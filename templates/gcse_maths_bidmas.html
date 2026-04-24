@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Order of Operations &amp; Negative Numbers — GCSE Maths{% endblock %}
+{% block content %}
+
+<div style="max-width:820px; margin:0 auto; padding: 0 16px;">
+
+<h1>Order of Operations &amp; Negative Numbers</h1>
+<p style="color:var(--text-muted);">AQA GCSE — Number (N1, N2) — Maths Genie 1.8 &amp; 1.10</p>
+
+<div class="problem-card">
+<h2>BIDMAS</h2>
+<p><strong>BIDMAS</strong> (also written BODMAS) tells you the order in which to carry out operations in any calculation. Always follow this sequence:</p>
+<table style="width:100%; border-collapse:collapse; margin:12px 0;">
+  <tr style="background:var(--color-surface-offset);">
+    <th style="padding:10px; text-align:left;">Letter</th>
+    <th style="padding:10px; text-align:left;">Meaning</th>
+    <th style="padding:10px; text-align:left;">Example</th>
+  </tr>
+  <tr><td style="padding:9px; border-top:1px solid var(--color-divider);"><strong>B</strong></td><td style="padding:9px; border-top:1px solid var(--color-divider);">Brackets</td><td style="padding:9px; border-top:1px solid var(--color-divider);">(3 + 2) × 4 → brackets first → 5 × 4</td></tr>
+  <tr><td style="padding:9px; border-top:1px solid var(--color-divider);"><strong>I</strong></td><td style="padding:9px; border-top:1px solid var(--color-divider);">Indices (powers &amp; roots)</td><td style="padding:9px; border-top:1px solid var(--color-divider);">3² + 1 → 9 + 1</td></tr>
+  <tr><td style="padding:9px; border-top:1px solid var(--color-divider);"><strong>D / M</strong></td><td style="padding:9px; border-top:1px solid var(--color-divider);">Division and Multiplication (left → right)</td><td style="padding:9px; border-top:1px solid var(--color-divider);">8 ÷ 4 × 2 → 2 × 2 → 4 (not 1!)</td></tr>
+  <tr><td style="padding:9px; border-top:1px solid var(--color-divider);"><strong>A / S</strong></td><td style="padding:9px; border-top:1px solid var(--color-divider);">Addition and Subtraction (left → right)</td><td style="padding:9px; border-top:1px solid var(--color-divider);">10 − 3 + 2 → 7 + 2 → 9 (not 5!)</td></tr>
+</table>
+<p style="color:var(--color-warning); font-weight:600;">⚠ Division and Multiplication have equal priority — work left to right. Same for Addition and Subtraction.</p>
+</div>
+
+<div class="problem-card">
+<h2>BIDMAS with Brackets and Powers</h2>
+<p><strong>Example:</strong> Calculate 3 + 2 × (7 − 4)²</p>
+<ol>
+  <li>Brackets: (7 − 4) = <strong>3</strong></li>
+  <li>Indices: 3² = <strong>9</strong></li>
+  <li>Multiply: 2 × 9 = <strong>18</strong></li>
+  <li>Add: 3 + 18 = <strong>21</strong></li>
+</ol>
+<p><strong>Example:</strong> Calculate (2 + 3)² ÷ 5 − 1</p>
+<ol>
+  <li>Brackets: (2 + 3) = 5</li>
+  <li>Indices: 5² = 25</li>
+  <li>Divide: 25 ÷ 5 = 5</li>
+  <li>Subtract: 5 − 1 = <strong>4</strong></li>
+</ol>
+</div>
+
+<div class="problem-card">
+<h2>Negative Numbers — Key Rules</h2>
+<p>You must know the sign rules for all four operations:</p>
+
+<h3 style="margin-top:16px;">Addition and Subtraction</h3>
+<p>Think of a number line. Adding a negative is the same as subtracting; subtracting a negative is the same as adding.</p>
+<ul>
+  <li>5 + (−3) = 5 − 3 = <strong>2</strong></li>
+  <li>5 − (−3) = 5 + 3 = <strong>8</strong></li>
+  <li>−4 + (−2) = −4 − 2 = <strong>−6</strong></li>
+</ul>
+
+<h3 style="margin-top:16px;">Multiplication and Division</h3>
+<table style="width:100%; border-collapse:collapse; margin:12px 0;">
+  <tr style="background:var(--color-surface-offset);">
+    <th style="padding:8px;">Signs</th><th style="padding:8px;">Result</th><th style="padding:8px;">Example</th>
+  </tr>
+  <tr><td style="padding:8px; border-top:1px solid var(--color-divider);">+ × +</td><td style="padding:8px; border-top:1px solid var(--color-divider);"><strong>+</strong></td><td style="padding:8px; border-top:1px solid var(--color-divider);">3 × 4 = 12</td></tr>
+  <tr><td style="padding:8px; border-top:1px solid var(--color-divider);">− × −</td><td style="padding:8px; border-top:1px solid var(--color-divider);"><strong>+</strong></td><td style="padding:8px; border-top:1px solid var(--color-divider);">(−3) × (−4) = 12</td></tr>
+  <tr><td style="padding:8px; border-top:1px solid var(--color-divider);">+ × −</td><td style="padding:8px; border-top:1px solid var(--color-divider);"><strong>−</strong></td><td style="padding:8px; border-top:1px solid var(--color-divider);">3 × (−4) = −12</td></tr>
+  <tr><td style="padding:8px; border-top:1px solid var(--color-divider);">− × +</td><td style="padding:8px; border-top:1px solid var(--color-divider);"><strong>−</strong></td><td style="padding:8px; border-top:1px solid var(--color-divider);">(−3) × 4 = −12</td></tr>
+</table>
+<p>Same rules apply to division: same signs → positive, different signs → negative.</p>
+</div>
+
+<div class="problem-card">
+<h2>Negative Numbers with Powers</h2>
+<p>Be very careful with brackets when squaring negative numbers.</p>
+<ul>
+  <li>(−3)² = (−3) × (−3) = <strong>+9</strong> — the negative is inside the brackets, so it gets squared</li>
+  <li>−3² = −(3 × 3) = <strong>−9</strong> — only 3 is squared; the negative sign stays</li>
+</ul>
+<p style="color:var(--color-warning); font-weight:600;">⚠ This is one of the most common errors in GCSE exams. Always check whether the negative is inside or outside the brackets before squaring.</p>
+</div>
+
+<div class="problem-card">
+<h2>Combining BIDMAS with Negatives</h2>
+<p><strong>Example:</strong> Calculate −2 × (3 + 5) − (−4)²</p>
+<ol>
+  <li>Brackets: (3 + 5) = 8 and (−4)² is computed next</li>
+  <li>Indices: (−4)² = +16</li>
+  <li>Multiply: −2 × 8 = −16</li>
+  <li>Subtract: −16 − 16 = <strong>−32</strong></li>
+</ol>
+<p><strong>Example:</strong> Calculate (−3)² + 4 × (−2)</p>
+<ol>
+  <li>Indices: (−3)² = 9</li>
+  <li>Multiply: 4 × (−2) = −8</li>
+  <li>Add: 9 + (−8) = <strong>1</strong></li>
+</ol>
+</div>
+
+<div class="problem-card">
+<h2>Quick Reference</h2>
+<ul>
+  <li><strong>B</strong>rackets → <strong>I</strong>ndices → <strong>D</strong>ivision/<strong>M</strong>ultiplication (left→right) → <strong>A</strong>ddition/<strong>S</strong>ubtraction (left→right)</li>
+  <li>Subtracting a negative = adding: a − (−b) = a + b</li>
+  <li>Same signs multiply/divide to give a <strong>positive</strong></li>
+  <li>Different signs multiply/divide to give a <strong>negative</strong></li>
+  <li>(−n)² = positive &nbsp;|&nbsp; −n² = negative</li>
+</ul>
+</div>
+
+</div>
+{% endblock %}

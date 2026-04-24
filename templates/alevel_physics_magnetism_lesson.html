@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block title %}Magnetic Fields — AQA A-Level Physics{% endblock %}
+{% block content %}
+
+<div style="max-width:820px; margin:0 auto; padding: 0 16px;">
+
+<h1>Magnetic Fields and Electromagnetism</h1>
+<p style="color:var(--text-muted);">AQA A-Level Physics — Section 7.5</p>
+
+<!-- SECTION 1: Motor Effect -->
+<div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>1. The Motor Effect</h2>
+    <p>A magnetic field is created by moving charges (currents). Field lines run from North to South and show the direction of force on a North-seeking pole. The closer the lines, the stronger the field.</p>
+    <p><strong>Magnetic Flux Density \(B\):</strong> The force per unit current per unit length on a wire at right angles to the field. Measured in Tesla (T), where \(1\,\text{T} = 1\,\text{kg\,s}^{-2}\text{A}^{-1}\).</p>
+    <p><strong>The Motor Effect:</strong> A current-carrying conductor in a magnetic field experiences a force. If the wire is at angle \(\theta\) to the field:</p>
+    \[ F = BIl\sin\theta \]
+    <p>The force is maximum when the wire is perpendicular to the field (\(\theta = 90°\)), and zero when parallel (\(\theta = 0°\)).</p>
+    <p><strong>Fleming's Left-Hand Rule:</strong> Point the <em>First finger</em> in the direction of the <strong>F</strong>ield, the se<em>C</em>ond finger in the direction of the <strong>C</strong>urrent — the thu<em>M</em>b gives the direction of <strong>M</strong>otion (force).</p>
+    <img src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/1764082d8dc8d7a2dc22b5f309e8c20cf829bbb4.jpg"
+         alt="Fleming's left-hand rule diagram" style="max-width:380px; margin:16px auto; display:block; border-radius:8px;">
+</div>
+
+<!-- PROBLEM 1 -->
+<div class="problem-card" style="border-left: 4px solid var(--color-primary);">
+    <h3>Practice: The Motor Effect</h3>
+    <p>{{ p1.question | safe }}</p>
+    <details>
+        <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Show Solution</summary>
+        <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset); border-radius:4px;">
+            <p>{{ p1.solution | safe }}</p>
+        </div>
+    </details>
+</div>
+
+<!-- SECTION 2: Moving Charges -->
+<div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>2. Moving Charges in Magnetic Fields</h2>
+    <p>A single particle of charge \(Q\) moving at velocity \(v\) at angle \(\theta\) to a field \(B\) experiences:</p>
+    \[ F = BQv\sin\theta \]
+    <p><strong>Derivation:</strong> Current is just moving charge, so \(I = Q/t\). The length of wire can be written as \(l = vt\). Substituting into \(F = BIl\):</p>
+    \[ F = B \cdot \frac{Q}{t} \cdot vt = BQv \]
+    <p>The magnetic force is always <strong>perpendicular to velocity</strong>, so it does no work and the speed remains constant. This force acts as a centripetal force, causing <strong>circular motion</strong>:</p>
+    \[ BQv = \frac{mv^2}{r} \implies r = \frac{mv}{BQ} \]
+    <p>The period of one full orbit is:</p>
+    \[ T = \frac{2\pi m}{BQ} \]
+    <p>Notice that \(T\) is independent of speed — this is the principle behind the <strong>cyclotron</strong>.</p>
+    <img src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/26bc3615d01f85a2ef89742bf3670a0b26783c1f.jpg"
+         alt="Circular motion of charged particle in magnetic field"
+         style="max-width:420px; margin:16px auto; display:block; border-radius:8px;">
+</div>
+
+<!-- PROBLEM 2 -->
+<div class="problem-card" style="border-left: 4px solid var(--color-primary);">
+    <h3>Practice: Circular Paths</h3>
+    <p>{{ p2.question | safe }}</p>
+    <details>
+        <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Show Solution</summary>
+        <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset); border-radius:4px;">
+            <p>{{ p2.solution | safe }}</p>
+        </div>
+    </details>
+</div>
+
+<!-- SECTION 2b: Cyclotrons -->
+<div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>3. Cyclotrons</h2>
+    <p>A cyclotron is a particle accelerator made of two D-shaped electrodes called <strong>Dees</strong>, with a magnetic field perpendicular to their plane and an alternating voltage across the gap between them.</p>
+    <ul style="margin-top:8px; padding-left:20px;">
+        <li>Particles spiral outward, gaining energy each time they cross the gap.</li>
+        <li>The magnetic field keeps them in a circular orbit inside each Dee.</li>
+        <li>Because \(T = 2\pi m / BQ\) is independent of speed, the alternating voltage can stay at a fixed frequency (the <em>cyclotron frequency</em>).</li>
+        <li>As speed increases, the radius of the path increases: \(r = mv/BQ\).</li>
+    </ul>
+    <p style="margin-top:10px;">Applications include producing radioactive tracers for medical imaging (PET scans) and ion beams for radiotherapy.</p>
+</div>
+
+<!-- SECTION 3: Magnetic Flux -->
+<div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>4. Magnetic Flux and Flux Linkage</h2>
+    <p><strong>Magnetic Flux \(\Phi\):</strong> The total field passing through a surface of area \(A\). Measured in Webers (Wb), where \(1\,\text{Wb} = 1\,\text{T\,m}^2\).</p>
+    \[ \Phi = BA\cos\theta \]
+    <p>Here \(\theta\) is the angle between the <em>normal to the surface</em> and the field direction. Flux is maximum when the field is perpendicular to the surface (\(\theta = 0°\)) and zero when parallel (\(\theta = 90°\)).</p>
+    <p><strong>Flux Linkage \(N\Phi\):</strong> For a coil of \(N\) turns, each turn links the same flux:</p>
+    \[ N\Phi = BAN\cos\theta \]
+    <p>For a rotating coil with angular speed \(\omega\), the angle changes with time so \(\theta = \omega t\):</p>
+    \[ N\Phi = BAN\cos(\omega t) \]
+</div>
+
+<!-- PROBLEM 3 -->
+<div class="problem-card" style="border-left: 4px solid var(--color-primary);">
+    <h3>Practice: Flux Linkage</h3>
+    <p>{{ p3.question | safe }}</p>
+    <details>
+        <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Show Solution</summary>
+        <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset); border-radius:4px;">
+            <p>{{ p3.solution | safe }}</p>
+        </div>
+    </details>
+</div>
+
+<!-- SECTION 4: Induction -->
+<div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>5. Electromagnetic Induction</h2>
+    <p>An e.m.f. is induced whenever magnetic flux linkage changes. There are two laws:</p>
+    <ul style="margin-top:8px; padding-left:20px;">
+        <li><strong>Faraday's Law:</strong> The induced e.m.f. equals the rate of change of flux linkage.</li>
+        <li><strong>Lenz's Law:</strong> The induced current opposes the change that caused it (conservation of energy).</li>
+    </ul>
+    \[ \varepsilon = -\frac{\Delta(N\Phi)}{\Delta t} \]
+    <p>The minus sign encodes Lenz's law — the induced e.m.f. acts to oppose the flux change.</p>
+
+    <h3 style="margin-top:18px;">Motional e.m.f. derivation</h3>
+    <p>A conductor of length \(l\) moving at speed \(v\) perpendicular to field \(B\) sweeps out area \(A = lvt\) in time \(t\). The flux change is \(\Delta\Phi = Blvt\), so:</p>
+    \[ \varepsilon = \frac{\Delta\Phi}{\Delta t} = Blv \]
+
+    <h3 style="margin-top:18px;">Rotating coil</h3>
+    <p>For a coil rotating at angular speed \(\omega\), flux linkage varies as \(N\Phi = BAN\cos(\omega t)\). Differentiating with respect to time gives the induced e.m.f.:</p>
+    \[ \varepsilon = BAN\omega\sin(\omega t) \]
+    <p>This is sinusoidal — the basis of the alternating current generator.</p>
+</div>
+
+<!-- PROBLEM 4 -->
+<div class="problem-card" style="border-left: 4px solid var(--color-primary);">
+    <h3>Practice: Faraday's Law</h3>
+    <p>{{ p4.question | safe }}</p>
+    <details>
+        <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Show Solution</summary>
+        <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset); border-radius:4px;">
+            <p>{{ p4.solution | safe }}</p>
+        </div>
+    </details>
+</div>
+
+<!-- SECTION 5: Alternating Current -->
+<div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>6. Alternating Current</h2>
+    <p>Alternating current changes direction sinusoidally. Key quantities:</p>
+    <ul style="margin-top:8px; padding-left:20px;">
+        <li><strong>Peak voltage \(V_0\):</strong> Maximum voltage from equilibrium.</li>
+        <li><strong>Peak-to-peak voltage:</strong> Distance from minimum to maximum.</li>
+        <li><strong>RMS voltage \(V_{rms}\):</strong> The equivalent DC voltage that delivers the same power.</li>
+    </ul>
+    \[ V_{rms} = \frac{V_0}{\sqrt{2}}, \qquad I_{rms} = \frac{I_0}{\sqrt{2}} \]
+    <p>UK mains supply is 230 V rms, meaning the peak voltage is \(230\sqrt{2} \approx 325\,\text{V}\).</p>
+</div>
+
+<!-- SECTION 6: Transformers -->
+<div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>7. Transformers and Power Transmission</h2>
+    <p>A transformer changes alternating voltage using two coils wound around a <strong>laminated soft iron core</strong>. The alternating primary current creates a changing flux, inducing an e.m.f. in the secondary coil by Faraday's law.</p>
+    <p><strong>Transformer equation</strong> (derived from equal rates of flux change in each turn):</p>
+    \[ \frac{V_s}{V_p} = \frac{N_s}{N_p} \]
+    <p><strong>Ideal transformer</strong> (power in = power out):</p>
+    \[ V_p I_p = V_s I_s \implies \frac{I_s}{I_p} = \frac{N_p}{N_s} \]
+
+    <h3 style="margin-top:18px;">Energy losses and how to reduce them</h3>
+    <ul style="padding-left:20px;">
+        <li><strong>Eddy currents</strong> — induced in the core, waste energy as heat. Reduced by <em>laminating</em> the core (layers of iron insulated from each other).</li>
+        <li><strong>Coil resistance</strong> — heating in the wire. Reduced by using <em>thick copper wire</em>.</li>
+        <li><strong>Magnetisation of core</strong> — energy needed to repeatedly magnetise/demagnetise. Reduced by using <em>soft iron</em> (easy to magnetise and demagnetise).</li>
+    </ul>
+
+    <h3 style="margin-top:18px;">Power transmission</h3>
+    <p>Power lost in cables is \(P = I^2R\). By stepping voltage up (reducing current), losses are dramatically reduced. That is why the National Grid transmits at hundreds of kilovolts.</p>
+</div>
+
+<!-- PROBLEM 5 -->
+<div class="problem-card" style="border-left: 4px solid var(--color-primary);">
+    <h3>Practice: Transformers</h3>
+    <p>{{ p5.question | safe }}</p>
+    <details>
+        <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Show Solution</summary>
+        <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset); border-radius:4px;">
+            <p>{{ p5.solution | safe }}</p>
+        </div>
+    </details>
+</div>
+
+<!-- QUICK REFERENCE -->
+<div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>Quick Reference</h2>
+    <table style="width:100%; border-collapse:collapse; font-size:0.97em;">
+        <thead>
+            <tr style="border-bottom:2px solid var(--color-border);">
+                <th style="text-align:left; padding:8px;">Quantity</th>
+                <th style="text-align:left; padding:8px;">Equation</th>
+                <th style="text-align:left; padding:8px;">Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr style="border-bottom:1px solid var(--color-border);">
+                <td style="padding:8px;">Force on wire</td>
+                <td style="padding:8px;">\(F = BIl\sin\theta\)</td>
+                <td style="padding:8px;">Max when \(\theta = 90°\)</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--color-border);">
+                <td style="padding:8px;">Force on charge</td>
+                <td style="padding:8px;">\(F = BQv\sin\theta\)</td>
+                <td style="padding:8px;">Always \(\perp\) to velocity</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--color-border);">
+                <td style="padding:8px;">Circular radius</td>
+                <td style="padding:8px;">\(r = mv/BQ\)</td>
+                <td style="padding:8px;">From \(BQv = mv^2/r\)</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--color-border);">
+                <td style="padding:8px;">Magnetic flux</td>
+                <td style="padding:8px;">\(\Phi = BA\cos\theta\)</td>
+                <td style="padding:8px;">\(\theta\) = angle to normal</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--color-border);">
+                <td style="padding:8px;">Flux linkage</td>
+                <td style="padding:8px;">\(N\Phi = BAN\cos\theta\)</td>
+                <td style="padding:8px;">Units: Wb turns</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--color-border);">
+                <td style="padding:8px;">Faraday's law</td>
+                <td style="padding:8px;">\(\varepsilon = -\Delta(N\Phi)/\Delta t\)</td>
+                <td style="padding:8px;">Minus sign = Lenz's law</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--color-border);">
+                <td style="padding:8px;">Motional e.m.f.</td>
+                <td style="padding:8px;">\(\varepsilon = Blv\)</td>
+                <td style="padding:8px;">Conductor moving in field</td>
+            </tr>
+            <tr style="border-bottom:1px solid var(--color-border);">
+                <td style="padding:8px;">Transformer ratio</td>
+                <td style="padding:8px;">\(V_s/V_p = N_s/N_p\)</td>
+                <td style="padding:8px;">AC only</td>
+            </tr>
+            <tr>
+                <td style="padding:8px;">RMS voltage</td>
+                <td style="padding:8px;">\(V_{rms} = V_0/\sqrt{2}\)</td>
+                <td style="padding:8px;">Sinusoidal AC</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+</div>
+{% endblock %}

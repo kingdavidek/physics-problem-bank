@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ content.title }} – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="topic-header">
+    <h1>{{ content.title }}</h1>
+    <p style="color: var(--text-muted);">{{ content.summary }}</p>
+</div>
+
+<h2>Key Formulae</h2>
+{% for formula in content.formulae %}
+<div class="formula-block">
+    \[ {{ formula }} \]
+</div>
+{% endfor %}
+
+<h2>Exam Tips</h2>
+<ul class="tips-list">
+{% for tip in content.tips %}
+    <li>{{ tip }}</li>
+{% endfor %}
+</ul>
+
+<div style="margin-top: 36px; display: flex; gap: 12px; flex-wrap: wrap;">
+    <a href="{{ content.generate_url }}" class="btn btn-primary">
+        Practice {{ content.title }} Problems →
+    </a>
+    <a href="/topics" class="btn btn-secondary">← All Topics</a>
+</div>
+{% endblock %}

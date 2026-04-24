@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Quick Test – Question {{ current }} of {{ total }}{% endblock %}
+{% block content %}
+<div style="max-width:720px;margin:0 auto;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <div style="font-size:var(--text-sm);color:var(--text-muted);text-transform:uppercase;">
+      Quick Test — {{ topic_name }}
+    </div>
+    <div style="font-size:var(--text-sm);color:var(--text-muted);">
+      Question {{ current }} / {{ total }}
+    </div>
+  </div>
+  <div style="height:6px;background:var(--color-surface-offset);border-radius:var(--radius-sm);margin-bottom:16px;">
+    <div style="height:100%;width:{{ ((current - 1) / total * 100) | round(1) }}%;background:var(--color-primary);border-radius:var(--radius-sm);transition:width 0.3s;"></div>
+  </div>
+  <div class="problem-card">
+    <div class="problem-meta">
+      <span class="badge badge-{{ problem.difficulty }}">{{ problem.difficulty | title }}</span>
+      <span class="badge badge-marks">{{ problem.marks }} mark{% if problem.marks > 1 %}s{% endif %}</span>
+    </div>
+    <div class="question" style="margin-top:16px;">
+
+                {% if problem.options %}
+            <p>{{ problem.question | safe }}</p>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;" id="mcq-options">
+                {% for opt in problem.options %}
+                    <button class="btn mcq-btn" data-letter="{{ opt[0] }}">{{ opt | safe }}</button>
+                {% endfor %}
+            </div>
+            <p id="mcq-feedback" style="margin-top:12px;font-weight:600;"></p>
+            <script>
+                (function() {
+                    const buttons = document.querySelectorAll('.mcq-btn');
+                    const correct = "{{ problem.correct_answer }}";
+                    const feedback = document.getElementById('mcq-feedback');
+                    let answered = false;
+                    buttons.forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            if (answered) return;
+                            answered = true;
+                            const letter = this.dataset.letter;
+                            if (letter === correct) {
+                                this.style.border = '3px solid green';
+                                feedback.textContent = 'Correct!';
+                                feedback.style.color = 'green';
+                            } else {
+                                this.style.border = '3px solid red';
+                                feedback.textContent = 'Incorrect. The correct answer is ' + correct + '.';
+                                feedback.style.color = 'red';
+                                // also highlight the correct button
+                                buttons.forEach(b => {
+                                    if (b.dataset.letter === correct) b.style.border = '3px solid green';
+                                });
+                            }
+                            // disable all buttons
+                            buttons.forEach(b => b.disabled = true);
+                        });
+                    });
+                })();
+            </script>
+        {% else %}
+            {{ problem.question | replace('\n', '<br>') | safe }}
+        {% endif %}
+    </div>
+  </div>
+  <div style="margin-top:24px;display:flex;justify-content:flex-end;">
+    <form method="POST" action="/quicktest/next">
+      <button type="submit" class="btn btn-primary">
+        {% if current < total %}Next question →{% else %}Finish &amp; show solutions →{% endif %}
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

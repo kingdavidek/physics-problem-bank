@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Decimals — GCSE Maths{% endblock %}
+{% block content %}
+
+<div style="max-width:820px; margin:0 auto; padding: 0 16px;">
+
+<h1>Decimals</h1>
+<p style="color:var(--text-muted);">AQA GCSE — Number (N2, N3, N10)</p>
+
+<div class="problem-card">
+<h2>Place Value in Decimals</h2>
+<p>Every digit in a decimal number has a <strong>place value</strong>. Moving left multiplies by 10; moving right divides by 10.</p>
+<table style="width:100%; border-collapse:collapse; margin:12px 0;">
+  <tr style="background:var(--color-surface-offset);">
+    <th style="padding:8px;">Hundreds</th><th style="padding:8px;">Tens</th><th style="padding:8px;">Units</th>
+    <th style="padding:8px;">·</th>
+    <th style="padding:8px;">Tenths</th><th style="padding:8px;">Hundredths</th><th style="padding:8px;">Thousandths</th>
+  </tr>
+  <tr style="text-align:center;">
+    <td style="padding:8px; border-top:1px solid var(--color-divider);">1</td>
+    <td style="padding:8px; border-top:1px solid var(--color-divider);">4</td>
+    <td style="padding:8px; border-top:1px solid var(--color-divider);">7</td>
+    <td style="padding:8px; border-top:1px solid var(--color-divider);">·</td>
+    <td style="padding:8px; border-top:1px solid var(--color-divider);">3</td>
+    <td style="padding:8px; border-top:1px solid var(--color-divider);">0</td>
+    <td style="padding:8px; border-top:1px solid var(--color-divider);">6</td>
+  </tr>
+</table>
+<p>So 147.306 means 1 hundred, 4 tens, 7 units, 3 tenths, 0 hundredths, 6 thousandths.</p>
+</div>
+
+<div class="problem-card">
+<h2>Ordering Decimals</h2>
+<p>Compare digits column by column, starting from the left. <strong>Never</strong> compare by length — 0.7 is greater than 0.35 even though 35 > 7 as integers.</p>
+<ul>
+  <li>To order 0.3, 0.35, 0.309: write them all to the same number of decimal places → 0.300, 0.350, 0.309</li>
+  <li>Ordering smallest to largest: <strong>0.300, 0.309, 0.350</strong> → i.e. 0.3, 0.309, 0.35</li>
+</ul>
+</div>
+
+<div class="problem-card">
+<h2>Adding and Subtracting Decimals</h2>
+<p>Line up the decimal points, then add or subtract as normal. Fill in gaps with zeros to avoid errors.</p>
+<pre style="background:var(--color-surface-offset); padding:12px; border-radius:6px; font-size:1rem;">
+  14.72
++  3.08
+------
+  17.80
+</pre>
+<p>For subtraction, borrow across the decimal point exactly as you would with whole numbers.</p>
+</div>
+
+<div class="problem-card">
+<h2>Multiplying Decimals</h2>
+<p>Ignore the decimal points, multiply as integers, then count the total number of decimal places in both original numbers and put the point back.</p>
+<p><strong>Example:</strong> 2.4 × 1.3</p>
+<ul>
+  <li>24 × 13 = 312</li>
+  <li>2.4 has 1 d.p., 1.3 has 1 d.p. → total 2 d.p.</li>
+  <li>Answer: <strong>3.12</strong></li>
+</ul>
+<p><strong>Multiplying by powers of 10:</strong> move the decimal point right (× 10, × 100, × 1000) or left (÷ 10, ÷ 100, ÷ 1000).</p>
+<ul>
+  <li>3.47 × 100 = <strong>347</strong></li>
+  <li>52.6 ÷ 1000 = <strong>0.0526</strong></li>
+</ul>
+</div>
+
+<div class="problem-card">
+<h2>Dividing Decimals</h2>
+<p>If the divisor is a decimal, multiply both numbers by a power of 10 to make the divisor a whole number first.</p>
+<p><strong>Example:</strong> 4.8 ÷ 0.6</p>
+<ul>
+  <li>Multiply both by 10: 48 ÷ 6 = <strong>8</strong></li>
+</ul>
+<p><strong>Example:</strong> 2.94 ÷ 0.07</p>
+<ul>
+  <li>Multiply both by 100: 294 ÷ 7 = <strong>42</strong></li>
+</ul>
+</div>
+
+<div class="problem-card">
+<h2>Rounding Decimals</h2>
+<p>Look at the digit <em>after</em> the place you're rounding to. If it is <strong>5 or more</strong>, round up; otherwise, round down.</p>
+<ul>
+  <li>3.746 to 2 d.p. → look at 3rd d.p. = 6 ≥ 5 → round up → <strong>3.75</strong></li>
+  <li>8.342 to 1 d.p. → look at 2nd d.p. = 4 &lt; 5 → round down → <strong>8.3</strong></li>
+  <li>5.996 to 2 d.p. → look at 3rd d.p. = 6 ≥ 5 → <strong>6.00</strong> (carry propagates!)</li>
+</ul>
+</div>
+
+<div class="problem-card">
+<h2>Fractions, Decimals and Percentages</h2>
+<p>These are three ways to express the same value. Key conversions to memorise:</p>
+<table style="width:100%; border-collapse:collapse;">
+  <tr style="background:var(--color-surface-offset);">
+    <th style="padding:8px;">Fraction</th><th style="padding:8px;">Decimal</th><th style="padding:8px;">Percentage</th>
+  </tr>
+  <tr style="text-align:center;"><td style="padding:8px; border-top:1px solid var(--color-divider);">1/2</td><td style="padding:8px; border-top:1px solid var(--color-divider);">0.5</td><td style="padding:8px; border-top:1px solid var(--color-divider);">50%</td></tr>
+  <tr style="text-align:center;"><td style="padding:8px; border-top:1px solid var(--color-divider);">1/4</td><td style="padding:8px; border-top:1px solid var(--color-divider);">0.25</td><td style="padding:8px; border-top:1px solid var(--color-divider);">25%</td></tr>
+  <tr style="text-align:center;"><td style="padding:8px; border-top:1px solid var(--color-divider);">3/4</td><td style="padding:8px; border-top:1px solid var(--color-divider);">0.75</td><td style="padding:8px; border-top:1px solid var(--color-divider);">75%</td></tr>
+  <tr style="text-align:center;"><td style="padding:8px; border-top:1px solid var(--color-divider);">1/5</td><td style="padding:8px; border-top:1px solid var(--color-divider);">0.2</td><td style="padding:8px; border-top:1px solid var(--color-divider);">20%</td></tr>
+  <tr style="text-align:center;"><td style="padding:8px; border-top:1px solid var(--color-divider);">1/8</td><td style="padding:8px; border-top:1px solid var(--color-divider);">0.125</td><td style="padding:8px; border-top:1px solid var(--color-divider);">12.5%</td></tr>
+  <tr style="text-align:center;"><td style="padding:8px; border-top:1px solid var(--color-divider);">1/3</td><td style="padding:8px; border-top:1px solid var(--color-divider);">0.333…</td><td style="padding:8px; border-top:1px solid var(--color-divider);">33.3…%</td></tr>
+</table>
+<p style="margin-top:12px;"><strong>Fraction → Decimal:</strong> divide numerator by denominator.<br>
+<strong>Decimal → Percentage:</strong> multiply by 100.<br>
+<strong>Percentage → Decimal:</strong> divide by 100.</p>
+</div>
+
+<div class="problem-card">
+<h2>Recurring Decimals (Higher)</h2>
+<p>A <strong>recurring decimal</strong> repeats a digit or block of digits forever. Use dot notation: 0.3̇ = 0.333…, 0.1̇4̇ = 0.141414…</p>
+<p>To convert to a fraction, use the algebraic method:</p>
+<p><strong>Example:</strong> Convert 0.363636… to a fraction</p>
+<ul>
+  <li>Let x = 0.363636…</li>
+  <li>100x = 36.363636…</li>
+  <li>100x − x = 36 → 99x = 36</li>
+  <li>x = 36/99 = <strong>4/11</strong></li>
+</ul>
+</div>
+
+</div>
+{% endblock %}

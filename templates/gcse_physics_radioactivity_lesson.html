@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCSE Edexcel Combined Science Physics: Radioactivity</title>
+    <style>
+        :root {
+            --bg: #f7f6f2;
+            --surface: #ffffff;
+            --surface-2: #f3f0ec;
+            --text: #28251d;
+            --muted: #6f6b63;
+            --primary: #01696f;
+            --primary-dark: #0c4e54;
+            --accent: #a13544;
+            --border: #d8d3cb;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            --radius: 18px;
+            --radius-sm: 12px;
+            --max: 1100px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            line-height: 1.6;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        a {
+            color: var(--primary);
+        }
+
+        .page {
+            max-width: var(--max);
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #e8f4f5 0%, #f8fbfb 55%, #fff5f6 100%);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 40px 28px;
+            box-shadow: var(--shadow);
+            margin-top: 24px;
+        }
+
+        .eyebrow {
+            display: inline-block;
+            font-size: 0.85rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        h1, h2, h3 {
+            line-height: 1.15;
+            margin: 0 0 12px 0;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 4vw, 3.4rem);
+            max-width: 12ch;
+        }
+
+        h2 {
+            font-size: clamp(1.4rem, 2.4vw, 2rem);
+            margin-bottom: 10px;
+        }
+
+        h3 {
+            font-size: 1.1rem;
+        }
+
+        p {
+            margin: 0 0 12px 0;
+            max-width: 75ch;
+        }
+
+        .lead {
+            font-size: 1.08rem;
+            color: var(--muted);
+            max-width: 70ch;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 24px;
+            align-items: start;
+            margin-top: 24px;
+        }
+
+        .summary-card,
+        .nav-card,
+        .tip-card,
+        .question-card,
+        .checklist,
+        .formula-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+        }
+
+        .summary-card ul,
+        .checklist ul,
+        .tip-card ul,
+        .nav-card ul {
+            margin: 10px 0 0 18px;
+            padding: 0;
+        }
+
+        .quick-nav {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin: 28px 0 36px;
+        }
+
+        .quick-nav a {
+            display: block;
+            text-decoration: none;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px;
+            font-weight: 700;
+            color: var(--text);
+            transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .quick-nav a:hover {
+            transform: translateY(-2px);
+            border-color: var(--primary);
+            box-shadow: 0 8px 20px rgba(1, 105, 111, 0.10);
+        }
+
+        .section {
+            margin: 40px 0;
+        }
+
+        .section-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .content-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+        }
+
+        .content-card ul {
+            margin: 12px 0 0 20px;
+        }
+
+        .content-card li {
+            margin-bottom: 8px;
+        }
+
+        .formula-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-top: 16px;
+        }
+
+        .formula-card {
+            background: var(--surface-2);
+        }
+
+        .formula {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+        }
+
+        .question-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            margin-top: 18px;
+        }
+
+        .question-card h3 {
+            margin-bottom: 8px;
+        }
+
+        .difficulty {
+            display: inline-block;
+            margin-bottom: 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #e6f3f4;
+            color: var(--primary-dark);
+        }
+
+        .difficulty.intermediate {
+            background: #f8eddc;
+            color: #8a5b00;
+        }
+
+        .difficulty.difficult {
+            background: #f6e3e7;
+            color: #8a2239;
+        }
+
+        .question-box {
+            background: #fcfcfb;
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+
+        .question-box p {
+            max-width: none;
+        }
+
+        .exam-tips {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+            margin-top: 18px;
+        }
+
+        .mini-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 0.96rem;
+            background: var(--surface);
+        }
+
+        .mini-table th,
+        .mini-table td {
+            border: 1px solid var(--border);
+            padding: 10px 12px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .mini-table th {
+            background: var(--surface-2);
+        }
+
+        .footer-note {
+            margin: 48px 0 24px;
+            padding: 18px 20px;
+            border-left: 4px solid var(--primary);
+            background: var(--surface);
+            border-radius: 0 12px 12px 0;
+            color: var(--muted);
+        }
+
+        code {
+            background: #f0ece7;
+            padding: 2px 6px;
+            border-radius: 6px;
+        }
+
+        @media (max-width: 900px) {
+            .hero-grid,
+            .section-grid,
+            .question-grid,
+            .exam-tips,
+            .quick-nav,
+            .two-col,
+            .formula-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page {
+                padding: 16px;
+            }
+
+            .hero {
+                padding: 28px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <section class="hero">
+            <span class="eyebrow">GCSE Edexcel Combined Science</span>
+            <h1>Physics Revision Lesson: Radioactivity</h1>
+            <p class="lead">
+                This page covers the key Edexcel Combined Science radioactivity ideas: atomic structure,
+                isotopes, alpha/beta/gamma radiation, activity, background radiation, half-life,
+                and contamination versus irradiation.
+            </p>
+
+            <div class="hero-grid">
+                <div class="summary-card">
+                    <h2>What you need to know</h2>
+                    <ul>
+                        <li>Atoms contain protons and neutrons in the nucleus, with electrons in shells around it.</li>
+                        <li>Isotopes are atoms of the same element with different numbers of neutrons.</li>
+                        <li>Unstable nuclei decay randomly and emit alpha, beta, or gamma radiation.</li>
+                        <li>Activity is measured in becquerels, and half-life tells you how quickly a source decays.</li>
+                        <li>Contamination is usually more dangerous than irradiation if radioactive material enters the body.</li>
+                    </ul>
+                </div>
+
+                <div class="nav-card">
+                    <h2>On this page</h2>
+                    <ul>
+                        <li>Atomic structure and isotopes</li>
+                        <li>Alpha, beta, and gamma</li>
+                        <li>Activity and background radiation</li>
+                        <li>Half-life</li>
+                        <li>Contamination and irradiation</li>
+                        <li>Practice questions</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <nav class="quick-nav">
+            <a href="#structure">Structure & isotopes</a>
+            <a href="#radiation">Alpha, beta, gamma</a>
+            <a href="#activity">Activity & background</a>
+            <a href="#halflife">Half-life</a>
+            <a href="#risk">Risk & safety</a>
+            <a href="#uses">Uses</a>
+            <a href="#practice">Practice questions</a>
+            <a href="#exam">Exam tips</a>
+        </nav>
+
+        <section class="section" id="structure">
+            <div class="section-grid">
+                <div class="content-card">
+                    <h2>Atomic structure and isotopes</h2>
+                    <p>
+                        All atoms have a tiny nucleus containing protons and neutrons, with electrons found outside the nucleus.
+                        The proton number tells you which element the atom is.
+                    </p>
+                    <p>
+                        <strong>Isotopes</strong> are atoms of the same element with the same number of protons
+                        but different numbers of neutrons. Some isotopes are stable, while others are unstable and radioactive.
+                    </p>
+                    <ul>
+                        <li>Proton: relative charge +1</li>
+                        <li>Neutron: relative charge 0</li>
+                        <li>Electron: relative charge -1</li>
+                        <li>Mass number = protons + neutrons</li>
+                    </ul>
+                </div>
+
+                <aside class="tip-card">
+                    <h3>Quick memory tip</h3>
+                    <ul>
+                        <li>Element = decided by proton number</li>
+                        <li>Isotope = same protons, different neutrons</li>
+                        <li>Nucleus = protons + neutrons only</li>
+                    </ul>
+                </aside>
+            </div>
+        </section>
+
+        <section class="section" id="radiation">
+            <div class="content-card">
+                <h2>Alpha, beta and gamma radiation</h2>
+                <p>
+                    Radioactive nuclei can emit three main types of nuclear radiation. You need to compare them in terms of what they are,
+                    how ionising they are, and how penetrating they are.
+                </p>
+
+                <table class="mini-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>What it is</th>
+                            <th>Ionising power</th>
+                            <th>Penetrating power</th>
+                            <th>Stopped by</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Alpha</strong></td>
+                            <td>Helium nucleus</td>
+                            <td>High</td>
+                            <td>Low</td>
+                            <td>Paper or a few cm of air</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Beta</strong></td>
+                            <td>Fast electron</td>
+                            <td>Medium</td>
+                            <td>Medium</td>
+                            <td>Thin aluminium</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Gamma</strong></td>
+                            <td>Electromagnetic wave</td>
+                            <td>Low</td>
+                            <td>High</td>
+                            <td>Thick lead or concrete</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="formula-grid">
+                    <div class="formula-card">
+                        <h3>Alpha decay</h3>
+                        <p class="formula">Mass number -4</p>
+                        <p class="formula">Atomic number -2</p>
+                    </div>
+                    <div class="formula-card">
+                        <h3>Beta-minus decay</h3>
+                        <p class="formula">Mass number unchanged</p>
+                        <p class="formula">Atomic number +1</p>
+                    </div>
+                    <div class="formula-card">
+                        <h3>Gamma emission</h3>
+                        <p class="formula">No change in mass number</p>
+                        <p class="formula">No change in atomic number</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="activity">
+            <div class="two-col">
+                <div class="content-card">
+                    <h2>Activity and count rate</h2>
+                    <p>
+                        <strong>Activity</strong> is the rate at which unstable nuclei decay.
+                        It is measured in <strong>becquerels (Bq)</strong>.
+                    </p>
+                    <p>
+                        1 Bq means <strong>1 decay per second</strong>.
+                    </p>
+                    <p>
+                        In practical work, you often measure <strong>count rate</strong> using a detector.
+                        This is not exactly the same as activity, but it is used as an experimental measure of it.
+                    </p>
+                </div>
+
+                <div class="content-card">
+                    <h2>Background radiation</h2>
+                    <p>
+                        Background radiation is the low-level radiation always present in the environment.
+                    </p>
+                    <ul>
+                        <li>Radon gas from rocks and soil</li>
+                        <li>Cosmic rays from space</li>
+                        <li>Medical sources such as X-rays</li>
+                        <li>Radioactive materials in food and building materials</li>
+                    </ul>
+                    <p>
+                        In calculations, remember to subtract the background count first.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="halflife">
+            <div class="section-grid">
+                <div class="content-card">
+                    <h2>Half-life</h2>
+                    <p>
+                        The <strong>half-life</strong> of a radioactive isotope is the time taken for half the unstable nuclei in a sample to decay,
+                        or for the activity / count rate to fall to half its original value.
+                    </p>
+                    <p>
+                        Radioactive decay is <strong>random</strong>, so you cannot predict when one nucleus will decay.
+                        But in a large sample, the overall pattern is predictable.
+                    </p>
+                    <ul>
+                        <li>After 1 half-life: 1/2 remains</li>
+                        <li>After 2 half-lives: 1/4 remains</li>
+                        <li>After 3 half-lives: 1/8 remains</li>
+                        <li>After 4 half-lives: 1/16 remains</li>
+                    </ul>
+                </div>
+
+                <aside class="checklist">
+                    <h3>Half-life checklist</h3>
+                    <ul>
+                        <li>Check whether the question is about mass, activity, or count rate</li>
+                        <li>Work out how many half-lives have passed</li>
+                        <li>Halve the value each time</li>
+                        <li>If count rate is measured experimentally, subtract background when needed</li>
+                    </ul>
+                </aside>
+            </div>
+        </section>
+
+        <section class="section" id="risk">
+            <div class="two-col">
+                <div class="content-card">
+                    <h2>Irradiation vs contamination</h2>
+                    <p>
+                        <strong>Irradiation</strong> means exposure to radiation.
+                        The object does not become radioactive just because radiation passes through or onto it.
+                    </p>
+                    <p>
+                        <strong>Contamination</strong> means radioactive material gets onto or into an object or person.
+                    </p>
+                    <p>
+                        Internal contamination is especially dangerous because the source keeps irradiating tissue from inside the body.
+                    </p>
+                </div>
+
+                <div class="content-card">
+                    <h2>Reducing risk</h2>
+                    <ul>
+                        <li>Spend less time near the source</li>
+                        <li>Increase distance from the source</li>
+                        <li>Use appropriate shielding</li>
+                        <li>Avoid contamination by handling sources carefully</li>
+                    </ul>
+                    <p>
+                        For internal risk, alpha can be very dangerous even though it is not very penetrating externally.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="uses">
+            <div class="content-card">
+                <h2>Uses of nuclear radiation</h2>
+                <table class="mini-table">
+                    <thead>
+                        <tr>
+                            <th>Radiation</th>
+                            <th>Example use</th>
+                            <th>Why it is suitable</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Alpha</td>
+                            <td>Smoke alarms</td>
+                            <td>Strong ionisation makes it good at ionising air.</td>
+                        </tr>
+                        <tr>
+                            <td>Beta</td>
+                            <td>Thickness monitoring</td>
+                            <td>Some passes through material, so the detector reading changes if thickness changes.</td>
+                        </tr>
+                        <tr>
+                            <td>Gamma</td>
+                            <td>Medical tracers / sterilising equipment</td>
+                            <td>Highly penetrating, so it can leave the body or pass through packaging.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="section" id="practice">
+            <h2>Practice questions</h2>
+
+
+            <div class="question-grid">
+                <article class="question-card">
+                    <span class="difficulty">Foundational</span>
+                    <h3>Core knowledge</h3>
+                    <div class="question-box">
+                        {{ p1.question | safe }}
+                    </div>
+                </article>
+
+                <article class="question-card">
+                    <span class="difficulty intermediate">Intermediate</span>
+                    <h3>Standard application</h3>
+                    <div class="question-box">
+                        {{ p2.question | safe }}
+                    </div>
+                </article>
+
+                <article class="question-card">
+                    <span class="difficulty difficult">Difficult</span>
+                    <h3>Exam-style stretch</h3>
+                    <div class="question-box">
+                        {{ p3.question | safe }}
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="section" id="exam">
+            <h2>Exam tips</h2>
+
+            <div class="exam-tips">
+                <div class="tip-card">
+                    <h3>Common mistakes</h3>
+                    <ul>
+                        <li>Saying irradiation makes an object radioactive.</li>
+                        <li>Mixing up ionising power and penetrating power.</li>
+                        <li>Forgetting to subtract background count.</li>
+                        <li>Confusing mass number with atomic number.</li>
+                        <li>Using the wrong number of half-lives.</li>
+                    </ul>
+                </div>
+
+                <div class="tip-card">
+                    <h3>What examiners like</h3>
+                    <ul>
+                        <li>Precise definitions, especially for half-life and activity.</li>
+                        <li>Clear comparisons of alpha, beta and gamma.</li>
+                        <li>Explicit reference to unstable nuclei and random decay.</li>
+                        <li>Correct use of “same protons, different neutrons” for isotopes.</li>
+                        <li>Linking a radiation type to its properties in use questions.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+</body>
+</html>
