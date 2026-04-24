@@ -1,0 +1,158 @@
+from flask import Flask, render_template, request, session
+
+from topics_data import TOPIC_CONTENT
+from jinja2.exceptions import TemplateNotFound
+from datetime import date
+
+app = Flask(__name__)
+app.secret_key = "password"
+
+from generators.gcse.physics import (
+    gcse_physics_forces,
+    edexcel_combined_physics_radioactivity,
+)
+
+from generators.gcse.maths import (
+    gcse_maths_algebra,
+    gcse_maths_surds,
+    gcse_maths_decimals,
+    gcse_maths_bidmas,
+    gcse_maths_fdp,
+    gcse_maths_multiples_factors,
+)
+
+from generators.gcse.cs import (
+    gcse_cs_binary,
+)
+
+from generators.myp.chemistry import (
+    myp_chemistry_redox,
+    myp_chemistry_energy_changes_and_rates,
+)
+
+from generators.alevel.physics import (
+    alevel_physics_magnetism,
+)
+
+
+
+def get_topic_content(level, subject, topic):
+    return TOPIC_CONTENT.get((level, subject, topic))
+
+
+
+
+
+
+
+
+
+# -----------------------------------------------
+# ROUTES
+# -----------------------------------------------
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if 'anon_count' not in session:
+        session['anon_count'] = 0
+
+    problem = None
+    error = None
+    limit_hit = False
+    ANON_DAILY_LIMIT = 999
+
+    selected_level = request.form.get('level', 'gcse') if request.method == 'POST' else 'gcse'
+    selected_subject = request.form.get('subject', 'physics') if request.method == 'POST' else 'physics'
+    selected_topic = request.form.get('topic', 'forces') if request.method == 'POST' else 'forces'
+    selected_mode = request.form.get('mode', 'revision') if request.method == 'POST' else 'revision'
+    selected_diff = request.form.get('difficulty', 'foundational') if request.method == 'POST' else 'foundational'
+
+    if request.method == 'POST':
+        if session['anon_count'] >= ANON_DAILY_LIMIT:
+            limit_hit = True
+        else:
+            try:
+                generator = TOPICS[selected_level][selected_subject][selected_topic]['func']
+                problem = generator(selected_diff, selected_mode)
+                session['anon_count'] += 1
+                session.modified = True
+            except KeyError:
+                error = "Invalid combination. Please try again."
+
+    return render_template(
+        'index.html',
+        problem=problem,
+        error=error,
+        limit_hit=limit_hit,
+        selected_level=selected_level,
+        selected_subject=selected_subject,
+        selected_topic=selected_topic,
+        selected_mode=selected_mode,
+        selected_diff=selected_diff
+    )
+
+
+@app.route('/topic/<level>/<subject>/<topic>')
+def topic_page(level, subject, topic):
+    # Try a custom template first
+    custom = f"{level}_{subject}_{topic}_lesson.html"
+    try:
+        return render_template(custom, level=level, subject=subject, topic=topic)
+    except TemplateNotFound:
+        # Fall back to generic data-driven template
+        content = get_topic_content(level, subject, topic)
+        if not content:
+            return "Topic not found", 404
+        return render_template('topic.html', content=content)
+
+
+@app.route('/topics')
+def topics_index():
+    return render_template('topics.html')
+
+
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if 'anon_count' not in session:
+        session['anon_count'] = 0
+
+    problem = None
+    error = None
+    limit_hit = False
+    ANON_DAILY_LIMIT = 999
+
+    selected_level = request.form.get('level', 'gcse') if request.method == 'POST' else 'gcse'
+    selected_subject = request.form.get('subject', 'physics') if request.method == 'POST' else 'physics'
+    selected_topic = request.form.get('topic', 'forces') if request.method == 'POST' else 'forces'
+    selected_mode = request.form.get('mode', 'revision') if request.method == 'POST' else 'revision'
+    selected_diff = request.form.get('difficulty', 'foundational') if request.method == 'POST' else 'foundational'
+
+    if request.method == 'POST':
+        if session['anon_count'] >= ANON_DAILY_LIMIT:
+            limit_hit = True
+        else:
+            try:
+                generator = TOPICS[selected_level][selected_subject][selected_topic]['func']
+                problem = generator(selected_diff, selected_mode)
+                session['anon_count'] += 1
+                session.modified = True
+            except KeyError:
+                error = "Invalid combination. Please try again."
+
+    return render_template(
+        'index.html',
+        problem=problem,
+        error=error,
+        limit_hit=limit_hit,
+        selected_level=selected_level,
+        selected_subject=selected_subject,
+        selected_topic=selected_topic,
+        selected_mode=selected_mode,
+        selected_diff=selected_diff
+    )
+
+
+
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=5001)

@@ -1,0 +1,39 @@
+from generators.gcse.maths import (
+    gcsemathsalgebra,
+    gcsemathssurds,
+    gcsemathsdecimals,
+    gcsemathsbidmas,
+    gcsemathsfdp,
+    gcsemathsmultiplesfactors,
+)
+
+from generators.gcse.physics import (
+    gcsephysicsforces,
+    edexcelcombinedphysicsradioactivity,
+)
+
+from generators.alevel.physics import (
+    alevelphysicsmagnetism,
+)
+
+TOPICS = {
+    "gcse": {
+        "maths": {
+            "algebra": {"name": "Algebra", "func": gcse_maths_algebra},
+            "surds": {"name": "Surds", "func": gcse_maths_surds},
+            "decimals": {"name": "Decimals", "func": gcse_maths_decimals},
+            "bidmas": {"name": "Order of Operations & Negatives", "func": gcse_maths_bidmas},
+            "fdp": {"name": "Fractions, Decimals and Percentages", "func": gcse_maths_fdp},
+            "multiples_factors": {"name": "Multiples and Factors", "func": gcse_maths_multiples_factors},
+        },
+        "physics": {
+            "forces": {"name": "Forces", "func": gcse_physics_forces},
+            "radioactivity": {"name": "Radioactivity", "func": edexcel_combined_physics_radioactivity},
+        },
+    },
+    "alevel": {
+        "physics": {
+            "magnetism": {"name": "Magnetic Fields", "func": alevel_physics_magnetism},
+        },
+    },
+}

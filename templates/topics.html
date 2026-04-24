@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Topics – Problem Bank{% endblock %}
+
+{% block content %}
+<h1>All Topics</h1>
+<p style="color: var(--text-muted); margin-bottom: 28px;">
+    Click any topic to read an explanation, see key formulae, and practise problems.
+</p>
+
+<h2>GCSE Physics</h2>
+<ul>
+    <li><a href="/topics/gcse/physics/forces">Forces</a> — Newton's Laws, F = ma, resultant forces</li>
+</ul>
+
+<h2>GCSE Maths</h2>
+<ul>
+    <li><a href="/topics/gcse/maths/algebra">Algebra</a> — Linear and quadratic equations</li>
+</ul>
+
+<h2>IB MYP Chemistry</h2>
+<ul>
+    <li>
+        <a href="/topics/myp/chemistry/thermochemistry">Thermochemistry</a>
+        — exothermic/endothermic reactions, q = mcΔT, bond energies, energy profiles
+    </li>
+</ul>
+
+<h2>GCSE Computer Science</h2>
+<ul>
+    <li>
+        <a href="/topics/gcse/cs/binary">Binary & Data Representation</a>
+        — denary to binary, binary to denary, binary addition, overflow
+    </li>
+</ul>
+
+{% endblock %}

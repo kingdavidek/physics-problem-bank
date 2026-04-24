@@ -1,0 +1,519 @@
+import random
+import math
+from generators.shared.utils import make_problem
+
+
+# ================================================================
+# GCSE PHYSICS — FORCES — VARIANT HELPERS
+# ================================================================
+
+# --- FOUNDATIONAL (10 variants) ---
+
+def _forces_found_fma():
+    m = random.randint(2, 20)
+    a = random.randint(1, 10)
+    f = m * a
+    q = rf"A \( {m} \, \text{{kg}} \) object accelerates at \( {a} \, \text{{m/s}}^2 \). Calculate the resultant force."
+    s = rf"\( F = ma = {m} \times {a} = \boxed{{{f}}} \, \text{{N}} \)"
+    hint = r"\[ F = ma \]"
+    return q, s, hint, 2
+
+def _forces_found_weight():
+    m = random.randint(1, 25)
+    w = round(m * 9.8, 1)
+    q = rf"Calculate the weight of a \( {m} \, \text{{kg}} \) object. (Use \( g = 9.8 \, \text{{m/s}}^2 \))"
+    s = rf"\( W = mg = {m} \times 9.8 = \boxed{{{w}}} \, \text{{N}} \)"
+    hint = r"\[ W = mg \]"
+    return q, s, hint, 2
+
+def _forces_found_classify_force():
+    examples = [
+        ("friction between a tyre and a road", "contact", "Friction requires surfaces to be touching."),
+        ("the tension in a rope", "contact", "Tension is transmitted through physical contact along the rope."),
+        ("air resistance on a cyclist", "contact", "Air resistance requires contact with air particles."),
+        ("gravity pulling a satellite toward Earth", "non-contact", "Gravity acts across empty space without touching."),
+        ("the magnetic force attracting a fridge magnet", "non-contact", "Magnetic forces act at a distance."),
+        ("the electrostatic repulsion between two positive charges", "non-contact", "Electrostatic forces act at a distance."),
+    ]
+    ex, answer, exp = random.choice(examples)
+    q = rf"Is the following a <strong>contact</strong> or <strong>non-contact</strong> force? Justify your answer.<br><br><em>{ex}</em>"
+    s = rf"<strong>{answer.title()} force.</strong> {exp}"
+    hint = r"Contact forces require physical touch (friction, tension, normal reaction). Non-contact forces act at a distance (gravity, magnetism, electrostatic)."
+    return q, s, hint, 2
+
+def _forces_found_newtons_first():
+    scenarios = [
+        ("a hockey puck slides across frictionless ice at constant speed",
+         "The resultant force on the puck is <strong>zero</strong>. Newton's First Law states that an object continues at constant velocity if no resultant force acts on it."),
+        ("a book sits motionless on a shelf",
+         "The resultant force on the book is <strong>zero</strong>. The book is in equilibrium — weight downward is balanced by the normal reaction force upward."),
+        ("a parachutist falls at constant terminal velocity",
+         "The resultant force is <strong>zero</strong>. Weight downward equals air resistance upward, so there is no net force and no acceleration."),
+    ]
+    scenario, answer = random.choice(scenarios)
+    q = rf"State the resultant force on the following object and explain your reasoning:<br><br><em>{scenario}</em>"
+    s = answer
+    hint = r"Newton's First Law: if an object moves at <em>constant velocity</em> (or is stationary), the resultant force must be <strong>zero</strong>."
+    return q, s, hint, 2
+
+def _forces_found_theory_newtons2():
+    q = "State Newton's Second Law of Motion and write the equation it gives rise to."
+    s = r"""Newton's Second Law states that the resultant force acting on an object is directly proportional
+    to its acceleration and acts in the same direction as the acceleration.<br><br>
+    \[ F = ma \]
+    where \( F \) = resultant force (N), \( m \) = mass (kg), \( a \) = acceleration (m/s²)."""
+    hint = "Newton's Second Law connects force, mass, and acceleration. The greater the force or the smaller the mass, the greater the acceleration."
+    return q, s, hint, 2
+
+def _forces_found_mass_weight_distinguish():
+    q = "Explain the difference between <strong>mass</strong> and <strong>weight</strong>."
+    s = r"""<strong>Mass</strong> is the amount of matter in an object. It is measured in kilograms (kg)
+    and does not change with location.<br><br>
+    <strong>Weight</strong> is the gravitational force acting on that mass. It is measured in Newtons (N)
+    and varies with gravitational field strength: \( W = mg \).<br><br>
+    For example, an astronaut has the same mass on the Moon as on Earth,
+    but their weight is much less because \( g \) is smaller on the Moon."""
+    hint = "Mass is a fixed property of matter (kg). Weight is a force that depends on gravity (N)."
+    return q, s, hint, 2
+
+def _forces_found_balanced():
+    f = random.randint(5, 50)
+    q = rf"""An object moves at <strong>constant velocity</strong>. A driving force of \( {f} \, \text{{N}} \)
+    acts on it. What is the magnitude of the resistive force? Explain your answer."""
+    s = rf"""The resistive force = \( \boxed{{{f}}} \, \text{{N}} \).<br><br>
+    At constant velocity, the resultant force is zero (Newton's First Law).
+    Therefore the resistive force must exactly balance the driving force."""
+    hint = "Constant velocity → resultant force = 0 → driving force = resistive force."
+    return q, s, hint, 2
+
+def _forces_found_find_accel_simple():
+    f = random.randint(10, 60)
+    m = random.randint(2, 15)
+    a = round(f / m, 2)
+    q = rf"A resultant force of \( {f} \, \text{{N}} \) acts on a \( {m} \, \text{{kg}} \) trolley. Calculate its acceleration."
+    s = rf"\( a = \frac{{F}}{{m}} = \frac{{{f}}}{{{m}}} = \boxed{{{a}}} \, \text{{m/s}}^2 \)"
+    hint = r"\[ a = \frac{F}{m} \]"
+    return q, s, hint, 2
+
+def _forces_found_find_mass_simple():
+    f = random.randint(10, 100)
+    a = random.randint(1, 5)
+    m = round(f / a, 2)
+    q = rf"A force of \( {f} \, \text{{N}} \) causes an acceleration of \( {a} \, \text{{m/s}}^2 \). Calculate the mass of the object."
+    s = rf"\( m = \frac{{F}}{{a}} = \frac{{{f}}}{{{a}}} = \boxed{{{m}}} \, \text{{kg}} \)"
+    hint = r"\[ m = \frac{F}{a} \]"
+    return q, s, hint, 2
+
+def _forces_found_gravity_moon():
+    m = random.randint(10, 100)
+    g_moon = 1.6
+    w_moon = round(m * g_moon, 1)
+    w_earth = round(m * 9.8, 1)
+    q = rf"""An astronaut has a mass of \( {m} \, \text{{kg}} \). The gravitational field strength on the Moon is \( 1.6 \, \text{{N/kg}} \).<br>
+    (a) Calculate their weight on the Moon.<br>
+    (b) State their mass on the Moon."""
+    s = rf"""(a) \( W = mg = {m} \times 1.6 = \boxed{{{w_moon}}} \, \text{{N}} \)<br><br>
+    (b) Mass = \( \boxed{{{m}}} \, \text{{kg}} \) — mass does not change with location, only weight does."""
+    hint = "Weight changes with gravitational field strength. Mass never changes."
+    return q, s, hint, 3
+
+
+# --- INTERMEDIATE (10 variants) ---
+
+def _forces_inter_rearrange_mass():
+    f = random.randint(20, 300)
+    a = round(random.uniform(1.5, 12.0), 1)
+    m = round(f / a, 2)
+    q = rf"A resultant force of \( {f} \, \text{{N}} \) produces an acceleration of \( {a} \, \text{{m/s}}^2 \). Calculate the mass."
+    s = rf"\( m = \frac{{F}}{{a}} = \frac{{{f}}}{{{a}}} = \boxed{{{m}}} \, \text{{kg}} \)"
+    hint = r"\[ m = \frac{F}{a} \]"
+    return q, s, hint, 3
+
+def _forces_inter_rearrange_accel():
+    f = random.randint(20, 300)
+    m = random.randint(5, 60)
+    a = round(f / m, 2)
+    q = rf"A \( {m} \, \text{{kg}} \) object experiences a resultant force of \( {f} \, \text{{N}} \). Calculate its acceleration."
+    s = rf"\( a = \frac{{F}}{{m}} = \frac{{{f}}}{{{m}}} = \boxed{{{a}}} \, \text{{m/s}}^2 \)"
+    hint = r"\[ a = \frac{F}{m} \]"
+    return q, s, hint, 3
+
+def _forces_inter_resultant_opposite():
+    f1 = random.randint(20, 100)
+    f2 = random.randint(10, f1 - 5)
+    net = f1 - f2
+    q = rf"""Two forces act on an object in opposite directions: \( {f1} \, \text{{N}} \) to the right
+    and \( {f2} \, \text{{N}} \) to the left.<br>
+    (a) Calculate the resultant force.<br>
+    (b) State the direction of any resulting acceleration."""
+    s = rf"""(a) \( F_{{net}} = {f1} - {f2} = \boxed{{{net}}} \, \text{{N}} \)<br><br>
+    (b) The acceleration is to the <strong>right</strong>, in the direction of the larger force."""
+    hint = "Resultant = larger force − smaller force. Direction follows the larger force."
+    return q, s, hint, 3
+
+def _forces_inter_friction_net():
+    applied = random.randint(30, 150)
+    friction = random.randint(5, applied - 5)
+    m = random.randint(5, 40)
+    net = applied - friction
+    a = round(net / m, 2)
+    q = rf"""A \( {m} \, \text{{kg}} \) box is pushed with \( {applied} \, \text{{N}} \).
+    Friction acts with \( {friction} \, \text{{N}} \). Calculate the acceleration of the box."""
+    s = rf"""\( F_{{net}} = {applied} - {friction} = {net} \, \text{{N}} \)<br>
+    \( a = \frac{{{net}}}{{{m}}} = \boxed{{{a}}} \, \text{{m/s}}^2 \)"""
+    hint = r"""
+        Step 1: \( F_{\text{net}} = F_{\text{applied}} - F_{\text{friction}} \)<br>
+        Step 2: \( a = \frac{F_{\text{net}}}{m} \)
+    """
+    return q, s, hint, 3
+
+def _forces_inter_vt_graph_accel():
+    u = random.randint(0, 10)
+    v = random.randint(u + 5, 30)
+    t = random.randint(2, 10)
+    a = round((v - u) / t, 2)
+    m = random.randint(2, 20)
+    f = round(m * a, 1)
+    # Scale for SVG: map velocity 0-40 to y 130-20, time 0-15 to x 40-220
+    def vy(vel): return int(130 - (vel / 40) * 110)
+    def tx(time): return int(40 + (time / 15) * 180)
+    svg = rf"""
+    <svg width="260" height="180" style="margin:12px 0;border:1px solid #ddd;border-radius:6px;background:#fafafa;">
+        <line x1="40" y1="20" x2="40" y2="150" stroke="#333" stroke-width="2"/>
+        <line x1="40" y1="150" x2="240" y2="150" stroke="#333" stroke-width="2"/>
+        <text x="140" y="172" text-anchor="middle" font-size="11" fill="#555">Time (s)</text>
+        <text x="12" y="88" text-anchor="middle" font-size="11" fill="#555" transform="rotate(-90,12,88)">v (m/s)</text>
+        <line x1="{tx(0)}" y1="{vy(u)}" x2="{tx(t)}" y2="{vy(v)}" stroke="#01696f" stroke-width="2.5"/>
+        <text x="35" y="{vy(u)+4}" text-anchor="end" font-size="11" fill="#333">{u}</text>
+        <text x="35" y="{vy(v)+4}" text-anchor="end" font-size="11" fill="#333">{v}</text>
+        <text x="{tx(t)}" y="163" text-anchor="middle" font-size="11" fill="#333">{t}</text>
+        <text x="40" y="163" text-anchor="middle" font-size="11" fill="#333">0</text>
+    </svg>"""
+    q = rf"""The velocity-time graph below shows the motion of a \( {m} \, \text{{kg}} \) object.<br>
+    {svg}<br>
+    (a) Calculate the acceleration of the object.<br>
+    (b) Calculate the resultant force acting on it."""
+    s = rf"""(a) \( a = \frac{{v - u}}{{t}} = \frac{{{v} - {u}}}{{{t}}} = \boxed{{{a}}} \, \text{{m/s}}^2 \)<br><br>
+    (b) \( F = ma = {m} \times {a} = \boxed{{{f}}} \, \text{{N}} \)"""
+    hint = r"""
+        Read \( u \), \( v \), and \( t \) from the graph, then:<br>
+        \[ a = \frac{v - u}{t} \qquad F = ma \]
+    """
+    return q, s, hint, 4
+
+def _forces_inter_stopping_distance():
+    m = random.randint(800, 2000)
+    v = random.randint(10, 30)
+    f = random.randint(2000, 8000)
+    a = round(-f / m, 2)
+    # v² = u² + 2as → s = -u²/(2a)
+    s_val = round(v**2 / (2 * f / m), 2)
+    q = rf"""A car of mass \( {m} \, \text{{kg}} \) travelling at \( {v} \, \text{{m/s}} \) brakes with a force of \( {f} \, \text{{N}} \).<br>
+    (a) Calculate the deceleration.<br>
+    (b) Calculate the stopping distance."""
+    s = rf"""(a) \( a = \frac{{F}}{{m}} = \frac{{{f}}}{{{m}}} = {abs(a)} \, \text{{m/s}}^2 \) (deceleration)<br><br>
+    (b) Using \( v^2 = u^2 + 2as \), with \( v = 0 \):<br>
+    \( s = \frac{{u^2}}{{2a}} = \frac{{{v}^2}}{{2 \times {abs(a)}}} = \boxed{{{s_val}}} \, \text{{m}} \)"""
+    hint = r"""
+        Deceleration: \( a = \frac{F}{m} \)<br>
+        Stopping distance: \( v^2 = u^2 + 2as \), set \( v = 0 \) and solve for \( s \).
+    """
+    return q, s, hint, 4
+
+def _forces_inter_theory_momentum():
+    q = "Explain, using Newton's Second Law, why a larger force produces a greater acceleration on the same object."
+    s = r"""Newton's Second Law states \( F = ma \), which can be rearranged to \( a = \frac{F}{m} \).<br><br>
+    For a fixed mass \( m \), acceleration is directly proportional to the resultant force.
+    Doubling the force doubles the acceleration. This is because the force determines the rate
+    of change of velocity — a larger force changes the object's velocity more quickly."""
+    hint = r"Rearrange \( F = ma \) to \( a = \frac{F}{m} \) and describe the proportional relationship."
+    return q, s, hint, 3
+
+def _forces_inter_elevator():
+    m = random.randint(40, 100)
+    a = round(random.uniform(1.0, 4.0), 1)
+    g = 9.8
+    w = round(m * g, 1)
+    direction = random.choice(['up', 'down'])
+    if direction == 'up':
+        n = round(w + m * a, 1)
+        q = rf"""A person of mass \( {m} \, \text{{kg}} \) stands in a lift accelerating <strong>upward</strong>
+        at \( {a} \, \text{{m/s}}^2 \). Calculate the normal reaction force from the lift floor on the person."""
+        s = rf"""Weight \( W = mg = {m} \times 9.8 = {w} \, \text{{N}} \) downward<br><br>
+        Net upward force required: \( F_{{net}} = ma = {m} \times {a} = {round(m*a,1)} \, \text{{N}} \)<br><br>
+        \( N - W = ma \Rightarrow N = W + ma = {w} + {round(m*a,1)} = \boxed{{{n}}} \, \text{{N}} \)"""
+    else:
+        n = round(w - m * a, 1)
+        q = rf"""A person of mass \( {m} \, \text{{kg}} \) stands in a lift accelerating <strong>downward</strong>
+        at \( {a} \, \text{{m/s}}^2 \). Calculate the normal reaction force from the lift floor on the person."""
+        s = rf"""Weight \( W = {w} \, \text{{N}} \) downward<br><br>
+        \( W - N = ma \Rightarrow N = W - ma = {w} - {round(m*a,1)} = \boxed{{{n}}} \, \text{{N}} \)"""
+    hint = r"""
+        Draw a free body diagram. Apply \( F_{\text{net}} = ma \) in the vertical direction.<br>
+        Upward acceleration: \( N - W = ma \)<br>
+        Downward acceleration: \( W - N = ma \)
+    """
+    return q, s, hint, 4
+
+def _forces_inter_three_forces():
+    f1 = random.randint(20, 80)
+    f2 = random.randint(20, 80)
+    f3 = random.randint(10, 40)
+    # f1 and f2 right, f3 left
+    net = f1 + f2 - f3
+    m = random.randint(5, 30)
+    a = round(net / m, 2)
+    q = rf"""Three horizontal forces act on a \( {m} \, \text{{kg}} \) object:
+    \( {f1} \, \text{{N}} \) to the right, \( {f2} \, \text{{N}} \) to the right, and \( {f3} \, \text{{N}} \) to the left.<br>
+    (a) Calculate the resultant force.<br>
+    (b) Calculate the acceleration."""
+    s = rf"""(a) \( F_{{net}} = {f1} + {f2} - {f3} = \boxed{{{net}}} \, \text{{N}} \) to the right<br><br>
+    (b) \( a = \frac{{{net}}}{{{m}}} = \boxed{{{a}}} \, \text{{m/s}}^2 \)"""
+    hint = "Add forces in the same direction, subtract forces in the opposite direction."
+    return q, s, hint, 4
+
+def _forces_inter_pressure():
+    f = random.randint(100, 1000)
+    a_val = round(random.uniform(0.01, 0.5), 2)
+    p = round(f / a_val)
+    q = rf"""A force of \( {f} \, \text{{N}} \) acts on a surface of area \( {a_val} \, \text{{m}}^2 \).
+    Calculate the pressure exerted on the surface."""
+    s = rf"""\( P = \frac{{F}}{{A}} = \frac{{{f}}}{{{a_val}}} = \boxed{{{p}}} \, \text{{Pa}} \)"""
+    hint = r"\[ P = \frac{F}{A} \]"
+    return q, s, hint, 3
+
+
+# --- DIFFICULT (10 variants) ---
+
+def _forces_diff_friction_full():
+    applied = random.randint(50, 200)
+    friction = random.randint(10, applied - 10)
+    m = random.randint(10, 60)
+    net_f = applied - friction
+    a = round(net_f / m, 2)
+    q = rf"""A \( {m} \, \text{{kg}} \) crate is pushed with \( {applied} \, \text{{N}} \).
+    Friction = \( {friction} \, \text{{N}} \). Calculate the acceleration."""
+    s = rf"""\( F_{{net}} = {applied} - {friction} = {net_f} \, \text{{N}} \)<br>
+    \( a = \frac{{{net_f}}}{{{m}}} = \boxed{{{a}}} \, \text{{m/s}}^2 \)"""
+    hint = r"\( F_{\text{net}} = F_{\text{applied}} - F_{\text{friction}} \), then \( a = F/m \)"
+    return q, s, hint, 4
+
+def _forces_diff_braking():
+    m = random.randint(500, 2000)
+    v_i = random.randint(15, 40)
+    t = random.randint(3, 12)
+    a = round(-v_i / t, 2)
+    f = round(m * abs(a), 1)
+    q = rf"""A \( {m} \, \text{{kg}} \) car travelling at \( {v_i} \, \text{{m/s}} \) brakes to rest in \( {t} \, \text{{s}} \).
+    Calculate the braking force."""
+    s = rf"""\( a = \frac{{0 - {v_i}}}{{{t}}} = {a} \, \text{{m/s}}^2 \)<br>
+    \( F = ma = {m} \times {abs(a)} = \boxed{{{f}}} \, \text{{N}} \)"""
+    hint = r"First find \( a = \frac{v-u}{t} \), then \( F = ma \)."
+    return q, s, hint, 4
+
+def _forces_diff_terminal():
+    m = random.randint(2, 20)
+    w = round(m * 9.8, 1)
+    q = rf"""A skydiver of mass \( {m} \, \text{{kg}} \) reaches terminal velocity.<br>
+    (a) State the resultant force at terminal velocity.<br>
+    (b) Calculate the drag force at terminal velocity.<br>
+    (c) Explain what happens to the drag force just <em>before</em> terminal velocity is reached."""
+    s = rf"""(a) Resultant force = <strong>0 N</strong><br><br>
+    (b) Drag = Weight = \( {m} \times 9.8 = \boxed{{{w}}} \, \text{{N}} \)<br><br>
+    (c) Just before terminal velocity, the skydiver is still accelerating,
+    so drag is slightly less than weight. As speed increases, drag increases until
+    it equals weight — at that point terminal velocity is reached."""
+    hint = "At terminal velocity: resultant force = 0, so drag = weight exactly."
+    return q, s, hint, 5
+
+def _forces_diff_multistep_extended():
+    m = random.randint(10, 80)
+    mu = round(random.uniform(0.2, 0.6), 1)
+    applied = random.randint(60, 250)
+    weight = round(m * 9.8, 1)
+    friction = round(mu * weight, 1)
+    net_f = round(applied - friction, 1)
+    a = round(net_f / m, 2)
+    q = rf"""A \( {m} \, \text{{kg}} \) box is pushed with \( {applied} \, \text{{N}} \).
+    The coefficient of friction \( \mu = {mu} \). (Use \( g = 9.8 \, \text{{m/s}}^2 \))<br>
+    (a) Calculate the weight.<br>
+    (b) Calculate friction (\( F_f = \mu W \)).<br>
+    (c) Calculate the resultant force.<br>
+    (d) Calculate the acceleration."""
+    s = rf"""(a) \( W = {m} \times 9.8 = {weight} \, \text{{N}} \)<br>
+    (b) \( F_f = {mu} \times {weight} = {friction} \, \text{{N}} \)<br>
+    (c) \( F_{{net}} = {applied} - {friction} = {net_f} \, \text{{N}} \)<br>
+    (d) \( a = \frac{{{net_f}}}{{{m}}} = \boxed{{{a}}} \, \text{{m/s}}^2 \)"""
+    hint = r"W → friction → net force → acceleration. Four steps in order."
+    return q, s, hint, 6
+
+def _forces_diff_rocket():
+    thrust = random.randint(5000, 20000)
+    m = random.randint(200, 1000)
+    w = round(m * 9.8, 1)
+    net = round(thrust - w, 1)
+    a = round(net / m, 2)
+    q = rf"""A rocket of mass \( {m} \, \text{{kg}} \) fires its engine producing a thrust of \( {thrust} \, \text{{N}} \).<br>
+    (a) Calculate the weight of the rocket.<br>
+    (b) Calculate the resultant upward force.<br>
+    (c) Calculate the acceleration of the rocket."""
+    s = rf"""(a) \( W = {m} \times 9.8 = {w} \, \text{{N}} \)<br>
+    (b) \( F_{{net}} = {thrust} - {w} = {net} \, \text{{N}} \) upward<br>
+    (c) \( a = \frac{{{net}}}{{{m}}} = \boxed{{{a}}} \, \text{{m/s}}^2 \)"""
+    hint = "Net force = thrust − weight. Then a = F/m."
+    return q, s, hint, 5
+
+def _forces_diff_vt_area():
+    u = random.randint(5, 15)
+    v = random.randint(u + 5, 35)
+    t = random.randint(4, 12)
+    a = round((v - u) / t, 2)
+    m = random.randint(5, 30)
+    f = round(m * a, 1)
+    dist = round(0.5 * (u + v) * t, 1)
+    def vy(vel): return int(130 - (vel / 40) * 110)
+    def tx(time): return int(40 + (time / 15) * 180)
+    svg = rf"""
+    <svg width="260" height="180" style="margin:12px 0;border:1px solid #ddd;border-radius:6px;background:#fafafa;">
+        <line x1="40" y1="20" x2="40" y2="150" stroke="#333" stroke-width="2"/>
+        <line x1="40" y1="150" x2="240" y2="150" stroke="#333" stroke-width="2"/>
+        <text x="140" y="172" text-anchor="middle" font-size="11" fill="#555">Time (s)</text>
+        <text x="12" y="88" font-size="11" fill="#555" transform="rotate(-90,12,88)" text-anchor="middle">v (m/s)</text>
+        <polygon points="{tx(0)},{vy(u)} {tx(t)},{vy(v)} {tx(t)},{vy(0)} {tx(0)},{vy(0)}"
+                 fill="#01696f" fill-opacity="0.12" stroke="none"/>
+        <line x1="{tx(0)}" y1="{vy(u)}" x2="{tx(t)}" y2="{vy(v)}" stroke="#01696f" stroke-width="2.5"/>
+        <text x="35" y="{vy(u)+4}" text-anchor="end" font-size="11" fill="#333">{u}</text>
+        <text x="35" y="{vy(v)+4}" text-anchor="end" font-size="11" fill="#333">{v}</text>
+        <text x="{tx(t)}" y="163" text-anchor="middle" font-size="11" fill="#333">{t}</text>
+        <text x="40" y="163" text-anchor="middle" font-size="11" fill="#333">0</text>
+    </svg>"""
+    q = rf"""The velocity-time graph shows the motion of a \( {m} \, \text{{kg}} \) object (shaded area = distance).<br>
+    {svg}<br>
+    (a) Calculate the acceleration.<br>
+    (b) Calculate the resultant force.<br>
+    (c) Calculate the distance travelled."""
+    s = rf"""(a) \( a = \frac{{{v}-{u}}}{{{t}}} = \boxed{{{a}}} \, \text{{m/s}}^2 \)<br>
+    (b) \( F = {m} \times {a} = \boxed{{{f}}} \, \text{{N}} \)<br>
+    (c) \( s = \frac{{(u+v)}}{{2}} \times t = \frac{{{u}+{v}}}{{2}} \times {t} = \boxed{{{dist}}} \, \text{{m}} \)"""
+    hint = r"Gradient of v-t graph = acceleration. Area under v-t graph = distance."
+    return q, s, hint, 6
+
+def _forces_diff_elevator_full():
+    m = random.randint(50, 120)
+    a = round(random.uniform(1.0, 4.0), 1)
+    w = round(m * 9.8, 1)
+    direction = random.choice(['up', 'down'])
+    if direction == 'up':
+        n = round(w + m * a, 1)
+        q = rf"""A \( {m} \, \text{{kg}} \) person stands in a lift accelerating upward at \( {a} \, \text{{m/s}}^2 \).<br>
+        (a) Draw a free body diagram showing all forces (describe in words).<br>
+        (b) Calculate the normal reaction force from the floor."""
+        s = rf"""(a) Two forces act: Weight \( {w} \, \text{{N}} \) downward, Normal reaction \( N \) upward.<br><br>
+        (b) Upward resultant = \( ma \):<br>
+        \( N - {w} = {m} \times {a} \)<br>
+        \( N = {w} + {round(m*a,1)} = \boxed{{{n}}} \, \text{{N}} \)"""
+    else:
+        n = round(w - m * a, 1)
+        q = rf"""A \( {m} \, \text{{kg}} \) person stands in a lift decelerating at \( {a} \, \text{{m/s}}^2 \) while moving upward.<br>
+        (a) State the direction of the resultant force.<br>
+        (b) Calculate the normal reaction force."""
+        s = rf"""(a) The resultant force acts <strong>downward</strong> (opposing upward motion to decelerate).<br><br>
+        (b) \( W - N = ma \)<br>
+        \( N = {w} - {round(m*a,1)} = \boxed{{{n}}} \, \text{{N}} \)"""
+    hint = r"Apply \( F_{\text{net}} = ma \) vertically. Identify which force is larger."
+    return q, s, hint, 5
+
+def _forces_diff_two_objects():
+    m1 = random.randint(2, 10)
+    m2 = random.randint(2, 10)
+    f = random.randint(20, 100)
+    total_m = m1 + m2
+    a = round(f / total_m, 2)
+    f_contact = round(m2 * a, 1)
+    q = rf"""Two boxes are pushed along a frictionless surface by a force of \( {f} \, \text{{N}} \).
+    Box A has mass \( {m1} \, \text{{kg}} \) and Box B (in front) has mass \( {m2} \, \text{{kg}} \).<br>
+    (a) Calculate the acceleration of the system.<br>
+    (b) Calculate the contact force between the boxes."""
+    s = rf"""(a) \( a = \frac{{F}}{{m_1 + m_2}} = \frac{{{f}}}{{{total_m}}} = \boxed{{{a}}} \, \text{{m/s}}^2 \)<br><br>
+    (b) Contact force accelerates Box B only:<br>
+    \( F_{{contact}} = m_2 \times a = {m2} \times {a} = \boxed{{{f_contact}}} \, \text{{N}} \)"""
+    hint = "For the whole system: F = (m₁+m₂)a. For the contact force, consider only the front box."
+    return q, s, hint, 5
+
+def _forces_diff_impulse():
+    m = random.randint(1, 20)
+    u = random.randint(5, 25)
+    v = random.randint(u + 5, 40)
+    t = round(random.uniform(0.1, 2.0), 1)
+    delta_p = round(m * (v - u), 1)
+    f = round(delta_p / t, 1)
+    q = rf"""A \( {m} \, \text{{kg}} \) object increases velocity from \( {u} \, \text{{m/s}} \) to \( {v} \, \text{{m/s}} \)
+    in \( {t} \, \text{{s}} \).<br>
+    (a) Calculate the change in momentum.<br>
+    (b) Calculate the average resultant force."""
+    s = rf"""(a) \( \Delta p = m \Delta v = {m} \times ({v} - {u}) = \boxed{{{delta_p}}} \, \text{{kg m/s}} \)<br><br>
+    (b) \( F = \frac{{\Delta p}}{{\Delta t}} = \frac{{{delta_p}}}{{{t}}} = \boxed{{{f}}} \, \text{{N}} \)"""
+    hint = r"\[ \Delta p = m\Delta v \qquad F = \frac{\Delta p}{\Delta t} \]"
+    return q, s, hint, 5
+
+def _forces_diff_theory_newtons3():
+    q = """State Newton's Third Law and give a specific, well-explained example involving forces and motion."""
+    s = r"""<strong>Newton's Third Law:</strong> When object A exerts a force on object B,
+    object B exerts an equal and opposite force on object A. These forces act on <em>different</em> objects.<br><br>
+    <strong>Example — rocket propulsion:</strong> The rocket engine pushes hot gas backward (action force).
+    By Newton's Third Law, the gas pushes the rocket forward with an equal force (reaction force).
+    The rocket accelerates forward because this reaction force is unbalanced — the gas disperses into space.<br><br>
+    <em>Common misconception:</em> Newton's Third Law pairs do NOT cancel each other out because
+    they act on different objects. Forces only cancel when they act on the <em>same</em> object."""
+    hint = "Newton's Third Law pairs: equal in magnitude, opposite in direction, acting on different objects."
+    return q, s, hint, 4
+
+
+# ================================================================
+# GCSE PHYSICS — FORCES — MAIN GENERATOR
+# ================================================================
+def gcse_physics_forces(difficulty, mode):
+
+    if difficulty == 'foundational':
+        variant = random.choice([
+            _forces_found_fma,
+            _forces_found_weight,
+            _forces_found_classify_force,
+            _forces_found_newtons_first,
+            _forces_found_theory_newtons2,
+            _forces_found_mass_weight_distinguish,
+            _forces_found_balanced,
+            _forces_found_find_accel_simple,
+            _forces_found_find_mass_simple,
+            _forces_found_gravity_moon,
+        ])
+    elif difficulty == 'intermediate':
+        variant = random.choice([
+            _forces_inter_rearrange_mass,
+            _forces_inter_rearrange_accel,
+            _forces_inter_resultant_opposite,
+            _forces_inter_friction_net,
+            _forces_inter_vt_graph_accel,
+            _forces_inter_stopping_distance,
+            _forces_inter_theory_momentum,
+            _forces_inter_elevator,
+            _forces_inter_three_forces,
+            _forces_inter_pressure,
+        ])
+    else:
+        variant = random.choice([
+            _forces_diff_friction_full,
+            _forces_diff_braking,
+            _forces_diff_terminal,
+            _forces_diff_multistep_extended,
+            _forces_diff_rocket,
+            _forces_diff_vt_area,
+            _forces_diff_elevator_full,
+            _forces_diff_two_objects,
+            _forces_diff_impulse,
+            _forces_diff_theory_newtons3,
+        ])
+
+    q, s, hint, marks = variant()
+    return make_problem(q, s, hint, difficulty, marks, 'gcse', 'physics', 'forces')
+
