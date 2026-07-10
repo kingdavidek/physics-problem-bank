@@ -1,0 +1,590 @@
+{% extends "base.html" %}
+{% block title %}Trigonometry – GCSE Mathematics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Trigonometry</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">GCSE Mathematics – Higher Tier · All Exam Boards</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+  <!-- Quick Test button -->
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='trigonometry') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <!-- 1. PYTHAGORAS' THEOREM (REVIEW) -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      Pythagoras' Theorem (Review)
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>Before SOH CAH TOA, you need <strong>Pythagoras’ theorem</strong>. It only works in <strong>right-angled triangles</strong>.</p>
+      <p><em>Example:</em> A right-angled triangle has shorter sides <strong>3 cm</strong> and <strong>4 cm</strong>. Find the hypotenuse.</p>
+      <ul style="line-height:1.9;">
+        <li>Square and add: 3² + 4² = 9 + 16 = <strong>25</strong></li>
+        <li>Square root: √25 = <strong>5 cm</strong></li>
+      </ul>
+      <p>In general, if the shorter sides are <strong>a</strong> and <strong>b</strong>, and the hypotenuse is <strong>c</strong>:</p>
+      <p style="text-align:center; font-size:1.1em;">\(a^2 + b^2 = c^2\)</p>
+      <p><strong>c</strong> is the <strong>hypotenuse</strong> — the longest side, opposite the right angle.</p>
+      <p>You can rearrange this to find any side:</p>
+      <ul style="line-height:1.9;">
+        <li>To find the hypotenuse: \(c = \sqrt{a^2 + b^2}\)</li>
+        <li>To find a shorter side: \(a = \sqrt{c^2 - b^2}\)</li>
+      </ul>
+      <p><strong>Common mistake:</strong> When finding a shorter side, <strong>subtract</strong> squares — do not add. The hypotenuse must always be the longest side.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">A right-angled triangle has legs <strong>3 cm</strong> and <strong>4 cm</strong>. What is the hypotenuse?</p>
+          <button class="btn mcq-btn" data-letter="A">5 cm</button>
+          <button class="btn mcq-btn" data-letter="B">7 cm</button>
+          <button class="btn mcq-btn" data-letter="C">25 cm</button>
+          <button class="btn mcq-btn" data-letter="D">12 cm</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 2. THE THREE TRIGONOMETRIC RATIOS -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      The Three Trigonometric Ratios (SOH CAH TOA)
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>In a right-angled triangle, we name the sides relative to an angle <strong>θ</strong>:</p>
+      <ul style="line-height:1.9;">
+        <li><strong>Hypotenuse (H):</strong> longest side, opposite the right angle</li>
+        <li><strong>Opposite (O):</strong> side facing θ</li>
+        <li><strong>Adjacent (A):</strong> side next to θ (not the hypotenuse)</li>
+      </ul>
+      <p><em>Memory trick:</em> <strong>SOH CAH TOA</strong></p>
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="font-size:1.1em; text-align:center;"><strong>SOH CAH TOA</strong></p>
+        <p style="text-align:center;">\(\sin \theta = \dfrac{\text{Opposite}}{\text{Hypotenuse}}\)<br>
+        \(\cos \theta = \dfrac{\text{Adjacent}}{\text{Hypotenuse}}\)<br>
+        \(\tan \theta = \dfrac{\text{Opposite}}{\text{Adjacent}}\)</p>
+      </div>
+      <p><strong>How to use them:</strong></p>
+      <ol style="line-height:1.9;">
+        <li>Label H, O, A for your angle θ.</li>
+        <li>Decide which two sides you know or need.</li>
+        <li>Pick sin, cos, or tan to connect those sides.</li>
+        <li>Substitute and solve.</li>
+      </ol>
+        <div style="text-align:center; margin:16px 0;">
+        <img src="{{ url_for('static', filename='images/Sohcahtoa.png') }}" alt="SOH CAH TOA triangle diagram" style="max-width:300px; height:auto; border-radius:8px;">
+      </div>
+      <p><strong>Finding an angle?</strong> Use the inverse on your calculator: \(\sin^{-1}\), \(\cos^{-1}\), or \(\tan^{-1}\) (often SHIFT + sin/cos/tan).</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">You know the <strong>opposite</strong> and <strong>hypotenuse</strong>. Which ratio do you use?</p>
+          <button class="btn mcq-btn" data-letter="A">cos</button>
+          <button class="btn mcq-btn" data-letter="B">sin</button>
+          <button class="btn mcq-btn" data-letter="C">tan</button>
+          <button class="btn mcq-btn" data-letter="D">Pythagoras only</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 3. EXACT TRIGONOMETRIC VALUES -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Exact Trigonometric Values
+      <span style="font-size:0.65rem; margin-left:8px; background:#ede8f5; color:#6a30b0; padding:2px 6px; border-radius:10px;">Higher Tier — All Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>At Higher tier you need exact values for <strong>0°, 30°, 45°, 60°</strong> and <strong>90°</strong> — no calculator rounding.</p>
+      <p><em>Example:</em> For <strong>45°</strong>, think of a 1-1-√2 triangle: \(\sin 45° = \cos 45° = \dfrac{1}{\sqrt{2}}\), and \(\tan 45° = \mathbf{1}\).</p>
+      <p>These come from two special triangles:</p>
+      <ul style="line-height:1.9;">
+        <li><strong>45°:</strong> isosceles right-angled triangle (1, 1, √2)</li>
+        <li><strong>30° and 60°:</strong> half of an equilateral triangle (1, 2, √3)</li>
+      </ul>
+      <table style="width:100%; border-collapse:collapse; margin:16px 0; text-align:center;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--color-border);">
+            <th style="padding:8px;">θ</th><th style="padding:8px;">sin θ</th><th style="padding:8px;">cos θ</th><th style="padding:8px;">tan θ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>0°</td><td>0</td><td>1</td><td>0</td></tr>
+          <tr><td>30°</td><td>½</td><td>√3/2</td><td>1/√3</td></tr>
+          <tr><td>45°</td><td>1/√2</td><td>1/√2</td><td>1</td></tr>
+          <tr><td>60°</td><td>√3/2</td><td>½</td><td>√3</td></tr>
+          <tr><td>90°</td><td>1</td><td>0</td><td>—</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Memory aid:</strong> For sin, the values are \(\frac{\sqrt{0}}{2}, \frac{\sqrt{1}}{2}, \frac{\sqrt{2}}{2}, \frac{\sqrt{3}}{2}, \frac{\sqrt{4}}{2}\).  Cos is the reverse.  Tan = sin/cos.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">What is the exact value of <strong>tan 45°</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">0</button>
+          <button class="btn mcq-btn" data-letter="B">½</button>
+          <button class="btn mcq-btn" data-letter="C">√3</button>
+          <button class="btn mcq-btn" data-letter="D">1</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 4. FINDING MISSING SIDES -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Using Trigonometry to Find Missing Sides
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>If you know one side and one angle (besides the right angle), you can find another side using SOH CAH TOA.</p>
+      <p><strong>Example:</strong> A right-angled triangle has angle θ = 35° and hypotenuse = 8 cm.  Find the opposite side.</p>
+      <ol style="line-height:1.9;">
+        <li>Label: H = 8, O = ?, A = not needed.</li>
+        <li>Ratio connecting O and H: sin.</li>
+        <li>\(\sin 35° = \dfrac{O}{8}\) → \(O = 8 \times \sin 35°\)</li>
+        <li>Calculator: \(O = 8 \times 0.5736 = 4.59 \text{ cm}\).</li>
+      </ol>
+      <p>The process is identical for cos and tan — just rearrange the formula to isolate the unknown side.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">θ = 35°, hypotenuse = 8 cm. Which ratio finds the <strong>opposite</strong> side?</p>
+          <button class="btn mcq-btn" data-letter="A">sin</button>
+          <button class="btn mcq-btn" data-letter="B">cos</button>
+          <button class="btn mcq-btn" data-letter="C">tan</button>
+          <button class="btn mcq-btn" data-letter="D">sin⁻¹</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 5. FINDING MISSING ANGLES -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Using Trigonometry to Find Missing Angles
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>If you know two sides in a right-angled triangle, you can find an angle using the <strong>inverse</strong> buttons.</p>
+      <p><strong>Example:</strong> A right-angled triangle has O = 5 cm and A = 12 cm.  Find the angle θ.</p>
+      <ol style="line-height:1.9;">
+        <li>Label: O = 5, A = 12.</li>
+        <li>Ratio connecting O and A: tan.</li>
+        <li>\(\tan \theta = \dfrac{5}{12}\) → \(\theta = \tan^{-1}\left(\dfrac{5}{12}\right)\)</li>
+        <li>Calculator: \(\theta = 22.6°\).</li>
+      </ol>
+      <p><strong>Key reminder:</strong> The inverse buttons on your calculator are \(\sin^{-1}\), \(\cos^{-1}\) and \(\tan^{-1}\).  You normally access them by pressing SHIFT or 2nd.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Opposite = 5 cm, adjacent = 12 cm. How do you find θ?</p>
+          <button class="btn mcq-btn" data-letter="A">θ = sin(5/12)</button>
+          <button class="btn mcq-btn" data-letter="B">θ = 5/12</button>
+          <button class="btn mcq-btn" data-letter="C">θ = tan⁻¹(5/12)</button>
+          <button class="btn mcq-btn" data-letter="D">θ = tan(5/12)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 6. THE SINE RULE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      The Sine Rule
+      <span style="font-size:0.65rem; margin-left:8px; background:#ede8f5; color:#6a30b0; padding:2px 6px; border-radius:10px;">Higher Tier — All Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>The <strong>sine rule</strong> works in <strong>any</strong> triangle — not just right-angled ones. It links each side to the sine of the angle opposite it.</p>
+      <p><strong>Example:</strong> In triangle ABC, angle A = 40°, angle B = 60°, and side a = 8 cm.  Find side b.</p>
+      <ul style="line-height:1.9;">
+        <li>We know side <strong>a</strong> and angle <strong>B</strong> (opposite sides and angles pair up)</li>
+        <li>\(\dfrac{8}{\sin 40°} = \dfrac{b}{\sin 60°}\)</li>
+        <li>\(b = \dfrac{8 \times \sin 60°}{\sin 40°} = 10.8 \text{ cm}\) (1 d.p.)</li>
+      </ul>
+      <p style="text-align:center; font-size:1.1em;">\(\dfrac{a}{\sin A} = \dfrac{b}{\sin B} = \dfrac{c}{\sin C}\)</p>
+      <p>Use the sine rule when you know:</p>
+      <ul style="line-height:1.9;">
+        <li>Two angles and any side (AAS or ASA), <strong>or</strong></li>
+        <li>Two sides and a non-included angle (SSA).</li>
+      </ul>
+            <div style="text-align:center; margin:16px 0;">
+        <img src="{{ url_for('static', filename='images/sine_rule.png') }}" alt="Sine rule triangle diagram" style="max-width:350px; height:auto; border-radius:8px;">
+      </div>
+      <p><strong>OCR note:</strong> OCR does not require you to consider the ambiguous case of the sine rule (where two different triangles are possible).</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">When is the <strong>sine rule</strong> most useful?</p>
+          <button class="btn mcq-btn" data-letter="A">Right-angled triangle with two legs</button>
+          <button class="btn mcq-btn" data-letter="B">Any triangle when you have a side and its opposite angle</button>
+          <button class="btn mcq-btn" data-letter="C">Only when all three sides are known</button>
+          <button class="btn mcq-btn" data-letter="D">Only for angles of 30° and 60°</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 7. THE COSINE RULE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      The Cosine Rule
+      <span style="font-size:0.65rem; margin-left:8px; background:#ede8f5; color:#6a30b0; padding:2px 6px; border-radius:10px;">Higher Tier — All Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>The <strong>cosine rule</strong> also works in any triangle. Use it when you do <em>not</em> have a handy opposite side–angle pair.</p>
+      <p><em>Example:</em> Two sides are <strong>7 cm</strong> and <strong>9 cm</strong>, and the angle between them is <strong>50°</strong>. Find the third side.</p>
+      <p>Here we use: \(a^2 = b^2 + c^2 - 2bc\cos A\) with the 50° angle between the 7 and 9 sides.</p>
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="text-align:center;"><strong>Finding a side:</strong> \(a^2 = b^2 + c^2 - 2bc \cos A\)</p>
+        <p style="text-align:center;"><strong>Finding an angle:</strong> \(\cos A = \dfrac{b^2 + c^2 - a^2}{2bc}\)</p>
+      </div>
+      <p>Use the cosine rule when you know:</p>
+      <ul style="line-height:1.9;">
+        <li>Two sides and the included angle (SAS), <strong>or</strong></li>
+        <li>All three sides (SSS).</li>
+      </ul>
+      <p><strong>Important:</strong> The cosine rule is not given on your formula sheet — you must memorise it.  The sine rule and area formula are provided in the exam.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">You know two sides and the <strong>included</strong> angle. Which rule should you use first?</p>
+          <button class="btn mcq-btn" data-letter="A">Cosine rule</button>
+          <button class="btn mcq-btn" data-letter="B">Sine rule only</button>
+          <button class="btn mcq-btn" data-letter="C">SOH CAH TOA only</button>
+          <button class="btn mcq-btn" data-letter="D">Area = ½ab sin C only</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 8. AREA OF A TRIANGLE USING SINE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+      Area of a Triangle Using Sine
+      <span style="font-size:0.65rem; margin-left:8px; background:#ede8f5; color:#6a30b0; padding:2px 6px; border-radius:10px;">Higher Tier — All Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>If you know two sides and the angle <em>between</em> them, you can find the area without the height.</p>
+      <p><strong>Example:</strong> Triangle with sides 7 cm and 9 cm and included angle 50°.<br>
+      Area = ½ × 7 × 9 × sin 50° = ½ × 63 × 0.766 = <strong>24.1 cm²</strong>.</p>
+      <p style="text-align:center; font-size:1.1em;">\(\text{Area} = \frac{1}{2}ab \sin C\)</p>
+      <p>This formula works because \(b \sin C\) is the perpendicular height of the triangle when side \(a\) is the base.</p>
+      <p>This formula is provided on your exam formula sheet.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Sides 7 cm and 9 cm, included angle 50°. What is the area formula?</p>
+          <button class="btn mcq-btn" data-letter="A">7 × 9 × sin 50°</button>
+          <button class="btn mcq-btn" data-letter="B">½ × (7 + 9) × sin 50°</button>
+          <button class="btn mcq-btn" data-letter="C">½ × 7 × 9 × sin 50°</button>
+          <button class="btn mcq-btn" data-letter="D">7 × 9 ÷ sin 50°</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 9. TRIGONOMETRIC GRAPHS -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">9</span>
+      Trigonometric Graphs
+      <span style="font-size:0.65rem; margin-left:8px; background:#ede8f5; color:#6a30b0; padding:2px 6px; border-radius:10px;">Higher Tier — All Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>You need to recognise the shapes of sin, cos, and tan from <strong>0° to 360°</strong>.</p>
+      <p><em>Quick picture in your head:</em> \(\sin 90° = 1\) (top of the wave), \(\cos 0° = 1\) (starts high), \(\tan 45° = 1\) (steep middle).</p>
+      <ul style="line-height:1.9;">
+        <li><strong>y = sin x:</strong> A wave starting at (0,0), rising to a maximum of 1 at 90°, returning to 0 at 180°, reaching −1 at 270°, back to 0 at 360°.  The graph repeats every 360°.</li>
+        <li><strong>y = cos x:</strong> A wave starting at (0,1), dropping to 0 at 90°, reaching −1 at 180°, returning to 0 at 270°, back to 1 at 360°.</li>
+        <li><strong>y = tan x:</strong> A repeating curve with vertical asymptotes at 90°, 270°, etc.  It passes through (0,0), (180°,0), (360°,0) and repeats every 180°.</li>
+      </ul>
+      <p><strong>Exam tip:</strong> You may be asked to sketch these graphs or to solve equations like \(\sin x = 0.5\) by reading from the graph.  Remember there are usually two solutions per cycle.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">What is <strong>sin 90°</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">0</button>
+          <button class="btn mcq-btn" data-letter="B">1</button>
+          <button class="btn mcq-btn" data-letter="C">−1</button>
+          <button class="btn mcq-btn" data-letter="D">90</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+          <div style="text-align:center; margin:16px 0;">
+        <img src="{{ url_for('static', filename='images/trig_graphs.png') }}" alt="Sine, cosine, and tangent graphs" style="max-width:100%; height:auto; border-radius:8px;">
+      </div>
+  </details>
+
+  <!-- 10. BEARINGS & TRIGONOMETRY -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">10</span>
+      Bearings &amp; Trigonometry
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>A <strong>bearing</strong> is a direction measured <strong>clockwise from North</strong>. We always write three figures: <strong>045°</strong>, not 45°.</p>
+      <p>Think of a ship or plane on a map: North is “up”, and you turn clockwise to the bearing.</p>
+      <p>Bearing questions often mean drawing a diagram with North lines, then using angle facts and trigonometry (or the cosine rule) to find distances.</p>
+    <div style="text-align:center; margin:16px 0;">
+        <img src="{{ url_for('static', filename='images/bearings_1.png') }}" alt="Bearings diagram" style="max-width:400px; height:auto; border-radius:8px;">
+      </div>
+      <p><strong>Typical exam question:</strong> "A ship sails 12 km on a bearing of 070°, then 8 km on a bearing of 150°.  Find its distance from its starting point."</p>
+      <p>For these problems, draw the two legs, add North lines, and use angle facts to find the angle between the two paths.  Then apply the cosine rule.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">How should the bearing <strong>45°</strong> be written in an exam?</p>
+          <button class="btn mcq-btn" data-letter="A">45°</button>
+          <button class="btn mcq-btn" data-letter="B">4.5°</button>
+          <button class="btn mcq-btn" data-letter="C">045°</button>
+          <button class="btn mcq-btn" data-letter="D">450°</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 11. ANGLES OF ELEVATION & DEPRESSION -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">11</span>
+      Angles of Elevation &amp; Depression
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p><strong>Angle of elevation:</strong> you look <em>up</em> from the horizontal — like spotting a bird in the sky.</p>
+      <p><strong>Angle of depression:</strong> you look <em>down</em> from the horizontal — like standing on a cliff looking at a boat.</p>
+      <p>These always become a <strong>right-angled triangle</strong> in your diagram. Label the sides, pick SOH CAH TOA, and solve.</p>
+      <div style="display:flex; flex-wrap:wrap; gap:20px; justify-content:center; margin:20px 0;">
+        <div style="flex:1; min-width:200px; text-align:center;">
+          <img src="{{ url_for('static', filename='images/angle_elevation.png') }}" alt="Angle of elevation" style="max-width:280px; height:auto; border-radius:8px;">
+          <p style="font-size:0.85em; color:var(--text-muted); margin-top:6px;">Angle of elevation</p>
+        </div>
+        <div style="flex:1; min-width:200px; text-align:center;">
+          <img src="{{ url_for('static', filename='images/angle_depression.png') }}" alt="Angle of depression" style="max-width:280px; height:auto; border-radius:8px;">
+          <p style="font-size:0.85em; color:var(--text-muted); margin-top:6px;">Angle of depression</p>
+        </div>
+      </div>
+      <p><strong>Key fact:</strong> The angle of depression from A to B equals the angle of elevation from B to A (alternate angles on parallel lines).</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">You stand on a cliff and look <strong>down</strong> at a boat. Which angle is this?</p>
+          <button class="btn mcq-btn" data-letter="A">Angle of depression</button>
+          <button class="btn mcq-btn" data-letter="B">Angle of elevation</button>
+          <button class="btn mcq-btn" data-letter="C">Bearing</button>
+          <button class="btn mcq-btn" data-letter="D">Right angle</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 12. 3D TRIGONOMETRY -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">12</span>
+      3D Trigonometry
+      <span style="font-size:0.65rem; margin-left:8px; background:#ede8f5; color:#6a30b0; padding:2px 6px; border-radius:10px;">Higher Tier — All Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>3D questions look scary, but the trick is to find a <strong>right-angled triangle hidden inside</strong> the shape.</p>
+      <ol style="line-height:1.9;">
+        <li><strong>Spot the right-angled triangle</strong> you need (draw it flat on the page if it helps).</li>
+        <li><strong>Find missing lengths first</strong> using Pythagoras or trig on other triangles in the shape.</li>
+        <li><strong>Then use trig or Pythagoras</strong> on your target triangle.</li>
+      </ol>
+      <p><strong>Example:</strong> To find the angle between a diagonal of a cuboid and its base, identify the right-angled triangle formed by the diagonal, its projection on the base, and the vertical edge.</p>
+      <p>These questions look harder than they are.  The trick is to always work in 2D triangles drawn from the 3D figure — never try to apply trig directly to the 3D shape.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">What is the best first step in a 3D trig question?</p>
+          <button class="btn mcq-btn" data-letter="A">Use the cosine rule on the whole cuboid</button>
+          <button class="btn mcq-btn" data-letter="B">Find and label a right-angled triangle inside the shape</button>
+          <button class="btn mcq-btn" data-letter="C">Multiply all three dimensions</button>
+          <button class="btn mcq-btn" data-letter="D">Assume the shape is a right-angled triangle</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 13. PROBLEM SOLVING STRATEGY -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">13</span>
+      Problem‑Solving Strategy
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>When you get a trig question in an exam, follow this checklist:</p>
+      <ol style="line-height:1.9;">
+        <li><strong>Draw a diagram</strong> if one isn't provided.  Label all known sides and angles.</li>
+        <li><strong>Decide: right-angled or not?</strong>  If yes, use Pythagoras or SOH CAH TOA.  If no, use sine rule, cosine rule, or area formula.</li>
+        <li><strong>For non-right-angled triangles:</strong>
+          <ul>
+            <li>Sine rule: when you have a "pair" (a side and its opposite angle).</li>
+            <li>Cosine rule: when you have SAS or SSS.</li>
+            <li>Area formula: when you need area and have two sides and the included angle.</li>
+          </ul>
+        </li>
+        <li><strong>Check your answer is sensible.</strong>  The longest side should be opposite the largest angle.  Angles in a triangle must sum to 180°.</li>
+        <li><strong>Watch units:</strong> make sure all lengths are in the same unit before calculating.</li>
+      </ol>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">A triangle has sides 5 cm, 7 cm, and 9 cm (no right angle). Which tool fits best <strong>first</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">SOH CAH TOA</button>
+          <button class="btn mcq-btn" data-letter="B">Area = ½ab sin C only</button>
+          <button class="btn mcq-btn" data-letter="C">Cosine rule</button>
+          <button class="btn mcq-btn" data-letter="D">Pythagoras on side 9 only</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- Revision card (auto-added) -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">14</span>
+      Trigonometry — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Right-angled triangle? SOH CAH TOA. Otherwise use sine or cosine rule.</p>
+
+      <div style="text-align:center;margin:16px 0;">
+        <div class="revision-card-wrap">
+        <svg class="revision-card-svg lesson-quick-ref" width="100%" viewBox="-16 -16 792 312" style="max-width:760px;width:100%;height:auto;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:10px;" role="img" aria-label="Trigonometry revision card">
+          <text x="380" y="28" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Trigonometry — Revision Card</text>
+          <line x1="20" y1="38" x2="740" y2="38" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="20" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Right-angled (SOH CAH TOA)</text>
+          <text x="20" y="78" font-size="14" fill="#28251d">sin = opp/hyp, cos = adj/hyp, tan = opp/adj</text>
+          <text x="20" y="98" font-size="14" fill="#28251d">Label sides relative to angle θ</text>
+          <text x="20" y="118" font-size="14" fill="#28251d">Pythagoras: a² + b² = c²</text>
+          <text x="20" y="142" font-size="15" fill="#1a6fa8" font-weight="bold">Any triangle</text>
+          <text x="20" y="162" font-size="14" fill="#28251d">Sine rule: a/sin A = b/sin B</text>
+          <text x="20" y="182" font-size="14" fill="#28251d">Cosine rule: a² = b² + c² − 2bc cos A</text>
+          <line x1="390" y1="48" x2="390" y2="260" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="400" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Area &amp; exact values</text>
+          <text x="400" y="78" font-size="14" fill="#28251d">Area = ½ab sin C</text>
+          <text x="400" y="98" font-size="14" fill="#28251d">sin 30° = ½, cos 60° = ½</text>
+          <text x="400" y="118" font-size="14" fill="#28251d">tan 45° = 1</text>
+        </svg>
+        </div>
+      </div>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">Right triangle: opp=3, hyp=5. Find sin θ.</p>
+          <button class="btn mcq-btn" data-letter="A">3/5</button>
+          <button class="btn mcq-btn" data-letter="B">5/3</button>
+          <button class="btn mcq-btn" data-letter="C">4/5</button>
+          <button class="btn mcq-btn" data-letter="D">3/4</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='trigonometry') }}" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Revision</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- QUICK TEST BUTTONS -->
+  <div style="text-align:center; margin-top: 32px; margin-bottom: 48px;">
+    <form method="POST" action="/quicktest/start" style="display:inline;">
+      <input type="hidden" name="level" value="gcse">
+      <input type="hidden" name="subject" value="maths">
+      <input type="hidden" name="topic" value="trigonometry">
+      <input type="hidden" name="mode" value="standard">
+      <input type="hidden" name="difficulty" value="foundational">
+      <button type="submit" class="btn btn-primary">⚡ Quick Test: Trigonometry (Foundational)</button>
+    </form>
+    <form method="POST" action="/quicktest/start" style="display:inline; margin-left:8px;">
+      <input type="hidden" name="level" value="gcse">
+      <input type="hidden" name="subject" value="maths">
+      <input type="hidden" name="topic" value="trigonometry">
+      <input type="hidden" name="mode" value="standard">
+      <input type="hidden" name="difficulty" value="difficult">
+      <button type="submit" class="btn btn-primary">⚡ Quick Test: Trigonometry (Difficult)</button>
+    </form>
+  </div>
+
+</div>
+
+  <!-- Practice link -->
+  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='trigonometry') }}"
+       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+      Start Practice Quiz
+    </a>
+  </div>
+
+{% endblock %}

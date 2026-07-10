@@ -1,0 +1,667 @@
+{% extends "base.html" %}
+{% block title %}Sequences – GCSE Mathematics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Sequences</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">A sequence is a list of numbers that follows a rule. You will learn how to spot the rule, write the <strong>nth term</strong>, and use sequences in real-life problems. We start with simple patterns and build up to sums and harder types.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+  <!-- Quick Test button -->
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='sequences') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 1. Term-to-Term Rules                                       -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      Term-to-Term Rules
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 8</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> The list <strong>3, 7, 11, 15, …</strong> goes up by <strong>4</strong> each time. The term-to-term rule is: <em>add 4</em>.</p>
+
+      <p>A <strong>sequence</strong> is an ordered list of numbers. The easiest way to describe it is the <strong>term-to-term rule</strong>: what you do to one term to get the next.</p>
+      <ul style="line-height:1.9;">
+        <li><strong>Arithmetic (linear):</strong> add or subtract the same number each time. That number is the <strong>common difference</strong> \(d\).</li>
+        <li><strong>Geometric:</strong> multiply by the same number each time. That number is the <strong>common ratio</strong> \(r\).</li>
+        <li><strong>Other:</strong> Fibonacci (add the last two), square numbers, triangle numbers, and more.</li>
+      </ul>
+
+      <!-- SVG: arithmetic vs geometric sequences side by side -->
+      <div style="text-align:center; margin:16px 0;">
+      <svg viewBox="0 0 520 180" style="max-width:100%; width:520px; font-family:sans-serif; font-size:12px;" aria-label="Arithmetic sequence 3,7,11,15 and geometric sequence 2,6,18,54">
+        <!-- ── Arithmetic ── -->
+        <text x="130" y="20" text-anchor="middle" font-weight="600" fill="#1e40af" font-size="15">Arithmetic  (d = +4)</text>
+        <!-- Term boxes -->
+        <rect x="10"  y="35" width="50" height="32" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="35"  y="56" text-anchor="middle" fill="#1e40af" font-weight="600">3</text>
+        <rect x="80"  y="35" width="50" height="32" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="105" y="56" text-anchor="middle" fill="#1e40af" font-weight="600">7</text>
+        <rect x="150" y="35" width="50" height="32" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="175" y="56" text-anchor="middle" fill="#1e40af" font-weight="600">11</text>
+        <rect x="220" y="35" width="50" height="32" rx="5" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="245" y="56" text-anchor="middle" fill="#1e40af" font-weight="600">15</text>
+        <!-- Arrows with +4 labels -->
+        <line x1="60" y1="51" x2="78" y2="51" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrSeq)"/>
+        <text x="69" y="45" text-anchor="middle" fill="#3b82f6" font-size="14">+4</text>
+        <line x1="130" y1="51" x2="148" y2="51" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrSeq)"/>
+        <text x="139" y="45" text-anchor="middle" fill="#3b82f6" font-size="14">+4</text>
+        <line x1="200" y1="51" x2="218" y2="51" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arrSeq)"/>
+        <text x="209" y="45" text-anchor="middle" fill="#3b82f6" font-size="14">+4</text>
+        <!-- Difference annotation -->
+        <text x="130" y="90" text-anchor="middle" fill="#6b7280" font-size="14">Common difference \(d = 4\)</text>
+
+        <!-- ── Geometric ── -->
+        <text x="390" y="20" text-anchor="middle" font-weight="600" fill="#15803d" font-size="15">Geometric  (r = ×3)</text>
+        <rect x="270" y="35" width="50" height="32" rx="5" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+        <text x="295" y="56" text-anchor="middle" fill="#15803d" font-weight="600">2</text>
+        <rect x="340" y="35" width="50" height="32" rx="5" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+        <text x="365" y="56" text-anchor="middle" fill="#15803d" font-weight="600">6</text>
+        <rect x="410" y="35" width="50" height="32" rx="5" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+        <text x="435" y="56" text-anchor="middle" fill="#15803d" font-weight="600">18</text>
+        <rect x="462" y="35" width="50" height="32" rx="5" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+        <text x="487" y="56" text-anchor="middle" fill="#15803d" font-weight="600">54</text>
+        <!-- Arrows ×3 -->
+        <line x1="320" y1="51" x2="338" y2="51" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrSeq)"/>
+        <text x="329" y="45" text-anchor="middle" fill="#16a34a" font-size="14">×3</text>
+        <line x1="390" y1="51" x2="408" y2="51" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrSeq)"/>
+        <text x="399" y="45" text-anchor="middle" fill="#16a34a" font-size="14">×3</text>
+        <line x1="460" y1="51" x2="460" y2="51" stroke="#16a34a" stroke-width="1.5"/>
+        <line x1="460" y1="51" x2="460" y2="51" stroke="none"/>
+        <!-- third arrow overlaps box — skip, label only -->
+        <text x="390" y="90" text-anchor="middle" fill="#6b7280" font-size="14">Common ratio \(r = 3\)</text>
+
+        <defs>
+          <marker id="arrSeq" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+            <path d="M0,0 L10,5 L0,10 Z" fill="#555"/>
+          </marker>
+        </defs>
+
+        <!-- Key summary at bottom -->
+        <text x="260" y="130" text-anchor="middle" font-size="14" fill="#374151">
+          <tspan font-weight="600">Key:</tspan>  arithmetic → constant  difference;   geometric → constant  ratio
+        </text>
+        <text x="260" y="150" text-anchor="middle" font-size="14" fill="#6b7280">To find the rule: subtract consecutive terms (arithmetic) or divide them (geometric).</text>
+      </svg>
+      </div>
+
+      <p><strong>Sequences worth knowing:</strong> square numbers \((1, 4, 9, 16, \ldots)\), triangle numbers \((1, 3, 6, 10, \ldots)\), Fibonacci \((1, 1, 2, 3, 5, 8, \ldots)\).</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">For <strong>2, 6, 18, 54, …</strong>, what is the term-to-term rule?</p>
+          <button class="btn mcq-btn" data-letter="A">Add 4 each time</button>
+          <button class="btn mcq-btn" data-letter="B">Multiply by 3 each time</button>
+          <button class="btn mcq-btn" data-letter="C">Add the previous two terms</button>
+          <button class="btn mcq-btn" data-letter="D">Square the position number</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 2. The nth Term of an Arithmetic Sequence                  -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      The \(n\)th Term of an Arithmetic Sequence
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> For <strong>5, 8, 11, 14, …</strong> you add 3 each time, so the nth term is <strong>3n + 2</strong>. Check: when \(n = 1\), \(3(1) + 2 = 5\) ✓</p>
+
+      <p>The <strong>nth term</strong> tells you any term straight away — you do not need to write out all the terms before it.</p>
+
+      <p><strong>How to find it:</strong></p>
+      <ol style="line-height:1.9;">
+        <li>Find \(d\) = next term − previous term (e.g. 8 − 5 = 3).</li>
+        <li>Start with \(dn\) (here, \(3n\)).</li>
+        <li>Compare with the first term: \(3 \times 1 = 3\), but we need 5, so add 2.</li>
+      </ol>
+
+      <p>For first term \(a\) and common difference \(d\):</p>
+      <p style="text-align:center; font-size:1.1rem;">\[u_n = a + (n-1)d \quad \Longrightarrow \quad u_n = dn + (a - d)\]</p>
+      <p>So the nth term is always a <strong>linear expression</strong> like \(3n + 2\).</p>
+
+      <!-- SVG: nth-term worked example for 5, 8, 11, 14 -->
+      <div style="text-align:center; margin:16px 0;">
+      <svg viewBox="0 0 500 200" style="max-width:100%; width:500px; font-family:sans-serif; font-size:12px;" aria-label="Finding the nth term of 5, 8, 11, 14">
+        <defs>
+          <marker id="arrNth" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+            <path d="M0,0 L10,5 L0,10 Z" fill="#6b7280"/>
+          </marker>
+        </defs>
+        <!-- Sequence row -->
+        <text x="10" y="22" font-size="14" fill="#374151">Sequence:</text>
+        <text x="100" y="22" fill="#1e40af" font-weight="600">5,</text>
+        <text x="140" y="22" fill="#1e40af" font-weight="600">8,</text>
+        <text x="180" y="22" fill="#1e40af" font-weight="600">11,</text>
+        <text x="225" y="22" fill="#1e40af" font-weight="600">14, ...</text>
+        <!-- Difference braces -->
+        <text x="120" y="40" text-anchor="middle" fill="#dc2626" font-size="14">+3</text>
+        <text x="160" y="40" text-anchor="middle" fill="#dc2626" font-size="14">+3</text>
+        <text x="202" y="40" text-anchor="middle" fill="#dc2626" font-size="14">+3</text>
+        <text x="10" y="40" font-size="14" fill="#374151">Differences:</text>
+        <!-- Step 1 box -->
+        <rect x="10" y="55" width="470" height="32" rx="5" fill="#fef9c3" stroke="#ca8a04" stroke-width="1"/>
+        <text x="20" y="76" font-size="14" fill="#78350f"><tspan font-weight="600">Step 1:</tspan>  d = 3, so nth term begins as 3n.</text>
+        <!-- 3n row -->
+        <text x="10" y="110" font-size="14" fill="#374151">3n gives:</text>
+        <text x="100" y="110" fill="#6b7280">3,</text>
+        <text x="140" y="110" fill="#6b7280">6,</text>
+        <text x="180" y="110" fill="#6b7280">9,</text>
+        <text x="220" y="110" fill="#6b7280">12, ...</text>
+        <!-- Step 2 box -->
+        <rect x="10" y="120" width="470" height="32" rx="5" fill="#ede9fe" stroke="#7c3aed" stroke-width="1"/>
+        <text x="20" y="141" font-size="14" fill="#4c1d95"><tspan font-weight="600">Step 2:</tspan>  Sequence exceeds 3n by 2 each time. Add 2.</text>
+        <!-- Result -->
+        <rect x="10" y="160" width="470" height="32" rx="5" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+        <text x="20" y="181" font-size="15" fill="#15803d" font-weight="700">nth term = 3n + 2   ✓ Check: n=1 → 5, n=4 → 14 ✓</text>
+      </svg>
+      </div>
+
+      <p><strong>Always check:</strong> plug in \(n = 1\) and one other value from the list.</p>
+      <p><strong>Is a number in the sequence?</strong> Set the nth term equal to that number and solve for \(n\). If \(n\) is a positive whole number, yes — otherwise no.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">What is the nth term of <strong>7, 10, 13, 16, …</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">n + 6</button>
+          <button class="btn mcq-btn" data-letter="B">7n + 3</button>
+          <button class="btn mcq-btn" data-letter="C">3n + 4</button>
+          <button class="btn mcq-btn" data-letter="D">3n + 7</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 3. Special Sequences                                        -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Special Sequences
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Triangle numbers build up like rows of dots: 1, then 1+2 = 3, then 1+2+3 = 6. The 4th triangle number is <strong>10</strong>.</p>
+
+      <p>Some patterns come up so often that you should recognise them quickly:</p>
+      <table style="width:100%; border-collapse:collapse; font-size:13px;">
+        <thead>
+          <tr style="background:var(--color-surface-2);">
+            <th style="padding:8px 12px; text-align:left; border-bottom:2px solid var(--border);">Sequence</th>
+            <th style="padding:8px 12px; text-align:left; border-bottom:2px solid var(--border);">First terms</th>
+            <th style="padding:8px 12px; text-align:left; border-bottom:2px solid var(--border);">\(n\)th term</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:8px 12px;"><strong>Square numbers</strong></td>
+            <td style="padding:8px 12px;">1, 4, 9, 16, 25, ...</td>
+            <td style="padding:8px 12px;">\(n^2\)</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border); background:var(--color-surface-2);">
+            <td style="padding:8px 12px;"><strong>Cube numbers</strong></td>
+            <td style="padding:8px 12px;">1, 8, 27, 64, 125, ...</td>
+            <td style="padding:8px 12px;">\(n^3\)</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:8px 12px;"><strong>Triangle numbers</strong></td>
+            <td style="padding:8px 12px;">1, 3, 6, 10, 15, ...</td>
+            <td style="padding:8px 12px;">\(\dfrac{n(n+1)}{2}\)</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border); background:var(--color-surface-2);">
+            <td style="padding:8px 12px;"><strong>Powers of 2</strong></td>
+            <td style="padding:8px 12px;">2, 4, 8, 16, 32, ...</td>
+            <td style="padding:8px 12px;">\(2^n\)</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 12px;"><strong>Fibonacci</strong></td>
+            <td style="padding:8px 12px;">1, 1, 2, 3, 5, 8, 13, ...</td>
+            <td style="padding:8px 12px;">No simple closed form</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- SVG: triangle number dot diagram -->
+      <div style="text-align:center; margin:16px 0;">
+      <svg viewBox="0 0 460 140" style="max-width:100%; width:460px; font-family:sans-serif; font-size:12px;" aria-label="Triangle number dot patterns for n=1 to 4">
+        <text x="230" y="18" text-anchor="middle" font-size="15" font-weight="600" fill="#374151">Triangle Numbers — dot patterns</text>
+        <!-- n=1: 1 dot -->
+        <circle cx="55" cy="60" r="7" fill="#7c3aed"/>
+        <text x="55" y="95" text-anchor="middle" fill="#7c3aed" font-weight="600">T₁ = 1</text>
+        <!-- n=2: 3 dots -->
+        <circle cx="130" cy="48" r="7" fill="#7c3aed"/>
+        <circle cx="118" cy="68" r="7" fill="#7c3aed"/>
+        <circle cx="142" cy="68" r="7" fill="#7c3aed"/>
+        <text x="130" y="95" text-anchor="middle" fill="#7c3aed" font-weight="600">T₂ = 3</text>
+        <!-- n=3: 6 dots -->
+        <circle cx="225" cy="40" r="7" fill="#7c3aed"/>
+        <circle cx="213" cy="60" r="7" fill="#7c3aed"/>
+        <circle cx="237" cy="60" r="7" fill="#7c3aed"/>
+        <circle cx="201" cy="80" r="7" fill="#7c3aed"/>
+        <circle cx="225" cy="80" r="7" fill="#7c3aed"/>
+        <circle cx="249" cy="80" r="7" fill="#7c3aed"/>
+        <text x="225" y="110" text-anchor="middle" fill="#7c3aed" font-weight="600">T₃ = 6</text>
+        <!-- n=4: 10 dots -->
+        <circle cx="330" cy="32" r="6" fill="#7c3aed"/>
+        <circle cx="318" cy="52" r="6" fill="#7c3aed"/>
+        <circle cx="342" cy="52" r="6" fill="#7c3aed"/>
+        <circle cx="306" cy="72" r="6" fill="#7c3aed"/>
+        <circle cx="330" cy="72" r="6" fill="#7c3aed"/>
+        <circle cx="354" cy="72" r="6" fill="#7c3aed"/>
+        <circle cx="294" cy="92" r="6" fill="#7c3aed"/>
+        <circle cx="318" cy="92" r="6" fill="#7c3aed"/>
+        <circle cx="342" cy="92" r="6" fill="#7c3aed"/>
+        <circle cx="366" cy="92" r="6" fill="#7c3aed"/>
+        <text x="330" y="118" text-anchor="middle" fill="#7c3aed" font-weight="600">T₄ = 10</text>
+        <!-- Formula label -->
+        <text x="420" y="70" text-anchor="middle" fill="#6b7280" font-size="14">Tₙ =</text>
+        <text x="420" y="86" text-anchor="middle" fill="#6b7280" font-size="14">n(n+1)/2</text>
+      </svg>
+      </div>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">What is the <strong>6th</strong> square number?</p>
+          <button class="btn mcq-btn" data-letter="A">12</button>
+          <button class="btn mcq-btn" data-letter="B">36</button>
+          <button class="btn mcq-btn" data-letter="C">30</button>
+          <button class="btn mcq-btn" data-letter="D">64</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 4. Arithmetic Series — Sum of Terms                        -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Arithmetic Series — Sum of Terms
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f7ec; color:#2d6a35; padding:2px 6px; border-radius:10px;">Higher Skill</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Add the first 5 positive whole numbers: \(1 + 2 + 3 + 4 + 5 = 15\). You can also use the formula with \(n = 5\), \(a = 1\), \(l = 5\): \(S_5 = \dfrac{5(1+5)}{2} = 15\) ✓</p>
+
+      <p>An <strong>arithmetic series</strong> means you <em>add up</em> the terms of an arithmetic sequence.</p>
+      <p style="text-align:center;">\[S_n = \frac{n(a+l)}{2} \qquad \text{or} \qquad S_n = \frac{n}{2}(2a + (n-1)d)\]</p>
+      <p>\(a\) = first term, \(l\) = last term, \(n\) = how many terms, \(d\) = common difference.</p>
+
+      <p><strong>Why it works (Gauss's trick):</strong> Write the sum forwards and backwards, then add:</p>
+      <p>\(S = 1 + 2 + 3 + \cdots + n\)</p>
+      <p>\(S = n + (n-1) + \cdots + 1\)</p>
+      <p>\(2S = n(n+1)\), so \(S = \dfrac{n(n+1)}{2}\).</p>
+
+      <!-- SVG: paired sum diagram for 1+2+...+5 -->
+      <div style="text-align:center; margin:16px 0;">
+      <svg viewBox="0 0 480 160" style="max-width:100%; width:480px; font-family:sans-serif; font-size:12px;" aria-label="Gauss pairing diagram: 1+2+3+4+5 paired with 5+4+3+2+1 giving 6 each">
+        <text x="240" y="20" text-anchor="middle" font-size="15" font-weight="600" fill="#374151">Gauss's Pairing: \(S_5 = 1+2+3+4+5\)</text>
+        <!-- Forward row -->
+        <text x="20" y="55" fill="#1e40af" font-weight="600">S =</text>
+        <text x="80"  y="55" text-anchor="middle" fill="#1e40af" font-weight="600">1</text>
+        <text x="160" y="55" text-anchor="middle" fill="#1e40af" font-weight="600">2</text>
+        <text x="240" y="55" text-anchor="middle" fill="#1e40af" font-weight="600">3</text>
+        <text x="320" y="55" text-anchor="middle" fill="#1e40af" font-weight="600">4</text>
+        <text x="400" y="55" text-anchor="middle" fill="#1e40af" font-weight="600">5</text>
+        <!-- Plus signs -->
+        <text x="120" y="55" text-anchor="middle" fill="#374151">+</text>
+        <text x="200" y="55" text-anchor="middle" fill="#374151">+</text>
+        <text x="280" y="55" text-anchor="middle" fill="#374151">+</text>
+        <text x="360" y="55" text-anchor="middle" fill="#374151">+</text>
+        <!-- Backward row -->
+        <text x="20" y="85" fill="#dc2626" font-weight="600">S =</text>
+        <text x="80"  y="85" text-anchor="middle" fill="#dc2626" font-weight="600">5</text>
+        <text x="160" y="85" text-anchor="middle" fill="#dc2626" font-weight="600">4</text>
+        <text x="240" y="85" text-anchor="middle" fill="#dc2626" font-weight="600">3</text>
+        <text x="320" y="85" text-anchor="middle" fill="#dc2626" font-weight="600">2</text>
+        <text x="400" y="85" text-anchor="middle" fill="#dc2626" font-weight="600">1</text>
+        <text x="120" y="85" text-anchor="middle" fill="#374151">+</text>
+        <text x="200" y="85" text-anchor="middle" fill="#374151">+</text>
+        <text x="280" y="85" text-anchor="middle" fill="#374151">+</text>
+        <text x="360" y="85" text-anchor="middle" fill="#374151">+</text>
+        <!-- Divider -->
+        <line x1="55" y1="93" x2="450" y2="93" stroke="#6b7280" stroke-width="1.5"/>
+        <!-- Sum row: each pair = 6 -->
+        <text x="20" y="115" fill="#15803d" font-weight="600">2S =</text>
+        <text x="80"  y="115" text-anchor="middle" fill="#15803d" font-weight="600">6</text>
+        <text x="160" y="115" text-anchor="middle" fill="#15803d" font-weight="600">6</text>
+        <text x="240" y="115" text-anchor="middle" fill="#15803d" font-weight="600">6</text>
+        <text x="320" y="115" text-anchor="middle" fill="#15803d" font-weight="600">6</text>
+        <text x="400" y="115" text-anchor="middle" fill="#15803d" font-weight="600">6</text>
+        <text x="120" y="115" text-anchor="middle" fill="#374151">+</text>
+        <text x="200" y="115" text-anchor="middle" fill="#374151">+</text>
+        <text x="280" y="115" text-anchor="middle" fill="#374151">+</text>
+        <text x="360" y="115" text-anchor="middle" fill="#374151">+</text>
+        <!-- Result -->
+        <text x="240" y="148" text-anchor="middle" fill="#15803d" font-weight="700" font-size="15">2S = 5 × 6 = 30  →  S = 15 ✓</text>
+      </svg>
+      </div>
+
+      <p><strong>Another example:</strong> Find \(S_{20}\) for 3, 7, 11, … (\(a=3\), \(d=4\), \(n=20\)).</p>
+      <p>\(S_{20} = \dfrac{20}{2}(2 \times 3 + 19 \times 4) = 10(6 + 76) = 10 \times 82 = \mathbf{820}\)</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">Find the sum of the first <strong>10</strong> positive integers (\(1 + 2 + \cdots + 10\)).</p>
+          <button class="btn mcq-btn" data-letter="A">55</button>
+          <button class="btn mcq-btn" data-letter="B">45</button>
+          <button class="btn mcq-btn" data-letter="C">100</button>
+          <button class="btn mcq-btn" data-letter="D">110</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 5. Quadratic Sequences                                      -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Quadratic Sequences
+      <span style="font-size:0.65rem; margin-left:8px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Higher Skill</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> For <strong>3, 8, 15, 24, 35, …</strong> the first differences are 5, 7, 9, 11 — they go up by 2 each time. That constant <strong>second difference</strong> of 2 tells you the nth term starts with \(n^2\).</p>
+
+      <p>A <strong>quadratic sequence</strong> has a <em>constant second difference</em>. Its nth term looks like \(an^2 + bn + c\).</p>
+      <p><strong>Steps to find the nth term:</strong></p>
+      <ol style="line-height:1.9;">
+        <li>Work out the first differences (subtract neighbours).</li>
+        <li>Work out the second differences.</li>
+        <li>\(a = \dfrac{\text{second difference}}{2}\) — that gives the \(n^2\) part.</li>
+        <li>Subtract \(an^2\) from each term; what is left is linear — find its nth term.</li>
+        <li>Add the \(n^2\) part and the linear part together.</li>
+      </ol>
+
+      <!-- SVG: quadratic sequence worked example with difference table -->
+      <div style="text-align:center; margin:16px 0;">
+      <svg viewBox="0 0 500 195" style="max-width:100%; width:500px; font-family:sans-serif; font-size:12px;" aria-label="Quadratic sequence 3,8,15,24,35 with first and second differences">
+        <text x="250" y="18" text-anchor="middle" font-size="15" font-weight="600" fill="#374151">Finding the nth term of  3, 8, 15, 24, 35, ...</text>
+        <!-- Term row -->
+        <text x="15" y="48" fill="#6b7280" font-size="14">Terms:</text>
+        <text x="80"  y="48" text-anchor="middle" fill="#1e40af" font-weight="600">3</text>
+        <text x="170" y="48" text-anchor="middle" fill="#1e40af" font-weight="600">8</text>
+        <text x="260" y="48" text-anchor="middle" fill="#1e40af" font-weight="600">15</text>
+        <text x="350" y="48" text-anchor="middle" fill="#1e40af" font-weight="600">24</text>
+        <text x="440" y="48" text-anchor="middle" fill="#1e40af" font-weight="600">35</text>
+        <!-- 1st diff arrows & values -->
+        <text x="15" y="80" fill="#6b7280" font-size="14">1st diff:</text>
+        <text x="125" y="80" text-anchor="middle" fill="#dc2626" font-weight="600">5</text>
+        <text x="215" y="80" text-anchor="middle" fill="#dc2626" font-weight="600">7</text>
+        <text x="305" y="80" text-anchor="middle" fill="#dc2626" font-weight="600">9</text>
+        <text x="395" y="80" text-anchor="middle" fill="#dc2626" font-weight="600">11</text>
+        <!-- 2nd diff arrows & values -->
+        <text x="15" y="112" fill="#6b7280" font-size="14">2nd diff:</text>
+        <text x="170" y="112" text-anchor="middle" fill="#7c3aed" font-weight="600">2</text>
+        <text x="260" y="112" text-anchor="middle" fill="#7c3aed" font-weight="600">2</text>
+        <text x="350" y="112" text-anchor="middle" fill="#7c3aed" font-weight="600">2</text>
+        <text x="430" y="112" text-anchor="middle" fill="#7c3aed" font-size="14">(constant!)</text>
+        <!-- Steps boxes -->
+        <rect x="15" y="126" width="468" height="28" rx="4" fill="#ede9fe" stroke="#7c3aed" stroke-width="1"/>
+        <text x="25" y="144" font-size="14" fill="#4c1d95"><tspan font-weight="600">Step 3:</tspan>  Coefficient of n² = 2 ÷ 2 = 1,  so leading term is n².</text>
+        <rect x="15" y="158" width="468" height="28" rx="4" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+        <text x="25" y="176" font-size="14" fill="#15803d"><tspan font-weight="600">Subtract n²</tspan>  from each: 3−1=2, 8−4=4, 15−9=6, 24−16=8 → linear part: 2n.</text>
+        <!-- Result -->
+        <text x="250" y="200" text-anchor="middle" font-size="15" font-weight="700" fill="#15803d">nth term = n² + 2n = n(n+2)  ✓</text>
+      </svg>
+      </div>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">A sequence has <strong>constant second differences</strong>. What type is it?</p>
+          <button class="btn mcq-btn" data-letter="A">Arithmetic</button>
+          <button class="btn mcq-btn" data-letter="B">Geometric</button>
+          <button class="btn mcq-btn" data-letter="C">Fibonacci</button>
+          <button class="btn mcq-btn" data-letter="D">Quadratic</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 6. Geometric Series and Sum to Infinity                    -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Geometric Series and Sum to Infinity
+      <span style="font-size:0.65rem; margin-left:8px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Higher Skill</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> \(8 + 4 + 2 + 1 + \frac{1}{2} + \cdots\) Each term is half the last (\(r = \frac{1}{2}\)). The terms shrink towards zero, and the total approaches <strong>16</strong>: \(S_\infty = \dfrac{8}{1 - \frac{1}{2}} = 16\).</p>
+
+      <p>For a geometric sequence with first term \(a\) and ratio \(r\):</p>
+      <ul style="line-height:1.9;">
+        <li>\(n\)th term: \(u_n = ar^{n-1}\)</li>
+        <li>Sum of first \(n\) terms: \(S_n = \dfrac{a(r^n - 1)}{r - 1}\) (when \(r \neq 1\))</li>
+        <li><strong>Sum to infinity</strong> (only if \(|r| < 1\)): \(S_\infty = \dfrac{a}{1-r}\)</li>
+      </ul>
+      <p>When \(|r| < 1\), each term gets smaller. The total settles on a limit — we say the series <strong>converges</strong>. That is how recurring decimals link to fractions.</p>
+
+      <!-- SVG: convergent geometric series bars showing shrinking terms -->
+      <div style="text-align:center; margin:16px 0;">
+      <svg viewBox="0 0 480 180" style="max-width:100%; width:480px; font-family:sans-serif; font-size:11px;" aria-label="Converging geometric series 8, 4, 2, 1, 0.5 shown as shrinking bars">
+        <text x="240" y="18" text-anchor="middle" font-size="15" font-weight="600" fill="#374151">Convergent series: 8 + 4 + 2 + 1 + ½ + ···  (a=8, r=½)</text>
+        <!-- Y-axis -->
+        <line x1="50" y1="25" x2="50" y2="145" stroke="#6b7280" stroke-width="1.5"/>
+        <!-- Bars (height ∝ value, scaled: 8→100px, 4→50, 2→25, 1→12.5, 0.5→6.25) -->
+        <rect x="60"  y="45"  width="55" height="100" fill="#2563eb" opacity="0.8" rx="3"/>
+        <text x="87"  y="41"  text-anchor="middle" fill="#1e40af" font-weight="600">8</text>
+        <rect x="125" y="95"  width="55" height="50"  fill="#2563eb" opacity="0.7" rx="3"/>
+        <text x="152" y="91"  text-anchor="middle" fill="#1e40af" font-weight="600">4</text>
+        <rect x="190" y="120" width="55" height="25"  fill="#2563eb" opacity="0.6" rx="3"/>
+        <text x="217" y="116" text-anchor="middle" fill="#1e40af" font-weight="600">2</text>
+        <rect x="255" y="132" width="55" height="13"  fill="#2563eb" opacity="0.5" rx="3"/>
+        <text x="282" y="128" text-anchor="middle" fill="#1e40af" font-weight="600">1</text>
+        <rect x="320" y="139" width="55" height="6"   fill="#2563eb" opacity="0.4" rx="3"/>
+        <text x="347" y="135" text-anchor="middle" fill="#1e40af" font-weight="600">½</text>
+        <text x="395" y="142" fill="#6b7280">→ 0</text>
+        <!-- X-axis -->
+        <line x1="50" y1="145" x2="460" y2="145" stroke="#6b7280" stroke-width="1.5"/>
+        <!-- S∞ dashed line -->
+        <line x1="50" y1="29" x2="460" y2="29" stroke="#dc2626" stroke-width="1.5" stroke-dasharray="6,3"/>
+        <text x="462" y="33" fill="#dc2626" font-weight="600" font-size="14">S∞=16</text>
+        <!-- Formula box -->
+        <rect x="50" y="152" width="380" height="22" rx="4" fill="#fee2e2" stroke="#dc2626" stroke-width="1"/>
+        <text x="240" y="167" text-anchor="middle" fill="#dc2626" font-size="14">
+          S∞ = a/(1−r) = 8/(1−½) = 8/(½) = 16
+        </text>
+      </svg>
+      </div>
+
+      <p><strong>Recurring decimals:</strong> \(0.\overline{3} = \frac{3}{10} + \frac{3}{100} + \cdots = \dfrac{3/10}{1 - 1/10} = \dfrac{3}{9} = \dfrac{1}{3}\).</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">When can you use \(S_\infty = \dfrac{a}{1-r}\)?</p>
+          <button class="btn mcq-btn" data-letter="A">Whenever \(r \neq 1\)</button>
+          <button class="btn mcq-btn" data-letter="B">Only when \(|r| &lt; 1\)</button>
+          <button class="btn mcq-btn" data-letter="C">Only when \(r &gt; 1\)</button>
+          <button class="btn mcq-btn" data-letter="D">Only for arithmetic sequences</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 7. Sequences in Context                                     -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Sequences in Context (Word Problems)
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f7ec; color:#2d6a35; padding:2px 6px; border-radius:10px;">Problem Solving</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> A plumber charges £50 to visit plus £30 per hour. Totals for 1h, 2h, 3h are <strong>£80, £110, £140, …</strong> — you add £30 each time, so this is arithmetic. After 8 hours: \(30(8) + 50 = £290\).</p>
+
+      <p>In word problems, ask yourself:</p>
+      <ul style="line-height:1.9;">
+        <li><strong>Fixed amount added each time?</strong> → arithmetic sequence.</li>
+        <li><strong>Fixed multiplier or percentage each time?</strong> → geometric sequence.</li>
+      </ul>
+
+      <!-- SVG: staircase diagram showing each step adds £30 -->
+      <div style="text-align:center; margin:16px 0;">
+      <svg viewBox="0 0 460 180" style="max-width:100%; width:460px; font-family:sans-serif; font-size:12px;" aria-label="Staircase diagram: cost increases by 30 each hour">
+        <text x="230" y="18" text-anchor="middle" font-size="15" font-weight="600" fill="#374151">Cost (£) vs hours worked</text>
+        <!-- Axes -->
+        <line x1="50" y1="155" x2="440" y2="155" stroke="#6b7280" stroke-width="1.5"/>
+        <line x1="50" y1="25"  x2="50"  y2="155" stroke="#6b7280" stroke-width="1.5"/>
+        <text x="442" y="159" fill="#6b7280" font-size="14">hours</text>
+        <text x="54"  y="22"  fill="#6b7280" font-size="14">£</text>
+        <!-- Staircase bars -->
+        <!-- h=1: £80, h=2: £110, h=3: £140, h=4: £170, h=5: £200 -->
+        <!-- Scale: £200 → 120px; y_px = 155 - (val/200)*120 -->
+        <!-- £80 → 107; £110 → 89; £140 → 71; £170 → 53; £200 → 35 -->
+        <rect x="70"  y="107" width="55" height="48" fill="#2563eb" opacity="0.75" rx="3"/>
+        <text x="97"  y="103" text-anchor="middle" fill="#1e40af" font-weight="600">£80</text>
+        <text x="97"  y="168" text-anchor="middle" fill="#6b7280" font-size="14">1h</text>
+        <rect x="140" y="89"  width="55" height="66" fill="#2563eb" opacity="0.75" rx="3"/>
+        <text x="167" y="85"  text-anchor="middle" fill="#1e40af" font-weight="600">£110</text>
+        <text x="167" y="168" text-anchor="middle" fill="#6b7280" font-size="14">2h</text>
+        <rect x="210" y="71"  width="55" height="84" fill="#2563eb" opacity="0.75" rx="3"/>
+        <text x="237" y="67"  text-anchor="middle" fill="#1e40af" font-weight="600">£140</text>
+        <text x="237" y="168" text-anchor="middle" fill="#6b7280" font-size="14">3h</text>
+        <rect x="280" y="53"  width="55" height="102" fill="#2563eb" opacity="0.75" rx="3"/>
+        <text x="307" y="49"  text-anchor="middle" fill="#1e40af" font-weight="600">£170</text>
+        <text x="307" y="168" text-anchor="middle" fill="#6b7280" font-size="14">4h</text>
+        <rect x="350" y="35"  width="55" height="120" fill="#2563eb" opacity="0.75" rx="3"/>
+        <text x="377" y="31"  text-anchor="middle" fill="#1e40af" font-weight="600">£200</text>
+        <text x="377" y="168" text-anchor="middle" fill="#6b7280" font-size="14">5h</text>
+        <!-- +30 annotations -->
+        <text x="132" y="100" fill="#dc2626" font-size="14">+30</text>
+        <text x="202" y="82"  fill="#dc2626" font-size="14">+30</text>
+        <text x="272" y="64"  fill="#dc2626" font-size="14">+30</text>
+        <text x="342" y="46"  fill="#dc2626" font-size="14">+30</text>
+      </svg>
+      </div>
+
+      <p><strong>Tip:</strong> Spot whether the situation grows by a fixed <em>amount</em> (arithmetic) or a fixed <em>multiplier</em> (geometric) before you pick a formula.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">A population doubles every year. What type of sequence is this?</p>
+          <button class="btn mcq-btn" data-letter="A">Geometric</button>
+          <button class="btn mcq-btn" data-letter="B">Arithmetic</button>
+          <button class="btn mcq-btn" data-letter="C">Quadratic</button>
+          <button class="btn mcq-btn" data-letter="D">Fibonacci</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 8. Key Formulae Summary                                     -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+      Sequences — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Use this section as a revision card. Every formula below has already appeared in the sections above — you do not need to learn anything new here, just check you can pick the right one in an exam.</p>
+
+<div style="text-align:center;margin:16px 0;">
+              <div class="revision-card-wrap">
+        <svg class="revision-card-svg lesson-quick-ref" width="100%" viewBox="0 0 760 300" style="max-width:760px;width:100%;height:auto;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:10px;" role="img" aria-label="Sequences revision card">
+          <text x="380" y="28" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Sequences — Revision Card</text>
+          <line x1="20" y1="38" x2="740" y2="38" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="20" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Arithmetic</text>
+          <text x="20" y="78" font-size="14" fill="#28251d">nth term: uₙ = a + (n−1)d</text>
+          <text x="20" y="98" font-size="14" fill="#28251d">Sum: Sₙ = n(a+l)/2</text>
+          <text x="20" y="118" font-size="14" fill="#28251d">Constant difference d</text>
+          <text x="20" y="142" font-size="15" fill="#1a6fa8" font-weight="bold">Geometric</text>
+          <text x="20" y="162" font-size="14" fill="#28251d">nth term: uₙ = arⁿ⁻¹</text>
+          <text x="20" y="182" font-size="14" fill="#28251d">Sum: Sₙ = a(rⁿ−1)/(r−1)</text>
+          <text x="20" y="202" font-size="14" fill="#28251d">S∞ = a/(1−r) if |r| &lt; 1</text>
+          <line x1="390" y1="48" x2="390" y2="280" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="400" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Other</text>
+          <text x="400" y="78" font-size="14" fill="#28251d">Quadratic nth: second diff constant</text>
+          <text x="400" y="98" font-size="14" fill="#28251d">Square numbers: n²</text>
+          <text x="400" y="118" font-size="14" fill="#28251d">Fibonacci: add previous two terms</text>
+          <text x="400" y="138" font-size="14" fill="#28251d">Is k in the sequence? Solve nth = k for n</text>
+        </svg>
+      </div>
+      </div>
+
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Is the number <strong>50</strong> in the sequence with nth term <strong>3n + 2</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">No — n would be 15</button>
+          <button class="btn mcq-btn" data-letter="B">Yes — when n = 16</button>
+          <button class="btn mcq-btn" data-letter="C">No — n is not a whole number</button>
+          <button class="btn mcq-btn" data-letter="D">Cannot tell without more terms</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+</div>
+
+  <!-- Practice link -->
+  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='sequences') }}"
+       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+      Start Practice Quiz
+    </a>
+  </div>
+
+{% endblock %}

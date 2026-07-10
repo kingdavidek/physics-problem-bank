@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Log in – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+
+<div class="lesson-hero">
+    <h1>Log in</h1>
+    <p class="hero-sub">Pick up where you left off with your Problem Bank account.</p>
+</div>
+
+{% if error %}
+    <p class="error">{{ error }}</p>
+{% endif %}
+
+<div class="form-card">
+    <div class="section-panel-header">Log in</div>
+    <form method="POST" class="form-inner auth-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" name="email" id="email" value="{{ email_value }}" autocomplete="email" required>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" name="password" id="password" autocomplete="current-password" required>
+        </div>
+
+        <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+                <input type="checkbox" name="remember" value="1" checked>
+                <span>Remember me for 30 days</span>
+            </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Log in</button>
+        <p class="auth-switch">No account yet? <a href="{{ url_for('register') }}">Sign up free</a></p>
+    </form>
+</div>
+
+</div>
+{% endblock %}

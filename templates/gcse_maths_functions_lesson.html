@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% block title %}Functions – GCSE Mathematics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Functions</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">Start with <strong>function machines</strong> (input → rule → output), then move to <strong>f(x)</strong> notation, composite functions, and inverses.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='functions') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <!-- 1. Function machines -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      Function machines
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 7</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>Before we write <strong>f(x)</strong>, most students meet functions as a <strong>function machine</strong>: a number goes in, a rule is applied, and exactly one number comes out.</p>
+      <ul style="line-height:1.9;">
+        <li>The <strong>input</strong> is the starting value.</li>
+        <li>The <strong>machine</strong> tells you what to do (e.g. multiply by 2, then add 3).</li>
+        <li>The <strong>output</strong> is the final answer.</li>
+      </ul>
+      <p>Apply each operation <strong>in order</strong>, working from left to right through the machine.</p>
+      <p><em>Example:</em> Input <strong>4</strong>, machine “× 2 then + 3”:</p>
+      <ul style="line-height:1.9;">
+        <li><strong>4 × 2 = 8</strong></li>
+        <li><strong>8 + 3 = 11</strong></li>
+        <li>Output = <strong>11</strong></li>
+      </ul>
+      <p>The same rule written with function notation is <strong>f(x) = 2x + 3</strong> and <strong>f(4) = 11</strong>.</p>
+
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="100%" viewBox="0 0 520 120" style="max-width:520px;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:8px;" aria-label="Function machine: input 4, multiply by 2, add 3, output 11">
+          <text x="260" y="22" text-anchor="middle" font-size="13" font-weight="600" fill="#333">Function machine — × 2 then + 3</text>
+          <!-- input -->
+          <rect x="12" y="44" width="72" height="44" rx="6" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+          <text x="48" y="62" text-anchor="middle" font-size="11" fill="#555">input</text>
+          <text x="48" y="80" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a6fa8">4</text>
+          <!-- arrow -->
+          <line x1="88" y1="66" x2="108" y2="66" stroke="#555" stroke-width="2"/>
+          <polygon points="108,66 100,62 100,70" fill="#555"/>
+          <!-- step 1 -->
+          <rect x="112" y="44" width="88" height="44" rx="6" fill="#fff" stroke="#01696f" stroke-width="2"/>
+          <text x="156" y="62" text-anchor="middle" font-size="11" fill="#555">operation</text>
+          <text x="156" y="80" text-anchor="middle" font-size="15" font-weight="bold" fill="#01696f">× 2</text>
+          <!-- arrow -->
+          <line x1="204" y1="66" x2="224" y2="66" stroke="#555" stroke-width="2"/>
+          <polygon points="224,66 216,62 216,70" fill="#555"/>
+          <!-- step 2 -->
+          <rect x="228" y="44" width="88" height="44" rx="6" fill="#fff" stroke="#01696f" stroke-width="2"/>
+          <text x="272" y="62" text-anchor="middle" font-size="11" fill="#555">operation</text>
+          <text x="272" y="80" text-anchor="middle" font-size="15" font-weight="bold" fill="#01696f">+ 3</text>
+          <!-- arrow -->
+          <line x1="320" y1="66" x2="340" y2="66" stroke="#555" stroke-width="2"/>
+          <polygon points="340,66 332,62 332,70" fill="#555"/>
+          <!-- output -->
+          <rect x="344" y="44" width="80" height="44" rx="6" fill="#fef4e8" stroke="#8a5300" stroke-width="2"/>
+          <text x="384" y="62" text-anchor="middle" font-size="11" fill="#555">output</text>
+          <text x="384" y="80" text-anchor="middle" font-size="16" font-weight="bold" fill="#8a5300">11</text>
+          <!-- working below -->
+          <text x="260" y="108" text-anchor="middle" font-size="12" fill="#555">4 → 8 → 11</text>
+        </svg>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin-top:6px;">Each box is one step. Work through the machine in order.</p>
+      </div>
+
+      <p><strong>Working backwards:</strong> if the output is <strong>11</strong> and the machine is “× 2 then + 3”, undo the steps in reverse:</p>
+      <ul style="line-height:1.9;">
+        <li>Subtract 3: <strong>11 − 3 = 8</strong></li>
+        <li>Divide by 2: <strong>8 ÷ 2 = 4</strong></li>
+        <li>So the input was <strong>4</strong>.</li>
+      </ul>
+      <p>This “reverse the machine” idea is what we later call an <strong>inverse function</strong> (Section 4).</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">A function machine does <strong>× 3</strong> then <strong>+ 5</strong>. The input is <strong>2</strong>. What is the output?</p>
+          <button class="btn mcq-btn" data-letter="A">8</button>
+          <button class="btn mcq-btn" data-letter="B">11</button>
+          <button class="btn mcq-btn" data-letter="C">16</button>
+          <button class="btn mcq-btn" data-letter="D">21</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 2. Notation and substitution -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      f(x) notation and substitution
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">Foundation+</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p><strong>f(x)</strong> means “the output of function f when the input is x”. It is <em>not</em> f multiplied by x.</p>
+      <p>Section 1 showed the same idea as a function machine. Here we write the rule in algebra: a machine “× 2 then + 3” becomes <strong>f(x) = 2x + 3</strong>. When you see <strong>f(4)</strong>, replace every <strong>x</strong> in the rule with <strong>4</strong>. If the input is negative, use brackets so you do not lose the sign.</p>
+      <p><em>Example:</em> If <strong>f(x) = 2x + 3</strong>, then:</p>
+      <ul style="line-height:1.9;">
+        <li><strong>f(4) = 2(4) + 3 = 11</strong></li>
+        <li><strong>f(−1) = 2(−1) + 3 = 1</strong></li>
+      </ul>
+      <p>If a question says <strong>f(x) = 5</strong>, it is different: you are being told the output and asked which input made it. Set the rule equal to 5 and solve the equation.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">If <strong>f(x) = 3x − 2</strong>, what is <strong>f(5)</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">7</button>
+          <button class="btn mcq-btn" data-letter="B">11</button>
+          <button class="btn mcq-btn" data-letter="C">13</button>
+          <button class="btn mcq-btn" data-letter="D">15</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 3. Composite functions -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Composite functions f(g(x))
+      <span style="font-size:0.65rem; margin-left:8px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Higher</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p><strong>f(g(x))</strong> means: apply <strong>g</strong> first, then apply <strong>f</strong> to the result.</p>
+      <p>The order matters. <strong>f(g(x))</strong> and <strong>g(f(x))</strong> usually give different answers, so always start from the inside brackets. For a number input, evaluate the inside function first. For an algebraic expression, substitute the whole expression into the outside function.</p>
+      <p><em>Example:</em> <strong>f(x) = 2x + 1</strong>, <strong>g(x) = x + 4</strong>, find <strong>f(g(3))</strong>:</p>
+      <ul style="line-height:1.9;">
+        <li><strong>g(3) = 3 + 4 = 7</strong></li>
+        <li><strong>f(7) = 2(7) + 1 = 15</strong></li>
+      </ul>
+      <p>As an expression: <strong>f(g(x)) = 2(x + 4) + 1 = 2x + 9</strong>.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">f(x) = x², g(x) = x + 1. What is <strong>f(g(2))</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">5</button>
+          <button class="btn mcq-btn" data-letter="B">9</button>
+          <button class="btn mcq-btn" data-letter="C">4</button>
+          <button class="btn mcq-btn" data-letter="D">3</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 4. Inverse functions -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Inverse functions f⁻¹(x)
+      <span style="font-size:0.65rem; margin-left:8px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Higher</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>The <strong>inverse function</strong> <strong>f⁻¹</strong> undoes f. If f maps x → y, then f⁻¹ maps y → x. It is like running the function machine <strong>backwards</strong> (Section 1).</p>
+      <p>For a linear function, the inverse reverses the operations in the opposite order. If <strong>f(x) = 2x + 5</strong>, the original function doubles then adds 5. The inverse subtracts 5 then divides by 2.</p>
+      <p><em>Example:</em> <strong>f(x) = 2x + 5</strong></p>
+      <ul style="line-height:1.9;">
+        <li>Write <strong>y = 2x + 5</strong></li>
+        <li>Rearrange: <strong>x = (y − 5) / 2</strong></li>
+        <li>So <strong>f⁻¹(x) = (x − 5) / 2</strong></li>
+      </ul>
+      <p>Check: <strong>f(f⁻¹(x)) = x</strong> when you substitute correctly.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">Find <strong>f⁻¹(x)</strong> when <strong>f(x) = 3x − 6</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">(x + 6) / 3</button>
+          <button class="btn mcq-btn" data-letter="B">(x − 6) / 3</button>
+          <button class="btn mcq-btn" data-letter="C">3x + 6</button>
+          <button class="btn mcq-btn" data-letter="D">x / 3 − 6</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 5. Graphs link -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Functions and graphs
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>The graph of <strong>y = f(x)</strong> shows all input–output pairs. Reading the graph is the <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='graphs') }}" style="color:#1a6fa8;">Graphs</a> topic; here we focus on the algebra of f(x).</p>
+      <p>Each point on the graph has coordinates <strong>(input, output)</strong>. For example, if <strong>f(2) = 7</strong>, the graph of <strong>y = f(x)</strong> passes through <strong>(2, 7)</strong>. If the graph is not defined for a value, such as <strong>x = 0</strong> in <strong>f(x) = 1/x</strong>, that input is outside the domain.</p>
+      <p style="margin-top:14px;">Practise in the generator: <strong>Functions</strong> (5 per difficulty, 4 randomised MCQs).</p>
+      <p style="margin:8px 0 0;">
+        <a href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=functions"
+           style="color:#1a6fa8;font-weight:600;">Open Functions in the generator →</a>
+      </p>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Functions — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Use this card to revise before a test. Each section above has a worked example and a Quick Check.</p>
+
+      <div style="text-align:center;margin:16px 0;">
+              <div class="revision-card-wrap">
+        <svg class="revision-card-svg lesson-quick-ref" width="100%" viewBox="0 0 760 250" style="max-width:760px;width:100%;height:auto;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:10px;" role="img" aria-label="Functions revision card">
+          <text x="380" y="28" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Functions — Revision Card</text>
+          <line x1="20" y1="38" x2="740" y2="38" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="20" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Function machines</text>
+          <text x="20" y="78" font-size="14" fill="#28251d">Input → operations in order → output</text>
+          <text x="20" y="98" font-size="14" fill="#28251d">Work backwards: undo each step in reverse</text>
+          <text x="20" y="122" font-size="15" fill="#1a6fa8" font-weight="bold">Notation</text>
+          <text x="20" y="142" font-size="14" fill="#28251d">f(a): substitute x = a into the rule</text>
+          <text x="20" y="162" font-size="14" fill="#28251d">f(x) = k: solve an equation for x</text>
+          <text x="20" y="182" font-size="14" fill="#28251d">f(3) is an output, not f × 3</text>
+          <line x1="390" y1="48" x2="390" y2="232" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="400" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Composite &amp; inverse</text>
+          <text x="400" y="78" font-size="14" fill="#28251d">f(g(x)): work out g(x) first, then apply f</text>
+          <text x="400" y="98" font-size="14" fill="#28251d">Order matters: f(g(x)) ≠ g(f(x))</text>
+          <text x="400" y="122" font-size="14" fill="#28251d">Inverse f⁻¹: swap x and y, then rearrange</text>
+          <text x="400" y="142" font-size="14" fill="#28251d">f⁻¹ undoes f: f(2)=7 → f⁻¹(7)=2</text>
+          <text x="400" y="166" font-size="15" fill="#1a6fa8" font-weight="bold">Watch out</text>
+          <text x="400" y="186" font-size="14" fill="#555555">Invalid inputs break the rule (x = 0 in 1/x)</text>
+        </svg>
+      </div>
+      </div>
+
+      <ul style="line-height:2;">
+        <li><strong>Function machine</strong> — input → operations in order → output</li>
+        <li><strong>Working backwards</strong> — undo each step in reverse to find the input</li>
+        <li><strong>f(a)</strong> — substitute x = a into the rule</li>
+        <li><strong>f(x) = k</strong> — solve an equation for x</li>
+        <li><strong>f(g(x))</strong> — find g(x) first, then apply f</li>
+        <li><strong>f⁻¹(x)</strong> — rearrange y = f(x) to get x in terms of y</li>
+        <li>Invalid inputs: values that break the rule (e.g. x = 0 for 1/x)</li>
+      </ul>
+    </div>
+  </details>
+
+</div>
+
+<div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+  <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+  <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='functions') }}"
+     style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+    Quick Test – Functions
+  </a>
+  <a href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=functions"
+     style="display:inline-block;margin-left:10px;background:#fff;color:#1a6fa8;border:1px solid #1a6fa8;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:700;">
+    Open Generator
+  </a>
+</div>
+
+{% endblock %}

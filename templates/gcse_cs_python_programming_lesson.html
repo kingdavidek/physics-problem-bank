@@ -1,0 +1,1342 @@
+{% extends "base.html" %}
+{% block title %}Python Programming – GCSE Computer Science{% endblock %}
+
+{% block content %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  /* Example code blocks — dark terminal style with syntax colours */
+  pre.py-snippet {
+    background: #0a0a0a;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    margin: 12px 0;
+    box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.45);
+  }
+  pre.py-snippet code {
+    font-family: 'Share Tech Mono', 'Consolas', 'Courier New', monospace;
+    color: #f5f5f5;
+    white-space: pre;
+    display: block;
+  }
+  pre.py-snippet .py-kw { color: #ff79c6; font-weight: 600; }
+  pre.py-snippet .py-builtin { color: #8be9fd; }
+  pre.py-snippet .py-str { color: #f1fa8c; }
+  pre.py-snippet .py-num { color: #bd93f9; }
+  pre.py-snippet .py-comment { color: #6272a4; font-style: italic; }
+  pre.py-snippet .py-fn { color: #50fa7b; }
+  pre.py-snippet .py-name { color: #f8f8f2; }
+
+  /* Live editor + output (playground section) */
+  .py-editor,
+  #py-output {
+    font-family: 'Share Tech Mono', 'Consolas', 'Courier New', monospace;
+    background: #0a0a0a;
+    color: #50fa7b;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+  }
+  .py-editor {
+    color: #f8f8f2;
+    padding: 12px 14px;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    width: 100%;
+    resize: vertical;
+  }
+  #py-output {
+    min-height: 48px;
+    margin-top: 12px;
+    padding: 14px 18px;
+    white-space: pre-wrap;
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
+
+  .lesson-inner > summary { list-style:none; }
+  .lesson-inner > summary::-webkit-details-marker { display:none; }
+</style>
+<script src="{{ url_for('static', filename='js/python-lesson-highlight.js') }}" defer></script>
+
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Python Programming</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">GCSE Computer Science programming in Python — variables, selection, iteration, strings, lists, functions, and file handling. Use this lesson for revision, then practise with generated exam-style questions.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">WJEC</span>
+    </div>
+  </div>
+
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='cs', topic='python_programming') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- 1. VARIABLES & DATA TYPES -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      Variables, Constants &amp; Data Types
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">1.1 Variables and assignment</summary>
+        <div style="padding:14px 16px;">
+          <p>Think of a <strong>variable</strong> as a labelled box in the computer’s memory: you give it a name, then you put a value inside. While your program runs, you can read that value, change it, or use it in calculations. GCSE exam questions often ask you to trace through code and state what each variable holds after each line — so it helps to picture the “box” updating step by step.</p>
+          <p>You create or update a variable with the <strong>assignment operator</strong> <code>=</code> (python understands a single "=" sign as “contains”, and not “equals”). Choose names that describe the data, such as <code>score</code> or <code>player_name</code>, rather than vague names like <code>x</code> unless the question uses them. In the example below, a quiz game starts with score 0, then adds 10 when the player answers correctly.</p>
+          <pre class="py-snippet"><code>name = "Alice"
+score = 0
+score = score + 10   # value can change</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Which line correctly stores the text <code>Year 11</code> in a variable?</p>
+              <button class="btn mcq-btn" data-letter="A">year = Year 11</button>
+              <button class="btn mcq-btn" data-letter="B">year = "Year 11"</button>
+              <button class="btn mcq-btn" data-letter="C">"year" = "Year 11"</button>
+              <button class="btn mcq-btn" data-letter="D">year == "Year 11"</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">1.2 The four data types</summary>
+        <div style="padding:14px 16px;">
+          <p>Every value in Python has a <strong>data type</strong>. The type tells the computer how to store the value and which operations are allowed — for example, you can add two integers, but joining two strings uses <code>+</code> to mean “stick together”, not “add mathematically”. At GCSE you need to recognise and use four main types:</p>
+          <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;text-align:center;font-size:.95rem;">
+            <code>int</code> whole numbers · <code>float</code> decimals · <code>str</code> text · <code>bool</code> True/False
+          </p>
+          <p><strong>Example:</strong> storing details for a student — their name is text (<code>str</code>), age is a whole number (<code>int</code>), height might be <code>1.72</code> metres (<code>float</code>), and whether they are enrolled is either <code>True</code> or <code>False</code> (<code>bool</code>). Booleans are essential later for <code>if</code> statements and loops.</p>
+          <pre class="py-snippet"><code>name = "Alice"        # string (str)
+age = 16              # integer (int)
+height = 1.72         # float (decimal)
+is_student = True     # boolean (bool)</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">What is the data type of <code>3.14</code>?</p>
+              <button class="btn mcq-btn" data-letter="A">int</button>
+              <button class="btn mcq-btn" data-letter="B">str</button>
+              <button class="btn mcq-btn" data-letter="C">float</button>
+              <button class="btn mcq-btn" data-letter="D">bool</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">1.3 Checking types with type()</summary>
+        <div style="padding:14px 16px;">
+          <p>If you are unsure what kind of value a variable holds — especially after <code>input()</code> — you can ask Python with <code>type(x)</code>. It returns something like <code>&lt;class 'int'&gt;</code>, which means “this value is an integer”. In exams, tracing programs often hinges on knowing whether you are working with a number or a string; checking the type is the first step when a program behaves oddly (for example, <code>"5" + "5"</code> gives <code>"55"</code>, not <code>10</code>).</p>
+          <p><strong>Remember:</strong> <code>False</code> and <code>True</code> are booleans (no quotes). The text <code>"False"</code> is a string — a common trick in multiple-choice questions.</p>
+          <pre class="py-snippet"><code>print(type(42))        # &lt;class 'int'&gt;
+print(type("hello"))  # &lt;class 'str'&gt;
+print(type(True))     # &lt;class 'bool'&gt;</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">Which value is a boolean?</p>
+              <button class="btn mcq-btn" data-letter="A">False</button>
+              <button class="btn mcq-btn" data-letter="B">"False"</button>
+              <button class="btn mcq-btn" data-letter="C">0</button>
+              <button class="btn mcq-btn" data-letter="D">"True"</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- 2. INPUT & OUTPUT -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Input &amp; Output
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">2.1 print() — displaying output</summary>
+        <div style="padding:14px 16px;">
+          <p>Programs need a way to show results on the screen. In Python, <code>print()</code> displays whatever you put inside the brackets. It is one of the first commands you learn because almost every program uses it — from a simple “Hello, World!” to showing a final score or error message.</p>
+          <p>You can print several items in one line. Using <code>+</code> only works sensibly when you are joining <strong>strings</strong> (and you must convert numbers with <code>str()</code> if needed). Using <strong>commas</strong> is often easier: Python converts each value to text and puts a space between them automatically — so <code>print("Score:", 42)</code> displays <code>Score: 42</code> without you typing spaces yourself.</p>
+          <pre class="py-snippet"><code>print("Hello, World!")
+print("Score:", 42)
+print("Hello, " + "Alice" + "!")</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="D">
+              <p style="margin:0 0 10px;">What does <code>print("Age", 16)</code> display?</p>
+              <button class="btn mcq-btn" data-letter="A">Age16</button>
+              <button class="btn mcq-btn" data-letter="B">"Age" 16</button>
+              <button class="btn mcq-btn" data-letter="C">Age + 16</button>
+              <button class="btn mcq-btn" data-letter="D">Age 16</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">2.2 input() and type conversion</summary>
+        <div style="padding:14px 16px;">
+          <p>Interactive programs pause and wait for the user to type something. The <code>input()</code> function shows a prompt (the message in the brackets), reads what the user types, and returns it to your program. That makes programs feel personal — quizzes, login screens, and calculators all rely on <code>input()</code>.</p>
+          <p>Here is the catch that appears in almost every GCSE paper: <code>input()</code> <strong>always returns a string</strong>, even if the user types digits. So if they enter <code>17</code>, Python stores <code>"17"</code> (text), not the number 17. Before adding, subtracting, or comparing numerically, convert with <code>int()</code> for whole numbers or <code>float()</code> for decimals.</p>
+          <pre class="py-snippet"><code>name = input("Enter your name: ")
+print("Hello, " + name + "!")
+
+age = int(input("Enter your age: "))
+print("Next year you will be", age + 1)</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">The user enters <code>17</code>. Which stores it as a number?</p>
+              <button class="btn mcq-btn" data-letter="A">age = input("Age: ")</button>
+              <button class="btn mcq-btn" data-letter="B">age = int(input("Age: "))</button>
+              <button class="btn mcq-btn" data-letter="C">age = str(input("Age: "))</button>
+              <button class="btn mcq-btn" data-letter="D">age = input(17)</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- 3. OPERATORS -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Arithmetic &amp; Comparison Operators
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">3.1 Arithmetic operators</summary>
+        <div style="padding:14px 16px;">
+          <p>Arithmetic operators let your program do maths. You will use <code>+</code>, <code>-</code>, and <code>*</code> in the same way as in mathematics. Division <code>/</code> always gives a <strong>float</strong> (decimal), even when the answer is whole — so <code>10 / 2</code> is <code>5.0</code>, not <code>5</code>.</p>
+          <p>Three operators are especially common in GCSE questions: <code>//</code> (integer division — how many whole times one number fits into another), <code>%</code> (modulus — the remainder left over), and <code>**</code> (power). For example, <code>17 % 5</code> is <code>2</code> because 17 = 3×5 + 2; modulus is useful for checking even numbers (<code>n % 2 == 0</code>) or cycling through menu options.</p>
+          <pre class="py-snippet"><code>a, b = 10, 3
+print(a + b)    # 13  addition
+print(a - b)    # 7   subtraction
+print(a * b)    # 30  multiplication
+print(a / b)    # 3.333...  division (float)
+print(a // b)   # 3   integer division
+print(a % b)    # 1   modulus (remainder)
+print(a ** b)   # 1000  power</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">What is <code>17 % 5</code>?</p>
+              <button class="btn mcq-btn" data-letter="A">3.4</button>
+              <button class="btn mcq-btn" data-letter="B">3</button>
+              <button class="btn mcq-btn" data-letter="C">2</button>
+              <button class="btn mcq-btn" data-letter="D">22</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">3.2 Comparison operators</summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Comparison operators</strong> ask a yes/no question about two values. The answer is always a boolean: <code>True</code> if the comparison holds, <code>False</code> if it does not. These operators are the building blocks of <code>if</code> statements — your program branches depending on whether the condition is true.</p>
+          <p>Students often mix up <code>=</code> and <code>==</code>. A single <code>=</code> <strong>assigns</strong> a value to a variable (<code>score = 10</code>). Double <code>==</code> <strong>compares</strong> two values for equality (<code>score == 10</code>). Using <code>=</code> inside an <code>if</code> by mistake is a syntax error in Python and a frequent exam trap.</p>
+          <table style="width:100%;border-collapse:collapse;margin:10px 0;font-size:1rem;">
+            <tr style="background:#eaf4fb;"><th style="padding:8px;text-align:left;border:1px solid #d4e6f1;">Operator</th><th style="padding:8px;border:1px solid #d4e6f1;">Meaning</th></tr>
+            <tr><td style="padding:8px;border:1px solid #e2e8f0;"><code>==</code></td><td style="padding:8px;border:1px solid #e2e8f0;">equal to</td></tr>
+            <tr><td style="padding:8px;border:1px solid #e2e8f0;"><code>!=</code></td><td style="padding:8px;border:1px solid #e2e8f0;">not equal</td></tr>
+            <tr><td style="padding:8px;border:1px solid #e2e8f0;"><code>&lt;</code> <code>&gt;</code> <code>&lt;=</code> <code>&gt;=</code></td><td style="padding:8px;border:1px solid #e2e8f0;">less / greater (or equal)</td></tr>
+          </table>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">Which checks if variable <code>x</code> equals 10?</p>
+              <button class="btn mcq-btn" data-letter="A">x == 10</button>
+              <button class="btn mcq-btn" data-letter="B">x = 10</button>
+              <button class="btn mcq-btn" data-letter="C">x === 10</button>
+              <button class="btn mcq-btn" data-letter="D">x != 10</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">3.3 Comparisons in conditions</summary>
+        <div style="padding:14px 16px;">
+          <p>Comparisons really matter when combined with <code>if</code>. The program below reads an age, converts it to an integer, then decides which message to show. Notice how <code>age >= 18</code> is a question: “Is age greater than or equal to 18?” — only if the answer is <code>True</code> does Python run the indented block underneath.</p>
+          <p>Python also allows “between” checks in one line: <code>1 &lt; x &lt; 10</code> means x is greater than 1 <em>and</em> less than 10. That is clearer than chaining awkward <code>and</code> expressions and often appears in mark schemes.</p>
+          <pre class="py-snippet"><code>age = int(input("Enter your age: "))
+if age >= 18:
+    print("You are an adult.")
+else:
+    print("You are not yet an adult.")</code></pre>
+          <p style="font-size:1rem;color:#8a5300;"><strong>Exam pitfall:</strong> comparing a string to a number always fails. <code>"10" == 10</code> is <code>False</code> because the types differ — always use <code>int(input(...))</code> when you need numeric comparisons.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="D">
+              <p style="margin:0 0 10px;">Python allows <code>1 &lt; x &lt; 10</code> to test if x is between 1 and 10. This is equivalent to:</p>
+              <button class="btn mcq-btn" data-letter="A">x &gt; 1 or x &lt; 10</button>
+              <button class="btn mcq-btn" data-letter="B">x &lt; 1 and x &gt; 10</button>
+              <button class="btn mcq-btn" data-letter="C">x == 1 and x == 10</button>
+              <button class="btn mcq-btn" data-letter="D">x &gt; 1 and x &lt; 10</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- 4. SELECTION -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Selection: if / elif / else
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">4.1 if and else</summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Selection</strong> means your program chooses different paths depending on conditions — like a fork in the road. The simplest form is <code>if</code> … <code>else</code>: one block runs when the test is true, another when it is false. Every GCSE board expects you to read and write these structures accurately.</p>
+          <p>After <code>if</code> you write a condition (something that evaluates to <code>True</code> or <code>False</code>), then a <strong>colon</strong> <code>:</code>. The lines that belong to that branch must be <strong>indented</strong> (usually four spaces). In the quiz example, a score of 65 is at least 50, so “Pass” is printed; otherwise “Fail” would run.</p>
+          <pre class="py-snippet"><code>score = 65
+if score >= 50:
+    print("Pass")
+else:
+    print("Fail")</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">What must appear at the end of an <code>if</code> line?</p>
+              <button class="btn mcq-btn" data-letter="A">;</button>
+              <button class="btn mcq-btn" data-letter="B">then</button>
+              <button class="btn mcq-btn" data-letter="C">:</button>
+              <button class="btn mcq-btn" data-letter="D">.</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">4.2 elif — multiple paths</summary>
+        <div style="padding:14px 16px;">
+          <p>When there are more than two outcomes, use <code>elif</code> (short for “else if”). Python checks conditions <strong>from top to bottom</strong> and runs the <strong>first</strong> block whose condition is true. After that, it skips the remaining <code>elif</code> and <code>else</code> branches — even if another condition would also have been true.</p>
+          <p><strong>Example:</strong> with a score of 82, <code>grade &gt;= 90</code> is false, but <code>grade &gt;= 80</code> is true, so “Grade: A” prints. The later tests for B and below are never reached. Order matters: put stricter (higher) thresholds first, or a general condition like <code>grade &gt;= 50</code> might “catch” everyone before more specific grades are tested.</p>
+          <pre class="py-snippet"><code>grade = int(input("Enter percentage: "))
+if grade >= 90:
+    print("Grade: A*")
+elif grade >= 80:
+    print("Grade: A")
+elif grade >= 70:
+    print("Grade: B")
+else:
+    print("Grade: below B")</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Score is 82. Which runs first?</p>
+              <button class="btn mcq-btn" data-letter="A">grade &gt;= 90</button>
+              <button class="btn mcq-btn" data-letter="B">grade &gt;= 80</button>
+              <button class="btn mcq-btn" data-letter="C">else</button>
+              <button class="btn mcq-btn" data-letter="D">grade &gt;= 70</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">4.3 Indentation</summary>
+        <div style="padding:14px 16px;">
+          <p>Unlike some languages, Python does not use curly braces <code>{ }</code> to mark blocks. Instead, <strong>indentation is part of the syntax</strong>: lines that belong to an <code>if</code>, <code>elif</code>, <code>else</code>, loop, or function must be indented further than the line above. If you forget to indent, Python raises an <code>IndentationError</code>; if you indent by mistake, code may run when you did not intend it to.</p>
+          <p>Use a consistent style — four spaces per level is standard in GCSE mark schemes. The commented “WRONG” line below would run every time because it is not inside the <code>if</code> block. When revising, trace indentation with a pencil: draw a box around each indented block.</p>
+          <pre class="py-snippet"><code>if 5 > 3:
+    print("Yes")   # CORRECT — indented
+
+# print("Yes")   # WRONG — would run every time</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;"><code>=</code> is for assignment. <code>==</code> is for:</p>
+              <button class="btn mcq-btn" data-letter="A">comparison</button>
+              <button class="btn mcq-btn" data-letter="B">assignment</button>
+              <button class="btn mcq-btn" data-letter="C">printing</button>
+              <button class="btn mcq-btn" data-letter="D">looping</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">4.4 and, or, not</summary>
+        <div style="padding:14px 16px;">
+          <p>Sometimes one comparison is not enough. You can combine conditions with <strong>logical operators</strong>: <code>and</code> (both must be true), <code>or</code> (at least one must be true), and <code>not</code> (reverses true to false and vice versa). They are used constantly in validation — for example, checking that a user is old enough <em>and</em> has ID before entry.</p>
+          <p><strong>Example:</strong> a 17-year-old with ID cannot enter because <code>age &gt;= 18</code> is false, so the whole <code>and</code> expression is false even though <code>has_id</code> is true. With <code>or</code>, only one part needs to be true. Exam trace tables often ask you to evaluate combined expressions step by step.</p>
+          <pre class="py-snippet"><code>age = 17
+has_id = True
+if age >= 18 and has_id:
+    print("You may enter.")
+# and — both True   |   or — at least one True   |   not — flips True/False</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;"><code>True and False</code> evaluates to:</p>
+              <button class="btn mcq-btn" data-letter="A">True</button>
+              <button class="btn mcq-btn" data-letter="B">True or False</button>
+              <button class="btn mcq-btn" data-letter="C">False</button>
+              <button class="btn mcq-btn" data-letter="D">None</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">4.5 Nested if</summary>
+        <div style="padding:14px 16px;">
+          <p>A <strong>nested <code>if</code></strong> is an <code>if</code> statement inside another <code>if</code> (or <code>else</code>) block. You use this when a decision depends on an earlier decision — first check whether it is raining; only if it is, ask whether it is windy and choose the umbrella type.</p>
+          <p>Each level needs its own indentation. In the example, if <code>rain</code> is false, the inner <code>if windy</code> is never evaluated and “No umbrella needed.” runs. Nesting is clearer than one long line of <code>and</code> when the logic has natural stages, but too many levels can be hard to read — another <code>elif</code> chain is sometimes better.</p>
+          <pre class="py-snippet"><code>rain = True
+windy = False
+if rain:
+    if windy:
+        print("Sturdy umbrella!")
+    else:
+        print("Normal umbrella.")
+else:
+    print("No umbrella needed.")</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Put the most <strong>specific</strong> conditions first in an if/elif chain so that:</p>
+              <button class="btn mcq-btn" data-letter="A">all blocks always run</button>
+              <button class="btn mcq-btn" data-letter="B">a general condition does not hide a specific one</button>
+              <button class="btn mcq-btn" data-letter="C">indentation is optional</button>
+              <button class="btn mcq-btn" data-letter="D">loops run faster</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='python_programming') }}?difficulty=foundational&amp;mode=practice" style="display:inline-block;margin:4px 0 8px;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Foundational</a>
+
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- 5. ITERATION -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Iteration: for &amp; while Loops
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">5.1 for loops and range()</summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Iteration</strong> means repeating code — essential for processing lists, counting, and menus. A <code>for</code> loop runs once for each item in a sequence. The built-in <code>range()</code> function generates a sequence of numbers without you typing them all out.</p>
+          <p><code>range(5)</code> produces 0, 1, 2, 3, 4 — it <strong>starts at 0</strong> and stops <strong>before</strong> the number you pass in. That “stop before” rule causes many off-by-one errors in exams: <code>range(1, 11)</code> gives 1 up to 10, not 11. You can also add a third argument for steps, including negative steps for countdowns.</p>
+          <pre class="py-snippet"><code>for i in range(5):
+    print(i)
+
+for n in range(1, 11):      # 1 to 10
+    print(n)
+
+for n in range(10, 0, -1):  # countdown
+    print(n)</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">What does <code>list(range(3))</code> produce?</p>
+              <button class="btn mcq-btn" data-letter="A">[0, 1, 2]</button>
+              <button class="btn mcq-btn" data-letter="B">[1, 2, 3]</button>
+              <button class="btn mcq-btn" data-letter="C">[0, 1, 2, 3]</button>
+              <button class="btn mcq-btn" data-letter="D">[3, 2, 1]</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">5.2 Looping through lists and strings</summary>
+        <div style="padding:14px 16px;">
+          <p>You do not have to use <code>range()</code> every time. A <code>for</code> loop can walk through each item in a <strong>list</strong> or each character in a <strong>string</strong> directly. The loop variable (<code>fruit</code> below) takes each value in turn — first <code>"apple"</code>, then <code>"banana"</code>, then <code>"cherry"</code>.</p>
+          <p>This style is ideal when you care about the items themselves (printing names, totalling scores) rather than the index position. The same pattern works for a username string: <code>for letter in "Python"</code> prints one letter per line. GCSE tasks often ask you to accumulate a total inside such a loop.</p>
+          <pre class="py-snippet"><code>fruits = ["apple", "banana", "cherry"]
+for fruit in fruits:
+    print(fruit)</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="D">
+              <p style="margin:0 0 10px;"><code>range(2, 8)</code> includes which numbers?</p>
+              <button class="btn mcq-btn" data-letter="A">2 to 8 inclusive</button>
+              <button class="btn mcq-btn" data-letter="B">2 to 7 inclusive</button>
+              <button class="btn mcq-btn" data-letter="C">0 to 8</button>
+              <button class="btn mcq-btn" data-letter="D">2, 3, 4, 5, 6, 7</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">5.3 while loops</summary>
+        <div style="padding:14px 16px;">
+          <p>A <code>while</code> loop repeats <strong>as long as</strong> its condition stays true. Unlike a <code>for</code> loop, you do not always know in advance how many times it will run — it is the right choice when you repeat until something happens (valid password entered, game still running, counter reached a limit).</p>
+          <p>Before each repetition, Python checks the condition at the <strong>top</strong> of the loop. You must include code that eventually makes the condition false; otherwise you get an <strong>infinite loop</strong>. The counter example adds 1 each time; the password example keeps asking until the user types <code>"secret"</code>.</p>
+          <pre class="py-snippet"><code>count = 1
+while count <= 5:
+    print(count)
+    count = count + 1
+
+password = ""
+while password != "secret":
+    password = input("Enter password: ")
+print("Access granted.")</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">A <code>while</code> loop checks its condition:</p>
+              <button class="btn mcq-btn" data-letter="A">once, at the end</button>
+              <button class="btn mcq-btn" data-letter="B">at the start of each repetition</button>
+              <button class="btn mcq-btn" data-letter="C">only if break is used</button>
+              <button class="btn mcq-btn" data-letter="D">never</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">5.4 break and continue</summary>
+        <div style="padding:14px 16px;">
+          <p>Two keywords give you extra control inside loops. <code>break</code> <strong>stops the loop immediately</strong> — useful when you have found what you were searching for and do not need to check the rest. <code>continue</code> <strong>skips the rest of the current repetition</strong> and jumps to the next one — handy for ignoring certain values without leaving the loop entirely.</p>
+          <p>In the first example, as soon as <code>item == 9</code>, “Found!” prints and <code>break</code> ends the loop; 5 is never processed. In the second, even numbers hit <code>continue</code>, so <code>print(i)</code> only runs for odd numbers. Trace these carefully in exams: <code>continue</code> does not exit the whole loop.</p>
+          <pre class="py-snippet"><code>for item in [4, 7, 9, 5]:
+    if item == 9:
+        print("Found!")
+        break
+
+for i in range(10):
+    if i % 2 == 0:
+        continue
+    print(i)   # odd numbers only</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;"><code>break</code> in a loop:</p>
+              <button class="btn mcq-btn" data-letter="A">exits the loop immediately</button>
+              <button class="btn mcq-btn" data-letter="B">skips to the next iteration</button>
+              <button class="btn mcq-btn" data-letter="C">pauses the program</button>
+              <button class="btn mcq-btn" data-letter="D">restarts the loop</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- 6. STRINGS -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      String Manipulation
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">6.1 String methods</summary>
+        <div style="padding:14px 16px;">
+          <p>A <strong>string</strong> is a sequence of characters — names, passwords, messages, or single letters. Python provides <strong>methods</strong>: functions that belong to a particular string and are called with a dot, such as <code>text.lower()</code>. They do not change the original string; they return a new one (strings are immutable), which is worth remembering when tracing code.</p>
+          <p>Common GCSE methods include <code>strip()</code> to remove spaces from the ends (useful after <code>input()</code>), <code>lower()</code> and <code>upper()</code> for case-insensitive comparisons, and <code>len()</code> for the number of characters. Validating login details often combines these: strip spaces, then compare with <code>lower()</code> so <code>"Admin"</code> matches <code>"admin"</code>.</p>
+          <pre class="py-snippet"><code>text = "  Hello, World!  "
+print(text.strip())    # removes outer spaces
+print(text.lower())    # lowercase
+print(text.upper())    # uppercase
+print(len(text))       # length</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;"><code>"  hi  ".strip()</code> returns:</p>
+              <button class="btn mcq-btn" data-letter="A">"  hi  "</button>
+              <button class="btn mcq-btn" data-letter="B">"hi  "</button>
+              <button class="btn mcq-btn" data-letter="C">"hi"</button>
+              <button class="btn mcq-btn" data-letter="D">" HI "</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">6.2 Indexing and slicing</summary>
+        <div style="padding:14px 16px;">
+          <p>Each character in a string has a position called an <strong>index</strong>. Python counts from <strong>zero</strong>: the first character of <code>"Python"</code> is <code>text[0]</code> which is <code>'P'</code>. Negative indices count from the end: <code>text[-1]</code> is the last character (<code>'n'</code>).</p>
+          <p><strong>Slicing</strong> extracts part of a string: <code>text[0:3]</code> takes characters at index 0, 1, and 2 — it stops <em>before</em> index 3, giving <code>"Pyt"</code>. The same rules apply to lists. Exam questions may ask for the substring starting at a given index or the effect of slicing on a word like a password or postcode.</p>
+          <pre class="py-snippet"><code>text = "Python"
+print(text[0])     # P
+print(text[-1])    # n (last character)
+print(text[0:3])   # Pyt</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">The first character of a string is at index:</p>
+              <button class="btn mcq-btn" data-letter="A">1</button>
+              <button class="btn mcq-btn" data-letter="B">0</button>
+              <button class="btn mcq-btn" data-letter="C">-0</button>
+              <button class="btn mcq-btn" data-letter="D">len(text)</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- 7. LISTS -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Lists (Arrays)
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">7.1 Creating lists and indexing</summary>
+        <div style="padding:14px 16px;">
+          <p>A <strong>list</strong> stores several values in order inside square brackets <code>[ ]</code>, separated by commas. In GCSE Computer Science, lists are the main way to represent collections — test scores, usernames, prices, or characters in a game. Items can be the same type or mixed, though exam programs usually use one type for clarity.</p>
+          <p>You access items by index, starting at 0: <code>fruits[0]</code> is <code>"apple"</code>. You can also change an item with assignment: <code>fruits[1] = "blueberry"</code> replaces the second element. Using <code>fruits[-1]</code> is a neat way to get the last item without knowing the length.</p>
+          <pre class="py-snippet"><code>fruits = ["apple", "banana", "cherry"]
+print(fruits[0])    # apple
+print(fruits[-1])   # cherry
+fruits[1] = "blueberry"</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">For <code>nums = [10, 20, 30]</code>, what is <code>nums[-1]</code>?</p>
+              <button class="btn mcq-btn" data-letter="A">10</button>
+              <button class="btn mcq-btn" data-letter="B">20</button>
+              <button class="btn mcq-btn" data-letter="C">30</button>
+              <button class="btn mcq-btn" data-letter="D">-30</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">7.2 append, insert, remove, pop</summary>
+        <div style="padding:14px 16px;">
+          <p>Lists can grow and shrink while your program runs. <code>append(item)</code> adds to the <strong>end</strong> — like adding an item to the bottom of a shopping list. <code>insert(index, item)</code> places something at a specific position; existing items shift along. <code>remove(value)</code> deletes the first matching value by content, not by index.</p>
+          <p><code>pop()</code> removes and returns the <strong>last</strong> item (useful for a stack of undo actions). Know the difference between removing by value (<code>remove("milk")</code>) and by position — exam pseudocode often says “add to end of list”, which maps to <code>append</code>.</p>
+          <pre class="py-snippet"><code>shopping = ["bread", "milk"]
+shopping.append("eggs")
+shopping.insert(1, "cheese")
+shopping.remove("milk")
+last = shopping.pop()</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;"><code>append()</code> adds an item:</p>
+              <button class="btn mcq-btn" data-letter="A">at the end of the list</button>
+              <button class="btn mcq-btn" data-letter="B">at the start only</button>
+              <button class="btn mcq-btn" data-letter="C">at a given index</button>
+              <button class="btn mcq-btn" data-letter="D">and returns the list length</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">7.3 Looping and the in keyword</summary>
+        <div style="padding:14px 16px;">
+          <p>Combining lists with <code>for</code> loops is a classic GCSE pattern. To find the <strong>total</strong> of numbers in a list, start a variable at 0, then add each score inside the loop. This is called an <strong>accumulator</strong> — the variable “accumulates” the running sum.</p>
+          <p>The keyword <code>in</code> checks membership: <code>"apple" in fruits</code> is <code>True</code> if that value appears anywhere in the list. That is cleaner than looping manually when you only need a yes/no answer. Remember: valid indexes for a list of length 5 are 0 to 4, not 0 to 5 — using index 5 causes an <code>IndexError</code>.</p>
+          <pre class="py-snippet"><code>scores = [12, 45, 67, 89, 34]
+total = 0
+for s in scores:
+    total = total + s
+
+if "apple" in fruits:
+    print("We have apples!")</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Last valid index of a list with 5 items (indexes 0–4) is:</p>
+              <button class="btn mcq-btn" data-letter="A">5</button>
+              <button class="btn mcq-btn" data-letter="B">4</button>
+              <button class="btn mcq-btn" data-letter="C">len(list)</button>
+              <button class="btn mcq-btn" data-letter="D">0</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">7.4 Slicing and 2D lists</summary>
+        <div style="padding:14px 16px;">
+          <p>List slicing uses the same <code>[start:stop]</code> idea as strings: <code>letters[1:4]</code> returns a new list containing elements at indexes 1, 2, and 3 — here <code>["b", "c", "d"]</code>. Slicing is useful for taking a subset of results without copying every element by hand.</p>
+          <p>A <strong>2D list</strong> is a list where each item is another list — like a grid or spreadsheet. <code>grid[1][2]</code> means row 1, column 2 (remember both start at 0). In the example, row 1 is <code>[4, 5, 6]</code> and column 2 of that row is <code>6</code>. Exam questions may show a table of temperatures or a tic-tac-toe board stored this way.</p>
+          <pre class="py-snippet"><code>letters = ["a", "b", "c", "d", "e"]
+print(letters[1:4])   # ["b", "c", "d"]
+
+grid = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+print(grid[1][2])    # 6</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">A 2D list is best described as:</p>
+              <button class="btn mcq-btn" data-letter="A">a list where each item can be another list</button>
+              <button class="btn mcq-btn" data-letter="B">a list with exactly two items</button>
+              <button class="btn mcq-btn" data-letter="C">two variables with the same name</button>
+              <button class="btn mcq-btn" data-letter="D">a list that only stores integers</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='python_programming') }}?difficulty=intermediate&amp;mode=practice" style="display:inline-block;margin:4px 0 8px;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Intermediate</a>
+
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- 8. FUNCTIONS -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+      Functions &amp; Procedures
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">8.1 def and calling procedures</summary>
+        <div style="padding:14px 16px;">
+          <p>As programs grow, repeating the same lines in many places becomes messy. A <strong>function</strong> (or <strong>procedure</strong> when it does not return a value) groups code under one name. You define it once with <code>def</code>, then <strong>call</strong> it whenever you need that behaviour — like pressing a button that runs a saved set of instructions.</p>
+          <p>The example defines <code>greet()</code> with two print lines indented underneath. Calling <code>greet()</code> twice runs those lines twice. Definitions are not run until you call the function; exam trace questions often jump over the <code>def</code> block until the call line is reached.</p>
+          <pre class="py-snippet"><code>def greet():
+    print("Hello!")
+    print("Welcome.")
+
+greet()
+greet()</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">Functions in Python are created with:</p>
+              <button class="btn mcq-btn" data-letter="A">function</button>
+              <button class="btn mcq-btn" data-letter="B">proc</button>
+              <button class="btn mcq-btn" data-letter="C">def</button>
+              <button class="btn mcq-btn" data-letter="D">fn</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">8.2 Parameters and arguments</summary>
+        <div style="padding:14px 16px;">
+          <p>Functions become far more useful when they accept <strong>parameters</strong> — placeholders in the definition for values that can change each time. When you call the function, the actual values you pass in are called <strong>arguments</strong>.</p>
+          <p>In <code>def greet_user(name):</code>, <code>name</code> is a parameter. When you write <code>greet_user("Alice")</code>, <code>"Alice"</code> is the argument: inside the function, <code>name</code> temporarily means <code>"Alice"</code>. The same function works for any name without rewriting the code — a core idea in structured programming for GCSE.</p>
+          <pre class="py-snippet"><code>def greet_user(name):
+    print("Hello, " + name + "!")
+
+greet_user("Alice")
+greet_user("Bob")</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">In <code>greet_user("Alice")</code>, <code>"Alice"</code> is called the:</p>
+              <button class="btn mcq-btn" data-letter="A">parameter</button>
+              <button class="btn mcq-btn" data-letter="B">argument</button>
+              <button class="btn mcq-btn" data-letter="C">return value</button>
+              <button class="btn mcq-btn" data-letter="D">global variable</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">8.3 return values</summary>
+        <div style="padding:14px 16px;">
+          <p>A <strong>function with a return value</strong> sends a result back to the line that called it. Use <code>return</code> followed by the value or expression. The caller can store that result in a variable, use it in a condition, or pass it to another function — the function becomes like a small machine that computes an answer.</p>
+          <p><strong>Example:</strong> <code>add(5, 3)</code> returns <code>8</code>, which is stored in <code>total</code> and then printed. <code>is_even(4)</code> returns <code>True</code> because <code>4 % 2 == 0</code>. In exams, distinguish <code>return</code> (sends data back) from <code>print()</code> (shows on screen only). If you only print inside a function, the rest of the program cannot use that value in further calculations.</p>
+          <pre class="py-snippet"><code>def add(a, b):
+    return a + b
+
+total = add(5, 3)
+print(total)   # 8
+
+def is_even(number):
+    return number % 2 == 0</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;"><code>return</code> sends a value:</p>
+              <button class="btn mcq-btn" data-letter="A">back to the code that called the function</button>
+              <button class="btn mcq-btn" data-letter="B">only to the screen</button>
+              <button class="btn mcq-btn" data-letter="C">to a file automatically</button>
+              <button class="btn mcq-btn" data-letter="D">to the Python interpreter only</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">8.4 Local and global scope</summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Scope</strong> means where a variable name can be used. A variable created <strong>inside</strong> a function is <strong>local</strong>: it exists only while that function runs and cannot be seen outside it. A variable created at the top level of the program (not indented under a function) is <strong>global</strong> and can be read from inside functions unless you create a local with the same name.</p>
+          <p>In the example, <code>local_name</code> works only inside <code>show()</code>. Trying to <code>print(local_name)</code> after the function finishes causes a <code>NameError</code> — a common exam question. Understanding scope helps you explain why functions are self-contained and reduce accidental changes elsewhere in the program.</p>
+          <pre class="py-snippet"><code>name = "global"
+
+def show():
+    local_name = "local"
+    print(name)       # can read global
+    print(local_name)
+
+show()
+# print(local_name)  # NameError — local only inside show()</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">A variable created inside a function is:</p>
+              <button class="btn mcq-btn" data-letter="A">global</button>
+              <button class="btn mcq-btn" data-letter="B">constant</button>
+              <button class="btn mcq-btn" data-letter="C">local to that function</button>
+              <button class="btn mcq-btn" data-letter="D">always a string</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- 9. FILE HANDLING -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">9</span>
+      File Handling
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">9.1 Opening files and modes</summary>
+        <div style="padding:14px 16px;">
+          <p>Programs often need to save data between runs — high scores, user settings, or logs. <strong>File handling</strong> lets Python read from and write to text files on disk. You open a file with <code>open()</code>, giving a filename and a <strong>mode</strong>: <code>"r"</code> read only, <code>"w"</code> write (creates a new file or <strong>overwrites</strong> an existing one), and <code>"a"</code> append (adds to the end without deleting what was already there).</p>
+          <p>Always use <code>with open("filename", mode) as f:</code> when you can. The <code>with</code> block ensures the file is <strong>closed properly</strong> when you finish, even if an error occurs — examiners expect this style because it avoids leaving files locked open.</p>
+          <pre class="py-snippet"><code>with open("data.txt", "w") as f:
+    f.write("Hello\n")
+
+with open("data.txt", "r") as f:
+    content = f.read()
+    print(content)</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Mode <code>"w"</code> when opening a file:</p>
+              <button class="btn mcq-btn" data-letter="A">reads only — file must exist</button>
+              <button class="btn mcq-btn" data-letter="B">writes and overwrites (or creates new)</button>
+              <button class="btn mcq-btn" data-letter="C">appends to the end only</button>
+              <button class="btn mcq-btn" data-letter="D">reads and writes without overwriting</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">9.2 Reading line by line</summary>
+        <div style="padding:14px 16px;">
+          <p>Large files are usually processed <strong>one line at a time</strong> rather than loading everything at once. A <code>for</code> loop over the file object reads each line in turn. Text files often end lines with an invisible newline character; <code>line.strip()</code> removes spaces and newlines from the ends so you can compare or print clean text — for example matching a username without extra spaces breaking the comparison.</p>
+          <p><strong>Example use:</strong> a file of quiz scores where each line is one pupil’s result; the loop could convert each line to an integer and add to a total, or count how many lines contain “Pass”.</p>
+          <pre class="py-snippet"><code>with open("data.txt", "r") as f:
+    for line in f:
+        print(line.strip())</code></pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;"><code>with open(...) as f:</code> is recommended because:</p>
+              <button class="btn mcq-btn" data-letter="A">the file is closed automatically when the block ends</button>
+              <button class="btn mcq-btn" data-letter="B">it runs code faster</button>
+              <button class="btn mcq-btn" data-letter="C">it converts files to lists</button>
+              <button class="btn mcq-btn" data-letter="D">it only works for .txt files</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='python_programming') }}?difficulty=difficult&amp;mode=practice" style="display:inline-block;margin:4px 0 8px;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Difficult</a>
+
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- 10. LIVE RUNNER -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">10</span>
+      Try It Yourself — Live Python Runner
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>The best way to understand Python is to try it. Use the editor below to type short programs from this lesson — change values, break things on purpose, and see what happens. When your code calls <code>input()</code>, a prompt appears below and waits for you to type a response and press <strong>Enter</strong> — just like a real terminal. Nothing is sent to a server; Python runs in your browser.</p>
+
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-weight:600;margin-bottom:4px;color:#1a6fa8;">Your Python code:</label>
+        <textarea id="py-code" class="py-editor" rows="8" placeholder="print('Hello')">name = input("What is your name? ")
+print("Hello, " + name)</textarea>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+        <button id="py-run" type="button" onclick="runInteractive()" style="background:#1a6fa8;color:#fff;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-weight:600;">Run ▶</button>
+        <div id="py-input-container" style="display:none;gap:6px;align-items:center;flex:1;min-width:200px;">
+          <span style="font-weight:600;color:var(--text-muted);">Input:</span>
+          <input type="text" id="py-input" placeholder="type your response and press Enter" style="padding:6px 10px;border-radius:4px;border:1px solid #2a2a2a;font-family:'Share Tech Mono','Consolas','Courier New',monospace;flex:1;background:#0a0a0a;color:#f8f8f2;">
+          <button id="py-send" type="button" style="background:#1a6fa8;color:#fff;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;">Send ↵</button>
+        </div>
+      </div>
+
+      <pre id="py-output" aria-live="polite"></pre>
+      <p style="margin-top:8px;font-size:0.9em;color:var(--text-muted);">The first click of <strong>Run</strong> loads the Python interpreter (a few seconds). After that, execution is instant.</p>
+
+      <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:16px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Why must you convert <code>input()</code> with <code>int()</code> before adding numbers?</p>
+          <button class="btn mcq-btn" data-letter="A">input() returns a float</button>
+          <button class="btn mcq-btn" data-letter="B">Python cannot add numbers</button>
+          <button class="btn mcq-btn" data-letter="C">input() always returns a string</button>
+          <button class="btn mcq-btn" data-letter="D">int() makes the program faster</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- QUICK REFERENCE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">★</span>
+      Quick Reference
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <div style="text-align:center;margin:12px 0;">
+        <svg width="100%" viewBox="0 0 760 320" style="background:#f9f8f5;border:1px solid #d4e6f1;border-radius:8px;max-width:760px;display:block;margin:0 auto;">
+          <text x="380" y="32" font-size="17" fill="#1a6fa8" font-weight="bold" text-anchor="middle">Python GCSE — Quick Reference</text>
+          <text x="20" y="62" font-size="14" fill="#28251d">int · float · str · bool  |  input() → str</text>
+          <text x="20" y="82" font-size="14" fill="#28251d">== compare  |  = assign  |  // % **</text>
+          <text x="20" y="102" font-size="14" fill="#28251d">if / elif / else  — colon + indent</text>
+          <text x="20" y="122" font-size="14" fill="#28251d">for i in range(n)  |  while cond:</text>
+          <text x="20" y="142" font-size="14" fill="#28251d">break · continue</text>
+          <line x1="380" y1="48" x2="380" y2="300" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="400" y="62" font-size="14" fill="#28251d">list[i]  index from 0  |  [-1] last</text>
+          <text x="400" y="82" font-size="14" fill="#28251d">append · insert · remove · pop</text>
+          <text x="400" y="102" font-size="14" fill="#28251d">def name():  return x</text>
+          <text x="400" y="122" font-size="14" fill="#28251d">open(f,"r/w/a")  with ... as f:</text>
+          <text x="400" y="152" font-size="14" fill="#1a6fa8" font-weight="bold">Common errors</text>
+          <text x="400" y="172" font-size="14" fill="#555555">= vs ==  |  off-by-one range  |  no int(input)</text>
+          <text x="400" y="192" font-size="14" fill="#555555">forget indent  |  print vs return</text>
+        </svg>
+      </div>
+    </div>
+  </details>
+
+</div>
+
+<div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;max-width:860px;margin-left:auto;margin-right:auto;">
+  <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+  <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='cs', topic='python_programming') }}"
+     style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+    Start Practice Quiz
+  </a>
+</div>
+
+
+<script>
+(function () {
+  'use strict';
+
+  const WORKER_URL = {{ url_for('static', filename='js/pyodide-runner-worker.js') | tojson }};
+
+  let pyWorker = null;
+  let workerReady = false;
+  let workerStarting = false;
+  let stdinControl = null;
+  let stdinBytes = null;
+  let interruptBuffer = null;
+  let fallbackPyodide = null;
+  let fallbackReady = false;
+  let stdinSendHandler = null;
+  let stdinKeyHandler = null;
+  let pendingStdinEcho = null;
+
+  function getUi() {
+    return {
+      outputElem: document.getElementById('py-output'),
+      inputContainer: document.getElementById('py-input-container'),
+      inputField: document.getElementById('py-input'),
+      sendBtn: document.getElementById('py-send'),
+      runBtn: document.getElementById('py-run'),
+      codeElem: document.getElementById('py-code'),
+    };
+  }
+
+  function appendOutput(text, isStderr) {
+    const outputElem = getUi().outputElem;
+    if (!text) return;
+    if (isStderr && outputElem.textContent && !outputElem.textContent.endsWith('\n')) {
+      outputElem.textContent += '\n';
+    }
+    outputElem.textContent += text;
+    if (isStderr && !text.endsWith('\n')) {
+      outputElem.textContent += '\n';
+    }
+  }
+
+  function showInputUi() {
+    const ui = getUi();
+    ui.inputContainer.style.display = 'flex';
+    ui.inputField.value = '';
+    ui.inputField.focus();
+  }
+
+  function unbindInputHandlers() {
+    const ui = getUi();
+    if (stdinSendHandler) {
+      ui.sendBtn.removeEventListener('click', stdinSendHandler);
+      ui.inputField.removeEventListener('keydown', stdinKeyHandler);
+      stdinSendHandler = null;
+      stdinKeyHandler = null;
+    }
+  }
+
+  function hideInputUi() {
+    const ui = getUi();
+    ui.inputContainer.style.display = 'none';
+    unbindInputHandlers();
+  }
+
+  function echoStdinLine(line) {
+    const outputElem = getUi().outputElem;
+    if (outputElem.textContent.length > 0) {
+      outputElem.textContent += line + '\n';
+      return;
+    }
+    pendingStdinEcho = line;
+  }
+
+  function flushPendingStdinEcho() {
+    if (pendingStdinEcho === null) {
+      return;
+    }
+    getUi().outputElem.textContent += pendingStdinEcho + '\n';
+    pendingStdinEcho = null;
+  }
+
+  function deliverStdinLine() {
+    const ui = getUi();
+    const line = ui.inputField.value;
+    const encoded = new TextEncoder().encode(line + '\n');
+    const len = Math.min(encoded.length, stdinBytes.length);
+    stdinBytes.set(encoded.subarray(0, len));
+    Atomics.store(stdinControl, 1, len);
+    Atomics.store(stdinControl, 0, 1);
+    Atomics.notify(stdinControl, 0);
+    echoStdinLine(line);
+    hideInputUi();
+  }
+
+  function bindInputHandlers() {
+    const ui = getUi();
+    unbindInputHandlers();
+    stdinSendHandler = deliverStdinLine;
+    stdinKeyHandler = function (e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        deliverStdinLine();
+      }
+    };
+    ui.sendBtn.addEventListener('click', stdinSendHandler);
+    ui.inputField.addEventListener('keydown', stdinKeyHandler);
+  }
+
+  function canUseWorkerStdin() {
+    if (typeof SharedArrayBuffer === 'undefined' || typeof Worker === 'undefined') {
+      return false;
+    }
+    try {
+      new SharedArrayBuffer(8);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  async function ensureWorker() {
+    return new Promise(async function (resolve, reject) {
+      if (workerReady) {
+        resolve(true);
+        return;
+      }
+      if (workerStarting) {
+        const waitReady = function (event) {
+          if (event.data.type === 'ready') {
+            pyWorker.removeEventListener('message', waitReady);
+            resolve(true);
+          } else if (event.data.type === 'init_error') {
+            pyWorker.removeEventListener('message', waitReady);
+            reject(new Error(event.data.message));
+          }
+        };
+        pyWorker.addEventListener('message', waitReady);
+        return;
+      }
+
+      if (!canUseWorkerStdin()) {
+        resolve(false);
+        return;
+      }
+
+      workerStarting = true;
+      const ui = getUi();
+      ui.outputElem.textContent = 'Loading Python interpreter... (this may take a few seconds)';
+
+      stdinControl = new Int32Array(new SharedArrayBuffer(8));
+      stdinBytes = new Uint8Array(new SharedArrayBuffer(4096));
+      interruptBuffer = new Int32Array(new SharedArrayBuffer(4));
+
+      try {
+        const workerResponse = await fetch(WORKER_URL);
+        if (!workerResponse.ok) {
+          throw new Error('Could not load Python worker script.');
+        }
+        const workerSource = await workerResponse.text();
+        const workerBlob = new Blob([workerSource], { type: 'application/javascript' });
+        pyWorker = new Worker(URL.createObjectURL(workerBlob));
+      } catch (err) {
+        workerStarting = false;
+        reject(err);
+        return;
+      }
+
+      pyWorker.onmessage = handleWorkerMessage;
+      pyWorker.onerror = function (err) {
+        workerStarting = false;
+        ui.outputElem.textContent = 'Failed to start Python worker: ' + err.message;
+        reject(err);
+      };
+
+      pyWorker.addEventListener('message', function onReady(event) {
+        if (event.data.type === 'ready') {
+          pyWorker.removeEventListener('message', onReady);
+          workerReady = true;
+          workerStarting = false;
+          ui.outputElem.textContent = '';
+          resolve(true);
+        } else if (event.data.type === 'init_error') {
+          pyWorker.removeEventListener('message', onReady);
+          workerStarting = false;
+          reject(new Error(event.data.message));
+        }
+      });
+
+      pyWorker.postMessage({
+        type: 'init',
+        stdinControl: stdinControl.buffer,
+        stdinBytes: stdinBytes.buffer,
+        interruptBuffer: interruptBuffer.buffer,
+      });
+    });
+  }
+
+  function handleWorkerMessage(event) {
+    const msg = event.data;
+    const ui = getUi();
+
+    if (msg.type === 'stdout') {
+      const outputElem = ui.outputElem;
+      outputElem.textContent += msg.text;
+      flushPendingStdinEcho();
+      return;
+    }
+
+    if (msg.type === 'stderr') {
+      appendOutput(msg.text, true);
+      return;
+    }
+
+    if (msg.type === 'stdin_request') {
+      showInputUi();
+      bindInputHandlers();
+      return;
+    }
+
+    if (msg.type === 'done') {
+      hideInputUi();
+      ui.runBtn.disabled = false;
+      if (!ui.outputElem.textContent) {
+        ui.outputElem.textContent = '(program finished)';
+      }
+      return;
+    }
+
+    if (msg.type === 'error') {
+      hideInputUi();
+      ui.runBtn.disabled = false;
+      appendOutput('Error: ' + msg.message, true);
+    }
+  }
+
+  function loadFallbackScript() {
+    return new Promise(function (resolve, reject) {
+      if (window.loadPyodide) {
+        resolve();
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js';
+      script.onload = resolve;
+      script.onerror = function () {
+        reject(new Error('Could not load Pyodide.'));
+      };
+      document.head.appendChild(script);
+    });
+  }
+
+  async function ensureFallbackPyodide() {
+    if (fallbackReady) return true;
+    const ui = getUi();
+    ui.outputElem.textContent = 'Loading Python interpreter... (this may take a few seconds)';
+    await loadFallbackScript();
+    fallbackPyodide = await loadPyodide();
+    fallbackPyodide.setStdout({
+      raw: function (byte) {
+        ui.outputElem.textContent += String.fromCharCode(byte);
+        flushPendingStdinEcho();
+      },
+    });
+    fallbackPyodide.setStderr({
+      batched: function (text) {
+        appendOutput(text, true);
+      },
+    });
+    fallbackPyodide.setStdin({
+      isatty: true,
+      stdin: function () {
+        const value = window.prompt('Python is waiting for your input:');
+        if (value === null) {
+          return undefined;
+        }
+        echoStdinLine(value);
+        return value + '\n';
+      },
+    });
+    fallbackReady = true;
+    ui.outputElem.textContent = '';
+    return true;
+  }
+
+  async function runWithFallback(code) {
+    const ui = getUi();
+    try {
+      await ensureFallbackPyodide();
+    } catch (err) {
+      ui.outputElem.textContent = 'Failed to load Python interpreter: ' + err.message;
+      ui.runBtn.disabled = false;
+      return;
+    }
+
+    ui.outputElem.textContent = '';
+    hideInputUi();
+
+    try {
+      await fallbackPyodide.runPythonAsync(code);
+      if (!ui.outputElem.textContent) {
+        ui.outputElem.textContent = '(program finished)';
+      }
+    } catch (err) {
+      appendOutput('Error: ' + err.message, true);
+    }
+
+    ui.runBtn.disabled = false;
+  }
+
+  window.runInteractive = async function () {
+    const ui = getUi();
+    const code = ui.codeElem.value;
+    ui.outputElem.textContent = '';
+    pendingStdinEcho = null;
+    hideInputUi();
+    ui.runBtn.disabled = true;
+
+    try {
+      const workerOk = await ensureWorker();
+      if (workerOk && pyWorker) {
+        pyWorker.postMessage({ type: 'run', code: code });
+        return;
+      }
+    } catch (err) {
+      console.warn('Pyodide worker unavailable, using fallback input:', err);
+    }
+
+    await runWithFallback(code);
+  };
+})();
+</script>
+{% endblock %}

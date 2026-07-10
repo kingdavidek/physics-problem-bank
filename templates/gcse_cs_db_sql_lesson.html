@@ -1,0 +1,492 @@
+{% extends "base.html" %}
+{% block title %}Relational Databases &amp; SQL – GCSE Computer Science{% endblock %}
+
+{% block content %}
+<style>
+  .lesson-inner > summary { list-style:none; }
+  .lesson-inner > summary::-webkit-details-marker { display:none; }
+  .sql-box { background:#f9f8f5;border:1px solid #d4e6f1;color:#e2e8f0;padding:12px 16px;border-radius:6px;font-family:Consolas,Monaco,monospace;font-size:.88rem;margin:10px 0;overflow-x:auto;line-height:1.6; }
+  .note-box { background:#e8f4fd;border-left:4px solid #1a6fa8;padding:10px 14px;margin:10px 0;border-radius:0 6px 6px 0; }
+  .board-tag { font-size:.7rem;padding:2px 6px;border-radius:8px;margin-right:4px; }
+  .board-aqa { background:#dbeafe;color:#1e40af; }
+  .board-ocr { background:#fce7f3;color:#9d174d; }
+  .board-edx { background:#fef3c7;color:#92400e; }
+  .schema-table { width:100%;border-collapse:collapse;font-size:1rem;margin:10px 0; }
+  .schema-table th, .schema-table td { border:1px solid #cbd5e1;padding:6px 8px;text-align:left; }
+  .schema-table th { background:#f1f5f9; }
+  .pk { color:#1e40af;font-weight:600; }
+  .fk { color:#9d174d;font-weight:600; }
+</style>
+
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Relational Databases &amp; SQL</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">GCSE Computer Science — tables, keys, querying data, and writing SQL (SELECT, INSERT, UPDATE, DELETE). Revise each section, use the Quick Checks, then practise exam-style questions.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">WJEC</span>
+    </div>
+  </div>
+
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='cs', topic='db_sql') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <div class="note-box" style="margin-bottom:14px;">
+    <strong>Running example:</strong> A school database with tables <code>Pupil</code>, <code>Class</code>, and <code>Grade</code> is used throughout this lesson.
+  </div>
+
+  <!-- 1. DATABASES -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      Databases &amp; the Relational Model
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" open style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          1.1 What is a database?
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>A <strong>database</strong> is an organised store of data that can be searched, added to, updated and reported on electronically. Examples: school pupil records, a shop stock system, a library catalogue.</p>
+          <p>A <strong>relational database</strong> stores data in <strong>related tables</strong> (like multiple linked spreadsheets). Each table holds one type of entity (pupils, classes, grades).</p>
+          <p><strong>Worked example:</strong> Instead of one huge spreadsheet with repeated class teacher names on every pupil row, you store teachers once in <code>Class</code> and link pupils with a <code>ClassID</code>.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">A relational database stores data in:</p>
+              <button class="btn mcq-btn" data-letter="A">One single text file only</button>
+              <button class="btn mcq-btn" data-letter="B">Related tables with rows and columns</button>
+              <button class="btn mcq-btn" data-letter="C">Only images</button>
+              <button class="btn mcq-btn" data-letter="D">RAM only</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          1.2 Tables, records, fields and keys
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <table class="schema-table">
+            <thead><tr><th>Term</th><th>Meaning</th><th>Example</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Table</strong></td><td>One entity type</td><td><code>Pupil</code></td></tr>
+              <tr><td><strong>Field (column)</strong></td><td>One attribute</td><td><code>Surname</code></td></tr>
+              <tr><td><strong>Record (row)</strong></td><td>One item</td><td>Pupil ID 7 = "Sam Patel"</td></tr>
+              <tr><td><span class="pk">Primary key (PK)</span></td><td>Unique ID for each record</td><td><code>PupilID</code></td></tr>
+              <tr><td><span class="fk">Foreign key (FK)</span></td><td>Links to PK in another table</td><td><code>ClassID</code> in Pupil → Class</td></tr>
+              <tr><td><strong>Data type</strong></td><td>Kind of value allowed</td><td>INTEGER, TEXT, BOOLEAN, DATE</td></tr>
+            </tbody>
+          </table>
+          <p><strong>Example schema:</strong></p>
+          <table class="schema-table">
+            <tr><th colspan="4">Pupil</th></tr>
+            <tr><td class="pk">PupilID (PK)</td><td>FirstName</td><td>Surname</td><td class="fk">ClassID (FK)</td></tr>
+            <tr><td>1</td><td>Aisha</td><td>Khan</td><td>10A</td></tr>
+            <tr><td>2</td><td>Ben</td><td>Okafor</td><td>10B</td></tr>
+          </table>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">A primary key must be:</p>
+              <button class="btn mcq-btn" data-letter="A">The same for every record</button>
+              <button class="btn mcq-btn" data-letter="B">Always the pupil's name</button>
+              <button class="btn mcq-btn" data-letter="C">Unique for each record in that table</button>
+              <button class="btn mcq-btn" data-letter="D">Shared by two tables</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          1.3 Redundancy and consistency
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Data redundancy</strong> — storing the same fact twice (e.g. teacher name on every pupil row).</p>
+          <p><strong>Data inconsistency</strong> — copies disagree (e.g. "Mr Jones" on one row, "Mr Jons" on another).</p>
+          <p>Relational design <strong>reduces redundancy</strong> by storing each fact once and linking tables with keys — improving <strong>consistency</strong>.</p>
+          <p><strong>Worked example:</strong> Class teacher changes to "Ms Lee". Update one row in <code>Class</code> — every pupil linked via <code>ClassID</code> sees the correct teacher in reports.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Data redundancy means:</p>
+              <button class="btn mcq-btn" data-letter="A">Data is stored only once</button>
+              <button class="btn mcq-btn" data-letter="B">The same data is duplicated in multiple places</button>
+              <button class="btn mcq-btn" data-letter="C">All data is encrypted</button>
+              <button class="btn mcq-btn" data-letter="D">Tables have no keys</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 2. SELECT -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Querying Data (SELECT)
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          2.1 SELECT and FROM
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>SQL</strong> (Structured Query Language) is used to work with relational databases.</p>
+          <p><code>SELECT</code> chooses columns; <code>FROM</code> names the table.</p>
+          <div class="sql-box">SELECT FirstName, Surname FROM Pupil;</div>
+          <p>All columns:</p>
+          <div class="sql-box">SELECT * FROM Pupil;</div>
+          <p><strong>Worked example:</strong> List every subject in the grade table:</p>
+          <div class="sql-box">SELECT Subject FROM Grade;</div>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">SELECT * FROM Pupil means:</p>
+              <button class="btn mcq-btn" data-letter="A">Delete all pupils</button>
+              <button class="btn mcq-btn" data-letter="B">Show all columns from the Pupil table</button>
+              <button class="btn mcq-btn" data-letter="C">Insert a new pupil</button>
+              <button class="btn mcq-btn" data-letter="D">Sort pupils only</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          2.2 WHERE — filtering rows
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><code>WHERE</code> filters which <strong>records</strong> are returned. Text values use quotes.</p>
+          <div class="sql-box">SELECT Surname FROM Pupil WHERE YearGroup = 11;</div>
+          <div class="sql-box">SELECT * FROM Class WHERE ClassName = '10A';</div>
+          <p><strong>Worked example:</strong> Pupils in class 10A (ClassID stored as number 3):</p>
+          <div class="sql-box">SELECT FirstName, Surname FROM Pupil WHERE ClassID = 3;</div>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">WHERE YearGroup = 10 returns:</p>
+              <button class="btn mcq-btn" data-letter="A">Only rows where YearGroup is 10</button>
+              <button class="btn mcq-btn" data-letter="B">All columns renamed to YearGroup</button>
+              <button class="btn mcq-btn" data-letter="C">The tenth row only</button>
+              <button class="btn mcq-btn" data-letter="D">Every row in the database</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          2.3 ORDER BY — sorting results
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-aqa">AQA</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><code>ORDER BY</code> sorts results. <code>ASC</code> = ascending (A→Z, low→high). <code>DESC</code> = descending.</p>
+          <div class="sql-box">SELECT Surname, Score FROM Grade ORDER BY Score DESC;</div>
+          <div class="sql-box">SELECT FirstName FROM Pupil ORDER BY FirstName ASC;</div>
+          <p><strong>Worked example:</strong> Alphabetical register by surname:</p>
+          <div class="sql-box">SELECT FirstName, Surname FROM Pupil ORDER BY Surname ASC;</div>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">ORDER BY Score DESC shows:</p>
+              <button class="btn mcq-btn" data-letter="A">Lowest scores first</button>
+              <button class="btn mcq-btn" data-letter="B">Highest scores first</button>
+              <button class="btn mcq-btn" data-letter="C">Random order</button>
+              <button class="btn mcq-btn" data-letter="D">Only one score</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='db_sql') }}?difficulty=foundational&amp;mode=practice" style="display:inline-block;margin:4px 0 8px;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Foundational</a>
+    </div>
+  </details>
+
+  <!-- 3. TWO TABLES -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Linking Two Tables
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span class="board-tag board-aqa">AQA</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          3.1 Queries across Pupil and Class
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-aqa">AQA</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>AQA exams may use up to <strong>two tables in one query</strong>. Link them by matching foreign key to primary key in <code>WHERE</code>:</p>
+          <div class="sql-box">SELECT Pupil.Surname, Class.ClassName
+FROM Pupil, Class
+WHERE Pupil.ClassID = Class.ClassID;</div>
+          <p>Use <code>Table.Field</code> when column names appear in more than one table.</p>
+          <p><strong>Worked example:</strong> Teacher for each pupil:</p>
+          <div class="sql-box">SELECT Pupil.FirstName, Class.Teacher
+FROM Pupil, Class
+WHERE Pupil.ClassID = Class.ClassID;</div>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">To link Pupil and Class tables you match:</p>
+              <button class="btn mcq-btn" data-letter="A">FirstName to Teacher</button>
+              <button class="btn mcq-btn" data-letter="B">Surname to ClassName only</button>
+              <button class="btn mcq-btn" data-letter="C">Pupil.ClassID to Class.ClassID</button>
+              <button class="btn mcq-btn" data-letter="D">PupilID to Teacher</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 4. MODIFYING DATA -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Modifying Data (INSERT, UPDATE, DELETE)
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span class="board-tag board-aqa">AQA</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          4.1 INSERT — adding records
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-aqa">AQA</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <div class="sql-box">INSERT INTO Pupil (PupilID, FirstName, Surname, ClassID)
+VALUES (50, 'Mia', 'Chen', 2);</div>
+          <p>Column order must match <code>VALUES</code> order. Strings need single quotes.</p>
+          <p><strong>Worked example:</strong> Add a new class:</p>
+          <div class="sql-box">INSERT INTO Class (ClassID, ClassName, Teacher)
+VALUES (12, '11C', 'Mr Ahmed');</div>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">INSERT INTO is used to:</p>
+              <button class="btn mcq-btn" data-letter="A">Add new records</button>
+              <button class="btn mcq-btn" data-letter="B">Delete all records</button>
+              <button class="btn mcq-btn" data-letter="C">Sort records</button>
+              <button class="btn mcq-btn" data-letter="D">Rename the database</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          4.2 UPDATE — changing records
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-aqa">AQA</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <div class="sql-box">UPDATE Pupil
+SET YearGroup = 11
+WHERE PupilID = 50;</div>
+          <p>Multiple fields: <code>SET Surname = 'Chen', ClassID = 3</code></p>
+          <p><strong>Warning:</strong> Forgetting <code>WHERE</code> updates <strong>every row</strong> in the table.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">UPDATE changes:</p>
+              <button class="btn mcq-btn" data-letter="A">Table structure only</button>
+              <button class="btn mcq-btn" data-letter="B">Existing data in records</button>
+              <button class="btn mcq-btn" data-letter="C">The CPU speed</button>
+              <button class="btn mcq-btn" data-letter="D">Network cables</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          4.3 DELETE — removing records
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-aqa">AQA</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <div class="sql-box">DELETE FROM Pupil WHERE PupilID = 99;</div>
+          <p><code>DELETE FROM Pupil;</code> without <code>WHERE</code> removes <strong>all pupils</strong> — dangerous.</p>
+          <p><strong>Worked example:</strong> Remove a grade entry for pupil 7 in Maths:</p>
+          <div class="sql-box">DELETE FROM Grade WHERE PupilID = 7 AND Subject = 'Maths';</div>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">DELETE FROM Pupil WHERE PupilID = 3:</p>
+              <button class="btn mcq-btn" data-letter="A">Removes only the pupil with ID 3</button>
+              <button class="btn mcq-btn" data-letter="B">Removes every pupil</button>
+              <button class="btn mcq-btn" data-letter="C">Shows pupil 3</button>
+              <button class="btn mcq-btn" data-letter="D">Adds pupil 3</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='db_sql') }}?difficulty=intermediate&amp;mode=practice" style="display:inline-block;margin:4px 0 8px;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Intermediate</a>
+    </div>
+  </details>
+
+  <!-- 5. DESIGN -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Designing Databases &amp; Staying Safe
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span class="board-tag board-ocr">OCR</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          5.1 Planning tables (ERD)
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>Before writing SQL, plan <strong>entities</strong> (tables), <strong>attributes</strong> (fields), and <strong>relationships</strong> (keys). An <strong>entity-relationship diagram (ERD)</strong> shows boxes for tables and lines for links.</p>
+          <p><strong>Worked example — library system:</strong></p>
+          <ul style="line-height:1.9;">
+            <li><code>Member(MemberID PK, Name)</code></li>
+            <li><code>Book(BookID PK, Title, Author)</code></li>
+            <li><code>Loan(LoanID PK, MemberID FK, BookID FK, DueDate)</code></li>
+          </ul>
+          <p>Choose sensible <strong>data types</strong>: INTEGER for IDs, TEXT for names, DATE for DueDate.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">An ERD is used to:</p>
+              <button class="btn mcq-btn" data-letter="A">Run Python programs</button>
+              <button class="btn mcq-btn" data-letter="B">Plan tables and relationships before building the database</button>
+              <button class="btn mcq-btn" data-letter="C">Encrypt WiFi</button>
+              <button class="btn mcq-btn" data-letter="D">Compress images</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          5.2 Validation and SQL injection
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Input validation</strong> checks data before it is stored (e.g. year group must be 7–13, name not empty).</p>
+          <p><strong>SQL injection</strong> — attackers insert malicious SQL into input fields. Defences: validate input, use <strong>parameterised queries</strong> (do not glue user text straight into SQL strings).</p>
+          <p><strong>Example attack string:</strong> <code>' OR '1'='1</code> in a login box could trick a poorly written query.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">SQL injection is prevented by:</p>
+              <button class="btn mcq-btn" data-letter="A">Using longer passwords only</button>
+              <button class="btn mcq-btn" data-letter="B">Deleting the database weekly</button>
+              <button class="btn mcq-btn" data-letter="C">Validating input and using parameterised queries</button>
+              <button class="btn mcq-btn" data-letter="D">Using only one table</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='db_sql') }}?difficulty=difficult&amp;mode=practice" style="display:inline-block;margin:4px 0 8px;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Difficult</a>
+    </div>
+  </details>
+
+  <!-- QUICK REFERENCE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">★</span>
+      Quick Reference
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10–11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <div style="text-align:center;margin:12px 0;">
+        <svg width="100%" viewBox="0 0 760 300" style="background:#f9f8f5;border:1px solid #d4e6f1;border-radius:8px;max-width:760px;display:block;margin:0 auto;" aria-label="SQL quick reference">
+          <text x="380" y="24" font-size="16" fill="#1a6fa8" font-weight="bold" text-anchor="middle">SQL — Quick Reference</text>
+          <text x="20" y="52" font-size="14" fill="#28251d">PK = unique row ID | FK = link to another table</text>
+          <text x="20" y="68" font-size="14" fill="#28251d">Redundancy = duplicate data | Relational = linked tables</text>
+          <text x="20" y="92" font-size="14" fill="#059669" font-weight="bold">Read data</text>
+          <text x="20" y="108" font-size="14" fill="#28251d">SELECT cols FROM table WHERE condition</text>
+          <text x="20" y="124" font-size="14" fill="#28251d">ORDER BY field ASC | DESC</text>
+          <text x="20" y="140" font-size="14" fill="#28251d">Two tables: FROM A, B WHERE A.fk = B.pk</text>
+          <line x1="380" y1="40" x2="380" y2="280" stroke="#d4e6f1"/>
+          <text x="400" y="92" font-size="14" fill="#a13544" font-weight="bold">Change data (AQA)</text>
+          <text x="400" y="108" font-size="14" fill="#28251d">INSERT INTO t (cols) VALUES (vals)</text>
+          <text x="400" y="124" font-size="14" fill="#28251d">UPDATE t SET col=val WHERE …</text>
+          <text x="400" y="140" font-size="14" fill="#28251d">DELETE FROM t WHERE …</text>
+          <text x="400" y="168" font-size="14" fill="#1a6fa8" font-weight="bold">Boards</text>
+          <text x="400" y="184" font-size="14" fill="#28251d">AQA: SELECT, INSERT, UPDATE, DELETE</text>
+          <text x="400" y="200" font-size="14" fill="#28251d">OCR: SELECT, FROM, WHERE (search)</text>
+          <text x="400" y="216" font-size="14" fill="#28251d">Always use WHERE on UPDATE/DELETE</text>
+        </svg>
+      </div>
+      <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:8px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">A foreign key:</p>
+          <button class="btn mcq-btn" data-letter="A">Must be the same in every table</button>
+          <button class="btn mcq-btn" data-letter="B">Links to a primary key in another table</button>
+          <button class="btn mcq-btn" data-letter="C">Deletes records automatically</button>
+          <button class="btn mcq-btn" data-letter="D">Sorts results alphabetically</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+</div>
+
+<div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;max-width:860px;margin-left:auto;margin-right:auto;">
+  <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+  <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='cs', topic='db_sql') }}"
+     style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+    Start Practice Quiz
+  </a>
+</div>
+
+{% endblock %}

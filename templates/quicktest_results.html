@@ -1,35 +1,43 @@
 {% extends "base.html" %}
 {% block title %}Quick Test – Solutions | {{ topic_name }}{% endblock %}
 {% block content %}
-<div style="max-width:720px;margin:0 auto;">
-  <div style="margin-bottom:32px;">
-    <h1 style="margin-bottom:6px;">Solutions</h1>
-    <p style="color:var(--text-muted);">{{ topic_name }} — {{ problems | length }} questions · {{ total_marks }} marks total</p>
-    <a href="/" class="btn" style="margin-top:16px;display:inline-block;">← Back to generator</a>
-  </div>
-  {% for problem in problems %}
-  <div class="problem-card" style="margin-bottom:32px;">
-    <div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:12px;">
-      <span style="font-size:var(--text-sm);font-weight:600;color:var(--text-muted);text-transform:uppercase;">Question {{ loop.index }}</span>
-      <div style="display:flex;gap:8px;">
-        <span class="badge badge-{{ problem.difficulty }}">{{ problem.difficulty | title }}</span>
-        <span class="badge badge-marks">{{ problem.marks }} mark{% if problem.marks > 1 %}s{% endif %}</span>
-      </div>
+<div class="page-shell">
+
+<div class="lesson-hero">
+    <h1>Solutions</h1>
+    <p class="hero-sub">{{ topic_name }} — {{ problems | length }} questions · {{ total_marks }} marks total</p>
+</div>
+
+<p class="page-intro">
+    <a href="/">← Back to practice generator</a>
+</p>
+
+{% for problem in problems %}
+<div class="problem-card" style="margin-bottom: 20px;">
+    <div class="section-panel-header">Question {{ loop.index }}</div>
+    <div class="problem-card-inner">
+        <div class="problem-meta">
+            <span class="badge badge-{{ problem.difficulty }}">{{ problem.difficulty | title }}</span>
+            <span class="badge badge-marks">{{ problem.marks }} mark{% if problem.marks > 1 %}s{% endif %}</span>
+        </div>
+        <div class="question" style="margin-bottom: 16px;"><div class="question-content">{{ problem.question | format_question_html }}</div></div>
+        <details class="answer-reveal" open>
+            <summary>Solution</summary>
+            <div class="answer">{{ problem.solution | format_question_html }}</div>
+            <details class="hint-reveal">
+                <summary>💡 Key concept</summary>
+                <div class="hint">{{ problem.hint | safe }}</div>
+            </details>
+        </details>
     </div>
-    <div class="question" style="margin-bottom:20px;">{{ problem.question | safe }}</div>
-    <hr style="border:none;border-top:1px solid var(--color-divider);margin-bottom:16px;">
-    <div style="margin-bottom:8px;">
-      <span style="font-size:var(--text-sm);font-weight:600;color:var(--color-primary);">Solution</span>
+</div>
+{% endfor %}
+
+<div class="section-panel">
+    <div class="section-panel-body" style="text-align: center;">
+        <a href="/" class="btn btn-primary">Start another test</a>
     </div>
-    <div class="answer">{{ problem.solution | replace('\n', '<br>') | safe }}</div>
-    <details class="hint-reveal" style="margin-top:16px;">
-      <summary>💡 Key concept</summary>
-      <div class="hint">{{ problem.hint | safe }}</div>
-    </details>
-  </div>
-  {% endfor %}
-  <div style="text-align:center;padding:32px 0 48px;">
-    <a href="/" class="btn btn-primary">Start another test</a>
-  </div>
+</div>
+
 </div>
 {% endblock %}

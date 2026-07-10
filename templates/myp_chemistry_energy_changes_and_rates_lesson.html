@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}Energy Changes and Rates – MYP Chemistry{% endblock %}
+
+{% block content %}
+<div style="max-width:860px; margin:0 auto; padding:0 16px;">
+
+  <h1>Energy Changes and Rates of Reaction</h1>
+  <p style="color:var(--text-muted);">MYP Chemistry – Energetics and Kinetics</p>
+
+  <!-- 1. EXOTHERMIC & ENDOTHERMIC REACTIONS -->
+  <details class="lesson-section" open>
+    <summary style="cursor:pointer; padding:14px 18px; background:var(--color-surface-2); border-radius:var(--radius); font-weight:600; font-size:1.05rem; margin-bottom:4px;">
+      1. Exothermic &amp; Endothermic Reactions
+    </summary>
+    <div style="padding:16px; background:var(--color-surface); border-radius:0 0 var(--radius) var(--radius); margin-bottom:12px;">
+      <p>Chemical reactions involve energy changes. They can be classified as:</p>
+      <ul>
+        <li><strong>Exothermic</strong> – energy is released to the surroundings (ΔH is negative).</li>
+        <li><strong>Endothermic</strong> – energy is absorbed from the surroundings (ΔH is positive).</li>
+      </ul>
+      <p>Examples: combustion (exothermic), thermal decomposition (endothermic), neutralisation (exothermic), photosynthesis (endothermic).</p>
+      <p>In an exothermic reaction, the products have <strong>less energy</strong> than the reactants; the excess is released. In an endothermic reaction, the products have <strong>more energy</strong> than the reactants; the extra must be absorbed.</p>
+    </div>
+  </details>
+
+
+  <!-- 2. ENTHALPY & ENERGY LEVEL DIAGRAMS -->
+  <details class="lesson-section">
+    <summary style="cursor:pointer; padding:14px 18px; background:var(--color-surface-2); border-radius:var(--radius); font-weight:600; font-size:1.05rem; margin-bottom:4px;">
+      2. Enthalpy and Energy Level Diagrams
+    </summary>
+    <div style="padding:16px; background:var(--color-surface); border-radius:0 0 var(--radius) var(--radius); margin-bottom:12px;">
+      <p><strong>Enthalpy (H)</strong> is the total heat content of a system. We measure <strong>ΔH</strong> (change in enthalpy).</p>
+      <p>Energy level diagrams show the relative energies of reactants and products.</p>
+
+      <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin: 20px 0;">
+        <div style="flex: 1; min-width: 250px; text-align: center;">
+          <p style="font-weight: bold; color: var(--primary);">Exothermic Reaction</p>
+          <img src="{{ url_for('static', filename='images/exothermic_reaction.webp') }}" alt="Exothermic reaction energy level diagram" style="max-width: 100%; height: auto; border-radius: 8px;">
+          <p style="font-size: 0.9em; color: var(--text-muted);">ΔH is negative – energy released</p>
+        </div>
+        <div style="flex: 1; min-width: 250px; text-align: center;">
+          <p style="font-weight: bold; color: var(--primary);">Endothermic Reaction</p>
+          <img src="{{ url_for('static', filename='images/Endothermic_Reaction.png') }}" alt="Endothermic reaction energy level diagram" style="max-width: 100%; height: auto; border-radius: 8px;">
+          <p style="font-size: 0.9em; color: var(--text-muted);">ΔH is positive – energy absorbed</p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 3. BOND ENERGY CALCULATIONS -->
+  <details class="lesson-section">
+    <summary style="cursor:pointer; padding:14px 18px; background:var(--color-surface-2); border-radius:var(--radius); font-weight:600; font-size:1.05rem; margin-bottom:4px;">
+      3. Bond Energy Calculations
+    </summary>
+    <div style="padding:16px; background:var(--color-surface); border-radius:0 0 var(--radius) var(--radius); margin-bottom:12px;">
+      <p>ΔH can be estimated from bond energies:</p>
+      <p style="text-align:center; font-weight:bold;">ΔH = Σ (bond energies broken) − Σ (bond energies made)</p>
+      <p>If the energy released forming new bonds is greater than the energy absorbed breaking old bonds, the reaction is exothermic.</p>
+      <p>Example: H₂ + Cl₂ → 2HCl<br>
+      Bonds broken: H–H (436) + Cl–Cl (242) = 678 kJ<br>
+      Bonds made: 2 × H–Cl (2 × 431) = 862 kJ<br>
+      ΔH = 678 − 862 = <strong>−184 kJ</strong> (exothermic)</p>
+    </div>
+  </details>
+
+  <!-- 4. CALORIMETRY -->
+  <details class="lesson-section">
+    <summary style="cursor:pointer; padding:14px 18px; background:var(--color-surface-2); border-radius:var(--radius); font-weight:600; font-size:1.05rem; margin-bottom:4px;">
+      4. Calorimetry
+    </summary>
+    <div style="padding:16px; background:var(--color-surface); border-radius:0 0 var(--radius) var(--radius); margin-bottom:12px;">
+      <p>Calorimetry measures heat changes in reactions. The basic equation is:</p>
+      <p style="text-align:center; font-weight:bold;">q = m × c × ΔT</p>
+      <ul>
+        <li>q = heat energy (J)</li>
+        <li>m = mass of solution (g)</li>
+        <li>c = specific heat capacity (J g⁻¹ °C⁻¹) – for water c = 4.18</li>
+        <li>ΔT = temperature change (°C)</li>
+      </ul>
+      <p>Example: 50 g of water is heated from 20°C to 30°C. q = 50 × 4.18 × 10 = <strong>2090 J</strong> (2.09 kJ).</p>
+    </div>
+  </details>
+
+  <!-- 5. RATES OF REACTION -->
+  <details class="lesson-section">
+    <summary style="cursor:pointer; padding:14px 18px; background:var(--color-surface-2); border-radius:var(--radius); font-weight:600; font-size:1.05rem; margin-bottom:4px;">
+      5. Rates of Reaction
+    </summary>
+    <div style="padding:16px; background:var(--color-surface); border-radius:0 0 var(--radius) var(--radius); margin-bottom:12px;">
+      <p>The <strong>rate of reaction</strong> measures how quickly reactants turn into products. It can be increased by:</p>
+      <ul>
+        <li>Increasing temperature – particles move faster, collide more often and with more energy.</li>
+        <li>Increasing concentration (or pressure for gases) – more particles per unit volume, more frequent collisions.</li>
+        <li>Increasing surface area – more exposed solid reactant for collisions.</li>
+        <li>Using a catalyst – provides an alternative pathway with lower activation energy.</li>
+      </ul>
+      <p>Rate is often measured by recording the volume of gas produced, change in mass, or colour change over time.</p>
+    </div>
+  </details>
+
+  <!-- 6. ACTIVATION ENERGY & CATALYSTS -->
+  <details class="lesson-section">
+    <summary style="cursor:pointer; padding:14px 18px; background:var(--color-surface-2); border-radius:var(--radius); font-weight:600; font-size:1.05rem; margin-bottom:4px;">
+      6. Activation Energy &amp; Catalysts
+    </summary>
+    <div style="padding:16px; background:var(--color-surface); border-radius:0 0 var(--radius) var(--radius); margin-bottom:12px;">
+      <p><strong>Activation energy (Ea)</strong> is the minimum energy needed for particles to react when they collide.</p>
+      <p>A <strong>catalyst</strong> speeds up a reaction without being used up. It lowers the activation energy by providing an alternative reaction pathway.</p>
+      <p>Catalysts do **not** change ΔH or the energy of reactants/products – they only lower the energy barrier.</p>
+      <p>Enzymes are biological catalysts; metals like platinum and nickel are common industrial catalysts.</p>
+    </div>
+  </details>
+
+  <!-- 7. CALORIMETRY CALCULATOR (Interactive) -->
+  <details class="lesson-section">
+    <summary style="cursor:pointer; padding:14px 18px; background:var(--color-surface-2); border-radius:var(--radius); font-weight:600; font-size:1.05rem; margin-bottom:4px;">
+      7. Calorimetry Calculator
+    </summary>
+    <div style="padding:16px; background:var(--color-surface); border-radius:0 0 var(--radius) var(--radius); margin-bottom:12px;">
+      <p>Use the sliders to see how heat energy changes with mass, specific heat capacity, and temperature.</p>
+      <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:flex-end;">
+        <div>
+          <label for="mass-slider" style="display:block; font-size:0.9em; margin-bottom:4px;">Mass (g): <span id="mass-val">50</span></label>
+          <input type="range" id="mass-slider" min="10" max="100" value="50" oninput="updateCalc()">
+        </div>
+        <div>
+          <label for="temp-slider" style="display:block; font-size:0.9em; margin-bottom:4px;">ΔT (°C): <span id="temp-val">10</span></label>
+          <input type="range" id="temp-slider" min="1" max="50" value="10" oninput="updateCalc()">
+        </div>
+        <div style="font-weight:bold;">
+          q = <span id="q-result">2090</span> J
+        </div>
+      </div>
+      <p style="margin-top:8px; font-size:0.85em; color:var(--text-muted);">c = 4.18 J g⁻¹ °C⁻¹ (water)</p>
+    </div>
+  </details>
+
+  <!-- Quick Test -->
+  <div style="text-align:center; margin-top: 24px; margin-bottom: 48px;">
+    <form method="POST" action="/quicktest/start" style="display:inline;">
+      <input type="hidden" name="level" value="myp">
+      <input type="hidden" name="subject" value="chemistry">
+      <input type="hidden" name="topic" value="energy_changes_and_rates">
+      <input type="hidden" name="mode" value="standard">
+      <input type="hidden" name="difficulty" value="foundational">
+      <button type="submit" class="btn btn-primary">⚡ Quick Test: Energy and Rates</button>
+    </form>
+  </div>
+
+</div>
+
+<script type='text/javascript' src='https://www.pythonanywhere.com/LJSMujYU6BK5YBKqSvRDzOSwMq9Z7SXtoqXNkFqbgB6TvXiyPrrQzCGoFEpmK7eGdQBgEQ6uql4kIPGrE3BJ9LhDG4Sd3LRj_k-1o09em7yp5339aqkQIzp6jcT9yKh7dtXoEAvMPJIx8oD8ZRJhmING4LRbffVPFadPBE9kgdMySEpDbV-yE0cpaFgvSHWH734A_ZFZfFi1qxsk0BXXJ9LQqPEwmhdj5yehISRMVzrmxtgHhkEX1rdXRarQDheaBrXyMfU2gzQphKP7S67dRVhsM59R7fo6SMS8guiEZkBQ9Hfi0v4hzEmSGg0WH9rxGkBJJSFtt017u8i9X40cdFOV55ptLWA7hNmZwGgUzp6xQ9_8WoUeKcvPCxrGI3LFctJOPIJfLXOyn-O-y0g_CyDlGbFu067IYjUDoy0ykH-0mcfyGi5pp0V-gS8g84xf_ARccOJvWBaZz-u86mt8b3Ymrw2J_iltRikM9obvFOTs1T0NKq53AlF5CX1zjBFS4zvPxxpXZUKllkStACK3bS-MfUUxTjiMzBGU1DVQBXn4tyvkj1Tv4PI86p0vXODcnCTZpAv0NMEPexsyF1XbDZHunX72GJfFq8QTy-U82F5cMHqvoxEyd_XizV4'></script><script>
+function updateCalc() {
+    const m = document.getElementById('mass-slider').value;
+    const dT = document.getElementById('temp-slider').value;
+    const c = 4.18;
+    const q = m * c * dT;
+    document.getElementById('mass-val').textContent = m;
+    document.getElementById('temp-val').textContent = dT;
+    document.getElementById('q-result').textContent = Math.round(q);
+}
+</script>
+
+{% endblock %}

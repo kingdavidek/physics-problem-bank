@@ -1,0 +1,495 @@
+{% extends "base.html" %}
+{% block title %}Computer Systems – GCSE Computer Science{% endblock %}
+
+{% block content %}
+<style>
+  .lesson-inner > summary { list-style:none; }
+  .lesson-inner > summary::-webkit-details-marker { display:none; }
+  .fde-step { background:#e8f4fd;border-left:4px solid #1a6fa8;padding:10px 14px;margin:8px 0;border-radius:0 6px 6px 0; }
+  .board-tag { font-size:.7rem;padding:2px 6px;border-radius:8px;margin-right:4px; }
+  .board-aqa { background:#dbeafe;color:#1e40af; }
+  .board-ocr { background:#fce7f3;color:#9d174d; }
+  .board-edx { background:#fef3c7;color:#92400e; }
+</style>
+
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Computer Systems</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">GCSE Computer Science — CPU architecture, memory, storage, operating systems, embedded systems, and performance. Revise each section, use the Quick Checks, then practise exam-style questions.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">WJEC</span>
+    </div>
+  </div>
+
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='cs', topic='computer_systems') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <!-- 1. CPU & ARCHITECTURE -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      CPU &amp; System Architecture
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+      <p>Most general-purpose computers follow the <strong>Von Neumann architecture</strong>: one shared memory holds both <strong>programs</strong> (instructions) and <strong>data</strong>. The <strong>CPU</strong> fetches instructions and processes data using buses linking memory and I/O devices.</p>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          1.1 CPU components
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <ul style="line-height:1.9;">
+            <li><strong>ALU</strong> — performs arithmetic (+, −) and logic (comparisons, AND/OR)</li>
+            <li><strong>Control Unit (CU)</strong> — coordinates the FDE cycle and signals on buses</li>
+            <li><strong>Registers</strong> — tiny, ultra-fast storage inside the CPU (e.g. Program Counter, CIR)</li>
+            <li><strong>Clock</strong> — synchronises operations; higher clock speed → more cycles per second</li>
+            <li><strong>Cache</strong> — small fast memory between CPU and RAM for frequent data</li>
+          </ul>
+          <p><strong>Example:</strong> Adding two numbers — operands move to the ALU; the CU ensures the correct instruction runs at the right time.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Which part of the CPU carries out calculations?</p>
+              <button class="btn mcq-btn" data-letter="A">Control Unit</button>
+              <button class="btn mcq-btn" data-letter="B">ALU</button>
+              <button class="btn mcq-btn" data-letter="C">Hard drive</button>
+              <button class="btn mcq-btn" data-letter="D">Monitor</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          1.2 Buses and Von Neumann
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>Three buses connect components:</p>
+          <ul style="line-height:1.9;">
+            <li><strong>Address bus</strong> — which memory location to access</li>
+            <li><strong>Data bus</strong> — the actual data transferred</li>
+            <li><strong>Control bus</strong> — signals (read/write, interrupt, clock)</li>
+          </ul>
+          <p>Because instructions and data share memory, the CPU cannot always fetch both at once — the <strong>Von Neumann bottleneck</strong>.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">The address bus carries:</p>
+              <button class="btn mcq-btn" data-letter="A">Memory location addresses</button>
+              <button class="btn mcq-btn" data-letter="B">Only the result of calculations</button>
+              <button class="btn mcq-btn" data-letter="C">Power to the CPU</button>
+              <button class="btn mcq-btn" data-letter="D">Sound to speakers</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 2. FDE CYCLE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Fetch–Decode–Execute Cycle
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          2.1 The three stages
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <div class="fde-step"><strong>Fetch</strong> — copy the next instruction from memory (address in <strong>Program Counter</strong>) into the <strong>Current Instruction Register (CIR)</strong>. PC increments.</div>
+          <div class="fde-step"><strong>Decode</strong> — the Control Unit works out what the instruction means (e.g. ADD, LOAD, STORE).</div>
+          <div class="fde-step"><strong>Execute</strong> — the operation runs (ALU calculates, data moved to/from memory).</div>
+          <p>The cycle repeats billions of times per second (driven by the <strong>clock</strong>).</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Correct order of the FDE cycle:</p>
+              <button class="btn mcq-btn" data-letter="A">Decode, Fetch, Execute</button>
+              <button class="btn mcq-btn" data-letter="B">Fetch, Decode, Execute</button>
+              <button class="btn mcq-btn" data-letter="C">Execute, Fetch, Decode</button>
+              <button class="btn mcq-btn" data-letter="D">Fetch, Execute, Decode</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          2.2 Worked example — tracing one instruction
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Scenario:</strong> PC = 200. Memory address 200 contains <code>ADD 3</code>.</p>
+          <ol style="line-height:1.9;">
+            <li><strong>Fetch:</strong> Instruction copied to CIR; PC becomes 201.</li>
+            <li><strong>Decode:</strong> CU recognises “add 3 to accumulator”.</li>
+            <li><strong>Execute:</strong> ALU adds 3; result stored in the appropriate register.</li>
+          </ol>
+          <p>Exam questions may ask you to name registers changed or the next PC value.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">During FETCH, the instruction is loaded into the:</p>
+              <button class="btn mcq-btn" data-letter="A">Hard drive</button>
+              <button class="btn mcq-btn" data-letter="B">Monitor</button>
+              <button class="btn mcq-btn" data-letter="C">Current Instruction Register</button>
+              <button class="btn mcq-btn" data-letter="D">Power supply</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='computer_systems') }}?difficulty=foundational&amp;mode=practice" style="display:inline-block;margin:4px 0 8px;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Foundational</a>
+    </div>
+  </details>
+
+  <!-- 3. MEMORY -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Primary Memory
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          3.1 RAM, ROM and cache
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <table style="width:100%;border-collapse:collapse;margin:10px 0;font-size:1rem;">
+            <tr style="background:#eaf4fb;"><th style="padding:8px;border:1px solid #d4e6f1;text-align:left;">Type</th><th style="padding:8px;border:1px solid #d4e6f1;">Volatile?</th><th style="padding:8px;border:1px solid #d4e6f1;">Typical role</th></tr>
+            <tr><td style="padding:8px;border:1px solid #e2e8f0;"><strong>RAM</strong></td><td style="padding:8px;border:1px solid #e2e8f0;">Yes</td><td style="padding:8px;border:1px solid #e2e8f0;">Programs &amp; data in use (lost on power-off)</td></tr>
+            <tr><td style="padding:8px;border:1px solid #e2e8f0;"><strong>ROM</strong></td><td style="padding:8px;border:1px solid #e2e8f0;">No</td><td style="padding:8px;border:1px solid #e2e8f0;">Firmware / BIOS — bootstrap startup</td></tr>
+            <tr><td style="padding:8px;border:1px solid #e2e8f0;"><strong>Cache</strong></td><td style="padding:8px;border:1px solid #e2e8f0;">Yes</td><td style="padding:8px;border:1px solid #e2e8f0;">Fast buffer for frequently used instructions/data</td></tr>
+          </table>
+          <p><strong>Example:</strong> Opening a game loads its files from SSD into <strong>RAM</strong> so the CPU can access them quickly.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">RAM is volatile. This means:</p>
+              <button class="btn mcq-btn" data-letter="A">Data is kept forever</button>
+              <button class="btn mcq-btn" data-letter="B">Data is lost when power is off</button>
+              <button class="btn mcq-btn" data-letter="C">RAM stores the BIOS</button>
+              <button class="btn mcq-btn" data-letter="D">RAM is the same as ROM</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          3.2 Virtual memory
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>When <strong>RAM is full</strong>, the OS can move less-used pages to <strong>secondary storage</strong> (hard drive/SSD) and treat that space as extra memory — <strong>virtual memory</strong>.</p>
+          <p><strong>Example:</strong> You have 8 GB RAM but open apps needing 10 GB. The OS swaps data in and out. The PC still runs, but <strong>thrashing</strong> (constant swapping) feels very slow.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Virtual memory uses:</p>
+              <button class="btn mcq-btn" data-letter="A">Cache only</button>
+              <button class="btn mcq-btn" data-letter="B">Secondary storage to extend RAM</button>
+              <button class="btn mcq-btn" data-letter="C">Registers only</button>
+              <button class="btn mcq-btn" data-letter="D">ROM instead of RAM</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 4. STORAGE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Secondary Storage
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          4.1 Storage types
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <ul style="line-height:1.9;">
+            <li><strong>HDD</strong> — magnetic, moving parts, large capacity, cheaper per GB, slower</li>
+            <li><strong>SSD</strong> — flash memory, no moving parts, faster, durable, common in laptops</li>
+            <li><strong>Optical</strong> — DVD/Blu-ray; good for distributing read-only media</li>
+            <li><strong>USB / cloud</strong> — portable or remote secondary storage</li>
+          </ul>
+          <p>All are <strong>non-volatile</strong> — data remains without power.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="D">
+              <p style="margin:0 0 10px;">Which is secondary storage?</p>
+              <button class="btn mcq-btn" data-letter="A">Cache</button>
+              <button class="btn mcq-btn" data-letter="B">Register</button>
+              <button class="btn mcq-btn" data-letter="C">RAM</button>
+              <button class="btn mcq-btn" data-letter="D">SSD</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          4.2 Choosing storage — worked comparison
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-aqa">AQA</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Example — gaming laptop:</strong> Install games on an <strong>SSD</strong> for fast load times; store old videos on a large <strong>HDD</strong> if cost matters.</p>
+          <p><strong>Cloud storage</strong> keeps files on remote servers (still magnetic/SSD at the data centre). Advantages: access anywhere, easy sharing. Disadvantages: needs internet, privacy/security concerns, ongoing cost.</p>
+          <p><strong>Example — backup:</strong> Use cloud storage or external USB for off-site copies (not the same as RAM).</p>
+          <p style="font-size:1rem;color:#8a5300;">Defragmentation helps HDDs, not SSDs (can wear flash unnecessarily).</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">A clear advantage of SSD over HDD:</p>
+              <button class="btn mcq-btn" data-letter="A">Uses spinning platters</button>
+              <button class="btn mcq-btn" data-letter="B">Faster access with no moving parts</button>
+              <button class="btn mcq-btn" data-letter="C">Always needs defragmentation</button>
+              <button class="btn mcq-btn" data-letter="D">Stores the BIOS only</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 5. OS & SOFTWARE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Operating Systems &amp; Software
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          5.1 Functions of the OS
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>The <strong>operating system</strong> is system software that manages hardware and provides services for applications:</p>
+          <ul style="line-height:1.9;">
+            <li><strong>Processor management</strong> — scheduling which program uses the CPU (multitasking)</li>
+            <li><strong>Memory management</strong> — allocating RAM, virtual memory</li>
+            <li><strong>File management</strong> — folders, permissions, saving/loading files</li>
+            <li><strong>Security</strong> — users, passwords, malware protection</li>
+            <li><strong>Device drivers</strong> — communicate with printers, GPUs, etc.</li>
+          </ul>
+          <p><strong>Example:</strong> When you open a browser and a music app, the OS time-slices the CPU so both appear to run together.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">An operating system is:</p>
+              <button class="btn mcq-btn" data-letter="A">A word processor</button>
+              <button class="btn mcq-btn" data-letter="B">Part of the ALU</button>
+              <button class="btn mcq-btn" data-letter="C">System software managing resources</button>
+              <button class="btn mcq-btn" data-letter="D">A type of RAM</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          5.2 Application and utility software
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Application software</strong> helps users perform tasks — spreadsheets, games, web browsers.</p>
+          <p><strong>Utility software</strong> maintains or optimises the computer — antivirus, backup tools, disk cleaner, defragmenter (HDD), file compression.</p>
+          <p><strong>Example:</strong> Windows is the OS; Microsoft Excel is an <em>application</em>; a virus scanner is a <em>utility</em>.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Which is utility software?</p>
+              <button class="btn mcq-btn" data-letter="A">The OS kernel alone</button>
+              <button class="btn mcq-btn" data-letter="B">Antivirus scanner</button>
+              <button class="btn mcq-btn" data-letter="C">CPU</button>
+              <button class="btn mcq-btn" data-letter="D">Photo editing app</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='computer_systems') }}?difficulty=intermediate&amp;mode=practice" style="display:inline-block;margin:4px 0 8px;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Intermediate</a>
+    </div>
+  </details>
+
+  <!-- 6. EMBEDDED & PERFORMANCE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Embedded Systems &amp; Performance
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          6.1 Embedded systems
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>An <strong>embedded system</strong> is a computer built into a device to perform <strong>one dedicated function</strong>. It often has limited RAM/storage, low power use, and real-time requirements.</p>
+          <p><strong>Examples:</strong> washing machine controller, engine management in a car, traffic light sequencer, hospital infusion pump.</p>
+          <p>Unlike a PC, you cannot usually install any app you want — firmware is specialised.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Embedded systems are designed to:</p>
+              <button class="btn mcq-btn" data-letter="A">Run any program from the internet</button>
+              <button class="btn mcq-btn" data-letter="B">Perform one dedicated function in a device</button>
+              <button class="btn mcq-btn" data-letter="C">Replace desktop operating systems</button>
+              <button class="btn mcq-btn" data-letter="D">Only display web pages</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          6.2 CPU performance factors
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <ul style="line-height:1.9;">
+            <li><strong>Clock speed (GHz)</strong> — more cycles per second per core (not the only factor)</li>
+            <li><strong>Cores</strong> — more independent processors for parallel tasks</li>
+            <li><strong>Cache size</strong> — larger cache can reduce waits for RAM</li>
+            <li><strong>Cooling</strong> — heat sinks/fans prevent thermal throttling</li>
+          </ul>
+          <p><strong>Example:</strong> Video editing benefits from many cores; a single-threaded game may care more about high clock speed on one core.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">A higher clock speed (GHz) generally means:</p>
+              <button class="btn mcq-btn" data-letter="A">More instruction cycles per second per core</button>
+              <button class="btn mcq-btn" data-letter="B">More hard drive space</button>
+              <button class="btn mcq-btn" data-letter="C">Less heat always</button>
+              <button class="btn mcq-btn" data-letter="D">Slower processing</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          6.3 Startup: BIOS/UEFI
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>When you press power, <strong>firmware</strong> (BIOS or UEFI in ROM/flash) runs first. It checks hardware (POST), lets you change basic settings, then <strong>boots</strong> the OS from a storage device.</p>
+          <p><strong>Example:</strong> “Press F2 for setup” appears before Windows loads — that is firmware, not the OS.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">ROM/firmware is typically used for:</p>
+              <button class="btn mcq-btn" data-letter="A">Temporary browser tabs</button>
+              <button class="btn mcq-btn" data-letter="B">Bootstrap / startup instructions</button>
+              <button class="btn mcq-btn" data-letter="C">Saving essays only</button>
+              <button class="btn mcq-btn" data-letter="D">Virtual memory pages</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='computer_systems') }}?difficulty=difficult&amp;mode=practice" style="display:inline-block;margin:4px 0 8px;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Difficult</a>
+    </div>
+  </details>
+
+  <!-- QUICK REFERENCE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">★</span>
+      Quick Reference
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10–11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <div style="text-align:center;margin:12px 0;">
+        <svg width="100%" viewBox="0 0 760 280" style="background:#f9f8f5;border:1px solid #d4e6f1;border-radius:8px;max-width:760px;display:block;margin:0 auto;">
+          <text x="380" y="26" font-size="16" fill="#1a6fa8" font-weight="bold" text-anchor="middle">Computer Systems — Quick Reference</text>
+          <text x="20" y="54" font-size="14" fill="#28251d">CPU: ALU + CU + registers + cache</text>
+          <text x="20" y="74" font-size="14" fill="#28251d">FDE: Fetch → Decode → Execute</text>
+          <text x="20" y="94" font-size="14" fill="#28251d">RAM volatile | ROM firmware | Cache fast</text>
+          <text x="20" y="114" font-size="14" fill="#28251d">SSD fast, no moving parts | HDD magnetic</text>
+          <line x1="380" y1="40" x2="380" y2="260" stroke="#d4e6f1"/>
+          <text x="400" y="54" font-size="14" fill="#28251d">OS: memory, CPU, files, security</text>
+          <text x="400" y="74" font-size="14" fill="#28251d">App = user tasks | Utility = maintenance</text>
+          <text x="400" y="94" font-size="14" fill="#28251d">Embedded = one dedicated job</text>
+          <text x="400" y="114" font-size="14" fill="#28251d">GHz, cores, cache → performance</text>
+          <text x="400" y="144" font-size="14" fill="#1a6fa8" font-weight="bold">Buses</text>
+          <text x="400" y="164" font-size="14" fill="#555555">Address | Data | Control</text>
+        </svg>
+      </div>
+      <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:8px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Cache memory is placed near the CPU to:</p>
+          <button class="btn mcq-btn" data-letter="A">Store the BIOS permanently</button>
+          <button class="btn mcq-btn" data-letter="B">Speed up access to frequently used data</button>
+          <button class="btn mcq-btn" data-letter="C">Replace the hard drive</button>
+          <button class="btn mcq-btn" data-letter="D">Cool the processor</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+</div>
+
+<div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;max-width:860px;margin-left:auto;margin-right:auto;">
+  <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+  <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='cs', topic='computer_systems') }}"
+     style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+    Start Practice Quiz
+  </a>
+</div>
+
+{% endblock %}

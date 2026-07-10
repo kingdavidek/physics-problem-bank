@@ -1,0 +1,822 @@
+{% extends "base.html" %}
+{% block title %}GCSE Maths – Constructions & Loci Lesson{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Constructions &amp; Loci</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">Learn how to draw accurate shapes with ruler and compasses, and how to find loci — the paths or regions where points must lie.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+  <!-- Quick Test button -->
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='constructions_loci') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       1. The Four Basic Loci
+  ══════════════════════════════════════════════════════ -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      The Four Basic Loci
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> “All points exactly <strong>5 cm</strong> from point P.” You draw a <strong>circle</strong> with centre P and radius 5 cm. That circle is the locus.</p>
+
+      <p>A <strong>locus</strong> (say “locus”, plural <strong>loci</strong>) is all the points that fit one rule. GCSE exams use four main types:</p>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:14px;">
+
+        <!-- Locus 1: distance from a point -->
+        <div style="border:1px solid #d4e6f1;border-radius:8px;padding:14px;">
+          <div style="font-weight:700;color:#1a6fa8;margin-bottom:8px;">① Fixed distance from a point</div>
+          <svg width="160" height="145" viewBox="0 0 160 145" style="display:block;margin:auto;">
+            <circle cx="80" cy="72" r="58" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2"/>
+            <circle cx="80" cy="72" r="4" fill="#1a6fa8"/>
+            <text x="86" y="68" font-size="14" fill="#1a6fa8" font-weight="bold">P</text>
+            <line x1="80" y1="72" x2="138" y2="72" stroke="#a13544" stroke-width="1.5"/>
+            <text x="109" y="67" font-size="14" fill="#a13544">r</text>
+            <text x="80" y="138" font-size="14" fill="#555" text-anchor="middle">Circle, centre P, radius r</text>
+          </svg>
+          <p style="margin:8px 0 0;font-size:1rem;color:#444;">Locus = <strong>circle</strong> with centre P and radius r</p>
+        </div>
+
+        <!-- Locus 2: equidistant from two points -->
+        <div style="border:1px solid #d4e6f1;border-radius:8px;padding:14px;">
+          <div style="font-weight:700;color:#1a6fa8;margin-bottom:8px;">② Equidistant from two points</div>
+          <svg width="210" height="145" viewBox="0 0 210 145" role="img" aria-label="Perpendicular bisector of AB: compass arcs from A and B meet at two points; the line through them bisects AB at right angles." style="display:block;margin:auto;">
+            <title>Perpendicular bisector locus of points equidistant from A and B</title>
+            <!-- Line AB (A at 20, B at 190, midpoint 105) -->
+            <line x1="20" y1="72" x2="190" y2="72" stroke="#555" stroke-width="1.5"/>
+            <circle cx="20" cy="72" r="4" fill="#1a6fa8"/>
+            <circle cx="190" cy="72" r="4" fill="#1a6fa8"/>
+            <text x="8" y="65" font-size="14" fill="#1a6fa8" font-weight="bold">A</text>
+            <text x="192" y="65" font-size="14" fill="#1a6fa8" font-weight="bold">B</text>
+            <!-- Compass arcs (radius 95, greater than half of AB) through crossing points -->
+            <path d="M 105,30 A 95,95 0 0 1 105,114" fill="none" stroke="#a13544" stroke-width="1.3" stroke-dasharray="4,3"/>
+            <path d="M 105,30 A 95,95 0 0 0 105,114" fill="none" stroke="#a13544" stroke-width="1.3" stroke-dasharray="4,3"/>
+            <circle cx="105" cy="30" r="3" fill="#a13544"/>
+            <circle cx="105" cy="114" r="3" fill="#a13544"/>
+            <line x1="105" y1="8" x2="105" y2="136" stroke="#059669" stroke-width="2"/>
+            <circle cx="105" cy="72" r="4" fill="#059669"/>
+            <rect x="105" y="62" width="8" height="8" fill="none" stroke="#059669" stroke-width="1.2"/>
+            <line x1="52" y1="68" x2="58" y2="76" stroke="#888" stroke-width="1"/>
+            <line x1="52" y1="76" x2="58" y2="68" stroke="#888" stroke-width="1"/>
+            <line x1="152" y1="68" x2="158" y2="76" stroke="#888" stroke-width="1"/>
+            <line x1="152" y1="76" x2="158" y2="68" stroke="#888" stroke-width="1"/>
+            <text x="105" y="143" font-size="14" fill="#555" text-anchor="middle">Perpendicular bisector of AB</text>
+          </svg>
+          <p style="margin:8px 0 0;font-size:1rem;color:#444;">Locus = <strong>perpendicular bisector</strong> of AB</p>
+        </div>
+
+        <!-- Locus 3: equidistant from two lines -->
+        <div style="border:1px solid #d4e6f1;border-radius:8px;padding:14px;">
+          <div style="font-weight:700;color:#1a6fa8;margin-bottom:8px;">③ Equidistant from two lines</div>
+          <svg width="190" height="145" viewBox="0 0 190 145" style="display:block;margin:auto;">
+            <!-- Two rays from corner B -->
+            <line x1="20" y1="130" x2="185" y2="130" stroke="#555" stroke-width="1.5"/>
+            <line x1="20" y1="130" x2="180" y2="15" stroke="#555" stroke-width="1.5"/>
+            <circle cx="20" cy="130" r="4" fill="#333"/>
+            <text x="2" y="143" font-size="14" fill="#333" font-weight="bold">B</text>
+            <!-- Compass arc from B (equal radius on both rays) -->
+            <path d="M 88,130 A 68,68 0 0 1 74,90" fill="none" stroke="#555" stroke-width="1.5" stroke-dasharray="4,3"/>
+            <text x="72" y="112" font-size="14" fill="#555">arc</text>
+            <!-- Angle bisector (through B, between the two rays) -->
+            <line x1="20" y1="130" x2="182" y2="78" stroke="#059669" stroke-width="2"/>
+            <text x="105" y="143" font-size="14" fill="#555" text-anchor="middle">Angle bisector of B</text>
+          </svg>
+          <p style="margin:8px 0 0;font-size:1rem;color:#444;">Locus = <strong>angle bisector(s)</strong> at the intersection</p>
+        </div>
+
+        <!-- Locus 4: fixed distance from a line segment -->
+        <div style="border:1px solid #d4e6f1;border-radius:8px;padding:14px;">
+          <div style="font-weight:700;color:#1a6fa8;margin-bottom:8px;">④ Fixed distance from a segment</div>
+          <svg width="230" height="145" viewBox="0 0 230 145" style="display:block;margin:auto;">
+            <!-- Stadium shape -->
+            <rect x="52" y="42" width="126" height="58" rx="29" ry="29"
+                  fill="#dbeafe" stroke="#1a6fa8" stroke-width="2" stroke-dasharray="5,3"/>
+            <!-- Line segment AB -->
+            <line x1="52" y1="71" x2="178" y2="71" stroke="#a13544" stroke-width="2.5"/>
+            <circle cx="52" cy="71" r="4" fill="#a13544"/>
+            <circle cx="178" cy="71" r="4" fill="#a13544"/>
+            <text x="40" y="74" font-size="14" fill="#a13544" font-weight="bold">A</text>
+            <text x="181" y="74" font-size="14" fill="#a13544" font-weight="bold">B</text>
+            <!-- Distance arrows -->
+            <line x1="115" y1="42" x2="115" y2="71" stroke="#059669" stroke-width="1.2"/>
+            <polygon points="115,42 112,50 118,50" fill="#059669"/>
+            <polygon points="115,71 112,63 118,63" fill="#059669"/>
+            <text x="120" y="59" font-size="14" fill="#059669">d</text>
+            <text x="115" y="135" font-size="14" fill="#555" text-anchor="middle">Stadium shape (parallel lines + semicircles)</text>
+          </svg>
+          <p style="margin:8px 0 0;font-size:1rem;color:#444;">Locus = <strong>stadium</strong>: parallel lines joined by semicircles</p>
+        </div>
+
+      </div><!-- end grid -->
+
+      <div style="background:#fef9c3;border-left:4px solid #f59e0b;padding:12px 16px;border-radius:0 6px 6px 0;margin-top:16px;">
+        <strong>In exams:</strong> Name the locus clearly — e.g. “circle, centre P, radius 5 cm” or “perpendicular bisector of AB”.
+      </div>
+
+      <div style="background:#eaf4fb;border-left:3px solid #1a6fa8;padding:14px 20px;margin:16px 0;border-radius:0 6px 6px 0;">
+        <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">“All points exactly <strong>4 cm</strong> from point P.” What is the locus?</p>
+          <button class="btn mcq-btn" data-letter="A">A circle, centre P, radius 4 cm</button>
+          <button class="btn mcq-btn" data-letter="B">A straight line through P</button>
+          <button class="btn mcq-btn" data-letter="C">The perpendicular bisector of P</button>
+          <button class="btn mcq-btn" data-letter="D">An angle bisector at P</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════════
+       2. Constructing the Perpendicular Bisector
+  ══════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Constructing the Perpendicular Bisector
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> You need the locus “equidistant from A and B.” We draw the <strong>perpendicular bisector</strong> of AB — every point on that line is the same distance from A as from B.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;flex-wrap:wrap;">
+        <div>
+          <h3 style="margin:0 0 10px;color:#1a6fa8;">Steps</h3>
+          <ol style="margin:0;padding-left:20px;line-height:1.9;color:#333;">
+            <li>Set compasses to <strong>more than half</strong> of AB.</li>
+            <li>From <strong>A</strong>, draw arcs above and below the line, connecting to points P and Q on either side of AB.</li>
+            <li>Keep the same radius with your compass; now from <strong>B</strong>, draw arcs on the other side of the perpendicular bisector (in green) that also connect points P and Q.</li>
+            <li>Join the two crossing points with a ruler — that line is the <strong>perpendicular bisector</strong>.</li>
+          </ol>
+          <div style="background:#dbeafe;border-radius:7px;padding:10px 14px;margin-top:12px;">
+            <strong>Key property:</strong> Every point on the perpendicular bisector is <em>equidistant</em> from A and B.
+          </div>
+          <div style="background:#dcfce7;border-radius:7px;padding:10px 14px;margin-top:8px;">
+            <strong>Use it to find:</strong> Circumcentre (intersect perp bisectors of two sides of a triangle)
+          </div>
+        </div>
+        <div>
+          <svg width="230" height="210" viewBox="0 0 230 210" role="img" aria-label="Construction of the perpendicular bisector: equal-radius arcs from A and B cross at two points; join them to bisect AB at M." style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+            <title>Constructing the perpendicular bisector of segment AB</title>
+            <!-- Segment AB -->
+            <line x1="25" y1="105" x2="205" y2="105" stroke="#555" stroke-width="2"/>
+            <circle cx="25" cy="105" r="5" fill="#1a6fa8"/>
+            <circle cx="205" cy="105" r="5" fill="#1a6fa8"/>
+            <text x="8" y="98" font-size="15" fill="#1a6fa8" font-weight="bold">A</text>
+            <text x="208" y="98" font-size="15" fill="#1a6fa8" font-weight="bold">B</text>
+            <!-- Arcs from A and B (radius 100, more than half of AB = 90) -->
+            <path d="M 115,62 A 100,100 0 0 1 115,148" fill="none" stroke="#a13544" stroke-width="1.8" stroke-dasharray="5,3"/>
+            <path d="M 115,62 A 100,100 0 0 0 115,148" fill="none" stroke="#a13544" stroke-width="1.8" stroke-dasharray="5,3"/>
+            <text x="72" y="118" font-size="9" fill="#a13544" font-style="italic">from A</text>
+            <text x="138" y="118" font-size="9" fill="#a13544" font-style="italic">from B</text>
+            <circle cx="115" cy="62" r="4" fill="#a13544"/>
+            <circle cx="115" cy="148" r="4" fill="#a13544"/>
+            <text x="122" y="58" font-size="14" fill="#a13544" font-weight="bold">P</text>
+            <text x="122" y="156" font-size="14" fill="#a13544" font-weight="bold">Q</text>
+            <line x1="115" y1="14" x2="115" y2="196" stroke="#059669" stroke-width="2.8"/>
+            <circle cx="115" cy="105" r="5" fill="#059669"/>
+            <text x="122" y="99" font-size="14" fill="#059669" font-weight="bold">M</text>
+            <rect x="115" y="95" width="10" height="10" fill="none" stroke="#059669" stroke-width="1.8"/>
+            <line x1="62" y1="100" x2="70" y2="110" stroke="#888" stroke-width="1.2"/>
+            <line x1="62" y1="110" x2="70" y2="100" stroke="#888" stroke-width="1.2"/>
+            <line x1="160" y1="100" x2="168" y2="110" stroke="#888" stroke-width="1.2"/>
+            <line x1="160" y1="110" x2="168" y2="100" stroke="#888" stroke-width="1.2"/>
+            <text x="115" y="204" font-size="14" fill="#555" text-anchor="middle">Join the crossing points → perpendicular bisector through M</text>
+          </svg>
+        </div>
+      </div>
+
+      <div style="background:#eaf4fb;border-left:3px solid #1a6fa8;padding:14px 20px;margin:16px 0;border-radius:0 6px 6px 0;">
+        <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">“Equidistant from points A and B.” Which construction do you need?</p>
+          <button class="btn mcq-btn" data-letter="A">Angle bisector</button>
+          <button class="btn mcq-btn" data-letter="B">Circle centre A</button>
+          <button class="btn mcq-btn" data-letter="C">Perpendicular bisector of AB</button>
+          <button class="btn mcq-btn" data-letter="D">Parallel line through A</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════════
+       3. Constructing the Angle Bisector
+  ══════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Constructing the Angle Bisector
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Two paths meet at corner B. The locus “same distance from both paths” is the <strong>angle bisector</strong> — we construct it with compasses at B.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;">
+        <div>
+          <h3 style="margin:0 0 10px;color:#1a6fa8;">Steps</h3>
+          <ol style="margin:0;padding-left:20px;line-height:1.9;color:#333;">
+            <li>Put the compass on <strong>B</strong>; draw an arc cutting both arms. Call the cuts <strong>X</strong> and <strong>Y</strong>.</li>
+            <li>From <strong>X</strong>, draw an arc inside the angle.</li>
+            <li>From <strong>Y</strong>, with the <strong>same radius</strong>, draw an arc crossing the first at <strong>Z</strong>.</li>
+            <li>Draw the line <strong>BZ</strong> — that is the angle bisector.</li>
+          </ol>
+          <div style="background:#dbeafe;border-radius:7px;padding:10px 14px;margin-top:12px;">
+            <strong>Key property:</strong> Every point on the angle bisector is <em>equidistant</em> from both arms of the angle.
+          </div>
+          <div style="background:#dcfce7;border-radius:7px;padding:10px 14px;margin-top:8px;">
+            <strong>Use it to find:</strong> Incentre (intersect angle bisectors of two angles of a triangle)
+          </div>
+        </div>
+        <div>
+          <svg width="230" height="200" viewBox="0 0 230 200" role="img" aria-label="Angle bisector at B: arcs from X and Y meet at Z inside the angle; draw line BZ." style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+            <title>Angle bisector construction — Z is inside the angle</title>
+            <line x1="25" y1="170" x2="165" y2="20" stroke="#555" stroke-width="2"/>
+            <line x1="25" y1="170" x2="220" y2="170" stroke="#555" stroke-width="2"/>
+            <circle cx="25" cy="170" r="5" fill="#333"/>
+            <text x="5" y="185" font-size="15" fill="#333" font-weight="bold">B</text>
+            <text x="167" y="19" font-size="15" fill="#333" font-weight="bold">A</text>
+            <text x="220" y="183" font-size="15" fill="#333" font-weight="bold">C</text>
+            <!-- Step 1: arc at B, radius 88 → X on BA, Y on BC -->
+            <path d="M 113,170 A 88,88 0 0 0 85,105.7" fill="none" stroke="#1a6fa8" stroke-width="2" stroke-dasharray="5,3" stroke-linecap="round"/>
+            <circle cx="85" cy="105.7" r="4" fill="#1a6fa8"/>
+            <circle cx="113" cy="170" r="4" fill="#1a6fa8"/>
+            <text x="66" y="100" font-size="14" fill="#1a6fa8" font-weight="bold">X</text>
+            <text x="115" y="186" font-size="14" fill="#1a6fa8" font-weight="bold">Y</text>
+            <!-- Steps 2–3: equal arcs from X and Y (radius 52), crossing at Z inside the angle -->
+            <path d="M 136.1,95.8 L 136.5,98.8 L 136.9,101.8 L 137,104.8 L 137,107.8 L 136.8,110.8 L 136.4,113.8 L 135.8,116.7 L 135.1,119.6 L 134.2,122.5 L 133.2,125.3 L 131.9,128.1 L 130.6,130.7 L 129.1,133.3 L 127.4,135.8 L 125.6,138.2 L 123.6,140.5 L 121.6,142.7 L 119.4,144.7" fill="none" stroke="#a13544" stroke-width="2" stroke-dasharray="5,3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M 107.8,118.3 L 110.8,118 L 113.8,118 L 116.8,118.1 L 119.8,118.4 L 122.8,118.9 L 125.7,119.6 L 128.6,120.4 L 131.4,121.4 L 134.2,122.5 L 136.9,123.8 L 139.5,125.3 L 142.1,126.9 L 144.5,128.6 L 146.8,130.5 L 149.1,132.5 L 151.2,134.7 L 153.1,136.9 L 155,139.3" fill="none" stroke="#a13544" stroke-width="2" stroke-dasharray="5,3" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="134.2" cy="122.5" r="4" fill="#a13544"/>
+            <text x="139" y="118" font-size="14" fill="#a13544" font-weight="bold">Z</text>
+            <!-- Step 4: bisector through B and Z -->
+            <line x1="25" y1="170" x2="203.8" y2="92.2" stroke="#059669" stroke-width="2.8"/>
+          </svg>
+          <p style="margin:6px 0 0;font-size:.8rem;color:#555;">Arcs from <strong>X</strong> and <strong>Y</strong> cross at two points — mark <strong>Z inside the angle</strong> (where the bisector meets the wedge), not the other intersection.</p>
+        </div>
+      </div>
+
+      <div style="background:#eaf4fb;border-left:3px solid #1a6fa8;padding:14px 20px;margin:16px 0;border-radius:0 6px 6px 0;">
+        <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">“Equidistant from two lines that meet at B.” What do you construct?</p>
+          <button class="btn mcq-btn" data-letter="A">Perpendicular bisector of AB</button>
+          <button class="btn mcq-btn" data-letter="B">Angle bisector at B</button>
+          <button class="btn mcq-btn" data-letter="C">Circle centre B</button>
+          <button class="btn mcq-btn" data-letter="D">Line parallel to one arm</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════════
+       4. Constructing Special Angles
+  ══════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Constructing Special Angles (60°, 90°, 30°, 45°)
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Start with radius <strong>6 cm</strong>. Mark A and X on a line with AX = 6 cm. Arcs from A and X with radius 6 cm meet at Y. Triangle AXY is equilateral, so angle at A is <strong>60°</strong>.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">
+
+        <!-- 60° -->
+        <div style="border:1px solid #d4e6f1;border-radius:8px;padding:14px;">
+          <div style="font-weight:700;color:#1a6fa8;margin-bottom:8px;">60° — Equilateral triangle</div>
+          <svg width="190" height="140" viewBox="0 0 190 140" style="display:block;margin:auto;background:#f9f8f5;border-radius:6px;">
+            <line x1="10" y1="118" x2="180" y2="118" stroke="#555" stroke-width="1.5"/>
+            <circle cx="20" cy="118" r="4" fill="#1a6fa8"/>
+            <text x="8" y="112" font-size="14" fill="#1a6fa8" font-weight="bold">A</text>
+            <circle cx="90" cy="118" r="4" fill="#a13544"/>
+            <text x="92" y="132" font-size="14" fill="#a13544" font-weight="bold">X</text>
+            <!-- Arc from A (radius AX), through X and Y -->
+            <path d="M 90,118 L 89.9,113.4 L 89.4,108.9 L 88.7,104.3 L 87.6,99.9 L 86.3,95.5 L 84.7,91.2 L 82.8,87 L 80.6,83 L 78.2,79.1 L 75.5,75.4 L 72.6,71.8 L 69.5,68.5 L 66.2,65.4 L 62.6,62.5 L 58.9,59.8 L 55,57.4" fill="none" stroke="#1a6fa8" stroke-width="1.5" stroke-dasharray="4,2" stroke-linecap="round"/>
+            <!-- Arc from X (radius XA), through A and Y -->
+            <path d="M 20,118 L 20.1,113.4 L 20.6,108.9 L 21.3,104.3 L 22.4,99.9 L 23.7,95.5 L 25.3,91.2 L 27.2,87 L 29.4,83 L 31.8,79.1 L 34.5,75.4 L 37.4,71.8 L 40.5,68.5 L 43.8,65.4 L 47.4,62.5 L 51.1,59.8 L 55,57.4" fill="none" stroke="#a13544" stroke-width="1.5" stroke-dasharray="4,2" stroke-linecap="round"/>
+            <circle cx="55" cy="57.4" r="4" fill="#059669"/>
+            <text x="58" y="51" font-size="14" fill="#059669" font-weight="bold">Y</text>
+            <line x1="20" y1="118" x2="55" y2="57.4" stroke="#059669" stroke-width="2"/>
+            <!-- 60° angle at A -->
+            <path d="M 46,118 L 45.9,115.3 L 45.4,112.6 L 44.7,110 L 43.8,107.4 L 42.5,105 L 41,102.7 L 39.3,100.6 L 37.4,98.7 L 35.3,97" fill="none" stroke="#a13544" stroke-width="1.2" stroke-linecap="round"/>
+            <text x="48" y="108" font-size="14" fill="#a13544" font-weight="bold">60°</text>
+          </svg>
+          <p style="font-size:1rem;margin:8px 0 0;color:#444;">AX = XY = AY = r → equilateral triangle → all angles 60°</p>
+        </div>
+
+        <!-- 90° at a point -->
+        <div style="border:1px solid #d4e6f1;border-radius:8px;padding:14px;">
+          <div style="font-weight:700;color:#1a6fa8;margin-bottom:8px;">90° at a point on a line</div>
+          <svg width="190" height="140" viewBox="0 0 190 140" style="display:block;margin:auto;background:#f9f8f5;border-radius:6px;">
+            <!-- Base line -->
+            <line x1="10" y1="100" x2="180" y2="100" stroke="#555" stroke-width="1.5"/>
+            <!-- Point P -->
+            <circle cx="95" cy="100" r="4" fill="#1a6fa8"/>
+            <text x="97" y="116" font-size="14" fill="#1a6fa8">P</text>
+            <!-- Arcs from P crossing the line at X=(55,100) and Y=(135,100) -->
+            <circle cx="55" cy="100" r="3" fill="#a13544"/>
+            <circle cx="135" cy="100" r="3" fill="#a13544"/>
+            <text x="48" y="114" font-size="14" fill="#a13544">X</text>
+            <text x="136" y="114" font-size="14" fill="#a13544">Y</text>
+            <!-- Arcs from X and Y above, meeting at Q=(95,48) -->
+            <path d="M 54,70 A 50,50 0 0 1 95,48" fill="none" stroke="#a13544" stroke-width="1.3" stroke-dasharray="4,2"/>
+            <path d="M 136,70 A 50,50 0 0 0 95,48" fill="none" stroke="#a13544" stroke-width="1.3" stroke-dasharray="4,2"/>
+            <circle cx="95" cy="48" r="4" fill="#059669"/>
+            <text x="99" y="44" font-size="14" fill="#059669">Q</text>
+            <!-- PQ (perpendicular) -->
+            <line x1="95" y1="100" x2="95" y2="30" stroke="#059669" stroke-width="2"/>
+            <!-- Right angle mark -->
+            <rect x="95" y="91" width="10" height="10" fill="none" stroke="#059669" stroke-width="1.5"/>
+            <text x="95" y="130" font-size="14" fill="#555" text-anchor="middle">PQ ⊥ line at P</text>
+          </svg>
+          <p style="font-size:1rem;margin:8px 0 0;color:#444;">Mark X, Y equidistant from P. Arcs from X and Y above → Q. Draw PQ.</p>
+        </div>
+
+        <!-- 30° and 45° -->
+        <div style="border:1px solid #d4e6f1;border-radius:8px;padding:14px;">
+          <div style="font-weight:700;color:#1a6fa8;margin-bottom:8px;">30° and 45°</div>
+          <div style="background:#f0f9ff;border-radius:6px;padding:10px;font-size:.88rem;line-height:1.7;">
+            <div><strong>30°</strong> = bisect a 60° angle</div>
+            <div><strong>45°</strong> = bisect a 90° angle</div>
+            <div style="margin-top:8px;"><strong>15°</strong> = bisect a 30° angle</div>
+            <div><strong>22.5°</strong> = bisect a 45° angle</div>
+          </div>
+          <div style="background:#dcfce7;border-radius:6px;padding:10px;margin-top:8px;font-size:.88rem;">
+            You can build any angle that is a multiple of <strong>15°</strong> using ruler and compasses only.
+          </div>
+        </div>
+
+      </div>
+
+      <div style="background:#eaf4fb;border-left:3px solid #1a6fa8;padding:14px 20px;margin:16px 0;border-radius:0 6px 6px 0;">
+        <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">How do you construct <strong>30°</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">Bisect a 60° angle</button>
+          <button class="btn mcq-btn" data-letter="B">Bisect a 90° angle</button>
+          <button class="btn mcq-btn" data-letter="C">Draw a perpendicular bisector</button>
+          <button class="btn mcq-btn" data-letter="D">Use a protractor only</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════════
+       5. Combined Loci and Regions
+  ══════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Combined Loci and Regions
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> “Closer to A than B <strong>and</strong> within 6 cm of B.” Draw the perpendicular bisector of AB (A’s side) and a circle radius 6 cm centre B. Shade where <strong>both</strong> rules apply.</p>
+
+      <p>Exam questions often combine two rules with <strong>AND</strong> (must satisfy both) or <strong>OR</strong> (either will do). The method is always the same at first:</p>
+      <ol style="line-height:1.8;padding-left:20px;color:#333;">
+        <li>Work out each locus on its own.</li>
+        <li>Draw them on one diagram.</li>
+        <li>Decide what the question wants: a <strong>region</strong> to shade, or specific <strong>points</strong> where the loci meet.</li>
+      </ol>
+
+      <p style="margin-top:12px;color:#333;">If one rule says “closer to A than B” and another “within 6 cm of B”, the overlap is usually a <strong>region</strong> (infinitely many points). If both rules are <strong>exact distances</strong> from A and B — a classic treasure-hunt setup — each rule is a <strong>circle</strong>, and “both at once” means the circles’ <strong>intersection points</strong> (0, 1, or 2 locations).</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+
+        <!-- Closer to A AND within r of B -->
+        <div style="border:1px solid #d4e6f1;border-radius:8px;padding:14px;">
+          <div style="font-weight:700;color:#1a6fa8;margin-bottom:8px;">Closer to A AND within 6 cm of B</div>
+          <svg width="230" height="165" viewBox="0 0 230 165" style="display:block;margin:auto;background:#f9f8f5;border-radius:6px;">
+            <!-- Circle B (radius 80px ≈ 6cm) -->
+            <circle cx="175" cy="82" r="72" fill="none" stroke="#a13544" stroke-width="1.8" stroke-dasharray="5,3"/>
+            <!-- Perp bisector (x=97) -->
+            <line x1="97" y1="5" x2="97" y2="160" stroke="#059669" stroke-width="2"/>
+            <!-- Shaded intersection: left part of circle -->
+            <clipPath id="leftHalf2">
+              <rect x="0" y="0" width="97" height="165"/>
+            </clipPath>
+            <circle cx="175" cy="82" r="72" fill="#c7d2fe" opacity="0.65" clip-path="url(#leftHalf2)"/>
+            <!-- Points A and B -->
+            <circle cx="20" cy="82" r="6" fill="#1a6fa8"/>
+            <circle cx="175" cy="82" r="6" fill="#a13544"/>
+            <text x="22" y="75" font-size="14" fill="#1a6fa8" font-weight="bold">A</text>
+            <text x="177" y="75" font-size="14" fill="#a13544" font-weight="bold">B</text>
+            <!-- Labels -->
+            <text x="48" y="145" font-size="9" fill="#555" text-anchor="middle">Closer to A</text>
+            <text x="170" y="148" font-size="9" fill="#555" text-anchor="middle">Within 6cm of B</text>
+          </svg>
+          <p style="font-size:1rem;margin:8px 0 0;color:#444;">The shaded lens region is the answer: left half of circle B.</p>
+        </div>
+
+        <!-- Two exact distances (treasure-hunt style) -->
+        <div style="border:1px solid #d4e6f1;border-radius:8px;padding:14px;">
+          <div style="font-weight:700;color:#1a6fa8;margin-bottom:8px;">Example: treasure hunt (two exact distances)</div>
+          <p style="font-size:.88rem;color:#444;margin:0 0 10px;line-height:1.55;">A treasure is buried <strong>exactly 5 km from post A</strong> and <strong>exactly 7 km from post B</strong>. Each clue is a locus (a circle). The treasure must lie on <strong>both</strong> circles — so draw them and mark where they cross.</p>
+          <svg width="230" height="165" viewBox="0 0 230 165" style="display:block;margin:auto;background:#f9f8f5;border-radius:6px;">
+            <!-- Circle A (radius 55px ≈ r1) -->
+            <circle cx="60" cy="82" r="55" fill="none" stroke="#1a6fa8" stroke-width="1.8" stroke-dasharray="5,3"/>
+            <!-- Circle B (radius 65px ≈ r2) -->
+            <circle cx="165" cy="82" r="65" fill="none" stroke="#a13544" stroke-width="1.8" stroke-dasharray="5,3"/>
+            <!-- Approximate intersection lens -->
+            <ellipse cx="115" cy="82" rx="16" ry="40" fill="#1a6fa8" opacity="0.7"/>
+            <!-- Dots at intersection -->
+            <circle cx="115" cy="42" r="5" fill="#000"/>
+            <circle cx="115" cy="122" r="5" fill="#000"/>
+            <text x="120" y="42" font-size="14" fill="#000">★</text>
+            <text x="120" y="127" font-size="14" fill="#000">★</text>
+            <!-- Points A and B -->
+            <circle cx="60" cy="82" r="5" fill="#1a6fa8"/>
+            <circle cx="165" cy="82" r="5" fill="#a13544"/>
+            <text x="62" y="75" font-size="14" fill="#1a6fa8" font-weight="bold">A</text>
+            <text x="167" y="75" font-size="14" fill="#a13544" font-weight="bold">B</text>
+            <text x="115" y="158" font-size="9" fill="#555" text-anchor="middle">2 possible treasure sites (★)</text>
+          </svg>
+          <p style="font-size:1rem;margin:8px 0 0;color:#444;">Two circles can meet in <strong>0, 1, or 2</strong> points. Here there are two — you need extra information to pick one. Contrast the left: “closer to A <em>and</em> within 6 cm of B” shades a whole region, not just isolated points.</p>
+        </div>
+
+      </div>
+
+      <table style="width:100%;border-collapse:collapse;margin-top:16px;font-size:1rem;">
+        <thead>
+          <tr style="background:#1a6fa8;color:#fff;">
+            <th style="padding:8px 12px;text-align:left;">Condition</th>
+            <th style="padding:8px 12px;text-align:left;">Locus/Boundary</th>
+            <th style="padding:8px 12px;text-align:left;">Region</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="background:#f0f9ff;"><td style="padding:7px 12px;border-bottom:1px solid #d4e6f1;">Exactly d from P</td><td style="padding:7px 12px;border-bottom:1px solid #d4e6f1;">Circle, radius d</td><td style="padding:7px 12px;border-bottom:1px solid #d4e6f1;">The circle itself (1D)</td></tr>
+          <tr><td style="padding:7px 12px;border-bottom:1px solid #d4e6f1;">Less than d from P</td><td style="padding:7px 12px;border-bottom:1px solid #d4e6f1;">Circle, radius d</td><td style="padding:7px 12px;border-bottom:1px solid #d4e6f1;">Interior of circle</td></tr>
+          <tr style="background:#f0f9ff;"><td style="padding:7px 12px;border-bottom:1px solid #d4e6f1;">More than d from P</td><td style="padding:7px 12px;border-bottom:1px solid #d4e6f1;">Circle, radius d</td><td style="padding:7px 12px;border-bottom:1px solid #d4e6f1;">Exterior of circle</td></tr>
+          <tr><td style="padding:7px 12px;border-bottom:1px solid #d4e6f1;">Closer to A than B</td><td style="padding:7px 12px;border-bottom:1px solid #d4e6f1;">Perp. bisector of AB</td><td style="padding:7px 12px;border-bottom:1px solid #d4e6f1;">Half-plane (A's side)</td></tr>
+          <tr style="background:#f0f9ff;"><td style="padding:7px 12px;">Closer to line l₁ than l₂</td><td style="padding:7px 12px;">Angle bisector</td><td style="padding:7px 12px;">Half-plane (l₁ side)</td></tr>
+        </tbody>
+      </table>
+
+      <div style="background:#eaf4fb;border-left:3px solid #1a6fa8;padding:14px 20px;margin:16px 0;border-radius:0 6px 6px 0;">
+        <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">“Closer to A than B” AND “within 5 cm of B.” What do you shade?</p>
+          <button class="btn mcq-btn" data-letter="A">The whole circle around B</button>
+          <button class="btn mcq-btn" data-letter="B">Everything on B’s side of the bisector</button>
+          <button class="btn mcq-btn" data-letter="C">The union of both regions</button>
+          <button class="btn mcq-btn" data-letter="D">Where the half-plane and circle overlap</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════════
+       6. Scale Drawings
+  ══════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Scale Drawings
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Scale <strong>1 : 25 000</strong>. A road is <strong>4.8 cm</strong> on the map. Actual length = \(4.8 \times 25\,000 = 120\,000\) cm = <strong>1.2 km</strong>.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <div>
+          <div class="lesson-formula-panel" style="background:#eaf4fb;color:#28251d;border:1px solid #d4e6f1;border-radius:8px;padding:16px;font-size:1rem;line-height:1.65;">
+            <div style="color:#1a6fa8;margin-bottom:8px;font-weight:600;font-size:1rem;">Scale formulae</div>
+            <div>Actual length = Map length × Scale number</div>
+            <div style="margin-top:8px;">Map length = Actual ÷ Scale number</div>
+            <div style="margin-top:8px;color:#059669;font-weight:600;font-size:1rem;">For areas:</div>
+            <div>Actual area = Map area × Scale²</div>
+          </div>
+          <div style="margin-top:14px;background:#fef9c3;border-left:4px solid #f59e0b;padding:12px 14px;border-radius:0 6px 6px 0;">
+            <strong>Bearings on maps:</strong> Measure clockwise from <strong>North</strong>. Write three digits (045°, not 45°).
+          </div>
+        </div>
+        <div>
+          <h3 style="margin:0 0 10px;color:#1a6fa8;">More examples</h3>
+          <div style="background:#f0f9ff;border-radius:7px;padding:12px;font-size:1rem;line-height:1.8;">
+            <strong>Scale 1:25000. Road = 4.8 cm on map. Find actual length.</strong><br>
+            Actual = 4.8 × 25000 = 120 000 cm<br>
+            = 1200 m = <strong>1.2 km</strong>
+          </div>
+          <div style="background:#f0f9ff;border-radius:7px;padding:12px;font-size:1rem;line-height:1.8;margin-top:8px;">
+            <strong>Scale 1:50000. Field = 6 cm² on map. Find actual area.</strong><br>
+            Actual = 6 × 50000² = 6 × 2.5×10⁹ cm²<br>
+            = 1.5×10¹⁰ cm² = <strong>1.5 km²</strong>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#eaf4fb;border-left:3px solid #1a6fa8;padding:14px 20px;margin:16px 0;border-radius:0 6px 6px 0;">
+        <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Scale <strong>1 : 25 000</strong>. A path is <strong>4 cm</strong> on the map. Actual length?</p>
+          <button class="btn mcq-btn" data-letter="A">100 m</button>
+          <button class="btn mcq-btn" data-letter="B">1 km</button>
+          <button class="btn mcq-btn" data-letter="C">10 km</button>
+          <button class="btn mcq-btn" data-letter="D">4.25 km</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════════
+       7. Circumcircle and Incircle
+  ══════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Circumcircle and Incircle of a Triangle
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Every triangle has two special circles tied to constructions you already know:</p>
+      <ul style="line-height:1.75;color:#333;padding-left:20px;margin:12px 0;">
+        <li><strong>Circumcircle</strong> — the unique circle that passes through <strong>all three vertices</strong> (A, B and C). Its centre is the <strong>circumcentre</strong> O. The triangle sits <em>inside</em> the circle; each vertex touches the circumference.</li>
+        <li><strong>Incircle</strong> — the largest circle that fits <strong>inside</strong> the triangle, touching each side without crossing it. Its centre is the <strong>incentre</strong> I. The circle sits <em>inside</em> the triangle; each side is a tangent.</li>
+      </ul>
+      <p style="color:#333;">Circumcentre ↔ perpendicular bisectors (equidistant from pairs of vertices). Incentre ↔ angle bisectors (equidistant from pairs of sides). O may lie outside an obtuse triangle; I is always inside.</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+        <!-- Circumcircle -->
+        <div>
+          <h3 style="margin:0 0 10px;color:#1a6fa8;">Circumcircle</h3>
+          <svg width="220" height="200" viewBox="0 0 220 200" style="background:#f9f8f5;border-radius:8px;display:block;margin:auto;max-width:100%;">
+            <circle cx="110" cy="102.8" r="87.8" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5" stroke-dasharray="6,4"/>
+            <polygon points="60,175 160,175 110,15" fill="none" stroke="#333" stroke-width="2"/>
+            <line x1="110" y1="8" x2="110" y2="192" stroke="#059669" stroke-width="1" stroke-dasharray="4,3" opacity="0.55"/>
+            <line x1="18" y1="88" x2="202" y2="118" stroke="#059669" stroke-width="1" stroke-dasharray="4,3" opacity="0.55"/>
+            <circle cx="110" cy="102.8" r="5" fill="#059669"/>
+            <text x="115" y="98" font-size="14" fill="#059669" font-weight="bold">O</text>
+            <circle cx="60" cy="175" r="3.5" fill="#333"/>
+            <circle cx="160" cy="175" r="3.5" fill="#333"/>
+            <circle cx="110" cy="15" r="3.5" fill="#333"/>
+            <text x="48" y="190" font-size="14" fill="#333" font-weight="bold">A</text>
+            <text x="161" y="190" font-size="14" fill="#333" font-weight="bold">B</text>
+            <text x="106" y="12" font-size="14" fill="#333" font-weight="bold">C</text>
+          </svg>
+          <div style="font-size:.87rem;margin-top:8px;line-height:1.6;color:#333;">
+            <strong>What it is:</strong> Circle through A, B and C — vertices lie on the circumference.<br>
+            <strong>Construction:</strong> Perpendicular bisectors of two sides meet at O. Compass radius <strong>OA</strong> (= OB = OC).<br>
+            <strong>Uses:</strong> Finding a point equidistant from all three vertices (e.g. equal-distance mast from three towns).
+          </div>
+        </div>
+
+        <!-- Incircle -->
+        <div>
+          <h3 style="margin:0 0 10px;color:#a13544;">Incircle</h3>
+          <svg width="220" height="200" viewBox="0 0 220 200" style="background:#f9f8f5;border-radius:8px;display:block;margin:auto;max-width:100%;">
+            <polygon points="30,175 190,175 110,25" fill="#f0f9ff" stroke="#333" stroke-width="2"/>
+            <circle cx="110" cy="127" r="48" fill="#fce7f3" stroke="#a13544" stroke-width="1.5" stroke-dasharray="5,3"/>
+            <line x1="30" y1="175" x2="110" y2="127" stroke="#a13544" stroke-width="1" stroke-dasharray="4,3" opacity="0.55"/>
+            <line x1="190" y1="175" x2="110" y2="127" stroke="#a13544" stroke-width="1" stroke-dasharray="4,3" opacity="0.55"/>
+            <circle cx="110" cy="127" r="5" fill="#a13544"/>
+            <text x="115" y="122" font-size="14" fill="#a13544" font-weight="bold">I</text>
+            <circle cx="30" cy="175" r="3.5" fill="#333"/>
+            <circle cx="190" cy="175" r="3.5" fill="#333"/>
+            <circle cx="110" cy="25" r="3.5" fill="#333"/>
+            <text x="14" y="190" font-size="14" fill="#333" font-weight="bold">A</text>
+            <text x="192" y="190" font-size="14" fill="#333" font-weight="bold">B</text>
+            <text x="106" y="22" font-size="14" fill="#333" font-weight="bold">C</text>
+          </svg>
+          <div style="font-size:.87rem;margin-top:8px;line-height:1.6;color:#333;">
+            <strong>What it is:</strong> Circle tangent to all three sides — sits inside the triangle.<br>
+            <strong>Construction:</strong> Angle bisectors of two angles meet at I. Compass radius = perpendicular distance from I to any side (inradius <strong>r</strong>).<br>
+            <strong>Formula:</strong> \(r = \dfrac{\text{area}}{\text{semi-perimeter}}\). I is always inside the triangle.
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#eaf4fb;border-left:3px solid #1a6fa8;padding:14px 20px;margin:16px 0;border-radius:0 6px 6px 0;">
+        <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">The <strong>circumcentre</strong> of a triangle is found by intersecting:</p>
+          <button class="btn mcq-btn" data-letter="A">Perpendicular bisectors of two sides</button>
+          <button class="btn mcq-btn" data-letter="B">Angle bisectors of two angles</button>
+          <button class="btn mcq-btn" data-letter="C">Altitudes of the triangle</button>
+          <button class="btn mcq-btn" data-letter="D">Medians of the triangle</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════════
+       8. Advanced Loci
+  ══════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+      Advanced Loci (Higher)
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Higher-tier questions sometimes use loci that are <strong>not</strong> straight lines or simple arcs. Three useful types:</p>
+      <ul style="line-height:1.75;color:#333;padding-left:20px;margin:12px 0;">
+        <li><strong>Sliding ladder</strong> — fixed length between wall and floor; the <strong>midpoint</strong> follows a quarter-circle.</li>
+        <li><strong>Apollonius circle</strong> — points where <strong>PA : PB = k</strong> (a fixed ratio, not equal distance).</li>
+        <li><strong>PA² − PB² = constant</strong> — points where the <em>difference of squared distances</em> is fixed; the locus is a <strong>straight line</strong> perpendicular to AB.</li>
+      </ul>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;">
+
+        <!-- Sliding ladder -->
+        <div style="border:1px solid #d4e6f1;border-radius:8px;padding:14px;">
+          <div style="font-weight:700;color:#1a6fa8;margin-bottom:8px;">Midpoint of a sliding ladder</div>
+          <p style="font-size:.88rem;color:#444;margin:0 0 8px;line-height:1.5;">A <strong>5 m</strong> ladder touches a wall and the floor. The bottom slides along the floor and the top slides down the wall, but the length stays 5 m. Track the <strong>midpoint M</strong>.</p>
+          <svg width="190" height="170" viewBox="0 0 190 170" style="display:block;margin:auto;background:#f9f8f5;border-radius:6px;">
+            <line x1="20" y1="10" x2="20" y2="155" stroke="#888" stroke-width="2"/>
+            <line x1="20" y1="155" x2="175" y2="155" stroke="#888" stroke-width="2"/>
+            <text x="8" y="14" font-size="14" fill="#888">wall</text>
+            <text x="160" y="168" font-size="14" fill="#888">floor</text>
+            <circle cx="20" cy="155" r="3" fill="#888"/>
+            <line x1="20" y1="40" x2="100" y2="155" stroke="#a13544" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.45"/>
+            <line x1="20" y1="71" x2="132" y2="155" stroke="#a13544" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.65"/>
+            <line x1="20" y1="105" x2="151" y2="155" stroke="#a13544" stroke-width="1.5"/>
+            <path d="M 90,155 A 70,70 0 0 0 20,85" fill="none" stroke="#059669" stroke-width="2.5"/>
+            <circle cx="60" cy="97.5" r="4" fill="#059669"/>
+            <circle cx="76" cy="113" r="4" fill="#059669"/>
+            <circle cx="85.4" cy="130" r="4" fill="#059669"/>
+            <text x="88" y="124" font-size="14" fill="#059669" font-weight="bold">M</text>
+            <text x="92" y="148" font-size="9" fill="#059669">r = 2.5 m</text>
+          </svg>
+          <p style="font-size:1rem;margin:8px 0 0;color:#444;line-height:1.55;"><strong>Why a quarter-circle:</strong> corner C, ladder length L. Midpoint M satisfies CM = L/2 by Pythagoras on half the ladder. M stays <strong>2.5 m</strong> from C → locus is a <strong>quarter-circle</strong> of radius L/2 in the corner.</p>
+        </div>
+
+        <!-- Apollonius circle -->
+        <div style="border:1px solid #d4e6f1;border-radius:8px;padding:14px;">
+          <div style="font-weight:700;color:#1a6fa8;margin-bottom:8px;">Apollonius circle (PA : PB = k)</div>
+          <p style="font-size:.88rem;color:#444;margin:0 0 8px;line-height:1.5;">Find points P where distance to A is <strong>half</strong> the distance to B (ratio <strong>1 : 2</strong>). This is <em>not</em> a perpendicular bisector — the locus is a <strong>circle</strong>.</p>
+          <svg width="190" height="170" viewBox="0 0 190 170" style="display:block;margin:auto;background:#f9f8f5;border-radius:6px;">
+            <line x1="10" y1="85" x2="180" y2="85" stroke="#ccc" stroke-width="1" stroke-dasharray="3,2"/>
+            <circle cx="40" cy="85" r="5" fill="#1a6fa8"/>
+            <circle cx="150" cy="85" r="5" fill="#a13544"/>
+            <text x="42" y="77" font-size="14" fill="#1a6fa8" font-weight="bold">A</text>
+            <text x="152" y="77" font-size="14" fill="#a13544" font-weight="bold">B</text>
+            <circle cx="76.7" cy="85" r="36.7" fill="none" stroke="#059669" stroke-width="2"/>
+            <circle cx="76.7" cy="85" r="4" fill="#059669"/>
+            <text x="81" y="80" font-size="14" fill="#059669" font-weight="bold">P</text>
+            <text x="95" y="155" font-size="9" fill="#555" text-anchor="middle">PA : PB = 1 : 2</text>
+          </svg>
+          <p style="font-size:1rem;margin:8px 0 0;color:#444;line-height:1.55;"><strong>Condition:</strong> PA/PB = k (k ≠ 1). Set PA² = k²·PB² and expand — the y terms cancel if A and B share a height, giving a circle. <strong>A lies on this circle</strong> when k &lt; 1; check which arc satisfies the ratio.</p>
+        </div>
+
+        <!-- PA² − PB² = const -->
+        <div style="border:1px solid #d4e6f1;border-radius:8px;padding:14px;">
+          <div style="font-weight:700;color:#1a6fa8;margin-bottom:8px;">PA² − PB² = constant</div>
+          <p style="font-size:.88rem;color:#444;margin:0 0 8px;line-height:1.5;">A different condition: squared distances differ by a fixed amount k. The locus is a <strong>straight line</strong> (not a circle), perpendicular to AB.</p>
+                <div class="revision-card-wrap">
+        <svg class="revision-card-svg lesson-quick-ref" width="190" height="170" viewBox="0 0 190 170" style="max-width:760px;width:100%;height:auto;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:10px;">
+            <line x1="10" y1="10" x2="10" y2="160" stroke="#888" stroke-width="1.5"/>
+            <line x1="10" y1="85" x2="180" y2="85" stroke="#888" stroke-width="1.5"/>
+            <circle cx="30" cy="85" r="5" fill="#1a6fa8"/>
+            <circle cx="150" cy="85" r="5" fill="#a13544"/>
+            <text x="32" y="77" font-size="14" fill="#1a6fa8" font-weight="bold">A</text>
+            <text x="152" y="77" font-size="14" fill="#a13544" font-weight="bold">B</text>
+            <line x1="90" y1="10" x2="90" y2="160" stroke="#059669" stroke-width="2.5"/>
+            <circle cx="90" cy="50" r="4" fill="#059669"/>
+            <text x="94" y="48" font-size="14" fill="#059669" font-weight="bold">P</text>
+            <text x="94" y="25" font-size="14" fill="#059669">locus</text>
+            <text x="95" y="158" font-size="9" fill="#555" text-anchor="middle">PA² − PB² = 0 → x = 90</text>
+          </svg>
+      </div>
+          <p style="font-size:1rem;margin:8px 0 0;color:#444;line-height:1.55;">Expand: \((x-x_A)^2-(x-x_B)^2 = k\). The \(x^2\) terms cancel → <strong>vertical line</strong> \(x = c\). If k = 0, P is equidistant from A and B (perpendicular bisector of AB).</p>
+        </div>
+
+      </div>
+
+      <div style="background:#eaf4fb;border-left:3px solid #1a6fa8;padding:14px 20px;margin:16px 0;border-radius:0 6px 6px 0;">
+        <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">A <strong>5 m</strong> ladder slides on a wall and floor. The locus of its <strong>midpoint</strong> is:</p>
+          <button class="btn mcq-btn" data-letter="A">A full circle radius 5 m</button>
+          <button class="btn mcq-btn" data-letter="B">A straight line along the floor</button>
+          <button class="btn mcq-btn" data-letter="C">A quarter-circle radius 2.5 m at the corner</button>
+          <button class="btn mcq-btn" data-letter="D">The perpendicular bisector of the ladder</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════════
+       9. Key Formulae Reference Card
+  ══════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">9</span>
+      Constructions &amp; Loci — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Use this card to revise. Each numbered section above has steps, diagrams, and a Quick Check question.</p>
+
+      <div class="lesson-quick-ref-card" role="region" aria-label="Constructions and loci quick reference">
+        <h3>Constructions &amp; Loci — Quick Reference</h3>
+        <div class="lesson-quick-ref-grid lesson-quick-ref-grid--3col">
+          <div>
+            <h4 style="color:#1a6fa8;">Basic Loci</h4>
+            <ul>
+              <li>Fixed distance from a point → circle</li>
+              <li>Equidistant from A and B → ⊥ bisector of AB</li>
+              <li>Equidistant from two lines → angle bisector</li>
+              <li>Fixed distance from a segment → stadium shape</li>
+            </ul>
+          </div>
+          <div>
+            <h4 style="color:#1a6fa8;">Constructions</h4>
+            <ul>
+              <li>⊥ bisector: equal arcs from A and B</li>
+              <li>Angle bisector: arc from vertex; equal arcs from leg crossings</li>
+              <li>60°: equilateral triangle (AX = AY = XY = r)</li>
+              <li>90°: mark X, Y equidistant from P; arcs cross above</li>
+              <li>30° = bisect 60°; 45° = bisect 90°</li>
+            </ul>
+          </div>
+          <div>
+            <h4 style="color:#1a6fa8;">Special Points</h4>
+            <ul>
+              <li>Circumcentre: where ⊥ bisectors meet</li>
+              <li>Incentre: where angle bisectors meet</li>
+              <li>Inradius r = Area ÷ semi-perimeter</li>
+            </ul>
+          </div>
+        </div>
+        <div class="lesson-quick-ref-advanced">
+          <h4>Advanced Loci (Higher)</h4>
+          <ul>
+            <li>Midpoint of sliding ladder (length L): quarter-circle, radius L/2</li>
+            <li>Point on ladder (d from foot, length L): ellipse x²/(L−d)² + y²/d² = 1</li>
+            <li>PA:PB = k (k ≠ 1): Apollonius circle</li>
+            <li>PA² − PB² = c: vertical line</li>
+            <li>Scale: Actual = Map × n &nbsp;|&nbsp; Area: Actual area = Map area × n²</li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="background:#eaf4fb;border-left:3px solid #1a6fa8;padding:14px 20px;margin:16px 0;border-radius:0 6px 6px 0;">
+        <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">The <strong>incentre</strong> of a triangle is where which lines meet?</p>
+          <button class="btn mcq-btn" data-letter="A">Perpendicular bisectors</button>
+          <button class="btn mcq-btn" data-letter="B">Angle bisectors</button>
+          <button class="btn mcq-btn" data-letter="C">Medians</button>
+          <button class="btn mcq-btn" data-letter="D">Altitudes</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- Practice link -->
+  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='constructions_loci') }}"
+       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+      Start Practice Quiz
+    </a>
+  </div>
+
+</div>
+
+{% endblock %}

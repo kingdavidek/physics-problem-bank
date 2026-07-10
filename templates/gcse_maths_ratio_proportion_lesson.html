@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+{% block title %}Ratio and Proportion – GCSE Mathematics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Ratio and Proportion</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">GCSE Mathematics – Foundation and Higher Tier · All Exam Boards</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+  <!-- Quick Test button -->
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='ratio_proportion') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      Understanding Ratio
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 7</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>A <strong>ratio</strong> tells you how two (or more) amounts compare. It uses a colon, like a score in sport: <strong>3 : 2</strong> means "3 for every 2".</p>
+      <p><em>Example:</em> A bag has red and blue counters in the ratio <strong>3 : 2</strong>. That means for every 3 red counters, there are 2 blue counters.</p>
+      <p>We can count the <strong>total parts</strong>. Here that's 3 + 2 = <strong>5 parts</strong> altogether. So red is \(\frac{3}{5}\) of all the counters and blue is \(\frac{2}{5}\).</p>
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="360" height="90" viewBox="0 0 360 90" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <circle cx="70" cy="45" r="18" fill="#a13544"/><circle cx="115" cy="45" r="18" fill="#a13544"/><circle cx="160" cy="45" r="18" fill="#a13544"/>
+          <circle cx="230" cy="45" r="18" fill="#01696f"/><circle cx="275" cy="45" r="18" fill="#01696f"/>
+          <text x="180" y="82" text-anchor="middle" font-size="14" fill="#555">3 red parts : 2 blue parts</text>
+        </svg>
+      </div>
+      <p><strong>Exam tip:</strong> Write ratios in their simplest form, like you simplify fractions. The ratio <strong>12 : 8</strong> becomes <strong>3 : 2</strong> when you divide both parts by 4.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Red and blue counters are in the ratio <strong>3 : 2</strong>. How many <strong>equal parts</strong> are there in total?</p>
+          <button class="btn mcq-btn" data-letter="A">3</button>
+          <button class="btn mcq-btn" data-letter="B">5</button>
+          <button class="btn mcq-btn" data-letter="C">6</button>
+          <button class="btn mcq-btn" data-letter="D">1</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Simplifying and Equivalent Ratios
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 7</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p><em>Example:</em> Simplify <strong>18 : 24</strong>.</p>
+      <p>Both numbers divide by 6. So 18 ÷ 6 = 3 and 24 ÷ 6 = 4. The simplified ratio is <strong>3 : 4</strong>.</p>
+      <p><strong>Equivalent ratios</strong> are different ways of writing the same comparison. You multiply or divide <em>every</em> part by the same number:</p>
+      <ul style="line-height:1.9;">
+        <li>2 : 5 → multiply both by 2 → <strong>4 : 10</strong></li>
+        <li>2 : 5 → multiply both by 5 → <strong>10 : 25</strong></li>
+      </ul>
+      <p>So 2 : 5, 4 : 10 and 10 : 25 all mean the same thing.</p>
+      <p><strong>Common mistake:</strong> Don't add the same number to both sides. <strong>2 : 5</strong> is <em>not</em> the same as <strong>3 : 6</strong> — the multipliers are different (×1.5 vs ×1.2).</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Simplify the ratio <strong>18 : 24</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">6 : 8</button>
+          <button class="btn mcq-btn" data-letter="B">9 : 12</button>
+          <button class="btn mcq-btn" data-letter="C">3 : 4</button>
+          <button class="btn mcq-btn" data-letter="D">2 : 3</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Sharing in a Ratio
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 8</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>When you share money or items in a ratio, follow these steps every time:</p>
+      <ol style="line-height:1.9;">
+        <li>Add up the parts to get the total number of parts.</li>
+        <li>Divide the whole amount by that total — that's the value of <strong>one part</strong>.</li>
+        <li>Multiply one part by each number in the ratio.</li>
+      </ol>
+      <p><em>Example:</em> Share <strong>£60</strong> in the ratio <strong>2 : 3</strong>.</p>
+      <ul style="line-height:1.9;">
+        <li>Total parts: 2 + 3 = <strong>5</strong></li>
+        <li>One part: £60 ÷ 5 = <strong>£12</strong></li>
+        <li>First share: 2 × £12 = <strong>£24</strong></li>
+        <li>Second share: 3 × £12 = <strong>£36</strong></li>
+      </ul>
+      <p style="text-align:center;">\( £60 \text{ in the ratio } 2:3 = £24:£36 \)</p>
+      <p><strong>Exam tip:</strong> Add your two answers at the end. £24 + £36 = £60 ✓ — if they don't add back to the total, something went wrong.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">Share <strong>£60</strong> in the ratio <strong>2 : 3</strong>. What is the smaller share?</p>
+          <button class="btn mcq-btn" data-letter="A">£24</button>
+          <button class="btn mcq-btn" data-letter="B">£36</button>
+          <button class="btn mcq-btn" data-letter="C">£12</button>
+          <button class="btn mcq-btn" data-letter="D">£30</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Ratio and Fractions
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 8</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p><em>Example:</em> In a class, boys : girls = <strong>4 : 5</strong>.</p>
+      <p>Total parts = 4 + 5 = <strong>9</strong>. So boys are \(\frac{4}{9}\) of the class and girls are \(\frac{5}{9}\).</p>
+      <p>If there are <strong>72 students</strong> in total:</p>
+      <ul style="line-height:1.9;">
+        <li>Boys = \(\frac{4}{9} \times 72 = 4 \times 8 =\) <strong>32</strong></li>
+        <li>Girls = \(\frac{5}{9} \times 72 = 5 \times 8 =\) <strong>40</strong></li>
+      </ul>
+      <p>Check: 32 + 40 = 72 ✓</p>
+      <p>The general rule: if the ratio is \(a : b\), the first quantity is \(\frac{a}{a+b}\) of the whole and the second is \(\frac{b}{a+b}\).</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">Boys : girls = <strong>4 : 5</strong>. There are <strong>72</strong> students. How many are boys?</p>
+          <button class="btn mcq-btn" data-letter="A">40</button>
+          <button class="btn mcq-btn" data-letter="B">36</button>
+          <button class="btn mcq-btn" data-letter="C">45</button>
+          <button class="btn mcq-btn" data-letter="D">32</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Direct Proportion
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>Two things are in <strong>direct proportion</strong> when they go up and down together by the same multiplier. Buy twice as many, pay twice as much.</p>
+      <p><em>Example:</em> 4 notebooks cost <strong>£6</strong>. How much do 7 notebooks cost?</p>
+      <ol style="line-height:1.9;">
+        <li>Find the cost of <strong>1</strong> notebook: £6 ÷ 4 = <strong>£1.50</strong></li>
+        <li>Multiply for 7: 7 × £1.50 = <strong>£10.50</strong></li>
+      </ol>
+      <p style="text-align:center;">\(4 \text{ items cost } £6 \Rightarrow 1 \text{ item costs } £1.50 \Rightarrow 7 \text{ items cost } £10.50\)</p>
+      <p>We call this the <strong>unitary method</strong>: find the value for one unit first, then scale up (or down).</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">4 notebooks cost <strong>£6</strong>. How much do <strong>7</strong> notebooks cost?</p>
+          <button class="btn mcq-btn" data-letter="A">£9.00</button>
+          <button class="btn mcq-btn" data-letter="B">£10.50</button>
+          <button class="btn mcq-btn" data-letter="C">£12.00</button>
+          <button class="btn mcq-btn" data-letter="D">£42.00</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Inverse Proportion
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Higher</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>In <strong>inverse proportion</strong>, when one quantity goes up, the other goes down. More workers on a job usually means less time to finish it.</p>
+      <p><em>Example:</em> 4 workers take <strong>9 hours</strong>. How long would <strong>6 workers</strong> take?</p>
+      <ol style="line-height:1.9;">
+        <li>Find the total "work" (worker-hours): 4 × 9 = <strong>36</strong></li>
+        <li>Share that total among 6 workers: 36 ÷ 6 = <strong>6 hours</strong></li>
+      </ol>
+      <p><strong>Exam tip:</strong> For workers, machines or speed questions, keep the total work (or total distance) fixed. Multiply to find it, then divide.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">4 workers take <strong>9 hours</strong>. How long would <strong>6 workers</strong> take?</p>
+          <button class="btn mcq-btn" data-letter="A">13.5 hours</button>
+          <button class="btn mcq-btn" data-letter="B">4 hours</button>
+          <button class="btn mcq-btn" data-letter="C">6 hours</button>
+          <button class="btn mcq-btn" data-letter="D">9 hours</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Scale Drawings and Maps
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>A <strong>scale</strong> is a ratio that links a drawing to real life.</p>
+      <p><em>Example:</em> Scale <strong>1 : 50</strong> means 1 cm on the drawing = 50 cm in real life.</p>
+      <p><em>Example:</em> A map scale of <strong>1 : 25,000</strong> means 1 cm on the map = 25,000 cm in real life.</p>
+      <ul style="line-height:1.9;">
+        <li>25,000 cm = 250 m (÷ 100)</li>
+        <li>So 1 cm on the map = <strong>250 m</strong> in real life</li>
+      </ul>
+      <p><strong>Common mistake:</strong> Watch your units. 100 cm = 1 m and 1000 m = 1 km. Convert before you multiply or divide.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">On a map with scale <strong>1 : 25,000</strong>, how far is <strong>1 cm</strong> on the map in real life?</p>
+          <button class="btn mcq-btn" data-letter="A">250 m</button>
+          <button class="btn mcq-btn" data-letter="B">25 m</button>
+          <button class="btn mcq-btn" data-letter="C">2.5 km</button>
+          <button class="btn mcq-btn" data-letter="D">25 km</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+      Best Buys and Recipes
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#eef7ea; color:#397a2f; padding:2px 6px; border-radius:10px;">Problem Solving</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>Exams often test ratio in real-life situations — cooking and shopping are the big two.</p>
+      <p><strong>Recipes:</strong> multiply <em>every</em> ingredient by the same scale factor.</p>
+      <p><em>Example:</em> A recipe for 4 people uses <strong>300 g</strong> flour. How much for <strong>10 people</strong>?</p>
+      <ul style="line-height:1.9;">
+        <li>Scale factor: 10 ÷ 4 = <strong>2.5</strong></li>
+        <li>Flour needed: 300 × 2.5 = <strong>750 g</strong></li>
+      </ul>
+      <p><strong>Best buys:</strong> work out the price for the <em>same</em> amount of each product — usually price per kg, per 100 g, or per item. Pick the smaller unit price.</p>
+      <p><em>Example:</em> 500 g for £2.50 vs 750 g for £3.60. Price per 100 g: £0.50 vs £0.48 — the 750 g pack is better value.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">A recipe for <strong>4 people</strong> uses <strong>300 g</strong> flour. How much flour for <strong>10 people</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">600 g</button>
+          <button class="btn mcq-btn" data-letter="B">400 g</button>
+          <button class="btn mcq-btn" data-letter="C">1200 g</button>
+          <button class="btn mcq-btn" data-letter="D">750 g</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- Revision card (auto-added) -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">9</span>
+      Ratio &amp; Proportion — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Pick the right type of ratio question — sharing, scaling a recipe, or best buy.</p>
+
+      <div style="text-align:center;margin:16px 0;">
+              <div class="revision-card-wrap">
+        <svg class="revision-card-svg lesson-quick-ref" width="100%" viewBox="0 0 760 280" style="max-width:760px;width:100%;height:auto;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:10px;" role="img" aria-label="Ratio revision card">
+          <text x="380" y="28" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Ratio &amp; Proportion — Revision Card</text>
+          <line x1="20" y1="38" x2="740" y2="38" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="20" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Simplifying</text>
+          <text x="20" y="78" font-size="14" fill="#28251d">Divide every part by the HCF</text>
+          <text x="20" y="98" font-size="14" fill="#28251d">12 : 8 → 3 : 2</text>
+          <text x="20" y="118" font-size="14" fill="#28251d">Share £60 in ratio 3:2 → 3+2=5 parts</text>
+          <text x="20" y="142" font-size="15" fill="#1a6fa8" font-weight="bold">Proportion</text>
+          <text x="20" y="162" font-size="14" fill="#28251d">Direct: both ↑ together (y = kx)</text>
+          <text x="20" y="182" font-size="14" fill="#28251d">Inverse: one ↑, other ↓ (y = k/x)</text>
+          <line x1="390" y1="48" x2="390" y2="260" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="400" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Recipes &amp; maps</text>
+          <text x="400" y="78" font-size="14" fill="#28251d">Scale every ingredient the same</text>
+          <text x="400" y="98" font-size="14" fill="#28251d">1 : n on map → × n in real life</text>
+          <text x="400" y="118" font-size="14" fill="#28251d">Best buy: same unit price</text>
+        </svg>
+      </div>
+      </div>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">Share £60 in ratio 2 : 3. How much for the 3 parts?</p>
+          <button class="btn mcq-btn" data-letter="A">£24</button>
+          <button class="btn mcq-btn" data-letter="B">£30</button>
+          <button class="btn mcq-btn" data-letter="C">£36</button>
+          <button class="btn mcq-btn" data-letter="D">£40</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='ratio_proportion') }}" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Revision</a>
+      </div>
+    </div>
+  </details>
+
+</div>
+
+  <!-- Practice link -->
+  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='ratio_proportion') }}"
+       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+      Start Practice Quiz
+    </a>
+  </div>
+
+{% endblock %}

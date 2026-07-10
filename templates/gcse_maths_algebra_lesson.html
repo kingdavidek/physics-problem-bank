@@ -1,0 +1,893 @@
+{% extends "base.html" %}
+{% block title %}Algebra – GCSE Mathematics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Algebra</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">GCSE Mathematics – Foundation and Higher Tier · All Exam Boards</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+  <!-- Quick Test button -->
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='algebra') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       1. COLLECTING LIKE TERMS
+  ══════════════════════════════════════════════════ -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      Collecting Like Terms
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 7</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Like terms</strong> are terms that have exactly the same letter(s) and power(s). You can add or subtract like terms — you can't mix different ones.</p>
+      <p>Think of it like fruit: 3 apples + 2 apples = 5 apples. But 3 apples + 2 oranges can't be combined — they're different things.</p>
+
+      <p><em>Example:</em> Simplify <strong>5x + 3y − 2x + y</strong></p>
+
+      <div style="text-align:center; margin:14px 0;">
+        <svg width="460" height="78" viewBox="0 0 460 78" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <!-- Term boxes -->
+          <rect x="10"  y="14" width="62" height="36" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2"/>
+          <rect x="82"  y="14" width="62" height="36" rx="6" fill="#dcfce7" stroke="#059669" stroke-width="2"/>
+          <rect x="154" y="14" width="72" height="36" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2" stroke-dasharray="4,2"/>
+          <rect x="236" y="14" width="52" height="36" rx="6" fill="#dcfce7" stroke="#059669" stroke-width="2" stroke-dasharray="4,2"/>
+          <!-- Term text -->
+          <text x="41"  y="38" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a6fa8">5x</text>
+          <text x="113" y="38" text-anchor="middle" font-size="18" font-weight="bold" fill="#059669">3y</text>
+          <text x="190" y="38" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a6fa8">−2x</text>
+          <text x="262" y="38" text-anchor="middle" font-size="18" font-weight="bold" fill="#059669">+y</text>
+          <!-- Arrows / grouping -->
+          <path d="M 41,50 Q 41,66 190,66 Q 190,66 190,50" fill="none" stroke="#1a6fa8" stroke-width="1.5"/>
+          <path d="M 113,50 Q 113,72 262,72 Q 262,72 262,50" fill="none" stroke="#059669" stroke-width="1.5"/>
+          <!-- Result -->
+          <text x="330" y="38" font-size="16" fill="#333">= <tspan font-weight="bold" fill="#1a6fa8">3x</tspan> + <tspan font-weight="bold" fill="#059669">4y</tspan></text>
+          <text x="316" y="55" font-size="14" fill="#1a6fa8">5−2=3</text>
+          <text x="390" y="55" font-size="14" fill="#059669">3+1=4</text>
+        </svg>
+      </div>
+
+      <p><em>More examples:</em></p>
+      <ul style="line-height:1.9;">
+        <li>4a + 3b − a + 2b = <strong>3a + 5b</strong></li>
+        <li>6x² + 2x − x² − 5x = <strong>5x² − 3x</strong> &nbsp;(x² terms and x terms are <em>different</em> — treat separately)</li>
+        <li>7m − 3n + n − 4m = <strong>3m − 2n</strong></li>
+      </ul>
+
+      <div style="background:#fff3cd; border-left:4px solid #f59e0b; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+        <strong>⚠️ Common mistake:</strong> x² and x are NOT like terms! 3x² + 2x cannot be simplified further — they're as different as apples and oranges.
+      </div>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Simplify <strong>3x + 5y − x + 2y</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">3x + 7y</button>
+          <button class="btn mcq-btn" data-letter="B">4x + 7y</button>
+          <button class="btn mcq-btn" data-letter="C">2x + 7y</button>
+          <button class="btn mcq-btn" data-letter="D">2x + 3y</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       2. EXPANDING SINGLE BRACKETS
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Expanding Single Brackets
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 8</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>To <strong>expand a bracket</strong>, multiply the number (or letter) outside by <em>every</em> term inside. Don't miss any — that's the most common mistake.</p>
+
+      <p><em>Example:</em> Expand <strong>3(2x − 5)</strong></p>
+
+      <div style="text-align:center; margin:14px 0;">
+        <svg width="320" height="80" viewBox="0 0 320 80" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <!-- The expression -->
+          <text x="20" y="38" font-size="18" font-weight="bold" fill="#a13544">3</text>
+          <text x="38" y="38" font-size="18" fill="#333">(</text>
+          <text x="50" y="38" font-size="18" font-weight="bold" fill="#1a6fa8">2x</text>
+          <text x="80" y="38" font-size="18" fill="#333">−</text>
+          <text x="96" y="38" font-size="18" font-weight="bold" fill="#059669">5</text>
+          <text x="112" y="38" font-size="18" fill="#333">)</text>
+          <!-- Arrows from 3 to 2x and to 5 -->
+          <path d="M 28,44 Q 28,64 60,60" fill="none" stroke="#a13544" stroke-width="2" marker-end="url(#arr2)"/>
+          <path d="M 28,44 Q 56,66 100,58" fill="none" stroke="#a13544" stroke-width="2" marker-end="url(#arr2)"/>
+          <!-- Labels on arrows -->
+          <text x="30" y="70" font-size="14" fill="#a13544">×3</text>
+          <text x="78" y="72" font-size="14" fill="#a13544">×3</text>
+          <!-- Result -->
+          <text x="145" y="38" font-size="18" fill="#333">= </text>
+          <text x="165" y="38" font-size="18" font-weight="bold" fill="#1a6fa8">6x</text>
+          <text x="193" y="38" font-size="18" fill="#333"> − </text>
+          <text x="215" y="38" font-size="18" font-weight="bold" fill="#059669">15</text>
+          <defs>
+            <marker id="arr2" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L7,3 z" fill="#a13544"/>
+            </marker>
+          </defs>
+        </svg>
+      </div>
+
+      <ul style="line-height:1.9;">
+        <li>3 × 2x = 6x</li>
+        <li>3 × (−5) = −15</li>
+        <li>Answer: <strong>6x − 15</strong></li>
+      </ul>
+
+      <p><em>More examples:</em></p>
+      <ul style="line-height:1.9;">
+        <li>5(x + 4) = <strong>5x + 20</strong></li>
+        <li>−2(3x − 1) = <strong>−6x + 2</strong> &nbsp;(multiply by a negative — both signs change!)</li>
+        <li>x(x + 7) = <strong>x² + 7x</strong> &nbsp;(x × x = x²)</li>
+      </ul>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Expand <strong>3(2x − 5)</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">6x + 15</button>
+          <button class="btn mcq-btn" data-letter="B">6x − 15</button>
+          <button class="btn mcq-btn" data-letter="C">5x − 2</button>
+          <button class="btn mcq-btn" data-letter="D">3x − 15</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       3. EXPANDING DOUBLE BRACKETS
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Expanding Double Brackets
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>To expand two brackets like (x + 3)(x − 2), every term in the first bracket must multiply every term in the second. We get <strong>4 multiplications</strong> total.</p>
+      <p>A helpful method is the <strong>grid (box) method</strong>:</p>
+
+      <p><em>Example:</em> Expand <strong>(x + 3)(x − 2)</strong></p>
+
+      <div style="text-align:center; margin:14px 0;">
+        <svg width="320" height="160" viewBox="0 0 320 160" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <!-- Grid -->
+          <rect x="60"  y="40" width="80" height="50" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <rect x="140" y="40" width="80" height="50" fill="#fce7f3" stroke="#a13544" stroke-width="1.5"/>
+          <rect x="60"  y="90" width="80" height="50" fill="#fce7f3" stroke="#a13544" stroke-width="1.5"/>
+          <rect x="140" y="90" width="80" height="50" fill="#dcfce7" stroke="#059669" stroke-width="1.5"/>
+          <!-- Column headers -->
+          <text x="100" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a6fa8">x</text>
+          <text x="180" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a6fa8">−2</text>
+          <!-- Row headers -->
+          <text x="42" y="72" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a6fa8">x</text>
+          <text x="42" y="122" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a6fa8">+3</text>
+          <!-- Cell contents -->
+          <text x="100" y="72" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a6fa8">x²</text>
+          <text x="180" y="72" text-anchor="middle" font-size="16" font-weight="bold" fill="#a13544">−2x</text>
+          <text x="100" y="122" text-anchor="middle" font-size="16" font-weight="bold" fill="#a13544">+3x</text>
+          <text x="180" y="122" text-anchor="middle" font-size="16" font-weight="bold" fill="#059669">−6</text>
+          <!-- Collect -->
+          <text x="160" y="152" text-anchor="middle" font-size="15" fill="#333">x² − 2x + 3x − 6 =</text>
+          <text x="255" y="152" text-anchor="middle" font-size="15" font-weight="bold" fill="#059669">x² + x − 6</text>
+        </svg>
+      </div>
+
+      <p>Collect the like terms: −2x + 3x = +x, so the answer is <strong>x² + x − 6</strong>.</p>
+
+      <p><em>More examples:</em></p>
+      <ul style="line-height:1.9;">
+        <li>(x + 4)(x + 2) = x² + 2x + 4x + 8 = <strong>x² + 6x + 8</strong></li>
+        <li>(x − 5)(x − 1) = x² − x − 5x + 5 = <strong>x² − 6x + 5</strong></li>
+        <li>(2x + 1)(x − 3) = 2x² − 6x + x − 3 = <strong>2x² − 5x − 3</strong></li>
+      </ul>
+
+      <div style="background:#dbeafe; border-left:4px solid #1a6fa8; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+        <strong>Special case — difference of two squares:</strong> (x + a)(x − a) = x² − a²<br>
+        E.g. (x + 5)(x − 5) = x² − 25. No middle term because +5x and −5x cancel out.
+      </div>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">Expand <strong>(x + 3)(x − 2)</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">\(x^2 + 5x - 6\)</button>
+          <button class="btn mcq-btn" data-letter="B">\(x^2 - 5x + 6\)</button>
+          <button class="btn mcq-btn" data-letter="C">\(x^2 + x + 6\)</button>
+          <button class="btn mcq-btn" data-letter="D">\(x^2 + x - 6\)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       4. FACTORISING
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Factorising
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Factorising</strong> is the reverse of expanding. You take an expression and write it as a product (something × something). Always look for the <strong>Highest Common Factor (HCF)</strong> of all the terms first.</p>
+
+      <p><em>Example:</em> Factorise <strong>6x² + 9x</strong></p>
+      <ul style="line-height:1.9;">
+        <li>HCF of 6x² and 9x: the HCF of 6 and 9 is 3, and both have at least one x → HCF = <strong>3x</strong></li>
+        <li>6x² ÷ 3x = 2x</li>
+        <li>9x ÷ 3x = 3</li>
+        <li>Answer: <strong>3x(2x + 3)</strong></li>
+      </ul>
+      <p>Check by expanding: 3x × 2x + 3x × 3 = 6x² + 9x ✓</p>
+
+      <p><em>Factorising quadratics</em> — when you have x² + bx + c, look for two numbers that multiply to c and add to b.</p>
+
+      <p><em>Example:</em> Factorise <strong>x² + 5x + 6</strong></p>
+      <ul style="line-height:1.9;">
+        <li>Need two numbers that multiply to 6 and add to 5.</li>
+        <li>Try: 2 × 3 = 6 and 2 + 3 = 5 ✓</li>
+        <li>Answer: <strong>(x + 2)(x + 3)</strong></li>
+      </ul>
+
+      <p><em>Example:</em> Factorise <strong>x² − x − 6</strong></p>
+      <ul style="line-height:1.9;">
+        <li>Need two numbers that multiply to −6 and add to −1.</li>
+        <li>Try: −3 × 2 = −6 and −3 + 2 = −1 ✓</li>
+        <li>Answer: <strong>(x − 3)(x + 2)</strong></li>
+      </ul>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">Factorise fully: <strong>6x² + 9x</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">3x(2x + 3)</button>
+          <button class="btn mcq-btn" data-letter="B">3(2x² + 3x)</button>
+          <button class="btn mcq-btn" data-letter="C">x(6x + 9)</button>
+          <button class="btn mcq-btn" data-letter="D">6x(x + 1.5)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       5. SOLVING LINEAR EQUATIONS
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Solving Linear Equations
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Solving an equation means finding the value of the unknown. Think of it like a <strong>balance scale</strong> — whatever you do to one side, you must do to the other to keep it balanced.</p>
+
+      <div style="text-align:center; margin:14px 0;">
+        <svg width="400" height="110" viewBox="0 0 400 110" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <!-- Balance beam -->
+          <line x1="200" y1="55" x2="100" y2="80" stroke="#888" stroke-width="3"/>
+          <line x1="200" y1="55" x2="300" y2="80" stroke="#888" stroke-width="3"/>
+          <line x1="200" y1="20" x2="200" y2="55" stroke="#555" stroke-width="3"/>
+          <polygon points="200,15 195,25 205,25" fill="#555"/>
+          <!-- Left pan -->
+          <rect x="68" y="78" width="64" height="24" rx="4" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <text x="100" y="95" text-anchor="middle" font-size="15" font-weight="bold" fill="#1a6fa8">4x + 7</text>
+          <!-- Right pan -->
+          <rect x="268" y="78" width="64" height="24" rx="4" fill="#fce7f3" stroke="#a13544" stroke-width="1.5"/>
+          <text x="300" y="95" text-anchor="middle" font-size="15" font-weight="bold" fill="#a13544">19</text>
+          <!-- Steps shown below -->
+          <text x="200" y="108" text-anchor="middle" font-size="14" fill="#555">Subtract 7 from both sides → 4x = 12 → x = 3</text>
+        </svg>
+      </div>
+
+      <p><em>Example:</em> Solve <strong>4x + 7 = 19</strong></p>
+      <ol style="line-height:1.9;">
+        <li>Subtract 7 from both sides: 4x = 12</li>
+        <li>Divide both sides by 4: <strong>x = 3</strong></li>
+      </ol>
+      <p>Check: 4(3) + 7 = 12 + 7 = 19 ✓</p>
+
+      <p><em>Example with x on both sides:</em> Solve <strong>5x − 3 = 2x + 9</strong></p>
+      <ol style="line-height:1.9;">
+        <li>Collect x terms: subtract 2x from both sides → 3x − 3 = 9</li>
+        <li>Add 3: 3x = 12</li>
+        <li>Divide by 3: <strong>x = 4</strong></li>
+      </ol>
+
+      <p><em>Example with brackets:</em> Solve <strong>3(x + 2) = 21</strong></p>
+      <ol style="line-height:1.9;">
+        <li>Expand: 3x + 6 = 21</li>
+        <li>Subtract 6: 3x = 15</li>
+        <li>Divide by 3: <strong>x = 5</strong></li>
+      </ol>
+
+      <p>The general method for ax + b = c is: \[ ax + b = c \Rightarrow x = \frac{c - b}{a} \]</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Solve <strong>4x + 7 = 19</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">x = 4</button>
+          <button class="btn mcq-btn" data-letter="B">x = 6</button>
+          <button class="btn mcq-btn" data-letter="C">x = 3</button>
+          <button class="btn mcq-btn" data-letter="D">x = 12</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       6. SOLVING QUADRATICS BY FACTORISATION
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Solving Quadratics by Factorisation
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>A <strong>quadratic equation</strong> has an x² term. To solve one by factorising, use this key fact: <em>if two things multiply to give zero, at least one of them must be zero</em>.</p>
+
+      <p><em>Example:</em> Solve <strong>x² + 5x + 6 = 0</strong></p>
+      <ol style="line-height:1.9;">
+        <li>Factorise: find two numbers that multiply to 6 and add to 5 → <strong>2 and 3</strong></li>
+        <li>Write as brackets: (x + 2)(x + 3) = 0</li>
+        <li>Set each bracket to zero: x + 2 = 0 or x + 3 = 0</li>
+        <li>Answer: <strong>x = −2 or x = −3</strong></li>
+      </ol>
+
+      <p><em>Example:</em> Solve <strong>x² − x − 6 = 0</strong></p>
+      <ol style="line-height:1.9;">
+        <li>Find two numbers: multiply to −6 and add to −1 → <strong>−3 and 2</strong></li>
+        <li>(x − 3)(x + 2) = 0</li>
+        <li>Answer: <strong>x = 3 or x = −2</strong></li>
+      </ol>
+
+      <p><em>Example:</em> Solve <strong>x² − 9 = 0</strong> (difference of two squares)</p>
+      <ol style="line-height:1.9;">
+        <li>(x − 3)(x + 3) = 0</li>
+        <li>Answer: <strong>x = 3 or x = −3</strong></li>
+      </ol>
+
+      <p>Using the quadratic formula: \[ \text{Factorise: } (x + p)(x + q) = 0 \Rightarrow x = -p \text{ or } x = -q \]</p>
+
+      <div style="background:#fff3cd; border-left:4px solid #f59e0b; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+        <strong>⚠️ Remember:</strong> A quadratic usually has <em>two</em> solutions. Don't stop at the first one — always check for a second!
+      </div>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Solve <strong>x² + 5x + 6 = 0</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">x = 2 or x = 3</button>
+          <button class="btn mcq-btn" data-letter="B">x = −2 or x = −3</button>
+          <button class="btn mcq-btn" data-letter="C">x = 1 or x = 6</button>
+          <button class="btn mcq-btn" data-letter="D">x = −1 or x = 6</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       7. COMPLETING THE SQUARE  (Higher)
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Completing the Square
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Higher</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Completing the square</strong> rewrites a quadratic so part of it is a <em>perfect square</em> — useful for solving equations and finding the turning point of a graph.</p>
+
+      <p><em>Everyday idea:</em> The expression \((x + 3)^2\) is easy to expand. Completing the square runs that idea <strong>backwards</strong>: turn \(x^2 + 6x + 5\) into something squared plus a number.</p>
+
+      <p><strong>Steps for</strong> \(x^2 + bx + c\):</p>
+      <ol style="line-height:1.9;">
+        <li>Halve the number in front of x → call this <strong>p</strong> (for \(x^2 + 6x\), \(p = 3\)).</li>
+        <li>Write \((x + p)^2\) — this expands to \(x^2 + 2px + p^2\).</li>
+        <li>Adjust the constant: subtract \(p^2\) from \(c\) to get <strong>k</strong>.</li>
+        <li>Answer: <strong>\((x + p)^2 + k\)</strong></li>
+      </ol>
+
+      <p><em>Worked example:</em> Complete the square for <strong>x² + 6x + 5</strong></p>
+      <ul style="line-height:1.9;">
+        <li>Half of 6 is 3 → start with \((x + 3)^2 = x^2 + 6x + 9\)</li>
+        <li>We have +5 not +9, so \(k = 5 - 9 = -4\)</li>
+        <li><strong>\((x + 3)^2 - 4\)</strong></li>
+      </ul>
+
+      <p><em>Solving:</em> For <strong>x² + 6x = 7</strong>, add 9 to both sides: \((x + 3)^2 = 16\), so \(x + 3 = \pm 4\), hence <strong>x = 1 or x = −7</strong>.</p>
+
+      <p><em>Graph:</em> \(y = (x + 3)^2 - 4\) has minimum point <strong>(−3, −4)</strong> — the vertex of the parabola.</p>
+
+      <div style="background:#fff3cd; border-left:4px solid #f59e0b; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+        <strong>Exam tip:</strong> Show halving the x-coefficient and the constant adjustment — method marks are given for correct completing-the-square steps.
+      </div>
+
+      <p style="margin-top:14px;">Practise: topic <strong>Completing the Square</strong> in the generator (5 questions per difficulty; MCQ mode uses new random numbers each time).</p>
+      <p style="margin:8px 0 0;">
+        <a href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=completing_the_square"
+           style="color:#1a6fa8;font-weight:600;">Open Completing the Square in the generator →</a>
+      </p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Write <strong>x² + 6x + 5</strong> in completed-square form.</p>
+          <button class="btn mcq-btn" data-letter="A">(x + 3)² + 4</button>
+          <button class="btn mcq-btn" data-letter="B">(x + 3)² − 4</button>
+          <button class="btn mcq-btn" data-letter="C">(x + 6)² − 4</button>
+          <button class="btn mcq-btn" data-letter="D">(x + 3)² − 9</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       8. THE QUADRATIC FORMULA  (Higher)
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+      The Quadratic Formula
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Higher</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Some quadratics can't be factorised neatly (the roots aren't integers). For those, we use the <strong>quadratic formula</strong>. You need to memorise it — or spot it on the formula sheet if your exam board provides one.</p>
+
+      <p>For any equation \(ax^2 + bx + c = 0\):</p>
+      <p style="text-align:center; font-size:1.1rem;">\[ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a} \]</p>
+
+      <p>The ± means you get <strong>two answers</strong> — one with + and one with −.</p>
+
+      <p><em>Example:</em> Solve <strong>x² − 5x + 4 = 0</strong> using the quadratic formula.</p>
+      <ul style="line-height:1.9;">
+        <li>Identify: a = 1, b = −5, c = 4</li>
+        <li>\(x = \dfrac{-(-5) \pm \sqrt{(-5)^2 - 4(1)(4)}}{2(1)} = \dfrac{5 \pm \sqrt{25 - 16}}{2} = \dfrac{5 \pm \sqrt{9}}{2} = \dfrac{5 \pm 3}{2}\)</li>
+        <li>x = (5 + 3)/2 = <strong>4</strong> &nbsp; or &nbsp; x = (5 − 3)/2 = <strong>1</strong></li>
+      </ul>
+
+      <p><em>Example:</em> Solve <strong>2x² + 3x − 2 = 0</strong> to 2 d.p.</p>
+      <ul style="line-height:1.9;">
+        <li>a = 2, b = 3, c = −2</li>
+        <li>Discriminant: b² − 4ac = 9 + 16 = 25</li>
+        <li>x = (−3 ± 5) / 4</li>
+        <li>x = 2/4 = <strong>0.5</strong> &nbsp; or &nbsp; x = −8/4 = <strong>−2</strong></li>
+      </ul>
+
+      <div style="background:#fce7f3; border-left:4px solid #a13544; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+        <strong>The discriminant b² − 4ac tells you how many solutions:</strong><br>
+        • &gt; 0: <strong>two</strong> real solutions &nbsp; • = 0: <strong>one</strong> repeated solution &nbsp; • &lt; 0: <strong>no</strong> real solutions
+      </div>
+
+      <p>When a quadratic cannot be factorised easily, use: \[ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a} \]
+      Identify \(a\), \(b\), and \(c\) from your equation, substitute carefully, and calculate both the + and − versions.</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">Using the quadratic formula, solve <strong>x² − 5x + 4 = 0</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">x = 5 or x = 1</button>
+          <button class="btn mcq-btn" data-letter="B">x = −4 or x = −1</button>
+          <button class="btn mcq-btn" data-letter="C">x = 3 or x = 2</button>
+          <button class="btn mcq-btn" data-letter="D">x = 4 or x = 1</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       9. FORMING AND SOLVING EQUATIONS
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">9</span>
+      Forming and Solving Equations
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>GCSE exams love giving you a wordy situation and asking you to write (or form) an equation, then solve it. The key is translating the words into algebra carefully.</p>
+
+      <p><em>Example:</em> Sam is <strong>3 times as old as his sister</strong>. Together their ages add up to <strong>24</strong>. How old is Sam?</p>
+      <ol style="line-height:1.9;">
+        <li>Let sister's age = x. Then Sam's age = 3x.</li>
+        <li>Together: x + 3x = 24</li>
+        <li>4x = 24</li>
+        <li>x = 6 &nbsp;→&nbsp; Sam = 3 × 6 = <strong>18</strong></li>
+      </ol>
+
+      <p><em>Example with geometry:</em> A rectangle has length (2x + 3) cm and width (x − 1) cm. Its perimeter is 28 cm. Find x.</p>
+      <ol style="line-height:1.9;">
+        <li>Perimeter = 2(length + width) = 2((2x + 3) + (x − 1)) = 2(3x + 2)</li>
+        <li>Set equal to 28: 2(3x + 2) = 28</li>
+        <li>6x + 4 = 28</li>
+        <li>6x = 24</li>
+        <li><strong>x = 4</strong></li>
+      </ol>
+
+      <p><strong>Approach for any "form an equation" question:</strong></p>
+      <ul style="line-height:1.9;">
+        <li>Define your variable — write "Let x = …" clearly</li>
+        <li>Translate each piece of information into algebra</li>
+        <li>Write and solve the equation</li>
+        <li>Check your answer makes sense in the original context</li>
+      </ul>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Sam is 3 times as old as his sister. Their ages add up to 24. How old is <strong>Sam</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">6</button>
+          <button class="btn mcq-btn" data-letter="B">12</button>
+          <button class="btn mcq-btn" data-letter="C">18</button>
+          <button class="btn mcq-btn" data-letter="D">8</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       10. SIMULTANEOUS EQUATIONS
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">10</span>
+      Simultaneous Equations
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">AQA · Edexcel Algebra</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Simultaneous equations</strong> means two equations with two unknowns (usually <strong>x</strong> and <strong>y</strong>) that you solve <em>at the same time</em>. You need one pair of values that makes <strong>both</strong> equations true — on a graph, that is where the two lines cross.</p>
+
+      <p><em>Everyday idea:</em> A café sells coffees and teas. Monday’s sales and Tuesday’s sales give two different totals. Two unknown prices, two facts — that is a simultaneous situation.</p>
+
+      <p><strong>Method 1 — Elimination</strong> (add or subtract the equations to remove x or y):</p>
+      <p><strong>3x + 2y = 13</strong> … (1) &nbsp;&nbsp; <strong>x + 2y = 7</strong> … (2)</p>
+      <ul style="line-height:1.9;">
+        <li>Both have <strong>2y</strong>, so subtract (2) from (1): 2x = 6 → <strong>x = 3</strong></li>
+        <li>Put x = 3 into (2): 3 + 2y = 7 → <strong>y = 2</strong></li>
+        <li>Solution: <strong>x = 3, y = 2</strong></li>
+      </ul>
+
+      <p><strong>Method 2 — Substitution</strong> (use when one equation already says y = … or x = …):</p>
+      <p>If <strong>y = 2x + 1</strong>, replace y in the second equation with <strong>2x + 1</strong>, then solve for x, then find y.</p>
+
+      <div style="background:#fff3cd; border-left:4px solid #f59e0b; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+        <strong>Exam tip:</strong> Show which equation you multiply (if needed) and which you subtract — method marks are awarded for elimination steps, not just the final answer.
+      </div>
+
+      <p style="margin-top:14px;">Practise in the generator: choose topic <strong>Simultaneous Equations</strong> on the home page (5 questions per difficulty, plus MCQ mode).</p>
+      <p style="margin:8px 0 0;">
+        <a href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=simultaneous_equations"
+           style="color:#1a6fa8;font-weight:600;">Open Simultaneous Equations in the generator →</a>
+      </p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Solve: <strong>3x + 2y = 13</strong> and <strong>x + 2y = 7</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">x = 2, y = 3</button>
+          <button class="btn mcq-btn" data-letter="B">x = 3, y = 1</button>
+          <button class="btn mcq-btn" data-letter="C">x = 3, y = 2</button>
+          <button class="btn mcq-btn" data-letter="D">x = 5, y = 2</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       11. QUADRATIC SIMULTANEOUS EQUATIONS
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">11</span>
+      Quadratic Simultaneous Equations
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">AQA · Edexcel Higher</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10–11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Section 10 was <strong>two straight lines</strong>. Here one equation is <strong>quadratic</strong> (often \(y = x^2\)) and the other is <strong>linear</strong> (often \(y = x + c\)). You still need values of <strong>x</strong> and <strong>y</strong> that work in <strong>both</strong> at once.</p>
+
+      <p><em>Everyday idea:</em> A ball follows a curved path (parabola) while a roof edge is a straight line. Where the path meets the edge — if it does twice — those are two \((x, y)\) points that satisfy both “rules” at once.</p>
+
+      <p><strong>Worked example:</strong> \(y = x^2\) and \(y = x + 2\)</p>
+      <ul style="line-height:1.9;">
+        <li>Substitute: \(x^2 = x + 2\) → rearrange: \(x^2 - x - 2 = 0\)</li>
+        <li>Factorise: \((x - 2)(x + 1) = 0\) → \(x = 2\) or \(x = -1\)</li>
+        <li>When \(x = 2\): \(y = 2^2 = 4\) → point <strong>(2, 4)</strong></li>
+        <li>When \(x = -1\): \(y = (-1)^2 = 1\) → point <strong>(-1, 1)</strong></li>
+        <li>Solutions: <strong>(2, 4)</strong> and <strong>(-1, 1)</strong></li>
+      </ul>
+
+      <p>On a graph, these are the two places where the <strong>line crosses the parabola</strong> — each crossing is one simultaneous solution.</p>
+
+      <div style="background:#fff3cd; border-left:4px solid #f59e0b; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+        <strong>Exam tip:</strong> State both coordinate pairs clearly. Show substitution, the quadratic in \(x\), and how you find each \(y\).
+      </div>
+
+      <p style="margin-top:14px;">Practise in the generator: choose <strong>Quadratic Simultaneous Equations</strong> (5 per difficulty, plus MCQ mode with randomised values).</p>
+      <p style="margin:8px 0 0;">
+        <a href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=quadratic_simultaneous_equations"
+           style="color:#1a6fa8;font-weight:600;">Open Quadratic Simultaneous Equations in the generator →</a>
+      </p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Solve: <strong>\(y = x^2\)</strong> and <strong>\(y = x + 2\)</strong>. Which pair is a solution?</p>
+          <button class="btn mcq-btn" data-letter="A">(1, 1)</button>
+          <button class="btn mcq-btn" data-letter="B">(2, 4)</button>
+          <button class="btn mcq-btn" data-letter="C">(3, 6)</button>
+          <button class="btn mcq-btn" data-letter="D">(0, 2)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       12. GRAPHICAL SIMULTANEOUS EQUATIONS
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">12</span>
+      Graphical Simultaneous Equations
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">AQA · Edexcel</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10–11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>You can solve simultaneous equations <strong>from a graph</strong> instead of algebra. Plot both equations on the same axes; the solution is where the graphs <strong>meet</strong>.</p>
+
+      <p><strong>Two straight lines</strong> — one crossing point (usually one solution):</p>
+      <svg width="100%" viewBox="0 0 280 200" style="max-width:300px;display:block;margin:12px auto;background:#fafbfc;border:1px solid #d4e6f1;border-radius:8px;">
+        <line x1="40" y1="160" x2="240" y2="160" stroke="#94a3b8" stroke-width="1.2"/>
+        <line x1="140" y1="180" x2="140" y2="30" stroke="#94a3b8" stroke-width="1.2"/>
+        <line x1="50" y1="150" x2="230" y2="50" stroke="#1a6fa8" stroke-width="2.5"/>
+        <line x1="50" y1="50" x2="230" y2="150" stroke="#c0392b" stroke-width="2.5"/>
+        <circle cx="140" cy="100" r="6" fill="#8a5300" stroke="#fff" stroke-width="1.5"/>
+        <text x="152" y="96" font-size="13" fill="#8a5300" font-weight="bold">(3, 5)</text>
+        <text x="200" y="55" font-size="11" fill="#1a6fa8">y = −x + 8</text>
+        <text x="55" y="145" font-size="11" fill="#c0392b">y = x + 2</text>
+      </svg>
+      <p>Here the lines cross at <strong>(3, 5)</strong>, so <strong>x = 3, y = 5</strong> is the simultaneous solution.</p>
+
+      <p><strong>Parallel lines</strong> — same gradient, never cross → <strong>no solution</strong>.</p>
+
+      <p><strong>Line and parabola</strong> (e.g. \(y = x^2\) and a straight line) — each crossing is one \((x, y)\) pair; you may get <strong>0, 1, or 2</strong> solutions:</p>
+
+      <p>Algebra (Sections 10–11) and graphs should agree: the same \((x, y)\) pairs appear as intersection points.</p>
+
+      <p style="margin-top:14px;">Practise with diagrams in the generator: <strong>Graphical Simultaneous Equations</strong> (5 per difficulty, 4 randomised MCQs).</p>
+      <p style="margin:8px 0 0;">
+        <a href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=graphical_simultaneous_equations"
+           style="color:#1a6fa8;font-weight:600;">Open Graphical Simultaneous Equations in the generator →</a>
+      </p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Two lines on a graph cross at <strong>(4, 7)</strong>. What is the simultaneous solution?</p>
+          <button class="btn mcq-btn" data-letter="A">x = 7, y = 4</button>
+          <button class="btn mcq-btn" data-letter="B">x = 4, y = 7</button>
+          <button class="btn mcq-btn" data-letter="C">No solution</button>
+          <button class="btn mcq-btn" data-letter="D">Two solutions</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       13. ALGEBRAIC FRACTIONS
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">13</span>
+      Algebraic Fractions
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">AQA · Edexcel Higher</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10–11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>An <strong>algebraic fraction</strong> has letters in the numerator, denominator, or both — e.g. \(\dfrac{3x}{x+2}\). The rules are the same as for number fractions.</p>
+
+      <p><strong>1. Simplify</strong> — factorise, then cancel <em>common factors</em> (never cancel single terms that are not factors):</p>
+      <ul style="line-height:1.9;">
+        <li>\(\dfrac{2(x+3)}{x+3} = 2\) &nbsp; (for \(x \neq -3\))</li>
+        <li>\(\dfrac{x^2 - 9}{x - 3} = \dfrac{(x-3)(x+3)}{x-3} = x + 3\)</li>
+      </ul>
+
+      <p><strong>2. Add / subtract</strong> — common denominator first:</p>
+      <ul style="line-height:1.9;">
+        <li>\(\dfrac{2}{x} + \dfrac{5}{x} = \dfrac{7}{x}\)</li>
+        <li>\(\dfrac{1}{x} + \dfrac{1}{2x} = \dfrac{2}{2x} + \dfrac{1}{2x} = \dfrac{3}{2x}\)</li>
+      </ul>
+
+      <p><strong>3. Multiply / divide</strong> — multiply tops and bottoms; to divide, flip the second fraction and multiply.</p>
+
+      <div style="background:#fff3cd; border-left:4px solid #f59e0b; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+        <strong>Exam tip:</strong> When solving equations with fractions in \(x\), multiply <strong>every</strong> term by the denominator and state values that make a denominator zero.
+      </div>
+
+      <p style="margin-top:14px;">Practise: <strong>Algebraic Fractions</strong> in the generator (5 per difficulty, 4 randomised MCQs).</p>
+      <p style="margin:8px 0 0;">
+        <a href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=algebraic_fractions"
+           style="color:#1a6fa8;font-weight:600;">Open Algebraic Fractions in the generator →</a>
+      </p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Simplify \(\dfrac{x^2 - 4}{x - 2}\).</p>
+          <button class="btn mcq-btn" data-letter="A">x − 2</button>
+          <button class="btn mcq-btn" data-letter="B">x² + 2</button>
+          <button class="btn mcq-btn" data-letter="C">x + 2</button>
+          <button class="btn mcq-btn" data-letter="D">2</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       14. ALGEBRAIC PROOF
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">14</span>
+      Algebraic Proof
+      <span style="font-size:0.65rem; margin-left:8px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Higher</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Algebraic proof</strong> shows a statement is true for <em>every</em> integer (not just a few examples). You use \(n\) to represent any integer and explain the structure — even/odd, consecutive numbers, or factorising.</p>
+
+      <p>Full lesson (even/odd, consecutive integers, identities, counterexamples):</p>
+      <p style="margin:8px 0 0;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='algebraic_proof') }}"
+           style="color:#1a6fa8;font-weight:600;">Open the Algebraic Proof lesson →</a>
+      </p>
+      <p style="margin:14px 0 0;">
+        <a href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=algebraic_proof"
+           style="color:#1a6fa8;font-weight:600;">Practise in the generator (Algebraic Proof) →</a>
+      </p>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       QUICK REFERENCE
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">15</span>
+      Algebra — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+            <div class="revision-card-wrap">
+        <div class="lesson-quick-ref-card" role="region" aria-label="Algebra quick reference">
+          <h3>Algebra — Quick Reference</h3>
+          <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+
+            <div>
+              <h4 style="color:#1a6fa8;">Simplifying</h4>
+              <ul>
+                <li>Like terms: same letter and power only</li>
+                <li>Single bracket: \(a(b+c) = ab + ac\)</li>
+                <li>Double bracket: multiply every term</li>
+                <li>\((x+a)(x-a) = x^2 - a^2\)</li>
+              </ul>
+            </div>
+            <div>
+              <h4 style="color:#1a6fa8;">Equations</h4>
+              <ul>
+                <li>Linear: \(ax+b=c \Rightarrow x=(c-b)/a\)</li>
+                <li>Quadratic: factorise → each bracket = 0</li>
+                <li>Complete the square: half \(b\), adjust constant</li>
+                <li>Formula: \(x = (-b \pm \sqrt{b^2-4ac})/(2a)\)</li>
+              </ul>
+            </div>
+          </div>
+          <div class="lesson-quick-ref-advanced">
+            <h4>Common exam traps</h4>
+            <ul>
+              <li>\(3x^2 + 2x \neq 5x^3\) — different powers stay separate</li>
+              <li>\(-2(x-3) = -2x + 6\) — both signs change</li>
+              <li>Quadratics usually have <strong>two</strong> solutions</li>
+              <li>Factorise: take out the HCF fully first</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+</div>
+
+  <!-- Practice link -->
+  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='algebra') }}"
+       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+      Start Practice Quiz
+    </a>
+  </div>
+
+{% endblock %}

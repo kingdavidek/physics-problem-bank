@@ -1,0 +1,561 @@
+{% extends "base.html" %}
+{% block title %}Multiples &amp; Factors – GCSE Mathematics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Multiples and Factors</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">GCSE Mathematics – Foundation and Higher Tier · All Exam Boards</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+  <!-- Quick Test button -->
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='multiples_factors') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       1. MULTIPLES
+  ══════════════════════════════════════════════════ -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      Multiples
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 7</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>The <strong>multiples</strong> of a number are what you get when you multiply it by 1, 2, 3, 4, … It's just the times table for that number, going on forever.</p>
+
+      <p><em>Example:</em> The multiples of <strong>6</strong> are:</p>
+      <p style="text-align:center; font-size:1.05rem;">6, 12, 18, 24, 30, 36, 42, 48, …</p>
+
+      <div style="text-align:center; margin:14px 0;">
+        <svg width="480" height="72" viewBox="0 0 480 72" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <!-- Six highlighted boxes for multiples of 6 -->
+          <rect x="10"  y="12" width="62" height="38" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <rect x="82"  y="12" width="62" height="38" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <rect x="154" y="12" width="62" height="38" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <rect x="226" y="12" width="62" height="38" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <rect x="298" y="12" width="62" height="38" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <rect x="370" y="12" width="62" height="38" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <!-- Numbers -->
+          <text x="41"  y="37" text-anchor="middle" font-size="17" font-weight="bold" fill="#1a6fa8">6</text>
+          <text x="113" y="37" text-anchor="middle" font-size="17" font-weight="bold" fill="#1a6fa8">12</text>
+          <text x="185" y="37" text-anchor="middle" font-size="17" font-weight="bold" fill="#1a6fa8">18</text>
+          <text x="257" y="37" text-anchor="middle" font-size="17" font-weight="bold" fill="#1a6fa8">24</text>
+          <text x="329" y="37" text-anchor="middle" font-size="17" font-weight="bold" fill="#1a6fa8">30</text>
+          <text x="401" y="37" text-anchor="middle" font-size="17" font-weight="bold" fill="#1a6fa8">36</text>
+          <!-- Labels below -->
+          <text x="41"  y="64" text-anchor="middle" font-size="14" fill="#555">6×1</text>
+          <text x="113" y="64" text-anchor="middle" font-size="14" fill="#555">6×2</text>
+          <text x="185" y="64" text-anchor="middle" font-size="14" fill="#555">6×3</text>
+          <text x="257" y="64" text-anchor="middle" font-size="14" fill="#555">6×4</text>
+          <text x="329" y="64" text-anchor="middle" font-size="14" fill="#555">6×5</text>
+          <text x="401" y="64" text-anchor="middle" font-size="14" fill="#555">6×6</text>
+        </svg>
+      </div>
+
+      <p><em>Example:</em> Find the <strong>5th multiple of 7</strong>.</p>
+      <p style="text-align:center;">5th multiple of 7 = 7 × 5 = <strong>35</strong></p>
+
+      <p><strong>Quick check:</strong> Is 45 a multiple of 9? Yes, because 9 × 5 = 45. Is 50 a multiple of 9? No — 9 × 5 = 45 and 9 × 6 = 54, so 50 is not in the 9 times table.</p>
+
+      <p><strong>Exam tip:</strong> "Multiple" sounds like "multiply" — that's the link to remember.</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">What is the <strong>5th multiple of 7</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">5</button>
+          <button class="btn mcq-btn" data-letter="B">28</button>
+          <button class="btn mcq-btn" data-letter="C">35</button>
+          <button class="btn mcq-btn" data-letter="D">42</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       2. FACTORS AND FACTOR PAIRS
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Factors and Factor Pairs
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 7</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>A <strong>factor</strong> of a number divides into it <em>exactly</em> — no remainder. Think of factors as the numbers that "fit" neatly into a number.</p>
+
+      <p><em>Example:</em> Find all the factors of <strong>24</strong>.</p>
+      <p>Work through pairs systematically, starting from 1:</p>
+
+      <div style="text-align:center; margin:14px 0;">
+        <svg width="460" height="108" viewBox="0 0 460 108" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <!-- Pairs arranged in two rows -->
+          <!-- Row 1 labels -->
+          <text x="230" y="16" text-anchor="middle" font-size="14" fill="#555" font-weight="bold">Factor pairs of 24</text>
+          <!-- Pair boxes -->
+          <rect x="10"  y="24" width="90" height="36" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <rect x="110" y="24" width="90" height="36" rx="6" fill="#dcfce7" stroke="#059669" stroke-width="1.5"/>
+          <rect x="210" y="24" width="90" height="36" rx="6" fill="#fce7f3" stroke="#a13544" stroke-width="1.5"/>
+          <rect x="310" y="24" width="90" height="36" rx="6" fill="#fef9c3" stroke="#d97706" stroke-width="1.5"/>
+          <!-- Pair labels -->
+          <text x="55"  y="47" text-anchor="middle" font-size="17" font-weight="bold" fill="#1a6fa8">1 × 24</text>
+          <text x="155" y="47" text-anchor="middle" font-size="17" font-weight="bold" fill="#059669">2 × 12</text>
+          <text x="255" y="47" text-anchor="middle" font-size="17" font-weight="bold" fill="#a13544">3 × 8</text>
+          <text x="355" y="47" text-anchor="middle" font-size="17" font-weight="bold" fill="#d97706">4 × 6</text>
+          <!-- All factors listed below -->
+          <text x="230" y="82" text-anchor="middle" font-size="14" fill="#333">All factors of 24:</text>
+          <text x="230" y="100" text-anchor="middle" font-size="15" fill="#1a6fa8" font-weight="bold">1, 2, 3, 4, 6, 8, 12, 24</text>
+        </svg>
+      </div>
+
+      <p><strong>How to find all factor pairs:</strong> start with 1 × the number, then try 2, 3, 4, … Stop when you reach the square root (for 24, that's around 4.9 — so once you reach 5 without a match, you're done).</p>
+
+      <ul style="line-height:1.9;">
+        <li>1 × 24 = 24 ✓</li>
+        <li>2 × 12 = 24 ✓</li>
+        <li>3 × 8 = 24 ✓</li>
+        <li>4 × 6 = 24 ✓</li>
+        <li>5 × ? = 24 — 24 ÷ 5 = 4.8, not a whole number ✗ (stop near here)</li>
+      </ul>
+
+      <p><strong>Important:</strong> 1 and the number itself are always factors. Every number has at least two factors.</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Which of these is <strong>not</strong> a factor of 24?</p>
+          <button class="btn mcq-btn" data-letter="A">6</button>
+          <button class="btn mcq-btn" data-letter="B">7</button>
+          <button class="btn mcq-btn" data-letter="C">8</button>
+          <button class="btn mcq-btn" data-letter="D">12</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       3. PRIME NUMBERS
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Prime Numbers
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 7</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>A <strong>prime number</strong> has <em>exactly two factors</em>: 1 and itself. That's the whole definition — learn it word for word.</p>
+
+      <p><em>Examples of primes:</em> 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, …</p>
+      <p><em>Not primes:</em></p>
+      <ul style="line-height:1.9;">
+        <li><strong>1</strong> — only one factor (itself), so it does <em>not</em> count as prime</li>
+        <li><strong>4</strong> — has factors 1, 2, 4 (three factors) → not prime</li>
+        <li><strong>9</strong> — has factors 1, 3, 9 → not prime</li>
+        <li><strong>2</strong> — the only <em>even</em> prime (factors: 1 and 2 only)</li>
+      </ul>
+
+      <div style="text-align:center; margin:14px 0;">
+        <svg width="480" height="90" viewBox="0 0 480 90" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <!-- First 10 primes highlighted -->
+          <text x="240" y="16" text-anchor="middle" font-size="14" fill="#555" font-weight="bold">First 10 prime numbers</text>
+          <rect x="10"  y="24" width="42" height="38" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <rect x="58"  y="24" width="42" height="38" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <rect x="106" y="24" width="42" height="38" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <rect x="154" y="24" width="42" height="38" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <rect x="202" y="24" width="42" height="38" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <rect x="250" y="24" width="42" height="38" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <rect x="298" y="24" width="42" height="38" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <rect x="346" y="24" width="42" height="38" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <rect x="394" y="24" width="42" height="38" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <rect x="434" y="24" width="42" height="38" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <text x="31"  y="49" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a6fa8">2</text>
+          <text x="79"  y="49" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a6fa8">3</text>
+          <text x="127" y="49" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a6fa8">5</text>
+          <text x="175" y="49" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a6fa8">7</text>
+          <text x="223" y="49" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a6fa8">11</text>
+          <text x="271" y="49" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a6fa8">13</text>
+          <text x="319" y="49" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a6fa8">17</text>
+          <text x="367" y="49" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a6fa8">19</text>
+          <text x="415" y="49" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a6fa8">23</text>
+          <text x="455" y="49" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a6fa8">29</text>
+          <text x="240" y="80" text-anchor="middle" font-size="14" fill="#555">Memorise the primes up to 30 — they come up constantly in GCSE!</text>
+        </svg>
+      </div>
+
+      <p><strong>Is 37 prime?</strong> Check by dividing by primes up to √37 ≈ 6.1. Test: ÷2 (no — odd), ÷3 (no — 3+7=10, not divisible by 3), ÷5 (no — doesn't end in 0 or 5). No factor found → <strong>37 is prime.</strong></p>
+
+      <p><strong>Is 33 prime?</strong> ÷3: 3+3=6, divisible by 3. 33 = 3 × 11. It has more than two factors → <strong>33 is not prime.</strong></p>
+
+      <div style="background:#fff3cd; border-left:4px solid #f59e0b; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+        <strong>⚠️ Remember:</strong> 1 is <em>not</em> a prime number. This catches out a lot of students. A prime needs <em>exactly two</em> factors — 1 only has one.
+      </div>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">Which of these is a <strong>prime number</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">23</button>
+          <button class="btn mcq-btn" data-letter="B">27</button>
+          <button class="btn mcq-btn" data-letter="C">21</button>
+          <button class="btn mcq-btn" data-letter="D">25</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       4. PRODUCT OF PRIME FACTORS
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Product of Prime Factors (Factor Trees)
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 8</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Every whole number bigger than 1 can be written as a <strong>product of prime numbers</strong>. We find this by drawing a <strong>factor tree</strong>: keep splitting each branch until every number at the end is prime.</p>
+
+      <p><em>Example:</em> Write <strong>36</strong> as a product of prime factors.</p>
+
+      <div style="text-align:center; margin:14px 0;">
+        <svg width="340" height="195" viewBox="0 0 340 195" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <!-- Root: 36 -->
+          <circle cx="170" cy="22" r="20" fill="#fef4e8" stroke="#d97706" stroke-width="2"/>
+          <text x="170" y="28" text-anchor="middle" font-size="17" font-weight="bold" fill="#d97706">36</text>
+          <!-- Branches to 4 and 9 -->
+          <line x1="155" y1="38" x2="100" y2="82" stroke="#888" stroke-width="1.8"/>
+          <line x1="185" y1="38" x2="240" y2="82" stroke="#888" stroke-width="1.8"/>
+          <!-- 4 -->
+          <circle cx="100" cy="100" r="18" fill="#fce7f3" stroke="#a13544" stroke-width="1.8"/>
+          <text x="100" y="106" text-anchor="middle" font-size="16" font-weight="bold" fill="#a13544">4</text>
+          <!-- 9 -->
+          <circle cx="240" cy="100" r="18" fill="#fce7f3" stroke="#a13544" stroke-width="1.8"/>
+          <text x="240" y="106" text-anchor="middle" font-size="16" font-weight="bold" fill="#a13544">9</text>
+          <!-- Branches from 4 to 2, 2 -->
+          <line x1="88" y1="115" x2="60" y2="153" stroke="#888" stroke-width="1.8"/>
+          <line x1="112" y1="115" x2="140" y2="153" stroke="#888" stroke-width="1.8"/>
+          <!-- Branches from 9 to 3, 3 -->
+          <line x1="228" y1="115" x2="200" y2="153" stroke="#888" stroke-width="1.8"/>
+          <line x1="252" y1="115" x2="280" y2="153" stroke="#888" stroke-width="1.8"/>
+          <!-- Prime leaves: 2, 2, 3, 3 -->
+          <circle cx="60"  cy="168" r="16" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2"/>
+          <text x="60"  y="174" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a6fa8">2</text>
+          <circle cx="140" cy="168" r="16" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2"/>
+          <text x="140" y="174" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a6fa8">2</text>
+          <circle cx="200" cy="168" r="16" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2"/>
+          <text x="200" y="174" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a6fa8">3</text>
+          <circle cx="280" cy="168" r="16" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2"/>
+          <text x="280" y="174" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a6fa8">3</text>
+          <!-- Result below -->
+          <text x="170" y="195" text-anchor="middle" font-size="14" fill="#059669" font-weight="bold">36 = 2 × 2 × 3 × 3 = 2² × 3²</text>
+        </svg>
+      </div>
+
+      <p>Collect the primes from the ends of the branches: 2, 2, 3, 3. Write with powers: \( 36 = 2^2 \times 3^2 \).</p>
+
+      <p><em>Another example:</em> Write <strong>40</strong> as a product of prime factors.</p>
+      <ul style="line-height:1.9;">
+        <li>40 = 8 × 5</li>
+        <li>8 = 2 × 4 = 2 × 2 × 2</li>
+        <li>5 is already prime</li>
+        <li>Result: \( 40 = 2^3 \times 5 \)</li>
+      </ul>
+
+      <p><strong>It doesn't matter which pairs you split into first</strong> — you'll always end up with the same prime factors at the bottom. 36 split as 6 × 6 or as 4 × 9 both give 2² × 3² in the end.</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">Write <strong>36</strong> as a product of prime factors.</p>
+          <button class="btn mcq-btn" data-letter="A">4 × 9</button>
+          <button class="btn mcq-btn" data-letter="B">2 × 18</button>
+          <button class="btn mcq-btn" data-letter="C">6²</button>
+          <button class="btn mcq-btn" data-letter="D">2² × 3²</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       5. HIGHEST COMMON FACTOR (HCF)
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Highest Common Factor (HCF)
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 8</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>The <strong>HCF</strong> is the <em>biggest</em> number that divides into <em>both</em> numbers exactly. Think of it as the largest shared factor.</p>
+
+      <p><em>Example:</em> Find the HCF of <strong>12 and 18</strong>.</p>
+
+      <p><strong>Method 1 — List factors:</strong></p>
+      <ul style="line-height:1.9;">
+        <li>Factors of 12: 1, 2, 3, <strong>4, 6</strong>, 12</li>
+        <li>Factors of 18: 1, 2, 3, <strong>6</strong>, 9, 18</li>
+        <li>Common factors: 1, 2, 3, 6 → Highest is <strong>6</strong></li>
+      </ul>
+
+      <p><strong>Method 2 — Prime factors (more reliable for big numbers):</strong></p>
+      <ul style="line-height:1.9;">
+        <li>12 = 2² × 3</li>
+        <li>18 = 2 × 3²</li>
+        <li>For HCF: take each shared prime with its <em>lowest</em> power → 2¹ × 3¹ = <strong>6</strong></li>
+      </ul>
+
+      <div style="text-align:center; margin:14px 0;">
+        <svg width="360" height="155" viewBox="0 0 360 155" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <!-- Venn diagram for 12 and 18 -->
+          <circle cx="130" cy="80" r="72" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2" opacity="0.7"/>
+          <circle cx="230" cy="80" r="72" fill="#dcfce7" stroke="#059669" stroke-width="2" opacity="0.7"/>
+          <!-- Overlap zone (approx ellipse) -->
+          <ellipse cx="180" cy="80" rx="30" ry="50" fill="#1a6fa8" opacity="0.6"/>
+          <!-- Labels in zones -->
+          <text x="90"  y="72" text-anchor="middle" font-size="14" fill="#1a6fa8" font-weight="bold">12 only</text>
+          <text x="90"  y="88" text-anchor="middle" font-size="14" fill="#1a6fa8">2, 4, 12</text>
+          <text x="180" y="72" text-anchor="middle" font-size="14" fill="#7c3aed" font-weight="bold">Shared</text>
+          <text x="180" y="88" text-anchor="middle" font-size="15" fill="#7c3aed" font-weight="bold">1,2,3,6</text>
+          <text x="270" y="72" text-anchor="middle" font-size="14" fill="#059669" font-weight="bold">18 only</text>
+          <text x="270" y="88" text-anchor="middle" font-size="14" fill="#059669">9, 18</text>
+          <!-- Circle labels at bottom -->
+          <text x="100" y="148" text-anchor="middle" font-size="15" fill="#1a6fa8" font-weight="bold">12</text>
+          <text x="260" y="148" text-anchor="middle" font-size="15" fill="#059669" font-weight="bold">18</text>
+          <text x="180" y="148" text-anchor="middle" font-size="14" fill="#7c3aed">HCF = 6</text>
+        </svg>
+      </div>
+
+      <p><strong>What's the HCF useful for?</strong> Simplifying fractions! To simplify \(\frac{18}{24}\), find HCF(18, 24) = 6, then divide top and bottom by 6: \(\frac{3}{4}\).</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">What is the <strong>HCF</strong> of <strong>12</strong> and <strong>18</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">4</button>
+          <button class="btn mcq-btn" data-letter="B">36</button>
+          <button class="btn mcq-btn" data-letter="C">6</button>
+          <button class="btn mcq-btn" data-letter="D">9</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       6. LOWEST COMMON MULTIPLE (LCM)
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Lowest Common Multiple (LCM)
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 8</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>The <strong>LCM</strong> is the <em>smallest</em> number that appears in the times tables of <em>both</em> numbers. Think of it as the first time the two times tables meet.</p>
+
+      <p><em>Example:</em> Find the LCM of <strong>4 and 6</strong>.</p>
+
+      <p><strong>Method 1 — List multiples:</strong></p>
+      <ul style="line-height:1.9;">
+        <li>Multiples of 4: 4, 8, <strong>12</strong>, 16, 20, 24, …</li>
+        <li>Multiples of 6: 6, <strong>12</strong>, 18, 24, …</li>
+        <li>First one they share: <strong>12</strong></li>
+      </ul>
+
+      <p><strong>Method 2 — Prime factors (faster for big numbers):</strong></p>
+      <ul style="line-height:1.9;">
+        <li>4 = 2²</li>
+        <li>6 = 2 × 3</li>
+        <li>For LCM: take each prime with its <em>highest</em> power → 2² × 3 = <strong>12</strong></li>
+      </ul>
+
+      <p><em>Another example:</em> LCM of 12 and 18.</p>
+      <ul style="line-height:1.9;">
+        <li>12 = 2² × 3, &nbsp; 18 = 2 × 3²</li>
+        <li>Highest powers: 2² × 3² = 4 × 9 = <strong>36</strong></li>
+      </ul>
+
+      <p><strong>What's the LCM useful for?</strong> Adding fractions! To add \(\frac{1}{4} + \frac{1}{6}\), use LCM(4,6) = 12 as the common denominator: \(\frac{3}{12} + \frac{2}{12} = \frac{5}{12}\).</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">What is the <strong>LCM</strong> of <strong>4</strong> and <strong>6</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">2</button>
+          <button class="btn mcq-btn" data-letter="B">12</button>
+          <button class="btn mcq-btn" data-letter="C">24</button>
+          <button class="btn mcq-btn" data-letter="D">6</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       7. USING HCF AND LCM TOGETHER
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Using HCF and LCM in Problems
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>In GCSE exams, HCF and LCM often appear wrapped in a word problem. The key is recognising <em>which one to use</em>.</p>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:14px 0;">
+        <div style="background:#dbeafe; border:1px solid #1a6fa8; border-radius:8px; padding:14px;">
+          <div style="font-weight:700; color:#1a6fa8; margin-bottom:6px;">Use HCF when…</div>
+          <ul style="margin:0; padding-left:16px; font-size:1rem; line-height:1.8; color:#333;">
+            <li>Splitting things into equal groups</li>
+            <li>Cutting into equal pieces with no waste</li>
+            <li>Sharing fairly between groups</li>
+            <li>Simplifying fractions</li>
+          </ul>
+        </div>
+        <div style="background:#dcfce7; border:1px solid #059669; border-radius:8px; padding:14px;">
+          <div style="font-weight:700; color:#059669; margin-bottom:6px;">Use LCM when…</div>
+          <ul style="margin:0; padding-left:16px; font-size:1rem; line-height:1.8; color:#333;">
+            <li>Two events happen repeatedly — when do they coincide?</li>
+            <li>Tiling, packing, or repeating patterns</li>
+            <li>Finding a common denominator for fractions</li>
+          </ul>
+        </div>
+      </div>
+
+      <p><em>LCM problem:</em> Bus A leaves every <strong>8 minutes</strong>. Bus B leaves every <strong>12 minutes</strong>. They both leave at 9:00 am. When is the next time they leave together?</p>
+      <ul style="line-height:1.9;">
+        <li>8 = 2³ &nbsp; 12 = 2² × 3</li>
+        <li>LCM = 2³ × 3 = <strong>24 minutes</strong></li>
+        <li>Next time: 9:00 + 24 min = <strong>9:24 am</strong></li>
+      </ul>
+
+      <p><em>HCF problem:</em> You have <strong>24 red tiles</strong> and <strong>36 blue tiles</strong>. You want to arrange them in identical groups with no tiles left over, using the same number of each colour per group. What is the maximum number of groups?</p>
+      <ul style="line-height:1.9;">
+        <li>24 = 2³ × 3 &nbsp; 36 = 2² × 3²</li>
+        <li>HCF = 2² × 3 = <strong>12 groups</strong></li>
+        <li>Each group gets 24÷12 = 2 red and 36÷12 = 3 blue tiles</li>
+      </ul>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Two buses leave a stop at the same time. Bus A runs every <strong>8 minutes</strong>, Bus B every <strong>12 minutes</strong>. How many minutes until they next leave together?</p>
+          <button class="btn mcq-btn" data-letter="A">4</button>
+          <button class="btn mcq-btn" data-letter="B">20</button>
+          <button class="btn mcq-btn" data-letter="C">24</button>
+          <button class="btn mcq-btn" data-letter="D">96</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       PRACTICE STRATEGY
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+      Multiples &amp; Factors — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 9</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+            <div class="revision-card-wrap">
+        <div class="lesson-quick-ref-card" role="region" aria-label="Multiples and factors quick reference">
+          <h3>Multiples &amp; Factors — Quick Reference</h3>
+          <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+
+            <div>
+              <h4 style="color:#1a6fa8;">Definitions</h4>
+              <ul>
+                <li>Multiple: \(n \times 1, 2, 3, \ldots\)</li>
+                <li>Factor: divides exactly (no remainder)</li>
+                <li>Prime: exactly two factors (1 and itself)</li>
+                <li><strong>1 is not prime</strong></li>
+              </ul>
+            </div>
+            <div>
+              <h4 style="color:#1a6fa8;">HCF vs LCM</h4>
+              <ul>
+                <li><strong>HCF</strong> — biggest shared factor; use lowest prime powers</li>
+                <li><strong>LCM</strong> — smallest shared multiple; use highest prime powers</li>
+              </ul>
+              <h4 style="color:#1a6fa8;margin-top:14px;">Prime factors</h4>
+              <ul>
+                <li>Factor tree → circle primes → index form</li>
+                <li>e.g. \(36 = 2^2 \times 3^2\)</li>
+              </ul>
+            </div>
+          </div>
+          <div class="lesson-quick-ref-advanced">
+            <h4>Word problems</h4>
+            <ul>
+              <li><strong>HCF</strong> — sharing into equal groups, simplifying fractions</li>
+              <li><strong>LCM</strong> — when events coincide, common denominators</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+</div>
+
+  <!-- Practice link -->
+  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='multiples_factors') }}"
+       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+      Start Practice Quiz
+    </a>
+  </div>
+
+{% endblock %}

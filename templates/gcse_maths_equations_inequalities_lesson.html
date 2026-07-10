@@ -1,0 +1,803 @@
+{% extends "base.html" %}
+{% block title %}Equations and Inequalities – GCSE Mathematics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Equations and Inequalities</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">In this topic we find unknown numbers in equations and inequalities. You will use the same “balance” idea throughout: whatever you do to one side, you must do to the other.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+  <!-- Quick Test button -->
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='equations_inequalities') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 1. One-Step and Two-Step Equations                         -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      Solving One-Step and Two-Step Equations
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 7</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>An <strong>equation</strong> is a maths sentence with an equals sign. The left side has the same value as the right side. Your job is to find the unknown letter — usually <strong>x</strong>.</p>
+      <p>Picture a set of scales. If we take 7 kg off the left pan, we must take 7 kg off the right pan too, or the scales tip. Equations work the same way.</p>
+
+      <p><em>One-step example:</em> Solve <strong>x + 7 = 12</strong></p>
+      <ul style="line-height:1.9;">
+        <li>We want x on its own, so subtract 7 from <em>both</em> sides.</li>
+        <li>12 − 7 = 5, so <strong>x = 5</strong>.</li>
+        <li>Check: 5 + 7 = 12 ✓</li>
+      </ul>
+
+      <p><em>Two-step example:</em> Solve <strong>3x + 4 = 19</strong></p>
+      <ul style="line-height:1.9;">
+        <li>First undo the +4: subtract 4 from both sides → <strong>3x = 15</strong>.</li>
+        <li>Then undo the ×3: divide both sides by 3 → <strong>x = 5</strong>.</li>
+      </ul>
+      <p>In general, for <strong>ax + b = c</strong>, we undo the +b first, then divide by a — just like in the example above.</p>
+
+      <!-- SVG: balance scale showing 3x+4 = 19 → x = 5 -->
+      <div style="text-align:center; margin:16px 0;">
+      <svg viewBox="0 0 480 200" style="max-width:100%; width:480px; font-family:sans-serif; font-size:13px;" aria-label="Balance scale showing 3x+4=19">
+        <!-- Stand -->
+        <line x1="240" y1="60" x2="240" y2="170" stroke="#555" stroke-width="3"/>
+        <ellipse cx="240" cy="175" rx="30" ry="7" fill="#888"/>
+        <!-- Beam -->
+        <line x1="80" y1="60" x2="400" y2="60" stroke="#444" stroke-width="3"/>
+        <circle cx="240" cy="60" r="5" fill="#444"/>
+        <!-- Left pan -->
+        <line x1="80" y1="60" x2="80" y2="100" stroke="#555" stroke-width="2"/>
+        <rect x="30" y="100" width="100" height="36" rx="4" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+        <text x="80" y="123" text-anchor="middle" fill="#1e40af" font-weight="600">3x + 4</text>
+        <!-- Right pan -->
+        <line x1="400" y1="60" x2="400" y2="100" stroke="#555" stroke-width="2"/>
+        <rect x="350" y="100" width="100" height="36" rx="4" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+        <text x="400" y="123" text-anchor="middle" fill="#15803d" font-weight="600">19</text>
+        <!-- Arrow and annotation -->
+        <text x="240" y="30" text-anchor="middle" fill="#374151" font-size="14">3x + 4 = 19</text>
+        <text x="240" y="46" text-anchor="middle" fill="#6b7280" font-size="14">→  −4 both sides, then ÷3</text>
+        <!-- Step annotations below -->
+        <text x="80"  y="155" text-anchor="middle" fill="#1e40af" font-size="14">3x = 15</text>
+        <text x="240" y="155" text-anchor="middle" fill="#6b7280" font-size="14">÷3 →</text>
+        <text x="400" y="155" text-anchor="middle" fill="#15803d" font-size="14">x = 5</text>
+      </svg>
+      </div>
+
+      <p><strong>Always check:</strong> put your answer back in. Here, 3 × 5 + 4 = 19 ✓</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Solve <strong>3x + 4 = 19</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">x = 3</button>
+          <button class="btn mcq-btn" data-letter="B">x = 5</button>
+          <button class="btn mcq-btn" data-letter="C">x = 7</button>
+          <button class="btn mcq-btn" data-letter="D">x = 23</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 2. Equations with Brackets                                 -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Equations with Brackets
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 8</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>Sometimes x is inside brackets. We usually <strong>expand the bracket first</strong>, then solve like a normal two-step equation.</p>
+      <p><em>Example:</em> Solve <strong>2(3x − 1) = 16</strong></p>
+      <ul style="line-height:1.9;">
+        <li>Multiply the 2 into the bracket: 2 × 3x = 6x and 2 × (−1) = −2 → <strong>6x − 2 = 16</strong></li>
+        <li>Add 2 to both sides: <strong>6x = 18</strong></li>
+        <li>Divide both sides by 6: <strong>x = 3</strong></li>
+        <li>Check: 2(3 × 3 − 1) = 2(8) = 16 ✓</li>
+      </ul>
+      <p>Rule of thumb: expand first unless the bracket is already on its own (e.g. 3(x + 2) = 15 — you could divide by 3 straight away).</p>
+
+      <!-- SVG: expanding brackets visually -->
+      <div style="text-align:center; margin:16px 0;">
+      <svg viewBox="0 0 480 140" style="max-width:100%; width:480px; font-family:sans-serif;" aria-label="Expanding 2(3x-1)">
+        <!-- Title -->
+        <text x="240" y="22" text-anchor="middle" font-size="17" fill="#374151" font-weight="600">Expanding  2(3x − 1)</text>
+        <!-- Box around the bracket -->
+        <rect x="60" y="38" width="200" height="38" rx="6" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
+        <text x="160" y="63" text-anchor="middle" font-size="17" fill="#78350f">2(3x − 1)</text>
+        <!-- equals -->
+        <text x="280" y="63" text-anchor="middle" font-size="17" fill="#374151">=</text>
+        <!-- result box -->
+        <rect x="302" y="38" width="118" height="38" rx="6" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+        <text x="361" y="63" text-anchor="middle" font-size="17" fill="#15803d">6x − 2</text>
+        <!-- arrows showing multiplication -->
+        <path d="M 88 38 Q 120 10 130 38" fill="none" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrowB)"/>
+        <text x="107" y="16" text-anchor="middle" font-size="14" fill="#2563eb">×2</text>
+        <path d="M 178 38 Q 210 10 200 38" fill="none" stroke="#dc2626" stroke-width="1.5" marker-end="url(#arrowB)"/>
+        <text x="213" y="16" text-anchor="middle" font-size="14" fill="#dc2626">×2</text>
+        <defs>
+          <marker id="arrowB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+            <path d="M0,0 L10,5 L0,10 Z" fill="#555"/>
+          </marker>
+        </defs>
+        <!-- step 2 -->
+        <text x="240" y="108" text-anchor="middle" font-size="15" fill="#374151">6x − 2 = 16  →  6x = 18  →  <tspan font-weight="600" fill="#15803d">x = 3</tspan></text>
+        <text x="240" y="128" text-anchor="middle" font-size="14" fill="#6b7280">Check: 2(3·3 − 1) = 2(8) = 16 ✓</text>
+      </svg>
+      </div>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Solve <strong>2(3x − 1) = 16</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">x = 1</button>
+          <button class="btn mcq-btn" data-letter="B">x = 2</button>
+          <button class="btn mcq-btn" data-letter="C">x = 3</button>
+          <button class="btn mcq-btn" data-letter="D">x = 9</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 3. Unknowns on Both Sides                                  -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Unknowns on Both Sides
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>Trickier equations have x on <em>both</em> sides. We tidy them up by moving all the x terms to one side and all the number terms to the other.</p>
+      <p><em>Example:</em> Solve <strong>5x + 2 = 2x + 17</strong></p>
+      <ul style="line-height:1.9;">
+        <li>Subtract 2x from both sides (smaller x-term first is often easier): <strong>3x + 2 = 17</strong></li>
+        <li>Subtract 2 from both sides: <strong>3x = 15</strong></li>
+        <li>Divide both sides by 3: <strong>x = 5</strong></li>
+        <li>Check: left = 5(5) + 2 = 27, right = 2(5) + 17 = 27 ✓</li>
+      </ul>
+
+      <!-- SVG: collecting terms visualised on a number line / see-saw -->
+      <div style="text-align:center; margin:16px 0;">
+      <svg viewBox="0 0 480 160" style="max-width:100%; width:480px; font-family:sans-serif; font-size:13px;" aria-label="Collecting like terms from both sides">
+        <defs>
+          <marker id="arrowC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+            <path d="M0,0 L10,5 L0,10 Z" fill="#6b7280"/>
+          </marker>
+        </defs>
+        <!-- Row 1: original -->
+        <text x="20"  y="28" font-size="15" fill="#374151">Start:</text>
+        <rect x="72"  y="10" width="90" height="26" rx="4" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.2"/>
+        <text x="117" y="28" text-anchor="middle" fill="#1e40af" font-weight="600">5x + 2</text>
+        <text x="172" y="28" fill="#374151"> = </text>
+        <rect x="192" y="10" width="90" height="26" rx="4" fill="#fce7f3" stroke="#db2777" stroke-width="1.2"/>
+        <text x="237" y="28" text-anchor="middle" fill="#9d174d" font-weight="600">2x + 17</text>
+        <!-- Arrow down step 1 -->
+        <line x1="240" y1="40" x2="240" y2="58" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrowC)"/>
+        <text x="260" y="52" font-size="14" fill="#6b7280">− 2x both sides</text>
+        <!-- Row 2 -->
+        <text x="20"  y="76" font-size="15" fill="#374151">Step 1:</text>
+        <rect x="72"  y="58" width="90" height="26" rx="4" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.2"/>
+        <text x="117" y="76" text-anchor="middle" fill="#1e40af" font-weight="600">3x + 2</text>
+        <text x="172" y="76" fill="#374151"> = </text>
+        <rect x="192" y="58" width="52" height="26" rx="4" fill="#fce7f3" stroke="#db2777" stroke-width="1.2"/>
+        <text x="218" y="76" text-anchor="middle" fill="#9d174d" font-weight="600">17</text>
+        <!-- Arrow down step 2 -->
+        <line x1="240" y1="88" x2="240" y2="106" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrowC)"/>
+        <text x="260" y="100" font-size="14" fill="#6b7280">− 2 both sides</text>
+        <!-- Row 3 -->
+        <text x="20"  y="124" font-size="15" fill="#374151">Step 2:</text>
+        <rect x="72"  y="106" width="60" height="26" rx="4" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.2"/>
+        <text x="102" y="124" text-anchor="middle" fill="#1e40af" font-weight="600">3x</text>
+        <text x="140" y="124" fill="#374151"> = </text>
+        <rect x="157" y="106" width="50" height="26" rx="4" fill="#fce7f3" stroke="#db2777" stroke-width="1.2"/>
+        <text x="182" y="124" text-anchor="middle" fill="#9d174d" font-weight="600">15</text>
+        <text x="215" y="124" fill="#6b7280">  ÷3 →</text>
+        <rect x="260" y="106" width="70" height="26" rx="4" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+        <text x="295" y="124" text-anchor="middle" fill="#15803d" font-weight="700">x = 5</text>
+      </svg>
+      </div>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Solve <strong>5x + 2 = 2x + 17</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">x = 3</button>
+          <button class="btn mcq-btn" data-letter="B">x = 5</button>
+          <button class="btn mcq-btn" data-letter="C">x = 15</button>
+          <button class="btn mcq-btn" data-letter="D">x = 19</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 4. Formulae and Rearranging                               -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Formulae and Rearranging
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f7ec; color:#2d6a35; padding:2px 6px; border-radius:10px;">Problem Solving</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>A <strong>formula</strong> is a ready-made equation that links quantities — like area, speed, or time. The letter you want on its own is called the <strong>subject</strong>.</p>
+      <p><em>Example:</em> The area of a circle is <strong>A = πr²</strong>. Make <strong>r</strong> the subject so we can find the radius from the area.</p>
+      <ul style="line-height:1.9;">
+        <li>Divide both sides by π: <strong>A ÷ π = r²</strong></li>
+        <li>Take the square root of both sides: <strong>r = √(A ÷ π)</strong></li>
+      </ul>
+      <p>We use the same balance idea as normal equations — just undo what is “stuck” to r (multiply, divide, square, and so on).</p>
+
+      <!-- SVG: formula rearrangement flowchart -->
+      <div style="text-align:center; margin:16px 0;">
+      <svg viewBox="0 0 480 130" style="max-width:100%; width:480px; font-family:sans-serif; font-size:13px;" aria-label="Rearranging formula A = pi r squared">
+        <defs>
+          <marker id="arrowF" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+            <path d="M0,0 L10,5 L0,10 Z" fill="#6b7280"/>
+          </marker>
+        </defs>
+        <!-- Box 1: A = π r² -->
+        <rect x="10" y="20" width="100" height="36" rx="6" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+        <text x="60" y="43" text-anchor="middle" fill="#78350f" font-size="16">A = πr²</text>
+        <!-- Arrow 1 -->
+        <line x1="110" y1="38" x2="158" y2="38" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrowF)"/>
+        <text x="134" y="30" text-anchor="middle" font-size="14" fill="#6b7280">÷ π</text>
+        <!-- Box 2 -->
+        <rect x="160" y="20" width="120" height="36" rx="6" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="220" y="43" text-anchor="middle" fill="#4c1d95" font-size="16">A/π = r²</text>
+        <!-- Arrow 2 -->
+        <line x1="280" y1="38" x2="328" y2="38" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrowF)"/>
+        <text x="304" y="30" text-anchor="middle" font-size="14" fill="#6b7280">√</text>
+        <!-- Box 3: result -->
+        <rect x="330" y="20" width="136" height="36" rx="6" fill="#dcfce7" stroke="#16a34a" stroke-width="1.8"/>
+        <text x="398" y="43" text-anchor="middle" fill="#15803d" font-size="16" font-weight="700">r = √(A/π)</text>
+        <!-- Labels below -->
+        <text x="60"  y="78" text-anchor="middle" font-size="14" fill="#6b7280">Original</text>
+        <text x="220" y="78" text-anchor="middle" font-size="14" fill="#6b7280">÷ π both sides</text>
+        <text x="398" y="78" text-anchor="middle" font-size="14" fill="#6b7280">Take √ both sides</text>
+        <!-- Reminder -->
+        <text x="240" y="112" text-anchor="middle" font-size="14" fill="#374151">Key: the new <tspan font-weight="600">subject</tspan> is isolated on one side.</text>
+      </svg>
+      </div>
+
+      <p><strong>Formulae worth knowing:</strong> speed = distance ÷ time; <strong>v = u + at</strong> (motion); triangle area <strong>A = ½ × base × height</strong>.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">Make <strong>r</strong> the subject of <strong>A = πr²</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">r = A²π</button>
+          <button class="btn mcq-btn" data-letter="B">r = A ÷ π</button>
+          <button class="btn mcq-btn" data-letter="C">r = √(Aπ)</button>
+          <button class="btn mcq-btn" data-letter="D">r = √(A ÷ π)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <p style="margin-top:14px;">More rearranging practice: use the generator topic <strong>Changing the Subject</strong> (linked in Section 9).</p>
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 5. Linear Inequalities                                     -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Linear Inequalities
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>An <strong>inequality</strong> uses &gt;, &lt;, ≥, or ≤ instead of =. It tells you a range of values that work, not just one answer.</p>
+      <p>You solve it almost the same way as an equation — but keep the inequality symbol in every step.</p>
+
+      <p><em>Example:</em> Solve <strong>3x − 1 &gt; 8</strong></p>
+      <ul style="line-height:1.9;">
+        <li>Add 1 to both sides: <strong>3x &gt; 9</strong></li>
+        <li>Divide both sides by 3: <strong>x &gt; 3</strong> (any number bigger than 3 works)</li>
+      </ul>
+
+      <div style="background:#fff3cd; border-left:4px solid #f59e0b; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+        <strong>⚠️ Watch out:</strong> If you multiply or divide by a <strong>negative</strong> number, flip the inequality sign.
+      </div>
+      <p><em>Example:</em> <strong>−2x ≤ 6</strong> → divide both sides by −2 → <strong>x ≥ −3</strong> (the ≤ flips to ≥).</p>
+
+      <!-- SVG: number line showing x > 3 -->
+      <div style="text-align:center; margin:16px 0;">
+      <svg viewBox="0 0 480 90" style="max-width:100%; width:480px; font-family:sans-serif; font-size:13px;" aria-label="Number line showing x greater than 3">
+        <!-- Number line -->
+        <line x1="40" y1="50" x2="440" y2="50" stroke="#374151" stroke-width="2"/>
+        <!-- Arrow at right end -->
+        <polygon points="440,45 452,50 440,55" fill="#374151"/>
+        <!-- Ticks and labels -->
+        <line x1="120" y1="44" x2="120" y2="56" stroke="#374151" stroke-width="1.5"/>
+        <text x="120" y="72" text-anchor="middle" fill="#374151">0</text>
+        <line x1="200" y1="44" x2="200" y2="56" stroke="#374151" stroke-width="1.5"/>
+        <text x="200" y="72" text-anchor="middle" fill="#374151">1</text>
+        <line x1="280" y1="44" x2="280" y2="56" stroke="#374151" stroke-width="1.5"/>
+        <text x="280" y="72" text-anchor="middle" fill="#374151">2</text>
+        <line x1="360" y1="44" x2="360" y2="56" stroke="#374151" stroke-width="1.5"/>
+        <text x="360" y="72" text-anchor="middle" fill="#374151">3</text>
+        <!-- Open circle at 3 -->
+        <circle cx="360" cy="50" r="7" fill="#ffffff" stroke="#2563eb" stroke-width="2.5"/>
+        <!-- Shaded region x > 3 -->
+        <line x1="367" y1="50" x2="435" y2="50" stroke="#2563eb" stroke-width="4"/>
+        <polygon points="435,45 447,50 435,55" fill="#2563eb"/>
+        <!-- Label -->
+        <text x="240" y="22" text-anchor="middle" fill="#2563eb" font-weight="600" font-size="16">x &gt; 3</text>
+        <text x="240" y="88" text-anchor="middle" font-size="14" fill="#6b7280">Open circle = 3 is NOT included</text>
+      </svg>
+      </div>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Solve <strong>3x − 1 &gt; 8</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">x &lt; 3</button>
+          <button class="btn mcq-btn" data-letter="B">x &gt; 3</button>
+          <button class="btn mcq-btn" data-letter="C">x &gt; 9</button>
+          <button class="btn mcq-btn" data-letter="D">x = 3</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 6. Representing Inequalities                              -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Representing Inequalities on a Number Line
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>Once you have solved an inequality, a <strong>number line</strong> is a clear way to show the answer.</p>
+      <ul style="line-height:1.9;">
+        <li><strong>Open circle ○</strong> — the end value is <em>not</em> included (for &gt; or &lt;)</li>
+        <li><strong>Filled circle ●</strong> — the end value <em>is</em> included (for ≥ or ≤)</li>
+        <li>Draw a line (and an arrow if the answer goes on forever) through the values that work.</li>
+      </ul>
+      <p><em>Example:</em> <strong>−1 &lt; x ≤ 4</strong> means x is bigger than −1 but can be 4. On a number line: open circle at −1, filled circle at 4, line between them. Whole-number answers: <strong>0, 1, 2, 3, 4</strong>.</p>
+
+      <!-- SVG: four examples of number line representations -->
+      <div style="text-align:center; margin:16px 0;">
+      <svg viewBox="0 0 480 190" style="max-width:100%; width:480px; font-family:sans-serif; font-size:12px;" aria-label="Four inequality representations on number lines">
+        <!-- Row 1: x > 2 (open, right) -->
+        <text x="10" y="22" font-size="14" fill="#374151" font-weight="600">x &gt; 2:</text>
+        <line x1="80" y1="18" x2="350" y2="18" stroke="#9ca3af" stroke-width="1.5"/>
+        <line x1="220" y1="12" x2="220" y2="24" stroke="#9ca3af" stroke-width="1.5"/>
+        <text x="220" y="34" text-anchor="middle" fill="#374151">2</text>
+        <circle cx="220" cy="18" r="5" fill="#ffffff" stroke="#2563eb" stroke-width="2"/>
+        <line x1="225" y1="18" x2="345" y2="18" stroke="#2563eb" stroke-width="3"/>
+        <polygon points="345,14 355,18 345,22" fill="#2563eb"/>
+
+        <!-- Row 2: x ≤ 2 (closed, left) -->
+        <text x="10" y="65" font-size="14" fill="#374151" font-weight="600">x ≤ 2:</text>
+        <line x1="80" y1="60" x2="350" y2="60" stroke="#9ca3af" stroke-width="1.5"/>
+        <line x1="220" y1="54" x2="220" y2="66" stroke="#9ca3af" stroke-width="1.5"/>
+        <text x="220" y="77" text-anchor="middle" fill="#374151">2</text>
+        <circle cx="220" cy="60" r="5" fill="#dc2626" stroke="#dc2626" stroke-width="2"/>
+        <line x1="85" y1="60" x2="215" y2="60" stroke="#dc2626" stroke-width="3"/>
+        <polygon points="85,56 75,60 85,64" fill="#dc2626"/>
+
+        <!-- Row 3: -1 < x ≤ 4 (compound) -->
+        <text x="10" y="107" font-size="14" fill="#374151" font-weight="600">−1 &lt; x ≤ 4:</text>
+        <line x1="80" y1="102" x2="380" y2="102" stroke="#9ca3af" stroke-width="1.5"/>
+        <line x1="150" y1="96" x2="150" y2="108" stroke="#9ca3af" stroke-width="1.5"/>
+        <text x="150" y="118" text-anchor="middle" fill="#374151">−1</text>
+        <line x1="310" y1="96" x2="310" y2="108" stroke="#9ca3af" stroke-width="1.5"/>
+        <text x="310" y="118" text-anchor="middle" fill="#374151">4</text>
+        <circle cx="150" cy="102" r="5" fill="#ffffff" stroke="#7c3aed" stroke-width="2"/>
+        <circle cx="310" cy="102" r="5" fill="#7c3aed" stroke="#7c3aed" stroke-width="2"/>
+        <line x1="155" y1="102" x2="305" y2="102" stroke="#7c3aed" stroke-width="3"/>
+
+        <!-- Integer solutions -->
+        <text x="240" y="152" text-anchor="middle" font-size="14" fill="#374151">Integer solutions: −1 &lt; x ≤ 4 gives <tspan font-weight="600">x = 0, 1, 2, 3, 4</tspan></text>
+
+        <!-- Legend -->
+        <circle cx="100" cy="174" r="5" fill="#ffffff" stroke="#374151" stroke-width="2"/>
+        <text x="112" y="178" fill="#374151" font-size="14">= not included</text>
+        <circle cx="220" cy="174" r="5" fill="#374151" stroke="#374151" stroke-width="2"/>
+        <text x="232" y="178" fill="#374151" font-size="14">= included</text>
+      </svg>
+      </div>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">For <strong>x &gt; 2</strong> on a number line, what do we draw at 2?</p>
+          <button class="btn mcq-btn" data-letter="A">An open circle</button>
+          <button class="btn mcq-btn" data-letter="B">A filled circle</button>
+          <button class="btn mcq-btn" data-letter="C">No circle</button>
+          <button class="btn mcq-btn" data-letter="D">A cross</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 7. Simultaneous Equations                                 -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Simultaneous Equations
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Higher Skill</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p><strong>Simultaneous equations</strong> are two equations at once, usually with <strong>x</strong> and <strong>y</strong>. You need one pair of values that makes <em>both</em> true — where the lines cross on a graph.</p>
+      <p>Two main methods: <strong>elimination</strong> (add or subtract equations to knock out x or y) and <strong>substitution</strong> (replace one letter with an expression from the other equation).</p>
+
+      <p><em>Elimination example:</em></p>
+      <p><strong>3x + 2y = 13</strong> … (1)<br><strong>x + 2y = 7</strong> … (2)</p>
+      <ul style="line-height:1.9;">
+        <li>Both have 2y, so subtract (2) from (1): 2x = 6 → <strong>x = 3</strong></li>
+        <li>Put x = 3 into (2): 3 + 2y = 7 → 2y = 4 → <strong>y = 2</strong></li>
+        <li>Solution: <strong>x = 3, y = 2</strong></li>
+      </ul>
+
+      <!-- SVG: two lines crossing at solution point -->
+      <!-- Scale: 30px/unit, origin (40, 212). Eq1 3x+2y=13: x=0→y=6.5 (px 17), x=13/3→y=0 (px 170,212).
+           Eq2 x+2y=7: x=0→y=3.5 (px 107), x=7→y=0 (px 250,212). Solution (3,2)→pixel(130,152). -->
+      <div style="text-align:center; margin:16px 0;">
+      <svg viewBox="0 0 350 250" style="max-width:100%; width:350px; font-family:sans-serif; font-size:11px;" aria-label="Two lines meeting at intersection point (3,2)">
+        <defs>
+          <marker id="arrowSim" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+            <path d="M0,0 L10,5 L0,10 Z" fill="#9ca3af"/>
+          </marker>
+          <clipPath id="simClip">
+            <rect x="40" y="10" width="265" height="204"/>
+          </clipPath>
+        </defs>
+        <!-- Light grid -->
+        <line x1="70"  y1="10" x2="70"  y2="214" stroke="#e5e7eb" stroke-width="1"/>
+        <line x1="100" y1="10" x2="100" y2="214" stroke="#e5e7eb" stroke-width="1"/>
+        <line x1="130" y1="10" x2="130" y2="214" stroke="#e5e7eb" stroke-width="1"/>
+        <line x1="160" y1="10" x2="160" y2="214" stroke="#e5e7eb" stroke-width="1"/>
+        <line x1="190" y1="10" x2="190" y2="214" stroke="#e5e7eb" stroke-width="1"/>
+        <line x1="220" y1="10" x2="220" y2="214" stroke="#e5e7eb" stroke-width="1"/>
+        <line x1="250" y1="10" x2="250" y2="214" stroke="#e5e7eb" stroke-width="1"/>
+        <line x1="40" y1="182" x2="308" y2="182" stroke="#e5e7eb" stroke-width="1"/>
+        <line x1="40" y1="152" x2="308" y2="152" stroke="#e5e7eb" stroke-width="1"/>
+        <line x1="40" y1="122" x2="308" y2="122" stroke="#e5e7eb" stroke-width="1"/>
+        <line x1="40" y1="92"  x2="308" y2="92"  stroke="#e5e7eb" stroke-width="1"/>
+        <line x1="40" y1="62"  x2="308" y2="62"  stroke="#e5e7eb" stroke-width="1"/>
+        <line x1="40" y1="32"  x2="308" y2="32"  stroke="#e5e7eb" stroke-width="1"/>
+        <!-- Axes -->
+        <line x1="40" y1="212" x2="312" y2="212" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrowSim)"/>
+        <line x1="40" y1="212" x2="40"  y2="8"   stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrowSim)"/>
+        <text x="318" y="216" fill="#6b7280" font-size="14">x</text>
+        <text x="43"  y="6"   fill="#6b7280" font-size="14">y</text>
+        <!-- X-axis ticks and labels -->
+        <text x="33" y="228" text-anchor="end" fill="#6b7280">0</text>
+        <line x1="70"  y1="208" x2="70"  y2="216" stroke="#6b7280" stroke-width="1"/>
+        <text x="70"  y="228" text-anchor="middle" fill="#6b7280">1</text>
+        <line x1="100" y1="208" x2="100" y2="216" stroke="#6b7280" stroke-width="1"/>
+        <text x="100" y="228" text-anchor="middle" fill="#6b7280">2</text>
+        <line x1="130" y1="208" x2="130" y2="216" stroke="#6b7280" stroke-width="1"/>
+        <text x="130" y="228" text-anchor="middle" fill="#6b7280">3</text>
+        <line x1="160" y1="208" x2="160" y2="216" stroke="#6b7280" stroke-width="1"/>
+        <text x="160" y="228" text-anchor="middle" fill="#6b7280">4</text>
+        <line x1="190" y1="208" x2="190" y2="216" stroke="#6b7280" stroke-width="1"/>
+        <text x="190" y="228" text-anchor="middle" fill="#6b7280">5</text>
+        <line x1="220" y1="208" x2="220" y2="216" stroke="#6b7280" stroke-width="1"/>
+        <text x="220" y="228" text-anchor="middle" fill="#6b7280">6</text>
+        <line x1="250" y1="208" x2="250" y2="216" stroke="#6b7280" stroke-width="1"/>
+        <text x="250" y="228" text-anchor="middle" fill="#6b7280">7</text>
+        <!-- Y-axis ticks and labels -->
+        <line x1="36" y1="182" x2="44" y2="182" stroke="#6b7280" stroke-width="1"/>
+        <text x="30" y="186" text-anchor="end" fill="#6b7280">1</text>
+        <line x1="36" y1="152" x2="44" y2="152" stroke="#6b7280" stroke-width="1"/>
+        <text x="30" y="156" text-anchor="end" fill="#6b7280">2</text>
+        <line x1="36" y1="122" x2="44" y2="122" stroke="#6b7280" stroke-width="1"/>
+        <text x="30" y="126" text-anchor="end" fill="#6b7280">3</text>
+        <line x1="36" y1="92"  x2="44" y2="92"  stroke="#6b7280" stroke-width="1"/>
+        <text x="30" y="96"   text-anchor="end" fill="#6b7280">4</text>
+        <line x1="36" y1="62"  x2="44" y2="62"  stroke="#6b7280" stroke-width="1"/>
+        <text x="30" y="66"   text-anchor="end" fill="#6b7280">5</text>
+        <line x1="36" y1="32"  x2="44" y2="32"  stroke="#6b7280" stroke-width="1"/>
+        <text x="30" y="36"   text-anchor="end" fill="#6b7280">6</text>
+        <!-- Eq1: 3x+2y=13. At x=0, y=6.5 → pixel(40,17). At y=0, x=13/3≈4.33 → pixel(170,212). -->
+        <line x1="40" y1="17" x2="170" y2="212" stroke="#2563eb" stroke-width="2.5" clip-path="url(#simClip)"/>
+        <text x="46" y="30" fill="#2563eb" font-size="14" font-weight="600">3x + 2y = 13</text>
+        <!-- Eq2: x+2y=7. At x=0, y=3.5 → pixel(40,107). At y=0, x=7 → pixel(250,212). -->
+        <line x1="40" y1="107" x2="250" y2="212" stroke="#dc2626" stroke-width="2.5" clip-path="url(#simClip)"/>
+        <text x="218" y="200" fill="#dc2626" font-size="14" font-weight="600">x + 2y = 7</text>
+        <!-- Solution (3, 2) → pixel (40+90, 212−60) = (130, 152) -->
+        <circle cx="130" cy="152" r="6" fill="#15803d"/>
+        <text x="139" y="146" fill="#15803d" font-weight="700" font-size="14">(3, 2)</text>
+        <!-- Caption -->
+        <text x="175" y="246" text-anchor="middle" fill="#374151" font-size="14">Lines intersect at the <tspan font-weight="600">solution</tspan>: x = 3, y = 2</text>
+      </svg>
+      </div>
+
+      <p><strong>Substitution:</strong> If one equation already says <strong>y = …</strong> (or <strong>x = …</strong>), plug that straight into the other equation.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Solve: <strong>3x + 2y = 13</strong> and <strong>x + 2y = 7</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">x = 2, y = 3</button>
+          <button class="btn mcq-btn" data-letter="B">x = 3, y = 1</button>
+          <button class="btn mcq-btn" data-letter="C">x = 3, y = 2</button>
+          <button class="btn mcq-btn" data-letter="D">x = 5, y = 2</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 8. Quadratic Equations                                    -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+      Quadratic Equations
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Higher Skill</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>A <strong>quadratic equation</strong> has an <strong>x²</strong> term (and no higher powers). The graph is a U-shaped curve called a parabola.</p>
+
+      <p><em>Factorising example:</em> Solve <strong>x² − x − 6 = 0</strong></p>
+      <ul style="line-height:1.9;">
+        <li>We need two numbers that multiply to −6 and add to −1: those are <strong>−3</strong> and <strong>2</strong>.</li>
+        <li>So (x − 3)(x + 2) = 0 — check by expanding if you like.</li>
+        <li>Either bracket is zero: <strong>x = 3</strong> or <strong>x = −2</strong>.</li>
+      </ul>
+      <p>Other tools you will meet: the <strong>quadratic formula</strong> (works when factorising is hard) and <strong>completing the square</strong> (helpful for turning-point form).</p>
+      <p style="text-align:center;">\[x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}\]</p>
+      <p>Use this when the equation is <strong>ax² + bx + c = 0</strong> and factorising does not come easily.</p>
+
+      <!-- SVG: smooth parabola using a single quadratic Bézier (parabolas are exactly Q-curves).
+           y = x²−x−6, roots x=−2 and x=3, vertex (0.5, −6.25).
+           Scale: x=40px/unit, y=12px/unit, origin pixel (175, 210).
+           P0=(55,138) at data(−3,6), P2=(335,138) at data(4,6),
+           control P1=(195,432) places vertex at t=0.5 → pixel(195,285). Roots verified at (95,210) and (295,210). -->
+      <div style="text-align:center; margin:16px 0;">
+      <svg viewBox="0 0 420 300" style="max-width:100%; width:420px; font-family:sans-serif; font-size:12px;" aria-label="Smooth parabola of y equals x squared minus x minus 6 with roots at minus 2 and 3">
+        <defs>
+          <marker id="arrowPara" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+            <path d="M0,0 L10,5 L0,10 Z" fill="#9ca3af"/>
+          </marker>
+          <clipPath id="paraClip">
+            <rect x="25" y="10" width="360" height="276"/>
+          </clipPath>
+        </defs>
+        <!-- Light grid (vertical lines at each integer x) -->
+        <line x1="55"  y1="10" x2="55"  y2="286" stroke="#f3f4f6" stroke-width="1"/>
+        <line x1="95"  y1="10" x2="95"  y2="286" stroke="#f3f4f6" stroke-width="1"/>
+        <line x1="135" y1="10" x2="135" y2="286" stroke="#f3f4f6" stroke-width="1"/>
+        <line x1="215" y1="10" x2="215" y2="286" stroke="#f3f4f6" stroke-width="1"/>
+        <line x1="255" y1="10" x2="255" y2="286" stroke="#f3f4f6" stroke-width="1"/>
+        <line x1="295" y1="10" x2="295" y2="286" stroke="#f3f4f6" stroke-width="1"/>
+        <line x1="335" y1="10" x2="335" y2="286" stroke="#f3f4f6" stroke-width="1"/>
+        <!-- Light grid (horizontal lines at y=6,4,2,−2,−4,−6) -->
+        <line x1="25" y1="138" x2="385" y2="138" stroke="#f3f4f6" stroke-width="1"/>
+        <line x1="25" y1="162" x2="385" y2="162" stroke="#f3f4f6" stroke-width="1"/>
+        <line x1="25" y1="186" x2="385" y2="186" stroke="#f3f4f6" stroke-width="1"/>
+        <line x1="25" y1="234" x2="385" y2="234" stroke="#f3f4f6" stroke-width="1"/>
+        <line x1="25" y1="258" x2="385" y2="258" stroke="#f3f4f6" stroke-width="1"/>
+        <line x1="25" y1="282" x2="385" y2="282" stroke="#f3f4f6" stroke-width="1"/>
+        <!-- Axes -->
+        <line x1="25"  y1="210" x2="388" y2="210" stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrowPara)"/>
+        <line x1="175" y1="292" x2="175" y2="8"   stroke="#6b7280" stroke-width="1.5" marker-end="url(#arrowPara)"/>
+        <text x="393" y="214" fill="#6b7280" font-size="14">x</text>
+        <text x="178" y="6"   fill="#6b7280" font-size="14">y</text>
+        <!-- X-axis ticks and labels -->
+        <text x="167" y="226" text-anchor="end" fill="#6b7280">0</text>
+        <line x1="55"  y1="206" x2="55"  y2="214" stroke="#6b7280" stroke-width="1"/>
+        <text x="55"  y="226" text-anchor="middle" fill="#6b7280">−3</text>
+        <line x1="95"  y1="206" x2="95"  y2="214" stroke="#6b7280" stroke-width="1"/>
+        <text x="95"  y="226" text-anchor="middle" fill="#6b7280">−2</text>
+        <line x1="135" y1="206" x2="135" y2="214" stroke="#6b7280" stroke-width="1"/>
+        <text x="135" y="226" text-anchor="middle" fill="#6b7280">−1</text>
+        <line x1="215" y1="206" x2="215" y2="214" stroke="#6b7280" stroke-width="1"/>
+        <text x="215" y="226" text-anchor="middle" fill="#6b7280">1</text>
+        <line x1="255" y1="206" x2="255" y2="214" stroke="#6b7280" stroke-width="1"/>
+        <text x="255" y="226" text-anchor="middle" fill="#6b7280">2</text>
+        <line x1="295" y1="206" x2="295" y2="214" stroke="#6b7280" stroke-width="1"/>
+        <text x="295" y="226" text-anchor="middle" fill="#6b7280">3</text>
+        <line x1="335" y1="206" x2="335" y2="214" stroke="#6b7280" stroke-width="1"/>
+        <text x="335" y="226" text-anchor="middle" fill="#6b7280">4</text>
+        <!-- Y-axis ticks and labels -->
+        <line x1="171" y1="138" x2="179" y2="138" stroke="#6b7280" stroke-width="1"/>
+        <text x="165" y="142" text-anchor="end" fill="#6b7280">6</text>
+        <line x1="171" y1="162" x2="179" y2="162" stroke="#6b7280" stroke-width="1"/>
+        <text x="165" y="166" text-anchor="end" fill="#6b7280">4</text>
+        <line x1="171" y1="186" x2="179" y2="186" stroke="#6b7280" stroke-width="1"/>
+        <text x="165" y="190" text-anchor="end" fill="#6b7280">2</text>
+        <line x1="171" y1="234" x2="179" y2="234" stroke="#6b7280" stroke-width="1"/>
+        <text x="165" y="238" text-anchor="end" fill="#6b7280">−2</text>
+        <line x1="171" y1="258" x2="179" y2="258" stroke="#6b7280" stroke-width="1"/>
+        <text x="165" y="262" text-anchor="end" fill="#6b7280">−4</text>
+        <line x1="171" y1="282" x2="179" y2="282" stroke="#6b7280" stroke-width="1"/>
+        <text x="165" y="286" text-anchor="end" fill="#6b7280">−6</text>
+        <!-- Smooth parabola: single quadratic Bézier Q(P0, P1, P2).
+             A parabola is exactly representable as a quadratic Bézier.
+             P0=(55,138) P1=(195,432) P2=(335,138) → vertex lands at pixel(195,285). -->
+        <path d="M 55,138 Q 195,432 335,138" fill="none" stroke="#7c3aed" stroke-width="2.5" clip-path="url(#paraClip)"/>
+        <!-- Roots: x=−2 at pixel(95,210), x=3 at pixel(295,210) -->
+        <circle cx="95"  cy="210" r="5" fill="#dc2626"/>
+        <text x="95"  y="198" text-anchor="middle" fill="#dc2626" font-weight="600">x = −2</text>
+        <circle cx="295" cy="210" r="5" fill="#dc2626"/>
+        <text x="295" y="198" text-anchor="middle" fill="#dc2626" font-weight="600">x = 3</text>
+        <!-- Vertex at data(0.5, −6.25) → pixel(195, 285) -->
+        <circle cx="195" cy="285" r="4" fill="#7c3aed" opacity="0.8"/>
+        <text x="208" y="284" fill="#6b7280" font-size="14">min (0.5, −6.25)</text>
+        <!-- Equation label -->
+        <text x="260" y="26" text-anchor="middle" fill="#7c3aed" font-weight="600" font-size="15">y = x² − x − 6</text>
+        <text x="260" y="42" text-anchor="middle" fill="#7c3aed" font-size="14">= (x + 2)(x − 3)</text>
+      </svg>
+      </div>
+
+      <p><strong>The discriminant</strong> (b² − 4ac) tells you how many real answers you get:</p>
+      <ul style="line-height:1.9;">
+        <li><strong>Positive</strong> → two different answers (curve crosses the x-axis twice)</li>
+        <li><strong>Zero</strong> → one repeated answer (curve just touches the x-axis)</li>
+        <li><strong>Negative</strong> → no real answers (curve does not cross the x-axis)</li>
+      </ul>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">Solve <strong>x² − x − 6 = 0</strong> by factorising.</p>
+          <button class="btn mcq-btn" data-letter="A">x = −2 or x = 3</button>
+          <button class="btn mcq-btn" data-letter="B">x = 2 or x = −3</button>
+          <button class="btn mcq-btn" data-letter="C">x = 1 or x = −6</button>
+          <button class="btn mcq-btn" data-letter="D">x = −1 or x = 6</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 9. Changing the Subject                                    -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">9</span>
+      Changing the Subject
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10–11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Changing the subject</strong> means rewriting a formula so your chosen letter is alone on one side — e.g. make <strong>t</strong> the subject of <strong>v = u + at</strong>.</p>
+
+      <p><em>Everyday idea:</em> A recipe says “servings = 2 × people + 1”. If you know servings and want people, you rearrange — same skill as changing the subject.</p>
+
+      <p><strong>Linear example:</strong> Make <strong>x</strong> the subject of <strong>y = 3x + 5</strong></p>
+      <ul style="line-height:1.9;">
+        <li>Subtract 5: <strong>y − 5 = 3x</strong></li>
+        <li>Divide by 3: <strong>x = (y − 5) ÷ 3</strong></li>
+      </ul>
+
+      <p><strong>With a square:</strong> Make <strong>r</strong> the subject of <strong>A = πr²</strong> → divide by π, then square root: <strong>r = √(A ÷ π)</strong>.</p>
+
+      <p><strong>With a fraction:</strong> Make <strong>x</strong> the subject of <strong>y = (2x + 1) / 5</strong> → multiply by 5 first, then undo +1 and ÷2.</p>
+
+      <div style="background:#fff3cd; border-left:4px solid #f59e0b; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+        <strong>Exam tip:</strong> Undo operations in <strong>reverse order</strong> — what was done last to the subject is undone first.
+      </div>
+
+      <p style="margin-top:14px;">Practise in the generator: <strong>Changing the Subject</strong> (5 questions per difficulty, 4 randomised MCQs).</p>
+      <p style="margin:8px 0 0;">
+        <a href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=changing_the_subject"
+           style="color:#1a6fa8;font-weight:600;">Open Changing the Subject in the generator →</a>
+      </p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Make <strong>t</strong> the subject of <strong>v = u + 5t</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">t = v + u − 5</button>
+          <button class="btn mcq-btn" data-letter="B">t = (v − u) ÷ 5</button>
+          <button class="btn mcq-btn" data-letter="C">t = 5(v − u)</button>
+          <button class="btn mcq-btn" data-letter="D">t = (v + u) ÷ 5</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- Revision card (auto-added) -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">10</span>
+      Equations — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Balance both sides. Factorise quadratics when possible; use the formula if not.</p>
+
+      <div style="text-align:center;margin:16px 0;">
+              <div class="revision-card-wrap">
+        <svg class="revision-card-svg lesson-quick-ref" width="100%" viewBox="0 0 760 280" style="max-width:760px;width:100%;height:auto;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:10px;" role="img" aria-label="Equations revision card">
+          <text x="380" y="28" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Equations &amp; Inequalities — Revision Card</text>
+          <line x1="20" y1="38" x2="740" y2="38" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="20" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Linear</text>
+          <text x="20" y="78" font-size="14" fill="#28251d">Do the same to both sides</text>
+          <text x="20" y="98" font-size="14" fill="#28251d">ax + b = c → x = (c − b)/a</text>
+          <text x="20" y="118" font-size="14" fill="#28251d">Unknowns on both sides: collect terms</text>
+          <text x="20" y="142" font-size="15" fill="#1a6fa8" font-weight="bold">Quadratic</text>
+          <text x="20" y="162" font-size="14" fill="#28251d">Factorise → each bracket = 0</text>
+          <text x="20" y="182" font-size="14" fill="#28251d">Formula: x = (−b ± √(b²−4ac))/2a</text>
+          <line x1="390" y1="48" x2="390" y2="260" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="400" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Other</text>
+          <text x="400" y="78" font-size="14" fill="#28251d">Simultaneous: eliminate a variable</text>
+          <text x="400" y="98" font-size="14" fill="#28251d">Change subject: undo ops in reverse order</text>
+          <text x="400" y="118" font-size="14" fill="#28251d">Inequality: flip sign if ×/÷ by negative</text>
+          <text x="400" y="138" font-size="14" fill="#28251d">Show solution on number line</text>
+        </svg>
+      </div>
+      </div>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">Solve 2x + 5 = 17.</p>
+          <button class="btn mcq-btn" data-letter="A">x = 6</button>
+          <button class="btn mcq-btn" data-letter="B">x = 11</button>
+          <button class="btn mcq-btn" data-letter="C">x = 5</button>
+          <button class="btn mcq-btn" data-letter="D">x = 8</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='equations_inequalities') }}" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Revision</a>
+      </div>
+    </div>
+  </details>
+
+</div>
+
+  <!-- Practice link -->
+  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='equations_inequalities') }}"
+       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+      Start Practice Quiz
+    </a>
+  </div>
+
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{{ profile_user.display_handle }} – Private profile{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+
+<div class="lesson-hero">
+    <h1>{{ profile_user.display_handle }}</h1>
+    <p class="hero-sub">This profile is private</p>
+</div>
+
+<section class="section-panel">
+    <div class="section-panel-body">
+        <p class="profile-empty">This user has chosen to keep their profile private.</p>
+        {% if not current_user.is_authenticated %}
+        <p><a href="{{ url_for('login') }}">Log in</a> if you follow them — followers-only profiles may become visible.</p>
+        {% endif %}
+    </div>
+</section>
+
+<p><a href="{{ url_for('index') }}">← Back to generator</a></p>
+
+</div>
+{% endblock %}

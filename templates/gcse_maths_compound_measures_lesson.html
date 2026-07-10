@@ -1,0 +1,687 @@
+{% extends "base.html" %}
+{% block title %}Compound Measures – GCSE Mathematics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Compound Measures</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">A <strong>compound measure</strong> joins two everyday measures together — like how fast you go (speed), how heavy something is for its size (density), or how hard a force presses on an area (pressure). We use simple triangles and unit conversions to solve GCSE questions.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+  <!-- Quick Test button -->
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='compound_measures') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 1. SPEED, DISTANCE, TIME                       -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      Speed, Distance and Time
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> You cycle <strong>60 km</strong> in <strong>2 hours</strong>. Your average speed is 60 ÷ 2 = <strong>30 km/h</strong>.</p>
+
+      <p>Speed, distance and time are linked. You can picture them in the <strong>SDT triangle</strong> — cover the letter you want and the triangle tells you what to do:</p>
+
+      <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin:20px 0;">
+        <!-- Large SDT triangle SVG -->
+        <svg width="240" height="200" viewBox="0 0 240 200" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+          <!-- Top: D (cover D → multiply S and T below) -->
+          <polygon points="120,12 70,92 170,92" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2"/>
+          <!-- Bottom left: S (trapezium — no centre wedge) -->
+          <polygon points="70,92 12,186 120,186 120,92" fill="#e0fdf4" stroke="#1a6fa8" stroke-width="2"/>
+          <!-- Bottom right: T -->
+          <polygon points="120,92 170,92 228,186 120,186" fill="#fef9c3" stroke="#1a6fa8" stroke-width="2"/>
+          <polygon points="120,12 12,186 228,186" fill="none" stroke="#1a6fa8" stroke-width="3"/>
+          <!-- Horizontal line: top ÷ bottom; vertical line: × only between S and T -->
+          <line x1="70" y1="92" x2="170" y2="92" stroke="#1a6fa8" stroke-width="2"/>
+          <line x1="120" y1="92" x2="120" y2="186" stroke="#1a6fa8" stroke-width="2"/>
+          <text x="120" y="58" font-size="26" fill="#1a6fa8" text-anchor="middle" font-weight="bold">D</text>
+          <text x="68" y="148" font-size="22" fill="#059669" text-anchor="middle" font-weight="bold">S</text>
+          <text x="172" y="148" font-size="22" fill="#a13544" text-anchor="middle" font-weight="bold">T</text>
+          <text x="120" y="148" font-size="18" fill="#555" text-anchor="middle">×</text>
+        </svg>
+
+        <div>
+          <p style="margin:4px 0;"><strong>Cover D:</strong> &ensp;D = S × T</p>
+          <p style="margin:4px 0;"><strong>Cover S:</strong> &ensp;S = D ÷ T</p>
+          <p style="margin:4px 0;"><strong>Cover T:</strong> &ensp;T = D ÷ S</p>
+          <hr style="margin:10px 0;">
+          <p style="margin:4px 0;font-size:1rem;color:var(--text-muted);">D = Distance (km, m, miles)</p>
+          <p style="margin:4px 0;font-size:1rem;color:var(--text-muted);">S = Speed (km/h, m/s, mph)</p>
+          <p style="margin:4px 0;font-size:1rem;color:var(--text-muted);">T = Time (hours, seconds, minutes)</p>
+        </div>
+      </div>
+
+      <p><strong>Rules to remember:</strong></p>
+      <ul>
+        <li>Keep your <strong>units matching</strong>. If speed is in km/h, use hours for time and km for distance.</li>
+        <li>To use the triangle, <em>cover what you want</em>. Cover the <strong>top</strong> → multiply the two bottom letters. Cover a <strong>bottom</strong> letter → the top goes above the other bottom (divide).</li>
+        <li>If time is in hours and minutes, turn it into decimal hours first. For example, 1 h 30 min = <strong>1.5 h</strong>.</li>
+      </ul>
+
+      <p style="background:#fffbeb;padding:10px 14px;border-radius:6px;border-left:4px solid #f59e0b;">
+        <strong>Average speed trap:</strong> Average speed = <em>total distance ÷ total time</em>, NOT the average of the two speeds.
+        For a journey at speed s₁ then s₂ over <em>equal distances</em>, average = 2s₁s₂/(s₁+s₂) (the harmonic mean).
+      </p>
+
+      <!--
+        SVG: Distance-time graph showing two different speeds.
+        x-axis = time (hours), y-axis = distance (km).
+        Segment 1: (0,0) to (2,120) — slope = 60 km/h
+        Segment 2: (2,120) to (4,180) — slope = 30 km/h
+        Scale: x: 0→5 maps to 40→220 (width 180, 36px/h)
+               y: 0→200 maps to 170→10 (height 160, 0.8px/km)
+      -->
+      <div style="text-align:center;margin:20px 0;">
+        <svg width="300" height="210" viewBox="0 0 300 210" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+          <!-- Axes -->
+          <line x1="45" y1="170" x2="265" y2="170" stroke="#333" stroke-width="1.5"/>
+          <line x1="45" y1="170" x2="45"  y2="15"  stroke="#333" stroke-width="1.5"/>
+          <!-- Arrowheads -->
+          <polygon points="265,170 257,165 257,175" fill="#333"/>
+          <polygon points="45,15 40,23 50,23"       fill="#333"/>
+
+          <!-- Grid lines + labels x-axis (36px per hour) -->
+          <line x1="81"  y1="170" x2="81"  y2="175" stroke="#333" stroke-width="1"/>
+          <text x="81"  y="188" font-size="14" fill="#555" text-anchor="middle">1</text>
+          <line x1="117" y1="170" x2="117" y2="175" stroke="#333" stroke-width="1"/>
+          <text x="117" y="188" font-size="14" fill="#555" text-anchor="middle">2</text>
+          <line x1="153" y1="170" x2="153" y2="175" stroke="#333" stroke-width="1"/>
+          <text x="153" y="188" font-size="14" fill="#555" text-anchor="middle">3</text>
+          <line x1="189" y1="170" x2="189" y2="175" stroke="#333" stroke-width="1"/>
+          <text x="189" y="188" font-size="14" fill="#555" text-anchor="middle">4</text>
+          <line x1="225" y1="170" x2="225" y2="175" stroke="#333" stroke-width="1"/>
+          <text x="225" y="188" font-size="14" fill="#555" text-anchor="middle">5</text>
+          <text x="250" y="200" font-size="14" fill="#555">Time (h)</text>
+
+          <!-- Grid lines + labels y-axis (0.8px per km → 80px per 100km) -->
+          <line x1="45" y1="90"  x2="40" y2="90"  stroke="#333" stroke-width="1"/>
+          <text x="36" y="94"  font-size="14" fill="#555" text-anchor="end">100</text>
+          <line x1="45" y1="10"  x2="40" y2="10"  stroke="#333" stroke-width="1"/>
+          <text x="36" y="14"  font-size="14" fill="#555" text-anchor="end">200</text>
+          <text x="15" y="95"  font-size="14" fill="#555" text-anchor="middle" transform="rotate(-90,15,95)">Distance (km)</text>
+
+          <!-- Data line segment 1: (0,0)→(2h,120km): x=45→117, y=170→74 -->
+          <!-- y for 120km: 170 - 0.8*120 = 170-96 = 74 -->
+          <line x1="45" y1="170" x2="117" y2="74" stroke="#1a6fa8" stroke-width="2.5"/>
+
+          <!-- Data line segment 2: (2h,120km)→(4h,180km): x=117→189, y=74→26 -->
+          <!-- y for 180km: 170 - 0.8*180 = 170-144 = 26 -->
+          <line x1="117" y1="74" x2="189" y2="26" stroke="#a13544" stroke-width="2.5"/>
+
+          <!-- Gradient annotations -->
+          <text x="72"  y="120" font-size="14" fill="#1a6fa8" font-weight="bold" transform="rotate(-53,72,120)">60 km/h</text>
+          <text x="145" y="60"  font-size="14" fill="#a13544" font-weight="bold" transform="rotate(-34,145,60)">30 km/h</text>
+
+          <text x="170" y="200" font-size="14" fill="#555" text-anchor="middle">Gradient = Speed</text>
+        </svg>
+      </div>
+
+      <p>On a <strong>distance–time graph</strong>, the gradient (steepness) of each straight line is the speed. In the graph above, the first part is steeper (60 km/h) and the second part is gentler (30 km/h).</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">A car drives <strong>90 km</strong> in <strong>3 hours</strong> at a steady speed. How fast is it going?</p>
+          <button class="btn mcq-btn" data-letter="A">27 km/h</button>
+          <button class="btn mcq-btn" data-letter="B">30 km/h</button>
+          <button class="btn mcq-btn" data-letter="C">93 km/h</button>
+          <button class="btn mcq-btn" data-letter="D">270 km/h</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=foundational&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Speed</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 2. DENSITY, MASS, VOLUME                      -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Density, Mass and Volume
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> A metal block has <strong>mass 200 g</strong> and <strong>volume 100 cm³</strong>. Its density is 200 ÷ 100 = <strong>2 g/cm³</strong> — that means 2 grams in every 1 cm³ of space.</p>
+
+      <p><strong>Density</strong> tells you how “squashed in” the mass is. The <strong>DMV triangle</strong> works just like SDT:</p>
+
+      <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin:20px 0;">
+        <!-- Large DMV triangle SVG -->
+        <svg width="240" height="200" viewBox="0 0 240 200" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+          <polygon points="120,12 70,92 170,92" fill="#fce7f3" stroke="#a13544" stroke-width="2"/>
+          <polygon points="70,92 12,186 120,186 120,92" fill="#dbeafe" stroke="#a13544" stroke-width="2"/>
+          <polygon points="120,92 170,92 228,186 120,186" fill="#e0fdf4" stroke="#a13544" stroke-width="2"/>
+          <polygon points="120,12 12,186 228,186" fill="none" stroke="#a13544" stroke-width="3"/>
+          <line x1="70" y1="92" x2="170" y2="92" stroke="#a13544" stroke-width="2"/>
+          <line x1="120" y1="92" x2="120" y2="186" stroke="#a13544" stroke-width="2"/>
+          <text x="120" y="58" font-size="26" fill="#a13544" text-anchor="middle" font-weight="bold">M</text>
+          <text x="68" y="148" font-size="22" fill="#1a6fa8" text-anchor="middle" font-weight="bold">ρ</text>
+          <text x="172" y="148" font-size="22" fill="#059669" text-anchor="middle" font-weight="bold">V</text>
+          <text x="120" y="148" font-size="18" fill="#555" text-anchor="middle">×</text>
+        </svg>
+
+        <div>
+          <p style="margin:4px 0;"><strong>Cover M:</strong> &ensp;M = ρ × V</p>
+          <p style="margin:4px 0;"><strong>Cover ρ:</strong> &ensp;ρ = M ÷ V</p>
+          <p style="margin:4px 0;"><strong>Cover V:</strong> &ensp;V = M ÷ ρ</p>
+          <hr style="margin:10px 0;">
+          <p style="margin:4px 0;font-size:1rem;color:var(--text-muted);">M = Mass (g, kg)</p>
+          <p style="margin:4px 0;font-size:1rem;color:var(--text-muted);">ρ = Density (g/cm³, kg/m³)</p>
+          <p style="margin:4px 0;font-size:1rem;color:var(--text-muted);">V = Volume (cm³, m³, L)</p>
+        </div>
+      </div>
+
+      <p><strong>Common densities to know:</strong></p>
+      <table style="border-collapse:collapse;font-size:1rem;margin-bottom:12px;">
+        <thead><tr style="background:var(--color-surface-2);">
+          <th style="padding:6px 12px;border:1px solid var(--color-border);">Material</th>
+          <th style="padding:6px 12px;border:1px solid var(--color-border);">Density (g/cm³)</th>
+          <th style="padding:6px 12px;border:1px solid var(--color-border);">Density (kg/m³)</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="padding:6px 12px;border:1px solid var(--color-border);">Water</td><td style="padding:6px 12px;border:1px solid var(--color-border);">1.0</td><td style="padding:6px 12px;border:1px solid var(--color-border);">1000</td></tr>
+          <tr style="background:var(--color-surface-2);"><td style="padding:6px 12px;border:1px solid var(--color-border);">Aluminium</td><td style="padding:6px 12px;border:1px solid var(--color-border);">2.7</td><td style="padding:6px 12px;border:1px solid var(--color-border);">2700</td></tr>
+          <tr><td style="padding:6px 12px;border:1px solid var(--color-border);">Iron / Steel</td><td style="padding:6px 12px;border:1px solid var(--color-border);">7.8</td><td style="padding:6px 12px;border:1px solid var(--color-border);">7800</td></tr>
+          <tr style="background:var(--color-surface-2);"><td style="padding:6px 12px;border:1px solid var(--color-border);">Copper</td><td style="padding:6px 12px;border:1px solid var(--color-border);">8.9</td><td style="padding:6px 12px;border:1px solid var(--color-border);">8900</td></tr>
+          <tr><td style="padding:6px 12px;border:1px solid var(--color-border);">Lead</td><td style="padding:6px 12px;border:1px solid var(--color-border);">11.3</td><td style="padding:6px 12px;border:1px solid var(--color-border);">11300</td></tr>
+          <tr style="background:var(--color-surface-2);"><td style="padding:6px 12px;border:1px solid var(--color-border);">Gold</td><td style="padding:6px 12px;border:1px solid var(--color-border);">19.3</td><td style="padding:6px 12px;border:1px solid var(--color-border);">19300</td></tr>
+        </tbody>
+      </table>
+
+      <p style="background:#fffbeb;padding:10px 14px;border-radius:6px;border-left:4px solid #f59e0b;">
+        <strong>Floating and sinking:</strong> An object floats in a liquid if its density is <em>less than</em> the liquid's density.
+        Since water has density 1 g/cm³, any object with density &lt; 1 g/cm³ floats.
+      </p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">A block has mass <strong>540 g</strong> and volume <strong>200 cm³</strong>. What is its density?</p>
+          <button class="btn mcq-btn" data-letter="A">0.37 g/cm³</button>
+          <button class="btn mcq-btn" data-letter="B">1.08 g/cm³</button>
+          <button class="btn mcq-btn" data-letter="C">2.7 g/cm³</button>
+          <button class="btn mcq-btn" data-letter="D">7.4 g/cm³</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=foundational&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Density</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 3. PRESSURE, FORCE, AREA                      -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Pressure, Force and Area
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> A box weighs <strong>400 N</strong> and its base covers <strong>2 m²</strong>. The pressure on the floor is 400 ÷ 2 = <strong>200 Pa</strong> (pascals).</p>
+
+      <p><strong>Pressure</strong> is how much force is pushing on each square metre (or cm²) of surface. We use the <strong>PFA triangle</strong>:</p>
+
+      <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin:20px 0;">
+        <!-- Large PFA triangle SVG -->
+        <svg width="240" height="200" viewBox="0 0 240 200" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+          <polygon points="120,12 70,92 170,92" fill="#fef9c3" stroke="#059669" stroke-width="2"/>
+          <polygon points="70,92 12,186 120,186 120,92" fill="#dbeafe" stroke="#059669" stroke-width="2"/>
+          <polygon points="120,92 170,92 228,186 120,186" fill="#fce7f3" stroke="#059669" stroke-width="2"/>
+          <polygon points="120,12 12,186 228,186" fill="none" stroke="#059669" stroke-width="3"/>
+          <line x1="70" y1="92" x2="170" y2="92" stroke="#059669" stroke-width="2"/>
+          <line x1="120" y1="92" x2="120" y2="186" stroke="#059669" stroke-width="2"/>
+          <text x="120" y="58" font-size="26" fill="#059669" text-anchor="middle" font-weight="bold">F</text>
+          <text x="68" y="148" font-size="22" fill="#1a6fa8" text-anchor="middle" font-weight="bold">P</text>
+          <text x="172" y="148" font-size="22" fill="#a13544" text-anchor="middle" font-weight="bold">A</text>
+          <text x="120" y="148" font-size="18" fill="#555" text-anchor="middle">×</text>
+        </svg>
+
+        <div>
+          <p style="margin:4px 0;"><strong>Cover F:</strong> &ensp;F = P × A</p>
+          <p style="margin:4px 0;"><strong>Cover P:</strong> &ensp;P = F ÷ A</p>
+          <p style="margin:4px 0;"><strong>Cover A:</strong> &ensp;A = F ÷ P</p>
+          <hr style="margin:10px 0;">
+          <p style="margin:4px 0;font-size:1rem;color:var(--text-muted);">F = Force (N, Newtons)</p>
+          <p style="margin:4px 0;font-size:1rem;color:var(--text-muted);">P = Pressure (Pa, N/m², N/cm²)</p>
+          <p style="margin:4px 0;font-size:1rem;color:var(--text-muted);">A = Area (m², cm²)</p>
+        </div>
+      </div>
+
+      <p><strong>Units of pressure:</strong></p>
+      <ul>
+        <li><strong>Pa (Pascal)</strong> = 1 N/m² &nbsp;(SI unit)</li>
+        <li><strong>N/cm²</strong>: to convert to Pa, multiply by 10 000 (since 1 m² = 10 000 cm²)</li>
+        <li>Weight (force in N) = mass (kg) × g, where g = 10 N/kg (or 9.8 N/kg)</li>
+      </ul>
+
+      <!--
+        SVG: Box on floor with pressure annotation.
+        Box: 200×80 rectangle at base of image, label "mass = 40 kg"
+        Force arrow pointing down onto floor.
+        Area label "A = 2 m²" at base of box.
+        Pressure annotation: P = 200 N ÷ 2 m² = 100 Pa
+      -->
+      <div style="text-align:center;margin:20px 0;">
+        <svg width="300" height="220" viewBox="0 0 300 220" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+          <!-- box -->
+          <rect x="80" y="90" width="140" height="80" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2"/>
+          <text x="150" y="133" font-size="15" fill="#1a6fa8" text-anchor="middle" font-weight="bold">mass = 40 kg</text>
+          <text x="150" y="152" font-size="14" fill="#555" text-anchor="middle">Weight = 400 N</text>
+
+          <!-- ground line -->
+          <line x1="40" y1="170" x2="260" y2="170" stroke="#333" stroke-width="2"/>
+
+          <!-- force arrow (downward from centre of box top) -->
+          <line x1="150" y1="30" x2="150" y2="88" stroke="#a13544" stroke-width="2.5"/>
+          <polygon points="150,90 145,80 155,80" fill="#a13544"/>
+          <text x="170" y="60" font-size="14" fill="#a13544" font-weight="bold">F = 400 N</text>
+
+          <!-- area annotation below ground -->
+          <line x1="80"  y1="180" x2="80"  y2="192" stroke="#059669" stroke-width="1.5"/>
+          <line x1="220" y1="180" x2="220" y2="192" stroke="#059669" stroke-width="1.5"/>
+          <line x1="80"  y1="186" x2="220" y2="186" stroke="#059669" stroke-width="1.5"/>
+          <text x="150" y="208" font-size="14" fill="#059669" text-anchor="middle" font-weight="bold">Area = 2 m²</text>
+
+          <!-- pressure result -->
+          <text x="150" y="18" font-size="14" fill="#555" text-anchor="middle">P = 400 ÷ 2 = 200 Pa</text>
+        </svg>
+      </div>
+
+      <p style="background:#e0fdf4;padding:10px 14px;border-radius:6px;border-left:4px solid #059669;">
+        <strong>Hydraulic systems (Pascal's Law):</strong> Pressure is transmitted equally through a fluid.
+        If the input force acts on a small piston (small A) and the output piston has a large area, the output force is amplified:
+        F<sub>out</sub> = P × A<sub>out</sub> = (F<sub>in</sub>/A<sub>in</sub>) × A<sub>out</sub>
+      </p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">A force of <strong>600 N</strong> acts on an area of <strong>3 m²</strong>. What is the pressure?</p>
+          <button class="btn mcq-btn" data-letter="A">200 Pa</button>
+          <button class="btn mcq-btn" data-letter="B">1800 Pa</button>
+          <button class="btn mcq-btn" data-letter="C">0.005 Pa</button>
+          <button class="btn mcq-btn" data-letter="D">597 Pa</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=intermediate&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Pressure</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 4. UNIT CONVERSIONS                           -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Unit Conversions for Compound Measures
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> A car travels at <strong>72 km/h</strong>. To change to m/s, divide by 3.6: 72 ÷ 3.6 = <strong>20 m/s</strong>.</p>
+
+      <p><strong>Speed conversions (km/h ↔ m/s):</strong></p>
+      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;text-align:center;font-size:1.1rem;">
+        m/s = km/h ÷ 3.6 &nbsp;&nbsp;&nbsp; km/h = m/s × 3.6
+      </p>
+      <p>This comes from: 1 km = 1000 m and 1 hour = 3600 s, so 1 km/h = 1000/3600 m/s = 5/18 m/s.</p>
+
+      <!--
+        SVG: Unit conversion arrows between km/h and m/s.
+        Left label: "km/h", right label: "m/s".
+        Top arrow right: "× 5/18 (or ÷ 3.6)"
+        Bottom arrow left: "× 3.6 (or × 18/5)"
+      -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="380" height="100" viewBox="0 0 380 100" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+          <!-- Labels -->
+          <text x="70"  y="55" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">km/h</text>
+          <text x="310" y="55" font-size="18" fill="#a13544" text-anchor="middle" font-weight="bold">m/s</text>
+          <!-- Top arrow: km/h → m/s -->
+          <line x1="110" y1="38" x2="270" y2="38" stroke="#1a6fa8" stroke-width="2"/>
+          <polygon points="270,38 260,32 260,44" fill="#1a6fa8"/>
+          <text x="190" y="30" font-size="14" fill="#1a6fa8" text-anchor="middle">÷ 3.6 &nbsp; (× 5/18)</text>
+          <!-- Bottom arrow: m/s → km/h -->
+          <line x1="270" y1="68" x2="110" y2="68" stroke="#a13544" stroke-width="2"/>
+          <polygon points="110,68 120,62 120,74" fill="#a13544"/>
+          <text x="190" y="88" font-size="14" fill="#a13544" text-anchor="middle">× 3.6 &nbsp; (× 18/5)</text>
+        </svg>
+      </div>
+
+      <p><strong>Example:</strong> Aluminium has density <strong>2.7 g/cm³</strong>. In kg/m³ that is 2.7 × 1000 = <strong>2700 kg/m³</strong>.</p>
+
+      <p><strong>Density conversions (g/cm³ ↔ kg/m³):</strong></p>
+      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;text-align:center;font-size:1.1rem;">
+        kg/m³ = g/cm³ × 1000
+      </p>
+      <p>Reason: 1 g = 0.001 kg and 1 cm³ = 10⁻⁶ m³, so 1 g/cm³ = 0.001/10⁻⁶ = 1000 kg/m³.</p>
+
+      <p><strong>Pressure conversions (N/cm² ↔ Pa):</strong></p>
+      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;text-align:center;font-size:1.1rem;">
+        Pa = N/cm² × 10 000 &nbsp;&nbsp;&nbsp; (since 1 m² = 10 000 cm²)
+      </p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Convert <strong>54 km/h</strong> to m/s.</p>
+          <button class="btn mcq-btn" data-letter="A">194.4 m/s</button>
+          <button class="btn mcq-btn" data-letter="B">15 m/s</button>
+          <button class="btn mcq-btn" data-letter="C">9 m/s</button>
+          <button class="btn mcq-btn" data-letter="D">0.015 m/s</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=foundational&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Conversions</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 5. POPULATION DENSITY AND OTHER RATES         -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Population Density and Other Rates
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> A town has <strong>36,000 people</strong> in an area of <strong>60 km²</strong>. Population density = 36,000 ÷ 60 = <strong>600 people per km²</strong>.</p>
+
+      <p>The same triangle idea works whenever you have <strong>Rate = Quantity ÷ Measure</strong>:</p>
+
+      <table style="border-collapse:collapse;width:100%;font-size:1rem;margin-bottom:16px;">
+        <thead><tr style="background:var(--color-surface-2);">
+          <th style="padding:8px 12px;border:1px solid var(--color-border);">Measure</th>
+          <th style="padding:8px 12px;border:1px solid var(--color-border);">Formula</th>
+          <th style="padding:8px 12px;border:1px solid var(--color-border);">Units</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="padding:8px 12px;border:1px solid var(--color-border);">Population Density</td>
+              <td style="padding:8px 12px;border:1px solid var(--color-border);">Population ÷ Area</td>
+              <td style="padding:8px 12px;border:1px solid var(--color-border);">people/km²</td></tr>
+          <tr style="background:var(--color-surface-2);">
+              <td style="padding:8px 12px;border:1px solid var(--color-border);">Flow Rate</td>
+              <td style="padding:8px 12px;border:1px solid var(--color-border);">Volume ÷ Time</td>
+              <td style="padding:8px 12px;border:1px solid var(--color-border);">L/min, cm³/s, m³/h</td></tr>
+          <tr><td style="padding:8px 12px;border:1px solid var(--color-border);">Concentration</td>
+              <td style="padding:8px 12px;border:1px solid var(--color-border);">Mass of solute ÷ Volume</td>
+              <td style="padding:8px 12px;border:1px solid var(--color-border);">g/L, mol/L</td></tr>
+          <tr style="background:var(--color-surface-2);">
+              <td style="padding:8px 12px;border:1px solid var(--color-border);">Water Pressure</td>
+              <td style="padding:8px 12px;border:1px solid var(--color-border);">P = ρgh</td>
+              <td style="padding:8px 12px;border:1px solid var(--color-border);">Pa (ρ in kg/m³, g = 10, h in m)</td></tr>
+        </tbody>
+      </table>
+
+      <!--
+        SVG: Two-part diagram. Left: map with area shaded (population density).
+        Right: pipe with flow rate annotation.
+        Keep it simple and clear.
+        Left panel: rectangle 130×100 representing a region.
+        Label inside: "Population 36,000". Label below: "Area = 60 km²".
+        Label result: "Density = 600 people/km²".
+        Right panel: pipe (horizontal rectangle) with arrow through it.
+        Label: "Flow rate = 5 L/min". Tank showing accumulation.
+      -->
+      <div style="text-align:center;margin:20px 0;">
+        <svg width="340" height="180" viewBox="0 0 340 180" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+
+          <!-- LEFT: Population density panel -->
+          <rect x="10" y="20" width="140" height="90" rx="4" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <!-- Irregular region outline inside -->
+          <path d="M30,40 Q70,30 100,50 Q130,65 120,90 Q100,105 70,100 Q40,95 30,70 Z"
+                fill="#bfdbfe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <text x="76" y="62" font-size="14" fill="#1a6fa8" text-anchor="middle">36,000</text>
+          <text x="76" y="76" font-size="14" fill="#1a6fa8" text-anchor="middle">people</text>
+          <text x="76" y="130" font-size="14" fill="#555" text-anchor="middle">Area = 60 km²</text>
+          <text x="76" y="148" font-size="14" fill="#a13544" text-anchor="middle" font-weight="bold">600 people/km²</text>
+
+          <!-- Divider -->
+          <line x1="175" y1="10" x2="175" y2="170" stroke="#ddd" stroke-width="1" stroke-dasharray="4,3"/>
+
+          <!-- RIGHT: Flow rate panel -->
+          <!-- Pipe -->
+          <rect x="185" y="75" width="120" height="30" rx="5" fill="#d1fae5" stroke="#059669" stroke-width="1.5"/>
+          <!-- Flow arrow -->
+          <line x1="195" y1="90" x2="295" y2="90" stroke="#059669" stroke-width="2"/>
+          <polygon points="295,90 285,84 285,96" fill="#059669"/>
+          <!-- Tank on right -->
+          <rect x="300" y="60" width="28" height="60" rx="3" fill="#a7f3d0" stroke="#059669" stroke-width="1.5"/>
+          <!-- Water level in tank -->
+          <rect x="302" y="95" width="24" height="23" rx="2" fill="#34d399"/>
+          <text x="218" y="58" font-size="14" fill="#059669" text-anchor="middle">5 L/min</text>
+          <text x="218" y="135" font-size="14" fill="#555" text-anchor="middle">After 20 min:</text>
+          <text x="218" y="150" font-size="14" fill="#a13544" text-anchor="middle" font-weight="bold">100 litres</text>
+        </svg>
+      </div>
+
+      <p>If water flows at <strong>5 L/min</strong> for <strong>20 minutes</strong>, you get 5 × 20 = <strong>100 litres</strong> — that is volume = rate × time.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">A pipe delivers <strong>8 L/min</strong>. How much water flows in <strong>15 minutes</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">23 L</button>
+          <button class="btn mcq-btn" data-letter="B">53 L</button>
+          <button class="btn mcq-btn" data-letter="C">120 L</button>
+          <button class="btn mcq-btn" data-letter="D">800 L</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 6. AVERAGE SPEED AND PROBLEM TYPES            -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Average Speed — Common Exam Traps
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> You drive from A to B at <strong>40 km/h</strong> and drive back at <strong>60 km/h</strong>. Do NOT average the speeds as (40+60)/2 = 50 km/h — that is wrong!</p>
+
+      <p>The <strong>most common mistake</strong> in speed questions is averaging the speeds instead of using total distance ÷ total time.</p>
+
+      <p><strong>Example: Return journey at different speeds</strong><br>
+        A car goes from A to B at 40 km/h and returns at 60 km/h.</p>
+      <ul>
+        <li>Wrong: average = (40+60)/2 = 50 km/h ✗</li>
+        <li>Correct method: let AB = d km.<br>
+            Time A→B = d/40; &ensp;Time B→A = d/60<br>
+            Total time = d/40 + d/60 = d(3+2)/120 = 5d/120 = d/24<br>
+            Average = 2d ÷ (d/24) = 48 km/h ✓</li>
+        <li>Formula: Average = 2s₁s₂/(s₁+s₂) = 2×40×60/100 = <strong>48 km/h</strong></li>
+      </ul>
+
+      <!--
+        SVG: Number line / diagram showing the classic speed trap.
+        Show A and B with journey divided into two halves.
+        Annotate both speeds.
+      -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="380" height="130" viewBox="0 0 380 130" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+          <!-- Road line -->
+          <line x1="50" y1="65" x2="330" y2="65" stroke="#888" stroke-width="3"/>
+          <!-- Points A and B -->
+          <circle cx="50"  cy="65" r="5" fill="#1a6fa8"/>
+          <circle cx="330" cy="65" r="5" fill="#1a6fa8"/>
+          <text x="50"  y="88" font-size="15" fill="#1a6fa8" text-anchor="middle" font-weight="bold">A</text>
+          <text x="330" y="88" font-size="15" fill="#1a6fa8" text-anchor="middle" font-weight="bold">B</text>
+
+          <!-- Arrow A→B (top, blue) -->
+          <line x1="60" y1="45" x2="320" y2="45" stroke="#1a6fa8" stroke-width="2"/>
+          <polygon points="320,45 310,39 310,51" fill="#1a6fa8"/>
+          <text x="190" y="36" font-size="14" fill="#1a6fa8" text-anchor="middle">40 km/h</text>
+
+          <!-- Arrow B→A (bottom, red) -->
+          <line x1="320" y1="95" x2="60" y2="95" stroke="#a13544" stroke-width="2"/>
+          <polygon points="60,95 70,89 70,101" fill="#a13544"/>
+          <text x="190" y="116" font-size="14" fill="#a13544" text-anchor="middle">60 km/h</text>
+
+          <!-- Average speed label -->
+          <text x="190" y="65" font-size="14" fill="#555" text-anchor="middle">Average speed = 48 km/h</text>
+        </svg>
+      </div>
+
+      <p><strong>Multi-leg journeys:</strong> Always use <em>total distance ÷ total time</em>. Work out each leg (D = S × T), add all the distances, then add all the times.</p>
+
+      <p><strong>Meeting problems:</strong> When two people walk or drive towards each other, their <em>relative speed</em> is the sum of their speeds. Time to meet = gap ÷ relative speed.</p>
+
+      <p><strong>Overtaking problems:</strong> When a faster object catches a slower one, the closing speed is the difference of the speeds. Time to catch = head-start distance ÷ closing speed.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">You go to town at <strong>30 km/h</strong> and return at <strong>60 km/h</strong> on the same road. What is your average speed for the whole return trip?</p>
+          <button class="btn mcq-btn" data-letter="A">45 km/h</button>
+          <button class="btn mcq-btn" data-letter="B">40 km/h</button>
+          <button class="btn mcq-btn" data-letter="C">50 km/h</button>
+          <button class="btn mcq-btn" data-letter="D">35 km/h</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=difficult&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Difficult</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 7. KEY FORMULAE QUICK REFERENCE               -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Compound Measures — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Use this section to revise before a test. We have put all three triangles and the main conversion facts on one card for you.</p>
+
+      <!--
+        Dark revision card SVG
+      -->
+      <div style="text-align:center;margin:16px 0;">
+              <div class="revision-card-wrap">
+        <svg class="revision-card-svg lesson-quick-ref" width="100%" viewBox="0 0 760 300" style="max-width:760px;width:100%;height:auto;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:10px;" role="img" aria-label="Compound measures revision card">
+          <text x="380" y="28" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Compound Measures — Revision Card</text>
+          <line x1="20" y1="38" x2="740" y2="38" stroke="#d4e6f1" stroke-width="1"/>
+
+          <text x="127" y="58" font-size="15" fill="#1a6fa8" font-weight="bold" text-anchor="middle">SDT Triangle</text>
+          <text x="380" y="58" font-size="15" fill="#1a6fa8" font-weight="bold" text-anchor="middle">DMV Triangle</text>
+          <text x="633" y="58" font-size="15" fill="#1a6fa8" font-weight="bold" text-anchor="middle">PFA Triangle</text>
+          <line x1="253" y1="48" x2="253" y2="280" stroke="#d4e6f1" stroke-width="1"/>
+          <line x1="507" y1="48" x2="507" y2="280" stroke="#d4e6f1" stroke-width="1"/>
+
+          <text x="127" y="78"  font-size="14" fill="#28251d" text-anchor="middle">S = D ÷ T</text>
+          <text x="127" y="96"  font-size="14" fill="#28251d" text-anchor="middle">D = S × T</text>
+          <text x="127" y="114" font-size="14" fill="#28251d" text-anchor="middle">T = D ÷ S</text>
+          <text x="127" y="138" font-size="14" fill="#555555" text-anchor="middle">km/h ÷ 3.6 = m/s</text>
+          <text x="127" y="156" font-size="14" fill="#555555" text-anchor="middle">m/s × 3.6 = km/h</text>
+          <text x="127" y="180" font-size="15" fill="#1a6fa8" text-anchor="middle">Avg speed trap:</text>
+          <text x="127" y="198" font-size="14" fill="#28251d" text-anchor="middle">= total D ÷ total T</text>
+          <text x="127" y="216" font-size="14" fill="#28251d" text-anchor="middle">NOT mean of speeds</text>
+
+          <text x="380" y="78"  font-size="14" fill="#28251d" text-anchor="middle">ρ = M ÷ V</text>
+          <text x="380" y="96"  font-size="14" fill="#28251d" text-anchor="middle">M = ρ × V</text>
+          <text x="380" y="114" font-size="14" fill="#28251d" text-anchor="middle">V = M ÷ ρ</text>
+          <text x="380" y="138" font-size="14" fill="#555555" text-anchor="middle">g/cm³ × 1000 = kg/m³</text>
+          <text x="380" y="156" font-size="14" fill="#555555" text-anchor="middle">floats if ρ &lt; ρ_liquid</text>
+          <text x="380" y="180" font-size="15" fill="#1a6fa8" text-anchor="middle">Alloy density:</text>
+          <text x="380" y="198" font-size="14" fill="#28251d" text-anchor="middle">ρ = total M ÷ total V</text>
+          <text x="380" y="216" font-size="14" fill="#28251d" text-anchor="middle">(NOT mean of densities)</text>
+
+          <text x="633" y="78"  font-size="14" fill="#28251d" text-anchor="middle">P = F ÷ A</text>
+          <text x="633" y="96"  font-size="14" fill="#28251d" text-anchor="middle">F = P × A</text>
+          <text x="633" y="114" font-size="14" fill="#28251d" text-anchor="middle">A = F ÷ P</text>
+          <text x="633" y="138" font-size="14" fill="#555555" text-anchor="middle">1 Pa = 1 N/m²</text>
+          <text x="633" y="156" font-size="14" fill="#555555" text-anchor="middle">1 N/cm² = 10,000 Pa</text>
+          <text x="633" y="180" font-size="15" fill="#1a6fa8" text-anchor="middle">Pressure at depth:</text>
+          <text x="633" y="198" font-size="14" fill="#28251d" text-anchor="middle">P = ρgh</text>
+          <text x="633" y="216" font-size="14" fill="#28251d" text-anchor="middle">(ρ kg/m³, g=10, h m)</text>
+        </svg>
+      </div>
+      </div>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">You cover <strong>D</strong> in the SDT triangle. Which formula do you use?</p>
+          <button class="btn mcq-btn" data-letter="A">S = D ÷ T</button>
+          <button class="btn mcq-btn" data-letter="B">T = D ÷ S</button>
+          <button class="btn mcq-btn" data-letter="C">D = S × T</button>
+          <button class="btn mcq-btn" data-letter="D">D = S ÷ T</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=intermediate&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Intermediate</a>
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=foundational&amp;mode=mcq" style="display:inline-block;padding:8px 16px;background:#059669;color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">MCQ Practice</a>
+      </div>
+    </div>
+  </details>
+
+</div>
+  <!-- Practice link -->
+  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='compound_measures') }}"
+       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+      Start Practice Quiz
+    </a>
+  </div>
+
+{% endblock %}

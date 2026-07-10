@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+{% block title %}Algebraic Proof – GCSE Mathematics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Algebraic Proof</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">Use algebra to show that a result is <strong>always true</strong> for every integer, or find a <strong>counterexample</strong> when it is not.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA · Edexcel · OCR</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Higher Tier</span>
+    </div>
+  </div>
+
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='algebraic_proof') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <!-- 1. What is algebraic proof? -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      What is algebraic proof?
+      <span style="font-size:0.65rem; margin-left:8px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Higher</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>Checking a few examples on a calculator is <strong>not</strong> proof. Algebraic proof means:</p>
+      <ul style="line-height:1.9;">
+        <li>Start with a letter (usually <strong>\(n\)</strong>) for <em>any</em> integer</li>
+        <li>Manipulate the expression using algebra</li>
+        <li>End with a clear conclusion (e.g. “always even”, “multiple of 3”)</li>
+      </ul>
+      <p><em>Everyday idea:</em> “All even house numbers on a street add to an even total” — you can explain why with algebra, not by checking every door.</p>
+
+      <div style="background:#fff3cd; border-left:4px solid #f59e0b; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+        <strong>Exam tip:</strong> Write <strong>conclusion</strong> words: “therefore”, “hence”, “so this is always…”. Show every expansion step that earns method marks.
+      </div>
+    </div>
+  </details>
+
+  <!-- 2. Even and odd -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Even and odd numbers
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>Standard forms (any integer <strong>\(n\)</strong>):</p>
+      <ul style="line-height:1.9;">
+        <li><strong>Even:</strong> \(2n\) &nbsp; (multiple of 2)</li>
+        <li><strong>Odd:</strong> \(2n + 1\) &nbsp; (one more than an even number)</li>
+      </ul>
+      <p><strong>Prove</strong> \(2n+1\) is always odd: it is not divisible by 2 because subtracting 1 gives \(2n\), which is even.</p>
+      <p><strong>Prove</strong> \((2n+1)^2\) is always odd: expand to \(4n^2 + 4n + 1 = 2(2n^2 + 2n) + 1\) — “twice something + 1”.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Which is <strong>always odd</strong> for any integer \(n\)?</p>
+          <button class="btn mcq-btn" data-letter="A">2n</button>
+          <button class="btn mcq-btn" data-letter="B">2n + 1</button>
+          <button class="btn mcq-btn" data-letter="C">n + 1</button>
+          <button class="btn mcq-btn" data-letter="D">4n</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 3. Consecutive integers -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Consecutive integers
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>Consecutive means “next door” on the number line: <strong>\(n\)</strong>, <strong>\(n+1\)</strong>, <strong>\(n+2\)</strong>, …</p>
+
+      <p><strong>Sum of two consecutive:</strong> \(n + (n+1) = 2n+1\) → always <strong>odd</strong>.</p>
+
+      <p><strong>Product \(n(n+1)\):</strong> always <strong>even</strong> — one of \(n\) and \(n+1\) must be even.</p>
+
+      <p><strong>Sum of three consecutive:</strong> \((n-1) + n + (n+1) = 3n\) → always a <strong>multiple of 3</strong>.</p>
+
+      <p><strong>Square gap:</strong> \((n+1)^2 - n^2 = n^2 + 2n + 1 - n^2 = 2n+1\) (always odd).</p>
+    </div>
+  </details>
+
+  <!-- 4. Identities -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Identities and factorising
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>An <strong>identity</strong> is true for <em>all</em> values of \(n\) (e.g. expanding both sides shows they match).</p>
+      <p><strong>Example:</strong> Show \(n^2 + n\) is even.</p>
+      <ul style="line-height:1.9;">
+        <li>Factorise: <strong>\(n^2 + n = n(n+1)\)</strong></li>
+        <li>\(n\) and \(n+1\) are consecutive → product is even ✓</li>
+      </ul>
+      <p>Factorising is often the first step in a proof — it reveals structure (consecutive numbers, common factors).</p>
+    </div>
+  </details>
+
+  <!-- 5. Counterexamples -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Counterexamples
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>To disprove “<strong>always</strong> true”, you need <strong>one</strong> value that fails — a <strong>counterexample</strong>.</p>
+      <p><em>Example:</em> “\(n^2 + 1\) is prime for every positive \(n\)” — false because:</p>
+      <ul style="line-height:1.9;">
+        <li>\(n = 3\): \(3^2 + 1 = 10 = 2 \times 5\) (not prime)</li>
+      </ul>
+      <p>One counterexample is enough; you do not need to test all integers.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Which shows “\(n^2\) is always greater than \(n\)” is <strong>false</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">n = 5 works, so it is true</button>
+          <button class="btn mcq-btn" data-letter="B">n = 100 gives n² &gt; n</button>
+          <button class="btn mcq-btn" data-letter="C">n = 0 gives 0² = 0, not greater than 0</button>
+          <button class="btn mcq-btn" data-letter="D">The statement is true for negatives</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 6. Practise -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Algebraic Proof — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Use this card to revise before a test. Each section above has worked examples and a Quick Check.</p>
+
+      <div style="text-align:center;margin:16px 0;">
+              <div class="revision-card-wrap">
+        <svg class="revision-card-svg lesson-quick-ref" width="100%" viewBox="0 0 760 220" style="max-width:760px;width:100%;height:auto;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:10px;" role="img" aria-label="Algebraic proof revision card">
+          <text x="380" y="28" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Algebraic Proof — Revision Card</text>
+          <line x1="20" y1="38" x2="740" y2="38" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="20" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Writing numbers algebraically</text>
+          <text x="20" y="78" font-size="14" fill="#28251d">Even: 2n   ·   Odd: 2n + 1</text>
+          <text x="20" y="98" font-size="14" fill="#28251d">Consecutive: n, n+1, n+2, …</text>
+          <text x="20" y="118" font-size="14" fill="#28251d">Consecutive even: 2n, 2n+2, 2n+4</text>
+          <text x="20" y="138" font-size="14" fill="#28251d">Multiple of k: k × (integer)</text>
+          <line x1="390" y1="48" x2="390" y2="202" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="400" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Proving &amp; disproving</text>
+          <text x="400" y="78" font-size="14" fill="#28251d">Always even → write as 2 × (…)</text>
+          <text x="400" y="98" font-size="14" fill="#28251d">Always odd → write as 2 × (…) + 1</text>
+          <text x="400" y="118" font-size="14" fill="#28251d">Multiple of k → factorise to k(…)</text>
+          <text x="400" y="138" font-size="14" fill="#28251d">Expand &amp; simplify, then conclude</text>
+          <text x="400" y="162" font-size="15" fill="#1a6fa8" font-weight="bold">Disprove “always”</text>
+          <text x="400" y="182" font-size="14" fill="#555555">One counterexample is enough</text>
+        </svg>
+      </div>
+      </div>
+
+      <ul style="line-height:2;">
+        <li><strong>Even:</strong> \(2n\) &nbsp;·&nbsp; <strong>Odd:</strong> \(2n+1\)</li>
+        <li><strong>Consecutive:</strong> \(n, n+1, n+2, \ldots\)</li>
+        <li><strong>Prove “multiple of k”:</strong> factorise to \(k \times (\text{integer})\)</li>
+        <li><strong>Prove “always even/odd”:</strong> write as \(2 \times (\cdots)\) or \(2 \times (\cdots) + 1\)</li>
+        <li><strong>Disprove “always”:</strong> one counterexample</li>
+      </ul>
+      <p style="margin-top:14px;">Generator: <strong>Algebraic Proof</strong> — 5 questions per difficulty, 4 randomised MCQs.</p>
+      <p style="margin:8px 0 0;">
+        <a href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=algebraic_proof"
+           style="color:#1a6fa8;font-weight:600;">Open Algebraic Proof in the generator →</a>
+      </p>
+      <p style="margin:12px 0 0;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='algebra') }}"
+           style="color:#1a6fa8;">← Back to Algebra lesson</a>
+      </p>
+    </div>
+  </details>
+
+</div>
+
+<div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+  <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+  <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='algebraic_proof') }}"
+     style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+    Start Practice Quiz
+  </a>
+</div>
+
+{% endblock %}

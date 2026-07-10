@@ -1,0 +1,833 @@
+{% extends "base.html" %}
+{% block title %}Geometry and Angles – GCSE Mathematics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Geometry and Angles</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">Angles show how much something turns. You will learn angle facts on lines and in shapes, parallel-line rules, polygons, circle theorems, bearings, and when shapes are similar or congruent.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+  <!-- Quick Test button -->
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='geometry_angles') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 1. ANGLE TYPES AND BASIC RULES                 -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      Angle Types and Basic Rules
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 8</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Two angles on a straight line are <strong>65°</strong> and <strong>115°</strong>. They add to 180° because they form a straight line.</p>
+
+      <p>An <strong>angle</strong> measures how far something has turned, in degrees (°). Common types:</p>
+      <ul style="line-height:1.9;">
+        <li><strong>Acute</strong> – less than 90°</li>
+        <li><strong>Right angle</strong> – exactly 90°</li>
+        <li><strong>Obtuse</strong> – between 90° and 180°</li>
+        <li><strong>Straight angle</strong> – exactly 180°</li>
+        <li><strong>Reflex</strong> – greater than 180° (the long way round)</li>
+      </ul>
+
+      <!--
+        SVG: Angle types.
+        Conventions used throughout this file:
+          • x = cx + r·cos θ,  y = cy + r·sin θ   (SVG y increases downward)
+          • For an arc ABOVE the baseline (interior opens upward / toward smaller y):
+              sweep-flag = 0  (counterclockwise in SVG standard = visually clockwise on screen
+                               = goes through the upper region from a rightward start point)
+          • For an arc BELOW the baseline: sweep-flag = 1
+          All arc endpoints are computed exactly on the rays at the stated radius.
+      -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="520" height="175" viewBox="0 0 520 175" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+
+          <!-- ── Acute 50° ── vertex V1=(65,135) ─────────────────────────────
+               Ray 1 rightward: end (130, 135)
+               Ray 2 at 50° above horizontal:
+                 x = 65 + 65·cos50° = 65 + 41.8 = 107
+                 y = 135 − 65·sin50° = 135 − 49.8 = 85
+               Arc radius 22, from right-ray pt to ray-2 pt:
+                 start : (65+22, 135) = (87, 135)
+                 end   : (65+22·cos50°, 135−22·sin50°) = (65+14.1, 135−16.9) = (79, 118)
+               sweep=0 → arc goes through upper (interior) region -->
+          <line x1="65"  y1="135" x2="130" y2="135" stroke="#444" stroke-width="2"/>
+          <line x1="65"  y1="135" x2="107" y2="85"  stroke="#01696f" stroke-width="2"/>
+          <path d="M87,135 A22,22,0,0,0,79,118" fill="none" stroke="#a13544" stroke-width="2"/>
+          <text x="91" y="123" font-size="14" fill="#a13544">50°</text>
+          <text x="80" y="158" font-size="14" fill="#444" text-anchor="middle">Acute</text>
+
+          <!-- ── Right angle 90° ── vertex V2=(200,135) ──────────────────────
+               Ray 1 rightward: end (265, 135)
+               Ray 2 upward: end (200, 70)
+               Square corners: bottom-left at vertex (200,135),
+                 right along ray 1 → (215,135), up → (215,120), left → (200,120).
+               rect x=200, y=120, w=15, h=15 places the square
+               exactly in the upper-right corner between the two rays. -->
+          <line x1="200" y1="135" x2="265" y2="135" stroke="#444" stroke-width="2"/>
+          <line x1="200" y1="135" x2="200" y2="70"  stroke="#01696f" stroke-width="2"/>
+          <rect x="200" y="120" width="15" height="15" fill="none" stroke="#a13544" stroke-width="2"/>
+          <text x="215" y="158" font-size="14" fill="#444" text-anchor="middle">Right</text>
+
+          <!-- ── Obtuse 120° ── vertex V3=(340,135) ──────────────────────────
+               Ray 1 rightward: end (405, 135)
+               Ray 2 at 120° above horizontal (upper-left):
+                 x = 340 + 65·cos120° = 340 − 32.5 = 308
+                 y = 135 − 65·sin120° = 135 − 56.3 = 79
+               Arc radius 25:
+                 start : (340+25, 135) = (365, 135)
+                 end   : (340+25·cos120°, 135−25·sin120°) = (340−12.5, 135−21.7) = (328, 113)
+               sweep=0 → upper interior -->
+          <line x1="340" y1="135" x2="405" y2="135" stroke="#444" stroke-width="2"/>
+          <line x1="340" y1="135" x2="308" y2="79"  stroke="#01696f" stroke-width="2"/>
+          <path d="M365,135 A25,25,0,0,0,328,113" fill="none" stroke="#a13544" stroke-width="2"/>
+          <text x="350" y="113" font-size="14" fill="#a13544">120°</text>
+          <text x="355" y="158" font-size="14" fill="#444" text-anchor="middle">Obtuse</text>
+
+          <!-- ── Reflex ~300° ── vertex V4=(465,128) ─────────────────────────
+               Ray 1 rightward: end (505, 128)
+               Ray 2 at 60° clockwise below horizontal:
+                 (cos60°, sin60°) in SVG screen = (0.5, 0.866)
+                 x = 465 + 40·0.5  = 485
+                 y = 128 + 40·0.866 = 163  (fits within 175 viewBox height)
+               The SMALL angle between the rays = 60° (below baseline).
+               The REFLEX angle = 360° − 60° = 300°.
+               Reflex arc: large-arc=1, sweep=1 (CW in SVG = goes from rightward
+               downward through south, west, north and back to the lower-right ray
+               — the 300° long way around).
+               Arc radius 20:
+                 start : (465+20, 128) = (485, 128)
+                 end   : (465+20·0.5, 128+20·0.866) = (475, 145)
+               sweep=1, large-arc=1 -->
+          <line x1="465" y1="128" x2="505" y2="128" stroke="#444" stroke-width="2"/>
+          <line x1="465" y1="128" x2="485" y2="163" stroke="#01696f" stroke-width="2"/>
+          <path d="M485,128 A20,20,0,1,0,475,145" fill="none" stroke="#a13544" stroke-width="2"/>
+          <text x="438" y="112" font-size="14" fill="#a13544">300°</text>
+          <text x="468" y="175" font-size="14" fill="#444" text-anchor="middle">Reflex</text>
+
+        </svg>
+      </div>
+
+      <p>Three facts you will use again and again:</p>
+      <ul style="line-height:1.9;">
+        <li><strong>Angles on a straight line</strong> add to 180°</li>
+        <li><strong>Angles around a point</strong> add to 360°</li>
+        <li><strong>Vertically opposite angles</strong> are equal (when two lines cross)</li>
+      </ul>
+      <p><strong>In exams:</strong> Write the reason you use, e.g. "angles on a straight line sum to 180°".</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Two angles on a straight line are <strong>72°</strong> and <strong>x°</strong>. Find <strong>x</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">72°</button>
+          <button class="btn mcq-btn" data-letter="B">108°</button>
+          <button class="btn mcq-btn" data-letter="C">180°</button>
+          <button class="btn mcq-btn" data-letter="D">288°</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='geometry_angles') }}?difficulty=foundational" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Angle Basics</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 2. ANGLES ON PARALLEL LINES                    -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Angles on Parallel Lines
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Parallel lines are cut by a transversal. One alternate angle is <strong>58°</strong>. The matching alternate angle is also <strong>58°</strong> (Z-shape).</p>
+
+      <p>When a line crosses two <strong>parallel</strong> lines, you get three useful patterns:</p>
+      <ul style="line-height:1.9;">
+        <li><strong>Corresponding angles</strong> (F-shape) — equal</li>
+        <li><strong>Alternate angles</strong> (Z-shape) — equal</li>
+        <li><strong>Co-interior angles</strong> (C-shape, allied angles) — add to 180°</li>
+      </ul>
+
+      <!--
+        SVG: three mini-diagrams side-by-side showing F, Z, C shapes.
+        Each panel is ~150px wide. Parallel lines at y=65 and y=135.
+        Transversal slope = 1 (45°).
+
+        Panel 1 (x-offset 0):  Corresponding (F)
+        Panel 2 (x-offset 160): Alternate (Z)
+        Panel 3 (x-offset 320): Co-interior (C)
+
+        For each panel: transversal from (ox+20, 10) to (ox+130, 190).
+        Intersection with y=65: x = ox+20 + (65−10) = ox+75.  I1=(ox+75, 65).
+        Intersection with y=135: x = ox+20 + (135−10) = ox+145. But panel width is 150 → x≤ox+150 ✓ barely.
+        Actually: slope=1 → at y=65, x = ox+20+(65-10)·1 = ox+75. At y=135, x = ox+20+(135-10) = ox+145.
+
+        At each intersection, the transversal makes 45° with the horizontal.
+        Arc endpoints (radius 16) on the two bounding rays:
+          Right-horizontal: pt = I + (16, 0)
+          Upper-left transversal: direction (−1,−1)/√2, pt = I + (−11.3, −11.3)
+          Lower-right transversal: direction (1,1)/√2,   pt = I + (11.3, 11.3)
+          Left-horizontal: pt = I + (−16, 0)
+      -->
+<div style="text-align:center;margin:16px 0;">
+  <svg width="480" height="200" viewBox="0 0 480 200" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+
+    <!-- ═══ Panel 1: Corresponding angles (F-shape) – ox=0 ═══ -->
+    <!-- Transversal with slope=1 from (20,10) to (150,140). Intersects y=65 at x=75, y=135 at x=145 -->
+    <line x1="5"   y1="65"  x2="148" y2="65"  stroke="#555" stroke-width="2"/>
+    <line x1="5"   y1="135" x2="148" y2="135" stroke="#555" stroke-width="2"/>
+    <line x1="70"  y1="60"  x2="76"  y2="65"  stroke="#555" stroke-width="1.5"/>
+    <line x1="70"  y1="70"  x2="76"  y2="65"  stroke="#555" stroke-width="1.5"/>
+    <line x1="70"  y1="130" x2="76"  y2="135" stroke="#555" stroke-width="1.5"/>
+    <line x1="70"  y1="140" x2="76"  y2="135" stroke="#555" stroke-width="1.5"/>
+    <line x1="20"  y1="10"  x2="150" y2="140" stroke="#444" stroke-width="2"/>
+
+    <!-- I1=(75,65): NE angle (above l1, right of transversal). Rays: right-horizontal & up-left transversal. -->
+    <path d="M91,65 A16,16,0,0,0,63.7,53.7" fill="#dbeafe" fill-opacity="0.7" stroke="#1a6fa8" stroke-width="1.5"/>
+    <text x="82" y="58" font-size="14" fill="#1a6fa8" font-weight="bold">a</text>
+
+    <!-- I2=(145,135): NE angle (above l2, right of transversal). Rays: right-horizontal & up-left transversal. -->
+    <path d="M161,135 A16,16,0,0,0,133.7,123.7" fill="#dbeafe" fill-opacity="0.7" stroke="#1a6fa8" stroke-width="1.5"/>
+    <text x="152" y="128" font-size="14" fill="#1a6fa8" font-weight="bold">a</text>
+
+    <text x="75"  y="182" font-size="14" fill="#1a6fa8" text-anchor="middle">Corresponding (F)</text>
+    <text x="75"  y="195" font-size="14" fill="#555"    text-anchor="middle">angles are equal</text>
+
+    <!-- ═══ Panel 2: Alternate angles (Z-shape) – ox=160 ═══ -->
+    <!-- Transversal (180,10) to (310,140). Intersects y=65 at x=235, y=135 at x=305 -->
+    <line x1="165" y1="65"  x2="308" y2="65"  stroke="#555" stroke-width="2"/>
+    <line x1="165" y1="135" x2="308" y2="135" stroke="#555" stroke-width="2"/>
+    <line x1="230" y1="60"  x2="236" y2="65"  stroke="#555" stroke-width="1.5"/>
+    <line x1="230" y1="70"  x2="236" y2="65"  stroke="#555" stroke-width="1.5"/>
+    <line x1="230" y1="130" x2="236" y2="135" stroke="#555" stroke-width="1.5"/>
+    <line x1="230" y1="140" x2="236" y2="135" stroke="#555" stroke-width="1.5"/>
+    <line x1="180" y1="10"  x2="310" y2="140" stroke="#444" stroke-width="2"/>
+
+    <!-- I1=(235,65): SE angle (below l1, right of transversal). Rays: right-horizontal & down-right transversal. -->
+    <path d="M251,65 A16,16,0,0,1,246.3,76.3" fill="#fed7aa" fill-opacity="0.8" stroke="#ea580c" stroke-width="1.5"/>
+    <text x="249" y="78" font-size="14" fill="#ea580c" font-weight="bold">b</text>
+
+    <!-- I2=(305,135): NW angle (above l2, left of transversal). Rays: left-horizontal & up-left transversal. -->
+    <path d="M289,135 A16,16,0,0,1,293.7,123.7" fill="#fed7aa" fill-opacity="0.8" stroke="#ea580c" stroke-width="1.5"/>
+    <text x="282" y="128" font-size="14" fill="#ea580c" font-weight="bold">b</text>
+
+    <text x="235" y="182" font-size="14" fill="#ea580c" text-anchor="middle">Alternate (Z)</text>
+    <text x="235" y="195" font-size="14" fill="#555"    text-anchor="middle">angles are equal</text>
+
+    <!-- ═══ Panel 3: Co-interior angles (C-shape) – ox=320 ═══ -->
+    <!-- Transversal (340,10) to (470,140). Intersects y=65 at x=395, y=135 at x=465 -->
+    <line x1="325" y1="65"  x2="468" y2="65"  stroke="#555" stroke-width="2"/>
+    <line x1="325" y1="135" x2="468" y2="135" stroke="#555" stroke-width="2"/>
+    <line x1="390" y1="60"  x2="396" y2="65"  stroke="#555" stroke-width="1.5"/>
+    <line x1="390" y1="70"  x2="396" y2="65"  stroke="#555" stroke-width="1.5"/>
+    <line x1="390" y1="130" x2="396" y2="135" stroke="#555" stroke-width="1.5"/>
+    <line x1="390" y1="140" x2="396" y2="135" stroke="#555" stroke-width="1.5"/>
+    <line x1="340" y1="10"  x2="470" y2="140" stroke="#444" stroke-width="2"/>
+
+    <!-- I1=(395,65): SE angle (below l1, right of transversal). Rays: right-horizontal & down-right transversal. -->
+    <path d="M411,65 A16,16,0,0,1,406.3,76.3" fill="#d1fae5" fill-opacity="0.8" stroke="#059669" stroke-width="1.5"/>
+    <text x="409" y="78" font-size="14" fill="#059669" font-weight="bold">c</text>
+
+    <!-- I2=(465,135): NE angle (above l2, right of transversal). Rays: right-horizontal & up-left transversal. -->
+    <path d="M481,135 A16,16,0,0,0,453.7,123.7" fill="#d1fae5" fill-opacity="0.8" stroke="#059669" stroke-width="1.5"/>
+    <text x="472" y="128" font-size="14" fill="#059669" font-weight="bold">180°−c</text>
+
+          <text x="396" y="182" font-size="14" fill="#059669" text-anchor="middle">Co-interior (C)</text>
+          <text x="396" y="195" font-size="14" fill="#555"    text-anchor="middle">c + (180°−c) = 180°</text>
+
+        </svg>
+      </div>
+
+      <p><strong>Memory tips:</strong></p>
+      <ul style="line-height:1.9;">
+        <li><strong>F</strong> → <strong>C</strong>orresponding (same corner position, equal)</li>
+        <li><strong>Z</strong> → <strong>A</strong>lternate (between the parallels, equal)</li>
+        <li><strong>C</strong> → <strong>C</strong>o-interior (same side between parallels, sum to 180°)</li>
+      </ul>
+      <p><strong>Watch out:</strong> Only use these rules when the diagram shows the lines are parallel (arrow marks).</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Two parallel lines are cut by a transversal. Co-interior angles are <strong>110°</strong> and <strong>x°</strong>. Find <strong>x</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">110°</button>
+          <button class="btn mcq-btn" data-letter="B">250°</button>
+          <button class="btn mcq-btn" data-letter="C">70°</button>
+          <button class="btn mcq-btn" data-letter="D">55°</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='geometry_angles') }}?difficulty=foundational" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Parallel Line Angles</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 3. TRIANGLES                                   -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Triangles
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> A triangle has angles <strong>50°</strong> and <strong>60°</strong>. The third angle is <strong>180° − 50° − 60° = 70°</strong>.</p>
+
+      <p>Key triangle angle facts:</p>
+      <ul style="line-height:1.9;">
+        <li>Angles in any triangle add to <strong>180°</strong></li>
+        <li><strong>Equilateral</strong> triangle: all angles are 60°</li>
+        <li><strong>Isosceles</strong> triangle: two equal sides → two equal base angles</li>
+        <li><strong>Exterior angle</strong> = sum of the two interior angles not next to it</li>
+      </ul>
+
+      <!--
+        SVG: triangle angle-sum proof using a parallel line through apex C.
+        Triangle: A=(90,170), B=(330,170), C=(200,40).
+        Dashed line through C parallel to AB at y=40.
+
+        Angle a at A: between ray AB (rightward) and ray AC (toward C).
+          Ray AC direction: (200−90, 40−170) = (110,−130), |AC|=170.6
+          Unit: (0.645, −0.762). Arc radius 20.
+          start : A + 20·(1,0)                    = (110, 170)
+          end   : A + 20·(0.645,−0.762)            = (103, 155)
+          sweep=0 (CCW in SVG standard = arc goes through upper interior region)
+
+        Angle b at B: between ray BA (leftward) and ray BC (toward C).
+          Ray BC direction: (200−330, 40−170) = (−130,−130), |BC|=183.8
+          Unit: (−0.707, −0.707). Arc radius 20.
+          start : B + 20·(−1,0)                    = (310, 170)
+          end   : B + 20·(−0.707,−0.707)            = (316, 156)
+          Going from leftward to upper-left through the upper interior:
+          CW in SVG standard (sweep=1) goes upward from the leftward point. ✓
+
+        Angle c at C: between ray CA (toward A, = lower-left) and ray CB (toward B, = lower-right).
+          CA unit: (−0.645, 0.762). At r=18: (200−11.6, 40+13.7) = (188, 54)
+          CB unit: (0.707, 0.707).  At r=18: (200+12.7, 40+12.7) = (213, 53)
+          Arc from (188,54) to (213,53) going through the bottom (y>40 region, interior of angle c).
+          sweep=0: CCW in standard, sweeps through the lower region at C. ✓
+
+        Alternate angle a on dashed line (left of C):
+          From leftward dashed pt (182,40) to CA pt (188,54).
+          sweep=1: CW in SVG standard → goes through lower-left = below the dashed line. ✓
+
+        Alternate angle b on dashed line (right of C):
+          From rightward dashed pt (218,40) to CB pt (213,53).
+          sweep=0: CCW in SVG standard → goes through lower-right = below the dashed line. ✓
+          Wait — verify: from rightward (218,40) going CCW to lower-right (213,53):
+          CCW from east goes through north → that's above. Hmm.
+          Actually sweep=1 (CW from rightward → goes downward/south first). ✓
+          Use sweep=1 for alternate b as well.
+      -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="420" height="205" viewBox="0 0 420 205" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+          <!-- Triangle -->
+          <polygon points="90,170 330,170 200,40" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+          <!-- Dashed parallel line through C at y=40 -->
+          <line x1="60" y1="40" x2="350" y2="40" stroke="#777" stroke-width="1.5" stroke-dasharray="5,4"/>
+
+          <!-- Angle a at A(90,170): from (110,170) to (103,155), sweep=0 -->
+          <path d="M110,170 A20,20,0,0,0,103,155" fill="none" stroke="#a13544" stroke-width="2"/>
+          <text x="116" y="160" font-size="15" fill="#a13544">a</text>
+
+          <!-- Angle b at B(330,170): from (310,170) to (316,156), sweep=1 -->
+          <path d="M310,170 A20,20,0,0,1,316,156" fill="none" stroke="#2d6a35" stroke-width="2"/>
+          <text x="296" y="160" font-size="15" fill="#2d6a35">b</text>
+
+          <!-- Angle c at C(200,40): from (188,54) to (213,53), sweep=0 -->
+          <path d="M188,54 A18,18,0,0,0,213,53" fill="none" stroke="#8a5300" stroke-width="2"/>
+          <text x="197" y="67" font-size="15" fill="#8a5300">c</text>
+
+          <!-- Alternate angle a on dashed line, left of C:
+               from (182,40) [leftward] to (188,54) [on CA], sweep=1 (below dashed line) -->
+          <path d="M182,40 A18,18,0,0,1,188,54" fill="none" stroke="#a13544" stroke-width="1.5" stroke-dasharray="3,2"/>
+          <text x="163" y="40" font-size="14" fill="#a13544">a</text>
+
+          <!-- Alternate angle b on dashed line, right of C:
+               from (218,40) [rightward] to (213,53) [on CB], sweep=1 (below dashed line) -->
+          <path d="M218,40 A18,18,0,0,1,213,53" fill="none" stroke="#2d6a35" stroke-width="1.5" stroke-dasharray="3,2"/>
+          <text x="228" y="40" font-size="14" fill="#2d6a35">b</text>
+
+          <!-- Annotation -->
+          <text x="210" y="195" font-size="14" fill="#333" text-anchor="middle">a + b + c = 180° (angles on straight line at C)</text>
+        </svg>
+      </div>
+
+      <p><em>The dashed line through C is parallel to AB. Alternate angles show the angle at C matches the angle at A (and similarly for b). Those three angles lie on a straight line, so they add to 180°.</em></p>
+
+      <table style="border-collapse:collapse;width:100%;margin-top:10px;">
+        <thead>
+          <tr style="background:var(--color-surface-2);">
+            <th style="padding:8px;border:1px solid var(--color-border);text-align:left;">Triangle type</th>
+            <th style="padding:8px;border:1px solid var(--color-border);text-align:left;">Sides</th>
+            <th style="padding:8px;border:1px solid var(--color-border);text-align:left;">Angles</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Equilateral</td><td style="padding:8px;border:1px solid var(--color-border);">All equal</td><td style="padding:8px;border:1px solid var(--color-border);">All 60°</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Isosceles</td><td style="padding:8px;border:1px solid var(--color-border);">Two equal</td><td style="padding:8px;border:1px solid var(--color-border);">Two base angles equal</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Scalene</td><td style="padding:8px;border:1px solid var(--color-border);">All different</td><td style="padding:8px;border:1px solid var(--color-border);">All different</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Right-angled</td><td style="padding:8px;border:1px solid var(--color-border);">Any</td><td style="padding:8px;border:1px solid var(--color-border);">One angle = 90°</td></tr>
+        </tbody>
+      </table>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">A triangle has angles <strong>47°</strong> and <strong>68°</strong>. What is the third angle?</p>
+          <button class="btn mcq-btn" data-letter="A">65°</button>
+          <button class="btn mcq-btn" data-letter="B">115°</button>
+          <button class="btn mcq-btn" data-letter="C">25°</button>
+          <button class="btn mcq-btn" data-letter="D">180°</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='geometry_angles') }}?difficulty=foundational" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Triangles</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 4. POLYGON ANGLES                              -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Polygon Angles
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> A pentagon has <strong>5</strong> sides. Split it into 3 triangles from one corner — each triangle is 180°, so interior angles add to <strong>3 × 180° = 540°</strong>. Each angle in a <strong>regular</strong> pentagon is <strong>540° ÷ 5 = 108°</strong>.</p>
+
+      <p>For any polygon with <strong>n</strong> sides, we use these rules:</p>
+      <p style="text-align:center;font-size:1.1rem;">\(\text{Sum of interior angles} = (n-2)\times180°\)</p>
+      <p style="text-align:center;font-size:1.1rem;">\(\text{Each interior angle (regular)} = \dfrac{(n-2)\times180°}{n}\)</p>
+      <p style="text-align:center;font-size:1.1rem;">\(\text{Each exterior angle (regular)} = \dfrac{360°}{n}\)</p>
+      <p>At any corner, interior angle + exterior angle = 180° (they lie on a straight line).</p>
+
+      <!--
+        SVG: regular pentagon divided into 3 triangles from the top vertex.
+        Pentagon vertices computed with centre (160,108), radius 82:
+          V0 (top):    (160 + 82·cos270°, 108 + 82·sin270°) = (160, 26)
+          V1 (upper-right): (160 + 82·cos342°, 108 + 82·sin342°) = (160+80.2, 108−25.3) = (240, 83)
+          V2 (lower-right): (160 + 82·cos54°,  108 + 82·sin54°)  = (160+48.2, 108+66.4) = (208, 174)
+          V3 (lower-left):  (160 + 82·cos126°, 108 + 82·sin126°) = (160−48.2, 108+66.4) = (112, 174)
+          V4 (upper-left):  (160 + 82·cos198°, 108 + 82·sin198°) = (160−78.0, 108−25.4) = (82, 83)
+      -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="440" height="210" viewBox="0 0 440 210" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+          <polygon points="160,26 240,83 208,174 112,174 82,83" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+          <!-- Diagonals from V0=(160,26) to V2 and V3 -->
+          <line x1="160" y1="26" x2="208" y2="174" stroke="#a13544" stroke-width="1.5" stroke-dasharray="5,4"/>
+          <line x1="160" y1="26" x2="112" y2="174" stroke="#a13544" stroke-width="1.5" stroke-dasharray="5,4"/>
+          <!-- Triangle labels -->
+          <text x="110" y="105" font-size="14" fill="#a13544" text-anchor="middle">△1</text>
+          <text x="160" y="155" font-size="14" fill="#a13544" text-anchor="middle">△2</text>
+          <text x="210" y="105" font-size="14" fill="#a13544" text-anchor="middle">△3</text>
+          <!-- Formula annotation on the right -->
+          <text x="330" y="60"  font-size="15" fill="#333"    text-anchor="middle">n = 5</text>
+          <text x="330" y="80"  font-size="15" fill="#333"    text-anchor="middle">3 triangles</text>
+          <text x="330" y="104" font-size="15" fill="#1a6fa8" text-anchor="middle">= (5−2)×180°</text>
+          <text x="330" y="124" font-size="15" fill="#1a6fa8" text-anchor="middle">= 540°</text>
+          <text x="330" y="158" font-size="14" fill="#555"    text-anchor="middle">Interior angle</text>
+          <text x="330" y="175" font-size="14" fill="#555"    text-anchor="middle">= 540° ÷ 5 = 108°</text>
+        </svg>
+      </div>
+
+      <table style="border-collapse:collapse;width:100%;margin-top:8px;">
+        <thead>
+          <tr style="background:var(--color-surface-2);">
+            <th style="padding:7px;border:1px solid var(--color-border);">Polygon</th>
+            <th style="padding:7px;border:1px solid var(--color-border);">Sides</th>
+            <th style="padding:7px;border:1px solid var(--color-border);">Interior angle sum</th>
+            <th style="padding:7px;border:1px solid var(--color-border);">Regular interior angle</th>
+            <th style="padding:7px;border:1px solid var(--color-border);">Regular exterior angle</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding:7px;border:1px solid var(--color-border);">Triangle</td><td style="padding:7px;border:1px solid var(--color-border);">3</td><td style="padding:7px;border:1px solid var(--color-border);">180°</td><td style="padding:7px;border:1px solid var(--color-border);">60°</td><td style="padding:7px;border:1px solid var(--color-border);">120°</td></tr>
+          <tr><td style="padding:7px;border:1px solid var(--color-border);">Quadrilateral</td><td style="padding:7px;border:1px solid var(--color-border);">4</td><td style="padding:7px;border:1px solid var(--color-border);">360°</td><td style="padding:7px;border:1px solid var(--color-border);">90°</td><td style="padding:7px;border:1px solid var(--color-border);">90°</td></tr>
+          <tr><td style="padding:7px;border:1px solid var(--color-border);">Pentagon</td><td style="padding:7px;border:1px solid var(--color-border);">5</td><td style="padding:7px;border:1px solid var(--color-border);">540°</td><td style="padding:7px;border:1px solid var(--color-border);">108°</td><td style="padding:7px;border:1px solid var(--color-border);">72°</td></tr>
+          <tr><td style="padding:7px;border:1px solid var(--color-border);">Hexagon</td><td style="padding:7px;border:1px solid var(--color-border);">6</td><td style="padding:7px;border:1px solid var(--color-border);">720°</td><td style="padding:7px;border:1px solid var(--color-border);">120°</td><td style="padding:7px;border:1px solid var(--color-border);">60°</td></tr>
+          <tr><td style="padding:7px;border:1px solid var(--color-border);">Octagon</td><td style="padding:7px;border:1px solid var(--color-border);">8</td><td style="padding:7px;border:1px solid var(--color-border);">1080°</td><td style="padding:7px;border:1px solid var(--color-border);">135°</td><td style="padding:7px;border:1px solid var(--color-border);">45°</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:8px;"><strong>Exam tip:</strong> If you know the exterior angle of a regular polygon, you can find how many sides quickly: \(n = 360° \div \text{exterior angle}\).</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">What is the sum of the interior angles of a <strong>hexagon</strong> (6 sides)?</p>
+          <button class="btn mcq-btn" data-letter="A">540°</button>
+          <button class="btn mcq-btn" data-letter="B">720°</button>
+          <button class="btn mcq-btn" data-letter="C">900°</button>
+          <button class="btn mcq-btn" data-letter="D">360°</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='geometry_angles') }}?difficulty=intermediate" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Polygons</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 5. CIRCLE THEOREMS                             -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Circle Theorems
+      <span style="font-size:0.65rem;margin-left:8px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Higher Skill</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> AB is a diameter of a circle. C is on the circle. Angle ACB = <strong>90°</strong> (angle in a semicircle).</p>
+
+      <p>On GCSE Higher you need seven circle theorems. Learn them with a sketch and name the theorem when you use it:</p>
+      <ol style="line-height:1.9;">
+        <li><strong>Angle at the centre = 2 × angle at the circumference</strong> (same arc)</li>
+        <li><strong>Angle in a semicircle = 90°</strong> (angle on a diameter)</li>
+        <li><strong>Angles in the same segment are equal</strong></li>
+        <li><strong>Opposite angles in a cyclic quadrilateral add to 180°</strong></li>
+        <li><strong>Tangent ⊥ radius</strong> at the point of contact</li>
+        <li><strong>Tangents from one outside point are equal in length</strong></li>
+        <li><strong>Alternate segment:</strong> angle between tangent and chord = angle in the alternate segment</li>
+      </ol>
+
+      <!--
+        SVG: two diagrams.
+        Left — Theorem 1 (angle at centre): circle centre O=(110,108), r=75.
+          Points on circle using x=cx+r·cosθ, y=cy+r·sinθ (SVG y-down):
+            C (top):  θ=270° → (110+0, 108−75) = (110, 33)
+            A (lower-left):  θ=150° → (110+75·cos150°, 108+75·sin150°)
+                                     = (110−64.95, 108+37.5) = (45, 146) ← r=75 ✓
+            B (lower-right): θ=30°  → (110+64.95, 108+37.5) = (175, 146) ← r=75 ✓
+          All three are exactly on the circle. O is at (110,108).
+
+        Right — Theorem 4 (cyclic quad): circle centre O2=(370,108), r=75.
+          P: θ=300° → (370+75·cos300°, 108+75·sin300°) = (370+37.5, 108−64.95) = (408, 43)
+          Q: θ=30°  → (370+64.95, 108+37.5) = (435, 146)
+          R: θ=120° → (370+75·cos120°, 108+75·sin120°) = (370−37.5, 108+64.95) = (333, 173)
+          S: θ=210° → (370+75·cos210°, 108+75·sin210°) = (370−64.95, 108−37.5) = (305, 71)
+          Verify P: sqrt((408−370)²+(43−108)²)=sqrt(38²+65²)=sqrt(1444+4225)=sqrt(5669)≈75.3 ✓
+          Verify R: sqrt((333−370)²+(173−108)²)=sqrt(37.5²+65²)=sqrt(1406+4225)=sqrt(5631)≈75.0 ✓
+      -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="500" height="225" viewBox="0 0 500 225" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+
+          <!-- ── Left: angle at centre (Theorem 1) ── -->
+          <circle cx="110" cy="108" r="75" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+          <!-- Centre O -->
+          <circle cx="110" cy="108" r="3.5" fill="#a13544"/>
+          <text x="115" y="113" font-size="14" fill="#a13544" font-weight="bold">O</text>
+          <!-- Points A(45,146), B(175,146), C(110,33) — all on circle -->
+          <circle cx="45"  cy="146" r="3" fill="#01696f"/>
+          <circle cx="175" cy="146" r="3" fill="#01696f"/>
+          <circle cx="110" cy="33"  r="3" fill="#01696f"/>
+          <text x="28"  y="158" font-size="14" fill="#444">A</text>
+          <text x="178" y="158" font-size="14" fill="#444">B</text>
+          <text x="104" y="26"  font-size="14" fill="#444">C</text>
+          <!-- Radii OA, OB (red — show centre angle AOB) -->
+          <line x1="110" y1="108" x2="45"  y2="146" stroke="#a13544" stroke-width="1.5"/>
+          <line x1="110" y1="108" x2="175" y2="146" stroke="#a13544" stroke-width="1.5"/>
+          <!-- Chords CA, CB (green — show circumference angle ACB) -->
+          <line x1="45"  y1="146" x2="110" y2="33"  stroke="#01696f" stroke-width="1.5"/>
+          <line x1="175" y1="146" x2="110" y2="33"  stroke="#01696f" stroke-width="1.5"/>
+          <!-- Label 2α at O (centre angle AOB opens downward) -->
+          <text x="90" y="130" font-size="14" fill="#a13544" font-weight="bold">2α</text>
+          <!-- Label α at C (circumference angle ACB opens downward, at apex C) -->
+          <text x="96" y="52"  font-size="14" fill="#01696f" font-weight="bold">α</text>
+          <!-- Caption -->
+          <text x="110" y="196" font-size="14" fill="#333" text-anchor="middle">Angle AOB = 2 × angle ACB</text>
+          <text x="110" y="210" font-size="14" fill="#333" text-anchor="middle">(same arc AB)</text>
+
+          <!-- ── Right: cyclic quadrilateral (Theorem 4) ── -->
+          <circle cx="370" cy="108" r="75" fill="#fef4e8" stroke="#8a5300" stroke-width="2"/>
+          <!-- Points P(408,43), Q(435,146), R(333,173), S(305,71) — all on circle -->
+          <polygon points="408,43 435,146 333,173 305,71" fill="none" stroke="#8a5300" stroke-width="1.8"/>
+          <circle cx="408" cy="43"  r="3" fill="#8a5300"/>
+          <circle cx="435" cy="146" r="3" fill="#8a5300"/>
+          <circle cx="333" cy="173" r="3" fill="#8a5300"/>
+          <circle cx="305" cy="71"  r="3" fill="#8a5300"/>
+          <text x="410" y="36"  font-size="14" fill="#444">P</text>
+          <text x="438" y="155" font-size="14" fill="#444">Q</text>
+          <text x="325" y="185" font-size="14" fill="#444">R</text>
+          <text x="289" y="70"  font-size="14" fill="#444">S</text>
+          <!-- Angle α at P, 180°−α at R -->
+          <text x="415" y="62"  font-size="14" fill="#8a5300" font-weight="bold">α</text>
+          <text x="330" y="163" font-size="14" fill="#8a5300" font-weight="bold">180°−α</text>
+          <!-- Caption -->
+          <text x="370" y="196" font-size="14" fill="#333" text-anchor="middle">Opposite angles in a</text>
+          <text x="370" y="210" font-size="14" fill="#333" text-anchor="middle">cyclic quadrilateral sum to 180°</text>
+
+        </svg>
+      </div>
+
+      <p><strong>Another example:</strong> A tangent at T makes a <strong>65°</strong> angle with chord TA. The angle in the alternate segment (at B on the major arc) is also <strong>65°</strong>.</p>
+      <p><strong>In exams:</strong> You often chain two or three theorems. Label each angle and write which rule you used.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">AB is a diameter. C is on the circle. Angle ACB is:</p>
+          <button class="btn mcq-btn" data-letter="A">45°</button>
+          <button class="btn mcq-btn" data-letter="B">60°</button>
+          <button class="btn mcq-btn" data-letter="C">90°</button>
+          <button class="btn mcq-btn" data-letter="D">180°</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='geometry_angles') }}?difficulty=intermediate" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Circle Theorems</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 6. BEARINGS                                    -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Bearings
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f7ec;color:#2d6a35;padding:2px 6px;border-radius:10px;">Problem Solving</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Town B is on a bearing of <strong>065°</strong> from A. You turn clockwise from North at A until you face B — that is 65°. We write it as <strong>065°</strong> (three digits).</p>
+
+      <p>A <strong>bearing</strong> is an angle measured <strong>clockwise from North</strong>. Always use three digits: 047°, 128°, 270°.</p>
+
+      <!--
+        SVG: bearing diagram.
+        A=(130,155). North line: (130,155) to (130,40).
+        Bearing 065° to B: sin65°=0.906, cos65°=0.423.
+          B = (130+0.906×90, 155−0.423×90) = (211.5, 116.9) ≈ (212,117)
+        Bearing arc: from North point (130,95) (60px above A) to point on AB at r=60:
+          (130+60×sin65°, 155−60×cos65°) = (130+54.4, 155−25.4) = (184.4,129.6) ≈ (184,130)
+        Arc CW from North (top) to AB direction:
+          M130,95 A60,60,0,0,1,184,130  (sweep=1 = CW in SVG)
+
+        B2=(282,117) — second copy of B for back-bearing illustration.
+        North line at B2: (282,117) to (282,30).
+        Back bearing = 065°+180° = 245°.
+        Line from B2 back toward A direction:
+          (282+sin(245°)×80, 117−cos(245°)×80) = (282−72.5, 117+33.8) = (209.5, 150.8) ≈ (210,151)
+        Back-bearing arc (245° CW from North):
+          Start on North: (282, 117−55) = (282,62)
+          End on back-bearing ray at r=55:
+            (282+55×sin245°, 117−55×cos245°) = (282−49.9, 117+23.3) = (232,140)
+          245° > 180° → large-arc=1, sweep=1 (CW)
+          M282,62 A55,55,0,1,1,232,140
+      -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="370" height="210" viewBox="0 0 370 210" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+          <!-- Point A, North line -->
+          <circle cx="130" cy="155" r="3" fill="#1a6fa8"/>
+          <text x="120" y="168" font-size="14" fill="#1a6fa8">A</text>
+          <line x1="130" y1="155" x2="130" y2="38" stroke="#555" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <text x="130" y="32" font-size="15" fill="#555" text-anchor="middle">N</text>
+          <!-- Ray from A to B(212,117) at bearing 065° -->
+          <line x1="130" y1="155" x2="212" y2="117" stroke="#a13544" stroke-width="2"/>
+          <circle cx="212" cy="117" r="3" fill="#a13544"/>
+          <text x="218" y="115" font-size="14" fill="#a13544">B</text>
+          <!-- Bearing arc: M130,95 A60,60,0,0,1,184,130 — CW from North to AB, sweep=1 -->
+          <path d="M130,95 A60,60,0,0,1,184,130" fill="none" stroke="#a13544" stroke-width="1.5"/>
+          <text x="158" y="110" font-size="14" fill="#a13544">065°</text>
+
+          <!-- B2 for back-bearing illustration -->
+          <circle cx="282" cy="117" r="3" fill="#a13544"/>
+          <text x="288" y="115" font-size="14" fill="#a13544">B</text>
+          <line x1="282" y1="117" x2="282" y2="28" stroke="#555" stroke-width="1.5" stroke-dasharray="6,4"/>
+          <text x="282" y="22" font-size="15" fill="#555" text-anchor="middle">N</text>
+          <!-- Back bearing ray (245°) from B2 toward A direction -->
+          <line x1="282" y1="117" x2="210" y2="151" stroke="#1a6fa8" stroke-width="2"/>
+          <!-- Back-bearing arc: 245°, large-arc=1, sweep=1 -->
+          <path d="M282,62 A55,55,0,1,1,232,140" fill="none" stroke="#1a6fa8" stroke-width="1.5"/>
+          <text x="312" y="88" font-size="14" fill="#1a6fa8">245°</text>
+          <!-- Captions -->
+          <text x="130" y="200" font-size="14" fill="#555" text-anchor="middle">Bearing of B from A = 065°</text>
+          <text x="282" y="200" font-size="14" fill="#555" text-anchor="middle">Back-bearing = 245°</text>
+        </svg>
+      </div>
+
+      <p><strong>Back-bearing:</strong> From B back to A, add 180° if the first bearing is under 180°; subtract 180° if it is 180° or more. So 065° from A → <strong>245°</strong> from B.</p>
+      <p><strong>Watch out:</strong> Measure from the <em>North line at the place you start from</em>, not from where you are going to.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">The bearing of B from A is <strong>047°</strong>. What is the back-bearing of A from B?</p>
+          <button class="btn mcq-btn" data-letter="A">227°</button>
+          <button class="btn mcq-btn" data-letter="B">047°</button>
+          <button class="btn mcq-btn" data-letter="C">133°</button>
+          <button class="btn mcq-btn" data-letter="D">317°</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='geometry_angles') }}?difficulty=intermediate" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Bearings</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 7. SIMILAR AND CONGRUENT SHAPES                -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Similar and Congruent Shapes
+      <span style="font-size:0.65rem;margin-left:8px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Higher Skill</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Two similar triangles have scale factor <strong>k = 2</strong> (lengths double). A small triangle has area <strong>4 cm²</strong>. The large area = 4 × \(2^2\) = 4 × 4 = <strong>16 cm²</strong>.</p>
+
+      <p><strong>Congruent</strong> means same shape and same size (you could place one on top of the other). <strong>Similar</strong> means same shape, different size — matching angles equal, sides in proportion.</p>
+      <p>Two triangles are <strong>congruent</strong> if any of these match:</p>
+      <ul style="line-height:1.9;">
+        <li><strong>SSS</strong> – all three sides equal</li>
+        <li><strong>SAS</strong> – two sides and the angle between them equal</li>
+        <li><strong>ASA</strong> – two angles and the side between them equal</li>
+        <li><strong>RHS</strong> – right angle, hypotenuse, and one other side equal</li>
+      </ul>
+      <p>For <strong>similar</strong> shapes, matching angles are equal. If lengths are multiplied by <strong>k</strong>:</p>
+      <p style="text-align:center;">\(\text{Area is multiplied by } k^2 \qquad \text{Volume is multiplied by } k^3\)</p>
+
+      <!-- SVG: two similar right triangles, scale factor 2 -->
+
+      <p><strong>Exam tip:</strong> Match up corresponding sides first, then work out the scale factor.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">Similar triangles have scale factor <strong>3</strong>. The smaller has area <strong>5 cm²</strong>. What is the larger area?</p>
+          <button class="btn mcq-btn" data-letter="A">15 cm²</button>
+          <button class="btn mcq-btn" data-letter="B">27 cm²</button>
+          <button class="btn mcq-btn" data-letter="C">9 cm²</button>
+          <button class="btn mcq-btn" data-letter="D">45 cm²</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='geometry_angles') }}?difficulty=difficult" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Similar Shapes</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 8. KEY FORMULAE QUICK REFERENCE                -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+      Geometry &amp; Angles — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Use this card to revise before a test. If you forget a rule, open the matching section above — each one has a diagram and a Quick Check question.</p>
+
+            <div class="revision-card-wrap">
+        <div class="lesson-quick-ref-card" role="region" aria-label="Geometry and angles quick reference">
+          <h3>Geometry &amp; Angles — Quick Reference</h3>
+          <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+
+            <div>
+              <h4 style="color:#1a6fa8;">Lines &amp; points</h4>
+              <ul>
+                <li>Straight line = 180°</li>
+                <li>Around a point = 360°</li>
+                <li>Vertically opposite angles are equal</li>
+              </ul>
+              <h4 style="color:#1a6fa8;margin-top:14px;">Parallel lines</h4>
+              <ul>
+                <li>Corresponding (F) = equal</li>
+                <li>Alternate (Z) = equal</li>
+                <li>Co-interior (C) = 180°</li>
+              </ul>
+              <h4 style="color:#1a6fa8;margin-top:14px;">Triangles</h4>
+              <ul>
+                <li>Angles sum to 180°</li>
+                <li>Exterior = sum of two interior opposites</li>
+              </ul>
+            </div>
+            <div>
+              <h4 style="color:#1a6fa8;">Polygons</h4>
+              <ul>
+                <li>Interior sum = \((n-2) \times 180°\)</li>
+                <li>Regular interior = \((n-2) \times 180 / n\)</li>
+                <li>Exterior angle = \(360° / n\)</li>
+              </ul>
+              <h4 style="color:#1a6fa8;margin-top:14px;">Circle theorems</h4>
+              <ul>
+                <li>Centre angle = 2 × circumference angle</li>
+                <li>Angle in semicircle = 90°</li>
+                <li>Same segment → equal angles</li>
+                <li>Cyclic quad: opposite angles = 180°</li>
+                <li>Tangent ⊥ radius; tangents from a point are equal</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+</div>
+
+  <!-- Practice link -->
+  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='geometry_angles') }}"
+       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+      Start Practice Quiz
+    </a>
+  </div>
+
+{% endblock %}

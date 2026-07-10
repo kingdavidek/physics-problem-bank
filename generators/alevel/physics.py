@@ -2,6 +2,7 @@ import random
 import math
 
 from generators.shared.utils import make_problem
+from generators.shared.variant_utils import pick_named_variant
 
 
 
@@ -20,12 +21,122 @@ def _sample_variants(pool, count):
 #
 #
 # 2018 - Photoelectric effect and wave particle duality
+# 3850 - Particle physics
+#
 #
 # -----------------------------------------------
 
 # -----------------------------------------------
 # A-LEVEL PHYSICS — Fields: MAGNETISM - LESSON
 # -----------------------------------------------
+def _mag_found_field_definition():
+    q = "Define magnetic flux density B and state its SI unit."
+    s = "Magnetic flux density is the force per unit current per unit length on a wire placed perpendicular to the field. Its unit is the tesla (T)."
+    hint = "B = F / (IL) when wire is perpendicular."
+    return q, s, hint, 1
+
+def _mag_found_fleming_left():
+    q = "State Fleming's left‑hand rule for the motor effect."
+    s = "Thumb = force (motion), First finger = magnetic field, SeCond finger = current."
+    hint = "ThuMb = Motion."
+    return q, s, hint, 1
+
+def _mag_found_flux_definition():
+    q = "Define magnetic flux Φ and state its unit."
+    s = "Magnetic flux is the product of the component of magnetic flux density perpendicular to a surface and the area of that surface. Unit: weber (Wb)."
+    hint = "Φ = BA cosθ."
+    return q, s, hint, 1
+
+def _mag_found_induced_emf_condition():
+    q = "State the condition necessary for an emf to be induced in a conductor."
+    s = "The conductor must cut magnetic field lines, or there must be a change in magnetic flux linking a circuit."
+    hint = "Faraday's law: rate of change of flux linkage."
+    return q, s, hint, 2
+
+
+def _mag_inter_force_calc():
+    B = random.choice([0.05, 0.10, 0.15, 0.20])  # T
+    I = random.choice([2.0, 3.0, 4.0, 5.0])        # A
+    L = random.choice([0.10, 0.20, 0.30, 0.50])    # m
+    F = B * I * L
+    q = rf"A straight wire of length {L} m carries a current of {I} A perpendicular to a uniform magnetic field of flux density {B} T. Calculate the force on the wire."
+    s = rf"F = BIL = {B} × {I} × {L} = {F:.3f} N."
+    hint = "F = BIL sinθ, with θ = 90° → sinθ = 1."
+    return q, s, hint, 2
+
+def _mag_inter_charge_force():
+    B = random.choice([0.20, 0.30, 0.50])          # T
+    Q = 1.60e-19
+    v = random.choice([1.0e6, 2.0e6, 3.0e6])       # m/s
+    F = B * Q * v
+    q = rf"An electron (Q = -1.60×10⁻¹⁹ C) moves at speed {v:.1e} m/s perpendicular to a magnetic field of {B} T. Calculate the magnitude of the magnetic force on it."
+    s = rf"F = BQv = {B} × 1.60×10⁻¹⁹ × {v:.1e} = {F:.2e} N."
+    hint = "F = BQv sinθ, with θ = 90°."
+    return q, s, hint, 2
+
+def _mag_inter_flux_linkage():
+    N = random.choice([50, 100, 200])
+    B = random.choice([0.05, 0.10, 0.20])
+    A = round(random.uniform(0.001, 0.01), 4)
+    flux = N * B * A
+    q = rf"A coil of {N} turns, area {A} m², is placed in a uniform magnetic field of {B} T with its plane perpendicular to the field. Calculate the magnetic flux linkage."
+    s = rf"Flux linkage NΦ = N B A = {N} × {B} × {A} = {flux:.4e} Wb-turns."
+    hint = "NΦ = BAN when plane is perpendicular to field (θ = 0)."
+    return q, s, hint, 2
+
+def _mag_inter_transformer():
+    Vp = 230
+    Np = random.choice([200, 400, 500])
+    Ns = random.choice([100, 50, 20])
+    Vs = Vp * (Ns / Np)
+    q = rf"A transformer has {Np} primary turns and {Ns} secondary turns. It is connected to a {Vp} V mains supply. Calculate the secondary voltage."
+    s = rf"Vs/Vp = Ns/Np → Vs = {Vp} × ({Ns}/{Np}) = {Vs:.1f} V."
+    hint = "Transformer equation: Vs/Vp = Ns/Np."
+    return q, s, hint, 2
+
+def mag_exam_motor_effect():
+    B = random.choice([0.04, 0.06, 0.08])  # T
+    I = random.choice([3.0, 4.0, 5.0])     # A
+    L = random.choice([0.20, 0.25, 0.30])  # m
+    F = B * I * L
+    q = rf"""<strong>Q1. Motor Effect</strong><br>
+A straight wire of length <strong>{L} m</strong> carries a current of <strong>{I} A</strong> and is placed perpendicular to a uniform magnetic field of flux density <strong>{B} T</strong>.<br>
+<strong>(a)</strong> Calculate the force on the wire. <strong>(2)</strong><br>
+<strong>(b)</strong> State the orientation of the wire relative to the field that would give zero force. <strong>(1)</strong><br>
+<strong>(c)</strong> Describe and explain the effect on the force if the current is doubled and the magnetic field strength is halved. <strong>(2)</strong><br>
+(Total 5 marks)
+"""
+    s = rf"""<strong>(a)</strong> F = BIL = {B} × {I} × {L} = <strong>{F:.3f} N</strong><br>
+<strong>(b)</strong> Parallel to the field (sin0° = 0).<br>
+<strong>(c)</strong> F ∝ B and F ∝ I. Doubling I (×2) and halving B (×0.5) keeps the product unchanged, so the force is unchanged.
+"""
+    hint = "F = BIL sinθ. For (c), consider proportionality."
+    return q, s, hint, 5
+
+
+def mag_exam_faraday_lenz():
+    N = random.choice([120, 150, 200])
+    flux_initial = random.choice([4.0, 5.0, 6.0]) * 1e-4
+    flux_final = random.choice([1.5, 2.0, 2.5]) * 1e-4
+    dt = random.choice([0.15, 0.20, 0.25])
+    delta_flux = flux_initial - flux_final
+    emf = N * delta_flux / dt
+    q = rf"""<strong>Q2. Electromagnetic Induction</strong><br>
+A coil of <strong>{N} turns</strong> is positioned in a magnetic field that can be varied. The flux through each turn changes from <strong>{flux_initial:.1e} Wb</strong> to <strong>{flux_final:.1e} Wb</strong> in a time of <strong>{dt} s</strong>.<br>
+<strong>(a)</strong> Calculate the induced emf. <strong>(2)</strong><br>
+<strong>(b)</strong> State Lenz's law and explain how it applies to this situation. <strong>(2)</strong><br>
+<strong>(c)</strong> The number of turns is increased to <strong>{N*2}</strong> while keeping everything else the same. Explain the effect on the induced emf. <strong>(2)</strong><br>
+(Total 6 marks)
+"""
+    s = rf"""<strong>(a)</strong> ΔΦ = {flux_initial:.1e} - {flux_final:.1e} = {delta_flux:.1e} Wb.<br>
+emf = N ΔΦ/Δt = {N} × {delta_flux:.1e} / {dt} = <strong>{emf:.3f} V</strong>.<br>
+<strong>(b)</strong> Lenz's law: the induced current opposes the change causing it. Here the flux is decreasing, so the induced current creates a flux that adds to the original, opposing the decrease.<br>
+<strong>(c)</strong> emf ∝ N, so doubling N to {N*2} doubles the emf to <strong>{2*emf:.3f} V</strong>.
+"""
+    hint = "emf = N ΔΦ/Δt. Lenz: opposition."
+    return q, s, hint, 6
+
+
 
 
 def aqa_mag_motor_effect():
@@ -40,6 +151,31 @@ def aqa_mag_motor_effect():
     q = rf"A wire of length {l_cm} cm carries a current of {I} A. It is placed in a uniform magnetic field of flux density {B} T at an angle of {angle}° to the field lines. Calculate the magnitude of the force on the wire."
     s = rf"Using \( F = BIl \sin\theta \):<br>Length in metres = {l_m} m<br>\( F = {B} \times {I} \times {l_m} \times \sin({angle}^\circ) \)<br><strong>F = {force:.3g} N</strong>"
     return {'question': q, 'solution': s}
+
+
+def _mag_diff_cyclotron():
+    q = "Explain how a cyclotron works, including the roles of the electric and magnetic fields. State why the particle's orbit radius increases."
+    s = "A cyclotron consists of two D‑shaped electrodes. A high‑frequency alternating voltage accelerates particles across the gap. A uniform magnetic field keeps them in circular motion. After each acceleration, the speed increases, so the radius (r = mv/(BQ)) increases, making a spiral path."
+    hint = "Magnetic force = centripetal force; radius ∝ speed."
+    return q, s, hint, 4
+
+def _mag_diff_faraday_explain():
+    q = "State Faraday's law and use it to explain why moving a magnet into a coil induces an emf."
+    s = "Faraday's law: induced emf equals the rate of change of magnetic flux linkage. Moving a magnet towards a coil increases the flux through it; the changing flux induces an emf. Faster movement = greater rate of change = larger emf."
+    hint = "ε = -N ΔΦ/Δt."
+    return q, s, hint, 3
+
+def _mag_diff_lenz_application():
+    q = "When a magnet is dropped through a copper pipe, it falls more slowly than in air. Explain this observation using Lenz's law."
+    s = "As the magnet falls, it induces eddy currents in the copper pipe. By Lenz's law, these currents create a magnetic field that opposes the motion of the magnet, exerting an upward force, reducing acceleration."
+    hint = "Eddy currents oppose change."
+    return q, s, hint, 4
+
+def _mag_diff_halbach_array():
+    q = "A Halbach array is used in some electric motors. Explain the advantage of a Halbach arrangement of magnets."
+    s = "A Halbach array strengthens the magnetic field on one side while cancelling it on the other, concentrating the flux where it is needed for the motor, improving efficiency."
+    hint = "Think of flux concentration."
+    return q, s, hint, 2
 
 def aqa_mag_particle_path():
     v_sci = random.choice([3.2, 4.5, 5.2, 6.0])
@@ -414,131 +550,136 @@ def mag_mcq():
         f"{chosen['explanation']}"
     )
     hint_text = "This is a multiple choice question — eliminate the distractors by checking each option against the physics."
-    return q_text, s_text, hint_text, 1
+
+    # Q21: Field definition
+    questions.append({
+        'q': "Which of the following correctly states Fleming's left‑hand rule?",
+        'A': "Thumb = force, first finger = current, second finger = magnetic field",
+        'B': "Thumb = magnetic field, first finger = force, second finger = current",
+        'C': "Thumb = force, first finger = magnetic field, second finger = current",
+        'D': "Thumb = current, first finger = magnetic field, second finger = force",
+        'answer': 'C',
+        'explanation': "Thumb = force, First finger = field, SeCond finger = current."
+    })
+
+    # Q22: Force on wire maximum angle
+    questions.append({
+        'q': "The force on a current‑carrying wire in a magnetic field is maximum when the wire is:",
+        'A': "Parallel to the field",
+        'B': "Perpendicular to the field",
+        'C': "At 45° to the field",
+        'D': "The force is constant at all angles",
+        'answer': 'B',
+        'explanation': "F = BIL sinθ, sin90° = 1, sin0° = 0."
+        })
+
+# Q23: Unit of B
+    questions.append({
+        'q': "What is the unit of magnetic flux density B?",
+        'A': "Weber (Wb)",
+        'B': "Tesla (T)",
+        'C': "Henry (H)",
+        'D': "Volt (V)",
+        'answer': 'B',
+        'explanation': "B = F/(IL sinθ) → N/(A·m) = Tesla."
+    })
+
+# Q24: Lenz's law
+    questions.append({
+        'q': "According to Lenz's law, the direction of an induced current is such that it:",
+        'A': "Opposes the change that produced it",
+        'B': "Reinforces the change that produced it",
+        'C': "Is always clockwise",
+        'D': "Has no effect on the flux",
+        'answer': 'A',
+        'explanation': "Conservation of energy."
+    })
+
+# Q25: Which is NOT a fundamental force
+    questions.append({
+        'q': "Which of the following is NOT a fundamental force?",
+        'A': "Electromagnetic",
+        'B': "Strong interaction",
+        'C': "Kinetic force",
+        'D': "Weak interaction",
+        'answer': 'C',
+        'explanation': "Kinetic is not fundamental."
+    })
+
+    # Q26: Transformer calculation
+    questions.append({
+        'q': "A transformer with 200 primary turns and 50 secondary turns is connected to a 240 V supply. What is the secondary voltage?",
+        'A': "60 V",
+        'B': "120 V",
+        'C': "960 V",
+        'D': "48 V",
+        'answer': 'A',
+        'explanation': "Vs/Vp = Ns/Np → Vs/240 = 50/200 → Vs = 60V."
+    })
+
+# Q27: Cyclotron magnetic field
+    questions.append({
+        'q': "In a cyclotron, the role of the magnetic field is to:",
+        'A': "Accelerate the particles",
+        'B': "Keep the particles in a circular path",
+        'C': "Cool the particles",
+        'D': "Generate electric fields",
+        'answer': 'B',
+        'explanation': "Magnetic force is centripetal."
+    })
+
+# Q28: de Broglie wavelength of macroscopic object
+    questions.append({
+        'q': "What is the de Broglie wavelength of a 0.1 kg ball moving at 30 m/s? (h = 6.63×10⁻³⁴ Js)",
+        'A': "2.2×10⁻³⁴ m",
+        'B': "2.2×10⁻³⁵ m",
+        'C': "2.2×10⁻³⁶ m",
+        'D': "2.2×10⁻³⁷ m",
+        'answer': 'A',
+        'explanation': "λ = h/mv = 6.63×10⁻³⁴/(0.1×30) ≈ 2.2×10⁻³⁴ m."
+    })
+
+# Q29: Flux linkage definition
+    questions.append({
+        'q': "Magnetic flux linkage for a coil of N turns is:",
+        'A': "NΦ",
+        'B': "N/Φ",
+        'C': "Φ/N",
+        'D': "BAN",
+        'answer': 'A',
+        'explanation': "Flux linkage = NΦ = BAN cosθ."
+    })
+
+    # Q30: Large Hadron Collider magnetic field
+    questions.append({
+        'q': "The large hadron collider uses magnetic fields to:",
+        'A': "Provide energy to protons",
+        'B': "Bend protons in a circular path",
+        'C': "Detect proton collisions",
+        'D': "Convert protons to neutrons",
+        'answer': 'B',
+        'explanation': "Magnetic fields provide centripetal force for charged particle beams."
+    })
 
 
-def alevel_physics_magnetism(difficulty, mode):
-    # EXAM MODE + DIFFICULT gets the exclusive 12-15 mark variants
 
-    if mode == 'mcq':
-        q, s, hint, marks = mag_mcq()
-        return make_problem(q, s, hint, difficulty, marks, 'alevel', 'physics', 'magnetism')
+    # Build a list of option strings matching the template format
+    options_list = [
+        f"A  {chosen['A']}",
+        f"B  {chosen['B']}",
+        f"C  {chosen['C']}",
+        f"D  {chosen['D']}",
+    ]
+    # The correct answer is a single letter, e.g. 'C'
+    correct_letter = chosen['answer']
 
-    if mode == 'exam' and difficulty == 'difficult':
-        variant = random.choice([
-            mag_exam_current_balance,
-            mag_exam_fine_beam_tube,
-            mag_exam_mass_spec_uranium,
-            mag_exam_cyclotron_synoptic,
-            mag_exam_bubble_chamber,
-            mag_exam_mhd_blood_flow,
-            mag_exam_railgun,
-            mag_exam_galvanometer,
-            mag_exam_helical_trap,
-            mag_exam_crossed_fields_comparative,
-            mag_exam_ac_generator,
-            mag_exam_falling_magnet,
-            mag_exam_transformer
-        ])
-    # Standard exam mode mixed difficulties
-    elif mode == 'exam' and difficulty == 'mixed':
-        difficulty = random.choices(
-            ['foundational', 'intermediate', 'difficult'],
-            weights=[60, 30, 10]
-        )[0]
-        if difficulty == 'foundational':
-            variant = random.choice([
-                mag_found_force_on_conductor,
-                mag_found_force_on_conductor_b,
-                mag_found_flhr_a,
-                mag_found_flhr_b,
-                mag_found_flhr_c,
-                mag_found_flux_density_definition,
-                mag_found_force_on_charge,
-                mag_found_force_on_charge_b,
-                mag_found_field_pattern_wire,
-                mag_found_field_pattern_solenoid,
-            ])
-        elif difficulty == 'intermediate':
-            variant = random.choice([
-                mag_inter_circular_motion,
-                mag_inter_velocity_selector,
-                mag_inter_fil_angle,
-                mag_inter_period_cyclotron,
-                mag_inter_hall_voltage,
-                mag_inter_find_mass,
-                mag_inter_force_between_wires,
-                mag_inter_electron_circle,
-                mag_inter_fil_angle_b,
-                mag_inter_current_field_wire,
-            ])
-        else:
-            variant = random.choice([
-                mag_exam_current_balance,
-                mag_exam_fine_beam_tube,
-                mag_exam_mass_spec_uranium,
-                mag_exam_cyclotron_synoptic,
-                mag_exam_bubble_chamber,
-                mag_exam_mhd_blood_flow,
-                mag_exam_railgun,
-                mag_exam_galvanometer,
-                mag_exam_helical_trap,
-                mag_exam_crossed_fields_comparative,
-            ])
-    # The rest is the standard routing for revision mode
-    elif difficulty == 'foundational':
-        variant = random.choice([
-            mag_found_force_on_conductor,
-            mag_found_force_on_conductor_b,
-            mag_found_flhr_a,
-            mag_found_flhr_b,
-            mag_found_flhr_c,
-            mag_found_flux_density_definition,
-            mag_found_force_on_charge,
-            mag_found_force_on_charge_b,
-            mag_found_field_pattern_wire,
-            mag_found_field_pattern_solenoid,
-        ])
-    elif difficulty == 'intermediate':
-        variant = random.choice([
-            mag_inter_circular_motion,
-            mag_inter_velocity_selector,
-            mag_inter_fil_angle,
-            mag_inter_period_cyclotron,
-            mag_inter_hall_voltage,
-            mag_inter_find_mass,
-            mag_inter_force_between_wires,
-            mag_inter_electron_circle,
-            mag_inter_fil_angle_b,
-            mag_inter_current_field_wire,
-        ])
-    else:
-        # Standard difficult revision variants
-        variant = random.choice([
-            mag_diff_no_work,
-            mag_diff_mass_spectrometer,
-            mag_diff_hall_semiconductor,
-            mag_diff_cyclotron_extended,
-            mag_diff_compare_fields,
-            mag_diff_helical_motion,
-            mag_diff_magnetic_bottle,
-            mag_diff_relativistic,
-            mag_diff_hall_derive,
-            mag_diff_force_current_loop,
-            mag_diff_extra_levitation,
-            mag_diff_extra_cyclotron_energy,
-            mag_diff_extra_helical_pitch,
-            mag_diff_extra_deflection_angle,
-            mag_diff_extra_null_point,
-            mag_diff_extra_isotope_ratio,
-            mag_diff_extra_hall_drift,
-            mag_diff_extra_crossed_accel,
-            mag_diff_extra_earth_magnetic,
-            mag_diff_extra_motor_efficiency,
-        ])
+    # Return the 6‑tuple: question, solution, hint, marks, options list, correct letter
+    return chosen['q'], s_text, hint_text, 1, options_list, correct_letter
 
-    q, s, hint, marks = variant()
-    return make_problem(q, s, hint, difficulty, marks, 'alevel', 'physics', 'magnetism')
+
+def alevel_physics_magnetism(difficulty, mode, variant_name=None):
+    from generators.alevel.magnetism import alevel_physics_magnetism as _mag_gen
+    return _mag_gen(difficulty, mode, variant_name=variant_name)
 
 # -----------------------------------------------
 # SVG HELPER FUNCTIONS
@@ -1702,45 +1843,7 @@ def mag_exam_bubble_chamber():
     hint = r"For (b), using the formula E_k = p²/2m is the fastest way to get the derivation."
     return q, s, hint, 12
 
-def mag_exam_mhd_blood_flow():
-    v = round(random.uniform(0.1, 0.5), 2)
-    B = round(random.uniform(0.05, 0.20), 2)
-    d_mm = random.randint(4, 12)
-    d = d_mm / 1000
-    V_mv = round(B * v * d * 1000, 3)
-    Z = (math.pi * d**2 / 4) * v
-    diagram = r"""<svg width="200" height="160" viewBox="0 0 200 160" style="margin:15px 0;display:block;background:#f9f8f5;border-radius:8px;padding:10px;">
-      <circle cx="100" cy="80" r="50" fill="#fef0f0" stroke="#a13544" stroke-width="3"/>
-      <text x="100" y="20" font-family="sans-serif" fill="#01696f" text-anchor="middle" font-weight="bold">B-field ↓</text>
-      <line x1="100" y1="25" x2="100" y2="135" stroke="#01696f" stroke-width="2" stroke-dasharray="4,4"/>
-      <polygon points="96,125 100,135 104,125" fill="#01696f"/>
-      <text x="65" y="85" font-family="sans-serif" font-weight="bold" fill="#a13544">+</text>
-      <text x="65" y="70" font-family="sans-serif" font-weight="bold" fill="#a13544">+</text>
-      <text x="65" y="100" font-family="sans-serif" font-weight="bold" fill="#a13544">+</text>
-      <text x="130" y="85" font-family="sans-serif" font-weight="bold" fill="#3b78ab">−</text>
-      <text x="130" y="70" font-family="sans-serif" font-weight="bold" fill="#3b78ab">−</text>
-      <text x="130" y="100" font-family="sans-serif" font-weight="bold" fill="#3b78ab">−</text>
-      <text x="100" y="155" font-family="sans-serif" font-size="12" text-anchor="middle">Blood flow (v) into page ⊗</text>
-    </svg>"""
-    q = (r"<strong>[14 marks] Medical Physics: MHD Flowmeter & Volume Flow Rate</strong><br>"
-         r"An electromagnetic flowmeter measures the speed of blood. "
-         rf"The artery has an internal diameter of <strong>{d_mm} mm</strong>. A magnetic field of <strong>{B} T</strong> is applied.<br>{diagram}"
-         r"<strong>a)</strong> Derive the equation V = Bvd for the potential difference across the artery, starting from the forces on a single ion.<br>"
-         r"<strong>b)</strong> The volume flow rate Z (in m³ s⁻¹) is the volume of blood passing a point per second. "
-         r"Derive an expression for Z in terms of V, d, and B.<br>"
-         rf"<strong>c)</strong> The measured potential difference is <strong>{V_mv} mV</strong>. Calculate the blood velocity v.<br>"
-         r"<strong>d)</strong> Calculate the volume flow rate Z in m³ s⁻¹.<br>"
-         r"<strong>e)</strong> Suggest why the magnetic field must be alternating (AC) rather than static (DC) in a real medical device.")
-    s = (r"<strong>a)</strong> Equilibrium occurs when electric force equals magnetic force: qE = Bqv → E = Bv. "
-         r"For a uniform electric field across diameter d, V = Ed. Substituting E yields V = Bvd.<br><br>"
-         r"<strong>b)</strong> Volume flow rate Z = Area × velocity = A v. The cross-sectional area of the artery A = πd² / 4. "
-         r"From (a), v = V / (Bd). Substituting both: Z = (πd² / 4) × (V / Bd). Simplifying gives Z = πdV / 4B.<br><br>"
-         rf"<strong>c)</strong> v = V / Bd = ({V_mv} × 10⁻³) / ({B} × {d}) = <strong>{v:.3f} m s⁻¹</strong>.<br><br>"
-         rf"<strong>d)</strong> Z = A v = (π × {d}² / 4) × {v:.3f} = <strong>{Z:.2e} m³ s⁻¹</strong>.<br><br>"
-         r"<strong>e)</strong> A static DC field causes ions to permanently migrate to the vessel walls, polarizing the artery (which creates resistance/polarization artifacts). "
-         r"An AC field continuously flips the direction, preventing charge buildup and providing a cleaner signal.")
-    hint = r"Volume flow rate Z = Cross-sectional Area × velocity. The area is a circle: πd²/4."
-    return q, s, hint, 14
+
 
 def mag_exam_railgun():
     B = round(random.uniform(0.5, 2.0), 2)
@@ -1979,48 +2082,62 @@ def mag_exam_falling_magnet():
     return q, s, hint, 15
 
 def mag_exam_transformer():
-    V_p = random.choice([25000, 33000, 132000])
-    V_s = 400000
-    N_p = random.randint(400, 1000)
-    N_s = int(N_p * (V_s / V_p))
-    I_p = random.randint(200, 500)
-    P_in = V_p * I_p
-    efficiency = random.choice([95, 96, 97, 98])
-    P_out = P_in * (efficiency / 100)
-    I_s = P_out / V_s
-    diagram = r"""<svg width="220" height="160" viewBox="0 0 220 160" style="margin:15px 0;display:block;background:#f9f8f5;border-radius:8px;padding:10px;">
-      <rect x="40" y="30" width="140" height="100" fill="none" stroke="#dcd9d5" stroke-width="24"/>
-      <rect x="45" y="35" width="130" height="90" fill="none" stroke="#888" stroke-width="1"/>
-      <rect x="50" y="40" width="120" height="80" fill="none" stroke="#888" stroke-width="1"/>
-      <path d="M 18,50 L 52,50 M 18,65 L 52,65 M 18,80 L 52,80 M 18,95 L 52,95 M 18,110 L 52,110" stroke="#a13544" stroke-width="4"/>
-      <path d="M 168,40 L 202,40 M 168,50 L 202,50 M 168,60 L 202,60 M 168,70 L 202,70 M 168,80 L 202,80 M 168,90 L 202,90 M 168,100 L 202,100 M 168,110 L 202,110 M 168,120 L 202,120" stroke="#01696f" stroke-width="3"/>
-      <text x="15" y="25" font-family="sans-serif" font-size="12" fill="#a13544" font-weight="bold">Primary AC</text>
-      <text x="140" y="25" font-family="sans-serif" font-size="12" fill="#01696f" font-weight="bold">Secondary</text>
+    # Fixed values
+    Np = 445
+    Vp = 132e3   # 132 kV
+    Vs = 400e3   # 400 kV
+    Ip = 297      # A
+    eff = 0.98
+
+    Ns = Np * Vs / Vp
+    Is_ideal = Ip * Vp / Vs
+    Is_real = Is_ideal * eff
+
+    # SVG of a simple transformer
+    svg = r"""<svg width="360" height="200" viewBox="0 0 360 200"
+     style="display:block; margin:12px auto; background:#f9f8f5; border-radius:8px;">
+      <!-- Primary coil -->
+      <rect x="40" y="40" width="60" height="120" rx="8" fill="none" stroke="#01696f" stroke-width="3"/>
+      <text x="70" y="25" text-anchor="middle" font-size="12" font-family="sans-serif" fill="#01696f">Primary</text>
+      <line x1="70" y1="40" x2="70" y2="25" stroke="#01696f" stroke-width="2"/>
+      <!-- Secondary coil -->
+      <rect x="260" y="40" width="60" height="120" rx="8" fill="none" stroke="#a13544" stroke-width="3"/>
+      <text x="290" y="25" text-anchor="middle" font-size="12" font-family="sans-serif" fill="#a13544">Secondary</text>
+      <line x1="290" y1="40" x2="290" y2="25" stroke="#a13544" stroke-width="2"/>
+      <!-- Iron core -->
+      <rect x="80" y="80" width="200" height="40" rx="4" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="6,4"/>
+      <text x="180" y="175" text-anchor="middle" font-size="12" font-family="sans-serif" fill="#555">Iron core</text>
+      <!-- Labels -->
+      <text x="60" y="105" font-size="11" font-family="sans-serif" fill="#333">N<sub>p</sub> = """ + str(Np) + r"""</text>
+      <text x="270" y="105" font-size="11" font-family="sans-serif" fill="#333">N<sub>s</sub> = """ + f"{Ns:.0f}" + r"""</text>
+      <text x="20" y="60" font-size="11" font-family="sans-serif" fill="#01696f">V<sub>p</sub> = """ + f"{Vp/1e3:.0f}" + r""" kV</text>
+      <text x="300" y="60" font-size="11" font-family="sans-serif" fill="#a13544">V<sub>s</sub> = """ + f"{Vs/1e3:.0f}" + r""" kV</text>
     </svg>"""
-    q = (r"<strong>[14 marks] Electromagnetic Induction: Real vs Ideal Transformers</strong><br>"
-         r"A step-up transformer at a power station is used to transmit power into the National Grid.<br>"
-         rf"{diagram}"
-         rf"The primary coil has <strong>{N_p} turns</strong> and receives an alternating input voltage of <strong>{V_p / 1000:.0f} kV</strong>. "
-         rf"The secondary coil steps this up to <strong>{V_s / 1000:.0f} kV</strong>.<br><br>"
-         r"<strong>a)</strong> Explain the core physical principles by which an alternating voltage across the primary coil induces an EMF in the secondary coil.<br>"
-         r"<strong>b)</strong> Calculate the required number of turns on the secondary coil.<br>"
-         r"<strong>c)</strong> State two causes of energy loss in a real transformer, and for each, describe a design feature used to minimize it.<br>"
-         rf"<strong>d)</strong> The current in the primary coil is <strong>{I_p} A</strong>. The transformer operates at exactly <strong>{efficiency}% efficiency</strong>. "
-         r"Calculate the current delivered to the National Grid by the secondary coil.<br>"
-         r"<strong>e)</strong> Show mathematically that transmitting power at 400 kV instead of 25 kV reduces the power lost as heat in the transmission cables by a factor of 256.")
-    s = (r"<strong>a)</strong> An alternating voltage in the primary coil causes an alternating current. This generates a continuously changing magnetic flux. "
-         r"The soft iron core links this changing flux to the secondary coil. By Faraday's Law, the changing flux linkage induces an alternating EMF in the secondary coil.<br><br>"
-         rf"<strong>b)</strong> N_s / N_p = V_s / V_p → N_s = N_p × (V_s / V_p) = {N_p} × ({V_s} / {V_p}) = <strong>{N_s} turns</strong>.<br><br>"
-         r"<strong>c)</strong> 1. Eddy currents heating the core: minimized by making the core out of laminated sheets separated by thin insulators.<br>"
-         r"2. Resistive heating (I²R) in the coils: minimized by using thick, low-resistance copper wire.<br>"
-         r"3. Hysteresis loss: minimized by using a 'soft' iron core that is easy to magnetise and demagnetise.<br><br>"
-         rf"<strong>d)</strong> Input Power P_in = V_p × I_p = {V_p} × {I_p} = {P_in:.2e} W.<br>"
-         rf"Output Power P_out = P_in × {efficiency/100:.2f} = {P_out:.2e} W.<br>"
-         rf"Secondary Current I_s = P_out / V_s = {P_out:.2e} / {V_s} = <strong>{I_s:.2f} A</strong>.<br><br>"
-         r"<strong>e)</strong> For a fixed transmitted power P = VI, current I = P/V. If V increases by a factor of 16 (400/25 = 16), current I decreases by a factor of 16. "
-         r"Power lost in cables P_loss = I²R. Since I is divided by 16, the power lost is divided by 16², which is <strong>256</strong>.")
-    hint = r"For (e), the power lost in the cables is I²R, but the power transmitted is P=VI. Don't mix up the two powers!"
+
+    q = rf"""<strong>[14 marks] Electromagnetic Induction: Real vs Ideal Transformers</strong><br><br>
+A step‑up transformer at a power station is used to transmit power into the National Grid.<br><br>
+{svg}<br><br>
+The primary coil has <strong>{Np} turns</strong> and receives an alternating input voltage of <strong>{Vp/1e3:.0f} kV</strong>. The secondary coil steps this up to <strong>{Vs/1e3:.0f} kV</strong>.<br><br>
+<strong>a)</strong> Explain the core physical principles by which an alternating voltage across the primary coil induces an EMF in the secondary coil.<br>
+<strong>b)</strong> Calculate the required number of turns on the secondary coil.<br>
+<strong>c)</strong> State two causes of energy loss in a real transformer, and for each, describe a design feature used to minimise it.<br>
+<strong>d)</strong> The current in the primary coil is <strong>{Ip} A</strong>. The transformer operates at exactly <strong>{eff*100:.0f}% efficiency</strong>. Calculate the current delivered to the National Grid by the secondary coil.<br>
+<strong>e)</strong> Show mathematically that transmitting power at <strong>{Vs/1e3:.0f} kV</strong> instead of <strong>25 kV</strong> reduces the power lost as heat in the transmission cables by a factor of 256.
+(Total 14 marks)
+"""
+
+    s = rf"""<strong>a)</strong> The alternating current in the primary coil produces a changing magnetic flux in the iron core. This changing flux links the secondary coil. By Faraday's law, a changing flux linkage induces an EMF in the secondary coil. The core concentrates the flux and ensures it passes through both coils.<br><br>
+<strong>b)</strong> Vs/Vp = Ns/Np → Ns = Np × (Vs/Vp) = {Np} × ({Vs/1e3:.0f}/{Vp/1e3:.0f}) = <strong>{Ns:.0f} turns</strong>.<br><br>
+<strong>c)</strong>
+1. <strong>Eddy currents</strong> – induced in the iron core; cause resistive heating. <em>Minimised by</em> laminating the core (thin insulated sheets) to increase resistance.
+2. <strong>Coil resistance (I²R heating)</strong> – wires have resistance, causing heat loss. <em>Minimised by</em> using thick copper wire (low resistivity, larger cross‑section).<br><br>
+<strong>d)</strong> Ideal secondary current Is_ideal = Ip × (Vp/Vs) = {Ip} × ({Vp/1e3:.0f}/{Vs/1e3:.0f}) = {Is_ideal:.2f} A. Real Is = Is_ideal × efficiency = {Is_ideal:.2f} × {eff} = <strong>{Is_real:.2f} A</strong>.<br><br>
+<strong>e)</strong> Power lost in cables = I²R. For a given transmitted power P = IV, current I = P/V. So P_loss = (P²/V²)R ∝ 1/V². Ratio of losses: (400/25)² = 16² = 256. Transmitting at 400 kV reduces P_loss by a factor of 256 compared to 25 kV.
+"""
+
+    hint = "Use Vs/Vp = Ns/Np, efficiency = P_out/P_in, and I ∝ 1/V for constant power."
     return q, s, hint, 14
+
 
 
 
@@ -2175,17 +2292,7 @@ def alevel_physics_photoelectric(difficulty, mode, variant_name=None):
         )
 
     variants = alevel_physics_photoelectric_variants(difficulty, mode)
-
-    if variant_name is None:
-        variant = random.choice(variants)
-    else:
-        variant_map = {v.__name__: v for v in variants}
-        if variant_name not in variant_map:
-            # Safe fallback if queue/session becomes stale after code changes
-            variant = random.choice(variants)
-        else:
-            variant = variant_map[variant_name]
-
+    variant = pick_named_variant(variants, variant_name)
     q, s, hint, marks = variant()
     return make_problem(q, s, hint, difficulty, marks, 'alevel', 'physics', 'photoelectric')
 
@@ -2272,7 +2379,7 @@ Convert this value to joules."""
     s = rf"""Use \( 1 \, \text{{eV}} = 1.60 \times 10^{{-19}} \, \text{{J}} \).<br>
 \( \phi = {phi_ev} \times 1.60 \times 10^{{-19}} \)<br>
 \( \phi = \boxed{{{phi_j:.3g} \, \text{{J}}}} \)"""
-    hint = "Multiply by \( 1.60 \times 10^{-19} \)."
+    hint = r"Multiply by \( 1.60 \times 10^{-19} \)."
     return q, s, hint, 2
 
 
@@ -2284,7 +2391,7 @@ Convert this value to electronvolts."""
     s = rf"""Use \( 1 \, \text{{eV}} = 1.60 \times 10^{{-19}} \, \text{{J}} \).<br>
 \( \phi = \frac{{{phi_j:.3g}}}{{1.60 \times 10^{{-19}}}} \)<br>
 \( \phi = \boxed{{{phi_ev:.3g} \, \text{{eV}}}} \)"""
-    hint = "Divide by \( 1.60 \times 10^{-19} \)."
+    hint = r"Divide by \( 1.60 \times 10^{-19} \)."
     return q, s, hint, 2
 
 
@@ -2535,7 +2642,7 @@ For both metals the photon energy is the same, but \( E_k = hf - \phi \). Since 
 Numerically:<br>
 Metal A: \( E_k \approx {ke1:.3g} \, \text{{J}} \)<br>
 Metal B: \( E_k \approx {ke2:.3g} \, \text{{J}} \)"""
-    hint = "Compare the work functions using \( E_k = hf - \phi \)."
+    hint = r"Compare the work functions using \( E_k = hf - \phi \)."
     return q, s, hint, 4
 
 
@@ -2582,7 +2689,7 @@ def _pe_diff_stopping_potential_graph():
     h = 6.63e-34
     e = 1.60e-19
     gradient = h / e
-    q = """A graph of stopping potential \(V_s\) against frequency \(f\) is plotted for a metal.
+    q = r"""A graph of stopping potential \(V_s\) against frequency \(f\) is plotted for a metal.
 Explain what the gradient and the intercept on the frequency axis represent."""
     s = rf"""From \( eV_s = hf - \phi \), we get:
 \( V_s = \frac{{h}}{{e}}f - \frac{{\phi}}{{e}} \).<br><br>
@@ -3617,14 +3724,6 @@ For (e), think about whether electrons are moving up (absorption) or down (emiss
     return q, s, hint, marks
 
 
-def _sample_variants(pool, count):
-    if count >= len(pool):
-        picked = pool[:]
-        random.shuffle(picked)
-        return picked
-    return random.sample(pool, count)
-
-
 def alevel_physics_photoelectric_variants(difficulty, mode):
     foundational = [
         _pe_found_threshold_definition,
@@ -3684,10 +3783,8 @@ def alevel_physics_photoelectric_variants(difficulty, mode):
         pe_exam_aqa_q5_clone,
     ]
 
-    if mode == 'exam' and difficulty == 'difficult':
-        queue = exam_difficult[:]
-        random.shuffle(queue)
-        return queue
+    if mode == 'mcq':
+        return [pe_mcq] * 10
 
     if difficulty == 'foundational':
         queue = foundational[:]
@@ -3705,10 +3802,10 @@ def alevel_physics_photoelectric_variants(difficulty, mode):
         diff_block = _sample_variants(difficult, 2)
         return found_block + inter_block + diff_block
 
-    if mode == 'mcq':
-        return [pe_mcq] * 10
-
-    queue = difficult[:]
+    seen = {}
+    for fn in difficult + exam_difficult:
+        seen[fn.__name__] = fn
+    queue = list(seen.values())
     random.shuffle(queue)
     return queue
 
@@ -3813,7 +3910,7 @@ def pe_mcq():
                 "D  the intensity of the incident light."
             ],
             "ans": "B",
-            "hint": "At the stopping potential, \(eV_s = K_\text{max}\)."
+            "hint": r"At the stopping potential, \(eV_s = K_\text{max}\)."
         },
         {
             "q": "The graph of maximum kinetic energy of photoelectrons against frequency is a straight line. Its gradient represents:",
@@ -3824,7 +3921,7 @@ def pe_mcq():
                 "D  1 divided by Planck's constant."
             ],
             "ans": "B",
-            "hint": "Einstein's equation: \(K_\text{max} = hf - \phi\); the gradient is h."
+            "hint": r"Einstein's equation: \(K_\text{max} = hf - \phi\); the gradient is h."
         }
     ]
 
@@ -3836,3 +3933,578 @@ def pe_mcq():
     hint = qdata["hint"]
     marks = 1
     return q, s, hint, marks, options, correct
+
+
+
+
+# ================================================================
+# A-LEVEL PHYSICS – PARTICLE PHYSICS (DISTINCT VARIANTS)
+# ================================================================
+
+
+# ---------- FOUNDATIONAL (10 distinct functions) ----------
+def part_found_atom_basics(difficulty, mode):
+    q = "State what is meant by the proton number Z and the nucleon number A of an atom."
+    s = "Z is the number of protons in the nucleus. A is the total number of protons and neutrons (nucleons)."
+    hint = "Z = protons, A = protons + neutrons."
+    return make_problem(q, s, hint, difficulty, 2, 'alevel', 'physics', 'particles')
+
+def part_found_isotope_def(difficulty, mode):
+    q = "Define the term isotope."
+    s = "Isotopes are atoms of the same element (same proton number) but with different numbers of neutrons (different nucleon number)."
+    hint = "Same Z, different A."
+    return make_problem(q, s, hint, difficulty, 1, 'alevel', 'physics', 'particles')
+
+def part_found_specific_charge_electron(difficulty, mode):
+    e, me = 1.60e-19, 9.11e-31
+    sc = e / me
+    q = "Calculate the specific charge of an electron in C kg⁻¹. (e = 1.60×10⁻¹⁹ C, mₑ = 9.11×10⁻³¹ kg)"
+    s = rf"Specific charge = Q/m = 1.60×10⁻¹⁹ / 9.11×10⁻³¹ = {sc:.3e} C kg⁻¹."
+    hint = "Divide charge by mass."
+    return make_problem(q, s, hint, difficulty, 2, 'alevel', 'physics', 'particles')
+
+def part_found_specific_charge_proton(difficulty, mode):
+    e, mp = 1.60e-19, 1.67e-27
+    sc = e / mp
+    q = "Calculate the specific charge of a proton in C kg⁻¹. (e = 1.60×10⁻¹⁹ C, mₚ = 1.67×10⁻²⁷ kg)"
+    s = rf"Specific charge = Q/m = 1.60×10⁻¹⁹ / 1.67×10⁻²⁷ = {sc:.3e} C kg⁻¹."
+    hint = "Divide charge by mass."
+    return make_problem(q, s, hint, difficulty, 2, 'alevel', 'physics', 'particles')
+
+def part_found_quark_proton(difficulty, mode):
+    q = "State the quark composition and total charge of a proton."
+    s = "Proton = uud (up, up, down). Charge = +⅔ + ⅔ − ⅓ = +1 (in units of e)."
+    hint = "Proton has two up quarks and one down quark."
+    return make_problem(q, s, hint, difficulty, 1, 'alevel', 'physics', 'particles')
+
+def part_found_nucleon_number(difficulty, mode):
+    q = "State what is meant by the nucleon number A and give an example for carbon-12."
+    s = "A is the total number of protons and neutrons in the nucleus. Carbon-12 has A=12 (6 protons + 6 neutrons)."
+    hint = "A = Z + N."
+    return make_problem(q, s, hint, difficulty, 1, 'alevel', 'physics', 'particles')
+
+def part_found_hadron_lepton_diff(difficulty, mode):
+    q = "State one difference between a hadron and a lepton."
+    s = "Hadrons feel the strong force; leptons do not. (Also: hadrons are made of quarks; leptons are fundamental)."
+    hint = "Think about the strong interaction."
+    return make_problem(q, s, hint, difficulty, 1, 'alevel', 'physics', 'particles')
+
+def part_found_neutron_charge_baryon(difficulty, mode):
+    q = "State the charge and baryon number of a neutron."
+    s = "Charge = 0; baryon number B = +1."
+    hint = "Neutron is a baryon with no net charge."
+    return make_problem(q, s, hint, difficulty, 1, 'alevel', 'physics', 'particles')
+
+def part_found_quark_generations(difficulty, mode):
+    q = "Name the three generations of quarks in the Standard Model."
+    s = "First generation: up (u), down (d). Second: charm (c), strange (s). Third: top (t), bottom (b)."
+    hint = "Each generation has a +2/3 and a -1/3 quark."
+    return make_problem(q, s, hint, difficulty, 2, 'alevel', 'physics', 'particles')
+
+def part_found_specific_charge_definition(difficulty, mode):
+    q = "Define specific charge. How is it calculated?"
+    s = "Specific charge = charge/mass (Q/m). It is usually expressed in C kg⁻¹."
+    hint = "It's a ratio."
+    return make_problem(q, s, hint, difficulty, 1, 'alevel', 'physics', 'particles')
+
+
+
+# ---------- INTERMEDIATE (10 distinct functions) ----------
+def part_inter_specific_charge_alpha(difficulty, mode):
+    e, u = 1.60e-19, 1.66e-27
+    charge = 2 * e
+    mass = 4 * u
+    sc = charge / mass
+    q = "Calculate the specific charge of an alpha particle (⁴₂He²⁺) in C kg⁻¹. (e = 1.60×10⁻¹⁹ C, u = 1.66×10⁻²⁷ kg)"
+    s = rf"Charge = +2e = {charge:.2e} C. Mass = 4u = {mass:.2e} kg. Specific charge = {charge:.2e} / {mass:.2e} = {sc:.3e} C kg⁻¹."
+    hint = "Alpha is a helium nucleus: 2 protons, 2 neutrons."
+    return make_problem(q, s, hint, difficulty, 3, 'alevel', 'physics', 'particles')
+
+def part_inter_neutron_quark_change(difficulty, mode):
+    q = "In beta-minus decay, a neutron changes into a proton. Describe the quark change and the exchange particle."
+    s = "A neutron (udd) becomes a proton (uud). One down quark changes to an up quark, emitting a W⁻ boson which then decays to e⁻ + ̄νₑ."
+    hint = "Think: udd → uud; which flavour changes?"
+    return make_problem(q, s, hint, difficulty, 3, 'alevel', 'physics', 'particles')
+
+def part_inter_baryon_number(difficulty, mode):
+    q = "State the baryon number B of a proton, a neutron, a π⁺ meson, and an antiproton. What is the baryon number of a quark?"
+    s = "Proton: B = +1. Neutron: B = +1. π⁺: B = 0. Antiproton: B = −1. Quark: B = +1/3."
+    hint = "Baryons B=+1, antibaryons B=−1, mesons B=0."
+    return make_problem(q, s, hint, difficulty, 2, 'alevel', 'physics', 'particles')
+
+def part_inter_muon_decay(difficulty, mode):
+    q = "Write the decay equation for a muon and verify that charge and lepton number are conserved."
+    s = r"μ⁻ → e⁻ + νμ + ̄νₑ. Charge: −1 → (−1) + 0 + 0 = −1. Lepton numbers: Lμ = 1 initially (μ⁻ has Lμ=+1). After: νμ has Lμ=+1, e⁻ has Lₑ=1, ̄νₑ has Lₑ=−1 → total Lμ=1, Lₑ=0 (initial Lₑ=0). Conserved."
+    hint = "Check muon number and electron number separately."
+    return make_problem(q, s, hint, difficulty, 4, 'alevel', 'physics', 'particles')
+
+def part_inter_pion_composition(difficulty, mode):
+    q = "Give the quark composition of a π⁺ and a π⁻ meson, and state their charges."
+    s = "π⁺ = ūd (up quark, anti‑down), charge = +1. π⁻ = d̄u (down, anti‑up), charge = −1."
+    hint = "Mesons are quark‑antiquark pairs."
+    return make_problem(q, s, hint, difficulty, 2, 'alevel', 'physics', 'particles')
+
+def part_inter_sigma_charge(difficulty, mode):
+    q = "The Σ⁺ baryon has quark composition uus. Calculate its charge in units of e."
+    s = "u = +2/3, u = +2/3, s = -1/3. Charge = 2/3 + 2/3 - 1/3 = +1."
+    hint = "Add the charges of the quarks."
+    return make_problem(q, s, hint, difficulty, 2, 'alevel', 'physics', 'particles')
+
+def part_inter_pi_zero_decay(difficulty, mode):
+    q = "The neutral pion π⁰ decays into two photons. Write the decay equation and state which fundamental force is responsible."
+    s = "π⁰ → γ + γ. Electromagnetic interaction."
+    hint = "π⁰ is chargeless; photons are EM."
+    return make_problem(q, s, hint, difficulty, 2, 'alevel', 'physics', 'particles')
+
+def part_inter_kaon_lepton_conservation(difficulty, mode):
+    q = "The kaon K⁺ decays to a muon and a muon neutrino: K⁺ → μ⁺ + νμ. Show that muon lepton number is conserved in this decay."
+    s = "Initial Lμ = 0 (K⁺ is not a lepton). Final: μ⁺ has Lμ = -1, νμ has Lμ = +1 → total Lμ = 0. Conserved."
+    hint = "Anti‑muon has Lμ = -1."
+    return make_problem(q, s, hint, difficulty, 3, 'alevel', 'physics', 'particles')
+
+def part_inter_deuteron_specific_charge(difficulty, mode):
+    e, u = 1.60e-19, 1.66e-27
+    charge = e
+    mass = 2 * u
+    sc = charge / mass
+    q = "Calculate the specific charge of a deuteron (²H nucleus containing one proton and one neutron). (e = 1.60×10⁻¹⁹ C, u = 1.66×10⁻²⁷ kg)"
+    s = rf"Charge = +e = {charge:.2e} C, mass = 2u = {mass:.2e} kg. Specific charge = {charge:.2e} / {mass:.2e} = {sc:.3e} C kg⁻¹."
+    hint = "Deuteron: A=2, Z=1."
+    return make_problem(q, s, hint, difficulty, 3, 'alevel', 'physics', 'particles')
+
+def part_inter_virtual_photon(difficulty, mode):
+    q = "Explain what is meant by a virtual photon and how it mediates the electromagnetic force between two electrons."
+    s = "A virtual photon is a temporary exchange particle that exists only during the interaction. It transfers energy and momentum between the two electrons, causing repulsion."
+    hint = "Virtual particles are not directly observable."
+    return make_problem(q, s, hint, difficulty, 3, 'alevel', 'physics', 'particles')
+
+
+
+# ---------- DIFFICULT (10 distinct functions) ----------
+def part_diff_conservation_check(difficulty, mode):
+    import random
+    reactions = [
+        # (reaction, allowed?, explanation)
+        ("p + π⁻ → K⁺ + Σ⁻", True,
+         "Charge: +1−1=0 → +1−1=0 ✔. Baryon: +1 → +1 ✔. Strangeness: 0 → 0 ✔. Strong interaction conserves S, so allowed."),
+        ("p + π⁻ → K⁺ + π⁰", False,
+         "Baryon number: +1 → 0 ✘. Baryon number is not conserved; reaction impossible."),
+        ("Σ⁰ → Λ + γ", True,
+         "Charge: 0 → 0 ✔. Baryon: +1 → +1 ✔. Strangeness: −1 → −1 ✔. Electromagnetic interaction conserves S, so allowed."),
+        ("Ξ⁰ → n + π⁰", False,
+         "Strangeness changes from −2 to 0 (ΔS = +2). In the Standard Model a single interaction can only change strangeness by ±1 or 0; this reaction cannot occur in one step."),
+        ("π⁺ → μ⁺ + νμ", True,
+         "Charge: +1 → +1+0 ✔. Lepton numbers: Lμ=0 → −1+1=0 ✔. Weak interaction; allowed."),
+        ("p + e⁺ → e⁻ + Σ⁰ + K⁺", False,
+         "Charge: +1+1=+2 → −1+0+1=0 ✘. Lepton number: Lₑ = 0−1 = −1 → +1+0+0 = +1 ✘. Both charge and electron lepton number are not conserved; reaction impossible."),
+        ("K⁺ → μ⁺ + νμ", True,
+         "Charge: +1 → +1 ✔. Strangeness: +1 → 0 (ΔS=1), allowed in weak decay."),
+        ("n → p + e⁻ + ̄νe", True,
+         "Beta‑minus decay: charge 0→+1−1=0, baryon +1→+1, lepton numbers Lₑ:0→1−1=0. Allowed."),
+        ("p + e⁻ → n + νe", True,
+         "Electron capture: charge +1−1=0, baryon +1→+1, Lₑ:1→0+1=1. Allowed via weak interaction."),
+        ("μ⁻ → e⁻ + νe", False,
+         "Lepton numbers: Lμ=1 initially, Lμ=0 after; Lₑ:0→1+1=2. Both muon and electron lepton numbers are not conserved (a muon neutrino is required). Reaction impossible."),
+    ]
+    reaction, allowed, explanation = random.choice(reactions)
+    q = f"Determine whether the following reaction is possible, applying conservation laws for charge, baryon number, and lepton numbers (where relevant). Justify your answer.\n\n{reaction}"
+    s = f"{'Allowed' if allowed else 'Not allowed'}. {explanation}"
+    hint = "Check charge, baryon number, and (if leptons are involved) separate lepton numbers. Strangeness need only be conserved in strong/EM interactions."
+    return make_problem(q, s, hint, difficulty, 4, 'alevel', 'physics', 'particles')
+
+
+def part_diff_specific_charge_comparison(difficulty, mode):
+    e, me, mp = 1.60e-19, 9.11e-31, 1.67e-27
+    sc_e = e / me
+    sc_p = e / mp
+    q = "Calculate the specific charge of an electron and a proton. Hence explain why electrons are deflected much more than protons in a given magnetic field."
+    s = rf"Electron: {sc_e:.2e} C kg⁻¹; Proton: {sc_p:.2e} C kg⁻¹. The electron's specific charge is ~1800 times larger, so for equal speeds the magnetic force causes a much tighter curve (r = mv/qB)."
+    hint = "Compare Q/m; larger specific charge → smaller radius."
+    return make_problem(q, s, hint, difficulty, 4, 'alevel', 'physics', 'particles')
+
+def part_diff_feynman_diagram(difficulty, mode):
+    import random
+    interactions = [
+        (
+            "beta‑minus decay of a neutron",
+            "Neutron (udd) → proton (uud) + electron + electron antineutrino. Exchange particle: W⁻ boson. Quark change: down → up.",
+            "W⁻ boson; d → u."
+        ),
+        (
+            "beta‑plus decay of a proton",
+            "Proton (uud) → neutron (udd) + positron + electron neutrino. Exchange particle: W⁺ boson. Quark change: up → down.",
+            "W⁺ boson; u → d."
+        ),
+        (
+            "electron capture by a proton",
+            "Proton + electron → neutron + electron neutrino. Exchange particle: W⁺ boson. Quark change: up → down.",
+            "W⁺ boson; u → d, electron absorbed."
+        ),
+        (
+            "electromagnetic repulsion between two electrons",
+            "e⁻ + e⁻ → e⁻ + e⁻ via virtual photon (γ) exchange. No quark change; fermion lines with photon squiggle.",
+            "Virtual photon (γ); no quark change."
+        ),
+        (
+            "strong interaction between an up and a down quark inside a nucleon",
+            "Up quark + down quark exchange a gluon (g). Both quarks remain inside the nucleon; diagram shows two quark lines with a gluon squiggle between them.",
+            "Gluon (g); quarks exchange colour."
+        ),
+    ]
+    interaction, description, hint_text = random.choice(interactions)
+    q = f"Draw a Feynman diagram for {interaction}. Label all particles and the exchange boson. Describe any quark transformation that occurs."
+    s = description
+    hint = hint_text
+    return make_problem(q, s, hint, difficulty, 4, 'alevel', 'physics', 'particles')
+
+def part_diff_kaon_strangeness(difficulty, mode):
+    q = "Explain why kaons are always produced in pairs in strong interactions, yet decay via the weak interaction."
+    s = "Kaons contain a strange quark (S = ±1). Strong interactions conserve strangeness → pair production. Weak interactions allow ΔS = ±1, so kaons decay via the weak force."
+    hint = "Strangeness conservation rules."
+    return make_problem(q, s, hint, difficulty, 3, 'alevel', 'physics', 'particles')
+
+def part_diff_pair_production(difficulty, mode):
+    q = "Explain why pair production cannot occur in free space and state the minimum photon energy required to create an electron‑positron pair."
+    s = "A nearby nucleus must absorb momentum. Minimum photon energy = 2mₑc² = 1.022 MeV."
+    hint = "Momentum conservation; E_min = 2×0.511 MeV."
+    return make_problem(q, s, hint, difficulty, 3, 'alevel', 'physics', 'particles')
+
+def part_diff_pp_pi_zero(difficulty, mode):
+    q = "Determine whether the reaction p + p → p + p + π⁰ is possible. Apply conservation laws for charge, baryon number, and energy. (m_p = 938 MeV/c², m_π₀ = 135 MeV/c²; assume sufficient kinetic energy in the initial protons.)"
+    s = "Charge: +1+1 = +2 → +1+1+0 = +2 ✔. Baryon number: +1+1 = +2 → +1+1+0 = +2 ✔. Energy: with enough kinetic energy, total energy before can equal rest energies after. Possible via strong interaction."
+    hint = "Check Q, B, and rest energy."
+    return make_problem(q, s, hint, difficulty, 4, 'alevel', 'physics', 'particles')
+
+def part_diff_sigma_decay(difficulty, mode):
+    q = "The Σ⁰ baryon decays to Λ + γ. State the forces involved and explain why this decay is electromagnetic rather than weak."
+    s = "Σ⁰ → Λ + γ is electromagnetic because a photon is emitted and strangeness is conserved (S: -1 → -1). The weak interaction is much slower; if EM is allowed, it dominates."
+    hint = "EM is faster than weak when allowed by conservation laws."
+    return make_problem(q, s, hint, difficulty, 4, 'alevel', 'physics', 'particles')
+
+def part_diff_pair_annihilation_energy(difficulty, mode):
+    q = "An electron and a positron annihilate at rest, producing two photons. Calculate the energy of each photon in MeV. (m_e = 0.511 MeV/c²)"
+    s = "Total rest energy = 2 × 0.511 MeV = 1.022 MeV. Each photon gets half (to conserve momentum): 0.511 MeV."
+    hint = "E = m c², and momentum conservation requires two equal-energy photons."
+    return make_problem(q, s, hint, difficulty, 3, 'alevel', 'physics', 'particles')
+
+def part_diff_omega_decay(difficulty, mode):
+    q = "The Ω⁻ baryon (sss) decays into Ξ⁰ + π⁻. Determine the change in strangeness and explain why this decay must proceed via the weak interaction."
+    s = "Ω⁻: S = -3. Ξ⁰: S = -2, π⁻: S = 0. ΔS = +1. Strangeness changes, so the decay cannot be strong or electromagnetic; it must be weak (allows ΔS = ±1)."
+    hint = "Weak interaction is the only one that can change quark flavour."
+    return make_problem(q, s, hint, difficulty, 4, 'alevel', 'physics', 'particles')
+
+def part_diff_feynman_pair_production(difficulty, mode):
+    q = "Draw a Feynman diagram for pair production (γ → e⁺ + e⁻) in the presence of a nucleus. Label all particles and explain the role of the nucleus."
+    s = "Diagram: a photon (squiggly line) splits into an electron (forward arrow) and a positron (backward arrow). The nucleus (heavy line) absorbs some momentum to conserve momentum. The nucleus is not part of the fundamental vertex but is necessary for momentum conservation."
+    hint = "Momentum must be conserved; the nucleus provides a recoil."
+    return make_problem(q, s, hint, difficulty, 5, 'alevel', 'physics', 'particles')
+
+
+def part_diff_aqa_q1(difficulty, mode):
+    # Fixed values from the paper
+    # (a) neutrino interaction explanation
+    # (b) specific charge of argon-37
+    # (c) Feynman diagram (electron capture by a proton)
+    # (d) 6‑mark essay on nuclear forces
+
+    q = r"""
+An electron neutrino interacts with a chlorine‑37 nucleus to produce an argon‑37 nucleus and an electron:
+\[
+\nu_e + {}^{37}_{17}\mathrm{Cl} \rightarrow {}^{37}_{18}\mathrm{Ar} + e^-
+\]
+
+<strong>(a)</strong> Explain, with reference to appropriate conservation laws, why the electron is emitted in this interaction.<br>
+______________________________________________________________________________________<br>
+______________________________________________________________________________________<br>
+______________________________________________________________________________________ <strong>(2)</strong><br><br>
+
+<strong>(b)</strong> Calculate the specific charge of the argon‑37 nucleus.<br>
+specific charge = ____________________ C kg⁻¹ <strong>(3)</strong><br><br>
+
+<strong>(c)</strong> In a different interaction, the argon‑37 nucleus interacts with an electron. The figure below represents the interaction of a quark in a baryon of the nucleus.<br><br>
+(A diagram showing an incoming electron, a quark line emitting a W⁻ boson, and the quark changing flavour.)
+<br><br>
+Deduce the exchange particle and the effect on the baryon. Give one reason to support each answer.<br>
+exchange particle: ____________________<br>
+reason: __________________________________________________<br>
+effect on baryon: ______________________________________________<br>
+reason: __________________________________________________ <strong>(4)</strong><br><br>
+
+<strong>(d)</strong> The argon‑37 nucleus decays into a stable nucleus.<br>
+Describe the nature of the forces that act between nucleons and how these forces can maintain nuclear stability.<br>
+In your answer, describe:<br>
+&bull; the forces of repulsion and attraction that act between nucleons<br>
+&bull; exchange particles associated with these forces<br>
+&bull; the role of these forces in keeping the nucleus stable.<br>
+______________________________________________________________________________________<br>
+______________________________________________________________________________________<br>
+______________________________________________________________________________________<br>
+______________________________________________________________________________________<br>
+______________________________________________________________________________________ <strong>(6)</strong><br><br>
+<strong>(Total 14 marks)</strong>
+"""
+
+    s = r"""
+<strong>(a)</strong> The electron is emitted to conserve <strong>charge</strong> and <strong>lepton number</strong>.<br>
+Charge: LHS = 0 + 17 = +17, RHS = 18 + (-1) = +17 ✔<br>
+Lepton number: LHS (νₑ has Lₑ = 1) + 0 = 1; RHS (e⁻ has Lₑ = 1) + 0 = 1 ✔
+
+<strong>(b)</strong> Charge of argon nucleus = 18 × 1.60×10⁻¹⁹ = 2.88×10⁻¹⁸ C.<br>
+Mass ≈ 37 × 1.67×10⁻²⁷ = 6.18×10⁻²⁶ kg.<br>
+Specific charge = (2.88×10⁻¹⁸) / (6.18×10⁻²⁶) ≈ <strong>4.66×10⁷ C kg⁻¹</strong>.
+
+<strong>(c)</strong> Exchange particle: <strong>W⁻ boson</strong>.<br>
+Reason: it is the weak interaction (electron capture); charge is conserved at the vertex (e⁻ → νₑ + W⁻).<br>
+Effect on baryon: a <strong>proton changes to a neutron</strong> (uud → ddu).<br>
+Reason: an up quark changes to a down quark (u → d), so the baryon's charge decreases by +1.
+
+<strong>(d)</strong> <em>Forces:</em><br>
+- Electromagnetic repulsion between positively‑charged protons.<br>
+- Gravitational attraction between all nucleons (negligible).<br>
+- Strong interaction – both attractive and repulsive, acting between nucleons.<br><br>
+<em>Exchange particles:</em><br>
+- Virtual photons mediate the EM force.<br>
+- Pions (or gluons) mediate the strong interaction between nucleons.<br><br>
+<em>Role in stability:</em><br>
+The strong force is much stronger than EM repulsion at nuclear distances (≈1 fm). It provides a short‑range attractive force (up to ~3 fm) that binds nucleons together, but becomes repulsive at very short range (< 0.5 fm) to prevent collapse. This balance, along with the right neutron‑to‑proton ratio, keeps the nucleus stable.
+"""
+
+    hint = r"For (a), check charge and lepton number. (b) specific charge = charge/mass. (c) look at the quark vertex – W⁻ changes u→d. (d) mention strong, EM, exchange particles, and range."
+    marks = 14
+    return make_problem(q, s, hint, difficulty, marks, 'alevel', 'physics', 'particles')
+
+
+def part_diff_aqa_q2(difficulty, mode):
+    q = r"""
+
+
+<strong>(a)</strong> State the names of the four fundamental interactions.<br>
+1. ____________________  2. ____________________<br>
+3. ____________________  4. ____________________ <strong>(1)</strong><br><br>
+
+<strong>(b)</strong> State the products of the decay of a free neutron.<br>
+______________________________________________________________________________________ <strong>(1)</strong><br><br>
+
+<strong>(c)</strong> Explain which of the fundamental interactions is responsible for the decay of the neutron.<br>
+______________________________________________________________________________________<br>
+______________________________________________________________________________________ <strong>(2)</strong><br><br>
+
+<strong>(d)</strong> The forces between two moving electrons cause their paths to change.<br>
+Explain, using the concept of exchange particles, why the electron paths change.<br>
+______________________________________________________________________________________<br>
+______________________________________________________________________________________<br>
+______________________________________________________________________________________ <strong>(3)</strong><br><br>
+<strong>(Total 7 marks)</strong>
+"""
+
+    s = r"""
+<strong>(a)</strong> 1. Gravity<br>2. Weak interaction<br>3. Strong interaction<br>4. Electromagnetic<br>(any order)
+
+<strong>(b)</strong> Proton + electron + electron antineutrino (p + e⁻ + ̄νₑ).
+
+<strong>(c)</strong> The <strong>weak</strong> interaction is responsible.<br>
+Reason: the decay involves a change of quark flavour (down → up), and/or leptons are involved (electron and antineutrino), which only feel the weak force.
+
+<strong>(d)</strong> The electrons repel via the electromagnetic force, which is mediated by <strong>virtual photons</strong>. These exchange particles carry momentum between the electrons. When a photon is emitted by one electron and absorbed by the other, momentum is transferred, causing both paths to change. This satisfies conservation of momentum.
+"""
+
+    hint = r"Four forces: strong, weak, EM, gravity. Neutron decay: β⁻. Exchange particles for EM: virtual photons."
+    marks = 7
+    return make_problem(q, s, hint, difficulty, marks, 'alevel', 'physics', 'particles')
+
+
+
+# ---------- MCQ (unchanged) ----------
+def pe_mcq_particles():
+    import random
+    questions = [
+        {"q": "What is the specific charge of an electron?",
+         "opts": ["A  1.76 × 10¹¹ C kg⁻¹","B  9.58 × 10⁷","C  1.76 × 10⁻¹¹","D  4.82 × 10⁷"],
+         "ans": "A", "hint": "e/mₑ ≈ 1.76×10¹¹."},
+        {"q": "Which of the following is not a fundamental particle?",
+         "opts": ["A  Electron","B  Up quark","C  Proton","D  Muon"],
+         "ans": "C", "hint": "Proton is a hadron (uud)."},
+        {"q": "What is the charge, in units of e, of a strange quark?",
+         "opts": ["A  +⅔","B  −⅓","C  +⅓","D  −⅔"],
+         "ans": "B", "hint": "Strange quark = −⅓."},
+        {"q": "A baryon has a baryon number of:",
+         "opts": ["A  0","B  +1","C  −1","D  +1/3"],
+         "ans": "B", "hint": "Baryons have B = +1."},
+        {"q": "Which force is responsible for beta decay?",
+         "opts": ["A  EM","B  Strong","C  Weak","D  Gravity"],
+         "ans": "C", "hint": "Quark flavour change → weak interaction."},
+        {"q": "What is the quark composition of a π⁺ meson?",
+         "opts": ["A  uud","B  ūd","C  d̄u","D  ud̄"],
+         "ans": "B", "hint": "π⁺ = up + anti‑down."},
+        {"q": "How many quarks are in a neutron?",
+         "opts": ["A  2","B  3","C  4","D  1"],
+         "ans": "B", "hint": "Neutron = udd."},
+        {"q": "Which of the following particles is a lepton?",
+         "opts": ["A  Pion","B  Muon","C  Proton","D  Kaon"],
+         "ans": "B", "hint": "Muon is a lepton."},
+        {"q": "The exchange particle of the strong interaction is:",
+         "opts": ["A  Photon","B  W boson","C  Gluon","D  Graviton"],
+         "ans": "C", "hint": "Gluons carry the strong force."},
+        {"q": "An alpha particle has nucleon number 4, proton number 2. Its specific charge (C kg⁻¹) is approx:",
+         "opts": ["A  4.8×10⁷","B  9.6×10⁷","C  1.2×10⁷","D  2.4×10⁷"],
+         "ans": "A", "hint": "2e/4u ≈ 4.82×10⁷."}
+    ]
+    qdata = random.choice(questions)
+    return qdata["q"], f"Answer: {qdata['ans']}\n\n{qdata['hint']}", qdata["hint"], 1, qdata["opts"], qdata["ans"]
+
+
+def part_diff_aqa_q4(difficulty, mode):
+    q = r"""
+A strong interaction between a negative kaon (K⁻) and a proton (p) produces an omega‑minus (Ω⁻) particle, a neutral kaon (K⁰) and an unidentified particle Y.
+\[
+K^- + p \rightarrow \Omega^- + K^0 + Y
+\]
+
+The table below contains information on the particles in this interaction.
+
+<table style="border-collapse:collapse; width:100%; margin:10px 0;">
+<tr><th>Particle</th><th>K⁻</th><th>p</th><th>Ω⁻</th><th>K⁰</th><th>Y</th></tr>
+<tr><td>Rest energy / MeV</td><td>493.8</td><td>938.3</td><td>1672</td><td>497.8</td><td>493.8</td></tr>
+<tr><td>Baryon number</td><td>0</td><td>+1</td><td>+1</td><td>0</td><td>……</td></tr>
+<tr><td>Charge</td><td>-1e</td><td>+1e</td><td>-1e</td><td>0</td><td>……</td></tr>
+<tr><td>Strangeness</td><td>-1</td><td>0</td><td>-3</td><td>+1</td><td>……</td></tr>
+</table>
+
+<strong>(a)</strong> Complete the table above for particle Y.<br>
+______________________________________________________________________________________ <strong>(2)</strong><br><br>
+
+<strong>(b)</strong> Calculate, in J, the rest energy of the Ω⁻.<br>
+rest energy = ____________________ J <strong>(2)</strong><br><br>
+
+<strong>(c)</strong> Suggest how energy is conserved in this interaction. Refer to the rest energies of the particles in the table above.<br>
+______________________________________________________________________________________<br>
+______________________________________________________________________________________ <strong>(2)</strong><br><br>
+
+The quark structure of the Ω⁻ particle is sss. The Ω⁻ is unstable. It decays into a proton through a series of decays:
+\[
+\Omega^- \rightarrow \Xi^0 + \pi^-
+\]
+\[
+\Xi^0 \rightarrow \Lambda^0 + \pi^0
+\]
+\[
+\Lambda^0 \rightarrow p + \pi^-
+\]
+The Ξ⁰ and Λ⁰ are both hadrons.
+
+<strong>(d)</strong> Deduce the quark structure of the Λ⁰ particle.<br>
+quark structure of Λ⁰ = ____________________ <strong>(4)</strong><br><br>
+
+The products of the decay series include π⁰ and π⁻ particles. These particles are unstable and decay.
+
+<strong>(e)</strong> The π⁰ decays into gamma photons. Each gamma photon has a wavelength of 1.25 × 10⁻¹⁴ m. Calculate the energy of one of these photons.<br>
+energy of photon = ____________________ J <strong>(2)</strong><br><br>
+
+<strong>(f)</strong> The negative pion π⁻ decays.<br>
+Which row shows the particles that could be created in this decay? Tick <strong>one</strong> box.<br>
+□ μ⁻ + ν_μ<br>
+□ e⁻ + ̄ν_e<br>
+□ μ⁺ + ̄ν_μ<br>
+□ e⁺ + ν_e <strong>(1)</strong><br><br>
+<strong>(Total 13 marks)</strong>
+"""
+
+    s = r"""
+<strong>(a)</strong> For particle Y:<br>
+Baryon number = 0, Charge = +1e, Strangeness = +1.
+
+<strong>(b)</strong> Rest energy = 1672 MeV = 1672 × 10⁶ × 1.60 × 10⁻¹⁹ J = 2.68 × 10⁻¹⁰ J (2.675 × 10⁻¹⁰ J).
+
+<strong>(c)</strong> The total rest energy of the reactants (K⁻ + p) = 493.8 + 938.3 = 1432.1 MeV.<br>
+Total rest energy of the products (Ω⁻ + K⁰ + Y) = 1672 + 497.8 + 493.8 = 2663.6 MeV.<br>
+The products have more rest energy than the reactants, so the extra energy comes from the kinetic energy of the incoming particles. Energy is conserved overall when kinetic energy is included.
+
+<strong>(d)</strong> Λ⁰ quark structure = <strong>uds</strong>.<br>
+(From the decays: Ω⁻(sss) → Ξ⁰(uss) + π⁻(dū). Then Ξ⁰(uss) → Λ⁰(uds) + π⁰(uū/dd). At the last step, Λ⁰(uds) → p(uud) + π⁻(dū). Baryon number, charge and strangeness are all consistent.)
+
+<strong>(e)</strong> E = hc/λ = (6.63 × 10⁻³⁴ × 3.00 × 10⁸) / (1.25 × 10⁻¹⁴) = 1.59 × 10⁻¹¹ J (1.591 × 10⁻¹¹ J).
+
+<strong>(f)</strong> The correct row is: <strong>e⁻ + ̄ν_e</strong>. (π⁻ decays via the weak interaction to an electron and an electron antineutrino.)
+"""
+
+    hint = r"For (b) 1 MeV = 1.60 × 10⁻¹³ J. (d) track baryon number and strangeness through each decay. (e) use E = hc/λ."
+    marks = 13
+    return make_problem(q, s, hint, difficulty, marks, 'alevel', 'physics', 'particles')
+
+
+
+
+
+
+# ---------- VARIANTS FUNCTION ----------
+def alevel_physics_particles_variants(difficulty, mode):
+    if mode == 'mcq':
+        return [pe_mcq_particles] * 10
+    if difficulty == 'foundational':
+        pool = [
+            part_found_atom_basics,
+            part_found_isotope_def,
+            part_found_specific_charge_electron,
+            part_found_specific_charge_proton,
+            part_found_quark_proton,
+        ]
+    elif difficulty == 'intermediate':
+        pool = [
+            part_inter_specific_charge_alpha,
+            part_inter_neutron_quark_change,
+            part_inter_baryon_number,
+            part_inter_muon_decay,
+            part_inter_pion_composition,
+        ]
+    elif difficulty == 'difficult':
+        pool = [
+            part_diff_conservation_check,
+            part_diff_specific_charge_comparison,
+            part_diff_feynman_diagram,
+            part_diff_kaon_strangeness,
+            part_diff_pair_production,
+            part_diff_aqa_q1,
+            part_diff_aqa_q2,
+            part_diff_aqa_q4,
+        ]
+    elif difficulty == 'mixed':
+        pool = (
+            random.sample([
+                part_found_atom_basics, part_found_isotope_def,
+                part_found_specific_charge_electron, part_found_specific_charge_proton,
+                part_found_quark_proton,
+            ], 4) +
+            random.sample([
+                part_inter_specific_charge_alpha, part_inter_neutron_quark_change,
+                part_inter_baryon_number, part_inter_muon_decay,
+                part_inter_pion_composition,
+            ], 4) +
+            random.sample([
+                part_diff_conservation_check, part_diff_specific_charge_comparison,
+                part_diff_feynman_diagram, part_diff_kaon_strangeness,
+                part_diff_pair_production,
+            ], 2)
+        )
+        return pool
+    else:
+        pool = [
+            part_diff_conservation_check,
+            part_diff_specific_charge_comparison,
+            part_diff_feynman_diagram,
+            part_diff_kaon_strangeness,
+            part_diff_pair_production,
+        ]
+
+    # Shuffle to ensure variety, then duplicate to 10 slots for the queue
+    shuffled = random.sample(pool, len(pool))
+    return (shuffled * (10 // len(shuffled) + 1))[:10]
+
+# ---------- MAIN GENERATOR ----------
+def alevel_physics_particles(difficulty, mode, variant_name=None):
+    if mode == 'mcq':
+        q, s, hint, marks, options, correct = pe_mcq_particles()
+        return make_problem(q, s, hint, difficulty, marks, 'alevel', 'physics', 'particles',
+                            options=options, correct_answer=correct)
+    variants = alevel_physics_particles_variants(difficulty, mode)
+    variant = pick_named_variant(variants, variant_name)
+    return variant(difficulty, mode)

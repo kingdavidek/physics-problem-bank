@@ -1,0 +1,845 @@
+{% extends "base.html" %}
+{% block title %}Circle Theorems – GCSE Mathematics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Circle Theorems</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">Circles hide neat angle rules. Once you spot which theorem fits, you can find missing angles quickly. We will work through the main GCSE circle theorems step by step.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+  <!-- Quick Test button -->
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='circle_theorems') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 1. ANGLE AT THE CENTRE                        -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      CT1 – Angle at the Centre
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Point C sits on the circle. The angle at the centre O is <strong>80°</strong>. The angle at the edge (at C) on the same arc is half of that: 80 ÷ 2 = <strong>40°</strong>.</p>
+
+      <p><strong>Theorem CT1:</strong> The angle at the <em>centre</em> is <strong>twice</strong> the angle at the <em>circumference</em>, as long as both look at the <strong>same arc</strong> AB.</p>
+      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;font-size:1.05rem;text-align:center;">
+        Angle at centre = 2 × Angle at circumference &nbsp;(same arc)
+      </p>
+
+      <!--
+        SVG: O at (130,130), r=95.
+        A at math 135° → SVG (130+95cos135°, 130−95sin135°) = (130−67.2, 130−67.2) = (62.8, 62.8)
+        B at math 45°  → (197.2, 62.8)
+        C at math 270° → (130, 225)
+        Angle AOB = 90° (= |135−45|). Angle ACB = 45°.
+        Angle-mark at O (between OA and OB via the top): small arc.
+        Angle-mark at C (between CA and CB pointing upward): small arc.
+      -->
+      <div style="text-align:center;margin:20px 0;">
+        <svg width="100%" viewBox="-24 -24 328 318" style="background:#f9f8f5;border-radius:8px;max-width:328px;display:block;margin:0 auto;overflow:visible;">
+          <!-- circle -->
+          <circle cx="140" cy="135" r="95" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+
+          <!-- radii OA and OB (red) -->
+          <line x1="140" y1="135" x2="73"  y2="68"  stroke="#a13544" stroke-width="2"/>
+          <line x1="140" y1="135" x2="207" y2="68"  stroke="#a13544" stroke-width="2"/>
+
+          <!-- chords CA and CB (green) -->
+          <line x1="140" y1="230" x2="73"  y2="68"  stroke="#059669" stroke-width="2"/>
+          <line x1="140" y1="230" x2="207" y2="68"  stroke="#059669" stroke-width="2"/>
+
+          <!-- angle arc at O (between OA and OB, goes via top) -->
+          <!-- arc from direction (−0.707,−0.707) to (0.707,−0.707) at O, sweep=0 (CCW on screen), r=24 -->
+          <!-- start = O + 24·(−0.707,−0.707) = (123.0, 118.0); end = (157.0, 118.0) -->
+          <path d="M123,118 A24,24,0,0,1,157,118" fill="none" stroke="#a13544" stroke-width="2"/>
+          <text x="140" y="108" font-size="14" fill="#a13544" text-anchor="middle" font-weight="bold">2α</text>
+
+          <!-- angle arc at C (between CA and CB, goes via top) -->
+          <!-- C=(140,230); direction to A=(73,68): dx=−67,dy=−162, unit=(−0.382,−0.927)
+               direction to B=(207,68): dx=67,dy=−162, unit=(0.382,−0.927)
+               Start = C+18·(−0.382,−0.927)=(133.1,213.3); End=(146.9,213.3) -->
+          <path d="M133,213 A18,18,0,0,1,147,213" fill="none" stroke="#059669" stroke-width="2"/>
+          <text x="140" y="200" font-size="14" fill="#059669" text-anchor="middle" font-weight="bold">α</text>
+
+          <!-- dots -->
+          <circle cx="140" cy="135" r="4" fill="#a13544"/>
+          <circle cx="73"  cy="68"  r="4" fill="#1a6fa8"/>
+          <circle cx="207" cy="68"  r="4" fill="#1a6fa8"/>
+          <circle cx="140" cy="230" r="4" fill="#059669"/>
+
+          <!-- labels -->
+          <text x="140" y="127" font-size="14" fill="#a13544" text-anchor="middle" font-weight="bold">O</text>
+          <text x="58"  y="62"  font-size="15" fill="#1a6fa8" text-anchor="middle" font-weight="bold">A</text>
+          <text x="220" y="62"  font-size="15" fill="#1a6fa8" text-anchor="middle" font-weight="bold">B</text>
+          <text x="140" y="258" font-size="15" fill="#059669" text-anchor="middle" font-weight="bold">C</text>
+
+          <!-- minor arc AB (upper) label -->
+          <text x="140" y="34" font-size="14" fill="#777" text-anchor="middle">same arc</text>
+        </svg>
+      </div>
+
+      <p><strong>What to watch for:</strong></p>
+      <ul>
+        <li>Point C should be on the <strong>major arc</strong> (the longer way round the circle from A to B).</li>
+        <li>If C is on the <strong>minor arc</strong>, use the <strong>reflex</strong> angle at the centre instead: angle ACB = ½ × reflex angle AOB.</li>
+        <li>When AB is a diameter, the centre angle is 180° — that leads to CT2 (angle in a semicircle = 90°).</li>
+      </ul>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">The angle at the centre on arc AB is <strong>110°</strong>. What is the angle at the circumference on the same arc?</p>
+          <button class="btn mcq-btn" data-letter="A">220°</button>
+          <button class="btn mcq-btn" data-letter="B">55°</button>
+          <button class="btn mcq-btn" data-letter="C">110°</button>
+          <button class="btn mcq-btn" data-letter="D">27.5°</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='circle_theorems') }}?difficulty=foundational&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – CT1</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 2. ANGLE IN A SEMICIRCLE                      -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      CT2 – Angle in a Semicircle
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> AB is a diameter. C is any point on the circle (not A or B). Triangle ABC has a right angle at C, so angle ACB = <strong>90°</strong>. If angle BAC = 35°, then angle ABC = 180° − 90° − 35° = <strong>55°</strong>.</p>
+
+      <p><strong>Theorem CT2:</strong> The angle in a semicircle is always <strong>90°</strong>.</p>
+      <p>If AB is a diameter and C is on the circle, then angle ACB = 90°.</p>
+      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;font-size:1.05rem;text-align:center;">
+        Angle in a semicircle = 90° &nbsp;(AB is diameter)
+      </p>
+
+      <!--
+        SVG: Circle cx=140,cy=120,r=90.
+        A at math 180° → (50,120). B at math 0° → (230,120). Diameter AB is horizontal.
+        C at math 110° → (140+90cos110°, 120−90sin110°) = (140−30.8, 120−84.6) = (109.2, 35.4) ≈ (109, 35)
+        Right-angle mark at C.
+      -->
+      <div style="text-align:center;margin:20px 0;">
+        <svg width="100%" viewBox="-24 -24 348 288" style="background:#f9f8f5;border-radius:8px;max-width:348px;display:block;margin:0 auto;overflow:visible;">
+          <circle cx="150" cy="125" r="90" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+
+          <!-- diameter AB (red) -->
+          <line x1="60"  y1="125" x2="240" y2="125" stroke="#a13544" stroke-width="2.5"/>
+
+          <!-- chords CA and CB (green) -->
+          <line x1="114" y1="40"  x2="60"  y2="125" stroke="#059669" stroke-width="2"/>
+          <line x1="114" y1="40"  x2="240" y2="125" stroke="#059669" stroke-width="2"/>
+
+          <!--
+            Right-angle mark at C=(114,40).
+            Direction CA: (60−114,125−40) = (−54,85), unit≈(−0.537,0.844)
+            Direction CB: (240−114,125−40) = (126,85), unit≈(0.829,0.559)
+            Small square: first go along CA direction 12px, then along CB direction 12px.
+            P1 = C + 12·(−0.537,0.844) = (107.6, 50.1)
+            P2 = P1 + 12·(0.829,0.559) = (117.5, 56.8)
+            P3 = C + 12·(0.829,0.559) = (124.0, 46.7)
+          -->
+          <polyline points="107.6,50.1 117.5,56.8 123.9,46.7" fill="none" stroke="#059669" stroke-width="1.8"/>
+
+          <!-- centre O -->
+          <circle cx="150" cy="125" r="4" fill="#a13544"/>
+          <text x="150" y="143" font-size="14" fill="#a13544" text-anchor="middle" font-weight="bold">O</text>
+
+          <!-- dots -->
+          <circle cx="60"  cy="125" r="4" fill="#1a6fa8"/>
+          <circle cx="240" cy="125" r="4" fill="#1a6fa8"/>
+          <circle cx="114" cy="40"  r="4" fill="#059669"/>
+
+          <!-- labels -->
+          <text x="46"  y="140" font-size="15" fill="#1a6fa8" font-weight="bold">A</text>
+          <text x="244" y="140" font-size="15" fill="#1a6fa8" font-weight="bold">B</text>
+          <text x="114" y="28"  font-size="15" fill="#059669" text-anchor="middle" font-weight="bold">C</text>
+
+          <text x="140" y="108" font-size="15" fill="#a13544" text-anchor="middle" font-weight="bold">90°</text>
+          <text x="150" y="224" font-size="14" fill="#777" text-anchor="middle">AB is a diameter</text>
+        </svg>
+      </div>
+
+      <p><strong>Why it works:</strong> The angle at the centre on a diameter is 180°. By CT1, 180° = 2 × angle ACB, so angle ACB = 90°. CT2 is just CT1 with a diameter.</p>
+      <p><strong>How to use it:</strong> Spot a diameter in the diagram — you instantly get a right angle. Then use “angles in a triangle add to 180°” for the rest.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">AB is a diameter and C lies on the circle. What is angle ACB?</p>
+          <button class="btn mcq-btn" data-letter="A">45°</button>
+          <button class="btn mcq-btn" data-letter="B">60°</button>
+          <button class="btn mcq-btn" data-letter="C">90°</button>
+          <button class="btn mcq-btn" data-letter="D">180°</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='circle_theorems') }}?difficulty=foundational&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Foundational</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 3. ANGLES IN THE SAME SEGMENT                 -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      CT3 – Angles in the Same Segment
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Chord AB fixes two points on the circle. C and D both sit on the <strong>same side</strong> of AB (same bow of the circle). If angle ACB = <strong>52°</strong>, then angle ADB = <strong>52°</strong> as well.</p>
+
+      <p><strong>Theorem CT3:</strong> Angles on the circumference that sit on the <strong>same side</strong> of chord AB and look at the same arc are <strong>equal</strong>.</p>
+      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;font-size:1.05rem;text-align:center;">
+        Angles in the same segment are equal
+      </p>
+
+      <!--
+        SVG: Circle cx=140,cy=135,r=95.
+        Chord AB: A at math 210° ≈ (57,182.5), B at math 330° ≈ (222,182.5).
+        C at math 70° ≈ (172.5,49), D at math 110° ≈ (107.5,49) — both on major arc (upper side).
+        Angle ACB = angle ADB (same segment).
+      -->
+      <div style="text-align:center;margin:20px 0;">
+        <svg width="100%" viewBox="-24 -24 338 328" style="background:#f9f8f5;border-radius:8px;max-width:338px;display:block;margin:0 auto;overflow:visible;">
+          <circle cx="145" cy="140" r="95" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+
+          <!-- C's chords (green) -->
+          <line x1="177" y1="48"  x2="63"  y2="187" stroke="#059669" stroke-width="1.8"/>
+          <line x1="177" y1="48"  x2="227" y2="187" stroke="#059669" stroke-width="1.8"/>
+
+          <!-- D's chords (red) -->
+          <line x1="113" y1="48"  x2="63"  y2="187" stroke="#a13544" stroke-width="1.8"/>
+          <line x1="113" y1="48"  x2="227" y2="187" stroke="#a13544" stroke-width="1.8"/>
+
+          <!-- angle arc at C -->
+          <!-- C=(177,48). Dir to A=(63,187): (−114,139)/len, len≈179.8 → (−0.634,0.773)
+               Dir to B=(227,187): (50,139)/len, len≈150.8 → (0.332,0.922)
+               start = C+18*(−0.634,0.773)=(165.6,61.9); end=C+18*(0.332,0.922)=(183.0,64.6)
+               cross=d1x*d2y−d1y*d2x=(−0.634)(0.922)−(0.773)(0.332)=−0.584−0.257=−0.841 < 0 → sweep=1 -->
+          <path d="M166,62 A18,18,0,0,0,183,65" fill="none" stroke="#059669" stroke-width="2"/>
+          <text x="177" y="80" font-size="14" fill="#059669" text-anchor="middle" font-weight="bold">α</text>
+
+          <!-- angle arc at D -->
+          <!-- D=(113,48). Dir to A=(63,187): (−50,139)/len≈150.8 → (−0.332,0.922)
+               Dir to B=(227,187): (114,139)/len≈179.8 → (0.634,0.773)
+               start=D+18*(−0.332,0.922)=(107.0,64.6); end=D+18*(0.634,0.773)=(124.4,61.9)
+               cross=(−0.332)(0.773)−(0.922)(0.634)=−0.257−0.584=−0.841 <0 → sweep=1 -->
+          <path d="M107,65 A18,18,0,0,0,124,62" fill="none" stroke="#a13544" stroke-width="2"/>
+          <text x="113" y="80" font-size="14" fill="#a13544" text-anchor="middle" font-weight="bold">α</text>
+
+          <!-- dots -->
+          <circle cx="63"  cy="187" r="4" fill="#333"/>
+          <circle cx="227" cy="187" r="4" fill="#333"/>
+          <circle cx="177" cy="48"  r="4" fill="#059669"/>
+          <circle cx="113" cy="48"  r="4" fill="#a13544"/>
+
+          <!-- labels -->
+          <text x="48"  cy="187" y="200" font-size="15" fill="#333" font-weight="bold">A</text>
+          <text x="234" y="200" font-size="15" fill="#333" font-weight="bold">B</text>
+          <text x="184" y="40"  font-size="15" fill="#059669" font-weight="bold">C</text>
+          <text x="106" y="40"  font-size="15" fill="#a13544" font-weight="bold">D</text>
+
+          <text x="145" y="268" font-size="14" fill="#777" text-anchor="middle">C and D are in the same segment</text>
+        </svg>
+      </div>
+
+      <p><strong>Why it works:</strong> Both angles use the same arc AB. Each is half the centre angle (CT1), so they match.</p>
+      <p><strong>Opposite bow:</strong> If C and D are on <em>opposite</em> sides of chord AB, then angle ACB + angle ADB = 180° (this links to CT4 and cyclic quadrilaterals).</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">C and D are on the same side of chord AB. Angle ACB = <strong>38°</strong>. What is angle ADB?</p>
+          <button class="btn mcq-btn" data-letter="A">38°</button>
+          <button class="btn mcq-btn" data-letter="B">76°</button>
+          <button class="btn mcq-btn" data-letter="C">142°</button>
+          <button class="btn mcq-btn" data-letter="D">19°</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 4. CYCLIC QUADRILATERAL                       -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      CT4 – Cyclic Quadrilateral
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Four points A, B, C, D all lie on a circle. Angle A = <strong>110°</strong> and angle C = <strong>70°</strong>. Check: 110° + 70° = <strong>180°</strong> — opposite angles in a cyclic quadrilateral always add to 180°.</p>
+
+      <p><strong>Theorem CT4:</strong> In a <strong>cyclic quadrilateral</strong> (all four corners on one circle), each pair of opposite angles adds up to <strong>180°</strong>.</p>
+      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;font-size:1.05rem;text-align:center;">
+        Opposite angles of a cyclic quadrilateral sum to 180°
+      </p>
+
+      <!--
+        SVG: Circle cx=140,cy=130,r=90.
+        ABCD on circle at math angles 115°, 25°, 300°, 200°.
+        A=(140+90cos115°,130−90sin115°)=(140−38.0,130−81.6)=(102,48)
+        B=(140+90cos25°, 130−90sin25°)=(140+81.6,130−38.0)=(222,92)
+        C=(140+90cos300°,130−90sin300°)=(140+45.0,130+77.9)=(185,208)
+        D=(140+90cos200°,130−90sin200°)=(140−84.6,130+30.8)=(55,161)
+        angle A (= angle DAB) + angle C (= angle BCD) = 180°.
+        Let angle A = 110°, angle C = 70°.
+      -->
+      <div style="text-align:center;margin:20px 0;">
+        <svg width="100%" viewBox="-24 -24 338 308" style="background:#f9f8f5;border-radius:8px;max-width:338px;display:block;margin:0 auto;overflow:visible;">
+          <circle cx="140" cy="130" r="90" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+
+          <!-- quadrilateral ABCD -->
+          <polygon points="102,48 222,92 185,208 55,161" fill="none" stroke="#333" stroke-width="2"/>
+
+          <!--
+            angle arcs at A and C.
+            A=(102,48): between D=(55,161) and B=(222,92).
+            dir AD=(55−102,161−48)=(−47,113)/len=122.4=(−0.384,0.924)
+            dir AB=(222−102,92−48)=(120,44)/len=126.9=(0.946,0.347)
+            arc start=A+20*(−0.384,0.924)=(94.3,66.5); end=A+20*(0.946,0.347)=(120.9,54.9)
+            cross=(−0.384)(0.347)−(0.924)(0.946)=−0.133−0.874=−1.01 <0 → sweep=1
+          -->
+          <path d="M94,67 A20,20,0,0,0,121,55" fill="none" stroke="#1a6fa8" stroke-width="2"/>
+          <text x="107" y="74" font-size="14" fill="#1a6fa8" font-weight="bold">110°</text>
+
+          <!--
+            C=(185,208): between B=(222,92) and D=(55,161).
+            dir CB=(222−185,92−208)=(37,−116)/len=121.8=(0.304,−0.953)
+            dir CD=(55−185,161−208)=(−130,−47)/len=138.3=(−0.940,−0.340)
+            arc start=C+18*(0.304,−0.953)=(190.5,191.0); end=C+18*(−0.940,−0.340)=(168.1,201.9)
+            cross=(0.304)(−0.340)−(−0.953)(−0.940)=−0.103−0.896=−1.00 <0 → sweep=1
+          -->
+          <path d="M191,191 A18,18,0,0,0,168,202" fill="none" stroke="#a13544" stroke-width="2"/>
+          <text x="178" y="188" font-size="14" fill="#a13544" font-weight="bold">70°</text>
+
+          <!-- dots and labels -->
+          <circle cx="102" cy="48"  r="4" fill="#333"/>
+          <circle cx="222" cy="92"  r="4" fill="#333"/>
+          <circle cx="185" cy="208" r="4" fill="#333"/>
+          <circle cx="55"  cy="161" r="4" fill="#333"/>
+
+          <text x="98"  y="38"  font-size="15" fill="#1a6fa8" text-anchor="middle" font-weight="bold">A</text>
+          <text x="234" y="94"  font-size="15" fill="#333"    text-anchor="start"  font-weight="bold">B</text>
+          <text x="192" y="222" font-size="15" fill="#a13544" text-anchor="middle" font-weight="bold">C</text>
+          <text x="40"  y="166" font-size="15" fill="#333"    text-anchor="end"   font-weight="bold">D</text>
+
+          <text x="140" y="250" font-size="14" fill="#777" text-anchor="middle">angle A + angle C = 110° + 70° = 180°</text>
+        </svg>
+      </div>
+
+      <p><strong>Working backwards:</strong> If opposite angles add to 180°, the four points must lie on a circle.</p>
+      <p><strong>Exterior angle tip:</strong> An exterior angle of a cyclic quadrilateral equals the interior angle at the opposite corner.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">In cyclic quadrilateral ABCD, angle A = <strong>95°</strong>. What is angle C?</p>
+          <button class="btn mcq-btn" data-letter="A">95°</button>
+          <button class="btn mcq-btn" data-letter="B">47.5°</button>
+          <button class="btn mcq-btn" data-letter="C">190°</button>
+          <button class="btn mcq-btn" data-letter="D">85°</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='circle_theorems') }}?difficulty=intermediate&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Intermediate</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 5. TANGENT AND RADIUS                         -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      CT5 &amp; CT6 – Tangent Theorems
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example (CT5):</strong> A tangent touches the circle at T. Radius OT meets the tangent at T. The angle between them is <strong>90°</strong> — they are perpendicular.</p>
+
+      <p><strong>Theorem CT5:</strong> A tangent and the radius at the point of contact always meet at <strong>90°</strong>.</p>
+      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;text-align:center;">
+        Tangent ⊥ Radius at point of contact
+      </p>
+
+      <p style="margin-top:12px;"><strong>Example (CT6):</strong> From point P outside the circle you draw two tangents to touch at A and B. If PA = <strong>7 cm</strong>, then PB = <strong>7 cm</strong> as well.</p>
+
+      <p><strong>Theorem CT6:</strong> Tangents from the same <strong>outside point</strong> to a circle are the <strong>same length</strong>.</p>
+      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;text-align:center;">
+        PA = PB &nbsp;(tangents from external point P)
+      </p>
+
+      <!--
+        SVG: Two panels side by side.
+        Left (CT5): Circle cx=85,cy=130,r=70. T at math 0° → (155,130). Tangent vertical at T.
+        Right (CT6): Circle cx=210,cy=130,r=55. A at math 50°, B at math −50°. Tangents PA, PB.
+      -->
+      <div style="text-align:center;margin:20px 0;">
+        <svg width="100%" viewBox="-24 -24 388 298" style="background:#f9f8f5;border-radius:8px;max-width:388px;display:block;margin:0 auto;overflow:visible;">
+
+          <!-- ── LEFT: CT5 ── -->
+          <circle cx="85" cy="125" r="68" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+
+          <!-- radius OT -->
+          <line x1="85"  y1="125" x2="153" y2="125" stroke="#a13544" stroke-width="2.5"/>
+
+          <!-- tangent at T (vertical) -->
+          <line x1="153" y1="55"  x2="153" y2="195" stroke="#059669" stroke-width="2.5"/>
+
+          <!-- right-angle mark at T (along radius OT and tangent) -->
+          <polyline points="143.0,125.0 143.0,115.0 153.0,115.0" fill="none" stroke="#059669" stroke-width="1.8"/>
+
+          <!-- labels -->
+          <circle cx="85"  cy="125" r="4" fill="#a13544"/>
+          <circle cx="153" cy="125" r="4" fill="#333"/>
+          <text x="76"  y="140" font-size="14" fill="#a13544" font-weight="bold">O</text>
+          <text x="162" y="129" font-size="14" fill="#333" font-weight="bold">T</text>
+          <text x="162" y="58"  font-size="14" fill="#059669" font-weight="bold">tangent</text>
+          <text x="116" y="118" font-size="14" fill="#a13544" text-anchor="middle">radius</text>
+          <text x="85"  y="215" font-size="14" fill="#777" text-anchor="middle">CT5: angle OTP = 90°</text>
+
+          <!-- divider -->
+          <line x1="192" y1="30" x2="192" y2="220" stroke="#ddd" stroke-width="1" stroke-dasharray="4,3"/>
+
+          <!-- ── RIGHT: CT6 ── -->
+          <!-- Circle cx=250,cy=125,r=55. A at math 50°: (250+55cos50°,125−55sin50°)=(285.4,83.0)
+               B at math −50°: (285.4,167.0). P at right. -->
+          <circle cx="248" cy="125" r="55" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+
+          <!-- radii OA, OB -->
+          <line x1="248" y1="125" x2="284" y2="83"  stroke="#a13544" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <line x1="248" y1="125" x2="284" y2="167" stroke="#a13544" stroke-width="1.5" stroke-dasharray="4,3"/>
+
+          <!-- tangents PA, PB -->
+          <line x1="325" y1="125" x2="284" y2="83"  stroke="#059669" stroke-width="2"/>
+          <line x1="325" y1="125" x2="284" y2="167" stroke="#059669" stroke-width="2"/>
+
+          <!-- line OP -->
+          <line x1="248" y1="125" x2="325" y2="125" stroke="#888" stroke-width="1.2" stroke-dasharray="4,3"/>
+
+          <!-- equal marks on PA and PB -->
+          <line x1="302" y1="107" x2="308" y2="101" stroke="#059669" stroke-width="2"/>
+          <line x1="302" y1="148" x2="308" y2="142" stroke="#059669" stroke-width="2"/>
+
+          <!-- right-angle marks at A and B (radius ⊥ tangent) -->
+          <polyline points="278.8,89.1 284.8,94.3 290.0,88.3" fill="none" stroke="#059669" stroke-width="1.5"/>
+          <polyline points="278.8,160.9 284.8,155.7 290.0,161.7" fill="none" stroke="#059669" stroke-width="1.5"/>
+
+          <!-- dots and labels -->
+          <circle cx="284" cy="83"  r="4" fill="#333"/>
+          <circle cx="284" cy="167" r="4" fill="#333"/>
+          <circle cx="325" cy="125" r="4" fill="#555"/>
+          <circle cx="248" cy="125" r="4" fill="#a13544"/>
+          <text x="248" y="143" font-size="14" fill="#a13544" text-anchor="middle" font-weight="bold">O</text>
+          <text x="289" y="77"  font-size="14" fill="#333" font-weight="bold">A</text>
+          <text x="289" y="180" font-size="14" fill="#333" font-weight="bold">B</text>
+          <text x="330" y="129" font-size="14" fill="#555" font-weight="bold">P</text>
+          <text x="248" y="215" font-size="14" fill="#777" text-anchor="middle">CT6: PA = PB</text>
+        </svg>
+      </div>
+
+      <p><strong>Using CT6:</strong> Because PA = PB and OA = OB (radii), shape OAPB is a <strong>kite</strong>. So:</p>
+      <ul>
+        <li>Angles at A and B are each 90° (CT5)</li>
+        <li>Angle AOB + angle APB = 180°</li>
+        <li>Line PO splits the kite in half and bisects angles APB and AOB</li>
+      </ul>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Two tangents are drawn from point P to a circle, touching at A and B. PA = <strong>9 cm</strong>. How long is PB?</p>
+          <button class="btn mcq-btn" data-letter="A">4.5 cm</button>
+          <button class="btn mcq-btn" data-letter="B">9 cm</button>
+          <button class="btn mcq-btn" data-letter="C">18 cm</button>
+          <button class="btn mcq-btn" data-letter="D">81 cm</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 6. ALTERNATE SEGMENT THEOREM                  -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      CT7 – Alternate Segment Theorem
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Tangent and chord meet at A on the circle. The angle between them is <strong>30°</strong>. Point C sits in the <strong>other</strong> bow (alternate segment). Then angle ACB = <strong>30°</strong> as well.</p>
+
+      <p><strong>Theorem CT7 (Alternate Segment):</strong></p>
+      <p>The angle between a <em>tangent</em> and a <em>chord</em> at the point of contact equals the angle in the <strong>alternate segment</strong> — the bow on the other side of the chord.</p>
+      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;text-align:center;">
+        Angle TAB = Angle ACB &nbsp;(C in alternate segment)
+      </p>
+
+      <!--
+        SVG: Circle cx=140,cy=140,r=90.
+        A at math 200° → (140+90cos200°,140−90sin200°)=(140−84.6,140+30.8)=(55.4,170.8) ≈ (55,171)
+        B at math 340° → (140+90cos340°,140−90sin340°)=(140+84.6,140+30.8)=(224.6,170.8) ≈ (225,171)
+        C at math 90°  → (140,140−90)=(140,50) — top of circle (alternate segment)
+        Tangent at A: perpendicular to radius OA. OA direction = 200°. Tangent direction = 110° or 290°.
+        Tangent from A toward T (right): direction 110° from +x.
+        T at A + 80*(cos110°,−sin110°) = (55+80*(−0.342),171+80*0.940) = (55−27.4,171+75.2) = (27.6, 246.2)
+        ... that goes off screen. Let's use direction 290° = (cos290°,−sin290°) = (0.342, 0.940)
+        T right = A + 80*(0.342, 0.940) = (55+27.4, 171+75.2) = (82.4, 246.2) — still off screen
+        Let me use a different A position. A at math 210°:
+        A=(140+90cos210°,140−90sin210°)=(140−77.9,140+45)=(62.1,185)≈(62,185)
+        Tangent direction at 210°+90°=300°: (cos300°,−sin300°)=(0.5,0.866)
+        T left = A + 75*(cos120°,−sin120°) = A+75*(−0.5,0.866)=(62−37.5,185−65.0)=(24.5,120.0)→(25,120)
+        T right= A + 75*(cos300°,−sin300°) = A+75*(0.5, 0.866)=(62+37.5,185+65)=(99.5,250)→off screen
+        Let's use T toward top-right instead: A at math 220°:
+        A=(140+90cos220°,140−90sin220°)=(140−68.9,140+57.9)=(71.1,197.9)≈(71,198)
+        Tangent dir = 220°+90°=310°: (cos310°,−sin310°)=(0.643,0.766)
+        T right = A+70*(0.643,0.766)=(71+45,198+53.6)=(116,251.6) — still low
+        Let me try: A at math 240°, tangent direction 240°−90°=150°:
+        A=(140+90cos240°,140−90sin240°)=(140−45,140+77.9)=(95,217.9)≈(95,218)
+        Tangent dir 330°=(cos330°,−sin330°)=(0.866,0.5); dir 150°=(−0.866,0.5)
+        T left = A+80*(−0.866,0.5)=(95−69.3,218+40)=(25.7,258)→off
+        T right= A+80*(0.866,0.5)=(95+69.3,218+40)=(164.3,258)→(164,258)
+        The tangent from (25,258) to (164,258) passes through A=(95,218)? Need A on that line.
+        Distance from y=258 to A=(95,218) is 40. So the tangent is at y=258? No, the tangent goes through A.
+        Let me just use a clean horizontal tangent, with A at the bottom of the circle:
+        A at math 270°: (140, 140+90)=(140,230). Tangent at A is horizontal (perpendicular to vertical radius OA).
+        B at math 330°: (140+90cos330°,140−90sin330°)=(140+77.9,140+45)=(217.9,185)≈(218,185)
+        C at math 80°: (140+90cos80°,140−90sin80°)=(140+15.6,140−88.6)=(155.6,51.4)≈(156,51)
+        Tangent at A: horizontal line y=230, from x=50 to x=230.
+        T on left: (50,230). T on right: (230,230).
+        angle TAB = angle between rightward tangent (T right at (230,230)) and chord AB.
+        chord AB direction: B=(218,185) − A=(140,230) = (78,−45), angle = atan2(45,78)=30.0° above horizontal.
+        angle TAB = 30° (between tangent going right and chord AB going upper-right).
+        Then C in alternate segment (upper part), angle ACB should also = 30°.
+        Verify with CT1: arc AB (from A at 270° to B at 330°, going CW in math = span of 60°). Wait:
+        Going from A(270°) counterclockwise to B(330°): span = 60°. This is the minor arc on the right side.
+        Inscribed angle from C (in major arc) = 60°/2 = 30°. ✓
+      -->
+      <div style="text-align:center;margin:20px 0;">
+        <svg width="300" height="290" viewBox="0 0 300 290" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+          <circle cx="150" cy="148" r="92" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+
+          <!-- tangent at A (A is at bottom, math 270°) — horizontal line -->
+          <!-- A=(150,240). Tangent: y=240, from x=55 to x=250 -->
+          <line x1="55"  y1="240" x2="250" y2="240" stroke="#a13544" stroke-width="2.5"/>
+
+          <!-- chord AB -->
+          <!-- B at math 330°: (150+92cos330°,148−92sin330°)=(150+79.7,148+46)=(229.7,194) ≈ (230,194) -->
+          <line x1="150" y1="240" x2="230" y2="194" stroke="#1a6fa8" stroke-width="2"/>
+
+          <!-- C at math 80°: (150+92cos80°,148−92sin80°)=(150+15.97,148−90.6)=(165.97,57.4)≈(166,57) -->
+          <line x1="150" y1="240" x2="166" y2="57"  stroke="#059669" stroke-width="1.8"/>
+          <line x1="230" y1="194" x2="166" y2="57"  stroke="#059669" stroke-width="1.8"/>
+
+          <!--
+            angle TAB at A=(150,240): between T-right=(250,240) and B=(230,194).
+            dir T=(250−150,240−240)/100=(1,0)
+            dir B=(230−150,194−240)/len=(80,−46)/91.2=(0.877,−0.504)
+            arc start=A+20*(1,0)=(170,240); end=A+20*(0.877,−0.504)=(167.5,229.9)
+            cross=(1)(−0.504)−(0)(0.877)=−0.504 < 0 → sweep=1
+          -->
+          <path d="M170,240 A20,20,0,0,0,168,230" fill="none" stroke="#a13544" stroke-width="2"/>
+          <text x="178" y="228" font-size="14" fill="#a13544" font-weight="bold">30°</text>
+
+          <!--
+            angle ACB at C=(166,57): between A=(150,240) and B=(230,194).
+            dir CA=(150−166,240−57)=(−16,183)/184=(−0.087,0.995)
+            dir CB=(230−166,194−57)=(64,137)/150=(0.427,0.913)
+            arc start=C+18*(−0.087,0.995)=(164.4,74.9); end=C+18*(0.427,0.913)=(173.7,73.4)
+            cross=(−0.087)(0.913)−(0.995)(0.427)=−0.079−0.425=−0.504 < 0 → sweep=1
+          -->
+          <path d="M164,75 A18,18,0,0,0,174,73" fill="none" stroke="#059669" stroke-width="2"/>
+          <text x="168" y="94" font-size="14" fill="#059669" font-weight="bold">30°</text>
+
+          <!-- dots and labels -->
+          <circle cx="150" cy="240" r="4" fill="#333"/>
+          <circle cx="230" cy="194" r="4" fill="#333"/>
+          <circle cx="166" cy="57"  r="4" fill="#059669"/>
+          <circle cx="150" cy="148" r="3" fill="#888"/>
+
+          <text x="143" y="258" font-size="15" fill="#333" font-weight="bold">A</text>
+          <text x="238" y="194" font-size="15" fill="#333" font-weight="bold">B</text>
+          <text x="166" y="46"  font-size="15" fill="#059669" text-anchor="middle" font-weight="bold">C</text>
+          <text x="55"  y="232" font-size="14" fill="#a13544" font-weight="bold">T</text>
+          <text x="250" y="232" font-size="14" fill="#a13544" font-weight="bold">T'</text>
+
+          <text x="150" y="280" font-size="14" fill="#777" text-anchor="middle">Angle TAB = Angle ACB = 30°</text>
+        </svg>
+      </div>
+
+      <p><strong>How to remember it:</strong> Chord AB splits the circle into two bows. The tangent angle matches the angle in the <em>other</em> bow from where you stand at A.</p>
+      <p><strong>Why it works (short):</strong> Radius OA is perpendicular to the tangent (CT5). Triangle OAB has OA = OB. CT1 links the centre angle to both the tangent–chord angle and angle ACB.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">At A, the angle between the tangent and chord AB is <strong>42°</strong>. C is in the alternate segment. What is angle ACB?</p>
+          <button class="btn mcq-btn" data-letter="A">42°</button>
+          <button class="btn mcq-btn" data-letter="B">84°</button>
+          <button class="btn mcq-btn" data-letter="C">138°</button>
+          <button class="btn mcq-btn" data-letter="D">21°</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='circle_theorems') }}?difficulty=intermediate&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Intermediate</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 7. CHORD BISECTOR                             -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Chord Bisector &amp; Intersecting Chords
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Chord PQ has length <strong>16 cm</strong>. The perpendicular from centre O meets PQ at M. Then PM = MQ = <strong>8 cm</strong> each.</p>
+
+      <p><strong>Chord Bisector Theorem:</strong> A line from the centre perpendicular to a chord cuts the chord <strong>in half</strong>. Also, the perpendicular bisector of any chord goes through the centre.</p>
+      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;text-align:center;">
+        OM ⊥ PQ &nbsp;⟹&nbsp; PM = MQ
+      </p>
+
+      <p><strong>Intersecting chords (inside the circle):</strong> If chords PQ and RS cross at T inside the circle:</p>
+      <ul>
+        <li>PT × TQ = RT × TS</li>
+        <li>Angle at T = ½ (arc PR + arc QS)</li>
+      </ul>
+
+      <p><strong>Secants from outside:</strong> If two secants from point P cut the circle at A, B and C, D:</p>
+      <ul>
+        <li>PA × PB = PC × PD</li>
+        <li>Angle at P = ½ (far arc − near arc)</li>
+      </ul>
+
+      <!--
+        SVG: Circle cx=140,cy=130,r=85. Chord PQ horizontal.
+        P at math 145°: (140+85cos145°,130−85sin145°)=(140−69.6,130−48.7)=(70.4,81.3)≈(70,81)
+        Q at math 35°:  (140+85cos35°, 130−85sin35°) =(140+69.6,130−48.7)=(209.6,81.3)≈(210,81)
+        M=(140,81) midpoint. OM = vertical line from (140,130) to (140,81).
+      -->
+      <div style="text-align:center;margin:20px 0;">
+        <svg width="100%" viewBox="-24 -24 328 288" style="background:#f9f8f5;border-radius:8px;max-width:328px;display:block;margin:0 auto;overflow:visible;">
+          <circle cx="140" cy="130" r="85" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+
+          <!-- chord PQ -->
+          <line x1="70" y1="82" x2="210" y2="82" stroke="#1a6fa8" stroke-width="2.5"/>
+
+          <!-- perpendicular from O to M -->
+          <line x1="140" y1="130" x2="140" y2="82" stroke="#a13544" stroke-width="2" stroke-dasharray="5,3"/>
+
+          <!-- right-angle mark at M (along OM and chord PQ) -->
+          <polyline points="140.0,91.0 131.0,91.0 131.0,82.0" fill="none" stroke="#a13544" stroke-width="1.8"/>
+
+          <!-- equal marks on PM and MQ -->
+          <line x1="102" y1="78" x2="106" y2="86" stroke="#059669" stroke-width="2"/>
+          <line x1="172" y1="78" x2="176" y2="86" stroke="#059669" stroke-width="2"/>
+
+          <!-- dots and labels -->
+          <circle cx="140" cy="130" r="4" fill="#a13544"/>
+          <circle cx="70"  cy="82"  r="4" fill="#1a6fa8"/>
+          <circle cx="210" cy="82"  r="4" fill="#1a6fa8"/>
+          <circle cx="140" cy="82"  r="4" fill="#333"/>
+
+          <text x="140" y="148" font-size="14" fill="#a13544" text-anchor="middle" font-weight="bold">O</text>
+          <text x="56"  y="84"  font-size="15" fill="#1a6fa8" font-weight="bold">P</text>
+          <text x="218" y="84"  font-size="15" fill="#1a6fa8" font-weight="bold">Q</text>
+          <text x="140" y="72"  font-size="14" fill="#333"    text-anchor="middle" font-weight="bold">M</text>
+
+          <text x="140" y="225" font-size="14" fill="#777" text-anchor="middle">OM ⊥ PQ  →  PM = MQ</text>
+        </svg>
+      </div>
+
+      <p><strong>With Pythagoras:</strong> Triangle OMP is right-angled at M. So OP² = OM² + PM². If you know the radius OP and how far O is from the chord (OM), you can find half the chord PM.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">OM is perpendicular to chord PQ at M. PQ = <strong>24 cm</strong>. How long is PM?</p>
+          <button class="btn mcq-btn" data-letter="A">24 cm</button>
+          <button class="btn mcq-btn" data-letter="B">48 cm</button>
+          <button class="btn mcq-btn" data-letter="C">12 cm</button>
+          <button class="btn mcq-btn" data-letter="D">6 cm</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 8. SUMMARY AND QUICK REFERENCE                -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+      Circle Theorems — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Use this table and revision card when you practise. Ask yourself: “Which arc am I looking at? Is there a diameter, tangent, or cyclic quad?”</p>
+
+      <table style="border-collapse:collapse;width:100%;font-size:1rem;">
+        <thead>
+          <tr style="background:var(--color-surface-2);">
+            <th style="padding:8px 12px;border:1px solid var(--color-border);text-align:left;">Theorem</th>
+            <th style="padding:8px 12px;border:1px solid var(--color-border);text-align:left;">Statement</th>
+            <th style="padding:8px 12px;border:1px solid var(--color-border);text-align:left;">Key Condition</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:8px 12px;border:1px solid var(--color-border);font-weight:600;color:#1a6fa8;">CT1</td>
+            <td style="padding:8px 12px;border:1px solid var(--color-border);">Angle at centre = 2 × angle at circumference</td>
+            <td style="padding:8px 12px;border:1px solid var(--color-border);">Same arc; C on major arc</td>
+          </tr>
+          <tr style="background:var(--color-surface-2);">
+            <td style="padding:8px 12px;border:1px solid var(--color-border);font-weight:600;color:#1a6fa8;">CT2</td>
+            <td style="padding:8px 12px;border:1px solid var(--color-border);">Angle in a semicircle = 90°</td>
+            <td style="padding:8px 12px;border:1px solid var(--color-border);">AB is a diameter</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 12px;border:1px solid var(--color-border);font-weight:600;color:#1a6fa8;">CT3</td>
+            <td style="padding:8px 12px;border:1px solid var(--color-border);">Angles in the same segment are equal</td>
+            <td style="padding:8px 12px;border:1px solid var(--color-border);">Same chord, same arc side</td>
+          </tr>
+          <tr style="background:var(--color-surface-2);">
+            <td style="padding:8px 12px;border:1px solid var(--color-border);font-weight:600;color:#1a6fa8;">CT4</td>
+            <td style="padding:8px 12px;border:1px solid var(--color-border);">Opposite angles of cyclic quad = 180°</td>
+            <td style="padding:8px 12px;border:1px solid var(--color-border);">All 4 vertices on circle</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 12px;border:1px solid var(--color-border);font-weight:600;color:#1a6fa8;">CT5</td>
+            <td style="padding:8px 12px;border:1px solid var(--color-border);">Tangent ⊥ radius at contact point</td>
+            <td style="padding:8px 12px;border:1px solid var(--color-border);">Always 90° at T</td>
+          </tr>
+          <tr style="background:var(--color-surface-2);">
+            <td style="padding:8px 12px;border:1px solid var(--color-border);font-weight:600;color:#1a6fa8;">CT6</td>
+            <td style="padding:8px 12px;border:1px solid var(--color-border);">Tangents from external point are equal</td>
+            <td style="padding:8px 12px;border:1px solid var(--color-border);">PA = PB from point P</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 12px;border:1px solid var(--color-border);font-weight:600;color:#1a6fa8;">CT7</td>
+            <td style="padding:8px 12px;border:1px solid var(--color-border);">Tangent–chord angle = angle in alternate segment</td>
+            <td style="padding:8px 12px;border:1px solid var(--color-border);">Angle TAB = angle ACB</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!--
+        Dark revision card SVG
+      -->
+      <div style="text-align:center;margin:20px 0;">
+              <div class="revision-card-wrap">
+        <svg class="revision-card-svg lesson-quick-ref" width="100%" viewBox="0 0 760 300" style="max-width:760px;width:100%;height:auto;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:10px;" role="img" aria-label="Circle theorems revision card">
+          <text x="380" y="28" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Circle Theorems — Revision Card</text>
+          <line x1="20" y1="38" x2="740" y2="38" stroke="#d4e6f1" stroke-width="1"/>
+
+          <text x="20"  y="58"  font-size="15" fill="#1a6fa8" font-weight="bold">CT1  Angle at Centre</text>
+          <text x="20"  y="78"  font-size="14" fill="#28251d">Centre = 2 × Circumference</text>
+          <text x="20"  y="102" font-size="15" fill="#1a6fa8" font-weight="bold">CT2  Semicircle</text>
+          <text x="20"  y="122" font-size="14" fill="#28251d">Angle in semicircle = 90°</text>
+          <text x="20"  y="146" font-size="15" fill="#1a6fa8" font-weight="bold">CT3  Same Segment</text>
+          <text x="20"  y="166" font-size="14" fill="#28251d">Same arc → equal angles</text>
+          <text x="20"  y="190" font-size="15" fill="#1a6fa8" font-weight="bold">CT4  Cyclic Quad</text>
+          <text x="20"  y="210" font-size="14" fill="#28251d">Opposite angles sum to 180°</text>
+
+          <line x1="390" y1="48" x2="390" y2="280" stroke="#d4e6f1" stroke-width="1"/>
+
+          <text x="400" y="58"  font-size="15" fill="#1a6fa8" font-weight="bold">CT5  Tangent ⊥ Radius</text>
+          <text x="400" y="78"  font-size="14" fill="#28251d">Angle OTP = 90° at contact T</text>
+          <text x="400" y="102" font-size="15" fill="#1a6fa8" font-weight="bold">CT6  Equal Tangents</text>
+          <text x="400" y="122" font-size="14" fill="#28251d">PA = PB from external point P</text>
+          <text x="400" y="146" font-size="15" fill="#1a6fa8" font-weight="bold">CT7  Alternate Segment</text>
+          <text x="400" y="166" font-size="14" fill="#28251d">Tangent–chord = alt. segment angle</text>
+          <text x="400" y="190" font-size="15" fill="#1a6fa8" font-weight="bold">Chord Bisector</text>
+          <text x="400" y="210" font-size="14" fill="#28251d">OM ⊥ PQ  →  PM = MQ</text>
+        </svg>
+      </div>
+      </div>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Which theorem tells you that opposite angles in a quadrilateral on a circle add to 180°?</p>
+          <button class="btn mcq-btn" data-letter="A">CT2</button>
+          <button class="btn mcq-btn" data-letter="B">CT4</button>
+          <button class="btn mcq-btn" data-letter="C">CT5</button>
+          <button class="btn mcq-btn" data-letter="D">CT7</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='circle_theorems') }}?difficulty=difficult&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Difficult</a>
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='circle_theorems') }}?difficulty=foundational&amp;mode=mcq" style="display:inline-block;padding:8px 16px;background:#059669;color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">MCQ Practice</a>
+      </div>
+    </div>
+  </details>
+
+</div>
+  <!-- Practice link -->
+  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='circle_theorems') }}"
+       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+      Start Practice Quiz
+    </a>
+  </div>
+
+{% endblock %}

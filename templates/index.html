@@ -2,16 +2,33 @@
 {% block title %}Practice Generator – Problem Bank{% endblock %}
 
 {% block content %}
-<h1>Practice Generator</h1>
-<p style="color: var(--text-muted); margin-bottom: 24px;">GCSE &amp; A-Level Maths and Physics</p>
+
+<div id="page-data"
+     data-level="{{ selected_level }}"
+     data-subject="{{ selected_subject }}"
+     data-topic="{{ selected_topic }}"
+     style="display:none;"></div>
+
+<div class="page-shell">
+
+<div class="lesson-hero">
+    <h1>Practice Generator</h1>
+    <p class="hero-sub">GCSE, A-Level, and IB MYP — Maths, Physics, and Computer Science</p>
+    <div class="hero-pills">
+        <span class="hero-pill">Standard questions</span>
+        <span class="hero-pill">Multiple choice</span>
+        <span class="hero-pill">Foundational · Intermediate · Difficult</span>
+    </div>
+</div>
 
 <div class="form-card">
-    <form method="POST" id="main-form">
+    <div class="section-panel-header">Choose your question</div>
+    <form method="POST" id="main-form" class="form-inner">
         <div class="form-grid">
 
             <div class="form-group">
                 <label for="level-select">Level</label>
-                <select name="level" id="level-select" onchange="updateSubjects()">
+                <select name="level" id="level-select">
                     <option value="gcse" {% if selected_level == 'gcse' %}selected{% endif %}>GCSE</option>
                     <option value="alevel" {% if selected_level == 'alevel' %}selected{% endif %}>A-Level</option>
                     <option value="myp" {% if selected_level == 'myp' %}selected{% endif %}>IB MYP</option>
@@ -20,7 +37,7 @@
 
             <div class="form-group">
                 <label for="subject-select">Subject</label>
-                <select name="subject" id="subject-select" onchange="updateTopics()">
+                <select name="subject" id="subject-select">
                     <option value="physics" data-level="gcse" {% if selected_level == 'gcse' and selected_subject == 'physics' %}selected{% endif %}>Physics</option>
                     <option value="maths" data-level="gcse" {% if selected_level == 'gcse' and selected_subject == 'maths' %}selected{% endif %}>Maths</option>
                     <option value="cs" data-level="gcse" {% if selected_level == 'gcse' and selected_subject == 'cs' %}selected{% endif %}>Computer Science</option>
@@ -32,32 +49,68 @@
             <div class="form-group">
                 <label for="topic-select">Topic</label>
                 <select name="topic" id="topic-select">
+                    <!-- options unchanged -->
                     <option value="forces" data-subject="physics" data-level="gcse" {% if selected_topic == 'forces' %}selected{% endif %}>Forces</option>
                     <option value="radioactivity" data-subject="physics" data-level="gcse" {% if selected_topic == 'radioactivity' %}selected{% endif %}>Edexcel Combined Physics Higher — Radioactivity</option>
 
+
+                    <option value="vectors" data-subject="maths" data-level="gcse" {% if selected_topic == 'vectors' %}selected{% endif %}>Vectors</option>
                     <option value="algebra" data-subject="maths" data-level="gcse" {% if selected_topic == 'algebra' %}selected{% endif %}>Algebra</option>
+                    <option value="algebraic_fractions" data-subject="maths" data-level="gcse" {% if selected_topic == 'algebraic_fractions' %}selected{% endif %}>Algebraic Fractions</option>
+                    <option value="algebraic_proof" data-subject="maths" data-level="gcse" {% if selected_topic == 'algebraic_proof' %}selected{% endif %}>Algebraic Proof</option>
+                    <option value="simultaneous_equations" data-subject="maths" data-level="gcse" {% if selected_topic == 'simultaneous_equations' %}selected{% endif %}>Simultaneous Equations</option>
+                    <option value="completing_the_square" data-subject="maths" data-level="gcse" {% if selected_topic == 'completing_the_square' %}selected{% endif %}>Completing the Square</option>
+                    <option value="quadratic_simultaneous_equations" data-subject="maths" data-level="gcse" {% if selected_topic == 'quadratic_simultaneous_equations' %}selected{% endif %}>Quadratic Simultaneous Equations</option>
+                    <option value="graphical_simultaneous_equations" data-subject="maths" data-level="gcse" {% if selected_topic == 'graphical_simultaneous_equations' %}selected{% endif %}>Graphical Simultaneous Equations</option>
                     <option value="surds" data-subject="maths" data-level="gcse" {% if selected_topic == 'surds' %}selected{% endif %}>Surds</option>
                     <option value="fdp" data-subject="maths" data-level="gcse" {% if selected_topic == 'fdp' %}selected{% endif %}>Fractions, Decimals and Percentages</option>
                     <option value="multiples_factors" data-subject="maths" data-level="gcse" {% if selected_topic == 'multiples_factors' %}selected{% endif %}>Multiples and Factors</option>
                     <option value="decimals" data-subject="maths" data-level="gcse" {% if selected_topic == 'decimals' %}selected{% endif %}>Decimals</option>
                     <option value="bidmas" data-subject="maths" data-level="gcse" {% if selected_topic == 'bidmas' %}selected{% endif %}>Order of Operations &amp; Negatives</option>
+                    <option value="trigonometry" data-subject="maths" data-level="gcse" {% if selected_topic == 'trigonometry' %}selected{% endif %}>Trigonometry</option>
+                    <option value="number" data-subject="maths" data-level="gcse" {% if selected_topic == 'number' %}selected{% endif %}>Number</option>
+                    <option value="ratio_proportion" data-subject="maths" data-level="gcse" {% if selected_topic == 'ratio_proportion' %}selected{% endif %}>Ratio and Proportion</option>
+                    <option value="probability" data-subject="maths" data-level="gcse" {% if selected_topic == 'probability' %}selected{% endif %}>Probability</option>
+                    <option value="statistics" data-subject="maths" data-level="gcse" {% if selected_topic == 'statistics' %}selected{% endif %}>Statistics</option>
+                    <option value="graphs" data-subject="maths" data-level="gcse" {% if selected_topic == 'graphs' %}selected{% endif %}>Graphs</option>
+                    <option value="functions" data-subject="maths" data-level="gcse" {% if selected_topic == 'functions' %}selected{% endif %}>Functions</option>
+                    <option value="equations_inequalities" data-subject="maths" data-level="gcse" {% if selected_topic == 'equations_inequalities' %}selected{% endif %}>Equations and Inequalities</option>
+                    <option value="changing_the_subject" data-subject="maths" data-level="gcse" {% if selected_topic == 'changing_the_subject' %}selected{% endif %}>Changing the Subject</option>
+                    <option value="sequences" data-subject="maths" data-level="gcse" {% if selected_topic == 'sequences' %}selected{% endif %}>Sequences</option>
+                    <option value="geometry_angles" data-subject="maths" data-level="gcse" {% if selected_topic == 'geometry_angles' %}selected{% endif %}>Geometry and Angles</option>
+                    <option value="transformations" data-subject="maths" data-level="gcse" {% if selected_topic == 'transformations' %}selected{% endif %}>Transformations</option>
+                    <option value="mensuration" data-subject="maths" data-level="gcse" {% if selected_topic == 'mensuration' %}selected{% endif %}>Mensuration</option>
+                    <option value="bearings" data-subject="maths" data-level="gcse" {% if selected_topic == 'bearings' %}selected{% endif %}>Bearings</option>
+                    <option value="circle_theorems" data-subject="maths" data-level="gcse" {% if selected_topic == 'circle_theorems' %}selected{% endif %}>Circle Theorems</option>
+                    <option value="compound_measures" data-subject="maths" data-level="gcse" {% if selected_topic == 'compound_measures' %}selected{% endif %}>Compound Measures</option>
+                    <option value="similarity_congruence" data-subject="maths" data-level="gcse" {% if selected_topic == 'similarity_congruence' %}selected{% endif %}>Similarity and Congruence</option>
+                    <option value="constructions_loci" data-subject="maths" data-level="gcse" {% if selected_topic == 'constructions_loci' %}selected{% endif %}>Constructions and Loci</option>
+                    <option value="pythagoras" data-subject="maths" data-level="gcse" {% if selected_topic == 'pythagoras' %}selected{% endif %}>Pythagoras' Theorem</option>
 
-                    <option value="binary" data-subject="cs" data-level="gcse" {% if selected_topic == 'binary' %}selected{% endif %}>Binary &amp; Data Representation</option>
 
                     <option value="magnetism" data-subject="physics" data-level="alevel" {% if selected_topic == 'magnetism' %}selected{% endif %}>Fields — Magnetism</option>
                     <option value="photoelectric" data-subject="physics" data-level="alevel" {% if selected_topic == 'photoelectric' %}selected{% endif %}>Photoelectric Effect and Wave-Particle Duality</option>
-
-
+                    <option value="particles" data-subject="physics" data-level="alevel" {% if selected_topic == 'particles' %}selected{% endif %}>Particle Physics &amp; the Standard Model</option>
                     <option value="redox" data-subject="chemistry" data-level="myp" {% if selected_topic == 'redox' %}selected{% endif %}>Redox Reactions</option>
                     <option value="energy_changes_and_rates" data-subject="chemistry" data-level="myp" {% if selected_topic == 'energy_changes_and_rates' %}selected{% endif %}>Energy Changes and Rates of Reaction</option>
+
+                    <option value="python_programming" data-subject="cs" data-level="gcse" {% if selected_topic == 'python_programming' %}selected{% endif %}> Python Programming </option>
+                    <option value="algorithms" data-subject="cs" data-level="gcse" {% if selected_topic == 'algorithms' %}selected{% endif %}>Fundamentals of Algorithms</option>
+                    <option value="data_rep" data-subject="cs" data-level="gcse" {% if selected_topic == 'data_rep' %}selected{% endif %}>Fundamentals of Data Representation</option>
+                    <option value="computer_systems" data-subject="cs" data-level="gcse" {% if selected_topic == 'computer_systems' %}selected{% endif %}>Computer Systems</option>
+                    <option value="computer_networks" data-subject="cs" data-level="gcse" {% if selected_topic == 'computer_networks' %}selected{% endif %}>Computer Networks</option>
+                    <option value="cyber_security" data-subject="cs" data-level="gcse" {% if selected_topic == 'cyber_security' %}selected{% endif %}>Cyber Security</option>
+                    <option value="db_sql" data-subject="cs" data-level="gcse" {% if selected_topic == 'db_sql' %}selected{% endif %}>Relational Databases &amp; SQL</option>
+                    <option value="ethical" data-subject="cs" data-level="gcse" {% if selected_topic == 'ethical' %}selected{% endif %}>Ethical, Legal &amp; Environmental Impacts</option>
+                    <option value="systems_software" data-subject="cs" data-level="gcse" {% if selected_topic == 'systems_software' %}selected{% endif %}>Systems Software (OCR)</option>
+
                 </select>
             </div>
 
             <div class="form-group">
                 <label for="mode-select">Mode</label>
-                <select name="mode" id="mode-select" onchange="updateDiffVisibility()">
-                    <option value="revision" {% if selected_mode == 'revision' %}selected{% endif %}>📖 Revision</option>
-                    <option value="exam" {% if selected_mode == 'exam' %}selected{% endif %}>📝 Exam</option>
+                <select name="mode" id="mode-select">
+                    <option value="standard" {% if selected_mode == 'standard' %}selected{% endif %}>📝 Standard question</option>
                     <option value="mcq" {% if selected_mode == 'mcq' %}selected{% endif %}>🔘 Multiple Choice</option>
                 </select>
             </div>
@@ -71,11 +124,8 @@
                 </select>
             </div>
 
-            <button type="submit" class="btn btn-primary">Generate Problem</button>
-            </div>
-
+            <button type="submit" class="btn btn-primary">Generate problem</button>
         </div>
-
     </form>
 </div>
 
@@ -83,72 +133,49 @@
     <p class="error">{{ error }}</p>
 {% endif %}
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+        <p class="{% if category == 'error' %}error{% else %}flash-success{% endif %}">{{ message }}</p>
+    {% endfor %}
+{% endwith %}
+
 {% if limit_hit %}
-<div class="problem-card">
-    <p style="font-size: var(--text-lg); margin-bottom: 16px;">
-        You've used your free question for today.
-    </p>
-    <p style="color: var(--text-muted); margin-bottom: 24px;">
-        Create a free account to keep practising and track your progress.
-    </p>
-    <a href="/register" class="btn btn-primary">Create free account</a>
-    <a href="/login" class="btn" style="margin-left: 12px;">Log in</a>
+<div class="section-panel">
+    <div class="section-panel-header">Daily limit reached</div>
+    <div class="section-panel-body">
+        <p style="margin-bottom: 12px;">You've used your free question for today.</p>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">
+            Create a free account to keep practising and track your progress.
+        </p>
+        <a href="{{ url_for('register') }}" class="btn btn-primary">Create free account</a>
+        <a href="{{ url_for('login') }}" class="btn btn-secondary" style="margin-left: 12px;">Log in</a>
+    </div>
 </div>
 
 {% elif problem %}
 <div class="problem-card">
+    <div class="section-panel-header">Your question</div>
+    <div class="problem-card-inner">
 
     <div class="problem-meta">
         <span class="badge badge-{{ problem.difficulty }}">{{ problem.difficulty | title }}</span>
         <span class="badge badge-marks">{{ problem.marks }} mark{% if problem.marks > 1 %}s{% endif %}</span>
-        {% if selected_mode == 'exam' %}
-            <span class="badge badge-exam">Exam Mode</span>
-        {% elif selected_mode == 'mcq' %}
-            <span class="badge badge-exam">Multiple Choice</span>
+        {% if selected_mode == 'mcq' %}
+            <span class="badge badge-mcq">Multiple choice</span>
         {% endif %}
     </div>
 
     <div class="question">
         {% if problem.options %}
-            <p>{{ problem.question | safe }}</p>
-            <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;" id="mcq-options">
+            <div class="question-content">{{ problem.question | safe }}</div>
+            <div id="mcq-options" class="mcq-options" data-correct="{{ problem.correct_answer }}">
                 {% for opt in problem.options %}
-                    <button class="btn mcq-btn" data-letter="{{ opt[0] }}">{{ opt | safe }}</button>
+                    <button type="button" class="btn mcq-btn" data-letter="{{ opt[0] }}">{{ opt | safe }}</button>
                 {% endfor %}
             </div>
             <p id="mcq-feedback" style="margin-top:12px;font-weight:600;"></p>
-            <script>
-                (function() {
-                    const buttons = document.querySelectorAll('.mcq-btn');
-                    const correct = "{{ problem.correct_answer }}";
-                    const feedback = document.getElementById('mcq-feedback');
-                    let answered = false;
-                    buttons.forEach(btn => {
-                        btn.addEventListener('click', function() {
-                            if (answered) return;
-                            answered = true;
-                            const letter = this.dataset.letter;
-                            if (letter === correct) {
-                                this.style.border = '3px solid green';
-                                feedback.textContent = 'Correct!';
-                                feedback.style.color = 'green';
-                            } else {
-                                this.style.border = '3px solid red';
-                                feedback.textContent = 'Incorrect. The correct answer is ' + correct + '.';
-                                feedback.style.color = 'red';
-                                // also highlight the correct button
-                                buttons.forEach(b => {
-                                    if (b.dataset.letter === correct) b.style.border = '3px solid green';
-                                });
-                            }
-                            // disable all buttons
-                            buttons.forEach(b => b.disabled = true);
-                        });
-                    });
-                })();
-            </script>
         {% else %}
-            {{ problem.question | replace('\n', '<br>') | safe }}
+            <div class="question-content">{{ problem.question | format_question_html }}</div>
         {% endif %}
     </div>
 
@@ -158,16 +185,19 @@
 
     <details class="answer-reveal">
         <summary>Show Answer</summary>
-
-        <div class="answer">{{ problem.solution | replace('\n', '<br>') | safe }}</div>
-
+        <div class="answer">
+            {% if '<pre>' in problem.solution %}
+                {{ problem.solution | safe }}
+            {% else %}
+                {{ problem.solution | format_question_html }}
+            {% endif %}
+    </div>
         <details class="hint-reveal">
             <summary>💡 I still don't understand — show me the key concept</summary>
             <div class="hint">
                 {{ problem.hint | safe }}
             </div>
         </details>
-
         <div style="padding: 16px;">
             <p class="topic-link">
                 📖 <a href="{{ problem.topic_url }}">Read the full {{ problem.topic_name }} topic page →</a>
@@ -175,110 +205,37 @@
         </div>
     </details>
 
-        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:8px;">
+    <div class="problem-actions">
+        {% if current_user.is_authenticated %}
+        <form method="POST" action="{{ url_for('save_problem_route') }}" id="save-problem-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline">⭐ Save question</button>
+        </form>
+        {% endif %}
+        {% if can_reroll_variant %}
+        <form method="POST" id="reroll-form">
+            <input type="hidden" name="action" value="reroll">
+            <input type="hidden" name="level" id="rr-level">
+            <input type="hidden" name="subject" id="rr-subject">
+            <input type="hidden" name="topic" id="rr-topic">
+            <input type="hidden" name="mode" id="rr-mode">
+            <input type="hidden" name="difficulty" id="rr-difficulty">
+            <button type="submit" class="btn btn-secondary" id="reroll-btn">🎲 New numbers</button>
+        </form>
+        {% endif %}
+        <form method="POST" action="/quicktest/start" id="quicktest-form">
+            <input type="hidden" name="level" id="qt-level">
+            <input type="hidden" name="subject" id="qt-subject">
+            <input type="hidden" name="topic" id="qt-topic">
+            <input type="hidden" name="mode" id="qt-mode">
+            <input type="hidden" name="difficulty" id="qt-difficulty">
+            <button type="submit" class="btn btn-primary" id="quicktest-btn">⚡ Quick test</button>
+        </form>
+    </div>
 
-            <form method="POST" action="/quicktest/start" id="quicktest-form" style="margin:0;">
-                <input type="hidden" name="level" id="qt-level">
-                <input type="hidden" name="subject" id="qt-subject">
-                <input type="hidden" name="topic" id="qt-topic">
-                <input type="hidden" name="mode" id="qt-mode">
-                <input type="hidden" name="difficulty" id="qt-difficulty">
-                <button type="submit" class="btn" onclick="syncQuickTest()">⚡ Quick Test</button>
-            </form>
-        </div>
-
-<script>
-function syncQuickTest() {
-  document.getElementById('qt-level').value = document.getElementById('level-select').value;
-  document.getElementById('qt-subject').value = document.getElementById('subject-select').value;
-  document.getElementById('qt-topic').value = document.getElementById('topic-select').value;
-  document.getElementById('qt-mode').value = document.getElementById('mode-select').value;
-  document.getElementById('qt-difficulty').value = document.getElementById('difficulty').value;
-}
-</script>
-
-
+    </div>
 </div>
 {% endif %}
 
-<script>
-function updateSubjects(preserve = false) {
-    const level = document.getElementById('level-select').value;
-    const subjectSelect = document.getElementById('subject-select');
-    const options = subjectSelect.querySelectorAll('option');
-    let firstVisible = null;
-    let foundSelected = false;
-
-    options.forEach(opt => {
-        if (opt.dataset.level === level) {
-            opt.style.display = '';
-            if (!firstVisible) firstVisible = opt;
-            if (preserve && opt.selected) foundSelected = true;
-        } else {
-            opt.style.display = 'none';
-            opt.selected = false;
-        }
-    });
-
-    if (!foundSelected && firstVisible) firstVisible.selected = true;
-    updateTopics(preserve);
-}
-
-function updateTopics(preserve = false) {
-    const level = document.getElementById('level-select').value;
-    const subjectSelect = document.getElementById('subject-select');
-    const subjectValue = subjectSelect.value;
-
-    const topicSelect = document.getElementById('topic-select');
-    const options = topicSelect.querySelectorAll('option');
-    let firstVisible = null;
-    let foundSelected = false;
-
-    options.forEach(opt => {
-        if (opt.dataset.subject === subjectValue && opt.dataset.level === level) {
-            opt.style.display = '';
-            if (!firstVisible) firstVisible = opt;
-            if (preserve && opt.selected) foundSelected = true;
-        } else {
-            opt.style.display = 'none';
-            opt.selected = false;
-        }
-    });
-
-    if (!foundSelected && firstVisible) firstVisible.selected = true;
-}
-
-function updateDiffVisibility() {
-    const mode = document.getElementById('mode-select').value;
-    const diffRow = document.getElementById('difficulty-row');
-    diffRow.style.display = mode === 'mcq' ? 'none' : '';
-}
-
-const previousLevel = "{{ selected_level }}";
-const previousSubject = "{{ selected_subject }}";
-const previousTopic = "{{ selected_topic }}";
-
-document.getElementById('level-select').value = previousLevel;
-
-const subjectSelect = document.getElementById('subject-select');
-Array.from(subjectSelect.options).forEach(opt => {
-    if (opt.value === previousSubject && opt.dataset.level === previousLevel) {
-        opt.selected = true;
-    }
-});
-
-const topicSelect = document.getElementById('topic-select');
-Array.from(topicSelect.options).forEach(opt => {
-    if (
-        opt.value === previousTopic &&
-        opt.dataset.level === previousLevel &&
-        opt.dataset.subject === previousSubject
-    ) {
-        opt.selected = true;
-    }
-});
-
-updateSubjects(true);
-updateDiffVisibility();
-</script>
+</div>
 {% endblock %}

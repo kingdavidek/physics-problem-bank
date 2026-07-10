@@ -693,7 +693,7 @@ def edexcel_combined_physics_radioactivity(difficulty, mode):
             "radioactivity",
         )
 
-    if mode == "exam" and difficulty == "mixed":
+    if difficulty == "mixed":
         difficulty = random.choices(
             ["foundational", "intermediate", "difficult"],
             weights=[50, 30, 20]

@@ -1,0 +1,509 @@
+{% extends "base.html" %}
+{% block title %}Computer Networks – GCSE Computer Science{% endblock %}
+
+{% block content %}
+<style>
+  .lesson-inner > summary { list-style:none; }
+  .lesson-inner > summary::-webkit-details-marker { display:none; }
+  .board-tag { font-size:.7rem;padding:2px 6px;border-radius:8px;margin-right:4px; }
+  .board-aqa { background:#dbeafe;color:#1e40af; }
+  .board-ocr { background:#fce7f3;color:#9d174d; }
+  .board-edx { background:#fef3c7;color:#92400e; }
+</style>
+
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Computer Networks</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">GCSE Computer Science — LANs and WANs, topologies, hardware, protocols, IP addressing, DNS, packet switching, and network security. Revise each section, use the Quick Checks, then practise exam-style questions.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">WJEC</span>
+    </div>
+  </div>
+
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='cs', topic='computer_networks') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <!-- 1. NETWORK TYPES -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      Types of Networks
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          1.1 LAN, WAN and PAN
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <ul style="line-height:1.9;">
+            <li><strong>LAN</strong> (Local Area Network) — one site, e.g. school, home (high speed, privately owned)</li>
+            <li><strong>WAN</strong> (Wide Area Network) — large area, often uses rented lines; the <strong>internet</strong> is the biggest WAN</li>
+            <li><strong>PAN</strong> (Personal Area Network) — devices around one person; AQA expects <strong>Bluetooth</strong> as the PAN example (headphones, phone to watch)</li>
+          </ul>
+          <p><strong>Why networks?</strong> Share files and printers, central backups, communication, access to the internet. Disadvantages: cost, security risks, dependency if the network fails.</p>
+          <p><strong>Example:</strong> PCs in your school computer room = LAN. Your school’s connection to the internet = link from LAN to WAN.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">A network covering one school site is usually a:</p>
+              <button class="btn mcq-btn" data-letter="A">WAN</button>
+              <button class="btn mcq-btn" data-letter="B">LAN</button>
+              <button class="btn mcq-btn" data-letter="C">PAN only</button>
+              <button class="btn mcq-btn" data-letter="D">VPN only</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          1.2 Client–server and peer-to-peer
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Client–server:</strong> powerful <strong>servers</strong> provide services; <strong>clients</strong> request them. Example: web browser (client) asks a web server for a page.</p>
+          <p><strong>Peer-to-peer (P2P):</strong> devices share roles — no central server required. Example: small office file sharing or some video call setups.</p>
+          <p><strong>Worked example:</strong> School email — client laptops connect to a dedicated <strong>mail server</strong> (client–server). A LAN party game with no central host can be P2P.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">In client–server, the server:</p>
+              <button class="btn mcq-btn" data-letter="A">Only requests pages</button>
+              <button class="btn mcq-btn" data-letter="B">Provides a service to clients</button>
+              <button class="btn mcq-btn" data-letter="C">Cannot use the internet</button>
+              <button class="btn mcq-btn" data-letter="D">Is always a phone</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          1.3 Wired and wireless
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Wired</strong> (Ethernet over copper or fibre) — often faster and more stable; harder to tap casually; cables cost money to install.</p>
+          <p><strong>Wireless</strong> (Wi‑Fi, Bluetooth) — flexible, no cables; can suffer interference, shorter range, shared bandwidth; needs encryption (WPA2/WPA3).</p>
+          <p><strong>Network speed</strong> is measured in <strong>bits per second</strong> (bps, Mbps, Gbps) — how much data can move in one second.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">A main advantage of wireless over wired for a laptop is:</p>
+              <button class="btn mcq-btn" data-letter="A">No need for any security</button>
+              <button class="btn mcq-btn" data-letter="B">Mobility without cables</button>
+              <button class="btn mcq-btn" data-letter="C">Always faster than fibre</button>
+              <button class="btn mcq-btn" data-letter="D">Cannot be intercepted</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 2. TOPOLOGIES -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Network Topologies
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          2.1 Star and bus
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Star</strong> — every device connects to a central <strong>switch</strong> or WAP. If one cable fails, only that device is affected. Most school and home networks are star-shaped logically.</p>
+          <p><strong>Bus</strong> — devices share one backbone cable. Cheap but the backbone is a <strong>single point of failure</strong>; older Ethernet used this layout.</p>
+          <div style="text-align:center;margin:14px 0;">
+            <svg width="100%" viewBox="0 0 400 160" style="background:#f9f8f5;border-radius:8px;max-width:400px;display:block;margin:0 auto;" aria-label="Star topology diagram">
+              <circle cx="200" cy="50" r="22" fill="#1a6fa8"/>
+              <text x="200" y="55" font-size="14" fill="#28251d" text-anchor="middle" font-weight="bold">Switch</text>
+              <line x1="200" y1="72" x2="80" y2="120" stroke="#b8c9d4" stroke-width="2"/>
+              <line x1="200" y1="72" x2="140" y2="130" stroke="#b8c9d4" stroke-width="2"/>
+              <line x1="200" y1="72" x2="260" y2="130" stroke="#b8c9d4" stroke-width="2"/>
+              <line x1="200" y1="72" x2="320" y2="120" stroke="#b8c9d4" stroke-width="2"/>
+              <rect x="60" y="120" width="40" height="24" rx="4" fill="#e8f4fd" stroke="#1a6fa8"/>
+              <rect x="120" y="130" width="40" height="24" rx="4" fill="#e8f4fd" stroke="#1a6fa8"/>
+              <rect x="240" y="130" width="40" height="24" rx="4" fill="#e8f4fd" stroke="#1a6fa8"/>
+              <rect x="300" y="120" width="40" height="24" rx="4" fill="#e8f4fd" stroke="#1a6fa8"/>
+              <text x="200" y="18" font-size="14" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Star topology</text>
+            </svg>
+          </div>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Devices all connect to a central switch in:</p>
+              <button class="btn mcq-btn" data-letter="A">Bus topology</button>
+              <button class="btn mcq-btn" data-letter="B">Star topology</button>
+              <button class="btn mcq-btn" data-letter="C">Ring topology only</button>
+              <button class="btn mcq-btn" data-letter="D">Mesh only</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          2.2 Mesh and reliability
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Mesh</strong> — devices have <strong>multiple links</strong> to others. If one link breaks, data can use another path. Used where reliability is critical (some backbone links); expensive to wire fully.</p>
+          <p><strong>Ring</strong> — devices in a circle; data passes token-style (less common in new GCSE setups).</p>
+          <p><strong>Example:</strong> Two city offices with two fibre links between them = partial mesh for backup if one cable is cut.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">A main disadvantage of bus topology is:</p>
+              <button class="btn mcq-btn" data-letter="A">The backbone cable can be a single point of failure</button>
+              <button class="btn mcq-btn" data-letter="B">Too many spare paths</button>
+              <button class="btn mcq-btn" data-letter="C">Every device needs a public IP</button>
+              <button class="btn mcq-btn" data-letter="D">It always uses HTTPS</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 3. HARDWARE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Network Hardware
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          3.1 Routers, switches and NICs
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <table style="width:100%;border-collapse:collapse;margin:10px 0;font-size:1rem;">
+            <tr style="background:#eaf4fb;"><th style="padding:8px;border:1px solid #d4e6f1;text-align:left;">Device</th><th style="padding:8px;border:1px solid #d4e6f1;">Role</th></tr>
+            <tr><td style="padding:8px;border:1px solid #e2e8f0;"><strong>NIC</strong></td><td style="padding:8px;border:1px solid #e2e8f0;">Connects device to network; has MAC address</td></tr>
+            <tr><td style="padding:8px;border:1px solid #e2e8f0;"><strong>Switch</strong></td><td style="padding:8px;border:1px solid #e2e8f0;">Connects devices on a LAN; sends frames to correct MAC</td></tr>
+            <tr><td style="padding:8px;border:1px solid #e2e8f0;"><strong>Router</strong></td><td style="padding:8px;border:1px solid #e2e8f0;">Links LAN to other networks (e.g. internet); routes by IP</td></tr>
+            <tr><td style="padding:8px;border:1px solid #e2e8f0;"><strong>WAP</strong></td><td style="padding:8px;border:1px solid #e2e8f0;">WiFi access point for wireless clients</td></tr>
+          </table>
+          <p><strong>Worked example:</strong> Home fibre → <strong>router</strong> (public IP, NAT) → <strong>switch/WiFi</strong> → laptops and phones.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Which device forwards packets between your LAN and the internet?</p>
+              <button class="btn mcq-btn" data-letter="A">Monitor</button>
+              <button class="btn mcq-btn" data-letter="B">Router</button>
+              <button class="btn mcq-btn" data-letter="C">Printer</button>
+              <button class="btn mcq-btn" data-letter="D">Keyboard</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          3.2 Switch vs hub
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>A <strong>hub</strong> repeats traffic to <em>every</em> port (collision, wasted bandwidth). A <strong>switch</strong> learns which MAC address is on which port and sends data <strong>only there</strong>.</p>
+          <p><strong>Example:</strong> In a classroom of 30 PCs, a switch stops one student’s traffic flooding everyone else’s machines.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">A switch improves on a hub because it:</p>
+              <button class="btn mcq-btn" data-letter="A">Broadcasts to every port always</button>
+              <button class="btn mcq-btn" data-letter="B">Sends data to the intended device only</button>
+              <button class="btn mcq-btn" data-letter="C">Replaces DNS</button>
+              <button class="btn mcq-btn" data-letter="D">Encrypts all emails automatically</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='computer_networks') }}?difficulty=foundational&amp;mode=practice" style="display:inline-block;margin:4px 0 8px;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Foundational</a>
+    </div>
+  </details>
+
+  <!-- 4. PROTOCOLS -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Protocols &amp; the TCP/IP Model
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          4.1 Application protocols
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>A <strong>protocol</strong> is an agreed set of rules so devices can communicate.</p>
+          <table style="width:100%;border-collapse:collapse;margin:10px 0;font-size:.88rem;">
+            <tr style="background:#eaf4fb;"><th style="padding:8px;border:1px solid #d4e6f1;">Protocol</th><th style="padding:8px;border:1px solid #d4e6f1;">Use</th></tr>
+            <tr><td style="padding:8px;border:1px solid #e2e8f0;">HTTP / HTTPS</td><td style="padding:8px;border:1px solid #e2e8f0;">Web pages (HTTPS encrypted)</td></tr>
+            <tr><td style="padding:8px;border:1px solid #e2e8f0;">SMTP</td><td style="padding:8px;border:1px solid #e2e8f0;">Sending email</td></tr>
+            <tr><td style="padding:8px;border:1px solid #e2e8f0;">IMAP</td><td style="padding:8px;border:1px solid #e2e8f0;">Receiving email (keeps mail on server)</td></tr>
+            <tr><td style="padding:8px;border:1px solid #e2e8f0;">POP3</td><td style="padding:8px;border:1px solid #e2e8f0;">Receiving email (often downloads then removes from server)</td></tr>
+            <tr><td style="padding:8px;border:1px solid #e2e8f0;">Ethernet / Wi‑Fi</td><td style="padding:8px;border:1px solid #e2e8f0;">Families of protocols for wired / wireless LAN links</td></tr>
+            <tr><td style="padding:8px;border:1px solid #e2e8f0;">FTP</td><td style="padding:8px;border:1px solid #e2e8f0;">File transfer</td></tr>
+          </table>
+          <p><strong>Example:</strong> Logging into webmail — browser uses <strong>HTTPS</strong>; outgoing mail may use <strong>SMTP</strong>.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">SMTP is mainly used to:</p>
+              <button class="btn mcq-btn" data-letter="A">Send email</button>
+              <button class="btn mcq-btn" data-letter="B">Display web pages</button>
+              <button class="btn mcq-btn" data-letter="C">Resolve domain names</button>
+              <button class="btn mcq-btn" data-letter="D">Print files</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          4.2 TCP, UDP and layers
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Four-layer TCP/IP model</strong> (AQA and Edexcel):</p>
+          <ol style="line-height:1.9;">
+            <li><strong>Application</strong> — HTTP, HTTPS, SMTP, IMAP, FTP, DNS</li>
+            <li><strong>Transport</strong> — <strong>TCP</strong> (reliable) or <strong>UDP</strong> (fast, no guarantee)</li>
+            <li><strong>Internet</strong> — <strong>IP</strong> addresses and routing</li>
+            <li><strong>Link</strong> — Ethernet, Wi‑Fi (WLAN); NIC and drivers sit here</li>
+          </ol>
+          <p><strong>Example:</strong> Loading a secure site: HTTPS → over TCP → over IP → over WiFi/Ethernet.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">TCP is chosen when:</p>
+              <button class="btn mcq-btn" data-letter="A">Lost packets never matter</button>
+              <button class="btn mcq-btn" data-letter="B">Reliable, ordered delivery is needed</button>
+              <button class="btn mcq-btn" data-letter="C">Only MAC addresses are used</button>
+              <button class="btn mcq-btn" data-letter="D">DNS is not required</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 5. ADDRESSES & DNS -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      IP Addresses &amp; DNS
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          5.1 IPv4 and MAC addresses
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>IPv4</strong> — four numbers 0–255, e.g. <code>192.168.0.10</code>. Used for <strong>routing</strong> across networks.</p>
+          <p><strong>MAC address</strong> — 48-bit hardware address on the NIC (e.g. <code>00:1A:2B:3C:4D:5E</code>). Used on the <strong>local</strong> link.</p>
+          <p><strong>Worked example:</strong> Your laptop MAC reaches the switch; the router uses IP to send packets to <code>142.250.x.x</code> (Google).</p>
+          <p style="font-size:1rem;color:#8a5300;">Private ranges (home LAN): 192.168.x.x, 10.x.x.x — shared one public IP via NAT on the router.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">A valid IPv4 address format is:</p>
+              <button class="btn mcq-btn" data-letter="A">Three letters and a slash</button>
+              <button class="btn mcq-btn" data-letter="B">Four numbers 0–255 separated by dots</button>
+              <button class="btn mcq-btn" data-letter="C">Eight hex digits only</button>
+              <button class="btn mcq-btn" data-letter="D">www.example.com</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          5.2 DNS
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>DNS</strong> (Domain Name System) maps domain names to IP addresses so humans need not memorise numbers. OCR also links DNS to how the internet is structured (web servers, hosting, cloud).</p>
+          <p><strong>Worked example:</strong> You type <code>www.bbc.co.uk</code> → DNS server returns an IP → browser connects to that IP using HTTP/HTTPS.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">DNS translates domain names into:</p>
+              <button class="btn mcq-btn" data-letter="A">MAC addresses only</button>
+              <button class="btn mcq-btn" data-letter="B">IP addresses</button>
+              <button class="btn mcq-btn" data-letter="C">HTML files</button>
+              <button class="btn mcq-btn" data-letter="D">WiFi passwords</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 6. TRANSMISSION & SECURITY -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Packets, Cloud &amp; Security
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          6.1 Packet switching
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>Large files are split into <strong>packets</strong> with headers (source/destination IP, sequence info). Routers forward packets; they may take <strong>different routes</strong> and are <strong>reassembled</strong> at the end.</p>
+          <p><strong>Example:</strong> A video stream is thousands of packets; if one is lost, only that packet is resent (TCP) or skipped (UDP).</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Packet switching means data:</p>
+              <button class="btn mcq-btn" data-letter="A">Uses one dedicated line only forever</button>
+              <button class="btn mcq-btn" data-letter="B">Is split into packets that may take different routes</button>
+              <button class="btn mcq-btn" data-letter="C">Never uses routers</button>
+              <button class="btn mcq-btn" data-letter="D">Is only sent wirelessly</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          6.2 Network security and cloud
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>Network security methods work together (defence in depth):</p>
+          <ul style="line-height:1.9;">
+            <li><strong>Authentication</strong> — prove identity before access (password, 2FA)</li>
+            <li><strong>Encryption</strong> — <strong>HTTPS</strong> encrypts web traffic in transit</li>
+            <li><strong>Firewall</strong> — filters traffic by rules; blocks unauthorised access</li>
+            <li><strong>MAC address filtering</strong> — allow/block devices by hardware address (can be spoofed; not enough alone)</li>
+          </ul>
+          <p>Edexcel also covers <strong>penetration testing</strong> and <strong>ethical hacking</strong> to find weaknesses. See the Cyber Security lesson for malware and social engineering in depth.</p>
+          <p><strong>Cloud</strong> services run on remote servers over the internet (storage, email, apps) — OCR links DNS, hosting and web servers to this model.</p>
+          <p><strong>Worked example:</strong> School firewall blocks gaming sites; Wi‑Fi uses WPA3; students submit homework via HTTPS portal.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">HTTPS compared with HTTP adds:</p>
+              <button class="btn mcq-btn" data-letter="A">More cables</button>
+              <button class="btn mcq-btn" data-letter="B">Encryption</button>
+              <button class="btn mcq-btn" data-letter="C">A larger monitor</button>
+              <button class="btn mcq-btn" data-letter="D">A MAC address</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='computer_networks') }}?difficulty=intermediate&amp;mode=practice" style="display:inline-block;margin:4px 0 8px;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Intermediate</a>
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='computer_networks') }}?difficulty=difficult&amp;mode=practice" style="display:inline-block;margin:4px 0 8px;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;margin-left:8px;">Quick Test – Difficult</a>
+    </div>
+  </details>
+
+  <!-- QUICK REFERENCE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">★</span>
+      Quick Reference
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10–11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <div style="text-align:center;margin:12px 0;">
+        <svg width="100%" viewBox="0 0 760 280" style="background:#f9f8f5;border:1px solid #d4e6f1;border-radius:8px;max-width:760px;display:block;margin:0 auto;">
+          <text x="380" y="26" font-size="16" fill="#1a6fa8" font-weight="bold" text-anchor="middle">Networks — Quick Reference</text>
+          <text x="20" y="54" font-size="14" fill="#28251d">LAN | WAN | PAN (Bluetooth)</text>
+          <text x="20" y="74" font-size="14" fill="#28251d">Star + bus (AQA) | + mesh (Edexcel/OCR)</text>
+          <text x="20" y="94" font-size="14" fill="#28251d">Router → networks | Switch → LAN</text>
+          <text x="20" y="114" font-size="14" fill="#28251d">HTTP/HTTPS | SMTP send | IMAP receive</text>
+          <line x1="380" y1="40" x2="380" y2="260" stroke="#d4e6f1"/>
+          <text x="400" y="54" font-size="14" fill="#28251d">DNS → name to IP | Cloud / hosting</text>
+          <text x="400" y="74" font-size="14" fill="#28251d">4 layers: App · Transport · Internet · Link</text>
+          <text x="400" y="94" font-size="14" fill="#28251d">TCP reliable | UDP fast | Ethernet / Wi‑Fi</text>
+          <text x="400" y="114" font-size="14" fill="#28251d">Packets + routers = internet</text>
+          <text x="400" y="144" font-size="14" fill="#1a6fa8" font-weight="bold">Security</text>
+          <text x="400" y="164" font-size="14" fill="#555555">Auth · HTTPS · Firewall · MAC filter</text>
+        </svg>
+      </div>
+      <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:8px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">The internet is best described as:</p>
+          <button class="btn mcq-btn" data-letter="A">A single LAN</button>
+          <button class="btn mcq-btn" data-letter="B">A WAN of interconnected networks</button>
+          <button class="btn mcq-btn" data-letter="C">One physical cable</button>
+          <button class="btn mcq-btn" data-letter="D">Only Bluetooth</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+</div>
+
+<div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;max-width:860px;margin-left:auto;margin-right:auto;">
+  <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+  <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='cs', topic='computer_networks') }}"
+     style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+    Start Practice Quiz
+  </a>
+</div>
+
+{% endblock %}

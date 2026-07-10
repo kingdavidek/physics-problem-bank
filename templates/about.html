@@ -2,29 +2,90 @@
 {% block title %}About – Problem Bank{% endblock %}
 
 {% block content %}
-<h1>About Problem Bank</h1>
-<p>
-    Problem Bank is a free practice tool for British GCSE and A-Level students
-    studying Maths and Physics. Every problem is randomly generated, so you can
-    practise the same topic as many times as you need without ever seeing the
-    same question twice.
+<div class="page-shell">
+
+<div class="lesson-hero">
+    <h1>About Problem Bank</h1>
+    <p class="hero-sub">Free revision and practice for GCSE, A-Level, and IB MYP — maths, physics, and computer science.</p>
+    <div class="hero-pills">
+        <span class="hero-pill">Revision notes</span>
+        <span class="hero-pill">Generated questions</span>
+        <span class="hero-pill">Instant answers</span>
+    </div>
+</div>
+
+<p class="page-intro">
+    Problem Bank helps you revise a topic, then practise with fresh exam-style questions.
+    Content is aimed at UK exam boards; many topics also suit general study and revision.
 </p>
 
-<h2>How to Use It</h2>
-<ol>
-    <li>Select your <strong>level</strong> (GCSE or A-Level)</li>
-    <li>Choose a <strong>subject</strong> and <strong>topic</strong></li>
-    <li>Pick <strong>Revision mode</strong> to choose your difficulty, or <strong>Exam mode</strong> for a realistic mix</li>
-    <li>Click <strong>Generate Problem</strong> and attempt it before revealing the answer</li>
-    <li>Use the <strong>💡 key concept</strong> hint if you need a nudge in the right direction</li>
-</ol>
+<section class="section-panel">
+    <div class="section-panel-header">What you can do</div>
+    <div class="section-panel-body">
+        <ul>
+            <li><strong><a href="{{ url_for('topics_index') }}">Browse topics</a></strong> — open a subject area for explanations, worked examples, and quick checks.</li>
+            <li><strong><a href="{{ url_for('index') }}">Generate a question</a></strong> — pick a level, subject, topic, and difficulty to get a new problem with a full solution.</li>
+            <li><strong>Quick test</strong> — after generating a question, start a short run of 10 questions on the same settings.</li>
+            <li><strong>Lesson quizzes</strong> — on some topic pages, try a short multiple-choice quiz to check what you remember.</li>
+        </ul>
+    </div>
+</section>
 
-<h2>About the Creator</h2>
-<p>
-    This tool was built by [Your Name], an online tutor specialising in GCSE and
-    A-Level Maths and Physics for British students.
-</p>
-<p>
-    <a href="https://yourwordpresssite.com" target="_blank" rel="noopener">Visit my main tutoring site →</a>
-</p>
+<section class="section-panel">
+    <div class="section-panel-header">Practice generator options</div>
+    <div class="section-panel-body">
+        <p>On the <a href="{{ url_for('index') }}">generator</a> you can choose:</p>
+        <ul>
+            <li><strong>Level</strong> — GCSE, A-Level, or IB MYP</li>
+            <li><strong>Subject</strong> — Mathematics, Physics, or Computer Science (availability depends on level)</li>
+            <li><strong>Topic</strong> — a specific area within that subject</li>
+            <li><strong>Mode</strong> — standard written questions, or multiple choice</li>
+            <li><strong>Difficulty</strong> — foundational, intermediate, or difficult</li>
+        </ul>
+        <p style="margin-bottom: 0; color: var(--text-muted); font-size: 0.95rem;">
+            Each question includes a worked answer. Many also include a hint if you are stuck.
+        </p>
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">Coverage</div>
+    <div class="section-panel-body">
+        <p>The site is growing. At the moment you will find, among others:</p>
+        <ul>
+            <li><strong>GCSE Maths</strong> — algebra, geometry, number, statistics, trigonometry, and more</li>
+            <li><strong>GCSE Physics</strong> — forces, radioactivity, and related topics</li>
+            <li><strong>GCSE Computer Science</strong> — Python, algorithms, data representation, networks, cyber security, and other theory topics</li>
+            <li><strong>A-Level Physics</strong> — fields, particles, photoelectric effect, and related areas</li>
+            <li><strong>IB MYP Chemistry</strong> — selected units such as redox and energy changes</li>
+        </ul>
+        <p style="margin-bottom: 0;">
+            See the full list on the <a href="{{ url_for('topics_index') }}">Topics</a> page.
+        </p>
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">Accounts</div>
+    <div class="section-panel-body">
+        <p>
+            You can use the generator without signing in. A free account lets you unlock
+            <strong>difficult</strong> questions, <strong>save questions</strong>, bookmark your place in lessons,
+            and track lesson quiz scores.
+        </p>
+        <p style="margin-bottom: 0;">
+            You must be <strong>13 or older</strong> to register. By signing up you agree to use Problem Bank
+            for personal study. We store your email and handle so you can log in; we do not sell your data.
+        </p>
+    </div>
+</section>
+
+<div class="section-panel cta-panel">
+    <div class="section-panel-body cta-panel-body">
+        <a href="{{ url_for('topics_index') }}" class="btn btn-primary">Browse topics</a>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary" style="margin-left: 12px;">Go to generator</a>
+    </div>
+</div>
+
+</div>
 {% endblock %}

@@ -1,0 +1,509 @@
+{% extends "base.html" %}
+{% block title %}Systems Software – GCSE Computer Science{% endblock %}
+
+{% block content %}
+<style>
+  .lesson-inner > summary { list-style:none; }
+  .lesson-inner > summary::-webkit-details-marker { display:none; }
+  .sys-box { background:#fdf2f8;border-left:4px solid #9d174d;padding:10px 14px;margin:10px 0;border-radius:0 6px 6px 0; }
+  .spec-table { width:100%;border-collapse:collapse;font-size:.88rem;margin:12px 0; }
+  .spec-table th, .spec-table td { border:1px solid #cbd5e1;padding:8px 10px;text-align:left;vertical-align:top; }
+  .spec-table th { background:#f1f5f9;font-weight:600; }
+  .board-tag { font-size:.7rem;padding:2px 6px;border-radius:8px;margin-right:4px; }
+  .board-aqa { background:#dbeafe;color:#1e40af; }
+  .board-ocr { background:#fce7f3;color:#9d174d; }
+  .board-edx { background:#fef3c7;color:#92400e; }
+  .note-box { background:#e8f4fd;border-left:4px solid #1a6fa8;padding:10px 14px;margin:10px 0;border-radius:0 6px 6px 0; }
+  .cli-box { background:#f9f8f5;border:1px solid #d4e6f1;color:#e2e8f0;padding:10px 14px;border-radius:6px;font-family:Consolas,Monaco,monospace;font-size:1rem;margin:10px 0;line-height:1.7; }
+</style>
+
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Systems Software</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">GCSE Computer Science — operating systems, user interfaces, OS functions, and utility programs. Written for <strong>OCR J277 §1.5</strong>; useful depth for any board studying OS concepts.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.28);border-radius:20px;padding:3px 12px;font-size:.8rem;font-weight:600;">OCR J277</span>
+    </div>
+  </div>
+
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='cs', topic='systems_software') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <div class="note-box" style="margin-bottom:14px;">
+    <strong>Board note:</strong> OCR has a dedicated <strong>1.5 Systems software</strong> topic (GUI/CLI, five OS functions, three named utilities). AQA and Edexcel mention operating systems inside broader “computer systems” topics but with less detail — this lesson follows the <strong>OCR checklist</strong>. For CPU and storage, see the Computer Systems topic.
+  </div>
+
+  <!-- 0. SOFTWARE TYPES -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">0</span>
+      Types of Software
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="board-tag board-ocr">OCR</span><span class="board-tag board-aqa">AQA</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" open style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          0.1 System vs application software
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-ocr">OCR</span><span class="board-tag board-aqa">AQA</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <table class="spec-table">
+            <thead><tr><th>Type</th><th>Purpose</th><th>Examples</th></tr></thead>
+            <tbody>
+              <tr><td><strong>System software</strong></td><td>Manages hardware and provides a platform for other software</td><td>Windows, macOS, Linux, drivers, utilities</td></tr>
+              <tr><td><strong>Application software</strong></td><td>Helps the user perform tasks</td><td>Browser, Excel, games, photo editor</td></tr>
+            </tbody>
+          </table>
+          <p><strong>Worked example:</strong> On a school PC, <strong>Windows 11</strong> is system software; <strong>Google Chrome</strong> is application software; <strong>7-Zip</strong> is utility software (still system software category).</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">Microsoft Word is:</p>
+              <button class="btn mcq-btn" data-letter="A">System software</button>
+              <button class="btn mcq-btn" data-letter="B">A device driver</button>
+              <button class="btn mcq-btn" data-letter="C">Application software</button>
+              <button class="btn mcq-btn" data-letter="D">Part of the CPU</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          0.2 Why an operating system is needed
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-ocr">OCR</span><span class="board-tag board-aqa">AQA</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>Without an OS, users would need to talk to hardware in machine code. The <strong>operating system</strong> sits between applications and hardware, managing resources so programs can share one computer safely.</p>
+          <div class="sys-box"><strong>Platform:</strong> Applications are written to run <em>on</em> an OS — Android apps differ from Windows apps.</div>
+          <p><strong>Worked example:</strong> Two pupils print at once — the OS printer queue sends jobs in order instead of corrupting output.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">The operating system mainly:</p>
+              <button class="btn mcq-btn" data-letter="A">Is a word processor</button>
+              <button class="btn mcq-btn" data-letter="B">Manages hardware and software resources</button>
+              <button class="btn mcq-btn" data-letter="C">Replaces RAM</button>
+              <button class="btn mcq-btn" data-letter="D">Only draws icons</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 1. OS OVERVIEW -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      Operating Systems
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="board-tag board-ocr">OCR</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" open style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          1.1 Purpose and role of the OS
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>The OS is the core system software. OCR expects you to know it provides a <strong>user interface</strong> and manages <strong>memory</strong>, <strong>peripherals</strong>, <strong>users</strong> and <strong>files</strong>.</p>
+          <p><strong>Worked example:</strong> When you double-click an app icon, the OS loads the program into RAM, checks you have permission, and connects it to the screen and keyboard.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">Which is an operating system?</p>
+              <button class="btn mcq-btn" data-letter="A">Windows 11</button>
+              <button class="btn mcq-btn" data-letter="B">Microsoft Excel</button>
+              <button class="btn mcq-btn" data-letter="C">Adobe Photoshop</button>
+              <button class="btn mcq-btn" data-letter="D">A printer cable</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          1.2 User interface — GUI and CLI
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <table class="spec-table">
+            <thead><tr><th>Interface</th><th>How it works</th><th>Pros</th><th>Cons</th></tr></thead>
+            <tbody>
+              <tr><td><strong>GUI</strong></td><td>Windows, icons, menus, pointer (WIMP)</td><td>Easy to learn, visual feedback</td><td>Uses more resources; slower for bulk admin tasks</td></tr>
+              <tr><td><strong>CLI</strong></td><td>Type text commands</td><td>Powerful, scriptable, low overhead</td><td>Commands must be memorised; less intuitive</td></tr>
+            </tbody>
+          </table>
+          <div class="cli-box">&gt; cd Documents<br>&gt; dir<br>&gt; mkdir Year11</div>
+          <p><strong>Worked example:</strong> A technician uses <strong>PowerShell</strong> (CLI) to install updates on 200 PCs from one script; everyday users use the <strong>desktop GUI</strong> to open apps.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">A GUI allows users to:</p>
+              <button class="btn mcq-btn" data-letter="A">Type only machine code</button>
+              <button class="btn mcq-btn" data-letter="B">Use windows, icons and menus</button>
+              <button class="btn mcq-btn" data-letter="C">Avoid all graphics</button>
+              <button class="btn mcq-btn" data-letter="D">Remove the OS</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          1.3 Desktop, mobile and embedded OS
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10–11</span>
+          <span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <ul style="line-height:1.9;">
+            <li><strong>Desktop/laptop:</strong> Windows, macOS, Linux — general multitasking, GUI</li>
+            <li><strong>Mobile:</strong> Android, iOS — touch GUI, apps, power management</li>
+            <li><strong>Server:</strong> often CLI-heavy (Linux Server) — many users, reliability</li>
+            <li><strong>Embedded:</strong> minimal OS in one device — washing machine, car ECU; may have no GUI</li>
+          </ul>
+          <p><strong>Worked example:</strong> A smart fridge runs a small embedded OS to read temperature sensors — not a full Windows install.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="D">
+              <p style="margin:0 0 10px;">An embedded system OS is usually:</p>
+              <button class="btn mcq-btn" data-letter="A">A full desktop Windows install for gaming</button>
+              <button class="btn mcq-btn" data-letter="B">Only Microsoft Word</button>
+              <button class="btn mcq-btn" data-letter="C">The same as a web browser</button>
+              <button class="btn mcq-btn" data-letter="D">Small and dedicated to one device function</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 2. OS FUNCTIONS -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Functions of the Operating System
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10–11</span>
+      <span class="board-tag board-ocr">OCR</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" open style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          2.1 Memory management and multitasking
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-ocr">OCR</span><span class="board-tag board-aqa">AQA</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Memory management</strong> — the OS allocates RAM to each program, frees it when closed, and prevents programs from overwriting each other's memory.</p>
+          <p><strong>Multitasking</strong> — the OS <strong>schedules</strong> the CPU so many programs appear to run together (time slices). If RAM runs out, the OS may use <strong>virtual memory</strong> (disk swap) — slower than real RAM.</p>
+          <p><strong>Worked example:</strong> You have a browser, Spotify and Python open — the OS swaps which process uses the CPU thousands of times per second.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">Multitasking means:</p>
+              <button class="btn mcq-btn" data-letter="A">Only one program may ever run</button>
+              <button class="btn mcq-btn" data-letter="B">The CPU is removed</button>
+              <button class="btn mcq-btn" data-letter="C">Several programs appear to run at the same time</button>
+              <button class="btn mcq-btn" data-letter="D">RAM is never used</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          2.2 Peripheral management and drivers
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Peripheral management</strong> — the OS controls input/output devices (keyboard, mouse, monitor, USB, printer). It schedules access and handles plug-and-play detection.</p>
+          <p>A <strong>device driver</strong> is software that translates OS requests into commands the hardware understands. New hardware often needs a driver installed.</p>
+          <p><strong>Worked example:</strong> You plug in a USB printer — Windows installs a driver so the OS can send print jobs to that model.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">A device driver is used to:</p>
+              <button class="btn mcq-btn" data-letter="A">Replace the CPU</button>
+              <button class="btn mcq-btn" data-letter="B">Let the OS communicate with a peripheral</button>
+              <button class="btn mcq-btn" data-letter="C">Compress files only</button>
+              <button class="btn mcq-btn" data-letter="D">Draw GUI windows only</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          2.3 User management
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10–11</span>
+          <span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>The OS stores <strong>user accounts</strong> with usernames and passwords (or biometrics). It enforces <strong>permissions</strong> — e.g. pupils cannot install software; teachers can.</p>
+          <p>Groups (Staff, Students) simplify applying the same rights to many accounts.</p>
+          <p><strong>Worked example:</strong> A pupil logs into a network account — the OS loads their profile and only shows their documents, not another pupil's folder.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">User management includes:</p>
+              <button class="btn mcq-btn" data-letter="A">Accounts, passwords and access rights</button>
+              <button class="btn mcq-btn" data-letter="B">Defragmenting the hard drive</button>
+              <button class="btn mcq-btn" data-letter="C">Compressing ZIP files</button>
+              <button class="btn mcq-btn" data-letter="D">Drawing circuit diagrams</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          2.4 File management
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>The OS organises storage using a <strong>file system</strong> (e.g. NTFS, ext4):</p>
+          <ul style="line-height:1.9;">
+            <li>Files and <strong>folders/directories</strong> with names and paths</li>
+            <li>Create, open, read, write, copy, move, delete</li>
+            <li><strong>Permissions</strong> — read-only, hidden, who may access</li>
+            <li>Tracks free space and bad sectors (with hardware)</li>
+          </ul>
+          <p><strong>Worked example:</strong> Path <code>C:\Users\Alex\work.docx</code> — the OS maps the path to sectors on the SSD via the file system.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">File management includes:</p>
+              <button class="btn mcq-btn" data-letter="A">Only CPU scheduling</button>
+              <button class="btn mcq-btn" data-letter="B">Printing circuit boards</button>
+              <button class="btn mcq-btn" data-letter="C">Organising files and folders on storage</button>
+              <button class="btn mcq-btn" data-letter="D">Running the ALU only</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 3. UTILITIES -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Utility Software
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10–11</span>
+      <span class="board-tag board-ocr">OCR</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" open style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          3.1 Role of utility software
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Utility programs</strong> maintain, protect or optimise the system. They are system software but not the OS itself.</p>
+          <p>OCR names three utilities for exams: <strong>encryption</strong>, <strong>defragmentation</strong>, <strong>data compression</strong>. Schools also teach antivirus, backup and disk cleanup — useful context, but learn the OCR trio first.</p>
+          <p><strong>Worked example:</strong> Windows includes Defrag (HDD), BitLocker (encryption) and supports ZIP (compression) — separate from opening Word.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Utility software:</p>
+              <button class="btn mcq-btn" data-letter="A">Is always a game</button>
+              <button class="btn mcq-btn" data-letter="B">Maintains or optimises the computer</button>
+              <button class="btn mcq-btn" data-letter="C">Replaces the CPU</button>
+              <button class="btn mcq-btn" data-letter="D">Is only application software</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          3.2 Encryption software
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Encryption utilities</strong> scramble data so it cannot be read without the correct <strong>key</strong> (password or certificate). Protects confidentiality if a laptop is stolen.</p>
+          <p>Examples: BitLocker (Windows), FileVault (macOS), VeraCrypt. Works with OS security but adds protection even if someone removes the drive.</p>
+          <p><strong>Worked example:</strong> A teacher's USB stick is lost — if encrypted, finder sees random data, not pupil names and grades.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">Encryption utility software:</p>
+              <button class="btn mcq-btn" data-letter="A">Makes data unreadable without the key</button>
+              <button class="btn mcq-btn" data-letter="B">Defragments files on an SSD</button>
+              <button class="btn mcq-btn" data-letter="C">Increases monitor brightness</button>
+              <button class="btn mcq-btn" data-letter="D">Creates user accounts</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          3.3 Defragmentation
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>On a traditional <strong>HDD</strong>, files can be split into <strong>fragments</strong> scattered on the disk. The read head moves more, slowing access.</p>
+          <p><strong>Defragmentation</strong> reorganises files into contiguous blocks — can improve speed on HDDs.</p>
+          <p style="font-size:1rem;color:#8a5300;"><strong>SSD note:</strong> defragmentation is usually unnecessary and can cause extra wear — OCR exams often contrast HDD vs SSD here.</p>
+          <p><strong>Worked example:</strong> After months of edits, a video project is fragmented — defrag places blocks together; opening the file may load faster on an HDD.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">Defragmentation is mainly used on:</p>
+              <button class="btn mcq-btn" data-letter="A">Monitors</button>
+              <button class="btn mcq-btn" data-letter="B">SSDs as standard practice</button>
+              <button class="btn mcq-btn" data-letter="C">Traditional hard disk drives (HDDs)</button>
+              <button class="btn mcq-btn" data-letter="D">Keyboards</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          3.4 Data compression
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Compression utilities</strong> (ZIP, RAR, 7-Zip) reduce file size for storage or transmission. <strong>Lossless</strong> compression for documents restores the exact original — important for coursework and backups.</p>
+          <p><strong>Worked example:</strong> A 400 MB folder of photos zips to 120 MB for email — receiver decompresses to get identical files back.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Compression utilities:</p>
+              <button class="btn mcq-btn" data-letter="A">Always delete files permanently</button>
+              <button class="btn mcq-btn" data-letter="B">Reduce file size for storage or transfer</button>
+              <button class="btn mcq-btn" data-letter="C">Install printer drivers</button>
+              <button class="btn mcq-btn" data-letter="D">Replace the operating system</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          3.5 Other common utilities (context)
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>Not all are named in OCR 1.5.2, but you may see them in questions or real systems:</p>
+          <ul style="line-height:1.9;">
+            <li><strong>Antivirus / anti-malware</strong> — scans for threats</li>
+            <li><strong>Backup utilities</strong> — copy data to another drive or cloud</li>
+            <li><strong>Disk cleanup</strong> — remove temporary files</li>
+            <li><strong>Firewall software</strong> — filter network traffic (often built into OS)</li>
+          </ul>
+          <p><strong>Worked example:</strong> Windows Defender is a utility; it is not the same as the Windows kernel managing memory.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="D">
+              <p style="margin:0 0 10px;">Antivirus software is best classified as:</p>
+              <button class="btn mcq-btn" data-letter="A">Application software like a game</button>
+              <button class="btn mcq-btn" data-letter="B">The operating system kernel</button>
+              <button class="btn mcq-btn" data-letter="C">A CPU register</button>
+              <button class="btn mcq-btn" data-letter="D">Utility software</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='systems_software') }}?difficulty=intermediate&amp;mode=practice" style="display:inline-block;margin:4px 0 8px;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Intermediate</a>
+    </div>
+  </details>
+
+  <!-- QUICK REFERENCE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">★</span>
+      Quick Reference (OCR 1.5)
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10–11</span>
+      <span class="board-tag board-ocr">OCR</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <div style="text-align:center;margin:12px 0;">
+        <svg width="100%" viewBox="0 0 760 300" style="background:#f9f8f5;border:1px solid #d4e6f1;border-radius:8px;max-width:760px;display:block;margin:0 auto;" aria-label="Systems software quick reference">
+          <text x="380" y="24" font-size="16" fill="#a13544" font-weight="bold" text-anchor="middle">OCR J277 — Systems Software</text>
+          <text x="20" y="52" font-size="14" fill="#a13544" font-weight="bold">OS functions (1.5.1)</text>
+          <text x="20" y="68" font-size="14" fill="#28251d">1. User interface — GUI &amp; CLI</text>
+          <text x="20" y="84" font-size="14" fill="#28251d">2. Memory management &amp; multitasking</text>
+          <text x="20" y="100" font-size="14" fill="#28251d">3. Peripheral management &amp; drivers</text>
+          <text x="20" y="116" font-size="14" fill="#28251d">4. User management</text>
+          <text x="20" y="132" font-size="14" fill="#28251d">5. File management</text>
+          <text x="20" y="156" font-size="14" fill="#a13544" font-weight="bold">Utilities (1.5.2)</text>
+          <text x="20" y="172" font-size="14" fill="#28251d">Encryption · Defragmentation (HDD) · Compression</text>
+          <line x1="380" y1="40" x2="380" y2="280" stroke="#d4e6f1"/>
+          <text x="400" y="52" font-size="14" fill="#1a6fa8" font-weight="bold">Classify</text>
+          <text x="400" y="68" font-size="14" fill="#28251d">System = OS + utilities + drivers</text>
+          <text x="400" y="84" font-size="14" fill="#28251d">Application = user tasks</text>
+          <text x="400" y="108" font-size="14" fill="#1a6fa8" font-weight="bold">Exam tips</text>
+          <text x="400" y="124" font-size="14" fill="#28251d">GUI = WIMP · CLI = typed commands</text>
+          <text x="400" y="140" font-size="14" fill="#28251d">Defrag → HDD not SSD</text>
+          <text x="400" y="156" font-size="14" fill="#28251d">Driver = OS ↔ peripheral</text>
+          <text x="400" y="172" font-size="14" fill="#28251d">Virtual memory = disk as extra RAM</text>
+          <text x="400" y="196" font-size="14" fill="#1a6fa8" font-weight="bold">Related</text>
+          <text x="400" y="212" font-size="14" fill="#28251d">Computer Systems — CPU, memory, storage</text>
+          <text x="400" y="228" font-size="14" fill="#28251d">Cyber Security — encryption in depth</text>
+        </svg>
+      </div>
+      <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:8px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">OCR lists how many main OS functions in 1.5.1?</p>
+          <button class="btn mcq-btn" data-letter="A">Five</button>
+          <button class="btn mcq-btn" data-letter="B">Two</button>
+          <button class="btn mcq-btn" data-letter="C">Ten</button>
+          <button class="btn mcq-btn" data-letter="D">None</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+</div>
+
+<div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;max-width:860px;margin-left:auto;margin-right:auto;">
+  <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+  <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='cs', topic='systems_software') }}"
+     style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+    Start Practice Quiz
+  </a>
+</div>
+
+{% endblock %}
