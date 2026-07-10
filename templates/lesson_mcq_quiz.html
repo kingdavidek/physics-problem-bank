@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Practice Quiz — {{ topic_name }}{% endblock %}
+
+{% block content %}
+<style>
+  .lesson-quiz-page { max-width: 720px; margin: 0 auto; }
+  .lesson-quiz-intro { margin-bottom: 24px; }
+  .lesson-quiz-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+  .lesson-quiz-card h2 {
+    font-size: 1rem;
+    margin: 0 0 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .lesson-quiz-question { margin-bottom: 14px; line-height: 1.55; }
+  .lesson-quiz-options { display: flex; flex-direction: column; gap: 8px; }
+  .lesson-quiz-mcq-btn {
+    text-align: left;
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    line-height: 1.45;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .lesson-quiz-mcq-btn:hover { border-color: #2563eb; }
+  .lesson-quiz-mcq-btn.selected {
+    background: #2563eb;
+    border-color: #1d4ed8;
+    color: #fff;
+  }
+  .lesson-quiz-submit {
+    margin-top: 8px;
+    padding-bottom: 48px;
+    text-align: center;
+  }
+  .lesson-quiz-back {
+    display: inline-block;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+    color: var(--primary);
+  }
+</style>
+
+<div class="lesson-quiz-page">
+  <a href="{{ lesson_url }}" class="lesson-quiz-back">← Back to lesson</a>
+
+  <div class="lesson-quiz-intro">
+    <h1 style="margin-bottom:6px;font-family:var(--font-serif);">Practice Quiz</h1>
+    <p style="color:var(--text-muted);">{{ topic_name }} — {{ total }} multiple-choice questions. Select one answer for each question, then submit.</p>
+  </div>
+
+  <form method="POST" action="{{ url_for('lesson_mcq_submit', level=level, subject=subject, topic=topic) }}" id="lesson-quiz-form">
+    {% for problem in problems %}
+    {% set q_index = loop.index0 %}
+    <div class="lesson-quiz-card" data-question="{{ q_index }}">
+      <h2>Question {{ loop.index }} of {{ total }}</h2>
+      <div class="lesson-quiz-question">{{ problem.question | safe }}</div>
+      <div class="lesson-quiz-options" role="group" aria-label="Question {{ loop.index }} options">
+        {% for opt in problem.options %}
+        <button type="button" class="lesson-quiz-mcq-btn" data-letter="{{ opt[0] }}">{{ opt | safe }}</button>
+        {% endfor %}
+      </div>
+      <input type="hidden" name="answer_{{ q_index }}" id="answer_{{ q_index }}" value="">
+    </div>
+    {% endfor %}
+
+    <div class="lesson-quiz-submit">
+      <button type="submit" class="btn btn-primary" style="padding:12px 32px;font-size:1rem;">Submit</button>
+    </div>
+  </form>
+</div>
+
+<script>
+(function() {
+  var form = document.getElementById('lesson-quiz-form');
+  if (!form) return;
+
+  form.querySelectorAll('.lesson-quiz-mcq-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var card = btn.closest('.lesson-quiz-card');
+      if (!card) return;
+
+      var letter = (btn.getAttribute('data-letter') || '').trim().charAt(0);
+      card.querySelectorAll('.lesson-quiz-mcq-btn').forEach(function(b) {
+        b.classList.remove('selected');
+      });
+      btn.classList.add('selected');
+
+      var hidden = card.querySelector('input[type="hidden"][name^="answer_"]');
+      if (hidden) hidden.value = letter;
+    });
+  });
+
+  form.addEventListener('submit', function(e) {
+    var missing = [];
+    form.querySelectorAll('input[type="hidden"][name^="answer_"]').forEach(function(input, idx) {
+      if (!input.value) missing.push(idx + 1);
+    });
+    if (missing.length) {
+      e.preventDefault();
+      alert('Please answer all ' + {{ total }} + ' questions before submitting.');
+    }
+  });
+})();
+</script>
+{% endblock %}

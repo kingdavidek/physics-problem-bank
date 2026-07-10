@@ -2,35 +2,44 @@
 {% block title %}Topics – Problem Bank{% endblock %}
 
 {% block content %}
-<h1>All Topics</h1>
-<p style="color: var(--text-muted); margin-bottom: 28px;">
-    Click any topic to read an explanation, see key formulae, and practise problems.
+<div class="page-shell">
+
+<div class="lesson-hero">
+    <h1>All topics</h1>
+    <p class="hero-sub">Open a lesson-style topic page, then practise with the generator or quick test.</p>
+    <div class="hero-pills">
+        <span class="hero-pill">Revision notes</span>
+        <span class="hero-pill">Formulae &amp; tips</span>
+        <span class="hero-pill">Practice questions</span>
+    </div>
+</div>
+
+<p class="page-intro">
+    Each topic links to explanations and worked examples. Use the
+    <a href="/">practice generator</a> for unlimited questions at your chosen difficulty.
 </p>
 
-<h2>GCSE Physics</h2>
-<ul>
-    <li><a href="/topics/gcse/physics/forces">Forces</a> — Newton's Laws, F = ma, resultant forces</li>
-</ul>
+{% for group in topic_groups %}
+<section class="topic-group">
+    <h2 class="topic-group-title">{{ group.title }}</h2>
+    <ul class="topic-grid">
+        {% for topic in group.topics %}
+        <li>
+            <a class="topic-card" href="{{ topic.url }}">
+                <span class="topic-card-title">{{ topic.name }}</span>
+                <span class="topic-card-meta">Open topic →</span>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+</section>
+{% endfor %}
 
-<h2>GCSE Maths</h2>
-<ul>
-    <li><a href="/topics/gcse/maths/algebra">Algebra</a> — Linear and quadratic equations</li>
-</ul>
+<div class="section-panel cta-panel">
+    <div class="section-panel-body cta-panel-body">
+        <a href="/" class="btn btn-primary">Go to practice generator</a>
+    </div>
+</div>
 
-<h2>IB MYP Chemistry</h2>
-<ul>
-    <li>
-        <a href="/topics/myp/chemistry/thermochemistry">Thermochemistry</a>
-        — exothermic/endothermic reactions, q = mcΔT, bond energies, energy profiles
-    </li>
-</ul>
-
-<h2>GCSE Computer Science</h2>
-<ul>
-    <li>
-        <a href="/topics/gcse/cs/binary">Binary & Data Representation</a>
-        — denary to binary, binary to denary, binary addition, overflow
-    </li>
-</ul>
-
+</div>
 {% endblock %}

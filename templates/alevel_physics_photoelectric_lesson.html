@@ -1,182 +1,394 @@
 {% extends "base.html" %}
-{% block title %}Photoelectric Effect and Wave-Particle Duality — AQA A-Level Physics{% endblock %}
+{% block title %}Photoelectric Effect & Wave‑Particle Duality – AQA A‑Level Physics{% endblock %}
+
 {% block content %}
+<div style="max-width:820px; margin:0 auto; padding:0 16px;">
 
-<div style="max-width:820px; margin:0 auto; padding: 0 16px;">
+  <h1>Photoelectric Effect and Wave‑Particle Duality</h1>
+  <p style="color:var(--text-muted);">AQA A‑Level Physics – Quantum Phenomena (Section 2.2)</p>
 
-<h1>Photoelectric Effect and Wave-Particle Duality</h1>
-<p style="color:var(--text-muted);">AQA A-Level Physics — Quantum Phenomena</p>
-
-<!-- SECTION 1 -->
-<div class="problem-card" style="background: var(--color-surface-2);">
+  <!-- 1. THE PHOTOELECTRIC EFFECT -->
+  <div class="problem-card" style="background: var(--color-surface-2);">
     <h2>1. The Photoelectric Effect</h2>
-    <p>The photoelectric effect is the emission of electrons from the surface of a metal when electromagnetic radiation of sufficiently high frequency is incident on it. The emitted electrons are called <strong>photoelectrons</strong>.</p>
-    <p>Classical wave theory could not explain why light below a certain frequency produces no emission, however intense the light is. The photon model explains this by treating light as discrete packets of energy called photons, each with energy \(E = hf\).</p>
-    <p>Each electron absorbs one photon. Emission only occurs if the photon energy is at least equal to the minimum energy needed to escape from the metal.</p>
-</div>
+    <p>
+      When light of <strong>frequency above a certain value</strong> is shone onto a metal surface,
+      electrons are emitted from the surface. These emitted electrons are called
+      <strong>photoelectrons</strong>.
+    </p>
+    <details>
+      <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">
+        Why the wave theory failed
+      </summary>
+      <div style="margin-top:8px; padding:12px; background:var(--color-surface-offset);">
+        <p>
+          Classical wave theory predicted that <em>any</em> frequency of light should eventually
+          cause emission, because the energy absorbed by each electron would accumulate over
+          many wave cycles. Experimentally, however, a <strong>threshold frequency</strong> exists:
+          below it, no electrons are emitted no matter how intense the light.
+        </p>
+      </div>
+    </details>
+    <p>
+      The <strong>photon model</strong> explains this:
+    </p>
+    <ul style="padding-left:20px;">
+      <li>Light travels as discrete packets (photons), each with energy <strong>E = hf</strong>.</li>
+      <li>An electron can absorb only <strong>one photon</strong> at a time.</li>
+      <li>If a single photon has insufficient energy, the electron cannot escape.</li>
+      <li>Increasing intensity means more photons per second, so more electrons are emitted
+        (but only if frequency &gt; threshold).</li>
+    </ul>
+  </div>
 
-<div class="problem-card" style="border-left: 4px solid var(--color-primary);">
-    <h3>Practice: Basic Photoelectric Effect</h3>
+  <!-- PRACTICE 1: Basic photoelectric effect -->
+  <div class="problem-card" style="border-left: 4px solid var(--color-primary);">
+    <h3>📝 Your turn</h3>
     <p>{{ p1.question | safe }}</p>
     <details>
-        <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Show Solution</summary>
-        <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset); border-radius:4px;">
-            <p>{{ p1.solution | safe }}</p>
-        </div>
+      <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Show solution</summary>
+      <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset);">
+        {{ p1.solution | safe }}
+      </div>
     </details>
-</div>
+  </div>
 
-<!-- SECTION 2 -->
-<div class="problem-card" style="background: var(--color-surface-2);">
-    <h2>2. Threshold Frequency and Work Function</h2>
-    <p>The <strong>threshold frequency</strong> \(f_0\) is the minimum frequency of electromagnetic radiation needed to cause photoelectric emission from a given metal.</p>
-    <p>The <strong>work function</strong> \(\phi\) is the minimum energy needed for an electron to escape from the metal surface. These are linked by:</p>
-    \[ \phi = hf_0 \]
-    <p>A useful model is the <strong>potential well</strong>. Electrons are trapped in the metal and need enough energy to escape the well. Surface electrons need the least energy, so they are the ones most likely to be emitted.</p>
-    <p>If intensity increases while frequency stays above threshold, more electrons are emitted per second. If frequency increases, the emitted electrons have greater maximum kinetic energy.</p>
-</div>
+  <!-- 2. THRESHOLD FREQUENCY & WORK FUNCTION -->
+  <div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>2. Threshold Frequency &amp; Work Function</h2>
+    <p>
+      The <strong>threshold frequency, \(f_0\)</strong>, is the minimum frequency of light that can
+      cause photoemission for a given metal.
+    </p>
+    <p>
+      The <strong>work function, \(\phi\)</strong>, is the minimum energy an electron needs to escape
+      from the metal surface. It is related to the threshold frequency by:
+      \[
+      \phi = hf_0
+      \]
+    </p>
+    <details>
+      <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">
+        The potential well model
+      </summary>
+      <div style="margin-top:8px; padding:12px; background:var(--color-surface-offset);">
+        <p>
+          Electrons in a metal can be thought of as sitting in a <strong>potential well</strong> — a
+          region of electrostatic attraction. The depth of the well is the work function:
+          the minimum energy needed for an electron to climb out. Electrons at the surface
+          require less energy than those deeper inside, which is why not all emitted electrons
+          have the same kinetic energy.
+        </p>
+      </div>
+    </details>
+    <p>
+      <strong>Key fact:</strong> The work function is different for each metal, which is why
+      different metals have different threshold frequencies.
+    </p>
+  </div>
 
-<div class="problem-card" style="border-left: 4px solid var(--color-primary);">
-    <h3>Practice: Threshold Frequency</h3>
+  <!-- PRACTICE 2: Threshold frequency -->
+  <div class="problem-card" style="border-left: 4px solid var(--color-primary);">
+    <h3>📝 Your turn</h3>
     <p>{{ p2.question | safe }}</p>
     <details>
-        <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Show Solution</summary>
-        <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset); border-radius:4px;">
-            <p>{{ p2.solution | safe }}</p>
-        </div>
+      <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Show solution</summary>
+      <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset);">
+        {{ p2.solution | safe }}
+      </div>
     </details>
-</div>
+  </div>
 
-<!-- SECTION 3 -->
-<div class="problem-card" style="background: var(--color-surface-2);">
-    <h2>3. Einstein’s Photoelectric Equation</h2>
-    <p>Conservation of energy gives the photoelectric equation. The energy of an incoming photon is used partly to free the electron and partly to give it kinetic energy.</p>
-    \[ hf = \phi + E_k \]
-    <p>For the fastest emitted electrons:</p>
-    \[ E_{k,\text{max}} = hf - \phi \]
-    <p>This explains two key observations:</p>
-    <ul style="padding-left:20px;">
-        <li>Below threshold frequency, no electrons are emitted.</li>
-        <li>Above threshold frequency, increasing frequency increases the maximum kinetic energy.</li>
+  <!-- 3. EINSTEIN'S PHOTOELECTRIC EQUATION -->
+  <div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>3. Einstein's Photoelectric Equation</h2>
+    <p>
+      Conservation of energy gives the photoelectric equation:
+      \[
+      hf = \phi + E_{k,\text{max}}
+      \]
+      where:
+      <ul>
+        <li>\(hf\) = energy of the incident photon,</li>
+        <li>\(\phi\) = work function (minimum energy to escape),</li>
+        <li>\(E_{k,\text{max}}\) = maximum kinetic energy of the emitted photoelectron.</li>
+      </ul>
+    </p>
+    <p>
+      This equation makes two predictions that match experiment:
+    </p>
+    <ul>
+      <li>Below threshold frequency, \(hf < \phi\) → no emission.</li>
+      <li>Above threshold, increasing frequency increases the <em>maximum</em> kinetic energy.</li>
     </ul>
-</div>
+  </div>
 
-<div class="problem-card" style="border-left: 4px solid var(--color-primary);">
-    <h3>Practice: Photoelectric Equation</h3>
+  <!-- PRACTICE 3: Photoelectric equation -->
+  <div class="problem-card" style="border-left: 4px solid var(--color-primary);">
+    <h3>📝 Your turn</h3>
     <p>{{ p3.question | safe }}</p>
     <details>
-        <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Show Solution</summary>
-        <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset); border-radius:4px;">
-            <p>{{ p3.solution | safe }}</p>
-        </div>
+      <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Show solution</summary>
+      <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset);">
+        {{ p3.solution | safe }}
+      </div>
     </details>
-</div>
+  </div>
 
-<!-- SECTION 4 -->
-<div class="problem-card" style="background: var(--color-surface-2);">
+  <!-- 4. STOPPING POTENTIAL -->
+  <div class="problem-card" style="background: var(--color-surface-2);">
     <h2>4. Stopping Potential</h2>
-    <p>The <strong>stopping potential</strong> is the minimum potential difference needed to stop the most energetic photoelectrons from reaching the collector plate.</p>
-    <p>At the stopping potential, the electrical work done equals the maximum kinetic energy of the electrons:</p>
-    \[ eV_s = E_{k,\text{max}} \]
-    <p>Combining this with Einstein’s equation gives:</p>
-    \[ eV_s = hf - \phi \]
-    <p>This provides a practical way to determine the maximum kinetic energy of emitted electrons.</p>
-</div>
+    <p>
+      To measure the maximum kinetic energy, we apply a reverse voltage, called the
+      <strong>stopping potential \(V_s\)</strong>, until the photocurrent drops to zero.
+      At this point, the electrical work done equals the maximum kinetic energy:
+      \[
+      eV_s = E_{k,\text{max}}
+      \]
+      Combining with Einstein's equation gives a straight‑line relationship:
+      \[
+      eV_s = hf - \phi \quad\Rightarrow\quad V_s = \frac{h}{e}f - \frac{\phi}{e}
+      \]
+      A graph of \(V_s\) against \(f\) yields a gradient of \(h/e\) and an x‑intercept equal to the
+      threshold frequency.
+    </p>
+  </div>
 
-<div class="problem-card" style="border-left: 4px solid var(--color-primary);">
-    <h3>Practice: Stopping Potential</h3>
+  <!-- PRACTICE 4: Stopping potential -->
+  <div class="problem-card" style="border-left: 4px solid var(--color-primary);">
+    <h3>📝 Your turn</h3>
     <p>{{ p4.question | safe }}</p>
     <details>
-        <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Show Solution</summary>
-        <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset); border-radius:4px;">
-            <p>{{ p4.solution | safe }}</p>
-        </div>
+      <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Show solution</summary>
+      <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset);">
+        {{ p4.solution | safe }}
+      </div>
     </details>
-</div>
+  </div>
 
-<!-- SECTION 5 -->
-<div class="problem-card" style="background: var(--color-surface-2);">
-    <h2>5. Wave-Particle Duality</h2>
-    <p>Wave-particle duality means that electromagnetic radiation and matter can show both wave-like and particle-like behaviour, depending on the experiment.</p>
-    <p>Light behaves as a wave in diffraction and interference, but behaves as particles in the photoelectric effect. Matter can also behave like waves.</p>
-    <p>De Broglie proposed that moving particles have a wavelength:</p>
-    \[ \lambda = \frac{h}{p} \]
-    <p>where \(p\) is momentum. For an electron, this predicts a wavelength similar in scale to atomic spacing, so diffraction should be possible.</p>
-</div>
+  <!-- INTERACTIVE WIDGET: Photon energy & kinetic energy calculator -->
+  <div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>💻 Try it yourself: Photon Energy &amp; Kinetic Energy</h2>
+    <p>Choose a metal (work function) and a light frequency to see the maximum kinetic energy.</p>
+    <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:flex-end;">
+      <div>
+        <label for="metal-select" style="display:block; font-size:0.9em; margin-bottom:4px;">Metal:</label>
+        <select id="metal-select" onchange="updateCalc()">
+          <option value="2.0">Zinc (2.0 eV)</option>
+          <option value="2.3">Sodium (2.3 eV)</option>
+          <option value="2.9">Calcium (2.9 eV)</option>
+          <option value="4.3">Silver (4.3 eV)</option>
+        </select>
+      </div>
+      <div>
+        <label for="freq-slider" style="display:block; font-size:0.9em; margin-bottom:4px;">
+          Frequency (×10<sup>14</sup> Hz): <span id="freq-display">8.0</span>
+        </label>
+        <input type="range" id="freq-slider" min="4.0" max="12.0" step="0.1" value="8.0" oninput="updateCalc()">
+      </div>
+      <div style="font-weight:bold;">
+        \(E_k\) = <span id="ke-result">1.4</span> eV
+      </div>
+    </div>
+    <p style="margin-top:8px; font-size:0.85em; color:var(--text-muted);">
+      \( h = 6.63\times10^{-34}\,\text{J·s},\; e = 1.60\times10^{-19}\,\text{C} \)
+    </p>
+  </div>
 
-<div class="problem-card" style="border-left: 4px solid var(--color-primary);">
-    <h3>Practice: De Broglie Wavelength</h3>
+  <!-- 5. ELECTRON DIFFRACTION & WAVE-PARTICLE DUALITY -->
+  <div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>5. Electron Diffraction &amp; de Broglie Wavelength</h2>
+    <p>
+      If particles have wave‑like properties, they should exhibit diffraction.
+      <strong>Louis de Broglie</strong> proposed that any moving particle has an associated
+      wavelength given by:
+      \[
+      \lambda = \frac{h}{p} \qquad (p = \text{momentum})
+      \]
+      For electrons, this predicts wavelengths similar to X‑rays. In 1927,
+      <strong>Davisson and Germer</strong> observed electron diffraction from a nickel crystal,
+      confirming the wave nature of matter.
+    </p>
+    <p>
+      Diffraction is strongest when the wavelength is comparable to the spacing between
+      atoms — exactly what happens in their experiment.
+    </p>
+    <p>
+      <strong>Wave‑particle duality</strong> means that light and matter are best described
+      sometimes as waves, sometimes as particles, depending on the situation.
+    </p>
+  </div>
+
+  <!-- PRACTICE 5: de Broglie wavelength -->
+  <div class="problem-card" style="border-left: 4px solid var(--color-primary);">
+    <h3>📝 Your turn</h3>
     <p>{{ p5.question | safe }}</p>
     <details>
-        <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Show Solution</summary>
-        <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset); border-radius:4px;">
-            <p>{{ p5.solution | safe }}</p>
-        </div>
+      <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Show solution</summary>
+      <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset);">
+        {{ p5.solution | safe }}
+      </div>
     </details>
+  </div>
+
+<!-- 6. ENERGY LEVELS & PHOTON EMISSION -->
+<div class="problem-card" style="background: var(--color-surface-2);">
+  <h2>6. Energy Levels and Photon Emission</h2>
+  <p>
+    Electrons in atoms occupy <strong>discrete energy levels</strong>. They can be excited
+    (move to a higher level) by absorbing exactly the right amount of energy, often from
+    colliding free electrons or photons.
+  </p>
+  <p>
+    When an excited electron falls back to a lower level, it emits a photon whose energy
+    equals the difference between the two levels:
+    \[
+    \Delta E = hf
+    \]
+    This produces a <strong>line spectrum</strong> — only certain wavelengths appear, which
+    act as a fingerprint for the element. For example, fluorescent tubes use mercury vapour;
+    collisions excite mercury atoms, which then emit UV photons, and a phosphor coating
+    converts them to visible light.
+  </p>
+
+  <!-- Interactive energy-level diagram -->
+  <div style="margin: 20px 0; background: #f9f8f5; border-radius: 8px; padding: 12px;">
+    <p style="font-weight: bold; text-align: center;">Click on a transition arrow to see the photon details</p>
+    <svg viewBox="0 0 320 220" style="width: 100%; max-width: 400px; display: block; margin: 0 auto;">
+      <!-- vertical axis -->
+      <line x1="80" y1="20" x2="80" y2="180" stroke="#333" stroke-width="2"/>
+      <text x="15" y="105" transform="rotate(-90 15 105)" font-size="14" font-family="sans-serif">Energy</text>
+
+      <!-- Levels -->
+      <line x1="80" y1="160" x2="250" y2="160" stroke="#01696f" stroke-width="3"/>
+      <text x="255" y="165" font-size="14" font-family="sans-serif" fill="#222">Ground state (-21.56 eV)</text>
+
+      <line x1="80" y1="90" x2="250" y2="90" stroke="#01696f" stroke-width="3"/>
+      <text x="255" y="95" font-size="14" font-family="sans-serif" fill="#222">A (-4.96 eV)</text>
+
+      <line x1="80" y1="50" x2="250" y2="50" stroke="#01696f" stroke-width="3"/>
+      <text x="255" y="55" font-size="14" font-family="sans-serif" fill="#222">B (-3.16 eV)</text>
+
+      <!-- Transition arrows (clickable) -->
+      <!-- Ground → A (absorption, up) -->
+      <line x1="120" y1="160" x2="120" y2="90" stroke="#d19900" stroke-width="2" marker-end="url(#arrowhead)" style="cursor: pointer;" onclick="showTransition('Ground to A', 16.60, this)"/>
+      <!-- A → B (absorption, up) -->
+      <line x1="150" y1="90" x2="150" y2="50" stroke="#d19900" stroke-width="2" marker-end="url(#arrowhead)" style="cursor: pointer;" onclick="showTransition('A to B', 1.80, this)"/>
+      <!-- B → A (emission, down) -->
+      <line x1="180" y1="50" x2="180" y2="90" stroke="#35a16b" stroke-width="2" marker-end="url(#arrowhead)" style="cursor: pointer;" onclick="showTransition('B to A', 1.80, this)"/>
+      <!-- B → ground (emission, down) -->
+      <line x1="210" y1="50" x2="210" y2="160" stroke="#35a16b" stroke-width="2" marker-end="url(#arrowhead)" style="cursor: pointer;" onclick="showTransition('B to ground', 18.40, this)"/>
+
+      <!-- arrowhead marker -->
+      <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#555"/>
+        </marker>
+      </defs>
+    </svg>
+    <p id="transition-info" style="text-align: center; margin-top: 8px; font-weight: 500;"></p>
+  </div>
+
+  <p>
+    <strong>Evidence for discrete levels:</strong> line spectra, not continuous, show that
+    only specific energy transitions are possible. The diagram above models a hypothetical
+    three‑level atom similar to those used in AQA exam questions.
+  </p>
 </div>
 
-<!-- SECTION 6 -->
-<div class="problem-card" style="background: var(--color-surface-2);">
-    <h2>6. Electron Diffraction</h2>
-    <p>Diffraction is strongest when a wave’s wavelength is of similar size to the gap or spacing it passes through. Crystals have atomic spacing of the same order of magnitude as X-ray wavelengths, and electron wavelengths can also be of this order.</p>
-    <p>Electron diffraction was observed experimentally by Davisson and Germer in 1927, supporting the idea that electrons have wave-like properties.</p>
-    <p>This is strong evidence for wave-particle duality: electrons behave like particles in some experiments and like waves in others.</p>
-</div>
-
-<!-- SECTION 7 -->
-<div class="problem-card" style="background: var(--color-surface-2);">
-    <h2>7. Energy Levels and Photon Emission</h2>
-    <p>Electrons in atoms can only occupy discrete energy levels. They can be excited by gaining exactly the right amount of energy, or ionised if they gain enough energy to escape completely.</p>
-    <p>When an excited electron falls back to a lower energy level, it emits a photon. The photon energy equals the difference between the energy levels:</p>
-    \[ \Delta E = hf \]
-    <p>Line spectra are evidence for discrete energy levels because only certain wavelengths are emitted. Fluorescent tubes are a practical example of excitation and de-excitation producing light.</p>
-</div>
-
-<!-- QUICK REFERENCE -->
-<div class="problem-card" style="background: var(--color-surface-2);">
-    <h2>Quick Reference</h2>
+  <!-- QUICK REFERENCE TABLE -->
+  <div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>Formula Quick Reference</h2>
     <table style="width:100%; border-collapse:collapse; font-size:0.97em;">
-        <thead>
-            <tr style="border-bottom:2px solid var(--color-border);">
-                <th style="text-align:left; padding:8px;">Quantity</th>
-                <th style="text-align:left; padding:8px;">Equation</th>
-                <th style="text-align:left; padding:8px;">Meaning</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr style="border-bottom:1px solid var(--color-border);">
-                <td style="padding:8px;">Photon energy</td>
-                <td style="padding:8px;">\(E = hf\)</td>
-                <td style="padding:8px;">Energy of one photon</td>
-            </tr>
-            <tr style="border-bottom:1px solid var(--color-border);">
-                <td style="padding:8px;">Work function</td>
-                <td style="padding:8px;">\(\phi = hf_0\)</td>
-                <td style="padding:8px;">Minimum energy to escape metal</td>
-            </tr>
-            <tr style="border-bottom:1px solid var(--color-border);">
-                <td style="padding:8px;">Photoelectric equation</td>
-                <td style="padding:8px;">\(hf = \phi + E_k\)</td>
-                <td style="padding:8px;">Energy conservation</td>
-            </tr>
-            <tr style="border-bottom:1px solid var(--color-border);">
-                <td style="padding:8px;">Stopping potential</td>
-                <td style="padding:8px;">\(eV_s = E_{k,\text{max}}\)</td>
-                <td style="padding:8px;">Stops fastest electrons</td>
-            </tr>
-            <tr style="border-bottom:1px solid var(--color-border);">
-                <td style="padding:8px;">De Broglie wavelength</td>
-                <td style="padding:8px;">\(\lambda = h/p\)</td>
-                <td style="padding:8px;">Wavelength of moving particle</td>
-            </tr>
-            <tr>
-                <td style="padding:8px;">Transition energy</td>
-                <td style="padding:8px;">\(\Delta E = hf\)</td>
-                <td style="padding:8px;">Photon emitted or absorbed</td>
-            </tr>
-        </tbody>
+      <thead>
+        <tr style="border-bottom:2px solid var(--color-border);">
+          <th style="text-align:left; padding:8px;">Quantity</th>
+          <th style="text-align:left; padding:8px;">Equation</th>
+          <th style="text-align:left; padding:8px;">Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Photon energy</td><td>\(E = hf\)</td><td></td></tr>
+        <tr><td>Work function</td><td>\(\phi = hf_0\)</td><td>Threshold frequency</td></tr>
+        <tr><td>Photoelectric equation</td><td>\(hf = \phi + E_{k,\text{max}}\)</td><td>Energy conservation</td></tr>
+        <tr><td>Stopping potential</td><td>\(eV_s = E_{k,\text{max}}\)</td><td>Stops even the fastest electrons</td></tr>
+        <tr><td>de Broglie wavelength</td><td>\(\lambda = \dfrac{h}{p}\)</td><td>\(p = mv\) for particles</td></tr>
+        <tr><td>Transition energy</td><td>\(\Delta E = hf\)</td><td>Photon emitted or absorbed</td></tr>
+      </tbody>
     </table>
-</div>
+  </div>
+
+  <!-- Quick Test shortcut -->
+  <div style="text-align:center; margin-top:24px; margin-bottom:48px;">
+    <form method="POST" action="/quicktest/start" style="display:inline;">
+      <input type="hidden" name="level" value="alevel">
+      <input type="hidden" name="subject" value="physics">
+      <input type="hidden" name="topic" value="photoelectric">
+      <input type="hidden" name="mode" value="standard">
+      <input type="hidden" name="difficulty" value="foundational">
+      <button type="submit" class="btn btn-primary">⚡ Quick Test: Foundational</button>
+    </form>
+    <form method="POST" action="/quicktest/start" style="display:inline; margin-left:8px;">
+      <input type="hidden" name="level" value="alevel">
+      <input type="hidden" name="subject" value="physics">
+      <input type="hidden" name="topic" value="photoelectric">
+      <input type="hidden" name="mode" value="standard">
+      <input type="hidden" name="difficulty" value="difficult">
+      <button type="submit" class="btn btn-primary">⚡ Quick Test: Difficult</button>
+    </form>
+  </div>
 
 </div>
+
+<script type='text/javascript' src='https://www.pythonanywhere.com/sKliY-O1sPHWamuwxr3nKRAaHzptbXPfSGFsgm3lwvEVOLXb5R__koZQTSywLYBYTrYuU0MFbm2rA7KzFSNgbnxgYyHP59ggY2SktHI2iTad03n0RVUQFVhFIDK3P5VHC79uUaCgeysUMc3C6FvEFQhUhZYBDN-58bsN8ecwcca_hsCF4Z4e9y6be5SjYOslWSisjhMlNCBN2uCAKpsU0TlXnxt2HcUKihxa1Msg4xQVnY4gphQmUlfcNkDz-QJZViZ5tuSzrgjqJ2UD6lryDinOmvNeJN9uiP_MVHdFgvPJEBDT7_CVQyWZOhK6hQPGDd3Oeaj7qXpXCiFy4pTZHPWY-LGjnz9FjPuqtyNY1l0HLYK9uRRNVGNXYuhCTAm3zANyAF1AtywTXh53d9UvLgYkujLHwCAaD9fipjjxXMumXarMgp0DDM6huknte5WKE5wqi1duI5dzghWLNpqnY0oqvhuyfrLZsbCycxgYF7960hO0mFT0H7gB2eyodzLdFvb7Zsbirg4LiweZXVLNGjzAnK6jOR8y-Be-bjaE87iG2V6OxgiL-RBcXD46LMW862_4Z0wm31uujOwtoDg-fwxjQkWv_TF_FY2yXEEjWOILAw'></script><script>
+  // Photon energy & kinetic energy calculator
+  function updateCalc() {
+    const metalSelect = document.getElementById('metal-select');
+    const freqSlider = document.getElementById('freq-slider');
+    const freqDisplay = document.getElementById('freq-display');
+    const keResult = document.getElementById('ke-result');
+
+    const phi_eV = parseFloat(metalSelect.value);                   // work function in eV
+    const f = parseFloat(freqSlider.value) * 1e14;                 // frequency in Hz
+    const h = 6.63e-34;                                            // Planck constant
+    const e = 1.60e-19;                                            // elementary charge
+
+    const photonEnergy_J = h * f;
+    const photonEnergy_eV = photonEnergy_J / e;
+    const ke_eV = photonEnergy_eV - phi_eV;
+
+    freqDisplay.textContent = freqSlider.value;                    // keep slider value
+    if (ke_eV < 0) {
+      keResult.textContent = "no emission (below threshold)";
+      keResult.style.color = "var(--color-text-muted)";
+    } else {
+      keResult.textContent = ke_eV.toFixed(2) + ' eV';
+      keResult.style.color = "var(--color-text)";
+    }
+  }
+
+  function showTransition(label, deltaE_eV, element) {
+    const h = 6.63e-34;
+    const c = 3.00e8;
+    const e = 1.60e-19;
+    const deltaE_J = deltaE_eV * e;
+    const wavelength = (h * c) / deltaE_J;
+    const info = document.getElementById('transition-info');
+    info.innerHTML = `${label}: ΔE = ${deltaE_eV.toFixed(2)} eV, λ ≈ ${(wavelength * 1e9).toFixed(0)} nm`;
+    // reset any previous highlight
+    document.querySelectorAll('#transition-info').forEach(el => el.style.color = '');
+    if (deltaE_eV >= 1.6 && deltaE_eV <= 3.2) {
+        info.style.color = '#35a16b';   // visible
+        info.innerHTML += ' (visible)';
+    } else {
+        info.style.color = '#a13544';   // UV / not visible
+    }
+    // briefly highlight the clicked arrow
+    element.style.stroke = '#ff4500';
+    setTimeout(() => { element.style.stroke = (deltaE_eV <= 3.2 ? '#35a16b' : '#d19900'); }, 300);
+    }
+
+  // initial call
+  updateCalc();
+</script>
+
 {% endblock %}

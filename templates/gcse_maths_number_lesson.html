@@ -1,0 +1,593 @@
+{% extends "base.html" %}
+{% block title %}Number – GCSE Mathematics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Number</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">GCSE Mathematics – Foundation and Higher Tier · All Exam Boards</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+  <!-- Quick Test button -->
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='number') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       1. PLACE VALUE
+  ══════════════════════════════════════════════════ -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      Place Value and Powers of 10
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Every digit in a number has a <strong>value</strong> that depends on where it sits. This is called <strong>place value</strong>.</p>
+
+      <p>Take the number <strong>4,372</strong>. Let's break it down:</p>
+      <ul style="line-height:1.9;">
+        <li>The <strong>4</strong> is in the thousands column → it's worth <strong>4,000</strong></li>
+        <li>The <strong>3</strong> is in the hundreds column → it's worth <strong>300</strong></li>
+        <li>The <strong>7</strong> is in the tens column → it's worth <strong>70</strong></li>
+        <li>The <strong>2</strong> is in the ones column → it's worth <strong>2</strong></li>
+      </ul>
+
+      <p>It works the same way with decimals — the columns just carry on to the right of the decimal point, getting <em>ten times smaller</em> each step.</p>
+
+      <p>Look at <strong>6.482</strong>:</p>
+      <ul style="line-height:1.9;">
+        <li>The <strong>4</strong> is in the tenths column → it's worth \(\frac{4}{10}\)</li>
+        <li>The <strong>8</strong> is in the hundredths column → it's worth \(\frac{8}{100}\)</li>
+        <li>The <strong>2</strong> is in the thousandths column → it's worth \(\frac{2}{1000}\)</li>
+      </ul>
+
+      <p style="text-align:center;">\( 6.482 = 6 + \frac{4}{10} + \frac{8}{100} + \frac{2}{1000} \)</p>
+
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="520" height="130" viewBox="0 0 520 130" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <rect x="20" y="35" width="80" height="45" fill="#e8f4fd" stroke="#1a6fa8"/>
+          <rect x="100" y="35" width="80" height="45" fill="#fef4e8" stroke="#b36a00"/>
+          <rect x="180" y="35" width="80" height="45" fill="#eef7ea" stroke="#397a2f"/>
+          <rect x="260" y="35" width="80" height="45" fill="#f5eafa" stroke="#7a3fa0"/>
+          <rect x="340" y="35" width="80" height="45" fill="#fdecef" stroke="#a13544"/>
+          <rect x="420" y="35" width="80" height="45" fill="#eaf7f6" stroke="#01696f"/>
+          <text x="60" y="62" text-anchor="middle" font-size="18" font-weight="bold">6</text>
+          <text x="140" y="62" text-anchor="middle" font-size="18" font-weight="bold">.</text>
+          <text x="220" y="62" text-anchor="middle" font-size="18" font-weight="bold">4</text>
+          <text x="300" y="62" text-anchor="middle" font-size="18" font-weight="bold">8</text>
+          <text x="380" y="62" text-anchor="middle" font-size="18" font-weight="bold">2</text>
+          <text x="60" y="104" text-anchor="middle" font-size="14">ones</text>
+          <text x="220" y="104" text-anchor="middle" font-size="14">tenths</text>
+          <text x="300" y="104" text-anchor="middle" font-size="14">hundredths</text>
+          <text x="380" y="104" text-anchor="middle" font-size="14">thousandths</text>
+        </svg>
+        <p style="font-size:0.85em; color:var(--text-muted);">Each step to the right is ten times smaller; each step to the left is ten times larger.</p>
+      </div>
+
+      <p><strong>Comparing decimals:</strong> Line up the decimal points and compare column by column from left to right. For example, 0.605 is bigger than 0.56 — both have 6 tenths, but 0.605 has 0 hundredths while 0.56 has 5 hundredths. Wait — actually 0.605 = 0.605 and 0.560 = 0.560. Looking at the tenths first: 6 vs 5, so 0.605 wins straight away.</p>
+
+      <p><strong>Exam tip:</strong> Always write "0" before the decimal point (e.g. 0.5, not .5). Examiners will spot the missing zero!</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">What is the value of the digit <strong>3</strong> in the number <strong>4,372</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">3</button>
+          <button class="btn mcq-btn" data-letter="B">300</button>
+          <button class="btn mcq-btn" data-letter="C">30</button>
+          <button class="btn mcq-btn" data-letter="D">3,000</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       2. ROUNDING
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Rounding to Decimal Places and Significant Figures
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Rounding makes a number simpler while keeping it close to the original. The rule is easy: <strong>look at the digit just after the one you're keeping</strong>. If it's 5 or more, round up. If it's 4 or less, leave it alone (round down).</p>
+
+      <p><strong>Rounding to decimal places (d.p.)</strong> — count digits after the decimal point.</p>
+
+      <p><em>Example:</em> Round <strong>7.386</strong> to <strong>2 decimal places</strong>.</p>
+      <ul style="line-height:1.9;">
+        <li>We're keeping 2 digits after the point, so we look at: 7.38<u>6</u></li>
+        <li>The third decimal digit is <strong>6</strong> (≥ 5), so we round up the 8 to a 9.</li>
+        <li>Answer: <strong>7.39</strong></li>
+      </ul>
+
+      <p><strong>Rounding to significant figures (s.f.)</strong> — count from the <em>first non-zero digit</em>.</p>
+
+      <p><em>Example:</em> Round <strong>0.004872</strong> to <strong>2 significant figures</strong>.</p>
+      <ul style="line-height:1.9;">
+        <li>The first significant figure is the <strong>4</strong> (the first non-zero digit).</li>
+        <li>The second significant figure is <strong>8</strong>. The next digit is 7 (≥ 5), so we round up.</li>
+        <li>Answer: <strong>0.0049</strong></li>
+      </ul>
+
+      <p><em>Example:</em> Round <strong>38,642</strong> to 3 significant figures.</p>
+      <p style="text-align:center;">\( 38,642 \approx 38,600 \)</p>
+      <p>(The 4th significant digit is 4, so we round down — the 6 stays as 6. The remaining digits become zeros as placeholders.)</p>
+
+      <div style="background:#fff3cd; border-left:4px solid #f59e0b; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+        <strong>⚠️ Common mistake:</strong> If you round 4,982 to 2 significant figures, the answer is <strong>5,000</strong>, not 50. You must keep the number roughly the same size — the zeros are just placeholders!
+      </div>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Round <strong>7.386</strong> to <strong>2 decimal places</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">7.3</button>
+          <button class="btn mcq-btn" data-letter="B">7.38</button>
+          <button class="btn mcq-btn" data-letter="C">7.39</button>
+          <button class="btn mcq-btn" data-letter="D">7.4</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       3. ESTIMATION
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Estimation and Checking Answers
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Estimation means swapping each number for a <em>round number</em> you can work with in your head. We use it to check whether a calculator answer is sensible — or to get a rough answer quickly.</p>
+
+      <p>The key step is to round each number to <strong>1 significant figure</strong> first (unless the question tells you otherwise).</p>
+
+      <p><em>Example:</em> Estimate \(\dfrac{19.8 \times 4.9}{0.51}\)</p>
+      <p>Round each number to 1 s.f.: 19.8 → 20, &nbsp; 4.9 → 5, &nbsp; 0.51 → 0.5</p>
+      <p style="text-align:center;">\( \frac{20 \times 5}{0.5} = \frac{100}{0.5} = 200 \)</p>
+      <p>If your calculator gives something around 190–205, great — that's sensible. If it gives 19 or 2,000, you've probably made a keying error.</p>
+
+      <p><em>Another example:</em> Estimate \( \sqrt{48.6} \times 9.7 \)</p>
+      <ul style="line-height:1.9;">
+        <li>√48.6 ≈ √49 = <strong>7</strong> (because 7² = 49)</li>
+        <li>9.7 ≈ 10</li>
+        <li>Estimate: 7 × 10 = <strong>70</strong></li>
+      </ul>
+
+      <p><strong>Exam tip:</strong> Always show the rounded values you used — that's where the mark usually is, not the final answer.</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Estimate the value of \(\dfrac{19.7 \times 4.1}{0.49}\) by rounding each number to 1 significant figure.</p>
+          <button class="btn mcq-btn" data-letter="A">20</button>
+          <button class="btn mcq-btn" data-letter="B">160</button>
+          <button class="btn mcq-btn" data-letter="C">200</button>
+          <button class="btn mcq-btn" data-letter="D">400</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       4. STANDARD FORM
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Standard Form
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Higher Skill</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Imagine writing the distance from Earth to the Sun: 150,000,000,000 m. That's a lot of zeros! Scientists use <strong>standard form</strong> to write very big (and very small) numbers neatly.</p>
+
+      <p>In standard form, every number looks like this:</p>
+      <p style="text-align:center;">\( A \times 10^n \quad \text{where } 1 \leq A &lt; 10 \text{ and } n \text{ is an integer.} \)</p>
+      <p>In plain English: the first part must be a number between 1 and 10 (not including 10), and the second part is a power of 10.</p>
+
+      <p><em>Example — large number:</em> Write <strong>45,000</strong> in standard form.</p>
+      <ul style="line-height:1.9;">
+        <li>Put the decimal point after the first digit: 4.5</li>
+        <li>Count how many places you moved the point: 4 places to the left</li>
+        <li>Answer: \(4.5 \times 10^4\)</li>
+      </ul>
+
+      <p><em>Example — small number:</em> Write <strong>0.0062</strong> in standard form.</p>
+      <ul style="line-height:1.9;">
+        <li>Put the decimal point after the first non-zero digit: 6.2</li>
+        <li>Count how many places you moved the point: 3 places to the right</li>
+        <li>The power is <em>negative</em> for small numbers: \(6.2 \times 10^{-3}\)</li>
+      </ul>
+
+      <table style="width:100%; border-collapse:collapse; margin:14px 0;">
+        <thead>
+          <tr>
+            <th style="border-bottom:1px solid #ddd; text-align:left; padding:8px;">Ordinary number</th>
+            <th style="border-bottom:1px solid #ddd; text-align:left; padding:8px;">Standard form</th>
+            <th style="border-bottom:1px solid #ddd; text-align:left; padding:8px;">Why?</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:8px;">45,000</td>
+            <td style="padding:8px;">\(4.5 \times 10^4\)</td>
+            <td style="padding:8px;">Decimal moved 4 places left.</td>
+          </tr>
+          <tr>
+            <td style="padding:8px;">0.0062</td>
+            <td style="padding:8px;">\(6.2 \times 10^{-3}\)</td>
+            <td style="padding:8px;">Decimal moved 3 places right.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p><strong>Multiplying in standard form:</strong> Multiply the front numbers and <em>add</em> the powers of 10.</p>
+      <p style="text-align:center;">\( (3 \times 10^5)(4 \times 10^2) = 12 \times 10^7 = 1.2 \times 10^8 \)</p>
+      <p>(We re-wrote 12 as 1.2 × 10 so the answer stays in proper standard form.)</p>
+
+      <p><strong>Dividing in standard form:</strong> Divide the front numbers and <em>subtract</em> the powers of 10.</p>
+      <p style="text-align:center;">\( (8 \times 10^6) \div (2 \times 10^2) = 4 \times 10^4 \)</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Write <strong>0.0035</strong> in standard form.</p>
+          <button class="btn mcq-btn" data-letter="A">\(3.5 \times 10^{2}\)</button>
+          <button class="btn mcq-btn" data-letter="B">\(35 \times 10^{-4}\)</button>
+          <button class="btn mcq-btn" data-letter="C">\(3.5 \times 10^{-3}\)</button>
+          <button class="btn mcq-btn" data-letter="D">\(0.35 \times 10^{-2}\)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       5. PERCENTAGES
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Percentages: Increase, Decrease and Reverse Percentages
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Per cent means <strong>out of 100</strong>. So 15% means 15 out of every 100 — or 0.15 as a decimal.</p>
+
+      <p><strong>The multiplier method</strong> is the slickest way to do percentage changes in one step.</p>
+      <ul style="line-height:1.9;">
+        <li>Increase by 15% → multiply by <strong>1.15</strong> (you keep 100% + add 15%)</li>
+        <li>Decrease by 15% → multiply by <strong>0.85</strong> (you keep 100% − lose 15%)</li>
+      </ul>
+
+      <p><em>Example:</em> A jacket costs £60. It goes up by 15%. What is the new price?</p>
+      <p style="text-align:center;">\( 60 \times 1.15 = \mathbf{£69} \)</p>
+
+      <p><em>Example:</em> A laptop is reduced by 20%. It now costs £480. What was the original price?</p>
+      <p>This is a <strong>reverse percentage</strong> — we're given the <em>after</em> value and want the <em>before</em>. Divide by the multiplier instead of multiplying:</p>
+      <p style="text-align:center;">\( \text{Original} = 480 \div 0.80 = \mathbf{£600} \)</p>
+
+      <p><em>Another example:</em> A price after a 20% increase is £72. Find the original.</p>
+      <p style="text-align:center;">\( \text{Original} = 72 \div 1.20 = \mathbf{£60} \)</p>
+
+      <div style="background:#fff3cd; border-left:4px solid #f59e0b; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+        <strong>⚠️ Trap question:</strong> A price goes up by 20% then down by 20%. You do <em>not</em> get back to the start! Try it: 100 × 1.20 = 120, then 120 × 0.80 = 96. You end up lower than you started because the 20% decrease comes off a <em>bigger</em> number.
+      </div>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">A coat costs <strong>£80 after a 20% discount</strong>. What was the original price?</p>
+          <button class="btn mcq-btn" data-letter="A">£96</button>
+          <button class="btn mcq-btn" data-letter="B">£100</button>
+          <button class="btn mcq-btn" data-letter="C">£64</button>
+          <button class="btn mcq-btn" data-letter="D">£60</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       6. ERROR INTERVALS
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Error Intervals and Bounds
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 11</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Higher Skill</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>When we measure something and round it, we don't know the <em>exact</em> value — it could be slightly higher or lower. The full range of possible values is called the <strong>error interval</strong>.</p>
+
+      <p><em>Example:</em> A length is measured as <strong>8.4 cm</strong> to the nearest 0.1 cm. What is the error interval?</p>
+      <ul style="line-height:1.9;">
+        <li>Half of 0.1 is <strong>0.05</strong> — that's the "half unit".</li>
+        <li>Subtract half unit for the lower bound: 8.4 − 0.05 = <strong>8.35</strong></li>
+        <li>Add half unit for the upper bound: 8.4 + 0.05 = <strong>8.45</strong></li>
+      </ul>
+      <p style="text-align:center;">\( 8.35 \leq x &lt; 8.45 \)</p>
+      <p>Notice: we use ≤ at the lower bound (8.35 would still round to 8.4) but a <em>strict</em> &lt; at the upper bound (8.45 itself would round to 8.5, not 8.4).</p>
+
+      <p><em>Another example:</em> A weight is given as <strong>120 g to the nearest 10 g</strong>. Half of 10 is 5, so:</p>
+      <p style="text-align:center;">\( 115 \leq w &lt; 125 \)</p>
+
+      <p><strong>Bounds in calculations:</strong> To get the <em>maximum</em> possible area, use the <em>upper bound</em> for both lengths. To get the <em>minimum</em>, use lower bounds for both. For division, maximum result = upper ÷ lower.</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">A length is given as <strong>6.3 cm to 1 decimal place</strong>. Which error interval is correct?</p>
+          <button class="btn mcq-btn" data-letter="A">\(6.25 \leq x &lt; 6.35\)</button>
+          <button class="btn mcq-btn" data-letter="B">\(6.3 \leq x &lt; 6.4\)</button>
+          <button class="btn mcq-btn" data-letter="C">\(6.2 \leq x &lt; 6.4\)</button>
+          <button class="btn mcq-btn" data-letter="D">\(6.25 &lt; x \leq 6.35\)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       7. INDEX LAWS
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Index Laws and Negative Powers
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>An <strong>index</strong> (or power) tells you how many times to multiply a number by itself. For example:</p>
+      <p style="text-align:center;">\( 5^3 = 5 \times 5 \times 5 = 125 \)</p>
+      <p>That's 5 multiplied together <em>three times</em> — not 5 × 3 = 15. That's the number-one mistake to avoid!</p>
+
+      <p>Here are the five index laws you need to know, each with an example first:</p>
+
+      <table style="width:100%; border-collapse:collapse; margin:14px 0;">
+        <thead>
+          <tr>
+            <th style="border-bottom:1px solid #ddd; text-align:left; padding:8px;">What it says</th>
+            <th style="border-bottom:1px solid #ddd; text-align:left; padding:8px;">Example first</th>
+            <th style="border-bottom:1px solid #ddd; text-align:left; padding:8px;">General law</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:8px;">Multiplying same base → <em>add</em> powers</td>
+            <td style="padding:8px;">\(2^3 \times 2^4 = 2^7\)</td>
+            <td style="padding:8px;">\(a^m \times a^n = a^{m+n}\)</td>
+          </tr>
+          <tr>
+            <td style="padding:8px;">Dividing same base → <em>subtract</em> powers</td>
+            <td style="padding:8px;">\(5^6 \div 5^2 = 5^4\)</td>
+            <td style="padding:8px;">\(a^m \div a^n = a^{m-n}\)</td>
+          </tr>
+          <tr>
+            <td style="padding:8px;">Power of a power → <em>multiply</em> powers</td>
+            <td style="padding:8px;">\((3^2)^4 = 3^8\)</td>
+            <td style="padding:8px;">\((a^m)^n = a^{mn}\)</td>
+          </tr>
+          <tr>
+            <td style="padding:8px;">Anything to the power 0 = 1</td>
+            <td style="padding:8px;">\(7^0 = 1\)</td>
+            <td style="padding:8px;">\(a^0 = 1\) (a ≠ 0)</td>
+          </tr>
+          <tr>
+            <td style="padding:8px;">Negative power → flip it (reciprocal)</td>
+            <td style="padding:8px;">\(2^{-3} = \frac{1}{8}\)</td>
+            <td style="padding:8px;">\(a^{-n} = \frac{1}{a^n}\)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p><strong>Why does \(a^0 = 1\)?</strong> Think about it this way: \(2^3 \div 2^3 = 8 \div 8 = 1\). But using the index law: \(2^{3-3} = 2^0\). So \(2^0\) must equal 1!</p>
+
+      <div style="background:#fff3cd; border-left:4px solid #f59e0b; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+        <strong>⚠️ Common mistake:</strong> \(3^2\) means \(3 \times 3 = 9\), <strong>not</strong> \(3 \times 2 = 6\). Powers are repeated multiplication, not ordinary multiplication.
+      </div>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Simplify \(3^5 \div 3^2\).</p>
+          <button class="btn mcq-btn" data-letter="A">\(3^2\)</button>
+          <button class="btn mcq-btn" data-letter="B">\(3^3\)</button>
+          <button class="btn mcq-btn" data-letter="C">\(3^7\)</button>
+          <button class="btn mcq-btn" data-letter="D">\(1^3\)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       8. PRIME FACTORS, HCF, LCM
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+      Prime Factors, HCF and LCM
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>A <strong>prime number</strong> has exactly two factors: 1 and itself. The first few primes are 2, 3, 5, 7, 11, 13 … Notice that 1 is <em>not</em> prime (it only has one factor).</p>
+
+      <p>Every whole number bigger than 1 can be broken down into primes — this is called writing it as a <strong>product of prime factors</strong>. We use a factor tree to do this.</p>
+
+      <p><em>Example:</em> Write <strong>360</strong> as a product of prime factors.</p>
+      <ul style="line-height:1.9;">
+        <li>360 = 2 × 180</li>
+        <li>180 = 2 × 90</li>
+        <li>90 = 2 × 45</li>
+        <li>45 = 3 × 15</li>
+        <li>15 = 3 × 5 ← all prime now</li>
+      </ul>
+      <p style="text-align:center;">\( 360 = 2^3 \times 3^2 \times 5 \)</p>
+
+      <p>Once you have the prime factor form for two numbers, finding HCF and LCM is straightforward.</p>
+      <p><em>Example:</em> Find the HCF and LCM of <strong>12</strong> and <strong>18</strong>.</p>
+      <p>12 = 2² × 3 &nbsp;&nbsp; 18 = 2 × 3²</p>
+      <ul style="line-height:1.9;">
+        <li><strong>HCF</strong> — take the <em>lowest</em> power of each <em>shared</em> prime: 2¹ × 3¹ = <strong>6</strong></li>
+        <li><strong>LCM</strong> — take the <em>highest</em> power of <em>every</em> prime: 2² × 3² = <strong>36</strong></li>
+      </ul>
+
+      <p>A handy memory trick: <strong>HCF</strong> = Highest Common <em>F</em>actor (so we use the lowest powers because we want what's <em>common</em> — the overlap). <strong>LCM</strong> = Lowest Common <em>M</em>ultiple (so we need all prime factors to cover both numbers).</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">What is the <strong>HCF</strong> of <strong>12</strong> and <strong>18</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">3</button>
+          <button class="btn mcq-btn" data-letter="B">36</button>
+          <button class="btn mcq-btn" data-letter="C">6</button>
+          <button class="btn mcq-btn" data-letter="D">72</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       PRACTICE STRATEGY
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      Practice Strategy
+      <span style="font-size:0.65rem; margin-left:8px; background:#eef7ea; color:#397a2f; padding:2px 6px; border-radius:10px;">Revision</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>Number questions reward careful working. Always write down each step — your rounded value, your multiplier, your error interval, or your prime factor form. This makes your method clear and helps you avoid calculator mistakes.</p>
+
+      <p>When you revise, mix short fluency drills (e.g. "write in standard form", "round to 2 s.f.") with longer context questions. GCSE exams love testing these skills inside real-world situations: money, science notation, population statistics, or measurements. If you can do both types, you're set.</p>
+
+      <p>Here's a quick checklist for each topic:</p>
+      <ul style="line-height:1.9;">
+        <li>✅ Place value: can you identify the value of any digit — including in decimals?</li>
+        <li>✅ Rounding: can you round to any number of d.p. <em>or</em> s.f. without confusing the two?</li>
+        <li>✅ Estimation: do you round to 1 s.f. first, then calculate?</li>
+        <li>✅ Standard form: is your first number always between 1 and 10?</li>
+        <li>✅ Percentages: do you know the multiplier for any % increase or decrease?</li>
+        <li>✅ Error intervals: do you subtract/add half a unit and use the right inequality signs?</li>
+        <li>✅ Index laws: are you adding (×), subtracting (÷), or multiplying (power of power)?</li>
+        <li>✅ Prime factors: can you build a factor tree and use it to find HCF and LCM?</li>
+      </ul>
+    </div>
+  </details>
+
+  <!-- Revision card (auto-added) -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">9</span>
+      Number — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 9</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Revise number types, powers and roots, and standard form before mixed exam questions.</p>
+
+      <div style="text-align:center;margin:16px 0;">
+              <div class="revision-card-wrap">
+        <svg class="revision-card-svg lesson-quick-ref" width="100%" viewBox="0 0 760 280" style="max-width:760px;width:100%;height:auto;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:10px;" role="img" aria-label="Number revision card">
+          <text x="380" y="28" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Number — Revision Card</text>
+          <line x1="20" y1="38" x2="740" y2="38" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="20" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Types of number</text>
+          <text x="20" y="78" font-size="14" fill="#28251d">Natural, integer, rational, irrational</text>
+          <text x="20" y="98" font-size="14" fill="#28251d">Prime: only factors 1 and itself</text>
+          <text x="20" y="118" font-size="14" fill="#28251d">HCF × LCM from factor trees / Venn</text>
+          <text x="20" y="142" font-size="15" fill="#1a6fa8" font-weight="bold">Powers &amp; roots</text>
+          <text x="20" y="162" font-size="14" fill="#28251d">aⁿ × aᵐ = aⁿ⁺ᵐ</text>
+          <text x="20" y="182" font-size="14" fill="#28251d">√ and ∛ are inverse powers</text>
+          <line x1="390" y1="48" x2="390" y2="260" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="400" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Standard form</text>
+          <text x="400" y="78" font-size="14" fill="#28251d">a × 10ⁿ, 1 ≤ a &lt; 10</text>
+          <text x="400" y="98" font-size="14" fill="#28251d">Multiply: multiply a's, add powers</text>
+          <text x="400" y="118" font-size="14" fill="#28251d">4500 = 4.5 × 10³</text>
+        </svg>
+      </div>
+      </div>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Write 3.2 × 10⁴ in ordinary form.</p>
+          <button class="btn mcq-btn" data-letter="A">320</button>
+          <button class="btn mcq-btn" data-letter="B">3200</button>
+          <button class="btn mcq-btn" data-letter="C">32000</button>
+          <button class="btn mcq-btn" data-letter="D">0.00032</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='number') }}" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Revision</a>
+      </div>
+    </div>
+  </details>
+
+</div>
+
+  <!-- Practice link -->
+  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='number') }}"
+       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+      Start Practice Quiz
+    </a>
+  </div>
+
+{% endblock %}

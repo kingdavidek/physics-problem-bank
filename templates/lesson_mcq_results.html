@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}Quiz Results — {{ topic_name }}{% endblock %}
+
+{% block content %}
+<style>
+  .lesson-results-page { max-width: 720px; margin: 0 auto; }
+  .lesson-results-score {
+    text-align: center;
+    background: linear-gradient(135deg, #1a6fa8, #0e4e7a);
+    color: #fff;
+    border-radius: 10px;
+    padding: 28px 24px;
+    margin-bottom: 28px;
+  }
+  .lesson-results-score .score-value {
+    font-size: 2.4rem;
+    font-weight: 700;
+    margin: 8px 0 4px;
+  }
+  .lesson-results-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+  }
+  .lesson-results-card h2 {
+    font-size: 1rem;
+    margin: 0 0 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .lesson-results-question { margin-bottom: 14px; }
+  .lesson-results-options { display: flex; flex-direction: column; gap: 8px; }
+  .lesson-results-opt {
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    font-size: 0.95rem;
+    line-height: 1.45;
+    background: var(--surface);
+  }
+  .lesson-results-opt.is-correct {
+    background: #16a34a;
+    border-color: #15803d;
+    color: #fff;
+  }
+  .lesson-results-opt.is-wrong {
+    background: #dc2626;
+    border-color: #b91c1c;
+    color: #fff;
+  }
+  .lesson-results-opt.is-neutral { color: var(--text); }
+  .lesson-results-explanation {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+  }
+  .lesson-results-actions { text-align: center; padding: 24px 0 48px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .lesson-results-back { display: inline-block; margin-bottom: 16px; font-size: 0.9rem; color: var(--primary); text-decoration: none; }
+  .lesson-results-back:hover { text-decoration: underline; }
+  .quiz-assist-wrap { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-soft); }
+  .quiz-assist-panel {
+    margin-top: 12px;
+    padding: 14px;
+    border: 1px solid #bfdbfe;
+    border-radius: var(--radius-sm);
+    background: #f8fbff;
+  }
+  .quiz-assist-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .quiz-assist-followup {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .quiz-assist-followup input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+  }
+  .quiz-assist-footnote {
+    margin: 10px 0 0;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+  }
+</style>
+
+<div class="lesson-results-page">
+  <a href="{{ back_url }}" class="lesson-results-back">{{ back_label }}</a>
+
+  <div class="lesson-results-score">
+    <p style="margin:0;opacity:.9;font-size:.95rem;">{{ topic_name }} — Practice Quiz</p>
+    <p class="score-value">{{ score }} / {{ total }}</p>
+    <p style="margin:0;opacity:.9;font-size:1rem;">{{ score }} correct out of {{ total }} questions</p>
+    {% if attempt_date %}
+    <p style="margin:8px 0 0;opacity:.85;font-size:.875rem;">Taken on {{ attempt_date }}</p>
+    {% endif %}
+  </div>
+
+  {% for problem in problems %}
+  {% set correct = problem.correct_answer %}
+  {% set user = problem.user_answer %}
+  {% set is_correct = user and user == correct %}
+  {% set explanation = quiz_explanation(problem) %}
+  <div class="lesson-results-card">
+    <h2>Question {{ loop.index }}</h2>
+    <div class="problem-meta" style="margin-bottom:10px;">
+      {% if is_correct %}
+      <span style="font-size:1rem;color:#16a34a;font-weight:600;margin-left:8px;">✓ Correct</span>
+      {% elif user %}
+      <span style="font-size:1rem;color:#dc2626;font-weight:600;margin-left:8px;">✗ Incorrect</span>
+      {% else %}
+      <span style="font-size:1rem;color:#8a5300;font-weight:600;margin-left:8px;">Not answered</span>
+      {% endif %}
+    </div>
+    <div class="lesson-results-question">{{ problem.question | safe }}</div>
+    <div class="lesson-results-options">
+      {% for opt in problem.options %}
+      {% set letter = option_letter(opt) %}
+      {% set show_correct = letter == correct %}
+      {% set show_wrong = letter == user and user != correct %}
+      <div class="lesson-results-opt {% if show_correct %}is-correct{% elif show_wrong %}is-wrong{% else %}is-neutral{% endif %}">
+        {{ opt | safe }}
+      </div>
+      {% endfor %}
+    </div>
+    {% if explanation and (not show_wrong_explanations_only or not is_correct) %}
+      {% if show_wrong_explanations_only and not is_correct %}
+      <div class="lesson-results-explanation">
+        <p style="margin:0 0 8px;font-weight:600;color:#9b1c1c;">Explanation</p>
+        <div>{{ explanation | safe }}</div>
+      </div>
+      {% else %}
+      <details class="hint-reveal" style="margin-top:14px;">
+        <summary>Explanation</summary>
+        <div class="answer" style="margin-top:8px;">{{ explanation | safe }}</div>
+      </details>
+      {% endif %}
+    {% endif %}
+
+    {% if lesson_assist_enabled %}
+    <div class="quiz-assist-wrap">
+      <button
+        type="button"
+        class="btn btn-outline btn-sm quiz-assist-btn"
+        data-quiz-item='{{ quiz_assist_item(problem, user, loop.index) | tojson }}'
+      >✨ AI explain this question</button>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  <div class="lesson-results-actions">
+    <a href="{{ url_for('lesson_mcq_quiz', level=level, subject=subject, topic=topic) }}" class="btn btn-primary">Try another quiz</a>
+    <a href="{{ lesson_url }}" class="btn">Back to lesson</a>
+  </div>
+</div>
+{% endblock %}

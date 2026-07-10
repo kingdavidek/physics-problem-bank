@@ -1,0 +1,488 @@
+{% extends "base.html" %}
+{% block title %}Probability – GCSE Mathematics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Probability</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">GCSE Mathematics – Foundation and Higher Tier · All Exam Boards</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+  <!-- Quick Test button -->
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='probability') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <p style="line-height:1.8;">Probability tells us how likely something is to happen. In this topic we work with fractions, decimals, and percentages — and we use diagrams when problems get trickier.</p>
+
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      The Probability Scale
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 7</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p><strong>Probability</strong> is a number that shows how likely an event is. It always sits between <strong>0</strong> and <strong>1</strong>.</p>
+      <p><em>Think about it:</em> The chance of snow in the Sahara in July is basically <strong>0</strong> (impossible). The chance that a coin lands heads or tails is <strong>1</strong> (certain — one of them must happen).</p>
+      <p>In the middle, <strong>0.5</strong> means an even chance — like flipping a fair coin and getting heads.</p>
+      <p>You can write the same probability in different ways: <strong>½ = 0.5 = 50%</strong>.</p>
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="520" height="110" viewBox="0 0 520 110" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <line x1="55" y1="55" x2="465" y2="55" stroke="#01696f" stroke-width="4"/>
+          <circle cx="55" cy="55" r="8" fill="#a13544"/><circle cx="260" cy="55" r="8" fill="#b36a00"/><circle cx="465" cy="55" r="8" fill="#397a2f"/>
+          <text x="55" y="85" text-anchor="middle" font-size="15">0 impossible</text>
+          <text x="260" y="85" text-anchor="middle" font-size="15">0.5 even chance</text>
+          <text x="465" y="85" text-anchor="middle" font-size="15">1 certain</text>
+        </svg>
+      </div>
+      <p><strong>Check your work:</strong> If you get a probability below 0 or above 1, go back — something has gone wrong.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">What is the probability of an event that <strong>cannot</strong> happen?</p>
+          <button class="btn mcq-btn" data-letter="A">0.5</button>
+          <button class="btn mcq-btn" data-letter="B">0</button>
+          <button class="btn mcq-btn" data-letter="C">1</button>
+          <button class="btn mcq-btn" data-letter="D">2</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Single-Event Probability
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 8</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>When every outcome is equally likely (like a fair die or a fair coin), we count how many outcomes we want and divide by how many outcomes there are in total.</p>
+      <p><em>Example:</em> You roll a fair six-sided die. What is the probability of an <strong>even</strong> number?</p>
+      <ul style="line-height:1.9;">
+        <li>Even numbers on the die: <strong>2, 4, 6</strong> → 3 favourable outcomes</li>
+        <li>Total outcomes: <strong>1, 2, 3, 4, 5, 6</strong> → 6 outcomes</li>
+        <li>Probability = <strong>3 ÷ 6 = ½</strong></li>
+      </ul>
+      <p>In general, when outcomes are equally likely:</p>
+      <p style="text-align:center;">\[ \text{Probability} = \frac{\text{number of favourable outcomes}}{\text{total number of outcomes}} \]</p>
+      <p><strong>Common mistake:</strong> Count how many outcomes there are, not how big the numbers are. Rolling a 6 is not more likely than rolling a 1 on a fair die — each face has the same chance.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">A fair die is rolled. What is P(even number)?</p>
+          <button class="btn mcq-btn" data-letter="A">1/6</button>
+          <button class="btn mcq-btn" data-letter="B">2/6</button>
+          <button class="btn mcq-btn" data-letter="C">1/2</button>
+          <button class="btn mcq-btn" data-letter="D">2/3</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      The Complement Rule
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>The <strong>complement</strong> of an event means “it does <em>not</em> happen”. Either the event happens or it does not — so the two probabilities add up to 1.</p>
+      <p><em>Example:</em> The probability a bus is late is <strong>0.18</strong>. What is the probability it is <strong>not</strong> late?</p>
+      <ul style="line-height:1.9;">
+        <li>Not late = everything except late</li>
+        <li>1 − 0.18 = <strong>0.82</strong></li>
+      </ul>
+      <p>So there is an 82% chance the bus is on time (or early).</p>
+      <p style="text-align:center;">\[P(\text{not A}) = 1 - P(\text{A})\]</p>
+      <p><strong>Exam tip:</strong> If “not” is awkward to count directly, use 1 − P(event) — it is often much quicker.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">P(late) = 0.18. What is P(not late)?</p>
+          <button class="btn mcq-btn" data-letter="A">0.18</button>
+          <button class="btn mcq-btn" data-letter="B">0.82</button>
+          <button class="btn mcq-btn" data-letter="C">1.18</button>
+          <button class="btn mcq-btn" data-letter="D">0.5</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Expected Frequency
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p><strong>Expected frequency</strong> tells you roughly how many times you would expect something to happen if you repeated a trial lots of times.</p>
+      <p><em>Example:</em> You have a <strong>3/10</strong> chance of winning each time you play a game. You play <strong>200</strong> games. How many wins would you expect?</p>
+      <ul style="line-height:1.9;">
+        <li>Multiply probability by number of trials: <strong>3/10 × 200 = 60</strong></li>
+        <li>We expect about <strong>60 wins</strong> — but in real life you might get a bit more or less.</li>
+      </ul>
+      <p style="text-align:center;">\[\text{Expected frequency} = \text{probability} \times \text{number of trials}\]</p>
+      <p>“Expected” does not mean guaranteed. With only a few trials, results can look quite different from the expected value.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">P(win) = 3/10. You play 200 games. How many wins do you expect?</p>
+          <button class="btn mcq-btn" data-letter="A">30</button>
+          <button class="btn mcq-btn" data-letter="B">40</button>
+          <button class="btn mcq-btn" data-letter="C">60</button>
+          <button class="btn mcq-btn" data-letter="D">200</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Relative Frequency
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>When you actually <strong>do an experiment</strong> (spin a spinner, flip a coin many times), you can estimate probability from your results. That estimate is called <strong>relative frequency</strong>.</p>
+      <p><em>Example:</em> A spinner lands on blue <strong>46 times</strong> in <strong>100 spins</strong>. What is the relative frequency of blue?</p>
+      <ul style="line-height:1.9;">
+        <li>46 successes out of 100 trials</li>
+        <li>Relative frequency = <strong>46 ÷ 100 = 0.46</strong></li>
+      </ul>
+      <p style="text-align:center;">\[\text{Relative frequency} = \frac{\text{number of successful outcomes}}{\text{number of trials}}\]</p>
+      <p>The more trials you do, the closer relative frequency usually gets to the true probability.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Blue appears 46 times in 100 spins. What is the relative frequency of blue?</p>
+          <button class="btn mcq-btn" data-letter="A">0.04</button>
+          <button class="btn mcq-btn" data-letter="B">0.46</button>
+          <button class="btn mcq-btn" data-letter="C">46</button>
+          <button class="btn mcq-btn" data-letter="D">0.54</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Mutually Exclusive Events
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>Two events are <strong>mutually exclusive</strong> if they cannot happen at the same time. On one roll of a die, you cannot roll a 2 and a 5 together.</p>
+      <p><em>Example:</em> What is the probability of rolling a <strong>1 or a 6</strong> on a fair die?</p>
+      <ul style="line-height:1.9;">
+        <li>P(1) = <strong>1/6</strong></li>
+        <li>P(6) = <strong>1/6</strong></li>
+        <li>Add them: <strong>1/6 + 1/6 = 2/6 = 1/3</strong></li>
+      </ul>
+      <p>For mutually exclusive events A and B:</p>
+      <p style="text-align:center;">\[P(A \text{ or } B) = P(A) + P(B)\]</p>
+      <p>Only add probabilities when the events cannot overlap. If they can both happen, you need a different method (tree diagrams or Venn diagrams).</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">A fair die is rolled once. What is P(1 or 6)?</p>
+          <button class="btn mcq-btn" data-letter="A">1/6</button>
+          <button class="btn mcq-btn" data-letter="B">1/3</button>
+          <button class="btn mcq-btn" data-letter="C">1/4</button>
+          <button class="btn mcq-btn" data-letter="D">1/2</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Tree Diagrams
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Higher Skill</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p><strong>Tree diagrams</strong> help when you have two or more stages — like flipping two coins or picking two cards without replacement.</p>
+      <p><em>Example:</em> You flip two fair coins. What is the probability of <strong>two heads</strong>?</p>
+      <ul style="line-height:1.9;">
+        <li>First coin: P(H) = <strong>1/2</strong></li>
+        <li>Second coin: P(H) = <strong>1/2</strong></li>
+        <li>Multiply along the branch: <strong>1/2 × 1/2 = 1/4</strong></li>
+      </ul>
+      <p><em>Another example:</em> Probability of <strong>exactly one head</strong> (HT or TH):</p>
+      <ul style="line-height:1.9;">
+        <li>P(HT) = 1/4 and P(TH) = 1/4</li>
+        <li>Add the routes: <strong>1/4 + 1/4 = 1/2</strong></li>
+      </ul>
+      <p><strong>Rules:</strong> multiply along a branch; add separate branches that give what you want.</p>
+
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="520" height="250" viewBox="0 0 520 250" style="background:#f9f8f5; border-radius:8px; max-width:100%;" aria-label="Tree diagram for flipping two fair coins">
+          <text x="260" y="22" text-anchor="middle" font-size="15" font-weight="600" fill="#333">Two fair coins — tree diagram</text>
+          <!-- Stage labels -->
+          <text x="45" y="42" text-anchor="middle" font-size="14" fill="#888">Start</text>
+          <text x="130" y="42" text-anchor="middle" font-size="14" fill="#888">Coin 1</text>
+          <text x="255" y="42" text-anchor="middle" font-size="14" fill="#888">Coin 2</text>
+          <text x="420" y="42" text-anchor="middle" font-size="14" fill="#888">Outcome</text>
+          <!-- Start -->
+          <circle cx="45" cy="125" r="6" fill="#555"/>
+          <!-- Main trunk -->
+          <line x1="51" y1="125" x2="95" y2="125" stroke="#555" stroke-width="2"/>
+          <!-- First split: H up, T down -->
+          <line x1="95" y1="125" x2="130" y2="60" stroke="#555" stroke-width="2"/>
+          <line x1="95" y1="125" x2="130" y2="190" stroke="#555" stroke-width="2"/>
+          <text x="108" y="88" font-size="14" font-weight="bold" fill="#1a6fa8">H</text>
+          <text x="108" y="100" font-size="14" fill="#666">½</text>
+          <text x="108" y="168" font-size="14" font-weight="bold" fill="#a13544">T</text>
+          <text x="108" y="180" font-size="14" fill="#666">½</text>
+          <!-- From first H -->
+          <line x1="130" y1="60" x2="220" y2="35" stroke="#555" stroke-width="2"/>
+          <line x1="130" y1="60" x2="220" y2="85" stroke="#555" stroke-width="2"/>
+          <text x="168" y="42" font-size="14" font-weight="bold" fill="#1a6fa8">H</text>
+          <text x="168" y="54" font-size="9" fill="#666">½</text>
+          <text x="168" y="92" font-size="14" font-weight="bold" fill="#a13544">T</text>
+          <text x="168" y="104" font-size="9" fill="#666">½</text>
+          <!-- From first T -->
+          <line x1="130" y1="190" x2="220" y2="165" stroke="#555" stroke-width="2"/>
+          <line x1="130" y1="190" x2="220" y2="215" stroke="#555" stroke-width="2"/>
+          <text x="168" y="172" font-size="14" font-weight="bold" fill="#1a6fa8">H</text>
+          <text x="168" y="184" font-size="9" fill="#666">½</text>
+          <text x="168" y="222" font-size="14" font-weight="bold" fill="#a13544">T</text>
+          <text x="168" y="234" font-size="9" fill="#666">½</text>
+          <!-- Outcome lines -->
+          <line x1="220" y1="35" x2="360" y2="35" stroke="#059669" stroke-width="3"/>
+          <line x1="220" y1="85" x2="360" y2="85" stroke="#555" stroke-width="2"/>
+          <line x1="220" y1="165" x2="360" y2="165" stroke="#555" stroke-width="2"/>
+          <line x1="220" y1="215" x2="360" y2="215" stroke="#555" stroke-width="2"/>
+          <!-- Outcomes -->
+          <rect x="360" y="22" width="72" height="26" rx="5" fill="#dcfce7" stroke="#059669" stroke-width="2"/>
+          <text x="396" y="40" text-anchor="middle" font-size="14" font-weight="bold" fill="#059669">HH</text>
+          <rect x="360" y="72" width="72" height="26" rx="5" fill="#ffffff" stroke="#888" stroke-width="1.5"/>
+          <text x="396" y="90" text-anchor="middle" font-size="14" font-weight="bold" fill="#333">HT</text>
+          <rect x="360" y="152" width="72" height="26" rx="5" fill="#ffffff" stroke="#888" stroke-width="1.5"/>
+          <text x="396" y="170" text-anchor="middle" font-size="14" font-weight="bold" fill="#333">TH</text>
+          <rect x="360" y="202" width="72" height="26" rx="5" fill="#ffffff" stroke="#888" stroke-width="1.5"/>
+          <text x="396" y="220" text-anchor="middle" font-size="14" font-weight="bold" fill="#333">TT</text>
+          <!-- Combined probabilities -->
+          <text x="455" y="40" font-size="14" fill="#059669" font-weight="600">½×½ = ¼</text>
+          <text x="455" y="90" font-size="14" fill="#666">¼</text>
+          <text x="455" y="170" font-size="14" fill="#666">¼</text>
+          <text x="455" y="220" font-size="14" fill="#666">¼</text>
+          <!-- Exactly one head note -->
+          <text x="260" y="248" text-anchor="middle" font-size="14" fill="#555">HT + TH → ¼ + ¼ = ½ (exactly one head)</text>
+        </svg>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin-top:6px;">Follow one path from left to right. Multiply the fractions on the branches. The green route is two heads: ½ × ½ = ¼.</p>
+      </div>
+
+      <p><strong>Exam tip:</strong> Without replacement, the second-stage probabilities often change because there are fewer items left.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">Two fair coins are flipped. What is P(two heads)?</p>
+          <button class="btn mcq-btn" data-letter="A">1/4</button>
+          <button class="btn mcq-btn" data-letter="B">1/2</button>
+          <button class="btn mcq-btn" data-letter="C">3/4</button>
+          <button class="btn mcq-btn" data-letter="D">1</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+      Venn Diagrams and Conditional Probability
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 11</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Higher Skill</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p><strong>Venn diagrams</strong> sort people or objects into overlapping groups. Each circle is a set. Where the circles overlap, someone belongs to <em>both</em> sets at once.</p>
+
+      <p><em>Example:</em> In a year group of <strong>120</strong> students:</p>
+      <ul style="line-height:1.9;">
+        <li><strong>30</strong> study French only</li>
+        <li><strong>10</strong> study both French and Spanish</li>
+        <li><strong>15</strong> study Spanish only</li>
+        <li><strong>65</strong> study neither language</li>
+      </ul>
+      <p>Check: 30 + 10 + 15 + 65 = 120 ✓ &nbsp;|French| = 30 + 10 = <strong>40</strong>. &nbsp;|Spanish| = 10 + 15 = <strong>25</strong>.</p>
+
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="480" height="260" viewBox="0 0 480 260" style="background:#f9f8f5; border-radius:8px; max-width:100%;" aria-label="Venn diagram: French and Spanish students in a year group of 120">
+          <rect x="25" y="35" width="430" height="185" rx="8" fill="#ffffff" stroke="#888" stroke-width="1.5"/>
+          <text x="40" y="58" font-size="14" fill="#666">All 120 students (ξ)</text>
+          <circle cx="175" cy="135" r="78" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2" opacity="0.85"/>
+          <circle cx="305" cy="135" r="78" fill="#fce7f3" stroke="#a13544" stroke-width="2" opacity="0.85"/>
+          <text x="115" y="128" text-anchor="middle" font-size="15" font-weight="bold" fill="#1a6fa8">French</text>
+          <text x="115" y="146" text-anchor="middle" font-size="15" font-weight="bold" fill="#1a6fa8">only</text>
+          <text x="115" y="168" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a6fa8">30</text>
+          <text x="240" y="122" text-anchor="middle" font-size="14" font-weight="bold" fill="#7c3aed">Both</text>
+          <text x="240" y="148" text-anchor="middle" font-size="18" font-weight="bold" fill="#7c3aed">10</text>
+          <text x="365" y="128" text-anchor="middle" font-size="15" font-weight="bold" fill="#a13544">Spanish</text>
+          <text x="365" y="146" text-anchor="middle" font-size="15" font-weight="bold" fill="#a13544">only</text>
+          <text x="365" y="168" text-anchor="middle" font-size="18" font-weight="bold" fill="#a13544">15</text>
+          <text x="395" y="58" text-anchor="middle" font-size="14" fill="#666">Neither</text>
+          <text x="395" y="76" text-anchor="middle" font-size="18" font-weight="bold" fill="#666">65</text>
+          <text x="145" y="238" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a6fa8">F (French)</text>
+          <text x="145" y="254" text-anchor="middle" font-size="14" fill="#1a6fa8">40 students total</text>
+          <text x="335" y="238" text-anchor="middle" font-size="16" font-weight="bold" fill="#a13544">S (Spanish)</text>
+          <text x="335" y="254" text-anchor="middle" font-size="14" fill="#a13544">25 students total</text>
+        </svg>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin-top:6px;">Each number sits in one region only. The rectangle is the whole year group; the circles are French and Spanish.</p>
+      </div>
+
+      <p><strong>How to read it:</strong></p>
+      <ul style="line-height:1.9;">
+        <li>The <strong>overlap (10)</strong> is students in <em>both</em> F and S — that is \(F \cap S\).</li>
+        <li><strong>French only (30)</strong> is in F but not S.</li>
+        <li>Everyone inside the blue circle (30 + 10) studies French — that is <strong>40</strong> students in total.</li>
+        <li>The <strong>65</strong> outside both circles study neither language.</li>
+      </ul>
+
+      <p><strong>Conditional probability</strong> means “the probability of A <em>given that</em> B has already happened”. The words “given that” tell you to use a smaller group as your starting point — not the whole year group.</p>
+      <p><em>Same example, with a condition:</em> You pick a student <strong>from those who study French</strong>. What is P(they also study Spanish)?</p>
+      <p>On the Venn diagram below, the <strong>green dashed box</strong> shows your new sample space: only the French circle (French only + both). Ignore everyone outside that box.</p>
+
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="480" height="260" viewBox="0 0 480 260" style="background:#f9f8f5; border-radius:8px; max-width:100%;" aria-label="Venn diagram with conditional probability region highlighted for given French">
+          <rect x="25" y="35" width="430" height="185" rx="8" fill="#ffffff" stroke="#888" stroke-width="1.5"/>
+          <text x="40" y="58" font-size="14" fill="#666">All 120 students (ξ)</text>
+          <circle cx="175" cy="135" r="78" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2" opacity="0.85"/>
+          <circle cx="305" cy="135" r="78" fill="#fce7f3" stroke="#a13544" stroke-width="2" opacity="0.85"/>
+          <text x="115" y="128" text-anchor="middle" font-size="15" font-weight="bold" fill="#1a6fa8">French</text>
+          <text x="115" y="146" text-anchor="middle" font-size="15" font-weight="bold" fill="#1a6fa8">only</text>
+          <text x="115" y="168" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a6fa8">30</text>
+          <text x="240" y="122" text-anchor="middle" font-size="14" font-weight="bold" fill="#7c3aed">Both</text>
+          <text x="240" y="148" text-anchor="middle" font-size="18" font-weight="bold" fill="#7c3aed">10</text>
+          <text x="365" y="128" text-anchor="middle" font-size="15" font-weight="bold" fill="#a13544">Spanish</text>
+          <text x="365" y="146" text-anchor="middle" font-size="15" font-weight="bold" fill="#a13544">only</text>
+          <text x="365" y="168" text-anchor="middle" font-size="18" font-weight="bold" fill="#a13544">15</text>
+          <text x="395" y="58" text-anchor="middle" font-size="14" fill="#666">Neither</text>
+          <text x="395" y="76" text-anchor="middle" font-size="18" font-weight="bold" fill="#666">65</text>
+          <text x="145" y="238" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a6fa8">F (French)</text>
+          <text x="145" y="254" text-anchor="middle" font-size="14" fill="#1a6fa8">40 students total</text>
+          <text x="335" y="238" text-anchor="middle" font-size="16" font-weight="bold" fill="#a13544">S (Spanish)</text>
+          <text x="335" y="254" text-anchor="middle" font-size="14" fill="#a13544">25 students total</text>
+          <rect x="88" y="88" width="192" height="110" rx="6" fill="none" stroke="#059669" stroke-width="2.5" stroke-dasharray="8,4"/>
+          <text x="184" y="82" text-anchor="middle" font-size="14" font-weight="bold" fill="#059669">“Given French” → look here (40)</text>
+        </svg>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin-top:6px;">The green box is the only part we use for P(Spanish | French): 40 students in total, 10 of whom also study Spanish.</p>
+      </div>
+
+      <ul style="line-height:1.9;">
+        <li>Your denominator is <strong>40</strong> (inside the green box), not 120</li>
+        <li>Of those 40, <strong>10</strong> also study Spanish (the overlap inside the box)</li>
+        <li>So P(Spanish | French) = <strong>10 ÷ 40 = 1/4</strong></li>
+      </ul>
+      <p><strong>Common mistake:</strong> When you see “given”, shrink the sample space to the group you are told about — do not use the whole school or year unless the question says so.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">40 students study French; 10 of them also study Spanish. A student is chosen <strong>from those who study French</strong>. What is P(also studies Spanish)?</p>
+          <button class="btn mcq-btn" data-letter="A">10/120</button>
+          <button class="btn mcq-btn" data-letter="B">40/120</button>
+          <button class="btn mcq-btn" data-letter="C">10/40</button>
+          <button class="btn mcq-btn" data-letter="D">30/40</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- Revision card (auto-added) -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+      Probability — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Write probabilities as fractions/decimals from 0 to 1. Use tables or trees when there are two stages.</p>
+
+      <div style="text-align:center;margin:16px 0;">
+              <div class="revision-card-wrap">
+        <svg class="revision-card-svg lesson-quick-ref" width="100%" viewBox="0 0 760 280" style="max-width:760px;width:100%;height:auto;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:10px;" role="img" aria-label="Probability revision card">
+          <text x="380" y="28" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Probability — Revision Card</text>
+          <line x1="20" y1="38" x2="740" y2="38" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="20" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Basics</text>
+          <text x="20" y="78" font-size="14" fill="#28251d">0 ≤ P ≤ 1</text>
+          <text x="20" y="98" font-size="14" fill="#28251d">P(certain) = 1, P(impossible) = 0</text>
+          <text x="20" y="118" font-size="14" fill="#28251d">P(not A) = 1 − P(A)</text>
+          <text x="20" y="142" font-size="15" fill="#1a6fa8" font-weight="bold">Combined events</text>
+          <text x="20" y="162" font-size="14" fill="#28251d">AND → multiply (if independent)</text>
+          <text x="20" y="182" font-size="14" fill="#28251d">OR (mutually exclusive) → add</text>
+          <line x1="390" y1="48" x2="390" y2="260" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="400" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Diagrams</text>
+          <text x="400" y="78" font-size="14" fill="#28251d">Sample space: list all outcomes</text>
+          <text x="400" y="98" font-size="14" fill="#28251d">Tree: multiply along branches</text>
+          <text x="400" y="118" font-size="14" fill="#28251d">Venn: overlap = both</text>
+          <text x="400" y="138" font-size="14" fill="#28251d">P(A|B): shrink sample space to B</text>
+        </svg>
+      </div>
+      </div>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">A fair dice is rolled. P(getting a 6)?</p>
+          <button class="btn mcq-btn" data-letter="A">1/6</button>
+          <button class="btn mcq-btn" data-letter="B">6</button>
+          <button class="btn mcq-btn" data-letter="C">1/3</button>
+          <button class="btn mcq-btn" data-letter="D">1/2</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='probability') }}" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Revision</a>
+      </div>
+    </div>
+  </details>
+
+</div>
+
+  <!-- Practice link -->
+  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='probability') }}"
+       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+      Start Practice Quiz
+    </a>
+  </div>
+
+{% endblock %}

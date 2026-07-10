@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}{{ profile_user.display_handle }} – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+
+<div class="lesson-hero">
+    <h1>{{ profile_user.display_handle }}</h1>
+    <p class="hero-sub">Public profile</p>
+</div>
+
+<div class="public-profile-stats">
+    <a href="{{ url_for('public_profile_followers', handle=profile_user.handle) }}" class="public-profile-stat">
+        <strong>{{ followers_count }}</strong>
+        <span>Followers</span>
+    </a>
+    <a href="{{ url_for('public_profile_following', handle=profile_user.handle) }}" class="public-profile-stat">
+        <strong>{{ following_count }}</strong>
+        <span>Following</span>
+    </a>
+</div>
+
+{% if is_own_profile %}
+<div class="public-profile-actions">
+    <a href="{{ url_for('profile_settings') }}" class="btn btn-outline">Privacy settings</a>
+    <a href="{{ url_for('profile') }}" class="btn btn-secondary">Your account</a>
+</div>
+{% elif current_user.is_authenticated %}
+<div class="public-profile-actions">
+    {% if viewer_follows %}
+    <form method="POST" action="{{ url_for('unfollow_user_route', handle=profile_user.handle) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-secondary">Unfollow</button>
+    </form>
+    {% else %}
+    <form method="POST" action="{{ url_for('follow_user_route', handle=profile_user.handle) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-primary">Follow</button>
+    </form>
+    {% endif %}
+</div>
+{% else %}
+<p class="profile-empty">Log in to follow {{ profile_user.display_handle }}.</p>
+{% endif %}
+
+<section class="section-panel">
+    <div class="section-panel-header">Overview</div>
+    <div class="section-panel-body">
+        <dl class="profile-dl">
+            {% if settings.show_member_since %}
+            <dt>Member since</dt>
+            <dd>{{ profile_user.created_at[:10] if profile_user.created_at else '—' }}</dd>
+            {% endif %}
+            <dt>Study streak</dt>
+            <dd class="profile-coming-soon">Coming soon</dd>
+            {% if settings.show_last_topic and activity.last_topic_label %}
+            <dt>Last topic opened</dt>
+            <dd>
+                {% if last_topic_url %}
+                <a href="{{ last_topic_url }}">{{ activity.last_topic_label }}</a>
+                {% else %}
+                {{ activity.last_topic_label }}
+                {% endif %}
+                {% if activity.last_topic_at %}
+                <span class="profile-list-meta"> · {{ activity.last_topic_at[:10] }}</span>
+                {% endif %}
+            </dd>
+            {% endif %}
+            {% if settings.show_last_activity and activity.last_activity_label %}
+            <dt>Last activity</dt>
+            <dd>
+                {% if last_activity_url %}
+                <a href="{{ last_activity_url }}">{{ activity.last_activity_label }}</a>
+                {% else %}
+                {{ activity.last_activity_label }}
+                {% endif %}
+                {% if activity.last_activity_at %}
+                <span class="profile-list-meta"> · {{ activity.last_activity_at[:10] }}</span>
+                {% endif %}
+            </dd>
+            {% endif %}
+        </dl>
+    </div>
+</section>
+
+{% if settings.show_lesson_progress %}
+<section class="section-panel">
+    <div class="section-panel-header">Lesson progress</div>
+    <div class="section-panel-body">
+        {% if lesson_progress %}
+        <ul class="profile-list">
+            {% for item in lesson_progress %}
+            <li class="profile-list-item">
+                <div class="profile-list-main">
+                    <a href="{{ item.lesson_url }}">{{ item.topic_label }}</a>
+                    <span class="profile-list-meta">
+                        {% if item.completed_count %}{{ item.completed_count }} quick check{% if item.completed_count != 1 %}s{% endif %} complete{% if item.section_label %} · {{ item.section_label | truncate(50) }}{% endif %}{% elif item.section_label %}{{ item.section_label | truncate(60) }}{% endif %}
+                        · {{ item.updated_at[:10] }}
+                    </span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty">No lesson progress shared yet.</p>
+        {% endif %}
+    </div>
+</section>
+{% endif %}
+
+{% if settings.show_quiz_stats %}
+<section class="section-panel">
+    <div class="section-panel-header">Recent quizzes</div>
+    <div class="section-panel-body">
+        {% if quiz_attempts %}
+        <ul class="profile-list">
+            {% for item in quiz_attempts %}
+            <li class="profile-list-item">
+                <div class="profile-list-main">
+                    <span>{{ item.topic_label }}</span>
+                    <span class="profile-list-meta">{{ item.score }}/{{ item.total }} · {{ item.created_at[:10] }}</span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty">No quiz scores shared yet.</p>
+        {% endif %}
+    </div>
+</section>
+{% endif %}
+
+</div>
+{% endblock %}

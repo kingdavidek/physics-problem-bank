@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+{% block title %}Surds – GCSE Mathematics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Surds</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">A <strong>surd</strong> is an exact square root that cannot be written as a whole number or simple fraction. Higher-tier GCSE questions often insist on surd form rather than decimals.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+      <span style="background:#fef4e8;color:#8a5300;border-radius:20px;padding:3px 12px;font-size:.8rem;">Higher Tier</span>
+    </div>
+  </div>
+
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='surds') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <!-- 1. WHAT IS A SURD -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      What Is a Surd?
+      <span style="font-size:0.65rem;margin-left:8px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Higher</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> √4 = 2 and √9 = 3 are <strong>not</strong> surds — they simplify to integers. √2, √3 and √5 <strong>are</strong> surds because they stay in root form for an exact answer.</p>
+
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="100%" viewBox="0 0 340 160" style="background:#f9f8f5;border-radius:8px;max-width:340px;display:block;margin:0 auto;">
+          <rect x="20" y="30" width="140" height="100" rx="8" fill="#dcfce7" stroke="#059669" stroke-width="2"/>
+          <text x="90" y="58" font-size="15" fill="#059669" text-anchor="middle" font-weight="bold">Not surds</text>
+          <text x="90" y="82" font-size="16" fill="#333" text-anchor="middle">√4 = 2</text>
+          <text x="90" y="104" font-size="16" fill="#333" text-anchor="middle">√9 = 3</text>
+          <rect x="180" y="30" width="140" height="100" rx="8" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+          <text x="250" y="58" font-size="15" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Surds</text>
+          <text x="250" y="82" font-size="16" fill="#333" text-anchor="middle">√2, √3, √5</text>
+          <text x="250" y="104" font-size="14" fill="#555" text-anchor="middle">exact roots</text>
+        </svg>
+      </div>
+
+      <p>When a question says <strong>“leave your answer in surd form”</strong> or <strong>“exact value”</strong>, do not round to a decimal.</p>
+
+      <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:16px 0;border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Which is a surd?</p>
+          <button class="btn mcq-btn" data-letter="A">√16</button>
+          <button class="btn mcq-btn" data-letter="B">√25</button>
+          <button class="btn mcq-btn" data-letter="C">√7</button>
+          <button class="btn mcq-btn" data-letter="D">√36</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 2. KEY RULES -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      The Two Key Rules
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;text-align:center;line-height:1.8;">
+        √a × √b = √(ab) &nbsp;&nbsp;·&nbsp;&nbsp; √a ÷ √b = √(a/b) &nbsp;&nbsp;·&nbsp;&nbsp; √a × √a = a
+      </p>
+
+      <p><strong>Example:</strong> √3 × √5 = √15. Also √20 ÷ √5 = √4 = 2.</p>
+
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="100%" viewBox="0 0 320 120" style="background:#f9f8f5;border-radius:8px;max-width:320px;display:block;margin:0 auto;">
+          <text x="80" y="40" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">√3</text>
+          <text x="120" y="40" font-size="18" fill="#555" text-anchor="middle">×</text>
+          <text x="160" y="40" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">√5</text>
+          <text x="200" y="40" font-size="18" fill="#555" text-anchor="middle">=</text>
+          <text x="250" y="40" font-size="18" fill="#a13544" text-anchor="middle" font-weight="bold">√15</text>
+          <line x1="40" y1="55" x2="280" y2="55" stroke="#ddd" stroke-width="1"/>
+          <text x="80" y="95" font-size="18" fill="#059669" text-anchor="middle" font-weight="bold">√7</text>
+          <text x="120" y="95" font-size="18" fill="#555" text-anchor="middle">×</text>
+          <text x="160" y="95" font-size="18" fill="#059669" text-anchor="middle" font-weight="bold">√7</text>
+          <text x="200" y="95" font-size="18" fill="#555" text-anchor="middle">=</text>
+          <text x="250" y="95" font-size="18" fill="#a13544" text-anchor="middle" font-weight="bold">7</text>
+        </svg>
+      </div>
+
+      <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:16px 0;border-radius:0 var(--radius) var(--radius) 0;">
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Simplify √2 × √8.</p>
+          <button class="btn mcq-btn" data-letter="A">√10</button>
+          <button class="btn mcq-btn" data-letter="B">4</button>
+          <button class="btn mcq-btn" data-letter="C">√6</button>
+          <button class="btn mcq-btn" data-letter="D">16</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 3. SIMPLIFYING -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Simplifying Surds
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> √48 = √(16 × 3) = √16 × √3 = <strong>4√3</strong>.</p>
+      <p>Find the <strong>largest square factor</strong> under the root, then split using √a × √b = √(ab).</p>
+
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="100%" viewBox="0 0 360 200" style="background:#f9f8f5;border-radius:8px;max-width:360px;display:block;margin:0 auto;">
+          <text x="180" y="28" font-size="17" fill="#333" text-anchor="middle" font-weight="bold">√48</text>
+          <line x1="180" y1="38" x2="120" y2="78" stroke="#1a6fa8" stroke-width="2"/>
+          <line x1="180" y1="38" x2="240" y2="78" stroke="#1a6fa8" stroke-width="2"/>
+          <rect x="88" y="78" width="64" height="44" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <text x="120" y="106" font-size="16" fill="#1a6fa8" text-anchor="middle" font-weight="bold">√16</text>
+          <rect x="208" y="78" width="64" height="44" rx="6" fill="#e8f4fd" stroke="#059669" stroke-width="1.5"/>
+          <text x="240" y="106" font-size="16" fill="#059669" text-anchor="middle" font-weight="bold">√3</text>
+          <line x1="120" y1="122" x2="120" y2="152" stroke="#a13544" stroke-width="2"/>
+          <text x="120" y="172" font-size="16" fill="#a13544" text-anchor="middle" font-weight="bold">4</text>
+          <text x="240" y="172" font-size="16" fill="#059669" text-anchor="middle" font-weight="bold">√3</text>
+          <text x="180" y="192" font-size="18" fill="#a13544" text-anchor="middle" font-weight="bold">4√3</text>
+        </svg>
+      </div>
+
+      <p style="color:#8a5300;background:#fef4e8;padding:8px 12px;border-radius:6px;font-size:.92rem;">
+        <strong>Tip:</strong> Using a smaller square factor (e.g. √48 = 2√12) means you must simplify again. Always use the <em>largest</em> square factor first.
+      </p>
+
+      <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:16px 0;border-radius:0 var(--radius) var(--radius) 0;">
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">Write √72 in simplest surd form.</p>
+          <button class="btn mcq-btn" data-letter="A">6√2</button>
+          <button class="btn mcq-btn" data-letter="B">8√2</button>
+          <button class="btn mcq-btn" data-letter="C">3√8</button>
+          <button class="btn mcq-btn" data-letter="D">√72</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='surds') }}?difficulty=foundational&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Foundational</a>
+    </div>
+  </details>
+
+  <!-- 4. ADD / SUBTRACT -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Adding and Subtracting Surds
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Only combine surds with the <strong>same number under the root</strong> — like collecting like terms.</p>
+      <p><strong>Example:</strong> √3 + √12 = √3 + 2√3 = <strong>3√3</strong> (simplify √12 first).</p>
+
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="100%" viewBox="0 0 340 100" style="background:#f9f8f5;border-radius:8px;max-width:340px;display:block;margin:0 auto;">
+          <text x="55" y="55" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">3√5</text>
+          <text x="110" y="55" font-size="22" fill="#555" text-anchor="middle">+</text>
+          <text x="165" y="55" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">2√5</text>
+          <text x="220" y="55" font-size="22" fill="#555" text-anchor="middle">=</text>
+          <text x="285" y="55" font-size="18" fill="#a13544" text-anchor="middle" font-weight="bold">5√5</text>
+          <text x="170" y="85" font-size="14" fill="#777" text-anchor="middle">same surd underneath → add coefficients</text>
+        </svg>
+      </div>
+
+      <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:16px 0;border-radius:0 var(--radius) var(--radius) 0;">
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Simplify √8 + √2.</p>
+          <button class="btn mcq-btn" data-letter="A">√10</button>
+          <button class="btn mcq-btn" data-letter="B">2√2</button>
+          <button class="btn mcq-btn" data-letter="C">3√2</button>
+          <button class="btn mcq-btn" data-letter="D">5√2</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 5. EXPANDING -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Expanding Brackets
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> (2 + √3)(2 − √3) = 4 − 3 = <strong>1</strong> (difference of two squares).</p>
+      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;text-align:center;">
+        (a + √b)(a − √b) = a² − b &nbsp;&nbsp;·&nbsp;&nbsp; (a + √b)² = a² + 2a√b + b
+      </p>
+
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="100%" viewBox="0 0 360 140" style="background:#f9f8f5;border-radius:8px;max-width:360px;display:block;margin:0 auto;">
+          <rect x="40" y="35" width="130" height="70" rx="6" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="1.5"/>
+          <text x="105" y="62" font-size="15" fill="#1a6fa8" text-anchor="middle" font-weight="bold">(a + √b)</text>
+          <text x="105" y="88" font-size="15" fill="#059669" text-anchor="middle" font-weight="bold">(a − √b)</text>
+          <text x="200" y="72" font-size="20" fill="#555">→</text>
+          <rect x="230" y="45" width="100" height="50" rx="6" fill="#fef4e8" stroke="#a13544" stroke-width="1.5"/>
+          <text x="280" y="78" font-size="17" fill="#a13544" text-anchor="middle" font-weight="bold">a² − b</text>
+          <text x="180" y="125" font-size="14" fill="#777" text-anchor="middle">surds cancel — rational result</text>
+        </svg>
+      </div>
+
+      <p><strong>Example:</strong> (3 + √5)² = 9 + 6√5 + 5 = <strong>14 + 6√5</strong>.</p>
+
+      <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:16px 0;border-radius:0 var(--radius) var(--radius) 0;">
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Expand (5 − √2)(5 + √2).</p>
+          <button class="btn mcq-btn" data-letter="A">25 + 2</button>
+          <button class="btn mcq-btn" data-letter="B">23</button>
+          <button class="btn mcq-btn" data-letter="C">10√2</button>
+          <button class="btn mcq-btn" data-letter="D">25 − √4</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='surds') }}?difficulty=intermediate&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Intermediate</a>
+    </div>
+  </details>
+
+  <!-- 6. RATIONALISING -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Rationalising the Denominator
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Simple:</strong> 6/√3 = (6√3)/(√3×√3) = 6√3/3 = <strong>2√3</strong> — multiply top and bottom by √3.</p>
+
+      <p><strong>Compound:</strong> Multiply by the <strong>conjugate</strong> (change the sign in the middle).</p>
+      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;text-align:center;">
+        Conjugate of (a + √b) is (a − √b) &nbsp;·&nbsp; (a + √b)(a − √b) = a² − b
+      </p>
+
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="100%" viewBox="0 0 400 130" style="background:#f9f8f5;border-radius:8px;max-width:400px;display:block;margin:0 auto;">
+          <!-- first fraction: 2 / (1 + √5) -->
+          <text x="72" y="36" font-size="17" fill="#a13544" text-anchor="middle" font-weight="bold">2</text>
+          <line x1="38" y1="44" x2="106" y2="44" stroke="#333" stroke-width="1.5"/>
+          <text x="72" y="62" font-size="15" fill="#1a6fa8" text-anchor="middle" font-weight="bold">1 + √5</text>
+          <!-- multiply -->
+          <text x="138" y="52" font-size="20" fill="#555" text-anchor="middle">×</text>
+          <!-- second fraction: (1 − √5) / (1 − √5) -->
+          <text x="248" y="36" font-size="15" fill="#059669" text-anchor="middle" font-weight="bold">1 − √5</text>
+          <line x1="204" y1="44" x2="292" y2="44" stroke="#333" stroke-width="1.5"/>
+          <text x="248" y="62" font-size="15" fill="#059669" text-anchor="middle" font-weight="bold">1 − √5</text>
+          <!-- bracket hint: same factor top and bottom -->
+          <text x="248" y="78" font-size="14" fill="#777" text-anchor="middle">(conjugate)</text>
+          <text x="200" y="108" font-size="14" fill="#777" text-anchor="middle">New denominator: (1 + √5)(1 − √5) = 1 − 5 = −4</text>
+        </svg>
+      </div>
+
+      <p><strong>Example:</strong> 2/(1 + √5) → multiply by (1 − √5) → simplify to <strong>(√5 − 1)/2</strong>.</p>
+
+      <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:16px 0;border-radius:0 var(--radius) var(--radius) 0;">
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">Rationalise 4/√2. Simplest form?</p>
+          <button class="btn mcq-btn" data-letter="A">2√2</button>
+          <button class="btn mcq-btn" data-letter="B">4√2</button>
+          <button class="btn mcq-btn" data-letter="C">2</button>
+          <button class="btn mcq-btn" data-letter="D">8</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 7. EXAM TIPS -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Exam Skills
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <ul style="line-height:1.9;">
+        <li><strong>Exact area:</strong> multiply surd sides, then simplify — e.g. 3√2 × 4√3 = 12√6.</li>
+        <li><strong>Show that:</strong> rationalise fully and match the target form given.</li>
+        <li><strong>Difference of squares:</strong> (p + √q)² − (p − √q)² = 4p√q — many terms cancel.</li>
+      </ul>
+
+      <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:16px 0;border-radius:0 var(--radius) var(--radius) 0;">
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">The conjugate of (3 + √7) is:</p>
+          <button class="btn mcq-btn" data-letter="A">−3 + √7</button>
+          <button class="btn mcq-btn" data-letter="B">3 + √7</button>
+          <button class="btn mcq-btn" data-letter="C">√7 − 3</button>
+          <button class="btn mcq-btn" data-letter="D">3 − √7</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='surds') }}?difficulty=difficult&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Difficult</a>
+    </div>
+  </details>
+
+  <!-- QUICK REFERENCE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+      Surds — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <div style="text-align:center;margin:12px 0;">
+              <div class="revision-card-wrap">
+        <svg class="revision-card-svg lesson-quick-ref" width="100%" viewBox="0 0 760 300" style="max-width:760px;width:100%;height:auto;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:10px;">
+          <text x="380" y="36" font-size="17" fill="#1a6fa8" font-weight="bold" text-anchor="middle">Surds – Quick Reference</text>
+          <text x="20" y="72" font-size="14" fill="#28251d">√a × √b = √(ab) &nbsp;·&nbsp; √a × √a = a</text>
+          <text x="20" y="94" font-size="14" fill="#28251d">Simplify: largest square factor</text>
+          <text x="20" y="116" font-size="14" fill="#28251d">Add/subtract: same surd only</text>
+          <text x="20" y="146" font-size="15" fill="#1a6fa8" font-weight="bold">Expanding</text>
+          <text x="20" y="168" font-size="14" fill="#28251d">(a+√b)(a−√b) = a²−b</text>
+          <text x="20" y="190" font-size="14" fill="#28251d">(a+√b)² = a²+2a√b+b</text>
+          <line x1="380" y1="52" x2="380" y2="280" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="400" y="72" font-size="15" fill="#1a6fa8" font-weight="bold">Rationalise</text>
+          <text x="400" y="94" font-size="14" fill="#28251d">k/√a → multiply by √a/√a</text>
+          <text x="400" y="116" font-size="14" fill="#28251d">k/(a+√b) → × conjugate (a−√b)</text>
+          <text x="400" y="146" font-size="14" fill="#555555">Common simplified surds:</text>
+          <text x="400" y="168" font-size="14" fill="#28251d">√8=2√2 · √12=2√3 · √18=3√2 · √50=5√2</text>
+          <text x="400" y="200" font-size="14" fill="#555555">Never leave √ in the denominator!</text>
+        </svg>
+      </div>
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='surds') }}?difficulty=foundational&amp;mode=mcq" style="display:inline-block;padding:8px 16px;background:#059669;color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Start Practice</a>
+      </div>
+    </div>
+  </details>
+
+</div>
+
+<div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;max-width:860px;margin-left:auto;margin-right:auto;">
+  <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+  <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='surds') }}"
+     style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+    Start Practice Quiz
+  </a>
+</div>
+
+{% endblock %}

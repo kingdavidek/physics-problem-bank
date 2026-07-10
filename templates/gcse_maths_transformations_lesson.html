@@ -1,0 +1,529 @@
+{% extends "base.html" %}
+{% block title %}Transformations – GCSE Mathematics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Transformations</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">A transformation moves or changes a shape on a grid. You will learn the four types — translation, reflection, rotation, and enlargement — and how to describe each one fully in exam answers.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+  <!-- Quick Test button -->
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='transformations') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 1. WHAT ARE TRANSFORMATIONS?                   -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      What Are Transformations?
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 8</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> You slide a triangle 3 squares right and 1 square up. The triangle looks the same — just in a new place. That slide is a <strong>translation</strong>.</p>
+
+      <p>A <strong>transformation</strong> moves or changes a shape. The shape you start with is the <strong>object</strong>. The shape you get is the <strong>image</strong>.</p>
+      <p>At GCSE you need these four:</p>
+
+      <table style="border-collapse:collapse;width:100%;margin-top:8px;">
+        <thead>
+          <tr style="background:var(--color-surface-2);">
+            <th style="padding:8px;border:1px solid var(--color-border);">Transformation</th>
+            <th style="padding:8px;border:1px solid var(--color-border);">What changes</th>
+            <th style="padding:8px;border:1px solid var(--color-border);">What stays the same</th>
+            <th style="padding:8px;border:1px solid var(--color-border);">Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);"><strong>Translation</strong></td><td style="padding:8px;border:1px solid var(--color-border);">Position</td><td style="padding:8px;border:1px solid var(--color-border);">Size, shape, orientation</td><td style="padding:8px;border:1px solid var(--color-border);">Congruent</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);"><strong>Reflection</strong></td><td style="padding:8px;border:1px solid var(--color-border);">Position, orientation</td><td style="padding:8px;border:1px solid var(--color-border);">Size, shape</td><td style="padding:8px;border:1px solid var(--color-border);">Congruent</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);"><strong>Rotation</strong></td><td style="padding:8px;border:1px solid var(--color-border);">Position, orientation</td><td style="padding:8px;border:1px solid var(--color-border);">Size, shape</td><td style="padding:8px;border:1px solid var(--color-border);">Congruent</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);"><strong>Enlargement</strong></td><td style="padding:8px;border:1px solid var(--color-border);">Position, size</td><td style="padding:8px;border:1px solid var(--color-border);">Shape (angles)</td><td style="padding:8px;border:1px solid var(--color-border);">Similar</td></tr>
+        </tbody>
+      </table>
+
+      <p style="margin-top:10px;"><strong>Isometry</strong> means lengths stay the same. Translations, reflections, and rotations are isometries. Enlargements with scale factor not equal to 1 (or −1) change size, so they are not.</p>
+      <p><strong>In exams:</strong> When you <em>describe</em> a transformation, give <em>all</em> the details the examiner asks for (see each section below).</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">Which transformation can make a shape <strong>bigger</strong> (not the same size)?</p>
+          <button class="btn mcq-btn" data-letter="A">Translation</button>
+          <button class="btn mcq-btn" data-letter="B">Reflection</button>
+          <button class="btn mcq-btn" data-letter="C">Rotation</button>
+          <button class="btn mcq-btn" data-letter="D">Enlargement (scale factor 2)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 2. TRANSLATION                                 -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Translation
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Point (2, 5) moves by vector \(\dbinom{3}{1}\). New position: (2+3, 5+1) = <strong>(5, 6)</strong> — 3 right, 1 up.</p>
+
+      <p>A <strong>translation</strong> slides a shape without turning or flipping it. We write it as a <strong>column vector</strong>:</p>
+      <p style="text-align:center;font-size:1.1rem;">\(\dbinom{a}{b}\) means move \(a\) units right (left if negative) and \(b\) units up (down if negative).</p>
+      <p>Every point moves the same way: \((x, y) \to (x+a,\; y+b)\).</p>
+      <p>To <strong>describe</strong> a translation in an exam: say "Translation by the vector \(\dbinom{a}{b}\)".</p>
+
+      <!-- SVG: translation diagram -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="400" height="220" viewBox="0 0 400 220" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+          <!-- Light grid lines -->
+          <defs>
+            <pattern id="tgrid" width="30" height="30" patternUnits="userSpaceOnUse">
+              <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#ddd" stroke-width="0.8"/>
+            </pattern>
+          </defs>
+          <rect width="400" height="220" fill="url(#tgrid)"/>
+          <!-- Axes: origin at (70,170) -->
+          <line x1="30" y1="170" x2="390" y2="170" stroke="#aaa" stroke-width="1.5"/>
+          <line x1="70" y1="20"  x2="70"  y2="210" stroke="#aaa" stroke-width="1.5"/>
+          <text x="393" y="173" font-size="14" fill="#888">x</text>
+          <text x="65"  y="16"  font-size="14" fill="#888">y</text>
+          <text x="62"  y="183" font-size="14" fill="#888">O</text>
+          <!-- Original triangle: P(1,2)→(100,110), Q(3,2)→(160,110), R(1,4)→(100,50) -->
+          <polygon points="100,110 160,110 100,50" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2"/>
+          <text x="85"  y="124" font-size="14" fill="#1a6fa8">P</text>
+          <text x="162" y="124" font-size="14" fill="#1a6fa8">Q</text>
+          <text x="85"  y="44"  font-size="14" fill="#1a6fa8">R</text>
+          <!-- Image triangle: translate by (3,1): P'(4,3)→(190,80), Q'(6,3)→(250,80), R'(4,5)→(190,20) -->
+          <polygon points="190,80 250,80 190,20" fill="#fee2e2" stroke="#a13544" stroke-width="2"/>
+          <text x="175" y="94"  font-size="14" fill="#a13544">P'</text>
+          <text x="252" y="94"  font-size="14" fill="#a13544">Q'</text>
+          <text x="175" y="16"  font-size="14" fill="#a13544">R'</text>
+          <!-- Translation arrows -->
+          <defs>
+            <marker id="tarr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#666"/>
+            </marker>
+          </defs>
+          <line x1="105" y1="105" x2="183" y2="82" stroke="#666" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#tarr)"/>
+          <line x1="164" y1="105" x2="243" y2="82" stroke="#666" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#tarr)"/>
+          <line x1="103"  y1="47"  x2="183" y2="24" stroke="#666" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#tarr)"/>
+          <!-- Vector label -->
+          <text x="270" y="120" font-size="15" fill="#333">Vector:</text>
+          <text x="270" y="140" font-size="18" fill="#a13544">(3)</text>
+          <text x="270" y="158" font-size="18" fill="#a13544">(1)</text>
+          <line x1="268" y1="123" x2="268" y2="163" stroke="#a13544" stroke-width="1.5"/>
+          <line x1="290" y1="123" x2="290" y2="163" stroke="#a13544" stroke-width="1.5"/>
+        </svg>
+      </div>
+
+      <p><strong>Key rule:</strong> \(\dbinom{3}{1}\) means \((x, y) \to (x+3,\; y+1)\).</p>
+      <p><strong>Watch out:</strong> Top number = horizontal (x). Bottom number = vertical (y). Do not swap them.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">\(\dbinom{-2}{4}\) means:</p>
+          <button class="btn mcq-btn" data-letter="A">2 right, 4 down</button>
+          <button class="btn mcq-btn" data-letter="B">2 left, 4 up</button>
+          <button class="btn mcq-btn" data-letter="C">4 left, 2 up</button>
+          <button class="btn mcq-btn" data-letter="D">2 right, 4 up</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='transformations') }}?difficulty=foundational" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Translation</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 3. REFLECTION                                  -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Reflection
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Reflect (3, 2) in the <strong>y-axis</strong> (\(x = 0\)). The x-coordinate flips sign: <strong>(−3, 2)</strong>.</p>
+
+      <p>A <strong>reflection</strong> flips a shape in a <strong>mirror line</strong>. Each point ends up the same distance from the line, but on the other side.</p>
+      <p>To <strong>describe</strong> a reflection: say "Reflection in the line …" and give the equation (e.g. \(y = x\), \(x = 2\)).</p>
+
+      <!-- Key coordinate rules table -->
+      <table style="border-collapse:collapse;width:100%;margin:10px 0;">
+        <thead>
+          <tr style="background:var(--color-surface-2);">
+            <th style="padding:8px;border:1px solid var(--color-border);">Mirror line</th>
+            <th style="padding:8px;border:1px solid var(--color-border);">Rule</th>
+            <th style="padding:8px;border:1px solid var(--color-border);">Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding:7px;border:1px solid var(--color-border);">\(x\)-axis (\(y=0\))</td><td style="padding:7px;border:1px solid var(--color-border);">\((x,y)\to(x,-y)\)</td><td style="padding:7px;border:1px solid var(--color-border);">\((3,2)\to(3,-2)\)</td></tr>
+          <tr><td style="padding:7px;border:1px solid var(--color-border);">\(y\)-axis (\(x=0\))</td><td style="padding:7px;border:1px solid var(--color-border);">\((x,y)\to(-x,y)\)</td><td style="padding:7px;border:1px solid var(--color-border);">\((3,2)\to(-3,2)\)</td></tr>
+          <tr><td style="padding:7px;border:1px solid var(--color-border);">\(y=x\)</td><td style="padding:7px;border:1px solid var(--color-border);">\((x,y)\to(y,x)\)</td><td style="padding:7px;border:1px solid var(--color-border);">\((3,2)\to(2,3)\)</td></tr>
+          <tr><td style="padding:7px;border:1px solid var(--color-border);">\(y=-x\)</td><td style="padding:7px;border:1px solid var(--color-border);">\((x,y)\to(-y,-x)\)</td><td style="padding:7px;border:1px solid var(--color-border);">\((3,2)\to(-2,-3)\)</td></tr>
+          <tr><td style="padding:7px;border:1px solid var(--color-border);">\(x=k\)</td><td style="padding:7px;border:1px solid var(--color-border);">\((x,y)\to(2k-x,y)\)</td><td style="padding:7px;border:1px solid var(--color-border);">\((5,2)\) in \(x=3\) \(\to(1,2)\)</td></tr>
+          <tr><td style="padding:7px;border:1px solid var(--color-border);">\(y=k\)</td><td style="padding:7px;border:1px solid var(--color-border);">\((x,y)\to(x,2k-y)\)</td><td style="padding:7px;border:1px solid var(--color-border);">\((3,5)\) in \(y=2\) \(\to(3,-1)\)</td></tr>
+          <tr><td style="padding:7px;border:1px solid var(--color-border);">\(y=x+c\)</td><td style="padding:7px;border:1px solid var(--color-border);">\((x,y)\to(y-c,\,x+c)\)</td><td style="padding:7px;border:1px solid var(--color-border);">\((1,3)\) in \(y=x+1\) \(\to(2,2)\)</td></tr>
+        </tbody>
+      </table>
+
+      <!-- SVG: reflection in y-axis -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="380" height="200" viewBox="0 0 380 200" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+          <rect width="380" height="200" fill="url(#tgrid)"/>
+          <!-- y-axis (mirror line) at x=190 -->
+          <line x1="190" y1="10" x2="190" y2="195" stroke="#a13544" stroke-width="2.5" stroke-dasharray="6,4"/>
+          <text x="192" y="14" font-size="14" fill="#a13544">y-axis</text>
+          <!-- x-axis at y=170 -->
+          <line x1="20" y1="170" x2="370" y2="170" stroke="#aaa" stroke-width="1.5"/>
+          <!-- Original triangle: A(1,1)→(220,140), B(3,1)→(280,140), C(1,4)→(220,50) -->
+          <polygon points="220,140 280,140 220,50" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2"/>
+          <text x="222" y="155" font-size="14" fill="#1a6fa8">A(1,1)</text>
+          <text x="282" y="155" font-size="14" fill="#1a6fa8">B(3,1)</text>
+          <text x="222" y="44"  font-size="14" fill="#1a6fa8">C(1,4)</text>
+          <!-- Image triangle: A'(-1,1)→(160,140), B'(-3,1)→(100,140), C'(-1,4)→(160,50) -->
+          <polygon points="160,140 100,140 160,50" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+          <text x="80"  y="155" font-size="14" fill="#dc2626">B'(-3,1)</text>
+          <text x="135" y="155" font-size="14" fill="#dc2626">A'(-1,1)</text>
+          <text x="130" y="44"  font-size="14" fill="#dc2626">C'(-1,4)</text>
+        </svg>
+      </div>
+
+      <p><strong>Invariant points:</strong> Points on the mirror line map to themselves. On the x-axis, every point \((a, 0)\) stays fixed.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Reflect <strong>(4, −1)</strong> in the <strong>x-axis</strong>. What is the image?</p>
+          <button class="btn mcq-btn" data-letter="A">(−4, −1)</button>
+          <button class="btn mcq-btn" data-letter="B">(−4, 1)</button>
+          <button class="btn mcq-btn" data-letter="C">(4, 1)</button>
+          <button class="btn mcq-btn" data-letter="D">(4, −1)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='transformations') }}?difficulty=foundational" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Reflection</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 4. ROTATION                                    -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Rotation
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Rotate <strong>(2, 3)</strong> by <strong>90° clockwise</strong> about the origin. Image: <strong>(3, −2)</strong> — use \((x,y) \to (y, -x)\).</p>
+
+      <p>A <strong>rotation</strong> turns a shape around a fixed point — the <strong>centre of rotation</strong>.</p>
+      <p>To <strong>describe</strong> a rotation you need three things: <strong>angle</strong>, <strong>direction</strong> (clockwise or anticlockwise), and <strong>centre</strong>.</p>
+
+      <!-- Key rotation rules -->
+      <table style="border-collapse:collapse;width:100%;margin:10px 0;">
+        <thead>
+          <tr style="background:var(--color-surface-2);">
+            <th style="padding:8px;border:1px solid var(--color-border);">Rotation about origin</th>
+            <th style="padding:8px;border:1px solid var(--color-border);">Rule</th>
+            <th style="padding:8px;border:1px solid var(--color-border);">Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding:7px;border:1px solid var(--color-border);">90° clockwise</td><td style="padding:7px;border:1px solid var(--color-border);">\((x,y)\to(y,-x)\)</td><td style="padding:7px;border:1px solid var(--color-border);">\((2,3)\to(3,-2)\)</td></tr>
+          <tr><td style="padding:7px;border:1px solid var(--color-border);">90° anticlockwise</td><td style="padding:7px;border:1px solid var(--color-border);">\((x,y)\to(-y,x)\)</td><td style="padding:7px;border:1px solid var(--color-border);">\((2,3)\to(-3,2)\)</td></tr>
+          <tr><td style="padding:7px;border:1px solid var(--color-border);">180°</td><td style="padding:7px;border:1px solid var(--color-border);">\((x,y)\to(-x,-y)\)</td><td style="padding:7px;border:1px solid var(--color-border);">\((2,3)\to(-2,-3)\)</td></tr>
+          <tr><td style="padding:7px;border:1px solid var(--color-border);">270° CW (= 90° ACW)</td><td style="padding:7px;border:1px solid var(--color-border);">\((x,y)\to(-y,x)\)</td><td style="padding:7px;border:1px solid var(--color-border);">\((2,3)\to(-3,2)\)</td></tr>
+        </tbody>
+      </table>
+
+      <p><strong>Rotating about (a, b):</strong> Shift so the centre is at the origin, rotate, then shift back.</p>
+      <p style="padding:8px 12px;background:#e8f4fd;border-left:3px solid #1a6fa8;border-radius:4px;">
+        90° CW about \((a,b)\): \((x,y)\to(a+(y-b),\; b-(x-a))\)
+      </p>
+
+      <!-- SVG: rotation diagram -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="380" height="240" viewBox="0 0 380 240" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+          <rect width="380" height="240" fill="url(#tgrid)"/>
+          <!-- Axes: origin at (160, 160) -->
+          <line x1="20"  y1="160" x2="370" y2="160" stroke="#aaa" stroke-width="1.5"/>
+          <line x1="160" y1="10"  x2="160" y2="230" stroke="#aaa" stroke-width="1.5"/>
+          <text x="373" y="163" font-size="14" fill="#888">x</text>
+          <text x="155" y="7"   font-size="14" fill="#888">y</text>
+          <!-- Original triangle: A(1,2)→(190,100), B(3,2)→(250,100), C(1,4)→(190,40) -->
+          <polygon points="190,100 250,100 190,40" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2"/>
+          <text x="193" y="95"  font-size="14" fill="#1a6fa8">A(1,2)</text>
+          <text x="253" y="95"  font-size="14" fill="#1a6fa8">B(3,2)</text>
+          <text x="193" y="35"  font-size="14" fill="#1a6fa8">C(1,4)</text>
+          <!-- Image after 90° CW: A'(2,-1)→(220,190), B'(2,-3)→(220,250?), C'(4,-1)→(280,190) -->
+          <!-- B'(2,-3) would be outside. Use different triangle. -->
+          <!-- Actually use 90° ACW: A(-2,1)→(100,130), B(-2,3)→(100,70), C(-4,1)→(40,130) -->
+          <!-- 90° ACW: (x,y)→(-y,x): A(1,2)→(-2,1), B(3,2)→(-2,3), C(1,4)→(-4,1) -->
+          <polygon points="100,130 100,70 40,130" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+          <text x="55"  y="125" font-size="14" fill="#dc2626">C'(-4,1)</text>
+          <text x="103" y="125" font-size="14" fill="#dc2626">A'(-2,1)</text>
+          <text x="103" y="65"  font-size="14" fill="#dc2626">B'(-2,3)</text>
+          <!-- Arc showing rotation -->
+          <path d="M 190 100 A 38 38 0 0 0 100 130" fill="none" stroke="#888" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <text x="155" y="125" font-size="14" fill="#555">90° ACW</text>
+          <!-- Centre dot -->
+          <circle cx="160" cy="160" r="4" fill="#555"/>
+          <text x="164" y="172" font-size="14" fill="#555">O (centre)</text>
+        </svg>
+      </div>
+
+      <p><strong>Finding the centre:</strong> Join a point to its image and draw the perpendicular bisector. Do the same for another pair. Where the bisectors cross is the centre.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">Rotate <strong>(2, 3)</strong> by <strong>90° clockwise</strong> about the origin. Image?</p>
+          <button class="btn mcq-btn" data-letter="A">(3, −2)</button>
+          <button class="btn mcq-btn" data-letter="B">(−3, 2)</button>
+          <button class="btn mcq-btn" data-letter="C">(−2, −3)</button>
+          <button class="btn mcq-btn" data-letter="D">(2, −3)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='transformations') }}?difficulty=foundational" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Rotation</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 5. ENLARGEMENT                                 -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Enlargement
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Enlarge a shape with area <strong>5 cm²</strong> by scale factor <strong>3</strong> from the origin. Each length × 3, so area × \(3^2 = 9\). New area = <strong>45 cm²</strong>.</p>
+
+      <p>An <strong>enlargement</strong> makes a shape bigger or smaller from a fixed <strong>centre of enlargement</strong>. The <strong>scale factor</strong> \(k\) tells you how many times longer each side becomes.</p>
+
+      <p>About centre \((a, b)\) with scale factor \(k\):</p>
+      <p style="text-align:center;">\((x, y) \;\to\; \bigl(a + k(x-a),\;\; b + k(y-b)\bigr)\)</p>
+
+      <table style="border-collapse:collapse;width:100%;margin:10px 0;">
+        <thead>
+          <tr style="background:var(--color-surface-2);">
+            <th style="padding:8px;border:1px solid var(--color-border);">Scale factor \(k\)</th>
+            <th style="padding:8px;border:1px solid var(--color-border);">Effect</th>
+            <th style="padding:8px;border:1px solid var(--color-border);">Image size</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding:7px;border:1px solid var(--color-border);">\(k > 1\)</td><td style="padding:7px;border:1px solid var(--color-border);">Same side of centre, larger</td><td style="padding:7px;border:1px solid var(--color-border);">Bigger</td></tr>
+          <tr><td style="padding:7px;border:1px solid var(--color-border);">\(0 &lt; k &lt; 1\)</td><td style="padding:7px;border:1px solid var(--color-border);">Same side of centre, smaller</td><td style="padding:7px;border:1px solid var(--color-border);">Smaller</td></tr>
+          <tr><td style="padding:7px;border:1px solid var(--color-border);">\(k = -1\)</td><td style="padding:7px;border:1px solid var(--color-border);">Opposite side, same size</td><td style="padding:7px;border:1px solid var(--color-border);">Same size (180° rotation)</td></tr>
+          <tr><td style="padding:7px;border:1px solid var(--color-border);">\(k &lt; -1\)</td><td style="padding:7px;border:1px solid var(--color-border);">Opposite side, larger</td><td style="padding:7px;border:1px solid var(--color-border);">Bigger, inverted</td></tr>
+          <tr><td style="padding:7px;border:1px solid var(--color-border);">\(-1 &lt; k &lt; 0\)</td><td style="padding:7px;border:1px solid var(--color-border);">Opposite side, smaller</td><td style="padding:7px;border:1px solid var(--color-border);">Smaller, inverted</td></tr>
+        </tbody>
+      </table>
+
+      <!-- SVG: enlargement diagram -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="400" height="220" viewBox="0 0 400 220" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+          <rect width="400" height="220" fill="url(#tgrid)"/>
+          <!-- Centre at (60,190), unit=25px, SF=2 -->
+          <!-- Original triangle: A(1,1)→(85,165), B(3,1)→(135,165), C(1,3)→(85,115) -->
+          <!-- Image (SF=2): A'(2,2)→(110,140), B'(6,2)→(210,140), C'(2,6)→(110,40) -->
+          <circle cx="60" cy="190" r="5" fill="#555"/>
+          <text x="42" y="205" font-size="14" fill="#555">Centre</text>
+          <!-- Rays from centre through vertices -->
+          <line x1="60" y1="190" x2="220" y2="130" stroke="#bbb" stroke-width="1" stroke-dasharray="4,3"/>
+          <line x1="60" y1="190" x2="320" y2="130" stroke="#bbb" stroke-width="1" stroke-dasharray="4,3"/>
+          <line x1="60" y1="190" x2="220" y2="30"  stroke="#bbb" stroke-width="1" stroke-dasharray="4,3"/>
+          <!-- Small original triangle -->
+          <polygon points="140,160 190,160 140,110" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2"/>
+          <text x="143" y="174" font-size="14" fill="#1a6fa8">A</text>
+          <text x="193" y="174" font-size="14" fill="#1a6fa8">B</text>
+          <text x="143" y="106" font-size="14" fill="#1a6fa8">C</text>
+          <!-- Large image triangle (SF=2) -->
+          <polygon points="220,130 320,130 220,30" fill="#fee2e2" stroke="#dc2626" stroke-width="2.5"/>
+          <text x="222" y="145" font-size="14" fill="#dc2626">A'</text>
+          <text x="322" y="145" font-size="14" fill="#dc2626">B'</text>
+          <text x="222" y="25"  font-size="14" fill="#dc2626">C'</text>
+          <!-- SF label -->
+          <text x="300" y="190" font-size="14" fill="#333">SF = 2</text>
+          <text x="295" y="207" font-size="14" fill="#333">A'B' = 2×AB</text>
+        </svg>
+      </div>
+
+      <p><strong>Area rule:</strong> If lengths scale by \(k\), area scales by \(k^2\).</p>
+      <p>\(\text{Area of image} = k^2 \times \text{Area of object}\)</p>
+      <p>To <strong>describe</strong> an enlargement: "Enlargement, scale factor \(k\), centre \((a,b)\)".</p>
+      <p><strong>Tip:</strong> Lines through matching vertices meet at the centre of enlargement.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">A shape has area <strong>8 cm²</strong>. It is enlarged by scale factor <strong>2</strong>. What is the new area?</p>
+          <button class="btn mcq-btn" data-letter="A">16 cm²</button>
+          <button class="btn mcq-btn" data-letter="B">4 cm²</button>
+          <button class="btn mcq-btn" data-letter="C">32 cm²</button>
+          <button class="btn mcq-btn" data-letter="D">64 cm²</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='transformations') }}?difficulty=intermediate" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Enlargement</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 6. COMBINATIONS AND DESCRIBING                 -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Combinations and Describing Transformations
+      <span style="font-size:0.65rem;margin-left:8px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Higher Skill</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Reflect in \(x = 1\), then reflect in \(x = 4\) (parallel mirrors 3 units apart). The combined effect is a <strong>translation</strong> of 6 units — not two reflections anymore.</p>
+
+      <p>You can do one transformation after another. Useful facts:</p>
+      <ul style="line-height:1.9;">
+        <li><strong>Two reflections in parallel lines</strong> (distance \(d\) apart) = <strong>translation</strong> by \(2d\) perpendicular to the lines.</li>
+        <li><strong>Two reflections in lines that cross</strong> (angle \(\alpha\) between them) = <strong>rotation</strong> by \(2\alpha\) about the crossing point.</li>
+        <li>A transformation followed by its reverse = back to the start (identity).</li>
+        <li><strong>Doing twice:</strong> reflections and 180° rotations return the shape to the original.</li>
+      </ul>
+
+      <!-- SVG: combinations diagram -->
+
+      <p><strong>In exams:</strong> Apply transformations in order, one step at a time. If asked for a single equivalent transformation, work through the steps carefully.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">To fully describe a <strong>rotation</strong>, you must state:</p>
+          <button class="btn mcq-btn" data-letter="A">Only the angle</button>
+          <button class="btn mcq-btn" data-letter="B">Angle, direction, and centre</button>
+          <button class="btn mcq-btn" data-letter="C">Only the centre</button>
+          <button class="btn mcq-btn" data-letter="D">Scale factor and centre</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='transformations') }}?difficulty=difficult" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Combinations</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 7. KEY FORMULAE QUICK REFERENCE                -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Transformations — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Use this as a revision card before a test. Pick the transformation type first, then use the matching rule from the card below.</p>
+
+            <div class="revision-card-wrap">
+        <div class="lesson-quick-ref-card" role="region" aria-label="Transformations quick reference">
+          <h3>Transformations — Quick Reference</h3>
+          <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+
+            <div>
+              <h4 style="color:#1a6fa8;">Reflections</h4>
+              <ul>
+                <li>\(x\)-axis: \((x,y) \to (x,-y)\)</li>
+                <li>\(y\)-axis: \((x,y) \to (-x,y)\)</li>
+                <li>\(y=x\): \((x,y) \to (y,x)\)</li>
+                <li>\(y=-x\): \((x,y) \to (-y,-x)\)</li>
+                <li>Line \(x=k\): \((x,y) \to (2k-x,y)\)</li>
+              </ul>
+              <h4 style="color:#1a6fa8;margin-top:14px;">Rotations (about origin)</h4>
+              <ul>
+                <li>90° CW: \((x,y) \to (y,-x)\)</li>
+                <li>90° ACW: \((x,y) \to (-y,x)\)</li>
+                <li>180°: \((x,y) \to (-x,-y)\)</li>
+              </ul>
+            </div>
+            <div>
+              <h4 style="color:#1a6fa8;">Translation &amp; enlargement</h4>
+              <ul>
+                <li>Vector \((a,b)\): \((x,y) \to (x+a,y+b)\)</li>
+                <li>Enlargement SF \(k\) about origin: \((kx,ky)\)</li>
+                <li>Area scale factor = \(k^2\)</li>
+              </ul>
+              <h4 style="color:#1a6fa8;margin-top:14px;">Combinations</h4>
+              <ul>
+                <li>Two parallel reflections → translation</li>
+                <li>Two reflections in intersecting lines → rotation</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+</div>
+
+  <!-- Practice link -->
+  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='transformations') }}"
+       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+      Start Practice Quiz
+    </a>
+  </div>
+
+{% endblock %}

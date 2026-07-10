@@ -1,0 +1,518 @@
+{% extends "base.html" %}
+{% block title %}Fundamentals of Algorithms – GCSE Computer Science{% endblock %}
+
+{% block content %}
+<style>
+  .ps-code { background:#f9f8f5;border:1px solid #d4e6f1; color:#e2e8f0; border-radius:6px; padding:14px; overflow-x:auto; font-size:0.88rem; line-height:1.55; margin:12px 0; font-family:Consolas, Monaco, monospace; white-space:pre-wrap; }
+  .lesson-inner > summary { list-style:none; }
+  .lesson-inner > summary::-webkit-details-marker { display:none; }
+  .trace-tbl { width:100%; border-collapse:collapse; margin:12px 0; font-size:1rem; }
+  .trace-tbl th { padding:8px; border:1px solid #d4e6f1; background:#eaf4fb; text-align:center; }
+  .trace-tbl td { padding:8px; border:1px solid #e2e8f0; text-align:center; }
+</style>
+
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Fundamentals of Algorithms</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">GCSE Computer Science — computational thinking, representing algorithms with flowcharts and pseudocode, searching and sorting, and trace tables. Revise each section, check your understanding with the Quick Checks, then practise exam-style questions.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">WJEC</span>
+    </div>
+  </div>
+
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='cs', topic='algorithms') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <!-- 1. COMPUTATIONAL THINKING -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      Computational Thinking
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+      <p>Before you write code, you plan <strong>how</strong> to solve the problem. <em>Computational thinking</em> is the set of skills that helps you design solutions that a computer (or a person following steps) can carry out. GCSE exams often describe a scenario and ask which skill is being used.</p>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          1.1 Abstraction
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Abstraction</strong> means focusing on important information and hiding detail that is not needed for the current task. Real systems are complicated; abstraction lets you work with a simpler model.</p>
+          <p><strong>Example:</strong> A school timetable app stores each teacher’s name, room, email, and phone number. When a pupil views “Who teaches me on Monday?”, the app only shows <strong>name and room</strong>. The email and phone are abstracted away because they are irrelevant to that screen.</p>
+          <p>In programming, abstraction also means using functions or modules without knowing every line inside them — you trust the interface (what goes in, what comes out).</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">A map app shows roads and journey time but not every tree and bench. This is mainly:</p>
+              <button class="btn mcq-btn" data-letter="A">Decomposition</button>
+              <button class="btn mcq-btn" data-letter="B">Binary search</button>
+              <button class="btn mcq-btn" data-letter="C">Abstraction</button>
+              <button class="btn mcq-btn" data-letter="D">Bubble sort</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          1.2 Decomposition
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Decomposition</strong> means breaking a large problem into smaller sub-problems that are easier to solve, test, and debug. Each sub-task can be given to a different part of the program (or a different person in a team).</p>
+          <p><strong>Example:</strong> “Build a quiz game” could be decomposed into:</p>
+          <ol style="line-height:1.9;margin:8px 0 12px 20px;">
+            <li>Store questions and correct answers</li>
+            <li>Display one question and read the user’s answer</li>
+            <li>Check the answer and update the score</li>
+            <li>Show final results and ask to play again</li>
+          </ol>
+          <p>Examiners may ask you to list sub-tasks in a sensible order — think about what must happen first (e.g. input before processing).</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Splitting “make an online shop” into login, basket, payment, and receipt is:</p>
+              <button class="btn mcq-btn" data-letter="A">Abstraction</button>
+              <button class="btn mcq-btn" data-letter="B">Decomposition</button>
+              <button class="btn mcq-btn" data-letter="C">Pattern recognition</button>
+              <button class="btn mcq-btn" data-letter="D">Linear search</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          1.3 Pattern recognition
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Pattern recognition</strong> means spotting similarities, trends, or rules in problems or data so you can reuse a solution you have seen before.</p>
+          <p><strong>Example:</strong> You notice that every password must have at least one digit. When you write validation code for a new website, you reuse the same “check for a digit” idea — you recognised a pattern from past tasks.</p>
+          <p>Sequences in exams (2, 4, 8, 16, …) are pattern recognition: the rule is “multiply by 2”, so the next term is <strong>32</strong>.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="D">
+              <p style="margin:0 0 10px;">What is the next number? 3, 6, 12, 24, …</p>
+              <button class="btn mcq-btn" data-letter="A">27</button>
+              <button class="btn mcq-btn" data-letter="B">30</button>
+              <button class="btn mcq-btn" data-letter="C">36</button>
+              <button class="btn mcq-btn" data-letter="D">48</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 2. REPRESENTING ALGORITHMS -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Representing Algorithms
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+      <p>An <strong>algorithm</strong> is a finite, ordered set of steps that solves a problem. It must be clear enough that someone (or a computer) can follow it without guessing. At GCSE you express algorithms in <strong>flowcharts</strong> and <strong>pseudocode</strong> before writing Python.</p>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          2.1 Flowcharts
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>Flowcharts use <strong>standard shapes</strong> linked by arrows to show the order of steps. Each shape tells you what <em>kind</em> of step happens — start/stop, input, calculation, or a yes/no choice. You must learn these symbols; exam papers often show or ask you to complete a flowchart.</p>
+
+          <p style="font-weight:600;margin:16px 0 8px;color:#1a6fa8;">Standard flowchart symbols</p>
+          <div style="text-align:center;margin:12px 0;">
+            <svg width="100%" viewBox="0 0 520 200" style="background:#f9f8f5;border-radius:8px;max-width:520px;display:block;margin:0 auto;" aria-label="GCSE flowchart symbol legend">
+              <!-- Terminator -->
+              <rect x="20" y="25" width="100" height="40" rx="18" ry="18" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+              <text x="70" y="50" font-size="14" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Start / Stop</text>
+              <text x="70" y="85" font-size="14" fill="#555" text-anchor="middle">Terminator</text>
+              <text x="70" y="100" font-size="9" fill="#777" text-anchor="middle">(rounded rectangle)</text>
+              <!-- Process -->
+              <rect x="145" y="25" width="100" height="40" fill="#e8f4fd" stroke="#059669" stroke-width="2"/>
+              <text x="195" y="50" font-size="14" fill="#059669" text-anchor="middle" font-weight="bold">Process</text>
+              <text x="195" y="85" font-size="14" fill="#555" text-anchor="middle">Assignment or</text>
+              <text x="195" y="100" font-size="9" fill="#777" text-anchor="middle">calculation</text>
+              <!-- Decision -->
+              <polygon points="320,45 360,65 320,85 280,65" fill="#fef4e8" stroke="#8a5300" stroke-width="2"/>
+              <text x="320" y="69" font-size="14" fill="#8a5300" text-anchor="middle" font-weight="bold">Decision</text>
+              <text x="320" y="110" font-size="14" fill="#555" text-anchor="middle">Yes / No question</text>
+              <text x="320" y="125" font-size="9" fill="#777" text-anchor="middle">(diamond)</text>
+              <!-- I/O -->
+              <polygon points="410,25 500,25 485,65 395,65" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+              <text x="447" y="50" font-size="14" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Input / Output</text>
+              <text x="447" y="85" font-size="14" fill="#555" text-anchor="middle">Read or display</text>
+              <text x="447" y="100" font-size="9" fill="#777" text-anchor="middle">(parallelogram)</text>
+              <!-- Arrows hint -->
+              <text x="260" y="175" font-size="14" fill="#555" text-anchor="middle">Arrows show the order steps run in — follow them top to bottom</text>
+            </svg>
+          </div>
+
+          <table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:1rem;">
+            <tr style="background:#eaf4fb;"><th style="padding:8px;border:1px solid #d4e6f1;text-align:left;">Symbol</th><th style="padding:8px;border:1px solid #d4e6f1;text-align:left;">Used for</th><th style="padding:8px;border:1px solid #d4e6f1;text-align:left;">Typical GCSE wording</th></tr>
+            <tr><td style="padding:8px;border:1px solid #e2e8f0;">Rounded rectangle</td><td style="padding:8px;border:1px solid #e2e8f0;">Start and end of the algorithm</td><td style="padding:8px;border:1px solid #e2e8f0;">START, STOP, END</td></tr>
+            <tr><td style="padding:8px;border:1px solid #e2e8f0;">Rectangle</td><td style="padding:8px;border:1px solid #e2e8f0;">A process that changes data</td><td style="padding:8px;border:1px solid #e2e8f0;">“Set total ← 0”, “Calculate average”</td></tr>
+            <tr><td style="padding:8px;border:1px solid #e2e8f0;">Diamond</td><td style="padding:8px;border:1px solid #e2e8f0;">A condition with two exits</td><td style="padding:8px;border:1px solid #e2e8f0;">“Is score ≥ 50?”, label branches Yes / No</td></tr>
+            <tr><td style="padding:8px;border:1px solid #e2e8f0;">Parallelogram</td><td style="padding:8px;border:1px solid #e2e8f0;">Input from or output to the user</td><td style="padding:8px;border:1px solid #e2e8f0;">INPUT age, OUTPUT "Pass"</td></tr>
+          </table>
+
+          <p style="font-weight:600;margin:20px 0 8px;color:#1a6fa8;">Worked example: “Is the user an adult?”</p>
+          <p>This algorithm asks for the user’s age, then prints <strong>Adult</strong> or <strong>Child</strong>. Trace it with your finger: only <em>one</em> path runs after the diamond.</p>
+          <div style="text-align:center;margin:16px 0;">
+            <svg width="100%" viewBox="0 0 320 520" style="background:#f9f8f5;border-radius:8px;max-width:320px;display:block;margin:0 auto;" aria-label="Example flowchart: check if age is 18 or over">
+              <!-- Start -->
+              <rect x="110" y="12" width="100" height="36" rx="16" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+              <text x="160" y="35" font-size="14" fill="#1a6fa8" text-anchor="middle" font-weight="bold">START</text>
+              <line x1="160" y1="48" x2="160" y2="68" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+              <!-- Input -->
+              <polygon points="70,68 250,68 235,108 55,108" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+              <text x="160" y="94" font-size="14" fill="#1a6fa8" text-anchor="middle" font-weight="bold">INPUT age</text>
+              <line x1="160" y1="108" x2="160" y2="128" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+              <!-- Decision -->
+              <polygon points="160,128 210,168 160,208 110,168" fill="#fef4e8" stroke="#8a5300" stroke-width="2"/>
+              <text x="160" y="165" font-size="14" fill="#8a5300" text-anchor="middle" font-weight="bold">age ≥ 18?</text>
+              <!-- Yes branch left -->
+              <line x1="110" y1="168" x2="55" y2="168" stroke="#333" stroke-width="1.5"/>
+              <line x1="55" y1="168" x2="55" y2="248" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+              <text x="82" y="158" font-size="14" fill="#059669" font-weight="bold">Yes</text>
+              <polygon points="5,248 105,248 95,288 0,288" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+              <text x="52" y="272" font-size="14" fill="#1a6fa8" text-anchor="middle" font-weight="bold">OUTPUT</text>
+              <text x="52" y="284" font-size="9" fill="#1a6fa8" text-anchor="middle">"Adult"</text>
+              <!-- No branch right -->
+              <line x1="210" y1="168" x2="265" y2="168" stroke="#333" stroke-width="1.5"/>
+              <line x1="265" y1="168" x2="265" y2="248" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+              <text x="238" y="158" font-size="14" fill="#a13544" font-weight="bold">No</text>
+              <polygon points="215,248 315,248 305,288 210,288" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+              <text x="262" y="272" font-size="14" fill="#1a6fa8" text-anchor="middle" font-weight="bold">OUTPUT</text>
+              <text x="262" y="284" font-size="9" fill="#1a6fa8" text-anchor="middle">"Child"</text>
+              <!-- Merge to stop -->
+              <line x1="55" y1="288" x2="55" y2="330" stroke="#333" stroke-width="1.5"/>
+              <line x1="265" y1="288" x2="265" y2="330" stroke="#333" stroke-width="1.5"/>
+              <line x1="55" y1="330" x2="265" y2="330" stroke="#333" stroke-width="1.5"/>
+              <line x1="160" y1="330" x2="160" y2="360" stroke="#333" stroke-width="1.5" marker-end="url(#arr)"/>
+              <rect x="110" y="360" width="100" height="36" rx="16" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+              <text x="160" y="383" font-size="14" fill="#1a6fa8" text-anchor="middle" font-weight="bold">STOP</text>
+              <defs>
+                <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                  <polygon points="0,0 8,4 0,8" fill="#333"/>
+                </marker>
+              </defs>
+            </svg>
+          </div>
+          <p style="font-size:1rem;color:#555;margin-top:8px;"><strong>Reading the diagram:</strong> START → read <code>age</code> → test the condition → exactly one OUTPUT runs → both paths lead to STOP. A <strong>rectangle</strong> could be added between INPUT and the decision if you had a separate calculation step (e.g. “increment visit count”).</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="D">
+              <p style="margin:0 0 10px;">Which flowchart symbol represents a decision?</p>
+              <button class="btn mcq-btn" data-letter="A">Rectangle</button>
+              <button class="btn mcq-btn" data-letter="B">Parallelogram</button>
+              <button class="btn mcq-btn" data-letter="C">Rounded rectangle</button>
+              <button class="btn mcq-btn" data-letter="D">Diamond</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          2.2 Pseudocode
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Pseudocode</strong> is structured English (or a simple notation) that looks like code but is not tied to one language. Exam boards use keywords such as <code>INPUT</code>, <code>OUTPUT</code>, <code>IF</code>, <code>FOR</code>, <code>WHILE</code>. Assignment is often written with <code>←</code> (e.g. <code>total ← 0</code>).</p>
+          <p><strong>Example:</strong> Average of two numbers:</p>
+          <pre class="ps-code">INPUT a
+INPUT b
+average ← (a + b) / 2
+OUTPUT average</pre>
+          <p>Indentation inside <code>IF</code> and loops shows which lines belong to which block — same idea as Python.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">In pseudocode, <code>count ← count + 1</code> means:</p>
+              <button class="btn mcq-btn" data-letter="A">Compare count with count + 1</button>
+              <button class="btn mcq-btn" data-letter="B">Add 1 to count and store the result in count</button>
+              <button class="btn mcq-btn" data-letter="C">Output count + 1</button>
+              <button class="btn mcq-btn" data-letter="D">Stop the program</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 3. SEARCHING -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Searching Algorithms
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          3.1 Linear search
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Linear search</strong> checks each item in turn from the start until it finds the target or runs out of items. It works on <strong>sorted or unsorted</strong> lists.</p>
+          <p><strong>Example:</strong> List [4, 7, 2, 9], search for 7 → compare 4 (no), 7 (yes) → <strong>2 comparisons</strong>. Worst case for n items: <strong>n comparisons</strong> (target last or missing).</p>
+          <pre class="ps-code">found ← FALSE
+FOR i ← 0 TO LEN(list) - 1
+    IF list[i] = target THEN
+        found ← TRUE
+    ENDIF
+ENDFOR</pre>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">Linear search on [5, 3, 8, 1] for 8. How many comparisons until found?</p>
+              <button class="btn mcq-btn" data-letter="A">1</button>
+              <button class="btn mcq-btn" data-letter="B">2</button>
+              <button class="btn mcq-btn" data-letter="C">3</button>
+              <button class="btn mcq-btn" data-letter="D">4</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          3.2 Binary search
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Binary search</strong> only works on a <strong>sorted</strong> list. Compare the target with the <strong>middle</strong> item; discard the half where the target cannot be; repeat until found or no items left.</p>
+          <p><strong>Example:</strong> Sorted [2, 5, 9, 14, 18, 23], find 14. Mid = 9 (too small) → search right half [14, 18, 23] → mid 18 (too big) → [14] → found. Far fewer steps than checking every item.</p>
+          <p style="font-size:1rem;color:#8a5300;"><strong>Remember:</strong> mid index = (low + high) DIV 2. Update <code>low</code> or <code>high</code> after each comparison.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">Binary search can only be used when data is:</p>
+              <button class="btn mcq-btn" data-letter="A">Sorted</button>
+              <button class="btn mcq-btn" data-letter="B">Random</button>
+              <button class="btn mcq-btn" data-letter="C">Less than 10 items</button>
+              <button class="btn mcq-btn" data-letter="D">Stored as text</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='algorithms') }}?difficulty=foundational&amp;mode=practice" style="display:inline-block;margin:4px 0 8px;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Foundational</a>
+    </div>
+  </details>
+
+  <!-- 4. SORTING -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Sorting Algorithms
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          4.1 Bubble sort
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Bubble sort</strong> repeatedly walks along the list comparing <strong>adjacent</strong> pairs. If the left item is bigger than the right, swap them. After one full pass, the largest value has “bubbled” to the end. Repeat until a pass completes with <strong>no swaps</strong>.</p>
+          <p><strong>Worked example (one pass):</strong> [5, 3, 8, 1] → compare 5&3 (swap) → [3, 5, 8, 1] → 5&8 (no swap) → 8&1 (swap) → [3, 5, 1, 8]. Largest value 8 is now at the end.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">After one complete pass of bubble sort on [4, 2, 7, 1], which value is definitely in the final position?</p>
+              <button class="btn mcq-btn" data-letter="A">1</button>
+              <button class="btn mcq-btn" data-letter="B">7</button>
+              <button class="btn mcq-btn" data-letter="C">2</button>
+              <button class="btn mcq-btn" data-letter="D">4</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          4.2 Merge sort
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Merge sort</strong> uses <strong>divide and conquer</strong>: split the list in half until each part has one item, then <strong>merge</strong> pairs in sorted order.</p>
+          <p><strong>Example:</strong> [38, 27, 43, 3] → split → [38][27][43][3] → merge pairs → [27, 38] and [3, 43] → merge those → [3, 27, 38, 43]. Merging compares the front of each list and takes the smaller.</p>
+          <p>More efficient than bubble sort for large lists, but needs extra space to hold merged sections — a common discussion point at GCSE.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">Merge sort is an example of:</p>
+              <button class="btn mcq-btn" data-letter="A">Divide and conquer</button>
+              <button class="btn mcq-btn" data-letter="B">Linear search</button>
+              <button class="btn mcq-btn" data-letter="C">Abstraction only</button>
+              <button class="btn mcq-btn" data-letter="D">Pattern recognition</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='algorithms') }}?difficulty=intermediate&amp;mode=practice" style="display:inline-block;margin:4px 0 8px;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Intermediate</a>
+    </div>
+  </details>
+
+  <!-- 5. TRACE TABLES -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Trace Tables
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          5.1 Reading and building trace tables
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>A <strong>trace table</strong> is a dry run of an algorithm: each row shows variable values <strong>after</strong> a step executes. Columns usually include the step number, each variable, and <code>OUTPUT</code> if something is printed.</p>
+          <p><strong>Example:</strong></p>
+          <pre class="ps-code">x ← 10
+y ← 3
+x ← x + y
+OUTPUT x</pre>
+          <table class="trace-tbl">
+            <tr><th>Step</th><th>x</th><th>y</th><th>OUTPUT</th></tr>
+            <tr><td>1</td><td>10</td><td>3</td><td></td></tr>
+            <tr><td>2</td><td>13</td><td>3</td><td></td></tr>
+            <tr><td>3</td><td>13</td><td>3</td><td>13</td></tr>
+          </table>
+          <p>Work line by line; only update columns that change on that step.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">After <code>total ← 0</code> then <code>total ← total + 5</code>, what is total?</p>
+              <button class="btn mcq-btn" data-letter="A">0</button>
+              <button class="btn mcq-btn" data-letter="B">10</button>
+              <button class="btn mcq-btn" data-letter="C">5</button>
+              <button class="btn mcq-btn" data-letter="D">undefined</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          5.2 Tracing loops and decisions
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>For <code>IF</code>, add a row when the condition is tested and record which branch runs. For loops, add a column for the loop counter (<code>i</code>) and a new row <strong>each time</strong> the loop body runs.</p>
+          <p><strong>Example:</strong></p>
+          <pre class="ps-code">total ← 0
+FOR i ← 1 TO 3
+    total ← total + i
+ENDFOR
+OUTPUT total</pre>
+          <table class="trace-tbl">
+            <tr><th>Step</th><th>i</th><th>total</th><th>OUTPUT</th></tr>
+            <tr><td>start</td><td>—</td><td>0</td><td></td></tr>
+            <tr><td>loop 1</td><td>1</td><td>1</td><td></td></tr>
+            <tr><td>loop 2</td><td>2</td><td>3</td><td></td></tr>
+            <tr><td>loop 3</td><td>3</td><td>6</td><td></td></tr>
+            <tr><td>output</td><td>—</td><td>6</td><td>6</td></tr>
+          </table>
+          <p>Binary search and bubble sort questions often ask for a partial trace — show low, high, mid, or swaps each pass.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">After <code>FOR i ← 1 TO 3</code> with <code>total ← total + i</code> starting at total = 0, final total is:</p>
+              <button class="btn mcq-btn" data-letter="A">3</button>
+              <button class="btn mcq-btn" data-letter="B">6</button>
+              <button class="btn mcq-btn" data-letter="C">9</button>
+              <button class="btn mcq-btn" data-letter="D">0</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='algorithms') }}?difficulty=difficult&amp;mode=practice" style="display:inline-block;margin:4px 0 8px;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Difficult</a>
+    </div>
+  </details>
+
+  <!-- QUICK REFERENCE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">★</span>
+      Quick Reference
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10–11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <div style="text-align:center;margin:12px 0;">
+        <svg width="100%" viewBox="0 0 760 300" style="background:#f9f8f5;border:1px solid #d4e6f1;border-radius:8px;max-width:760px;display:block;margin:0 auto;">
+          <text x="380" y="28" font-size="17" fill="#1a6fa8" font-weight="bold" text-anchor="middle">Algorithms — Quick Reference</text>
+          <text x="20" y="58" font-size="14" fill="#28251d">CT: abstraction · decomposition · pattern recognition</text>
+          <text x="20" y="78" font-size="14" fill="#28251d">Flowchart: terminator · process · decision · I/O</text>
+          <text x="20" y="98" font-size="14" fill="#28251d">Linear search: check each item · any order</text>
+          <text x="20" y="118" font-size="14" fill="#28251d">Binary search: sorted · halve each step</text>
+          <text x="20" y="148" font-size="14" fill="#1a6fa8" font-weight="bold">Sorting</text>
+          <text x="20" y="168" font-size="14" fill="#28251d">Bubble: adjacent swaps · largest to end</text>
+          <text x="20" y="188" font-size="14" fill="#28251d">Merge: split · merge sorted lists</text>
+          <line x1="380" y1="44" x2="380" y2="280" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="400" y="58" font-size="14" fill="#28251d">Trace table: step · variables · OUTPUT</text>
+          <text x="400" y="78" font-size="14" fill="#28251d">Pseudocode ← assignment</text>
+          <text x="400" y="98" font-size="14" fill="#28251d">mid ← (low + high) DIV 2</text>
+          <text x="400" y="128" font-size="14" fill="#1a6fa8" font-weight="bold">Exam tips</text>
+          <text x="400" y="148" font-size="14" fill="#555555">Count comparisons carefully</text>
+          <text x="400" y="168" font-size="14" fill="#555555">One bubble pass ≠ fully sorted</text>
+          <text x="400" y="188" font-size="14" fill="#555555">Trace one line at a time</text>
+        </svg>
+      </div>
+      <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:8px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">Which skill breaks a problem into smaller sub-tasks?</p>
+          <button class="btn mcq-btn" data-letter="A">Decomposition</button>
+          <button class="btn mcq-btn" data-letter="B">Abstraction</button>
+          <button class="btn mcq-btn" data-letter="C">Merge sort</button>
+          <button class="btn mcq-btn" data-letter="D">Binary search</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+</div>
+
+<div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;max-width:860px;margin-left:auto;margin-right:auto;">
+  <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+  <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='cs', topic='algorithms') }}"
+     style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+    Start Practice Quiz
+  </a>
+</div>
+
+{% endblock %}

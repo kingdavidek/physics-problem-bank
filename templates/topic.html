@@ -2,29 +2,108 @@
 {% block title %}{{ content.title }} – Problem Bank{% endblock %}
 
 {% block content %}
-<div class="topic-header">
+<div class="page-shell">
+
+<div class="lesson-hero">
     <h1>{{ content.title }}</h1>
-    <p style="color: var(--text-muted);">{{ content.summary }}</p>
+    <p class="hero-sub">{{ content.summary }}</p>
 </div>
 
-<h2>Key Formulae</h2>
-{% for formula in content.formulae %}
-<div class="formula-block">
-    \[ {{ formula }} \]
+{% if content.key_ideas %}
+<div class="section-panel">
+    <div class="section-panel-header">Key ideas</div>
+    <div class="section-panel-body">
+        {% for idea in content.key_ideas %}
+            <p>{{ idea }}</p>
+        {% endfor %}
+    </div>
 </div>
-{% endfor %}
+{% endif %}
 
-<h2>Exam Tips</h2>
-<ul class="tips-list">
-{% for tip in content.tips %}
-    <li>{{ tip }}</li>
-{% endfor %}
-</ul>
+{% if content.method_sections %}
+<div class="section-panel">
+    <div class="section-panel-header">How to do it</div>
+    <div class="section-panel-body">
+        {% for section in content.method_sections %}
+            <div style="margin-bottom:18px;">
+                <p style="margin-bottom:8px;"><strong>{{ section.title }}</strong></p>
+                <ol class="tips-list" style="list-style:decimal;padding-left:1.4rem;">
+                {% for step in section.steps %}
+                    <li style="margin-bottom:6px;">{{ step | safe }}</li>
+                {% endfor %}
+                </ol>
+            </div>
+        {% endfor %}
 
-<div style="margin-top: 36px; display: flex; gap: 12px; flex-wrap: wrap;">
-    <a href="{{ content.generate_url }}" class="btn btn-primary">
-        Practice {{ content.title }} Problems →
+        {% if content.method_mcq %}
+        <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0 0; border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="{{ content.method_mcq.correct }}">
+                <p style="margin:0 0 10px;">{{ content.method_mcq.question | safe }}</p>
+                {% for opt in content.method_mcq.options %}
+                <button class="btn mcq-btn" data-letter="{{ opt.letter }}">{{ opt.text | safe }}</button>
+                {% endfor %}
+                <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+            </div>
+            {% if content.method_mcq.hint %}
+            <p style="font-size:0.82rem; color:var(--text-muted); margin:8px 0 0;">{{ content.method_mcq.hint | safe }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<div class="section-panel">
+    <div class="section-panel-header">Key formulae</div>
+    <div class="section-panel-body">
+        {% for formula in content.formulae %}
+        <div class="formula-block">
+            \[ {{ formula }} \]
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="section-panel">
+    <div class="section-panel-header">Exam tips</div>
+    <div class="section-panel-body">
+        <ul class="tips-list">
+        {% for tip in content.tips %}
+            <li>{{ tip }}</li>
+        {% endfor %}
+        </ul>
+    </div>
+</div>
+
+{% if content.worked_examples %}
+<div class="section-panel">
+    <div class="section-panel-header">Worked examples</div>
+    <div class="section-panel-body">
+        {% for example in content.worked_examples %}
+            <div style="margin-bottom:16px;">
+                <p style="margin-bottom:6px;"><strong>{{ example.title }}</strong></p>
+                <p style="margin-bottom:6px;">{{ example.question | safe }}</p>
+                <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:12px 16px;border-radius:0 var(--radius) var(--radius) 0;">
+                    {{ example.working | safe }}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="problem-actions" style="border-top: none; padding-top: 0; margin-top: 8px;">
+    {% if supports_lesson_quiz %}
+    <a href="{{ url_for('lesson_mcq_quiz', level=level, subject=subject, topic=topic) }}" class="btn btn-primary">
+        Quick Test →
     </a>
-    <a href="/topics" class="btn btn-secondary">← All Topics</a>
+    {% endif %}
+    <a href="{{ content.generate_url }}" class="btn btn-primary">
+        Practice {{ content.title }} problems →
+    </a>
+    <a href="/topics" class="btn btn-secondary">← All topics</a>
+</div>
+
 </div>
 {% endblock %}

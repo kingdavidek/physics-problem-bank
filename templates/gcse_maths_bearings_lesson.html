@@ -1,0 +1,742 @@
+{% extends "base.html" %}
+{% block title %}Bearings – GCSE Mathematics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Bearings</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">A <strong>bearing</strong> tells you which way to go, like on a map or when a pilot gives a heading. You measure the angle <strong>clockwise from North</strong>. We use bearings in navigation, maps, and exam geometry questions.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+  <!-- Quick Test button -->
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='bearings') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 1. WHAT IS A BEARING?                          -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      What Is a Bearing?
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> You stand at point A and face <strong>due East</strong>. You turned <strong>90°</strong> clockwise from North, so the bearing is written <strong>090°</strong> (always three digits).</p>
+
+      <p>Three rules you must follow:</p>
+      <ol style="line-height:1.9;">
+        <li>Measure <strong>clockwise</strong> from North.</li>
+        <li>Write <strong>three digits</strong> (e.g. 008°, 045°, 270°).</li>
+        <li>Start from the <strong>North line at the place you stand</strong> — not at the other town.</li>
+      </ol>
+      <p><strong>“Bearing of B from A”</strong> means: stand at A, face North, turn clockwise until you point at B. That angle is the bearing.</p>
+
+      <!--
+        SVG: four compass bearings shown around a central point.
+        Centre = (150, 130). N at top (000°), E right (090°), S down (180°), W left (270°).
+        Also showing NE=045°, SE=135°, SW=225°, NW=315°.
+        Key SVG convention: x = cx + r·sin(θ), y = cy - r·cos(θ).
+      -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="460" height="380" viewBox="0 0 340 280" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+
+          <!-- central point -->
+          <circle cx="170" cy="145" r="4" fill="#333"/>
+
+          <!-- 8 bearing rays -->
+          <!-- N (000°): (170, 145-95) = (170,50) -->
+          <line x1="170" y1="145" x2="170" y2="50"   stroke="#1a6fa8" stroke-width="2"/>
+          <text x="170" y="42"  font-size="15" fill="#1a6fa8" text-anchor="middle" font-weight="bold">N 000°</text>
+
+          <!-- NE (045°): +67.2, -67.2 → (237,78) -->
+          <line x1="170" y1="145" x2="237" y2="78"   stroke="#555" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <text x="248" y="74"  font-size="14" fill="#555">045°</text>
+
+          <!-- E (090°): +95, 0 → (265,145) -->
+          <line x1="170" y1="145" x2="265" y2="145"  stroke="#a13544" stroke-width="2"/>
+          <text x="275" y="149" font-size="15" fill="#a13544" font-weight="bold">E 090°</text>
+
+          <!-- SE (135°): +67.2, +67.2 → (237,212) -->
+          <line x1="170" y1="145" x2="237" y2="212"  stroke="#555" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <text x="244" y="218" font-size="14" fill="#555">135°</text>
+
+          <!-- S (180°): 0, +95 → (170,240) -->
+          <line x1="170" y1="145" x2="170" y2="240"  stroke="#8a5300" stroke-width="2"/>
+          <text x="170" y="258" font-size="15" fill="#8a5300" text-anchor="middle" font-weight="bold">S 180°</text>
+
+          <!-- SW (225°): -67.2, +67.2 → (103,212) -->
+          <line x1="170" y1="145" x2="103" y2="212"  stroke="#555" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <text x="58" y="218" font-size="14" fill="#555">225°</text>
+
+          <!-- W (270°): -95, 0 → (75,145) -->
+          <line x1="170" y1="145" x2="75"  y2="145"  stroke="#059669" stroke-width="2"/>
+          <text x="28" y="149" font-size="15" fill="#059669" font-weight="bold">W 270°</text>
+
+          <!-- NW (315°): -67.2, -67.2 → (103,78) -->
+          <line x1="170" y1="145" x2="103" y2="78"   stroke="#555" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <text x="50"  y="74"  font-size="14" fill="#555">315°</text>
+
+          <!-- Arc example: 045° bearing -->
+          <path d="M170,115 A30,30,0,0,1,191,124" fill="none" stroke="#555" stroke-width="1.5"/>
+          <text x="170" y="110" font-size="14" fill="#777" text-anchor="middle">clockwise</text>
+
+        </svg>
+      </div>
+
+      <table style="border-collapse:collapse;width:100%;margin-top:8px;">
+        <thead><tr style="background:var(--color-surface-2);">
+          <th style="padding:7px;border:1px solid var(--color-border);">Direction</th>
+          <th style="padding:7px;border:1px solid var(--color-border);">Bearing</th>
+          <th style="padding:7px;border:1px solid var(--color-border);">Direction</th>
+          <th style="padding:7px;border:1px solid var(--color-border);">Bearing</th>
+        </tr></thead>
+        <tbody>
+          <tr>
+            <td style="padding:7px;border:1px solid var(--color-border);">North</td>
+            <td style="padding:7px;border:1px solid var(--color-border);">000°</td>
+            <td style="padding:7px;border:1px solid var(--color-border);">South</td>
+            <td style="padding:7px;border:1px solid var(--color-border);">180°</td>
+          </tr>
+          <tr>
+            <td style="padding:7px;border:1px solid var(--color-border);">North-East</td>
+            <td style="padding:7px;border:1px solid var(--color-border);">045°</td>
+            <td style="padding:7px;border:1px solid var(--color-border);">South-West</td>
+            <td style="padding:7px;border:1px solid var(--color-border);">225°</td>
+          </tr>
+          <tr>
+            <td style="padding:7px;border:1px solid var(--color-border);">East</td>
+            <td style="padding:7px;border:1px solid var(--color-border);">090°</td>
+            <td style="padding:7px;border:1px solid var(--color-border);">West</td>
+            <td style="padding:7px;border:1px solid var(--color-border);">270°</td>
+          </tr>
+          <tr>
+            <td style="padding:7px;border:1px solid var(--color-border);">South-East</td>
+            <td style="padding:7px;border:1px solid var(--color-border);">135°</td>
+            <td style="padding:7px;border:1px solid var(--color-border);">North-West</td>
+            <td style="padding:7px;border:1px solid var(--color-border);">315°</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p style="margin-top:8px;"><strong>Compass notation (older style):</strong> N40°E → 040° · S30°W → 210° · N25°W → 335° · S15°E → 165°</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Which bearing is written correctly?</p>
+          <button class="btn mcq-btn" data-letter="A">45°</button>
+          <button class="btn mcq-btn" data-letter="B">045°</button>
+          <button class="btn mcq-btn" data-letter="C">N45E</button>
+          <button class="btn mcq-btn" data-letter="D">4.5°</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='bearings') }}?difficulty=foundational" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Reading Bearings</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 2. BACK BEARINGS (REVERSE BEARINGS)            -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Back Bearings (Reverse Bearings)
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> The bearing of B from A is <strong>065°</strong>. To travel back from B to A, add 180°: 065° + 180° = <strong>245°</strong>.</p>
+
+      <p>The <strong>back bearing</strong> is the bearing for the return trip (opposite direction):</p>
+      <p style="text-align:center;font-size:1.1rem;">
+        If bearing &lt; 180°: &emsp; back bearing = bearing + 180°<br>
+        If bearing ≥ 180°: &emsp; back bearing = bearing − 180°
+      </p>
+      <p style="text-align:center;">Same idea: turn around = add or subtract <strong>180°</strong>.</p>
+
+      <!--
+        SVG: Two-point back-bearing diagram.
+        A at (80, 155), B at bearing 065° from A, distance 90px.
+        B = (80 + 90·sin65°, 155 - 90·cos65°) = (80+81.5, 155-38.0) = (161.5, 117)
+        Bearing of B from A = 065°. Back bearing = 245°.
+        North at A: (80, 155-55) = (80, 100).
+        North at B: (161.5, 117-55) = (161.5, 62).
+        Arc at A: from (80,129) [= (80,155-26)] to (80+26·sin65°, 155-26·cos65°)
+                  = (80+23.6, 155-11.0) = (103.6, 144.0). sweep=1, large=0 (65°<180°).
+        Arc at B: back bearing = 245°.
+          from North at arc_r=22: (161.5, 117-22) = (161.5, 95)
+          to 245°: (161.5+22·sin245°, 117-22·cos245°) = (161.5-19.9, 117+9.3) = (141.6, 126.3)
+          245° > 180° → large=1, sweep=1.
+      -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="460" height="340" viewBox="0 0 310 230" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+
+          <!-- Dashed line AB -->
+          <line x1="80" y1="155" x2="162" y2="117" stroke="#888" stroke-width="1.5" stroke-dasharray="5,3"/>
+
+          <!-- North at A (80,155) -->
+          <line x1="80" y1="155" x2="80" y2="100"  stroke="#666" stroke-width="1.5" stroke-dasharray="5,4"/>
+          <polygon points="80,100 76,109 84,109" fill="#666"/>
+          <text x="80" y="94" font-size="14" fill="#555" text-anchor="middle">N</text>
+
+          <!-- North at B (162,117) -->
+          <line x1="162" y1="117" x2="162" y2="62" stroke="#666" stroke-width="1.5" stroke-dasharray="5,4"/>
+          <polygon points="162,62 158,71 166,71" fill="#666"/>
+          <text x="162" y="56" font-size="14" fill="#555" text-anchor="middle">N</text>
+
+          <!-- Bearing arc at A: from (80,129) to (103.6,144), sweep=1, large=0 -->
+          <path d="M80,129 A26,26,0,0,1,103.6,144" fill="none" stroke="#1a6fa8" stroke-width="2"/>
+          <text x="108" y="136" font-size="14" fill="#1a6fa8" font-weight="bold">065°</text>
+
+          <!-- Back bearing arc at B: from (162,95) to (141.6,126.3), large=1, sweep=1 -->
+          <path d="M162,95 A22,22,0,1,1,141.6,126.3" fill="none" stroke="#a13544" stroke-width="2"/>
+          <text x="110" y="105" font-size="14" fill="#a13544" font-weight="bold">245°</text>
+
+          <!-- Points -->
+          <circle cx="80"  cy="155" r="4" fill="#333"/>
+          <text x="65"  y="160" font-size="15" fill="#333" font-weight="bold">A</text>
+          <circle cx="162" cy="117" r="4" fill="#a13544"/>
+          <text x="170" y="122" font-size="15" fill="#a13544" font-weight="bold">B</text>
+
+          <!-- Caption -->
+          <text x="155" y="205" font-size="14" fill="#333" text-anchor="middle">Bearing of B from A = 065°</text>
+          <text x="155" y="220" font-size="14" fill="#333" text-anchor="middle">Back bearing (A from B) = 245°</text>
+        </svg>
+      </div>
+
+      <p><strong>More examples:</strong></p>
+      <ul style="line-height:1.9;">
+        <li>070° → back bearing <strong>250°</strong></li>
+        <li>150° → back bearing <strong>330°</strong></li>
+        <li>200° → back bearing <strong>020°</strong></li>
+        <li>315° → back bearing <strong>135°</strong></li>
+      </ul>
+      <p><strong>Why it works:</strong> North lines at A and B are parallel. Line AB cuts across them like a transversal, so alternate angles match — that is the same as adding 180° to the bearing.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">The bearing of B from A is <strong>047°</strong>. What is the back bearing of A from B?</p>
+          <button class="btn mcq-btn" data-letter="A">047°</button>
+          <button class="btn mcq-btn" data-letter="B">133°</button>
+          <button class="btn mcq-btn" data-letter="C">227°</button>
+          <button class="btn mcq-btn" data-letter="D">317°</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='bearings') }}?difficulty=foundational" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Back Bearings</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 3. PARALLEL NORTH LINES AND ANGLE FACTS        -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Parallel North Lines and Angle Facts
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Bearing of B from A is <strong>063°</strong>. At B, the alternate angle between line BA and the South line is also <strong>63°</strong>, so the back bearing is 63° + 180° = <strong>243°</strong>.</p>
+
+      <p>Every North line points the same way, so North lines at different places are <strong>parallel</strong>. When path AB crosses them, you can use parallel-line angle facts:</p>
+
+      <ul style="line-height:1.9;">
+        <li><strong>Alternate angles (Z-shape)</strong> — equal. This links the bearing at A to the angle at B.</li>
+        <li><strong>Co-interior angles (C-shape)</strong> — add to 180°.</li>
+      </ul>
+
+      <!--
+        SVG: parallel North lines, transversal AB, showing alternate angles.
+        Two horizontal parallel lines representing the North lines (dashed, vertical).
+        Left point A at (80, 170), right point B at (210, 70).
+        North at A: (80, 115). North at B: (210, 15).
+        Bearing of B from A: direction (210-80, 70-170) = (130,-100). Angle = atan2(130,100) = 52.4°.
+        Arc at A: sweep=1, from (80,144) to (80+26·sin52.4°, 170-26·cos52.4°)=(80+20.6,170-15.8)=(100.6,154.2).
+        Alternate angle at B: same angle = 52.4°, shown between line BA and South at B.
+          South at B: (210, 70+50)=(210,120).
+          Arc from South direction at B going counterclockwise (= toward the BA direction):
+          BA direction: angle = atan2(-130,100) = atan2(-130,100) = back bearing = 232.4°.
+          The alternate angle arc: from South direction (210,96) [= B + 26 in south direction = (210,96)]
+          going clockwise... actually alternate angle is shown ABOVE B between BA and south direction.
+          To show this more simply: use color-coded arcs with labels "θ" at both locations.
+      -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="540" height="360" viewBox="0 0 380 255" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+
+          <!-- North at A (80,165) -->
+          <line x1="80" y1="165" x2="80" y2="108" stroke="#666" stroke-width="1.5" stroke-dasharray="5,4"/>
+          <polygon points="80,108 76,117 84,117" fill="#666"/>
+          <text x="80" y="103" font-size="14" fill="#555" text-anchor="middle">N</text>
+
+          <!-- North at B (220,95) -->
+          <line x1="220" y1="95" x2="220" y2="38" stroke="#666" stroke-width="1.5" stroke-dasharray="5,4"/>
+          <polygon points="220,38 216,47 224,47" fill="#666"/>
+          <text x="220" y="33" font-size="14" fill="#555" text-anchor="middle">N</text>
+
+          <!-- Line AB -->
+          <line x1="80" y1="165" x2="220" y2="95" stroke="#444" stroke-width="2"/>
+
+          <!--
+            Bearing of B from A: direction vector (140, -70) in SVG.
+            In bearing convention: East = 140, North = 70 (since y decreases = northward).
+            bearing = atan2(140, 70) = 63.4°.
+            Arc at A from North (80,139) to (80+26·sin63.4°, 165-26·cos63.4°)
+                   = (80+23.2, 165-11.6) = (103.2, 153.4). sweep=1, large=0.
+          -->
+          <path d="M80,139 A26,26,0,0,1,103.2,153.4" fill="none" stroke="#1a6fa8" stroke-width="2"/>
+          <text x="112" y="147" font-size="14" fill="#1a6fa8" font-weight="bold">θ</text>
+          <text x="88" y="215" font-size="14" fill="#1a6fa8" text-anchor="middle">Bearing of B from A</text>
+
+          <!--
+            Alternate angle at B:
+            Back bearing = 63.4° + 180° = 243.4°.
+            At B, the alternate angle between BA and the South direction at B.
+            South direction at B: (220, 95+26)=(220, 121).
+            BA direction at arc_r=26: (220+26·sin243.4°, 95-26·cos243.4°)
+              sin(243.4°)=sin(180°+63.4°)=-sin(63.4°)=-0.894, cos(243.4°)=-cos(63.4°)=-0.447
+              = (220-23.2, 95+11.6) = (196.8, 106.6).
+            Going from South (220,121) clockwise to (196.8, 106.6):
+            This is 360°-243.4°=116.6° CW from North, and South is 180° from North.
+            The arc from South to back-bearing is 243.4°-180° = 63.4° CW beyond South.
+            Arc: from (220,121) sweep=1 to (196.8, 106.6). span = 63.4°. large=0.
+          -->
+          <path d="M220,121 A26,26,0,0,1,196.8,106.6" fill="none" stroke="#a13544" stroke-width="2"/>
+          <text x="188" y="128" font-size="14" fill="#a13544" font-weight="bold">θ</text>
+          <text x="268" y="215" font-size="14" fill="#a13544" text-anchor="middle">Alternate angle = θ</text>
+
+          <!-- Points -->
+          <circle cx="80"  cy="165" r="4" fill="#333"/>
+          <text x="65"  y="170" font-size="15" fill="#333" font-weight="bold">A</text>
+          <circle cx="220" cy="95"  r="4" fill="#a13544"/>
+          <text x="230" y="100" font-size="15" fill="#a13544" font-weight="bold">B</text>
+
+          <!-- Caption -->
+          <text x="190" y="240" font-size="14" fill="#555" text-anchor="middle">Alternate angles → back bearing = θ + 180°</text>
+        </svg>
+      </div>
+
+      <p><strong>In exams:</strong> You may be told to “use angle facts” instead of just adding 180°. Draw the North lines and mark the Z-shape alternate angles.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">North lines at two different places on a map are:</p>
+          <button class="btn mcq-btn" data-letter="A">Parallel</button>
+          <button class="btn mcq-btn" data-letter="B">Perpendicular</button>
+          <button class="btn mcq-btn" data-letter="C">Always 90° apart</button>
+          <button class="btn mcq-btn" data-letter="D">Different on every map</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='bearings') }}?difficulty=foundational" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Angle Facts</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 4. TRIGONOMETRY WITH BEARINGS                  -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Trigonometry with Bearings
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> A boat sails <strong>50 km</strong> on bearing <strong>090°</strong> (due East). East = \(50\sin 90° = 50\) km. North = \(50\cos 90° = 0\) km — it does not move north or south.</p>
+
+      <p>If you travel distance \(d\) on bearing \(\theta\), split the journey into East and North parts:</p>
+      <p style="text-align:center;font-size:1.1rem;">
+        \(\text{East} = d\sin\theta \qquad \text{North} = d\cos\theta\)
+      </p>
+      <p>If North comes out negative, you went south. If East is negative, you went west. Check the quadrant before you write the final bearing.</p>
+
+      <p>To find the <strong>bearing</strong> when you know East and North:</p>
+      <p style="text-align:center;">
+        \(\theta = \arctan\!\left(\dfrac{\text{East}}{\text{North}}\right)\) — then adjust for the correct quadrant
+      </p>
+
+      <!--
+        SVG: right triangle showing East/North components.
+        Ship travels bearing 060°, d=80km (display scaled to 80px).
+        A at (60, 140). B = (60+80·sin60°, 140-80·cos60°) = (60+69.3, 140-40) = (129.3, 100).
+        North leg: (60, 140) to (60, 100) = vertical, length 40px (=North component = 40km).
+        East leg: (60, 100) to (129.3, 100) = horizontal, length 69.3px (=East comp = 69.3km).
+        Hypotenuse: (60,140) to (129.3, 100).
+        Right angle mark at (60, 100): small square.
+        North arrow at A: (60,85).
+        Bearing arc at A: from (60,114) to (60+26·sin60°,140-26·cos60°)=(60+22.5,140-13)=(82.5,127). sweep=1.
+      -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="540" height="340" viewBox="0 0 430 260" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+
+          <!-- North arrow at A(95,185) -->
+          <line x1="95" y1="185" x2="95" y2="48" stroke="#666" stroke-width="1.5" stroke-dasharray="5,4"/>
+          <polygon points="95,48 91,57 99,57" fill="#666"/>
+          <text x="95" y="41" font-size="16" fill="#555" text-anchor="middle">N</text>
+
+          <!-- Hypotenuse (bearing ray) -->
+          <line x1="95" y1="185" x2="210" y2="95" stroke="#a13544" stroke-width="2.5"/>
+          <text x="162" y="151" font-size="16" fill="#a13544">d km</text>
+
+          <!-- North component (vertical, blue) -->
+          <line x1="95" y1="185" x2="95" y2="95" stroke="#1a6fa8" stroke-width="2.5"/>
+          <text x="44" y="137" font-size="16" fill="#1a6fa8" text-anchor="middle">d·cosθ</text>
+          <text x="44" y="156" font-size="16" fill="#1a6fa8" text-anchor="middle">(North)</text>
+
+          <!-- East component (horizontal, green) -->
+          <line x1="95" y1="95" x2="210" y2="95" stroke="#059669" stroke-width="2.5"/>
+          <text x="152" y="82" font-size="16" fill="#059669" text-anchor="middle">d·sinθ (East)</text>
+
+          <!-- Right angle mark at (95,95) -->
+          <rect x="95" y="95" width="13" height="13" fill="none" stroke="#555" stroke-width="1.3"/>
+
+          <!-- Bearing arc at A -->
+          <path d="M95,155 A30,30,0,0,1,118.8,166.7" fill="none" stroke="#a13544" stroke-width="1.8"/>
+          <text x="130" y="176" font-size="16" fill="#a13544">θ</text>
+
+          <!-- Points -->
+          <circle cx="95"  cy="185" r="4.5" fill="#333"/>
+          <text x="78" y="197" font-size="17" fill="#333" font-weight="bold">A</text>
+          <circle cx="210" cy="95" r="4.5" fill="#a13544"/>
+          <text x="220" y="101" font-size="17" fill="#a13544" font-weight="bold">B</text>
+
+          <!-- Formula box -->
+          <rect x="260" y="58" width="152" height="122" rx="8" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="1.2"/>
+          <text x="336" y="88"  font-size="18" fill="#1a6fa8" text-anchor="middle">E = d sinθ</text>
+          <text x="336" y="115" font-size="18" fill="#1a6fa8" text-anchor="middle">N = d cosθ</text>
+          <text x="336" y="149" font-size="16" fill="#555"    text-anchor="middle">θ = arctan(E/N)</text>
+          <text x="336" y="170" font-size="16" fill="#777"    text-anchor="middle">(check quadrant)</text>
+
+        </svg>
+      </div>
+
+      <p><strong>Another example:</strong> Bearing <strong>135°</strong> for <strong>60 km</strong>:</p>
+      <ul style="line-height:1.9;">
+        <li>East = \(60\sin 135° \approx 42.4\) km</li>
+        <li>North = \(60\cos 135° \approx -42.4\) km (about 42.4 km <strong>south</strong>)</li>
+      </ul>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">A ship sails <strong>80 km</strong> on bearing <strong>000°</strong> (due North). What is the North component?</p>
+          <button class="btn mcq-btn" data-letter="A">0 km</button>
+          <button class="btn mcq-btn" data-letter="B">40 km</button>
+          <button class="btn mcq-btn" data-letter="C">80 km East</button>
+          <button class="btn mcq-btn" data-letter="D">80 km North</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='bearings') }}?difficulty=intermediate" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Trig and Bearings</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 5. MULTI-LEG JOURNEYS                          -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Multi-Leg Journeys
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Leg 1: 40 km on 050°. Leg 2: 30 km on 140°. Work out East and North for each leg, <strong>add</strong> them, then use Pythagoras for the straight-line distance from start to finish.</p>
+
+      <p>When a journey has several legs, we split each leg into East and North, then combine:</p>
+      <ol style="line-height:1.9;">
+        <li>Each leg: East = \(d\sin\theta\), North = \(d\cos\theta\)</li>
+        <li>Add all East values; add all North values</li>
+        <li>Resultant distance = \(\sqrt{E_{\text{total}}^2 + N_{\text{total}}^2}\)</li>
+        <li>Resultant bearing = \(\arctan(E_{\text{total}} / N_{\text{total}})\) — check the quadrant</li>
+      </ol>
+      <p><strong>Return trip:</strong> use the opposite East and North (multiply both by −1), then find the bearing.</p>
+
+      <!--
+        SVG: three-leg journey A→B→C→D with displacement to D.
+        A at (60,165). Leg1: bearing 050°, 65px. B=(60+49.8,165-41.8)=(110,123).
+        Leg2: bearing 140°, 60px. C=(110+38.6,123+46.0)=(149,169).
+        Leg3: bearing 280°, 55px. D=(149-54.2,169+9.5)=(95,179).
+        Displacement AD: (95-60,179-165)=(35,14) in SVG → E=35, N=-14 (southward since y increases downward)
+        D is shown with a dashed line from A.
+      -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="500" height="390" viewBox="0 0 360 280" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+
+          <!-- Leg 1: A(60,165) → B(110,123), bearing 050° -->
+          <line x1="60" y1="165" x2="110" y2="123" stroke="#1a6fa8" stroke-width="2"/>
+          <text x="76" y="136" font-size="14" fill="#1a6fa8">050°</text>
+
+          <!-- Leg 2: B(110,123) → C(149,169), bearing 140° -->
+          <line x1="110" y1="123" x2="149" y2="169" stroke="#059669" stroke-width="2"/>
+          <text x="142" y="140" font-size="14" fill="#059669">140°</text>
+
+          <!-- Leg 3: C(149,169) → D(95,179), bearing 280° -->
+          <line x1="149" y1="169" x2="95" y2="179" stroke="#8a5300" stroke-width="2"/>
+          <text x="112" y="186" font-size="14" fill="#8a5300">280°</text>
+
+          <!-- Dashed displacement A to D -->
+          <line x1="60" y1="165" x2="95" y2="179" stroke="#a13544" stroke-width="2" stroke-dasharray="6,3"/>
+          <text x="63" y="200" font-size="14" fill="#a13544">resultant</text>
+
+          <!-- North arrows at A -->
+          <line x1="60" y1="165" x2="60" y2="110" stroke="#999" stroke-width="1" stroke-dasharray="4,3"/>
+          <polygon points="60,110 57,119 63,119" fill="#999"/>
+          <text x="60" y="104" font-size="14" fill="#777" text-anchor="middle">N</text>
+
+          <!-- Points -->
+          <circle cx="60"  cy="165" r="3.5" fill="#333"/>
+          <text x="47" y="170" font-size="14" fill="#333" font-weight="bold">A</text>
+          <circle cx="110" cy="123" r="3" fill="#1a6fa8"/>
+          <text x="116" y="120" font-size="14" fill="#1a6fa8" font-weight="bold">B</text>
+          <circle cx="149" cy="169" r="3" fill="#059669"/>
+          <text x="155" y="175" font-size="14" fill="#059669" font-weight="bold">C</text>
+          <circle cx="95"  cy="179" r="3.5" fill="#a13544"/>
+          <text x="100" y="174" font-size="14" fill="#a13544" font-weight="bold">D</text>
+
+          <!-- Formula box -->
+          <rect x="210" y="28" width="140" height="124" rx="6" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="1"/>
+          <text x="280" y="50"  font-size="15" fill="#555"    text-anchor="middle">Strategy:</text>
+          <text x="280" y="70"  font-size="15" fill="#1a6fa8" text-anchor="middle">E = Σ d·sinθ</text>
+          <text x="280" y="88"  font-size="15" fill="#059669" text-anchor="middle">N = Σ d·cosθ</text>
+          <text x="280" y="111" font-size="14" fill="#333"    text-anchor="middle">dist = √(E²+N²)</text>
+          <text x="280" y="130" font-size="14" fill="#333"    text-anchor="middle">brg = arctan(E/N)</text>
+          <text x="280" y="146" font-size="14" fill="#777"    text-anchor="middle">check quadrant!</text>
+
+        </svg>
+      </div>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">After two legs, total East = <strong>30 km</strong> and total North = <strong>40 km</strong>. What is the resultant distance?</p>
+          <button class="btn mcq-btn" data-letter="A">70 km</button>
+          <button class="btn mcq-btn" data-letter="B">50 km</button>
+          <button class="btn mcq-btn" data-letter="C">35 km</button>
+          <button class="btn mcq-btn" data-letter="D">1200 km</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='bearings') }}?difficulty=intermediate" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Multi-leg Journeys</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 6. SINE AND COSINE RULE WITH BEARINGS          -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Sine and Cosine Rule with Bearings
+      <span style="font-size:0.65rem;margin-left:8px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Higher Tier</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Two boats leave port O. One goes on <strong>030°</strong> for <strong>80 km</strong>, the other on <strong>090°</strong> for <strong>60 km</strong>. Angle at O = 090° − 030° = <strong>60°</strong>. Then use the cosine rule to find how far apart they are.</p>
+
+      <p>When two paths start from the same point on different bearings, they make a <strong>triangle</strong>. If there is no right angle, use the sine rule or cosine rule.</p>
+
+      <p style="text-align:center;">
+        <strong>Cosine rule:</strong> \(c^2 = a^2 + b^2 - 2ab\cos C\)
+        &emsp;&emsp;
+        <strong>Sine rule:</strong> \(\dfrac{a}{\sin A} = \dfrac{b}{\sin B}\)
+      </p>
+
+      <p><strong>Angle at the port:</strong> subtract the two bearings (e.g. 130° − 040° = 90°). If the gap is over 180°, use \(360°\) minus the difference instead.</p>
+
+      <!--
+        SVG: two ships from port O at different bearings. O at (90,170).
+        Ship A: bearing 040°, 75px. A=(90+75·sin40°, 170-75·cos40°)=(90+48.2,170-57.5)=(138.2,112.5).
+        Ship B: bearing 130°, 90px. B=(90+90·sin130°, 170-90·cos130°)=(90+68.9,170+57.9)=(158.9,227.9)
+          B goes below the SVG if h=240. Use dist=70. B=(90+53.6,170+45.0)=(143.6,215). Fine for h=240.
+        Angle at O = 130°-40° = 90°.
+        AB line for reference.
+      -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="460" height="300" viewBox="0 0 460 300" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+
+          <!-- North at O(170,170) -->
+          <line x1="170" y1="170" x2="170" y2="95" stroke="#666" stroke-width="1.5" stroke-dasharray="5,4"/>
+          <polygon points="170,95 166,104 174,104" fill="#666"/>
+          <text x="170" y="88" font-size="14" fill="#555" text-anchor="middle">N</text>
+
+          <!-- OA: bearing 040° -->
+          <line x1="170" y1="170" x2="225" y2="104" stroke="#1a6fa8" stroke-width="2.5"/>
+          <circle cx="225" cy="104" r="4" fill="#1a6fa8"/>
+          <text x="236" y="103" font-size="16" fill="#1a6fa8" font-weight="bold">A</text>
+          <text x="197" y="126" font-size="15" fill="#1a6fa8">040°</text>
+
+          <!-- OB: bearing 130° -->
+          <line x1="170" y1="170" x2="232" y2="222" stroke="#a13544" stroke-width="2.5"/>
+          <circle cx="232" cy="222" r="4" fill="#a13544"/>
+          <text x="243" y="228" font-size="16" fill="#a13544" font-weight="bold">B</text>
+          <text x="211" y="209" font-size="15" fill="#a13544">130°</text>
+
+          <!-- AB (distance to find) -->
+          <line x1="225" y1="104" x2="232" y2="222" stroke="#059669" stroke-width="2.5" stroke-dasharray="6,3"/>
+          <text x="255" y="166" font-size="16" fill="#059669" font-weight="bold">AB = ?</text>
+
+          <!-- Angle at O -->
+          <path d="M170,144 A26,26,0,0,1,186.7,157.0" fill="none" stroke="#555" stroke-width="1.8"/>
+          <text x="190" y="164" font-size="15" fill="#555">90°</text>
+
+          <!-- Port O -->
+          <circle cx="170" cy="170" r="5" fill="#333"/>
+          <text x="151" y="176" font-size="16" fill="#333" font-weight="bold">O</text>
+
+          <!-- Formula box -->
+          <rect x="18" y="26" width="135" height="106" rx="6" fill="#fef4e8" stroke="#8a5300" stroke-width="1"/>
+          <text x="86" y="48"  font-size="15" fill="#8a5300" text-anchor="middle">Angle at O</text>
+          <text x="86" y="66"  font-size="15" fill="#8a5300" text-anchor="middle">= 130° − 040°</text>
+          <text x="86" y="84"  font-size="15" fill="#8a5300" text-anchor="middle">= 90°</text>
+          <text x="86" y="106" font-size="15" fill="#555"    text-anchor="middle">Cosine rule:</text>
+          <text x="86" y="124" font-size="13" fill="#555"    text-anchor="middle">AB² = a²+b²−2ab cos C</text>
+
+        </svg>
+      </div>
+
+      <p><strong>Full working:</strong> \(AB^2 = 80^2 + 60^2 - 2 \times 80 \times 60 \times \cos 60° = 5200\), so \(AB \approx \mathbf{72.1}\) km.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">Two paths leave O on bearings <strong>040°</strong> and <strong>130°</strong>. What is the angle at O?</p>
+          <button class="btn mcq-btn" data-letter="A">90°</button>
+          <button class="btn mcq-btn" data-letter="B">170°</button>
+          <button class="btn mcq-btn" data-letter="C">40°</button>
+          <button class="btn mcq-btn" data-letter="D">130°</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='bearings') }}?difficulty=difficult" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Sine and Cosine Rule</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 7. KEY FACTS QUICK REFERENCE                   -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Bearings — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Use this card before a test. Each section above has a diagram and a Quick Check — open the one you need if you forget a step.</p>
+
+      <div style="text-align:center;margin:16px 0;">
+              <div class="revision-card-wrap">
+        <svg class="revision-card-svg lesson-quick-ref" width="100%" viewBox="0 0 600 300" style="max-width:760px;width:100%;height:auto;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:10px;">
+          <text x="270" y="24" font-size="17" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Bearings – Key Facts</text>
+
+          <!-- Column 1 -->
+          <text x="10" y="47"  font-size="14" fill="#1a6fa8">DEFINITION</text>
+          <text x="10" y="64"  font-size="14" fill="#28251d">Clockwise from North</text>
+          <text x="10" y="80"  font-size="14" fill="#28251d">Always 3 digits (000°–359°)</text>
+          <text x="10" y="96"  font-size="14" fill="#28251d">Measured at the START point</text>
+          <text x="10" y="120" font-size="14" fill="#1a6fa8">CARDINAL BEARINGS</text>
+          <text x="10" y="137" font-size="14" fill="#28251d">N = 000°    E = 090°</text>
+          <text x="10" y="153" font-size="14" fill="#28251d">S = 180°    W = 270°</text>
+          <text x="10" y="169" font-size="14" fill="#28251d">NE=045° SE=135° SW=225° NW=315°</text>
+          <text x="10" y="193" font-size="14" fill="#1a6fa8">COMPASS NOTATION</text>
+          <text x="10" y="210" font-size="14" fill="#28251d">N x° E → bearing = x°</text>
+          <text x="10" y="226" font-size="14" fill="#28251d">S x° W → bearing = 180° + x°</text>
+          <text x="10" y="242" font-size="14" fill="#28251d">S x° E → bearing = 180° − x°</text>
+          <text x="10" y="258" font-size="14" fill="#28251d">N x° W → bearing = 360° − x°</text>
+
+          <!-- Divider -->
+          <line x1="264" y1="35" x2="264" y2="270" stroke="#d4e6f1" stroke-width="1"/>
+
+          <!-- Column 2 -->
+          <text x="274" y="47"  font-size="14" fill="#1a6fa8">BACK BEARING</text>
+          <text x="274" y="64"  font-size="14" fill="#28251d">If bearing &lt; 180°: add 180°</text>
+          <text x="274" y="80"  font-size="14" fill="#28251d">If bearing ≥ 180°: subtract 180°</text>
+          <text x="274" y="96"  font-size="14" fill="#28251d">Or: (bearing + 180°) mod 360°</text>
+          <text x="274" y="120" font-size="14" fill="#1a6fa8">TRIG COMPONENTS (bearing θ)</text>
+          <text x="274" y="137" font-size="14" fill="#28251d">East  = d × sinθ</text>
+          <text x="274" y="153" font-size="14" fill="#28251d">North = d × cosθ</text>
+          <text x="274" y="169" font-size="14" fill="#28251d">θ = arctan(E / N) mod 360°</text>
+          <text x="274" y="193" font-size="14" fill="#1a6fa8">MULTI-LEG JOURNEYS</text>
+          <text x="274" y="210" font-size="14" fill="#28251d">1. Resolve each leg into E, N</text>
+          <text x="274" y="226" font-size="14" fill="#28251d">2. Sum all E and N</text>
+          <text x="274" y="242" font-size="14" fill="#28251d">3. dist = √(E²+N²)</text>
+          <text x="274" y="258" font-size="14" fill="#28251d">4. bearing = arctan(E/N), check quadrant</text>
+        </svg>
+      </div>
+      </div>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">The bearing of a town is <strong>315°</strong>. What is the back bearing?</p>
+          <button class="btn mcq-btn" data-letter="A">315°</button>
+          <button class="btn mcq-btn" data-letter="B">135°</button>
+          <button class="btn mcq-btn" data-letter="C">225°</button>
+          <button class="btn mcq-btn" data-letter="D">045°</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='bearings') }}?difficulty=difficult&amp;mode=mcq" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Mixed MCQ</a>
+      </div>
+    </div>
+  </details>
+
+</div>
+
+  <!-- Practice link -->
+  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='bearings') }}"
+       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+      Start Practice Quiz
+    </a>
+  </div>
+
+{% endblock %}

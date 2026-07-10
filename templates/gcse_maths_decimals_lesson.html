@@ -1,0 +1,587 @@
+{% extends "base.html" %}
+{% block title %}Decimals – GCSE Mathematics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Decimals</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">GCSE Mathematics – Foundation and Higher Tier · All Exam Boards</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+  <!-- Quick Test button -->
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='decimals') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       1. WHAT IS A DECIMAL?
+  ══════════════════════════════════════════════════ -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      What is a Decimal?
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 7</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>A <strong>decimal</strong> is just a way of writing numbers that are not whole — the part after the decimal point represents a fraction of 1.</p>
+
+      <p>Think of money: £3.47 means 3 whole pounds, 4 tens of pence (40p), and 7 pence. That's exactly how decimal place value works.</p>
+
+      <p>Look at <strong>3.47</strong>:</p>
+      <ul style="line-height:1.9;">
+        <li>The <strong>3</strong> is in the <em>ones</em> column → worth <strong>3</strong></li>
+        <li>The <strong>4</strong> is in the <em>tenths</em> column → worth \(\frac{4}{10} = 0.4\)</li>
+        <li>The <strong>7</strong> is in the <em>hundredths</em> column → worth \(\frac{7}{100} = 0.07\)</li>
+      </ul>
+
+      <p style="text-align:center;">\( 3.47 = 3 + \frac{4}{10} + \frac{7}{100} \)</p>
+
+      <div style="text-align:center; margin:16px 0;">
+        <svg width="560" height="130" viewBox="0 0 560 130" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <!-- Columns: hundreds, tens, ones, ., tenths, hundredths, thousandths -->
+          <rect x="10"  y="30" width="70" height="48" fill="#e8f4fd" stroke="#1a6fa8"/>
+          <rect x="80"  y="30" width="70" height="48" fill="#fef4e8" stroke="#b36a00"/>
+          <rect x="150" y="30" width="70" height="48" fill="#eef7ea" stroke="#397a2f"/>
+          <rect x="220" y="30" width="30" height="48" fill="#f5f5f5" stroke="#aaa"/>
+          <rect x="250" y="30" width="80" height="48" fill="#f5eafa" stroke="#7a3fa0"/>
+          <rect x="330" y="30" width="100" height="48" fill="#fdecef" stroke="#a13544"/>
+          <rect x="430" y="30" width="110" height="48" fill="#eaf7f6" stroke="#01696f"/>
+          <!-- Digit values -->
+          <text x="45"  y="58" text-anchor="middle" font-size="18" font-weight="bold">H</text>
+          <text x="115" y="58" text-anchor="middle" font-size="18" font-weight="bold">T</text>
+          <text x="185" y="58" text-anchor="middle" font-size="18" font-weight="bold">O</text>
+          <text x="235" y="58" text-anchor="middle" font-size="18" font-weight="bold">.</text>
+          <text x="290" y="58" text-anchor="middle" font-size="16" font-weight="bold">th</text>
+          <text x="380" y="58" text-anchor="middle" font-size="15" font-weight="bold">hth</text>
+          <text x="485" y="58" text-anchor="middle" font-size="14" font-weight="bold">thth</text>
+          <!-- Labels -->
+          <text x="45"  y="104" text-anchor="middle" font-size="14">hundreds</text>
+          <text x="115" y="104" text-anchor="middle" font-size="14">tens</text>
+          <text x="185" y="104" text-anchor="middle" font-size="14">ones</text>
+          <text x="290" y="104" text-anchor="middle" font-size="14">tenths</text>
+          <text x="380" y="104" text-anchor="middle" font-size="14">hundredths</text>
+          <text x="485" y="104" text-anchor="middle" font-size="14">thousandths</text>
+        </svg>
+        <p style="font-size:0.85em; color:var(--text-muted);">Moving one place <strong>right</strong> makes the value 10× smaller. Moving one place <strong>left</strong> makes it 10× larger.</p>
+      </div>
+
+      <p><strong>Key fact:</strong> Zeros at the end of a decimal do not change its value. 3.40 = 3.4 = 3.400. But zeros <em>between</em> digits or between the decimal point and a non-zero digit are important: 3.04 ≠ 3.4.</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">What is the value of the digit <strong>7</strong> in <strong>3.47</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">7</button>
+          <button class="btn mcq-btn" data-letter="B">0.7</button>
+          <button class="btn mcq-btn" data-letter="C">0.07</button>
+          <button class="btn mcq-btn" data-letter="D">70</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       2. ORDERING AND COMPARING DECIMALS
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Ordering and Comparing Decimals
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 7</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>A common mistake is thinking that a number with more digits after the decimal point must be larger. It isn't! The trick is to <strong>compare column by column</strong>, starting from the left.</p>
+
+      <p><em>Example:</em> Put these in order, smallest to largest: <strong>0.3, 0.29, 0.301, 0.03</strong></p>
+
+      <p><strong>Step 1:</strong> Add trailing zeros so they all have the same number of decimal places:</p>
+      <p style="text-align:center; font-family:monospace; font-size:1rem;">
+        0.300 &nbsp; 0.290 &nbsp; 0.301 &nbsp; 0.030
+      </p>
+
+      <p><strong>Step 2:</strong> Compare the tenths column first. The tenths digits are: 3, 2, 3, 0. The smallest tenths digit is 0, so 0.030 (= 0.03) comes first.</p>
+
+      <p><strong>Step 3:</strong> Among those with tenths digit 2 or 3: 0.290 has tenths = 2, so it comes next. Then 0.300 and 0.301 both have tenths = 3 — compare hundredths: 0 vs 0. Same! Compare thousandths: 0 vs 1. So 0.300 comes before 0.301.</p>
+
+      <p><strong>Correct order:</strong> 0.03, 0.29, 0.3, 0.301</p>
+
+      <div style="text-align:center; margin:16px 0;">
+        <svg width="500" height="70" viewBox="0 0 500 70" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <!-- Number line -->
+          <line x1="30" y1="35" x2="470" y2="35" stroke="#555" stroke-width="2"/>
+          <!-- Arrow heads -->
+          <polygon points="470,35 460,30 460,40" fill="#555"/>
+          <!-- Tick marks and labels -->
+          <line x1="50"  y1="28" x2="50"  y2="42" stroke="#555" stroke-width="1.5"/>
+          <text x="50"  y="58" text-anchor="middle" font-size="14" fill="#333">0</text>
+
+          <line x1="160" y1="28" x2="160" y2="42" stroke="#555" stroke-width="1.5"/>
+          <text x="160" y="58" text-anchor="middle" font-size="14" fill="#333">0.1</text>
+
+          <line x1="270" y1="28" x2="270" y2="42" stroke="#555" stroke-width="1.5"/>
+          <text x="270" y="58" text-anchor="middle" font-size="14" fill="#333">0.2</text>
+
+          <line x1="380" y1="28" x2="380" y2="42" stroke="#555" stroke-width="1.5"/>
+          <text x="380" y="58" text-anchor="middle" font-size="14" fill="#333">0.3</text>
+
+          <!-- Points for our numbers -->
+          <circle cx="83"  cy="35" r="5" fill="#a13544"/>
+          <text x="83"  y="20" text-anchor="middle" font-size="14" fill="#a13544">0.03</text>
+
+          <circle cx="369" cy="35" r="5" fill="#1a6fa8"/>
+          <text x="357"  y="20" text-anchor="middle" font-size="14" fill="#1a6fa8">0.29</text>
+
+          <circle cx="380" cy="35" r="5" fill="#059669"/>
+          <text x="393"  y="20" text-anchor="middle" font-size="14" fill="#059669">0.3</text>
+
+          <circle cx="383" cy="35" r="5" fill="#7a3fa0"/>
+          <text x="413"  y="58" text-anchor="middle" font-size="14" fill="#7a3fa0">0.301</text>
+        </svg>
+      </div>
+
+      <p><strong>Exam tip:</strong> If asked to order decimals, always add trailing zeros to make them all the same length first. It makes comparison much easier.</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Which of these is the <strong>largest</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">0.3</button>
+          <button class="btn mcq-btn" data-letter="B">0.29</button>
+          <button class="btn mcq-btn" data-letter="C">0.301</button>
+          <button class="btn mcq-btn" data-letter="D">0.03</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       3. ADDING AND SUBTRACTING DECIMALS
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Adding and Subtracting Decimals
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 7</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Adding and subtracting decimals works exactly like whole numbers — the only rule is: <strong>line up the decimal points</strong>. Once you do that, the columns take care of themselves.</p>
+
+      <p><em>Example:</em> Work out <strong>3.47 + 1.8</strong></p>
+      <p>Write it out in columns, lining up the decimal points. Add a zero to 1.8 to make 1.80 so the columns match:</p>
+
+      <div style="text-align:center; margin:14px 0;">
+        <svg width="200" height="105" viewBox="0 0 200 105" style="background:#f9f8f5; border-radius:8px; max-width:100%; display:inline-block;">
+          <text x="60"  y="25" text-anchor="right" font-size="18" font-family="monospace" fill="#333">3 . 4 7</text>
+          <text x="43"  y="50" text-anchor="right" font-size="18" font-family="monospace" fill="#333">+ 1 . 8 0</text>
+          <line x1="15" y1="58" x2="130" y2="58" stroke="#333" stroke-width="1.5"/>
+          <text x="60"  y="80" text-anchor="right" font-size="18" font-family="monospace" fill="#059669" font-weight="bold">5 . 2 7</text>
+          <!-- Decimal point markers -->
+          <text x="140" y="80" font-size="14" fill="#059669">← answer</text>
+        </svg>
+      </div>
+
+      <p><em>Example:</em> Work out <strong>5.4 − 2.67</strong></p>
+      <p>Write 5.4 as 5.40 so the columns align:</p>
+
+      <div style="text-align:center; margin:14px 0;">
+        <svg width="200" height="105" viewBox="0 0 200 105" style="background:#f9f8f5; border-radius:8px; max-width:100%; display:inline-block;">
+          <text x="60"  y="25" text-anchor="right" font-size="18" font-family="monospace" fill="#333">5 . 4 0</text>
+          <text x="43"  y="50" text-anchor="right" font-size="18" font-family="monospace" fill="#333">− 2 . 6 7</text>
+          <line x1="15" y1="58" x2="130" y2="58" stroke="#333" stroke-width="1.5"/>
+          <text x="60"  y="80" text-anchor="right" font-size="18" font-family="monospace" fill="#059669" font-weight="bold">2 . 7 3</text>
+          <text x="140" y="80" font-size="14" fill="#059669">← answer</text>
+        </svg>
+      </div>
+
+      <p>(We borrow from the 4 to do 10 − 7 = 3 in the hundredths column, then 3 − 6 needs another borrow: 13 − 6 = 7 in the tenths column, then 4 − 1 − 2 = 1? Wait — 5 − 1 (borrowed) − 2 = 2 in the ones column.)</p>
+
+      <div style="background:#fff3cd; border-left:4px solid #f59e0b; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+        <strong>⚠️ Top tip:</strong> Always pad with zeros so both numbers have the same number of decimal places before you start. It prevents column-misalignment errors.
+      </div>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Work out <strong>5.4 − 2.67</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">3.27</button>
+          <button class="btn mcq-btn" data-letter="B">2.73</button>
+          <button class="btn mcq-btn" data-letter="C">2.83</button>
+          <button class="btn mcq-btn" data-letter="D">3.73</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       4. MULTIPLYING DECIMALS
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Multiplying Decimals
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 8</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>The best method for multiplying decimals: <strong>ignore the decimal points, multiply as whole numbers, then put the decimal point back</strong>.</p>
+
+      <p>The rule for placing the decimal point is:</p>
+      <p style="text-align:center; font-style:italic;">Total decimal places in the answer = sum of decimal places in both numbers you multiplied.</p>
+
+      <p><em>Example:</em> Work out <strong>2.3 × 1.4</strong></p>
+      <ul style="line-height:1.9;">
+        <li>Ignore decimal points: 23 × 14 = <strong>322</strong></li>
+        <li>Count decimal places: 2.3 has 1 d.p., 1.4 has 1 d.p. → total = <strong>2 d.p.</strong></li>
+        <li>Put point 2 places from the right: <strong>3.22</strong></li>
+      </ul>
+
+      <p><em>Example:</em> Work out <strong>0.6 × 0.4</strong></p>
+      <ul style="line-height:1.9;">
+        <li>Ignore decimal points: 6 × 4 = <strong>24</strong></li>
+        <li>0.6 has 1 d.p., 0.4 has 1 d.p. → total = <strong>2 d.p.</strong></li>
+        <li>Put point 2 places from the right: <strong>0.24</strong></li>
+      </ul>
+
+      <div style="text-align:center; margin:14px 0;">
+        <svg width="380" height="90" viewBox="0 0 380 90" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <!-- Step labels -->
+          <text x="10"  y="28" font-size="15" fill="#1a6fa8" font-weight="bold">Step 1:</text>
+          <text x="72"  y="28" font-size="15" fill="#333">6 × 4 = 24</text>
+          <text x="10"  y="52" font-size="15" fill="#1a6fa8" font-weight="bold">Step 2:</text>
+          <text x="72"  y="52" font-size="15" fill="#333">1 d.p. + 1 d.p. = 2 d.p. total</text>
+          <text x="10"  y="76" font-size="15" fill="#1a6fa8" font-weight="bold">Step 3:</text>
+          <text x="72"  y="76" font-size="15" fill="#059669" font-weight="bold">0.6 × 0.4 = 0.24</text>
+        </svg>
+      </div>
+
+      <p><em>Example:</em> Work out <strong>3.6 × 0.05</strong></p>
+      <ul style="line-height:1.9;">
+        <li>36 × 5 = <strong>180</strong></li>
+        <li>3.6 has 1 d.p., 0.05 has 2 d.p. → total = <strong>3 d.p.</strong></li>
+        <li>180 becomes <strong>0.180 = 0.18</strong></li>
+      </ul>
+
+      <div style="background:#fff3cd; border-left:4px solid #f59e0b; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+        <strong>⚠️ Sense check:</strong> 0.6 × 0.4 should be less than 1 (since both numbers are less than 1), so 0.24 makes sense. If you got 2.4, you placed the decimal point in the wrong spot.
+      </div>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">Work out <strong>0.6 × 0.4</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">0.24</button>
+          <button class="btn mcq-btn" data-letter="B">2.4</button>
+          <button class="btn mcq-btn" data-letter="C">0.024</button>
+          <button class="btn mcq-btn" data-letter="D">24</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       5. DIVIDING DECIMALS
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Dividing Decimals
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 8</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Dividing by a decimal can look tricky, but there's a simple trick: <strong>multiply both numbers by the same power of 10</strong> to turn the divisor into a whole number. The answer doesn't change because you're scaling both sides equally.</p>
+
+      <p><em>Example:</em> Work out <strong>4.8 ÷ 0.6</strong></p>
+      <ul style="line-height:1.9;">
+        <li>0.6 has 1 decimal place, so multiply both by 10:</li>
+        <li>4.8 × 10 = 48, &nbsp; 0.6 × 10 = 6</li>
+        <li>Now do: 48 ÷ 6 = <strong>8</strong></li>
+      </ul>
+
+      <p><em>Example:</em> Work out <strong>0.35 ÷ 0.07</strong></p>
+      <ul style="line-height:1.9;">
+        <li>0.07 has 2 decimal places, so multiply both by 100:</li>
+        <li>0.35 × 100 = 35, &nbsp; 0.07 × 100 = 7</li>
+        <li>Now do: 35 ÷ 7 = <strong>5</strong></li>
+      </ul>
+
+      <p><em>Example:</em> Work out <strong>7.2 ÷ 0.04</strong></p>
+      <ul style="line-height:1.9;">
+        <li>Multiply both by 100: 720 ÷ 4 = <strong>180</strong></li>
+      </ul>
+
+      <div style="text-align:center; margin:14px 0;">
+        <svg width="380" height="90" viewBox="0 0 380 90" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <text x="10"  y="28" font-size="15" fill="#1a6fa8" font-weight="bold">Rule:</text>
+          <text x="55"  y="28" font-size="15" fill="#333">Make the divisor a whole number by ×10, ×100, etc.</text>
+          <text x="10"  y="52" font-size="15" fill="#1a6fa8" font-weight="bold">Key:</text>
+          <text x="55"  y="52" font-size="15" fill="#333">Multiply BOTH top and bottom by the same number.</text>
+          <text x="10"  y="76" font-size="15" fill="#059669" font-weight="bold">Result:</text>
+          <text x="70"  y="76" font-size="15" fill="#059669">Dividing a decimal ÷ decimal = whole ÷ whole</text>
+        </svg>
+      </div>
+
+      <p><strong>Dividing a decimal by a whole number</strong> is easier — just do standard division and keep the decimal point in the same column.</p>
+      <p><em>Example:</em> 6.9 ÷ 3 = <strong>2.3</strong> (same as 69 ÷ 3 = 23, then put the decimal back)</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Work out <strong>4.8 ÷ 0.6</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">0.8</button>
+          <button class="btn mcq-btn" data-letter="B">80</button>
+          <button class="btn mcq-btn" data-letter="C">8</button>
+          <button class="btn mcq-btn" data-letter="D">0.08</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       6. CONVERTING BETWEEN FRACTIONS AND DECIMALS
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Converting Between Fractions and Decimals
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 8</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Fraction → Decimal:</strong> A fraction is just a division sum. Divide the top by the bottom.</p>
+
+      <p><em>Example:</em> Convert \(\frac{3}{8}\) to a decimal.</p>
+      <p style="text-align:center;">3 ÷ 8 = <strong>0.375</strong></p>
+      <p>(Work it out: 8 goes into 3.000 → 0.375)</p>
+
+      <p><em>Example:</em> Convert \(\frac{7}{20}\) to a decimal.</p>
+      <p style="text-align:center;">\(\frac{7}{20} = \frac{7 \times 5}{20 \times 5} = \frac{35}{100} = \mathbf{0.35}\)</p>
+      <p>(Tip: if the denominator divides into a power of 10, make an equivalent fraction with 10, 100 or 1000 on the bottom.)</p>
+
+      <p><strong>Decimal → Fraction:</strong> Write the decimal as a fraction over the appropriate power of 10, then simplify.</p>
+
+      <p><em>Example:</em> Convert 0.35 to a fraction.</p>
+      <p style="text-align:center;">\( 0.35 = \frac{35}{100} = \frac{7}{20} \)</p>
+
+      <p><em>Example:</em> Convert 0.125 to a fraction.</p>
+      <p style="text-align:center;">\( 0.125 = \frac{125}{1000} = \frac{1}{8} \)</p>
+
+      <p><strong>Common ones to memorise:</strong></p>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:8px; margin:12px 0;">
+        <div style="background:var(--color-surface-2); padding:8px 10px; border-radius:6px; text-align:center;">\(\frac{1}{2} = 0.5\)</div>
+        <div style="background:var(--color-surface-2); padding:8px 10px; border-radius:6px; text-align:center;">\(\frac{1}{4} = 0.25\)</div>
+        <div style="background:var(--color-surface-2); padding:8px 10px; border-radius:6px; text-align:center;">\(\frac{3}{4} = 0.75\)</div>
+        <div style="background:var(--color-surface-2); padding:8px 10px; border-radius:6px; text-align:center;">\(\frac{1}{5} = 0.2\)</div>
+        <div style="background:var(--color-surface-2); padding:8px 10px; border-radius:6px; text-align:center;">\(\frac{1}{8} = 0.125\)</div>
+        <div style="background:var(--color-surface-2); padding:8px 10px; border-radius:6px; text-align:center;">\(\frac{3}{8} = 0.375\)</div>
+      </div>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">What is \(\dfrac{3}{8}\) as a decimal?</p>
+          <button class="btn mcq-btn" data-letter="A">0.38</button>
+          <button class="btn mcq-btn" data-letter="B">0.375</button>
+          <button class="btn mcq-btn" data-letter="C">0.3</button>
+          <button class="btn mcq-btn" data-letter="D">3.75</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       7. RECURRING DECIMALS  (Higher)
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Recurring Decimals
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Higher</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Some fractions produce decimals that go on forever and <em>repeat</em> a pattern. These are called <strong>recurring decimals</strong>. We show the repeating part with a dot above the first and last digit of the pattern.</p>
+
+      <p>For example: \( \frac{1}{3} = 0.\dot{3} = 0.3333\ldots \) &nbsp; and &nbsp; \( \frac{1}{7} = 0.\dot{1}4285\dot{7} = 0.142857142857\ldots \)</p>
+
+      <p><strong>Converting a recurring decimal to a fraction</strong> uses a neat algebra trick. Here's the method step by step:</p>
+
+      <p><em>Example:</em> Write \(0.\dot{6}\) (= 0.6666…) as a fraction.</p>
+      <ul style="line-height:1.9;">
+        <li>Let \(x = 0.6666\ldots\)</li>
+        <li>Multiply both sides by 10: \(10x = 6.6666\ldots\)</li>
+        <li>Subtract: \(10x - x = 6.6666\ldots - 0.6666\ldots\)</li>
+        <li>\(9x = 6\)</li>
+        <li>\(x = \frac{6}{9} = \mathbf{\frac{2}{3}}\)</li>
+      </ul>
+
+      <p><em>Example:</em> Write \(0.\dot{1}\dot{8}\) (= 0.181818…) as a fraction.</p>
+      <ul style="line-height:1.9;">
+        <li>Let \(x = 0.181818\ldots\)</li>
+        <li>The repeating block "18" has 2 digits, so multiply by 100: \(100x = 18.181818\ldots\)</li>
+        <li>Subtract: \(100x - x = 18\)</li>
+        <li>\(99x = 18\)</li>
+        <li>\(x = \frac{18}{99} = \mathbf{\frac{2}{11}}\)</li>
+      </ul>
+
+      <div style="background:#dbeafe; border-left:4px solid #1a6fa8; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+        <strong>The pattern:</strong> If the repeating block has 1 digit, multiply by 10 and subtract. If it has 2 digits, multiply by 100. If 3 digits, by 1000. Choose your multiplier so the decimal parts line up exactly.
+      </div>
+
+      <p><em>Trickier example:</em> Convert \(0.1\dot{6}\) (= 0.1666…) to a fraction. Here only the 6 repeats — the 1 does not.</p>
+      <ul style="line-height:1.9;">
+        <li>Let \(x = 0.1666\ldots\)</li>
+        <li>\(10x = 1.666\ldots\) and \(100x = 16.666\ldots\)</li>
+        <li>Subtract: \(100x - 10x = 16.666\ldots - 1.666\ldots\)</li>
+        <li>\(90x = 15\)</li>
+        <li>\(x = \frac{15}{90} = \mathbf{\frac{1}{6}}\)</li>
+      </ul>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Write \(0.\dot{6}\) (= 0.6666…) as a fraction in its simplest form.</p>
+          <button class="btn mcq-btn" data-letter="A">\(\frac{6}{10}\)</button>
+          <button class="btn mcq-btn" data-letter="B">\(\frac{6}{9}\)</button>
+          <button class="btn mcq-btn" data-letter="C">\(\frac{2}{3}\)</button>
+          <button class="btn mcq-btn" data-letter="D">\(\frac{1}{6}\)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       PRACTICE STRATEGY
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      Practice Strategy
+      <span style="font-size:0.65rem; margin-left:8px; background:#eef7ea; color:#397a2f; padding:2px 6px; border-radius:10px;">Revision</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Decimals show up everywhere in GCSE — in money, measurements, probability and standard form. Getting confident here saves you marks across every topic.</p>
+
+      <p>Here's a revision checklist. Tick each one off when you're confident:</p>
+      <ul style="line-height:1.9;">
+        <li>✅ <strong>Place value:</strong> Can you state the value of any digit, including thousandths?</li>
+        <li>✅ <strong>Ordering:</strong> Do you pad with zeros before comparing?</li>
+        <li>✅ <strong>Adding/subtracting:</strong> Do you line up the decimal points every time?</li>
+        <li>✅ <strong>Multiplying:</strong> Do you count total decimal places and place the point at the end?</li>
+        <li>✅ <strong>Dividing:</strong> Do you multiply both numbers to eliminate the decimal in the divisor?</li>
+        <li>✅ <strong>Fraction ↔ decimal:</strong> Can you do 3 ÷ 8 by hand to get 0.375?</li>
+        <li>✅ <strong>Recurring decimals (Higher):</strong> Can you use the multiply-and-subtract method?</li>
+      </ul>
+
+      <p>A great drill: write out the six key fractions (½, ¼, ¾, ⅕, ⅛, ⅜) and their decimal equivalents from memory. You'll be glad you did in the exam.</p>
+
+    </div>
+  </details>
+
+  <!-- Revision card (auto-added) -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+      Decimals — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 9</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Use this card before a test. Line up decimal points for +/−, and count decimal places when you multiply.</p>
+
+      <div style="text-align:center;margin:16px 0;">
+              <div class="revision-card-wrap">
+        <svg class="revision-card-svg lesson-quick-ref" width="100%" viewBox="0 0 760 280" style="max-width:760px;width:100%;height:auto;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:10px;" role="img" aria-label="Decimals revision card">
+          <text x="380" y="28" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Decimals — Revision Card</text>
+          <line x1="20" y1="38" x2="740" y2="38" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="20" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Operations</text>
+          <text x="20" y="78" font-size="14" fill="#28251d">Add/subtract: line up the decimal points</text>
+          <text x="20" y="98" font-size="14" fill="#28251d">Multiply: count total decimal places in answer</text>
+          <text x="20" y="118" font-size="14" fill="#28251d">Divide: make the divisor a whole number first</text>
+          <text x="20" y="142" font-size="15" fill="#1a6fa8" font-weight="bold">Place value</text>
+          <text x="20" y="162" font-size="14" fill="#28251d">Each column is ×10 — pad with zeros to compare</text>
+          <text x="20" y="182" font-size="14" fill="#28251d">0.375 = 375 thousandths</text>
+          <line x1="390" y1="48" x2="390" y2="260" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="400" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Fractions ↔ decimals</text>
+          <text x="400" y="78" font-size="14" fill="#28251d">Fraction → decimal: divide top ÷ bottom</text>
+          <text x="400" y="98" font-size="14" fill="#28251d">¼ = 0.25, ⅜ = 0.375, ⅝ = 0.625</text>
+          <text x="400" y="122" font-size="15" fill="#1a6fa8" font-weight="bold">Higher (recurring)</text>
+          <text x="400" y="142" font-size="14" fill="#28251d">0.333… = ⅓ — dot or bar notation</text>
+          <text x="400" y="162" font-size="14" fill="#28251d">Multiply-and-subtract method for proofs</text>
+        </svg>
+      </div>
+      </div>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">What is 2.4 × 0.5?</p>
+          <button class="btn mcq-btn" data-letter="A">1.2</button>
+          <button class="btn mcq-btn" data-letter="B">12</button>
+          <button class="btn mcq-btn" data-letter="C">0.12</button>
+          <button class="btn mcq-btn" data-letter="D">2.9</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='decimals') }}" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Revision</a>
+      </div>
+    </div>
+  </details>
+
+</div>
+
+  <!-- Practice link -->
+  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='decimals') }}"
+       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+      Start Practice Quiz
+    </a>
+  </div>
+
+{% endblock %}

@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+{% block title %}Particle Physics &amp; the Standard Model – AQA A‑Level Physics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px; margin:0 auto; padding:0 16px;">
+
+  <h1>Particle Physics &amp; the Standard Model</h1>
+  <p style="color:var(--text-muted);">AQA A‑Level Physics – Particles and Radiation</p>
+
+  <!-- 1. ATOM BASICS -->
+  <div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>1. Atom Basics</h2>
+    <p>
+      An atom consists of a tiny, dense nucleus containing <strong>protons</strong> and <strong>neutrons</strong> (collectively called nucleons), surrounded by <strong>electrons</strong> that orbit in discrete shells. The number of protons defines the element and is called the <strong>proton number</strong> \(Z\). The total number of nucleons is the <strong>nucleon number</strong> \(A\). An atom is represented symbolically as \(^A_Z X\), where \(X\) is the chemical symbol.
+    </p>
+    <p>
+      Although the nucleus contains almost all the atom’s mass, it occupies only about \(10^{-15}\) m of the atom’s radius, which is roughly \(10^{-10}\) m. The electrons are held in place by the electromagnetic force, while the protons are bound together by the <strong>strong nuclear force</strong> that overcomes their electrostatic repulsion.
+    </p>
+    <p>
+      <strong>Isotopes</strong> are atoms with the same proton number \(Z\) but different nucleon numbers \(A\). They have the same chemical properties but different masses. For example, hydrogen has three isotopes: protium (\(^1_1H\)), deuterium (\(^2_1H\)), and tritium (\(^3_1H\)). Isotopes are often denoted by their mass number alone, such as carbon‑14 or uranium‑238.
+    </p>
+  </div>
+
+  <!-- 2. SPECIFIC CHARGE -->
+  <div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>2. Specific Charge</h2>
+    <p>
+      The <strong>specific charge</strong> of a particle is its charge divided by its mass, measured in coulombs per kilogram (C kg⁻¹). It is defined as
+      \[
+      \text{specific charge} = \frac{Q}{m}
+      \]
+    </p>
+    <p>
+      For a nucleus, \(Q = +Ze\) and \(m \approx Au\), where \(e = 1.60\times10^{-19}\) C and \(u = 1.66\times10^{-27}\) kg. For an electron, \(Q = -e\) and \(m = m_e = 9.11\times10^{-31}\) kg.
+    </p>
+    <p>
+      <strong>Examples:</strong>
+      <ul>
+        <li>Electron: \(\frac{-1.60\times10^{-19}}{9.11\times10^{-31}} \approx -1.76\times10^{11}\) C kg⁻¹</li>
+        <li>Proton: \(\frac{+1.60\times10^{-19}}{1.67\times10^{-27}} \approx +9.58\times10^{7}\) C kg⁻¹</li>
+        <li>Alpha particle (\(^4_2He^{2+}\)): \(\frac{+3.20\times10^{-19}}{6.64\times10^{-27}} \approx +4.82\times10^{7}\) C kg⁻¹</li>
+      </ul>
+      Notice that the electron’s specific charge is much larger in magnitude than that of a proton or alpha particle because its mass is so much smaller.
+    </p>
+    <p>
+      Calculating specific charge is a common exam skill – always use the correct charge and mass, and give units.
+    </p>
+  </div>
+
+  <!-- 3. FUNDAMENTAL PARTICLES & THE STANDARD MODEL -->
+  <div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>3. Fundamental Particles &amp; the Standard Model</h2>
+    <p>
+      The Standard Model describes all known fundamental particles and their interactions. Fundamental particles are indivisible; they are not made of smaller constituents. There are 12 fundamental matter particles (fermions) and several force‑carrying particles (bosons). The matter fermions divide into <strong>quarks</strong> and <strong>leptons</strong>.
+    </p>
+    <p>
+      <strong>Quarks:</strong> up (u), down (d), charm (c), strange (s), top (t), bottom (b). Quarks have fractional charges (+⅔ e or −⅓ e) and feel all four fundamental forces, including the strong force.
+    </p>
+    <p>
+      <strong>Leptons:</strong> electron (e⁻), muon (μ⁻), tau (τ⁻), and their associated neutrinos (νₑ, νμ, ντ). Leptons have integer charges (0 or −1 e) and do **not** feel the strong force. Each lepton has its own lepton number, which is conserved.
+    </p>
+    <p>
+      <strong>Generations:</strong> The fermions are arranged in three generations. The first generation (up, down, electron, electron neutrino) makes up all ordinary matter. Higher generations are heavier and unstable, observed only in cosmic rays or particle accelerators.
+    </p>
+    <details>
+      <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Full particle table</summary>
+      <div style="margin-top:8px; padding:12px; background:var(--color-surface-offset);">
+        <table style="width:100%; border-collapse:collapse;">
+          <thead><tr><th>Generation</th><th>Quarks</th><th>Leptons</th></tr></thead>
+          <tbody>
+            <tr><td>1st</td><td>u (+⅔), d (−⅓)</td><td>e⁻, νₑ</td></tr>
+            <tr><td>2nd</td><td>c (+⅔), s (−⅓)</td><td>μ⁻, νμ</td></tr>
+            <tr><td>3rd</td><td>t (+⅔), b (−⅓)</td><td>τ⁻, ντ</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+    <p>
+      <strong>Antiparticles:</strong> Every fermion has an antiparticle with opposite charge, baryon number, lepton number, and strangeness, but the same mass. For example, the positron (e⁺) is the antiparticle of the electron; an up antiquark (ū) has charge −⅔.
+    </p>
+  </div>
+
+  <!-- 4. HADRONS – BARYONS & MESONS -->
+  <div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>4. Hadrons: Baryons &amp; Mesons</h2>
+    <p>
+      <strong>Hadrons</strong> are particles made of quarks. They are subject to the strong force. There are two families:
+      <ul>
+        <li><strong>Baryons</strong> – made of three quarks (qqq). Examples: proton (uud), neutron (udd). Antibaryons are made of three antiquarks. All baryons have baryon number \(B = +1\) (antibaryons \(B = -1\)). Baryons, except the stable proton, eventually decay into protons.</li>
+        <li><strong>Mesons</strong> – made of a quark and an antiquark (q\(\bar{q}\)). Examples: pion (π⁺ = u\(\bar{d}\)), kaon (K⁺ = u\(\bar{s}\)). Mesons have baryon number \(B = 0\). They are often unstable and decay via the weak or electromagnetic interaction.</li>
+      </ul>
+    </p>
+    <p>
+      <strong>Quark compositions and charges:</strong>
+      <ul>
+        <li>Proton (uud): charge = +⅔ + ⅔ − ⅓ = +1</li>
+        <li>Neutron (udd): charge = +⅔ − ⅓ − ⅓ = 0</li>
+        <li>π⁺ (u\(\bar{d}\)): charge = +⅔ + ⅓ = +1</li>
+        <li>K⁺ (u\(\bar{s}\)): charge = +⅔ + ⅓ = +1</li>
+        <li>π⁰ is a mix of uū and dđ; its own antiparticle.</li>
+      </ul>
+    </p>
+    <p>
+      <strong>Strangeness:</strong> The strange quark (s) possesses a quantum number called strangeness, \(S\). For strange particles, \(S = -1\) for each strange quark, +1 for antistrange. Strangeness is conserved in strong and electromagnetic interactions, but not in weak interactions. This explains why strange particles are always produced in pairs (associated production) and why they decay more slowly than expected—the weak interaction must change strangeness, which takes time.
+    </p>
+    <p>
+      <strong>Kaons:</strong> Kaons are mesons containing a strange quark (or antiquark). K⁺ = u\(\bar{s}\) (S = +1), K⁻ = s\(\bar{u}\) (S = -1), K⁰ = d\(\bar{s}\), \(\bar{K}^0\) = s\(\bar{d}\). They were historically important in the discovery of strangeness and CP violation.
+    </p>
+    <!-- Quark composition builder (unchanged) -->
+    <div style="margin-top: 16px; padding: 16px; background: var(--color-surface-offset); border-radius: 8px;">
+      <p><strong>Quark Composition Builder</strong></p>
+      <p>Select a particle to see its quark structure:</p>
+      <select id="particle-select" style="margin-bottom: 12px;">
+        <option value="proton">Proton (p⁺)</option>
+        <option value="neutron">Neutron (n)</option>
+        <option value="piplus">π⁺ (pion)</option>
+        <option value="piminus">π⁻ (pion)</option>
+        <option value="kplus">K⁺ (kaon)</option>
+        <option value="kminus">K⁻ (kaon)</option>
+      </select>
+      <div id="quark-display" style="display: flex; gap: 12px; font-size: 1.2em; font-weight: bold; align-items: center;">
+        <!-- filled by JS -->
+      </div>
+      <p id="charge-display" style="margin-top: 8px; font-weight: 500;"></p>
+    </div>
+  </div>
+
+  <!-- 5. LEPTONS -->
+  <div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>5. Leptons</h2>
+    <p>
+      Leptons are fundamental fermions that do **not** feel the strong force. The six leptons are: electron (e⁻), muon (μ⁻), tau (τ⁻), and their corresponding neutrinos (νₑ, νμ, ντ). Each has an antilepton partner (e⁺, \(\bar{ν}_e\), etc.).
+    </p>
+    <p>
+      <strong>Lepton number:</strong> \(L_e\) for electron‑type, \(L_\mu\) for muon‑type, \(L_\tau\) for tau‑type. In any interaction, each lepton number is conserved separately. For example, in muon decay: μ⁻ → e⁻ + νμ + \(\bar{\nu}_e\), the muon lepton number (Lμ = 1) is balanced by νμ, and the electron lepton number (Le = 0 initially) becomes +1 (e⁻) and −1 (\(\bar{\nu}_e\)), so Le = 0 overall.
+    </p>
+    <p>
+      <strong>Muon decay:</strong> Muons are unstable, with a mean lifetime of 2.2 µs. They decay purely via the weak interaction: μ⁻ → e⁻ + νμ + \(\bar{\nu}_e\). The muon’s large mass (about 207 mₑ) allows the decay to an electron and two neutrinos, conserving energy and momentum.
+    </p>
+    <p>
+      <strong>Neutrinos:</strong> Neutrinos have no electric charge and an incredibly small mass, interacting only through the weak force and gravity. They are produced copiously in nuclear reactions and cosmic‑ray showers. Their existence was first postulated to explain missing energy in beta decay.
+    </p>
+  </div>
+
+  <!-- 6. FORCES AND BOSONS -->
+  <div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>6. The Four Fundamental Forces</h2>
+    <p>
+      Interactions between particles are described by the exchange of <strong>gauge bosons</strong>, the force‑carrying particles. Each fundamental force has its own boson(s):
+      <ul>
+        <li><strong>Electromagnetic:</strong> photon (γ). Acts on charged particles, infinite range, but strength decreases with distance squared.</li>
+        <li><strong>Strong:</strong> gluon (g). Acts on colour‑charged quarks, range ≈ 10⁻¹⁵ m. Gluons themselves carry colour, making the strong force incredibly complex and confining quarks inside hadrons.</li>
+        <li><strong>Weak:</strong> W⁺, W⁻, Z⁰. Acts on quarks and leptons, range ≈ 10⁻¹⁸ m. The W bosons carry electric charge, enabling flavour changes (e.g., beta decay). The Z⁰ is neutral and mediates neutral‑current interactions.</li>
+        <li><strong>Gravity:</strong> graviton (hypothetical). Acts on all particles with mass/energy, infinite range, but by far the weakest force—typically 10⁻³⁹ times the strong force at the nuclear scale. Its quantum description is not yet complete.</li>
+      </ul>
+    </p>
+    <p>
+      <strong>Higgs boson:</strong> Not a force carrier, but associated with the Higgs field, which gives fundamental particles their mass. Its discovery in 2012 confirmed the Standard Model’s mechanism for electroweak symmetry breaking.
+    </p>
+    <p>
+      <strong>Pion exchange:</strong> Historically, the strong nuclear force between nucleons was explained by the exchange of pions (mesons). Today we understand that this is a residual effect of the underlying strong force between quarks, mediated by gluons. Pions still provide a useful model for nuclear binding at the nucleon level.
+    </p>
+  </div>
+
+  <!-- 7. FEYNMAN DIAGRAMS -->
+  <div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>7. Feynman Diagrams</h2>
+    <p>
+      Feynman diagrams are pictorial representations of particle interactions. They are read from <strong>left to right</strong>. Fermions are shown as straight lines; bosons as <strong>squiggly lines</strong>. Each vertex represents a fundamental coupling. The diagrams encode conservation laws at every vertex.
+    </p>
+
+    <!-- Electromagnetic repulsion -->
+    <div style="margin: 24px 0;">
+      <h3>Electromagnetic Repulsion (e⁻ e⁻ → e⁻ e⁻)</h3>
+      <img src="{{ url_for('static', filename='images/electron_repulsion.png') }}"
+           alt="Electromagnetic repulsion Feynman diagram"
+           style="max-width:100%; height:auto; display:block; margin:0 auto;">
+      <p style="font-size:0.9em; text-align:center;">Repulsion via virtual photon exchange.</p>
+    </div>
+
+    <!-- Beta-minus decay -->
+    <div style="margin: 24px 0;">
+      <h3>Weak Interaction – Beta‑Minus Decay (n → p + e⁻ + \(\bar{\nu}_e\))</h3>
+      <img src="{{ url_for('static', filename='images/beta_minus_decay.png') }}"
+           alt="Beta-minus decay Feynman diagram showing quark structure"
+           style="max-width:100%; height:auto; display:block; margin:0 auto;">
+      <p style="font-size:0.9em; text-align:center;">Down → up quark transformation, emitting a W⁻ boson that decays to e⁻ + \(\bar{\nu}_e\).</p>
+    </div>
+
+    <!-- Beta-plus decay -->
+    <div style="margin: 24px 0;">
+      <h3>Weak Interaction – Beta‑Plus Decay (p → n + e⁺ + νₑ)</h3>
+      <img src="{{ url_for('static', filename='images/beta_plus_decay.png') }}"
+           alt="Beta-plus decay Feynman diagram"
+           style="max-width:100%; height:auto; display:block; margin:0 auto;">
+      <p style="font-size:0.9em; text-align:center;">Up → down quark transformation, emitting a W⁺ boson that decays to e⁺ + νₑ.</p>
+    </div>
+
+    <!-- Electron capture -->
+    <div style="margin: 24px 0;">
+      <h3>Weak Interaction – Electron Capture (p + e⁻ → n + νₑ)</h3>
+      <img src="{{ url_for('static', filename='images/electron_capture.png') }}"
+           alt="Electron capture Feynman diagram"
+           style="max-width:100%; height:auto; display:block; margin:0 auto;">
+      <p style="font-size:0.9em; text-align:center;">Proton absorbs an electron, emitting a W⁺ boson that produces a neutron and a neutrino.</p>
+    </div>
+
+    <!-- Strong interaction (gluon exchange between quarks) -->
+    <div style="margin: 24px 0;">
+      <h3>Strong Interaction – Gluon Exchange Between Quarks</h3>
+      <img src="{{ url_for('static', filename='images/Nucleon_strong_force.png') }}"
+           alt="Gluon exchange between quarks Feynman diagram"
+           style="max-width:100%; height:auto; display:block; margin:0 auto;">
+      <p style="font-size:0.9em; text-align:center;">Gluons bind quarks inside a nucleon. The squiggly line represents the strong‑force carrier.</p>
+    </div>
+  </div>
+
+  <!-- 8. DECAY PROCESSES -->
+  <div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>8. Decay Processes Summary</h2>
+    <p>
+      Unstable nuclei (or particles) decay to achieve a more stable configuration. The dominant decay modes are:
+      <ul>
+        <li><strong>Alpha decay:</strong> large nuclei with too many nucleons emit an alpha particle (⁴₂He²⁺). The parent nucleus loses 2 protons and 2 neutrons, reducing \(Z\) by 2 and \(A\) by 4. Alpha particles are highly ionising and have a short range.</li>
+        <li><strong>Beta‑minus decay:</strong> neutron‑rich nuclei convert a neutron into a proton, emitting an electron (β⁻) and an electron antineutrino. \(Z\) increases by 1, \(A\) unchanged.</li>
+        <li><strong>Beta‑plus decay:</strong> proton‑rich nuclei convert a proton into a neutron, emitting a positron (β⁺) and an electron neutrino. \(Z\) decreases by 1, \(A\) unchanged.</li>
+        <li><strong>Electron capture:</strong> a proton‑rich nucleus captures an inner orbital electron, converting a proton to a neutron and emitting a neutrino. \(Z\) decreases by 1, \(A\) unchanged. Characteristic X‑rays often follow.</li>
+      </ul>
+    </p>
+    <p>
+      <strong>Meson decays:</strong> Charged pions (π⁺, π⁻) decay via the weak interaction into a muon and a muon neutrino: π⁺ → μ⁺ + νμ, π⁻ → μ⁻ + \(\bar{\nu}_μ\). The neutral pion (π⁰) decays electromagnetically into two photons: π⁰ → γγ. Kaons decay in multiple modes, often involving pions or muons, via the weak interaction because strangeness must change.
+    </p>
+  </div>
+
+  <!-- 9. CONSERVATION LAWS -->
+  <div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>9. Conservation Laws</h2>
+    <p>
+      Particle interactions obey strict conservation laws. The following must be conserved in any interaction:
+      <ul>
+        <li><strong>Charge (Q):</strong> total electric charge before = total after.</li>
+        <li><strong>Baryon number (B):</strong> +1 for baryons, −1 for antibaryons, 0 for others. Protons are stable because no lighter baryon exists to decay into without violating B conservation.</li>
+        <li><strong>Lepton number (L):</strong> separated into \(L_e\), \(L_\mu\), \(L_\tau\). Each lepton carries L = +1, its antiparticle L = −1. Neutrino oscillations indicate that lepton flavour is not absolutely conserved, but in the Standard Model at tree level it is.</li>
+        <li><strong>Strangeness (S):</strong> conserved in strong and electromagnetic interactions, but can change by ±1 in weak interactions. This explains the slow decay of strange particles.</li>
+      </ul>
+    </p>
+    <p>
+      <strong>Example – β⁻ decay:</strong> n → p + e⁻ + \(\bar{\nu}_e\)<br>
+      Charge: 0 → (+1) + (−1) + 0 = 0 ✅<br>
+      Baryon number: +1 → +1 + 0 + 0 = +1 ✅<br>
+      Electron lepton number (Lₑ): 0 → 0 + (+1) + (−1) = 0 ✅
+    </p>
+    <p>
+      <strong>Example – π⁺ decay:</strong> π⁺ → μ⁺ + νμ<br>
+      Charge: +1 → +1 + 0 = +1 ✅<br>
+      Baryon number: 0 → 0 + 0 = 0 ✅<br>
+      Muon lepton number (Lμ): 0 → (−1) + (+1) = 0 ✅ (μ⁺ is anti‑muon, Lμ = −1; νμ has Lμ = +1)
+    </p>
+  </div>
+
+  <!-- 10. ANNIHILATION & PAIR PRODUCTION -->
+  <div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>10. Annihilation &amp; Pair Production</h2>
+    <p>
+      <strong>Annihilation:</strong> When a particle meets its antiparticle, they annihilate, converting their rest energy (and kinetic energy) into photons or other particle–antiparticle pairs. For example, electron–positron annihilation: e⁻ + e⁺ → γγ. At least two photons are produced to conserve momentum. This process is the basis of PET scans, where positron‑emitting isotopes are used to image metabolic activity.
+    </p>
+    <p>
+      <strong>Pair production:</strong> A photon with energy greater than \(2m_ec^2 = 1.022\) MeV can, in the presence of a nucleus (to conserve momentum), create an electron–positron pair: γ → e⁻ + e⁺. The excess energy becomes kinetic energy of the particles. Pair production is an important interaction of high‑energy photons in matter and is used in particle detectors.
+    </p>
+    <p>
+      Both processes illustrate the interchangeability of mass and energy described by \(E = mc^2\).
+    </p>
+  </div>
+
+  <!-- 11. COSMIC RAYS & PARTICLE DETECTION -->
+  <div class="problem-card" style="background: var(--color-surface-2);">
+    <h2>11. Cosmic Rays &amp; Particle Detection</h2>
+    <p>
+      <strong>Cosmic rays:</strong> High‑energy protons (and some heavier nuclei) from space collide with atoms in the upper atmosphere, creating cascades of secondary particles: pions (π), kaons (K), muons (μ), neutrinos, and electromagnetic showers. The pions and kaons are short‑lived and decay into muons and neutrinos. Muons, being relatively long‑lived (2.2 µs), can reach the Earth’s surface. Without relativistic time dilation, they would decay long before reaching the ground.
+    </p>
+    <p>
+      <strong>Detection:</strong> Particle detectors exploit ionisation, radiation, or photon emission. Cloud chambers and bubble chambers show visible tracks left by charged particles; modern wire chambers and silicon detectors provide electronic readouts. Scintillators and photomultipliers detect light flashes. These techniques allow physicists to identify particles by their specific charge, momentum, and interaction patterns.
+    </p>
+    <p>
+      <strong>Muon time dilation:</strong> The fact that muons produced at ~15 km altitude survive to sea level is direct evidence for special relativity: their internal clock runs slower by a factor of γ, allowing them to travel much farther than their rest‑frame half‑life would suggest.
+    </p>
+  </div>
+
+  <!-- Quick Test button -->
+  <div style="text-align:center; margin-top: 24px; margin-bottom: 48px;">
+    <form method="POST" action="/quicktest/start" style="display:inline;">
+      <input type="hidden" name="level" value="alevel">
+      <input type="hidden" name="subject" value="physics">
+      <input type="hidden" name="topic" value="particles">
+      <input type="hidden" name="mode" value="standard">
+      <input type="hidden" name="difficulty" value="foundational">
+      <button type="submit" class="btn btn-primary">⚡ Quick Test: Particle Physics</button>
+    </form>
+  </div>
+
+</div>
+
+<script type='text/javascript' src='https://www.pythonanywhere.com/NBPC2V2jRteFdN86AX0tVqyBaC3JyucXlIpmdJvGZ6G4o5PBUPI4Woafu4FlQakoBpc7X90OEFbWDYst6VZu3XNhIUqQjg99IwzZrQ28vEdGMxeVfg1zYSq3vQXMPjRQw0GBEn4aO4KL21pZQkMZ7brVdiuFflbu97czq0Ydz-4JTjAzJ1qn_q4VLMUp8a_azlg29-XPy2AtPSlwDB75XJECar4LfrTzv7JNR0t6FJFoW8gATcXuVKRz34Kpz3Kum3ciLSat0XsSEnYVdZIzb7mlhT1ot0vjfL1ouELiZnpq4WQFJ9Jszffc0ccKlyqKcCn56OlwGvH52cQLr46BbFtKD9VCkeW-vdus28xTBppHoQHQi52NyIbceBCt4JLEYkxb9XEZWaGMX8Ou08MmDzwKxoyDMqYXwOhXrj_wlwNAKiYqOSt3hetwyEKE2OXX_7O5JBcHhfZu28WUCARiPd3VHZlXqWzGa-9yo-Aq22uD85-O8gu3FS83x6nlXHm6C2sn-EdtlfE0k35hW-UL3z66RzcJ0snQqtt2-FxczQYZqMemd4ccZkvx7sxNpA0MNuJGgwTw8u5FIWWADVgM28ja-QGMXeBoWqXYp8QJ'></script><script src="{{ url_for('static', filename='js/quark-builder.js') }}"></script>
+
+{% endblock %}

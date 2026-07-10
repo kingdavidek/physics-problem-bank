@@ -1,0 +1,59 @@
+Project: A dynamic GCSE / A-Level / IB problem generator and interactive lesson website (Python/Flask, deployed on PythonAnywhere).
+Goal: Continue building out the remaining GCSE Maths topics (and later other subjects) following the exact same patterns already established in the codebase.
+What I need you to do:
+•	Read the description below and understand the architecture (don’t ask me to re explain it – all the rules are already set up).
+•	Finish the GCSE Maths section. I already have lessons and generators for: Algebra, BIDMAS/Order of Operations, Decimals, Fractions/Decimals/Percentages, Multiples and Factors, Surds, Vectors, Trigonometry, and Python Programming (CS). I need new topics (e.g. Number, Ratio, Geometry, Probability, Statistics, Graphs, etc.) built with:
+o	A full accordion style lesson HTML file (like the ones I already have – including exam board badges).
+o	A generator file with 15 foundational / 15 intermediate / 15 difficult variants + 15 MCQs (plus a variants function and main dispatcher).
+o	The necessary entries in topic_registry.py and index.html.
+•	The exact output I want from you: ready to paste code blocks (or complete file contents) that I can drop into my PythonAnywhere editor, reload the site, and immediately test. 
+Tech stack & key files:
+•	Flask on PythonAnywhere, using a single app.py for routes (including Quick Test routes that pre generate a queue of questions and store them in SQLite).
+•	Generators live in generators/<subject>/<module>.py. Each topic has a main function (e.g. gcse_vectors) and a variants function (e.g. gcse_vectors_variants). All generators return a question dict using make_problem() from generators/shared/utils.py.
+•	Lesson templates are in templates/ and follow the naming pattern <level>_<subject>_<topic>_lesson.html. They use Jinja2, extend base.html, and use <details> accordions.
+•	Topic registry is topic_registry.py – a central dict that maps level/subject/topic to the generator function and an optional variants_func.
+•	Frontend uses templates/index.html (the generator page) with dropdowns that are populated manually (options with data-level/data-subject).
+•	Quick Test works by calling variants_func to get a list of variant functions, generating all problems, storing them in a SQLite quicktest_sessions table (via _save_qt/_load_qt in app.py), then serving one question at a time.
+•	MCQs work by returning a six tuple (question, solution, hint, marks, options_list, correct_letter) and are handled in the main generator with a mode == 'mcq' branch.
+•	Math rendering uses MathJax (tex svg) with a configuration file static/js/mathjax-config.js.
+•	CSP is handled via WSGI middleware in the WSGI file (strips any existing CSP and injects a permissive one).
+•	SVGs are styled globally in base.html so that all instructional SVGs get a visible background and are not treated as MathJax formulas.
+Patterns to follow:
+•	Lesson pages: use the same <details class="lesson-section"> style as gcse_maths_vectors_lesson.html. Include exam board tags (<span> badges).
+•	Generators:
+o	Each variant helper returns (q, s, hint, marks).
+o	The main function accepts (difficulty, mode, variant_name=None) and dispatches accordingly.
+o	The variants function returns a list of at least 10 callables for the queue (duplicates if needed).
+o	MCQ function returns (q, s, hint, marks, options, correct).
+o	Every variant helper must randomise its numbers using random.randint, random.choice, etc., so that calling the same function multiple times generates different questions. The queue stores the list of function references, and each call to the same function should produce a new problem. Never hard code values – the entire point is that the student gets fresh variants.
+o	
+•	make_problem from utils.py accepts **extra and passes it through, so MCQs can include options and correct_answer.
+•	topic_registry.py entries look like: "vectors": {"name": "Vectors", "func": gcse_vectors, "variants_func": gcse_vectors_variants}.
+•	index.html options: <option value="vectors" data-subject="maths" data-level="gcse">Vectors</option> (inside the appropriate subject select).
+Current status (what’s already done):
+•	GCSE Topics: Algebra, BIDMAS, Decimals, FDP, Multiples/Factors, Surds, Vectors, Trigonometry (lessons + full generator sets). CS: Python Programming (lesson + Pyodide runner + generator).
+•	A Level: Photoelectric Effect, Magnetic Fields, Particle Physics (lessons + full generators + MCQs + exam clones).
+•	MYP: Energy Changes and Rates (lesson).
+•	Quick Test works for all registered topics.
+•	MCQ interactive buttons (green/red) work for any topic with a py_mcq style function.
+What I want you to build next (GCSE Maths – remaining topics):
+The typical GCSE Maths curriculum includes: Number (place value, rounding, standard form, percentages), Ratio/Proportion, Algebra (already done), Geometry (angles, polygons, circles, transformations, Pythagoras/trig already done), Probability, Statistics. Pick any topic from that list that is not already covered and create:
+1.	A complete lesson HTML (as described).
+2.	A full generator with 15/15/15 variants + 15 MCQs + the wrapper functions.
+3.	The registry and dropdown snippets.
+Please start with Number (or the most foundational topic) and work through in a logical order. I want to eventually have the whole GCSE maths syllabus.
+How to deliver:
+•	Give me the exact content of each file, labelled clearly (e.g. templates/gcse_maths_number_lesson.html, generators/gcse/maths.py additions).
+•	Provide the topic_registry.py entry and index.html snippet as separate blocks.
+•	I will copy paste them into my PythonAnywhere environment, reload the web app, and test. So ensure there are no syntax errors and the code follows the existing conventions exactly.
+Additional context (so you don’t repeat old mistakes):
+•	Do not put replace('\n', '<br>') on lesson pages – only on the main generator/quick test templates, and even there, skip it when the question contains <svg> (use {% if '<svg' in problem.question %}).
+•	The CSP is already handled; don’t add any new <meta> CSP tags or inline scripts in lessons – keep all JavaScript in external files (static/js/). The only exception is tiny inline scripts for interactive widgets (like the calorimetry calculator in the MYP lesson), but avoid eval.
+•	All generator functions must be defined before the variants function in the same file.
+•	Variants lists should be shuffled and then duplicated to reach 10 slots.
+•	The Quick Test route expects variant_name to be a function name string; the main generator handles variant_name=None by picking randomly.
+•	The topic lesson URL is automatically constructed by the route from the level/subject/topic slug, so the file name must match exactly: gcse_maths_<topic>_lesson.html.
+What I can provide if you need it:
+•	The full content of app.py, topic_registry.py, generators/shared/utils.py, and any existing lesson or generator file – just ask.
+Please start by confirming you understand the architecture, then deliver the first new topic. I want to spend as few messages as possible, so batch as much as you can in each response.
+

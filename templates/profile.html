@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Profile – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+
+<div class="lesson-hero">
+    <h1>{{ current_user.display_handle }}</h1>
+    <p class="hero-sub">Your Problem Bank account · <a href="{{ public_profile_url }}">Public profile</a> · <a href="{{ url_for('profile_settings') }}">Privacy</a></p>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+        <p class="{% if category == 'error' %}error{% else %}flash-success{% endif %}">{{ message }}</p>
+    {% endfor %}
+{% endwith %}
+
+<section class="section-panel">
+    <div class="section-panel-header">Account details</div>
+    <div class="section-panel-body">
+        <dl class="profile-dl">
+            <dt>Handle</dt>
+            <dd>{{ current_user.display_handle }}</dd>
+            <dt>Email</dt>
+            <dd>{{ current_user.email }}</dd>
+            <dt>Member since</dt>
+            <dd>{{ current_user.created_at[:10] if current_user.created_at else '—' }}</dd>
+            <dt>Last login</dt>
+            <dd>{{ current_user.last_login_at[:10] if current_user.last_login_at else '—' }}</dd>
+        </dl>
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">
+        Saved questions
+        {% if saved_problems %}
+        <a href="{{ url_for('saved_problems_index') }}" class="profile-section-link">View all</a>
+        {% endif %}
+    </div>
+    <div class="section-panel-body">
+        {% if saved_problems %}
+        <ul class="profile-list">
+            {% for item in saved_problems %}
+            <li class="profile-list-item">
+                <div class="profile-list-main">
+                    <a href="{{ url_for('view_saved_problem', saved_id=item.id) }}">{{ item.topic_label }}</a>
+                    <span class="profile-list-meta">{{ item.difficulty | title }} · {{ item.created_at[:10] }}</span>
+                </div>
+                <form method="POST" action="{{ url_for('delete_saved_problem_route', saved_id=item.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="next" value="{{ url_for('profile') }}">
+                    <button type="submit" class="btn btn-outline btn-sm">Remove</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty">No saved questions yet. Generate a question and click <strong>Save question</strong>.</p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">Lesson bookmarks</div>
+    <div class="section-panel-body">
+        {% if lesson_progress %}
+        <ul class="profile-list">
+            {% for item in lesson_progress %}
+            <li class="profile-list-item">
+                <div class="profile-list-main">
+                    <a href="{{ item.lesson_url }}">{{ item.topic_label }}</a>
+                    <span class="profile-list-meta">
+                        {% if item.section_label %}{{ item.section_label | truncate(60) }}{% else %}Section {{ item.section_key }}{% endif %}
+                        · {{ item.updated_at[:10] }}
+                    </span>
+                </div>
+                <form method="POST" action="{{ url_for('clear_lesson_progress_route', level=item.level, subject=item.subject, topic=item.topic) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline btn-sm">Clear</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty">Open a lesson while logged in — your place is saved when you expand a section.</p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">Quiz history</div>
+    <div class="section-panel-body">
+        {% if quiz_attempts %}
+        <ul class="profile-list">
+            {% for item in quiz_attempts %}
+            <li class="profile-list-item">
+                <div class="profile-list-main">
+                    <span>{{ item.topic_label }}</span>
+                    <span class="profile-list-meta">{{ item.score }}/{{ item.total }} · {{ item.created_at[:10] }}</span>
+                </div>
+                <div class="profile-list-actions">
+                    {% if item.has_review %}
+                    <a href="{{ url_for('view_quiz_attempt', attempt_id=item.id) }}" class="btn btn-primary btn-sm">View results</a>
+                    {% endif %}
+                    <a href="{{ url_for('lesson_mcq_quiz', level=item.level, subject=item.subject, topic=item.topic) }}" class="btn btn-outline btn-sm">New quiz</a>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty">Complete a lesson quiz to see scores here.</p>
+        {% endif %}
+    </div>
+</section>
+
+<div class="section-panel cta-panel">
+    <div class="section-panel-body cta-panel-body">
+        <a href="{{ url_for('index') }}" class="btn btn-primary">Go to generator</a>
+        <form method="POST" action="{{ url_for('logout') }}" class="inline-logout-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-secondary">Log out</button>
+        </form>
+    </div>
+</div>
+
+</div>
+{% endblock %}

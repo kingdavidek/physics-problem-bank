@@ -1,0 +1,604 @@
+{% extends "base.html" %}
+{% block title %}Statistics – GCSE Mathematics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Statistics</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">GCSE Mathematics – Foundation and Higher Tier · All Exam Boards</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+  <!-- Quick Test button -->
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='statistics') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <p style="line-height:1.8;">Statistics is all about collecting, showing, and understanding data. Before you draw a chart or find an average, you need to know what type of data you are working with.</p>
+
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      Types of Data
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 7</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p><strong>Statistics</strong> means working with data — numbers we collect to answer a question.</p>
+      <p><em>Example:</em> Shoe sizes in a shop might be <strong>4, 5, 6, 7</strong> only. You cannot have size 4.3. That is <strong>discrete</strong> data — separate steps, usually whole numbers.</p>
+      <p><em>Example:</em> Someone’s height could be <strong>162.4 cm</strong> or <strong>175.8 cm</strong> — any value in a range. That is <strong>continuous</strong> data.</p>
+      <p><strong>Primary data</strong> is data you collect yourself (a survey in your class). <strong>Secondary data</strong> is data someone else already collected (a government website). Secondary data is quick to use, but it might not fit your exact question.</p>
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="420" height="150" viewBox="0 0 420 150" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <text x="105" y="22" text-anchor="middle" font-size="14" font-weight="600" fill="#01696f">Discrete</text>
+          <text x="315" y="22" text-anchor="middle" font-size="14" font-weight="600" fill="#a13544">Continuous</text>
+          <line x1="30" y1="95" x2="180" y2="95" stroke="#555"/>
+          <circle cx="55" cy="95" r="5" fill="#01696f"/><circle cx="85" cy="95" r="5" fill="#01696f"/><circle cx="115" cy="95" r="5" fill="#01696f"/><circle cx="145" cy="95" r="5" fill="#01696f"/>
+          <text x="105" y="118" text-anchor="middle" font-size="14" fill="#555">Only whole shoe sizes (4,5,6,7)</text>
+          <line x1="220" y1="95" x2="390" y2="95" stroke="#555"/>
+          <rect x="250" y="78" width="110" height="34" fill="#a13544" opacity="0.35" stroke="#a13544"/>
+          <text x="305" y="118" text-anchor="middle" font-size="14" fill="#555">Any height in a range (cm)</text>
+        </svg>
+      </div>
+      <p style="font-size:1rem;color:var(--text-muted);">Discrete values are separate “steps”; continuous values can lie anywhere along an interval.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">Which is <strong>discrete</strong> data?</p>
+          <button class="btn mcq-btn" data-letter="A">Number of pets per household</button>
+          <button class="btn mcq-btn" data-letter="B">Height of students (cm)</button>
+          <button class="btn mcq-btn" data-letter="C">Time taken to run 100 m</button>
+          <button class="btn mcq-btn" data-letter="D">Mass of apples (grams)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Averages: Mean, Median, Mode and Range
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 8</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>We use three main averages to summarise data: the <strong>mean</strong>, <strong>median</strong>, and <strong>mode</strong>. The <strong>range</strong> is not an average — it tells you how spread out the data is.</p>
+      <p><em>Example:</em> Test scores: <strong>4, 4, 6, 8, 10</strong> (put in order first).</p>
+      <ul style="line-height:1.9;">
+        <li><strong>Mean</strong> = (4 + 4 + 6 + 8 + 10) ÷ 5 = <strong>6.4</strong></li>
+        <li><strong>Median</strong> = middle value = <strong>6</strong></li>
+        <li><strong>Mode</strong> = most common = <strong>4</strong></li>
+        <li><strong>Range</strong> = highest − lowest = 10 − 4 = <strong>6</strong></li>
+      </ul>
+      <table style="width:100%; border-collapse:collapse; margin:14px 0;">
+        <thead><tr><th style="border-bottom:1px solid #ddd; text-align:left; padding:8px;">Measure</th><th style="border-bottom:1px solid #ddd; text-align:left; padding:8px;">How to find it</th></tr></thead>
+        <tbody>
+          <tr><td style="padding:8px;">Mean</td><td style="padding:8px;">Add all values and divide by the number of values.</td></tr>
+          <tr><td style="padding:8px;">Median</td><td style="padding:8px;">Put values in order and find the middle value.</td></tr>
+          <tr><td style="padding:8px;">Mode</td><td style="padding:8px;">Find the value that occurs most often.</td></tr>
+          <tr><td style="padding:8px;">Range</td><td style="padding:8px;">Highest value minus lowest value.</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Common mistake:</strong> Always put data in order before you find the median or range.</p>
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="420" height="160" viewBox="0 0 420 160" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <defs><marker id="arr-s2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><polygon points="0 0, 8 4, 0 8" fill="#01696f"/></marker></defs>
+          <text x="210" y="20" text-anchor="middle" font-size="15" font-weight="600">Data: 4, 4, 6, 8, 10 (ordered)</text>
+          <line x1="50" y1="100" x2="370" y2="100" stroke="#555"/>
+          <circle cx="78" cy="100" r="7" fill="#397a2f" stroke="#1a4d1a" stroke-width="2"/><circle cx="108" cy="100" r="7" fill="#397a2f" stroke="#1a4d1a" stroke-width="2"/>
+          <circle cx="200" cy="100" r="6" fill="#01696f"/>
+          <circle cx="272" cy="100" r="6" fill="#01696f"/><circle cx="342" cy="100" r="6" fill="#01696f"/>
+          <text x="93" y="128" text-anchor="middle" font-size="14" fill="#397a2f">mode 4</text>
+          <line x1="200" y1="55" x2="200" y2="100" stroke="#a13544" stroke-dasharray="4,3"/>
+          <text x="200" y="48" text-anchor="middle" font-size="14" fill="#a13544">median 6</text>
+          <line x1="78" y1="72" x2="342" y2="72" stroke="#01696f" stroke-width="2" marker-end="url(#arr-s2)"/>
+          <text x="210" y="66" text-anchor="middle" font-size="14" fill="#01696f">range = max − min</text>
+        </svg>
+      </div>
+      <p style="font-size:1rem;color:var(--text-muted);">Here <strong>mode</strong> (4, most often) and <strong>median</strong> (6, middle value) differ; the <strong>range</strong> still spans smallest to largest.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">For the data <strong>4, 4, 6, 8, 10</strong> (in order), what is the <strong>median</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">4</button>
+          <button class="btn mcq-btn" data-letter="B">8</button>
+          <button class="btn mcq-btn" data-letter="C">6</button>
+          <button class="btn mcq-btn" data-letter="D">6.4</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Frequency Tables
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>A <strong>frequency table</strong> shows each score (called <strong>x</strong>) and how many times it happened (<strong>frequency f</strong>).</p>
+      <p><em>Example:</em> 30 students sit a vocab test marked 1–5. Seven students score 2, eight score 3, and so on. Instead of writing all 30 scores out, we count them in a table.</p>
+      <p>The <strong>fx</strong> column means “frequency × score” on each row. If 7 students scored 2, that row adds <strong>7 × 2 = 14</strong> to the total of all marks.</p>
+      <p>Add every fx value: <strong>99</strong>. Add every frequency: <strong>30</strong> students. Mean mark = <strong>99 ÷ 30 = 3.3</strong>.</p>
+      <p style="text-align:center;">\(\displaystyle\text{Mean}=\frac{\sum fx}{\sum f}\)</p>
+      <p>Here \(\sum f\) is the total number of students (add the frequencies). \(\sum fx\) is the sum of the \(fx\) column. Then divide: \(\text{mean}=99\div30=3.3\) marks (one decimal place is enough for this context).</p>
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="440" height="268" viewBox="0 0 440 268" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <text x="220" y="22" text-anchor="middle" font-size="15" font-weight="600">Same example in table form</text>
+          <text x="220" y="38" text-anchor="middle" font-size="14" fill="#555">Vocab test · marks 1–5 · 30 students</text>
+          <rect x="55" y="48" width="330" height="198" fill="#ffffff" stroke="#555" stroke-width="1"/>
+          <line x1="165" y1="48" x2="165" y2="246" stroke="#ccc"/><line x1="265" y1="48" x2="265" y2="246" stroke="#ccc"/>
+          <line x1="55" y1="78" x2="385" y2="78" stroke="#ccc"/>
+          <line x1="55" y1="214" x2="385" y2="214" stroke="#555" stroke-width="1.5"/>
+          <text x="110" y="70" text-anchor="middle" font-size="14" font-weight="600">Mark (x)</text>
+          <text x="215" y="70" text-anchor="middle" font-size="14" font-weight="600">Frequency (f)</text>
+          <text x="325" y="70" text-anchor="middle" font-size="14" font-weight="600">f × x</text>
+          <text x="110" y="104" text-anchor="middle" font-size="14">1</text><text x="215" y="104" text-anchor="middle" font-size="14">2</text><text x="325" y="104" text-anchor="middle" font-size="14">2</text>
+          <text x="110" y="132" text-anchor="middle" font-size="14">2</text><text x="215" y="132" text-anchor="middle" font-size="14">7</text><text x="325" y="132" text-anchor="middle" font-size="14">14</text>
+          <text x="110" y="160" text-anchor="middle" font-size="14">3</text><text x="215" y="160" text-anchor="middle" font-size="14">8</text><text x="325" y="160" text-anchor="middle" font-size="14">24</text>
+          <text x="110" y="188" text-anchor="middle" font-size="14">4</text><text x="215" y="188" text-anchor="middle" font-size="14">6</text><text x="325" y="188" text-anchor="middle" font-size="14">24</text>
+          <text x="110" y="216" text-anchor="middle" font-size="14">5</text><text x="215" y="216" text-anchor="middle" font-size="14">7</text><text x="325" y="216" text-anchor="middle" font-size="14">35</text>
+          <text x="110" y="242" text-anchor="middle" font-size="14" font-weight="600">Totals</text>
+          <text x="215" y="242" text-anchor="middle" font-size="14" font-weight="600">30</text>
+          <text x="325" y="242" text-anchor="middle" font-size="14" font-weight="600">99</text>
+          <text x="220" y="262" text-anchor="middle" font-size="14" fill="#01696f" font-weight="600">Mean = 99 ÷ 30 = 3.3</text>
+        </svg>
+      </div>
+      <p style="font-size:1rem;color:var(--text-muted);"><strong>Exam routine:</strong> copy the table carefully, check \(\sum f\) matches the story (here, 30 students), add \(fx\) twice if needed, then \(\sum fx\div\sum f\). If \(x\) is “number of something,” the mean has the same kind of unit (here, “marks”).</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">From the table, \(\sum fx = 99\) and \(\sum f = 30\). What is the mean mark?</p>
+          <button class="btn mcq-btn" data-letter="A">2.3</button>
+          <button class="btn mcq-btn" data-letter="B">3.3</button>
+          <button class="btn mcq-btn" data-letter="C">30</button>
+          <button class="btn mcq-btn" data-letter="D">99</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Grouped Frequency Tables
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>Sometimes data is grouped into intervals (e.g. 10–20 cm) because there are too many different values to list one by one.</p>
+      <p><em>Example:</em> For the class <strong>10 &lt; x ≤ 20</strong>, the numbers go from just above 10 up to 20. The middle is <strong>(10 + 20) ÷ 2 = 15</strong>. We call 15 the <strong>midpoint</strong>.</p>
+      <p>To estimate the mean: multiply each midpoint by its frequency, add them up, then divide by total frequency — same idea as \(\sum fx \div \sum f\), but using midpoints instead of exact scores.</p>
+      <p><strong>Exam tip:</strong> This mean is only an <strong>estimate</strong> — we do not know the exact values inside each group.</p>
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="420" height="150" viewBox="0 0 420 150" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <text x="210" y="20" text-anchor="middle" font-size="15" font-weight="600">Class interval and midpoint</text>
+          <rect x="80" y="55" width="100" height="70" fill="#01696f" opacity="0.25" stroke="#01696f"/>
+          <rect x="180" y="55" width="140" height="70" fill="#01696f" opacity="0.12" stroke="#01696f" stroke-dasharray="4,3"/>
+          <text x="130" y="48" text-anchor="middle" font-size="14">10 &lt; x ≤ 20</text>
+          <line x1="130" y1="125" x2="130" y2="138" stroke="#a13544" stroke-width="2"/>
+          <text x="130" y="148" text-anchor="middle" font-size="14" fill="#a13544" font-weight="600">midpoint 15</text>
+          <text x="250" y="88" text-anchor="middle" font-size="14" fill="#555"><tspan x="250" dy="0">Use midpoint × f</tspan><tspan x="250" dy="12">for each row</tspan></text>
+        </svg>
+      </div>
+      <p style="font-size:1rem;color:var(--text-muted);">The midpoint sits in the centre of each class; we pretend every value in that class equals the midpoint when estimating the mean.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">What is the midpoint of the class <strong>10 &lt; x ≤ 20</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">10</button>
+          <button class="btn mcq-btn" data-letter="B">20</button>
+          <button class="btn mcq-btn" data-letter="C">15</button>
+          <button class="btn mcq-btn" data-letter="D">30</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Charts and Diagrams
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>Different charts answer different questions. Pick the one that fits your data.</p>
+      <ul style="line-height:1.9;">
+        <li><strong>Bar chart</strong> — compare separate categories (favourite subjects, colours)</li>
+        <li><strong>Pie chart</strong> — show parts of a whole (what fraction chose each option)</li>
+        <li><strong>Line graph</strong> — show how something changes over time (temperature each hour)</li>
+      </ul>
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="420" height="170" viewBox="0 0 420 170" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <line x1="55" y1="135" x2="365" y2="135" stroke="#555"/><line x1="55" y1="25" x2="55" y2="135" stroke="#555"/>
+          <rect x="90" y="75" width="40" height="60" fill="#01696f"/><rect x="170" y="45" width="40" height="90" fill="#a13544"/><rect x="250" y="95" width="40" height="40" fill="#397a2f"/>
+          <text x="110" y="153" text-anchor="middle" font-size="14">A</text><text x="190" y="153" text-anchor="middle" font-size="14">B</text><text x="270" y="153" text-anchor="middle" font-size="14">C</text>
+          <text x="210" y="18" text-anchor="middle" font-size="15">Bar charts compare categories</text>
+        </svg>
+      </div>
+      <p><strong>Common mistake:</strong> Bar charts should have gaps between bars because the categories are separate. Histograms use joined bars because they represent continuous grouped data.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">Which chart is best for comparing separate categories like favourite sports?</p>
+          <button class="btn mcq-btn" data-letter="A">Bar chart</button>
+          <button class="btn mcq-btn" data-letter="B">Line graph</button>
+          <button class="btn mcq-btn" data-letter="C">Scatter graph</button>
+          <button class="btn mcq-btn" data-letter="D">Histogram</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Scatter Graphs and Correlation
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>A <strong>scatter graph</strong> plots two measurements for each person or object — for example, hours of revision and test score.</p>
+      <p><em>What to look for:</em> If points slope <strong>upwards</strong> as you go right, we say there is <strong>positive correlation</strong> (more of one tends to go with more of the other). If they slope <strong>downwards</strong>, it is <strong>negative correlation</strong>.</p>
+      <p>You can draw a <strong>line of best fit</strong> through the middle of the points to make estimates.</p>
+      <ul style="line-height:1.9;">
+        <li><strong>Interpolation</strong> — estimating <em>inside</em> your data range (usually OK)</li>
+        <li><strong>Extrapolation</strong> — estimating <em>outside</em> your data range (less reliable)</li>
+      </ul>
+      <p><strong>Exam tip:</strong> Correlation does not always mean one thing <em>causes</em> the other. Ice cream sales and sunburn might both rise in summer — sunshine affects both.</p>
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="420" height="175" viewBox="0 0 420 175" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <text x="210" y="20" text-anchor="middle" font-size="15" font-weight="600">Positive correlation + line of best fit</text>
+          <line x1="55" y1="145" x2="365" y2="145" stroke="#555"/><line x1="55" y1="40" x2="55" y2="145" stroke="#555"/>
+          <circle cx="95" cy="120" r="5" fill="#01696f"/><circle cx="130" cy="105" r="5" fill="#01696f"/><circle cx="165" cy="95" r="5" fill="#01696f"/>
+          <circle cx="210" cy="78" r="5" fill="#01696f"/><circle cx="255" cy="62" r="5" fill="#01696f"/><circle cx="300" cy="50" r="5" fill="#01696f"/>
+          <line x1="75" y1="135" x2="320" y2="42" stroke="#a13544" stroke-width="2" stroke-dasharray="6,4"/>
+          <text x="360" y="48" font-size="14" fill="#a13544">LOBF</text>
+          <text x="210" y="168" text-anchor="middle" font-size="14" fill="#555">x →</text>
+          <text x="18" y="95" font-size="14" fill="#555" transform="rotate(-90 18,95)">y →</text>
+        </svg>
+      </div>
+      <p style="font-size:1rem;color:var(--text-muted);">Points sloping upward → <strong>positive</strong> correlation; a line of best fit summarises the trend for estimates.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">On a scatter graph, points rise from left to right. What type of correlation is this?</p>
+          <button class="btn mcq-btn" data-letter="A">Negative</button>
+          <button class="btn mcq-btn" data-letter="B">Positive</button>
+          <button class="btn mcq-btn" data-letter="C">No correlation</button>
+          <button class="btn mcq-btn" data-letter="D">Causation</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Cumulative Frequency
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Higher Skill</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p><strong>Cumulative frequency</strong> is a running total. Each row adds that group’s frequency to everything above it.</p>
+      <p><em>Example:</em> In the table below, 4 students scored 10–20, then 9 more scored 20–30, so after those two groups the cumulative frequency is <strong>4 + 9 = 13</strong>.</p>
+      <p>Plot points at the <strong>upper class boundary</strong> (top end of each interval) and join them with a smooth S-shaped curve. The curve starts at 0 and ends at the total number of people (<strong>n = 40</strong> here).</p>
+      <p>From the curve you can estimate:</p>
+      <ul>
+        <li><strong>Median</strong> — read across from \(\frac{n}{2}\) on the cumulative frequency axis.</li>
+        <li><strong>Lower quartile (Q1)</strong> — read across from \(\frac{n}{4}\).</li>
+        <li><strong>Upper quartile (Q3)</strong> — read across from \(\frac{3n}{4}\).</li>
+        <li><strong>Interquartile range</strong> — \(IQR = Q_3 - Q_1\), the spread of the middle 50%.</li>
+      </ul>
+      <p><strong>Worked example:</strong> 40 students sit a test. Their scores (out of 60) are recorded below.</p>
+      <table style="width:100%; border-collapse:collapse; margin:14px 0; font-size:0.95rem;">
+        <thead><tr style="background:var(--color-surface-2);">
+          <th style="border:1px solid #ddd; padding:7px 10px; text-align:left;">Score</th>
+          <th style="border:1px solid #ddd; padding:7px 10px; text-align:center;">Frequency</th>
+          <th style="border:1px solid #ddd; padding:7px 10px; text-align:center;">Cumulative frequency</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="border:1px solid #ddd; padding:7px 10px;">\(10 &lt; s \leq 20\)</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center;">4</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center;">4</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:7px 10px;">\(20 &lt; s \leq 30\)</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center;">9</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center;">13</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:7px 10px;">\(30 &lt; s \leq 40\)</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center;">15</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center;">28</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:7px 10px;">\(40 &lt; s \leq 50\)</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center;">10</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center;">38</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:7px 10px;">\(50 &lt; s \leq 60\)</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center;">2</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center; font-weight:600;">40</td></tr>
+        </tbody>
+      </table>
+      <p>With \(n = 40\): read at <strong>20</strong> for the median, at <strong>10</strong> for Q1, and at <strong>30</strong> for Q3. The dashed lines on the diagram show exactly how to do this.</p>
+      <div style="text-align:center;margin:16px 0;">
+        <!-- x scale: score 10→60 maps to px 65→440 (7.5px per unit). y scale: CF 0→40 maps to px 195→40 (3.875px per unit). -->
+        <svg width="500" height="240" viewBox="0 0 500 240" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <text x="252" y="22" text-anchor="middle" font-size="15" font-weight="600">Cumulative frequency curve — test scores, n = 40</text>
+          <!-- axes -->
+          <line x1="65" y1="195" x2="445" y2="195" stroke="#555" stroke-width="1.5"/>
+          <line x1="65" y1="40"  x2="65"  y2="195" stroke="#555" stroke-width="1.5"/>
+          <!-- x-axis ticks and labels -->
+          <line x1="65"  y1="195" x2="65"  y2="200" stroke="#555"/><text x="65"  y="213" text-anchor="middle" font-size="14" fill="#555">10</text>
+          <line x1="140" y1="195" x2="140" y2="200" stroke="#555"/><text x="140" y="213" text-anchor="middle" font-size="14" fill="#555">20</text>
+          <line x1="215" y1="195" x2="215" y2="200" stroke="#555"/><text x="215" y="213" text-anchor="middle" font-size="14" fill="#555">30</text>
+          <line x1="290" y1="195" x2="290" y2="200" stroke="#555"/><text x="290" y="213" text-anchor="middle" font-size="14" fill="#555">40</text>
+          <line x1="365" y1="195" x2="365" y2="200" stroke="#555"/><text x="365" y="213" text-anchor="middle" font-size="14" fill="#555">50</text>
+          <line x1="440" y1="195" x2="440" y2="200" stroke="#555"/><text x="440" y="213" text-anchor="middle" font-size="14" fill="#555">60</text>
+          <text x="252" y="228" text-anchor="middle" font-size="14" fill="#555">Score</text>
+          <!-- y-axis ticks and labels -->
+          <line x1="60" y1="195" x2="65" y2="195" stroke="#555"/><text x="55" y="199" text-anchor="end" font-size="14" fill="#555">0</text>
+          <line x1="60" y1="156" x2="65" y2="156" stroke="#555"/><text x="55" y="160" text-anchor="end" font-size="14" fill="#555">10</text>
+          <line x1="60" y1="118" x2="65" y2="118" stroke="#555"/><text x="55" y="122" text-anchor="end" font-size="14" fill="#555">20</text>
+          <line x1="60" y1="79"  x2="65" y2="79"  stroke="#555"/><text x="55" y="83"  text-anchor="end" font-size="14" fill="#555">30</text>
+          <line x1="60" y1="40"  x2="65" y2="40"  stroke="#555"/><text x="55" y="44"  text-anchor="end" font-size="14" fill="#555">40</text>
+          <text x="18" y="118" text-anchor="middle" font-size="14" fill="#555" transform="rotate(-90 18,118)">Cumulative frequency</text>
+          <!-- cumulative frequency curve: points at (10,0),(20,4),(30,13),(40,28),(50,38),(60,40) -->
+          <polyline points="65,195 140,180 215,145 290,87 365,48 440,40" fill="none" stroke="#01696f" stroke-width="2.5" stroke-linejoin="round"/>
+          <!-- data points on curve -->
+          <circle cx="65"  cy="195" r="4" fill="#01696f"/>
+          <circle cx="140" cy="180" r="4" fill="#01696f"/>
+          <circle cx="215" cy="145" r="4" fill="#01696f"/>
+          <circle cx="290" cy="87"  r="4" fill="#01696f"/>
+          <circle cx="365" cy="48"  r="4" fill="#01696f"/>
+          <circle cx="440" cy="40"  r="4" fill="#01696f"/>
+          <!-- Q1 guide: cf=10 → x≈27 → px 193, y=156 -->
+          <line x1="65" y1="156" x2="193" y2="156" stroke="#397a2f" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <line x1="193" y1="156" x2="193" y2="195" stroke="#397a2f" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <circle cx="193" cy="156" r="4" fill="#397a2f"/>
+          <text x="193" y="210" text-anchor="middle" font-size="9" fill="#397a2f" font-weight="600">Q1≈27</text>
+          <!-- Median guide: cf=20 → x≈35 → px 253, y=118 -->
+          <line x1="65" y1="118" x2="253" y2="118" stroke="#a13544" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <line x1="253" y1="118" x2="253" y2="195" stroke="#a13544" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <circle cx="253" cy="118" r="4" fill="#a13544"/>
+          <text x="253" y="210" text-anchor="middle" font-size="9" fill="#a13544" font-weight="600">Q2≈35</text>
+          <!-- Q3 guide: cf=30 → x=42 → px 305, y=79 -->
+          <line x1="65" y1="79" x2="305" y2="79" stroke="#7a4f9a" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <line x1="305" y1="79" x2="305" y2="195" stroke="#7a4f9a" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <circle cx="305" cy="79" r="4" fill="#7a4f9a"/>
+          <text x="305" y="210" text-anchor="middle" font-size="9" fill="#7a4f9a" font-weight="600">Q3=42</text>
+          <!-- legend key -->
+          <line x1="330" y1="55" x2="350" y2="55" stroke="#397a2f" stroke-dasharray="5,3"/><text x="355" y="59" font-size="9" fill="#397a2f">Q1 (at n/4=10)</text>
+          <line x1="330" y1="70" x2="350" y2="70" stroke="#a13544" stroke-dasharray="5,3"/><text x="355" y="74" font-size="9" fill="#a13544">Q2 (at n/2=20)</text>
+          <line x1="330" y1="85" x2="350" y2="85" stroke="#7a4f9a" stroke-dasharray="5,3"/><text x="355" y="89" font-size="9" fill="#7a4f9a">Q3 (at 3n/4=30)</text>
+        </svg>
+      </div>
+      <p style="font-size:1rem;color:var(--text-muted);"><strong>Exam routine:</strong> draw a horizontal dashed line across from the target cumulative frequency, then drop a vertical line down to the score axis and read off the value. Always show these construction lines in your working.</p>
+      <p><strong>Common mistake:</strong> Plot points at the <em>upper</em> class boundary — not the midpoint. The curve should always start at zero.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">40 students sit a test (\(n = 40\)). To find the <strong>median</strong> from a cumulative frequency curve, you read across at cumulative frequency …</p>
+          <button class="btn mcq-btn" data-letter="A">10</button>
+          <button class="btn mcq-btn" data-letter="B">20</button>
+          <button class="btn mcq-btn" data-letter="C">30</button>
+          <button class="btn mcq-btn" data-letter="D">40</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+      Box Plots
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 11</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Higher Skill</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>A <strong>box plot</strong> (box-and-whisker diagram) shows five key values at a glance — the <strong>five-number summary</strong>:</p>
+      <ul>
+        <li><strong>Minimum</strong> — the smallest value (or lower end of the data).</li>
+        <li><strong>Lower quartile Q1</strong> — 25% of data falls below this.</li>
+        <li><strong>Median Q2</strong> — the middle value; 50% below, 50% above.</li>
+        <li><strong>Upper quartile Q3</strong> — 75% of data falls below this.</li>
+        <li><strong>Maximum</strong> — the largest value.</li>
+      </ul>
+      <p>The <strong>interquartile range</strong> \(IQR = Q_3 - Q_1\) measures the spread of the middle 50% of the data. A larger IQR means the data is more spread out in the middle.</p>
+      <p><strong>Continuing the example from section 7</strong> (40 students' test scores, reading from the CF curve):</p>
+      <table style="width:100%; border-collapse:collapse; margin:14px 0; font-size:0.95rem;">
+        <thead><tr style="background:var(--color-surface-2);">
+          <th style="border:1px solid #ddd; padding:7px 10px;">Value</th>
+          <th style="border:1px solid #ddd; padding:7px 10px; text-align:center;">How found</th>
+          <th style="border:1px solid #ddd; padding:7px 10px; text-align:center;">Score</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="border:1px solid #ddd; padding:7px 10px;">Minimum</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center;">Lower boundary of first class</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center;">10</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:7px 10px; color:#397a2f; font-weight:600;">Q1</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center;">Read at \(n/4 = 10\)</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center; color:#397a2f;">≈ 27</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:7px 10px; color:#a13544; font-weight:600;">Median Q2</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center;">Read at \(n/2 = 20\)</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center; color:#a13544;">≈ 35</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:7px 10px; color:#7a4f9a; font-weight:600;">Q3</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center;">Read at \(3n/4 = 30\)</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center; color:#7a4f9a;">= 42</td></tr>
+          <tr><td style="border:1px solid #ddd; padding:7px 10px;">Maximum</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center;">Upper boundary of last class</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center;">60</td></tr>
+          <tr style="background:var(--color-surface-2);"><td style="border:1px solid #ddd; padding:7px 10px; font-weight:600;">IQR</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center;">\(Q_3 - Q_1 = 42 - 27\)</td><td style="border:1px solid #ddd; padding:7px 10px; text-align:center; font-weight:600;">= 15</td></tr>
+        </tbody>
+      </table>
+      <div style="text-align:center;margin:16px 0;">
+        <!-- Same x scale: score 10→60 maps to px 65→440 (7.5px/unit). Box centre y=80, box top=58, bottom=102. -->
+        <svg width="500" height="165" viewBox="0 0 500 165" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <text x="252" y="20" text-anchor="middle" font-size="15" font-weight="600">Box plot — test scores of 40 students</text>
+          <!-- x-axis -->
+          <line x1="65" y1="118" x2="445" y2="118" stroke="#555" stroke-width="1.5"/>
+          <line x1="65"  y1="118" x2="65"  y2="123" stroke="#555"/><text x="65"  y="134" text-anchor="middle" font-size="14" fill="#555">10</text>
+          <line x1="140" y1="118" x2="140" y2="123" stroke="#555"/><text x="140" y="134" text-anchor="middle" font-size="14" fill="#555">20</text>
+          <line x1="215" y1="118" x2="215" y2="123" stroke="#555"/><text x="215" y="134" text-anchor="middle" font-size="14" fill="#555">30</text>
+          <line x1="290" y1="118" x2="290" y2="123" stroke="#555"/><text x="290" y="134" text-anchor="middle" font-size="14" fill="#555">40</text>
+          <line x1="365" y1="118" x2="365" y2="123" stroke="#555"/><text x="365" y="134" text-anchor="middle" font-size="14" fill="#555">50</text>
+          <line x1="440" y1="118" x2="440" y2="123" stroke="#555"/><text x="440" y="134" text-anchor="middle" font-size="14" fill="#555">60</text>
+          <text x="252" y="150" text-anchor="middle" font-size="14" fill="#555">Score</text>
+          <!-- whiskers: min(10)→px65  max(60)→px440  at y=80 -->
+          <line x1="65"  y1="80" x2="193" y2="80" stroke="#555" stroke-width="2"/>
+          <line x1="305" y1="80" x2="440" y2="80" stroke="#555" stroke-width="2"/>
+          <!-- whisker end caps -->
+          <line x1="65"  y1="65" x2="65"  y2="95" stroke="#555" stroke-width="2"/>
+          <line x1="440" y1="65" x2="440" y2="95" stroke="#555" stroke-width="2"/>
+          <!-- box: Q1(27)→px193  Q3(42)→px305  top=58 bottom=102 -->
+          <rect x="193" y="58" width="112" height="44" fill="#01696f" fill-opacity="0.18" stroke="#01696f" stroke-width="2"/>
+          <!-- median line: Q2(35)→px253 -->
+          <line x1="253" y1="58" x2="253" y2="102" stroke="#a13544" stroke-width="3"/>
+          <!-- value labels above the diagram -->
+          <text x="65"  y="52" text-anchor="middle" font-size="9" fill="#555">Min</text>
+          <text x="65"  y="42" text-anchor="middle" font-size="14" font-weight="600" fill="#555">10</text>
+          <text x="193" y="52" text-anchor="middle" font-size="9" fill="#397a2f">Q1</text>
+          <text x="193" y="42" text-anchor="middle" font-size="14" font-weight="600" fill="#397a2f">27</text>
+          <text x="253" y="52" text-anchor="middle" font-size="9" fill="#a13544">Q2</text>
+          <text x="253" y="42" text-anchor="middle" font-size="14" font-weight="600" fill="#a13544">35</text>
+          <text x="305" y="52" text-anchor="middle" font-size="9" fill="#7a4f9a">Q3</text>
+          <text x="305" y="42" text-anchor="middle" font-size="14" font-weight="600" fill="#7a4f9a">42</text>
+          <text x="440" y="52" text-anchor="middle" font-size="9" fill="#555">Max</text>
+          <text x="440" y="42" text-anchor="middle" font-size="14" font-weight="600" fill="#555">60</text>
+          <!-- IQR brace label -->
+          <line x1="193" y1="110" x2="305" y2="110" stroke="#01696f" stroke-width="1.5" stroke-dasharray="3,2"/>
+          <text x="249" y="122" text-anchor="middle" font-size="9" fill="#01696f">IQR = 15</text>
+        </svg>
+      </div>
+      <p style="font-size:1rem;color:var(--text-muted);">The <strong>box</strong> covers the middle 50% of the data (Q1 to Q3); the <strong>whiskers</strong> extend to the minimum and maximum; the <strong>red line</strong> is the median. A box sitting closer to one end shows <em>skewness</em>.</p>
+      <p><strong>Comparing two box plots:</strong> compare the medians first (which group scored higher on average?), then compare the IQRs or overall ranges (which group was more consistent?).</p>
+      <p><strong>Common mistake:</strong> The whiskers end at the minimum and maximum of the data — not at Q1 and Q3. Make sure your box plot matches the scale of the axis underneath.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">From section 7, Q1 ≈ 27 and Q3 = 42. What is the <strong>IQR</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">69</button>
+          <button class="btn mcq-btn" data-letter="B">27</button>
+          <button class="btn mcq-btn" data-letter="C">15</button>
+          <button class="btn mcq-btn" data-letter="D">42</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">9</span>
+      Histograms
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 11</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Higher Skill</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <p>A <strong>histogram</strong> is for continuous grouped data, especially when class widths are not all the same. The <strong>area</strong> of each bar shows the frequency — not just the height.</p>
+      <p><em>Example:</em> A class has frequency <strong>24</strong> and class width <strong>6</strong>.</p>
+      <ul style="line-height:1.9;">
+        <li>Frequency density = 24 ÷ 6 = <strong>4</strong></li>
+        <li>Draw the bar with <strong>height 4</strong> (on a frequency-density axis)</li>
+      </ul>
+      <p style="text-align:center;">\(\text{Frequency density}=\frac{\text{frequency}}{\text{class width}}\)</p>
+      <p>If a class has frequency 24 and class width 6, the frequency density is \(24\div6=4\). The bar height should be 4.</p>
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="420" height="185" viewBox="0 0 420 185" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <text x="210" y="20" text-anchor="middle" font-size="15" font-weight="600">Unequal class widths: bar height = frequency density</text>
+          <line x1="55" y1="150" x2="365" y2="150" stroke="#555"/><line x1="55" y1="35" x2="55" y2="150" stroke="#555"/>
+          <rect x="65" y="70" width="80" height="80" fill="#01696f" opacity="0.75"/>
+          <rect x="155" y="100" width="50" height="50" fill="#01696f" opacity="0.75"/>
+          <rect x="215" y="85" width="120" height="65" fill="#01696f" opacity="0.75"/>
+          <text x="105" y="170" text-anchor="middle" font-size="14" fill="#555">width 10</text>
+          <text x="180" y="170" text-anchor="middle" font-size="14" fill="#555">width 5</text>
+          <text x="275" y="170" text-anchor="middle" font-size="14" fill="#555">width 12</text>
+          <text x="20" y="95" font-size="14" fill="#555" transform="rotate(-90 20,95)">FD</text>
+          <text x="210" y="32" text-anchor="middle" font-size="14" fill="#a13544">Area of each bar ∝ frequency</text>
+        </svg>
+      </div>
+      <p style="font-size:1rem;color:var(--text-muted);">Wider classes need a shorter bar for the same frequency; <strong>frequency ÷ class width</strong> keeps the bar area honest.</p>
+      <p><strong>Common mistake:</strong> In a histogram, the y-axis is frequency density, not frequency, unless all class widths are equal and the question explicitly allows frequency.</p>
+
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Frequency = 24, class width = 6. What is the <strong>frequency density</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">30</button>
+          <button class="btn mcq-btn" data-letter="B">4</button>
+          <button class="btn mcq-btn" data-letter="C">144</button>
+          <button class="btn mcq-btn" data-letter="D">0.25</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- Revision card (auto-added) -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+      Statistics — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Know when to use the mean, median or mode — and which chart fits the data.</p>
+
+      <div style="text-align:center;margin:16px 0;">
+              <div class="revision-card-wrap">
+        <svg class="revision-card-svg lesson-quick-ref" width="100%" viewBox="0 0 760 280" style="max-width:760px;width:100%;height:auto;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:10px;" role="img" aria-label="Statistics revision card">
+          <text x="380" y="28" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Statistics — Revision Card</text>
+          <line x1="20" y1="38" x2="740" y2="38" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="20" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Averages</text>
+          <text x="20" y="78" font-size="14" fill="#28251d">Mean: total ÷ count</text>
+          <text x="20" y="98" font-size="14" fill="#28251d">Median: middle value (order first)</text>
+          <text x="20" y="118" font-size="14" fill="#28251d">Mode: most common</text>
+          <text x="20" y="138" font-size="14" fill="#28251d">Range = largest − smallest</text>
+          <text x="20" y="162" font-size="15" fill="#1a6fa8" font-weight="bold">Spread</text>
+          <text x="20" y="182" font-size="14" fill="#28251d">Grouped data: use midpoints</text>
+          <line x1="390" y1="48" x2="390" y2="260" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="400" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Charts</text>
+          <text x="400" y="78" font-size="14" fill="#28251d">Bar / pie: categories</text>
+          <text x="400" y="98" font-size="14" fill="#28251d">Histogram: continuous (freq density)</text>
+          <text x="400" y="118" font-size="14" fill="#28251d">Cumulative freq → median/quartiles</text>
+          <text x="400" y="138" font-size="14" fill="#28251d">Box plot: Q1, median, Q3</text>
+        </svg>
+      </div>
+      </div>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Data: 3, 5, 5, 8. What is the median?</p>
+          <button class="btn mcq-btn" data-letter="A">5</button>
+          <button class="btn mcq-btn" data-letter="B">5.5</button>
+          <button class="btn mcq-btn" data-letter="C">4</button>
+          <button class="btn mcq-btn" data-letter="D">8</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='statistics') }}" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Revision</a>
+      </div>
+    </div>
+  </details>
+
+</div>
+
+  <!-- Practice link -->
+  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='statistics') }}"
+       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+      Start Practice Quiz
+    </a>
+  </div>
+
+{% endblock %}

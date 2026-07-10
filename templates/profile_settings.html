@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Privacy settings – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+
+<div class="lesson-hero">
+    <h1>Privacy settings</h1>
+    <p class="hero-sub">Control what appears on your <a href="{{ public_profile_url }}">public profile</a></p>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+        <p class="{% if category == 'error' %}error{% else %}flash-success{% endif %}">{{ message }}</p>
+    {% endfor %}
+{% endwith %}
+
+{% if errors.form %}
+<p class="error">{{ errors.form }}</p>
+{% endif %}
+
+<form method="POST" class="auth-form" style="max-width:520px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <section class="section-panel" style="margin-bottom:16px;">
+        <div class="section-panel-header">Who can see your profile?</div>
+        <div class="section-panel-body">
+            <div class="form-group">
+                <label class="privacy-radio">
+                    <input type="radio" name="profile_visibility" value="public"
+                           {% if settings.profile_visibility == 'public' %}checked{% endif %}>
+                    <span><strong>Public</strong> — anyone can view</span>
+                </label>
+                <label class="privacy-radio">
+                    <input type="radio" name="profile_visibility" value="followers_only"
+                           {% if settings.profile_visibility == 'followers_only' %}checked{% endif %}>
+                    <span><strong>Followers only</strong> — only people who follow you</span>
+                </label>
+                <label class="privacy-radio">
+                    <input type="radio" name="profile_visibility" value="private"
+                           {% if settings.profile_visibility == 'private' %}checked{% endif %}>
+                    <span><strong>Private</strong> — hidden from everyone</span>
+                </label>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-panel" style="margin-bottom:16px;">
+        <div class="section-panel-header">What to show</div>
+        <div class="section-panel-body">
+            <label class="privacy-check">
+                <input type="checkbox" name="show_member_since" value="1"
+                       {% if settings.show_member_since %}checked{% endif %}>
+                Member since date
+            </label>
+            <label class="privacy-check">
+                <input type="checkbox" name="show_last_topic" value="1"
+                       {% if settings.show_last_topic %}checked{% endif %}>
+                Last topic opened
+            </label>
+            <label class="privacy-check">
+                <input type="checkbox" name="show_last_activity" value="1"
+                       {% if settings.show_last_activity %}checked{% endif %}>
+                Last question practised or quiz completed
+            </label>
+            <label class="privacy-check">
+                <input type="checkbox" name="show_lesson_progress" value="1"
+                       {% if settings.show_lesson_progress %}checked{% endif %}>
+                Lesson progress summary
+            </label>
+            <label class="privacy-check">
+                <input type="checkbox" name="show_quiz_stats" value="1"
+                       {% if settings.show_quiz_stats %}checked{% endif %}>
+                Recent quiz scores
+            </label>
+        </div>
+    </section>
+
+    <button type="submit" class="btn btn-primary">Save settings</button>
+    <a href="{{ url_for('profile') }}" class="btn btn-outline" style="margin-left:8px;">Cancel</a>
+</form>
+
+</div>
+{% endblock %}

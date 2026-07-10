@@ -1,0 +1,581 @@
+{% extends "base.html" %}
+{% block title %}Vectors – GCSE Mathematics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Vectors</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">GCSE Mathematics – Higher Tier · All Exam Boards</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+  <!-- Quick Test button -->
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='vectors') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <!-- 1. WHAT IS A VECTOR -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      What is a Vector?
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> A car travels at <strong>30 mph north</strong>. That is a vector — you know the speed <em>and</em> the direction. A bag weighing <strong>1.5 kg</strong> is not a vector — weight alone has no direction.</p>
+
+      <p>We use two types of quantity in maths:</p>
+      <ul style="line-height:1.9;">
+        <li><strong>Scalar:</strong> size only (speed without direction, mass, temperature).</li>
+        <li><strong>Vector:</strong> size <em>and</em> direction (displacement, velocity, force).</li>
+      </ul>
+
+      <p>At GCSE you will see vectors in three ways:</p>
+      <ul style="line-height:1.9;">
+        <li><strong>As a diagram:</strong> an arrow — length shows size, arrowhead shows direction.</li>
+        <li><strong>As a column vector:</strong> \(\begin{pmatrix} x \\ y \end{pmatrix}\) — top number is horizontal move, bottom is vertical move.</li>
+        <li><strong>As a letter:</strong> a bold letter or underlined letter, e.g. <strong>a</strong> or \(\underline{a}\).</li>
+      </ul>
+
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="200" height="120" viewBox="0 0 200 120" style="background:#f9f8f5; border-radius:8px;">
+          <line x1="30" y1="90" x2="160" y2="30" stroke="#01696f" stroke-width="3" marker-end="url(#arrowhead)"/>
+          <text x="90" y="70" font-size="18" fill="#01696f" font-weight="bold">a</text>
+          <defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#01696f"/></marker></defs>
+        </svg>
+        <p style="font-size:0.85em; color:var(--text-muted);">An arrow represents a vector — its length is the magnitude, the arrowhead shows direction.</p>
+      </div>
+
+      <p><strong>Same vector, different place:</strong> If you slide an arrow without turning or stretching it, it is still the same vector. Two vectors are equal when they have the same length and the same direction.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Which of these is a <strong>vector</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">Mass of 2 kg</button>
+          <button class="btn mcq-btn" data-letter="B">Temperature of 20°C</button>
+          <button class="btn mcq-btn" data-letter="C">Walk 5 m east</button>
+          <button class="btn mcq-btn" data-letter="D">Time of 3 hours</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 2. COLUMN VECTORS -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Column Vectors
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> \(\begin{pmatrix} 3 \\ 2 \end{pmatrix}\) means <strong>move 3 right</strong> and <strong>move 2 up</strong>.</p>
+
+      <p>A column vector looks like this:</p>
+      <p style="text-align:center;">\(\begin{pmatrix} 3 \\ 2 \end{pmatrix}\)</p>
+
+      <ul style="line-height:1.9;">
+        <li><strong>Top number (x):</strong> horizontal move — positive = right, negative = left.</li>
+        <li><strong>Bottom number (y):</strong> vertical move — positive = up, negative = down.</li>
+      </ul>
+
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="240" height="160" viewBox="0 0 240 160" style="background:#f9f8f5; border-radius:8px;">
+          <line x1="50" y1="120" x2="200" y2="120" stroke="#ccc" stroke-width="1"/>
+          <line x1="50" y1="20" x2="50" y2="120" stroke="#ccc" stroke-width="1"/>
+          <line x1="70" y1="100" x2="160" y2="70" stroke="#a13544" stroke-width="3" marker-end="url(#arrowcol)"/>
+          <text x="100" y="80" font-size="16" fill="#a13544" font-weight="bold">\(\begin{pmatrix}3\\2\end{pmatrix}\)</text>
+          <text x="170" y="115" font-size="14" fill="#555">x</text>
+          <text x="42" y="25" font-size="14" fill="#555">y</text>
+          <defs><marker id="arrowcol" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#a13544"/></marker></defs>
+        </svg>
+        <p style="font-size:0.85em; color:var(--text-muted);">The vector starts at the dot, moves 3 right and 2 up, and the arrow shows the direction.</p>
+      </div>
+
+      <p><strong>Do not mix up vectors and coordinates.</strong> Coordinates tell you <em>where a point is</em>. Column vectors tell you <em>how to move</em>. They look similar, but they mean different things.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">What does \(\begin{pmatrix} -2 \\ 4 \end{pmatrix}\) mean?</p>
+          <button class="btn mcq-btn" data-letter="A">2 right, 4 down</button>
+          <button class="btn mcq-btn" data-letter="B">2 left, 4 up</button>
+          <button class="btn mcq-btn" data-letter="C">Point at (-2, 4) only</button>
+          <button class="btn mcq-btn" data-letter="D">2 up, 4 left</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 2a. POSITION VECTORS -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      2a. Position Vectors
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Point A is at (3, 4). From the origin O to A, we write \(\overrightarrow{OA} = \begin{pmatrix} 3 \\ 4 \end{pmatrix}\). The arrow means “from O to A”.</p>
+
+      <p>Every point on a grid has a <strong>position vector</strong>. It is the vector from the origin O to that point.</p>
+
+      <p>We use position vectors so we can describe points with vector algebra. That helps in harder geometry questions.</p>
+
+      <p><strong>Midpoint rule (with numbers):</strong> If A has position vector \(\begin{pmatrix} 2 \\ 6 \end{pmatrix}\) and B has \(\begin{pmatrix} 8 \\ 10 \end{pmatrix}\), the midpoint M has position vector \(\dfrac{1}{2}\left(\begin{pmatrix} 2 \\ 6 \end{pmatrix} + \begin{pmatrix} 8 \\ 10 \end{pmatrix}\right) = \begin{pmatrix} 5 \\ 8 \end{pmatrix}\).</p>
+      <p style="text-align:center;">\(\overrightarrow{OM} = \dfrac{\mathbf{a} + \mathbf{b}}{2}\)</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">Point P is at (5, 1). What is \(\overrightarrow{OP}\)?</p>
+          <button class="btn mcq-btn" data-letter="A">\(\begin{pmatrix} 5 \\ 1 \end{pmatrix}\)</button>
+          <button class="btn mcq-btn" data-letter="B">\(\begin{pmatrix} 1 \\ 5 \end{pmatrix}\)</button>
+          <button class="btn mcq-btn" data-letter="C">\(\begin{pmatrix} 6 \\ 6 \end{pmatrix}\)</button>
+          <button class="btn mcq-btn" data-letter="D">\(\begin{pmatrix} 4 \\ -4 \end{pmatrix}\)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 2b. DISPLACEMENT VECTORS -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      2b. Displacement Vectors
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> A is at (1, 2) and B is at (5, 7). To go from A to B:</p>
+      <p style="text-align:center;">\(\overrightarrow{AB} = \begin{pmatrix} 5-1 \\ 7-2 \end{pmatrix} = \begin{pmatrix} 4 \\ 5 \end{pmatrix}\)</p>
+      <p>That means move 4 right and 5 up.</p>
+
+      <p>A <strong>displacement vector</strong> is the move from one point to another — not where the point sits on the grid.</p>
+
+      <p>Remember: <strong>end minus start</strong>.</p>
+      <p style="text-align:center;">\(\overrightarrow{AB} = \overrightarrow{OB} - \overrightarrow{OA}\)</p>
+
+      <p>Almost every vector geometry question uses this rule at least once. Write it on your formula sheet if it helps.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">A is (2, 3), B is (6, 8). Find \(\overrightarrow{AB}\).</p>
+          <button class="btn mcq-btn" data-letter="A">\(\begin{pmatrix} 8 \\ 11 \end{pmatrix}\)</button>
+          <button class="btn mcq-btn" data-letter="B">\(\begin{pmatrix} -4 \\ -5 \end{pmatrix}\)</button>
+          <button class="btn mcq-btn" data-letter="C">\(\begin{pmatrix} 3 \\ 5 \end{pmatrix}\)</button>
+          <button class="btn mcq-btn" data-letter="D">\(\begin{pmatrix} 4 \\ 5 \end{pmatrix}\)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 3. ADDING AND SUBTRACTING VECTORS -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Adding &amp; Subtracting Vectors
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example (add):</strong></p>
+      <p style="text-align:center;">\(\begin{pmatrix} 2 \\ 3 \end{pmatrix} + \begin{pmatrix} 4 \\ -1 \end{pmatrix} = \begin{pmatrix} 2+4 \\ 3+(-1) \end{pmatrix} = \begin{pmatrix} 6 \\ 2 \end{pmatrix}\)</p>
+
+      <p><strong>Example (subtract):</strong></p>
+      <p style="text-align:center;">\(\begin{pmatrix} 5 \\ 4 \end{pmatrix} - \begin{pmatrix} 1 \\ 3 \end{pmatrix} = \begin{pmatrix} 4 \\ 1 \end{pmatrix}\)</p>
+
+      <p>With column vectors, add or subtract the top numbers together and the bottom numbers together.</p>
+
+      <p><strong>What does adding mean on a diagram?</strong> Put the tail of the second vector at the head of the first. The sum is the arrow from start to finish. This is the <strong>triangle law of addition</strong>. Order does not matter: \(\mathbf{a} + \mathbf{b} = \mathbf{b} + \mathbf{a}\).</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">\(\begin{pmatrix} 1 \\ 5 \end{pmatrix} + \begin{pmatrix} 3 \\ -2 \end{pmatrix} = \) ?</p>
+          <button class="btn mcq-btn" data-letter="A">\(\begin{pmatrix} 2 \\ 7 \end{pmatrix}\)</button>
+          <button class="btn mcq-btn" data-letter="B">\(\begin{pmatrix} 4 \\ 3 \end{pmatrix}\)</button>
+          <button class="btn mcq-btn" data-letter="C">\(\begin{pmatrix} 4 \\ 7 \end{pmatrix}\)</button>
+          <button class="btn mcq-btn" data-letter="D">\(\begin{pmatrix} -2 \\ 3 \end{pmatrix}\)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 4. SCALAR MULTIPLICATION -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Multiplying a Vector by a Scalar
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> If \(\mathbf{a} = \begin{pmatrix} 3 \\ -2 \end{pmatrix}\), then:</p>
+      <ul style="line-height:1.9;">
+        <li>\(2\mathbf{a} = \begin{pmatrix} 6 \\ -4 \end{pmatrix}\) — same direction, twice as long</li>
+        <li>\(-\mathbf{a} = \begin{pmatrix} -3 \\ 2 \end{pmatrix}\) — same length, opposite direction</li>
+        <li>\(\frac{1}{2}\mathbf{a} = \begin{pmatrix} 1.5 \\ -1 \end{pmatrix}\) — same direction, half as long</li>
+      </ul>
+
+      <p>A <strong>scalar</strong> is an ordinary number. Multiply every part of the column vector by that number.</p>
+
+      <p>If \(\mathbf{b} = k\mathbf{a}\) for some number \(k\), then \(\mathbf{b}\) is <strong>parallel</strong> to \(\mathbf{a}\). This idea comes up a lot in exam proofs.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">If \(\mathbf{v} = \begin{pmatrix} 4 \\ -6 \end{pmatrix}\), what is \(-\frac{1}{2}\mathbf{v}\)?</p>
+          <button class="btn mcq-btn" data-letter="A">\(\begin{pmatrix} -8 \\ 12 \end{pmatrix}\)</button>
+          <button class="btn mcq-btn" data-letter="B">\(\begin{pmatrix} 2 \\ -3 \end{pmatrix}\)</button>
+          <button class="btn mcq-btn" data-letter="C">\(\begin{pmatrix} -2 \\ 3 \end{pmatrix}\)</button>
+          <button class="btn mcq-btn" data-letter="D">\(\begin{pmatrix} -4 \\ 6 \end{pmatrix}\)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 5. MAGNITUDE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Magnitude of a Vector
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Find \(|\begin{pmatrix} 3 \\ 4 \end{pmatrix}|\).</p>
+      <p>Think of a right-angled triangle: horizontal 3, vertical 4, vector is the hypotenuse.</p>
+      <p style="text-align:center;">\(|\mathbf{v}| = \sqrt{3^2 + 4^2} = \sqrt{9 + 16} = \sqrt{25} = 5\)</p>
+
+      <p>The <strong>magnitude</strong> is the length of the vector. For \(\begin{pmatrix} x \\ y \end{pmatrix}\):</p>
+      <p style="text-align:center;">\(|\mathbf{v}| = \sqrt{x^2 + y^2}\)</p>
+
+      <p>We write \(|\mathbf{a}|\) as “the magnitude of \(\mathbf{a}\)”. The answer is always zero or positive — length cannot be negative.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">What is \(|\begin{pmatrix} 5 \\ 12 \end{pmatrix}|\)?</p>
+          <button class="btn mcq-btn" data-letter="A">13</button>
+          <button class="btn mcq-btn" data-letter="B">17</button>
+          <button class="btn mcq-btn" data-letter="C">7</button>
+          <button class="btn mcq-btn" data-letter="D">√17</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 6. PARALLEL AND COLLINEAR -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Parallel Vectors &amp; Collinear Points
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <h3>Parallel vectors</h3>
+      <p><strong>Example:</strong> \(\begin{pmatrix} 2 \\ 4 \end{pmatrix} = 2 \times \begin{pmatrix} 1 \\ 2 \end{pmatrix}\), so the two vectors are <strong>parallel</strong> (same direction, different length).</p>
+      <p>Two vectors are parallel when one is a scalar multiple of the other: \(\mathbf{b} = k\mathbf{a}\).</p>
+      <p>If \(k\) is negative, they are parallel but point opposite ways. For example, \(\begin{pmatrix} 2 \\ 4 \end{pmatrix}\) and \(\begin{pmatrix} -1 \\ -2 \end{pmatrix}\).</p>
+
+      <h3>Collinear points</h3>
+      <p>Points A, B, and C are <strong>collinear</strong> when they lie on one straight line. To prove it, show:</p>
+      <ol style="line-height:1.9;">
+        <li>\(\overrightarrow{AB}\) is parallel to \(\overrightarrow{BC}\) (one is a multiple of the other), <strong>and</strong></li>
+        <li>They share point B (so the lines are the same line, not just parallel).</li>
+      </ol>
+      <p>This type of question appears often on Higher papers.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Which pair of vectors is <strong>parallel</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">\(\begin{pmatrix} 1 \\ 2 \end{pmatrix}\) and \(\begin{pmatrix} 2 \\ 3 \end{pmatrix}\)</button>
+          <button class="btn mcq-btn" data-letter="B">\(\begin{pmatrix} 3 \\ 6 \end{pmatrix}\) and \(\begin{pmatrix} 1 \\ 2 \end{pmatrix}\)</button>
+          <button class="btn mcq-btn" data-letter="C">\(\begin{pmatrix} 4 \\ 1 \end{pmatrix}\) and \(\begin{pmatrix} 1 \\ 4 \end{pmatrix}\)</button>
+          <button class="btn mcq-btn" data-letter="D">\(\begin{pmatrix} 2 \\ 5 \end{pmatrix}\) and \(\begin{pmatrix} 5 \\ 2 \end{pmatrix}\)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 7. VECTOR GEOMETRY -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Vector Geometry &amp; Finding Paths
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Exam questions often give you a diagram with labelled vectors. You need to write one vector in terms of others.</p>
+
+      <p><strong>Example:</strong> Let \(\mathbf{a} = \overrightarrow{OA}\) and \(\mathbf{b} = \overrightarrow{OB}\). Find \(\overrightarrow{OM}\) where M is the midpoint of AB.</p>
+      <ul style="line-height:1.9;">
+        <li>O to A: \(\mathbf{a}\)</li>
+        <li>A to B: \(\mathbf{b} - \mathbf{a}\)</li>
+        <li>A to midpoint M: \(\frac{1}{2}(\mathbf{b} - \mathbf{a})\)</li>
+        <li>So \(\overrightarrow{OM} = \mathbf{a} + \frac{1}{2}(\mathbf{b} - \mathbf{a}) = \frac{\mathbf{a} + \mathbf{b}}{2}\)</li>
+      </ul>
+
+      <blockquote style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:10px 16px; margin:12px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <strong>Golden rule:</strong> Build a route from where you start to where you want to end, using vectors you already know.
+      </blockquote>
+
+      <p>Break the journey into small steps. Add those steps together. This method works for most vector geometry questions.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">\(\mathbf{a} = \overrightarrow{OA}\), \(\mathbf{b} = \overrightarrow{OB}\). What is \(\overrightarrow{AB}\)?</p>
+          <button class="btn mcq-btn" data-letter="A">\(\mathbf{a} + \mathbf{b}\)</button>
+          <button class="btn mcq-btn" data-letter="B">\(\mathbf{b} - \mathbf{a}\) from O only</button>
+          <button class="btn mcq-btn" data-letter="C">\(\mathbf{b} - \mathbf{a}\)</button>
+          <button class="btn mcq-btn" data-letter="D">\(\mathbf{a} - \mathbf{b}\)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 8. RATIOS ALONG A LINE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+      Using Ratios Along a Line
+      <span style="font-size:0.65rem; margin-left:8px; background:#ede8f5; color:#6a30b0; padding:2px 6px; border-radius:10px;">Higher Tier — All Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> P divides AB in the ratio AP : PB = 2 : 3. So P is \(\frac{2}{5}\) of the way from A to B (not halfway — closer to A).</p>
+      <p>If \(\mathbf{a} = \overrightarrow{OA}\) and \(\mathbf{b} = \overrightarrow{OB}\):</p>
+      <p style="text-align:center;">\(\overrightarrow{OP} = \frac{3\mathbf{a} + 2\mathbf{b}}{5}\)</p>
+
+      <p>When P divides AB in the ratio \(m:n\) (AP : PB), the <strong>section formula</strong> is:</p>
+      <p style="text-align:center;">\(\overrightarrow{OP} = \frac{n\mathbf{a} + m\mathbf{b}}{m + n}\)</p>
+
+      <p><strong>Memory tip:</strong> The number in front of \(\mathbf{a}\) is the ratio on the <em>other</em> side of P (the PB part, which is 3 when AP:PB = 2:3).</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">P divides AB with AP : PB = 1 : 3. Which is \(\overrightarrow{OP}\)?</p>
+          <button class="btn mcq-btn" data-letter="A">\(\dfrac{3\mathbf{a} + \mathbf{b}}{4}\)</button>
+          <button class="btn mcq-btn" data-letter="B">\(\dfrac{\mathbf{a} + 3\mathbf{b}}{4}\)</button>
+          <button class="btn mcq-btn" data-letter="C">\(\dfrac{\mathbf{a} + \mathbf{b}}{2}\)</button>
+          <button class="btn mcq-btn" data-letter="D">\(\dfrac{2\mathbf{a} + 2\mathbf{b}}{4}\)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 9. VECTOR PROOFS -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">9</span>
+      Vector Proofs
+      <span style="font-size:0.65rem; margin-left:8px; background:#ede8f5; color:#6a30b0; padding:2px 6px; border-radius:10px;">Higher Tier — All Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Vector proofs ask you to show a geometry fact using algebra — for example, three points lie on a line, or two lines are parallel.</p>
+
+      <p><strong>Facts you should know:</strong></p>
+      <ul style="line-height:1.9;">
+        <li><strong>Midpoint of AB:</strong> \(\frac{\mathbf{a} + \mathbf{b}}{2}\)</li>
+        <li><strong>Diagonals of a parallelogram bisect each other.</strong></li>
+        <li><strong>The line joining the midpoints of two sides of a triangle is parallel to the third side and half its length.</strong></li>
+        <li><strong>A, B, C are collinear if \(\overrightarrow{AB} = k \cdot \overrightarrow{BC}\) for some scalar \(k\).</strong></li>
+      </ul>
+
+      <p><strong>How we tackle a proof:</strong></p>
+      <ol style="line-height:1.9;">
+        <li>Pick two base vectors (often \(\mathbf{a}\) and \(\mathbf{b}\)) from the diagram.</li>
+        <li>Write every other vector in terms of those two.</li>
+        <li>Add, subtract, and multiply by scalars to simplify.</li>
+        <li>If \(\mathbf{p} = k\mathbf{q}\), the vectors are parallel; if they also share a point, the points are collinear.</li>
+      </ol>
+
+      <p>Keep your working neat. Label each vector you define so the examiner can follow your steps.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">You want to prove three points are collinear. What must you show?</p>
+          <button class="btn mcq-btn" data-letter="A">The vectors have equal magnitude</button>
+          <button class="btn mcq-btn" data-letter="B">One vector is the negative of another only</button>
+          <button class="btn mcq-btn" data-letter="C">All sides of the triangle are equal</button>
+          <button class="btn mcq-btn" data-letter="D">\(\overrightarrow{AB}\) is a scalar multiple of \(\overrightarrow{BC}\), and they share B</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 10. TRANSLATIONS -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">10</span>
+      Translations Using Vectors
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Translate every point by \(\begin{pmatrix} 3 \\ -2 \end{pmatrix}\). Point (1, 4) moves to (1+3, 4−2) = <strong>(4, 2)</strong>. The shape slides — it does not turn or flip.</p>
+
+      <p>A <strong>translation</strong> moves every point of a shape the same distance in the same direction. We describe it with a column vector.</p>
+
+      <p>If the vector is \(\begin{pmatrix} 3 \\ -2 \end{pmatrix}\), then (x, y) → (x + 3, y − 2). At GCSE, translations are the transformation that uses column vectors most directly.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Shape point (2, 5) is translated by \(\begin{pmatrix} -1 \\ 4 \end{pmatrix}\). Where does it go?</p>
+          <button class="btn mcq-btn" data-letter="A">(3, 1)</button>
+          <button class="btn mcq-btn" data-letter="B">(1, 9)</button>
+          <button class="btn mcq-btn" data-letter="C">(-2, 20)</button>
+          <button class="btn mcq-btn" data-letter="D">(1, -1)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 11. THE ZERO VECTOR -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">11</span>
+      The Zero Vector &amp; Negative Vectors
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> If \(\mathbf{a} = \begin{pmatrix} 2 \\ 3 \end{pmatrix}\), then \(-\mathbf{a} = \begin{pmatrix} -2 \\ -3 \end{pmatrix}\). Same length, opposite direction.</p>
+
+      <p>The <strong>zero vector</strong> \(\begin{pmatrix} 0 \\ 0 \end{pmatrix}\) has length zero. Adding it changes nothing: \(\mathbf{v} + \mathbf{0} = \mathbf{v}\). Subtracting a vector from itself gives zero: \(\mathbf{a} - \mathbf{a} = \mathbf{0}\).</p>
+
+      <p>For displacement: \(\overrightarrow{BA} = -\overrightarrow{AB}\). The trip from B back to A is the reverse of A to B.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">If \(\overrightarrow{AB} = \begin{pmatrix} 4 \\ -1 \end{pmatrix}\), what is \(\overrightarrow{BA}\)?</p>
+          <button class="btn mcq-btn" data-letter="A">\(\begin{pmatrix} 4 \\ -1 \end{pmatrix}\)</button>
+          <button class="btn mcq-btn" data-letter="B">\(\begin{pmatrix} 0 \\ 0 \end{pmatrix}\)</button>
+          <button class="btn mcq-btn" data-letter="C">\(\begin{pmatrix} -4 \\ 1 \end{pmatrix}\)</button>
+          <button class="btn mcq-btn" data-letter="D">\(\begin{pmatrix} 1 \\ -4 \end{pmatrix}\)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- Revision card (auto-added) -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">12</span>
+      Vectors — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Column vectors show movement. Add for combined journeys; multiply by a number to scale.</p>
+
+      <div style="text-align:center;margin:16px 0;">
+              <div class="revision-card-wrap">
+        <svg class="revision-card-svg lesson-quick-ref" width="100%" viewBox="0 0 760 280" style="max-width:760px;width:100%;height:auto;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:10px;" role="img" aria-label="Vectors revision card">
+          <text x="380" y="28" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Vectors — Revision Card</text>
+          <line x1="20" y1="38" x2="740" y2="38" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="20" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Notation</text>
+          <text x="20" y="78" font-size="14" fill="#28251d">→a or column (x, y)</text>
+          <text x="20" y="98" font-size="14" fill="#28251d">AB = b − a (end − start)</text>
+          <text x="20" y="118" font-size="14" fill="#28251d">BA = −AB</text>
+          <text x="20" y="142" font-size="15" fill="#1a6fa8" font-weight="bold">Operations</text>
+          <text x="20" y="162" font-size="14" fill="#28251d">Add: add x's and y's</text>
+          <text x="20" y="182" font-size="14" fill="#28251d">k a: multiply both components by k</text>
+          <line x1="390" y1="48" x2="390" y2="260" stroke="#d4e6f1" stroke-width="1"/>
+          <text x="400" y="58" font-size="15" fill="#1a6fa8" font-weight="bold">Geometry</text>
+          <text x="400" y="78" font-size="14" fill="#28251d">Parallel vectors: one is multiple of other</text>
+          <text x="400" y="98" font-size="14" fill="#28251d">Midpoint: average of endpoints</text>
+          <text x="400" y="118" font-size="14" fill="#28251d">Magnitude |a| = √(x² + y²)</text>
+        </svg>
+      </div>
+      </div>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">a = (2, 3), b = (−1, 4). What is a + b?</p>
+          <button class="btn mcq-btn" data-letter="A">(1, 7)</button>
+          <button class="btn mcq-btn" data-letter="B">(3, 7)</button>
+          <button class="btn mcq-btn" data-letter="C">(1, 1)</button>
+          <button class="btn mcq-btn" data-letter="D">(3, −1)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='vectors') }}" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Revision</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- QUICK TEST -->
+  <div style="text-align:center; margin-top: 24px; margin-bottom: 48px;">
+    <form method="POST" action="/quicktest/start" style="display:inline;">
+      <input type="hidden" name="level" value="gcse">
+      <input type="hidden" name="subject" value="maths">
+      <input type="hidden" name="topic" value="vectors">
+      <input type="hidden" name="mode" value="standard">
+      <input type="hidden" name="difficulty" value="foundational">
+      <button type="submit" class="btn btn-primary">⚡ Quick Test: Vectors</button>
+    </form>
+  </div>
+
+</div>
+
+  <!-- Practice link -->
+  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='vectors') }}"
+       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+      Start Practice Quiz
+    </a>
+  </div>
+
+{% endblock %}

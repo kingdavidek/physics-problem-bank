@@ -1,0 +1,452 @@
+{% extends "base.html" %}
+{% block title %}Order of Operations &amp; Negative Numbers — GCSE Maths{% endblock %}
+{% block content %}
+
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Order of Operations &amp; Negative Numbers</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">GCSE Mathematics – Foundation and Higher Tier · All Exam Boards</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+  <!-- Quick Test button -->
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='bidmas') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       1. WHAT IS BIDMAS?
+  ══════════════════════════════════════════════════ -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      What is BIDMAS?
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 7</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>When a calculation has more than one operation — like 3 + 2 × 4 — you need to know <strong>which part to work out first</strong>. Different people might get different answers if they don't follow the same rule!</p>
+
+      <p><strong>BIDMAS</strong> (also called BODMAS) is the agreed order everyone follows. It stands for:</p>
+
+      <div style="text-align:center; margin:16px 0;">
+        <svg width="520" height="72" viewBox="0 0 520 72" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <rect x="10"  y="10" width="70" height="52" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <rect x="88"  y="10" width="70" height="52" rx="6" fill="#fce7f3" stroke="#a13544" stroke-width="1.5"/>
+          <rect x="166" y="10" width="85" height="52" rx="6" fill="#dcfce7" stroke="#059669" stroke-width="1.5"/>
+          <rect x="259" y="10" width="85" height="52" rx="6" fill="#dcfce7" stroke="#059669" stroke-width="1.5"/>
+          <rect x="352" y="10" width="75" height="52" rx="6" fill="#fef9c3" stroke="#d97706" stroke-width="1.5"/>
+          <rect x="435" y="10" width="75" height="52" rx="6" fill="#fef9c3" stroke="#d97706" stroke-width="1.5"/>
+          <!-- Letters -->
+          <text x="45"  y="38" text-anchor="middle" font-size="22" font-weight="bold" fill="#1a6fa8">B</text>
+          <text x="123" y="38" text-anchor="middle" font-size="22" font-weight="bold" fill="#a13544">I</text>
+          <text x="209" y="38" text-anchor="middle" font-size="22" font-weight="bold" fill="#059669">D</text>
+          <text x="302" y="38" text-anchor="middle" font-size="22" font-weight="bold" fill="#059669">M</text>
+          <text x="390" y="38" text-anchor="middle" font-size="22" font-weight="bold" fill="#d97706">A</text>
+          <text x="473" y="38" text-anchor="middle" font-size="22" font-weight="bold" fill="#d97706">S</text>
+          <!-- Labels below -->
+          <text x="45"  y="58" text-anchor="middle" font-size="9" fill="#555">Brackets</text>
+          <text x="123" y="58" text-anchor="middle" font-size="9" fill="#555">Indices</text>
+          <text x="209" y="58" text-anchor="middle" font-size="9" fill="#555">Divide</text>
+          <text x="302" y="58" text-anchor="middle" font-size="9" fill="#555">Multiply</text>
+          <text x="390" y="58" text-anchor="middle" font-size="9" fill="#555">Add</text>
+          <text x="473" y="58" text-anchor="middle" font-size="9" fill="#555">Subtract</text>
+        </svg>
+      </div>
+
+      <table style="width:100%; border-collapse:collapse; margin:12px 0;">
+        <tr style="background:var(--color-surface-offset);">
+          <th style="padding:10px; text-align:left;">Letter</th>
+          <th style="padding:10px; text-align:left;">Meaning</th>
+          <th style="padding:10px; text-align:left;">Example</th>
+        </tr>
+        <tr><td style="padding:9px; border-top:1px solid var(--color-divider);"><strong>B</strong></td><td style="padding:9px; border-top:1px solid var(--color-divider);">Brackets</td><td style="padding:9px; border-top:1px solid var(--color-divider);">(3 + 2) × 4 → brackets first → 5 × 4</td></tr>
+        <tr><td style="padding:9px; border-top:1px solid var(--color-divider);"><strong>I</strong></td><td style="padding:9px; border-top:1px solid var(--color-divider);">Indices (powers &amp; roots)</td><td style="padding:9px; border-top:1px solid var(--color-divider);">3² + 1 → 9 + 1</td></tr>
+        <tr><td style="padding:9px; border-top:1px solid var(--color-divider);"><strong>D / M</strong></td><td style="padding:9px; border-top:1px solid var(--color-divider);">Division and Multiplication (left → right)</td><td style="padding:9px; border-top:1px solid var(--color-divider);">8 ÷ 4 × 2 → 2 × 2 → 4 (not 1!)</td></tr>
+        <tr><td style="padding:9px; border-top:1px solid var(--color-divider);"><strong>A / S</strong></td><td style="padding:9px; border-top:1px solid var(--color-divider);">Addition and Subtraction (left → right)</td><td style="padding:9px; border-top:1px solid var(--color-divider);">10 − 3 + 2 → 7 + 2 → 9 (not 5!)</td></tr>
+      </table>
+
+      <p><em>Example:</em> Work out <strong>3 + 2 × 4</strong></p>
+      <ul style="line-height:1.9;">
+        <li>There are no brackets or powers, so look for × or ÷ first.</li>
+        <li>Multiply: 2 × 4 = <strong>8</strong></li>
+        <li>Add: 3 + 8 = <strong>11</strong></li>
+      </ul>
+      <p>If you just worked left to right you'd get 3 + 2 = 5, then 5 × 4 = 20. That's wrong. BIDMAS gives <strong>11</strong>.</p>
+
+      <div style="background:#fff3cd; border-left:4px solid #f59e0b; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+        <strong>⚠️ Equal priority:</strong> Division and Multiplication have the <em>same</em> priority — go left to right. Same for Addition and Subtraction. So 8 ÷ 4 × 2 = (8 ÷ 4) × 2 = 2 × 2 = <strong>4</strong>, not 8 ÷ (4 × 2) = 1.
+      </div>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Work out <strong>3 + 2 × 4</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">20</button>
+          <button class="btn mcq-btn" data-letter="B">11</button>
+          <button class="btn mcq-btn" data-letter="C">14</button>
+          <button class="btn mcq-btn" data-letter="D">9</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       2. BIDMAS WITH BRACKETS AND POWERS
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      BIDMAS with Brackets and Powers
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 8</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>When you have brackets <em>and</em> powers in the same calculation, always work through the BIDMAS steps one at a time. Label each step as you go — that way you won't lose track.</p>
+
+      <p><em>Example:</em> Calculate <strong>3 + 2 × (7 − 4)²</strong></p>
+      <ol style="line-height:1.9;">
+        <li><strong>Brackets:</strong> (7 − 4) = <strong>3</strong> &nbsp;→&nbsp; expression becomes 3 + 2 × 3²</li>
+        <li><strong>Indices:</strong> 3² = <strong>9</strong> &nbsp;→&nbsp; expression becomes 3 + 2 × 9</li>
+        <li><strong>Multiply:</strong> 2 × 9 = <strong>18</strong> &nbsp;→&nbsp; expression becomes 3 + 18</li>
+        <li><strong>Add:</strong> 3 + 18 = <strong>21</strong></li>
+      </ol>
+
+      <p><em>Example:</em> Calculate <strong>(2 + 3)² ÷ 5 − 1</strong></p>
+      <ol style="line-height:1.9;">
+        <li><strong>Brackets:</strong> (2 + 3) = <strong>5</strong> &nbsp;→&nbsp; expression becomes 5² ÷ 5 − 1</li>
+        <li><strong>Indices:</strong> 5² = <strong>25</strong> &nbsp;→&nbsp; expression becomes 25 ÷ 5 − 1</li>
+        <li><strong>Divide:</strong> 25 ÷ 5 = <strong>5</strong> &nbsp;→&nbsp; expression becomes 5 − 1</li>
+        <li><strong>Subtract:</strong> 5 − 1 = <strong>4</strong></li>
+      </ol>
+
+      <div style="text-align:center; margin:14px 0;">
+        <svg width="480" height="80" viewBox="0 0 480 80" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <!-- Step flow diagram -->
+          <rect x="10"  y="15" width="90"  height="40" rx="6" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <rect x="120" y="15" width="90"  height="40" rx="6" fill="#fce7f3" stroke="#a13544" stroke-width="1.5"/>
+          <rect x="230" y="15" width="110" height="40" rx="6" fill="#dcfce7" stroke="#059669" stroke-width="1.5"/>
+          <rect x="360" y="15" width="110" height="40" rx="6" fill="#fef9c3" stroke="#d97706" stroke-width="1.5"/>
+          <!-- Arrows -->
+          <polygon points="110,35 117,30 117,40" fill="#555"/>
+          <polygon points="220,35 227,30 227,40" fill="#555"/>
+          <polygon points="342,35 349,30 349,40" fill="#555"/>
+          <!-- Labels -->
+          <text x="55"  y="30" text-anchor="middle" font-size="14" fill="#1a6fa8" font-weight="bold">Brackets</text>
+          <text x="165" y="30" text-anchor="middle" font-size="14" fill="#a13544" font-weight="bold">Indices</text>
+          <text x="285" y="30" text-anchor="middle" font-size="14" fill="#059669" font-weight="bold">Div / Mult</text>
+          <text x="415" y="30" text-anchor="middle" font-size="14" fill="#d97706" font-weight="bold">Add / Sub</text>
+          <text x="55"  y="46" text-anchor="middle" font-size="14" fill="#555">( ) first</text>
+          <text x="165" y="46" text-anchor="middle" font-size="14" fill="#555">² √ next</text>
+          <text x="285" y="46" text-anchor="middle" font-size="14" fill="#555">left → right</text>
+          <text x="415" y="46" text-anchor="middle" font-size="14" fill="#555">left → right</text>
+        </svg>
+      </div>
+
+      <p><strong>Exam tip:</strong> Rewrite the expression at each step rather than trying to do everything in your head. Examiners can give method marks even if you make an arithmetic error later.</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">Calculate <strong>(2 + 3)² ÷ 5 − 1</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">0</button>
+          <button class="btn mcq-btn" data-letter="B">3</button>
+          <button class="btn mcq-btn" data-letter="C">5</button>
+          <button class="btn mcq-btn" data-letter="D">4</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       3. NEGATIVE NUMBERS — ADDING AND SUBTRACTING
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Negative Numbers — Adding and Subtracting
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 7</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Negative numbers sit to the left of zero on a number line. You can picture them as temperatures below zero or floors below ground in a building.</p>
+
+      <p>The key rule for adding and subtracting is: <strong>two signs next to each other combine into one sign</strong>. Think of it this way:</p>
+      <ul style="line-height:1.9;">
+        <li><strong>+ − = −</strong> &nbsp; (adding a negative = moving left = subtracting)</li>
+        <li><strong>− − = +</strong> &nbsp; (subtracting a negative = moving right = adding)</li>
+      </ul>
+
+      <p><em>Examples:</em></p>
+      <ul style="line-height:1.9;">
+        <li>5 + (−3) = 5 − 3 = <strong>2</strong></li>
+        <li>5 − (−3) = 5 + 3 = <strong>8</strong></li>
+        <li>−4 + (−2) = −4 − 2 = <strong>−6</strong></li>
+        <li>−1 − (−5) = −1 + 5 = <strong>4</strong></li>
+      </ul>
+
+      <p><strong>Memory trick:</strong> Two minus signs next to each other = <strong>double negative = positive</strong>. Like the grammar rule "a double negative makes a positive" (e.g. "I don't have no money" means you do have money!).</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">What is <strong>5 − (−3)</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">2</button>
+          <button class="btn mcq-btn" data-letter="B">−8</button>
+          <button class="btn mcq-btn" data-letter="C">−2</button>
+          <button class="btn mcq-btn" data-letter="D">8</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       4. NEGATIVE NUMBERS — MULTIPLYING AND DIVIDING
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Negative Numbers — Multiplying and Dividing
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 8</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Multiplying and dividing with negatives has a simple two-case rule:</p>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:14px 0;">
+        <div style="background:#dcfce7; border:1px solid #059669; border-radius:8px; padding:14px; text-align:center;">
+          <div style="font-size:1.4rem; font-weight:700; color:#059669;">+</div>
+          <div style="font-weight:600; margin:4px 0;">Same signs</div>
+          <div style="font-size:.88rem; color:#444;">positive × positive = positive<br>negative × negative = positive</div>
+        </div>
+        <div style="background:#fce7f3; border:1px solid #a13544; border-radius:8px; padding:14px; text-align:center;">
+          <div style="font-size:1.4rem; font-weight:700; color:#a13544;">−</div>
+          <div style="font-weight:600; margin:4px 0;">Different signs</div>
+          <div style="font-size:.88rem; color:#444;">positive × negative = negative<br>negative × positive = negative</div>
+        </div>
+      </div>
+
+      <p>You must know the sign rules for all four operations:</p>
+      <table style="width:100%; border-collapse:collapse; margin:12px 0;">
+        <tr style="background:var(--color-surface-offset);">
+          <th style="padding:8px;">Signs</th><th style="padding:8px;">Result</th><th style="padding:8px;">Example</th>
+        </tr>
+        <tr><td style="padding:8px; border-top:1px solid var(--color-divider);">+ × +</td><td style="padding:8px; border-top:1px solid var(--color-divider);"><strong>+</strong></td><td style="padding:8px; border-top:1px solid var(--color-divider);">3 × 4 = 12</td></tr>
+        <tr><td style="padding:8px; border-top:1px solid var(--color-divider);">− × −</td><td style="padding:8px; border-top:1px solid var(--color-divider);"><strong>+</strong></td><td style="padding:8px; border-top:1px solid var(--color-divider);">(−3) × (−4) = 12</td></tr>
+        <tr><td style="padding:8px; border-top:1px solid var(--color-divider);">+ × −</td><td style="padding:8px; border-top:1px solid var(--color-divider);"><strong>−</strong></td><td style="padding:8px; border-top:1px solid var(--color-divider);">3 × (−4) = −12</td></tr>
+        <tr><td style="padding:8px; border-top:1px solid var(--color-divider);">− × +</td><td style="padding:8px; border-top:1px solid var(--color-divider);"><strong>−</strong></td><td style="padding:8px; border-top:1px solid var(--color-divider);">(−3) × 4 = −12</td></tr>
+      </table>
+      <p>The same rules apply to division: same signs → positive, different signs → negative.</p>
+
+      <p><em>Examples with division:</em></p>
+      <ul style="line-height:1.9;">
+        <li>(−12) ÷ (−3) = <strong>+4</strong> (same signs → positive)</li>
+        <li>15 ÷ (−5) = <strong>−3</strong> (different signs → negative)</li>
+        <li>(−20) ÷ 4 = <strong>−5</strong> (different signs → negative)</li>
+      </ul>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">What is <strong>(−6) ÷ (−2)</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">−3</button>
+          <button class="btn mcq-btn" data-letter="B">−12</button>
+          <button class="btn mcq-btn" data-letter="C">3</button>
+          <button class="btn mcq-btn" data-letter="D">12</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       5. NEGATIVE NUMBERS WITH POWERS
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Negative Numbers with Powers
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>This is one of the biggest trap questions in GCSE. The position of the brackets completely changes the answer.</p>
+
+      <p><em>Compare these two carefully:</em></p>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:14px 0;">
+        <div style="background:#dcfce7; border:2px solid #059669; border-radius:8px; padding:16px; text-align:center;">
+          <div style="font-size:1.2rem; font-weight:700; margin-bottom:6px;">(−3)²</div>
+          <div style="font-size:.88rem; color:#444; margin-bottom:8px;">The negative is <strong>inside</strong> the brackets.<br>The whole thing gets squared.</div>
+          <div style="font-size:1rem; font-weight:600; color:#059669;">(−3) × (−3) = <strong>+9</strong></div>
+          <div style="font-size:.8rem; color:#555; margin-top:6px;">negative × negative = positive</div>
+        </div>
+        <div style="background:#fce7f3; border:2px solid #a13544; border-radius:8px; padding:16px; text-align:center;">
+          <div style="font-size:1.2rem; font-weight:700; margin-bottom:6px;">−(3²)</div>
+          <div style="font-size:.88rem; color:#444; margin-bottom:8px;">The minus is <strong>outside</strong> the brackets — only <strong>3</strong> is squared.</div>
+          <div style="font-size:1rem; font-weight:600; color:#a13544;">−(3 × 3) = <strong>−9</strong></div>
+          <div style="font-size:.8rem; color:#555; margin-top:6px;">apply the negative after squaring</div>
+        </div>
+      </div>
+
+      <p>Be very careful with brackets when squaring negative numbers.</p>
+      <ul style="line-height:1.9;">
+        <li>(−3)² = (−3) × (−3) = <strong>+9</strong> — the negative is inside the brackets, so it gets squared</li>
+        <li>−(3²) = −(3 × 3) = <strong>−9</strong> — only 3 is squared; the negative sign stays outside</li>
+      </ul>
+
+      <div style="background:#fce7f3; border-left:4px solid #a13544; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0; font-weight:600; color:var(--color-warning);">
+        ⚠️ This is one of the most common errors in GCSE exams. Always check whether the negative is inside or outside the brackets before squaring.
+      </div>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">What is <strong>(−4)²</strong>?</p>
+          <button class="btn mcq-btn" data-letter="A">−16</button>
+          <button class="btn mcq-btn" data-letter="B">16</button>
+          <button class="btn mcq-btn" data-letter="C">−8</button>
+          <button class="btn mcq-btn" data-letter="D">8</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       6. COMBINING BIDMAS WITH NEGATIVES
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Combining BIDMAS with Negatives
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 9</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Now we put it all together. Work through BIDMAS step by step, applying the sign rules at each stage. Write out every step — never try to do two things at once.</p>
+
+      <p><em>Example:</em> Calculate <strong>−2 × (3 + 5) − (−4)²</strong></p>
+      <ol style="line-height:1.9;">
+        <li><strong>Brackets:</strong> (3 + 5) = 8 → expression becomes −2 × 8 − (−4)²</li>
+        <li><strong>Indices:</strong> (−4)² = +16 → expression becomes −2 × 8 − 16</li>
+        <li><strong>Multiply:</strong> −2 × 8 = −16 → expression becomes −16 − 16</li>
+        <li><strong>Subtract:</strong> −16 − 16 = <strong>−32</strong></li>
+      </ol>
+
+      <p><em>Example:</em> Calculate <strong>(−3)² + 4 × (−2)</strong></p>
+      <ol style="line-height:1.9;">
+        <li><strong>Indices:</strong> (−3)² = 9 → expression becomes 9 + 4 × (−2)</li>
+        <li><strong>Multiply:</strong> 4 × (−2) = −8 → expression becomes 9 + (−8)</li>
+        <li><strong>Add:</strong> 9 + (−8) = 9 − 8 = <strong>1</strong></li>
+      </ol>
+
+      <p><strong>Strategy:</strong> At each step, ask yourself: "Which operation comes next in BIDMAS?" Handle <em>one operation at a time</em> and rewrite the expression after each step. This keeps things clear and reduces errors.</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Calculate <strong>(−3)² + 4 × (−2)</strong>.</p>
+          <button class="btn mcq-btn" data-letter="A">−1</button>
+          <button class="btn mcq-btn" data-letter="B">18</button>
+          <button class="btn mcq-btn" data-letter="C">1</button>
+          <button class="btn mcq-btn" data-letter="D">−18</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       7. QUICK REFERENCE
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      BIDMAS &amp; Negative Numbers — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 9</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+            <div class="revision-card-wrap">
+        <div class="lesson-quick-ref-card" role="region" aria-label="BIDMAS and negative numbers quick reference">
+          <h3>BIDMAS &amp; Negative Numbers — Quick Reference</h3>
+          <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+
+            <div>
+              <h4 style="color:#1a6fa8;">BIDMAS order</h4>
+              <ul>
+                <li><strong>B</strong> — Brackets first</li>
+                <li><strong>I</strong> — Indices (powers &amp; roots)</li>
+                <li><strong>D / M</strong> — Divide &amp; multiply, left to right</li>
+                <li><strong>A / S</strong> — Add &amp; subtract, left to right</li>
+              </ul>
+            </div>
+            <div>
+              <h4 style="color:#1a6fa8;">Negative numbers</h4>
+              <ul>
+                <li>\(a + (-b) = a - b\)</li>
+                <li>\(a - (-b) = a + b\)</li>
+                <li>Same signs × or ÷ → positive</li>
+                <li>Different signs × or ÷ → negative</li>
+                <li>\((-n)^2\) is positive; \(-(n^2)\) is negative</li>
+              </ul>
+            </div>
+          </div>
+          <div class="lesson-quick-ref-advanced">
+            <h4>Common exam traps</h4>
+            <ul>
+              <li>\(8 \div 4 \times 2 = 4\), not 1 — work D and M left to right</li>
+              <li>\(10 - 3 + 2 = 9\), not 5 — work A and S left to right</li>
+              <li>\((-3)^2 = +9\) but \(-(3^2) = -9\) — brackets change everything</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+</div>
+
+  <!-- Practice link -->
+  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='bidmas') }}"
+       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+      Start Practice Quiz
+    </a>
+  </div>
+
+{% endblock %}

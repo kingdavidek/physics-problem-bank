@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Saved question – {{ topic_label }}{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+
+<div class="lesson-hero">
+    <h1>Saved question</h1>
+    <p class="hero-sub">{{ topic_label }} · saved {{ saved.created_at[:10] }}</p>
+</div>
+
+<div class="problem-card">
+    <div class="section-panel-header">Your saved question</div>
+    <div class="problem-card-inner">
+
+    <div class="problem-meta">
+        <span class="badge badge-{{ saved.difficulty }}">{{ saved.difficulty | title }}</span>
+        {% if problem.marks %}
+        <span class="badge badge-marks">{{ problem.marks }} mark{% if problem.marks > 1 %}s{% endif %}</span>
+        {% endif %}
+        {% if saved.mode == 'mcq' %}
+            <span class="badge badge-mcq">Multiple choice</span>
+        {% endif %}
+    </div>
+
+    <div class="question" id="saved-question-root">
+        {% if problem.options %}
+            <div class="question-content" id="saved-question-content">{{ problem.question | safe }}</div>
+            <div class="mcq-options" id="saved-mcq-options" data-correct="{{ problem.correct_answer }}">
+                {% for opt in problem.options %}
+                    <button type="button" class="btn mcq-btn" data-letter="{{ opt[0] }}">{{ opt | safe }}</button>
+                {% endfor %}
+            </div>
+            <p class="mcq-feedback" id="saved-mcq-feedback" style="margin-top:12px;font-weight:600;"></p>
+        {% else %}
+            <div class="question-content" id="saved-question-content">{{ problem.question | format_question_html }}</div>
+        {% endif %}
+    </div>
+
+    <p class="topic-link">
+        📖 <a href="{{ url_for('topic_page', level=saved.level, subject=saved.subject, topic=saved.topic) }}">Revise: {{ topic_label }}</a>
+    </p>
+
+    <details class="answer-reveal">
+        <summary>Show Answer</summary>
+        <div class="answer" id="saved-answer-content">
+            {% if '<pre>' in problem.solution %}
+                {{ problem.solution | safe }}
+            {% else %}
+                {{ problem.solution | format_question_html }}
+            {% endif %}
+        </div>
+        {% if problem.hint %}
+        <details class="hint-reveal" id="saved-hint-wrap">
+            <summary>💡 I still don't understand — show me the key concept</summary>
+            <div class="hint" id="saved-hint-content">{{ problem.hint | safe }}</div>
+        </details>
+        {% endif %}
+    </details>
+
+    <div class="problem-actions">
+        {% if can_reroll_variant %}
+        <form method="POST" action="{{ url_for('reroll_saved_problem_route', saved_id=saved.id) }}" id="reroll-saved-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-secondary">🎲 New numbers</button>
+        </form>
+        {% endif %}
+        <form method="POST" action="{{ url_for('delete_saved_problem_route', saved_id=saved.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="next" value="{{ url_for('saved_problems_index') }}">
+            <button type="submit" class="btn btn-secondary">Remove from saved</button>
+        </form>
+        <a href="{{ url_for('saved_problems_index') }}" class="btn btn-outline">All saved questions</a>
+    </div>
+
+    </div>
+</div>
+
+<p><a href="{{ url_for('profile') }}">← Back to profile</a></p>
+
+</div>
+{% endblock %}

@@ -1,0 +1,708 @@
+{% extends "base.html" %}
+{% block title %}Ethical, Legal &amp; Environmental Impacts – GCSE Computer Science{% endblock %}
+
+{% block content %}
+<style>
+  .lesson-inner > summary { list-style:none; }
+  .lesson-inner > summary::-webkit-details-marker { display:none; }
+  .impact-env { background:#ecfdf5;border-left:4px solid #059669;padding:10px 14px;margin:10px 0;border-radius:0 6px 6px 0; }
+  .impact-legal { background:#eff6ff;border-left:4px solid #2563eb;padding:10px 14px;margin:10px 0;border-radius:0 6px 6px 0; }
+  .impact-ethical { background:#fef4e8;border-left:4px solid #8a5300;padding:10px 14px;margin:10px 0;border-radius:0 6px 6px 0; }
+  .spec-table { width:100%;border-collapse:collapse;font-size:.88rem;margin:12px 0; }
+  .spec-table th, .spec-table td { border:1px solid #cbd5e1;padding:8px 10px;text-align:left;vertical-align:top; }
+  .spec-table th { background:#f1f5f9;font-weight:600; }
+  .board-tag { font-size:.7rem;padding:2px 6px;border-radius:8px;margin-right:4px; }
+  .board-aqa { background:#dbeafe;color:#1e40af; }
+  .board-ocr { background:#fce7f3;color:#9d174d; }
+  .board-edx { background:#fef3c7;color:#92400e; }
+  .note-box { background:#e8f4fd;border-left:4px solid #1a6fa8;padding:10px 14px;margin:10px 0;border-radius:0 6px 6px 0; }
+</style>
+
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Ethical, Legal &amp; Environmental Impacts</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">GCSE Computer Science — how digital technology affects people, society and the planet. Laws, ethics, the environment, privacy, AI, and exam-style scenarios. Revise each section, use the Quick Checks, then practise questions.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">WJEC</span>
+    </div>
+  </div>
+
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='cs', topic='ethical') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <div class="note-box" style="margin-bottom:14px;">
+    <strong>Exam tip:</strong> Classify impacts as <strong>ethical</strong> (right/wrong), <strong>legal</strong> (law broken or followed), <strong>environmental</strong> (planet/resources), or <strong>cultural/social</strong> (how society behaves). AQA often uses realistic scenarios (cloud, wearables, autonomous vehicles) — explain <em>principles</em>, not newspaper headlines.
+  </div>
+
+  <!-- 0. OVERVIEW -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">0</span>
+      Digital Technology &amp; Society
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" open style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          0.1 Why impacts matter
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>Computer scientists do not only build systems — they must understand how technology affects <strong>individuals</strong>, <strong>organisations</strong> and <strong>wider society</strong>.</p>
+          <table class="spec-table">
+            <thead><tr><th>Type</th><th>Focus</th><th>Example question</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Environmental</strong></td><td>Planet, resources, waste</td><td>How do smartphones affect e-waste?</td></tr>
+              <tr><td><strong>Legal</strong></td><td>Laws and regulators</td><td>Which law covers hacking?</td></tr>
+              <tr><td><strong>Ethical</strong></td><td>Morals, fairness, harm</td><td>Should schools use facial recognition?</td></tr>
+              <tr><td><strong>Cultural / social</strong></td><td>Behaviour, access, norms</td><td>What is the digital divide?</td></tr>
+            </tbody>
+          </table>
+          <p><strong>Worked example:</strong> A free game asks for your contacts list. <em>Legal:</em> may need consent under UK GDPR. <em>Ethical:</em> is it fair to pupils who do not read terms? <em>Environmental:</em> extra server use is minor but real.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">An ethical issue is mainly about:</p>
+              <button class="btn mcq-btn" data-letter="A">CPU clock speed</button>
+              <button class="btn mcq-btn" data-letter="B">Binary addition</button>
+              <button class="btn mcq-btn" data-letter="C">What is morally right or wrong</button>
+              <button class="btn mcq-btn" data-letter="D">RAM type</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 1. ENVIRONMENTAL -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      Environmental Impacts
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" open style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          1.1 Energy use and carbon footprint
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>Digital devices and <strong>data centres</strong> use electricity 24/7 for computing and cooling. Carbon impact depends on how power is generated (coal vs renewables).</p>
+          <div class="impact-env"><strong>Key points:</strong> streaming video, AI training, cloud services and Bitcoin-style mining consume large energy; always-on home devices add up.</div>
+          <p><strong>Worked example:</strong> A school moves files to the cloud. Benefit: fewer local servers. Risk: unknown total energy if the provider runs huge global data centres.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Data centres mainly increase environmental concern because they:</p>
+              <button class="btn mcq-btn" data-letter="A">Use no electricity</button>
+              <button class="btn mcq-btn" data-letter="B">Run servers continuously, using large amounts of power</button>
+              <button class="btn mcq-btn" data-letter="C">Only work on paper</button>
+              <button class="btn mcq-btn" data-letter="D">Replace all laws</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          1.2 Manufacture, mining and e-waste
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>Making phones, laptops and servers needs <strong>raw materials</strong> (metals, rare earth elements), water and factory energy. <strong>E-waste</strong> is discarded equipment; toxic substances can leak if dumped irresponsibly.</p>
+          <p><strong>Worked example:</strong> Replacing a whole laptop because one component failed creates more e-waste than repair — Edexcel highlights <strong>replacement cycle</strong> and <strong>disposal</strong>.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">E-waste refers to:</p>
+              <button class="btn mcq-btn" data-letter="A">Discarded electronic equipment</button>
+              <button class="btn mcq-btn" data-letter="B">Deleted emails only</button>
+              <button class="btn mcq-btn" data-letter="C">Encrypted passwords</button>
+              <button class="btn mcq-btn" data-letter="D">Open-source code</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          1.3 Planned obsolescence and recycling
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10–11</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Planned obsolescence</strong> — products designed to fail or feel outdated quickly (non-replaceable batteries, no updates). Drives more manufacturing and waste.</p>
+          <p><strong>Mitigation:</strong> repair cafés, longer device life, WEEE recycling schemes, buying refurbished kit, reducing unnecessary upgrades.</p>
+          <p><strong>Worked example:</strong> A phone stops receiving security updates after three years. Users buy new phones → more mining and e-waste, even though the screen still works.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="D">
+              <p style="margin:0 0 10px;">Planned obsolescence encourages consumers to:</p>
+              <button class="btn mcq-btn" data-letter="A">Keep one device for decades only</button>
+              <button class="btn mcq-btn" data-letter="B">Never use technology</button>
+              <button class="btn mcq-btn" data-letter="C">Recycle laws</button>
+              <button class="btn mcq-btn" data-letter="D">Replace products sooner than necessary</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 2. DATA PROTECTION -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Legal — Data Protection
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10–11</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" open style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          2.1 Personal data, UK GDPR and DPA 2018
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Personal data</strong> identifies a living person (name, email, photo, IP address, school ID). <strong>UK GDPR</strong> and the <strong>Data Protection Act 2018</strong> control how organisations collect, use, store and share it.</p>
+          <div class="impact-legal"><strong>Key ideas:</strong> lawful basis for processing, purpose limitation, data minimisation (only collect what you need), accuracy, security, storage limitation.</div>
+          <p><strong>Worked example:</strong> A homework app stores pupil names and grades. The school is a <strong>data controller</strong>; the app company may be a <strong>processor</strong> — both must keep data secure and lawful.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">UK GDPR mainly protects:</p>
+              <button class="btn mcq-btn" data-letter="A">CPU registers</button>
+              <button class="btn mcq-btn" data-letter="B">Personal data about identifiable individuals</button>
+              <button class="btn mcq-btn" data-letter="C">Only paper files in museums</button>
+              <button class="btn mcq-btn" data-letter="D">Open-source licences</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          2.2 Consent, privacy rights and the ICO
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Consent</strong> must be informed and freely given where required — pre-ticked boxes are often invalid. Individuals have rights including <strong>access</strong> to their data, <strong>correction</strong>, and in some cases <strong>erasure</strong>.</p>
+          <p>The <strong>ICO</strong> (Information Commissioner's Office) regulates data protection in the UK and can fine organisations for serious breaches.</p>
+          <p><strong>Worked example:</strong> A newsletter asks “uncheck to refuse marketing” — weak consent. Better: clear opt-in with plain language.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">The ICO is:</p>
+              <button class="btn mcq-btn" data-letter="A">A type of CPU</button>
+              <button class="btn mcq-btn" data-letter="B">A programming language</button>
+              <button class="btn mcq-btn" data-letter="C">The UK data protection regulator</button>
+              <button class="btn mcq-btn" data-letter="D">A network protocol</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          2.3 Data breaches and school responsibilities
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>A <strong>personal data breach</strong> is loss, theft or unauthorised access to personal data. Schools must train staff, limit access, encrypt sensitive data where appropriate, and report serious breaches to the ICO within <strong>72 hours</strong> when required.</p>
+          <p><strong>Worked example:</strong> A teacher emails a spreadsheet of pupil home addresses to the wrong parent → breach. Steps: contain leak, assess harm, notify ICO if high risk, inform families, review procedures.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">After a serious personal data breach, an organisation may need to:</p>
+              <button class="btn mcq-btn" data-letter="A">Report to the ICO and protect affected people</button>
+              <button class="btn mcq-btn" data-letter="B">Delete all computers permanently</button>
+              <button class="btn mcq-btn" data-letter="C">Ignore it if embarrassing</button>
+              <button class="btn mcq-btn" data-letter="D">Share more data publicly</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 3. MISUSE & IP -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Legal — Misuse &amp; Intellectual Property
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10–11</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" open style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          3.1 Computer Misuse Act 1990
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>Makes <strong>unauthorised access</strong> to computer material illegal, including:</p>
+          <ul style="line-height:1.9;">
+            <li>Accessing files or accounts without permission</li>
+            <li>Access with intent to commit further crimes</li>
+            <li><strong>Unauthorised modification</strong> — viruses, ransomware, deleting files</li>
+          </ul>
+          <p>AQA links <strong>hacking</strong> (unauthorised access) to this area. <strong>Ethical hacking / penetration testing</strong> is legal only with written permission.</p>
+          <p><strong>Worked example:</strong> A pupil uses a guessed admin password to change grades → Computer Misuse Act offence, not “just a prank”.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">The Computer Misuse Act covers:</p>
+              <button class="btn mcq-btn" data-letter="A">Buying legal software</button>
+              <button class="btn mcq-btn" data-letter="B">Unauthorised access or modification of computer systems</button>
+              <button class="btn mcq-btn" data-letter="C">Recycling phones</button>
+              <button class="btn mcq-btn" data-letter="D">Teaching Python</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          3.2 Copyright, Designs and Patents Act 1988
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>Protects original <strong>literary, artistic, musical and software</strong> works. Copying, sharing or adapting without permission or a licence can infringe copyright.</p>
+          <p><strong>Allowed in school:</strong> use licences (school agreement), Creative Commons, royalty-free assets, or your own work. Always credit sources where required.</p>
+          <p><strong>Worked example:</strong> Downloading a paid game from a torrent site and redistributing it → copyright infringement plus possible CMA offence.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">Copyright protects:</p>
+              <button class="btn mcq-btn" data-letter="A">Only handwritten letters</button>
+              <button class="btn mcq-btn" data-letter="B">Hardware patents only</button>
+              <button class="btn mcq-btn" data-letter="C">Original creative work such as software and music</button>
+              <button class="btn mcq-btn" data-letter="D">Public bus timetables only</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          3.3 Patents, trademarks and licensing
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-edx">Edexcel</span><span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <table class="spec-table">
+            <thead><tr><th>Protection</th><th>Protects</th><th>Example</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Patent</strong></td><td>How an invention works</td><td>A new chip design method</td></tr>
+              <tr><td><strong>Trademark</strong></td><td>Brand names, logos, slogans</td><td>App icon shape consumers recognise</td></tr>
+              <tr><td><strong>Licence</strong></td><td>Permission to use IP</td><td>School pays for 500 Office seats</td></tr>
+            </tbody>
+          </table>
+          <p><strong>Worked example:</strong> A startup copies a rival's logo and name — trademark infringement; copying their patented search algorithm — patent infringement.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">A trademark mainly protects:</p>
+              <button class="btn mcq-btn" data-letter="A">Brand identity such as logos and names</button>
+              <button class="btn mcq-btn" data-letter="B">How a machine works internally</button>
+              <button class="btn mcq-btn" data-letter="C">Personal medical records</button>
+              <button class="btn mcq-btn" data-letter="D">CO₂ levels in the atmosphere</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 4. LICENSING -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Software Licensing
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" open style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          4.1 Open source vs proprietary
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <table class="spec-table">
+            <thead><tr><th></th><th>Open source</th><th>Proprietary</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Source code</strong></td><td>Available to view/modify (under licence)</td><td>Hidden; licence forbids changes</td></tr>
+              <tr><td><strong>Cost</strong></td><td>Often free to use</td><td>Per-seat or subscription fees</td></tr>
+              <tr><td><strong>Examples</strong></td><td>Linux, LibreOffice, GIMP</td><td>Windows, Adobe Photoshop</td></tr>
+              <tr><td><strong>Trade-offs</strong></td><td>Needs technical skill; community support</td><td>Polished support; vendor lock-in risk</td></tr>
+            </tbody>
+          </table>
+          <p><strong>Worked example:</strong> A school uses Linux and LibreOffice to avoid licence fees but pays a technician to maintain systems — total cost includes staff time, not just purchase price.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Open-source software:</p>
+              <button class="btn mcq-btn" data-letter="A">Never has a licence</button>
+              <button class="btn mcq-btn" data-letter="B">Allows access to source code under licence terms</button>
+              <button class="btn mcq-btn" data-letter="C">Cannot be modified ever</button>
+              <button class="btn mcq-btn" data-letter="D">Is always illegal in schools</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 5. ETHICAL -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Ethical Issues
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10–11</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" open style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          5.1 Privacy: citizens vs government
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <div class="impact-ethical"><strong>Balanced debate (AQA):</strong> Citizens value privacy and may oppose mass surveillance. Governments argue they need data access to prevent terrorism and serious crime. Exams reward <em>both sides</em>.</div>
+          <p><strong>Worked example:</strong> Police request backdoor access to all messaging apps. <em>For:</em> investigate criminals. <em>Against:</em> weakens security for everyone; criminals may use other tools.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="D">
+              <p style="margin:0 0 10px;">In privacy debates, governments often argue they need more data access to:</p>
+              <button class="btn mcq-btn" data-letter="A">Increase screen resolution</button>
+              <button class="btn mcq-btn" data-letter="B">Sell more phones</button>
+              <button class="btn mcq-btn" data-letter="C">Reduce copyright</button>
+              <button class="btn mcq-btn" data-letter="D">Protect citizens from terrorism and serious crime</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          5.2 Surveillance, cookies and targeted ads
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10–11</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>CCTV</strong>, tracking cookies, location data and social media profiling raise privacy questions even when legal.</p>
+          <ul style="line-height:1.9;">
+            <li>Who collects data and for what <strong>purpose</strong>?</li>
+            <li>Is there informed <strong>consent</strong>?</li>
+            <li>Could data be <strong>misused</strong> (leaks, profiling, discrimination)?</li>
+          </ul>
+          <p><strong>Worked example:</strong> A shop uses facial recognition for “VIP service” without clear signs — ethical concerns about consent and bias; possible legal issues under data protection.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">Tracking cookies on websites mainly help companies:</p>
+              <button class="btn mcq-btn" data-letter="A">Build profiles of user behaviour for advertising</button>
+              <button class="btn mcq-btn" data-letter="B">Cool the CPU</button>
+              <button class="btn mcq-btn" data-letter="C">Encrypt the hard drive automatically</button>
+              <button class="btn mcq-btn" data-letter="D">Remove copyright</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          5.3 AI, automation and algorithmic bias
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-edx">Edexcel</span><span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Artificial intelligence</strong> and automation can improve efficiency but raise issues of <strong>accountability</strong>, <strong>safety</strong>, <strong>algorithmic bias</strong> and <strong>legal liability</strong> (Edexcel).</p>
+          <p><strong>Algorithmic bias</strong> — unfair outcomes because training data or rules favour one group (e.g. hiring AI trained on past biased decisions).</p>
+          <p><strong>Worked example:</strong> An exam marking AI scores rural schools lower because training data was mostly city schools — biased and unethical; may also be unlawful discrimination.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">Algorithmic bias means:</p>
+              <button class="btn mcq-btn" data-letter="A">Algorithms always use binary</button>
+              <button class="btn mcq-btn" data-letter="B">CPUs run at maximum speed</button>
+              <button class="btn mcq-btn" data-letter="C">Systems produce unfair outcomes due to flawed data or rules</button>
+              <button class="btn mcq-btn" data-letter="D">All AI is illegal</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          5.4 Autonomous vehicles and computer implants
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Autonomous vehicles</strong> (AQA exam context): who is liable in a crash? How should cars “choose” in unavoidable accidents? Job impacts for drivers.</p>
+          <p><strong>Computer-based implants</strong> (medical chips, pacemakers with connectivity): privacy of body data, hacking risk, inequality of access, safety if software fails.</p>
+          <p><strong>Worked example:</strong> A self-driving car hits a pedestrian when swerving — was it the manufacturer, owner, or software supplier? Ethical and legal complexity.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">A major ethical issue with autonomous vehicles is:</p>
+              <button class="btn mcq-btn" data-letter="A">Monitor refresh rate</button>
+              <button class="btn mcq-btn" data-letter="B">Who is responsible when an accident occurs</button>
+              <button class="btn mcq-btn" data-letter="C">ASCII character sets</button>
+              <button class="btn mcq-btn" data-letter="D">Printer ink levels</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 6. CULTURAL -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Cultural &amp; Social Impacts
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" open style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          6.1 Digital divide and accessibility
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>The <strong>digital divide</strong> is unequal access to devices, broadband, skills and support. Causes include poverty, rural locations, age, disability and language barriers.</p>
+          <p><strong>Accessibility:</strong> screen readers, subtitles, adjustable text — good design helps everyone; ignoring accessibility excludes disabled users (ethical and sometimes legal).</p>
+          <p><strong>Worked example:</strong> During remote learning, pupils without laptops fall behind — cultural/social inequality widened by technology gaps.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">The digital divide is:</p>
+              <button class="btn mcq-btn" data-letter="A">A network topology</button>
+              <button class="btn mcq-btn" data-letter="B">A type of virus</button>
+              <button class="btn mcq-btn" data-letter="C">Unequal access to technology and digital skills</button>
+              <button class="btn mcq-btn" data-letter="D">A sorting algorithm</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          6.2 Online behaviour and cultural change
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10–11</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>Technology changes how people communicate: social media, echo chambers, anonymity, cyberbullying, trolling, misinformation.</p>
+          <p><strong>Positive:</strong> global collaboration, education resources, support communities.</p>
+          <p><strong>Negative:</strong> addiction, mental health pressure, spread of false news, harassment.</p>
+          <p><strong>Worked example:</strong> A viral false rumour damages a pupil's reputation — cultural harm; schools respond with digital citizenship education and reporting tools.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">An echo chamber online is when:</p>
+              <button class="btn mcq-btn" data-letter="A">Users mainly see opinions similar to their own</button>
+              <button class="btn mcq-btn" data-letter="B">Sound is louder on headphones</button>
+              <button class="btn mcq-btn" data-letter="C">Emails are encrypted</button>
+              <button class="btn mcq-btn" data-letter="D">CPUs share one cache</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 7. SCENARIOS -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Exam Scenarios (AQA-style contexts)
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span class="board-tag board-aqa">AQA</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" open style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          7.1 Mobile technology and wireless networking
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>Smartphones enable constant connectivity but increase <strong>distraction</strong>, <strong>location tracking</strong>, and <strong>e-waste</strong> from short upgrade cycles. Wireless networking (Wi‑Fi, 5G) expands access but raises <strong>security</strong> risks on public networks — see also the Cyber Security topic.</p>
+          <p><strong>Worked example (6-mark style):</strong> Mobile banking — <em>benefit:</em> convenience; <em>legal:</em> biometric data under GDPR; <em>ethical:</em> elderly users without smartphones excluded; <em>environmental:</em> millions of replaced handsets yearly.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="D">
+              <p style="margin:0 0 10px;">AQA lists mobile technologies in 3.8 mainly because exams want you to:</p>
+              <button class="btn mcq-btn" data-letter="A">Memorise every phone model</button>
+              <button class="btn mcq-btn" data-letter="B">Write code in assembly only</button>
+              <button class="btn mcq-btn" data-letter="C">Ignore privacy</button>
+              <button class="btn mcq-btn" data-letter="D">Discuss general impacts on society</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          7.2 Cloud storage and hacking
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-aqa">AQA</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Cloud storage</strong> — files on provider servers: scalability and backup vs privacy, jurisdiction, provider breaches.</p>
+          <p><strong>Hacking</strong> (AQA: unauthorised access) — illegal under Computer Misuse Act; ethical debates about whistle-blowing still require legal analysis.</p>
+          <p><strong>Worked example:</strong> Celebrity photos leaked from cloud backups — legal breach of CMA and GDPR; ethical harm to victims; reputational damage to provider.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Storing data in the cloud without strong security mainly increases risk of:</p>
+              <button class="btn mcq-btn" data-letter="A">Faster CPU clock speed</button>
+              <button class="btn mcq-btn" data-letter="B">Unauthorised access and data breaches</button>
+              <button class="btn mcq-btn" data-letter="C">Copyright on your own homework</button>
+              <button class="btn mcq-btn" data-letter="D">Removing the digital divide</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          7.3 Wearable technologies
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-aqa">AQA</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>Smartwatches and fitness trackers collect <strong>health and location data</strong>. Benefits: medical monitoring, fitness goals. Risks: sensitive data sold to advertisers, weak passwords, devices discarded quickly.</p>
+          <p><strong>Worked example:</strong> Employer gives staff fitness trackers and ranks them publicly — ethical pressure and possible GDPR issues if health data processed unfairly.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">Wearable health devices raise concerns mainly about:</p>
+              <button class="btn mcq-btn" data-letter="A">Monitor refresh rates</button>
+              <button class="btn mcq-btn" data-letter="B">Binary shifts only</button>
+              <button class="btn mcq-btn" data-letter="C">Sensitive personal and health data privacy</button>
+              <button class="btn mcq-btn" data-letter="D">Removing all copyright</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='ethical') }}?difficulty=difficult&amp;mode=practice" style="display:inline-block;margin:4px 0 8px;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Difficult scenarios</a>
+    </div>
+  </details>
+
+  <!-- QUICK REFERENCE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">★</span>
+      Quick Reference
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10–11</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <div style="text-align:center;margin:12px 0;">
+        <svg width="100%" viewBox="0 0 760 340" style="background:#f9f8f5;border:1px solid #d4e6f1;border-radius:8px;max-width:760px;display:block;margin:0 auto;" aria-label="Ethical legal environmental quick reference">
+          <text x="380" y="24" font-size="16" fill="#1a6fa8" font-weight="bold" text-anchor="middle">Impacts — Quick Reference</text>
+          <text x="20" y="52" font-size="14" fill="#059669" font-weight="bold">Environmental</text>
+          <text x="20" y="68" font-size="14" fill="#28251d">Energy · data centres · e-waste · mining · obsolescence</text>
+          <text x="20" y="92" font-size="14" fill="#1a6fa8" font-weight="bold">Legal (UK)</text>
+          <text x="20" y="108" font-size="14" fill="#28251d">UK GDPR / DPA 2018 · Computer Misuse Act 1990</text>
+          <text x="20" y="124" font-size="14" fill="#28251d">Copyright Act 1988 · patents · trademarks · licences</text>
+          <text x="20" y="148" font-size="14" fill="#8a5300" font-weight="bold">Ethical</text>
+          <text x="20" y="164" font-size="14" fill="#28251d">Privacy · surveillance · AI bias · automation · liability</text>
+          <text x="20" y="180" font-size="14" fill="#28251d">Citizens vs government access to data</text>
+          <text x="20" y="204" font-size="14" fill="#a13544" font-weight="bold">Cultural / social</text>
+          <text x="20" y="220" font-size="14" fill="#28251d">Digital divide · cyberbullying · echo chambers</text>
+          <line x1="380" y1="40" x2="380" y2="320" stroke="#d4e6f1"/>
+          <text x="400" y="52" font-size="14" fill="#1a6fa8" font-weight="bold">AQA 3.8 contexts</text>
+          <text x="400" y="68" font-size="14" fill="#28251d">Mobile · wireless · cloud · hacking</text>
+          <text x="400" y="84" font-size="14" fill="#28251d">Wearables · implants · autonomous vehicles</text>
+          <text x="400" y="108" font-size="14" fill="#1a6fa8" font-weight="bold">Exam structure</text>
+          <text x="400" y="124" font-size="14" fill="#28251d">State impact type → explain → example</text>
+          <text x="400" y="140" font-size="14" fill="#28251d">Balanced arguments for privacy debates</text>
+          <text x="400" y="156" font-size="14" fill="#28251d">Pen test = legal with permission</text>
+          <text x="400" y="172" font-size="14" fill="#28251d">Open source ≠ always free of obligations</text>
+          <text x="400" y="196" font-size="14" fill="#1a6fa8" font-weight="bold">Related topic</text>
+          <text x="400" y="212" font-size="14" fill="#28251d">Cyber Security — malware, firewalls, encryption</text>
+        </svg>
+      </div>
+      <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:8px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">In exams, something can be legal but still:</p>
+          <button class="btn mcq-btn" data-letter="A">Impossible</button>
+          <button class="btn mcq-btn" data-letter="B">Considered unethical</button>
+          <button class="btn mcq-btn" data-letter="C">Always environmental</button>
+          <button class="btn mcq-btn" data-letter="D">Unrelated to society</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+</div>
+
+<div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;max-width:860px;margin-left:auto;margin-right:auto;">
+  <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+  <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='cs', topic='ethical') }}"
+     style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+    Start Practice Quiz
+  </a>
+</div>
+
+{% endblock %}

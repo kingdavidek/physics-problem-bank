@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+{% block title %}Pythagoras' Theorem – GCSE Mathematics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Pythagoras' Theorem</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">In any right-angled triangle, the square on the hypotenuse equals the sum of the squares on the other two sides. This links algebra, geometry, coordinates, and 3D problems — a core GCSE skill on Foundation and Higher.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='pythagoras') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <!-- 1. THE THEOREM -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      The Theorem
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> A right triangle has shorter sides <strong>3 cm</strong> and <strong>4 cm</strong>. Then 3² + 4² = 9 + 16 = 25 = 5², so the hypotenuse is <strong>5 cm</strong>.</p>
+
+      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;font-size:1.05rem;text-align:center;">
+        a² + b² = c² &nbsp;&nbsp;(c is the hypotenuse — longest side, opposite the right angle)
+      </p>
+
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="100%" viewBox="-16 -16 272 232" style="background:#f9f8f5;border-radius:8px;max-width:272px;display:block;margin:0 auto;overflow:visible;">
+          <polygon points="50,170 190,170 50,50" fill="#e8f4fd" stroke="none"/>
+          <line x1="50" y1="170" x2="190" y2="170" stroke="#1a6fa8" stroke-width="2.5"/>
+          <line x1="50" y1="170" x2="50" y2="50" stroke="#059669" stroke-width="2.5"/>
+          <line x1="50" y1="50" x2="190" y2="170" stroke="#a13544" stroke-width="3"/>
+          <polyline points="59,170 59,161 50,161" fill="none" stroke="#333" stroke-width="1.8"/>
+          <text x="120" y="188" font-size="16" fill="#1a6fa8" text-anchor="middle" font-weight="bold">a = 3</text>
+          <text x="32" y="115" font-size="16" fill="#059669" text-anchor="middle" font-weight="bold">b = 4</text>
+          <text x="128" y="95" font-size="16" fill="#a13544" font-weight="bold">c = 5</text>
+          <text x="195" y="108" font-size="14" fill="#a13544">hypotenuse</text>
+          <text x="120" y="28" font-size="14" fill="#555" text-anchor="middle">3² + 4² = 5²</text>
+        </svg>
+      </div>
+
+      <ul style="line-height:1.9;">
+        <li><strong>a</strong> and <strong>b</strong> are the two shorter sides (legs).</li>
+        <li><strong>c</strong> is the <strong>hypotenuse</strong> — always the longest side.</li>
+        <li>Label the right angle before you start — it tells you which side is c.</li>
+      </ul>
+
+      <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:16px 0;border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Which formula is correct for legs a, b and hypotenuse c?</p>
+          <button class="btn mcq-btn" data-letter="A">c = a + b</button>
+          <button class="btn mcq-btn" data-letter="B">c² = a² + b²</button>
+          <button class="btn mcq-btn" data-letter="C">c² = a² − b²</button>
+          <button class="btn mcq-btn" data-letter="D">a² = c² + b²</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 2. FIND HYPOTENUSE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Finding the Hypotenuse
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Shorter sides 6 cm and 8 cm. Find c.</p>
+      <p>c² = 6² + 8² = 36 + 64 = 100 → c = √100 = <strong>10 cm</strong>.</p>
+
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="100%" viewBox="-16 -16 272 232" style="background:#f9f8f5;border-radius:8px;max-width:272px;display:block;margin:0 auto;overflow:visible;">
+          <polygon points="50,170 190,170 50,50" fill="#e8f4fd" stroke="none"/>
+          <line x1="50" y1="170" x2="190" y2="170" stroke="#1a6fa8" stroke-width="2"/>
+          <line x1="50" y1="170" x2="50" y2="50" stroke="#059669" stroke-width="2"/>
+          <line x1="50" y1="50" x2="190" y2="170" stroke="#a13544" stroke-width="2.5"/>
+          <polyline points="59,170 59,161 50,161" fill="none" stroke="#333" stroke-width="1.5"/>
+          <text x="120" y="188" font-size="15" fill="#1a6fa8" text-anchor="middle" font-weight="bold">6 cm</text>
+          <text x="32" y="115" font-size="15" fill="#059669" text-anchor="middle" font-weight="bold">8 cm</text>
+          <text x="128" y="95" font-size="15" fill="#a13544" font-weight="bold">c = ?</text>
+        </svg>
+      </div>
+
+      <p><strong>Steps:</strong> (1) Square both shorter sides. (2) Add. (3) Square root.</p>
+
+      <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:16px 0;border-radius:0 var(--radius) var(--radius) 0;">
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">Shorter sides 5 cm and 12 cm. Hypotenuse?</p>
+          <button class="btn mcq-btn" data-letter="A">17 cm</button>
+          <button class="btn mcq-btn" data-letter="B">13 cm</button>
+          <button class="btn mcq-btn" data-letter="C">169 cm</button>
+          <button class="btn mcq-btn" data-letter="D">60 cm</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='pythagoras') }}?difficulty=foundational&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Foundational</a>
+    </div>
+  </details>
+
+  <!-- 3. FIND SHORTER SIDE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Finding a Shorter Side
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Hypotenuse 13 cm, one leg 5 cm. Find the other leg.</p>
+      <p>b² = 13² − 5² = 169 − 25 = 144 → b = <strong>12 cm</strong>.</p>
+
+      <p style="color:#8a5300;background:#fef4e8;padding:8px 12px;border-radius:6px;font-size:.92rem;">
+        <strong>Rearrangement:</strong> (shorter side)² = c² − (other shorter side)² — subtract before you square root.
+      </p>
+
+      <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:16px 0;border-radius:0 var(--radius) var(--radius) 0;">
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">Hypotenuse 10 cm, one leg 6 cm. Other leg?</p>
+          <button class="btn mcq-btn" data-letter="A">8 cm</button>
+          <button class="btn mcq-btn" data-letter="B">4 cm</button>
+          <button class="btn mcq-btn" data-letter="C">16 cm</button>
+          <button class="btn mcq-btn" data-letter="D">136 cm</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 4. CONVERSE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Is the Triangle Right-Angled?
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Converse:</strong> If a² + b² = c² (with c the longest side), the triangle <strong>is</strong> right-angled. If not equal, it is <strong>not</strong>.</p>
+
+      <p><strong>Example:</strong> Sides 7, 24, 25 → 7² + 24² = 49 + 576 = 625 = 25² ✓ right-angled.</p>
+      <p><strong>Counter-example:</strong> 5, 12, 14 → 5² + 12² = 169 but 14² = 196 ✗ not right-angled.</p>
+
+      <p style="color:#a13544;font-size:.92rem;"><strong>Common mistake:</strong> Checking a + b = c instead of a² + b² = c².</p>
+
+      <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:16px 0;border-radius:0 var(--radius) var(--radius) 0;">
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">Sides 9 cm, 12 cm, 15 cm — right-angled?</p>
+          <button class="btn mcq-btn" data-letter="A">Yes</button>
+          <button class="btn mcq-btn" data-letter="B">No</button>
+          <button class="btn mcq-btn" data-letter="C">Only if the angle is 45°</button>
+          <button class="btn mcq-btn" data-letter="D">Cannot tell</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <!-- 5. 2D APPLICATIONS -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      2D Applications
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Rectangle diagonal:</strong> A 9 cm × 12 cm rectangle has diagonal √(9² + 12²) = √225 = <strong>15 cm</strong>.</p>
+
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="100%" viewBox="-16 -16 292 212" style="background:#f9f8f5;border-radius:8px;max-width:292px;display:block;margin:0 auto;overflow:visible;">
+          <rect x="55" y="45" width="150" height="100" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+          <line x1="55" y1="45" x2="205" y2="145" stroke="#a13544" stroke-width="2.5" stroke-dasharray="6,3"/>
+          <polyline points="63,145 63,136 55,136" fill="none" stroke="#333" stroke-width="1.5"/>
+          <text x="130" y="162" font-size="15" fill="#1a6fa8" text-anchor="middle" font-weight="bold">9 cm</text>
+          <text x="38" y="98" font-size="15" fill="#059669" text-anchor="middle" font-weight="bold">12 cm</text>
+          <text x="138" y="88" font-size="15" fill="#a13544" font-weight="bold">d = 15 cm</text>
+        </svg>
+      </div>
+
+      <p><strong>Ladder against a wall:</strong> The wall and ground are perpendicular. The ladder is the hypotenuse.</p>
+
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="100%" viewBox="-16 -16 272 232" style="background:#f9f8f5;border-radius:8px;max-width:272px;display:block;margin:0 auto;overflow:visible;">
+          <line x1="50" y1="170" x2="50" y2="50" stroke="#555" stroke-width="2"/>
+          <line x1="50" y1="170" x2="190" y2="170" stroke="#555" stroke-width="2"/>
+          <line x1="50" y1="50" x2="190" y2="170" stroke="#a13544" stroke-width="3"/>
+          <polyline points="59,170 59,161 50,161" fill="none" stroke="#333" stroke-width="1.5"/>
+          <text x="32" y="115" font-size="14" fill="#059669" font-weight="bold">8 m</text>
+          <text x="120" y="188" font-size="14" fill="#1a6fa8" font-weight="bold">6 m</text>
+          <text x="128" y="95" font-size="14" fill="#a13544" font-weight="bold">ladder 10 m</text>
+        </svg>
+      </div>
+    </div>
+  </details>
+
+  <!-- 6. 3D -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      3D Pythagoras
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>For a cuboid with edges l, w, h:</p>
+      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;text-align:center;">
+        space diagonal² = l² + w² + h²
+      </p>
+
+      <p><strong>Example:</strong> 3 cm × 4 cm × 5 cm → AG = √(9 + 16 + 25) = √50 ≈ <strong>7.07 cm</strong>.</p>
+
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="100%" viewBox="-20 -20 320 250" style="background:#f9f8f5;border-radius:8px;max-width:320px;display:block;margin:0 auto;overflow:visible;">
+          <polygon points="70,150 160,95 240,95 150,150" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="1.5"/>
+          <polygon points="70,150 150,150 240,95 160,95" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <polygon points="150,150 240,95 240,5 150,60" fill="#bfdbfe" stroke="#1a6fa8" stroke-width="1.5"/>
+          <line x1="70" y1="150" x2="240" y2="5" stroke="#a13544" stroke-width="2.5" stroke-dasharray="5,3"/>
+          <text x="110" y="168" font-size="14" fill="#1a6fa8">l</text>
+          <text x="248" y="52" font-size="14" fill="#059669">h</text>
+          <text x="200" y="88" font-size="14" fill="#059669">w</text>
+          <text x="145" y="72" font-size="14" fill="#a13544" font-weight="bold">AG</text>
+        </svg>
+      </div>
+
+      <p><strong>Two-step method:</strong> Find a face diagonal first (√(l² + w²)), then use that with h as the legs of a second right triangle.</p>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='pythagoras') }}?difficulty=intermediate&amp;mode=practice" style="display:inline-block;margin-top:8px;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Intermediate</a>
+    </div>
+  </details>
+
+  <!-- 7. COORDINATES -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Distance on a Grid
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> From A(0, 0) to B(6, 8): Δx = 6, Δy = 8 → AB = √(36 + 64) = <strong>10</strong>.</p>
+
+      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;text-align:center;">
+        AB = √[(x₂ − x₁)² + (y₂ − y₁)²]
+      </p>
+    </div>
+  </details>
+
+  <!-- QUICK REFERENCE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+      Pythagoras — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+            <div class="revision-card-wrap">
+        <div class="lesson-quick-ref-card" role="region" aria-label="Pythagoras quick reference">
+          <h3>Pythagoras — Quick Reference</h3>
+          <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+
+            <div>
+              <h4 style="color:#1a6fa8;">Core rule</h4>
+              <ul>
+                <li>\(c^2 = a^2 + b^2\) (\(c\) = hypotenuse)</li>
+                <li>Shorter side: \(a^2 = c^2 - b^2\)</li>
+                <li>Converse: check \(a^2+b^2\) equals longest side squared</li>
+              </ul>
+              <h4 style="color:#1a6fa8;margin-top:14px;">Common triples</h4>
+              <ul>
+                <li>3-4-5 · 5-12-13 · 8-15-17</li>
+              </ul>
+            </div>
+            <div>
+              <h4 style="color:#1a6fa8;">Applications</h4>
+              <ul>
+                <li>Rectangle diagonal: \(\sqrt{w^2+h^2}\)</li>
+                <li>3D: \(d^2 = l^2 + w^2 + h^2\)</li>
+                <li>Coordinates: \(d = \sqrt{(\Delta x)^2 + (\Delta y)^2}\)</li>
+              </ul>
+              <p style="margin:12px 0 0;color:#555;font-size:0.95rem;">Never add lengths directly — square, add, then square root.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+</div>
+
+<div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;max-width:860px;margin-left:auto;margin-right:auto;">
+  <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+  <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='pythagoras') }}"
+     style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+    Start Practice Quiz
+  </a>
+</div>
+
+{% endblock %}

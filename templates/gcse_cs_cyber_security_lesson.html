@@ -1,0 +1,668 @@
+{% extends "base.html" %}
+{% block title %}Cyber Security – GCSE Computer Science{% endblock %}
+
+{% block content %}
+<style>
+  .lesson-inner > summary { list-style:none; }
+  .lesson-inner > summary::-webkit-details-marker { display:none; }
+  .threat-box { background:#fef4e8;border-left:4px solid #8a5300;padding:10px 14px;margin:10px 0;border-radius:0 6px 6px 0; }
+  .defence-box { background:#ecfdf5;border-left:4px solid #059669;padding:10px 14px;margin:10px 0;border-radius:0 6px 6px 0; }
+  .spec-table { width:100%;border-collapse:collapse;font-size:.88rem;margin:12px 0; }
+  .spec-table th, .spec-table td { border:1px solid #cbd5e1;padding:8px 10px;text-align:left;vertical-align:top; }
+  .spec-table th { background:#f1f5f9;font-weight:600; }
+  .board-tag { font-size:.7rem;padding:2px 6px;border-radius:8px;margin-right:4px; }
+  .board-aqa { background:#dbeafe;color:#1e40af; }
+  .board-ocr { background:#fce7f3;color:#9d174d; }
+  .board-edx { background:#fef3c7;color:#92400e; }
+</style>
+
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Cyber Security</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">GCSE Computer Science — threats, malware, social engineering, network attacks, protecting systems, encryption, policies, and data protection. Revise each section, use the Quick Checks, then practise exam-style questions.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">WJEC</span>
+    </div>
+  </div>
+
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='cs', topic='cyber_security') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <!-- 0. FUNDAMENTALS -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">0</span>
+      What is Cyber Security?
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" open style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          0.1 Definition and aims
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Cyber security</strong> is the set of <strong>processes, practices and technologies</strong> used to protect networks, computers, programs and data from attack, damage or unauthorised access.</p>
+          <p>Exams often link three goals (useful across all boards):</p>
+          <ul style="line-height:1.9;">
+            <li><strong>Confidentiality</strong> — only authorised people see the data</li>
+            <li><strong>Integrity</strong> — data is accurate and not tampered with</li>
+            <li><strong>Availability</strong> — systems and data are there when needed (DoS attacks target this)</li>
+          </ul>
+          <div class="defence-box"><strong>Defence in depth</strong> — no single control is perfect; layers (physical, network, software, people, policies) work together.</div>
+          <p><strong>Worked example:</strong> A school stores pupil marks on a server. Cyber security means: locked server room (physical), firewall (network), patched OS (software), strong staff passwords (people), and an AUP pupils sign (policy).</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Cyber security mainly aims to:</p>
+              <button class="btn mcq-btn" data-letter="A">Make screens brighter</button>
+              <button class="btn mcq-btn" data-letter="B">Protect systems and data from attack and unauthorised access</button>
+              <button class="btn mcq-btn" data-letter="C">Increase download speed only</button>
+              <button class="btn mcq-btn" data-letter="D">Remove the need for passwords</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 1. THREATS -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      Threats to Systems
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          1.1 Malware
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Malware</strong> (malicious software) is hostile or intrusive software that harms systems or steals data. Exam boards require virus, trojan and spyware; Edexcel also names worms, ransomware and key loggers.</p>
+          <table class="spec-table">
+            <thead><tr><th>Type</th><th>What it does</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Virus</strong></td><td>Attaches to files; spreads when infected file is opened</td></tr>
+              <tr><td><strong>Worm</strong></td><td>Spreads across networks without user opening a file</td></tr>
+              <tr><td><strong>Trojan</strong></td><td>Disguised as legitimate software; user installs it</td></tr>
+              <tr><td><strong>Spyware</strong></td><td>Records activity secretly (keystrokes, screens)</td></tr>
+              <tr><td><strong>Key logger</strong></td><td>Captures keyboard input to steal passwords</td></tr>
+              <tr><td><strong>Ransomware</strong></td><td>Encrypts or locks files; demands payment</td></tr>
+            </tbody>
+          </table>
+          <p><strong>Protection:</strong> anti-malware with up-to-date definitions, do not run unknown attachments, least-privilege accounts, backups.</p>
+          <p><strong>Example:</strong> A pupil opens “free_game.exe” — a Trojan installs spyware that logs keystrokes.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">A Trojan differs from a virus because it:</p>
+              <button class="btn mcq-btn" data-letter="A">Only affects printers</button>
+              <button class="btn mcq-btn" data-letter="B">Pretends to be legitimate software the user installs</button>
+              <button class="btn mcq-btn" data-letter="C">Cannot harm data</button>
+              <button class="btn mcq-btn" data-letter="D">Only spreads over WiFi automatically</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          1.2 Social engineering
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Social engineering</strong> manipulates people into breaking security — the “human weak point”. People are often the weakest link in a system.</p>
+          <ul style="line-height:1.9;">
+            <li><strong>Phishing</strong> — fake emails, texts (smishing) or calls (vishing) to steal credentials</li>
+            <li><strong>Blagging / pretexting</strong> — invented story to gain trust (“I’m from IT, read me your password”)</li>
+            <li><strong>Shoulder surfing / shouldering</strong> — watching someone enter a PIN or password</li>
+          </ul>
+          <div class="threat-box"><strong>Red flags:</strong> urgent threats, spelling errors, odd sender addresses, links that do not match the real domain.</div>
+          <p><strong>Protection:</strong> security awareness training, verify callers independently, screen shields at ATMs, never share passwords, report suspicious messages.</p>
+          <p><strong>Worked example:</strong> Email says “Your school password expires today — click here.” Link goes to <code>sch00l-login.evil.com</code> — phishing.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">Shoulder surfing is:</p>
+              <button class="btn mcq-btn" data-letter="A">Flooding a server with traffic</button>
+              <button class="btn mcq-btn" data-letter="B">Encrypting files for ransom</button>
+              <button class="btn mcq-btn" data-letter="C">Watching someone enter private information</button>
+              <button class="btn mcq-btn" data-letter="D">Writing SQL in a login box</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          1.3 Configuration &amp; physical threats
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p>Not every threat is malware. You also need to know:</p>
+          <ul style="line-height:1.9;">
+            <li><strong>Pharming</strong> — redirects traffic to a <strong>fake website</strong> (often via poisoned DNS or hosts file), even if the user types the correct URL</li>
+            <li><strong>Weak and default passwords</strong> — e.g. <code>admin/admin</code> on a router; easy for brute force</li>
+            <li><strong>Misconfigured access rights</strong> — pupils given admin rights; shared folders open to everyone</li>
+            <li><strong>Removable media</strong> — infected USB sticks plug into school PCs; data copied off on unauthorised USB</li>
+            <li><strong>Unpatched / outdated software</strong> — known flaws attackers exploit; includes out-of-date anti-malware</li>
+          </ul>
+          <p><strong>Pharming vs phishing:</strong> phishing tricks the <em>user</em> into clicking a bad link; pharming misdirects traffic so the <em>address bar looks correct</em> but the site is fake.</p>
+          <p><strong>Example:</strong> A teacher leaves a laptop unlocked in a corridor — insider/careless threat; pupil copies files to a USB (removable media risk).</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">Pharming mainly:</p>
+              <button class="btn mcq-btn" data-letter="A">Redirects users to a fake website</button>
+              <button class="btn mcq-btn" data-letter="B">Installs more RAM</button>
+              <button class="btn mcq-btn" data-letter="C">Speeds up DNS for everyone</button>
+              <button class="btn mcq-btn" data-letter="D">Encrypts backups automatically</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 2. ATTACKS -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Network &amp; Application Attacks
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10–11</span>
+      <span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          2.1 DoS, brute force and data interception
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Denial of Service (DoS)</strong> — floods a server so legitimate users cannot connect (attacks <strong>availability</strong>). <strong>DDoS</strong> uses many machines (botnet).</p>
+          <p><strong>Brute force</strong> — tries many passwords until one works. Slowed by lockouts, CAPTCHA, rate limiting, and strong passwords.</p>
+          <p><strong>Data interception and theft</strong> — capturing packets on unencrypted WiFi, stealing laptops, or MITM on weak links.</p>
+          <p><strong>Example:</strong> Revision site goes offline during exams due to junk requests — DoS.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">A DoS attack aims to:</p>
+              <button class="btn mcq-btn" data-letter="A">Steal passwords silently only</button>
+              <button class="btn mcq-btn" data-letter="B">Make a service unavailable to users</button>
+              <button class="btn mcq-btn" data-letter="C">Encrypt all files</button>
+              <button class="btn mcq-btn" data-letter="D">Install antivirus</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          2.2 SQL injection and man-in-the-middle
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>SQL injection</strong> — malicious input in a form tricks the database, e.g. <code>' OR '1'='1</code> to bypass login. Prevent with <strong>parameterised queries</strong> and input validation.</p>
+          <p><strong>Man-in-the-middle (MITM)</strong> — attacker relays or alters traffic between user and server. <strong>HTTPS (TLS)</strong> and valid certificates reduce risk.</p>
+          <div style="text-align:center;margin:14px 0;">
+            <svg width="100%" viewBox="0 0 420 100" style="background:#f9f8f5;border-radius:8px;max-width:420px;display:block;margin:0 auto;" aria-label="MITM diagram">
+              <text x="210" y="16" font-size="14" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Man-in-the-middle</text>
+              <rect x="20" y="40" width="70" height="36" rx="4" fill="#e8f4fd" stroke="#1a6fa8"/>
+              <text x="55" y="62" font-size="9" fill="#334155" text-anchor="middle">User</text>
+              <rect x="175" y="32" width="70" height="52" rx="4" fill="#fef4e8" stroke="#8a5300"/>
+              <text x="210" y="58" font-size="9" fill="#334155" text-anchor="middle">Attacker</text>
+              <rect x="330" y="40" width="70" height="36" rx="4" fill="#e8f4fd" stroke="#1a6fa8"/>
+              <text x="365" y="62" font-size="9" fill="#334155" text-anchor="middle">Server</text>
+              <line x1="90" y1="58" x2="175" y2="58" stroke="#b8c9d4" stroke-width="2"/>
+              <line x1="245" y1="58" x2="330" y2="58" stroke="#b8c9d4" stroke-width="2"/>
+            </svg>
+          </div>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">SQL injection mainly targets:</p>
+              <button class="btn mcq-btn" data-letter="A">Printers</button>
+              <button class="btn mcq-btn" data-letter="B">Databases via malicious input</button>
+              <button class="btn mcq-btn" data-letter="C">Monitors</button>
+              <button class="btn mcq-btn" data-letter="D">Keyboards</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          2.3 Cross-site scripting (XSS)
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>XSS</strong> injects malicious scripts into web pages others view — can steal cookies or redirect users. Defences: sanitise input, escape output, Content Security Policy.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">XSS attacks often involve:</p>
+              <button class="btn mcq-btn" data-letter="A">Malicious scripts in web pages</button>
+              <button class="btn mcq-btn" data-letter="B">Physical USB locks only</button>
+              <button class="btn mcq-btn" data-letter="C">Brute-forcing router MAC addresses</button>
+              <button class="btn mcq-btn" data-letter="D">Full disk backups</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='cyber_security') }}?difficulty=foundational&amp;mode=practice" style="display:inline-block;margin:4px 0 8px;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Foundational</a>
+    </div>
+  </details>
+
+  <!-- 3. PROTECTING SYSTEMS -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Protecting Systems
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          3.1 Firewalls, anti-malware and patches
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <ul style="line-height:1.9;">
+            <li><strong>Firewall</strong> — monitors and filters traffic; allows or blocks by rules (ports, IPs). Hardware or software.</li>
+            <li><strong>Anti-malware / antivirus</strong> — scans for signatures and suspicious behaviour; quarantines threats</li>
+            <li><strong>Patches &amp; automatic updates</strong> — fix known vulnerabilities</li>
+          </ul>
+          <p><strong>Example:</strong> Windows Update closes a flaw attackers were using — patch management.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Software patches mainly fix:</p>
+              <button class="btn mcq-btn" data-letter="A">Screen brightness</button>
+              <button class="btn mcq-btn" data-letter="B">Security vulnerabilities</button>
+              <button class="btn mcq-btn" data-letter="C">Keyboard layout</button>
+              <button class="btn mcq-btn" data-letter="D">Printer paper size</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          3.2 Passwords, 2FA, CAPTCHA and email verification
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Password systems:</strong> long, unique passwords; passphrases; password managers; never reuse across sites; change defaults on routers.</p>
+          <p><strong>2FA / MFA</strong> — two <em>different</em> factor types: know (password) + have (phone code) or are (fingerprint).</p>
+          <p><strong>CAPTCHA</strong> (or similar) — proves a human is logging in; slows automated brute force and bots.</p>
+          <p><strong>Email confirmation</strong> — link sent to registered email to verify identity when signing up or resetting password.</p>
+          <p><strong>Worked example:</strong> School email: password + approve notification on phone app — 2FA.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">CAPTCHA is mainly used to:</p>
+              <button class="btn mcq-btn" data-letter="A">Encrypt the hard drive</button>
+              <button class="btn mcq-btn" data-letter="B">Distinguish humans from automated bots</button>
+              <button class="btn mcq-btn" data-letter="C">Filter MAC addresses</button>
+              <button class="btn mcq-btn" data-letter="D">Back up databases</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          3.3 Biometrics
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Biometrics</strong> use body features — fingerprint, face, iris — especially on <strong>mobile devices</strong>. Convenient but templates cannot be “changed” like a password if stolen; use as second factor where possible.</p>
+          <p><strong>Example:</strong> Phone unlock with fingerprint + banking app still asks PIN — layered security.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">A risk of biometrics alone is:</p>
+              <button class="btn mcq-btn" data-letter="A">They always slow the CPU</button>
+              <button class="btn mcq-btn" data-letter="B">They remove the need for encryption</button>
+              <button class="btn mcq-btn" data-letter="C">You cannot change your fingerprint if the template is stolen</button>
+              <button class="btn mcq-btn" data-letter="D">They only work on printers</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          3.4 Access control, MAC filtering and physical security
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10–11</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <ul style="line-height:1.9;">
+            <li><strong>User access levels</strong> — pupils vs staff vs admin; <strong>least privilege</strong> (only rights needed)</li>
+            <li><strong>MAC address filtering</strong> — allow/block devices by NIC hardware address; can be <strong>spoofed</strong>, so not enough alone</li>
+            <li><strong>Physical security</strong> — locks, CCTV, visitor logs, cable locks, controlled USB ports</li>
+          </ul>
+          <p><strong>Example:</strong> WiFi allows only school laptop MACs — helpful, but WPA3 and strong passwords still required.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">Least privilege means:</p>
+              <button class="btn mcq-btn" data-letter="A">Giving users only the access they need</button>
+              <button class="btn mcq-btn" data-letter="B">Everyone is an administrator</button>
+              <button class="btn mcq-btn" data-letter="C">Removing all firewalls</button>
+              <button class="btn mcq-btn" data-letter="D">Sharing one password for the whole school</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          3.5 Backups and recovery
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-edx">Edexcel</span><span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Full backup</strong> — copies everything (slow, simple restore). <strong>Incremental</strong> — only changes since last backup (faster, longer restore chain).</p>
+          <p><strong>3-2-1 rule:</strong> 3 copies, 2 media types, 1 off-site. Test restores regularly.</p>
+          <p><strong>Example:</strong> Ransomware on a file server — disconnect network, restore from clean off-site backup, investigate breach.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">Incremental backups store:</p>
+              <button class="btn mcq-btn" data-letter="A">Only files changed since the last backup</button>
+              <button class="btn mcq-btn" data-letter="B">No data</button>
+              <button class="btn mcq-btn" data-letter="C">Only the CPU</button>
+              <button class="btn mcq-btn" data-letter="D">Only emails from 1990</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 4. ENCRYPTION -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Encryption
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10–11</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          4.1 Data at rest vs in transit
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <ul style="line-height:1.9;">
+            <li><strong>In transit</strong> — data moving across a network; protect with <strong>HTTPS/TLS</strong>, VPN</li>
+            <li><strong>At rest</strong> — data on disk/USB; protect with full-disk encryption, encrypted backups</li>
+          </ul>
+          <p>Encryption scrambles data so only someone with the <strong>key</strong> can read it.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">HTTPS mainly protects data:</p>
+              <button class="btn mcq-btn" data-letter="A">On the hard drive only</button>
+              <button class="btn mcq-btn" data-letter="B">In transit between browser and server</button>
+              <button class="btn mcq-btn" data-letter="C">Inside the CPU cache only</button>
+              <button class="btn mcq-btn" data-letter="D">On paper printouts</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          4.2 Symmetric and asymmetric encryption
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Symmetric</strong> — one shared secret key encrypts and decrypts (fast; key must be shared securely). Example: password-protected ZIP.</p>
+          <p><strong>Asymmetric</strong> — <strong>public key</strong> encrypts, <strong>private key</strong> decrypts. Public key can be shared openly. Used in HTTPS certificates.</p>
+          <div style="text-align:center;margin:14px 0;">
+            <svg width="100%" viewBox="0 0 400 120" style="background:#f9f8f5;border-radius:8px;max-width:400px;display:block;margin:0 auto;" aria-label="Symmetric vs asymmetric">
+              <text x="100" y="18" font-size="14" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Symmetric</text>
+              <text x="100" y="36" font-size="9" fill="#334155" text-anchor="middle">Same key both ways</text>
+              <rect x="60" y="50" width="80" height="28" rx="4" fill="#e8f4fd" stroke="#1a6fa8"/>
+              <text x="100" y="68" font-size="9" fill="#334155" text-anchor="middle">Secret key</text>
+              <text x="300" y="18" font-size="14" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Asymmetric</text>
+              <rect x="240" y="44" width="55" height="24" rx="4" fill="#ecfdf5" stroke="#059669"/>
+              <text x="267" y="60" font-size="8" fill="#334155" text-anchor="middle">Public</text>
+              <rect x="305" y="44" width="55" height="24" rx="4" fill="#fef4e8" stroke="#8a5300"/>
+              <text x="332" y="60" font-size="8" fill="#334155" text-anchor="middle">Private</text>
+              <text x="300" y="90" font-size="9" fill="#334155" text-anchor="middle">Public encrypts · Private decrypts</text>
+            </svg>
+          </div>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="A">
+              <p style="margin:0 0 10px;">Symmetric encryption uses:</p>
+              <button class="btn mcq-btn" data-letter="A">One shared secret key</button>
+              <button class="btn mcq-btn" data-letter="B">No keys</button>
+              <button class="btn mcq-btn" data-letter="C">Only public keys</button>
+              <button class="btn mcq-btn" data-letter="D">Only MAC addresses</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          4.3 Caesar cipher (historical)
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Caesar cipher</strong> shifts each letter — shift 3: <code>CAT → FDW</code>. Easy to break by trying all shifts; teaches how ciphers work, not used for real security today.</p>
+          <p><strong>Worked example:</strong> Encode <strong>HELLO</strong> with shift 1 → <strong>IFMMP</strong>.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="C">
+              <p style="margin:0 0 10px;">Caesar cipher with shift 3 turns A into:</p>
+              <button class="btn mcq-btn" data-letter="A">A</button>
+              <button class="btn mcq-btn" data-letter="B">B</button>
+              <button class="btn mcq-btn" data-letter="C">D</button>
+              <button class="btn mcq-btn" data-letter="D">Z</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+    </div>
+  </details>
+
+  <!-- 5. POLICIES & DATA -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Policies, Testing &amp; Data Protection
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+    </summary>
+    <div style="padding:14px 16px 8px;background:#fff;">
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          5.1 Authentication, authorisation and AUP
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Authentication</strong> — proving identity (username, password, biometrics, smart card).</p>
+          <p><strong>Authorisation</strong> — what you may do after login (read a file, admin rights for staff only).</p>
+          <p><strong>Acceptable Use Policy (AUP)</strong> — rules for IT use: no bullying online, no illegal downloads, no password sharing.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Authentication means:</p>
+              <button class="btn mcq-btn" data-letter="A">What files you may open</button>
+              <button class="btn mcq-btn" data-letter="B">Proving who you are</button>
+              <button class="btn mcq-btn" data-letter="C">Encrypting a drive</button>
+              <button class="btn mcq-btn" data-letter="D">Backing up data</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          5.2 Penetration testing and ethical hacking
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>Penetration testing</strong> (also called <strong>ethical hacking</strong> when done legally with permission) — authorised attempt to find weaknesses before criminals do.</p>
+          <table class="spec-table">
+            <thead><tr><th>Type</th><th>Knowledge of system</th><th>Simulates</th></tr></thead>
+            <tbody>
+              <tr><td><strong>White-box / insider test</strong></td><td>Tester has credentials or inside knowledge</td><td>Malicious insider</td></tr>
+              <tr><td><strong>Black-box / external test</strong></td><td>No prior credentials</td><td>Outside attacker</td></tr>
+            </tbody>
+          </table>
+          <p><strong>Example:</strong> IT hires a security firm to try breaking the homework portal before go-live — findings fixed before pupils use it.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">External (black-box) penetration testing simulates:</p>
+              <button class="btn mcq-btn" data-letter="A">An attack from inside with admin passwords already</button>
+              <button class="btn mcq-btn" data-letter="B">An attacker with no prior credentials</button>
+              <button class="btn mcq-btn" data-letter="C">A power cut only</button>
+              <button class="btn mcq-btn" data-letter="D">Automatic Windows updates</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
+        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          5.3 GDPR, insider threats and incident response
+          <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+          <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
+        </summary>
+        <div style="padding:14px 16px;">
+          <p><strong>UK GDPR</strong> protects personal data. Schools must keep pupil data secure, use it lawfully, minimise what they hold, and respect rights (e.g. access). The <strong>ICO</strong> regulates this in the UK.</p>
+          <p><strong>Insider threat</strong> — risk from staff or careless users (shared passwords, unlocked laptops, wrong email attachment).</p>
+          <p><strong>Incident response</strong> (e.g. ransomware): isolate affected systems → report to leadership / ICO if personal data breached → restore from clean backups → review and improve defences.</p>
+          <p><strong>Worked example:</strong> Ransomware on file server — disconnect VLAN, do not pay immediately, restore from off-site backup, log incident for governors.</p>
+          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+            <div class="mcq-inline" data-correct="B">
+              <p style="margin:0 0 10px;">Penetration testing is done to:</p>
+              <button class="btn mcq-btn" data-letter="A">Attack systems without permission</button>
+              <button class="btn mcq-btn" data-letter="B">Find weaknesses with permission before criminals do</button>
+              <button class="btn mcq-btn" data-letter="C">Send spam</button>
+              <button class="btn mcq-btn" data-letter="D">Remove encryption</button>
+              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='cyber_security') }}?difficulty=intermediate&amp;mode=practice" style="display:inline-block;margin:4px 0 8px;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Intermediate</a>
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='cyber_security') }}?difficulty=difficult&amp;mode=practice" style="display:inline-block;margin:4px 0 8px;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;margin-left:8px;">Quick Test – Difficult</a>
+    </div>
+  </details>
+
+  <!-- QUICK REFERENCE -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">★</span>
+      Quick Reference
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10–11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+      <div style="text-align:center;margin:12px 0;">
+        <svg width="100%" viewBox="0 0 760 320" style="background:#f9f8f5;border:1px solid #d4e6f1;border-radius:8px;max-width:760px;display:block;margin:0 auto;" aria-label="Cyber security quick reference">
+          <text x="380" y="24" font-size="16" fill="#1a6fa8" font-weight="bold" text-anchor="middle">Cyber Security — Quick Reference</text>
+          <text x="20" y="52" font-size="14" fill="#28251d">Threats: malware · phishing · pharming · weak passwords</text>
+          <text x="20" y="68" font-size="14" fill="#28251d">Social: blagging · shoulder surfing · smishing/vishing</text>
+          <text x="20" y="84" font-size="14" fill="#28251d">Network: DoS · brute force · SQLi · MITM · XSS</text>
+          <text x="20" y="100" font-size="14" fill="#28251d">Config: bad access rights · USB · unpatched software</text>
+          <text x="20" y="124" font-size="14" fill="#059669" font-weight="bold">Defences</text>
+          <text x="20" y="140" font-size="14" fill="#28251d">Firewall · anti-malware · patches · 2FA · CAPTCHA</text>
+          <text x="20" y="156" font-size="14" fill="#28251d">Biometrics · MAC filter · least privilege · physical</text>
+          <text x="20" y="172" font-size="14" fill="#28251d">Encrypt: symmetric (1 key) · asymmetric (pub/priv)</text>
+          <text x="20" y="188" font-size="14" fill="#28251d">HTTPS = in transit · disk encryption = at rest</text>
+          <line x1="380" y1="40" x2="380" y2="300" stroke="#d4e6f1"/>
+          <text x="400" y="52" font-size="14" fill="#28251d">AuthN = identity | AuthZ = permissions</text>
+          <text x="400" y="68" font-size="14" fill="#28251d">AUP · backups 3-2-1 · GDPR / ICO</text>
+          <text x="400" y="84" font-size="14" fill="#28251d">Pen test: white-box (insider) · black-box (external)</text>
+          <text x="400" y="100" font-size="14" fill="#28251d">CIA: Confidentiality · Integrity · Availability</text>
+          <text x="400" y="124" font-size="14" fill="#1a6fa8" font-weight="bold">Exam tip</text>
+          <text x="400" y="140" font-size="14" fill="#28251d">Name the threat AND a matching defence</text>
+          <text x="400" y="156" font-size="14" fill="#28251d">White-box = insider test · Black-box = external</text>
+          <text x="400" y="172" font-size="14" fill="#28251d">Pharming ≠ phishing (traffic redirect)</text>
+        </svg>
+      </div>
+      <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:8px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">Social engineering relies on:</p>
+          <button class="btn mcq-btn" data-letter="A">Manipulating people</button>
+          <button class="btn mcq-btn" data-letter="B">Faster cables only</button>
+          <button class="btn mcq-btn" data-letter="C">Larger screens</button>
+          <button class="btn mcq-btn" data-letter="D">Binary maths only</button>
+          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+</div>
+
+<div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;max-width:860px;margin-left:auto;margin-right:auto;">
+  <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+  <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='cs', topic='cyber_security') }}"
+     style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+    Start Practice Quiz
+  </a>
+</div>
+
+{% endblock %}

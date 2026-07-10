@@ -1,0 +1,493 @@
+{% extends "base.html" %}
+{% block title %}Fractions, Decimals and Percentages — GCSE Maths{% endblock %}
+{% block content %}
+
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Fractions, Decimals and Percentages</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">GCSE Mathematics – Foundation and Higher Tier · All Exam Boards</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+  <!-- Quick Test button -->
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='fdp') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       1. THREE WAYS OF WRITING THE SAME VALUE
+  ══════════════════════════════════════════════════ -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      Three Ways of Writing the Same Value
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 7</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Fractions, decimals and percentages all mean the same thing: <strong>part of a whole</strong>. They're just three different ways of writing the same value.</p>
+      <p>For example: \(\frac{1}{2}\) = 0.5 = 50%. All three say exactly the same thing — "half".</p>
+      <p>The skill you need is converting confidently between all three forms. This page shows you every route, one at a time.</p>
+
+      <!-- Conversion triangle SVG -->
+      <div style="text-align:center; margin:18px 0;">
+        <svg width="460" height="210" viewBox="0 0 460 210" style="background:#f9f8f5; border-radius:8px; max-width:100%;">
+          <!-- Three labelled nodes -->
+          <!-- Fraction (top centre) -->
+          <rect x="155" y="12" width="150" height="48" rx="10" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2"/>
+          <text x="230" y="32" text-anchor="middle" font-size="15" font-weight="bold" fill="#1a6fa8">FRACTION</text>
+          <text x="230" y="51" text-anchor="middle" font-size="14" fill="#1a6fa8">e.g. ¾</text>
+          <!-- Decimal (bottom left) -->
+          <rect x="18"  y="148" width="150" height="48" rx="10" fill="#dcfce7" stroke="#059669" stroke-width="2"/>
+          <text x="93"  y="168" text-anchor="middle" font-size="15" font-weight="bold" fill="#059669">DECIMAL</text>
+          <text x="93"  y="187" text-anchor="middle" font-size="14" fill="#059669">e.g. 0.75</text>
+          <!-- Percentage (bottom right) -->
+          <rect x="292" y="148" width="150" height="48" rx="10" fill="#fce7f3" stroke="#a13544" stroke-width="2"/>
+          <text x="367" y="168" text-anchor="middle" font-size="15" font-weight="bold" fill="#a13544">PERCENTAGE</text>
+          <text x="367" y="187" text-anchor="middle" font-size="14" fill="#a13544">e.g. 75%</text>
+
+          <!-- Arrow: Fraction → Decimal (down-left) -->
+          <line x1="185" y1="60" x2="128" y2="148" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+          <text x="134" y="106" text-anchor="middle" font-size="14" fill="#333">÷ top by bottom</text>
+          <!-- Arrow: Decimal → Fraction (up-right) -->
+          <line x1="143" y1="148" x2="200" y2="60" stroke="#555" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+          <text x="152" y="88" text-anchor="middle" font-size="14" fill="#333">place value, simplify</text>
+
+          <!-- Arrow: Fraction → Percentage (down-right) -->
+          <line x1="275" y1="60" x2="332" y2="148" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+          <text x="325" y="97" text-anchor="middle" font-size="14" fill="#333">÷ top ÷ bottom × 100</text>
+          <!-- Arrow: Percentage → Fraction (up-left) -->
+          <line x1="317" y1="148" x2="260" y2="60" stroke="#555" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+          <text x="268" y="121" text-anchor="middle" font-size="14" fill="#333">over 100, simplify</text>
+
+          <!-- Arrow: Decimal → Percentage (right) -->
+          <line x1="168" y1="172" x2="292" y2="172" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+          <text x="230" y="167" text-anchor="middle" font-size="14" fill="#333">× 100</text>
+          <!-- Arrow: Percentage → Decimal (left) -->
+          <line x1="292" y1="182" x2="168" y2="182" stroke="#555" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+          <text x="230" y="196" text-anchor="middle" font-size="14" fill="#333">÷ 100</text>
+
+          <!-- Arrow marker definition -->
+          <defs>
+            <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#555"/>
+            </marker>
+          </defs>
+        </svg>
+        <p style="font-size:0.82rem; color:var(--text-muted); margin-top:4px;">Solid arrows = covered in this lesson. Each section below takes you through one conversion step at a time.</p>
+      </div>
+
+      <p><strong>Key pairs to memorise:</strong> These come up in almost every exam. Learn them now and save time later.</p>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; margin:10px 0;">
+        <div style="background:var(--color-surface-2); padding:8px 10px; border-radius:6px; text-align:center; font-size:1rem;">\(\frac{1}{2}\) = 0.5 = 50%</div>
+        <div style="background:var(--color-surface-2); padding:8px 10px; border-radius:6px; text-align:center; font-size:1rem;">\(\frac{1}{4}\) = 0.25 = 25%</div>
+        <div style="background:var(--color-surface-2); padding:8px 10px; border-radius:6px; text-align:center; font-size:1rem;">\(\frac{3}{4}\) = 0.75 = 75%</div>
+        <div style="background:var(--color-surface-2); padding:8px 10px; border-radius:6px; text-align:center; font-size:1rem;">\(\frac{1}{5}\) = 0.2 = 20%</div>
+        <div style="background:var(--color-surface-2); padding:8px 10px; border-radius:6px; text-align:center; font-size:1rem;">\(\frac{1}{10}\) = 0.1 = 10%</div>
+        <div style="background:var(--color-surface-2); padding:8px 10px; border-radius:6px; text-align:center; font-size:1rem;">\(\frac{1}{3}\) ≈ 0.333 = 33.3%</div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       2. DECIMAL → PERCENTAGE
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Decimal → Percentage
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 7</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Converting a decimal to a percentage is the easiest conversion. Just <strong>multiply by 100</strong> and add a % sign. That's it.</p>
+      <p>Why 100? Because "per cent" means "out of 100", so multiplying by 100 tells you how many parts per hundred.</p>
+
+      <p><em>Examples — try each one before reading the answer:</em></p>
+      <ul style="line-height:1.9;">
+        <li>0.29 × 100 = <strong>29%</strong></li>
+        <li>0.375 × 100 = <strong>37.5%</strong></li>
+        <li>1.25 × 100 = <strong>125%</strong> &nbsp;(more than 100% is fine — it means more than the whole)</li>
+        <li>0.04 × 100 = <strong>4%</strong></li>
+      </ul>
+
+      <p><strong>The shortcut:</strong> multiplying by 100 is the same as moving the decimal point <strong>two places to the right</strong>.</p>
+      <p style="text-align:center; font-size:1rem; font-family:monospace;">0.375 → 037.5 → <strong>37.5%</strong></p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">What is <strong>0.375</strong> as a percentage?</p>
+          <button class="btn mcq-btn" data-letter="A">3.75%</button>
+          <button class="btn mcq-btn" data-letter="B">375%</button>
+          <button class="btn mcq-btn" data-letter="C">37.5%</button>
+          <button class="btn mcq-btn" data-letter="D">0.00375%</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       3. PERCENTAGE → DECIMAL
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Percentage → Decimal
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 7</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Going the other way: to convert a percentage to a decimal, <strong>divide by 100</strong>. Move the decimal point <strong>two places to the left</strong>.</p>
+
+      <p><em>Examples:</em></p>
+      <ul style="line-height:1.9;">
+        <li>18% ÷ 100 = <strong>0.18</strong></li>
+        <li>4% ÷ 100 = <strong>0.04</strong> &nbsp;(a small %, so the decimal is small too — makes sense!)</li>
+        <li>125% ÷ 100 = <strong>1.25</strong></li>
+        <li>7.5% ÷ 100 = <strong>0.075</strong></li>
+      </ul>
+
+      <p><strong>Why does this matter?</strong> Decimal multipliers are the key tool for percentage calculations in GCSE. For example, "increase by 18%" uses the multiplier <strong>1.18</strong>, and "decrease by 18%" uses <strong>0.82</strong>. You can't use these without being able to convert percentages to decimals fluently.</p>
+
+      <div style="background:#dbeafe; border-left:4px solid #1a6fa8; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+        <strong>Tip:</strong> Percentage → Decimal is the reverse of Decimal → Percentage. One divides by 100, the other multiplies. If in doubt, check: 18% → 0.18 → 18%. ✓
+      </div>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">What is <strong>4%</strong> as a decimal?</p>
+          <button class="btn mcq-btn" data-letter="A">4</button>
+          <button class="btn mcq-btn" data-letter="B">0.04</button>
+          <button class="btn mcq-btn" data-letter="C">0.4</button>
+          <button class="btn mcq-btn" data-letter="D">40</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       4. DECIMAL → FRACTION
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Decimal → Fraction
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 7</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Use <strong>place value</strong> to write the decimal as a fraction, then simplify. The denominator (bottom number) is always a power of 10 — use 10 for one decimal place, 100 for two, 1000 for three.</p>
+
+      <p><em>Example:</em> Convert <strong>0.3</strong> to a fraction.</p>
+      <ul style="line-height:1.9;">
+        <li>One decimal place → denominator is 10</li>
+        <li>0.3 = \(\frac{3}{10}\) &nbsp;(already simplified — 3 and 10 share no common factors)</li>
+      </ul>
+
+      <p><em>Example:</em> Convert <strong>0.25</strong> to a fraction.</p>
+      <ul style="line-height:1.9;">
+        <li>Two decimal places → denominator is 100</li>
+        <li>0.25 = \(\frac{25}{100}\)</li>
+        <li>Simplify: HCF(25, 100) = 25 → divide both by 25 → \(\mathbf{\frac{1}{4}}\)</li>
+      </ul>
+
+      <p><em>Example:</em> Convert <strong>0.12</strong> to a fraction.</p>
+      <ul style="line-height:1.9;">
+        <li>Two decimal places → \(\frac{12}{100}\)</li>
+        <li>HCF(12, 100) = 4 → divide both by 4 → \(\mathbf{\frac{3}{25}}\)</li>
+      </ul>
+
+      <p>Use place value to write the decimal as a fraction over 10, 100, 1000 and so on, then simplify if possible.</p>
+
+      <div style="background:#fff3cd; border-left:4px solid #f59e0b; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+        <strong>⚠️ Always simplify!</strong> Leaving your answer as 25/100 when it should be 1/4 will cost you a mark in the exam.
+      </div>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">Write <strong>0.12</strong> as a fraction in its simplest form.</p>
+          <button class="btn mcq-btn" data-letter="A">\(\frac{12}{10}\)</button>
+          <button class="btn mcq-btn" data-letter="B">\(\frac{6}{50}\)</button>
+          <button class="btn mcq-btn" data-letter="C">\(\frac{1}{12}\)</button>
+          <button class="btn mcq-btn" data-letter="D">\(\frac{3}{25}\)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       5. FRACTION → DECIMAL
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Fraction → Decimal
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 8</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>A fraction is just a division sum in disguise. To convert a fraction to a decimal, <strong>divide the top number by the bottom number</strong>.</p>
+
+      <p style="text-align:center; font-style:italic;">\(\frac{\text{numerator}}{\text{denominator}} = \text{numerator} \div \text{denominator}\)</p>
+
+      <p><em>Examples:</em></p>
+      <ul style="line-height:1.9;">
+        <li>\(\frac{3}{8}\) = 3 ÷ 8 = <strong>0.375</strong></li>
+        <li>\(\frac{1}{4}\) = 1 ÷ 4 = <strong>0.25</strong></li>
+        <li>\(\frac{2}{5}\) = 2 ÷ 5 = <strong>0.4</strong></li>
+        <li>\(\frac{5}{8}\) = 5 ÷ 8 = <strong>0.625</strong></li>
+      </ul>
+
+      <p><strong>Shortcut for "nice" denominators:</strong> If the denominator divides into a power of 10, you can make an equivalent fraction first.</p>
+      <p><em>Example:</em> \(\frac{7}{20}\) — multiply top and bottom by 5 to get \(\frac{35}{100}\) = <strong>0.35</strong>. Much faster than long division!</p>
+
+      <p>Convert a fraction to a decimal by dividing the numerator by the denominator.</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">What is \(\dfrac{3}{8}\) as a decimal?</p>
+          <button class="btn mcq-btn" data-letter="A">0.38</button>
+          <button class="btn mcq-btn" data-letter="B">0.375</button>
+          <button class="btn mcq-btn" data-letter="C">3.8</button>
+          <button class="btn mcq-btn" data-letter="D">0.25</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       6. PERCENTAGE → FRACTION
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Percentage → Fraction
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 8</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>"Per cent" literally means <em>per hundred</em>. So any percentage is already a fraction with 100 on the bottom — you just need to write it down and simplify.</p>
+
+      <p><em>Example:</em> Write <strong>65%</strong> as a fraction.</p>
+      <ul style="line-height:1.9;">
+        <li>65% = \(\frac{65}{100}\)</li>
+        <li>HCF(65, 100) = 5 → divide both by 5</li>
+        <li>= \(\mathbf{\frac{13}{20}}\)</li>
+      </ul>
+
+      <p><em>More examples:</em></p>
+      <ul style="line-height:1.9;">
+        <li>23% = \(\frac{23}{100}\) &nbsp;(23 and 100 share no common factor, so it's already simplified)</li>
+        <li>150% = \(\frac{150}{100} = \frac{3}{2}\) &nbsp;(improper fraction — that's fine!)</li>
+        <li>40% = \(\frac{40}{100} = \frac{2}{5}\)</li>
+      </ul>
+
+      <p>Write the percentage over 100, then simplify.</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">Write <strong>65%</strong> as a fraction in its simplest form.</p>
+          <button class="btn mcq-btn" data-letter="A">\(\frac{13}{100}\)</button>
+          <button class="btn mcq-btn" data-letter="B">\(\frac{65}{10}\)</button>
+          <button class="btn mcq-btn" data-letter="C">\(\frac{1}{65}\)</button>
+          <button class="btn mcq-btn" data-letter="D">\(\frac{13}{20}\)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       7. FRACTION → PERCENTAGE
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Fraction → Percentage
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 8</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>To convert a fraction to a percentage, use the two-step route you already know: <strong>fraction → decimal → percentage</strong>.</p>
+
+      <ol style="line-height:1.9;">
+        <li>Divide the numerator by the denominator (fraction → decimal)</li>
+        <li>Multiply by 100 (decimal → percentage)</li>
+      </ol>
+
+      <p><em>Examples:</em></p>
+      <ul style="line-height:1.9;">
+        <li>\(\frac{3}{8}\) = 3 ÷ 8 = 0.375 → 0.375 × 100 = <strong>37.5%</strong></li>
+        <li>\(\frac{1}{5}\) = 1 ÷ 5 = 0.2 → 0.2 × 100 = <strong>20%</strong></li>
+        <li>\(\frac{3}{4}\) = 3 ÷ 4 = 0.75 → 0.75 × 100 = <strong>75%</strong></li>
+      </ul>
+
+      <p><strong>One-step shortcut:</strong> just multiply the fraction by 100.</p>
+      <p style="text-align:center;">\(\frac{3}{8} \times 100 = \frac{300}{8} = 37.5\%\)</p>
+
+      <p>First convert the fraction to a decimal, then multiply by 100.</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">What is \(\dfrac{3}{4}\) as a percentage?</p>
+          <button class="btn mcq-btn" data-letter="A">75%</button>
+          <button class="btn mcq-btn" data-letter="B">0.75%</button>
+          <button class="btn mcq-btn" data-letter="C">34%</button>
+          <button class="btn mcq-btn" data-letter="D">7.5%</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       8. RECURRING DECIMALS  (Higher)
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+      Recurring Decimals → Fractions
+      <span style="font-size:0.65rem; margin-left:8px; background:#e8f4fd; color:#1a6fa8; padding:2px 6px; border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Year 10</span>
+      <span style="font-size:0.65rem; margin-left:6px; background:#fef4e8; color:#8a5300; padding:2px 6px; border-radius:10px;">Higher</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Some decimals go on forever with a repeating pattern — like 0.333… or 0.181818…. These are called <strong>recurring decimals</strong>. We write a dot over the repeating digits to show this: \(0.\dot{3}\) or \(0.\dot{1}\dot{8}\).</p>
+
+      <p>At Higher tier, you need to convert them to fractions using an algebra trick. Here's how:</p>
+
+      <p><em>Example:</em> Write \(0.\dot{7}\) (= 0.7777…) as a fraction.</p>
+      <ul style="line-height:1.9;">
+        <li>Let \(x = 0.7777\ldots\)</li>
+        <li>Multiply by 10: \(10x = 7.7777\ldots\)</li>
+        <li>Subtract: \(10x - x = 7.7777\ldots - 0.7777\ldots\)</li>
+        <li>\(9x = 7\)</li>
+        <li>\(x = \dfrac{7}{9}\)</li>
+      </ul>
+
+      <p><em>Example:</em> Write \(0.\dot{1}\dot{8}\) (= 0.181818…) as a fraction.</p>
+      <ul style="line-height:1.9;">
+        <li>Let \(x = 0.181818\ldots\)</li>
+        <li>The repeating block "18" has 2 digits → multiply by 100: \(100x = 18.181818\ldots\)</li>
+        <li>Subtract: \(100x - x = 18\) → \(99x = 18\) → \(x = \dfrac{18}{99} = \dfrac{2}{11}\)</li>
+      </ul>
+
+      <p>Some decimals repeat forever, like 0.333... or 0.181818.... At Higher tier you may be asked to convert them into fractions using algebra.</p>
+
+      <!-- MCQ -->
+      <div style="margin-top:18px; padding:14px 16px; background:var(--color-surface-2); border-radius:var(--radius); border-left:4px solid #1a6fa8;">
+        <p style="margin:0 0 10px; font-weight:600;">🧠 Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Write \(0.\dot{7}\) (= 0.7777…) as a fraction in its simplest form.</p>
+          <button class="btn mcq-btn" data-letter="A">\(\frac{7}{10}\)</button>
+          <button class="btn mcq-btn" data-letter="B">\(\frac{7}{11}\)</button>
+          <button class="btn mcq-btn" data-letter="C">\(\frac{7}{9}\)</button>
+          <button class="btn mcq-btn" data-letter="D">\(\frac{77}{100}\)</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════════
+       QUICK REFERENCE
+  ══════════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">9</span>
+      FDP Conversions — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 9</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+            <div class="revision-card-wrap">
+        <div class="lesson-quick-ref-card" role="region" aria-label="FDP conversions quick reference">
+          <h3>FDP Conversions — Quick Reference</h3>
+          <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+
+            <div>
+              <h4 style="color:#1a6fa8;">Decimal conversions</h4>
+              <ul>
+                <li>Decimal → %: multiply by 100</li>
+                <li>% → decimal: divide by 100</li>
+                <li>Decimal → fraction: use place value, simplify</li>
+                <li>Fraction → decimal: top ÷ bottom</li>
+              </ul>
+            </div>
+            <div>
+              <h4 style="color:#1a6fa8;">Fraction &amp; percentage</h4>
+              <ul>
+                <li>% → fraction: write over 100, simplify</li>
+                <li>Fraction → %: divide, then × 100</li>
+                <li>Recurring decimal → fraction: algebra method</li>
+                <li>Always simplify fractions fully</li>
+              </ul>
+            </div>
+          </div>
+          <div class="lesson-quick-ref-advanced">
+            <h4>Must-know equivalences</h4>
+            <ul>
+              <li>\(\frac12 = 0.5 = 50\%\) &nbsp;·&nbsp; \(\frac14 = 0.25 = 25\%\) &nbsp;·&nbsp; \(\frac34 = 0.75 = 75\%\)</li>
+              <li>\(\frac15 = 0.2 = 20\%\) &nbsp;·&nbsp; \(\frac18 = 0.125 = 12.5\%\)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+</div>
+
+  <!-- Practice link -->
+  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='fdp') }}"
+       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+      Start Practice Quiz
+    </a>
+  </div>
+
+{% endblock %}

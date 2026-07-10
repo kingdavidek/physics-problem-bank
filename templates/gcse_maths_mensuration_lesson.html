@@ -1,0 +1,678 @@
+{% extends "base.html" %}
+{% block title %}Mensuration – GCSE Mathematics{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:12px;">
+
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
+    <h1 style="margin:0 0 6px;font-size:1.7rem;">Mensuration</h1>
+    <p style="margin:0;opacity:.9;font-size:.97rem;">Mensuration means <strong>measuring</strong> shapes — how long around the edge, how much flat space inside, and how much room a 3D object takes up. We will work with 2D areas, 3D volumes, and shapes made from more than one piece.</p>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
+      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+    </div>
+  </div>
+  <!-- Quick Test button -->
+  <div style="text-align:right;margin-bottom:14px;">
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='mensuration') }}"
+       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+      ▶ Practice Quiz (10 MCQs)
+    </a>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 1. PERIMETER AND AREA OF 2D SHAPES             -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+      Perimeter and Area of 2D Shapes
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 8</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> A rectangle is <strong>6 cm</strong> by <strong>4 cm</strong>. Area = 6 × 4 = <strong>24 cm²</strong>. Perimeter = 6 + 4 + 6 + 4 = <strong>20 cm</strong>.</p>
+
+      <p>The <strong>perimeter</strong> is the distance all the way around the edge. The <strong>area</strong> is how much flat space is inside.</p>
+
+      <table style="border-collapse:collapse;width:100%;margin:12px 0;">
+        <thead><tr style="background:var(--color-surface-2);">
+          <th style="padding:8px;border:1px solid var(--color-border);">Shape</th>
+          <th style="padding:8px;border:1px solid var(--color-border);">Area</th>
+          <th style="padding:8px;border:1px solid var(--color-border);">Perimeter</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Rectangle</td><td style="padding:8px;border:1px solid var(--color-border);">\(lw\)</td><td style="padding:8px;border:1px solid var(--color-border);">\(2(l+w)\)</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Triangle</td><td style="padding:8px;border:1px solid var(--color-border);">\(\tfrac{1}{2}bh\)</td><td style="padding:8px;border:1px solid var(--color-border);">sum of sides</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Parallelogram</td><td style="padding:8px;border:1px solid var(--color-border);">\(bh\) (perpendicular)</td><td style="padding:8px;border:1px solid var(--color-border);">sum of sides</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Trapezium</td><td style="padding:8px;border:1px solid var(--color-border);">\(\tfrac{1}{2}(a+b)h\)</td><td style="padding:8px;border:1px solid var(--color-border);">sum of sides</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Circle</td><td style="padding:8px;border:1px solid var(--color-border);">\(\pi r^2\)</td><td style="padding:8px;border:1px solid var(--color-border);">\(\pi d = 2\pi r\)</td></tr>
+        </tbody>
+      </table>
+
+      <!--
+        SVG: four shapes side by side – rectangle, triangle, trapezium, circle.
+        Each has key dimensions labelled.
+      -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="520" height="155" viewBox="0 0 520 155" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+
+          <!-- Rectangle, w=100, h=65, top-left (15,25) -->
+          <rect x="15" y="25" width="100" height="65" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+          <text x="65" y="19" font-size="14" fill="#1a6fa8" text-anchor="middle">l</text>
+          <text x="8"  y="60" font-size="14" fill="#a13544" text-anchor="middle">w</text>
+          <text x="65" y="105" font-size="14" fill="#333"   text-anchor="middle">Area = lw</text>
+
+          <!-- Triangle: apex(170,25), base-left(130,90), base-right(220,90) -->
+          <polygon points="170,25 130,90 220,90" fill="#fef4e8" stroke="#8a5300" stroke-width="2"/>
+          <!-- height dashed line -->
+          <line x1="170" y1="25" x2="170" y2="90" stroke="#aaa" stroke-width="1" stroke-dasharray="4,3"/>
+          <text x="175" y="62" font-size="14" fill="#a13544">h</text>
+          <text x="175" y="100" font-size="14" fill="#8a5300">b</text>
+          <text x="175" y="118" font-size="14" fill="#333" text-anchor="middle">Area = ½bh</text>
+
+          <!-- Trapezium: parallel sides a=60,b=90, height=60 -->
+          <!-- top: (280,25)–(340,25)  bottom: (265,90)–(355,90) -->
+          <polygon points="280,25 340,25 355,90 265,90" fill="#d1fae5" stroke="#059669" stroke-width="2"/>
+          <text x="310" y="19" font-size="14" fill="#059669" text-anchor="middle">a</text>
+          <text x="310" y="104" font-size="14" fill="#059669" text-anchor="middle">b</text>
+          <text x="360" y="62" font-size="14" fill="#a13544">h</text>
+          <line x1="355" y1="25" x2="355" y2="90" stroke="#aaa" stroke-width="1" stroke-dasharray="4,3"/>
+          <text x="310" y="118" font-size="14" fill="#333" text-anchor="middle">Area = ½(a+b)h</text>
+
+          <!-- Circle: cx=455, cy=57, r=40 -->
+          <circle cx="455" cy="57" r="40" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+          <line x1="455" y1="57" x2="495" y2="57" stroke="#a13544" stroke-width="1.5"/>
+          <text x="475" y="50" font-size="14" fill="#a13544" text-anchor="middle">r</text>
+          <text x="455" y="118" font-size="14" fill="#333" text-anchor="middle">Area = πr²</text>
+
+        </svg>
+      </div>
+
+      <p><strong>Compound shapes:</strong> split the shape into rectangles, triangles, or circles, then add the areas. Or subtract a hole. Use the <strong>perpendicular height</strong> for triangles and trapeziums — not the sloping side unless the question says so.</p>
+      <p><strong>Units:</strong> 1 m² = 10 000 cm². To change cm² to m², divide by 10 000.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">A rectangle is <strong>7 cm</strong> by <strong>5 cm</strong>. What is its area?</p>
+          <button class="btn mcq-btn" data-letter="A">12 cm²</button>
+          <button class="btn mcq-btn" data-letter="B">35 cm²</button>
+          <button class="btn mcq-btn" data-letter="C">24 cm²</button>
+          <button class="btn mcq-btn" data-letter="D">70 cm²</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='mensuration') }}?difficulty=foundational" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – 2D Areas</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 2. CIRCLES, ARCS, AND SECTORS                  -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+      Circles, Arcs, and Sectors
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> A sector has radius <strong>10 cm</strong> and angle <strong>90°</strong> at the centre. The full circle circumference is \(2\pi \times 10\). A quarter of that is the arc: \(\frac{90}{360} \times 2\pi \times 10 = \mathbf{5\pi}\) cm.</p>
+
+      <p>A <strong>sector</strong> is a “pizza slice” — two radii and a curved <strong>arc</strong>. \(\theta\) is the angle at the centre in degrees.</p>
+
+      <p style="text-align:center;font-size:1.05rem;">
+        \(\text{Arc length} = \dfrac{\theta}{360} \times 2\pi r\)
+        &emsp;&emsp;
+        \(\text{Sector area} = \dfrac{\theta}{360} \times \pi r^2\)
+      </p>
+      <p>Going all the way around the sector (perimeter) = arc length + <strong>two radii</strong>: arc + \(2r\).</p>
+
+      <!--
+        SVG: a sector with labelled arc, radius, and angle.
+        Centre (110,120), r=85, angle=70° from 0° (east) to 70° (above-right).
+        To draw a 70° sector (for illustration — visually similar to "typical" sector):
+          Start ray: (110+85, 120) = (195, 120)
+          End ray at 70° CCW: (110+85·cos70°, 120−85·sin70°) = (110+29.1, 120−79.9) = (139.1, 40.1)
+          arc: M195,120 A85,85,0,0,0,139,40 (sweep=0, large-arc=0 since 70°<180°)
+          Then close with line back to centre.
+        For a segment illustration, add chord.
+      -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="420" height="175" viewBox="0 0 420 175" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+
+          <!-- Sector: centre=(110,130), r=85, angle from east to 70° CCW -->
+          <!-- end ray: (110+85cos70°, 130−85sin70°)=(110+29.1,130−79.9)=(139,50) -->
+          <path d="M110,130 L195,130 A85,85,0,0,0,139,50 Z"
+                fill="#fef4e8" stroke="#8a5300" stroke-width="2"/>
+          <!-- Arc label (arc length) -->
+          <path d="M190,130 A80,80,0,0,0,136,56" fill="none" stroke="#a13544" stroke-width="2.5"/>
+          <text x="188" y="85" font-size="14" fill="#a13544">arc length</text>
+          <!-- Radius labels -->
+          <text x="155" y="127" font-size="14" fill="#8a5300">r</text>
+          <text x="120" y="92"  font-size="14" fill="#8a5300">r</text>
+          <!-- Angle arc -->
+          <path d="M130,130 A20,20,0,0,0,116,111" fill="none" stroke="#1a6fa8" stroke-width="1.5"/>
+          <text x="135" y="116" font-size="14" fill="#1a6fa8">θ</text>
+
+          <!-- Segment diagram (right side): show segment between chord and arc -->
+          <!-- Centre=(320,130), r=75, angle=60° sector then highlight segment -->
+          <!-- end ray: (320+75cos60°, 130−75sin60°)=(357.5, 65.0) -->
+          <path d="M320,130 L395,130 A75,75,0,0,0,357,65 Z"
+                fill="none" stroke="#059669" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <path d="M395,130 A75,75,0,0,0,357,65" fill="#d1fae5" stroke="#059669" stroke-width="2"/>
+          <line x1="395" y1="130" x2="357" y2="65" stroke="#059669" stroke-width="1.5"/>
+          <text x="375" y="112" font-size="14" fill="#059669">segment</text>
+          <text x="356" y="148" font-size="14" fill="#059669">= sector − triangle</text>
+          <text x="320" y="162" font-size="14" fill="#333" text-anchor="middle">Segment area</text>
+        </svg>
+      </div>
+
+      <p><strong>Segment:</strong> the bit between a chord and an arc. Area = sector area − triangle area, with triangle area = \(\tfrac{1}{2}r^2\sin\theta\).</p>
+      <p><strong>In exams:</strong> Sometimes you must leave π in the answer — only use 3.14 if the question tells you to.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">A circle has radius <strong>5 cm</strong>. What is its area?</p>
+          <button class="btn mcq-btn" data-letter="A">25π cm²</button>
+          <button class="btn mcq-btn" data-letter="B">10π cm²</button>
+          <button class="btn mcq-btn" data-letter="C">5π cm²</button>
+          <button class="btn mcq-btn" data-letter="D">50π cm²</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='mensuration') }}?difficulty=intermediate" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Arcs and Sectors</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 3. VOLUME OF 3D SOLIDS                         -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+      Volume of 3D Solids
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> A cylinder has radius <strong>3 cm</strong> and height <strong>5 cm</strong>. Volume = \(\pi \times 3^2 \times 5 = \mathbf{45\pi}\) cm³ (about 141 cm³ if you use π ≈ 3.14).</p>
+
+      <p><strong>Volume</strong> is the space inside a 3D shape. For a prism, multiply the area of the end face by how long it is.</p>
+
+      <table style="border-collapse:collapse;width:100%;margin:12px 0;">
+        <thead><tr style="background:var(--color-surface-2);">
+          <th style="padding:8px;border:1px solid var(--color-border);">Solid</th>
+          <th style="padding:8px;border:1px solid var(--color-border);">Volume formula</th>
+          <th style="padding:8px;border:1px solid var(--color-border);">Key variables</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Cuboid</td><td style="padding:8px;border:1px solid var(--color-border);">\(lwh\)</td><td style="padding:8px;border:1px solid var(--color-border);">length, width, height</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Prism</td><td style="padding:8px;border:1px solid var(--color-border);">\(A \times l\)</td><td style="padding:8px;border:1px solid var(--color-border);">cross-section area × length</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Cylinder</td><td style="padding:8px;border:1px solid var(--color-border);">\(\pi r^2 h\)</td><td style="padding:8px;border:1px solid var(--color-border);">radius, height</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Cone</td><td style="padding:8px;border:1px solid var(--color-border);">\(\tfrac{1}{3}\pi r^2 h\)</td><td style="padding:8px;border:1px solid var(--color-border);">base radius, perpendicular height</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Pyramid</td><td style="padding:8px;border:1px solid var(--color-border);">\(\tfrac{1}{3} \times \text{base area} \times h\)</td><td style="padding:8px;border:1px solid var(--color-border);">base area, perpendicular height</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Sphere</td><td style="padding:8px;border:1px solid var(--color-border);">\(\tfrac{4}{3}\pi r^3\)</td><td style="padding:8px;border:1px solid var(--color-border);">radius</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Hemisphere</td><td style="padding:8px;border:1px solid var(--color-border);">\(\tfrac{2}{3}\pi r^3\)</td><td style="padding:8px;border:1px solid var(--color-border);">radius (half of sphere)</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Frustum</td><td style="padding:8px;border:1px solid var(--color-border);">\(\tfrac{\pi h}{3}(R^2 + Rr + r^2)\)</td><td style="padding:8px;border:1px solid var(--color-border);">large radius R, small radius r, height h</td></tr>
+        </tbody>
+      </table>
+
+      <!--
+        SVG: Cylinder and Cone side by side with dimension labels.
+        Cylinder: ellipse top+bottom at cx=90, top cy=35, bottom cy=100, rx=55, ry=15, h=65.
+        Cone: apex(280,20), base ellipse cx=280, cy=110, rx=55, ry=15.
+      -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="480" height="145" viewBox="0 0 480 145" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+
+          <!-- ── Cylinder ── -->
+          <!-- Body (two rectangles + ellipses) -->
+          <rect x="35" y="40" width="110" height="70" fill="#e8f4fd" stroke="none"/>
+          <!-- Bottom ellipse -->
+          <ellipse cx="90" cy="110" rx="55" ry="15" fill="#c8e4f8" stroke="#1a6fa8" stroke-width="2"/>
+          <!-- Top ellipse -->
+          <ellipse cx="90" cy="40"  rx="55" ry="15" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+          <!-- Side lines -->
+          <line x1="35"  y1="40"  x2="35"  y2="110" stroke="#1a6fa8" stroke-width="2"/>
+          <line x1="145" y1="40"  x2="145" y2="110" stroke="#1a6fa8" stroke-width="2"/>
+          <!-- Labels -->
+          <line x1="90" y1="40" x2="145" y2="40"   stroke="#a13544" stroke-width="1.5"/>
+          <text x="118" y="33"  font-size="14" fill="#a13544" text-anchor="middle">r</text>
+          <text x="155" y="77"  font-size="14" fill="#8a5300">h</text>
+          <line x1="150" y1="40" x2="150" y2="110" stroke="#8a5300" stroke-width="1" stroke-dasharray="4,3"/>
+          <text x="90" y="138"  font-size="14" fill="#333" text-anchor="middle">V = πr²h</text>
+
+          <!-- ── Cone ── -->
+          <!-- Slant sides from apex (330,20) to base edges -->
+          <line x1="330" y1="20" x2="275" y2="110" stroke="#8a5300" stroke-width="2"/>
+          <line x1="330" y1="20" x2="385" y2="110" stroke="#8a5300" stroke-width="2"/>
+          <!-- Base ellipse -->
+          <ellipse cx="330" cy="110" rx="55" ry="15" fill="#fef4e8" stroke="#8a5300" stroke-width="2"/>
+          <!-- Fill slant region -->
+          <polygon points="330,20 275,110 385,110" fill="#fef4e8" stroke="none"/>
+          <line x1="330" y1="20" x2="275" y2="110" stroke="#8a5300" stroke-width="2"/>
+          <line x1="330" y1="20" x2="385" y2="110" stroke="#8a5300" stroke-width="2"/>
+          <!-- Height dashed -->
+          <line x1="330" y1="20" x2="330" y2="110" stroke="#aaa" stroke-width="1" stroke-dasharray="4,3"/>
+          <!-- Labels -->
+          <text x="340" y="65" font-size="14" fill="#8a5300">h</text>
+          <line x1="330" y1="110" x2="385" y2="110" stroke="#a13544" stroke-width="1.5"/>
+          <text x="358" y="125" font-size="14" fill="#a13544" text-anchor="middle">r</text>
+          <!-- Slant label -->
+          <text x="366" y="65" font-size="14" fill="#555" font-style="italic">l</text>
+          <text x="330" y="140" font-size="14" fill="#333" text-anchor="middle">V = ⅓πr²h</text>
+
+        </svg>
+      </div>
+
+      <p><strong>Remember:</strong> A cone or pyramid is exactly <strong>one-third</strong> of a cylinder or prism with the same base and perpendicular height — that is why we multiply by \(\tfrac{1}{3}\).</p>
+      <p><strong>Slant height:</strong> If you need the sloping edge \(l\), use Pythagoras: \(l = \sqrt{r^2 + h^2}\) (radius and perpendicular height).</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">A cuboid is <strong>4 cm</strong> × <strong>3 cm</strong> × <strong>2 cm</strong>. What is its volume?</p>
+          <button class="btn mcq-btn" data-letter="A">9 cm³</button>
+          <button class="btn mcq-btn" data-letter="B">18 cm³</button>
+          <button class="btn mcq-btn" data-letter="C">24 cm³</button>
+          <button class="btn mcq-btn" data-letter="D">48 cm³</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='mensuration') }}?difficulty=intermediate" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – 3D Volumes</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 4. SURFACE AREA OF 3D SOLIDS                   -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+      Surface Area of 3D Solids
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> A closed cylinder has \(r = 2\) cm and \(h = 10\) cm. Curved part = \(2\pi rh = 40\pi\). Two circles = \(2\pi r^2 = 8\pi\). Total surface area = <strong>\(48\pi\) cm²</strong>.</p>
+
+      <p><strong>Surface area</strong> is the total area you would cover if you peeled the shape flat (its net).</p>
+
+      <table style="border-collapse:collapse;width:100%;margin:12px 0;">
+        <thead><tr style="background:var(--color-surface-2);">
+          <th style="padding:8px;border:1px solid var(--color-border);">Solid</th>
+          <th style="padding:8px;border:1px solid var(--color-border);">Surface area formula</th>
+          <th style="padding:8px;border:1px solid var(--color-border);">Notes</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Cuboid</td><td style="padding:8px;border:1px solid var(--color-border);">\(2(lw + lh + wh)\)</td><td style="padding:8px;border:1px solid var(--color-border);">3 pairs of identical rectangles</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Cylinder (closed)</td><td style="padding:8px;border:1px solid var(--color-border);">\(2\pi r(r+h)\)</td><td style="padding:8px;border:1px solid var(--color-border);">curved = 2πrh; two circles = 2πr²</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Cone (closed)</td><td style="padding:8px;border:1px solid var(--color-border);">\(\pi r(r + l)\)</td><td style="padding:8px;border:1px solid var(--color-border);">l = slant height; curved = πrl</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Sphere</td><td style="padding:8px;border:1px solid var(--color-border);">\(4\pi r^2\)</td><td style="padding:8px;border:1px solid var(--color-border);">—</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Hemisphere (closed)</td><td style="padding:8px;border:1px solid var(--color-border);">\(3\pi r^2\)</td><td style="padding:8px;border:1px solid var(--color-border);">curved (2πr²) + flat circle (πr²)</td></tr>
+          <tr><td style="padding:8px;border:1px solid var(--color-border);">Prism</td><td style="padding:8px;border:1px solid var(--color-border);">2 × (end area) + (perimeter of end) × l</td><td style="padding:8px;border:1px solid var(--color-border);">l = length of prism</td></tr>
+        </tbody>
+      </table>
+
+      <!--
+        SVG: Cone net showing circle + sector that make up its surface area.
+        The net of a cone = a circle (base) + a sector (curved surface).
+        Base circle: cx=80, cy=95, r=40.
+        Curved surface sector: radius=slant height (say 75px for display). 
+        Arc of sector = circumference of base circle = 2π×40 = 80π.
+        Angle of sector = arc/radius × (180/π) = 80π/75 × (180/π) = 192°.
+        Display angle ≈ 192°. large-arc=1.
+        Sector centre (300, 95). Start from east (375,95).
+        end at 192°: (300+75cos192°, 95+75sin192°) = (300−73.4, 95+15.6) = (226.6,110.6) ≈ (227,111)
+        Arc from (375,95) to (227,111), sweep=0 (CCW), large-arc=1.
+      -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="430" height="185" viewBox="0 0 430 185" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+
+          <!-- Net label -->
+          <text x="210" y="18" font-size="15" fill="#555" text-anchor="middle" font-weight="600">Net of a Cone</text>
+
+          <!-- Base circle -->
+          <circle cx="80" cy="110" r="45" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
+          <text x="80" y="115" font-size="14" fill="#1a6fa8" text-anchor="middle">base (πr²)</text>
+          <line x1="80" y1="110" x2="125" y2="110" stroke="#a13544" stroke-width="1.5"/>
+          <text x="103" y="103" font-size="14" fill="#a13544">r</text>
+
+          <!-- Curved surface sector: centre (295,110), r=75, angle ~192° -->
+          <path d="M295,110 L370,110 A75,75,0,1,0,221,121 Z"
+                fill="#fef4e8" stroke="#8a5300" stroke-width="2"/>
+          <text x="305" y="95" font-size="14" fill="#8a5300">l (slant height)</text>
+          <text x="285" y="130" font-size="14" fill="#a13544" text-anchor="middle">curved = πrl</text>
+          <text x="295" y="170" font-size="14" fill="#333" text-anchor="middle">Total SA = πr² + πrl = πr(r + l)</text>
+
+        </svg>
+      </div>
+
+      <p><strong>Slant height:</strong> For a cone, find \(l = \sqrt{r^2 + h^2}\) first if you only have \(r\) and perpendicular \(h\).</p>
+      <p><strong>Open or closed?</strong> A tin with no lid is an open cylinder — you do not count the top circle. Read what faces are actually on the outside.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p style="margin:0 0 10px;">A sphere has radius <strong>3 cm</strong>. What is its surface area?</p>
+          <button class="btn mcq-btn" data-letter="A">9π cm²</button>
+          <button class="btn mcq-btn" data-letter="B">36π cm²</button>
+          <button class="btn mcq-btn" data-letter="C">27π cm³</button>
+          <button class="btn mcq-btn" data-letter="D">12π cm²</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='mensuration') }}?difficulty=intermediate" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Surface Area</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 5. COMPOSITE SOLIDS                            -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+      Composite Solids
+      <span style="font-size:0.65rem;margin-left:8px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Higher Skill</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> A silo is a cylinder with a hemisphere on top, both radius <strong>2 m</strong>, cylinder height <strong>5 m</strong>. Volume = \(\pi r^2 h + \frac{2}{3}\pi r^3 = \pi(4)(5) + \frac{2}{3}\pi(8) = 20\pi + \frac{16}{3}\pi\) m³. Add the two parts — do not double-count the join inside.</p>
+
+      <p>A <strong>composite solid</strong> is two or more shapes stuck together. <strong>Volume:</strong> add each part. <strong>Surface area:</strong> only count faces you can touch from outside — not the hidden flat face where they meet.</p>
+
+      <p><strong>Hemisphere + cylinder (same radius):</strong></p>
+      <p>Total volume = \(\pi r^2 h + \dfrac{2}{3}\pi r^3\)</p>
+      <p>Total surface area = \(2\pi r^2 + 2\pi r h\) (curved hemisphere + curved cylinder; the flat join is inside)</p>
+
+      <!--
+        SVG: composite solid = cylinder body + hemisphere cap.
+        Cylinder: cx=180, ellipse-top cy=70, bottom cy=135, rx=55, ry=15, h=65.
+        Hemisphere: drawn as a semicircle arc on top of cylinder top ellipse.
+          Upper arc from (125,70) to (235,70) via (180,10): 
+          cx=180, r=55, top of hemisphere at (180,70−55)=(180,15).
+          Arc: M125,70 A55,55,0,0,1,235,70 (sweep=1 draws the upper arc CCW)
+          Actually: from (125,70) to (235,70) with r=55, going ABOVE (smaller y):
+          sweep=0 goes CCW = through UPPER region in SVG standard... 
+          let me just use the known-working convention: large-arc=0, sweep=0 for upper arc.
+      -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="380" height="185" viewBox="0 0 380 185" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+
+          <!-- ── Cylinder+Hemisphere composite ── -->
+          <!-- Cylinder body fill -->
+          <rect x="125" y="75" width="110" height="70" fill="#e8f4fd" stroke="none"/>
+          <!-- Hemisphere (upper arc over the top ellipse) -->
+          <!-- arc from (125,75) to (235,75) going upward (sweep=0 = upper in SVG standard) -->
+          <path d="M125,75 A55,55,0,0,1,235,75" fill="#c8e4f8" stroke="#1a6fa8" stroke-width="2"/>
+          <!-- Top ellipse (join) — dashed, internal -->
+          <ellipse cx="180" cy="75" rx="55" ry="15" fill="none" stroke="#aaa" stroke-width="1" stroke-dasharray="4,3"/>
+          <!-- Bottom ellipse -->
+          <ellipse cx="180" cy="145" rx="55" ry="15" fill="#b0d4f0" stroke="#1a6fa8" stroke-width="2"/>
+          <!-- Side lines -->
+          <line x1="125" y1="75"  x2="125" y2="145" stroke="#1a6fa8" stroke-width="2"/>
+          <line x1="235" y1="75"  x2="235" y2="145" stroke="#1a6fa8" stroke-width="2"/>
+
+          <!-- Labels -->
+          <text x="242" y="113" font-size="14" fill="#8a5300">h</text>
+          <line x1="238" y1="75" x2="238" y2="145" stroke="#8a5300" stroke-width="1" stroke-dasharray="4,3"/>
+          <line x1="180" y1="75" x2="235" y2="75" stroke="#a13544" stroke-width="1.5"/>
+          <text x="208" y="68" font-size="14" fill="#a13544">r</text>
+
+          <!-- Formulas on right -->
+          <text x="310" y="60"  font-size="14" fill="#555" text-anchor="middle">Hemisphere:</text>
+          <text x="310" y="78"  font-size="14" fill="#1a6fa8" text-anchor="middle">V = ⅔πr³</text>
+          <text x="310" y="104" font-size="14" fill="#555" text-anchor="middle">Cylinder:</text>
+          <text x="310" y="122" font-size="14" fill="#1a6fa8" text-anchor="middle">V = πr²h</text>
+          <text x="310" y="148" font-size="14" fill="#555" text-anchor="middle">Total:</text>
+          <text x="310" y="166" font-size="14" fill="#1a6fa8" text-anchor="middle">V = πr²h + ⅔πr³</text>
+
+        </svg>
+      </div>
+
+      <p><strong>How we tackle these:</strong></p>
+      <ol style="line-height:1.9;">
+        <li>Name each shape (cylinder, cone, hemisphere, …).</li>
+        <li>Work out each volume or face area on its own.</li>
+        <li>Add volumes. For surface area, leave out any face glued together inside.</li>
+      </ol>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p style="margin:0 0 10px;">A composite solid is made from a <strong>cylinder</strong> (V = 100 cm³) and a <strong>cone</strong> (V = 40 cm³) joined at the base. Total volume?</p>
+          <button class="btn mcq-btn" data-letter="A">140 cm³</button>
+          <button class="btn mcq-btn" data-letter="B">60 cm³</button>
+          <button class="btn mcq-btn" data-letter="C">4000 cm³</button>
+          <button class="btn mcq-btn" data-letter="D">100 cm³</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='mensuration') }}?difficulty=difficult" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Composite Solids</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 6. SIMILAR SHAPES – LENGTH, AREA, VOLUME       -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+      Similar Shapes – Length, Area, and Volume Scale Factors
+      <span style="font-size:0.65rem;margin-left:8px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Higher Skill</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> Two similar cones have lengths in ratio <strong>1 : 3</strong>. The smaller has surface area <strong>50 cm²</strong>. The larger has area \(50 \times 3^2 = \mathbf{450}\) cm² (areas scale with \(k^2\), not \(k\)).</p>
+
+      <p>If matching lengths are multiplied by <strong>k</strong> (the length scale factor), then:</p>
+      <p style="text-align:center;font-size:1.1rem;">
+        \(\text{Area is multiplied by } k^2 \qquad \text{Volume is multiplied by } k^3\)
+      </p>
+      <p>Going from big to small? Divide by \(k^2\) or \(k^3\) instead.</p>
+
+      <!--
+        SVG: two similar cylinders with k=2.
+        Small: cx=80, top cy=60, bottom cy=110, rx=30, ry=10, h=50.
+        Large: cx=270, top cy=40, bottom cy=140, rx=60, ry=20, h=100 (k=2 of each).
+      -->
+      <div style="text-align:center;margin:16px 0;">
+        <svg width="440" height="175" viewBox="0 0 440 175" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+
+          <!-- Small cylinder -->
+          <rect x="50" y="60" width="60" height="50" fill="#e8f4fd" stroke="none"/>
+          <ellipse cx="80" cy="60"  rx="30" ry="10" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="1.5"/>
+          <ellipse cx="80" cy="110" rx="30" ry="10" fill="#c8e4f8" stroke="#1a6fa8" stroke-width="1.5"/>
+          <line x1="50"  y1="60"  x2="50"  y2="110" stroke="#1a6fa8" stroke-width="1.5"/>
+          <line x1="110" y1="60"  x2="110" y2="110" stroke="#1a6fa8" stroke-width="1.5"/>
+          <text x="80"  y="135" font-size="14" fill="#1a6fa8" text-anchor="middle">r = r</text>
+          <text x="80"  y="150" font-size="14" fill="#1a6fa8" text-anchor="middle">h = h</text>
+          <text x="80"  y="166" font-size="14" fill="#333"   text-anchor="middle">V = V</text>
+
+          <!-- Arrow -->
+          <text x="170" y="85"  font-size="22" fill="#a13544">→</text>
+          <text x="160" y="100" font-size="14" fill="#a13544">k = 2</text>
+
+          <!-- Large cylinder (k=2) -->
+          <rect x="210" y="40"  width="120" height="100" fill="#fef4e8" stroke="none"/>
+          <ellipse cx="270" cy="40"  rx="60" ry="20" fill="#fef4e8" stroke="#8a5300" stroke-width="2"/>
+          <ellipse cx="270" cy="140" rx="60" ry="20" fill="#fed7aa" stroke="#8a5300" stroke-width="2"/>
+          <line x1="210" y1="40"  x2="210" y2="140" stroke="#8a5300" stroke-width="2"/>
+          <line x1="330" y1="40"  x2="330" y2="140" stroke="#8a5300" stroke-width="2"/>
+          <text x="270" y="163" font-size="14" fill="#8a5300" text-anchor="middle">r = 2r</text>
+          <text x="340" y="93"  font-size="14" fill="#8a5300">h = 2h</text>
+          <text x="270" y="173" font-size="14" fill="#333"   text-anchor="middle">V = 8V (= 2³V)</text>
+
+          <!-- Summary table on right -->
+          <text x="410" y="55"  font-size="14" fill="#333"   text-anchor="middle">k = 2</text>
+          <text x="410" y="73"  font-size="14" fill="#1a6fa8" text-anchor="middle">Length ×2</text>
+          <text x="410" y="91"  font-size="14" fill="#059669" text-anchor="middle">Area ×4</text>
+          <text x="410" y="109" font-size="14" fill="#a13544" text-anchor="middle">Volume ×8</text>
+
+        </svg>
+      </div>
+
+      <p><strong>In exams:</strong> Find \(k\) from a pair of matching lengths first. Then square for area or cube for volume.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p style="margin:0 0 10px;">Two similar solids have length scale factor <strong>2</strong>. The smaller has volume <strong>15 cm³</strong>. What is the larger volume?</p>
+          <button class="btn mcq-btn" data-letter="A">30 cm³</button>
+          <button class="btn mcq-btn" data-letter="B">45 cm³</button>
+          <button class="btn mcq-btn" data-letter="C">60 cm³</button>
+          <button class="btn mcq-btn" data-letter="D">120 cm³</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='mensuration') }}?difficulty=difficult" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Similar Shapes</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 7. DENSITY, MASS, AND VOLUME                   -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+      Density, Mass, and Volume
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p><strong>Example:</strong> A block has density <strong>2.5 g/cm³</strong> and volume <strong>20 cm³</strong>. Mass = density × volume = 2.5 × 20 = <strong>50 g</strong>.</p>
+
+      <p><strong>Density</strong> tells you how “heavy” a material is for its size. The link is:</p>
+      <p style="text-align:center;font-size:1.1rem;">
+        \(\text{Mass} = \text{Density} \times \text{Volume}\)
+      </p>
+      <p>Use the triangle below: cover the letter you want and read what is left.</p>
+
+      <!--
+        SVG: DMV formula triangle (like the classic M=DV triangle).
+        Triangle with M at top, D bottom-left, V bottom-right.
+        A horizontal line divides top (M) from bottom (D × V).
+      -->
+
+      <p>You can rearrange to:</p>
+      <ul style="line-height:1.9;">
+        <li>\(M = D \times V\)</li>
+        <li>\(D = M \div V\)</li>
+        <li>\(V = M \div D\)</li>
+      </ul>
+      <p><strong>In exams:</strong> Often you find the volume of a shape first (cylinder, cuboid, …), then multiply by density to get mass.</p>
+
+      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
+        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p style="margin:0 0 10px;">Density = <strong>4 g/cm³</strong>, volume = <strong>12 cm³</strong>. Find the mass.</p>
+          <button class="btn mcq-btn" data-letter="A">3 g</button>
+          <button class="btn mcq-btn" data-letter="B">16 g</button>
+          <button class="btn mcq-btn" data-letter="C">48 g</button>
+          <button class="btn mcq-btn" data-letter="D">48 cm³</button>
+          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='mensuration') }}?difficulty=foundational" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Density Problems</a>
+      </div>
+    </div>
+  </details>
+
+  <!-- ══════════════════════════════════════════════ -->
+  <!-- 8. KEY FORMULAE QUICK REFERENCE                -->
+  <!-- ══════════════════════════════════════════════ -->
+  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
+    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
+      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+      Mensuration — Quick Reference
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
+      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+    </summary>
+    <div style="padding:18px 20px;background:#fff;">
+
+      <p>Use this card to revise before a test. If you need a reminder of how a formula works, jump back to the matching section above.</p>
+
+            <div class="revision-card-wrap">
+        <div class="lesson-quick-ref-card" role="region" aria-label="Mensuration quick reference">
+          <h3>Mensuration — Quick Reference</h3>
+          <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+
+            <div>
+              <h4 style="color:#1a6fa8;">2D areas</h4>
+              <ul>
+                <li>Rectangle \(lw\) · Triangle \(\frac12 bh\)</li>
+                <li>Parallelogram \(bh\) · Trapezium \(\frac12(a+b)h\)</li>
+                <li>Circle \(\pi r^2\) · Sector \(\frac{\theta}{360}\pi r^2\)</li>
+                <li>Circumference \(C = \pi d = 2\pi r\)</li>
+              </ul>
+              <h4 style="color:#1a6fa8;margin-top:14px;">Scale factors</h4>
+              <ul>
+                <li>Length × \(k\) · Area × \(k^2\) · Volume × \(k^3\)</li>
+              </ul>
+            </div>
+            <div>
+              <h4 style="color:#1a6fa8;">3D volumes</h4>
+              <ul>
+                <li>Prism: area of cross-section × length</li>
+                <li>Cylinder \(\pi r^2 h\) · Cone \(\frac13 \pi r^2 h\)</li>
+                <li>Sphere \(\frac43 \pi r^3\) · Pyramid \(\frac13 \times base \times h\)</li>
+              </ul>
+              <h4 style="color:#1a6fa8;margin-top:14px;">Surface areas</h4>
+              <ul>
+                <li>Cylinder \(2\pi r(r+h)\) · Sphere \(4\pi r^2\)</li>
+                <li>Cone slant height \(l = \sqrt{r^2+h^2}\)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+</div>
+
+  <!-- Practice link -->
+  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
+    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='mensuration') }}"
+       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+      Start Practice Quiz
+    </a>
+  </div>
+
+{% endblock %}
