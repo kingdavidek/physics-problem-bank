@@ -6,7 +6,7 @@ import random
 from generators.shared.utils import make_problem
 from generators.shared.variant_utils import (
     select_tier_variants,
-    mcq_variants_from_fn,
+    mcq_variants_from_pool,
     run_mcq_variant,
     pick_named_variant,
 )
@@ -509,18 +509,21 @@ def _ap_mcq_proof_valid():
     return q, sol, "Proof uses algebra for general n; testing examples alone is not enough.", 1, opts, correct_letter
 
 
+_AP_MCQ_POOL = [
+    _ap_mcq_even_odd,
+    _ap_mcq_square_diff,
+    _ap_mcq_consecutive_product,
+    _ap_mcq_counterexample,
+    _ap_mcq_sum_consecutive,
+    _ap_mcq_three_consecutive,
+    _ap_mcq_factorise_even,
+    _ap_mcq_odd_square,
+    _ap_mcq_proof_valid,
+]
+
+
 def _ap_mcq_dispatch():
-    return random.choice([
-        _ap_mcq_even_odd,
-        _ap_mcq_square_diff,
-        _ap_mcq_consecutive_product,
-        _ap_mcq_counterexample,
-        _ap_mcq_sum_consecutive,
-        _ap_mcq_three_consecutive,
-        _ap_mcq_factorise_even,
-        _ap_mcq_odd_square,
-        _ap_mcq_proof_valid,
-    ])()
+    return random.choice(_AP_MCQ_POOL)()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -560,8 +563,8 @@ _POOLS = {
 
 def gcse_algebraic_proof_variants(difficulty, mode="practice"):
     if mode == "mcq":
-        return mcq_variants_from_fn(
-            _ap_mcq_dispatch, "algebraic_proof", difficulty, count=4
+        return mcq_variants_from_pool(
+            _AP_MCQ_POOL, "algebraic_proof", difficulty, count=4
         )
 
     pool = _POOLS.get(difficulty)

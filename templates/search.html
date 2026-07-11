@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Search – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+
+<div class="lesson-hero">
+    <h1>Search</h1>
+    <p class="hero-sub">Find lessons, topics, and other learners.</p>
+</div>
+
+<form method="GET" action="{{ url_for('site_search') }}" class="auth-form" style="max-width:520px;margin-bottom:20px;">
+    <div class="form-group">
+        <label for="q">Search</label>
+        <input type="search" name="q" id="q" value="{{ query }}" placeholder="Topics, lessons, @handles…" autocomplete="off" maxlength="80" autofocus>
+    </div>
+    <button type="submit" class="btn btn-primary">Search</button>
+</form>
+
+{% if error %}
+<p class="error">{{ error }}</p>
+{% endif %}
+
+{% if query and not error %}
+{% set total = topics|length + users|length %}
+
+{% if topics %}
+<section class="section-panel">
+    <div class="section-panel-header">Topics &amp; lessons</div>
+    <div class="section-panel-body">
+        <ul class="profile-list">
+            {% for item in topics %}
+            <li class="profile-list-item">
+                <div class="profile-list-main">
+                    <a href="{{ item.url }}">{{ item.name }}</a>
+                    <span class="profile-list-meta">{{ item.group }}</span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+{% endif %}
+
+{% if users %}
+<section class="section-panel">
+    <div class="section-panel-header">Users</div>
+    <div class="section-panel-body">
+        <ul class="profile-list">
+            {% for item in users %}
+            <li class="profile-list-item">
+                <div class="profile-list-main">
+                    <a href="{{ item.profile_url }}">@{{ item.handle }}</a>
+                    <span class="profile-list-meta">
+                        {% if item.member_since %}
+                        Member since {{ item.member_since }}
+                        {% elif not item.profile_accessible %}
+                        Private profile
+                        {% endif %}
+                        {% if current_user.is_authenticated and item.viewer_follows is defined and item.viewer_follows %}
+                        · Following
+                        {% endif %}
+                    </span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+{% endif %}
+
+{% if total == 0 %}
+<section class="section-panel">
+    <div class="section-panel-header">No results</div>
+    <div class="section-panel-body">
+        <p class="profile-empty">Nothing matched “{{ query }}”. Try a topic name or part of a handle.</p>
+    </div>
+</section>
+{% endif %}
+
+{% elif not query %}
+<p class="page-intro">Search topics by name (e.g. “vectors”, “trigonometry”) or users by handle (e.g. “alex_maths”).</p>
+{% endif %}
+
+<p><a href="{{ url_for('profile') if current_user.is_authenticated else url_for('index') }}">← Back</a></p>
+
+</div>
+{% endblock %}

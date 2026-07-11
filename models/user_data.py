@@ -1,4 +1,5 @@
 import json
+from datetime import date, timedelta
 
 from models.user import utc_now_iso
 
@@ -251,6 +252,87 @@ def list_quiz_attempts(conn, user_id, limit=20):
         (user_id, limit),
     ).fetchall()
     return [dict(row) for row in rows]
+
+
+def record_generator_mcq_attempt(
+    conn,
+    user_id,
+    level,
+    subject,
+    topic,
+    mode,
+    difficulty,
+    user_answer,
+    correct_answer,
+    correct,
+):
+    now = utc_now_iso()
+    cursor = conn.execute(
+        '''
+        INSERT INTO generator_mcq_attempts (
+            user_id, level, subject, topic, mode, difficulty,
+            user_answer, correct_answer, correct, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''',
+        (
+            user_id,
+            level,
+            subject,
+            topic,
+            mode,
+            difficulty,
+            user_answer,
+            correct_answer,
+            1 if correct else 0,
+            now,
+        ),
+    )
+    conn.commit()
+    return cursor.lastrowid
+
+
+def list_generator_mcq_attempts(conn, user_id, limit=10):
+    rows = conn.execute(
+        '''
+        SELECT id, level, subject, topic, mode, difficulty,
+               user_answer, correct_answer, correct, created_at
+        FROM generator_mcq_attempts
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+        LIMIT ?
+        ''',
+        (user_id, limit),
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def get_practice_streak(conn, user_id):
+    rows = conn.execute(
+        '''
+        SELECT DISTINCT substr(created_at, 1, 10) AS day
+        FROM generator_mcq_attempts
+        WHERE user_id = ?
+        ORDER BY day DESC
+        ''',
+        (user_id,),
+    ).fetchall()
+    if not rows:
+        return 0
+    days = {row['day'] for row in rows}
+    today = date.today()
+    yesterday = today - timedelta(days=1)
+    if today.isoformat() in days:
+        anchor = today
+    elif yesterday.isoformat() in days:
+        anchor = yesterday
+    else:
+        return 0
+    streak = 0
+    expected = anchor
+    while expected.isoformat() in days:
+        streak += 1
+        expected -= timedelta(days=1)
+    return streak
 
 
 def _saved_row(row):

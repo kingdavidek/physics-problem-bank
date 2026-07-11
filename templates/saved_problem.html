@@ -26,7 +26,13 @@
     <div class="question" id="saved-question-root">
         {% if problem.options %}
             <div class="question-content" id="saved-question-content">{{ problem.question | safe }}</div>
-            <div class="mcq-options" id="saved-mcq-options" data-correct="{{ problem.correct_answer }}">
+            <div class="mcq-options" id="saved-mcq-options"
+                 data-correct="{{ problem.correct_answer }}"
+                 data-level="{{ saved.level }}"
+                 data-subject="{{ saved.subject }}"
+                 data-topic="{{ saved.topic }}"
+                 data-mode="{{ saved.mode }}"
+                 data-difficulty="{{ saved.difficulty }}">
                 {% for opt in problem.options %}
                     <button type="button" class="btn mcq-btn" data-letter="{{ opt[0] }}">{{ opt | safe }}</button>
                 {% endfor %}
@@ -65,6 +71,8 @@
             <button type="submit" class="btn btn-secondary">🎲 New numbers</button>
         </form>
         {% endif %}
+        <button type="button" class="btn btn-outline share-suggest-open" data-action="share" data-saved-id="{{ saved.id }}">Share</button>
+        <button type="button" class="btn btn-outline share-suggest-open" data-action="suggest" data-saved-id="{{ saved.id }}">Send to @user</button>
         <form method="POST" action="{{ url_for('delete_saved_problem_route', saved_id=saved.id) }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="next" value="{{ url_for('saved_problems_index') }}">

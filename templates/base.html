@@ -9,8 +9,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
-
 
     <style>
         /* ---- TOKENS ---- */
@@ -107,6 +105,31 @@
         }
         .site-title span { color: var(--primary); }
         nav { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+        .nav-handle {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+            padding: 8px 14px;
+            border-radius: var(--radius-pill);
+            transition: color 200ms var(--ease), background 200ms var(--ease);
+            white-space: nowrap;
+        }
+        .nav-handle:hover {
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+        .nav-handle.active {
+            color: var(--primary);
+            background: var(--primary-light);
+            font-weight: 600;
+        }
         nav a {
             text-decoration: none;
             color: var(--text-muted);
@@ -256,6 +279,27 @@
         .profile-empty {
             margin: 0;
             color: var(--text-muted);
+        }
+        .feed-card-badge {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 2px 8px;
+            border-radius: 999px;
+            width: fit-content;
+            background: var(--surface-alt, #eef2f7);
+            color: var(--text-muted);
+        }
+        .feed-card-badge--quiz { background: #e8f4fd; color: #1565a8; }
+        .feed-card-badge--lesson { background: #eef7ee; color: #2e7d32; }
+        .feed-card-badge--share { background: #fdf0f7; color: #9c27b0; }
+        .feed-card-badge--topic { background: #fff8e6; color: #b8860b; }
+        .feed-poll-note {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 12px;
         }
         .btn-sm {
             padding: 7px 14px;
@@ -654,6 +698,247 @@
         }
         .inline-logout-form { display: inline; margin-left: 12px; }
         nav .nav-logout-form { display: inline; margin: 0; }
+        .nav-search-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            border: none;
+            border-radius: var(--radius-pill);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: color 200ms var(--ease), background 200ms var(--ease);
+        }
+        .nav-search-btn:hover,
+        .nav-search-btn[aria-expanded="true"] {
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+        .nav-search-btn svg { display: block; }
+        .nav-notif-wrap {
+            position: relative;
+            display: inline-flex;
+        }
+        .nav-notif-badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            min-width: 16px;
+            height: 16px;
+            padding: 0 4px;
+            border-radius: 999px;
+            background: #dc2626;
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 700;
+            line-height: 16px;
+            text-align: center;
+            pointer-events: none;
+        }
+        .nav-notif-panel {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            width: min(360px, calc(100vw - 32px));
+            max-height: min(420px, 70vh);
+            background: var(--surface);
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            z-index: 120;
+            display: flex;
+            flex-direction: column;
+        }
+        .nav-notif-panel[hidden] { display: none; }
+        .nav-notif-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border-soft);
+            background: var(--primary-light);
+            font-size: 0.92rem;
+        }
+        .nav-notif-mark-all {
+            border: none;
+            background: none;
+            color: var(--primary);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0;
+        }
+        .nav-notif-mark-all:hover { text-decoration: underline; }
+        .nav-notif-list {
+            overflow: auto;
+            flex: 1;
+        }
+        .nav-notif-item {
+            display: block;
+            padding: 12px 14px;
+            text-decoration: none;
+            color: inherit;
+            border-bottom: 1px solid var(--border-soft);
+            transition: background 160ms var(--ease);
+        }
+        .nav-notif-item:hover { background: var(--primary-light); }
+        .nav-notif-item.is-unread {
+            background: rgba(42, 127, 186, 0.06);
+        }
+        .nav-notif-item-text {
+            display: block;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        .nav-notif-item-time {
+            display: block;
+            margin-top: 4px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+        .nav-notif-empty {
+            margin: 0;
+            padding: 20px 14px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        .nav-notif-footer {
+            display: block;
+            padding: 10px 14px;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-top: 1px solid var(--border-soft);
+            text-decoration: none;
+        }
+        body.site-search-open { overflow: hidden; }
+        .site-search-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 72px 16px 24px;
+        }
+        .site-search-overlay[hidden] { display: none; }
+        .site-search-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(20, 24, 28, 0.42);
+            backdrop-filter: blur(2px);
+        }
+        .site-search-panel {
+            position: relative;
+            width: min(560px, 100%);
+            background: var(--surface);
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .site-search-form {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-soft);
+        }
+        .site-search-form input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font: inherit;
+            font-size: 1rem;
+            background: transparent;
+            color: var(--text);
+        }
+        .site-search-form input::placeholder { color: var(--text-muted); }
+        .site-search-results {
+            max-height: min(60vh, 420px);
+            overflow: auto;
+            padding: 8px 0 12px;
+        }
+        .site-search-group h3 {
+            margin: 8px 16px 6px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        .site-search-group ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .site-search-group a {
+            display: block;
+            padding: 10px 16px;
+            text-decoration: none;
+            color: inherit;
+            transition: background 160ms var(--ease);
+        }
+        .site-search-group a:hover { background: var(--primary-light); }
+        .site-search-title {
+            display: block;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .site-search-meta {
+            display: block;
+            margin-top: 2px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+        .site-search-empty {
+            margin: 0;
+            padding: 18px 16px;
+            color: var(--text-muted);
+            font-size: 0.92rem;
+        }
+        .share-suggest-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-soft);
+        }
+        .share-suggest-header h2 {
+            margin: 0;
+            font-size: 1.05rem;
+        }
+        .hero-pill.active-pill {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .settings-form {
+            max-width: 560px;
+        }
+        .settings-section {
+            margin-bottom: 16px;
+        }
+        .settings-form-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .profile-page-back {
+            margin: -8px 0 20px;
+        }
+        .profile-page-back a {
+            text-decoration: none;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+        .profile-page-back a:hover {
+            color: var(--primary);
+        }
         .nav-link-btn {
             text-decoration: none;
             color: var(--text-muted);
@@ -670,6 +955,60 @@
         .nav-link-btn:hover {
             color: var(--primary);
             background: var(--primary-light);
+        }
+        .nav-menu-wrap {
+            position: relative;
+            display: inline-flex;
+        }
+        .nav-menu-panel {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            min-width: 200px;
+            background: var(--surface);
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            z-index: 120;
+            padding: 6px;
+        }
+        .nav-menu-panel[hidden] { display: none; }
+        .nav-menu-panel a,
+        .nav-menu-panel button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            text-decoration: none;
+            color: var(--text);
+            font-size: 0.9rem;
+            font-weight: 500;
+            font-family: var(--font-body);
+            padding: 10px 12px;
+            border: none;
+            border-radius: var(--radius-sm);
+            background: transparent;
+            cursor: pointer;
+            transition: background 160ms var(--ease), color 160ms var(--ease);
+        }
+        .nav-menu-panel a:hover,
+        .nav-menu-panel button:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+        .nav-menu-panel a.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .nav-menu-divider {
+            height: 1px;
+            margin: 4px 8px;
+            background: var(--border-soft);
+        }
+        .nav-menu-logout-form {
+            margin: 0;
+            padding: 0;
         }
 
         /* ---- BUTTONS ---- */
@@ -735,7 +1074,17 @@
             color: var(--primary);
             box-shadow: var(--shadow-sm);
         }
-        .mcq-btn:disabled { opacity: 0.85; cursor: default; }
+        .mcq-btn.is-correct {
+            background: #16a34a;
+            border-color: #16a34a;
+            color: #fff;
+        }
+        .mcq-btn.is-wrong {
+            background: #dc2626;
+            border-color: #dc2626;
+            color: #fff;
+        }
+        .mcq-btn:disabled { opacity: 0.95; cursor: default; }
         .mcq-options {
             display: flex;
             flex-direction: column;
@@ -1425,6 +1774,11 @@
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
     <!-- External site logic (dropdowns, MCQs, etc.) -->
     <script src="{{ url_for('static', filename='js/site.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/site-search.js') }}?v=1" defer></script>
+    <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=1" defer></script>
+    {% if current_user.is_authenticated %}
+    <script src="{{ url_for('static', filename='js/notifications.js') }}?v=1" defer></script>
+    {% endif %}
     {% if lesson_assist_enabled and lesson_meta and not lesson_meta.get('quizReview') %}
     <script src="{{ url_for('static', filename='js/lesson-assist.js') }}?v=4" defer></script>
     {% endif %}
@@ -1441,23 +1795,114 @@
 <header>
     <div class="header-inner">
         <a href="/" class="site-title"><span>Problem</span> Bank</a>
-        <nav>
-            <a href="/" class="{% if nav_endpoint == 'index' %}active{% endif %}">Generator</a>
-            <a href="/topics" class="{% if nav_endpoint == 'topics_index' %}active{% endif %}">Topics</a>
-            <a href="/about" class="{% if nav_endpoint == 'about' %}active{% endif %}">About</a>
+        <div class="nav-actions">
             {% if current_user.is_authenticated %}
-            <a href="{{ url_for('profile') }}" class="{% if nav_endpoint in ('profile', 'profile_settings', 'public_profile', 'public_profile_followers', 'public_profile_following') %}active{% endif %}">{{ current_user.display_handle }}</a>
-            <form method="POST" action="{{ url_for('logout') }}" class="nav-logout-form">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="nav-link-btn">Log out</button>
-            </form>
-            {% else %}
-            <a href="{{ url_for('login') }}" class="{% if nav_endpoint == 'login' %}active{% endif %}">Log in</a>
-            <a href="{{ url_for('register') }}" class="{% if nav_endpoint == 'register' %}active{% endif %}">Sign up</a>
+            <a href="{{ url_for('profile') }}" class="nav-handle {% if nav_endpoint in ('profile', 'profile_settings', 'public_profile', 'public_profile_followers', 'public_profile_following', 'site_search', 'suggestions_inbox', 'view_suggestion') %}active{% endif %}">{{ current_user.display_handle }}</a>
             {% endif %}
-        </nav>
+            <button type="button" class="nav-search-btn" id="site-search-open" aria-label="Search" aria-expanded="false" aria-controls="site-search-overlay">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"></circle>
+                    <path d="M20 20L16.5 16.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                </svg>
+            </button>
+            {% if current_user.is_authenticated %}
+            <div class="nav-notif-wrap">
+                <button type="button" class="nav-search-btn nav-notif-btn" id="nav-notif-open" aria-label="Notifications" aria-expanded="false" aria-controls="nav-notif-panel">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                        <path d="M13.7 21a2 2 0 01-3.4 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                    </svg>
+                    <span class="nav-notif-badge" id="nav-notif-badge"{% if not unread_notifications %} hidden{% endif %}>{% if unread_notifications > 9 %}9+{% else %}{{ unread_notifications }}{% endif %}</span>
+                </button>
+                <div class="nav-notif-panel" id="nav-notif-panel" hidden role="region" aria-label="Notifications">
+                    <div class="nav-notif-panel-header">
+                        <strong>Notifications</strong>
+                        <button type="button" class="nav-notif-mark-all" id="nav-notif-mark-all">Mark all read</button>
+                    </div>
+                    <div class="nav-notif-list" id="nav-notif-list">
+                        <p class="nav-notif-empty">Loading…</p>
+                    </div>
+                    <a href="{{ url_for('suggestions_inbox') }}" class="nav-notif-footer">Question suggestions inbox</a>
+                </div>
+            </div>
+            {% endif %}
+            <div class="nav-menu-wrap">
+                <button type="button" class="nav-search-btn" id="nav-menu-open" aria-label="Menu" aria-expanded="false" aria-controls="nav-menu-panel">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                    </svg>
+                </button>
+                <div class="nav-menu-panel" id="nav-menu-panel" hidden role="menu" aria-label="Site menu">
+                    <a href="/" role="menuitem" class="{% if nav_endpoint == 'index' %}active{% endif %}">Generator</a>
+                    <a href="/topics" role="menuitem" class="{% if nav_endpoint == 'topics_index' %}active{% endif %}">Topics</a>
+                    <a href="/about" role="menuitem" class="{% if nav_endpoint == 'about' %}active{% endif %}">About</a>
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('activity_feed') }}" role="menuitem" class="{% if nav_endpoint == 'activity_feed' %}active{% endif %}">Feed</a>
+                    <a href="{{ url_for('suggestions_inbox') }}" role="menuitem" class="{% if nav_endpoint in ('suggestions_inbox', 'view_suggestion') %}active{% endif %}">Suggestions</a>
+                    <div class="nav-menu-divider" role="separator"></div>
+                    <a href="{{ url_for('profile_settings') }}" role="menuitem" class="{% if nav_endpoint == 'profile_settings' %}active{% endif %}">Settings</a>
+                    <form method="POST" action="{{ url_for('logout') }}" class="nav-menu-logout-form">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" role="menuitem">Log out</button>
+                    </form>
+                    {% else %}
+                    <div class="nav-menu-divider" role="separator"></div>
+                    <a href="{{ url_for('login') }}" role="menuitem" class="{% if nav_endpoint == 'login' %}active{% endif %}">Log in</a>
+                    <a href="{{ url_for('register') }}" role="menuitem" class="{% if nav_endpoint == 'register' %}active{% endif %}">Sign up</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
 </header>
+
+<div id="site-search-overlay" class="site-search-overlay" hidden aria-hidden="true">
+    <div class="site-search-backdrop" data-close-search></div>
+    <div class="site-search-panel" role="dialog" aria-modal="true" aria-label="Search">
+        <form method="GET" action="{{ url_for('site_search') }}" class="site-search-form">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"></circle>
+                <path d="M20 20L16.5 16.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+            </svg>
+            <input type="search" name="q" id="site-search-input" placeholder="Search topics, lessons, users…" autocomplete="off" maxlength="80" aria-label="Search">
+        </form>
+        <div id="site-search-results" class="site-search-results"></div>
+    </div>
+</div>
+
+{% if current_user.is_authenticated %}
+<div id="share-suggest-overlay" class="site-search-overlay" hidden aria-hidden="true">
+    <div class="site-search-backdrop" data-close-share></div>
+    <div class="site-search-panel share-suggest-panel" role="dialog" aria-modal="true" aria-label="Share question">
+        <div class="share-suggest-header">
+            <h2 id="share-suggest-title">Share question</h2>
+        </div>
+        <form id="share-suggest-form" class="auth-form" style="padding:16px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="saved_id" id="share-suggest-saved-id" value="">
+            <div class="form-group share-suggest-recipient" hidden>
+                <label for="share-suggest-recipient">Send to</label>
+                <input type="text" name="recipient_handle" id="share-suggest-recipient" placeholder="@handle" maxlength="20" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="share-suggest-visibility">Who can see this?</label>
+                <select name="visibility" id="share-suggest-visibility">
+                    <option value="followers_only">Followers only</option>
+                    <option value="public">Public</option>
+                    <option value="private">Private link only</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="share-suggest-note">Note (optional)</label>
+                <input type="text" name="note" id="share-suggest-note" maxlength="200" placeholder="Try this one!">
+            </div>
+            <button type="submit" class="btn btn-primary" id="share-suggest-submit">Share</button>
+            <button type="button" class="btn btn-outline" data-close-share>Cancel</button>
+        </form>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/share-suggest.js') }}?v=1" defer></script>
+{% endif %}
 
 <div class="site-wrapper" data-user-logged-in="{% if current_user.is_authenticated %}1{% else %}0{% endif %}"{% if lesson_meta %} data-lesson-level="{{ lesson_meta.level }}" data-lesson-subject="{{ lesson_meta.subject }}" data-lesson-topic="{{ lesson_meta.topic }}" data-lesson-title="{{ lesson_meta.topicTitle|e }}"{% if lesson_meta.get('quizReview') %} data-quiz-review="1"{% else %} data-lesson-content{% endif %}{% endif %}>
     {% block content %}{% endblock %}

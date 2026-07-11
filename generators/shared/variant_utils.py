@@ -160,15 +160,54 @@ def mcq_variants_from_bank_with_procedural(
     return mcq_variants_from_fn(_dispatch, topic_slug, difficulty, count)
 
 
-def mcq_variants_from_fn(mcq_fn, topic_slug, difficulty, count=TIER_VARIANT_COUNT):
-    """Named wrappers around a procedural MCQ generator (one per queue slot)."""
+def mcq_variants_from_fn(
+    mcq_fn, topic_slug, difficulty, count=TIER_VARIANT_COUNT, *, slot_param=None
+):
+    """Named wrappers around a procedural MCQ generator (one per queue slot).
+
+    When ``slot_param`` is set (e.g. ``"mcq_type"`` or ``"slot_index"``), each
+    queue slot binds to a fixed value so rerolling keeps the same question stem.
+    """
+    fns = []
+    sig = inspect.signature(mcq_fn)
+    use_slot = slot_param is not None and slot_param in sig.parameters
+
+    for i in range(count):
+        if use_slot:
+            slot_value = i + 1 if slot_param == "mcq_type" else i
+
+            def _variant(sv=slot_value, fn=mcq_fn, param=slot_param):
+                return fn(**{param: sv})
+
+            _variant.__name__ = f"{topic_slug}_mcq_{difficulty}_{i + 1}"
+            bound = lambda sv=slot_value, fn=mcq_fn, param=slot_param: fn(**{param: sv})
+            bound.__name__ = _variant.__name__
+            _variant._randomizable = variant_is_randomizable(bound)
+        else:
+            def _variant(fn=mcq_fn):
+                return fn()
+
+            _variant.__name__ = f"{topic_slug}_mcq_{difficulty}_{i + 1}"
+            _variant._mcq_source = mcq_fn
+        fns.append(_variant)
+    return fns
+
+
+def mcq_variants_from_pool(generator_fns, topic_slug, difficulty, count=TIER_VARIANT_COUNT):
+    """One queue slot per generator in ``generator_fns`` (cycled if needed)."""
+    pool = list(generator_fns)
+    if not pool:
+        return []
+
     fns = []
     for i in range(count):
-        def _variant(variant_index=i):
-            return mcq_fn()
+        gen = pool[i % len(pool)]
+
+        def _variant(source=gen):
+            return source()
 
         _variant.__name__ = f"{topic_slug}_mcq_{difficulty}_{i + 1}"
-        _variant._mcq_source = mcq_fn
+        _variant._randomizable = variant_is_randomizable(gen)
         fns.append(_variant)
     return fns
 
@@ -180,17 +219,22 @@ def _probe_variant_varies(fn, attempts=8):
     """Empirically decide if a variant produces different content across runs.
 
     Returns True/False, or None if the variant could not be executed (so the
-    caller can fall back to static analysis). This is robust to the many ways a
-    variant can randomise (``random.choice`` of numeric values, delegating
-    one-line wrappers, helper functions, etc.) that source inspection misses.
+    caller can fall back to static analysis). For MCQ generators that return a
+    tuple, only the question text (first element) is compared so option
+    shuffling does not count as rerollable content.
     """
+    def _question_text(result):
+        if isinstance(result, tuple) and result:
+            return str(result[0])
+        return str(result)
+
     try:
-        first = str(fn())
+        first = _question_text(fn())
     except Exception:
         return None
     for _ in range(attempts - 1):
         try:
-            nxt = str(fn())
+            nxt = _question_text(fn())
         except Exception:
             return None
         if nxt != first:

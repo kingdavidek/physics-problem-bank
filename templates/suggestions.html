@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Question suggestions – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+
+<div class="lesson-hero">
+    <h1>Question suggestions</h1>
+    <p class="hero-sub">Questions other learners think you should try</p>
+</div>
+
+<div class="hero-pills" style="margin-bottom:16px;">
+    <a href="{{ url_for('suggestions_inbox', status='pending') }}" class="hero-pill {% if filter_status == 'pending' %}active-pill{% endif %}">Pending</a>
+    <a href="{{ url_for('suggestions_inbox', status='opened') }}" class="hero-pill {% if filter_status == 'opened' %}active-pill{% endif %}">Opened</a>
+    <a href="{{ url_for('suggestions_inbox', status='all') }}" class="hero-pill {% if filter_status == 'all' %}active-pill{% endif %}">All</a>
+</div>
+
+<section class="section-panel">
+    <div class="section-panel-body">
+        {% if suggestions %}
+        <ul class="profile-list">
+            {% for item in suggestions %}
+            <li class="profile-list-item">
+                <div class="profile-list-main">
+                    <a href="{{ url_for('view_suggestion', suggestion_id=item.id) }}">{{ item.topic_label }}</a>
+                    <span class="profile-list-meta">
+                        From @{{ item.sender_handle }} · {{ item.created_at[:10] }}
+                        {% if item.note %} · {{ item.note | truncate(60) }}{% endif %}
+                    </span>
+                </div>
+                {% if item.status == 'pending' %}
+                <form method="POST" action="{{ url_for('dismiss_suggestion_route', suggestion_id=item.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline btn-sm">Dismiss</button>
+                </form>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty">No suggestions here. When someone sends you a question, it will appear in this inbox.</p>
+        {% endif %}
+    </div>
+</section>
+
+<p><a href="{{ url_for('profile') }}">← Back to profile</a></p>
+
+</div>
+{% endblock %}

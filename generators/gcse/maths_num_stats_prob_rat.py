@@ -851,8 +851,9 @@ def _number_diff_sf_population_difference():
 
 # ---------- MCQ (18) ----------
 
-def number_mcq():
-    mcq_type = random.randint(1, 18)
+def number_mcq(mcq_type=None):
+    if mcq_type is None:
+        mcq_type = random.randint(1, 18)
 
     if mcq_type == 1:
         n = random.randint(2000, 9000)
@@ -1033,7 +1034,9 @@ def number_mcq():
 
 def gcse_number_variants(difficulty, mode):
     if mode == 'mcq':
-        return mcq_variants_from_fn(number_mcq, 'number', difficulty)
+        return mcq_variants_from_fn(
+            number_mcq, 'number', difficulty, slot_param='mcq_type'
+        )
 
     if difficulty == 'foundational':
         pool = [
@@ -1686,8 +1689,9 @@ def _ratio_diff_19(): return _ratio_inter_map_hike()
 
 
 
-def ratio_proportion_mcq():
-    mcq_type = random.randint(1, 9)
+def ratio_proportion_mcq(mcq_type=None):
+    if mcq_type is None:
+        mcq_type = random.randint(1, 9)
 
     if mcq_type == 1:
         a, b, k = random.randint(2,6), random.randint(2,6), random.randint(2,5)
@@ -1802,7 +1806,10 @@ def ratio_proportion_mcq():
 
 
 def gcse_ratio_proportion_variants(difficulty, mode):
-    if mode == 'mcq': return mcq_variants_from_fn(ratio_proportion_mcq, 'ratio_proportion', difficulty)
+    if mode == 'mcq':
+        return mcq_variants_from_fn(
+            ratio_proportion_mcq, 'ratio_proportion', difficulty, slot_param='mcq_type'
+        )
     found = [_ratio_found_01,_ratio_found_02,_ratio_found_03,_ratio_found_04,_ratio_found_05,_ratio_found_06,_ratio_found_07,_ratio_found_08,_ratio_found_09,_ratio_found_10,_ratio_found_11,_ratio_found_12,_ratio_found_13,_ratio_found_14,_ratio_found_15]
     inter = [_ratio_inter_01,_ratio_inter_02,_ratio_inter_03,_ratio_inter_04,_ratio_inter_05,_ratio_inter_06,_ratio_inter_07,_ratio_inter_08,_ratio_inter_09,_ratio_inter_10,_ratio_inter_11,_ratio_inter_12,_ratio_inter_13,_ratio_inter_14,_ratio_inter_15,_ratio_inter_16,_ratio_inter_17,_ratio_inter_18,_ratio_inter_19]
     diff = [_ratio_diff_01,_ratio_diff_02,_ratio_diff_03,_ratio_diff_04,_ratio_diff_05,_ratio_diff_06,_ratio_diff_07,_ratio_diff_08,_ratio_diff_09,_ratio_diff_10,_ratio_diff_11,_ratio_diff_12,_ratio_diff_13,_ratio_diff_14,_ratio_diff_15,_ratio_diff_16,_ratio_diff_17,_ratio_diff_18,_ratio_diff_19]
@@ -2799,12 +2806,23 @@ def _prob_diff_17(): return _prob_or_not_exclusive()
 
 
 # ---- Probability MCQ (shows full solution) ----
-def probability_mcq():
-    func = random.choice([
-        _prob_single_die, _prob_single_bag, _prob_complement,
-        _prob_expected_frequency, _prob_two_coins, _prob_mutually_exclusive,
-        _prob_relative_frequency, _prob_independent_product,
-    ])
+_PROBABILITY_MCQ_GENERATORS = [
+    _prob_single_die,
+    _prob_single_bag,
+    _prob_complement,
+    _prob_expected_frequency,
+    _prob_two_coins,
+    _prob_mutually_exclusive,
+    _prob_relative_frequency,
+    _prob_independent_product,
+]
+
+
+def probability_mcq(slot_index=None):
+    if slot_index is None:
+        func = random.choice(_PROBABILITY_MCQ_GENERATORS)
+    else:
+        func = _PROBABILITY_MCQ_GENERATORS[slot_index % len(_PROBABILITY_MCQ_GENERATORS)]
     q, full_s, hint_text, marks = func()
 
     correct = ""
@@ -2850,7 +2868,9 @@ def probability_mcq():
 
 def gcse_probability_variants(difficulty, mode):
     if mode == 'mcq':
-        return mcq_variants_from_fn(probability_mcq, 'probability', difficulty)
+        return mcq_variants_from_fn(
+            probability_mcq, 'probability', difficulty, slot_param='slot_index'
+        )
     found = [_prob_found_01, _prob_found_02, _prob_found_03, _prob_found_04,
              _prob_found_05, _prob_found_06, _prob_found_07, _prob_found_08,
              _prob_found_09, _prob_found_10, _prob_found_11, _prob_found_12,
@@ -3126,11 +3146,13 @@ def _stats_freq_mean():
     scenario = f"A survey of {total_f} {who} recorded the number of {noun}."
     q = f"{scenario}\n{svg}\nFind the mean number of {noun} (to 2 d.p.)."
     mean_val = total_fx / total_f
-    terms = ' + '.join(f'{v}\\times{f}' for v, f in zip(values, freqs))
-    s = (rf"\(\\sum fx = {terms} = {total_fx}\)<br>"
-         rf"\(\\sum f = {total_f}\)<br>"
-         rf"Mean = \\(\\frac{{{total_fx}}}{{{total_f}}} = {mean_val:.2f}\\)<br>"
-         rf"The mean number of pets per student is <strong>{mean_val:.2f}</strong>.")
+    terms = ' + '.join(f'{v} × {f}' for v, f in zip(values, freqs))
+    s = (
+        f"Σfx = {terms} = {total_fx}<br>"
+        f"Σf = {total_f}<br>"
+        f"Mean = {total_fx} ÷ {total_f} = <strong>{mean_val:.2f}</strong><br>"
+        f"The mean number of {noun} is <strong>{mean_val:.2f}</strong>."
+    )
     hint = "Use mean = Σfx ÷ Σf."
     return q, s, hint, 3
 
@@ -3147,13 +3169,15 @@ def _stats_estimated_mean_grouped():
     mids = [(a + b) / 2 for a, b in intervals]
     total_fx = sum(m * f for m, f in zip(mids, freqs))
     est_mean = total_fx / total_f
-    mid_terms = ' + '.join(f'{m:.0f}\\times{f}' for m, f in zip(mids, freqs))
+    mid_terms = ' + '.join(f'{m:.0f} × {f}' for m, f in zip(mids, freqs))
     q = f"{scenario}\n{svg}\nEstimate the mean (in {unit})."
-    s = (f"Midpoints: {', '.join(f'{m:.0f}' for m in mids)}<br>"
-         rf"\(\\sum fx = {mid_terms} = {total_fx:.0f}\)<br>"
-         rf"\(\\sum f = {total_f}\)<br>"
-         rf"Estimated mean = \\(\\frac{{{total_fx:.0f}}}{{{total_f}}} = {est_mean:.2f}\\)<br>"
-         rf"The estimated mean is <strong>{est_mean:.2f}</strong>.")
+    s = (
+        f"Midpoints: {', '.join(f'{m:.0f}' for m in mids)}<br>"
+        f"Σfx = {mid_terms} = {total_fx:.0f}<br>"
+        f"Σf = {total_f}<br>"
+        f"Estimated mean = {total_fx:.0f} ÷ {total_f} = <strong>{est_mean:.2f}</strong><br>"
+        f"The estimated mean is <strong>{est_mean:.2f}</strong> {unit}."
+    )
     hint = "Use class midpoints."
     return q, s, hint, 4
 
@@ -3173,9 +3197,9 @@ def _stats_grouped_midpoint():
 
 def _stats_range_list():
     scenario = random.choice([
-        "the daily temperatures (°C) recorded over a week",
-        "the scores of students in a quiz",
-        "the heights of plants in a biology experiment",
+        "daily temperatures (°C) recorded over a week",
+        "scores of students in a quiz",
+        "heights of plants in a biology experiment",
     ])
     vals = [random.randint(5, 50) for _ in range(6)]
     q = f"The {scenario} are: {', '.join(map(str, vals))}. Find the range."
@@ -3186,9 +3210,9 @@ def _stats_range_list():
 
 def _stats_median_list():
     scenario = random.choice([
-        "the test scores of a group of students",
-        "the number of goals scored by a football team in each match",
-        "the hourly wages of part‑time workers",
+        "test scores of a group of students",
+        "number of goals scored by a football team in each match",
+        "hourly wages of part‑time workers",
     ])
     vals = [random.randint(1, 30) for _ in range(7)]
     ordered = sorted(vals)
@@ -3201,9 +3225,9 @@ def _stats_median_list():
 
 def _stats_mode_list():
     scenario = random.choice([
-        "the shoe sizes of a group of students",
-        "the favourite ice‑cream flavours voted by a class",
-        "the number of siblings of each student in a year group",
+        "shoe sizes of a group of students",
+        "favourite ice‑cream flavours voted by a class",
+        "number of siblings of each student in a year group",
     ])
     mode = random.randint(2, 9)
     pool = [x for x in range(1, 13) if x != mode]
@@ -3218,9 +3242,9 @@ def _stats_mode_list():
 
 def _stats_mean_list():
     scenario = random.choice([
-        "the daily rainfall (mm) over a week",
-        "the running speeds (km/h) of a group of athletes",
-        "the weekly pocket money (£) of a group of friends",
+        "daily rainfall (mm) over a week",
+        "running speeds (km/h) of a group of athletes",
+        "weekly pocket money (£) of a group of friends",
     ])
     vals = [random.randint(2, 20) for _ in range(5)]
     mean = sum(vals) / len(vals)
@@ -3630,14 +3654,28 @@ def _stats_diff_17(): return _stats_diff_histogram_multipart()
 
 
 
-def statistics_mcq():
-    func = random.choice([
-        _stats_mean_list, _stats_median_list, _stats_mode_list,
-        _stats_range_list, _stats_grouped_midpoint, _stats_pie_angle,
-        _stats_bar_read, _stats_scatter_correlation,
-        _stats_freq_mean, _stats_estimated_mean_grouped,
-        _stats_box_iqr, _stats_hist_density, _stats_compare_distributions,
-    ])
+_STATISTICS_MCQ_GENERATORS = [
+    _stats_mean_list,
+    _stats_median_list,
+    _stats_mode_list,
+    _stats_range_list,
+    _stats_grouped_midpoint,
+    _stats_pie_angle,
+    _stats_bar_read,
+    _stats_scatter_correlation,
+    _stats_freq_mean,
+    _stats_estimated_mean_grouped,
+    _stats_box_iqr,
+    _stats_hist_density,
+    _stats_compare_distributions,
+]
+
+
+def statistics_mcq(slot_index=None):
+    if slot_index is None:
+        func = random.choice(_STATISTICS_MCQ_GENERATORS)
+    else:
+        func = _STATISTICS_MCQ_GENERATORS[slot_index % len(_STATISTICS_MCQ_GENERATORS)]
     q, full_s, hint_text, marks = func()          # ← use the actual marks
 
     # Extract correct answer from the full solution
@@ -3707,7 +3745,10 @@ def statistics_mcq():
 
 
 def gcse_statistics_variants(difficulty, mode):
-    if mode == 'mcq': return mcq_variants_from_fn(statistics_mcq, 'statistics', difficulty)
+    if mode == 'mcq':
+        return mcq_variants_from_fn(
+            statistics_mcq, 'statistics', difficulty, slot_param='slot_index'
+        )
     found = [_stats_found_01,_stats_found_02,_stats_found_03,_stats_found_04,_stats_found_05,_stats_found_06,_stats_found_07,_stats_found_08,_stats_found_09,_stats_found_10,_stats_found_11,_stats_found_12,_stats_found_13,_stats_found_14,_stats_found_15]
     inter = [_stats_inter_01,_stats_inter_02,_stats_inter_03,_stats_inter_04,_stats_inter_05,_stats_inter_06,_stats_inter_07,_stats_inter_08,_stats_inter_09,_stats_inter_10,_stats_inter_11,_stats_inter_12,_stats_inter_13,_stats_inter_14,_stats_inter_15]
     diff = [_stats_diff_01,_stats_diff_02,_stats_diff_03,_stats_diff_04,_stats_diff_05,_stats_diff_06,_stats_diff_07,_stats_diff_08,_stats_diff_09,_stats_diff_10,_stats_diff_11,_stats_diff_12,_stats_diff_13,_stats_diff_14,_stats_diff_15,_stats_diff_16,_stats_diff_17]
@@ -4627,13 +4668,27 @@ def _gra_diff_17(): return _gra_diff_quadratic_intersection_multipart()
 
 
 # --- MCQ ---
-def graphs_mcq():
-    func = random.choice([
-        _gra_coordinate_quadrant, _gra_substitute_linear, _gra_y_intercept,
-        _gra_equation_from_gradient_intercept, _gra_parallel_gradient, _gra_distance_time_speed,
-        _gra_scatter_positive, _gra_scatter_negative, _gra_scatter_no_correlation,
-        _gra_midpoint, _gra_reciprocal_value, _gra_cubic_substitute,
-    ])
+_GRAPHS_MCQ_GENERATORS = [
+    _gra_coordinate_quadrant,
+    _gra_substitute_linear,
+    _gra_y_intercept,
+    _gra_equation_from_gradient_intercept,
+    _gra_parallel_gradient,
+    _gra_distance_time_speed,
+    _gra_scatter_positive,
+    _gra_scatter_negative,
+    _gra_scatter_no_correlation,
+    _gra_midpoint,
+    _gra_reciprocal_value,
+    _gra_cubic_substitute,
+]
+
+
+def graphs_mcq(slot_index=None):
+    if slot_index is None:
+        func = random.choice(_GRAPHS_MCQ_GENERATORS)
+    else:
+        func = _GRAPHS_MCQ_GENERATORS[slot_index % len(_GRAPHS_MCQ_GENERATORS)]
     q, s, hint, marks = func()
 
     correct = ""
@@ -4679,7 +4734,9 @@ def graphs_mcq():
 
 def gcse_graphs_variants(difficulty, mode):
     if mode == 'mcq':
-        return mcq_variants_from_fn(graphs_mcq, 'graphs', difficulty)
+        return mcq_variants_from_fn(
+            graphs_mcq, 'graphs', difficulty, slot_param='slot_index'
+        )
     found = [_gra_found_01, _gra_found_02, _gra_found_03, _gra_found_04,
              _gra_found_05, _gra_found_06, _gra_found_07, _gra_found_08,
              _gra_found_09, _gra_found_10, _gra_found_11, _gra_found_12,

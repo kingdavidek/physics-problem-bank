@@ -7,7 +7,7 @@ import random
 from generators.shared.utils import make_problem
 from generators.shared.variant_utils import (
     select_tier_variants,
-    mcq_variants_from_fn,
+    mcq_variants_from_pool,
     run_mcq_variant,
     pick_named_variant,
 )
@@ -702,17 +702,20 @@ def _gsim_mcq_tangent_count():
     return q, sol, "A tangent touches the curve at a single point.", 2, opts, correct_letter
 
 
+_GSIM_MCQ_POOL = [
+    _gsim_mcq_read_coords,
+    _gsim_mcq_parallel_count,
+    _gsim_mcq_parabola_intersections,
+    _gsim_mcq_parabola_point,
+    _gsim_mcq_solution_meaning,
+    _gsim_mcq_find_intersection,
+    _gsim_mcq_parallel_zero,
+    _gsim_mcq_tangent_count,
+]
+
+
 def _gsim_mcq_dispatch():
-    return random.choice([
-        _gsim_mcq_read_coords,
-        _gsim_mcq_parallel_count,
-        _gsim_mcq_parabola_intersections,
-        _gsim_mcq_parabola_point,
-        _gsim_mcq_solution_meaning,
-        _gsim_mcq_find_intersection,
-        _gsim_mcq_parallel_zero,
-        _gsim_mcq_tangent_count,
-    ])()
+    return random.choice(_GSIM_MCQ_POOL)()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -752,8 +755,8 @@ _POOLS = {
 
 def gcse_graphical_simultaneous_equations_variants(difficulty, mode="practice"):
     if mode == "mcq":
-        return mcq_variants_from_fn(
-            _gsim_mcq_dispatch, "graphical_simultaneous_equations", difficulty, count=4
+        return mcq_variants_from_pool(
+            _GSIM_MCQ_POOL, "graphical_simultaneous_equations", difficulty, count=4
         )
 
     pool = _POOLS.get(difficulty)
