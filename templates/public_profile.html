@@ -22,7 +22,7 @@
 
 {% if is_own_profile %}
 <div class="public-profile-actions">
-    <a href="{{ url_for('profile_settings') }}" class="btn btn-outline">Privacy settings</a>
+    <a href="{{ url_for('profile_settings') }}" class="btn btn-outline">Settings</a>
     <a href="{{ url_for('profile') }}" class="btn btn-secondary">Your account</a>
 </div>
 {% elif current_user.is_authenticated %}

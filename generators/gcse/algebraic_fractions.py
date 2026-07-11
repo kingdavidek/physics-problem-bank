@@ -7,7 +7,7 @@ from math import gcd
 from generators.shared.utils import make_problem
 from generators.shared.variant_utils import (
     select_tier_variants,
-    mcq_variants_from_fn,
+    mcq_variants_from_pool,
     run_mcq_variant,
     pick_named_variant,
 )
@@ -566,17 +566,20 @@ def _af_mcq_factor_cancel():
     return q, sol, "Factorise the quadratic, then cancel the common bracket.", 3, opts, correct_letter
 
 
+_AF_MCQ_POOL = [
+    _af_mcq_cancel,
+    _af_mcq_add_same,
+    _af_mcq_diff_squares,
+    _af_mcq_solve,
+    _af_mcq_multiply,
+    _af_mcq_divide,
+    _af_mcq_subtract_same,
+    _af_mcq_factor_cancel,
+]
+
+
 def _af_mcq_dispatch():
-    return random.choice([
-        _af_mcq_cancel,
-        _af_mcq_add_same,
-        _af_mcq_diff_squares,
-        _af_mcq_solve,
-        _af_mcq_multiply,
-        _af_mcq_divide,
-        _af_mcq_subtract_same,
-        _af_mcq_factor_cancel,
-    ])()
+    return random.choice(_AF_MCQ_POOL)()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -616,8 +619,8 @@ _POOLS = {
 
 def gcse_algebraic_fractions_variants(difficulty, mode="practice"):
     if mode == "mcq":
-        return mcq_variants_from_fn(
-            _af_mcq_dispatch, "algebraic_fractions", difficulty, count=4
+        return mcq_variants_from_pool(
+            _AF_MCQ_POOL, "algebraic_fractions", difficulty, count=4
         )
 
     pool = _POOLS.get(difficulty)

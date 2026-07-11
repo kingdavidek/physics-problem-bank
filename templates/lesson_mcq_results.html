@@ -163,6 +163,13 @@
   {% endfor %}
 
   <div class="lesson-results-actions">
+    {% if quiz_attempt_id and current_user.is_authenticated %}
+    <form method="POST" action="{{ url_for('share_quiz_attempt_route', attempt_id=quiz_attempt_id) }}" class="share-quiz-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="visibility" value="followers_only">
+        <button type="submit" class="btn btn-outline">Share score to feed</button>
+    </form>
+    {% endif %}
     <a href="{{ url_for('lesson_mcq_quiz', level=level, subject=subject, topic=topic) }}" class="btn btn-primary">Try another quiz</a>
     <a href="{{ lesson_url }}" class="btn">Back to lesson</a>
   </div>

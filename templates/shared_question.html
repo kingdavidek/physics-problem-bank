@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Shared question – {{ topic_label }}{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+
+<div class="lesson-hero">
+    <h1>Shared question</h1>
+    <p class="hero-sub">From @{{ owner_handle }} · {{ topic_label }} · {{ shared.created_at[:10] }}</p>
+</div>
+
+{% if shared.note %}
+<p class="page-intro"><strong>Note:</strong> {{ shared.note }}</p>
+{% endif %}
+
+<div class="problem-card">
+    <div class="section-panel-header">Question</div>
+    <div class="problem-card-inner">
+
+    <div class="problem-meta">
+        <span class="badge badge-{{ shared.difficulty }}">{{ shared.difficulty | title }}</span>
+        {% if problem.marks %}
+        <span class="badge badge-marks">{{ problem.marks }} mark{% if problem.marks > 1 %}s{% endif %}</span>
+        {% endif %}
+        {% if shared.mode == 'mcq' %}
+            <span class="badge badge-mcq">Multiple choice</span>
+        {% endif %}
+    </div>
+
+    <div class="question">
+        {% if problem.options %}
+            <div class="question-content">{{ problem.question | safe }}</div>
+            <div class="mcq-options" data-correct="{{ problem.correct_answer }}">
+                {% for opt in problem.options %}
+                    <button type="button" class="btn mcq-btn" data-letter="{{ opt[0] }}">{{ opt | safe }}</button>
+                {% endfor %}
+            </div>
+            <p class="mcq-feedback" style="margin-top:12px;font-weight:600;"></p>
+        {% else %}
+            <div class="question-content">{{ problem.question | format_question_html }}</div>
+        {% endif %}
+    </div>
+
+    <p class="topic-link">
+        📖 <a href="{{ url_for('topic_page', level=shared.level, subject=shared.subject, topic=shared.topic) }}">Revise: {{ topic_label }}</a>
+    </p>
+
+    <details class="answer-reveal">
+        <summary>Show Answer</summary>
+        <div class="answer">
+            {% if '<pre>' in problem.solution %}
+                {{ problem.solution | safe }}
+            {% else %}
+                {{ problem.solution | format_question_html }}
+            {% endif %}
+        </div>
+        {% if problem.hint %}
+        <details class="hint-reveal">
+            <summary>💡 Key concept</summary>
+            <div class="hint">{{ problem.hint | safe }}</div>
+        </details>
+        {% endif %}
+    </details>
+
+    </div>
+</div>
+
+<p><a href="{{ url_for('index') }}">← Try the generator</a></p>
+
+</div>
+{% endblock %}

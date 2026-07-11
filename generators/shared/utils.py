@@ -27,6 +27,59 @@ def format_cs_mcq_option(option):
     return format_cs_prose(option)
 
 
+def _update_solution_letter(solution, old_letter, new_letter):
+    """Rewrite MCQ answer-letter references after options are shuffled."""
+    if old_letter == new_letter:
+        return solution
+
+    patterns = [
+        (
+            rf'(The correct option is\s*<strong>){re.escape(old_letter)}(</strong>)',
+            rf'\g<1>{new_letter}\2',
+        ),
+        (
+            rf'(The correct option is\s*\*\*){re.escape(old_letter)}(\*\*)',
+            rf'\g<1>{new_letter}\2',
+        ),
+        (
+            rf'(Answer:\s*<strong>){re.escape(old_letter)}(</strong>)',
+            rf'\g<1>{new_letter}\2',
+        ),
+        (
+            rf'(Answer:\s*\*\*){re.escape(old_letter)}(\*\*)',
+            rf'\g<1>{new_letter}\2',
+        ),
+        (
+            rf'(Answer:\s*){re.escape(old_letter)}(\b)',
+            rf'\g<1>{new_letter}\2',
+        ),
+        (
+            rf'(→\s*<strong>){re.escape(old_letter)}(</strong>)',
+            rf'\g<1>{new_letter}\2',
+        ),
+        (
+            rf'(Only\s*<strong>){re.escape(old_letter)}(\))',
+            rf'\g<1>{new_letter}\2',
+        ),
+        (
+            rf'(\. Answer:\s*){re.escape(old_letter)}(\s*$)',
+            rf'\g<1>{new_letter}\2',
+        ),
+        (
+            rf'^(<strong>){re.escape(old_letter)}(</strong>)',
+            rf'\g<1>{new_letter}\2',
+        ),
+        (
+            rf'(remove the constant term first → <strong>){re.escape(old_letter)}(</strong>)',
+            rf'\g<1>{new_letter}\2',
+        ),
+    ]
+    updated = solution
+    for pattern, repl in patterns:
+        updated = re.sub(pattern, repl, updated)
+    return updated
+
+
 def _shuffle_mcq(options, correct_letter, solution):
     """Randomly reorder MCQ options and update the correct-answer letter.
 
@@ -58,11 +111,7 @@ def _shuffle_mcq(options, correct_letter, solution):
 
     new_options = [f"{labels[i]}  {contents[indices[i]]}" for i in range(len(contents))]
 
-    # Replace every occurrence of the old answer letter in the solution string.
-    new_solution = solution.replace(
-        f"Answer: {correct_letter}",
-        f"Answer: {new_correct_letter}",
-    )
+    new_solution = _update_solution_letter(solution, correct_letter, new_correct_letter)
 
     return new_options, new_correct_letter, new_solution
 

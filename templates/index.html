@@ -168,12 +168,18 @@
     <div class="question">
         {% if problem.options %}
             <div class="question-content">{{ problem.question | safe }}</div>
-            <div id="mcq-options" class="mcq-options" data-correct="{{ problem.correct_answer }}">
+            <div id="mcq-options" class="mcq-options"
+                 data-correct="{{ problem.correct_answer }}"
+                 data-level="{{ selected_level }}"
+                 data-subject="{{ selected_subject }}"
+                 data-topic="{{ selected_topic }}"
+                 data-mode="{{ selected_mode }}"
+                 data-difficulty="{{ selected_diff }}">
                 {% for opt in problem.options %}
                     <button type="button" class="btn mcq-btn" data-letter="{{ opt[0] }}">{{ opt | safe }}</button>
                 {% endfor %}
             </div>
-            <p id="mcq-feedback" style="margin-top:12px;font-weight:600;"></p>
+            <p class="mcq-feedback" id="mcq-feedback" style="margin-top:12px;font-weight:600;"></p>
         {% else %}
             <div class="question-content">{{ problem.question | format_question_html }}</div>
         {% endif %}
@@ -211,6 +217,8 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-outline">⭐ Save question</button>
         </form>
+        <button type="button" class="btn btn-outline share-suggest-open" data-action="share">Share</button>
+        <button type="button" class="btn btn-outline share-suggest-open" data-action="suggest">Send to @user</button>
         {% endif %}
         {% if can_reroll_variant %}
         <form method="POST" id="reroll-form">

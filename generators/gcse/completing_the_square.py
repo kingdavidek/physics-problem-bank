@@ -7,7 +7,7 @@ import random
 from generators.shared.utils import make_problem
 from generators.shared.variant_utils import (
     select_tier_variants,
-    mcq_variants_from_fn,
+    mcq_variants_from_pool,
     run_mcq_variant,
     pick_named_variant,
 )
@@ -466,18 +466,21 @@ def _cts_mcq_expand_c():
     return q, sol, "Expand the bracket, then combine the constants.", 2, opts, correct_letter
 
 
+_CTSQ_MCQ_POOL = [
+    _cts_mcq_half_b,
+    _cts_mcq_completed_form,
+    _cts_mcq_solve_roots,
+    _cts_mcq_minimum_y,
+    _cts_mcq_square_constant,
+    _cts_mcq_turning_point,
+    _cts_mcq_min_x,
+    _cts_mcq_expand_c,
+]
+
+
 def _cts_mcq_dispatch():
     """Randomly pick one of eight MCQ types (values randomised inside)."""
-    return random.choice([
-        _cts_mcq_half_b,
-        _cts_mcq_completed_form,
-        _cts_mcq_solve_roots,
-        _cts_mcq_minimum_y,
-        _cts_mcq_square_constant,
-        _cts_mcq_turning_point,
-        _cts_mcq_min_x,
-        _cts_mcq_expand_c,
-    ])()
+    return random.choice(_CTSQ_MCQ_POOL)()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -517,8 +520,8 @@ _POOLS = {
 
 def gcse_completing_the_square_variants(difficulty, mode="practice"):
     if mode == "mcq":
-        return mcq_variants_from_fn(
-            _cts_mcq_dispatch, "completing_the_square", difficulty, count=4
+        return mcq_variants_from_pool(
+            _CTSQ_MCQ_POOL, "completing_the_square", difficulty, count=4
         )
 
     pool = _POOLS.get(difficulty)

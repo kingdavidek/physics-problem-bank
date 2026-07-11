@@ -6,7 +6,7 @@ import random
 from generators.shared.utils import make_problem
 from generators.shared.variant_utils import (
     select_tier_variants,
-    mcq_variants_from_fn,
+    mcq_variants_from_pool,
     run_mcq_variant,
     pick_named_variant,
 )
@@ -606,21 +606,24 @@ def _cts_mcq_force():
     return q, sol, "Divide both sides by the other factor.", 2, opts, correct_letter
 
 
+_CTS_MCQ_POOL = [
+    _cts_mcq_y_mx_c,
+    _cts_mcq_vuat,
+    _cts_mcq_sqrt_r,
+    _cts_mcq_kinetic,
+    _cts_mcq_triangle_h,
+    _cts_mcq_circumference,
+    _cts_mcq_inverse,
+    _cts_mcq_density,
+    _cts_mcq_two_step,
+    _cts_mcq_pythagoras,
+    _cts_mcq_speed,
+    _cts_mcq_force,
+]
+
+
 def _cts_mcq_dispatch():
-    return random.choice([
-        _cts_mcq_y_mx_c,
-        _cts_mcq_vuat,
-        _cts_mcq_sqrt_r,
-        _cts_mcq_kinetic,
-        _cts_mcq_triangle_h,
-        _cts_mcq_circumference,
-        _cts_mcq_inverse,
-        _cts_mcq_density,
-        _cts_mcq_two_step,
-        _cts_mcq_pythagoras,
-        _cts_mcq_speed,
-        _cts_mcq_force,
-    ])()
+    return random.choice(_CTS_MCQ_POOL)()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -673,8 +676,8 @@ _POOLS = {
 
 def gcse_changing_the_subject_variants(difficulty, mode="practice"):
     if mode == "mcq":
-        return mcq_variants_from_fn(
-            _cts_mcq_dispatch, "changing_the_subject", difficulty, count=4
+        return mcq_variants_from_pool(
+            _CTS_MCQ_POOL, "changing_the_subject", difficulty, count=4
         )
 
     pool = _POOLS.get(difficulty)

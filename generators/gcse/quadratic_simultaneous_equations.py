@@ -8,7 +8,7 @@ import random
 from generators.shared.utils import make_problem
 from generators.shared.variant_utils import (
     select_tier_variants,
-    mcq_variants_from_fn,
+    mcq_variants_from_pool,
     run_mcq_variant,
     pick_named_variant,
 )
@@ -376,13 +376,16 @@ def _qsim_mcq_find_x():
     return q, sol, "Factorise the quadratic after substituting.", 2, opts, correct_letter
 
 
+_QSIM_MCQ_POOL = [
+    _qsim_mcq_substitution_equation,
+    _qsim_mcq_correct_pair,
+    _qsim_mcq_number_of_solutions,
+    _qsim_mcq_find_x,
+]
+
+
 def _qsim_mcq_dispatch():
-    return random.choice([
-        _qsim_mcq_substitution_equation,
-        _qsim_mcq_correct_pair,
-        _qsim_mcq_number_of_solutions,
-        _qsim_mcq_find_x,
-    ])()
+    return random.choice(_QSIM_MCQ_POOL)()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -422,8 +425,8 @@ _POOLS = {
 
 def gcse_quadratic_simultaneous_equations_variants(difficulty, mode="practice"):
     if mode == "mcq":
-        return mcq_variants_from_fn(
-            _qsim_mcq_dispatch, "quadratic_simultaneous_equations", difficulty, count=4
+        return mcq_variants_from_pool(
+            _QSIM_MCQ_POOL, "quadratic_simultaneous_equations", difficulty, count=4
         )
 
     pool = _POOLS.get(difficulty)

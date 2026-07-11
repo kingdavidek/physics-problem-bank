@@ -27,12 +27,18 @@
         <div class="question">
             {% if problem.options %}
                 <div class="question-content">{{ problem.question | safe }}</div>
-                <div id="mcq-options" class="mcq-options" data-correct="{{ problem.correct_answer }}">
+                <div id="mcq-options" class="mcq-options"
+                     data-correct="{{ problem.correct_answer }}"
+                     data-level="{{ qt_level }}"
+                     data-subject="{{ qt_subject }}"
+                     data-topic="{{ qt_topic }}"
+                     data-mode="{{ qt_mode }}"
+                     data-difficulty="{{ qt_difficulty }}">
                     {% for opt in problem.options %}
                         <button type="button" class="btn mcq-btn" data-letter="{{ opt[0] }}">{{ opt | safe }}</button>
                     {% endfor %}
                 </div>
-                <p id="mcq-feedback" style="margin-top:12px;font-weight:600;"></p>
+                <p class="mcq-feedback" id="mcq-feedback" style="margin-top:12px;font-weight:600;"></p>
             {% else %}
                 <div class="question-content">{{ problem.question | format_question_html }}</div>
             {% endif %}

@@ -79,6 +79,15 @@ from models.user import (
 )
 from models.social import (
     VISIBILITY_CHOICES,
+    VISIBILITY_FOLLOWERS,
+    VISIBILITY_PUBLIC,
+    ACTIVITY_LESSON_STEP_COMPLETED,
+    ACTIVITY_MCQ_ANSWERED,
+    ACTIVITY_QUESTION_GENERATED,
+    ACTIVITY_QUESTION_SHARED,
+    ACTIVITY_QUIZ_COMPLETED,
+    ACTIVITY_SUGGESTION_SENT,
+    ACTIVITY_TOPIC_OPENED,
     can_view_profile,
     ensure_user_profile,
     follow_user,
@@ -89,14 +98,48 @@ from models.social import (
     get_user_by_handle,
     is_following,
     lesson_progress_summary,
+    list_activity_events,
     list_followers,
     list_following,
+    list_followed_feed,
+    normalize_feed_filter,
+    FEED_FILTER_ALL,
+    FEED_FILTER_LESSONS,
+    FEED_FILTER_QUIZZES,
+    FEED_FILTER_SHARES,
     quiz_stats_summary,
+    record_activity_event,
+    record_mcq_answered,
     record_question_generated,
     record_quiz_completed,
     record_topic_opened,
+    search_users_by_handle,
     unfollow_user,
     update_profile_settings,
+)
+from models.sharing import (
+    SUGGESTION_DISMISSED,
+    SUGGESTION_OPENED,
+    SUGGESTION_PENDING,
+    can_view_share,
+    count_pending_suggestions,
+    create_shared_question,
+    create_suggestion,
+    dismiss_suggestion,
+    get_shared_question,
+    get_suggestion,
+    list_suggestions_inbox,
+    mark_suggestion_opened,
+)
+from models.notifications import (
+    NOTIFICATION_FOLLOW,
+    NOTIFICATION_SUGGESTION,
+    count_unread_notifications,
+    create_notification,
+    list_notifications,
+    mark_all_notifications_read,
+    mark_notification_read,
+    mark_suggestion_notifications_read,
 )
 from models.user_data import (
     clear_lesson_progress,
@@ -105,9 +148,12 @@ from models.user_data import (
     get_lesson_progress,
     get_quiz_attempt,
     get_saved_problem,
+    get_practice_streak,
+    list_generator_mcq_attempts,
     list_lesson_progress,
     list_quiz_attempts,
     list_saved_problems,
+    record_generator_mcq_attempt,
     record_quiz_attempt,
     save_problem,
     update_saved_problem,
@@ -204,12 +250,17 @@ def inject_nav():
 
     assist_on = lesson_assist_enabled() and lesson_meta is not None
     lesson_progress_on = assist_on and not (lesson_meta or {}).get('quizReview')
+    unread_notifications = 0
+    if current_user.is_authenticated:
+        with get_db() as conn:
+            unread_notifications = count_unread_notifications(conn, current_user.id)
     return {
         'nav_endpoint': request.endpoint,
         'lesson_meta': lesson_meta,
         'lesson_assist_enabled': assist_on,
         'lesson_progress_enabled': lesson_progress_on,
         'csrf_token': _csrf_token,
+        'unread_notifications': unread_notifications,
     }
 
 
@@ -336,6 +387,26 @@ with get_db() as conn:
         CREATE INDEX IF NOT EXISTS idx_quiz_attempts_user
         ON quiz_attempts (user_id, created_at DESC)
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS generator_mcq_attempts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            level TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            topic TEXT NOT NULL,
+            mode TEXT NOT NULL,
+            difficulty TEXT NOT NULL,
+            user_answer TEXT NOT NULL,
+            correct_answer TEXT NOT NULL,
+            correct INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_generator_mcq_attempts_user
+        ON generator_mcq_attempts (user_id, created_at DESC)
+    """)
     quiz_cols = {
         row[1] for row in conn.execute('PRAGMA table_info(quiz_attempts)').fetchall()
     }
@@ -392,12 +463,103 @@ with get_db() as conn:
         CREATE INDEX IF NOT EXISTS idx_follows_following
         ON follows (following_id)
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_activity_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            event_type TEXT NOT NULL,
+            payload_json TEXT NOT NULL DEFAULT '{}',
+            visibility TEXT NOT NULL DEFAULT 'followers_only',
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_activity_events_user_created
+        ON user_activity_events (user_id, created_at DESC)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS shared_questions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            level TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            topic TEXT NOT NULL,
+            mode TEXT NOT NULL,
+            difficulty TEXT NOT NULL,
+            problem_json TEXT NOT NULL,
+            visibility TEXT NOT NULL DEFAULT 'followers_only',
+            note TEXT NOT NULL DEFAULT '',
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_shared_questions_user
+        ON shared_questions (user_id, created_at DESC)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS question_suggestions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sender_id INTEGER NOT NULL,
+            recipient_id INTEGER NOT NULL,
+            level TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            topic TEXT NOT NULL,
+            mode TEXT NOT NULL,
+            difficulty TEXT NOT NULL,
+            problem_json TEXT NOT NULL,
+            note TEXT NOT NULL DEFAULT '',
+            status TEXT NOT NULL DEFAULT 'pending',
+            created_at TEXT NOT NULL,
+            read_at TEXT,
+            FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (recipient_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_suggestions_recipient
+        ON question_suggestions (recipient_id, status, created_at DESC)
+    """)
+    profile_cols = {
+        row[1] for row in conn.execute('PRAGMA table_info(user_profile_settings)').fetchall()
+    }
+    for col, ddl in (
+        ('show_shared_questions', 'INTEGER NOT NULL DEFAULT 1'),
+        ('auto_share_quiz', 'INTEGER NOT NULL DEFAULT 0'),
+        ('auto_share_lesson', 'INTEGER NOT NULL DEFAULT 0'),
+        ('default_share_visibility', "TEXT NOT NULL DEFAULT 'followers_only'"),
+    ):
+        if col not in profile_cols:
+            conn.execute(f'ALTER TABLE user_profile_settings ADD COLUMN {col} {ddl}')
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            notification_type TEXT NOT NULL,
+            payload_json TEXT NOT NULL DEFAULT '{}',
+            read_at TEXT,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_notifications_user_created
+        ON user_notifications (user_id, created_at DESC)
+    """)
     conn.commit()
 
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Please log in to access that page.'
 login_manager.login_message_category = 'error'
+
+
+@login_manager.unauthorized_handler
+def _unauthorized():
+    if request.path.startswith('/api/'):
+        return jsonify({'ok': False, 'error': 'Authentication required'}), 401
+    return redirect(url_for('login', next=request.path))
 
 
 @login_manager.user_loader
@@ -502,6 +664,7 @@ def _render_quiz_results(
     back_url=None,
     back_label=None,
     show_wrong_explanations_only=True,
+    quiz_attempt_id=None,
 ):
     return render_template(
         'lesson_mcq_results.html',
@@ -520,6 +683,7 @@ def _render_quiz_results(
         back_url=back_url or lesson_url,
         back_label=back_label or '← Back to lesson',
         show_wrong_explanations_only=show_wrong_explanations_only,
+        quiz_attempt_id=quiz_attempt_id,
     )
 
 
@@ -575,7 +739,6 @@ def _get_problem_from_queue(topic_config, level, subject, topic, mode, difficult
     idx = session.get('problem_index', -1)
 
     needs_new_queue = (
-        action == 'start' or
         current_key != queue_key or
         not queue
     )
@@ -857,6 +1020,12 @@ SUBJECT_LABELS = {
     'cs': 'Computer Science',
     'chemistry': 'Chemistry',
 }
+PROFILE_VISIBILITY_LABELS = {
+    'public': 'Public',
+    'followers_only': 'Followers only',
+    'private': 'Private',
+}
+SHARE_VISIBILITY_LABELS = PROFILE_VISIBILITY_LABELS
 
 
 def _topic_label(level, subject, topic):
@@ -869,20 +1038,27 @@ def _topic_label(level, subject, topic):
 def _track_topic_opened(level, subject, topic):
     if not current_user.is_authenticated:
         return
+    label = _topic_label(level, subject, topic)
     with get_db() as conn:
-        record_topic_opened(
+        record_topic_opened(conn, current_user.id, level, subject, topic, label)
+        record_activity_event(
             conn,
             current_user.id,
-            level,
-            subject,
-            topic,
-            _topic_label(level, subject, topic),
+            ACTIVITY_TOPIC_OPENED,
+            {
+                'level': level,
+                'subject': subject,
+                'topic': topic,
+                'topic_label': label,
+            },
+            VISIBILITY_FOLLOWERS,
         )
 
 
 def _track_question_generated(level, subject, topic, difficulty):
     if not current_user.is_authenticated:
         return
+    label = _topic_label(level, subject, topic)
     with get_db() as conn:
         record_question_generated(
             conn,
@@ -890,24 +1066,101 @@ def _track_question_generated(level, subject, topic, difficulty):
             level,
             subject,
             topic,
-            _topic_label(level, subject, topic),
+            label,
             difficulty,
+        )
+        record_activity_event(
+            conn,
+            current_user.id,
+            ACTIVITY_QUESTION_GENERATED,
+            {
+                'level': level,
+                'subject': subject,
+                'topic': topic,
+                'topic_label': label,
+                'difficulty': difficulty,
+            },
+            VISIBILITY_FOLLOWERS,
+        )
+
+
+def _track_mcq_answered(level, subject, topic, difficulty, user_answer, correct_answer, correct):
+    if not current_user.is_authenticated:
+        return
+    label = _topic_label(level, subject, topic)
+    with get_db() as conn:
+        record_generator_mcq_attempt(
+            conn,
+            current_user.id,
+            level,
+            subject,
+            topic,
+            'mcq',
+            difficulty,
+            user_answer,
+            correct_answer,
+            correct,
+        )
+        record_mcq_answered(
+            conn,
+            current_user.id,
+            level,
+            subject,
+            topic,
+            label,
+            correct,
+        )
+        record_activity_event(
+            conn,
+            current_user.id,
+            ACTIVITY_MCQ_ANSWERED,
+            {
+                'level': level,
+                'subject': subject,
+                'topic': topic,
+                'topic_label': label,
+                'difficulty': difficulty,
+                'user_answer': user_answer,
+                'correct_answer': correct_answer,
+                'correct': bool(correct),
+            },
+            VISIBILITY_FOLLOWERS,
         )
 
 
 def _track_quiz_completed(level, subject, topic, score, total):
     if not current_user.is_authenticated:
         return
+    label = _topic_label(level, subject, topic)
     with get_db() as conn:
+        settings = get_profile_settings(conn, current_user.id)
+        visibility = VISIBILITY_FOLLOWERS
+        if settings.get('auto_share_quiz'):
+            visibility = _normalize_share_visibility(settings.get('default_share_visibility'))
         record_quiz_completed(
             conn,
             current_user.id,
             level,
             subject,
             topic,
-            _topic_label(level, subject, topic),
+            label,
             score,
             total,
+        )
+        record_activity_event(
+            conn,
+            current_user.id,
+            ACTIVITY_QUIZ_COMPLETED,
+            {
+                'level': level,
+                'subject': subject,
+                'topic': topic,
+                'topic_label': label,
+                'score': score,
+                'total': total,
+                'auto_shared': bool(settings.get('auto_share_quiz')),
+            },
+            visibility,
         )
 
 
@@ -978,6 +1231,323 @@ def _build_public_profile_context(target_user, viewer_id=None):
     }
 
 
+def _api_error(message, status=400, code=None):
+    payload = {'ok': False, 'error': message}
+    if code:
+        payload['code'] = code
+    return jsonify(payload), status
+
+
+def _notify_suggestion_received(conn, recipient_id, sender_handle, suggestion_id, topic_label):
+    create_notification(
+        conn,
+        recipient_id,
+        NOTIFICATION_SUGGESTION,
+        {
+            'suggestion_id': suggestion_id,
+            'sender_handle': sender_handle,
+            'topic_label': topic_label,
+        },
+    )
+
+
+def _notify_new_follower(conn, following_id, follower_handle):
+    create_notification(
+        conn,
+        following_id,
+        NOTIFICATION_FOLLOW,
+        {'follower_handle': follower_handle},
+    )
+
+
+def _serialize_notification_item(item):
+    payload = item.get('payload') or {}
+    ntype = item.get('notification_type', '')
+    if ntype == NOTIFICATION_SUGGESTION:
+        handle = payload.get('sender_handle', 'someone')
+        topic = payload.get('topic_label', 'a topic')
+        message = f'@{handle} sent you a question on {topic}'
+        url = url_for('view_suggestion', suggestion_id=payload.get('suggestion_id'))
+    elif ntype == NOTIFICATION_FOLLOW:
+        handle = payload.get('follower_handle', 'someone')
+        message = f'@{handle} started following you'
+        url = url_for('public_profile', handle=handle)
+    else:
+        message = 'New notification'
+        url = url_for('profile')
+    return {
+        'id': item['id'],
+        'type': ntype,
+        'message': message,
+        'url': url,
+        'read': item.get('read_at') is not None,
+        'created_at': item.get('created_at'),
+    }
+
+
+def _serialize_feed_item(item):
+    payload = item.get('payload') or {}
+    event_type = item.get('event_type', '')
+    handle = item.get('actor_handle', 'someone')
+    topic_label = payload.get('topic_label') or 'a topic'
+    actor_url = url_for('public_profile', handle=handle)
+
+    if event_type == ACTIVITY_QUIZ_COMPLETED:
+        score = payload.get('score')
+        total = payload.get('total')
+        score_text = f'{score}/{total}' if score is not None and total else 'a quiz'
+        message = f'@{handle} scored {score_text} on {topic_label}'
+        url = _topic_page_url(
+            payload.get('level'),
+            payload.get('subject'),
+            payload.get('topic'),
+        ) or actor_url
+        card_type = 'quiz'
+        card_label = 'Quiz'
+    elif event_type == ACTIVITY_LESSON_STEP_COMPLETED:
+        section = payload.get('section_label') or 'a lesson step'
+        message = f'@{handle} completed {section} on {topic_label}'
+        url = _topic_page_url(
+            payload.get('level'),
+            payload.get('subject'),
+            payload.get('topic'),
+        ) or actor_url
+        card_type = 'lesson'
+        card_label = 'Lesson'
+    elif event_type == ACTIVITY_QUESTION_SHARED:
+        message = f'@{handle} shared a question on {topic_label}'
+        share_id = payload.get('share_id')
+        url = (
+            url_for('view_shared_question', share_id=share_id)
+            if share_id
+            else actor_url
+        )
+        card_type = 'share'
+        card_label = 'Share'
+    elif event_type == ACTIVITY_TOPIC_OPENED:
+        message = f'@{handle} opened {topic_label}'
+        url = _topic_page_url(
+            payload.get('level'),
+            payload.get('subject'),
+            payload.get('topic'),
+        ) or actor_url
+        card_type = 'topic'
+        card_label = 'Topic'
+    else:
+        message = f'@{handle} was active on Problem Bank'
+        url = actor_url
+        card_type = 'activity'
+        card_label = 'Activity'
+
+    return {
+        'id': item['id'],
+        'type': event_type,
+        'card_type': card_type,
+        'card_label': card_label,
+        'actor_handle': handle,
+        'actor_url': actor_url,
+        'message': message,
+        'url': url,
+        'created_at': item.get('created_at'),
+    }
+
+
+def _feed_items_for_viewer(viewer_id, filter_name=FEED_FILTER_ALL, limit=50):
+    with get_db() as conn:
+        raw_items = list_followed_feed(conn, viewer_id, filter_name, limit=limit)
+        items = []
+        for item in raw_items:
+            if item.get('event_type') == ACTIVITY_QUESTION_SHARED:
+                payload = item.get('payload') or {}
+                share_id = payload.get('share_id')
+                if not share_id:
+                    continue
+                share = get_shared_question(conn, share_id)
+                if not share:
+                    continue
+                if not can_view_share(
+                    conn,
+                    viewer_id,
+                    item.get('user_id'),
+                    item.get('visibility'),
+                ):
+                    continue
+            items.append(_serialize_feed_item(item))
+        return items
+
+
+def _settings_to_json(settings):
+    return {
+        'profile_visibility': settings.get('profile_visibility', VISIBILITY_PUBLIC),
+        'show_member_since': bool(settings.get('show_member_since', True)),
+        'show_last_topic': bool(settings.get('show_last_topic', True)),
+        'show_last_activity': bool(settings.get('show_last_activity', True)),
+        'show_lesson_progress': bool(settings.get('show_lesson_progress', True)),
+        'show_quiz_stats': bool(settings.get('show_quiz_stats', True)),
+        'show_shared_questions': bool(settings.get('show_shared_questions', True)),
+        'auto_share_quiz': bool(settings.get('auto_share_quiz', False)),
+        'auto_share_lesson': bool(settings.get('auto_share_lesson', False)),
+        'default_share_visibility': settings.get('default_share_visibility', VISIBILITY_FOLLOWERS),
+    }
+
+
+def _normalize_share_visibility(value):
+    if value in VISIBILITY_CHOICES:
+        return value
+    return VISIBILITY_FOLLOWERS
+
+
+def _problem_from_session_payload():
+    payload = session.get('last_problem_payload')
+    if not payload or not isinstance(payload.get('problem'), dict):
+        return None
+    level = payload['level']
+    subject = payload['subject']
+    topic = payload['topic']
+    mode = normalize_mode(payload.get('mode', 'standard'))
+    difficulty = payload.get('difficulty', 'foundational')
+    problem = dict(payload['problem'])
+    variant_name = payload.get('variant_name') or problem.get('variant_name')
+    if variant_name:
+        problem['variant_name'] = variant_name
+    if not _topic_path_valid(level, subject, topic) or not problem.get('question'):
+        return None
+    return {
+        'level': level,
+        'subject': subject,
+        'topic': topic,
+        'mode': mode,
+        'difficulty': difficulty,
+        'problem': problem,
+    }
+
+
+def _record_user_activity(user_id, event_type, payload, visibility=VISIBILITY_FOLLOWERS):
+    with get_db() as conn:
+        record_activity_event(conn, user_id, event_type, payload, visibility)
+
+
+def _topic_page_url(level, subject, topic):
+    if level and subject and topic:
+        return url_for('topic_page', level=level, subject=subject, topic=topic)
+    return None
+
+
+def _activity_field(activity, prefix, show):
+    if not show:
+        return None
+    label = activity.get(f'{prefix}_label')
+    if not label:
+        return None
+    return {
+        'label': label,
+        'url': _topic_page_url(
+            activity.get(f'{prefix}_level'),
+            activity.get(f'{prefix}_subject'),
+            activity.get(f'{prefix}_topic'),
+        ),
+        'at': activity.get(f'{prefix}_at'),
+    }
+
+
+def _build_public_profile_json(target_user, viewer_id=None):
+    context = _build_public_profile_context(target_user, viewer_id)
+    if context is None:
+        return None
+
+    settings = context['settings']
+    activity = context['activity']
+    profile = {
+        'handle': target_user.handle,
+        'followers_count': context['followers_count'],
+        'following_count': context['following_count'],
+        'is_own_profile': context['is_own_profile'],
+        'viewer_follows': context['viewer_follows'],
+    }
+    if settings.get('show_member_since'):
+        created = target_user.created_at or ''
+        profile['member_since'] = created[:10] if created else None
+    if settings.get('show_last_topic') or settings.get('show_last_activity'):
+        profile['activity'] = {
+            'last_topic': _activity_field(activity, 'last_topic', settings.get('show_last_topic')),
+            'last_activity': _activity_field(
+                activity,
+                'last_activity',
+                settings.get('show_last_activity'),
+            ),
+        }
+    if settings.get('show_lesson_progress'):
+        profile['lesson_progress'] = [
+            {
+                'level': item['level'],
+                'subject': item['subject'],
+                'topic': item['topic'],
+                'topic_label': item['topic_label'],
+                'lesson_url': item['lesson_url'],
+                'section_key': item.get('section_key'),
+                'section_label': item.get('section_label'),
+                'completed_count': item.get('completed_count', 0),
+                'updated_at': item.get('updated_at'),
+            }
+            for item in context['lesson_progress']
+        ]
+    if settings.get('show_quiz_stats'):
+        profile['quiz_attempts'] = [
+            {
+                'level': item['level'],
+                'subject': item['subject'],
+                'topic': item['topic'],
+                'topic_label': item['topic_label'],
+                'score': item['score'],
+                'total': item['total'],
+                'created_at': item['created_at'],
+            }
+            for item in context['quiz_attempts']
+        ]
+    return profile
+
+
+def _resolve_active_user_by_handle(handle):
+    with get_db() as conn:
+        target = get_user_by_handle(conn, normalize_handle(handle))
+    if not target or not target.is_active:
+        return None
+    return target
+
+
+def _serialize_user_search_results(rows):
+    serialized = []
+    for item in rows:
+        entry = {
+            'handle': item['handle'],
+            'profile_url': _public_profile_url(item['handle']),
+            'profile_accessible': item['profile_accessible'],
+        }
+        if item.get('member_since'):
+            entry['member_since'] = item['member_since']
+        if 'viewer_follows' in item:
+            entry['viewer_follows'] = item['viewer_follows']
+        serialized.append(entry)
+    return serialized
+
+
+def _unified_search(query, viewer_id=None, limit_topics=8, limit_users=8):
+    normalized = (query or '').strip()
+    if len(normalized) < 2:
+        return normalized.lower(), [], [], 'Enter at least 2 characters to search.'
+
+    topics = _search_topics(normalized, limit=limit_topics) if limit_topics > 0 else []
+    with get_db() as conn:
+        users = search_users_by_handle(
+            conn,
+            normalized,
+            viewer_id=viewer_id,
+            limit=limit_users,
+            exclude_user_id=viewer_id,
+        )
+    return normalized.lower(), topics, users, None
+
+
 def _lesson_meta_for_topic(level, subject, topic, *, quiz_review=False):
     if not level or not subject or not topic:
         return None
@@ -1035,6 +1605,61 @@ def _build_topic_groups():
                 'topics': items,
             })
     return groups
+
+
+_TOPIC_INDEX = None
+
+
+def _get_topic_index():
+    global _TOPIC_INDEX
+    if _TOPIC_INDEX is not None:
+        return _TOPIC_INDEX
+
+    items = []
+    for level in _TOPIC_LEVEL_ORDER:
+        subjects = TOPICS.get(level)
+        if not subjects:
+            continue
+        for subject in _TOPIC_SUBJECT_ORDER.get(level, tuple(subjects.keys())):
+            topics = subjects.get(subject)
+            if not topics:
+                continue
+            group = (
+                f"{LEVEL_LABELS.get(level, level.title())} "
+                f"{SUBJECT_LABELS.get(subject, subject.title())}"
+            )
+            for slug, cfg in sorted(topics.items(), key=lambda x: x[1]['name'].lower()):
+                items.append({
+                    'name': cfg['name'],
+                    'slug': slug,
+                    'url': f'/topic/{level}/{subject}/{slug}',
+                    'group': group,
+                })
+    _TOPIC_INDEX = items
+    return _TOPIC_INDEX
+
+
+def _search_topics(query, limit=8):
+    query = (query or '').strip().lower()
+    if len(query) < 2:
+        return []
+
+    tokens = query.split()
+    matches = []
+    for item in _get_topic_index():
+        haystack = ' '.join([
+            item['name'].lower(),
+            item['slug'].replace('_', ' '),
+            item['group'].lower(),
+        ])
+        if all(token in haystack for token in tokens):
+            matches.append(item)
+
+    matches.sort(key=lambda item: (
+        0 if item['name'].lower().startswith(query) else 1,
+        item['name'].lower(),
+    ))
+    return matches[:limit]
 
 
 @app.route('/topics')
@@ -1153,6 +1778,9 @@ def profile():
         saved = list_saved_problems(conn, current_user.id, limit=10)
         progress = list_lesson_progress(conn, current_user.id, limit=10)
         quizzes = list_quiz_attempts(conn, current_user.id, limit=10)
+        mcq_attempts = list_generator_mcq_attempts(conn, current_user.id, limit=10)
+        practice_streak = get_practice_streak(conn, current_user.id)
+        pending_suggestions = count_pending_suggestions(conn, current_user.id)
     for item in saved:
         item['topic_label'] = _topic_label(item['level'], item['subject'], item['topic'])
     for item in progress:
@@ -1165,11 +1793,17 @@ def profile():
         )
     for item in quizzes:
         item['topic_label'] = _topic_label(item['level'], item['subject'], item['topic'])
+    for item in mcq_attempts:
+        item['topic_label'] = _topic_label(item['level'], item['subject'], item['topic'])
+        item['correct'] = bool(item.get('correct'))
     return render_template(
         'profile.html',
         saved_problems=saved,
         lesson_progress=progress,
         quiz_attempts=quizzes,
+        mcq_attempts=mcq_attempts,
+        practice_streak=practice_streak,
+        pending_suggestions=pending_suggestions,
         public_profile_url=_public_profile_url(current_user.handle),
     )
 
@@ -1192,17 +1826,28 @@ def profile_settings():
                 'show_last_activity': request.form.get('show_last_activity') == '1',
                 'show_lesson_progress': request.form.get('show_lesson_progress') == '1',
                 'show_quiz_stats': request.form.get('show_quiz_stats') == '1',
+                'show_shared_questions': request.form.get('show_shared_questions') == '1',
+                'auto_share_quiz': request.form.get('auto_share_quiz') == '1',
+                'auto_share_lesson': request.form.get('auto_share_lesson') == '1',
+                'default_share_visibility': request.form.get(
+                    'default_share_visibility',
+                    VISIBILITY_FOLLOWERS,
+                ),
             }
             with get_db() as conn:
                 update_profile_settings(conn, current_user.id, updated)
                 settings = get_profile_settings(conn, current_user.id)
-            flash('Privacy settings saved.', 'success')
+            flash('Settings saved.', 'success')
             return redirect(url_for('profile_settings'))
 
     return render_template(
         'profile_settings.html',
         settings=settings,
         visibility_choices=VISIBILITY_CHOICES,
+        profile_visibility_label=PROFILE_VISIBILITY_LABELS.get(
+            settings.get('profile_visibility', VISIBILITY_PUBLIC),
+            'Public',
+        ),
         errors=errors,
         public_profile_url=_public_profile_url(current_user.handle),
     )
@@ -1284,7 +1929,9 @@ def follow_user_route(handle):
             return redirect(url_for('index'))
         if target.id == current_user.id:
             return redirect(_public_profile_url(handle))
-        follow_user(conn, current_user.id, target.id)
+        followed = follow_user(conn, current_user.id, target.id)
+        if followed:
+            _notify_new_follower(conn, target.id, current_user.handle)
 
     flash(f'You are now following @{target.handle}.', 'success')
     return redirect(_public_profile_url(handle))
@@ -1306,6 +1953,340 @@ def unfollow_user_route(handle):
 
     flash(f'You unfollowed @{target.handle}.', 'success')
     return redirect(_public_profile_url(handle))
+
+
+@app.route('/search')
+def site_search():
+    query = (request.args.get('q') or '').strip()
+    topics = []
+    users = []
+    error = None
+    if query:
+        viewer_id = current_user.id if current_user.is_authenticated else None
+        _, topics, user_rows, error = _unified_search(query, viewer_id=viewer_id)
+        users = _serialize_user_search_results(user_rows)
+
+    return render_template(
+        'search.html',
+        query=query,
+        topics=topics,
+        users=users,
+        error=error,
+    )
+
+
+@app.route('/users/search')
+def user_search_redirect():
+    return redirect(url_for('site_search', q=request.args.get('q', '')))
+
+
+@app.get('/api/v1/search')
+def api_v1_search():
+    query = (request.args.get('q') or '').strip()
+    try:
+        limit = int(request.args.get('limit', 8))
+    except (TypeError, ValueError):
+        limit = 8
+    limit = min(max(limit, 1), 20)
+
+    viewer_id = current_user.id if current_user.is_authenticated else None
+    normalized, topics, user_rows, error = _unified_search(
+        query,
+        viewer_id=viewer_id,
+        limit_topics=limit,
+        limit_users=limit,
+    )
+    if error:
+        return _api_error(error, 400, 'query_too_short')
+
+    return jsonify({
+        'ok': True,
+        'query': normalized,
+        'topics': topics,
+        'users': _serialize_user_search_results(user_rows),
+    })
+
+
+@app.get('/api/v1/users/search')
+def api_v1_search_users():
+    query = (request.args.get('q') or '').strip()
+    try:
+        limit = int(request.args.get('limit', 20))
+    except (TypeError, ValueError):
+        limit = 20
+
+    viewer_id = current_user.id if current_user.is_authenticated else None
+    normalized, _, user_rows, error = _unified_search(
+        query,
+        viewer_id=viewer_id,
+        limit_topics=0,
+        limit_users=limit,
+    )
+    if error:
+        return _api_error(error, 400, 'query_too_short')
+
+    return jsonify({
+        'ok': True,
+        'query': normalize_handle(query),
+        'users': _serialize_user_search_results(user_rows),
+    })
+
+
+@app.get('/api/v1/users/<handle>/profile')
+def api_v1_user_profile(handle):
+    target = _resolve_active_user_by_handle(handle)
+    if not target:
+        return _api_error('User not found', 404, 'user_not_found')
+
+    viewer_id = current_user.id if current_user.is_authenticated else None
+    profile = _build_public_profile_json(target, viewer_id)
+    if profile is None:
+        return jsonify({
+            'ok': False,
+            'error': 'Profile is not accessible',
+            'code': 'profile_private',
+            'profile': {'handle': target.handle},
+        }), 403
+
+    return jsonify({'ok': True, 'profile': profile})
+
+
+@app.post('/api/v1/users/<handle>/follow')
+@login_required
+def api_v1_follow_user(handle):
+    target = _resolve_active_user_by_handle(handle)
+    if not target:
+        return _api_error('User not found', 404, 'user_not_found')
+    if target.id == current_user.id:
+        return _api_error('You cannot follow yourself', 400, 'self_follow')
+
+    with get_db() as conn:
+        if is_following(conn, current_user.id, target.id):
+            unfollow_user(conn, current_user.id, target.id)
+            following = False
+        else:
+            followed = follow_user(conn, current_user.id, target.id)
+            following = True
+            if followed:
+                _notify_new_follower(conn, target.id, current_user.handle)
+        followers_count = follower_count(conn, target.id)
+
+    return jsonify({
+        'ok': True,
+        'handle': target.handle,
+        'following': following,
+        'followers_count': followers_count,
+    })
+
+
+@app.delete('/api/v1/users/<handle>/follow')
+@login_required
+def api_v1_unfollow_user(handle):
+    target = _resolve_active_user_by_handle(handle)
+    if not target:
+        return _api_error('User not found', 404, 'user_not_found')
+    if target.id == current_user.id:
+        return _api_error('You cannot unfollow yourself', 400, 'self_follow')
+
+    with get_db() as conn:
+        unfollow_user(conn, current_user.id, target.id)
+        followers_count = follower_count(conn, target.id)
+
+    return jsonify({
+        'ok': True,
+        'handle': target.handle,
+        'following': False,
+        'followers_count': followers_count,
+    })
+
+
+@app.post('/api/v1/generator/mcq-answer')
+@login_required
+def api_v1_generator_mcq_answer():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('JSON body required', 400, 'invalid_payload')
+
+    level = (payload.get('level') or '').strip()
+    subject = (payload.get('subject') or '').strip()
+    topic = (payload.get('topic') or '').strip()
+    difficulty = (payload.get('difficulty') or 'foundational').strip()
+    user_answer = (payload.get('user_answer') or '').strip()
+    correct_answer = (payload.get('correct_answer') or '').strip()
+    correct = payload.get('correct')
+
+    if not level or not subject or not topic:
+        return _api_error('level, subject, and topic are required', 400, 'missing_fields')
+    if not user_answer or not correct_answer:
+        return _api_error('user_answer and correct_answer are required', 400, 'missing_fields')
+    if correct not in (True, False):
+        return _api_error('correct must be a boolean', 400, 'invalid_correct')
+
+    try:
+        TOPICS[level][subject][topic]
+    except KeyError:
+        return _api_error('Invalid topic', 400, 'invalid_topic')
+
+    _track_mcq_answered(
+        level,
+        subject,
+        topic,
+        difficulty,
+        user_answer,
+        correct_answer,
+        correct,
+    )
+    with get_db() as conn:
+        streak = get_practice_streak(conn, current_user.id)
+
+    return jsonify({'ok': True, 'practice_streak': streak})
+
+
+@app.get('/api/v1/me/settings')
+@login_required
+def api_v1_get_settings():
+    with get_db() as conn:
+        settings = get_profile_settings(conn, current_user.id)
+    return jsonify({'ok': True, 'settings': _settings_to_json(settings)})
+
+
+@app.patch('/api/v1/me/settings')
+@login_required
+def api_v1_patch_settings():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('Request body must be a JSON object', 400, 'invalid_json')
+
+    allowed_keys = {
+        'profile_visibility',
+        'show_member_since',
+        'show_last_topic',
+        'show_last_activity',
+        'show_lesson_progress',
+        'show_quiz_stats',
+        'show_shared_questions',
+        'auto_share_quiz',
+        'auto_share_lesson',
+        'default_share_visibility',
+    }
+    unknown = set(payload.keys()) - allowed_keys
+    if unknown:
+        return _api_error(
+            f'Unknown field(s): {", ".join(sorted(unknown))}',
+            400,
+            'invalid_field',
+        )
+
+    if 'profile_visibility' in payload:
+        visibility = payload['profile_visibility']
+        if visibility not in VISIBILITY_CHOICES:
+            return _api_error(
+                f'profile_visibility must be one of: {", ".join(VISIBILITY_CHOICES)}',
+                400,
+                'invalid_visibility',
+            )
+
+    if 'default_share_visibility' in payload:
+        share_visibility = payload['default_share_visibility']
+        if share_visibility not in VISIBILITY_CHOICES:
+            return _api_error(
+                f'default_share_visibility must be one of: {", ".join(VISIBILITY_CHOICES)}',
+                400,
+                'invalid_visibility',
+            )
+
+    bool_fields = (
+        'show_member_since',
+        'show_last_topic',
+        'show_last_activity',
+        'show_lesson_progress',
+        'show_quiz_stats',
+        'show_shared_questions',
+        'auto_share_quiz',
+        'auto_share_lesson',
+    )
+    for field in bool_fields:
+        if field in payload and not isinstance(payload[field], bool):
+            return _api_error(f'{field} must be a boolean', 400, 'invalid_field')
+
+    with get_db() as conn:
+        current = _settings_to_json(get_profile_settings(conn, current_user.id))
+        current.update(payload)
+        update_profile_settings(conn, current_user.id, current)
+        settings = _settings_to_json(get_profile_settings(conn, current_user.id))
+
+    return jsonify({'ok': True, 'settings': settings})
+
+
+@app.get('/api/v1/me/notifications')
+@login_required
+def api_v1_list_notifications():
+    try:
+        limit = min(max(int(request.args.get('limit', 20)), 1), 50)
+    except (TypeError, ValueError):
+        limit = 20
+    with get_db() as conn:
+        items = list_notifications(conn, current_user.id, limit=limit)
+        unread = count_unread_notifications(conn, current_user.id)
+    return jsonify({
+        'ok': True,
+        'unread_count': unread,
+        'notifications': [_serialize_notification_item(item) for item in items],
+    })
+
+
+@app.post('/api/v1/me/notifications/read')
+@login_required
+def api_v1_mark_notifications_read():
+    payload = request.get_json(silent=True) or {}
+    mark_all = bool(payload.get('all'))
+    notification_id = payload.get('id')
+
+    with get_db() as conn:
+        if mark_all:
+            mark_all_notifications_read(conn, current_user.id)
+        elif notification_id is not None:
+            if not mark_notification_read(conn, current_user.id, int(notification_id)):
+                return _api_error('Notification not found', 404, 'not_found')
+        else:
+            return _api_error('Provide id or all: true', 400, 'invalid_payload')
+        unread = count_unread_notifications(conn, current_user.id)
+
+    return jsonify({'ok': True, 'unread_count': unread})
+
+
+@app.get('/feed')
+@login_required
+def activity_feed():
+    filter_name = normalize_feed_filter(request.args.get('filter', FEED_FILTER_ALL))
+    items = _feed_items_for_viewer(current_user.id, filter_name)
+    return render_template(
+        'feed.html',
+        filter=filter_name,
+        items=items,
+        feed_filters=(
+            (FEED_FILTER_ALL, 'All'),
+            (FEED_FILTER_LESSONS, 'Lessons'),
+            (FEED_FILTER_QUIZZES, 'Quizzes'),
+            (FEED_FILTER_SHARES, 'Shares'),
+        ),
+    )
+
+
+@app.get('/api/v1/feed')
+@login_required
+def api_v1_feed():
+    filter_name = normalize_feed_filter(request.args.get('filter', FEED_FILTER_ALL))
+    try:
+        limit = min(max(int(request.args.get('limit', 50)), 1), 100)
+    except (TypeError, ValueError):
+        limit = 50
+    items = _feed_items_for_viewer(current_user.id, filter_name, limit=limit)
+    return jsonify({
+        'ok': True,
+        'filter': filter_name,
+        'items': items,
+    })
 
 
 @app.route('/saved-problems')
@@ -1523,6 +2504,523 @@ def delete_saved_problem_route(saved_id):
     return redirect(next_url)
 
 
+def _share_problem_from_data(user_id, data, visibility, note=''):
+    share_id = None
+    with get_db() as conn:
+        share_id = create_shared_question(
+            conn,
+            user_id,
+            data['level'],
+            data['subject'],
+            data['topic'],
+            data['mode'],
+            data['difficulty'],
+            data['problem'],
+            visibility=visibility,
+            note=note,
+        )
+        record_activity_event(
+            conn,
+            user_id,
+            ACTIVITY_QUESTION_SHARED,
+            {
+                'share_id': share_id,
+                'level': data['level'],
+                'subject': data['subject'],
+                'topic': data['topic'],
+                'topic_label': _topic_label(data['level'], data['subject'], data['topic']),
+                'note': note,
+            },
+            visibility,
+        )
+    return share_id
+
+
+@app.post('/shared-questions/share')
+@login_required
+def share_question_route():
+    wants_json = _wants_json_response()
+    if not _validate_csrf(request.form.get('csrf_token')):
+        message = 'Your session expired. Please try again.'
+        if wants_json:
+            return jsonify({'ok': False, 'error': message}), 403
+        flash(message, 'error')
+        return redirect(request.referrer or url_for('index'))
+
+    visibility = _normalize_share_visibility(
+        request.form.get('visibility') or VISIBILITY_FOLLOWERS
+    )
+    note = (request.form.get('note') or '').strip()[:200]
+    saved_id = request.form.get('saved_id', type=int)
+
+    if saved_id:
+        with get_db() as conn:
+            saved = get_saved_problem(conn, current_user.id, saved_id)
+        if not saved:
+            message = 'Saved question not found.'
+            if wants_json:
+                return jsonify({'ok': False, 'error': message}), 404
+            flash(message, 'error')
+            return redirect(url_for('profile'))
+        data = {
+            'level': saved['level'],
+            'subject': saved['subject'],
+            'topic': saved['topic'],
+            'mode': normalize_mode(saved['mode']),
+            'difficulty': saved['difficulty'],
+            'problem': saved['problem'],
+        }
+    else:
+        data = _problem_from_session_payload()
+        if not data:
+            message = 'Generate a question first, then share it.'
+            if wants_json:
+                return jsonify({'ok': False, 'error': message}), 400
+            flash(message, 'error')
+            return redirect(url_for('index'))
+
+    try:
+        share_id = _share_problem_from_data(current_user.id, data, visibility, note)
+    except ValueError:
+        message = 'You have reached the shared question limit (200).'
+        if wants_json:
+            return jsonify({'ok': False, 'error': message}), 400
+        flash(message, 'error')
+        return redirect(request.referrer or url_for('index'))
+
+    share_url = url_for('view_shared_question', share_id=share_id)
+    message = 'Question shared.'
+    if wants_json:
+        return jsonify({'ok': True, 'message': message, 'share_id': share_id, 'share_url': share_url})
+    flash(message, 'success')
+    return redirect(share_url)
+
+
+@app.get('/shared/<int:share_id>')
+def view_shared_question(share_id):
+    with get_db() as conn:
+        shared = get_shared_question(conn, share_id)
+    if not shared:
+        return 'Shared question not found', 404
+
+    viewer_id = current_user.id if current_user.is_authenticated else None
+    with get_db() as conn:
+        if not can_view_share(conn, viewer_id, shared['user_id'], shared['visibility']):
+            return render_template(
+                'shared_question_private.html',
+                owner_handle=shared.get('owner_handle'),
+            )
+
+    topic_label = _topic_label(shared['level'], shared['subject'], shared['topic'])
+    return render_template(
+        'shared_question.html',
+        shared=shared,
+        problem=shared['problem'],
+        topic_label=topic_label,
+        owner_handle=shared.get('owner_handle'),
+    )
+
+
+@app.route('/suggestions')
+@login_required
+def suggestions_inbox():
+    status = request.args.get('status', SUGGESTION_PENDING)
+    if status not in (SUGGESTION_PENDING, SUGGESTION_OPENED, SUGGESTION_DISMISSED, 'all'):
+        status = SUGGESTION_PENDING
+    with get_db() as conn:
+        if status == 'all':
+            items = list_suggestions_inbox(conn, current_user.id, limit=100)
+        else:
+            items = list_suggestions_inbox(conn, current_user.id, status=status, limit=100)
+    for item in items:
+        item['topic_label'] = _topic_label(item['level'], item['subject'], item['topic'])
+    return render_template(
+        'suggestions.html',
+        suggestions=items,
+        filter_status=status,
+    )
+
+
+@app.post('/suggestions')
+@login_required
+def create_suggestion_route():
+    wants_json = _wants_json_response()
+    if not _validate_csrf(request.form.get('csrf_token')):
+        message = 'Your session expired. Please try again.'
+        if wants_json:
+            return jsonify({'ok': False, 'error': message}), 403
+        flash(message, 'error')
+        return redirect(request.referrer or url_for('index'))
+
+    recipient_handle = normalize_handle(request.form.get('recipient_handle', ''))
+    note = (request.form.get('note') or '').strip()[:200]
+    saved_id = request.form.get('saved_id', type=int)
+
+    if not recipient_handle:
+        message = 'Enter a recipient handle.'
+        if wants_json:
+            return jsonify({'ok': False, 'error': message}), 400
+        flash(message, 'error')
+        return redirect(request.referrer or url_for('index'))
+
+    with get_db() as conn:
+        recipient = get_user_by_handle(conn, recipient_handle)
+    if not recipient or not recipient.is_active:
+        message = 'User not found.'
+        if wants_json:
+            return jsonify({'ok': False, 'error': message}), 404
+        flash(message, 'error')
+        return redirect(request.referrer or url_for('index'))
+
+    if saved_id:
+        with get_db() as conn:
+            saved = get_saved_problem(conn, current_user.id, saved_id)
+        if not saved:
+            message = 'Saved question not found.'
+            if wants_json:
+                return jsonify({'ok': False, 'error': message}), 404
+            flash(message, 'error')
+            return redirect(url_for('profile'))
+        data = {
+            'level': saved['level'],
+            'subject': saved['subject'],
+            'topic': saved['topic'],
+            'mode': normalize_mode(saved['mode']),
+            'difficulty': saved['difficulty'],
+            'problem': saved['problem'],
+        }
+    else:
+        data = _problem_from_session_payload()
+        if not data:
+            message = 'Generate a question first, then suggest it.'
+            if wants_json:
+                return jsonify({'ok': False, 'error': message}), 400
+            flash(message, 'error')
+            return redirect(url_for('index'))
+
+    try:
+        with get_db() as conn:
+            suggestion_id = create_suggestion(
+                conn,
+                current_user.id,
+                recipient.id,
+                data['level'],
+                data['subject'],
+                data['topic'],
+                data['mode'],
+                data['difficulty'],
+                data['problem'],
+                note=note,
+            )
+            record_activity_event(
+                conn,
+                current_user.id,
+                ACTIVITY_SUGGESTION_SENT,
+                {
+                    'suggestion_id': suggestion_id,
+                    'recipient_handle': recipient.handle,
+                    'level': data['level'],
+                    'subject': data['subject'],
+                    'topic': data['topic'],
+                    'topic_label': _topic_label(data['level'], data['subject'], data['topic']),
+                },
+                VISIBILITY_FOLLOWERS,
+            )
+            topic_label = _topic_label(data['level'], data['subject'], data['topic'])
+            _notify_suggestion_received(
+                conn,
+                recipient.id,
+                current_user.handle,
+                suggestion_id,
+                topic_label,
+            )
+    except ValueError as exc:
+        if str(exc) == 'self_suggest':
+            message = 'You cannot suggest a question to yourself.'
+        else:
+            message = 'That user has too many pending suggestions.'
+        if wants_json:
+            return jsonify({'ok': False, 'error': message}), 400
+        flash(message, 'error')
+        return redirect(request.referrer or url_for('index'))
+
+    message = f'Question sent to @{recipient.handle}.'
+    if wants_json:
+        return jsonify({'ok': True, 'message': message, 'suggestion_id': suggestion_id})
+    flash(message, 'success')
+    return redirect(url_for('suggestions_inbox'))
+
+
+@app.get('/suggestions/<int:suggestion_id>')
+@login_required
+def view_suggestion(suggestion_id):
+    with get_db() as conn:
+        item = get_suggestion(conn, suggestion_id, recipient_id=current_user.id)
+        if item:
+            mark_suggestion_opened(conn, suggestion_id, current_user.id)
+            mark_suggestion_notifications_read(conn, current_user.id, suggestion_id)
+    if not item:
+        return 'Suggestion not found', 404
+    topic_label = _topic_label(item['level'], item['subject'], item['topic'])
+    return render_template(
+        'suggestion_view.html',
+        suggestion=item,
+        problem=item['problem'],
+        topic_label=topic_label,
+    )
+
+
+@app.post('/suggestions/<int:suggestion_id>/dismiss')
+@login_required
+def dismiss_suggestion_route(suggestion_id):
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash('Your session expired. Please try again.', 'error')
+        return redirect(url_for('suggestions_inbox'))
+    with get_db() as conn:
+        dismissed = dismiss_suggestion(conn, suggestion_id, current_user.id)
+    if dismissed:
+        flash('Suggestion dismissed.', 'success')
+    else:
+        flash('Suggestion not found.', 'error')
+    return redirect(url_for('suggestions_inbox'))
+
+
+@app.post('/quiz-attempts/<int:attempt_id>/share')
+@login_required
+def share_quiz_attempt_route(attempt_id):
+    wants_json = _wants_json_response()
+    if not _validate_csrf(request.form.get('csrf_token')):
+        message = 'Your session expired. Please try again.'
+        if wants_json:
+            return jsonify({'ok': False, 'error': message}), 403
+        flash(message, 'error')
+        return redirect(url_for('profile'))
+
+    visibility = _normalize_share_visibility(
+        request.form.get('visibility') or VISIBILITY_FOLLOWERS
+    )
+    with get_db() as conn:
+        attempt = get_quiz_attempt(conn, current_user.id, attempt_id)
+    if not attempt:
+        message = 'Quiz attempt not found.'
+        if wants_json:
+            return jsonify({'ok': False, 'error': message}), 404
+        flash(message, 'error')
+        return redirect(url_for('profile'))
+
+    _record_user_activity(
+        current_user.id,
+        ACTIVITY_QUIZ_COMPLETED,
+        {
+            'level': attempt['level'],
+            'subject': attempt['subject'],
+            'topic': attempt['topic'],
+            'topic_label': _topic_label(attempt['level'], attempt['subject'], attempt['topic']),
+            'score': attempt['score'],
+            'total': attempt['total'],
+            'attempt_id': attempt_id,
+            'shared': True,
+        },
+        visibility,
+    )
+    message = 'Quiz score shared to your activity feed.'
+    if wants_json:
+        return jsonify({'ok': True, 'message': message})
+    flash(message, 'success')
+    return redirect(url_for('view_quiz_attempt', attempt_id=attempt_id))
+
+
+@app.post('/api/v1/shared-questions')
+@login_required
+def api_v1_create_share():
+    payload = request.get_json(silent=True) or {}
+    visibility = _normalize_share_visibility(
+        payload.get('visibility') or VISIBILITY_FOLLOWERS
+    )
+    note = (payload.get('note') or '').strip()[:200]
+    saved_id = payload.get('saved_id')
+
+    if saved_id:
+        with get_db() as conn:
+            saved = get_saved_problem(conn, current_user.id, int(saved_id))
+        if not saved:
+            return _api_error('Saved question not found', 404, 'not_found')
+        data = {
+            'level': saved['level'],
+            'subject': saved['subject'],
+            'topic': saved['topic'],
+            'mode': normalize_mode(saved['mode']),
+            'difficulty': saved['difficulty'],
+            'problem': saved['problem'],
+        }
+    else:
+        data = _problem_from_session_payload()
+        if not data:
+            return _api_error('Generate a question first', 400, 'no_problem')
+
+    try:
+        share_id = _share_problem_from_data(current_user.id, data, visibility, note)
+    except ValueError:
+        return _api_error('Shared question limit reached', 400, 'share_limit')
+
+    return jsonify({
+        'ok': True,
+        'share_id': share_id,
+        'share_url': url_for('view_shared_question', share_id=share_id),
+    })
+
+
+@app.get('/api/v1/shared-questions/<int:share_id>')
+def api_v1_get_share(share_id):
+    with get_db() as conn:
+        shared = get_shared_question(conn, share_id)
+    if not shared:
+        return _api_error('Shared question not found', 404, 'not_found')
+
+    viewer_id = current_user.id if current_user.is_authenticated else None
+    with get_db() as conn:
+        if not can_view_share(conn, viewer_id, shared['user_id'], shared['visibility']):
+            return _api_error('Shared question is not accessible', 403, 'not_accessible')
+
+    return jsonify({
+        'ok': True,
+        'share': {
+            'id': shared['id'],
+            'owner_handle': shared.get('owner_handle'),
+            'level': shared['level'],
+            'subject': shared['subject'],
+            'topic': shared['topic'],
+            'topic_label': _topic_label(shared['level'], shared['subject'], shared['topic']),
+            'mode': shared['mode'],
+            'difficulty': shared['difficulty'],
+            'note': shared.get('note') or '',
+            'created_at': shared['created_at'],
+            'problem': _problem_client_payload(shared['problem']),
+        },
+    })
+
+
+@app.get('/api/v1/me/suggestions')
+@login_required
+def api_v1_list_suggestions():
+    status = request.args.get('status', SUGGESTION_PENDING)
+    with get_db() as conn:
+        if status == 'all':
+            items = list_suggestions_inbox(conn, current_user.id, limit=50)
+        elif status in (SUGGESTION_PENDING, SUGGESTION_OPENED, SUGGESTION_DISMISSED):
+            items = list_suggestions_inbox(conn, current_user.id, status=status, limit=50)
+        else:
+            return _api_error('Invalid status', 400, 'invalid_status')
+    out = []
+    for item in items:
+        out.append({
+            'id': item['id'],
+            'sender_handle': item['sender_handle'],
+            'status': item['status'],
+            'note': item.get('note') or '',
+            'topic_label': _topic_label(item['level'], item['subject'], item['topic']),
+            'created_at': item['created_at'],
+            'url': url_for('view_suggestion', suggestion_id=item['id']),
+        })
+    return jsonify({'ok': True, 'suggestions': out})
+
+
+@app.post('/api/v1/suggestions')
+@login_required
+def api_v1_create_suggestion():
+    payload = request.get_json(silent=True) or {}
+    recipient_handle = normalize_handle(payload.get('recipient_handle', ''))
+    note = (payload.get('note') or '').strip()[:200]
+    saved_id = payload.get('saved_id')
+
+    if not recipient_handle:
+        return _api_error('recipient_handle is required', 400, 'invalid_field')
+
+    with get_db() as conn:
+        recipient = get_user_by_handle(conn, recipient_handle)
+    if not recipient or not recipient.is_active:
+        return _api_error('User not found', 404, 'user_not_found')
+
+    if saved_id:
+        with get_db() as conn:
+            saved = get_saved_problem(conn, current_user.id, int(saved_id))
+        if not saved:
+            return _api_error('Saved question not found', 404, 'not_found')
+        data = {
+            'level': saved['level'],
+            'subject': saved['subject'],
+            'topic': saved['topic'],
+            'mode': normalize_mode(saved['mode']),
+            'difficulty': saved['difficulty'],
+            'problem': saved['problem'],
+        }
+    else:
+        data = _problem_from_session_payload()
+        if not data:
+            return _api_error('Generate a question first', 400, 'no_problem')
+
+    try:
+        with get_db() as conn:
+            suggestion_id = create_suggestion(
+                conn,
+                current_user.id,
+                recipient.id,
+                data['level'],
+                data['subject'],
+                data['topic'],
+                data['mode'],
+                data['difficulty'],
+                data['problem'],
+                note=note,
+            )
+            record_activity_event(
+                conn,
+                current_user.id,
+                ACTIVITY_SUGGESTION_SENT,
+                {
+                    'suggestion_id': suggestion_id,
+                    'recipient_handle': recipient.handle,
+                    'level': data['level'],
+                    'subject': data['subject'],
+                    'topic': data['topic'],
+                    'topic_label': _topic_label(data['level'], data['subject'], data['topic']),
+                },
+                VISIBILITY_FOLLOWERS,
+            )
+            topic_label = _topic_label(data['level'], data['subject'], data['topic'])
+            _notify_suggestion_received(
+                conn,
+                recipient.id,
+                current_user.handle,
+                suggestion_id,
+                topic_label,
+            )
+    except ValueError as exc:
+        code = 'self_suggest' if str(exc) == 'self_suggest' else 'inbox_limit'
+        message = (
+            'You cannot suggest a question to yourself'
+            if code == 'self_suggest'
+            else 'That user has too many pending suggestions'
+        )
+        return _api_error(message, 400, code)
+
+    return jsonify({
+        'ok': True,
+        'suggestion_id': suggestion_id,
+        'url': url_for('view_suggestion', suggestion_id=suggestion_id),
+    })
+
+
+@app.post('/api/v1/suggestions/<int:suggestion_id>/dismiss')
+@login_required
+def api_v1_dismiss_suggestion(suggestion_id):
+    with get_db() as conn:
+        dismissed = dismiss_suggestion(conn, suggestion_id, current_user.id)
+    if not dismissed:
+        return _api_error('Suggestion not found', 404, 'not_found')
+    return jsonify({'ok': True})
+
+
 @app.get('/api/lesson-progress/<level>/<subject>/<topic>')
 @login_required
 def api_get_lesson_progress(level, subject, topic):
@@ -1573,6 +3071,27 @@ def api_save_lesson_progress():
             section_label,
             completed_keys=completed_keys,
         )
+        progress = get_lesson_progress(conn, current_user.id, level, subject, topic)
+        settings = get_profile_settings(conn, current_user.id)
+    completed_count = len((progress or {}).get('completed_keys') or [])
+    visibility = VISIBILITY_FOLLOWERS
+    if settings.get('auto_share_lesson'):
+        visibility = _normalize_share_visibility(settings.get('default_share_visibility'))
+    _record_user_activity(
+        current_user.id,
+        ACTIVITY_LESSON_STEP_COMPLETED,
+        {
+            'level': level,
+            'subject': subject,
+            'topic': topic,
+            'topic_label': _topic_label(level, subject, topic),
+            'section_key': section_key,
+            'section_label': section_label,
+            'completed_count': completed_count,
+            'auto_shared': bool(settings.get('auto_share_lesson')),
+        },
+        visibility,
+    )
     return jsonify({'ok': True})
 
 
@@ -1630,6 +3149,7 @@ def view_quiz_attempt(attempt_id):
         back_url=url_for('profile'),
         back_label='← Back to profile',
         show_wrong_explanations_only=True,
+        quiz_attempt_id=attempt_id,
     )
 
 
@@ -1833,6 +3353,11 @@ def quicktest_question():
         current=idx + 1,
         total=len(data['problems']),
         topic_name=data['topic_name'],
+        qt_level=data.get('level', 'gcse'),
+        qt_subject=data.get('subject', 'physics'),
+        qt_topic=data.get('topic', 'forces'),
+        qt_mode=data.get('mode', 'standard'),
+        qt_difficulty=data.get('difficulty', 'foundational'),
     )
 
 @app.route('/quicktest/next', methods=['POST'])

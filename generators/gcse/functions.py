@@ -6,7 +6,7 @@ import random
 from generators.shared.utils import make_problem
 from generators.shared.variant_utils import (
     select_tier_variants,
-    mcq_variants_from_fn,
+    mcq_variants_from_pool,
     run_mcq_variant,
     pick_named_variant,
 )
@@ -641,17 +641,20 @@ def _fn_mcq_notation_meaning():
     return q, sol, "f(input) gives the output for that input.", 1, opts, correct_letter
 
 
+_FN_MCQ_POOL = [
+    _fn_mcq_evaluate,
+    _fn_mcq_composite,
+    _fn_mcq_inverse,
+    _fn_mcq_fg_expression,
+    _fn_mcq_evaluate_quadratic,
+    _fn_mcq_gf_composite,
+    _fn_mcq_solve_linear,
+    _fn_mcq_notation_meaning,
+]
+
+
 def _fn_mcq_dispatch():
-    return random.choice([
-        _fn_mcq_evaluate,
-        _fn_mcq_composite,
-        _fn_mcq_inverse,
-        _fn_mcq_fg_expression,
-        _fn_mcq_evaluate_quadratic,
-        _fn_mcq_gf_composite,
-        _fn_mcq_solve_linear,
-        _fn_mcq_notation_meaning,
-    ])()
+    return random.choice(_FN_MCQ_POOL)()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -696,8 +699,8 @@ _POOLS = {
 
 def gcse_functions_variants(difficulty, mode="practice"):
     if mode == "mcq":
-        return mcq_variants_from_fn(
-            _fn_mcq_dispatch, "functions", difficulty, count=4
+        return mcq_variants_from_pool(
+            _FN_MCQ_POOL, "functions", difficulty, count=4
         )
 
     pool = _POOLS.get(difficulty)

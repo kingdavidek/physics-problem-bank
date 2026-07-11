@@ -108,7 +108,7 @@ def main():
             },
             follow_redirects=True,
         )
-        assert b'Privacy settings saved' in r.data
+        assert b'Settings saved' in r.data
 
         # B views A and follows
         client.post('/logout', data={'csrf_token': csrf_from(client.get('/profile').data.decode())})

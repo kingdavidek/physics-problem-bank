@@ -1,13 +1,15 @@
 {% extends "base.html" %}
-{% block title %}Privacy settings – Problem Bank{% endblock %}
+{% block title %}Settings – Problem Bank{% endblock %}
 
 {% block content %}
 <div class="page-shell">
 
 <div class="lesson-hero">
-    <h1>Privacy settings</h1>
-    <p class="hero-sub">Control what appears on your <a href="{{ public_profile_url }}">public profile</a></p>
+    <h1>Settings</h1>
+    <p class="hero-sub">Account details, privacy, and sharing preferences</p>
 </div>
+
+<p class="profile-page-back"><a href="{{ url_for('profile') }}">← Back to account</a></p>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
     {% for category, message in messages %}
@@ -19,12 +21,31 @@
 <p class="error">{{ errors.form }}</p>
 {% endif %}
 
-<form method="POST" class="auth-form" style="max-width:520px;">
+<form method="POST" class="auth-form settings-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-    <section class="section-panel" style="margin-bottom:16px;">
-        <div class="section-panel-header">Who can see your profile?</div>
+    <section class="section-panel settings-section">
+        <div class="section-panel-header">Account</div>
         <div class="section-panel-body">
+            <dl class="profile-dl">
+                <dt>Handle</dt>
+                <dd>{{ current_user.display_handle }}</dd>
+                <dt>Email</dt>
+                <dd>{{ current_user.email }}</dd>
+                <dt>Member since</dt>
+                <dd>{{ current_user.created_at[:10] if current_user.created_at else '—' }}</dd>
+                <dt>Last login</dt>
+                <dd>{{ current_user.last_login_at[:10] if current_user.last_login_at else '—' }}</dd>
+            </dl>
+            <p class="profile-empty" style="margin-top:8px;">Handle and email cannot be changed here yet.</p>
+            <p style="margin-top:12px;"><a href="{{ public_profile_url }}">Preview your public profile →</a></p>
+        </div>
+    </section>
+
+    <section class="section-panel settings-section">
+        <div class="section-panel-header">Profile visibility</div>
+        <div class="section-panel-body">
+            <p class="page-intro" style="margin-top:0;">Who can view your <a href="{{ public_profile_url }}">public profile</a> at /u/{{ current_user.handle }}?</p>
             <div class="form-group">
                 <label class="privacy-radio">
                     <input type="radio" name="profile_visibility" value="public"
@@ -39,14 +60,14 @@
                 <label class="privacy-radio">
                     <input type="radio" name="profile_visibility" value="private"
                            {% if settings.profile_visibility == 'private' %}checked{% endif %}>
-                    <span><strong>Private</strong> — hidden from everyone</span>
+                    <span><strong>Private</strong> — hidden from everyone else</span>
                 </label>
             </div>
         </div>
     </section>
 
-    <section class="section-panel" style="margin-bottom:16px;">
-        <div class="section-panel-header">What to show</div>
+    <section class="section-panel settings-section">
+        <div class="section-panel-header">What others can see on your profile</div>
         <div class="section-panel-body">
             <label class="privacy-check">
                 <input type="checkbox" name="show_member_since" value="1"
@@ -73,11 +94,42 @@
                        {% if settings.show_quiz_stats %}checked{% endif %}>
                 Recent quiz scores
             </label>
+            <label class="privacy-check">
+                <input type="checkbox" name="show_shared_questions" value="1"
+                       {% if settings.show_shared_questions %}checked{% endif %}>
+                Shared questions (when feed launches)
+            </label>
         </div>
     </section>
 
-    <button type="submit" class="btn btn-primary">Save settings</button>
-    <a href="{{ url_for('profile') }}" class="btn btn-outline" style="margin-left:8px;">Cancel</a>
+    <section class="section-panel settings-section">
+        <div class="section-panel-header">Sharing &amp; activity feed</div>
+        <div class="section-panel-body">
+            <label class="privacy-check">
+                <input type="checkbox" name="auto_share_quiz" value="1"
+                       {% if settings.auto_share_quiz %}checked{% endif %}>
+                Automatically share quiz completions to your activity feed
+            </label>
+            <label class="privacy-check">
+                <input type="checkbox" name="auto_share_lesson" value="1"
+                       {% if settings.auto_share_lesson %}checked{% endif %}>
+                Automatically share lesson progress milestones
+            </label>
+            <div class="form-group" style="margin-top:12px;">
+                <label for="default_share_visibility">Default visibility when you share</label>
+                <select name="default_share_visibility" id="default_share_visibility">
+                    <option value="public" {% if settings.default_share_visibility == 'public' %}selected{% endif %}>Public</option>
+                    <option value="followers_only" {% if settings.default_share_visibility == 'followers_only' %}selected{% endif %}>Followers only</option>
+                    <option value="private" {% if settings.default_share_visibility == 'private' %}selected{% endif %}>Private (not on public feed)</option>
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <div class="settings-form-actions">
+        <button type="submit" class="btn btn-primary">Save settings</button>
+        <a href="{{ url_for('profile') }}" class="btn btn-outline">Cancel</a>
+    </div>
 </form>
 
 </div>

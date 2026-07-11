@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Activity feed – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+
+<div class="lesson-hero">
+    <h1>Activity feed</h1>
+    <p class="hero-sub">See what people you follow are practising</p>
+</div>
+
+<div class="hero-pills feed-filters" style="margin-bottom:16px;">
+    {% for key, label in feed_filters %}
+    <a href="{{ url_for('activity_feed', filter=key) }}"
+       class="hero-pill feed-filter-pill {% if filter == key %}active-pill{% endif %}"
+       data-feed-filter="{{ key }}">{{ label }}</a>
+    {% endfor %}
+</div>
+
+<section class="section-panel">
+    <div class="section-panel-body">
+        <div id="feed-list" data-feed-filter="{{ filter }}">
+            {% if items %}
+            <ul class="profile-list feed-list">
+                {% for item in items %}
+                <li class="profile-list-item feed-card" data-feed-id="{{ item.id }}">
+                    <div class="profile-list-main">
+                        <span class="feed-card-badge feed-card-badge--{{ item.card_type }}">{{ item.card_label }}</span>
+                        <a href="{{ item.url }}">{{ item.message }}</a>
+                        <span class="profile-list-meta feed-card-time" data-created-at="{{ item.created_at }}">
+                            {{ item.created_at[:10] }}
+                        </span>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="profile-empty feed-empty">
+                Follow people to see their activity.
+                <a href="{{ url_for('site_search') }}">Search users</a>
+                or browse <a href="{{ url_for('topics_index') }}">topics</a>.
+            </p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<p class="feed-poll-note">Feed refreshes automatically every minute.</p>
+
+</div>
+<script src="{{ url_for('static', filename='js/feed.js') }}?v=1" defer></script>
+{% endblock %}

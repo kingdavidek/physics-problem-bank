@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Suggested question – {{ topic_label }}{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+
+<div class="lesson-hero">
+    <h1>Suggested question</h1>
+    <p class="hero-sub">From @{{ suggestion.sender_handle }} · {{ topic_label }}</p>
+</div>
+
+{% if suggestion.note %}
+<p class="page-intro"><strong>Message:</strong> {{ suggestion.note }}</p>
+{% endif %}
+
+<div class="problem-card">
+    <div class="section-panel-header">Try this question</div>
+    <div class="problem-card-inner">
+
+    <div class="problem-meta">
+        <span class="badge badge-{{ suggestion.difficulty }}">{{ suggestion.difficulty | title }}</span>
+        {% if problem.marks %}
+        <span class="badge badge-marks">{{ problem.marks }} mark{% if problem.marks > 1 %}s{% endif %}</span>
+        {% endif %}
+    </div>
+
+    <div class="question">
+        {% if problem.options %}
+            <div class="question-content">{{ problem.question | safe }}</div>
+            <div class="mcq-options" data-correct="{{ problem.correct_answer }}">
+                {% for opt in problem.options %}
+                    <button type="button" class="btn mcq-btn" data-letter="{{ opt[0] }}">{{ opt | safe }}</button>
+                {% endfor %}
+            </div>
+            <p class="mcq-feedback" style="margin-top:12px;font-weight:600;"></p>
+        {% else %}
+            <div class="question-content">{{ problem.question | format_question_html }}</div>
+        {% endif %}
+    </div>
+
+    <p class="topic-link">
+        📖 <a href="{{ url_for('topic_page', level=suggestion.level, subject=suggestion.subject, topic=suggestion.topic) }}">Open lesson: {{ topic_label }}</a>
+    </p>
+
+    <details class="answer-reveal">
+        <summary>Show Answer</summary>
+        <div class="answer">
+            {% if '<pre>' in problem.solution %}
+                {{ problem.solution | safe }}
+            {% else %}
+                {{ problem.solution | format_question_html }}
+            {% endif %}
+        </div>
+    </details>
+
+    <div class="problem-actions">
+        <form method="POST" action="{{ url_for('dismiss_suggestion_route', suggestion_id=suggestion.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-secondary">Dismiss</button>
+        </form>
+        <a href="{{ url_for('suggestions_inbox') }}" class="btn btn-outline">Back to inbox</a>
+    </div>
+
+    </div>
+</div>
+
+</div>
+{% endblock %}

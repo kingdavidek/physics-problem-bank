@@ -140,11 +140,11 @@
   }
 
   function resetMcqInline(block) {
-    var feedback = block.querySelector('.mcq-feedback');
+    var feedback = block.querySelector('.mcq-feedback')
+      || (block.parentElement && block.parentElement.querySelector('.mcq-feedback'));
     block.querySelectorAll('.mcq-btn').forEach(function (b) {
       b.disabled = false;
-      b.style.background = '';
-      b.style.color = '';
+      b.classList.remove('is-correct', 'is-wrong');
     });
     if (feedback) {
       feedback.textContent = '';
@@ -155,6 +155,74 @@
       retryWrap.hidden = true;
     }
     block.dispatchEvent(new CustomEvent('mcq-reset', { bubbles: true }));
+  }
+
+  function findMcqFeedback(block) {
+    return block.querySelector('.mcq-feedback')
+      || (block.parentElement && block.parentElement.querySelector('.mcq-feedback'));
+  }
+
+  function persistMcqAnswer(block, userAnswer, correctAnswer, isCorrect) {
+    if (!block.dataset.level) return;
+    fetch('/api/v1/generator/mcq-answer', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        level: block.dataset.level,
+        subject: block.dataset.subject,
+        topic: block.dataset.topic,
+        difficulty: block.dataset.difficulty || 'foundational',
+        user_answer: userAnswer,
+        correct_answer: correctAnswer,
+        correct: isCorrect,
+      }),
+    }).catch(function () {});
+  }
+
+  function wireMcqBlock(block) {
+    if (!block || block.dataset.mcqInit === '1') return;
+
+    var correctRaw = (block.getAttribute('data-correct') || block.dataset.correct || '').trim();
+    if (!correctRaw) return;
+
+    block.dataset.mcqInit = '1';
+    var correctLetter = correctRaw.charAt(0);
+    var feedback = findMcqFeedback(block);
+    var trackable = Boolean(block.dataset.level);
+
+    block.querySelectorAll('.mcq-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (btn.disabled) {
+          return;
+        }
+        block.querySelectorAll('.mcq-btn').forEach(function (b) { b.disabled = true; });
+        var letter = (btn.dataset.letter || '').trim().charAt(0);
+        var isCorrect = letter === correctLetter;
+        if (isCorrect) {
+          btn.classList.add('is-correct');
+          if (feedback) {
+            feedback.textContent = '\u2713 Correct!';
+            feedback.style.color = '#16a34a';
+          }
+          block.dispatchEvent(new CustomEvent('mcq-correct', { bubbles: true }));
+        } else {
+          btn.classList.add('is-wrong');
+          if (feedback) {
+            feedback.textContent = '\u2717 Not quite \u2014 try again.';
+            feedback.style.color = '#dc2626';
+          }
+          showMcqRetry(block);
+        }
+        if (trackable && block.dataset.mcqPersisted !== '1') {
+          block.dataset.mcqPersisted = '1';
+          persistMcqAnswer(block, letter, correctRaw, isCorrect);
+        }
+      });
+    });
   }
 
   function showMcqRetry(block) {
@@ -176,40 +244,7 @@
   }
 
   function initMcqInline() {
-    document.querySelectorAll('.mcq-inline').forEach(function (block) {
-      if (block.dataset.mcqInit === '1') {
-        return;
-      }
-      block.dataset.mcqInit = '1';
-
-      var correct = block.dataset.correct;
-      var feedback = block.querySelector('.mcq-feedback');
-      block.querySelectorAll('.mcq-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          if (btn.disabled) {
-            return;
-          }
-          block.querySelectorAll('.mcq-btn').forEach(function (b) { b.disabled = true; });
-          if (btn.dataset.letter === correct) {
-            btn.style.background = '#16a34a';
-            btn.style.color = '#fff';
-            if (feedback) {
-              feedback.textContent = '\u2713 Correct!';
-              feedback.style.color = '#16a34a';
-            }
-            block.dispatchEvent(new CustomEvent('mcq-correct', { bubbles: true }));
-          } else {
-            btn.style.background = '#dc2626';
-            btn.style.color = '#fff';
-            if (feedback) {
-              feedback.textContent = '\u2717 Not quite \u2014 try again.';
-              feedback.style.color = '#dc2626';
-            }
-            showMcqRetry(block);
-          }
-        });
-      });
-    });
+    document.querySelectorAll('.mcq-inline').forEach(wireMcqBlock);
   }
 
   function showAppToast(message, type, options) {
@@ -268,30 +303,7 @@
   }
 
   function wireMcqWrap(wrap) {
-    if (!wrap || wrap.dataset.mcqInit === '1') return;
-
-    var correctRaw = (wrap.getAttribute('data-correct') || '').trim();
-    if (!correctRaw) return;
-    var correctLetter = correctRaw.charAt(0);
-    var feedback = wrap.parentElement
-      ? wrap.parentElement.querySelector('.mcq-feedback')
-      : null;
-    var buttons = wrap.querySelectorAll('.mcq-btn');
-
-    wrap.dataset.mcqInit = '1';
-    buttons.forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var letter = (btn.getAttribute('data-letter') || '').trim().charAt(0);
-        var isCorrect = letter === correctLetter;
-        buttons.forEach(function (b) { b.disabled = true; });
-        if (feedback) {
-          feedback.textContent = isCorrect
-            ? 'Correct.'
-            : ('Incorrect. The correct answer is ' + correctRaw + '.');
-          feedback.style.color = isCorrect ? 'var(--success)' : '#a02020';
-        }
-      });
-    });
+    wireMcqBlock(wrap);
   }
 
   function initSaveProblemForm() {
@@ -344,6 +356,7 @@
     if (mcq && problem.options && problem.options.length) {
       mcq.dataset.correct = problem.correct_answer || '';
       delete mcq.dataset.mcqInit;
+      delete mcq.dataset.mcqPersisted;
       mcq.innerHTML = '';
       problem.options.forEach(function (opt) {
         var btn = document.createElement('button');
@@ -391,8 +404,8 @@
   }
 
   function initMcqButtons() {
-    var wraps = document.querySelectorAll('#mcq-options, #saved-mcq-options');
-    wraps.forEach(wireMcqWrap);
+    var wraps = document.querySelectorAll('#mcq-options, #saved-mcq-options, .mcq-options[data-correct]');
+    wraps.forEach(wireMcqBlock);
   }
 
   function scrollToProblemCard() {
@@ -477,6 +490,18 @@
     });
   }
 
+  function initAnswerRevealMathJax() {
+    document.querySelectorAll('details.answer-reveal').forEach(function (details) {
+      details.addEventListener('toggle', function () {
+        if (!details.open || !window.MathJax || !MathJax.typesetPromise) return;
+        var targets = [details.querySelector('.answer'), details.querySelector('.hint')];
+        MathJax.typesetPromise(targets.filter(Boolean)).catch(function () {});
+      });
+    });
+  }
+
+  window.showAppToast = showAppToast;
+
   document.addEventListener('DOMContentLoaded', function () {
     initGeneratorForm();
     initQuickTestForm();
@@ -486,5 +511,6 @@
     initRerollSavedForm();
     initScrollToProblem();
     initProbTreeInputs();
+    initAnswerRevealMathJax();
   });
 })();
