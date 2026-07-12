@@ -27,7 +27,7 @@ def _load_env_file(path: Path) -> None:
 
 _load_env_file(_ROOT / ".env")
 
-from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash, g
+from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash, g, send_from_directory, Response
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from jinja2.exceptions import TemplateNotFound
 from markupsafe import Markup
@@ -159,6 +159,28 @@ from models.user_data import (
     update_saved_problem,
     upsert_lesson_progress,
 )
+from models.gamification import (
+    evaluate_milestones,
+    friend_effort_leaderboard,
+    get_study_streak,
+    get_weekly_recap,
+    list_user_milestones,
+    record_study_day,
+)
+from models.problem_queue import (
+    clear_problem_queue as clear_db_problem_queue,
+    get_problem_queue as get_db_problem_queue,
+    save_problem_queue as save_db_problem_queue,
+)
+from models.moderation import (
+    REPORT_TYPES,
+    block_user,
+    create_report,
+    is_blocked,
+    list_blocked_users,
+    unblock_user,
+)
+from models.rate_limit import check_and_increment_rate_limit
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-for-local-testing')
@@ -286,8 +308,9 @@ def apply_csp(response):
         "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; "
         # Pyodide fetches pyodide.wasm and the Python stdlib zip from the CDN at runtime.
         "connect-src 'self' https://cdn.jsdelivr.net; "
-        # Pyodide uses blob: workers internally for async execution.
+        # Pyodide uses blob: workers internally for async execution; SW is same-origin.
         "worker-src 'self' blob:; "
+        "manifest-src 'self'; "
         "frame-src 'none'; "
         "object-src 'none'; "
         "base-uri 'self'"
@@ -529,9 +552,37 @@ with get_db() as conn:
         ('auto_share_quiz', 'INTEGER NOT NULL DEFAULT 0'),
         ('auto_share_lesson', 'INTEGER NOT NULL DEFAULT 0'),
         ('default_share_visibility', "TEXT NOT NULL DEFAULT 'followers_only'"),
+        ('show_study_streak', 'INTEGER NOT NULL DEFAULT 0'),
+        ('show_milestones', 'INTEGER NOT NULL DEFAULT 0'),
     ):
         if col not in profile_cols:
             conn.execute(f'ALTER TABLE user_profile_settings ADD COLUMN {col} {ddl}')
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_streaks (
+            user_id INTEGER PRIMARY KEY,
+            current_streak INTEGER NOT NULL DEFAULT 0,
+            longest_streak INTEGER NOT NULL DEFAULT 0,
+            last_active_date TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_study_days (
+            user_id INTEGER NOT NULL,
+            study_date TEXT NOT NULL,
+            PRIMARY KEY (user_id, study_date),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_milestones (
+            user_id INTEGER NOT NULL,
+            milestone_key TEXT NOT NULL,
+            earned_at TEXT NOT NULL,
+            PRIMARY KEY (user_id, milestone_key),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS user_notifications (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -546,6 +597,54 @@ with get_db() as conn:
     conn.execute("""
         CREATE INDEX IF NOT EXISTS idx_notifications_user_created
         ON user_notifications (user_id, created_at DESC)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_problem_queues (
+            user_id INTEGER NOT NULL,
+            queue_key TEXT NOT NULL,
+            queue_json TEXT NOT NULL DEFAULT '[]',
+            queue_index INTEGER NOT NULL DEFAULT 0,
+            variant_name TEXT,
+            updated_at TEXT NOT NULL,
+            PRIMARY KEY (user_id, queue_key),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_blocks (
+            blocker_id INTEGER NOT NULL,
+            blocked_id INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            PRIMARY KEY (blocker_id, blocked_id),
+            FOREIGN KEY (blocker_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (blocked_id) REFERENCES users(id) ON DELETE CASCADE,
+            CHECK (blocker_id != blocked_id)
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_user_blocks_blocked
+        ON user_blocks (blocked_id)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_reports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            reporter_id INTEGER NOT NULL,
+            reported_user_id INTEGER,
+            report_type TEXT NOT NULL,
+            note TEXT NOT NULL DEFAULT '',
+            context_json TEXT NOT NULL DEFAULT '{}',
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS rate_limit_buckets (
+            bucket_key TEXT NOT NULL,
+            window_start TEXT NOT NULL,
+            count INTEGER NOT NULL DEFAULT 0,
+            updated_at TEXT,
+            PRIMARY KEY (bucket_key, window_start)
+        )
     """)
     conn.commit()
 
@@ -709,7 +808,7 @@ def _selection_key(level, subject, topic, mode, difficulty):
     return f"{level}|{subject}|{topic}|{mode}|{difficulty}"
 
 
-def _clear_problem_queue():
+def _clear_problem_queue(user_id=None, queue_key=None):
     for key in (
         'problem_queue_key',
         'problem_queue',
@@ -717,6 +816,9 @@ def _clear_problem_queue():
         'problem_variant_name',
     ):
         session.pop(key, None)
+    if user_id:
+        with get_db() as conn:
+            clear_db_problem_queue(conn, user_id, queue_key)
 
 
 def _build_problem_queue(topic_config, level, subject, topic, mode, difficulty):
@@ -731,37 +833,103 @@ def _build_problem_queue(topic_config, level, subject, topic, mode, difficulty):
     return [variant.__name__ for variant in queue]
 
 
-def _get_problem_from_queue(topic_config, level, subject, topic, mode, difficulty, action):
-    generator = topic_config['func']
-    queue_key = _selection_key(level, subject, topic, mode, difficulty)
-    current_key = session.get('problem_queue_key')
-    queue = session.get('problem_queue')
-    idx = session.get('problem_index', -1)
-
-    needs_new_queue = (
-        current_key != queue_key or
-        not queue
+def _load_queue_state(user_id, queue_key):
+    """Return (queue, index, variant_name) from DB or session."""
+    if user_id:
+        with get_db() as conn:
+            stored = get_db_problem_queue(conn, user_id, queue_key)
+        if stored and stored.get('queue'):
+            return stored['queue'], stored['index'], stored.get('variant_name')
+        return None, -1, None
+    if session.get('problem_queue_key') != queue_key:
+        return None, -1, None
+    return (
+        session.get('problem_queue'),
+        session.get('problem_index', -1),
+        session.get('problem_variant_name'),
     )
 
-    if needs_new_queue:
+
+def _persist_queue_state(user_id, queue_key, queue, index, variant_name):
+    if user_id:
+        with get_db() as conn:
+            save_db_problem_queue(conn, user_id, queue_key, queue, index, variant_name)
+    session['problem_queue_key'] = queue_key
+    session['problem_queue'] = queue
+    session['problem_index'] = index
+    session['problem_variant_name'] = variant_name
+    session.modified = True
+
+
+def _get_problem_from_queue(
+    topic_config, level, subject, topic, mode, difficulty, action, user_id=None
+):
+    """Advance or start the variant queue. Returns problem dict."""
+    problem, _meta = _generate_queued_problem(
+        topic_config, level, subject, topic, mode, difficulty, action, user_id=user_id
+    )
+    return problem
+
+
+def _generate_queued_problem(
+    topic_config, level, subject, topic, mode, difficulty, action, user_id=None
+):
+    """
+    Generate a problem from the variant queue.
+
+    action:
+      - start: rebuild queue and return first item (API) OR start if empty (web)
+      - next: advance to next variant
+    Returns (problem_dict, meta_dict).
+    """
+    generator = topic_config['func']
+    queue_key = _selection_key(level, subject, topic, mode, difficulty)
+    queue, idx, _variant = _load_queue_state(user_id, queue_key)
+
+    rebuild = False
+    if action == 'start':
+        if user_id is not None:
+            rebuild = True
+        else:
+            rebuild = not queue
+    elif not queue:
+        rebuild = True
+
+    if rebuild:
         queue = _build_problem_queue(topic_config, level, subject, topic, mode, difficulty)
         if not queue:
-            return generator(difficulty, mode)
+            problem = generator(difficulty, mode)
+            return problem, {
+                'variant_name': None,
+                'queue_position': 0,
+                'queue_length': 0,
+                'can_reroll': False,
+            }
         idx = 0
     else:
         idx += 1
         if idx >= len(queue):
             queue = _build_problem_queue(topic_config, level, subject, topic, mode, difficulty)
+            if not queue:
+                problem = generator(difficulty, mode)
+                return problem, {
+                    'variant_name': None,
+                    'queue_position': 0,
+                    'queue_length': 0,
+                    'can_reroll': False,
+                }
             idx = 0
 
     variant_name = queue[idx]
-    session['problem_queue_key'] = queue_key
-    session['problem_queue'] = queue
-    session['problem_index'] = idx
-    session['problem_variant_name'] = variant_name
-    session.modified = True
-
-    return generator(difficulty, mode, variant_name=variant_name)
+    _persist_queue_state(user_id, queue_key, queue, idx, variant_name)
+    problem = generator(difficulty, mode, variant_name=variant_name)
+    meta = {
+        'variant_name': variant_name,
+        'queue_position': idx + 1,
+        'queue_length': len(queue),
+        'can_reroll': _can_reroll_variant(topic_config, mode, difficulty, variant_name),
+    }
+    return problem, meta
 
 
 def _reroll_variant_problem(topic_config, mode, difficulty, variant_name):
@@ -784,30 +952,20 @@ def _can_reroll_variant(topic_config, mode, difficulty, variant_name):
     return variant_is_randomizable(variant_fn)
 
 
-def _reroll_current_problem(topic_config, level, subject, topic, mode, difficulty):
+def _reroll_current_problem(topic_config, level, subject, topic, mode, difficulty, user_id=None):
     """Regenerate the current queue variant without advancing the queue index."""
-    variant_name = session.get('problem_variant_name')
     queue_key = _selection_key(level, subject, topic, mode, difficulty)
-    if (
-        not variant_name
-        or session.get('problem_queue_key') != queue_key
-        or not topic_config.get('variants_func')
-    ):
+    _queue, _idx, variant_name = _load_queue_state(user_id, queue_key)
+    if not variant_name or not topic_config.get('variants_func'):
         return None
-
     return _reroll_variant_problem(topic_config, mode, difficulty, variant_name)
 
 
-def _can_reroll_current_variant(topic_config, level, subject, topic, mode, difficulty):
-    variant_name = session.get('problem_variant_name')
+def _can_reroll_current_variant(topic_config, level, subject, topic, mode, difficulty, user_id=None):
     queue_key = _selection_key(level, subject, topic, mode, difficulty)
-    if (
-        not variant_name
-        or session.get('problem_queue_key') != queue_key
-        or not topic_config.get('variants_func')
-    ):
+    _queue, _idx, variant_name = _load_queue_state(user_id, queue_key)
+    if not variant_name or not topic_config.get('variants_func'):
         return False
-
     return _can_reroll_variant(topic_config, mode, difficulty, variant_name)
 
 
@@ -1053,6 +1211,7 @@ def _track_topic_opened(level, subject, topic):
             },
             VISIBILITY_FOLLOWERS,
         )
+    _record_study_activity(current_user.id)
 
 
 def _track_question_generated(level, subject, topic, difficulty):
@@ -1082,6 +1241,7 @@ def _track_question_generated(level, subject, topic, difficulty):
             },
             VISIBILITY_FOLLOWERS,
         )
+    _record_study_activity(current_user.id)
 
 
 def _track_mcq_answered(level, subject, topic, difficulty, user_answer, correct_answer, correct):
@@ -1162,6 +1322,7 @@ def _track_quiz_completed(level, subject, topic, score, total):
             },
             visibility,
         )
+    _record_study_activity(current_user.id)
 
 
 def _public_profile_url(handle):
@@ -1186,6 +1347,12 @@ def _build_public_profile_context(target_user, viewer_id=None):
             lesson_rows = lesson_progress_summary(conn, target_user.id, limit=8)
         if settings.get('show_quiz_stats'):
             quiz_rows = quiz_stats_summary(conn, target_user.id, limit=5)
+        study_streak = None
+        milestones = []
+        if is_own or settings.get('show_study_streak'):
+            study_streak = get_study_streak(conn, target_user.id)
+        if is_own or settings.get('show_milestones'):
+            milestones = list_user_milestones(conn, target_user.id)
 
     for item in lesson_rows:
         item['topic_label'] = _topic_label(item['level'], item['subject'], item['topic'])
@@ -1228,6 +1395,8 @@ def _build_public_profile_context(target_user, viewer_id=None):
         'quiz_attempts': quiz_rows,
         'last_topic_url': last_topic_url,
         'last_activity_url': last_activity_url,
+        'study_streak': study_streak,
+        'milestones': milestones,
     }
 
 
@@ -1352,9 +1521,11 @@ def _serialize_feed_item(item):
     }
 
 
-def _feed_items_for_viewer(viewer_id, filter_name=FEED_FILTER_ALL, limit=50):
+def _feed_items_for_viewer(viewer_id, filter_name=FEED_FILTER_ALL, limit=50, before_id=None):
     with get_db() as conn:
-        raw_items = list_followed_feed(conn, viewer_id, filter_name, limit=limit)
+        raw_items = list_followed_feed(
+            conn, viewer_id, filter_name, limit=limit, before_id=before_id
+        )
         items = []
         for item in raw_items:
             if item.get('event_type') == ACTIVITY_QUESTION_SHARED:
@@ -1388,6 +1559,8 @@ def _settings_to_json(settings):
         'auto_share_quiz': bool(settings.get('auto_share_quiz', False)),
         'auto_share_lesson': bool(settings.get('auto_share_lesson', False)),
         'default_share_visibility': settings.get('default_share_visibility', VISIBILITY_FOLLOWERS),
+        'show_study_streak': bool(settings.get('show_study_streak', False)),
+        'show_milestones': bool(settings.get('show_milestones', False)),
     }
 
 
@@ -1425,6 +1598,14 @@ def _problem_from_session_payload():
 def _record_user_activity(user_id, event_type, payload, visibility=VISIBILITY_FOLLOWERS):
     with get_db() as conn:
         record_activity_event(conn, user_id, event_type, payload, visibility)
+
+
+def _record_study_activity(user_id):
+    if not user_id:
+        return
+    with get_db() as conn:
+        record_study_day(conn, user_id)
+        evaluate_milestones(conn, user_id)
 
 
 def _topic_page_url(level, subject, topic):
@@ -1504,6 +1685,14 @@ def _build_public_profile_json(target_user, viewer_id=None):
             }
             for item in context['quiz_attempts']
         ]
+    if context.get('study_streak') is not None and (
+        context['is_own_profile'] or settings.get('show_study_streak')
+    ):
+        profile['study_streak'] = context['study_streak']
+    if context.get('milestones') and (
+        context['is_own_profile'] or settings.get('show_milestones')
+    ):
+        profile['milestones'] = context['milestones']
     return profile
 
 
@@ -1672,6 +1861,30 @@ def about():
     return render_template('about.html')
 
 
+@app.get('/offline')
+def offline():
+    return render_template('offline.html')
+
+
+@app.get('/sw.js')
+def service_worker():
+    """Serve the service worker from the site root so it can control the whole origin."""
+    path = _ROOT / 'static' / 'js' / 'sw.js'
+    response = Response(path.read_text(encoding='utf-8'), mimetype='application/javascript')
+    response.headers['Service-Worker-Allowed'] = '/'
+    response.headers['Cache-Control'] = 'no-cache'
+    return response
+
+
+@app.get('/manifest.webmanifest')
+def web_manifest():
+    return send_from_directory(
+        _ROOT / 'static',
+        'manifest.webmanifest',
+        mimetype='application/manifest+json',
+    )
+
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
@@ -1780,6 +1993,10 @@ def profile():
         quizzes = list_quiz_attempts(conn, current_user.id, limit=10)
         mcq_attempts = list_generator_mcq_attempts(conn, current_user.id, limit=10)
         practice_streak = get_practice_streak(conn, current_user.id)
+        study_streak = get_study_streak(conn, current_user.id)
+        milestones = list_user_milestones(conn, current_user.id)
+        weekly_recap = get_weekly_recap(conn, current_user.id)
+        leaderboard = friend_effort_leaderboard(conn, current_user.id, days=7)
         pending_suggestions = count_pending_suggestions(conn, current_user.id)
     for item in saved:
         item['topic_label'] = _topic_label(item['level'], item['subject'], item['topic'])
@@ -1796,6 +2013,11 @@ def profile():
     for item in mcq_attempts:
         item['topic_label'] = _topic_label(item['level'], item['subject'], item['topic'])
         item['correct'] = bool(item.get('correct'))
+    if weekly_recap.get('best_quiz'):
+        bq = weekly_recap['best_quiz']
+        bq['topic_label'] = _topic_label(bq['level'], bq['subject'], bq['topic'])
+    for item in leaderboard:
+        item['profile_url'] = url_for('public_profile', handle=item['handle'])
     return render_template(
         'profile.html',
         saved_problems=saved,
@@ -1803,6 +2025,10 @@ def profile():
         quiz_attempts=quizzes,
         mcq_attempts=mcq_attempts,
         practice_streak=practice_streak,
+        study_streak=study_streak,
+        milestones=milestones,
+        weekly_recap=weekly_recap,
+        friend_leaderboard=leaderboard[:5],
         pending_suggestions=pending_suggestions,
         public_profile_url=_public_profile_url(current_user.handle),
     )
@@ -1833,6 +2059,8 @@ def profile_settings():
                     'default_share_visibility',
                     VISIBILITY_FOLLOWERS,
                 ),
+                'show_study_streak': request.form.get('show_study_streak') == '1',
+                'show_milestones': request.form.get('show_milestones') == '1',
             }
             with get_db() as conn:
                 update_profile_settings(conn, current_user.id, updated)
@@ -2061,6 +2289,8 @@ def api_v1_follow_user(handle):
         return _api_error('You cannot follow yourself', 400, 'self_follow')
 
     with get_db() as conn:
+        if is_blocked(conn, current_user.id, target.id):
+            return _api_error('Cannot follow a blocked user', 403, 'blocked')
         if is_following(conn, current_user.id, target.id):
             unfollow_user(conn, current_user.id, target.id)
             following = False
@@ -2168,6 +2398,8 @@ def api_v1_patch_settings():
         'auto_share_quiz',
         'auto_share_lesson',
         'default_share_visibility',
+        'show_study_streak',
+        'show_milestones',
     }
     unknown = set(payload.keys()) - allowed_keys
     if unknown:
@@ -2204,6 +2436,8 @@ def api_v1_patch_settings():
         'show_shared_questions',
         'auto_share_quiz',
         'auto_share_lesson',
+        'show_study_streak',
+        'show_milestones',
     )
     for field in bool_fields:
         if field in payload and not isinstance(payload[field], bool):
@@ -2225,13 +2459,17 @@ def api_v1_list_notifications():
         limit = min(max(int(request.args.get('limit', 20)), 1), 50)
     except (TypeError, ValueError):
         limit = 20
+    before_id = request.args.get('before_id', type=int)
     with get_db() as conn:
-        items = list_notifications(conn, current_user.id, limit=limit)
+        items = list_notifications(
+            conn, current_user.id, limit=limit, before_id=before_id
+        )
         unread = count_unread_notifications(conn, current_user.id)
     return jsonify({
         'ok': True,
         'unread_count': unread,
         'notifications': [_serialize_notification_item(item) for item in items],
+        'next_before_id': items[-1]['id'] if items else None,
     })
 
 
@@ -2281,11 +2519,407 @@ def api_v1_feed():
         limit = min(max(int(request.args.get('limit', 50)), 1), 100)
     except (TypeError, ValueError):
         limit = 50
-    items = _feed_items_for_viewer(current_user.id, filter_name, limit=limit)
+    before_id = request.args.get('before_id', type=int)
+    items = _feed_items_for_viewer(
+        current_user.id, filter_name, limit=limit, before_id=before_id
+    )
     return jsonify({
         'ok': True,
         'filter': filter_name,
         'items': items,
+        'next_before_id': items[-1]['id'] if items else None,
+    })
+
+
+@app.get('/leaderboard/friends')
+@login_required
+def friend_leaderboard_page():
+    with get_db() as conn:
+        leaderboard = friend_effort_leaderboard(conn, current_user.id, days=7)
+    for item in leaderboard:
+        item['profile_url'] = url_for('public_profile', handle=item['handle'])
+    return render_template(
+        'leaderboard_friends.html',
+        leaderboard=leaderboard,
+        period_days=7,
+    )
+
+
+@app.get('/api/v1/me/gamification')
+@login_required
+def api_v1_me_gamification():
+    with get_db() as conn:
+        streak = get_study_streak(conn, current_user.id)
+        milestones = list_user_milestones(conn, current_user.id)
+        recap = get_weekly_recap(conn, current_user.id)
+        leaderboard = friend_effort_leaderboard(conn, current_user.id, days=7)
+    if recap.get('best_quiz'):
+        bq = recap['best_quiz']
+        bq['topic_label'] = _topic_label(bq['level'], bq['subject'], bq['topic'])
+    return jsonify({
+        'ok': True,
+        'study_streak': streak,
+        'milestones': milestones,
+        'weekly_recap': recap,
+        'friend_leaderboard': [
+            {
+                'rank': item['rank'],
+                'handle': item['handle'],
+                'score': item['score'],
+                'is_viewer': item['is_viewer'],
+            }
+            for item in leaderboard
+        ],
+    })
+
+
+GENERATE_DAILY_LIMIT = 200
+REPORT_DAILY_LIMIT = 20
+DIFFICULTIES = ('foundational', 'intermediate', 'difficult')
+
+
+def _client_ip():
+    forwarded = (request.headers.get('X-Forwarded-For') or '').split(',')[0].strip()
+    return forwarded or (request.remote_addr or 'unknown')
+
+
+def _api_rate_limit(action, limit):
+    """Return (allowed, remaining) or abort with JSON error via tuple (False, 0)."""
+    if current_user.is_authenticated:
+        bucket = f'{action}:user:{current_user.id}'
+    else:
+        bucket = f'{action}:ip:{_client_ip()}'
+    with get_db() as conn:
+        allowed, remaining, _count = check_and_increment_rate_limit(conn, bucket, limit)
+    return allowed, remaining
+
+
+def _build_topics_catalog():
+    levels = []
+    for level in _TOPIC_LEVEL_ORDER:
+        subjects_map = TOPICS.get(level) or {}
+        subjects = []
+        for subject in _TOPIC_SUBJECT_ORDER.get(level, tuple(subjects_map.keys())):
+            topics_map = subjects_map.get(subject) or {}
+            topics = []
+            for slug, cfg in sorted(topics_map.items(), key=lambda x: x[1]['name'].lower()):
+                has_variants = bool(cfg.get('variants_func'))
+                modes = ['standard']
+                if has_variants:
+                    modes.append('mcq')
+                if _lesson_quiz_available(level, subject, slug):
+                    modes.append('lesson')
+                topics.append({
+                    'slug': slug,
+                    'name': cfg['name'],
+                    'url': f'/topic/{level}/{subject}/{slug}',
+                    'has_variants': has_variants,
+                    'supports_lesson_mcq': topic_supports_lesson_mcq(cfg),
+                    'modes': modes,
+                    'difficulties': list(DIFFICULTIES),
+                })
+            subjects.append({
+                'id': subject,
+                'label': SUBJECT_LABELS.get(subject, subject.title()),
+                'topics': topics,
+            })
+        levels.append({
+            'id': level,
+            'label': LEVEL_LABELS.get(level, level.title()),
+            'subjects': subjects,
+        })
+    return levels
+
+
+@app.get('/api/v1/topics')
+def api_v1_topics_catalog():
+    return jsonify({'ok': True, 'levels': _build_topics_catalog()})
+
+
+@app.post('/api/v1/problems/generate')
+def api_v1_generate_problem():
+    payload = request.get_json(silent=True) or {}
+    level = (payload.get('level') or 'gcse').strip()
+    subject = (payload.get('subject') or 'maths').strip()
+    topic = _resolve_topic_slug(level, subject, (payload.get('topic') or '').strip())
+    mode = normalize_mode(payload.get('mode') or 'standard')
+    difficulty = (payload.get('difficulty') or 'foundational').strip()
+    action = (payload.get('action') or 'start').strip().lower()
+
+    if action not in ('start', 'next', 'reroll'):
+        return _api_error('action must be start, next, or reroll', 400, 'invalid_action')
+    if difficulty not in DIFFICULTIES:
+        return _api_error(
+            f'difficulty must be one of: {", ".join(DIFFICULTIES)}',
+            400,
+            'invalid_difficulty',
+        )
+    if not _topic_path_valid(level, subject, topic):
+        return _api_error('Topic not found', 404, 'topic_not_found')
+    if not can_access_difficulty(current_user, difficulty):
+        return _api_error(
+            'Difficult questions require a free account',
+            403,
+            'difficulty_locked',
+        )
+
+    allowed, remaining = _api_rate_limit('generate', GENERATE_DAILY_LIMIT)
+    if not allowed:
+        return _api_error('Daily generate limit reached', 429, 'rate_limited')
+
+    topic_config = TOPICS[level][subject][topic]
+    user_id = current_user.id if current_user.is_authenticated else None
+    meta = {
+        'variant_name': None,
+        'queue_position': 0,
+        'queue_length': 0,
+        'can_reroll': False,
+    }
+
+    try:
+        if action == 'reroll':
+            if not user_id and not session.get('problem_variant_name'):
+                return _api_error('Nothing to reroll — generate a problem first', 400, 'no_variant')
+            problem = _reroll_current_problem(
+                topic_config, level, subject, topic, mode, difficulty, user_id=user_id
+            )
+            if problem is None:
+                return _api_error('Could not reroll this question', 400, 'reroll_failed')
+            queue_key = _selection_key(level, subject, topic, mode, difficulty)
+            _queue, idx, variant_name = _load_queue_state(user_id, queue_key)
+            meta = {
+                'variant_name': variant_name,
+                'queue_position': (idx + 1) if _queue else 0,
+                'queue_length': len(_queue) if _queue else 0,
+                'can_reroll': _can_reroll_variant(
+                    topic_config, mode, difficulty, variant_name
+                ),
+            }
+        elif topic_config.get('variants_func'):
+            problem, meta = _generate_queued_problem(
+                topic_config,
+                level,
+                subject,
+                topic,
+                mode,
+                difficulty,
+                action,
+                user_id=user_id,
+            )
+        else:
+            problem = topic_config['func'](difficulty, mode)
+    except Exception:
+        return _api_error('Could not generate problem', 500, 'generate_failed')
+
+    if problem is None:
+        return _api_error('Could not generate problem', 500, 'generate_failed')
+
+    if user_id:
+        session['last_problem_payload'] = {
+            'level': level,
+            'subject': subject,
+            'topic': topic,
+            'mode': mode,
+            'difficulty': difficulty,
+            'variant_name': meta.get('variant_name') or problem.get('variant_name'),
+            'problem': problem,
+        }
+        session.modified = True
+        _track_question_generated(level, subject, topic, difficulty)
+
+    client = _problem_client_payload(problem)
+    client['difficulty'] = difficulty
+    client['level'] = level
+    client['subject'] = subject
+    client['topic'] = topic
+    client['mode'] = mode
+    client['topic_label'] = _topic_label(level, subject, topic)
+
+    return jsonify({
+        'ok': True,
+        'problem': client,
+        'selection': meta,
+        'rate_limit_remaining': remaining,
+    })
+
+
+@app.get('/api/v1/me/saved-problems')
+@login_required
+def api_v1_list_saved_problems():
+    try:
+        limit = min(max(int(request.args.get('limit', 50)), 1), 100)
+    except (TypeError, ValueError):
+        limit = 50
+    with get_db() as conn:
+        saved = list_saved_problems(conn, current_user.id, limit=limit)
+    items = []
+    for item in saved:
+        items.append({
+            'id': item['id'],
+            'level': item['level'],
+            'subject': item['subject'],
+            'topic': item['topic'],
+            'topic_label': _topic_label(item['level'], item['subject'], item['topic']),
+            'mode': item['mode'],
+            'difficulty': item['difficulty'],
+            'created_at': item['created_at'],
+            'problem': _problem_client_payload(item['problem']),
+        })
+    return jsonify({'ok': True, 'saved_problems': items})
+
+
+@app.get('/api/v1/me/saved-problems/<int:saved_id>')
+@login_required
+def api_v1_get_saved_problem(saved_id):
+    with get_db() as conn:
+        saved = get_saved_problem(conn, current_user.id, saved_id)
+    if not saved:
+        return _api_error('Saved question not found', 404, 'not_found')
+    return jsonify({
+        'ok': True,
+        'saved_problem': {
+            'id': saved['id'],
+            'level': saved['level'],
+            'subject': saved['subject'],
+            'topic': saved['topic'],
+            'topic_label': _topic_label(saved['level'], saved['subject'], saved['topic']),
+            'mode': saved['mode'],
+            'difficulty': saved['difficulty'],
+            'created_at': saved['created_at'],
+            'problem': _problem_client_payload(saved['problem']),
+        },
+    })
+
+
+@app.post('/api/v1/me/saved-problems')
+@login_required
+def api_v1_save_problem():
+    payload = request.get_json(silent=True) or {}
+    data = _problem_from_session_payload()
+    if not data and isinstance(payload.get('problem'), dict):
+        level = payload.get('level')
+        subject = payload.get('subject')
+        topic = payload.get('topic')
+        if not _topic_path_valid(level, subject, topic):
+            return _api_error('Topic not found', 404, 'topic_not_found')
+        data = {
+            'level': level,
+            'subject': subject,
+            'topic': topic,
+            'mode': normalize_mode(payload.get('mode', 'standard')),
+            'difficulty': payload.get('difficulty', 'foundational'),
+            'problem': payload['problem'],
+        }
+    if not data:
+        return _api_error('Generate a question first, then save it', 400, 'no_problem')
+
+    try:
+        with get_db() as conn:
+            saved_id = save_problem(
+                conn,
+                current_user.id,
+                data['level'],
+                data['subject'],
+                data['topic'],
+                data['mode'],
+                data['difficulty'],
+                data['problem'],
+            )
+    except ValueError:
+        return _api_error('Saved question limit reached (200)', 400, 'saved_limit')
+
+    return jsonify({
+        'ok': True,
+        'saved_id': saved_id,
+        'url': url_for('view_saved_problem', saved_id=saved_id),
+    })
+
+
+@app.delete('/api/v1/me/saved-problems/<int:saved_id>')
+@login_required
+def api_v1_delete_saved_problem(saved_id):
+    with get_db() as conn:
+        deleted = delete_saved_problem(conn, current_user.id, saved_id)
+    if not deleted:
+        return _api_error('Saved question not found', 404, 'not_found')
+    return jsonify({'ok': True})
+
+
+@app.post('/api/v1/users/<handle>/block')
+@login_required
+def api_v1_block_user(handle):
+    target = _resolve_active_user_by_handle(handle)
+    if not target:
+        return _api_error('User not found', 404, 'user_not_found')
+    if target.id == current_user.id:
+        return _api_error('You cannot block yourself', 400, 'self_block')
+    with get_db() as conn:
+        block_user(conn, current_user.id, target.id)
+    return jsonify({'ok': True, 'handle': target.handle, 'blocked': True})
+
+
+@app.delete('/api/v1/users/<handle>/block')
+@login_required
+def api_v1_unblock_user(handle):
+    target = _resolve_active_user_by_handle(handle)
+    if not target:
+        return _api_error('User not found', 404, 'user_not_found')
+    with get_db() as conn:
+        unblock_user(conn, current_user.id, target.id)
+    return jsonify({'ok': True, 'handle': target.handle, 'blocked': False})
+
+
+@app.get('/api/v1/me/blocks')
+@login_required
+def api_v1_list_blocks():
+    with get_db() as conn:
+        blocked = list_blocked_users(conn, current_user.id)
+    return jsonify({
+        'ok': True,
+        'blocked': [
+            {'handle': item['handle'], 'blocked_at': item['blocked_at']}
+            for item in blocked
+        ],
+    })
+
+
+@app.post('/api/v1/users/<handle>/report')
+@login_required
+def api_v1_report_user(handle):
+    target = _resolve_active_user_by_handle(handle)
+    if not target:
+        return _api_error('User not found', 404, 'user_not_found')
+    if target.id == current_user.id:
+        return _api_error('You cannot report yourself', 400, 'self_report')
+
+    allowed, remaining = _api_rate_limit('report', REPORT_DAILY_LIMIT)
+    if not allowed:
+        return _api_error('Daily report limit reached', 429, 'rate_limited')
+
+    payload = request.get_json(silent=True) or {}
+    report_type = (payload.get('report_type') or 'other').strip().lower()
+    if report_type not in REPORT_TYPES:
+        return _api_error(
+            f'report_type must be one of: {", ".join(sorted(REPORT_TYPES))}',
+            400,
+            'invalid_report_type',
+        )
+    note = (payload.get('note') or '').strip()
+    context = payload.get('context') if isinstance(payload.get('context'), dict) else {}
+
+    with get_db() as conn:
+        report_id = create_report(
+            conn,
+            current_user.id,
+            reported_user_id=target.id,
+            report_type=report_type,
+            note=note,
+            context=context,
+        )
+    return jsonify({
+        'ok': True,
+        'report_id': report_id,
+        'rate_limit_remaining': remaining,
     })
 
 
@@ -3092,6 +3726,8 @@ def api_save_lesson_progress():
         },
         visibility,
     )
+    if completed_count > 0:
+        _record_study_activity(current_user.id)
     return jsonify({'ok': True})
 
 

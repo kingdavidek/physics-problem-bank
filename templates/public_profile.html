@@ -51,8 +51,15 @@
             <dt>Member since</dt>
             <dd>{{ profile_user.created_at[:10] if profile_user.created_at else '—' }}</dd>
             {% endif %}
+            {% if study_streak and (is_own_profile or settings.show_study_streak) %}
             <dt>Study streak</dt>
-            <dd class="profile-coming-soon">Coming soon</dd>
+            <dd>
+                {{ study_streak.current }} day{% if study_streak.current != 1 %}s{% endif %}
+                {% if study_streak.longest > study_streak.current %}
+                <span class="profile-list-meta"> · Best {{ study_streak.longest }} days</span>
+                {% endif %}
+            </dd>
+            {% endif %}
             {% if settings.show_last_topic and activity.last_topic_label %}
             <dt>Last topic opened</dt>
             <dd>
@@ -82,6 +89,25 @@
         </dl>
     </div>
 </section>
+
+{% if milestones and (is_own_profile or settings.show_milestones) %}
+<section class="section-panel">
+    <div class="section-panel-header">Milestones</div>
+    <div class="section-panel-body">
+        <ul class="milestone-list">
+            {% for item in milestones %}
+            <li class="milestone-item">
+                <span class="milestone-badge" aria-hidden="true">★</span>
+                <div>
+                    <strong>{{ item.title }}</strong>
+                    <span class="profile-list-meta">{{ item.description }}</span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+{% endif %}
 
 {% if settings.show_lesson_progress %}
 <section class="section-panel">

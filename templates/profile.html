@@ -18,6 +18,62 @@
     {% endfor %}
 {% endwith %}
 
+<div class="profile-stats-row">
+    <div class="profile-stat-card">
+        <strong>{{ study_streak.current }}</strong>
+        <span>Day study streak</span>
+        {% if study_streak.longest > study_streak.current %}
+        <span class="profile-list-meta">Best: {{ study_streak.longest }} days</span>
+        {% endif %}
+    </div>
+    <div class="profile-stat-card">
+        <strong>{{ weekly_recap.active_days }}</strong>
+        <span>Active days this week</span>
+    </div>
+    <div class="profile-stat-card">
+        <strong>{{ weekly_recap.topics_practised }}</strong>
+        <span>Topics this week</span>
+    </div>
+</div>
+
+<section class="section-panel">
+    <div class="section-panel-header">This week</div>
+    <div class="section-panel-body">
+        {% if weekly_recap.best_quiz %}
+        <p class="profile-empty" style="margin-bottom:8px;">
+            Best quiz: <strong>{{ weekly_recap.best_quiz.score }}/{{ weekly_recap.best_quiz.total }}</strong>
+            on {{ weekly_recap.best_quiz.topic_label }}
+        </p>
+        {% endif %}
+        <p class="profile-empty">
+            {{ weekly_recap.activity_count }} practice activities in the last {{ weekly_recap.days }} days.
+            <a href="{{ url_for('friend_leaderboard_page') }}">Friend effort leaderboard</a>
+        </p>
+    </div>
+</section>
+
+{% if milestones %}
+<section class="section-panel">
+    <div class="section-panel-header">
+        Milestones
+        <a href="{{ url_for('profile_settings') }}" class="profile-section-link">Sharing settings</a>
+    </div>
+    <div class="section-panel-body">
+        <ul class="milestone-list">
+            {% for item in milestones %}
+            <li class="milestone-item">
+                <span class="milestone-badge" aria-hidden="true">★</span>
+                <div>
+                    <strong>{{ item.title }}</strong>
+                    <span class="profile-list-meta">{{ item.description }} · {{ item.earned_at[:10] }}</span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+{% endif %}
+
 <section class="section-panel">
     <div class="section-panel-header">
         Question suggestions
@@ -91,7 +147,7 @@
     <div class="section-panel-header">
         MCQ practice
         {% if practice_streak %}
-        <span class="profile-section-link">{{ practice_streak }}-day streak</span>
+        <span class="profile-section-link">{{ practice_streak }}-day MCQ streak</span>
         {% endif %}
     </div>
     <div class="section-panel-body">

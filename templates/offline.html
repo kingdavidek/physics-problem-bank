@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Offline – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+  <div class="lesson-hero">
+    <h1>You’re offline</h1>
+    <p class="hero-sub">Problem Bank needs a connection to generate questions and load lessons.</p>
+  </div>
+
+  <section class="section-panel">
+    <div class="section-panel-body">
+      <p class="profile-empty" style="margin-bottom:16px;">
+        Check your connection, then try again. Cached pages may still open if you’ve visited them recently.
+      </p>
+      <a href="/" class="btn btn-primary" id="offline-retry">Try again</a>
+    </div>
+  </section>
+</div>
+<script>
+  document.getElementById('offline-retry').addEventListener('click', function (event) {
+    if (!navigator.onLine) {
+      event.preventDefault();
+      window.location.reload();
+    }
+  });
+</script>
+{% endblock %}

@@ -3,6 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1a6fa8">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Problem Bank">
+    <meta name="description" content="GCSE, A-Level and MYP practice problems, lessons, and study tools.">
+    <link rel="manifest" href="{{ url_for('web_manifest') }}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
     <title>{% block title %}Problem Bank{% endblock %}</title>
 
     <!-- Fonts -->
@@ -300,6 +309,142 @@
             font-size: 0.85rem;
             color: var(--text-muted);
             margin-top: 12px;
+        }
+        .pwa-offline-bar {
+            position: sticky;
+            top: 56px;
+            z-index: 90;
+            background: #7a1f1f;
+            color: #fff;
+            text-align: center;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 8px 12px;
+        }
+        .pwa-install-banner {
+            position: fixed;
+            left: 12px;
+            right: 12px;
+            bottom: 12px;
+            z-index: 120;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding: 14px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+        .pwa-install-banner[hidden] { display: none; }
+        .pwa-install-copy {
+            flex: 1;
+            min-width: 160px;
+        }
+        .pwa-install-copy strong {
+            display: block;
+            font-size: 0.95rem;
+        }
+        .pwa-install-copy span {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+        }
+        .pwa-install-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        @media (max-width: 640px) {
+            .site-wrapper { padding: 10px 14px 72px; }
+            .header-inner { padding: 0 12px; }
+            .pwa-install-banner { bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+        }
+        .profile-stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .profile-stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border-soft);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .profile-stat-card strong {
+            font-size: 1.75rem;
+            color: var(--primary);
+            line-height: 1.1;
+        }
+        .profile-stat-card span {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+        .milestone-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .milestone-item {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .milestone-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #fef4e8;
+            color: #8a5300;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .leaderboard-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-soft);
+        }
+        .leaderboard-item:last-child { border-bottom: none; }
+        .leaderboard-item.is-viewer {
+            background: var(--primary-light, #eef6ff);
+            margin: 0 -12px;
+            padding-left: 12px;
+            padding-right: 12px;
+            border-radius: var(--radius-sm);
+        }
+        .leaderboard-rank {
+            font-weight: 700;
+            color: var(--text-muted);
+            min-width: 2rem;
+        }
+        .leaderboard-main { flex: 1; min-width: 0; }
+        .leaderboard-main a {
+            font-weight: 600;
+            color: var(--text);
+            text-decoration: none;
+        }
+        .leaderboard-main a:hover { color: var(--primary); }
+        .leaderboard-score {
+            font-weight: 700;
+            color: var(--primary);
         }
         .btn-sm {
             padding: 7px 14px;
@@ -1776,6 +1921,7 @@
     <script src="{{ url_for('static', filename='js/site.js') }}" defer></script>
     <script src="{{ url_for('static', filename='js/site-search.js') }}?v=1" defer></script>
     <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=1" defer></script>
+    <script src="{{ url_for('static', filename='js/pwa.js') }}?v=1" defer></script>
     {% if current_user.is_authenticated %}
     <script src="{{ url_for('static', filename='js/notifications.js') }}?v=1" defer></script>
     {% endif %}
@@ -1791,6 +1937,8 @@
 </head>
 
 <body>
+
+<div id="pwa-offline-bar" class="pwa-offline-bar" hidden role="status">You’re offline — some features need a connection.</div>
 
 <header>
     <div class="header-inner">
@@ -1838,6 +1986,7 @@
                     <a href="/about" role="menuitem" class="{% if nav_endpoint == 'about' %}active{% endif %}">About</a>
                     {% if current_user.is_authenticated %}
                     <a href="{{ url_for('activity_feed') }}" role="menuitem" class="{% if nav_endpoint == 'activity_feed' %}active{% endif %}">Feed</a>
+                    <a href="{{ url_for('friend_leaderboard_page') }}" role="menuitem" class="{% if nav_endpoint == 'friend_leaderboard_page' %}active{% endif %}">Leaderboard</a>
                     <a href="{{ url_for('suggestions_inbox') }}" role="menuitem" class="{% if nav_endpoint in ('suggestions_inbox', 'view_suggestion') %}active{% endif %}">Suggestions</a>
                     <div class="nav-menu-divider" role="separator"></div>
                     <a href="{{ url_for('profile_settings') }}" role="menuitem" class="{% if nav_endpoint == 'profile_settings' %}active{% endif %}">Settings</a>
@@ -1909,6 +2058,17 @@
 </div>
 
 <div id="app-toast-host" class="app-toast-host" aria-live="polite" aria-atomic="true"></div>
+
+<div id="pwa-install-banner" class="pwa-install-banner" hidden role="dialog" aria-label="Install Problem Bank">
+    <div class="pwa-install-copy">
+        <strong>Install Problem Bank</strong>
+        <span>Add to your home screen for quicker practice on mobile.</span>
+    </div>
+    <div class="pwa-install-actions">
+        <button type="button" class="btn btn-primary btn-sm" id="pwa-install-btn">Install</button>
+        <button type="button" class="btn btn-outline btn-sm" id="pwa-install-dismiss">Not now</button>
+    </div>
+</div>
 
 </body>
 </html>

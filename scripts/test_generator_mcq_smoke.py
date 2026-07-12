@@ -63,7 +63,7 @@ def main():
         assert r.status_code == 200
         body = r.data.decode()
         assert 'MCQ practice' in body
-        assert '1-day streak' in body
+        assert '1-day MCQ streak' in body
         assert '✓ Correct' in body
 
         r = client.post(

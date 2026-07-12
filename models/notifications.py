@@ -31,16 +31,23 @@ def count_unread_notifications(conn, user_id):
     return row['n'] if row else 0
 
 
-def list_notifications(conn, user_id, limit=20):
+def list_notifications(conn, user_id, limit=20, before_id=None):
+    params = [user_id]
+    before_clause = ''
+    if before_id is not None:
+        before_clause = 'AND id < ?'
+        params.append(int(before_id))
+    params.append(limit)
     rows = conn.execute(
-        '''
+        f'''
         SELECT id, notification_type, payload_json, read_at, created_at
         FROM user_notifications
         WHERE user_id = ?
-        ORDER BY created_at DESC
+        {before_clause}
+        ORDER BY id DESC
         LIMIT ?
         ''',
-        (user_id, limit),
+        params,
     ).fetchall()
     out = []
     for row in rows:
