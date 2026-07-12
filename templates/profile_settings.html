@@ -142,5 +142,32 @@
     </div>
 </form>
 
+<section class="section-panel settings-section">
+    <div class="section-panel-header">App sessions</div>
+    <div class="section-panel-body">
+        <p class="page-intro" style="margin-top:0;">Native apps and other clients sign in with API tokens. Your web browser session is separate.</p>
+        {% if api_token_sessions %}
+        <ul class="profile-list" style="margin:12px 0;">
+            {% for session in api_token_sessions %}
+            <li>
+                <strong>{{ session.label or 'App session' }}</strong>
+                · created {{ session.created_at[:10] if session.created_at else '—' }}
+                {% if session.last_used_at %}
+                · last used {{ session.last_used_at[:10] }}
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty">No active app sessions.</p>
+        {% endif %}
+        <form method="POST" style="margin-top:12px;" onsubmit="return confirm('Sign out all native apps and revoke every API token?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="revoke_all_api_tokens">
+            <button type="submit" class="btn btn-outline">Log out all devices</button>
+        </form>
+    </div>
+</section>
+
 </div>
 {% endblock %}
