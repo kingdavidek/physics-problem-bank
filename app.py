@@ -181,6 +181,21 @@ from models.moderation import (
     unblock_user,
 )
 from models.rate_limit import check_and_increment_rate_limit
+from models.api_tokens import (
+    create_api_token,
+    get_token_row_by_raw,
+    list_user_tokens,
+    revoke_all_tokens,
+    revoke_token_by_raw,
+    touch_token_use,
+)
+from models.quicktest import (
+    build_quicktest_problems,
+    can_access_quicktest,
+    load_quicktest_session,
+    make_session_id,
+    save_quicktest_session,
+)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-for-local-testing')
@@ -646,6 +661,22 @@ with get_db() as conn:
             PRIMARY KEY (bucket_key, window_start)
         )
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS api_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            token_hash TEXT NOT NULL UNIQUE,
+            label TEXT NOT NULL DEFAULT '',
+            created_at TEXT NOT NULL,
+            last_used_at TEXT,
+            expires_at TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_api_tokens_user
+        ON api_tokens (user_id, created_at DESC)
+    """)
     conn.commit()
 
 login_manager.init_app(app)
@@ -671,31 +702,42 @@ def load_user(user_id):
         return User.get_by_id(conn, uid)
 
 
+@login_manager.request_loader
+def load_user_from_bearer_token(req):
+    """Authenticate native/API clients via Authorization: Bearer <token>."""
+    auth = req.headers.get('Authorization', '')
+    if not auth.startswith('Bearer '):
+        return None
+    raw = auth[7:].strip()
+    if not raw:
+        return None
+    with get_db() as conn:
+        row = get_token_row_by_raw(conn, raw)
+        if not row:
+            return None
+        user = User.get_by_id(conn, row['user_id'])
+        if not user or not user.is_active:
+            return None
+        touch_token_use(conn, row['id'], row['last_used_at'])
+        g.api_token_id = row['id']
+        return user
+
+
 def _save_qt(data):
     qt_id = session.get('qt_id', str(uuid.uuid4()))
     session['qt_id'] = qt_id
     session.modified = True
-
     with get_db() as conn:
-        conn.execute(
-            "INSERT OR REPLACE INTO quicktest_sessions (session_id, data) VALUES (?, ?)",
-            (qt_id, json.dumps(data))
-        )
-        conn.commit()
+        save_quicktest_session(conn, qt_id, data)
     return qt_id
+
 
 def _load_qt():
     qt_id = session.get('qt_id')
     if not qt_id:
         return None
     with get_db() as conn:
-        row = conn.execute(
-            "SELECT data FROM quicktest_sessions WHERE session_id = ?",
-            (qt_id,)
-        ).fetchone()
-        if row:
-            return json.loads(row['data'])
-    return None
+        return load_quicktest_session(conn, qt_id)
 
 
 def _save_lq(data):
@@ -1407,6 +1449,36 @@ def _api_error(message, status=400, code=None):
     return jsonify(payload), status
 
 
+def _extract_bearer_token():
+    auth = request.headers.get('Authorization', '')
+    if auth.startswith('Bearer '):
+        return auth[7:].strip()
+    return None
+
+
+def _serialize_auth_user(user):
+    return {
+        'id': user.id,
+        'handle': user.handle,
+        'email': user.email,
+        'created_at': user.created_at,
+        'profile_url': _public_profile_url(user.handle),
+    }
+
+
+def _auth_rate_limit(action, limit):
+    bucket = f'auth:{action}:ip:{_client_ip()}'
+    with get_db() as conn:
+        allowed, remaining, _count = check_and_increment_rate_limit(conn, bucket, limit)
+    return allowed, remaining
+
+
+def _issue_api_token(conn, user, label=''):
+    raw_token, _token_id = create_api_token(conn, user.id, label=label)
+    user.touch_login(conn)
+    return raw_token
+
+
 def _notify_suggestion_received(conn, recipient_id, sender_handle, suggestion_id, topic_label):
     create_notification(
         conn,
@@ -1763,6 +1835,171 @@ def _topic_path_valid(level, subject, topic):
         return False
 
 
+def _lesson_render_spec(level, subject, topic):
+    """Return (template_name, context) for a lesson page, or None if unavailable."""
+    try:
+        topic_data = TOPICS[level][subject][topic]
+    except KeyError:
+        return None
+
+    if level == 'alevel' and subject == 'physics' and topic == 'photoelectric':
+        return (
+            'alevel_physics_photoelectric_lesson.html',
+            {
+                'p1': lesson_problem(aqa_pe_basic),
+                'p2': lesson_problem(aqa_pe_threshold_frequency),
+                'p3': lesson_problem(aqa_pe_photoelectric_equation),
+                'p4': lesson_problem(aqa_pe_stopping_potential),
+                'p5': lesson_problem(aqa_pe_debroglie),
+            },
+        )
+
+    if level == 'alevel' and subject == 'physics' and topic == 'magnetism':
+        return (
+            'alevel_physics_magnetism_lesson.html',
+            {
+                'p1': aqa_mag_motor_effect(),
+                'p2': aqa_mag_particle_path(),
+                'p3': aqa_mag_flux_linkage(),
+                'p4': aqa_mag_faradays_law(),
+                'p5': aqa_mag_transformers(),
+            },
+        )
+
+    custom = f'{level}_{subject}_{topic}_lesson.html'
+    try:
+        app.jinja_env.get_template(custom)
+        return custom, {}
+    except TemplateNotFound:
+        pass
+
+    content = get_topic_content(level, subject, topic)
+    if not content:
+        return None
+    return (
+        'topic.html',
+        {
+            'content': content,
+            'level': level,
+            'subject': subject,
+            'topic': topic,
+            'supports_lesson_quiz': _lesson_quiz_available(level, subject, topic),
+        },
+    )
+
+
+def _render_lesson_html(level, subject, topic):
+    spec = _lesson_render_spec(level, subject, topic)
+    if not spec:
+        return None
+    template_name, context = spec
+    return render_template(template_name, **context)
+
+
+def _lesson_api_metadata(level, subject, topic):
+    try:
+        topic_data = TOPICS[level][subject][topic]
+    except KeyError:
+        return None
+    return {
+        'level': level,
+        'subject': subject,
+        'topic': topic,
+        'title': topic_data.get('name', topic.replace('_', ' ').title()),
+        'topic_url': url_for('topic_page', level=level, subject=subject, topic=topic),
+        'supports_lesson_quiz': _lesson_quiz_available(level, subject, topic),
+        'lesson_quiz_url': (
+            url_for('lesson_mcq_quiz', level=level, subject=subject, topic=topic)
+            if _lesson_quiz_available(level, subject, topic)
+            else None
+        ),
+        'progress_enabled': True,
+    }
+
+
+def _quicktest_question_payload(problem, *, reveal=False):
+    payload = _problem_client_payload(problem)
+    if not reveal:
+        payload.pop('solution_html', None)
+        payload.pop('hint_html', None)
+    return payload
+
+
+def _quicktest_session_summary(data, session_id):
+    idx = int(data.get('index', 0))
+    total = len(data.get('problems') or [])
+    return {
+        'session_id': session_id,
+        'topic_name': data.get('topic_name'),
+        'level': data.get('level'),
+        'subject': data.get('subject'),
+        'topic': data.get('topic'),
+        'mode': data.get('mode'),
+        'difficulty': data.get('difficulty'),
+        'current': min(idx + 1, total) if total else 0,
+        'total': total,
+        'finished': idx >= total and total > 0,
+    }
+
+
+def _get_quicktest_session_or_error(session_id):
+    viewer_id = current_user.id if current_user.is_authenticated else None
+    with get_db() as conn:
+        data = load_quicktest_session(conn, session_id)
+    if not data:
+        return None, _api_error('Quick test session not found', 404, 'not_found')
+    if not can_access_quicktest(data, session_id, viewer_id):
+        return None, _api_error('Quick test session not accessible', 403, 'forbidden')
+    return data, None
+
+
+def _apply_lesson_progress_update(
+    user_id,
+    level,
+    subject,
+    topic,
+    section_key,
+    section_label,
+    completed_keys=None,
+):
+    with get_db() as conn:
+        upsert_lesson_progress(
+            conn,
+            user_id,
+            level,
+            subject,
+            topic,
+            section_key,
+            section_label,
+            completed_keys=completed_keys,
+        )
+        progress = get_lesson_progress(conn, user_id, level, subject, topic)
+        settings = get_profile_settings(conn, user_id)
+
+    completed_count = len((progress or {}).get('completed_keys') or [])
+    visibility = VISIBILITY_FOLLOWERS
+    if settings.get('auto_share_lesson'):
+        visibility = _normalize_share_visibility(settings.get('default_share_visibility'))
+    _record_user_activity(
+        user_id,
+        ACTIVITY_LESSON_STEP_COMPLETED,
+        {
+            'level': level,
+            'subject': subject,
+            'topic': topic,
+            'topic_label': _topic_label(level, subject, topic),
+            'section_key': section_key,
+            'section_label': section_label,
+            'completed_count': completed_count,
+            'auto_shared': bool(settings.get('auto_share_lesson')),
+        },
+        visibility,
+    )
+    if completed_count > 0:
+        _record_study_activity(user_id)
+    return progress
+
+
 _TOPIC_LEVEL_ORDER = ('gcse', 'alevel', 'myp')
 _TOPIC_SUBJECT_ORDER = {
     'gcse': ('maths', 'physics', 'cs'),
@@ -2040,10 +2277,16 @@ def profile_settings():
     errors = {}
     with get_db() as conn:
         settings = get_profile_settings(conn, current_user.id)
+        api_token_sessions = list_user_tokens(conn, current_user.id)
 
     if request.method == 'POST':
         if not _validate_csrf(request.form.get('csrf_token')):
             errors['form'] = 'Your session expired. Please try again.'
+        elif request.form.get('action') == 'revoke_all_api_tokens':
+            with get_db() as conn:
+                revoke_all_tokens(conn, current_user.id)
+            flash('All app sessions have been signed out.', 'success')
+            return redirect(url_for('profile_settings'))
         else:
             updated = {
                 'profile_visibility': request.form.get('profile_visibility', 'public'),
@@ -2065,12 +2308,14 @@ def profile_settings():
             with get_db() as conn:
                 update_profile_settings(conn, current_user.id, updated)
                 settings = get_profile_settings(conn, current_user.id)
+                api_token_sessions = list_user_tokens(conn, current_user.id)
             flash('Settings saved.', 'success')
             return redirect(url_for('profile_settings'))
 
     return render_template(
         'profile_settings.html',
         settings=settings,
+        api_token_sessions=api_token_sessions,
         visibility_choices=VISIBILITY_CHOICES,
         profile_visibility_label=PROFILE_VISIBILITY_LABELS.get(
             settings.get('profile_visibility', VISIBILITY_PUBLIC),
@@ -2452,6 +2697,134 @@ def api_v1_patch_settings():
     return jsonify({'ok': True, 'settings': settings})
 
 
+AUTH_REGISTER_DAILY_LIMIT = 10
+AUTH_LOGIN_DAILY_LIMIT = 30
+
+
+@app.post('/api/v1/auth/register')
+def api_v1_auth_register():
+    allowed, _remaining = _auth_rate_limit('register', AUTH_REGISTER_DAILY_LIMIT)
+    if not allowed:
+        return _api_error('Too many registration attempts today', 429, 'rate_limited')
+
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('Request body must be a JSON object', 400, 'invalid_json')
+
+    email = payload.get('email', '')
+    handle = payload.get('handle', '')
+    password = payload.get('password', '')
+    age_confirm = payload.get('age_confirm')
+    label = payload.get('label', '')
+
+    errors = {}
+    for field, validator, value in (
+        ('email', validate_email, email),
+        ('handle', validate_handle, handle),
+        ('password', validate_password, password),
+    ):
+        msg = validator(value)
+        if msg:
+            errors[field] = msg
+    if age_confirm is not True:
+        errors['age_confirm'] = 'You must confirm you are 13 or older (age_confirm: true).'
+    if errors:
+        return jsonify({'ok': False, 'error': 'Validation failed', 'code': 'validation_error', 'fields': errors}), 400
+
+    email = normalize_email(email)
+    handle = normalize_handle(handle)
+    with get_db() as conn:
+        if User.get_by_email(conn, email):
+            return _api_error('An account with that email already exists', 409, 'email_taken')
+        if User.get_by_handle(conn, handle):
+            return _api_error('That handle is already taken', 409, 'handle_taken')
+        user = User.create(conn, email, handle, password)
+        ensure_user_profile(conn, user.id)
+        token = _issue_api_token(conn, user, label=label or 'Registration')
+
+    return jsonify({'ok': True, 'token': token, 'user': _serialize_auth_user(user)}), 201
+
+
+@app.post('/api/v1/auth/login')
+def api_v1_auth_login():
+    allowed, _remaining = _auth_rate_limit('login', AUTH_LOGIN_DAILY_LIMIT)
+    if not allowed:
+        return _api_error('Too many login attempts today', 429, 'rate_limited')
+
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('Request body must be a JSON object', 400, 'invalid_json')
+
+    email = normalize_email(payload.get('email', ''))
+    password = payload.get('password', '')
+    label = payload.get('label', '')
+    if not email or not password:
+        return _api_error('email and password are required', 400, 'missing_fields')
+
+    with get_db() as conn:
+        user = User.get_by_email(conn, email)
+        if not user or not user.is_active or not user.check_password(password):
+            return _api_error('Invalid email or password', 401, 'invalid_credentials')
+        token = _issue_api_token(conn, user, label=label or 'Login')
+
+    return jsonify({'ok': True, 'token': token, 'user': _serialize_auth_user(user)})
+
+
+@app.post('/api/v1/auth/logout')
+def api_v1_auth_logout():
+    raw = _extract_bearer_token()
+    if not raw:
+        return _api_error('Authorization Bearer token required', 401, 'auth_required')
+    with get_db() as conn:
+        if revoke_token_by_raw(conn, raw):
+            return jsonify({'ok': True})
+    return _api_error('Invalid or expired token', 401, 'invalid_token')
+
+
+@app.get('/api/v1/auth/me')
+@login_required
+def api_v1_auth_me():
+    return jsonify({'ok': True, 'user': _serialize_auth_user(current_user)})
+
+
+@app.get('/api/v1/auth/tokens')
+@login_required
+def api_v1_auth_list_tokens():
+    with get_db() as conn:
+        tokens = list_user_tokens(conn, current_user.id)
+    current_id = getattr(g, 'api_token_id', None)
+    return jsonify({
+        'ok': True,
+        'tokens': [
+            {
+                'id': item['id'],
+                'label': item['label'],
+                'created_at': item['created_at'],
+                'last_used_at': item['last_used_at'],
+                'expires_at': item['expires_at'],
+                'is_current': item['id'] == current_id,
+            }
+            for item in tokens
+        ],
+    })
+
+
+@app.post('/api/v1/auth/revoke-all')
+@login_required
+def api_v1_auth_revoke_all():
+    payload = request.get_json(silent=True)
+    keep_current = True
+    if isinstance(payload, dict) and 'keep_current' in payload:
+        if not isinstance(payload['keep_current'], bool):
+            return _api_error('keep_current must be a boolean', 400, 'invalid_field')
+        keep_current = payload['keep_current']
+
+    except_id = getattr(g, 'api_token_id', None) if keep_current else None
+    with get_db() as conn:
+        revoke_all_tokens(conn, current_user.id, except_token_id=except_id)
+    return jsonify({'ok': True})
+
+
 @app.get('/api/v1/me/notifications')
 @login_required
 def api_v1_list_notifications():
@@ -2629,6 +3002,257 @@ def _build_topics_catalog():
             'subjects': subjects,
         })
     return levels
+
+
+@app.get('/api/v1/topics/<level>/<subject>/<topic>/lesson')
+def api_v1_lesson_content(level, subject, topic):
+    topic = _resolve_topic_slug(level, subject, topic)
+    if not _topic_path_valid(level, subject, topic):
+        return _api_error('Topic not found', 404, 'topic_not_found')
+
+    html = _render_lesson_html(level, subject, topic)
+    if html is None:
+        return _api_error('Lesson not available for this topic', 404, 'lesson_not_found')
+
+    _track_topic_opened(level, subject, topic)
+    meta = _lesson_api_metadata(level, subject, topic)
+    return jsonify({'ok': True, 'lesson': {**meta, 'html': html}})
+
+
+@app.post('/api/v1/quicktest/start')
+def api_v1_quicktest_start():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('Request body must be a JSON object', 400, 'invalid_json')
+
+    level = payload.get('level', 'gcse')
+    subject = payload.get('subject', 'physics')
+    topic = _resolve_topic_slug(level, subject, payload.get('topic', 'forces'))
+    mode = normalize_mode(payload.get('mode', 'standard'))
+    difficulty = payload.get('difficulty', 'foundational')
+
+    if not _topic_path_valid(level, subject, topic):
+        return _api_error('Topic not found', 404, 'topic_not_found')
+    if difficulty not in DIFFICULTIES:
+        return _api_error(
+            f'difficulty must be one of: {", ".join(DIFFICULTIES)}',
+            400,
+            'invalid_difficulty',
+        )
+    if not can_access_difficulty(current_user, difficulty):
+        return _api_error(
+            'Difficult questions require a free account',
+            403,
+            'auth_required',
+        )
+
+    try:
+        problems, topic_config = build_quicktest_problems(
+            level, subject, topic, mode, difficulty, TOPICS
+        )
+    except KeyError:
+        return _api_error('Topic not found', 404, 'topic_not_found')
+
+    owner_user_id = current_user.id if current_user.is_authenticated else None
+    session_id = make_session_id(owner_user_id)
+    data = {
+        'problems': problems,
+        'answers': [],
+        'index': 0,
+        'topic_name': topic_config.get('name', topic),
+        'level': level,
+        'subject': subject,
+        'topic': topic,
+        'difficulty': difficulty,
+        'mode': mode,
+        'owner_user_id': owner_user_id,
+    }
+    with get_db() as conn:
+        save_quicktest_session(conn, session_id, data)
+
+    summary = _quicktest_session_summary(data, session_id)
+    first = _quicktest_question_payload(problems[0]) if problems else None
+    return jsonify({'ok': True, **summary, 'problem': first}), 201
+
+
+@app.get('/api/v1/quicktest/<session_id>/question')
+def api_v1_quicktest_question(session_id):
+    data, err = _get_quicktest_session_or_error(session_id)
+    if err:
+        return err
+
+    problems = data.get('problems') or []
+    idx = int(data.get('index', 0))
+    if idx >= len(problems):
+        return _api_error('Quick test finished — fetch results', 400, 'finished')
+
+    summary = _quicktest_session_summary(data, session_id)
+    return jsonify({
+        'ok': True,
+        **summary,
+        'problem': _quicktest_question_payload(problems[idx]),
+        'question_number': idx + 1,
+    })
+
+
+@app.post('/api/v1/quicktest/<session_id>/answer')
+def api_v1_quicktest_answer(session_id):
+    data, err = _get_quicktest_session_or_error(session_id)
+    if err:
+        return err
+
+    problems = data.get('problems') or []
+    idx = int(data.get('index', 0))
+    if idx >= len(problems):
+        return _api_error('Quick test already finished', 400, 'finished')
+
+    payload = request.get_json(silent=True)
+    if payload is not None and not isinstance(payload, dict):
+        return _api_error('Request body must be a JSON object', 400, 'invalid_json')
+
+    user_answer = ''
+    if isinstance(payload, dict):
+        user_answer = (payload.get('user_answer') or '').strip().upper()[:1]
+
+    problem = problems[idx]
+    correct_answer = (problem.get('correct_answer') or '').strip().upper()[:1]
+    is_mcq = bool(problem.get('options'))
+    correct = bool(user_answer and correct_answer and user_answer == correct_answer)
+
+    answers = list(data.get('answers') or [])
+    answers.append({
+        'question_number': idx + 1,
+        'user_answer': user_answer,
+        'correct_answer': correct_answer if is_mcq else None,
+        'correct': correct if is_mcq else None,
+    })
+    data['answers'] = answers
+    data['index'] = idx + 1
+
+    with get_db() as conn:
+        save_quicktest_session(conn, session_id, data)
+
+    finished = data['index'] >= len(problems)
+    response = {
+        'ok': True,
+        **_quicktest_session_summary(data, session_id),
+        'was_correct': correct if is_mcq else None,
+        'finished': finished,
+    }
+    if finished:
+        response['results_url'] = url_for(
+            'api_v1_quicktest_results', session_id=session_id, _external=False
+        )
+    return jsonify(response)
+
+
+@app.get('/api/v1/quicktest/<session_id>/results')
+def api_v1_quicktest_results(session_id):
+    data, err = _get_quicktest_session_or_error(session_id)
+    if err:
+        return err
+
+    problems = data.get('problems') or []
+    idx = int(data.get('index', 0))
+    if idx < len(problems):
+        return _api_error('Quick test not finished yet', 400, 'not_finished')
+
+    answers = data.get('answers') or []
+    enriched = []
+    mcq_score = 0
+    mcq_total = 0
+    for i, problem in enumerate(problems):
+        entry = _quicktest_question_payload(problem, reveal=True)
+        answer = answers[i] if i < len(answers) else {}
+        entry['user_answer'] = answer.get('user_answer')
+        if problem.get('options'):
+            mcq_total += 1
+            if answer.get('correct'):
+                mcq_score += 1
+        enriched.append(entry)
+
+    total_marks = sum(int(p.get('marks') or 0) for p in problems)
+    return jsonify({
+        'ok': True,
+        **_quicktest_session_summary(data, session_id),
+        'problems': enriched,
+        'total_marks': total_marks,
+        'mcq_score': mcq_score,
+        'mcq_total': mcq_total,
+    })
+
+
+@app.get('/api/v1/me/lesson-progress')
+@login_required
+def api_v1_list_lesson_progress():
+    try:
+        limit = min(max(int(request.args.get('limit', 20)), 1), 100)
+    except (TypeError, ValueError):
+        limit = 20
+    with get_db() as conn:
+        items = list_lesson_progress(conn, current_user.id, limit=limit)
+    return jsonify({'ok': True, 'items': items})
+
+
+@app.get('/api/v1/me/lesson-progress/<level>/<subject>/<topic>')
+@login_required
+def api_v1_get_lesson_progress(level, subject, topic):
+    topic = _resolve_topic_slug(level, subject, topic)
+    if not _topic_path_valid(level, subject, topic):
+        return _api_error('Topic not found', 404, 'topic_not_found')
+    with get_db() as conn:
+        progress = get_lesson_progress(conn, current_user.id, level, subject, topic)
+    return jsonify({'ok': True, 'progress': progress})
+
+
+@app.post('/api/v1/me/lesson-progress')
+@login_required
+def api_v1_save_lesson_progress():
+    payload = request.get_json(silent=True) or {}
+    if not isinstance(payload, dict):
+        return _api_error('Request body must be a JSON object', 400, 'invalid_json')
+
+    level = payload.get('level', '')
+    subject = payload.get('subject', '')
+    topic = _resolve_topic_slug(level, subject, payload.get('topic', ''))
+    section_key = (payload.get('section_key') or '').strip()
+    section_label = (payload.get('section_label') or '').strip()[:200]
+    completed_keys = payload.get('completed_keys')
+    if completed_keys is not None:
+        if not isinstance(completed_keys, list):
+            return _api_error('completed_keys must be a list', 400, 'invalid_field')
+        completed_keys = [
+            str(key).strip()[:80]
+            for key in completed_keys
+            if str(key).strip()
+        ]
+
+    if not _topic_path_valid(level, subject, topic):
+        return _api_error('Topic not found', 404, 'topic_not_found')
+    if not section_key or len(section_key) > 80:
+        return _api_error('Invalid section_key', 400, 'invalid_field')
+
+    progress = _apply_lesson_progress_update(
+        current_user.id,
+        level,
+        subject,
+        topic,
+        section_key,
+        section_label,
+        completed_keys=completed_keys,
+    )
+    return jsonify({'ok': True, 'progress': progress})
+
+
+@app.delete('/api/v1/me/lesson-progress/<level>/<subject>/<topic>')
+@login_required
+def api_v1_clear_lesson_progress(level, subject, topic):
+    topic = _resolve_topic_slug(level, subject, topic)
+    if not _topic_path_valid(level, subject, topic):
+        return _api_error('Topic not found', 404, 'topic_not_found')
+    with get_db() as conn:
+        clear_lesson_progress(conn, current_user.id, level, subject, topic)
+    return jsonify({'ok': True})
 
 
 @app.get('/api/v1/topics')
@@ -3676,7 +4300,7 @@ def api_save_lesson_progress():
 
     level = payload.get('level', '')
     subject = payload.get('subject', '')
-    topic = payload.get('topic', '')
+    topic = _resolve_topic_slug(level, subject, payload.get('topic', ''))
     section_key = (payload.get('section_key') or '').strip()
     section_label = (payload.get('section_label') or '').strip()[:200]
     completed_keys = payload.get('completed_keys')
@@ -3694,41 +4318,16 @@ def api_save_lesson_progress():
     if not section_key or len(section_key) > 80:
         return jsonify({'error': 'Invalid section'}), 400
 
-    with get_db() as conn:
-        upsert_lesson_progress(
-            conn,
-            current_user.id,
-            level,
-            subject,
-            topic,
-            section_key,
-            section_label,
-            completed_keys=completed_keys,
-        )
-        progress = get_lesson_progress(conn, current_user.id, level, subject, topic)
-        settings = get_profile_settings(conn, current_user.id)
-    completed_count = len((progress or {}).get('completed_keys') or [])
-    visibility = VISIBILITY_FOLLOWERS
-    if settings.get('auto_share_lesson'):
-        visibility = _normalize_share_visibility(settings.get('default_share_visibility'))
-    _record_user_activity(
+    progress = _apply_lesson_progress_update(
         current_user.id,
-        ACTIVITY_LESSON_STEP_COMPLETED,
-        {
-            'level': level,
-            'subject': subject,
-            'topic': topic,
-            'topic_label': _topic_label(level, subject, topic),
-            'section_key': section_key,
-            'section_label': section_label,
-            'completed_count': completed_count,
-            'auto_shared': bool(settings.get('auto_share_lesson')),
-        },
-        visibility,
+        level,
+        subject,
+        topic,
+        section_key,
+        section_label,
+        completed_keys=completed_keys,
     )
-    if completed_count > 0:
-        _record_study_activity(current_user.id)
-    return jsonify({'ok': True})
+    return jsonify({'ok': True, 'progress': progress})
 
 
 @app.post('/lesson-progress/<level>/<subject>/<topic>/clear')
@@ -3945,25 +4544,15 @@ def quicktest_start():
     difficulty = request.form.get('difficulty', 'foundational')
 
     try:
-        topic_config = TOPICS[level][subject][topic]
-        generator = topic_config['func']
-        variants_func = topic_config.get('variants_func')
+        problems, topic_config = build_quicktest_problems(
+            level, subject, topic, mode, difficulty, TOPICS
+        )
     except KeyError:
         return 'Invalid topic', 400
 
-    problems = []
-    if variants_func:
-        variant_list = variants_func(difficulty, mode)
-        for variant_fn in variant_list:
-            p = generator(difficulty, mode, variant_name=variant_fn.__name__)
-            problems.append(p)
-    else:
-        for _ in range(10):
-            p = generator(difficulty, mode, variant_name=None)
-            problems.append(p)
-
     data = {
         'problems': problems,
+        'answers': [],
         'index': 0,
         'topic_name': topic_config.get('name', topic),
         'level': level,
@@ -3971,8 +4560,9 @@ def quicktest_start():
         'topic': topic,
         'difficulty': difficulty,
         'mode': mode,
+        'owner_user_id': current_user.id if current_user.is_authenticated else None,
     }
-    _save_qt(data)                       # <-- stores in SQLite, not in session
+    _save_qt(data)
     return redirect(url_for('quicktest_question'))
 
 @app.route('/quicktest', methods=['GET'])
