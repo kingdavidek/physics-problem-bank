@@ -99,6 +99,16 @@
                        {% if settings.show_shared_questions %}checked{% endif %}>
                 Shared questions (when feed launches)
             </label>
+            <label class="privacy-check">
+                <input type="checkbox" name="show_study_streak" value="1"
+                       {% if settings.show_study_streak %}checked{% endif %}>
+                Study streak (days you opened topics, practised, or completed quizzes)
+            </label>
+            <label class="privacy-check">
+                <input type="checkbox" name="show_milestones" value="1"
+                       {% if settings.show_milestones %}checked{% endif %}>
+                Milestone badges
+            </label>
         </div>
     </section>
 

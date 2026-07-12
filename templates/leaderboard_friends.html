@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Friend leaderboard – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+
+<div class="lesson-hero">
+    <h1>Friend effort leaderboard</h1>
+    <p class="hero-sub">Last {{ period_days }} days — effort points from topics, practice, lessons, and quizzes</p>
+</div>
+
+<section class="section-panel">
+    <div class="section-panel-body">
+        {% if leaderboard|length > 1 or (leaderboard and leaderboard[0].score > 0) %}
+        <ol class="leaderboard-list">
+            {% for item in leaderboard %}
+            <li class="leaderboard-item{% if item.is_viewer %} is-viewer{% endif %}">
+                <span class="leaderboard-rank">#{{ item.rank }}</span>
+                <div class="leaderboard-main">
+                    <a href="{{ item.profile_url }}">@{{ item.handle }}</a>
+                    {% if item.is_viewer %}<span class="profile-list-meta"> (you)</span>{% endif %}
+                </div>
+                <span class="leaderboard-score">{{ item.score }} pts</span>
+            </li>
+            {% endfor %}
+        </ol>
+        <p class="profile-empty" style="margin-top:12px;">
+            Points: topic opened +1, question generated +1, lesson step +2, quiz completed +3.
+        </p>
+        {% else %}
+        <p class="profile-empty">
+            Follow people to compare weekly effort.
+            <a href="{{ url_for('site_search') }}">Search users</a>
+        </p>
+        {% endif %}
+    </div>
+</section>
+
+<p><a href="{{ url_for('profile') }}">← Back to profile</a></p>
+
+</div>
+{% endblock %}

@@ -86,7 +86,7 @@ def get_profile_settings(conn, user_id):
         SELECT profile_visibility, show_member_since, show_last_topic,
                show_last_activity, show_lesson_progress, show_quiz_stats,
                show_shared_questions, auto_share_quiz, auto_share_lesson,
-               default_share_visibility
+               default_share_visibility, show_study_streak, show_milestones
         FROM user_profile_settings
         WHERE user_id = ?
         ''',
@@ -115,7 +115,9 @@ def update_profile_settings(conn, user_id, settings):
             show_shared_questions = ?,
             auto_share_quiz = ?,
             auto_share_lesson = ?,
-            default_share_visibility = ?
+            default_share_visibility = ?,
+            show_study_streak = ?,
+            show_milestones = ?
         WHERE user_id = ?
         ''',
         (
@@ -129,6 +131,8 @@ def update_profile_settings(conn, user_id, settings):
             _bool_int(settings.get('auto_share_quiz', False)),
             _bool_int(settings.get('auto_share_lesson', False)),
             share_visibility,
+            _bool_int(settings.get('show_study_streak', False)),
+            _bool_int(settings.get('show_milestones', False)),
             user_id,
         ),
     )
@@ -185,12 +189,24 @@ def normalize_feed_filter(value):
     return FEED_FILTER_ALL
 
 
-def list_followed_feed(conn, viewer_id, filter_name=FEED_FILTER_ALL, limit=FEED_DEFAULT_LIMIT):
+def list_followed_feed(
+    conn,
+    viewer_id,
+    filter_name=FEED_FILTER_ALL,
+    limit=FEED_DEFAULT_LIMIT,
+    before_id=None,
+):
     """Activity events from users the viewer follows (feed timeline)."""
     filter_name = normalize_feed_filter(filter_name)
     limit = min(max(int(limit), 1), FEED_MAX_LIMIT)
     event_types = FEED_EVENT_TYPES[filter_name]
     placeholders = ','.join('?' * len(event_types))
+    before_clause = ''
+    params = [viewer_id, viewer_id, viewer_id, VISIBILITY_PRIVATE, *event_types]
+    if before_id is not None:
+        before_clause = 'AND e.id < ?'
+        params.append(int(before_id))
+    params.append(limit)
     rows = conn.execute(
         f'''
         SELECT e.id, e.user_id, e.event_type, e.payload_json, e.visibility, e.created_at,
@@ -200,12 +216,18 @@ def list_followed_feed(conn, viewer_id, filter_name=FEED_FILTER_ALL, limit=FEED_
         WHERE e.user_id IN (
             SELECT following_id FROM follows WHERE follower_id = ?
         )
+          AND e.user_id NOT IN (
+            SELECT blocked_id FROM user_blocks WHERE blocker_id = ?
+            UNION
+            SELECT blocker_id FROM user_blocks WHERE blocked_id = ?
+          )
           AND e.visibility != ?
           AND e.event_type IN ({placeholders})
-        ORDER BY e.created_at DESC
+          {before_clause}
+        ORDER BY e.id DESC
         LIMIT ?
         ''',
-        (viewer_id, VISIBILITY_PRIVATE, *event_types, limit),
+        params,
     ).fetchall()
     out = []
     for row in rows:
@@ -429,6 +451,9 @@ def list_following(conn, user_id, limit=50):
 def can_view_profile(conn, viewer_id, target_user_id, settings):
     if viewer_id and viewer_id == target_user_id:
         return True
+    from models.moderation import is_blocked
+    if is_blocked(conn, viewer_id, target_user_id):
+        return False
     visibility = settings.get('profile_visibility', VISIBILITY_PUBLIC)
     if visibility == VISIBILITY_PRIVATE:
         return False
