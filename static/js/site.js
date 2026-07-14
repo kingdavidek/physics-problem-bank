@@ -247,6 +247,132 @@
     document.querySelectorAll('.mcq-inline').forEach(wireMcqBlock);
   }
 
+  function resetFreeResponseBlock(block) {
+    var input = block.querySelector('.free-response-input');
+    var feedback = block.querySelector('.free-response-feedback');
+    var checkBtn = block.querySelector('.free-response-check-btn');
+    if (input) {
+      input.value = '';
+      input.disabled = false;
+      input.classList.remove('is-correct', 'is-wrong');
+    }
+    if (checkBtn) checkBtn.disabled = false;
+    if (feedback) {
+      feedback.textContent = '';
+      feedback.style.color = '';
+    }
+    delete block.dataset.freeResponsePersisted;
+  }
+
+  function wireFreeResponseBlock(block) {
+    if (!block || block.dataset.freeResponseInit === '1') return;
+
+    var correctRaw = (block.getAttribute('data-correct-raw') || block.dataset.correctRaw || '').trim();
+    if (!correctRaw) return;
+
+    block.dataset.freeResponseInit = '1';
+    var input = block.querySelector('.free-response-input');
+    var checkBtn = block.querySelector('.free-response-check-btn');
+    var feedback = block.querySelector('.free-response-feedback');
+    if (!input || !checkBtn) return;
+
+    var answerType = (block.getAttribute('data-answer-type') || block.dataset.answerType || 'number').trim();
+    var trackable = Boolean(block.dataset.level);
+
+    function submitAnswer() {
+      if (input.disabled) return;
+      var userAnswer = (input.value || '').trim();
+      if (!userAnswer) {
+        if (feedback) {
+          feedback.textContent = 'Enter an answer first.';
+          feedback.style.color = '#dc2626';
+        }
+        return;
+      }
+
+      checkBtn.disabled = true;
+      input.disabled = true;
+
+      var body = {
+        user_answer: userAnswer,
+        correct_answer_raw: correctRaw,
+        answer_type: answerType,
+      };
+      if (trackable) {
+        body.level = block.dataset.level;
+        body.subject = block.dataset.subject;
+        body.topic = block.dataset.topic;
+        body.difficulty = block.dataset.difficulty || 'foundational';
+      }
+
+      fetch('/api/v1/problems/check', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(body),
+      })
+        .then(function (response) {
+          return response.json().then(function (data) {
+            if (!response.ok) {
+              var err = new Error(data.error || 'Check failed');
+              err.data = data;
+              throw err;
+            }
+            return data;
+          });
+        })
+        .then(function (data) {
+          if (data.correct) {
+            input.classList.add('is-correct');
+            if (feedback) {
+              feedback.textContent = '\u2713 ' + (data.feedback || 'Correct!');
+              feedback.style.color = '#16a34a';
+            }
+          } else {
+            input.classList.add('is-wrong');
+            input.disabled = false;
+            checkBtn.disabled = false;
+            if (feedback) {
+              feedback.textContent = '\u2717 ' + (data.feedback || 'Not quite \u2014 try again.');
+              feedback.style.color = '#dc2626';
+            }
+          }
+          if (trackable && block.dataset.freeResponsePersisted !== '1') {
+            block.dataset.freeResponsePersisted = '1';
+            persistMcqAnswer(
+              block,
+              data.normalized_user || userAnswer,
+              data.normalized_correct || correctRaw,
+              Boolean(data.correct)
+            );
+          }
+        })
+        .catch(function (err) {
+          input.disabled = false;
+          checkBtn.disabled = false;
+          if (feedback) {
+            feedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
+            feedback.style.color = '#dc2626';
+          }
+        });
+    }
+
+    checkBtn.addEventListener('click', submitAnswer);
+    input.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        submitAnswer();
+      }
+    });
+  }
+
+  function initFreeResponseInline() {
+    document.querySelectorAll('.free-response-inline').forEach(wireFreeResponseBlock);
+  }
+
   function showAppToast(message, type, options) {
     var host = document.getElementById('app-toast-host');
     if (!host) return;
@@ -506,6 +632,7 @@
     initGeneratorForm();
     initQuickTestForm();
     initMcqInline();
+    initFreeResponseInline();
     initMcqButtons();
     initSaveProblemForm();
     initRerollSavedForm();

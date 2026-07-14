@@ -239,17 +239,24 @@ def enrich_quiz_attempt_problems(problems, answers):
     return enriched
 
 
-def list_quiz_attempts(conn, user_id, limit=20):
+def list_quiz_attempts(conn, user_id, limit=20, before_id=None):
+    params = [user_id]
+    before_clause = ''
+    if before_id is not None:
+        before_clause = 'AND id < ?'
+        params.append(int(before_id))
+    params.append(limit)
     rows = conn.execute(
-        '''
+        f'''
         SELECT id, level, subject, topic, score, total, created_at,
                CASE WHEN problems_json IS NOT NULL AND problems_json != '' THEN 1 ELSE 0 END AS has_review
         FROM quiz_attempts
         WHERE user_id = ?
-        ORDER BY created_at DESC
+        {before_clause}
+        ORDER BY id DESC
         LIMIT ?
         ''',
-        (user_id, limit),
+        params,
     ).fetchall()
     return [dict(row) for row in rows]
 
@@ -291,19 +298,39 @@ def record_generator_mcq_attempt(
     return cursor.lastrowid
 
 
-def list_generator_mcq_attempts(conn, user_id, limit=10):
+def list_generator_mcq_attempts(conn, user_id, limit=10, before_id=None):
+    params = [user_id]
+    before_clause = ''
+    if before_id is not None:
+        before_clause = 'AND id < ?'
+        params.append(int(before_id))
+    params.append(limit)
     rows = conn.execute(
-        '''
+        f'''
         SELECT id, level, subject, topic, mode, difficulty,
                user_answer, correct_answer, correct, created_at
         FROM generator_mcq_attempts
         WHERE user_id = ?
-        ORDER BY created_at DESC
+        {before_clause}
+        ORDER BY id DESC
         LIMIT ?
         ''',
-        (user_id, limit),
+        params,
     ).fetchall()
     return [dict(row) for row in rows]
+
+
+def get_generator_mcq_attempt(conn, user_id, attempt_id):
+    row = conn.execute(
+        '''
+        SELECT id, level, subject, topic, mode, difficulty,
+               user_answer, correct_answer, correct, created_at
+        FROM generator_mcq_attempts
+        WHERE user_id = ? AND id = ?
+        ''',
+        (user_id, attempt_id),
+    ).fetchone()
+    return dict(row) if row else None
 
 
 def get_practice_streak(conn, user_id):

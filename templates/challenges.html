@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Challenges – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+<div class="lesson-hero">
+    <h1>Quiz challenges</h1>
+    <p class="hero-sub">Same 10 questions as a friend — compare scores when you are both done</p>
+</div>
+
+<p class="profile-page-back"><a href="{{ url_for('profile') }}">← Back to account</a></p>
+
+<p style="margin-bottom:16px;"><a href="{{ url_for('challenge_new') }}" class="btn btn-primary">Challenge a friend</a></p>
+
+{% if challenges %}
+<ul class="profile-list">
+    {% for item in challenges %}
+    {% set s = item.summary %}
+    <li class="profile-list-item">
+        <a href="{{ url_for('challenge_detail', challenge_id=item.id) }}">
+            <strong>{{ item.topic_label }}</strong>
+        </a>
+        <span class="profile-list-meta">
+            @{{ item.creator_handle }} vs @{{ item.opponent_handle }}
+            · {{ item.status }}
+            {% if s.creator_score is not none %} · {{ s.creator_score }}/{{ s.total }}{% endif %}
+            {% if s.opponent_score is not none %} vs {{ s.opponent_score }}/{{ s.total }}{% endif %}
+        </span>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p class="profile-empty">No challenges yet. Challenge someone from their public profile or start one here.</p>
+{% endif %}
+</div>
+{% endblock %}

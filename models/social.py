@@ -46,6 +46,7 @@ FEED_DEFAULT_LIMIT = 50
 FEED_MAX_LIMIT = 100
 SEARCH_MAX_LIMIT = 50
 SEARCH_DEFAULT_LIMIT = 20
+SEARCH_MIN_QUERY_LEN = 2
 
 
 def _like_escape(value):
@@ -86,7 +87,8 @@ def get_profile_settings(conn, user_id):
         SELECT profile_visibility, show_member_since, show_last_topic,
                show_last_activity, show_lesson_progress, show_quiz_stats,
                show_shared_questions, auto_share_quiz, auto_share_lesson,
-               default_share_visibility, show_study_streak, show_milestones
+               default_share_visibility, show_study_streak, show_milestones,
+               email_weekly_digest
         FROM user_profile_settings
         WHERE user_id = ?
         ''',
@@ -117,7 +119,8 @@ def update_profile_settings(conn, user_id, settings):
             auto_share_lesson = ?,
             default_share_visibility = ?,
             show_study_streak = ?,
-            show_milestones = ?
+            show_milestones = ?,
+            email_weekly_digest = ?
         WHERE user_id = ?
         ''',
         (
@@ -133,6 +136,7 @@ def update_profile_settings(conn, user_id, settings):
             share_visibility,
             _bool_int(settings.get('show_study_streak', False)),
             _bool_int(settings.get('show_milestones', False)),
+            _bool_int(settings.get('email_weekly_digest', False)),
             user_id,
         ),
     )

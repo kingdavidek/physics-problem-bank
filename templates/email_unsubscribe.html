@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Email preferences – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+<div class="lesson-hero">
+    <h1>Email preferences</h1>
+</div>
+
+<section class="section-panel">
+    <div class="section-panel-body">
+        {% if ok %}
+        <p class="flash-success">{{ message }}</p>
+        <p>You can turn weekly recaps back on anytime in <a href="{{ url_for('profile_settings') }}">Settings</a>.</p>
+        {% else %}
+        <p class="error">{{ message }}</p>
+        {% endif %}
+        <p style="margin-top:16px;"><a href="{{ url_for('index') }}">← Back to home</a></p>
+    </div>
+</section>
+</div>
+{% endblock %}
