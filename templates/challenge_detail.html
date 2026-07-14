@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Challenge – {{ topic_label }}{% endblock %}
+
+{% block content %}
+<style>
+  .lesson-quiz-page { max-width: 720px; margin: 0 auto; }
+  .lesson-quiz-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 20px;
+  }
+  .lesson-quiz-mcq-btn {
+    text-align: left; width: 100%; padding: 10px 14px;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); cursor: pointer;
+  }
+  .lesson-quiz-mcq-btn.selected { background: #2563eb; color: #fff; border-color: #1d4ed8; }
+</style>
+
+<div class="page-shell lesson-quiz-page">
+<p class="profile-page-back"><a href="{{ url_for('challenges_list') }}">← All challenges</a></p>
+
+<div class="lesson-hero">
+    <h1>{{ topic_label }}</h1>
+    <p class="hero-sub">@{{ challenge.creator_handle }} vs @{{ challenge.opponent_handle }}</p>
+</div>
+
+<section class="section-panel" style="margin-bottom:20px;">
+    <div class="section-panel-body">
+        <p>
+            <strong>Status:</strong> {{ summary.status }}
+            {% if summary.creator_score is not none %}
+            · @{{ challenge.creator_handle }}: {{ summary.creator_score }}/{{ summary.total }}
+            {% endif %}
+            {% if summary.opponent_score is not none %}
+            · @{{ challenge.opponent_handle }}: {{ summary.opponent_score }}/{{ summary.total }}
+            {% endif %}
+        </p>
+        {% if summary.status == 'pending' and summary.viewer_role == 'opponent' and not summary.viewer_submitted %}
+        <form method="POST" action="{{ url_for('challenge_decline', challenge_id=challenge.id) }}" style="display:inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline">Decline</button>
+        </form>
+        {% endif %}
+    </div>
+</section>
+
+{% if show_quiz %}
+<form method="POST" id="challenge-quiz-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="action" value="submit">
+    {% for problem in problems %}
+    {% set q_index = loop.index0 %}
+    <div class="lesson-quiz-card">
+        <h2 style="font-size:1rem;color:var(--text-muted);">Question {{ loop.index }} of {{ total }}</h2>
+        <div style="margin-bottom:12px;">{{ problem.question | safe }}</div>
+        <div class="lesson-quiz-options">
+            {% for opt in problem.options %}
+            <button type="button" class="lesson-quiz-mcq-btn" data-q="{{ q_index }}" data-letter="{{ opt[0] }}">{{ opt | safe }}</button>
+            {% endfor %}
+        </div>
+        <input type="hidden" name="answer_{{ q_index }}" id="answer_{{ q_index }}" value="">
+    </div>
+    {% endfor %}
+    <p style="text-align:center;margin:24px 0;"><button type="submit" class="btn btn-primary">Submit challenge</button></p>
+</form>
+<script>
+document.querySelectorAll('.lesson-quiz-mcq-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var q = btn.getAttribute('data-q');
+        document.querySelectorAll('.lesson-quiz-mcq-btn[data-q="' + q + '"]').forEach(function(b) { b.classList.remove('selected'); });
+        btn.classList.add('selected');
+        document.getElementById('answer_' + q).value = btn.getAttribute('data-letter');
+    });
+});
+</script>
+{% elif summary.viewer_submitted %}
+<p class="profile-empty">Your score is recorded. Waiting for the other player or view final results above.</p>
+{% endif %}
+</div>
+{% endblock %}

@@ -132,7 +132,10 @@ from models.sharing import (
     mark_suggestion_opened,
 )
 from models.notifications import (
+    NOTIFICATION_CHALLENGE,
+    NOTIFICATION_CHALLENGE_COMPLETE,
     NOTIFICATION_FOLLOW,
+    NOTIFICATION_STUDY_PAIR,
     NOTIFICATION_SUGGESTION,
     count_unread_notifications,
     create_notification,
@@ -147,6 +150,7 @@ from models.user_data import (
     enrich_quiz_attempt_problems,
     get_lesson_progress,
     get_quiz_attempt,
+    get_generator_mcq_attempt,
     get_saved_problem,
     get_practice_streak,
     list_generator_mcq_attempts,
@@ -196,6 +200,55 @@ from models.quicktest import (
     make_session_id,
     save_quicktest_session,
 )
+from models.lesson_quiz import (
+    can_access_lesson_quiz,
+    load_lesson_quiz_session,
+    make_lesson_quiz_session_id,
+    save_lesson_quiz_session,
+)
+from models.email_digest import (
+    build_weekly_digest_payload,
+    disable_weekly_digest,
+    mail_config,
+    render_digest_html,
+    render_digest_subject,
+    render_digest_text,
+    send_test_weekly_digest,
+    verify_unsubscribe_token,
+)
+from models.challenges import (
+    CHALLENGE_COMPLETE,
+    CHALLENGE_DECLINED,
+    CHALLENGE_PENDING,
+    create_challenge,
+    decline_challenge,
+    get_challenge,
+    list_challenges_for_user,
+    make_challenge_seed,
+    serialize_challenge,
+    submit_challenge_attempt,
+    user_has_submitted,
+    user_role_in_challenge,
+)
+from models.study_pairs import (
+    PAIR_PENDING,
+    accept_study_pair,
+    buddy_weekly_recap,
+    decline_study_pair,
+    end_study_pair,
+    get_active_study_pair,
+    invite_study_pair,
+    list_pending_study_pair_invites,
+    serialize_study_pair,
+)
+from models.qotd import (
+    current_day_key,
+    friend_qotd_leaderboard,
+    get_daily_question,
+    get_user_attempt,
+    record_qotd_answer,
+)
+from models.weak_topics import analyze_weak_topics, serialize_weak_topic
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-for-local-testing')
@@ -247,6 +300,12 @@ def _problem_client_payload(problem):
         'correct_answer': problem.get('correct_answer'),
         'variant_name': problem.get('variant_name'),
     }
+    if problem.get('correct_answer_raw') is not None:
+        payload['correct_answer_raw'] = str(problem['correct_answer_raw'])
+        payload['answer_type'] = problem.get('answer_type') or 'number'
+        hint = problem.get('answer_format_hint')
+        if hint:
+            payload['answer_format_hint'] = hint
     return payload
 
 _BLOCK_HTML_MARKERS = ('<svg', '<div', '<table', '<pre', '<figure')
@@ -334,6 +393,52 @@ def apply_csp(response):
         # SharedArrayBuffer (blocking stdin in the Pyodide worker) needs cross-origin isolation.
         response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
         response.headers['Cross-Origin-Embedder-Policy'] = 'credentialless'
+    return response
+
+
+@app.after_request
+def apply_cors(response):
+    """Allow configured browser origins to call /api/* (native wrappers, local dev)."""
+    if not _is_api_path():
+        return response
+    origins = _cors_origins()
+    if not origins:
+        return response
+    origin = request.headers.get('Origin')
+    if origin and origin in origins:
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Allow-Headers'] = (
+            'Authorization, Content-Type, Accept, X-Requested-With'
+        )
+        response.headers['Access-Control-Allow-Methods'] = (
+            'GET, POST, PATCH, PUT, DELETE, OPTIONS'
+        )
+        response.headers['Vary'] = 'Origin'
+    return response
+
+
+@app.before_request
+def handle_cors_preflight():
+    if request.method != 'OPTIONS' or not _is_api_path():
+        return None
+    origins = _cors_origins()
+    origin = request.headers.get('Origin')
+    if not origins:
+        return Response('', status=405)
+    if origin not in origins:
+        return Response('', status=403)
+    response = Response('', status=204)
+    response.headers['Access-Control-Allow-Origin'] = origin
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    response.headers['Access-Control-Allow-Headers'] = (
+        'Authorization, Content-Type, Accept, X-Requested-With'
+    )
+    response.headers['Access-Control-Allow-Methods'] = (
+        'GET, POST, PATCH, PUT, DELETE, OPTIONS'
+    )
+    response.headers['Access-Control-Max-Age'] = '86400'
+    response.headers['Vary'] = 'Origin'
     return response
 
 
@@ -569,9 +674,25 @@ with get_db() as conn:
         ('default_share_visibility', "TEXT NOT NULL DEFAULT 'followers_only'"),
         ('show_study_streak', 'INTEGER NOT NULL DEFAULT 0'),
         ('show_milestones', 'INTEGER NOT NULL DEFAULT 0'),
+        ('email_weekly_digest', 'INTEGER NOT NULL DEFAULT 0'),
     ):
         if col not in profile_cols:
             conn.execute(f'ALTER TABLE user_profile_settings ADD COLUMN {col} {ddl}')
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS email_digest_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            week_key TEXT NOT NULL,
+            status TEXT NOT NULL,
+            error_message TEXT NOT NULL DEFAULT '',
+            sent_at TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_email_digest_log_user_week
+        ON email_digest_log (user_id, week_key)
+    """)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS user_streaks (
             user_id INTEGER PRIMARY KEY,
@@ -677,6 +798,62 @@ with get_db() as conn:
         CREATE INDEX IF NOT EXISTS idx_api_tokens_user
         ON api_tokens (user_id, created_at DESC)
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS quiz_challenges (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            creator_id INTEGER NOT NULL,
+            opponent_id INTEGER NOT NULL,
+            level TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            topic TEXT NOT NULL,
+            seed INTEGER NOT NULL,
+            problems_json TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            creator_score INTEGER,
+            opponent_score INTEGER,
+            creator_completed_at TEXT,
+            opponent_completed_at TEXT,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (opponent_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_quiz_challenges_users
+        ON quiz_challenges (creator_id, opponent_id, created_at DESC)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS study_pairs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_low_id INTEGER NOT NULL,
+            user_high_id INTEGER NOT NULL,
+            invited_by_id INTEGER NOT NULL,
+            to_user_id INTEGER NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            created_at TEXT NOT NULL,
+            activated_at TEXT,
+            ended_at TEXT,
+            FOREIGN KEY (user_low_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (user_high_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (invited_by_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (to_user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_study_pairs_users
+        ON study_pairs (user_low_id, user_high_id, status)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS qotd_attempts (
+            user_id INTEGER NOT NULL,
+            day_key TEXT NOT NULL,
+            correct INTEGER NOT NULL,
+            answer TEXT NOT NULL,
+            answered_at TEXT NOT NULL,
+            PRIMARY KEY (user_id, day_key),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
     conn.commit()
 
 login_manager.init_app(app)
@@ -721,6 +898,28 @@ def load_user_from_bearer_token(req):
         touch_token_use(conn, row['id'], row['last_used_at'])
         g.api_token_id = row['id']
         return user
+
+
+@app.errorhandler(404)
+def _handle_not_found(err):
+    if _is_api_path():
+        return _api_error('Not found', 404, 'not_found')
+    return 'Not Found', 404
+
+
+@app.errorhandler(405)
+def _handle_method_not_allowed(err):
+    if _is_api_path():
+        return _api_error('Method not allowed', 405, 'method_not_allowed')
+    return 'Method Not Allowed', 405
+
+
+@app.errorhandler(500)
+def _handle_server_error(err):
+    if _is_api_path():
+        app.logger.exception('Unhandled API error')
+        return _api_error('Internal server error', 500, 'server_error')
+    return 'Internal Server Error', 500
 
 
 def _save_qt(data):
@@ -1395,6 +1594,11 @@ def _build_public_profile_context(target_user, viewer_id=None):
             study_streak = get_study_streak(conn, target_user.id)
         if is_own or settings.get('show_milestones'):
             milestones = list_user_milestones(conn, target_user.id)
+        can_challenge = False
+        can_invite_study_pair = False
+        if viewer_id and not is_own:
+            can_challenge = not is_blocked(conn, viewer_id, target_user.id)
+            can_invite_study_pair = can_challenge
 
     for item in lesson_rows:
         item['topic_label'] = _topic_label(item['level'], item['subject'], item['topic'])
@@ -1439,14 +1643,238 @@ def _build_public_profile_context(target_user, viewer_id=None):
         'last_activity_url': last_activity_url,
         'study_streak': study_streak,
         'milestones': milestones,
+        'can_challenge': can_challenge,
+        'can_invite_study_pair': can_invite_study_pair,
     }
 
 
-def _api_error(message, status=400, code=None):
+def _mcq_topic_choices():
+    from models.qotd import list_mcq_topic_paths
+
+    choices = []
+    for level, subject, topic, cfg in list_mcq_topic_paths():
+        choices.append({
+            'level': level,
+            'subject': subject,
+            'topic': topic,
+            'label': cfg.get('name', topic.replace('_', ' ').title()),
+            'value': f'{level}|{subject}|{topic}',
+        })
+    return choices
+
+
+def _parse_topic_choice(value):
+    parts = (value or '').split('|')
+    if len(parts) != 3:
+        return None
+    return parts[0], parts[1], parts[2]
+
+
+def _create_challenge_for_users(conn, creator, opponent, level, subject, topic):
+    if is_blocked(conn, creator.id, opponent.id):
+        raise ValueError('blocked')
+    if not _lesson_quiz_available(level, subject, topic):
+        raise ValueError('topic_unavailable')
+    topic_config = TOPICS[level][subject][topic]
+    seed = make_challenge_seed(creator.id, opponent.id, level, subject, topic)
+    problems = build_lesson_mcq_quiz(level, subject, topic, topic_config, seed=seed)
+    challenge_id = create_challenge(
+        conn,
+        creator.id,
+        opponent.id,
+        level,
+        subject,
+        topic,
+        problems,
+        seed=seed,
+    )
+    topic_label = _topic_label(level, subject, topic)
+    _notify_challenge_received(conn, opponent.id, creator.handle, challenge_id, topic_label)
+    return challenge_id
+
+
+def _weak_topics_for_user(conn, user_id, *, limit=8, lookback_days=None, external_urls=False):
+    items = analyze_weak_topics(
+        conn,
+        user_id,
+        limit=limit,
+        lookback_days=lookback_days,
+    )
+    out = []
+    for item in items:
+        level, subject, topic = item['level'], item['subject'], item['topic']
+        topic_url = url_for('topic_page', level=level, subject=subject, topic=topic)
+        lesson_quiz_url = None
+        if _lesson_quiz_available(level, subject, topic):
+            lesson_quiz_url = url_for(
+                'lesson_mcq_quiz',
+                level=level,
+                subject=subject,
+                topic=topic,
+            )
+        if external_urls:
+            topic_url = url_for(
+                'topic_page',
+                level=level,
+                subject=subject,
+                topic=topic,
+                _external=True,
+            )
+            if lesson_quiz_url:
+                lesson_quiz_url = url_for(
+                    'lesson_mcq_quiz',
+                    level=level,
+                    subject=subject,
+                    topic=topic,
+                    _external=True,
+                )
+        enriched = serialize_weak_topic(
+            item,
+            topic_label=_topic_label(level, subject, topic),
+            topic_url=topic_url,
+            lesson_quiz_url=lesson_quiz_url,
+        )
+        out.append(enriched)
+    return out
+
+
+def _serialize_quiz_attempt_summary(item, *, external_urls=False):
+    level, subject, topic = item['level'], item['subject'], item['topic']
+    total = item.get('total') or 0
+    score = item.get('score') or 0
+    return {
+        'id': item['id'],
+        'level': level,
+        'subject': subject,
+        'topic': topic,
+        'topic_label': _topic_label(level, subject, topic),
+        'score': score,
+        'total': total,
+        'score_pct': round(100.0 * score / total, 1) if total else None,
+        'created_at': item.get('created_at'),
+        'has_review': bool(item.get('has_review')),
+        'topic_url': url_for(
+            'topic_page',
+            level=level,
+            subject=subject,
+            topic=topic,
+            _external=external_urls,
+        ),
+        'review_url': url_for(
+            'view_quiz_attempt',
+            attempt_id=item['id'],
+            _external=external_urls,
+        ),
+    }
+
+
+def _serialize_quiz_attempt_detail(attempt, *, external_urls=False):
+    level, subject, topic = attempt['level'], attempt['subject'], attempt['topic']
+    total = attempt.get('total') or 0
+    score = attempt.get('score') or 0
+    questions = []
+    if attempt.get('problems'):
+        enriched = enrich_quiz_attempt_problems(attempt['problems'], attempt['answers'])
+        for index, problem in enumerate(enriched):
+            entry = _quicktest_question_payload(problem, reveal=True)
+            user_answer = (problem.get('user_answer') or '').strip().upper()[:1]
+            correct_answer = (problem.get('correct_answer') or '').strip().upper()[:1]
+            entry['index'] = index
+            entry['user_answer'] = user_answer
+            entry['correct'] = bool(user_answer and user_answer == correct_answer)
+            questions.append(entry)
+    return {
+        'id': attempt['id'],
+        'level': level,
+        'subject': subject,
+        'topic': topic,
+        'topic_label': _topic_label(level, subject, topic),
+        'score': score,
+        'total': total,
+        'score_pct': round(100.0 * score / total, 1) if total else None,
+        'created_at': attempt.get('created_at'),
+        'has_review': bool(questions),
+        'topic_url': url_for(
+            'topic_page',
+            level=level,
+            subject=subject,
+            topic=topic,
+            _external=external_urls,
+        ),
+        'review_url': url_for(
+            'view_quiz_attempt',
+            attempt_id=attempt['id'],
+            _external=external_urls,
+        ),
+        'questions': questions,
+    }
+
+
+def _serialize_mcq_attempt_summary(item, *, external_urls=False):
+    level, subject, topic = item['level'], item['subject'], item['topic']
+    return {
+        'id': item['id'],
+        'level': level,
+        'subject': subject,
+        'topic': topic,
+        'topic_label': _topic_label(level, subject, topic),
+        'mode': item.get('mode'),
+        'difficulty': item.get('difficulty'),
+        'user_answer': item.get('user_answer'),
+        'correct_answer': item.get('correct_answer'),
+        'correct': bool(item.get('correct')),
+        'created_at': item.get('created_at'),
+        'topic_url': url_for(
+            'topic_page',
+            level=level,
+            subject=subject,
+            topic=topic,
+            _external=external_urls,
+        ),
+    }
+
+
+def _api_error(message, status=400, code=None, **extra):
     payload = {'ok': False, 'error': message}
     if code:
         payload['code'] = code
+    payload.update(extra)
     return jsonify(payload), status
+
+
+def _require_rate_limit(action, limit, *, label=None):
+    """Return an error response if limited, else (None, remaining)."""
+    allowed, remaining = _api_rate_limit(action, limit)
+    if not allowed:
+        name = label or action.replace('_', ' ')
+        return _api_error(
+            f'Daily {name} limit reached',
+            429,
+            'rate_limited',
+            rate_limit_remaining=0,
+        ), None
+    return None, remaining
+
+
+def _cors_origins():
+    raw = os.environ.get('CORS_ORIGINS', '').strip()
+    if not raw:
+        return frozenset()
+    return frozenset(origin.strip() for origin in raw.split(',') if origin.strip())
+
+
+def _is_api_path(path=None):
+    path = path or request.path
+    return path.startswith('/api/')
+
+
+def _legacy_api_response(payload, status=200):
+    """JSON response for deprecated /api/* routes (non-v1)."""
+    response = jsonify(payload)
+    response.status_code = status
+    response.headers['Deprecation'] = 'true'
+    response.headers['Link'] = '</api/v1/>; rel="successor-version"'
+    return response
 
 
 def _extract_bearer_token():
@@ -1466,7 +1894,13 @@ def _serialize_auth_user(user):
     }
 
 
+def _rate_limits_disabled():
+    return app.config.get('TESTING') or os.environ.get('PB_TESTING') == '1'
+
+
 def _auth_rate_limit(action, limit):
+    if _rate_limits_disabled():
+        return True, limit
     bucket = f'auth:{action}:ip:{_client_ip()}'
     with get_db() as conn:
         allowed, remaining, _count = check_and_increment_rate_limit(conn, bucket, limit)
@@ -1501,6 +1935,43 @@ def _notify_new_follower(conn, following_id, follower_handle):
     )
 
 
+def _notify_challenge_received(conn, opponent_id, creator_handle, challenge_id, topic_label):
+    create_notification(
+        conn,
+        opponent_id,
+        NOTIFICATION_CHALLENGE,
+        {
+            'challenge_id': challenge_id,
+            'creator_handle': creator_handle,
+            'topic_label': topic_label,
+        },
+    )
+
+
+def _notify_challenge_complete(conn, user_id, challenge_id, creator_handle, opponent_handle, creator_score, opponent_score):
+    create_notification(
+        conn,
+        user_id,
+        NOTIFICATION_CHALLENGE_COMPLETE,
+        {
+            'challenge_id': challenge_id,
+            'creator_handle': creator_handle,
+            'opponent_handle': opponent_handle,
+            'creator_score': creator_score,
+            'opponent_score': opponent_score,
+        },
+    )
+
+
+def _notify_study_pair_invite(conn, to_user_id, from_handle, pair_id):
+    create_notification(
+        conn,
+        to_user_id,
+        NOTIFICATION_STUDY_PAIR,
+        {'pair_id': pair_id, 'from_handle': from_handle},
+    )
+
+
 def _serialize_notification_item(item):
     payload = item.get('payload') or {}
     ntype = item.get('notification_type', '')
@@ -1513,6 +1984,21 @@ def _serialize_notification_item(item):
         handle = payload.get('follower_handle', 'someone')
         message = f'@{handle} started following you'
         url = url_for('public_profile', handle=handle)
+    elif ntype == NOTIFICATION_CHALLENGE:
+        handle = payload.get('creator_handle', 'someone')
+        topic = payload.get('topic_label', 'a topic')
+        message = f'@{handle} challenged you to a quiz on {topic}'
+        url = url_for('challenge_detail', challenge_id=payload.get('challenge_id'))
+    elif ntype == NOTIFICATION_CHALLENGE_COMPLETE:
+        ch_id = payload.get('challenge_id')
+        cs = payload.get('creator_score')
+        os_ = payload.get('opponent_score')
+        message = f'Challenge complete — {cs}/{os_} vs @{payload.get("opponent_handle", "friend")}'
+        url = url_for('challenge_detail', challenge_id=ch_id)
+    elif ntype == NOTIFICATION_STUDY_PAIR:
+        handle = payload.get('from_handle', 'someone')
+        message = f'@{handle} invited you to be study buddies'
+        url = url_for('profile')
     else:
         message = 'New notification'
         url = url_for('profile')
@@ -1633,6 +2119,7 @@ def _settings_to_json(settings):
         'default_share_visibility': settings.get('default_share_visibility', VISIBILITY_FOLLOWERS),
         'show_study_streak': bool(settings.get('show_study_streak', False)),
         'show_milestones': bool(settings.get('show_milestones', False)),
+        'email_weekly_digest': bool(settings.get('email_weekly_digest', False)),
     }
 
 
@@ -1913,6 +2400,11 @@ def _lesson_api_metadata(level, subject, topic):
             if _lesson_quiz_available(level, subject, topic)
             else None
         ),
+        'lesson_quiz_api': (
+            url_for('api_v1_lesson_quiz_start')
+            if _lesson_quiz_available(level, subject, topic)
+            else None
+        ),
         'progress_enabled': True,
     }
 
@@ -1951,6 +2443,78 @@ def _get_quicktest_session_or_error(session_id):
     if not can_access_quicktest(data, session_id, viewer_id):
         return None, _api_error('Quick test session not accessible', 403, 'forbidden')
     return data, None
+
+
+def _lesson_quiz_session_summary(data, session_id):
+    idx = int(data.get('index', 0))
+    total = len(data.get('problems') or [])
+    return {
+        'session_id': session_id,
+        'topic_name': data.get('topic_name'),
+        'level': data.get('level'),
+        'subject': data.get('subject'),
+        'topic': data.get('topic'),
+        'lesson_url': data.get('lesson_url'),
+        'current': min(idx + 1, total) if total else 0,
+        'total': total,
+        'finished': idx >= total and total > 0,
+        'score': data.get('score'),
+        'attempt_id': data.get('attempt_id'),
+    }
+
+
+def _get_lesson_quiz_session_or_error(session_id):
+    viewer_id = current_user.id if current_user.is_authenticated else None
+    with get_db() as conn:
+        data = load_lesson_quiz_session(conn, session_id)
+    if not data:
+        return None, _api_error('Lesson quiz session not found', 404, 'not_found')
+    if not can_access_lesson_quiz(data, session_id, viewer_id):
+        return None, _api_error('Lesson quiz session not accessible', 403, 'forbidden')
+    return data, None
+
+
+def _lesson_quiz_score(problems, answers):
+    score = 0
+    for i, problem in enumerate(problems):
+        letter = answers[i] if i < len(answers) else ''
+        if letter and letter == (problem.get('correct_answer') or '').strip().upper()[:1]:
+            score += 1
+    return score
+
+
+def _finalize_lesson_quiz_session(data, session_id):
+    problems = data.get('problems') or []
+    answers = list(data.get('answers') or [])
+    score = _lesson_quiz_score(problems, answers)
+    data['score'] = score
+    data['attempt_id'] = None
+
+    if current_user.is_authenticated:
+        with get_db() as conn:
+            attempt_id = record_quiz_attempt(
+                conn,
+                current_user.id,
+                data['level'],
+                data['subject'],
+                data['topic'],
+                score,
+                len(problems),
+                answers,
+                problems,
+            )
+        data['attempt_id'] = attempt_id
+        _track_quiz_completed(
+            data['level'],
+            data['subject'],
+            data['topic'],
+            score,
+            len(problems),
+        )
+
+    with get_db() as conn:
+        save_lesson_quiz_session(conn, session_id, data)
+    return score, data.get('attempt_id')
 
 
 def _apply_lesson_progress_update(
@@ -2235,6 +2799,11 @@ def profile():
         weekly_recap = get_weekly_recap(conn, current_user.id)
         leaderboard = friend_effort_leaderboard(conn, current_user.id, days=7)
         pending_suggestions = count_pending_suggestions(conn, current_user.id)
+        challenges = list_challenges_for_user(conn, current_user.id, limit=10)
+        study_pair = get_active_study_pair(conn, current_user.id)
+        study_pair_invites = list_pending_study_pair_invites(conn, current_user.id)
+        buddy_recap = buddy_weekly_recap(conn, current_user.id)
+        weak_topics = _weak_topics_for_user(conn, current_user.id, limit=8)
     for item in saved:
         item['topic_label'] = _topic_label(item['level'], item['subject'], item['topic'])
     for item in progress:
@@ -2255,6 +2824,14 @@ def profile():
         bq['topic_label'] = _topic_label(bq['level'], bq['subject'], bq['topic'])
     for item in leaderboard:
         item['profile_url'] = url_for('public_profile', handle=item['handle'])
+    for item in challenges:
+        item['topic_label'] = _topic_label(item['level'], item['subject'], item['topic'])
+        item['summary'] = serialize_challenge(item, current_user.id)
+    pending_challenges = sum(
+        1 for c in challenges
+        if c['status'] == CHALLENGE_PENDING
+        and not user_has_submitted(c, current_user.id)
+    )
     return render_template(
         'profile.html',
         saved_problems=saved,
@@ -2267,6 +2844,12 @@ def profile():
         weekly_recap=weekly_recap,
         friend_leaderboard=leaderboard[:5],
         pending_suggestions=pending_suggestions,
+        challenges=challenges,
+        pending_challenges=pending_challenges,
+        study_pair=study_pair,
+        study_pair_invites=study_pair_invites,
+        buddy_recap=buddy_recap,
+        weak_topics=weak_topics,
         public_profile_url=_public_profile_url(current_user.handle),
     )
 
@@ -2287,6 +2870,25 @@ def profile_settings():
                 revoke_all_tokens(conn, current_user.id)
             flash('All app sessions have been signed out.', 'success')
             return redirect(url_for('profile_settings'))
+        elif request.form.get('action') == 'send_test_digest':
+            cfg = mail_config()
+            if not cfg['enabled'] and cfg['provider'] != 'console':
+                flash(
+                    'Email sending is not enabled yet. See docs/EMAIL_SETUP.md when you launch.',
+                    'error',
+                )
+            else:
+                with get_db() as conn:
+                    ok, err = send_test_weekly_digest(
+                        conn,
+                        current_user,
+                        topic_label_fn=_topic_label,
+                    )
+                if ok:
+                    flash('Test recap email sent (check your inbox or server logs).', 'success')
+                else:
+                    flash(f'Could not send test email: {err}', 'error')
+            return redirect(url_for('profile_settings'))
         else:
             updated = {
                 'profile_visibility': request.form.get('profile_visibility', 'public'),
@@ -2304,6 +2906,7 @@ def profile_settings():
                 ),
                 'show_study_streak': request.form.get('show_study_streak') == '1',
                 'show_milestones': request.form.get('show_milestones') == '1',
+                'email_weekly_digest': request.form.get('email_weekly_digest') == '1',
             }
             with get_db() as conn:
                 update_profile_settings(conn, current_user.id, updated)
@@ -2316,6 +2919,7 @@ def profile_settings():
         'profile_settings.html',
         settings=settings,
         api_token_sessions=api_token_sessions,
+        mail_configured=mail_config()['enabled'] or mail_config()['provider'] == 'console',
         visibility_choices=VISIBILITY_CHOICES,
         profile_visibility_label=PROFILE_VISIBILITY_LABELS.get(
             settings.get('profile_visibility', VISIBILITY_PUBLIC),
@@ -2324,6 +2928,69 @@ def profile_settings():
         errors=errors,
         public_profile_url=_public_profile_url(current_user.handle),
     )
+
+
+@app.route('/email/unsubscribe')
+def email_unsubscribe():
+    token = (request.args.get('token') or '').strip()
+    secret = app.secret_key
+    user_id = verify_unsubscribe_token(token, secret)
+    if not user_id:
+        return render_template('email_unsubscribe.html', ok=False, message='Invalid or expired link.')
+
+    with get_db() as conn:
+        user = User.get_by_id(conn, user_id)
+        if not user or not user.is_active:
+            return render_template('email_unsubscribe.html', ok=False, message='Account not found.')
+        disable_weekly_digest(conn, user_id)
+
+    return render_template(
+        'email_unsubscribe.html',
+        ok=True,
+        message='You have been unsubscribed from weekly recap emails.',
+        handle=user.handle,
+    )
+
+
+@app.post('/api/v1/me/email/test-digest')
+@login_required
+def api_v1_test_digest():
+    cfg = mail_config()
+    if not cfg['enabled'] and cfg['provider'] != 'console':
+        return _api_error(
+            'Email sending is not enabled. See docs/EMAIL_SETUP.md.',
+            503,
+            'mail_not_configured',
+        )
+    with get_db() as conn:
+        ok, err = send_test_weekly_digest(
+            conn,
+            current_user,
+            topic_label_fn=_topic_label,
+        )
+    if not ok:
+        return _api_error(err or 'Send failed', 502, 'mail_send_failed')
+    return jsonify({'ok': True, 'message': 'Test digest sent'})
+
+
+@app.get('/api/v1/me/email/digest-preview')
+@login_required
+def api_v1_digest_preview():
+    with get_db() as conn:
+        payload = build_weekly_digest_payload(
+            conn,
+            current_user,
+            topic_label_fn=_topic_label,
+        )
+    return jsonify({
+        'ok': True,
+        'preview': {
+            'subject': render_digest_subject(payload),
+            'text': render_digest_text(payload),
+            'html': render_digest_html(payload),
+            'week_key': payload['week_key'],
+        },
+    })
 
 
 @app.route('/u/<handle>')
@@ -2575,6 +3242,75 @@ def api_v1_unfollow_user(handle):
     })
 
 
+@app.post('/api/v1/problems/check')
+def api_v1_problems_check():
+    from generators.shared.answer_checkers import check_answer
+
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('JSON body required', 400, 'invalid_payload')
+
+    user_answer = payload.get('user_answer')
+    if user_answer is None or str(user_answer).strip() == '':
+        return _api_error('user_answer is required', 400, 'missing_fields')
+
+    stored = session.get('last_problem_payload') or {}
+    problem = stored.get('problem') or {}
+
+    if problem.get('correct_answer_raw') is not None:
+        correct_answer_raw = str(problem['correct_answer_raw'])
+        answer_type = problem.get('answer_type') or 'number'
+        level = stored.get('level') or ''
+        subject = stored.get('subject') or ''
+        topic = stored.get('topic') or ''
+        difficulty = stored.get('difficulty') or 'foundational'
+        client_raw = payload.get('correct_answer_raw')
+        if client_raw is not None and str(client_raw) != correct_answer_raw:
+            return _api_error('Problem mismatch', 403, 'session_mismatch')
+        client_type = payload.get('answer_type')
+        if client_type is not None and client_type != answer_type:
+            return _api_error('Problem mismatch', 403, 'session_mismatch')
+    else:
+        correct_answer_raw = str(payload.get('correct_answer_raw') or '').strip()
+        answer_type = (payload.get('answer_type') or 'number').strip()
+        level = (payload.get('level') or '').strip()
+        subject = (payload.get('subject') or '').strip()
+        topic = (payload.get('topic') or '').strip()
+        difficulty = (payload.get('difficulty') or 'foundational').strip()
+        if not correct_answer_raw:
+            return _api_error('correct_answer_raw is required', 400, 'missing_fields')
+
+    try:
+        result = check_answer(answer_type, correct_answer_raw, user_answer)
+    except ValueError as exc:
+        message = str(exc)
+        if message.startswith('unknown_answer_type:'):
+            return _api_error(message, 400, 'unknown_answer_type')
+        return _api_error(message, 400, 'invalid_correct_answer')
+
+    if current_user.is_authenticated and level and subject and topic:
+        try:
+            TOPICS[level][subject][topic]
+        except KeyError:
+            pass
+        else:
+            _track_mcq_answered(
+                level,
+                subject,
+                topic,
+                difficulty,
+                str(user_answer).strip(),
+                result['normalized_correct'],
+                result['correct'],
+            )
+
+    response = {'ok': True, **result}
+    if current_user.is_authenticated:
+        with get_db() as conn:
+            response['practice_streak'] = get_practice_streak(conn, current_user.id)
+    return jsonify(response)
+
+
 @app.post('/api/v1/generator/mcq-answer')
 @login_required
 def api_v1_generator_mcq_answer():
@@ -2645,6 +3381,7 @@ def api_v1_patch_settings():
         'default_share_visibility',
         'show_study_streak',
         'show_milestones',
+        'email_weekly_digest',
     }
     unknown = set(payload.keys()) - allowed_keys
     if unknown:
@@ -2683,6 +3420,7 @@ def api_v1_patch_settings():
         'auto_share_lesson',
         'show_study_streak',
         'show_milestones',
+        'email_weekly_digest',
     )
     for field in bool_fields:
         if field in payload and not isinstance(payload[field], bool):
@@ -2926,6 +3664,8 @@ def api_v1_me_gamification():
         milestones = list_user_milestones(conn, current_user.id)
         recap = get_weekly_recap(conn, current_user.id)
         leaderboard = friend_effort_leaderboard(conn, current_user.id, days=7)
+        buddy_recap = buddy_weekly_recap(conn, current_user.id)
+        qotd_board = friend_qotd_leaderboard(conn, current_user.id)
     if recap.get('best_quiz'):
         bq = recap['best_quiz']
         bq['topic_label'] = _topic_label(bq['level'], bq['subject'], bq['topic'])
@@ -2934,6 +3674,7 @@ def api_v1_me_gamification():
         'study_streak': streak,
         'milestones': milestones,
         'weekly_recap': recap,
+        'buddy_recap': buddy_recap,
         'friend_leaderboard': [
             {
                 'rank': item['rank'],
@@ -2943,11 +3684,114 @@ def api_v1_me_gamification():
             }
             for item in leaderboard
         ],
+        'qotd_leaderboard': qotd_board,
+    })
+
+
+@app.get('/api/v1/me/weak-topics')
+@login_required
+def api_v1_me_weak_topics():
+    try:
+        limit = min(max(int(request.args.get('limit', 8)), 1), 20)
+    except (TypeError, ValueError):
+        limit = 8
+    lookback_days = request.args.get('lookback_days', type=int)
+    with get_db() as conn:
+        weak_topics = _weak_topics_for_user(
+            conn,
+            current_user.id,
+            limit=limit,
+            lookback_days=lookback_days,
+            external_urls=True,
+        )
+    return jsonify({'ok': True, 'weak_topics': weak_topics})
+
+
+@app.get('/api/v1/me/quiz-attempts')
+@login_required
+def api_v1_list_quiz_attempts():
+    try:
+        limit = min(max(int(request.args.get('limit', 20)), 1), 100)
+    except (TypeError, ValueError):
+        limit = 20
+    before_id = request.args.get('before_id', type=int)
+    with get_db() as conn:
+        attempts = list_quiz_attempts(
+            conn,
+            current_user.id,
+            limit=limit,
+            before_id=before_id,
+        )
+    items = [
+        _serialize_quiz_attempt_summary(item, external_urls=True)
+        for item in attempts
+    ]
+    return jsonify({
+        'ok': True,
+        'quiz_attempts': items,
+        'next_before_id': items[-1]['id'] if items else None,
+    })
+
+
+@app.get('/api/v1/me/quiz-attempts/<int:attempt_id>')
+@login_required
+def api_v1_get_quiz_attempt(attempt_id):
+    with get_db() as conn:
+        attempt = get_quiz_attempt(conn, current_user.id, attempt_id)
+    if not attempt:
+        return _api_error('Quiz attempt not found', 404, 'not_found')
+    return jsonify({
+        'ok': True,
+        'quiz_attempt': _serialize_quiz_attempt_detail(attempt, external_urls=True),
+    })
+
+
+@app.get('/api/v1/me/mcq-attempts')
+@login_required
+def api_v1_list_mcq_attempts():
+    try:
+        limit = min(max(int(request.args.get('limit', 20)), 1), 100)
+    except (TypeError, ValueError):
+        limit = 20
+    before_id = request.args.get('before_id', type=int)
+    with get_db() as conn:
+        attempts = list_generator_mcq_attempts(
+            conn,
+            current_user.id,
+            limit=limit,
+            before_id=before_id,
+        )
+    items = [
+        _serialize_mcq_attempt_summary(item, external_urls=True)
+        for item in attempts
+    ]
+    return jsonify({
+        'ok': True,
+        'mcq_attempts': items,
+        'next_before_id': items[-1]['id'] if items else None,
+    })
+
+
+@app.get('/api/v1/me/mcq-attempts/<int:attempt_id>')
+@login_required
+def api_v1_get_mcq_attempt(attempt_id):
+    with get_db() as conn:
+        attempt = get_generator_mcq_attempt(conn, current_user.id, attempt_id)
+    if not attempt:
+        return _api_error('MCQ attempt not found', 404, 'not_found')
+    return jsonify({
+        'ok': True,
+        'mcq_attempt': _serialize_mcq_attempt_summary(attempt, external_urls=True),
     })
 
 
 GENERATE_DAILY_LIMIT = 200
 REPORT_DAILY_LIMIT = 20
+SHARE_DAILY_LIMIT = 50
+SUGGEST_DAILY_LIMIT = 50
+QUICKTEST_DAILY_LIMIT = 30
+LESSON_QUIZ_DAILY_LIMIT = 20
+CHALLENGE_DAILY_LIMIT = 20
 DIFFICULTIES = ('foundational', 'intermediate', 'difficult')
 
 
@@ -2958,6 +3802,8 @@ def _client_ip():
 
 def _api_rate_limit(action, limit):
     """Return (allowed, remaining) or abort with JSON error via tuple (False, 0)."""
+    if _rate_limits_disabled():
+        return True, limit
     if current_user.is_authenticated:
         bucket = f'{action}:user:{current_user.id}'
     else:
@@ -3004,6 +3850,11 @@ def _build_topics_catalog():
     return levels
 
 
+@app.get('/api/v1/health')
+def api_v1_health():
+    return jsonify({'ok': True, 'status': 'up'})
+
+
 @app.get('/api/v1/topics/<level>/<subject>/<topic>/lesson')
 def api_v1_lesson_content(level, subject, topic):
     topic = _resolve_topic_slug(level, subject, topic)
@@ -3045,6 +3896,10 @@ def api_v1_quicktest_start():
             403,
             'auth_required',
         )
+
+    err, _remaining = _require_rate_limit('quicktest', QUICKTEST_DAILY_LIMIT, label='quick test')
+    if err:
+        return err
 
     try:
         problems, topic_config = build_quicktest_problems(
@@ -3180,6 +4035,168 @@ def api_v1_quicktest_results(session_id):
         'mcq_score': mcq_score,
         'mcq_total': mcq_total,
     })
+
+
+@app.post('/api/v1/lesson-quiz/start')
+def api_v1_lesson_quiz_start():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('Request body must be a JSON object', 400, 'invalid_json')
+
+    level = payload.get('level', 'gcse')
+    subject = payload.get('subject', 'maths')
+    topic = _resolve_topic_slug(level, subject, payload.get('topic', ''))
+
+    if not _topic_path_valid(level, subject, topic):
+        return _api_error('Topic not found', 404, 'topic_not_found')
+    if not _lesson_quiz_available(level, subject, topic):
+        return _api_error('Lesson quiz not available for this topic', 404, 'quiz_not_available')
+
+    err, _remaining = _require_rate_limit(
+        'lesson_quiz', LESSON_QUIZ_DAILY_LIMIT, label='lesson quiz'
+    )
+    if err:
+        return err
+
+    try:
+        topic_config = TOPICS[level][subject][topic]
+        problems = build_lesson_mcq_quiz(level, subject, topic, topic_config)
+    except (KeyError, ValueError):
+        return _api_error('Lesson quiz not available for this topic', 404, 'quiz_not_available')
+
+    owner_user_id = current_user.id if current_user.is_authenticated else None
+    session_id = make_lesson_quiz_session_id(owner_user_id)
+    data = {
+        'problems': problems,
+        'answers': [],
+        'index': 0,
+        'topic_name': topic_config.get('name', topic),
+        'level': level,
+        'subject': subject,
+        'topic': topic,
+        'lesson_url': url_for('topic_page', level=level, subject=subject, topic=topic),
+        'total': len(problems),
+        'owner_user_id': owner_user_id,
+        'kind': 'lesson_quiz',
+    }
+    with get_db() as conn:
+        save_lesson_quiz_session(conn, session_id, data)
+
+    summary = _lesson_quiz_session_summary(data, session_id)
+    first = _quicktest_question_payload(problems[0]) if problems else None
+    return jsonify({'ok': True, **summary, 'problem': first}), 201
+
+
+@app.get('/api/v1/lesson-quiz/<session_id>/question')
+def api_v1_lesson_quiz_question(session_id):
+    data, err = _get_lesson_quiz_session_or_error(session_id)
+    if err:
+        return err
+
+    problems = data.get('problems') or []
+    idx = int(data.get('index', 0))
+    if idx >= len(problems):
+        return _api_error('Lesson quiz finished — fetch results', 400, 'finished')
+
+    return jsonify({
+        'ok': True,
+        **_lesson_quiz_session_summary(data, session_id),
+        'problem': _quicktest_question_payload(problems[idx]),
+        'question_number': idx + 1,
+    })
+
+
+@app.post('/api/v1/lesson-quiz/<session_id>/answer')
+def api_v1_lesson_quiz_answer(session_id):
+    data, err = _get_lesson_quiz_session_or_error(session_id)
+    if err:
+        return err
+
+    problems = data.get('problems') or []
+    idx = int(data.get('index', 0))
+    if idx >= len(problems):
+        return _api_error('Lesson quiz already finished', 400, 'finished')
+
+    payload = request.get_json(silent=True)
+    if payload is not None and not isinstance(payload, dict):
+        return _api_error('Request body must be a JSON object', 400, 'invalid_json')
+
+    user_answer = ''
+    if isinstance(payload, dict):
+        user_answer = (payload.get('user_answer') or '').strip().upper()[:1]
+
+    problem = problems[idx]
+    correct_answer = (problem.get('correct_answer') or '').strip().upper()[:1]
+    correct = bool(user_answer and correct_answer and user_answer == correct_answer)
+
+    answers = list(data.get('answers') or [])
+    answers.append(user_answer)
+    data['answers'] = answers
+    data['index'] = idx + 1
+
+    finished = data['index'] >= len(problems)
+    attempt_id = None
+    score = None
+    if finished:
+        score, attempt_id = _finalize_lesson_quiz_session(data, session_id)
+    else:
+        with get_db() as conn:
+            save_lesson_quiz_session(conn, session_id, data)
+
+    response = {
+        'ok': True,
+        **_lesson_quiz_session_summary(data, session_id),
+        'was_correct': correct,
+        'finished': finished,
+    }
+    if finished:
+        response['score'] = score
+        response['attempt_id'] = attempt_id
+        if attempt_id is not None:
+            response['attempt_url'] = url_for('view_quiz_attempt', attempt_id=attempt_id)
+        response['results_url'] = url_for(
+            'api_v1_lesson_quiz_results', session_id=session_id, _external=False
+        )
+    return jsonify(response)
+
+
+@app.get('/api/v1/lesson-quiz/<session_id>/results')
+def api_v1_lesson_quiz_results(session_id):
+    data, err = _get_lesson_quiz_session_or_error(session_id)
+    if err:
+        return err
+
+    problems = data.get('problems') or []
+    idx = int(data.get('index', 0))
+    if idx < len(problems):
+        return _api_error('Lesson quiz not finished yet', 400, 'not_finished')
+
+    answers = data.get('answers') or []
+    score = data.get('score')
+    if score is None:
+        score = _lesson_quiz_score(problems, answers)
+
+    enriched = []
+    for i, problem in enumerate(problems):
+        entry = _quicktest_question_payload(problem, reveal=True)
+        entry['user_answer'] = answers[i] if i < len(answers) else ''
+        correct_answer = (problem.get('correct_answer') or '').strip().upper()[:1]
+        entry['was_correct'] = bool(
+            entry['user_answer'] and entry['user_answer'] == correct_answer
+        )
+        enriched.append(entry)
+
+    result = {
+        'ok': True,
+        **_lesson_quiz_session_summary(data, session_id),
+        'score': score,
+        'total': len(problems),
+        'problems': enriched,
+    }
+    attempt_id = data.get('attempt_id')
+    if attempt_id is not None:
+        result['attempt_url'] = url_for('view_quiz_attempt', attempt_id=attempt_id)
+    return jsonify(result)
 
 
 @app.get('/api/v1/me/lesson-progress')
@@ -3798,6 +4815,14 @@ def _share_problem_from_data(user_id, data, visibility, note=''):
 @login_required
 def share_question_route():
     wants_json = _wants_json_response()
+    err, remaining = _require_rate_limit('share', SHARE_DAILY_LIMIT, label='share')
+    if err:
+        if wants_json:
+            body, status = err
+            return body, status
+        flash('Daily share limit reached. Try again tomorrow.', 'error')
+        return redirect(request.referrer or url_for('index'))
+
     if not _validate_csrf(request.form.get('csrf_token')):
         message = 'Your session expired. Please try again.'
         if wants_json:
@@ -3849,7 +4874,13 @@ def share_question_route():
     share_url = url_for('view_shared_question', share_id=share_id)
     message = 'Question shared.'
     if wants_json:
-        return jsonify({'ok': True, 'message': message, 'share_id': share_id, 'share_url': share_url})
+        return jsonify({
+            'ok': True,
+            'message': message,
+            'share_id': share_id,
+            'share_url': share_url,
+            'rate_limit_remaining': remaining,
+        })
     flash(message, 'success')
     return redirect(share_url)
 
@@ -3903,6 +4934,14 @@ def suggestions_inbox():
 @login_required
 def create_suggestion_route():
     wants_json = _wants_json_response()
+    err, remaining = _require_rate_limit('suggest', SUGGEST_DAILY_LIMIT, label='suggestion')
+    if err:
+        if wants_json:
+            body, status = err
+            return body, status
+        flash('Daily suggestion limit reached. Try again tomorrow.', 'error')
+        return redirect(request.referrer or url_for('index'))
+
     if not _validate_csrf(request.form.get('csrf_token')):
         message = 'Your session expired. Please try again.'
         if wants_json:
@@ -4091,6 +5130,10 @@ def share_quiz_attempt_route(attempt_id):
 @app.post('/api/v1/shared-questions')
 @login_required
 def api_v1_create_share():
+    err, remaining = _require_rate_limit('share', SHARE_DAILY_LIMIT, label='share')
+    if err:
+        return err
+
     payload = request.get_json(silent=True) or {}
     visibility = _normalize_share_visibility(
         payload.get('visibility') or VISIBILITY_FOLLOWERS
@@ -4125,6 +5168,7 @@ def api_v1_create_share():
         'ok': True,
         'share_id': share_id,
         'share_url': url_for('view_shared_question', share_id=share_id),
+        'rate_limit_remaining': remaining,
     })
 
 
@@ -4186,6 +5230,10 @@ def api_v1_list_suggestions():
 @app.post('/api/v1/suggestions')
 @login_required
 def api_v1_create_suggestion():
+    err, remaining = _require_rate_limit('suggest', SUGGEST_DAILY_LIMIT, label='suggestion')
+    if err:
+        return err
+
     payload = request.get_json(silent=True) or {}
     recipient_handle = normalize_handle(payload.get('recipient_handle', ''))
     note = (payload.get('note') or '').strip()[:200]
@@ -4266,6 +5314,7 @@ def api_v1_create_suggestion():
         'ok': True,
         'suggestion_id': suggestion_id,
         'url': url_for('view_suggestion', suggestion_id=suggestion_id),
+        'rate_limit_remaining': remaining,
     })
 
 
@@ -4282,13 +5331,15 @@ def api_v1_dismiss_suggestion(suggestion_id):
 @app.get('/api/lesson-progress/<level>/<subject>/<topic>')
 @login_required
 def api_get_lesson_progress(level, subject, topic):
+    topic = _resolve_topic_slug(level, subject, topic)
     if not _topic_path_valid(level, subject, topic):
-        return jsonify({'error': 'Topic not found'}), 404
+        return _legacy_api_response(
+            {'ok': False, 'error': 'Topic not found', 'code': 'topic_not_found'},
+            404,
+        )
     with get_db() as conn:
         progress = get_lesson_progress(conn, current_user.id, level, subject, topic)
-    if not progress:
-        return jsonify({'progress': None})
-    return jsonify({'progress': progress})
+    return _legacy_api_response({'ok': True, 'progress': progress})
 
 
 @app.post('/api/lesson-progress')
@@ -4296,7 +5347,10 @@ def api_get_lesson_progress(level, subject, topic):
 def api_save_lesson_progress():
     payload = request.get_json(silent=True) or {}
     if not _validate_csrf(payload.get('csrf_token')):
-        return jsonify({'error': 'Invalid session'}), 403
+        return _legacy_api_response(
+            {'ok': False, 'error': 'Invalid session', 'code': 'invalid_csrf'},
+            403,
+        )
 
     level = payload.get('level', '')
     subject = payload.get('subject', '')
@@ -4306,7 +5360,10 @@ def api_save_lesson_progress():
     completed_keys = payload.get('completed_keys')
     if completed_keys is not None:
         if not isinstance(completed_keys, list):
-            return jsonify({'error': 'Invalid completed steps'}), 400
+            return _legacy_api_response(
+                {'ok': False, 'error': 'Invalid completed steps', 'code': 'invalid_field'},
+                400,
+            )
         completed_keys = [
             str(key).strip()[:80]
             for key in completed_keys
@@ -4314,9 +5371,15 @@ def api_save_lesson_progress():
         ]
 
     if not _topic_path_valid(level, subject, topic):
-        return jsonify({'error': 'Topic not found'}), 404
+        return _legacy_api_response(
+            {'ok': False, 'error': 'Topic not found', 'code': 'topic_not_found'},
+            404,
+        )
     if not section_key or len(section_key) > 80:
-        return jsonify({'error': 'Invalid section'}), 400
+        return _legacy_api_response(
+            {'ok': False, 'error': 'Invalid section', 'code': 'invalid_field'},
+            400,
+        )
 
     progress = _apply_lesson_progress_update(
         current_user.id,
@@ -4327,7 +5390,7 @@ def api_save_lesson_progress():
         section_label,
         completed_keys=completed_keys,
     )
-    return jsonify({'ok': True, 'progress': progress})
+    return _legacy_api_response({'ok': True, 'progress': progress})
 
 
 @app.post('/lesson-progress/<level>/<subject>/<topic>/clear')
@@ -4720,6 +5783,563 @@ def quicktest_results():
         topic_name=data['topic_name'],
         total_marks=total_marks,
     )
+
+
+# --- Phase E: challenges, study pairs, question of the day ---
+
+
+@app.route('/challenges')
+@login_required
+def challenges_list():
+    with get_db() as conn:
+        challenges = list_challenges_for_user(conn, current_user.id, limit=50)
+    for item in challenges:
+        item['topic_label'] = _topic_label(item['level'], item['subject'], item['topic'])
+        item['summary'] = serialize_challenge(item, current_user.id)
+    return render_template('challenges.html', challenges=challenges)
+
+
+@app.route('/challenges/new', methods=['GET', 'POST'])
+@login_required
+def challenge_new():
+    opponent_handle = (request.args.get('handle') or request.form.get('handle') or '').strip().lstrip('@')
+    topic_choices = _mcq_topic_choices()
+    errors = {}
+
+    if request.method == 'POST':
+        if not _validate_csrf(request.form.get('csrf_token')):
+            errors['form'] = 'Your session expired. Please try again.'
+        else:
+            err, _ = _require_rate_limit('challenge_create', CHALLENGE_DAILY_LIMIT, label='challenge')
+            if err:
+                flash(err.get_json()['error'], 'error')
+                return redirect(url_for('challenge_new', handle=opponent_handle))
+            opponent_handle = (request.form.get('handle') or '').strip().lstrip('@')
+            parsed = _parse_topic_choice(request.form.get('topic_choice'))
+            if not opponent_handle:
+                errors['handle'] = 'Choose a friend to challenge.'
+            if not parsed:
+                errors['topic'] = 'Choose a topic.'
+            if not errors:
+                with get_db() as conn:
+                    opponent = get_user_by_handle(conn, opponent_handle)
+                    if not opponent or not opponent.is_active:
+                        errors['handle'] = 'User not found.'
+                    elif opponent.id == current_user.id:
+                        errors['handle'] = 'You cannot challenge yourself.'
+                    else:
+                        level, subject, topic = parsed
+                        try:
+                            challenge_id = _create_challenge_for_users(
+                                conn, current_user, opponent, level, subject, topic,
+                            )
+                        except ValueError as exc:
+                            code = str(exc)
+                            if code == 'blocked':
+                                errors['handle'] = 'You cannot challenge this user.'
+                            elif code == 'challenge_limit':
+                                errors['form'] = 'Too many open challenges. Finish or wait for some to complete.'
+                            else:
+                                errors['topic'] = 'Quiz not available for that topic.'
+                        else:
+                            flash(f'Challenge sent to @{opponent.handle}.', 'success')
+                            return redirect(url_for('challenge_detail', challenge_id=challenge_id))
+
+    return render_template(
+        'challenge_new.html',
+        opponent_handle=opponent_handle,
+        topic_choices=topic_choices,
+        errors=errors,
+    )
+
+
+@app.route('/challenges/<int:challenge_id>', methods=['GET', 'POST'])
+@login_required
+def challenge_detail(challenge_id):
+    with get_db() as conn:
+        challenge = get_challenge(conn, challenge_id)
+    if not challenge:
+        return 'Challenge not found', 404
+    if user_role_in_challenge(challenge, current_user.id) is None:
+        return 'Forbidden', 403
+
+    topic_label = _topic_label(challenge['level'], challenge['subject'], challenge['topic'])
+    summary = serialize_challenge(challenge, current_user.id)
+    problems = challenge['problems']
+    total = len(problems)
+
+    if request.method == 'POST' and request.form.get('action') == 'submit':
+        if not _validate_csrf(request.form.get('csrf_token')):
+            flash('Your session expired. Please try again.', 'error')
+            return redirect(url_for('challenge_detail', challenge_id=challenge_id))
+        if user_has_submitted(challenge, current_user.id):
+            return redirect(url_for('challenge_detail', challenge_id=challenge_id))
+        answers = []
+        for i in range(total):
+            answers.append((request.form.get(f'answer_{i}', '') or '').strip().upper()[:1])
+        with get_db() as conn:
+            updated, score = submit_challenge_attempt(conn, challenge_id, current_user.id, answers)
+            if updated['status'] == CHALLENGE_COMPLETE:
+                _notify_challenge_complete(
+                    conn,
+                    challenge['creator_id'],
+                    challenge_id,
+                    challenge['creator_handle'],
+                    challenge['opponent_handle'],
+                    updated['creator_score'],
+                    updated['opponent_score'],
+                )
+                _notify_challenge_complete(
+                    conn,
+                    challenge['opponent_id'],
+                    challenge_id,
+                    challenge['creator_handle'],
+                    challenge['opponent_handle'],
+                    updated['creator_score'],
+                    updated['opponent_score'],
+                )
+        flash(f'Score recorded: {score}/{total}.', 'success')
+        return redirect(url_for('challenge_detail', challenge_id=challenge_id))
+
+    show_quiz = (
+        challenge['status'] != CHALLENGE_DECLINED
+        and not user_has_submitted(challenge, current_user.id)
+    )
+    return render_template(
+        'challenge_detail.html',
+        challenge=challenge,
+        summary=summary,
+        topic_label=topic_label,
+        problems=problems,
+        total=total,
+        show_quiz=show_quiz,
+    )
+
+
+@app.post('/challenges/<int:challenge_id>/decline')
+@login_required
+def challenge_decline(challenge_id):
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash('Your session expired.', 'error')
+        return redirect(url_for('challenges_list'))
+    with get_db() as conn:
+        if decline_challenge(conn, challenge_id, current_user.id):
+            flash('Challenge declined.', 'success')
+        else:
+            flash('Could not decline that challenge.', 'error')
+    return redirect(url_for('challenges_list'))
+
+
+@app.post('/study-pair/invite/<handle>')
+@login_required
+def study_pair_invite(handle):
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash('Your session expired.', 'error')
+        return redirect(url_for('public_profile', handle=handle))
+    with get_db() as conn:
+        target = get_user_by_handle(conn, handle)
+        if not target or not target.is_active:
+            flash('User not found.', 'error')
+        elif target.id == current_user.id:
+            flash('You cannot pair with yourself.', 'error')
+        elif is_blocked(conn, current_user.id, target.id):
+            flash('You cannot invite this user.', 'error')
+        else:
+            try:
+                pair_id = invite_study_pair(conn, current_user.id, target.id)
+            except ValueError as exc:
+                messages = {
+                    'already_paired': 'You already have an active study buddy.',
+                    'target_paired': 'That user already has a study buddy.',
+                    'pending_outgoing': 'You already sent a study buddy invite.',
+                    'pending_incoming': 'You have a pending invite to respond to first.',
+                }
+                flash(messages.get(str(exc), 'Could not send invite.'), 'error')
+            else:
+                _notify_study_pair_invite(conn, target.id, current_user.handle, pair_id)
+                flash(f'Study buddy invite sent to @{target.handle}.', 'success')
+    return redirect(url_for('public_profile', handle=handle))
+
+
+@app.post('/study-pair/<int:pair_id>/accept')
+@login_required
+def study_pair_accept(pair_id):
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash('Your session expired.', 'error')
+        return redirect(url_for('profile'))
+    with get_db() as conn:
+        try:
+            pair = accept_study_pair(conn, pair_id, current_user.id)
+        except ValueError:
+            flash('Could not accept — one of you may already have a buddy.', 'error')
+        else:
+            if pair:
+                flash('Study buddy connected!', 'success')
+            else:
+                flash('Invite not found.', 'error')
+    return redirect(url_for('profile'))
+
+
+@app.post('/study-pair/<int:pair_id>/decline')
+@login_required
+def study_pair_decline(pair_id):
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash('Your session expired.', 'error')
+        return redirect(url_for('profile'))
+    with get_db() as conn:
+        if decline_study_pair(conn, pair_id, current_user.id):
+            flash('Invite declined.', 'success')
+    return redirect(url_for('profile'))
+
+
+@app.post('/study-pair/end')
+@login_required
+def study_pair_end():
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash('Your session expired.', 'error')
+        return redirect(url_for('profile'))
+    with get_db() as conn:
+        if end_study_pair(conn, current_user.id):
+            flash('Study buddy link ended.', 'success')
+    return redirect(url_for('profile'))
+
+
+@app.route('/qotd', methods=['GET', 'POST'])
+@login_required
+def qotd_page():
+    day_key = current_day_key()
+    try:
+        daily = get_daily_question(day_key=day_key)
+    except ValueError:
+        return 'No daily question available', 503
+
+    problem = daily['problem']
+    correct_answer = (problem.get('correct_answer') or '').strip().upper()[:1]
+
+    if request.method == 'POST':
+        if not _validate_csrf(request.form.get('csrf_token')):
+            flash('Your session expired.', 'error')
+            return redirect(url_for('qotd_page'))
+        letter = (request.form.get('answer') or '').strip().upper()[:1]
+        correct = letter == correct_answer
+        with get_db() as conn:
+            try:
+                record_qotd_answer(conn, current_user.id, day_key, letter, correct)
+            except ValueError:
+                flash('You already answered today.', 'error')
+            else:
+                _track_mcq_answered(
+                    daily['level'],
+                    daily['subject'],
+                    daily['topic'],
+                    problem.get('difficulty', 'foundational'),
+                    letter,
+                    correct_answer,
+                    correct,
+                )
+                _record_study_activity(current_user.id)
+                flash('Correct!' if correct else f'Not quite — answer was {correct_answer}.', 'success' if correct else 'error')
+        return redirect(url_for('qotd_page'))
+
+    with get_db() as conn:
+        attempt = get_user_attempt(conn, current_user.id, day_key)
+        leaderboard = friend_qotd_leaderboard(conn, current_user.id, day_key)
+
+    return render_template(
+        'qotd.html',
+        daily=daily,
+        attempt=attempt,
+        leaderboard=leaderboard,
+        problem=problem,
+    )
+
+
+@app.get('/api/v1/challenges')
+@login_required
+def api_v1_challenges_list():
+    with get_db() as conn:
+        challenges = list_challenges_for_user(conn, current_user.id, limit=50)
+    out = []
+    for item in challenges:
+        out.append(serialize_challenge(item, current_user.id))
+    return jsonify({'ok': True, 'challenges': out})
+
+
+@app.post('/api/v1/challenges')
+@login_required
+def api_v1_challenges_create():
+    err, _ = _require_rate_limit('challenge_create', CHALLENGE_DAILY_LIMIT, label='challenge')
+    if err:
+        return err
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('Request body must be a JSON object', 400, 'invalid_json')
+    handle = (payload.get('opponent_handle') or '').strip().lstrip('@')
+    level = payload.get('level')
+    subject = payload.get('subject')
+    topic = payload.get('topic')
+    if not handle or not level or not subject or not topic:
+        return _api_error('opponent_handle, level, subject, and topic are required', 400, 'invalid_field')
+    with get_db() as conn:
+        opponent = get_user_by_handle(conn, handle)
+        if not opponent or not opponent.is_active:
+            return _api_error('User not found', 404, 'not_found')
+        if opponent.id == current_user.id:
+            return _api_error('Cannot challenge yourself', 400, 'invalid_field')
+        try:
+            challenge_id = _create_challenge_for_users(
+                conn, current_user, opponent, level, subject, topic,
+            )
+            challenge = get_challenge(conn, challenge_id)
+        except ValueError as exc:
+            code = str(exc)
+            if code == 'blocked':
+                return _api_error('Blocked', 403, 'blocked')
+            if code == 'challenge_limit':
+                return _api_error('Too many open challenges', 429, 'rate_limited')
+            return _api_error('Topic unavailable', 400, 'invalid_topic')
+    return jsonify({
+        'ok': True,
+        'challenge': serialize_challenge(challenge, current_user.id),
+    }), 201
+
+
+@app.get('/api/v1/challenges/<int:challenge_id>')
+@login_required
+def api_v1_challenge_detail(challenge_id):
+    with get_db() as conn:
+        challenge = get_challenge(conn, challenge_id)
+    if not challenge:
+        return _api_error('Not found', 404, 'not_found')
+    if user_role_in_challenge(challenge, current_user.id) is None:
+        return _api_error('Forbidden', 403, 'forbidden')
+    data = serialize_challenge(challenge, current_user.id)
+    if not data['viewer_submitted'] and challenge['status'] != CHALLENGE_DECLINED:
+        data['problems'] = [
+            {
+                'index': i,
+                'question_html': p.get('question', ''),
+                'options': p.get('options') or [],
+                'difficulty': p.get('difficulty'),
+            }
+            for i, p in enumerate(challenge['problems'])
+        ]
+    return jsonify({'ok': True, 'challenge': data})
+
+
+@app.post('/api/v1/challenges/<int:challenge_id>/submit')
+@login_required
+def api_v1_challenge_submit(challenge_id):
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('Request body must be a JSON object', 400, 'invalid_json')
+    answers = payload.get('answers')
+    if not isinstance(answers, list):
+        return _api_error('answers must be an array', 400, 'invalid_field')
+    with get_db() as conn:
+        challenge = get_challenge(conn, challenge_id)
+        if not challenge:
+            return _api_error('Not found', 404, 'not_found')
+        try:
+            updated, score = submit_challenge_attempt(
+                conn, challenge_id, current_user.id, answers,
+            )
+        except ValueError as exc:
+            code = str(exc)
+            if code == 'forbidden':
+                return _api_error('Forbidden', 403, 'forbidden')
+            if code == 'already_submitted':
+                return _api_error('Already submitted', 409, 'already_submitted')
+            if code == 'declined':
+                return _api_error('Challenge declined', 410, 'declined')
+            return _api_error('Not found', 404, 'not_found')
+        if updated['status'] == CHALLENGE_COMPLETE:
+            _notify_challenge_complete(
+                conn,
+                challenge['creator_id'],
+                challenge_id,
+                challenge['creator_handle'],
+                challenge['opponent_handle'],
+                updated['creator_score'],
+                updated['opponent_score'],
+            )
+            _notify_challenge_complete(
+                conn,
+                challenge['opponent_id'],
+                challenge_id,
+                challenge['creator_handle'],
+                challenge['opponent_handle'],
+                updated['creator_score'],
+                updated['opponent_score'],
+            )
+    return jsonify({
+        'ok': True,
+        'score': score,
+        'total': len(challenge['problems']),
+        'challenge': serialize_challenge(updated, current_user.id),
+    })
+
+
+@app.post('/api/v1/challenges/<int:challenge_id>/decline')
+@login_required
+def api_v1_challenge_decline(challenge_id):
+    with get_db() as conn:
+        if not decline_challenge(conn, challenge_id, current_user.id):
+            return _api_error('Cannot decline', 400, 'invalid_state')
+    return jsonify({'ok': True})
+
+
+@app.get('/api/v1/me/study-pair')
+@login_required
+def api_v1_me_study_pair():
+    with get_db() as conn:
+        active = get_active_study_pair(conn, current_user.id)
+        invites = list_pending_study_pair_invites(conn, current_user.id)
+        recap = buddy_weekly_recap(conn, current_user.id)
+    return jsonify({
+        'ok': True,
+        'study_pair': serialize_study_pair(active, current_user.id) if active else None,
+        'pending_invites': [
+            {
+                'id': row['id'],
+                'from_handle': row['invited_by_handle'],
+                'created_at': row['created_at'],
+            }
+            for row in invites
+        ],
+        'buddy_recap': recap,
+    })
+
+
+@app.post('/api/v1/study-pairs/invite')
+@login_required
+def api_v1_study_pair_invite():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('Request body must be a JSON object', 400, 'invalid_json')
+    handle = (payload.get('handle') or '').strip().lstrip('@')
+    if not handle:
+        return _api_error('handle is required', 400, 'invalid_field')
+    with get_db() as conn:
+        target = get_user_by_handle(conn, handle)
+        if not target or not target.is_active:
+            return _api_error('User not found', 404, 'not_found')
+        if target.id == current_user.id:
+            return _api_error('Cannot invite yourself', 400, 'invalid_field')
+        if is_blocked(conn, current_user.id, target.id):
+            return _api_error('Blocked', 403, 'blocked')
+        try:
+            pair_id = invite_study_pair(conn, current_user.id, target.id)
+        except ValueError as exc:
+            return _api_error(str(exc).replace('_', ' '), 409, str(exc))
+        _notify_study_pair_invite(conn, target.id, current_user.handle, pair_id)
+    return jsonify({'ok': True, 'pair_id': pair_id}), 201
+
+
+@app.post('/api/v1/study-pairs/<int:pair_id>/accept')
+@login_required
+def api_v1_study_pair_accept(pair_id):
+    with get_db() as conn:
+        try:
+            pair = accept_study_pair(conn, pair_id, current_user.id)
+        except ValueError as exc:
+            return _api_error(str(exc).replace('_', ' '), 409, str(exc))
+        if not pair:
+            return _api_error('Not found', 404, 'not_found')
+    return jsonify({'ok': True, 'study_pair': serialize_study_pair(pair, current_user.id)})
+
+
+@app.post('/api/v1/study-pairs/<int:pair_id>/decline')
+@login_required
+def api_v1_study_pair_decline(pair_id):
+    with get_db() as conn:
+        if not decline_study_pair(conn, pair_id, current_user.id):
+            return _api_error('Cannot decline', 400, 'invalid_state')
+    return jsonify({'ok': True})
+
+
+@app.delete('/api/v1/me/study-pair')
+@login_required
+def api_v1_study_pair_end():
+    with get_db() as conn:
+        if not end_study_pair(conn, current_user.id):
+            return _api_error('No active study pair', 404, 'not_found')
+    return jsonify({'ok': True})
+
+
+@app.get('/api/v1/qotd/today')
+@login_required
+def api_v1_qotd_today():
+    day_key = current_day_key()
+    try:
+        daily = get_daily_question(day_key=day_key)
+    except ValueError:
+        return _api_error('No question today', 503, 'unavailable')
+    problem = daily['problem']
+    with get_db() as conn:
+        attempt = get_user_attempt(conn, current_user.id, day_key)
+    return jsonify({
+        'ok': True,
+        'day_key': day_key,
+        'level': daily['level'],
+        'subject': daily['subject'],
+        'topic': daily['topic'],
+        'topic_name': daily['topic_name'],
+        'question_html': problem.get('question', ''),
+        'options': problem.get('options') or [],
+        'answered': attempt is not None,
+        'correct': bool(attempt['correct']) if attempt else None,
+        'your_answer': attempt['answer'] if attempt else None,
+    })
+
+
+@app.post('/api/v1/qotd/today/answer')
+@login_required
+def api_v1_qotd_answer():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('Request body must be a JSON object', 400, 'invalid_json')
+    letter = (payload.get('answer') or '').strip().upper()[:1]
+    if not letter:
+        return _api_error('answer is required', 400, 'invalid_field')
+    day_key = current_day_key()
+    try:
+        daily = get_daily_question(day_key=day_key)
+    except ValueError:
+        return _api_error('No question today', 503, 'unavailable')
+    problem = daily['problem']
+    correct_answer = (problem.get('correct_answer') or '').strip().upper()[:1]
+    correct = letter == correct_answer
+    with get_db() as conn:
+        try:
+            record_qotd_answer(conn, current_user.id, day_key, letter, correct)
+        except ValueError:
+            return _api_error('Already answered today', 409, 'already_answered')
+    _track_mcq_answered(
+        daily['level'],
+        daily['subject'],
+        daily['topic'],
+        problem.get('difficulty', 'foundational'),
+        letter,
+        correct_answer,
+        correct,
+    )
+    _record_study_activity(current_user.id)
+    return jsonify({
+        'ok': True,
+        'correct': correct,
+        'correct_answer': correct_answer,
+    })
+
+
+@app.get('/api/v1/qotd/today/leaderboard')
+@login_required
+def api_v1_qotd_leaderboard():
+    day_key = current_day_key()
+    with get_db() as conn:
+        board = friend_qotd_leaderboard(conn, current_user.id, day_key)
+    return jsonify({'ok': True, 'day_key': day_key, 'leaderboard': board})
+
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5001)

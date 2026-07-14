@@ -113,6 +113,19 @@
     </section>
 
     <section class="section-panel settings-section">
+        <div class="section-panel-header">Email</div>
+        <div class="section-panel-body">
+            <p class="page-intro" style="margin-top:0;">Optional weekly recap of your study activity (same summary as on your profile). Off by default.</p>
+            <label class="privacy-check">
+                <input type="checkbox" name="email_weekly_digest" value="1"
+                       {% if settings.email_weekly_digest %}checked{% endif %}>
+                Send me a weekly study recap email
+            </label>
+            <p class="profile-empty" style="margin-top:8px;">Uses the email on your account. Each message includes an unsubscribe link.</p>
+        </div>
+    </section>
+
+    <section class="section-panel settings-section">
         <div class="section-panel-header">Sharing &amp; activity feed</div>
         <div class="section-panel-body">
             <label class="privacy-check">
@@ -141,6 +154,24 @@
         <a href="{{ url_for('profile') }}" class="btn btn-outline">Cancel</a>
     </div>
 </form>
+
+{% if settings.email_weekly_digest or mail_configured %}
+<section class="section-panel settings-section">
+    <div class="section-panel-header">Test weekly email</div>
+    <div class="section-panel-body">
+        <p class="page-intro" style="margin-top:0;">Send yourself a one-off preview of the recap email (does not affect the weekly schedule).</p>
+        {% if not mail_configured %}
+        <p class="profile-empty">Email delivery is not configured on this server yet. See <code>docs/EMAIL_SETUP.md</code> before launch.</p>
+        {% else %}
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="send_test_digest">
+            <button type="submit" class="btn btn-outline">Send test recap to {{ current_user.email }}</button>
+        </form>
+        {% endif %}
+    </div>
+</section>
+{% endif %}
 
 <section class="section-panel settings-section">
     <div class="section-panel-header">App sessions</div>

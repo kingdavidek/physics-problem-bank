@@ -24,10 +24,30 @@ from generators.shared.variant_utils import (
 #gcse_trigonometry,   gcse_trigonometry_variants,
 
 
+def _bidmas_problem_from_output(out, difficulty):
+    if len(out) >= 5:
+        q, s, hint, marks, raw = out[:5]
+        return make_problem(
+            q, s, hint, difficulty, marks, 'gcse', 'maths', 'bidmas',
+            correct_answer_raw=str(raw),
+            answer_type='number',
+            answer_format_hint='Enter a number',
+        )
+    q, s, hint, marks = out[:4]
+    return make_problem(q, s, hint, difficulty, marks, 'gcse', 'maths', 'bidmas')
+
+
+def _bidmas_problem(variant_fn, difficulty):
+    return _bidmas_problem_from_output(variant_fn(), difficulty)
+
+
 def _basic_maths_practice(topic, difficulty, mode, variant_name):
     from generators.gcse import maths_basic_topics_mcq as mcq_mod
     vf = getattr(mcq_mod, f"gcse_maths_{topic}_variants")
-    q, s, hint, marks = run_practice_variant(vf, difficulty, mode, variant_name)
+    out = run_practice_variant(vf, difficulty, mode, variant_name)
+    if topic == 'bidmas':
+        return _bidmas_problem_from_output(out, difficulty)
+    q, s, hint, marks = out[:4]
     return make_problem(q, s, hint, difficulty, marks, 'gcse', 'maths', topic)
 
 
@@ -67,8 +87,7 @@ def gcse_maths_bidmas(difficulty, mode, variant_name=None):
     }
     variant = random.choice(pools.get(difficulty, pools['foundational']))
 
-    q, s, hint, marks = variant()
-    return make_problem(q, s, hint, difficulty, marks, 'gcse', 'maths', 'bidmas')
+    return _bidmas_problem(variant, difficulty)
 
 # ─────────────────────────────────────────────────────────────
 # GCSE MATHS — FRACTIONS, DECIMALS AND PERCENTAGES
@@ -1857,7 +1876,7 @@ def gcse_bidmas_simple():
          rf"{b} × {c} = {b*c}<br>"
          rf"{a} + {b*c} = <strong>{result}</strong>")
     hint = r"Multiply first, then add. Don't work left to right without applying BIDMAS."
-    return q, s, hint, 1
+    return q, s, hint, 1, result
 
 def gcse_bidmas_brackets():
     """Foundational: BIDMAS with one set of brackets"""
@@ -1871,7 +1890,7 @@ def gcse_bidmas_brackets():
          rf"({a} + {b}) = {a+b}<br>"
          rf"{a+b} × {c} = <strong>{result}</strong>")
     hint = r"Always evaluate what's inside the brackets before doing anything else."
-    return q, s, hint, 1
+    return q, s, hint, 1, result
 
 def gcse_bidmas_power():
     """Foundational: BIDMAS with a power"""
@@ -1885,7 +1904,7 @@ def gcse_bidmas_power():
          rf"{b}^{c} = {b**c}<br>"
          rf"{a} × {b**c} = <strong>{result}</strong>")
     hint = r"Indices (powers) come before multiplication in BIDMAS."
-    return q, s, hint, 1
+    return q, s, hint, 1, result
 
 def gcse_bidmas_mixed():
     """Intermediate: BIDMAS combining brackets, powers, × and +/−"""
@@ -1926,7 +1945,7 @@ def gcse_neg_add_subtract():
         else:
             s = rf"{a} − {b} = <strong>{result}</strong>"
     hint = r"Think of a number line. Subtracting a negative means moving right (adding). Adding a negative means moving left (subtracting)."
-    return q, s, hint, 1
+    return q, s, hint, 1, result
 
 def gcse_neg_multiply_divide():
     """Foundational: multiply or divide involving negative numbers"""

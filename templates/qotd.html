@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Question of the day – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+<div class="lesson-hero">
+    <h1>Question of the day</h1>
+    <p class="hero-sub">{{ daily.topic_name }} — one MCQ, same for everyone today</p>
+</div>
+
+<section class="section-panel">
+    <div class="section-panel-body">
+        <div style="margin-bottom:16px;line-height:1.55;">{{ problem.question | safe }}</div>
+        {% if attempt %}
+        <p class="{% if attempt.correct %}flash-success{% else %}error{% endif %}">
+            You answered <strong>{{ attempt.answer }}</strong>
+            {% if attempt.correct %}— correct!{% else %}— not quite.{% endif %}
+        </p>
+        {% else %}
+        <form method="POST" class="auth-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+                {% for opt in problem.options %}
+                <label class="privacy-radio">
+                    <input type="radio" name="answer" value="{{ opt[0] }}" required>
+                    <span>{{ opt | safe }}</span>
+                </label>
+                {% endfor %}
+            </div>
+            <button type="submit" class="btn btn-primary">Submit answer</button>
+        </form>
+        {% endif %}
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">Friends who answered today</div>
+    <div class="section-panel-body">
+        {% if leaderboard %}
+        <ol class="leaderboard-list">
+            {% for item in leaderboard %}
+            <li class="leaderboard-item{% if item.is_viewer %} is-viewer{% endif %}">
+                <span class="leaderboard-rank">#{{ item.rank }}</span>
+                <div class="leaderboard-main">
+                    <a href="{{ url_for('public_profile', handle=item.handle) }}">@{{ item.handle }}</a>
+                </div>
+                <span class="leaderboard-score">{% if item.correct %}✓{% else %}✗{% endif %}</span>
+            </li>
+            {% endfor %}
+        </ol>
+        {% else %}
+        <p class="profile-empty">No friends have answered yet today. Follow people to see a mini leaderboard here.</p>
+        {% endif %}
+    </div>
+</section>
+</div>
+{% endblock %}

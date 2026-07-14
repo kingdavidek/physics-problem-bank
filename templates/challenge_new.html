@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}New challenge – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+<div class="lesson-hero">
+    <h1>Challenge a friend</h1>
+    <p class="hero-sub">Pick a topic — you will both get the same 10-question quiz</p>
+</div>
+
+<p class="profile-page-back"><a href="{{ url_for('challenges_list') }}">← Back to challenges</a></p>
+
+{% if errors.form %}<p class="error">{{ errors.form }}</p>{% endif %}
+
+<form method="POST" class="auth-form settings-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <section class="section-panel">
+        <div class="section-panel-body">
+            <div class="form-group">
+                <label for="handle">Friend's handle</label>
+                <input type="text" name="handle" id="handle" value="{{ opponent_handle }}" placeholder="username" required>
+                {% if errors.handle %}<p class="error">{{ errors.handle }}</p>{% endif %}
+            </div>
+            <div class="form-group">
+                <label for="topic_choice">Topic</label>
+                <select name="topic_choice" id="topic_choice" required>
+                    <option value="">Choose a topic…</option>
+                    {% for t in topic_choices %}
+                    <option value="{{ t.value }}">{{ t.label }} ({{ t.level }}/{{ t.subject }})</option>
+                    {% endfor %}
+                </select>
+                {% if errors.topic %}<p class="error">{{ errors.topic }}</p>{% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary">Send challenge</button>
+        </div>
+    </section>
+</form>
+</div>
+{% endblock %}

@@ -37,14 +37,15 @@ def topic_supports_lesson_mcq(topic_config):
     return False
 
 
-def _generate_mcq_problem(generator, variants_func, difficulty, seen_keys):
+def _generate_mcq_problem(generator, variants_func, difficulty, seen_keys, rng=None):
     """Return one unique MCQ problem dict, or None if none found."""
+    rng = rng or random
     for _ in range(_MAX_GENERATION_ATTEMPTS):
         try:
             if variants_func:
                 variants = variants_func(difficulty, "mcq")
                 if variants:
-                    variant = random.choice(variants)
+                    variant = rng.choice(variants)
                     try:
                         problem = generator(
                             difficulty, "mcq", variant_name=variant.__name__
@@ -75,30 +76,33 @@ def _generate_mcq_problem(generator, variants_func, difficulty, seen_keys):
     return None
 
 
-def _fill_quiz_slot(generator, variants_func, difficulty, count, problems, seen_keys):
+def _fill_quiz_slot(generator, variants_func, difficulty, count, problems, seen_keys, rng=None):
     """Append up to `count` unique problems for one difficulty band."""
+    rng = rng or random
     added = 0
     while added < count:
-        problem = _generate_mcq_problem(generator, variants_func, difficulty, seen_keys)
+        problem = _generate_mcq_problem(generator, variants_func, difficulty, seen_keys, rng)
         if not problem:
             break
         problems.append(problem)
         added += 1
 
 
-def build_lesson_mcq_quiz(level, subject, topic, topic_config):
+def build_lesson_mcq_quiz(level, subject, topic, topic_config, *, seed=None):
     """
     Build 10 shuffled MCQs: 3 foundational, 4 intermediate, 3 difficult.
     Uses the topic's generator in MCQ mode (existing MCQ banks / variants).
     No two questions in the quiz share the same question text.
+    Optional seed produces a reproducible quiz (for friend challenges).
     """
+    rng = random.Random(seed) if seed is not None else random
     generator = topic_config["func"]
     variants_func = topic_config.get("variants_func")
     problems = []
     seen_keys = set()
 
     for difficulty, count in LESSON_QUIZ_MIX:
-        _fill_quiz_slot(generator, variants_func, difficulty, count, problems, seen_keys)
+        _fill_quiz_slot(generator, variants_func, difficulty, count, problems, seen_keys, rng)
 
     if len(problems) < 10:
         for difficulty in ("foundational", "intermediate", "difficult"):
@@ -109,6 +113,7 @@ def build_lesson_mcq_quiz(level, subject, topic, topic_config):
                 10 - len(problems),
                 problems,
                 seen_keys,
+                rng,
             )
             if len(problems) >= 10:
                 break
@@ -116,5 +121,5 @@ def build_lesson_mcq_quiz(level, subject, topic, topic_config):
     if not problems:
         raise ValueError(f"No MCQ problems available for {level}/{subject}/{topic}")
 
-    random.shuffle(problems)
+    rng.shuffle(problems)
     return problems[:10]

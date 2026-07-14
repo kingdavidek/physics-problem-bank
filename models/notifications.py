@@ -4,6 +4,9 @@ from models.user import utc_now_iso
 
 NOTIFICATION_SUGGESTION = 'suggestion_received'
 NOTIFICATION_FOLLOW = 'new_follower'
+NOTIFICATION_CHALLENGE = 'challenge_received'
+NOTIFICATION_CHALLENGE_COMPLETE = 'challenge_complete'
+NOTIFICATION_STUDY_PAIR = 'study_pair_invite'
 
 
 def create_notification(conn, user_id, notification_type, payload):

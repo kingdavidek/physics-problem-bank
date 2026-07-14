@@ -52,6 +52,32 @@
     </div>
 </section>
 
+{% if weak_topics %}
+<section class="section-panel">
+    <div class="section-panel-header">Topics to revisit</div>
+    <div class="section-panel-body">
+        <p class="profile-empty" style="margin-top:0;margin-bottom:12px;">Based on your quiz and practice question history — focus on effort, not ranking.</p>
+        <ul class="profile-list">
+            {% for item in weak_topics %}
+            <li class="profile-list-item">
+                <a href="{{ item.topic_url }}"><strong>{{ item.topic_label }}</strong></a>
+                <span class="profile-list-meta">
+                    {% for reason in item.reasons %}{{ reason }}{% if not loop.last %} · {% endif %}{% endfor %}
+                    {% if item.last_practised_date %} · Last practised {{ item.last_practised_date }}{% endif %}
+                </span>
+                <span style="display:block;margin-top:6px;">
+                    <a href="{{ item.topic_url }}">Open topic</a>
+                    {% if item.lesson_quiz_url %}
+                    · <a href="{{ item.lesson_quiz_url }}">Retake quiz</a>
+                    {% endif %}
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+{% endif %}
+
 {% if milestones %}
 <section class="section-panel">
     <div class="section-panel-header">
@@ -73,6 +99,58 @@
     </div>
 </section>
 {% endif %}
+
+<section class="section-panel">
+    <div class="section-panel-header">
+        Study buddy
+    </div>
+    <div class="section-panel-body">
+        {% if study_pair %}
+        <p>Accountability partner: <strong>@{{ study_pair.buddy_handle }}</strong></p>
+        {% if buddy_recap %}
+        <p class="profile-empty" style="margin-top:8px;">
+            This week: you {{ buddy_recap.your_active_days }} active days · buddy {{ buddy_recap.buddy_active_days }} ·
+            {{ buddy_recap.shared_topics }} topic(s) in common
+        </p>
+        {% endif %}
+        <form method="POST" action="{{ url_for('study_pair_end') }}" style="margin-top:12px;" onsubmit="return confirm('End study buddy link?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline">End buddy link</button>
+        </form>
+        {% elif study_pair_invites %}
+        <p class="profile-empty">Pending invites:</p>
+        <ul class="profile-list">
+            {% for inv in study_pair_invites %}
+            <li>
+                @{{ inv.invited_by_handle }}
+                <form method="POST" action="{{ url_for('study_pair_accept', pair_id=inv.id) }}" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-primary btn-sm">Accept</button>
+                </form>
+                <form method="POST" action="{{ url_for('study_pair_decline', pair_id=inv.id) }}" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline btn-sm">Decline</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty">Invite one friend as an accountability buddy from their public profile.</p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">
+        Quiz challenges
+        {% if pending_challenges %}
+        <a href="{{ url_for('challenges_list') }}" class="profile-section-link">{{ pending_challenges }} to play</a>
+        {% endif %}
+    </div>
+    <div class="section-panel-body">
+        <p class="profile-empty"><a href="{{ url_for('challenges_list') }}">View challenges</a> · <a href="{{ url_for('qotd_page') }}">Question of the day</a></p>
+    </div>
+</section>
 
 <section class="section-panel">
     <div class="section-panel-header">
