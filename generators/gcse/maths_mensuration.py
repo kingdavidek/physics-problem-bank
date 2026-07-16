@@ -1,7 +1,8 @@
 """
 GCSE Maths – Mensuration
 15 foundational · 18 intermediate · 18 difficult · 18 MCQ
-Each variant returns (question, solution, hint, marks).
+Graded practice variants return (question, solution, hint, marks, raw).
+Exact-π answers use answer_type pi_multiple (coefficient + π UI).
 Final answers are wrapped in <strong> tags.
 """
 import random
@@ -34,6 +35,82 @@ def _pi_str(coeff):
     """Return a clean multiple-of-π string, e.g. 12π or 3.5π."""
     c = _dp(coeff, 2)
     return f"{c}π"
+
+
+def _mens_raw(value, places=2):
+    """Canonical numeric string for typed answer checking."""
+    if isinstance(value, Fraction):
+        return str(value)
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        return _dp(value, places)
+    return str(value)
+
+
+def _mens_fields_answer(values, labels, places=2):
+    return {
+        'type': 'number_fields',
+        'values': tuple(_mens_raw(v, places) for v in values),
+        'labels': tuple(labels),
+    }
+
+
+def _mens_pi_answer(coeff):
+    """Coefficient of π for the pi_multiple free-response UI."""
+    if isinstance(coeff, Fraction):
+        value = str(coeff)
+    else:
+        value = _mens_raw(coeff)
+    return {'type': 'pi_multiple', 'value': value}
+
+
+def _mens_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict) and raw.get('type') == 'number_fields':
+            values = raw.get('values') or ()
+            labels = raw.get('labels') or ()
+            if values and len(values) == len(labels):
+                extra = {
+                    'correct_answer_raw': '|'.join(str(v) for v in values),
+                    'answer_type': 'number_fields',
+                    'answer_labels': list(labels),
+                    'answer_format_hint': 'Enter a number or fraction in every field',
+                }
+        elif isinstance(raw, dict) and raw.get('type') == 'pi_multiple':
+            value = raw.get('value')
+            if value is not None and str(value).strip():
+                extra = {
+                    'correct_answer_raw': str(value).strip(),
+                    'answer_type': 'pi_multiple',
+                    'answer_format_hint': 'Enter the multiple of π',
+                }
+        elif isinstance(raw, Fraction):
+            extra = {
+                'correct_answer_raw': str(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number or fraction',
+            }
+        elif isinstance(raw, (int, float)):
+            extra = {
+                'correct_answer_raw': _mens_raw(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+        elif isinstance(raw, str):
+            extra = {
+                'correct_answer_raw': raw,
+                'answer_type': 'number',
+                'answer_format_hint': (
+                    'Enter a number or fraction' if '/' in raw else 'Enter a number'
+                ),
+            }
+    return make_problem(
+        q, s, hint, difficulty, marks, 'gcse', 'maths', 'mensuration', **extra
+    )
 
 
 def _rect_svg(w, h, label_area=True):
@@ -129,7 +206,7 @@ def _mens_found_rect_area():
     s = (f"Area of a rectangle = length × width<br>"
          f"\\(= {l} \\times {w}\\)<br>"
          f"<strong>\\(= {area}\\text{{ cm}}^2\\)</strong>")
-    return q, s, "Area = l × w", 1
+    return q, s, "Area = l × w", 1, area
 
 
 def _mens_found_rect_perimeter():
@@ -139,7 +216,7 @@ def _mens_found_rect_perimeter():
     q = f"Find the perimeter of a rectangle with length {l} cm and width {w} cm."
     s = (f"Perimeter = 2(l + w) = 2({l} + {w}) = 2 × {l+w}<br>"
          f"<strong>= {P} cm</strong>")
-    return q, s, "Perimeter = 2(l + w)", 1
+    return q, s, "Perimeter = 2(l + w)", 1, P
 
 
 def _mens_found_triangle_area():
@@ -151,7 +228,7 @@ def _mens_found_triangle_area():
     s = (f"Area = ½ × base × height<br>"
          f"= ½ × {b} × {h}<br>"
          f"<strong>= {area} cm²</strong>")
-    return q, s, "Area = ½ × b × h", 1
+    return q, s, "Area = ½ × b × h", 1, area
 
 
 def _mens_found_parallelogram_area():
@@ -163,7 +240,7 @@ def _mens_found_parallelogram_area():
     s = (f"Area of a parallelogram = base × perpendicular height<br>"
          f"= {b} × {h}<br>"
          f"<strong>= {area} cm²</strong>")
-    return q, s, "Area = base × perpendicular height (not the slant)", 2
+    return q, s, "Area = base × perpendicular height (not the slant)", 2, area
 
 
 def _mens_found_trapezium_area():
@@ -177,7 +254,7 @@ def _mens_found_trapezium_area():
          f"= ½ × ({a} + {b}) × {h}<br>"
          f"= ½ × {a+b} × {h}<br>"
          f"<strong>= {area} cm²</strong>")
-    return q, s, "Area = ½(a + b)h", 2
+    return q, s, "Area = ½(a + b)h", 2, area
 
 
 def _mens_found_circle_circumference():
@@ -189,7 +266,7 @@ def _mens_found_circle_circumference():
          f"Give your answer to 2 decimal places.<br>{svg}")
     s = (f"C = πd = π × {d}<br>"
          f"<strong>= {circ} cm</strong>")
-    return q, s, "C = πd = 2πr", 2
+    return q, s, "C = πd = 2πr", 2, circ
 
 
 def _mens_found_circle_area():
@@ -202,7 +279,7 @@ def _mens_found_circle_area():
          f"= π × {r}²<br>"
          f"= π × {r*r}<br>"
          f"<strong>= {area} cm²</strong>")
-    return q, s, "A = πr²", 2
+    return q, s, "A = πr²", 2, area
 
 
 def _mens_found_cuboid_volume():
@@ -215,7 +292,7 @@ def _mens_found_cuboid_volume():
     s = (f"V = l × w × h<br>"
          f"= {l} × {w} × {h}<br>"
          f"<strong>= {vol} cm³</strong>")
-    return q, s, "V = l × w × h", 2
+    return q, s, "V = l × w × h", 2, vol
 
 
 def _mens_found_cuboid_surface_area():
@@ -229,7 +306,7 @@ def _mens_found_cuboid_surface_area():
          f"= 2({l*w} + {l*h} + {w*h})<br>"
          f"= 2 × {l*w + l*h + w*h}<br>"
          f"<strong>= {sa} cm²</strong>")
-    return q, s, "SA = 2(lw + lh + wh)", 3
+    return q, s, "SA = 2(lw + lh + wh)", 3, sa
 
 
 def _mens_found_triangular_prism_vol():
@@ -244,7 +321,7 @@ def _mens_found_triangular_prism_vol():
          f"Volume = cross-sectional area × length<br>"
          f"= {area_cross} × {length}<br>"
          f"<strong>= {vol} cm³</strong>")
-    return q, s, "V = area of cross-section × length", 3
+    return q, s, "V = area of cross-section × length", 3, vol
 
 
 def _mens_found_compound_area_L():
@@ -260,7 +337,7 @@ def _mens_found_compound_area_L():
          f"= ({a} × {c}) − ({b} × {d_val})<br>"
          f"= {a*c} − {b*d_val}<br>"
          f"<strong>= {area} cm²</strong>")
-    return q, s, "Split into simpler rectangles or subtract", 3
+    return q, s, "Split into simpler rectangles or subtract", 3, area
 
 
 def _mens_found_area_to_length():
@@ -271,7 +348,7 @@ def _mens_found_area_to_length():
     s = (f"Area = length × width<br>"
          f"\\(l = \\dfrac{{\\text{{Area}}}}{{w}} = \\dfrac{{{area}}}{{{w}}}\\)<br>"
          f"<strong>= {_dp(l)} cm</strong>")
-    return q, s, "Rearrange: length = area ÷ width", 2
+    return q, s, "Rearrange: length = area ÷ width", 2, l
 
 
 def _mens_found_unit_conversion_area():
@@ -285,7 +362,7 @@ def _mens_found_unit_conversion_area():
          f"1 m² = 10 000 cm²<br>"
          f"Area = {area_cm2} ÷ 10 000<br>"
          f"<strong>= {_dp(area_m2, 4)} m²</strong>")
-    return q, s, "1 m = 100 cm, so 1 m² = 100² = 10 000 cm²", 2
+    return q, s, "1 m = 100 cm, so 1 m² = 100² = 10 000 cm²", 2, _dp(area_m2, 4)
 
 
 def _mens_found_density():
@@ -297,7 +374,7 @@ def _mens_found_density():
     s = (f"Mass = density × volume<br>"
          f"= {density} × {vol}<br>"
          f"<strong>= {mass} g</strong>")
-    return q, s, "Mass = density × volume", 2
+    return q, s, "Mass = density × volume", 2, mass
 
 
 def _mens_found_diameter_from_circumference():
@@ -307,7 +384,7 @@ def _mens_found_diameter_from_circumference():
     s = (f"C = πd<br>"
          f"\\(d = \\dfrac{{C}}{{\\pi}} = \\dfrac{{{C}}}{{\\pi}}\\)<br>"
          f"<strong>= {d} cm</strong>")
-    return q, s, "Rearrange C = πd to find d = C ÷ π", 2
+    return q, s, "Rearrange C = πd to find d = C ÷ π", 2, d
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -324,7 +401,7 @@ def _mens_inter_arc_length():
     s = (f"Arc length = \\(\\dfrac{{\\theta}}{{360}} \\times 2\\pi r\\)<br>"
          f"= \\(\\dfrac{{{angle}}}{{360}} \\times 2\\pi \\times {r}\\)<br>"
          f"<strong>= {arc} cm</strong>")
-    return q, s, "Arc length = (θ/360) × 2πr", 2
+    return q, s, "Arc length = (θ/360) × 2πr", 2, arc
 
 
 def _mens_inter_sector_area():
@@ -338,7 +415,7 @@ def _mens_inter_sector_area():
          f"= \\(\\dfrac{{{angle}}}{{360}} \\times \\pi \\times {r}^2\\)<br>"
          f"= \\(\\dfrac{{{angle}}}{{360}} \\times \\pi \\times {r*r}\\)<br>"
          f"<strong>= {area} cm²</strong>")
-    return q, s, "Sector area = (θ/360) × πr²", 3
+    return q, s, "Sector area = (θ/360) × πr²", 3, area
 
 
 def _mens_inter_cylinder_volume():
@@ -351,7 +428,7 @@ def _mens_inter_cylinder_volume():
          f"= π × {r}² × {h}<br>"
          f"= π × {r*r} × {h}<br>"
          f"<strong>= {vol} cm³</strong>")
-    return q, s, "V = πr²h", 3
+    return q, s, "V = πr²h", 3, vol
 
 
 def _mens_inter_cylinder_surface_area():
@@ -364,7 +441,7 @@ def _mens_inter_cylinder_surface_area():
          f"= 2π × {r} × ({r} + {h})<br>"
          f"= 2π × {r} × {r+h}<br>"
          f"<strong>= {sa} cm²</strong>")
-    return q, s, "SA = 2πrh (curved) + 2πr² (two ends)", 3
+    return q, s, "SA = 2πrh (curved) + 2πr² (two ends)", 3, sa
 
 
 def _mens_inter_cone_volume():
@@ -377,7 +454,7 @@ def _mens_inter_cone_volume():
          f"= ⅓ × π × {r}² × {h}<br>"
          f"= ⅓ × π × {r*r} × {h}<br>"
          f"<strong>= {vol} cm³</strong>")
-    return q, s, "V = ⅓πr²h", 3
+    return q, s, "V = ⅓πr²h", 3, vol
 
 
 def _mens_inter_sphere_volume():
@@ -389,7 +466,7 @@ def _mens_inter_sphere_volume():
          f"= \\(\\frac{{4}}{{3}} \\times \\pi \\times {r}^3\\)<br>"
          f"= \\(\\frac{{4}}{{3}} \\times \\pi \\times {r**3}\\)<br>"
          f"<strong>= {vol} cm³</strong>")
-    return q, s, "V = (4/3)πr³", 3
+    return q, s, "V = (4/3)πr³", 3, vol
 
 
 def _mens_inter_sphere_surface_area():
@@ -400,7 +477,7 @@ def _mens_inter_sphere_surface_area():
          f"= 4 × π × {r}²<br>"
          f"= 4 × π × {r*r}<br>"
          f"<strong>= {sa} cm²</strong>")
-    return q, s, "SA = 4πr²", 2
+    return q, s, "SA = 4πr²", 2, sa
 
 
 def _mens_inter_pyramid_volume():
@@ -415,7 +492,7 @@ def _mens_inter_pyramid_volume():
          f"= ⅓ × ({l} × {w}) × {h}<br>"
          f"= ⅓ × {base_area} × {h}<br>"
          f"<strong>= {vol} cm³</strong>")
-    return q, s, "V = ⅓ × base area × height", 3
+    return q, s, "V = ⅓ × base area × height", 3, vol
 
 
 def _mens_inter_annulus_area():
@@ -429,7 +506,7 @@ def _mens_inter_annulus_area():
          f"= π({R*R} − {r*r})<br>"
          f"= π × {R*R - r*r}<br>"
          f"<strong>= {area} cm²</strong>")
-    return q, s, "Subtract inner circle area from outer: π(R²−r²)", 3
+    return q, s, "Subtract inner circle area from outer: π(R²−r²)", 3, area
 
 
 def _mens_inter_perimeter_sector():
@@ -443,7 +520,7 @@ def _mens_inter_perimeter_sector():
          f"Arc = \\(\\frac{{{angle}}}{{360}} \\times 2\\pi \\times {r} = {arc}\\) cm<br>"
          f"Perimeter = {arc} + 2 × {r} = {arc} + {2*r}<br>"
          f"<strong>= {perimeter} cm</strong>")
-    return q, s, "Perimeter of sector = arc + 2r", 3
+    return q, s, "Perimeter of sector = arc + 2r", 3, perimeter
 
 
 def _mens_inter_cone_surface_area():
@@ -456,7 +533,7 @@ def _mens_inter_cone_surface_area():
          f"= π × {r} × ({r} + {l_slant})<br>"
          f"= π × {r} × {r + l_slant}<br>"
          f"<strong>= {sa} cm²</strong>")
-    return q, s, "SA = πrl (curved) + πr² (base) = πr(r + l)", 3
+    return q, s, "SA = πrl (curved) + πr² (base) = πr(r + l)", 3, sa
 
 
 def _mens_inter_find_radius_from_area():
@@ -466,7 +543,7 @@ def _mens_inter_find_radius_from_area():
     s = (f"A = πr²<br>"
          f"\\(r = \\sqrt{{\\dfrac{{A}}{{\\pi}}}} = \\sqrt{{\\dfrac{{{area}}}{{\\pi}}}}\\)<br>"
          f"<strong>= {_dp(r, 2)} cm</strong> (using \\(r^2 = {area}/\\pi ≈ {_dp(area/math.pi,2)}\\))")
-    return q, s, "Rearrange A = πr² to get r = √(A/π)", 3
+    return q, s, "Rearrange A = πr² to get r = √(A/π)", 3, r
 
 
 def _mens_inter_rate_fill():
@@ -482,7 +559,7 @@ def _mens_inter_rate_fill():
          f"In litres: {round(math.pi*r*r*h,2)} ÷ 1000 = {vol_L} litres<br>"
          f"Time = volume ÷ rate = {vol_L} ÷ {rate}<br>"
          f"<strong>= {time_min} minutes</strong>")
-    return q, s, "Volume in litres ÷ flow rate = time", 4
+    return q, s, "Volume in litres ÷ flow rate = time", 4, time_min
 
 
 def _mens_inter_similar_area():
@@ -495,7 +572,7 @@ def _mens_inter_similar_area():
          f"Area ratio = 1² : {k}² = 1 : {k*k}<br>"
          f"Area of larger = {area1} × {k*k}<br>"
          f"<strong>= {area2} cm²</strong>")
-    return q, s, "Area scale factor = (length scale factor)²", 3
+    return q, s, "Area scale factor = (length scale factor)²", 3, area2
 
 
 def _mens_inter_composite_cylinder_hemisphere():
@@ -512,7 +589,7 @@ def _mens_inter_composite_cylinder_hemisphere():
          f"= \\(\\frac{{2}}{{3}}\\) × π × {r}³ = {vol_hemi} cm³<br>"
          f"Total = {vol_cyl} + {vol_hemi}<br>"
          f"<strong>= {total} cm³</strong>")
-    return q, s, "Total volume = cylinder + hemisphere = πr²h + (2/3)πr³", 4
+    return q, s, "Total volume = cylinder + hemisphere = πr²h + (2/3)πr³", 4, total
 
 
 # ---------- INTERMEDIATE (multi-step, real-world, a/b/c) ----------
@@ -544,7 +621,10 @@ def _mens_inter_cylinder_tank_multipart():
         rf"<strong>c)</strong> Time = {vol_L} ÷ {rate} = <strong>{time_min} minutes</strong>"
     )
     hint = "Use V = πr²h then convert to litres; SA = 2πr(r + h); time = volume ÷ rate."
-    return q, s, hint, 5
+    return q, s, hint, 5, _mens_fields_answer(
+        (vol_L, sa, time_min),
+        ('(a) Volume (litres)', '(b) Surface area (cm²)', '(c) Fill time (minutes)'),
+    )
 
 
 def _mens_inter_garden_plot_multipart():
@@ -578,7 +658,10 @@ def _mens_inter_garden_plot_multipart():
         rf"<strong>c)</strong> Cost = {total_area} × {cost_per_m2} = <strong>£{total_cost}</strong>"
     )
     hint = "Perimeter uses the curved arc instead of one width; area = rectangle + half circle; then multiply by the cost per m²."
-    return q, s, hint, 5
+    return q, s, hint, 5, _mens_fields_answer(
+        (perimeter, total_area, total_cost),
+        ('(a) Perimeter (m)', '(b) Area (m²)', '(c) Turf cost (£)'),
+    )
 
 
 def _mens_inter_cone_container_multipart():
@@ -609,7 +692,10 @@ def _mens_inter_cone_container_multipart():
         rf"<strong>c)</strong> {curved} cm² = {curved_m2:.4f} m²; cost = <strong>£{paint_cost}</strong>"
     )
     hint = "Use V = ⅓πr²h; find l = √(r² + h²) then curved area = πrl; convert cm² to m² for the cost."
-    return q, s, hint, 5
+    return q, s, hint, 5, _mens_fields_answer(
+        (vol, curved, paint_cost),
+        ('(a) Volume (cm³)', '(b) Curved surface area (cm²)', '(c) Paint cost (£)'),
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -628,7 +714,7 @@ def _mens_diff_cone_slant_from_height():
          f"SA = πr(r + l) = π × {r} × ({r} + {round(slant,2)})<br>"
          f"= π × {r} × {round(r + slant, 2)}<br>"
          f"<strong>= {sa} cm²</strong>")
-    return q, s, "Find slant height using Pythagoras: l = √(r² + h²), then SA = πr(r + l)", 4
+    return q, s, "Find slant height using Pythagoras: l = √(r² + h²), then SA = πr(r + l)", 4, sa
 
 
 def _mens_diff_sphere_radius_from_volume():
@@ -640,7 +726,7 @@ def _mens_diff_sphere_radius_from_volume():
          f"\\dfrac{{{3*vol}}}{{4\\pi}} ≈ {_dp(3*vol/(4*math.pi), 2)}\\)<br>"
          f"\\(r = \\sqrt[3]{{{_dp(3*vol/(4*math.pi),2)}}} \\)<br>"
          f"<strong>≈ {r_true} cm</strong>")
-    return q, s, "Rearrange V = (4/3)πr³ → r³ = 3V/(4π), then cube root", 4
+    return q, s, "Rearrange V = (4/3)πr³ → r³ = 3V/(4π), then cube root", 4, r_true
 
 
 def _mens_diff_exact_pi_answer():
@@ -654,7 +740,7 @@ def _mens_diff_exact_pi_answer():
          f"= π × {r}² × {h}<br>"
          f"= π × {r*r} × {h}<br>"
          f"<strong>= {coeff}π cm³</strong>")
-    return q, s, "Leave answer as a multiple of π — do not use 3.14…", 2
+    return q, s, "Leave answer as a multiple of π — do not use 3.14…", 2, _mens_pi_answer(coeff)
 
 
 def _mens_diff_frustum_volume():
@@ -670,7 +756,7 @@ def _mens_diff_frustum_volume():
          f"= \\(\\dfrac{{\\pi \\times {h}}}{{3}}({R*R} + {R*r} + {r*r})\\)<br>"
          f"= \\(\\dfrac{{\\pi \\times {h}}}{{3}} \\times {R*R + R*r + r*r}\\)<br>"
          f"<strong>= {vol} cm³</strong>")
-    return q, s, "Frustum volume = (πh/3)(R² + Rr + r²)", 5
+    return q, s, "Frustum volume = (πh/3)(R² + Rr + r²)", 5, vol
 
 
 def _mens_diff_hemisphere_cone_surface_area():
@@ -688,7 +774,7 @@ def _mens_diff_hemisphere_cone_surface_area():
          f"Curved surface of cone = πrl = π × {r} × {round(slant,2)} = {sa_cone_curved} cm²<br>"
          f"Total SA = {sa_hemi_curved} + {sa_cone_curved}<br>"
          f"<strong>= {total} cm²</strong>")
-    return q, s, "SA = curved hemisphere (2πr²) + curved cone (πrl); no flat circles needed", 5
+    return q, s, "SA = curved hemisphere (2πr²) + curved cone (πrl); no flat circles needed", 5, total
 
 
 def _mens_diff_sector_minus_triangle():
@@ -705,7 +791,7 @@ def _mens_diff_sector_minus_triangle():
          f"\\frac{{1}}{{2}} \\times {r*r} \\times \\sin 60° ≈ {round(triangle_area,2)}\\) cm²<br>"
          f"Segment area = sector − triangle = {round(sector_area,2)} − {round(triangle_area,2)}<br>"
          f"<strong>= {segment} cm²</strong>")
-    return q, s, "Segment area = sector area − triangle area; triangle area = ½r²sinθ", 4
+    return q, s, "Segment area = sector area − triangle area; triangle area = ½r²sinθ", 4, segment
 
 
 def _mens_diff_similar_volume():
@@ -718,7 +804,7 @@ def _mens_diff_similar_volume():
          f"Volume ratio = 1³ : {k}³ = 1 : {k**3}<br>"
          f"Volume of larger = {vol1} × {k**3}<br>"
          f"<strong>= {vol2} cm³</strong>")
-    return q, s, "Volume scale factor = (length scale factor)³", 3
+    return q, s, "Volume scale factor = (length scale factor)³", 3, vol2
 
 
 def _mens_diff_density_3d():
@@ -732,7 +818,7 @@ def _mens_diff_density_3d():
     s = (f"V = πr²h = π × {r}² × {h} = {round(vol,2)} cm³<br>"
          f"Mass = density × volume = {density} × {round(vol,2)}<br>"
          f"<strong>= {mass} g</strong>")
-    return q, s, "Mass = density × volume; find volume first using V = πr²h", 4
+    return q, s, "Mass = density × volume; find volume first using V = πr²h", 4, mass
 
 
 def _mens_diff_sphere_submerged():
@@ -748,7 +834,7 @@ def _mens_diff_sphere_submerged():
          f"\\dfrac{{{round(vol_sphere,2)}}}{{\\pi \\times {cyl_r}^2}} = "
          f"\\dfrac{{{round(vol_sphere,2)}}}{{{round(math.pi*cyl_r**2,2)}}}\\)<br>"
          f"<strong>≈ {rise} cm</strong>")
-    return q, s, "Rise = sphere volume ÷ (π × cylinder radius²)", 4
+    return q, s, "Rise = sphere volume ÷ (π × cylinder radius²)", 4, rise
 
 
 def _mens_diff_prism_composite_cross_section():
@@ -768,7 +854,7 @@ def _mens_diff_prism_composite_cross_section():
          f"= {cross_section} cm²<br>"
          f"Volume = {cross_section} × {length}<br>"
          f"<strong>= {vol} cm³</strong>")
-    return q, s, "Find cross-section area first (rectangle + triangle), then multiply by length", 5
+    return q, s, "Find cross-section area first (rectangle + triangle), then multiply by length", 5, vol
 
 
 def _mens_diff_find_height_from_volume():
@@ -781,7 +867,7 @@ def _mens_diff_find_height_from_volume():
          f"\\(h = \\dfrac{{V}}{{\\pi r^2}} = \\dfrac{{{vol}}}{{\\pi \\times {r}^2}} = "
          f"\\dfrac{{{vol}}}{{{round(math.pi*r*r,4)}}}\\)<br>"
          f"<strong>= {h} cm</strong>")
-    return q, s, "Rearrange V = πr²h → h = V/(πr²)", 3
+    return q, s, "Rearrange V = πr²h → h = V/(πr²)", 3, h
 
 
 def _mens_diff_arc_exact():
@@ -795,7 +881,10 @@ def _mens_diff_arc_exact():
     s = (f"Arc = \\(\\dfrac{{{angle}}}{{360}} \\times 2\\pi \\times {r}\\)<br>"
          f"= \\({frac} \\times {2*r}\\pi\\)<br>"
          f"<strong>= {coeff}π cm</strong>")
-    return q, s, "Simplify the fraction (θ/360) before multiplying", 3
+    return (
+        q, s, "Simplify the fraction (θ/360) before multiplying", 3,
+        _mens_pi_answer(coeff),
+    )
 
 
 def _mens_diff_cone_height_from_slant():
@@ -809,7 +898,7 @@ def _mens_diff_cone_height_from_slant():
          f"\\sqrt{{{slant**2} - {r**2}}} = \\sqrt{{{slant**2 - r**2}}} ≈ {h}\\) cm<br>"
          f"V = ⅓πr²h = ⅓ × π × {r}² × {h} = ⅓ × π × {r*r} × {h}<br>"
          f"<strong>= {vol} cm³</strong>")
-    return q, s, "Use Pythagoras to find h = √(l²−r²), then V = ⅓πr²h", 4
+    return q, s, "Use Pythagoras to find h = √(l²−r²), then V = ⅓πr²h", 4, vol
 
 
 def _mens_diff_surface_area_prism():
@@ -831,7 +920,7 @@ def _mens_diff_surface_area_prism():
          f"= {round(perimeter,2)} × {length} = {round(perimeter*length,2)} cm²<br>"
          f"SA = {2*tri_area} + {round(perimeter*length,2)}<br>"
          f"<strong>= {sa} cm²</strong>")
-    return q, s, "SA = 2 × (triangle area) + (perimeter of triangle) × length", 5
+    return q, s, "SA = 2 × (triangle area) + (perimeter of triangle) × length", 5, sa
 
 
 def _mens_diff_optimize_box():
@@ -851,7 +940,10 @@ def _mens_diff_optimize_box():
          f"h = {total - x*x} ÷ {4*x} = <strong>{h} cm</strong><br>"
          f"Volume = x²h = {x}² × {h} = {x*x} × {h}<br>"
          f"<strong>Volume = {vol} cm³</strong>")
-    return q, s, "Write SA = x² + 4xh, substitute values, solve for h, then find volume", 5
+    return q, s, "Write SA = x² + 4xh, substitute values, solve for h, then find volume", 5, _mens_fields_answer(
+        (h, vol),
+        ('Height (cm)', 'Volume (cm³)'),
+    )
 
 
 # ---------- DIFFICULT (multi-step, real-world, a/b/c) ----------
@@ -886,7 +978,10 @@ def _mens_diff_silo_multipart():
         rf"<strong>c)</strong> Mass = {density} × {vol_total} = <strong>{mass} tonnes</strong>"
     )
     hint = "Add cylinder and hemisphere volumes; outer SA = curved cylinder + curved hemisphere; mass = density × volume."
-    return q, s, hint, 5
+    return q, s, hint, 5, _mens_fields_answer(
+        (vol_total, sa, mass),
+        ('(a) Volume (m³)', '(b) Outer surface area (m²)', '(c) Mass (tonnes)'),
+    )
 
 
 def _mens_diff_similar_prisms_multipart():
@@ -917,7 +1012,10 @@ def _mens_diff_similar_prisms_multipart():
         rf"Larger volume = {vol1} × {k**3} = <strong>{vol2} cm³</strong>"
     )
     hint = "Lengths scale by k; areas by k²; volumes by k³."
-    return q, s, hint, 5
+    return q, s, hint, 5, _mens_fields_answer(
+        (k, sa2, vol2),
+        ('(a) Length scale factor', '(b) Larger surface area (cm²)', '(c) Larger volume (cm³)'),
+    )
 
 
 def _mens_diff_frustum_tank_multipart():
@@ -949,7 +1047,11 @@ def _mens_diff_frustum_tank_multipart():
         rf"<strong>= {litres} litres</strong>"
     )
     hint = "Use V = (πh/3)(R² + Rr + r²); for part (c) find the percentage of the volume then convert cm³ to litres."
-    return q, s, hint, 5
+    # Part (a) is formula setup — grade numeric (b) and (c) only.
+    return q, s, hint, 5, _mens_fields_answer(
+        (vol_full, litres),
+        ('(b) Full volume (cm³)', '(c) Water volume (litres)'),
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1224,9 +1326,4 @@ def gcse_mensuration(difficulty, mode, variant_name=None):
 
     variants = gcse_mensuration_variants(difficulty, mode)
     variant = pick_named_variant(variants, variant_name)
-
-    q, s, hint, marks = variant()
-    return make_problem(
-        q, s, hint, difficulty, marks,
-        'gcse', 'maths', 'mensuration',
-    )
+    return _mens_problem_from_output(variant(), difficulty)

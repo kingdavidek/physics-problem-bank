@@ -234,7 +234,13 @@ def enrich_quiz_attempt_problems(problems, answers):
     enriched = []
     for i, problem in enumerate(problems):
         item = dict(problem)
-        item['user_answer'] = answers[i] if i < len(answers) else ''
+        ans = answers[i] if i < len(answers) else ''
+        if isinstance(ans, dict):
+            item['user_answer'] = ans.get('user_answer')
+            item['answered_correctly'] = ans.get('correct')
+            item['was_checked'] = ans.get('checked')
+        else:
+            item['user_answer'] = ans
         enriched.append(item)
     return enriched
 
@@ -272,14 +278,19 @@ def record_generator_mcq_attempt(
     user_answer,
     correct_answer,
     correct,
+    *,
+    attempt_group_id=None,
+    part_index=None,
+    part_total=None,
 ):
     now = utc_now_iso()
     cursor = conn.execute(
         '''
         INSERT INTO generator_mcq_attempts (
             user_id, level, subject, topic, mode, difficulty,
-            user_answer, correct_answer, correct, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            user_answer, correct_answer, correct, created_at,
+            attempt_group_id, part_index, part_total
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''',
         (
             user_id,
@@ -292,6 +303,9 @@ def record_generator_mcq_attempt(
             correct_answer,
             1 if correct else 0,
             now,
+            attempt_group_id,
+            part_index,
+            part_total,
         ),
     )
     conn.commit()
@@ -308,7 +322,8 @@ def list_generator_mcq_attempts(conn, user_id, limit=10, before_id=None):
     rows = conn.execute(
         f'''
         SELECT id, level, subject, topic, mode, difficulty,
-               user_answer, correct_answer, correct, created_at
+               user_answer, correct_answer, correct, created_at,
+               attempt_group_id, part_index, part_total
         FROM generator_mcq_attempts
         WHERE user_id = ?
         {before_clause}
@@ -324,13 +339,75 @@ def get_generator_mcq_attempt(conn, user_id, attempt_id):
     row = conn.execute(
         '''
         SELECT id, level, subject, topic, mode, difficulty,
-               user_answer, correct_answer, correct, created_at
+               user_answer, correct_answer, correct, created_at,
+               attempt_group_id, part_index, part_total
         FROM generator_mcq_attempts
         WHERE user_id = ? AND id = ?
         ''',
         (user_id, attempt_id),
     ).fetchone()
     return dict(row) if row else None
+
+
+def group_mcq_attempts_for_display(attempts):
+    """Collapse multipart practice rows that share an attempt_group_id."""
+    if not attempts:
+        return []
+
+    by_group = {}
+    ungrouped = []
+    for item in attempts:
+        gid = item.get('attempt_group_id')
+        if gid:
+            by_group.setdefault(gid, []).append(item)
+        else:
+            ungrouped.append({**item, 'is_multipart': False})
+
+    grouped = []
+    for rows in by_group.values():
+        latest_by_part = {}
+        part_total = None
+        for row in rows:
+            if row.get('part_total') is not None:
+                part_total = row['part_total']
+            part_index = row.get('part_index')
+            if part_index is None:
+                continue
+            previous = latest_by_part.get(part_index)
+            if previous is None or row['id'] > previous['id']:
+                latest_by_part[part_index] = row
+
+        if not latest_by_part:
+            for row in rows:
+                ungrouped.append({**row, 'is_multipart': False})
+            continue
+
+        total = part_total if part_total is not None else len(latest_by_part)
+        score = sum(1 for row in latest_by_part.values() if row.get('correct'))
+        base = max(rows, key=lambda row: row['id'])
+        grouped.append({
+            **base,
+            'is_multipart': True,
+            'score': score,
+            'total': total,
+            'correct': score == total,
+            'created_at': max(row['created_at'] for row in rows),
+        })
+
+    combined = grouped + ungrouped
+    combined.sort(key=lambda row: (row.get('created_at') or '', row.get('id') or 0), reverse=True)
+    return combined
+
+
+def list_generator_mcq_attempts_for_display(
+    conn, user_id, limit=10, before_id=None, *, raw_limit=200
+):
+    """Fetch raw attempts and return grouped rows for profile/history UI."""
+    raw_limit = max(int(limit), min(int(raw_limit), 500))
+    attempts = list_generator_mcq_attempts(
+        conn, user_id, limit=raw_limit, before_id=before_id
+    )
+    return group_mcq_attempts_for_display(attempts)[:limit]
 
 
 def get_practice_streak(conn, user_id):

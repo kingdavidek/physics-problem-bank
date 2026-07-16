@@ -112,7 +112,7 @@
   {% for problem in problems %}
   {% set correct = problem.correct_answer %}
   {% set user = problem.user_answer %}
-  {% set is_correct = user and user == correct %}
+  {% set is_correct = problem.answered_correctly if problem.answered_correctly is not none else (user and user == correct) %}
   {% set explanation = quiz_explanation(problem) %}
   <div class="lesson-results-card">
     <h2>Question {{ loop.index }}</h2>
@@ -126,6 +126,7 @@
       {% endif %}
     </div>
     <div class="lesson-results-question">{{ problem.question | safe }}</div>
+    {% if problem.options %}
     <div class="lesson-results-options">
       {% for opt in problem.options %}
       {% set letter = option_letter(opt) %}
@@ -136,6 +137,9 @@
       </div>
       {% endfor %}
     </div>
+    {% elif user %}
+    <p style="margin:12px 0 0;">Your answer: <strong>{{ user }}</strong></p>
+    {% endif %}
     {% if explanation and (not show_wrong_explanations_only or not is_correct) %}
       {% if show_wrong_explanations_only and not is_correct %}
       <div class="lesson-results-explanation">

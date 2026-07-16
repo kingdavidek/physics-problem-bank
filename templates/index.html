@@ -182,26 +182,11 @@
             <p class="mcq-feedback" id="mcq-feedback" style="margin-top:12px;font-weight:600;"></p>
         {% else %}
             <div class="question-content">{{ problem.question | format_question_html }}</div>
-            {% if problem.correct_answer_raw %}
-            <div class="free-response-inline"
-                 data-correct-raw="{{ problem.correct_answer_raw }}"
-                 data-answer-type="{{ problem.answer_type or 'number' }}"
-                 data-level="{{ selected_level }}"
-                 data-subject="{{ selected_subject }}"
-                 data-topic="{{ selected_topic }}"
-                 data-difficulty="{{ selected_diff }}">
-                <div class="free-response-row">
-                    <input type="text"
-                           class="free-response-input"
-                           placeholder="{{ problem.answer_format_hint or 'Enter a number' }}"
-                           autocomplete="off"
-                           inputmode="decimal"
-                           aria-label="Your answer">
-                    <button type="button" class="btn free-response-check-btn">Check</button>
-                </div>
-                <p class="free-response-feedback" aria-live="polite"></p>
-            </div>
-            {% endif %}
+            {% set fr_level = selected_level %}
+            {% set fr_subject = selected_subject %}
+            {% set fr_topic = selected_topic %}
+            {% set fr_difficulty = selected_diff %}
+            {% include 'partials/free_response_inline.html' %}
         {% endif %}
     </div>
 

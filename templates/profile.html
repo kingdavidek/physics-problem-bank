@@ -223,9 +223,9 @@
 
 <section class="section-panel">
     <div class="section-panel-header">
-        MCQ practice
+        Practice problem history
         {% if practice_streak %}
-        <span class="profile-section-link">{{ practice_streak }}-day MCQ streak</span>
+        <span class="profile-section-link">{{ practice_streak }}-day Practice streak</span>
         {% endif %}
     </div>
     <div class="section-panel-body">
@@ -236,7 +236,9 @@
                 <div class="profile-list-main">
                     <span>{{ item.topic_label }}</span>
                     <span class="profile-list-meta">
-                        {% if item.correct %}
+                        {% if item.is_multipart %}
+                        <span>{{ item.score }}/{{ item.total }}</span>
+                        {% elif item.correct %}
                         <span style="color: var(--success);">✓ Correct</span>
                         {% else %}
                         <span style="color: #dc2626;">✗ Incorrect</span>
@@ -249,7 +251,7 @@
             {% endfor %}
         </ul>
         {% else %}
-        <p class="profile-empty">Answer multiple-choice questions in the generator to build your practice streak.</p>
+        <p class="profile-empty">Answer practice questions in the generator, quick test, or saved questions to build your practice streak.</p>
         {% endif %}
     </div>
 </section>
@@ -275,7 +277,7 @@
             {% endfor %}
         </ul>
         {% else %}
-        <p class="profile-empty">Complete a lesson quiz to see scores here.</p>
+        <p class="profile-empty">Complete a lesson quiz or quick test to see scores here.</p>
         {% endif %}
     </div>
 </section>

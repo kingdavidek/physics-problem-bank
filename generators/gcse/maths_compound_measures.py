@@ -1,13 +1,8 @@
 """
 GCSE Maths – Compound Measures
 15 foundational · 15 intermediate · 15 difficult · 15 MCQ
-
-Covers:
-  Speed / Distance / Time  (SDT)
-  Density / Mass / Volume  (DMV)
-  Pressure / Force / Area  (PFA)
-  Unit conversions (km/h ↔ m/s, g/cm³ ↔ kg/m³, N/cm² ↔ Pa)
-  Average speed, population density, flow rate, concentration
+Graded practice variants return (question, solution, hint, marks, raw).
+Algebraic / proof-style variants stay as 4-tuples (Phase 2).
 """
 import random
 import math
@@ -32,6 +27,66 @@ def _dp(v, places=2):
         return str(int(v))
     return f"{v:.{places}f}".rstrip('0').rstrip('.')
 
+
+def _cm_raw(value, places=2):
+    """Canonical numeric string for typed answer checking."""
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        return _dp(value, places)
+    return str(value)
+
+
+def _cm_fields_answer(values, labels, places=2):
+    return {
+        'type': 'number_fields',
+        'values': tuple(_cm_raw(v, places) for v in values),
+        'labels': tuple(labels),
+    }
+
+
+def _cm_keyword_answer(value):
+    return {'type': 'keyword', 'value': str(value).strip().lower()}
+
+
+def _cm_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict) and raw.get('type') == 'number_fields':
+            values = raw.get('values') or ()
+            labels = raw.get('labels') or ()
+            if values and len(values) == len(labels):
+                extra = {
+                    'correct_answer_raw': '|'.join(str(v) for v in values),
+                    'answer_type': 'number_fields',
+                    'answer_labels': list(labels),
+                    'answer_format_hint': 'Enter a number in every field',
+                }
+        elif isinstance(raw, dict) and raw.get('type') == 'keyword':
+            value = raw.get('value')
+            if value is not None and str(value).strip():
+                extra = {
+                    'correct_answer_raw': str(value).strip().lower(),
+                    'answer_type': 'keyword',
+                    'answer_format_hint': 'Enter your answer in words',
+                }
+        elif isinstance(raw, (int, float)):
+            extra = {
+                'correct_answer_raw': _cm_raw(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+        elif isinstance(raw, str):
+            extra = {
+                'correct_answer_raw': raw,
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+    return make_problem(
+        q, s, hint, difficulty, marks, 'gcse', 'maths', 'compound_measures', **extra
+    )
 
 def _formula_tri(top, bl, br, cover=None):
     """
@@ -81,7 +136,7 @@ def _cm_f1_sdt_find_speed():
     sol = (f"Speed = Distance ÷ Time<br>"
            f"= {d} ÷ {t}<br>"
            f"= <strong>{s} km/h</strong>")
-    return q, sol, "Cover S in the SDT triangle: Speed = Distance ÷ Time.", 2
+    return q, sol, "Cover S in the SDT triangle: Speed = Distance ÷ Time.", 2, s
 
 
 def _cm_f2_sdt_find_distance():
@@ -92,7 +147,7 @@ def _cm_f2_sdt_find_distance():
     sol = (f"Distance = Speed × Time<br>"
            f"= {s} × {t}<br>"
            f"= <strong>{d} km</strong>")
-    return q, sol, "Cover D in the SDT triangle: Distance = Speed × Time.", 2
+    return q, sol, "Cover D in the SDT triangle: Distance = Speed × Time.", 2, d
 
 
 def _cm_f3_sdt_find_time():
@@ -103,7 +158,7 @@ def _cm_f3_sdt_find_time():
     sol = (f"Time = Distance ÷ Speed<br>"
            f"= {d} ÷ {s}<br>"
            f"= <strong>{_dp(t)} hours</strong>")
-    return q, sol, "Cover T in the SDT triangle: Time = Distance ÷ Speed.", 2
+    return q, sol, "Cover T in the SDT triangle: Time = Distance ÷ Speed.", 2, t
 
 
 def _cm_f4_dmv_find_density():
@@ -114,7 +169,7 @@ def _cm_f4_dmv_find_density():
     sol = (f"Density = Mass ÷ Volume<br>"
            f"= {m} ÷ {v}<br>"
            f"= <strong>{d} g/cm³</strong>")
-    return q, sol, "Cover ρ in the DMV triangle: Density = Mass ÷ Volume.", 2
+    return q, sol, "Cover ρ in the DMV triangle: Density = Mass ÷ Volume.", 2, d
 
 
 def _cm_f5_dmv_find_mass():
@@ -125,7 +180,7 @@ def _cm_f5_dmv_find_mass():
     sol = (f"Mass = Density × Volume<br>"
            f"= {d} × {v}<br>"
            f"= <strong>{_dp(m)} g</strong>")
-    return q, sol, "Cover M in the DMV triangle: Mass = Density × Volume.", 2
+    return q, sol, "Cover M in the DMV triangle: Mass = Density × Volume.", 2, m
 
 
 def _cm_f6_dmv_find_volume():
@@ -136,7 +191,7 @@ def _cm_f6_dmv_find_volume():
     sol = (f"Volume = Mass ÷ Density<br>"
            f"= {m} ÷ {d}<br>"
            f"= <strong>{_dp(v)} cm³</strong>")
-    return q, sol, "Cover V in the DMV triangle: Volume = Mass ÷ Density.", 2
+    return q, sol, "Cover V in the DMV triangle: Volume = Mass ÷ Density.", 2, v
 
 
 def _cm_f7_pfa_find_pressure():
@@ -147,7 +202,7 @@ def _cm_f7_pfa_find_pressure():
     sol = (f"Pressure = Force ÷ Area<br>"
            f"= {f} ÷ {a}<br>"
            f"= <strong>{p} Pa</strong>")
-    return q, sol, "Cover P in the PFA triangle: Pressure = Force ÷ Area. 1 Pa = 1 N/m².", 2
+    return q, sol, "Cover P in the PFA triangle: Pressure = Force ÷ Area. 1 Pa = 1 N/m².", 2, p
 
 
 def _cm_f8_pfa_find_force():
@@ -158,7 +213,7 @@ def _cm_f8_pfa_find_force():
     sol = (f"Force = Pressure × Area<br>"
            f"= {p} × {a}<br>"
            f"= <strong>{f} N</strong>")
-    return q, sol, "Cover F in the PFA triangle: Force = Pressure × Area.", 2
+    return q, sol, "Cover F in the PFA triangle: Force = Pressure × Area.", 2, f
 
 
 def _cm_f9_pfa_find_area():
@@ -169,7 +224,7 @@ def _cm_f9_pfa_find_area():
     sol = (f"Area = Force ÷ Pressure<br>"
            f"= {f} ÷ {p}<br>"
            f"= <strong>{a} m²</strong>")
-    return q, sol, "Cover A in the PFA triangle: Area = Force ÷ Pressure.", 2
+    return q, sol, "Cover A in the PFA triangle: Area = Force ÷ Pressure.", 2, a
 
 
 def _cm_f10_convert_kmh_to_ms():
@@ -179,7 +234,7 @@ def _cm_f10_convert_kmh_to_ms():
     sol = (f"To convert km/h to m/s: multiply by 5 and divide by 18 (or divide by 3.6).<br>"
            f"{kmh} × 5 ÷ 18 = {kmh * 5} ÷ 18<br>"
            f"= <strong>{_dp(ms)} m/s</strong>")
-    return q, sol, "km/h → m/s: multiply by 5/18 (equivalently, divide by 3.6).", 2
+    return q, sol, "km/h → m/s: multiply by 5/18 (equivalently, divide by 3.6).", 2, ms
 
 
 def _cm_f11_convert_ms_to_kmh():
@@ -188,7 +243,7 @@ def _cm_f11_convert_ms_to_kmh():
     q = f"Convert {ms} m/s into km/h."
     sol = (f"To convert m/s to km/h: multiply by 3.6 (or multiply by 18 and divide by 5).<br>"
            f"{ms} × 3.6 = <strong>{_dp(kmh)} km/h</strong>")
-    return q, sol, "m/s → km/h: multiply by 3.6.", 2
+    return q, sol, "m/s → km/h: multiply by 3.6.", 2, kmh
 
 
 def _cm_f12_population_density_find():
@@ -201,7 +256,7 @@ def _cm_f12_population_density_find():
     sol = (f"Population Density = Population ÷ Area<br>"
            f"= {pop:,} ÷ {area}<br>"
            f"= <strong>{dens:,} people/km²</strong>")
-    return q, sol, "Population Density = Population ÷ Area.", 2
+    return q, sol, "Population Density = Population ÷ Area.", 2, dens
 
 
 def _cm_f13_population_find_pop():
@@ -212,7 +267,7 @@ def _cm_f13_population_find_pop():
     sol = (f"Population = Density × Area<br>"
            f"= {dens} × {area}<br>"
            f"= <strong>{pop:,} people</strong>")
-    return q, sol, "Population = Density × Area.", 2
+    return q, sol, "Population = Density × Area.", 2, pop
 
 
 def _cm_f14_flow_rate_volume():
@@ -223,7 +278,7 @@ def _cm_f14_flow_rate_volume():
     sol = (f"Volume = Rate × Time<br>"
            f"= {rate} × {time}<br>"
            f"= <strong>{vol} litres</strong>")
-    return q, sol, "Volume = Flow Rate × Time.", 2
+    return q, sol, "Volume = Flow Rate × Time.", 2, vol
 
 
 def _cm_f15_density_compare():
@@ -242,7 +297,7 @@ def _cm_f15_density_compare():
     sol = (f"Density of first: {d1} g/cm³<br>"
            f"Density of second: {d2} g/cm³<br>"
            f"Since {d2} > {d1}, the denser object is <strong>{winner}</strong>.")
-    return q, sol, "Calculate density = mass ÷ volume for each, then compare.", 3
+    return q, sol, "Calculate density = mass ÷ volume for each, then compare.", 3, _cm_keyword_answer(winner)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -261,7 +316,7 @@ def _cm_i1_average_speed_two_legs():
            f"Total distance = {d1} + {d2} = {total_d} km<br>"
            f"Total time     = {t1} + {t2} = {total_t} h<br>"
            f"Average speed  = {total_d} ÷ {total_t} = <strong>{_dp(avg)} km/h</strong>")
-    return q, sol, "Average speed = total distance ÷ total time (NOT the mean of the two speeds).", 4
+    return q, sol, "Average speed = total distance ÷ total time (NOT the mean of the two speeds).", 4, avg
 
 
 def _cm_i2_time_hours_minutes():
@@ -272,7 +327,7 @@ def _cm_i2_time_hours_minutes():
          f"How far does it travel?")
     sol = (f"Convert time: {h} h {m} min = {h} + {m}/60 = {_dp(t_h)} h<br>"
            f"Distance = {s} × {_dp(t_h)} = <strong>{d} km</strong>")
-    return q, sol, "Convert minutes to hours (÷60) before using D = S × T.", 3
+    return q, sol, "Convert minutes to hours (÷60) before using D = S × T.", 3, d
 
 
 def _cm_i3_alloy_density_by_vol():
@@ -288,7 +343,7 @@ def _cm_i3_alloy_density_by_vol():
            f"Mass B = {d2} × {v2} = {m2} g<br>"
            f"Total mass = {total_m} g;  Total volume = {total_v} cm³<br>"
            f"Density = {total_m} ÷ {total_v} = <strong>{_dp(d_mix)} g/cm³</strong>")
-    return q, sol, "Mass = density × volume for each. Sum masses, sum volumes, then divide.", 4
+    return q, sol, "Mass = density × volume for each. Sum masses, sum volumes, then divide.", 4, d_mix
 
 
 def _cm_i4_pfa_box_weight():
@@ -301,7 +356,7 @@ def _cm_i4_pfa_box_weight():
     sol = (f"Weight = mass × g = {mass_kg} × 10 = {force} N<br>"
            f"Area = {L} × {W} = {area} m²<br>"
            f"Pressure = {force} ÷ {area} = <strong>{_dp(pressure)} Pa</strong>")
-    return q, sol, "Weight (force) = mass × g. Pressure = force ÷ area.", 4
+    return q, sol, "Weight (force) = mass × g. Pressure = force ÷ area.", 4, pressure
 
 
 def _cm_i5_sdt_time_in_minutes():
@@ -311,7 +366,7 @@ def _cm_i5_sdt_time_in_minutes():
          f"How far does it travel? Give your answer in km.")
     sol = (f"Convert time: {t_min} min = {t_min}/60 = {_dp(t_h)} hours<br>"
            f"Distance = {s} × {_dp(t_h)} = <strong>{_dp(d)} km</strong>")
-    return q, sol, "Convert minutes to hours (÷60) before using Distance = Speed × Time.", 3
+    return q, sol, "Convert minutes to hours (÷60) before using Distance = Speed × Time.", 3, d
 
 
 def _cm_i6_flow_rate_fill_tank():
@@ -323,7 +378,7 @@ def _cm_i6_flow_rate_fill_tank():
     sol = (f"Time = Volume ÷ Rate<br>"
            f"= {vol} ÷ {rate}<br>"
            f"= <strong>{time} minutes</strong>")
-    return q, sol, "Time = Volume ÷ Flow Rate.", 3
+    return q, sol, "Time = Volume ÷ Flow Rate.", 3, time
 
 
 def _cm_i7_density_sphere():
@@ -336,7 +391,7 @@ def _cm_i7_density_sphere():
          f"Find the mass of the sphere. (V = 4πr³/3)")
     sol = (f"Volume = (4/3) × π × {r_cm}³ = (4/3) × π × {r_cm**3} = {vol} cm³<br>"
            f"Mass = Density × Volume = {density} × {vol} = <strong>{mass} g</strong>")
-    return q, sol, "V = 4πr³/3. Then mass = density × volume.", 4
+    return q, sol, "V = 4πr³/3. Then mass = density × volume.", 4, mass
 
 
 def _cm_i8_density_unit_conversion():
@@ -346,7 +401,7 @@ def _cm_i8_density_unit_conversion():
          f"Express this density in kg/m³.")
     sol = (f"1 g/cm³ = 1000 kg/m³ &nbsp;(1 g = 0.001 kg; 1 cm³ = 10⁻⁶ m³)<br>"
            f"{d_gcm3} g/cm³ × 1000 = <strong>{d_kgm3} kg/m³</strong>")
-    return q, sol, "Multiply by 1000 to convert g/cm³ → kg/m³.", 3
+    return q, sol, "Multiply by 1000 to convert g/cm³ → kg/m³.", 3, d_kgm3
 
 
 def _cm_i9_average_speed_equal_distances():
@@ -363,7 +418,7 @@ def _cm_i9_average_speed_equal_distances():
            f"Average speed = 2d ÷ [d({s1}+{s2})/({s1}×{s2})] = 2×{s1}×{s2}/({s1}+{s2})<br>"
            f"= {2*s1*s2}/{s1+s2} = <strong>{_dp(avg_val)} km/h</strong><br>"
            f"(Caution: simply averaging gives {_dp(wrong)} km/h — this is WRONG.)")
-    return q, sol, "Average speed = total distance ÷ total time. Do NOT average the two speeds.", 5
+    return q, sol, "Average speed = total distance ÷ total time. Do NOT average the two speeds.", 5, avg_val
 
 
 def _cm_i10_sdt_ms_and_km():
@@ -373,7 +428,9 @@ def _cm_i10_sdt_ms_and_km():
          f"Find the distance in (a) metres and (b) kilometres.")
     sol = (f"(a) Distance = {speed_ms} × {time_s} = <strong>{dist_m} m</strong><br>"
            f"(b) {dist_m} ÷ 1000 = <strong>{_dp(dist_km)} km</strong>")
-    return q, sol, "D = S × T (in m and s → m). Then divide by 1000 to get km.", 3
+    return q, sol, "D = S × T (in m and s → m). Then divide by 1000 to get km.", 3, _cm_fields_answer(
+        (dist_m, dist_km), ("Distance (m)", "Distance (km)")
+    )
 
 
 def _cm_i11_population_density_area():
@@ -386,7 +443,7 @@ def _cm_i11_population_density_area():
     sol = (f"Area = Population ÷ Density<br>"
            f"= {pop:,} ÷ {dens}<br>"
            f"= <strong>{_dp(area)} km²</strong>")
-    return q, sol, "Area = Population ÷ Population Density.", 3
+    return q, sol, "Area = Population ÷ Population Density.", 3, area
 
 
 def _cm_i12_pressure_unit_conversion():
@@ -398,7 +455,9 @@ def _cm_i12_pressure_unit_conversion():
     sol = (f"(a) Pressure = {f_N} ÷ {a_cm2} = <strong>{_dp(p_ncm2)} N/cm²</strong><br>"
            f"(b) 1 N/cm² = 10 000 Pa &nbsp;(since 1 cm² = 10⁻⁴ m²)<br>"
            f"Pressure = {_dp(p_ncm2)} × 10 000 = <strong>{p_Pa:,} Pa</strong>")
-    return q, sol, "1 cm² = 10⁻⁴ m², so 1 N/cm² = 10 000 Pa.", 4
+    return q, sol, "1 cm² = 10⁻⁴ m², so 1 N/cm² = 10 000 Pa.", 4, _cm_fields_answer(
+        (p_ncm2, p_Pa), ("Pressure (N/cm²)", "Pressure (Pa)")
+    )
 
 
 def _cm_i13_floating_sinking():
@@ -413,7 +472,9 @@ def _cm_i13_floating_sinking():
            f"Compare to water (1 g/cm³):<br>"
            f"{density} {'<' if floats else '>'} 1  →  the object will "
            f"<strong>{'float' if floats else 'sink'}</strong>.")
-    return q, sol, "Density < 1 g/cm³ → floats; Density > 1 g/cm³ → sinks.", 3
+    return q, sol, "Density < 1 g/cm³ → floats; Density > 1 g/cm³ → sinks.", 3, _cm_keyword_answer(
+        "float" if floats else "sink"
+    )
 
 
 def _cm_i14_speed_convert_then_distance():
@@ -425,7 +486,9 @@ def _cm_i14_speed_convert_then_distance():
     sol = (f"(i) {speed_ms} m/s × 3.6 = <strong>{_dp(speed_kmh)} km/h</strong><br>"
            f"(ii) Time = {time_min} min = {time_min}/60 = {_dp(time_h)} hours<br>"
            f"Distance = {_dp(speed_kmh)} × {_dp(time_h)} = <strong>{_dp(dist_km)} km</strong>")
-    return q, sol, "(i) Multiply m/s by 3.6. (ii) Convert minutes to hours before D = S × T.", 4
+    return q, sol, "(i) Multiply m/s by 3.6. (ii) Convert minutes to hours before D = S × T.", 4, _cm_fields_answer(
+        (speed_kmh, dist_km), ("Speed (km/h)", "Distance (km)")
+    )
 
 
 def _cm_i15_hollow_cylinder_mass():
@@ -438,7 +501,7 @@ def _cm_i15_hollow_cylinder_mass():
          f"Find the mass of the cylinder.")
     sol = (f"Volume = π(R² − r²)h = π({R}² − {r}²) × {h} = π × {R**2-r**2} × {h} = {vol} cm³<br>"
            f"Mass = {density} × {vol} = <strong>{_dp(int(mass))} g</strong>")
-    return q, sol, "Hollow volume = π(R²−r²)h. Then mass = density × volume.", 5
+    return q, sol, "Hollow volume = π(R²−r²)h. Then mass = density × volume.", 5, int(mass)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -455,7 +518,9 @@ def _cm_d1_meeting_problem():
     sol = (f"(i) They close the gap at combined speed {s1} + {s2} = {rel} km/h.<br>"
            f"Time = {dist} ÷ {rel} = <strong>{time_h} hours</strong><br>"
            f"(ii) Distance P travels = {s1} × {time_h} = <strong>{meet} km from A</strong>")
-    return q, sol, "Relative speed towards each other = s1 + s2. Time = gap ÷ relative speed.", 5
+    return q, sol, "Relative speed towards each other = s1 + s2. Time = gap ÷ relative speed.", 5, _cm_fields_answer(
+        (time_h, meet), ("Time (hours)", "Distance from A (km)")
+    )
 
 
 def _cm_d2_overtaking():
@@ -468,7 +533,7 @@ def _cm_d2_overtaking():
     sol = (f"Head-start distance = {s_slow} × ({head_start_min}/60) = {head_km} km<br>"
            f"Closing speed = {s_fast} − {s_slow} = {rel} km/h<br>"
            f"Time = {head_km} ÷ {rel} = {_dp(head_km/rel)} h = <strong>{time_min} minutes</strong>")
-    return q, sol, "Head-start distance = slow speed × head-start time. Then time = gap ÷ closing speed.", 5
+    return q, sol, "Head-start distance = slow speed × head-start time. Then time = gap ÷ closing speed.", 5, time_min
 
 
 def _cm_d3_alloy_percentage_density():
@@ -486,7 +551,7 @@ def _cm_d3_alloy_percentage_density():
            f"Mass B = {p_B} g → Volume B = {p_B}/{d_B} = {round(v_B,4)} cm³<br>"
            f"Total volume = {round(v_A,4)} + {round(v_B,4)} = {total_v} cm³<br>"
            f"Density = 100 ÷ {total_v} = <strong>{density} g/cm³</strong>")
-    return q, sol, "Use 100 g as the reference. Find volumes via density, sum them, divide 100 g by total volume.", 6
+    return q, sol, "Use 100 g as the reference. Find volumes via density, sum them, divide 100 g by total volume.", 6, density
 
 
 def _cm_d4_water_pressure():
@@ -497,7 +562,7 @@ def _cm_d4_water_pressure():
          f"Find the pressure at a depth of {depth_m} m, stating units.")
     sol = (f"P = ρgh = 1000 × 10 × {depth_m}<br>"
            f"= <strong>{pressure:,} Pa</strong> ({pressure//1000} kPa)")
-    return q, sol, "Substitute into P = ρgh. Ensure SI units throughout → answer in Pa.", 4
+    return q, sol, "Substitute into P = ρgh. Ensure SI units throughout → answer in Pa.", 4, pressure
 
 
 def _cm_d5_algebraic_sdt():
@@ -527,7 +592,7 @@ def _cm_d6_two_pipes():
          f"How long does it take to fill the empty tank?")
     sol = (f"Net fill rate = {r_fill} − {r_drain} = {net} L/min<br>"
            f"Time = {vol} ÷ {net} = <strong>{time_min} minutes</strong>")
-    return q, sol, "Net rate = fill rate − drain rate. Time = volume ÷ net rate.", 4
+    return q, sol, "Net rate = fill rate − drain rate. Time = volume ÷ net rate.", 4, time_min
 
 
 def _cm_d7_harmonic_mean_prove():
@@ -553,7 +618,9 @@ def _cm_d8_density_kg_m3_use():
          f"(ii) Find the mass in kg of {vol_m3} m³ of this material.")
     sol = (f"(i) {d_gcm3} g/cm³ × 1000 = <strong>{d_kgm3} kg/m³</strong><br>"
            f"(ii) Mass = {d_kgm3} × {vol_m3} = <strong>{_dp(mass_kg)} kg</strong>")
-    return q, sol, "1 g/cm³ = 1000 kg/m³. Then mass (kg) = density (kg/m³) × volume (m³).", 5
+    return q, sol, "1 g/cm³ = 1000 kg/m³. Then mass (kg) = density (kg/m³) × volume (m³).", 5, _cm_fields_answer(
+        (d_kgm3, mass_kg), ("Density (kg/m³)", "Mass (kg)")
+    )
 
 
 def _cm_d9_concentration():
@@ -565,7 +632,9 @@ def _cm_d9_concentration():
     sol = (f"(i) Mass = {conc} × {vol1} = <strong>{_dp(mass1)} g</strong><br>"
            f"(ii) {vol2_mL} mL = {vol2_mL}/1000 = {vol2_mL/1000} L<br>"
            f"Mass = {conc} × {vol2_mL/1000} = <strong>{_dp(mass2)} g</strong>")
-    return q, sol, "Mass = concentration × volume. Convert mL to L first (divide by 1000).", 5
+    return q, sol, "Mass = concentration × volume. Convert mL to L first (divide by 1000).", 5, _cm_fields_answer(
+        (mass1, mass2), ("Mass (g) in (i)", "Mass (g) in (ii)")
+    )
 
 
 def _cm_d10_relative_speed():
@@ -587,7 +656,7 @@ def _cm_d10_relative_speed():
          f"How long before A {action_txt} B? Give your answer in minutes.")
     sol = (f"Relative speed = {s1} {'−' if same_dir else '+'} {s2} = {rel} km/h<br>"
            f"Time = {dist_km} ÷ {rel} = {_dp(dist_km/rel)} h = <strong>{t_min} minutes</strong>")
-    return q, sol, "Same direction: relative speed = difference. Opposite: relative speed = sum.", 5
+    return q, sol, "Same direction: relative speed = difference. Opposite: relative speed = sum.", 5, t_min
 
 
 def _cm_d11_composite_density_ratio():
@@ -604,7 +673,7 @@ def _cm_d11_composite_density_ratio():
            f"Mass A = {d1} × {v1} = {m1} g;  Mass B = {d2} × {v2} = {m2} g<br>"
            f"Total mass = {m1+m2} g;  Total volume = {total_v} cm³<br>"
            f"Density = {total_m} ÷ {total_v} = <strong>{density_mix} g/cm³</strong>")
-    return q, sol, "Use the ratio directly as volumes. Mass = density × volume for each. Then total M ÷ total V.", 5
+    return q, sol, "Use the ratio directly as volumes. Mass = density × volume for each. Then total M ÷ total V.", 5, density_mix
 
 
 def _cm_d12_hydraulic_press():
@@ -618,7 +687,9 @@ def _cm_d12_hydraulic_press():
     sol = (f"(i) Pressure = {f_in} ÷ {a_in} = <strong>{_dp(p)} N/cm²</strong><br>"
            f"(ii) Pascal's Law: pressure is equal throughout the fluid.<br>"
            f"Output force = {_dp(p)} × {a_out} = <strong>{_dp(f_out)} N</strong>")
-    return q, sol, "P = F/A at input. Pascal's Law: same P at output → F_out = P × A_out.", 5
+    return q, sol, "P = F/A at input. Pascal's Law: same P at output → F_out = P × A_out.", 5, _cm_fields_answer(
+        (p, f_out), ("Pressure (N/cm²)", "Output force (N)")
+    )
 
 
 def _cm_d13_three_leg_average():
@@ -635,7 +706,7 @@ def _cm_d13_three_leg_average():
            f"Total distance = {d1}+{d2}+{d3} = {total_d} km<br>"
            f"Total time = {t1}+{t2}+{t3} = {total_t} h<br>"
            f"Average speed = {total_d} ÷ {total_t} = <strong>{_dp(avg_val)} km/h</strong>")
-    return q, sol, "Compute each leg's distance. Average speed = total distance ÷ total time.", 5
+    return q, sol, "Compute each leg's distance. Average speed = total distance ÷ total time.", 5, avg_val
 
 
 def _cm_d14_pressure_minimum_area():
@@ -650,7 +721,9 @@ def _cm_d14_pressure_minimum_area():
     sol = (f"(i) Weight = {mass_kg} × 10 = <strong>{weight:,} N</strong><br>"
            f"(ii) Minimum area = Force ÷ Max Pressure = {weight:,} ÷ {max_pressure:,} = "
            f"<strong>{_dp(min_area)} m²</strong>")
-    return q, sol, "Weight = mg. Minimum area = weight ÷ max pressure.", 5
+    return q, sol, "Weight = mg. Minimum area = weight ÷ max pressure.", 5, _cm_fields_answer(
+        (weight, min_area), ("Weight (N)", "Minimum area (m²)")
+    )
 
 
 def _cm_d15_mass_flow_rate():
@@ -669,7 +742,10 @@ def _cm_d15_mass_flow_rate():
            f"(ii) Convert speed: {speed_ms} m/s = {speed_cm_s} cm/s<br>"
            f"Volume flow rate = {area} × {speed_cm_s} = <strong>{vol_rate} cm³/s</strong><br>"
            f"(iii) Mass flow rate = {density_gcm3} × {vol_rate} = <strong>{mass_rate} g/s</strong>")
-    return q, sol, "Volume flow = area × speed. Mass flow = density × volume flow.", 6
+    return q, sol, "Volume flow = area × speed. Mass flow = density × volume flow.", 6, _cm_fields_answer(
+        (area, vol_rate, mass_rate),
+        ("Area (cm²)", "Volume flow rate (cm³/s)", "Mass flow rate (g/s)"),
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -850,8 +926,5 @@ def gcse_compound_measures(difficulty, mode, variant_name=None):
     variants = gcse_compound_measures_variants(difficulty, mode)
     variant = pick_named_variant(variants, variant_name)
 
-    q, s, hint, marks = variant()
-    return make_problem(
-        q, s, hint, difficulty, marks,
-        'gcse', 'maths', 'compound_measures',
-    )
+    out = variant()
+    return _cm_problem_from_output(out, difficulty)

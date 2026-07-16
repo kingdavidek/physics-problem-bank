@@ -1,13 +1,51 @@
 """
 GCSE Computer Science – Fundamentals of Algorithms
 10 foundational · 10 intermediate · 10 difficult · 15 MCQ
-Each variant returns (question, solution, hint, marks).
-Final answers wrapped in <strong> tags.
+Graded practice variants return (question, solution, hint, marks, raw).
+Text / pseudocode-writing variants stay as 4-tuples (Phase 2).
 """
 import random
 import math
 from generators.shared.utils import make_problem
 from generators.shared.variant_utils import pick_named_variant
+
+
+def _alg_raw_number(value):
+    return str(int(value))
+
+
+def _alg_fields_answer(values, labels):
+    return {
+        'type': 'number_fields',
+        'values': tuple(_alg_raw_number(v) for v in values),
+        'labels': tuple(labels),
+    }
+
+
+def _alg_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict) and raw.get('type') == 'number_fields':
+            values = raw.get('values') or ()
+            labels = raw.get('labels') or ()
+            if values and len(values) == len(labels):
+                extra = {
+                    'correct_answer_raw': '|'.join(str(v) for v in values),
+                    'answer_type': 'number_fields',
+                    'answer_labels': list(labels),
+                    'answer_format_hint': 'Enter a number in every field',
+                }
+        elif isinstance(raw, (int, float)):
+            extra = {
+                'correct_answer_raw': _alg_raw_number(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+    return make_problem(
+        q, s, hint, difficulty, marks, 'gcse', 'cs', 'algorithms', **extra
+    )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -75,7 +113,7 @@ def _alg_f3_pattern():
     nums, nxt, rule = seq
     q = f"What is the next number in the sequence: <strong>{', '.join(map(str, nums))}, ?</strong>"
     s = f"The pattern is <strong>{rule}</strong>, so the next term is <strong>{nxt}</strong>."
-    return q, s, "Pattern recognition means spotting how terms are generated from previous ones.", 1
+    return q, s, "Pattern recognition means spotting how terms are generated from previous ones.", 1, nxt
 
 
 def _alg_f4_flowchart_symbol():
@@ -104,7 +142,7 @@ def _alg_f5_pseudocode_output():
         "count ← 0\nFOR i ← 1 TO 3\n    count ← count + 2\nENDFOR\nOUTPUT count</pre>"
     )
     s = "Loop runs 3 times, adding 2 each time: 0→2→4→6. Output is <strong>6</strong>."
-    return q, s, "Trace the loop: how many times it runs and what changes each time.", 2
+    return q, s, "Trace the loop: how many times it runs and what changes each time.", 2, 6
 
 
 def _alg_f6_linear_found():
@@ -121,7 +159,7 @@ def _alg_f6_linear_found():
         f"Check each element from the start until {target} is found at position {pos}. "
         f"Comparisons = <strong>{pos}</strong>."
     )
-    return q, s, "Linear search checks items one by one from the beginning until found.", 2
+    return q, s, "Linear search checks items one by one from the beginning until found.", 2, pos
 
 
 def _alg_f7_linear_not_found():
@@ -135,7 +173,7 @@ def _alg_f7_linear_not_found():
         f"Every element is compared; {target} is never found after {len(data)} checks. "
         f"Answer: <strong>{len(data)}</strong> comparisons."
     )
-    return q, s, "If the item is absent, linear search still checks every element (unless you stop early).", 2
+    return q, s, "If the item is absent, linear search still checks every element (unless you stop early).", 2, len(data)
 
 
 def _alg_f8_bubble_one_pass():
@@ -160,7 +198,7 @@ def _alg_f8_bubble_one_pass():
         f"After one pass the list becomes <strong>{working}</strong>. "
         f"Number of swaps = <strong>{swaps}</strong>."
     )
-    return q, s, "One pass: walk through adjacent pairs; swap if the left item is larger.", 2
+    return q, s, "One pass: walk through adjacent pairs; swap if the left item is larger.", 2, swaps
 
 
 def _alg_f9_simple_trace():
@@ -178,7 +216,7 @@ def _alg_f9_simple_trace():
         "<code>y ← 5<br>x ← 3<br>y ← y + x<br>OUTPUT y</code>"
     )
     s = "After <code>y ← y + x</code>, y becomes 5 + 3 = <strong>8</strong>, which is output."
-    return q, s, "Fill trace tables line by line — each row shows values after that step runs.", 2
+    return q, s, "Fill trace tables line by line — each row shows values after that step runs.", 2, 8
 
 
 def _alg_f10_algorithm_definition():
@@ -220,7 +258,7 @@ def _alg_i2_binary_comparisons():
         f"Each comparison halves the search space. Worst case ≈ log₂({n}) = "
         f"<strong>{max_cmp}</strong> comparisons."
     )
-    return q, s, "Binary search halves the remaining items each time — related to log₂(n).", 2
+    return q, s, "Binary search halves the remaining items each time — related to log₂(n).", 2, max_cmp
 
 
 def _alg_i3_binary_next_half():
@@ -295,7 +333,7 @@ def _alg_i7_trace_loop():
         "total ← 0\nFOR i ← 1 TO 4\n    total ← total + i\nENDFOR</pre>"
     )
     s = "total = 1+2+3+4 = <strong>10</strong>."
-    return q, s, "Add each value of i inside the loop; trace i and total each iteration.", 2
+    return q, s, "Add each value of i inside the loop; trace i and total each iteration.", 2, 10
 
 
 def _alg_i8_linear_vs_binary():
@@ -342,7 +380,7 @@ def _alg_i10_bubble_passes_needed():
         if not swapped:
             break
     s = f"Sorted list is [1,2,3,4] after <strong>{passes}</strong> complete passes."
-    return q, s, "Stop when a pass completes with zero swaps.", 3
+    return q, s, "Stop when a pass completes with zero swaps.", 3, passes
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -372,7 +410,7 @@ def _alg_d1_binary_trace():
     )
     found_step = next(i for i, r in enumerate(rows) if r[4] == str(target)) + 1
     s = f"Value {target} is found at step <strong>{found_step}</strong> when mid points to index {rows[found_step-1][3]}."
-    return q, s, "Update low/high after each comparison; mid = (low + high) DIV 2.", 3
+    return q, s, "Update low/high after each comparison; mid = (low + high) DIV 2.", 3, found_step
 
 
 def _alg_d2_bubble_trace():
@@ -396,7 +434,7 @@ def _alg_d3_merge_trace():
         "Merge picks smaller front items: 3, then 9, then <strong>27</strong> is third "
         "(list so far: 3, 9, 27 …)."
     )
-    return q, s, "Compare fronts of both lists; move the smaller, repeat.", 3
+    return q, s, "Compare fronts of both lists; move the smaller, repeat.", 3, 27
 
 
 def _alg_d4_nested_trace():
@@ -406,7 +444,7 @@ def _alg_d4_nested_trace():
         "count ← 0\nFOR i ← 1 TO 2\n    FOR j ← 1 TO 3\n        count ← count + 1\n    ENDFOR\nENDFOR</pre>"
     )
     s = "Outer runs 2 times, inner 3 each: count = 2×3 = <strong>6</strong>."
-    return q, s, "Nested loops multiply: total iterations = outer × inner.", 2
+    return q, s, "Nested loops multiply: total iterations = outer × inner.", 2, 6
 
 
 def _alg_d5_efficiency():
@@ -414,10 +452,12 @@ def _alg_d5_efficiency():
     if n == 1024:
         q = "A sorted list has 1024 items. Worst-case binary search comparisons are about:"
         s = "1024 = 2¹⁰, so about <strong>10</strong> comparisons (log₂ 1024)."
+        answer = 10
     else:
         q = f"A sorted list has {n} items. Worst-case <strong>linear</strong> search needs how many comparisons?"
         s = f"In the worst case every item is checked: <strong>{n}</strong> comparisons."
-    return q, s, "Linear ∝ n; binary ∝ log₂ n for sorted data.", 2
+        answer = n
+    return q, s, "Linear ∝ n; binary ∝ log₂ n for sorted data.", 2, answer
 
 
 def _alg_d6_pseudocode_binary():
@@ -474,7 +514,7 @@ def _alg_d9_compare_searches():
         "How many <strong>fewer</strong> comparisons does binary search use?"
     )
     s = f"Difference = {lin} − {b} = <strong>{lin - b}</strong> fewer comparisons."
-    return q, s, "Subtract binary comparisons from linear for the same target.", 2
+    return q, s, "Subtract binary comparisons from linear for the same target.", 2, lin - b
 
 
 def _alg_d10_fix_pseudocode():
@@ -559,7 +599,13 @@ def _alg_d13_multipart_search_compare():
         f"in the half that gets thrown away, so the algorithm may report it as "
         f"<strong>not found</strong> even when it is present."
     )
-    return q, s, "Binary search checks the middle, then halves the search area each time.", 6
+    return (
+        q, s, "Binary search checks the middle, then halves the search area each time.", 6,
+        _alg_fields_answer(
+            (comps,),
+            ('Part (b): number of comparisons to find the target',),
+        ),
+    )
 
 
 def _alg_d14_multipart_trace_table():
@@ -589,7 +635,13 @@ def _alg_d14_multipart_trace_table():
         f"<strong>c)</strong> It calculates the <strong>sum of the integers from 1 to 4</strong> "
         f"(more generally, the running total of a sequence of numbers)."
     )
-    return q, s, "Add i to total on each pass: 1, then 1+2, then +3, then +4.", 6
+    return (
+        q, s, "Add i to total on each pass: 1, then 1+2, then +3, then +4.", 6,
+        _alg_fields_answer(
+            (total,),
+            ('Part (b): value output by the program',),
+        ),
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -782,9 +834,4 @@ def gcse_algorithms(difficulty, mode, variant_name=None):
 
     variants = gcse_algorithms_variants(difficulty, mode)
     variant = pick_named_variant(variants, variant_name)
-
-    q, s, hint, marks = variant()
-    return make_problem(
-        q, s, hint, difficulty, marks,
-        "gcse", "cs", "algorithms",
-    )
+    return _alg_problem_from_output(variant(), difficulty)

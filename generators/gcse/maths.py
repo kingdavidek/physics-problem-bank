@@ -3,7 +3,7 @@ import random
 import math
 import sympy as sp
 
-from generators.shared.utils import make_problem
+from generators.shared.utils import make_problem, problem_from_choice_output
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from generators.shared.variant_utils import (
     select_tier_variants,
@@ -47,6 +47,9 @@ def _basic_maths_practice(topic, difficulty, mode, variant_name):
     out = run_practice_variant(vf, difficulty, mode, variant_name)
     if topic == 'bidmas':
         return _bidmas_problem_from_output(out, difficulty)
+    choice = problem_from_choice_output(out, difficulty, 'gcse', 'maths', topic)
+    if choice:
+        return choice
     q, s, hint, marks = out[:4]
     return make_problem(q, s, hint, difficulty, marks, 'gcse', 'maths', topic)
 
@@ -1922,7 +1925,7 @@ def gcse_bidmas_mixed():
          rf"Step 3 — Multiply: {outer} × {inner**p} = {outer * inner**p}<br>"
          rf"Step 4 — Add: {outer * inner**p} + {extra} = <strong>{result}</strong>")
     hint = r"Follow B → I → D/M → A/S strictly. Work out each step before moving to the next."
-    return q, s, hint, 2
+    return q, s, hint, 2, result
 
 def gcse_neg_add_subtract():
     """Foundational: add and subtract negative numbers"""
@@ -1967,9 +1970,9 @@ def gcse_neg_multiply_divide():
         res = a_use // b_use
         s = rf"Signs: {'same signs → positive' if (a_use<0)==(b_use<0) else 'different signs → negative'}<br>{a_use} ÷ {b_use} = <strong>{res}</strong>"
         hint = r"Same signs → positive result. Different signs → negative result."
-        return q, s, hint, 1
+        return q, s, hint, 1, res
     hint = r"Same signs → positive result. Different signs → negative result."
-    return q, s, hint, 1
+    return q, s, hint, 1, result
 
 def gcse_neg_powers():
     """Intermediate: negative numbers with powers — bracket vs no bracket"""
@@ -1986,24 +1989,29 @@ def gcse_neg_powers():
             rf"\left(-{n}\right) \times \left(-{n}\right) \times \left(-{n}\right)"
         )
         power_phrase = "cubed"
-    q = (
-        rf"(a) Calculate \( \left(-{n}\right)^{{{p}}} \).<br>"
-        rf"(b) Calculate \( -\left({n}\right)^{{{p}}} \).<br>"
-        rf"Explain why the answers differ."
-    )
-    s = (
-        rf"(a) \( \left(-{n}\right)^{{{p}}} = {expand_a} = {with_bracket} \) "
-        rf"(the negative is <strong>inside</strong> the brackets, so it is raised to the power).<br><br>"
-        rf"(b) \( -\left({n}\right)^{{{p}}} = -\left({n}^{{{p}}}\right) = -{n**p} = {without_bracket} \) "
-        rf"(only <strong>{n}</strong> is raised to the power; the minus sign stays <strong>outside</strong> the brackets).<br><br>"
-        rf"They differ because in (a) the <strong>whole of \(-{n}\)</strong> is {power_phrase}, "
-        rf"while in (b) only <strong>{n}</strong> is {power_phrase} and the result is then made negative."
-    )
-    hint = (
-        rf"Brackets show what is powered: \( \left(-{n}\right)^{{{p}}} \) "
-        rf"≠ \( -\left({n}\right)^{{{p}}} \)."
-    )
-    return q, s, hint, 2
+    if random.choice((True, False)):
+        result = with_bracket
+        q = rf"Calculate \( \left(-{n}\right)^{{{p}}} \)"
+        s = (
+            rf"\( \left(-{n}\right)^{{{p}}} = {expand_a} = <strong>{with_bracket}</strong> \)<br>"
+            rf"The negative is <strong>inside</strong> the brackets, so it is raised to the power."
+        )
+        hint = (
+            rf"Bracket the whole \(-{n}\) before applying the power: "
+            rf"\( \left(-{n}\right)^{{{p}}} \neq -\left({n}\right)^{{{p}}} \)."
+        )
+    else:
+        result = without_bracket
+        q = rf"Calculate \( -\left({n}\right)^{{{p}}} \)"
+        s = (
+            rf"\( -\left({n}\right)^{{{p}}} = -\left({n**p}\right) = <strong>{without_bracket}</strong> \)<br>"
+            rf"Only <strong>{n}</strong> is {power_phrase}; the minus sign stays <strong>outside</strong> the brackets."
+        )
+        hint = (
+            rf"The power applies to {n} only; the leading minus is not inside the brackets. "
+            rf"Compare with \( \left(-{n}\right)^{{{p}}} = {with_bracket} \)."
+        )
+    return q, s, hint, 2, result
 
 def gcse_bidmas_with_negatives():
     """Intermediate: BIDMAS expression combining negatives and brackets"""
@@ -2026,7 +2034,7 @@ def gcse_bidmas_with_negatives():
         rf"Square the bracketed value first: \( \left({inner}\right)^{{2}} = {inner**2} \). "
         rf"Then multiply by \( -{a} \)."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, result
 
 def gcse_bidmas_hard():
     """Difficult/Exam: multi-step BIDMAS with negatives, fraction bar, and powers"""
@@ -2042,13 +2050,14 @@ def gcse_bidmas_hard():
     top = a**2 - b
     bottom = c - d
     result = top / bottom + e
+    raw = int(result) if float(result).is_integer() else round(result, 4)
     q = rf"Calculate   ( {a}² − {b} ) ÷ ( {c} − {d} ) + {e}"
     s = (rf"Numerator (top brackets): {a}² − {b} = {a**2} − {b} = {top}<br>"
          rf"Denominator (bottom brackets): {c} − {d} = {bottom}<br>"
          rf"Divide: {top} ÷ {bottom} = {top/bottom:.4g}<br>"
-         rf"Add: {top/bottom:.4g} + {e} = <strong>{result:.4g}</strong>")
+         rf"Add: {top/bottom:.4g} + {e} = <strong>{raw}</strong>")
     hint = r"Evaluate all brackets first (including the indices inside), divide, then add."
-    return q, s, hint, 3
+    return q, s, hint, 3, raw
 
 
 # ── BIDMAS: procedural practice (extra variants) ─────────────────────────────
@@ -2066,7 +2075,7 @@ def gcse_bidmas_proc_subtract_multiply():
         rf"Then subtract: {a} − {product} = <strong>{result}</strong>"
     )
     hint = r"× comes before − in BIDMAS. Do not subtract before multiplying."
-    return q, s, hint, 1
+    return q, s, hint, 1, result
 
 
 def gcse_bidmas_proc_divide_add():
@@ -2082,7 +2091,7 @@ def gcse_bidmas_proc_divide_add():
         rf"Then add: {a} + {quotient} = <strong>{result}</strong>"
     )
     hint = r"÷ comes before + in BIDMAS."
-    return q, s, hint, 1
+    return q, s, hint, 1, result
 
 
 def gcse_bidmas_proc_two_products():
@@ -2097,7 +2106,7 @@ def gcse_bidmas_proc_two_products():
         rf"{p1} + {p2} = <strong>{result}</strong>"
     )
     hint = r"Work out each multiplication, then add the results."
-    return q, s, hint, 1
+    return q, s, hint, 1, result
 
 
 def gcse_bidmas_proc_nested_brackets():
@@ -2115,7 +2124,7 @@ def gcse_bidmas_proc_nested_brackets():
         rf"{left} × {right} = <strong>{result}</strong>"
     )
     hint = r"Evaluate both brackets before multiplying."
-    return q, s, hint, 2
+    return q, s, hint, 2, result
 
 
 def gcse_bidmas_proc_power_then_multiply():
@@ -2134,7 +2143,7 @@ def gcse_bidmas_proc_power_then_multiply():
         rf"Add: {product} + {extra} = <strong>{result}</strong>"
     )
     hint = r"Order: indices → multiply → add."
-    return q, s, hint, 2
+    return q, s, hint, 2, result
 
 
 def gcse_bidmas_proc_bracket_over_divisor():
@@ -2153,7 +2162,7 @@ def gcse_bidmas_proc_bracket_over_divisor():
         rf"Add: {quotient} + {extra} = <strong>{result}</strong>"
     )
     hint = r"Brackets first, then division, then addition."
-    return q, s, hint, 2
+    return q, s, hint, 2, result
 
 
 def gcse_bidmas_proc_square_bracket_divide():
@@ -2176,7 +2185,7 @@ def gcse_bidmas_proc_square_bracket_divide():
         rf"Add: {divided} + {extra} = <strong>{result}</strong>"
     )
     hint = r"B → I → M/D → A/S. The bracket may give a negative value before squaring."
-    return q, s, hint, 3
+    return q, s, hint, 3, result
 
 
 def gcse_bidmas_proc_nested_inner_bracket():
@@ -2192,7 +2201,7 @@ def gcse_bidmas_proc_nested_inner_bracket():
         rf"Subtract: {inner} − {d} = <strong>{result}</strong>"
     )
     hint = r"Work out the bracket first, then multiply, then subtract."
-    return q, s, hint, 3
+    return q, s, hint, 3, result
 
 
 def gcse_bidmas_proc_negative_coefficient():
@@ -2212,7 +2221,7 @@ def gcse_bidmas_proc_negative_coefficient():
         rf"Add: {product} + {extra} = <strong>{result}</strong>"
     )
     hint = r"Squaring removes the sign of the bracketed value; then apply the negative multiplier."
-    return q, s, hint, 3
+    return q, s, hint, 3, result
 
 
 # -----------------------------------------------
@@ -3006,19 +3015,21 @@ def gcse_surds_practice_divide():
 
 def gcse_surds_practice_compare():
     """Compare the size of two surd expressions."""
-    c1, r1, c2, r2, s1, s2, winner, v1, v2 = _surd_random_compare()
-    q = (
-        rf"Which is larger: \( {c1}\sqrt{{{r1}}} \) or \( {c2}\sqrt{{{r2}}} \)? "
-        rf"Show your reasoning."
-    )
+    c1, r1, c2, r2, _s1, _s2, _winner, v1, v2 = _surd_random_compare()
+    expr1 = rf'\({c1}\sqrt{{{r1}}}\)'
+    expr2 = rf'\({c2}\sqrt{{{r2}}}\)'
+    from generators.shared.utils import compare_choice_payload
+    correct = 'A' if v1 > v2 else 'B'
+    winner_expr = expr1 if v1 > v2 else expr2
+    q = rf'Which is larger: {expr1} or {expr2}?'
     s = (
-        rf"Square both (positive values):<br>"
-        rf"\( ({c1}\sqrt{{{r1}}})^2 = {c1**2} \times {r1} = {v1} \)<br>"
-        rf"\( ({c2}\sqrt{{{r2}}})^2 = {c2**2} \times {r2} = {v2} \)<br>"
-        rf"<strong>{winner}</strong> is larger."
+        rf'Square both (positive values):<br>'
+        rf'\( ({c1}\sqrt{{{r1}}})^2 = {c1**2} \times {r1} = {v1} \)<br>'
+        rf'\( ({c2}\sqrt{{{r2}}})^2 = {c2**2} \times {r2} = {v2} \)<br>'
+        rf'<strong>{winner_expr}</strong> is larger.'
     )
-    hint = r"Compare by squaring, or rewrite each surd in simplest form and compare coefficients × root."
-    return q, s, hint, 2
+    hint = r'Compare by squaring, or rewrite each surd in simplest form and compare coefficients × root.'
+    return q, s, hint, 2, compare_choice_payload(expr1, expr2, correct)
 
 
 def gcse_surds_practice_mixed_simplify():
@@ -3135,7 +3146,11 @@ def gcse_maths_surds(difficulty, mode, variant_name=None):
     }
     variant = random.choice(pools.get(difficulty, pools['foundational']))
 
-    q, s, hint, marks = variant()
+    out = variant()
+    choice = problem_from_choice_output(out, difficulty, 'gcse', 'maths', 'surds')
+    if choice:
+        return choice
+    q, s, hint, marks = out[:4]
     return make_problem(q, s, hint, difficulty, marks, 'gcse', 'maths', 'surds')
 
 

@@ -30,7 +30,13 @@
     <div class="question">
         {% if problem.options %}
             <div class="question-content">{{ problem.question | safe }}</div>
-            <div class="mcq-options" data-correct="{{ problem.correct_answer }}">
+            <div class="mcq-options" id="shared-mcq-options"
+                 data-correct="{{ problem.correct_answer }}"
+                 data-level="{{ shared.level }}"
+                 data-subject="{{ shared.subject }}"
+                 data-topic="{{ shared.topic }}"
+                 data-mode="{{ shared.mode }}"
+                 data-difficulty="{{ shared.difficulty }}">
                 {% for opt in problem.options %}
                     <button type="button" class="btn mcq-btn" data-letter="{{ opt[0] }}">{{ opt | safe }}</button>
                 {% endfor %}
@@ -38,6 +44,12 @@
             <p class="mcq-feedback" style="margin-top:12px;font-weight:600;"></p>
         {% else %}
             <div class="question-content">{{ problem.question | format_question_html }}</div>
+            {% set fr_level = shared.level %}
+            {% set fr_subject = shared.subject %}
+            {% set fr_topic = shared.topic %}
+            {% set fr_difficulty = shared.difficulty %}
+            {% set fr_id = 'shared-free-response' %}
+            {% include 'partials/free_response_inline.html' %}
         {% endif %}
     </div>
 

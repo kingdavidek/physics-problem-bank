@@ -1,12 +1,55 @@
 """
 GCSE Computer Science – Computer Networks
 10 foundational · 10 intermediate · 10 difficult · 15 MCQ
-Each variant returns (question, solution, hint, marks).
-Final answers wrapped in <strong> tags.
+Graded practice variants return (question, solution, hint, marks, raw).
+Explanation-only variants stay as 4-tuples (Phase 2).
 """
 import random
 from generators.shared.utils import make_problem
 from generators.shared.variant_utils import pick_named_variant
+
+
+def _net_raw_number(value):
+    if isinstance(value, float):
+        val = round(value, 2)
+        if val == int(val):
+            return str(int(val))
+        return f'{val:.2f}'.rstrip('0').rstrip('.')
+    return str(int(value))
+
+
+def _net_fields_answer(values, labels):
+    return {
+        'type': 'number_fields',
+        'values': tuple(_net_raw_number(v) for v in values),
+        'labels': tuple(labels),
+    }
+
+
+def _net_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict) and raw.get('type') == 'number_fields':
+            values = raw.get('values') or ()
+            labels = raw.get('labels') or ()
+            if values and len(values) == len(labels):
+                extra = {
+                    'correct_answer_raw': '|'.join(str(v) for v in values),
+                    'answer_type': 'number_fields',
+                    'answer_labels': list(labels),
+                    'answer_format_hint': 'Enter a number in every field',
+                }
+        elif isinstance(raw, (int, float)):
+            extra = {
+                'correct_answer_raw': _net_raw_number(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+    return make_problem(
+        q, s, hint, difficulty, marks, 'gcse', 'cs', 'computer_networks', **extra
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -91,6 +134,15 @@ def _net_f10_packet():
     return q, s, "Packet switching is how the internet works.", 2
 
 
+def _net_f11_ipv4_groups():
+    q = (
+        "An <strong>IPv4</strong> address is written as four numbers separated by dots "
+        "(e.g. 192.168.0.10). How many numbers (octets) are in one IPv4 address?"
+    )
+    s = "An IPv4 address has <strong>4</strong> octets (e.g. four groups of 0–255)."
+    return q, s, "IPv4 = 32 bits shown as 4 denary octets.", 1, 4
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # INTERMEDIATE (10)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -126,9 +178,34 @@ def _net_i3_dns():
 
 
 def _net_i4_ipv4():
-    q = "Which of these is a valid <strong>IPv4</strong> address format?"
-    s = "Four numbers 0–255 separated by dots, e.g. <strong>192.168.1.10</strong>."
-    return q, s, "IPv4 = 32 bits, shown as 4 denary octets.", 1
+    q = (
+        "How many <strong>bits</strong> are used to represent one complete "
+        "<strong>IPv4</strong> address?"
+    )
+    s = "Four octets × 8 bits = <strong>32 bits</strong> (shown as four numbers 0–255)."
+    return q, s, "IPv4 = 32 bits, shown as 4 denary octets.", 1, 32
+
+
+def _net_i11_http_port():
+    q = (
+        "What is the default port number for unencrypted <strong>HTTP</strong> web traffic?"
+    )
+    s = "Standard HTTP uses port <strong>80</strong>."
+    return q, s, "HTTPS typically uses port 443 instead.", 1, 80
+
+
+def _net_i12_https_port():
+    q = (
+        "What is the default port number for secure <strong>HTTPS</strong> web traffic?"
+    )
+    s = "Standard HTTPS uses port <strong>443</strong>."
+    return q, s, "HTTPS = HTTP with encryption (TLS).", 1, 443
+
+
+def _net_i13_mac_bits():
+    q = "How many <strong>bits</strong> are in a standard MAC address?"
+    s = "A MAC address is <strong>48 bits</strong> (often shown as six hex pairs)."
+    return q, s, "MAC addresses are assigned to the NIC hardware.", 2, 48
 
 
 def _net_i5_mac_vs_ip():
@@ -304,13 +381,34 @@ def _net_d11_wireless_security():
 def _net_d12_http_status():
     q = (
         "A browser shows <strong>404 Not Found</strong> for one page and "
-        "<strong>500 Internal Server Error</strong> for another. Explain the difference."
+        "<strong>500 Internal Server Error</strong> for another.<br><br>"
+        "Explain the difference between these two status codes."
     )
     s = (
         "<strong>404:</strong> client requested a URL/resource that <strong>does not exist</strong> on the server. "
         "<strong>500:</strong> server received the request but <strong>failed while processing</strong> it."
     )
     return q, s, "4xx = client-side problem; 5xx = server-side failure.", 3
+
+
+def _net_d15_http_not_found_code():
+    q = (
+        "A student enters a web address that does not exist on the server. "
+        "The browser displays an HTTP error. What is the <strong>status code number</strong> "
+        "for <strong>Not Found</strong>?"
+    )
+    s = "The standard code is <strong>404 Not Found</strong>."
+    return q, s, "4xx codes indicate a problem with the client request.", 2, 404
+
+
+def _net_d16_http_server_error_code():
+    q = (
+        "A web server crashes while handling a valid request. "
+        "What is the <strong>status code number</strong> for "
+        "<strong>Internal Server Error</strong>?"
+    )
+    s = "The standard code is <strong>500 Internal Server Error</strong>."
+    return q, s, "5xx codes indicate the server failed to process the request.", 2, 500
 
 
 # ── Multi-part difficult questions (a, b, c) ──────────────────────────────────
@@ -517,13 +615,15 @@ _FOUNDATIONAL = [
     _net_f1_lan, _net_f2_wan, _net_f3_client_server, _net_f4_p2p,
     _net_f5_star_topology, _net_f6_router_role, _net_f7_http,
     _net_f8_nic, _net_f9_wifi_wap, _net_f10_packet,
+    _net_f11_ipv4_groups,
 ]
 
 _INTERMEDIATE = [
     _net_i1_topology_compare, _net_i2_switch_vs_hub, _net_i3_dns,
     _net_i4_ipv4, _net_i5_mac_vs_ip, _net_i6_tcp_udp,
     _net_i7_email_protocols, _net_i8_https, _net_i9_cloud,
-    _net_i10_bus_topology,
+    _net_i10_bus_topology, _net_i11_http_port, _net_i12_https_port,
+    _net_i13_mac_bits,
 ]
 
 _DIFFICULT = [
@@ -533,6 +633,7 @@ _DIFFICULT = [
     _net_d9_pop_imap, _net_d10_traceroute_concept,
     _net_d11_wireless_security, _net_d12_http_status,
     _net_d13_multipart_home_network, _net_d14_multipart_protocols,
+    _net_d15_http_not_found_code, _net_d16_http_server_error_code,
 ]
 
 
@@ -563,9 +664,4 @@ def gcse_computer_networks(difficulty, mode, variant_name=None):
 
     variants = gcse_computer_networks_variants(difficulty, mode)
     variant = pick_named_variant(variants, variant_name)
-
-    q, s, hint, marks = variant()
-    return make_problem(
-        q, s, hint, difficulty, marks,
-        "gcse", "cs", "computer_networks",
-    )
+    return _net_problem_from_output(variant(), difficulty)

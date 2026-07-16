@@ -139,6 +139,114 @@
     syncProblemActionHiddenFields();
   }
 
+  function readFreeResponseUserAnswer(block) {
+    if (!block) return '';
+    var answerType = (block.getAttribute('data-answer-type') || 'number').trim();
+    if (answerType === 'standard_form') {
+      var coeff = block.querySelector('.free-response-input-coeff');
+      var exp = block.querySelector('.free-response-input-exp');
+      if (!coeff || !exp) return '';
+      return (coeff.value || '').trim() + '|' + (exp.value || '').trim();
+    }
+    if (answerType === 'number_pair') {
+      var a = block.querySelector('.free-response-input-a');
+      var b = block.querySelector('.free-response-input-b');
+      if (!a || !b) return '';
+      return (a.value || '').trim() + '|' + (b.value || '').trim();
+    }
+    if (answerType === 'power') {
+      var base = block.querySelector('.free-response-input-base');
+      var index = block.querySelector('.free-response-input-index');
+      if (!base || !index) return '';
+      return (base.value || '').trim() + '|' + (index.value || '').trim();
+    }
+    if (answerType === 'number_fields') {
+      var fields = block.querySelectorAll('.free-response-input-field');
+      var correctRaw = (block.getAttribute('data-correct-raw') || '').trim();
+      var sep = correctRaw.indexOf('\x1e') >= 0 ? '\x1e' : '|';
+      return Array.prototype.map.call(fields, function (input) {
+        return (input.value || '').trim();
+      }).join(sep);
+    }
+    var single = block.querySelector('.free-response-input');
+    return single ? (single.value || '').trim() : '';
+  }
+
+  function freeResponseCheckState(block) {
+    if (!block || block.hidden) {
+      return { checked: false, correct: null, userAnswer: '' };
+    }
+    var answerType = (block.getAttribute('data-answer-type') || 'number').trim();
+    if (answerType === 'number_fields') {
+      var fields = block.querySelectorAll('.free-response-input-field');
+      if (!fields.length) {
+        return { checked: false, correct: null, userAnswer: '' };
+      }
+      var checked = Array.prototype.some.call(fields, function (input) {
+        return input.classList.contains('is-correct') || input.classList.contains('is-wrong');
+      });
+      var allCorrect = checked && Array.prototype.every.call(fields, function (input) {
+        return input.classList.contains('is-correct');
+      });
+      return {
+        checked: checked,
+        correct: checked ? allCorrect : null,
+        userAnswer: readFreeResponseUserAnswer(block),
+      };
+    }
+    var inputs = freeResponseInputs(block);
+    var checked = inputs.some(function (input) {
+      return input.classList.contains('is-correct') || input.classList.contains('is-wrong');
+    });
+    var correct = checked && inputs.length > 0 && inputs.every(function (input) {
+      return input.classList.contains('is-correct');
+    });
+    return {
+      checked: checked,
+      correct: checked ? correct : null,
+      userAnswer: readFreeResponseUserAnswer(block),
+    };
+  }
+
+  function collectQuickTestAnswerState() {
+    var mcq = document.getElementById('mcq-options');
+    if (mcq) {
+      var choice = (mcq.dataset.userChoice || '').trim();
+      if (!choice) {
+        return { userAnswer: '', checked: false, correct: null };
+      }
+      var correctLetter = ((mcq.getAttribute('data-correct') || '').trim()).charAt(0);
+      return {
+        userAnswer: choice,
+        checked: true,
+        correct: choice === correctLetter,
+      };
+    }
+    var fr = document.querySelector('.free-response-inline');
+    var frState = freeResponseCheckState(fr);
+    return {
+      userAnswer: frState.userAnswer,
+      checked: frState.checked,
+      correct: frState.correct,
+    };
+  }
+
+  function initQuickTestNextForm() {
+    var form = document.getElementById('quicktest-next-form');
+    if (!form) return;
+    form.addEventListener('submit', function () {
+      var state = collectQuickTestAnswerState();
+      var userEl = document.getElementById('qt-user-answer');
+      var checkedEl = document.getElementById('qt-checked');
+      var correctEl = document.getElementById('qt-correct');
+      if (userEl) userEl.value = state.userAnswer || '';
+      if (checkedEl) checkedEl.value = state.checked ? '1' : '0';
+      if (correctEl) {
+        correctEl.value = state.correct === true ? '1' : (state.correct === false ? '0' : '');
+      }
+    });
+  }
+
   function resetMcqInline(block) {
     var feedback = block.querySelector('.mcq-feedback')
       || (block.parentElement && block.parentElement.querySelector('.mcq-feedback'));
@@ -201,6 +309,7 @@
         }
         block.querySelectorAll('.mcq-btn').forEach(function (b) { b.disabled = true; });
         var letter = (btn.dataset.letter || '').trim().charAt(0);
+        block.dataset.userChoice = letter;
         var isCorrect = letter === correctLetter;
         if (isCorrect) {
           btn.classList.add('is-correct');
@@ -211,8 +320,14 @@
           block.dispatchEvent(new CustomEvent('mcq-correct', { bubbles: true }));
         } else {
           btn.classList.add('is-wrong');
+          block.querySelectorAll('.mcq-btn').forEach(function (b) {
+            var bLetter = (b.dataset.letter || '').trim().charAt(0);
+            if (bLetter === correctLetter) {
+              b.classList.add('is-correct');
+            }
+          });
           if (feedback) {
-            feedback.textContent = '\u2717 Not quite \u2014 try again.';
+            feedback.textContent = '\u2717 Not quite \u2014 the correct answer is highlighted.';
             feedback.style.color = '#dc2626';
           }
           showMcqRetry(block);
@@ -247,21 +362,383 @@
     document.querySelectorAll('.mcq-inline').forEach(wireMcqBlock);
   }
 
+  function freeResponseInputs(block) {
+    return Array.prototype.slice.call(block.querySelectorAll('.free-response-input'));
+  }
+
+  function freeResponseRowKind(row) {
+    if (!row) return 'number';
+    if (row.classList.contains('free-response-row--standard-form')) return 'standard_form';
+    if (row.classList.contains('free-response-row--number-pair')) return 'number_pair';
+    if (row.classList.contains('free-response-row--number-list')) return 'number_list';
+    if (row.classList.contains('free-response-row--power')) return 'power';
+    if (row.classList.contains('free-response-row--linear-equation')) return 'linear_equation';
+    if (row.classList.contains('free-response-row--ratio')) return 'ratio';
+    if (row.classList.contains('free-response-row--number-fields')) return 'number_fields';
+    if (row.classList.contains('free-response-row--pi-multiple')) return 'pi_multiple';
+    if (row.classList.contains('free-response-row--surd')) return 'surd';
+    return 'number';
+  }
+
+  function freeResponseRowHtml(block, answerType) {
+    var formatHint = block.getAttribute('data-format-hint') || '';
+    var labelA = block.getAttribute('data-label-a') || 'First value';
+    var labelB = block.getAttribute('data-label-b') || 'Second value';
+    var pairSep = block.getAttribute('data-pair-sep') || 'and';
+    var esc = function (s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    };
+
+    if (answerType === 'standard_form') {
+      return (
+        '<div class="free-response-row free-response-row--standard-form">' +
+        '<input type="text" class="free-response-input free-response-input-coeff" placeholder="e.g. 3.2" autocomplete="off" inputmode="decimal" aria-label="Standard form coefficient">' +
+        '<span class="free-response-sf-sep" aria-hidden="true">× 10^</span>' +
+        '<input type="text" class="free-response-input free-response-input-exp" placeholder="e.g. 5" autocomplete="off" inputmode="numeric" aria-label="Standard form power">' +
+        '<button type="button" class="btn free-response-check-btn">Check</button>' +
+        '</div>'
+      );
+    }
+    if (answerType === 'number_pair') {
+      return (
+        '<div class="free-response-row free-response-row--number-pair">' +
+        '<input type="text" class="free-response-input free-response-input-a" placeholder="' + esc(labelA) + '" autocomplete="off" inputmode="decimal" aria-label="' + esc(labelA) + '">' +
+        '<span class="free-response-pair-sep" aria-hidden="true">' + esc(pairSep) + '</span>' +
+        '<input type="text" class="free-response-input free-response-input-b" placeholder="' + esc(labelB) + '" autocomplete="off" inputmode="decimal" aria-label="' + esc(labelB) + '">' +
+        '<button type="button" class="btn free-response-check-btn">Check</button>' +
+        '</div>'
+      );
+    }
+    if (answerType === 'number_list') {
+      var listPh = formatHint || 'Enter numbers separated by commas';
+      return (
+        '<div class="free-response-row free-response-row--number-list">' +
+        '<input type="text" class="free-response-input free-response-input-list" placeholder="' + esc(listPh) + '" autocomplete="off" inputmode="decimal" aria-label="Your answer">' +
+        '<button type="button" class="btn free-response-check-btn">Check</button>' +
+        '</div>'
+      );
+    }
+    if (answerType === 'power') {
+      return (
+        '<div class="free-response-row free-response-row--power">' +
+        '<input type="text" class="free-response-input free-response-input-base" placeholder="e.g. 2" autocomplete="off" inputmode="numeric" aria-label="Base">' +
+        '<span class="free-response-power-sep" aria-hidden="true">^</span>' +
+        '<input type="text" class="free-response-input free-response-input-index" placeholder="e.g. 12" autocomplete="off" inputmode="numeric" aria-label="Index">' +
+        '<button type="button" class="btn free-response-check-btn">Check</button>' +
+        '</div>'
+      );
+    }
+    if (answerType === 'ratio' || answerType === 'ratio_exact') {
+      var ratioPh = formatHint || 'e.g. 3:5';
+      return (
+        '<div class="free-response-row free-response-row--ratio">' +
+        '<input type="text" class="free-response-input free-response-input-ratio" placeholder="' + esc(ratioPh) + '" autocomplete="off" inputmode="text" aria-label="Your ratio">' +
+        '<button type="button" class="btn free-response-check-btn">Check</button>' +
+        '</div>'
+      );
+    }
+    if (answerType === 'linear_equation') {
+      var eqPh = formatHint || 'e.g. y = 2x + 3';
+      return (
+        '<div class="free-response-row free-response-row--linear-equation">' +
+        '<input type="text" class="free-response-input free-response-input-linear-equation" placeholder="' + esc(eqPh) + '" autocomplete="off" inputmode="text" aria-label="Linear equation">' +
+        '<button type="button" class="btn free-response-check-btn">Check</button>' +
+        '</div>'
+      );
+    }
+    if (answerType === 'number_fields') {
+      var labels = [];
+      var fieldTypes = [];
+      try {
+        labels = JSON.parse(block.getAttribute('data-answer-labels') || '[]');
+      } catch (err) {
+        labels = [];
+      }
+      try {
+        fieldTypes = JSON.parse(block.getAttribute('data-field-types') || '[]');
+      } catch (err2) {
+        fieldTypes = [];
+      }
+      function fieldPlaceholder(fieldType) {
+        if (fieldType === 'keyword') return 'e.g. positive, negative, or none';
+        if (fieldType === 'linear_equation') return 'e.g. y = 2x + 3';
+        if (fieldType === 'number_estimate') return 'Your estimate from the graph';
+        if (fieldType === 'ratio' || fieldType === 'ratio_exact') return 'e.g. 3:5';
+        if (fieldType === 'binary') return 'e.g. 1101';
+        if (fieldType === 'hex') return 'e.g. FF';
+        return 'Number or fraction';
+      }
+      var rows = labels.map(function (label, index) {
+        var safeLabel = esc(label);
+        var ph = esc(fieldPlaceholder(fieldTypes[index] || 'number'));
+        return (
+          '<div class="free-response-field-row">' +
+          '<label class="free-response-field">' +
+          '<span class="free-response-field-label">' + safeLabel + '</span>' +
+          '<input type="text" class="free-response-input free-response-input-field" placeholder="' + ph + '" autocomplete="off" inputmode="text" aria-label="' + safeLabel + '">' +
+          '</label>' +
+          '<button type="button" class="btn free-response-check-btn free-response-field-check-btn">Check</button>' +
+          '<p class="free-response-field-feedback" aria-live="polite"></p>' +
+          '</div>'
+        );
+      }).join('');
+      return (
+        '<div class="free-response-row free-response-row--number-fields">' +
+        '<div class="free-response-fields-stack">' + rows + '</div>' +
+        '</div>'
+      );
+    }
+    if (answerType === 'pi_multiple') {
+      var piPh = formatHint || 'e.g. 4';
+      return (
+        '<div class="free-response-row free-response-row--pi-multiple">' +
+        '<input type="text" class="free-response-input free-response-input-pi" placeholder="' + esc(piPh) + '" autocomplete="off" inputmode="text" aria-label="Coefficient of pi">' +
+        '<span class="free-response-pi-sep" aria-hidden="true">π</span>' +
+        '<button type="button" class="btn free-response-check-btn">Check</button>' +
+        '</div>'
+      );
+    }
+    if (answerType === 'surd') {
+      var surdPh = formatHint || 'e.g. √113';
+      return (
+        '<div class="free-response-row free-response-row--surd">' +
+        '<input type="text" class="free-response-input free-response-input-surd" placeholder="' + esc(surdPh) + '" autocomplete="off" inputmode="text" aria-label="Surd answer">' +
+        '<button type="button" class="btn btn-secondary free-response-surd-btn" aria-label="Insert square root symbol">√</button>' +
+        '<button type="button" class="btn free-response-check-btn">Check</button>' +
+        '</div>'
+      );
+    }
+    var placeholder = formatHint || 'Enter a number';
+    var numberInputMode = formatHint.toLowerCase().indexOf('fraction') !== -1
+      ? 'text'
+      : 'decimal';
+    return (
+      '<div class="free-response-row free-response-row--number">' +
+      '<input type="text" class="free-response-input" placeholder="' + esc(placeholder) + '" autocomplete="off" inputmode="' + numberInputMode + '" aria-label="Your answer">' +
+      '<button type="button" class="btn free-response-check-btn">Check</button>' +
+      '</div>'
+    );
+  }
+
+  function insertAtCursor(input, text) {
+    if (!input) return;
+    var start = input.selectionStart;
+    var end = input.selectionEnd;
+    var value = input.value || '';
+    if (typeof start === 'number' && typeof end === 'number') {
+      input.value = value.slice(0, start) + text + value.slice(end);
+      var pos = start + text.length;
+      input.setSelectionRange(pos, pos);
+    } else {
+      input.value = value + text;
+    }
+    input.focus();
+  }
+
+  function wireSurdInsertButton(block) {
+    var btn = block.querySelector('.free-response-surd-btn');
+    var input = block.querySelector('.free-response-input-surd');
+    if (!btn || !input || btn.dataset.surdInit === '1') return;
+    btn.dataset.surdInit = '1';
+    btn.addEventListener('click', function () {
+      if (input.disabled) return;
+      insertAtCursor(input, '√');
+    });
+  }
+
+  function ensureFreeResponseRow(block, answerType) {
+    var current = block.querySelector('.free-response-row');
+    var rowKind = (answerType === 'ratio' || answerType === 'ratio_exact') ? 'ratio'
+      : (answerType === 'linear_equation') ? 'linear_equation'
+      : answerType;
+    if (!current || freeResponseRowKind(current) !== rowKind) {
+      if (current) current.remove();
+      var feedback = block.querySelector('.free-response-feedback');
+      var wrap = document.createElement('div');
+      wrap.innerHTML = freeResponseRowHtml(block, answerType);
+      var row = wrap.firstChild;
+      if (feedback) {
+        block.insertBefore(row, feedback);
+      } else {
+        block.appendChild(row);
+      }
+    }
+  }
+
+  function setFreeResponseInputMode(block, answerType) {
+    ensureFreeResponseRow(block, answerType);
+    if (answerType === 'surd') {
+      wireSurdInsertButton(block);
+    }
+  }
+
   function resetFreeResponseBlock(block) {
-    var input = block.querySelector('.free-response-input');
-    var feedback = block.querySelector('.free-response-feedback');
-    var checkBtn = block.querySelector('.free-response-check-btn');
-    if (input) {
+    freeResponseInputs(block).forEach(function (input) {
       input.value = '';
       input.disabled = false;
       input.classList.remove('is-correct', 'is-wrong');
-    }
-    if (checkBtn) checkBtn.disabled = false;
+    });
+    block.querySelectorAll('.free-response-check-btn').forEach(function (btn) {
+      btn.disabled = false;
+    });
+    block.querySelectorAll('.free-response-field-feedback').forEach(function (el) {
+      el.textContent = '';
+      el.style.color = '';
+    });
+    var feedback = block.querySelector('.free-response-feedback');
     if (feedback) {
       feedback.textContent = '';
       feedback.style.color = '';
     }
     delete block.dataset.freeResponsePersisted;
+  }
+
+  function newAttemptGroupId() {
+    return 'g_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9);
+  }
+
+  function splitNumberFieldCorrectParts(correctRaw) {
+    if (!correctRaw) return [];
+    if (correctRaw.indexOf('\x1e') >= 0) {
+      return correctRaw.split('\x1e');
+    }
+    return correctRaw.split('|');
+  }
+
+  function wireNumberFieldsFreeResponse(block, correctRaw, trackable) {
+    var correctParts = splitNumberFieldCorrectParts(correctRaw);
+    var fieldRows = block.querySelectorAll('.free-response-field-row');
+    var blockFeedback = block.querySelector('.free-response-feedback');
+    var partTotal = correctParts.length;
+    if (trackable && !block.dataset.attemptGroupId) {
+      block.dataset.attemptGroupId = newAttemptGroupId();
+    }
+    var fieldTypes = [];
+    try {
+      fieldTypes = JSON.parse(block.getAttribute('data-field-types') || '[]');
+    } catch (err) {
+      fieldTypes = [];
+    }
+
+    function allFieldsCorrect() {
+      var inputs = block.querySelectorAll('.free-response-input-field');
+      if (!inputs.length) return false;
+      return Array.prototype.every.call(inputs, function (input) {
+        return input.disabled && input.classList.contains('is-correct');
+      });
+    }
+
+    function maybePersistAllFields() {
+      if (!allFieldsCorrect()) return;
+      if (blockFeedback) {
+        blockFeedback.textContent = '\u2713 All parts correct!';
+        blockFeedback.style.color = '#16a34a';
+      }
+    }
+
+    fieldRows.forEach(function (row, index) {
+      var input = row.querySelector('.free-response-input-field');
+      var checkBtn = row.querySelector('.free-response-field-check-btn');
+      var fieldFeedback = row.querySelector('.free-response-field-feedback');
+      if (!input || !checkBtn) return;
+
+      function submitField() {
+        if (input.disabled && input.classList.contains('is-correct')) return;
+
+        var userValue = (input.value || '').trim();
+        if (!userValue) {
+          if (fieldFeedback) {
+            fieldFeedback.textContent = 'Enter an answer.';
+            fieldFeedback.style.color = '#dc2626';
+          }
+          return;
+        }
+
+        var fieldCorrect = correctParts[index] || '';
+        var fieldType = fieldTypes[index] || 'number';
+        checkBtn.disabled = true;
+        input.disabled = true;
+
+        var body = {
+          user_answer: userValue,
+          correct_answer_raw: fieldCorrect,
+          answer_type: fieldType,
+        };
+        if (trackable) {
+          body.level = block.dataset.level;
+          body.subject = block.dataset.subject;
+          body.topic = block.dataset.topic;
+          body.difficulty = block.dataset.difficulty || 'foundational';
+          if (block.dataset.attemptGroupId) {
+            body.attempt_group_id = block.dataset.attemptGroupId;
+            body.part_index = index;
+            body.part_total = partTotal;
+          }
+        }
+
+        fetch('/api/v1/problems/check', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify(body),
+        })
+          .then(function (response) {
+            return response.json().then(function (data) {
+              if (!response.ok) {
+                var err = new Error(data.error || 'Check failed');
+                err.data = data;
+                throw err;
+              }
+              return data;
+            });
+          })
+          .then(function (data) {
+            input.classList.remove('is-correct', 'is-wrong');
+            if (data.correct) {
+              input.classList.add('is-correct');
+              input.disabled = true;
+              checkBtn.disabled = true;
+              if (fieldFeedback) {
+                fieldFeedback.textContent = '\u2713 ' + (data.feedback || 'Correct!');
+                fieldFeedback.style.color = '#16a34a';
+              }
+              maybePersistAllFields();
+            } else {
+              input.classList.add('is-wrong');
+              input.disabled = false;
+              checkBtn.disabled = false;
+              if (fieldFeedback) {
+                fieldFeedback.textContent = '\u2717 ' + (data.feedback || 'Not quite \u2014 try again.');
+                fieldFeedback.style.color = '#dc2626';
+              }
+            }
+          })
+          .catch(function (err) {
+            input.disabled = false;
+            checkBtn.disabled = false;
+            if (fieldFeedback) {
+              fieldFeedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
+              fieldFeedback.style.color = '#dc2626';
+            }
+          });
+      }
+
+      checkBtn.addEventListener('click', submitField);
+      input.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          submitField();
+        }
+      });
+    });
   }
 
   function wireFreeResponseBlock(block) {
@@ -271,27 +748,154 @@
     if (!correctRaw) return;
 
     block.dataset.freeResponseInit = '1';
-    var input = block.querySelector('.free-response-input');
-    var checkBtn = block.querySelector('.free-response-check-btn');
-    var feedback = block.querySelector('.free-response-feedback');
-    if (!input || !checkBtn) return;
-
     var answerType = (block.getAttribute('data-answer-type') || block.dataset.answerType || 'number').trim();
+    setFreeResponseInputMode(block, answerType);
+
     var trackable = Boolean(block.dataset.level);
 
+    if (answerType === 'number_fields') {
+      wireNumberFieldsFreeResponse(block, correctRaw, trackable);
+      return;
+    }
+
+    var checkBtn = block.querySelector('.free-response-check-btn');
+    var feedback = block.querySelector('.free-response-feedback');
+    if (!checkBtn) return;
+
+    function activeInputs() {
+      if (answerType === 'standard_form') {
+        return {
+          coeff: block.querySelector('.free-response-input-coeff'),
+          exp: block.querySelector('.free-response-input-exp'),
+          all: freeResponseInputs(block),
+        };
+      }
+      if (answerType === 'number_pair') {
+        return {
+          a: block.querySelector('.free-response-input-a'),
+          b: block.querySelector('.free-response-input-b'),
+          all: freeResponseInputs(block),
+        };
+      }
+      if (answerType === 'number_list') {
+        var listInput = block.querySelector('.free-response-input-list');
+        return { single: listInput, all: listInput ? [listInput] : [] };
+      }
+      if (answerType === 'power') {
+        return {
+          base: block.querySelector('.free-response-input-base'),
+          index: block.querySelector('.free-response-input-index'),
+          all: freeResponseInputs(block),
+        };
+      }
+      if (answerType === 'ratio' || answerType === 'ratio_exact') {
+        var ratioInput = block.querySelector('.free-response-input-ratio');
+        return { single: ratioInput, all: ratioInput ? [ratioInput] : [] };
+      }
+      if (answerType === 'linear_equation') {
+        var eqInput = block.querySelector('.free-response-input-linear-equation');
+        return { single: eqInput, all: eqInput ? [eqInput] : [] };
+      }
+      if (answerType === 'pi_multiple') {
+        var piInput = block.querySelector('.free-response-input-pi');
+        return { single: piInput, all: piInput ? [piInput] : [] };
+      }
+      if (answerType === 'surd') {
+        var surdInput = block.querySelector('.free-response-input-surd');
+        return { single: surdInput, all: surdInput ? [surdInput] : [] };
+      }
+      if (answerType === 'number_fields') {
+        var fields = Array.prototype.slice.call(
+          block.querySelectorAll('.free-response-input-field')
+        );
+        return { fields: fields, all: fields };
+      }
+      var single = block.querySelector('.free-response-row--number .free-response-input');
+      return { single: single, all: single ? [single] : [] };
+    }
+
+    function readUserAnswer() {
+      var inputs = activeInputs();
+      if (answerType === 'standard_form') {
+        if (!inputs.coeff || !inputs.exp) return '';
+        return (inputs.coeff.value || '').trim() + '|' + (inputs.exp.value || '').trim();
+      }
+      if (answerType === 'number_pair') {
+        if (!inputs.a || !inputs.b) return '';
+        return (inputs.a.value || '').trim() + '|' + (inputs.b.value || '').trim();
+      }
+      if (answerType === 'power') {
+        if (!inputs.base || !inputs.index) return '';
+        return (inputs.base.value || '').trim() + '|' + (inputs.index.value || '').trim();
+      }
+      if (answerType === 'number_fields') {
+        return inputs.fields.map(function (input) {
+          return (input.value || '').trim();
+        }).join('|');
+      }
+      return inputs.single ? (inputs.single.value || '').trim() : '';
+    }
+
+    function isEmptyAnswer() {
+      var inputs = activeInputs();
+      if (answerType === 'standard_form') {
+        return !(inputs.coeff && (inputs.coeff.value || '').trim()) || !(inputs.exp && (inputs.exp.value || '').trim());
+      }
+      if (answerType === 'number_pair') {
+        return !(inputs.a && (inputs.a.value || '').trim()) || !(inputs.b && (inputs.b.value || '').trim());
+      }
+      if (answerType === 'power') {
+        return !(inputs.base && (inputs.base.value || '').trim()) || !(inputs.index && (inputs.index.value || '').trim());
+      }
+      if (answerType === 'number_fields') {
+        return !inputs.fields.length || inputs.fields.some(function (input) {
+          return !(input.value || '').trim();
+        });
+      }
+      return !readUserAnswer();
+    }
+
+    function emptyMessage() {
+      if (answerType === 'standard_form') return 'Enter the coefficient and power of 10.';
+      if (answerType === 'number_pair') return 'Enter both values.';
+      if (answerType === 'power') return 'Enter the base and index.';
+      if (answerType === 'number_fields') return 'Complete every answer field.';
+      if (answerType === 'number_list') return 'Enter your answer.';
+      if (answerType === 'pi_multiple') return 'Enter the coefficient of π.';
+      if (answerType === 'surd') return 'Enter your answer in surd form.';
+      return 'Enter an answer first.';
+    }
+
+    function setInputState(correct) {
+      var inputs = activeInputs();
+      inputs.all.forEach(function (input) {
+        input.classList.remove('is-correct', 'is-wrong');
+        if (correct) {
+          input.classList.add('is-correct');
+          input.disabled = true;
+        } else {
+          input.classList.add('is-wrong');
+          input.disabled = false;
+        }
+      });
+      block.querySelectorAll('.free-response-check-btn').forEach(function (btn) {
+        btn.disabled = correct;
+      });
+    }
+
     function submitAnswer() {
-      if (input.disabled) return;
-      var userAnswer = (input.value || '').trim();
-      if (!userAnswer) {
+      var inputs = activeInputs();
+      if (inputs.all.length && inputs.all[0] && inputs.all[0].disabled) return;
+
+      if (isEmptyAnswer()) {
         if (feedback) {
-          feedback.textContent = 'Enter an answer first.';
+          feedback.textContent = emptyMessage();
           feedback.style.color = '#dc2626';
         }
         return;
       }
 
-      checkBtn.disabled = true;
-      input.disabled = true;
+      var userAnswer = readUserAnswer();
 
       var body = {
         user_answer: userAnswer,
@@ -304,6 +908,13 @@
         body.topic = block.dataset.topic;
         body.difficulty = block.dataset.difficulty || 'foundational';
       }
+
+      block.querySelectorAll('.free-response-check-btn').forEach(function (btn) {
+        btn.disabled = true;
+      });
+      inputs.all.forEach(function (input) {
+        input.disabled = true;
+      });
 
       fetch('/api/v1/problems/check', {
         method: 'POST',
@@ -326,15 +937,13 @@
         })
         .then(function (data) {
           if (data.correct) {
-            input.classList.add('is-correct');
+            setInputState(true);
             if (feedback) {
               feedback.textContent = '\u2713 ' + (data.feedback || 'Correct!');
               feedback.style.color = '#16a34a';
             }
           } else {
-            input.classList.add('is-wrong');
-            input.disabled = false;
-            checkBtn.disabled = false;
+            setInputState(false);
             if (feedback) {
               feedback.textContent = '\u2717 ' + (data.feedback || 'Not quite \u2014 try again.');
               feedback.style.color = '#dc2626';
@@ -351,8 +960,12 @@
           }
         })
         .catch(function (err) {
-          input.disabled = false;
-          checkBtn.disabled = false;
+          inputs.all.forEach(function (input) {
+            input.disabled = false;
+          });
+          block.querySelectorAll('.free-response-check-btn').forEach(function (btn) {
+            btn.disabled = false;
+          });
           if (feedback) {
             feedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
             feedback.style.color = '#dc2626';
@@ -361,11 +974,13 @@
     }
 
     checkBtn.addEventListener('click', submitAnswer);
-    input.addEventListener('keydown', function (event) {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        submitAnswer();
-      }
+    activeInputs().all.forEach(function (input) {
+      input.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          submitAnswer();
+        }
+      });
     });
   }
 
@@ -500,7 +1115,54 @@
       wireMcqWrap(mcq);
     }
 
-    typesetNodes([question, answer, hint, mcq]);
+    var free = document.getElementById('saved-free-response');
+    if (free) {
+      var raw = (problem.correct_answer_raw || '').trim();
+      if (raw) {
+        free.hidden = false;
+        free.setAttribute('data-correct-raw', raw);
+        free.dataset.correctRaw = raw;
+        var answerType = problem.answer_type || 'number';
+        free.setAttribute('data-answer-type', answerType);
+        free.dataset.answerType = answerType;
+        if (problem.answer_format_hint) {
+          free.setAttribute('data-format-hint', problem.answer_format_hint);
+        } else {
+          free.removeAttribute('data-format-hint');
+        }
+        if (problem.answer_labels && problem.answer_labels.length) {
+          free.setAttribute('data-label-a', problem.answer_labels[0] || '');
+          free.setAttribute('data-label-b', problem.answer_labels[1] || '');
+          free.setAttribute('data-answer-labels', JSON.stringify(problem.answer_labels));
+        } else {
+          free.removeAttribute('data-label-a');
+          free.removeAttribute('data-label-b');
+          free.setAttribute('data-answer-labels', '[]');
+        }
+        if (problem.answer_field_types && problem.answer_field_types.length) {
+          free.setAttribute('data-field-types', JSON.stringify(problem.answer_field_types));
+        } else {
+          free.setAttribute('data-field-types', '[]');
+        }
+        if (problem.answer_pair_sep) {
+          free.setAttribute('data-pair-sep', problem.answer_pair_sep);
+        } else {
+          free.setAttribute('data-pair-sep', 'and');
+        }
+        setFreeResponseInputMode(free, answerType);
+        delete free.dataset.freeResponseInit;
+        delete free.dataset.freeResponsePersisted;
+        resetFreeResponseBlock(free);
+        wireFreeResponseBlock(free);
+      } else {
+        free.hidden = true;
+        free.setAttribute('data-correct-raw', '');
+        free.dataset.correctRaw = '';
+        resetFreeResponseBlock(free);
+      }
+    }
+
+    typesetNodes([question, answer, hint, mcq, free]);
   }
 
   function initRerollSavedForm() {
@@ -530,8 +1192,11 @@
   }
 
   function initMcqButtons() {
-    var wraps = document.querySelectorAll('#mcq-options, #saved-mcq-options, .mcq-options[data-correct]');
+    var wraps = document.querySelectorAll(
+      '#mcq-options, #saved-mcq-options, #shared-mcq-options, #suggestion-mcq-options, .mcq-options[data-correct]'
+    );
     wraps.forEach(wireMcqBlock);
+    typesetNodes(Array.prototype.slice.call(wraps));
   }
 
   function scrollToProblemCard() {
@@ -631,6 +1296,7 @@
   document.addEventListener('DOMContentLoaded', function () {
     initGeneratorForm();
     initQuickTestForm();
+    initQuickTestNextForm();
     initMcqInline();
     initFreeResponseInline();
     initMcqButtons();

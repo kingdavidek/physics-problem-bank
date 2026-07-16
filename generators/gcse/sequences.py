@@ -1,8 +1,8 @@
 """
 GCSE Maths – Sequences
 15 foundational · 15 intermediate · 15 difficult · 18 MCQ
-Each variant returns (question, solution, hint, marks).
-Final answers are wrapped in <strong> tags.
+Graded practice variants return (question, solution, hint, marks, raw).
+Text nth-term / proof-style variants stay as 4-tuples (Phase 2).
 """
 import random
 import math
@@ -28,6 +28,82 @@ def _linear_nth(d, b):
         return f"{d}n - {-b}"
 
 
+def _seq_raw(value, places=2):
+    """Canonical numeric string for typed answer checking."""
+    if isinstance(value, Fraction):
+        return str(value)
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        val = round(value, places)
+        if val == int(val):
+            return str(int(val))
+        return f"{val:.{places}f}".rstrip('0').rstrip('.')
+    return str(value)
+
+
+def _seq_keyword_answer(value):
+    return {'type': 'keyword', 'value': str(value).strip().lower()}
+
+
+def _seq_fields_answer(values, labels, places=2):
+    return {
+        'type': 'number_fields',
+        'values': tuple(_seq_raw(v, places) for v in values),
+        'labels': tuple(labels),
+    }
+
+
+def _seq_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict) and raw.get('type') == 'number_fields':
+            values = raw.get('values') or ()
+            labels = raw.get('labels') or ()
+            if values and len(values) == len(labels):
+                extra = {
+                    'correct_answer_raw': '|'.join(str(v) for v in values),
+                    'answer_type': 'number_fields',
+                    'answer_labels': list(labels),
+                    'answer_format_hint': (
+                        'Enter a number or fraction in every field'
+                    ),
+                }
+        elif isinstance(raw, dict) and raw.get('type') == 'keyword':
+            value = raw.get('value')
+            if value is not None and str(value).strip():
+                extra = {
+                    'correct_answer_raw': str(value).strip().lower(),
+                    'answer_type': 'keyword',
+                    'answer_format_hint': 'e.g. yes or no',
+                }
+        elif isinstance(raw, Fraction):
+            extra = {
+                'correct_answer_raw': str(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number or fraction',
+            }
+        elif isinstance(raw, (int, float)):
+            extra = {
+                'correct_answer_raw': _seq_raw(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+        elif isinstance(raw, str):
+            extra = {
+                'correct_answer_raw': raw,
+                'answer_type': 'number',
+                'answer_format_hint': (
+                    'Enter a number or fraction' if '/' in raw else 'Enter a number'
+                ),
+            }
+    return make_problem(
+        q, s, hint, difficulty, marks, 'gcse', 'maths', 'sequences', **extra
+    )
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # FOUNDATIONAL (15 variants)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -44,7 +120,7 @@ def _seq_found_next_term_arithmetic():
          rf"Next term = \({terms[-1]} + {d}\)<br>"
          rf"<strong>\(= {next_t}\)</strong>")
     hint = f"Find the difference between consecutive terms, then add it to the last term."
-    return q, s, hint, 1
+    return q, s, hint, 1, next_t
 
 
 def _seq_found_next_term_subtract():
@@ -59,7 +135,7 @@ def _seq_found_next_term_subtract():
          rf"Next term = \({terms[-1]} - {d}\)<br>"
          rf"<strong>\(= {next_t}\)</strong>")
     hint = "Find the difference between consecutive terms."
-    return q, s, hint, 1
+    return q, s, hint, 1, next_t
 
 
 def _seq_found_identify_rule():
@@ -104,7 +180,7 @@ def _seq_found_nth_term_find_value():
          rf"\({d} \times {n_val} {'+' if b >= 0 else '-'} {abs(b)} = {d*n_val} {'+' if b>=0 else '-'} {abs(b)}\)<br>"
          rf"<strong>\(= {ans}\)</strong>")
     hint = f"Replace n with {n_val} in {expr_str}."
-    return q, s, hint, 1
+    return q, s, hint, 1, ans
 
 
 def _seq_found_is_term_in_seq():
@@ -121,7 +197,7 @@ def _seq_found_is_term_in_seq():
          rf"\(n = {val - b} \div {d} = {k}\)<br>"
          rf"Since \(n = {k}\) is a positive integer, <strong>{val} is the {k}th term</strong>.")
     hint = f"Set {expr_str} = {val} and solve for n. If n is a positive integer, the value is in the sequence."
-    return q, s, hint, 3
+    return q, s, hint, 3, _seq_keyword_answer('yes')
 
 
 def _seq_found_term_to_term_rule():
@@ -147,7 +223,7 @@ def _seq_found_geometric_next():
          rf"Next term \(= {terms[-1]} \times {r}\)<br>"
          rf"<strong>\(= {next_t}\)</strong>")
     hint = "Divide any term by the previous term to find the common ratio r."
-    return q, s, hint, 2
+    return q, s, hint, 2, next_t
 
 
 def _seq_found_square_numbers():
@@ -158,7 +234,7 @@ def _seq_found_square_numbers():
          rf"\({n_val}^2 = {n_val} \times {n_val}\)<br>"
          rf"<strong>\(= {ans}\)</strong>")
     hint = "The nth square number is n²."
-    return q, s, hint, 1
+    return q, s, hint, 1, ans
 
 
 def _seq_found_triangle_numbers():
@@ -171,7 +247,7 @@ def _seq_found_triangle_numbers():
          rf"\(\dfrac{{{n_val} \times {n_val+1}}}{{2}} = \dfrac{{{n_val*(n_val+1)}}}{{2}}\)<br>"
          rf"<strong>\(= {ans}\)</strong>")
     hint = "The nth triangle number is n(n+1)/2."
-    return q, s, hint, 2
+    return q, s, hint, 2, ans
 
 
 def _seq_found_odd_even_seq():
@@ -189,7 +265,7 @@ def _seq_found_odd_even_seq():
         q = rf"The sequence of even numbers starts: {', '.join(str(t) for t in terms)}, ...<br>Find the {n_val}th even number."
         s = rf"The \(n\)th even number is \(2n\).<br>\(2 \times {n_val}\)<br><strong>\(= {ans}\)</strong>"
     hint = "Use the formula for the nth term of the odd or even number sequence."
-    return q, s, hint, 1
+    return q, s, hint, 1, ans
 
 
 def _seq_found_fibonacci_next():
@@ -204,7 +280,7 @@ def _seq_found_fibonacci_next():
          rf"Next term \(= {terms[-1]} + {terms[-2]}\)<br>"
          rf"<strong>\(= {next_t}\)</strong>")
     hint = "Add the last two terms to find the next one."
-    return q, s, hint, 1
+    return q, s, hint, 1, next_t
 
 
 def _seq_found_missing_term():
@@ -218,7 +294,7 @@ def _seq_found_missing_term():
          rf"Missing term \(= {terms[gap_idx - 1]} + {d}\) or \(= {terms[gap_idx + 1]} - {d}\)<br>"
          rf"<strong>\(= {terms[gap_idx]}\)</strong>")
     hint = "Use the common difference to work out the missing value."
-    return q, s, hint, 1
+    return q, s, hint, 1, terms[gap_idx]
 
 
 def _seq_found_continue_pattern():
@@ -229,11 +305,11 @@ def _seq_found_continue_pattern():
     ]
     terms, rule, next_t = random.choice(patterns)
     seq_str = ", ".join(str(t) for t in terms)
-    q = rf"Write down the next term in the sequence: {seq_str}, ___<br>Explain the pattern."
+    q = rf"Write down the next term in the sequence: {seq_str}, ___<br>Explain the pattern and find the next term in the sequence."
     s = (rf"Pattern: {rule}.<br>"
          rf"<strong>Next term = {next_t}</strong>")
     hint = "Look at differences or ratios to identify the pattern."
-    return q, s, hint, 2
+    return q, s, hint, 2, next_t
 
 
 def _seq_found_count_patterns():
@@ -248,7 +324,7 @@ def _seq_found_count_patterns():
          rf"Shape {pattern_n + 1}: \({dots_per} \times {pattern_n + 1}\)<br>"
          rf"<strong>\(= {ans}\)</strong>")
     hint = f"Find the formula (nth term), then substitute n = {pattern_n + 1}."
-    return q, s, hint, 2
+    return q, s, hint, 2, ans
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -301,7 +377,7 @@ def _seq_inter_which_term():
          rf"\(n = {val - b} \div {d} = {k}\)<br>"
          rf"<strong>{val} is the {k}th term.</strong>")
     hint = f"Set the nth-term expression equal to {val} and solve for n."
-    return q, s, hint, 3
+    return q, s, hint, 3, k
 
 
 def _seq_inter_not_in_seq():
@@ -318,7 +394,7 @@ def _seq_inter_not_in_seq():
          rf"\(n = {numer} \div {d} = {Fraction(numer, d)}\)<br>"
          rf"Since \(n\) is not a positive integer, <strong>{val} is not a term in the sequence.</strong>")
     hint = f"Set {s_expr} = {val} and solve for n. If n is not a whole number, the value is not in the sequence."
-    return q, s, hint, 3
+    return q, s, hint, 3, _seq_keyword_answer('no')
 
 
 def _seq_inter_first_term_over():
@@ -337,7 +413,7 @@ def _seq_inter_first_term_over():
          rf"The first integer value is \(n = {n_ans}\).<br>"
          rf"<strong>First term greater than {target} is \({val}\) (the {n_ans}th term).</strong>")
     hint = f"Solve {s_expr} > {target} for n, then round up to the nearest whole number."
-    return q, s, hint, 3
+    return q, s, hint, 3, val
 
 
 def _seq_inter_geometric_nth_term():
@@ -351,7 +427,7 @@ def _seq_inter_geometric_nth_term():
          rf"\(= {a} \times {r**(n_val-1)}\)<br>"
          rf"<strong>\(= {ans}\)</strong>")
     hint = f"Use the formula: nth term = ar^(n-1), with a = {a} and r = {r}."
-    return q, s, hint, 3
+    return q, s, hint, 3, ans
 
 
 def _seq_inter_two_sequences_same():
@@ -384,7 +460,7 @@ def _seq_inter_two_sequences_same():
          rf"Both sequences give the value \({e1.replace('n', str(n_val))} = {ans}\).<br>"
          rf"<strong>The shared value is {ans} (at position n = {n_val}).</strong>")
     hint = f"Set {e1} = {e2} and solve for n."
-    return q, s, hint, 4
+    return q, s, hint, 4, ans
 
 
 def _seq_inter_sum_arithmetic():
@@ -398,7 +474,7 @@ def _seq_inter_sum_arithmetic():
          rf"Sum: \(S_n = \dfrac{{n(a+l)}}{{2}} = \dfrac{{{n}({a}+{l})}}{{2}} = \dfrac{{{n}({a+l})}}{{2}}\)<br>"
          rf"<strong>\(S_{{{n}}} = {ans}\)</strong>")
     hint = "Use Sn = n(a + l)/2, where l is the last term."
-    return q, s, hint, 3
+    return q, s, hint, 3, ans
 
 
 def _seq_inter_quadratic_identify():
@@ -428,7 +504,7 @@ def _seq_inter_arithmetic_word():
          rf"Total: \(S = \dfrac{{{rows}({seats_row1}+{l})}}{{2}} = \dfrac{{{rows} \times {seats_row1+l}}}{{2}}\)<br>"
          rf"<strong>Total seats \(= {total}\)</strong>")
     hint = "The row sizes form an arithmetic sequence. Use Sn = n(a + l)/2."
-    return q, s, hint, 4
+    return q, s, hint, 4, total
 
 
 def _seq_inter_sequences_nth_term_large():
@@ -443,7 +519,7 @@ def _seq_inter_sequences_nth_term_large():
          rf"\({d} \times {n_val} {'+' if b >= 0 else '-'} {abs(b)} = {d*n_val} {'+' if b >= 0 else '-'} {abs(b)}\)<br>"
          rf"<strong>\(= {ans}\)</strong>")
     hint = f"Substitute n = {n_val} into {s_expr}."
-    return q, s, hint, 1
+    return q, s, hint, 1, ans
 
 
 def _seq_inter_nth_term_from_context():
@@ -457,7 +533,7 @@ def _seq_inter_nth_term_from_context():
          rf"Year {year}: \({rise} \times {year} + {wage - rise}\)<br>"
          rf"<strong>£{ans}</strong>")
     hint = "The salary is an arithmetic sequence. Write it in the form dn + b."
-    return q, s, hint, 4
+    return q, s, hint, 4, ans
 
 
 def _seq_inter_common_terms():
@@ -481,7 +557,7 @@ def _seq_inter_common_terms():
          rf"Checking terms of A: {', '.join(str(a1+k*d1) for k in range(15))}...<br>"
          rf"<strong>First common term is {first_common}.</strong>")
     hint = "List terms of both sequences and find the first one they share."
-    return q, s, hint, 3
+    return q, s, hint, 3, first_common
 
 
 def _seq_inter_pattern_dots():
@@ -495,7 +571,7 @@ def _seq_inter_pattern_dots():
          rf"Shape {n_val}: \({n_val} \times {n_val+1}\)<br>"
          rf"<strong>\(= {ans}\)</strong>")
     hint = f"Substitute n = {n_val} into n(n+1)."
-    return q, s, hint, 2
+    return q, s, hint, 2, ans
 
 
 def _seq_inter_linear_quadratic_compare():
@@ -517,7 +593,7 @@ def _seq_inter_linear_quadratic_compare():
          rf"{'A > B ✓' if n_test**2 > d*n_test+a else 'A ≤ B'}<br>"
          rf"<strong>Smallest \(n\) is {n_test}.</strong>")
     hint = f"Set n² > {d}n + {a} and test integer values of n."
-    return q, s, hint, 3
+    return q, s, hint, 3, n_test
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -570,7 +646,7 @@ def _seq_diff_quadratic_verify():
          rf"(b) \(n = {n_val}\): \({a_coef}({n_val})^2 + {b_coef}({n_val}) + ({c_coef}) = {a_coef*n_val**2} + {b_coef*n_val} - {-c_coef}\)<br>"
          rf"<strong>\(= {ans}\)</strong>")
     hint = "Use second differences to find the n² coefficient, then subtract to find the linear part."
-    return q, s, hint, 5
+    return q, s, hint, 5, ans
 
 
 def _seq_diff_geometric_sum():
@@ -584,7 +660,7 @@ def _seq_diff_geometric_sum():
          rf"= \dfrac{{{a*(r**n-1)}}}{{{r-1}}}\)<br>"
          rf"<strong>\(S_{{{n}}} = {ans}\)</strong>")
     hint = "Use Sn = a(rⁿ − 1)/(r − 1) for a geometric series with r ≠ 1."
-    return q, s, hint, 4
+    return q, s, hint, 4, ans
 
 
 def _seq_diff_quadratic_is_term():
@@ -608,7 +684,7 @@ def _seq_diff_quadratic_is_term():
          rf"\(n = {k}\) or \(n = {-k - b_coef}\) (rejected, not positive).<br>"
          rf"<strong>{val} is the {k}th term.</strong>")
     hint = f"Set {nth} = {val} and solve the quadratic for n."
-    return q, s, hint, 5
+    return q, s, hint, 5, _seq_keyword_answer('yes')
 
 
 def _seq_diff_recurring_decimal_proof():
@@ -653,7 +729,7 @@ def _seq_diff_sum_formula_derive():
          rf"(b) \(S_{{{n}}} = \dfrac{{{n}({a}+{l})}}{{2}} = \dfrac{{{n} \times {a+l}}}{{2}}\)<br>"
          rf"<strong>\(S_{{{n}}} = {ans}\)</strong>")
     hint = "For part (a), write the sum twice (forwards and backwards) and add them together."
-    return q, s, hint, 5
+    return q, s, hint, 5, ans
 
 
 def _seq_diff_geometric_infinite_sum():
@@ -671,7 +747,7 @@ def _seq_diff_geometric_infinite_sum():
          rf"\(S_\infty = \dfrac{{a}}{{1-r}} = \dfrac{{{a}}}{{1 - \dfrac{{{r_num}}}{{{r_den}}}}} = \dfrac{{{a}}}{{\dfrac{{{r_den - r_num}}}{{{r_den}}}}} = {a} \times \dfrac{{{r_den}}}{{{r_den - r_num}}}\)<br>"
          rf"<strong>\(S_\infty = {ans}\)</strong>")
     hint = "Use S∞ = a/(1 − r), valid when |r| < 1."
-    return q, s, hint, 4
+    return q, s, hint, 4, ans
 
 
 def _seq_diff_quadratic_seq_prove():
@@ -694,7 +770,7 @@ def _seq_diff_quadratic_seq_prove():
          rf"Second difference: \(({2*a_coef}(n+1) + {a_coef+b_coef}) - ({2*a_coef}n + {a_coef+b_coef}) = {2*a_coef}\)<br>"
          rf"<strong>Constant second difference = {2*a_coef}.</strong>")
     hint = "For part (b), find uₙ₊₁ − uₙ (first difference), then find the first difference of that (second difference)."
-    return q, s, hint, 5
+    return q, s, hint, 5, term_k
 
 
 def _seq_diff_arithmetic_mean():
@@ -713,7 +789,7 @@ def _seq_diff_arithmetic_mean():
          rf"Mean \(= \dfrac{{{a}+{l}}}{{2}} = \dfrac{{{a+l}}}{{2}}\)<br>"
          rf"<strong>Mean \(= {Fraction(a+l, 2)}\)</strong>")
     hint = "Mean = Sn / n. Substitute Sn = n(a+l)/2 and simplify."
-    return q, s, hint, 4
+    return q, s, hint, 4, Fraction(a + l, 2)
 
 
 def _seq_diff_show_divisible():
@@ -746,7 +822,7 @@ def _seq_diff_find_a_and_d():
          rf"From (1): \(a = {t3} - 2({d}) = {t3 - 2*d}\).<br>"
          rf"<strong>First term \(a = {a}\), common difference \(d = {d}\).</strong>")
     hint = "Write two simultaneous equations using the nth-term formula a + (n−1)d."
-    return q, s, hint, 4
+    return q, s, hint, 4, _seq_fields_answer((a, d), ("First term a", "Common difference d"))
 
 
 def _seq_diff_sum_of_squares():
@@ -758,7 +834,7 @@ def _seq_diff_sum_of_squares():
          rf"\(\dfrac{{{n} \times {n+1} \times {2*n+1}}}{{6}} = \dfrac{{{n*(n+1)*(2*n+1)}}}{{6}}\)<br>"
          rf"<strong>\(= {ans}\)</strong>")
     hint = f"Substitute n = {n} directly into the formula n(n+1)(2n+1)/6."
-    return q, s, hint, 2
+    return q, s, hint, 2, ans
 
 
 def _seq_diff_nth_term_with_fractions():
@@ -794,7 +870,7 @@ def _seq_diff_nth_term_with_fractions():
              rf"(b) \(n = {n_val}\): \(\dfrac{{2({n_val})-1}}{{2({n_val})+1}} = \dfrac{{{ans_num}}}{{{ans_den}}}\)<br>"
              rf"<strong>\(= \dfrac{{{ans_num}}}{{{ans_den}}}\)</strong>")
     hint = "Look at numerators and denominators separately and express each as a formula in n."
-    return q, s, hint, 3
+    return q, s, hint, 3, f"{ans_num}/{ans_den}"
 
 
 def _seq_diff_convergence_check():
@@ -823,7 +899,7 @@ def _seq_diff_convergence_check():
          rf"(c) \(S_n = {a} \times \dfrac{{1 - ({r_num}/{r_den})^n}}{{1 - {r_num}/{r_den}}}\) Try \(n = {n_ans}\)<br>"
          rf"Test values until \(S_n > {target}\). <strong>Smallest \(n = {n_ans}\)</strong>")
     hint = "Use S∞ = a/(1−r) for part (b). For part (c), use Sn = a(1−rⁿ)/(1−r) and try values of n."
-    return q, s, hint, 5
+    return q, s, hint, 5, _seq_fields_answer((s_inf, int(n_ans)), ("Sum to infinity", "Smallest n"))
 
 
 def _seq_diff_arithmetic_proof():
@@ -1082,8 +1158,5 @@ def gcse_sequences(difficulty, mode, variant_name=None):
     variants = gcse_sequences_variants(difficulty, mode)
     variant = pick_named_variant(variants, variant_name)
 
-    q, s, hint, marks = variant()
-    return make_problem(
-        q, s, hint, difficulty, marks,
-        'gcse', 'maths', 'sequences',
-    )
+    out = variant()
+    return _seq_problem_from_output(out, difficulty)

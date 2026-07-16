@@ -8,6 +8,32 @@
     <p class="hero-sub">{{ topic_name }} — {{ problems | length }} questions · {{ total_marks }} marks total</p>
 </div>
 
+{% if mcq_total or graded_total %}
+<div class="section-panel" style="margin-bottom: 20px;">
+    <div class="section-panel-body">
+        {% if quiz_attempt_id and current_user.is_authenticated %}
+        <p style="margin: 0 0 12px;">
+            Saved to your <a href="{{ url_for('profile') }}">profile</a>.
+            <a href="{{ url_for('view_quiz_attempt', attempt_id=quiz_attempt_id) }}">View detailed review →</a>
+        </p>
+        {% endif %}
+        {% if mcq_total %}
+        <p style="margin: 0 0 {% if graded_total %}8px{% else %}0{% endif %};">
+            Multiple choice: <strong>{{ mcq_score }} / {{ mcq_total }}</strong> correct
+        </p>
+        {% endif %}
+        {% if graded_total %}
+        <p style="margin: 0;">
+            Typed answers checked: <strong>{{ graded_score }} / {{ graded_total }}</strong> correct
+            {% if checked_total < graded_total %}
+            <span style="color: var(--muted, #64748b);">({{ checked_total }} of {{ graded_total }} checked before continuing)</span>
+            {% endif %}
+        </p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
 <p class="page-intro">
     <a href="/">← Back to practice generator</a>
 </p>
@@ -19,6 +45,20 @@
         <div class="problem-meta">
             <span class="badge badge-{{ problem.difficulty }}">{{ problem.difficulty | title }}</span>
             <span class="badge badge-marks">{{ problem.marks }} mark{% if problem.marks > 1 %}s{% endif %}</span>
+            {% set answer = answers[loop.index0] if answers and loop.index0 < answers|length else {} %}
+            {% if problem.options and answer.get('user_answer') %}
+                {% if answer.get('correct') %}
+                <span class="badge" style="background:#dcfce7;color:#166534;">✓ Your choice: {{ answer.user_answer }}</span>
+                {% else %}
+                <span class="badge" style="background:#fee2e2;color:#991b1b;">✗ Your choice: {{ answer.user_answer }}</span>
+                {% endif %}
+            {% elif problem.correct_answer_raw and answer.get('checked') %}
+                {% if answer.get('correct') %}
+                <span class="badge" style="background:#dcfce7;color:#166534;">✓ Checked correct</span>
+                {% else %}
+                <span class="badge" style="background:#fee2e2;color:#991b1b;">✗ Checked incorrect</span>
+                {% endif %}
+            {% endif %}
         </div>
         <div class="question" style="margin-bottom: 16px;"><div class="question-content">{{ problem.question | format_question_html }}</div></div>
         <details class="answer-reveal" open>
