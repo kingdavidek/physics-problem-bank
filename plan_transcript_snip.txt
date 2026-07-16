@@ -1,0 +1,56 @@
+1.15 — GCSE CS: Data representation
+**Files:** `generators/gcse/cs_data_rep.py` — binary/hex/decimal conversion variants with numeric answers
+
+### Step 1.16 — GCSE CS: Algorithms (trace outputs)
+**Files:** `generators/gcse/cs_algorithms.py` — variants where answer is a single integer
+
+### Step 1.17 — GCSE CS: Computer systems / networks (numeric)
+**Files:** `generators/gcse/cs_computer_systems.py`, `generators/gcse/cs_computer_networks.py`
+
+### Step 1.18 — Quick Test UI
+**Files:** `templates/quicktest_question.html`, optionally `templates/quicktest_results.html`  
+**Change:** Add free-response block + “Check” before “Next”; store checked state in session if you want to require check before advance (optional).
+
+### Step 1.19 — Other templates (parity with index)
+**Files:** `templates/saved_problem.html`, `templates/shared_question.html`, `templates/suggestion_view.html`  
+**Change:** Same free-response block in non-MCQ branches.
+
+### Step 1.20 — Phase 1 audit script
+**Files:** `scripts/audit_correct_answer_raw.py` (new)  
+**Purpose:** Scan generated problems per topic/mode; report non-MCQ problems missing `correct_answer_raw`.
+
+### Step 1.21 — Phase 1 smoke + docs
+**Files:** `scripts/test_phase1_numeric_smoke.py`, `docs/API.md`  
+**Document:** `POST /api/v1/problems/check` request/response.
+
+---
+
+# Phase 2 — Fractions & surds
+
+**Prerequisite:** Add `sympy` to `requirements.txt`.
+
+### Step 2.1 — `fraction` checker
+**Files:** `generators/shared/answer_checkers.py`  
+**Function:** `check_fraction(correct_raw, user_answer)`  
+**Accept:** `3/4`, `1 1/2`, `0.75` (if equivalent), decimal equivalents via `Fraction`.
+
+### Step 2.2 — `surd` checker (SymPy)
+**Files:** `generators/shared/answer_checkers.py`  
+**Function:** `check_surd(correct_raw, user_answer)`  
+**Canonical raw:** `"2*sqrt(3)"`, `"3*sqrt(2)"`; parse with SymPy; compare simplified forms.
+
+### Step 2.3 — FDP topic
+**Files:** `generators/gcse/maths.py` → `gcse_maths_fdp()` and `_fdp_*` variants  
+**Types:** mix of `fraction`, `number` (percentages as number).
+
+### Step 2.4 — Surds topic
+**Files:** `generators/gcse/maths.py` → `gcse_maths_surds()` and surd variant functions
+
+### Step 2.5 — Algebraic fractions (numeric/fraction answers)
+**Files:** `generators/gcse/algebraic_fractions.py`
+
+### Step 2.6 — Ratio (fraction form)
+**Files:** `generators/gcse/maths_num_stats_prob_rat.py` → remaining ratio variants
+
+### Step 2.7 — Probability (fraction answers)
+**Files:** `generators/gcse/maths_num_stats_prob_rat.

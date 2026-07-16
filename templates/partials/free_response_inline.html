@@ -1,0 +1,199 @@
+{% if problem.correct_answer_raw or fr_shell %}
+<div class="free-response-inline"
+     {% if fr_id %}id="{{ fr_id }}"{% endif %}
+     {% if not problem.correct_answer_raw %}hidden{% endif %}
+     data-correct-raw="{{ problem.correct_answer_raw or '' }}"
+     data-answer-type="{{ problem.answer_type or 'number' }}"
+     data-label-a="{{ (problem.answer_labels[0] if problem.answer_labels else '') | e }}"
+     data-label-b="{{ (problem.answer_labels[1] if problem.answer_labels and problem.answer_labels|length > 1 else '') | e }}"
+     data-answer-labels="{{ (problem.answer_labels or []) | tojson | forceescape }}"
+     data-field-types="{{ (problem.answer_field_types or []) | tojson | forceescape }}"
+     data-pair-sep="{{ problem.answer_pair_sep or 'and' }}"
+     data-format-hint="{{ problem.answer_format_hint or '' }}"
+     data-level="{{ fr_level }}"
+     data-subject="{{ fr_subject }}"
+     data-topic="{{ fr_topic }}"
+     data-difficulty="{{ fr_difficulty }}">
+    {% if problem.answer_type == 'standard_form' %}
+    <div class="free-response-row free-response-row--standard-form">
+        <input type="text"
+               class="free-response-input free-response-input-coeff"
+               placeholder="e.g. 3.2"
+               autocomplete="off"
+               inputmode="decimal"
+               aria-label="Standard form coefficient">
+        <span class="free-response-sf-sep" aria-hidden="true">× 10^</span>
+        <input type="text"
+               class="free-response-input free-response-input-exp"
+               placeholder="e.g. 5"
+               autocomplete="off"
+               inputmode="numeric"
+               aria-label="Standard form power">
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% elif problem.answer_type == 'number_pair' %}
+    <div class="free-response-row free-response-row--number-pair">
+        <input type="text"
+               class="free-response-input free-response-input-a"
+               placeholder="{{ problem.answer_labels[0] if problem.answer_labels else 'First value' }}"
+               autocomplete="off"
+               inputmode="decimal"
+               aria-label="{{ problem.answer_labels[0] if problem.answer_labels else 'First value' }}">
+        <span class="free-response-pair-sep" aria-hidden="true">{{ problem.answer_pair_sep or 'and' }}</span>
+        <input type="text"
+               class="free-response-input free-response-input-b"
+               placeholder="{{ problem.answer_labels[1] if problem.answer_labels and problem.answer_labels|length > 1 else 'Second value' }}"
+               autocomplete="off"
+               inputmode="decimal"
+               aria-label="{{ problem.answer_labels[1] if problem.answer_labels and problem.answer_labels|length > 1 else 'Second value' }}">
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% elif problem.answer_type == 'number_list' %}
+    <div class="free-response-row free-response-row--number-list">
+        <input type="text"
+               class="free-response-input free-response-input-list"
+               placeholder="{{ problem.answer_format_hint or 'Enter numbers separated by commas' }}"
+               autocomplete="off"
+               inputmode="decimal"
+               aria-label="Your answer">
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% elif problem.answer_type == 'power' %}
+    <div class="free-response-row free-response-row--power">
+        <input type="text"
+               class="free-response-input free-response-input-base"
+               placeholder="e.g. 2"
+               autocomplete="off"
+               inputmode="numeric"
+               aria-label="Base">
+        <span class="free-response-power-sep" aria-hidden="true">^</span>
+        <input type="text"
+               class="free-response-input free-response-input-index"
+               placeholder="e.g. 12"
+               autocomplete="off"
+               inputmode="numeric"
+               aria-label="Index">
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% elif problem.answer_type == 'linear_equation' %}
+    <div class="free-response-row free-response-row--linear-equation">
+        <input type="text"
+               class="free-response-input free-response-input-linear-equation"
+               placeholder="{{ problem.answer_format_hint or 'e.g. y = 2x + 3' }}"
+               autocomplete="off"
+               inputmode="text"
+               aria-label="Linear equation">
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% elif problem.answer_type == 'ratio' or problem.answer_type == 'ratio_exact' %}
+    <div class="free-response-row free-response-row--ratio">
+        <input type="text"
+               class="free-response-input free-response-input-ratio"
+               placeholder="{{ problem.answer_format_hint or 'e.g. 3:5' }}"
+               autocomplete="off"
+               inputmode="text"
+               aria-label="Your ratio">
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% elif problem.answer_type == 'number_fields' %}
+    <div class="free-response-row free-response-row--number-fields">
+        <div class="free-response-fields-stack">
+            {% for label in problem.answer_labels or [] %}
+            {% set field_type = (problem.answer_field_types or [])[loop.index0] if problem.answer_field_types and loop.index0 < (problem.answer_field_types|length) else 'number' %}
+            {% if field_type == 'keyword' %}
+                {% set field_ph = 'e.g. positive, negative, or none' %}
+            {% elif field_type == 'linear_equation' %}
+                {% set field_ph = 'e.g. y = 2x + 3' %}
+            {% elif field_type == 'number_estimate' %}
+                {% set field_ph = 'Your estimate from the graph' %}
+            {% elif field_type in ('ratio', 'ratio_exact') %}
+                {% set field_ph = 'e.g. 3:5' %}
+            {% elif field_type == 'binary' %}
+                {% set field_ph = 'e.g. 1101' %}
+            {% elif field_type == 'hex' %}
+                {% set field_ph = 'e.g. FF' %}
+            {% else %}
+                {% set field_ph = 'Number or fraction' %}
+            {% endif %}
+            <div class="free-response-field-row">
+                <label class="free-response-field">
+                    <span class="free-response-field-label">{{ label }}</span>
+                    <input type="text"
+                           class="free-response-input free-response-input-field"
+                           placeholder="{{ field_ph }}"
+                           autocomplete="off"
+                           inputmode="text"
+                           aria-label="{{ label }}">
+                </label>
+                <button type="button" class="btn free-response-check-btn free-response-field-check-btn">Check</button>
+                <p class="free-response-field-feedback" aria-live="polite"></p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% elif problem.answer_type == 'number_estimate' %}
+    <div class="free-response-row free-response-row--number">
+        <input type="text"
+               class="free-response-input"
+               placeholder="{{ problem.answer_format_hint or 'Your estimate from the graph' }}"
+               autocomplete="off"
+               inputmode="decimal"
+               aria-label="Your estimate">
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% elif problem.answer_type == 'pi_multiple' %}
+    <div class="free-response-row free-response-row--pi-multiple">
+        <input type="text"
+               class="free-response-input free-response-input-pi"
+               placeholder="{{ problem.answer_format_hint or 'e.g. 4' }}"
+               autocomplete="off"
+               inputmode="text"
+               aria-label="Coefficient of pi">
+        <span class="free-response-pi-sep" aria-hidden="true">π</span>
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% elif problem.answer_type == 'surd' %}
+    <div class="free-response-row free-response-row--surd">
+        <input type="text"
+               class="free-response-input free-response-input-surd"
+               placeholder="{{ problem.answer_format_hint or 'e.g. √113' }}"
+               autocomplete="off"
+               inputmode="text"
+               aria-label="Surd answer">
+        <button type="button" class="btn btn-secondary free-response-surd-btn" aria-label="Insert square root symbol">√</button>
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% elif problem.answer_type == 'binary' %}
+    <div class="free-response-row free-response-row--binary">
+        <input type="text"
+               class="free-response-input"
+               placeholder="{{ problem.answer_format_hint or 'e.g. 1101' }}"
+               autocomplete="off"
+               inputmode="text"
+               aria-label="Binary answer">
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% elif problem.answer_type == 'hex' %}
+    <div class="free-response-row free-response-row--hex">
+        <input type="text"
+               class="free-response-input"
+               placeholder="{{ problem.answer_format_hint or 'e.g. FF' }}"
+               autocomplete="off"
+               inputmode="text"
+               aria-label="Hexadecimal answer">
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% else %}
+    <div class="free-response-row free-response-row--number">
+        <input type="text"
+               class="free-response-input"
+               placeholder="{{ problem.answer_format_hint or 'Enter a number' }}"
+               autocomplete="off"
+               inputmode="{{ 'text' if 'fraction' in (problem.answer_format_hint or '')|lower else 'decimal' }}"
+               aria-label="Your answer">
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% endif %}
+    <p class="free-response-feedback" aria-live="polite"></p>
+</div>
+{% endif %}

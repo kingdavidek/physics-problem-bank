@@ -1,12 +1,55 @@
 """
 GCSE Computer Science – Computer Systems
 10 foundational · 10 intermediate · 10 difficult · 15 MCQ
-Each variant returns (question, solution, hint, marks).
-Final answers wrapped in <strong> tags.
+Graded practice variants return (question, solution, hint, marks, raw).
+Explanation-only variants stay as 4-tuples (Phase 2).
 """
 import random
 from generators.shared.utils import make_problem
 from generators.shared.variant_utils import pick_named_variant
+
+
+def _cs_raw_number(value):
+    if isinstance(value, float):
+        val = round(value, 2)
+        if val == int(val):
+            return str(int(val))
+        return f'{val:.2f}'.rstrip('0').rstrip('.')
+    return str(int(value))
+
+
+def _cs_fields_answer(values, labels):
+    return {
+        'type': 'number_fields',
+        'values': tuple(_cs_raw_number(v) for v in values),
+        'labels': tuple(labels),
+    }
+
+
+def _cs_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict) and raw.get('type') == 'number_fields':
+            values = raw.get('values') or ()
+            labels = raw.get('labels') or ()
+            if values and len(values) == len(labels):
+                extra = {
+                    'correct_answer_raw': '|'.join(str(v) for v in values),
+                    'answer_type': 'number_fields',
+                    'answer_labels': list(labels),
+                    'answer_format_hint': 'Enter a number in every field',
+                }
+        elif isinstance(raw, (int, float)):
+            extra = {
+                'correct_answer_raw': _cs_raw_number(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+    return make_problem(
+        q, s, hint, difficulty, marks, 'gcse', 'cs', 'computer_systems', **extra
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -89,6 +132,15 @@ def _cs_f10_embedded():
     return q, s, "Embedded = computer built into a single-purpose device.", 1
 
 
+def _cs_f11_fde_stage_count():
+    q = (
+        "How many main stages are there in one cycle of the "
+        "<strong>fetch–decode–execute</strong> (FDE) cycle?"
+    )
+    s = "The three stages are <strong>Fetch → Decode → Execute</strong>."
+    return q, s, "F-D-E repeats billions of times per second.", 1, 3
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # INTERMEDIATE (10)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -103,6 +155,35 @@ def _cs_i1_von_neumann():
         "so the CPU cannot fetch code and data at the same time — <strong>Von Neumann bottleneck</strong>."
     )
     return q, s, "Harvard architecture (separate buses) avoids this but is less common in GCSE PCs.", 3
+
+
+def _cs_i11_pc_after_fetch():
+    pc = random.choice([100, 150, 200, 250])
+    next_pc = pc + 1
+    q = (
+        f"The <strong>Program Counter</strong> holds <strong>{pc}</strong>. "
+        f"One instruction is fetched from that address (each instruction uses one address). "
+        f"What value should the Program Counter hold <strong>after</strong> the fetch stage?"
+    )
+    s = (
+        f"During fetch the instruction at address {pc} is copied to the CIR and the PC is "
+        f"incremented to <strong>{next_pc}</strong> ready for the next instruction."
+    )
+    return q, s, "PC usually increases by 1 during fetch when each instruction is one address.", 2, next_pc
+
+
+def _cs_i12_clock_billion_cycles():
+    clock = random.choice([2.0, 2.5, 3.0, 3.6])
+    q = (
+        f"A CPU core runs at <strong>{clock} GHz</strong>. "
+        f"How many <strong>billion</strong> fetch–decode–execute cycles can that core "
+        f"perform in one second?"
+    )
+    s = (
+        f"<strong>{clock} GHz</strong> means <strong>{clock}</strong> billion cycles "
+        f"per second on that core."
+    )
+    return q, s, "1 GHz = 1 billion cycles per second per core.", 2, clock
 
 
 def _cs_i2_cache_purpose():
@@ -193,30 +274,34 @@ def _cs_i10_secondary_primary():
 
 def _cs_d1_fde_full_trace():
     q = (
-        "Program Counter = 100. Memory at 100 holds instruction <code>LOAD 5</code>. "
-        "Name the <strong>three stages</strong> and state what changes in the PC after fetch "
-        "(assume each instruction is one address apart)."
+        "Program Counter = 100. Memory at address 100 holds instruction <code>LOAD 5</code>. "
+        "Assume each instruction occupies one memory address.<br><br>"
+        "What value is in the <strong>Program Counter</strong> immediately "
+        "<strong>after</strong> the fetch stage?"
     )
     s = (
         "<strong>Fetch:</strong> instruction at 100 → CIR; PC becomes <strong>101</strong>. "
         "<strong>Decode:</strong> control unit interprets LOAD 5. "
         "<strong>Execute:</strong> value 5 loaded into register."
     )
-    return q, s, "PC usually increments during fetch so the next instruction is ready.", 4
+    return q, s, "PC usually increments during fetch so the next instruction is ready.", 4, 101
 
 
 def _cs_d2_ram_capacity():
     ram = random.choice([4, 8, 16])
-    apps = random.choice([6, 10, 12])
+    needed = ram + random.choice([2, 4, 6])
+    shortfall = needed - ram
     q = (
-        f"A PC has <strong>{ram} GB RAM</strong>. A user opens programs needing "
-        f"<strong>{ram + 2} GB</strong> total. What might the OS do?"
+        f"A PC has <strong>{ram} GB RAM</strong>. The programs a user opens need "
+        f"<strong>{needed} GB</strong> in total. "
+        f"How many gigabytes <strong>over</strong> the physical RAM limit is this?"
     )
     s = (
-        "Use <strong>virtual memory</strong> — move less-used pages to secondary storage, "
-        "freeing RAM (system may run <strong>slower</strong>)."
+        f"{needed} − {ram} = <strong>{shortfall} GB</strong> over the installed RAM. "
+        f"The OS may use <strong>virtual memory</strong> on secondary storage, "
+        f"which runs slower than real RAM."
     )
-    return q, s, "When RAM is full, swapping to disk avoids crashing.", 3
+    return q, s, "When RAM is full, swapping to disk avoids crashing.", 3, shortfall
 
 
 def _cs_d3_embedded_constraints():
@@ -308,6 +393,19 @@ def _cs_d12_multi_core():
         "or share memory/buses, limiting speed-up."
     )
     return q, s, "More cores help only when work can run in parallel.", 3
+
+
+def _cs_d15_core_count():
+    cores = random.choice([2, 4, 6, 8])
+    threads = cores * 2
+    q = (
+        f"A CPU has <strong>{cores} cores</strong> and supports two threads per core "
+        f"(hyper-threading). How many <strong>threads</strong> can run at the same time?"
+    )
+    s = (
+        f"{cores} cores × 2 threads per core = <strong>{threads}</strong> hardware threads."
+    )
+    return q, s, "Threads per core × number of cores.", 2, threads
 
 
 # ── Multi-part difficult questions (a, b, c) ──────────────────────────────────
@@ -518,13 +616,14 @@ _FOUNDATIONAL = [
     _cs_f1_cpu_alu, _cs_f2_cpu_cu, _cs_f3_ram_vs_rom, _cs_f4_rom_use,
     _cs_f5_fde_order, _cs_f6_register, _cs_f7_os_definition,
     _cs_f8_input_device, _cs_f9_ssd_hdd, _cs_f10_embedded,
+    _cs_f11_fde_stage_count,
 ]
 
 _INTERMEDIATE = [
     _cs_i1_von_neumann, _cs_i2_cache_purpose, _cs_i3_virtual_memory,
     _cs_i4_os_functions, _cs_i5_utility_software, _cs_i6_storage_compare,
     _cs_i7_clock_cores, _cs_i8_fetch_step, _cs_i9_app_vs_system,
-    _cs_i10_secondary_primary,
+    _cs_i10_secondary_primary, _cs_i11_pc_after_fetch, _cs_i12_clock_billion_cycles,
 ]
 
 _DIFFICULT = [
@@ -533,6 +632,7 @@ _DIFFICULT = [
     _cs_d7_hdd_defrag, _cs_d8_bios_role, _cs_d9_address_bus,
     _cs_d10_open_source_os, _cs_d11_control_bus, _cs_d12_multi_core,
     _cs_d13_multipart_cpu_performance, _cs_d14_multipart_memory,
+    _cs_d15_core_count,
 ]
 
 
@@ -563,9 +663,4 @@ def gcse_computer_systems(difficulty, mode, variant_name=None):
 
     variants = gcse_computer_systems_variants(difficulty, mode)
     variant = pick_named_variant(variants, variant_name)
-
-    q, s, hint, marks = variant()
-    return make_problem(
-        q, s, hint, difficulty, marks,
-        "gcse", "cs", "computer_systems",
-    )
+    return _cs_problem_from_output(variant(), difficulty)

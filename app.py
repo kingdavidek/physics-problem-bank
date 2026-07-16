@@ -154,6 +154,7 @@ from models.user_data import (
     get_saved_problem,
     get_practice_streak,
     list_generator_mcq_attempts,
+    list_generator_mcq_attempts_for_display,
     list_lesson_progress,
     list_quiz_attempts,
     list_saved_problems,
@@ -306,6 +307,15 @@ def _problem_client_payload(problem):
         hint = problem.get('answer_format_hint')
         if hint:
             payload['answer_format_hint'] = hint
+        labels = problem.get('answer_labels')
+        if labels:
+            payload['answer_labels'] = labels
+        sep = problem.get('answer_pair_sep')
+        if sep:
+            payload['answer_pair_sep'] = sep
+        field_types = problem.get('answer_field_types')
+        if field_types:
+            payload['answer_field_types'] = field_types
     return payload
 
 _BLOCK_HTML_MARKERS = ('<svg', '<div', '<table', '<pre', '<figure')
@@ -543,12 +553,28 @@ with get_db() as conn:
             correct_answer TEXT NOT NULL,
             correct INTEGER NOT NULL,
             created_at TEXT NOT NULL,
+            attempt_group_id TEXT,
+            part_index INTEGER,
+            part_total INTEGER,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     """)
     conn.execute("""
         CREATE INDEX IF NOT EXISTS idx_generator_mcq_attempts_user
         ON generator_mcq_attempts (user_id, created_at DESC)
+    """)
+    mcq_cols = {
+        row[1] for row in conn.execute('PRAGMA table_info(generator_mcq_attempts)').fetchall()
+    }
+    if 'attempt_group_id' not in mcq_cols:
+        conn.execute('ALTER TABLE generator_mcq_attempts ADD COLUMN attempt_group_id TEXT')
+    if 'part_index' not in mcq_cols:
+        conn.execute('ALTER TABLE generator_mcq_attempts ADD COLUMN part_index INTEGER')
+    if 'part_total' not in mcq_cols:
+        conn.execute('ALTER TABLE generator_mcq_attempts ADD COLUMN part_total INTEGER')
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_generator_mcq_attempts_group
+        ON generator_mcq_attempts (user_id, attempt_group_id)
     """)
     quiz_cols = {
         row[1] for row in conn.execute('PRAGMA table_info(quiz_attempts)').fetchall()
@@ -1485,7 +1511,19 @@ def _track_question_generated(level, subject, topic, difficulty):
     _record_study_activity(current_user.id)
 
 
-def _track_mcq_answered(level, subject, topic, difficulty, user_answer, correct_answer, correct):
+def _track_mcq_answered(
+    level,
+    subject,
+    topic,
+    difficulty,
+    user_answer,
+    correct_answer,
+    correct,
+    *,
+    attempt_group_id=None,
+    part_index=None,
+    part_total=None,
+):
     if not current_user.is_authenticated:
         return
     label = _topic_label(level, subject, topic)
@@ -1501,6 +1539,9 @@ def _track_mcq_answered(level, subject, topic, difficulty, user_answer, correct_
             user_answer,
             correct_answer,
             correct,
+            attempt_group_id=attempt_group_id,
+            part_index=part_index,
+            part_total=part_total,
         )
         record_mcq_answered(
             conn,
@@ -1812,7 +1853,7 @@ def _serialize_quiz_attempt_detail(attempt, *, external_urls=False):
 
 def _serialize_mcq_attempt_summary(item, *, external_urls=False):
     level, subject, topic = item['level'], item['subject'], item['topic']
-    return {
+    payload = {
         'id': item['id'],
         'level': level,
         'subject': subject,
@@ -1832,6 +1873,11 @@ def _serialize_mcq_attempt_summary(item, *, external_urls=False):
             _external=external_urls,
         ),
     }
+    if item.get('is_multipart'):
+        payload['is_multipart'] = True
+        payload['score'] = item.get('score')
+        payload['total'] = item.get('total')
+    return payload
 
 
 def _api_error(message, status=400, code=None, **extra):
@@ -2434,6 +2480,128 @@ def _quicktest_session_summary(data, session_id):
     }
 
 
+def _quicktest_answer_from_form(problem, form):
+    """Capture MCQ choice or free-response check state when advancing Quick Test."""
+    user_answer = (form.get('qt_user_answer') or '').strip()
+    checked = (form.get('qt_checked') or '').strip() == '1'
+    correct_flag = (form.get('qt_correct') or '').strip()
+
+    if problem.get('options'):
+        correct_letter = (problem.get('correct_answer') or '').strip().upper()[:1]
+        user_letter = user_answer.upper()[:1]
+        return {
+            'user_answer': user_letter or None,
+            'correct_answer': correct_letter or None,
+            'correct': bool(user_letter and correct_letter and user_letter == correct_letter),
+            'checked': bool(user_letter),
+        }
+
+    if not problem.get('correct_answer_raw'):
+        return {
+            'user_answer': user_answer or None,
+            'correct': None,
+            'checked': checked,
+        }
+
+    correct = None
+    if correct_flag == '1':
+        correct = True
+    elif correct_flag == '0':
+        correct = False
+    return {
+        'user_answer': user_answer or None,
+        'correct': correct,
+        'checked': checked,
+    }
+
+
+def _quicktest_results_summary(problems, answers):
+    """Score tallies for auto-graded Quick Test questions (MCQ + free response)."""
+    mcq_score = 0
+    mcq_total = 0
+    graded_score = 0
+    graded_total = 0
+    checked_total = 0
+
+    for i, problem in enumerate(problems):
+        answer = answers[i] if i < len(answers) else {}
+        is_mcq = bool(problem.get('options'))
+        is_graded_fr = bool(problem.get('correct_answer_raw')) and not is_mcq
+
+        if is_mcq:
+            mcq_total += 1
+            if answer.get('correct'):
+                mcq_score += 1
+        elif is_graded_fr:
+            graded_total += 1
+            if answer.get('checked'):
+                checked_total += 1
+            if answer.get('correct'):
+                graded_score += 1
+
+    return {
+        'mcq_score': mcq_score,
+        'mcq_total': mcq_total,
+        'graded_score': graded_score,
+        'graded_total': graded_total,
+        'checked_total': checked_total,
+    }
+
+
+def _sync_last_problem_payload(problem, *, level, subject, topic, mode, difficulty):
+    """Keep session check API aligned with the problem currently on screen."""
+    session['last_problem_payload'] = {
+        'level': level,
+        'subject': subject,
+        'topic': topic,
+        'mode': mode,
+        'difficulty': difficulty,
+        'variant_name': problem.get('variant_name'),
+        'problem': problem,
+    }
+    session.modified = True
+
+
+def _finalize_quicktest_session(data):
+    """Save completed Quick Test scores to the user's profile (once per session)."""
+    if data.get('attempt_id'):
+        return data['attempt_id']
+
+    problems = data.get('problems') or []
+    answers = list(data.get('answers') or [])
+    summary = _quicktest_results_summary(problems, answers)
+    score = summary['mcq_score'] + summary['graded_score']
+    total = summary['mcq_total'] + summary['graded_total']
+    data['score'] = score
+    data['quicktest_total'] = total
+
+    attempt_id = None
+    if current_user.is_authenticated and total > 0:
+        with get_db() as conn:
+            attempt_id = record_quiz_attempt(
+                conn,
+                current_user.id,
+                data.get('level', 'gcse'),
+                data.get('subject', 'physics'),
+                data.get('topic', 'forces'),
+                score,
+                total,
+                answers,
+                problems,
+            )
+        _track_quiz_completed(
+            data.get('level', 'gcse'),
+            data.get('subject', 'physics'),
+            data.get('topic', 'forces'),
+            score,
+            total,
+        )
+        data['attempt_id'] = attempt_id
+        _save_qt(data)
+
+    return attempt_id
+
+
 def _get_quicktest_session_or_error(session_id):
     viewer_id = current_user.id if current_user.is_authenticated else None
     with get_db() as conn:
@@ -2792,7 +2960,7 @@ def profile():
         saved = list_saved_problems(conn, current_user.id, limit=10)
         progress = list_lesson_progress(conn, current_user.id, limit=10)
         quizzes = list_quiz_attempts(conn, current_user.id, limit=10)
-        mcq_attempts = list_generator_mcq_attempts(conn, current_user.id, limit=10)
+        mcq_attempts = list_generator_mcq_attempts_for_display(conn, current_user.id, limit=10)
         practice_streak = get_practice_streak(conn, current_user.id)
         study_streak = get_study_streak(conn, current_user.id)
         milestones = list_user_milestones(conn, current_user.id)
@@ -2819,6 +2987,9 @@ def profile():
     for item in mcq_attempts:
         item['topic_label'] = _topic_label(item['level'], item['subject'], item['topic'])
         item['correct'] = bool(item.get('correct'))
+        if item.get('is_multipart'):
+            item['score'] = int(item.get('score') or 0)
+            item['total'] = int(item.get('total') or 0)
     if weekly_recap.get('best_quiz'):
         bq = weekly_recap['best_quiz']
         bq['topic_label'] = _topic_label(bq['level'], bq['subject'], bq['topic'])
@@ -3258,17 +3429,36 @@ def api_v1_problems_check():
     problem = stored.get('problem') or {}
 
     if problem.get('correct_answer_raw') is not None:
-        correct_answer_raw = str(problem['correct_answer_raw'])
-        answer_type = problem.get('answer_type') or 'number'
+        stored_raw = str(problem['correct_answer_raw'])
+        stored_type = problem.get('answer_type') or 'number'
+        correct_answer_raw = stored_raw
+        answer_type = stored_type
         level = stored.get('level') or ''
         subject = stored.get('subject') or ''
         topic = stored.get('topic') or ''
         difficulty = stored.get('difficulty') or 'foundational'
         client_raw = payload.get('correct_answer_raw')
-        if client_raw is not None and str(client_raw) != correct_answer_raw:
-            return _api_error('Problem mismatch', 403, 'session_mismatch')
         client_type = payload.get('answer_type')
-        if client_type is not None and client_type != answer_type:
+        partial_field = False
+        if client_raw is not None and str(client_raw) != stored_raw:
+            field_sep = '\x1e' if '\x1e' in stored_raw else '|'
+            stored_parts = stored_raw.split(field_sep)
+            if (
+                stored_type == 'number_fields'
+                and client_type
+                and client_type != 'number_fields'
+                and str(client_raw) in stored_parts
+            ):
+                partial_field = True
+                correct_answer_raw = str(client_raw)
+                answer_type = client_type
+            else:
+                return _api_error('Problem mismatch', 403, 'session_mismatch')
+        if (
+            not partial_field
+            and client_type is not None
+            and client_type != stored_type
+        ):
             return _api_error('Problem mismatch', 403, 'session_mismatch')
     else:
         correct_answer_raw = str(payload.get('correct_answer_raw') or '').strip()
@@ -3294,6 +3484,19 @@ def api_v1_problems_check():
         except KeyError:
             pass
         else:
+            attempt_group_id = (payload.get('attempt_group_id') or '').strip() or None
+            part_index = payload.get('part_index')
+            part_total = payload.get('part_total')
+            if part_index is not None:
+                try:
+                    part_index = int(part_index)
+                except (TypeError, ValueError):
+                    part_index = None
+            if part_total is not None:
+                try:
+                    part_total = int(part_total)
+                except (TypeError, ValueError):
+                    part_total = None
             _track_mcq_answered(
                 level,
                 subject,
@@ -3302,6 +3505,9 @@ def api_v1_problems_check():
                 str(user_answer).strip(),
                 result['normalized_correct'],
                 result['correct'],
+                attempt_group_id=attempt_group_id,
+                part_index=part_index,
+                part_total=part_total,
             )
 
     response = {'ok': True, **result}
@@ -3755,11 +3961,12 @@ def api_v1_list_mcq_attempts():
         limit = 20
     before_id = request.args.get('before_id', type=int)
     with get_db() as conn:
-        attempts = list_generator_mcq_attempts(
+        attempts = list_generator_mcq_attempts_for_display(
             conn,
             current_user.id,
             limit=limit,
             before_id=before_id,
+            raw_limit=max(limit * 20, 100),
         )
     items = [
         _serialize_mcq_attempt_summary(item, external_urls=True)
@@ -3941,11 +4148,20 @@ def api_v1_quicktest_question(session_id):
     if idx >= len(problems):
         return _api_error('Quick test finished — fetch results', 400, 'finished')
 
+    problem = problems[idx]
+    _sync_last_problem_payload(
+        problem,
+        level=data.get('level', 'gcse'),
+        subject=data.get('subject', 'physics'),
+        topic=data.get('topic', 'forces'),
+        mode=data.get('mode', 'standard'),
+        difficulty=data.get('difficulty', 'foundational'),
+    )
     summary = _quicktest_session_summary(data, session_id)
     return jsonify({
         'ok': True,
         **summary,
-        'problem': _quicktest_question_payload(problems[idx]),
+        'problem': _quicktest_question_payload(problem),
         'question_number': idx + 1,
     })
 
@@ -4027,14 +4243,22 @@ def api_v1_quicktest_results(session_id):
         enriched.append(entry)
 
     total_marks = sum(int(p.get('marks') or 0) for p in problems)
-    return jsonify({
+    attempt_id = _finalize_quicktest_session(data)
+    summary = _quicktest_results_summary(problems, answers)
+    response = {
         'ok': True,
         **_quicktest_session_summary(data, session_id),
         'problems': enriched,
         'total_marks': total_marks,
         'mcq_score': mcq_score,
         'mcq_total': mcq_total,
-    })
+        'graded_score': summary['graded_score'],
+        'graded_total': summary['graded_total'],
+    }
+    if attempt_id:
+        response['attempt_id'] = attempt_id
+        response['attempt_url'] = url_for('view_quiz_attempt', attempt_id=attempt_id)
+    return jsonify(response)
 
 
 @app.post('/api/v1/lesson-quiz/start')
@@ -4582,6 +4806,14 @@ def view_saved_problem(saved_id):
     if not saved:
         return 'Saved question not found', 404
     problem = saved['problem']
+    _sync_last_problem_payload(
+        problem,
+        level=saved['level'],
+        subject=saved['subject'],
+        topic=saved['topic'],
+        mode=normalize_mode(saved['mode']),
+        difficulty=saved['difficulty'],
+    )
     can_reroll_variant = False
     try:
         topic_config = TOPICS[saved['level']][saved['subject']][saved['topic']]
@@ -4748,6 +4980,14 @@ def reroll_saved_problem_route(saved_id):
         return redirect(url_for('saved_problems_index'))
 
     message = 'New numbers generated for this saved question.'
+    _sync_last_problem_payload(
+        new_problem,
+        level=level,
+        subject=subject,
+        topic=topic,
+        mode=mode,
+        difficulty=difficulty,
+    )
     if wants_json:
         return jsonify({
             'ok': True,
@@ -4901,6 +5141,14 @@ def view_shared_question(share_id):
             )
 
     topic_label = _topic_label(shared['level'], shared['subject'], shared['topic'])
+    _sync_last_problem_payload(
+        shared['problem'],
+        level=shared['level'],
+        subject=shared['subject'],
+        topic=shared['topic'],
+        mode=normalize_mode(shared.get('mode', 'standard')),
+        difficulty=shared['difficulty'],
+    )
     return render_template(
         'shared_question.html',
         shared=shared,
@@ -5059,6 +5307,14 @@ def view_suggestion(suggestion_id):
     if not item:
         return 'Suggestion not found', 404
     topic_label = _topic_label(item['level'], item['subject'], item['topic'])
+    _sync_last_problem_payload(
+        item['problem'],
+        level=item['level'],
+        subject=item['subject'],
+        topic=item['topic'],
+        mode=normalize_mode(item.get('mode', 'standard')),
+        difficulty=item['difficulty'],
+    )
     return render_template(
         'suggestion_view.html',
         suggestion=item,
@@ -5636,9 +5892,18 @@ def quicktest_question():
     idx = data['index']
     if idx >= len(data['problems']):
         return redirect(url_for('quicktest_results'))
+    problem = data['problems'][idx]
+    _sync_last_problem_payload(
+        problem,
+        level=data.get('level', 'gcse'),
+        subject=data.get('subject', 'physics'),
+        topic=data.get('topic', 'forces'),
+        mode=data.get('mode', 'standard'),
+        difficulty=data.get('difficulty', 'foundational'),
+    )
     return render_template(
         'quicktest_question.html',
-        problem=data['problems'][idx],
+        problem=problem,
         current=idx + 1,
         total=len(data['problems']),
         topic_name=data['topic_name'],
@@ -5654,9 +5919,17 @@ def quicktest_next():
     data = _load_qt()
     if not data:
         return redirect(url_for('index'))
-    data['index'] += 1
+
+    problems = data.get('problems') or []
+    idx = int(data.get('index', 0))
+    if idx < len(problems):
+        answers = list(data.get('answers') or [])
+        answers.append(_quicktest_answer_from_form(problems[idx], request.form))
+        data['answers'] = answers
+
+    data['index'] = idx + 1
     _save_qt(data)
-    if data['index'] >= len(data['problems']):
+    if data['index'] >= len(problems):
         return redirect(url_for('quicktest_results'))
     return redirect(url_for('quicktest_question'))
 
@@ -5776,12 +6049,18 @@ def quicktest_results():
     if not data:
         return redirect(url_for('index'))
     problems = data['problems']
+    answers = data.get('answers') or []
     total_marks = sum(p['marks'] for p in problems)
+    summary = _quicktest_results_summary(problems, answers)
+    attempt_id = _finalize_quicktest_session(data)
     return render_template(
         'quicktest_results.html',
         problems=problems,
+        answers=answers,
         topic_name=data['topic_name'],
         total_marks=total_marks,
+        quiz_attempt_id=attempt_id,
+        **summary,
     )
 
 

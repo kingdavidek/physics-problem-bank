@@ -116,12 +116,41 @@ def _shuffle_mcq(options, correct_letter, solution):
     return new_options, new_correct_letter, new_solution
 
 
+def compare_choice_payload(label_a, label_b, correct_letter):
+    """Build a 5-tuple payload for two-button compare / which-is-larger practice items."""
+    letter = str(correct_letter).strip().upper()
+    if letter not in ('A', 'B'):
+        raise ValueError('compare_choice correct letter must be A or B')
+    return {
+        'type': 'choice',
+        'options': [f'A  {label_a}', f'B  {label_b}'],
+        'correct': letter,
+    }
+
+
+def problem_from_choice_output(out, difficulty, level, subject, topic):
+    """Turn a variant 5-tuple with compare_choice_payload into an MCQ-style problem."""
+    if len(out) < 5:
+        return None
+    raw = out[4]
+    if not (isinstance(raw, dict) and raw.get('type') == 'choice'):
+        return None
+    q, s, hint, marks = out[:4]
+    return make_problem(
+        q, s, hint, difficulty, marks, level, subject, topic,
+        options=raw['options'],
+        correct_answer=raw['correct'],
+        choice_no_shuffle=True,
+    )
+
+
 def make_problem(question, solution, hint, difficulty, marks, level, subject, topic, **extra):
     # Shuffle MCQ options so the correct answer is not always A.
     if "options" in extra and "correct_answer" in extra:
-        extra["options"], extra["correct_answer"], solution = _shuffle_mcq(
-            extra["options"], extra["correct_answer"], solution
-        )
+        if not extra.pop("choice_no_shuffle", False):
+            extra["options"], extra["correct_answer"], solution = _shuffle_mcq(
+                extra["options"], extra["correct_answer"], solution
+            )
 
     data = {
         "question": question,

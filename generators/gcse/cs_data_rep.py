@@ -1,12 +1,135 @@
 """
 GCSE Computer Science – Fundamentals of Data Representation
 10 foundational · 10 intermediate · 10 difficult · 10 MCQ (fixed)
-Each practice variant returns (question, solution, hint, marks).
-MCQ: ten named variants for lesson quiz and quick tests (no duplicate stems).
+Graded practice variants return (question, solution, hint, marks, raw).
+Explanation-only variants stay as 4-tuples (Phase 2).
 """
 import random
 from generators.shared.utils import make_problem
 from generators.shared.variant_utils import run_mcq_variant, pick_named_variant
+
+
+def _dr_raw_number(value):
+    """Canonical numeric string for typed answer checking."""
+    if isinstance(value, float):
+        val = round(value, 2)
+        if val == int(val):
+            return str(int(val))
+        return f'{val:.2f}'.rstrip('0').rstrip('.')
+    return str(int(value))
+
+
+def _dr_binary_raw(bits, width=0):
+    return f'{int(width)}|{str(bits).replace(" ", "")}'
+
+
+def _dr_hex_raw(value, width=0):
+    return f'{int(width)}|{str(value).upper().replace(" ", "").replace("0X", "")}'
+
+
+def _dr_binary_answer(bits, width=0):
+    return {'type': 'binary', 'bits': str(bits).replace(' ', ''), 'width': width}
+
+
+def _dr_hex_answer(value, width=0):
+    return {
+        'type': 'hex',
+        'value': str(value).upper().replace(' ', '').replace('0X', ''),
+        'width': width,
+    }
+
+
+def _dr_keyword_answer(value):
+    return {'type': 'keyword', 'value': str(value).strip().lower()}
+
+
+def _dr_encode_field_value(value):
+    if isinstance(value, dict):
+        if value.get('type') == 'binary':
+            return _dr_binary_raw(value['bits'], value.get('width', 0))
+        if value.get('type') == 'hex':
+            return _dr_hex_raw(value['value'], value.get('width', 0))
+        if value.get('type') == 'keyword':
+            return str(value['value'])
+    if isinstance(value, float):
+        return _dr_raw_number(value)
+    return str(value)
+
+
+def _dr_join_field_values(values):
+    encoded = [_dr_encode_field_value(v) for v in values]
+    if any('|' in part for part in encoded):
+        return '\x1e'.join(encoded)
+    return '|'.join(encoded)
+
+
+def _dr_fields_answer(values, labels, field_types=None):
+    encoded = tuple(_dr_encode_field_value(v) for v in values)
+    payload = {
+        'type': 'number_fields',
+        'values': encoded,
+        'labels': tuple(labels),
+    }
+    if field_types:
+        payload['field_types'] = tuple(field_types)
+    return payload
+
+
+def _dr_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict):
+            raw_type = raw.get('type')
+            if raw_type == 'number_fields':
+                values = raw.get('values') or ()
+                labels = raw.get('labels') or ()
+                if values and len(values) == len(labels):
+                    extra = {
+                        'correct_answer_raw': _dr_join_field_values(values),
+                        'answer_type': 'number_fields',
+                        'answer_labels': list(labels),
+                        'answer_format_hint': (
+                            'Enter your answer in each field'
+                        ),
+                    }
+                    field_types = raw.get('field_types')
+                    if field_types:
+                        extra['answer_field_types'] = list(field_types)
+            elif raw_type == 'binary':
+                extra = {
+                    'correct_answer_raw': _dr_binary_raw(
+                        raw['bits'], raw.get('width', 0)
+                    ),
+                    'answer_type': 'binary',
+                    'answer_format_hint': 'Enter binary digits (0 and 1)',
+                }
+            elif raw_type == 'hex':
+                extra = {
+                    'correct_answer_raw': _dr_hex_raw(
+                        raw['value'], raw.get('width', 0)
+                    ),
+                    'answer_type': 'hex',
+                    'answer_format_hint': 'Enter hexadecimal (e.g. FF)',
+                }
+            elif raw_type == 'keyword':
+                value = raw.get('value')
+                if value is not None and str(value).strip():
+                    extra = {
+                        'correct_answer_raw': str(value).strip().lower(),
+                        'answer_type': 'keyword',
+                        'answer_format_hint': 'Enter your answer in words',
+                    }
+        elif isinstance(raw, (int, float)):
+            extra = {
+                'correct_answer_raw': _dr_raw_number(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+    return make_problem(
+        q, s, hint, difficulty, marks, 'gcse', 'cs', 'data_rep', **extra
+    )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -241,45 +364,57 @@ def _solution_binary_add(a, b, answer, denary_a, denary_b, denary_sum):
 
 def _dr_f1_denary_to_binary():
     n = random.choice([5, 9, 13, 19, 22, 25, 37, 45])
-    q = f"Convert denary <strong>{n}</strong> to binary (no leading zeros required)."
+    q = (
+        f"Write the denary number <strong>{n}</strong> as a binary number. "
+        f"You do not need to include leading zeros."
+    )
     s = _solution_denary_to_binary(n)
-    return q, s, "Same as sharing into groups of 2 — remainder 0 or 1 each time.", 2
+    return (
+        q, s, "Same as sharing into groups of 2 — remainder 0 or 1 each time.", 2,
+        _dr_binary_answer(_denary_to_binary(n), width=0),
+    )
 
 
 def _dr_f2_binary_to_denary():
     vals = ["1010", "1101", "10011", "11110", "101101"]
     b = random.choice(vals)
-    q = f"Convert binary <strong>{b}</strong> to denary."
+    q = f"What is the denary (base 10) value of the binary number <strong>{b}</strong>?"
     s = _solution_binary_to_denary(b)
-    return q, s, "Think 8, 4, 2, 1 switches — add labels that are ON.", 2
+    return q, s, "Think 8, 4, 2, 1 switches — add labels that are ON.", 2, _binary_to_denary(b)
 
 
 def _dr_f3_hex_to_denary():
     h = random.choice(["A", "B", "C", "D", "E", "F", "1A", "2F", "3C"])
-    q = f"Convert hexadecimal <strong>{h}</strong> to denary."
+    q = f"What is the denary (base 10) value of the hexadecimal number <strong>{h}</strong>?"
     s = _solution_hex_to_denary(h)
-    return q, s, "A=10 … F=15; multiply each digit by 16^position.", 2
+    return q, s, "A=10 … F=15; multiply each digit by 16^position.", 2, _hex_to_denary(h)
 
 
 def _dr_f4_denary_to_hex():
     n = random.choice([10, 15, 16, 26, 31, 47, 255])
-    q = f"Convert denary <strong>{n}</strong> to hexadecimal."
+    q = f"Write the denary number <strong>{n}</strong> in hexadecimal."
     s = _solution_denary_to_hex(n)
-    return q, s, "Divide by 16; remainders 10–15 become A–F.", 2
+    return (
+        q, s, "Divide by 16; remainders 10–15 become A–F.", 2,
+        _dr_hex_answer(_denary_to_hex(n), width=0),
+    )
 
 
 def _dr_f5_bits_in_byte():
-    q = "How many <strong>bits</strong> are in one <strong>byte</strong>?"
+    q = "How many <strong>bits</strong> are there in one <strong>byte</strong>?"
     s = "One byte = <strong>8 bits</strong>."
-    return q, s, "One byte is the usual size for one English character in memory.", 1
+    return q, s, "One byte is the usual size for one English character in memory.", 1, 8
 
 
 def _dr_f6_bytes_storage():
     bits = random.choice([16, 24, 32, 64])
     bytes_ = bits // 8
-    q = f"A file uses <strong>{bits} bits</strong> of storage. How many <strong>bytes</strong> is that?"
+    q = (
+        f"A file uses <strong>{bits} bits</strong> of storage. "
+        f"How many <strong>bytes</strong> is that?"
+    )
     s = f"{bits} ÷ 8 = <strong>{bytes_} bytes</strong>."
-    return q, s, "8 bits make 1 byte — divide by 8.", 1
+    return q, s, "8 bits make 1 byte — divide by 8.", 1, bytes_
 
 
 def _dr_f7_binary_add_small():
@@ -291,36 +426,47 @@ def _dr_f7_binary_add_small():
     ]
     a, b, ans, da, db, ds = random.choice(pairs)
     q = (
-        f"Add binary <strong>{a}</strong> + <strong>{b}</strong> "
-        f"(same as {da} + {db} in denary). Give the answer in binary."
+        f"Add the binary numbers <strong>{a}</strong> and <strong>{b}</strong> "
+        f"(this is the same as {da} + {db} in denary). "
+        f"Give your answer in binary."
     )
     s = _solution_binary_add(a, b, ans, da, db, ds)
-    return q, s, "Start from the right; carry when the column sum is 2 or more.", 2
+    return (
+        q, s, "Start from the right; carry when the column sum is 2 or more.", 2,
+        _dr_binary_answer(ans, width=0),
+    )
 
 
 def _dr_f8_ascii_chars():
     n = random.choice([5, 8, 12, 20])
     bits = n * 7
     q = (
-        f"A plain text file has <strong>{n}</strong> characters using "
-        f"<strong>7-bit ASCII</strong>. How many <strong>bits</strong> of data?"
+        f"A plain text file contains <strong>{n}</strong> characters. "
+        f"Each character is stored using <strong>7-bit ASCII</strong>. "
+        f"How many <strong>bits</strong> of data are stored in total?"
     )
     s = f"{n} × 7 = <strong>{bits} bits</strong>."
-    return q, s, "Multiply character count by bits per character from the question.", 2
+    return q, s, "Multiply character count by bits per character from the question.", 2, bits
 
 
 def _dr_f9_max_denary_n_bits():
     n = random.choice([3, 4, 5, 6])
     mx = (2 ** n) - 1
-    q = f"What is the <strong>largest denary number</strong> you can store with <strong>{n} bits</strong> (unsigned)?"
+    q = (
+        f"What is the <strong>largest denary number</strong> that can be stored "
+        f"using <strong>{n} bits</strong> (unsigned — no sign bit)?"
+    )
     s = f"All bits set to 1: 2^{n} − 1 = <strong>{mx}</strong>."
-    return q, s, "Like a 3-wheel lock with 0–7 on each — max is all wheels at max.", 2
+    return q, s, "Like a 3-wheel lock with 0–7 on each — max is all wheels at max.", 2, mx
 
 
 def _dr_f10_nybble_hex():
-    q = "One hexadecimal digit represents how many <strong>bits</strong>?"
+    q = (
+        "How many <strong>bits</strong> can one hexadecimal digit represent? "
+        "(One hex digit is also called a nybble.)"
+    )
     s = "One hex digit = one nybble = <strong>4 bits</strong>."
-    return q, s, "16 values need 4 binary digits — that is why hex shortens binary.", 1
+    return q, s, "16 values need 4 binary digits — that is why hex shortens binary.", 1, 4
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -330,9 +476,15 @@ def _dr_f10_nybble_hex():
 def _dr_i1_binary_to_hex():
     n = random.choice([42, 85, 170, 255])
     b = _denary_to_binary(n)
-    q = f"Binary <strong>{_pad8(b)}</strong> (8-bit) → convert to hexadecimal."
+    q = (
+        f"The 8-bit binary number <strong>{_pad8(b)}</strong> is given. "
+        f"Write this value in <strong>hexadecimal</strong>."
+    )
     s = _solution_binary_to_hex(b, width=8)
-    return q, s, "Split into groups of 4 bits from the right; pad if needed.", 2
+    return (
+        q, s, "Split into groups of 4 bits from the right; pad if needed.", 2,
+        _dr_hex_answer(_denary_to_hex(n), width=0),
+    )
 
 
 def _dr_i2_image_size():
@@ -341,15 +493,15 @@ def _dr_i2_image_size():
     total = w * h * depth
     mb = total / (8 * 1_000_000)
     q = (
-        f"Image: <strong>{w} × {h}</strong> pixels, <strong>{depth}-bit</strong> colour depth. "
-        "Uncompressed size in <strong>bytes</strong>?"
+        f"What is the uncompressed size in <strong>bytes</strong> of an image that is "
+        f"<strong>{w} × {h}</strong> pixels, with a <strong>{depth}-bit</strong> colour depth?"
     )
     s = (
         f"Every pixel stored: {w}×{h}×{depth} = {total} bits. "
         f"÷ 8 = <strong>{total // 8:,} bytes</strong> "
         f"(≈ {mb:.2f} MB if 1 MB = 10⁶ bytes)."
     )
-    return q, s, "Multiply width × height × depth, then ÷ 8 for bytes.", 3
+    return q, s, "Multiply width × height × depth, then ÷ 8 for bytes.", 3, total // 8
 
 
 def _dr_i3_sound_size():
@@ -359,22 +511,27 @@ def _dr_i3_sound_size():
     bits = rate * depth * secs
     bytes_ = bits // 8
     q = (
-        f"Sound: sample rate <strong>{rate} Hz</strong>, <strong>{depth}-bit</strong> samples, "
-        f"<strong>{secs} seconds</strong> (mono). File size in <strong>bytes</strong>?"
+        f"A <strong>mono</strong> (single-channel) sound recording has a sample rate of "
+        f"<strong>{rate} Hz</strong>, uses <strong>{depth}-bit</strong> samples, and lasts "
+        f"<strong>{secs} seconds</strong>. What is the uncompressed file size in "
+        f"<strong>bytes</strong>?"
     )
     s = (
         f"Snapshots per second × precision × length: {rate} × {depth} × {secs} = {bits} bits. "
         f"÷ 8 = <strong>{bytes_:,} bytes</strong>."
     )
-    return q, s, "Rate × bit depth × seconds (× 2 if stereo).", 3
+    return q, s, "Rate × bit depth × seconds (× 2 if stereo).", 3, bytes_
 
 
 def _dr_i4_kb_to_bytes():
     kb = random.choice([4, 12, 50, 250])
     b = kb * 1000
-    q = f"<strong>{kb} KB</strong> (1 KB = 1000 bytes). How many bytes?"
+    q = (
+        f"In this question, <strong>1 KB = 1000 bytes</strong>. "
+        f"How many bytes are in <strong>{kb} KB</strong>?"
+    )
     s = f"{kb} × 1000 = <strong>{b:,} bytes</strong>."
-    return q, s, "Use the value given in the question for KB.", 2
+    return q, s, "Use the value given in the question for KB.", 2, b
 
 
 def _dr_i5_binary_add_8bit():
@@ -385,15 +542,22 @@ def _dr_i5_binary_add_8bit():
     ba, bb = _pad8(_denary_to_binary(a)), _pad8(_denary_to_binary(b))
     ans = _pad8(_denary_to_binary(a + b))
     q = (
-        f"Add 8-bit binary <strong>{ba}</strong> + <strong>{bb}</strong> "
-        f"(denary {a} + {b})."
+        f"Add the 8-bit binary numbers <strong>{ba}</strong> and <strong>{bb}</strong> "
+        f"(these represent {a} and {b} in denary). "
+        f"Give your answer as an 8-bit binary number."
     )
     s = _solution_binary_add(ba, bb, ans, a, b, a + b)
-    return q, s, "Same as denary column addition; 1+1 → 0 carry 1.", 3
+    return (
+        q, s, "Same as denary column addition; 1+1 → 0 carry 1.", 3,
+        _dr_binary_answer(ans, width=8),
+    )
 
 
 def _dr_i6_overflow():
-    q = "8-bit unsigned storage holds max <strong>255</strong>. You add 1 to 255. What happens?"
+    q = (
+        "An 8-bit unsigned store can hold a maximum denary value of <strong>255</strong>. "
+        "If you add <strong>1</strong> to <strong>255</strong>, what happens to the stored value?"
+    )
     s = (
         "Value wraps to <strong>0</strong> — <strong>overflow</strong> "
         "(like a car odometer running out of digits)."
@@ -413,9 +577,12 @@ def _dr_i7_unicode_vs_ascii():
 def _dr_i8_colour_depth_bits():
     colours = random.choice([16, 256, 65536])
     bits = {16: 4, 256: 8, 65536: 16}[colours]
-    q = f"An image uses <strong>{colours}</strong> distinct colours. Minimum <strong>colour depth</strong> (bits per pixel)?"
+    q = (
+        f"An image can display <strong>{colours}</strong> different colours. "
+        f"What is the minimum <strong>colour depth</strong> (bits per pixel) needed?"
+    )
     s = f"2^{bits} = {colours} → need <strong>{bits} bits</strong> per pixel."
-    return q, s, "Number of colours = 2^(bits per pixel).", 2
+    return q, s, "Number of colours = 2^(bits per pixel).", 2, bits
 
 
 def _dr_i9_compression_type():
@@ -425,16 +592,29 @@ def _dr_i9_compression_type():
         ("A row of 20 identical white pixels in a simple graphic", "lossless", "Run-length encoding (RLE) can store count + value without losing data."),
     ]
     text, ans, why = random.choice(scenarios)
-    q = f"<strong>Scenario:</strong> {text}. <strong>Lossy</strong> or <strong>lossless</strong> compression?"
+    q = (
+        f"<strong>Scenario:</strong> {text}<br><br>"
+        f"Should you use <strong>lossy</strong> or <strong>lossless</strong> compression?"
+    )
     s = f"<strong>{ans.capitalize()}</strong> — {why}"
-    return q, s, "Lossy = smaller but data lost forever; lossless = exact restore.", 2
+    return (
+        q, s, "Lossy = smaller but data lost forever; lossless = exact restore.", 2,
+        _dr_keyword_answer(ans),
+    )
 
 
 def _dr_i10_hex_binary_nybble():
     h = random.choice(["3", "7", "B", "F"])
-    q = f"Hex digit <strong>{h}</strong> → 4-bit binary?"
+    q = (
+        f"Write the hexadecimal digit <strong>{h}</strong> as a "
+        f"<strong>4-bit binary number</strong> (include leading zeros if needed)."
+    )
     s = _solution_hex_to_binary(h, width=4)
-    return q, s, "Each hex digit maps to exactly four binary digits.", 1
+    nybble = format(_hex_digit_value(h), '04b')
+    return (
+        q, s, "Each hex digit maps to exactly four binary digits.", 1,
+        _dr_binary_answer(nybble, width=4),
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -444,12 +624,18 @@ def _dr_i10_hex_binary_nybble():
 def _dr_d1_large_denary_binary():
     n = random.choice([129, 187, 200, 231])
     b = _denary_to_binary(n)
-    q = f"Convert denary <strong>{n}</strong> to an 8-bit binary number."
+    q = (
+        f"Write the denary number <strong>{n}</strong> as an "
+        f"<strong>8-bit binary number</strong> (include leading zeros)."
+    )
     s = (
         f"{_solution_denary_to_binary(n)}<br><br>"
         f"Pad with leading zeros to 8 bits: <strong>{_pad8(b)}</strong>."
     )
-    return q, s, "Build binary then pad to the required bit width.", 3
+    return (
+        q, s, "Build binary then pad to the required bit width.", 3,
+        _dr_binary_answer(_pad8(b), width=8),
+    )
 
 
 def _dr_d2_image_mb():
@@ -458,14 +644,15 @@ def _dr_d2_image_mb():
     bytes_ = w * h * depth // 8
     mb = bytes_ / 1_000_000
     q = (
-        f"Uncompressed image <strong>{w}×{h}</strong>, <strong>24-bit</strong> colour. "
-        "Size in <strong>MB</strong> (1 MB = 1 000 000 bytes)?"
+        f"An uncompressed image is <strong>{w} × {h}</strong> pixels with "
+        f"<strong>24-bit</strong> colour depth. What is the file size in "
+        f"<strong>megabytes (MB)</strong>? Use <strong>1 MB = 1 000 000 bytes</strong>."
     )
     s = (
         f"{w}×{h}×24 = {w*h*24} bits → {bytes_:,} bytes → "
         f"<strong>{mb:.2f} MB</strong>."
     )
-    return q, s, "Bits → bytes (÷8) → MB (÷1 000 000).", 4
+    return q, s, "Bits → bytes (÷8) → MB (÷1 000 000).", 4, round(mb, 2)
 
 
 def _dr_d3_stereo_sound():
@@ -473,14 +660,16 @@ def _dr_d3_stereo_sound():
     bits = rate * depth * secs * 2
     bytes_ = bits // 8
     q = (
-        f"Stereo sound: <strong>{rate} Hz</strong>, <strong>{depth}-bit</strong>, "
-        f"<strong>{secs} s</strong>. Size in <strong>bytes</strong>?"
+        f"A <strong>stereo</strong> sound file is recorded at <strong>{rate} Hz</strong>, "
+        f"with <strong>{depth}-bit</strong> samples, for <strong>{secs} seconds</strong>. "
+        f"What is the uncompressed file size in <strong>bytes</strong>? "
+        f"(Remember: stereo has two channels.)"
     )
     s = (
         f"Left + right channel: {rate}×{depth}×{secs}×<strong>2</strong> = {bits} bits. "
         f"Bytes = <strong>{bytes_:,}</strong>."
     )
-    return q, s, "Stereo = two channels — multiply by 2 at the end.", 4
+    return q, s, "Stereo = two channels — multiply by 2 at the end.", 4, bytes_
 
 
 def _dr_d4_binary_shift_left():
@@ -488,7 +677,11 @@ def _dr_d4_binary_shift_left():
     shifted = b[1:] + "0"
     d_before = _binary_to_denary(b)
     d_after = _binary_to_denary(shifted)
-    q = f"8-bit value <strong>{b}</strong> is shifted left one place (new bit 0 on the right). New denary value?"
+    q = (
+        f"An 8-bit binary value <strong>{b}</strong> is shifted left by one place "
+        f"(a <strong>0</strong> is added on the right). "
+        f"What is the new value in <strong>denary</strong>?"
+    )
     s = (
         f"Value before shift:<br>{_solution_binary_to_denary(b)}<br><br>"
         f"Shift left: every bit moves one place left and a <strong>0</strong> is added on the "
@@ -497,48 +690,69 @@ def _dr_d4_binary_shift_left():
         f"Shifting left once <strong>doubles</strong> the value: "
         f"{d_before} × 2 = <strong>{d_after}</strong>."
     )
-    return q, s, "Like writing 37 then 370 — shifting left multiplies by 2.", 3
+    return q, s, "Like writing 37 then 370 — shifting left multiplies by 2.", 3, d_after
 
 
 def _dr_d5_hex_binary_full():
     h = random.choice(["2A", "B4", "FF", "3D"])
-    q = f"Convert hex <strong>{h}</strong> to 8-bit binary."
+    q = (
+        f"Write the hexadecimal value <strong>{h}</strong> as an "
+        f"<strong>8-bit binary number</strong> (include leading zeros)."
+    )
     s = _solution_hex_to_binary(h, width=8)
-    return q, s, "Hex → denary → binary; pad to 8 bits.", 3
+    binary = _pad8(_denary_to_binary(_hex_to_denary(h)))
+    return (
+        q, s, "Hex → denary → binary; pad to 8 bits.", 3,
+        _dr_binary_answer(binary, width=8),
+    )
 
 
 def _dr_d6_storage_multiple_files():
     photos = random.randint(3, 8)
     mb_each = random.choice([2, 3, 4])
     total = photos * mb_each
-    q = f"<strong>{photos}</strong> photos each <strong>{mb_each} MB</strong>. Total storage in MB?"
+    q = (
+        f"You have <strong>{photos}</strong> photos. Each photo is <strong>{mb_each} MB</strong>. "
+        f"What is the <strong>total</strong> storage needed in MB?"
+    )
     s = f"{photos} × {mb_each} = <strong>{total} MB</strong>."
-    return q, s, "Multiply file size by count.", 2
+    return q, s, "Multiply file size by count.", 2, total
 
 
 def _dr_d7_bits_for_text_unicode():
     chars = random.choice([100, 250, 500])
     bytes_ = chars * 2
     q = (
-        f"A Unicode text file stores each character in <strong>2 bytes</strong>. "
-        f"<strong>{chars}</strong> characters → how many <strong>bytes</strong>?"
+        f"A Unicode text file stores each character using <strong>2 bytes</strong>. "
+        f"The file contains <strong>{chars}</strong> characters. "
+        f"How many <strong>bytes</strong> are stored in total?"
     )
     s = f"{chars} × 2 = <strong>{bytes_} bytes</strong>."
-    return q, s, "Bytes per character × number of characters.", 2
+    return q, s, "Bytes per character × number of characters.", 2, bytes_
 
 
 def _dr_d8_overflow_add():
-    q = "In 4-bit unsigned binary, <strong>1111</strong> + <strong>0001</strong>. What is the 4-bit result?"
+    q = (
+        "In <strong>4-bit unsigned binary</strong>, what is the result of "
+        "<strong>1111 + 0001</strong> if only 4 bits are kept in storage? "
+        "Give your 4-bit answer in binary."
+    )
     s = "15 + 1 = 16, but only 4 bits kept → <strong>0000</strong> (overflow)."
-    return q, s, "Only the lowest n bits are stored — extra bits are lost.", 3
+    return (
+        q, s, "Only the lowest n bits are stored — extra bits are lost.", 3,
+        _dr_binary_answer('0000', width=4),
+    )
 
 
 def _dr_d9_colours_from_depth():
     bits = random.choice([6, 10, 12])
     colours = 2 ** bits
-    q = f"Colour depth <strong>{bits} bits</strong> per pixel. Maximum number of colours?"
+    q = (
+        f"An image uses a colour depth of <strong>{bits} bits</strong> per pixel. "
+        f"What is the <strong>maximum number of different colours</strong> that can be represented?"
+    )
     s = f"2^{bits} = <strong>{colours}</strong> colours."
-    return q, s, "Each bit doubles the number of colour choices.", 2
+    return q, s, "Each bit doubles the number of colour choices.", 2, colours
 
 
 def _dr_d10_lossy_lossless_compare():
@@ -561,7 +775,7 @@ def _dr_d11_sample_rate_calc():
         f"How many <strong>bits</strong> of uncompressed audio data?"
     )
     s = f"{rate} × {seconds} × {depth} = <strong>{size_bits:,} bits</strong>."
-    return q, s, "Sample rate × duration × bit depth (mono).", 3
+    return q, s, "Sample rate × duration × bit depth (mono).", 3, size_bits
 
 
 def _dr_d12_metadata_vs_payload():
@@ -585,10 +799,10 @@ def _dr_d13_multipart_number_systems():
     hex_value = _denary_to_hex(n)
     q = (
         f"A sensor stores the denary reading <strong>{n}</strong> in a single byte.<br><br>"
-        f"<strong>a)</strong> Convert <strong>{n}</strong> to an 8-bit binary number. "
+        f"<strong>a)</strong> Write <strong>{n}</strong> as an 8-bit binary number. "
         f"Show your working. [2]<br>"
-        f"<strong>b)</strong> Convert your 8-bit answer from part (a) to hexadecimal. [2]<br>"
-        f"<strong>c)</strong> State one reason programmers often write byte values in "
+        f"<strong>b)</strong> Write your answer from part (a) in hexadecimal. [2]<br>"
+        f"<strong>c)</strong> Give one reason why programmers often write byte values in "
         f"hexadecimal rather than binary. [2]"
     )
     s = (
@@ -599,7 +813,14 @@ def _dr_d13_multipart_number_systems():
         f"than binary (one hex digit replaces four bits), so there are fewer digits to write "
         f"and <strong>fewer mistakes</strong> when copying values."
     )
-    return q, s, "Divide by 2 for (a), group bits into nybbles for (b).", 6
+    return (
+        q, s, "Divide by 2 for (a), group bits into nybbles for (b).", 6,
+        _dr_fields_answer(
+            (_dr_binary_answer(binary, width=8), _dr_hex_answer(hex_value, width=0)),
+            ('Part (a): 8-bit binary', 'Part (b): hexadecimal'),
+            ('binary', 'hex'),
+        ),
+    )
 
 
 def _dr_d14_multipart_image_size():
@@ -615,7 +836,8 @@ def _dr_d14_multipart_image_size():
         f"<strong>b)</strong> Calculate the file size in <strong>bytes</strong>. "
         f"Show your working. [3]<br>"
         f"<strong>c)</strong> The image is edited to use a colour depth of "
-        f"<strong>{depth * 2} bits</strong> instead. State the effect on the file size. [2]"
+        f"<strong>{depth * 2} bits</strong> per pixel instead. "
+        f"What happens to the file size? [2]"
     )
     s = (
         f"<strong>a)</strong> Pixels = width × height = {w} × {h} = "
@@ -627,7 +849,18 @@ def _dr_d14_multipart_image_size():
         f"<strong>c)</strong> Doubling the colour depth <strong>doubles the file size</strong>, "
         f"because each pixel now needs twice as many bits to store its colour."
     )
-    return q, s, "Pixels × depth = bits; ÷ 8 for bytes. Depth is directly proportional to size.", 6
+    return (
+        q, s, "Pixels × depth = bits; ÷ 8 for bytes. Depth is directly proportional to size.", 6,
+        _dr_fields_answer(
+            (w * h, total_bytes, _dr_keyword_answer('doubles')),
+            (
+                'Part (a): total pixels',
+                'Part (b): file size (bytes)',
+                'Part (c): effect on file size',
+            ),
+            ('number', 'number', 'keyword'),
+        ),
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -645,7 +878,7 @@ _DR_MCQ_BANK = [
     },
     {
         "difficulty": "foundational",
-        "q": "Denary 13 in binary is:",
+        "q": "What is the denary number 13 written in binary?",
         "opts": ["A  1011", "B  1101", "C  1110", "D  1100"],
         "ans": "B", "marks": 2,
         "sol": (
@@ -659,7 +892,7 @@ _DR_MCQ_BANK = [
     },
     {
         "difficulty": "foundational",
-        "q": "Binary 101 + 11 equals (same as 5 + 3 in denary):",
+        "q": "What is the result of adding binary 101 and 11? (This is the same as 5 + 3 in denary.)",
         "opts": ["A  1000", "B  110", "C  111", "D  1010"],
         "ans": "A", "marks": 2,
         "sol": (
@@ -673,7 +906,7 @@ _DR_MCQ_BANK = [
     },
     {
         "difficulty": "intermediate",
-        "q": "Hexadecimal F in denary is:",
+        "q": "What is the denary (base 10) value of hexadecimal F?",
         "opts": ["A  14", "B  15", "C  16", "D  255"],
         "ans": "B", "marks": 1,
         "sol": "F = <strong>15</strong>. Answer: <strong>B</strong>",
@@ -681,7 +914,7 @@ _DR_MCQ_BANK = [
     },
     {
         "difficulty": "intermediate",
-        "q": "Uncompressed image size in bits equals:",
+        "q": "Which formula gives the uncompressed size of an image in bits?",
         "opts": ["A  width + height + depth", "B  width × height × colour depth",
                  "C  width × depth only", "D  height ÷ depth"],
         "ans": "B", "marks": 2,
@@ -690,7 +923,7 @@ _DR_MCQ_BANK = [
     },
     {
         "difficulty": "intermediate",
-        "q": "Doubling sample rate (same duration, bit depth, mono) will:",
+        "q": "If you double the sample rate (keeping duration, bit depth and mono the same), what happens to the file size?",
         "opts": ["A  halve file size", "B  keep file size the same",
                  "C  double file size", "D  quarter file size"],
         "ans": "C", "marks": 2,
@@ -709,7 +942,7 @@ _DR_MCQ_BANK = [
     },
     {
         "difficulty": "difficult",
-        "q": "Maximum denary value in 6 unsigned bits:",
+        "q": "What is the largest denary value that can be stored in 6 unsigned bits?",
         "opts": ["A  32", "B  63", "C  64", "D  127"],
         "ans": "B", "marks": 2,
         "sol": "2⁶−1 = <strong>63</strong>. Answer: <strong>B</strong>",
@@ -717,7 +950,7 @@ _DR_MCQ_BANK = [
     },
     {
         "difficulty": "difficult",
-        "q": "Binary 1111 + 0001 in 4-bit storage gives:",
+        "q": "In 4-bit unsigned storage, what is the result of binary 1111 + 0001?",
         "opts": ["A  10000", "B  11110", "C  0000", "D  1111"],
         "ans": "C", "marks": 2,
         "sol": "16 in 4 bits wraps to <strong>0000</strong>. Answer: <strong>C</strong>",
@@ -725,7 +958,7 @@ _DR_MCQ_BANK = [
     },
     {
         "difficulty": "difficult",
-        "q": "Lossy compression:",
+        "q": "Which statement best describes lossy compression?",
         "opts": ["A  restores data perfectly", "B  never reduces file size",
                  "C  permanently removes some data", "D  is only for text"],
         "ans": "C", "marks": 2,
@@ -734,7 +967,7 @@ _DR_MCQ_BANK = [
     },
     {
         "difficulty": "intermediate",
-        "q": "1 KB (binary) equals how many bytes?",
+        "q": "In binary units, how many bytes are in 1 KB (1 kibibyte)?",
         "opts": ["A  1000", "B  1024", "C  8", "D  512"],
         "ans": "B", "marks": 2,
         "sol": "1 KB = 2¹⁰ = <strong>1024 bytes</strong>. Answer: <strong>B</strong>",
@@ -751,7 +984,7 @@ _DR_MCQ_BANK = [
     },
     {
         "difficulty": "foundational",
-        "q": "The largest denary value stored in 4 unsigned bits is:",
+        "q": "What is the largest denary value that can be stored in 4 unsigned bits?",
         "opts": ["A  8", "B  15", "C  16", "D  31"],
         "ans": "B", "marks": 2,
         "sol": "2⁴ − 1 = <strong>15</strong> (1111). Answer: <strong>B</strong>",
@@ -759,7 +992,7 @@ _DR_MCQ_BANK = [
     },
     {
         "difficulty": "foundational",
-        "q": "Binary 1010 in denary is:",
+        "q": "What is the denary (base 10) value of the binary number 1010?",
         "opts": ["A  8", "B  10", "C  12", "D  20"],
         "ans": "B", "marks": 2,
         "sol": "8 + 2 = <strong>10</strong>. Answer: <strong>B</strong>",
@@ -767,7 +1000,7 @@ _DR_MCQ_BANK = [
     },
     {
         "difficulty": "intermediate",
-        "q": "Denary 255 in hexadecimal is:",
+        "q": "What is the denary number 255 written in hexadecimal?",
         "opts": ["A  EE", "B  FF", "C  255", "D  F0"],
         "ans": "B", "marks": 2,
         "sol": "255 = <strong>FF</strong>. Answer: <strong>B</strong>",
@@ -775,7 +1008,7 @@ _DR_MCQ_BANK = [
     },
     {
         "difficulty": "intermediate",
-        "q": "Increasing colour depth from 8 bits to 16 bits per pixel:",
+        "q": "What happens to the bits per pixel when colour depth increases from 8 bits to 16 bits?",
         "opts": ["A  halves image file size", "B  doubles the bits per pixel",
                  "C  removes colour information", "D  only affects sound files"],
         "ans": "B", "marks": 2,
@@ -784,7 +1017,7 @@ _DR_MCQ_BANK = [
     },
     {
         "difficulty": "difficult",
-        "q": "Lossless compression:",
+        "q": "Which statement best describes lossless compression?",
         "opts": ["A  permanently deletes data", "B  reduces size and can restore the original exactly",
                  "C  only works on video", "D  always increases file size"],
         "ans": "B", "marks": 2,
@@ -881,9 +1114,4 @@ def gcse_data_rep(difficulty, mode, variant_name=None):
 
     variants = gcse_data_rep_variants(difficulty, mode)
     variant = pick_named_variant(variants, variant_name)
-
-    q, s, hint, marks = variant()
-    return make_problem(
-        q, s, hint, difficulty, marks,
-        "gcse", "cs", "data_rep",
-    )
+    return _dr_problem_from_output(variant(), difficulty)

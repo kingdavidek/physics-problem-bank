@@ -1237,6 +1237,146 @@
             margin-top: 12px;
             align-items: center;
         }
+        .free-response-row[hidden] {
+            display: none !important;
+        }
+        .free-response-row--standard-form .free-response-input-coeff {
+            flex: 0 1 88px;
+            min-width: 72px;
+        }
+        .free-response-row--standard-form .free-response-input-exp {
+            flex: 0 1 72px;
+            min-width: 56px;
+        }
+        .free-response-row--number-pair .free-response-input-a,
+        .free-response-row--number-pair .free-response-input-b {
+            flex: 0 1 120px;
+            min-width: 88px;
+        }
+        .free-response-row--number-list .free-response-input-list {
+            flex: 1 1 220px;
+            min-width: 160px;
+        }
+        .free-response-row--power .free-response-input-base {
+            flex: 0 1 88px;
+            min-width: 72px;
+        }
+        .free-response-row--power .free-response-input-index {
+            flex: 0 1 64px;
+            min-width: 48px;
+            font-size: 0.9rem;
+            align-self: flex-start;
+            margin-top: -2px;
+        }
+        .free-response-row--ratio .free-response-input-ratio {
+            flex: 0 1 120px;
+            min-width: 88px;
+        }
+        .free-response-row--linear-equation .free-response-input-linear-equation {
+            flex: 1 1 180px;
+            min-width: 140px;
+        }
+        .free-response-row--number-fields {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .free-response-fields-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+        }
+        .free-response-field-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 8px;
+            width: 100%;
+        }
+        .free-response-field-row .free-response-field {
+            flex: 0 1 auto;
+            min-width: 0;
+            max-width: 280px;
+        }
+        .free-response-field-row .free-response-field-check-btn {
+            flex: 0 0 auto;
+            align-self: flex-end;
+            margin-bottom: 1px;
+        }
+        .free-response-field-feedback {
+            flex: 1 1 100%;
+            margin: 0;
+            font-size: 0.875rem;
+            min-height: 1.25em;
+        }
+        .free-response-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
+        .free-response-field-label {
+            color: var(--muted, #64748b);
+            font-size: 0.85rem;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+        .free-response-field .free-response-input {
+            box-sizing: border-box;
+            flex: none;
+            min-width: 0;
+            width: 100%;
+            max-width: 280px;
+        }
+        .free-response-power-sep {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-muted, #64748b);
+            align-self: flex-start;
+            margin-top: 8px;
+            line-height: 1;
+        }
+        .free-response-pi-sep {
+            font-size: 1.35rem;
+            font-weight: 600;
+            color: var(--text, #1e3a5f);
+            line-height: 1;
+            user-select: none;
+            padding: 0 2px;
+        }
+        .free-response-row--pi-multiple .free-response-input-pi {
+            flex: 0 1 8rem;
+            min-width: 5rem;
+            max-width: 40vw;
+            width: 8rem;
+        }
+        .free-response-row--surd .free-response-input-surd {
+            flex: 1 1 140px;
+            min-width: 100px;
+            max-width: 280px;
+        }
+        .free-response-surd-btn {
+            flex: 0 0 auto;
+            min-width: 2.75rem;
+            padding: 10px 12px;
+            font-size: 1.15rem;
+            line-height: 1;
+            font-weight: 600;
+        }
+        .free-response-sf-sep {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text);
+            white-space: nowrap;
+            user-select: none;
+        }
+        .free-response-pair-sep {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--muted, #64748b);
+            white-space: nowrap;
+            user-select: none;
+        }
         .free-response-input {
             flex: 1 1 160px;
             min-width: 120px;
@@ -1618,20 +1758,30 @@
             width: 100% !important;
             height: auto !important;
         }
+        svg.geom-diagram {
+            background: #f9f8f5 !important;
+            border-radius: 6px !important;
+            display: block !important;
+            margin: 6px auto !important;
+            height: auto !important;
+        }
         /* Typeable self-checking probability-tree inputs (blank/difficult trees) */
         .prob-tree-input {
             width: 100%;
             height: 100%;
             box-sizing: border-box;
             margin: 0;
-            padding: 0;
+            padding: 1px 2px;
             border: 1px solid #bbb;
             border-radius: 3px;
             background: #fffef5;
             color: #333;
             font-family: inherit;
-            font-size: 11px;
+            font-size: 10px;
+            line-height: 1.1;
             text-align: center;
+            appearance: none;
+            -webkit-appearance: none;
         }
         .prob-tree-input:focus {
             outline: 2px solid #1a6fa8;

@@ -27,7 +27,13 @@
     <div class="question">
         {% if problem.options %}
             <div class="question-content">{{ problem.question | safe }}</div>
-            <div class="mcq-options" data-correct="{{ problem.correct_answer }}">
+            <div class="mcq-options" id="suggestion-mcq-options"
+                 data-correct="{{ problem.correct_answer }}"
+                 data-level="{{ suggestion.level }}"
+                 data-subject="{{ suggestion.subject }}"
+                 data-topic="{{ suggestion.topic }}"
+                 data-mode="{{ suggestion.mode }}"
+                 data-difficulty="{{ suggestion.difficulty }}">
                 {% for opt in problem.options %}
                     <button type="button" class="btn mcq-btn" data-letter="{{ opt[0] }}">{{ opt | safe }}</button>
                 {% endfor %}
@@ -35,6 +41,12 @@
             <p class="mcq-feedback" style="margin-top:12px;font-weight:600;"></p>
         {% else %}
             <div class="question-content">{{ problem.question | format_question_html }}</div>
+            {% set fr_level = suggestion.level %}
+            {% set fr_subject = suggestion.subject %}
+            {% set fr_topic = suggestion.topic %}
+            {% set fr_difficulty = suggestion.difficulty %}
+            {% set fr_id = 'suggestion-free-response' %}
+            {% include 'partials/free_response_inline.html' %}
         {% endif %}
     </div>
 

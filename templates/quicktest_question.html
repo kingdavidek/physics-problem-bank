@@ -41,13 +41,21 @@
                 <p class="mcq-feedback" id="mcq-feedback" style="margin-top:12px;font-weight:600;"></p>
             {% else %}
                 <div class="question-content">{{ problem.question | format_question_html }}</div>
+                {% set fr_level = qt_level %}
+                {% set fr_subject = qt_subject %}
+                {% set fr_topic = qt_topic %}
+                {% set fr_difficulty = qt_difficulty %}
+                {% include 'partials/free_response_inline.html' %}
             {% endif %}
         </div>
     </div>
 </div>
 
 <div class="problem-actions" style="border-top: none; justify-content: flex-end;">
-    <form method="POST" action="/quicktest/next">
+    <form method="POST" action="/quicktest/next" id="quicktest-next-form">
+        <input type="hidden" name="qt_user_answer" id="qt-user-answer" value="">
+        <input type="hidden" name="qt_checked" id="qt-checked" value="0">
+        <input type="hidden" name="qt_correct" id="qt-correct" value="">
         <button type="submit" class="btn btn-primary">
             {% if current < total %}Next question →{% else %}Finish and show solutions →{% endif %}
         </button>

@@ -40,6 +40,13 @@
             <p class="mcq-feedback" id="saved-mcq-feedback" style="margin-top:12px;font-weight:600;"></p>
         {% else %}
             <div class="question-content" id="saved-question-content">{{ problem.question | format_question_html }}</div>
+            {% set fr_level = saved.level %}
+            {% set fr_subject = saved.subject %}
+            {% set fr_topic = saved.topic %}
+            {% set fr_difficulty = saved.difficulty %}
+            {% set fr_id = 'saved-free-response' %}
+            {% set fr_shell = true %}
+            {% include 'partials/free_response_inline.html' %}
         {% endif %}
     </div>
 

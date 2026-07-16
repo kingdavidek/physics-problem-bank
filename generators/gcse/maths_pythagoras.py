@@ -1,7 +1,8 @@
 """
 GCSE Maths – Pythagoras' Theorem
 8 foundational · 8 intermediate · 8 difficult · 10 MCQ
-Each variant returns (question, solution, hint, marks).
+Graded practice variants return (question, solution, hint, marks, raw).
+Exact-surd / proof-style variants stay as 4-tuples (Phase 2).
 Final answers wrapped in <strong> tags.
 """
 import random
@@ -37,6 +38,82 @@ def _pick_triple():
     ])
     k = random.choice([1, 1, 1, 2, 2, 3])
     return tuple(x * k for x in base)
+
+
+def _pyth_raw(value):
+    return _fmt(value)
+
+
+def _pyth_fields_answer(values, labels):
+    return {
+        'type': 'number_fields',
+        'values': tuple(_pyth_raw(v) for v in values),
+        'labels': tuple(labels),
+    }
+
+
+def _pyth_keyword_answer(value):
+    return {'type': 'keyword', 'value': str(value).strip().lower()}
+
+
+def _pyth_surd_answer(radicand, coeff=1):
+    """Surd answer k√r (default k=1). Stored as 'coeff|radicand' when coeff != 1."""
+    c = int(coeff)
+    r = int(radicand)
+    if c == 1:
+        return {'type': 'surd', 'radicand': r}
+    return {'type': 'surd', 'coeff': c, 'radicand': r}
+
+
+def _pyth_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict) and raw.get('type') == 'number_fields':
+            values = raw.get('values') or ()
+            labels = raw.get('labels') or ()
+            if values and len(values) == len(labels):
+                extra = {
+                    'correct_answer_raw': '|'.join(str(v) for v in values),
+                    'answer_type': 'number_fields',
+                    'answer_labels': list(labels),
+                    'answer_format_hint': 'Enter a number in every field',
+                }
+        elif isinstance(raw, dict) and raw.get('type') == 'keyword':
+            value = raw.get('value')
+            if value is not None and str(value).strip():
+                extra = {
+                    'correct_answer_raw': str(value).strip().lower(),
+                    'answer_type': 'keyword',
+                    'answer_format_hint': 'e.g. yes or no',
+                }
+        elif isinstance(raw, dict) and raw.get('type') == 'surd':
+            coeff = int(raw.get('coeff') or 1)
+            radicand = raw.get('radicand')
+            if radicand is not None:
+                extra = {
+                    'correct_answer_raw': (
+                        str(radicand) if coeff == 1 else f'{coeff}|{radicand}'
+                    ),
+                    'answer_type': 'surd',
+                    'answer_format_hint': 'e.g. √113 — use the √ button if needed',
+                }
+        elif isinstance(raw, (int, float)):
+            extra = {
+                'correct_answer_raw': _pyth_raw(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+        elif isinstance(raw, str):
+            extra = {
+                'correct_answer_raw': raw,
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+    return make_problem(
+        q, s, hint, difficulty, marks, 'gcse', 'maths', 'pythagoras', **extra
+    )
 
 
 # ── Standard problem-diagram display size ──
@@ -151,31 +228,48 @@ def _coord_journey_svg(dx=60, dy=80, east_km=None, north_km=None):
     )
 
 
-def _ladder_two_position_svg(base1=60, base2=100, lad=130, foot1_m=6, foot2_m=10, length_m=13):
-    """Ladder against wall — two positions of the foot."""
-    wx, wy = 200, 40
-    bx1, bx2 = 200 - base1, 200 - base2
-    by = 160
-    bounds_x = [30, wx, bx1 - 8, bx2 - 8, 208]
-    bounds_y = [wy, by + 14, 100]
+def _ladder_two_position_svg(base1_m, base2_m, height1_m, height2_m, length_m=None):
+    """Ladder against wall in two foot positions.
+
+    Labels foot distances only. Wall reach heights are marked '?' so the
+    diagram does not give away the answers. Ladder tops sit at different heights.
+    """
+    # Scale so the larger base / taller height fit the canvas.
+    scale = 100 / max(base2_m, height1_m, 1)
+    wx, ground = 200, 160
+    bx1 = wx - base1_m * scale
+    bx2 = wx - base2_m * scale
+    ty1 = ground - height1_m * scale
+    ty2 = ground - height2_m * scale
+    wall_top = min(ty1, ty2) - 12
+    bounds_x = [min(bx1, bx2) - 20, wx + 28]
+    bounds_y = [wall_top, ground + 16]
     return (
         _pyth_svg_fitted(bounds_x, bounds_y)
-        + f'<line x1="{wx}" y1="{wy}" x2="{wx}" y2="{by}" stroke="#555" stroke-width="2"/>'
-        + '<line x1="30" y1="160" x2="210" y2="160" stroke="#555" stroke-width="2"/>'
-        + f'<line x1="{bx1}" y1="{by}" x2="{wx}" y2="{wy}" stroke="#a13544" stroke-width="2.5" opacity="0.5"/>'
-        + f'<line x1="{bx2}" y1="{by}" x2="{wx}" y2="{wy}" stroke="#a13544" stroke-width="2.5"/>'
-        + f'<circle cx="{bx1}" cy="{by}" r="3" fill="#94a3b8"/>'
-        + f'<circle cx="{bx2}" cy="{by}" r="4" fill="#a13544"/>'
-        + f'<text x="{bx1-8}" y="{by+14}" font-size="10" fill="#666">{foot1_m} m</text>'
-        + f'<text x="{bx2-8}" y="{by+14}" font-size="10" fill="#a13544">{foot2_m} m</text>'
-        + f'<text x="208" y="100" font-size="11" fill="#a13544" font-weight="bold">{length_m} m</text>'
+        + f'<line x1="{wx}" y1="{wall_top}" x2="{wx}" y2="{ground}" stroke="#555" stroke-width="2"/>'
+        + f'<line x1="{min(bx1, bx2) - 16}" y1="{ground}" x2="{wx + 10}" y2="{ground}" stroke="#555" stroke-width="2"/>'
+        # First (closer) position — faded
+        + f'<line x1="{bx1}" y1="{ground}" x2="{wx}" y2="{ty1}" stroke="#a13544" stroke-width="2.5" opacity="0.45"/>'
+        + f'<circle cx="{bx1}" cy="{ground}" r="3" fill="#94a3b8"/>'
+        + f'<circle cx="{wx}" cy="{ty1}" r="3" fill="#94a3b8"/>'
+        + f'<text x="{wx + 14}" y="{ty1 + 4}" font-size="12" fill="#64748b" font-weight="bold">?</text>'
+        # Second (further) position — solid
+        + f'<line x1="{bx2}" y1="{ground}" x2="{wx}" y2="{ty2}" stroke="#a13544" stroke-width="2.5"/>'
+        + f'<circle cx="{bx2}" cy="{ground}" r="4" fill="#a13544"/>'
+        + f'<circle cx="{wx}" cy="{ty2}" r="3.5" fill="#a13544"/>'
+        + f'<text x="{wx + 14}" y="{ty2 + 4}" font-size="12" fill="#a13544" font-weight="bold">?</text>'
+        # Foot distances only (given in the question)
+        + f'<text x="{bx1}" y="{ground + 14}" font-size="11" fill="#666" text-anchor="middle">{base1_m} m</text>'
+        + f'<text x="{bx2}" y="{ground + 14}" font-size="11" fill="#a13544" text-anchor="middle">{base2_m} m</text>'
         + '</svg>'
     )
 
 
-def _cuboid_svg(l, w, h, diag):
+def _cuboid_svg(l, w, h, diag, find=None):
+    """Cuboid with space diagonal. find='d' labels the diagonal as '?'."""
     ox, oy = 70, 150
     dx, dy = 90, -55
+    dl = "?" if find == "d" else f"{diag}"
     bounds_x = [ox - 12, ox + 80 + dx, ox + 95]
     bounds_y = [oy + 18, oy + dy - 90, oy - 55, oy - 40]
     return (
@@ -193,7 +287,7 @@ def _cuboid_svg(l, w, h, diag):
         + f'<text x="{ox+40}" y="{oy+18}" font-size="12" fill="#1a6fa8" text-anchor="middle">{l} cm</text>'
         + f'<text x="{ox+95}" y="{oy-42}" font-size="12" fill="#059669">{w} cm</text>'
         + f'<text x="{ox-12}" y="{oy-40}" font-size="12" fill="#059669">{h} cm</text>'
-        + f'<text x="{ox+55}" y="{oy-55}" font-size="12" fill="#a13544" font-weight="bold">{diag} cm</text>'
+        + f'<text x="{ox+55}" y="{oy-55}" font-size="12" fill="#a13544" font-weight="bold">{dl} cm</text>'
         + '</svg>'
     )
 
@@ -210,20 +304,23 @@ def _py_f1_find_hypotenuse():
     s = (f"a² + b² = c²<br>"
          f"{a}² + {b}² = c² → {a*a} + {b*b} = c² → c² = {c*c}<br>"
          f"c = √{c*c} = <strong>{c} cm</strong>")
-    return q, s, "Hypotenuse c is the longest side, opposite the right angle. Use c² = a² + b².", 2
+    return q, s, "Hypotenuse c is the longest side, opposite the right angle. Use c² = a² + b².", 2, c
 
 
 def _py_f2_find_shorter_side():
     a, b, c = _pick_triple()
-    known, find_lbl = random.choice([(a, "a"), (b, "b")])
-    missing = b if find_lbl == "a" else a
+    # Show the known leg; hide the missing leg (not the known one).
+    if random.choice([True, False]):
+        known, missing, find_lbl = a, b, "b"
+    else:
+        known, missing, find_lbl = b, a, "a"
     svg = _pyth_tri_svg(a, b, c, find=find_lbl)
     q = (f"A right-angled triangle has hypotenuse {c} cm and one shorter side {known} cm. "
          f"Find the other shorter side.<br>{svg}")
     s = (f"a² + b² = c²<br>"
          f"{missing}² + {known}² = {c}² → {missing}² = {c*c} − {known*known} = {c*c - known*known}<br>"
          f"{missing} = √{c*c - known*known} = <strong>{missing} cm</strong>")
-    return q, s, "Rearrange: (shorter side)² = c² − (other shorter side)².", 3
+    return q, s, "Rearrange: (shorter side)² = c² − (other shorter side)².", 3, missing
 
 
 def _py_f3_is_right_yes():
@@ -234,7 +331,7 @@ def _py_f3_is_right_yes():
          f"{a}² + {b}² = {a*a} + {b*b} = {a*a + b*b}<br>"
          f"{c}² = {c*c}<br>"
          f"Since {a*a + b*b} = {c*c}, the triangle <strong>is right-angled</strong>.")
-    return q, s, "Square the longest side and compare with the sum of squares of the other two.", 2
+    return q, s, "Square the longest side and compare with the sum of squares of the other two.", 2, _pyth_keyword_answer('yes')
 
 
 def _py_f4_is_right_no():
@@ -248,7 +345,7 @@ def _py_f4_is_right_no():
     s = (f"Longest side is {c_wrong} cm. Check a² + b² = c²:<br>"
          f"{a}² + {b}² = {lhs}, but {c_wrong}² = {rhs}<br>"
          f"{lhs} ≠ {rhs}, so the triangle is <strong>not right-angled</strong>.")
-    return q, s, "If a² + b² ≠ (longest side)², the triangle is not right-angled.", 2
+    return q, s, "If a² + b² ≠ (longest side)², the triangle is not right-angled.", 2, _pyth_keyword_answer('no')
 
 
 def _py_f5_ladder_wall():
@@ -262,7 +359,7 @@ def _py_f5_ladder_wall():
     s = (f"Ladder is the hypotenuse:<br>"
          f"{base}² + {h}² = L² → {base*base + h*h} = L²<br>"
          f"L = <strong>{lad} m</strong>")
-    return q, s, "Wall and ground are perpendicular — ladder is the hypotenuse.", 2
+    return q, s, "Wall and ground are perpendicular — ladder is the hypotenuse.", 2, lad
 
 
 def _py_f6_rectangle_diagonal():
@@ -273,7 +370,7 @@ def _py_f6_rectangle_diagonal():
     s = (f"Diagonal is the hypotenuse of a right triangle with legs {w} cm and {h} cm:<br>"
          f"{w}² + {h}² = d² → {w*w + h*h} = d²<br>"
          f"d = <strong>{d} cm</strong>")
-    return q, s, "Split the rectangle into two right-angled triangles using the diagonal.", 2
+    return q, s, "Split the rectangle into two right-angled triangles using the diagonal.", 2, d
 
 
 def _py_f7_distance_on_grid():
@@ -284,7 +381,7 @@ def _py_f7_distance_on_grid():
     s = (f"Horizontal change = {dx} cm, vertical change = {dy} cm.<br>"
          f"AB² = {dx}² + {dy}² = {dx*dx + dy*dy}<br>"
          f"AB = <strong>{d} cm</strong>")
-    return q, s, "Count horizontal and vertical steps — they are the two shorter sides.", 2
+    return q, s, "Count horizontal and vertical steps — they are the two shorter sides.", 2, d
 
 
 def _py_f8_square_diagonal():
@@ -296,7 +393,7 @@ def _py_f8_square_diagonal():
     sol = (f"Diagonal splits the square into two right isosceles triangles with legs {s} cm:<br>"
            f"{s}² + {s}² = d² → {d2} = d²<br>"
            f"d = √{d2} = <strong>{d} cm</strong>")
-    return q, sol, "In a square, the diagonal is the hypotenuse of a right triangle with two equal legs.", 2
+    return q, sol, "In a square, the diagonal is the hypotenuse of a right triangle with two equal legs.", 2, d
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -311,7 +408,7 @@ def _py_i1_perimeter():
          f"Find its perimeter.<br>{svg}")
     s = (f"First find hypotenuse: c² = {a}² + {b}² = {c*c}, so c = {c} cm.<br>"
          f"Perimeter = {a} + {b} + {c} = <strong>{p} cm</strong>")
-    return q, s, "Find the missing hypotenuse, then add all three sides.", 3
+    return q, s, "Find the missing hypotenuse, then add all three sides.", 3, p
 
 
 def _py_i2_area_then_side():
@@ -321,7 +418,10 @@ def _py_i2_area_then_side():
          f"Find the other shorter side and the hypotenuse.")
     s = (f"Area = ½ × a × b → {area} = ½ × {a} × b → b = <strong>{b} cm</strong><br>"
          f"c² = {a}² + {b}² = {c*c} → c = <strong>{c} cm</strong>")
-    return q, s, "Use Area = ½ab for a right triangle, then Pythagoras for the hypotenuse.", 4
+    return q, s, "Use Area = ½ab for a right triangle, then Pythagoras for the hypotenuse.", 4, _pyth_fields_answer(
+        (b, c),
+        ('Other shorter side (cm)', 'Hypotenuse (cm)'),
+    )
 
 
 def _py_i3_isosceles_height():
@@ -332,30 +432,33 @@ def _py_i3_isosceles_height():
     s = (f"Height splits the base into two {half} cm segments, forming a right triangle:<br>"
          f"{half}² + h² = {slant}² → h² = {slant*slant} − {half*half} = {slant*slant - half*half}<br>"
          f"h = <strong>{h} cm</strong>")
-    return q, s, "The height bisects the base in an isosceles triangle — use Pythagoras on half the triangle.", 3
+    return q, s, "The height bisects the base in an isosceles triangle — use Pythagoras on half the triangle.", 3, h
 
 
 def _py_i4_3d_space_diagonal():
     l, w, h = random.choice([(3, 4, 5), (6, 8, 10), (4, 4, 4)])
     d = int(math.sqrt(l * l + w * w + h * h))
-    svg = _cuboid_svg(l, w, h, d)
+    svg = _cuboid_svg(l, w, h, d, find="d")
     q = (f"A cuboid is {l} cm by {w} cm by {h} cm. Find the length of its space diagonal.<br>{svg}")
     s = (f"Space diagonal AG satisfies AG² = AB² + BC² + CG²<br>"
          f"AG² = {l}² + {w}² + {h}² = {l*l + w*w + h*h}<br>"
          f"AG = <strong>{d} cm</strong>")
-    return q, s, "3D Pythagoras: square all three edges, add, then square root.", 3
+    return q, s, "3D Pythagoras: square all three edges, add, then square root.", 3, d
 
 
 def _py_i5_3d_two_step():
     l, w, h = 6, 8, 10
     face = int(math.sqrt(l * l + w * w))
     space = int(math.sqrt(l * l + w * w + h * h))
-    svg = _cuboid_svg(l, w, h, space)
+    svg = _cuboid_svg(l, w, h, space, find="d")
     q = (f"A cuboid is {l} cm × {w} cm × {h} cm. "
          f"(i) Find the diagonal of the base. (ii) Find the space diagonal.<br>{svg}")
     s = (f"(i) Base diagonal = √({l}² + {w}²) = √{l*l + w*w} = <strong>{face} cm</strong><br>"
          f"(ii) Space diagonal = √({face}² + {h}²) = √{face*face + h*h} = <strong>{space} cm</strong>")
-    return q, s, "Find a face diagonal first, then use it with the height as the two legs.", 4
+    return q, s, "Find a face diagonal first, then use it with the height as the two legs.", 4, _pyth_fields_answer(
+        (face, space),
+        ('Base diagonal (cm)', 'Space diagonal (cm)'),
+    )
 
 
 def _py_i6_coordinate_distance():
@@ -367,7 +470,7 @@ def _py_i6_coordinate_distance():
     s = (f"Δx = {dx}, Δy = {dy}<br>"
          f"AB² = {dx}² + {dy}² = {dx*dx + dy*dy}<br>"
          f"AB = <strong>{d}</strong>")
-    return q, s, "Difference in x and difference in y are the legs of a right triangle.", 3
+    return q, s, "Difference in x and difference in y are the legs of a right triangle.", 3, d
 
 
 def _py_i7_ladder_slips():
@@ -382,7 +485,7 @@ def _py_i7_ladder_slips():
     s = (f"Original height = √({lad}² − {base}²) = {h} m (check).<br>"
          f"New distance from wall = {new_base} m. Height = √({lad}² − {new_base}²)<br>"
          f"= √{lad*lad - new_base*new_base} = <strong>{new_h} m</strong>")
-    return q, s, "Ladder length stays fixed — only the horizontal distance changes.", 4
+    return q, s, "Ladder length stays fixed — only the horizontal distance changes.", 4, new_h
 
 
 def _py_i8_cone_slant():
@@ -392,7 +495,7 @@ def _py_i8_cone_slant():
     s_txt = (f"Radius and height are perpendicular:<br>"
              f"s² = {r}² + {h}² = {r*r + h*h}<br>"
              f"Slant height = <strong>{s} cm</strong>")
-    return q, s_txt, "Slant height is the hypotenuse of the triangle formed by radius and height.", 3
+    return q, s_txt, "Slant height is the hypotenuse of the triangle formed by radius and height.", 3, s
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -409,7 +512,7 @@ def _py_d1_composite_area():
     s = (f"Rectangle area = {a} × {c} = {rect_area} cm²<br>"
          f"Triangle removed = ½ × {a} × {b} = {tri_area} cm²<br>"
          f"Shaded area = {rect_area} − {tri_area} = <strong>{total} cm²</strong>")
-    return q, s, "Subtract the right triangle area from the rectangle area.", 4
+    return q, s, "Subtract the right triangle area from the rectangle area.", 4, total
 
 
 def _py_d2_distance_formula():
@@ -417,14 +520,16 @@ def _py_d2_distance_formula():
     dx = random.choice([5, 6, 8, 9, 12])
     dy = random.choice([4, 5, 7, 8, 12, 15])
     x2, y2 = x1 + dx, y1 + dy
-    d = int(math.sqrt(dx * dx + dy * dy))
+    sum_sq = dx * dx + dy * dy
+    d = int(math.sqrt(sum_sq))
     q = (f"Find the exact distance between P({x1}, {y1}) and Q({x2}, {y2}). "
          f"Give your answer in surd form if needed.")
     s = (f"Δx = {x2} − ({x1}) = {dx}, Δy = {y2} − ({y1}) = {dy}<br>"
-         f"PQ = √({dx}² + {dy}²) = √{dx*dx + dy*dy}"
-         + (f" = <strong>{d}</strong>" if dx * dx + dy * dy == d * d else
-            f" = <strong>√{dx*dx + dy*dy}</strong>"))
-    return q, s, "Use PQ² = (Δx)² + (Δy)² — the coordinate form of Pythagoras.", 4
+         f"PQ = √({dx}² + {dy}²) = √{sum_sq}"
+         + (f" = <strong>{d}</strong>" if sum_sq == d * d else
+            f" = <strong>√{sum_sq}</strong>"))
+    hint = "Use PQ² = (Δx)² + (Δy)² — the coordinate form of Pythagoras."
+    return q, s, hint, 4, _pyth_surd_answer(sum_sq)
 
 
 def _py_d3_3d_diagonal_exact():
@@ -460,7 +565,10 @@ def _py_d5_two_triangles():
          f"Triangle 2: {x}² + {y}² = {x*x + y*y} = {z*z} ✓ also right-angled.<br>"
          f"Perimeter of triangle 1 = {a}+{b}+{c} = <strong>{p} cm</strong> "
          f"(triangle 2 perimeter = {x+y+z} cm).")
-    return q, s, "Test a² + b² = c² for each triangle using the longest side as c.", 4
+    return q, s, "Test a² + b² = c² for each triangle using the longest side as c.", 4, _pyth_fields_answer(
+        (1, p),
+        ('Which triangle? (1 or 2)', 'Perimeter (cm)'),
+    )
 
 
 def _py_d6_roof_truss_multi():
@@ -475,7 +583,10 @@ def _py_d6_roof_truss_multi():
          f"Rafter² = {half}² + {rise}² = {half*half + rise*rise} → rafter = <strong>{rafter} m</strong>.<br>"
          f"(b) The perpendicular height is given as <strong>{rise} m</strong> (the dashed line at the centre).<br>"
          f"(c) Total = 2 × {rafter} + 12 = <strong>{2*rafter + 12} m</strong>.")
-    return q, s, "Use Pythagoras on half the truss; the height is one leg, half the span is the other.", 6
+    return q, s, "Use Pythagoras on half the truss; the height is one leg, half the span is the other.", 6, _pyth_fields_answer(
+        (rafter, rise, 2 * rafter + 12),
+        ('(a) Rafter length (m)', '(b) Height (m)', '(c) Total timber (m)'),
+    )
 
 
 def _py_d7_coordinate_journey_multi():
@@ -493,16 +604,25 @@ def _py_d7_coordinate_journey_multi():
          f"(b) OB² = 8² + 6² = 64 + 36 = 100 → OB = <strong>{ob} km</strong>.<br>"
          f"(c) Two-leg distance = 6 + 8 = 14 km. Direct route = {dist} km.<br>"
          f"Saving = 14 − {dist} = <strong>{saving} km</strong> (the direct line is shorter).")
-    return q, s, "East/north legs are perpendicular; use Pythagoras for the hypotenuse OL.", 6
+    return q, s, "East/north legs are perpendicular; use Pythagoras for the hypotenuse OL.", 6, _pyth_fields_answer(
+        (dist, ob, saving),
+        ('(a) Direct distance OL (km)', '(b) Distance OB (km)', '(c) Saving (km)'),
+    )
 
 
 def _py_d8_ladder_slip_multi():
-    lad, base1, base2 = 13, 5, 12
-    h1 = int(math.sqrt(lad * lad - base1 * base1))
-    h2 = int(math.sqrt(lad * lad - base2 * base2))
+    # Same ladder length with two integer foot/height swaps from a Pythagorean triple.
+    a, b, c = random.choice([
+        (3, 4, 5), (5, 12, 13), (8, 15, 17), (7, 24, 25), (20, 21, 29),
+    ])
+    k = random.choice([1, 1, 2, 2, 3])
+    a, b, c = a * k, b * k, c * k
+    # Start closer to the wall (taller reach), then slide further out.
+    base1, h1 = min(a, b), max(a, b)
+    base2, h2 = max(a, b), min(a, b)
+    lad = c
     drop = h1 - h2
-    svg = _ladder_two_position_svg(base1 * 10, base2 * 10, lad * 10,
-                                   foot1_m=base1, foot2_m=base2, length_m=lad)
+    svg = _ladder_two_position_svg(base1, base2, h1, h2, length_m=lad)
     q = (f"A {lad} m ladder leans against a vertical wall. Its foot is {base1} m from the wall "
          f"(see diagram).<br>{svg}"
          f"(a) Find how high the ladder reaches on the wall.<br>"
@@ -512,7 +632,10 @@ def _py_d8_ladder_slip_multi():
     s = (f"(a) h² = {lad}² − {base1}² = {lad*lad - base1*base1} → h = <strong>{h1} m</strong>.<br>"
          f"(b) New height = √({lad}² − {base2}²) = √{lad*lad - base2*base2} = <strong>{h2} m</strong>.<br>"
          f"(c) Drop = {h1} − {h2} = <strong>{drop} m</strong>.")
-    return q, s, "The ladder is the hypotenuse; wall height and ground distance are the legs.", 6
+    return q, s, "The ladder is the hypotenuse; wall height and ground distance are the legs.", 6, _pyth_fields_answer(
+        (h1, h2, drop),
+        ('(a) First height (m)', '(b) New height (m)', '(c) Drop (m)'),
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -646,8 +769,5 @@ def gcse_pythagoras(difficulty, mode, variant_name=None):
     variants = gcse_pythagoras_variants(difficulty, mode)
     variant = pick_named_variant(variants, variant_name)
 
-    q, s, hint, marks = variant()
-    return make_problem(
-        q, s, hint, difficulty, marks,
-        "gcse", "maths", "pythagoras",
-    )
+    out = variant()
+    return _pyth_problem_from_output(out, difficulty)
