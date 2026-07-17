@@ -140,6 +140,7 @@ Without a graded problem in session, `correct_answer_raw` is required in the bod
 | Type | `correct_answer_raw` format | User input examples |
 |------|----------------------------|---------------------|
 | `number` | `42`, `1/2`, `-3.5` | Same; fractions and decimals accepted when equivalent |
+| `fraction` | `3/4` or `num\|den` e.g. `3\|4` | `3/4`, `6/8`, `1 1/2` (mixed), `0.75` (decimal equivalent) |
 | `standard_form` | `coeff\|exp` e.g. `3.2\|5` | Coefficient + power of 10 fields |
 | `number_pair` | `a\|b` | Two numeric fields |
 | `number_list` | `1,2,3` | Comma-separated numbers |
@@ -156,7 +157,7 @@ Without a graded problem in session, `correct_answer_raw` is required in the bod
 | `binary` | `width\|bits` e.g. `8\|10010110` (`0\|…` = no fixed width) | Binary digits |
 | `hex` | `width\|hex` e.g. `0\|FF` | Hex digits (case-insensitive) |
 
-Phase 2+ will add richer fraction/surd/algebra types; ungraded conceptual variants omit `correct_answer_raw` and do not show the Check UI.
+Phase 2 adds dedicated `fraction` and SymPy-backed `surd` types; ungraded conceptual variants omit `correct_answer_raw` and do not show the Check UI.
 ## Quick Test (M4)
 
 | Method | Path |
