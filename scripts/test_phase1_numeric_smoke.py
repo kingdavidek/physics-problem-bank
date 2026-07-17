@@ -45,6 +45,8 @@ DIFFICULTIES = ('foundational', 'intermediate', 'difficult')
 CHECKER_CASES = (
     ('number', '42', '42', '41'),
     ('number', '1/2', '0.5', '1/3'),
+    ('fraction', '3/4', '0.75', '1/2'),
+    ('fraction', '3/2', '1 1/2', '1 1/3'),
     ('standard_form', '3.2|5', '3.2|5', '3.2|4'),
     ('number_pair', '3|4', '3|4', '3|5'),
     ('number_list', '1,2,3', '1,2,3', '1,2,4'),

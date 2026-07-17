@@ -105,6 +105,7 @@ from generators.shared.answer_checkers import (  # noqa: E402
     check_bearing,
     check_binary,
     check_hex,
+    check_fraction,
 )
 from generators.shared.utils import problem_from_choice_output  # noqa: E402
 from app import app  # noqa: E402
@@ -238,6 +239,36 @@ def test_checker_power_and_fraction_unit():
     assert frac_multi_slash['correct'] is False
 
     via_registry = check_answer('power', '3|5', '3|5')
+    assert via_registry['correct'] is True
+
+
+def test_checker_fraction_unit():
+    same = check_fraction('3/4', '3/4')
+    assert same['correct'] is True
+    assert same['normalized_correct'] == '3/4'
+    assert same['normalized_user'] == '3/4'
+
+    decimal = check_fraction('3/4', '0.75')
+    assert decimal['correct'] is True
+    assert decimal['normalized_user'] == '0.75'
+
+    equivalent = check_fraction('3/4', '6/8')
+    assert equivalent['correct'] is True
+
+    mixed = check_fraction('3/2', '1 1/2')
+    assert mixed['correct'] is True
+    assert mixed['normalized_user'] == '1 1/2'
+
+    pipe_raw = check_fraction('3|4', '0.75')
+    assert pipe_raw['correct'] is True
+
+    bad = check_fraction('3/4', '1/2')
+    assert bad['correct'] is False
+
+    invalid = check_fraction('3/4', '1/2/4')
+    assert invalid['correct'] is False
+
+    via_registry = check_answer('fraction', '3/4', '0.75')
     assert via_registry['correct'] is True
 
 
@@ -2895,6 +2926,7 @@ def main():
     test_checker_standard_form_unit()
     test_checker_number_pair_and_list_unit()
     test_checker_power_and_fraction_unit()
+    test_checker_fraction_unit()
     test_checker_number_fields_unit()
     test_bidmas_variants_expose_raw()
     test_all_bidmas_practice_variants_return_five_tuple()

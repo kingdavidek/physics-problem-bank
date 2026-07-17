@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 import math
 from decimal import Decimal, InvalidOperation
+from fractions import Fraction
 
 CHECKERS: dict[str, callable] = {}
 
@@ -56,6 +57,121 @@ def _parse_fraction_or_number(value) -> Decimal | None:
 
 def _looks_like_fraction(value) -> bool:
     return '/' in str(value or '')
+
+
+def _looks_like_mixed_fraction(value) -> bool:
+    return bool(re.search(r'\d+\s+\d+/\d+', str(value or '')))
+
+
+def _format_fraction(fr: Fraction) -> str:
+    if fr.denominator == 1:
+        return str(fr.numerator)
+    return f'{fr.numerator}/{fr.denominator}'
+
+
+def _parse_fraction_value(value) -> Fraction | None:
+    """Parse a fraction, mixed number, decimal, or integer (e.g. 3/4, 1 1/2, 0.75)."""
+    s = _normalize_numeric_string(value)
+    if not s:
+        return None
+
+    mixed = re.fullmatch(r'(-?\d+)\s+(\d+)/(\d+)', s)
+    if mixed:
+        whole = int(mixed.group(1))
+        num = int(mixed.group(2))
+        den = int(mixed.group(3))
+        if den == 0 or num < 0:
+            return None
+        sign = -1 if whole < 0 else 1
+        abs_whole = abs(whole)
+        return Fraction(sign * (abs_whole * den + num), den)
+
+    if '/' in s:
+        if s.count('/') != 1:
+            return None
+        num_s, den_s = s.split('/', 1)
+        num = _parse_number(num_s.strip())
+        den = _parse_number(den_s.strip())
+        if num is None or den is None or den == 0:
+            return None
+        if num != num.to_integral_value() or den != den.to_integral_value():
+            return None
+        return Fraction(int(num), int(den))
+
+    as_decimal = _parse_fraction_or_number(s)
+    if as_decimal is None:
+        return None
+    try:
+        return Fraction(as_decimal)
+    except (ValueError, ZeroDivisionError):
+        return None
+
+
+def _parse_fraction_raw(raw) -> Fraction | None:
+    """Parse canonical correct_answer_raw for answer_type fraction."""
+    s = str(raw or '').strip()
+    if not s:
+        return None
+    if '|' in s and '/' not in s:
+        num_s, den_s = s.split('|', 1)
+        num = _parse_number(num_s.strip())
+        den = _parse_number(den_s.strip())
+        if num is None or den is None or den == 0:
+            return None
+        if num != num.to_integral_value() or den != den.to_integral_value():
+            return None
+        return Fraction(int(num), int(den))
+    return _parse_fraction_value(s)
+
+
+def _format_fraction_user_display(user_answer, fr: Fraction) -> str:
+    raw = str(user_answer or '').strip()
+    if _looks_like_mixed_fraction(raw):
+        return _normalize_numeric_string(raw)
+    if _looks_like_fraction(raw):
+        return _normalize_numeric_string(raw)
+    as_decimal = _parse_fraction_or_number(raw)
+    if as_decimal is not None:
+        return _format_number(as_decimal)
+    return _format_fraction(fr)
+
+
+@register_checker('fraction')
+def check_fraction(correct_raw, user_answer):
+    expected = _parse_fraction_raw(correct_raw)
+    if expected is None:
+        raise ValueError('invalid_correct_answer')
+
+    normalized_correct = _format_fraction(expected)
+
+    user_s = str(user_answer or '').strip()
+    if not user_s:
+        return {
+            'correct': False,
+            'normalized_user': '',
+            'normalized_correct': normalized_correct,
+            'feedback': 'Enter a fraction.',
+        }
+
+    actual = _parse_fraction_value(user_answer)
+    if actual is None:
+        return {
+            'correct': False,
+            'normalized_user': _normalize_numeric_string(user_answer),
+            'normalized_correct': normalized_correct,
+            'feedback': (
+                'Enter a valid fraction, mixed number, or decimal '
+                '(e.g. 3/4, 1 1/2, or 0.75).'
+            ),
+        }
+
+    correct = actual == expected
+    return {
+        'correct': correct,
+        'normalized_user': _format_fraction_user_display(user_answer, actual),
+        'normalized_correct': normalized_correct,
+        'feedback': 'Correct!' if correct else 'Not quite — check your fraction.',
+    }
 
 
 def _format_number(value: Decimal) -> str:
