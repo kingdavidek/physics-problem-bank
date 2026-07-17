@@ -62,13 +62,15 @@ Storage caps (not daily): saved problems 200, shared questions 200, recipient su
 | GET | `/api/v1/topics/<level>/<subject>/<topic>/lesson` | Optional |
 | POST | `/api/v1/problems/generate` | Optional |
 
-### Check typed answer (Phase 0)
+### Check typed answer (Phase 1)
 
 | Method | Path | Auth |
 |--------|------|------|
 | POST | `/api/v1/problems/check` | Optional |
 
-Body:
+Marks a typed (free-response) answer correct or incorrect. Used by the generator, Quick Test, saved/shared/suggested question pages, and native clients.
+
+#### Request body
 
 ```json
 {
@@ -78,13 +80,32 @@ Body:
   "level": "gcse",
   "subject": "maths",
   "topic": "bidmas",
-  "difficulty": "foundational"
+  "difficulty": "foundational",
+  "attempt_group_id": "g_optional",
+  "part_index": 0,
+  "part_total": 3
 }
 ```
 
-When the browser has a recent generator problem in session (`last_problem_payload`), the server validates against that stored problem and rejects mismatched `correct_answer_raw` / `answer_type` with HTTP **403** (`session_mismatch`). Otherwise `correct_answer_raw` must be supplied in the body.
+| Field | Required | Notes |
+|-------|----------|-------|
+| `user_answer` | Yes | What the learner typed |
+| `correct_answer_raw` | Yes* | Canonical answer (see types below). \*Optional when session already has `last_problem_payload` with a graded problem — then the server uses the stored raw/type |
+| `answer_type` | No | Defaults to `number`. Must match the stored type when session-bound |
+| `level` / `subject` / `topic` / `difficulty` | No | When the caller is logged in, used to record practice history |
+| `attempt_group_id` / `part_index` / `part_total` | No | Multipart field attempts (e.g. `number_fields`) |
 
-Response:
+#### Session binding
+
+When the browser (or client) has a recent generator / Quick Test / saved problem in session (`last_problem_payload`) **with** `correct_answer_raw`, the server:
+
+1. Grades against the **stored** raw and type (not the client’s copy of the answer key).
+2. Rejects a mismatched `correct_answer_raw` or `answer_type` with HTTP **403** and `"code": "session_mismatch"` (`"error": "Problem mismatch"`).
+3. Allows a **partial field** check for `number_fields`: client may send one field’s raw plus that field’s `answer_type` if the value appears in the stored multipart string (`|` or `\x1e` separated).
+
+Without a graded problem in session, `correct_answer_raw` is required in the body.
+
+#### Success response
 
 ```json
 {
@@ -97,8 +118,45 @@ Response:
 }
 ```
 
-`practice_streak` is included when the caller is logged in. Supported `answer_type` values: `number` (more types planned).
+| Field | Notes |
+|-------|-------|
+| `correct` | Whether the answer matched |
+| `normalized_user` / `normalized_correct` | Canonical forms used for comparison |
+| `feedback` | Short human-readable message |
+| `practice_streak` | Present when logged in |
 
+#### Error responses
+
+| HTTP | `code` | When |
+|------|--------|------|
+| 400 | `invalid_payload` | Body is not a JSON object |
+| 400 | `missing_fields` | Empty `user_answer`, or missing `correct_answer_raw` with no session problem |
+| 400 | `unknown_answer_type` | Unsupported `answer_type` |
+| 400 | `invalid_correct_answer` | Stored/raw answer could not be parsed |
+| 403 | `session_mismatch` | Client raw/type does not match session problem |
+
+#### Supported `answer_type` values (Phase 1)
+
+| Type | `correct_answer_raw` format | User input examples |
+|------|----------------------------|---------------------|
+| `number` | `42`, `1/2`, `-3.5` | Same; fractions and decimals accepted when equivalent |
+| `standard_form` | `coeff\|exp` e.g. `3.2\|5` | Coefficient + power of 10 fields |
+| `number_pair` | `a\|b` | Two numeric fields |
+| `number_list` | `1,2,3` | Comma-separated numbers |
+| `power` | `base\|index` e.g. `2\|10` | Base ^ index |
+| `number_fields` | `v1\|v2\|…` (or `\x1e` sep when a value contains `\|`) | One field per label; optional per-field Check |
+| `ratio` | `a\|b` | `a:b` (equivalent ratios OK) |
+| `ratio_exact` | `a\|b` | `a:b` must match exactly (not simplified) |
+| `linear_equation` | `m\|c` e.g. `2\|3` for \(y = 2x + 3\) | `y = 2x + 3` |
+| `keyword` | e.g. `positive` | Case-insensitive keyword / alias match |
+| `number_estimate` | `centre~tol` e.g. `10~2` | Estimate within tolerance |
+| `bearing` | `045` | `45`, `045`, `045°` |
+| `pi_multiple` | coefficient of π e.g. `4`, `1/2` | `4`, `4π`, `0.5` |
+| `surd` | `coeff\|radicand` e.g. `1\|113`, `2\|5` | `√113`, `2√5` |
+| `binary` | `width\|bits` e.g. `8\|10010110` (`0\|…` = no fixed width) | Binary digits |
+| `hex` | `width\|hex` e.g. `0\|FF` | Hex digits (case-insensitive) |
+
+Phase 2+ will add richer fraction/surd/algebra types; ungraded conceptual variants omit `correct_answer_raw` and do not show the Check UI.
 ## Quick Test (M4)
 
 | Method | Path |
