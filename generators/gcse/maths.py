@@ -47,6 +47,10 @@ def _basic_maths_practice(topic, difficulty, mode, variant_name):
     out = run_practice_variant(vf, difficulty, mode, variant_name)
     if topic == 'bidmas':
         return _bidmas_problem_from_output(out, difficulty)
+    if topic == 'fdp':
+        return _fdp_problem_from_output(out, difficulty)
+    if topic == 'surds':
+        return _surd_problem_from_output(out, difficulty)
     choice = problem_from_choice_output(out, difficulty, 'gcse', 'maths', topic)
     if choice:
         return choice
@@ -425,6 +429,79 @@ def _fdp_best_value_case():
     return label_a, label_b, best, unit_price_a, unit_price_b
 
 
+def _fdp_raw(value, places=4):
+    """Canonical numeric string for typed answer checking."""
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        val = round(value, places)
+        if val == int(val):
+            return str(int(val))
+        return f'{val:.{places}f}'.rstrip('0').rstrip('.')
+    return str(value)
+
+
+def _fdp_fields_answer(values, labels):
+    return {
+        'type': 'number_fields',
+        'values': tuple(_fdp_raw(v) for v in values),
+        'labels': tuple(labels),
+    }
+
+
+def _fdp_fraction_answer(value):
+    return {'type': 'fraction', 'value': str(value)}
+
+
+def _fdp_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict) and raw.get('type') == 'number_fields':
+            values = raw.get('values') or ()
+            labels = raw.get('labels') or ()
+            if values and len(values) == len(labels):
+                extra = {
+                    'correct_answer_raw': '|'.join(str(v) for v in values),
+                    'answer_type': 'number_fields',
+                    'answer_labels': list(labels),
+                    'answer_format_hint': 'Enter a number in every field',
+                }
+        elif isinstance(raw, dict) and raw.get('type') == 'fraction':
+            value = raw.get('value')
+            if value is not None and str(value).strip():
+                extra = {
+                    'correct_answer_raw': str(value).strip(),
+                    'answer_type': 'fraction',
+                    'answer_format_hint': 'Enter a fraction (e.g. 3/4)',
+                }
+        elif isinstance(raw, (int, float)):
+            extra = {
+                'correct_answer_raw': _fdp_raw(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+        elif isinstance(raw, str):
+            if '/' in raw:
+                extra = {
+                    'correct_answer_raw': raw,
+                    'answer_type': 'fraction',
+                    'answer_format_hint': 'Enter a fraction (e.g. 3/4)',
+                }
+            else:
+                extra = {
+                    'correct_answer_raw': raw,
+                    'answer_type': 'number',
+                    'answer_format_hint': 'Enter a number',
+                }
+    return make_problem(q, s, hint, difficulty, marks, 'gcse', 'maths', 'fdp', **extra)
+
+
+def _fdp_problem(variant_fn, difficulty):
+    return _fdp_problem_from_output(variant_fn(), difficulty)
+
+
 def gcse_fdp_decimal_to_percentage():
     num, den = _fdp_random_terminating_fraction()
     x = num / den
@@ -434,7 +511,7 @@ def gcse_fdp_decimal_to_percentage():
     q = rf"Write {x_str} as a percentage."
     s = rf"To convert a decimal to a percentage, multiply by 100.<br>{x_str} × 100 = <strong>{ans_str}%</strong>"
     hint = "Multiply the decimal by 100 and add the percentage sign."
-    return q, s, hint, 1
+    return q, s, hint, 1, ans if ans == int(ans) else ans
 
 def gcse_fdp_percentage_to_decimal():
     x = random.randint(1, 150)
@@ -443,7 +520,7 @@ def gcse_fdp_percentage_to_decimal():
     q = rf"Write {x}% as a decimal."
     s = rf"To convert a percentage to a decimal, divide by 100.<br>{x} ÷ 100 = <strong>{ans_str}</strong>"
     hint = "Divide by 100, or move the decimal point two places left."
-    return q, s, hint, 1
+    return q, s, hint, 1, ans
 
 def gcse_fdp_decimal_to_fraction():
     num, den = _fdp_random_terminating_fraction()
@@ -453,7 +530,7 @@ def gcse_fdp_decimal_to_fraction():
     q = rf"Write {dec_str} as a fraction in its simplest form."
     s = rf"Write {dec_str} using place value, then simplify.<br><strong>{frac}</strong>"
     hint = "Write the decimal over 10, 100 or 1000 depending on place value, then simplify."
-    return q, s, hint, 1
+    return q, s, hint, 1, _fdp_fraction_answer(frac)
 
 def gcse_fdp_fraction_to_decimal():
     a, b = _fdp_random_terminating_fraction()
@@ -462,7 +539,7 @@ def gcse_fdp_fraction_to_decimal():
     q = rf"Write {frac_str} as a decimal."
     s = rf"Convert a fraction to a decimal by dividing the numerator by the denominator.<br>{a} ÷ {b} = <strong>{ans}</strong>"
     hint = "Divide the top number by the bottom number."
-    return q, s, hint, 1
+    return q, s, hint, 1, a / b
 
 def gcse_fdp_percentage_to_fraction():
     pct = _fdp_random_percentage()
@@ -470,7 +547,7 @@ def gcse_fdp_percentage_to_fraction():
     q = rf"Write {pct}% as a fraction in its simplest form."
     s = rf"Write the percentage over 100, then simplify.<br>{pct}% = {pct}/100 = <strong>{ans}</strong>"
     hint = "Percent means per hundred, so start with denominator 100."
-    return q, s, hint, 1
+    return q, s, hint, 1, _fdp_fraction_answer(ans)
 
 def gcse_fdp_fraction_to_percentage():
     a, b = _fdp_random_terminating_fraction()
@@ -480,7 +557,7 @@ def gcse_fdp_fraction_to_percentage():
     q = rf"Write {frac} as a percentage."
     s = rf"Convert the fraction to a decimal, then multiply by 100.<br><strong>{frac} = {ans_str}%</strong>"
     hint = "Fraction to decimal first, then decimal to percentage."
-    return q, s, hint, 1
+    return q, s, hint, 1, ans if ans == int(ans) else ans
 
 def gcse_fdp_multi_step():
     a, b = _fdp_random_terminating_fraction()
@@ -515,7 +592,7 @@ def gcse_fdp_fraction_of_amount():
         rf"Method 2: {num}/{den} × {total} = <strong>{ans}</strong>"
     )
     hint = "Multiply the amount by the fraction, or find one part then multiply by the numerator."
-    return q, s, hint, 2
+    return q, s, hint, 2, ans
 
 
 def gcse_fdp_percentage_increase():
@@ -531,7 +608,7 @@ def gcse_fdp_percentage_increase():
         rf"Or use multiplier 1.{pct if pct < 10 else pct}: {amount} × {1 + pct/100} = {new_amount}"
     )
     hint = "Find the percentage of the amount, then add it on. Alternatively multiply by (1 + p/100)."
-    return q, s, hint, 2
+    return q, s, hint, 2, new_amount
 
 
 def gcse_fdp_percentage_decrease():
@@ -547,7 +624,7 @@ def gcse_fdp_percentage_decrease():
         rf"Multiplier method: £{amount} × {1 - pct/100} = £{new_amount}"
     )
     hint = "Find the discount, then subtract. Or multiply the original price by (1 − p/100)."
-    return q, s, hint, 2
+    return q, s, hint, 2, new_amount
 
 
 def gcse_fdp_percentage_change():
@@ -567,7 +644,7 @@ def gcse_fdp_percentage_change():
         rf"= ({change} ÷ {original}) × 100 = <strong>{pct}% {change_type}</strong>"
     )
     hint = "Percentage change = (change ÷ original value) × 100. Always divide by the original."
-    return q, s, hint, 3
+    return q, s, hint, 3, pct
 
 
 def gcse_fdp_reverse_percentage():
@@ -583,7 +660,7 @@ def gcse_fdp_reverse_percentage():
         rf"Original = {final} ÷ {multiplier} = <strong>£{original}</strong>"
     )
     hint = "Divide the final amount by the multiplier (1 − p/100 for a decrease, 1 + p/100 for an increase)."
-    return q, s, hint, 3
+    return q, s, hint, 3, original
 
 
 def gcse_fdp_order_mixed_values():
@@ -624,7 +701,7 @@ def gcse_fdp_compound_percentage():
         rf"{round((1 + pct1/100) * (1 - pct2/100), 4)}"
     )
     hint = "Apply each percentage change in order using multipliers, not by adding the percentages."
-    return q, s, hint, 3
+    return q, s, hint, 3, final
 
 
 def gcse_fdp_reverse_percentage_two_step():
@@ -646,7 +723,7 @@ def gcse_fdp_reverse_percentage_two_step():
         rf"= <strong>£{original}</strong>"
     )
     hint = "Multiply the multipliers for each change, then divide the final amount by this combined multiplier."
-    return q, s, hint, 4
+    return q, s, hint, 4, original
 
 
 def gcse_fdp_share_in_ratio():
@@ -659,7 +736,9 @@ def gcse_fdp_share_in_ratio():
         rf"{a} parts = <strong>£{part_a}</strong>, {b} parts = <strong>£{part_b}</strong>"
     )
     hint = "Add the ratio parts, divide the total by this sum to find one part, then multiply."
-    return q, s, hint, 3
+    return q, s, hint, 3, _fdp_fields_answer(
+        (part_a, part_b), (f'{a} parts', f'{b} parts')
+    )
 
 
 def gcse_fdp_profit_loss_percentage():
@@ -678,7 +757,7 @@ def gcse_fdp_profit_loss_percentage():
         rf"= ({markup} ÷ {cost}) × 100 = <strong>{pct}%</strong>"
     )
     hint = "Percentage profit is based on the cost price: (profit ÷ cost) × 100."
-    return q, s, hint, 3
+    return q, s, hint, 3, pct
 
 
 def gcse_fdp_best_value_comparison():
@@ -710,7 +789,7 @@ def gcse_fdp_fraction_word_problem():
         rf"Pupils who do not walk = {total} − {taken} = <strong>{left}</strong>"
     )
     hint = "Find the fraction who walk first, then subtract from the total."
-    return q, s, hint, 3
+    return q, s, hint, 3, left
 
 
 def gcse_maths_fdp(difficulty, mode, variant_name=None):
@@ -752,8 +831,7 @@ def gcse_maths_fdp(difficulty, mode, variant_name=None):
             gcse_fdp_fraction_word_problem,
         ])
 
-    q, s, hint, marks = variant()
-    return make_problem(q, s, hint, difficulty, marks, 'gcse', 'maths', 'fdp')
+    return _fdp_problem(variant, difficulty)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -2609,6 +2687,65 @@ def _surd_fmt(k, r):
     return f"{k}√{r}"
 
 
+def _surd_answer(coeff, radicand):
+    """Surd answer k√r. Stored as 'coeff|radicand' when coeff != 1."""
+    c = int(coeff)
+    r = int(radicand)
+    if c == 1:
+        return {'type': 'surd', 'radicand': r}
+    return {'type': 'surd', 'coeff': c, 'radicand': r}
+
+
+def _surd_fields_answer(values, labels):
+    return {
+        'type': 'number_fields',
+        'values': tuple(_fdp_raw(v) for v in values),
+        'labels': tuple(labels),
+    }
+
+
+def _surd_problem_from_output(out, difficulty):
+    choice = problem_from_choice_output(out, difficulty, 'gcse', 'maths', 'surds')
+    if choice:
+        return choice
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict) and raw.get('type') == 'number_fields':
+            values = raw.get('values') or ()
+            labels = raw.get('labels') or ()
+            if values and len(values) == len(labels):
+                extra = {
+                    'correct_answer_raw': '|'.join(str(v) for v in values),
+                    'answer_type': 'number_fields',
+                    'answer_labels': list(labels),
+                    'answer_format_hint': 'Enter a number in every field',
+                }
+        elif isinstance(raw, dict) and raw.get('type') == 'surd':
+            coeff = int(raw.get('coeff') or 1)
+            radicand = raw.get('radicand')
+            if radicand is not None:
+                extra = {
+                    'correct_answer_raw': (
+                        str(radicand) if coeff == 1 else f'{coeff}|{radicand}'
+                    ),
+                    'answer_type': 'surd',
+                    'answer_format_hint': 'e.g. √113 — use the √ button if needed',
+                }
+        elif isinstance(raw, (int, float)):
+            extra = {
+                'correct_answer_raw': _fdp_raw(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+    return make_problem(q, s, hint, difficulty, marks, 'gcse', 'maths', 'surds', **extra)
+
+
+def _surd_problem(variant_fn, difficulty):
+    return _surd_problem_from_output(variant_fn(), difficulty)
+
+
 def _surd_random_radicand():
     square = random.choice(_SURD_SQUARES)
     prime = random.choice(_SURD_PRIMES)
@@ -2625,7 +2762,7 @@ def _surd_random_divide():
             rf"\( \dfrac{{\sqrt{{{a}}}}}{{\sqrt{{{b}}}}} = \sqrt{{\dfrac{{{a}}}{{{b}}}}} "
             rf"= \sqrt{{{a // b}}} = {ans}"
         )
-        return a, b, str(ans), working
+        return a, b, str(ans), working, ans
     k = random.randint(2, 5)
     r = random.choice([2, 3, 5, 7])
     b = random.choice([2, 3, 5, 8])
@@ -2635,7 +2772,7 @@ def _surd_random_divide():
         rf"\( \dfrac{{\sqrt{{{a}}}}}{{\sqrt{{{b}}}}} = \sqrt{{\dfrac{{{a}}}{{{b}}}}} "
         rf"= \sqrt{{{k * k * r}}} = {k}\sqrt{{{r}}} = {ans}"
     )
-    return a, b, ans, working
+    return a, b, ans, working, _surd_answer(k, r)
 
 
 def _surd_random_compare():
@@ -2682,7 +2819,7 @@ def _surd_random_mixed():
     expr = "".join(expr_parts)
     ans = _surd_fmt(total_k, p)
     working = "<br>".join(working_parts) + f"<br>Combine: <strong>{ans}</strong>"
-    return expr, ans, working
+    return expr, ans, working, _surd_answer(total_k, p)
 
 
 def _surd_random_equation():
@@ -2720,7 +2857,7 @@ def gcse_surds_simplify():
     s = (rf"Find the largest square factor of {n}: that is {square} (since {square} × {prime} = {n}).<br>"
          rf"√{n} = √({square} × {prime}) = √{square} × √{prime} = <strong>{k}√{prime}</strong>")
     hint = r"Look for the largest square number that divides exactly into the number under the root."
-    return q, s, hint, 2
+    return q, s, hint, 2, _surd_answer(k, prime)
 
 def gcse_surds_simplify_multiple():
     """Foundational: write p√n in the form k√r"""
@@ -2732,7 +2869,7 @@ def gcse_surds_simplify_multiple():
     s = (rf"First simplify √{n}: √{n} = √({square} × {prime}) = {k_inner}√{prime}<br>"
          rf"Then multiply: {p} × {k_inner}√{prime} = <strong>{k_total}√{prime}</strong>")
     hint = rf"Simplify √{n} first by finding its square factor, then multiply by {p}."
-    return q, s, hint, 2
+    return q, s, hint, 2, _surd_answer(k_total, prime)
 
 def gcse_surds_add_subtract():
     """Foundational: add or subtract surds after simplifying"""
@@ -2758,7 +2895,7 @@ def gcse_surds_add_subtract():
          rf"√{n2} = √({b_sq} × {prime}) = {b_coef}√{prime}<br>"
          rf"{a_coef}√{prime}{op_word}{b_coef}√{prime} = <strong>{_surd_fmt(total, prime)}</strong>")
     hint = rf"Simplify each surd separately first, then combine the coefficients in front of √{prime}."
-    return q, s, hint, 2
+    return q, s, hint, 2, _surd_answer(total, prime)
 
 def gcse_surds_multiply():
     """Foundational: multiply two simple surds"""
@@ -2777,12 +2914,14 @@ def gcse_surds_multiply():
         sol = (rf"√{a} × √{b} = √({a} × {b}) = √{product}<br>"
                rf"Simplify √{product}: largest square factor is {largest_sq}<br>"
                rf"√{product} = {k}√{rem} → <strong>{ans}</strong>")
+        raw = k if rem == 1 else _surd_answer(k, rem)
     else:
         ans = f"√{product}"
         sol = rf"√{a} × √{b} = √({a} × {b}) = <strong>√{product}</strong>"
+        raw = _surd_answer(1, product)
     q = rf"Simplify √{a} × √{b}."
     hint = r"Use the rule √a × √b = √(ab), then check if the result can be simplified further."
-    return q, sol, hint, 2
+    return q, sol, hint, 2, raw
 
 def gcse_surds_expand_simple():
     """Intermediate: expand (a + √b)(a − √b) — difference of two squares"""
@@ -2972,16 +3111,18 @@ def gcse_surds_exact_area():
         sol_step = (rf"√{a} × √{b} = √{product_surd}<br>"
                     rf"√{product_surd} = {k_inner}<br>"
                     rf"Area = {p} × {q_coef} × {k_inner} = {ans}")
+        raw = total_k
     else:
         ans = f"{total_k}√{rem} cm²"
         sol_step = (rf"√{a} × √{b} = √{product_surd}<br>"
                     rf"Simplify √{product_surd}: largest square factor = {largest_sq}, so √{product_surd} = {k_inner}√{rem}<br>"
                     rf"Area = {p} × {q_coef} × {k_inner}√{rem} = <strong>{ans}</strong>")
+        raw = _surd_answer(total_k, rem)
     s = (rf"Area = length × width = {p}√{a} × {q_coef}√{b}<br>"
          rf"= ({p} × {q_coef}) × (√{a} × √{b})<br>"
          + sol_step)
     hint = r"Multiply the integer parts together and the surd parts together, then simplify the resulting surd."
-    return q_text, s, hint, 3
+    return q_text, s, hint, 3, raw
 
 def gcse_surds_expand_diff_subtract():
     """Exam: expand (p + √q)² − (p − √q)², show it simplifies to k√q"""
@@ -2999,18 +3140,18 @@ def gcse_surds_expand_diff_subtract():
          rf"Subtract: ( {p**2} + {2*p}√{q} + {q} ) − ( {p**2} − {2*p}√{q} + {q} )<br>"
          rf"= {2*p}√{q} + {2*p}√{q} = <strong>{k}√{q}</strong>")
     hint = r"Expand each bracket separately using (a ± √b)² = a² ± 2a√b + b, then subtract — most terms cancel."
-    return q_text, s, hint, 3
+    return q_text, s, hint, 3, _surd_answer(k, q)
 
 
 # ── Surds: intermediate (extra formats) ───────────────────────────────────────
 
 def gcse_surds_practice_divide():
     """Divide one surd by another and simplify."""
-    a, b, ans, working = _surd_random_divide()
+    a, b, ans, working, raw = _surd_random_divide()
     q = rf"Simplify: \( \dfrac{{\sqrt{{{a}}}}}{{\sqrt{{{b}}}}} \)"
     s = rf"{working} → <strong>{ans}</strong>"
     hint = r"Use √a ÷ √b = √(a/b), then simplify the surd if possible."
-    return q, s, hint, 2
+    return q, s, hint, 2, raw
 
 
 def gcse_surds_practice_compare():
@@ -3034,11 +3175,11 @@ def gcse_surds_practice_compare():
 
 def gcse_surds_practice_mixed_simplify():
     """Simplify a multi-term surd expression."""
-    expr, ans, working = _surd_random_mixed()
+    expr, ans, working, raw = _surd_random_mixed()
     q = rf"Simplify fully: \( {expr} \)"
     s = working
     hint = r"Simplify each surd first, then combine like surds (same number under the root)."
-    return q, s, hint, 3
+    return q, s, hint, 3, raw
 
 
 def gcse_surds_practice_double_bracket():
@@ -3057,7 +3198,7 @@ def gcse_surds_practice_surd_equation():
         rf"\( x = {rhs**2} - {offset} = <strong>{x_val}</strong> \)"
     )
     hint = r"Square both sides to remove the square root, then solve the linear equation."
-    return q, s, hint, 3
+    return q, s, hint, 3, x_val
 
 
 def gcse_surds_practice_rationalise_binomial_diff():
@@ -3083,7 +3224,7 @@ def gcse_surds_practice_between_which_integers():
         rf"<strong>{lo} and {hi}</strong>."
     )
     hint = r"Find the nearest perfect squares below and above n."
-    return q, s, hint, 2
+    return q, s, hint, 2, _surd_fields_answer((lo, hi), ('Lower bound', 'Upper bound'))
 
 
 def gcse_surds_practice_perimeter_exact():
@@ -3105,7 +3246,7 @@ def gcse_surds_practice_perimeter_exact():
         rf"<strong>{_surd_fmt(perim_coef, surd_r)} cm</strong>"
     )
     hint = rf"Add the {mult} equal sides; multiply the coefficient by {mult}."
-    return q_text, s, hint, 2
+    return q_text, s, hint, 2, _surd_answer(perim_coef, surd_r)
 
 
 def gcse_maths_surds(difficulty, mode, variant_name=None):
@@ -3146,12 +3287,7 @@ def gcse_maths_surds(difficulty, mode, variant_name=None):
     }
     variant = random.choice(pools.get(difficulty, pools['foundational']))
 
-    out = variant()
-    choice = problem_from_choice_output(out, difficulty, 'gcse', 'maths', 'surds')
-    if choice:
-        return choice
-    q, s, hint, marks = out[:4]
-    return make_problem(q, s, hint, difficulty, marks, 'gcse', 'maths', 'surds')
+    return _surd_problem(variant, difficulty)
 
 
 

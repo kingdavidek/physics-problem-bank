@@ -1315,6 +1315,14 @@ def _ratio_random_two_part(lo=2, hi=9):
     return a, b
 
 
+def _ratio_fraction_answer(num, den):
+    g = math.gcd(int(num), int(den))
+    n, d = int(num) // g, int(den) // g
+    if d == 1:
+        return n
+    return {'type': 'fraction', 'value': f'{n}/{d}'}
+
+
 def _ratio_simplify():
     a, b = random.randint(2, 12), random.randint(2, 12)
     k = random.randint(2, 9)
@@ -1357,11 +1365,39 @@ def _ratio_share_three():
 
 def _ratio_fraction_of_total():
     a, b = random.randint(2, 8), random.randint(2, 8)
-    total = (a + b) * random.randint(6, 20)
-    q = rf"The ratio of boys to girls is {a}:{b}. There are {total} students altogether. How many are boys?"
-    boys = total * a // (a+b)
-    s = rf"There are {a+b} parts in total. Boys are \(\frac{{{a}}}{{{a+b}}}\) of the total, so boys = {a}/{a+b} × {total} = <strong>{boys}</strong>."
-    return q, s, "Convert the ratio part into a fraction of the total.", 2, boys
+    total_parts = a + b
+    g = math.gcd(a, total_parts)
+    frac = _ratio_fraction_answer(a, total_parts)
+    q = (
+        rf"The ratio of boys to girls in a class is {a}:{b}. "
+        rf"What fraction of the students are boys? Give your answer in simplest form."
+    )
+    s = (
+        rf"Total parts = {a} + {b} = {total_parts}. "
+        rf"Boys are {a} out of {total_parts} parts: "
+        rf"<strong>{a // g}/{total_parts // g}</strong>."
+    )
+    return q, s, "Write one part as a fraction of the total parts, then simplify.", 2, frac
+
+
+def _ratio_three_part_as_fraction():
+    a, b, c = random.randint(1, 5), random.randint(2, 6), random.randint(2, 7)
+    part = random.choice(('first', 'second', 'third'))
+    nums = (a, b, c)
+    idx = ('first', 'second', 'third').index(part)
+    num = nums[idx]
+    total_parts = a + b + c
+    g = math.gcd(num, total_parts)
+    q = (
+        rf"An amount is shared in the ratio {a}:{b}:{c}. "
+        rf"What fraction of the total is the <strong>{part}</strong> share? "
+        rf"Give your answer in simplest form."
+    )
+    s = (
+        rf"Total parts = {total_parts}. The {part} share is {num} out of {total_parts}: "
+        rf"<strong>{num // g}/{total_parts // g}</strong>."
+    )
+    return q, s, "Add all ratio parts for the denominator, then simplify.", 2, _ratio_fraction_answer(num, total_parts)
 
 
 def _ratio_find_missing_part():
@@ -1784,6 +1820,7 @@ def _ratio_found_12(): return _ratio_density_style()
 def _ratio_found_13(): return _ratio_inverse_workers()
 def _ratio_found_14(): return _ratio_direct_formula()
 def _ratio_found_15(): return _ratio_inverse_formula()
+def _ratio_found_16(): return _ratio_three_part_as_fraction()
 
 def _ratio_inter_01(): return _ratio_inter_school_house_prize()
 def _ratio_inter_02(): return _ratio_inter_cafe_ingredients()
@@ -1984,6 +2021,14 @@ def _ratio_problem_from_output(out, difficulty):
                     answer_labels=[raw['label_a'], raw['label_b']],
                     answer_pair_sep=raw.get('sep', 'and'),
                 )
+            elif raw_type == 'fraction':
+                value = raw.get('value')
+                if value is not None and str(value).strip():
+                    extra = {
+                        'correct_answer_raw': str(value).strip(),
+                        'answer_type': 'fraction',
+                        'answer_format_hint': 'Enter a fraction (e.g. 3/8)',
+                    }
         elif isinstance(raw, (str, int, float)):
             format_hint = 'Enter a number or fraction'
             if isinstance(raw, str) and '/' in raw:
@@ -2003,7 +2048,7 @@ def gcse_ratio_proportion_variants(difficulty, mode):
         return mcq_variants_from_fn(
             ratio_proportion_mcq, 'ratio_proportion', difficulty, slot_param='mcq_type'
         )
-    found = [_ratio_found_01,_ratio_found_02,_ratio_found_03,_ratio_found_04,_ratio_found_05,_ratio_found_06,_ratio_found_07,_ratio_found_08,_ratio_found_09,_ratio_found_10,_ratio_found_11,_ratio_found_12,_ratio_found_13,_ratio_found_14,_ratio_found_15]
+    found = [_ratio_found_01,_ratio_found_02,_ratio_found_03,_ratio_found_04,_ratio_found_05,_ratio_found_06,_ratio_found_07,_ratio_found_08,_ratio_found_09,_ratio_found_10,_ratio_found_11,_ratio_found_12,_ratio_found_13,_ratio_found_14,_ratio_found_15,_ratio_found_16]
     inter = [_ratio_inter_01,_ratio_inter_02,_ratio_inter_03,_ratio_inter_04,_ratio_inter_05,_ratio_inter_06,_ratio_inter_07,_ratio_inter_08,_ratio_inter_09,_ratio_inter_10,_ratio_inter_11,_ratio_inter_12,_ratio_inter_13,_ratio_inter_14,_ratio_inter_15,_ratio_inter_16,_ratio_inter_17,_ratio_inter_18,_ratio_inter_19]
     diff = [_ratio_diff_01,_ratio_diff_02,_ratio_diff_03,_ratio_diff_04,_ratio_diff_05,_ratio_diff_06,_ratio_diff_07,_ratio_diff_08,_ratio_diff_09,_ratio_diff_10,_ratio_diff_11,_ratio_diff_12,_ratio_diff_13,_ratio_diff_14,_ratio_diff_15,_ratio_diff_16,_ratio_diff_17,_ratio_diff_18,_ratio_diff_19]
     pool = found if difficulty == 'foundational' else inter if difficulty == 'intermediate' else diff if difficulty == 'difficult' else random.sample(found,4)+random.sample(inter,4)+random.sample(diff,2)

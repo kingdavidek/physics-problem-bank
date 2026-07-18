@@ -53,6 +53,68 @@ def _fmt_linear(coeff, const=0):
     return " ".join(parts) if parts else "0"
 
 
+def _af_raw(value):
+    """Canonical numeric string for typed answer checking."""
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        val = round(value, 4)
+        if val == int(val):
+            return str(int(val))
+        return f'{val:.4f}'.rstrip('0').rstrip('.')
+    return str(value)
+
+
+def _af_fraction_answer(num, den):
+    g = gcd(int(num), int(den))
+    n, d = int(num) // g, int(den) // g
+    if d == 1:
+        return n
+    return {'type': 'fraction', 'value': f'{n}/{d}'}
+
+
+def _af_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict) and raw.get('type') == 'fraction':
+            value = raw.get('value')
+            if value is not None and str(value).strip():
+                extra = {
+                    'correct_answer_raw': str(value).strip(),
+                    'answer_type': 'fraction',
+                    'answer_format_hint': 'Enter a fraction (e.g. 3/4)',
+                }
+        elif isinstance(raw, (int, float)):
+            extra = {
+                'correct_answer_raw': _af_raw(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+        elif isinstance(raw, str):
+            if '/' in raw:
+                extra = {
+                    'correct_answer_raw': raw,
+                    'answer_type': 'fraction',
+                    'answer_format_hint': 'Enter a fraction (e.g. 3/4)',
+                }
+            else:
+                extra = {
+                    'correct_answer_raw': raw,
+                    'answer_type': 'number',
+                    'answer_format_hint': 'Enter a number',
+                }
+    return make_problem(
+        q, s, hint, difficulty, marks,
+        'gcse', 'maths', 'algebraic_fractions', **extra,
+    )
+
+
+def _af_problem(variant_fn, difficulty):
+    return _af_problem_from_output(variant_fn(), difficulty)
+
+
 def _af_add_reciprocal_style_steps(n1, n2, c):
     """Step-by-step solution for n1/x + n2/(x+c) as a single fraction."""
     lcd = f"x(x + {c})"
@@ -157,7 +219,7 @@ def _af_f_cancel_numeric():
         rf"Cancel the common factor \(x\) (and \(\gcd({num},{den})={g}\)):<br>"
         rf"<strong>\({_frac(num // g, den // g)}\)</strong>"
     )
-    return q, s, "Cancel common factors in numerator and denominator only.", 2
+    return q, s, "Cancel common factors in numerator and denominator only.", 2, _af_fraction_answer(num, den)
 
 
 def _af_f_same_denominator_add():
@@ -178,9 +240,11 @@ def _af_f_multiply():
     q = rf"Simplify <strong>{_math(tex)}</strong>."
     if b == a:
         s = r"Cancel \(x\): <strong>\(1\)</strong>"
+        raw = 1
     else:
         s = rf"Multiply then cancel \(x\): <strong>\({_frac(b // g, a // g)}\)</strong>"
-    return q, s, "Multiply tops and bottoms, then cancel common factors.", 2
+        raw = _af_fraction_answer(b, a)
+    return q, s, "Multiply tops and bottoms, then cancel common factors.", 2, raw
 
 
 def _af_f_divide():
@@ -208,7 +272,7 @@ def _af_f_factor_cancel():
             rf"Cancel \((x + {d})\): <strong>\({k}\)</strong> (for \(x \neq -{d}\))."
         )
     )
-    return q, s, "Factorise the top fully, then cancel matching brackets.", 3
+    return q, s, "Factorise the top fully, then cancel matching brackets.", 3, k
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -327,7 +391,7 @@ def _af_d_solve_simple():
         "Remove fractions by multiplying both sides by the denominators, one at a time. "
         "Start by multiplying by x, then by the remaining denominator."
     )
-    return q, s, hint, 4
+    return q, s, hint, 4, x_ans
 
 
 def _af_d_add_reciprocal_style():
@@ -347,7 +411,7 @@ def _af_d_simplify_nested():
         _af_step(rf"Top: \({k}(x - {d})(x + {d})\)")
         + _af_answer(rf"Cancel \((x - {d})(x + {d})\): <strong>\({k}\)</strong>")
     )
-    return q, s, "Recognise difference of squares in both parts.", 4
+    return q, s, "Recognise difference of squares in both parts.", 4, k
 
 
 def _af_d_subtract_fractions():
@@ -390,7 +454,7 @@ def _af_d_equation_with_linear_den():
         "Multiply through by x to remove the fraction, then collect x terms on one side "
         "and numbers on the other. Remember x cannot be 0."
     )
-    return q, s, hint, 4
+    return q, s, hint, 4, x_ans
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -643,8 +707,4 @@ def gcse_algebraic_fractions(difficulty, mode, variant_name=None):
     variants = gcse_algebraic_fractions_variants(difficulty, mode)
     variant = pick_named_variant(variants, variant_name)
 
-    q, s, hint, marks = variant()
-    return make_problem(
-        q, s, hint, difficulty, marks,
-        "gcse", "maths", "algebraic_fractions",
-    )
+    return _af_problem(variant, difficulty)

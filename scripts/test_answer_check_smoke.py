@@ -7,17 +7,39 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from generators.gcse.algebraic_fractions import (  # noqa: E402
+    _af_f_cancel_numeric,
+    _af_f_factor_cancel,
+    _af_f_multiply,
+    _af_problem,
+    _af_problem_from_output,
+    gcse_algebraic_fractions,
+    gcse_algebraic_fractions_variants,
+)
 from generators.gcse.maths import (  # noqa: E402
     _bidmas_problem,
+    _fdp_problem,
+    _fdp_problem_from_output,
+    _surd_problem,
+    _surd_problem_from_output,
     gcse_bidmas_brackets,
     gcse_bidmas_power,
     gcse_bidmas_simple,
+    gcse_fdp_decimal_to_fraction,
+    gcse_fdp_decimal_to_percentage,
+    gcse_fdp_fraction_to_decimal,
+    gcse_fdp_share_in_ratio,
     gcse_maths_bidmas,
+    gcse_maths_fdp,
+    gcse_maths_surds,
     gcse_neg_add_subtract,
+    gcse_surds_simplify,
 )
 from generators.gcse.maths_basic_topics_mcq import (  # noqa: E402
     _practice_pools,
     gcse_maths_bidmas_variants,
+    gcse_maths_fdp_variants,
+    gcse_maths_surds_variants,
 )
 from generators.gcse.maths_num_stats_prob_rat import (  # noqa: E402
     _number_found_square_cube,
@@ -386,6 +408,416 @@ def test_bidmas_variant_queue_always_graded():
             problem = gcse_maths_bidmas(difficulty, 'practice', variant_name=name)
             assert problem.get('correct_answer_raw') is not None, name
             assert problem.get('answer_type') == 'number', name
+
+
+FDP_UNGRADED_VARIANTS = {
+    'gcse_fdp_multi_step',
+    'gcse_fdp_recurring',
+    'gcse_fdp_order_mixed_values',
+    'gcse_fdp_best_value_comparison',
+}
+
+FDP_FRACTION_VARIANTS = (
+    'gcse_fdp_decimal_to_fraction',
+    'gcse_fdp_percentage_to_fraction',
+)
+
+FDP_MULTIPART_VARIANTS = (
+    'gcse_fdp_share_in_ratio',
+)
+
+
+def _fdp_pool_functions(difficulty):
+    from generators.gcse import maths as m
+
+    pools = {
+        'foundational': [
+            m.gcse_fdp_decimal_to_percentage,
+            m.gcse_fdp_percentage_to_decimal,
+            m.gcse_fdp_decimal_to_fraction,
+            m.gcse_fdp_fraction_to_decimal,
+            m.gcse_fdp_percentage_to_fraction,
+            m.gcse_fdp_fraction_to_percentage,
+        ],
+        'intermediate': [
+            m.gcse_fdp_fraction_to_decimal,
+            m.gcse_fdp_percentage_to_fraction,
+            m.gcse_fdp_fraction_to_percentage,
+            m.gcse_fdp_fraction_of_amount,
+            m.gcse_fdp_percentage_increase,
+            m.gcse_fdp_percentage_decrease,
+            m.gcse_fdp_percentage_change,
+            m.gcse_fdp_reverse_percentage,
+            m.gcse_fdp_order_mixed_values,
+        ],
+        'difficult': [
+            m.gcse_fdp_multi_step,
+            m.gcse_fdp_recurring,
+            m.gcse_fdp_compound_percentage,
+            m.gcse_fdp_reverse_percentage_two_step,
+            m.gcse_fdp_share_in_ratio,
+            m.gcse_fdp_profit_loss_percentage,
+            m.gcse_fdp_best_value_comparison,
+            m.gcse_fdp_fraction_word_problem,
+        ],
+    }
+    return pools.get(difficulty, pools['foundational'])
+
+
+def test_fdp_graded_variants_return_five_tuple():
+    import generators.gcse.maths as m
+
+    for fn in _fdp_pool_functions('foundational') + _fdp_pool_functions('intermediate'):
+        if fn.__name__ in FDP_UNGRADED_VARIANTS:
+            continue
+        out = fn()
+        assert len(out) == 5, fn.__name__
+
+
+def test_fdp_ungraded_variants_remain_four_tuple():
+    import generators.gcse.maths as m
+
+    for name in FDP_UNGRADED_VARIANTS:
+        out = getattr(m, name)()
+        assert len(out) == 4, name
+
+
+def test_fdp_fraction_variants_use_fraction_checker():
+    import generators.gcse.maths as m
+
+    for name in FDP_FRACTION_VARIANTS:
+        out = getattr(m, name)()
+        assert len(out) == 5, name
+        problem = _fdp_problem_from_output(out, 'foundational')
+        assert problem.get('answer_type') == 'fraction', name
+        assert problem.get('correct_answer_raw'), name
+
+
+def test_fdp_multipart_variants_use_number_fields():
+    import generators.gcse.maths as m
+
+    for name in FDP_MULTIPART_VARIANTS:
+        out = getattr(m, name)()
+        assert len(out) == 5, name
+        problem = _fdp_problem_from_output(out, 'difficult')
+        assert problem.get('answer_type') == 'number_fields', name
+
+
+def test_fdp_generator_payload():
+    pilot = _fdp_problem(gcse_fdp_decimal_to_percentage, 'foundational')
+    assert pilot.get('correct_answer_raw') is not None
+    assert pilot.get('answer_type') == 'number'
+
+    fraction_pilot = _fdp_problem(gcse_fdp_decimal_to_fraction, 'foundational')
+    assert fraction_pilot.get('answer_type') == 'fraction'
+
+
+def test_fdp_variant_queues_are_graded():
+    for difficulty in ('foundational', 'intermediate', 'difficult'):
+        variants = gcse_maths_fdp_variants(difficulty, 'practice')
+        assert variants, difficulty
+        for fn in variants:
+            name = fn.__name__
+            problem = gcse_maths_fdp(difficulty, 'practice', variant_name=name)
+            if name in FDP_UNGRADED_VARIANTS:
+                assert problem.get('correct_answer_raw') is None, name
+                continue
+            assert problem.get('correct_answer_raw') is not None, name
+
+
+def test_fdp_check_api_fraction():
+    problem = gcse_maths_fdp(
+        'foundational', 'practice', variant_name='gcse_fdp_decimal_to_fraction'
+    )
+    correct = problem['correct_answer_raw']
+    assert problem.get('answer_type') == 'fraction'
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'user_answer': correct,
+                'correct_answer_raw': correct,
+                'answer_type': 'fraction',
+            },
+            headers={'Accept': 'application/json'},
+        )
+        assert r.status_code == 200, r.data
+        assert r.get_json()['correct'] is True
+
+
+def test_fdp_check_api_number():
+    problem = gcse_maths_fdp(
+        'foundational', 'practice', variant_name='gcse_fdp_decimal_to_percentage'
+    )
+    correct = problem['correct_answer_raw']
+    assert problem.get('answer_type') == 'number'
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'user_answer': correct,
+                'correct_answer_raw': correct,
+                'answer_type': 'number',
+            },
+            headers={'Accept': 'application/json'},
+        )
+        assert r.status_code == 200, r.data
+        assert r.get_json()['correct'] is True
+
+
+SURDS_UNGRADED_VARIANTS = {
+    'gcse_surds_expand_simple',
+    'gcse_surds_expand_double',
+    'gcse_surds_square_bracket',
+    'gcse_surds_square_bracket_minus',
+    'gcse_surds_rationalise_simple',
+    'gcse_surds_rationalise_compound',
+    'gcse_surds_show_that_rationalise',
+    'gcse_surds_identity',
+    'gcse_surds_practice_rationalise_binomial_diff',
+    'gcse_surds_practice_double_bracket',
+}
+
+SURDS_SURD_VARIANTS = (
+    'gcse_surds_simplify',
+    'gcse_surds_simplify_multiple',
+    'gcse_surds_add_subtract',
+    'gcse_surds_practice_mixed_simplify',
+    'gcse_surds_expand_diff_subtract',
+    'gcse_surds_practice_perimeter_exact',
+)
+
+SURDS_NUMBER_VARIANTS = (
+    'gcse_surds_practice_surd_equation',
+)
+
+SURDS_MULTIPART_VARIANTS = (
+    'gcse_surds_practice_between_which_integers',
+)
+
+
+def test_surds_surd_variants_use_surd_checker():
+    import generators.gcse.maths as m
+
+    for name in SURDS_SURD_VARIANTS:
+        out = getattr(m, name)()
+        assert len(out) == 5, name
+        problem = _surd_problem_from_output(out, 'foundational')
+        assert problem.get('answer_type') == 'surd', name
+        assert problem.get('correct_answer_raw'), name
+
+
+def test_surds_ungraded_variants_remain_four_tuple():
+    import generators.gcse.maths as m
+
+    for name in SURDS_UNGRADED_VARIANTS:
+        out = getattr(m, name)()
+        assert len(out) == 4, name
+        problem = _surd_problem_from_output(out, 'intermediate')
+        assert problem.get('correct_answer_raw') is None, name
+
+
+def test_surds_number_variants_are_graded():
+    import generators.gcse.maths as m
+
+    for name in SURDS_NUMBER_VARIANTS:
+        out = getattr(m, name)()
+        assert len(out) == 5, name
+        problem = _surd_problem_from_output(out, 'difficult')
+        assert problem.get('answer_type') == 'number', name
+
+
+def test_surds_multipart_variants_use_number_fields():
+    import generators.gcse.maths as m
+
+    for name in SURDS_MULTIPART_VARIANTS:
+        out = getattr(m, name)()
+        assert len(out) == 5, name
+        problem = _surd_problem_from_output(out, 'difficult')
+        assert problem.get('answer_type') == 'number_fields', name
+
+
+def test_surds_compare_uses_choice_buttons():
+    from generators.gcse.maths import gcse_surds_practice_compare
+
+    problem = _surd_problem_from_output(gcse_surds_practice_compare(), 'intermediate')
+    assert problem.get('options') and len(problem['options']) == 2
+    assert problem.get('correct_answer') in ('A', 'B')
+    assert problem.get('correct_answer_raw') is None
+
+
+def test_surds_generator_payload():
+    pilot = _surd_problem(gcse_surds_simplify, 'foundational')
+    assert pilot.get('correct_answer_raw') is not None
+    assert pilot.get('answer_type') == 'surd'
+
+
+def test_surds_variant_queues_are_graded():
+    for difficulty in ('foundational', 'intermediate', 'difficult'):
+        variants = gcse_maths_surds_variants(difficulty, 'practice')
+        assert variants, difficulty
+        for fn in variants:
+            name = fn.__name__
+            problem = gcse_maths_surds(difficulty, 'practice', variant_name=name)
+            if name in SURDS_UNGRADED_VARIANTS:
+                assert problem.get('correct_answer_raw') is None, name
+                continue
+            if name == 'gcse_surds_practice_compare':
+                assert problem.get('correct_answer') in ('A', 'B'), name
+                continue
+            assert problem.get('correct_answer_raw') is not None, name
+
+
+def test_surds_check_api():
+    problem = gcse_maths_surds(
+        'foundational', 'practice', variant_name='gcse_surds_simplify'
+    )
+    correct = problem['correct_answer_raw']
+    assert problem.get('answer_type') == 'surd'
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'user_answer': f'√{correct}' if '|' not in correct else (
+                    f"{correct.split('|')[0]}√{correct.split('|')[1]}"
+                ),
+                'correct_answer_raw': correct,
+                'answer_type': 'surd',
+            },
+            headers={'Accept': 'application/json'},
+        )
+        assert r.status_code == 200, r.data
+        assert r.get_json()['correct'] is True
+
+
+AF_UNGRADED_VARIANTS = {
+    '_af_f_same_denominator_add',
+    '_af_f_divide',
+    '_af_i_diff_denominator_add',
+    '_af_i_difference_of_squares',
+    '_af_i_single_fraction_add',
+    '_af_i_multiply_two',
+    '_af_i_quadratic_cancel',
+    '_af_d_add_reciprocal_style',
+    '_af_d_subtract_fractions',
+}
+
+AF_FRACTION_VARIANTS = (
+    '_af_f_cancel_numeric',
+    '_af_f_multiply',
+)
+
+AF_NUMBER_VARIANTS = (
+    '_af_f_factor_cancel',
+    '_af_d_solve_simple',
+    '_af_d_simplify_nested',
+    '_af_d_equation_with_linear_den',
+)
+
+
+def test_af_fraction_variants_use_fraction_checker():
+    import generators.gcse.algebraic_fractions as af_mod
+
+    for name in AF_FRACTION_VARIANTS:
+        for _ in range(8):
+            out = getattr(af_mod, name)()
+            if name == '_af_f_multiply' and out[4] == 1:
+                continue
+            assert len(out) == 5, name
+            problem = _af_problem_from_output(out, 'foundational')
+            assert problem.get('answer_type') == 'fraction', name
+            assert problem.get('correct_answer_raw'), name
+            break
+
+
+def test_af_number_variants_are_graded():
+    import generators.gcse.algebraic_fractions as af_mod
+
+    for name in AF_NUMBER_VARIANTS:
+        out = getattr(af_mod, name)()
+        assert len(out) == 5, name
+        problem = _af_problem_from_output(out, 'difficult')
+        assert problem.get('answer_type') == 'number', name
+        assert problem.get('correct_answer_raw'), name
+
+
+def test_af_ungraded_variants_remain_four_tuple():
+    import generators.gcse.algebraic_fractions as af_mod
+
+    for name in AF_UNGRADED_VARIANTS:
+        out = getattr(af_mod, name)()
+        assert len(out) == 4, name
+        problem = _af_problem_from_output(out, 'intermediate')
+        assert problem.get('correct_answer_raw') is None, name
+
+
+def test_af_generator_payload():
+    pilot = _af_problem(_af_f_cancel_numeric, 'foundational')
+    assert pilot.get('correct_answer_raw') is not None
+    assert pilot.get('answer_type') == 'fraction'
+
+    number_pilot = _af_problem(_af_f_factor_cancel, 'foundational')
+    assert number_pilot.get('answer_type') == 'number'
+
+
+def test_af_variant_queues_are_graded():
+    for difficulty in ('foundational', 'intermediate', 'difficult'):
+        variants = gcse_algebraic_fractions_variants(difficulty, 'practice')
+        assert variants, difficulty
+        for fn in variants:
+            name = fn.__name__
+            problem = gcse_algebraic_fractions(
+                difficulty, 'practice', variant_name=name
+            )
+            if name in AF_UNGRADED_VARIANTS:
+                assert problem.get('correct_answer_raw') is None, name
+                continue
+            assert problem.get('correct_answer_raw') is not None, name
+
+
+def test_af_check_api_fraction():
+    problem = gcse_algebraic_fractions(
+        'foundational', 'practice', variant_name='_af_f_cancel_numeric'
+    )
+    correct = problem['correct_answer_raw']
+    assert problem.get('answer_type') == 'fraction'
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'user_answer': correct,
+                'correct_answer_raw': correct,
+                'answer_type': 'fraction',
+            },
+            headers={'Accept': 'application/json'},
+        )
+        assert r.status_code == 200, r.data
+        assert r.get_json()['correct'] is True
+
+
+def test_af_check_api_number():
+    problem = gcse_algebraic_fractions(
+        'foundational', 'practice', variant_name='_af_f_factor_cancel'
+    )
+    correct = problem['correct_answer_raw']
+    assert problem.get('answer_type') == 'number'
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'user_answer': correct,
+                'correct_answer_raw': correct,
+                'answer_type': 'number',
+            },
+            headers={'Accept': 'application/json'},
+        )
+        assert r.status_code == 200, r.data
+        assert r.get_json()['correct'] is True
 
 
 NUMBER_NUMERIC_VARIANTS = (
@@ -897,6 +1329,7 @@ RATIO_CORE_VARIANTS = (
     '_ratio_share_two',
     '_ratio_share_three',
     '_ratio_fraction_of_total',
+    '_ratio_three_part_as_fraction',
     '_ratio_find_missing_part',
     '_ratio_unitary_cost',
     '_ratio_recipe_scale',
@@ -907,6 +1340,22 @@ RATIO_CORE_VARIANTS = (
     '_ratio_convert_units',
     '_ratio_density_style',
 )
+
+RATIO_FRACTION_VARIANTS = (
+    '_ratio_fraction_of_total',
+    '_ratio_three_part_as_fraction',
+)
+
+
+def test_ratio_fraction_variants_use_fraction_checker():
+    import generators.gcse.maths_num_stats_prob_rat as ratio_mod
+
+    for name in RATIO_FRACTION_VARIANTS:
+        out = getattr(ratio_mod, name)()
+        assert len(out) == 5, name
+        problem = _ratio_problem_from_output(out, 'foundational')
+        assert problem.get('answer_type') == 'fraction', name
+        assert problem.get('correct_answer_raw'), name
 
 
 def test_ratio_core_variants_are_graded():
@@ -920,8 +1369,34 @@ def test_ratio_core_variants_are_graded():
         if name == '_ratio_best_buy':
             continue
         assert problem.get('answer_type') in (
-            'number', 'number_pair', 'number_fields', 'ratio', 'ratio_exact'
+            'number', 'number_pair', 'number_fields', 'ratio', 'ratio_exact', 'fraction'
         ), name
+
+
+def test_ratio_fraction_check_api():
+    problem = gcse_ratio_proportion(
+        'foundational', 'practice', variant_name='_ratio_found_04'
+    )
+    correct = problem['correct_answer_raw']
+    assert problem.get('answer_type') == 'fraction'
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'ratio_proportion',
+                'difficulty': 'foundational',
+                'correct_answer_raw': correct,
+                'answer_type': 'fraction',
+                'user_answer': correct,
+            },
+        )
+        assert r.status_code == 200
+        data = r.get_json()
+        assert data['ok'] is True
+        assert data['correct'] is True
 
 
 def test_ratio_multipart_variants_use_number_fields():
@@ -2933,6 +3408,29 @@ def main():
     test_foundational_practice_pool_returns_five_tuple()
     test_bidmas_generator_payload()
     test_bidmas_variant_queue_always_graded()
+    test_fdp_graded_variants_return_five_tuple()
+    test_fdp_ungraded_variants_remain_four_tuple()
+    test_fdp_fraction_variants_use_fraction_checker()
+    test_fdp_multipart_variants_use_number_fields()
+    test_fdp_generator_payload()
+    test_fdp_variant_queues_are_graded()
+    test_fdp_check_api_fraction()
+    test_fdp_check_api_number()
+    test_surds_surd_variants_use_surd_checker()
+    test_surds_ungraded_variants_remain_four_tuple()
+    test_surds_number_variants_are_graded()
+    test_surds_multipart_variants_use_number_fields()
+    test_surds_compare_uses_choice_buttons()
+    test_surds_generator_payload()
+    test_surds_variant_queues_are_graded()
+    test_surds_check_api()
+    test_af_fraction_variants_use_fraction_checker()
+    test_af_number_variants_are_graded()
+    test_af_ungraded_variants_remain_four_tuple()
+    test_af_generator_payload()
+    test_af_variant_queues_are_graded()
+    test_af_check_api_fraction()
+    test_af_check_api_number()
     test_number_numeric_variants_return_five_tuple()
     test_number_standard_form_variants_graded()
     test_number_power_variants_graded()
@@ -2949,7 +3447,9 @@ def main():
     test_statistics_choice_variants_use_buttons()
     test_statistics_variant_queues_are_graded()
     test_checker_ratio_unit()
+    test_ratio_fraction_variants_use_fraction_checker()
     test_ratio_core_variants_are_graded()
+    test_ratio_fraction_check_api()
     test_ratio_multipart_variants_use_number_fields()
     test_ratio_choice_and_pair_variants()
     test_ratio_variant_queues_are_graded()
