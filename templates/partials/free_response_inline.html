@@ -163,6 +163,37 @@
         <button type="button" class="btn btn-secondary free-response-surd-btn" aria-label="Insert square root symbol">√</button>
         <button type="button" class="btn free-response-check-btn">Check</button>
     </div>
+    {% elif problem.answer_type == 'algebraic' %}
+    <div class="free-response-row free-response-row--algebraic">
+        <input type="text"
+               class="free-response-input free-response-input-algebraic"
+               placeholder="{{ problem.answer_format_hint or 'e.g. a - b' }}"
+               autocomplete="off"
+               inputmode="text"
+               aria-label="Algebraic answer">
+        <button type="button" class="btn btn-secondary free-response-surd-btn" aria-label="Insert square root symbol">√</button>
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% elif problem.answer_type == 'algebraic_fraction' %}
+    <div class="free-response-row free-response-row--algebraic-fraction">
+        <div class="free-response-fraction-stack" aria-label="Fraction answer">
+            <input type="text"
+                   class="free-response-input free-response-input-alg-frac-num"
+                   placeholder="e.g. 6 − 3√3"
+                   autocomplete="off"
+                   inputmode="text"
+                   aria-label="Numerator">
+            <span class="free-response-fraction-bar" aria-hidden="true"></span>
+            <input type="text"
+                   class="free-response-input free-response-input-alg-frac-den"
+                   placeholder="1 if none"
+                   autocomplete="off"
+                   inputmode="numeric"
+                   aria-label="Denominator">
+        </div>
+        <button type="button" class="btn btn-secondary free-response-surd-btn" aria-label="Insert square root symbol">√</button>
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
     {% elif problem.answer_type == 'binary' %}
     <div class="free-response-row free-response-row--binary">
         <input type="text"

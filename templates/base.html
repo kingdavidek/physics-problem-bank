@@ -1355,6 +1355,41 @@
             min-width: 100px;
             max-width: 280px;
         }
+        .free-response-row--algebraic .free-response-input-algebraic {
+            flex: 1 1 140px;
+            min-width: 100px;
+            max-width: 280px;
+        }
+        .free-response-row--algebraic-fraction {
+            align-items: center;
+        }
+        .free-response-fraction-stack {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 2px;
+            flex: 0 0 auto;
+            min-width: 120px;
+            max-width: 200px;
+        }
+        .free-response-fraction-stack .free-response-input-alg-frac-num,
+        .free-response-fraction-stack .free-response-input-alg-frac-den {
+            width: 100%;
+            box-sizing: border-box;
+            flex: none;
+            min-height: 0;
+            padding: 6px 10px;
+            line-height: 1.25;
+        }
+        .free-response-fraction-stack .free-response-input-alg-frac-den {
+            text-align: center;
+        }
+        .free-response-fraction-bar {
+            display: block;
+            width: 100%;
+            border-top: 2px solid var(--text, #1e3a5f);
+            margin: 0;
+        }
         .free-response-surd-btn {
             flex: 0 0 auto;
             min-width: 2.75rem;
