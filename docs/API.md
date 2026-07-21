@@ -125,6 +125,8 @@ Without a graded problem in session, `correct_answer_raw` is required in the bod
 | `feedback` | Short human-readable message |
 | `practice_streak` | Present when logged in |
 
+When the checker accepts an equivalent form (e.g. `6/8` for `3/4`, `2√5` for surd answers, `6:10` for `3:5`), `normalized_user` differs from what the student typed. The free-response UI appends **“Equivalent forms accepted.”** to the success feedback in that case. Input placeholders come from each problem’s `answer_format_hint` when set.
+
 #### Error responses
 
 | HTTP | `code` | When |

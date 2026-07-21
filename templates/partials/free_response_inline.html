@@ -106,12 +106,18 @@
                 {% set field_ph = 'e.g. y = 2x + 3' %}
             {% elif field_type == 'number_estimate' %}
                 {% set field_ph = 'Your estimate from the graph' %}
+            {% elif field_type == 'fraction' %}
+                {% set field_ph = 'e.g. 3/4' %}
+            {% elif field_type == 'surd' %}
+                {% set field_ph = 'e.g. 4√3' %}
             {% elif field_type in ('ratio', 'ratio_exact') %}
                 {% set field_ph = 'e.g. 3:5' %}
             {% elif field_type == 'binary' %}
                 {% set field_ph = 'e.g. 1101' %}
             {% elif field_type == 'hex' %}
                 {% set field_ph = 'e.g. FF' %}
+            {% elif problem.answer_format_hint %}
+                {% set field_ph = problem.answer_format_hint %}
             {% else %}
                 {% set field_ph = 'Number or fraction' %}
             {% endif %}
@@ -139,6 +145,16 @@
                autocomplete="off"
                inputmode="decimal"
                aria-label="Your estimate">
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% elif problem.answer_type == 'fraction' %}
+    <div class="free-response-row free-response-row--fraction">
+        <input type="text"
+               class="free-response-input"
+               placeholder="{{ problem.answer_format_hint or 'e.g. 3/4' }}"
+               autocomplete="off"
+               inputmode="text"
+               aria-label="Your answer">
         <button type="button" class="btn free-response-check-btn">Check</button>
     </div>
     {% elif problem.answer_type == 'pi_multiple' %}
@@ -215,12 +231,13 @@
         <button type="button" class="btn free-response-check-btn">Check</button>
     </div>
     {% else %}
+    {% set hint_lower = (problem.answer_format_hint or '')|lower %}
     <div class="free-response-row free-response-row--number">
         <input type="text"
                class="free-response-input"
                placeholder="{{ problem.answer_format_hint or 'Enter a number' }}"
                autocomplete="off"
-               inputmode="{{ 'text' if 'fraction' in (problem.answer_format_hint or '')|lower else 'decimal' }}"
+               inputmode="{{ 'text' if hint_lower and ('fraction' in hint_lower or 'surd' in hint_lower or '√' in (problem.answer_format_hint or '') or ':' in (problem.answer_format_hint or '')) else 'decimal' }}"
                aria-label="Your answer">
         <button type="button" class="btn free-response-check-btn">Check</button>
     </div>
