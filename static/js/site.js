@@ -470,6 +470,8 @@
         if (fieldType === 'keyword') return 'e.g. positive, negative, or none';
         if (fieldType === 'linear_equation') return 'e.g. y = 2x + 3';
         if (fieldType === 'number_estimate') return 'Your estimate from the graph';
+        if (fieldType === 'fraction') return 'e.g. 3/8';
+        if (fieldType === 'surd') return 'e.g. 4√3';
         if (fieldType === 'ratio' || fieldType === 'ratio_exact') return 'e.g. 3:5';
         if (fieldType === 'binary') return 'e.g. 1101';
         if (fieldType === 'hex') return 'e.g. FF';

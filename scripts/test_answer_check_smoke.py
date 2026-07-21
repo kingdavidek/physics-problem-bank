@@ -1442,6 +1442,34 @@ PROBABILITY_CORE_VARIANTS = (
 )
 
 
+PROBABILITY_FRACTION_VARIANTS = (
+    '_prob_single_die',
+    '_prob_single_bag',
+    '_prob_mutually_exclusive',
+    '_prob_two_coins',
+    '_prob_tree_replacement',
+    '_prob_tree_no_replacement',
+    '_prob_conditional_simple',
+    '_prob_venn_total',
+    '_prob_or_not_exclusive',
+    '_prob_independent_product',
+    '_prob_tree_simple',
+    '_prob_tree_different',
+    '_prob_tree_at_least_one_colour',
+)
+
+
+def test_probability_fraction_variants_use_fraction_checker():
+    import generators.gcse.maths_num_stats_prob_rat as prob_mod
+
+    for name in PROBABILITY_FRACTION_VARIANTS:
+        out = getattr(prob_mod, name)()
+        assert len(out) == 5, name
+        problem = _prob_problem_from_output(out, 'intermediate')
+        assert problem.get('answer_type') == 'fraction', name
+        assert problem.get('correct_answer_raw'), name
+
+
 def test_probability_core_variants_are_graded():
     import generators.gcse.maths_num_stats_prob_rat as prob_mod
 
@@ -1450,25 +1478,38 @@ def test_probability_core_variants_are_graded():
         assert len(out) == 5, name
         problem = _prob_problem_from_output(out, 'intermediate')
         assert problem.get('correct_answer_raw'), name
-        assert problem.get('answer_type') in ('number', 'number_fields'), name
+        assert problem.get('answer_type') in (
+            'number', 'number_fields', 'fraction'
+        ), name
 
 
 def test_probability_tree_diagrams_use_inline_inputs():
     import generators.gcse.maths_num_stats_prob_rat as prob_mod
 
-    tree_cases = (
+    fill_in_cases = (
         prob_mod._prob_tree_replacement(blank=True),
         prob_mod._prob_tree_no_replacement(blank=True),
         prob_mod._prob_tree_simple(blank=True),
-        prob_mod._prob_tree_different(),
-        prob_mod._prob_tree_at_least_one_colour(),
+        prob_mod._prob_tree_different(blank=True),
+        prob_mod._prob_tree_at_least_one_colour(blank=True),
     )
-    for out in tree_cases:
+    for out in fill_in_cases:
         problem = _prob_problem_from_output(out, 'difficult')
-        assert problem.get('answer_type') == 'number', out[0][:40]
+        assert problem.get('answer_type') == 'fraction', out[0][:40]
         assert '/' in problem.get('correct_answer_raw', '')
         assert 'prob-tree-input' in problem['question']
         assert problem['question'].count('prob-tree-input') == 10
+
+    structure_cases = (
+        prob_mod._prob_tree_replacement(structure_only=True),
+        prob_mod._prob_tree_no_replacement(structure_only=True),
+        prob_mod._prob_tree_different(blank=False),
+        prob_mod._prob_tree_at_least_one_colour(blank=False),
+    )
+    for out in structure_cases:
+        problem = _prob_problem_from_output(out, 'intermediate')
+        assert 'prob-tree-input' not in problem['question'], out[0][:40]
+        assert problem.get('answer_type') == 'fraction'
 
     venn_cases = (
         prob_mod._prob_diff_venn_three_clubs(),
@@ -1480,6 +1521,12 @@ def test_probability_tree_diagrams_use_inline_inputs():
         assert problem.get('answer_type') == 'number_fields'
         assert len(problem.get('answer_labels') or []) == expected_count
         assert len(problem['correct_answer_raw'].split('|')) == expected_count
+        field_types = problem.get('answer_field_types') or []
+        if expected_count == 3:
+            assert field_types == ['fraction', 'fraction', 'fraction']
+        else:
+            assert field_types[-2:] == ['fraction', 'fraction']
+            assert field_types[:8] == ['number'] * 8
 
 
 def test_probability_variant_queues_are_graded():
@@ -1496,13 +1543,35 @@ def test_probability_variant_queues_are_graded():
 
 
 def test_probability_check_api_accepts_fraction():
+    problem = gcse_probability(
+        'foundational', 'practice', variant_name='_prob_found_01'
+    )
+    correct = problem['correct_answer_raw']
+    assert problem.get('answer_type') == 'fraction'
+
     with app.test_client() as client:
+        response = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'probability',
+                'difficulty': 'foundational',
+                'correct_answer_raw': correct,
+                'answer_type': 'fraction',
+                'user_answer': correct,
+            },
+            headers={'Accept': 'application/json'},
+        )
+        assert response.status_code == 200, response.data
+        assert response.get_json()['correct'] is True
+
         response = client.post(
             '/api/v1/problems/check',
             json={
                 'user_answer': '2/4',
                 'correct_answer_raw': '1/2',
-                'answer_type': 'number',
+                'answer_type': 'fraction',
             },
             headers={'Accept': 'application/json'},
         )
@@ -2503,8 +2572,15 @@ PYTHAGORAS_MULTIPART_VARIANTS = (
     '_py_d8_ladder_slip_multi',
 )
 
-PYTHAGORAS_UNGRADED_VARIANTS = (
+PYTHAGORAS_SURD_VARIANTS = (
+    '_py_d2_distance_formula',
+)
+
+PYTHAGORAS_SURD_MULTIPART_VARIANTS = (
     '_py_d3_3d_diagonal_exact',
+)
+
+PYTHAGORAS_UNGRADED_VARIANTS = (
     '_py_d4_pythagoras_proof_check',
 )
 
@@ -2542,6 +2618,32 @@ def test_pythagoras_multipart_variants_use_number_fields():
         labels = problem.get('answer_labels') or []
         assert labels, name
         assert len(problem['correct_answer_raw'].split('|')) == len(labels), name
+
+
+def test_pythagoras_surd_variants_use_surd_checker():
+    import generators.gcse.maths_pythagoras as pyth_mod
+
+    for name in PYTHAGORAS_SURD_VARIANTS:
+        out = getattr(pyth_mod, name)()
+        assert len(out) == 5, name
+        problem = _pyth_problem_from_output(out, 'difficult')
+        assert problem.get('answer_type') == 'surd', name
+        assert problem.get('correct_answer_raw'), name
+
+
+def test_pythagoras_surd_multipart_variants():
+    import generators.gcse.maths_pythagoras as pyth_mod
+
+    for name in PYTHAGORAS_SURD_MULTIPART_VARIANTS:
+        out = getattr(pyth_mod, name)()
+        assert len(out) == 5, name
+        problem = _pyth_problem_from_output(out, 'difficult')
+        assert problem.get('answer_type') == 'number_fields', name
+        field_types = problem.get('answer_field_types') or []
+        assert field_types == ['surd', 'number'], name
+        raw = problem['correct_answer_raw']
+        sep = '\x1e' if '\x1e' in raw else '|'
+        assert len(raw.split(sep)) == 2, name
 
 
 def test_pythagoras_ungraded_variants_remain_ungraded():
@@ -2593,6 +2695,60 @@ def test_pythagoras_surd_check_api():
         data = r.get_json()
         assert data['ok'] is True
         assert data['correct'] is True
+
+        r2 = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'pythagoras',
+                'difficulty': 'difficult',
+                'correct_answer_raw': '4|3',
+                'answer_type': 'surd',
+                'user_answer': '4√3',
+            },
+        )
+        assert r2.status_code == 200
+        assert r2.get_json()['correct'] is True
+
+
+def test_pythagoras_3d_diagonal_exact_check_api():
+    import generators.gcse.maths_pythagoras as pyth_mod
+
+    problem = _pyth_problem_from_output(pyth_mod._py_d3_3d_diagonal_exact(), 'difficult')
+    raw = problem['correct_answer_raw']
+    sep = '\x1e' if '\x1e' in raw else '|'
+    parts = raw.split(sep)
+    assert len(parts) == 2
+    surd_raw, dec_raw = parts[0], parts[1]
+    if '|' in surd_raw:
+        coeff, rad = surd_raw.split('|', 1)
+        user_surd = f'{coeff}√{rad}'
+    else:
+        user_surd = f'√{surd_raw}'
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'correct_answer_raw': surd_raw,
+                'answer_type': 'surd',
+                'user_answer': user_surd,
+            },
+        )
+        assert r.status_code == 200
+        assert r.get_json()['correct'] is True
+
+        r2 = client.post(
+            '/api/v1/problems/check',
+            json={
+                'correct_answer_raw': dec_raw,
+                'answer_type': 'number',
+                'user_answer': dec_raw,
+            },
+        )
+        assert r2.status_code == 200
+        assert r2.get_json()['correct'] is True
 
 
 def test_pythagoras_variant_queues_are_graded():
