@@ -40,6 +40,38 @@ def _pick_triple():
     return tuple(x * k for x in base)
 
 
+def _pick_non_right_triangle():
+    """Return side lengths (a, b, c) that do not form a right triangle."""
+    for _ in range(60):
+        sides = sorted(random.sample(range(4, 26), 3))
+        a, b, c = sides
+        if a + b <= c:
+            continue
+        if a * a + b * b != c * c:
+            ordered = list(sides)
+            random.shuffle(ordered)
+            return tuple(ordered)
+    return (5, 12, 14)
+
+
+def _is_right_triangle(sides):
+    a, b, c = sorted(sides)
+    return a + b > c and a * a + b * b == c * c
+
+
+def _triangle_right_check_line(num, sides, is_right):
+    a, b, c = sorted(sides)
+    lhs = a * a + b * b
+    rhs = c * c
+    if is_right:
+        return (
+            f"Triangle {num}: {a}² + {b}² = {lhs} = {c}² ✓ right-angled."
+        )
+    return (
+        f"Triangle {num}: {a}² + {b}² = {lhs} ≠ {rhs} = {c}² ✗ not right-angled."
+    )
+
+
 def _pyth_raw(value):
     return _fmt(value)
 
@@ -53,6 +85,8 @@ def _pyth_join_field_values(values):
 
 def _pyth_fields_answer(values, labels, field_types=None):
     def _field_val(value):
+        if isinstance(value, dict) and value.get('type') == 'keyword':
+            return str(value.get('value') or '').strip().lower()
         if isinstance(value, dict) and value.get('type') == 'surd':
             coeff = int(value.get('coeff') or 1)
             radicand = value['radicand']
@@ -582,19 +616,80 @@ def _py_d4_pythagoras_proof_check():
 
 
 def _py_d5_two_triangles():
-    a, b, c = 5, 12, 13
-    x, y, z = 9, 12, 15
+    scenario = random.choice(['both', '1', '2', 'neither'])
+    if scenario == 'both':
+        t1 = _pick_triple()
+        t2 = _pick_triple()
+        while sorted(t1) == sorted(t2):
+            t2 = _pick_triple()
+    elif scenario == '1':
+        t1 = _pick_triple()
+        t2 = _pick_non_right_triangle()
+    elif scenario == '2':
+        t1 = _pick_non_right_triangle()
+        t2 = _pick_triple()
+    else:
+        t1 = _pick_non_right_triangle()
+        t2 = _pick_non_right_triangle()
+        while sorted(t1) == sorted(t2):
+            t2 = _pick_non_right_triangle()
+
+    a, b, c = t1
+    x, y, z = t2
+    p1 = a + b + c
+    p2 = x + y + z
+    right1 = _is_right_triangle(t1)
+    right2 = _is_right_triangle(t2)
+
+    if scenario == 'both':
+        perim = p1
+        perim_label = 'Perimeter of triangle 1 (cm)'
+        q_suffix = 'Find the perimeter of triangle 1.'
+        answer_line = (
+            'Both triangles are right-angled, so the first answer is '
+            '<strong>both</strong>.'
+        )
+    elif scenario == '1':
+        perim = p1
+        perim_label = 'Perimeter of triangle 1 (cm)'
+        q_suffix = 'Find the perimeter of triangle 1.'
+        answer_line = (
+            'Only triangle 1 is right-angled, so the first answer is '
+            '<strong>1</strong>.'
+        )
+    elif scenario == '2':
+        perim = p2
+        perim_label = 'Perimeter of triangle 2 (cm)'
+        q_suffix = 'Find the perimeter of triangle 2.'
+        answer_line = (
+            'Only triangle 2 is right-angled, so the first answer is '
+            '<strong>2</strong>.'
+        )
+    else:
+        perim = p1
+        perim_label = 'Perimeter of triangle 1 (cm)'
+        q_suffix = 'Find the perimeter of triangle 1.'
+        answer_line = (
+            'Neither triangle is right-angled, so the first answer is '
+            '<strong>neither</strong>.'
+        )
+
     q = (f"Triangle 1 has sides {a} cm, {b} cm, {c} cm. "
          f"Triangle 2 has sides {x} cm, {y} cm, {z} cm. "
-         f"Which triangle is right-angled? Find the perimeter of that triangle.")
-    p = a + b + c
-    s = (f"Triangle 1: {a}² + {b}² = {a*a + b*b} = {c}² ✓ right-angled.<br>"
-         f"Triangle 2: {x}² + {y}² = {x*x + y*y} = {z*z} ✓ also right-angled.<br>"
-         f"Perimeter of triangle 1 = {a}+{b}+{c} = <strong>{p} cm</strong> "
-         f"(triangle 2 perimeter = {x+y+z} cm).")
+         f"Which triangle is right-angled? (Enter 1, 2, both, or neither.) "
+         f"{q_suffix}")
+    s = (
+        f"{_triangle_right_check_line(1, t1, right1)}<br>"
+        f"{_triangle_right_check_line(2, t2, right2)}<br>"
+        f"{answer_line}<br>"
+        f"{perim_label.replace(' (cm)', '')} = "
+        f"<strong>{perim} cm</strong> "
+        f"(triangle 1 perimeter = {p1} cm, triangle 2 perimeter = {p2} cm)."
+    )
     return q, s, "Test a² + b² = c² for each triangle using the longest side as c.", 4, _pyth_fields_answer(
-        (1, p),
-        ('Which triangle? (1 or 2)', 'Perimeter (cm)'),
+        (_pyth_keyword_answer(scenario), perim),
+        ('Which triangle? (1, 2, both, or neither)', perim_label),
+        field_types=('keyword', 'number'),
     )
 
 

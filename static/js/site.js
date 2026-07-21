@@ -362,6 +362,65 @@
     document.querySelectorAll('.mcq-inline').forEach(wireMcqBlock);
   }
 
+  function normalizeFeedbackText(value) {
+    return String(value || '').replace(/\s+/g, '').toLowerCase();
+  }
+
+  function freeResponseFieldPlaceholder(fieldType, formatHint) {
+    if (formatHint) return formatHint;
+    if (fieldType === 'keyword') return 'e.g. positive, negative, or none';
+    if (fieldType === 'linear_equation') return 'e.g. y = 2x + 3';
+    if (fieldType === 'number_estimate') return 'Your estimate from the graph';
+    if (fieldType === 'fraction') return 'e.g. 3/4';
+    if (fieldType === 'surd') return 'e.g. 4√3';
+    if (fieldType === 'ratio' || fieldType === 'ratio_exact') return 'e.g. 3:5';
+    if (fieldType === 'binary') return 'e.g. 1101';
+    if (fieldType === 'hex') return 'e.g. FF';
+    return 'Number or fraction';
+  }
+
+  function freeResponsePlaceholder(answerType, formatHint) {
+    if (formatHint) return formatHint;
+    if (answerType === 'fraction') return 'e.g. 3/4';
+    if (answerType === 'surd') return 'e.g. √113';
+    if (answerType === 'ratio' || answerType === 'ratio_exact') return 'e.g. 3:5';
+    if (answerType === 'linear_equation') return 'e.g. y = 2x + 3';
+    if (answerType === 'number_list') return 'Enter numbers separated by commas';
+    if (answerType === 'number_estimate') return 'Your estimate from the graph';
+    if (answerType === 'pi_multiple') return 'e.g. 4';
+    if (answerType === 'algebraic') return 'e.g. a - b';
+    if (answerType === 'binary') return 'e.g. 1101';
+    if (answerType === 'hex') return 'e.g. FF';
+    if (answerType === 'standard_form') return 'e.g. 3.2 × 10^5';
+    return 'Enter a number';
+  }
+
+  function freeResponseCorrectFeedback(data, userAnswer) {
+    var base = (data && data.feedback) || 'Correct!';
+    if (!data || !data.correct) return base;
+    var nu = data.normalized_user;
+    var nc = data.normalized_correct;
+    if (nu && nc && normalizeFeedbackText(nu) !== normalizeFeedbackText(nc)) {
+      return base + ' Equivalent forms accepted.';
+    }
+    return base;
+  }
+
+  function freeResponseInputMode(answerType, formatHint) {
+    var hint = String(formatHint || '').toLowerCase();
+    if (answerType === 'fraction' || answerType === 'surd' || answerType === 'ratio' ||
+        answerType === 'ratio_exact' || answerType === 'linear_equation' ||
+        answerType === 'algebraic' || answerType === 'binary' || answerType === 'hex' ||
+        answerType === 'pi_multiple') {
+      return 'text';
+    }
+    if (hint.indexOf('fraction') !== -1 || hint.indexOf('surd') !== -1 ||
+        hint.indexOf('√') !== -1 || hint.indexOf(':') !== -1) {
+      return 'text';
+    }
+    return 'decimal';
+  }
+
   function freeResponseInputs(block) {
     return Array.prototype.slice.call(block.querySelectorAll('.free-response-input'));
   }
@@ -374,6 +433,7 @@
     if (row.classList.contains('free-response-row--power')) return 'power';
     if (row.classList.contains('free-response-row--linear-equation')) return 'linear_equation';
     if (row.classList.contains('free-response-row--ratio')) return 'ratio';
+    if (row.classList.contains('free-response-row--fraction')) return 'fraction';
     if (row.classList.contains('free-response-row--number-fields')) return 'number_fields';
     if (row.classList.contains('free-response-row--pi-multiple')) return 'pi_multiple';
     if (row.classList.contains('free-response-row--surd')) return 'surd';
@@ -417,7 +477,7 @@
       );
     }
     if (answerType === 'number_list') {
-      var listPh = formatHint || 'Enter numbers separated by commas';
+      var listPh = freeResponsePlaceholder('number_list', formatHint);
       return (
         '<div class="free-response-row free-response-row--number-list">' +
         '<input type="text" class="free-response-input free-response-input-list" placeholder="' + esc(listPh) + '" autocomplete="off" inputmode="decimal" aria-label="Your answer">' +
@@ -436,7 +496,7 @@
       );
     }
     if (answerType === 'ratio' || answerType === 'ratio_exact') {
-      var ratioPh = formatHint || 'e.g. 3:5';
+      var ratioPh = freeResponsePlaceholder(answerType, formatHint);
       return (
         '<div class="free-response-row free-response-row--ratio">' +
         '<input type="text" class="free-response-input free-response-input-ratio" placeholder="' + esc(ratioPh) + '" autocomplete="off" inputmode="text" aria-label="Your ratio">' +
@@ -445,7 +505,7 @@
       );
     }
     if (answerType === 'linear_equation') {
-      var eqPh = formatHint || 'e.g. y = 2x + 3';
+      var eqPh = freeResponsePlaceholder('linear_equation', formatHint);
       return (
         '<div class="free-response-row free-response-row--linear-equation">' +
         '<input type="text" class="free-response-input free-response-input-linear-equation" placeholder="' + esc(eqPh) + '" autocomplete="off" inputmode="text" aria-label="Linear equation">' +
@@ -467,19 +527,15 @@
         fieldTypes = [];
       }
       function fieldPlaceholder(fieldType) {
-        if (fieldType === 'keyword') return 'e.g. positive, negative, or none';
-        if (fieldType === 'linear_equation') return 'e.g. y = 2x + 3';
-        if (fieldType === 'number_estimate') return 'Your estimate from the graph';
-        if (fieldType === 'fraction') return 'e.g. 3/8';
-        if (fieldType === 'surd') return 'e.g. 4√3';
-        if (fieldType === 'ratio' || fieldType === 'ratio_exact') return 'e.g. 3:5';
-        if (fieldType === 'binary') return 'e.g. 1101';
-        if (fieldType === 'hex') return 'e.g. FF';
-        return 'Number or fraction';
+        return freeResponseFieldPlaceholder(
+          fieldType,
+          fieldType === 'number' ? formatHint : ''
+        );
       }
       var rows = labels.map(function (label, index) {
         var safeLabel = esc(label);
-        var ph = esc(fieldPlaceholder(fieldTypes[index] || 'number'));
+        var fieldType = fieldTypes[index] || 'number';
+        var ph = esc(fieldPlaceholder(fieldType));
         return (
           '<div class="free-response-field-row">' +
           '<label class="free-response-field">' +
@@ -498,7 +554,7 @@
       );
     }
     if (answerType === 'pi_multiple') {
-      var piPh = formatHint || 'e.g. 4';
+      var piPh = freeResponsePlaceholder('pi_multiple', formatHint);
       return (
         '<div class="free-response-row free-response-row--pi-multiple">' +
         '<input type="text" class="free-response-input free-response-input-pi" placeholder="' + esc(piPh) + '" autocomplete="off" inputmode="text" aria-label="Coefficient of pi">' +
@@ -508,7 +564,7 @@
       );
     }
     if (answerType === 'surd') {
-      var surdPh = formatHint || 'e.g. √113';
+      var surdPh = freeResponsePlaceholder('surd', formatHint);
       return (
         '<div class="free-response-row free-response-row--surd">' +
         '<input type="text" class="free-response-input free-response-input-surd" placeholder="' + esc(surdPh) + '" autocomplete="off" inputmode="text" aria-label="Surd answer">' +
@@ -518,7 +574,7 @@
       );
     }
     if (answerType === 'algebraic') {
-      var algPh = formatHint || 'e.g. a - b';
+      var algPh = freeResponsePlaceholder('algebraic', formatHint);
       return (
         '<div class="free-response-row free-response-row--algebraic">' +
         '<input type="text" class="free-response-input free-response-input-algebraic" placeholder="' + esc(algPh) + '" autocomplete="off" inputmode="text" aria-label="Algebraic answer">' +
@@ -550,10 +606,17 @@
         '</div>'
       );
     }
-    var placeholder = formatHint || 'Enter a number';
-    var numberInputMode = formatHint.toLowerCase().indexOf('fraction') !== -1
-      ? 'text'
-      : 'decimal';
+    if (answerType === 'fraction') {
+      var fracPh = freeResponsePlaceholder('fraction', formatHint);
+      return (
+        '<div class="free-response-row free-response-row--fraction">' +
+        '<input type="text" class="free-response-input" placeholder="' + esc(fracPh) + '" autocomplete="off" inputmode="text" aria-label="Your answer">' +
+        '<button type="button" class="btn free-response-check-btn">Check</button>' +
+        '</div>'
+      );
+    }
+    var placeholder = freeResponsePlaceholder(answerType, formatHint);
+    var numberInputMode = freeResponseInputMode(answerType, formatHint);
     return (
       '<div class="free-response-row free-response-row--number">' +
       '<input type="text" class="free-response-input" placeholder="' + esc(placeholder) + '" autocomplete="off" inputmode="' + numberInputMode + '" aria-label="Your answer">' +
@@ -594,6 +657,7 @@
     var current = block.querySelector('.free-response-row');
     var rowKind = (answerType === 'ratio' || answerType === 'ratio_exact') ? 'ratio'
       : (answerType === 'linear_equation') ? 'linear_equation'
+      : (answerType === 'fraction') ? 'fraction'
       : answerType;
     if (!current || freeResponseRowKind(current) !== rowKind) {
       if (current) current.remove();
@@ -746,7 +810,7 @@
               input.disabled = true;
               checkBtn.disabled = true;
               if (fieldFeedback) {
-                fieldFeedback.textContent = '\u2713 ' + (data.feedback || 'Correct!');
+                fieldFeedback.textContent = '\u2713 ' + freeResponseCorrectFeedback(data, userValue);
                 fieldFeedback.style.color = '#16a34a';
               }
               maybePersistAllFields();
@@ -862,7 +926,8 @@
         );
         return { fields: fields, all: fields };
       }
-      var single = block.querySelector('.free-response-row--number .free-response-input');
+      var single = block.querySelector('.free-response-row--number .free-response-input')
+        || block.querySelector('.free-response-row--fraction .free-response-input');
       return { single: single, all: single ? [single] : [] };
     }
 
@@ -1003,7 +1068,7 @@
           if (data.correct) {
             setInputState(true);
             if (feedback) {
-              feedback.textContent = '\u2713 ' + (data.feedback || 'Correct!');
+              feedback.textContent = '\u2713 ' + freeResponseCorrectFeedback(data, userAnswer);
               feedback.style.color = '#16a34a';
             }
           } else {

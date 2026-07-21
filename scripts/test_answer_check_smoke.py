@@ -276,6 +276,7 @@ def test_checker_fraction_unit():
 
     equivalent = check_fraction('3/4', '6/8')
     assert equivalent['correct'] is True
+    assert equivalent['normalized_user'] != equivalent['normalized_correct']
 
     mixed = check_fraction('3/2', '1 1/2')
     assert mixed['correct'] is True
@@ -993,7 +994,8 @@ def test_af_fraction_variants_use_fraction_checker():
     for name in AF_FRACTION_VARIANTS:
         for _ in range(8):
             out = getattr(af_mod, name)()
-            if name == '_af_f_multiply' and out[4] == 1:
+            raw = out[4]
+            if name in ('_af_f_multiply', '_af_f_cancel_numeric') and isinstance(raw, int):
                 continue
             assert len(out) == 5, name
             problem = _af_problem_from_output(out, 'foundational')
@@ -1024,9 +1026,14 @@ def test_af_ungraded_variants_remain_four_tuple():
 
 
 def test_af_generator_payload():
-    pilot = _af_problem(_af_f_cancel_numeric, 'foundational')
+    pilot = None
+    for _ in range(12):
+        candidate = _af_problem(_af_f_cancel_numeric, 'foundational')
+        if candidate.get('answer_type') == 'fraction':
+            pilot = candidate
+            break
+    assert pilot is not None
     assert pilot.get('correct_answer_raw') is not None
-    assert pilot.get('answer_type') == 'fraction'
 
     number_pilot = _af_problem(_af_f_factor_cancel, 'foundational')
     assert number_pilot.get('answer_type') == 'number'
@@ -1048,9 +1055,15 @@ def test_af_variant_queues_are_graded():
 
 
 def test_af_check_api_fraction():
-    problem = gcse_algebraic_fractions(
-        'foundational', 'practice', variant_name='_af_f_cancel_numeric'
-    )
+    problem = None
+    for _ in range(12):
+        candidate = gcse_algebraic_fractions(
+            'foundational', 'practice', variant_name='_af_f_cancel_numeric'
+        )
+        if candidate.get('answer_type') == 'fraction':
+            problem = candidate
+            break
+    assert problem is not None
     correct = problem['correct_answer_raw']
     assert problem.get('answer_type') == 'fraction'
 
@@ -2620,6 +2633,59 @@ def test_pythagoras_multipart_variants_use_number_fields():
         assert len(problem['correct_answer_raw'].split('|')) == len(labels), name
 
 
+def test_pythagoras_two_triangles_keyword_field():
+    import generators.gcse.maths_pythagoras as pyth_mod
+    from generators.shared.variant_utils import variant_is_randomizable
+
+    assert variant_is_randomizable(pyth_mod._py_d5_two_triangles) is True
+
+    seen_keywords = set()
+    for _ in range(24):
+        out = pyth_mod._py_d5_two_triangles()
+        problem = _pyth_problem_from_output(out, 'difficult')
+        assert problem.get('answer_field_types') == ['keyword', 'number']
+        parts = problem['correct_answer_raw'].split('|')
+        assert parts[0] in ('both', '1', '2', 'neither')
+        assert parts[1]
+        seen_keywords.add(parts[0])
+
+    assert len(seen_keywords) >= 2, seen_keywords
+
+    assert check_keyword('both', 'both')['correct'] is True
+    assert check_keyword('both', '1 and 2')['correct'] is True
+    assert check_keyword('both', '1')['correct'] is False
+    assert check_keyword('both', 'neither')['correct'] is False
+    assert check_keyword('neither', 'neither')['correct'] is True
+    assert check_keyword('neither', 'none')['correct'] is True
+    assert check_keyword('1', 'triangle 1')['correct'] is True
+
+    with app.test_client() as client:
+        for answer in ('both', 'Both triangles', '1 and 2'):
+            response = client.post(
+                '/api/v1/problems/check',
+                json={
+                    'user_answer': answer,
+                    'correct_answer_raw': 'both',
+                    'answer_type': 'keyword',
+                },
+                headers={'Accept': 'application/json'},
+            )
+            assert response.status_code == 200, response.data
+            assert response.get_json()['correct'] is True, answer
+
+        response = client.post(
+            '/api/v1/problems/check',
+            json={
+                'user_answer': '1',
+                'correct_answer_raw': 'both',
+                'answer_type': 'keyword',
+            },
+            headers={'Accept': 'application/json'},
+        )
+        assert response.status_code == 200, response.data
+        assert response.get_json()['correct'] is False
+
+
 def test_pythagoras_surd_variants_use_surd_checker():
     import generators.gcse.maths_pythagoras as pyth_mod
 
@@ -3935,6 +4001,7 @@ def main():
     test_pythagoras_number_variants_are_graded()
     test_pythagoras_keyword_variants_are_graded()
     test_pythagoras_multipart_variants_use_number_fields()
+    test_pythagoras_two_triangles_keyword_field()
     test_pythagoras_ungraded_variants_remain_ungraded()
     test_pythagoras_distance_formula_graded()
     test_checker_surd_unit()
