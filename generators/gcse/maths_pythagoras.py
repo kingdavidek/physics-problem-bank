@@ -2,7 +2,7 @@
 GCSE Maths – Pythagoras' Theorem
 8 foundational · 8 intermediate · 8 difficult · 10 MCQ
 Graded practice variants return (question, solution, hint, marks, raw).
-Exact-surd / proof-style variants stay as 4-tuples (Phase 2).
+Exact-surd variants use answer_type surd (Phase 2.8); proof-style variants stay as 4-tuples.
 Final answers wrapped in <strong> tags.
 """
 import random
@@ -44,12 +44,29 @@ def _pyth_raw(value):
     return _fmt(value)
 
 
-def _pyth_fields_answer(values, labels):
-    return {
+def _pyth_join_field_values(values):
+    encoded = [str(v) for v in values]
+    if any('|' in part for part in encoded):
+        return '\x1e'.join(encoded)
+    return '|'.join(encoded)
+
+
+def _pyth_fields_answer(values, labels, field_types=None):
+    def _field_val(value):
+        if isinstance(value, dict) and value.get('type') == 'surd':
+            coeff = int(value.get('coeff') or 1)
+            radicand = value['radicand']
+            return str(radicand) if coeff == 1 else f'{coeff}|{radicand}'
+        return _pyth_raw(value)
+
+    payload = {
         'type': 'number_fields',
-        'values': tuple(_pyth_raw(v) for v in values),
+        'values': tuple(_field_val(value) for value in values),
         'labels': tuple(labels),
     }
+    if field_types:
+        payload['field_types'] = tuple(field_types)
+    return payload
 
 
 def _pyth_keyword_answer(value):
@@ -75,11 +92,14 @@ def _pyth_problem_from_output(out, difficulty):
             labels = raw.get('labels') or ()
             if values and len(values) == len(labels):
                 extra = {
-                    'correct_answer_raw': '|'.join(str(v) for v in values),
+                    'correct_answer_raw': _pyth_join_field_values(values),
                     'answer_type': 'number_fields',
                     'answer_labels': list(labels),
-                    'answer_format_hint': 'Enter a number in every field',
+                    'answer_format_hint': 'Enter a number or surd in every field',
                 }
+                field_types = raw.get('field_types')
+                if field_types:
+                    extra['answer_field_types'] = list(field_types)
         elif isinstance(raw, dict) and raw.get('type') == 'keyword':
             value = raw.get('value')
             if value is not None and str(value).strip():
@@ -533,14 +553,21 @@ def _py_d2_distance_formula():
 
 
 def _py_d3_3d_diagonal_exact():
-    l, w, h = 4, 4, 4
-    d = int(math.sqrt(l * l + w * w + h * h))
-    q = (f"A cube has edge length {l} cm. Show that its space diagonal is {d}√3 cm "
-         f"and state the decimal length correct to 1 d.p.")
-    dec = round(d * math.sqrt(3), 1) if d == 4 else round(math.sqrt(l*l+w*w+h*h), 1)
-    s = (f"AG² = {l}² + {l}² + {l}² = 3 × {l}² = {3*l*l}<br>"
-         f"AG = √{3*l*l} = {l}√3 = <strong>{d}√3 cm ≈ {dec} cm</strong>")
-    return q, s, "In a cube all three edges are equal — add three squares of the edge.", 5
+    edge = random.choice([2, 4, 5, 6])
+    sum_sq = 3 * edge * edge
+    dec = round(math.sqrt(sum_sq), 1)
+    q = (f"A cube has edge length {edge} cm.<br>"
+         f"(a) Find the exact length of its space diagonal in surd form.<br>"
+         f"(b) Give the decimal length correct to 1 d.p.")
+    s = (f"AG² = {edge}² + {edge}² + {edge}² = 3 × {edge}² = {sum_sq}<br>"
+         f"(a) AG = √{sum_sq} = <strong>{edge}√3 cm</strong><br>"
+         f"(b) ≈ <strong>{dec} cm</strong> (1 d.p.)")
+    hint = "In a cube all three edges are equal — add three squares of the edge, then simplify the surd."
+    return q, s, hint, 5, _pyth_fields_answer(
+        (_pyth_surd_answer(3, edge), dec),
+        ('(a) Exact space diagonal', '(b) Decimal length (1 d.p.)'),
+        field_types=('surd', 'number'),
+    )
 
 
 def _py_d4_pythagoras_proof_check():

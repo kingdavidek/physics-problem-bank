@@ -2076,12 +2076,19 @@ def _prob_frac(a, b):
     return f"{a//g}/{b//g}"
 
 
-def _prob_fields_answer(values, labels):
-    return {
+def _prob_fraction_answer(a, b):
+    return _ratio_fraction_answer(a, b)
+
+
+def _prob_fields_answer(values, labels, field_types=None):
+    payload = {
         'type': 'number_fields',
         'values': tuple(str(value) for value in values),
         'labels': tuple(labels),
     }
+    if field_types:
+        payload['field_types'] = tuple(field_types)
+    return payload
 
 
 def _prob_svg_venn(a_only, b_only, both, neither):
@@ -2214,10 +2221,11 @@ def _prob_svg_tree(c1, c2, p1n, p1d, p2n, p2d,
                    p11n, p11d, p12n, p12d,
                    p21n, p21d, p22n, p22d,
                    title="Two-stage probability tree",
-                   show_probs=True):
+                   show_probs=True, fill_in=False):
     """SVG of a two-draw probability tree.
-    show_probs=True  → display all fractions (for worked/foundational questions).
-    show_probs=False → replace every probability with a typeable self-checking box.
+    show_probs=True  → display all fractions (foundational).
+    show_probs=False, fill_in=True → typeable box on every branch (difficult).
+    show_probs=False, fill_in=False → bare tree structure only (intermediate).
     """
     def _fr(n, d):
         g = math.gcd(abs(n), abs(d))
@@ -2235,10 +2243,12 @@ def _prob_svg_tree(c1, c2, p1n, p1d, p2n, p2d,
     col2 = _prob_tree_colour(c2, 1)
 
     def _branch_label(x, y, val, color):
-        """Probability on a branch line — value, or a typeable self-checking box."""
+        """Probability on a branch line — value, fill-in box, or omitted."""
         if show_probs:
             return (f'<text x="{x}" y="{y}" text-anchor="middle" '
                     f'font-size="10" fill="{color}">{val}</text>')
+        if not fill_in:
+            return ''
         rx, ry = x - 22, y - 11
         return (f'<foreignObject x="{rx}" y="{ry}" width="54" height="22">'
                 f'<input xmlns="http://www.w3.org/1999/xhtml" type="text" '
@@ -2247,10 +2257,13 @@ def _prob_svg_tree(c1, c2, p1n, p1d, p2n, p2d,
                 f'</foreignObject>')
 
     def _outcome_row(x, y, lbl, prob):
-        """Outcome row at end of branch — with probability or typeable self-checking box."""
+        """Outcome row at end of branch — with probability, fill-in box, or label only."""
         if show_probs:
             return (f'<text x="{x}" y="{y}" font-size="10" fill="#555">'
                     f'\u2192 {lbl} = {prob}</text>')
+        if not fill_in:
+            return (f'<text x="{x}" y="{y}" font-size="10" fill="#555">'
+                    f'\u2192 {lbl}</text>')
         bx = x + 118  # fixed offset — safe for longest colour names
         return (f'<text x="{x}" y="{y}" font-size="10" fill="#555">'
                 f'\u2192 {lbl} = </text>'
@@ -2260,8 +2273,8 @@ def _prob_svg_tree(c1, c2, p1n, p1d, p2n, p2d,
                 f'autocomplete="off" spellcheck="false" aria-label="outcome probability"/>'
                 f'</foreignObject>')
 
-    # Use a slightly wider canvas so boxes don't clip at the right edge
-    w = 640 if not show_probs else 600
+    # Wider canvas only when branch/outcome fill-in boxes are shown
+    w = 640 if fill_in else 600
     return (
         f'<div style="text-align:center;margin:10px 0;">'
         f'<svg width="{w}" height="290" viewBox="0 0 {w} 290" '
@@ -2303,7 +2316,9 @@ def _prob_svg_tree(c1, c2, p1n, p1d, p2n, p2d,
         # column headers
         f'<text x="228" y="278" text-anchor="middle" font-size="9" fill="#888">1st draw</text>'
         f'<text x="390" y="278" text-anchor="middle" font-size="9" fill="#888">2nd draw</text>'
-        f'<text x="{w - 90}" y="278" text-anchor="middle" font-size="9" fill="#888">outcome \u00b7 P(outcome)</text>'
+        f'<text x="{w - 90}" y="278" text-anchor="middle" font-size="9" fill="#888">'
+        f'{"outcome" if not show_probs and not fill_in else "outcome \u00b7 P(outcome)"}'
+        f'</text>'
         f'</svg></div>'
     )
 
@@ -2449,7 +2464,7 @@ def _prob_single_die():
     s = (f"Favourable outcomes ({target}): {fav_list} — {fav} out of 6 equally likely outcomes.<br>"
          f"P({target}) = {fav}/6 = <strong>{prob}</strong>.")
     hint = "List which numbers on the die satisfy the condition, count them, then divide by 6."
-    return q, s, hint, 1, prob
+    return q, s, hint, 1, _prob_fraction_answer(fav, 6)
 
 
 def _prob_single_bag():
@@ -2463,7 +2478,7 @@ def _prob_single_bag():
     s = (f"There are {count} {colour} counters out of {total} in total.<br>"
          f"P({colour}) = {count}/{total} = <strong>{prob}</strong>.")
     hint = "Count how many items match the colour asked for, then divide by the total number of items."
-    return q, s, hint, 1, prob
+    return q, s, hint, 1, _prob_fraction_answer(count, total)
 
 
 def _prob_complement():
@@ -2519,7 +2534,7 @@ def _prob_mutually_exclusive():
          f"P({a}) = 1/6 &nbsp;&nbsp; P({b}) = 1/6<br>"
          f"P({a} or {b}) = 1/6 + 1/6 = 2/6 = <strong>{prob}</strong>.")
     hint = "Mutually exclusive events cannot happen at the same time — add their individual probabilities."
-    return q, s, hint, 2, prob
+    return q, s, hint, 2, _prob_fraction_answer(2, 6)
 
 
 def _prob_two_coins():
@@ -2552,10 +2567,10 @@ def _prob_two_coins():
         f"P({qtype}) = {fav}/{total} = <strong>{prob}</strong>."
     )
     hint = "Count equally likely outcomes in the sample space, or use combinations when order does not matter."
-    return q, s, hint, 2, prob
+    return q, s, hint, 2, _prob_fraction_answer(fav, total)
 
 
-def _prob_tree_replacement(blank=False):
+def _prob_tree_replacement(blank=False, structure_only=False):
     c1, c2 = random.choice(BAG_COLOURS)
     red, blue = random.randint(2, 6), random.randint(2, 6)
     total = red + blue
@@ -2567,7 +2582,8 @@ def _prob_tree_replacement(blank=False):
         red, total, blue, total,
         red, total, blue, total,
         title=f"With replacement \u2014 {c1} / {c2}",
-        show_probs=not blank,
+        show_probs=not blank and not structure_only,
+        fill_in=blank,
     )
     ask = (f"Complete the tree diagram — type the probability on every branch — then find "
            f"P(two {c1})." if blank else f"Find P(two {c1}).")
@@ -2577,10 +2593,10 @@ def _prob_tree_replacement(blank=False):
          f"P({c1} on 1st draw) = {red}/{total} &nbsp;&nbsp; P({c1} on 2nd draw) = {red}/{total} (same bag).<br>"
          f"P(both {c1}) = {red}/{total} \u00d7 {red}/{total} = <strong>{prob}</strong>.")
     hint = "With replacement: the same probabilities apply on every draw. Multiply along the branch."
-    return q, s, hint, 4 if blank else 3, prob
+    return q, s, hint, 4 if blank else 3, _prob_fraction_answer(red * red, total * total)
 
 
-def _prob_tree_no_replacement(blank=False):
+def _prob_tree_no_replacement(blank=False, structure_only=False):
     c1, c2 = random.choice(BAG_COLOURS)
     red, blue = random.randint(3, 7), random.randint(2, 6)
     total = red + blue
@@ -2592,7 +2608,8 @@ def _prob_tree_no_replacement(blank=False):
         red - 1, total - 1, blue, total - 1,
         red, total - 1, blue - 1, total - 1,
         title=f"Without replacement \u2014 {c1} / {c2}",
-        show_probs=not blank,
+        show_probs=not blank and not structure_only,
+        fill_in=blank,
     )
     ask = (f"Complete the tree diagram — type the probability on every branch — then find "
            f"P(two {c1})." if blank else f"Find P(two {c1}).")
@@ -2603,7 +2620,7 @@ def _prob_tree_no_replacement(blank=False):
          f"{total - 1} counters — P({c1}) = {red - 1}/{total - 1}.<br>"
          f"P(both {c1}) = {red}/{total} \u00d7 {red - 1}/{total - 1} = <strong>{prob}</strong>.")
     hint = "Without replacement: after 1st draw both the numerator (one fewer of that colour) and denominator (one fewer counter) decrease by 1."
-    return q, s, hint, 4 if blank else 3, prob
+    return q, s, hint, 4 if blank else 3, _prob_fraction_answer(red * (red - 1), total * (total - 1))
 
 
 def _prob_at_least_one():
@@ -2657,7 +2674,7 @@ def _prob_conditional_simple():
     hint = (f"P(B|A) = P(A \u2229 B) \u00f7 P(A). "
             f"To divide by a fraction, flip it and multiply (reciprocal).")
 
-    return q, s, hint, 3, cond_prob
+    return q, s, hint, 3, _prob_fraction_answer(cond_n, cond_d)
 
 
 def _prob_venn_total():
@@ -2693,7 +2710,7 @@ def _prob_venn_total():
         f"{ask} = {num}/{total} = <strong>{prob}</strong>."
     )
     hint = "Add the relevant regions from the diagram, then divide by the total in the universal set."
-    return q, s, hint, 2, prob
+    return q, s, hint, 2, _prob_fraction_answer(num, total)
 
 
 def _prob_diff_venn_three_clubs():
@@ -2763,6 +2780,7 @@ def _prob_diff_venn_three_clubs():
             "b) P(at least one activity)",
             f"c) P({act_a} or {act_b}, not {act_c})",
         ),
+        field_types=('fraction', 'fraction', 'fraction'),
     )
     return q, s, hint, 5, raw
 
@@ -2880,6 +2898,10 @@ def _prob_diff_venn_three_fill_in():
             f"b) P({drink_c})",
             "c) P(exactly two)",
         ),
+        field_types=(
+            'number', 'number', 'number', 'number', 'number', 'number', 'number', 'number',
+            'fraction', 'fraction',
+        ),
     )
     return q, s, hint, 6, raw
 
@@ -2898,7 +2920,7 @@ def _prob_or_not_exclusive():
          f"= {a}/{total} + {b}/{total} \u2212 {both}/{total}<br>"
          f"= ({a} + {b} \u2212 {both}) / {total} = {num}/{total} = <strong>{prob}</strong>.")
     hint = "The inclusion-exclusion formula subtracts the overlap once to avoid counting those in both groups twice."
-    return q, s, hint, 3, prob
+    return q, s, hint, 3, _prob_fraction_answer(num, total)
 
 
 def _prob_independent_product():
@@ -2913,7 +2935,7 @@ def _prob_independent_product():
     s = (f"The events are independent (one does not affect the other), so their probabilities multiply:<br>"
          f"P(A and B) = P(A) \u00d7 P(B) = {a}/{b} \u00d7 {c}/{d} = <strong>{prob}</strong>.")
     hint = "Independent events: P(A and B) = P(A) \u00d7 P(B). One event has no effect on the other."
-    return q, s, hint, 2, prob
+    return q, s, hint, 2, _prob_fraction_answer(a * c, b * d)
 
 
 def _prob_tree_simple(blank=False):
@@ -2929,6 +2951,7 @@ def _prob_tree_simple(blank=False):
         red, total, blue, total,
         title="Two draws with replacement",
         show_probs=not blank,
+        fill_in=blank,
     )
     prob = _prob_frac(red * red, total * total)
     ask = ("Complete the tree diagram — type the probability on every branch — then use it to find "
@@ -2940,12 +2963,11 @@ def _prob_tree_simple(blank=False):
          f"P({c1}) = {red}/{total} on both draws.<br>"
          f"Follow the ({c1},{c1}) branch: {red}/{total} \u00d7 {red}/{total} = <strong>{prob}</strong>.")
     hint = "With replacement: the same fractions apply on both draws. Multiply the probabilities along the branch."
-    return q, s, hint, 3 if blank else 2, prob
+    return q, s, hint, 3 if blank else 2, _prob_fraction_answer(red * red, total * total)
 
 
-def _prob_tree_different():
-    """Difficult: two draws WITHOUT replacement; blank tree — students fill probabilities,
-    then find P(different colours)."""
+def _prob_tree_different(blank=False):
+    """Two draws WITHOUT replacement; blank tree for difficult, bare structure for intermediate."""
     c1, c2 = random.choice(BAG_COLOURS)
     red = random.randint(3, 6)
     blue = random.randint(3, 6)
@@ -2955,8 +2977,10 @@ def _prob_tree_different():
         red, total, blue, total,
         red - 1, total - 1, blue, total - 1,
         red, total - 1, blue - 1, total - 1,
-        title=f"Without replacement \u2014 complete each branch",
+        title=f"Without replacement \u2014 {c1} / {c2}" if not blank else
+              f"Without replacement \u2014 complete each branch",
         show_probs=False,
+        fill_in=blank,
     )
     num = 2 * red * blue
     den = total * (total - 1)
@@ -2966,11 +2990,17 @@ def _prob_tree_different():
     b1 = _prob_frac(red, total); b2 = _prob_frac(blue, total)
     b11 = _prob_frac(red - 1, total - 1); b12 = _prob_frac(blue, total - 1)
     b21 = _prob_frac(red, total - 1);     b22 = _prob_frac(blue - 1, total - 1)
-    q = (f"A bag contains {red} {c1} and {blue} {c2} counters. Two counters are drawn "
-         f"without replacement.\n{svg}\n"
-         f"(a) Fill in the probability on every branch of the tree diagram.\n"
-         f"(b) Hence find the probability that the two counters are "
-         f"<strong>different</strong> colours.")
+    if blank:
+        q = (f"A bag contains {red} {c1} and {blue} {c2} counters. Two counters are drawn "
+             f"without replacement.\n{svg}\n"
+             f"(a) Fill in the probability on every branch of the tree diagram.\n"
+             f"(b) Hence find the probability that the two counters are "
+             f"<strong>different</strong> colours.")
+    else:
+        q = (f"A bag contains {red} {c1} and {blue} {c2} counters. Two counters are drawn "
+             f"without replacement.\n{svg}\n"
+             f"Use the tree diagram to find the probability that the two counters are "
+             f"<strong>different</strong> colours.")
     s = (f"<strong>(a) Branch probabilities:</strong><br>"
          f"1st draw: P({c1}) = {b1}, &nbsp; P({c2}) = {b2}<br>"
          f"2nd draw from {c1}: P({c1}) = {b11}, &nbsp; P({c2}) = {b12}<br>"
@@ -2982,12 +3012,11 @@ def _prob_tree_different():
     hint = ("Fill in 1st-draw fractions first (total = {t}), then 2nd-draw fractions "
             "(total drops to {t1} because one counter is gone). "
             "Add the two mixed-colour branches for part (b).").format(t=total, t1=total-1)
-    return q, s, hint, 4, prob
+    return q, s, hint, 4, _prob_fraction_answer(num, den)
 
 
-def _prob_tree_at_least_one_colour():
-    """Difficult: two draws WITHOUT replacement; blank tree — students fill probabilities,
-    then find P(at least one c1) using complement."""
+def _prob_tree_at_least_one_colour(blank=False):
+    """Two draws WITHOUT replacement; blank tree for difficult, bare structure for intermediate."""
     c1, c2 = random.choice(BAG_COLOURS)
     red = random.randint(3, 5)
     blue = random.randint(3, 5)
@@ -2997,8 +3026,10 @@ def _prob_tree_at_least_one_colour():
         red, total, blue, total,
         red - 1, total - 1, blue, total - 1,
         red, total - 1, blue - 1, total - 1,
-        title=f"Without replacement \u2014 complete each branch",
+        title=f"Without replacement \u2014 {c1} / {c2}" if not blank else
+              f"Without replacement \u2014 complete each branch",
         show_probs=False,
+        fill_in=blank,
     )
     p_none_n = blue * (blue - 1)
     p_none_d = total * (total - 1)
@@ -3007,10 +3038,15 @@ def _prob_tree_at_least_one_colour():
     b1 = _prob_frac(red, total); b2 = _prob_frac(blue, total)
     b11 = _prob_frac(red - 1, total - 1); b12 = _prob_frac(blue, total - 1)
     b21 = _prob_frac(red, total - 1);     b22 = _prob_frac(blue - 1, total - 1)
-    q = (f"A bag has {red} {c1} and {blue} {c2} counters. Two are drawn without replacement.\n"
-         f"{svg}\n"
-         f"(a) Fill in the probability on every branch of the tree diagram.\n"
-         f"(b) Hence find P(at least one {c1} counter).")
+    if blank:
+        q = (f"A bag has {red} {c1} and {blue} {c2} counters. Two are drawn without replacement.\n"
+             f"{svg}\n"
+             f"(a) Fill in the probability on every branch of the tree diagram.\n"
+             f"(b) Hence find P(at least one {c1} counter).")
+    else:
+        q = (f"A bag has {red} {c1} and {blue} {c2} counters. Two are drawn without replacement.\n"
+             f"{svg}\n"
+             f"Use the tree diagram to find P(at least one {c1} counter).")
     s = (f"<strong>(a) Branch probabilities:</strong><br>"
          f"1st draw: P({c1}) = {b1}, &nbsp; P({c2}) = {b2}<br>"
          f"2nd draw from {c1}: P({c1}) = {b11}, &nbsp; P({c2}) = {b12}<br>"
@@ -3020,7 +3056,7 @@ def _prob_tree_at_least_one_colour():
          f"P(at least one {c1}) = 1 \u2212 {p_none} = <strong>{prob}</strong>.")
     hint = (f"Fill in all six branch probabilities first. Then use complement: "
             f"P(at least one {c1}) = 1 \u2212 P({c2},{c2}).")
-    return q, s, hint, 4, prob
+    return q, s, hint, 4, _prob_fraction_answer(p_none_d - p_none_n, p_none_d)
 
 
 # ---- Variant wrappers ----
@@ -3042,8 +3078,8 @@ def _prob_found_14(): return _prob_at_least_one()
 def _prob_found_15(): return _prob_conditional_simple()
 
 def _prob_inter_01(): return _prob_two_coins()
-def _prob_inter_02(): return _prob_tree_replacement()
-def _prob_inter_03(): return _prob_tree_no_replacement()
+def _prob_inter_02(): return _prob_tree_replacement(structure_only=True)
+def _prob_inter_03(): return _prob_tree_no_replacement(structure_only=True)
 def _prob_inter_04(): return _prob_venn_total()
 def _prob_inter_05(): return _prob_independent_product()
 def _prob_inter_06(): return _prob_or_not_exclusive()
@@ -3060,8 +3096,8 @@ def _prob_inter_15(): return _prob_mutually_exclusive()
 def _prob_diff_01(): return _prob_at_least_one()
 def _prob_diff_02(): return _prob_conditional_simple()
 def _prob_diff_03(): return _prob_or_not_exclusive()
-def _prob_diff_04(): return _prob_tree_different()
-def _prob_diff_05(): return _prob_tree_at_least_one_colour()
+def _prob_diff_04(): return _prob_tree_different(blank=True)
+def _prob_diff_05(): return _prob_tree_at_least_one_colour(blank=True)
 def _prob_diff_06(): return _prob_tree_replacement(blank=True)
 def _prob_diff_07(): return _prob_venn_total()
 def _prob_diff_08(): return _prob_independent_product()
@@ -3171,16 +3207,29 @@ def _prob_problem_from_output(out, difficulty):
     extra = {}
     if len(out) >= 5:
         raw = out[4]
-        if isinstance(raw, dict) and raw.get('type') == 'number_fields':
-            values = raw.get('values') or ()
-            labels = raw.get('labels') or ()
-            if values and len(values) == len(labels):
-                extra = {
-                    'correct_answer_raw': '|'.join(str(value) for value in values),
-                    'answer_type': 'number_fields',
-                    'answer_labels': list(labels),
-                    'answer_format_hint': 'Enter a number or fraction in every field',
-                }
+        if isinstance(raw, dict):
+            raw_type = raw.get('type')
+            if raw_type == 'number_fields':
+                values = raw.get('values') or ()
+                labels = raw.get('labels') or ()
+                if values and len(values) == len(labels):
+                    extra = {
+                        'correct_answer_raw': '|'.join(str(value) for value in values),
+                        'answer_type': 'number_fields',
+                        'answer_labels': list(labels),
+                        'answer_format_hint': 'Enter a number or fraction in every field',
+                    }
+                    field_types = raw.get('field_types')
+                    if field_types:
+                        extra['answer_field_types'] = list(field_types)
+            elif raw_type == 'fraction':
+                value = raw.get('value')
+                if value is not None and str(value).strip():
+                    extra = {
+                        'correct_answer_raw': str(value).strip(),
+                        'answer_type': 'fraction',
+                        'answer_format_hint': 'Enter a fraction (e.g. 3/8)',
+                    }
         elif isinstance(raw, (str, int, float)):
             format_hint = 'Enter a number or fraction'
             if 'prob-tree-input' in q and '(b)' in q:
