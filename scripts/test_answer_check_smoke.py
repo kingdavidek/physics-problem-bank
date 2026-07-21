@@ -567,18 +567,26 @@ def test_fdp_check_api_number():
         assert r.get_json()['correct'] is True
 
 
-SURDS_UNGRADED_VARIANTS = {
-    'gcse_surds_expand_simple',
-    'gcse_surds_expand_double',
-    'gcse_surds_square_bracket',
-    'gcse_surds_square_bracket_minus',
+SURDS_UNGRADED_VARIANTS = set()
+
+SURDS_ALGEBRAIC_FRACTION_VARIANTS = (
     'gcse_surds_rationalise_simple',
     'gcse_surds_rationalise_compound',
     'gcse_surds_show_that_rationalise',
-    'gcse_surds_identity',
+    'gcse_surds_rationalise_binomial_diff',
     'gcse_surds_practice_rationalise_binomial_diff',
-    'gcse_surds_practice_double_bracket',
-}
+)
+
+SURDS_ALGEBRAIC_VARIANTS = (
+    'gcse_surds_identity',
+    'gcse_surds_expand_double',
+    'gcse_surds_square_bracket',
+    'gcse_surds_square_bracket_minus',
+)
+
+SURDS_EXPAND_NUMBER_VARIANTS = (
+    'gcse_surds_expand_simple',
+)
 
 SURDS_SURD_VARIANTS = (
     'gcse_surds_simplify',
@@ -637,6 +645,267 @@ def test_surds_multipart_variants_use_number_fields():
         assert len(out) == 5, name
         problem = _surd_problem_from_output(out, 'difficult')
         assert problem.get('answer_type') == 'number_fields', name
+
+
+def test_surds_algebraic_variants_use_algebraic_checker():
+    import generators.gcse.maths as m
+
+    for name in SURDS_ALGEBRAIC_VARIANTS:
+        out = getattr(m, name)()
+        assert len(out) == 5, name
+        problem = _surd_problem_from_output(out, 'intermediate')
+        assert problem.get('answer_type') == 'algebraic', name
+        assert problem.get('correct_answer_raw'), name
+
+
+def test_surds_expand_simple_uses_number_checker():
+    import generators.gcse.maths as m
+
+    out = m.gcse_surds_expand_simple()
+    assert len(out) == 5
+    problem = _surd_problem_from_output(out, 'intermediate')
+    assert problem.get('answer_type') == 'number'
+    assert problem.get('correct_answer_raw')
+
+
+def test_surds_algebraic_fraction_variants_are_graded():
+    import generators.gcse.maths as m
+
+    for name in SURDS_ALGEBRAIC_FRACTION_VARIANTS:
+        out = getattr(m, name)()
+        assert len(out) == 5, name
+        problem = _surd_problem_from_output(out, 'intermediate')
+        assert problem.get('correct_answer_raw'), name
+        if name == 'gcse_surds_rationalise_simple':
+            assert problem.get('answer_type') in ('algebraic_fraction', 'surd'), name
+        elif name == 'gcse_surds_show_that_rationalise':
+            assert problem.get('answer_type') in ('algebraic_fraction', 'number'), name
+        else:
+            assert problem.get('answer_type') == 'algebraic_fraction', name
+
+
+def test_check_algebraic_fraction_binomial():
+    from generators.shared.answer_checkers import check_algebraic_fraction
+
+    raw = 'b|2|4|1|6|5|-'
+    assert check_algebraic_fraction(raw, '2(4-√6)|5')['correct'] is True
+    assert check_algebraic_fraction(raw, '8-2√6|5')['correct'] is True
+    assert check_algebraic_fraction(raw, '(8-2√6)|5')['correct'] is True
+    assert check_algebraic_fraction(raw, '16-4√6|10')['correct'] is True
+    assert check_algebraic_fraction(raw, '(4-√6)|5')['correct'] is False
+
+
+def test_check_algebraic_fraction_expanded_binomial():
+    from generators.shared.answer_checkers import check_algebraic_fraction
+
+    raw = 'e|6|-3|3|1'
+    assert check_algebraic_fraction(raw, '6-3√3')['correct'] is True
+    assert check_algebraic_fraction(raw, '6-3√3|1')['correct'] is True
+    assert check_algebraic_fraction(raw, '3(2-√3)')['correct'] is True
+
+
+def test_check_algebraic_fraction_empty_denominator_defaults_to_one():
+    from generators.shared.answer_checkers import check_algebraic_fraction
+
+    raw = 'b|3|2|1|3|1|-'
+    for user in ('3(2-√3)|', '3(2-√3)|1', '3(2-√3)'):
+        assert check_algebraic_fraction(raw, user)['correct'] is True, user
+
+
+def test_check_algebraic_fraction_two_surds():
+    from generators.shared.answer_checkers import check_algebraic_fraction
+
+    raw = 'd|10|18|8'
+    assert check_algebraic_fraction(raw, '√18+√10|8')['correct'] is True
+    assert check_algebraic_fraction(raw, '√10+√18|8')['correct'] is True
+    assert check_algebraic_fraction(raw, '(√18+√10)|8')['correct'] is True
+    assert check_algebraic_fraction(raw, '3√2+√10|8')['correct'] is True
+    assert check_algebraic_fraction(raw, '√18+√10|4')['correct'] is False
+    assert check_algebraic_fraction(raw, '√18+√10')['correct'] is False
+
+
+def test_surds_rationalise_binomial_diff_intermediate_check_api():
+    import generators.gcse.maths as m
+
+    problem = _surd_problem_from_output(
+        m.gcse_surds_rationalise_binomial_diff(), 'intermediate'
+    )
+    assert problem.get('answer_type') == 'algebraic_fraction'
+    assert problem['correct_answer_raw'].startswith('d|')
+
+    _, rad1, rad2, denom = problem['correct_answer_raw'].split('|')
+    user = f'√{rad1}+√{rad2}|{denom}'
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'user_answer': user,
+                'correct_answer_raw': problem['correct_answer_raw'],
+                'answer_type': 'algebraic_fraction',
+            },
+            headers={'Accept': 'application/json'},
+        )
+        assert r.status_code == 200, r.data
+        assert r.get_json()['correct'] is True
+
+
+def test_surds_show_that_rationalise_check_api():
+    import generators.gcse.maths as m
+
+    problem = _surd_problem_from_output(m.gcse_surds_show_that_rationalise(), 'difficult')
+    assert problem.get('answer_type') == 'algebraic_fraction'
+    assert problem['correct_answer_raw'].startswith('e|')
+
+    parts = problem['correct_answer_raw'].split('|')
+    int_part, surd_coef, rad, denom = parts[1], parts[2], parts[3], parts[4]
+    sc = int(surd_coef)
+    op = '+' if sc >= 0 else '-'
+    abs_sc = abs(sc)
+    surd = f'√{rad}' if abs_sc == 1 else f'{abs_sc}√{rad}'
+    user = f'{int_part}{op}{surd}|{denom}'
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'user_answer': user,
+                'correct_answer_raw': problem['correct_answer_raw'],
+                'answer_type': 'algebraic_fraction',
+            },
+            headers={'Accept': 'application/json'},
+        )
+        assert r.status_code == 200, r.data
+        assert r.get_json()['correct'] is True
+
+
+def test_surds_rationalise_compound_check_api():
+    import generators.gcse.maths as m
+
+    problem = _surd_problem_from_output(m.gcse_surds_rationalise_compound(), 'intermediate')
+    assert problem.get('answer_type') == 'algebraic_fraction'
+    raw = problem['correct_answer_raw']
+    parts = raw.split('|')
+    scale, const, rad, denom = parts[1], parts[2], parts[4], parts[5]
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'user_answer': f'{scale}({const}-√{rad})|{denom}',
+                'correct_answer_raw': raw,
+                'answer_type': 'algebraic_fraction',
+            },
+            headers={'Accept': 'application/json'},
+        )
+        assert r.status_code == 200, r.data
+        assert r.get_json()['correct'] is True
+
+
+def test_surds_rationalise_binomial_diff_check_api():
+    import generators.gcse.maths as m
+
+    problem = _surd_problem_from_output(
+        m.gcse_surds_practice_rationalise_binomial_diff(), 'difficult'
+    )
+    assert problem.get('answer_type') == 'algebraic_fraction'
+    _, rad1, rad2, denom = problem['correct_answer_raw'].split('|')
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'user_answer': f'√{rad1}+√{rad2}|{denom}',
+                'correct_answer_raw': problem['correct_answer_raw'],
+                'answer_type': 'algebraic_fraction',
+            },
+            headers={'Accept': 'application/json'},
+        )
+        assert r.status_code == 200, r.data
+        assert r.get_json()['correct'] is True
+
+
+def test_check_algebraic_fraction_surd():
+    from generators.shared.answer_checkers import check_algebraic_fraction
+
+    raw = '3|5|7'
+    for user in ('3√5|7', '3√5 / 7', '√5|7'):
+        if user == '√5|7':
+            continue
+        result = check_algebraic_fraction(raw, user)
+        assert result['correct'] is True, user
+
+    assert check_algebraic_fraction('3|5|7', '6√5|14')['correct'] is True
+    assert check_algebraic_fraction('3|5|7', '3√5|14')['correct'] is False
+
+
+def test_surds_rationalise_simple_check_api():
+    import generators.gcse.maths as m
+
+    problem = None
+    for _ in range(40):
+        candidate = _surd_problem_from_output(m.gcse_surds_rationalise_simple(), 'intermediate')
+        if candidate.get('answer_type') == 'algebraic_fraction':
+            problem = candidate
+            break
+    assert problem is not None
+
+    coef, rad, denom = problem['correct_answer_raw'].split('|')
+    user = f'{coef}√{rad}|{denom}' if coef != '1' else f'√{rad}|{denom}'
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'user_answer': user,
+                'correct_answer_raw': problem['correct_answer_raw'],
+                'answer_type': 'algebraic_fraction',
+            },
+            headers={'Accept': 'application/json'},
+        )
+        assert r.status_code == 200, r.data
+        assert r.get_json()['correct'] is True
+
+
+def test_check_algebraic_identity():
+    from generators.shared.answer_checkers import check_algebraic
+
+    for user in ('a-b', 'a - b', 'a−b', 'A - B'):
+        result = check_algebraic('a-b', user)
+        assert result['correct'] is True, user
+    assert check_algebraic('a-b', 'b-a')['correct'] is False
+
+
+def test_check_algebraic_surd_binomial():
+    from generators.shared.answer_checkers import check_algebraic
+
+    raw = '11|5|3|+'
+    for user in ('11+5√3', '11 + 5√3', '5√3+11'):
+        result = check_algebraic(raw, user)
+        assert result['correct'] is True, user
+    assert check_algebraic('25|6|2|-', '25-6√2')['correct'] is True
+    assert check_algebraic('25|6|2|-', '25+6√2')['correct'] is False
+
+
+def test_surds_algebraic_check_api():
+    problem = gcse_maths_surds(
+        'intermediate', 'practice', variant_name='gcse_surds_identity'
+    )
+    assert problem.get('answer_type') == 'algebraic'
+    assert problem['correct_answer_raw'] == 'a-b'
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'user_answer': 'a - b',
+                'correct_answer_raw': problem['correct_answer_raw'],
+                'answer_type': 'algebraic',
+            },
+            headers={'Accept': 'application/json'},
+        )
+        assert r.status_code == 200, r.data
+        assert r.get_json()['correct'] is True
 
 
 def test_surds_compare_uses_choice_buttons():
@@ -3420,6 +3689,22 @@ def main():
     test_surds_ungraded_variants_remain_four_tuple()
     test_surds_number_variants_are_graded()
     test_surds_multipart_variants_use_number_fields()
+    test_surds_algebraic_variants_use_algebraic_checker()
+    test_surds_expand_simple_uses_number_checker()
+    test_surds_algebraic_fraction_variants_are_graded()
+    test_check_algebraic_fraction_surd()
+    test_check_algebraic_fraction_binomial()
+    test_check_algebraic_fraction_expanded_binomial()
+    test_check_algebraic_fraction_empty_denominator_defaults_to_one()
+    test_check_algebraic_fraction_two_surds()
+    test_surds_rationalise_simple_check_api()
+    test_surds_rationalise_compound_check_api()
+    test_surds_show_that_rationalise_check_api()
+    test_surds_rationalise_binomial_diff_intermediate_check_api()
+    test_surds_rationalise_binomial_diff_check_api()
+    test_check_algebraic_identity()
+    test_check_algebraic_surd_binomial()
+    test_surds_algebraic_check_api()
     test_surds_compare_uses_choice_buttons()
     test_surds_generator_payload()
     test_surds_variant_queues_are_graded()

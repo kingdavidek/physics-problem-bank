@@ -184,6 +184,61 @@ def _fdp_recurring_digit_info(num, den):
     return digits, rep_start
 
 
+def _fdp_recurring_algebra_working(num, den):
+    """Step-by-step solution and key-concept hint for recurring decimal → fraction."""
+    dec = _fdp_recurring_decimal_display(num, den)
+    digits, rep_start = _fdp_recurring_digit_info(num, den)
+    rep_len = max(1, len(digits) - rep_start)
+    mult_a = 10 ** rep_start
+    mult_b = 10 ** (rep_start + rep_len)
+    coeff = mult_b - mult_a
+    rhs = num * coeff // den
+    simp_num, simp_den = _fdp_simplify_fraction(num, den)
+    frac = _fdp_fraction_str(simp_num, simp_den)
+
+    if rep_start == 0:
+        lhs_int = (num * mult_b) // den
+        multiply_line = (
+            f"Multiply both sides by {mult_b} so the repeating block moves to the left:<br>"
+            f"&nbsp;&nbsp;{mult_b}x = {lhs_int}.{''.join(digits[rep_start:rep_start + rep_len] * 3)}…"
+        )
+        subtract_line = f"Subtract the original equation: {mult_b}x − x = {rhs}  →  {coeff}x = {rhs}"
+    else:
+        fixed = ''.join(digits[:rep_start])
+        repeat = ''.join(digits[rep_start:rep_start + rep_len])
+        multiply_line = (
+            f"Multiply by {mult_a} to move past the non-repeating part:<br>"
+            f"&nbsp;&nbsp;{mult_a}x = {fixed}.{repeat}…<br>"
+            f"Multiply by {mult_b} to shift one full repeating block:<br>"
+            f"&nbsp;&nbsp;{mult_b}x = … (the digits after the decimal now match and will cancel)"
+        )
+        subtract_line = (
+            f"Subtract the two equations so the recurring tail disappears:<br>"
+            f"&nbsp;&nbsp;{mult_b}x − {mult_a}x = {rhs}  →  {coeff}x = {rhs}"
+        )
+
+    solve_line = f"Divide both sides by {coeff}: x = {rhs}/{coeff} = <strong>{frac}</strong>"
+
+    s = (
+        f"This is a recurring decimal. Use the algebraic method:<br>"
+        f"<strong>1.</strong> Let x = {dec}<br>"
+        f"<strong>2.</strong> {multiply_line}<br>"
+        f"<strong>3.</strong> {subtract_line}<br>"
+        f"<strong>4.</strong> {solve_line}"
+    )
+    hint = (
+        f"<strong>Key idea:</strong> let the decimal equal x, multiply to line up the repeating "
+        f"digits, then subtract so the infinite repeating part cancels.<br><br>"
+        f"<strong>Step 1:</strong> write x = {dec}<br>"
+        f"<strong>Step 2:</strong> multiply x by a power of 10 so the repeat lines up "
+        f"({'×' + str(mult_b) if rep_start == 0 else '×' + str(mult_a) + ' then ×' + str(mult_b)}).<br>"
+        f"<strong>Step 3:</strong> subtract the equations — the recurring decimals disappear, "
+        f"leaving {coeff}x = {rhs}.<br>"
+        f"<strong>Step 4:</strong> solve for x and simplify: x = {rhs}/{coeff} = {frac}."
+    )
+    return s, hint
+
+
 def _fdp_digit_sum(n):
     n = abs(int(n))
     total = 0
@@ -510,7 +565,10 @@ def gcse_fdp_decimal_to_percentage():
     x_str = _fdp_format_decimal(x)
     q = rf"Write {x_str} as a percentage."
     s = rf"To convert a decimal to a percentage, multiply by 100.<br>{x_str} × 100 = <strong>{ans_str}%</strong>"
-    hint = "Multiply the decimal by 100 and add the percentage sign."
+    hint = (
+        "<strong>Key idea:</strong> percent means “out of 100”, so move the decimal point two places right.<br>"
+        f"Example: 0.25 → 25 (because 0.25 = 25/100). Multiply by 100: {x_str} × 100."
+    )
     return q, s, hint, 1, ans if ans == int(ans) else ans
 
 def gcse_fdp_percentage_to_decimal():
@@ -519,7 +577,10 @@ def gcse_fdp_percentage_to_decimal():
     ans_str = _fdp_format_decimal(ans, 3)
     q = rf"Write {x}% as a decimal."
     s = rf"To convert a percentage to a decimal, divide by 100.<br>{x} ÷ 100 = <strong>{ans_str}</strong>"
-    hint = "Divide by 100, or move the decimal point two places left."
+    hint = (
+        "<strong>Key idea:</strong> divide by 100, or move the decimal point two places left.<br>"
+        f"Example: 50% = 50 ÷ 100 = 0.5. Here: {x} ÷ 100 = {ans_str}."
+    )
     return q, s, hint, 1, ans
 
 def gcse_fdp_decimal_to_fraction():
@@ -529,7 +590,12 @@ def gcse_fdp_decimal_to_fraction():
     frac = _fdp_fraction_str(num, den)
     q = rf"Write {dec_str} as a fraction in its simplest form."
     s = rf"Write {dec_str} using place value, then simplify.<br><strong>{frac}</strong>"
-    hint = "Write the decimal over 10, 100 or 1000 depending on place value, then simplify."
+    hint = (
+        "<strong>Key idea:</strong> read the decimal place value, write as a fraction over 10, 100 or 1000, "
+        "then cancel common factors.<br>"
+        f"Example: 0.75 = 75/100 = 3/4. For {dec_str}, identify the last digit's place value, "
+        "write the fraction, then simplify."
+    )
     return q, s, hint, 1, _fdp_fraction_answer(frac)
 
 def gcse_fdp_fraction_to_decimal():
@@ -538,7 +604,10 @@ def gcse_fdp_fraction_to_decimal():
     ans = _fdp_format_decimal(a / b)
     q = rf"Write {frac_str} as a decimal."
     s = rf"Convert a fraction to a decimal by dividing the numerator by the denominator.<br>{a} ÷ {b} = <strong>{ans}</strong>"
-    hint = "Divide the top number by the bottom number."
+    hint = (
+        "<strong>Key idea:</strong> a fraction is a division, so divide the top number by the bottom.<br>"
+        f"Example: 3/4 = 3 ÷ 4 = 0.75. Here: {a} ÷ {b}."
+    )
     return q, s, hint, 1, a / b
 
 def gcse_fdp_percentage_to_fraction():
@@ -546,7 +615,10 @@ def gcse_fdp_percentage_to_fraction():
     ans = _fdp_pct_to_fraction(pct)
     q = rf"Write {pct}% as a fraction in its simplest form."
     s = rf"Write the percentage over 100, then simplify.<br>{pct}% = {pct}/100 = <strong>{ans}</strong>"
-    hint = "Percent means per hundred, so start with denominator 100."
+    hint = (
+        "<strong>Key idea:</strong> “percent” means per hundred, so write the number over 100 first.<br>"
+        f"Example: 20% = 20/100 = 1/5. Here: {pct}% = {pct}/100, then simplify to {ans}."
+    )
     return q, s, hint, 1, _fdp_fraction_answer(ans)
 
 def gcse_fdp_fraction_to_percentage():
@@ -556,7 +628,10 @@ def gcse_fdp_fraction_to_percentage():
     ans_str = _fdp_format_decimal(ans) if ans != int(ans) else str(int(ans))
     q = rf"Write {frac} as a percentage."
     s = rf"Convert the fraction to a decimal, then multiply by 100.<br><strong>{frac} = {ans_str}%</strong>"
-    hint = "Fraction to decimal first, then decimal to percentage."
+    hint = (
+        "<strong>Key idea:</strong> turn the fraction into a decimal first, then multiply by 100 for %.<br>"
+        f"Example: 1/4 = 0.25 → 25%. Here: {frac} → decimal → × 100 → {ans_str}%."
+    )
     return q, s, hint, 1, ans if ans == int(ans) else ans
 
 def gcse_fdp_multi_step():
@@ -567,16 +642,18 @@ def gcse_fdp_multi_step():
     pct = f"{_fdp_format_decimal(pct_val)}%" if pct_val != int(pct_val) else f"{int(pct_val)}%"
     q = rf"Convert {frac} into a decimal and a percentage."
     s = rf"{frac} = <strong>{dec}</strong><br>{dec} × 100 = <strong>{pct}</strong>"
-    hint = "First divide to get the decimal, then multiply by 100 for the percentage."
+    hint = (
+        "<strong>Key idea:</strong> do the conversions in order — fraction → decimal → percentage.<br>"
+        f"1. Divide: {a} ÷ {b} = {dec}<br>"
+        f"2. Multiply by 100: {dec} × 100 = {pct.replace('%', '')}%"
+    )
     return q, s, hint, 2
 
 def gcse_fdp_recurring():
     num, den = _fdp_random_recurring_fraction()
     dec = _fdp_recurring_decimal_display(num, den)
-    ans = _fdp_fraction_str(num, den)
     q = rf"Write {dec} as a fraction."
-    s = rf"This is a recurring decimal. Using the algebraic method gives <strong>{ans}</strong>."
-    hint = "For recurring decimals, let x equal the decimal, multiply to line up the repeat, then subtract."
+    s, hint = _fdp_recurring_algebra_working(num, den)
     return q, s, hint, 3
 
 
@@ -591,7 +668,11 @@ def gcse_fdp_fraction_of_amount():
         rf"{total} ÷ {den} = {total // den}, then × {num} = <strong>{ans}</strong><br>"
         rf"Method 2: {num}/{den} × {total} = <strong>{ans}</strong>"
     )
-    hint = "Multiply the amount by the fraction, or find one part then multiply by the numerator."
+    hint = (
+        "<strong>Key idea:</strong> “of” means multiply — find the fraction of the amount.<br>"
+        f"Method 1: divide by {den} to find one part, then × {num}.<br>"
+        f"Method 2: multiply directly — {num}/{den} × {total}."
+    )
     return q, s, hint, 2, ans
 
 
@@ -607,7 +688,12 @@ def gcse_fdp_percentage_increase():
         rf"Add to the original: {amount} + {increase} = <strong>{new_amount}</strong><br>"
         rf"Or use multiplier 1.{pct if pct < 10 else pct}: {amount} × {1 + pct/100} = {new_amount}"
     )
-    hint = "Find the percentage of the amount, then add it on. Alternatively multiply by (1 + p/100)."
+    hint = (
+        "<strong>Key idea:</strong> an increase adds on a percentage of the original amount.<br>"
+        f"1. Find {pct}% of {amount}: {amount} × {pct}/100 = {increase}<br>"
+        f"2. Add to the original: {amount} + {increase}<br>"
+        f"Or use the multiplier 1.{pct if pct < 10 else pct} in one step: {amount} × {1 + pct/100}."
+    )
     return q, s, hint, 2, new_amount
 
 
@@ -623,7 +709,12 @@ def gcse_fdp_percentage_decrease():
         rf"Sale price = £{amount} − £{decrease} = <strong>£{new_amount}</strong><br>"
         rf"Multiplier method: £{amount} × {1 - pct/100} = £{new_amount}"
     )
-    hint = "Find the discount, then subtract. Or multiply the original price by (1 − p/100)."
+    hint = (
+        "<strong>Key idea:</strong> a reduction subtracts a percentage of the original price.<br>"
+        f"1. Discount = {pct}% of £{amount} = £{decrease}<br>"
+        f"2. Sale price = £{amount} − £{decrease}<br>"
+        f"Or use multiplier {1 - pct/100}: £{amount} × {1 - pct/100}."
+    )
     return q, s, hint, 2, new_amount
 
 
@@ -643,7 +734,12 @@ def gcse_fdp_percentage_change():
         rf"Percentage change = (change ÷ original) × 100<br>"
         rf"= ({change} ÷ {original}) × 100 = <strong>{pct}% {change_type}</strong>"
     )
-    hint = "Percentage change = (change ÷ original value) × 100. Always divide by the original."
+    hint = (
+        "<strong>Key idea:</strong> percentage change compares the change to the <em>original</em> value.<br>"
+        f"1. Change = |new − original| = {change}<br>"
+        f"2. Percentage change = (change ÷ original) × 100 = ({change} ÷ {original}) × 100<br>"
+        "Always divide by the starting value, not the new value."
+    )
     return q, s, hint, 3, pct
 
 
@@ -659,7 +755,11 @@ def gcse_fdp_reverse_percentage():
         rf"Original × {multiplier} = {final}<br>"
         rf"Original = {final} ÷ {multiplier} = <strong>£{original}</strong>"
     )
-    hint = "Divide the final amount by the multiplier (1 − p/100 for a decrease, 1 + p/100 for an increase)."
+    hint = (
+        "<strong>Key idea:</strong> reverse percentages undo the multiplier — divide, don't subtract the %.<br>"
+        f"A {pct}% reduction means the final price is {multiplier} of the original.<br>"
+        f"So original × {multiplier} = {final} → original = {final} ÷ {multiplier}."
+    )
     return q, s, hint, 3, original
 
 
@@ -677,7 +777,12 @@ def gcse_fdp_order_mixed_values():
         + "<br>".join(f"{lab} ≈ {_fdp_format_decimal(val)}" for lab, val in items)
         + rf"<br>Smallest to largest: <strong>{ordered}</strong>"
     )
-    hint = "Convert every value to a decimal (or percentage of 100), then compare."
+    hint = (
+        "<strong>Key idea:</strong> you cannot compare fractions, decimals and percentages directly — "
+        "convert them all to the same form first.<br>"
+        "Easiest method: rewrite every value as a decimal, then order from smallest to largest.<br>"
+        "Check each conversion carefully before comparing."
+    )
     return q, s, hint, 2
 
 
@@ -700,7 +805,12 @@ def gcse_fdp_compound_percentage():
         rf"Overall multiplier: {1 + pct1/100} × {1 - pct2/100} = "
         rf"{round((1 + pct1/100) * (1 - pct2/100), 4)}"
     )
-    hint = "Apply each percentage change in order using multipliers, not by adding the percentages."
+    hint = (
+        "<strong>Key idea:</strong> apply each percentage change separately — do not add or subtract the percentages.<br>"
+        f"1. After {pct1}% increase: multiply by {1 + pct1/100}<br>"
+        f"2. Then {pct2}% decrease: multiply by {1 - pct2/100}<br>"
+        "Each change applies to the <em>current</em> amount, not the original."
+    )
     return q, s, hint, 3, final
 
 
@@ -722,7 +832,13 @@ def gcse_fdp_reverse_percentage_two_step():
         rf"Original = {final} ÷ {round((1 + pct_up/100) * (1 - pct_down/100), 4)} "
         rf"= <strong>£{original}</strong>"
     )
-    hint = "Multiply the multipliers for each change, then divide the final amount by this combined multiplier."
+    combined = round((1 + pct_up/100) * (1 - pct_down/100), 4)
+    hint = (
+        "<strong>Key idea:</strong> combine the multipliers first, then divide the final price.<br>"
+        f"Increase ×{1 + pct_up/100}, then decrease ×{1 - pct_down/100} "
+        f"→ combined multiplier = {combined}.<br>"
+        f"Original × {combined} = {final}, so original = {final} ÷ {combined}."
+    )
     return q, s, hint, 4, original
 
 
@@ -735,7 +851,12 @@ def gcse_fdp_share_in_ratio():
         rf"One part = £{total} ÷ {a + b} = £{total // (a + b)}<br>"
         rf"{a} parts = <strong>£{part_a}</strong>, {b} parts = <strong>£{part_b}</strong>"
     )
-    hint = "Add the ratio parts, divide the total by this sum to find one part, then multiply."
+    hint = (
+        "<strong>Key idea:</strong> treat the ratio as equal parts — find one part, then scale up.<br>"
+        f"1. Total parts = {a} + {b} = {a + b}<br>"
+        f"2. One part = £{total} ÷ {a + b}<br>"
+        f"3. First share = {a} parts, second share = {b} parts."
+    )
     return q, s, hint, 3, _fdp_fields_answer(
         (part_a, part_b), (f'{a} parts', f'{b} parts')
     )
@@ -756,7 +877,11 @@ def gcse_fdp_profit_loss_percentage():
         rf"Percentage profit = (profit ÷ cost) × 100<br>"
         rf"= ({markup} ÷ {cost}) × 100 = <strong>{pct}%</strong>"
     )
-    hint = "Percentage profit is based on the cost price: (profit ÷ cost) × 100."
+    hint = (
+        "<strong>Key idea:</strong> percentage profit is always based on the <em>cost price</em>, not the selling price.<br>"
+        f"1. Profit = selling price − cost = £{selling} − £{cost} = £{markup}<br>"
+        f"2. Percentage profit = (profit ÷ cost) × 100 = ({markup} ÷ {cost}) × 100."
+    )
     return q, s, hint, 3, pct
 
 
@@ -770,7 +895,11 @@ def gcse_fdp_best_value_comparison():
         rf"{label_b}: £{unit_b:.2f} per item<br>"
         rf"<strong>{best}</strong> is better value (lower cost per item)."
     )
-    hint = "Find the cost of one item in each pack, then compare."
+    hint = (
+        "<strong>Key idea:</strong> better value means a lower cost <em>per item</em>, not necessarily a lower pack price.<br>"
+        "Divide each pack price by how many items it contains, then compare the unit costs.<br>"
+        "The pack with the smaller cost per item is better value."
+    )
     return q, s, hint, 3
 
 
@@ -788,7 +917,11 @@ def gcse_fdp_fraction_word_problem():
         rf"Pupils who walk = \( \dfrac{{{num}}}{{{den}}} \) × {total} = {taken}<br>"
         rf"Pupils who do not walk = {total} − {taken} = <strong>{left}</strong>"
     )
-    hint = "Find the fraction who walk first, then subtract from the total."
+    hint = (
+        "<strong>Key idea:</strong> read the question carefully — it asks for pupils who do <em>not</em> walk.<br>"
+        f"1. Find how many walk: {num}/{den} × {total} = {taken}<br>"
+        f"2. Subtract from the total: {total} − {taken} = pupils who do not walk."
+    )
     return q, s, hint, 3, left
 
 
@@ -2704,6 +2837,138 @@ def _surd_fields_answer(values, labels):
     }
 
 
+def _algebraic_answer(text, format_hint=None):
+    payload = {'type': 'algebraic', 'value': str(text)}
+    if format_hint:
+        payload['format_hint'] = format_hint
+    return payload
+
+
+def _algebraic_surd_binomial(const, coef, radicand, surd_sign='+', format_hint=None):
+    sign = '+' if str(surd_sign).strip() == '+' else '-'
+    payload = {
+        'type': 'algebraic',
+        'kind': 'surd_binomial',
+        'const': int(const),
+        'coef': int(coef),
+        'radicand': int(radicand),
+        'surd_sign': sign,
+    }
+    if format_hint:
+        payload['format_hint'] = format_hint
+    return payload
+
+
+def _algebraic_fraction_surd(coef, radicand, denom, format_hint=None):
+    payload = {
+        'type': 'algebraic_fraction',
+        'kind': 'surd_over_int',
+        'coef': int(coef),
+        'radicand': int(radicand),
+        'denom': int(denom),
+    }
+    if format_hint:
+        payload['format_hint'] = format_hint
+    return payload
+
+
+def _algebraic_fraction_binomial(
+    scale, const, radicand, denom, surd_coef=1, bracket_sign='-', format_hint=None
+):
+    sign = '-' if str(bracket_sign).strip() == '-' else '+'
+    payload = {
+        'type': 'algebraic_fraction',
+        'kind': 'binomial_over_int',
+        'scale': int(scale),
+        'const': int(const),
+        'surd_coef': int(surd_coef),
+        'radicand': int(radicand),
+        'denom': int(denom),
+        'bracket_sign': sign,
+    }
+    if format_hint:
+        payload['format_hint'] = format_hint
+    return payload
+
+
+def _algebraic_fraction_two_surds(rad1, rad2, denom, format_hint=None):
+    r1, r2 = sorted([int(rad1), int(rad2)])
+    payload = {
+        'type': 'algebraic_fraction',
+        'kind': 'two_surds_over_int',
+        'rad1': r1,
+        'rad2': r2,
+        'denom': int(denom),
+    }
+    if format_hint:
+        payload['format_hint'] = format_hint
+    return payload
+
+
+def _algebraic_fraction_hint_two_surds(rad1, rad2, denom):
+    r1, r2 = sorted([int(rad1), int(rad2)])
+    return (
+        f'Numerator like √{r1} + √{r2} (simplified surds OK, e.g. 3√2 + √5); '
+        f'denominator a whole number (leave blank if 1)'
+    )
+
+
+def _algebraic_fraction_hint_binomial(scale, const, rad, denom, bracket_sign='-'):
+    op = '−' if bracket_sign == '-' else '+'
+    inner = f'{const} {op} √{rad}'
+    if scale == 1:
+        factored = f'({inner})'
+    elif scale == -1:
+        factored = f'−({inner})'
+    elif scale > 0:
+        factored = f'{scale}({inner})'
+    else:
+        factored = f'−{abs(scale)}({inner})'
+    abs_scale = abs(scale)
+    sign = 1 if scale >= 0 else -1
+    int_part = sign * abs_scale * const
+    sc = -sign * abs_scale if bracket_sign == '-' else sign * abs_scale
+    exp_op = '+' if sc >= 0 else '−'
+    abs_sc = abs(sc)
+    expanded = (
+        f'{int_part} {exp_op} √{rad}'
+        if abs_sc == 1
+        else f'{int_part} {exp_op} {abs_sc}√{rad}'
+    )
+    return (
+        f'Numerator like {expanded} or {factored}; '
+        f'denominator a whole number (leave blank if 1)'
+    )
+
+
+def _algebraic_fraction_expanded_binomial(
+    int_part, surd_coef, radicand, denom, format_hint=None
+):
+    payload = {
+        'type': 'algebraic_fraction',
+        'kind': 'expanded_binomial_over_int',
+        'int_part': int(int_part),
+        'surd_coef': int(surd_coef),
+        'radicand': int(radicand),
+        'denom': int(denom),
+    }
+    if format_hint:
+        payload['format_hint'] = format_hint
+    return payload
+
+
+def _algebraic_fraction_hint_expanded_binomial(int_part, surd_coef, rad):
+    if surd_coef == 0:
+        return 'Enter the simplified value'
+    op = '+' if surd_coef >= 0 else '−'
+    abs_sc = abs(surd_coef)
+    surd = f'√{rad}' if abs_sc == 1 else f'{abs_sc}√{rad}'
+    return (
+        f'Numerator like {int_part} {op} {surd}; '
+        f'denominator a whole number (leave blank if 1)'
+    )
+
+
 def _surd_problem_from_output(out, difficulty):
     choice = problem_from_choice_output(out, difficulty, 'gcse', 'maths', 'surds')
     if choice:
@@ -2732,6 +2997,92 @@ def _surd_problem_from_output(out, difficulty):
                     ),
                     'answer_type': 'surd',
                     'answer_format_hint': 'e.g. √113 — use the √ button if needed',
+                }
+        elif isinstance(raw, dict) and raw.get('type') == 'algebraic':
+            if raw.get('kind') == 'surd_binomial':
+                const = int(raw['const'])
+                coef = int(raw['coef'])
+                rad = int(raw['radicand'])
+                sign = raw.get('surd_sign', '+')
+                extra = {
+                    'correct_answer_raw': f'{const}|{coef}|{rad}|{sign}',
+                    'answer_type': 'algebraic',
+                    'answer_format_hint': raw.get(
+                        'format_hint',
+                        (
+                            f'e.g. {const} + {coef}√{rad}'
+                            if sign == '+'
+                            else f'e.g. {const} − {coef}√{rad}'
+                        ),
+                    ),
+                }
+            else:
+                text = str(raw.get('value') or '')
+                extra = {
+                    'correct_answer_raw': text,
+                    'answer_type': 'algebraic',
+                    'answer_format_hint': raw.get('format_hint', 'e.g. a - b'),
+                }
+        elif isinstance(raw, dict) and raw.get('type') == 'algebraic_fraction':
+            kind = raw.get('kind')
+            if kind == 'surd_over_int':
+                coef = int(raw['coef'])
+                rad = int(raw['radicand'])
+                denom = int(raw['denom'])
+                num_display = _surd_fmt(coef, rad)
+                extra = {
+                    'correct_answer_raw': f'{coef}|{rad}|{denom}',
+                    'answer_type': 'algebraic_fraction',
+                    'answer_format_hint': raw.get(
+                        'format_hint',
+                        f'Numerator like {num_display}, denominator a whole number',
+                    ),
+                }
+            elif kind == 'binomial_over_int':
+                scale = int(raw['scale'])
+                const = int(raw['const'])
+                surd_coef = int(raw['surd_coef'])
+                rad = int(raw['radicand'])
+                denom = int(raw['denom'])
+                bracket_sign = raw.get('bracket_sign', '-')
+                extra = {
+                    'correct_answer_raw': (
+                        f'b|{scale}|{const}|{surd_coef}|{rad}|{denom}|{bracket_sign}'
+                    ),
+                    'answer_type': 'algebraic_fraction',
+                    'answer_format_hint': raw.get(
+                        'format_hint',
+                        _algebraic_fraction_hint_binomial(
+                            scale, const, rad, denom, bracket_sign
+                        ),
+                    ),
+                }
+            elif kind == 'two_surds_over_int':
+                rad1 = int(raw['rad1'])
+                rad2 = int(raw['rad2'])
+                denom = int(raw['denom'])
+                extra = {
+                    'correct_answer_raw': f'd|{rad1}|{rad2}|{denom}',
+                    'answer_type': 'algebraic_fraction',
+                    'answer_format_hint': raw.get(
+                        'format_hint',
+                        _algebraic_fraction_hint_two_surds(rad1, rad2, denom),
+                    ),
+                }
+            elif kind == 'expanded_binomial_over_int':
+                int_part = int(raw['int_part'])
+                surd_coef = int(raw['surd_coef'])
+                rad = int(raw['radicand'])
+                denom = int(raw['denom'])
+                extra = {
+                    'correct_answer_raw': f'e|{int_part}|{surd_coef}|{rad}|{denom}',
+                    'answer_type': 'algebraic_fraction',
+                    'answer_format_hint': raw.get(
+                        'format_hint',
+                        _algebraic_fraction_hint_expanded_binomial(
+                            int_part, surd_coef, rad
+                        ),
+                    ),
                 }
         elif isinstance(raw, (int, float)):
             extra = {
@@ -2932,7 +3283,7 @@ def gcse_surds_expand_simple():
     s = (rf"Use the difference of two squares pattern (p + q)(p − q) = p² − q²:<br>"
          rf"({a})² − (√{b})² = {a**2} − {b} = <strong>{result}</strong>")
     hint = r"(a + √b)(a − √b) = a² − b. The surd terms cancel out."
-    return q, s, hint, 2
+    return q, s, hint, 2, result
 
 def gcse_surds_expand_double():
     """Intermediate: expand (a + √b)(c + √b) — general double bracket"""
@@ -2950,7 +3301,7 @@ def gcse_surds_expand_double():
          rf"Last: √{b} × √{b} = {b}<br>"
          rf"Collect terms: ({a*c} + {b}) + ({a} + {c})√{b} = <strong>{const} + {coef}√{b}</strong>")
     hint = r"Use FOIL. Remember √b × √b = b (the surd disappears)."
-    return q, s, hint, 2
+    return q, s, hint, 2, _algebraic_surd_binomial(const, coef, b, '+')
 
 def gcse_surds_square_bracket():
     """Intermediate: expand (a + √b)² — write in form p + q√b"""
@@ -2965,7 +3316,7 @@ def gcse_surds_square_bracket():
          rf"= {a**2} + {coef}√{b} + {b}<br>"
          rf"= <strong>{const} + {coef}√{b}</strong>")
     hint = rf"(a + √b)² = a² + 2a√b + b. Don't forget the middle term 2a√b."
-    return q, s, hint, 2
+    return q, s, hint, 2, _algebraic_surd_binomial(const, coef, b, '+')
 
 def gcse_surds_square_bracket_minus():
     """Intermediate: expand (a − √b)² — write in form p + q√b"""
@@ -2979,28 +3330,28 @@ def gcse_surds_square_bracket_minus():
          rf"= {a**2} − {coef}√{b} + {b}<br>"
          rf"= <strong>{const} − {coef}√{b}</strong>")
     hint = rf"(a − √b)² = a² − 2a√b + b. Note: (−√b)² = +b."
-    return q, s, hint, 2
+    return q, s, hint, 2, _algebraic_surd_binomial(const, coef, b, '-')
 
 def gcse_surds_rationalise_simple():
     """Intermediate: rationalise 1/√a or k/√a"""
     a = random.choice(_SURD_PRIMES[:8])
     num = random.randint(1, 9)
-    import math as _m
-    # simplify num/a if possible
     from math import gcd
-    g   = gcd(num, a)
+    g = gcd(num, a)
     n_s = num // g
     d_s = a // g
     if d_s == 1:
-        ans = f"{n_s}√{a}"
+        ans = _surd_fmt(n_s, a)
+        raw = _surd_answer(n_s, a)
     else:
-        ans = f"{n_s}√{a} / {d_s}" if n_s > 1 else f"√{a} / {d_s}"
+        ans = f"{_surd_fmt(n_s, a)} / {d_s}"
+        raw = _algebraic_fraction_surd(n_s, a, d_s)
     q = rf"Rationalise the denominator of {num} / √{a}. Write your answer in its simplest form."
     s = (rf"Multiply numerator and denominator by √{a}:<br>"
          rf"({num} × √{a}) / (√{a} × √{a}) = {num}√{a} / {a}<br>"
          rf"Simplify: <strong>{ans}</strong>")
     hint = rf"Multiply top and bottom by √{a} to clear the surd from the denominator."
-    return q, s, hint, 2
+    return q, s, hint, 2, raw
 
 def gcse_surds_rationalise_compound():
     """Intermediate: rationalise k/(a + √b) using conjugate"""
@@ -3011,23 +3362,27 @@ def gcse_surds_rationalise_compound():
         if denom != 0:
             break
     num = random.choice([2, 3, 4, 5, 6, 8])
-    sign = "−" if denom > 0 else "+"
     abs_denom = abs(denom)
     from math import gcd
     g = gcd(num, abs_denom)
     n_s = num // g
     d_s = abs_denom // g
-    if denom < 0:
-        # flip signs
-        if d_s == 1:
-            ans = f"−{n_s}({a} − √{b})" if n_s > 1 else f"−({a} − √{b})"
-        else:
-            ans = f"−{n_s}({a} − √{b}) / {d_s}" if n_s > 1 else f"−({a} − √{b}) / {d_s}"
+    scale = n_s if denom > 0 else -n_s
+    if d_s == 1:
+        ans = (
+            f"−{n_s}({a} − √{b})" if denom < 0 and n_s > 1
+            else f"−({a} − √{b})" if denom < 0
+            else f"{n_s}({a} − √{b})" if n_s > 1
+            else f"({a} − √{b})"
+        )
     else:
-        if d_s == 1:
-            ans = f"{n_s}({a} − √{b})" if n_s > 1 else f"({a} − √{b})"
-        else:
-            ans = f"{n_s}({a} − √{b}) / {d_s}" if n_s > 1 else f"({a} − √{b}) / {d_s}"
+        ans = (
+            f"−{n_s}({a} − √{b}) / {d_s}" if denom < 0 and n_s > 1
+            else f"−({a} − √{b}) / {d_s}" if denom < 0
+            else f"{n_s}({a} − √{b}) / {d_s}" if n_s > 1
+            else f"({a} − √{b}) / {d_s}"
+        )
+    raw = _algebraic_fraction_binomial(scale, a, b, d_s, 1, '-')
     q = rf"Rationalise the denominator: {num} / ( {a} + √{b} )"
     s = (rf"Multiply top and bottom by the conjugate ( {a} − √{b} ):<br>"
          rf"Numerator: {num}({a} − √{b}) = {num*a} − {num}√{b}<br>"
@@ -3035,7 +3390,7 @@ def gcse_surds_rationalise_compound():
          rf"Result: ({num*a} − {num}√{b}) / {denom}<br>"
          rf"Simplified: <strong>{ans}</strong>")
     hint = rf"The conjugate of ({a} + √{b}) is ({a} − √{b}). Multiplying gives a² − b, removing the surd from the denominator."
-    return q, s, hint, 3
+    return q, s, hint, 3, raw
 
 def gcse_surds_show_that_rationalise():
     """Exam: 'show that' rationalise with a compound denominator"""
@@ -3072,7 +3427,11 @@ def gcse_surds_show_that_rationalise():
          rf"Result: ({new_const} + {new_coef}√{r}) / {new_denom}<br>"
          rf"Divide through by {g}: <strong>{target} ✓</strong>")
     hint = rf"Multiply top and bottom by the conjugate ({a} − √{r}) then expand both brackets fully before simplifying."
-    return q_text, s, hint, 3
+    if nk == 0:
+        raw = nc if abs(nd) == 1 else _fdp_raw(Fraction(nc, abs(nd)))
+    else:
+        raw = _algebraic_fraction_expanded_binomial(nc, nk, r, abs(nd))
+    return q_text, s, hint, 3, raw
 
 def gcse_surds_identity():
     """Exam: (√a + √b)(√a − √b) = a − b as an algebraic result"""
@@ -3081,7 +3440,7 @@ def gcse_surds_identity():
          r"Here p = √a and q = √b:<br>"
          r"(√a)² − (√b)² = <strong>a − b</strong>")
     hint = r"(√a + √b)(√a − √b) is a difference of two squares pattern."
-    return q_text, s, hint, 2
+    return q_text, s, hint, 2, _algebraic_answer('a-b', 'e.g. a - b')
 
 
 gcse_surds_identity._fixed_stem = True
@@ -3201,8 +3560,8 @@ def gcse_surds_practice_surd_equation():
     return q, s, hint, 3, x_val
 
 
-def gcse_surds_practice_rationalise_binomial_diff():
-    """Rationalise denominator √a − √b (conjugate has +)."""
+def gcse_surds_rationalise_binomial_diff():
+    """Rationalise 1/(√a − √b) using conjugate √a + √b in the numerator."""
     a, b, denom, ans = _surd_random_binomial_diff()
     q = rf"Rationalise the denominator: \( \dfrac{{1}}{{\sqrt{{{a}}} - \sqrt{{{b}}}}} \)"
     s = (
@@ -3210,8 +3569,17 @@ def gcse_surds_practice_rationalise_binomial_diff():
         rf"Denominator becomes \( {a} - {b} = {denom} \)<br>"
         rf"Answer: <strong>\( {ans} \)</strong>"
     )
-    hint = r"Use the conjugate √a + √b; the surds in the denominator cancel to give a whole number."
-    return q, s, hint, 4
+    hint = (
+        r"Multiply by the conjugate √a + √b. The denominator becomes a whole number; "
+        r"write the numerator as a sum of surds."
+    )
+    return q, s, hint, 3, _algebraic_fraction_two_surds(a, b, denom)
+
+
+def gcse_surds_practice_rationalise_binomial_diff():
+    """Difficult pool: rationalise 1/(√a − √b)."""
+    q, s, hint, _, raw = gcse_surds_rationalise_binomial_diff()
+    return q, s, hint, 4, raw
 
 
 def gcse_surds_practice_between_which_integers():
@@ -3269,6 +3637,7 @@ def gcse_maths_surds(difficulty, mode, variant_name=None):
             gcse_surds_square_bracket_minus,
             gcse_surds_rationalise_simple,
             gcse_surds_rationalise_compound,
+            gcse_surds_rationalise_binomial_diff,
             gcse_surds_practice_divide,
             gcse_surds_practice_compare,
             gcse_surds_practice_mixed_simplify,

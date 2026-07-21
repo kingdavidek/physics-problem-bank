@@ -492,6 +492,697 @@ def _format_surd(coeff: Decimal, radicand: Decimal) -> str:
     return f'{_format_number(coeff)}√{_format_number(radicand)}'
 
 
+def _normalize_algebraic_string(value) -> str:
+    s = str(value or '').strip().lower()
+    s = s.replace('\u221a', '√').replace('−', '-').replace('\u2212', '-')
+    s = re.sub(r'(?i)sqrt\((\d+)\)', r'√\1', s)
+    s = re.sub(r'\s+', '', s)
+    if s.startswith('+'):
+        s = s[1:]
+    return s
+
+
+def _format_algebraic_text(value) -> str:
+    return _normalize_algebraic_string(value)
+
+
+def _parse_algebraic_surd_binomial_raw(raw) -> tuple[int, int, int, str] | None:
+    s = str(raw or '').strip()
+    parts = s.split('|')
+    if len(parts) != 4:
+        return None
+    const = _parse_number(parts[0])
+    coef = _parse_number(parts[1])
+    rad = _parse_number(parts[2])
+    sign = parts[3].strip()
+    if const is None or coef is None or rad is None:
+        return None
+    if const != const.to_integral_value() or coef != coef.to_integral_value():
+        return None
+    if rad != rad.to_integral_value() or int(rad) <= 0:
+        return None
+    if sign not in ('+', '-'):
+        return None
+    return int(const), int(coef), int(rad), sign
+
+
+def _format_algebraic_surd_binomial(const: int, coef: int, radicand: int, sign: str) -> str:
+    surd = f'√{radicand}' if coef == 1 else f'{coef}√{radicand}'
+    op = '+' if sign == '+' else '-'
+    return f'{const}{op}{surd}'
+
+
+def _parse_algebraic_surd_binomial(value) -> tuple[int, int, int, str] | None:
+    s = _normalize_algebraic_string(value)
+    if not s:
+        return None
+
+    patterns = (
+        r'^(-?\d+)([+-])(?:(\d+)[×x*]?)?√(\d+)$',
+        r'^(?:(\d+)[×x*]?)?√(\d+)([+-])(-?\d+)$',
+    )
+    m = re.fullmatch(patterns[0], s)
+    if m:
+        const = int(m.group(1))
+        sign = m.group(2)
+        coef = int(m.group(3) or '1')
+        rad = int(m.group(4))
+        return const, coef, rad, sign
+
+    m = re.fullmatch(patterns[1], s)
+    if m:
+        coef = int(m.group(1) or '1')
+        rad = int(m.group(2))
+        sign = m.group(3)
+        const = int(m.group(4))
+        return const, coef, rad, sign
+
+    return None
+
+
+def _parse_algebraic_fraction_surd_raw(raw) -> tuple[int, int, int] | None:
+    """Parse coef|radicand|denom for k√r / n answers."""
+    s = str(raw or '').strip()
+    parts = s.split('|')
+    if len(parts) != 3 or parts[0] in ('b', 'd'):
+        return None
+    coef = _parse_number(parts[0])
+    rad = _parse_number(parts[1])
+    denom = _parse_number(parts[2])
+    if coef is None or rad is None or denom is None:
+        return None
+    if coef != coef.to_integral_value() or rad != rad.to_integral_value():
+        return None
+    if denom != denom.to_integral_value() or int(denom) <= 0:
+        return None
+    if int(rad) <= 0:
+        return None
+    return int(coef), int(rad), int(denom)
+
+
+def _parse_algebraic_fraction_binomial_raw(
+    raw,
+) -> tuple[int, int, int, int, int, str] | None:
+    s = str(raw or '').strip()
+    parts = s.split('|')
+    if len(parts) != 7 or parts[0] != 'b':
+        return None
+    scale = _parse_number(parts[1])
+    const = _parse_number(parts[2])
+    surd_coef = _parse_number(parts[3])
+    rad = _parse_number(parts[4])
+    denom = _parse_number(parts[5])
+    bracket_sign = parts[6].strip()
+    if None in (scale, const, surd_coef, rad, denom):
+        return None
+    for val in (scale, const, surd_coef, rad, denom):
+        if val != val.to_integral_value():
+            return None
+    if int(rad) <= 0 or int(denom) <= 0 or int(surd_coef) <= 0:
+        return None
+    if bracket_sign not in ('+', '-'):
+        return None
+    return (
+        int(scale), int(const), int(surd_coef), int(rad), int(denom), bracket_sign
+    )
+
+
+def _parse_algebraic_fraction_two_surds_raw(
+    raw,
+) -> tuple[tuple[tuple[int, int], tuple[int, int]], int] | None:
+    s = str(raw or '').strip()
+    parts = s.split('|')
+    if len(parts) != 4 or parts[0] != 'd':
+        return None
+    rad1 = _parse_number(parts[1])
+    rad2 = _parse_number(parts[2])
+    denom = _parse_number(parts[3])
+    if rad1 is None or rad2 is None or denom is None:
+        return None
+    if rad1 != rad1.to_integral_value() or rad2 != rad2.to_integral_value():
+        return None
+    if denom != denom.to_integral_value() or int(denom) <= 0:
+        return None
+    if int(rad1) <= 0 or int(rad2) <= 0:
+        return None
+    terms = _normalize_two_surd_sum_terms(int(rad1), int(rad2))
+    return terms, int(denom)
+
+
+def _simplify_algebraic_fraction_surd(
+    coef: int, radicand: int, denom: int
+) -> tuple[int, int, int]:
+    if coef == 0:
+        return 0, radicand, denom
+    g = math.gcd(abs(coef), denom)
+    return coef // g, radicand, denom // g
+
+
+def _binomial_to_expanded(
+    scale: int, const: int, surd_coef: int, rad: int, bracket_sign: str
+) -> tuple[int, int, int]:
+    abs_scale = abs(scale)
+    sign = 1 if scale >= 0 else -1
+    int_part = sign * abs_scale * const
+    if bracket_sign == '-':
+        surd_part = -sign * abs_scale * surd_coef
+    else:
+        surd_part = sign * abs_scale * surd_coef
+    return int_part, surd_part, rad
+
+
+def _simplify_binomial_expanded(
+    int_part: int, surd_coef: int, rad: int, denom: int
+) -> tuple[int, int, int, int]:
+    g = math.gcd(math.gcd(abs(int_part), abs(surd_coef)), denom)
+    return int_part // g, surd_coef // g, rad, denom // g
+
+
+def _format_algebraic_fraction_surd(coef: int, radicand: int, denom: int) -> str:
+    num = _format_surd(Decimal(coef), Decimal(radicand))
+    if denom == 1:
+        return num
+    return f'{num}/{denom}'
+
+
+def _format_binomial_expanded(int_part: int, surd_coef: int, rad: int, denom: int) -> str:
+    op = '+' if surd_coef >= 0 else '-'
+    abs_sc = abs(surd_coef)
+    surd = f'√{rad}' if abs_sc == 1 else f'{abs_sc}√{rad}'
+    num = f'{int_part}{op}{surd}'
+    if denom == 1:
+        return num
+    return f'{num}/{denom}'
+
+
+def _format_two_surds(rads: tuple[int, int], denom: int) -> str:
+    num = f'√{rads[0]}+√{rads[1]}'
+    if denom == 1:
+        return num
+    return f'{num}/{denom}'
+
+
+def _canonical_surd_term(coef: int, radicand: int) -> tuple[int, int]:
+    c, r = _simplify_surd_pair(Decimal(coef), Decimal(radicand))
+    return int(c), int(r)
+
+
+def _normalize_two_surd_sum_terms(
+    rad1: int, rad2: int,
+) -> tuple[tuple[int, int], tuple[int, int]]:
+    terms = sorted(
+        [_canonical_surd_term(1, rad1), _canonical_surd_term(1, rad2)],
+        key=lambda t: (t[1], t[0]),
+    )
+    return terms[0], terms[1]
+
+
+def _format_two_surd_sum_terms(
+    terms: tuple[tuple[int, int], tuple[int, int]], denom: int,
+) -> str:
+    parts = []
+    for coef, rad in terms:
+        if coef == 1:
+            parts.append(f'√{rad}')
+        else:
+            parts.append(f'{coef}√{rad}')
+    num = '+'.join(parts)
+    if denom == 1:
+        return num
+    return f'{num}/{denom}'
+
+
+def _parse_two_surd_sum_numerator(
+    value: str,
+) -> tuple[tuple[int, int], tuple[int, int]] | None:
+    s = _normalize_algebraic_string(value)
+    if not s:
+        return None
+    if s.startswith('(') and s.endswith(')'):
+        s = s[1:-1]
+    if '-' in s:
+        return None
+    parts = [p for p in s.split('+') if p]
+    if len(parts) != 2:
+        return None
+    terms = []
+    for part in parts:
+        parsed = _parse_surd_expression(part)
+        if parsed is None:
+            return None
+        terms.append(_canonical_surd_term(int(parsed[0]), int(parsed[1])))
+    ordered = sorted(terms, key=lambda t: (t[1], t[0]))
+    return ordered[0], ordered[1]
+
+
+def _split_algebraic_fraction_user(value) -> tuple[str, int] | None:
+    raw = str(value or '').strip()
+    if not raw:
+        return None
+    if '|' in raw:
+        num_text, den_s = raw.rsplit('|', 1)
+        num_text = num_text.strip()
+        if not num_text:
+            return None
+        den_s = den_s.strip()
+        if not den_s:
+            return num_text, 1
+        denom = _parse_number(den_s)
+        if denom is None or denom != denom.to_integral_value() or int(denom) <= 0:
+            return None
+        return num_text, int(denom)
+    s = _normalize_algebraic_string(raw)
+    if '/' not in s:
+        return raw.strip(), 1
+    m = re.fullmatch(r'(.+)/(\d+)', s)
+    if not m:
+        return None
+    denom = _parse_number(m.group(2))
+    if denom is None or int(denom) <= 0:
+        return None
+    return m.group(1), int(denom)
+
+
+def _parse_algebraic_fraction_surd_user(value) -> tuple[int, int, int] | None:
+    split = _split_algebraic_fraction_user(value)
+    if split is None:
+        return None
+    num_text, denom = split
+    surd = _parse_surd_expression(num_text)
+    if surd is None:
+        return None
+    coef, rad = int(surd[0]), int(surd[1])
+    return _simplify_algebraic_fraction_surd(coef, rad, denom)
+
+
+def _parse_algebraic_fraction_binomial_user(
+    value,
+) -> tuple[int, int, int, int] | None:
+    split = _split_algebraic_fraction_user(value)
+    if split is None:
+        return None
+    num_text, denom = split
+    s = _normalize_algebraic_string(num_text)
+    if not s:
+        return None
+
+    m = re.fullmatch(
+        r'^(-?)(\d+)\((\d+)([+-])((?:\d+[×x*]?)?)?√(\d+)\)$',
+        s,
+    )
+    if m:
+        scale = int(m.group(2))
+        if m.group(1) == '-':
+            scale = -scale
+        const = int(m.group(3))
+        bracket_sign = m.group(4)
+        coef_raw = m.group(5) or '1'
+        if coef_raw[-1] in '×x*':
+            surd_coef = int(coef_raw[:-1])
+        else:
+            surd_coef = int(coef_raw)
+        rad = int(m.group(6))
+        int_part, sc, r = _binomial_to_expanded(
+            scale, const, surd_coef, rad, bracket_sign
+        )
+        return _simplify_binomial_expanded(int_part, sc, r, denom)
+
+    m = re.fullmatch(r'^-\((\d+)([+-])((?:\d+[×x*]?)?)?√(\d+)\)$', s)
+    if m:
+        const = int(m.group(1))
+        bracket_sign = m.group(2)
+        coef_raw = m.group(3) or '1'
+        if coef_raw[-1] in '×x*':
+            surd_coef = int(coef_raw[:-1])
+        else:
+            surd_coef = int(coef_raw)
+        rad = int(m.group(4))
+        int_part, sc, r = _binomial_to_expanded(
+            -1, const, surd_coef, rad, bracket_sign
+        )
+        return _simplify_binomial_expanded(int_part, sc, r, denom)
+
+    m = re.fullmatch(r'^\((\d+)([+-])((?:\d+[×x*]?)?)?√(\d+)\)$', s)
+    if m:
+        const = int(m.group(1))
+        bracket_sign = m.group(2)
+        coef_raw = m.group(3) or '1'
+        if coef_raw[-1] in '×x*':
+            surd_coef = int(coef_raw[:-1])
+        else:
+            surd_coef = int(coef_raw)
+        rad = int(m.group(4))
+        int_part, sc, r = _binomial_to_expanded(
+            1, const, surd_coef, rad, bracket_sign
+        )
+        return _simplify_binomial_expanded(int_part, sc, r, denom)
+
+    m = re.fullmatch(r'^\((-?\d+)([+-])((?:\d+[×x*]?)?)?√(\d+)\)$', s)
+    if m:
+        int_part = int(m.group(1))
+        sign = m.group(2)
+        coef_raw = m.group(3) or '1'
+        if coef_raw[-1] in '×x*':
+            surd_coef = int(coef_raw[:-1])
+        else:
+            surd_coef = int(coef_raw)
+        rad = int(m.group(4))
+        sc = surd_coef if sign == '+' else -surd_coef
+        return _simplify_binomial_expanded(int_part, sc, rad, denom)
+
+    m = re.fullmatch(r'^(-?\d+)([+-])((?:\d+[×x*]?)?)?√(\d+)$', s)
+    if m:
+        int_part = int(m.group(1))
+        sign = m.group(2)
+        coef_raw = m.group(3) or '1'
+        if coef_raw[-1] in '×x*':
+            surd_coef = int(coef_raw[:-1])
+        else:
+            surd_coef = int(coef_raw)
+        rad = int(m.group(4))
+        sc = surd_coef if sign == '+' else -surd_coef
+        return _simplify_binomial_expanded(int_part, sc, rad, denom)
+
+    return None
+
+
+def _parse_algebraic_fraction_two_surds_user(
+    value,
+) -> tuple[tuple[tuple[int, int], tuple[int, int]], int] | None:
+    split = _split_algebraic_fraction_user(value)
+    if split is None:
+        return None
+    num_text, denom = split
+    terms = _parse_two_surd_sum_numerator(num_text)
+    if terms is None:
+        return None
+    return terms, denom
+
+
+def _parse_algebraic_fraction_expanded_binomial_raw(
+    raw,
+) -> tuple[int, int, int, int] | None:
+    s = str(raw or '').strip()
+    parts = s.split('|')
+    if len(parts) != 5 or parts[0] != 'e':
+        return None
+    int_part = _parse_number(parts[1])
+    surd_coef = _parse_number(parts[2])
+    rad = _parse_number(parts[3])
+    denom = _parse_number(parts[4])
+    if None in (int_part, surd_coef, rad, denom):
+        return None
+    for val in (int_part, surd_coef, rad, denom):
+        if val != val.to_integral_value():
+            return None
+    if int(rad) <= 0 or int(denom) <= 0:
+        return None
+    return _simplify_binomial_expanded(
+        int(int_part), int(surd_coef), int(rad), int(denom)
+    )
+
+
+def _binomial_expanded_answers_equal(
+    expected: tuple[int, int, int, int],
+    actual: tuple[int, int, int, int],
+) -> bool:
+    if expected[1] == 0:
+        return (
+            actual[1] == 0
+            and expected[0] == actual[0]
+            and expected[3] == actual[3]
+        )
+    return expected == actual
+
+
+def _check_algebraic_fraction_expanded_binomial(correct_raw, user_answer) -> dict:
+    expected = _parse_algebraic_fraction_expanded_binomial_raw(correct_raw)
+    if expected is None:
+        raise ValueError('invalid_correct_answer')
+
+    normalized_correct = _format_binomial_expanded(*expected)
+
+    raw_user = str(user_answer or '').strip()
+    if not raw_user:
+        return {
+            'correct': False,
+            'normalized_user': '',
+            'normalized_correct': normalized_correct,
+            'feedback': 'Enter the numerator and denominator.',
+        }
+
+    actual = _parse_algebraic_fraction_binomial_user(raw_user)
+    if actual is None and expected[1] == 0:
+        split = _split_algebraic_fraction_user(raw_user)
+        if split is not None:
+            val = _parse_number(split[0])
+            if val is not None and val == val.to_integral_value():
+                actual = _simplify_binomial_expanded(
+                    int(val), 0, expected[2], split[1]
+                )
+
+    if actual is None:
+        return {
+            'correct': False,
+            'normalized_user': raw_user,
+            'normalized_correct': normalized_correct,
+            'feedback': (
+                'Write the numerator like 6 − 3√3 (or 3(2 − √3)); '
+                'denominator optional if it is 1.'
+            ),
+        }
+
+    correct = _binomial_expanded_answers_equal(expected, actual)
+    return {
+        'correct': correct,
+        'normalized_user': _format_binomial_expanded(*actual),
+        'normalized_correct': normalized_correct,
+        'feedback': (
+            'Correct!'
+            if correct
+            else 'Not quite — check your simplified numerator and denominator.'
+        ),
+    }
+
+
+def _check_algebraic_fraction_surd(correct_raw, user_answer) -> dict:
+    expected = _parse_algebraic_fraction_surd_raw(correct_raw)
+    if expected is None:
+        raise ValueError('invalid_correct_answer')
+
+    exp_coef, exp_rad, exp_denom = _simplify_algebraic_fraction_surd(*expected)
+    normalized_correct = _format_algebraic_fraction_surd(
+        exp_coef, exp_rad, exp_denom
+    )
+
+    raw_user = str(user_answer or '').strip()
+    if not raw_user:
+        return {
+            'correct': False,
+            'normalized_user': '',
+            'normalized_correct': normalized_correct,
+            'feedback': 'Enter the numerator and denominator.',
+        }
+
+    actual = _parse_algebraic_fraction_surd_user(raw_user)
+    if actual is None:
+        return {
+            'correct': False,
+            'normalized_user': raw_user,
+            'normalized_correct': normalized_correct,
+            'feedback': (
+                'Write the numerator as a surd (e.g. 3√5) and the denominator '
+                'as a whole number.'
+            ),
+        }
+
+    act_coef, act_rad, act_denom = actual
+    correct = (
+        act_coef == exp_coef
+        and act_rad == exp_rad
+        and act_denom == exp_denom
+    )
+    return {
+        'correct': correct,
+        'normalized_user': _format_algebraic_fraction_surd(
+            act_coef, act_rad, act_denom
+        ),
+        'normalized_correct': normalized_correct,
+        'feedback': (
+            'Correct!'
+            if correct
+            else 'Not quite — check your surd numerator and simplified denominator.'
+        ),
+    }
+
+
+def _check_algebraic_fraction_binomial(correct_raw, user_answer) -> dict:
+    expected = _parse_algebraic_fraction_binomial_raw(correct_raw)
+    if expected is None:
+        raise ValueError('invalid_correct_answer')
+
+    scale, const, surd_coef, rad, denom, bracket_sign = expected
+    exp = _simplify_binomial_expanded(
+        *_binomial_to_expanded(scale, const, surd_coef, rad, bracket_sign),
+        denom,
+    )
+    normalized_correct = _format_binomial_expanded(*exp)
+
+    raw_user = str(user_answer or '').strip()
+    if not raw_user:
+        return {
+            'correct': False,
+            'normalized_user': '',
+            'normalized_correct': normalized_correct,
+            'feedback': 'Enter the numerator and denominator.',
+        }
+
+    actual = _parse_algebraic_fraction_binomial_user(raw_user)
+    if actual is None:
+        return {
+            'correct': False,
+            'normalized_user': raw_user,
+            'normalized_correct': normalized_correct,
+            'feedback': (
+                'Write the numerator like 6 − 3√3 or 2(4 − √6); '
+                'denominator optional if it is 1.'
+            ),
+        }
+
+    correct = actual == exp
+    return {
+        'correct': correct,
+        'normalized_user': _format_binomial_expanded(*actual),
+        'normalized_correct': normalized_correct,
+        'feedback': (
+            'Correct!'
+            if correct
+            else 'Not quite — check your simplified numerator and denominator.'
+        ),
+    }
+
+
+def _check_algebraic_fraction_two_surds(correct_raw, user_answer) -> dict:
+    expected = _parse_algebraic_fraction_two_surds_raw(correct_raw)
+    if expected is None:
+        raise ValueError('invalid_correct_answer')
+
+    exp_terms, exp_denom = expected
+    normalized_correct = _format_two_surd_sum_terms(exp_terms, exp_denom)
+
+    raw_user = str(user_answer or '').strip()
+    if not raw_user:
+        return {
+            'correct': False,
+            'normalized_user': '',
+            'normalized_correct': normalized_correct,
+            'feedback': 'Enter the numerator and denominator.',
+        }
+
+    actual = _parse_algebraic_fraction_two_surds_user(raw_user)
+    if actual is None:
+        return {
+            'correct': False,
+            'normalized_user': raw_user,
+            'normalized_correct': normalized_correct,
+            'feedback': (
+                'Write the numerator as a sum of two surds (e.g. √18 + √10); '
+                'denominator optional if it is 1.'
+            ),
+        }
+
+    act_terms, act_denom = actual
+    correct = act_terms == exp_terms and act_denom == exp_denom
+    return {
+        'correct': correct,
+        'normalized_user': _format_two_surd_sum_terms(act_terms, act_denom),
+        'normalized_correct': normalized_correct,
+        'feedback': (
+            'Correct!'
+            if correct
+            else 'Not quite — check your surd sum and denominator.'
+        ),
+    }
+
+
+@register_checker('algebraic_fraction')
+def check_algebraic_fraction(correct_raw, user_answer):
+    s = str(correct_raw or '').strip()
+    if s.startswith('b|'):
+        return _check_algebraic_fraction_binomial(correct_raw, user_answer)
+    if s.startswith('e|'):
+        return _check_algebraic_fraction_expanded_binomial(correct_raw, user_answer)
+    if s.startswith('d|'):
+        return _check_algebraic_fraction_two_surds(correct_raw, user_answer)
+    return _check_algebraic_fraction_surd(correct_raw, user_answer)
+
+
+@register_checker('algebraic')
+def check_algebraic(correct_raw, user_answer):
+    binomial = _parse_algebraic_surd_binomial_raw(correct_raw)
+    if binomial is not None:
+        exp_const, exp_coef, exp_rad, exp_sign = binomial
+        normalized_correct = _format_algebraic_surd_binomial(
+            exp_const, exp_coef, exp_rad, exp_sign
+        )
+
+        raw_user = str(user_answer or '').strip()
+        if not raw_user:
+            return {
+                'correct': False,
+                'normalized_user': '',
+                'normalized_correct': normalized_correct,
+                'feedback': 'Enter your answer in the form p + q√r.',
+            }
+
+        actual = _parse_algebraic_surd_binomial(raw_user)
+        if actual is None:
+            return {
+                'correct': False,
+                'normalized_user': raw_user,
+                'normalized_correct': normalized_correct,
+                'feedback': 'Use the form p + q√r, e.g. 7 + 12√5 (click √ if needed).',
+            }
+
+        act_const, act_coef, act_rad, act_sign = actual
+        correct = (
+            act_const == exp_const
+            and act_coef == exp_coef
+            and act_rad == exp_rad
+            and act_sign == exp_sign
+        )
+        return {
+            'correct': correct,
+            'normalized_user': _format_algebraic_surd_binomial(
+                act_const, act_coef, act_rad, act_sign
+            ),
+            'normalized_correct': normalized_correct,
+            'feedback': 'Correct!' if correct else 'Not quite — check your integer and surd terms.',
+        }
+
+    normalized_correct = _format_algebraic_text(correct_raw)
+    if not normalized_correct:
+        raise ValueError('invalid_correct_answer')
+
+    raw_user = str(user_answer or '').strip()
+    if not raw_user:
+        return {
+            'correct': False,
+            'normalized_user': '',
+            'normalized_correct': normalized_correct,
+            'feedback': 'Enter your simplified expression.',
+        }
+
+    normalized_user = _format_algebraic_text(raw_user)
+    correct = normalized_user == normalized_correct
+    return {
+        'correct': correct,
+        'normalized_user': normalized_user,
+        'normalized_correct': normalized_correct,
+        'feedback': 'Correct!' if correct else 'Not quite — check your simplified expression.',
+    }
+
+
 @register_checker('surd')
 def check_surd(correct_raw, user_answer):
     expected = _parse_surd_pair(correct_raw)

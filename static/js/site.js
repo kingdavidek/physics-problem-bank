@@ -377,6 +377,8 @@
     if (row.classList.contains('free-response-row--number-fields')) return 'number_fields';
     if (row.classList.contains('free-response-row--pi-multiple')) return 'pi_multiple';
     if (row.classList.contains('free-response-row--surd')) return 'surd';
+    if (row.classList.contains('free-response-row--algebraic')) return 'algebraic';
+    if (row.classList.contains('free-response-row--algebraic-fraction')) return 'algebraic_fraction';
     return 'number';
   }
 
@@ -513,6 +515,39 @@
         '</div>'
       );
     }
+    if (answerType === 'algebraic') {
+      var algPh = formatHint || 'e.g. a - b';
+      return (
+        '<div class="free-response-row free-response-row--algebraic">' +
+        '<input type="text" class="free-response-input free-response-input-algebraic" placeholder="' + esc(algPh) + '" autocomplete="off" inputmode="text" aria-label="Algebraic answer">' +
+        '<button type="button" class="btn btn-secondary free-response-surd-btn" aria-label="Insert square root symbol">√</button>' +
+        '<button type="button" class="btn free-response-check-btn">Check</button>' +
+        '</div>'
+      );
+    }
+    if (answerType === 'algebraic_fraction') {
+      var fracNumPh = 'e.g. 6 − 3√3';
+      var hintLower = formatHint.toLowerCase();
+      if (hintLower.indexOf('+ √') !== -1 || hintLower.indexOf('+√') !== -1) {
+        var sumMatch = formatHint.match(/√\d+\s*\+\s*√\d+/);
+        if (sumMatch) {
+          fracNumPh = 'e.g. ' + sumMatch[0].replace(/\s+/g, ' ');
+        } else {
+          fracNumPh = 'e.g. √18 + √10';
+        }
+      }
+      return (
+        '<div class="free-response-row free-response-row--algebraic-fraction">' +
+        '<div class="free-response-fraction-stack" aria-label="Fraction answer">' +
+        '<input type="text" class="free-response-input free-response-input-alg-frac-num" placeholder="' + esc(fracNumPh) + '" autocomplete="off" inputmode="text" aria-label="Numerator">' +
+        '<span class="free-response-fraction-bar" aria-hidden="true"></span>' +
+        '<input type="text" class="free-response-input free-response-input-alg-frac-den" placeholder="1 if none" autocomplete="off" inputmode="numeric" aria-label="Denominator">' +
+        '</div>' +
+        '<button type="button" class="btn btn-secondary free-response-surd-btn" aria-label="Insert square root symbol">√</button>' +
+        '<button type="button" class="btn free-response-check-btn">Check</button>' +
+        '</div>'
+      );
+    }
     var placeholder = formatHint || 'Enter a number';
     var numberInputMode = formatHint.toLowerCase().indexOf('fraction') !== -1
       ? 'text'
@@ -542,7 +577,9 @@
 
   function wireSurdInsertButton(block) {
     var btn = block.querySelector('.free-response-surd-btn');
-    var input = block.querySelector('.free-response-input-surd');
+    var input = block.querySelector('.free-response-input-surd')
+      || block.querySelector('.free-response-input-algebraic')
+      || block.querySelector('.free-response-input-alg-frac-num');
     if (!btn || !input || btn.dataset.surdInit === '1') return;
     btn.dataset.surdInit = '1';
     btn.addEventListener('click', function () {
@@ -572,7 +609,7 @@
 
   function setFreeResponseInputMode(block, answerType) {
     ensureFreeResponseRow(block, answerType);
-    if (answerType === 'surd') {
+    if (answerType === 'surd' || answerType === 'algebraic' || answerType === 'algebraic_fraction') {
       wireSurdInsertButton(block);
     }
   }
@@ -804,6 +841,19 @@
         var surdInput = block.querySelector('.free-response-input-surd');
         return { single: surdInput, all: surdInput ? [surdInput] : [] };
       }
+      if (answerType === 'algebraic') {
+        var algInput = block.querySelector('.free-response-input-algebraic');
+        return { single: algInput, all: algInput ? [algInput] : [] };
+      }
+      if (answerType === 'algebraic_fraction') {
+        var fracNum = block.querySelector('.free-response-input-alg-frac-num');
+        var fracDen = block.querySelector('.free-response-input-alg-frac-den');
+        return {
+          num: fracNum,
+          den: fracDen,
+          all: [fracNum, fracDen].filter(Boolean),
+        };
+      }
       if (answerType === 'number_fields') {
         var fields = Array.prototype.slice.call(
           block.querySelectorAll('.free-response-input-field')
@@ -833,6 +883,13 @@
           return (input.value || '').trim();
         }).join('|');
       }
+      if (answerType === 'algebraic_fraction') {
+        if (!inputs.num) return '';
+        var num = (inputs.num.value || '').trim();
+        if (!num) return '';
+        var den = inputs.den ? (inputs.den.value || '').trim() : '';
+        return num + '|' + (den || '1');
+      }
       return inputs.single ? (inputs.single.value || '').trim() : '';
     }
 
@@ -852,6 +909,9 @@
           return !(input.value || '').trim();
         });
       }
+      if (answerType === 'algebraic_fraction') {
+        return !(inputs.num && (inputs.num.value || '').trim());
+      }
       return !readUserAnswer();
     }
 
@@ -863,6 +923,8 @@
       if (answerType === 'number_list') return 'Enter your answer.';
       if (answerType === 'pi_multiple') return 'Enter the coefficient of π.';
       if (answerType === 'surd') return 'Enter your answer in surd form.';
+      if (answerType === 'algebraic') return 'Enter your simplified expression.';
+      if (answerType === 'algebraic_fraction') return 'Enter the surd numerator (denominator optional if it is 1).';
       return 'Enter an answer first.';
     }
 
