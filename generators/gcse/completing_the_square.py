@@ -1,6 +1,8 @@
 """
 GCSE Maths – Completing the Square
 5 foundational · 5 intermediate · 5 difficult · 8 MCQ (randomised each time)
+Graded practice variants return (question, solution, hint, marks, raw).
+Completed-form / show-that variants stay as 4-tuples.
 """
 import math
 import random
@@ -49,6 +51,98 @@ def _completed_form(p, k):
     return rf"{inner}^2 {tail}".strip()
 
 
+def _cts_raw(value):
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        if value == int(value):
+            return str(int(value))
+        return f"{value:g}"
+    return str(value)
+
+
+def _cts_quadratic_roots_answer(*roots):
+    return {'type': 'quadratic_roots', 'roots': tuple(_cts_raw(r) for r in roots)}
+
+
+def _cts_quadratic_roots_hint(*roots):
+    joined = ','.join(str(r) for r in roots)
+    if 'sqrt' in joined.lower():
+        return 'e.g. -3+√14, -3-√14 — use the ± and √ buttons'
+    return 'Enter roots separated by commas (e.g. 3, -2). Use ± and √ for surd answers.'
+
+
+def _cts_pair_answer(val_a, val_b, label_a='x', label_b='y', sep=','):
+    return {
+        'type': 'number_pair',
+        'values': (_cts_raw(val_a), _cts_raw(val_b)),
+        'label_a': label_a,
+        'label_b': label_b,
+        'sep': sep,
+    }
+
+
+def _cts_completed_square_answer(kind, *values, subject=None):
+    payload = {
+        'type': 'completed_square',
+        'kind': str(kind),
+        'values': tuple(_cts_raw(v) for v in values),
+    }
+    if subject:
+        payload['subject'] = str(subject)
+    return payload
+
+
+def _cts_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict):
+            raw_type = raw.get('type')
+            if raw_type == 'quadratic_roots':
+                roots = raw.get('roots') or ()
+                extra = {
+                    'correct_answer_raw': ','.join(str(r) for r in roots),
+                    'answer_type': 'quadratic_roots',
+                    'answer_format_hint': _cts_quadratic_roots_hint(*roots),
+                }
+            elif raw_type == 'number_pair':
+                val_a, val_b = raw['values']
+                extra = {
+                    'correct_answer_raw': f'{val_a}|{val_b}',
+                    'answer_type': 'number_pair',
+                    'answer_labels': [raw['label_a'], raw['label_b']],
+                    'answer_pair_sep': raw.get('sep', 'and'),
+                }
+            elif raw_type == 'completed_square':
+                kind = raw.get('kind') or 'plus'
+                values = raw.get('values') or ()
+                extra = {
+                    'correct_answer_raw': '|'.join([kind, *values]),
+                    'answer_type': 'completed_square',
+                    'answer_template_kind': kind,
+                    'answer_subject': raw.get('subject', ''),
+                    'answer_format_hint': 'Use + or − for each term, then enter each number',
+                }
+        elif isinstance(raw, (int, float)):
+            extra = {
+                'correct_answer_raw': _cts_raw(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+        elif isinstance(raw, str):
+            extra = {
+                'correct_answer_raw': raw,
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+    return make_problem(
+        q, s, hint, difficulty, marks,
+        'gcse', 'maths', 'completing_the_square', **extra
+    )
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # FOUNDATIONAL (5)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -63,7 +157,7 @@ def _cts_f_half_coefficient():
         rf"What is the value of <strong>p</strong> in \((x + p)^2 + \ldots\)?"
     )
     s = rf"Half of {b} is {p}, so <strong>\(p = {p}\)</strong>."
-    return q, s, "For x² + bx + …, take half of b (the number in front of x).", 1
+    return q, s, "For x² + bx + …, take half of b (the number in front of x).", 1, p
 
 
 def _cts_f_square_the_half():
@@ -72,7 +166,7 @@ def _cts_f_square_the_half():
     sq = p * p
     q = rf"The x² + {b}x + … form uses half the x-coefficient ({p}). What number do you <strong>subtract</strong> when building \((x + {p})^2\)?"
     s = rf"Square the half: {p}² = <strong>{sq}</strong>."
-    return q, s, "You subtract p² when rewriting the constant part.", 1
+    return q, s, "You subtract p² when rewriting the constant part.", 1, sq
 
 
 def _cts_f_write_completed_form():
@@ -89,7 +183,7 @@ def _cts_f_write_completed_form():
         rf"\((x + {p})^2 - {p*p} {q_str} = (x + {p})^2 {k_str}\)<br>"
         rf"<strong>\((x + {p})^2 {k_str}\)</strong>"
     )
-    return q, s, f"Half of {b} is {p}; subtract {p}² = {p*p} from the constant.", 2
+    return q, s, f"Half of {b} is {p}; subtract {p}² = {p*p} from the constant.", 2, _cts_completed_square_answer('plus', p, k)
 
 
 def _cts_f_expand_check():
@@ -101,7 +195,7 @@ def _cts_f_expand_check():
     b = 2 * p
     c_str = _fmt_const(expanded_c)
     s = rf"\(x^2 {_fmt_linear_x(b)} {c_str}\)"
-    return q, s, "Expand the square first, then add the constant.", 2
+    return q, s, "Expand the square first, then add the constant.", 2, _cts_completed_square_answer('expand', b, expanded_c)
 
 
 def _cts_f_missing_constant():
@@ -110,7 +204,7 @@ def _cts_f_missing_constant():
     b = 2 * p
     q = rf"You are completing \(x^2 {_fmt_linear_x(b)} + c\). What must <strong>c</strong> be so the expression becomes \((x + {p})^2\)?"
     s = rf"Need \(c = {p}^2 = {target}\), so <strong>\(c = {target}\)</strong>."
-    return q, s, "A perfect square trinomial has c = (half of b)².", 2
+    return q, s, "A perfect square trinomial has c = (half of b)².", 2, target
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -131,7 +225,7 @@ def _cts_i_complete_expression():
         rf"Adjust the constant: \((x + {p})^2 - {p*p} {q_str} = (x + {p})^2 {k_str}\)<br>"
         rf"<strong>\((x + {p})^2 {k_str}\)</strong>"
     )
-    return q, s, f"Use p = {p}, then adjust the constant by −{p*p}.", 3
+    return q, s, f"Use p = {p}, then adjust the constant by −{p*p}.", 3, _cts_completed_square_answer('plus', p, k)
 
 
 def _cts_i_solve_integer_roots():
@@ -148,7 +242,7 @@ def _cts_i_solve_integer_roots():
         rf"\(x + {p} = \pm {d}\)<br>"
         rf"<strong>\(x = {r1}\) or \(x = {r2}\)</strong>"
     )
-    return q, sol, "Move the constant, complete the square, then square-root both sides.", 4
+    return q, sol, "Move the constant, complete the square, then square-root both sides.", 4, _cts_quadratic_roots_answer(r1, r2)
 
 
 def _cts_i_turning_point():
@@ -161,7 +255,7 @@ def _cts_i_turning_point():
         rf"State the coordinates of the minimum."
     )
     s = rf"Completed form shows minimum at <strong>\(({-p},\, {k})\)</strong>."
-    return q, s, "For (x + p)² + k with positive square, turning point is (−p, k).", 3
+    return q, s, "For (x + p)² + k with positive square, turning point is (−p, k).", 3, _cts_pair_answer(-p, k, 'x', 'y')
 
 
 def _cts_i_solve_rearrange_first():
@@ -177,7 +271,7 @@ def _cts_i_solve_rearrange_first():
         rf"\(x + {p} = \pm {root}\)<br>"
         rf"<strong>\(x = {x1}\) or \(x = {x2}\)</strong>"
     )
-    return q, s, f"Add {p}² to both sides after isolating the x terms.", 3
+    return q, s, f"Add {p}² to both sides after isolating the x terms.", 3, _cts_quadratic_roots_answer(x1, x2)
 
 
 def _cts_i_negative_x_coeff():
@@ -193,7 +287,7 @@ def _cts_i_negative_x_coeff():
         rf"Adjust the constant: \((x - {p})^2 - {p*p} + {q_val} = (x - {p})^2 {k_str}\)<br>"
         rf"<strong>\((x - {p})^2 {k_str}\)</strong>"
     )
-    return q, s, "Half of a negative x-coefficient is negative — use (x − p)².", 3
+    return q, s, "Half of a negative x-coefficient is negative — use (x − p)².", 3, _cts_completed_square_answer('minus', p, k)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -215,7 +309,9 @@ def _cts_d_solve_surd():
         rf"\(x + {p} = \pm\sqrt{{{rhs}}}\)<br>"
         rf"<strong>\(x = -{p} \pm \sqrt{{{rhs}}}\)</strong>"
     )
-    return q, s, "Rearrange, complete the square, then take ± the square root.", 4
+    return q, s, "Rearrange, complete the square, then take ± the square root.", 4, _cts_quadratic_roots_answer(
+        f'{-p}+sqrt({rhs})', f'{-p}-sqrt({rhs})'
+    )
 
 
 def _is_perfect_square(n):
@@ -238,7 +334,7 @@ def _cts_d_decimal_roots():
         rf"\(x + {p} = \pm\sqrt{{{total}}} \approx \pm {math.sqrt(total):.3f}\)<br>"
         rf"<strong>\(x \approx {x1:.2f}\) or \(x \approx {x2:.2f}\)</strong>"
     )
-    return q, s, "Use a calculator for the square root if needed.", 4
+    return q, s, "Use a calculator for the square root if needed.", 4, _cts_quadratic_roots_answer(round(x1, 2), round(x2, 2))
 
 
 def _cts_d_factor_a_out():
@@ -259,7 +355,7 @@ def _cts_d_factor_a_out():
         rf"Inside: \(\left(x + {p}\right)^2 {k_str}\)<br>"
         rf"<strong>\(y = {a}\left((x + {p})^2 {k_str}\right)\)</strong>"
     )
-    return q, s, f"Factor {a} out, complete the square inside the bracket, then multiply back.", 5
+    return q, s, f"Factor {a} out, complete the square inside the bracket, then multiply back.", 5, _cts_completed_square_answer('scaled', a, p, k, subject='y')
 
 
 def _cts_d_minimum_value_word():
@@ -270,7 +366,7 @@ def _cts_d_minimum_value_word():
         rf"What is the <strong>maximum</strong> profit?"
     )
     s = rf"Completed-square form: peak when \(x = {h}\). <strong>Maximum profit = £{max_p}000</strong>."
-    return q, s, "The +k term in (x − h)² + max is the maximum (when the squared part is 0).", 3
+    return q, s, "The +k term in (x − h)² + max is the maximum (when the squared part is 0).", 3, max_p
 
 
 def _cts_d_exam_show_that():
@@ -544,8 +640,4 @@ def gcse_completing_the_square(difficulty, mode, variant_name=None):
     variants = gcse_completing_the_square_variants(difficulty, mode)
     variant = pick_named_variant(variants, variant_name)
 
-    q, s, hint, marks = variant()
-    return make_problem(
-        q, s, hint, difficulty, marks,
-        "gcse", "maths", "completing_the_square",
-    )
+    return _cts_problem_from_output(variant(), difficulty)

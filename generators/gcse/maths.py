@@ -1,6 +1,7 @@
 import inspect
 import random
 import math
+from fractions import Fraction
 import sympy as sp
 
 from generators.shared.utils import make_problem, problem_from_choice_output
@@ -4173,6 +4174,155 @@ def _vectors_unit_vector_steps(x, y):
     return "<br>".join(steps), hint
 
 
+_VEC_SURD_MAGNITUDES = frozenset({2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20})
+
+
+def _vec_raw(value):
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        if value == int(value):
+            return str(int(value))
+        return f"{value:g}"
+    return str(value)
+
+
+def _vec_answer(x, y):
+    return {'type': 'vector', 'x': x, 'y': y}
+
+
+def _vec_keyword_answer(value):
+    return {'type': 'keyword', 'value': str(value).strip().lower()}
+
+
+def _vec_number_pair_answer(val_a, val_b, label_a='x', label_b='y', sep=','):
+    return {
+        'type': 'number_pair',
+        'values': (_vec_raw(val_a), _vec_raw(val_b)),
+        'label_a': label_a,
+        'label_b': label_b,
+        'sep': sep,
+    }
+
+
+def _vec_format_combo_coef(value):
+    if isinstance(value, Fraction):
+        if value.denominator == 1:
+            return str(value.numerator)
+        return f'{value.numerator}/{value.denominator}'
+    return _vec_raw(value)
+
+
+def _vec_vector_combo_answer(*coefficients, labels=('b', 'c')):
+    return {
+        'type': 'vector_combo',
+        'coefficients': tuple(coefficients),
+        'labels': tuple(labels),
+    }
+
+
+def _vec_two_vectors_answer(x, y, labels=('x', 'y')):
+    return {
+        'type': 'vector_pair',
+        'vectors': (tuple(x), tuple(y)),
+        'labels': tuple(labels),
+    }
+
+
+def _vec_magnitude_answer(x, y):
+    sq_sum = x * x + y * y
+    mag = math.sqrt(sq_sum)
+    if mag == int(mag):
+        return int(mag)
+    if sq_sum in _VEC_SURD_MAGNITUDES:
+        return {'type': 'surd', 'coeff': 1, 'radicand': sq_sum}
+    return round(mag, 3)
+
+
+def _vec_vector_raw(raw):
+    return f"{_vec_raw(raw['x'])}|{_vec_raw(raw['y'])}"
+
+
+def _vec_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict):
+            raw_type = raw.get('type')
+            if raw_type == 'vector':
+                extra = {
+                    'correct_answer_raw': _vec_vector_raw(raw),
+                    'answer_type': 'vector',
+                    'answer_format_hint': 'Enter the column vector (e.g. (3, 4))',
+                }
+            elif raw_type == 'number_pair':
+                val_a, val_b = raw['values']
+                extra = {
+                    'correct_answer_raw': f'{val_a}|{val_b}',
+                    'answer_type': 'number_pair',
+                    'answer_labels': [raw['label_a'], raw['label_b']],
+                    'answer_pair_sep': raw.get('sep', 'and'),
+                }
+            elif raw_type == 'keyword':
+                value = raw.get('value')
+                if value is not None and str(value).strip():
+                    extra = {
+                        'correct_answer_raw': str(value).strip().lower(),
+                        'answer_type': 'keyword',
+                        'answer_format_hint': 'e.g. yes or no',
+                    }
+            elif raw_type == 'surd':
+                coeff = int(raw.get('coeff') or 1)
+                radicand = raw.get('radicand')
+                if radicand is not None:
+                    extra = {
+                        'correct_answer_raw': (
+                            str(radicand) if coeff == 1 else f'{coeff}|{radicand}'
+                        ),
+                        'answer_type': 'surd',
+                        'answer_format_hint': 'e.g. √13 — use the √ button if needed',
+                    }
+            elif raw_type == 'vector_combo':
+                coeffs = raw.get('coefficients') or ()
+                labels = raw.get('labels') or ('b', 'c')
+                extra = {
+                    'correct_answer_raw': '|'.join(
+                        _vec_format_combo_coef(coef) for coef in coeffs
+                    ),
+                    'answer_type': 'vector_combo',
+                    'answer_labels': list(labels),
+                    'answer_format_hint': (
+                        'Use + or − for each term, then enter each coefficient (e.g. 1/5)'
+                    ),
+                }
+            elif raw_type == 'vector_pair':
+                vectors = raw.get('vectors') or ((), ())
+                labels = raw.get('labels') or ('x', 'y')
+                parts = []
+                for vec in vectors:
+                    parts.extend(_vec_raw(component) for component in vec)
+                extra = {
+                    'correct_answer_raw': '|'.join(parts),
+                    'answer_type': 'vector_pair',
+                    'answer_labels': list(labels),
+                    'answer_format_hint': 'Enter each component in the x and y vectors above',
+                }
+        elif isinstance(raw, (int, float)):
+            extra = {
+                'correct_answer_raw': _vec_raw(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+        elif isinstance(raw, str):
+            extra = {
+                'correct_answer_raw': raw,
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+    return make_problem(q, s, hint, difficulty, marks, 'gcse', 'maths', 'vectors', **extra)
+
+
 # ---------- FOUNDATIONAL (14) ----------
 def _vectors_found_column_meaning():
     x = random.randint(-6, 8)
@@ -4188,13 +4338,13 @@ def _vectors_found_magnitude_3_4():
     x, y, mag = _vectors_pythagorean_components()
     q = rf"Find the magnitude of the vector \(\begin{{pmatrix}} {x} \\ {y} \end{{pmatrix}}\)."
     s, hint = _vectors_magnitude_steps(x, y)
-    return q, s, hint, 2
+    return q, s, hint, 2, _vec_magnitude_answer(x, y)
 
 def _vectors_found_magnitude_6_8():
     x, y, mag = _vectors_pythagorean_components()
     q = rf"Find the magnitude of the vector \(\begin{{pmatrix}} {x} \\ {y} \end{{pmatrix}}\)."
     s, hint = _vectors_magnitude_steps(x, y)
-    return q, s, hint, 2
+    return q, s, hint, 2, _vec_magnitude_answer(x, y)
 
 def _vectors_found_add_simple():
     a = (random.randint(1,5), random.randint(-3,6))
@@ -4210,7 +4360,7 @@ def _vectors_found_add_simple():
         "Column vectors add component by component — the top numbers together, "
         "then the bottom numbers together. Do not add across the diagonal."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, _vec_answer(c[0], c[1])
 
 def _vectors_found_subtract_simple():
     a = (random.randint(3,7), random.randint(-2,5))
@@ -4226,7 +4376,7 @@ def _vectors_found_subtract_simple():
         "Subtract each component separately: top minus top, bottom minus bottom. "
         "Watch the signs when subtracting negative numbers."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, _vec_answer(c[0], c[1])
 
 def _vectors_found_scalar_multiply():
     k = random.choice([2,3,4,-2,-3])
@@ -4242,7 +4392,7 @@ def _vectors_found_scalar_multiply():
         "Scalar multiplication scales the vector — multiply <em>each</em> component by the number outside. "
         "A negative scalar reverses the direction as well as changing the length."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, _vec_answer(res[0], res[1])
 
 def _vectors_found_parallel_check():
     a = (random.randint(1, 6), random.randint(1, 6))
@@ -4258,7 +4408,7 @@ def _vectors_found_parallel_check():
     q = rf"Is \(\begin{{pmatrix}} {a[0]} \\ {a[1]} \end{{pmatrix}}\) parallel to \(\begin{{pmatrix}} {b[0]} \\ {b[1]} \end{{pmatrix}}\)? Give a reason."
     s = reason
     hint = "Check if you can multiply one vector by a single number to get the other."
-    return q, s, hint, 1
+    return q, s, hint, 1, _vec_keyword_answer("yes" if is_para else "no")
 
 def _vectors_found_zero_vector():
     v = (random.randint(-8, 8), random.randint(-8, 8))
@@ -4267,13 +4417,13 @@ def _vectors_found_zero_vector():
     q = rf"What is the result of \(\begin{{pmatrix}} {v[0]} \\ {v[1]} \end{{pmatrix}} - \begin{{pmatrix}} {v[0]} \\ {v[1]} \end{{pmatrix}}\)?"
     s = r"\(\begin{pmatrix} 0 \\ 0 \end{pmatrix}\) – the zero vector."
     hint = "Subtracting a vector from itself gives the zero vector."
-    return q, s, hint, 1
+    return q, s, hint, 1, _vec_answer(0, 0)
 
 def _vectors_found_magnitude_zero():
     q = r"What is the magnitude of the vector \(\begin{pmatrix} 0 \\ 0 \end{pmatrix}\)?"
     s = "0"
     hint = "Distance from the origin to (0,0) is zero."
-    return q, s, hint, 1
+    return q, s, hint, 1, 0
 
 def _vectors_found_negative_vector():
     v = (random.randint(2,6), random.randint(-5,5))
@@ -4286,7 +4436,7 @@ def _vectors_found_negative_vector():
         "Opposite direction means multiply the whole vector by −1 — flip the sign of both the top "
         "and bottom numbers. The length stays the same."
     )
-    return q, s, hint, 1
+    return q, s, hint, 1, _vec_answer(-v[0], -v[1])
 
 
 def _vectors_found_position_vector():
@@ -4294,7 +4444,7 @@ def _vectors_found_position_vector():
     q = rf"Write the position vector of point A({a[0]}, {a[1]})."
     s = rf"\(\overrightarrow{{OA}} = \begin{{pmatrix}} {a[0]} \\ {a[1]} \end{{pmatrix}}\)"
     hint = "A position vector starts at the origin O."
-    return q, s, hint, 1
+    return q, s, hint, 1, _vec_answer(a[0], a[1])
 
 def _vectors_found_displacement():
     a = (random.randint(1,4), random.randint(1,4))
@@ -4311,7 +4461,7 @@ def _vectors_found_displacement():
         "The displacement vector tells you how to get from A to B. "
         "Subtract A's coordinates from B's — x from x, y from y."
     )
-    return q, s, hint, 1
+    return q, s, hint, 1, _vec_answer(ab[0], ab[1])
 
 def _vectors_found_equal_vectors():
     a = (random.randint(2,5), random.randint(2,5))
@@ -4320,7 +4470,7 @@ def _vectors_found_equal_vectors():
     q = rf"Are \(\begin{{pmatrix}} {a[0]} \\ {a[1]} \end{{pmatrix}}\) and \(\begin{{pmatrix}} {b[0]} \\ {b[1]} \end{{pmatrix}}\) equal?"
     s = f"{eq}. " + ("They have the same components." if eq=="Yes" else "The components differ.")
     hint = "Vectors are equal if both components are equal."
-    return q, s, hint, 1
+    return q, s, hint, 1, _vec_keyword_answer("yes" if b == a else "no")
 
 def _vectors_found_inverse():
     v = (random.randint(-3,3), random.randint(-3,3))
@@ -4328,7 +4478,7 @@ def _vectors_found_inverse():
     q = rf"Find the vector that must be added to \(\begin{{pmatrix}} {v[0]} \\ {v[1]} \end{{pmatrix}}\) to give the zero vector."
     s = rf"The additive inverse is \(\begin{{pmatrix}} {inv[0]} \\ {inv[1]} \end{{pmatrix}}\)."
     hint = "Add the negative of each component."
-    return q, s, hint, 1
+    return q, s, hint, 1, _vec_answer(inv[0], inv[1])
 
 # ---------- INTERMEDIATE (14) ----------
 def _vectors_inter_magnitude_advanced():
@@ -4345,7 +4495,7 @@ def _vectors_inter_magnitude_advanced():
         "Square each component, add, then square-root. At GCSE, if the result is not a whole number, "
         "write it as a surd such as √41 rather than rounding."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, {"type": "surd", "coeff": 1, "radicand": sq_sum}
 
 def _vectors_inter_parallel_k():
     a = (random.randint(2, 8), random.randint(2, 9))
@@ -4361,7 +4511,7 @@ def _vectors_inter_parallel_k():
         "If b = k a, then each component of b equals k times the matching component of a. "
         "Divide one pair of components to find k, then verify with the other pair."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, k
 
 def _vectors_inter_collinear_points():
     a, b, c, direction = _vectors_collinear_points()
@@ -4394,7 +4544,7 @@ def _vectors_inter_path_addition():
         "Walking from A to C via B means the overall displacement is AB followed by BC. "
         "Add the vectors component by component."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, _vec_answer(ac[0], ac[1])
 
 def _vectors_inter_magnitude_distance():
     p = (random.randint(1,6), random.randint(1,6))
@@ -4419,7 +4569,7 @@ def _vectors_inter_magnitude_distance():
         "Distance between two points equals the length of the vector from one to the other. "
         "Subtract coordinates to get the vector, then use Pythagoras on its components."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, _vec_magnitude_answer(vec[0], vec[1])
 
 def _vectors_inter_ratio_point():
     a = (random.randint(1, 6), random.randint(1, 6))
@@ -4438,7 +4588,7 @@ def _vectors_inter_ratio_point():
     s = (rf"\(\overrightarrow{{AP}} = \frac{{{ratio}}}{{{ratio + 1}}}\overrightarrow{{AB}} = \frac{{{ratio}}}{{{ratio + 1}}}\begin{{pmatrix}} {ab[0]} \\ {ab[1]} \end{{pmatrix}} = \begin{{pmatrix}} {ap_x:g} \\ {ap_y:g} \end{{pmatrix}}\)."
          rf" P = A + AP = \(({a[0]} + {ap_x:g},\ {a[1]} + {ap_y:g}) = ({p[0]:g},{p[1]:g})\)")
     hint = f"AP = ratio/(ratio+1) × AB. Multiply each component of AB by {ratio}/{ratio+1}."
-    return q, s, hint, 3
+    return q, s, hint, 3, _vec_number_pair_answer(p[0], p[1], "x", "y")
 
 def _vectors_inter_parallel_unknown():
     a, b, t = _vectors_parallel_unknown_pair()
@@ -4454,7 +4604,7 @@ def _vectors_inter_parallel_unknown():
         "Parallel column vectors are scalar multiples, so the ratio of tops equals the ratio of bottoms. "
         "Set up the proportion and solve for the unknown."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, t
 
 def _vectors_inter_magnitude_comparison():
     v1 = (random.randint(3,6), random.randint(4,8))
@@ -4475,7 +4625,7 @@ def _vectors_inter_magnitude_comparison():
     hint = (
         "Calculate the magnitude of each vector separately using Pythagoras, then compare the two lengths."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, _vec_keyword_answer(bigger)
 
 def _vectors_inter_vector_equation():
     a = (random.randint(2,4), random.randint(1,4))
@@ -4493,7 +4643,7 @@ def _vectors_inter_vector_equation():
         "Treat this like a normal equation: subtract the fixed vector first, then divide "
         "each component by 2 to undo the scalar multiplication."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, _vec_answer(x[0], x[1])
 
 def _vectors_inter_position_geometry():
     a = (random.randint(1,6), random.randint(1,6))
@@ -4510,7 +4660,7 @@ def _vectors_inter_position_geometry():
         "A position vector starts at the origin. To go from A to B, subtract A's position vector "
         "from B's — component by component."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, _vec_answer(ab[0], ab[1])
 
 def _vectors_inter_midpoint_vector():
     a = (random.randint(1,4), random.randint(1,4))
@@ -4526,7 +4676,7 @@ def _vectors_inter_midpoint_vector():
         "The midpoint is exactly halfway between the two points — add corresponding coordinates "
         "and divide each by 2."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, _vec_number_pair_answer(mid[0], mid[1], "x", "y")
 
 def _vectors_inter_translation():
     point = (random.randint(1,5), random.randint(1,5))
@@ -4543,7 +4693,7 @@ def _vectors_inter_translation():
         "A translation shifts every point by the same vector — add the vector's components "
         "to the point's x- and y-coordinates."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, _vec_number_pair_answer(image[0], image[1], "x", "y")
 
 def _vectors_inter_vector_path():
     ab = (random.randint(2, 5), random.randint(1, 4))
@@ -4561,7 +4711,7 @@ def _vectors_inter_vector_path():
         "The vector from A to C equals AB plus BC. Rearrange to BC = AC − AB, "
         "then subtract matching components."
     )
-    return q, s, hint, 3
+    return q, s, hint, 3, _vec_answer(bc[0], bc[1])
 
 # ---------- DIFFICULT (10) ----------
 def _vectors_diff_geometry_proof():
@@ -4586,7 +4736,7 @@ def _vectors_diff_ratio_theorem():
          rf"= \begin{{pmatrix}} \frac{{{ratio2}\times{a[0]}+{ratio1}\times{b[0]}}}{{{ratio1+ratio2}}} \\ \frac{{{ratio2}\times{a[1]}+{ratio1}\times{b[1]}}}{{{ratio1+ratio2}}} \end{{pmatrix}} "
          rf"= \begin{{pmatrix}} {op[0]:g} \\ {op[1]:g} \end{{pmatrix}}\)")
     hint = "Section formula for AP:PB = m:n: OP = (n·a + m·b) / (m+n)."
-    return q, s, hint, 3
+    return q, s, hint, 3, _vec_answer(op[0], op[1])
 
 def _vectors_diff_collinear_proof():
     p, q_pt, r, direction = _vectors_collinear_points()
@@ -4605,18 +4755,26 @@ def _vectors_diff_collinear_proof():
         "Three points are collinear if the vectors between them are parallel (one is a multiple of the other) "
         "and they share a common point."
     )
-    return q, s, hint, 3
+    return q, s, hint, 3, _vec_keyword_answer("yes")
 
 def _vectors_diff_triangle_midpoint():
     svg = _svg_triangle_de(1/2, 1/2, "D", "E")
-    q = rf"{svg}In triangle ABC, D is the midpoint of AB and E is the midpoint of AC. Let \(\overrightarrow{{AB}} = \mathbf{{b}}\) and \(\overrightarrow{{AC}} = \mathbf{{c}}\). Prove that \(\overrightarrow{{DE}} = \\frac{{1}}{{2}}\overrightarrow{{BC}}\) and hence that DE \u2225 BC and DE = \u00bd BC."
+    q = (
+        rf"{svg}In triangle ABC, D is the midpoint of AB and E is the midpoint of AC. "
+        rf"Let \(\overrightarrow{{AB}} = \mathbf{{b}}\) and \(\overrightarrow{{AC}} = \mathbf{{c}}\). "
+        rf"Prove that \(\overrightarrow{{DE}} = \frac{{1}}{{2}}\overrightarrow{{BC}}\) "
+        rf"and hence that DE \(\parallel\) BC and DE \(=\frac{{1}}{{2}}\) BC."
+    )
     s = r"Using A as origin: \(\overrightarrow{AD} = \frac{1}{2}\mathbf{b}\), \(\overrightarrow{AE} = \frac{1}{2}\mathbf{c}\). Then \(\overrightarrow{DE} = \overrightarrow{AE} - \overrightarrow{AD} = \frac{1}{2}\mathbf{c} - \frac{1}{2}\mathbf{b} = \frac{1}{2}(\mathbf{c}-\mathbf{b}) = \frac{1}{2}\overrightarrow{BC}\). Since \(\overrightarrow{DE} = \frac{1}{2}\overrightarrow{BC}\), DE is parallel to BC and exactly half its length."
     hint = "Express D and E using the section formula (midpoint), then find DE = AE − AD."
     return q, s, hint, 4
 
 def _vectors_diff_trapezium_ratio():
     svg = _svg_trapezium_parallel()
-    q = rf"{svg}In trapezium ABCD, AB \u2225 DC and AB = 2 DC. Express \(\overrightarrow{{DC}}\) in terms of \(\overrightarrow{{AB}}\)."
+    q = (
+        rf"{svg}In trapezium ABCD, AB \(\parallel\) DC and AB = 2 DC. "
+        rf"Express \(\overrightarrow{{DC}}\) in terms of \(\overrightarrow{{AB}}\)."
+    )
     s = r"Since AB \(\parallel\) DC and AB = 2 DC, the vectors point in the same direction but DC is half the length. Therefore \(\overrightarrow{DC} = \frac{1}{2}\overrightarrow{AB}\)."
     hint = "Parallel vectors with the same sense are positive scalar multiples. If AB = 2 DC, then DC = ½ AB."
     return q, s, hint, 2
@@ -4641,7 +4799,7 @@ def _vectors_diff_parallelogram_area():
         "The area equals the magnitude of the '2D cross product': multiply the top of a by the bottom of b, "
         "subtract the bottom of a times the top of b, then take the absolute value."
     )
-    return q, s, hint, 3
+    return q, s, hint, 3, abs(cross)
 
 def _vectors_diff_unknown_parallel():
     p, qv, t = _vectors_parallel_unknown_pair()
@@ -4655,7 +4813,7 @@ def _vectors_diff_unknown_parallel():
     hint = (
         "Set the ratio of tops equal to the ratio of bottoms, then solve for the unknown component."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, t
 
 def _vectors_diff_geometry_parallelogram():
     a, b, c, d = _vectors_random_parallelogram_vertices()
@@ -4668,7 +4826,7 @@ def _vectors_diff_geometry_parallelogram():
          rf" Since DC = AB, D = C \(-\) AB = \(({c[0]}-{ab[0]},\ {c[1]}-{ab[1]}) = ({d[0]},{d[1]})\)."
          rf"<br>Alternatively: D = A + C \(-\) B = ({a[0]}+{c[0]}\(-\){b[0]},\ {a[1]}+{c[1]}\(-\){b[1]}) = ({d[0]},{d[1]})\).")
     hint = "Use D = A + C − B (the diagonal property: midpoints of AC and BD must coincide)."
-    return q, s, hint, 3
+    return q, s, hint, 3, _vec_number_pair_answer(d[0], d[1], "x", "y")
 
 def _vectors_diff_vector_method_simultaneous():
     x = (random.randint(1, 8), random.randint(1, 8))
@@ -4689,7 +4847,7 @@ def _vectors_diff_vector_method_simultaneous():
         "Add the two vector equations to cancel y and find x, then substitute back to find y. "
         "Work on the top and bottom components together."
     )
-    return q, s, hint, 3
+    return q, s, hint, 3, _vec_two_vectors_answer(x, y)
 
 def _vectors_diff_ratio_collinear():
     a = (random.randint(1, 6), random.randint(1, 6))
@@ -4705,7 +4863,7 @@ def _vectors_diff_ratio_collinear():
          rf"\(\overrightarrow{{OP}} = \frac{{{ratio}\mathbf{{a}}+1\cdot\mathbf{{b}}}}{{{1+ratio}}}\). "
          rf"P = \(\left(\frac{{{ratio}\times{a[0]}+{b[0]}}}{{{1+ratio}}},\ \frac{{{ratio}\times{a[1]}+{b[1]}}}{{{1+ratio}}}\right) = ({px:.1f},\ {py:.1f})\)")
     hint = "Section formula for AP:PB = m:n: P = (n·A + m·B) / (m+n)."
-    return q, s, hint, 3
+    return q, s, hint, 3, _vec_number_pair_answer(round(px, 1), round(py, 1), "x", "y")
 
 def _vectors_diff_vector_proof_sim():
     svg = _svg_parallelogram_diagonals()
@@ -4718,7 +4876,7 @@ def _vectors_diff_parallel_unit():
     v = (random.randint(3,6), random.randint(4,9))
     q = rf"Find a unit vector parallel to \(\begin{{pmatrix}} {v[0]} \\ {v[1]} \end{{pmatrix}}\)."
     s, hint = _vectors_unit_vector_steps(v[0], v[1])
-    return q, s, hint, 3
+    return q, s, hint, 3, _vec_answer(round(v[0] / math.sqrt(v[0]**2 + v[1]**2), 3), round(v[1] / math.sqrt(v[0]**2 + v[1]**2), 3))
 
 def _vectors_diff_geometric_ratio():
     m = random.randint(2, 4)
@@ -4735,7 +4893,9 @@ def _vectors_diff_geometric_ratio():
          rf"<br>AE:EC = {p}:{q_ratio}, so E divides AC in ratio {p}:{q_ratio} from A: \(\overrightarrow{{AE}} = \frac{{{p}}}{{{p+q_ratio}}}\mathbf{{c}}\)."
          rf"<br>\(\overrightarrow{{DE}} = \overrightarrow{{AE}} - \overrightarrow{{AD}} = \frac{{{p}}}{{{p+q_ratio}}}\mathbf{{c}} - \frac{{{m}}}{{{m+n}}}\mathbf{{b}}\)")
     hint = "Use the section formula for each point (fraction of the way from A), then DE = AE − AD."
-    return q, s, hint, 4
+    coef_b = -Fraction(m, m + n)
+    coef_c = Fraction(p, p + q_ratio)
+    return q, s, hint, 4, _vec_vector_combo_answer(coef_b, coef_c, labels=('b', 'c'))
 
 
 _VECTORS_HELPER_NAMES = {
@@ -4916,8 +5076,7 @@ def gcse_vectors(difficulty, mode, variant_name=None):
                             options=opts_mcq, correct_answer=correct_mcq)
     variants = gcse_vectors_variants(difficulty, mode)
     variant = pick_named_variant(variants, variant_name)
-    q, s, hint, marks = variant()
-    return make_problem(q, s, hint, difficulty, marks, 'gcse', 'maths', 'vectors')
+    return _vec_problem_from_output(variant(), difficulty)
 
 
 # ------------------------------------------------------------

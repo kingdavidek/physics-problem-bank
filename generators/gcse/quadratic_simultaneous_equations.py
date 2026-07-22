@@ -3,6 +3,8 @@ GCSE Maths – Quadratic Simultaneous Equations
 5 foundational · 5 intermediate · 5 difficult · 4 MCQ (randomised each time)
 
 Typical pair: y = x² (parabola) and y = ax + b (straight line).
+Graded practice variants return (question, solution, hint, marks, raw).
+Conceptual / embedded-MCQ variants stay as 4-tuples.
 """
 import random
 from generators.shared.utils import make_problem
@@ -34,6 +36,95 @@ def _factor_pair(r1, r2):
     f1 = f"(x - {r1})" if r1 > 0 else (f"(x + {abs(r1)})" if r1 < 0 else "(x)")
     f2 = f"(x - {r2})" if r2 > 0 else (f"(x + {abs(r2)})" if r2 < 0 else "(x)")
     return f1, f2
+
+
+def _qsim_raw(value):
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        if value == int(value):
+            return str(int(value))
+        return f"{value:g}"
+    return str(value)
+
+
+def _qsim_quadratic_roots_answer(*roots):
+    return {'type': 'quadratic_roots', 'roots': tuple(_qsim_raw(r) for r in roots)}
+
+
+def _qsim_linear_answer(value, var='y'):
+    return {'type': 'linear', 'value': _qsim_raw(value), 'var': str(var).strip().lower()}
+
+
+def _qsim_fields_answer(values, labels):
+    return {
+        'type': 'number_fields',
+        'values': tuple(_qsim_raw(v) for v in values),
+        'labels': tuple(labels),
+    }
+
+
+def _qsim_linear_raw(raw):
+    var = raw.get('var') or 'x'
+    val = raw.get('value')
+    if var == 'x':
+        return str(val)
+    return f'{var}={val}'
+
+
+def _qsim_solution_fields(r1, y1, r2, y2):
+    return _qsim_fields_answer(
+        [r1, y1, r2, y2],
+        ['x (1st solution)', 'y (1st solution)', 'x (2nd solution)', 'y (2nd solution)'],
+    )
+
+
+def _qsim_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict):
+            raw_type = raw.get('type')
+            if raw_type == 'quadratic_roots':
+                roots = raw.get('roots') or ()
+                extra = {
+                    'correct_answer_raw': ','.join(str(r) for r in roots),
+                    'answer_type': 'quadratic_roots',
+                    'answer_format_hint': 'Enter roots separated by commas (e.g. 3, -2)',
+                }
+            elif raw_type == 'number_fields':
+                values = raw.get('values') or ()
+                labels = raw.get('labels') or ()
+                if values and len(values) == len(labels):
+                    extra = {
+                        'correct_answer_raw': '|'.join(str(v) for v in values),
+                        'answer_type': 'number_fields',
+                        'answer_labels': list(labels),
+                        'answer_format_hint': 'Enter a number in every field',
+                    }
+            elif raw_type == 'linear':
+                extra = {
+                    'correct_answer_raw': _qsim_linear_raw(raw),
+                    'answer_type': 'linear',
+                    'answer_format_hint': 'Enter the value (e.g. y = 9 or just 9)',
+                }
+        elif isinstance(raw, (int, float)):
+            extra = {
+                'correct_answer_raw': _qsim_raw(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+        elif isinstance(raw, str):
+            extra = {
+                'correct_answer_raw': raw,
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+    return make_problem(
+        q, s, hint, difficulty, marks,
+        'gcse', 'maths', 'quadratic_simultaneous_equations', **extra
+    )
 
 
 def _roots_from_line(r1=None, r2=None, *, require_a_nonzero=True, require_a_not_one=False):
@@ -124,7 +215,7 @@ def _qsim_f_simple_integer():
         rf"\(x = {r1}\) or \(x = {r2}\)<br>"
         rf"<strong>\(({r1}, {y1})\) and \(({r2}, {y2})\)</strong>"
     )
-    return q, s, "Substitute, rearrange to zero, factorise, find y from either equation.", 3
+    return q, s, "Substitute, rearrange to zero, factorise, find y from either equation.", 3, _qsim_solution_fields(r1, y1, r2, y2)
 
 
 def _qsim_f_find_y_given_x():
@@ -136,7 +227,7 @@ def _qsim_f_find_y_given_x():
         rf"What is the corresponding <strong>\(y\)</strong>?"
     )
     s = rf"Substitute \(x = {x_val}\): \(y = {x_val}^2 = <strong>{y_val}</strong> (matches the line too)."
-    return q, s, "Both equations give the same y when x is a true solution.", 2
+    return q, s, "Both equations give the same y when x is a true solution.", 2, _qsim_linear_answer(y_val, 'y')
 
 
 def _qsim_f_rearrange_only():
@@ -170,7 +261,7 @@ def _qsim_i_full_solve():
         rf"When \(x = {r1}\), \(y = {y1}\). When \(x = {r2}\), \(y = {y2}\)<br>"
         rf"<strong>\(({r1}, {y1})\) and \(({r2}, {y2})\)</strong>"
     )
-    return q, s, "Substitute the line into the parabola, factorise, then find both y-values.", 4
+    return q, s, "Substitute the line into the parabola, factorise, then find both y-values.", 4, _qsim_solution_fields(r1, y1, r2, y2)
 
 
 def _qsim_i_find_x_only():
@@ -180,7 +271,7 @@ def _qsim_i_find_x_only():
         rf"Find all possible values of <strong>x</strong>."
     )
     s = rf"Factorise after substitution → <strong>\(x = {r1}\) or \(x = {r2}\)</strong>."
-    return q, s, "Solve the quadratic in x first; y comes afterwards.", 3
+    return q, s, "Solve the quadratic in x first; y comes afterwards.", 3, _qsim_quadratic_roots_answer(r1, r2)
 
 
 def _qsim_i_graph_meaning():
@@ -195,7 +286,7 @@ def _qsim_i_graph_meaning():
         r"How many <strong>simultaneous solutions</strong> are there?"
     )
     s = r"Two intersections on the graph → <strong>2 solutions</strong> (two (x, y) pairs)."
-    return q, s, "Each intersection is one (x, y) solution pair.", 1
+    return q, s, "Each intersection is one (x, y) solution pair.", 1, 2
 
 
 def _qsim_i_steeper_line():
@@ -207,7 +298,7 @@ def _qsim_i_steeper_line():
         rf"Substitute, factorise \({f1}{f2} = 0\)<br>"
         rf"<strong>\(({r1}, {y1})\) and \(({r2}, {y2})\)</strong>"
     )
-    return q, s, "Same method when the line has gradient ≠ 1.", 4
+    return q, s, "Same method when the line has gradient ≠ 1.", 4, _qsim_solution_fields(r1, y1, r2, y2)
 
 
 def _qsim_i_check_pair():
@@ -241,7 +332,7 @@ def _qsim_d_non_monic_line():
         rf"\(x^2 = {a}x {_fmt_b(b)}\) → \({f1}{f2} = 0\)<br>"
         rf"<strong>\(({r1}, {y1})\) and \(({r2}, {y2})\)</strong>"
     )
-    return q, s, "Works the same when the line has coefficient ≠ 1.", 4
+    return q, s, "Works the same when the line has coefficient ≠ 1.", 4, _qsim_solution_fields(r1, y1, r2, y2)
 
 
 def _qsim_d_exam_multipart():
@@ -258,7 +349,7 @@ def _qsim_d_exam_multipart():
         rf"<strong>(b)</strong> \({f1}{f2} = 0\) → "
         rf"<strong>\(({r1}, {y1})\) and \(({r2}, {y2})\)</strong>"
     )
-    return q, s, "Part (a) is method marks for correct substitution and rearrangement.", 5
+    return q, s, "Part (a) is method marks for correct substitution and rearrangement.", 5, _qsim_solution_fields(r1, y1, r2, y2)
 
 
 def _qsim_d_discriminant():
@@ -272,7 +363,7 @@ def _qsim_d_discriminant():
     )
     n = 2 if disc > 0 else (1 if disc == 0 else 0)
     s = rf"\(\Delta > 0\) → <strong>{n} intersection points</strong> (two solutions)."
-    return q, s, "Positive discriminant → two distinct real roots for x.", 3
+    return q, s, "Positive discriminant → two distinct real roots for x.", 3, n
 
 
 def _qsim_d_word_problem():
@@ -287,7 +378,7 @@ def _qsim_d_word_problem():
         rf"Set \(t^2 = {a}t {_fmt_b(b)}\) → \({f1}{f2} = 0\)<br>"
         rf"<strong>\(t = {r1}\) s or \(t = {r2}\) s</strong>"
     )
-    return q, s, "Same structure: quadratic meets linear.", 4
+    return q, s, "Same structure: quadratic meets linear.", 4, _qsim_quadratic_roots_answer(r1, r2)
 
 
 def _qsim_d_negative_root():
@@ -299,7 +390,7 @@ def _qsim_d_negative_root():
         rf"\({f1}{f2} = 0\) → \(x = {r1}\) or \(x = {r2}\)<br>"
         rf"<strong>\(({r1}, {y1})\) and \(({r2}, {y2})\)</strong>"
     )
-    return q, s, "Include negative x-values when they factorise cleanly.", 4
+    return q, s, "Include negative x-values when they factorise cleanly.", 4, _qsim_solution_fields(r1, y1, r2, y2)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -449,8 +540,4 @@ def gcse_quadratic_simultaneous_equations(difficulty, mode, variant_name=None):
     variants = gcse_quadratic_simultaneous_equations_variants(difficulty, mode)
     variant = pick_named_variant(variants, variant_name)
 
-    q, s, hint, marks = variant()
-    return make_problem(
-        q, s, hint, difficulty, marks,
-        "gcse", "maths", "quadratic_simultaneous_equations",
-    )
+    return _qsim_problem_from_output(variant(), difficulty)

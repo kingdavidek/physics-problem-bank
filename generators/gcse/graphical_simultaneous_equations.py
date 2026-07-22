@@ -1,6 +1,8 @@
 """
 GCSE Maths – Graphical Simultaneous Equations
 5 foundational · 5 intermediate · 5 difficult · 8 MCQ (randomised, with SVG)
+Graded practice variants return (question, solution, hint, marks, raw).
+Interpret-only / embedded-MCQ variants stay as 4-tuples.
 """
 import math
 import random
@@ -40,6 +42,95 @@ def _fmt_line_eq(m, c):
     else:
         body = f"{m}x"
     return rf"\(y = {body} {_fmt_b(c)}\)".strip()
+
+
+def _gsim_raw(value):
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        if value == int(value):
+            return str(int(value))
+        return f"{value:g}"
+    return str(value)
+
+
+def _gsim_pair_answer(x, y, label_a='x', label_b='y', sep=','):
+    return {
+        'type': 'number_pair',
+        'values': (_gsim_raw(x), _gsim_raw(y)),
+        'label_a': label_a,
+        'label_b': label_b,
+        'sep': sep,
+    }
+
+
+def _gsim_linear_answer(value, var='y'):
+    return {'type': 'linear', 'value': _gsim_raw(value), 'var': str(var).strip().lower()}
+
+
+def _gsim_fields_answer(values, labels):
+    return {
+        'type': 'number_fields',
+        'values': tuple(_gsim_raw(v) for v in values),
+        'labels': tuple(labels),
+    }
+
+
+def _gsim_linear_raw(raw):
+    var = raw.get('var') or 'x'
+    val = raw.get('value')
+    if var == 'x':
+        return str(val)
+    return f'{var}={val}'
+
+
+def _gsim_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict):
+            raw_type = raw.get('type')
+            if raw_type == 'number_pair':
+                val_a, val_b = raw['values']
+                extra = {
+                    'correct_answer_raw': f'{val_a}|{val_b}',
+                    'answer_type': 'number_pair',
+                    'answer_labels': [raw['label_a'], raw['label_b']],
+                    'answer_pair_sep': raw.get('sep', 'and'),
+                }
+            elif raw_type == 'number_fields':
+                values = raw.get('values') or ()
+                labels = raw.get('labels') or ()
+                if values and len(values) == len(labels):
+                    extra = {
+                        'correct_answer_raw': '|'.join(str(v) for v in values),
+                        'answer_type': 'number_fields',
+                        'answer_labels': list(labels),
+                        'answer_format_hint': 'Enter a number in every field',
+                    }
+            elif raw_type == 'linear':
+                extra = {
+                    'correct_answer_raw': _gsim_linear_raw(raw),
+                    'answer_type': 'linear',
+                    'answer_format_hint': 'Enter the value (e.g. y = 3 or just 3)',
+                }
+        elif isinstance(raw, (int, float)):
+            extra = {
+                'correct_answer_raw': _gsim_raw(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+        elif isinstance(raw, str):
+            extra = {
+                'correct_answer_raw': raw,
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+    return make_problem(
+        q, s, hint, difficulty, marks,
+        'gcse', 'maths', 'graphical_simultaneous_equations', **extra
+    )
 
 
 def _parabola_line_roots(r1=None, r2=None):
@@ -288,7 +379,7 @@ def _gsim_f_read_intersection():
         rf"What are the coordinates of <strong>P</strong>?"
     )
     s = rf"Read from the axes: <strong>\(({ix}, {iy})\)</strong>."
-    return q, s, "Read x across, then y up from the numbered axes.", 2
+    return q, s, "Read x across, then y up from the numbered axes.", 2, _gsim_pair_answer(ix, iy)
 
 
 def _gsim_f_meaning_of_crossing():
@@ -346,7 +437,7 @@ def _gsim_f_read_y_at_crossing():
         rf"What is the value of <strong>\(y\)</strong> at the intersection?"
     )
     s = rf"At \(x = {ix}\), the lines meet at <strong>\(y = {iy}\)</strong>."
-    return q, s, "The y-coordinate at the crossing is part of the solution pair.", 2
+    return q, s, "The y-coordinate at the crossing is part of the solution pair.", 2, _gsim_linear_answer(iy, "y")
 
 
 def _gsim_f_how_many_solutions_lines():
@@ -365,7 +456,7 @@ def _gsim_f_how_many_solutions_lines():
         rf"How many simultaneous solutions do these two lines have?<br>{svg}"
     )
     s = rf"Distinct crossing → <strong>{word}</strong> solution ({n})."
-    return q, s, "Parallel distinct lines never meet → 0 solutions.", 2
+    return q, s, "Parallel distinct lines never meet → 0 solutions.", 2, n
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -408,7 +499,7 @@ def _gsim_i_parabola_read_one_point():
         rf"Write this solution as coordinates <strong>(x, y)</strong>."
     )
     s = rf"Read from the axes: <strong>\(({r1}, {y1})\)</strong>."
-    return q, s, "Each crossing of curve and line is one solution pair.", 3
+    return q, s, "Each crossing of curve and line is one solution pair.", 3, _gsim_pair_answer(r1, y1)
 
 
 def _gsim_i_parabola_count_intersections():
@@ -419,7 +510,7 @@ def _gsim_i_parabola_count_intersections():
         rf"according to the graph?<br>{svg}"
     )
     s = r"Two distinct crossings → <strong>2 solutions</strong>."
-    return q, s, "Count intersection points on the diagram.", 2
+    return q, s, "Count intersection points on the diagram.", 2, 2
 
 
 def _gsim_i_no_solution_parallel():
@@ -434,7 +525,7 @@ def _gsim_i_no_solution_parallel():
         r"Lines are <strong>parallel</strong> (same gradient, different intercepts) → "
         r"<strong>no solutions</strong>."
     )
-    return q, s, "No intersection means no (x, y) works in both equations.", 2
+    return q, s, "No intersection means no (x, y) works in both equations.", 2, 0
 
 
 def _gsim_i_negative_gradient():
@@ -447,7 +538,7 @@ def _gsim_i_negative_gradient():
         rf"Use the graph to find the simultaneous solution (point <strong>P</strong>).<br>{svg}"
     )
     s = rf"<strong>\(x = {ix},\; y = {iy}\)</strong> at the intersection."
-    return q, s, "Read x and y from the numbered axes at P.", 2
+    return q, s, "Read x and y from the numbered axes at P.", 2, _gsim_pair_answer(ix, iy)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -463,7 +554,7 @@ def _gsim_d_both_parabola_points():
         rf"State <strong>both</strong> coordinate pairs."
     )
     s = rf"<strong>\(({r1}, {y1})\) and \(({r2}, {y2})\)</strong>."
-    return q, s, "Both crossings are solutions — list them clearly.", 4
+    return q, s, "Both crossings are solutions — list them clearly.", 4, _gsim_fields_answer([r1, y1, r2, y2], ["x (1st)", "y (1st)", "x (2nd)", "y (2nd)"])
 
 
 def _gsim_d_tangent_one_solution():
@@ -477,7 +568,7 @@ def _gsim_d_tangent_one_solution():
         r"How many simultaneous solutions are there?"
     )
     s = r"One touching point → <strong>1 solution</strong> (repeated root algebraically)."
-    return q, s, "Touching = one solution; crossing twice = two.", 3
+    return q, s, "Touching = one solution; crossing twice = two.", 3, 1
 
 
 def _gsim_d_line_misses_parabola():
@@ -497,7 +588,7 @@ def _gsim_d_line_misses_parabola():
         r"\(x^2 = x - 5\) → \(x^2 - x + 5 = 0\) has negative discriminant → "
         r"<strong>0 real solutions</strong> (curves do not cross)."
     )
-    return q, s, "No intersection on the graph means no real simultaneous solutions.", 3
+    return q, s, "No intersection on the graph means no real simultaneous solutions.", 3, 0
 
 
 def _gsim_d_context_graph():
@@ -519,7 +610,7 @@ def _gsim_d_context_graph():
         rf"At how many items \(x\) do the <strong>costs match</strong>?"
     )
     s = rf"Costs match only at the intersection → <strong>\(x = {ix}\)</strong> (one value)."
-    return q, s, "Equal cost at the crossing point of the two lines.", 3
+    return q, s, "Equal cost at the crossing point of the two lines.", 3, ix
 
 
 def _gsim_d_verify_algebra_from_graph():
@@ -531,7 +622,7 @@ def _gsim_d_verify_algebra_from_graph():
         rf"Algebra gives \(x = {r1}\) or \(x = {r2}\). Which \(x\)-value matches the <strong>marked</strong> point?"
     )
     s = rf"The marked point has <strong>\(x = {r1}\)</strong> (and \(y = {y1}\))."
-    return q, s, "Graph and algebra must agree on the same solution pairs.", 3
+    return q, s, "Graph and algebra must agree on the same solution pairs.", 3, _gsim_linear_answer(r1, "x")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -779,8 +870,4 @@ def gcse_graphical_simultaneous_equations(difficulty, mode, variant_name=None):
     variants = gcse_graphical_simultaneous_equations_variants(difficulty, mode)
     variant = pick_named_variant(variants, variant_name)
 
-    q, s, hint, marks = variant()
-    return make_problem(
-        q, s, hint, difficulty, marks,
-        "gcse", "maths", "graphical_simultaneous_equations",
-    )
+    return _gsim_problem_from_output(variant(), difficulty)

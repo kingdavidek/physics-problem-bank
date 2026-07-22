@@ -1253,6 +1253,23 @@
             flex: 0 1 120px;
             min-width: 88px;
         }
+        .free-response-row--coordinate-pairs {
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        .free-response-coord-pairs-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1 1 220px;
+            min-width: 200px;
+        }
+        .free-response-row--coordinate-pairs .free-response-input-coord-pair {
+            width: 100%;
+            box-sizing: border-box;
+            min-width: 160px;
+            max-width: 280px;
+        }
         .free-response-row--number-list .free-response-input-list {
             flex: 1 1 220px;
             min-width: 160px;
@@ -1267,6 +1284,249 @@
             font-size: 0.9rem;
             align-self: flex-start;
             margin-top: -2px;
+        }
+        .free-response-row--completed-square {
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .free-response-csq-template {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-mono, ui-monospace, monospace);
+            font-size: 1.05rem;
+            line-height: 1.4;
+        }
+        .free-response-csq-part {
+            white-space: nowrap;
+        }
+        .free-response-row--completed-square .free-response-input-csq {
+            flex: 0 1 56px;
+            min-width: 44px;
+            max-width: 72px;
+            text-align: center;
+            padding-left: 6px;
+            padding-right: 6px;
+        }
+        .free-response-csq-sign {
+            flex: 0 0 auto;
+            min-width: 2.25rem;
+            padding: 8px 10px;
+            font-size: 1.05rem;
+            line-height: 1;
+            font-weight: 600;
+            font-family: var(--font-mono, ui-monospace, monospace);
+        }
+        .free-response-csq-hint {
+            flex: 1 1 100%;
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--text-muted, #64748b);
+        }
+        .free-response-row--vector-combo {
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .free-response-vcombo-template {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-mono, ui-monospace, monospace);
+            font-size: 1.05rem;
+            line-height: 1.4;
+        }
+        .free-response-vcombo-part {
+            white-space: nowrap;
+            margin-right: 4px;
+        }
+        .free-response-row--vector-combo .free-response-input-vcombo {
+            flex: 0 1 64px;
+            min-width: 52px;
+            max-width: 80px;
+            text-align: center;
+            padding-left: 6px;
+            padding-right: 6px;
+        }
+        .free-response-vcombo-sign {
+            flex: 0 0 auto;
+            min-width: 2.25rem;
+            padding: 8px 10px;
+            font-size: 1.05rem;
+            line-height: 1;
+            font-weight: 600;
+            font-family: var(--font-mono, ui-monospace, monospace);
+        }
+        .free-response-vcombo-hint {
+            flex: 1 1 100%;
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--text-muted, #64748b);
+        }
+        .free-response-row--vector-pair {
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .free-response-vpair-template {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px;
+            font-family: var(--font-mono, ui-monospace, monospace);
+            font-size: 1.05rem;
+            line-height: 1.4;
+        }
+        .free-response-vpair-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .free-response-vpair-label {
+            white-space: nowrap;
+        }
+        .free-response-vpair-bracket {
+            font-size: 1.35rem;
+            line-height: 1;
+            font-weight: 300;
+        }
+        .free-response-vpair-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .free-response-row--vector-pair .free-response-input-vpair {
+            flex: 0 1 40px;
+            min-width: 36px;
+            max-width: 48px;
+            text-align: center;
+            padding-left: 4px;
+            padding-right: 4px;
+        }
+        .free-response-vpair-hint {
+            flex: 1 1 100%;
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--text-muted, #64748b);
+        }
+        .free-response-row--linear-inequality,
+        .free-response-row--compound-inequality {
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .free-response-ineq-template,
+        .free-response-compound-ineq-template {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-mono, ui-monospace, monospace);
+            font-size: 1.05rem;
+            line-height: 1.4;
+        }
+        .free-response-ineq-part {
+            white-space: nowrap;
+        }
+        .free-response-ineq-sign,
+        .free-response-compound-sign {
+            flex: 0 0 auto;
+            min-width: 3rem;
+            padding: 8px 10px;
+            font-size: 1rem;
+            line-height: 1.2;
+            font-family: var(--font-mono, ui-monospace, monospace);
+        }
+        .free-response-row--linear-inequality .free-response-input-ineq-value,
+        .free-response-row--compound-inequality .free-response-input-compound-bound {
+            flex: 0 1 56px;
+            min-width: 44px;
+            max-width: 72px;
+            text-align: center;
+            padding-left: 6px;
+            padding-right: 6px;
+        }
+        .free-response-ineq-hint {
+            flex: 1 1 100%;
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--text-muted, #64748b);
+        }
+        .free-response-row--number-line {
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+        }
+        .free-response-number-line {
+            flex: 1 1 280px;
+            min-width: 240px;
+            max-width: 520px;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+        .free-response-number-line svg {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+        .free-response-number-line .nl-endpoint {
+            cursor: grab;
+            outline: none;
+        }
+        .free-response-number-line .nl-endpoint:focus {
+            filter: drop-shadow(0 0 3px #1a6fa8);
+        }
+        .free-response-number-line.is-disabled .nl-endpoint {
+            cursor: default;
+            pointer-events: none;
+        }
+        .free-response-number-line.is-dragging .nl-endpoint {
+            cursor: grabbing;
+        }
+        .free-response-number-line.is-correct .nl-segment {
+            stroke: #16a34a;
+        }
+        .free-response-number-line.is-correct .nl-endpoint {
+            stroke: #16a34a;
+        }
+        .free-response-number-line.is-correct .nl-endpoint.nl-closed {
+            fill: #16a34a;
+        }
+        .free-response-number-line.is-wrong .nl-segment {
+            stroke: #dc2626;
+        }
+        .free-response-number-line.is-wrong .nl-endpoint {
+            stroke: #dc2626;
+        }
+        .free-response-number-line.is-wrong .nl-endpoint.nl-closed {
+            fill: #dc2626;
+        }
+        .free-response-number-line-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 18px;
+            margin: 4px 0 0;
+            font-size: 0.8rem;
+            color: var(--text-muted, #64748b);
+        }
+        .free-response-number-line-legend span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .free-response-number-line-legend .nl-legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid #1a6fa8;
+            box-sizing: border-box;
+            display: inline-block;
+        }
+        .free-response-number-line-legend .nl-legend-dot.open {
+            background: #fff;
+        }
+        .free-response-number-line-legend .nl-legend-dot.closed {
+            background: #1a6fa8;
         }
         .free-response-row--ratio .free-response-input-ratio {
             flex: 0 1 120px;
@@ -1355,6 +1615,10 @@
             min-width: 100px;
             max-width: 280px;
         }
+        .free-response-row--algebraic {
+            flex-wrap: wrap;
+            align-items: center;
+        }
         .free-response-row--algebraic .free-response-input-algebraic {
             flex: 1 1 140px;
             min-width: 100px;
@@ -1362,6 +1626,38 @@
         }
         .free-response-row--algebraic-fraction {
             align-items: center;
+        }
+        .free-response-row--formula-fraction {
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .free-response-formula-fraction-template {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--font-mono, ui-monospace, monospace);
+            font-size: 1.05rem;
+        }
+        .free-response-formula-subject {
+            white-space: nowrap;
+        }
+        .free-response-formula-frac-hint {
+            flex: 1 1 100%;
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--text-muted, #64748b);
+        }
+        .free-response-fraction-stack .free-response-input-formula-frac-num,
+        .free-response-fraction-stack .free-response-input-formula-frac-den {
+            width: 100%;
+            box-sizing: border-box;
+            flex: none;
+            min-height: 0;
+            padding: 6px 10px;
+            line-height: 1.25;
+            text-align: center;
+            font-family: var(--font-mono, ui-monospace, monospace);
         }
         .free-response-fraction-stack {
             display: flex;
@@ -1397,6 +1693,18 @@
             font-size: 1.15rem;
             line-height: 1;
             font-weight: 600;
+        }
+        .free-response-roots-insert-btn {
+            flex: 0 0 auto;
+            min-width: 2.75rem;
+            padding: 10px 12px;
+            font-size: 1.15rem;
+            line-height: 1;
+            font-weight: 600;
+        }
+        .free-response-row--quadratic-roots .free-response-input-quadratic-roots {
+            flex: 1 1 180px;
+            min-width: 140px;
         }
         .free-response-sf-sep {
             font-size: 1rem;

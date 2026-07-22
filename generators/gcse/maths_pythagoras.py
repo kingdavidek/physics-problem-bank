@@ -2,7 +2,8 @@
 GCSE Maths – Pythagoras' Theorem
 8 foundational · 8 intermediate · 8 difficult · 10 MCQ
 Graded practice variants return (question, solution, hint, marks, raw).
-Exact-surd variants use answer_type surd (Phase 2.8); proof-style variants stay as 4-tuples.
+Exact-surd variants use answer_type surd (Phase 2.8); explain-error variants
+use practice-mode choice buttons so answers can be recorded.
 Final answers wrapped in <strong> tags.
 """
 import random
@@ -116,11 +117,26 @@ def _pyth_surd_answer(radicand, coeff=1):
     return {'type': 'surd', 'coeff': c, 'radicand': r}
 
 
+def _pyth_choice_answer(options, correct_letter):
+    return {
+        'type': 'choice',
+        'options': list(options),
+        'correct': str(correct_letter).strip().upper(),
+    }
+
+
 def _pyth_problem_from_output(out, difficulty):
     q, s, hint, marks = out[:4]
     extra = {}
     if len(out) >= 5:
         raw = out[4]
+        if isinstance(raw, dict) and raw.get('type') == 'choice':
+            return make_problem(
+                q, s, hint, difficulty, marks,
+                'gcse', 'maths', 'pythagoras',
+                options=list(raw.get('options') or []),
+                correct_answer=str(raw.get('correct') or '').strip().upper(),
+            )
         if isinstance(raw, dict) and raw.get('type') == 'number_fields':
             values = raw.get('values') or ()
             labels = raw.get('labels') or ()
@@ -605,14 +621,52 @@ def _py_d3_3d_diagonal_exact():
 
 
 def _py_d4_pythagoras_proof_check():
-    a, b, c = 9, 12, 15
-    q = (f"A student says a triangle with sides {a} cm, {b} cm and {c} cm is right-angled "
-         f"because {a}+{b}={c}. Explain the error and decide whether the triangle is right-angled.")
-    ok = a * a + b * b == c * c
-    s = (f"The student used a + b = c, but Pythagoras requires <strong>a² + b² = c²</strong>, not a + b = c.<br>"
-         f"Check: {a}² + {b}² = {a*a + b*b} and {c}² = {c*c}. "
-         f"{'They are equal, so the triangle <strong>is</strong> right-angled.' if ok else 'They are not equal.'}")
-    return q, s, "Always compare squares of sides, never just the lengths.", 3
+    """Student wrongly uses a+b=c; decide if the triangle is actually right-angled."""
+    if random.choice([True, False]):
+        a, b, c = sorted(_pick_triple())
+        is_right = True
+    else:
+        a, b, c = sorted(_pick_non_right_triangle())
+        is_right = False
+
+    q = (
+        f"A student says a triangle with sides {a} cm, {b} cm and {c} cm is right-angled "
+        f"because {a}+{b}={c}. Which statement is correct?"
+    )
+    lhs = a * a + b * b
+    rhs = c * c
+    if is_right:
+        verdict = (
+            f"Check: {a}² + {b}² = {lhs} and {c}² = {rhs}. "
+            f"They are equal, so the triangle <strong>is</strong> right-angled."
+        )
+        correct_letter = 'A'
+    else:
+        verdict = (
+            f"Check: {a}² + {b}² = {lhs} and {c}² = {rhs}. "
+            f"They are not equal, so the triangle is <strong>not</strong> right-angled."
+        )
+        correct_letter = 'B'
+
+    options = [
+        "A  The student used the wrong test (should use a² + b² = c²). "
+        "The triangle is right-angled.",
+        "B  The student used the wrong test (should use a² + b² = c²). "
+        "The triangle is not right-angled.",
+        f"C  The student is correct: {a}+{b}={c} proves the triangle is right-angled.",
+        f"D  The student should check {a}×{b}={c} instead; "
+        f"the triangle {'is' if is_right else 'is not'} right-angled.",
+    ]
+    s = (
+        f"The student used a + b = c, but Pythagoras requires "
+        f"<strong>a² + b² = c²</strong>, not a + b = c.<br>"
+        f"{verdict}<br>"
+        f"Answer: <strong>{correct_letter}</strong>"
+    )
+    return (
+        q, s, "Always compare squares of sides, never just the lengths.", 3,
+        _pyth_choice_answer(options, correct_letter),
+    )
 
 
 def _py_d5_two_triangles():

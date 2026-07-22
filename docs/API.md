@@ -151,6 +151,9 @@ When the checker accepts an equivalent form (e.g. `6/8` for `3/4`, `2√5` for s
 | `ratio` | `a\|b` | `a:b` (equivalent ratios OK) |
 | `ratio_exact` | `a\|b` | `a:b` must match exactly (not simplified) |
 | `linear_equation` | `m\|c` e.g. `2\|3` for \(y = 2x + 3\) | `y = 2x + 3` |
+| `linear` | `3` or `x=3` (one-variable solution) | `3`, `x = 3`, `x=-2`; fractions/decimals when equivalent |
+| `quadratic_roots` | `3,-2` or `{3,-2}` (sorted set) | `3, -2`, `-2, 3`, `x=3 or x=-2`; order ignored; equivalent fractions OK |
+| `vector` | `x\|y` e.g. `3\|4` (top \| bottom) | `(3, 4)`, `3, 4`, `3\|4`, column matrix notation; fractions/decimals when equivalent |
 | `keyword` | e.g. `positive` | Case-insensitive keyword / alias match |
 | `number_estimate` | `centre~tol` e.g. `10~2` | Estimate within tolerance |
 | `bearing` | `045` | `45`, `045`, `045°` |
@@ -158,8 +161,9 @@ When the checker accepts an equivalent form (e.g. `6/8` for `3/4`, `2√5` for s
 | `surd` | `coeff\|radicand` e.g. `1\|113`, `2\|5` | `√113`, `2√5` |
 | `binary` | `width\|bits` e.g. `8\|10010110` (`0\|…` = no fixed width) | Binary digits |
 | `hex` | `width\|hex` e.g. `0\|FF` | Hex digits (case-insensitive) |
+| `completed_square` | `kind\|v1\|v2\|…` e.g. `scaled\|3\|4\|-9` for \(y = 3((x+4)^2-9)\) | Fixed template with integer blanks: `plus` \((x+p)^2+k\), `minus` \((x-p)^2+k\), `scaled` \(a((x+p)^2+k)\), `expand` \(x^2+bx+c\) |
 
-Phase 2 adds dedicated `fraction` and SymPy-backed `surd` types; ungraded conceptual variants omit `correct_answer_raw` and do not show the Check UI.
+Phase 2 adds dedicated `fraction` and SymPy-backed `surd` types; ungraded conceptual variants omit `correct_answer_raw` and do not show the Check UI. Phase 3 adds `linear` (one-variable equation solutions), `quadratic_roots` (order-independent root sets via SymPy), and `vector` (column vectors with flexible `(x, y)` input). Simultaneous linear topics (`simultaneous_equations`, `graphical_simultaneous_equations`) use `number_pair` for `(x, y)` solutions, `linear` when only one variable is requested, and `number_fields` for two intersection points. The quadratics cluster (`completing_the_square`, `quadratic_simultaneous_equations`) reuses those types for numeric roots, turning points, and full `(x, y)` solution pairs; completed-square **form** variants use structured `completed_square` blanks (only show-that proofs stay ungraded). `changing_the_subject` uses the `algebraic` checker for rearranged formulae; `functions` uses `number`, `linear`, `quadratic_roots`, and `number_fields` for numeric evaluation and solving (inverse/composite-rule algebra and multipart exam-style variants stay ungraded).
 ## Quick Test (M4)
 
 | Method | Path |

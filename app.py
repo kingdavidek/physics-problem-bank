@@ -316,6 +316,12 @@ def _problem_client_payload(problem):
         field_types = problem.get('answer_field_types')
         if field_types:
             payload['answer_field_types'] = field_types
+        template_kind = problem.get('answer_template_kind')
+        if template_kind:
+            payload['answer_template_kind'] = template_kind
+        subject = problem.get('answer_subject')
+        if subject:
+            payload['answer_subject'] = subject
     return payload
 
 _BLOCK_HTML_MARKERS = ('<svg', '<div', '<table', '<pre', '<figure')

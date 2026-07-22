@@ -1,6 +1,8 @@
 """
 GCSE Maths – Simultaneous Equations
 5 foundational · 5 intermediate · 5 difficult · 6 MCQ
+Graded practice variants return (question, solution, hint, marks, raw).
+Conceptual / interpret-only variants stay as 4-tuples.
 """
 import random
 from generators.shared.utils import make_problem
@@ -52,6 +54,77 @@ def _sim_answer(x_ans, y_ans):
     return _sim_step(rf"<strong>Answer:</strong> \(x = {x_ans},\; y = {y_ans}\)")
 
 
+def _sim_raw(value):
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        if value == int(value):
+            return str(int(value))
+        return f"{value:g}"
+    return str(value)
+
+
+def _sim_pair_answer(val_a, val_b, label_a='x', label_b='y', sep=','):
+    return {
+        'type': 'number_pair',
+        'values': (_sim_raw(val_a), _sim_raw(val_b)),
+        'label_a': label_a,
+        'label_b': label_b,
+        'sep': sep,
+    }
+
+
+def _sim_linear_answer(value, var='y'):
+    return {'type': 'linear', 'value': _sim_raw(value), 'var': str(var).strip().lower()}
+
+
+def _sim_linear_raw(raw):
+    var = raw.get('var') or 'x'
+    val = raw.get('value')
+    if var == 'x':
+        return str(val)
+    return f'{var}={val}'
+
+
+def _sim_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict):
+            raw_type = raw.get('type')
+            if raw_type == 'number_pair':
+                val_a, val_b = raw['values']
+                extra = {
+                    'correct_answer_raw': f'{val_a}|{val_b}',
+                    'answer_type': 'number_pair',
+                    'answer_labels': [raw['label_a'], raw['label_b']],
+                    'answer_pair_sep': raw.get('sep', 'and'),
+                }
+            elif raw_type == 'linear':
+                extra = {
+                    'correct_answer_raw': _sim_linear_raw(raw),
+                    'answer_type': 'linear',
+                    'answer_format_hint': 'Enter the value (e.g. y = 3 or just 3)',
+                }
+        elif isinstance(raw, (int, float)):
+            extra = {
+                'correct_answer_raw': _sim_raw(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+        elif isinstance(raw, str):
+            extra = {
+                'correct_answer_raw': raw,
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+    return make_problem(
+        q, s, hint, difficulty, marks,
+        'gcse', 'maths', 'simultaneous_equations', **extra
+    )
+
+
 def _build_pair(x_ans, y_ans, a1, b1, a2, b2):
     """Return (eq1_str, eq2_str) for integer solution."""
     c1 = a1 * x_ans + b1 * y_ans
@@ -90,7 +163,7 @@ def _sim_f_add_to_eliminate():
         r"When one equation has \(+y\) and the other has \(-y\), adding the equations "
         r"cancels \(y\) straight away. Then substitute back to find the other unknown."
     )
-    return q, sol, hint, 2
+    return q, sol, hint, 2, _sim_pair_answer(x_ans, y_ans)
 
 
 def _sim_f_elim_same_coefficient():
@@ -125,7 +198,7 @@ def _sim_f_elim_same_coefficient():
         "When the same variable has the same coefficient in both equations, subtract one "
         "equation from the other to eliminate that variable, then substitute back."
     )
-    return q, sol, hint, 3
+    return q, sol, hint, 3, _sim_pair_answer(x_ans, y_ans)
 
 
 def _sim_f_substitution_y_equals():
@@ -168,7 +241,7 @@ def _sim_f_substitution_y_equals():
         r"When one equation is already \(y = \ldots\) or \(x = \ldots\), replace that variable "
         r"in the second equation, solve for one unknown, then substitute back."
     )
-    return q, sol, hint, 3
+    return q, sol, hint, 3, _sim_pair_answer(x_ans, y_ans)
 
 
 def _sim_f_simple_pair():
@@ -203,7 +276,7 @@ def _sim_f_simple_pair():
         r"Look for matching coefficients. Here, multiply one equation so the \(y\) terms "
         r"match, subtract to find \(x\), then substitute back."
     )
-    return q, sol, hint, 2
+    return q, sol, hint, 2, _sim_pair_answer(x_ans, y_ans)
 
 
 def _sim_f_classic_pair():
@@ -232,7 +305,7 @@ def _sim_f_classic_pair():
         r"When the \(y\) coefficients are identical, subtract one equation from the other "
         r"to eliminate \(y\), then substitute to find \(x\)."
     )
-    return q, sol, hint, 2
+    return q, sol, hint, 2, _sim_pair_answer(x_ans, y_ans)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -286,7 +359,7 @@ def _sim_i_elimination_multiply():
         "When coefficients do not match yet, multiply one or both equations so one variable "
         "has the same coefficient, then add or subtract to eliminate it."
     )
-    return q, sol, hint, 4
+    return q, sol, hint, 4, _sim_pair_answer(x_ans, y_ans)
 
 
 def _sim_i_substitution_rearrange():
@@ -326,7 +399,7 @@ def _sim_i_substitution_rearrange():
         r"When neither variable is isolated, rearrange the easier equation first "
         r"(here, equation (2) has \(y\) with coefficient 1), then substitute."
     )
-    return q, sol, hint, 3
+    return q, sol, hint, 3, _sim_pair_answer(x_ans, y_ans)
 
 
 def _sim_i_word_tickets():
@@ -385,7 +458,7 @@ def _sim_i_word_tickets():
         "Translate each day's sales into an equation. Then use elimination — multiply "
         "equations if the coefficients do not match yet."
     )
-    return q, sol, hint, 4
+    return q, sol, hint, 4, _sim_pair_answer(adult_p, child_p, "Adult price (£)", "Child price (£)")
 
 
 def _sim_i_find_y_only():
@@ -414,7 +487,7 @@ def _sim_i_find_y_only():
     hint = (
         "Solve the pair fully, but only state the variable the question asks for in your final answer."
     )
-    return q, sol, hint, 2
+    return q, sol, hint, 2, _sim_linear_answer(y_ans, "y")
 
 
 def _sim_i_graph_interpret():
@@ -455,7 +528,7 @@ def _sim_d_general_elimination():
         rf"Eliminate one variable (multiply if needed), substitute back.<br>"
         rf"<strong>\(x = {x_ans},\; y = {y_ans}\)</strong>"
     )
-    return q, sol, "Show multiplying equations and subtracting — examiners award method marks.", 4
+    return q, sol, "Show multiplying equations and subtracting — examiners award method marks.", 4, _sim_pair_answer(x_ans, y_ans)
 
 
 def _sim_d_cafe_prices():
@@ -479,7 +552,7 @@ def _sim_d_cafe_prices():
         rf"Eliminate \(t\) (or \(c\)) by multiplying and subtracting.<br>"
         rf"<strong>\(c = {coffee}\), \(t = {tea}\)</strong> pounds."
     )
-    return q, sol, "One equation per day; two unknowns need two independent equations.", 5
+    return q, sol, "One equation per day; two unknowns need two independent equations.", 5, _sim_pair_answer(coffee, tea, "Coffee (£)", "Tea (£)")
 
 
 def _sim_d_matching_x_terms():
@@ -495,7 +568,7 @@ def _sim_d_matching_x_terms():
         r"Substitute into (2): \(5x - 1 = 9\) → <strong>\(x = 2\)</strong><br>"
         rf"<strong>\(x = {x_ans},\; y = {y_ans}\)</strong>"
     )
-    return q, sol, "Subtract equations when the x-terms match.", 4
+    return q, sol, "Subtract equations when the x-terms match.", 4, _sim_pair_answer(x_ans, y_ans)
 
 
 def _sim_d_apples_oranges():
@@ -517,7 +590,7 @@ def _sim_d_apples_oranges():
         rf"Solve by elimination.<br>"
         rf"<strong>\(a = {apple}\)p, \(o = {orange}\)p</strong>"
     )
-    return q, sol, "Two purchases → two equations in two unknowns.", 5
+    return q, sol, "Two purchases → two equations in two unknowns.", 5, _sim_pair_answer(apple, orange, "Apple (p)", "Orange (p)")
 
 
 def _sim_d_exam_multipart():
@@ -549,7 +622,7 @@ def _sim_d_exam_multipart():
         rf"<strong>\(y = {y_ans}\)</strong><br>"
         rf"<strong>\(x = {x_ans},\; y = {y_ans}\)</strong>"
     )
-    return q, sol, "Part (a): one equation per customer; part (b): subtract when y-terms match.", 4
+    return q, sol, "Part (a): one equation per customer; part (b): subtract when y-terms match.", 4, _sim_pair_answer(x_ans, y_ans)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -757,8 +830,4 @@ def gcse_simultaneous_equations(difficulty, mode, variant_name=None):
     variants = gcse_simultaneous_equations_variants(difficulty, mode)
     variant = pick_named_variant(variants, variant_name)
 
-    q, s, hint, marks = variant()
-    return make_problem(
-        q, s, hint, difficulty, marks,
-        "gcse", "maths", "simultaneous_equations",
-    )
+    return _sim_problem_from_output(variant(), difficulty)
