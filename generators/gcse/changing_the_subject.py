@@ -1,6 +1,8 @@
 """
 GCSE Maths – Changing the Subject
 8 foundational · 10 intermediate · 10 difficult · 12 MCQ types (randomised each time)
+Graded practice variants return (question, solution, hint, marks, raw).
+The first-step MCQ variant stays as a 4-tuple.
 """
 import random
 from generators.shared.utils import make_problem
@@ -27,6 +29,48 @@ def _sqrt_tex(expr):
     return rf"\sqrt{{{expr}}}"
 
 
+def _subj_frac(num, den):
+    if den == 1:
+        return str(num)
+    return f'({num})/({den})'
+
+
+def _subj_sqrt(inner):
+    return f'√({inner})'
+
+
+def _subj_formula(subject, rhs):
+    return f'{subject}={rhs}'
+
+
+def _subj_algebraic_answer(expr, format_hint=None):
+    payload = {'type': 'algebraic', 'value': str(expr)}
+    if format_hint:
+        payload['format_hint'] = format_hint
+    return payload
+
+
+def _subj_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict) and raw.get('type') == 'algebraic':
+            text = str(raw.get('value') or '')
+            extra = {
+                'correct_answer_raw': text,
+                'answer_type': 'algebraic',
+                'answer_format_hint': raw.get(
+                    'format_hint',
+                    'Enter the rearranged formula, e.g. x = (y - 3)/2',
+                ),
+            }
+    return make_problem(
+        q, s, hint, difficulty, marks,
+        'gcse', 'maths', 'changing_the_subject', **extra
+    )
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # FOUNDATIONAL (5)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -40,6 +84,7 @@ def _cts_f_one_step_add():
             rf"<strong>\(u = v - {a}t\)</strong>"
         )
         hint = rf"Move the \({a}t\) term to the other side."
+        ans = _subj_algebraic_answer(_subj_formula('u', f'v-{a}t'))
     else:
         q = _q_make("t", rf"v = u + {a}t")
         s = (
@@ -47,7 +92,8 @@ def _cts_f_one_step_add():
             rf"Divide by \({a}\): <strong>\(t = \dfrac{{v - u}}{{{a}}}\)</strong>"
         )
         hint = "Subtract u, then divide by the coefficient of t."
-    return q, s, hint, 2
+        ans = _subj_algebraic_answer(_subj_formula('t', _subj_frac('v-u', a)))
+    return q, s, hint, 2, ans
 
 
 def _cts_f_one_step_divide():
@@ -56,7 +102,9 @@ def _cts_f_one_step_divide():
     rhs = random.choice(["s", "d", "y"])
     q = _q_make(letter, rf"{rhs} = {k}{letter}")
     s = rf"Divide both sides by \({k}\): <strong>\({letter} = \dfrac{{{rhs}}}{{{k}}}\)</strong>"
-    return q, s, "Undo multiplication by dividing both sides.", 1
+    return q, s, "Undo multiplication by dividing both sides.", 1, _subj_algebraic_answer(
+        _subj_formula(letter, _subj_frac(rhs, k))
+    )
 
 
 def _cts_f_two_step_y_mx_c():
@@ -67,7 +115,9 @@ def _cts_f_two_step_y_mx_c():
         rf"Subtract \({c}\): \(y - {c} = {m}x\)<br>"
         rf"Divide by \({m}\): <strong>\(x = \dfrac{{y - {c}}}{{{m}}}\)</strong>"
     )
-    return q, s, "Undo +c first, then divide by the coefficient of x.", 2
+    return q, s, "Undo +c first, then divide by the coefficient of x.", 2, _subj_algebraic_answer(
+        _subj_formula('x', _subj_frac(f'y-{c}', m))
+    )
 
 
 def _cts_f_perimeter():
@@ -77,13 +127,15 @@ def _cts_f_perimeter():
             r"Subtract \(2l\) from both sides: \(P - 2l = 2w\)<br>"
             r"Divide by 2: <strong>\(w = \dfrac{P - 2l}{2}\)</strong>"
         )
+        ans = _subj_algebraic_answer(_subj_formula('w', _subj_frac('p-2l', 2)))
     else:
         q = _q_make("l", r"P = 2l + 2w")
         s = (
             r"Subtract \(2w\) from both sides: \(P - 2w = 2l\)<br>"
             r"Divide by 2: <strong>\(l = \dfrac{P - 2w}{2}\)</strong>"
         )
-    return q, s, "Treat P = 2l + 2w like a normal equation.", 2
+        ans = _subj_algebraic_answer(_subj_formula('l', _subj_frac('p-2w', 2)))
+    return q, s, "Treat P = 2l + 2w like a normal equation.", 2, ans
 
 
 def _cts_f_ax_plus_by():
@@ -95,7 +147,9 @@ def _cts_f_ax_plus_by():
         rf"Subtract \({a}x\) from both sides: \({b}y = {c} - {a}x\)<br>"
         rf"<strong>\(y = \dfrac{{{c} - {a}x}}{{{b}}}\)</strong>"
     )
-    return q, s, "Treat x as a known value; isolate y like a normal equation.", 2
+    return q, s, "Treat x as a known value; isolate y like a normal equation.", 2, _subj_algebraic_answer(
+        _subj_formula('y', _subj_frac(f'{c}-{a}x', b))
+    )
 
 
 def _cts_f_speed_time():
@@ -106,13 +160,15 @@ def _cts_f_speed_time():
             r"Divide by \(v\): <strong>\(t = \dfrac{s}{v}\)</strong>"
         )
         hint = "Remove the fraction: multiply by t, then divide by v."
+        ans = _subj_algebraic_answer(_subj_formula('t', _subj_frac('s', 'v')))
     else:
         q = _q_make("s", r"v = \dfrac{s}{t}")
         s = (
             r"Multiply by \(t\): <strong>\(s = vt\)</strong>"
         )
         hint = "Multiply both sides by t to clear the denominator."
-    return q, s, hint, 2
+        ans = _subj_algebraic_answer(_subj_formula('s', 'v*t'))
+    return q, s, hint, 2, ans
 
 
 def _cts_f_work_formula():
@@ -120,11 +176,13 @@ def _cts_f_work_formula():
         q = _q_make("F", r"W = Fd")
         s = r"Divide both sides by \(d\): <strong>\(F = \dfrac{W}{d}\)</strong>"
         hint = "W = Fd is linear in F — divide by d."
+        ans = _subj_algebraic_answer(_subj_formula('f', _subj_frac('w', 'd')))
     else:
         q = _q_make("d", r"W = Fd")
         s = r"Divide both sides by \(F\): <strong>\(d = \dfrac{W}{F}\)</strong>"
         hint = "Divide both sides by F to isolate d."
-    return q, s, hint, 2
+        ans = _subj_algebraic_answer(_subj_formula('d', _subj_frac('w', 'f')))
+    return q, s, hint, 2, ans
 
 
 def _cts_f_first_step():
@@ -160,7 +218,9 @@ def _cts_i_vuat():
         rf"\(v - u = {a}t\)<br>"
         rf"<strong>\(t = \dfrac{{v - u}}{{{a}}}\)</strong>"
     )
-    return q, s, "Isolate the term in t, then divide.", 3
+    return q, s, "Isolate the term in t, then divide.", 3, _subj_algebraic_answer(
+        _subj_formula('t', _subj_frac('v-u', a))
+    )
 
 
 def _cts_i_sqrt_area():
@@ -169,7 +229,9 @@ def _cts_i_sqrt_area():
         r"Divide by \(\pi\): \(A/\pi = r^2\)<br>"
         r"Square root both sides: <strong>\(r = \sqrt{\dfrac{A}{\pi}}\)</strong>"
     )
-    return q, s, "Undo squaring with a square root.", 3
+    return q, s, "Undo squaring with a square root.", 3, _subj_algebraic_answer(
+        _subj_formula('r', _subj_sqrt('a/π'))
+    )
 
 
 def _cts_i_half_at_squared():
@@ -182,7 +244,10 @@ def _cts_i_half_at_squared():
         rf"Divide by \({a}\): \({inner} = t^2\)<br>"
         rf"<strong>\(t = {_sqrt_tex(inner)}\)</strong>"
     )
-    return q, s, "Clear the fraction, isolate t², then take the square root.", 4
+    inner = _subj_frac(f'{den}s', a)
+    return q, s, "Clear the fraction, isolate t², then take the square root.", 4, _subj_algebraic_answer(
+        _subj_formula('t', _subj_sqrt(inner))
+    )
 
 
 def _cts_i_linear_fraction():
@@ -195,14 +260,18 @@ def _cts_i_linear_fraction():
         rf"Subtract \({b}\): \(cy - {b} = {a}x\)<br>"
         rf"<strong>\(x = \dfrac{{cy - {b}}}{{{a}}}\)</strong>"
     )
-    return q, s, "Remove the fraction first (multiply by the denominator).", 3
+    return q, s, "Remove the fraction first (multiply by the denominator).", 3, _subj_algebraic_answer(
+        _subj_formula('x', _subj_frac(f'c*y-{b}', a))
+    )
 
 
 def _cts_i_distance_speed():
     k = random.randint(3, 9)
     q = _q_make("t", rf"D = {k}t")
     s = rf"<strong>\(t = \dfrac{{D}}{{{k}}}\)</strong>"
-    return q, s, "Same as solving D = kt for t.", 2
+    return q, s, "Same as solving D = kt for t.", 2, _subj_algebraic_answer(
+        _subj_formula('t', _subj_frac('d', k))
+    )
 
 
 def _cts_i_F_ma():
@@ -211,17 +280,21 @@ def _cts_i_F_ma():
         q = _q_make("m", rf"F = {a}m")
         s = rf"Divide both sides by \({a}\): <strong>\(m = \dfrac{{F}}{{{a}}}\)</strong>"
         hint = "F = ma with a numerical coefficient — divide by a."
+        ans = _subj_algebraic_answer(_subj_formula('m', _subj_frac('f', a)))
     else:
         q = _q_make("a", rf"F = {a}m")
         s = rf"Divide both sides by \(m\): <strong>\(a = \dfrac{{F}}{{m}}\)</strong>"
         hint = "Divide by m to make a the subject."
-    return q, s, hint, 3
+        ans = _subj_algebraic_answer(_subj_formula('a', _subj_frac('f', 'm')))
+    return q, s, hint, 3, ans
 
 
 def _cts_i_circumference():
     q = _q_make("r", r"C = 2\pi r")
     s = r"Divide both sides by \(2\pi\): <strong>\(r = \dfrac{C}{2\pi}\)</strong>"
-    return q, s, "Undo multiplication by 2π.", 3
+    return q, s, "Undo multiplication by 2π.", 3, _subj_algebraic_answer(
+        _subj_formula('r', _subj_frac('c', '2π'))
+    )
 
 
 def _cts_i_triangle_area():
@@ -230,7 +303,9 @@ def _cts_i_triangle_area():
         r"Multiply by 2: \(2A = bh\)<br>"
         r"Divide by \(b\): <strong>\(h = \dfrac{2A}{b}\)</strong>"
     )
-    return q, s, "Clear the ½ first, then divide by b.", 3
+    return q, s, "Clear the ½ first, then divide by b.", 3, _subj_algebraic_answer(
+        _subj_formula('h', _subj_frac('2a', 'b'))
+    )
 
 
 def _cts_i_y_ax_squared():
@@ -241,7 +316,9 @@ def _cts_i_y_ax_squared():
         rf"Divide by \({a}\): \(y/{a} = x^2\)<br>"
         rf"<strong>\(x = {_sqrt_tex(inner)}\)</strong>"
     )
-    return q, s, "Divide by the coefficient, then square root.", 3
+    return q, s, "Divide by the coefficient, then square root.", 3, _subj_algebraic_answer(
+        _subj_formula('x', _subj_sqrt(_subj_frac('y', a)))
+    )
 
 
 def _cts_i_suvat_make_u():
@@ -251,7 +328,9 @@ def _cts_i_suvat_make_u():
         rf"Subtract \(\dfrac{{1}}{{2}}{a}t^2\): \(s - \dfrac{{1}}{{2}}{a}t^2 = ut\)<br>"
         rf"Divide by \(t\): <strong>\(u = \dfrac{{s - \dfrac{{1}}{{2}}{a}t^2}}{{t}}\)</strong>"
     )
-    return q, s, "Remove the ½at² term, then divide by t.", 4
+    return q, s, "Remove the ½at² term, then divide by t.", 4, _subj_algebraic_answer(
+        _subj_formula('u', _subj_frac(f's-{a}*t^2/2', 't'))
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -267,6 +346,7 @@ def _cts_d_kinetic():
             r"<strong>\(v = \sqrt{\dfrac{2E}{m}}\)</strong>"
         )
         hint = "Clear the fraction and the square, then square root."
+        ans = _subj_algebraic_answer(_subj_formula('v', _subj_sqrt(_subj_frac('2e', 'm'))))
     else:
         q = _q_make("m", r"E = \dfrac{1}{2}mv^2")
         s = (
@@ -274,7 +354,8 @@ def _cts_d_kinetic():
             r"<strong>\(m = \dfrac{2E}{v^2}\)</strong>"
         )
         hint = "Multiply by 2, then divide by v²."
-    return q, s, hint, 4
+        ans = _subj_algebraic_answer(_subj_formula('m', _subj_frac('2e', 'v^2')))
+    return q, s, hint, 4, ans
 
 
 def _cts_d_v_squared_u():
@@ -285,7 +366,9 @@ def _cts_d_v_squared_u():
         rf"Subtract \({a}s\): \(v^2 - {a}s = u^2\)<br>"
         rf"<strong>\(u = {_sqrt_tex(inner)}\)</strong>"
     )
-    return q, s, "Isolate u², then take the square root.", 4
+    return q, s, "Isolate u², then take the square root.", 4, _subj_algebraic_answer(
+        _subj_formula('u', _subj_sqrt(f'v^2-{a}s'))
+    )
 
 
 def _cts_d_density():
@@ -294,7 +377,9 @@ def _cts_d_density():
         r"Multiply by \(V\): \(\rho V = m\)<br>"
         r"Divide by \(\rho\): <strong>\(V = \dfrac{m}{\rho}\)</strong>"
     )
-    return q, s, "Multiply by the denominator, then divide by ρ.", 4
+    return q, s, "Multiply by the denominator, then divide by ρ.", 4, _subj_algebraic_answer(
+        _subj_formula('v', _subj_frac('m', 'ρ'))
+    )
 
 
 def _cts_d_inverse_proportion():
@@ -304,7 +389,9 @@ def _cts_d_inverse_proportion():
         rf"Multiply by \(x\): \(xy = {k}\)<br>"
         rf"Divide by \(y\): <strong>\(x = {_frac(k, 'y')}\)</strong>"
     )
-    return q, s, "Clear the fraction: multiply by x.", 4
+    return q, s, "Clear the fraction: multiply by x.", 4, _subj_algebraic_answer(
+        _subj_formula('x', _subj_frac(k, 'y'))
+    )
 
 
 def _cts_d_P_VI():
@@ -312,11 +399,13 @@ def _cts_d_P_VI():
         q = _q_make("I", r"P = VI")
         s = r"Divide both sides by \(V\): <strong>\(I = \dfrac{P}{V}\)</strong>"
         hint = "P = VI — divide by V to isolate I."
+        ans = _subj_algebraic_answer(_subj_formula('i', _subj_frac('p', 'v')))
     else:
         q = _q_make("V", r"P = VI")
         s = r"Divide both sides by \(I\): <strong>\(V = \dfrac{P}{I}\)</strong>"
         hint = "Divide by I to make V the subject."
-    return q, s, hint, 3
+        ans = _subj_algebraic_answer(_subj_formula('v', _subj_frac('p', 'i')))
+    return q, s, hint, 3, ans
 
 
 def _cts_d_V_lwh():
@@ -324,7 +413,9 @@ def _cts_d_V_lwh():
     s = (
         r"Divide both sides by \(lw\): <strong>\(h = \dfrac{V}{lw}\)</strong>"
     )
-    return q, s, "Divide by the product of the other two dimensions.", 3
+    return q, s, "Divide by the product of the other two dimensions.", 3, _subj_algebraic_answer(
+        _subj_formula('h', _subj_frac('v', 'l*w'))
+    )
 
 
 def _cts_d_y_ax2_plus_c():
@@ -337,7 +428,9 @@ def _cts_d_y_ax2_plus_c():
         rf"Divide by \({a}\): \(x^2 = {inner}\)<br>"
         rf"<strong>\(x = {_sqrt_tex(inner)}\)</strong>"
     )
-    return q, s, "Undo +c, divide by a, then square root.", 4
+    return q, s, "Undo +c, divide by a, then square root.", 4, _subj_algebraic_answer(
+        _subj_formula('x', _subj_sqrt(_subj_frac(f'y-{c}', a)))
+    )
 
 
 def _cts_d_suvat_u_zero():
@@ -349,7 +442,10 @@ def _cts_d_suvat_u_zero():
         rf"Divide by \({a}\): \(t^2 = {inner}\)<br>"
         rf"<strong>\(t = {_sqrt_tex(inner)}\)</strong>"
     )
-    return q, s, "When u = 0, suvat reduces to s = ½at².", 4
+    inner = _subj_frac('2s', a)
+    return q, s, "When u = 0, suvat reduces to s = ½at².", 4, _subj_algebraic_answer(
+        _subj_formula('t', _subj_sqrt(inner))
+    )
 
 
 def _cts_d_subject_on_both_sides():
@@ -364,7 +460,9 @@ def _cts_d_subject_on_both_sides():
         rf"Subtract \({c}x\) and \({b}\): \({coeff}x = {const}\)<br>"
         rf"<strong>\(x = {_frac(const, coeff)}\)</strong>"
     )
-    return q, s, "Collect x terms on one side, numbers on the other.", 4
+    return q, s, "Collect x terms on one side, numbers on the other.", 4, _subj_algebraic_answer(
+        _subj_formula('x', _subj_frac(const, coeff))
+    )
 
 
 def _cts_d_rational_x():
@@ -378,7 +476,11 @@ def _cts_d_rational_x():
         rf"Collect \(x\): \(x - {k}x = -{k * q_val} - {p}\)<br>"
         rf"<strong>\(x = {_frac(-k * q_val - p, 1 - k)}\)</strong>"
     )
-    return q, s, "Multiply by the denominator, then collect like terms.", 5
+    num = -k * q_val - p
+    den = 1 - k
+    return q, s, "Multiply by the denominator, then collect like terms.", 5, _subj_algebraic_answer(
+        _subj_formula('x', _subj_frac(num, den))
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -700,8 +802,4 @@ def gcse_changing_the_subject(difficulty, mode, variant_name=None):
     variants = gcse_changing_the_subject_variants(difficulty, mode)
     variant = pick_named_variant(variants, variant_name)
 
-    q, s, hint, marks = variant()
-    return make_problem(
-        q, s, hint, difficulty, marks,
-        "gcse", "maths", "changing_the_subject",
-    )
+    return _subj_problem_from_output(variant(), difficulty)

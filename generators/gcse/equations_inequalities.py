@@ -1,8 +1,8 @@
 """
 GCSE Maths – Equations and Inequalities
 17 foundational · 18 intermediate · 20 difficult · 15 MCQ
-Each variant returns (question, solution, hint, marks).
-The final answer is wrapped in <strong> tags.
+Graded practice variants return (question, solution, hint, marks, raw).
+Algebraic rearrangement, proof, and some multipart variants stay 4-tuples.
 """
 import random
 import math
@@ -54,6 +54,344 @@ def _eq_fmt_factor_bracket(root):
     return f"(x + {abs(root)})"
 
 
+def _eq_raw(value):
+    """Canonical numeric string for typed answer checking."""
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        if value == int(value):
+            return str(int(value))
+        return f"{value:g}"
+    return str(value)
+
+
+def _eq_linear_answer(value, var='x'):
+    return {'type': 'linear', 'value': _eq_raw(value), 'var': str(var).strip().lower()}
+
+
+def _eq_quadratic_roots_answer(*roots, format_hint=None):
+    payload = {'type': 'quadratic_roots', 'roots': tuple(_eq_raw(r) for r in roots)}
+    if format_hint:
+        payload['format_hint'] = format_hint
+    return payload
+
+
+def _eq_number_pair_answer(val_a, val_b, label_a='Answer 1', label_b='Answer 2', sep='and'):
+    return {
+        'type': 'number_pair',
+        'values': (_eq_raw(val_a), _eq_raw(val_b)),
+        'label_a': label_a,
+        'label_b': label_b,
+        'sep': sep,
+    }
+
+
+def _eq_coord_pairs_answer(x1, y1, x2, y2):
+    return {
+        'type': 'coordinate_pairs',
+        'values': (_eq_raw(x1), _eq_raw(y1), _eq_raw(x2), _eq_raw(y2)),
+        'labels': ('1st solution (x, y)', '2nd solution (x, y)'),
+    }
+
+
+def _eq_number_list_answer(values):
+    return {'type': 'number_list', 'values': tuple(_eq_raw(v) for v in values)}
+
+
+def _eq_keyword_answer(value):
+    return {'type': 'keyword', 'value': str(value).strip().lower()}
+
+
+def _eq_latex_sign_to_canonical(sym: str) -> str:
+    mapping = {
+        r'\gt': '>',
+        r'\geq': '>=',
+        r'\ge': '>=',
+        r'\lt': '<',
+        r'\leq': '<=',
+        r'\le': '<=',
+    }
+    return mapping.get(str(sym).strip(), str(sym).strip())
+
+
+def _eq_linear_inequality_answer(value, sign, var='x'):
+    return {
+        'type': 'linear_inequality',
+        'var': str(var).strip().lower(),
+        'sign': _eq_latex_sign_to_canonical(sign),
+        'value': _eq_raw(value),
+    }
+
+
+def _eq_compound_inequality_answer(var, left_sign, left_val, right_sign, right_val):
+    return {
+        'type': 'compound_inequality',
+        'var': str(var).strip().lower(),
+        'left_sign': _eq_latex_sign_to_canonical(left_sign),
+        'left': _eq_raw(left_val),
+        'right_sign': _eq_latex_sign_to_canonical(right_sign),
+        'right': _eq_raw(right_val),
+    }
+
+
+def _eq_number_line_answer(var, left_sign, left_val, right_sign, right_val,
+                           axis_min=None, axis_max=None):
+    left = int(left_val)
+    right = int(right_val)
+    amin = int(axis_min) if axis_min is not None else left - 1
+    amax = int(axis_max) if axis_max is not None else right + 1
+    if amax - amin < 4:
+        amax = amin + 4
+    return {
+        'type': 'number_line',
+        'var': str(var).strip().lower(),
+        'left_sign': _eq_latex_sign_to_canonical(left_sign),
+        'left': _eq_raw(left_val),
+        'right_sign': _eq_latex_sign_to_canonical(right_sign),
+        'right': _eq_raw(right_val),
+        'axis_min': amin,
+        'axis_max': amax,
+    }
+
+
+def _eq_formula_fraction_answer(numerator, denominator, var='x'):
+    return {
+        'type': 'formula_fraction',
+        'var': str(var).strip().lower(),
+        'numerator': str(numerator).strip(),
+        'denominator': str(denominator).strip(),
+    }
+
+
+def _eq_subj_frac(num, den):
+    if den == 1:
+        return str(num)
+    return f'({num})/({den})'
+
+
+def _eq_subj_sqrt(inner):
+    return f'√({inner})'
+
+
+def _eq_subj_formula(subject, rhs):
+    return f'{subject}={rhs}'
+
+
+def _eq_algebraic_answer(expr, subject=None, format_hint=None):
+    payload = {'type': 'algebraic', 'value': str(expr)}
+    if subject:
+        payload['subject'] = str(subject).strip().lower()
+    if format_hint:
+        payload['format_hint'] = format_hint
+    return payload
+
+
+def _eq_completed_square_answer(kind, *values, subject=None):
+    payload = {
+        'type': 'completed_square',
+        'kind': str(kind),
+        'values': tuple(_eq_raw(v) for v in values),
+    }
+    if subject:
+        payload['subject'] = str(subject)
+    return payload
+
+
+def _eq_number_fields_answer(values, labels, field_types=None):
+    types = tuple(field_types) if field_types else tuple('number' for _ in values)
+    return {
+        'type': 'number_fields',
+        'values': tuple(_eq_raw(v) for v in values),
+        'labels': tuple(labels),
+        'field_types': types,
+    }
+
+
+def _eq_two_var_equation_raw(var1, var2, coef1, coef2, total):
+    return f'eq:{var1},{var2}:{coef1}:{coef2}:{total}'
+
+
+def _eq_linear_inequality_raw(raw):
+    var = raw.get('var') or 'x'
+    sign = raw.get('sign') or '>='
+    val = raw.get('value')
+    return f'{var}|{sign}|{val}'
+
+
+def _eq_compound_inequality_raw(raw):
+    var = raw.get('var') or 'x'
+    return '|'.join([
+        var,
+        raw.get('left_sign') or '<',
+        _eq_raw(raw.get('left')),
+        raw.get('right_sign') or '<=',
+        _eq_raw(raw.get('right')),
+    ])
+
+
+def _eq_linear_raw(raw):
+    var = raw.get('var') or 'x'
+    val = raw.get('value')
+    if var == 'x':
+        return str(val)
+    return f'{var}={val}'
+
+
+def _eq_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict):
+            raw_type = raw.get('type')
+            if raw_type == 'linear':
+                extra = {
+                    'correct_answer_raw': _eq_linear_raw(raw),
+                    'answer_type': 'linear',
+                    'answer_format_hint': 'Enter the value (e.g. x = 3 or just 3)',
+                }
+            elif raw_type == 'quadratic_roots':
+                roots = raw.get('roots') or ()
+                hint = raw.get('format_hint')
+                if not hint:
+                    if len(roots) == 4:
+                        hint = 'Enter all four roots separated by commas (e.g. 1, -1, 2, -2)'
+                    else:
+                        hint = 'Enter roots separated by commas (e.g. 3, -2)'
+                extra = {
+                    'correct_answer_raw': ','.join(str(r) for r in roots),
+                    'answer_type': 'quadratic_roots',
+                    'answer_format_hint': hint,
+                }
+            elif raw_type == 'number_pair':
+                val_a, val_b = raw['values']
+                extra = {
+                    'correct_answer_raw': f'{val_a}|{val_b}',
+                    'answer_type': 'number_pair',
+                    'answer_labels': [raw['label_a'], raw['label_b']],
+                    'answer_pair_sep': raw.get('sep', 'and'),
+                }
+            elif raw_type == 'coordinate_pairs':
+                values = raw.get('values') or ()
+                labels = raw.get('labels') or ()
+                if len(values) == 4:
+                    extra = {
+                        'correct_answer_raw': '|'.join(str(v) for v in values),
+                        'answer_type': 'coordinate_pairs',
+                        'answer_labels': list(labels) if labels else [
+                            '1st solution (x, y)',
+                            '2nd solution (x, y)',
+                        ],
+                        'answer_format_hint': 'Enter each solution as coordinates, e.g. (-2, 4)',
+                    }
+            elif raw_type == 'number_list':
+                extra = {
+                    'correct_answer_raw': ','.join(str(v) for v in raw['values']),
+                    'answer_type': 'number_list',
+                    'answer_format_hint': 'Enter numbers separated by commas',
+                }
+            elif raw_type == 'keyword':
+                value = raw.get('value')
+                if value is not None and str(value).strip():
+                    extra = {
+                        'correct_answer_raw': str(value).strip().lower(),
+                        'answer_type': 'keyword',
+                        'answer_format_hint': 'e.g. yes or no',
+                    }
+            elif raw_type == 'linear_inequality':
+                extra = {
+                    'correct_answer_raw': _eq_linear_inequality_raw(raw),
+                    'answer_type': 'linear_inequality',
+                    'answer_subject': raw.get('var') or 'x',
+                    'answer_format_hint': 'Choose the sign, then enter the value',
+                }
+            elif raw_type == 'compound_inequality':
+                extra = {
+                    'correct_answer_raw': _eq_compound_inequality_raw(raw),
+                    'answer_type': 'compound_inequality',
+                    'answer_subject': raw.get('var') or 'x',
+                    'answer_format_hint': 'Enter both bounds and choose each sign',
+                }
+            elif raw_type == 'number_line':
+                extra = {
+                    'correct_answer_raw': _eq_compound_inequality_raw(raw),
+                    'answer_type': 'number_line',
+                    'answer_subject': raw.get('var') or 'x',
+                    'answer_axis_min': raw.get('axis_min'),
+                    'answer_axis_max': raw.get('axis_max'),
+                    'answer_format_hint': (
+                        'Drag the endpoints. Click a circle to toggle open or closed.'
+                    ),
+                }
+            elif raw_type == 'formula_fraction':
+                extra = {
+                    'correct_answer_raw': '|'.join([
+                        raw.get('numerator') or '',
+                        raw.get('denominator') or '',
+                    ]),
+                    'answer_type': 'formula_fraction',
+                    'answer_subject': raw.get('var') or 'x',
+                    'answer_format_hint': 'Enter the numerator and denominator',
+                }
+            elif raw_type == 'algebraic':
+                text = str(raw.get('value') or '')
+                extra = {
+                    'correct_answer_raw': text,
+                    'answer_type': 'algebraic',
+                    'answer_format_hint': raw.get(
+                        'format_hint',
+                        'Enter the rearranged formula, e.g. x = (y - 3)/2',
+                    ),
+                }
+                if raw.get('subject'):
+                    extra['answer_subject'] = raw['subject']
+            elif raw_type == 'completed_square':
+                kind = raw.get('kind') or 'plus'
+                values = raw.get('values') or ()
+                extra = {
+                    'correct_answer_raw': '|'.join([kind, *[str(v) for v in values]]),
+                    'answer_type': 'completed_square',
+                    'answer_template_kind': kind,
+                    'answer_subject': raw.get('subject', ''),
+                    'answer_format_hint': 'Use + or − for each term, then enter each number',
+                }
+            elif raw_type == 'number_fields':
+                values = raw.get('values') or ()
+                labels = raw.get('labels') or ()
+                field_types = raw.get('field_types') or ()
+                if values and labels and len(values) == len(labels):
+                    sep = (
+                        '\x1e'
+                        if field_types and any(t != 'number' for t in field_types)
+                        else '|'
+                    )
+                    extra = {
+                        'correct_answer_raw': sep.join(str(v) for v in values),
+                        'answer_type': 'number_fields',
+                        'answer_labels': list(labels),
+                        'answer_field_types': list(field_types) if field_types else (
+                            ['number'] * len(labels)
+                        ),
+                        'answer_format_hint': 'Enter a number in every field',
+                    }
+        elif isinstance(raw, (int, float)):
+            extra = {
+                'correct_answer_raw': _eq_raw(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+        elif isinstance(raw, str):
+            extra = {
+                'correct_answer_raw': raw,
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+    return make_problem(
+        q, s, hint, difficulty, marks,
+        'gcse', 'maths', 'equations_inequalities', **extra
+    )
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # FOUNDATIONAL (17 variants)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -67,7 +405,7 @@ def _eq_found_one_step_add():
          rf"\(x = {c} - {b}\)<br>"
          rf"<strong>\(x = {ans}\)</strong>")
     hint = f"Subtract {b} from both sides."
-    return q, s, hint, 1
+    return q, s, hint, 1, _eq_linear_answer(ans)
 
 
 def _eq_found_one_step_multiply():
@@ -79,7 +417,7 @@ def _eq_found_one_step_multiply():
          rf"\(x = \dfrac{{{c}}}{{{a}}}\)<br>"
          rf"<strong>\(x = {ans}\)</strong>")
     hint = f"Divide both sides by {a}."
-    return q, s, hint, 1
+    return q, s, hint, 1, _eq_linear_answer(ans)
 
 
 def _eq_found_two_step():
@@ -92,7 +430,7 @@ def _eq_found_two_step():
          rf"Step 2 — divide both sides by {a}: \(x = \dfrac{{{c-b}}}{{{a}}}\)<br>"
          rf"<strong>\(x = {ans}\)</strong>")
     hint = f"First subtract {b}, then divide by {a}."
-    return q, s, hint, 2
+    return q, s, hint, 2, _eq_linear_answer(ans)
 
 
 def _eq_found_substitute_formula():
@@ -108,7 +446,7 @@ def _eq_found_substitute_formula():
          rf"Divide by {a}: \(t = \dfrac{{{v-u}}}{{{a}}}\)<br>"
          rf"<strong>\(t = {t_ans}\)</strong>")
     hint = "Substitute the numbers, then rearrange to find t."
-    return q, s, hint, 2
+    return q, s, hint, 2, _eq_linear_answer(t_ans, "t")
 
 
 def _eq_found_simple_inequality():
@@ -116,11 +454,12 @@ def _eq_found_simple_inequality():
     ans = random.randint(2, 10)
     c = ans + b
     sym = random.choice([r"\gt", r"\geq"])
+    sign = _eq_latex_sign_to_canonical(sym)
     q = rf"Solve \(x + {b} {sym} {c}\)."
     s = (rf"Subtract {b} from both sides:<br>"
          rf"<strong>\(x {sym} {ans}\)</strong>")
     hint = f"Treat it like an equation — subtract {b} from both sides."
-    return q, s, hint, 1
+    return q, s, hint, 1, _eq_linear_inequality_answer(ans, sign)
 
 
 def _eq_found_double_inequality():
@@ -134,7 +473,7 @@ def _eq_found_double_inequality():
     s = (rf"The inequality \({lo} \lt x \leq {hi}\) means \(x\) is greater than {lo} and at most {hi}.<br>"
          rf"Integers satisfying this: <strong>{ints_str}</strong>")
     hint = f"x must be greater than {lo} (not including {lo}) and up to and including {hi}."
-    return rf"{q} {q_part2}", s, hint, 2
+    return rf"{q} {q_part2}", s, hint, 2, _eq_number_list_answer(ints)
 
 
 def _eq_found_ineq_solve_two_step():
@@ -143,12 +482,13 @@ def _eq_found_ineq_solve_two_step():
     ans = random.randint(2, 7)
     c = a * ans + b
     sym = random.choice([r"\lt", r"\leq"])
+    sign = _eq_latex_sign_to_canonical(sym)
     q = rf"Solve \({a}x + {b} {sym} {c}\)."
     s = (rf"Step 1 — subtract {b}: \({a}x {sym} {c - b}\)<br>"
          rf"Step 2 — divide by {a}: "
          rf"<strong>\(x {sym} {ans}\)</strong>")
     hint = f"Subtract {b} then divide by {a}. The inequality symbol stays the same."
-    return q, s, hint, 2
+    return q, s, hint, 2, _eq_linear_inequality_answer(ans, sign)
 
 
 def _eq_found_verify_solution():
@@ -168,7 +508,7 @@ def _eq_found_verify_solution():
             rf"This gives {lhs}, not {c}, so the student is <strong>incorrect</strong>. "
             rf"The correct solution is \(x = {ans}\)."))
     hint = f"Substitute x = {wrong} into {a}x + {b} and check if you get {c}."
-    return q, s, hint, 2
+    return q, s, hint, 2, _eq_keyword_answer("yes" if correct else "no")
 
 
 def _eq_found_form_and_solve_words():
@@ -186,7 +526,7 @@ def _eq_found_form_and_solve_words():
          rf"Divide by {n}: "
          rf"<strong>\(x = {ans}\)</strong>")
     hint = "Write an equation using the information, then solve it."
-    return q, s, hint, 3
+    return q, s, hint, 3, _eq_linear_answer(ans)
 
 
 def _eq_found_brackets_simple():
@@ -203,7 +543,7 @@ def _eq_found_brackets_simple():
          rf"Subtract {a*b}: \({a}x = {c - a*b}\)<br>"
          rf"Divide by {a}: <strong>\(x = {ans}\)</strong>")
     hint = f"Either divide both sides by {a} first, or expand the brackets."
-    return q, s, hint, 2
+    return q, s, hint, 2, _eq_linear_answer(ans)
 
 
 def _eq_found_rearrange_one_step():
@@ -212,7 +552,11 @@ def _eq_found_rearrange_one_step():
     s = (r"Subtract \(at\) from both sides:<br>"
          r"<strong>\(u = v - at\)</strong>")
     hint = "Move the unwanted terms to the opposite side."
-    return q, s, hint, 2
+    return q, s, hint, 2, _eq_algebraic_answer(
+        _eq_subj_formula('u', 'v-at'),
+        subject='u',
+        format_hint='Enter the expression after u =, e.g. v - at',
+    )
 
 
 def _eq_found_fraction_eq():
@@ -223,7 +567,7 @@ def _eq_found_fraction_eq():
     s = (rf"Multiply both sides by {a}:<br>"
          rf"<strong>\(x = {b}\)</strong>")
     hint = f"Multiply both sides by {a}."
-    return q, s, hint, 1
+    return q, s, hint, 1, _eq_linear_answer(b)
 
 
 def _eq_found_negative_answer():
@@ -236,7 +580,7 @@ def _eq_found_negative_answer():
          rf"Divide by {a}: "
          rf"<strong>\(x = {ans}\)</strong>")
     hint = "Don't be surprised if the answer is negative — just follow the steps."
-    return q, s, hint, 2
+    return q, s, hint, 2, _eq_linear_answer(ans)
 
 
 def _eq_found_ineq_integer_list():
@@ -248,7 +592,7 @@ def _eq_found_ineq_integer_list():
     s = (rf"\(n\) must be at least {lo} and less than {hi}.<br>"
          rf"<strong>\(n = {ints_str}\)</strong>")
     hint = f"Start from {lo} (included) and go up to, but not including, {hi}."
-    return q, s, hint, 2
+    return q, s, hint, 2, _eq_number_list_answer(ints)
 
 
 def _eq_found_write_ineq_from_words():
@@ -258,7 +602,7 @@ def _eq_found_write_ineq_from_words():
     s = (rf"'At most {n} kg' means the weight is less than or equal to {n}:<br>"
          rf"<strong>\(w \leq {n}\)</strong>")
     hint = "'At most' means ≤; 'at least' means ≥; 'more than' means >."
-    return q, s, hint, 1
+    return q, s, hint, 1, _eq_linear_inequality_answer(n, '<=', 'w')
 
 
 def _eq_found_rearrange_numeric_var():
@@ -272,20 +616,21 @@ def _eq_found_rearrange_numeric_var():
              rf"Divide both sides by {m}: "
              rf"<strong>\(x = \dfrac{{y - {c}}}{{{m}}}\)</strong>")
         hint = f"Subtract {c}, then divide by {m}."
-    elif choice == "s_kt":
+        return q, s, hint, 2, _eq_formula_fraction_answer(f'y-{c}', str(m), 'x')
+    if choice == "s_kt":
         k = random.randint(2, 9)
         q = rf"Make \(t\) the subject of \(s = {k}t\)."
         s = rf"Divide both sides by {k}: <strong>\(t = \dfrac{{s}}{{{k}}}\)</strong>"
         hint = f"Divide both sides by {k}."
-    else:
-        a = random.randint(2, 6)
-        b = random.randint(1, 10)
-        q = rf"Make \(w\) the subject of \(P = {a}w + {b}\)."
-        s = (rf"Subtract {b} from both sides: \(P - {b} = {a}w\)<br>"
-             rf"Divide both sides by {a}: "
-             rf"<strong>\(w = \dfrac{{P - {b}}}{{{a}}}\)</strong>")
-        hint = f"Subtract {b}, then divide by {a}."
-    return q, s, hint, 2
+        return q, s, hint, 2, _eq_formula_fraction_answer('s', str(k), 't')
+    a = random.randint(2, 6)
+    b = random.randint(1, 10)
+    q = rf"Make \(w\) the subject of \(P = {a}w + {b}\)."
+    s = (rf"Subtract {b} from both sides: \(P - {b} = {a}w\)<br>"
+         rf"Divide both sides by {a}: "
+         rf"<strong>\(w = \dfrac{{P - {b}}}{{{a}}}\)</strong>")
+    hint = f"Subtract {b}, then divide by {a}."
+    return q, s, hint, 2, _eq_formula_fraction_answer(f'p-{b}', str(a), 'w')
 
 
 def _eq_found_substitute_formula_var():
@@ -318,7 +663,7 @@ def _eq_found_substitute_formula_var():
         s = (rf"Substitute: \(s = {v} \times {t}\)<br>"
              rf"<strong>\(s = {ans}\)</strong>")
         hint = "Multiply speed by time."
-    return q, s, hint, 2
+    return q, s, hint, 2, ans
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -341,7 +686,7 @@ def _eq_inter_both_sides():
          rf"Divide by {a-c}: "
          rf"<strong>\(x = {ans}\)</strong>")
     hint = f"Subtract {c}x from both sides to collect x-terms."
-    return q, s, hint, 3
+    return q, s, hint, 3, _eq_linear_answer(ans)
 
 
 def _eq_inter_expand_both_sides():
@@ -372,7 +717,7 @@ def _eq_inter_expand_both_sides():
          rf"\({a-c}x = {cd - ab}\)<br>"
          rf"<strong>\(x = {ans}\)</strong>")
     hint = "Expand each bracket first, then collect like terms."
-    return q, s, hint, 3
+    return q, s, hint, 3, _eq_linear_answer(ans)
 
 
 def _eq_inter_simult_elim():
@@ -395,7 +740,7 @@ def _eq_inter_simult_elim():
          rf"\({b1}y = {c1 - a1*x_ans}\)<br>"
          rf"<strong>\(x = {x_ans},\; y = {y_ans}\)</strong>")
     hint = "Subtract the equations to eliminate y (they have the same y coefficient)."
-    return q, s, hint, 4
+    return q, s, hint, 4, _eq_number_pair_answer(x_ans, y_ans, "x", "y", sep=",")
 
 
 def _eq_inter_simult_sub():
@@ -422,7 +767,7 @@ def _eq_inter_simult_sub():
          rf"Substitute into (1): \(y = {a1}\times{x_ans} {b1_str} = {y_ans}\)<br>"
          rf"<strong>\(x = {x_ans},\; y = {y_ans}\)</strong>")
     hint = "Substitute the expression for y into the second equation."
-    return q, s, hint, 4
+    return q, s, hint, 4, _eq_number_pair_answer(x_ans, y_ans, "x", "y", sep=",")
 
 
 def _eq_inter_rearrange_two_step():
@@ -432,7 +777,11 @@ def _eq_inter_rearrange_two_step():
          r"Square root both sides: "
          r"<strong>\(t = \sqrt{\dfrac{2s}{a}}\)</strong>")
     hint = "Isolate t² first, then take the square root."
-    return q, s, hint, 3
+    return q, s, hint, 3, _eq_algebraic_answer(
+        _eq_subj_formula('t', _eq_subj_sqrt('2s/a')),
+        subject='t',
+        format_hint='Enter the expression after t =, e.g. √(2s/a)',
+    )
 
 
 def _eq_inter_word_perimeter():
@@ -451,7 +800,7 @@ def _eq_inter_word_perimeter():
          rf"\(6w = {P - 2*k}\)<br>"
          rf"<strong>\(w = {ans}\) cm</strong>")
     hint = "Write an expression for the perimeter in terms of w, set it equal to the given perimeter."
-    return q, s, hint, 4
+    return q, s, hint, 4, _eq_linear_answer(ans, "w")
 
 
 def _eq_inter_compound_ineq():
@@ -468,7 +817,7 @@ def _eq_inter_compound_ineq():
          rf"Divide all three parts by {a}:<br>"
          rf"<strong>\({lo_ans} \lt x \leq {hi_ans}\)</strong>")
     hint = "Work on all three parts simultaneously — subtract then divide."
-    return q, s, hint, 3
+    return q, s, hint, 3, _eq_compound_inequality_answer('x', '<', lo_ans, '<=', hi_ans)
 
 
 def _eq_inter_neg_ineq_flip():
@@ -479,12 +828,13 @@ def _eq_inter_neg_ineq_flip():
     c = b - a * ans
     sym = random.choice([r"\gt", r"\geq"])
     flip = r"\lt" if sym == r"\gt" else r"\leq"
+    sign = _eq_latex_sign_to_canonical(flip)
     q = rf"Solve \(-{a}x + {b} {sym} {c}\)."
     s = (rf"Subtract {b} from both sides: \(-{a}x {sym} {c - b}\)<br>"
          rf"Divide both sides by \(-{a}\) — <strong>flip the inequality sign</strong>!<br>"
          rf"<strong>\(x {flip} {ans}\)</strong>")
     hint = "When you divide by a negative number the inequality sign reverses."
-    return q, s, hint, 3
+    return q, s, hint, 3, _eq_linear_inequality_answer(ans, sign)
 
 
 def _eq_inter_frac_eq():
@@ -500,7 +850,7 @@ def _eq_inter_frac_eq():
          rf"Subtract {b}:<br>"
          rf"<strong>\(x = {lhs_num}\)</strong>")
     hint = f"Multiply both sides by {a} to clear the fraction."
-    return q, s, hint, 2
+    return q, s, hint, 2, _eq_linear_answer(lhs_num)
 
 
 def _eq_inter_angle_equation():
@@ -523,7 +873,7 @@ def _eq_inter_angle_equation():
          rf"\({total_coeff}x = {180 - total_const}\)<br>"
          rf"<strong>\(x = {x_ans}\)</strong>")
     hint = "Sum the three angles and set equal to 180°."
-    return q, s, hint, 4
+    return q, s, hint, 4, _eq_linear_answer(x_ans)
 
 
 def _eq_inter_consec_integers():
@@ -538,7 +888,7 @@ def _eq_inter_consec_integers():
          rf"\(n = {n}\)<br>"
          rf"<strong>The integers are {n}, {n+1}, {n+2}.</strong>")
     hint = "Let the three integers be n, n+1, n+2 and form an equation."
-    return q, s, hint, 3
+    return q, s, hint, 3, _eq_number_list_answer([n, n + 1, n + 2])
 
 
 def _eq_inter_ratio_equation():
@@ -555,7 +905,7 @@ def _eq_inter_ratio_equation():
          rf"\(k = {k}\)<br>"
          rf"<strong>The numbers are \({a*k}\) and \({b*k}\).</strong>")
     hint = f"Let the parts be {a}k and {b}k, then their sum = {total}."
-    return q, s, hint, 3
+    return q, s, hint, 3, _eq_number_pair_answer(a * k, b * k, "First number", "Second number")
 
 
 def _eq_inter_rearrange_sqrt():
@@ -564,7 +914,11 @@ def _eq_inter_rearrange_sqrt():
          r"Square root both sides: "
          r"<strong>\(r = \sqrt{\dfrac{A}{\pi}}\)</strong>")
     hint = "Divide by π first, then square root."
-    return q, s, hint, 3
+    return q, s, hint, 3, _eq_algebraic_answer(
+        _eq_subj_formula('r', _eq_subj_sqrt('a/π')),
+        subject='r',
+        format_hint='Enter the expression after r =, e.g. √(A/π)',
+    )
 
 
 def _eq_inter_word_both_sides():
@@ -586,7 +940,7 @@ def _eq_inter_word_both_sides():
          rf"Stickers each: \({a_coeff}\times{ans} + {a_const} = {n_stickers}\)<br>"
          rf"<strong>\(x = {ans}\); each person has {n_stickers} stickers.</strong>")
     hint = "Set the two expressions equal to each other."
-    return q, s, hint, 4
+    return q, s, hint, 4, _eq_number_pair_answer(ans, n_stickers, "x", "Number of stickers", sep=",")
 
 
 def _eq_inter_ineq_on_number_line():
@@ -594,14 +948,19 @@ def _eq_inter_ineq_on_number_line():
     hi = lo + random.randint(3, 5)
     sym_lo = random.choice([r"\lt", r"\leq"])
     sym_hi = random.choice([r"\lt", r"\leq"])
-    q = (rf"Describe the number line diagram for \({lo} {sym_lo} x {sym_hi} {hi}\). "
-         rf"State whether each endpoint is included.")
+    left_sign = _eq_latex_sign_to_canonical(sym_lo)
+    right_sign = _eq_latex_sign_to_canonical(sym_hi)
+    q = (rf"Show \({lo} {sym_lo} x {sym_hi} {hi}\) on the number line below. "
+         rf"Drag the endpoints and click each circle to make it open or closed.")
     s = (rf"The solution is all values from {lo} to {hi}.<br>"
          rf"At \(x = {lo}\): {'included (filled circle)' if sym_lo == r'\leq' else 'not included (open circle)'}.<br>"
          rf"At \(x = {hi}\): {'included (filled circle)' if sym_hi == r'\leq' else 'not included (open circle)'}.<br>"
          rf"<strong>Draw a line from {lo} to {hi} with the appropriate circles at each end.</strong>")
     hint = "'<' means open circle (not included); '≤' means filled circle (included)."
-    return q, s, hint, 3
+    return (
+        q, s, hint, 3,
+        _eq_number_line_answer('x', left_sign, lo, right_sign, hi),
+    )
 
 
 def _eq_inter_rearrange_two_step_numeric_var():
@@ -616,7 +975,11 @@ def _eq_inter_rearrange_two_step_numeric_var():
          rf"Square root: "
          rf"<strong>\(t = \sqrt{{\dfrac{{{den}s}}{{{num * a}}}}}\)</strong>")
     hint = "Clear the fraction, isolate t², then square root."
-    return q, s, hint, 3
+    return q, s, hint, 3, _eq_algebraic_answer(
+        _eq_subj_formula('t', _eq_subj_sqrt(f'{den}s/{num * a}')),
+        subject='t',
+        format_hint=f'Enter the expression after t =, e.g. √({den}s/{num * a})',
+    )
 
 
 def _eq_inter_simult_elimination_general_var():
@@ -642,7 +1005,7 @@ def _eq_inter_simult_elimination_general_var():
          rf"\({b1}y = {c1 - a1 * x_ans}\)<br>"
          rf"<strong>\(x = {x_ans},\; y = {y_ans}\)</strong>")
     hint = "Match the y-coefficients by multiplying one or both equations, then subtract."
-    return q, s, hint, 4
+    return q, s, hint, 4, _eq_number_pair_answer(x_ans, y_ans, "x", "y", sep=",")
 
 
 def _eq_inter_savings_inequality_var():
@@ -660,7 +1023,7 @@ def _eq_inter_savings_inequality_var():
          rf"Divide by {weekly}: "
          rf"<strong>\(w \geq {weeks_needed}\)</strong> (at least {weeks_needed} more weeks)")
     hint = "Form an expression for total savings, then use ≥ for 'at least'."
-    return q, s, hint, 3
+    return q, s, hint, 3, _eq_linear_inequality_answer(weeks_needed, '>=', 'w')
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -681,7 +1044,7 @@ def _eq_diff_quadratic_factorise():
          rf"So \(x = {r1}\) or \(x = {r2}\)<br>"
          rf"<strong>\(x = {r1}\) or \(x = {r2}\)</strong>")
     hint = "Find two numbers that multiply to the constant and add to the x-coefficient."
-    return q, s, hint, 3
+    return q, s, hint, 3, _eq_quadratic_roots_answer(r1, r2)
 
 
 def _eq_diff_quadratic_formula():
@@ -702,7 +1065,7 @@ def _eq_diff_quadratic_formula():
          rf"\(x = \dfrac{{{-b_v} \pm {sqrt_disc}}}{{{2*a_v}}}\)<br>"
          rf"<strong>\(x = {r1}\) or \(x = {r2}\)</strong>")
     hint = "Identify a, b, c then substitute into the formula. Simplify the discriminant first."
-    return q, s, hint, 4
+    return q, s, hint, 4, _eq_quadratic_roots_answer(r1, r2)
 
 
 def _eq_diff_complete_square():
@@ -717,7 +1080,7 @@ def _eq_diff_complete_square():
          rf"\(= (x + {p})^2 - {p*p} + {q_val}\)<br>"
          rf"<strong>\(= (x + {p})^2 {q_str_k}\)</strong>")
     hint = f"Half the x-coefficient is {p}. Write (x + {p})² and then adjust the constant."
-    return q, s, hint, 3
+    return q, s, hint, 3, _eq_completed_square_answer('plus', p, k)
 
 
 def _eq_diff_simult_non_integer():
@@ -740,7 +1103,7 @@ def _eq_diff_simult_non_integer():
          r"Substitute into (2): \(5(1) - y = 3 \Rightarrow y = 2\)<br>"
          r"<strong>\(x = 1,\; y = 2\)</strong>")
     hint = "Multiply one equation so that a coefficient matches, then add or subtract."
-    return q, s, hint, 4
+    return q, s, hint, 4, _eq_number_pair_answer(1, 2, "x", "y", sep=",")
 
 
 def _eq_diff_quadratic_from_geometry():
@@ -761,7 +1124,7 @@ def _eq_diff_quadratic_from_geometry():
          rf" — test: the positive root is valid.<br>"
          rf"<strong>\(x = {x_ans}\) cm</strong> (taking the positive value since \(x\) is a length)")
     hint = "Set up (x+a)(x+b) = area, expand, rearrange to 0, then factorise."
-    return q, s, hint, 5
+    return q, s, hint, 5, _eq_linear_answer(x_ans)
 
 
 def _eq_diff_rearrange_complex():
@@ -771,7 +1134,11 @@ def _eq_diff_rearrange_complex():
          r"Square root: "
          r"<strong>\(v = \sqrt{\dfrac{2E}{m}}\)</strong>")
     hint = "Isolate v² first, then square root."
-    return q, s, hint, 3
+    return q, s, hint, 3, _eq_algebraic_answer(
+        _eq_subj_formula('v', _eq_subj_sqrt('2e/m')),
+        subject='v',
+        format_hint='Enter the expression after v =, e.g. √(2E/m)',
+    )
 
 
 def _eq_diff_quadratic_ineq():
@@ -787,7 +1154,7 @@ def _eq_diff_quadratic_ineq():
          rf"The expression is negative <em>between</em> the roots:<br>"
          rf"<strong>\({r1} \lt x \lt {r2}\)</strong>")
     hint = "Factorise, sketch the parabola (opens up), then identify where it is below the x-axis."
-    return q, s, hint, 4
+    return q, s, hint, 4, _eq_compound_inequality_answer('x', '<', r1, '<', r2)
 
 
 def _eq_diff_fractional_eq():
@@ -811,19 +1178,27 @@ def _eq_diff_fractional_eq():
          rf"\({a+b}x = {ans * a * b}\)<br>"
          rf"<strong>\(x = {ans * a * b // (a+b)}\)</strong>")
     hint = f"Multiply through by {a*b} to clear both fractions."
-    return q, s, hint, 4
+    return q, s, hint, 4, _eq_linear_answer(ans * a * b // (a + b))
 
 
 def _eq_diff_disguised_quadratic():
-    # Let u = x², solve u² - 5u + 4 = 0 → u=1,4 → x=±1, ±2
-    q = r"Solve \(x^4 - 5x^2 + 4 = 0\)."
-    s = (r"Let \(u = x^2\). Then the equation becomes:<br>"
-         r"\(u^2 - 5u + 4 = 0\)<br>"
-         r"Factorise: \((u - 1)(u - 4) = 0\)<br>"
-         r"So \(u = 1\) or \(u = 4\), i.e. \(x^2 = 1\) or \(x^2 = 4\)<br>"
-         r"<strong>\(x = \pm 1\) or \(x = \pm 2\)</strong>")
-    hint = "Let u = x² to turn it into a standard quadratic, then solve for u, then for x."
-    return q, s, hint, 5
+    """Biquadratic x⁴ + bx² + c = 0 with random perfect-square roots."""
+    s1, s2 = sorted(random.sample(range(1, 7), 2))
+    ua, ub = s1 * s1, s2 * s2
+    b_u = -(ua + ub)
+    c_u = ua * ub
+    b_str = f"+ {b_u}" if b_u >= 0 else f"- {abs(b_u)}"
+    c_str = f"+ {c_u}" if c_u >= 0 else f"- {abs(c_u)}"
+    q = rf"Solve \(x^4 {b_str}x^2 {c_str} = 0\)."
+    s = (rf"Let \(u = x^2\). Then \(u^2 {b_str}u {c_str} = 0\)<br>"
+         rf"Factorise: \((u - {ua})(u - {ub}) = 0\)<br>"
+         rf"So \(u = {ua}\) or \(u = {ub}\), i.e. \(x^2 = {ua}\) or \(x^2 = {ub}\)<br>"
+         rf"<strong>\(x = \pm {s1}\) or \(x = \pm {s2}\)</strong>")
+    hint = "Let u = x² to get a quadratic in u, solve for u, then take square roots."
+    return q, s, hint, 5, _eq_quadratic_roots_answer(
+        -s2, -s1, s1, s2,
+        format_hint='Enter all four roots separated by commas (e.g. 1, -1, 2, -2)',
+    )
 
 
 def _eq_diff_simult_one_quadratic():
@@ -854,7 +1229,7 @@ def _eq_diff_simult_one_quadratic():
          rf"When \(x = {r1}\): \(y = {y1}\). When \(x = {r2}\): \(y = {y2}\)<br>"
          rf"<strong>Solutions: \(({r1},\, {y1})\) and \(({r2},\, {y2})\)</strong>")
     hint = "Substitute the linear equation into the quadratic, then factorise."
-    return q, s, hint, 5
+    return q, s, hint, 5, _eq_coord_pairs_answer(r1, y1, r2, y2)
 
 
 def _eq_diff_subject_appears_twice():
@@ -865,7 +1240,7 @@ def _eq_diff_subject_appears_twice():
          r"Divide by \((a - c)\):<br>"
          r"<strong>\(x = \dfrac{d - b}{a - c}\)</strong>")
     hint = "Collect all x-terms on one side, factorise x out, then divide."
-    return q, s, hint, 4
+    return q, s, hint, 4, _eq_formula_fraction_answer('d-b', 'a-c', 'x')
 
 
 def _eq_diff_prove_identity():
@@ -892,7 +1267,7 @@ def _eq_diff_complete_square_solve():
          rf"<strong>\(x = {-p} + \sqrt{{{rhs}}} \approx {-p + math.sqrt(rhs):.2f}\) "
          rf"or \(x = {-p} - \sqrt{{{rhs}}} \approx {-p - math.sqrt(rhs):.2f}\)</strong>")
     hint = f"Add {p}² = {p*p} to both sides after moving the constant."
-    return q, s, hint, 4
+    return q, s, hint, 4, _eq_quadratic_roots_answer(round(-p + math.sqrt(rhs), 2), round(-p - math.sqrt(rhs), 2))
 
 
 def _eq_diff_rearrange_fraction():
@@ -916,7 +1291,11 @@ def _eq_diff_rearrange_fraction():
          rf"Factorise: \((1 - {k})x = {lhs_const}\)<br>"
          rf"Divide: {ans_str}")
     hint = "Multiply through by the denominator, expand, then collect terms in x."
-    return q, s, hint, 4
+    if num % den == 0:
+        raw = _eq_linear_answer(num // den)
+    else:
+        raw = _eq_linear_answer(f"{num}/{den}")
+    return q, s, hint, 4, raw
 
 
 def _eq_diff_quadratic_from_consecutive():
@@ -932,7 +1311,7 @@ def _eq_diff_quadratic_from_consecutive():
          rf"\(n = {n}\) (taking the positive value)<br>"
          rf"<strong>The integers are {n} and {n+2}.</strong>")
     hint = "Let the integers be n and n+2, multiply, rearrange to 0, then factorise."
-    return q, s, hint, 4
+    return q, s, hint, 4, _eq_number_pair_answer(n, n + 2, "First integer", "Second integer")
 
 
 def _eq_diff_rearrange_kinetic_var():
@@ -945,7 +1324,11 @@ def _eq_diff_rearrange_kinetic_var():
          rf"Divide both sides by {m}: \(v^2 = \dfrac{{2E}}{{{m}}}\)<br>"
          rf"Square root: <strong>\(v = \sqrt{{\dfrac{{2E}}{{{m}}}}}\)</strong>")
     hint = "Isolate v² first (multiply by 2, divide by mass), then take the square root."
-    return q, s, hint, 3
+    return q, s, hint, 3, _eq_algebraic_answer(
+        _eq_subj_formula('v', _eq_subj_sqrt(f'2e/{m}')),
+        subject='v',
+        format_hint=f'Enter the expression after v =, e.g. √(2E/{m})',
+    )
 
 
 def _eq_diff_quadratic_formula_generated():
@@ -964,25 +1347,7 @@ def _eq_diff_quadratic_formula_generated():
          rf"\(x = \dfrac{{-{b} \pm {sqrt_disc}}}{{2}}\)<br>"
          rf"<strong>\(x = {r2}\) or \(x = {r1}\)</strong>")
     hint = "Identify a, b, c from the equation, evaluate the discriminant, then substitute."
-    return q, s, hint, 4
-
-
-def _eq_diff_disguised_quadratic_var():
-    """Biquadratic x⁴ + bx² + c = 0 built from random u-substitution roots."""
-    s1 = random.randint(1, 4)
-    s2 = random.randint(2, 5)
-    ua, ub = s1 * s1, s2 * s2
-    b_u = -(ua + ub)
-    c_u = ua * ub
-    b_str = f"+ {b_u}" if b_u >= 0 else f"- {abs(b_u)}"
-    c_str = f"+ {c_u}" if c_u >= 0 else f"- {abs(c_u)}"
-    q = rf"Solve \(x^4 {b_str}x^2 {c_str} = 0\)."
-    s = (rf"Let \(u = x^2\). Then \(u^2 {b_str}u {c_str} = 0\)<br>"
-         rf"Factorise: \((u - {ua})(u - {ub}) = 0\)<br>"
-         rf"So \(u = {ua}\) or \(u = {ub}\), i.e. \(x^2 = {ua}\) or \(x^2 = {ub}\)<br>"
-         rf"<strong>\(x = \pm {s1}\) or \(x = \pm {s2}\)</strong>")
-    hint = "Let u = x² to get a quadratic in u, solve for u, then take square roots."
-    return q, s, hint, 5
+    return q, s, hint, 4, _eq_quadratic_roots_answer(r1, r2)
 
 
 def _eq_diff_simult_linear_pair_var():
@@ -1007,7 +1372,7 @@ def _eq_diff_simult_linear_pair_var():
          rf"Substitute into (1): \(y = {y_ans}\)<br>"
          rf"<strong>\(x = {x_ans},\; y = {y_ans}\)</strong>")
     hint = "Match the y-coefficients by multiplying, then subtract to eliminate y."
-    return q, s, hint, 4
+    return q, s, hint, 4, _eq_number_pair_answer(x_ans, y_ans, "x", "y", sep=",")
 
 
 # ---------- DIFFICULT (multi-step, real-world, a/b/c) ----------
@@ -1040,15 +1405,30 @@ def _eq_diff_cafe_prices_multipart():
         rf"<strong>a)</strong> Monday: <strong>\({n_c1}c + {n_t1}t = {total1}\)</strong> &nbsp; (1); "
         rf"Tuesday: <strong>\({n_c2}c + {n_t2}t = {total2}\)</strong> &nbsp; (2)<br>"
         rf"<strong>b)</strong> Eliminate \(t\): multiply (1) by {n_t2}, (2) by {n_t1}, then subtract:<br>"
-        rf"\({coeff_c}c = {rhs_c}\) \u21d2 <strong>\(c = {coffee_p}\)</strong> pounds.<br>"
+        rf"\({coeff_c}c = {rhs_c}\) \(\Rightarrow\) <strong>\(c = {coffee_p}\)</strong> pounds.<br>"
         rf"<strong>c)</strong> Substitute into (1): \({n_c1}({coffee_p}) + {n_t1}t = {total1}\)<br>"
-        rf"\({n_t1}t = {total1 - n_c1 * coffee_p}\) \u21d2 <strong>\(t = {tea_p}\)</strong> pounds."
+        rf"\({n_t1}t = {total1 - n_c1 * coffee_p}\) \(\Rightarrow\) "
+        rf"<strong>\(t = {tea_p}\)</strong> pounds."
     )
     hint = (
         r"Write one equation per day, then eliminate one unknown by multiplying "
         r"and subtracting the equations."
     )
-    return q, s, hint, 5
+    return q, s, hint, 5, _eq_number_fields_answer(
+        (
+            _eq_two_var_equation_raw('c', 't', n_c1, n_t1, total1),
+            _eq_two_var_equation_raw('c', 't', n_c2, n_t2, total2),
+            coffee_p,
+            tea_p,
+        ),
+        (
+            'Part (a): Monday equation',
+            'Part (a): Tuesday equation',
+            'Part (b): price of one coffee (£)',
+            'Part (c): price of one tea (£)',
+        ),
+        ('two_var_equation', 'two_var_equation', 'number', 'number'),
+    )
 
 
 def _eq_diff_phone_plans_multipart():
@@ -1085,7 +1465,17 @@ def _eq_diff_phone_plans_multipart():
         r"Convert pence to pounds in your expressions; equate costs for part (b); "
         r"for (c) compare the two expressions using <."
     )
-    return q, s, hint, 5
+    return q, s, hint, 5, _eq_number_fields_answer(
+        (
+            m_equal,
+            f'm|<|{m_equal}',
+        ),
+        (
+            'Part (b): minutes when both plans cost the same',
+            'Part (c): Plan A cheaper when… (e.g. m < 40)',
+        ),
+        ('number', 'linear_inequality'),
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1276,7 +1666,6 @@ def gcse_equations_inequalities_variants(difficulty, mode):
             _eq_diff_phone_plans_multipart,
             _eq_diff_rearrange_kinetic_var,
             _eq_diff_quadratic_formula_generated,
-            _eq_diff_disguised_quadratic_var,
             _eq_diff_simult_linear_pair_var,
         ]
     else:  # mixed
@@ -1317,8 +1706,4 @@ def gcse_equations_inequalities(difficulty, mode, variant_name=None):
     variants = gcse_equations_inequalities_variants(difficulty, mode)
     variant = pick_named_variant(variants, variant_name)
 
-    q, s, hint, marks = variant()
-    return make_problem(
-        q, s, hint, difficulty, marks,
-        'gcse', 'maths', 'equations_inequalities',
-    )
+    return _eq_problem_from_output(variant(), difficulty)

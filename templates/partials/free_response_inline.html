@@ -10,6 +10,10 @@
      data-field-types="{{ (problem.answer_field_types or []) | tojson | forceescape }}"
      data-pair-sep="{{ problem.answer_pair_sep or 'and' }}"
      data-format-hint="{{ problem.answer_format_hint or '' }}"
+     data-answer-template-kind="{{ problem.answer_template_kind or '' }}"
+     data-csq-subject="{{ problem.answer_subject or '' }}"
+     data-axis-min="{{ problem.answer_axis_min if problem.answer_axis_min is not none else '' }}"
+     data-axis-max="{{ problem.answer_axis_max if problem.answer_axis_max is not none else '' }}"
      data-level="{{ fr_level }}"
      data-subject="{{ fr_subject }}"
      data-topic="{{ fr_topic }}"
@@ -46,6 +50,23 @@
                autocomplete="off"
                inputmode="decimal"
                aria-label="{{ problem.answer_labels[1] if problem.answer_labels and problem.answer_labels|length > 1 else 'Second value' }}">
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% elif problem.answer_type == 'coordinate_pairs' %}
+    <div class="free-response-row free-response-row--coordinate-pairs">
+        <div class="free-response-coord-pairs-stack">
+            {% for label in problem.answer_labels or ['1st solution (x, y)', '2nd solution (x, y)'] %}
+            <label class="free-response-field">
+                <span class="free-response-field-label">{{ label }}</span>
+                <input type="text"
+                       class="free-response-input free-response-input-coord-pair"
+                       placeholder="e.g. (-2, 4)"
+                       autocomplete="off"
+                       inputmode="text"
+                       aria-label="{{ label }}">
+            </label>
+            {% endfor %}
+        </div>
         <button type="button" class="btn free-response-check-btn">Check</button>
     </div>
     {% elif problem.answer_type == 'number_list' %}
@@ -85,6 +106,66 @@
                aria-label="Linear equation">
         <button type="button" class="btn free-response-check-btn">Check</button>
     </div>
+    {% elif problem.answer_type == 'linear_inequality' %}
+    <div class="free-response-row free-response-row--linear-inequality">
+        <div class="free-response-ineq-template" aria-label="Inequality answer">
+            <span class="free-response-ineq-part"><strong>{{ problem.answer_subject or 'x' }}</strong></span>
+            <select class="free-response-ineq-sign" aria-label="Inequality sign">
+                <option value="=">=</option>
+                <option value="<">&lt;</option>
+                <option value=">">&gt;</option>
+                <option value="<=">≤</option>
+                <option value=">=" selected>≥</option>
+            </select>
+            <input type="text"
+                   class="free-response-input free-response-input-ineq-value"
+                   placeholder="value"
+                   autocomplete="off"
+                   inputmode="text"
+                   aria-label="Inequality value">
+        </div>
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    <p class="free-response-ineq-hint">{{ problem.answer_format_hint or 'Choose the sign, then enter the value' }}</p>
+    {% elif problem.answer_type == 'compound_inequality' %}
+    <div class="free-response-row free-response-row--compound-inequality">
+        <div class="free-response-compound-ineq-template" aria-label="Compound inequality answer">
+            <input type="text"
+                   class="free-response-input free-response-input-compound-bound"
+                   placeholder="lo"
+                   autocomplete="off"
+                   inputmode="text"
+                   aria-label="Lower bound">
+            <select class="free-response-compound-sign" aria-label="Sign between lower bound and variable">
+                <option value="<">&lt;</option>
+                <option value="<=">≤</option>
+            </select>
+            <span class="free-response-ineq-part"><strong>{{ problem.answer_subject or 'x' }}</strong></span>
+            <select class="free-response-compound-sign" aria-label="Sign between variable and upper bound">
+                <option value="<">&lt;</option>
+                <option value="<=" selected>≤</option>
+            </select>
+            <input type="text"
+                   class="free-response-input free-response-input-compound-bound"
+                   placeholder="hi"
+                   autocomplete="off"
+                   inputmode="text"
+                   aria-label="Upper bound">
+        </div>
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    <p class="free-response-ineq-hint">{{ problem.answer_format_hint or 'Enter both bounds and choose each sign' }}</p>
+    {% elif problem.answer_type == 'number_line' %}
+    <div class="free-response-row free-response-row--number-line">
+        <div class="free-response-number-line"
+             data-axis-min="{{ problem.answer_axis_min if problem.answer_axis_min is not none else -2 }}"
+             data-axis-max="{{ problem.answer_axis_max if problem.answer_axis_max is not none else 6 }}"
+             role="group"
+             aria-label="Number line inequality">
+        </div>
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    <p class="free-response-ineq-hint">{{ problem.answer_format_hint or 'Drag the endpoints. Click a circle to toggle open or closed.' }}</p>
     {% elif problem.answer_type == 'ratio' or problem.answer_type == 'ratio_exact' %}
     <div class="free-response-row free-response-row--ratio">
         <input type="text"
@@ -104,6 +185,10 @@
                 {% set field_ph = 'e.g. positive, negative, or none' %}
             {% elif field_type == 'linear_equation' %}
                 {% set field_ph = 'e.g. y = 2x + 3' %}
+            {% elif field_type == 'two_var_equation' %}
+                {% set field_ph = 'e.g. 10c + 11t = 53' %}
+            {% elif field_type == 'linear_inequality' %}
+                {% set field_ph = 'e.g. m < 40' %}
             {% elif field_type == 'number_estimate' %}
                 {% set field_ph = 'Your estimate from the graph' %}
             {% elif field_type == 'fraction' %}
@@ -157,6 +242,44 @@
                aria-label="Your answer">
         <button type="button" class="btn free-response-check-btn">Check</button>
     </div>
+    {% elif problem.answer_type == 'linear' %}
+    <div class="free-response-row free-response-row--linear">
+        <input type="text"
+               class="free-response-input"
+               placeholder="{{ problem.answer_format_hint or 'e.g. x = 3' }}"
+               autocomplete="off"
+               inputmode="text"
+               aria-label="Your answer">
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% elif problem.answer_type == 'quadratic_roots' %}
+    <div class="free-response-row free-response-row--quadratic-roots">
+        <input type="text"
+               class="free-response-input free-response-input-quadratic-roots"
+               placeholder="{{ problem.answer_format_hint or 'e.g. 3, -2 or -3+√14, -3-√14' }}"
+               autocomplete="off"
+               inputmode="text"
+               aria-label="Quadratic roots">
+        <button type="button"
+                class="btn btn-secondary free-response-roots-insert-btn"
+                data-insert="±"
+                aria-label="Insert plus-minus symbol">±</button>
+        <button type="button"
+                class="btn btn-secondary free-response-roots-insert-btn"
+                data-insert="√"
+                aria-label="Insert square root symbol">√</button>
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% elif problem.answer_type == 'vector' %}
+    <div class="free-response-row free-response-row--vector">
+        <input type="text"
+               class="free-response-input free-response-input-vector"
+               placeholder="{{ problem.answer_format_hint or 'e.g. (3, 4)' }}"
+               autocomplete="off"
+               inputmode="text"
+               aria-label="Column vector">
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
     {% elif problem.answer_type == 'pi_multiple' %}
     <div class="free-response-row free-response-row--pi-multiple">
         <input type="text"
@@ -181,6 +304,9 @@
     </div>
     {% elif problem.answer_type == 'algebraic' %}
     <div class="free-response-row free-response-row--algebraic">
+        {% if problem.answer_subject %}
+        <span class="free-response-formula-subject"><strong>{{ problem.answer_subject }}</strong> =</span>
+        {% endif %}
         <input type="text"
                class="free-response-input free-response-input-algebraic"
                placeholder="{{ problem.answer_format_hint or 'e.g. a - b' }}"
@@ -210,6 +336,29 @@
         <button type="button" class="btn btn-secondary free-response-surd-btn" aria-label="Insert square root symbol">√</button>
         <button type="button" class="btn free-response-check-btn">Check</button>
     </div>
+    {% elif problem.answer_type == 'formula_fraction' %}
+    <div class="free-response-row free-response-row--formula-fraction">
+        <div class="free-response-formula-fraction-template" aria-label="Formula fraction answer">
+            <span class="free-response-formula-subject"><strong>{{ problem.answer_subject or 'x' }}</strong> =</span>
+            <div class="free-response-fraction-stack">
+                <input type="text"
+                       class="free-response-input free-response-input-formula-frac-num"
+                       placeholder="numerator"
+                       autocomplete="off"
+                       inputmode="text"
+                       aria-label="Numerator">
+                <span class="free-response-fraction-bar" aria-hidden="true"></span>
+                <input type="text"
+                       class="free-response-input free-response-input-formula-frac-den"
+                       placeholder="denominator"
+                       autocomplete="off"
+                       inputmode="text"
+                       aria-label="Denominator">
+            </div>
+        </div>
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    <p class="free-response-formula-frac-hint">{{ problem.answer_format_hint or 'Enter the numerator and denominator' }}</p>
     {% elif problem.answer_type == 'binary' %}
     <div class="free-response-row free-response-row--binary">
         <input type="text"
@@ -220,6 +369,180 @@
                aria-label="Binary answer">
         <button type="button" class="btn free-response-check-btn">Check</button>
     </div>
+    {% elif problem.answer_type == 'completed_square' %}
+    <div class="free-response-row free-response-row--completed-square">
+        <div class="free-response-csq-template" aria-label="Completed square answer">
+            {% if problem.answer_template_kind == 'scaled' %}
+            {% if problem.answer_subject %}<span class="free-response-csq-part">{{ problem.answer_subject }} =</span>{% endif %}
+            <input type="text"
+                   class="free-response-input free-response-input-csq"
+                   data-csq-role="a"
+                   placeholder="a"
+                   autocomplete="off"
+                   inputmode="numeric"
+                   aria-label="Factor outside the bracket">
+            <span class="free-response-csq-part">((x</span>
+            <button type="button"
+                    class="btn btn-secondary free-response-csq-sign"
+                    data-sign="+"
+                    data-default-sign="+"
+                    aria-label="Toggle sign between plus and minus">+</button>
+            <input type="text"
+                   class="free-response-input free-response-input-csq"
+                   data-csq-role="p"
+                   placeholder="p"
+                   autocomplete="off"
+                   inputmode="numeric"
+                   aria-label="Value p in (x ± p)">
+            <span class="free-response-csq-part">)²</span>
+            <button type="button"
+                    class="btn btn-secondary free-response-csq-sign"
+                    data-sign="+"
+                    data-default-sign="+"
+                    aria-label="Toggle sign between plus and minus">+</button>
+            <input type="text"
+                   class="free-response-input free-response-input-csq"
+                   data-csq-role="k"
+                   placeholder="k"
+                   autocomplete="off"
+                   inputmode="numeric"
+                   aria-label="Constant k">
+            <span class="free-response-csq-part">)</span>
+            {% elif problem.answer_template_kind == 'minus' %}
+            <span class="free-response-csq-part">(x</span>
+            <button type="button"
+                    class="btn btn-secondary free-response-csq-sign"
+                    data-sign="-"
+                    data-default-sign="-"
+                    aria-label="Toggle sign between plus and minus">−</button>
+            <input type="text"
+                   class="free-response-input free-response-input-csq"
+                   data-csq-role="p"
+                   placeholder="p"
+                   autocomplete="off"
+                   inputmode="numeric"
+                   aria-label="Value p in (x ± p)">
+            <span class="free-response-csq-part">)²</span>
+            <button type="button"
+                    class="btn btn-secondary free-response-csq-sign"
+                    data-sign="+"
+                    data-default-sign="+"
+                    aria-label="Toggle sign between plus and minus">+</button>
+            <input type="text"
+                   class="free-response-input free-response-input-csq"
+                   data-csq-role="k"
+                   placeholder="k"
+                   autocomplete="off"
+                   inputmode="numeric"
+                   aria-label="Constant k">
+            {% elif problem.answer_template_kind == 'expand' %}
+            <span class="free-response-csq-part">x²</span>
+            <button type="button"
+                    class="btn btn-secondary free-response-csq-sign"
+                    data-sign="+"
+                    data-default-sign="+"
+                    aria-label="Toggle sign between plus and minus">+</button>
+            <input type="text"
+                   class="free-response-input free-response-input-csq"
+                   data-csq-role="b"
+                   placeholder="b"
+                   autocomplete="off"
+                   inputmode="numeric"
+                   aria-label="Coefficient of x">
+            <span class="free-response-csq-part">x</span>
+            <button type="button"
+                    class="btn btn-secondary free-response-csq-sign"
+                    data-sign="+"
+                    data-default-sign="+"
+                    aria-label="Toggle sign between plus and minus">+</button>
+            <input type="text"
+                   class="free-response-input free-response-input-csq"
+                   data-csq-role="c"
+                   placeholder="c"
+                   autocomplete="off"
+                   inputmode="numeric"
+                   aria-label="Constant term">
+            {% else %}
+            <span class="free-response-csq-part">(x</span>
+            <button type="button"
+                    class="btn btn-secondary free-response-csq-sign"
+                    data-sign="+"
+                    data-default-sign="+"
+                    aria-label="Toggle sign between plus and minus">+</button>
+            <input type="text"
+                   class="free-response-input free-response-input-csq"
+                   data-csq-role="p"
+                   placeholder="p"
+                   autocomplete="off"
+                   inputmode="numeric"
+                   aria-label="Value p in (x ± p)">
+            <span class="free-response-csq-part">)²</span>
+            <button type="button"
+                    class="btn btn-secondary free-response-csq-sign"
+                    data-sign="+"
+                    data-default-sign="+"
+                    aria-label="Toggle sign between plus and minus">+</button>
+            <input type="text"
+                   class="free-response-input free-response-input-csq"
+                   data-csq-role="k"
+                   placeholder="k"
+                   autocomplete="off"
+                   inputmode="numeric"
+                   aria-label="Constant k">
+            {% endif %}
+        </div>
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    <p class="free-response-csq-hint">{{ problem.answer_format_hint or 'Use + or − for each term, then enter each number' }}</p>
+    {% elif problem.answer_type == 'vector_combo' %}
+    <div class="free-response-row free-response-row--vector-combo">
+        <div class="free-response-vcombo-template" aria-label="Vector expression answer">
+            {% for label in problem.answer_labels or ['b', 'c'] %}
+            <button type="button"
+                    class="btn btn-secondary free-response-vcombo-sign"
+                    data-sign="+"
+                    data-default-sign="+"
+                    aria-label="Toggle sign between plus and minus">+</button>
+            <input type="text"
+                   class="free-response-input free-response-input-vcombo"
+                   placeholder="e.g. 1/5"
+                   autocomplete="off"
+                   inputmode="text"
+                   aria-label="Coefficient of {{ label }}">
+            <span class="free-response-vcombo-part"><strong>{{ label }}</strong></span>
+            {% endfor %}
+        </div>
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    <p class="free-response-vcombo-hint">{{ problem.answer_format_hint or 'Use + or − for each term, then enter each coefficient (e.g. 1/5)' }}</p>
+    {% elif problem.answer_type == 'vector_pair' %}
+    <div class="free-response-row free-response-row--vector-pair">
+        <div class="free-response-vpair-template" aria-label="Vector pair answer">
+            {% for label in problem.answer_labels or ['x', 'y'] %}
+            <div class="free-response-vpair-group">
+                <span class="free-response-vpair-label"><strong>{{ label }}</strong> =</span>
+                <span class="free-response-vpair-bracket" aria-hidden="true">(</span>
+                <span class="free-response-vpair-stack">
+                    <input type="text"
+                           class="free-response-input free-response-input-vpair"
+                           placeholder="top"
+                           autocomplete="off"
+                           inputmode="text"
+                           aria-label="{{ label }} top component">
+                    <input type="text"
+                           class="free-response-input free-response-input-vpair"
+                           placeholder="bottom"
+                           autocomplete="off"
+                           inputmode="text"
+                           aria-label="{{ label }} bottom component">
+                </span>
+                <span class="free-response-vpair-bracket" aria-hidden="true">)</span>
+            </div>
+            {% endfor %}
+        </div>
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    <p class="free-response-vpair-hint">{{ problem.answer_format_hint or 'Enter each component in the x and y vectors above' }}</p>
     {% elif problem.answer_type == 'hex' %}
     <div class="free-response-row free-response-row--hex">
         <input type="text"

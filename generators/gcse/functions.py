@@ -1,6 +1,8 @@
 """
 GCSE Maths – Functions
 7 foundational · 5 intermediate · 5 difficult · 8 MCQ (randomised each time)
+Graded practice variants return (question, solution, hint, marks, raw).
+Inverse/composite-rule algebra and multipart variants stay as 4-tuples.
 """
 import random
 from generators.shared.utils import make_problem
@@ -73,6 +75,88 @@ def _three_numeric_distractors(correct, candidates):
     return wrong
 
 
+def _fn_raw(value):
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        if value == int(value):
+            return str(int(value))
+        return f"{value:g}"
+    return str(value)
+
+
+def _fn_quadratic_roots_answer(*roots):
+    return {'type': 'quadratic_roots', 'roots': tuple(_fn_raw(r) for r in roots)}
+
+
+def _fn_linear_answer(value, var='x'):
+    return {'type': 'linear', 'value': _fn_raw(value), 'var': str(var).strip().lower()}
+
+
+def _fn_fields_answer(values, labels):
+    return {
+        'type': 'number_fields',
+        'values': tuple(_fn_raw(v) for v in values),
+        'labels': tuple(labels),
+    }
+
+
+def _fn_linear_raw(raw):
+    var = raw.get('var') or 'x'
+    val = raw.get('value')
+    if var == 'x':
+        return str(val)
+    return f'{var}={val}'
+
+
+def _fn_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict):
+            raw_type = raw.get('type')
+            if raw_type == 'quadratic_roots':
+                roots = raw.get('roots') or ()
+                extra = {
+                    'correct_answer_raw': ','.join(str(r) for r in roots),
+                    'answer_type': 'quadratic_roots',
+                    'answer_format_hint': 'Enter roots separated by commas (e.g. 3, -2)',
+                }
+            elif raw_type == 'number_fields':
+                values = raw.get('values') or ()
+                labels = raw.get('labels') or ()
+                if values and len(values) == len(labels):
+                    extra = {
+                        'correct_answer_raw': '|'.join(str(v) for v in values),
+                        'answer_type': 'number_fields',
+                        'answer_labels': list(labels),
+                        'answer_format_hint': 'Enter a number in every field',
+                    }
+            elif raw_type == 'linear':
+                extra = {
+                    'correct_answer_raw': _fn_linear_raw(raw),
+                    'answer_type': 'linear',
+                    'answer_format_hint': 'Enter the value (e.g. y = 9 or just 9)',
+                }
+        elif isinstance(raw, (int, float)):
+            extra = {
+                'correct_answer_raw': _fn_raw(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+        elif isinstance(raw, str):
+            extra = {
+                'correct_answer_raw': raw,
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+    return make_problem(
+        q, s, hint, difficulty, marks,
+        'gcse', 'maths', 'functions', **extra
+    )
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # FOUNDATIONAL (7)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -91,7 +175,7 @@ def _fn_f_evaluate_linear():
         rf"\(f({x}) = {m} \times {_sub_num(x)} {_fmt_b(c)} = {ans}\)<br>"
         rf"<strong>\(f({x}) = {ans}\)</strong>"
     )
-    return q, s, "Replace every x in the rule with the given number.", 2
+    return q, s, "Replace every x in the rule with the given number.", 2, ans
 
 
 def _fn_f_evaluate_square():
@@ -117,7 +201,7 @@ def _fn_f_evaluate_square():
         rf"\(f({x}) = {x*x} {_fmt_b(b*x)} {_fmt_b(c)} = {ans}\)<br>"
         rf"<strong>\(f({x}) = {ans}\)</strong>"
     )
-    return q, s, "Substitute carefully with negative values — use brackets.", 2
+    return q, s, "Substitute carefully with negative values — use brackets.", 2, ans
 
 
 def _fn_f_input_output():
@@ -135,7 +219,7 @@ def _fn_f_input_output():
         rf"\({m*x} + {c} = {y}\)<br>"
         rf"<strong>Output = {y}</strong>"
     )
-    return q, s, "Apply each step in order, or use f(x) notation.", 2
+    return q, s, "Apply each step in order, or use f(x) notation.", 2, y
 
 
 def _fn_f_machine_add_then_multiply():
@@ -157,7 +241,7 @@ def _fn_f_machine_add_then_multiply():
         rf"<strong>Output = {y}</strong>"
     )
     hint = "Apply the operations in the order shown on the machine — here, add before you multiply."
-    return q, s, hint, 2
+    return q, s, hint, 2, y
 
 
 def _fn_f_machine_find_input():
@@ -180,7 +264,7 @@ def _fn_f_machine_find_input():
         rf"<strong>Input = {x}</strong>"
     )
     hint = "Reverse the machine: undo the last operation first, then undo the first operation."
-    return q, s, hint, 3
+    return q, s, hint, 3, x
 
 
 def _fn_f_find_input_linear():
@@ -196,7 +280,7 @@ def _fn_f_find_input_linear():
         rf"\({target} = {m}x {_fmt_b(c)}\) → \({target - c} = {m}x\) → "
         rf"<strong>\(x = {x}\)</strong>"
     )
-    return q, s, "Set f(x) equal to the target value and solve like a linear equation.", 3
+    return q, s, "Set f(x) equal to the target value and solve like a linear equation.", 3, _fn_linear_answer(x, 'x')
 
 
 def _fn_f_meaning_notation():
@@ -213,7 +297,9 @@ def _fn_f_meaning_notation():
         rf"\(f({x2}) = {m} \times {x2} + {c} = {y2}\)<br>"
         rf"<strong>\(f({x1}) = {y1}\)</strong> and <strong>\(f({x2}) = {y2}\)</strong>"
     )
-    return q, s, "f(a) means the output when the input is a.", 2
+    return q, s, "f(a) means the output when the input is a.", 2, _fn_fields_answer(
+        [y1, y2], [f'f({x1})', f'f({x2})']
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -237,7 +323,7 @@ def _fn_i_composite_linear():
         rf"Then \(f({gx}) = {a} \times {gx} {_fmt_b(b)} = {ans}\)<br>"
         rf"<strong>\(f(g({x})) = {ans}\)</strong>"
     )
-    return q, s, "Work inside out: find g(x) first, then apply f.", 3
+    return q, s, "Work inside out: find g(x) first, then apply f.", 3, ans
 
 
 def _fn_i_sum_two_values():
@@ -253,7 +339,7 @@ def _fn_i_sum_two_values():
         rf"\(f({x1}) = {m * x1 + c}\), \(f({x2}) = {m * x2 + c}\)<br>"
         rf"Sum = <strong>{s_val}</strong>"
     )
-    return q, s, "Evaluate each output separately, then add.", 3
+    return q, s, "Evaluate each output separately, then add.", 3, s_val
 
 
 def _fn_i_quadratic_eval():
@@ -278,7 +364,7 @@ def _fn_i_quadratic_eval():
         rf"\(f({x}) = {x*x} {_fmt_b(b*x)} {_fmt_b(c)} = {ans}\)<br>"
         rf"<strong>\(f({x}) = {ans}\)</strong>"
     )
-    return q, s, "Substitute into the quadratic expression.", 3
+    return q, s, "Substitute into the quadratic expression.", 3, ans
 
 
 def _fn_i_inverse_linear():
@@ -328,7 +414,7 @@ def _fn_d_composite_quadratic():
         rf"\(f(g({x})) = f({gx}) = {gx}^2 = {ans}\)<br>"
         rf"<strong>\(f(g({x})) = {ans}\)</strong>"
     )
-    return q, s, "Composite: apply g, then f.", 4
+    return q, s, "Composite: apply g, then f.", 4, ans
 
 
 def _fn_d_solve_f_equals():
@@ -346,7 +432,7 @@ def _fn_d_solve_f_equals():
         rf"Factorise: \((x - {lo})(x - {hi}) = 0\)<br>"
         rf"<strong>\(x = {lo}\) or \(x = {hi}\)</strong>"
     )
-    return q, s, "f(x) = 0 is a quadratic equation — factorise or use the formula.", 4
+    return q, s, "f(x) = 0 is a quadratic equation — factorise or use the formula.", 4, _fn_quadratic_roots_answer(lo, hi)
 
 
 def _fn_d_inverse_then_eval():
@@ -367,7 +453,7 @@ def _fn_d_inverse_then_eval():
         rf"\(f^{{-1}}({y_in}) = \dfrac{{{y_in - c}}}{{{m}}} = {x_back}\)<br>"
         rf"<strong>Input = {x_back}</strong>"
     )
-    return q, s, "Inverse maps output back to input.", 4
+    return q, s, "Inverse maps output back to input.", 4, x_back
 
 
 def _fn_d_ff_linear():
@@ -385,7 +471,7 @@ def _fn_d_ff_linear():
         rf"\(f(f({x})) = f({once}) = {a} \times {once} {_fmt_b(b)} = {ans}\)<br>"
         rf"<strong>\(f(f({x})) = {ans}\)</strong>"
     )
-    return q, s, "f(f(x)) means substitute f(x) into f again.", 4
+    return q, s, "f(f(x)) means substitute f(x) into f again.", 4, ans
 
 
 def _fn_d_domain_valid():
@@ -394,7 +480,7 @@ def _fn_d_domain_valid():
         r"cannot be used as an input? Explain briefly."
     )
     s = r"<strong>\(x = 0\)</strong> — division by zero is not defined."
-    return q, s, "The input must not make the denominator zero.", 2
+    return q, s, "The input must not make the denominator zero.", 2, 0
 
 
 def _fn_d_multipart_composite_inverse():
@@ -723,8 +809,4 @@ def gcse_functions(difficulty, mode, variant_name=None):
     variants = gcse_functions_variants(difficulty, mode)
     variant = pick_named_variant(variants, variant_name)
 
-    q, s, hint, marks = variant()
-    return make_problem(
-        q, s, hint, difficulty, marks,
-        "gcse", "maths", "functions",
-    )
+    return _fn_problem_from_output(variant(), difficulty)
