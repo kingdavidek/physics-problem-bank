@@ -7,7 +7,7 @@ import math
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from fractions import Fraction
 
-from sympy import nsimplify, sympify
+from sympy import nsimplify, simplify, sympify
 
 CHECKERS: dict[str, callable] = {}
 
@@ -494,13 +494,136 @@ def _format_surd(coeff: Decimal, radicand: Decimal) -> str:
     return f'{_format_number(coeff)}√{_format_number(radicand)}'
 
 
+def _split_top_level_division(s: str) -> tuple[str, str] | None:
+    """Return (numerator, denominator) when s is a single top-level division."""
+    depth = 0
+    for i, ch in enumerate(s):
+        if ch == '(':
+            depth += 1
+        elif ch == ')':
+            depth = max(0, depth - 1)
+        elif ch == '/' and depth == 0:
+            num, den = s[:i], s[i + 1:]
+            if num and den:
+                return num, den
+            return None
+    return None
+
+
+def _wrap_top_level_fraction(s: str) -> str:
+    """Canonicalise a/b as (a)/(b) without double-wrapping."""
+    split = _split_top_level_division(s)
+    if split is None:
+        return s
+    num, den = split
+    if not (num.startswith('(') and num.endswith(')')):
+        num = f'({num})'
+    if not (den.startswith('(') and den.endswith(')')):
+        den = f'({den})'
+    return f'{num}/{den}'
+
+
+def _normalize_algebraic_division(s: str) -> str:
+    """Normalise top-level divisions and subject=rhs formulae."""
+    if '=' in s:
+        subject, rhs = s.split('=', 1)
+        return subject + '=' + _wrap_top_level_fraction(rhs)
+    return _wrap_top_level_fraction(s)
+
+
+def _normalize_algebraic_powers(s: str) -> str:
+    """Unify t^2, t**2, t*t, and t²."""
+    s = re.sub(r'\*\*', '^', s)
+    s = s.replace('²', '^2')
+    changed = True
+    while changed:
+        changed = False
+        updated = re.sub(r'([a-z])\*\1', r'\1^2', s)
+        if updated != s:
+            s = updated
+            changed = True
+    return s
+
+
+def _normalize_algebraic_implicit_mult(s: str) -> str:
+    """Remove * only for implicit multiplication (keep numeric products like 0.5*3)."""
+    s = re.sub(r'(\d)\*([a-z(])', r'\1\2', s)
+    s = re.sub(r'(\))([a-z(])', r'\1\2', s)
+    return s
+
+
+def _algebraic_uses_bc_vector_difference(correct_raw) -> bool:
+    """True when the mark scheme uses a b/c component difference (vector BC style)."""
+    s = _algebraic_prepare_for_sympy(correct_raw)
+    if not re.search(r'(?<![a-z])b(?![a-z])', s) or not re.search(r'(?<![a-z])c(?![a-z])', s):
+        return False
+    return bool(re.search(r'\([bc]-[bc]\)|(?<![a-z])[bc]-[bc](?![a-z])', s))
+
+
+def _algebraic_expand_vector_labels(s: str, correct_raw) -> str:
+    """Expand GCSE vector names like BC when the answer uses b and c components."""
+    if not _algebraic_uses_bc_vector_difference(correct_raw):
+        return s
+    s = re.sub(r'(?<![a-z])bc(?![a-z])', '(c-b)', s, flags=re.IGNORECASE)
+    s = re.sub(r'(?<![a-z])cb(?![a-z])', '(b-c)', s, flags=re.IGNORECASE)
+    return s
+
+
+def _algebraic_prepare_for_sympy(value, *, context_raw=None) -> str:
+    """Convert a student/correct algebraic string into something SymPy can parse."""
+    s = str(value or '').strip().lower()
+    s = s.replace('\u221a', '√').replace('−', '-').replace('\u2212', '-')
+    if '=' in s:
+        s = s.split('=', 1)[1]
+    s = re.sub(r'\s+', '', s)
+    s = s.replace('π', 'pi')
+    s = re.sub(r'(?<![a-z])pi(?![a-z])', 'pi', s)
+    s = s.replace('²', '**2')
+    s = re.sub(
+        r'(?i)sqrt\(([^()]*(?:\([^()]*\)[^()]*)*)\)',
+        r'sqrt(\1)',
+        s,
+    )
+    s = re.sub(r'√\(([^()]+)\)', r'sqrt(\1)', s)
+    s = re.sub(r'√([a-z0-9π]+)', r'sqrt(\1)', s)
+    s = re.sub(r'\*\*', '**', s)
+    s = re.sub(r'\^', '**', s)
+    changed = True
+    while changed:
+        changed = False
+        updated = re.sub(r'([a-z])\*\1', r'\1**2', s)
+        if updated != s:
+            s = updated
+            changed = True
+    # Implicit multiplication for SymPy (5t, 3t**2, (s-1)t).
+    s = re.sub(r'(\d)([a-z(])', r'\1*\2', s)
+    s = re.sub(r'(\))([a-z(])', r'\1*\2', s)
+    if context_raw is not None:
+        s = _algebraic_expand_vector_labels(s, context_raw)
+    return s
+
+
+def _algebraic_sympy_equivalent(correct_raw, user_raw) -> bool:
+    """Fallback: accept equivalent forms such as 0.5*3*t**2 and 3*t**2/2."""
+    try:
+        correct_expr = sympify(_algebraic_prepare_for_sympy(correct_raw))
+        user_expr = sympify(_algebraic_prepare_for_sympy(user_raw, context_raw=correct_raw))
+        return bool(simplify(correct_expr - user_expr) == 0)
+    except (TypeError, ValueError, SyntaxError, AttributeError, ZeroDivisionError):
+        return False
+
+
 def _normalize_algebraic_sqrt_quotient(s: str) -> str:
     """Collapse √a/√b (and parenthesised variants) to √(a/b)."""
+    # Allow π in unparenthesised radicals (after pi → π normalisation).
+    atom = r'[a-z0-9π]+'
+    # Drop trivial parentheses around a single radical, e.g. (√a)/(√π).
+    s = re.sub(rf'\((√\({atom}\)|√{atom}|√\([^()]+\))\)', r'\1', s)
     patterns = (
         r'√\(([^()]+)\)/√\(([^()]+)\)',
-        r'√\(([^()]+)\)/√([a-z0-9]+)',
-        r'√([a-z0-9]+)/√\(([^()]+)\)',
-        r'√([a-z0-9]+)/√([a-z0-9]+)',
+        rf'√\(([^()]+)\)/√({atom})',
+        rf'√({atom})/√\(([^()]+)\)',
+        rf'√({atom})/√({atom})',
     )
     changed = True
     while changed:
@@ -523,10 +646,12 @@ def _normalize_algebraic_string(value) -> str:
         s,
     )
     s = re.sub(r'\s+', '', s)
-    s = s.replace('*', '')
+    s = _normalize_algebraic_powers(s)
+    s = _normalize_algebraic_implicit_mult(s)
     if s.startswith('+'):
         s = s[1:]
     s = _normalize_algebraic_sqrt_quotient(s)
+    s = _normalize_algebraic_division(s)
     s = re.sub(r'√\(\(([^()]+)\)/\(([^()]+)\)\)', r'√(\1/\2)', s)
     return s
 
@@ -542,13 +667,15 @@ def _algebraic_answers_equivalent(correct_raw, user_raw) -> bool:
         return False
     if normalized_user == normalized_correct:
         return True
-    if '=' not in normalized_correct:
-        return False
-    subject, rhs = normalized_correct.split('=', 1)
-    if normalized_user == rhs:
+    if '=' in normalized_correct:
+        subject, rhs = normalized_correct.split('=', 1)
+        if normalized_user == rhs:
+            return True
+        if normalized_user.startswith(subject + '='):
+            if normalized_user == normalized_correct:
+                return True
+    if _algebraic_sympy_equivalent(correct_raw, user_raw):
         return True
-    if normalized_user.startswith(subject + '='):
-        return normalized_user == normalized_correct
     return False
 
 
@@ -800,7 +927,10 @@ def _split_algebraic_fraction_user(value) -> tuple[str, int] | None:
     s = _normalize_algebraic_string(raw)
     if '/' not in s:
         return raw.strip(), 1
-    m = re.fullmatch(r'(.+)/(\d+)', s)
+    # After normalisation, slash forms may look like (3√5)/(7).
+    m = re.fullmatch(r'\((.+)\)/\((\d+)\)', s)
+    if not m:
+        m = re.fullmatch(r'(.+)/(\d+)', s)
     if not m:
         return None
     denom = _parse_number(m.group(2))
@@ -1160,7 +1290,79 @@ def check_algebraic_fraction(correct_raw, user_answer):
         return _check_algebraic_fraction_expanded_binomial(correct_raw, user_answer)
     if s.startswith('d|'):
         return _check_algebraic_fraction_two_surds(correct_raw, user_answer)
+    # General algebraic/numeric fraction: numerator|denominator (stacked UI).
+    if len(s.split('|')) == 2:
+        return _check_general_algebraic_fraction(correct_raw, user_answer)
     return _check_algebraic_fraction_surd(correct_raw, user_answer)
+
+
+def _check_general_algebraic_fraction(correct_raw, user_answer):
+    """Check algebraic or numeric fractions entered as numerator|denominator."""
+    parts = [part.strip() for part in str(correct_raw or '').split('|', 1)]
+    if len(parts) != 2 or not parts[0] or not parts[1]:
+        raise ValueError('invalid_correct_answer')
+
+    exp_num, exp_den = parts[0], parts[1]
+    normalized_correct = f'{_format_algebraic_text(exp_num)}/{_format_algebraic_text(exp_den)}'
+
+    user_s = str(user_answer or '').strip()
+    if not user_s:
+        return {
+            'correct': False,
+            'normalized_user': '',
+            'normalized_correct': normalized_correct,
+            'feedback': 'Enter the numerator and denominator.',
+        }
+
+    if '|' in user_s:
+        user_parts = [part.strip() for part in user_s.split('|', 1)]
+        act_num = user_parts[0]
+        act_den = user_parts[1] if len(user_parts) > 1 else ''
+        if not act_den:
+            act_den = '1'
+    else:
+        split = _split_algebraic_fraction_user(user_s)
+        if split is None:
+            return {
+                'correct': False,
+                'normalized_user': user_s,
+                'normalized_correct': normalized_correct,
+                'feedback': 'Enter both the numerator and denominator.',
+            }
+        act_num, act_den_int = split
+        act_den = str(act_den_int)
+
+    if not act_num:
+        return {
+            'correct': False,
+            'normalized_user': user_s,
+            'normalized_correct': normalized_correct,
+            'feedback': 'Enter both the numerator and denominator.',
+        }
+
+    normalized_user = (
+        f'{_format_algebraic_text(act_num)}/{_format_algebraic_text(act_den)}'
+    )
+    correct = _algebraic_sympy_equivalent(
+        f'({exp_num})/({exp_den})',
+        f'({act_num})/({act_den})',
+    )
+    if not correct:
+        # Accept matching parts even when overall sympy parse fails on awkward forms.
+        correct = (
+            _algebraic_answers_equivalent(exp_num, act_num)
+            and _algebraic_answers_equivalent(exp_den, act_den)
+        )
+    return {
+        'correct': correct,
+        'normalized_user': normalized_user,
+        'normalized_correct': normalized_correct,
+        'feedback': (
+            'Correct!'
+            if correct
+            else 'Not quite — check the numerator and denominator.'
+        ),
+    }
 
 
 @register_checker('algebraic')
@@ -2267,7 +2469,7 @@ def check_quadratic_roots(correct_raw, user_answer):
             'correct': False,
             'normalized_user': '',
             'normalized_correct': normalized_correct,
-            'feedback': 'Enter the roots separated by commas.',
+            'feedback': 'Enter the roots.',
         }
 
     actual_parts = _split_quadratic_roots_raw(user_s)
@@ -2276,7 +2478,7 @@ def check_quadratic_roots(correct_raw, user_answer):
             'correct': False,
             'normalized_user': user_s,
             'normalized_correct': normalized_correct,
-            'feedback': 'Enter the roots separated by commas (e.g. 3, -2).',
+            'feedback': 'Enter each root (e.g. 3 and -2).',
         }
 
     actual_parts = _expand_quadratic_root_pm(actual_parts)
@@ -2287,13 +2489,14 @@ def check_quadratic_roots(correct_raw, user_answer):
             'correct': False,
             'normalized_user': user_s,
             'normalized_correct': normalized_correct,
-            'feedback': 'Enter valid roots separated by commas (e.g. 3, -2).',
+            'feedback': 'Enter valid roots (e.g. 3 and -2).',
         }
 
     if len(actual) != len(expected):
-        count_msg = f'Enter {len(expected)} roots separated by commas.'
         if len(expected) == 4:
-            count_msg += ' Hint: this problem has four solutions!'
+            count_msg = 'Not quite — hint: this problem has four solutions!'
+        else:
+            count_msg = f'Enter {len(expected)} roots.'
         return {
             'correct': False,
             'normalized_user': _format_quadratic_root_set(actual),
@@ -2310,9 +2513,7 @@ def check_quadratic_roots(correct_raw, user_answer):
     if correct:
         wrong_feedback = 'Correct!'
     elif len(expected) == 4:
-        wrong_feedback = (
-            'Not quite — check your roots. Hint: this problem has four solutions!'
-        )
+        wrong_feedback = 'Not quite — hint: this problem has four solutions!'
     elif len(expected) == 2:
         wrong_feedback = 'Not quite — check both roots.'
     else:
@@ -2646,6 +2847,29 @@ def _normalize_keyword(value) -> str:
     return re.sub(r'\s+', ' ', str(value or '').strip().lower())
 
 
+@register_checker('mcq')
+def check_mcq(correct_raw, user_answer):
+    """Check a single-letter MCQ choice (A, B, C, …)."""
+    correct = str(correct_raw or '').strip().upper()[:1]
+    if not correct or correct not in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
+        raise ValueError('invalid_correct_answer')
+    user = str(user_answer or '').strip().upper()[:1]
+    if not user:
+        return {
+            'correct': False,
+            'normalized_user': '',
+            'normalized_correct': correct,
+            'feedback': 'Choose an option.',
+        }
+    ok = user == correct
+    return {
+        'correct': ok,
+        'normalized_user': user,
+        'normalized_correct': correct,
+        'feedback': 'Correct!' if ok else 'Not quite — try another option.',
+    }
+
+
 @register_checker('keyword')
 def check_keyword(correct_raw, user_answer):
     correct_key = _normalize_keyword(correct_raw)
@@ -2916,6 +3140,82 @@ def check_completed_square(correct_raw, user_answer):
         'normalized_user': _format_completed_square(kind, act_numbers),
         'normalized_correct': normalized_correct,
         'feedback': 'Correct!' if correct else 'Not quite — check each blank.',
+    }
+
+
+def _parse_proof_steps_raw(raw) -> tuple[bool, list[str]] | None:
+    """Parse ``orderFlag|id1|id2|...`` (orderFlag is 0 or 1)."""
+    s = str(raw or '').strip()
+    if not s:
+        return None
+    parts = [p.strip() for p in s.split('|') if p.strip()]
+    if len(parts) < 2:
+        return None
+    flag = parts[0]
+    if flag not in ('0', '1'):
+        # Legacy / bare id list: treat as ordered.
+        return True, parts
+    ids = parts[1:]
+    if not ids:
+        return None
+    return flag == '1', ids
+
+
+@register_checker('proof_steps')
+def check_proof_steps(correct_raw, user_answer):
+    """Plan C: selected step ids from a bank (order optional)."""
+    parsed = _parse_proof_steps_raw(correct_raw)
+    if parsed is None:
+        raise ValueError('invalid_correct_answer')
+    order_matters, expected_ids = parsed
+    normalized_correct = '|'.join(expected_ids)
+
+    user_s = str(user_answer or '').strip()
+    if not user_s:
+        return {
+            'correct': False,
+            'normalized_user': '',
+            'normalized_correct': normalized_correct,
+            'feedback': (
+                'Select the correct proof steps in order.'
+                if order_matters
+                else 'Select all correct statements.'
+            ),
+        }
+
+    user_ids = [p.strip() for p in user_s.split('|') if p.strip()]
+    if not user_ids:
+        return {
+            'correct': False,
+            'normalized_user': '',
+            'normalized_correct': normalized_correct,
+            'feedback': (
+                'Select the correct proof steps in order.'
+                if order_matters
+                else 'Select all correct statements.'
+            ),
+        }
+
+    if order_matters:
+        correct = user_ids == expected_ids
+        feedback = (
+            'Correct!'
+            if correct
+            else 'Not quite — check which steps belong and their order.'
+        )
+    else:
+        correct = set(user_ids) == set(expected_ids)
+        feedback = (
+            'Correct!'
+            if correct
+            else 'Not quite — select every correct statement and leave out the rest.'
+        )
+
+    return {
+        'correct': correct,
+        'normalized_user': '|'.join(user_ids),
+        'normalized_correct': normalized_correct,
+        'feedback': feedback,
     }
 
 

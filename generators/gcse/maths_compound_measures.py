@@ -2,7 +2,7 @@
 GCSE Maths – Compound Measures
 15 foundational · 15 intermediate · 15 difficult · 15 MCQ
 Graded practice variants return (question, solution, hint, marks, raw).
-Algebraic / proof-style variants stay as 4-tuples (Phase 2).
+Show-that and express-in-terms variants use Plan A checkpoints (number / algebraic).
 """
 import random
 import math
@@ -37,16 +37,30 @@ def _cm_raw(value, places=2):
     return str(value)
 
 
-def _cm_fields_answer(values, labels, places=2):
-    return {
+def _cm_fields_answer(values, labels, places=2, field_types=None):
+    types = tuple(field_types) if field_types else None
+    payload = {
         'type': 'number_fields',
-        'values': tuple(_cm_raw(v, places) for v in values),
+        'values': tuple(
+            str(v) if types and types[i] == 'algebraic' else _cm_raw(v, places)
+            for i, v in enumerate(values)
+        ),
         'labels': tuple(labels),
     }
+    if types:
+        payload['field_types'] = types
+    return payload
 
 
 def _cm_keyword_answer(value):
     return {'type': 'keyword', 'value': str(value).strip().lower()}
+
+
+def _cm_algebraic_answer(expr, format_hint=None):
+    payload = {'type': 'algebraic', 'value': str(expr)}
+    if format_hint:
+        payload['format_hint'] = format_hint
+    return payload
 
 
 def _cm_problem_from_output(out, difficulty):
@@ -57,12 +71,21 @@ def _cm_problem_from_output(out, difficulty):
         if isinstance(raw, dict) and raw.get('type') == 'number_fields':
             values = raw.get('values') or ()
             labels = raw.get('labels') or ()
-            if values and len(values) == len(labels):
+            field_types = raw.get('field_types') or ()
+            if values and labels and len(values) == len(labels):
+                sep = (
+                    '\x1e'
+                    if field_types and any(t != 'number' for t in field_types)
+                    else '|'
+                )
                 extra = {
-                    'correct_answer_raw': '|'.join(str(v) for v in values),
+                    'correct_answer_raw': sep.join(str(v) for v in values),
                     'answer_type': 'number_fields',
                     'answer_labels': list(labels),
-                    'answer_format_hint': 'Enter a number in every field',
+                    'answer_field_types': list(field_types) if field_types else (
+                        ['number'] * len(labels)
+                    ),
+                    'answer_format_hint': 'Complete every step',
                 }
         elif isinstance(raw, dict) and raw.get('type') == 'keyword':
             value = raw.get('value')
@@ -72,6 +95,16 @@ def _cm_problem_from_output(out, difficulty):
                     'answer_type': 'keyword',
                     'answer_format_hint': 'Enter your answer in words',
                 }
+        elif isinstance(raw, dict) and raw.get('type') == 'algebraic':
+            text = str(raw.get('value') or '')
+            extra = {
+                'correct_answer_raw': text,
+                'answer_type': 'algebraic',
+                'answer_format_hint': raw.get(
+                    'format_hint',
+                    'Enter the simplified expression in terms of v',
+                ),
+            }
         elif isinstance(raw, (int, float)):
             extra = {
                 'correct_answer_raw': _cm_raw(raw),
@@ -570,18 +603,40 @@ def _cm_d5_algebraic_sdt():
     d, f1, f2 = random.choice(combos)
     # Both halves: first d/2 at v, second d/2 at f2*v
     # Total time = (d/2)/v + (d/2)/(f2*v) = d/(2v)(1 + 1/f2) = d(f2+1)/(2f2*v)
+    half = d // 2
     num = d * (f2 + 1)
     den_factor = 2 * f2
-    q = (f"A journey of {d} km is split into two equal halves. "
-         f"The first half is done at speed v km/h and the second half at {f2}v km/h. "
-         f"Find the total journey time in terms of v.")
-    sol = (f"Time first half = ({d}/2)/v = {d//2}/v hours<br>"
-           f"Time second half = ({d}/2)/({f2}v) = {d//f2//2}/v hours<br>"
-           f"Wait — more carefully:<br>"
-           f"Time = {d//2}/v + {d//2}/({f2}v) = ({d//2}×{f2} + {d//2}) / ({f2}v)<br>"
-           f"= {d//2*(f2+1)} / ({f2}v)<br>"
-           f"= <strong>{num}/{den_factor}v hours</strong>")
-    return q, sol, "Time = distance ÷ speed for each leg. Add fractions over a common denominator.", 5
+    q = (
+        f"A journey of {d} km is split into two equal halves. "
+        f"The first half is done at speed v km/h and the second half at {f2}v km/h. "
+        f"Find the total journey time in terms of v by completing the steps below."
+    )
+    sol = (
+        f"<strong>Formula:</strong> speed = distance ÷ time "
+        f"(rearranged: time = distance ÷ speed).<br>"
+        f"Time first half = ({d}/2)/v = {half}/v hours<br>"
+        f"Time second half = ({d}/2)/({f2}v) = {half}/({f2}v) hours<br>"
+        f"Total = {half}/v + {half}/({f2}v) = ({half}×{f2} + {half}) / ({f2}v)<br>"
+        f"= <strong>{num}/({den_factor}v) hours</strong>"
+    )
+    return (
+        q, sol,
+        "Time = distance ÷ speed for each leg. Add fractions over a common denominator.",
+        5,
+        _cm_fields_answer(
+            (
+                f'{half}/v',
+                f'{half}/({f2}*v)',
+                f'{num}/({den_factor}*v)',
+            ),
+            (
+                f'Step 1: time for the first {half} km (in terms of v)',
+                f'Step 2: time for the second {half} km (in terms of v)',
+                'Step 3: simplified total time',
+            ),
+            field_types=('algebraic', 'algebraic', 'algebraic'),
+        ),
+    )
 
 
 def _cm_d6_two_pipes():
@@ -599,15 +654,53 @@ def _cm_d7_harmonic_mean_prove():
     combos = [(30,60,40),(40,60,48),(50,100,200/3),(60,90,72)]
     s1, s2, avg = random.choice(combos)
     avg_val = 2 * s1 * s2 / (s1 + s2)
-    q = (f"A car travels from X to Y at {s1} km/h and returns at {s2} km/h. "
-         f"(i) Show that the average speed = 2 × {s1} × {s2} / ({s1} + {s2}). "
-         f"(ii) Calculate the average speed.")
-    sol = (f"(i) Let XY = d km.<br>"
-           f"Time X→Y = d/{s1};  Time Y→X = d/{s2}<br>"
-           f"Total time = d/{s1} + d/{s2} = d({s1}+{s2})/({s1}×{s2})<br>"
-           f"Avg speed = 2d ÷ [d({s1}+{s2})/({s1}×{s2})] = 2×{s1}×{s2}/({s1}+{s2}) ✓<br>"
-           f"(ii) = {2*s1*s2}/{s1+s2} = <strong>{_dp(avg_val)} km/h</strong>")
-    return q, sol, "Write total time algebraically in terms of d. Avg = 2d ÷ total time → d cancels.", 6
+    avg_out = avg_val if avg_val != int(avg_val) else int(avg_val)
+    q = (
+        f"A car travels from X to Y at {s1} km/h and returns at {s2} km/h. "
+        f"Let the distance XY be d km. Complete the steps to find the average speed "
+        f"for the whole journey."
+    )
+    prod = s1 * s2
+    total_s = s1 + s2
+    num = 2 * s1 * s2
+    sol = (
+        f"<strong>Formulae</strong><br>"
+        f"speed = distance ÷ time<br>"
+        f"time = distance ÷ speed<br>"
+        f"average speed = total distance ÷ total time<br><br>"
+        f"<strong>Step 1 — total time (in terms of d)</strong><br>"
+        f"Time X→Y = \\(\\dfrac{{d}}{{{s1}}}\\) hours<br>"
+        f"Time Y→X = \\(\\dfrac{{d}}{{{s2}}}\\) hours<br>"
+        f"Total time = \\(\\dfrac{{d}}{{{s1}}} + \\dfrac{{d}}{{{s2}}}\\)<br>"
+        f"= \\(\\dfrac{{d({s1} + {s2})}}{{{s1} \\times {s2}}}\\) "
+        f"= \\(\\dfrac{{{total_s}d}}{{{prod}}}\\) hours<br><br>"
+        f"<strong>Step 2 — average-speed formula</strong><br>"
+        f"Total distance for the round trip = 2d<br>"
+        f"Average speed = \\(\\dfrac{{2d}}{{\\text{{total time}}}} "
+        f"= \\dfrac{{2d}}{{\\dfrac{{{total_s}d}}{{{prod}}}}}\\)<br>"
+        f"= \\(\\dfrac{{2 \\times {s1} \\times {s2}}}{{{s1} + {s2}}}\\)<br><br>"
+        f"<strong>Step 3 — work out the value</strong><br>"
+        f"= \\(\\dfrac{{{num}}}{{{total_s}}}\\) "
+        f"= <strong>{_dp(avg_val)} km/h</strong>"
+    )
+    return (
+        q, sol,
+        "Write total time in terms of d, then average speed = 2d ÷ total time.",
+        6,
+        _cm_fields_answer(
+            (
+                f'd/{s1} + d/{s2}',
+                f'2*{s1}*{s2}/({s1}+{s2})',
+                avg_out,
+            ),
+            (
+                'Step 1: total time for the round trip (in terms of d)',
+                'Step 2: simplified average-speed formula',
+                'Step 3: average speed (km/h)',
+            ),
+            field_types=('algebraic', 'algebraic', 'number'),
+        ),
+    )
 
 
 def _cm_d8_density_kg_m3_use():

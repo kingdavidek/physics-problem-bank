@@ -144,6 +144,31 @@ def problem_from_choice_output(out, difficulty, level, subject, topic):
     )
 
 
+def quadratic_roots_ui_labels(n):
+    """Labels for multi-field quadratic-root answer UI (order-independent)."""
+    try:
+        count = int(n or 0)
+    except (TypeError, ValueError):
+        count = 0
+    if count <= 0:
+        return []
+    return [f'Root {i}' for i in range(1, count + 1)]
+
+
+def quadratic_roots_format_hint(n, custom=None):
+    if custom:
+        return custom
+    try:
+        count = int(n or 0)
+    except (TypeError, ValueError):
+        count = 0
+    if count >= 4:
+        return 'Enter each solution in its own box'
+    if count >= 2:
+        return 'Enter each root in its own box'
+    return 'Enter the root'
+
+
 def make_problem(question, solution, hint, difficulty, marks, level, subject, topic, **extra):
     # Shuffle MCQ options so the correct answer is not always A.
     if "options" in extra and "correct_answer" in extra:
@@ -166,3 +191,58 @@ def make_problem(question, solution, hint, difficulty, marks, level, subject, to
     }
     data.update(extra)
     return data
+
+
+def proof_steps_answer(required_ids, bank, *, order_matters=True, format_hint=None):
+    """Plan C payload: select correct proof steps from a shuffled bank.
+
+    bank items are dicts ``{id, text}``. ``required_ids`` lists the correct step
+    ids (in order when ``order_matters`` is True).
+    """
+    required = tuple(str(i) for i in required_ids)
+    steps = []
+    for item in bank:
+        step_id = str(item.get('id') or '').strip()
+        text = str(item.get('text') or '').strip()
+        if not step_id or not text:
+            continue
+        steps.append({'id': step_id, 'text': text})
+    if not required or not steps:
+        raise ValueError('proof_steps bank and required_ids are required')
+    bank_ids = {step['id'] for step in steps}
+    if any(rid not in bank_ids for rid in required):
+        raise ValueError('proof_steps required_ids must appear in bank')
+    payload = {
+        'type': 'proof_steps',
+        'required_ids': required,
+        'order_matters': bool(order_matters),
+        'bank': steps,
+    }
+    if format_hint:
+        payload['format_hint'] = format_hint
+    return payload
+
+
+def proof_steps_problem_extra(raw):
+    """Convert a proof_steps payload into make_problem kwargs."""
+    if not isinstance(raw, dict) or raw.get('type') != 'proof_steps':
+        return {}
+    required = tuple(str(i) for i in (raw.get('required_ids') or ()))
+    bank = list(raw.get('bank') or [])
+    if not required or not bank:
+        return {}
+    order_matters = bool(raw.get('order_matters', True))
+    hint = raw.get('format_hint') or (
+        'Select the correct proof steps in order'
+        if order_matters
+        else 'Select all correct statements'
+    )
+    return {
+        'correct_answer_raw': (
+            f"{'1' if order_matters else '0'}|{('|'.join(required))}"
+        ),
+        'answer_type': 'proof_steps',
+        'answer_step_bank': bank,
+        'answer_order_matters': order_matters,
+        'answer_format_hint': hint,
+    }

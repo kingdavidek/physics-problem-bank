@@ -6,7 +6,7 @@ Algebraic rearrangement, proof, and some multipart variants stay 4-tuples.
 """
 import random
 import math
-from generators.shared.utils import make_problem
+from generators.shared.utils import make_problem, quadratic_roots_format_hint, quadratic_roots_ui_labels
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from generators.shared.variant_utils import (
     select_tier_variants,
@@ -253,15 +253,11 @@ def _eq_problem_from_output(out, difficulty):
             elif raw_type == 'quadratic_roots':
                 roots = raw.get('roots') or ()
                 hint = raw.get('format_hint')
-                if not hint:
-                    if len(roots) == 4:
-                        hint = 'Enter all four roots separated by commas (e.g. 1, -1, 2, -2)'
-                    else:
-                        hint = 'Enter roots separated by commas (e.g. 3, -2)'
                 extra = {
                     'correct_answer_raw': ','.join(str(r) for r in roots),
                     'answer_type': 'quadratic_roots',
-                    'answer_format_hint': hint,
+                    'answer_labels': quadratic_roots_ui_labels(len(roots)),
+                    'answer_format_hint': quadratic_roots_format_hint(len(roots), hint),
                 }
             elif raw_type == 'number_pair':
                 val_a, val_b = raw['values']
@@ -1197,7 +1193,7 @@ def _eq_diff_disguised_quadratic():
     hint = "Let u = x² to get a quadratic in u, solve for u, then take square roots."
     return q, s, hint, 5, _eq_quadratic_roots_answer(
         -s2, -s1, s1, s2,
-        format_hint='Enter all four roots separated by commas (e.g. 1, -1, 2, -2)',
+        format_hint='Enter the solutions, separated by commas',
     )
 
 
@@ -1244,15 +1240,33 @@ def _eq_diff_subject_appears_twice():
 
 
 def _eq_diff_prove_identity():
-    q = r"Show that \((x + 3)^2 - (x - 3)^2 \equiv 12x\)."
-    s = (r"Expand \((x+3)^2 = x^2 + 6x + 9\)<br>"
-         r"Expand \((x-3)^2 = x^2 - 6x + 9\)<br>"
-         r"Subtract: \((x^2 + 6x + 9) - (x^2 - 6x + 9)\)<br>"
-         r"\(= x^2 + 6x + 9 - x^2 + 6x - 9\)<br>"
-         r"\(= 12x\)<br>"
-         r"<strong>LHS = \(12x\) = RHS ✓</strong>")
+    q = (
+        r"Show that \((x + 3)^2 - (x - 3)^2 \equiv 12x\) by completing the proof steps below."
+    )
+    s = (
+        r"<strong>Formula:</strong> \((a + b)^2 = a^2 + 2ab + b^2\) and "
+        r"\((a - b)^2 = a^2 - 2ab + b^2\).<br>"
+        r"Expand \((x+3)^2 = x^2 + 6x + 9\)<br>"
+        r"Expand \((x-3)^2 = x^2 - 6x + 9\)<br>"
+        r"Subtract: \((x^2 + 6x + 9) - (x^2 - 6x + 9)\)<br>"
+        r"\(= x^2 + 6x + 9 - x^2 + 6x - 9\)<br>"
+        r"\(= 12x\)<br>"
+        r"<strong>LHS = \(12x\) = RHS ✓</strong>"
+    )
     hint = "Expand each bracket fully, then subtract and simplify."
-    return q, s, hint, 4
+    return q, s, hint, 4, _eq_number_fields_answer(
+        (
+            'x**2 + 6*x + 9',
+            'x**2 - 6*x + 9',
+            '12*x',
+        ),
+        (
+            'Step 1: expand (x + 3)²',
+            'Step 2: expand (x − 3)²',
+            'Step 3: subtract and simplify',
+        ),
+        ('algebraic', 'algebraic', 'algebraic'),
+    )
 
 
 def _eq_diff_complete_square_solve():
@@ -1467,14 +1481,18 @@ def _eq_diff_phone_plans_multipart():
     )
     return q, s, hint, 5, _eq_number_fields_answer(
         (
+            f'{fixed_a} + {rate_a}*m/100',
+            f'{fixed_b} + {rate_b}*m/100',
             m_equal,
             f'm|<|{m_equal}',
         ),
         (
+            'Part (a): monthly cost of Plan A (in £)',
+            'Part (a): monthly cost of Plan B (in £)',
             'Part (b): minutes when both plans cost the same',
             'Part (c): Plan A cheaper when… (e.g. m < 40)',
         ),
-        ('number', 'linear_inequality'),
+        ('algebraic', 'algebraic', 'number', 'linear_inequality'),
     )
 
 

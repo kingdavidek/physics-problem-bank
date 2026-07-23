@@ -2,7 +2,7 @@
 GCSE Maths – Geometry and Angles
 15 foundational · 15 intermediate · 15 difficult · 15 MCQ
 Graded practice variants return (question, solution, hint, marks, raw).
-Proof-only variants stay as 4-tuples (no auto-grade).
+Geometry proof variants use Plan B scaffolds (number_fields checkpoints).
 Final answers are wrapped in <strong> tags.
 """
 import random
@@ -29,12 +29,32 @@ def _polygon_name(n):
     return names.get(n, f"{n}-sided polygon")
 
 
-def _geom_fields_answer(values, labels):
-    return {
+def _geom_raw(value):
+    if isinstance(value, bool):
+        return str(value)
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        if value == int(value):
+            return str(int(value))
+        return str(value)
+    return str(value)
+
+
+def _geom_fields_answer(values, labels, field_types=None):
+    types = tuple(field_types) if field_types else None
+    payload = {
         'type': 'number_fields',
-        'values': tuple(str(int(v)) for v in values),
+        'values': tuple(
+            str(v) if types and types[i] in ('algebraic', 'keyword', 'fraction')
+            else _geom_raw(v)
+            for i, v in enumerate(values)
+        ),
         'labels': tuple(labels),
     }
+    if types:
+        payload['field_types'] = types
+    return payload
 
 
 def _geom_problem_from_output(out, difficulty):
@@ -45,12 +65,21 @@ def _geom_problem_from_output(out, difficulty):
         if isinstance(raw, dict) and raw.get('type') == 'number_fields':
             values = raw.get('values') or ()
             labels = raw.get('labels') or ()
+            field_types = raw.get('field_types') or ()
             if values and len(values) == len(labels):
+                sep = (
+                    '\x1e'
+                    if field_types and any(t != 'number' for t in field_types)
+                    else '|'
+                )
                 extra = {
-                    'correct_answer_raw': '|'.join(str(v) for v in values),
+                    'correct_answer_raw': sep.join(str(v) for v in values),
                     'answer_type': 'number_fields',
                     'answer_labels': list(labels),
-                    'answer_format_hint': 'Enter a number in every field (degrees optional)',
+                    'answer_field_types': list(field_types) if field_types else (
+                        ['number'] * len(labels)
+                    ),
+                    'answer_format_hint': 'Complete every proof step',
                 }
         elif isinstance(raw, (int, float)):
             raw_s = str(int(raw)) if float(raw) == int(raw) else str(raw)
@@ -1393,16 +1422,33 @@ def _geom_diff_similar_area():
 
 def _geom_diff_prove_triangle_sum():
     svg = _geom_svg_prove_triangle_sum()
-    q = (r"Prove that the angles in a triangle sum to 180°. "
-         rf"You may use the fact that alternate angles on parallel lines are equal.<br>{svg}")
-    s = (r"Draw triangle ABC. Through vertex C, draw line DE parallel to AB.<br>"
-         r"Angle DCA = angle CAB (alternate angles, DE ∥ AB, AC transversal).<br>"
-         r"Angle ECB = angle CBA (alternate angles, DE ∥ AB, BC transversal).<br>"
-         r"Angle DCA + angle ACB + angle ECB = 180° (angles on straight line DCE).<br>"
-         r"Substituting: angle CAB + angle ACB + angle CBA = 180°.<br>"
-         r"<strong>Therefore the angles in triangle ABC sum to 180°. ✓</strong>")
+    q = (
+        r"Prove that the angles in a triangle sum to 180° by completing the proof steps below. "
+        r"You may use the fact that alternate angles on parallel lines are equal.<br>"
+        rf"{svg}"
+    )
+    s = (
+        r"<strong>Formula / facts:</strong> alternate angles are equal; "
+        r"angles on a straight line sum to 180°.<br><br>"
+        r"<strong>Step 1</strong> — Draw triangle ABC. Through C, draw DE parallel to AB.<br>"
+        r"Angle DCA = angle CAB (alternate angles, DE ∥ AB).<br>"
+        r"Angle ECB = angle CBA (alternate angles, DE ∥ AB).<br><br>"
+        r"<strong>Step 2</strong> — Angle DCA + angle ACB + angle ECB = 180° "
+        r"(angles on straight line DCE).<br><br>"
+        r"<strong>Step 3</strong> — Substituting the alternate angles:<br>"
+        r"angle CAB + angle ACB + angle CBA = 180°.<br>"
+        r"<strong>Therefore the angles in a triangle sum to 180°. ✓</strong>"
+    )
     hint = "Draw a line through one vertex parallel to the opposite side, then use alternate angles."
-    return q, s, hint, 4
+    return q, s, hint, 4, _geom_fields_answer(
+        (180, 180, 180),
+        (
+            'Step 1: angles on a straight line sum to (°)',
+            'Step 2: angle DCA + ACB + ECB equals (°)',
+            'Step 3: therefore the triangle angle sum is (°)',
+        ),
+        field_types=('number', 'number', 'number'),
+    )
 
 
 def _geom_diff_algebraic_circle():
@@ -1463,33 +1509,67 @@ def _geom_diff_chord_distance():
 
 def _geom_diff_cyclic_quad_proof():
     svg = _geom_svg_cyclic_quad("α", "?")
-    q = (rf"ABCD is a cyclic quadrilateral. Prove that angle DAB + angle BCD = 180°.<br>{svg}")
-    s = (r"Let angle DAB \(= \alpha\). The arc BCD subtends angle \(\alpha\) at the circumference (point A).<br>"
-         r"By the angle at centre theorem, the angle at O subtended by arc BCD \(= 2\alpha\).<br>"
-         r"The remaining arc BAD subtends the reflex angle at O \(= 360° - 2\alpha\).<br>"
-         r"Angle BCD (at circumference, subtended by arc BAD) \(= \dfrac{360° - 2\alpha}{2} = 180° - \alpha\).<br>"
-         r"Therefore angle DAB + angle BCD \(= \alpha + (180° - \alpha) = 180°\).<br>"
-         r"<strong>Opposite angles in a cyclic quadrilateral sum to 180°. ✓</strong>")
+    q = (
+        rf"ABCD is a cyclic quadrilateral. Prove that angle DAB + angle BCD = 180° "
+        rf"by completing the proof steps below.<br>{svg}"
+    )
+    s = (
+        r"<strong>Formula:</strong> angle at the centre = 2 × angle at the circumference "
+        r"(same arc).<br><br>"
+        r"<strong>Step 1</strong> — Let angle DAB \(= \alpha\). "
+        r"Arc BCD subtends \(\alpha\) at the circumference, so the angle at the centre "
+        r"for arc BCD \(= 2\alpha\).<br><br>"
+        r"<strong>Step 2</strong> — The remaining arc BAD subtends the reflex centre angle "
+        r"\(360° - 2\alpha\). At the circumference, angle BCD "
+        r"\(= \dfrac{360° - 2\alpha}{2} = 180° - \alpha\).<br><br>"
+        r"<strong>Step 3</strong> — angle DAB + angle BCD "
+        r"\(= \alpha + (180° - \alpha) = 180°\).<br>"
+        r"<strong>Opposite angles in a cyclic quadrilateral sum to 180°. ✓</strong>"
+    )
     hint = "Use the angle at centre theorem for both arcs, noting that the two arcs together form the full 360°."
-    return q, s, hint, 5
+    return q, s, hint, 5, _geom_fields_answer(
+        (2, '180 - a', 180),
+        (
+            'Step 1: angle at centre = ___ × angle at circumference',
+            'Step 2: angle BCD in terms of α (use a for α)',
+            'Step 3: opposite angles in a cyclic quad sum to (°)',
+        ),
+        field_types=('number', 'algebraic', 'number'),
+    )
 
 
 def _geom_diff_regular_polygon_proof():
     n = random.choice([5, 6, 8, 10])
     interior = (n - 2) * 180 // n
+    triangles = n - 2
     svg = _geom_svg_regular_polygon(n)
-    q = (rf"(a) Show that the interior angle of a regular {_polygon_name(n)} is {interior}°.<br>"
-         rf"(b) Prove that the exterior angles of any convex polygon sum to 360°.<br>{svg}")
-    s = (rf"(a) A regular {_polygon_name(n)} can be divided into \({n} - 2 = {n-2}\) triangles.<br>"
-         rf"Total interior angle sum \(= {n-2} \times 180° = {(n-2)*180}°\)<br>"
-         rf"Each interior angle \(= \dfrac{{{(n-2)*180}°}}{{{n}}} = {interior}°\) ✓<br>"
-         rf"(b) At each vertex, interior + exterior = 180°.<br>"
-         rf"Summing all \(n\) vertices: (sum of interior angles) + (sum of exterior angles) \(= 180n°\)<br>"
-         rf"\((n-2) \times 180° + \text{{exterior sum}} = 180n°\)<br>"
-         rf"Exterior sum \(= 180n° - (n-2) \times 180° = 180n° - 180n° + 360° = 360°\). ✓<br>"
-         rf"<strong>Exterior angles of any convex polygon sum to 360°.</strong>")
+    q = (
+        rf"(a) Show that the interior angle of a regular {_polygon_name(n)} is {interior}° "
+        rf"by completing the steps below.<br>"
+        rf"(b) Prove that the exterior angles of any convex polygon sum to 360°.<br>{svg}"
+    )
+    s = (
+        rf"<strong>Formulae:</strong> a convex \(n\)-gon divides into \(n-2\) triangles; "
+        rf"interior + exterior = 180° at each vertex.<br><br>"
+        rf"<strong>(a) Step 1</strong> — A regular {_polygon_name(n)} divides into "
+        rf"\({n} - 2 = {triangles}\) triangles.<br>"
+        rf"Total interior sum \(= {triangles} \times 180° = {triangles * 180}°\)<br>"
+        rf"<strong>Step 2</strong> — Each interior angle "
+        rf"\(= \dfrac{{{triangles * 180}°}}{{{n}}} = {interior}°\) ✓<br><br>"
+        rf"<strong>(b) Step 3</strong> — Summing all \(n\) vertices:<br>"
+        rf"(interior sum) + (exterior sum) \(= 180n°\)<br>"
+        rf"Exterior sum \(= 180n° - (n-2)\times 180° = 360°\). ✓"
+    )
     hint = "For (a) divide into triangles. For (b) use interior + exterior = 180° at each vertex."
-    return q, s, hint, 5
+    return q, s, hint, 5, _geom_fields_answer(
+        (triangles, interior, 360),
+        (
+            f'Step 1: number of triangles in a regular {_polygon_name(n)}',
+            f'Step 2: each interior angle (°)',
+            'Step 3: exterior angles of any convex polygon sum to (°)',
+        ),
+        field_types=('number', 'number', 'number'),
+    )
 
 
 def _geom_diff_polygon_algebra():

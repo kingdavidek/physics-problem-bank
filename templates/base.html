@@ -1540,6 +1540,59 @@
             flex-direction: column;
             align-items: stretch;
         }
+        .free-response-row--proof-steps {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.75rem;
+        }
+        .free-response-proof-hint {
+            margin: 0;
+            color: var(--muted, #64748b);
+            font-size: 0.92rem;
+        }
+        .free-response-proof-bank {
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+        .free-response-proof-step {
+            text-align: left;
+            white-space: normal;
+            line-height: 1.35;
+            justify-content: flex-start;
+        }
+        .free-response-proof-step.is-used {
+            opacity: 0.55;
+        }
+        .free-response-proof-step.is-selected-toggle {
+            border-color: var(--primary);
+            background: var(--primary-light, #e6f4f5);
+        }
+        .free-response-proof-selected-wrap {
+            border: 1px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 0.75rem 0.9rem;
+            background: var(--panel-bg, #f7f5f0);
+        }
+        .free-response-proof-selected-label {
+            margin: 0 0 0.4rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .free-response-proof-selected {
+            margin: 0 0 0.6rem;
+            padding-left: 1.25rem;
+            min-height: 1.5rem;
+        }
+        .free-response-proof-selected li {
+            margin: 0.25rem 0;
+            line-height: 1.35;
+        }
+        .free-response-proof-selected .free-response-proof-remove {
+            margin-left: 0.45rem;
+            font-size: 0.8rem;
+            padding: 0.1rem 0.45rem;
+        }
         .free-response-fields-stack {
             display: flex;
             flex-direction: column;
@@ -1676,8 +1729,6 @@
             min-height: 0;
             padding: 6px 10px;
             line-height: 1.25;
-        }
-        .free-response-fraction-stack .free-response-input-alg-frac-den {
             text-align: center;
         }
         .free-response-fraction-bar {
@@ -1686,13 +1737,19 @@
             border-top: 2px solid var(--text, #1e3a5f);
             margin: 0;
         }
-        .free-response-surd-btn {
+        .free-response-surd-btn,
+        .free-response-pi-btn,
+        .free-response-square-btn {
             flex: 0 0 auto;
             min-width: 2.75rem;
             padding: 10px 12px;
             font-size: 1.15rem;
             line-height: 1;
             font-weight: 600;
+        }
+        .free-response-square-btn {
+            min-width: 3rem;
+            font-size: 1rem;
         }
         .free-response-roots-insert-btn {
             flex: 0 0 auto;
@@ -1705,6 +1762,37 @@
         .free-response-row--quadratic-roots .free-response-input-quadratic-roots {
             flex: 1 1 180px;
             min-width: 140px;
+        }
+        .free-response-row--quadratic-roots-pair .free-response-input-quadratic-root {
+            flex: 0 1 110px;
+            min-width: 88px;
+        }
+        .free-response-row--quadratic-roots-multi {
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        .free-response-roots-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1 1 200px;
+            min-width: 160px;
+        }
+        .free-response-roots-stack .free-response-field {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .free-response-roots-stack .free-response-input-quadratic-root {
+            flex: 1 1 auto;
+            min-width: 100px;
+            max-width: 200px;
+        }
+        .free-response-root-prefix {
+            font-size: 1rem;
+            color: var(--text);
+            white-space: nowrap;
+            user-select: none;
         }
         .free-response-sf-sep {
             font-size: 1rem;

@@ -46,12 +46,23 @@ def _brg_keyword_answer(value):
     return {'type': 'keyword', 'value': str(value).strip().lower()}
 
 
-def _brg_fields_answer(values, labels, places=2):
-    return {
+def _brg_fields_answer(values, labels, places=2, field_types=None):
+    types = tuple(field_types) if field_types else None
+    payload = {
         'type': 'number_fields',
-        'values': tuple(_brg_raw(v, places) for v in values),
+        'values': tuple(
+            (
+                f'{int(round(v)) % 360:03d}'
+                if types and types[i] == 'bearing'
+                else _brg_raw(v, places)
+            )
+            for i, v in enumerate(values)
+        ),
         'labels': tuple(labels),
     }
+    if types:
+        payload['field_types'] = types
+    return payload
 
 
 def _brg_problem_from_output(out, difficulty):
@@ -62,11 +73,20 @@ def _brg_problem_from_output(out, difficulty):
         if isinstance(raw, dict) and raw.get('type') == 'number_fields':
             values = raw.get('values') or ()
             labels = raw.get('labels') or ()
-            if values and len(values) == len(labels):
+            field_types = raw.get('field_types') or ()
+            if values and labels and len(values) == len(labels):
+                sep = (
+                    '\x1e'
+                    if field_types and any(t != 'number' for t in field_types)
+                    else '|'
+                )
                 extra = {
-                    'correct_answer_raw': '|'.join(str(v) for v in values),
+                    'correct_answer_raw': sep.join(str(v) for v in values),
                     'answer_type': 'number_fields',
                     'answer_labels': list(labels),
+                    'answer_field_types': list(field_types) if field_types else (
+                        ['number'] * len(labels)
+                    ),
                     'answer_format_hint': (
                         'Enter a number or 3-figure bearing in every field'
                     ),
@@ -1246,14 +1266,29 @@ def _brg_diff_prove_bearing():
     diff = random.randint(90, 130)
     b2 = b1 + diff
     back_b2 = _back(b2)
-    angle_from_north_at_B = b2 - 180 if b2 >= 180 else b2 + 180
-    q = (f"A ship sails from O to A on bearing {_brg(b1)}, then from A to B on bearing {_brg(b2)}. "
-         f"Show that the bearing of A from B is {_brg(back_b2)}.")
-    s = (f"The bearing of B from A is {_brg(b2)}.<br>"
-         f"The back bearing (bearing of A from B) = {b2}° − 180° = {back_b2}°<br>"
-         f"(Since {b2}° &gt; 180°, we subtract 180°.)<br>"
-         f"<strong>{_brg(back_b2)} ✓</strong>")
-    return q, s, "Back bearing = bearing ± 180°. Show the arithmetic step clearly.", 3
+    q = (
+        f"A ship sails from O to A on bearing {_brg(b1)}, then from A to B on bearing {_brg(b2)}. "
+        f"Find the bearing of A from B by completing the steps below."
+    )
+    s = (
+        f"<strong>Formula:</strong> back bearing = forward bearing ± 180° "
+        f"(add 180° if forward &lt; 180°; subtract 180° if forward ≥ 180°).<br>"
+        f"Step 1 — bearing of B from A is {_brg(b2)}.<br>"
+        f"Step 2 — back bearing (bearing of A from B) = {b2}° − 180° = {back_b2}°<br>"
+        f"(Since {b2}° &gt; 180°, subtract 180°.)<br>"
+        f"<strong>{_brg(back_b2)} ✓</strong>"
+    )
+    return (
+        q, s, "Back bearing = bearing ± 180°. Use the A→B leg, then reverse it.", 3,
+        _brg_fields_answer(
+            (b2, back_b2),
+            (
+                'Step 1: bearing of B from A',
+                'Step 2: bearing of A from B (back bearing)',
+            ),
+            field_types=('bearing', 'bearing'),
+        ),
+    )
 
 
 def _brg_diff_complex_polygon_journey():

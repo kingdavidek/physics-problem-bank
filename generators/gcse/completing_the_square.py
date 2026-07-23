@@ -6,7 +6,7 @@ Completed-form / show-that variants stay as 4-tuples.
 """
 import math
 import random
-from generators.shared.utils import make_problem
+from generators.shared.utils import make_problem, quadratic_roots_format_hint, quadratic_roots_ui_labels
 from generators.shared.variant_utils import (
     select_tier_variants,
     mcq_variants_from_pool,
@@ -68,8 +68,8 @@ def _cts_quadratic_roots_answer(*roots):
 def _cts_quadratic_roots_hint(*roots):
     joined = ','.join(str(r) for r in roots)
     if 'sqrt' in joined.lower():
-        return 'e.g. -3+√14, -3-√14 — use the ± and √ buttons'
-    return 'Enter roots separated by commas (e.g. 3, -2). Use ± and √ for surd answers.'
+        return 'e.g. -3+√14 and -3-√14 — use the ± and √ buttons'
+    return 'Enter each root in its own box. Use ± and √ for surd answers.'
 
 
 def _cts_pair_answer(val_a, val_b, label_a='x', label_b='y', sep=','):
@@ -93,6 +93,16 @@ def _cts_completed_square_answer(kind, *values, subject=None):
     return payload
 
 
+def _cts_number_fields_answer(values, labels, field_types=None):
+    types = tuple(field_types) if field_types else tuple('number' for _ in values)
+    return {
+        'type': 'number_fields',
+        'values': tuple(str(v) for v in values),
+        'labels': tuple(labels),
+        'field_types': types,
+    }
+
+
 def _cts_problem_from_output(out, difficulty):
     q, s, hint, marks = out[:4]
     extra = {}
@@ -105,7 +115,10 @@ def _cts_problem_from_output(out, difficulty):
                 extra = {
                     'correct_answer_raw': ','.join(str(r) for r in roots),
                     'answer_type': 'quadratic_roots',
-                    'answer_format_hint': _cts_quadratic_roots_hint(*roots),
+                    'answer_labels': quadratic_roots_ui_labels(len(roots)),
+                    'answer_format_hint': quadratic_roots_format_hint(
+                        len(roots), _cts_quadratic_roots_hint(*roots),
+                    ),
                 }
             elif raw_type == 'number_pair':
                 val_a, val_b = raw['values']
@@ -125,6 +138,25 @@ def _cts_problem_from_output(out, difficulty):
                     'answer_subject': raw.get('subject', ''),
                     'answer_format_hint': 'Use + or − for each term, then enter each number',
                 }
+            elif raw_type == 'number_fields':
+                values = raw.get('values') or ()
+                labels = raw.get('labels') or ()
+                field_types = raw.get('field_types') or ()
+                if values and labels and len(values) == len(labels):
+                    sep = (
+                        '\x1e'
+                        if field_types and any(t != 'number' for t in field_types)
+                        else '|'
+                    )
+                    extra = {
+                        'correct_answer_raw': sep.join(str(v) for v in values),
+                        'answer_type': 'number_fields',
+                        'answer_labels': list(labels),
+                        'answer_field_types': list(field_types) if field_types else (
+                            ['number'] * len(labels)
+                        ),
+                        'answer_format_hint': 'Complete every proof step',
+                    }
         elif isinstance(raw, (int, float)):
             extra = {
                 'correct_answer_raw': _cts_raw(raw),
@@ -378,13 +410,28 @@ def _cts_d_exam_show_that():
     k_str = _fmt_const(k)
     q = (
         rf"Show that \(x^2 {_fmt_linear_x(b)} {q_str}\) can be written as "
-        rf"\((x + {p})^2 {k_str}\)."
+        rf"\((x + {p})^2 {k_str}\) by completing the expansion steps below."
     )
     s = (
+        rf"<strong>Formula:</strong> \((a + b)^2 = a^2 + 2ab + b^2\).<br>"
         rf"Expand \((x + {p})^2 = x^2 {_fmt_linear_x(b)} + {p*p}\)<br>"
-        rf"So \((x + {p})^2 {k_str} = x^2 {_fmt_linear_x(b)} {q_str}\) ✓"
+        rf"So \((x + {p})^2 {k_str} = x^2 {_fmt_linear_x(b)} + {p*p} {_fmt_const(k)} "
+        rf"= x^2 {_fmt_linear_x(b)} {q_str}\) ✓"
     )
-    return q, s, "Expand your completed form to verify it matches the original.", 3
+    return (
+        q, s, "Expand the completed-square form and check it matches the original.", 3,
+        _cts_number_fields_answer(
+            (
+                f'x**2 + {b}*x + {p * p}',
+                f'x**2 + {b}*x + {q_val}',
+            ),
+            (
+                rf'Step 1: expand (x + {p})²',
+                rf'Step 2: expand the full RHS (x + {p})² {k_str}',
+            ),
+            ('algebraic', 'algebraic'),
+        ),
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════

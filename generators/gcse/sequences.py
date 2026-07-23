@@ -2,12 +2,12 @@
 GCSE Maths – Sequences
 15 foundational · 15 intermediate · 15 difficult · 18 MCQ
 Graded practice variants return (question, solution, hint, marks, raw).
-Text nth-term / proof-style variants stay as 4-tuples (Phase 2).
+Pure theorem proofs use Plan C proof_steps banks; some nth-term text variants stay ungraded.
 """
 import random
 import math
 from fractions import Fraction
-from generators.shared.utils import make_problem
+from generators.shared.utils import make_problem, proof_steps_answer, proof_steps_problem_extra
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from generators.shared.variant_utils import (
     select_tier_variants,
@@ -59,7 +59,9 @@ def _seq_problem_from_output(out, difficulty):
     extra = {}
     if len(out) >= 5:
         raw = out[4]
-        if isinstance(raw, dict) and raw.get('type') == 'number_fields':
+        if isinstance(raw, dict) and raw.get('type') == 'proof_steps':
+            extra = proof_steps_problem_extra(raw)
+        elif isinstance(raw, dict) and raw.get('type') == 'number_fields':
             values = raw.get('values') or ()
             labels = raw.get('labels') or ()
             if values and len(values) == len(labels):
@@ -689,28 +691,97 @@ def _seq_diff_quadratic_is_term():
 
 def _seq_diff_recurring_decimal_proof():
     a_rec = random.randint(1, 8)
-    b_rec = random.randint(10, 99)
-    # 0.a_ recurring = a/9, 0.0bcd recurring needs care; use simple forms
     digits = random.randint(1, 3)
     if digits == 1:
         frac = Fraction(a_rec, 9)
-        dec_str = f"0.{''.join([str(a_rec)]*6)}..."
-        q = rf"Prove, using a sequence argument, that \(0.\overline{{{a_rec}}} = \dfrac{{{frac.numerator}}}{{{frac.denominator}}}\)"
-        s = (rf"Let \(x = 0.\overline{{{a_rec}}}\). Then \(10x = {a_rec}.\overline{{{a_rec}}}\).<br>"
-             rf"Subtracting: \(9x = {a_rec}\), so \(x = \dfrac{{{a_rec}}}{{9}}\)<br>"
-             rf"\(= \dfrac{{{frac.numerator}}}{{{frac.denominator}}}\) ✓<br>"
-             rf"This can also be seen as the sum of the geometric series \(\dfrac{{{a_rec}}}{{10}} + \dfrac{{{a_rec}}}{{100}} + \ldots\) with \(a = \dfrac{{{a_rec}}}{{10}}\), \(r = \dfrac{{1}}{{10}}\):<br>"
-             rf"\(S_\infty = \dfrac{{a}}{{1-r}} = \dfrac{{{a_rec}/10}}{{9/10}} = \dfrac{{{a_rec}}}{{9}} = \dfrac{{{frac.numerator}}}{{{frac.denominator}}}\)"
-             rf"<br><strong>\(0.\overline{{{a_rec}}} = \dfrac{{{frac.numerator}}}{{{frac.denominator}}}\)</strong>")
+        q = (
+            rf"Prove, using a sequence argument, that \(0.\overline{{{a_rec}}} = "
+            rf"\dfrac{{{frac.numerator}}}{{{frac.denominator}}}\) by selecting the "
+            rf"correct proof steps in order."
+        )
+        s = (
+            rf"Let \(x = 0.\overline{{{a_rec}}}\). Then \(10x = {a_rec}.\overline{{{a_rec}}}\).<br>"
+            rf"Subtracting: \(9x = {a_rec}\), so \(x = \dfrac{{{a_rec}}}{{9}}\)"
+            rf"\(= \dfrac{{{frac.numerator}}}{{{frac.denominator}}}\) ✓"
+        )
+        bank = [
+            {'id': 's1', 'text': rf'Let \(x = 0.\overline{{{a_rec}}}\).'},
+            {
+                'id': 's2',
+                'text': rf'Multiply by 10: \(10x = {a_rec}.\overline{{{a_rec}}}\).',
+            },
+            {
+                'id': 's3',
+                'text': (
+                    rf'Subtract: \(10x - x = {a_rec}\), so \(9x = {a_rec}\) and '
+                    rf'\(x = \dfrac{{{a_rec}}}{{9}}\).'
+                ),
+            },
+            {
+                'id': 'd1',
+                'text': rf'Multiply by 100: \(100x = {a_rec}.\overline{{{a_rec}}}\).',
+            },
+            {
+                'id': 'd2',
+                'text': rf'Conclude \(x = \dfrac{{{a_rec}}}{{10}}\) without subtracting.',
+            },
+            {
+                'id': 'd3',
+                'text': 'Treat it as a geometric series with common ratio r = 10.',
+            },
+        ]
+        required = ('s1', 's2', 's3')
     else:
         rec_num = random.randint(10, 99)
         frac = Fraction(rec_num, 99)
-        q = rf"Prove that \(0.\overline{{{rec_num}}} = \dfrac{{{frac.numerator}}}{{{frac.denominator}}}\)"
-        s = (rf"Let \(x = 0.\overline{{{rec_num}}}\). Then \(100x = {rec_num}.\overline{{{rec_num}}}\).<br>"
-             rf"Subtracting: \(99x = {rec_num}\), so \(x = \dfrac{{{rec_num}}}{{99}} = \dfrac{{{frac.numerator}}}{{{frac.denominator}}}\)<br>"
-             rf"<strong>\(0.\overline{{{rec_num}}} = \dfrac{{{frac.numerator}}}{{{frac.denominator}}}\)</strong>")
-    hint = "Let x = the recurring decimal. Multiply by a power of 10 to shift it, then subtract to eliminate the recurring part."
-    return q, s, hint, 4
+        q = (
+            rf"Prove that \(0.\overline{{{rec_num}}} = "
+            rf"\dfrac{{{frac.numerator}}}{{{frac.denominator}}}\) by selecting the "
+            rf"correct proof steps in order."
+        )
+        s = (
+            rf"Let \(x = 0.\overline{{{rec_num}}}\). Then \(100x = {rec_num}.\overline{{{rec_num}}}\).<br>"
+            rf"Subtracting: \(99x = {rec_num}\), so "
+            rf"\(x = \dfrac{{{rec_num}}}{{99}} = \dfrac{{{frac.numerator}}}{{{frac.denominator}}}\) ✓"
+        )
+        bank = [
+            {'id': 's1', 'text': rf'Let \(x = 0.\overline{{{rec_num}}}\).'},
+            {
+                'id': 's2',
+                'text': rf'Multiply by 100: \(100x = {rec_num}.\overline{{{rec_num}}}\).',
+            },
+            {
+                'id': 's3',
+                'text': (
+                    rf'Subtract: \(100x - x = {rec_num}\), so \(99x = {rec_num}\) and '
+                    rf'\(x = \dfrac{{{rec_num}}}{{99}}\).'
+                ),
+            },
+            {
+                'id': 'd1',
+                'text': rf'Multiply by 10: \(10x = {rec_num}.\overline{{{rec_num}}}\).',
+            },
+            {
+                'id': 'd2',
+                'text': rf'Conclude \(x = \dfrac{{{rec_num}}}{{9}}\) after subtracting.',
+            },
+            {
+                'id': 'd3',
+                'text': 'Treat it as an arithmetic series with common difference 0.01.',
+            },
+        ]
+        required = ('s1', 's2', 's3')
+    hint = (
+        "Let x = the recurring decimal. Multiply by a power of 10 to shift it, "
+        "then subtract to eliminate the recurring part."
+    )
+    random.shuffle(bank)
+    return q, s, hint, 4, proof_steps_answer(
+        required,
+        bank,
+        order_matters=True,
+        format_hint='Select the correct proof steps in order',
+    )
 
 
 def _seq_diff_sum_formula_derive():
@@ -793,19 +864,51 @@ def _seq_diff_arithmetic_mean():
 
 
 def _seq_diff_show_divisible():
-    d = random.choice([2, 3, 4, 5])
-    # nth term is d*n*(n+1)/2 or similar always divisible
-    # Use: sum of AP 1+2+...+n = n(n+1)/2; so d*n(n+1)/2 is divisible by d
-    a = 1
-    # sequence: dn(n+1) → always divisible by 2
-    # simpler: nth term = n(n+1)  always divisible by 2
-    q = (rf"Prove that every term of the sequence with nth term \(n(n+1)\) is divisible by 2.")
-    s = (rf"Every pair of consecutive integers \(n\) and \(n+1\) contains one even number and one odd number.<br>"
-         rf"Therefore their product \(n(n+1)\) is always even (divisible by 2).<br>"
-         rf"Alternatively: \(n(n+1) = 2 \times \dfrac{{n(n+1)}}{{2}}\) where \(\dfrac{{n(n+1)}}{{2}}\) is always an integer (the \(n\)th triangle number).<br>"
-         rf"<strong>Hence \(n(n+1)\) is divisible by 2 for all positive integers \(n\).</strong>")
+    q = (
+        r"Prove that every term of the sequence with nth term \(n(n+1)\) is divisible by 2 "
+        r"by selecting the correct proof steps in order."
+    )
+    s = (
+        r"Every pair of consecutive integers \(n\) and \(n+1\) contains one even and one odd.<br>"
+        r"Therefore their product \(n(n+1)\) is always even (divisible by 2).<br>"
+        r"Alternatively: \(n(n+1) = 2 \times \dfrac{n(n+1)}{2}\) where "
+        r"\(\dfrac{n(n+1)}{2}\) is always an integer (the \(n\)th triangle number).<br>"
+        r"<strong>Hence \(n(n+1)\) is divisible by 2 for all positive integers \(n\).</strong>"
+    )
     hint = "Consider whether n and n+1 are even/odd. One of any two consecutive integers must be even."
-    return q, s, hint, 4
+    bank = [
+        {
+            'id': 's1',
+            'text': 'n and n+1 are consecutive integers, so one is even and one is odd.',
+        },
+        {
+            'id': 's2',
+            'text': 'The product of an even integer and any integer is even.',
+        },
+        {
+            'id': 's3',
+            'text': 'Therefore n(n+1) is always divisible by 2.',
+        },
+        {
+            'id': 'd1',
+            'text': 'n and n+1 are both always odd, so their product is odd.',
+        },
+        {
+            'id': 'd2',
+            'text': 'n(n+1) is only even when n is a multiple of 3.',
+        },
+        {
+            'id': 'd3',
+            'text': 'Use the geometric series formula for Sn to show divisibility.',
+        },
+    ]
+    random.shuffle(bank)
+    return q, s, hint, 4, proof_steps_answer(
+        ('s1', 's2', 's3'),
+        bank,
+        order_matters=True,
+        format_hint='Select the correct proof steps in order',
+    )
 
 
 def _seq_diff_find_a_and_d():
@@ -903,13 +1006,50 @@ def _seq_diff_convergence_check():
 
 
 def _seq_diff_arithmetic_proof():
-    q = (r"Prove that the sum of the first \(n\) odd numbers equals \(n^2\)")
-    s = (r"The first \(n\) odd numbers are \(1, 3, 5, \ldots, (2n-1)\).<br>"
-         r"This is an arithmetic series with \(a = 1\), \(l = 2n-1\), and \(n\) terms.<br>"
-         r"Sum \(= \dfrac{n(a+l)}{2} = \dfrac{n(1 + 2n-1)}{2} = \dfrac{n \cdot 2n}{2} = n^2\)<br>"
-         r"<strong>Therefore the sum of the first \(n\) odd numbers is \(n^2\). ✓</strong>")
+    q = (
+        r"Prove that the sum of the first \(n\) odd numbers equals \(n^2\) "
+        r"by selecting the correct proof steps in order."
+    )
+    s = (
+        r"The first \(n\) odd numbers are \(1, 3, 5, \ldots, (2n-1)\).<br>"
+        r"This is an arithmetic series with \(a = 1\), \(l = 2n-1\), and \(n\) terms.<br>"
+        r"Sum \(= \dfrac{n(a+l)}{2} = \dfrac{n(1 + 2n-1)}{2} = \dfrac{n \cdot 2n}{2} = n^2\)<br>"
+        r"<strong>Therefore the sum of the first \(n\) odd numbers is \(n^2\). ✓</strong>"
+    )
     hint = "Recognise the odd numbers as an AP with a = 1, d = 2. Use Sn = n(a + l)/2."
-    return q, s, hint, 4
+    bank = [
+        {
+            'id': 's1',
+            'text': 'The first n odd numbers form an AP with a = 1 and d = 2 (last term l = 2n − 1).',
+        },
+        {
+            'id': 's2',
+            'text': 'Use the AP sum formula Sn = n(a + l)/2.',
+        },
+        {
+            'id': 's3',
+            'text': 'Substitute: Sn = n(1 + 2n − 1)/2 = n(2n)/2 = n².',
+        },
+        {
+            'id': 'd1',
+            'text': 'Use the geometric series formula Sn = a(1 − rⁿ)/(1 − r).',
+        },
+        {
+            'id': 'd2',
+            'text': 'The first n odd numbers form an AP with a = 0 and d = 1.',
+        },
+        {
+            'id': 'd3',
+            'text': 'Conclude that the sum equals 2n without using a sum formula.',
+        },
+    ]
+    random.shuffle(bank)
+    return q, s, hint, 4, proof_steps_answer(
+        ('s1', 's2', 's3'),
+        bank,
+        order_matters=True,
+        format_hint='Select the correct proof steps in order',
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════

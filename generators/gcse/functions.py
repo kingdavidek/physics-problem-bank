@@ -2,10 +2,11 @@
 GCSE Maths – Functions
 7 foundational · 5 intermediate · 5 difficult · 8 MCQ (randomised each time)
 Graded practice variants return (question, solution, hint, marks, raw).
-Inverse/composite-rule algebra and multipart variants stay as 4-tuples.
+Inverse/multipart variants stay as 4-tuples; inverse linear and composite-rule algebra are graded.
 """
 import random
-from generators.shared.utils import make_problem
+from fractions import Fraction
+from generators.shared.utils import make_problem, quadratic_roots_format_hint, quadratic_roots_ui_labels
 from generators.shared.variant_utils import (
     select_tier_variants,
     mcq_variants_from_pool,
@@ -93,12 +94,17 @@ def _fn_linear_answer(value, var='x'):
     return {'type': 'linear', 'value': _fn_raw(value), 'var': str(var).strip().lower()}
 
 
-def _fn_fields_answer(values, labels):
-    return {
+def _fn_fields_answer(values, labels, field_types=None, field_options=None):
+    types = tuple(field_types) if field_types else tuple('number' for _ in values)
+    payload = {
         'type': 'number_fields',
         'values': tuple(_fn_raw(v) for v in values),
         'labels': tuple(labels),
+        'field_types': types,
     }
+    if field_options is not None:
+        payload['field_options'] = tuple(field_options)
+    return payload
 
 
 def _fn_linear_raw(raw):
@@ -107,6 +113,27 @@ def _fn_linear_raw(raw):
     if var == 'x':
         return str(val)
     return f'{var}={val}'
+
+
+def _fn_algebraic_answer(expr, format_hint=None, wrong_hint=None, subject=None):
+    payload = {'type': 'algebraic', 'value': str(expr)}
+    if format_hint:
+        payload['format_hint'] = format_hint
+    if wrong_hint:
+        payload['wrong_hint'] = wrong_hint
+    if subject:
+        payload['subject'] = subject
+    return payload
+
+
+def _fn_frac(num, den):
+    return f'({num})/({den})'
+
+
+_FN_FRACTION_BRACKET_HINT = (
+    'Careful with brackets! If the answer is a fraction, '
+    'put the numerator and denominator in brackets ().'
+)
 
 
 def _fn_problem_from_output(out, difficulty):
@@ -121,24 +148,53 @@ def _fn_problem_from_output(out, difficulty):
                 extra = {
                     'correct_answer_raw': ','.join(str(r) for r in roots),
                     'answer_type': 'quadratic_roots',
-                    'answer_format_hint': 'Enter roots separated by commas (e.g. 3, -2)',
+                    'answer_labels': quadratic_roots_ui_labels(len(roots)),
+                    'answer_format_hint': quadratic_roots_format_hint(len(roots)),
                 }
             elif raw_type == 'number_fields':
                 values = raw.get('values') or ()
                 labels = raw.get('labels') or ()
-                if values and len(values) == len(labels):
+                field_types = raw.get('field_types') or ()
+                field_options = raw.get('field_options') or ()
+                if values and labels and len(values) == len(labels):
+                    sep = (
+                        '\x1e'
+                        if field_types and any(t != 'number' for t in field_types)
+                        else '|'
+                    )
                     extra = {
-                        'correct_answer_raw': '|'.join(str(v) for v in values),
+                        'correct_answer_raw': sep.join(str(v) for v in values),
                         'answer_type': 'number_fields',
                         'answer_labels': list(labels),
+                        'answer_field_types': list(field_types) if field_types else (
+                            ['number'] * len(labels)
+                        ),
                         'answer_format_hint': 'Enter a number in every field',
                     }
+                    if field_options:
+                        extra['answer_field_options'] = [
+                            list(opts) if opts else None for opts in field_options
+                        ]
             elif raw_type == 'linear':
                 extra = {
                     'correct_answer_raw': _fn_linear_raw(raw),
                     'answer_type': 'linear',
                     'answer_format_hint': 'Enter the value (e.g. y = 9 or just 9)',
                 }
+            elif raw_type == 'algebraic':
+                text = str(raw.get('value') or '')
+                extra = {
+                    'correct_answer_raw': text,
+                    'answer_type': 'algebraic',
+                    'answer_format_hint': raw.get(
+                        'format_hint',
+                        'Enter the simplified expression, e.g. 3x + 6',
+                    ),
+                }
+                if raw.get('subject'):
+                    extra['answer_subject'] = raw['subject']
+                if raw.get('wrong_hint'):
+                    extra['answer_wrong_hint'] = raw['wrong_hint']
         elif isinstance(raw, (int, float)):
             extra = {
                 'correct_answer_raw': _fn_raw(raw),
@@ -376,7 +432,13 @@ def _fn_i_inverse_linear():
         rf"\(x = {m}y {_fmt_b(c)}\) → \(x {_fmt_b(-c)} = {m}y\) → "
         rf"<strong>\(f^{{-1}}(x) = \dfrac{{x {_fmt_b(-c)}}}{{{m}}}\)</strong>"
     )
-    return q, s, "Inverse undoes f: solve y = f(x) for x in terms of y.", 4
+    num = f'x-{c}' if c > 0 else 'x'
+    return q, s, "Inverse undoes f: solve y = f(x) for x in terms of y.", 4, _fn_algebraic_answer(
+        _fn_frac(num, m),
+        format_hint='Enter the inverse, e.g. (x - 5)/5',
+        wrong_hint=_FN_FRACTION_BRACKET_HINT,
+        subject='f⁻¹(x)',
+    )
 
 
 def _fn_i_write_composite_rule():
@@ -392,7 +454,10 @@ def _fn_i_write_composite_rule():
         rf"\(f(g(x)) = {a}x + {a * c}\)<br>"
         rf"<strong>\(f(g(x)) = {a}x + {a * c}\)</strong>"
     )
-    return q, s, "Substitute g(x) into f in place of x.", 3
+    return q, s, "Substitute g(x) into f in place of x.", 3, _fn_algebraic_answer(
+        f'{a}x+{a * c}',
+        'Enter the simplified expression, e.g. 3x + 6',
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -477,7 +542,7 @@ def _fn_d_ff_linear():
 def _fn_d_domain_valid():
     q = (
         r"\(f(x) = \dfrac{1}{x}\). Which value of \(x\) "
-        r"cannot be used as an input? Explain briefly."
+        r"cannot be used as an input?"
     )
     s = r"<strong>\(x = 0\)</strong> — division by zero is not defined."
     return q, s, "The input must not make the denominator zero.", 2, 0
@@ -509,7 +574,17 @@ def _fn_d_multipart_composite_inverse():
         rf"\(x {_fmt_b(-b)} = {a}y\)<br>"
         rf"<strong>\(f^{{-1}}(x) = \dfrac{{x {_fmt_b(-b)}}}{{{a}}}\)</strong>"
     )
-    return q, s, "For a composite, work inside out. For an inverse, swap x and y then rearrange.", 7
+    composite_expr = f'{a}x+{a * k + b}'
+    inverse_num = f'x-{b}' if b > 0 else 'x'
+    return q, s, "For a composite, work inside out. For an inverse, swap x and y then rearrange.", 7, _fn_fields_answer(
+        (composite_expr, fgx, _fn_frac(inverse_num, a)),
+        (
+            'Part (a): expression for f(g(x))',
+            f'Part (b): value of f(g({x_val}))',
+            'Part (c): expression for f⁻¹(x)',
+        ),
+        field_types=('algebraic', 'number', 'algebraic'),
+    )
 
 
 def _fn_d_multipart_quadratic_graph():
@@ -536,25 +611,42 @@ def _fn_d_multipart_quadratic_graph():
         rf"<strong>c)</strong> The line of symmetry passes through the minimum point, so "
         rf"<strong>\(x = {h}\)</strong>."
     )
-    return q, s, "Completed-square form shows the turning point directly.", 6
+    return q, s, "Completed-square form shows the turning point directly.", 6, _fn_fields_answer(
+        (f'{h}|{k}', fx, h),
+        (
+            'Part (a): coordinates of the minimum point',
+            f'Part (b): value of f({x_val})',
+            'Part (c): equation of the line of symmetry',
+        ),
+        field_types=('vector', 'number', 'linear'),
+    )
 
 
 def _fn_d_multipart_domain_range():
     excluded = random.choice([-4, -3, -2, 2, 3, 4])
     x_val = random.choice([n for n in range(-5, 6) if n != excluded])
-    fx = 1 / (x_val - excluded)
+    q_sub = x_val - excluded
+    frac = Fraction(1, q_sub)
+    frac_raw = f'{frac.numerator}/{frac.denominator}'
+    correct_mcq = 'Division by zero is undefined'
+    mcq_pool = [
+        'The numerator would be zero',
+        'The function would give a negative output',
+        correct_mcq,
+    ]
+    random.shuffle(mcq_pool)
+    letters = 'ABC'
+    correct_letter = letters[mcq_pool.index(correct_mcq)]
     q = (
         rf"\(f(x) = \dfrac{{1}}{{x {_fmt_b(-excluded)}}}\).<br><br>"
         rf"<strong>a)</strong> State the value of \(x\) that cannot be used as an input. [1]<br>"
         rf"<strong>b)</strong> Explain why this input is not allowed. [2]<br>"
         rf"<strong>c)</strong> Find \(f({x_val})\). [2]"
     )
-    if fx.is_integer():
-        fx_str = str(int(fx))
+    if q_sub == 1 or q_sub == -1:
+        fx_display = str(1 if q_sub == 1 else -1)
     else:
-        denominator = x_val - excluded
-        fx_str = rf"\dfrac{{1}}{{{denominator}}}"
-    q_sub = x_val - excluded
+        fx_display = rf"\dfrac{{1}}{{{q_sub}}}"
     s = (
         rf"<strong>a)</strong> The denominator must not be zero. \(x {_fmt_b(-excluded)} = 0\), "
         rf"so <strong>\(x = {excluded}\)</strong> is not allowed.<br><br>"
@@ -562,9 +654,18 @@ def _fn_d_multipart_domain_range():
         rf"Division by zero is <strong>undefined</strong>, so the function would not give a valid output.<br><br>"
         rf"<strong>c)</strong> Substitute \(x = {x_val}\):<br>"
         rf"\(f({x_val}) = \dfrac{{1}}{{{x_val} {_fmt_b(-excluded)}}} = \dfrac{{1}}{{{q_sub}}}\)<br>"
-        rf"<strong>\(f({x_val}) = {fx_str}\)</strong>"
+        rf"<strong>\(f({x_val}) = {fx_display}\)</strong>"
     )
-    return q, s, "Set the denominator equal to zero to find the excluded input.", 5
+    return q, s, "Set the denominator equal to zero to find the excluded input.", 5, _fn_fields_answer(
+        (excluded, correct_letter, frac_raw),
+        (
+            'Part (a): value of x that cannot be used',
+            'Part (b): why this input is not allowed',
+            f'Part (c): value of f({x_val})',
+        ),
+        field_types=('number', 'mcq', 'fraction'),
+        field_options=(None, mcq_pool, None),
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════

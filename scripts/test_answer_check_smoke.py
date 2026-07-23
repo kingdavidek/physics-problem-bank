@@ -17,6 +17,7 @@ from generators.gcse.algebraic_fractions import (  # noqa: E402
     gcse_algebraic_fractions_variants,
 )
 from generators.gcse.maths import (  # noqa: E402
+    _algebra_problem_from_output,
     _bidmas_problem,
     _fdp_problem,
     _fdp_problem_from_output,
@@ -29,6 +30,7 @@ from generators.gcse.maths import (  # noqa: E402
     gcse_fdp_decimal_to_percentage,
     gcse_fdp_fraction_to_decimal,
     gcse_fdp_share_in_ratio,
+    gcse_maths_algebra,
     gcse_maths_bidmas,
     gcse_maths_fdp,
     gcse_maths_surds,
@@ -37,9 +39,13 @@ from generators.gcse.maths import (  # noqa: E402
     _vec_problem_from_output,
     gcse_vectors,
     gcse_vectors_variants,
+    _trig_problem_from_output,
+    gcse_trigonometry,
+    gcse_trigonometry_variants,
 )
 from generators.gcse.maths_basic_topics_mcq import (  # noqa: E402
     _practice_pools,
+    gcse_maths_algebra_variants,
     gcse_maths_bidmas_variants,
     gcse_maths_fdp_variants,
     gcse_maths_surds_variants,
@@ -177,6 +183,7 @@ from generators.shared.answer_checkers import (  # noqa: E402
     check_binary,
     check_hex,
     check_fraction,
+    check_algebraic_fraction,
 )
 from generators.shared.utils import problem_from_choice_output  # noqa: E402
 from app import app  # noqa: E402
@@ -448,10 +455,14 @@ def test_checker_quadratic_roots_unit():
     four_wrong = check_quadratic_roots('-2,-1,1,2', '1, -1')
     assert four_wrong['correct'] is False
     assert 'four solutions' in (four_wrong.get('feedback') or '').lower()
+    assert 'enter 4' not in (four_wrong.get('feedback') or '').lower()
+    assert 'commas' not in (four_wrong.get('feedback') or '').lower()
 
     four_wrong_vals = check_quadratic_roots('-2,-1,1,2', '1, -1, 2, 3')
     assert four_wrong_vals['correct'] is False
     assert 'four solutions' in (four_wrong_vals.get('feedback') or '').lower()
+    assert 'enter 4' not in (four_wrong_vals.get('feedback') or '').lower()
+    assert 'commas' not in (four_wrong_vals.get('feedback') or '').lower()
 
     via_registry = check_answer('quadratic_roots', '{3,-2}', '-2,3')
     assert via_registry['correct'] is True
@@ -1045,6 +1056,38 @@ def test_check_algebraic_identity():
     assert check_algebraic('a-b', 'b-a')['correct'] is False
 
 
+def test_check_algebraic_vector_bc_notation():
+    from generators.shared.answer_checkers import check_algebraic
+
+    raw = '(c - b)/2'
+    for user in (
+        '0.5 BC',
+        '0.5BC',
+        '1/2 BC',
+        'BC/2',
+        '1/2*BC',
+        '(c-b)/2',
+        'c/2 - b/2',
+        '0.5*(c-b)',
+    ):
+        assert check_algebraic(raw, user)['correct'] is True, user
+    assert check_algebraic('b*c', 'bc')['correct'] is False
+
+
+def test_check_proof_steps_order_and_set():
+    from generators.shared.answer_checkers import check_proof_steps
+
+    ordered = check_proof_steps('1|s1|s2|s3', 's1|s2|s3')
+    assert ordered['correct'] is True
+    assert check_proof_steps('1|s1|s2|s3', 's1|s3|s2')['correct'] is False
+    assert check_proof_steps('1|s1|s2|s3', 's1|s2')['correct'] is False
+
+    unordered = check_proof_steps('0|c1|c2|c3', 'c3|c1|c2')
+    assert unordered['correct'] is True
+    assert check_proof_steps('0|c1|c2|c3', 'c1|c2')['correct'] is False
+    assert check_proof_steps('0|c1|c2|c3', 'c1|c2|c3|d1')['correct'] is False
+
+
 def test_check_algebraic_surd_binomial():
     from generators.shared.answer_checkers import check_algebraic
 
@@ -1132,43 +1175,51 @@ def test_surds_check_api():
 
 
 AF_UNGRADED_VARIANTS = {
-    '_af_f_same_denominator_add',
-    '_af_f_divide',
-    '_af_i_diff_denominator_add',
-    '_af_i_difference_of_squares',
-    '_af_i_single_fraction_add',
-    '_af_i_multiply_two',
-    '_af_i_quadratic_cancel',
-    '_af_d_add_reciprocal_style',
-    '_af_d_subtract_fractions',
 }
 
 AF_FRACTION_VARIANTS = (
     '_af_f_cancel_numeric',
     '_af_f_multiply',
+    '_af_f_same_denominator_add',
+    '_af_f_divide',
+    '_af_i_diff_denominator_add',
+    '_af_i_single_fraction_add',
+    '_af_i_multiply_two',
+    '_af_d_add_reciprocal_style',
+    '_af_d_subtract_fractions',
+)
+
+AF_ALGEBRAIC_VARIANTS = (
+    '_af_i_difference_of_squares',
+    '_af_i_quadratic_cancel',
 )
 
 AF_NUMBER_VARIANTS = (
     '_af_f_factor_cancel',
-    '_af_d_solve_simple',
     '_af_d_simplify_nested',
+)
+
+AF_LINEAR_VARIANTS = (
+    '_af_d_solve_simple',
     '_af_d_equation_with_linear_den',
 )
 
 
-def test_af_fraction_variants_use_fraction_checker():
+def test_af_fraction_variants_use_stacked_fraction_ui():
     import generators.gcse.algebraic_fractions as af_mod
 
     for name in AF_FRACTION_VARIANTS:
-        for _ in range(8):
+        for _ in range(12):
             out = getattr(af_mod, name)()
+            assert len(out) >= 5, name
             raw = out[4]
-            if name in ('_af_f_multiply', '_af_f_cancel_numeric') and isinstance(raw, int):
-                continue
-            assert len(out) == 5, name
+            if isinstance(raw, int):
+                problem = _af_problem_from_output(out, 'foundational')
+                assert problem.get('answer_type') == 'number', name
+                break
             problem = _af_problem_from_output(out, 'foundational')
-            assert problem.get('answer_type') == 'fraction', name
-            assert problem.get('correct_answer_raw'), name
+            assert problem.get('answer_type') == 'algebraic_fraction', name
+            assert '|' in (problem.get('correct_answer_raw') or ''), name
             break
 
 
@@ -1180,6 +1231,28 @@ def test_af_number_variants_are_graded():
         assert len(out) == 5, name
         problem = _af_problem_from_output(out, 'difficult')
         assert problem.get('answer_type') == 'number', name
+        assert problem.get('correct_answer_raw'), name
+
+
+def test_af_linear_variants_are_graded():
+    import generators.gcse.algebraic_fractions as af_mod
+
+    for name in AF_LINEAR_VARIANTS:
+        out = getattr(af_mod, name)()
+        assert len(out) == 5, name
+        problem = _af_problem_from_output(out, 'difficult')
+        assert problem.get('answer_type') == 'linear', name
+        assert problem.get('correct_answer_raw'), name
+
+
+def test_af_algebraic_variants_are_graded():
+    import generators.gcse.algebraic_fractions as af_mod
+
+    for name in AF_ALGEBRAIC_VARIANTS:
+        out = getattr(af_mod, name)()
+        assert len(out) == 5, name
+        problem = _af_problem_from_output(out, 'intermediate')
+        assert problem.get('answer_type') == 'algebraic', name
         assert problem.get('correct_answer_raw'), name
 
 
@@ -1197,11 +1270,14 @@ def test_af_generator_payload():
     pilot = None
     for _ in range(12):
         candidate = _af_problem(_af_f_cancel_numeric, 'foundational')
-        if candidate.get('answer_type') == 'fraction':
+        if candidate.get('answer_type') == 'algebraic_fraction':
             pilot = candidate
             break
+        if candidate.get('answer_type') == 'number':
+            continue
     assert pilot is not None
     assert pilot.get('correct_answer_raw') is not None
+    assert '|' in pilot['correct_answer_raw']
 
     number_pilot = _af_problem(_af_f_factor_cancel, 'foundational')
     assert number_pilot.get('answer_type') == 'number'
@@ -1211,41 +1287,45 @@ def test_af_variant_queues_are_graded():
     for difficulty in ('foundational', 'intermediate', 'difficult'):
         variants = gcse_algebraic_fractions_variants(difficulty, 'practice')
         assert variants, difficulty
-        for fn in variants:
-            name = fn.__name__
+        for variant in variants:
             problem = gcse_algebraic_fractions(
-                difficulty, 'practice', variant_name=name
+                difficulty, 'practice', variant_name=variant.__name__
             )
-            if name in AF_UNGRADED_VARIANTS:
-                assert problem.get('correct_answer_raw') is None, name
+            if variant.__name__ in AF_UNGRADED_VARIANTS:
+                assert problem.get('correct_answer_raw') is None, variant.__name__
                 continue
-            assert problem.get('correct_answer_raw') is not None, name
+            assert problem.get('correct_answer_raw') is not None, (
+                difficulty,
+                variant.__name__,
+            )
 
 
 def test_af_check_api_fraction():
     problem = None
-    for _ in range(12):
+    for _ in range(20):
         candidate = gcse_algebraic_fractions(
             'foundational', 'practice', variant_name='_af_f_cancel_numeric'
         )
-        if candidate.get('answer_type') == 'fraction':
+        if candidate.get('answer_type') == 'algebraic_fraction':
             problem = candidate
             break
     assert problem is not None
-    correct = problem['correct_answer_raw']
-    assert problem.get('answer_type') == 'fraction'
+    raw = problem['correct_answer_raw']
 
     with app.test_client() as client:
         r = client.post(
             '/api/v1/problems/check',
             json={
-                'user_answer': correct,
-                'correct_answer_raw': correct,
-                'answer_type': 'fraction',
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'algebraic_fractions',
+                'difficulty': 'foundational',
+                'correct_answer_raw': raw,
+                'answer_type': 'algebraic_fraction',
+                'user_answer': raw,
             },
-            headers={'Accept': 'application/json'},
         )
-        assert r.status_code == 200, r.data
+        assert r.status_code == 200
         assert r.get_json()['correct'] is True
 
 
@@ -1253,21 +1333,80 @@ def test_af_check_api_number():
     problem = gcse_algebraic_fractions(
         'foundational', 'practice', variant_name='_af_f_factor_cancel'
     )
-    correct = problem['correct_answer_raw']
     assert problem.get('answer_type') == 'number'
+    raw = problem['correct_answer_raw']
 
     with app.test_client() as client:
         r = client.post(
             '/api/v1/problems/check',
             json={
-                'user_answer': correct,
-                'correct_answer_raw': correct,
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'algebraic_fractions',
+                'difficulty': 'foundational',
+                'correct_answer_raw': raw,
                 'answer_type': 'number',
+                'user_answer': raw,
             },
-            headers={'Accept': 'application/json'},
         )
-        assert r.status_code == 200, r.data
+        assert r.status_code == 200
         assert r.get_json()['correct'] is True
+
+
+def test_af_diff_denominator_check_api_accepts_equivalent():
+    problem = gcse_algebraic_fractions(
+        'intermediate', 'practice', variant_name='_af_i_diff_denominator_add'
+    )
+    assert problem.get('answer_type') == 'algebraic_fraction'
+    raw = problem['correct_answer_raw']
+    num, den = raw.split('|', 1)
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'algebraic_fractions',
+                'difficulty': 'intermediate',
+                'correct_answer_raw': raw,
+                'answer_type': 'algebraic_fraction',
+                'user_answer': f'{num}|{den}',
+            },
+        )
+        assert r.status_code == 200
+        assert r.get_json()['correct'] is True
+
+
+def test_af_stacked_fraction_partial_renders():
+    with app.test_request_context():
+        from flask import render_template
+
+        html = render_template(
+            'partials/free_response_inline.html',
+            problem={
+                'correct_answer_raw': '39|6x',
+                'answer_type': 'algebraic_fraction',
+                'answer_format_hint': 'Enter the numerator and denominator',
+            },
+            fr_level='gcse',
+            fr_subject='maths',
+            fr_topic='algebraic_fractions',
+            fr_difficulty='intermediate',
+        )
+        assert 'free-response-row--algebraic-fraction' in html
+        assert 'free-response-input-alg-frac-num' in html
+        assert 'free-response-input-alg-frac-den' in html
+        assert html.count('free-response-check-btn') == 1
+
+
+def test_check_general_algebraic_fraction_equivalence():
+    assert check_algebraic_fraction('39|6x', '13|2x')['correct'] is True
+    assert check_algebraic_fraction('39|6x', '39|6x')['correct'] is True
+    assert check_algebraic_fraction('3|4', '6|8')['correct'] is True
+    assert check_algebraic_fraction('39|6x', '39|3x')['correct'] is False
+    assert check_algebraic_fraction('x+2|x+5', 'x+2|x+5')['correct'] is True
+    assert check_algebraic_fraction('x+2|x+5', 'x+3|x+5')['correct'] is False
 
 
 NUMBER_NUMERIC_VARIANTS = (
@@ -2431,7 +2570,6 @@ EQ_QUADRATIC_VARIANTS = (
 )
 
 EQ_UNGRADED_VARIANTS = (
-    '_eq_diff_prove_identity',
 )
 
 EQ_MULTIPART_NUMBER_FIELDS_VARIANTS = (
@@ -2451,6 +2589,10 @@ EQ_ALGEBRAIC_REARRANGE_VARIANTS = (
     '_eq_inter_rearrange_two_step',
     '_eq_inter_rearrange_sqrt',
     '_eq_inter_rearrange_two_step_numeric_var',
+)
+
+EQ_SHOW_THAT_CHECKPOINT_VARIANTS = (
+    '_eq_diff_prove_identity',
 )
 
 EQ_COMPLETED_SQUARE_VARIANTS = (
@@ -2499,6 +2641,7 @@ def test_equations_quadratic_roots_variants_are_graded():
         problem = _eq_problem_from_output(out, 'difficult')
         assert problem.get('answer_type') == 'quadratic_roots', name
         assert problem.get('correct_answer_raw') is not None, name
+        assert len(problem.get('answer_labels') or []) >= 2, name
 
 
 def test_equations_ungraded_variants_remain_ungraded():
@@ -2576,6 +2719,22 @@ def test_equations_algebraic_rearrange_variants_are_graded():
         assert problem.get('correct_answer_raw'), name
 
 
+def test_equations_show_that_checkpoint_variants_are_graded():
+    import generators.gcse.equations_inequalities as eq_mod
+
+    for name in EQ_SHOW_THAT_CHECKPOINT_VARIANTS:
+        out = getattr(eq_mod, name)()
+        assert len(out) == 5, name
+        problem = _eq_problem_from_output(out, 'difficult')
+        assert problem.get('answer_type') == 'number_fields', name
+        assert problem.get('answer_field_types') == [
+            'algebraic', 'algebraic', 'algebraic',
+        ], name
+        parts = problem['correct_answer_raw'].split('\x1e')
+        assert len(parts) == 3, name
+        assert check_answer('algebraic', parts[2], '12x')['correct'] is True
+
+
 def test_equations_completed_square_variants_are_graded():
     import generators.gcse.equations_inequalities as eq_mod
 
@@ -2620,8 +2779,9 @@ def test_equations_multipart_number_fields_variants_are_graded():
             assert parts[0].startswith('eq:'), name
             assert parts[1].startswith('eq:'), name
         if name == '_eq_diff_phone_plans_multipart':
-            assert len(labels) == 2, name
-            assert '|' in parts[1], name
+            assert len(labels) == 4, name
+            assert parts[2].isdigit() or parts[2].replace('.', '', 1).isdigit(), name
+            assert '|' in parts[3], name
 
 
 def test_check_two_var_equation():
@@ -2683,6 +2843,26 @@ def test_check_algebraic_kinetic_formula():
     assert check_algebraic(raw_pi, 'r=√(A/π)')['correct'] is True
     assert check_algebraic(raw_pi, 'r=√(a/pi)')['correct'] is True
     assert check_algebraic(raw_pi, 'r=sqrt(a/pi)')['correct'] is True
+    assert check_algebraic(raw_pi, '√A/√π')['correct'] is True
+    assert check_algebraic(raw_pi, '√A/√pi')['correct'] is True
+    assert check_algebraic(raw_pi, '(√A)/(√π)')['correct'] is True
+    assert check_algebraic(raw_pi, '√(A)/√(π)')['correct'] is True
+    assert check_algebraic(raw_pi, '√A/√e')['correct'] is False
+
+
+def test_check_algebraic_power_and_product_flexibility():
+    from generators.shared.answer_checkers import check_algebraic
+
+    raw = 'u=(s-3*t^2/2)/(t)'
+    for user in (
+        '(s-0.5*3*t*t)/t',
+        '(s-1.5*t^2)/t',
+        '(s-3*t**2/2)/t',
+        'u=(s-0.5*3*t^2)/t',
+        '(s-3t^2/2)/t',
+    ):
+        assert check_algebraic(raw, user)['correct'] is True, user
+    assert check_algebraic(raw, '(s-3*t^2)/t')['correct'] is False
 
     raw_mass = 'v=√(2e/10)'
     assert check_algebraic(raw_mass, '√2E/√10')['correct'] is True
@@ -2953,10 +3133,13 @@ def test_equations_phone_plans_check_api():
     assert problem.get('answer_type') == 'number_fields'
     correct = problem['correct_answer_raw']
     parts = correct.split('\x1e')
-    assert len(parts) == 2
+    assert len(parts) == 4
+    assert problem.get('answer_field_types') == [
+        'algebraic', 'algebraic', 'number', 'linear_inequality',
+    ]
 
     with app.test_client() as client:
-        r = client.post(
+        r0 = client.post(
             '/api/v1/problems/check',
             json={
                 'level': 'gcse',
@@ -2964,14 +3147,29 @@ def test_equations_phone_plans_check_api():
                 'topic': 'equations_inequalities',
                 'difficulty': 'difficult',
                 'correct_answer_raw': parts[0],
-                'answer_type': 'number',
+                'answer_type': 'algebraic',
                 'user_answer': parts[0],
+            },
+        )
+        assert r0.status_code == 200
+        assert r0.get_json()['correct'] is True
+
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'equations_inequalities',
+                'difficulty': 'difficult',
+                'correct_answer_raw': parts[2],
+                'answer_type': 'number',
+                'user_answer': parts[2],
             },
         )
         assert r.status_code == 200
         assert r.get_json()['correct'] is True
 
-        ineq = parts[1]
+        ineq = parts[3]
         minutes = ineq.split('|')[-1]
         r2 = client.post(
             '/api/v1/problems/check',
@@ -3061,6 +3259,7 @@ VEC_VECTOR_VARIANTS = (
 
 VEC_COMBO_VARIANTS = (
     '_vectors_diff_geometric_ratio',
+    '_vectors_diff_trapezium_ratio',
 )
 
 VEC_PAIR_VARIANTS = (
@@ -3068,13 +3267,18 @@ VEC_PAIR_VARIANTS = (
 )
 
 VEC_UNGRADED_VARIANTS = (
-    '_vectors_found_column_meaning',
+)
+
+VEC_PLAN_B_SCAFFOLD_VARIANTS = (
     '_vectors_inter_collinear_points',
     '_vectors_diff_geometry_proof',
     '_vectors_diff_triangle_midpoint',
-    '_vectors_diff_trapezium_ratio',
-    '_vectors_diff_vector_inequality',
     '_vectors_diff_vector_proof_sim',
+)
+
+VEC_PLAN_C_STEP_BANK_VARIANTS = (
+    '_vectors_found_column_meaning',
+    '_vectors_diff_vector_inequality',
 )
 
 
@@ -3097,8 +3301,33 @@ def test_vectors_combo_variants_are_graded():
         assert len(out) == 5, name
         problem = _vec_problem_from_output(out, 'difficult')
         assert problem.get('answer_type') == 'vector_combo', name
-        assert problem.get('answer_labels') == ['b', 'c'], name
+        assert problem.get('answer_labels'), name
         assert problem.get('correct_answer_raw') is not None, name
+
+
+def test_vectors_trapezium_ratio_check_api():
+    problem = gcse_vectors(
+        'difficult', 'practice', variant_name='_vectors_diff_trapezium_ratio'
+    )
+    assert problem.get('answer_type') == 'vector_combo'
+    assert problem.get('answer_labels') == ['AB']
+    assert problem.get('correct_answer_raw') == '1/2'
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'vectors',
+                'difficulty': 'difficult',
+                'correct_answer_raw': '1/2',
+                'answer_type': 'vector_combo',
+                'user_answer': '1/2',
+            },
+        )
+        assert r.status_code == 200
+        assert r.get_json()['correct'] is True
 
 
 def test_check_vector_combo():
@@ -3184,6 +3413,31 @@ def test_vectors_ungraded_variants_remain_ungraded():
         assert problem.get('correct_answer_raw') is None, name
 
 
+def test_vectors_plan_b_scaffold_variants_are_graded():
+    import generators.gcse.maths as maths_mod
+
+    for name in VEC_PLAN_B_SCAFFOLD_VARIANTS:
+        out = getattr(maths_mod, name)()
+        assert len(out) == 5, name
+        problem = _vec_problem_from_output(out, 'difficult')
+        assert problem.get('answer_type') == 'number_fields', name
+        assert problem.get('correct_answer_raw'), name
+        assert problem.get('answer_field_types'), name
+        assert len(problem.get('answer_labels') or []) >= 2, name
+
+
+def test_vectors_plan_c_step_bank_variants_are_graded():
+    import generators.gcse.maths as maths_mod
+
+    for name in VEC_PLAN_C_STEP_BANK_VARIANTS:
+        out = getattr(maths_mod, name)()
+        assert len(out) == 5, name
+        problem = _vec_problem_from_output(out, 'foundational')
+        assert problem.get('answer_type') == 'proof_steps', name
+        assert problem.get('correct_answer_raw'), name
+        assert problem.get('answer_step_bank'), name
+
+
 def test_vectors_variant_queues_are_graded():
     for difficulty in ('foundational', 'intermediate', 'difficult'):
         variants = gcse_vectors_variants(difficulty, 'practice')
@@ -3202,6 +3456,140 @@ def test_vectors_variant_queues_are_graded():
             assert graded, (difficulty, variant.__name__)
 
 
+TRIG_NUMBER_VARIANTS = (
+    '_trig_found_sin_side',
+    '_trig_found_pythagoras',
+    '_trig_inter_elevation',
+    '_trig_diff_sine_rule_side',
+)
+
+TRIG_EXACT_VARIANTS = (
+    '_trig_found_exact_values',
+    '_trig_diff_exact_compound',
+)
+
+TRIG_KEYWORD_VARIANTS = (
+    '_trig_inter_converse_pyth',
+)
+
+TRIG_UNGRADED_VARIANTS = (
+)
+
+TRIG_PLAN_B_SCAFFOLD_VARIANTS = (
+    '_trig_inter_exact_expression',
+)
+
+
+def test_trig_number_variants_are_graded():
+    import generators.gcse.maths as maths_mod
+
+    for name in TRIG_NUMBER_VARIANTS:
+        out = getattr(maths_mod, name)()
+        assert len(out) == 5, name
+        problem = _trig_problem_from_output(out, 'foundational')
+        assert problem.get('answer_type') == 'number', name
+        assert problem.get('correct_answer_raw') is not None, name
+
+
+def test_trig_exact_variants_are_graded():
+    import generators.gcse.maths as maths_mod
+
+    for name in TRIG_EXACT_VARIANTS:
+        out = getattr(maths_mod, name)()
+        assert len(out) == 5, name
+        problem = _trig_problem_from_output(out, 'foundational')
+        assert problem.get('answer_type') in (
+            'number', 'fraction', 'surd', 'algebraic_fraction'
+        ), name
+        assert problem.get('correct_answer_raw') is not None, name
+
+
+def test_trig_keyword_variants_are_graded():
+    import generators.gcse.maths as maths_mod
+
+    for name in TRIG_KEYWORD_VARIANTS:
+        out = getattr(maths_mod, name)()
+        assert len(out) == 5, name
+        problem = _trig_problem_from_output(out, 'intermediate')
+        assert problem.get('answer_type') == 'keyword', name
+        assert problem.get('correct_answer_raw') in ('yes', 'no'), name
+
+
+def test_trig_ungraded_variants_remain_ungraded():
+    import generators.gcse.maths as maths_mod
+
+    for name in TRIG_UNGRADED_VARIANTS:
+        out = getattr(maths_mod, name)()
+        assert len(out) == 4, name
+        problem = _trig_problem_from_output(out, 'intermediate')
+        assert problem.get('correct_answer_raw') is None, name
+
+
+def test_trig_plan_b_scaffold_variants_are_graded():
+    import generators.gcse.maths as maths_mod
+
+    for name in TRIG_PLAN_B_SCAFFOLD_VARIANTS:
+        out = getattr(maths_mod, name)()
+        assert len(out) == 5, name
+        problem = _trig_problem_from_output(out, 'intermediate')
+        assert problem.get('answer_type') == 'number_fields', name
+        assert problem.get('correct_answer_raw'), name
+        assert problem.get('answer_field_types'), name
+
+
+def test_trig_variant_queues_are_graded():
+    for difficulty in ('foundational', 'intermediate', 'difficult'):
+        variants = gcse_trigonometry_variants(difficulty, 'practice')
+        assert variants, difficulty
+        for variant in variants:
+            problem = gcse_trigonometry(
+                difficulty, 'practice', variant_name=variant.__name__
+            )
+            if variant.__name__ in TRIG_UNGRADED_VARIANTS:
+                assert problem.get('correct_answer_raw') is None, variant.__name__
+                continue
+            graded = (
+                problem.get('correct_answer_raw')
+                or problem.get('correct_answer')
+            )
+            assert graded, (difficulty, variant.__name__)
+
+
+def test_trig_exact_fraction_check():
+    assert check_fraction('1/2', '1/2')['correct'] is True
+    assert check_fraction('1/2', '0.5')['correct'] is True
+
+
+def test_trig_exact_surd_fraction_check():
+    assert check_algebraic_fraction('1|2|2', '√2/2')['correct'] is True
+    assert check_algebraic_fraction('1|3|2', '√3/2')['correct'] is True
+    assert check_algebraic_fraction('1|3|3', '√3/3')['correct'] is True
+
+
+def test_trig_check_api():
+    problem = gcse_trigonometry(
+        'foundational', 'practice', variant_name='_trig_found_pythagoras'
+    )
+    assert problem.get('answer_type') == 'number'
+    correct = problem['correct_answer_raw']
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'trigonometry',
+                'difficulty': 'foundational',
+                'correct_answer_raw': correct,
+                'answer_type': 'number',
+                'user_answer': correct,
+            },
+        )
+        assert r.status_code == 200
+        assert r.get_json()['correct'] is True
+
+
 SIM_PAIR_VARIANTS = (
     '_sim_f_add_to_eliminate',
     '_sim_f_classic_pair',
@@ -3209,7 +3597,6 @@ SIM_PAIR_VARIANTS = (
 )
 
 SIM_UNGRADED_VARIANTS = (
-    '_sim_i_graph_interpret',
 )
 
 GSIM_GRADED_VARIANTS = (
@@ -3219,9 +3606,13 @@ GSIM_GRADED_VARIANTS = (
 )
 
 GSIM_UNGRADED_VARIANTS = (
+)
+
+GSIM_MCQ_PRACTICE_VARIANTS = (
     '_gsim_f_meaning_of_crossing',
     '_gsim_f_which_point_on_both',
     '_gsim_i_equations_from_graph',
+    '_gsim_i_no_solution_parallel',
 )
 
 
@@ -3280,6 +3671,18 @@ def test_graphical_simultaneous_variants_are_graded():
         assert problem.get('correct_answer_raw') is None, name
 
 
+def test_graphical_simultaneous_mcq_practice_variants():
+    import generators.gcse.graphical_simultaneous_equations as gsim_mod
+
+    for name in GSIM_MCQ_PRACTICE_VARIANTS:
+        out = getattr(gsim_mod, name)()
+        assert len(out) == 6, name
+        problem = _gsim_problem_from_output(out, 'foundational')
+        assert problem.get('options') and len(problem['options']) == 4, name
+        assert problem.get('correct_answer') in 'ABCD', name
+        assert problem.get('correct_answer_raw') is None, name
+
+
 def test_graphical_simultaneous_variant_queues_are_graded():
     for difficulty in ('foundational', 'intermediate', 'difficult'):
         variants = gcse_graphical_simultaneous_equations_variants(difficulty, 'practice')
@@ -3296,6 +3699,14 @@ def test_graphical_simultaneous_variant_queues_are_graded():
                 or problem.get('correct_answer')
             )
             assert graded, (difficulty, variant.__name__)
+
+
+def test_simultaneous_graph_interpret_is_mcq():
+    problem = gcse_simultaneous_equations(
+        'intermediate', 'practice', variant_name='_sim_i_graph_interpret'
+    )
+    assert problem.get('options') and len(problem['options']) == 4
+    assert problem.get('correct_answer') in 'ABCD'
 
 
 def test_simultaneous_check_api():
@@ -3323,7 +3734,6 @@ def test_simultaneous_check_api():
 
 
 CTS_UNGRADED_VARIANTS = (
-    '_cts_d_exam_show_that',
 )
 
 CTS_GRADED_VARIANTS = (
@@ -3333,9 +3743,13 @@ CTS_GRADED_VARIANTS = (
     '_cts_i_solve_integer_roots',
     '_cts_i_turning_point',
     '_cts_d_solve_surd',
+    '_cts_d_exam_show_that',
 )
 
 QSIM_UNGRADED_VARIANTS = (
+)
+
+QSIM_MCQ_PRACTICE_VARIANTS = (
     '_qsim_f_what_is_intersection',
     '_qsim_f_substitute_step',
     '_qsim_f_rearrange_only',
@@ -3357,8 +3771,16 @@ def test_completing_the_square_variants_are_graded():
         assert len(out) == 5, name
         problem = _cts_problem_from_output(out, 'foundational')
         assert problem.get('correct_answer_raw') is not None, name
-        if name in ('_cts_f_write_completed_form', '_cts_d_factor_a_out'):
+        if name in (
+            '_cts_f_write_completed_form',
+            '_cts_d_factor_a_out',
+        ):
             assert problem.get('answer_type') == 'completed_square', name
+        if name == '_cts_d_exam_show_that':
+            assert problem.get('answer_type') == 'number_fields', name
+            assert problem.get('answer_field_types') == [
+                'algebraic', 'algebraic',
+            ], name
 
     for name in CTS_UNGRADED_VARIANTS:
         out = getattr(cts_mod, name)()
@@ -3401,6 +3823,18 @@ def test_quadratic_simultaneous_variants_are_graded():
         assert problem.get('correct_answer_raw') is None, name
 
 
+def test_quadratic_simultaneous_mcq_practice_variants():
+    import generators.gcse.quadratic_simultaneous_equations as qsim_mod
+
+    for name in QSIM_MCQ_PRACTICE_VARIANTS:
+        out = getattr(qsim_mod, name)()
+        assert len(out) == 6, name
+        problem = _qsim_problem_from_output(out, 'foundational')
+        assert problem.get('options') and len(problem['options']) == 4, name
+        assert problem.get('correct_answer') in 'ABCD', name
+        assert problem.get('correct_answer_raw') is None, name
+
+
 def test_quadratic_simultaneous_variant_queues_are_graded():
     for difficulty in ('foundational', 'intermediate', 'difficult'):
         variants = gcse_quadratic_simultaneous_equations_variants(difficulty, 'practice')
@@ -3417,6 +3851,14 @@ def test_quadratic_simultaneous_variant_queues_are_graded():
                 or problem.get('correct_answer')
             )
             assert graded, (difficulty, variant.__name__)
+
+
+def test_quadratic_simultaneous_intersection_meaning_is_mcq():
+    problem = gcse_quadratic_simultaneous_equations(
+        'foundational', 'practice', variant_name='_qsim_f_what_is_intersection'
+    )
+    assert problem.get('options') and len(problem['options']) == 4
+    assert problem.get('correct_answer') in 'ABCD'
 
 
 def test_completing_the_square_check_api():
@@ -3508,6 +3950,9 @@ def test_quadratic_simultaneous_check_api():
 
 
 SUBJ_UNGRADED_VARIANTS = (
+)
+
+SUBJ_MCQ_PRACTICE_VARIANTS = (
     '_cts_f_first_step',
 )
 
@@ -3518,17 +3963,17 @@ SUBJ_GRADED_VARIANTS = (
 )
 
 FN_UNGRADED_VARIANTS = (
-    '_fn_i_inverse_linear',
-    '_fn_i_write_composite_rule',
-    '_fn_d_multipart_composite_inverse',
-    '_fn_d_multipart_quadratic_graph',
-    '_fn_d_multipart_domain_range',
 )
 
 FN_GRADED_VARIANTS = (
     '_fn_f_evaluate_linear',
     '_fn_f_meaning_notation',
     '_fn_d_solve_f_equals',
+    '_fn_i_write_composite_rule',
+    '_fn_i_inverse_linear',
+    '_fn_d_multipart_quadratic_graph',
+    '_fn_d_multipart_composite_inverse',
+    '_fn_d_multipart_domain_range',
 )
 
 
@@ -3546,6 +3991,18 @@ def test_changing_the_subject_variants_are_graded():
         out = getattr(subj_mod, name)()
         assert len(out) == 4, name
         problem = _subj_problem_from_output(out, 'intermediate')
+        assert problem.get('correct_answer_raw') is None, name
+
+
+def test_changing_the_subject_mcq_practice_variants():
+    import generators.gcse.changing_the_subject as subj_mod
+
+    for name in SUBJ_MCQ_PRACTICE_VARIANTS:
+        out = getattr(subj_mod, name)()
+        assert len(out) == 6, name
+        problem = _subj_problem_from_output(out, 'foundational')
+        assert problem.get('options') and len(problem['options']) == 4, name
+        assert problem.get('correct_answer') in 'ABCD', name
         assert problem.get('correct_answer_raw') is None, name
 
 
@@ -3601,6 +4058,15 @@ def test_functions_variant_queues_are_graded():
             assert graded, (difficulty, variant.__name__)
 
 
+def test_check_changing_the_subject_simple_fraction():
+    from generators.shared.answer_checkers import check_algebraic
+
+    raw = 'i=(p)/(v)'
+    for user in ('P/V', 'p/v', 'I = P/V', '(p)/(v)'):
+        assert check_algebraic(raw, user)['correct'] is True, user
+    assert check_algebraic(raw, 'V/P')['correct'] is False
+
+
 def test_changing_the_subject_check_api():
     problem = gcse_changing_the_subject(
         'foundational', 'practice', variant_name='_cts_f_two_step_y_mx_c'
@@ -3625,6 +4091,229 @@ def test_changing_the_subject_check_api():
         assert r.get_json()['correct'] is True
 
 
+def test_functions_inverse_linear_check_api():
+    problem = gcse_functions(
+        'intermediate', 'practice', variant_name='_fn_i_inverse_linear'
+    )
+    assert problem.get('answer_type') == 'algebraic'
+    assert problem.get('answer_wrong_hint')
+    raw = problem['correct_answer_raw']
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'functions',
+                'difficulty': 'intermediate',
+                'correct_answer_raw': raw,
+                'answer_type': 'algebraic',
+                'user_answer': raw,
+            },
+        )
+        assert r.status_code == 200
+        assert r.get_json()['correct'] is True
+
+
+def test_functions_composite_rule_check_api():
+    problem = gcse_functions(
+        'intermediate', 'practice', variant_name='_fn_i_write_composite_rule'
+    )
+    assert problem.get('answer_type') == 'algebraic'
+    raw = problem['correct_answer_raw']
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'functions',
+                'difficulty': 'intermediate',
+                'correct_answer_raw': raw,
+                'answer_type': 'algebraic',
+                'user_answer': raw.replace('+', ' + '),
+            },
+        )
+        assert r.status_code == 200
+        assert r.get_json()['correct'] is True
+
+
+def test_functions_multipart_composite_inverse_check_api():
+    problem = gcse_functions(
+        'difficult', 'practice', variant_name='_fn_d_multipart_composite_inverse'
+    )
+    assert problem.get('answer_type') == 'number_fields'
+    field_types = problem.get('answer_field_types') or []
+    assert field_types == ['algebraic', 'number', 'algebraic']
+    parts = problem['correct_answer_raw'].split('\x1e')
+    assert len(parts) == 3
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'functions',
+                'difficulty': 'difficult',
+                'correct_answer_raw': parts[0],
+                'answer_type': 'algebraic',
+                'user_answer': parts[0].replace('+', ' + '),
+            },
+        )
+        assert r.status_code == 200
+        assert r.get_json()['correct'] is True
+
+        r2 = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'functions',
+                'difficulty': 'difficult',
+                'correct_answer_raw': parts[1],
+                'answer_type': 'number',
+                'user_answer': parts[1],
+            },
+        )
+        assert r2.status_code == 200
+        assert r2.get_json()['correct'] is True
+
+        r3 = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'functions',
+                'difficulty': 'difficult',
+                'correct_answer_raw': parts[2],
+                'answer_type': 'algebraic',
+                'user_answer': parts[2],
+            },
+        )
+        assert r3.status_code == 200
+        assert r3.get_json()['correct'] is True
+
+
+def test_functions_multipart_quadratic_graph_check_api():
+    problem = gcse_functions(
+        'difficult', 'practice', variant_name='_fn_d_multipart_quadratic_graph'
+    )
+    assert problem.get('answer_type') == 'number_fields'
+    field_types = problem.get('answer_field_types') or []
+    assert field_types == ['vector', 'number', 'linear']
+    parts = problem['correct_answer_raw'].split('\x1e')
+    assert len(parts) == 3
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'functions',
+                'difficulty': 'difficult',
+                'correct_answer_raw': parts[0],
+                'answer_type': 'vector',
+                'user_answer': parts[0].replace('|', ', '),
+            },
+        )
+        assert r.status_code == 200
+        assert r.get_json()['correct'] is True
+
+        r2 = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'functions',
+                'difficulty': 'difficult',
+                'correct_answer_raw': parts[1],
+                'answer_type': 'number',
+                'user_answer': parts[1],
+            },
+        )
+        assert r2.status_code == 200
+        assert r2.get_json()['correct'] is True
+
+        r3 = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'functions',
+                'difficulty': 'difficult',
+                'correct_answer_raw': parts[2],
+                'answer_type': 'linear',
+                'user_answer': f'x = {parts[2]}',
+            },
+        )
+        assert r3.status_code == 200
+        assert r3.get_json()['correct'] is True
+
+
+def test_functions_multipart_domain_range_check_api():
+    problem = gcse_functions(
+        'difficult', 'practice', variant_name='_fn_d_multipart_domain_range'
+    )
+    assert problem.get('answer_type') == 'number_fields'
+    field_types = problem.get('answer_field_types') or []
+    assert field_types == ['number', 'mcq', 'fraction']
+    field_options = problem.get('answer_field_options') or []
+    assert len(field_options) == 3
+    assert field_options[1] and len(field_options[1]) == 3
+    parts = problem['correct_answer_raw'].split('\x1e')
+    assert len(parts) == 3
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'functions',
+                'difficulty': 'difficult',
+                'correct_answer_raw': parts[0],
+                'answer_type': 'number',
+                'user_answer': parts[0],
+            },
+        )
+        assert r.status_code == 200
+        assert r.get_json()['correct'] is True
+
+        r2 = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'functions',
+                'difficulty': 'difficult',
+                'correct_answer_raw': parts[1],
+                'answer_type': 'mcq',
+                'user_answer': parts[1],
+            },
+        )
+        assert r2.status_code == 200
+        assert r2.get_json()['correct'] is True
+
+        r3 = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'functions',
+                'difficulty': 'difficult',
+                'correct_answer_raw': parts[2],
+                'answer_type': 'fraction',
+                'user_answer': parts[2],
+            },
+        )
+        assert r3.status_code == 200
+        assert r3.get_json()['correct'] is True
+
+
 def test_functions_check_api():
     problem = gcse_functions(
         'foundational', 'practice', variant_name='_fn_f_evaluate_linear'
@@ -3642,6 +4331,241 @@ def test_functions_check_api():
                 'difficulty': 'foundational',
                 'correct_answer_raw': raw,
                 'answer_type': 'number',
+                'user_answer': raw,
+            },
+        )
+        assert r.status_code == 200
+        assert r.get_json()['correct'] is True
+
+
+ALGEBRA_LINEAR_VARIANTS = (
+    'algebra_practice_linear_1',
+    'algebra_practice_linear_2',
+    'algebra_practice_linear_3',
+    'algebra_practice_linear_both_sides',
+    'algebra_practice_brackets_both_sides',
+    'algebra_practice_consecutive_integers',
+)
+
+ALGEBRA_QUADRATIC_ROOTS_VARIANTS = (
+    'algebra_practice_factorise_1',
+    'algebra_practice_factorise_2',
+    'algebra_practice_factorise_3',
+    'algebra_practice_quadratic_1',
+)
+
+ALGEBRA_NUMBER_VARIANTS = (
+    'algebra_practice_substitution',
+    'algebra_practice_word_linear',
+)
+
+ALGEBRA_ALGEBRAIC_VARIANTS = (
+    'algebra_practice_expand_binomial',
+    'algebra_practice_expand_mixed',
+    'algebra_practice_factorise_hcf',
+    'algebra_practice_change_subject',
+    'algebra_practice_quadratic_3',
+)
+
+ALGEBRA_NUMBER_PAIR_VARIANTS = (
+    'algebra_practice_simultaneous',
+)
+
+
+def test_algebra_linear_variants_are_graded():
+    import generators.gcse.maths as m
+
+    for name in ALGEBRA_LINEAR_VARIANTS:
+        out = getattr(m, name)()
+        assert len(out) == 5, name
+        problem = _algebra_problem_from_output(out, 'foundational')
+        assert problem.get('answer_type') == 'linear', name
+        assert problem.get('correct_answer_raw') is not None, name
+
+
+def test_algebra_quadratic_roots_variants_are_graded():
+    import generators.gcse.maths as m
+
+    for name in ALGEBRA_QUADRATIC_ROOTS_VARIANTS:
+        out = getattr(m, name)()
+        assert len(out) == 5, name
+        problem = _algebra_problem_from_output(out, 'intermediate')
+        assert problem.get('answer_type') == 'quadratic_roots', name
+        assert problem.get('correct_answer_raw') is not None, name
+        assert len(problem.get('answer_labels') or []) >= 2, name
+
+
+def test_algebra_number_and_pair_variants_are_graded():
+    import generators.gcse.maths as m
+
+    for name in ALGEBRA_NUMBER_VARIANTS:
+        out = getattr(m, name)()
+        assert len(out) == 5, name
+        problem = _algebra_problem_from_output(out, 'intermediate')
+        assert problem.get('answer_type') == 'number', name
+        assert problem.get('correct_answer_raw') is not None, name
+
+    for name in ALGEBRA_NUMBER_PAIR_VARIANTS:
+        out = getattr(m, name)()
+        assert len(out) == 5, name
+        problem = _algebra_problem_from_output(out, 'difficult')
+        assert problem.get('answer_type') == 'number_pair', name
+        assert problem.get('correct_answer_raw') is not None, name
+
+
+def test_algebra_algebraic_variants_are_graded():
+    import generators.gcse.maths as m
+
+    for name in ALGEBRA_ALGEBRAIC_VARIANTS:
+        out = getattr(m, name)()
+        assert len(out) == 5, name
+        problem = _algebra_problem_from_output(out, 'intermediate')
+        assert problem.get('answer_type') == 'algebraic', name
+        assert problem.get('correct_answer_raw') is not None, name
+
+
+def test_algebra_variant_queues_are_graded():
+    for difficulty in ('foundational', 'intermediate', 'difficult'):
+        variants = gcse_maths_algebra_variants(difficulty, 'practice')
+        assert variants, difficulty
+        for variant in variants:
+            problem = gcse_maths_algebra(
+                difficulty, 'practice', variant_name=variant.__name__
+            )
+            assert problem.get('correct_answer_raw') is not None, (
+                difficulty,
+                variant.__name__,
+            )
+
+
+def test_algebra_fallback_random_is_graded():
+    for difficulty in ('foundational', 'intermediate', 'difficult'):
+        problem = gcse_maths_algebra(difficulty, 'practice')
+        assert problem.get('correct_answer_raw') is not None, difficulty
+        assert problem.get('answer_type') in (
+            'linear',
+            'quadratic_roots',
+            'number',
+            'number_pair',
+            'algebraic',
+        ), (difficulty, problem.get('answer_type'))
+
+
+def test_algebra_linear_check_api():
+    problem = gcse_maths_algebra(
+        'foundational', 'practice', variant_name='algebra_practice_linear_1'
+    )
+    assert problem.get('answer_type') == 'linear'
+    raw = problem['correct_answer_raw']
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'algebra',
+                'difficulty': 'foundational',
+                'correct_answer_raw': raw,
+                'answer_type': 'linear',
+                'user_answer': raw,
+            },
+        )
+        assert r.status_code == 200
+        assert r.get_json()['correct'] is True
+
+
+def test_algebra_quadratic_roots_check_api():
+    problem = gcse_maths_algebra(
+        'intermediate', 'practice', variant_name='algebra_practice_factorise_1'
+    )
+    assert problem.get('answer_type') == 'quadratic_roots'
+    raw = problem['correct_answer_raw']
+    roots = [part.strip() for part in raw.split(',')]
+    reversed_raw = ','.join(reversed(roots))
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'algebra',
+                'difficulty': 'intermediate',
+                'correct_answer_raw': raw,
+                'answer_type': 'quadratic_roots',
+                'user_answer': reversed_raw,
+            },
+        )
+        assert r.status_code == 200
+        assert r.get_json()['correct'] is True
+
+
+def test_algebra_simultaneous_check_api():
+    problem = gcse_maths_algebra(
+        'difficult', 'practice', variant_name='algebra_practice_simultaneous'
+    )
+    assert problem.get('answer_type') == 'number_pair'
+    raw = problem['correct_answer_raw']
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'algebra',
+                'difficulty': 'difficult',
+                'correct_answer_raw': raw,
+                'answer_type': 'number_pair',
+                'user_answer': raw,
+            },
+        )
+        assert r.status_code == 200
+        assert r.get_json()['correct'] is True
+
+
+def test_algebra_expand_check_api():
+    problem = gcse_maths_algebra(
+        'intermediate', 'practice', variant_name='algebra_practice_expand_binomial'
+    )
+    assert problem.get('answer_type') == 'algebraic'
+    raw = problem['correct_answer_raw']
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'algebra',
+                'difficulty': 'intermediate',
+                'correct_answer_raw': raw,
+                'answer_type': 'algebraic',
+                'user_answer': raw,
+            },
+        )
+        assert r.status_code == 200
+        assert r.get_json()['correct'] is True
+
+
+def test_algebra_change_subject_check_api():
+    problem = gcse_maths_algebra(
+        'intermediate', 'practice', variant_name='algebra_practice_change_subject'
+    )
+    assert problem.get('answer_type') == 'algebraic'
+    raw = problem['correct_answer_raw']
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'algebra',
+                'difficulty': 'intermediate',
+                'correct_answer_raw': raw,
+                'answer_type': 'algebraic',
                 'user_answer': raw,
             },
         )
@@ -3751,14 +4675,18 @@ def test_geometry_multipart_variants_use_number_fields():
         assert len(problem['correct_answer_raw'].split('|')) == len(labels), name
 
 
-def test_geometry_proof_variants_remain_ungraded():
+def test_geometry_proof_variants_use_plan_b_scaffolds():
     import generators.gcse.geometry_angles as geom_mod
 
     for name in GEOMETRY_PROOF_VARIANTS:
         out = getattr(geom_mod, name)()
-        assert len(out) == 4, name
+        assert len(out) == 5, name
         problem = _geom_problem_from_output(out, 'difficult')
-        assert problem.get('correct_answer_raw') is None, name
+        assert problem.get('answer_type') == 'number_fields', name
+        labels = problem.get('answer_labels') or []
+        assert len(labels) >= 2, name
+        assert problem.get('correct_answer_raw'), name
+        assert problem.get('answer_field_types'), name
 
 
 def test_geometry_variant_queues_are_graded():
@@ -3769,9 +4697,6 @@ def test_geometry_variant_queues_are_graded():
             problem = gcse_geometry_angles(
                 difficulty, 'practice', variant_name=variant.__name__
             )
-            if variant.__name__ in GEOMETRY_PROOF_VARIANTS:
-                assert problem.get('correct_answer_raw') is None, variant.__name__
-                continue
             graded = (
                 problem.get('correct_answer_raw')
                 or problem.get('correct_answer')
@@ -4316,6 +5241,14 @@ COMPOUND_NUMBER_VARIANTS = (
     '_cm_d4_water_pressure',
 )
 
+COMPOUND_ALGEBRAIC_VARIANTS = (
+)
+
+COMPOUND_SCAFFOLD_VARIANTS = (
+    '_cm_d5_algebraic_sdt',
+    '_cm_d7_harmonic_mean_prove',
+)
+
 COMPOUND_KEYWORD_VARIANTS = (
     '_cm_f15_density_compare',
     '_cm_i13_floating_sinking',
@@ -4334,8 +5267,6 @@ COMPOUND_MULTIPART_VARIANTS = (
 )
 
 COMPOUND_UNGRADED_VARIANTS = (
-    '_cm_d5_algebraic_sdt',
-    '_cm_d7_harmonic_mean_prove',
 )
 
 
@@ -4348,6 +5279,37 @@ def test_compound_measures_number_variants_are_graded():
         problem = _cm_problem_from_output(out, 'foundational')
         assert problem.get('correct_answer_raw'), name
         assert problem.get('answer_type') == 'number', name
+
+
+def test_compound_measures_algebraic_variants_are_graded():
+    import generators.gcse.maths_compound_measures as cm_mod
+
+    for name in COMPOUND_ALGEBRAIC_VARIANTS:
+        out = getattr(cm_mod, name)()
+        assert len(out) == 5, name
+        problem = _cm_problem_from_output(out, 'difficult')
+        assert problem.get('answer_type') == 'algebraic', name
+        assert problem.get('correct_answer_raw'), name
+        assert check_answer(
+            'algebraic',
+            problem['correct_answer_raw'],
+            problem['correct_answer_raw'],
+        )['correct'] is True, name
+
+
+def test_compound_measures_scaffold_variants_are_graded():
+    import generators.gcse.maths_compound_measures as cm_mod
+
+    for name in COMPOUND_SCAFFOLD_VARIANTS:
+        out = getattr(cm_mod, name)()
+        assert len(out) == 5, name
+        problem = _cm_problem_from_output(out, 'difficult')
+        assert problem.get('answer_type') == 'number_fields', name
+        labels = problem.get('answer_labels') or []
+        assert len(labels) >= 2, name
+        assert '\x1e' in problem['correct_answer_raw'], name
+        parts = problem['correct_answer_raw'].split('\x1e')
+        assert len(parts) == len(labels), name
 
 
 def test_compound_measures_keyword_variants_are_graded():
@@ -4465,10 +5427,10 @@ BEARINGS_MULTIPART_VARIANTS = (
     '_brg_inter_single_leg_multipart',
     '_brg_inter_two_ships_port_multipart',
     '_brg_diff_return_voyage_multipart',
+    '_brg_diff_prove_bearing',
 )
 
 BEARINGS_UNGRADED_VARIANTS = (
-    '_brg_diff_prove_bearing',
 )
 
 
@@ -4610,6 +5572,9 @@ SEQUENCES_UNGRADED_VARIANTS = (
     '_seq_inter_nth_term_negative_d',
     '_seq_inter_quadratic_identify',
     '_seq_diff_quadratic_nth_term',
+)
+
+SEQUENCES_PLAN_C_STEP_BANK_VARIANTS = (
     '_seq_diff_recurring_decimal_proof',
     '_seq_diff_show_divisible',
     '_seq_diff_arithmetic_proof',
@@ -4665,6 +5630,18 @@ def test_sequences_ungraded_variants_remain_ungraded():
         assert len(out) == 4, name
         problem = _seq_problem_from_output(out, 'difficult')
         assert problem.get('correct_answer_raw') is None, name
+
+
+def test_sequences_plan_c_step_bank_variants_are_graded():
+    import generators.gcse.sequences as seq_mod
+
+    for name in SEQUENCES_PLAN_C_STEP_BANK_VARIANTS:
+        out = getattr(seq_mod, name)()
+        assert len(out) == 5, name
+        problem = _seq_problem_from_output(out, 'difficult')
+        assert problem.get('answer_type') == 'proof_steps', name
+        assert problem.get('correct_answer_raw'), name
+        assert problem.get('answer_step_bank'), name
 
 
 def test_sequences_variant_queues_are_graded():
@@ -4783,6 +5760,40 @@ def test_free_response_partial_renders_one_row():
         assert 'free-response-row--standard-form' not in pair_html
         assert 'free-response-row--number"' not in pair_html
         assert pair_html.count('free-response-check-btn') == 1
+
+        roots_html = render_template(
+            'partials/free_response_inline.html',
+            problem={
+                'correct_answer_raw': '-0.67,-2',
+                'answer_type': 'quadratic_roots',
+                'answer_labels': ['Root 1', 'Root 2'],
+                'answer_format_hint': 'Enter each root in its own box',
+            },
+            fr_level='gcse',
+            fr_subject='maths',
+            fr_topic='algebra',
+            fr_difficulty='difficult',
+        )
+        assert 'free-response-row--quadratic-roots-pair' in roots_html
+        assert roots_html.count('free-response-input-quadratic-root') == 2
+        assert 'free-response-input-quadratic-roots"' not in roots_html
+        assert roots_html.count('free-response-check-btn') == 1
+
+        four_roots_html = render_template(
+            'partials/free_response_inline.html',
+            problem={
+                'correct_answer_raw': '-2,-1,1,2',
+                'answer_type': 'quadratic_roots',
+                'answer_labels': ['Root 1', 'Root 2', 'Root 3', 'Root 4'],
+            },
+            fr_level='gcse',
+            fr_subject='maths',
+            fr_topic='equations_inequalities',
+            fr_difficulty='difficult',
+        )
+        assert 'free-response-row--quadratic-roots-multi' in four_roots_html
+        assert four_roots_html.count('free-response-input-quadratic-root') == 4
+        assert four_roots_html.count('free-response-check-btn') == 1
 
         power_html = render_template(
             'partials/free_response_inline.html',
@@ -5371,19 +6382,26 @@ def main():
     test_surds_rationalise_binomial_diff_intermediate_check_api()
     test_surds_rationalise_binomial_diff_check_api()
     test_check_algebraic_identity()
+    test_check_algebraic_vector_bc_notation()
+    test_check_proof_steps_order_and_set()
     test_check_algebraic_surd_binomial()
     test_surds_algebraic_check_api()
     test_surds_compare_uses_choice_buttons()
     test_surds_generator_payload()
     test_surds_variant_queues_are_graded()
     test_surds_check_api()
-    test_af_fraction_variants_use_fraction_checker()
+    test_af_fraction_variants_use_stacked_fraction_ui()
     test_af_number_variants_are_graded()
+    test_af_linear_variants_are_graded()
+    test_af_algebraic_variants_are_graded()
     test_af_ungraded_variants_remain_four_tuple()
     test_af_generator_payload()
     test_af_variant_queues_are_graded()
     test_af_check_api_fraction()
     test_af_check_api_number()
+    test_af_diff_denominator_check_api_accepts_equivalent()
+    test_af_stacked_fraction_partial_renders()
+    test_check_general_algebraic_fraction_equivalence()
     test_number_numeric_variants_return_five_tuple()
     test_number_standard_form_variants_graded()
     test_number_power_variants_graded()
@@ -5437,6 +6455,7 @@ def main():
     test_equations_number_line_variants_are_graded()
     test_equations_formula_fraction_variants_are_graded()
     test_equations_algebraic_rearrange_variants_are_graded()
+    test_equations_show_that_checkpoint_variants_are_graded()
     test_equations_completed_square_variants_are_graded()
     test_equations_coordinate_pairs_variants_are_graded()
     test_equations_multipart_number_fields_variants_are_graded()
@@ -5447,6 +6466,7 @@ def main():
     test_check_number_line()
     test_check_formula_fraction()
     test_check_algebraic_kinetic_formula()
+    test_check_algebraic_power_and_product_flexibility()
     test_check_coordinate_pairs()
     test_equations_simple_inequality_check_api()
     test_equations_number_line_check_api()
@@ -5464,28 +6484,51 @@ def main():
     test_check_vector_combo()
     test_check_vector_pair()
     test_vectors_geometric_ratio_check_api()
+    test_vectors_trapezium_ratio_check_api()
     test_vectors_simultaneous_check_api()
     test_vectors_ungraded_variants_remain_ungraded()
+    test_vectors_plan_b_scaffold_variants_are_graded()
+    test_vectors_plan_c_step_bank_variants_are_graded()
     test_vectors_variant_queues_are_graded()
     test_vectors_check_api()
+    test_trig_number_variants_are_graded()
+    test_trig_exact_variants_are_graded()
+    test_trig_keyword_variants_are_graded()
+    test_trig_ungraded_variants_remain_ungraded()
+    test_trig_plan_b_scaffold_variants_are_graded()
+    test_trig_variant_queues_are_graded()
+    test_trig_exact_fraction_check()
+    test_trig_exact_surd_fraction_check()
+    test_trig_check_api()
     test_simultaneous_pair_variants_are_graded()
     test_simultaneous_ungraded_variants_remain_ungraded()
     test_simultaneous_variant_queues_are_graded()
     test_graphical_simultaneous_variants_are_graded()
+    test_graphical_simultaneous_mcq_practice_variants()
     test_graphical_simultaneous_variant_queues_are_graded()
+    test_simultaneous_graph_interpret_is_mcq()
     test_simultaneous_check_api()
     test_completing_the_square_variants_are_graded()
     test_completing_the_square_variant_queues_are_graded()
     test_quadratic_simultaneous_variants_are_graded()
+    test_quadratic_simultaneous_mcq_practice_variants()
     test_quadratic_simultaneous_variant_queues_are_graded()
+    test_quadratic_simultaneous_intersection_meaning_is_mcq()
     test_completing_the_square_check_api()
     test_check_completed_square()
     test_completing_the_square_completed_square_api()
     test_quadratic_simultaneous_check_api()
     test_changing_the_subject_variants_are_graded()
+    test_changing_the_subject_mcq_practice_variants()
     test_changing_the_subject_variant_queues_are_graded()
+    test_check_changing_the_subject_simple_fraction()
     test_functions_variants_are_graded()
     test_functions_variant_queues_are_graded()
+    test_functions_composite_rule_check_api()
+    test_functions_inverse_linear_check_api()
+    test_functions_multipart_composite_inverse_check_api()
+    test_functions_multipart_quadratic_graph_check_api()
+    test_functions_multipart_domain_range_check_api()
     test_changing_the_subject_check_api()
     test_functions_check_api()
     test_standard_form_check_api()
@@ -5497,7 +6540,7 @@ def main():
     test_check_api_number_fields_partial_with_session()
     test_geometry_core_variants_are_graded()
     test_geometry_multipart_variants_use_number_fields()
-    test_geometry_proof_variants_remain_ungraded()
+    test_geometry_proof_variants_use_plan_b_scaffolds()
     test_geometry_variant_queues_are_graded()
     test_geometry_check_api_accepts_degree_symbol()
     test_mensuration_core_variants_are_graded()
@@ -5518,6 +6561,8 @@ def main():
     test_pythagoras_variant_queues_are_graded()
     test_pythagoras_check_api()
     test_compound_measures_number_variants_are_graded()
+    test_compound_measures_algebraic_variants_are_graded()
+    test_compound_measures_scaffold_variants_are_graded()
     test_compound_measures_keyword_variants_are_graded()
     test_compound_measures_multipart_variants_use_number_fields()
     test_compound_measures_ungraded_variants_remain_ungraded()
@@ -5537,6 +6582,7 @@ def main():
     test_sequences_multipart_variants_use_number_fields()
     test_sequences_fraction_variants_are_graded()
     test_sequences_ungraded_variants_remain_ungraded()
+    test_sequences_plan_c_step_bank_variants_are_graded()
     test_sequences_variant_queues_are_graded()
     test_sequences_check_api()
     test_free_response_partial_renders_one_row()

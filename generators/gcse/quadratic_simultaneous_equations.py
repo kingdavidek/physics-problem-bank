@@ -4,10 +4,10 @@ GCSE Maths – Quadratic Simultaneous Equations
 
 Typical pair: y = x² (parabola) and y = ax + b (straight line).
 Graded practice variants return (question, solution, hint, marks, raw).
-Conceptual / embedded-MCQ variants stay as 4-tuples.
+Conceptual practice variants return MCQ 6-tuples (options + correct letter).
 """
 import random
-from generators.shared.utils import make_problem
+from generators.shared.utils import make_problem, quadratic_roots_format_hint, quadratic_roots_ui_labels
 from generators.shared.variant_utils import (
     select_tier_variants,
     mcq_variants_from_pool,
@@ -22,6 +22,40 @@ def _fmt_b(b):
     if b < 0:
         return f"- {abs(b)}"
     return ""
+
+
+def _fmt_ax(a):
+    """Format a coefficient times x (e.g. x, -x, 3x, -10x)."""
+    if a == 1:
+        return "x"
+    if a == -1:
+        return "-x"
+    return f"{a}x"
+
+
+def _fmt_signed_x(coeff):
+    """Polynomial x-term with leading sign (e.g. '+ 3x', '- x')."""
+    if coeff == 0:
+        return ""
+    if coeff == 1:
+        return "+ x"
+    if coeff == -1:
+        return "- x"
+    if coeff > 0:
+        return f"+ {coeff}x"
+    return f"- {abs(coeff)}x"
+
+
+def _fmt_rearranged_quad(a, b):
+    """Format x² = ax + b as a tidy =0 quadratic (no double minuses)."""
+    parts = ["x^2"]
+    x_part = _fmt_signed_x(-a)
+    c_part = _fmt_b(-b)
+    if x_part:
+        parts.append(x_part)
+    if c_part:
+        parts.append(c_part)
+    return " ".join(parts) + " = 0"
 
 
 def _fmt_linear(a, b):
@@ -82,7 +116,13 @@ def _qsim_solution_fields(r1, y1, r2, y2):
 def _qsim_problem_from_output(out, difficulty):
     q, s, hint, marks = out[:4]
     extra = {}
-    if len(out) >= 5:
+    if len(out) >= 6 and isinstance(out[4], (list, tuple)):
+        extra = {
+            'options': list(out[4]),
+            'correct_answer': out[5],
+            'choice_no_shuffle': True,
+        }
+    elif len(out) >= 5:
         raw = out[4]
         if isinstance(raw, dict):
             raw_type = raw.get('type')
@@ -91,7 +131,8 @@ def _qsim_problem_from_output(out, difficulty):
                 extra = {
                     'correct_answer_raw': ','.join(str(r) for r in roots),
                     'answer_type': 'quadratic_roots',
-                    'answer_format_hint': 'Enter roots separated by commas (e.g. 3, -2)',
+                    'answer_labels': quadratic_roots_ui_labels(len(roots)),
+                    'answer_format_hint': quadratic_roots_format_hint(len(roots)),
                 }
             elif raw_type == 'number_fields':
                 values = raw.get('values') or ()
@@ -175,15 +216,27 @@ def _roots_with_negative():
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _qsim_f_what_is_intersection():
+    correct = "A pair (x, y) that satisfies both equations at the same time"
+    distractors = [
+        "The midpoint between the parabola and the line",
+        "The gradient where the line meets the parabola",
+        "The average of the two y-values at the intersections",
+    ]
+    texts = [correct] + distractors
+    random.shuffle(texts)
+    letters = "ABCD"
+    correct_letter = letters[texts.index(correct)]
+    opts = [f"{letters[i]}  {texts[i]}" for i in range(4)]
     q = (
         r"A parabola \(y = x^2\) and a straight line meet at two points on a graph. "
         r"What does each intersection point represent?"
     )
     s = (
         r"Each point is a <strong>pair (x, y)</strong> that satisfies <strong>both</strong> "
-        r"equations at the same time — a solution to the simultaneous equations."
+        r"equations at the same time — a solution to the simultaneous equations.<br>"
+        rf"Answer: <strong>{correct_letter}</strong>"
     )
-    return q, s, "Intersection = simultaneous solution.", 1
+    return q, s, "Intersection = simultaneous solution.", 1, opts, correct_letter
 
 
 _qsim_f_what_is_intersection._fixed_stem = True
@@ -194,15 +247,26 @@ def _qsim_f_substitute_step():
     c = random.randint(1, 12)
     line = rf"\(y = x + {c}\)" if m == 1 else rf"\(y = {m}x + {c}\)"
     x_term = "x" if m == 1 else f"{m}x"
+    correct = rf"\(x^2 - {x_term} - {c} = 0\)"
+    wrong = [
+        rf"\(x^2 + {x_term} - {c} = 0\)",
+        rf"\(x^2 - {x_term} + {c} = 0\)",
+        rf"\(2x^2 - {x_term} - {c} = 0\)",
+    ]
+    forms = wrong + [correct]
+    random.shuffle(forms)
+    letters = "ABCD"
+    correct_letter = letters[forms.index(correct)]
+    opts = [f"{letters[i]}  {forms[i]}" for i in range(4)]
     q = (
         rf"Solve:<br>\(y = x^2\)<br>{line}<br><br>"
         rf"After substituting the linear equation into the parabola, which equation in <strong>x</strong> do you get?"
     )
     s = (
         rf"Replace \(y\): \(x^2 = {x_term} + {c}\) → rearrange to "
-        rf"<strong>\(x^2 - {x_term} - {c} = 0\)</strong>."
+        rf"<strong>{correct}</strong>. Answer: <strong>{correct_letter}</strong>"
     )
-    return q, s, "Set x² equal to the expression for y from the line.", 2
+    return q, s, "Set x² equal to the expression for y from the line.", 2, opts, correct_letter
 
 
 def _qsim_f_simple_integer():
@@ -226,19 +290,36 @@ def _qsim_f_find_y_given_x():
         rf"\(y = x^2\) and {_fmt_linear(a, b)} have a solution with \(x = {x_val}\). "
         rf"What is the corresponding <strong>\(y\)</strong>?"
     )
-    s = rf"Substitute \(x = {x_val}\): \(y = {x_val}^2 = <strong>{y_val}</strong> (matches the line too)."
+    s = (
+        rf"Substitute \(x = {x_val}\): "
+        rf"<strong>\(y = {x_val}^2 = {y_val}\)</strong> (matches the line too)."
+    )
     return q, s, "Both equations give the same y when x is a true solution.", 2, _qsim_linear_answer(y_val, 'y')
 
 
 def _qsim_f_rearrange_only():
     m = random.randint(2, 9)
     c = random.randint(1, 15)
+    correct = rf"\(x^2 - {m}x - {c} = 0\)"
+    wrong = [
+        rf"\(x^2 + {m}x - {c} = 0\)",
+        rf"\(x^2 - {m}x + {c} = 0\)",
+        rf"\(2x^2 - {m}x - {c} = 0\)",
+    ]
+    forms = wrong + [correct]
+    random.shuffle(forms)
+    letters = "ABCD"
+    correct_letter = letters[forms.index(correct)]
+    opts = [f"{letters[i]}  {forms[i]}" for i in range(4)]
     q = (
         rf"Solve:<br>\(y = x^2\)<br>\(y = {m}x + {c}\)<br><br>"
-        rf"Write the quadratic equation in <strong>x</strong> after substitution (equal to 0)."
+        rf"Which is the quadratic equation in <strong>x</strong> after substitution (equal to 0)?"
     )
-    s = rf"\(x^2 = {m}x + {c}\) → <strong>\(x^2 - {m}x - {c} = 0\)</strong>."
-    return q, s, "Move all terms to one side before factorising.", 2
+    s = (
+        rf"\(x^2 = {m}x + {c}\) → <strong>{correct}</strong>. "
+        rf"Answer: <strong>{correct_letter}</strong>"
+    )
+    return q, s, "Move all terms to one side before factorising.", 2, opts, correct_letter
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -250,12 +331,10 @@ def _qsim_i_full_solve():
     y1, y2 = r1 * r1, r2 * r2
     q = rf"Solve the simultaneous equations:<br>\(y = x^2\)<br>{_fmt_linear(a, b)}"
     f1, f2 = _factor_pair(r1, r2)
-    c_rearr = _fmt_b(-b)
-    x_term = "x" if a == 1 else f"{a}x"
     s = (
         rf"Substitute into \(y = x^2\):<br>"
-        rf"\(x^2 = {x_term} {_fmt_b(b)}\)<br>"
-        rf"Rearrange: \(x^2 - {x_term} {c_rearr} = 0\)<br>"
+        rf"\(x^2 = {_fmt_ax(a)} {_fmt_b(b)}\)<br>"
+        rf"Rearrange: \({_fmt_rearranged_quad(a, b)}\)<br>"
         rf"Factorise: \({f1}{f2} = 0\)<br>"
         rf"\(x = {r1}\) or \(x = {r2}\)<br>"
         rf"When \(x = {r1}\), \(y = {y1}\). When \(x = {r2}\), \(y = {y2}\)<br>"
@@ -308,15 +387,25 @@ def _qsim_i_check_pair():
     wrong_on_parabola = (wrong_x, wrong_x * wrong_x)
     wrong_on_line = (1, a + b)
     neither = (0, 1)
+    coords = [
+        f"({wrong_on_parabola[0]}, {wrong_on_parabola[1]})",
+        f"({correct}, {correct * correct})",
+        f"({wrong_on_line[0]}, {wrong_on_line[1]})",
+        f"({neither[0]}, {neither[1]})",
+    ]
+    correct_coord = f"({correct}, {correct * correct})"
+    random.shuffle(coords)
+    letters = "ABCD"
+    correct_letter = letters[coords.index(correct_coord)]
+    opts = [f"{letters[i]}  {coords[i]}" for i in range(4)]
     q = (
-        rf"Which point lies on <strong>both</strong> \(y = x^2\) and {_fmt_linear(a, b)}?<br>"
-        rf"A) \({wrong_on_parabola[0]}, {wrong_on_parabola[1]}\) &nbsp; "
-        rf"B) \(({correct}, {correct*correct})\) &nbsp; "
-        rf"C) \({wrong_on_line[0]}, {wrong_on_line[1]}\) &nbsp; "
-        rf"D) \({neither[0]}, {neither[1]}\)"
+        rf"Which point lies on <strong>both</strong> \(y = x^2\) and {_fmt_linear(a, b)}?"
     )
-    s = rf"Check substitution — <strong>B \(({correct}, {correct*correct})\)</strong> satisfies both."
-    return q, s, "Substitute x and y into both equations.", 2
+    s = (
+        rf"Check substitution — <strong>{correct_letter}) {correct_coord}</strong> satisfies both.<br>"
+        rf"Answer: <strong>{correct_letter}</strong>"
+    )
+    return q, s, "Substitute x and y into both equations.", 2, opts, correct_letter
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -341,11 +430,13 @@ def _qsim_d_exam_multipart():
     f1, f2 = _factor_pair(r1, r2)
     q = (
         rf"Solve:<br>\(y = x^2\) &nbsp; (1)<br>{_fmt_linear(a, b)} &nbsp; (2)<br><br>"
-        rf"<strong>(a)</strong> Show that substituting (2) into (1) gives \(x^2 - {a}x {_fmt_b(-b)} = 0\).<br>"
+        rf"<strong>(a)</strong> Show that substituting (2) into (1) gives "
+        rf"\({_fmt_rearranged_quad(a, b)}\).<br>"
         rf"<strong>(b)</strong> Hence solve the simultaneous equations."
     )
     s = (
-        rf"<strong>(a)</strong> \(x^2 = {a}x {_fmt_b(b)}\) rearranges correctly.<br>"
+        rf"<strong>(a)</strong> \(x^2 = {_fmt_ax(a)} {_fmt_b(b)}\) rearranges to "
+        rf"\({_fmt_rearranged_quad(a, b)}\).<br>"
         rf"<strong>(b)</strong> \({f1}{f2} = 0\) → "
         rf"<strong>\(({r1}, {y1})\) and \(({r2}, {y2})\)</strong>"
     )
@@ -353,17 +444,38 @@ def _qsim_d_exam_multipart():
 
 
 def _qsim_d_discriminant():
-    """How many intersections from discriminant of x² - ax - b = 0."""
-    r1, r2, a, b = _roots_from_line()
-    disc = a * a + 4 * b  # x² - ax - b = 0, Δ = a² + 4b
+    """How many intersections from discriminant of x² - ax - b = 0 (0, 1 or 2)."""
+    case = random.choice(["two", "one", "none"])
+    if case == "two":
+        _, _, a, b = _roots_from_line()
+    elif case == "one":
+        # Tangent: repeated root r → a = 2r, b = -r², Δ = 0
+        r = random.choice([-4, -3, -2, -1, 1, 2, 3, 4, 5])
+        a, b = 2 * r, -(r * r)
+    else:
+        # Misses parabola: Δ = a² + 4b < 0
+        a = random.choice([-5, -4, -3, -2, -1, 1, 2, 3, 4, 5])
+        # Need 4b < -a² → b ≤ -⌊a²/4⌋ - 1
+        b_max = -(a * a) // 4 - 1
+        b = random.randint(b_max - 8, b_max)
+
+    disc = a * a + 4 * b  # x² - ax - b = 0
+    n = 2 if disc > 0 else (1 if disc == 0 else 0)
     q = (
         rf"The line {_fmt_linear(a, b)} meets \(y = x^2\). "
-        rf"The quadratic \(x^2 - {a}x {_fmt_b(-b)} = 0\) has discriminant \(\Delta = {disc}\). "
+        rf"The quadratic \({_fmt_rearranged_quad(a, b)}\) has discriminant \(\Delta = {disc}\). "
         rf"How many real points of intersection are there?"
     )
-    n = 2 if disc > 0 else (1 if disc == 0 else 0)
-    s = rf"\(\Delta > 0\) → <strong>{n} intersection points</strong> (two solutions)."
-    return q, s, "Positive discriminant → two distinct real roots for x.", 3, n
+    if n == 2:
+        s = rf"\(\Delta > 0\) → <strong>2</strong> intersection points (two solutions)."
+        hint = "Positive discriminant → two distinct real roots for x."
+    elif n == 1:
+        s = rf"\(\Delta = 0\) → <strong>1</strong> intersection point (the line is a tangent)."
+        hint = "Zero discriminant → exactly one repeated root for x."
+    else:
+        s = rf"\(\Delta < 0\) → <strong>0</strong> intersection points (no real solutions)."
+        hint = "Negative discriminant → no real roots for x."
+    return q, s, hint, 3, n
 
 
 def _qsim_d_word_problem():
