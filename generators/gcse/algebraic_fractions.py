@@ -66,26 +66,104 @@ def _af_raw(value):
 
 
 def _af_fraction_answer(num, den):
+    """Numeric fraction → stacked algebraic_fraction UI (or integer number)."""
     g = gcd(int(num), int(den))
     n, d = int(num) // g, int(den) // g
+    if d < 0:
+        n, d = -n, -d
     if d == 1:
         return n
-    return {'type': 'fraction', 'value': f'{n}/{d}'}
+    return _af_alg_fraction_answer(n, d)
+
+
+def _af_alg_fraction_answer(numerator, denominator, format_hint=None):
+    payload = {
+        'type': 'algebraic_fraction',
+        'numerator': str(numerator).strip(),
+        'denominator': str(denominator).strip(),
+    }
+    if format_hint:
+        payload['format_hint'] = format_hint
+    return payload
+
+
+def _af_algebraic_answer(expr, format_hint=None):
+    payload = {'type': 'algebraic', 'value': str(expr).strip()}
+    if format_hint:
+        payload['format_hint'] = format_hint
+    return payload
+
+
+def _af_linear_answer(value, var='x'):
+    return {
+        'type': 'linear',
+        'value': _af_raw(value),
+        'var': str(var).strip().lower(),
+    }
 
 
 def _af_problem_from_output(out, difficulty):
     q, s, hint, marks = out[:4]
     extra = {}
-    if len(out) >= 5:
+    if len(out) >= 6 and isinstance(out[4], (list, tuple)):
+        extra = {
+            'options': list(out[4]),
+            'correct_answer': out[5],
+            'choice_no_shuffle': True,
+        }
+    elif len(out) >= 5:
         raw = out[4]
-        if isinstance(raw, dict) and raw.get('type') == 'fraction':
-            value = raw.get('value')
-            if value is not None and str(value).strip():
+        if isinstance(raw, dict):
+            raw_type = raw.get('type')
+            if raw_type == 'algebraic_fraction':
+                num = str(raw.get('numerator') or '').strip()
+                den = str(raw.get('denominator') or '').strip()
+                if num and den:
+                    extra = {
+                        'correct_answer_raw': f'{num}|{den}',
+                        'answer_type': 'algebraic_fraction',
+                        'answer_format_hint': raw.get(
+                            'format_hint',
+                            'Enter the numerator and denominator',
+                        ),
+                    }
+            elif raw_type == 'algebraic':
+                text = str(raw.get('value') or '')
                 extra = {
-                    'correct_answer_raw': str(value).strip(),
-                    'answer_type': 'fraction',
-                    'answer_format_hint': 'Enter a fraction (e.g. 3/4)',
+                    'correct_answer_raw': text,
+                    'answer_type': 'algebraic',
+                    'answer_format_hint': raw.get(
+                        'format_hint',
+                        'Enter the simplified expression',
+                    ),
                 }
+            elif raw_type == 'linear':
+                var = raw.get('var') or 'x'
+                val = raw.get('value')
+                extra = {
+                    'correct_answer_raw': (
+                        str(val) if var == 'x' else f'{var}={val}'
+                    ),
+                    'answer_type': 'linear',
+                    'answer_format_hint': 'Enter the value (e.g. x = 3 or just 3)',
+                }
+            elif raw_type == 'fraction':
+                value = raw.get('value')
+                if value is not None and str(value).strip():
+                    text = str(value).strip()
+                    if '/' in text:
+                        num, den = text.split('/', 1)
+                        extra = {
+                            'correct_answer_raw': f'{num.strip()}|{den.strip()}',
+                            'answer_type': 'algebraic_fraction',
+                            'answer_format_hint': 'Enter the numerator and denominator',
+                        }
+                    else:
+                        extra = {
+                            'correct_answer_raw': text,
+                            'answer_type': 'number',
+                            'answer_format_hint': 'Enter a number',
+                        }
         elif isinstance(raw, (int, float)):
             extra = {
                 'correct_answer_raw': _af_raw(raw),
@@ -93,11 +171,12 @@ def _af_problem_from_output(out, difficulty):
                 'answer_format_hint': 'Enter a number',
             }
         elif isinstance(raw, str):
-            if '/' in raw:
+            if '/' in raw and not any(ch.isalpha() for ch in raw):
+                num, den = raw.split('/', 1)
                 extra = {
-                    'correct_answer_raw': raw,
-                    'answer_type': 'fraction',
-                    'answer_format_hint': 'Enter a fraction (e.g. 3/4)',
+                    'correct_answer_raw': f'{num.strip()}|{den.strip()}',
+                    'answer_type': 'algebraic_fraction',
+                    'answer_format_hint': 'Enter the numerator and denominator',
                 }
             else:
                 extra = {
@@ -115,11 +194,43 @@ def _af_problem(variant_fn, difficulty):
     return _af_problem_from_output(variant_fn(), difficulty)
 
 
+def _af_add_scaled_x_steps(p, q_num, k):
+    """Step-by-step solution for p/x + q/(kx). Returns (solution_html, hint, top, lcd)."""
+    lcd = f"{k}x"
+    top = p * k + q_num
+    s = (
+        _af_step(
+            f"<strong>Step 1</strong> — the LCD of x and {k}x is <strong>{lcd}</strong>."
+        )
+        + _af_step(
+            f"<strong>Step 2</strong> — rewrite {p}/x with denominator {lcd}:"
+            + _af_math_line(
+                rf"\(\dfrac{{{p}}}{{x}} = \dfrac{{{p} \times {k}}}{{{k}x}} = \dfrac{{{p * k}}}{{{lcd}}}\)"
+            )
+        )
+        + _af_step(
+            f"<strong>Step 3</strong> — the second fraction already has denominator {lcd}. "
+            f"Add the tops:"
+            + _af_math_line(
+                rf"\(\dfrac{{{p * k}}}{{{lcd}}} + \dfrac{{{q_num}}}{{{lcd}}} = "
+                rf"\dfrac{{{p * k} + {q_num}}}{{{lcd}}} = {_frac(str(top), lcd)}\)"
+            )
+        )
+        + _af_answer(rf"<strong>Answer:</strong> \({_frac(str(top), lcd)}\)")
+    )
+    hint = (
+        f"The denominators x and {k}x share a common multiple {k}x. "
+        f"Multiply the first fraction's top and bottom by {k}, then add the numerators."
+    )
+    return s, hint, top, lcd
+
+
 def _af_add_reciprocal_style_steps(n1, n2, c):
-    """Step-by-step solution for n1/x + n2/(x+c) as a single fraction."""
+    """Step-by-step for n1/x + n2/(x+c). Returns (solution_html, hint, num, den)."""
     lcd = f"x(x + {c})"
     sum_coeff = n1 + n2
     const = n1 * c
+    num = f"{sum_coeff}x + {const}"
     s = (
         _af_step(
             f"<strong>Step 1</strong> — find the lowest common denominator (LCD). "
@@ -157,38 +268,7 @@ def _af_add_reciprocal_style_steps(n1, n2, c):
         f"Convert each fraction, add the numerators, expand brackets, then collect the x terms "
         f"and the number terms separately."
     )
-    return s, hint
-
-
-def _af_add_scaled_x_steps(p, q_num, k):
-    """Step-by-step solution for p/x + q/(kx)."""
-    lcd = f"{k}x"
-    top = p * k + q_num
-    s = (
-        _af_step(
-            f"<strong>Step 1</strong> — the LCD of x and {k}x is <strong>{lcd}</strong>."
-        )
-        + _af_step(
-            f"<strong>Step 2</strong> — rewrite {p}/x with denominator {lcd}:"
-            + _af_math_line(
-                rf"\(\dfrac{{{p}}}{{x}} = \dfrac{{{p} \times {k}}}{{{k}x}} = \dfrac{{{p * k}}}{{{lcd}}}\)"
-            )
-        )
-        + _af_step(
-            f"<strong>Step 3</strong> — the second fraction already has denominator {lcd}. "
-            f"Add the tops:"
-            + _af_math_line(
-                rf"\(\dfrac{{{p * k}}}{{{lcd}}} + \dfrac{{{q_num}}}{{{lcd}}} = "
-                rf"\dfrac{{{p * k} + {q_num}}}{{{lcd}}} = "
-                rf"<strong>\({_frac(str(top), lcd)}\)</strong>"
-            )
-        )
-    )
-    hint = (
-        f"The denominators x and {k}x share a common multiple {k}x. "
-        f"Multiply the first fraction's top and bottom by {k}, then add the numerators."
-    )
-    return s, hint
+    return s, hint, num, lcd
 
 
 def _af_random_denominator():
@@ -229,7 +309,9 @@ def _af_f_same_denominator_add():
     tex = _frac(str(p), d) + " + " + _frac(str(q_val), d)
     q = rf"Write as a single fraction: <strong>{_math(tex)}</strong>."
     s = rf"Same denominator: <strong>\({_frac(str(p + q_val), d)}\)</strong>"
-    return q, s, "Add the numerators; keep the denominator.", 2
+    return q, s, "Add the numerators; keep the denominator.", 2, _af_alg_fraction_answer(
+        p + q_val, d,
+    )
 
 
 def _af_f_multiply():
@@ -256,8 +338,9 @@ def _af_f_divide():
         rf"Flip and multiply: \(\dfrac{{x}}{{{m}}} \times \dfrac{{x}}{{{n}}} = "
         rf"\dfrac{{x^2}}{{{m * n}}}\) — or cancel to <strong>\({_frac('x^2', str(m * n))}\)</strong>."
     )
-    return q, s, "Divide by a fraction = multiply by its reciprocal.", 3
-
+    return q, s, "Divide by a fraction = multiply by its reciprocal.", 3, _af_alg_fraction_answer(
+        'x^2', m * n,
+    )
 
 def _af_f_factor_cancel():
     """(kx + kd)/(x + d) = k"""
@@ -285,8 +368,8 @@ def _af_i_diff_denominator_add():
     q_num = random.randint(1, 6)
     k = random.randint(2, 7)
     q = rf"Write as a single fraction: <strong>\(\dfrac{{{p}}}{{x}} + \dfrac{{{q_num}}}{{{k}x}}\)</strong>."
-    s, hint = _af_add_scaled_x_steps(p, q_num, k)
-    return q, s, hint, 3
+    s, hint, top, lcd = _af_add_scaled_x_steps(p, q_num, k)
+    return q, s, hint, 3, _af_alg_fraction_answer(top, lcd)
 
 
 def _af_i_difference_of_squares():
@@ -298,7 +381,9 @@ def _af_i_difference_of_squares():
             rf"Cancel \((x - {r})\): <strong>\(x + {r}\)</strong> (\(x \neq {r}\))."
         )
     )
-    return q, s, "Difference of squares on the numerator.", 3
+    return q, s, "Difference of squares on the numerator.", 3, _af_algebraic_answer(
+        f'x+{r}', format_hint='e.g. x + 3',
+    )
 
 
 def _af_i_single_fraction_add():
@@ -306,8 +391,8 @@ def _af_i_single_fraction_add():
     b = random.randint(1, 5)
     c = random.randint(2, 6)
     q = rf"Write as a single fraction: <strong>\(\dfrac{{{a}}}{{x}} + \dfrac{{{b}}}{{x + {c}}}\)</strong>."
-    s, hint = _af_add_reciprocal_style_steps(a, b, c)
-    return q, s, hint, 4
+    s, hint, num, den = _af_add_reciprocal_style_steps(a, b, c)
+    return q, s, hint, 4, _af_alg_fraction_answer(num, den)
 
 
 def _af_i_multiply_two():
@@ -336,7 +421,9 @@ def _af_i_multiply_two():
         "Multiply tops together and bottoms together, then look for common factors "
         "in the numerator and denominator before cancelling."
     )
-    return q, s, hint, 3
+    if p == q_val:
+        return q, s, hint, 3, 1
+    return q, s, hint, 3, _af_alg_fraction_answer(f'x+{p}', f'x+{q_val}')
 
 
 def _af_i_quadratic_cancel():
@@ -353,8 +440,9 @@ def _af_i_quadratic_cancel():
             rf"Cancel \((x - {lo})\): <strong>\(x - {hi}\)</strong> (\(x \neq {lo}\))."
         )
     )
-    return q, s, "Factorise the quadratic numerator first.", 4
-
+    return q, s, "Factorise the quadratic numerator first.", 4, _af_algebraic_answer(
+        f'x-{hi}', format_hint='e.g. x - 3',
+    )
 
 # ══════════════════════════════════════════════════════════════════════════════
 # DIFFICULT (5)
@@ -391,7 +479,7 @@ def _af_d_solve_simple():
         "Remove fractions by multiplying both sides by the denominators, one at a time. "
         "Start by multiplying by x, then by the remaining denominator."
     )
-    return q, s, hint, 4, x_ans
+    return q, s, hint, 4, _af_linear_answer(x_ans)
 
 
 def _af_d_add_reciprocal_style():
@@ -399,8 +487,8 @@ def _af_d_add_reciprocal_style():
     n2 = random.randint(2, 7)
     c = random.randint(2, 9)
     q = rf"Write as a single fraction: <strong>\(\dfrac{{{n1}}}{{x}} + \dfrac{{{n2}}}{{x + {c}}}\)</strong>."
-    s, hint = _af_add_reciprocal_style_steps(n1, n2, c)
-    return q, s, hint, 4
+    s, hint, num, den = _af_add_reciprocal_style_steps(n1, n2, c)
+    return q, s, hint, 4, _af_alg_fraction_answer(num, den)
 
 
 def _af_d_simplify_nested():
@@ -422,8 +510,9 @@ def _af_d_subtract_fractions():
     q = rf"Simplify <strong>{_math(tex)}</strong>."
     ans = p - q_val
     s = rf"<strong>\({_frac(str(ans), d)}\)</strong>"
-    return q, s, "Subtract numerators when denominators match.", 3
-
+    return q, s, "Subtract numerators when denominators match.", 3, _af_alg_fraction_answer(
+        ans, d,
+    )
 
 def _af_d_equation_with_linear_den():
     """(x + c)/x = r style with integer solution."""
@@ -454,7 +543,7 @@ def _af_d_equation_with_linear_den():
         "Multiply through by x to remove the fraction, then collect x terms on one side "
         "and numbers on the other. Remember x cannot be 0."
     )
-    return q, s, hint, 4, x_ans
+    return q, s, hint, 4, _af_linear_answer(x_ans)
 
 
 # ══════════════════════════════════════════════════════════════════════════════

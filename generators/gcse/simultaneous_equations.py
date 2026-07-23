@@ -1,8 +1,8 @@
 """
 GCSE Maths – Simultaneous Equations
 5 foundational · 5 intermediate · 5 difficult · 6 MCQ
-Graded practice variants return (question, solution, hint, marks, raw).
-Conceptual / interpret-only variants stay as 4-tuples.
+Graded practice variants return (question, solution, hint, marks, raw)
+or an MCQ 6-tuple (question, solution, hint, marks, options, correct_letter).
 """
 import random
 from generators.shared.utils import make_problem
@@ -89,7 +89,12 @@ def _sim_linear_raw(raw):
 def _sim_problem_from_output(out, difficulty):
     q, s, hint, marks = out[:4]
     extra = {}
-    if len(out) >= 5:
+    if len(out) >= 6 and isinstance(out[4], (list, tuple)):
+        extra = {
+            'options': list(out[4]),
+            'correct_answer': out[5],
+        }
+    elif len(out) >= 5:
         raw = out[4]
         if isinstance(raw, dict):
             raw_type = raw.get('type')
@@ -491,16 +496,33 @@ def _sim_i_find_y_only():
 
 
 def _sim_i_graph_interpret():
-    """Link to intersection of two lines."""
+    """Link to intersection of two lines — MCQ."""
+    m1 = random.randint(1, 3)
+    c1 = random.randint(1, 5)
+    m2 = -random.randint(1, 3)
+    c2 = random.randint(4, 10)
     q = (
-        r"The lines \(y = 2x + 1\) and \(y = -x + 7\) are drawn on the same axes. "
+        rf"The lines \(y = {m1}x + {c1}\) and \(y = {m2}x + {c2}\) are drawn on the same axes. "
         r"What do the coordinates of their point of intersection represent?"
     )
+    correct = "The solution to the simultaneous equations"
+    distractors = [
+        "The midpoint between the two y-intercepts",
+        "The gradient of both lines",
+        "Where the lines are parallel",
+    ]
+    texts = [correct] + distractors
+    random.shuffle(texts)
+    letters = "ABCD"
+    correct_letter = letters[texts.index(correct)]
+    opts = [f"{letters[i]}  {texts[i]}" for i in range(4)]
     sol = (
-        r"The intersection is the <strong>solution to the simultaneous equations</strong> "
-        r"\(y = 2x + 1\) and \(y = -x + 7\) — the only \((x, y)\) that satisfies both."
+        rf"The intersection is the <strong>solution to the simultaneous equations</strong> "
+        rf"\(y = {m1}x + {c1}\) and \(y = {m2}x + {c2}\) — the only \((x, y)\) that satisfies both.<br>"
+        rf"Answer: <strong>{correct_letter}</strong>"
     )
-    return q, sol, "Graphical solution = algebraic solution = point where lines cross.", 2
+    hint = "Graphical solution = algebraic solution = point where lines cross."
+    return q, sol, hint, 2, opts, correct_letter
 
 
 # ══════════════════════════════════════════════════════════════════════════════

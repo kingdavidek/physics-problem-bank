@@ -204,6 +204,9 @@
       var afD = afDen ? (afDen.value || '').trim() : '';
       return afN + '|' + (afD || '1');
     }
+    if (answerType === 'quadratic_roots') {
+      return readQuadraticRootsUserAnswer(block);
+    }
     var single = block.querySelector('.free-response-input');
     return single ? (single.value || '').trim() : '';
   }
@@ -485,10 +488,13 @@
 
   function freeResponseFieldPlaceholder(fieldType, formatHint) {
     if (formatHint) return formatHint;
-    if (fieldType === 'keyword') return 'e.g. positive, negative, or none';
+    if (fieldType === 'keyword') return 'e.g. yes or no';
     if (fieldType === 'linear_equation') return 'e.g. y = 2x + 3';
     if (fieldType === 'two_var_equation') return 'e.g. 10c + 11t = 53';
     if (fieldType === 'linear_inequality') return 'e.g. m < 40';
+    if (fieldType === 'algebraic') return 'e.g. d/50 + d/100 or 3x + 6';
+    if (fieldType === 'vector') return 'e.g. (3, 4)';
+    if (fieldType === 'bearing') return 'e.g. 045';
     if (fieldType === 'number_estimate') return 'Your estimate from the graph';
     if (fieldType === 'fraction') return 'e.g. 3/4';
     if (fieldType === 'surd') return 'e.g. 4√3';
@@ -517,6 +523,43 @@
     return 'Enter a number';
   }
 
+  function splitQuadraticRootsRaw(raw) {
+    var s = String(raw || '').trim();
+    if (!s) return [];
+    if (s.charAt(0) === '{' && s.charAt(s.length - 1) === '}') {
+      s = s.slice(1, -1).trim();
+    }
+    s = s.replace(/\s+or\s+/gi, ',').replace(/\s+and\s+/gi, ',');
+    var sep = (s.indexOf('|') >= 0 && s.indexOf(',') < 0) ? '|' : ',';
+    return s.split(sep).map(function (part) {
+      return part.trim();
+    }).filter(Boolean);
+  }
+
+  function quadraticRootsFieldCount(block) {
+    if (!block) return 0;
+    var labels = [];
+    try {
+      labels = JSON.parse(block.getAttribute('data-answer-labels') || '[]');
+    } catch (e) {
+      labels = [];
+    }
+    if (labels && labels.length >= 2) return labels.length;
+    return splitQuadraticRootsRaw(block.getAttribute('data-correct-raw') || '').length;
+  }
+
+  function readQuadraticRootsUserAnswer(block) {
+    var multi = block.querySelectorAll('.free-response-input-quadratic-root');
+    if (multi.length >= 2) {
+      return Array.prototype.map.call(multi, function (input) {
+        return (input.value || '').trim();
+      }).join(', ');
+    }
+    var single = block.querySelector('.free-response-input-quadratic-roots')
+      || block.querySelector('.free-response-input');
+    return single ? (single.value || '').trim() : '';
+  }
+
   function freeResponseCorrectFeedback(data, userAnswer) {
     var base = (data && data.feedback) || 'Correct!';
     if (!data || !data.correct) return base;
@@ -526,6 +569,12 @@
       return base + ' Equivalent forms accepted.';
     }
     return base;
+  }
+
+  function freeResponseWrongFeedback(block, data) {
+    var base = (data && data.feedback) || 'Not quite \u2014 try again.';
+    var wrongHint = block.getAttribute('data-wrong-hint') || '';
+    return wrongHint ? (base + ' ' + wrongHint) : base;
   }
 
   function freeResponseInputMode(answerType, formatHint) {
@@ -594,6 +643,11 @@
     } else {
       block.removeAttribute('data-format-hint');
     }
+    if (problem.answer_wrong_hint) {
+      block.setAttribute('data-wrong-hint', problem.answer_wrong_hint);
+    } else {
+      block.removeAttribute('data-wrong-hint');
+    }
     if (problem.answer_subject) {
       block.setAttribute('data-csq-subject', problem.answer_subject);
     } else {
@@ -624,6 +678,21 @@
       block.setAttribute('data-field-types', JSON.stringify(problem.answer_field_types));
     } else {
       block.setAttribute('data-field-types', '[]');
+    }
+    if (problem.answer_field_options && problem.answer_field_options.length) {
+      block.setAttribute('data-field-options', JSON.stringify(problem.answer_field_options));
+    } else {
+      block.setAttribute('data-field-options', '[]');
+    }
+    if (problem.answer_step_bank && problem.answer_step_bank.length) {
+      block.setAttribute('data-step-bank', JSON.stringify(problem.answer_step_bank));
+    } else {
+      block.setAttribute('data-step-bank', '[]');
+    }
+    if (problem.answer_order_matters) {
+      block.setAttribute('data-order-matters', '1');
+    } else {
+      block.setAttribute('data-order-matters', '0');
     }
     if (problem.answer_pair_sep) {
       block.setAttribute('data-pair-sep', problem.answer_pair_sep);
@@ -666,6 +735,7 @@
     if (row.classList.contains('free-response-row--quadratic-roots')) return 'quadratic_roots';
     if (row.classList.contains('free-response-row--vector')) return 'vector';
     if (row.classList.contains('free-response-row--number-fields')) return 'number_fields';
+    if (row.classList.contains('free-response-row--proof-steps')) return 'proof_steps';
     if (row.classList.contains('free-response-row--completed-square')) return 'completed_square';
     if (row.classList.contains('free-response-row--vector-combo')) return 'vector_combo';
     if (row.classList.contains('free-response-row--vector-pair')) return 'vector_pair';
@@ -849,6 +919,8 @@
       prefix +
       '<input type="text" class="free-response-input free-response-input-algebraic" placeholder="' + esc(algPh) + '" autocomplete="off" inputmode="text" aria-label="Algebraic answer">' +
       '<button type="button" class="btn btn-secondary free-response-surd-btn" aria-label="Insert square root symbol">√</button>' +
+      '<button type="button" class="btn btn-secondary free-response-pi-btn" aria-label="Insert pi symbol">π</button>' +
+      '<button type="button" class="btn btn-secondary free-response-square-btn" aria-label="Insert squared symbol">x²</button>' +
       '<button type="button" class="btn free-response-check-btn">Check</button>' +
       '</div>'
     );
@@ -1523,6 +1595,24 @@
     );
   }
 
+  function numberFieldMcqRowHtml(label, options) {
+    var letters = 'ABC';
+    var buttons = (options || []).map(function (opt, i) {
+      return (
+        '<button type="button" class="btn mcq-btn" data-letter="' + letters.charAt(i) + '">' +
+        esc(opt) +
+        '</button>'
+      );
+    }).join('');
+    return (
+      '<div class="free-response-field-row">' +
+      '<span class="free-response-field-label">' + esc(label) + '</span>' +
+      '<div class="mcq-inline free-response-field-mcq">' + buttons + '</div>' +
+      '<p class="free-response-field-feedback" aria-live="polite"></p>' +
+      '</div>'
+    );
+  }
+
   function freeResponseRowHtml(block, answerType) {
     var formatHint = block.getAttribute('data-format-hint') || '';
     var labelA = block.getAttribute('data-label-a') || 'First value';
@@ -1622,6 +1712,7 @@
     if (answerType === 'number_fields') {
       var labels = [];
       var fieldTypes = [];
+      var fieldOptions = [];
       try {
         labels = JSON.parse(block.getAttribute('data-answer-labels') || '[]');
       } catch (err) {
@@ -1632,6 +1723,11 @@
       } catch (err2) {
         fieldTypes = [];
       }
+      try {
+        fieldOptions = JSON.parse(block.getAttribute('data-field-options') || '[]');
+      } catch (err3) {
+        fieldOptions = [];
+      }
       function fieldPlaceholder(fieldType) {
         return freeResponseFieldPlaceholder(
           fieldType,
@@ -1639,15 +1735,27 @@
         );
       }
       var rows = labels.map(function (label, index) {
-        var safeLabel = esc(label);
         var fieldType = fieldTypes[index] || 'number';
+        if (fieldType === 'mcq') {
+          return numberFieldMcqRowHtml(label, fieldOptions[index] || []);
+        }
+        var safeLabel = esc(label);
         var ph = esc(fieldPlaceholder(fieldType));
+        var insertBtns = '';
+        if (fieldType === 'algebraic') {
+          insertBtns = (
+            '<button type="button" class="btn btn-secondary free-response-surd-btn" aria-label="Insert square root symbol">√</button>' +
+            '<button type="button" class="btn btn-secondary free-response-pi-btn" aria-label="Insert pi symbol">π</button>' +
+            '<button type="button" class="btn btn-secondary free-response-square-btn" aria-label="Insert squared symbol">x²</button>'
+          );
+        }
         return (
           '<div class="free-response-field-row">' +
           '<label class="free-response-field">' +
           '<span class="free-response-field-label">' + safeLabel + '</span>' +
           '<input type="text" class="free-response-input free-response-input-field" placeholder="' + ph + '" autocomplete="off" inputmode="text" aria-label="' + safeLabel + '">' +
           '</label>' +
+          insertBtns +
           '<button type="button" class="btn free-response-check-btn free-response-field-check-btn">Check</button>' +
           '<p class="free-response-field-feedback" aria-live="polite"></p>' +
           '</div>'
@@ -1722,6 +1830,8 @@
         '<input type="text" class="free-response-input free-response-input-alg-frac-den" placeholder="1 if none" autocomplete="off" inputmode="numeric" aria-label="Denominator">' +
         '</div>' +
         '<button type="button" class="btn btn-secondary free-response-surd-btn" aria-label="Insert square root symbol">√</button>' +
+        '<button type="button" class="btn btn-secondary free-response-pi-btn" aria-label="Insert pi symbol">π</button>' +
+        '<button type="button" class="btn btn-secondary free-response-square-btn" aria-label="Insert squared symbol">x²</button>' +
         '<button type="button" class="btn free-response-check-btn">Check</button>' +
         '</div>'
       );
@@ -1745,6 +1855,44 @@
       );
     }
     if (answerType === 'quadratic_roots') {
+      var rootCount = quadraticRootsFieldCount(block);
+      if (rootCount >= 2) {
+        var pairClass = rootCount === 2
+          ? ' free-response-row--quadratic-roots-pair'
+          : ' free-response-row--quadratic-roots-multi';
+        var insertBtns = (
+          '<button type="button" class="btn btn-secondary free-response-roots-insert-btn" data-insert="±" aria-label="Insert plus-minus symbol">±</button>' +
+          '<button type="button" class="btn btn-secondary free-response-roots-insert-btn" data-insert="√" aria-label="Insert square root symbol">√</button>' +
+          '<button type="button" class="btn free-response-check-btn">Check</button>'
+        );
+        if (rootCount === 2) {
+          return (
+            '<div class="free-response-row free-response-row--quadratic-roots' + pairClass + '">' +
+            '<span class="free-response-root-prefix" aria-hidden="true"><strong>x</strong> =</span>' +
+            '<input type="text" class="free-response-input free-response-input-quadratic-root" placeholder="e.g. -0.67" autocomplete="off" inputmode="text" aria-label="First root">' +
+            '<span class="free-response-pair-sep" aria-hidden="true">or</span>' +
+            '<span class="free-response-root-prefix" aria-hidden="true"><strong>x</strong> =</span>' +
+            '<input type="text" class="free-response-input free-response-input-quadratic-root" placeholder="e.g. -2" autocomplete="off" inputmode="text" aria-label="Second root">' +
+            insertBtns +
+            '</div>'
+          );
+        }
+        var rootRows = '';
+        for (var ri = 0; ri < rootCount; ri += 1) {
+          rootRows += (
+            '<label class="free-response-field">' +
+            '<span class="free-response-field-label"><strong>x</strong> =</span>' +
+            '<input type="text" class="free-response-input free-response-input-quadratic-root" placeholder="root ' + (ri + 1) + '" autocomplete="off" inputmode="text" aria-label="Root ' + (ri + 1) + '">' +
+            '</label>'
+          );
+        }
+        return (
+          '<div class="free-response-row free-response-row--quadratic-roots' + pairClass + '">' +
+          '<div class="free-response-roots-stack">' + rootRows + '</div>' +
+          insertBtns +
+          '</div>'
+        );
+      }
       var rootsPh = freeResponsePlaceholder('quadratic_roots', formatHint);
       return (
         '<div class="free-response-row free-response-row--quadratic-roots">' +
@@ -1760,6 +1908,43 @@
       return (
         '<div class="free-response-row free-response-row--vector">' +
         '<input type="text" class="free-response-input free-response-input-vector" placeholder="' + esc(vectorPh) + '" autocomplete="off" inputmode="text" aria-label="Column vector">' +
+        '<button type="button" class="btn free-response-check-btn">Check</button>' +
+        '</div>'
+      );
+    }
+    if (answerType === 'proof_steps') {
+      var stepBank = [];
+      try {
+        stepBank = JSON.parse(block.getAttribute('data-step-bank') || '[]');
+      } catch (errBank) {
+        stepBank = [];
+      }
+      var orderMatters = (block.getAttribute('data-order-matters') || '1') === '1';
+      var proofHint = esc(formatHint || (
+        orderMatters
+          ? 'Select the correct proof steps in order'
+          : 'Select all correct statements'
+      ));
+      var bankHtml = stepBank.map(function (step) {
+        return (
+          '<button type="button" class="btn btn-secondary free-response-proof-step" data-step-id="' +
+          esc(step.id || '') +
+          '">' +
+          String(step.text || '') +
+          '</button>'
+        );
+      }).join('');
+      return (
+        '<div class="free-response-row free-response-row--proof-steps" data-order-matters="' +
+        (orderMatters ? '1' : '0') +
+        '">' +
+        '<p class="free-response-proof-hint">' + proofHint + '</p>' +
+        '<div class="free-response-proof-bank" aria-label="Proof step bank">' + bankHtml + '</div>' +
+        '<div class="free-response-proof-selected-wrap">' +
+        '<p class="free-response-proof-selected-label">Your proof</p>' +
+        '<ol class="free-response-proof-selected" aria-live="polite"></ol>' +
+        '<button type="button" class="btn btn-secondary free-response-proof-clear">Clear</button>' +
+        '</div>' +
         '<button type="button" class="btn free-response-check-btn">Check</button>' +
         '</div>'
       );
@@ -1790,27 +1975,60 @@
   }
 
   function wireSurdInsertButton(block) {
-    var btn = block.querySelector('.free-response-surd-btn');
     var input = block.querySelector('.free-response-input-surd')
       || block.querySelector('.free-response-input-algebraic')
       || block.querySelector('.free-response-input-alg-frac-num');
-    if (!btn || !input || btn.dataset.surdInit === '1') return;
-    btn.dataset.surdInit = '1';
-    btn.addEventListener('click', function () {
-      if (input.disabled) return;
-      insertAtCursor(input, '√');
-    });
+    if (!input) return;
+
+    var surdBtn = block.querySelector('.free-response-surd-btn');
+    if (surdBtn && surdBtn.dataset.surdInit !== '1') {
+      surdBtn.dataset.surdInit = '1';
+      surdBtn.addEventListener('click', function () {
+        if (input.disabled) return;
+        insertAtCursor(input, '√');
+      });
+    }
+
+    var piBtn = block.querySelector('.free-response-pi-btn');
+    if (piBtn && piBtn.dataset.piInit !== '1') {
+      piBtn.dataset.piInit = '1';
+      piBtn.addEventListener('click', function () {
+        if (input.disabled) return;
+        insertAtCursor(input, 'π');
+      });
+    }
+
+    var squareBtn = block.querySelector('.free-response-square-btn');
+    if (squareBtn && squareBtn.dataset.squareInit !== '1') {
+      squareBtn.dataset.squareInit = '1';
+      squareBtn.addEventListener('click', function () {
+        if (input.disabled) return;
+        insertAtCursor(input, '^2');
+      });
+    }
   }
 
   function wireQuadraticRootsInsertButtons(block) {
-    var input = block.querySelector('.free-response-input-quadratic-roots');
-    if (!input) return;
+    var inputs = Array.prototype.slice.call(
+      block.querySelectorAll('.free-response-input-quadratic-root, .free-response-input-quadratic-roots')
+    );
+    if (!inputs.length) return;
+    var lastFocused = inputs[0];
+    inputs.forEach(function (input) {
+      input.addEventListener('focus', function () {
+        lastFocused = input;
+      });
+    });
     block.querySelectorAll('.free-response-roots-insert-btn').forEach(function (btn) {
       if (btn.dataset.rootsInsertInit === '1') return;
       btn.dataset.rootsInsertInit = '1';
       btn.addEventListener('click', function () {
-        if (input.disabled) return;
-        insertAtCursor(input, btn.getAttribute('data-insert') || '');
+        var target = lastFocused;
+        if (!target || target.disabled) {
+          target = inputs.find(function (input) { return !input.disabled; }) || null;
+        }
+        if (!target || target.disabled) return;
+        insertAtCursor(target, btn.getAttribute('data-insert') || '');
       });
     });
   }
@@ -1988,6 +2206,13 @@
       el.textContent = '';
       el.style.color = '';
     });
+    block.querySelectorAll('.free-response-field-mcq .mcq-btn').forEach(function (btn) {
+      btn.disabled = false;
+      btn.classList.remove('is-correct', 'is-wrong');
+    });
+    block.querySelectorAll('.free-response-field-row').forEach(function (row) {
+      delete row.dataset.fieldCorrect;
+    });
     var feedback = block.querySelector('.free-response-feedback');
     if (feedback) {
       feedback.textContent = '';
@@ -2008,6 +2233,34 @@
     return correctRaw.split('|');
   }
 
+  function wireFieldInsertButtons(row, input) {
+    if (!row || !input) return;
+    var surdBtn = row.querySelector('.free-response-surd-btn');
+    if (surdBtn && surdBtn.dataset.surdInit !== '1') {
+      surdBtn.dataset.surdInit = '1';
+      surdBtn.addEventListener('click', function () {
+        if (input.disabled) return;
+        insertAtCursor(input, '√');
+      });
+    }
+    var piBtn = row.querySelector('.free-response-pi-btn');
+    if (piBtn && piBtn.dataset.piInit !== '1') {
+      piBtn.dataset.piInit = '1';
+      piBtn.addEventListener('click', function () {
+        if (input.disabled) return;
+        insertAtCursor(input, 'π');
+      });
+    }
+    var squareBtn = row.querySelector('.free-response-square-btn');
+    if (squareBtn && squareBtn.dataset.squareInit !== '1') {
+      squareBtn.dataset.squareInit = '1';
+      squareBtn.addEventListener('click', function () {
+        if (input.disabled) return;
+        insertAtCursor(input, '^2');
+      });
+    }
+  }
+
   function wireNumberFieldsFreeResponse(block, correctRaw, trackable) {
     var correctParts = splitNumberFieldCorrectParts(correctRaw);
     var fieldRows = block.querySelectorAll('.free-response-field-row');
@@ -2024,10 +2277,11 @@
     }
 
     function allFieldsCorrect() {
-      var inputs = block.querySelectorAll('.free-response-input-field');
-      if (!inputs.length) return false;
-      return Array.prototype.every.call(inputs, function (input) {
-        return input.disabled && input.classList.contains('is-correct');
+      if (!fieldRows.length) return false;
+      return Array.prototype.every.call(fieldRows, function (row) {
+        if (row.dataset.fieldCorrect === '1') return true;
+        var input = row.querySelector('.free-response-input-field');
+        return input && input.disabled && input.classList.contains('is-correct');
       });
     }
 
@@ -2039,11 +2293,110 @@
       }
     }
 
+    function submitNumberFieldAnswer(index, row, fieldType, userValue, onDone) {
+      var fieldCorrect = correctParts[index] || '';
+      var fieldFeedback = row.querySelector('.free-response-field-feedback');
+      var body = {
+        user_answer: userValue,
+        correct_answer_raw: fieldCorrect,
+        answer_type: fieldType,
+      };
+      if (trackable) {
+        body.level = block.dataset.level;
+        body.subject = block.dataset.subject;
+        body.topic = block.dataset.topic;
+        body.difficulty = block.dataset.difficulty || 'foundational';
+        if (block.dataset.attemptGroupId) {
+          body.attempt_group_id = block.dataset.attemptGroupId;
+          body.part_index = index;
+          body.part_total = partTotal;
+        }
+      }
+
+      return fetch('/api/v1/problems/check', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(body),
+      })
+        .then(function (response) {
+          return response.json().then(function (data) {
+            if (!response.ok) {
+              var err = new Error(data.error || 'Check failed');
+              err.data = data;
+              throw err;
+            }
+            return data;
+          });
+        })
+        .then(function (data) {
+          if (typeof onDone === 'function') {
+            onDone(data, userValue, fieldFeedback);
+          }
+          return data;
+        });
+    }
+
     fieldRows.forEach(function (row, index) {
+      var fieldType = fieldTypes[index] || 'number';
+      var fieldFeedback = row.querySelector('.free-response-field-feedback');
+
+      if (fieldType === 'mcq') {
+        var mcqWrap = row.querySelector('.free-response-field-mcq');
+        if (!mcqWrap) return;
+        var correctLetter = (correctParts[index] || '').trim().charAt(0).toUpperCase();
+        mcqWrap.querySelectorAll('.mcq-btn').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            if (row.dataset.fieldCorrect === '1') return;
+            var letter = (btn.dataset.letter || '').trim().charAt(0).toUpperCase();
+            mcqWrap.querySelectorAll('.mcq-btn').forEach(function (b) { b.disabled = true; });
+            submitNumberFieldAnswer(index, row, 'mcq', letter, function (data) {
+              btn.classList.remove('is-correct', 'is-wrong');
+              mcqWrap.querySelectorAll('.mcq-btn').forEach(function (b) {
+                b.classList.remove('is-correct', 'is-wrong');
+              });
+              if (data.correct) {
+                btn.classList.add('is-correct');
+                row.dataset.fieldCorrect = '1';
+                if (fieldFeedback) {
+                  fieldFeedback.textContent = '\u2713 Correct!';
+                  fieldFeedback.style.color = '#16a34a';
+                }
+                maybePersistAllFields();
+              } else {
+                btn.classList.add('is-wrong');
+                mcqWrap.querySelectorAll('.mcq-btn').forEach(function (b) {
+                  var bLetter = (b.dataset.letter || '').trim().charAt(0).toUpperCase();
+                  if (bLetter === correctLetter) {
+                    b.classList.add('is-correct');
+                  }
+                });
+                mcqWrap.querySelectorAll('.mcq-btn').forEach(function (b) { b.disabled = false; });
+                if (fieldFeedback) {
+                  fieldFeedback.textContent = '\u2717 Not quite \u2014 the correct answer is highlighted.';
+                  fieldFeedback.style.color = '#dc2626';
+                }
+              }
+            }).catch(function (err) {
+              mcqWrap.querySelectorAll('.mcq-btn').forEach(function (b) { b.disabled = false; });
+              if (fieldFeedback) {
+                fieldFeedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
+                fieldFeedback.style.color = '#dc2626';
+              }
+            });
+          });
+        });
+        return;
+      }
+
       var input = row.querySelector('.free-response-input-field');
       var checkBtn = row.querySelector('.free-response-field-check-btn');
-      var fieldFeedback = row.querySelector('.free-response-field-feedback');
       if (!input || !checkBtn) return;
+
+      wireFieldInsertButtons(row, input);
 
       function submitField() {
         if (input.disabled && input.classList.contains('is-correct')) return;
@@ -2057,76 +2410,37 @@
           return;
         }
 
-        var fieldCorrect = correctParts[index] || '';
-        var fieldType = fieldTypes[index] || 'number';
         checkBtn.disabled = true;
         input.disabled = true;
 
-        var body = {
-          user_answer: userValue,
-          correct_answer_raw: fieldCorrect,
-          answer_type: fieldType,
-        };
-        if (trackable) {
-          body.level = block.dataset.level;
-          body.subject = block.dataset.subject;
-          body.topic = block.dataset.topic;
-          body.difficulty = block.dataset.difficulty || 'foundational';
-          if (block.dataset.attemptGroupId) {
-            body.attempt_group_id = block.dataset.attemptGroupId;
-            body.part_index = index;
-            body.part_total = partTotal;
-          }
-        }
-
-        fetch('/api/v1/problems/check', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-          credentials: 'same-origin',
-          body: JSON.stringify(body),
-        })
-          .then(function (response) {
-            return response.json().then(function (data) {
-              if (!response.ok) {
-                var err = new Error(data.error || 'Check failed');
-                err.data = data;
-                throw err;
-              }
-              return data;
-            });
-          })
-          .then(function (data) {
-            input.classList.remove('is-correct', 'is-wrong');
-            if (data.correct) {
-              input.classList.add('is-correct');
-              input.disabled = true;
-              checkBtn.disabled = true;
-              if (fieldFeedback) {
-                fieldFeedback.textContent = '\u2713 ' + freeResponseCorrectFeedback(data, userValue);
-                fieldFeedback.style.color = '#16a34a';
-              }
-              maybePersistAllFields();
-            } else {
-              input.classList.add('is-wrong');
-              input.disabled = false;
-              checkBtn.disabled = false;
-              if (fieldFeedback) {
-                fieldFeedback.textContent = '\u2717 ' + (data.feedback || 'Not quite \u2014 try again.');
-                fieldFeedback.style.color = '#dc2626';
-              }
+        submitNumberFieldAnswer(index, row, fieldType, userValue, function (data, userValue) {
+          input.classList.remove('is-correct', 'is-wrong');
+          if (data.correct) {
+            input.classList.add('is-correct');
+            input.disabled = true;
+            checkBtn.disabled = true;
+            if (fieldFeedback) {
+              fieldFeedback.textContent = '\u2713 ' + freeResponseCorrectFeedback(data, userValue);
+              fieldFeedback.style.color = '#16a34a';
             }
-          })
-          .catch(function (err) {
+            maybePersistAllFields();
+          } else {
+            input.classList.add('is-wrong');
             input.disabled = false;
             checkBtn.disabled = false;
             if (fieldFeedback) {
-              fieldFeedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
+              fieldFeedback.textContent = '\u2717 ' + freeResponseWrongFeedback(block, data);
               fieldFeedback.style.color = '#dc2626';
             }
-          });
+          }
+        }).catch(function (err) {
+          input.disabled = false;
+          checkBtn.disabled = false;
+          if (fieldFeedback) {
+            fieldFeedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
+            fieldFeedback.style.color = '#dc2626';
+          }
+        });
       }
 
       checkBtn.addEventListener('click', submitField);
@@ -2137,6 +2451,173 @@
         }
       });
     });
+  }
+
+  function wireProofStepsFreeResponse(block, correctRaw, trackable) {
+    var row = block.querySelector('.free-response-row--proof-steps');
+    if (!row) return;
+    var orderMatters = (row.getAttribute('data-order-matters')
+      || block.getAttribute('data-order-matters')
+      || '1') === '1';
+    var selected = [];
+    var bank = row.querySelector('.free-response-proof-bank');
+    var list = row.querySelector('.free-response-proof-selected');
+    var clearBtn = row.querySelector('.free-response-proof-clear');
+    var checkBtn = row.querySelector('.free-response-check-btn');
+    var feedback = block.querySelector('.free-response-feedback');
+
+    function stepButton(id) {
+      if (!bank) return null;
+      return bank.querySelector('.free-response-proof-step[data-step-id="' + id + '"]');
+    }
+
+    function renderSelected() {
+      if (!list) return;
+      list.innerHTML = '';
+      selected.forEach(function (id, index) {
+        var btn = stepButton(id);
+        var text = btn ? btn.innerHTML : id;
+        var li = document.createElement('li');
+        li.innerHTML = text + ' ';
+        var remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'btn btn-secondary free-response-proof-remove';
+        remove.textContent = 'Remove';
+        remove.addEventListener('click', function () {
+          selected.splice(index, 1);
+          syncBankState();
+          renderSelected();
+        });
+        li.appendChild(remove);
+        list.appendChild(li);
+      });
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        window.MathJax.typesetPromise([list]).catch(function () {});
+      }
+    }
+
+    function syncBankState() {
+      if (!bank) return;
+      bank.querySelectorAll('.free-response-proof-step').forEach(function (btn) {
+        var id = btn.getAttribute('data-step-id') || '';
+        var used = selected.indexOf(id) >= 0;
+        if (orderMatters) {
+          btn.classList.toggle('is-used', used);
+          btn.disabled = used;
+          btn.classList.remove('is-selected-toggle');
+        } else {
+          btn.classList.toggle('is-selected-toggle', used);
+          btn.disabled = false;
+          btn.classList.remove('is-used');
+        }
+      });
+    }
+
+    if (bank) {
+      bank.querySelectorAll('.free-response-proof-step').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (checkBtn && checkBtn.disabled) return;
+          var id = btn.getAttribute('data-step-id') || '';
+          if (!id) return;
+          var idx = selected.indexOf(id);
+          if (orderMatters) {
+            if (idx >= 0) return;
+            selected.push(id);
+          } else if (idx >= 0) {
+            selected.splice(idx, 1);
+          } else {
+            selected.push(id);
+          }
+          syncBankState();
+          renderSelected();
+        });
+      });
+    }
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        if (checkBtn && checkBtn.disabled) return;
+        selected = [];
+        syncBankState();
+        renderSelected();
+        if (feedback) {
+          feedback.textContent = '';
+          feedback.style.color = '';
+        }
+      });
+    }
+
+    if (!checkBtn) return;
+    checkBtn.addEventListener('click', function () {
+      if (!selected.length) {
+        if (feedback) {
+          feedback.textContent = orderMatters
+            ? 'Select the correct proof steps in order.'
+            : 'Select all correct statements.';
+          feedback.style.color = '#dc2626';
+        }
+        return;
+      }
+      var body = {
+        user_answer: selected.join('|'),
+        correct_answer_raw: correctRaw,
+        answer_type: 'proof_steps',
+      };
+      if (trackable) {
+        body.level = block.dataset.level;
+        body.subject = block.dataset.subject;
+        body.topic = block.dataset.topic;
+        body.difficulty = block.dataset.difficulty || 'foundational';
+      }
+      checkBtn.disabled = true;
+      fetch('/api/v1/problems/check', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(body),
+      })
+        .then(function (response) {
+          return response.json().then(function (data) {
+            if (!response.ok) {
+              var err = new Error(data.error || 'Check failed');
+              err.data = data;
+              throw err;
+            }
+            return data;
+          });
+        })
+        .then(function (data) {
+          if (feedback) {
+            feedback.textContent = data.correct
+              ? '\u2713 Correct!'
+              : ('\u2717 ' + (data.feedback || 'Not quite.'));
+            feedback.style.color = data.correct ? '#16a34a' : '#dc2626';
+          }
+          if (data.correct) {
+            row.classList.add('is-correct');
+            if (bank) {
+              bank.querySelectorAll('.free-response-proof-step').forEach(function (b) {
+                b.disabled = true;
+              });
+            }
+            if (clearBtn) clearBtn.disabled = true;
+          } else {
+            checkBtn.disabled = false;
+          }
+        })
+        .catch(function (err) {
+          checkBtn.disabled = false;
+          if (feedback) {
+            feedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
+            feedback.style.color = '#dc2626';
+          }
+        });
+    });
+
+    syncBankState();
   }
 
   function wireFreeResponseBlock(block) {
@@ -2153,6 +2634,10 @@
 
     if (answerType === 'number_fields') {
       wireNumberFieldsFreeResponse(block, correctRaw, trackable);
+      return;
+    }
+    if (answerType === 'proof_steps') {
+      wireProofStepsFreeResponse(block, correctRaw, trackable);
       return;
     }
 
@@ -2272,10 +2757,20 @@
         );
         return { fields: fields, all: fields };
       }
+      if (answerType === 'quadratic_roots') {
+        var rootInputs = Array.prototype.slice.call(
+          block.querySelectorAll('.free-response-input-quadratic-root')
+        );
+        if (rootInputs.length >= 2) {
+          return { fields: rootInputs, all: rootInputs };
+        }
+        var singleRoot = block.querySelector('.free-response-input-quadratic-roots')
+          || block.querySelector('.free-response-row--quadratic-roots .free-response-input');
+        return { single: singleRoot, all: singleRoot ? [singleRoot] : [] };
+      }
       var single = block.querySelector('.free-response-row--number .free-response-input')
         || block.querySelector('.free-response-row--fraction .free-response-input')
         || block.querySelector('.free-response-row--linear .free-response-input')
-        || block.querySelector('.free-response-row--quadratic-roots .free-response-input')
         || block.querySelector('.free-response-row--vector .free-response-input');
       return { single: single, all: single ? [single] : [] };
     }
@@ -2333,6 +2828,9 @@
         var den = inputs.den ? (inputs.den.value || '').trim() : '';
         return num + '|' + (den || '1');
       }
+      if (answerType === 'quadratic_roots') {
+        return readQuadraticRootsUserAnswer(block);
+      }
       return inputs.single ? (inputs.single.value || '').trim() : '';
     }
 
@@ -2389,6 +2887,11 @@
       if (answerType === 'algebraic_fraction') {
         return !(inputs.num && (inputs.num.value || '').trim());
       }
+      if (answerType === 'quadratic_roots' && inputs.fields && inputs.fields.length >= 2) {
+        return inputs.fields.some(function (input) {
+          return !(input.value || '').trim();
+        });
+      }
       return !readUserAnswer();
     }
 
@@ -2410,6 +2913,7 @@
       if (answerType === 'surd') return 'Enter your answer in surd form.';
       if (answerType === 'algebraic') return 'Enter your simplified expression.';
       if (answerType === 'algebraic_fraction') return 'Enter the surd numerator (denominator optional if it is 1).';
+      if (answerType === 'quadratic_roots') return 'Enter a value in every root field.';
       return 'Enter an answer first.';
     }
 
@@ -2526,7 +3030,7 @@
               if (nlWrong) nlWrong.classList.remove('is-disabled');
             }
             if (feedback) {
-              feedback.textContent = '\u2717 ' + (data.feedback || 'Not quite \u2014 try again.');
+              feedback.textContent = '\u2717 ' + freeResponseWrongFeedback(block, data);
               feedback.style.color = '#dc2626';
             }
           }

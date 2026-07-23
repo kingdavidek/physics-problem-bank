@@ -1,8 +1,8 @@
 """
 GCSE Maths – Changing the Subject
 8 foundational · 10 intermediate · 10 difficult · 12 MCQ types (randomised each time)
-Graded practice variants return (question, solution, hint, marks, raw).
-The first-step MCQ variant stays as a 4-tuple.
+Graded practice variants return (question, solution, hint, marks, raw)
+or an MCQ 6-tuple (question, solution, hint, marks, options, correct_letter).
 """
 import random
 from generators.shared.utils import make_problem
@@ -53,7 +53,13 @@ def _subj_algebraic_answer(expr, format_hint=None):
 def _subj_problem_from_output(out, difficulty):
     q, s, hint, marks = out[:4]
     extra = {}
-    if len(out) >= 5:
+    if len(out) >= 6 and isinstance(out[4], (list, tuple)):
+        extra = {
+            'options': list(out[4]),
+            'correct_answer': out[5],
+            'choice_no_shuffle': True,
+        }
+    elif len(out) >= 5:
         raw = out[4]
         if isinstance(raw, dict) and raw.get('type') == 'algebraic':
             text = str(raw.get('value') or '')
@@ -62,9 +68,11 @@ def _subj_problem_from_output(out, difficulty):
                 'answer_type': 'algebraic',
                 'answer_format_hint': raw.get(
                     'format_hint',
-                    'Enter the rearranged formula, e.g. x = (y - 3)/2',
+                    'Enter the right-hand side, e.g. P/V or (y - 3)/2',
                 ),
             }
+            if '=' in text:
+                extra['answer_subject'] = text.split('=', 1)[0]
     return make_problem(
         q, s, hint, difficulty, marks,
         'gcse', 'maths', 'changing_the_subject', **extra
@@ -198,13 +206,16 @@ def _cts_f_first_step():
         rf"Add \({c}\) to both sides",
         rf"Square both sides",
     ]
-    opts = wrong + [correct]
-    random.shuffle(opts)
+    texts = wrong + [correct]
+    random.shuffle(texts)
     letters = "ABCD"
-    correct_letter = letters[opts.index(correct)]
-    q += "<br>" + "<br>".join(f"{letters[i]}) {opts[i]}" for i in range(4))
-    s = rf"Remove the constant term first → <strong>{correct_letter}</strong>."
-    return q, s, "Undo operations in reverse order: +c before ×m.", 2
+    correct_letter = letters[texts.index(correct)]
+    opts = [f"{letters[i]}  {texts[i]}" for i in range(4)]
+    s = (
+        rf"Undo \(+{c}\) first (reverse order): subtract \({c}\) from both sides.<br>"
+        rf"Answer: <strong>{correct_letter}</strong>"
+    )
+    return q, s, "Undo operations in reverse order: +c before ×m.", 2, opts, correct_letter
 
 
 # ══════════════════════════════════════════════════════════════════════════════

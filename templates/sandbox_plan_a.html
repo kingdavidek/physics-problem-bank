@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Sandbox — Plan A/B checkpoints{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+
+<div class="lesson-hero">
+    <h1>Sandbox: Plan A / B checkpoints</h1>
+    <p class="hero-sub">
+        Unlinked review page for Plan C worded-conceptual / pure-theorem step banks.
+        Earlier Plan A/B checkpoints remain available in the main generator queues.
+    </p>
+</div>
+
+<nav class="sandbox-nav" aria-label="Checkpoint questions">
+    <ol class="sandbox-nav-list">
+    {% for item in items %}
+        <li>
+            <a class="sandbox-nav-link{% if loop.index0 == index %} is-active{% endif %}"
+               href="{{ url_for('sandbox_plan_a_checkpoints', q=loop.index0) }}">
+                {{ loop.index }}. {{ item.label }}
+            </a>
+        </li>
+    {% endfor %}
+    </ol>
+</nav>
+
+{% set item = items[index] %}
+{% set problem = item.problem %}
+
+<div class="problem-card">
+    <div class="section-panel-header">
+        {{ index + 1 }} / {{ items|length }} · {{ item.label }}
+    </div>
+    <div class="problem-card-inner">
+
+    <p class="sandbox-meta">
+        <span class="badge badge-{{ problem.difficulty }}">{{ problem.difficulty | title }}</span>
+        <span class="badge badge-marks">{{ problem.marks }} mark{% if problem.marks > 1 %}s{% endif %}</span>
+        <span class="badge badge-mcq">{{ item.topic }}</span>
+        <code style="font-size:0.8rem;">{{ item.variant }}</code>
+    </p>
+    <p class="sandbox-note">{{ item.plan_note }}</p>
+
+    <div class="question">
+        <div class="question-content">{{ problem.question | format_question_html }}</div>
+        {% set fr_level = 'gcse' %}
+        {% set fr_subject = 'maths' %}
+        {% set fr_topic = item.topic %}
+        {% set fr_difficulty = item.difficulty %}
+        {% set fr_id = 'sandbox-free-response' %}
+        {% include 'partials/free_response_inline.html' %}
+    </div>
+
+    <details class="answer-reveal" open>
+        <summary>Show Answer</summary>
+        <div class="answer">
+            {% if '<pre>' in problem.solution %}
+                {{ problem.solution | safe }}
+            {% else %}
+                {{ problem.solution | format_question_html }}
+            {% endif %}
+        </div>
+        {% if problem.hint %}
+        <details class="hint-reveal">
+            <summary>💡 Key concept</summary>
+            <div class="hint">{{ problem.hint | safe }}</div>
+        </details>
+        {% endif %}
+    </details>
+
+    <div class="problem-actions sandbox-actions">
+        {% if index > 0 %}
+        <a class="btn btn-secondary" href="{{ url_for('sandbox_plan_a_checkpoints', q=index - 1) }}">← Previous</a>
+        {% endif %}
+        <a class="btn btn-secondary" href="{{ url_for('sandbox_plan_a_checkpoints', q=index) }}">🎲 New numbers</a>
+        {% if index + 1 < items|length %}
+        <a class="btn" href="{{ url_for('sandbox_plan_a_checkpoints', q=index + 1) }}">Next →</a>
+        {% endif %}
+    </div>
+
+    </div>
+</div>
+
+</div>
+
+<style>
+.sandbox-nav {
+    margin: 0 0 1.25rem;
+    padding: 1rem 1.1rem;
+    background: var(--panel-bg, #f7f5f0);
+    border-radius: 10px;
+}
+.sandbox-nav-list {
+    margin: 0;
+    padding-left: 1.25rem;
+    display: grid;
+    gap: 0.35rem;
+}
+.sandbox-nav-link {
+    text-decoration: none;
+    color: var(--text, #333);
+}
+.sandbox-nav-link.is-active {
+    font-weight: 700;
+    color: var(--primary, #01696f);
+}
+.sandbox-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    align-items: center;
+    margin: 0 0 0.75rem;
+}
+.sandbox-note {
+    margin: 0 0 1rem;
+    color: var(--text-muted, #666);
+    font-size: 0.92rem;
+}
+.sandbox-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1.25rem;
+}
+</style>
+{% endblock %}

@@ -4,7 +4,14 @@ import math
 from fractions import Fraction
 import sympy as sp
 
-from generators.shared.utils import make_problem, problem_from_choice_output
+from generators.shared.utils import (
+    make_problem,
+    problem_from_choice_output,
+    proof_steps_answer,
+    proof_steps_problem_extra,
+    quadratic_roots_format_hint,
+    quadratic_roots_ui_labels,
+)
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from generators.shared.variant_utils import (
     select_tier_variants,
@@ -52,6 +59,8 @@ def _basic_maths_practice(topic, difficulty, mode, variant_name):
         return _fdp_problem_from_output(out, difficulty)
     if topic == 'surds':
         return _surd_problem_from_output(out, difficulty)
+    if topic == 'algebra':
+        return _algebra_problem_from_output(out, difficulty)
     choice = problem_from_choice_output(out, difficulty, 'gcse', 'maths', topic)
     if choice:
         return choice
@@ -2440,6 +2449,136 @@ def gcse_bidmas_proc_negative_coefficient():
 # GCSE MATHS — ALGEBRA (practice variants + MCQ)
 # -----------------------------------------------
 
+def _algebra_raw(value):
+    """Canonical numeric string for typed answer checking."""
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        if value == int(value):
+            return str(int(value))
+        return f'{value:g}'
+    if isinstance(value, sp.Rational):
+        if value.q == 1:
+            return str(int(value.p))
+        return f'{int(value.p)}/{int(value.q)}'
+    return str(value)
+
+
+def _algebra_linear_answer(value, var='x'):
+    return {
+        'type': 'linear',
+        'value': _algebra_raw(value),
+        'var': str(var).strip().lower(),
+    }
+
+
+def _algebra_quadratic_roots_answer(*roots, format_hint=None):
+    payload = {
+        'type': 'quadratic_roots',
+        'roots': tuple(_algebra_raw(r) for r in roots),
+    }
+    if format_hint:
+        payload['format_hint'] = format_hint
+    return payload
+
+
+def _algebra_number_pair_answer(val_a, val_b, label_a='x', label_b='y', sep=','):
+    return {
+        'type': 'number_pair',
+        'values': (_algebra_raw(val_a), _algebra_raw(val_b)),
+        'label_a': label_a,
+        'label_b': label_b,
+        'sep': sep,
+    }
+
+
+def _algebra_algebraic_answer(expr, format_hint=None, subject=None):
+    payload = {'type': 'algebraic', 'value': str(expr)}
+    if format_hint:
+        payload['format_hint'] = format_hint
+    if subject:
+        payload['subject'] = subject
+    return payload
+
+
+def _algebra_expr_str(expr):
+    """SymPy expression → algebraic checker string (e.g. 2*x**2 + x - 3)."""
+    return sp.sstr(expr)
+
+
+def _algebra_linear_raw(raw):
+    var = raw.get('var') or 'x'
+    val = raw.get('value')
+    if var == 'x':
+        return str(val)
+    return f'{var}={val}'
+
+
+def _algebra_problem_from_output(out, difficulty):
+    choice = problem_from_choice_output(out, difficulty, 'gcse', 'maths', 'algebra')
+    if choice:
+        return choice
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict):
+            raw_type = raw.get('type')
+            if raw_type == 'linear':
+                extra = {
+                    'correct_answer_raw': _algebra_linear_raw(raw),
+                    'answer_type': 'linear',
+                    'answer_format_hint': 'Enter the value (e.g. x = 3 or just 3)',
+                }
+            elif raw_type == 'quadratic_roots':
+                roots = raw.get('roots') or ()
+                extra = {
+                    'correct_answer_raw': ','.join(str(r) for r in roots),
+                    'answer_type': 'quadratic_roots',
+                    'answer_labels': quadratic_roots_ui_labels(len(roots)),
+                    'answer_format_hint': quadratic_roots_format_hint(
+                        len(roots), raw.get('format_hint'),
+                    ),
+                }
+            elif raw_type == 'number_pair':
+                val_a, val_b = raw['values']
+                extra = {
+                    'correct_answer_raw': f'{val_a}|{val_b}',
+                    'answer_type': 'number_pair',
+                    'answer_labels': [raw['label_a'], raw['label_b']],
+                    'answer_pair_sep': raw.get('sep', ','),
+                }
+            elif raw_type == 'algebraic':
+                text = str(raw.get('value') or '')
+                extra = {
+                    'correct_answer_raw': text,
+                    'answer_type': 'algebraic',
+                    'answer_format_hint': raw.get(
+                        'format_hint',
+                        'Enter the simplified expression',
+                    ),
+                }
+                if raw.get('subject'):
+                    extra['answer_subject'] = raw['subject']
+                elif '=' in text:
+                    extra['answer_subject'] = text.split('=', 1)[0]
+        elif isinstance(raw, (int, float, sp.Rational)):
+            extra = {
+                'correct_answer_raw': _algebra_raw(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+        elif isinstance(raw, str):
+            extra = {
+                'correct_answer_raw': raw,
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+    return make_problem(
+        q, s, hint, difficulty, marks, 'gcse', 'maths', 'algebra', **extra
+    )
+
+
 def _algebra_linear_equation(a_lo, a_hi, b_lo, b_hi, c_lo, c_hi):
     x = sp.Symbol('x')
     a = random.randint(a_lo, a_hi)
@@ -2451,7 +2590,7 @@ def _algebra_linear_equation(a_lo, a_hi, b_lo, b_hi, c_lo, c_hi):
     q = rf"Solve: \( {a}x + {b} = {c} \)"
     s = rf"Subtract \( {b} \): \( {a}x = {c - b} \)<br>Divide by \( {a} \): \( x = \boxed{{{sp.latex(ans)}}} \)"
     hint = r"Isolate \(x\) using inverse operations."
-    return q, s, hint, 2
+    return q, s, hint, 2, _algebra_linear_answer(ans)
 
 
 def algebra_practice_linear_1():
@@ -2476,7 +2615,7 @@ def _algebra_factorise_problem(r1_range, r2_range):
     q = rf"Solve: \( {sp.latex(expr)} = 0 \)"
     s = rf"Factorise: \( (x - {r1})(x - {r2}) = 0 \)<br>\( x = \boxed{{{r1}}} \) or \( x = \boxed{{{r2}}} \)"
     hint = r"Factorise, then set each bracket equal to zero."
-    return q, s, hint, 3
+    return q, s, hint, 3, _algebra_quadratic_roots_answer(r1, r2)
 
 
 def algebra_practice_factorise_1():
@@ -2510,7 +2649,9 @@ def _algebra_quadratic_formula_problem():
     \( x = \frac{{{-b_c} \pm \sqrt{{{discriminant}}}}}{{{2 * a_c}}} \)<br><br>
     \( x = \boxed{{{r1}}} \) or \( x = \boxed{{{r2}}} \)"""
     hint = r"Use \( x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a} \)."
-    return q, s, hint, 4
+    return q, s, hint, 4, _algebra_quadratic_roots_answer(
+        r1, r2, format_hint='Enter roots to 2 d.p., separated by commas',
+    )
 
 
 def _algebra_hcf_factorise_problem():
@@ -2524,7 +2665,9 @@ def _algebra_hcf_factorise_problem():
     q = rf"Factorise fully: \( {coeff_x}x + {const} \)"
     s = rf"HCF is {hcf}: \( {coeff_x}x + {const} = \boxed{{{factored}}} \)"
     hint = r"Find the largest number that divides both terms, and factor it out."
-    return q, s, hint, 2
+    return q, s, hint, 2, _algebra_algebraic_answer(
+        factored, format_hint='e.g. 3(2x + 5)',
+    )
 
 
 def _algebra_change_subject_problem():
@@ -2538,18 +2681,23 @@ def _algebra_change_subject_problem():
         b = random.randint(1, 15)
         formula = f"{dep} = {a}{subj} + {b}"
         ans_latex = rf"{subj} = \frac{{{dep} - {b}}}{{{a}}}"
+        ans_raw = f'{subj}=({dep}-{b})/{a}'
     else:
-        subj, formula, ans_latex = random.choice([
-            ('t', 'v = u + at', r't = \frac{v - u}{a}'),
-            ('w', 'P = 2l + 2w', r'w = \frac{P - 2l}{2}'),
-            ('h', 'A = bh', r'h = \frac{A}{b}'),
-            ('x', 'y = mx + c', r'x = \frac{y - c}{m}'),
-            ('r', 'C = 2\\pi r', r'r = \frac{C}{2\pi}'),
+        subj, formula, ans_latex, ans_raw = random.choice([
+            ('t', 'v = u + at', r't = \frac{v - u}{a}', 't=(v-u)/a'),
+            ('w', 'P = 2l + 2w', r'w = \frac{P - 2l}{2}', 'w=(P-2l)/2'),
+            ('h', 'A = bh', r'h = \frac{A}{b}', 'h=A/b'),
+            ('x', 'y = mx + c', r'x = \frac{y - c}{m}', 'x=(y-c)/m'),
+            ('r', 'C = 2\\pi r', r'r = \frac{C}{2\pi}', 'r=C/(2*pi)'),
         ])
     q = rf"Make \({subj}\) the subject of the formula: \( {formula} \)"
     s = rf"Rearrange step by step to get <strong>\( {ans_latex} \)</strong>"
     hint = r"Treat the formula like an equation: undo operations on the subject in reverse order."
-    return q, s, hint, 3
+    return q, s, hint, 3, _algebra_algebraic_answer(
+        ans_raw,
+        format_hint='Enter the rearranged formula, e.g. x=(y-3)/2',
+        subject=subj,
+    )
 
 
 def _algebra_simultaneous_problem():
@@ -2569,7 +2717,7 @@ def _algebra_simultaneous_problem():
         rf"Check in both equations."
     )
     hint = r"Eliminate one variable by adding or subtracting the equations, then substitute back."
-    return q, s, hint, 4
+    return q, s, hint, 4, _algebra_number_pair_answer(x_val, y_val)
 
 
 def algebra_practice_quadratic_1():
@@ -2595,7 +2743,10 @@ def algebra_practice_expand_binomial():
     q = rf"Expand and simplify: \( ({a}x + {b})({c}x + {d}) \)"
     s = rf"\( ({a}x + {b})({c}x + {d}) = \boxed{{{sp.latex(expr)}}} \)"
     hint = r"Multiply each term in the first bracket by each term in the second, then collect like terms."
-    return q, s, hint, 2
+    return q, s, hint, 2, _algebra_algebraic_answer(
+        _algebra_expr_str(expr),
+        format_hint='Enter the expanded expression, e.g. 2x^2 + 5x + 3',
+    )
 
 
 def algebra_practice_linear_both_sides():
@@ -2614,7 +2765,7 @@ def algebra_practice_linear_both_sides():
         rf"\( x = \boxed{{{x_val}}} \)"
     )
     hint = r"Collect \(x\) terms on one side and numbers on the other, then divide."
-    return q, s, hint, 3
+    return q, s, hint, 3, _algebra_linear_answer(x_val)
 
 
 def algebra_practice_substitution():
@@ -2633,7 +2784,7 @@ def algebra_practice_substitution():
         rf"\boxed{{{result}}} \)"
     )
     hint = r"Replace every \(x\) with the given number, respecting powers and negative signs."
-    return q, s, hint, 2
+    return q, s, hint, 2, result
 
 
 def algebra_practice_factorise_hcf():
@@ -2665,7 +2816,7 @@ def algebra_practice_word_linear():
         rf"\( x = \boxed{{{miles}}} \) miles"
     )
     hint = r"Write an equation with a fixed amount plus rate × miles, then solve."
-    return q, s, hint, 3
+    return q, s, hint, 3, miles
 
 
 def algebra_practice_simultaneous():
@@ -2683,7 +2834,10 @@ def algebra_practice_expand_mixed():
     q = rf"Expand and simplify: \( ({a}x + {b})(x + {c}) \)"
     s = rf"\( ({a}x + {b})(x + {c}) = \boxed{{{sp.latex(expr)}}} \)"
     hint = r"Multiply term by term, then collect \(x^2\), \(x\) and constant terms."
-    return q, s, hint, 3
+    return q, s, hint, 3, _algebra_algebraic_answer(
+        _algebra_expr_str(expr),
+        format_hint='Enter the expanded expression, e.g. 2x^2 + 5x + 3',
+    )
 
 
 def algebra_practice_brackets_both_sides():
@@ -2701,12 +2855,11 @@ def algebra_practice_brackets_both_sides():
         rf"\( x = \boxed{{{x_val}}} \)"
     )
     hint = r"Expand brackets first, then collect \(x\) terms and solve."
-    return q, s, hint, 3
+    return q, s, hint, 3, _algebra_linear_answer(x_val)
 
 
 def algebra_practice_consecutive_integers():
     """Consecutive integers problem leading to an equation."""
-    x = sp.Symbol('x')
     n = random.randint(3, 8)
     start = random.randint(10, 20)
     total = sum(range(start, start + n))
@@ -2720,7 +2873,7 @@ def algebra_practice_consecutive_integers():
         rf"\( x = \boxed{{{start}}} \)"
     )
     hint = r"Write the sum as \(nx\) plus the sum of 0,1,…,(n−1), then solve."
-    return q, s, hint, 4
+    return q, s, hint, 4, _algebra_linear_answer(start)
 
 
 def gcse_maths_algebra(difficulty, mode, variant_name=None):
@@ -2730,64 +2883,35 @@ def gcse_maths_algebra(difficulty, mode, variant_name=None):
     if variant_name:
         return _basic_maths_practice('algebra', difficulty, mode, variant_name)
 
-    x = sp.Symbol('x')
-
-    if difficulty == 'foundational':
-        a = random.randint(2, 8)
-        b = random.randint(1, 10)
-        c = random.randint(b + 1, 30)
-        ans = sp.Rational(c - b, a)
-        q = rf"Solve: \( {a}x + {b} = {c} \)"
-        s = rf"Subtract \( {b} \) from both sides: \( {a}x = {c - b} \)<br>Divide by \( {a} \): \( x = \boxed{{{sp.latex(ans)}}} \)"
-        hint = r"""
-            <strong>Solving a linear equation</strong><br>
-            Use inverse operations to isolate \( x \). Whatever is added, subtract it.
-            Whatever is multiplied, divide it:
-            \[ ax + b = c \Rightarrow x = \frac{c - b}{a} \]
-        """
-        marks = 2
-
-    elif difficulty == 'intermediate':
-        r1 = random.randint(-6, 6)
-        r2 = random.randint(-6, 6)
-        expr = sp.expand((x - r1) * (x - r2))
-        q = rf"Solve: \( {sp.latex(expr)} = 0 \)"
-        s = rf"Factorise: \( (x - {r1})(x - {r2}) = 0 \)<br>Therefore \( x = \boxed{{{r1}}} \) or \( x = \boxed{{{r2}}} \)"
-        hint = r"""
-            <strong>Solving a quadratic by factorisation</strong><br>
-            Find two numbers that multiply to give \( c \) and add to give \( b \).
-            Write as two brackets and set each equal to zero:
-            \[ (x + p)(x + q) = 0 \Rightarrow x = -p \text{ or } x = -q \]
-        """
-        marks = 3
-
-    else:
-        while True:
-            a_c = random.randint(1, 4)
-            b_c = random.randint(-10, 10)
-            c_c = random.randint(-12, 12)
-            if c_c == 0:
-                continue
-            discriminant = b_c**2 - 4 * a_c * c_c
-            if discriminant > 0:
-                break
-        expr = a_c * x**2 + b_c * x + c_c
-        r1 = round((-b_c + discriminant**0.5) / (2 * a_c), 2)
-        r2 = round((-b_c - discriminant**0.5) / (2 * a_c), 2)
-        q = rf"Solve \( {sp.latex(expr)} = 0 \), giving your answers to 2 decimal places."
-        s = rf"""Using the quadratic formula:<br><br>
-        \( x = \frac{{{-b_c} \pm \sqrt{{{discriminant}}}}}{{{2 * a_c}}} \)<br><br>
-        \( x = \boxed{{{r1}}} \) or \( x = \boxed{{{r2}}} \)"""
-        hint = r"""
-            <strong>The Quadratic Formula</strong><br>
-            When a quadratic cannot be factorised easily, use:
-            \[ x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a} \]
-            Identify \( a \), \( b \), and \( c \) from your equation, substitute carefully,
-            and calculate both the \( + \) and \( - \) versions.
-        """
-        marks = 4
-
-    return make_problem(q, s, hint, difficulty, marks, 'gcse', 'maths', 'algebra')
+    pools = {
+        'foundational': [
+            algebra_practice_linear_1,
+            algebra_practice_linear_2,
+            algebra_practice_linear_3,
+        ],
+        'intermediate': [
+            algebra_practice_factorise_1,
+            algebra_practice_factorise_2,
+            algebra_practice_factorise_3,
+            algebra_practice_expand_binomial,
+            algebra_practice_linear_both_sides,
+            algebra_practice_substitution,
+            algebra_practice_factorise_hcf,
+            algebra_practice_change_subject,
+        ],
+        'difficult': [
+            algebra_practice_quadratic_1,
+            algebra_practice_word_linear,
+            algebra_practice_simultaneous,
+            algebra_practice_expand_mixed,
+            algebra_practice_brackets_both_sides,
+            algebra_practice_consecutive_integers,
+            algebra_practice_quadratic_2,
+            algebra_practice_quadratic_3,
+        ],
+    }
+    variant = random.choice(pools.get(difficulty, pools['foundational']))
+    return _algebra_problem_from_output(variant(), difficulty)
 
 
 
@@ -3926,23 +4050,86 @@ def _svg_section_line(m, n):
 
 def _svg_collinear_pts_grid(ax=1, ay=2, bx=3, by=5, cx=5, cy=8):
     """Grid showing three collinear points with parallel vector arrows AB and BC."""
-    def sv(x, y): return int(30 + x * 42), int(210 - y * 22)
+    xs = [ax, bx, cx]
+    ys = [ay, by, cy]
+    pad = 1
+    xmin = min(xs) - pad
+    xmax = max(xs) + pad
+    ymin = min(ys) - pad
+    ymax = max(ys) + pad
+    x_span = max(xmax - xmin, 1)
+    y_span = max(ymax - ymin, 1)
+
+    margin_l, margin_r, margin_t, margin_b = 28, 32, 14, 30
+    max_plot_w, max_plot_h = 280, 175
+    cell = min(42, max_plot_w / x_span, max_plot_h / y_span)
+    cell = max(18, int(cell))
+
+    plot_w = int(x_span * cell)
+    plot_h = int(y_span * cell)
+    origin_x = margin_l
+    origin_y = margin_t + plot_h
+    width = margin_l + plot_w + margin_r
+    height = margin_t + plot_h + margin_b
+
+    def sv(x, y):
+        return int(origin_x + (x - xmin) * cell), int(origin_y - (y - ymin) * cell)
+
     Ax, Ay = sv(ax, ay)
     Bx, By = sv(bx, by)
     Cx, Cy = sv(cx, cy)
-    gh = "".join(f'<line x1="30" y1="{210 - j * 22}" x2="282" y2="{210 - j * 22}" stroke="#e0ddd6" stroke-width="1"/>' for j in range(10))
-    gv = "".join(f'<line x1="{30 + i * 42}" y1="10" x2="{30 + i * 42}" y2="215" stroke="#e0ddd6" stroke-width="1"/>' for i in range(7))
-    xt = "".join(f'<text x="{30 + i * 42}" y="228" font-size="11" text-anchor="middle" fill="#888">{i}</text>' for i in range(7))
-    yt = "".join(f'<text x="16" y="{213 - j * 22}" font-size="11" text-anchor="middle" fill="#888">{j}</text>' for j in range(10))
+
+    gh = "".join(
+        f'<line x1="{origin_x}" y1="{origin_y - (y - ymin) * cell}" '
+        f'x2="{origin_x + plot_w}" y2="{origin_y - (y - ymin) * cell}" '
+        f'stroke="#e0ddd6" stroke-width="1"/>'
+        for y in range(int(ymin), int(ymax) + 1)
+    )
+    gv = "".join(
+        f'<line x1="{origin_x + (x - xmin) * cell}" y1="{margin_t}" '
+        f'x2="{origin_x + (x - xmin) * cell}" y2="{origin_y}" '
+        f'stroke="#e0ddd6" stroke-width="1"/>'
+        for x in range(int(xmin), int(xmax) + 1)
+    )
+    xt = "".join(
+        f'<text x="{origin_x + (x - xmin) * cell}" y="{origin_y + 18}" '
+        f'font-size="11" text-anchor="middle" fill="#888">{x}</text>'
+        for x in range(int(xmin), int(xmax) + 1)
+    )
+    yt = "".join(
+        f'<text x="{origin_x - 14}" y="{origin_y - (y - ymin) * cell + 4}" '
+        f'font-size="11" text-anchor="middle" fill="#888">{y}</text>'
+        for y in range(int(ymin), int(ymax) + 1)
+    )
+
+    axis_x = sv(0, ymin)[0] if xmin <= 0 <= xmax else origin_x
+    axis_y = sv(xmin, 0)[1] if ymin <= 0 <= ymax else origin_y
+    axes = (
+        f'<line x1="{origin_x}" y1="{origin_y}" x2="{origin_x + plot_w}" y2="{origin_y}" '
+        f'stroke="#aaa" stroke-width="1.5"/>'
+        f'<line x1="{origin_x}" y1="{margin_t}" x2="{origin_x}" y2="{origin_y}" '
+        f'stroke="#aaa" stroke-width="1.5"/>'
+    )
+    if xmin <= 0 <= xmax:
+        axes += (
+            f'<line x1="{axis_x}" y1="{margin_t}" x2="{axis_x}" y2="{origin_y}" '
+            f'stroke="#bbb" stroke-width="1" stroke-dasharray="4,3"/>'
+        )
+    if ymin <= 0 <= ymax:
+        axes += (
+            f'<line x1="{origin_x}" y1="{axis_y}" x2="{origin_x + plot_w}" y2="{axis_y}" '
+            f'stroke="#bbb" stroke-width="1" stroke-dasharray="4,3"/>'
+        )
+
+    marker_id = f'arr-cln-{ax}-{ay}-{cx}-{cy}'
     inner = (
-        '<defs><marker id="arr-cln" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">'
-        '<polygon points="0 0,8 3,0 6" fill="#a13544"/></marker></defs>'
-        f'{gh}{gv}'
-        '<line x1="30" y1="210" x2="284" y2="210" stroke="#aaa" stroke-width="1.5"/>'
-        '<line x1="30" y1="10" x2="30" y2="215" stroke="#aaa" stroke-width="1.5"/>'
-        f'{xt}{yt}'
-        f'<line x1="{Ax}" y1="{Ay}" x2="{Bx}" y2="{By}" stroke="#a13544" stroke-width="2.5" marker-end="url(#arr-cln)"/>'
-        f'<line x1="{Bx}" y1="{By}" x2="{Cx}" y2="{Cy}" stroke="#a13544" stroke-width="2.5" marker-end="url(#arr-cln)"/>'
+        f'<defs><marker id="{marker_id}" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">'
+        f'<polygon points="0 0,8 3,0 6" fill="#a13544"/></marker></defs>'
+        f'{gh}{gv}{axes}{xt}{yt}'
+        f'<line x1="{Ax}" y1="{Ay}" x2="{Bx}" y2="{By}" stroke="#a13544" stroke-width="2.5" '
+        f'marker-end="url(#{marker_id})"/>'
+        f'<line x1="{Bx}" y1="{By}" x2="{Cx}" y2="{Cy}" stroke="#a13544" stroke-width="2.5" '
+        f'marker-end="url(#{marker_id})"/>'
         f'<circle cx="{Ax}" cy="{Ay}" r="5" fill="#333"/>'
         f'<circle cx="{Bx}" cy="{By}" r="5" fill="#333"/>'
         f'<circle cx="{Cx}" cy="{Cy}" r="5" fill="#333"/>'
@@ -3950,7 +4137,7 @@ def _svg_collinear_pts_grid(ax=1, ay=2, bx=3, by=5, cx=5, cy=8):
         f'<text x="{Bx - 14}" y="{By + 4}" font-size="12" font-weight="bold" fill="#333" text-anchor="end">B</text>'
         f'<text x="{Cx + 8}" y="{Cy + 4}" font-size="12" font-weight="bold" fill="#333">C</text>'
     )
-    return _vectors_diagram_svg(310, 242, inner)
+    return _vectors_diagram_svg(width, height, inner)
 
 
 def _svg_triangle_path_addition(ab=(3, 2), bc=(-1, 4), scale=28):
@@ -4221,6 +4408,16 @@ def _vec_vector_combo_answer(*coefficients, labels=('b', 'c')):
     }
 
 
+def _vec_number_fields_answer(values, labels, field_types=None):
+    types = tuple(field_types) if field_types else tuple('number' for _ in values)
+    return {
+        'type': 'number_fields',
+        'values': tuple(str(v) for v in values),
+        'labels': tuple(labels),
+        'field_types': types,
+    }
+
+
 def _vec_two_vectors_answer(x, y, labels=('x', 'y')):
     return {
         'type': 'vector_pair',
@@ -4296,6 +4493,25 @@ def _vec_problem_from_output(out, difficulty):
                         'Use + or − for each term, then enter each coefficient (e.g. 1/5)'
                     ),
                 }
+            elif raw_type == 'number_fields':
+                values = raw.get('values') or ()
+                labels = raw.get('labels') or ()
+                field_types = raw.get('field_types') or ()
+                if values and labels and len(values) == len(labels):
+                    sep = (
+                        '\x1e'
+                        if field_types and any(t != 'number' for t in field_types)
+                        else '|'
+                    )
+                    extra = {
+                        'correct_answer_raw': sep.join(str(v) for v in values),
+                        'answer_type': 'number_fields',
+                        'answer_labels': list(labels),
+                        'answer_field_types': list(field_types) if field_types else (
+                            ['number'] * len(labels)
+                        ),
+                        'answer_format_hint': 'Complete every proof step',
+                    }
             elif raw_type == 'vector_pair':
                 vectors = raw.get('vectors') or ((), ())
                 labels = raw.get('labels') or ('x', 'y')
@@ -4308,6 +4524,8 @@ def _vec_problem_from_output(out, difficulty):
                     'answer_labels': list(labels),
                     'answer_format_hint': 'Enter each component in the x and y vectors above',
                 }
+            elif raw_type == 'proof_steps':
+                extra = proof_steps_problem_extra(raw)
         elif isinstance(raw, (int, float)):
             extra = {
                 'correct_answer_raw': _vec_raw(raw),
@@ -4329,10 +4547,40 @@ def _vectors_found_column_meaning():
     y = random.randint(-6, 8)
     while x == 0 and y == 0:
         y = random.randint(-6, 8)
-    q = rf"What does the column vector \(\begin{{pmatrix}} {x} \\ {y} \end{{pmatrix}}\) represent in words?"
-    s = f"It means move {_vectors_direction_words(x, y)}."
+    meaning = _vectors_direction_words(x, y)
+    q = (
+        rf"What does the column vector \(\begin{{pmatrix}} {x} \\ {y} \end{{pmatrix}}\) "
+        rf"represent? Select all correct statements below."
+    )
+    s = (
+        rf"<strong>Meaning:</strong> move {meaning}.<br>"
+        rf"Top number = horizontal ({'right' if x > 0 else 'left' if x < 0 else 'none'}); "
+        rf"bottom number = vertical ({'up' if y > 0 else 'down' if y < 0 else 'none'})."
+    )
     hint = "Top number = horizontal, bottom = vertical."
-    return q, s, hint, 1
+    correct_full = f"It means move {meaning}."
+    bank = [
+        {'id': 'c1', 'text': correct_full},
+        {'id': 'c2', 'text': 'The top number is the horizontal component.'},
+        {'id': 'c3', 'text': 'The bottom number is the vertical component.'},
+        {'id': 'd1', 'text': 'The top number is the vertical component.'},
+        {'id': 'd2', 'text': 'The bottom number is the horizontal component.'},
+        {
+            'id': 'd3',
+            'text': (
+                f"It means move {_vectors_direction_words(-x if x else 1, -y if y else 1)}."
+            ),
+        },
+        {'id': 'd4', 'text': 'This vector gives the magnitude only, not a direction.'},
+    ]
+    random.shuffle(bank)
+    return q, s, hint, 1, proof_steps_answer(
+        ('c1', 'c2', 'c3'),
+        bank,
+        order_matters=False,
+        format_hint='Select every correct statement (order does not matter)',
+    )
+
 
 def _vectors_found_magnitude_3_4():
     x, y, mag = _vectors_pythagorean_components()
@@ -4517,16 +4765,41 @@ def _vectors_inter_collinear_points():
     a, b, c, direction = _vectors_collinear_points()
     ab = (b[0] - a[0], b[1] - a[1])
     bc = (c[0] - b[0], c[1] - b[1])
+    # BC = k · AB
+    if ab[0] != 0:
+        k = Fraction(bc[0], ab[0])
+    else:
+        k = Fraction(bc[1], ab[1])
+    k_raw = str(k.numerator) if k.denominator == 1 else f'{k.numerator}/{k.denominator}'
     svg = _svg_collinear_pts_grid(*a, *b, *c)
-    q = (f"{svg}Prove, using vectors, that the points A{a}, B{b}, and C{c} are collinear.")
-    s = (
-        rf"\(\overrightarrow{{AB}} = \begin{{pmatrix}} {b[0]-a[0]} \\ {b[1]-a[1]} \end{{pmatrix}} = \begin{{pmatrix}} {ab[0]} \\ {ab[1]} \end{{pmatrix}}\), "
-        rf"\(\overrightarrow{{BC}} = \begin{{pmatrix}} {c[0]-b[0]} \\ {c[1]-b[1]} \end{{pmatrix}} = \begin{{pmatrix}} {bc[0]} \\ {bc[1]} \end{{pmatrix}}\). "
-        rf"Since \(\overrightarrow{{BC}} = \overrightarrow{{AB}}\) (scalar multiple with k=1), the vectors are parallel. "
-        r"They share point B, so A, B, C are collinear."
+    q = (
+        f"{svg}Prove, using vectors, that the points A{a}, B{b}, and C{c} are collinear "
+        f"by completing the steps below."
     )
-    hint = "Find vectors AB and BC. If BC = k·AB for some scalar k, they are parallel — and as they share a common point, the three points are collinear."
-    return q, s, hint, 3
+    s = (
+        rf"<strong>Method:</strong> find \(\overrightarrow{{AB}}\) and \(\overrightarrow{{BC}}\). "
+        rf"If one is a scalar multiple of the other and they share a point, the points are collinear.<br><br>"
+        rf"<strong>Step 1</strong> — "
+        rf"\(\overrightarrow{{AB}} = \begin{{pmatrix}} {ab[0]} \\ {ab[1]} \end{{pmatrix}}\)<br>"
+        rf"<strong>Step 2</strong> — "
+        rf"\(\overrightarrow{{BC}} = \begin{{pmatrix}} {bc[0]} \\ {bc[1]} \end{{pmatrix}}\)<br>"
+        rf"<strong>Step 3</strong> — \(\overrightarrow{{BC}} = {k_raw}\,\overrightarrow{{AB}}\) "
+        rf"(parallel). They share B, so A, B, C are collinear. ✓"
+    )
+    hint = (
+        "Find vectors AB and BC. If BC = k·AB for some scalar k, they are parallel — "
+        "and as they share a common point, the three points are collinear."
+    )
+    return q, s, hint, 3, _vec_number_fields_answer(
+        (f'{ab[0]}|{ab[1]}', f'{bc[0]}|{bc[1]}', k_raw),
+        (
+            'Step 1: vector AB',
+            'Step 2: vector BC',
+            'Step 3: scalar k such that BC = k × AB',
+        ),
+        ('vector', 'vector', 'fraction' if '/' in k_raw else 'number'),
+    )
+
 
 def _vectors_inter_path_addition():
     ab = (random.randint(1, 5), random.randint(1, 5))
@@ -4716,10 +4989,31 @@ def _vectors_inter_vector_path():
 # ---------- DIFFICULT (10) ----------
 def _vectors_diff_geometry_proof():
     svg = _svg_parallelogram_diagonals()
-    q = rf"{svg}ABCD is a parallelogram with \(\overrightarrow{{AB}} = \mathbf{{a}}\) and \(\overrightarrow{{AD}} = \mathbf{{b}}\). Prove, using vectors, that the diagonals bisect each other."
-    s = r"Let \(\overrightarrow{AB} = \mathbf{a}\), \(\overrightarrow{AD} = \mathbf{b}\). Then \(\overrightarrow{AC} = \mathbf{a}+\mathbf{b}\). The midpoint M of AC has position vector \(\frac{1}{2}(\mathbf{a}+\mathbf{b})\) from A. For diagonal BD: \(\overrightarrow{BD} = \mathbf{b}-\mathbf{a}\), so its midpoint from B is \(\mathbf{a}+\frac{1}{2}(\mathbf{b}-\mathbf{a}) = \frac{1}{2}(\mathbf{a}+\mathbf{b})\) from A. Both midpoints coincide at M, so the diagonals bisect each other."
+    q = (
+        rf"{svg}ABCD is a parallelogram with \(\overrightarrow{{AB}} = \mathbf{{a}}\) and "
+        rf"\(\overrightarrow{{AD}} = \mathbf{{b}}\). Prove, using vectors, that the diagonals "
+        rf"bisect each other by completing the steps below."
+    )
+    s = (
+        r"<strong>Method:</strong> find the midpoint of each diagonal from A; show they coincide.<br><br>"
+        r"<strong>Step 1</strong> — \(\overrightarrow{AC} = \mathbf{a}+\mathbf{b}\), so midpoint M of AC "
+        r"has position \(\dfrac{1}{2}(\mathbf{a}+\mathbf{b})\) from A.<br><br>"
+        r"<strong>Step 2</strong> — \(\overrightarrow{BD} = \mathbf{b}-\mathbf{a}\). Midpoint of BD "
+        r"from A: \(\mathbf{a}+\dfrac{1}{2}(\mathbf{b}-\mathbf{a}) = \dfrac{1}{2}(\mathbf{a}+\mathbf{b})\).<br><br>"
+        r"<strong>Step 3</strong> — Both midpoints are \(\dfrac{1}{2}(\mathbf{a}+\mathbf{b})\), "
+        r"so the diagonals bisect each other. ✓"
+    )
     hint = "Express each diagonal in terms of a and b, find both midpoints, and show they are equal."
-    return q, s, hint, 4
+    return q, s, hint, 4, _vec_number_fields_answer(
+        ('(a + b)/2', '(a + b)/2', 'yes'),
+        (
+            'Step 1: midpoint of AC from A (in terms of a and b)',
+            'Step 2: midpoint of BD from A (in terms of a and b)',
+            'Step 3: do the midpoints coincide? (yes/no)',
+        ),
+        ('algebraic', 'algebraic', 'keyword'),
+    )
+
 
 def _vectors_diff_ratio_theorem():
     a = (random.randint(1, 6), random.randint(1, 6))
@@ -4763,11 +5057,28 @@ def _vectors_diff_triangle_midpoint():
         rf"{svg}In triangle ABC, D is the midpoint of AB and E is the midpoint of AC. "
         rf"Let \(\overrightarrow{{AB}} = \mathbf{{b}}\) and \(\overrightarrow{{AC}} = \mathbf{{c}}\). "
         rf"Prove that \(\overrightarrow{{DE}} = \frac{{1}}{{2}}\overrightarrow{{BC}}\) "
-        rf"and hence that DE \(\parallel\) BC and DE \(=\frac{{1}}{{2}}\) BC."
+        rf"by completing the steps below."
     )
-    s = r"Using A as origin: \(\overrightarrow{AD} = \frac{1}{2}\mathbf{b}\), \(\overrightarrow{AE} = \frac{1}{2}\mathbf{c}\). Then \(\overrightarrow{DE} = \overrightarrow{AE} - \overrightarrow{AD} = \frac{1}{2}\mathbf{c} - \frac{1}{2}\mathbf{b} = \frac{1}{2}(\mathbf{c}-\mathbf{b}) = \frac{1}{2}\overrightarrow{BC}\). Since \(\overrightarrow{DE} = \frac{1}{2}\overrightarrow{BC}\), DE is parallel to BC and exactly half its length."
+    s = (
+        r"<strong>Method:</strong> use A as origin; find AD and AE, then DE = AE − AD.<br><br>"
+        r"<strong>Step 1</strong> — \(\overrightarrow{AD} = \dfrac{1}{2}\mathbf{b}\)<br>"
+        r"<strong>Step 2</strong> — \(\overrightarrow{AE} = \dfrac{1}{2}\mathbf{c}\)<br>"
+        r"<strong>Step 3</strong> — \(\overrightarrow{DE} = \overrightarrow{AE} - \overrightarrow{AD} "
+        r"= \dfrac{1}{2}\mathbf{c} - \dfrac{1}{2}\mathbf{b} = \dfrac{1}{2}(\mathbf{c}-\mathbf{b}) "
+        r"= \dfrac{1}{2}\overrightarrow{BC}\).<br>"
+        r"Hence DE ∥ BC and DE = ½ BC. ✓"
+    )
     hint = "Express D and E using the section formula (midpoint), then find DE = AE − AD."
-    return q, s, hint, 4
+    return q, s, hint, 4, _vec_number_fields_answer(
+        ('b/2', 'c/2', '(c - b)/2'),
+        (
+            'Step 1: AD in terms of b',
+            'Step 2: AE in terms of c',
+            'Step 3: DE in terms of b and c',
+        ),
+        ('algebraic', 'algebraic', 'algebraic'),
+    )
+
 
 def _vectors_diff_trapezium_ratio():
     svg = _svg_trapezium_parallel()
@@ -4777,13 +5088,61 @@ def _vectors_diff_trapezium_ratio():
     )
     s = r"Since AB \(\parallel\) DC and AB = 2 DC, the vectors point in the same direction but DC is half the length. Therefore \(\overrightarrow{DC} = \frac{1}{2}\overrightarrow{AB}\)."
     hint = "Parallel vectors with the same sense are positive scalar multiples. If AB = 2 DC, then DC = ½ AB."
-    return q, s, hint, 2
+    return q, s, hint, 2, _vec_vector_combo_answer(Fraction(1, 2), labels=('AB',))
 
 def _vectors_diff_vector_inequality():
-    q = r"Prove that for any two vectors a and b, \(|\mathbf{a}+\mathbf{b}| \le |\mathbf{a}| + |\mathbf{b}|\)."
-    s = "This is the triangle inequality: the length of the sum is at most the sum of the lengths, because they form a triangle."
+    q = (
+        r"Prove that for any two vectors \(\mathbf{a}\) and \(\mathbf{b}\), "
+        r"\(|\mathbf{a}+\mathbf{b}| \le |\mathbf{a}| + |\mathbf{b}|\). "
+        r"Build the proof by selecting the correct steps in order."
+    )
+    s = (
+        r"<strong>Triangle inequality</strong><br>"
+        r"Place \(\mathbf{a}\) and \(\mathbf{b}\) tip-to-tail so they form two sides of a triangle "
+        r"with \(\mathbf{a}+\mathbf{b}\) as the third side.<br>"
+        r"In any triangle, each side is shorter than (or equal to) the sum of the other two.<br>"
+        r"Therefore \(|\mathbf{a}+\mathbf{b}| \le |\mathbf{a}| + |\mathbf{b}|\). ✓"
+    )
     hint = "Think of the vectors as sides of a triangle."
-    return q, s, hint, 2
+    bank = [
+        {
+            'id': 's1',
+            'text': (
+                'Place a and b tip-to-tail so they form two sides of a triangle, '
+                'with a + b as the third side.'
+            ),
+        },
+        {
+            'id': 's2',
+            'text': (
+                'In any triangle, each side length is at most the sum of the other two side lengths.'
+            ),
+        },
+        {
+            'id': 's3',
+            'text': 'Hence |a + b| ≤ |a| + |b| (the triangle inequality).',
+        },
+        {
+            'id': 'd1',
+            'text': 'In any triangle, each side is longer than the sum of the other two.',
+        },
+        {
+            'id': 'd2',
+            'text': 'Vectors always satisfy |a + b| = |a| + |b| for every a and b.',
+        },
+        {
+            'id': 'd3',
+            'text': 'Use Pythagoras: |a + b|² = |a|² + |b|² for all vectors a and b.',
+        },
+    ]
+    random.shuffle(bank)
+    return q, s, hint, 2, proof_steps_answer(
+        ('s1', 's2', 's3'),
+        bank,
+        order_matters=True,
+        format_hint='Select the correct proof steps in order',
+    )
+
 
 def _vectors_diff_parallelogram_area():
     a=(random.randint(2,5), random.randint(1,4))
@@ -4866,11 +5225,9 @@ def _vectors_diff_ratio_collinear():
     return q, s, hint, 3, _vec_number_pair_answer(round(px, 1), round(py, 1), "x", "y")
 
 def _vectors_diff_vector_proof_sim():
-    svg = _svg_parallelogram_diagonals()
-    q = rf"{svg}ABCD is a parallelogram with \(\overrightarrow{{AB}} = \mathbf{{a}}\) and \(\overrightarrow{{AD}} = \mathbf{{b}}\). Prove, using vectors, that the diagonals bisect each other."
-    s = r"Let \(\overrightarrow{AB} = \mathbf{a}\), \(\overrightarrow{AD} = \mathbf{b}\). Diagonal AC: \(\overrightarrow{AC} = \mathbf{a}+\mathbf{b}\), midpoint M at \(\frac{1}{2}(\mathbf{a}+\mathbf{b})\) from A. Diagonal BD: midpoint from A = \(\mathbf{a} + \frac{1}{2}(\mathbf{b}-\mathbf{a}) = \frac{1}{2}(\mathbf{a}+\mathbf{b})\). The two midpoints are identical, so the diagonals bisect each other."
-    hint = "Express each diagonal in terms of a and b, find both midpoints, and show they are equal."
-    return q, s, hint, 4
+    # Same parallelogram-diagonals proof as _vectors_diff_geometry_proof (Plan B scaffold).
+    return _vectors_diff_geometry_proof()
+
 
 def _vectors_diff_parallel_unit():
     v = (random.randint(3,6), random.randint(4,9))
@@ -5503,6 +5860,138 @@ def _trig_svg_bearing(north_km, east_km, dist=None):
             f'</svg></div>')
 
 
+def _trig_raw(val):
+    if isinstance(val, float) and val == int(val):
+        return str(int(val))
+    if isinstance(val, int):
+        return str(val)
+    return str(val)
+
+
+def _trig_keyword(value):
+    return {'type': 'keyword', 'value': str(value).strip().lower()}
+
+
+def _trig_surd(coeff, radicand):
+    return {'type': 'surd', 'coeff': coeff, 'radicand': radicand}
+
+
+def _trig_surd_over_int(coef, radicand, denom):
+    return {
+        'type': 'algebraic_fraction',
+        'kind': 'surd_over_int',
+        'coef': coef,
+        'radicand': radicand,
+        'denom': denom,
+    }
+
+
+def _trig_exact_from_text(text_ans):
+    mapping = {
+        '1/2': '1/2',
+        '1': 1,
+        '\u221a2/2': _trig_surd_over_int(1, 2, 2),
+        '\u221a3/2': _trig_surd_over_int(1, 3, 2),
+        '\u221a3': _trig_surd(1, 3),
+        '1/\u221a3 = \u221a3/3': _trig_surd_over_int(1, 3, 3),
+    }
+    return mapping[text_ans]
+
+
+def _trig_exact_compound_answer(ans):
+    if ans in ('1', '0'):
+        return int(ans)
+    if ans == '3/2':
+        return '3/2'
+    if ans in ('\u221a3/2',):
+        return _trig_surd_over_int(1, 3, 2)
+    return ans
+
+
+def _trig_number_fields_answer(values, labels, field_types=None):
+    types = tuple(field_types) if field_types else tuple('number' for _ in values)
+    return {
+        'type': 'number_fields',
+        'values': tuple(str(v) for v in values),
+        'labels': tuple(labels),
+        'field_types': types,
+    }
+
+
+def _trig_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict):
+            raw_type = raw.get('type')
+            if raw_type == 'keyword':
+                value = raw.get('value')
+                if value is not None and str(value).strip():
+                    extra = {
+                        'correct_answer_raw': str(value).strip().lower(),
+                        'answer_type': 'keyword',
+                        'answer_format_hint': 'e.g. yes or no',
+                    }
+            elif raw_type == 'surd':
+                coeff = int(raw.get('coeff') or 1)
+                radicand = raw.get('radicand')
+                if radicand is not None:
+                    extra = {
+                        'correct_answer_raw': (
+                            str(radicand) if coeff == 1 else f'{coeff}|{radicand}'
+                        ),
+                        'answer_type': 'surd',
+                        'answer_format_hint': 'e.g. √3 — use the √ button if needed',
+                    }
+            elif raw_type == 'algebraic_fraction' and raw.get('kind') == 'surd_over_int':
+                coef = int(raw['coef'])
+                rad = int(raw['radicand'])
+                denom = int(raw['denom'])
+                num_display = _surd_fmt(coef, rad)
+                extra = {
+                    'correct_answer_raw': f'{coef}|{rad}|{denom}',
+                    'answer_type': 'algebraic_fraction',
+                    'answer_format_hint': (
+                        f'Numerator like {num_display}, denominator a whole number'
+                    ),
+                }
+            elif raw_type == 'number_fields':
+                values = raw.get('values') or ()
+                labels = raw.get('labels') or ()
+                field_types = raw.get('field_types') or ()
+                if values and labels and len(values) == len(labels):
+                    sep = (
+                        '\x1e'
+                        if field_types and any(t != 'number' for t in field_types)
+                        else '|'
+                    )
+                    extra = {
+                        'correct_answer_raw': sep.join(str(v) for v in values),
+                        'answer_type': 'number_fields',
+                        'answer_labels': list(labels),
+                        'answer_field_types': list(field_types) if field_types else (
+                            ['number'] * len(labels)
+                        ),
+                        'answer_format_hint': 'Complete every proof step',
+                    }
+        elif isinstance(raw, str) and '/' in raw:
+            extra = {
+                'correct_answer_raw': raw,
+                'answer_type': 'fraction',
+                'answer_format_hint': 'Enter an exact fraction (e.g. 1/2)',
+            }
+        elif isinstance(raw, (int, float)):
+            extra = {
+                'correct_answer_raw': _trig_raw(raw),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+    return make_problem(
+        q, s, hint, difficulty, marks, 'gcse', 'maths', 'trigonometry', **extra
+    )
+
+
 # ===== FOUNDATIONAL (10) =====
 
 def _trig_found_sin_side():
@@ -5520,7 +6009,7 @@ def _trig_found_sin_side():
          f"<br>opp = {hyp} \u00d7 sin {angle}\u00b0 = {hyp} \u00d7 {math.sin(math.radians(angle)):.4f}"
          f"<br>= <strong>{opp} cm</strong>")
     hint = "SOH: sin\u202f=\u202fopposite \u00f7 hypotenuse. Rearrange to opp = hyp \u00d7 sin\u202f\u03b8."
-    return q, s, hint, 2
+    return q, s, hint, 2, opp
 
 
 def _trig_found_cos_side():
@@ -5538,7 +6027,7 @@ def _trig_found_cos_side():
          f"<br>adj = {hyp} \u00d7 cos {angle}\u00b0 = {hyp} \u00d7 {math.cos(math.radians(angle)):.4f}"
          f"<br>= <strong>{adj} m</strong>")
     hint = "CAH: cos\u202f=\u202fadjacent \u00f7 hypotenuse. Rearrange to adj = hyp \u00d7 cos\u202f\u03b8."
-    return q, s, hint, 2
+    return q, s, hint, 2, adj
 
 
 def _trig_found_tan_angle():
@@ -5556,7 +6045,7 @@ def _trig_found_tan_angle():
          f"<br>\u03b8 = tan\u207b\u00b9\u202f({opp}/{adj})"
          f"<br>= <strong>{angle}\u00b0</strong>")
     hint = "TOA: tan\u202f=\u202fopposite \u00f7 adjacent. Use inverse tan (\u03b8 = tan\u207b\u00b9) to find the angle."
-    return q, s, hint, 2
+    return q, s, hint, 2, angle
 
 
 def _trig_found_pythagoras():
@@ -5573,7 +6062,7 @@ def _trig_found_pythagoras():
     s = (rf"\(c = \sqrt{{{a}^2 + {b}^2}} = \sqrt{{{a**2} + {b**2}}} = \sqrt{{{a**2 + b**2}}}\)"
          f"<br>= <strong>{c} cm</strong>")
     hint = "Pythagoras: c\u00b2 = a\u00b2 + b\u00b2. Square both legs, add, then take the square root."
-    return q, s, hint, 2
+    return q, s, hint, 2, c
 
 
 def _trig_found_ladder():
@@ -5589,7 +6078,7 @@ def _trig_found_ladder():
          f"<br>height = {length} \u00d7 sin {angle}\u00b0 = {length} \u00d7 {math.sin(math.radians(angle)):.4f}"
          f"<br>= <strong>{height} m</strong>")
     hint = "Draw the triangle: ladder = hyp, height = opp, ground = adj. Use SOH: sin = opp/hyp."
-    return q, s, hint, 2
+    return q, s, hint, 2, height
 
 
 def _trig_found_find_hyp_from_opp():
@@ -5608,7 +6097,7 @@ def _trig_found_find_hyp_from_opp():
          f"<br>hyp = {opp} \u00f7 sin {angle}\u00b0 = {opp} \u00f7 {math.sin(math.radians(angle)):.4f}"
          f"<br>= <strong>{hyp} cm</strong>")
     hint = "SOH: sin = opp/hyp. Rearrange: hyp = opp \u00f7 sin\u202f\u03b8."
-    return q, s, hint, 2
+    return q, s, hint, 2, hyp
 
 
 def _trig_found_find_adj_from_tan():
@@ -5626,7 +6115,7 @@ def _trig_found_find_adj_from_tan():
          f"<br>adj = {opp} \u00f7 tan {angle}\u00b0 = {opp} \u00f7 {math.tan(math.radians(angle)):.4f}"
          f"<br>= <strong>{adj} m</strong>")
     hint = "TOA: tan = opp/adj. Rearrange: adj = opp \u00f7 tan\u202f\u03b8."
-    return q, s, hint, 2
+    return q, s, hint, 2, adj
 
 
 def _trig_found_pythagoras_leg():
@@ -5643,7 +6132,7 @@ def _trig_found_pythagoras_leg():
     s = (rf"\(b = \sqrt{{c^2 - a^2}} = \sqrt{{{c}^2 - {a}^2}} = \sqrt{{{c**2 - a**2}}}\)"
          f"<br>= <strong>{b} cm</strong>")
     hint = "Rearrange Pythagoras: b\u00b2 = c\u00b2 \u2212 a\u00b2."
-    return q, s, hint, 2
+    return q, s, hint, 2, b
 
 
 def _trig_found_cos_angle():
@@ -5662,7 +6151,7 @@ def _trig_found_cos_angle():
          f"<br>\u03b8 = cos\u207b\u00b9\u202f({adj}/{hyp})"
          f"<br>= <strong>{angle}\u00b0</strong>")
     hint = "CAH: cos = adj/hyp. Use inverse cos to find the angle."
-    return q, s, hint, 2
+    return q, s, hint, 2, angle
 
 
 def _trig_found_exact_values():
@@ -5681,7 +6170,7 @@ def _trig_found_exact_values():
     q = rf"Write down the <strong>exact</strong> value of \(\{fn} {ang}°\)."
     s = rf"\(\{fn} {ang}° = {latex_ans}\) &nbsp; (exact value: <strong>{text_ans}</strong>)"
     hint = "Learn the exact values for 30\u00b0, 45\u00b0, 60\u00b0 from the special triangles."
-    return q, s, hint, 1
+    return q, s, hint, 1, _trig_exact_from_text(text_ans)
 
 
 # ===== INTERMEDIATE (10) =====
@@ -5704,7 +6193,7 @@ def _trig_inter_two_step():
          rf"\(\tan \theta = \dfrac{{{short}}}{{{max(a,b)}}}\) \(\Rightarrow\) "
          rf"\(\theta = \tan^{{-1}}\!\left(\dfrac{{{short}}}{{{max(a,b)}}}\right) = \) <strong>{angle}\u00b0</strong>")
     hint = "The smallest angle is opposite the shortest side. Use tan with the two legs."
-    return q, s, hint, 3
+    return q, s, hint, 3, angle
 
 
 def _trig_inter_bearing():
@@ -5719,7 +6208,7 @@ def _trig_inter_bearing():
          rf"\(d = \sqrt{{{leg1}^2 + {leg2}^2}} = \sqrt{{{leg1**2} + {leg2**2}}} = \sqrt{{{leg1**2+leg2**2}}}\)"
          f"<br>= <strong>{dist} km</strong>")
     hint = "The two legs (N and E) form a right angle. The direct distance is the hypotenuse."
-    return q, s, hint, 3
+    return q, s, hint, 3, dist
 
 
 def _trig_inter_elevation():
@@ -5735,7 +6224,7 @@ def _trig_inter_elevation():
          f"<br>\u03b8 = tan\u207b\u00b9\u202f({height}/{shadow})"
          f"<br>= <strong>{angle}\u00b0</strong>")
     hint = "Angle of elevation: measure upward from horizontal. Use tan = opp/adj."
-    return q, s, hint, 3
+    return q, s, hint, 3, angle
 
 
 def _trig_inter_isosceles():
@@ -5759,16 +6248,31 @@ def _trig_inter_isosceles():
          f"<br>\u03b8/2 = sin\u207b\u00b9\u202f({half_base}/{equal}) = {angle_half}\u00b0"
          f"<br>apex angle = 2 \u00d7 {angle_half}\u00b0 = <strong>{apex}\u00b0</strong>")
     hint = "Halve the base and use sin to find half the apex angle, then double it."
-    return q, s, hint, 4
+    return q, s, hint, 4, apex
 
 
 def _trig_inter_exact_expression():
-    q = r"Using exact values, show that \(\sin^2 30° + \cos^2 30° = 1\)."
-    s = (r"\(\sin 30° = \dfrac{1}{2},\quad \cos 30° = \dfrac{\sqrt{3}}{2}\)<br>"
-         r"\(\left(\dfrac{1}{2}\right)^2 + \left(\dfrac{\sqrt{3}}{2}\right)^2"
-         r" = \dfrac{1}{4} + \dfrac{3}{4} = \dfrac{4}{4} = \mathbf{1}\) \u2713")
+    q = (
+        r"Using exact values, show that \(\sin^2 30° + \cos^2 30° = 1\) "
+        r"by completing the proof steps below."
+    )
+    s = (
+        r"<strong>Exact values:</strong> \(\sin 30° = \dfrac{1}{2}\), "
+        r"\(\cos 30° = \dfrac{\sqrt{3}}{2}\).<br><br>"
+        r"<strong>Step 1</strong> — \(\sin^2 30° = \left(\dfrac{1}{2}\right)^2 = \dfrac{1}{4}\)<br>"
+        r"<strong>Step 2</strong> — \(\cos^2 30° = \left(\dfrac{\sqrt{3}}{2}\right)^2 = \dfrac{3}{4}\)<br>"
+        r"<strong>Step 3</strong> — \(\dfrac{1}{4} + \dfrac{3}{4} = \dfrac{4}{4} = 1\) ✓"
+    )
     hint = "Substitute the exact values and simplify each squared term."
-    return q, s, hint, 2
+    return q, s, hint, 2, _trig_number_fields_answer(
+        ('1/4', '3/4', 1),
+        (
+            'Step 1: value of sin² 30°',
+            'Step 2: value of cos² 30°',
+            'Step 3: simplified LHS',
+        ),
+        ('fraction', 'fraction', 'number'),
+    )
 
 
 def _trig_inter_depression():
@@ -5784,7 +6288,7 @@ def _trig_inter_depression():
          f"<br>\u03b8 = tan\u207b\u00b9\u202f({height}/{dist})"
          f"<br>= <strong>{angle}\u00b0</strong>")
     hint = "Angle of depression: measure downward from horizontal. tan = opp/adj."
-    return q, s, hint, 3
+    return q, s, hint, 3, angle
 
 
 def _trig_inter_cosine_find_angle():
@@ -5812,7 +6316,7 @@ def _trig_inter_cosine_find_angle():
          f"<br>A = cos\u207b\u00b9\u202f({cosA:.4f})"
          f"<br>= <strong>{A}\u00b0</strong>")
     hint = "Rearranged cosine rule: cos A = (b\u00b2 + c\u00b2 \u2212 a\u00b2) / (2bc)."
-    return q, s, hint, 4
+    return q, s, hint, 4, A
 
 
 def _trig_inter_converse_pyth():
@@ -5834,7 +6338,7 @@ def _trig_inter_converse_pyth():
              f"{c}\u00b2 = {c**2}<br>"
              f"Since {a**2+b**2} \u2260 {c**2}, the triangle is <strong>not right-angled</strong>. \u2717")
     hint = "Converse of Pythagoras: if a\u00b2 + b\u00b2 = c\u00b2, the triangle is right-angled."
-    return q, s, hint, 2
+    return q, s, hint, 2, _trig_keyword('yes' if is_right else 'no')
 
 
 def _trig_inter_compound():
@@ -5853,7 +6357,7 @@ def _trig_inter_compound():
          f"<br>= <strong>{h2} m</strong><br>"
          f"(The wall height of {h1} m is used in setting up the scenario but the direct calculation gives total h.)")
     hint = "Set up the right triangle from the observation point to the top. Use tan."
-    return q, s, hint, 3
+    return q, s, hint, 3, h2
 
 
 def _trig_inter_sine_find_side():
@@ -5873,7 +6377,7 @@ def _trig_inter_sine_find_side():
          rf" = \dfrac{{{c} \times {math.sin(math.radians(A)):.4f}}}{{{math.sin(math.radians(C)):.4f}}}\)"
          f"<br>= <strong>{a} cm</strong>")
     hint = "Sine rule: a/sin A = c/sin C. Multiply both sides by sin A to isolate a."
-    return q, s, hint, 3
+    return q, s, hint, 3, a
 
 
 # ===== DIFFICULT (10) =====
@@ -5895,7 +6399,7 @@ def _trig_diff_sine_rule_side():
          rf" = \dfrac{{{a} \times {math.sin(math.radians(B)):.4f}}}{{{math.sin(math.radians(A)):.4f}}}\)"
          f"<br>= <strong>{b} cm</strong>")
     hint = "Use the pair you know (a and A) together with the unknown pair (b and B)."
-    return q, s, hint, 3
+    return q, s, hint, 3, b
 
 
 def _trig_diff_cosine_rule_side():
@@ -5918,7 +6422,7 @@ def _trig_diff_cosine_rule_side():
          rf"<br>\(= {b**2+c**2} - {round(2*b*c*math.cos(math.radians(A)),4)} = {round(a**2,4)}\)"
          f"<br>a = <strong>{a} cm</strong>")
     hint = "Cosine rule: a\u00b2 = b\u00b2 + c\u00b2 \u2212 2bc\u202fcos\u202fA. Use when you have SAS."
-    return q, s, hint, 3
+    return q, s, hint, 3, a
 
 
 def _trig_diff_area_sine():
@@ -5939,7 +6443,7 @@ def _trig_diff_area_sine():
          rf"<br>\(= \dfrac{{1}}{{2}} \times {a} \times {b} \times {math.sin(math.radians(C)):.4f}\)"
          f"<br>= <strong>{area} cm\u00b2</strong>")
     hint = "Area = \u00bd\u202fa\u202fb\u202fsin\u202fC. This formula works for any triangle when you know two sides and the included angle."
-    return q, s, hint, 2
+    return q, s, hint, 2, area
 
 
 def _trig_diff_3d():
@@ -5988,7 +6492,7 @@ def _trig_diff_3d():
          f"<br>\u03b8 = tan\u207b\u00b9\u202f({h}/{diag_base})"
          f"<br>= <strong>{angle}\u00b0</strong>")
     hint = "Find the base diagonal with Pythagoras first, then use tan with the height."
-    return q, s, hint, 4
+    return q, s, hint, 4, angle
 
 
 def _trig_diff_sine_rule_angle():
@@ -6031,7 +6535,7 @@ def _trig_diff_sine_rule_angle():
          f"<br>A = sin\u207b\u00b9\u202f({sinA:.4f})"
          f"<br>= <strong>{A}\u00b0</strong>")
     hint = "Rearrange the sine rule: sin A = a\u202f\u00d7\u202fsin B / b, then use inverse sin."
-    return q, s, hint, 4
+    return q, s, hint, 4, A
 
 
 def _trig_diff_cosine_rule_angle():
@@ -6056,7 +6560,7 @@ def _trig_diff_cosine_rule_angle():
          f"<br>A = cos\u207b\u00b9\u202f({cosA:.4f})"
          f"<br>= <strong>{A}\u00b0</strong>")
     hint = "Rearranged cosine rule: cos A = (b\u00b2+c\u00b2\u2212a\u00b2)/(2bc). Use when all 3 sides are known."
-    return q, s, hint, 3
+    return q, s, hint, 3, A
 
 
 def _trig_diff_area_find_side():
@@ -6079,7 +6583,7 @@ def _trig_diff_area_find_side():
          f"<br>b = {area} \u00f7 ({a / 2} \u00d7 {math.sin(math.radians(C)):.4f})"
          f"<br>= <strong>{b} cm</strong>")
     hint = "Rearrange Area = \u00bd\u202fa\u202fb\u202fsin\u202fC to make b the subject."
-    return q, s, hint, 3
+    return q, s, hint, 3, b
 
 
 def _trig_diff_bearing_nonright():
@@ -6104,7 +6608,7 @@ def _trig_diff_bearing_nonright():
          rf"<br>\(= {d1**2+d2**2} - ({round(2*d1*d2*math.cos(math.radians(turn_angle)),3)})\)"
          f"<br>\u21d2 d = <strong>{dist} km</strong>")
     hint = "Apply the cosine rule with the included angle between the two legs."
-    return q, s, hint, 4
+    return q, s, hint, 4, dist
 
 
 def _trig_diff_exact_compound():
@@ -6131,7 +6635,7 @@ def _trig_diff_exact_compound():
     s = (rf"\({expr} = {working}\)"
          f"<br>= <strong>{ans}</strong>&ensp;({note})")
     hint = "Substitute the exact values for each trig function, then simplify."
-    return q, s, hint, 3
+    return q, s, hint, 3, _trig_exact_compound_answer(ans)
 
 
 # ===== MCQ (15 questions) =====
@@ -6331,5 +6835,4 @@ def gcse_trigonometry(difficulty, mode, variant_name=None):
 
     variants = gcse_trigonometry_variants(difficulty, mode)
     variant = pick_named_variant(variants, variant_name)
-    q, s, hint, marks = variant()
-    return make_problem(q, s, hint, difficulty, marks, 'gcse', 'maths', 'trigonometry')
+    return _trig_problem_from_output(variant(), difficulty)

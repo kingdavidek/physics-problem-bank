@@ -8,8 +8,12 @@
      data-label-b="{{ (problem.answer_labels[1] if problem.answer_labels and problem.answer_labels|length > 1 else '') | e }}"
      data-answer-labels="{{ (problem.answer_labels or []) | tojson | forceescape }}"
      data-field-types="{{ (problem.answer_field_types or []) | tojson | forceescape }}"
+     data-field-options="{{ (problem.answer_field_options or []) | tojson | forceescape }}"
+     data-step-bank="{{ (problem.answer_step_bank or []) | tojson | forceescape }}"
+     data-order-matters="{{ '1' if problem.answer_order_matters else '0' }}"
      data-pair-sep="{{ problem.answer_pair_sep or 'and' }}"
      data-format-hint="{{ problem.answer_format_hint or '' }}"
+     data-wrong-hint="{{ problem.answer_wrong_hint or '' }}"
      data-answer-template-kind="{{ problem.answer_template_kind or '' }}"
      data-csq-subject="{{ problem.answer_subject or '' }}"
      data-axis-min="{{ problem.answer_axis_min if problem.answer_axis_min is not none else '' }}"
@@ -182,13 +186,23 @@
             {% for label in problem.answer_labels or [] %}
             {% set field_type = (problem.answer_field_types or [])[loop.index0] if problem.answer_field_types and loop.index0 < (problem.answer_field_types|length) else 'number' %}
             {% if field_type == 'keyword' %}
-                {% set field_ph = 'e.g. positive, negative, or none' %}
+                {% set field_ph = 'e.g. yes or no' %}
             {% elif field_type == 'linear_equation' %}
                 {% set field_ph = 'e.g. y = 2x + 3' %}
             {% elif field_type == 'two_var_equation' %}
                 {% set field_ph = 'e.g. 10c + 11t = 53' %}
+            {% elif field_type == 'linear' %}
+                {% set field_ph = 'e.g. x = 1' %}
+            {% elif field_type == 'vector' %}
+                {% set field_ph = 'e.g. (1, 6)' %}
+            {% elif field_type == 'algebraic' %}
+                {% set field_ph = 'e.g. d/50 + d/100 or 3x + 6' %}
+            {% elif field_type == 'mcq' %}
+                {% set field_ph = '' %}
             {% elif field_type == 'linear_inequality' %}
                 {% set field_ph = 'e.g. m < 40' %}
+            {% elif field_type == 'bearing' %}
+                {% set field_ph = 'e.g. 045' %}
             {% elif field_type == 'number_estimate' %}
                 {% set field_ph = 'Your estimate from the graph' %}
             {% elif field_type == 'fraction' %}
@@ -207,6 +221,15 @@
                 {% set field_ph = 'Number or fraction' %}
             {% endif %}
             <div class="free-response-field-row">
+                {% if field_type == 'mcq' %}
+                <span class="free-response-field-label">{{ label }}</span>
+                <div class="mcq-inline free-response-field-mcq">
+                    {% set opts = (problem.answer_field_options or [])[loop.index0] if problem.answer_field_options and loop.index0 < (problem.answer_field_options|length) else [] %}
+                    {% for opt in opts or [] %}
+                    <button type="button" class="btn mcq-btn" data-letter="{{ 'ABC'[loop.index0] }}">{{ opt }}</button>
+                    {% endfor %}
+                </div>
+                {% else %}
                 <label class="free-response-field">
                     <span class="free-response-field-label">{{ label }}</span>
                     <input type="text"
@@ -216,7 +239,13 @@
                            inputmode="text"
                            aria-label="{{ label }}">
                 </label>
+                {% if field_type == 'algebraic' %}
+                <button type="button" class="btn btn-secondary free-response-surd-btn" aria-label="Insert square root symbol">√</button>
+                <button type="button" class="btn btn-secondary free-response-pi-btn" aria-label="Insert pi symbol">π</button>
+                <button type="button" class="btn btn-secondary free-response-square-btn" aria-label="Insert squared symbol">x²</button>
+                {% endif %}
                 <button type="button" class="btn free-response-check-btn free-response-field-check-btn">Check</button>
+                {% endif %}
                 <p class="free-response-field-feedback" aria-live="polite"></p>
             </div>
             {% endfor %}
@@ -253,6 +282,60 @@
         <button type="button" class="btn free-response-check-btn">Check</button>
     </div>
     {% elif problem.answer_type == 'quadratic_roots' %}
+    {% set qr_labels = problem.answer_labels or [] %}
+    {% if not qr_labels and problem.correct_answer_raw %}
+      {% set _qr_raw = (problem.correct_answer_raw or '')|replace('{','')|replace('}','') %}
+      {% if '|' in _qr_raw and ',' not in _qr_raw %}
+        {% set qr_labels = _qr_raw.split('|') %}
+      {% else %}
+        {% set qr_labels = _qr_raw.split(',') %}
+      {% endif %}
+    {% endif %}
+    {% set qr_count = qr_labels|length %}
+    {% if qr_count >= 2 %}
+    <div class="free-response-row free-response-row--quadratic-roots {% if qr_count == 2 %}free-response-row--quadratic-roots-pair{% else %}free-response-row--quadratic-roots-multi{% endif %}">
+        {% if qr_count == 2 %}
+        <span class="free-response-root-prefix" aria-hidden="true"><strong>x</strong> =</span>
+        <input type="text"
+               class="free-response-input free-response-input-quadratic-root"
+               placeholder="e.g. -0.67"
+               autocomplete="off"
+               inputmode="text"
+               aria-label="First root">
+        <span class="free-response-pair-sep" aria-hidden="true">or</span>
+        <span class="free-response-root-prefix" aria-hidden="true"><strong>x</strong> =</span>
+        <input type="text"
+               class="free-response-input free-response-input-quadratic-root"
+               placeholder="e.g. -2"
+               autocomplete="off"
+               inputmode="text"
+               aria-label="Second root">
+        {% else %}
+        <div class="free-response-roots-stack">
+            {% for label in qr_labels %}
+            <label class="free-response-field">
+                <span class="free-response-field-label"><strong>x</strong> =</span>
+                <input type="text"
+                       class="free-response-input free-response-input-quadratic-root"
+                       placeholder="root {{ loop.index }}"
+                       autocomplete="off"
+                       inputmode="text"
+                       aria-label="Root {{ loop.index }}">
+            </label>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <button type="button"
+                class="btn btn-secondary free-response-roots-insert-btn"
+                data-insert="±"
+                aria-label="Insert plus-minus symbol">±</button>
+        <button type="button"
+                class="btn btn-secondary free-response-roots-insert-btn"
+                data-insert="√"
+                aria-label="Insert square root symbol">√</button>
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% else %}
     <div class="free-response-row free-response-row--quadratic-roots">
         <input type="text"
                class="free-response-input free-response-input-quadratic-roots"
@@ -270,6 +353,7 @@
                 aria-label="Insert square root symbol">√</button>
         <button type="button" class="btn free-response-check-btn">Check</button>
     </div>
+    {% endif %}
     {% elif problem.answer_type == 'vector' %}
     <div class="free-response-row free-response-row--vector">
         <input type="text"
@@ -314,6 +398,8 @@
                inputmode="text"
                aria-label="Algebraic answer">
         <button type="button" class="btn btn-secondary free-response-surd-btn" aria-label="Insert square root symbol">√</button>
+        <button type="button" class="btn btn-secondary free-response-pi-btn" aria-label="Insert pi symbol">π</button>
+        <button type="button" class="btn btn-secondary free-response-square-btn" aria-label="Insert squared symbol">x²</button>
         <button type="button" class="btn free-response-check-btn">Check</button>
     </div>
     {% elif problem.answer_type == 'algebraic_fraction' %}
@@ -334,6 +420,8 @@
                    aria-label="Denominator">
         </div>
         <button type="button" class="btn btn-secondary free-response-surd-btn" aria-label="Insert square root symbol">√</button>
+        <button type="button" class="btn btn-secondary free-response-pi-btn" aria-label="Insert pi symbol">π</button>
+        <button type="button" class="btn btn-secondary free-response-square-btn" aria-label="Insert squared symbol">x²</button>
         <button type="button" class="btn free-response-check-btn">Check</button>
     </div>
     {% elif problem.answer_type == 'formula_fraction' %}
@@ -551,6 +639,24 @@
                autocomplete="off"
                inputmode="text"
                aria-label="Hexadecimal answer">
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% elif problem.answer_type == 'proof_steps' %}
+    <div class="free-response-row free-response-row--proof-steps"
+         data-order-matters="{{ '1' if problem.answer_order_matters else '0' }}">
+        <p class="free-response-proof-hint">{{ problem.answer_format_hint or 'Select the correct proof steps' }}</p>
+        <div class="free-response-proof-bank" aria-label="Proof step bank">
+            {% for step in problem.answer_step_bank or [] %}
+            <button type="button"
+                    class="btn btn-secondary free-response-proof-step"
+                    data-step-id="{{ step.id }}">{{ step.text | safe }}</button>
+            {% endfor %}
+        </div>
+        <div class="free-response-proof-selected-wrap">
+            <p class="free-response-proof-selected-label">Your proof</p>
+            <ol class="free-response-proof-selected" aria-live="polite"></ol>
+            <button type="button" class="btn btn-secondary free-response-proof-clear">Clear</button>
+        </div>
         <button type="button" class="btn free-response-check-btn">Check</button>
     </div>
     {% else %}

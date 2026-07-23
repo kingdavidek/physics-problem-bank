@@ -316,12 +316,18 @@ def _problem_client_payload(problem):
         field_types = problem.get('answer_field_types')
         if field_types:
             payload['answer_field_types'] = field_types
+        field_options = problem.get('answer_field_options')
+        if field_options:
+            payload['answer_field_options'] = field_options
         template_kind = problem.get('answer_template_kind')
         if template_kind:
             payload['answer_template_kind'] = template_kind
         subject = problem.get('answer_subject')
         if subject:
             payload['answer_subject'] = subject
+        wrong_hint = problem.get('answer_wrong_hint')
+        if wrong_hint:
+            payload['answer_wrong_hint'] = wrong_hint
     return payload
 
 _BLOCK_HTML_MARKERS = ('<svg', '<div', '<table', '<pre', '<figure')
@@ -2831,6 +2837,89 @@ def topics_index():
     return render_template('topics.html', topic_groups=_build_topic_groups())
 
 
+# Sandbox review page for Plan A/B/C auto-grade variants.
+_SANDBOX_PLAN_A_ITEMS = (
+    {
+        'label': 'Vectors — column meaning (Plan C)',
+        'topic': 'vectors',
+        'difficulty': 'foundational',
+        'variant': '_vectors_found_column_meaning',
+        'plan_note': 'Plan C step bank: select all correct statements about the column vector.',
+    },
+    {
+        'label': 'Vectors — triangle inequality (Plan C)',
+        'topic': 'vectors',
+        'difficulty': 'difficult',
+        'variant': '_vectors_diff_vector_inequality',
+        'plan_note': 'Plan C step bank: ordered proof of |a+b| ≤ |a|+|b|.',
+    },
+    {
+        'label': 'Sequences — sum of first n odds (Plan C)',
+        'topic': 'sequences',
+        'difficulty': 'difficult',
+        'variant': '_seq_diff_arithmetic_proof',
+        'plan_note': 'Plan C step bank: AP recognition → Sn formula → simplify to n².',
+    },
+    {
+        'label': 'Sequences — n(n+1) divisible by 2 (Plan C)',
+        'topic': 'sequences',
+        'difficulty': 'difficult',
+        'variant': '_seq_diff_show_divisible',
+        'plan_note': 'Plan C step bank: consecutive integers → product even.',
+    },
+    {
+        'label': 'Sequences — recurring decimal proof (Plan C)',
+        'topic': 'sequences',
+        'difficulty': 'difficult',
+        'variant': '_seq_diff_recurring_decimal_proof',
+        'plan_note': 'Plan C step bank: let x → multiply → subtract.',
+    },
+)
+
+
+@app.get('/sandbox/plan-a-checkpoints')
+def sandbox_plan_a_checkpoints():
+    """Sandbox-only quiz for Plan A auto-grade variants. Not linked from navigation."""
+    try:
+        index = int(request.args.get('q', 0))
+    except (TypeError, ValueError):
+        index = 0
+    n = len(_SANDBOX_PLAN_A_ITEMS)
+    index = max(0, min(index, n - 1))
+
+    items = []
+    for i, spec in enumerate(_SANDBOX_PLAN_A_ITEMS):
+        topic_config = TOPICS['gcse']['maths'][spec['topic']]
+        entry = {
+            **spec,
+            'topic_name': topic_config.get('name', spec['topic']),
+            'problem': None,
+        }
+        if i == index:
+            problem = topic_config['func'](
+                spec['difficulty'],
+                'practice',
+                variant_name=spec['variant'],
+            )
+            problem['variant_name'] = spec['variant']
+            entry['problem'] = problem
+            _sync_last_problem_payload(
+                problem,
+                level='gcse',
+                subject='maths',
+                topic=spec['topic'],
+                mode='practice',
+                difficulty=spec['difficulty'],
+            )
+        items.append(entry)
+
+    return render_template(
+        'sandbox_plan_a.html',
+        items=items,
+        index=index,
+    )
+
+
 @app.route('/about')
 def about():
     return render_template('about.html')
@@ -3449,14 +3538,26 @@ def api_v1_problems_check():
         if client_raw is not None and str(client_raw) != stored_raw:
             field_sep = '\x1e' if '\x1e' in stored_raw else '|'
             stored_parts = stored_raw.split(field_sep)
+            client_raw_s = str(client_raw)
+            field_match = False
             if (
                 stored_type == 'number_fields'
                 and client_type
                 and client_type != 'number_fields'
-                and str(client_raw) in stored_parts
             ):
+                part_index = payload.get('part_index')
+                if part_index is not None:
+                    try:
+                        pi = int(part_index)
+                    except (TypeError, ValueError):
+                        pi = None
+                    if pi is not None and 0 <= pi < len(stored_parts):
+                        field_match = client_raw_s == stored_parts[pi]
+                if not field_match:
+                    field_match = client_raw_s in stored_parts
+            if field_match:
                 partial_field = True
-                correct_answer_raw = str(client_raw)
+                correct_answer_raw = client_raw_s
                 answer_type = client_type
             else:
                 return _api_error('Problem mismatch', 403, 'session_mismatch')

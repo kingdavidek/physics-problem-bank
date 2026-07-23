@@ -1,8 +1,8 @@
 """
 GCSE Maths – Graphical Simultaneous Equations
-5 foundational · 5 intermediate · 5 difficult · 8 MCQ (randomised, with SVG)
-Graded practice variants return (question, solution, hint, marks, raw).
-Interpret-only / embedded-MCQ variants stay as 4-tuples.
+5 foundational · 6 intermediate · 4 difficult · 8 MCQ (randomised, with SVG)
+Graded practice variants return (question, solution, hint, marks, raw)
+or an MCQ 6-tuple (question, solution, hint, marks, options, correct_letter).
 """
 import math
 import random
@@ -87,7 +87,14 @@ def _gsim_linear_raw(raw):
 def _gsim_problem_from_output(out, difficulty):
     q, s, hint, marks = out[:4]
     extra = {}
-    if len(out) >= 5:
+    if len(out) >= 6 and isinstance(out[4], (list, tuple)):
+        # Letter order may match labels drawn on the diagram — do not reshuffle.
+        extra = {
+            'options': list(out[4]),
+            'correct_answer': out[5],
+            'choice_no_shuffle': True,
+        }
+    elif len(out) >= 5:
         raw = out[4]
         if isinstance(raw, dict):
             raw_type = raw.get('type')
@@ -274,6 +281,31 @@ def _parabola_pts(x0, x1, n=30):
     return [(x0 + i * step, (x0 + i * step) ** 2) for i in range(n)]
 
 
+def _line_graph_bounds(m1, c1, m2, c2, ix, iy, *, x_min=None, y_min=None, x_pad=3):
+    """Axis limits that include the intersection, both intercepts, and a margin beyond ix."""
+    x_lo = 0 if x_min == 0 else ix - x_pad
+    x_hi = ix + x_pad
+    pts = [
+        (ix, iy),
+        (x_lo, m1 * x_lo + c1),
+        (x_hi, m1 * x_hi + c1),
+        (x_lo, m2 * x_lo + c2),
+        (x_hi, m2 * x_hi + c2),
+    ]
+    if x_min is not None and x_min < x_lo:
+        pts.extend([(x_min, m1 * x_min + c1), (x_min, m2 * x_min + c2)])
+    if y_min is not None or x_min == 0:
+        pts.extend([(0, c1), (0, c2)])
+        if y_min is not None:
+            pts.append((0, y_min))
+    bounds = _bounds(pts, 1)
+    if x_min is not None:
+        bounds = (x_min, bounds[1], bounds[2], bounds[3])
+    if y_min is not None:
+        bounds = (bounds[0], bounds[1], y_min, bounds[3])
+    return bounds
+
+
 def _svg_two_lines(
     m1, c1, m2, c2, ix, iy,
     show_point=True,
@@ -281,17 +313,31 @@ def _svg_two_lines(
     line_labels=True,
     axis_numbers=False,
     extra_points=None,
+    x_min=None,
+    y_min=None,
+    line_label_1=None,
+    line_label_2=None,
 ):
     """
     extra_points: list of (x, y, label) e.g. [('A', 3, 5)] — label is a single letter, not coordinates.
     Never pass coordinate strings as labels on exam-style read/graph questions.
+    x_min / y_min: pin axis limits (e.g. 0 for cost graphs so intercepts stay visible).
     """
-    x0, x1 = ix - 3, ix + 3
-    pts = [(ix, iy), (x0, m1 * x0 + c1), (x1, m1 * x1 + c1), (x0, m2 * x0 + c2), (x1, m2 * x1 + c2)]
-    if extra_points:
-        for item in extra_points:
-            pts.append((item[1], item[2]))
-    bounds = _bounds(pts, 1)
+    if x_min is not None or y_min is not None:
+        bounds = _line_graph_bounds(m1, c1, m2, c2, ix, iy, x_min=x_min, y_min=y_min)
+    else:
+        x0, x1 = ix - 3, ix + 3
+        pts = [
+            (ix, iy),
+            (x0, m1 * x0 + c1),
+            (x1, m1 * x1 + c1),
+            (x0, m2 * x0 + c2),
+            (x1, m2 * x1 + c2),
+        ]
+        if extra_points:
+            for item in extra_points:
+                pts.append((item[1], item[2]))
+        bounds = _bounds(pts, 1)
     svg = _svg_open() + _svg_grid(bounds)
     if axis_numbers:
         svg += _svg_axis_numbers(bounds)
@@ -303,10 +349,24 @@ def _svg_two_lines(
         for letter, px, py in extra_points:
             svg += _svg_point(bounds, px, py, letter, r=4)
     if line_labels:
-        lx, ly = _xy(bounds, bounds[0] + 0.3, m1 * (bounds[0] + 0.3) + c1)
-        svg += f'<text x="{lx}" y="{ly - 6}" font-size="11" fill="#1a6fa8">L₁</text>'
-        lx2, ly2 = _xy(bounds, bounds[1] - 0.5, m2 * (bounds[1] - 0.5) + c2)
-        svg += f'<text x="{lx2}" y="{ly2 + 14}" font-size="11" fill="#c0392b">L₂</text>'
+        lbl1 = line_label_1 or "L₁"
+        lbl2 = line_label_2 or "L₂"
+        if x_min == 0 and y_min == 0:
+            lx1, ly1 = _xy(bounds, 0.15, c1)
+            svg += (
+                f'<text x="{lx1 + 4}" y="{ly1 + (4 if c1 <= c2 else -6)}" '
+                f'font-size="10" fill="#1a6fa8">{lbl1}</text>'
+            )
+            lx2, ly2 = _xy(bounds, 0.15, c2)
+            svg += (
+                f'<text x="{lx2 + 4}" y="{ly2 + (-6 if c1 <= c2 else 4)}" '
+                f'font-size="10" fill="#c0392b">{lbl2}</text>'
+            )
+        else:
+            lx, ly = _xy(bounds, bounds[0] + 0.3, m1 * (bounds[0] + 0.3) + c1)
+            svg += f'<text x="{lx}" y="{ly - 6}" font-size="11" fill="#1a6fa8">{lbl1}</text>'
+            lx2, ly2 = _xy(bounds, bounds[1] - 0.5, m2 * (bounds[1] - 0.5) + c2)
+            svg += f'<text x="{lx2}" y="{ly2 + 14}" font-size="11" fill="#c0392b">{lbl2}</text>'
     return svg + "</svg>"
 
 
@@ -392,11 +452,23 @@ def _gsim_f_meaning_of_crossing():
         rf"Two straight lines are drawn on the same axes and cross once.<br>{svg}<br>"
         r"What does the crossing point represent?"
     )
+    correct = "The solution to both equations (the simultaneous solution)"
+    distractors = [
+        "The midpoint of the two lines",
+        "Where the gradients are equal",
+        "The average of the two y-intercepts",
+    ]
+    texts = [correct] + distractors
+    random.shuffle(texts)
+    letters = "ABCD"
+    correct_letter = letters[texts.index(correct)]
+    opts = [f"{letters[i]}  {texts[i]}" for i in range(4)]
     s = (
         r"The <strong>(x, y)</strong> pair that satisfies <strong>both</strong> equations — "
-        r"the solution to the simultaneous equations."
+        r"the solution to the simultaneous equations.<br>"
+        rf"Answer: <strong>{correct_letter}</strong>"
     )
-    return q, s, "One point on both lines = one simultaneous solution.", 1
+    return q, s, "One point on both lines = one simultaneous solution.", 1, opts, correct_letter
 
 
 def _gsim_f_which_point_on_both():
@@ -409,20 +481,22 @@ def _gsim_f_which_point_on_both():
         (ix - 1, iy - 1),
     ]
     correct = f"({ix}, {iy})"
-    opts = [f"({w[0]}, {w[1]})" for w in wrong] + [correct]
-    random.shuffle(opts)
+    coords = [f"({w[0]}, {w[1]})" for w in wrong] + [correct]
+    random.shuffle(coords)
     letters = "ABCD"
-    correct_letter = letters[opts.index(correct)]
-    plotted = [(letter, *_parse_coord_pair(opt)) for letter, opt in zip(letters, opts)]
+    correct_letter = letters[coords.index(correct)]
+    plotted = [(letter, *_parse_coord_pair(opt)) for letter, opt in zip(letters, coords)]
     svg = _svg_two_lines(
         m1, c1, m2, c2, ix, iy,
         show_point=False, axis_numbers=True, extra_points=plotted,
     )
-    q = rf"Which labelled point lies on <strong>both</strong> lines?<br>{svg}<br>"
-    for i, o in enumerate(opts):
-        q += rf"{letters[i]}) {o} &nbsp;&nbsp;"
-    s = rf"Only <strong>{correct_letter}) {correct}</strong> sits on both lines."
-    return q, s, "The point on both lines is at the intersection.", 2
+    q = rf"Which labelled point lies on <strong>both</strong> lines?<br>{svg}"
+    opts = [f"{letters[i]}  {coords[i]}" for i in range(4)]
+    s = (
+        rf"Only <strong>{correct_letter}) {correct}</strong> sits on both lines.<br>"
+        rf"Answer: <strong>{correct_letter}</strong>"
+    )
+    return q, s, "The point on both lines is at the intersection.", 2, opts, correct_letter
 
 
 def _gsim_f_read_y_at_crossing():
@@ -480,17 +554,23 @@ def _gsim_i_equations_from_graph():
         f"{_fmt_line_eq(m2, c1)} and {_fmt_line_eq(m1, c2)}",
         f"{_fmt_line_eq(-m1, c1)} and {_fmt_line_eq(m2, c2)}",
     ]
-    opts = wrong + [correct]
-    random.shuffle(opts)
+    texts = wrong + [correct]
+    random.shuffle(texts)
     letters = "ABCD"
-    correct_letter = letters[opts.index(correct)]
-    q += "<br>" + "<br>".join(f"{letters[i]}) {opts[i]}" for i in range(4))
-    s = rf"Lines match slopes and intercepts at the crossing → <strong>{correct_letter}</strong>."
-    return q, s, "Compare gradients and where each line crosses the y-axis.", 3
+    correct_letter = letters[texts.index(correct)]
+    opts = [f"{letters[i]}  {texts[i]}" for i in range(4)]
+    s = (
+        rf"Lines match slopes and intercepts at the crossing → "
+        rf"<strong>{correct_letter}</strong>. Answer: <strong>{correct_letter}</strong>"
+    )
+    return q, s, "Compare gradients and where each line crosses the y-axis.", 3, opts, correct_letter
 
 
 def _gsim_i_parabola_read_one_point():
-    r1, r2, a, b = _parabola_line_roots(2, 5)
+    r1, r2, a, b = _parabola_line_roots()
+    # Prefer marking the left root so the diagram stays readable.
+    if r1 > r2:
+        r1, r2 = r2, r1
     y1 = r1 * r1
     svg = _svg_parabola_line(r1, r2, a, b, mark="one", axis_numbers=True)
     q = (
@@ -521,18 +601,35 @@ def _gsim_i_no_solution_parallel():
         rf"Two lines are graphed below.<br>{svg}<br>"
         r"What can you say about solving them <strong>simultaneously</strong>?"
     )
+    correct = "There are no solutions (the lines are parallel)"
+    distractors = [
+        "There is exactly one solution",
+        "There are two solutions",
+        "There are infinitely many solutions",
+    ]
+    texts = [correct] + distractors
+    random.shuffle(texts)
+    letters = "ABCD"
+    correct_letter = letters[texts.index(correct)]
+    opts = [f"{letters[i]}  {texts[i]}" for i in range(4)]
     s = (
         r"Lines are <strong>parallel</strong> (same gradient, different intercepts) → "
-        r"<strong>no solutions</strong>."
+        r"<strong>no solutions</strong>.<br>"
+        rf"Answer: <strong>{correct_letter}</strong>"
     )
-    return q, s, "No intersection means no (x, y) works in both equations.", 2, 0
+    return q, s, "No intersection means no (x, y) works in both equations.", 2, opts, correct_letter
 
 
 def _gsim_i_negative_gradient():
-    ix, iy = 3, 4
-    m1, c1, m2, c2 = -1, iy + ix, 2, iy - 2 * ix
+    """One positive and one negative gradient meeting at an integer point."""
+    ix = random.randint(2, 5)
+    iy = random.randint(2, 8)
+    m_neg = -random.randint(1, 3)
+    m_pos = random.randint(1, 3)
+    c1 = iy - m_neg * ix
+    c2 = iy - m_pos * ix
     svg = _svg_two_lines(
-        m1, c1, m2, c2, ix, iy, point_label="P", axis_numbers=True,
+        m_neg, c1, m_pos, c2, ix, iy, point_label="P", axis_numbers=True,
     )
     q = (
         rf"Use the graph to find the simultaneous solution (point <strong>P</strong>).<br>{svg}"
@@ -546,7 +643,7 @@ def _gsim_i_negative_gradient():
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _gsim_d_both_parabola_points():
-    r1, r2, a, b = _parabola_line_roots(-2, 4)
+    r1, r2, a, b = _parabola_line_roots()
     y1, y2 = r1 * r1, r2 * r2
     svg = _svg_parabola_line(r1, r2, a, b, mark="none", axis_numbers=True)
     q = (
@@ -572,49 +669,110 @@ def _gsim_d_tangent_one_solution():
 
 
 def _gsim_d_line_misses_parabola():
-    """y = x² and y = x - 5 — negative discriminant, no real intersections."""
-    a, b = 1, -5
-    pts = _parabola_pts(-2, 4) + _line_pts(a, b, -2, 4)
+    """y = x² and a line with no real intersections."""
+    # Line y = mx + c below the parabola for integer m, so discriminant < 0.
+    m = random.randint(1, 3)
+    c = -random.randint(4, 8)
+    # x² - mx - c = 0 → disc = m² + 4c; with c <= -4 and m <= 3, disc < 0.
+    pts = _parabola_pts(-2, 4) + _line_pts(m, c, -2, 4)
     bounds = _bounds(pts, 1)
     svg = _svg_open() + _svg_grid(bounds)
     svg += _svg_polyline(bounds, _parabola_pts(bounds[0], bounds[1]), "#059669", width=2.8)
-    svg += _svg_polyline(bounds, _line_pts(a, b, bounds[0], bounds[1]), "#1a6fa8")
+    svg += _svg_polyline(bounds, _line_pts(m, c, bounds[0], bounds[1]), "#1a6fa8")
     svg += "</svg>"
     q = (
-        rf"The graphs of \(y = x^2\) and \(y = x - 5\) are sketched on the same axes.<br>{svg}<br>"
+        rf"The graphs of \(y = x^2\) and {_fmt_line_eq(m, c)} are sketched on the same axes.<br>{svg}<br>"
         r"How many real simultaneous solutions are there?"
     )
     s = (
-        r"\(x^2 = x - 5\) → \(x^2 - x + 5 = 0\) has negative discriminant → "
-        r"<strong>0 real solutions</strong> (curves do not cross)."
+        rf"Set \(x^2\) equal to the line {_fmt_line_eq(m, c)}; rearranging gives a quadratic "
+        r"with negative discriminant → <strong>0 real solutions</strong> (curves do not cross)."
     )
     return q, s, "No intersection on the graph means no real simultaneous solutions.", 3, 0
 
 
 def _gsim_d_context_graph():
+    """Real-world cost comparison: two companies, break-even number of items."""
     ix = random.randint(3, 6)
-    cost_a = random.randint(2, 4)
-    cost_b = random.randint(3, 5)
-    iy = cost_a * ix + random.randint(0, 2)
-    m1, c1 = cost_a, iy - cost_a * ix
-    m2, c2 = cost_b, iy - cost_b * ix
-    while m1 == m2:
-        m2 += 1
-        c2 = iy - m2 * ix
+    # One firm: lower joining fee, higher per-unit rate.
+    # Other: higher joining fee, cheaper per unit — they break even at P.
+    rate_steep = random.randint(3, 5)
+    rate_gentle = random.randint(2, rate_steep - 1)
+    fee_steep = random.randint(0, 2)
+    iy = rate_steep * ix + fee_steep
+    fee_gentle = iy - rate_gentle * ix  # positive because rate_gentle < rate_steep
+    m1, c1 = rate_steep, fee_steep
+    m2, c2 = rate_gentle, fee_gentle
+
+    def _fee_phrase(amount, kind):
+        if amount == 0:
+            return f"no {kind}"
+        return f"a £{amount} {kind}"
+
+    scenarios = [
+        {
+            "line_a": "QuickCopy",
+            "line_b": "PrintPro",
+            "intro": (
+                rf"A school is comparing two photocopying firms.<br>"
+                rf"<strong>QuickCopy</strong> charges {_fee_phrase(fee_steep, 'setup fee')} plus £{rate_steep} per booklet.<br>"
+                rf"<strong>PrintPro</strong> charges {_fee_phrase(fee_gentle, 'setup fee')} plus £{rate_gentle} per booklet.<br>"
+                rf"The graphs show total cost \(y\) (in pounds) against number of booklets \(x\)."
+            ),
+            "unit": "booklets",
+        },
+        {
+            "line_a": "NetFast",
+            "line_b": "WebWise",
+            "intro": (
+                rf"Two broadband companies advertise these plans:<br>"
+                rf"<strong>NetFast</strong>: {_fee_phrase(fee_steep, 'joining fee')}, then £{rate_steep} per GB of data.<br>"
+                rf"<strong>WebWise</strong>: {_fee_phrase(fee_gentle, 'joining fee')}, then £{rate_gentle} per GB of data.<br>"
+                rf"The graphs show total cost \(y\) (in pounds) against data used \(x\) (in GB)."
+            ),
+            "unit": "GB",
+        },
+        {
+            "line_a": "SnackHire",
+            "line_b": "PopCo",
+            "intro": (
+                rf"A cinema hires popcorn machines from two suppliers.<br>"
+                rf"<strong>SnackHire</strong>: {_fee_phrase(fee_steep, 'delivery fee')} plus £{rate_steep} per bag of popcorn sold.<br>"
+                rf"<strong>PopCo</strong>: {_fee_phrase(fee_gentle, 'delivery fee')} plus £{rate_gentle} per bag sold.<br>"
+                rf"The graphs show total cost \(y\) (in pounds) against bags sold \(x\)."
+            ),
+            "unit": "bags",
+        },
+    ]
+    scene = random.choice(scenarios)
     svg = _svg_two_lines(
-        m1, c1, m2, c2, ix, iy, point_label="P", axis_numbers=True,
+        m1, c1, m2, c2, ix, iy,
+        point_label="P",
+        axis_numbers=True,
+        x_min=0,
+        y_min=0,
+        line_label_1=scene["line_a"],
+        line_label_2=scene["line_b"],
     )
     q = (
-        rf"Graph A shows cost of provider 1; Graph B shows provider 2 (same axes). "
-        rf"They cross at point <strong>P</strong>.<br>{svg}<br>"
-        rf"At how many items \(x\) do the <strong>costs match</strong>?"
+        rf"{scene['intro']}<br>{svg}<br>"
+        rf"The lines cross at point <strong>P</strong>. "
+        rf"At how many {scene['unit']} \(x\) do the <strong>two costs match</strong>?"
     )
-    s = rf"Costs match only at the intersection → <strong>\(x = {ix}\)</strong> (one value)."
-    return q, s, "Equal cost at the crossing point of the two lines.", 3, ix
+    s = (
+        rf"The costs are equal only at the intersection P.<br>"
+        rf"Read the \(x\)-coordinate of P: <strong>\(x = {ix}\)</strong> {scene['unit']}."
+    )
+    hint = (
+        "Find where the two cost lines cross — that x-value is where both companies charge the same."
+    )
+    return q, s, hint, 3, ix
 
 
-def _gsim_d_verify_algebra_from_graph():
-    r1, r2, a, b = _parabola_line_roots(1, 4)
+def _gsim_i_verify_algebra_from_graph():
+    r1, r2, a, b = _parabola_line_roots()
+    if r1 > r2:
+        r1, r2 = r2, r1
     y1 = r1 * r1
     svg = _svg_parabola_line(r1, r2, a, b, mark="one", axis_numbers=True)
     q = (
@@ -827,6 +985,7 @@ _INTERMEDIATE = [
     _gsim_i_parabola_count_intersections,
     _gsim_i_no_solution_parallel,
     _gsim_i_negative_gradient,
+    _gsim_i_verify_algebra_from_graph,
 ]
 
 _DIFFICULT = [
@@ -834,7 +993,6 @@ _DIFFICULT = [
     _gsim_d_tangent_one_solution,
     _gsim_d_line_misses_parabola,
     _gsim_d_context_graph,
-    _gsim_d_verify_algebra_from_graph,
 ]
 
 _POOLS = {
