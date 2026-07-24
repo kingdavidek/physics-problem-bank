@@ -5525,6 +5525,67 @@ def _trig_svg_right_tri(adj, opp,
             f'</svg></div>')
 
 
+def _trig_svg_isosceles(equal, base,
+                        label_equal=None, label_base=None,
+                        angle_label="\u03b8"):
+    """Isosceles triangle with apex at top, equal sides and base labelled."""
+    if label_equal is None:
+        label_equal = f"{equal} cm"
+    if label_base is None:
+        label_base = f"{base} cm"
+
+    half = base / 2
+    height = math.sqrt(max(0.0, equal ** 2 - half ** 2))
+    pts = [(0.0, 0.0), (base, 0.0), (half, -height)]
+    (Ax, Ay), (Bx, By), (Cx, Cy) = _trig_fit_triangle_to_canvas(
+        pts, _TRIG_DIAGRAM_W, _TRIG_DIAGRAM_H, margin=40, label_pad=32)
+
+    tri = (f'<polygon points="{Ax:.0f},{Ay:.0f} {Bx:.0f},{By:.0f} {Cx:.0f},{Cy:.0f}"'
+           f' fill="#e8f4f4" stroke="#01696f" stroke-width="2"/>')
+
+    ang_a = math.atan2(Ay - Cy, Ax - Cx)
+    ang_b = math.atan2(By - Cy, Bx - Cx)
+    r = 24
+    x1 = Cx + r * math.cos(ang_a)
+    y1 = Cy + r * math.sin(ang_a)
+    x2 = Cx + r * math.cos(ang_b)
+    y2 = Cy + r * math.sin(ang_b)
+    sweep = 1 if (ang_b - ang_a) % (2 * math.pi) < math.pi else 0
+    arc = (f'<path d="M {x1:.0f},{y1:.0f} A {r},{r} 0 0,{sweep} {x2:.0f},{y2:.0f}"'
+           f' fill="none" stroke="#a13544" stroke-width="1.5"/>')
+
+    mid = ang_a + ((ang_b - ang_a + math.pi) % (2 * math.pi) - math.pi) / 2
+    lx = Cx + (r + 16) * math.cos(mid)
+    ly = Cy + (r + 16) * math.sin(mid)
+    ang_lbl = (f'<text x="{lx:.0f}" y="{ly:.0f}" text-anchor="middle"'
+               f' font-size="13" font-style="italic" fill="#a13544">{angle_label} = ?</text>')
+
+    def _side_lbl(p1, p2, opp, text):
+        mx, my = (p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2
+        ex, ey = p2[0] - p1[0], p2[1] - p1[1]
+        nx, ny = -ey, ex
+        n = math.hypot(nx, ny) or 1.0
+        nx, ny = nx / n, ny / n
+        if (opp[0] - mx) * nx + (opp[1] - my) * ny > 0:
+            nx, ny = -nx, -ny
+        tx, ty = mx + nx * 18, my + ny * 18 + 4
+        return (f'<text x="{tx:.0f}" y="{ty:.0f}" text-anchor="middle"'
+                f' font-size="12" fill="#333">{text}</text>'), tx, ty
+
+    leq_a, ax1, ay1 = _side_lbl((Ax, Ay), (Cx, Cy), (Bx, By), label_equal)
+    leq_b, ax2, ay2 = _side_lbl((Bx, By), (Cx, Cy), (Ax, Ay), label_equal)
+    lbase, bx, by = _side_lbl((Ax, Ay), (Bx, By), (Cx, Cy), label_base)
+
+    all_x = [Ax, Bx, Cx, x1, x2, lx, ax1, ax2, bx]
+    all_y = [Ay, By, Cy, y1, y2, ly, ay1, ay2, by]
+    vx, vy, vw, vh = _trig_diagram_viewbox_from_coords(all_x, all_y)
+    return (
+        f'{_trig_svg_open_bounded(vx, vy, vw, vh)}'
+        f'{tri}{arc}{ang_lbl}{leq_a}{leq_b}{lbase}'
+        f'</svg></div>'
+    )
+
+
 def _trig_triangle_unit_coords(A_deg, B_deg, C_deg):
     """A bottom-left, B bottom-right, C above AB (unit side c = AB)."""
     Ar, Br, Cr = math.radians(A_deg), math.radians(B_deg), math.radians(C_deg)
@@ -6233,12 +6294,7 @@ def _trig_inter_isosceles():
     half_base = base / 2
     angle_half = round(math.degrees(math.asin(half_base / equal)), 1)
     apex = round(2 * angle_half, 1)
-    opp_px = half_base
-    adj_px = round(math.sqrt(equal ** 2 - half_base ** 2), 2)
-    svg = _trig_svg_right_tri(adj_px, opp_px,
-                               label_adj=f"{adj_px:.1f} cm", label_opp=f"{half_base} cm",
-                               label_hyp=f"{equal} cm",
-                               angle_label="\u03b8/2 = ?")
+    svg = _trig_svg_isosceles(equal, base)
     q = (f"{svg}"
          f"An isosceles triangle has equal sides of {equal} cm and a base of {base} cm. "
          f"Find the apex angle (the angle between the two equal sides). Give your answer to 1 d.p.")
@@ -6387,17 +6443,25 @@ def _trig_diff_sine_rule_side():
     B = random.randint(60, 80)
     C = 180 - A - B
     a = random.randint(8, 15)
-    b = round(a * math.sin(math.radians(B)) / math.sin(math.radians(A)), 2)
+    sin_a = math.sin(math.radians(A))
+    sin_b = math.sin(math.radians(B))
+    b = round(a * sin_b / sin_a, 2)
     svg = _trig_svg_general_tri(A, B,
                                  label_a=f"{a} cm", label_b="? cm", label_c="",
                                  mark_A=f"A={A}\u00b0", mark_B=f"B={B}\u00b0", mark_C=f"C={C}\u00b0")
     q = (f"{svg}"
          f"In triangle ABC, angle A = {A}\u00b0, angle B = {B}\u00b0, and side a = {a} cm (opposite A). "
          f"Use the sine rule to find side b (opposite B). Give your answer to 2 d.p.")
-    s = (rf"\(\dfrac{{a}}{{\sin A}} = \dfrac{{b}}{{\sin B}}\)"
-         rf"<br>\(b = \dfrac{{{a} \times \sin {B}°}}{{\sin {A}°}}"
-         rf" = \dfrac{{{a} \times {math.sin(math.radians(B)):.4f}}}{{{math.sin(math.radians(A)):.4f}}}\)"
-         f"<br>= <strong>{b} cm</strong>")
+    s = (
+        rf"<strong>Sine rule:</strong> \(\dfrac{{a}}{{\sin A}} = \dfrac{{b}}{{\sin B}}\)<br><br>"
+        rf"<strong>Step 1</strong> — rearrange for \(b\):<br>"
+        rf"\(b = \dfrac{{a \sin B}}{{\sin A}}\)<br><br>"
+        rf"<strong>Step 2</strong> — substitute \(a = {a}\,\text{{cm}}\), \(A = {A}^\circ\), \(B = {B}^\circ\):<br>"
+        rf"\(b = \dfrac{{{a} \times \sin {B}^\circ}}{{\sin {A}^\circ}}\)<br><br>"
+        rf"<strong>Step 3</strong> — evaluate:<br>"
+        rf"\(b = \dfrac{{{a} \times {sin_b:.4f}}}{{{sin_a:.4f}}} = {b:.2f}\)<br><br>"
+        rf"<strong>Answer:</strong> \(b = {b:.2f}\,\text{{cm}}\)"
+    )
     hint = "Use the pair you know (a and A) together with the unknown pair (b and B)."
     return q, s, hint, 3, b
 

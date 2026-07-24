@@ -9,6 +9,8 @@
      data-answer-labels="{{ (problem.answer_labels or []) | tojson | forceescape }}"
      data-field-types="{{ (problem.answer_field_types or []) | tojson | forceescape }}"
      data-field-options="{{ (problem.answer_field_options or []) | tojson | forceescape }}"
+     data-field-row-sizes="{{ (problem.answer_field_row_sizes or []) | tojson | forceescape }}"
+     data-field-group-labels="{{ (problem.answer_field_group_labels or []) | tojson | forceescape }}"
      data-step-bank="{{ (problem.answer_step_bank or []) | tojson | forceescape }}"
      data-order-matters="{{ '1' if problem.answer_order_matters else '0' }}"
      data-pair-sep="{{ problem.answer_pair_sep or 'and' }}"
@@ -21,7 +23,8 @@
      data-level="{{ fr_level }}"
      data-subject="{{ fr_subject }}"
      data-topic="{{ fr_topic }}"
-     data-difficulty="{{ fr_difficulty }}">
+     data-difficulty="{{ fr_difficulty }}"
+     {% if problem.answer_inline_sections %}data-inline-sections="1"{% endif %}>
     {% if problem.answer_type == 'standard_form' %}
     <div class="free-response-row free-response-row--standard-form">
         <input type="text"
@@ -181,76 +184,132 @@
         <button type="button" class="btn free-response-check-btn">Check</button>
     </div>
     {% elif problem.answer_type == 'number_fields' %}
-    <div class="free-response-row free-response-row--number-fields">
-        <div class="free-response-fields-stack">
-            {% for label in problem.answer_labels or [] %}
-            {% set field_type = (problem.answer_field_types or [])[loop.index0] if problem.answer_field_types and loop.index0 < (problem.answer_field_types|length) else 'number' %}
-            {% if field_type == 'keyword' %}
-                {% set field_ph = 'e.g. yes or no' %}
-            {% elif field_type == 'linear_equation' %}
-                {% set field_ph = 'e.g. y = 2x + 3' %}
-            {% elif field_type == 'two_var_equation' %}
-                {% set field_ph = 'e.g. 10c + 11t = 53' %}
-            {% elif field_type == 'linear' %}
-                {% set field_ph = 'e.g. x = 1' %}
-            {% elif field_type == 'vector' %}
-                {% set field_ph = 'e.g. (1, 6)' %}
-            {% elif field_type == 'algebraic' %}
-                {% set field_ph = 'e.g. d/50 + d/100 or 3x + 6' %}
-            {% elif field_type == 'mcq' %}
-                {% set field_ph = '' %}
-            {% elif field_type == 'linear_inequality' %}
-                {% set field_ph = 'e.g. m < 40' %}
-            {% elif field_type == 'bearing' %}
-                {% set field_ph = 'e.g. 045' %}
-            {% elif field_type == 'number_estimate' %}
-                {% set field_ph = 'Your estimate from the graph' %}
-            {% elif field_type == 'fraction' %}
-                {% set field_ph = 'e.g. 3/4' %}
-            {% elif field_type == 'surd' %}
-                {% set field_ph = 'e.g. 4√3' %}
-            {% elif field_type in ('ratio', 'ratio_exact') %}
-                {% set field_ph = 'e.g. 3:5' %}
-            {% elif field_type == 'binary' %}
-                {% set field_ph = 'e.g. 1101' %}
-            {% elif field_type == 'hex' %}
-                {% set field_ph = 'e.g. FF' %}
-            {% elif problem.answer_format_hint %}
-                {% set field_ph = problem.answer_format_hint %}
-            {% else %}
-                {% set field_ph = 'Number or fraction' %}
-            {% endif %}
-            <div class="free-response-field-row">
-                {% if field_type == 'mcq' %}
-                <span class="free-response-field-label">{{ label }}</span>
-                <div class="mcq-inline free-response-field-mcq">
-                    {% set opts = (problem.answer_field_options or [])[loop.index0] if problem.answer_field_options and loop.index0 < (problem.answer_field_options|length) else [] %}
-                    {% for opt in opts or [] %}
-                    <button type="button" class="btn mcq-btn" data-letter="{{ 'ABC'[loop.index0] }}">{{ opt }}</button>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <label class="free-response-field">
-                    <span class="free-response-field-label">{{ label }}</span>
-                    <input type="text"
-                           class="free-response-input free-response-input-field"
-                           placeholder="{{ field_ph }}"
-                           autocomplete="off"
-                           inputmode="text"
-                           aria-label="{{ label }}">
-                </label>
-                {% if field_type == 'algebraic' %}
-                <button type="button" class="btn btn-secondary free-response-surd-btn" aria-label="Insert square root symbol">√</button>
-                <button type="button" class="btn btn-secondary free-response-pi-btn" aria-label="Insert pi symbol">π</button>
-                <button type="button" class="btn btn-secondary free-response-square-btn" aria-label="Insert squared symbol">x²</button>
-                {% endif %}
-                <button type="button" class="btn free-response-check-btn free-response-field-check-btn">Check</button>
-                {% endif %}
-                <p class="free-response-field-feedback" aria-live="polite"></p>
-            </div>
+    {% macro nf_render_field(label, field_idx) %}
+    {% set field_type = (problem.answer_field_types or [])[field_idx] if problem.answer_field_types and field_idx < (problem.answer_field_types|length) else 'number' %}
+    {% if field_type == 'keyword' %}
+        {% set field_ph = 'e.g. yes or no' %}
+    {% elif field_type == 'linear_equation' %}
+        {% set field_ph = 'e.g. y = 2x + 3' %}
+    {% elif field_type == 'two_var_equation' %}
+        {% set field_ph = 'e.g. 10c + 11t = 53' %}
+    {% elif field_type == 'linear' %}
+        {% set field_ph = 'e.g. x = 1' %}
+    {% elif field_type == 'vector' %}
+        {% set field_ph = 'e.g. (1, 6)' %}
+    {% elif field_type == 'algebraic' %}
+        {% set field_ph = 'e.g. d/50 + d/100 or 3x + 6' %}
+    {% elif field_type == 'mcq' %}
+        {% set field_ph = '' %}
+    {% elif field_type == 'linear_inequality' %}
+        {% set field_ph = 'e.g. m < 40' %}
+    {% elif field_type == 'bearing' %}
+        {% set field_ph = 'e.g. 045' %}
+    {% elif field_type == 'number_estimate' %}
+        {% set field_ph = 'Your estimate from the graph' %}
+    {% elif field_type == 'fraction' %}
+        {% set field_ph = 'e.g. 3/4' %}
+    {% elif field_type == 'surd' %}
+        {% set field_ph = 'e.g. 4√3' %}
+    {% elif field_type in ('ratio', 'ratio_exact') %}
+        {% set field_ph = 'e.g. 3:5' %}
+    {% elif field_type == 'binary' %}
+        {% set field_ph = 'e.g. 1101' %}
+    {% elif field_type == 'hex' %}
+        {% set field_ph = 'e.g. FF' %}
+    {% elif problem.answer_format_hint %}
+        {% set field_ph = problem.answer_format_hint %}
+    {% else %}
+        {% set field_ph = 'Number or fraction' %}
+    {% endif %}
+    <div class="free-response-field-row">
+        {% if field_type == 'mcq' %}
+        <span class="free-response-field-label">{{ label }}</span>
+        <div class="mcq-inline free-response-field-mcq">
+            {% set opts = (problem.answer_field_options or [])[field_idx] if problem.answer_field_options and field_idx < (problem.answer_field_options|length) else [] %}
+            {% for opt in opts or [] %}
+            <button type="button" class="btn mcq-btn" data-letter="{{ 'ABC'[loop.index0] }}">{{ opt }}</button>
             {% endfor %}
         </div>
+        {% else %}
+        <label class="free-response-field">
+            <span class="free-response-field-label">{{ label }}</span>
+            <input type="text"
+                   class="free-response-input free-response-input-field"
+                   placeholder="{{ field_ph }}"
+                   autocomplete="off"
+                   inputmode="text"
+                   aria-label="{{ label }}">
+        </label>
+        {% if field_type == 'algebraic' %}
+        <button type="button" class="btn btn-secondary free-response-surd-btn" aria-label="Insert square root symbol">√</button>
+        <button type="button" class="btn btn-secondary free-response-pi-btn" aria-label="Insert pi symbol">π</button>
+        <button type="button" class="btn btn-secondary free-response-square-btn" aria-label="Insert squared symbol">x²</button>
+        {% endif %}
+        <button type="button" class="btn free-response-check-btn free-response-field-check-btn">Check</button>
+        {% endif %}
+        <p class="free-response-field-feedback" aria-live="polite"></p>
     </div>
+    {% endmacro %}
+    {% if problem.answer_inline_sections and problem.answer_field_section_keys %}
+    {% set q_parts = problem.question | split_question_sections(problem.answer_field_section_keys) %}
+    {% if q_parts.intro %}
+    <div class="question-content question-intro">{{ q_parts.intro | format_question_html }}</div>
+    {% endif %}
+    {% set nf_labels = problem.answer_labels or [] %}
+    {% set nf_ns = namespace(i=0) %}
+    {% for section in q_parts.sections %}
+    <div class="question-part-block">
+        <div class="question-content question-part">{{ section.text | format_question_html }}</div>
+        <div class="free-response-row free-response-row--number-fields">
+            <div class="free-response-fields-stack free-response-fields-stack--grouped">
+                {% for size in problem.answer_field_row_sizes or [] %}
+                {% set gi = loop.index0 %}
+                {% set gl = problem.answer_field_group_labels[gi] if problem.answer_field_group_labels and gi < (problem.answer_field_group_labels|length) else '' %}
+                {% if gl.startswith(section.key) or gl == section.key %}
+                <div class="free-response-field-group">
+                    {% if gl and gl.startswith(section.key + ' ') %}
+                    <span class="free-response-field-group-label">{{ gl[section.key|length + 1:] }}</span>
+                    {% endif %}
+                    <div class="free-response-field-group-fields">
+                        {% for _ in range(size) %}
+                        {{ nf_render_field(nf_labels[nf_ns.i], nf_ns.i) }}
+                        {% set nf_ns.i = nf_ns.i + 1 %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="free-response-row free-response-row--number-fields">
+        <div class="free-response-fields-stack{% if problem.answer_field_row_sizes %} free-response-fields-stack--grouped{% endif %}">
+            {% if problem.answer_field_row_sizes %}
+            {% set nf_labels = problem.answer_labels or [] %}
+            {% set nf_ns = namespace(i=0) %}
+            {% for size in problem.answer_field_row_sizes %}
+            <div class="free-response-field-group">
+                {% if problem.answer_field_group_labels and loop.index0 < (problem.answer_field_group_labels|length) %}
+                <span class="free-response-field-group-label">{{ problem.answer_field_group_labels[loop.index0] }}</span>
+                {% endif %}
+                <div class="free-response-field-group-fields">
+                    {% for _ in range(size) %}
+                    {{ nf_render_field(nf_labels[nf_ns.i], nf_ns.i) }}
+                    {% set nf_ns.i = nf_ns.i + 1 %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            {% for label in problem.answer_labels or [] %}
+            {{ nf_render_field(label, loop.index0) }}
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
     {% elif problem.answer_type == 'number_estimate' %}
     <div class="free-response-row free-response-row--number">
         <input type="text"
