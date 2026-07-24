@@ -250,6 +250,14 @@ from models.qotd import (
     record_qotd_answer,
 )
 from models.weak_topics import analyze_weak_topics, serialize_weak_topic
+from models.revision_queue import (
+    DUE_TODAY_LIMIT,
+    complete_revision_item,
+    dismiss_revision_item,
+    list_revision_queue,
+    serialize_revision_item,
+    sync_revision_queue,
+)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-for-local-testing')
@@ -814,6 +822,26 @@ with get_db() as conn:
             PRIMARY KEY (user_id, queue_key),
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_revision_queue (
+            user_id INTEGER NOT NULL,
+            level TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            topic TEXT NOT NULL,
+            priority REAL NOT NULL DEFAULT 0,
+            reason TEXT,
+            due_at TEXT NOT NULL,
+            last_synced_at TEXT NOT NULL,
+            last_completed_at TEXT,
+            created_at TEXT NOT NULL,
+            PRIMARY KEY (user_id, level, subject, topic),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_user_revision_queue_due
+        ON user_revision_queue (user_id, due_at)
     """)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS user_blocks (
@@ -1819,6 +1847,31 @@ def _weak_topics_for_user(conn, user_id, *, limit=8, lookback_days=None, externa
             lesson_quiz_url=lesson_quiz_url,
         )
         out.append(enriched)
+    return out
+
+
+def _revision_queue_for_user(conn, user_id, *, limit=DUE_TODAY_LIMIT, due_only=True, external_urls=False):
+    sync_revision_queue(conn, user_id)
+    items = list_revision_queue(conn, user_id, limit=limit, due_only=due_only)
+    out = []
+    for item in items:
+        level, subject, topic = item['level'], item['subject'], item['topic']
+        topic_url = url_for('topic_page', level=level, subject=subject, topic=topic, _external=external_urls)
+        lesson_quiz_url = None
+        if _lesson_quiz_available(level, subject, topic):
+            lesson_quiz_url = url_for(
+                'lesson_mcq_quiz',
+                level=level,
+                subject=subject,
+                topic=topic,
+                _external=external_urls,
+            )
+        out.append(serialize_revision_item(
+            item,
+            topic_label=_topic_label(level, subject, topic),
+            topic_url=topic_url,
+            lesson_quiz_url=lesson_quiz_url,
+        ))
     return out
 
 
@@ -3105,6 +3158,7 @@ def profile():
         study_pair_invites = list_pending_study_pair_invites(conn, current_user.id)
         buddy_recap = buddy_weekly_recap(conn, current_user.id)
         weak_topics = _weak_topics_for_user(conn, current_user.id, limit=8)
+        due_today = _revision_queue_for_user(conn, current_user.id)
     for item in saved:
         item['topic_label'] = _topic_label(item['level'], item['subject'], item['topic'])
     for item in progress:
@@ -3154,6 +3208,7 @@ def profile():
         study_pair_invites=study_pair_invites,
         buddy_recap=buddy_recap,
         weak_topics=weak_topics,
+        due_today=due_today,
         public_profile_url=_public_profile_url(current_user.handle),
     )
 
@@ -4056,6 +4111,65 @@ def api_v1_me_weak_topics():
             external_urls=True,
         )
     return jsonify({'ok': True, 'weak_topics': weak_topics})
+
+
+@app.get('/api/v1/me/revision-queue')
+@login_required
+def api_v1_me_revision_queue():
+    try:
+        limit = min(max(int(request.args.get('limit', DUE_TODAY_LIMIT)), 1), 20)
+    except (TypeError, ValueError):
+        limit = DUE_TODAY_LIMIT
+    due_only = request.args.get('due_only', '1') not in ('0', 'false', 'False')
+    with get_db() as conn:
+        items = _revision_queue_for_user(
+            conn,
+            current_user.id,
+            limit=limit,
+            due_only=due_only,
+            external_urls=True,
+        )
+    return jsonify({'ok': True, 'revision_queue': items})
+
+
+def _revision_queue_topic_from_request():
+    data = request.get_json(silent=True) or {}
+    level = data.get('level')
+    subject = data.get('subject')
+    topic = data.get('topic')
+    if not (level and subject and topic):
+        return None
+    return level, subject, topic
+
+
+@app.post('/api/v1/me/revision-queue/dismiss')
+@login_required
+def api_v1_revision_queue_dismiss():
+    parsed = _revision_queue_topic_from_request()
+    if not parsed:
+        return _api_error('level, subject and topic are required', 400, 'invalid_request')
+    level, subject, topic = parsed
+    with get_db() as conn:
+        sync_revision_queue(conn, current_user.id)
+        ok = dismiss_revision_item(conn, current_user.id, level, subject, topic)
+    if not ok:
+        return _api_error('Revision queue item not found', 404, 'not_found')
+    return jsonify({'ok': True})
+
+
+@app.post('/api/v1/me/revision-queue/complete')
+@login_required
+def api_v1_revision_queue_complete():
+    parsed = _revision_queue_topic_from_request()
+    if not parsed:
+        return _api_error('level, subject and topic are required', 400, 'invalid_request')
+    level, subject, topic = parsed
+    with get_db() as conn:
+        sync_revision_queue(conn, current_user.id)
+        ok = complete_revision_item(conn, current_user.id, level, subject, topic)
+    if not ok:
+        return _api_error('Revision queue item not found', 404, 'not_found')
+    return jsonify({'ok': True})
 
 
 @app.get('/api/v1/me/quiz-attempts')

@@ -3415,6 +3415,56 @@
     });
   }
 
+  function initRevisionQueue() {
+    var panel = document.querySelector('[data-revision-queue]');
+    if (!panel) return;
+
+    panel.addEventListener('click', function (e) {
+      var btn = e.target.closest('.revision-queue-action');
+      if (!btn || !panel.contains(btn)) return;
+      e.preventDefault();
+      if (btn.disabled) return;
+      var item = btn.closest('.revision-queue-item');
+      if (!item) return;
+      var action = btn.getAttribute('data-action');
+      var endpoint = action === 'complete'
+        ? '/api/v1/me/revision-queue/complete'
+        : '/api/v1/me/revision-queue/dismiss';
+
+      btn.disabled = true;
+      fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          level: item.dataset.level,
+          subject: item.dataset.subject,
+          topic: item.dataset.topic,
+        }),
+      })
+        .then(function (r) { return r.json().catch(function () { return {}; }); })
+        .then(function (data) {
+          if (data && data.ok) {
+            item.remove();
+            showAppToast(
+              action === 'complete' ? 'Nice work — see you next time.' : 'Snoozed for a few days.',
+              'success'
+            );
+            if (!panel.querySelector('.revision-queue-item')) {
+              panel.remove();
+            }
+          } else {
+            btn.disabled = false;
+            showAppToast('Something went wrong — try again.', 'error');
+          }
+        })
+        .catch(function () {
+          btn.disabled = false;
+          showAppToast('Something went wrong — try again.', 'error');
+        });
+    });
+  }
+
   function initAnswerRevealMathJax() {
     document.querySelectorAll('details.answer-reveal').forEach(function (details) {
       details.addEventListener('toggle', function () {
@@ -3439,5 +3489,6 @@
     initScrollToProblem();
     initProbTreeInputs();
     initAnswerRevealMathJax();
+    initRevisionQueue();
   });
 })();

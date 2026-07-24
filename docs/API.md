@@ -211,6 +211,24 @@ Query: `limit` (1–20, default 8), optional `lookback_days` (only count attempt
 
 Response includes `weak_topics[]` with `level`, `subject`, `topic`, `topic_label`, `weakness_score`, `reasons`, `quiz_average_pct`, `mcq_accuracy_pct`, `quiz_attempts`, `mcq_attempts`, `best_quiz_pct`, `last_practised`, `topic_url`, and `lesson_quiz_url` when a lesson quiz exists.
 
+## Revision queue (G3)
+
+Rule-based spaced revision queue built on top of weak topics (logged-in only). The queue is synced from the latest weak-topic analysis every time it's read — there's no background job. New weak topics get a due date based on how weak they currently look (worse recent accuracy → sooner due date); topics that stop being weak are dropped automatically.
+
+| Method | Path |
+|--------|------|
+| GET | `/api/v1/me/revision-queue` |
+| POST | `/api/v1/me/revision-queue/dismiss` |
+| POST | `/api/v1/me/revision-queue/complete` |
+
+**GET** query: `limit` (1–20, default 3), `due_only` (default `1` — only items due today or overdue; pass `0` for the full queue including items snoozed into the future).
+
+Response: `revision_queue[]` with `level`, `subject`, `topic`, `topic_label`, `priority`, `reason`, `due_at`, `due_date`, `last_completed_at`, `topic_url`, and `lesson_quiz_url` when a lesson quiz exists.
+
+**POST** `dismiss` / `complete` body: `{ "level": ..., "subject": ..., "topic": ... }`. `dismiss` ("not now") snoozes the item a few days; `complete` ("done") snoozes it further and records `last_completed_at`. Both return `404 not_found` if the topic isn't currently in the user's queue (e.g. it's no longer weak).
+
+The profile page shows the top 3 due-today items in a "Due today" widget with the same actions.
+
 ## Quiz history (G2)
 
 Paginated lesson quiz and generator MCQ history for the logged-in user.

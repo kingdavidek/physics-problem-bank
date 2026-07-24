@@ -52,6 +52,33 @@
     </div>
 </section>
 
+{% if due_today %}
+<section class="section-panel" data-revision-queue>
+    <div class="section-panel-header">Due today</div>
+    <div class="section-panel-body">
+        <p class="profile-empty" style="margin-top:0;margin-bottom:12px;">A few topics worth revisiting today, based on your recent scores.</p>
+        <ul class="profile-list">
+            {% for item in due_today %}
+            <li class="profile-list-item revision-queue-item" data-level="{{ item.level }}" data-subject="{{ item.subject }}" data-topic="{{ item.topic }}">
+                <a href="{{ item.topic_url }}"><strong>{{ item.topic_label }}</strong></a>
+                {% if item.reason %}
+                <span class="profile-list-meta">{{ item.reason }}</span>
+                {% endif %}
+                <span style="display:block;margin-top:6px;">
+                    <a href="{{ item.topic_url }}">Practise now</a>
+                    {% if item.lesson_quiz_url %}
+                    · <a href="{{ item.lesson_quiz_url }}">Take quiz</a>
+                    {% endif %}
+                    · <button type="button" class="btn-link revision-queue-action" data-action="complete">Done</button>
+                    · <button type="button" class="btn-link revision-queue-action" data-action="dismiss">Not now</button>
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+{% endif %}
+
 {% if weak_topics %}
 <section class="section-panel">
     <div class="section-panel-header">Topics to revisit</div>

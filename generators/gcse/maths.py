@@ -11,6 +11,9 @@ from generators.shared.utils import (
     proof_steps_problem_extra,
     quadratic_roots_format_hint,
     quadratic_roots_ui_labels,
+    graded_answer_keyword,
+    graded_answer_number_pair,
+    problem_extra_from_graded_answer,
 )
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from generators.shared.variant_utils import (
@@ -61,6 +64,10 @@ def _basic_maths_practice(topic, difficulty, mode, variant_name):
         return _surd_problem_from_output(out, difficulty)
     if topic == 'algebra':
         return _algebra_problem_from_output(out, difficulty)
+    if topic == 'decimals':
+        return _dec_problem_from_output(out, difficulty)
+    if topic == 'multiples_factors':
+        return _mf_problem_from_output(out, difficulty)
     choice = problem_from_choice_output(out, difficulty, 'gcse', 'maths', topic)
     if choice:
         return choice
@@ -1175,6 +1182,28 @@ def _mf_primes_between(lo, hi):
     return [p for p in range(max(2, lo + 1), hi) if _mf_is_prime(p)]
 
 
+def _mf_number_list_answer(values):
+    return {'type': 'number_list', 'values': tuple(values)}
+
+
+def _mf_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict) and raw.get('type') == 'number_list':
+            values = raw.get('values') or ()
+            if values:
+                extra = {
+                    'correct_answer_raw': ','.join(_fdp_raw(v) for v in values),
+                    'answer_type': 'number_list',
+                    'answer_format_hint': 'Enter numbers separated by commas',
+                }
+        else:
+            extra = problem_extra_from_graded_answer(raw)
+    return make_problem(q, s, hint, difficulty, marks, 'gcse', 'maths', 'multiples_factors', **extra)
+
+
 def gcse_mf_find_multiple():
     n = random.randint(3, 15)
     k = random.randint(3, 12)
@@ -1182,7 +1211,7 @@ def gcse_mf_find_multiple():
     q = rf"Write down the {k}th multiple of {n}."
     s = rf"The {k}th multiple of {n} is {n} × {k} = <strong>{ans}</strong>"
     hint = "Multiply the number by the position in the list."
-    return q, s, hint, 1
+    return q, s, hint, 1, ans
 
 
 def gcse_mf_find_factor():
@@ -1214,7 +1243,7 @@ def gcse_mf_prime():
         div = _mf_small_divisor(n)
         s = rf"No. <strong>{n}</strong> is not prime because it is divisible by {div}."
     hint = "A prime number has exactly two factors: 1 and itself."
-    return q, s, hint, 1
+    return q, s, hint, 1, graded_answer_keyword('yes' if is_prime else 'no')
 
 
 def gcse_mf_hcf():
@@ -1223,7 +1252,7 @@ def gcse_mf_hcf():
     q = rf"Find the highest common factor of {a} and {b}."
     s = rf"The highest common factor is the largest number that divides both exactly.<br><strong>HCF = {ans}</strong>"
     hint = "List the factors of both numbers, then choose the greatest common one."
-    return q, s, hint, 2
+    return q, s, hint, 2, ans
 
 
 def gcse_mf_lcm():
@@ -1232,7 +1261,7 @@ def gcse_mf_lcm():
     q = rf"Find the lowest common multiple of {a} and {b}."
     s = rf"The lowest common multiple is the smallest number in both times tables.<br><strong>LCM = {ans}</strong>"
     hint = "List multiples of both numbers until you find the first common one."
-    return q, s, hint, 2
+    return q, s, hint, 2, ans
 
 
 def gcse_mf_prime_factors():
@@ -1265,7 +1294,7 @@ def gcse_mf_lcm_buses_word():
         rf"Next together: {start} + {lcm} minutes = <strong>{ans_time}</strong>"
     )
     hint = "The next time they coincide is the lowest common multiple of the two intervals."
-    return q, s, hint, 3
+    return q, s, hint, 3, graded_answer_keyword(ans_time)
 
 
 def gcse_mf_hcf_tiles_word():
@@ -1282,7 +1311,7 @@ def gcse_mf_hcf_tiles_word():
         rf"HCF({length}, {width}) = <strong>{tile_str}</strong>"
     )
     hint = "The largest square tile is the highest common factor of the length and width."
-    return q, s, hint, 3
+    return q, s, hint, 3, tile
 
 
 def gcse_mf_common_factors_count():
@@ -1298,7 +1327,7 @@ def gcse_mf_common_factors_count():
         rf"There are <strong>{count}</strong> common factors."
     )
     hint = "List all factors of each number, then count how many appear in both lists."
-    return q, s, hint, 2
+    return q, s, hint, 2, count
 
 
 def gcse_mf_hcf_using_primes():
@@ -1313,7 +1342,7 @@ def gcse_mf_hcf_using_primes():
         rf"HCF = <strong>{hcf}</strong>"
     )
     hint = "Write both numbers as products of primes, then multiply the lowest index of each shared prime."
-    return q, s, hint, 3
+    return q, s, hint, 3, hcf
 
 
 def gcse_mf_divisibility_digit():
@@ -1344,7 +1373,7 @@ def gcse_mf_hcf_three_numbers():
         rf"HCF({_mf_hcf(a, b)}, {c}) = <strong>{ans}</strong>"
     )
     hint = "Find the HCF of two numbers first, then find the HCF of that result with the third."
-    return q, s, hint, 3
+    return q, s, hint, 3, ans
 
 
 def gcse_mf_lcm_three_numbers():
@@ -1358,7 +1387,7 @@ def gcse_mf_lcm_three_numbers():
         rf"LCM({_mf_lcm(a, b)}, {c}) = <strong>{ans}</strong>"
     )
     hint = "Find the LCM of two numbers first, then the LCM of that result with the third."
-    return q, s, hint, 3
+    return q, s, hint, 3, ans
 
 
 def gcse_mf_hcf_lcm_product_rule():
@@ -1377,7 +1406,7 @@ def gcse_mf_hcf_lcm_product_rule():
         rf"So HCF × LCM = product of the numbers ✓"
     )
     hint = "This relationship is always true for two positive integers."
-    return q, s, hint, 3
+    return q, s, hint, 3, graded_answer_number_pair(hcf, lcm, 'HCF', 'LCM')
 
 
 def gcse_mf_number_from_hcf_lcm():
@@ -1393,7 +1422,7 @@ def gcse_mf_number_from_hcf_lcm():
         rf"Other number = {hcf * lcm} ÷ {known} = <strong>{unknown}</strong>"
     )
     hint = "Multiply HCF by LCM, then divide by the number you know."
-    return q, s, hint, 4
+    return q, s, hint, 4, unknown
 
 
 def gcse_mf_lcm_from_prime_forms():
@@ -1408,7 +1437,7 @@ def gcse_mf_lcm_from_prime_forms():
         rf"LCM = {pf_lcm} = <strong>{lcm}</strong>"
     )
     hint = "For LCM, use the highest index of each prime in either factorisation."
-    return q, s, hint, 3
+    return q, s, hint, 3, lcm
 
 
 def gcse_mf_primes_in_range():
@@ -1420,7 +1449,7 @@ def gcse_mf_primes_in_range():
     q = rf"List all the prime numbers between {lo} and {hi}."
     s = rf"Using a sieve or systematic testing: <strong>{listed}</strong>"
     hint = "Test each number for factors; only 1 and itself means prime."
-    return q, s, hint, 3
+    return q, s, hint, 3, _mf_number_list_answer(primes)
 
 
 def gcse_maths_multiples_factors(difficulty, mode, variant_name=None):
@@ -1457,8 +1486,7 @@ def gcse_maths_multiples_factors(difficulty, mode, variant_name=None):
             gcse_mf_primes_in_range,
         ])
 
-    q, s, hint, marks = variant()
-    return make_problem(q, s, hint, difficulty, marks, 'gcse', 'maths', 'multiples_factors')
+    return _mf_problem_from_output(variant(), difficulty)
 
 
 
@@ -1497,6 +1525,40 @@ def _dec_bounds_from_value(value, dp):
     return lower, upper, half
 
 
+def _dec_number_list_answer(values):
+    return {'type': 'number_list', 'values': tuple(values)}
+
+
+def _dec_fraction_answer(value):
+    return {'type': 'fraction', 'value': str(value)}
+
+
+def _dec_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    extra = {}
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict) and raw.get('type') == 'number_list':
+            values = raw.get('values') or ()
+            if values:
+                extra = {
+                    'correct_answer_raw': ','.join(_fdp_raw(v) for v in values),
+                    'answer_type': 'number_list',
+                    'answer_format_hint': 'Enter numbers separated by commas',
+                }
+        elif isinstance(raw, dict) and raw.get('type') == 'fraction':
+            value = raw.get('value')
+            if value is not None and str(value).strip():
+                extra = {
+                    'correct_answer_raw': str(value).strip(),
+                    'answer_type': 'fraction',
+                    'answer_format_hint': 'Enter a fraction (e.g. 3/4)',
+                }
+        else:
+            extra = problem_extra_from_graded_answer(raw)
+    return make_problem(q, s, hint, difficulty, marks, 'gcse', 'maths', 'decimals', **extra)
+
+
 def gcse_dec_ordering():
     """Foundational: order a list of decimals"""
     import random
@@ -1522,7 +1584,7 @@ def gcse_dec_ordering():
         r"Pad every number to the same number of decimal places (e.g. write 0.4 as 0.400). "
         r"Then compare from left to right — the first place where digits differ tells you which is larger."
     )
-    return q, s, hint, 1
+    return q, s, hint, 1, _dec_number_list_answer(ordered)
 
 def gcse_dec_add_subtract():
     """Foundational: add or subtract two decimals"""
@@ -1544,7 +1606,7 @@ def gcse_dec_add_subtract():
         r"Add zeros on the right if needed so both numbers have the same number of decimal places, "
         r"then work from right to left like whole-number column addition or subtraction."
     )
-    return q, s, hint, 1
+    return q, s, hint, 1, result
 
 def gcse_dec_multiply_power10():
     """Foundational: multiply or divide a decimal by a power of 10"""
@@ -1574,7 +1636,7 @@ def gcse_dec_multiply_power10():
         rf"(each jump ×10). ÷ {power}: shift {places} place(s) to the left. "
         rf"Add placeholder zeros if a digit would move past the end of the number."
     )
-    return q, s, hint, 1
+    return q, s, hint, 1, result_str
 
 def gcse_dec_multiply():
     """Intermediate: multiply two decimals"""
@@ -1596,7 +1658,7 @@ def gcse_dec_multiply():
         r"Treat the numbers as integers (e.g. 2.4 → 24), multiply, then count how many decimal "
         r"places were in both factors combined and insert the point that many places from the right."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, result
 
 def gcse_dec_divide():
     """Intermediate: divide a decimal by a decimal"""
@@ -1620,7 +1682,7 @@ def gcse_dec_divide():
         rf"Scale both dividend and divisor by the same power of 10 until {b} has no decimal point. "
         rf"The quotient is unchanged, but the division becomes a standard whole-number calculation."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, result
 
 def gcse_dec_round():
     """Foundational: round a decimal to a specified number of decimal places"""
@@ -1642,10 +1704,11 @@ def gcse_dec_round():
         rf"Find the digit one place beyond where you are rounding. "
         rf"If it is 5 or above, increase the last kept digit by 1; otherwise leave it as it is."
     )
-    return q, s, hint, 1
+    return q, s, hint, 1, result
 
 def gcse_dec_fraction_to_decimal():
     """Intermediate: convert a fraction to a decimal by long division"""
+    raw = None
     if random.random() < 0.75:
         num, den = _fdp_random_terminating_fraction()
         dec_str = _fdp_format_decimal(num / den)
@@ -1661,6 +1724,7 @@ def gcse_dec_fraction_to_decimal():
             r"After the whole-number part, add a decimal point and keep dividing; "
             r"each remainder is multiplied by 10 for the next digit."
         )
+        raw = dec_str
     else:
         num, den = _fdp_random_recurring_fraction()
         dec_str = _fdp_recurring_decimal_display(num, den)
@@ -1675,6 +1739,9 @@ def gcse_dec_fraction_to_decimal():
             r"Carry out long or short division. Track remainders — when a remainder repeats, "
             r"the digits from that point onward form the recurring block (write … or a dot over the repeat)."
         )
+        # Recurring decimals use "…" display notation and are not typeable exactly — leave ungraded.
+    if raw is not None:
+        return q, s, hint, 1, raw
     return q, s, hint, 1
 
 
@@ -1696,7 +1763,7 @@ def gcse_dec_practice_word_total():
         r"Multiply the price of one item by how many you buy. "
         r"Line up decimal points or treat pence as whole numbers (e.g. £1.25 → 125p × quantity)."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, total
 
 
 def gcse_dec_practice_decimal_to_fraction():
@@ -1721,7 +1788,7 @@ def gcse_dec_practice_decimal_to_fraction():
         r"Then divide numerator and denominator by their highest common factor until no number "
         r"other than 1 divides both."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, _dec_fraction_answer(f'{num}/{den}')
 
 
 def gcse_dec_practice_estimate_product():
@@ -1745,7 +1812,7 @@ def gcse_dec_practice_estimate_product():
         r"Round each decimal to the nearest whole number (0.5 and above rounds up). "
         r"Multiply those rounded values — this gives a quick, sensible approximation of the true product."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, est
 
 
 def gcse_dec_practice_order_mixed():
@@ -1780,7 +1847,7 @@ def gcse_dec_recurring():
     dec = _fdp_recurring_decimal_display(num, den)
     s, hint = _fdp_recurring_algebra_steps(num, den)
     q = rf"Write {dec} as a fraction in its simplest form. Show your working."
-    return q, s, hint, 3
+    return q, s, hint, 3, _dec_fraction_answer(f'{num}/{den}')
 
 
 def gcse_dec_practice_mixed_ops():
@@ -1803,7 +1870,7 @@ def gcse_dec_practice_mixed_ops():
         r"If the divisor is a decimal, multiply both numbers by 10 (or 100) "
         r"to make the divisor a whole number, then divide."
     )
-    return q, s, hint, 3
+    return q, s, hint, 3, ans
 
 
 def gcse_dec_practice_bounds():
@@ -1829,7 +1896,7 @@ def gcse_dec_practice_bounds():
         r"(e.g. 1 d.p. → ±0.05). Add half to get the upper bound and subtract half for the lower bound. "
         r"The upper value is not included in the interval."
     )
-    return q, s, hint, 3
+    return q, s, hint, 3, graded_answer_number_pair(lower, upper, 'Lower bound', 'Upper bound', sep='to')
 
 
 def gcse_dec_practice_word_unit_price():
@@ -1848,7 +1915,7 @@ def gcse_dec_practice_word_unit_price():
         r"Unit price means 'cost for 1 kg'. Divide the total bill by the number of kilograms. "
         r"If the mass is a decimal, multiply top and bottom by 10 to make division easier."
     )
-    return q, s, hint, 3
+    return q, s, hint, 3, per_kg
 
 
 # ── Decimals: procedural practice (extra variants) ───────────────────────────
@@ -1869,7 +1936,7 @@ def gcse_dec_proc_three_add():
         r"Write all numbers to the same number of decimal places, stack them with points aligned, "
         r"then add from right to left — carry into the next column when a column sums to 10 or more."
     )
-    return q, s, hint, 1
+    return q, s, hint, 1, result
 
 
 def gcse_dec_proc_divide_power10():
@@ -1889,7 +1956,7 @@ def gcse_dec_proc_divide_power10():
         rf"÷ {power} moves the decimal point {places} place(s) left. "
         rf"Add a leading zero if the point moves past the start of the number (e.g. 4.5 ÷ 10 = 0.45)."
     )
-    return q, s, hint, 1
+    return q, s, hint, 1, result_str
 
 
 def gcse_dec_proc_difference():
@@ -1907,7 +1974,7 @@ def gcse_dec_proc_difference():
         r"'Difference' means subtract the smaller number from the larger. "
         r"Align decimal points, add trailing zeros if needed, then subtract."
     )
-    return q, s, hint, 1
+    return q, s, hint, 1, diff
 
 
 def gcse_dec_proc_money_change():
@@ -1927,7 +1994,7 @@ def gcse_dec_proc_money_change():
         r"Subtract the price from the amount handed over. "
         r"Line up the pounds and pence columns, or convert both to pence (× 100) and subtract."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, change
 
 
 def gcse_dec_proc_mean():
@@ -1943,7 +2010,7 @@ def gcse_dec_proc_mean():
     hint = (
         r"Mean = total ÷ count. Add every value first, then divide the sum by how many numbers there are."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, mean
 
 
 def gcse_dec_proc_map_scale():
@@ -1964,7 +2031,7 @@ def gcse_dec_proc_map_scale():
         rf"Each {cm_per_km} cm on the map stands for 1 km. "
         rf"Divide the map measurement by {cm_per_km} to find how many kilometres it represents."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, real_km
 
 
 def gcse_dec_proc_multi_step_shop():
@@ -1992,7 +2059,7 @@ def gcse_dec_proc_multi_step_shop():
         r"Work in order: find the cost of all items, calculate the percentage off that subtotal "
         r"(divide by 100, then multiply by the percentage), then subtract the discount from the subtotal."
     )
-    return q, s, hint, 3
+    return q, s, hint, 3, total
 
 
 def gcse_dec_proc_bounds_dynamic():
@@ -2021,7 +2088,7 @@ def gcse_dec_proc_bounds_dynamic():
         r"The true value lies within half a unit of the last decimal place above and below the recorded value. "
         r"Write as lower ≤ true value < upper — the upper limit is never included."
     )
-    return q, s, hint, 3
+    return q, s, hint, 3, graded_answer_number_pair(lower, upper, 'Lower bound', 'Upper bound', sep='to')
 
 
 def gcse_dec_proc_density():
@@ -2042,7 +2109,7 @@ def gcse_dec_proc_density():
         r"Use the formula density = mass ÷ volume. Substitute the given values and divide; "
         r"scale numerator and denominator by the same power of 10 if the volume is a decimal."
     )
-    return q, s, hint, 3
+    return q, s, hint, 3, density
 
 
 def gcse_maths_decimals(difficulty, mode, variant_name=None):
@@ -2079,8 +2146,7 @@ def gcse_maths_decimals(difficulty, mode, variant_name=None):
     }
     variant = random.choice(pools.get(difficulty, pools['foundational']))
 
-    q, s, hint, marks = variant()
-    return make_problem(q, s, hint, difficulty, marks, 'gcse', 'maths', 'decimals')
+    return _dec_problem_from_output(variant(), difficulty)
 
 
 # ─────────────────────────────────────────────────────────────

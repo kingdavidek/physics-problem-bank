@@ -19,6 +19,8 @@ from generators.gcse.algebraic_fractions import (  # noqa: E402
 from generators.gcse.maths import (  # noqa: E402
     _algebra_problem_from_output,
     _bidmas_problem,
+    _dec_problem_from_output,
+    _mf_problem_from_output,
     _fdp_problem,
     _fdp_problem_from_output,
     _surd_problem,
@@ -26,14 +28,23 @@ from generators.gcse.maths import (  # noqa: E402
     gcse_bidmas_brackets,
     gcse_bidmas_power,
     gcse_bidmas_simple,
+    gcse_dec_fraction_to_decimal,
+    gcse_dec_ordering,
+    gcse_dec_recurring,
     gcse_fdp_decimal_to_fraction,
     gcse_fdp_decimal_to_percentage,
     gcse_fdp_fraction_to_decimal,
     gcse_fdp_share_in_ratio,
     gcse_maths_algebra,
     gcse_maths_bidmas,
+    gcse_maths_decimals,
     gcse_maths_fdp,
+    gcse_maths_multiples_factors,
     gcse_maths_surds,
+    gcse_mf_hcf_lcm_product_rule,
+    gcse_mf_lcm_buses_word,
+    gcse_mf_prime,
+    gcse_mf_primes_in_range,
     gcse_neg_add_subtract,
     gcse_surds_simplify,
     _vec_problem_from_output,
@@ -47,7 +58,9 @@ from generators.gcse.maths_basic_topics_mcq import (  # noqa: E402
     _practice_pools,
     gcse_maths_algebra_variants,
     gcse_maths_bidmas_variants,
+    gcse_maths_decimals_variants,
     gcse_maths_fdp_variants,
+    gcse_maths_multiples_factors_variants,
     gcse_maths_surds_variants,
 )
 from generators.gcse.maths_num_stats_prob_rat import (  # noqa: E402
@@ -597,6 +610,160 @@ def test_bidmas_variant_queue_always_graded():
             problem = gcse_maths_bidmas(difficulty, 'practice', variant_name=name)
             assert problem.get('correct_answer_raw') is not None, name
             assert problem.get('answer_type') == 'number', name
+
+
+# Answer depends on a random branch (terminating vs. recurring decimal); only the
+# terminating branch is graded, so a single call can legitimately be ungraded.
+DEC_SOMETIMES_UNGRADED_VARIANTS = {'gcse_dec_fraction_to_decimal'}
+DEC_UNGRADED_VARIANTS = {'gcse_dec_practice_order_mixed'}
+DEC_NUMBER_LIST_VARIANTS = {'gcse_dec_ordering'}
+DEC_FRACTION_VARIANTS = {'gcse_dec_practice_decimal_to_fraction', 'gcse_dec_recurring'}
+DEC_NUMBER_PAIR_VARIANTS = {'gcse_dec_practice_bounds', 'gcse_dec_proc_bounds_dynamic'}
+
+
+def test_decimals_variant_queue_is_graded():
+    for difficulty in ('foundational', 'intermediate', 'difficult'):
+        variants = gcse_maths_decimals_variants(difficulty, 'practice')
+        assert variants, difficulty
+        for fn in variants:
+            name = fn.__name__
+            if name in DEC_UNGRADED_VARIANTS:
+                problem = gcse_maths_decimals(difficulty, 'practice', variant_name=name)
+                assert problem.get('correct_answer_raw') is None, name
+                continue
+            if name in DEC_SOMETIMES_UNGRADED_VARIANTS:
+                graded = [
+                    gcse_maths_decimals(difficulty, 'practice', variant_name=name)
+                    for _ in range(20)
+                ]
+                assert any(p.get('correct_answer_raw') is not None for p in graded), name
+                assert all(p.get('answer_type') in (None, 'number') for p in graded), name
+                continue
+            problem = gcse_maths_decimals(difficulty, 'practice', variant_name=name)
+            assert problem.get('correct_answer_raw') is not None, name
+            if name in DEC_NUMBER_LIST_VARIANTS:
+                assert problem.get('answer_type') == 'number_list', name
+            elif name in DEC_FRACTION_VARIANTS:
+                assert problem.get('answer_type') == 'fraction', name
+            elif name in DEC_NUMBER_PAIR_VARIANTS:
+                assert problem.get('answer_type') == 'number_pair', name
+            else:
+                assert problem.get('answer_type') == 'number', name
+
+
+def test_decimals_ordering_uses_number_list_checker():
+    out = gcse_dec_ordering()
+    problem = _dec_problem_from_output(out, 'foundational')
+    assert problem.get('answer_type') == 'number_list'
+    raw = problem['correct_answer_raw']
+    result = check_answer('number_list', raw, raw)
+    assert result['correct'] is True
+
+
+def test_decimals_recurring_uses_fraction_checker():
+    out = gcse_dec_recurring()
+    problem = _dec_problem_from_output(out, 'difficult')
+    assert problem.get('answer_type') == 'fraction'
+    raw = problem['correct_answer_raw']
+    result = check_answer('fraction', raw, raw)
+    assert result['correct'] is True
+
+
+def test_decimals_check_api():
+    problem = gcse_maths_decimals(
+        'intermediate', 'practice', variant_name='gcse_dec_practice_bounds'
+    )
+    correct = problem['correct_answer_raw']
+    assert problem.get('answer_type') == 'number_pair'
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'user_answer': correct,
+                'correct_answer_raw': correct,
+                'answer_type': 'number_pair',
+                'level': 'gcse', 'subject': 'maths', 'topic': 'decimals',
+                'difficulty': 'intermediate',
+            },
+        )
+        data = r.get_json()
+        assert data['ok'] is True
+        assert data['correct'] is True
+
+
+MF_UNGRADED_VARIANTS = {
+    'gcse_mf_find_factor',
+    'gcse_mf_factor_pairs',
+    'gcse_mf_prime_factors',
+    'gcse_mf_divisibility_digit',
+}
+MF_KEYWORD_VARIANTS = {'gcse_mf_prime', 'gcse_mf_lcm_buses_word'}
+MF_NUMBER_PAIR_VARIANTS = {'gcse_mf_hcf_lcm_product_rule'}
+MF_NUMBER_LIST_VARIANTS = {'gcse_mf_primes_in_range'}
+
+
+def test_multiples_factors_variant_queue_is_graded():
+    for difficulty in ('foundational', 'intermediate', 'difficult'):
+        variants = gcse_maths_multiples_factors_variants(difficulty, 'practice')
+        assert variants, difficulty
+        for fn in variants:
+            name = fn.__name__
+            problem = gcse_maths_multiples_factors(difficulty, 'practice', variant_name=name)
+            if name in MF_UNGRADED_VARIANTS:
+                assert problem.get('correct_answer_raw') is None, name
+                continue
+            assert problem.get('correct_answer_raw') is not None, name
+            if name in MF_KEYWORD_VARIANTS:
+                assert problem.get('answer_type') == 'keyword', name
+            elif name in MF_NUMBER_PAIR_VARIANTS:
+                assert problem.get('answer_type') == 'number_pair', name
+            elif name in MF_NUMBER_LIST_VARIANTS:
+                assert problem.get('answer_type') == 'number_list', name
+            else:
+                assert problem.get('answer_type') == 'number', name
+
+
+def test_multiples_factors_prime_uses_keyword_checker():
+    out = gcse_mf_prime()
+    problem = _mf_problem_from_output(out, 'foundational')
+    assert problem.get('answer_type') == 'keyword'
+    raw = problem['correct_answer_raw']
+    assert raw in ('yes', 'no')
+    result = check_answer('keyword', raw, raw)
+    assert result['correct'] is True
+
+
+def test_multiples_factors_primes_in_range_uses_number_list_checker():
+    out = gcse_mf_primes_in_range()
+    problem = _mf_problem_from_output(out, 'difficult')
+    assert problem.get('answer_type') == 'number_list'
+    raw = problem['correct_answer_raw']
+    result = check_answer('number_list', raw, raw)
+    assert result['correct'] is True
+
+
+def test_multiples_factors_check_api():
+    problem = gcse_maths_multiples_factors(
+        'foundational', 'practice', variant_name='gcse_mf_hcf'
+    )
+    correct = problem['correct_answer_raw']
+    assert problem.get('answer_type') == 'number'
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'user_answer': correct,
+                'correct_answer_raw': correct,
+                'answer_type': 'number',
+                'level': 'gcse', 'subject': 'maths', 'topic': 'multiples_factors',
+                'difficulty': 'foundational',
+            },
+        )
+        data = r.get_json()
+        assert data['ok'] is True
+        assert data['correct'] is True
 
 
 FDP_UNGRADED_VARIANTS = {
@@ -6641,6 +6808,14 @@ def main():
     test_foundational_practice_pool_returns_five_tuple()
     test_bidmas_generator_payload()
     test_bidmas_variant_queue_always_graded()
+    test_decimals_variant_queue_is_graded()
+    test_decimals_ordering_uses_number_list_checker()
+    test_decimals_recurring_uses_fraction_checker()
+    test_decimals_check_api()
+    test_multiples_factors_variant_queue_is_graded()
+    test_multiples_factors_prime_uses_keyword_checker()
+    test_multiples_factors_primes_in_range_uses_number_list_checker()
+    test_multiples_factors_check_api()
     test_fdp_graded_variants_return_five_tuple()
     test_fdp_ungraded_variants_remain_four_tuple()
     test_fdp_fraction_variants_use_fraction_checker()
