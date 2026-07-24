@@ -12,7 +12,14 @@ Covers:
 """
 import random
 import math
-from generators.shared.utils import make_problem
+from generators.shared.utils import (
+    make_problem,
+    make_graded_problem,
+    graded_answer_number,
+    graded_answer_number_pair,
+    graded_answer_number_fields,
+    proof_steps_answer,
+)
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from generators.shared.variant_utils import (
     select_tier_variants,
@@ -97,7 +104,7 @@ def _cl_scale_area():
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _perp_bisect_svg(w=220, h=188):
-    """Perpendicular bisector with compass arcs."""
+    """Segment AB — setup for locus / construction questions (no construction shown)."""
     return (
         f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
         f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:inline-block;margin:4px;vertical-align:middle;">'
@@ -106,24 +113,13 @@ def _perp_bisect_svg(w=220, h=188):
         '<circle cx="195" cy="94" r="4" fill="#1a6fa8"/>'
         '<text x="8" y="87" font-size="13" fill="#1a6fa8" font-weight="bold">A</text>'
         '<text x="198" y="87" font-size="13" fill="#1a6fa8" font-weight="bold">B</text>'
-        # Arc from A (radius 100, bulging rightward)
-        '<path d="M 70,4 A 100,100 0 0 1 70,184" fill="none" stroke="#a13544" stroke-width="1.5" stroke-dasharray="5,3"/>'
-        # Arc from B (radius 100, bulging leftward)
-        '<path d="M 150,4 A 100,100 0 0 0 150,184" fill="none" stroke="#a13544" stroke-width="1.5" stroke-dasharray="5,3"/>'
-        # Intersection dots
-        '<circle cx="110" cy="41" r="3" fill="#a13544"/>'
-        '<circle cx="110" cy="147" r="3" fill="#a13544"/>'
-        # Perpendicular bisector
-        '<line x1="110" y1="8" x2="110" y2="180" stroke="#059669" stroke-width="2.5"/>'
-        '<circle cx="110" cy="94" r="4" fill="#059669"/>'
-        '<text x="116" y="88" font-size="11" fill="#059669">M</text>'
-        '<rect x="110" y="86" width="9" height="9" fill="none" stroke="#059669" stroke-width="1.5"/>'
+        '<text x="110" y="130" font-size="10" fill="#555" text-anchor="middle">Points A and B</text>'
         '</svg>'
     )
 
 
 def _angle_bisect_svg(w=220, h=172):
-    """Angle bisector with compass arcs."""
+    """Angle at B — setup only (no bisector construction shown)."""
     return (
         f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
         f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:inline-block;margin:4px;vertical-align:middle;">'
@@ -133,67 +129,49 @@ def _angle_bisect_svg(w=220, h=172):
         '<text x="160" y="14" font-size="13" fill="#333" font-weight="bold">A</text>'
         '<line x1="28" y1="148" x2="215" y2="148" stroke="#555" stroke-width="2"/>'
         '<text x="215" y="161" font-size="13" fill="#333" font-weight="bold">C</text>'
-        # Arc from B
-        '<path d="M 82,74 A 76,76 0 0 1 104,148" fill="none" stroke="#1a6fa8" stroke-width="1.5" stroke-dasharray="4,2"/>'
-        '<circle cx="82" cy="74" r="3" fill="#1a6fa8"/>'
-        '<circle cx="104" cy="148" r="3" fill="#1a6fa8"/>'
-        '<text x="89" y="70" font-size="10" fill="#1a6fa8">X</text>'
-        '<text x="105" y="162" font-size="10" fill="#1a6fa8">Y</text>'
-        # Equal arcs from X and Y crossing at Z≈(147,105)
-        '<path d="M 123,53 A 50,50 0 0 1 150,105" fill="none" stroke="#a13544" stroke-width="1.5" stroke-dasharray="4,2"/>'
-        '<path d="M 90,107 A 50,50 0 0 0 150,105" fill="none" stroke="#a13544" stroke-width="1.5" stroke-dasharray="4,2"/>'
-        '<circle cx="150" cy="105" r="3" fill="#a13544"/>'
-        # Bisector
-        '<line x1="28" y1="148" x2="212" y2="58" stroke="#059669" stroke-width="2.5"/>'
+        '<text x="110" y="8" font-size="10" fill="#555" text-anchor="middle">Two lines meeting at B</text>'
         '</svg>'
     )
 
 
 def _circle_svg(r_label="r cm", w=180, h=172):
+    """Fixed point P — setup only (locus not drawn)."""
     return (
         f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
         f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:inline-block;margin:4px;vertical-align:middle;">'
-        '<circle cx="90" cy="86" r="70" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2"/>'
         '<circle cx="90" cy="86" r="4" fill="#1a6fa8"/>'
         '<text x="95" y="82" font-size="13" fill="#1a6fa8" font-weight="bold">P</text>'
-        '<line x1="90" y1="86" x2="160" y2="86" stroke="#a13544" stroke-width="1.5"/>'
-        f'<text x="125" y="80" font-size="12" fill="#a13544" text-anchor="middle">{r_label}</text>'
+        '<text x="90" y="130" font-size="10" fill="#555" text-anchor="middle">Fixed point P</text>'
         '</svg>'
     )
 
 
 def _stadium_svg(w=265, h=140):
+    """Segment AB — setup only (stadium locus not drawn)."""
     return (
         f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
         f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:inline-block;margin:4px;vertical-align:middle;">'
-        '<rect x="62" y="40" width="140" height="60" rx="30" ry="30" '
-        'fill="#dbeafe" stroke="#1a6fa8" stroke-width="2" stroke-dasharray="6,3"/>'
-        '<line x1="62" y1="70" x2="202" y2="70" stroke="#a13544" stroke-width="2.5"/>'
+        '<line x1="62" y1="70" x2="202" y2="70" stroke="#555" stroke-width="2.5"/>'
         '<circle cx="62" cy="70" r="4" fill="#a13544"/>'
         '<circle cx="202" cy="70" r="4" fill="#a13544"/>'
         '<text x="50" y="73" font-size="12" fill="#a13544" font-weight="bold">A</text>'
         '<text x="204" y="73" font-size="12" fill="#a13544" font-weight="bold">B</text>'
-        '<line x1="132" y1="40" x2="132" y2="70" stroke="#059669" stroke-width="1.5"/>'
-        '<polygon points="132,40 129,48 135,48" fill="#059669"/>'
-        '<polygon points="132,70 129,62 135,62" fill="#059669"/>'
-        '<text x="140" y="58" font-size="11" fill="#059669">d</text>'
-        '<text x="132" y="130" font-size="10" fill="#555" text-anchor="middle">Locus at distance d from segment AB</text>'
+        '<text x="132" y="110" font-size="10" fill="#555" text-anchor="middle">Line segment AB</text>'
         '</svg>'
     )
 
 
 def _half_plane_svg(w=230, h=155):
+    """Points A and B — setup only (no region shaded)."""
     return (
         f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
         f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:inline-block;margin:4px;vertical-align:middle;">'
-        '<rect x="10" y="8" width="107" height="139" fill="#dbeafe" opacity="0.65"/>'
-        '<line x1="117" y1="4" x2="117" y2="151" stroke="#059669" stroke-width="2.5"/>'
+        '<line x1="10" y1="77" x2="220" y2="77" stroke="#555" stroke-width="2"/>'
         '<circle cx="42" cy="77" r="6" fill="#1a6fa8"/>'
         '<circle cx="192" cy="77" r="6" fill="#a13544"/>'
         '<text x="44" y="70" font-size="13" fill="#1a6fa8" font-weight="bold">A</text>'
         '<text x="194" y="70" font-size="13" fill="#a13544" font-weight="bold">B</text>'
-        '<text x="60" y="132" font-size="10" fill="#1a6fa8" text-anchor="middle">Closer to A</text>'
-        '<text x="117" y="8" font-size="9" fill="#059669" text-anchor="middle">perp. bisector</text>'
+        '<text x="117" y="132" font-size="10" fill="#555" text-anchor="middle">Points A and B</text>'
         '</svg>'
     )
 
@@ -204,12 +182,11 @@ def _lens_svg(w=240, h=168):
         f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:inline-block;margin:4px;vertical-align:middle;">'
         '<circle cx="72" cy="84" r="68" fill="none" stroke="#1a6fa8" stroke-width="2" stroke-dasharray="5,3"/>'
         '<circle cx="168" cy="84" r="68" fill="none" stroke="#a13544" stroke-width="2" stroke-dasharray="5,3"/>'
-        '<ellipse cx="120" cy="84" rx="26" ry="50" fill="#c7d2fe" opacity="0.8"/>'
         '<circle cx="72" cy="84" r="4" fill="#1a6fa8"/>'
         '<circle cx="168" cy="84" r="4" fill="#a13544"/>'
         '<text x="52" y="81" font-size="13" fill="#1a6fa8" font-weight="bold">A</text>'
         '<text x="172" y="81" font-size="13" fill="#a13544" font-weight="bold">B</text>'
-        '<text x="120" y="156" font-size="10" fill="#555" text-anchor="middle">Shaded: within r₁ of A AND r₂ of B</text>'
+        '<text x="120" y="156" font-size="10" fill="#555" text-anchor="middle">Circles centred at A and B</text>'
         '</svg>'
     )
 
@@ -239,7 +216,7 @@ def _garden_loci_svg(w=300, h=215):
 
 
 def _treasure_loci_svg(d_ab=80, w=260, h=175):
-    """Perpendicular bisector of AB and circle centred at C."""
+    """Markers A, B and C — setup only (loci not drawn)."""
     ax, bx = 40, 40 + d_ab
     mx = (ax + bx) // 2
     return (
@@ -250,29 +227,19 @@ def _treasure_loci_svg(d_ab=80, w=260, h=175):
         f'<circle cx="{bx}" cy="120" r="4" fill="#1a6fa8"/>'
         f'<text x="{ax-12}" y="112" font-size="12" fill="#1a6fa8" font-weight="bold">A</text>'
         f'<text x="{bx+4}" y="112" font-size="12" fill="#1a6fa8" font-weight="bold">B</text>'
-        f'<line x1="{mx}" y1="30" x2="{mx}" y2="155" stroke="#059669" stroke-width="2"/>'
         f'<circle cx="{mx}" cy="75" r="4" fill="#8a5300"/>'
         f'<text x="{mx+6}" y="72" font-size="11" fill="#8a5300" font-weight="bold">C</text>'
-        f'<circle cx="{mx}" cy="75" r="45" fill="none" stroke="#a13544" stroke-width="1.5" stroke-dasharray="5,3"/>'
-        '<text x="8" y="22" font-size="10" fill="#059669">⊥ bisector of AB</text>'
-        '<text x="8" y="36" font-size="10" fill="#a13544">circle centre C</text>'
+        '<text x="130" y="155" font-size="10" fill="#555" text-anchor="middle">Markers A, B and C</text>'
         '</svg>'
     )
 
 
 def _triangle_centres_svg(w=340, h=248, ab_label="8 cm", bc_label="6 cm", ac_label="10 cm"):
-    """Right triangle ABC (right-angled at B) with circumcircle and incircle hints.
-
-    ab_label = vertical leg B→A, bc_label = base B→C, ac_label = hypotenuse A→C.
-    The drawing uses a fixed 240×175 coordinate space; w/h scale it up uniformly.
-    """
+    """Right triangle ABC — setup only (centres and loci not drawn)."""
     bx, by, ax, ay, cx, cy = 45, 145, 45, 55, 105, 145
-    mx, my = (ax + cx) // 2, (ay + cy) // 2
-    hyp_px = int(math.sqrt((cx - ax) ** 2 + (cy - ay) ** 2))
     return (
         f'<svg width="{w}" height="{h}" viewBox="0 0 240 175" '
         f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:block;margin:8px auto;">'
-        f'<polygon points="{bx},{by} {ax},{ay} {cx},{cy}" fill="#e8f4fd" stroke="none"/>'
         f'<line x1="{bx}" y1="{by}" x2="{cx}" y2="{cy}" stroke="#1a6fa8" stroke-width="2"/>'
         f'<line x1="{bx}" y1="{by}" x2="{ax}" y2="{ay}" stroke="#059669" stroke-width="2"/>'
         f'<line x1="{ax}" y1="{ay}" x2="{cx}" y2="{cy}" stroke="#a13544" stroke-width="2.5"/>'
@@ -283,40 +250,20 @@ def _triangle_centres_svg(w=340, h=248, ab_label="8 cm", bc_label="6 cm", ac_lab
         f'<text x="{bx-8}" y="158" font-size="11" fill="#333" font-weight="bold">B</text>'
         f'<text x="{ax-14}" y="{ay+4}" font-size="11" fill="#333" font-weight="bold">A</text>'
         f'<text x="{cx+4}" y="{cy+4}" font-size="11" fill="#333" font-weight="bold">C</text>'
-        f'<circle cx="{mx}" cy="{my}" r="{hyp_px // 2}" fill="none" stroke="#1a6fa8" '
-        'stroke-width="1.5" stroke-dasharray="4,3"/>'
-        '<circle cx="65" cy="125" r="20" fill="none" stroke="#059669" stroke-width="1.5"/>'
-        '<line x1="45" y1="145" x2="85" y2="105" stroke="#8a5300" stroke-width="1.5" stroke-dasharray="4,2"/>'
-        '<text x="155" y="55" font-size="10" fill="#1a6fa8">circumcircle</text>'
-        '<text x="88" y="118" font-size="10" fill="#059669">incircle</text>'
         '</svg>'
     )
 
 
 def _sixty_deg_svg(w=210, h=148):
-    """60° angle construction SVG."""
-    # A=(22,115), X=(92,115), Y=(57,54)
+    """Starting setup for 60° angle construction at A on line AB (no construction shown)."""
     return (
         f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
         f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:inline-block;margin:4px;vertical-align:middle;">'
-        # Base line
         '<line x1="10" y1="115" x2="200" y2="115" stroke="#555" stroke-width="2"/>'
         '<circle cx="22" cy="115" r="4" fill="#1a6fa8"/>'
         '<text x="8" y="108" font-size="13" fill="#1a6fa8" font-weight="bold">A</text>'
-        '<circle cx="92" cy="115" r="3" fill="#a13544"/>'
-        '<text x="94" y="130" font-size="11" fill="#a13544">X</text>'
-        # Arc from A (radius 70): shows curve from near X up toward Y
-        '<path d="M 92,115 A 70,70 0 0 1 57,54" fill="none" stroke="#a13544" stroke-width="1.5" stroke-dasharray="4,2"/>'
-        # Arc from X (same radius 70): crosses first arc at Y
-        '<path d="M 57,54 A 70,70 0 0 1 22,115" fill="none" stroke="#1a6fa8" stroke-width="1.5" stroke-dasharray="4,2"/>'
-        # Intersection Y
-        '<circle cx="57" cy="54" r="4" fill="#059669"/>'
-        '<text x="60" y="48" font-size="11" fill="#059669">Y</text>'
-        # The 60° ray AY
-        '<line x1="22" y1="115" x2="57" y2="54" stroke="#059669" stroke-width="2.5"/>'
-        # Arc showing the angle
-        '<path d="M 50,115 A 28,28 0 0 1 39,90" fill="none" stroke="#a13544" stroke-width="1.5"/>'
-        '<text x="55" y="106" font-size="12" fill="#a13544" font-weight="bold">60°</text>'
+        '<text x="188" y="108" font-size="13" fill="#555" font-weight="bold">B</text>'
+        '<text x="105" y="138" font-size="10" fill="#555" text-anchor="middle">Line AB — construct a 60° angle at A</text>'
         '</svg>'
     )
 
@@ -324,6 +271,30 @@ def _sixty_deg_svg(w=210, h=148):
 # ══════════════════════════════════════════════════════════════════════════════
 # FOUNDATIONAL  (15 variants)
 # ══════════════════════════════════════════════════════════════════════════════
+
+def _cl_mcq_return(q, s, hint, marks, correct, distractors):
+    """Return a 6-tuple MCQ for constructions/loci conceptual questions."""
+    choices = [correct] + list(distractors[:3])
+    random.shuffle(choices)
+    letters = 'ABCD'
+    correct_letter = letters[choices.index(correct)]
+    opts = [f"{letters[i]}  {choices[i]}" for i in range(4)]
+    return q, s, hint, marks, opts, correct_letter
+
+
+def _cl_steps_answer(steps, distractors, *, format_hint='Put the construction steps in the correct order'):
+    bank = [{'id': f's{i + 1}', 'text': text} for i, text in enumerate(steps)]
+    for j, text in enumerate(distractors):
+        bank.append({'id': f'd{j + 1}', 'text': text})
+    random.shuffle(bank)
+    required = tuple(f's{i + 1}' for i in range(len(steps)))
+    return proof_steps_answer(
+        required,
+        bank,
+        order_matters=True,
+        format_hint=format_hint,
+    )
+
 
 def _cl_f1_equidistant_two_points():
     d = random.randint(3, 35)
@@ -333,7 +304,16 @@ def _cl_f1_equidistant_two_points():
     s = ("The locus is the <strong>perpendicular bisector of AB</strong> — a straight line "
          "that passes through the midpoint of AB at right angles (90°) to AB. "
          "Every point on this line is exactly equal in distance from A and B.")
-    return q, s, "The locus equidistant from two fixed points is the perpendicular bisector of the line joining them.", 2
+    hint = "The locus equidistant from two fixed points is the perpendicular bisector of the line joining them."
+    return _cl_mcq_return(
+        q, s, hint, 2,
+        "The perpendicular bisector of AB",
+        [
+            "A circle with diameter AB",
+            "Two parallel lines each d cm from AB",
+            "The midpoint of AB only",
+        ],
+    )
 
 
 def _cl_f2_fixed_distance_point():
@@ -342,7 +322,16 @@ def _cl_f2_fixed_distance_point():
     q = (f"Describe the locus of all points that are exactly {r} cm from a fixed point P.<br>{svg}")
     s = (f"The locus is a <strong>circle with centre P and radius {r} cm</strong>. "
          "Every point on this circle is exactly the given distance from P.")
-    return q, s, "A fixed distance from a fixed point → circle.", 2
+    hint = "A fixed distance from a fixed point → circle."
+    return _cl_mcq_return(
+        q, s, hint, 2,
+        f"A circle with centre P and radius {r} cm",
+        [
+            f"Two parallel lines each {r} cm from P",
+            f"A square of side {r} cm centred at P",
+            f"A straight line {r} cm long through P",
+        ],
+    )
 
 
 def _cl_f3_equidistant_two_lines():
@@ -353,7 +342,16 @@ def _cl_f3_equidistant_two_lines():
     s = ("The locus consists of the <strong>two angle bisectors</strong> of the angles formed at B. "
          f"One bisector passes through the {angle}° angle and the other through the supplementary angle. "
          "Every point on an angle bisector is equidistant from the two lines.")
-    return q, s, "Equidistant from two intersecting lines → the angle bisector(s).", 2
+    hint = "Equidistant from two intersecting lines → the angle bisector(s)."
+    return _cl_mcq_return(
+        q, s, hint, 2,
+        "The two angle bisectors of the angles at B",
+        [
+            "The perpendicular bisector of the angle at B",
+            f"A circle of radius {angle} cm centred at B",
+            "A single line parallel to one of the arms",
+        ],
+    )
 
 
 def _cl_f4_fixed_distance_segment():
@@ -365,7 +363,17 @@ def _cl_f4_fixed_distance_segment():
     s = (f"The locus is a <strong>stadium shape</strong> (also called a discorectangle): "
          f"two straight lines parallel to AB, each {d} cm away (one on each side), "
          f"joined at each end by a semicircle of radius {d} cm centred at A and B respectively.")
-    return q, s, "Fixed distance from a segment: two parallel lines joined by semicircles at the ends.", 2
+    hint = "Fixed distance from a segment: two parallel lines joined by semicircles at the ends."
+    correct = (
+        f"A stadium shape: two lines parallel to AB, {d} cm away, "
+        f"with semicircles of radius {d} cm at A and B"
+    )
+    distractors = [
+        f"A circle of radius {d} cm centred at the midpoint of AB",
+        f"Two parallel lines only, each {d} cm from AB (no curves at the ends)",
+        f"A rectangle {seg} cm by {2 * d} cm",
+    ]
+    return _cl_mcq_return(q, s, hint, 2, correct, distractors)
 
 
 def _cl_f5_perp_bisector_property():
@@ -382,7 +390,14 @@ def _cl_f5_perp_bisector_property():
     s = (f"Since {P} is on the perpendicular bisector: <strong>{P}A = {P}B</strong>.<br>"
          f"Since {Q} is also on the perpendicular bisector: <strong>{Q}A = {Q}B</strong>.<br>"
          f"Since {R} is NOT on the perpendicular bisector: <strong>{R}A ≠ {R}B</strong>.")
-    return q, s, "Any point on the perpendicular bisector of AB is equidistant from A and B.", 2
+    hint = "Any point on the perpendicular bisector of AB is equidistant from A and B."
+    correct = f"{P}A = {P}B and {Q}A = {Q}B, but {R}A ≠ {R}B"
+    distractors = [
+        f"{P}A = {P}B only; {Q}A ≠ {Q}B",
+        f"{P}A ≠ {P}B and {R}A = {R}B",
+        "Every point is equidistant from A and B",
+    ]
+    return _cl_mcq_return(q, s, hint, 2, correct, distractors)
 
 
 def _cl_f6_angle_bisector_property():
@@ -392,7 +407,16 @@ def _cl_f6_angle_bisector_property():
          f"What is the relationship between P's distance from line AB and from line AC?")
     s = ("Any point on the angle bisector is equidistant from the two arms of the angle. "
          f"Therefore, P's perpendicular distance from AB <strong>equals</strong> P's perpendicular distance from AC.")
-    return q, s, "Any point on an angle bisector is equidistant from the two lines forming the angle.", 2
+    hint = "Any point on an angle bisector is equidistant from the two lines forming the angle."
+    return _cl_mcq_return(
+        q, s, hint, 2,
+        "The perpendicular distance from AB equals the perpendicular distance from AC",
+        [
+            "The distance from AB is greater than the distance from AC",
+            "The distance from AB is less than the distance from AC",
+            "P must lie at vertex A",
+        ],
+    )
 
 
 def _cl_f7_rolling_wheel():
@@ -402,7 +426,16 @@ def _cl_f7_rolling_wheel():
          f"Describe the locus traced by the centre of the wheel.")
     s = (f"The centre of the wheel stays exactly {r} cm above the {road} at all times. "
          f"The locus is a <strong>straight line parallel to the {road}, at height {r} cm</strong>.")
-    return q, s, "The centre of a rolling circle stays at a fixed height = radius above the surface.", 2
+    hint = "The centre of a rolling circle stays at a fixed height = radius above the surface."
+    return _cl_mcq_return(
+        q, s, hint, 2,
+        f"A straight line parallel to the {road}, at height {r} cm",
+        [
+            f"A circle of radius {r} cm",
+            "A wavy curve (cycloid)",
+            f"The {road} surface itself",
+        ],
+    )
 
 
 def _cl_f8_closer_to_A():
@@ -413,7 +446,16 @@ def _cl_f8_closer_to_A():
     s = ("The region is all points on <strong>A's side of the perpendicular bisector of AB</strong>. "
          "The boundary is the perpendicular bisector itself (where PA = PB). "
          "The region is an infinite half-plane.")
-    return q, s, "Closer to A → on A's side of the perpendicular bisector of AB.", 2
+    hint = "Closer to A → on A's side of the perpendicular bisector of AB."
+    return _cl_mcq_return(
+        q, s, hint, 2,
+        "All points on A's side of the perpendicular bisector of AB",
+        [
+            "All points on B's side of the perpendicular bisector of AB",
+            "Only points on the perpendicular bisector of AB",
+            f"A circle of radius {d} cm centred at A",
+        ],
+    )
 
 
 def _cl_f9_construct_perp_bisector_steps():
@@ -422,9 +464,21 @@ def _cl_f9_construct_perp_bisector_steps():
          "<strong>Step 2:</strong> Place the compass point on A and draw an arc above and below AB.<br>"
          "<strong>Step 3:</strong> Without changing the radius, place the point on B and draw arcs above and below AB, crossing the first arcs.<br>"
          "<strong>Step 4:</strong> Join the two intersection points with a straight line. This line is the perpendicular bisector of AB.")
-    return q, s, "Keep the same compass radius for both arcs. The arcs must cross on both sides of AB.", 3
-
-_cl_f9_construct_perp_bisector_steps._fixed_stem = True
+    hint = "Keep the same compass radius for both arcs. The arcs must cross on both sides of AB."
+    return q, s, hint, 3, _cl_steps_answer(
+        (
+            "Open the compasses to more than half the length of AB.",
+            "Place the compass point on A and draw an arc above and below AB.",
+            "Without changing the radius, place the point on B and draw arcs above and below AB, crossing the first arcs.",
+            "Join the two intersection points with a straight line.",
+        ),
+        (
+            "Place the compass on the midpoint of AB and draw a circle.",
+            "Use a protractor to measure 90° at the midpoint of AB.",
+            "Draw one arc from A only, then join A to the arc crossing.",
+            "Measure AB with a ruler and mark the midpoint with a dot only.",
+        ),
+    )
 
 
 def _cl_f10_construct_angle_bisector_steps():
@@ -434,9 +488,55 @@ def _cl_f10_construct_angle_bisector_steps():
          "<strong>Step 3:</strong> Place the compass on X and draw an arc inside the angle.<br>"
          "<strong>Step 4:</strong> Using the same radius, place the compass on Y and draw an arc crossing the previous one; label the crossing Z.<br>"
          "<strong>Step 5:</strong> Draw the ray BZ — this is the angle bisector of angle ABC.")
-    return q, s, "Use equal radii from both arms' crossing points; join B to their intersection Z.", 3
-
-_cl_f10_construct_angle_bisector_steps._fixed_stem = True
+    hint = "Use equal radii from both arms' crossing points; join B to their intersection Z."
+    bank = [
+        {
+            'id': 's1',
+            'text': 'Place the compass point on B and draw an arc that crosses both arms BA and BC.',
+        },
+        {
+            'id': 's2',
+            'text': 'Label the crossings X (on BA) and Y (on BC).',
+        },
+        {
+            'id': 's3',
+            'text': 'Place the compass on X and draw an arc inside the angle.',
+        },
+        {
+            'id': 's4',
+            'text': (
+                'Using the same radius, place the compass on Y and draw an arc '
+                'crossing the previous one; label the crossing Z.'
+            ),
+        },
+        {
+            'id': 's5',
+            'text': 'Draw the ray BZ — this is the angle bisector of angle ABC.',
+        },
+        {
+            'id': 'd1',
+            'text': 'Place the compass on A and draw an arc through B.',
+        },
+        {
+            'id': 'd2',
+            'text': 'Use a protractor to measure angle ABC and divide by 2.',
+        },
+        {
+            'id': 'd3',
+            'text': 'Place the compass on B and draw an arc that crosses only arm BA.',
+        },
+        {
+            'id': 'd4',
+            'text': 'Join X and Y with a straight line.',
+        },
+    ]
+    random.shuffle(bank)
+    return q, s, hint, 3, proof_steps_answer(
+        ('s1', 's2', 's3', 's4', 's5'),
+        bank,
+        order_matters=True,
+        format_hint='Put the construction steps in the correct order',
+    )
 
 
 def _cl_f11_triangle_tools():
@@ -448,7 +548,16 @@ def _cl_f11_triangle_tools():
          "A protractor is not needed because all three sides are given (SSS). "
          "Use compasses to draw arcs of the correct radii from two ends of the base; "
          "the third vertex is where the arcs intersect.")
-    return q, s, "SSS construction uses only ruler + compasses. Arcs from two vertices give the third.", 2
+    hint = "SSS construction uses only ruler + compasses. Arcs from two vertices give the third."
+    return _cl_mcq_return(
+        q, s, hint, 2,
+        "A ruler and a pair of compasses",
+        [
+            "A ruler and a protractor",
+            "A ruler only",
+            "A protractor and compasses",
+        ],
+    )
 
 
 def _cl_f12_locus_around_rectangle():
@@ -460,7 +569,16 @@ def _cl_f12_locus_around_rectangle():
     s = (f"The locus is a <strong>rounded rectangle</strong>: straight sections parallel to each side of the "
          f"rectangle (displaced outward by {d} cm), joined at each corner by a quarter-circle of radius {d} cm. "
          f"The total dimensions are {w_r + 2*d} cm × {h_r + 2*d} cm with rounded corners.")
-    return q, s, "The locus hugs the rectangle's outline at a fixed distance, with circular arcs at the corners.", 3
+    hint = "The locus hugs the rectangle's outline at a fixed distance, with circular arcs at the corners."
+    return _cl_mcq_return(
+        q, s, hint, 3,
+        f"A rounded rectangle: sides parallel to the rectangle, {d} cm out, with quarter-circle corners of radius {d} cm",
+        [
+            f"A larger rectangle {w_r + 2*d} cm × {h_r + 2*d} cm with sharp corners",
+            f"A circle of radius {d} cm centred at the rectangle's centre",
+            f"Four separate circles of radius {d} cm, one at each corner only",
+        ],
+    )
 
 
 def _cl_f13_bisector_right_angle():
@@ -469,9 +587,16 @@ def _cl_f13_bisector_right_angle():
     s = ("Since angle DAB = 90°, the angle bisector of angle DAB makes a 45° angle with both sides. "
          "P lies on the <strong>angle bisector of angle DAB</strong>, "
          "which is a line at 45° to both AB and AD, passing through vertex A.")
-    return q, s, "Equidistant from two sides of an angle → on the angle bisector.", 2
-
-_cl_f13_bisector_right_angle._fixed_stem = True
+    hint = "Equidistant from two sides of an angle → on the angle bisector."
+    return _cl_mcq_return(
+        q, s, hint, 2,
+        "The angle bisector of angle DAB (a 45° line through A)",
+        [
+            "The perpendicular bisector of diagonal BD",
+            "The diagonal AC",
+            "A line parallel to AB through A",
+        ],
+    )
 
 
 def _cl_f14_two_circle_region():
@@ -485,7 +610,16 @@ def _cl_f14_two_circle_region():
          f"The required region is the <strong>intersection of the two circles</strong> — "
          f"the lens-shaped (vesica) region where the two circles overlap. "
          f"{'The circles do overlap since ' + str(r1) + ' + ' + str(r2) + ' = ' + str(r1+r2) + ' > ' + str(d_AB) + '.' if r1+r2 > d_AB else 'Check whether the circles actually intersect.'}")
-    return q, s, "Draw both circles and shade the overlapping region.", 3
+    hint = "Draw both circles and shade the overlapping region."
+    return _cl_mcq_return(
+        q, s, hint, 3,
+        "The intersection (lens-shaped overlap) of the two circles",
+        [
+            "The union of both full circles",
+            "The perpendicular bisector of AB only",
+            "The region outside both circles",
+        ],
+    )
 
 
 def _cl_f15_scale_drawing_length():
@@ -496,7 +630,7 @@ def _cl_f15_scale_drawing_length():
          f"Find the actual length of the wall in {unit_out}.")
     s = (f"Actual length = {map_d} × {scale:,} = {actual_cm:,.0f} {unit_in}<br>"
          f"Convert to {unit_out}: {actual_cm:,.0f} ÷ {divisor:,} = <strong>{actual_final} {unit_out}</strong>")
-    return q, s, f"Multiply map distance by scale factor, then convert units.", 2
+    return q, s, f"Multiply map distance by scale factor, then convert units.", 2, graded_answer_number(actual_final)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -514,7 +648,16 @@ def _cl_i1_combined_loci():
          f"(ii) Less than {r} cm from A → inside a circle of radius {r} cm centred at A.<br>"
          f"The required region is <strong>the part of the circle (centre A, radius {r} cm) "
          f"that lies on B's side of the perpendicular bisector of AB</strong>.")
-    return q, s, "Draw both loci. The answer is their intersection (AND means the overlap).", 4
+    hint = "Draw both loci. The answer is their intersection (AND means the overlap)."
+    return _cl_mcq_return(
+        q, s, hint, 4,
+        f"The part of the circle (centre A, radius {r} cm) on B's side of the perpendicular bisector of AB",
+        [
+            f"The full circle of radius {r} cm centred at A",
+            "All points on B's side of the perpendicular bisector of AB",
+            f"The part of the circle (centre A, radius {r} cm) on A's side of the perpendicular bisector",
+        ],
+    )
 
 
 def _cl_i2_equilateral_triangle():
@@ -528,7 +671,23 @@ def _cl_i2_equilateral_triangle():
          f"<strong>Step 5:</strong> Mark point C where the arcs intersect.<br>"
          f"<strong>Step 6:</strong> Join A to C and B to C.<br>"
          f"Triangle ABC is equilateral with all sides <strong>{side} cm</strong>.")
-    return q, s, "Keep compass set to the side length. Both arcs from A and B with the same radius give C.", 4
+    hint = "Keep compass set to the side length. Both arcs from A and B with the same radius give C."
+    return q, s, hint, 4, _cl_steps_answer(
+        (
+            f"Draw a line segment AB = {side} cm.",
+            f"Set the compasses to {side} cm.",
+            "Draw an arc from A (above AB).",
+            "Without changing the radius, draw an arc from B (above AB).",
+            "Mark point C where the arcs intersect.",
+            "Join A to C and B to C.",
+        ),
+        (
+            "Use a protractor to measure 60° at A and B.",
+            f"Draw a circle of radius {side} cm centred at the midpoint of AB.",
+            "Draw one arc from A only, then join A to any point on the arc.",
+            "Measure three equal sides with a ruler without using compasses.",
+        ),
+    )
 
 
 def _cl_i3_ladder_midpoint():
@@ -541,7 +700,17 @@ def _cl_i3_ladder_midpoint():
          f"Then a = 2x, b = 2y, so (2x)² + (2y)² = {L**2} → x² + y² = {L**2 // 4}.<br>"
          f"The locus is a <strong>quarter-circle of radius {half_L} m centred at the corner</strong> "
          f"(where the wall meets the floor), sweeping from the floor to the wall.")
-    return q, s, "Set up coordinates with the corner at origin. The midpoint's coordinates satisfy a circle equation.", 4
+    hint = "Set up coordinates with the corner at origin. The midpoint's coordinates satisfy a circle equation."
+    half_display = int(half_L) if half_L == int(half_L) else half_L
+    return _cl_mcq_return(
+        q, s, hint, 4,
+        f"A quarter-circle of radius {half_display} m centred at the corner (where wall meets floor)",
+        [
+            f"A full circle of radius {L} m centred at the corner",
+            f"A straight line parallel to the floor at height {half_display} m",
+            f"A semicircle of radius {L} m",
+        ],
+    )
 
 
 def _cl_i4_semicircle_locus():
@@ -551,9 +720,16 @@ def _cl_i4_semicircle_locus():
          "makes angle APB = 90°. "
          "Therefore the locus of P is <strong>the full circle with diameter AB</strong> "
          "(excluding points A and B themselves, where the angle is undefined).")
-    return q, s, "Angle in semicircle theorem: if angle APB = 90°, P lies on the circle with diameter AB.", 3
-
-_cl_i4_semicircle_locus._fixed_stem = True
+    hint = "Angle in semicircle theorem: if angle APB = 90°, P lies on the circle with diameter AB."
+    return _cl_mcq_return(
+        q, s, hint, 3,
+        "The full circle with diameter AB (excluding A and B)",
+        [
+            "The semicircle above diameter AB only",
+            "The perpendicular bisector of AB",
+            "Two parallel lines through A and B",
+        ],
+    )
 
 
 def _cl_i5_treasure_hunt():
@@ -577,7 +753,7 @@ def _cl_i5_treasure_hunt():
          f"C lies on the perpendicular bisector, so the circle crosses the perpendicular bisector at "
          f"{r_C} cm above C and {r_C} cm below C — giving "
          f"<strong>{n_locations} possible locations</strong> for the treasure.")
-    return q, s, "Each condition gives a locus; count how many times they intersect.", 4
+    return q, s, "Each condition gives a locus; count how many times they intersect.", 4, graded_answer_number(n_locations)
 
 
 def _cl_i6_perp_from_external_point():
@@ -589,9 +765,22 @@ def _cl_i6_perp_from_external_point():
          "<strong>Step 4:</strong> Without changing radius, draw an arc from Y below the line, crossing the previous arc at Q.<br>"
          "<strong>Step 5:</strong> Draw the line PQ. The foot of the perpendicular is where PQ meets l.<br>"
          "<strong>PQ is perpendicular to l.</strong>")
-    return q, s, "The two arcs from X and Y (equal radii) locate Q on the far side of l from P.", 4
-
-_cl_i6_perp_from_external_point._fixed_stem = True
+    hint = "The two arcs from X and Y (equal radii) locate Q on the far side of l from P."
+    return q, s, hint, 4, _cl_steps_answer(
+        (
+            "Place the compass point on P and draw an arc that crosses line l at two points; label them X and Y.",
+            "Open the compass to more than half of XY.",
+            "Draw an arc from X below the line.",
+            "Without changing radius, draw an arc from Y below the line, crossing the previous arc at Q.",
+            "Draw the line PQ.",
+        ),
+        (
+            "Use a protractor at P to measure 90° to line l.",
+            "Draw one arc from P and join P to the first crossing on l.",
+            "Bisect segment XY with a ruler only, without compasses.",
+            "Draw a circle centred at P through l.",
+        ),
+    )
 
 
 def _cl_i7_triangle_sss_steps():
@@ -602,7 +791,21 @@ def _cl_i7_triangle_sss_steps():
          f"<strong>Step 3:</strong> Set compasses to {QR} cm. Draw an arc centred at Q, crossing the previous arc at R.<br>"
          f"<strong>Step 4:</strong> Join P to R and Q to R.<br>"
          f"Triangle PQR has sides <strong>PQ = {PQ} cm, QR = {QR} cm, PR = {PR} cm</strong>.")
-    return q, s, "Draw the base, then use compasses to locate the third vertex where two arcs intersect.", 4
+    hint = "Draw the base, then use compasses to locate the third vertex where two arcs intersect."
+    return q, s, hint, 4, _cl_steps_answer(
+        (
+            f"Draw PQ = {PQ} cm with a ruler.",
+            f"Set compasses to {PR} cm. Draw an arc centred at P.",
+            f"Set compasses to {QR} cm. Draw an arc centred at Q, crossing the previous arc at R.",
+            "Join P to R and Q to R.",
+        ),
+        (
+            f"Use a protractor to mark angles at P and Q.",
+            f"Draw one arc of radius {PR} cm from P only, then guess R.",
+            "Measure all three sides after drawing a random triangle.",
+            f"Draw a circle of radius {PQ} cm centred at P.",
+        ),
+    )
 
 
 def _cl_i8_construct_60():
@@ -613,9 +816,20 @@ def _cl_i8_construct_60():
          "<strong>Step 2:</strong> Without changing r, place the compass on X and draw an arc crossing the first arc; label this crossing Y.<br>"
          "<strong>Step 3:</strong> Draw the ray AY.<br>"
          "Angle YAX = <strong>60°</strong> (since AX = AY = XY = r, so triangle AXY is equilateral).")
-    return q, s, "Both arcs have the same radius r. Triangle AXY is equilateral → angles are all 60°.", 4
-
-_cl_i8_construct_60._fixed_stem = True
+    hint = "Both arcs have the same radius r. Triangle AXY is equilateral → angles are all 60°."
+    return q, s, hint, 4, _cl_steps_answer(
+        (
+            "Set the compass to any radius r. Place the point on A and draw an arc crossing AB; label the crossing X.",
+            "Without changing r, place the compass on X and draw an arc crossing the first arc; label this crossing Y.",
+            "Draw the ray AY.",
+        ),
+        (
+            "Use a protractor to measure 60° at A.",
+            "Draw a perpendicular at A, then bisect the 90° angle.",
+            "Draw two arcs from A with different radii.",
+            "Mark 60° using a ruler by measuring equal segments only.",
+        ),
+    )
 
 
 def _cl_i9_perp_at_point_on_line():
@@ -624,9 +838,21 @@ def _cl_i9_perp_at_point_on_line():
          "<strong>Step 2:</strong> Open the compass wider (more than PX).<br>"
          "<strong>Step 3:</strong> Draw arcs from X and Y above the line, crossing each other at Q.<br>"
          "<strong>Step 4:</strong> Draw the line PQ. <strong>PQ ⊥ AB</strong>.")
-    return q, s, "X and Y are equidistant from P; Q is equidistant from X and Y → PQ is the perp. bisector of XY, hence ⊥ AB.", 4
-
-_cl_i9_perp_at_point_on_line._fixed_stem = True
+    hint = "X and Y are equidistant from P; Q is equidistant from X and Y → PQ is the perp. bisector of XY, hence ⊥ AB."
+    return q, s, hint, 4, _cl_steps_answer(
+        (
+            "Place the compass on P and draw two equal arcs along AB, crossing it at X and Y (equidistant from P).",
+            "Open the compass wider (more than PX).",
+            "Draw arcs from X and Y above the line, crossing each other at Q.",
+            "Draw the line PQ.",
+        ),
+        (
+            "Use a protractor at P to measure 90°.",
+            "Draw one large arc from P only.",
+            "Join P directly to any point above AB without compasses.",
+            "Bisect the whole line AB at P using only a ruler.",
+        ),
+    )
 
 
 def _cl_i10_scale_bearing():
@@ -642,7 +868,7 @@ def _cl_i10_scale_bearing():
          f"= {dist_km * 100000:,} ÷ {scale:,} = <strong>{map_cm:.1f} cm</strong><br>"
          f"(ii) Draw a north arrow at the starting point. Use a protractor to measure {bearing:03d}° clockwise "
          f"from north, then draw the line <strong>{map_cm:.1f} cm</strong> in that direction.")
-    return q, s, "Convert real distance to cm, divide by scale. Bearings are measured clockwise from north.", 4
+    return q, s, "Convert real distance to cm, divide by scale. Bearings are measured clockwise from north.", 4, graded_answer_number(round(map_cm, 1))
 
 
 def _cl_i11_circumcircle():
@@ -653,9 +879,21 @@ def _cl_i11_circumcircle():
          "All three perpendicular bisectors meet at O.<br>"
          "<strong>Step 4:</strong> Set the compass to OA (= OB = OC) and draw the circle centred at O.<br>"
          "The circumcircle <strong>passes through all three vertices</strong>.")
-    return q, s, "The circumcentre is equidistant from all three vertices → on all three perpendicular bisectors.", 4
-
-_cl_i11_circumcircle._fixed_stem = True
+    hint = "The circumcentre is equidistant from all three vertices → on all three perpendicular bisectors."
+    return q, s, hint, 4, _cl_steps_answer(
+        (
+            "Construct the perpendicular bisector of side AB.",
+            "Construct the perpendicular bisector of side BC.",
+            "Label the intersection of the two bisectors O (the circumcentre).",
+            "Set the compass to OA and draw the circle centred at O.",
+        ),
+        (
+            "Construct the angle bisectors of all three angles and use their intersection.",
+            "Draw a circle through A only with any radius.",
+            "Find the midpoint of BC and draw a circle centred there.",
+            "Use a protractor to measure angles at each vertex.",
+        ),
+    )
 
 
 def _cl_i12_incircle():
@@ -666,9 +904,22 @@ def _cl_i12_incircle():
          "<strong>Step 4:</strong> Construct a perpendicular from I to any side; its length is the inradius r.<br>"
          "<strong>Step 5:</strong> Draw the circle centred at I with radius r.<br>"
          "The incircle <strong>touches (is tangent to) all three sides</strong>.")
-    return q, s, "The incentre is equidistant from all three sides → on all three angle bisectors.", 4
-
-_cl_i12_incircle._fixed_stem = True
+    hint = "The incentre is equidistant from all three sides → on all three angle bisectors."
+    return q, s, hint, 4, _cl_steps_answer(
+        (
+            "Construct the angle bisector of angle A.",
+            "Construct the angle bisector of angle B.",
+            "Label the intersection I (the incentre).",
+            "Construct a perpendicular from I to any side; its length is the inradius r.",
+            "Draw the circle centred at I with radius r.",
+        ),
+        (
+            "Construct the perpendicular bisectors of all three sides.",
+            "Draw a circle through the three vertices.",
+            "Use the centroid as the centre of the incircle.",
+            "Measure each side with a protractor.",
+        ),
+    )
 
 
 def _cl_i13_garden_sprinkler():
@@ -679,12 +930,20 @@ def _cl_i13_garden_sprinkler():
          f"A sprinkler at corner A can reach any point within {range_m} m. "
          f"Describe the region of the garden watered by the sprinkler.")
     area = round(0.25 * math.pi * range_m**2, 2)
-    q_area = min(range_m, length) <= length and min(range_m, width) <= width
     s = (f"The sprinkler waters the region within {range_m} m of A. "
          f"This is a quarter-circle of radius {range_m} m centred at A (since the garden is a rectangle). "
          f"The area watered ≈ ¼ × π × {range_m}² = <strong>{area} m²</strong> "
          f"(assuming the full quarter-circle fits inside the garden).")
-    return q, s, "Region within range of corner = quarter-circle of that radius at that corner.", 4
+    hint = "Region within range of corner = quarter-circle of that radius at that corner."
+    return _cl_mcq_return(
+        q, s, hint, 4,
+        f"A quarter-circle of radius {range_m} m centred at corner A",
+        [
+            f"A full circle of radius {range_m} m centred at A",
+            f"A semicircle of radius {range_m} m centred at A",
+            f"A square of side {range_m} m at corner A",
+        ],
+    )
 
 
 def _cl_i14_count_loci_intersections():
@@ -713,7 +972,7 @@ def _cl_i14_count_loci_intersections():
     s = (f"Circle A has radius {r1} cm; circle B has radius {r2} cm, centres {d_AB} cm apart.<br>"
          f"Sum of radii = {r1+r2}; difference = {abs(r1-r2)}.<br>"
          f"Since {desc}, there are <strong>{n} point{'s' if n != 1 else ''}</strong> satisfying both conditions.")
-    return q, s, "Two circles intersect in 0, 1, or 2 points depending on how the radii and distance compare.", 4
+    return q, s, "Two circles intersect in 0, 1, or 2 points depending on how the radii and distance compare.", 4, graded_answer_number(n)
 
 
 def _cl_i15_scale_area():
@@ -732,7 +991,7 @@ def _cl_i15_scale_area():
              f"Find the actual floor area in {unit}.")
         s = (f"Area scale factor = {scale}² = {area_scale:,}<br>"
              f"Actual area = {map_cm2} × {area_scale:,} = <strong>{actual_cm2:,.0f} {unit}</strong>")
-    return q, s, "Area scales as (linear scale)². Multiply map area by scale².", 4
+    return q, s, "Area scales as (linear scale)². Multiply map area by scale².", 4, graded_answer_number(actual_final)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -784,7 +1043,7 @@ def _cl_d3_chord_midpoint():
          f"OM² = {R**2} − {hc**2} = {R**2 - hc**2}<br>"
          f"OM = {d} cm (constant, independent of the chord's position).<br>"
          f"The locus is a <strong>circle of radius {d} cm, centred at O</strong>.")
-    return q, s, "OM ⊥ chord; use Pythagoras OM² + (half-chord)² = R². OM is constant → circle.", 5
+    return q, s, "OM ⊥ chord; use Pythagoras OM² + (half-chord)² = R². OM is constant → circle.", 5, graded_answer_number(d)
 
 
 def _cl_d4_constant_area_locus():
@@ -798,7 +1057,16 @@ def _cl_d4_constant_area_locus():
          f"P must always be exactly {h} cm from line AB. "
          f"The locus consists of <strong>two straight lines parallel to AB, each {h} cm away</strong> "
          f"(one on each side of AB).")
-    return q, s, "Area = ½ × base × height; solve for h. P must be at constant height → lines parallel to AB.", 5
+    hint = "Area = ½ × base × height; solve for h. P must be at constant height → lines parallel to AB."
+    return _cl_mcq_return(
+        q, s, hint, 5,
+        f"Two straight lines parallel to AB, each {h} cm from AB (one on each side)",
+        [
+            f"A single line parallel to AB, {h} cm from AB",
+            f"A circle of radius {h} cm centred at the midpoint of AB",
+            f"The perpendicular bisector of AB",
+        ],
+    )
 
 
 def _cl_d5_apollonius_circle():
@@ -843,7 +1111,7 @@ def _cl_d6_difference_squares():
          f"{2*d}x = {k + d**2}<br>"
          f"x = {x_calc}<br>"
          f"The locus is the <strong>vertical line x = {x_calc} cm from A</strong>, perpendicular to AB.")
-    return q, s, "Expand PA² and PB², subtract. The y² terms cancel, giving a simple linear equation.", 5
+    return q, s, "Expand PA² and PB², subtract. The y² terms cancel, giving a simple linear equation.", 5, graded_answer_number(x_calc)
 
 
 def _cl_d7_three_loci():
@@ -857,9 +1125,16 @@ def _cl_d7_three_loci():
          "(iii) The point equidistant from all three vertices is where all three perpendicular bisectors meet. "
          "This unique point is the <strong>circumcentre</strong> of triangle ABC. "
          "It is equidistant from A, B, and C, and is the centre of the circumscribed circle.")
-    return q, s, "Equidistant from two points → perp bisector. All three → circumcentre (all perp bisectors meet).", 5
-
-_cl_d7_three_loci._fixed_stem = True
+    hint = "Equidistant from two points → perp bisector. All three → circumcentre (all perp bisectors meet)."
+    return _cl_mcq_return(
+        q, s, hint, 5,
+        "The circumcentre — where the perpendicular bisectors of the sides meet",
+        [
+            "The incentre — where the angle bisectors meet",
+            "The centroid — where the medians meet",
+            "The orthocentre — where the altitudes meet",
+        ],
+    )
 
 
 def _cl_d8_circumcentre_coords():
@@ -885,7 +1160,9 @@ def _cl_d8_circumcentre_coords():
          f"Perp slope = −{C[0]-A[0]}/{C[1]-A[1]}.<br>"
          f"Perp bisector of AC: y − {mid_AC[1]} = −{(C[0]-A[0])}/{(C[1]-A[1])} × (x − {mid_AC[0]}).<br>"
          f"At x = {mid_AB[0]}: solve for y to find circumcentre = <strong>{O}</strong>.")
-    return q, s, "Perp bisector of horizontal segment → vertical line. Substitute into second bisector equation.", 6
+    ox = round(Ox, 2) if Oy != int(Oy) else int(Ox)
+    oy = round(Oy, 2) if Oy != int(Oy) else int(Oy)
+    return q, s, "Perp bisector of horizontal segment → vertical line. Substitute into second bisector equation.", 6, graded_answer_number_pair(ox, oy, 'Circumcentre x', 'Circumcentre y')
 
 
 def _cl_d9_regular_hexagon():
@@ -897,7 +1174,21 @@ def _cl_d9_regular_hexagon():
          f"<strong>Step 3:</strong> Without changing the compass ({side} cm), step around the circle marking points: starting at A, mark B, then C, D, E, F — each {side} cm from the previous, totalling 6 points.<br>"
          f"<strong>Step 4:</strong> Join consecutive points with straight lines.<br>"
          f"The result is a regular hexagon with all sides <strong>{side} cm</strong> and all interior angles 120°.")
-    return q, s, "A regular hexagon fits exactly 6 equilateral triangles; the radius equals the side length.", 5
+    hint = "A regular hexagon fits exactly 6 equilateral triangles; the radius equals the side length."
+    return q, s, hint, 5, _cl_steps_answer(
+        (
+            f"Draw a circle of radius {side} cm.",
+            "Mark any point A on the circle.",
+            f"Without changing the compass ({side} cm), step around the circle marking six points A through F.",
+            "Join consecutive points with straight lines.",
+        ),
+        (
+            f"Draw six separate equilateral triangles of side {side} cm and join them.",
+            "Use a protractor to mark 120° at each vertex.",
+            f"Draw a square of side {side} cm and extend the sides.",
+            "Mark six random points on a circle with a ruler only.",
+        ),
+    )
 
 
 def _cl_d10_incircle_radius():
@@ -913,7 +1204,10 @@ def _cl_d10_incircle_radius():
          f"Area = ½ × {a} × {b} = <strong>{area} cm²</strong><br>"
          f"(ii) Semi-perimeter s = ({a} + {b} + {c}) / 2 = {s_val}<br>"
          f"Inradius r = Area / s = {area} / {s_val} = <strong>{r_display} cm</strong>")
-    return q, s, "For a right triangle, area = ½ × legs. Inradius = area ÷ semi-perimeter.", 5
+    return q, s, "For a right triangle, area = ½ × legs. Inradius = area ÷ semi-perimeter.", 5, graded_answer_number_fields(
+        (area, r_display),
+        ('Area (cm²)', 'Inradius (cm)'),
+    )
 
 
 def _cl_d11_sector_area_sprinkler():
@@ -926,7 +1220,7 @@ def _cl_d11_sector_area_sprinkler():
          f"Find the area watered by the sprinkler.")
     s = (f"The watered region is a sector of radius {R} m and angle {angle_deg}°.<br>"
          f"Area = ({angle_deg}/360) × π × {R}² = <strong>{area} m²</strong> (to 2 d.p.)")
-    return q, s, "Area of sector = (angle/360) × π × r².", 4
+    return q, s, "Area of sector = (angle/360) × π × r².", 4, graded_answer_number(area)
 
 
 def _cl_d12_two_radio_towers():
@@ -945,7 +1239,16 @@ def _cl_d12_two_radio_towers():
              f"The overlap region is a <strong>lens (intersection of two circles)</strong>, "
              f"confirming that the circles overlap. No single formula at GCSE — describe the region geometrically.")
     s = q_str
-    return q, s, "Sum of radii > distance → circles overlap. Total ≠ sum of areas (overlap counted twice).", 5
+    hint = "Sum of radii > distance → circles overlap. Total ≠ sum of areas (overlap counted twice)."
+    return _cl_mcq_return(
+        q, s, hint, 5,
+        "Yes — the circles overlap in a lens-shaped region because the sum of the radii exceeds the distance between the towers",
+        [
+            "No — the circles do not overlap because each tower covers less than half the distance between them",
+            "Yes — they overlap along the perpendicular bisector of AB only (a straight line)",
+            "No — the circles touch at exactly one point but do not overlap",
+        ],
+    )
 
 
 def _cl_d13_construct_45():
@@ -954,9 +1257,19 @@ def _cl_d13_construct_45():
          "use the perpendicular-at-a-point method (arcs from A on both sides, then arcs crossing above).<br>"
          "<strong>Step 2:</strong> Bisect the 90° angle using the angle bisector construction.<br>"
          "The bisector of a 90° angle gives a <strong>45° angle</strong>.")
-    return q, s, "45° = half of 90°. First construct 90°, then bisect it.", 4
-
-_cl_d13_construct_45._fixed_stem = True
+    hint = "45° = half of 90°. First construct 90°, then bisect it."
+    return q, s, hint, 4, _cl_steps_answer(
+        (
+            "Construct a 90° angle at point A on a line using the perpendicular-at-a-point method.",
+            "Bisect the 90° angle using the angle bisector construction.",
+        ),
+        (
+            "Construct a 60° angle and subtract 15° with a protractor.",
+            "Draw a perpendicular bisector of a line segment.",
+            "Use a protractor to measure 45° directly.",
+            "Construct an equilateral triangle and trisect one angle.",
+        ),
+    )
 
 
 def _cl_d14_construct_30():
@@ -965,9 +1278,19 @@ def _cl_d14_construct_30():
          "draw an arc from A crossing the base at X; without changing radius, arc from X gives point Y; line AY = 60°).<br>"
          "<strong>Step 2:</strong> Bisect the 60° angle using the angle bisector construction.<br>"
          "The bisector of a 60° angle gives a <strong>30° angle</strong>.")
-    return q, s, "30° = half of 60°. Construct 60° first (equilateral triangle), then bisect.", 4
-
-_cl_d14_construct_30._fixed_stem = True
+    hint = "30° = half of 60°. Construct 60° first (equilateral triangle), then bisect."
+    return q, s, hint, 4, _cl_steps_answer(
+        (
+            "Construct a 60° angle using the equilateral triangle method.",
+            "Bisect the 60° angle using the angle bisector construction.",
+        ),
+        (
+            "Construct a 90° angle and subtract 60° with a protractor.",
+            "Use a protractor to measure 30° directly.",
+            "Construct a 45° angle and halve it again.",
+            "Draw a perpendicular bisector of a line segment.",
+        ),
+    )
 
 
 def _cl_d15_multi_locus_garden():
@@ -979,7 +1302,7 @@ def _cl_d15_multi_locus_garden():
          f"(i) it is more than {boundary_dist} m from the boundary PQ,<br>"
          f"(ii) it is closer to P than to R,<br>"
          f"(iii) it is at most {max_dist} m from Q.<br>"
-         f"Describe each locus/region and sketch the feasible region.")
+         f"Which of the following best describes the feasible region?")
     s = (f"(i) More than {boundary_dist} m from PQ → above the line parallel to PQ at height {boundary_dist} m.<br>"
          f"(ii) Closer to P than R → on P's side of the perpendicular bisector of PR "
          f"(diagonal of garden: midpoint M of PR).<br>"
@@ -987,7 +1310,16 @@ def _cl_d15_multi_locus_garden():
          f"The feasible region is the <strong>intersection of these three regions</strong>: "
          f"above the {boundary_dist} m line, on P's half of the garden (P-side of the diagonal bisector), "
          f"and inside the {max_dist} m circle from Q.")
-    return q, s, "Describe each constraint as a region, then find their intersection.", 6
+    hint = "Describe each constraint as a region, then find their intersection."
+    return _cl_mcq_return(
+        q, s, hint, 6,
+        f"The intersection of all three regions: above the line {boundary_dist} m from PQ, on P's side of the perpendicular bisector of PR, and inside the circle of radius {max_dist} m centred at Q",
+        [
+            "The union of all three regions (any one condition is enough)",
+            f"Only the region inside the circle of radius {max_dist} m centred at Q",
+            f"Only the region more than {boundary_dist} m from PQ",
+        ],
+    )
 
 
 def _cl_d16_garden_sprinkler_multi():
@@ -1001,14 +1333,23 @@ def _cl_d16_garden_sprinkler_multi():
          f"(a) T is more than {boundary_dist} m from the side PQ,<br>"
          f"(b) T is closer to P than to R,<br>"
          f"(c) T is at most {max_dist} m from Q.<br>"
-         f"Describe each condition as a locus or region.<br>{svg}")
+         f"Which of the following best describes the feasible region?<br>{svg}")
     s = (f"(a) More than {boundary_dist} m from PQ → the region <strong>above the line parallel to PQ, "
          f"{boundary_dist} m inside the garden</strong> (not including the boundary line).<br>"
          f"(b) Closer to P than R → on <strong>P's side of the perpendicular bisector of diagonal PR</strong> "
          f"(the line through the midpoint of PR at right angles to it).<br>"
          f"(c) At most {max_dist} m from Q → <strong>inside or on a circle of radius {max_dist} m centred at Q</strong>.<br>"
          f"The feasible region is the <strong>intersection</strong> of these three regions.")
-    return q, s, "Translate each bullet into one locus; the answer is where all three overlap.", 6
+    hint = "Translate each bullet into one locus; the answer is where all three overlap."
+    return _cl_mcq_return(
+        q, s, hint, 6,
+        f"The intersection of all three regions: above the line {boundary_dist} m from PQ, on P's side of the perpendicular bisector of PR, and inside the circle of radius {max_dist} m centred at Q",
+        [
+            "The union of all three regions (any one condition is enough)",
+            f"Only the region inside the circle of radius {max_dist} m centred at Q",
+            f"Only the region on P's side of the perpendicular bisector of PR",
+        ],
+    )
 
 
 def _cl_d17_treasure_hunt_multi():
@@ -1026,7 +1367,7 @@ def _cl_d17_treasure_hunt_multi():
          f"Since C lies on the perpendicular bisector, this circle crosses that line in two symmetric points.<br>"
          f"(c) There are <strong>2 possible positions</strong> — the two intersection points of the circle "
          f"and the perpendicular bisector ({d_mc} ± {r_c} m along the bisector from C).")
-    return q, s, "Each condition is a locus; count intersections of the line and circle.", 6
+    return q, s, "Each condition is a locus; count intersections of the line and circle.", 6, graded_answer_number(2)
 
 
 def _cl_d18_triangle_centres_multi():
@@ -1047,7 +1388,11 @@ def _cl_d18_triangle_centres_multi():
          f"Inradius r = Area ÷ s = {area} ÷ {s_val} = <strong>{r_in} cm</strong>.<br>"
          f"(c) Equidistant from the two legs meeting at B → on the <strong>angle bisector of angle ABC</strong> "
          f"(the line at 45° to both legs through B).")
-    return q, s, "Right triangle: circumcentre = midpoint of hypotenuse; incentre uses r = Area/s.", 6
+    r_in_display = int(r_in) if r_in == int(r_in) else round(r_in, 2)
+    return q, s, "Right triangle: circumcentre = midpoint of hypotenuse; incentre uses r = Area/s.", 6, graded_answer_number_fields(
+        (r_circ, r_in_display),
+        ('Circumradius (cm)', 'Inradius (cm)'),
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1266,9 +1611,12 @@ def gcse_constructions_loci(difficulty, mode, variant_name=None):
 
     variants = gcse_constructions_loci_variants(difficulty, mode)
     variant = pick_named_variant(variants, variant_name)
-
-    q, s, hint, marks = variant()
-    return make_problem(
-        q, s, hint, difficulty, marks,
-        'gcse', 'maths', 'constructions_loci',
-    )
+    result = variant()
+    if len(result) == 6:
+        q, s, hint, marks, opts, correct = result
+        return make_problem(
+            q, s, hint, difficulty, marks,
+            'gcse', 'maths', 'constructions_loci',
+            options=opts, correct_answer=correct,
+        )
+    return make_graded_problem(result, difficulty, 'gcse', 'maths', 'constructions_loci')

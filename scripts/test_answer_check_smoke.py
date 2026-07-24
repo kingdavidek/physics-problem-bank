@@ -68,6 +68,15 @@ from generators.gcse.maths_num_stats_prob_rat import (  # noqa: E402
     gcse_graphs_variants,
     _gr_problem_from_output,
 )
+from generators.gcse.transformations import (  # noqa: E402
+    gcse_transformations,
+    gcse_transformations_variants,
+)
+from generators.gcse.maths_constructions_loci import (  # noqa: E402
+    gcse_constructions_loci,
+    gcse_constructions_loci_variants,
+)
+from generators.shared.utils import make_graded_problem, make_problem  # noqa: E402
 from generators.gcse.geometry_angles import (  # noqa: E402
     _geom_problem_from_output,
     gcse_geometry_angles,
@@ -3555,6 +3564,282 @@ def test_trig_variant_queues_are_graded():
             assert graded, (difficulty, variant.__name__)
 
 
+TRANS_COORD_VARIANTS = (
+    '_trans_found_translate',
+    '_trans_found_reflect_xaxis',
+    '_trans_inter_rotate_not_origin',
+    '_trans_diff_three_transformations',
+)
+
+TRANS_NUMBER_VARIANTS = (
+    '_trans_inter_area_after_enlargement',
+    '_trans_diff_area_scale_factor',
+)
+
+TRANS_MCQ_DESCRIBE_VARIANTS = (
+    '_trans_found_describe_translation',
+    '_trans_found_describe_reflection_axis',
+    '_trans_found_describe_rotation_90',
+    '_trans_found_describe_rotation_180',
+    '_trans_inter_describe_enlargement_full',
+    '_trans_inter_describe_rotation_full',
+    '_trans_diff_negative_enlarge_describe',
+)
+
+TRANS_FIELDS_MCQ_VARIANTS = (
+    '_trans_inter_invariant_reflection',
+    '_trans_inter_combination_reflect_reflect',
+    '_trans_diff_self_inverse',
+    '_trans_diff_invariant_rotation',
+    '_trans_diff_combination_single_equiv',
+    '_trans_diff_two_reflections_intersecting',
+    '_trans_diff_two_reflections_parallel',
+    '_trans_diff_congruent_similar',
+)
+
+TRANS_UNGRADED_VARIANTS = (
+)
+
+CL_NUMBER_VARIANTS = (
+    '_cl_f15_scale_drawing_length',
+    '_cl_i5_treasure_hunt',
+    '_cl_i10_scale_bearing',
+    '_cl_i14_count_loci_intersections',
+    '_cl_i15_scale_area',
+    '_cl_d3_chord_midpoint',
+    '_cl_d6_difference_squares',
+    '_cl_d11_sector_area_sprinkler',
+    '_cl_d17_treasure_hunt_multi',
+)
+
+CL_FIELDS_VARIANTS = (
+    '_cl_d10_incircle_radius',
+    '_cl_d18_triangle_centres_multi',
+)
+
+CL_MCQ_VARIANTS = (
+    '_cl_f1_equidistant_two_points',
+    '_cl_f2_fixed_distance_point',
+    '_cl_f3_equidistant_two_lines',
+    '_cl_f4_fixed_distance_segment',
+    '_cl_f5_perp_bisector_property',
+    '_cl_f6_angle_bisector_property',
+    '_cl_f7_rolling_wheel',
+    '_cl_f8_closer_to_A',
+    '_cl_f11_triangle_tools',
+    '_cl_f12_locus_around_rectangle',
+    '_cl_f13_bisector_right_angle',
+    '_cl_f14_two_circle_region',
+    '_cl_i1_combined_loci',
+    '_cl_i3_ladder_midpoint',
+    '_cl_i4_semicircle_locus',
+    '_cl_i13_garden_sprinkler',
+    '_cl_d4_constant_area_locus',
+    '_cl_d7_three_loci',
+    '_cl_d12_two_radio_towers',
+    '_cl_d15_multi_locus_garden',
+    '_cl_d16_garden_sprinkler_multi',
+)
+
+CL_PROOF_STEPS_VARIANTS = (
+    '_cl_f9_construct_perp_bisector_steps',
+    '_cl_f10_construct_angle_bisector_steps',
+    '_cl_i2_equilateral_triangle',
+    '_cl_i6_perp_from_external_point',
+    '_cl_i7_triangle_sss_steps',
+    '_cl_i8_construct_60',
+    '_cl_i9_perp_at_point_on_line',
+    '_cl_i11_circumcircle',
+    '_cl_i12_incircle',
+    '_cl_d9_regular_hexagon',
+    '_cl_d13_construct_45',
+    '_cl_d14_construct_30',
+)
+
+CL_UNGRADED_VARIANTS = (
+    '_cl_d1_locus_proof',
+    '_cl_d2_ladder_ellipse',
+    '_cl_d5_apollonius_circle',
+)
+
+
+def test_transformations_coord_variants_are_graded():
+    import generators.gcse.transformations as trans_mod
+
+    for name in TRANS_COORD_VARIANTS:
+        out = getattr(trans_mod, name)()
+        assert len(out) == 5, name
+        problem = make_graded_problem(out, 'foundational', 'gcse', 'maths', 'transformations')
+        assert problem.get('answer_type') == 'number_fields', name
+        assert problem.get('correct_answer_raw'), name
+
+
+def test_transformations_number_variants_are_graded():
+    import generators.gcse.transformations as trans_mod
+
+    for name in TRANS_NUMBER_VARIANTS:
+        out = getattr(trans_mod, name)()
+        assert len(out) == 5, name
+        problem = make_graded_problem(out, 'intermediate', 'gcse', 'maths', 'transformations')
+        assert problem.get('answer_type') == 'number', name
+
+
+def test_transformations_describe_mcq_variants_are_graded():
+    import generators.gcse.transformations as trans_mod
+
+    for name in TRANS_MCQ_DESCRIBE_VARIANTS:
+        out = getattr(trans_mod, name)()
+        assert len(out) == 6, name
+        problem = make_problem(
+            out[0], out[1], out[2], 'intermediate', out[3],
+            'gcse', 'maths', 'transformations',
+            options=out[4], correct_answer=out[5],
+        )
+        assert problem.get('options') and len(problem['options']) == 4, name
+        assert problem.get('correct_answer') in 'ABCD', name
+
+
+def test_transformations_fields_mcq_variants_are_graded():
+    import generators.gcse.transformations as trans_mod
+
+    for name in TRANS_FIELDS_MCQ_VARIANTS:
+        out = getattr(trans_mod, name)()
+        assert len(out) == 5, name
+        problem = make_graded_problem(out, 'intermediate', 'gcse', 'maths', 'transformations')
+        assert problem.get('answer_type') == 'number_fields', name
+        field_types = problem.get('answer_field_types') or []
+        assert field_types, name
+        field_options = problem.get('answer_field_options') or []
+        assert len(field_options) == len(field_types), name
+        if all(t == 'mcq' for t in field_types):
+            assert all(opts and len(opts) == 3 for opts in field_options), name
+        assert problem.get('correct_answer_raw'), name
+        if name == '_trans_diff_two_reflections_intersecting':
+            assert problem.get('answer_inline_sections'), name
+            assert problem.get('answer_field_section_keys') == ['(a)', '(b)', '(c)'], name
+        if name == '_trans_diff_two_reflections_parallel':
+            assert problem.get('answer_inline_sections'), name
+            assert problem.get('answer_field_section_keys') == ['(a)', '(b)', '(c)'], name
+            assert problem.get('answer_field_types')[-1] == 'mcq', name
+        if name == '_trans_diff_congruent_similar':
+            assert problem.get('answer_inline_sections'), name
+            assert problem.get('answer_field_section_keys') == ['(a)', '(b)', '(c)', '(d)'], name
+            assert all(t == 'mcq' for t in field_types), name
+
+
+def test_trans_congruent_similar_variant_is_randomizable():
+    import generators.gcse.transformations as trans_mod
+    from generators.shared.variant_utils import variant_is_randomizable
+
+    assert variant_is_randomizable(trans_mod._trans_diff_congruent_similar)
+    questions = {trans_mod._trans_diff_congruent_similar()[0] for _ in range(12)}
+    assert len(questions) > 1
+
+
+def test_transformations_ungraded_variants_remain_ungraded():
+    import generators.gcse.transformations as trans_mod
+
+    for name in TRANS_UNGRADED_VARIANTS:
+        out = getattr(trans_mod, name)()
+        assert len(out) == 4, name
+        problem = make_graded_problem(out, 'intermediate', 'gcse', 'maths', 'transformations')
+        assert problem.get('correct_answer_raw') is None, name
+
+
+def test_transformations_variant_queues_are_graded():
+    for difficulty in ('foundational', 'intermediate', 'difficult'):
+        for variant in gcse_transformations_variants(difficulty, 'practice'):
+            problem = gcse_transformations(
+                difficulty, 'practice', variant_name=variant.__name__
+            )
+            if variant.__name__ in TRANS_UNGRADED_VARIANTS:
+                assert problem.get('correct_answer_raw') is None, variant.__name__
+                continue
+            if variant.__name__ in TRANS_MCQ_DESCRIBE_VARIANTS:
+                assert problem.get('options') and problem.get('correct_answer'), variant.__name__
+                continue
+            if variant.__name__ in TRANS_FIELDS_MCQ_VARIANTS:
+                assert problem.get('answer_type') == 'number_fields', variant.__name__
+                assert problem.get('correct_answer_raw'), variant.__name__
+                continue
+            graded = problem.get('correct_answer_raw') or problem.get('correct_answer')
+            assert graded, (difficulty, variant.__name__)
+
+
+def test_constructions_loci_number_variants_are_graded():
+    import generators.gcse.maths_constructions_loci as cl_mod
+
+    for name in CL_NUMBER_VARIANTS:
+        out = getattr(cl_mod, name)()
+        assert len(out) == 5, name
+        problem = make_graded_problem(out, 'foundational', 'gcse', 'maths', 'constructions_loci')
+        assert problem.get('answer_type') == 'number', name
+
+
+def test_constructions_loci_fields_variants_are_graded():
+    import generators.gcse.maths_constructions_loci as cl_mod
+
+    for name in CL_FIELDS_VARIANTS:
+        out = getattr(cl_mod, name)()
+        assert len(out) == 5, name
+        problem = make_graded_problem(out, 'difficult', 'gcse', 'maths', 'constructions_loci')
+        assert problem.get('answer_type') == 'number_fields', name
+
+
+def test_constructions_loci_mcq_variants_are_graded():
+    import generators.gcse.maths_constructions_loci as cl_mod
+
+    for name in CL_MCQ_VARIANTS:
+        out = getattr(cl_mod, name)()
+        assert len(out) == 6, name
+        problem = gcse_constructions_loci('foundational', 'practice', variant_name=name)
+        assert problem.get('options') and len(problem['options']) == 4, name
+        assert problem.get('correct_answer') in 'ABCD', name
+
+
+def test_constructions_loci_proof_steps_variants_are_graded():
+    import generators.gcse.maths_constructions_loci as cl_mod
+
+    for name in CL_PROOF_STEPS_VARIANTS:
+        out = getattr(cl_mod, name)()
+        assert len(out) == 5, name
+        problem = gcse_constructions_loci('foundational', 'practice', variant_name=name)
+        assert problem.get('answer_type') == 'proof_steps', name
+        assert problem.get('correct_answer_raw'), name
+        assert problem.get('answer_step_bank'), name
+        assert problem.get('answer_order_matters') is True, name
+
+
+def test_constructions_loci_ungraded_variants_remain_ungraded():
+    import generators.gcse.maths_constructions_loci as cl_mod
+
+    for name in CL_UNGRADED_VARIANTS:
+        out = getattr(cl_mod, name)()
+        assert len(out) == 4, name
+        problem = make_graded_problem(out, 'foundational', 'gcse', 'maths', 'constructions_loci')
+        assert problem.get('correct_answer_raw') is None, name
+
+
+def test_constructions_loci_variant_queues_are_graded():
+    for difficulty in ('foundational', 'intermediate', 'difficult'):
+        for variant in gcse_constructions_loci_variants(difficulty, 'practice'):
+            problem = gcse_constructions_loci(
+                difficulty, 'practice', variant_name=variant.__name__
+            )
+            if variant.__name__ in CL_UNGRADED_VARIANTS:
+                assert problem.get('correct_answer_raw') is None, variant.__name__
+                continue
+            if variant.__name__ in CL_MCQ_VARIANTS:
+                assert problem.get('options') and problem.get('correct_answer'), variant.__name__
+                continue
+            if variant.__name__ in CL_PROOF_STEPS_VARIANTS:
+                assert problem.get('answer_type') == 'proof_steps', variant.__name__
+                assert problem.get('correct_answer_raw'), variant.__name__
+                continue
+            graded = problem.get('correct_answer_raw') or problem.get('correct_answer')
+            assert graded, (difficulty, variant.__name__)
+
+
 def test_trig_exact_fraction_check():
     assert check_fraction('1/2', '1/2')['correct'] is True
     assert check_fraction('1/2', '0.5')['correct'] is True
@@ -6497,6 +6782,14 @@ def main():
     test_trig_ungraded_variants_remain_ungraded()
     test_trig_plan_b_scaffold_variants_are_graded()
     test_trig_variant_queues_are_graded()
+    test_transformations_coord_variants_are_graded()
+    test_transformations_number_variants_are_graded()
+    test_transformations_ungraded_variants_remain_ungraded()
+    test_transformations_variant_queues_are_graded()
+    test_constructions_loci_number_variants_are_graded()
+    test_constructions_loci_fields_variants_are_graded()
+    test_constructions_loci_ungraded_variants_remain_ungraded()
+    test_constructions_loci_variant_queues_are_graded()
     test_trig_exact_fraction_check()
     test_trig_exact_surd_fraction_check()
     test_trig_check_api()

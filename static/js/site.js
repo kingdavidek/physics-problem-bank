@@ -684,6 +684,21 @@
     } else {
       block.setAttribute('data-field-options', '[]');
     }
+    if (problem.answer_field_row_sizes && problem.answer_field_row_sizes.length) {
+      block.setAttribute('data-field-row-sizes', JSON.stringify(problem.answer_field_row_sizes));
+    } else {
+      block.setAttribute('data-field-row-sizes', '[]');
+    }
+    if (problem.answer_field_group_labels && problem.answer_field_group_labels.length) {
+      block.setAttribute('data-field-group-labels', JSON.stringify(problem.answer_field_group_labels));
+    } else {
+      block.setAttribute('data-field-group-labels', '[]');
+    }
+    if (problem.answer_inline_sections) {
+      block.setAttribute('data-inline-sections', '1');
+    } else {
+      block.removeAttribute('data-inline-sections');
+    }
     if (problem.answer_step_bank && problem.answer_step_bank.length) {
       block.setAttribute('data-step-bank', JSON.stringify(problem.answer_step_bank));
     } else {
@@ -1595,8 +1610,18 @@
     );
   }
 
+  function htmlEscape(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function numberFieldMcqRowHtml(label, options) {
     var letters = 'ABC';
+    var esc = htmlEscape;
     var buttons = (options || []).map(function (opt, i) {
       return (
         '<button type="button" class="btn mcq-btn" data-letter="' + letters.charAt(i) + '">' +
@@ -1611,6 +1636,81 @@
       '<p class="free-response-field-feedback" aria-live="polite"></p>' +
       '</div>'
     );
+  }
+
+  function numberFieldRowHtml(label, fieldType, fieldOptions, formatHint) {
+    var esc = htmlEscape;
+    if (fieldType === 'mcq') {
+      return numberFieldMcqRowHtml(label, fieldOptions || []);
+    }
+    var safeLabel = esc(label);
+    var ph = esc(freeResponseFieldPlaceholder(
+      fieldType,
+      fieldType === 'number' ? formatHint : ''
+    ));
+    var insertBtns = '';
+    if (fieldType === 'algebraic') {
+      insertBtns = (
+        '<button type="button" class="btn btn-secondary free-response-surd-btn" aria-label="Insert square root symbol">√</button>' +
+        '<button type="button" class="btn btn-secondary free-response-pi-btn" aria-label="Insert pi symbol">π</button>' +
+        '<button type="button" class="btn btn-secondary free-response-square-btn" aria-label="Insert squared symbol">x²</button>'
+      );
+    }
+    return (
+      '<div class="free-response-field-row">' +
+      '<label class="free-response-field">' +
+      '<span class="free-response-field-label">' + safeLabel + '</span>' +
+      '<input type="text" class="free-response-input free-response-input-field" placeholder="' + ph + '" autocomplete="off" inputmode="text" aria-label="' + safeLabel + '">' +
+      '</label>' +
+      insertBtns +
+      '<button type="button" class="btn free-response-check-btn free-response-field-check-btn">Check</button>' +
+      '<p class="free-response-field-feedback" aria-live="polite"></p>' +
+      '</div>'
+    );
+  }
+
+  function numberFieldsStackHtml(block, labels, fieldTypes, fieldOptions, formatHint) {
+    var esc = htmlEscape;
+    var rowSizes = [];
+    var groupLabels = [];
+    try {
+      rowSizes = JSON.parse(block.getAttribute('data-field-row-sizes') || '[]');
+    } catch (errRowSizes) {
+      rowSizes = [];
+    }
+    try {
+      groupLabels = JSON.parse(block.getAttribute('data-field-group-labels') || '[]');
+    } catch (errGroupLabels) {
+      groupLabels = [];
+    }
+    var stackClass = 'free-response-fields-stack';
+    if (rowSizes.length) {
+      stackClass += ' free-response-fields-stack--grouped';
+    }
+    var html = '';
+    if (rowSizes.length) {
+      var idx = 0;
+      rowSizes.forEach(function (size, groupIndex) {
+        html += '<div class="free-response-field-group">';
+        if (groupLabels[groupIndex]) {
+          html += '<span class="free-response-field-group-label">' + esc(groupLabels[groupIndex]) + '</span>';
+        }
+        html += '<div class="free-response-field-group-fields">';
+        for (var j = 0; j < size; j += 1) {
+          var label = labels[idx] || ('Field ' + (idx + 1));
+          var fieldType = fieldTypes[idx] || 'number';
+          html += numberFieldRowHtml(label, fieldType, fieldOptions[idx] || [], formatHint);
+          idx += 1;
+        }
+        html += '</div></div>';
+      });
+    } else {
+      html = labels.map(function (label, index) {
+        var fieldType = fieldTypes[index] || 'number';
+        return numberFieldRowHtml(label, fieldType, fieldOptions[index] || [], formatHint);
+      }).join('');
+    }
+    return '<div class="' + stackClass + '">' + html + '</div>';
   }
 
   function freeResponseRowHtml(block, answerType) {
@@ -1728,42 +1828,9 @@
       } catch (err3) {
         fieldOptions = [];
       }
-      function fieldPlaceholder(fieldType) {
-        return freeResponseFieldPlaceholder(
-          fieldType,
-          fieldType === 'number' ? formatHint : ''
-        );
-      }
-      var rows = labels.map(function (label, index) {
-        var fieldType = fieldTypes[index] || 'number';
-        if (fieldType === 'mcq') {
-          return numberFieldMcqRowHtml(label, fieldOptions[index] || []);
-        }
-        var safeLabel = esc(label);
-        var ph = esc(fieldPlaceholder(fieldType));
-        var insertBtns = '';
-        if (fieldType === 'algebraic') {
-          insertBtns = (
-            '<button type="button" class="btn btn-secondary free-response-surd-btn" aria-label="Insert square root symbol">√</button>' +
-            '<button type="button" class="btn btn-secondary free-response-pi-btn" aria-label="Insert pi symbol">π</button>' +
-            '<button type="button" class="btn btn-secondary free-response-square-btn" aria-label="Insert squared symbol">x²</button>'
-          );
-        }
-        return (
-          '<div class="free-response-field-row">' +
-          '<label class="free-response-field">' +
-          '<span class="free-response-field-label">' + safeLabel + '</span>' +
-          '<input type="text" class="free-response-input free-response-input-field" placeholder="' + ph + '" autocomplete="off" inputmode="text" aria-label="' + safeLabel + '">' +
-          '</label>' +
-          insertBtns +
-          '<button type="button" class="btn free-response-check-btn free-response-field-check-btn">Check</button>' +
-          '<p class="free-response-field-feedback" aria-live="polite"></p>' +
-          '</div>'
-        );
-      }).join('');
       return (
         '<div class="free-response-row free-response-row--number-fields">' +
-        '<div class="free-response-fields-stack">' + rows + '</div>' +
+        numberFieldsStackHtml(block, labels, fieldTypes, fieldOptions, formatHint) +
         '</div>'
       );
     }
@@ -2034,6 +2101,9 @@
   }
 
   function ensureFreeResponseRow(block, answerType) {
+    if (answerType === 'number_fields' && block.getAttribute('data-inline-sections') === '1') {
+      return;
+    }
     if (answerType === 'completed_square') {
       var currentCsq = block.querySelector('.free-response-row');
       if (!currentCsq || freeResponseRowKind(currentCsq) !== 'completed_square') {

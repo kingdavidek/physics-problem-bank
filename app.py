@@ -319,6 +319,17 @@ def _problem_client_payload(problem):
         field_options = problem.get('answer_field_options')
         if field_options:
             payload['answer_field_options'] = field_options
+        row_sizes = problem.get('answer_field_row_sizes')
+        if row_sizes:
+            payload['answer_field_row_sizes'] = row_sizes
+        group_labels = problem.get('answer_field_group_labels')
+        if group_labels:
+            payload['answer_field_group_labels'] = group_labels
+        if problem.get('answer_inline_sections'):
+            payload['answer_inline_sections'] = True
+        section_keys = problem.get('answer_field_section_keys')
+        if section_keys:
+            payload['answer_field_section_keys'] = section_keys
         template_kind = problem.get('answer_template_kind')
         if template_kind:
             payload['answer_template_kind'] = template_kind
@@ -331,6 +342,26 @@ def _problem_client_payload(problem):
     return payload
 
 _BLOCK_HTML_MARKERS = ('<svg', '<div', '<table', '<pre', '<figure')
+
+
+@app.template_filter('split_question_sections')
+def split_question_sections(value, section_keys):
+    """Split a multipart question into intro + labelled sections for inline fields."""
+    q = str(value or '')
+    keys = [str(k) for k in (section_keys or []) if k]
+    if not keys:
+        return {'intro': q, 'sections': []}
+    start = q.find(keys[0])
+    intro = q[:start].strip() if start >= 0 else ''
+    sections = []
+    for i, key in enumerate(keys):
+        pos = q.find(key)
+        if pos < 0:
+            continue
+        nxt = keys[i + 1] if i + 1 < len(keys) else None
+        end = q.find(nxt, pos + len(key)) if nxt else len(q)
+        sections.append({'key': key, 'text': q[pos:end].strip()})
+    return {'intro': intro, 'sections': sections}
 
 
 @app.template_filter('format_question_html')
@@ -2873,6 +2904,13 @@ _SANDBOX_PLAN_A_ITEMS = (
         'difficulty': 'difficult',
         'variant': '_seq_diff_recurring_decimal_proof',
         'plan_note': 'Plan C step bank: let x → multiply → subtract.',
+    },
+    {
+        'label': 'Constructions & Loci — construct 60° angle (proof steps)',
+        'topic': 'constructions_loci',
+        'difficulty': 'intermediate',
+        'variant': '_cl_i8_construct_60',
+        'plan_note': 'Proof-steps auto-grade: order ruler-and-compasses steps. Diagram shows setup only (line AB, point A).',
     },
 )
 

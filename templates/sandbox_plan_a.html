@@ -43,7 +43,9 @@
     <p class="sandbox-note">{{ item.plan_note }}</p>
 
     <div class="question">
+        {% if not problem.answer_inline_sections %}
         <div class="question-content">{{ problem.question | format_question_html }}</div>
+        {% endif %}
         {% set fr_level = 'gcse' %}
         {% set fr_subject = 'maths' %}
         {% set fr_topic = item.topic %}

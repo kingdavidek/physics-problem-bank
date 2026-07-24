@@ -39,7 +39,9 @@
             </div>
             <p class="mcq-feedback" id="saved-mcq-feedback" style="margin-top:12px;font-weight:600;"></p>
         {% else %}
+            {% if not problem.answer_inline_sections %}
             <div class="question-content" id="saved-question-content">{{ problem.question | format_question_html }}</div>
+            {% endif %}
             {% set fr_level = saved.level %}
             {% set fr_subject = saved.subject %}
             {% set fr_topic = saved.topic %}

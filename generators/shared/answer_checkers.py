@@ -2840,6 +2840,23 @@ _KEYWORD_ALIASES = {
         '2 times',
         'x2',
     ),
+    'origin': (
+        'origin',
+        'the origin',
+        '(0,0)',
+        '(0, 0)',
+        '0,0',
+        '0, 0',
+        'only the origin',
+    ),
+    'centre of rotation': (
+        'centre of rotation',
+        'center of rotation',
+        'the centre of rotation',
+        'the center of rotation',
+        'centre',
+        'center',
+    ),
 }
 
 

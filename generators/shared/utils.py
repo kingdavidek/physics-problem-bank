@@ -223,6 +223,167 @@ def proof_steps_answer(required_ids, bank, *, order_matters=True, format_hint=No
     return payload
 
 
+def _graded_format_num(val):
+    if isinstance(val, float) and val == int(val):
+        return str(int(val))
+    if isinstance(val, float):
+        return str(val)
+    return str(val)
+
+
+def graded_answer_number(val):
+    return {'type': 'number', 'value': val}
+
+
+def graded_answer_keyword(val):
+    return {'type': 'keyword', 'value': str(val).strip().lower()}
+
+
+def graded_answer_number_pair(val_a, val_b, label_a='x', label_b='y', sep=','):
+    return {
+        'type': 'number_pair',
+        'values': (_graded_format_num(val_a), _graded_format_num(val_b)),
+        'label_a': label_a,
+        'label_b': label_b,
+        'sep': sep,
+    }
+
+
+def graded_answer_number_fields(values, labels, field_types=None, *,
+                                row_sizes=None, group_labels=None, format_hint=None,
+                                field_options=None, inline_sections=False):
+    types = tuple(field_types) if field_types else tuple('number' for _ in values)
+    payload = {
+        'type': 'number_fields',
+        'values': tuple(_graded_format_num(v) for v in values),
+        'labels': tuple(labels),
+        'field_types': types,
+    }
+    if row_sizes:
+        payload['row_sizes'] = tuple(int(n) for n in row_sizes)
+    if group_labels:
+        payload['group_labels'] = tuple(group_labels)
+    if format_hint:
+        payload['format_hint'] = format_hint
+    if field_options is not None:
+        payload['field_options'] = tuple(field_options)
+    if inline_sections and group_labels:
+        keys = []
+        for gl in group_labels:
+            key = str(gl).split(' ', 1)[0]
+            if key and (not keys or keys[-1] != key):
+                keys.append(key)
+        if keys:
+            payload['inline_sections'] = True
+            payload['section_keys'] = tuple(keys)
+    return payload
+
+
+def graded_answer_tri_coords(img, vertex_labels=("P'", "Q'", "R'")):
+    labels = []
+    values = []
+    for _name, (x, y) in zip(vertex_labels, img):
+        labels.extend(['x', 'y'])
+        values.extend([x, y])
+    return graded_answer_number_fields(
+        values,
+        labels,
+        row_sizes=(2, 2, 2),
+        group_labels=vertex_labels,
+        format_hint='Enter each coordinate',
+    )
+
+
+def problem_extra_from_graded_answer(raw):
+    """Build make_problem kwargs from a graded-answer payload (5th tuple element)."""
+    extra = {}
+    if raw is None:
+        return extra
+    if isinstance(raw, dict):
+        raw_type = raw.get('type')
+        if raw_type == 'number':
+            extra = {
+                'correct_answer_raw': _graded_format_num(raw['value']),
+                'answer_type': 'number',
+                'answer_format_hint': 'Enter a number',
+            }
+        elif raw_type == 'keyword':
+            value = raw.get('value')
+            if value is not None and str(value).strip():
+                extra = {
+                    'correct_answer_raw': str(value).strip().lower(),
+                    'answer_type': 'keyword',
+                    'answer_format_hint': 'Enter one word (e.g. yes or no)',
+                }
+        elif raw_type == 'number_pair':
+            val_a, val_b = raw['values']
+            extra = {
+                'correct_answer_raw': f'{val_a}|{val_b}',
+                'answer_type': 'number_pair',
+                'answer_labels': [raw['label_a'], raw['label_b']],
+                'answer_pair_sep': raw.get('sep', 'and'),
+            }
+        elif raw_type == 'number_fields':
+            values = raw.get('values') or ()
+            labels = raw.get('labels') or ()
+            field_types = raw.get('field_types') or ()
+            if values and labels and len(values) == len(labels):
+                sep = (
+                    '\x1e'
+                    if field_types and any(t != 'number' for t in field_types)
+                    else '|'
+                )
+                extra = {
+                    'correct_answer_raw': sep.join(str(v) for v in values),
+                    'answer_type': 'number_fields',
+                    'answer_labels': list(labels),
+                    'answer_field_types': list(field_types) if field_types else (
+                        ['number'] * len(labels)
+                    ),
+                    'answer_format_hint': raw.get(
+                        'format_hint',
+                        'Enter each value in its own box',
+                    ),
+                }
+                row_sizes = raw.get('row_sizes')
+                if row_sizes:
+                    extra['answer_field_row_sizes'] = list(row_sizes)
+                group_labels = raw.get('group_labels')
+                if group_labels:
+                    extra['answer_field_group_labels'] = list(group_labels)
+                field_options = raw.get('field_options') or ()
+                if field_options:
+                    extra['answer_field_options'] = [
+                        list(opts) if opts else None for opts in field_options
+                    ]
+                if raw.get('inline_sections'):
+                    extra['answer_inline_sections'] = True
+                    section_keys = raw.get('section_keys') or ()
+                    if section_keys:
+                        extra['answer_field_section_keys'] = list(section_keys)
+        elif raw_type == 'proof_steps':
+            extra = proof_steps_problem_extra(raw)
+    elif isinstance(raw, (int, float)):
+        extra = {
+            'correct_answer_raw': _graded_format_num(raw),
+            'answer_type': 'number',
+            'answer_format_hint': 'Enter a number',
+        }
+    elif isinstance(raw, str) and raw.strip():
+        extra = {
+            'correct_answer_raw': raw.strip(),
+            'answer_type': 'number',
+            'answer_format_hint': 'Enter a number',
+        }
+    return extra
+
+
+def make_graded_problem(out, difficulty, level, subject, topic):
+    q, s, hint, marks = out[:4]
+    extra = problem_extra_from_graded_answer(out[4] if len(out) >= 5 else None)
+    return make_problem(q, s, hint, difficulty, marks, level, subject, topic, **extra)
+
+
 def proof_steps_problem_extra(raw):
     """Convert a proof_steps payload into make_problem kwargs."""
     if not isinstance(raw, dict) or raw.get('type') != 'proof_steps':
