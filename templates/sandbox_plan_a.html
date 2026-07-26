@@ -37,7 +37,7 @@
     <p class="sandbox-meta">
         <span class="badge badge-{{ problem.difficulty }}">{{ problem.difficulty | title }}</span>
         <span class="badge badge-marks">{{ problem.marks }} mark{% if problem.marks > 1 %}s{% endif %}</span>
-        <span class="badge badge-mcq">{{ item.topic }}</span>
+        <span class="badge badge-mcq">{{ item.topic_name | default(item.topic) }}</span>
         <code style="font-size:0.8rem;">{{ item.variant }}</code>
     </p>
     <p class="sandbox-note">{{ item.plan_note }}</p>
@@ -47,7 +47,7 @@
         <div class="question-content">{{ problem.question | format_question_html }}</div>
         {% endif %}
         {% set fr_level = 'gcse' %}
-        {% set fr_subject = 'maths' %}
+        {% set fr_subject = item.subject | default('maths') %}
         {% set fr_topic = item.topic %}
         {% set fr_difficulty = item.difficulty %}
         {% set fr_id = 'sandbox-free-response' %}

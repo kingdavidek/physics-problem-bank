@@ -2964,24 +2964,6 @@ def test_systems_software_mcq_option_length_not_biased():
 
 
 ALGORITHMS_UNGRADED = (
-    '_alg_f1_abstraction',
-    '_alg_f2_decomposition',
-    '_alg_f4_flowchart_symbol',
-    '_alg_f10_algorithm_definition',
-    '_alg_i1_pseudocode_linear',
-    '_alg_i3_binary_next_half',
-    '_alg_i4_bubble_after_pass',
-    '_alg_i5_merge_concept',
-    '_alg_i6_trace_if',
-    '_alg_i8_linear_vs_binary',
-    '_alg_i9_flowchart_to_pseudo',
-    '_alg_d2_bubble_trace',
-    '_alg_d6_pseudocode_binary',
-    '_alg_d7_identify_sort',
-    '_alg_d8_merge_full',
-    '_alg_d10_fix_pseudocode',
-    '_alg_d11_insertion_pass',
-    '_alg_d12_while_condition',
 )
 
 
@@ -2998,24 +2980,72 @@ def test_algorithms_trace_variants_are_graded():
                 assert not problem.get('correct_answer_raw'), fn.__name__
                 continue
             assert len(out) == 5, fn.__name__
-            assert problem.get('correct_answer_raw'), fn.__name__
-            assert problem.get('answer_type') in ('number', 'number_fields'), fn.__name__
+            graded = problem.get('correct_answer_raw') or (
+                problem.get('options') and problem.get('correct_answer')
+            )
+            assert graded, fn.__name__
+            if problem.get('options') and problem.get('correct_answer'):
+                continue
+            assert problem.get('answer_type') in (
+                'number', 'number_fields', 'proof_steps', 'text', 'keyword',
+            ), fn.__name__
+
+
+def test_algorithms_binary_pseudocode_fix():
+    from generators.shared.answer_checkers import check_mcq, check_text, check_number
+
+    problem = gcse_algorithms(
+        'difficult', 'practice', variant_name='_alg_d6_pseudocode_binary'
+    )
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_inline_sections') is True
+    assert problem.get('answer_field_types') == [
+        'mcq', 'text', 'number', 'text', 'number', 'number',
+    ]
+    parts = (problem.get('correct_answer_raw') or '').split('\x1e')
+    assert len(parts) == 6
+    assert parts[0] in 'ABC'
+    assert check_mcq(parts[0], parts[0])['correct'] is True
+    assert check_text(parts[1], 'mid ← (low + high) DIV 2')['correct'] is True
+    assert check_text(parts[1], 'mid = (low + high) / 2')['correct'] is False
+    assert check_number(parts[2], '2')['correct'] is True
+    assert check_text(parts[3], 'found ← FALSE')['correct'] is True
+    assert check_number(parts[4], '8')['correct'] is True
+    assert check_number(parts[5], '10')['correct'] is True
+    assert 'three faults' in (problem.get('question') or '').lower()
 
 
 def test_algorithms_multipart_numeric_fields():
     import generators.gcse.cs_algorithms as alg_mod
+    from generators.shared.answer_checkers import check_number_fields
 
     search = _alg_problem_from_output(
         alg_mod._alg_d13_multipart_search_compare(), 'difficult'
     )
     assert search.get('answer_type') == 'number_fields'
-    assert search.get('correct_answer_raw')
+    assert search.get('answer_inline_sections') is True
+    assert search.get('answer_field_types') == ['mcq', 'number', 'mcq']
+    parts = (search.get('correct_answer_raw') or '').split('\x1e')
+    assert len(parts) == 3
+    assert parts[0] in 'ABC'
+    assert check_number_fields(parts[1], parts[1])['correct'] is True
+    assert parts[2] in 'ABC'
+    opts = search.get('answer_field_options') or []
+    assert opts[0] and 'Binary search' in opts[0]
+    assert opts[2] and any('ordered' in str(o) for o in opts[2])
 
     trace = _alg_problem_from_output(
         alg_mod._alg_d14_multipart_trace_table(), 'difficult'
     )
     assert trace.get('answer_type') == 'number_fields'
-    assert trace['correct_answer_raw'] == '10'
+    assert trace.get('answer_inline_sections') is True
+    assert trace.get('answer_field_section_keys') == ['(a)', '(b)', '(c)']
+    assert trace.get('answer_field_row_sizes') == [4, 1, 1]
+    assert trace.get('answer_field_group_labels') == ['(a)', '(b)', '(c)']
+    assert 'number' in (trace.get('answer_field_types') or [])
+    assert 'mcq' in (trace.get('answer_field_types') or [])
+    assert trace['correct_answer_raw'].split('\x1e')[4] == '10'
+    assert trace['correct_answer_raw'].split('\x1e')[5] in 'ABC'
 
 
 def test_algorithms_variant_queues_are_graded():
@@ -3028,7 +3058,140 @@ def test_algorithms_variant_queues_are_graded():
             problem = gcse_algorithms(
                 difficulty, 'practice', variant_name=variant.__name__
             )
-            assert problem.get('correct_answer_raw'), (difficulty, variant.__name__)
+            graded = problem.get('correct_answer_raw') or (
+                problem.get('options') and problem.get('correct_answer')
+            )
+            assert graded, (difficulty, variant.__name__)
+
+
+def test_algorithms_mcq_option_length_not_biased():
+    import generators.gcse.cs_algorithms as alg_mod
+
+    mcq_fns = []
+    for pool in (alg_mod._FOUNDATIONAL, alg_mod._INTERMEDIATE, alg_mod._DIFFICULT):
+        for fn in pool:
+            out = fn()
+            if len(out) >= 5 and isinstance(out[4], dict) and out[4].get('type') == 'mcq':
+                mcq_fns.append(fn)
+
+    longest_correct = 0
+    trials = 0
+    for fn in mcq_fns:
+        for _ in range(20):
+            problem = _alg_problem_from_output(fn(), 'intermediate')
+            opts = [o.split('  ', 1)[1] for o in problem['options']]
+            idx = ord(problem['correct_answer']) - ord('A')
+            if len(opts[idx]) == max(len(o) for o in opts):
+                longest_correct += 1
+            trials += 1
+
+    bank_longest = 0
+    for _ in range(100):
+        problem = gcse_algorithms('foundational', 'mcq')
+        texts = [o.split('  ', 1)[1] for o in problem['options']]
+        idx = ord(problem['correct_answer']) - ord('A')
+        if len(texts[idx]) == max(len(t) for t in texts):
+            bank_longest += 1
+
+    assert trials > 0
+    assert longest_correct / trials < 0.45, longest_correct / trials
+    assert bank_longest / 100 < 0.55, bank_longest / 100
+
+
+def test_algorithms_order_and_pick_variants():
+    from generators.shared.answer_checkers import check_proof_steps
+
+    decomp = gcse_algorithms(
+        'foundational', 'practice', variant_name='_alg_f2_decomposition'
+    )
+    assert decomp.get('answer_type') == 'proof_steps'
+    assert decomp.get('answer_order_matters') is True
+    raw = decomp.get('correct_answer_raw') or ''
+    assert raw.startswith('1|')
+    step_ids = raw.split('|')[1:]
+    assert check_proof_steps(raw, '|'.join(step_ids))['correct'] is True
+
+    compare = gcse_algorithms(
+        'intermediate', 'practice', variant_name='_alg_i8_linear_vs_binary'
+    )
+    assert compare.get('answer_type') == 'proof_steps'
+    assert compare.get('answer_pick_count') == 2
+    assert (compare.get('correct_answer_raw') or '').startswith('pick|2|')
+
+    flowchart = gcse_algorithms(
+        'intermediate', 'practice', variant_name='_alg_i9_flowchart_to_pseudo'
+    )
+    assert flowchart.get('answer_type') == 'proof_steps'
+    assert flowchart.get('answer_order_matters') is True
+    assert flowchart.get('answer_pick_count') is None
+    hint = (flowchart.get('answer_format_hint') or '').lower()
+    assert '6' not in hint and 'six' not in hint
+    assert 'how many' not in hint
+    flow_raw = flowchart.get('correct_answer_raw') or ''
+    assert flow_raw.startswith('1|')
+    flow_ids = flow_raw.split('|')[1:]
+    assert len(flow_ids) == 6
+    assert len(flowchart.get('answer_step_bank') or []) > 6
+    assert check_proof_steps(flow_raw, '|'.join(flow_ids))['correct'] is True
+    assert check_proof_steps(flow_raw, '|'.join(flow_ids[:3]))['correct'] is False
+
+    linear = gcse_algorithms(
+        'difficult', 'practice', variant_name='_alg_d15_pseudocode_linear'
+    )
+    assert linear.get('answer_type') == 'proof_steps'
+    assert linear.get('answer_order_matters') is True
+    assert linear.get('answer_pick_count') is None
+    lin_hint = (linear.get('answer_format_hint') or '').lower()
+    assert '11' not in lin_hint and 'eleven' not in lin_hint
+    assert 'how many' not in lin_hint
+    lin_raw = linear.get('correct_answer_raw') or ''
+    assert lin_raw.startswith('1|')
+    lin_ids = lin_raw.split('|')[1:]
+    assert len(lin_ids) == 11
+    assert len(linear.get('answer_step_bank') or []) > 11
+    assert check_proof_steps(lin_raw, '|'.join(lin_ids))['correct'] is True
+    assert check_proof_steps(lin_raw, '|'.join(lin_ids[:5]))['correct'] is False
+
+
+def test_algorithms_flowchart_fix_variants():
+    from generators.shared.answer_checkers import check_mcq, check_proof_steps
+
+    f12 = gcse_algorithms(
+        'foundational', 'practice', variant_name='_alg_f12_flowchart_fix_decision'
+    )
+    assert f12.get('answer_type') == 'number_fields'
+    assert f12.get('answer_field_types') == ['mcq']
+    assert f12.get('correct_answer_raw') in 'ABCD'
+    assert '<svg' in (f12.get('question') or '').lower()
+    assert 'flowchart' in (f12.get('question') or '').lower()
+    assert check_mcq(f12['correct_answer_raw'], f12['correct_answer_raw'])['correct'] is True
+
+    i11 = gcse_algorithms(
+        'intermediate', 'practice', variant_name='_alg_i11_flowchart_fix_symbols'
+    )
+    assert i11.get('answer_type') == 'proof_steps'
+    assert i11.get('answer_pick_count') == 2
+    assert '<svg' in (i11.get('question') or '').lower()
+    raw = i11.get('correct_answer_raw') or ''
+    assert raw.startswith('pick|2|')
+    pick_ids = raw.split('|')[2:]
+    assert len(pick_ids) == 2
+    assert check_proof_steps(raw, '|'.join(pick_ids))['correct'] is True
+
+    d16 = gcse_algorithms(
+        'difficult', 'practice', variant_name='_alg_d16_flowchart_fix_multipart'
+    )
+    assert d16.get('answer_type') == 'number_fields'
+    assert d16.get('answer_inline_sections') is True
+    assert d16.get('answer_field_types') == ['mcq', 'mcq', 'mcq']
+    assert d16.get('answer_field_group_labels') == ['(a)', '(b)', '(c)']
+    assert '<svg' in (d16.get('question') or '').lower()
+    parts = (d16.get('correct_answer_raw') or '').split('\x1e')
+    assert len(parts) == 3
+    assert all(p in 'ABCD' for p in parts)
+    assert check_mcq(parts[0], parts[0])['correct'] is True
+    assert check_mcq(parts[1], parts[1])['correct'] is True
+    assert check_mcq(parts[2], parts[2])['correct'] is True
 
 
 def test_algorithms_check_api():
@@ -3068,18 +3231,6 @@ ETHICAL_UNGRADED = (
 )
 
 NETWORKS_UNGRADED = (
-    '_net_f1_lan', '_net_f2_wan', '_net_f3_client_server', '_net_f4_p2p',
-    '_net_f5_star_topology', '_net_f6_router_role', '_net_f7_http',
-    '_net_f8_nic', '_net_f9_wifi_wap', '_net_f10_packet',
-    '_net_i1_topology_compare', '_net_i2_switch_vs_hub', '_net_i3_dns',
-    '_net_i5_mac_vs_ip', '_net_i6_tcp_udp', '_net_i7_email_protocols',
-    '_net_i8_https', '_net_i9_cloud', '_net_i10_bus_topology',
-    '_net_d1_packet_switching', '_net_d2_firewall', '_net_d3_nat',
-    '_net_d4_mesh_topology', '_net_d5_layered', '_net_d6_four_layer_send',
-    '_net_d7_bandwidth_latency', '_net_d8_vlan_scenario', '_net_d9_pop_imap',
-    '_net_d10_traceroute_concept', '_net_d11_wireless_security',
-    '_net_d12_http_status', '_net_d13_multipart_home_network',
-    '_net_d14_multipart_protocols',
 )
 
 
@@ -3283,8 +3434,66 @@ def test_computer_networks_numeric_variants_are_graded():
                 assert not problem.get('correct_answer_raw'), fn.__name__
                 continue
             assert len(out) == 5, fn.__name__
-            assert problem.get('answer_type') in ('number', 'text', 'keyword', 'number_fields', 'proof_steps'), fn.__name__
+            if problem.get('options') and problem.get('correct_answer'):
+                continue
+            assert problem.get('answer_type') in (
+                'number', 'text', 'keyword', 'number_fields', 'proof_steps',
+            ), fn.__name__
             assert problem.get('correct_answer_raw'), fn.__name__
+
+
+def test_computer_networks_multipart_inline():
+    from generators.shared.answer_checkers import check_proof_steps
+
+    home = gcse_computer_networks(
+        'difficult', 'practice', variant_name='_net_d13_multipart_home_network'
+    )
+    assert home.get('answer_type') == 'number_fields'
+    assert home.get('answer_inline_sections') is True
+    assert home.get('answer_field_types') == ['pick', 'pick', 'pick']
+    parts = (home.get('correct_answer_raw') or '').split('\x1e')
+    assert len(parts) == 3
+    lan_ids = parts[0].split('|')[2:]
+    assert check_proof_steps(parts[0], '|'.join(lan_ids[:1]))['correct'] is True
+
+    proto = gcse_computer_networks(
+        'difficult', 'practice', variant_name='_net_d14_multipart_protocols'
+    )
+    assert proto.get('answer_field_types') == ['pick', 'pick', 'pick']
+
+
+def test_computer_networks_mcq_option_length_not_biased():
+    import generators.gcse.cs_computer_networks as net_mod
+
+    mcq_fns = []
+    for pool in (net_mod._FOUNDATIONAL, net_mod._INTERMEDIATE, net_mod._DIFFICULT):
+        for fn in pool:
+            out = fn()
+            if len(out) >= 5 and isinstance(out[4], dict) and out[4].get('type') == 'mcq':
+                mcq_fns.append(fn)
+
+    longest_correct = 0
+    trials = 0
+    for fn in mcq_fns:
+        for _ in range(20):
+            problem = _net_problem_from_output(fn(), 'intermediate')
+            opts = [o.split('  ', 1)[1] for o in problem['options']]
+            idx = ord(problem['correct_answer']) - ord('A')
+            if len(opts[idx]) == max(len(o) for o in opts):
+                longest_correct += 1
+            trials += 1
+
+    bank_longest = 0
+    for _ in range(100):
+        problem = gcse_computer_networks('foundational', 'mcq')
+        texts = [o.split('  ', 1)[1] for o in problem['options']]
+        idx = ord(problem['correct_answer']) - ord('A')
+        if len(texts[idx]) == max(len(t) for t in texts):
+            bank_longest += 1
+
+    assert trials > 0
+    assert longest_correct / trials < 0.45, longest_correct / trials
+    assert bank_longest / 100 < 0.55, bank_longest / 100
 
 
 def test_cyber_security_definition_variants_are_graded():
@@ -3799,7 +4008,10 @@ def test_computer_systems_networks_variant_queues():
                 if variant.__name__ in ungraded:
                     continue
                 problem = gen(difficulty, 'practice', variant_name=variant.__name__)
-                assert problem.get('correct_answer_raw'), (difficulty, variant.__name__)
+                graded = problem.get('correct_answer_raw') or (
+                    problem.get('options') and problem.get('correct_answer')
+                )
+                assert graded, (difficulty, variant.__name__)
 
 
 def test_computer_systems_networks_check_api():
@@ -8074,7 +8286,11 @@ def main():
     test_systems_software_mcq_option_length_not_biased()
     test_algorithms_trace_variants_are_graded()
     test_algorithms_multipart_numeric_fields()
+    test_algorithms_binary_pseudocode_fix()
     test_algorithms_variant_queues_are_graded()
+    test_algorithms_mcq_option_length_not_biased()
+    test_algorithms_order_and_pick_variants()
+    test_algorithms_flowchart_fix_variants()
     test_algorithms_check_api()
     test_computer_systems_numeric_variants_are_graded()
     test_cs_embedded_constraints_pick_from_bank()
@@ -8120,6 +8336,8 @@ def main():
     test_cs_text_problems_expose_grading_keywords()
     test_cs_definition_variant_queues_are_graded()
     test_computer_networks_numeric_variants_are_graded()
+    test_computer_networks_multipart_inline()
+    test_computer_networks_mcq_option_length_not_biased()
     test_computer_systems_networks_variant_queues()
     test_computer_systems_networks_check_api()
     test_checker_linear_unit()

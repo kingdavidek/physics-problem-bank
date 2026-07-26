@@ -1302,8 +1302,26 @@ def _generate_queued_problem(
             idx = 0
 
     variant_name = queue[idx]
+    try:
+        problem = generator(difficulty, mode, variant_name=variant_name)
+    except ValueError as exc:
+        # Stale queue entries after variant renames/removals — rebuild once.
+        if 'Unknown variant' not in str(exc):
+            raise
+        queue = _build_problem_queue(topic_config, level, subject, topic, mode, difficulty)
+        if not queue:
+            problem = generator(difficulty, mode)
+            _persist_queue_state(user_id, queue_key, [], 0, None)
+            return problem, {
+                'variant_name': None,
+                'queue_position': 0,
+                'queue_length': 0,
+                'can_reroll': False,
+            }
+        idx = 0
+        variant_name = queue[idx]
+        problem = generator(difficulty, mode, variant_name=variant_name)
     _persist_queue_state(user_id, queue_key, queue, idx, variant_name)
-    problem = generator(difficulty, mode, variant_name=variant_name)
     meta = {
         'variant_name': variant_name,
         'queue_position': idx + 1,
@@ -3036,6 +3054,30 @@ _SANDBOX_PLAN_A_ITEMS = (
         'variant': '_cl_i8_construct_60',
         'plan_note': 'Proof-steps auto-grade: order ruler-and-compasses steps. Diagram shows setup only (line AB, point A).',
     },
+    {
+        'label': 'Algorithms — flowchart wrong decision symbol (foundational)',
+        'subject': 'cs',
+        'topic': 'algorithms',
+        'difficulty': 'foundational',
+        'variant': '_alg_f12_flowchart_fix_decision',
+        'plan_note': 'Visible SVG flowchart; MCQ identifies rectangle used instead of diamond for a decision.',
+    },
+    {
+        'label': 'Algorithms — flowchart wrong I/O and process symbols (intermediate)',
+        'subject': 'cs',
+        'topic': 'algorithms',
+        'difficulty': 'intermediate',
+        'variant': '_alg_i11_flowchart_fix_symbols',
+        'plan_note': 'Visible SVG flowchart; pick-2 identifies INPUT and PROCESS symbol errors.',
+    },
+    {
+        'label': 'Algorithms — flowchart multipart fix (difficult)',
+        'subject': 'cs',
+        'topic': 'algorithms',
+        'difficulty': 'difficult',
+        'variant': '_alg_d16_flowchart_fix_multipart',
+        'plan_note': 'Visible SVG flowchart; inline MCQ fields for wrong symbol, correct symbol, and swapped branches.',
+    },
 )
 
 
@@ -3051,9 +3093,11 @@ def sandbox_plan_a_checkpoints():
 
     items = []
     for i, spec in enumerate(_SANDBOX_PLAN_A_ITEMS):
-        topic_config = TOPICS['gcse']['maths'][spec['topic']]
+        subject = spec.get('subject', 'maths')
+        topic_config = TOPICS['gcse'][subject][spec['topic']]
         entry = {
             **spec,
+            'subject': subject,
             'topic_name': topic_config.get('name', spec['topic']),
             'problem': None,
         }
@@ -3068,7 +3112,7 @@ def sandbox_plan_a_checkpoints():
             _sync_last_problem_payload(
                 problem,
                 level='gcse',
-                subject='maths',
+                subject=subject,
                 topic=spec['topic'],
                 mode='practice',
                 difficulty=spec['difficulty'],
