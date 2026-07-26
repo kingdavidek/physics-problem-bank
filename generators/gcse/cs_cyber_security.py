@@ -2,7 +2,7 @@
 GCSE Computer Science – Cyber Security
 10 foundational · 10 intermediate · 10 difficult · 15 MCQ
 Each variant returns (question, solution, hint, marks).
-Graded definition variants add a 5th text/keyword payload (Phase 4).
+Graded practice variants use MCQ, pick, order, or multipart fields (no weak free-text definitions).
 List/multipart variants may use inline ``number_fields`` (4- or 5-tuples).
 """
 import random
@@ -10,7 +10,6 @@ from generators.shared.utils import (
     make_problem,
     graded_answer_keyword,
     graded_answer_number_fields,
-    graded_answer_text,
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
@@ -53,6 +52,18 @@ def _cy_mcq_payload(correct_text, distractors):
     return {'type': 'mcq', 'options': options, 'correct': correct_letter}
 
 
+def _cy_mcq_graded_field(correct_text, distractors, label='Select the best answer'):
+    """Single inline MCQ field for auto-check (practice + sandbox)."""
+    payload = _cy_mcq_payload(correct_text, distractors)
+    opts = [text.split('  ', 1)[1] for text in payload['options']]
+    return graded_answer_number_fields(
+        (payload['correct'],),
+        (label,),
+        field_types=('mcq',),
+        field_options=(opts,),
+    )
+
+
 def _cy_pick_from_bank(correct_texts, distractor_texts, pick_count, *, format_hint=None):
     """Shuffled option bank: pick exactly ``pick_count`` correct statements."""
     correct_ids = tuple(f'c{i + 1}' for i in range(len(correct_texts)))
@@ -89,16 +100,30 @@ def _cy_f1_malware_virus():
         "<strong>Malicious software</strong> designed to damage, disrupt, or gain "
         "unauthorised access to systems (viruses, worms, trojans, ransomware, etc.)."
     )
-    return q, s, "Malware = malicious + software.", 1, graded_answer_text('malicious', 'software')
+    return q, s, "Malware = malicious + software.", 1, _cy_mcq_graded_field(
+        "Malicious software designed to damage, disrupt, or gain unauthorised access to systems",
+        [
+            "Hardware that monitors network traffic and blocks unauthorised connections",
+            "Legal software that encrypts files to protect them from unauthorised access",
+            "A backup copy of data stored on a separate device for recovery",
+        ],
+    )
 
 
 def _cy_f2_phishing():
-    q = "Describe <strong>phishing</strong> in one or two sentences."
+    q = "What is <strong>phishing</strong>?"
     s = (
         "Fake emails, texts, or sites that <strong>trick users</strong> into revealing "
         "passwords, bank details, or clicking malicious links."
     )
-    return q, s, "Look-alike logos and urgent language are common signs.", 2, graded_answer_text('trick', 'password')
+    return q, s, "Look-alike logos and urgent language are common signs.", 2, _cy_mcq_graded_field(
+        "Fake emails, texts, or sites that trick users into revealing passwords or clicking malicious links",
+        [
+            "Software that scans files and memory for known virus signatures",
+            "Encrypting all data stored on a hard drive with a secret key",
+            "Flooding a server with traffic so legitimate users cannot access it",
+        ],
+    )
 
 
 def _cy_f3_firewall():
@@ -107,7 +132,7 @@ def _cy_f3_firewall():
         "Monitors and <strong>filters network traffic</strong>, blocking unauthorised "
         "connections based on rules."
     )
-    return q, s, "Hardware or software barrier between trusted and untrusted networks.", 2, _cy_mcq_payload(
+    return q, s, "Hardware or software barrier between trusted and untrusted networks.", 2, _cy_mcq_graded_field(
         "Monitors and filters network traffic, blocking unauthorised connections",
         [
             "Scans files and memory for known malware signatures",
@@ -123,16 +148,38 @@ def _cy_f4_antivirus():
         "Scans files and memory for <strong>known malware signatures</strong> and suspicious "
         "behaviour; can quarantine or remove threats."
     )
-    return q, s, "Keep definitions updated for new threats.", 2, graded_answer_text('scan', 'malware')
+    return q, s, "Keep definitions updated for new threats.", 2, _cy_mcq_graded_field(
+        "Scans files and memory for known malware signatures and suspicious behaviour",
+        [
+            "Encrypts all network traffic between the computer and the internet",
+            "Assigns a unique IP address to each device on the network",
+            "Blocks physical access to the server room with a locked door",
+        ],
+    )
 
 
 def _cy_f5_strong_password():
-    q = "Give <strong>three features</strong> of a strong password."
+    q = "Select <strong>two features</strong> of a strong password."
     s = (
         "<strong>Long</strong>, mix of upper/lower case, numbers and symbols; "
         "<strong>unique</strong> per account; not based on personal info."
     )
-    return q, s, "Passphrases can be strong and memorable.", 2, graded_answer_text('long', 'unique', 'symbol')
+    return q, s, "Passphrases can be strong and memorable.", 2, _cy_pick_from_bank(
+        (
+            'Long with a mix of upper/lower case, numbers and symbols',
+            'Unique for each account — not reused across sites',
+            'Not based on easily guessed personal information',
+            'Uses a passphrase that is memorable but hard to guess',
+        ),
+        (
+            'Short and easy to remember like a pet name',
+            'The same password used for every online account',
+            'Only lowercase letters with no numbers or symbols',
+            'Written on a sticky note attached to the monitor',
+        ),
+        2,
+        format_hint='Select two features of a strong password',
+    )
 
 
 def _cy_f6_social_engineering():
@@ -141,7 +188,14 @@ def _cy_f6_social_engineering():
         "Manipulating people into <strong>breaking security rules</strong> — e.g. "
         "pretending to be IT support to get a password."
     )
-    return q, s, "Targets human trust, not only technical flaws.", 2, graded_answer_text('manipulating', 'people')
+    return q, s, "Targets human trust, not only technical flaws.", 2, _cy_mcq_graded_field(
+        "Manipulating people into breaking security rules or revealing confidential information",
+        [
+            "Exploiting a software bug to gain administrator access to a server",
+            "Encrypting data so it cannot be read without the decryption key",
+            "Scanning network ports to find open services on a router",
+        ],
+    )
 
 
 def _cy_f7_ransomware():
@@ -150,7 +204,7 @@ def _cy_f7_ransomware():
         "Encrypts or locks files and <strong>demands payment</strong> for the decryption key "
         "or access restore."
     )
-    return q, s, "Regular offline backups reduce impact.", 2, _cy_mcq_payload(
+    return q, s, "Regular offline backups reduce impact.", 2, _cy_mcq_graded_field(
         "Encrypts or locks files and demands payment for the decryption key",
         [
             "Scans incoming email attachments for known virus signatures",
@@ -161,13 +215,27 @@ def _cy_f7_ransomware():
 
 
 def _cy_f8_physical_security():
-    q = "Give <strong>two physical security</strong> measures for a school server room."
+    q = "Select <strong>two physical security</strong> measures for a school server room."
     s = (
         "Examples: <strong>locked door</strong>, CCTV, visitor log, cable locks, "
         "no unauthorised USB access."
     )
-    return q, s, "Cyber security includes physical access control.", 2, graded_answer_text(
-        'lock', 'cctv', 'visitor', 'cable', 'usb', required=2,
+    return q, s, "Cyber security includes physical access control.", 2, _cy_pick_from_bank(
+        (
+            'Locked door to the server room',
+            'CCTV monitoring the server room entrance',
+            'Visitor log for everyone entering the room',
+            'Cable locks securing equipment to desks',
+            'Policy blocking unauthorised USB devices',
+        ),
+        (
+            'Posting the admin password on the door for convenience',
+            'Leaving the server room unlocked during the school day',
+            'Allowing any pupil to plug in their own USB drive',
+            'Disabling all software updates to avoid downtime',
+        ),
+        2,
+        format_hint='Select two physical security measures',
     )
 
 
@@ -177,7 +245,14 @@ def _cy_f9_software_update():
         "They fix <strong>known vulnerabilities</strong> that attackers could exploit "
         "if the old version remains installed."
     )
-    return q, s, "Zero-day = flaw not yet patched.", 2, graded_answer_text('vulnerabilit', 'fix')
+    return q, s, "Zero-day = flaw not yet patched.", 2, _cy_mcq_graded_field(
+        "They fix known vulnerabilities that attackers could exploit",
+        [
+            "They increase screen resolution and improve graphics performance",
+            "They change keyboard layout settings for different languages",
+            "They compress photos to save disk space on the hard drive",
+        ],
+    )
 
 
 def _cy_f10_trojan():
@@ -186,7 +261,7 @@ def _cy_f10_trojan():
         "A Trojan <strong>pretends to be legitimate software</strong> users install; "
         "it does not self-replicate like a virus spreading to other files/machines."
     )
-    return q, s, "Named after the Trojan horse.", 2, _cy_mcq_payload(
+    return q, s, "Named after the Trojan horse.", 2, _cy_mcq_graded_field(
         "It pretends to be legitimate software and does not self-replicate like a virus",
         [
             "It automatically copies itself to other files without user action",
@@ -206,7 +281,7 @@ def _cy_i1_dos():
         "Floods a server with traffic so <strong>legitimate users cannot access</strong> "
         "the service (website, game, etc.)."
     )
-    return q, s, "DDoS uses many machines (botnet).", 2, _cy_mcq_payload(
+    return q, s, "DDoS uses many machines (botnet).", 2, _cy_mcq_graded_field(
         "Floods a server with traffic so legitimate users cannot access the service",
         [
             "Steals passwords by sending fake login emails",
@@ -217,21 +292,35 @@ def _cy_i1_dos():
 
 
 def _cy_i2_brute_force():
-    q = "Describe a <strong>brute-force</strong> attack on a login page."
+    q = "What is a <strong>brute-force</strong> attack on a login page?"
     s = (
         "Automated trial of <strong>many password combinations</strong> until one works; "
         "slowed by lockouts, CAPTCHA, and strong passwords."
     )
-    return q, s, "Rate limiting and 2FA defend against this.", 2, graded_answer_text('password', 'combinations')
+    return q, s, "Rate limiting and 2FA defend against this.", 2, _cy_mcq_graded_field(
+        "Automated trial of many password combinations until one works",
+        [
+            "Flooding a server with traffic so users cannot log in",
+            "Tricking users into clicking a link in a fake email",
+            "Encrypting files and demanding payment for the decryption key",
+        ],
+    )
 
 
 def _cy_i3_2fa():
-    q = "Explain how <strong>two-factor authentication (2FA)</strong> improves security."
+    q = "How does <strong>two-factor authentication (2FA)</strong> improve security?"
     s = (
         "Requires <strong>two different types</strong> of evidence — something you know (password) "
         "plus something you have (phone code) or are (fingerprint)."
     )
-    return q, s, "Stolen password alone is not enough.", 2, graded_answer_text('two', 'factor')
+    return q, s, "Stolen password alone is not enough.", 2, _cy_mcq_graded_field(
+        "Requires two different types of evidence (e.g. password plus phone code or fingerprint)",
+        [
+            "Uses two identical passwords entered one after the other",
+            "Installs two separate firewalls on the same network",
+            "Requires two different email addresses for one account",
+        ],
+    )
 
 
 def _cy_i4_symmetric():
@@ -240,7 +329,7 @@ def _cy_i4_symmetric():
         "Same <strong>secret key</strong> encrypts and decrypts. Example: encrypting a "
         "file on a USB drive with a password."
     )
-    return q, s, "Fast but key distribution must be secure.", 2, _cy_mcq_payload(
+    return q, s, "Fast but key distribution must be secure.", 2, _cy_mcq_graded_field(
         "The same secret key encrypts and decrypts (e.g. a password-protected file on a USB drive)",
         [
             "A public key encrypts and a different private key decrypts",
@@ -256,7 +345,14 @@ def _cy_i5_asymmetric():
         "Uses a <strong>public key</strong> to encrypt and a <strong>private key</strong> "
         "to decrypt (or sign). Public key can be shared openly."
     )
-    return q, s, "Used in HTTPS and secure email.", 3, graded_answer_text('public', 'private')
+    return q, s, "Used in HTTPS and secure email.", 3, _cy_mcq_graded_field(
+        "Uses a public key to encrypt and a private key to decrypt (or sign)",
+        [
+            "Uses the same secret key to encrypt and decrypt every message",
+            "Scrambles data in a way that cannot be decrypted by anyone",
+            "Compresses files so they take less space on a hard drive",
+        ],
+    )
 
 
 def _cy_i6_sql_injection():
@@ -265,7 +361,7 @@ def _cy_i6_sql_injection():
         "Entering malicious SQL in input fields to <strong>manipulate a database</strong> "
         "(e.g. bypass login or steal data)."
     )
-    return q, s, "Prevent with parameterised queries and input validation.", 3, _cy_mcq_payload(
+    return q, s, "Prevent with parameterised queries and input validation.", 3, _cy_mcq_graded_field(
         "Entering malicious SQL in input fields to manipulate a database",
         [
             "Sending fake emails to trick users into revealing passwords",
@@ -314,7 +410,14 @@ def _cy_i8_mitm():
         "Attacker <strong>secretly relays or alters</strong> communication between two parties "
         "who believe they talk directly."
     )
-    return q, s, "HTTPS with valid certificates helps prevent this.", 3, graded_answer_text('relay', 'communication')
+    return q, s, "HTTPS with valid certificates helps prevent this.", 3, _cy_mcq_graded_field(
+        "Secretly relays or alters communication between two parties who believe they talk directly",
+        [
+            "Floods a server with traffic so legitimate users cannot access it",
+            "Encrypts files and demands payment for the decryption key",
+            "Scans files and memory for known malware signatures",
+        ],
+    )
 
 
 def _cy_i9_acceptable_use():
@@ -323,7 +426,14 @@ def _cy_i9_acceptable_use():
         "Sets <strong>rules</strong> for using IT (no illegal content, no sharing passwords, "
         "respect copyright) and consequences for misuse."
     )
-    return q, s, "Legal and safeguarding protection for school and pupils.", 2, graded_answer_text('rules', 'misuse')
+    return q, s, "Legal and safeguarding protection for school and pupils.", 2, _cy_mcq_graded_field(
+        "Sets rules for using IT and consequences for misuse",
+        [
+            "Increases download speed for pupils using school Wi-Fi",
+            "Replaces the need for antivirus software on school computers",
+            "Encrypts all pupil data automatically without staff involvement",
+        ],
+    )
 
 
 def _cy_i10_backup():
@@ -369,7 +479,7 @@ def _cy_d1_pen_test():
         "Ethical experts simulate attacks to find <strong>weaknesses before criminals do</strong>; "
         "done with <strong>permission</strong> and a defined scope."
     )
-    return q, s, "White-hat vs black-hat hackers.", 3, _cy_mcq_payload(
+    return q, s, "White-hat vs black-hat hackers.", 3, _cy_mcq_graded_field(
         "Ethical experts simulate attacks with permission to find weaknesses before criminals do",
         [
             "Hackers attack a system without permission to prove it is insecure",
@@ -410,23 +520,59 @@ def _cy_d3_xss():
         "Injecting malicious <strong>scripts into web pages</strong> viewed by others — "
         "can steal cookies or redirect users."
     )
-    return q, s, "Sanitise user input and escape output.", 3, graded_answer_text('script', 'web')
+    return q, s, "Sanitise user input and escape output.", 3, _cy_mcq_graded_field(
+        "Injecting malicious scripts into web pages viewed by others",
+        [
+            "Entering malicious SQL in input fields to manipulate a database",
+            "Flooding a server with traffic so users cannot access the website",
+            "Encrypting all data stored in a database with a secret key",
+        ],
+    )
 
 
 def _cy_d4_bio_vs_password():
     q = (
-        "Give <strong>one advantage</strong> and <strong>one risk</strong> of using "
+        "Select <strong>one advantage</strong> and <strong>one risk</strong> of using "
         "fingerprint biometrics instead of passwords alone."
     )
     s = (
         "<strong>Advantage:</strong> convenient, hard to guess. "
         "<strong>Risk:</strong> cannot change fingerprint if template is stolen; false accept/reject."
     )
+    advantage_raw, advantage_bank, advantage_pick = _cy_pick_field(
+        (
+            'Convenient — no password to remember each time',
+            'Hard to guess compared with a weak password',
+            'Can be used as a second factor alongside a password',
+        ),
+        (
+            'Completely impossible to spoof under any circumstances',
+            'Never produces false accept or false reject errors',
+            'Replaces the need for any other security measures',
+        ),
+        1,
+    )
+    risk_raw, risk_bank, risk_pick = _cy_pick_field(
+        (
+            'Cannot change your fingerprint if the template is stolen',
+            'False accept or false reject errors can occur',
+            'If compromised, you cannot reset it like a password',
+        ),
+        (
+            'Fingerprints are always slower to use than typing a password',
+            'Biometrics eliminate the need for encryption entirely',
+            'Fingerprint readers never fail in normal use',
+        ),
+        1,
+    )
     return q, s, "Often used as second factor, not sole factor.", 3, graded_answer_number_fields(
-        ('convenient', 'fingerprint'),
+        (advantage_raw, risk_raw),
         ('Advantage', 'Risk'),
-        field_types=('keyword', 'keyword'),
-        format_hint='Enter your answer',
+        field_types=('pick', 'pick'),
+        field_options=(advantage_bank, risk_bank),
+        field_pick_counts=(advantage_pick, risk_pick),
+        row_sizes=(1, 1),
+        group_labels=('Advantage', 'Risk'),
     )
 
 
@@ -458,12 +604,19 @@ def _cy_d6_cipher_caesar():
 
 
 def _cy_d7_https_role():
-    q = "Explain how <strong>HTTPS</strong> protects data in transit (high level)."
+    q = "How does <strong>HTTPS</strong> protect data in transit (high level)?"
     s = (
         "Uses <strong>TLS</strong> to encrypt data between browser and server; "
         "certificate proves server identity; prevents casual eavesdropping."
     )
-    return q, s, "Padlock icon; certificate authorities.", 3, graded_answer_text('encrypt', 'transit')
+    return q, s, "Padlock icon; certificate authorities.", 3, _cy_mcq_graded_field(
+        "Encrypts data in transit between browser and server using TLS",
+        [
+            "Compresses web pages so they download faster over slow connections",
+            "Stores passwords in plain text on the server for faster login",
+            "Blocks all cookies from being saved in the browser",
+        ],
+    )
 
 
 def _cy_d8_insider_threat():
@@ -472,7 +625,14 @@ def _cy_d8_insider_threat():
         "Security risk from <strong>people inside the organisation</strong> — malicious staff, "
         "or careless actions (leaving laptop unlocked, emailing wrong attachment)."
     )
-    return q, s, "Least privilege limits damage.", 3, graded_answer_text('inside', 'organisation')
+    return q, s, "Least privilege limits damage.", 3, _cy_mcq_graded_field(
+        "Security risk from people inside the organisation (malicious or careless actions)",
+        [
+            "Attack launched only from outside the organisation over the internet",
+            "Hardware fault that causes a server to crash unexpectedly",
+            "Software bug that displays the wrong colour on a web page",
+        ],
+    )
 
 
 def _cy_d9_mac_address_spoof():
@@ -481,7 +641,14 @@ def _cy_d9_mac_address_spoof():
         "MAC addresses can be <strong>spoofed</strong>; it does not encrypt traffic — "
         "strong WPA2/WPA3 and passwords matter more."
     )
-    return q, s, "Defence in depth — multiple layers.", 3, graded_answer_text('spoof', 'mac')
+    return q, s, "Defence in depth — multiple layers.", 3, _cy_mcq_graded_field(
+        "MAC addresses can be spoofed and filtering does not encrypt traffic",
+        [
+            "MAC addresses are randomly generated every second so filters never match",
+            "MAC filtering encrypts all WiFi traffic automatically",
+            "MAC filtering prevents any device from connecting to the network",
+        ],
+    )
 
 
 def _cy_d10_risk_assessment():
@@ -493,7 +660,7 @@ def _cy_d10_risk_assessment():
         "They prioritise which threats to fix first — "
         "<strong>high impact + high likelihood</strong> = greatest risk."
     )
-    return q, s, "Risk = threat × vulnerability × asset value.", 3, _cy_mcq_payload(
+    return q, s, "Risk = threat × vulnerability × asset value.", 3, _cy_mcq_graded_field(
         "Which threats to fix first — high impact and high likelihood mean greatest risk",
         [
             "Which hardware to buy based only on the purchase price",
@@ -506,18 +673,43 @@ def _cy_d10_risk_assessment():
 def _cy_d11_shoulder_surfing():
     q = (
         "A pupil watches a teacher type a password in the staff room. "
-        "Name the attack type and <strong>two defences</strong>."
+        "Name the attack type and select <strong>two defences</strong>."
     )
     s = (
         "<strong>Shoulder surfing</strong> (social/physical observation). "
         "Defences: shield the keyboard, use <strong>2FA</strong>, privacy screens, "
         "never share passwords, lock screen when away."
     )
+    attack_opts, attack_ans = _cy_mcq_match_field(
+        "Shoulder surfing",
+        [
+            "Phishing",
+            "Denial of service (DoS)",
+        ],
+    )
+    defence_raw, defence_bank, defence_pick = _cy_pick_field(
+        (
+            "Shield the keyboard when typing passwords",
+            "Use two-factor authentication (2FA)",
+            "Use a privacy screen on the monitor",
+            "Lock the screen when stepping away",
+            "Never share passwords with pupils or colleagues",
+        ),
+        (
+            "Post the password on the staff room noticeboard for convenience",
+            "Use the same short password for every account",
+            "Disable the lock screen so login is faster",
+        ),
+        2,
+    )
     return q, s, "Not all attacks are online — physical observation counts.", 3, graded_answer_number_fields(
-        ('shoulder surfing', '2fa', 'privacy'),
-        ('Attack type', 'Defence 1', 'Defence 2'),
-        field_types=('keyword', 'keyword', 'keyword'),
-        format_hint='Enter your answer',
+        (attack_ans, defence_raw),
+        ('Attack type', 'Defences'),
+        field_types=('mcq', 'pick'),
+        field_options=(attack_opts, defence_bank),
+        field_pick_counts=(None, defence_pick),
+        row_sizes=(1, 1),
+        group_labels=('Attack type', 'Defences'),
     )
 
 
@@ -575,6 +767,13 @@ def _cy_d13_multipart_attack_scenario():
             "Denial of service (DoS)",
         ],
     )
+    social_opts, social_ans = _cy_mcq_match_field(
+        "Manipulating or tricking people into giving away confidential information",
+        [
+            "Exploiting a software bug to bypass a firewall",
+            "Encrypting data so it cannot be read in transit",
+        ],
+    )
     measures_raw, measures_bank, measures_pick = _cy_pick_field(
         (
             "Staff training to spot suspicious emails and check sender addresses",
@@ -592,10 +791,10 @@ def _cy_d13_multipart_attack_scenario():
         3,
     )
     return q, s, "Fake email tricking users = phishing, a form of social engineering.", 6, graded_answer_number_fields(
-        (attack_ans, 'manipulating|people|trick', measures_raw),
+        (attack_ans, social_ans, measures_raw),
         ('Attack type', 'Social engineering', 'Preventive measures'),
-        field_types=('mcq', 'text', 'pick'),
-        field_options=(attack_opts, None, measures_bank),
+        field_types=('mcq', 'mcq', 'pick'),
+        field_options=(attack_opts, social_opts, measures_bank),
         field_pick_counts=(None, None, measures_pick),
         row_sizes=(1, 1, 1),
         group_labels=('(a)', '(b)', '(c)'),

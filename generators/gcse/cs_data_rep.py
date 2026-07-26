@@ -2,7 +2,6 @@
 GCSE Computer Science – Fundamentals of Data Representation
 10 foundational · 10 intermediate · 10 difficult · 10 MCQ (fixed)
 Graded practice variants return (question, solution, hint, marks, raw).
-Explanation-only variants stay as 4-tuples (Phase 2).
 """
 import random
 from generators.shared.utils import (
@@ -88,6 +87,48 @@ def _dr_pick_field(correct_texts, distractor_texts, pick_count):
     random.shuffle(bank)
     raw = f"pick|{pick_count}|{'|'.join(correct_ids)}"
     return raw, bank, pick_count
+
+
+def _dr_mcq_payload(correct_variants, distractor_groups):
+    """Four-option practice MCQ; picks one phrasing per answer and shuffles."""
+    variants = correct_variants if isinstance(correct_variants, (tuple, list)) else (correct_variants,)
+    groups = [
+        (group,) if isinstance(group, str) else tuple(group)
+        for group in distractor_groups[:3]
+    ]
+    correct_text = random.choice(variants)
+    max_distractor_len = max(len(max(g, key=len)) for g in groups) if groups else 0
+    if len(correct_text) > max_distractor_len:
+        shorter = [v for v in variants if len(v) <= max_distractor_len]
+        if shorter:
+            correct_text = random.choice(shorter)
+    distractors = []
+    for group in groups:
+        if random.random() < 0.55:
+            distractors.append(max(group, key=len))
+        else:
+            distractors.append(random.choice(group))
+    if distractors and len(correct_text) > max(len(d) for d in distractors):
+        gi = random.randrange(len(groups))
+        distractors[gi] = max(groups[gi], key=len)
+    pool = [correct_text] + distractors
+    random.shuffle(pool)
+    letters = 'ABCD'
+    correct_letter = letters[pool.index(correct_text)]
+    options = [f'{letters[i]}  {pool[i]}' for i in range(len(pool))]
+    return {'type': 'mcq', 'options': options, 'correct': correct_letter}
+
+
+def _dr_mcq_graded_field(correct_variants, distractor_groups, label):
+    """Single inline MCQ field for ``graded_answer_number_fields``."""
+    payload = _dr_mcq_payload(correct_variants, distractor_groups)
+    opts = [text.split('  ', 1)[1] for text in payload['options']]
+    return graded_answer_number_fields(
+        (payload['correct'],),
+        (label,),
+        field_types=('mcq',),
+        field_options=(opts,),
+    )
 
 
 def _dr_problem_from_output(out, difficulty):
@@ -580,7 +621,19 @@ def _dr_i6_overflow():
         "Value wraps to <strong>0</strong> — <strong>overflow</strong> "
         "(like a car odometer running out of digits)."
     )
-    return q, s, "Fixed bits cannot store 256 in 8-bit unsigned.", 2
+    return q, s, "Fixed bits cannot store 256 in 8-bit unsigned.", 2, _dr_mcq_graded_field(
+        (
+            'The value wraps to 0 — overflow occurs',
+            'It overflows and the stored value becomes 0',
+            'Overflow: the bits wrap round to 0',
+        ),
+        (
+            ('The stored value becomes 256', 'The register stores 256 in 8-bit unsigned'),
+            ('The program stops with an error', 'An error message stops the program'),
+            ('The value stays at 255', 'The stored value remains 255'),
+        ),
+        'What happens to the stored value?',
+    )
 
 
 def _dr_i7_unicode_vs_ascii():
@@ -589,7 +642,19 @@ def _dr_i7_unicode_vs_ascii():
         "Unicode represents <strong>thousands of characters</strong> worldwide; "
         "ASCII only needs <strong>128</strong> English-focused codes."
     )
-    return q, s, "More symbols in the table → more bits needed on average.", 2
+    return q, s, "More symbols in the table → more bits needed on average.", 2, _dr_mcq_graded_field(
+        (
+            'Unicode must represent thousands of characters; ASCII only needs 128 codes',
+            'Unicode covers many more symbols worldwide than ASCII\'s 128-character set',
+            'More characters in the table means more bits are needed on average',
+        ),
+        (
+            ('Unicode uses encryption so it needs more bits', 'Extra bits encrypt each Unicode character'),
+            ('ASCII stores images while Unicode stores text only', 'ASCII is for images and Unicode is for text'),
+            ('Unicode is slower so it uses more bits', 'Unicode needs more bits because it runs slower than ASCII'),
+        ),
+        'Select the best explanation',
+    )
 
 
 def _dr_i8_colour_depth_bits():

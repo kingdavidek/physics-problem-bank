@@ -2,15 +2,13 @@
 GCSE Computer Science – Ethical, Legal & Environmental Impacts
 10 foundational · 10 intermediate · 10 difficult · 15 MCQ
 Each variant returns (question, solution, hint, marks).
-Graded definition variants add a 5th text/keyword payload (Phase 4).
-List/multipart variants stay as 4-tuples.
+Graded practice variants use MCQ, pick, order, or multipart fields (no weak free-text definitions).
+List/multipart variants may use inline ``number_fields`` (4- or 5-tuples).
 """
 import random
 from generators.shared.utils import (
     make_problem,
-    graded_answer_keyword,
     graded_answer_number_fields,
-    graded_answer_text,
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
@@ -50,6 +48,18 @@ def _eth_mcq_payload(correct_text, distractors):
     correct_letter = letters[pool.index(correct_text)]
     options = [f'{letters[i]}  {pool[i]}' for i in range(len(pool))]
     return {'type': 'mcq', 'options': options, 'correct': correct_letter}
+
+
+def _eth_mcq_graded_field(correct_text, distractors, label='Select the best answer'):
+    """Single inline MCQ field for auto-check (practice + sandbox)."""
+    payload = _eth_mcq_payload(correct_text, distractors)
+    opts = [text.split('  ', 1)[1] for text in payload['options']]
+    return graded_answer_number_fields(
+        (payload['correct'],),
+        (label,),
+        field_types=('mcq',),
+        field_options=(opts,),
+    )
 
 
 def _eth_pick_from_bank(correct_texts, distractor_texts, pick_count, *, format_hint=None):
@@ -120,14 +130,27 @@ def _eth_order_field(steps, distractors):
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _eth_f1_environmental():
-    q = "Give <strong>two environmental impacts</strong> of digital technology."
+    q = "Select <strong>two environmental impacts</strong> of digital technology."
     s = (
         "Examples: <strong>energy consumption</strong> (data centres, charging devices), "
         "<strong>e-waste</strong> from discarded hardware, <strong>manufacturing pollution</strong>, "
         "mining rare earth metals, <strong>carbon footprint</strong> of device lifecycles."
     )
-    return q, s, "Think manufacture → use → disposal.", 2, graded_answer_text(
-        'energy', 'waste', 'pollution', 'mining', 'carbon', required=2,
+    return q, s, "Think manufacture → use → disposal.", 2, _eth_pick_from_bank(
+        (
+            'Energy consumption from data centres and charging devices',
+            'E-waste from discarded phones, PCs and servers',
+            'Manufacturing pollution and mining of rare earth metals',
+            'Carbon footprint across the device lifecycle',
+        ),
+        (
+            'Improved battery life makes all devices carbon-neutral',
+            'Digital technology has no environmental impact once recycled',
+            'Cloud storage eliminates energy use in data centres',
+            'Manufacturing electronics uses no raw materials',
+        ),
+        2,
+        format_hint='Select two environmental impacts',
     )
 
 
@@ -137,7 +160,14 @@ def _eth_f2_gdpr():
         "<strong>Personal data</strong> — how organisations collect, store, use and share "
         "information that can identify living individuals."
     )
-    return q, s, "Replaces much of the old Data Protection Act for EU/UK law.", 1, graded_answer_text('personal', 'data')
+    return q, s, "Replaces much of the old Data Protection Act for EU/UK law.", 1, _eth_mcq_graded_field(
+        "Personal data about living individuals",
+        [
+            "Copyright on creative works such as music and images",
+            "Hardware devices and computer components only",
+            "Network traffic between computers on the internet",
+        ],
+    )
 
 
 def _eth_f3_copyright():
@@ -146,7 +176,7 @@ def _eth_f3_copyright():
         "Original <strong>creative work</strong> (software, music, images, text) so the owner "
         "controls copying and distribution; copying without permission can be illegal."
     )
-    return q, s, "© symbol = copyright.", 2, _eth_mcq_payload(
+    return q, s, "© symbol = copyright.", 2, _eth_mcq_graded_field(
         "Original creative work such as software, music, images and text",
         [
             "Personal data about living individuals only",
@@ -162,7 +192,14 @@ def _eth_f4_cma():
         "UK law making it illegal to <strong>access or modify computer systems/data without "
         "authorisation</strong> — e.g. hacking, spreading viruses, denial-of-service attacks."
     )
-    return q, s, "Unauthorised access = offence.", 2, graded_answer_text('unauthorised', 'access')
+    return q, s, "Unauthorised access = offence.", 2, _eth_mcq_graded_field(
+        "Illegal unauthorised access to or modification of computer systems and data",
+        [
+            "Rules for how organisations must protect personal data under GDPR",
+            "Protection of original creative work such as music and software",
+            "Standards for energy efficiency in data centre cooling systems",
+        ],
+    )
 
 
 def _eth_f5_open_source():
@@ -171,7 +208,7 @@ def _eth_f5_open_source():
         "Software whose <strong>source code is publicly available</strong> to view, modify and "
         "redistribute under a licence (e.g. GNU GPL), often free of charge."
     )
-    return q, s, "Opposite of closed proprietary code.", 2, _eth_mcq_payload(
+    return q, s, "Opposite of closed proprietary code.", 2, _eth_mcq_graded_field(
         "Software whose source code is publicly available to view, modify and redistribute",
         [
             "Software sold under a licence that hides the source code from users",
@@ -187,7 +224,14 @@ def _eth_f6_proprietary():
         "Commercial software where the <strong>source code is not shared</strong>; users buy a "
         "<strong>licence</strong> to use it under strict terms (e.g. Microsoft Office)."
     )
-    return q, s, "You buy permission to use, not ownership of the code.", 2, graded_answer_text('source code', 'licence')
+    return q, s, "You buy permission to use, not ownership of the code.", 2, _eth_mcq_graded_field(
+        "Commercial software where the source code is not shared and users buy a licence to use it",
+        [
+            "Software whose source code is publicly available to modify and redistribute",
+            "Software that is always free with no licence terms",
+            "Hardware firmware stored in read-only memory on a device",
+        ],
+    )
 
 
 def _eth_f7_digital_divide():
@@ -196,7 +240,14 @@ def _eth_f7_digital_divide():
         "The gap between those who <strong>have access</strong> to digital technology, skills and "
         "connectivity and those who <strong>do not</strong> (often due to income, location, age, disability)."
     )
-    return q, s, "Unequal access to tech and the internet.", 2, graded_answer_text('access', 'divide')
+    return q, s, "Unequal access to tech and the internet.", 2, _eth_mcq_graded_field(
+        "The gap between those who have access to digital technology and those who do not",
+        [
+            "The difference between open-source and proprietary software licences",
+            "The gap between upload and download speed on a home broadband connection",
+            "The difference between legal and ethical issues in computing",
+        ],
+    )
 
 
 def _eth_f8_e_waste():
@@ -205,7 +256,14 @@ def _eth_f8_e_waste():
         "Discarded electrical and electronic equipment (phones, PCs, servers). "
         "Toxic materials can harm the environment if not <strong>recycled responsibly</strong>."
     )
-    return q, s, "Old kit sent to landfill or export.", 1, graded_answer_text('discarded', 'electronic')
+    return q, s, "Old kit sent to landfill or export.", 1, _eth_mcq_graded_field(
+        "Discarded electrical and electronic equipment such as phones, PCs and servers",
+        [
+            "Energy used by data centres running 24/7",
+            "Personal data stored on a cloud server",
+            "Software released under an open-source licence",
+        ],
+    )
 
 
 def _eth_f9_consent():
@@ -214,7 +272,14 @@ def _eth_f9_consent():
         "People should <strong>know and agree</strong> to what data is collected and how it is used; "
         "collecting without a lawful basis or clear consent can breach data protection law."
     )
-    return q, s, "Tick boxes and privacy policies.", 2, graded_answer_text('consent', 'agree')
+    return q, s, "Tick boxes and privacy policies.", 2, _eth_mcq_graded_field(
+        "People should know and agree to what data is collected and how it is used",
+        [
+            "Consent is optional if the organisation stores data in the cloud",
+            "Consent only matters for marketing emails, not for pupil records",
+            "Collecting data without consent is always legal under UK GDPR",
+        ],
+    )
 
 
 def _eth_f10_ethical_vs_legal():
@@ -316,7 +381,7 @@ def _eth_i3_copyright_example():
         "copying without permission or a valid licence can infringe copyright. "
         "Use royalty-free assets or create your own."
     )
-    return q, s, "© applies to photos and code too.", 2, _eth_mcq_payload(
+    return q, s, "© applies to photos and code too.", 2, _eth_mcq_graded_field(
         "Copyright, Designs and Patents Act 1988",
         [
             "Computer Misuse Act 1990",
@@ -362,17 +427,46 @@ def _eth_i4_planned_obsolescence():
 
 
 def _eth_i5_cloud_privacy():
-    q = "Give <strong>one benefit</strong> and <strong>one risk</strong> of cloud storage for a school."
+    q = "Select <strong>one benefit</strong> and <strong>one risk</strong> of cloud storage for a school."
     s = (
         "<strong>Benefit:</strong> access files anywhere, easy backup, scalable storage. "
         "<strong>Risk:</strong> data held on third-party servers — <strong>privacy</strong>, "
         "jurisdiction (where data is stored), provider breach or outage."
     )
+    benefit_raw, benefit_bank, benefit_pick = _eth_pick_field(
+        (
+            'Access files from anywhere with an internet connection',
+            'Easy backup and scalable storage without buying more servers',
+            'Multiple users can collaborate on shared documents',
+        ),
+        (
+            'Eliminates all privacy concerns because data is in the cloud',
+            'Guarantees zero downtime with no risk of provider outage',
+            'Removes the need for any password or access controls',
+        ),
+        1,
+    )
+    risk_raw, risk_bank, risk_pick = _eth_pick_field(
+        (
+            'Data held on third-party servers raises privacy concerns',
+            'Uncertainty about where data is stored (jurisdiction)',
+            'Provider breach or outage could affect access to school files',
+        ),
+        (
+            'Cloud storage always costs more than buying local servers',
+            'Files cannot be accessed unless the internet is disconnected',
+            'Cloud providers never experience security incidents',
+        ),
+        1,
+    )
     return q, s, "AQA often uses cloud in 3.8 scenarios.", 3, graded_answer_number_fields(
-        ('access', 'privacy'),
+        (benefit_raw, risk_raw),
         ('Benefit', 'Risk'),
-        field_types=('keyword', 'keyword'),
-        format_hint='Enter your answer',
+        field_types=('pick', 'pick'),
+        field_options=(benefit_bank, risk_bank),
+        field_pick_counts=(benefit_pick, risk_pick),
+        row_sizes=(1, 1),
+        group_labels=('Benefit', 'Risk'),
     )
 
 
@@ -435,6 +529,13 @@ def _eth_i7_ai_bias():
         "favour one group. Example: facial recognition less accurate on some skin tones; "
         "hiring AI trained on biased past decisions."
     )
+    definition_opts, definition_ans = _eth_mcq_match_field(
+        "When a computer system produces unfair outcomes because training data or rules favour one group",
+        [
+            "When antivirus software fails to detect a virus on a laptop",
+            "When a firewall blocks all incoming network traffic by default",
+        ],
+    )
     example_raw, example_bank, example_pick = _eth_pick_field(
         (
             'Facial recognition less accurate on some skin tones',
@@ -449,10 +550,10 @@ def _eth_i7_ai_bias():
         1,
     )
     return q, s, "Edexcel mentions bias explicitly.", 3, graded_answer_number_fields(
-        ('unfair|bias|discrimination', example_raw),
+        (definition_ans, example_raw),
         ('Definition', 'Example'),
-        field_types=('text', 'pick'),
-        field_options=(None, example_bank),
+        field_types=('mcq', 'pick'),
+        field_options=(definition_opts, example_bank),
         field_pick_counts=(None, example_pick),
         row_sizes=(1, 1),
         group_labels=('(a)', '(b)'),
@@ -461,14 +562,27 @@ def _eth_i7_ai_bias():
 
 
 def _eth_i8_autonomous_vehicles():
-    q = "Give <strong>one ethical issue</strong> with autonomous (self-driving) vehicles."
+    q = "Select <strong>one ethical issue</strong> with autonomous (self-driving) vehicles."
     s = (
         "Examples: <strong>who is liable</strong> in a crash (manufacturer, owner, software); "
         "<strong>trolley problem</strong> style choices programmed into AI; job losses for drivers; "
         "safety vs adoption speed."
     )
-    return q, s, "AQA lists autonomous vehicles in 3.8.", 3, graded_answer_text(
-        'liable', 'crash', 'trolley', 'jobs', 'safety', required=1,
+    return q, s, "AQA lists autonomous vehicles in 3.8.", 3, _eth_pick_from_bank(
+        (
+            'Who is liable in a crash — manufacturer, owner or software developer',
+            'Trolley-problem style choices programmed into the AI',
+            'Job losses for professional drivers',
+            'Safety concerns versus speed of adoption on public roads',
+        ),
+        (
+            'Improved fuel efficiency from smoother acceleration profiles',
+            'Faster download speeds for in-car entertainment systems',
+            'Reduced cost of open-source navigation software',
+            'Better battery life for the vehicle entertainment screen',
+        ),
+        1,
+        format_hint='Select one ethical issue',
     )
 
 
@@ -511,7 +625,14 @@ def _eth_i10_ico_role():
         "UK regulator for <strong>data protection</strong>; investigates breaches, gives guidance, "
         "can issue fines for serious GDPR/DPA failures."
     )
-    return q, s, "ICO enforces UK data law.", 2, graded_answer_text('data protection', 'regulator')
+    return q, s, "ICO enforces UK data law.", 2, _eth_mcq_graded_field(
+        "UK regulator for data protection that investigates breaches and can issue fines",
+        [
+            "Court that prosecutes all hacking offences under the Computer Misuse Act",
+            "Organisation that grants patents for new software inventions",
+            "Body that sets WiFi encryption standards for home routers",
+        ],
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -594,13 +715,31 @@ def _eth_d2_wearable_implant():
 
 
 def _eth_d3_cma_vs_ethical_hack():
-    q = "How is <strong>penetration testing</strong> different from an offence under the Computer Misuse Act?"
+    q = (
+        "How is <strong>penetration testing</strong> different from an offence under the "
+        "Computer Misuse Act?"
+    )
     s = (
         "Pen testing is <strong>authorised</strong> security testing with permission and scope. "
         "CMA offences involve <strong>unauthorised</strong> access or modification — same tools, "
         "different legality."
     )
-    return q, s, "Permission is the key difference.", 3, graded_answer_text('authorised', 'unauthorised')
+    return q, s, "Permission is the key difference.", 3, _eth_pick_from_bank(
+        (
+            'Penetration testing is carried out with permission and a defined scope',
+            'Pen testing is authorised security testing agreed with the system owner',
+            'Computer Misuse Act offences involve unauthorised access or modification',
+            'The same tools can be legal or illegal depending on whether access is authorised',
+        ),
+        (
+            'Penetration testing is always illegal even when the owner gives permission',
+            'The Computer Misuse Act only applies to physical theft of laptops',
+            'Unauthorised access is legal if no data is copied from the system',
+            'Permission makes no difference to whether hacking is an offence',
+        ),
+        2,
+        format_hint='Select two correct statements about the difference',
+    )
 
 
 def _eth_d4_energy_datacentre():
@@ -609,7 +748,23 @@ def _eth_d4_energy_datacentre():
         "They run <strong>24/7 servers</strong> needing huge electricity (often for cooling); "
         "carbon depends on power source; drives demand for hardware and water use in some regions."
     )
-    return q, s, "Cloud = many data centres.", 3, graded_answer_text('electricity', 'cooling')
+    return q, s, "Cloud = many data centres.", 3, _eth_pick_from_bank(
+        (
+            'Servers run 24/7 and consume large amounts of electricity',
+            'Cooling systems need significant energy to prevent overheating',
+            'Carbon emissions depend on the source of electricity used',
+            'Demand for hardware increases manufacturing and resource use',
+            'Some regions use large amounts of water for cooling',
+        ),
+        (
+            'Data centres eliminate the need for any local school servers',
+            'Cloud storage has no environmental impact once files are uploaded',
+            'Digital services use no electricity when users are offline',
+            'Recycling old phones removes all data centre energy demand',
+        ),
+        2,
+        format_hint='Select two environmental concerns',
+    )
 
 
 def _eth_d5_job_automation():
@@ -907,14 +1062,29 @@ def _eth_d11_right_to_erasure():
 def _eth_d12_creative_commons():
     q = (
         "A student finds an image online with a <strong>Creative Commons</strong> licence. "
-        "What should they check before using it in coursework?"
+        "Select <strong>two things</strong> they should check before using it in coursework."
     )
     s = (
         "Read the <strong>licence terms</strong> (attribution required? non-commercial only? "
         "no derivatives?). Credit the <strong>creator</strong>, respect share-alike rules, "
         "and do not assume ‘free on the internet’ means unrestricted use."
     )
-    return q, s, "Licences define what reuse is allowed.", 3, graded_answer_text('licence', 'attribution')
+    return q, s, "Licences define what reuse is allowed.", 3, _eth_pick_from_bank(
+        (
+            'Read the licence terms (attribution, non-commercial, no derivatives)',
+            'Check whether attribution to the creator is required',
+            'Confirm whether commercial use is allowed in coursework context',
+            'Verify whether modifying or remixing the image is permitted',
+        ),
+        (
+            'Assume any image found online can be copied without credit',
+            'Ignore licence terms if the image appears in a Google search',
+            'Use the image commercially without checking the licence',
+            'Modify the image freely even when the licence says no derivatives',
+        ),
+        2,
+        format_hint='Select two things to check',
+    )
 
 
 # ── Multi-part difficult questions (a, b, c) ──────────────────────────────────
@@ -942,6 +1112,32 @@ def _eth_d13_multipart_smartphone_lifecycle():
         "phones to be <strong>more easily upgraded</strong> so they last longer; trade-in "
         "schemes."
     )
+    manufacture_raw, manufacture_bank, manufacture_pick = _eth_pick_field(
+        (
+            'Uses raw materials including rare-earth metals that must be mined',
+            'Manufacturing consumes large amounts of energy and causes pollution',
+            'Carbon emissions are produced during device production',
+        ),
+        (
+            'Eliminates all mining because phones are made from recycled air',
+            'Uses no energy because smartphones are assembled by hand only',
+            'Has no environmental impact once the phone is packaged',
+        ),
+        1,
+    )
+    disposal_raw, disposal_bank, disposal_pick = _eth_pick_field(
+        (
+            'Discarded phones become e-waste in landfill',
+            'Toxic substances such as lead or lithium can leak into the environment',
+            'Old devices may be exported rather than recycled responsibly',
+        ),
+        (
+            'Old phones dissolve harmlessly within days in landfill',
+            'Throwing phones away has no effect on soil or water quality',
+            'E-waste only matters for desktop computers, not phones',
+        ),
+        1,
+    )
     measures_raw, measures_bank, measures_pick = _eth_pick_field(
         (
             'Recycle old devices to recover materials',
@@ -958,15 +1154,11 @@ def _eth_d13_multipart_smartphone_lifecycle():
         2,
     )
     return q, s, "Think mining + energy (make), toxic landfill (dispose), recycle/repair (reduce).", 6, graded_answer_number_fields(
-        (
-            '2@raw|material|mining|energy|pollution|carbon|rare',
-            '2@e-waste|landfill|toxic|leak|lithium|lead|waste',
-            measures_raw,
-        ),
+        (manufacture_raw, disposal_raw, measures_raw),
         ('Manufacturing impact', 'Disposal problem', 'Ways to reduce impact'),
-        field_types=('text', 'text', 'pick'),
-        field_options=(None, None, measures_bank),
-        field_pick_counts=(None, None, measures_pick),
+        field_types=('pick', 'pick', 'pick'),
+        field_options=(manufacture_bank, disposal_bank, measures_bank),
+        field_pick_counts=(manufacture_pick, disposal_pick, measures_pick),
         row_sizes=(1, 1, 1),
         group_labels=('(a)', '(b)', '(c)'),
         inline_sections=True,
