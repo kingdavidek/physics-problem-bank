@@ -165,6 +165,11 @@ from generators.gcse.gcse_cs_db_sql_lesson import (  # noqa: E402
     gcse_db_sql,
     gcse_db_sql_variants,
 )
+from generators.gcse.gcse_cs_systems_software_lesson import (  # noqa: E402
+    _sw_problem_from_output,
+    gcse_systems_software,
+    gcse_systems_software_variants,
+)
 from generators.gcse.cs_algorithms import (  # noqa: E402
     _alg_problem_from_output,
     gcse_algorithms,
@@ -1312,8 +1317,19 @@ def test_check_proof_steps_order_and_set():
 
     pick_two = check_proof_steps('pick|2|c1|c2|c3|c4|c5', 'c1|c3')
     assert pick_two['correct'] is True
+    assert pick_two['score'] == 2
+    assert pick_two['score_total'] == 2
     assert check_proof_steps('pick|2|c1|c2|c3|c4|c5', 'c1|c2|c3')['correct'] is False
-    assert check_proof_steps('pick|2|c1|c2|c3|c4|c5', 'c1|d1')['correct'] is False
+    partial_pick = check_proof_steps('pick|2|c1|c2|c3|c4|c5', 'c1|d1')
+    assert partial_pick['correct'] is False
+    assert partial_pick['score'] == 1
+    assert partial_pick['score_total'] == 2
+    assert partial_pick['feedback'] == '1/2 correct.'
+    pick_three = check_proof_steps('pick|3|c1|c2|c3', 'c1|d1|d2')
+    assert pick_three['correct'] is False
+    assert pick_three['score'] == 1
+    assert pick_three['score_total'] == 3
+    assert pick_three['feedback'] == '1/3 correct.'
     assert check_proof_steps('pick|2|c1|c2|c3|c4|c5', 'c1')['correct'] is False
 
 
@@ -2710,6 +2726,122 @@ def test_db_sql_check_api():
                 'correct_answer_raw': raw,
                 'answer_type': 'text',
                 'user_answer': 'SELECT * FROM Pupil',
+            },
+        )
+        assert r.status_code == 200
+        data = r.get_json()
+        assert data['ok'] is True
+        assert data['correct'] is True
+
+
+SYSTEMS_SOFTWARE_UNGRADED = (
+)
+
+
+def test_systems_software_variants_are_graded():
+    import generators.gcse.gcse_cs_systems_software_lesson as sw_mod
+
+    for pool in (sw_mod._FOUNDATIONAL, sw_mod._INTERMEDIATE, sw_mod._DIFFICULT):
+        for fn in pool:
+            out = fn()
+            problem = _sw_problem_from_output(out, 'intermediate')
+            if fn.__name__ in SYSTEMS_SOFTWARE_UNGRADED:
+                assert len(out) == 4, fn.__name__
+                assert not problem.get('correct_answer_raw'), fn.__name__
+                continue
+            assert len(out) == 5, fn.__name__
+            if problem.get('options') and problem.get('correct_answer'):
+                continue
+            assert problem.get('answer_type') in (
+                'text', 'number_fields', 'proof_steps',
+            ), fn.__name__
+            assert problem.get('correct_answer_raw'), fn.__name__
+
+
+def test_systems_software_classify_match_fields():
+    problem = gcse_systems_software(
+        'difficult', 'practice', variant_name='_sw_d10_classify_software'
+    )
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_field_types') == ['mcq', 'mcq', 'mcq', 'mcq']
+    assert len(problem.get('answer_field_options') or []) == 4
+
+
+def test_systems_software_multipart_inline_fields():
+    from generators.shared.answer_checkers import check_proof_steps
+
+    os_mgmt = gcse_systems_software(
+        'difficult', 'practice', variant_name='_sw_d13_multipart_os_management'
+    )
+    assert os_mgmt.get('answer_type') == 'number_fields'
+    assert os_mgmt.get('answer_inline_sections') is True
+    assert os_mgmt.get('answer_field_types') == ['pick', 'pick', 'pick']
+    assert os_mgmt.get('answer_field_pick_counts') == [2, 2, 2]
+    parts = (os_mgmt.get('correct_answer_raw') or '').split('\x1e')
+    assert len(parts) == 3
+    for part in parts:
+        pick_count = int(part.split('|', 2)[1])
+        pick_ids = part.split('|')[2:]
+        assert check_proof_steps(part, '|'.join(pick_ids[:pick_count]))['correct'] is True
+
+    utilities = gcse_systems_software(
+        'difficult', 'practice', variant_name='_sw_d14_multipart_utilities'
+    )
+    assert utilities.get('answer_inline_sections') is True
+    assert utilities.get('answer_field_types') == ['pick', 'pick', 'pick']
+    assert utilities.get('answer_field_pick_counts') == [1, 1, 2]
+
+
+def test_systems_software_exam_pick_variants():
+    os_funcs = gcse_systems_software(
+        'difficult', 'practice', variant_name='_sw_d6_exam_os_functions'
+    )
+    assert os_funcs.get('answer_type') == 'proof_steps'
+    assert os_funcs.get('answer_pick_count') == 5
+    assert os_funcs.get('correct_answer_raw', '').startswith('pick|5|')
+
+    utilities = gcse_systems_software(
+        'difficult', 'practice', variant_name='_sw_d7_exam_utilities'
+    )
+    assert utilities.get('answer_pick_count') == 3
+
+
+def test_systems_software_variant_queues_are_graded():
+    for difficulty in ('foundational', 'intermediate', 'difficult'):
+        variants = gcse_systems_software_variants(difficulty, 'practice')
+        assert variants, difficulty
+        for variant in variants:
+            if variant.__name__ in SYSTEMS_SOFTWARE_UNGRADED:
+                continue
+            problem = gcse_systems_software(
+                difficulty, 'practice', variant_name=variant.__name__
+            )
+            graded = problem.get('correct_answer_raw') or (
+                problem.get('options') and problem.get('correct_answer')
+            )
+            assert graded, (difficulty, variant.__name__)
+
+
+def test_systems_software_check_api():
+    problem = gcse_systems_software(
+        'foundational', 'practice', variant_name='_sw_f9_file_management'
+    )
+    assert problem.get('answer_type') == 'proof_steps'
+    raw = problem['correct_answer_raw']
+    pick_count = int(raw.split('|', 2)[1])
+    pick_ids = raw.split('|')[2:][:pick_count]
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'cs',
+                'topic': 'systems_software',
+                'difficulty': 'foundational',
+                'correct_answer_raw': raw,
+                'answer_type': 'proof_steps',
+                'user_answer': '|'.join(pick_ids),
             },
         )
         assert r.status_code == 200
@@ -7819,6 +7951,12 @@ def main():
     test_db_sql_multipart_query_writing()
     test_db_sql_variant_queues_are_graded()
     test_db_sql_check_api()
+    test_systems_software_variants_are_graded()
+    test_systems_software_classify_match_fields()
+    test_systems_software_multipart_inline_fields()
+    test_systems_software_exam_pick_variants()
+    test_systems_software_variant_queues_are_graded()
+    test_systems_software_check_api()
     test_algorithms_trace_variants_are_graded()
     test_algorithms_multipart_numeric_fields()
     test_algorithms_variant_queues_are_graded()

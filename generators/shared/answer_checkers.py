@@ -3330,12 +3330,16 @@ def check_proof_steps(correct_raw, user_answer):
             'all': 'Select all correct statements.',
             'pick': f"Select {parsed.get('pick_count', 0)} correct options.",
         }
-        return {
+        empty_result = {
             'correct': False,
             'normalized_user': '',
             'normalized_correct': normalized_correct,
             'feedback': empty_feedback.get(mode, 'Select your answer.'),
         }
+        if mode == 'pick':
+            empty_result['score'] = 0
+            empty_result['score_total'] = parsed.get('pick_count', 0)
+        return empty_result
 
     user_ids = [p.strip() for p in user_s.split('|') if p.strip()]
     if not user_ids:
@@ -3357,16 +3361,30 @@ def check_proof_steps(correct_raw, user_answer):
         pick_count = parsed['pick_count']
         correct_pool = set(parsed['correct_ids'])
         user_set = set(user_ids)
+        score = len([uid for uid in user_ids if uid in correct_pool])
+        score_total = pick_count
         correct = (
             len(user_ids) == pick_count
             and len(user_set) == pick_count
             and user_set.issubset(correct_pool)
         )
-        feedback = (
-            'Correct!'
-            if correct
-            else f'Not quite — select exactly {pick_count} correct options and leave out the rest.'
-        )
+        if correct:
+            feedback = 'Correct!'
+        elif score == 0:
+            feedback = (
+                f'Not quite — select exactly {pick_count} correct options '
+                'and leave out the rest.'
+            )
+        else:
+            feedback = f'{score}/{score_total} correct.'
+        return {
+            'correct': correct,
+            'score': score,
+            'score_total': score_total,
+            'normalized_user': '|'.join(user_ids),
+            'normalized_correct': normalized_correct,
+            'feedback': feedback,
+        }
     else:
         correct = set(user_ids) == set(expected_ids)
         feedback = (

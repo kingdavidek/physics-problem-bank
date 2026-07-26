@@ -2691,6 +2691,14 @@
               }
               if (clearBtn) clearBtn.disabled = true;
               maybePersistAllFields();
+            } else if (isTextPartialScore(data)) {
+              checkBtn.disabled = false;
+              if (fieldFeedback) {
+                fieldFeedback.textContent = '\u25D0 ' + (data.feedback || (
+                  data.score + '/' + data.score_total + ' correct.'
+                ));
+                fieldFeedback.style.color = '#d97706';
+              }
             } else {
               checkBtn.disabled = false;
               if (fieldFeedback) {
@@ -2988,11 +2996,21 @@
           });
         })
         .then(function (data) {
+          if (data.score_total != null && data.score != null) {
+            block.dataset.textScore = String(data.score);
+            block.dataset.textScoreTotal = String(data.score_total);
+          }
           if (feedback) {
-            feedback.textContent = data.correct
-              ? '\u2713 Correct!'
-              : ('\u2717 ' + (data.feedback || 'Not quite.'));
-            feedback.style.color = data.correct ? '#16a34a' : '#dc2626';
+            if (data.correct) {
+              feedback.textContent = '\u2713 Correct!';
+              feedback.style.color = '#16a34a';
+            } else if (isTextPartialScore(data)) {
+              feedback.textContent = '\u25D0 ' + freeResponseWrongFeedback(block, data);
+              feedback.style.color = '#d97706';
+            } else {
+              feedback.textContent = '\u2717 ' + (data.feedback || 'Not quite.');
+              feedback.style.color = '#dc2626';
+            }
           }
           if (data.correct) {
             row.classList.add('is-correct');
