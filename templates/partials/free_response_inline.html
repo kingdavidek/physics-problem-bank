@@ -16,6 +16,7 @@
      data-pick-count="{{ problem.answer_pick_count if problem.answer_pick_count is not none else '' }}"
      data-pair-sep="{{ problem.answer_pair_sep or 'and' }}"
      data-format-hint="{{ problem.answer_format_hint or '' }}"
+     data-answer-input-lines="{{ problem.answer_input_lines if problem.answer_input_lines is not none else '' }}"
      data-wrong-hint="{{ problem.answer_wrong_hint or '' }}"
      data-answer-template-kind="{{ problem.answer_template_kind or '' }}"
      data-csq-subject="{{ problem.answer_subject or '' }}"
@@ -191,6 +192,8 @@
         {% set field_ph = 'Enter your answer' %}
     {% elif field_type == 'text' %}
         {% set field_ph = 'Enter your answer' %}
+    {% elif field_type == 'sql' %}
+        {% set field_ph = 'Write your SQL query' %}
     {% elif field_type == 'linear_equation' %}
         {% set field_ph = 'e.g. y = 2x + 3' %}
     {% elif field_type == 'two_var_equation' %}
@@ -224,7 +227,7 @@
     {% else %}
         {% set field_ph = 'Number or fraction' %}
     {% endif %}
-    <div class="free-response-field-row{% if field_type == 'pick' %} free-response-field-row--pick{% elif field_type == 'order' %} free-response-field-row--order{% elif field_type in ('text', 'keyword') %} free-response-field-row--text{% endif %}"
+    <div class="free-response-field-row{% if field_type == 'pick' %} free-response-field-row--pick{% elif field_type == 'order' %} free-response-field-row--order{% elif field_type in ('text', 'keyword', 'sql') %} free-response-field-row--text{% if field_type == 'sql' %} free-response-field-row--sql{% endif %}{% endif %}"
          {% if field_type == 'pick' %}
          {% set pick_n = (problem.answer_field_pick_counts or [])[field_idx] if problem.answer_field_pick_counts and field_idx < (problem.answer_field_pick_counts|length) else none %}
          {% if pick_n is not none %}data-pick-count="{{ pick_n }}"{% endif %}
@@ -278,14 +281,23 @@
         </div>
         <button type="button" class="btn free-response-field-check-btn">Check</button>
         {% else %}
-        <label class="free-response-field{% if field_type in ('text', 'keyword') %} free-response-field--text{% endif %}">
+        <label class="free-response-field{% if field_type in ('text', 'keyword', 'sql') %} free-response-field--text{% if field_type == 'sql' %} free-response-field--sql{% endif %}{% endif %}">
             <span class="free-response-field-label">{{ label }}</span>
+            {% if field_type == 'sql' %}
+            <textarea class="free-response-input free-response-input-field free-response-input--text free-response-input--sql"
+                      rows="2"
+                      placeholder="{{ field_ph }}"
+                      autocomplete="off"
+                      spellcheck="false"
+                      aria-label="{{ label }}"></textarea>
+            {% else %}
             <input type="text"
                    class="free-response-input free-response-input-field{% if field_type in ('text', 'keyword') %} free-response-input--text{% endif %}"
                    placeholder="{{ field_ph }}"
                    autocomplete="off"
                    inputmode="text"
                    aria-label="{{ label }}">
+            {% endif %}
         </label>
         {% if field_type == 'algebraic' %}
         <button type="button" class="btn btn-secondary free-response-surd-btn" aria-label="Insert square root symbol">√</button>
@@ -394,6 +406,17 @@
                autocomplete="off"
                inputmode="text"
                aria-label="Your answer">
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% elif problem.answer_type == 'sql' %}
+    {% set sql_rows = 1 if problem.answer_input_lines == 1 else 2 %}
+    <div class="free-response-row free-response-row--number free-response-row--text free-response-row--sql">
+        <textarea class="free-response-input free-response-input--sql"
+                  rows="{{ sql_rows }}"
+                  placeholder="{{ problem.answer_format_hint or 'Write your SQL query (one statement)' }}"
+                  autocomplete="off"
+                  spellcheck="false"
+                  aria-label="Your SQL query"></textarea>
         <button type="button" class="btn free-response-check-btn">Check</button>
     </div>
     {% elif problem.answer_type == 'keyword' %}

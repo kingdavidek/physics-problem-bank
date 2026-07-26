@@ -9,7 +9,13 @@ from fractions import Fraction
 
 from sympy import nsimplify, simplify, sympify
 
-from generators.shared.text_keywords import text_keyword_aliases, text_keyword_labels, text_keyword_labels
+from generators.shared.sql_checker import (
+    compare_sql_queries,
+    normalize_sql_query,
+    score_sql_queries,
+    sql_partial_credit_threshold,
+)
+from generators.shared.text_keywords import text_keyword_aliases, text_keyword_labels
 
 CHECKERS: dict[str, callable] = {}
 
@@ -2905,6 +2911,44 @@ def _text_contains_keyword(text: str, keyword: str) -> bool:
         if len(kw) >= 5 and kw in text:
             return True
     return False
+
+
+@register_checker('sql')
+def check_sql(correct_raw, user_answer):
+    """Compare GCSE SQL queries by token sequence; allow partial credit when close."""
+    correct = str(correct_raw or '').strip()
+    if not correct:
+        raise ValueError('invalid_correct_answer')
+    user = str(user_answer or '').strip()
+    exp_display = normalize_sql_query(correct)
+    if not user:
+        return {
+            'correct': False,
+            'normalized_user': '',
+            'normalized_correct': exp_display,
+            'feedback': 'Write your SQL query.',
+        }
+    ok = compare_sql_queries(correct, user)
+    act_display = normalize_sql_query(user)
+    scoring = score_sql_queries(correct, user)
+    score = int(scoring['score'])
+    score_total = int(scoring['score_total'])
+    result = {
+        'correct': ok,
+        'normalized_user': act_display,
+        'normalized_correct': exp_display,
+        'score': score,
+        'score_total': score_total,
+    }
+    if ok:
+        result['feedback'] = 'Correct!'
+    elif sql_partial_credit_threshold(score, score_total):
+        result['feedback'] = f'{score}/{score_total} parts correct.'
+    else:
+        result['feedback'] = (
+            'Not quite — check your SQL syntax, clauses, and column names match the question.'
+        )
+    return result
 
 
 @register_checker('text')

@@ -516,6 +516,7 @@
   function freeResponseFieldPlaceholder(fieldType, formatHint) {
     if (formatHint && !isCoachingAnswerHint(formatHint)) return formatHint;
     if (fieldType === 'keyword' || fieldType === 'text') return 'Enter your answer';
+    if (fieldType === 'sql') return 'Write your SQL query';
     if (fieldType === 'linear_equation') return 'e.g. y = 2x + 3';
     if (fieldType === 'two_var_equation') return 'e.g. 10c + 11t = 53';
     if (fieldType === 'linear_inequality') return 'e.g. m < 40';
@@ -534,6 +535,7 @@
   function freeResponsePlaceholder(answerType, formatHint) {
     if (formatHint && !isCoachingAnswerHint(formatHint)) return formatHint;
     if (answerType === 'text' || answerType === 'keyword') return 'Enter your answer';
+    if (answerType === 'sql') return 'Write your SQL query (one statement)';
     if (answerType === 'fraction') return 'e.g. 3/4';
     if (answerType === 'linear') return 'e.g. x = 3';
     if (answerType === 'quadratic_roots') return 'e.g. 3, -2 or -3+√14, -3-√14';
@@ -683,6 +685,12 @@
       block.setAttribute('data-format-hint', problem.answer_format_hint);
     } else {
       block.removeAttribute('data-format-hint');
+    }
+    if (problem.answer_input_lines !== undefined && problem.answer_input_lines !== null
+      && problem.answer_input_lines !== '') {
+      block.setAttribute('data-answer-input-lines', String(problem.answer_input_lines));
+    } else {
+      block.removeAttribute('data-answer-input-lines');
     }
     if (problem.answer_wrong_hint) {
       block.setAttribute('data-wrong-hint', problem.answer_wrong_hint);
@@ -1684,6 +1692,15 @@
     );
   }
 
+  function sqlInputLines(block, fallback) {
+    var raw = block && block.getAttribute('data-answer-input-lines');
+    if (raw !== null && raw !== '') {
+      var parsed = parseInt(raw, 10);
+      if (!isNaN(parsed) && parsed > 0) return parsed;
+    }
+    return fallback == null ? 3 : fallback;
+  }
+
   function numberFieldRowHtml(label, fieldType, fieldOptions, formatHint) {
     var esc = htmlEscape;
     if (fieldType === 'mcq') {
@@ -1702,15 +1719,25 @@
         '<button type="button" class="btn btn-secondary free-response-square-btn" aria-label="Insert squared symbol">x²</button>'
       );
     }
-    var textWide = fieldType === 'text' || fieldType === 'keyword';
-    var rowClass = 'free-response-field-row' + (textWide ? ' free-response-field-row--text' : '');
-    var fieldClass = 'free-response-field' + (textWide ? ' free-response-field--text' : '');
-    var inputClass = 'free-response-input free-response-input-field' + (textWide ? ' free-response-input--text' : '');
+    var textWide = fieldType === 'text' || fieldType === 'keyword' || fieldType === 'sql';
+    var rowClass = 'free-response-field-row' + (textWide ? ' free-response-field-row--text' : '') + (fieldType === 'sql' ? ' free-response-field-row--sql' : '');
+    var fieldClass = 'free-response-field' + (textWide ? ' free-response-field--text' : '') + (fieldType === 'sql' ? ' free-response-field--sql' : '');
+    var inputClass = 'free-response-input free-response-input-field' + (textWide ? ' free-response-input--text' : '') + (fieldType === 'sql' ? ' free-response-input--sql' : '');
+    var inputHtml;
+    if (fieldType === 'sql') {
+      inputHtml = (
+        '<textarea class="' + inputClass + '" rows="2" placeholder="' + ph + '" autocomplete="off" spellcheck="false" aria-label="' + safeLabel + '"></textarea>'
+      );
+    } else {
+      inputHtml = (
+        '<input type="text" class="' + inputClass + '" placeholder="' + ph + '" autocomplete="off" inputmode="text" aria-label="' + safeLabel + '">'
+      );
+    }
     return (
       '<div class="' + rowClass + '">' +
       '<label class="' + fieldClass + '">' +
       '<span class="free-response-field-label">' + safeLabel + '</span>' +
-      '<input type="text" class="' + inputClass + '" placeholder="' + ph + '" autocomplete="off" inputmode="text" aria-label="' + safeLabel + '">' +
+      inputHtml +
       '</label>' +
       insertBtns +
       '<button type="button" class="btn free-response-check-btn free-response-field-check-btn">Check</button>' +
@@ -2025,6 +2052,17 @@
       return (
         '<div class="free-response-row free-response-row--vector">' +
         '<input type="text" class="free-response-input free-response-input-vector" placeholder="' + esc(vectorPh) + '" autocomplete="off" inputmode="text" aria-label="Column vector">' +
+        '<button type="button" class="btn free-response-check-btn">Check</button>' +
+        '</div>'
+      );
+    }
+    if (answerType === 'sql') {
+      var sqlPh = esc(freeResponsePlaceholder('sql', formatHint));
+      var sqlLines = sqlInputLines(block, 2);
+      var sqlRows = sqlLines <= 1 ? 1 : 2;
+      return (
+        '<div class="free-response-row free-response-row--number free-response-row--text free-response-row--sql">' +
+        '<textarea class="free-response-input free-response-input--sql" rows="' + sqlRows + '" placeholder="' + sqlPh + '" autocomplete="off" spellcheck="false" aria-label="Your SQL query"></textarea>' +
         '<button type="button" class="btn free-response-check-btn">Check</button>' +
         '</div>'
       );
@@ -2787,7 +2825,7 @@
         input.disabled = true;
 
         submitNumberFieldAnswer(index, row, fieldType, userValue, function (data, userValue) {
-          input.classList.remove('is-correct', 'is-wrong');
+          input.classList.remove('is-correct', 'is-wrong', 'is-partial');
           if (data.correct) {
             input.classList.add('is-correct');
             input.disabled = true;
@@ -2797,6 +2835,14 @@
               fieldFeedback.style.color = '#16a34a';
             }
             maybePersistAllFields();
+          } else if (isTextPartialScore(data)) {
+            input.classList.add('is-partial');
+            input.disabled = false;
+            checkBtn.disabled = false;
+            if (fieldFeedback) {
+              fieldFeedback.textContent = '\u25D0 ' + freeResponseWrongFeedback(block, data);
+              fieldFeedback.style.color = '#d97706';
+            }
           } else {
             input.classList.add('is-wrong');
             input.disabled = false;
@@ -2818,7 +2864,7 @@
 
       checkBtn.addEventListener('click', submitField);
       input.addEventListener('keydown', function (event) {
-        if (event.key === 'Enter') {
+        if (event.key === 'Enter' && input.tagName !== 'TEXTAREA') {
           event.preventDefault();
           submitField();
         }
@@ -3502,7 +3548,7 @@
     if (answerType !== 'number_line') {
       activeInputs().all.forEach(function (input) {
         input.addEventListener('keydown', function (event) {
-          if (event.key === 'Enter') {
+          if (event.key === 'Enter' && input.tagName !== 'TEXTAREA') {
             event.preventDefault();
             submitAnswer();
           }

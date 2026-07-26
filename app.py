@@ -356,6 +356,9 @@ def _problem_client_payload(problem):
         text_required = problem.get('answer_text_required')
         if text_required is not None:
             payload['answer_text_required'] = text_required
+        input_lines = problem.get('answer_input_lines')
+        if input_lines is not None:
+            payload['answer_input_lines'] = input_lines
         field_hints = problem.get('answer_field_hints')
         if field_hints:
             payload['answer_field_hints'] = field_hints

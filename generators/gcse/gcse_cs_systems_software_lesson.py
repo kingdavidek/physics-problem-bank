@@ -32,14 +32,40 @@ def _sw_problem_from_output(out, difficulty):
     )
 
 
-def _sw_mcq_payload(correct_text, distractors):
-    """Four-option practice MCQ; returns payload for ``_sw_problem_from_output``."""
-    pool = [correct_text] + list(distractors[:3])
+def _sw_mcq_payload(correct_variants, distractor_groups):
+    """Four-option practice MCQ; picks one phrasing per answer and shuffles."""
+    variants = correct_variants if isinstance(correct_variants, (tuple, list)) else (correct_variants,)
+    groups = [
+        (group,) if isinstance(group, str) else tuple(group)
+        for group in distractor_groups[:3]
+    ]
+    correct_text = random.choice(variants)
+    max_distractor_len = max(len(max(g, key=len)) for g in groups) if groups else 0
+    if len(correct_text) > max_distractor_len:
+        shorter = [v for v in variants if len(v) <= max_distractor_len]
+        if shorter:
+            correct_text = random.choice(shorter)
+    distractors = []
+    for group in groups:
+        if random.random() < 0.55:
+            distractors.append(max(group, key=len))
+        else:
+            distractors.append(random.choice(group))
+    if distractors and len(correct_text) > max(len(d) for d in distractors):
+        gi = random.randrange(len(groups))
+        distractors[gi] = max(groups[gi], key=len)
+    pool = [correct_text] + distractors
     random.shuffle(pool)
     letters = 'ABCD'
     correct_letter = letters[pool.index(correct_text)]
     options = [f'{letters[i]}  {pool[i]}' for i in range(len(pool))]
     return {'type': 'mcq', 'options': options, 'correct': correct_letter}
+
+
+def _sw_mcq_options(correct_variants, distractor_groups):
+    """Build shuffled MCQ options for bank items (returns opts list + correct letter)."""
+    payload = _sw_mcq_payload(correct_variants, distractor_groups)
+    return payload['options'], payload['correct']
 
 
 def _sw_mcq_match_field(correct_text, distractors):
@@ -87,12 +113,16 @@ def _sw_f1_system_software():
         "for application software (e.g. operating system, utilities)."
     )
     return q, s, "Not end-user tasks like spreadsheets.", 1, _sw_mcq_payload(
-        'Software that manages computer resources and provides a platform for application software',
-        [
-            'Programs that help users perform everyday tasks such as word processing',
-            'Hardware built into the CPU that performs calculations',
-            'Data stored permanently on secondary storage devices',
-        ],
+        (
+            'Software that manages computer resources for application software',
+            'Software that manages computer resources and provides a platform for application software',
+            'Software that manages computer resources and provides a platform for other application software to run on',
+        ),
+        (
+            ('Programs for everyday tasks such as word processing', 'Programs that help users perform everyday tasks such as word processing or browsing the web'),
+            ('Hardware built into the CPU that performs calculations', 'Physical hardware inside the CPU that performs arithmetic and logic calculations only'),
+            ('Data stored permanently on secondary storage devices', 'Structured data stored permanently on secondary storage devices with no programs involved'),
+        ),
     )
 
 
@@ -103,12 +133,16 @@ def _sw_f2_application_software():
         "word processors, photo editors."
     )
     return q, s, "Runs on top of the OS.", 1, _sw_mcq_payload(
-        'Programs that help users perform tasks (e.g. browsers, word processors, games)',
-        [
-            'Software that manages hardware resources and runs the operating system',
-            'Firmware stored in ROM that starts the computer on power-on',
-            'Device drivers that translate commands for peripherals only',
-        ],
+        (
+            'Programs that help users perform tasks',
+            'Programs that help users perform tasks (e.g. browsers, word processors, games)',
+            'Programs that help users perform everyday tasks such as browsing, word processing or playing games',
+        ),
+        (
+            ('Software that manages hardware resources and runs the operating system', 'System software that manages hardware resources and runs the operating system kernel'),
+            ('Firmware stored in ROM that starts the computer on power-on', 'Firmware stored in ROM that starts the computer when power is switched on'),
+            ('Device drivers that translate commands for peripherals only', 'Device drivers that translate commands for peripherals and nothing else'),
+        ),
     )
 
 
@@ -119,12 +153,16 @@ def _sw_f3_os_purpose():
         "so applications can run (memory, files, users, devices)."
     )
     return q, s, "Bridge between user/apps and hardware.", 2, _sw_mcq_payload(
-        'To manage hardware and software resources and provide services so applications can run',
-        [
-            'To perform arithmetic and logic operations inside the CPU',
-            'To store the bootstrap instructions that start the computer',
-            'To replace application programs such as web browsers',
-        ],
+        (
+            'To manage hardware and software resources so applications can run',
+            'To manage hardware and software resources and provide services so applications can run',
+            'To manage hardware and software resources and provide services so application programs can run (memory, files, users, devices)',
+        ),
+        (
+            ('To perform arithmetic and logic operations inside the CPU', 'To perform arithmetic and logic operations inside the CPU only, with no resource management'),
+            ('To store the bootstrap instructions that start the computer', 'To store the bootstrap instructions that start the computer before any applications load'),
+            ('To replace application programs such as web browsers', 'To replace application programs such as web browsers and word processors entirely'),
+        ),
     )
 
 
@@ -135,12 +173,16 @@ def _sw_f4_gui():
         "so users interact visually — e.g. Windows desktop, macOS."
     )
     return q, s, "Point-and-click.", 1, _sw_mcq_payload(
-        'An interface using windows, icons, menus and pointers so users interact visually',
-        [
-            'An interface where users type text commands only',
-            'Software that encrypts files on a hard drive',
-            'A program that compresses files into ZIP archives',
-        ],
+        (
+            'An interface using windows, icons, menus and pointers',
+            'An interface using windows, icons, menus and pointers so users interact visually',
+            'An interface using windows, icons, menus and pointers (WIMP) so users interact visually with the system',
+        ),
+        (
+            ('An interface where users type text commands only', 'An interface where users type text commands only with no visual menus or icons'),
+            ('Software that encrypts files on a hard drive', 'Utility software that encrypts files on a hard drive so they cannot be read without a key'),
+            ('A program that compresses files into ZIP archives', 'A compression program that reduces file size by packing files into ZIP archives'),
+        ),
     )
 
 
@@ -151,12 +193,16 @@ def _sw_f5_cli():
         "<code>cd</code>, <code>dir</code>, Linux shell. Powerful for admins; steeper learning curve."
     )
     return q, s, "No menus — typed commands.", 2, _sw_mcq_payload(
-        'Users type text commands to control the system',
-        [
-            'Users click windows, icons, menus and pointers to control the system',
-            'The CPU fetches, decodes and executes machine-code instructions',
-            'A utility that reorganises fragmented files on a hard disk',
-        ],
+        (
+            'Users type text commands to control the system',
+            'Users type text commands to control the system (e.g. cd, dir, shell commands)',
+            'Users type text commands at a prompt to control the system rather than using menus and icons',
+        ),
+        (
+            ('Users click windows, icons, menus and pointers to control the system', 'Users click windows, icons, menus and pointers in a graphical interface to control the system'),
+            ('The CPU fetches, decodes and executes machine-code instructions', 'The CPU fetches, decodes and executes machine-code instructions as part of the fetch-decode-execute cycle'),
+            ('A utility that reorganises fragmented files on a hard disk', 'A defragmentation utility that reorganises fragmented files on a magnetic hard disk'),
+        ),
     )
 
 
@@ -167,12 +213,16 @@ def _sw_f6_multitasking():
         "time-slicing the CPU or scheduling tasks."
     )
     return q, s, "Music + browser open together.", 2, _sw_mcq_payload(
-        'The OS running several programs apparently at once by time-slicing or scheduling the CPU',
-        [
-            'Running one program until it finishes before starting another',
-            'Installing device drivers for every peripheral on the computer',
-            'Encrypting all files on the hard drive automatically',
-        ],
+        (
+            'The OS runs several programs apparently at once by scheduling the CPU',
+            'The OS running several programs apparently at once by time-slicing or scheduling the CPU',
+            'The OS running several programs apparently at once by time-slicing the CPU or scheduling tasks fairly',
+        ),
+        (
+            ('Running one program until it finishes before starting another', 'Running one program until it finishes completely before starting another program'),
+            ('Installing device drivers for every peripheral on the computer', 'Installing device drivers for every peripheral on the computer during boot only'),
+            ('Encrypting all files on the hard drive automatically', 'Encrypting all files on the hard drive automatically without any user action'),
+        ),
     )
 
 
@@ -183,12 +233,16 @@ def _sw_f7_driver():
         "(printer, GPU, keyboard) — often installed when hardware is added."
     )
     return q, s, "Translator for hardware.", 2, _sw_mcq_payload(
-        'Software that lets the OS communicate with a peripheral device',
-        [
-            'Application software that helps users write documents',
-            'The main program that manages all hardware and software resources',
-            'A utility that reduces file size for email attachments',
-        ],
+        (
+            'Software that lets the OS communicate with a peripheral',
+            'Software that lets the OS communicate with a peripheral device',
+            'Software that lets the operating system communicate with a peripheral device such as a printer or keyboard',
+        ),
+        (
+            ('Application software that helps users write documents', 'Application software that helps users write documents and perform end-user tasks'),
+            ('The main program that manages all hardware and software resources', 'The operating system kernel that manages all hardware and software resources for the whole computer'),
+            ('A utility that reduces file size for email attachments', 'A compression utility that reduces file size for email attachments using ZIP-style algorithms'),
+        ),
     )
 
 
@@ -199,12 +253,16 @@ def _sw_f8_utility():
         "encryption, defragmentation, compression (OCR), plus common extras like antivirus."
     )
     return q, s, "Helps manage the system, not write essays.", 2, _sw_mcq_payload(
-        'System software that maintains or optimises the computer',
-        [
-            'Programs that help users perform everyday tasks such as browsing the web',
-            'Hardware inside the CPU that performs calculations',
-            'The operating system kernel that manages all resources',
-        ],
+        (
+            'System software that maintains or optimises the computer',
+            'System software that maintains or optimises the computer (e.g. antivirus, defrag, compression)',
+            'System software that maintains, optimises or protects the computer rather than performing end-user tasks',
+        ),
+        (
+            ('Programs that help users perform everyday tasks such as browsing the web', 'Application programs that help users perform everyday tasks such as browsing the web or writing documents'),
+            ('Hardware inside the CPU that performs calculations', 'Physical hardware inside the CPU that performs arithmetic calculations only'),
+            ('The operating system kernel that manages all resources', 'The operating system kernel that manages all hardware and software resources for every program'),
+        ),
     )
 
 
@@ -240,12 +298,16 @@ def _sw_f10_user_management():
         "who can log in and what files/settings they may access."
     )
     return q, s, "Admin vs standard user.", 2, _sw_mcq_payload(
-        'The OS controls accounts, passwords and permissions for who can log in and access files',
-        [
-            'Software that reduces file size using ZIP-style compression',
-            'The process of reorganising fragmented files on a hard disk',
-            'Firmware that runs POST before the operating system loads',
-        ],
+        (
+            'The OS controls accounts, passwords and permissions',
+            'The OS controls accounts, passwords and permissions for who can log in and access files',
+            'The OS controls user accounts, passwords and permissions so only authorised users can access files and settings',
+        ),
+        (
+            ('Software that reduces file size using ZIP-style compression', 'Utility software that reduces file size using ZIP-style compression algorithms'),
+            ('The process of reorganising fragmented files on a hard disk', 'The process of reorganising fragmented files on a magnetic hard disk to improve read speed'),
+            ('Firmware that runs POST before the operating system loads', 'Firmware stored in ROM that runs POST hardware checks before the operating system loads'),
+        ),
     )
 
 
@@ -286,12 +348,16 @@ def _sw_i2_peripheral_management():
         "<strong>drivers</strong>, handles plug-and-play, reports errors (printer offline, etc.)."
     )
     return q, s, "Keyboard, mouse, USB, printer.", 2, _sw_mcq_payload(
-        'The OS controls input/output devices, loads drivers and handles device access',
-        [
-            'The OS organises files into folders and sets file permissions only',
-            'The OS allocates RAM and manages virtual memory when RAM is full',
-            'The OS compresses files to reduce storage space on the hard drive',
-        ],
+        (
+            'The OS controls input/output devices and loads drivers',
+            'The OS controls input/output devices, loads drivers and handles device access',
+            'The OS controls input/output devices, loads drivers, handles plug-and-play and reports device errors',
+        ),
+        (
+            ('The OS organises files into folders and sets file permissions only', 'The OS organises files into folders and sets file permissions but does not manage devices'),
+            ('The OS allocates RAM and manages virtual memory when RAM is full', 'The OS allocates RAM to programs and manages virtual memory on disk when physical RAM is full'),
+            ('The OS compresses files to reduce storage space on the hard drive', 'The OS compresses files automatically to reduce storage space on the hard drive for every user'),
+        ),
     )
 
 
@@ -302,12 +368,16 @@ def _sw_i3_encryption_utility():
         "protects data if a laptop is stolen (works with OS security)."
     )
     return q, s, "BitLocker, VeraCrypt examples.", 2, _sw_mcq_payload(
-        'Encrypts files or drives so data is unreadable without the correct key',
-        [
-            'Reorganises fragmented files so they are stored contiguously on a hard disk',
-            'Reduces file size using lossless compression algorithms such as ZIP',
-            'Creates user accounts and sets login passwords for the operating system',
-        ],
+        (
+            'Encrypts files or drives so data is unreadable without the key',
+            'Encrypts files or drives so data is unreadable without the correct key',
+            'Encrypts files or whole drives so stored data is unreadable without the correct decryption key',
+        ),
+        (
+            ('Reorganises fragmented files on a hard disk', 'Reorganises fragmented files on a magnetic hard disk so related blocks are stored contiguously'),
+            ('Reduces file size using lossless compression algorithms such as ZIP', 'Reduces file size using lossless compression algorithms such as ZIP for storage or transfer'),
+            ('Creates user accounts and sets login passwords for the operating system', 'Creates user accounts and sets login passwords as part of operating system user management'),
+        ),
     )
 
 
@@ -319,12 +389,16 @@ def _sw_i4_defragmentation():
         "<strong>Not recommended for SSDs</strong> (unnecessary wear)."
     )
     return q, s, "Fragments spread over disk.", 3, _sw_mcq_payload(
-        'Reorganises fragmented files so related blocks are stored contiguously, reducing head movement',
-        [
-            'Encrypts files so they cannot be read without a password',
-            'Reduces file size using compression algorithms such as ZIP',
-            'Allocates RAM to each running program when memory is low',
-        ],
+        (
+            'Reorganises fragmented files so related blocks are stored contiguously',
+            'Reorganises fragmented files so related blocks are stored contiguously, reducing head movement',
+            'Reorganises fragmented files on an HDD so related blocks are stored contiguously, reducing head movement and improving read speed',
+        ),
+        (
+            ('Encrypts files so they cannot be read without a password', 'Encrypts files so they cannot be read without the correct password or decryption key'),
+            ('Reduces file size using compression algorithms such as ZIP', 'Reduces file size using lossless compression algorithms such as ZIP for email attachments'),
+            ('Allocates RAM to each running program when memory is low', 'Allocates RAM to each running program and uses virtual memory when physical RAM is low'),
+        ),
     )
 
 
@@ -335,12 +409,16 @@ def _sw_i5_compression():
         "<strong>lossless</strong> for documents (exact restore); can save storage and bandwidth."
     )
     return q, s, "Smaller archives for email.", 2, _sw_mcq_payload(
-        'Reduces file size using compression algorithms, often losslessly for documents',
-        [
-            'Reorganises fragmented files on a magnetic hard disk drive',
-            'Encrypts data so it is unreadable without the correct key',
-            'Installs device drivers so peripherals can communicate with the OS',
-        ],
+        (
+            'Reduces file size using compression algorithms',
+            'Reduces file size using compression algorithms, often losslessly for documents',
+            'Reduces file size using compression algorithms (often lossless for documents) to save storage and bandwidth',
+        ),
+        (
+            ('Reorganises fragmented files on a magnetic hard disk drive', 'Reorganises fragmented files on a magnetic hard disk drive to reduce head movement'),
+            ('Encrypts data so it is unreadable without the correct key', 'Encrypts data so it is unreadable without the correct decryption key or password'),
+            ('Installs device drivers so peripherals can communicate with the OS', 'Installs device drivers so peripherals such as printers can communicate with the operating system'),
+        ),
     )
 
 
@@ -409,12 +487,16 @@ def _sw_i8_processor_scheduling():
         "so many programs share one CPU fairly and responsively."
     )
     return q, s, "Scheduler in the OS kernel.", 3, _sw_mcq_payload(
-        'Scheduling decides which process gets the CPU next using time slices or priority',
-        [
-            'The OS runs one program until it finishes before starting the next',
-            'The OS stores all running programs permanently in ROM',
-            'The OS defragments the hard drive while programs are running',
-        ],
+        (
+            'Scheduling decides which process gets the CPU next',
+            'Scheduling decides which process gets the CPU next using time slices or priority',
+            'Scheduling decides which process gets the CPU next using time slices or priority so multitasking works fairly',
+        ),
+        (
+            ('The OS runs one program until it finishes before starting the next', 'The OS runs one program until it finishes completely before starting the next program'),
+            ('The OS stores all running programs permanently in ROM', 'The OS stores all running programs permanently in ROM instead of RAM during execution'),
+            ('The OS defragments the hard drive while programs are running', 'The OS defragments the hard drive automatically while application programs are running'),
+        ),
     )
 
 
@@ -455,12 +537,16 @@ def _sw_i10_driver_install():
         "instructions the printer understands — install from manufacturer or Windows Update."
     )
     return q, s, "Peripheral management.", 2, _sw_mcq_payload(
-        'The OS needs a device driver to translate commands into instructions the printer understands',
-        [
-            'The OS needs a compression utility to reduce the size of print jobs',
-            'The OS needs an encryption utility before any file can be sent to a printer',
-            'The OS replaces the printer hardware with virtual memory on the hard disk',
-        ],
+        (
+            'The OS needs a device driver to translate commands for the printer',
+            'The OS needs a device driver to translate commands into instructions the printer understands',
+            'The OS needs a device driver to translate generic print commands into instructions the printer hardware understands',
+        ),
+        (
+            ('The OS needs a compression utility to reduce the size of print jobs', 'The OS needs a compression utility to reduce the size of print jobs before sending them to the printer'),
+            ('The OS needs an encryption utility before any file can be sent to a printer', 'The OS needs an encryption utility before any file can be sent to a printer over the network'),
+            ('The OS replaces the printer hardware with virtual memory on the hard disk', 'The OS replaces the printer hardware with virtual memory stored on the hard disk instead of using a driver'),
+        ),
     )
 
 
@@ -478,12 +564,16 @@ def _sw_d1_virtual_memory():
         "allows more programs than RAM alone could hold, but <strong>slower</strong> than real RAM (thrashing if overused)."
     )
     return q, s, "Swap file / page file.", 3, _sw_mcq_payload(
-        'Uses disk space as extra memory when physical RAM is full so more programs can run',
-        [
-            'Extra RAM chips installed inside the CPU for faster access',
-            'A compression utility that reduces the size of files on the hard drive',
-            'Firmware stored in ROM that starts the computer before the OS loads',
-        ],
+        (
+            'Uses disk space as extra memory when physical RAM is full',
+            'Uses disk space as extra memory when physical RAM is full so more programs can run',
+            'Uses disk space on the hard drive as extra memory when physical RAM is full so more programs can run, though access is slower',
+        ),
+        (
+            ('Extra RAM chips installed inside the CPU for faster access', 'Extra RAM chips installed inside the CPU for faster access than main memory'),
+            ('A compression utility that reduces the size of files on the hard drive', 'A compression utility that reduces the size of files on the hard drive using ZIP-style algorithms'),
+            ('Firmware stored in ROM that starts the computer before the OS loads', 'Firmware stored in ROM that starts the computer and runs POST before the operating system loads'),
+        ),
     )
 
 
@@ -676,12 +766,16 @@ def _sw_d9_cli_script():
         "to install updates automatically — faster and more consistent than clicking GUI on each machine."
     )
     return q, s, "Automation.", 3, _sw_mcq_payload(
-        'Administrators can run scripts or batch files remotely to install updates automatically',
-        [
-            'Administrators must click through the GUI on each of the 500 PCs individually',
-            'CLI cannot be used for remote administration of computers on a network',
-            'GUI scripting is always faster than command-line tools for mass deployment',
-        ],
+        (
+            'Administrators can run scripts remotely to install updates automatically',
+            'Administrators can run scripts or batch files remotely to install updates automatically',
+            'Administrators can run scripts or batch files remotely (e.g. PowerShell, SSH) to install updates automatically on many PCs',
+        ),
+        (
+            ('Administrators must click through the GUI on each of the 500 PCs individually', 'Administrators must click through the graphical interface on each of the 500 PCs individually to install software'),
+            ('CLI cannot be used for remote administration of computers on a network', 'Command-line interfaces cannot be used for remote administration of computers on a school network'),
+            ('GUI scripting is always faster than command-line tools for mass deployment', 'GUI scripting is always faster than command-line tools when deploying software to hundreds of computers'),
+        ),
     )
 
 
@@ -931,139 +1025,312 @@ def _sw_d14_multipart_utilities():
 
 _SW_MCQ_BANK = [
     {"q": "System software:",
-     "opts": ["A  Only games", "B  Manages resources and runs the platform for other software",
-              "C  Is the CPU", "D  Only web browsers"],
-     "ans": "B", "marks": 1, "difficulty": "foundational",
-     "sol": "<strong>Manages the computer</strong>. Answer: B",
+     "correct": (
+         "Manages resources and runs the platform for other software",
+         "Software that manages resources and provides a platform for other software",
+         "System software that manages computer resources and runs the platform for application software",
+     ),
+     "wrong": (
+         ("Only games", "Software that only runs games and nothing else"),
+         ("Is the CPU", "The physical CPU chip itself with no programs involved"),
+         ("Only web browsers", "Software that only runs web browsers and no other programs"),
+     ),
+     "marks": 1, "difficulty": "foundational",
+     "sol": "<strong>Manages the computer</strong>.",
      "hint": "OS + utilities."},
     {"q": "A GUI uses:",
-     "opts": ["A  Typed commands only", "B  Windows, icons, menus and pointers",
-              "C  No output", "D  Only machine code"],
-     "ans": "B", "marks": 1, "difficulty": "foundational",
-     "sol": "<strong>Visual WIMP interface</strong>. Answer: B",
+     "correct": (
+         "Windows, icons, menus and pointers",
+         "An interface with windows, icons, menus and pointers",
+         "A graphical interface using windows, icons, menus and pointers (WIMP) for visual interaction",
+     ),
+     "wrong": (
+         ("Typed commands only", "Typed text commands only with no visual menus or icons"),
+         ("No output", "An interface that produces no output to the user at all"),
+         ("Only machine code", "An interface that displays only raw machine code to the user"),
+     ),
+     "marks": 1, "difficulty": "foundational",
+     "sol": "<strong>Visual WIMP interface</strong>.",
      "hint": "Desktop metaphor."},
     {"q": "Multitasking means:",
-     "opts": ["A  One program ever", "B  Several programs appear to run at once",
-              "C  No CPU", "D  Only printing"],
-     "ans": "B", "marks": 2, "difficulty": "foundational",
-     "sol": "OS <strong>schedules</strong> CPU time. Answer: B",
+     "correct": (
+         "Several programs appear to run at once",
+         "The OS runs several programs apparently at once",
+         "The operating system runs several programs apparently at once by scheduling CPU time",
+     ),
+     "wrong": (
+         ("One program ever", "Only one program can ever be stored on the computer"),
+         ("No CPU", "Multitasking means the computer has no CPU at all"),
+         ("Only printing", "Multitasking means the computer can only run printing tasks"),
+     ),
+     "marks": 2, "difficulty": "foundational",
+     "sol": "OS <strong>schedules</strong> CPU time.",
      "hint": "Time slicing."},
     {"q": "A device driver:",
-     "opts": ["A  Replaces the CPU", "B  Lets the OS communicate with hardware",
-              "C  Is always an application", "D  Deletes all files"],
-     "ans": "B", "marks": 2, "difficulty": "foundational",
-     "sol": "<strong>Hardware interface</strong>. Answer: B",
+     "correct": (
+         "Lets the OS communicate with hardware",
+         "Software that lets the OS communicate with hardware",
+         "Software that lets the operating system communicate with a hardware device such as a printer",
+     ),
+     "wrong": (
+         ("Replaces the CPU", "A program that replaces the CPU and performs all calculations"),
+         ("Is always an application", "Is always application software for end-user tasks only"),
+         ("Deletes all files", "Software that deletes all files on the hard drive automatically"),
+     ),
+     "marks": 2, "difficulty": "foundational",
+     "sol": "<strong>Hardware interface</strong>.",
      "hint": "Printer won't work without one."},
     {"q": "Defragmentation is mainly for:",
-     "opts": ["A  Traditional HDDs", "B  SSDs only", "C  Monitors", "D  Keyboards"],
-     "ans": "A", "marks": 2, "difficulty": "intermediate",
-     "sol": "<strong>HDD</strong> head movement. Answer: A",
+     "correct": (
+         "Traditional HDDs",
+         "Traditional magnetic hard disk drives (HDDs)",
+         "Traditional magnetic hard disk drives where a read/write head moves across platters",
+     ),
+     "wrong": (
+         ("SSDs only", "Solid-state drives (SSDs) only and never magnetic hard disks"),
+         ("Monitors", "Computer monitors and display screens only"),
+         ("Keyboards", "Keyboards and other input devices only"),
+     ),
+     "marks": 2, "difficulty": "intermediate",
+     "sol": "<strong>HDD</strong> head movement.",
      "hint": "Avoid on SSD."},
     {"q": "Compression utilities:",
-     "opts": ["A  Increase file size always", "B  Reduce file size for storage or transfer",
-              "C  Install drivers", "D  Replace the OS"],
-     "ans": "B", "marks": 2, "difficulty": "intermediate",
-     "sol": "<strong>ZIP-style</strong> tools. Answer: B",
+     "correct": (
+         "Reduce file size for storage or transfer",
+         "Reduce file size to save storage space or transfer time",
+         "Reduce file size using compression algorithms for storage or transfer (e.g. ZIP archives)",
+     ),
+     "wrong": (
+         ("Increase file size always", "Always increase file size every time they are used"),
+         ("Install drivers", "Install device drivers so peripherals can communicate with the OS"),
+         ("Replace the OS", "Replace the operating system kernel entirely on the computer"),
+     ),
+     "marks": 2, "difficulty": "intermediate",
+     "sol": "<strong>ZIP-style</strong> tools.",
      "hint": "Archives."},
     {"q": "User management includes:",
-     "opts": ["A  Accounts and permissions", "B  Overclocking the GPU only",
-              "C  Drawing icons", "D  Compiling Python"],
-     "ans": "A", "marks": 2, "difficulty": "intermediate",
-     "sol": "<strong>Who can access what</strong>. Answer: A",
+     "correct": (
+         "Accounts and permissions",
+         "User accounts, passwords and access permissions",
+         "Managing user accounts, passwords and permissions so only authorised users can access files",
+     ),
+     "wrong": (
+         ("Overclocking the GPU only", "Overclocking the GPU to increase its clock speed only"),
+         ("Drawing icons", "Drawing desktop icons and choosing wallpaper colours only"),
+         ("Compiling Python", "Compiling Python source code into machine code only"),
+     ),
+     "marks": 2, "difficulty": "intermediate",
+     "sol": "<strong>Who can access what</strong>.",
      "hint": "Login accounts."},
     {"q": "File management includes:",
-     "opts": ["A  Folders, create/delete/copy files", "B  Only RAM timing",
-              "C  Monitor brightness", "D  Network cables"],
-     "ans": "A", "marks": 1, "difficulty": "intermediate",
-     "sol": "<strong>Directory structure</strong>. Answer: A",
+     "correct": (
+         "Folders, create/delete/copy files",
+         "Organising folders and creating, deleting or copying files",
+         "Organising files in folders and creating, deleting, copying or locating files on storage",
+     ),
+     "wrong": (
+         ("Only RAM timing", "Setting the timing of RAM chips inside the CPU only"),
+         ("Monitor brightness", "Adjusting monitor brightness and contrast settings only"),
+         ("Network cables", "Installing and testing physical network cables only"),
+     ),
+     "marks": 1, "difficulty": "intermediate",
+     "sol": "<strong>Directory structure</strong>.",
      "hint": "Explorer tasks."},
     {"q": "A CLI interface:",
-     "opts": ["A  Uses typed commands", "B  Has no keyboard", "C  Is only for printers",
-              "D  Cannot run scripts"],
-     "ans": "A", "marks": 2, "difficulty": "intermediate",
-     "sol": "<strong>Command line</strong>. Answer: A",
+     "correct": (
+         "Uses typed commands",
+         "Users type text commands to control the system",
+         "Users type text commands at a prompt to control the system rather than using menus",
+     ),
+     "wrong": (
+         ("Has no keyboard", "An interface that cannot use a keyboard for any input"),
+         ("Is only for printers", "An interface used only for controlling printers and nothing else"),
+         ("Cannot run scripts", "An interface that cannot run scripts or batch files at all"),
+     ),
+     "marks": 2, "difficulty": "intermediate",
+     "sol": "<strong>Command line</strong>.",
      "hint": "Shell/CMD."},
     {"q": "Memory management by the OS:",
-     "opts": ["A  Allocates RAM to programs", "B  Paints the desktop",
-              "C  Sells laptops", "D  Removes copyright"],
-     "ans": "A", "marks": 2, "difficulty": "difficult",
-     "sol": "<strong>RAM allocation</strong>. Answer: A",
+     "correct": (
+         "Allocates RAM to programs",
+         "Allocates RAM to running programs and tracks memory use",
+         "Allocates RAM to each running program and reclaims memory when programs close",
+     ),
+     "wrong": (
+         ("Paints the desktop", "Paints the desktop background and window borders only"),
+         ("Sells laptops", "Manages online shops that sell laptop computers to customers"),
+         ("Removes copyright", "Removes copyright protection from all files automatically"),
+     ),
+     "marks": 2, "difficulty": "difficult",
+     "sol": "<strong>RAM allocation</strong>.",
      "hint": "Tracks memory use."},
     {"q": "Encryption utility software:",
-     "opts": ["A  Makes data unreadable without the key", "B  Speeds up the CPU clock",
-              "C  Defragments SSDs", "D  Creates user accounts"],
-     "ans": "A", "marks": 2, "difficulty": "difficult",
-     "sol": "<strong>Confidentiality</strong>. Answer: A",
+     "correct": (
+         "Makes data unreadable without the key",
+         "Encrypts data so it is unreadable without the correct key",
+         "Encrypts files or drives so data is unreadable without the correct decryption key",
+     ),
+     "wrong": (
+         ("Speeds up the CPU clock", "Increases the clock speed of the CPU for faster processing"),
+         ("Defragments SSDs", "Defragments solid-state drives to reorganise fragmented files"),
+         ("Creates user accounts", "Creates user accounts and sets login passwords for the OS"),
+     ),
+     "marks": 2, "difficulty": "difficult",
+     "sol": "<strong>Confidentiality</strong>.",
      "hint": "OCR utility type."},
     {"q": "Microsoft Word is:",
-     "opts": ["A  Application software", "B  The operating system",
-              "C  A device driver", "D  Firmware in the CPU"],
-     "ans": "A", "marks": 1, "difficulty": "foundational",
-     "sol": "<strong>End-user task</strong> software. Answer: A",
+     "correct": (
+         "Application software",
+         "Application software for end-user tasks",
+         "Application software that helps users perform tasks such as writing documents",
+     ),
+     "wrong": (
+         ("The operating system", "The operating system that manages all hardware and software resources"),
+         ("A device driver", "A device driver that lets the OS communicate with a printer"),
+         ("Firmware in the CPU", "Firmware stored inside the CPU that starts the computer on power-on"),
+     ),
+     "marks": 1, "difficulty": "foundational",
+     "sol": "<strong>End-user task</strong> software.",
      "hint": "Runs on Windows."},
     {"q": "Virtual memory uses:",
-     "opts": ["A  Disk space when RAM is full", "B  Only cache inside CPU",
-              "C  Monitor pixels", "D  Printer ink"],
-     "ans": "A", "marks": 2, "difficulty": "difficult",
-     "sol": "<strong>Swap/page file</strong>. Answer: A",
+     "correct": (
+         "Disk space when RAM is full",
+         "Disk space on storage when physical RAM is full",
+         "Disk space used as extra memory when physical RAM is full so more programs can run",
+     ),
+     "wrong": (
+         ("Only cache inside CPU", "Only cache memory stored inside the CPU with no disk involved"),
+         ("Monitor pixels", "Memory used to store the colour of every pixel on the monitor"),
+         ("Printer ink", "Ink stored inside a printer cartridge for printing documents"),
+     ),
+     "marks": 2, "difficulty": "difficult",
+     "sol": "<strong>Swap/page file</strong>.",
      "hint": "Slower than RAM."},
     {"q": "Peripheral management involves:",
-     "opts": ["A  Drivers and I/O devices", "B  Only file names",
-              "C  GCSE grades", "D  Binary addition in ALU only"],
-     "ans": "A", "marks": 2, "difficulty": "difficult",
-     "sol": "<strong>Devices + drivers</strong>. Answer: A",
+     "correct": (
+         "Drivers and I/O devices",
+         "Managing I/O devices and loading device drivers",
+         "Controlling input/output devices, loading drivers and handling plug-and-play access",
+     ),
+     "wrong": (
+         ("Only file names", "Renaming files and choosing file extensions only"),
+         ("GCSE grades", "Recording GCSE grades for pupils in a school database only"),
+         ("Binary addition in ALU only", "Performing binary addition inside the ALU only"),
+     ),
+     "marks": 2, "difficulty": "difficult",
+     "sol": "<strong>Devices + drivers</strong>.",
      "hint": "Keyboard, USB, printer."},
     {"q": "Windows 11 kernel is:",
-     "opts": ["A  Part of the operating system", "B  Application software",
-              "C  A compression utility only", "D  RAM chip"],
-     "ans": "A", "marks": 2, "difficulty": "difficult",
-     "sol": "<strong>OS core</strong>. Answer: A",
+     "correct": (
+         "Part of the operating system",
+         "Core part of the operating system",
+         "The core part of the operating system that manages hardware and system resources",
+     ),
+     "wrong": (
+         ("Application software", "Application software that helps users write documents or browse the web"),
+         ("A compression utility only", "A compression utility that only reduces file size using ZIP algorithms"),
+         ("RAM chip", "A physical RAM chip installed on the computer's motherboard"),
+     ),
+     "marks": 2, "difficulty": "difficult",
+     "sol": "<strong>OS core</strong>.",
      "hint": "System software."},
     {"q": "A full backup:",
-     "opts": ["A  copies all selected data each time", "B  never uses storage space",
-              "C  only backs up files deleted yesterday", "D  replaces the CPU"],
-     "ans": "A", "marks": 2, "difficulty": "difficult",
-     "sol": "Copies <strong>everything</strong> in scope. Answer: A",
+     "correct": (
+         "Copies all selected data each time",
+         "Copies every file in the selected scope each time",
+         "Copies all selected data in full each time the backup runs, not just changes since last time",
+     ),
+     "wrong": (
+         ("Never uses storage space", "Never uses any storage space on backup media or cloud storage"),
+         ("Only backs up files deleted yesterday", "Only backs up files that were deleted on the previous day"),
+         ("Replaces the CPU", "Replaces the CPU with a faster model during the backup process"),
+     ),
+     "marks": 2, "difficulty": "difficult",
+     "sol": "Copies <strong>everything</strong> in scope.",
      "hint": "Contrast with incremental."},
     {"q": "Thrashing occurs when:",
-     "opts": ["A  the OS spends too much time swapping pages between RAM and disk",
-              "B  the monitor refreshes faster", "C  a GUI uses icons",
-              "D  a user logs out"],
-     "ans": "A", "marks": 2, "difficulty": "difficult",
-     "sol": "Excessive <strong>paging</strong> slows the system. Answer: A",
+     "correct": (
+         "The OS spends too much time swapping pages between RAM and disk",
+         "The OS spends too much time moving pages between RAM and disk",
+         "The OS spends too much time swapping pages between RAM and disk instead of running programs",
+     ),
+     "wrong": (
+         ("The monitor refreshes faster", "The monitor refresh rate increases and the display updates faster"),
+         ("A GUI uses icons", "A graphical user interface displays icons on the desktop"),
+         ("A user logs out", "A user logs out of their account and ends their session"),
+     ),
+     "marks": 2, "difficulty": "difficult",
+     "sol": "Excessive <strong>paging</strong> slows the system.",
      "hint": "Too little RAM for running programs."},
     {"q": "Utility software is designed to:",
-     "opts": ["A  perform maintenance or security tasks on the system",
-              "B  replace the operating system kernel", "C  be the CPU",
-              "D  only run games"],
-     "ans": "A", "marks": 2, "difficulty": "intermediate",
-     "sol": "Utilities <strong>maintain or protect</strong> the computer. Answer: A",
+     "correct": (
+         "Perform maintenance or security tasks on the system",
+         "Maintain, optimise or protect the computer system",
+         "Perform maintenance, optimisation or security tasks on the computer system",
+     ),
+     "wrong": (
+         ("Replace the operating system kernel", "Replace the operating system kernel and manage all hardware directly"),
+         ("Be the CPU", "Act as the physical CPU that executes machine-code instructions"),
+         ("Only run games", "Run games only and cannot perform any maintenance tasks"),
+     ),
+     "marks": 2, "difficulty": "intermediate",
+     "sol": "Utilities <strong>maintain or protect</strong> the computer.",
      "hint": "Antivirus, defrag, compression tools."},
     {"q": "A process in an operating system is:",
-     "opts": ["A  a program currently being executed", "B  only a file icon",
-              "C  the monitor cable", "D  a type of keyboard"],
-     "ans": "A", "marks": 2, "difficulty": "intermediate",
-     "sol": "A running instance of a <strong>program</strong>. Answer: A",
+     "correct": (
+         "A program currently being executed",
+         "A running instance of a program being executed",
+         "A program that is currently being executed by the CPU with its own memory space",
+     ),
+     "wrong": (
+         ("Only a file icon", "Only a graphical icon displayed on the desktop with no running code"),
+         ("The monitor cable", "The cable connecting the monitor to the computer case"),
+         ("A type of keyboard", "A special type of keyboard used only by system administrators"),
+     ),
+     "marks": 2, "difficulty": "intermediate",
+     "sol": "A running instance of a <strong>program</strong>.",
      "hint": "Task Manager lists processes."},
     {"q": "Scheduling in the OS decides:",
-     "opts": ["A  which process uses the CPU next", "B  the colour of desktop icons only",
-              "C  how to print paper", "D  the price of laptops"],
-     "ans": "A", "marks": 2, "difficulty": "difficult",
-     "sol": "CPU time is <strong>allocated between processes</strong>. Answer: A",
+     "correct": (
+         "Which process uses the CPU next",
+         "Which process gets the CPU next during multitasking",
+         "Which process uses the CPU next using time slices or priority during multitasking",
+     ),
+     "wrong": (
+         ("The colour of desktop icons only", "The colour of desktop icons and wallpaper only"),
+         ("How to print paper", "How much paper to load into a printer tray only"),
+         ("The price of laptops", "The retail price of laptop computers sold to customers"),
+     ),
+     "marks": 2, "difficulty": "difficult",
+     "sol": "CPU time is <strong>allocated between processes</strong>.",
      "hint": "Part of multitasking."},
     {"q": "Firmware is software that is:",
-     "opts": ["A  stored in non-volatile memory and controls hardware at startup",
-              "B  always deleted when power is lost", "C  only a web browser",
-              "D  the same as a word processor"],
-     "ans": "A", "marks": 2, "difficulty": "foundational",
-     "sol": "Firmware such as BIOS/UEFI is <strong>semi-permanent</strong>. Answer: A",
+     "correct": (
+         "Stored in non-volatile memory and controls hardware at startup",
+         "Stored in ROM or flash and controls hardware during startup",
+         "Stored in non-volatile memory and controls hardware during startup (e.g. BIOS/UEFI)",
+     ),
+     "wrong": (
+         ("Always deleted when power is lost", "Always deleted from memory every time power is lost"),
+         ("Only a web browser", "Only a web browser application such as Chrome or Firefox"),
+         ("The same as a word processor", "The same as a word processor such as Microsoft Word"),
+     ),
+     "marks": 2, "difficulty": "foundational",
+     "sol": "Firmware such as BIOS/UEFI is <strong>semi-permanent</strong>.",
      "hint": "Stored on ROM/flash chips."},
     {"q": "Disk cleanup utilities help by:",
-     "opts": ["A  removing unnecessary files to free storage space",
-              "B  increasing CPU clock speed", "C  assigning IP addresses",
-              "D  writing SQL queries"],
-     "ans": "A", "marks": 2, "difficulty": "intermediate",
-     "sol": "Deletes temp files and frees <strong>disk space</strong>. Answer: A",
+     "correct": (
+         "Removing unnecessary files to free storage space",
+         "Deleting temporary and unnecessary files to free disk space",
+         "Removing unnecessary files such as temporary files to free storage space on the drive",
+     ),
+     "wrong": (
+         ("Increasing CPU clock speed", "Increasing the clock speed of the CPU for faster program execution"),
+         ("Assigning IP addresses", "Assigning IP addresses to devices on a local network automatically"),
+         ("Writing SQL queries", "Writing SQL queries to search and update records in a database"),
+     ),
+     "marks": 2, "difficulty": "intermediate",
+     "sol": "Deletes temp files and frees <strong>disk space</strong>.",
      "hint": "Common Windows/macOS maintenance tool."},
 ]
 
@@ -1075,10 +1342,11 @@ _LESSON_QUIZ_MIX = (
 
 
 def _sw_mcq_item_to_problem(item, difficulty):
+    opts, ans = _sw_mcq_options(item["correct"], item["wrong"])
     return make_problem(
         item["q"], item["sol"], item["hint"], difficulty, item["marks"],
         "gcse", "cs", "systems_software",
-        options=item["opts"], correct_answer=item["ans"],
+        options=opts, correct_answer=ans,
     )
 
 
@@ -1100,7 +1368,8 @@ def build_systems_software_lesson_quiz():
 
 def systems_software_mcq():
     item = random.choice(_SW_MCQ_BANK)
-    return item["q"], item["sol"], item["hint"], item["marks"], item["opts"], item["ans"]
+    opts, ans = _sw_mcq_options(item["correct"], item["wrong"])
+    return item["q"], item["sol"], item["hint"], item["marks"], opts, ans
 
 
 # ══════════════════════════════════════════════════════════════════════════════

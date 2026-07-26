@@ -2,6 +2,7 @@ import random
 import re
 
 from generators.shared.text_keywords import text_keyword_labels
+from generators.shared.sql_checker import normalize_sql_query
 
 
 def format_light_markdown(text):
@@ -251,6 +252,15 @@ def graded_answer_keyword(val):
     return {'type': 'keyword', 'value': str(val).strip().lower()}
 
 
+def graded_answer_sql(query, *, lines=3, format_hint=None):
+    payload = {'type': 'sql', 'query': normalize_sql_query(query)}
+    if lines != 3:
+        payload['lines'] = int(lines)
+    if format_hint:
+        payload['format_hint'] = format_hint
+    return payload
+
+
 def graded_answer_text(*keywords, required=None, format_hint=None, labels=None):
     kws = tuple(str(k).strip().lower() for k in keywords if str(k).strip())
     payload = {'type': 'text', 'keywords': kws}
@@ -366,6 +376,19 @@ def problem_extra_from_graded_answer(raw):
                 }
                 if required is not None and required < len(keywords):
                     extra['answer_text_required'] = int(required)
+        elif raw_type == 'sql':
+            query = str(raw.get('query') or '').strip()
+            if query:
+                lines = int(raw.get('lines', 3))
+                extra = {
+                    'correct_answer_raw': query,
+                    'answer_type': 'sql',
+                    'answer_format_hint': raw.get(
+                        'format_hint',
+                        'Write your SQL query (one statement)',
+                    ),
+                    'answer_input_lines': lines,
+                }
         elif raw_type == 'number_pair':
             val_a, val_b = raw['values']
             extra = {

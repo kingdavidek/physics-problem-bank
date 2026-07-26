@@ -2655,40 +2655,67 @@ def test_db_sql_variants_are_graded():
             if problem.get('options') and problem.get('correct_answer'):
                 continue
             assert problem.get('answer_type') in (
-                'text', 'number_fields', 'proof_steps',
+                'text', 'sql', 'number_fields', 'proof_steps',
             ), fn.__name__
             assert problem.get('correct_answer_raw'), fn.__name__
 
 
-def test_db_sql_write_query_keyword_grading():
-    from generators.shared.answer_checkers import check_text
+def test_db_sql_write_query_exact_grading():
+    from generators.shared.answer_checkers import check_sql
 
     problem = gcse_db_sql('intermediate', 'practice', variant_name='_db_i2_where_example')
-    assert problem.get('answer_type') == 'text'
+    assert problem.get('answer_type') == 'sql'
     raw = problem.get('correct_answer_raw') or ''
-    assert check_text(raw, "SELECT Surname FROM Pupil WHERE YearGroup = 11")['correct'] is True
+    assert check_sql(raw, 'SELECT Surname FROM Pupil WHERE YearGroup = 11')['correct'] is True
+    assert check_sql(raw, 'SELECT * FROM Pupil')['correct'] is False
 
     insert = gcse_db_sql('intermediate', 'practice', variant_name='_db_i4_insert')
-    assert check_text(
+    assert insert.get('answer_type') == 'sql'
+    assert insert.get('answer_input_lines') == 3
+    assert check_sql(
         insert['correct_answer_raw'],
         "INSERT INTO Pupil (PupilID, FirstName, YearGroup) VALUES (42, 'Ali', 10)",
     )['correct'] is True
 
+    group = gcse_db_sql('difficult', 'practice', variant_name='_db_d11_count_group')
+    canonical = group['correct_answer_raw']
+    assert check_sql(
+        canonical,
+        'SELECT YearGroup, COUNT(PupilID) FROM Pupil GROUP BY YearGroup',
+    )['correct'] is True
+    assert check_sql(
+        canonical,
+        'select yeargroup count() from pupil group by yeargroup',
+    )['correct'] is False
+    assert check_sql(
+        canonical,
+        'SELECT YearGroup, COUNT(*) FROM Pupil GROUP BY YearGroup',
+    )['correct'] is False
+
+    order = gcse_db_sql('difficult', 'practice', variant_name='_db_d2_order_desc')
+    partial = check_sql(
+        order['correct_answer_raw'],
+        'SELECT Score FROM Grade ORDER Score DESC 5',
+    )
+    assert partial['correct'] is False
+    assert partial['score'] >= 8
+    assert 'parts correct' in partial['feedback']
+
 
 def test_db_sql_multipart_query_writing():
-    from generators.shared.answer_checkers import check_proof_steps, check_text
+    from generators.shared.answer_checkers import check_proof_steps, check_sql
 
     problem = gcse_db_sql('difficult', 'practice', variant_name='_db_d13_multipart_query_writing')
     assert problem.get('answer_type') == 'number_fields'
     assert problem.get('answer_inline_sections') is True
-    assert problem.get('answer_field_types') == ['text', 'text', 'pick']
+    assert problem.get('answer_field_types') == ['sql', 'sql', 'pick']
     parts = (problem.get('correct_answer_raw') or '').split('\x1e')
     assert len(parts) == 3
-    assert check_text(
+    assert check_sql(
         parts[0],
         "SELECT FirstName, Surname FROM Member WHERE Town = 'Leeds'",
     )['correct'] is True
-    assert check_text(
+    assert check_sql(
         parts[1],
         "SELECT * FROM Member WHERE Age >= 18 ORDER BY Surname ASC",
     )['correct'] is True
@@ -2710,9 +2737,47 @@ def test_db_sql_variant_queues_are_graded():
             assert graded, (difficulty, variant.__name__)
 
 
+def test_db_sql_mcq_option_length_not_biased():
+    """Correct MCQ option should not always be the longest (avoids length tell)."""
+    import generators.gcse.gcse_cs_db_sql_lesson as db_mod
+
+    mcq_fns = []
+    for pool in (db_mod._FOUNDATIONAL, db_mod._INTERMEDIATE, db_mod._DIFFICULT):
+        for fn in pool:
+            out = fn()
+            if len(out) >= 5 and isinstance(out[4], dict) and out[4].get('type') == 'mcq':
+                mcq_fns.append(fn)
+
+    longest_correct = 0
+    trials = 0
+    for fn in mcq_fns:
+        for _ in range(20):
+            problem = _db_problem_from_output(fn(), 'intermediate')
+            opts = [o.split('  ', 1)[1] for o in problem['options']]
+            idx = ord(problem['correct_answer']) - ord('A')
+            if len(opts[idx]) == max(len(o) for o in opts):
+                longest_correct += 1
+            trials += 1
+
+    bank_longest = 0
+    for _ in range(100):
+        problem = gcse_db_sql('foundational', 'mcq')
+        opts = problem['options']
+        ans = problem['correct_answer']
+        texts = [o.split('  ', 1)[1] for o in opts]
+        idx = ord(ans) - ord('A')
+        if len(texts[idx]) == max(len(t) for t in texts):
+            bank_longest += 1
+
+    assert trials > 0
+    assert longest_correct / trials < 0.45, longest_correct / trials
+    assert bank_longest / 100 < 0.55, bank_longest / 100
+
+
 def test_db_sql_check_api():
     problem = gcse_db_sql('foundational', 'practice', variant_name='_db_i1_select_star')
-    assert problem.get('answer_type') == 'text'
+    assert problem.get('answer_type') == 'sql'
+    assert problem.get('answer_input_lines') == 1
     raw = problem['correct_answer_raw']
 
     with app.test_client() as client:
@@ -2724,7 +2789,7 @@ def test_db_sql_check_api():
                 'topic': 'db_sql',
                 'difficulty': 'foundational',
                 'correct_answer_raw': raw,
-                'answer_type': 'text',
+                'answer_type': 'sql',
                 'user_answer': 'SELECT * FROM Pupil',
             },
         )
@@ -2732,6 +2797,17 @@ def test_db_sql_check_api():
         data = r.get_json()
         assert data['ok'] is True
         assert data['correct'] is True
+
+        r2 = client.post(
+            '/api/v1/problems/check',
+            json={
+                'correct_answer_raw': raw,
+                'answer_type': 'sql',
+                'user_answer': 'SELECT Pupil FROM *',
+            },
+        )
+        assert r2.status_code == 200
+        assert r2.get_json()['correct'] is False
 
 
 SYSTEMS_SOFTWARE_UNGRADED = (
@@ -2848,6 +2924,43 @@ def test_systems_software_check_api():
         data = r.get_json()
         assert data['ok'] is True
         assert data['correct'] is True
+
+
+def test_systems_software_mcq_option_length_not_biased():
+    """Correct MCQ option should not always be the longest (avoids length tell)."""
+    import generators.gcse.gcse_cs_systems_software_lesson as sw_mod
+
+    mcq_fns = []
+    for pool in (sw_mod._FOUNDATIONAL, sw_mod._INTERMEDIATE, sw_mod._DIFFICULT):
+        for fn in pool:
+            out = fn()
+            if len(out) >= 5 and isinstance(out[4], dict) and out[4].get('type') == 'mcq':
+                mcq_fns.append(fn)
+
+    longest_correct = 0
+    trials = 0
+    for fn in mcq_fns:
+        for _ in range(20):
+            problem = _sw_problem_from_output(fn(), 'intermediate')
+            opts = [o.split('  ', 1)[1] for o in problem['options']]
+            idx = ord(problem['correct_answer']) - ord('A')
+            if len(opts[idx]) == max(len(o) for o in opts):
+                longest_correct += 1
+            trials += 1
+
+    bank_longest = 0
+    for _ in range(100):
+        problem = gcse_systems_software('foundational', 'mcq')
+        opts = problem['options']
+        ans = problem['correct_answer']
+        texts = [o.split('  ', 1)[1] for o in opts]
+        idx = ord(ans) - ord('A')
+        if len(texts[idx]) == max(len(t) for t in texts):
+            bank_longest += 1
+
+    assert trials > 0
+    assert longest_correct / trials < 0.45, longest_correct / trials
+    assert bank_longest / 100 < 0.55, bank_longest / 100
 
 
 ALGORITHMS_UNGRADED = (
@@ -7947,9 +8060,10 @@ def main():
     test_data_rep_variant_queues_are_graded()
     test_data_rep_check_api()
     test_db_sql_variants_are_graded()
-    test_db_sql_write_query_keyword_grading()
+    test_db_sql_write_query_exact_grading()
     test_db_sql_multipart_query_writing()
     test_db_sql_variant_queues_are_graded()
+    test_db_sql_mcq_option_length_not_biased()
     test_db_sql_check_api()
     test_systems_software_variants_are_graded()
     test_systems_software_classify_match_fields()
@@ -7957,6 +8071,7 @@ def main():
     test_systems_software_exam_pick_variants()
     test_systems_software_variant_queues_are_graded()
     test_systems_software_check_api()
+    test_systems_software_mcq_option_length_not_biased()
     test_algorithms_trace_variants_are_graded()
     test_algorithms_multipart_numeric_fields()
     test_algorithms_variant_queues_are_graded()

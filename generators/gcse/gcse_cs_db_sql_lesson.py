@@ -8,7 +8,7 @@ import random
 from generators.shared.utils import (
     make_problem,
     graded_answer_number_fields,
-    graded_answer_text,
+    graded_answer_sql,
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
@@ -33,14 +33,40 @@ def _db_problem_from_output(out, difficulty):
     )
 
 
-def _db_mcq_payload(correct_text, distractors):
-    """Four-option practice MCQ; returns payload for _db_problem_from_output."""
-    pool = [correct_text] + list(distractors[:3])
+def _db_mcq_payload(correct_variants, distractor_groups):
+    """Four-option practice MCQ; picks one phrasing per answer and shuffles."""
+    variants = correct_variants if isinstance(correct_variants, (tuple, list)) else (correct_variants,)
+    groups = [
+        (group,) if isinstance(group, str) else tuple(group)
+        for group in distractor_groups[:3]
+    ]
+    correct_text = random.choice(variants)
+    max_distractor_len = max(len(max(g, key=len)) for g in groups) if groups else 0
+    if len(correct_text) > max_distractor_len:
+        shorter = [v for v in variants if len(v) <= max_distractor_len]
+        if shorter:
+            correct_text = random.choice(shorter)
+    distractors = []
+    for group in groups:
+        if random.random() < 0.55:
+            distractors.append(max(group, key=len))
+        else:
+            distractors.append(random.choice(group))
+    if distractors and len(correct_text) > max(len(d) for d in distractors):
+        gi = random.randrange(len(groups))
+        distractors[gi] = max(groups[gi], key=len)
+    pool = [correct_text] + distractors
     random.shuffle(pool)
     letters = 'ABCD'
     correct_letter = letters[pool.index(correct_text)]
     options = [f'{letters[i]}  {pool[i]}' for i in range(len(pool))]
     return {'type': 'mcq', 'options': options, 'correct': correct_letter}
+
+
+def _db_mcq_options(correct_variants, distractor_groups):
+    """Build shuffled MCQ options for bank items (returns opts list + correct letter)."""
+    payload = _db_mcq_payload(correct_variants, distractor_groups)
+    return payload['options'], payload['correct']
 
 
 def _db_pick_from_bank(correct_texts, distractor_texts, pick_count, *, format_hint=None):
@@ -69,13 +95,9 @@ def _db_pick_field(correct_texts, distractor_texts, pick_count):
     return raw, bank, pick_count
 
 
-def _db_sql_text(*keywords, required=None):
-    """Keyword-graded SQL answer — punctuation/case ignored by the text checker."""
-    return graded_answer_text(
-        *keywords,
-        required=required,
-        format_hint='Write your SQL query',
-    )
+def _db_sql(query, *, lines=3):
+    """Exact SQL grading payload — ``lines`` sets the textarea height (1 or 3)."""
+    return graded_answer_sql(query, lines=lines)
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -89,12 +111,19 @@ def _db_f1_database():
         "so it can be searched, updated and managed efficiently."
     )
     return q, s, "Think: school pupil records, shop stock.", 1, _db_mcq_payload(
-        'An organised collection of structured data stored electronically so it can be searched, updated and managed',
-        [
-            'A single spreadsheet file with no structure or search features',
-            'A programming language used only to write websites',
-            'A type of cable used to connect computers on a network',
-        ],
+        (
+            'Structured electronic data that can be searched and updated',
+            'An organised collection of structured data stored electronically for efficient management',
+            'An organised collection of structured data stored electronically so it can be searched, updated and managed efficiently',
+        ),
+        (
+            ('A programming language for websites', 'A programming language used only to write websites'),
+            ('A type of network cable', 'A type of cable used to connect computers on a network'),
+            (
+                'An unstructured spreadsheet with no search features',
+                'A single spreadsheet file with no structure or search features',
+            ),
+        ),
     )
 
 
@@ -105,12 +134,16 @@ def _db_f2_relational():
         "<strong>keys</strong>, rather than one giant flat file."
     )
     return q, s, "Tables + relationships.", 2, _db_mcq_payload(
-        'Data is stored in related tables linked by keys, rather than one giant flat file',
-        [
-            'Data stored in a single unstructured text file with no links',
-            'A database that is only allowed to contain one table',
-            'A database that stores every record as an image file',
-        ],
+        (
+            'Data in related tables linked by keys',
+            'Data stored in related tables linked by keys instead of one flat file',
+            'Data is stored in related tables linked by keys, rather than one giant flat file',
+        ),
+        (
+            ('One unstructured text file', 'Data stored in a single unstructured text file with no links'),
+            ('A database with only one table allowed', 'A database that is only allowed to contain one table'),
+            ('Records stored as image files', 'A database that stores every record as an image file'),
+        ),
     )
 
 
@@ -147,12 +180,19 @@ def _db_f4_primary_key():
         "(e.g. PupilID). No two rows share the same value."
     )
     return q, s, "Unique ID for each row.", 2, _db_mcq_payload(
-        'A field that uniquely identifies each record in a table — no two rows share the same value',
-        [
-            'A field that stores the password used to log into the database',
-            'A field that must contain the same value in every row',
-            'A field that links to another table\u2019s primary key',
-        ],
+        (
+            'A field that uniquely identifies each record in a table',
+            'A field that uniquely identifies each row — no duplicates allowed',
+            'A field that uniquely identifies each record in a table — no two rows share the same value',
+        ),
+        (
+            ('A field storing login passwords', 'A field that stores the password used to log into the database'),
+            ('A field with the same value in every row', 'A field that must contain the same value in every row'),
+            (
+                'A field linking to another table\u2019s primary key',
+                'A field that links to another table\u2019s primary key',
+            ),
+        ),
     )
 
 
@@ -163,12 +203,19 @@ def _db_f5_foreign_key():
         "(e.g. ClassID in Pupil table links to Class table)."
     )
     return q, s, "Creates a relationship between tables.", 2, _db_mcq_payload(
-        'A field that links to the primary key in another table',
-        [
-            'A field that uniquely identifies records in its own table',
-            'A field that encrypts sensitive data automatically',
-            'A field that is always the first column in a table',
-        ],
+        (
+            'A field linking to a primary key in another table',
+            'A field that links to the primary key in another table',
+            'A field that references the primary key of a row in a different table to create a link',
+        ),
+        (
+            (
+                'A field uniquely identifying its own table\u2019s records',
+                'A field that uniquely identifies records in its own table',
+            ),
+            ('A field that encrypts data automatically', 'A field that encrypts sensitive data automatically'),
+            ('The first column in every table', 'A field that is always the first column in a table'),
+        ),
     )
 
 
@@ -179,12 +226,19 @@ def _db_f6_redundancy():
         "which can cause inconsistency when one copy is updated and another is not."
     )
     return q, s, "Duplicate data = redundancy.", 2, _db_mcq_payload(
-        'The same data stored more than once in different places',
-        [
-            'Data that has been permanently deleted from a table',
-            'A field that is never allowed to be empty',
-            'Data stored using a foreign key relationship',
-        ],
+        (
+            'The same data stored more than once',
+            'Duplicate data stored in multiple places in a database',
+            'The same data stored more than once in different places',
+        ),
+        (
+            ('Data permanently deleted from a table', 'Data that has been permanently deleted from a table'),
+            ('A field that must never be empty', 'A field that is never allowed to be empty'),
+            (
+                'Data linked by a foreign key',
+                'Data stored using a foreign key relationship',
+            ),
+        ),
     )
 
 
@@ -195,12 +249,16 @@ def _db_f7_select():
         "(e.g. <code>SELECT FirstName, Surname</code>)."
     )
     return q, s, "SELECT = which fields to show.", 1, _db_mcq_payload(
-        'Chooses which columns to return from a query',
-        [
-            'Deletes rows that match a condition',
-            'Names the table the query reads from',
-            'Sorts the returned rows into an order',
-        ],
+        (
+            'Chooses which columns to return',
+            'Selects which columns appear in the query results',
+            'Chooses which columns to return from a query',
+        ),
+        (
+            ('Deletes rows matching a condition', 'Deletes rows that match a condition'),
+            ('Names the table to read from', 'Names the table the query reads from'),
+            ('Sorts returned rows into order', 'Sorts the returned rows into an order'),
+        ),
     )
 
 
@@ -211,12 +269,16 @@ def _db_f8_from():
         "(e.g. <code>FROM Pupil</code>)."
     )
     return q, s, "FROM = which table.", 1, _db_mcq_payload(
-        'Names the table the query reads data from',
-        [
-            'Chooses which columns are returned',
-            'Filters out rows that do not match a condition',
-            'Sorts rows into ascending or descending order',
-        ],
+        (
+            'Names the table to read from',
+            'Names the table the query reads data from',
+            'Specifies which table in the database the query reads data from',
+        ),
+        (
+            ('Chooses which columns are returned', 'Chooses which columns are returned'),
+            ('Filters rows by a condition', 'Filters out rows that do not match a condition'),
+            ('Sorts rows ascending or descending', 'Sorts rows into ascending or descending order'),
+        ),
     )
 
 
@@ -227,12 +289,16 @@ def _db_f9_where():
         "condition are returned (e.g. <code>WHERE YearGroup = 11</code>)."
     )
     return q, s, "WHERE = filter rows.", 2, _db_mcq_payload(
-        'Filters records so only rows matching the condition are returned',
-        [
-            'Names which table the query reads from',
-            'Chooses which columns are displayed',
-            'Sorts the results alphabetically',
-        ],
+        (
+            'Filters rows by a condition',
+            'Returns only rows that match the condition',
+            'Filters records so only rows matching the condition are returned',
+        ),
+        (
+            ('Names which table to read from', 'Names which table the query reads from'),
+            ('Chooses which columns to display', 'Chooses which columns are displayed'),
+            ('Sorts results alphabetically', 'Sorts the results alphabetically'),
+        ),
     )
 
 
@@ -266,7 +332,7 @@ def _db_f10_data_type():
 def _db_i1_select_star():
     q = "Write SQL to list <strong>all columns</strong> from table <code>Pupil</code>."
     s = "<pre>SELECT * FROM Pupil;</pre>"
-    return q, s, "<code>*</code> means all fields.", 2, _db_sql_text('select', 'from', 'pupil')
+    return q, s, "<code>*</code> means all fields.", 2, _db_sql('SELECT * FROM Pupil', lines=1)
 
 
 def _db_i2_where_example():
@@ -274,8 +340,9 @@ def _db_i2_where_example():
     s = (
         "<pre>SELECT Surname FROM Pupil WHERE YearGroup = 11;</pre>"
     )
-    return q, s, "SELECT columns FROM table WHERE condition.", 2, _db_sql_text(
-        'select', 'surname', 'from', 'pupil', 'where', 'yeargroup', '11',
+    return q, s, "SELECT columns FROM table WHERE condition.", 2, _db_sql(
+        'SELECT Surname FROM Pupil WHERE YearGroup = 11',
+        lines=1,
     )
 
 
@@ -286,12 +353,24 @@ def _db_i3_order_by():
         "<code>DESC</code> would sort descending (Z→A)."
     )
     return q, s, "ORDER BY = sort results.", 2, _db_mcq_payload(
-        'Sorts results alphabetically by Surname, ascending (A to Z)',
-        [
-            'Filters out rows where Surname is empty',
-            'Sorts results by Surname, descending (Z to A)',
-            'Groups rows that share the same Surname',
-        ],
+        (
+            'Sorts by Surname ascending (A to Z)',
+            'Sorts results by Surname in ascending order',
+            'Sorts results alphabetically by Surname, ascending (A to Z)',
+        ),
+        (
+            ('Filters out empty Surname values', 'Filters out rows where Surname is empty'),
+            (
+                'Sorts by Surname descending (Z to A)',
+                'Sorts results by Surname, descending (Z to A)',
+                'Sorts results by Surname in descending order from Z down to A',
+            ),
+            (
+                'Groups rows with the same Surname',
+                'Groups rows that share the same Surname',
+                'Combines all rows that share the same Surname into a single grouped result row',
+            ),
+        ),
     )
 
 
@@ -301,8 +380,8 @@ def _db_i4_insert():
         "<pre>INSERT INTO Pupil (PupilID, FirstName, YearGroup)\n"
         "VALUES (42, 'Ali', 10);</pre>"
     )
-    return q, s, "INSERT INTO … VALUES …", 3, _db_sql_text(
-        'insert', 'into', 'pupil', 'values', '42', 'ali', '10',
+    return q, s, "INSERT INTO … VALUES …", 3, _db_sql(
+        "INSERT INTO Pupil (PupilID, FirstName, YearGroup) VALUES (42, 'Ali', 10)",
     )
 
 
@@ -311,16 +390,17 @@ def _db_i5_update():
     s = (
         "<pre>UPDATE Pupil SET YearGroup = 11 WHERE PupilID = 42;</pre>"
     )
-    return q, s, "UPDATE … SET … WHERE …", 3, _db_sql_text(
-        'update', 'pupil', 'set', 'yeargroup', '11', 'where', 'pupilid', '42',
+    return q, s, "UPDATE … SET … WHERE …", 3, _db_sql(
+        'UPDATE Pupil SET YearGroup = 11 WHERE PupilID = 42',
     )
 
 
 def _db_i6_delete():
     q = "Write SQL to <strong>delete</strong> the pupil with ID 99."
     s = "<pre>DELETE FROM Pupil WHERE PupilID = 99;</pre>"
-    return q, s, "DELETE FROM … WHERE … — WHERE avoids deleting all rows.", 2, _db_sql_text(
-        'delete', 'from', 'pupil', 'where', 'pupilid', '99',
+    return q, s, "DELETE FROM … WHERE … — WHERE avoids deleting all rows.", 2, _db_sql(
+        'DELETE FROM Pupil WHERE PupilID = 99',
+        lines=1,
     )
 
 
@@ -331,12 +411,28 @@ def _db_i7_consistency():
         "Updating the teacher in <code>Class</code> updates it for all linked pupils automatically."
     )
     return q, s, "Less duplication = fewer conflicting copies.", 2, _db_mcq_payload(
-        'Each fact is stored once and linked by keys, so updating it in one place updates it everywhere it is used',
-        [
-            'Every table stores a full copy of every other table',
-            'Consistency is guaranteed by never allowing UPDATE statements',
-            'Data is duplicated across tables to make queries faster',
-        ],
+        (
+            'Each fact is stored once and linked by keys',
+            'Facts are stored once in the right table and linked by keys',
+            'Each fact is stored once and linked by keys, so updating it in one place updates it everywhere it is used',
+        ),
+        (
+            (
+                'Every table copies all other tables completely',
+                'Every table stores a full copy of every other table',
+                'Every table stores a complete duplicate of all data from every other table in the database',
+            ),
+            (
+                'UPDATE statements are never allowed',
+                'Consistency is guaranteed by never allowing UPDATE statements',
+                'Data stays consistent because UPDATE and DELETE statements are blocked entirely',
+            ),
+            (
+                'Data is duplicated to speed up queries',
+                'Data is duplicated across tables to make queries faster',
+                'Duplicating data across many tables makes every query run faster automatically',
+            ),
+        ),
     )
 
 
@@ -351,15 +447,16 @@ def _db_i8_two_tables():
         "FROM Pupil, Class\n"
         "WHERE Pupil.ClassID = Class.ClassID;</pre>"
     )
-    return q, s, "Link tables with WHERE on matching keys.", 4, _db_sql_text(
-        'select', 'surname', 'classname', 'from', 'pupil', 'class', 'where', 'classid',
+    return q, s, "Link tables with WHERE on matching keys.", 4, _db_sql(
+        'SELECT Pupil.Surname, Class.ClassName FROM Pupil, Class '
+        'WHERE Pupil.ClassID = Class.ClassID',
     )
 
 
 def _db_i9_count():
     q = "Write SQL to count how many pupils are in <code>Pupil</code>."
     s = "<pre>SELECT COUNT(*) FROM Pupil;</pre>"
-    return q, s, "COUNT(*) counts rows.", 2, _db_sql_text('select', 'count', 'from', 'pupil')
+    return q, s, "COUNT(*) counts rows.", 2, _db_sql('SELECT COUNT(*) FROM Pupil', lines=1)
 
 
 def _db_i10_validation():
@@ -369,12 +466,20 @@ def _db_i10_validation():
         "you cannot reliably link or update that row."
     )
     return q, s, "PK must be unique and present.", 2, _db_mcq_payload(
-        'Every record must be uniquely identifiable, and NULL means it cannot be reliably linked or updated',
-        [
-            'NULL values automatically delete the whole record',
-            'A NULL primary key makes queries run faster',
-            'Primary keys are only used for sorting, so NULL has no effect',
-        ],
+        (
+            'NULL means a record cannot be uniquely identified',
+            'Every record must be uniquely identifiable — NULL breaks that',
+            'Every record must be uniquely identifiable, and NULL means it cannot be reliably linked or updated',
+        ),
+        (
+            ('NULL deletes the whole record', 'NULL values automatically delete the whole record'),
+            ('NULL makes queries run faster', 'A NULL primary key makes queries run faster'),
+            (
+                'Primary keys are only for sorting',
+                'Primary keys are only used for sorting, so NULL has no effect',
+                'A NULL primary key is acceptable because keys are only used to sort rows, not identify them',
+            ),
+        ),
     )
 
 
@@ -412,16 +517,16 @@ def _db_d2_order_desc():
         "<pre>SELECT Score FROM Grade ORDER BY Score DESC LIMIT 5;</pre>"
         " (LIMIT optional at GCSE — check paper wording.)"
     )
-    return q, s, "ORDER BY … DESC = largest first.", 3, _db_sql_text(
-        'select', 'score', 'from', 'grade', 'order', 'desc',
+    return q, s, "ORDER BY … DESC = largest first.", 3, _db_sql(
+        'SELECT Score FROM Grade ORDER BY Score DESC LIMIT 5',
     )
 
 
 def _db_d3_update_multiple():
     q = "Write SQL to set <code>Teacher</code> to <code>'Ms Lee'</code> for <code>ClassID</code> 7."
     s = "<pre>UPDATE Class SET Teacher = 'Ms Lee' WHERE ClassID = 7;</pre>"
-    return q, s, "One UPDATE fixes all records matching WHERE.", 3, _db_sql_text(
-        'update', 'class', 'set', 'teacher', 'lee', 'where', 'classid', '7',
+    return q, s, "One UPDATE fixes all records matching WHERE.", 3, _db_sql(
+        "UPDATE Class SET Teacher = 'Ms Lee' WHERE ClassID = 7",
     )
 
 
@@ -432,12 +537,22 @@ def _db_d4_delete_care():
         "<code>WHERE</code> unless you truly intend to remove all rows."
     )
     return q, s, "Missing WHERE = all rows affected.", 2, _db_mcq_payload(
-        'It deletes every record in the table, not just the ones you meant to remove',
-        [
-            'It only deletes the first record in the table',
-            'It asks for confirmation before deleting anything',
-            'It deletes the table structure but keeps the data',
-        ],
+        (
+            'It deletes every row in the table',
+            'It removes all records in the table, not just one',
+            'It deletes every record in the table, not just the ones you meant to remove',
+        ),
+        (
+            ('It deletes only the first record', 'It only deletes the first record in the table'),
+            (
+                'It asks for confirmation before deleting',
+                'It asks for confirmation before deleting anything',
+            ),
+            (
+                'It deletes the table structure but keeps data',
+                'It deletes the table structure but keeps the data',
+            ),
+        ),
     )
 
 
@@ -451,12 +566,25 @@ def _db_d5_trace_query():
         "sorted A→Z by first name."
     )
     return q, s, "Read SELECT, FROM (implied Pupil), WHERE, ORDER BY in order.", 3, _db_mcq_payload(
-        'First names of pupils in years 11 and above, sorted A to Z by first name',
-        [
-            'Every column for pupils in year 10 or below, unsorted',
-            'First names of pupils in years 11 and above, sorted Z to A',
-            'A count of how many pupils are in each year group',
-        ],
+        (
+            'First names for year 11+, sorted A to Z',
+            'First names of pupils in years 11 and above, sorted A to Z',
+            'First names of pupils in years 11 and above, sorted A to Z by first name',
+        ),
+        (
+            (
+                'All columns for year 10 or below',
+                'Every column for pupils in year 10 or below, unsorted',
+            ),
+            (
+                'First names for year 11+, sorted Z to A',
+                'First names of pupils in years 11 and above, sorted Z to A',
+            ),
+            (
+                'A count per year group',
+                'A count of how many pupils are in each year group',
+            ),
+        ),
     )
 
 
@@ -467,12 +595,19 @@ def _db_d6_fk_integrity():
         "non-existent primary key; the link is invalid."
     )
     return q, s, "FK must match an existing PK.", 3, _db_mcq_payload(
-        'Referential integrity failure — the foreign key points to a primary key that does not exist',
-        [
-            'Data redundancy — the class information is duplicated',
-            'A primary key violation in the Pupil table',
-            'A data type mismatch between ClassID and PupilID',
-        ],
+        (
+            'Referential integrity failure — invalid foreign key',
+            'Referential integrity failure — the foreign key points to a missing row',
+            'Referential integrity failure — the foreign key points to a primary key that does not exist',
+        ),
+        (
+            ('Data redundancy in the Pupil table', 'Data redundancy — the class information is duplicated'),
+            ('A primary key violation in Pupil', 'A primary key violation in the Pupil table'),
+            (
+                'A data type mismatch between keys',
+                'A data type mismatch between ClassID and PupilID',
+            ),
+        ),
     )
 
 
@@ -483,12 +618,22 @@ def _db_d7_insert_columns():
         "defaults or NULL. Order of values must match column list."
     )
     return q, s, "Column list maps to VALUES list.", 3, _db_mcq_payload(
-        'It controls which fields receive the listed values, leaving other columns as default/NULL',
-        [
-            'It is required syntax with no effect on which columns are filled',
-            'It deletes any columns not named in the list',
-            'It renames the columns listed to match the VALUES given',
-        ],
+        (
+            'It controls which columns receive the values listed',
+            'It sets values only for the named columns',
+            'It controls which fields receive the listed values, leaving other columns as default/NULL',
+        ),
+        (
+            (
+                'Required syntax with no effect on columns',
+                'It is required syntax with no effect on which columns are filled',
+            ),
+            ('It deletes unnamed columns', 'It deletes any columns not named in the list'),
+            (
+                'It renames columns to match VALUES',
+                'It renames the columns listed to match the VALUES given',
+            ),
+        ),
     )
 
 
@@ -499,12 +644,25 @@ def _db_d8_entity_diagram():
         "<strong>relationships</strong> (keys) — plan structure before writing SQL."
     )
     return q, s, "Design first, implement in SQL second.", 3, _db_mcq_payload(
-        'It shows entities, attributes, and relationships so the structure can be planned before writing SQL',
-        [
-            'It automatically writes the SQL CREATE TABLE statements',
-            'It replaces the need for primary and foreign keys',
-            'It only shows what data currently exists in the tables',
-        ],
+        (
+            'It shows entities, attributes and relationships before building tables',
+            'It maps entities, attributes and relationships for planning table design',
+            'It shows entities, attributes, and relationships so the structure can be planned before writing SQL',
+        ),
+        (
+            (
+                'It writes CREATE TABLE statements automatically',
+                'It automatically writes the SQL CREATE TABLE statements',
+            ),
+            (
+                'It removes the need for keys',
+                'It replaces the need for primary and foreign keys',
+            ),
+            (
+                'It only shows existing table data',
+                'It only shows what data currently exists in the tables',
+            ),
+        ),
     )
 
 
@@ -515,12 +673,25 @@ def _db_d9_sql_injection_link():
         "(e.g. <code>' OR '1'='1</code>). Use <strong>parameterised queries</strong> and validation."
     )
     return q, s, "Never trust raw user input in SQL strings.", 3, _db_mcq_payload(
-        'If user input is pasted straight into a query, attackers can inject malicious SQL — use parameterised queries and validation',
-        [
-            'SQL injection only affects databases that use foreign keys',
-            'Poor input handling makes queries run faster but is otherwise harmless',
-            'SQL injection is prevented automatically by using SELECT instead of UPDATE',
-        ],
+        (
+            'Raw input in queries lets attackers inject malicious SQL',
+            'Pasting user input into queries allows SQL injection attacks',
+            'If user input is pasted straight into a query, attackers can inject malicious SQL — use parameterised queries and validation',
+        ),
+        (
+            (
+                'Injection only affects databases with foreign keys',
+                'SQL injection only affects databases that use foreign keys',
+            ),
+            (
+                'Poor input handling only speeds up queries',
+                'Poor input handling makes queries run faster but is otherwise harmless',
+            ),
+            (
+                'SELECT prevents injection automatically',
+                'SQL injection is prevented automatically by using SELECT instead of UPDATE',
+            ),
+        ),
     )
 
 
@@ -536,8 +707,9 @@ def _db_d10_exam_reading():
         "WHERE Book.AuthorID = Author.AuthorID\n"
         "AND Author.Name = 'Rowling';</pre>"
     )
-    return q, s, "AQA: max two tables in one query — link with WHERE.", 4, _db_sql_text(
-        'select', 'title', 'from', 'book', 'author', 'where', 'authorid', 'rowling',
+    return q, s, "AQA: max two tables in one query — link with WHERE.", 4, _db_sql(
+        "SELECT Book.Title FROM Book, Author "
+        "WHERE Book.AuthorID = Author.AuthorID AND Author.Name = 'Rowling'",
     )
 
 
@@ -551,8 +723,8 @@ def _db_d11_count_group():
         "FROM Pupil\n"
         "GROUP BY YearGroup;</pre>"
     )
-    return q, s, "COUNT with GROUP BY — one row per year group.", 4, _db_sql_text(
-        'select', 'yeargroup', 'count', 'from', 'pupil', 'group',
+    return q, s, "COUNT with GROUP BY — one row per year group.", 4, _db_sql(
+        'SELECT YearGroup, COUNT(PupilID) FROM Pupil GROUP BY YearGroup',
     )
 
 
@@ -566,8 +738,8 @@ def _db_d12_update_scenario():
         "SET YearGroup = 12\n"
         "WHERE YearGroup = 11;</pre>"
     )
-    return q, s, "UPDATE … SET … WHERE limits which rows change.", 3, _db_sql_text(
-        'update', 'pupil', 'set', 'yeargroup', '12', 'where', '11',
+    return q, s, "UPDATE … SET … WHERE limits which rows change.", 3, _db_sql(
+        'UPDATE Pupil SET YearGroup = 12 WHERE YearGroup = 11',
     )
 
 
@@ -612,12 +784,12 @@ def _db_d13_multipart_query_writing():
     )
     return q, s, "SELECT fields FROM table WHERE condition ORDER BY field; PK must be unique.", 7, graded_answer_number_fields(
         (
-            'select|firstname|surname|from|member|where|leeds',
-            'select|from|member|where|age|18|order|surname',
+            "SELECT FirstName, Surname FROM Member WHERE Town = 'Leeds'",
+            "SELECT * FROM Member WHERE Age >= 18 ORDER BY Surname ASC",
             pk_raw,
         ),
         ('Leeds query', 'Adults sorted by surname', 'Primary key'),
-        field_types=('text', 'text', 'pick'),
+        field_types=('sql', 'sql', 'pick'),
         field_options=(None, None, pk_bank),
         field_pick_counts=(None, None, pk_pick),
         row_sizes=(1, 1, 1),
@@ -697,136 +869,291 @@ def _db_d14_multipart_relational_design():
 
 _DB_MCQ_BANK = [
     {"q": "A row in a database table is called a:",
-     "opts": ["A  field", "B  record", "C  primary key", "D  query"],
-     "ans": "B", "marks": 1,
+     "correct": ("row", "record", "a record (one row in the table)"),
+     "wrong": (
+         ("column", "field"),
+         ("primary key", "a primary key value"),
+         ("query", "an SQL query"),
+     ),
+     "marks": 1,
      "sol": "One <strong>record</strong> = one row. Answer: B",
      "hint": "Row = record."},
     {"q": "A primary key must be:",
-     "opts": ["A  the same for every record", "B  unique for each record",
-              "C  always text", "D  optional"],
-     "ans": "B", "marks": 1,
+     "correct": ("unique for each record", "unique per row", "different for every record in the table"),
+     "wrong": (
+         ("the same for every record", "identical in every row"),
+         ("always text", "text only"),
+         ("optional", "not required"),
+     ),
+     "marks": 1,
      "sol": "<strong>Unique</strong> per record. Answer: B",
      "hint": "Identifies each row."},
     {"q": "SELECT * FROM Pupil means:",
-     "opts": ["A  delete all pupils", "B  show all columns from Pupil",
-              "C  insert a pupil", "D  update pupils"],
-     "ans": "B", "marks": 2,
+     "correct": (
+         "show all columns from Pupil",
+         "return every column from the Pupil table",
+         "display all fields stored in the Pupil table",
+     ),
+     "wrong": (
+         ("delete all pupils", "remove every pupil record", "delete every pupil row from the Pupil table permanently"),
+         ("insert a pupil", "add a new pupil row", "insert a brand-new pupil record into the Pupil table"),
+         ("update pupils", "change existing pupil data", "modify every column in every pupil record automatically"),
+     ),
+     "marks": 2,
      "sol": "<code>*</code> = all columns. Answer: B",
      "hint": "SELECT reads data."},
     {"q": "WHERE YearGroup = 10 filters:",
-     "opts": ["A  columns", "B  rows matching the condition",
-              "C  tables", "D  databases"],
-     "ans": "B", "marks": 2,
+     "correct": (
+         "rows matching the condition",
+         "only rows where YearGroup is 10",
+         "records that meet the YearGroup = 10 condition",
+     ),
+     "wrong": (
+         ("columns", "which columns are shown", "which columns are displayed in the final result set"),
+         ("tables", "which tables are used", "which tables in the database are being joined together"),
+         ("databases", "which database is open", "which database server instance is currently connected"),
+     ),
+     "marks": 2,
      "sol": "<strong>Filters rows</strong>. Answer: B",
      "hint": "WHERE = row filter."},
     {"q": "ORDER BY Score DESC sorts:",
-     "opts": ["A  lowest scores first", "B  highest scores first",
-              "C  alphabetically A–Z", "D  random order"],
-     "ans": "B", "marks": 2,
+     "correct": (
+         "highest scores first",
+         "from highest to lowest score",
+         "scores in descending order (largest first)",
+     ),
+     "wrong": (
+         ("lowest scores first", "from lowest to highest score"),
+         ("alphabetically A\u2013Z", "names in A to Z order"),
+         ("random order", "rows in a random sequence"),
+     ),
+     "marks": 2,
      "sol": "<strong>DESC</strong> = descending. Answer: B",
      "hint": "DESC = high to low."},
     {"q": "A foreign key:",
-     "opts": ["A  links to a primary key in another table",
-              "B  must be text only", "C  deletes records",
-              "D  encrypts data"],
-     "ans": "A", "marks": 2,
+     "correct": (
+         "links to a primary key in another table",
+         "references a primary key in a different table",
+         "connects a row to a primary key value held in another table",
+     ),
+     "wrong": (
+         ("must be text only", "can only store text values", "must always be a text or VARCHAR field and never a number"),
+         ("deletes records", "removes rows when used", "automatically deletes related rows in other tables when updated"),
+         ("encrypts data", "scrambles stored data automatically", "encrypts every value in the column so it cannot be read"),
+     ),
+     "marks": 2,
      "sol": "Links tables together. Answer: A",
      "hint": "FK = link between tables."},
     {"q": "Data redundancy means:",
-     "opts": ["A  data stored only once", "B  duplicate data in multiple places",
-              "C  no keys used", "D  encrypted data"],
-     "ans": "B", "marks": 2,
+     "correct": (
+         "duplicate data in multiple places",
+         "the same data stored more than once",
+         "identical data repeated across different locations",
+     ),
+     "wrong": (
+         ("data stored only once", "each fact kept in one place only", "every piece of data is stored in exactly one location with no copies"),
+         ("no keys used", "tables without any keys", "tables that do not use primary keys or foreign keys at all"),
+         ("encrypted data", "data that has been encrypted", "data that has been scrambled so only authorised users can read it"),
+     ),
+     "marks": 2,
      "sol": "<strong>Duplicate</strong> storage. Answer: B",
      "hint": "Redundant = repeated."},
     {"q": "INSERT INTO is used to:",
-     "opts": ["A  add new records", "B  remove records",
-              "C  sort records", "D  rename tables"],
-     "ans": "A", "marks": 2,
+     "correct": ("add new records", "insert new rows", "add a new row to a table"),
+     "wrong": (
+         ("remove records", "delete existing rows"),
+         ("sort records", "order rows by a column"),
+         ("rename tables", "change a table\u2019s name"),
+     ),
+     "marks": 2,
      "sol": "<strong>Add</strong> new rows. Answer: A",
      "hint": "INSERT = add."},
-    {"q": "UPDATE … SET … WHERE is used to:",
-     "opts": ["A  change existing data", "B  create tables",
-              "C  list databases", "D  only delete data"],
-     "ans": "A", "marks": 2,
+    {"q": "UPDATE \u2026 SET \u2026 WHERE is used to:",
+     "correct": (
+         "change existing data",
+         "modify values in existing rows",
+         "update data in rows that match the WHERE condition",
+     ),
+     "wrong": (
+         ("create tables", "define new tables"),
+         ("list databases", "show all databases on a server"),
+         ("only delete data", "remove rows without changing values"),
+     ),
+     "marks": 2,
      "sol": "<strong>Modify</strong> existing rows. Answer: A",
      "hint": "UPDATE = edit."},
     {"q": "DELETE FROM Pupil WHERE PupilID = 3:",
-     "opts": ["A  deletes pupil 3 only", "B  deletes all pupils",
-              "C  shows pupil 3", "D  adds pupil 3"],
-     "ans": "A", "marks": 2,
+     "correct": (
+         "deletes pupil 3 only",
+         "removes the row where PupilID is 3",
+         "deletes only the pupil record with PupilID = 3",
+     ),
+     "wrong": (
+         ("deletes all pupils", "removes every row in Pupil"),
+         ("shows pupil 3", "displays pupil 3\u2019s details"),
+         ("adds pupil 3", "creates a new pupil with ID 3"),
+     ),
+     "marks": 2,
      "sol": "<strong>WHERE</strong> limits delete. Answer: A",
      "hint": "WHERE targets one row."},
     {"q": "Relational databases reduce inconsistency by:",
-     "opts": ["A  storing everything in one cell",
-              "B  linking related data in separate tables",
-              "C  removing primary keys", "D  using only one table"],
-     "ans": "B", "marks": 2,
+     "correct": (
+         "linking related data in separate tables",
+         "storing each fact once in linked tables",
+         "splitting data into related tables connected by keys",
+     ),
+     "wrong": (
+         ("storing everything in one cell", "putting all data in a single cell", "keeping every field from every table inside one spreadsheet cell"),
+         ("removing primary keys", "not using primary keys", "deleting all primary keys so rows can be matched freely"),
+         ("using only one table", "keeping all data in one table", "storing the entire database in a single table with no relationships"),
+     ),
+     "marks": 2,
      "sol": "Normalised <strong>linked tables</strong>. Answer: B",
      "hint": "Split data logically."},
     {"q": "FROM Pupil in a query specifies:",
-     "opts": ["A  the table", "B  the sort order", "C  the primary key only",
-              "D  the password"],
-     "ans": "A", "marks": 1,
+     "correct": ("the table", "which table to read from", "the source table for the query"),
+     "wrong": (
+         ("the sort order", "how results are ordered"),
+         ("the primary key only", "only the primary key column"),
+         ("the password", "the database login password"),
+     ),
+     "marks": 1,
      "sol": "Names the <strong>table</strong>. Answer: A",
      "hint": "FROM = table name."},
     {"q": "INTEGER is a suitable type for:",
-     "opts": ["A  a pupil's year group number", "B  a long essay",
-              "C  a photo file", "D  today's date only"],
-     "ans": "A", "marks": 2,
-     "sol": "Whole numbers → <strong>INTEGER</strong>. Answer: A",
+     "correct": (
+         "a pupil\u2019s year group number",
+         "whole numbers such as a year group",
+         "a numeric whole-number field like YearGroup",
+     ),
+     "wrong": (
+         ("a long essay", "a paragraph of text"),
+         ("a photo file", "an image stored in the database"),
+         ("today\u2019s date only", "calendar dates only"),
+     ),
+     "marks": 2,
+     "sol": "Whole numbers \u2192 <strong>INTEGER</strong>. Answer: A",
      "hint": "Match type to data."},
     {"q": "OCR GCSE SQL for searching mainly requires:",
-     "opts": ["A  SELECT, FROM, WHERE only", "B  only DELETE",
-              "C  only CREATE TABLE", "D  HTML tags"],
-     "ans": "A", "marks": 2,
+     "correct": (
+         "SELECT, FROM, WHERE",
+         "SELECT, FROM and WHERE clauses",
+         "SELECT, FROM, WHERE only (basic querying commands)",
+     ),
+     "wrong": (
+         ("only DELETE", "DELETE statements only"),
+         ("only CREATE TABLE", "CREATE TABLE statements only"),
+         ("HTML tags", "HTML markup tags"),
+     ),
+     "marks": 2,
      "sol": "OCR focuses on <strong>querying</strong>. Answer: A",
      "hint": "Read data commands."},
     {"q": "AQA allows SQL to modify data using:",
-     "opts": ["A  INSERT, UPDATE, DELETE", "B  only SELECT",
-              "C  only PRINT", "D  only JOIN"],
-     "ans": "A", "marks": 2,
+     "correct": (
+         "INSERT, UPDATE, DELETE",
+         "INSERT, UPDATE and DELETE statements",
+         "INSERT, UPDATE, DELETE (add, change and remove data)",
+     ),
+     "wrong": (
+         ("only SELECT", "SELECT queries only", "SELECT statements only — no INSERT, UPDATE or DELETE allowed"),
+         ("only PRINT", "PRINT commands only", "PRINT commands only, which display messages but never change data"),
+         ("only JOIN", "JOIN operations only", "JOIN operations only, which combine tables but never modify rows"),
+     ),
+     "marks": 2,
      "sol": "Full <strong>CRUD</strong> on AQA. Answer: A",
      "hint": "Add, change, remove."},
     {"q": "COUNT(*) in a SELECT query:",
-     "opts": ["A  counts rows matching the query", "B  deletes duplicate tables",
-              "C  sorts columns alphabetically", "D  encrypts the database"],
-     "ans": "A", "marks": 2,
+     "correct": (
+         "counts rows matching the query",
+         "returns the number of rows found",
+         "counts how many records the query returns",
+     ),
+     "wrong": (
+         ("deletes duplicate tables", "removes duplicate table definitions"),
+         ("sorts columns alphabetically", "orders column names A to Z"),
+         ("encrypts the database", "encrypts all stored data"),
+     ),
+     "marks": 2,
      "sol": "<strong>Counts records</strong> returned. Answer: A",
      "hint": "Aggregate function."},
     {"q": "VARCHAR is suitable for:",
-     "opts": ["A  a pupil's first name", "B  a whole photo file",
-              "C  the number of cores in a CPU", "D  today's date only"],
-     "ans": "A", "marks": 2,
+     "correct": (
+         "a pupil\u2019s first name",
+         "text such as a first name",
+         "variable-length text like a pupil\u2019s name",
+     ),
+     "wrong": (
+         ("a whole photo file", "binary image data"),
+         ("CPU core count", "the number of cores in a CPU"),
+         ("today\u2019s date only", "calendar dates only"),
+     ),
+     "marks": 2,
      "sol": "<strong>Variable-length text</strong>. Answer: A",
      "hint": "Text field type."},
     {"q": "A column in a database table is also called a:",
-     "opts": ["A  record", "B  field", "C  query", "D  report"],
-     "ans": "B", "marks": 1,
+     "correct": ("field", "a field", "a field (one column in the table)"),
+     "wrong": (
+         ("record", "a record (one row)"),
+         ("query", "an SQL query"),
+         ("report", "a printed report"),
+     ),
+     "marks": 1,
      "sol": "One <strong>field</strong> = one column. Answer: B",
      "hint": "Row = record, column = field."},
     {"q": "SELECT Name, Score FROM Pupil returns:",
-     "opts": ["A  only the Name and Score columns", "B  every column in the table",
-              "C  no data", "D  only primary keys"],
-     "ans": "A", "marks": 2,
+     "correct": (
+         "only the Name and Score columns",
+         "just the Name and Score fields",
+         "the Name and Score columns only, not every column",
+     ),
+     "wrong": (
+         ("every column in the table", "all columns including every field"),
+         ("no data", "an empty result set always"),
+         ("only primary keys", "primary key values only"),
+     ),
+     "marks": 2,
      "sol": "Lists <strong>named columns only</strong>. Answer: A",
      "hint": "Contrast with SELECT *."},
     {"q": "A composite primary key means:",
-     "opts": ["A  one column identifies each record alone",
-              "B  two or more columns together uniquely identify a record",
-              "C  no key is used", "D  every field is text"],
-     "ans": "B", "marks": 2,
+     "correct": (
+         "two or more columns together identify a record",
+         "a combination of fields uniquely identifies each row",
+         "two or more columns together uniquely identify a record",
+     ),
+     "wrong": (
+         ("one column identifies each record alone", "a single column is the only identifier", "one column on its own always uniquely identifies every record in the table"),
+         ("no key is used", "the table has no key at all", "the table has no primary key or any other way to identify rows"),
+         ("every field is text", "all fields must be text type", "every field in the table must be stored as a text or VARCHAR type"),
+     ),
+     "marks": 2,
      "sol": "Combination of fields is <strong>unique</strong>. Answer: B",
      "hint": "Common in link tables."},
     {"q": "Flat-file storage compared with a relational database often causes:",
-     "opts": ["A  less duplication", "B  more data redundancy and inconsistency",
-              "C  automatic encryption", "D  faster networks"],
-     "ans": "B", "marks": 2,
-     "sol": "Repeating data in one file → <strong>redundancy</strong>. Answer: B",
+     "correct": (
+         "more redundancy and inconsistency",
+         "duplicate data and conflicting copies",
+         "more data redundancy and inconsistency",
+     ),
+     "wrong": (
+         ("less duplication", "less repeated data", "less repeated data because every fact is stored in only one row"),
+         ("automatic encryption", "built-in encryption of all files", "automatic encryption of every file so data cannot be read without a key"),
+         ("faster networks", "faster network connections", "faster network connections because all data is sent in one packet"),
+     ),
+     "marks": 2,
+     "sol": "Repeating data in one file \u2192 <strong>redundancy</strong>. Answer: B",
      "hint": "Same customer address stored many times."},
     {"q": "SELECT AVG(Score) FROM Pupil calculates:",
-     "opts": ["A  the average score", "B  the highest score only",
-              "C  the number of tables", "D  the primary key"],
-     "ans": "A", "marks": 2,
+     "correct": (
+         "the average score",
+         "the mean of all Score values",
+         "the average (mean) score across matching rows",
+     ),
+     "wrong": (
+         ("the highest score only", "only the maximum score"),
+         ("the number of tables", "how many tables exist"),
+         ("the primary key", "the primary key value"),
+     ),
+     "marks": 2,
      "sol": "<strong>AVG</strong> returns the mean value. Answer: A",
      "hint": "Another aggregate like COUNT and MAX."},
 ]
@@ -834,7 +1161,8 @@ _DB_MCQ_BANK = [
 
 def db_sql_mcq():
     item = random.choice(_DB_MCQ_BANK)
-    return item["q"], item["sol"], item["hint"], item["marks"], item["opts"], item["ans"]
+    opts, ans = _db_mcq_options(item["correct"], item["wrong"])
+    return item["q"], item["sol"], item["hint"], item["marks"], opts, ans
 
 
 # ══════════════════════════════════════════════════════════════════════════════
