@@ -5,7 +5,11 @@ Graded practice variants return (question, solution, hint, marks, raw).
 Explanation-only variants stay as 4-tuples (Phase 2).
 """
 import random
-from generators.shared.utils import make_problem
+from generators.shared.utils import (
+    graded_answer_number_fields,
+    make_problem,
+    problem_extra_from_graded_answer,
+)
 from generators.shared.variant_utils import run_mcq_variant, pick_named_variant
 
 
@@ -75,6 +79,17 @@ def _dr_fields_answer(values, labels, field_types=None):
     return payload
 
 
+def _dr_pick_field(correct_texts, distractor_texts, pick_count):
+    """Inline pick-N field for ``number_fields`` (returns raw, bank, count)."""
+    correct_ids = tuple(f'c{i + 1}' for i in range(len(correct_texts)))
+    bank = [{'id': cid, 'text': text} for cid, text in zip(correct_ids, correct_texts)]
+    for i, text in enumerate(distractor_texts):
+        bank.append({'id': f'd{i + 1}', 'text': text})
+    random.shuffle(bank)
+    raw = f"pick|{pick_count}|{'|'.join(correct_ids)}"
+    return raw, bank, pick_count
+
+
 def _dr_problem_from_output(out, difficulty):
     q, s, hint, marks = out[:4]
     extra = {}
@@ -85,18 +100,21 @@ def _dr_problem_from_output(out, difficulty):
             if raw_type == 'number_fields':
                 values = raw.get('values') or ()
                 labels = raw.get('labels') or ()
-                if values and len(values) == len(labels):
-                    extra = {
-                        'correct_answer_raw': _dr_join_field_values(values),
-                        'answer_type': 'number_fields',
-                        'answer_labels': list(labels),
-                        'answer_format_hint': (
-                            'Enter your answer in each field'
-                        ),
-                    }
-                    field_types = raw.get('field_types')
-                    if field_types:
-                        extra['answer_field_types'] = list(field_types)
+                if values and any(isinstance(v, dict) for v in values):
+                    if values and labels and len(values) == len(labels):
+                        extra = {
+                            'correct_answer_raw': _dr_join_field_values(values),
+                            'answer_type': 'number_fields',
+                            'answer_labels': list(labels),
+                            'answer_format_hint': (
+                                'Enter your answer in each field'
+                            ),
+                        }
+                        field_types = raw.get('field_types')
+                        if field_types:
+                            extra['answer_field_types'] = list(field_types)
+                else:
+                    extra = problem_extra_from_graded_answer(raw)
             elif raw_type == 'binary':
                 extra = {
                     'correct_answer_raw': _dr_binary_raw(
@@ -756,12 +774,50 @@ def _dr_d9_colours_from_depth():
 
 
 def _dr_d10_lossy_lossless_compare():
-    q = "State <strong>one advantage</strong> of lossy compression and <strong>one advantage</strong> of lossless."
+    q = (
+        "State <strong>one advantage</strong> of lossy compression and "
+        "<strong>one advantage</strong> of lossless. "
+        "Select one advantage of each."
+    )
     s = (
         "<strong>Lossy:</strong> much smaller files (photos/audio streaming). "
         "<strong>Lossless:</strong> perfect reconstruction (programs, ZIP, RLE graphics)."
     )
-    return q, s, "Compare file size vs getting the exact original back.", 3
+    lossy_raw, lossy_bank, lossy_pick = _dr_pick_field(
+        (
+            'Much smaller file sizes — good for photos and audio streaming',
+            'Reduces storage space and download time for media files',
+            'Makes streaming video and music practical over the internet',
+        ),
+        (
+            'Perfect reconstruction of every original bit',
+            'Ideal for storing executable programs without any change',
+            'No detail is ever removed during compression',
+        ),
+        1,
+    )
+    lossless_raw, lossless_bank, lossless_pick = _dr_pick_field(
+        (
+            'Perfect reconstruction of the original file',
+            'No data is lost — the exact original can be restored (e.g. programs, ZIP)',
+            'Suitable when every bit must be preserved, such as software or archives',
+        ),
+        (
+            'Creates the smallest possible files by removing detail permanently',
+            'Always best for streaming photos and music online',
+            'Removes quality that humans cannot notice from audio files',
+        ),
+        1,
+    )
+    return q, s, "Compare file size vs getting the exact original back.", 3, graded_answer_number_fields(
+        (lossy_raw, lossless_raw),
+        ('Lossy advantage', 'Lossless advantage'),
+        field_types=('pick', 'pick'),
+        field_options=(lossy_bank, lossless_bank),
+        field_pick_counts=(lossy_pick, lossless_pick),
+        row_sizes=(1, 1),
+        group_labels=('Lossy advantage', 'Lossless advantage'),
+    )
 
 
 def _dr_d11_sample_rate_calc():
@@ -781,14 +837,48 @@ def _dr_d11_sample_rate_calc():
 def _dr_d12_metadata_vs_payload():
     q = (
         "A JPEG photo file includes <strong>EXIF metadata</strong> (camera model, GPS) "
-        "alongside the compressed image data. Explain one reason metadata is useful and "
-        "one <strong>privacy</strong> concern."
+        "alongside the compressed image data. "
+        "Select one reason metadata is useful and one privacy concern."
     )
     s = (
         "<strong>Useful:</strong> sorting photos by date/location, editing software knows camera settings. "
         "<strong>Privacy:</strong> GPS or device info may reveal <strong>where/when</strong> a photo was taken when shared online."
     )
-    return q, s, "Metadata is extra data about the file, not the main image pixels.", 3
+    useful_raw, useful_bank, useful_pick = _dr_pick_field(
+        (
+            'Sorting photos by date or location automatically',
+            'Editing software can read camera settings from the file',
+            'Organising a large photo library by when pictures were taken',
+        ),
+        (
+            'Metadata replaces the need to store any image pixels',
+            'EXIF data always encrypts the compressed JPEG image',
+            'Metadata removes GPS information before a photo is saved',
+        ),
+        1,
+    )
+    privacy_raw, privacy_bank, privacy_pick = _dr_pick_field(
+        (
+            'GPS data may reveal where a photo was taken when shared online',
+            'Device or camera info may reveal when or where a photo was taken',
+            'Location metadata could expose home or school addresses in shared images',
+        ),
+        (
+            'Metadata makes JPEG files impossible to open in a web browser',
+            'EXIF data automatically deletes itself when a photo is uploaded',
+            'Privacy concerns only apply to lossless PNG files, not JPEG',
+        ),
+        1,
+    )
+    return q, s, "Metadata is extra data about the file, not the main image pixels.", 3, graded_answer_number_fields(
+        (useful_raw, privacy_raw),
+        ('Why metadata is useful', 'Privacy concern'),
+        field_types=('pick', 'pick'),
+        field_options=(useful_bank, privacy_bank),
+        field_pick_counts=(useful_pick, privacy_pick),
+        row_sizes=(1, 1),
+        group_labels=('Why metadata is useful', 'Privacy concern'),
+    )
 
 
 # ── Multi-part difficult questions (a, b, c) ──────────────────────────────────
@@ -815,10 +905,21 @@ def _dr_d13_multipart_number_systems():
     )
     return (
         q, s, "Divide by 2 for (a), group bits into nybbles for (b).", 6,
-        _dr_fields_answer(
-            (_dr_binary_answer(binary, width=8), _dr_hex_answer(hex_value, width=0)),
-            ('Part (a): 8-bit binary', 'Part (b): hexadecimal'),
-            ('binary', 'hex'),
+        graded_answer_number_fields(
+            (
+                _dr_binary_raw(binary, width=8),
+                _dr_hex_raw(hex_value, width=0),
+                '2@shorter|easier|read|fewer|mistake|digit|four|bits',
+            ),
+            (
+                'Part (a): 8-bit binary',
+                'Part (b): hexadecimal',
+                'Part (c): why use hex',
+            ),
+            field_types=('binary', 'hex', 'text'),
+            row_sizes=(1, 1, 1),
+            group_labels=('(a)', '(b)', '(c)'),
+            inline_sections=True,
         ),
     )
 

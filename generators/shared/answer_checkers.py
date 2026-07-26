@@ -9,6 +9,8 @@ from fractions import Fraction
 
 from sympy import nsimplify, simplify, sympify
 
+from generators.shared.text_keywords import text_keyword_aliases, text_keyword_labels, text_keyword_labels
+
 CHECKERS: dict[str, callable] = {}
 
 
@@ -2857,11 +2859,125 @@ _KEYWORD_ALIASES = {
         'centre',
         'center',
     ),
+    'ram': ('ram', 'random access memory'),
+    'ssd': ('ssd', 'solid state', 'solid state drive'),
+    'input': ('input',),
+    'output': ('output',),
+    'application': ('application', 'application software'),
+    'phishing': ('phishing',),
+    'fdw': ('fdw',),
+    'copyright': ('copyright', 'copyright designs and patents act'),
+    'computer misuse act': ('computer misuse act', 'computer misuse act 1990', 'cma'),
+    'shoulder surfing': ('shoulder surfing', 'shoulder-surfing', 'observation'),
+    '2fa': ('2fa', 'two factor', 'two-factor', 'two factor authentication'),
+    'privacy': ('privacy', 'privacy screen', 'shield', 'shield keyboard'),
+    'convenient': ('convenient', 'convenience', 'easy'),
+    'fingerprint': ('fingerprint', 'biometric', 'stolen'),
+    'full': ('full', 'full backup'),
+    'incremental': ('incremental', 'incremental backup', 'changes'),
 }
 
 
 def _normalize_keyword(value) -> str:
     return re.sub(r'\s+', ' ', str(value or '').strip().lower())
+
+
+def _normalize_text(value) -> str:
+    s = str(value or '').strip().lower()
+    s = re.sub(r'[^\w\s]', ' ', s)
+    return re.sub(r'\s+', ' ', s).strip()
+
+
+def _text_contains_keyword(text: str, keyword: str) -> bool:
+    for variant in text_keyword_aliases(keyword):
+        kw = _normalize_text(variant)
+        if not kw:
+            continue
+        if ' ' in kw:
+            if kw in text:
+                return True
+            continue
+        if re.search(
+            r'(?<!\w)' + re.escape(kw) + r'(?:s|es|ed|ing|ies|tion|ions|ity|ities)?(?!\w)',
+            text,
+        ):
+            return True
+        if len(kw) >= 5 and kw in text:
+            return True
+    return False
+
+
+@register_checker('text')
+def check_text(correct_raw, user_answer):
+    raw_s = str(correct_raw or '').strip()
+    required = None
+    if '@' in raw_s:
+        head, rest = raw_s.split('@', 1)
+        if head.isdigit():
+            required = int(head)
+            raw_s = rest
+    keywords = [
+        k.strip().lower()
+        for k in raw_s.split('|')
+        if k.strip()
+    ]
+    if not keywords:
+        raise ValueError('invalid_correct_answer')
+    if required is None:
+        required = len(keywords)
+    pick_any = required < len(keywords)
+    user = _normalize_text(user_answer)
+    if not user:
+        return {
+            'correct': False,
+            'confidence': 'low',
+            'score': 0,
+            'score_total': required,
+            'normalized_user': '',
+            'normalized_correct': raw_s if '@' not in str(correct_raw or '') else '|'.join(keywords),
+            'feedback': 'Enter an answer.',
+        }
+    matched = [kw for kw in keywords if _text_contains_keyword(user, kw)]
+    match_count = len(matched)
+    if pick_any:
+        score = min(match_count, required)
+        ok = match_count >= required
+        total = required
+    else:
+        score = match_count
+        ok = match_count == required
+        total = required
+    if ok:
+        feedback = 'Correct!'
+        confidence = 'high'
+    elif score == 0:
+        if pick_any:
+            feedback = f'Not quite — mention {required} key ideas from the model answer.'
+        else:
+            feedback = f'Not quite — mention the key ideas ({total} needed).'
+        confidence = 'low'
+    else:
+        feedback = f'{score}/{total} key ideas found.'
+        confidence = 'medium'
+    missing = [kw for kw in keywords if kw not in matched]
+    result = {
+        'correct': ok,
+        'confidence': confidence,
+        'score': score,
+        'score_total': total,
+        'normalized_user': user,
+        'normalized_correct': '|'.join(keywords),
+        'feedback': feedback,
+    }
+    if missing and not pick_any:
+        result['missing_keywords'] = missing
+        result['missing_keyword_labels'] = text_keyword_labels(missing)
+    elif pick_any and not ok:
+        result['acceptable_keywords'] = keywords
+        result['acceptable_keyword_labels'] = text_keyword_labels(keywords)
+    if matched:
+        result['matched_keywords'] = matched
+    return result
 
 
 @register_checker('mcq')
@@ -2890,7 +3006,8 @@ def check_mcq(correct_raw, user_answer):
 @register_checker('keyword')
 def check_keyword(correct_raw, user_answer):
     correct_key = _normalize_keyword(correct_raw)
-    aliases = _KEYWORD_ALIASES.get(correct_key, (correct_key,))
+    legacy = _KEYWORD_ALIASES.get(correct_key, ())
+    aliases = set(text_keyword_aliases(correct_key)) | set(legacy) | {correct_key}
     user = _normalize_keyword(user_answer)
     if not user:
         return {
@@ -3160,8 +3277,14 @@ def check_completed_square(correct_raw, user_answer):
     }
 
 
-def _parse_proof_steps_raw(raw) -> tuple[bool, list[str]] | None:
-    """Parse ``orderFlag|id1|id2|...`` (orderFlag is 0 or 1)."""
+def _parse_proof_steps_raw(raw):
+    """Parse proof-steps grading payloads.
+
+    Formats:
+    - ``pick|N|id1|id2|...`` — choose exactly N ids from the correct pool
+    - ``orderFlag|id1|id2|...`` — orderFlag is 0 (set) or 1 (ordered sequence)
+    - bare id list — legacy ordered sequence
+    """
     s = str(raw or '').strip()
     if not s:
         return None
@@ -3169,13 +3292,25 @@ def _parse_proof_steps_raw(raw) -> tuple[bool, list[str]] | None:
     if len(parts) < 2:
         return None
     flag = parts[0]
+    if flag == 'pick':
+        if len(parts) < 3:
+            return None
+        try:
+            pick_count = int(parts[1])
+        except ValueError:
+            return None
+        correct_ids = parts[2:]
+        if pick_count < 1 or not correct_ids:
+            return None
+        return {'mode': 'pick', 'pick_count': pick_count, 'correct_ids': correct_ids}
     if flag not in ('0', '1'):
-        # Legacy / bare id list: treat as ordered.
-        return True, parts
+        return {'mode': 'ordered', 'expected_ids': parts}
     ids = parts[1:]
     if not ids:
         return None
-    return flag == '1', ids
+    if flag == '1':
+        return {'mode': 'ordered', 'expected_ids': ids}
+    return {'mode': 'all', 'expected_ids': ids}
 
 
 @register_checker('proof_steps')
@@ -3184,20 +3319,22 @@ def check_proof_steps(correct_raw, user_answer):
     parsed = _parse_proof_steps_raw(correct_raw)
     if parsed is None:
         raise ValueError('invalid_correct_answer')
-    order_matters, expected_ids = parsed
+    mode = parsed['mode']
+    expected_ids = parsed.get('expected_ids') or parsed.get('correct_ids') or []
     normalized_correct = '|'.join(expected_ids)
 
     user_s = str(user_answer or '').strip()
     if not user_s:
+        empty_feedback = {
+            'ordered': 'Select the correct proof steps in order.',
+            'all': 'Select all correct statements.',
+            'pick': f"Select {parsed.get('pick_count', 0)} correct options.",
+        }
         return {
             'correct': False,
             'normalized_user': '',
             'normalized_correct': normalized_correct,
-            'feedback': (
-                'Select the correct proof steps in order.'
-                if order_matters
-                else 'Select all correct statements.'
-            ),
+            'feedback': empty_feedback.get(mode, 'Select your answer.'),
         }
 
     user_ids = [p.strip() for p in user_s.split('|') if p.strip()]
@@ -3206,19 +3343,29 @@ def check_proof_steps(correct_raw, user_answer):
             'correct': False,
             'normalized_user': '',
             'normalized_correct': normalized_correct,
-            'feedback': (
-                'Select the correct proof steps in order.'
-                if order_matters
-                else 'Select all correct statements.'
-            ),
+            'feedback': 'Select your answer.',
         }
 
-    if order_matters:
+    if mode == 'ordered':
         correct = user_ids == expected_ids
         feedback = (
             'Correct!'
             if correct
             else 'Not quite — check which steps belong and their order.'
+        )
+    elif mode == 'pick':
+        pick_count = parsed['pick_count']
+        correct_pool = set(parsed['correct_ids'])
+        user_set = set(user_ids)
+        correct = (
+            len(user_ids) == pick_count
+            and len(user_set) == pick_count
+            and user_set.issubset(correct_pool)
+        )
+        feedback = (
+            'Correct!'
+            if correct
+            else f'Not quite — select exactly {pick_count} correct options and leave out the rest.'
         )
     else:
         correct = set(user_ids) == set(expected_ids)

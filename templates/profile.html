@@ -263,7 +263,7 @@
                 <div class="profile-list-main">
                     <span>{{ item.topic_label }}</span>
                     <span class="profile-list-meta">
-                        {% if item.is_multipart %}
+                        {% if item.is_multipart or item.score_total %}
                         <span>{{ item.score }}/{{ item.total }}</span>
                         {% elif item.correct %}
                         <span style="color: var(--success);">✓ Correct</span>

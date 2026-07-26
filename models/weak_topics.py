@@ -25,6 +25,8 @@ def _empty_topic_stats():
         'quiz_best_pct': None,
         'mcq_count': 0,
         'mcq_correct': 0,
+        'mcq_score_sum': 0,
+        'mcq_total_sum': 0,
         'mcq_last_at': None,
         'last_practised': None,
     }
@@ -68,7 +70,7 @@ def _aggregate_topic_stats(conn, user_id, *, lookback_days=None):
             stats['last_practised'] = created_at
 
     mcq_sql = '''
-        SELECT level, subject, topic, correct, created_at
+        SELECT level, subject, topic, correct, created_at, score, score_total
         FROM generator_mcq_attempts
         WHERE user_id = ?
     '''
@@ -81,7 +83,15 @@ def _aggregate_topic_stats(conn, user_id, *, lookback_days=None):
         key = _topic_key(row['level'], row['subject'], row['topic'])
         stats = topics.setdefault(key, _empty_topic_stats())
         stats['mcq_count'] += 1
-        stats['mcq_correct'] += int(row['correct'] or 0)
+        score_total = row['score_total']
+        if score_total is not None and int(score_total) > 0:
+            stats['mcq_score_sum'] += int(row['score'] or 0)
+            stats['mcq_total_sum'] += int(score_total)
+            stats['mcq_correct'] += int(int(row['score'] or 0) == int(score_total))
+        else:
+            stats['mcq_score_sum'] += int(row['correct'] or 0)
+            stats['mcq_total_sum'] += 1
+            stats['mcq_correct'] += int(row['correct'] or 0)
         created_at = row['created_at']
         if not stats['mcq_last_at'] or created_at > stats['mcq_last_at']:
             stats['mcq_last_at'] = created_at
@@ -122,13 +132,14 @@ def _compute_weakness(stats):
                 if recent not in reasons:
                     reasons.append(recent)
 
-    if stats['mcq_count'] >= MIN_MCQ_ATTEMPTS:
-        mcq_accuracy_pct = 100.0 * stats['mcq_correct'] / stats['mcq_count']
+    if stats['mcq_count'] >= MIN_MCQ_ATTEMPTS and stats['mcq_total_sum']:
+        mcq_accuracy_pct = 100.0 * stats['mcq_score_sum'] / stats['mcq_total_sum']
         if mcq_accuracy_pct < WEAK_MCQ_PCT:
             weakness_score += (WEAK_MCQ_PCT - mcq_accuracy_pct) * 1.0
-            wrong = stats['mcq_count'] - stats['mcq_correct']
+            missed = stats['mcq_total_sum'] - stats['mcq_score_sum']
             reasons.append(
-                f'MCQ accuracy {mcq_accuracy_pct:.0f}% ({wrong} wrong of {stats["mcq_count"]})'
+                f'Practice score {stats["mcq_score_sum"]}/{stats["mcq_total_sum"]} '
+                f'({mcq_accuracy_pct:.0f}%)'
             )
 
     if not reasons:

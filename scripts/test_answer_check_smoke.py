@@ -160,6 +160,11 @@ from generators.gcse.cs_data_rep import (  # noqa: E402
     gcse_data_rep,
     gcse_data_rep_variants,
 )
+from generators.gcse.gcse_cs_db_sql_lesson import (  # noqa: E402
+    _db_problem_from_output,
+    gcse_db_sql,
+    gcse_db_sql_variants,
+)
 from generators.gcse.cs_algorithms import (  # noqa: E402
     _alg_problem_from_output,
     gcse_algorithms,
@@ -174,6 +179,16 @@ from generators.gcse.cs_computer_networks import (  # noqa: E402
     _net_problem_from_output,
     gcse_computer_networks,
     gcse_computer_networks_variants,
+)
+from generators.gcse.cs_cyber_security import (  # noqa: E402
+    _cy_problem_from_output,
+    gcse_cyber_security,
+    gcse_cyber_security_variants,
+)
+from generators.gcse.gcse_cs_ethical_lesson import (  # noqa: E402
+    _eth_problem_from_output,
+    gcse_ethical,
+    gcse_ethical_variants,
 )
 from generators.shared.answer_checkers import (  # noqa: E402
     check_answer,
@@ -197,6 +212,7 @@ from generators.shared.answer_checkers import (  # noqa: E402
     check_vector_combo,
     check_vector_pair,
     check_keyword,
+    check_text,
     check_number_estimate,
     check_standard_form,
     check_surd,
@@ -548,6 +564,37 @@ def test_checker_linear_equation_and_keyword_unit():
 
     neg = check_keyword('negative', 'Negative')
     assert neg['correct'] is True
+
+    text_ok = check_text('malicious|software', 'Malicious software damages systems')
+    assert text_ok['correct'] is True
+    assert text_ok['confidence'] == 'high'
+
+    av = check_text(
+        'scan|malware',
+        'Scans files and memory for known malware signatures and suspicious behaviour',
+    )
+    assert av['correct'] is True, av
+
+    av_synonym = check_text(
+        'scan|malware',
+        'Antivirus software detects viruses and other threats on the computer',
+    )
+    assert av_synonym['correct'] is True, av_synonym
+
+    energy_ok = check_text('energy|waste', 'High energy use and e-waste from old devices')
+    assert energy_ok['correct'] is True
+
+    text_partial = check_text('malicious|software', 'It is malicious')
+    assert text_partial['correct'] is False
+    assert text_partial['score'] == 1
+    assert text_partial['score_total'] == 2
+    assert text_partial['confidence'] == 'medium'
+
+    ram_ok = check_text('register|cpu', 'A CPU register is very fast storage')
+    assert ram_ok['correct'] is True
+
+    via_registry = check_answer('text', 'personal|data', 'Protects personal data')
+    assert via_registry['correct'] is True
 
 
 def test_checker_number_estimate_unit():
@@ -1262,6 +1309,73 @@ def test_check_proof_steps_order_and_set():
     assert unordered['correct'] is True
     assert check_proof_steps('0|c1|c2|c3', 'c1|c2')['correct'] is False
     assert check_proof_steps('0|c1|c2|c3', 'c1|c2|c3|d1')['correct'] is False
+
+    pick_two = check_proof_steps('pick|2|c1|c2|c3|c4|c5', 'c1|c3')
+    assert pick_two['correct'] is True
+    assert check_proof_steps('pick|2|c1|c2|c3|c4|c5', 'c1|c2|c3')['correct'] is False
+    assert check_proof_steps('pick|2|c1|c2|c3|c4|c5', 'c1|d1')['correct'] is False
+    assert check_proof_steps('pick|2|c1|c2|c3|c4|c5', 'c1')['correct'] is False
+
+
+def test_cy_gdpr_principles_pick_from_bank():
+    from generators.gcse.cs_cyber_security import _cy_d2_gdpr_principle, _cy_problem_from_output
+
+    out = _cy_d2_gdpr_principle()
+    assert len(out) == 5
+    problem = _cy_problem_from_output(out, 'difficult')
+    assert problem.get('answer_type') == 'proof_steps'
+    assert problem.get('answer_pick_count') == 2
+    assert problem.get('correct_answer_raw', '').startswith('pick|2|')
+    bank = problem.get('answer_step_bank') or []
+    assert len(bank) == 9
+    ids = {step['id'] for step in bank}
+    assert {'c1', 'c2', 'c3', 'c4', 'c5', 'd1', 'd2', 'd3', 'd4'}.issubset(ids)
+
+
+def test_cy_worm_vs_virus_pick_from_bank():
+    from generators.gcse.cs_cyber_security import _cy_d12_worm_vs_virus, _cy_problem_from_output
+
+    out = _cy_d12_worm_vs_virus()
+    assert len(out) == 5
+    problem = _cy_problem_from_output(out, 'difficult')
+    assert problem.get('answer_type') == 'proof_steps'
+    assert problem.get('answer_pick_count') == 2
+    assert problem.get('correct_answer_raw', '').startswith('pick|2|')
+    assert len(problem.get('answer_step_bank') or []) == 8
+
+
+def test_cy_multipart_data_protection_inline_fields():
+    from generators.gcse.cs_cyber_security import _cy_d14_multipart_data_protection, _cy_problem_from_output
+
+    out = _cy_d14_multipart_data_protection()
+    assert len(out) == 5
+    problem = _cy_problem_from_output(out, 'difficult')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_inline_sections') is True
+    assert problem.get('answer_field_types') == ['mcq', 'pick', 'mcq']
+    assert problem.get('answer_field_pick_counts') == [None, 2, None]
+    assert len(problem.get('answer_field_options') or []) == 3
+    pick_bank = (problem.get('answer_field_options') or [])[1]
+    assert len(pick_bank) == 6
+
+
+def test_cy_multipart_attack_scenario_inline_fields():
+    from generators.gcse.cs_cyber_security import _cy_d13_multipart_attack_scenario, _cy_problem_from_output
+
+    out = _cy_d13_multipart_attack_scenario()
+    assert len(out) == 5
+    problem = _cy_problem_from_output(out, 'difficult')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_inline_sections') is True
+    assert problem.get('answer_field_section_keys') == ['(a)', '(b)', '(c)']
+    assert problem.get('answer_field_types') == ['mcq', 'text', 'pick']
+    assert problem.get('answer_field_pick_counts') == [None, None, 3]
+    raw = problem.get('correct_answer_raw') or ''
+    assert '\x1e' in raw
+    parts = raw.split('\x1e')
+    assert len(parts) == 3
+    assert parts[1] == 'manipulating|people|trick'
+    assert parts[2].startswith('pick|3|')
 
 
 def test_check_algebraic_surd_binomial():
@@ -2344,8 +2458,6 @@ def test_ratio_proportion_check_api():
 DATA_REP_UNGRADED = (
     '_dr_i6_overflow',
     '_dr_i7_unicode_vs_ascii',
-    '_dr_d10_lossy_lossless_compare',
-    '_dr_d12_metadata_vs_payload',
 )
 
 
@@ -2366,6 +2478,42 @@ def test_checker_binary_hex_unit():
 
     via_registry = check_answer('hex', '0|2A', '2a')
     assert via_registry['correct'] is True
+
+
+def test_dr_lossy_lossless_pick_fields():
+    from generators.gcse.cs_data_rep import gcse_data_rep
+
+    problem = gcse_data_rep('difficult', 'practice', variant_name='_dr_d10_lossy_lossless_compare')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_field_types') == ['pick', 'pick']
+    assert problem.get('answer_field_pick_counts') == [1, 1]
+    assert problem.get('answer_labels') == ['Lossy advantage', 'Lossless advantage']
+    opts = problem.get('answer_field_options') or []
+    assert len(opts) == 2
+    assert len(opts[0]) == 6
+    assert len(opts[1]) == 6
+    parts = (problem.get('correct_answer_raw') or '').split('\x1e')
+    assert len(parts) == 2
+    assert parts[0].startswith('pick|1|')
+    assert parts[1].startswith('pick|1|')
+
+
+def test_dr_metadata_pick_fields():
+    from generators.gcse.cs_data_rep import gcse_data_rep
+
+    problem = gcse_data_rep('difficult', 'practice', variant_name='_dr_d12_metadata_vs_payload')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_field_types') == ['pick', 'pick']
+    assert problem.get('answer_field_pick_counts') == [1, 1]
+    assert problem.get('answer_labels') == ['Why metadata is useful', 'Privacy concern']
+    opts = problem.get('answer_field_options') or []
+    assert len(opts) == 2
+    assert len(opts[0]) == 6
+    assert len(opts[1]) == 6
+    parts = (problem.get('correct_answer_raw') or '').split('\x1e')
+    assert len(parts) == 2
+    assert parts[0].startswith('pick|1|')
+    assert parts[1].startswith('pick|1|')
 
 
 def test_data_rep_core_variants_are_graded():
@@ -2393,17 +2541,24 @@ def test_data_rep_core_variants_are_graded():
 
 def test_data_rep_multipart_number_systems():
     import generators.gcse.cs_data_rep as dr_mod
+    from generators.shared.answer_checkers import check_text
 
     problem = _dr_problem_from_output(
         dr_mod._dr_d13_multipart_number_systems(), 'difficult'
     )
     assert problem.get('answer_type') == 'number_fields'
-    assert len(problem.get('answer_labels') or []) == 2
+    assert problem.get('answer_inline_sections') is True
+    assert problem.get('answer_field_section_keys') == ['(a)', '(b)', '(c)']
+    assert len(problem.get('answer_labels') or []) == 3
+    assert problem.get('answer_field_types') == ['binary', 'hex', 'text']
     assert '\x1e' in problem['correct_answer_raw']
     parts = problem['correct_answer_raw'].split('\x1e')
-    assert len(parts) == 2
+    assert len(parts) == 3
     assert check_answer('binary', parts[0], parts[0].split('|', 1)[1])['correct'] is True
     assert check_answer('hex', parts[1], parts[1].split('|', 1)[1])['correct'] is True
+    assert parts[2].startswith('2@')
+    assert check_text(parts[2], 'hexadecimal is shorter and easier to read than binary')['correct'] is True
+    assert check_text(parts[2], 'one hex digit')['correct'] is False
 
 
 def test_data_rep_variant_queues_are_graded():
@@ -2463,6 +2618,104 @@ def test_data_rep_check_api():
         )
         assert r2.status_code == 200
         assert r2.get_json()['correct'] is True
+
+
+DB_SQL_UNGRADED = (
+)
+
+
+def test_db_sql_variants_are_graded():
+    import generators.gcse.gcse_cs_db_sql_lesson as db_mod
+
+    for pool in (db_mod._FOUNDATIONAL, db_mod._INTERMEDIATE, db_mod._DIFFICULT):
+        for fn in pool:
+            out = fn()
+            problem = _db_problem_from_output(out, 'intermediate')
+            if fn.__name__ in DB_SQL_UNGRADED:
+                assert len(out) == 4, fn.__name__
+                assert not problem.get('correct_answer_raw'), fn.__name__
+                continue
+            assert len(out) == 5, fn.__name__
+            if problem.get('options') and problem.get('correct_answer'):
+                continue
+            assert problem.get('answer_type') in (
+                'text', 'number_fields', 'proof_steps',
+            ), fn.__name__
+            assert problem.get('correct_answer_raw'), fn.__name__
+
+
+def test_db_sql_write_query_keyword_grading():
+    from generators.shared.answer_checkers import check_text
+
+    problem = gcse_db_sql('intermediate', 'practice', variant_name='_db_i2_where_example')
+    assert problem.get('answer_type') == 'text'
+    raw = problem.get('correct_answer_raw') or ''
+    assert check_text(raw, "SELECT Surname FROM Pupil WHERE YearGroup = 11")['correct'] is True
+
+    insert = gcse_db_sql('intermediate', 'practice', variant_name='_db_i4_insert')
+    assert check_text(
+        insert['correct_answer_raw'],
+        "INSERT INTO Pupil (PupilID, FirstName, YearGroup) VALUES (42, 'Ali', 10)",
+    )['correct'] is True
+
+
+def test_db_sql_multipart_query_writing():
+    from generators.shared.answer_checkers import check_proof_steps, check_text
+
+    problem = gcse_db_sql('difficult', 'practice', variant_name='_db_d13_multipart_query_writing')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_inline_sections') is True
+    assert problem.get('answer_field_types') == ['text', 'text', 'pick']
+    parts = (problem.get('correct_answer_raw') or '').split('\x1e')
+    assert len(parts) == 3
+    assert check_text(
+        parts[0],
+        "SELECT FirstName, Surname FROM Member WHERE Town = 'Leeds'",
+    )['correct'] is True
+    assert check_text(
+        parts[1],
+        "SELECT * FROM Member WHERE Age >= 18 ORDER BY Surname ASC",
+    )['correct'] is True
+    pick_ids = parts[2].split('|')[2:]
+    assert check_proof_steps(parts[2], '|'.join(pick_ids[:1]))['correct'] is True
+
+
+def test_db_sql_variant_queues_are_graded():
+    for difficulty in ('foundational', 'intermediate', 'difficult'):
+        variants = gcse_db_sql_variants(difficulty, 'practice')
+        assert variants, difficulty
+        for variant in variants:
+            if variant.__name__ in DB_SQL_UNGRADED:
+                continue
+            problem = gcse_db_sql(difficulty, 'practice', variant_name=variant.__name__)
+            graded = problem.get('correct_answer_raw') or (
+                problem.get('options') and problem.get('correct_answer')
+            )
+            assert graded, (difficulty, variant.__name__)
+
+
+def test_db_sql_check_api():
+    problem = gcse_db_sql('foundational', 'practice', variant_name='_db_i1_select_star')
+    assert problem.get('answer_type') == 'text'
+    raw = problem['correct_answer_raw']
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'cs',
+                'topic': 'db_sql',
+                'difficulty': 'foundational',
+                'correct_answer_raw': raw,
+                'answer_type': 'text',
+                'user_answer': 'SELECT * FROM Pupil',
+            },
+        )
+        assert r.status_code == 200
+        data = r.get_json()
+        assert data['ok'] is True
+        assert data['correct'] is True
 
 
 ALGORITHMS_UNGRADED = (
@@ -2560,17 +2813,13 @@ def test_algorithms_check_api():
 
 
 SYSTEMS_UNGRADED = (
-    '_cs_f1_cpu_alu', '_cs_f2_cpu_cu', '_cs_f3_ram_vs_rom', '_cs_f4_rom_use',
-    '_cs_f5_fde_order', '_cs_f6_register', '_cs_f7_os_definition',
-    '_cs_f8_input_device', '_cs_f9_ssd_hdd', '_cs_f10_embedded',
-    '_cs_i1_von_neumann', '_cs_i2_cache_purpose', '_cs_i3_virtual_memory',
-    '_cs_i4_os_functions', '_cs_i5_utility_software', '_cs_i6_storage_compare',
-    '_cs_i7_clock_cores', '_cs_i8_fetch_step', '_cs_i9_app_vs_system',
-    '_cs_i10_secondary_primary', '_cs_d3_embedded_constraints',
-    '_cs_d4_optical_storage', '_cs_d5_heat_sink', '_cs_d6_multitasking_os',
-    '_cs_d7_hdd_defrag', '_cs_d8_bios_role', '_cs_d9_address_bus',
-    '_cs_d10_open_source_os', '_cs_d11_control_bus', '_cs_d12_multi_core',
-    '_cs_d13_multipart_cpu_performance', '_cs_d14_multipart_memory',
+)
+
+CYBER_UNGRADED = (
+)
+
+ETHICAL_UNGRADED = (
+    '_eth_d3_cma_vs_ethical_hack',
 )
 
 NETWORKS_UNGRADED = (
@@ -2601,8 +2850,180 @@ def test_computer_systems_numeric_variants_are_graded():
                 assert not problem.get('correct_answer_raw'), fn.__name__
                 continue
             assert len(out) == 5, fn.__name__
-            assert problem.get('answer_type') == 'number', fn.__name__
+            if problem.get('options') and problem.get('correct_answer'):
+                continue
+            assert problem.get('answer_type') in ('number', 'text', 'keyword', 'number_fields', 'proof_steps'), fn.__name__
             assert problem.get('correct_answer_raw'), fn.__name__
+
+
+def test_cs_embedded_constraints_pick_from_bank():
+    from generators.gcse.cs_computer_systems import gcse_computer_systems
+
+    problem = gcse_computer_systems('difficult', 'practice', variant_name='_cs_d3_embedded_constraints')
+    assert problem.get('answer_type') == 'proof_steps'
+    assert problem.get('answer_pick_count') == 2
+    assert problem.get('correct_answer_raw', '').startswith('pick|2|')
+    assert len(problem.get('answer_step_bank') or []) == 8
+
+
+def test_cs_fde_trace_order_steps():
+    from generators.gcse.cs_computer_systems import gcse_computer_systems
+    from generators.shared.answer_checkers import check_proof_steps
+
+    problem = gcse_computer_systems('difficult', 'practice', variant_name='_cs_d1_fde_full_trace')
+    assert problem.get('answer_type') == 'proof_steps'
+    assert problem.get('answer_order_matters') is True
+    raw = problem.get('correct_answer_raw') or ''
+    assert raw.startswith('1|')
+    step_ids = raw.split('|')[1:]
+    assert len(step_ids) == 3
+    assert len(problem.get('answer_step_bank') or []) == 6
+    assert check_proof_steps(raw, '|'.join(step_ids))['correct'] is True
+    assert check_proof_steps(raw, '|'.join(reversed(step_ids)))['correct'] is False
+
+
+def test_cs_bios_role_order_steps():
+    from generators.gcse.cs_computer_systems import gcse_computer_systems
+    from generators.shared.answer_checkers import check_proof_steps
+
+    problem = gcse_computer_systems('difficult', 'practice', variant_name='_cs_d8_bios_role')
+    assert problem.get('answer_type') == 'proof_steps'
+    assert problem.get('answer_order_matters') is True
+    raw = problem.get('correct_answer_raw') or ''
+    assert raw.startswith('1|')
+    step_ids = raw.split('|')[1:]
+    assert len(step_ids) == 4
+    assert len(problem.get('answer_step_bank') or []) == 7
+    assert check_proof_steps(raw, '|'.join(step_ids))['correct'] is True
+
+
+def test_cs_multi_core_pick_from_bank():
+    from generators.gcse.cs_computer_systems import gcse_computer_systems
+
+    problem = gcse_computer_systems('difficult', 'practice', variant_name='_cs_d12_multi_core')
+    assert problem.get('answer_type') == 'proof_steps'
+    assert problem.get('answer_pick_count') == 2
+    assert problem.get('correct_answer_raw', '').startswith('pick|2|')
+    assert len(problem.get('answer_step_bank') or []) == 7
+
+
+def test_cs_multipart_cpu_performance_inline_fields():
+    from generators.gcse.cs_computer_systems import gcse_computer_systems
+    from generators.shared.answer_checkers import check_proof_steps
+
+    problem = gcse_computer_systems('difficult', 'practice', variant_name='_cs_d13_multipart_cpu_performance')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_inline_sections') is True
+    assert problem.get('answer_field_section_keys') == ['(a)', '(b)', '(c)']
+    assert problem.get('answer_field_types') == ['mcq', 'order', 'order']
+    parts = (problem.get('correct_answer_raw') or '').split('\x1e')
+    assert len(parts) == 3
+    assert parts[0] in ('A', 'B', 'C')
+    assert parts[1].startswith('1|')
+    assert parts[2].startswith('1|')
+    core_ids = parts[1].split('|')[1:]
+    cache_ids = parts[2].split('|')[1:]
+    assert len(core_ids) == 2
+    assert len(cache_ids) == 2
+    assert check_proof_steps(parts[1], '|'.join(core_ids))['correct'] is True
+    assert check_proof_steps(parts[1], '|'.join(reversed(core_ids)))['correct'] is False
+    assert check_proof_steps(parts[2], '|'.join(cache_ids))['correct'] is True
+    opts = problem.get('answer_field_options') or []
+    assert len(opts[0]) == 3
+    assert len(opts[1]) == 5
+    assert len(opts[2]) == 5
+
+
+def test_cs_open_source_os_text_keywords():
+    from generators.gcse.cs_computer_systems import gcse_computer_systems
+    from generators.shared.answer_checkers import check_text
+
+    problem = gcse_computer_systems('difficult', 'practice', variant_name='_cs_d10_open_source_os')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_field_types') == ['text', 'text']
+    parts = (problem.get('correct_answer_raw') or '').split('\x1e')
+    assert len(parts) == 2
+    assert parts[0].startswith('1@')
+    assert parts[1].startswith('1@')
+    assert check_text(parts[0], 'transparent')['correct'] is True
+    assert check_text(parts[0], 'free to modify the source code')['correct'] is True
+    assert check_text(parts[1], 'learning is difficult')['correct'] is True
+    assert check_text(parts[1], 'fewer drivers for some hardware')['correct'] is True
+
+
+def test_cs_d14_multipart_memory_inline_fields():
+    from generators.gcse.cs_computer_systems import gcse_computer_systems
+    from generators.shared.answer_checkers import check_proof_steps, check_text
+
+    problem = gcse_computer_systems('difficult', 'practice', variant_name='_cs_d14_multipart_memory')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_inline_sections') is True
+    assert problem.get('answer_field_types') == ['pick', 'text', 'text']
+    parts = (problem.get('correct_answer_raw') or '').split('\x1e')
+    assert len(parts) == 3
+    assert parts[0].startswith('pick|1|')
+    assert check_text(parts[1], 'secondary storage used when RAM is full')['correct'] is True
+    assert check_text(parts[2], 'slower than RAM causes thrashing')['correct'] is True
+    pick_ids = parts[0].split('|')[2:]
+    assert check_proof_steps(parts[0], '|'.join(pick_ids[:1]))['correct'] is True
+
+
+def test_cs_intermediate_pick_variants():
+    from generators.gcse.cs_computer_systems import gcse_computer_systems
+
+    for variant_name in (
+        '_cs_i1_von_neumann',
+        '_cs_i2_cache_purpose',
+        '_cs_i5_utility_software',
+        '_cs_i6_storage_compare',
+        '_cs_i7_clock_cores',
+        '_cs_i8_fetch_step',
+        '_cs_i9_app_vs_system',
+    ):
+        problem = gcse_computer_systems('intermediate', 'practice', variant_name=variant_name)
+        assert problem.get('answer_type') == 'proof_steps', variant_name
+        assert problem.get('correct_answer_raw', '').startswith('pick|'), variant_name
+
+
+def test_cs_difficult_pick_order_variants():
+    from generators.gcse.cs_computer_systems import gcse_computer_systems
+
+    pick_variants = (
+        '_cs_d3_embedded_constraints',
+        '_cs_d4_optical_storage',
+        '_cs_d7_hdd_defrag',
+        '_cs_d11_control_bus',
+        '_cs_d12_multi_core',
+    )
+    order_variants = (
+        '_cs_d6_multitasking_os',
+    )
+    for variant_name in pick_variants:
+        problem = gcse_computer_systems('difficult', 'practice', variant_name=variant_name)
+        assert problem.get('answer_type') == 'proof_steps', variant_name
+        assert problem.get('correct_answer_raw', '').startswith('pick|'), variant_name
+    for variant_name in order_variants:
+        problem = gcse_computer_systems('difficult', 'practice', variant_name=variant_name)
+        assert problem.get('answer_type') == 'proof_steps', variant_name
+        assert problem.get('correct_answer_raw', '').startswith('1|'), variant_name
+
+
+def test_cs_foundational_graded_variants():
+    from generators.gcse.cs_computer_systems import gcse_computer_systems
+    from generators.shared.answer_checkers import check_proof_steps
+
+    problem = gcse_computer_systems('foundational', 'practice', variant_name='_cs_f5_fde_order')
+    assert problem.get('answer_type') == 'proof_steps'
+    assert problem.get('answer_order_matters') is True
+    raw = problem.get('correct_answer_raw') or ''
+    step_ids = raw.split('|')[1:]
+    assert len(step_ids) == 3
+    assert check_proof_steps(raw, '|'.join(step_ids))['correct'] is True
+
+    problem = gcse_computer_systems('foundational', 'practice', variant_name='_cs_f10_embedded')
+    assert problem.get('answer_type') == 'proof_steps'
+    assert problem.get('answer_pick_count') == 1
+    assert problem.get('correct_answer_raw', '').startswith('pick|1|')
 
 
 def test_computer_networks_numeric_variants_are_graded():
@@ -2617,8 +3038,508 @@ def test_computer_networks_numeric_variants_are_graded():
                 assert not problem.get('correct_answer_raw'), fn.__name__
                 continue
             assert len(out) == 5, fn.__name__
-            assert problem.get('answer_type') == 'number', fn.__name__
+            assert problem.get('answer_type') in ('number', 'text', 'keyword', 'number_fields', 'proof_steps'), fn.__name__
             assert problem.get('correct_answer_raw'), fn.__name__
+
+
+def test_cyber_security_definition_variants_are_graded():
+    import generators.gcse.cs_cyber_security as cy_mod
+
+    for pool in (cy_mod._FOUNDATIONAL, cy_mod._INTERMEDIATE, cy_mod._DIFFICULT):
+        for fn in pool:
+            out = fn()
+            problem = _cy_problem_from_output(out, 'intermediate')
+            if fn.__name__ in CYBER_UNGRADED:
+                assert len(out) == 4, fn.__name__
+                assert not problem.get('correct_answer_raw'), fn.__name__
+                continue
+            assert len(out) == 5, fn.__name__
+            assert problem.get('answer_type') in ('text', 'keyword', 'number_fields', 'proof_steps'), fn.__name__
+            assert problem.get('correct_answer_raw'), fn.__name__
+
+
+def test_ethical_definition_variants_are_graded():
+    import generators.gcse.gcse_cs_ethical_lesson as eth_mod
+
+    for pool in (eth_mod._FOUNDATIONAL, eth_mod._INTERMEDIATE, eth_mod._DIFFICULT):
+        for fn in pool:
+            out = fn()
+            problem = _eth_problem_from_output(out, 'intermediate')
+            if fn.__name__ in ETHICAL_UNGRADED:
+                assert len(out) == 4, fn.__name__
+                assert not problem.get('correct_answer_raw'), fn.__name__
+                continue
+            assert len(out) == 5, fn.__name__
+            assert problem.get('answer_type') in ('text', 'keyword', 'number_fields', 'proof_steps'), fn.__name__
+            assert problem.get('correct_answer_raw'), fn.__name__
+
+
+def test_cs_definition_topics_check_api():
+    malware = gcse_cyber_security('foundational', 'practice', variant_name='_cy_f1_malware_virus')
+    gdpr = gcse_ethical('foundational', 'practice', variant_name='_eth_f2_gdpr')
+    ram = gcse_computer_systems('foundational', 'practice', variant_name='_cs_f3_ram_vs_rom')
+
+    with app.test_client() as client:
+        register(client, 'text42@example.com', 'text42user')
+        for topic, problem in (
+            ('cyber_security', malware),
+            ('ethical', gdpr),
+            ('computer_systems', ram),
+        ):
+            r = client.post(
+                '/api/v1/problems/check',
+                json={
+                    'user_answer': 'placeholder',
+                    'correct_answer_raw': problem['correct_answer_raw'],
+                    'answer_type': problem['answer_type'],
+                    'level': 'gcse',
+                    'subject': 'cs',
+                    'topic': topic,
+                    'difficulty': 'foundational',
+                },
+                headers={'Accept': 'application/json'},
+            )
+            assert r.status_code == 200, (topic, r.data)
+
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'user_answer': 'Malicious software that damages computers',
+                'correct_answer_raw': malware['correct_answer_raw'],
+                'answer_type': malware['answer_type'],
+                'level': 'gcse',
+                'subject': 'cs',
+                'topic': 'cyber_security',
+                'difficulty': 'foundational',
+            },
+            headers={'Accept': 'application/json'},
+        )
+        assert r.get_json()['correct'] is True
+
+
+def test_cy_practice_definition_mcq_variants():
+    for variant_name in (
+        '_cy_f3_firewall',
+        '_cy_f7_ransomware',
+        '_cy_f10_trojan',
+        '_cy_i1_dos',
+        '_cy_i4_symmetric',
+        '_cy_i6_sql_injection',
+        '_cy_d1_pen_test',
+        '_cy_d10_risk_assessment',
+    ):
+        diff = 'foundational'
+        if variant_name.startswith('_cy_i'):
+            diff = 'intermediate'
+        elif variant_name.startswith('_cy_d'):
+            diff = 'difficult'
+        problem = gcse_cyber_security(diff, 'practice', variant_name=variant_name)
+        assert problem.get('options'), variant_name
+        assert problem.get('correct_answer') in 'ABCD', variant_name
+        assert len(problem['options']) == 4, variant_name
+        assert not problem.get('correct_answer_raw'), variant_name
+
+
+def test_cy_backup_match_mcq():
+    problem = gcse_cyber_security('intermediate', 'practice', variant_name='_cy_i10_backup')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_field_types') == ['mcq', 'mcq']
+    assert problem.get('answer_labels') == ['Full backup', 'Incremental backup']
+    opts = problem.get('answer_field_options') or []
+    assert len(opts) == 2 and all(len(row) == 3 for row in opts)
+
+
+def test_eth_multipart_legislation_inline_fields():
+    from generators.gcse.gcse_cs_ethical_lesson import gcse_ethical
+
+    problem = gcse_ethical('difficult', 'practice', variant_name='_eth_d14_multipart_legislation')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_inline_sections') is True
+    assert problem.get('answer_field_section_keys') == ['(a)', '(b)', '(c)']
+    assert problem.get('answer_field_types') == ['mcq', 'mcq', 'pick', 'pick']
+    assert problem.get('answer_field_pick_counts') == [None, None, 1, 1]
+    law_opts = (problem.get('answer_field_options') or [])[0]
+    assert 'Computer Misuse Act 1990' in law_opts
+
+
+def test_eth_wearable_select_all_impacts():
+    from generators.gcse.gcse_cs_ethical_lesson import gcse_ethical
+    from generators.shared.answer_checkers import check_proof_steps
+
+    problem = gcse_ethical('difficult', 'practice', variant_name='_eth_d2_wearable_implant')
+    assert problem.get('answer_type') == 'proof_steps'
+    assert problem.get('answer_order_matters') is False
+    assert not problem.get('answer_pick_count')
+    raw = problem.get('correct_answer_raw') or ''
+    assert raw.startswith('0|')
+    assert len(problem.get('answer_step_bank') or []) == 8
+    correct_ids = raw.split('|')[1:]
+    assert check_proof_steps(raw, '|'.join(correct_ids))['correct'] is True
+    assert check_proof_steps(raw, '|'.join(correct_ids[:2]))['correct'] is False
+
+
+def test_eth_privacy_debate_pick_fields():
+    from generators.gcse.gcse_cs_ethical_lesson import gcse_ethical
+
+    problem = gcse_ethical('difficult', 'practice', variant_name='_eth_d1_privacy_debate')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_field_types') == ['pick', 'pick']
+    assert problem.get('answer_labels') == ['Citizens value', 'Governments argue']
+    assert problem.get('answer_field_pick_counts') == [1, 1]
+    opts = problem.get('answer_field_options') or []
+    assert len(opts[0]) == 7
+    assert len(opts[1]) == 6
+
+
+def test_eth_mixed_scenario_pick_from_bank():
+    from generators.gcse.gcse_cs_ethical_lesson import gcse_ethical
+
+    problem = gcse_ethical('difficult', 'practice', variant_name='_eth_d10_mixed_scenario')
+    assert problem.get('answer_type') == 'proof_steps'
+    assert problem.get('answer_pick_count') == 3
+    assert problem.get('correct_answer_raw', '').startswith('pick|3|')
+    bank = problem.get('answer_step_bank') or []
+    assert len(bank) == 12
+    assert all(' — ' in step['text'] for step in bank)
+
+
+def test_eth_job_automation_pick_fields():
+    from generators.gcse.gcse_cs_ethical_lesson import gcse_ethical
+
+    problem = gcse_ethical('difficult', 'practice', variant_name='_eth_d5_job_automation')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_field_types') == ['pick', 'pick']
+    assert problem.get('answer_field_pick_counts') == [1, 1]
+    assert problem.get('answer_labels') == ['Positive impact', 'Negative impact']
+    opts = problem.get('answer_field_options') or []
+    assert len(opts) == 2
+    assert len(opts[0]) == 6
+    assert len(opts[1]) == 6
+    parts = (problem.get('correct_answer_raw') or '').split('\x1e')
+    assert len(parts) == 2
+    assert parts[0].startswith('pick|1|')
+    assert parts[1].startswith('pick|1|')
+
+
+def test_eth_implant_ethics_pick_from_bank():
+    from generators.gcse.gcse_cs_ethical_lesson import gcse_ethical
+
+    problem = gcse_ethical('difficult', 'practice', variant_name='_eth_d8_implant_ethics')
+    assert problem.get('answer_type') == 'proof_steps'
+    assert problem.get('answer_pick_count') == 1
+    assert problem.get('correct_answer_raw', '').startswith('pick|1|')
+    assert len(problem.get('answer_step_bank') or []) == 10
+
+
+def test_split_question_sections_html_markers():
+    from app import split_question_sections
+
+    q = (
+        "A technology company releases a new smartphone every year.<br><br>"
+        "<strong>a)</strong> Describe one impact. [2]<br>"
+        "<strong>b)</strong> Describe one problem. [2]<br>"
+        "<strong>c)</strong> Suggest two ways. [2]"
+    )
+    parts = split_question_sections(q, ['(a)', '(b)', '(c)'])
+    assert parts['intro'].startswith('A technology company')
+    assert len(parts['sections']) == 3
+    assert parts['sections'][0]['text'].startswith('<strong>a)</strong>')
+    assert parts['sections'][1]['text'].startswith('<strong>b)</strong>')
+    assert parts['sections'][2]['text'].startswith('<strong>c)</strong>')
+
+
+def test_eth_multipart_smartphone_lifecycle_inline_fields():
+    from generators.gcse.gcse_cs_ethical_lesson import _eth_d13_multipart_smartphone_lifecycle, _eth_problem_from_output
+
+    out = _eth_d13_multipart_smartphone_lifecycle()
+    assert len(out) == 5
+    problem = _eth_problem_from_output(out, 'difficult')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_inline_sections') is True
+    assert problem.get('answer_field_section_keys') == ['(a)', '(b)', '(c)']
+    assert problem.get('answer_field_types') == ['text', 'text', 'pick']
+    assert problem.get('answer_field_pick_counts') == [None, None, 2]
+    raw = problem.get('correct_answer_raw') or ''
+    assert '\x1e' in raw
+    parts = raw.split('\x1e')
+    assert len(parts) == 3
+    assert parts[0].startswith('2@')
+    assert parts[1].startswith('2@')
+    assert parts[2].startswith('pick|2|')
+    assert len((problem.get('answer_field_options') or [])[2]) == 8
+
+
+def test_eth_right_to_erasure_pick_fields():
+    from generators.gcse.gcse_cs_ethical_lesson import gcse_ethical
+    from generators.shared.answer_checkers import check_proof_steps
+
+    problem = gcse_ethical('difficult', 'practice', variant_name='_eth_d11_right_to_erasure')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_field_types') == ['pick', 'pick']
+    assert problem.get('answer_field_pick_counts') == [1, None]
+    assert problem.get('answer_inline_sections') is True
+    opts = problem.get('answer_field_options') or []
+    assert len(opts) == 2
+    assert len(opts[0]) == 6
+    assert len(opts[1]) == 8
+    parts = (problem.get('correct_answer_raw') or '').split('\x1e')
+    assert len(parts) == 2
+    assert parts[0].startswith('pick|1|')
+    assert parts[1].startswith('0|')
+    retention_ids = parts[1].split('|')[1:]
+    assert check_proof_steps(parts[1], '|'.join(retention_ids))['correct'] is True
+    assert check_proof_steps(parts[1], '|'.join(retention_ids[:2]))['correct'] is False
+
+
+def test_eth_exam_structure_order_steps():
+    from generators.gcse.gcse_cs_ethical_lesson import gcse_ethical
+    from generators.shared.answer_checkers import check_proof_steps
+
+    problem = gcse_ethical('difficult', 'practice', variant_name='_eth_d9_exam_structure')
+    assert problem.get('answer_type') == 'proof_steps'
+    assert problem.get('answer_order_matters') is True
+    raw = problem.get('correct_answer_raw') or ''
+    assert raw.startswith('1|')
+    step_ids = raw.split('|')[1:]
+    assert len(step_ids) == 3
+    assert len(problem.get('answer_step_bank') or []) == 7
+    assert check_proof_steps(raw, '|'.join(step_ids))['correct'] is True
+    assert check_proof_steps(raw, '|'.join(reversed(step_ids)))['correct'] is False
+
+
+def test_eth_breach_response_order_fields():
+    from generators.gcse.gcse_cs_ethical_lesson import gcse_ethical
+    from generators.shared.answer_checkers import check_proof_steps
+
+    problem = gcse_ethical('difficult', 'practice', variant_name='_eth_d7_breach_response')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_field_types') == ['order', 'order']
+    parts = (problem.get('correct_answer_raw') or '').split('\x1e')
+    assert len(parts) == 2
+    assert parts[0].startswith('1|')
+    assert parts[1].startswith('1|')
+    legal_ids = parts[0].split('|')[1:]
+    assert check_proof_steps(parts[0], '|'.join(legal_ids))['correct'] is True
+    assert check_proof_steps(parts[0], '|'.join(reversed(legal_ids)))['correct'] is False
+
+
+def test_eth_patent_trademark_match_mcq():
+    from generators.gcse.gcse_cs_ethical_lesson import gcse_ethical
+
+    problem = gcse_ethical('intermediate', 'practice', variant_name='_eth_i9_patent_trademark')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_field_types') == ['mcq', 'mcq']
+    assert problem.get('answer_labels') == ['Patent', 'Trademark']
+    opts = problem.get('answer_field_options') or []
+    assert len(opts) == 2 and all(len(row) == 3 for row in opts)
+
+
+def test_eth_ai_bias_definition_and_example_fields():
+    from generators.gcse.gcse_cs_ethical_lesson import gcse_ethical
+
+    problem = gcse_ethical('intermediate', 'practice', variant_name='_eth_i7_ai_bias')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_inline_sections') is True
+    assert problem.get('answer_field_section_keys') == ['(a)', '(b)']
+    assert problem.get('answer_field_types') == ['text', 'pick']
+    assert problem.get('answer_field_pick_counts') == [None, 1]
+    parts = (problem.get('correct_answer_raw') or '').split('\x1e')
+    assert len(parts) == 2
+    assert 'unfair' in parts[0]
+    assert parts[1].startswith('pick|1|')
+    assert len((problem.get('answer_field_options') or [])[1]) == 6
+
+
+def test_eth_licence_compare_select_all_fields():
+    from generators.gcse.gcse_cs_ethical_lesson import gcse_ethical
+    from generators.shared.answer_checkers import check_proof_steps
+
+    problem = gcse_ethical('difficult', 'practice', variant_name='_eth_d6_licence_compare')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_field_types') == ['pick', 'pick']
+    assert problem.get('answer_field_pick_counts') == [None, None]
+    opts = problem.get('answer_field_options') or []
+    assert len(opts) == 2
+    assert len(opts[0]) == 8
+    assert len(opts[1]) == 9
+    parts = (problem.get('correct_answer_raw') or '').split('\x1e')
+    assert len(parts) == 2
+    assert parts[0].startswith('0|')
+    assert parts[1].startswith('0|')
+    os_ids = parts[0].split('|')[1:]
+    prop_ids = parts[1].split('|')[1:]
+    assert check_proof_steps(parts[0], '|'.join(os_ids))['correct'] is True
+    assert check_proof_steps(parts[1], '|'.join(prop_ids))['correct'] is True
+    assert check_proof_steps(parts[0], '|'.join(os_ids[:2]))['correct'] is False
+
+
+def test_eth_surveillance_pick_fields():
+    from generators.gcse.gcse_cs_ethical_lesson import gcse_ethical
+
+    problem = gcse_ethical('intermediate', 'practice', variant_name='_eth_i6_surveillance')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_field_types') == ['pick', 'pick']
+    assert problem.get('answer_field_pick_counts') == [1, 1]
+    opts = problem.get('answer_field_options') or []
+    assert len(opts) == 2
+    assert len(opts[0]) == 6
+    assert len(opts[1]) == 7
+    parts = (problem.get('correct_answer_raw') or '').split('\x1e')
+    assert len(parts) == 2
+    assert parts[0].startswith('pick|1|')
+    assert parts[1].startswith('pick|1|')
+
+
+def test_eth_cma_offences_pick_from_bank():
+    from generators.gcse.gcse_cs_ethical_lesson import gcse_ethical
+
+    problem = gcse_ethical('intermediate', 'practice', variant_name='_eth_i2_cma_offences')
+    assert problem.get('answer_type') == 'proof_steps'
+    assert problem.get('answer_pick_count') == 2
+    assert problem.get('correct_answer_raw', '').startswith('pick|2|')
+    assert len(problem.get('answer_step_bank') or []) == 7
+
+
+def test_eth_planned_obsolescence_match_mcq():
+    from generators.gcse.gcse_cs_ethical_lesson import gcse_ethical
+
+    problem = gcse_ethical('intermediate', 'practice', variant_name='_eth_i4_planned_obsolescence')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_field_types') == ['mcq', 'mcq']
+    assert problem.get('answer_labels') == ['Planned obsolescence', 'Environmental concern']
+    opts = problem.get('answer_field_options') or []
+    assert len(opts) == 2 and all(len(row) == 3 for row in opts)
+
+
+def test_eth_gdpr_principles_pick_from_bank():
+    from generators.gcse.gcse_cs_ethical_lesson import gcse_ethical
+
+    problem = gcse_ethical('intermediate', 'practice', variant_name='_eth_i1_gdpr_principles')
+    assert problem.get('answer_type') == 'proof_steps'
+    assert problem.get('answer_pick_count') == 3
+    assert problem.get('correct_answer_raw', '').startswith('pick|3|')
+    assert len(problem.get('answer_step_bank') or []) == 11
+
+
+def test_eth_definition_mcq_variants():
+    from generators.gcse.gcse_cs_ethical_lesson import gcse_ethical
+
+    for variant_name in ('_eth_f3_copyright', '_eth_f5_open_source', '_eth_i3_copyright_example'):
+        problem = gcse_ethical('foundational', 'practice', variant_name=variant_name)
+        if variant_name.startswith('_eth_i'):
+            problem = gcse_ethical('intermediate', 'practice', variant_name=variant_name)
+        assert problem.get('options'), variant_name
+        assert problem.get('correct_answer') in 'ABCD', variant_name
+        assert len(problem['options']) == 4, variant_name
+        assert not problem.get('correct_answer_raw'), variant_name
+
+
+def test_eth_ethical_vs_legal_match_mcq():
+    from generators.gcse.gcse_cs_ethical_lesson import gcse_ethical
+
+    problem = gcse_ethical('foundational', 'practice', variant_name='_eth_f10_ethical_vs_legal')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_field_types') == ['mcq', 'mcq']
+    assert problem.get('answer_labels') == ['Ethical', 'Legal']
+    opts = problem.get('answer_field_options') or []
+    assert len(opts) == 2 and all(len(row) == 3 for row in opts)
+    raw = problem.get('correct_answer_raw') or ''
+    assert '\x1e' in raw
+
+
+def test_cy_auth_vs_authz_match_mcq():
+    problem = gcse_cyber_security('intermediate', 'practice', variant_name='_cy_i7_auth_vs_authz')
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_field_types') == ['mcq', 'mcq']
+    opts = problem.get('answer_field_options') or []
+    assert len(opts) == 2
+    assert all(len(row) == 3 for row in opts)
+    assert 'Authentication' in (problem.get('answer_labels') or [])
+    raw = problem['correct_answer_raw']
+    assert '\x1e' in raw
+    parts = raw.split('\x1e')
+    assert len(parts) == 2
+    assert all(p in 'ABC' for p in parts)
+
+
+def test_cs_text_partial_score_recorded():
+    import uuid
+
+    from models.user import User, normalize_email
+    from models.user_data import list_generator_mcq_attempts
+    from app import get_db
+
+    email = f'pt_{uuid.uuid4().hex[:8]}@example.com'
+    handle = f'pt{uuid.uuid4().hex[:6]}'
+    av = gcse_cyber_security('foundational', 'practice', variant_name='_cy_f1_malware_virus')
+    with app.test_client() as client:
+        register(client, email, handle)
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'user_answer': 'Malicious code damages systems',
+                'correct_answer_raw': av['correct_answer_raw'],
+                'answer_type': av['answer_type'],
+                'level': 'gcse',
+                'subject': 'cs',
+                'topic': 'cyber_security',
+                'difficulty': 'foundational',
+            },
+            headers={'Accept': 'application/json'},
+        )
+        data = r.get_json()
+        assert data['correct'] is False
+        assert data['score'] == 1
+        assert data['score_total'] == 2
+
+        with get_db() as conn:
+            user = User.get_by_email(conn, normalize_email(email))
+            attempts = list_generator_mcq_attempts(conn, user.id, limit=1)
+            assert attempts
+            latest = attempts[0]
+            assert latest['score'] == 1
+            assert latest['score_total'] == 2
+            assert latest['correct'] == 0
+
+
+def test_cs_text_problems_expose_grading_keywords():
+    av = gcse_cyber_security('foundational', 'practice', variant_name='_cy_f4_antivirus')
+    assert av.get('answer_type') == 'text'
+    assert av.get('answer_text_keywords')
+
+    phys = gcse_cyber_security('foundational', 'practice', variant_name='_cy_f8_physical_security')
+    assert phys.get('answer_text_required') == 2
+    assert len(phys.get('answer_text_keywords') or []) >= 5
+    assert phys['correct_answer_raw'].startswith('2@')
+
+    visitor = check_text(phys['correct_answer_raw'], 'visitor log and cable locks')
+    assert visitor['correct'] is True, visitor
+    assert visitor['score'] == 2
+
+    one_measure = check_text(phys['correct_answer_raw'], 'we keep a visitor log')
+    assert one_measure['correct'] is False
+    assert one_measure['score'] == 1
+    assert one_measure['score_total'] == 2
+
+    bio = gcse_cyber_security('difficult', 'practice', variant_name='_cy_d4_bio_vs_password')
+    assert bio.get('answer_field_hints')
+    assert any('Advantage' in hint for hint in bio['answer_field_hints'])
+
+
+def test_cs_definition_variant_queues_are_graded():
+    for difficulty in ('foundational', 'intermediate', 'difficult'):
+        for variants, ungraded, gen in (
+            (gcse_cyber_security_variants, CYBER_UNGRADED, gcse_cyber_security),
+            (gcse_ethical_variants, ETHICAL_UNGRADED, gcse_ethical),
+        ):
+            pool = variants(difficulty, 'practice')
+            assert pool, difficulty
+            for variant in pool:
+                if variant.__name__ in ungraded:
+                    continue
+                problem = gen(difficulty, 'practice', variant_name=variant.__name__)
+                assert problem.get('correct_answer_raw'), (difficulty, variant.__name__)
+                assert problem.get('answer_type') in ('text', 'keyword', 'number_fields', 'proof_steps'), variant.__name__
 
 
 def test_computer_systems_networks_variant_queues():
@@ -6888,14 +7809,63 @@ def main():
     test_ratio_proportion_check_api()
     test_checker_binary_hex_unit()
     test_data_rep_core_variants_are_graded()
+    test_dr_lossy_lossless_pick_fields()
+    test_dr_metadata_pick_fields()
     test_data_rep_multipart_number_systems()
     test_data_rep_variant_queues_are_graded()
     test_data_rep_check_api()
+    test_db_sql_variants_are_graded()
+    test_db_sql_write_query_keyword_grading()
+    test_db_sql_multipart_query_writing()
+    test_db_sql_variant_queues_are_graded()
+    test_db_sql_check_api()
     test_algorithms_trace_variants_are_graded()
     test_algorithms_multipart_numeric_fields()
     test_algorithms_variant_queues_are_graded()
     test_algorithms_check_api()
     test_computer_systems_numeric_variants_are_graded()
+    test_cs_embedded_constraints_pick_from_bank()
+    test_cs_fde_trace_order_steps()
+    test_cs_bios_role_order_steps()
+    test_cs_multi_core_pick_from_bank()
+    test_cs_multipart_cpu_performance_inline_fields()
+    test_cs_open_source_os_text_keywords()
+    test_cs_d14_multipart_memory_inline_fields()
+    test_cs_intermediate_pick_variants()
+    test_cs_difficult_pick_order_variants()
+    test_cs_foundational_graded_variants()
+    test_cyber_security_definition_variants_are_graded()
+    test_ethical_definition_variants_are_graded()
+    test_cs_definition_topics_check_api()
+    test_cy_practice_definition_mcq_variants()
+    test_cy_auth_vs_authz_match_mcq()
+    test_eth_ethical_vs_legal_match_mcq()
+    test_eth_gdpr_principles_pick_from_bank()
+    test_eth_cma_offences_pick_from_bank()
+    test_eth_surveillance_pick_fields()
+    test_eth_job_automation_pick_fields()
+    test_eth_implant_ethics_pick_from_bank()
+    test_eth_licence_compare_select_all_fields()
+    test_eth_ai_bias_definition_and_example_fields()
+    test_eth_patent_trademark_match_mcq()
+    test_eth_breach_response_order_fields()
+    test_eth_exam_structure_order_steps()
+    test_eth_right_to_erasure_pick_fields()
+    test_eth_mixed_scenario_pick_from_bank()
+    test_eth_privacy_debate_pick_fields()
+    test_eth_wearable_select_all_impacts()
+    test_eth_multipart_legislation_inline_fields()
+    test_eth_multipart_smartphone_lifecycle_inline_fields()
+    test_eth_planned_obsolescence_match_mcq()
+    test_eth_definition_mcq_variants()
+    test_cy_gdpr_principles_pick_from_bank()
+    test_cy_worm_vs_virus_pick_from_bank()
+    test_cy_multipart_attack_scenario_inline_fields()
+    test_cy_multipart_data_protection_inline_fields()
+    test_cy_backup_match_mcq()
+    test_cs_text_partial_score_recorded()
+    test_cs_text_problems_expose_grading_keywords()
+    test_cs_definition_variant_queues_are_graded()
     test_computer_networks_numeric_variants_are_graded()
     test_computer_systems_networks_variant_queues()
     test_computer_systems_networks_check_api()

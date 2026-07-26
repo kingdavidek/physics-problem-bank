@@ -1,0 +1,19 @@
+{% if problem.answer_text_keywords %}
+<p class="answer-grading-hint">
+  {% if problem.answer_text_required and problem.answer_text_keywords|length > problem.answer_text_required %}
+  <strong>To get full marks, mention any {{ problem.answer_text_required }} of:</strong>
+  {% else %}
+  <strong>To get this marked correct, mention:</strong>
+  {% endif %}
+  {% for kw in problem.answer_text_keywords %}
+  <span class="answer-keyword-chip">{{ kw }}</span>{% if not loop.last %}, {% endif %}
+  {% endfor %}
+</p>
+{% elif problem.answer_field_hints %}
+<p class="answer-grading-hint">
+  <strong>Key ideas we look for:</strong>
+  {% for hint in problem.answer_field_hints %}
+  <span class="answer-keyword-chip">{{ hint }}</span>{% if not loop.last %}; {% endif %}
+  {% endfor %}
+</p>
+{% endif %}

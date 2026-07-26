@@ -321,9 +321,17 @@
     var correct = checked && inputs.length > 0 && inputs.every(function (input) {
       return input.classList.contains('is-correct');
     });
+    var partial = checked && !correct && inputs.some(function (input) {
+      return input.classList.contains('is-partial');
+    });
+    var score = block.dataset.textScore;
+    var scoreTotal = block.dataset.textScoreTotal;
     return {
       checked: checked,
       correct: checked ? correct : null,
+      partial: partial,
+      score: score !== undefined && score !== '' ? parseInt(score, 10) : null,
+      scoreTotal: scoreTotal !== undefined && scoreTotal !== '' ? parseInt(scoreTotal, 10) : null,
       userAnswer: readFreeResponseUserAnswer(block),
     };
   }
@@ -348,6 +356,8 @@
       userAnswer: frState.userAnswer,
       checked: frState.checked,
       correct: frState.correct,
+      score: frState.score,
+      scoreTotal: frState.scoreTotal,
     };
   }
 
@@ -359,11 +369,15 @@
       var userEl = document.getElementById('qt-user-answer');
       var checkedEl = document.getElementById('qt-checked');
       var correctEl = document.getElementById('qt-correct');
+      var scoreEl = document.getElementById('qt-score');
+      var scoreTotalEl = document.getElementById('qt-score-total');
       if (userEl) userEl.value = state.userAnswer || '';
       if (checkedEl) checkedEl.value = state.checked ? '1' : '0';
       if (correctEl) {
         correctEl.value = state.correct === true ? '1' : (state.correct === false ? '0' : '');
       }
+      if (scoreEl) scoreEl.value = state.score != null ? String(state.score) : '';
+      if (scoreTotalEl) scoreTotalEl.value = state.scoreTotal != null ? String(state.scoreTotal) : '';
     });
   }
 
@@ -486,9 +500,22 @@
     return String(value || '').replace(/\s+/g, '').toLowerCase();
   }
 
+  function isCoachingAnswerHint(hint) {
+    var h = String(hint || '').toLowerCase();
+    if (!h) return false;
+    return (
+      h.indexOf('mention') >= 0 ||
+      h.indexOf('key ideas') >= 0 ||
+      h.indexOf('your own words') >= 0 ||
+      h.indexOf('below count') >= 0 ||
+      h.indexOf('any of the') >= 0 ||
+      h.indexOf('choose the correct description') >= 0
+    );
+  }
+
   function freeResponseFieldPlaceholder(fieldType, formatHint) {
-    if (formatHint) return formatHint;
-    if (fieldType === 'keyword') return 'e.g. yes or no';
+    if (formatHint && !isCoachingAnswerHint(formatHint)) return formatHint;
+    if (fieldType === 'keyword' || fieldType === 'text') return 'Enter your answer';
     if (fieldType === 'linear_equation') return 'e.g. y = 2x + 3';
     if (fieldType === 'two_var_equation') return 'e.g. 10c + 11t = 53';
     if (fieldType === 'linear_inequality') return 'e.g. m < 40';
@@ -505,7 +532,8 @@
   }
 
   function freeResponsePlaceholder(answerType, formatHint) {
-    if (formatHint) return formatHint;
+    if (formatHint && !isCoachingAnswerHint(formatHint)) return formatHint;
+    if (answerType === 'text' || answerType === 'keyword') return 'Enter your answer';
     if (answerType === 'fraction') return 'e.g. 3/4';
     if (answerType === 'linear') return 'e.g. x = 3';
     if (answerType === 'quadratic_roots') return 'e.g. 3, -2 or -3+√14, -3-√14';
@@ -573,8 +601,21 @@
 
   function freeResponseWrongFeedback(block, data) {
     var base = (data && data.feedback) || 'Not quite \u2014 try again.';
+    if (data && data.score_total != null && data.score > 0 && data.score < data.score_total) {
+      base = data.feedback || (data.score + '/' + data.score_total + ' key ideas found.');
+    }
     var wrongHint = block.getAttribute('data-wrong-hint') || '';
     return wrongHint ? (base + ' ' + wrongHint) : base;
+  }
+
+  function isTextPartialScore(data) {
+    return Boolean(
+      data
+      && data.score_total != null
+      && data.score != null
+      && data.score > 0
+      && data.score < data.score_total
+    );
   }
 
   function freeResponseInputMode(answerType, formatHint) {
@@ -683,6 +724,11 @@
       block.setAttribute('data-field-options', JSON.stringify(problem.answer_field_options));
     } else {
       block.setAttribute('data-field-options', '[]');
+    }
+    if (problem.answer_field_pick_counts && problem.answer_field_pick_counts.length) {
+      block.setAttribute('data-field-pick-counts', JSON.stringify(problem.answer_field_pick_counts));
+    } else {
+      block.removeAttribute('data-field-pick-counts');
     }
     if (problem.answer_field_row_sizes && problem.answer_field_row_sizes.length) {
       block.setAttribute('data-field-row-sizes', JSON.stringify(problem.answer_field_row_sizes));
@@ -1656,11 +1702,15 @@
         '<button type="button" class="btn btn-secondary free-response-square-btn" aria-label="Insert squared symbol">x²</button>'
       );
     }
+    var textWide = fieldType === 'text' || fieldType === 'keyword';
+    var rowClass = 'free-response-field-row' + (textWide ? ' free-response-field-row--text' : '');
+    var fieldClass = 'free-response-field' + (textWide ? ' free-response-field--text' : '');
+    var inputClass = 'free-response-input free-response-input-field' + (textWide ? ' free-response-input--text' : '');
     return (
-      '<div class="free-response-field-row">' +
-      '<label class="free-response-field">' +
+      '<div class="' + rowClass + '">' +
+      '<label class="' + fieldClass + '">' +
       '<span class="free-response-field-label">' + safeLabel + '</span>' +
-      '<input type="text" class="free-response-input free-response-input-field" placeholder="' + ph + '" autocomplete="off" inputmode="text" aria-label="' + safeLabel + '">' +
+      '<input type="text" class="' + inputClass + '" placeholder="' + ph + '" autocomplete="off" inputmode="text" aria-label="' + safeLabel + '">' +
       '</label>' +
       insertBtns +
       '<button type="button" class="btn free-response-check-btn free-response-field-check-btn">Check</button>' +
@@ -1987,10 +2037,14 @@
         stepBank = [];
       }
       var orderMatters = (block.getAttribute('data-order-matters') || '1') === '1';
+      var pickCount = proofStepsPickCount(block.getAttribute('data-correct-raw') || '', block, null);
+      if (pickCount) orderMatters = false;
       var proofHint = esc(formatHint || (
         orderMatters
           ? 'Select the correct proof steps in order'
-          : 'Select all correct statements'
+          : (pickCount
+            ? ('Select ' + pickCount + ' correct options')
+            : 'Select all correct statements')
       ));
       var bankHtml = stepBank.map(function (step) {
         return (
@@ -2004,7 +2058,9 @@
       return (
         '<div class="free-response-row free-response-row--proof-steps" data-order-matters="' +
         (orderMatters ? '1' : '0') +
-        '">' +
+        '"' +
+        (pickCount ? (' data-pick-count="' + pickCount + '"') : '') +
+        '>' +
         '<p class="free-response-proof-hint">' + proofHint + '</p>' +
         '<div class="free-response-proof-bank" aria-label="Proof step bank">' + bankHtml + '</div>' +
         '<div class="free-response-proof-selected-wrap">' +
@@ -2414,6 +2470,245 @@
       var fieldType = fieldTypes[index] || 'number';
       var fieldFeedback = row.querySelector('.free-response-field-feedback');
 
+      if (fieldType === 'order') {
+        var stepCount = proofStepsOrderCount(correctParts[index] || '');
+        var selected = [];
+        var bank = row.querySelector('.free-response-proof-bank');
+        var list = row.querySelector('.free-response-proof-selected');
+        var clearBtn = row.querySelector('.free-response-proof-clear');
+        var checkBtn = row.querySelector('.free-response-field-check-btn');
+
+        function orderStepButton(id) {
+          if (!bank) return null;
+          return bank.querySelector('.free-response-proof-step[data-step-id="' + id + '"]');
+        }
+
+        function renderOrderSelected() {
+          if (!list) return;
+          list.innerHTML = '';
+          selected.forEach(function (id, selIndex) {
+            var btn = orderStepButton(id);
+            var text = btn ? btn.innerHTML : id;
+            var li = document.createElement('li');
+            li.innerHTML = text + ' ';
+            var remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'btn btn-secondary free-response-proof-remove';
+            remove.textContent = 'Remove';
+            remove.addEventListener('click', function () {
+              selected.splice(selIndex, 1);
+              syncOrderBankState();
+              renderOrderSelected();
+            });
+            li.appendChild(remove);
+            list.appendChild(li);
+          });
+        }
+
+        function syncOrderBankState() {
+          if (!bank) return;
+          bank.querySelectorAll('.free-response-proof-step').forEach(function (btn) {
+            var id = btn.getAttribute('data-step-id') || '';
+            var used = selected.indexOf(id) >= 0;
+            btn.classList.toggle('is-used', used);
+            btn.disabled = used;
+            btn.classList.remove('is-selected-toggle');
+          });
+        }
+
+        if (bank) {
+          bank.querySelectorAll('.free-response-proof-step').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              if (row.dataset.fieldCorrect === '1') return;
+              var id = btn.getAttribute('data-step-id') || '';
+              if (!id || selected.indexOf(id) >= 0) return;
+              if (stepCount && selected.length >= stepCount) return;
+              selected.push(id);
+              syncOrderBankState();
+              renderOrderSelected();
+            });
+          });
+        }
+
+        if (clearBtn) {
+          clearBtn.addEventListener('click', function () {
+            if (row.dataset.fieldCorrect === '1') return;
+            selected = [];
+            syncOrderBankState();
+            renderOrderSelected();
+            if (fieldFeedback) {
+              fieldFeedback.textContent = '';
+              fieldFeedback.style.color = '';
+            }
+          });
+        }
+
+        if (!checkBtn) return;
+        checkBtn.addEventListener('click', function () {
+          if (row.dataset.fieldCorrect === '1') return;
+          if (!selected.length) {
+            if (fieldFeedback) {
+              fieldFeedback.textContent = 'Put the steps in the correct order.';
+              fieldFeedback.style.color = '#dc2626';
+            }
+            return;
+          }
+          checkBtn.disabled = true;
+          submitNumberFieldAnswer(index, row, 'proof_steps', selected.join('|'), function (data) {
+            if (data.correct) {
+              row.dataset.fieldCorrect = '1';
+              if (fieldFeedback) {
+                fieldFeedback.textContent = '\u2713 Correct!';
+                fieldFeedback.style.color = '#16a34a';
+              }
+              if (bank) {
+                bank.querySelectorAll('.free-response-proof-step').forEach(function (btn) {
+                  btn.disabled = true;
+                });
+              }
+              if (clearBtn) clearBtn.disabled = true;
+              maybePersistAllFields();
+            } else {
+              checkBtn.disabled = false;
+              if (fieldFeedback) {
+                fieldFeedback.textContent = '\u2717 ' + (data.feedback || 'Not quite — check which steps belong and their order.');
+                fieldFeedback.style.color = '#dc2626';
+              }
+            }
+          }).catch(function (err) {
+            checkBtn.disabled = false;
+            if (fieldFeedback) {
+              fieldFeedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
+              fieldFeedback.style.color = '#dc2626';
+            }
+          });
+        });
+        return;
+      }
+
+      if (fieldType === 'pick') {
+        var pickCount = parseInt(row.getAttribute('data-pick-count') || '0', 10);
+        if (!pickCount) {
+          pickCount = proofStepsPickCount(correctParts[index] || '', block, row);
+        }
+        var selected = [];
+        var bank = row.querySelector('.free-response-proof-bank');
+        var list = row.querySelector('.free-response-proof-selected');
+        var clearBtn = row.querySelector('.free-response-proof-clear');
+        var checkBtn = row.querySelector('.free-response-field-check-btn');
+
+        function pickStepButton(id) {
+          if (!bank) return null;
+          return bank.querySelector('.free-response-proof-step[data-step-id="' + id + '"]');
+        }
+
+        function renderPickSelected() {
+          if (!list) return;
+          list.innerHTML = '';
+          selected.forEach(function (id, selIndex) {
+            var btn = pickStepButton(id);
+            var text = btn ? btn.innerHTML : id;
+            var li = document.createElement('li');
+            li.innerHTML = text + ' ';
+            var remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'btn btn-secondary free-response-proof-remove';
+            remove.textContent = 'Remove';
+            remove.addEventListener('click', function () {
+              selected.splice(selIndex, 1);
+              syncPickBankState();
+              renderPickSelected();
+            });
+            li.appendChild(remove);
+            list.appendChild(li);
+          });
+        }
+
+        function syncPickBankState() {
+          if (!bank) return;
+          bank.querySelectorAll('.free-response-proof-step').forEach(function (btn) {
+            var id = btn.getAttribute('data-step-id') || '';
+            var used = selected.indexOf(id) >= 0;
+            btn.classList.toggle('is-selected-toggle', used);
+          });
+        }
+
+        if (bank) {
+          bank.querySelectorAll('.free-response-proof-step').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              if (row.dataset.fieldCorrect === '1') return;
+              var id = btn.getAttribute('data-step-id') || '';
+              if (!id) return;
+              var idx = selected.indexOf(id);
+              if (idx >= 0) {
+                selected.splice(idx, 1);
+              } else if (!pickCount || selected.length < pickCount) {
+                selected.push(id);
+              }
+              syncPickBankState();
+              renderPickSelected();
+            });
+          });
+        }
+
+        if (clearBtn) {
+          clearBtn.addEventListener('click', function () {
+            if (row.dataset.fieldCorrect === '1') return;
+            selected = [];
+            syncPickBankState();
+            renderPickSelected();
+            if (fieldFeedback) {
+              fieldFeedback.textContent = '';
+              fieldFeedback.style.color = '';
+            }
+          });
+        }
+
+        if (!checkBtn) return;
+        checkBtn.addEventListener('click', function () {
+          if (row.dataset.fieldCorrect === '1') return;
+          if (!selected.length) {
+            if (fieldFeedback) {
+              fieldFeedback.textContent = pickCount
+                ? ('Select ' + pickCount + ' correct options.')
+                : 'Select your answer.';
+              fieldFeedback.style.color = '#dc2626';
+            }
+            return;
+          }
+          checkBtn.disabled = true;
+          submitNumberFieldAnswer(index, row, 'proof_steps', selected.join('|'), function (data) {
+            if (data.correct) {
+              row.dataset.fieldCorrect = '1';
+              if (fieldFeedback) {
+                fieldFeedback.textContent = '\u2713 Correct!';
+                fieldFeedback.style.color = '#16a34a';
+              }
+              if (bank) {
+                bank.querySelectorAll('.free-response-proof-step').forEach(function (btn) {
+                  btn.disabled = true;
+                });
+              }
+              if (clearBtn) clearBtn.disabled = true;
+              maybePersistAllFields();
+            } else {
+              checkBtn.disabled = false;
+              if (fieldFeedback) {
+                fieldFeedback.textContent = '\u2717 ' + (data.feedback || 'Not quite — try again.');
+                fieldFeedback.style.color = '#dc2626';
+              }
+            }
+          }).catch(function (err) {
+            checkBtn.disabled = false;
+            if (fieldFeedback) {
+              fieldFeedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
+              fieldFeedback.style.color = '#dc2626';
+            }
+          });
+        });
+        return;
+      }
+
       if (fieldType === 'mcq') {
         var mcqWrap = row.querySelector('.free-response-field-mcq');
         if (!mcqWrap) return;
@@ -2523,12 +2818,42 @@
     });
   }
 
+  function proofStepsOrderCount(correctRaw) {
+    var raw = String(correctRaw || '').trim();
+    if (raw.indexOf('1|') === 0) {
+      return Math.max(0, raw.split('|').length - 1);
+    }
+    return 0;
+  }
+
+  function proofStepsPickCount(correctRaw, block, row) {
+    var pickAttr = '';
+    if (row && row.getAttribute('data-pick-count')) {
+      pickAttr = row.getAttribute('data-pick-count');
+    } else if (block && block.getAttribute('data-pick-count')) {
+      pickAttr = block.getAttribute('data-pick-count');
+    }
+    if (pickAttr) {
+      var parsedAttr = parseInt(pickAttr, 10);
+      if (!isNaN(parsedAttr) && parsedAttr > 0) return parsedAttr;
+    }
+    var raw = String(correctRaw || '').trim();
+    if (raw.indexOf('pick|') === 0) {
+      var parts = raw.split('|');
+      var parsedRaw = parseInt(parts[1], 10);
+      if (!isNaN(parsedRaw) && parsedRaw > 0) return parsedRaw;
+    }
+    return 0;
+  }
+
   function wireProofStepsFreeResponse(block, correctRaw, trackable) {
     var row = block.querySelector('.free-response-row--proof-steps');
     if (!row) return;
     var orderMatters = (row.getAttribute('data-order-matters')
       || block.getAttribute('data-order-matters')
       || '1') === '1';
+    var pickCount = proofStepsPickCount(correctRaw, block, row);
+    if (pickCount) orderMatters = false;
     var selected = [];
     var bank = row.querySelector('.free-response-proof-bank');
     var list = row.querySelector('.free-response-proof-selected');
@@ -2596,6 +2921,7 @@
           } else if (idx >= 0) {
             selected.splice(idx, 1);
           } else {
+            if (pickCount && selected.length >= pickCount) return;
             selected.push(id);
           }
           syncBankState();
@@ -2623,7 +2949,9 @@
         if (feedback) {
           feedback.textContent = orderMatters
             ? 'Select the correct proof steps in order.'
-            : 'Select all correct statements.';
+            : (pickCount
+              ? ('Select ' + pickCount + ' correct options.')
+              : 'Select all correct statements.');
           feedback.style.color = '#dc2626';
         }
         return;
@@ -2997,7 +3325,7 @@
         return;
       }
       inputs.all.forEach(function (input) {
-        input.classList.remove('is-correct', 'is-wrong');
+        input.classList.remove('is-correct', 'is-wrong', 'is-partial');
         if (correct) {
           input.classList.add('is-correct');
           input.disabled = true;
@@ -3011,10 +3339,22 @@
       });
       block.querySelectorAll('.free-response-csq-sign, .free-response-vcombo-sign').forEach(function (btn) {
         btn.disabled = correct;
-        btn.classList.remove('is-correct', 'is-wrong');
+        btn.classList.remove('is-correct', 'is-wrong', 'is-partial');
         if (correct) {
           btn.classList.add('is-correct');
         }
+      });
+    }
+
+    function setInputStatePartial() {
+      var inputs = activeInputs();
+      inputs.all.forEach(function (input) {
+        input.classList.remove('is-correct', 'is-wrong');
+        input.classList.add('is-partial');
+        input.disabled = false;
+      });
+      block.querySelectorAll('.free-response-check-btn').forEach(function (btn) {
+        btn.disabled = false;
       });
     }
 
@@ -3050,6 +3390,9 @@
         body.subject = block.dataset.subject;
         body.topic = block.dataset.topic;
         body.difficulty = block.dataset.difficulty || 'foundational';
+        if (block.dataset.freeResponsePersisted === '1') {
+          body.record_attempt = false;
+        }
       }
 
       block.querySelectorAll('.free-response-check-btn').forEach(function (btn) {
@@ -3087,11 +3430,21 @@
           });
         })
         .then(function (data) {
+          if (data.score_total != null && data.score != null) {
+            block.dataset.textScore = String(data.score);
+            block.dataset.textScoreTotal = String(data.score_total);
+          }
           if (data.correct) {
             setInputState(true);
             if (feedback) {
               feedback.textContent = '\u2713 ' + freeResponseCorrectFeedback(data, userAnswer);
               feedback.style.color = '#16a34a';
+            }
+          } else if (isTextPartialScore(data)) {
+            setInputStatePartial();
+            if (feedback) {
+              feedback.textContent = '\u25D0 ' + freeResponseWrongFeedback(block, data);
+              feedback.style.color = '#d97706';
             }
           } else {
             setInputState(false);
@@ -3106,12 +3459,6 @@
           }
           if (trackable && block.dataset.freeResponsePersisted !== '1') {
             block.dataset.freeResponsePersisted = '1';
-            persistMcqAnswer(
-              block,
-              data.normalized_user || userAnswer,
-              data.normalized_correct || correctRaw,
-              Boolean(data.correct)
-            );
           }
         })
         .catch(function (err) {
@@ -3237,12 +3584,48 @@
     });
   }
 
+  function escapeHtml(text) {
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function renderAnswerGradingHintHtml(problem) {
+    var keywords = problem.answer_text_keywords;
+    var fieldHints = problem.answer_field_hints;
+    if ((!keywords || !keywords.length) && (!fieldHints || !fieldHints.length)) {
+      return '';
+    }
+    var required = problem.answer_text_required;
+    var title = 'To get this marked correct, mention:';
+    if (keywords && keywords.length && required && keywords.length > required) {
+      title = 'To get full marks, mention any ' + required + ' of:';
+    } else if (keywords && keywords.length) {
+      title = 'To get this marked correct, mention:';
+    } else {
+      title = 'Key ideas we look for:';
+    }
+    var chips = (keywords && keywords.length ? keywords : fieldHints).map(function (item) {
+      return '<span class="answer-keyword-chip">' + escapeHtml(String(item)) + '</span>';
+    }).join(keywords && keywords.length ? ', ' : '; ');
+    return (
+      '<p class="answer-grading-hint"><strong>' + title + '</strong> ' + chips + '</p>'
+    );
+  }
+
   function applySavedProblemPayload(problem) {
     var question = document.getElementById('saved-question-content');
     if (question) question.innerHTML = problem.question_html || '';
 
     var answer = document.getElementById('saved-answer-content');
     if (answer) answer.innerHTML = problem.solution_html || '';
+
+    var gradingHint = document.getElementById('saved-answer-grading-hint');
+    if (gradingHint) {
+      gradingHint.innerHTML = renderAnswerGradingHintHtml(problem);
+    }
 
     var hint = document.getElementById('saved-hint-content');
     var hintWrap = document.getElementById('saved-hint-wrap');

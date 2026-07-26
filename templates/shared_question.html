@@ -68,6 +68,7 @@
                 {{ problem.solution | format_question_html }}
             {% endif %}
         </div>
+        {% include 'partials/answer_grading_hint.html' %}
         {% if problem.hint %}
         <details class="hint-reveal">
             <summary>💡 Key concept</summary>

@@ -1664,8 +1664,18 @@
             min-width: 88px;
             max-width: 140px;
         }
+        .free-response-field-group-fields .free-response-field--text {
+            flex: 1 1 280px;
+            min-width: min(100%, 240px);
+            max-width: min(100%, 560px);
+        }
         .free-response-field-group-fields .free-response-field .free-response-input {
             max-width: 120px;
+        }
+        .free-response-field-group-fields .free-response-field .free-response-input--text {
+            max-width: none;
+            min-width: 240px;
+            width: 100%;
         }
         .free-response-field-row {
             display: flex;
@@ -1678,6 +1688,16 @@
             flex: 0 1 auto;
             min-width: 0;
             max-width: 280px;
+        }
+        .free-response-field-row--text .free-response-field,
+        .free-response-field-row--text .free-response-field--text {
+            flex: 1 1 280px;
+            max-width: min(100%, 560px);
+        }
+        .free-response-field-row--text .free-response-input--text {
+            max-width: none;
+            min-width: 240px;
+            width: 100%;
         }
         .free-response-field-row .free-response-field-check-btn {
             flex: 0 0 auto;
@@ -1708,6 +1728,15 @@
             min-width: 0;
             width: 100%;
             max-width: 280px;
+        }
+        .free-response-field .free-response-input--text {
+            max-width: none;
+            min-width: 240px;
+        }
+        .free-response-row--text > .free-response-input--text {
+            flex: 1 1 280px;
+            max-width: min(100%, 560px);
+            min-width: 240px;
         }
         .free-response-power-sep {
             font-size: 1rem;
@@ -1899,6 +1928,10 @@
             border-color: #dc2626;
             background: #fef2f2;
         }
+        .free-response-input.is-partial {
+            border-color: #d97706;
+            background: #fffbeb;
+        }
         .free-response-feedback {
             margin-top: 8px;
             font-weight: 600;
@@ -2079,6 +2112,28 @@
             border-top: 1px solid var(--border);
             font-family: var(--font-serif);
             line-height: 1.8;
+        }
+
+        .answer-grading-hint {
+            margin: 0;
+            padding: 14px 16px 16px;
+            border-top: 1px dashed var(--border-soft);
+            font-family: var(--font-sans);
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+            background: #f8fafc;
+        }
+        .answer-grading-hint strong {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text);
+            font-weight: 600;
+        }
+        .answer-keyword-chip {
+            display: inline;
+            color: var(--primary);
+            font-weight: 500;
         }
 
         /* Inline code in CS / Python questions */

@@ -209,7 +209,8 @@
             {% else %}
                 {{ problem.solution | format_question_html }}
             {% endif %}
-    </div>
+        </div>
+        {% include 'partials/answer_grading_hint.html' %}
         <details class="hint-reveal">
             <summary>💡 I still don't understand — show me the key concept</summary>
             <div class="hint">

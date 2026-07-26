@@ -282,6 +282,8 @@ def record_generator_mcq_attempt(
     attempt_group_id=None,
     part_index=None,
     part_total=None,
+    score=None,
+    score_total=None,
 ):
     now = utc_now_iso()
     cursor = conn.execute(
@@ -289,8 +291,8 @@ def record_generator_mcq_attempt(
         INSERT INTO generator_mcq_attempts (
             user_id, level, subject, topic, mode, difficulty,
             user_answer, correct_answer, correct, created_at,
-            attempt_group_id, part_index, part_total
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            attempt_group_id, part_index, part_total, score, score_total
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''',
         (
             user_id,
@@ -306,6 +308,8 @@ def record_generator_mcq_attempt(
             attempt_group_id,
             part_index,
             part_total,
+            score,
+            score_total,
         ),
     )
     conn.commit()
@@ -323,7 +327,7 @@ def list_generator_mcq_attempts(conn, user_id, limit=10, before_id=None):
         f'''
         SELECT id, level, subject, topic, mode, difficulty,
                user_answer, correct_answer, correct, created_at,
-               attempt_group_id, part_index, part_total
+               attempt_group_id, part_index, part_total, score, score_total
         FROM generator_mcq_attempts
         WHERE user_id = ?
         {before_clause}
@@ -340,13 +344,23 @@ def get_generator_mcq_attempt(conn, user_id, attempt_id):
         '''
         SELECT id, level, subject, topic, mode, difficulty,
                user_answer, correct_answer, correct, created_at,
-               attempt_group_id, part_index, part_total
+               attempt_group_id, part_index, part_total, score, score_total
         FROM generator_mcq_attempts
         WHERE user_id = ? AND id = ?
         ''',
         (user_id, attempt_id),
     ).fetchone()
     return dict(row) if row else None
+
+
+def _mcq_attempt_display_row(item):
+    """Normalize a single practice attempt row for profile/history UI."""
+    row = {**item, 'is_multipart': False}
+    score_total = item.get('score_total')
+    if score_total is not None and int(score_total) > 0:
+        row['score'] = int(item.get('score') or 0)
+        row['total'] = int(score_total)
+    return row
 
 
 def group_mcq_attempts_for_display(attempts):
@@ -361,7 +375,7 @@ def group_mcq_attempts_for_display(attempts):
         if gid:
             by_group.setdefault(gid, []).append(item)
         else:
-            ungrouped.append({**item, 'is_multipart': False})
+            ungrouped.append(_mcq_attempt_display_row(item))
 
     grouped = []
     for rows in by_group.values():
@@ -379,7 +393,7 @@ def group_mcq_attempts_for_display(attempts):
 
         if not latest_by_part:
             for row in rows:
-                ungrouped.append({**row, 'is_multipart': False})
+                ungrouped.append(_mcq_attempt_display_row(row))
             continue
 
         total = part_total if part_total is not None else len(latest_by_part)

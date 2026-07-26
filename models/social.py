@@ -309,11 +309,15 @@ def record_question_generated(conn, user_id, level, subject, topic, topic_label,
     conn.commit()
 
 
-def record_mcq_answered(conn, user_id, level, subject, topic, topic_label, correct):
+def record_mcq_answered(conn, user_id, level, subject, topic, topic_label, correct, *,
+                        score=None, score_total=None):
     ensure_user_profile(conn, user_id)
     now = utc_now_iso()
     label = topic_label or topic.replace('_', ' ').title()
-    outcome = 'Correct' if correct else 'Incorrect'
+    if score_total is not None and score is not None and not correct:
+        outcome = f'{score}/{score_total}'
+    else:
+        outcome = 'Correct' if correct else 'Incorrect'
     conn.execute(
         '''
         UPDATE user_activity_summary

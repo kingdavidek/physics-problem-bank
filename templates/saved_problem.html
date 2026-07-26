@@ -65,6 +65,9 @@
                 {{ problem.solution | format_question_html }}
             {% endif %}
         </div>
+        <div id="saved-answer-grading-hint">
+            {% include 'partials/answer_grading_hint.html' %}
+        </div>
         {% if problem.hint %}
         <details class="hint-reveal" id="saved-hint-wrap">
             <summary>💡 I still don't understand — show me the key concept</summary>

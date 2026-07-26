@@ -327,6 +327,9 @@ def _problem_client_payload(problem):
         field_options = problem.get('answer_field_options')
         if field_options:
             payload['answer_field_options'] = field_options
+        field_pick_counts = problem.get('answer_field_pick_counts')
+        if field_pick_counts:
+            payload['answer_field_pick_counts'] = field_pick_counts
         row_sizes = problem.get('answer_field_row_sizes')
         if row_sizes:
             payload['answer_field_row_sizes'] = row_sizes
@@ -347,6 +350,15 @@ def _problem_client_payload(problem):
         wrong_hint = problem.get('answer_wrong_hint')
         if wrong_hint:
             payload['answer_wrong_hint'] = wrong_hint
+        text_keywords = problem.get('answer_text_keywords')
+        if text_keywords:
+            payload['answer_text_keywords'] = text_keywords
+        text_required = problem.get('answer_text_required')
+        if text_required is not None:
+            payload['answer_text_required'] = text_required
+        field_hints = problem.get('answer_field_hints')
+        if field_hints:
+            payload['answer_field_hints'] = field_hints
     return payload
 
 _BLOCK_HTML_MARKERS = ('<svg', '<div', '<table', '<pre', '<figure')
@@ -359,15 +371,39 @@ def split_question_sections(value, section_keys):
     keys = [str(k) for k in (section_keys or []) if k]
     if not keys:
         return {'intro': q, 'sections': []}
-    start = q.find(keys[0])
-    intro = q[:start].strip() if start >= 0 else ''
-    sections = []
-    for i, key in enumerate(keys):
-        pos = q.find(key)
+
+    def _section_pos(text, key, start=0):
+        """Find section start; keys like (a) also match <strong>a)</strong> in question HTML."""
+        key = str(key).strip()
+        if len(key) >= 3 and key[0] == '(' and key[-1] == ')' and key[1].isalpha():
+            letter = key[1]
+            for marker in (
+                f'<strong>{letter})</strong>',
+                f'({letter})',
+                f'{letter})',
+            ):
+                pos = text.find(marker, start)
+                if pos >= 0:
+                    return pos
+            return -1
+        return text.find(key, start)
+
+    key_positions = []
+    search_from = 0
+    for key in keys:
+        pos = _section_pos(q, key, search_from)
         if pos < 0:
             continue
-        nxt = keys[i + 1] if i + 1 < len(keys) else None
-        end = q.find(nxt, pos + len(key)) if nxt else len(q)
+        key_positions.append((key, pos))
+        search_from = pos + 1
+
+    if not key_positions:
+        return {'intro': q, 'sections': []}
+
+    intro = q[:key_positions[0][1]].strip()
+    sections = []
+    for i, (key, pos) in enumerate(key_positions):
+        end = key_positions[i + 1][1] if i + 1 < len(key_positions) else len(q)
         sections.append({'key': key, 'text': q[pos:end].strip()})
     return {'intro': intro, 'sections': sections}
 
@@ -623,6 +659,10 @@ with get_db() as conn:
         conn.execute('ALTER TABLE generator_mcq_attempts ADD COLUMN part_index INTEGER')
     if 'part_total' not in mcq_cols:
         conn.execute('ALTER TABLE generator_mcq_attempts ADD COLUMN part_total INTEGER')
+    if 'score' not in mcq_cols:
+        conn.execute('ALTER TABLE generator_mcq_attempts ADD COLUMN score INTEGER')
+    if 'score_total' not in mcq_cols:
+        conn.execute('ALTER TABLE generator_mcq_attempts ADD COLUMN score_total INTEGER')
     conn.execute("""
         CREATE INDEX IF NOT EXISTS idx_generator_mcq_attempts_group
         ON generator_mcq_attempts (user_id, attempt_group_id)
@@ -1594,6 +1634,8 @@ def _track_mcq_answered(
     attempt_group_id=None,
     part_index=None,
     part_total=None,
+    score=None,
+    score_total=None,
 ):
     if not current_user.is_authenticated:
         return
@@ -1613,6 +1655,8 @@ def _track_mcq_answered(
             attempt_group_id=attempt_group_id,
             part_index=part_index,
             part_total=part_total,
+            score=score,
+            score_total=score_total,
         )
         record_mcq_answered(
             conn,
@@ -1622,21 +1666,27 @@ def _track_mcq_answered(
             topic,
             label,
             correct,
+            score=score,
+            score_total=score_total,
         )
+        activity_payload = {
+            'level': level,
+            'subject': subject,
+            'topic': topic,
+            'topic_label': label,
+            'difficulty': difficulty,
+            'user_answer': user_answer,
+            'correct_answer': correct_answer,
+            'correct': bool(correct),
+        }
+        if score_total is not None:
+            activity_payload['score'] = score
+            activity_payload['score_total'] = score_total
         record_activity_event(
             conn,
             current_user.id,
             ACTIVITY_MCQ_ANSWERED,
-            {
-                'level': level,
-                'subject': subject,
-                'topic': topic,
-                'topic_label': label,
-                'difficulty': difficulty,
-                'user_answer': user_answer,
-                'correct_answer': correct_answer,
-                'correct': bool(correct),
-            },
+            activity_payload,
             VISIBILITY_FOLLOWERS,
         )
 
@@ -1973,6 +2023,10 @@ def _serialize_mcq_attempt_summary(item, *, external_urls=False):
         payload['is_multipart'] = True
         payload['score'] = item.get('score')
         payload['total'] = item.get('total')
+    elif item.get('score_total'):
+        payload['score'] = item.get('score')
+        payload['score_total'] = item.get('score_total')
+        payload['total'] = item.get('total') or item.get('score_total')
     return payload
 
 
@@ -2581,6 +2635,14 @@ def _quicktest_answer_from_form(problem, form):
     user_answer = (form.get('qt_user_answer') or '').strip()
     checked = (form.get('qt_checked') or '').strip() == '1'
     correct_flag = (form.get('qt_correct') or '').strip()
+    score_raw = (form.get('qt_score') or '').strip()
+    score_total_raw = (form.get('qt_score_total') or '').strip()
+    score = None
+    score_total = None
+    if score_total_raw.isdigit():
+        score_total = int(score_total_raw)
+        if score_raw.isdigit():
+            score = int(score_raw)
 
     if problem.get('options'):
         correct_letter = (problem.get('correct_answer') or '').strip().upper()[:1]
@@ -2608,6 +2670,8 @@ def _quicktest_answer_from_form(problem, form):
         'user_answer': user_answer or None,
         'correct': correct,
         'checked': checked,
+        'score': score,
+        'score_total': score_total,
     }
 
 
@@ -2629,11 +2693,15 @@ def _quicktest_results_summary(problems, answers):
             if answer.get('correct'):
                 mcq_score += 1
         elif is_graded_fr:
-            graded_total += 1
-            if answer.get('checked'):
-                checked_total += 1
-            if answer.get('correct'):
-                graded_score += 1
+            if answer.get('score_total'):
+                graded_total += int(answer['score_total'])
+                graded_score += int(answer.get('score') or 0)
+            else:
+                graded_total += 1
+                if answer.get('checked'):
+                    checked_total += 1
+                if answer.get('correct'):
+                    graded_score += 1
 
     return {
         'mcq_score': mcq_score,
@@ -3174,9 +3242,9 @@ def profile():
     for item in mcq_attempts:
         item['topic_label'] = _topic_label(item['level'], item['subject'], item['topic'])
         item['correct'] = bool(item.get('correct'))
-        if item.get('is_multipart'):
+        if item.get('is_multipart') or item.get('score_total'):
             item['score'] = int(item.get('score') or 0)
-            item['total'] = int(item.get('total') or 0)
+            item['total'] = int(item.get('total') or item.get('score_total') or 0)
     if weekly_recap.get('best_quiz'):
         bq = weekly_recap['best_quiz']
         bq['topic_label'] = _topic_label(bq['level'], bq['subject'], bq['topic'])
@@ -3697,18 +3765,22 @@ def api_v1_problems_check():
                     part_total = int(part_total)
                 except (TypeError, ValueError):
                     part_total = None
-            _track_mcq_answered(
-                level,
-                subject,
-                topic,
-                difficulty,
-                str(user_answer).strip(),
-                result['normalized_correct'],
-                result['correct'],
-                attempt_group_id=attempt_group_id,
-                part_index=part_index,
-                part_total=part_total,
-            )
+            record_attempt = payload.get('record_attempt', True)
+            if record_attempt is not False:
+                _track_mcq_answered(
+                    level,
+                    subject,
+                    topic,
+                    difficulty,
+                    str(user_answer).strip(),
+                    result['normalized_correct'],
+                    result['correct'],
+                    attempt_group_id=attempt_group_id,
+                    part_index=part_index,
+                    part_total=part_total,
+                    score=result.get('score'),
+                    score_total=result.get('score_total'),
+                )
 
     response = {'ok': True, **result}
     if current_user.is_authenticated:

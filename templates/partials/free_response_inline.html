@@ -13,6 +13,7 @@
      data-field-group-labels="{{ (problem.answer_field_group_labels or []) | tojson | forceescape }}"
      data-step-bank="{{ (problem.answer_step_bank or []) | tojson | forceescape }}"
      data-order-matters="{{ '1' if problem.answer_order_matters else '0' }}"
+     data-pick-count="{{ problem.answer_pick_count if problem.answer_pick_count is not none else '' }}"
      data-pair-sep="{{ problem.answer_pair_sep or 'and' }}"
      data-format-hint="{{ problem.answer_format_hint or '' }}"
      data-wrong-hint="{{ problem.answer_wrong_hint or '' }}"
@@ -187,7 +188,9 @@
     {% macro nf_render_field(label, field_idx) %}
     {% set field_type = (problem.answer_field_types or [])[field_idx] if problem.answer_field_types and field_idx < (problem.answer_field_types|length) else 'number' %}
     {% if field_type == 'keyword' %}
-        {% set field_ph = 'e.g. yes or no' %}
+        {% set field_ph = 'Enter your answer' %}
+    {% elif field_type == 'text' %}
+        {% set field_ph = 'Enter your answer' %}
     {% elif field_type == 'linear_equation' %}
         {% set field_ph = 'e.g. y = 2x + 3' %}
     {% elif field_type == 'two_var_equation' %}
@@ -216,12 +219,18 @@
         {% set field_ph = 'e.g. 1101' %}
     {% elif field_type == 'hex' %}
         {% set field_ph = 'e.g. FF' %}
-    {% elif problem.answer_format_hint %}
+    {% elif problem.answer_format_hint and field_type not in ('keyword', 'text', 'mcq', 'pick', 'order') %}
         {% set field_ph = problem.answer_format_hint %}
     {% else %}
         {% set field_ph = 'Number or fraction' %}
     {% endif %}
-    <div class="free-response-field-row">
+    <div class="free-response-field-row{% if field_type == 'pick' %} free-response-field-row--pick{% elif field_type == 'order' %} free-response-field-row--order{% elif field_type in ('text', 'keyword') %} free-response-field-row--text{% endif %}"
+         {% if field_type == 'pick' %}
+         {% set pick_n = (problem.answer_field_pick_counts or [])[field_idx] if problem.answer_field_pick_counts and field_idx < (problem.answer_field_pick_counts|length) else none %}
+         {% if pick_n is not none %}data-pick-count="{{ pick_n }}"{% endif %}
+         {% elif field_type == 'order' %}
+         data-order-matters="1"
+         {% endif %}>
         {% if field_type == 'mcq' %}
         <span class="free-response-field-label">{{ label }}</span>
         <div class="mcq-inline free-response-field-mcq">
@@ -230,11 +239,49 @@
             <button type="button" class="btn mcq-btn" data-letter="{{ 'ABC'[loop.index0] }}">{{ opt }}</button>
             {% endfor %}
         </div>
+        {% elif field_type == 'pick' %}
+        {% set pick_bank = (problem.answer_field_options or [])[field_idx] if problem.answer_field_options and field_idx < (problem.answer_field_options|length) else [] %}
+        <span class="free-response-field-label">{{ label }}</span>
+        {% if pick_n is not none %}
+        <p class="free-response-proof-hint">Select {{ pick_n }} correct option{{ 's' if pick_n != 1 else '' }}</p>
         {% else %}
-        <label class="free-response-field">
+        <p class="free-response-proof-hint">Select all correct statements</p>
+        {% endif %}
+        <div class="free-response-proof-bank" aria-label="Answer options">
+            {% for step in pick_bank or [] %}
+            <button type="button"
+                    class="btn btn-secondary free-response-proof-step"
+                    data-step-id="{{ step.id }}">{{ step.text | safe }}</button>
+            {% endfor %}
+        </div>
+        <div class="free-response-proof-selected-wrap">
+            <p class="free-response-proof-selected-label">Your selections</p>
+            <ol class="free-response-proof-selected" aria-live="polite"></ol>
+            <button type="button" class="btn btn-secondary free-response-proof-clear">Clear</button>
+        </div>
+        <button type="button" class="btn free-response-field-check-btn">Check</button>
+        {% elif field_type == 'order' %}
+        {% set order_bank = (problem.answer_field_options or [])[field_idx] if problem.answer_field_options and field_idx < (problem.answer_field_options|length) else [] %}
+        <span class="free-response-field-label">{{ label }}</span>
+        <p class="free-response-proof-hint">Put the steps in the correct order</p>
+        <div class="free-response-proof-bank" aria-label="Step bank">
+            {% for step in order_bank or [] %}
+            <button type="button"
+                    class="btn btn-secondary free-response-proof-step"
+                    data-step-id="{{ step.id }}">{{ step.text | safe }}</button>
+            {% endfor %}
+        </div>
+        <div class="free-response-proof-selected-wrap">
+            <p class="free-response-proof-selected-label">Your order</p>
+            <ol class="free-response-proof-selected" aria-live="polite"></ol>
+            <button type="button" class="btn btn-secondary free-response-proof-clear">Clear</button>
+        </div>
+        <button type="button" class="btn free-response-field-check-btn">Check</button>
+        {% else %}
+        <label class="free-response-field{% if field_type in ('text', 'keyword') %} free-response-field--text{% endif %}">
             <span class="free-response-field-label">{{ label }}</span>
             <input type="text"
-                   class="free-response-input free-response-input-field"
+                   class="free-response-input free-response-input-field{% if field_type in ('text', 'keyword') %} free-response-input--text{% endif %}"
                    placeholder="{{ field_ph }}"
                    autocomplete="off"
                    inputmode="text"
@@ -252,6 +299,7 @@
     {% endmacro %}
     {% if problem.answer_inline_sections and problem.answer_field_section_keys %}
     {% set q_parts = problem.question | split_question_sections(problem.answer_field_section_keys) %}
+    {% if q_parts.sections %}
     {% if q_parts.intro %}
     <div class="question-content question-intro">{{ q_parts.intro | format_question_html }}</div>
     {% endif %}
@@ -284,6 +332,7 @@
     </div>
     {% endfor %}
     {% else %}
+    <div class="question-content">{{ problem.question | format_question_html }}</div>
     <div class="free-response-row free-response-row--number-fields">
         <div class="free-response-fields-stack{% if problem.answer_field_row_sizes %} free-response-fields-stack--grouped{% endif %}">
             {% if problem.answer_field_row_sizes %}
@@ -310,6 +359,53 @@
         </div>
     </div>
     {% endif %}
+    {% else %}
+    <div class="free-response-row free-response-row--number-fields">
+        <div class="free-response-fields-stack{% if problem.answer_field_row_sizes %} free-response-fields-stack--grouped{% endif %}">
+            {% if problem.answer_field_row_sizes %}
+            {% set nf_labels = problem.answer_labels or [] %}
+            {% set nf_ns = namespace(i=0) %}
+            {% for size in problem.answer_field_row_sizes %}
+            <div class="free-response-field-group">
+                {% if problem.answer_field_group_labels and loop.index0 < (problem.answer_field_group_labels|length) %}
+                <span class="free-response-field-group-label">{{ problem.answer_field_group_labels[loop.index0] }}</span>
+                {% endif %}
+                <div class="free-response-field-group-fields">
+                    {% for _ in range(size) %}
+                    {{ nf_render_field(nf_labels[nf_ns.i], nf_ns.i) }}
+                    {% set nf_ns.i = nf_ns.i + 1 %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            {% for label in problem.answer_labels or [] %}
+            {{ nf_render_field(label, loop.index0) }}
+            {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    {% elif problem.answer_type == 'text' %}
+    <div class="free-response-row free-response-row--number free-response-row--text">
+        <input type="text"
+               class="free-response-input free-response-input--text"
+               placeholder="Enter your answer"
+               autocomplete="off"
+               inputmode="text"
+               aria-label="Your answer">
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% elif problem.answer_type == 'keyword' %}
+    <div class="free-response-row free-response-row--number free-response-row--text">
+        <input type="text"
+               class="free-response-input free-response-input--text"
+               placeholder="Enter your answer"
+               autocomplete="off"
+               inputmode="text"
+               aria-label="Your answer">
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
     {% elif problem.answer_type == 'number_estimate' %}
     <div class="free-response-row free-response-row--number">
         <input type="text"
@@ -702,7 +798,8 @@
     </div>
     {% elif problem.answer_type == 'proof_steps' %}
     <div class="free-response-row free-response-row--proof-steps"
-         data-order-matters="{{ '1' if problem.answer_order_matters else '0' }}">
+         data-order-matters="{{ '1' if problem.answer_order_matters else '0' }}"
+         {% if problem.answer_pick_count is not none %}data-pick-count="{{ problem.answer_pick_count }}"{% endif %}>
         <p class="free-response-proof-hint">{{ problem.answer_format_hint or 'Select the correct proof steps' }}</p>
         <div class="free-response-proof-bank" aria-label="Proof step bank">
             {% for step in problem.answer_step_bank or [] %}

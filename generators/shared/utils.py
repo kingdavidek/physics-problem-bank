@@ -1,6 +1,8 @@
 import random
 import re
 
+from generators.shared.text_keywords import text_keyword_labels
+
 
 def format_light_markdown(text):
     """Turn lightweight markdown markers into HTML for question/solution prose."""
@@ -193,11 +195,14 @@ def make_problem(question, solution, hint, difficulty, marks, level, subject, to
     return data
 
 
-def proof_steps_answer(required_ids, bank, *, order_matters=True, format_hint=None):
+def proof_steps_answer(required_ids, bank, *, order_matters=True, format_hint=None,
+                       pick_count=None):
     """Plan C payload: select correct proof steps from a shuffled bank.
 
     bank items are dicts ``{id, text}``. ``required_ids`` lists the correct step
-    ids (in order when ``order_matters`` is True).
+    ids (in order when ``order_matters`` is True). When ``pick_count`` is set,
+    ``required_ids`` lists every correct option id and the student must choose
+    exactly that many (any correct combination; distractors in the bank fail).
     """
     required = tuple(str(i) for i in required_ids)
     steps = []
@@ -212,12 +217,19 @@ def proof_steps_answer(required_ids, bank, *, order_matters=True, format_hint=No
     bank_ids = {step['id'] for step in steps}
     if any(rid not in bank_ids for rid in required):
         raise ValueError('proof_steps required_ids must appear in bank')
+    if pick_count is not None:
+        pick_count = int(pick_count)
+        if pick_count < 1 or pick_count > len(required):
+            raise ValueError('proof_steps pick_count must be between 1 and len(required_ids)')
+        order_matters = False
     payload = {
         'type': 'proof_steps',
         'required_ids': required,
         'order_matters': bool(order_matters),
         'bank': steps,
     }
+    if pick_count is not None:
+        payload['pick_count'] = pick_count
     if format_hint:
         payload['format_hint'] = format_hint
     return payload
@@ -239,6 +251,18 @@ def graded_answer_keyword(val):
     return {'type': 'keyword', 'value': str(val).strip().lower()}
 
 
+def graded_answer_text(*keywords, required=None, format_hint=None, labels=None):
+    kws = tuple(str(k).strip().lower() for k in keywords if str(k).strip())
+    payload = {'type': 'text', 'keywords': kws}
+    if required is not None:
+        payload['required'] = int(required)
+    if format_hint:
+        payload['format_hint'] = format_hint
+    if labels:
+        payload['labels'] = tuple(labels)
+    return payload
+
+
 def graded_answer_number_pair(val_a, val_b, label_a='x', label_b='y', sep=','):
     return {
         'type': 'number_pair',
@@ -251,7 +275,8 @@ def graded_answer_number_pair(val_a, val_b, label_a='x', label_b='y', sep=','):
 
 def graded_answer_number_fields(values, labels, field_types=None, *,
                                 row_sizes=None, group_labels=None, format_hint=None,
-                                field_options=None, inline_sections=False):
+                                field_options=None, inline_sections=False,
+                                field_pick_counts=None):
     types = tuple(field_types) if field_types else tuple('number' for _ in values)
     payload = {
         'type': 'number_fields',
@@ -267,6 +292,8 @@ def graded_answer_number_fields(values, labels, field_types=None, *,
         payload['format_hint'] = format_hint
     if field_options is not None:
         payload['field_options'] = tuple(field_options)
+    if field_pick_counts is not None:
+        payload['field_pick_counts'] = tuple(field_pick_counts)
     if inline_sections and group_labels:
         keys = []
         for gl in group_labels:
@@ -310,11 +337,35 @@ def problem_extra_from_graded_answer(raw):
         elif raw_type == 'keyword':
             value = raw.get('value')
             if value is not None and str(value).strip():
+                key = str(value).strip().lower()
                 extra = {
-                    'correct_answer_raw': str(value).strip().lower(),
+                    'correct_answer_raw': key,
                     'answer_type': 'keyword',
-                    'answer_format_hint': 'Enter one word (e.g. yes or no)',
+                    'answer_format_hint': raw.get(
+                        'format_hint',
+                        'Enter your answer',
+                    ),
+                    'answer_text_keywords': text_keyword_labels([key]),
                 }
+        elif raw_type == 'text':
+            keywords = raw.get('keywords') or ()
+            labels = raw.get('labels')
+            required = raw.get('required')
+            if keywords:
+                display = list(labels) if labels else text_keyword_labels(keywords)
+                kw_joined = '|'.join(str(k) for k in keywords)
+                if required is not None and required < len(keywords):
+                    raw_encoded = f'{required}@{kw_joined}'
+                else:
+                    raw_encoded = kw_joined
+                extra = {
+                    'correct_answer_raw': raw_encoded,
+                    'answer_type': 'text',
+                    'answer_text_keywords': display,
+                    'answer_format_hint': raw.get('format_hint', 'Enter your answer'),
+                }
+                if required is not None and required < len(keywords):
+                    extra['answer_text_required'] = int(required)
         elif raw_type == 'number_pair':
             val_a, val_b = raw['values']
             extra = {
@@ -356,11 +407,23 @@ def problem_extra_from_graded_answer(raw):
                     extra['answer_field_options'] = [
                         list(opts) if opts else None for opts in field_options
                     ]
+                field_pick_counts = raw.get('field_pick_counts') or ()
+                if field_pick_counts:
+                    extra['answer_field_pick_counts'] = list(field_pick_counts)
                 if raw.get('inline_sections'):
                     extra['answer_inline_sections'] = True
                     section_keys = raw.get('section_keys') or ()
                     if section_keys:
                         extra['answer_field_section_keys'] = list(section_keys)
+                if field_types:
+                    field_hints = []
+                    for label, val, ft in zip(labels, values, field_types):
+                        if ft == 'keyword' and val is not None and str(val).strip():
+                            key = str(val).strip().lower()
+                            hint = text_keyword_labels([key])[0]
+                            field_hints.append(f'{label}: {hint}')
+                    if field_hints:
+                        extra['answer_field_hints'] = field_hints
         elif raw_type == 'proof_steps':
             extra = proof_steps_problem_extra(raw)
     elif isinstance(raw, (int, float)):
@@ -393,17 +456,25 @@ def proof_steps_problem_extra(raw):
     if not required or not bank:
         return {}
     order_matters = bool(raw.get('order_matters', True))
-    hint = raw.get('format_hint') or (
-        'Select the correct proof steps in order'
-        if order_matters
-        else 'Select all correct statements'
-    )
-    return {
-        'correct_answer_raw': (
-            f"{'1' if order_matters else '0'}|{('|'.join(required))}"
-        ),
+    pick_count = raw.get('pick_count')
+    if pick_count is not None:
+        pick_count = int(pick_count)
+        hint = raw.get('format_hint') or f'Select {pick_count} correct options'
+        correct_raw = f"pick|{pick_count}|{('|'.join(required))}"
+    else:
+        hint = raw.get('format_hint') or (
+            'Select the correct proof steps in order'
+            if order_matters
+            else 'Select all correct statements'
+        )
+        correct_raw = f"{'1' if order_matters else '0'}|{('|'.join(required))}"
+    extra = {
+        'correct_answer_raw': correct_raw,
         'answer_type': 'proof_steps',
         'answer_step_bank': bank,
         'answer_order_matters': order_matters,
         'answer_format_hint': hint,
     }
+    if pick_count is not None:
+        extra['answer_pick_count'] = pick_count
+    return extra

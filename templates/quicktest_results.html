@@ -55,6 +55,8 @@
             {% elif problem.correct_answer_raw and answer.get('checked') %}
                 {% if answer.get('correct') %}
                 <span class="badge" style="background:#dcfce7;color:#166534;">✓ Checked correct</span>
+                {% elif answer.get('score_total') and (answer.get('score') or 0) > 0 %}
+                <span class="badge" style="background:#fef3c7;color:#92400e;">◐ {{ answer.score }}/{{ answer.score_total }} key ideas</span>
                 {% else %}
                 <span class="badge" style="background:#fee2e2;color:#991b1b;">✗ Checked incorrect</span>
                 {% endif %}
@@ -64,6 +66,7 @@
         <details class="answer-reveal" open>
             <summary>Solution</summary>
             <div class="answer">{{ problem.solution | format_question_html }}</div>
+            {% include 'partials/answer_grading_hint.html' %}
             <details class="hint-reveal">
                 <summary>💡 Key concept</summary>
                 <div class="hint">{{ problem.hint | safe }}</div>
