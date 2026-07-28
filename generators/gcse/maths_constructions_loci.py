@@ -268,6 +268,68 @@ def _sixty_deg_svg(w=210, h=148):
     )
 
 
+def _ladder_ellipse_svg(L, dist, w=384, h=252):
+    """Ladder against a wall — foot (a, 0), top (0, b), point P dist m from the foot along the ladder."""
+    a = max(1, round(L * 0.6))
+    b_sq = L * L - a * a
+    if b_sq <= 0:
+        a = max(1, L // 2)
+        b_sq = L * L - a * a
+    b_val = b_sq ** 0.5
+    b = int(b_val) if abs(b_val - round(b_val)) < 1e-9 else round(b_val, 1)
+
+    wall_x, ground_y = 62, 206
+    scale = min(16.2, 150 / max(a, b, 1))
+    foot_x = wall_x + a * scale
+    foot_y = ground_y
+    top_x = wall_x
+    top_y = ground_y - b * scale
+    t = dist / L
+    px = foot_x + t * (top_x - foot_x)
+    py = foot_y + t * (top_y - foot_y)
+    mid_lx = (foot_x + top_x) / 2
+    mid_ly = (foot_y + top_y) / 2
+    # Place the dist label toward P (not the foot) and offset down-right for legibility.
+    dist_lx = foot_x + 0.62 * (px - foot_x) + 18
+    dist_ly = foot_y + 0.62 * (py - foot_y) + 8
+
+    return (
+        f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
+        f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:block;margin:8px auto;" '
+        f'role="img" aria-label="Ladder of length {L} metres leaning against a wall, with point P '
+        f'{dist} metres from the foot along the ladder">'
+        # Ground and wall
+        f'<line x1="{wall_x}" y1="{ground_y}" x2="{foot_x + 34}" y2="{ground_y}" stroke="#555" stroke-width="3"/>'
+        f'<line x1="{wall_x}" y1="{ground_y}" x2="{wall_x}" y2="{top_y - 22}" stroke="#555" stroke-width="3"/>'
+        f'<polyline points="{wall_x},{ground_y} {wall_x},{ground_y - 12} {wall_x + 12},{ground_y - 12}" '
+        f'fill="none" stroke="#333" stroke-width="1.8"/>'
+        f'<text x="{wall_x - 10}" y="{ground_y + 19}" font-size="13" fill="#555" text-anchor="middle">ground</text>'
+        f'<text x="{wall_x - 22}" y="{top_y + 10}" font-size="13" fill="#555" text-anchor="middle" '
+        f'transform="rotate(-90 {wall_x - 22} {top_y + 10})">wall</text>'
+        # Ladder
+        f'<line x1="{foot_x}" y1="{foot_y}" x2="{top_x}" y2="{top_y}" stroke="#8b5a2b" stroke-width="6" '
+        f'stroke-linecap="round"/>'
+        f'<line x1="{foot_x}" y1="{foot_y}" x2="{top_x}" y2="{top_y}" stroke="#c68642" stroke-width="3" '
+        f'stroke-linecap="round"/>'
+        # Foot-to-P highlight
+        f'<line x1="{foot_x}" y1="{foot_y}" x2="{px}" y2="{py}" stroke="#a13544" stroke-width="5" '
+        f'stroke-linecap="round"/>'
+        # Points
+        f'<circle cx="{foot_x}" cy="{foot_y}" r="6" fill="#1a6fa8"/>'
+        f'<circle cx="{top_x}" cy="{top_y}" r="6" fill="#1a6fa8"/>'
+        f'<circle cx="{px}" cy="{py}" r="6.5" fill="#a13544"/>'
+        # Labels
+        f'<text x="{foot_x + 8}" y="{foot_y + 19}" font-size="14" fill="#1a6fa8" font-weight="bold">(a, 0)</text>'
+        f'<text x="{top_x - 40}" y="{top_y - 10}" font-size="14" fill="#1a6fa8" font-weight="bold">(0, b)</text>'
+        f'<text x="{px + 10}" y="{py - 8}" font-size="16" fill="#a13544" font-weight="bold">P</text>'
+        f'<text x="{mid_lx + 12}" y="{mid_ly - 8}" font-size="13" fill="#8b5a2b" font-weight="bold">{L} m</text>'
+        f'<text x="{dist_lx}" y="{dist_ly}" font-size="13" fill="#a13544" '
+        f'font-weight="bold">{dist} m</text>'
+        f'<text x="{wall_x + 10}" y="29" font-size="12" fill="#555">Corner at origin; a² + b² = {L * L}</text>'
+        '</svg>'
+    )
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # FOUNDATIONAL  (15 variants)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -293,6 +355,42 @@ def _cl_steps_answer(steps, distractors, *, format_hint='Put the construction st
         bank,
         order_matters=True,
         format_hint=format_hint,
+    )
+
+
+def _cl_pick_field(correct_texts, distractor_texts, pick_count):
+    """Inline pick-N field for ``number_fields`` (returns raw, bank, count)."""
+    correct_ids = tuple(f'c{i + 1}' for i in range(len(correct_texts)))
+    bank = [{'id': cid, 'text': text} for cid, text in zip(correct_ids, correct_texts)]
+    for i, text in enumerate(distractor_texts):
+        bank.append({'id': f'd{i + 1}', 'text': text})
+    random.shuffle(bank)
+    raw = f"pick|{pick_count}|{'|'.join(correct_ids)}"
+    return raw, bank, pick_count
+
+
+def _cl_treasure_reasoning_pick(r_from_c, unit='cm'):
+    """Shared reasoning pick field for treasure-hunt locus questions."""
+    return _cl_pick_field(
+        (
+            'Condition (i) means the treasure must lie on the perpendicular bisector of AB.',
+            (
+                f'Condition (ii) means the treasure lies on a circle of radius '
+                f'{r_from_c} {unit} centred at C.'
+            ),
+            (
+                f'Since C lies on the perpendicular bisector, the circle crosses that line '
+                f'in two points — {r_from_c} {unit} above C and {r_from_c} {unit} below C.'
+            ),
+        ),
+        (
+            'Condition (i) means the treasure lies on a circle centred at the midpoint M of AB.',
+            'Because C is on the perpendicular bisector, the circle touches the line at only one point.',
+            'Condition (ii) means the treasure is equidistant from A and B.',
+            'The two loci meet at exactly one point on the perpendicular bisector.',
+            'The treasure must lie inside triangle ABC.',
+        ),
+        3,
     )
 
 
@@ -742,8 +840,9 @@ def _cl_i5_treasure_hunt():
     q = (f"Treasure is buried such that:<br>"
          f"(i) It is equidistant from points A and B ({d_AB} cm apart), AND<br>"
          f"(ii) It is exactly {r_C} cm from point C, where C is on the perpendicular bisector "
-         f"of AB, {d_MC} cm from the midpoint M of AB.<br>"
-         f"How many possible locations are there? Explain your reasoning.")
+         f"of AB, {d_MC} cm from the midpoint M of AB.<br><br>"
+         f"<strong>(a)</strong> How many possible locations are there?<br>"
+         f"<strong>(b)</strong> Select the three correct statements that explain your reasoning.")
     # Check: P on perp bisector AND at distance r_C from C.
     # On perp bisector (x=0 say, perp bisector is the y-axis), C=(0, d_MC).
     # Circle: x²+(y-d_MC)²=r_C². On perp bisector x=0: (y-d_MC)²=r_C² → two solutions y=d_MC±r_C.
@@ -753,7 +852,17 @@ def _cl_i5_treasure_hunt():
          f"C lies on the perpendicular bisector, so the circle crosses the perpendicular bisector at "
          f"{r_C} cm above C and {r_C} cm below C — giving "
          f"<strong>{n_locations} possible locations</strong> for the treasure.")
-    return q, s, "Each condition gives a locus; count how many times they intersect.", 4, graded_answer_number(n_locations)
+    reason_raw, reason_bank, reason_pick = _cl_treasure_reasoning_pick(r_C)
+    return q, s, "Each condition gives a locus; count how many times they intersect.", 4, graded_answer_number_fields(
+        (n_locations, reason_raw),
+        ('Number of locations', 'Reasoning'),
+        field_types=('number', 'pick'),
+        field_options=(None, reason_bank),
+        field_pick_counts=(None, reason_pick),
+        row_sizes=(1, 1),
+        group_labels=('(a)', '(b)'),
+        inline_sections=True,
+    )
 
 
 def _cl_i6_perp_from_external_point():
@@ -1020,17 +1129,43 @@ def _cl_d2_ladder_ellipse():
     L_sq = L ** 2
     # P is dist m from foot: P = (a*(L-dist)/L, b*dist/L)
     semi_x = L - dist
-    semi_y = dist
+    svg = _ladder_ellipse_svg(L, dist)
     q = (f"A {L} m ladder has its foot at point (a, 0) on the ground and its top at (0, b) against a wall, "
          f"where a² + b² = {L_sq}. Point P is {dist} m from the foot of the ladder along its length. "
-         f"Show that the locus of P is an ellipse and state its equation.")
+         f"Show that the locus of P is an ellipse and state its equation.<br>{svg}")
     s = (f"The ladder goes from (a, 0) to (0, b). The unit vector along the ladder is (−a/{L}, b/{L}).<br>"
          f"P is {dist} m from (a, 0): P = (a − {dist}a/{L}, {dist}b/{L}) = ({semi_x}a/{L}, {dist}b/{L}).<br>"
          f"Let x = {semi_x}a/{L}, y = {dist}b/{L}, so a = {L}x/{semi_x} and b = {L}y/{dist}.<br>"
          f"Substituting into a² + b² = {L_sq}: ({L}x/{semi_x})² + ({L}y/{dist})² = {L_sq}<br>"
          f"<strong>x²/{semi_x**2} + y²/{dist**2} = 1</strong><br>"
          f"This is an ellipse with semi-axes {semi_x} m (horizontal) and {dist} m (vertical).")
-    return q, s, "Express P's coordinates in terms of a and b, substitute into a²+b²=L², simplify to get ellipse form.", 6
+    hint = "Express P's coordinates in terms of a and b, substitute into a²+b²=L², simplify to get ellipse form."
+    return q, s, hint, 6, _cl_steps_answer(
+        (
+            f"The ladder goes from (a, 0) to (0, b). The unit vector along the ladder is (−a/{L}, b/{L}).",
+            (
+                f"P is {dist} m from the foot (a, 0): "
+                f"P = (a − {dist}a/{L}, {dist}b/{L}) = ({semi_x}a/{L}, {dist}b/{L})."
+            ),
+            f"Let x = {semi_x}a/{L} and y = {dist}b/{L}, so a = {L}x/{semi_x} and b = {L}y/{dist}.",
+            f"Substitute into a² + b² = {L_sq}: ({L}x/{semi_x})² + ({L}y/{dist})² = {L_sq}.",
+            (
+                f"Simplify to x²/{semi_x**2} + y²/{dist**2} = 1 — an ellipse with semi-axes "
+                f"{semi_x} m (horizontal) and {dist} m (vertical)."
+            ),
+        ),
+        (
+            (
+                f"P is {dist} m from the top (0, b) along the ladder: "
+                f"P = ({dist}a/{L}, b − {dist}b/{L})."
+            ),
+            f"The unit vector along the ladder is (a/{L}, −b/{L}).",
+            f"Let x = {semi_x}a/{L} and y = {dist}b/{L}, so a = {semi_x}x/{L} and b = {dist}y/{L}.",
+            f"Simplifying gives x²/{dist**2} + y²/{semi_x**2} = 1.",
+            f"The locus is a circle x² + y² = {L_sq}.",
+        ),
+        format_hint='Put the proof steps in the correct order',
+    )
 
 
 def _cl_d3_chord_midpoint():
@@ -1358,16 +1493,27 @@ def _cl_d17_treasure_hunt_multi():
     d_mc = random.randint(2, 5)
     svg = _treasure_loci_svg(d_ab * 8)
     q = (f"Treasure is buried so that:<br>"
-         f"(a) It is equidistant from markers A and B, which are {d_ab} m apart.<br>"
-         f"(b) It is exactly {r_c} m from marker C, where C lies on the perpendicular bisector of AB "
-         f"and is {d_mc} m from the midpoint M of AB.<br>"
-         f"(c) How many possible burial positions are there? Justify your answer.<br>{svg}")
-    s = ("(a) Equidistant from A and B → on the <strong>perpendicular bisector of AB</strong>.<br>"
-         f"(b) Exactly {r_c} m from C → on a <strong>circle of radius {r_c} m centred at C</strong>. "
+         f"(i) It is equidistant from markers A and B, which are {d_ab} m apart.<br>"
+         f"(ii) It is exactly {r_c} m from marker C, where C lies on the perpendicular bisector of AB "
+         f"and is {d_mc} m from the midpoint M of AB.<br><br>"
+         f"<strong>(a)</strong> How many possible burial positions are there?<br>"
+         f"<strong>(b)</strong> Select the three correct statements that justify your answer.<br>{svg}")
+    s = ("(i) Equidistant from A and B → on the <strong>perpendicular bisector of AB</strong>.<br>"
+         f"(ii) Exactly {r_c} m from C → on a <strong>circle of radius {r_c} m centred at C</strong>. "
          f"Since C lies on the perpendicular bisector, this circle crosses that line in two symmetric points.<br>"
-         f"(c) There are <strong>2 possible positions</strong> — the two intersection points of the circle "
+         f"(a) There are <strong>2 possible positions</strong> — the two intersection points of the circle "
          f"and the perpendicular bisector ({d_mc} ± {r_c} m along the bisector from C).")
-    return q, s, "Each condition is a locus; count intersections of the line and circle.", 6, graded_answer_number(2)
+    reason_raw, reason_bank, reason_pick = _cl_treasure_reasoning_pick(r_c, unit='m')
+    return q, s, "Each condition is a locus; count intersections of the line and circle.", 6, graded_answer_number_fields(
+        (2, reason_raw),
+        ('Number of positions', 'Justification'),
+        field_types=('number', 'pick'),
+        field_options=(None, reason_bank),
+        field_pick_counts=(None, reason_pick),
+        row_sizes=(1, 1),
+        group_labels=('(a)', '(b)'),
+        inline_sections=True,
+    )
 
 
 def _cl_d18_triangle_centres_multi():

@@ -1674,7 +1674,7 @@
   }
 
   function numberFieldMcqRowHtml(label, options) {
-    var letters = 'ABC';
+    var letters = 'ABCD';
     var esc = htmlEscape;
     var buttons = (options || []).map(function (opt, i) {
       return (

@@ -117,18 +117,28 @@ def _arc_at(vx, vy, p1, p2, arc_r=20, color="#1a6fa8"):
     return path, lx, ly
 
 
-_SVG_PAD = 32  # viewBox margin so labels, tangents and points are not clipped
+_SVG_SCALE = 0.6
+_SVG_PAD = 20  # viewBox margin so labels, tangents and points are not clipped
+_SVG_MAX_W = 240
 
 
 def _svg_open(w, h, pad=_SVG_PAD):
     """SVG with padded viewBox — content coords stay 0..w × 0..h; frame includes margin."""
-    vb_w, vb_h = w + 2 * pad, h + 2 * pad
-    max_w = min(vb_w, 400)
+    disp_w = w * _SVG_SCALE
+    disp_h = h * _SVG_SCALE
+    vb_w = disp_w + 2 * pad
+    vb_h = disp_h + 2 * pad
+    max_w = min(int(vb_w), _SVG_MAX_W)
     return (
         f'<svg width="100%" viewBox="{-pad} {-pad} {vb_w} {vb_h}" '
         f'style="background:#f9f8f5;border-radius:6px;max-width:{max_w}px;display:block;'
         f'margin:0 auto;vertical-align:middle;overflow:visible;">'
+        f'<g transform="scale({_SVG_SCALE})">'
     )
+
+
+def _svg_close():
+    return '</g></svg>'
 
 
 def _circle_el(cx, cy, r):
@@ -231,7 +241,7 @@ def _svg_ct1(angle_centre, angle_circ=None, show_centre=True, w=300, h=300):
         + _dot(*A, "#1a6fa8") + _txt(A[0] - 10, A[1] - 6, "A", "#1a6fa8", 12, "middle", True)
         + _dot(*B, "#1a6fa8") + _txt(B[0] + 10, B[1] - 6, "B", "#1a6fa8", 12, "middle", True)
         + _dot(*C, "#059669") + _txt(C[0], C[1] + 14, "C", "#059669", 12, "middle", True)
-        + '</svg>'
+        + _svg_close()
     )
 
 
@@ -262,7 +272,7 @@ def _svg_ct2(angle_bac=None, angle_acb=None, w=300, h=280):
         + _dot(*C, "#059669") + _txt(C[0] - 12, C[1] - 6, "C", "#059669", 12, "middle", True)
         + _dot(cx, cy, "#a13544") + _txt(cx + 8, cy + 5, "O", "#a13544", 11, "start", True)
         + _txt(cx, cy + r + 20, "AB is a diameter", "#555", 11, "middle")
-        + '</svg>'
+        + _svg_close()
     )
 
 
@@ -295,7 +305,7 @@ def _svg_ct3(angle, known_at="C", w=300, h=300):
         + _dot(*B) + _txt(B[0] + 12, B[1] + 5, "B", "#333", 12, "middle", True)
         + _dot(*C, "#059669") + _txt(C[0] + 10, C[1] - 5, "C", "#059669", 12, "middle", True)
         + _dot(*D, "#a13544") + _txt(D[0] - 10, D[1] - 5, "D", "#a13544", 12, "middle", True)
-        + '</svg>'
+        + _svg_close()
     )
 
 
@@ -321,7 +331,7 @@ def _svg_ct4(angle_dab, angle_bcd=None, w=300, h=300):
         + _dot(*B) + _txt(B[0] + 12, B[1] - 5, "B", "#333", 12, "middle", True)
         + _dot(*C) + _txt(C[0] + 12, C[1] + 5, "C", "#333", 12, "middle", True)
         + _dot(*D) + _txt(D[0] - 12, D[1] + 5, "D", "#333", 12, "middle", True)
-        + '</svg>'
+        + _svg_close()
     )
 
 
@@ -355,13 +365,13 @@ def _svg_ct5(angle_top, show_otp=None, w=320, h=280):
         + _dot(*T)            + _txt(T[0] + 10, T[1] - 8, "T", "#333", 12, "start", True)
         + _dot(*P)            + _txt(P[0] + 8, P[1] + 4, "P", "#333", 12, "start", True)
         + _txt(T[0] - 6, T[1] - 58, "tangent", "#a13544", 10, "middle")
-        + '</svg>'
+        + _svg_close()
     )
 
 
-def _svg_ct6(angle_at_P, w=320, h=280):
+def _svg_ct6(angle_at_P, w=280, h=220):
     """CT6: Two tangents from external point P. TA=TB, show kite OAPB."""
-    cx, cy, r = 110, 120, 80
+    cx, cy, r = 65, 100, 52
     # Symmetric tangents: angle AOB = 180° − angle APB (kite OAPB)
     half_spread = max(25, min(75, (180 - angle_at_P) / 2))
     A = _pt(cx, cy, r, half_spread)
@@ -369,6 +379,8 @@ def _svg_ct6(angle_at_P, w=320, h=280):
     O = (cx, cy)
     px = cx + r / math.cos(math.radians(half_spread))
     P = (round(px, 1), cy)
+    w = max(w, int(px + 42))
+    h = max(h, int(cy + r + 28), int(max(A[1], B[1]) + 22))
 
     arc_P, lPx, lPy = _arc_at(*P, A, B, arc_r=22, color="#a13544")
     arc_O, lOx, lOy = _arc_at(*O, A, B, arc_r=24, color="#1a6fa8")
@@ -389,7 +401,7 @@ def _svg_ct6(angle_at_P, w=320, h=280):
         + _dot(*A)            + _txt(A[0] + 8, A[1] - 5, "A", "#333", 12, "start", True)
         + _dot(*B)            + _txt(B[0] + 8, B[1] + 8, "B", "#333", 12, "start", True)
         + _dot(*P)            + _txt(P[0] + 8, P[1] + 4, "P", "#333", 12, "start", True)
-        + '</svg>'
+        + _svg_close()
     )
 
 
@@ -432,7 +444,7 @@ def _svg_ct7(angle, known_at="A", w=300, h=300):
         + _dot(*C) + _txt(C[0], C[1] - 10, "C", "#059669", 12, "middle", True)
         + _txt(T2[0] - 5, T2[1] + 14, "T", "#a13544", 11, "middle")
         + _txt(cx, cy + r + 22, "Alternate segment theorem", "#555", 10, "middle")
-        + '</svg>'
+        + _svg_close()
     )
 
 
@@ -472,7 +484,7 @@ def _svg_intersecting_chords(arc_pr, arc_qs, angle_ptr=None, w=300, h=300):
         + _dot(*R) + _txt(R[0] + 10, R[1] - 8, "R", "#333", 12, "middle", True)
         + _dot(*S) + _txt(S[0] - 10, S[1] + 8, "S", "#333", 12, "middle", True)
         + _dot(*T, "#a13544") + _txt(T[0], T[1] + 14, "T", "#a13544", 12, "middle", True)
-        + '</svg>'
+        + _svg_close()
     )
 
 

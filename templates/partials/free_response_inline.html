@@ -239,7 +239,7 @@
         <div class="mcq-inline free-response-field-mcq">
             {% set opts = (problem.answer_field_options or [])[field_idx] if problem.answer_field_options and field_idx < (problem.answer_field_options|length) else [] %}
             {% for opt in opts or [] %}
-            <button type="button" class="btn mcq-btn" data-letter="{{ 'ABC'[loop.index0] }}">{{ opt }}</button>
+            <button type="button" class="btn mcq-btn" data-letter="{{ 'ABCD'[loop.index0] }}">{{ opt }}</button>
             {% endfor %}
         </div>
         {% elif field_type == 'pick' %}

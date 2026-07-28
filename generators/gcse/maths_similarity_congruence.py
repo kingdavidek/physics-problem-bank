@@ -2,7 +2,7 @@
 GCSE Maths – Similarity and Congruence
 15 foundational · 15 intermediate · 15 difficult · 15 MCQ
 Graded practice variants return (question, solution, hint, marks, raw).
-Genuine proof-only variants (_sc_i9, _sc_d1, _sc_d7) stay as 4-tuples (no auto-grade).
+Proof step variants (_sc_i9, _sc_d1, _sc_d7) use ordered proof_steps with distractors.
 
 Covers:
   Congruence: SSS, SAS, ASA/AAS, RHS
@@ -18,6 +18,7 @@ from generators.shared.utils import (
     make_problem,
     make_graded_problem,
     graded_answer_number_fields,
+    proof_steps_answer,
 )
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from generators.shared.variant_utils import (
@@ -41,8 +42,72 @@ def _sc_mcq_field(correct, distractors):
     return pool, letters[pool.index(correct)]
 
 
+def _sc_pick_field(correct_texts, distractor_texts, pick_count):
+    """Inline pick-N field for ``number_fields`` (returns raw, bank, count)."""
+    correct_ids = tuple(f'c{i + 1}' for i in range(len(correct_texts)))
+    bank = [{'id': cid, 'text': text} for cid, text in zip(correct_ids, correct_texts)]
+    for i, text in enumerate(distractor_texts):
+        bank.append({'id': f'd{i + 1}', 'text': text})
+    random.shuffle(bank)
+    raw = f"pick|{pick_count}|{'|'.join(correct_ids)}"
+    return raw, bank, pick_count
+
+
 def _sc_num(value, label):
     return graded_answer_number_fields((value,), (label,))
+
+
+def _sc_proof_steps_answer(steps, distractors, *, format_hint='Put the proof steps in the correct order'):
+    bank = [{'id': f's{i + 1}', 'text': text} for i, text in enumerate(steps)]
+    for j, text in enumerate(distractors):
+        bank.append({'id': f'd{j + 1}', 'text': text})
+    random.shuffle(bank)
+    required = tuple(f's{i + 1}' for i in range(len(steps)))
+    return proof_steps_answer(
+        required,
+        bank,
+        order_matters=True,
+        format_hint=format_hint,
+    )
+
+
+def _sc_lin_expr(a, b):
+    """Format a linear expression ax + b for question text."""
+    if a == 1:
+        return f"(x + {b})"
+    return f"({a}x + {b})"
+
+
+def _sc_similar_rectangle_algebra_case():
+    """Build a valid similar-rectangles algebra problem with integer answers."""
+    width_pairs = [(6, 4), (8, 4), (9, 6), (12, 8), (10, 5), (15, 10), (12, 6)]
+    for _ in range(150):
+        x = random.randint(5, 18)
+        w1, w2 = random.choice(width_pairs)
+        g = math.gcd(w1, w2)
+        p, q = w1 // g, w2 // g
+        c = random.randint(1, 3)
+        d = random.randint(2, 14)
+        L2 = c * x + d
+        if L2 <= 0 or L2 % q != 0:
+            continue
+        L1 = L2 * p // q
+        a = random.randint(2, 4)
+        b = L1 - a * x
+        if b <= 0 or b > 18:
+            continue
+        if q * a == p * c:
+            continue
+        return {
+            'x': x, 'a': a, 'b': b, 'c': c, 'd': d,
+            'w1': w1, 'w2': w2, 'p': p, 'q': q,
+            'L1': L1, 'L2': L2,
+        }
+    return {
+        'x': 13, 'a': 2, 'b': 1, 'c': 1, 'd': 5,
+        'w1': 6, 'w2': 4, 'p': 3, 'q': 2,
+        'L1': 27, 'L2': 18,
+    }
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -90,7 +155,7 @@ def _two_tris(A1, B1, C1, A2, B2, C2,
               vl1=("A", "B", "C"), vl2=("P", "Q", "R"),
               sl1=None, sl2=None,
               c1="#1a6fa8", c2="#a13544", s1="#dbeafe", s2="#fce7f3",
-              w=390, h=175):
+              w=None, h=None, pad=34):
     """Draw two similar triangles side by side with a ~ sign."""
     cx1 = (A1[0]+B1[0]+C1[0])/3
     cy1 = (A1[1]+B1[1]+C1[1])/3
@@ -107,8 +172,22 @@ def _two_tris(A1, B1, C1, A2, B2, C2,
         n = math.hypot(dx, dy) or 1
         return px+dx/n*d, py+dy/n*d
 
+    all_pts = (A1, B1, C1, A2, B2, C2)
+    xs = [p[0] for p in all_pts]
+    ys = [p[1] for p in all_pts]
+    min_x = min(xs) - pad
+    max_x = max(xs) + pad
+    min_y = min(ys) - pad
+    max_y = max(ys) + pad
+    vb_w = max_x - min_x
+    vb_h = max_y - min_y
+    if w is None:
+        w = max(420, int(vb_w))
+    if h is None:
+        h = max(200, int(vb_h))
+
     svg = (
-        f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
+        f'<svg width="{w}" height="{h}" viewBox="{min_x:.0f} {min_y:.0f} {vb_w:.0f} {vb_h:.0f}" '
         f'style="background:#f9f8f5;border-radius:6px;max-width:100%;'
         f'display:inline-block;margin:4px;vertical-align:middle;">'
         f'<polygon points="{A1[0]},{A1[1]} {B1[0]},{B1[1]} {C1[0]},{C1[1]}" '
@@ -143,8 +222,8 @@ def _two_tris(A1, B1, C1, A2, B2, C2,
                 svg += f'<text x="{ox:.0f}" y="{oy+4:.0f}" font-size="11" fill="#555" text-anchor="middle">{lbl}</text>'
 
     # Tilde between the two triangles
-    gap_x = (min(A2[0],B2[0],C2[0]) + max(A1[0],B1[0],C1[0])) // 2
-    svg += f'<text x="{gap_x}" y="{h//2+5}" font-size="22" fill="#555" text-anchor="middle">~</text>'
+    gap_x = (min(A2[0], B2[0], C2[0]) + max(A1[0], B1[0], C1[0])) / 2
+    svg += f'<text x="{gap_x:.0f}" y="{(min_y + max_y) / 2 + 5:.0f}" font-size="22" fill="#555" text-anchor="middle">~</text>'
     svg += '</svg>'
     return svg
 
@@ -181,6 +260,47 @@ def _par_tri(AD_lbl, DB_lbl, DE_lbl, BC_lbl, ratio=0.45, w=210, h=175):
         f'<text x="{mid_DB[0]-16:.0f}" y="{mid_DB[1]+4:.0f}" font-size="11" fill="#1a6fa8" text-anchor="middle">{DB_lbl}</text>'
         f'<text x="{mid_DE[0]:.0f}" y="{mid_DE[1]-8:.0f}" font-size="11" fill="#a13544" text-anchor="middle">{DE_lbl}</text>'
         f'<text x="{mid_BC[0]:.0f}" y="{mid_BC[1]+16:.0f}" font-size="11" fill="#1a6fa8" text-anchor="middle">{BC_lbl}</text>'
+        f'</svg>'
+    )
+    return svg
+
+
+def _midpoint_tri_svg(w=210, h=175):
+    """Triangle ABC with D and E as midpoints of AB and AC, and segment DE drawn."""
+    A = (105, 15)
+    B = (25, 158)
+    C = (185, 158)
+    D = ((A[0] + B[0]) / 2, (A[1] + B[1]) / 2)
+    E = ((A[0] + C[0]) / 2, (A[1] + C[1]) / 2)
+
+    def tick(x1, y1, x2, y2, length=6):
+        mx, my = (x1 + x2) / 2, (y1 + y2) / 2
+        dx, dy = x2 - x1, y2 - y1
+        n = math.hypot(dx, dy) or 1
+        px, py = -dy / n, dx / n
+        return (
+            f'<line x1="{mx - px * length:.1f}" y1="{my - py * length:.1f}" '
+            f'x2="{mx + px * length:.1f}" y2="{my + py * length:.1f}" '
+            f'stroke="#1a6fa8" stroke-width="1.5"/>'
+        )
+
+    svg = (
+        f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
+        f'style="background:#f9f8f5;border-radius:6px;max-width:100%;'
+        f'display:inline-block;margin:4px;vertical-align:middle;">'
+        f'<polygon points="{A[0]},{A[1]} {B[0]},{B[1]} {C[0]},{C[1]}" '
+        f'fill="#e0f2fe" stroke="#1a6fa8" stroke-width="2"/>'
+        f'<polygon points="{A[0]},{A[1]} {D[0]:.1f},{D[1]:.1f} {E[0]:.1f},{E[1]:.1f}" '
+        f'fill="#bfdbfe" stroke="#1a6fa8" stroke-width="1.5"/>'
+        f'<line x1="{D[0]:.1f}" y1="{D[1]:.1f}" x2="{E[0]:.1f}" y2="{E[1]:.1f}" '
+        f'stroke="#a13544" stroke-width="2.5"/>'
+        f'{tick(A[0], A[1], D[0], D[1])}{tick(D[0], D[1], B[0], B[1])}'
+        f'{tick(A[0], A[1], E[0], E[1])}{tick(E[0], E[1], C[0], C[1])}'
+        f'<text x="{A[0]}" y="10" font-size="13" fill="#333" text-anchor="middle" font-weight="bold">A</text>'
+        f'<text x="{B[0]-12}" y="{B[1]+7}" font-size="13" fill="#333" font-weight="bold">B</text>'
+        f'<text x="{C[0]+12}" y="{C[1]+7}" font-size="13" fill="#333" font-weight="bold">C</text>'
+        f'<text x="{D[0]-15:.0f}" y="{D[1]+4:.0f}" font-size="12" fill="#333">D</text>'
+        f'<text x="{E[0]+15:.0f}" y="{E[1]+4:.0f}" font-size="12" fill="#333">E</text>'
         f'</svg>'
     )
     return svg
@@ -304,9 +424,9 @@ def _sc_f7_similar_triangles_sides():
     ]
     AB, BC, CA, PQ, QR, RP, T1, T2, sf = random.choice(combos)
     svg = _two_tris(
-        (20,140),(80,20),(160,140), (220,140),(295,20),(390,140),
-        vl1=(T1[0],T1[1],T1[2]), vl2=(T2[0],T2[1],T2[2]),
-        sl1=(f"{BC}",f"{CA}",f"{AB}"), sl2=(f"?",f"?",f"{PQ}"),
+        (25, 135), (85, 28), (155, 135), (225, 135), (300, 28), (375, 135),
+        vl1=(T1[0], T1[1], T1[2]), vl2=(T2[0], T2[1], T2[2]),
+        sl1=(f"{BC}", f"{CA}", f"{AB}"), sl2=(f"?", f"?", f"{PQ}"),
     )
     q = (f"Triangle {T1} is similar to triangle {T2} ({T1[0]} corresponds to {T2[0]}, etc.).<br>"
          f"{T1[0]}{T1[1]} = {AB} cm, {T1[1]}{T1[2]} = {BC} cm, {T1[0]}{T1[2]} = {CA} cm. "
@@ -581,7 +701,23 @@ def _sc_i9_proof_aa_parallel():
          "• Angle A is common to both triangles ADE and ABC<br>"
          "Since two pairs of angles are equal, by <strong>AA (Angle-Angle)</strong> similarity,<br>"
          "triangle ADE ~ triangle ABC.")
-    return q, s, "Identify two pairs of equal angles: one from parallel lines, one shared.", 4
+    steps = (
+        "DE is parallel to BC (DE ∥ BC).",
+        "Angle ADE = angle ABC (corresponding angles).",
+        "Angle A is common to both triangles ADE and ABC.",
+        "Triangle ADE ~ triangle ABC by AA similarity.",
+    )
+    distractors = (
+        "Angle ADE = angle ACB because DE is perpendicular to BC.",
+        "Triangle ADE is congruent to triangle ABC by SSS.",
+        "Only one pair of equal angles is needed, so triangle ADE ~ triangle ABC by SAS.",
+        "Angle ADE = angle BAC because DE and BC are alternate interior angles.",
+    )
+    return q, s, "Identify two pairs of equal angles: one from parallel lines, one shared.", 4, _sc_proof_steps_answer(
+        steps,
+        distractors,
+        format_hint='Put the proof steps in the correct order',
+    )
 
 
 def _sc_i10_overlapping_similar():
@@ -699,8 +835,12 @@ def _sc_i15_chain_scale_factor():
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _sc_d1_midpoint_theorem_proof():
-    q = ("Triangle ABC has D and E as the midpoints of AB and AC respectively. "
-         "Prove that triangle ADE is similar to triangle ABC, and hence show that DE ∥ BC and DE = ½BC.")
+    svg = _midpoint_tri_svg()
+    q = (
+        f"Triangle ABC has D and E as the midpoints of AB and AC respectively. "
+        f"Prove that triangle ADE is similar to triangle ABC, and hence show that "
+        f"DE ∥ BC and DE = ½BC.<br>{svg}"
+    )
     s = ("Since D and E are midpoints: AD = ½AB and AE = ½AC.<br>"
          "Therefore AD/AB = AE/AC = 1/2.<br>"
          "Angle A is common to both triangles ADE and ABC.<br>"
@@ -710,7 +850,25 @@ def _sc_d1_midpoint_theorem_proof():
          "Since the triangles are similar, angle ADE = angle ABC (corresponding angles), "
          "so DE ∥ BC (corresponding angles with transversal AB are equal). "
          "The scale factor is 1/2, so DE = ½BC. ✓")
-    return q, s, "Show AD/AB = AE/AC = 1/2 and angle A is common → SAS similarity.", 5
+    steps = (
+        "Since D and E are midpoints, AD = ½AB and AE = ½AC.",
+        "Therefore AD/AB = AE/AC = 1/2.",
+        "Angle A is common to both triangles ADE and ABC.",
+        "Triangle ADE ~ triangle ABC by SAS similarity (scale factor 1/2).",
+        "Corresponding angles are equal, so angle ADE = angle ABC, hence DE ∥ BC.",
+        "Since the scale factor is 1/2, DE = ½BC.",
+    )
+    distractors = (
+        "Angle B = angle C, so triangle ADE ~ triangle ABC by AA similarity.",
+        "AD = DB, therefore triangle ADE is congruent to triangle ABC by SSS.",
+        "Because DE is drawn inside the triangle, DE must equal BC.",
+        "Angle ADE = angle ACB because DE is perpendicular to BC.",
+    )
+    return q, s, "Show AD/AB = AE/AC = 1/2 and angle A is common → SAS similarity.", 5, _sc_proof_steps_answer(
+        steps,
+        distractors,
+        format_hint='Put the proof steps in the correct order',
+    )
 
 
 def _sc_d2_frustum_volume():
@@ -741,19 +899,47 @@ def _sc_d3_altitude_in_right_triangle():
     # Right triangle with altitude to hypotenuse: CD² = AD × DB
     combos = [(4, 16, 8), (9, 25, 15), (4, 9, 6)]
     AD, DB, CD = random.choice(combos)
-    AB = AD + DB
     q = (f"In right-angled triangle ABC (right angle at C), the altitude from C meets AB at D. "
          f"Given AD = {AD} cm and DB = {DB} cm:<br>"
-         f"(i) State why triangle ACD is similar to triangle ACB.<br>"
-         f"(ii) Show that CD² = AD × DB.<br>"
-         f"(iii) Find CD.")
+         f"<strong>(i)</strong> Select the correct reason why triangle ACD is similar to triangle ACB.<br>"
+         f"<strong>(ii)</strong> Select the correct statement that shows CD² = AD × DB.<br>"
+         f"<strong>(iii)</strong> Find CD.")
     s = (f"(i) Angle A is common to both triangles ACD and ACB. "
-         f"Angle ADC = Angle ACB = 90°. By AA, triangle ACD ~ triangle ACB.<br>"
-         f"(ii) From the similarity: CD/DB = AD/CD → CD² = AD × DB.<br>"
-         f"(iii) CD² = {AD} × {DB} = {AD*DB}<br>"
-         f"CD = √{AD*DB} = <strong>{CD} cm</strong>")
-    return q, s, "Show AA similarity for triangle ACD and ACB. Use the proportion to get CD² = AD·DB.", 5, _sc_num(
-        CD, 'CD (cm)'
+         f"Angle ADC = angle ACB = 90°. By AA, triangle ACD ~ triangle ACB.<br>"
+         f"(ii) Triangle ACD is also similar to triangle CBD (AA: right angles at D, "
+         f"and angle ACD = angle CBD). Corresponding sides give AD/CD = CD/DB, "
+         f"so CD² = AD × DB.<br>"
+         f"(iii) CD² = {AD} × {DB} = {AD * DB}<br>"
+         f"CD = √{AD * DB} = <strong>{CD} cm</strong>")
+    sim_opts, sim_ans = _sc_mcq_field(
+        'Angle A is common and angle ADC = angle ACB = 90°, so △ACD ~ △ACB by AA',
+        [
+            'Two sides and the included angle are equal, so the triangles are similar by SAS',
+            'All three pairs of corresponding sides are proportional, so the triangles are similar by SSS',
+            'Both triangles contain a right angle, so they are congruent by RHS',
+        ],
+    )
+    proof_raw, proof_bank, proof_pick = _sc_pick_field(
+        (
+            'From △ACD ~ △CBD, corresponding sides give AD/CD = CD/DB, so CD² = AD × DB.',
+        ),
+        (
+            'From △ACD ~ △ACB alone, AC/AB = CD/CB immediately gives CD² = AD × DB.',
+            'Because AD + DB = AB, squaring AB gives CD² = AD × DB.',
+            'The altitude from the right angle always bisects the hypotenuse, so CD² = AD × DB.',
+            'Matching sides in △ACD and △ACB give CD/DB = AD/CD because angle B is shared.',
+        ),
+        1,
+    )
+    return q, s, "Show AA similarity for △ACD and △ACB, then use △ACD ~ △CBD for the product rule.", 5, graded_answer_number_fields(
+        (sim_ans, proof_raw, CD),
+        ('Similarity reason', 'Proof of CD² = AD × DB', 'CD (cm)'),
+        field_types=('mcq', 'pick', 'number'),
+        field_options=(sim_opts, proof_bank, None),
+        field_pick_counts=(None, proof_pick, None),
+        row_sizes=(1, 1, 1),
+        group_labels=('(i)', '(ii)', '(iii)'),
+        inline_sections=True,
     )
 
 
@@ -814,6 +1000,18 @@ def _sc_d7_congruence_proof():
              "• AM = AM (common side)<br>"
              "By <strong>SSS</strong>, triangle ABM ≅ triangle ACM. ✓")
         hint = "List three pairs of equal sides: AB=AC, BM=MC, AM=AM. Then apply SSS."
+        steps = (
+            "AB = AC (given: triangle ABC is isosceles).",
+            "BM = MC (M is the midpoint of BC).",
+            "AM = AM (common side).",
+            "Triangle ABM ≅ triangle ACM by SSS.",
+        )
+        distractors = (
+            "Angle B = angle C, so triangle ABM ≅ triangle ACM by ASA.",
+            "AB = BM, so triangle ABM ≅ triangle ACM by SAS.",
+            "AM is perpendicular to BC, so triangle ABM ≅ triangle ACM by RHS.",
+            "BC = AC, so triangle ABM ≅ triangle ACM by SSS.",
+        )
     else:
         q = ("ABCD is a parallelogram. Prove that triangles ABC and CDA are congruent.")
         s = ("In triangles ABC and CDA:<br>"
@@ -822,7 +1020,23 @@ def _sc_d7_congruence_proof():
              "• AC = CA (common diagonal)<br>"
              "By <strong>SSS</strong>, triangle ABC ≅ triangle CDA. ✓")
         hint = "Use properties of parallelogram (opposite sides equal), then apply SSS."
-    return q, s, hint, 4
+        steps = (
+            "AB = CD (opposite sides of a parallelogram).",
+            "BC = DA (opposite sides of a parallelogram).",
+            "AC = CA (common diagonal).",
+            "Triangle ABC ≅ triangle CDA by SSS.",
+        )
+        distractors = (
+            "Angle ABC = angle CDA, so triangle ABC ≅ triangle CDA by ASA.",
+            "AB = BC, so triangle ABC ≅ triangle CDA by SSS.",
+            "The diagonals bisect each other, so triangle ABC ≅ triangle CDA by SAS.",
+            "AD = DC, so triangle ABC ≅ triangle CDA by RHS.",
+        )
+    return q, s, hint, 4, _sc_proof_steps_answer(
+        steps,
+        distractors,
+        format_hint='Put the proof steps in the correct order',
+    )
 
 
 def _sc_d8_both_sa_and_vol_similar():
@@ -888,19 +1102,41 @@ def _sc_d11_similar_trapezium():
 
 
 def _sc_d12_similar_rectangle_algebra():
-    q = ("A rectangle has dimensions (2x + 1) cm by 6 cm. "
-         "It is similar to a rectangle with dimensions (x + 5) cm by 4 cm. "
-         "Find x and the dimensions of each rectangle.")
-    s = ("For similar rectangles, corresponding sides must be in equal ratio.<br>"
-         "Orientation: (2x+1)/(x+5) = 6/4 = 3/2<br>"
-         "2(2x+1) = 3(x+5)<br>"
-         "4x + 2 = 3x + 15<br>"
-         "x = <strong>13</strong><br>"
-         "Rectangle 1: (2×13+1) by 6 = <strong>27 cm × 6 cm</strong><br>"
-         "Rectangle 2: (13+5) by 4 = <strong>18 cm × 4 cm</strong><br>"
-         "Check: 27/18 = 3/2 and 6/4 = 3/2 ✓")
-    return q, s, "Set up ratio of corresponding sides equal. Cross-multiply and solve for x.", 5, graded_answer_number_fields(
-        (13, 27, 6, 18, 4),
+    case = _sc_similar_rectangle_algebra_case()
+    x = case['x']
+    a, b, c, d = case['a'], case['b'], case['c'], case['d']
+    w1, w2 = case['w1'], case['w2']
+    p, q = case['p'], case['q']
+    L1, L2 = case['L1'], case['L2']
+    expr1 = _sc_lin_expr(a, b)
+    expr2 = _sc_lin_expr(c, d)
+
+    cross_left = f"{q}({a}x + {b})" if q > 1 else f"({a}x + {b})"
+    cross_right = f"{p}({c}x + {d})" if p > 1 else f"({c}x + {d})"
+    left_expand = f"{q * a}x + {q * b}"
+    right_expand = f"{p * c}x + {p * d}"
+    lhs_coeff = q * a - p * c
+    rhs_const = p * d - q * b
+
+    q_text = (
+        f"A rectangle has dimensions {expr1} cm by {w1} cm. "
+        f"It is similar to a rectangle with dimensions {expr2} cm by {w2} cm. "
+        f"Find x and the dimensions of each rectangle."
+    )
+    ratio_note = f" = {p}/{q}" if (p, q) != (w1, w2) else ""
+    s = (
+        "For similar rectangles, corresponding sides must be in equal ratio.<br>"
+        f"Orientation: {expr1}/{expr2} = {w1}/{w2}{ratio_note}<br>"
+        f"{cross_left} = {cross_right}<br>"
+        f"{left_expand} = {right_expand}<br>"
+        f"{lhs_coeff}x = {rhs_const}<br>"
+        f"x = <strong>{x}</strong><br>"
+        f"Rectangle 1: ({a}×{x}+{b}) by {w1} = <strong>{L1} cm × {w1} cm</strong><br>"
+        f"Rectangle 2: ({c}×{x}+{d}) by {w2} = <strong>{L2} cm × {w2} cm</strong><br>"
+        f"Check: {L1}/{L2} = {w1}/{w2} ✓"
+    )
+    return q_text, s, "Set up ratio of corresponding sides equal. Cross-multiply and solve for x.", 5, graded_answer_number_fields(
+        (x, L1, w1, L2, w2),
         ('x', 'Rectangle 1 length (cm)', 'Rectangle 1 width (cm)', 'Rectangle 2 length (cm)', 'Rectangle 2 width (cm)'),
     )
 

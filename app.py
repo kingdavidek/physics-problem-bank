@@ -1416,7 +1416,10 @@ def index():
                 'Difficult questions require a free account. '
                 'Sign up or log in to continue.'
             )
-        elif session['anon_count'] >= ANON_DAILY_LIMIT:
+        elif (
+            not current_user.is_authenticated
+            and session['anon_count'] >= ANON_DAILY_LIMIT
+        ):
             limit_hit = True
         else:
             try:
@@ -1459,7 +1462,8 @@ def index():
                     problem = generator(selected_diff, selected_mode)
 
                 if problem is not None:
-                    session['anon_count'] += 1
+                    if not current_user.is_authenticated:
+                        session['anon_count'] += 1
                     session['last_problem_payload'] = {
                         'level': selected_level,
                         'subject': selected_subject,
@@ -3743,10 +3747,10 @@ def api_v1_problems_check():
         client_raw = payload.get('correct_answer_raw')
         client_type = payload.get('answer_type')
         partial_field = False
-        if client_raw is not None and str(client_raw) != stored_raw:
+        client_raw_s = str(client_raw) if client_raw is not None else None
+        if client_raw_s is not None:
             field_sep = '\x1e' if '\x1e' in stored_raw else '|'
             stored_parts = stored_raw.split(field_sep)
-            client_raw_s = str(client_raw)
             field_match = False
             if (
                 stored_type == 'number_fields'
@@ -3763,12 +3767,23 @@ def api_v1_problems_check():
                         field_match = client_raw_s == stored_parts[pi]
                 if not field_match:
                     field_match = client_raw_s in stored_parts
-            if field_match:
+                if (
+                    not field_match
+                    and client_raw_s == stored_raw
+                    and len(stored_parts) == 1
+                ):
+                    field_match = True
+            if client_raw_s != stored_raw:
+                if field_match:
+                    partial_field = True
+                    correct_answer_raw = client_raw_s
+                    answer_type = client_type
+                else:
+                    return _api_error('Problem mismatch', 403, 'session_mismatch')
+            elif field_match:
                 partial_field = True
                 correct_answer_raw = client_raw_s
                 answer_type = client_type
-            else:
-                return _api_error('Problem mismatch', 403, 'session_mismatch')
         if (
             not partial_field
             and client_type is not None
@@ -4390,9 +4405,8 @@ def _api_rate_limit(action, limit):
     if _rate_limits_disabled():
         return True, limit
     if current_user.is_authenticated:
-        bucket = f'{action}:user:{current_user.id}'
-    else:
-        bucket = f'{action}:ip:{_client_ip()}'
+        return True, limit
+    bucket = f'{action}:ip:{_client_ip()}'
     with get_db() as conn:
         allowed, remaining, _count = check_and_increment_rate_limit(conn, bucket, limit)
     return allowed, remaining

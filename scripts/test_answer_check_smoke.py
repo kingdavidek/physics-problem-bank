@@ -1392,14 +1392,18 @@ def test_cy_multipart_attack_scenario_inline_fields():
     assert problem.get('answer_type') == 'number_fields'
     assert problem.get('answer_inline_sections') is True
     assert problem.get('answer_field_section_keys') == ['(a)', '(b)', '(c)']
-    assert problem.get('answer_field_types') == ['mcq', 'text', 'pick']
+    assert problem.get('answer_field_types') == ['mcq', 'mcq', 'pick']
     assert problem.get('answer_field_pick_counts') == [None, None, 3]
     raw = problem.get('correct_answer_raw') or ''
     assert '\x1e' in raw
     parts = raw.split('\x1e')
     assert len(parts) == 3
-    assert parts[1] == 'manipulating|people|trick'
+    assert parts[0] in 'ABC'
+    assert parts[1] in 'ABC'
     assert parts[2].startswith('pick|3|')
+    opts = problem.get('answer_field_options') or []
+    assert any('Phishing' in str(o) for o in opts[0])
+    assert any('trick' in str(o).lower() or 'manipulat' in str(o).lower() for o in opts[1])
 
 
 def test_check_algebraic_surd_binomial():
@@ -3767,14 +3771,14 @@ def test_eth_multipart_smartphone_lifecycle_inline_fields():
     assert problem.get('answer_type') == 'number_fields'
     assert problem.get('answer_inline_sections') is True
     assert problem.get('answer_field_section_keys') == ['(a)', '(b)', '(c)']
-    assert problem.get('answer_field_types') == ['text', 'text', 'pick']
-    assert problem.get('answer_field_pick_counts') == [None, None, 2]
+    assert problem.get('answer_field_types') == ['pick', 'pick', 'pick']
+    assert problem.get('answer_field_pick_counts') == [1, 1, 2]
     raw = problem.get('correct_answer_raw') or ''
     assert '\x1e' in raw
     parts = raw.split('\x1e')
     assert len(parts) == 3
-    assert parts[0].startswith('2@')
-    assert parts[1].startswith('2@')
+    assert parts[0].startswith('pick|1|')
+    assert parts[1].startswith('pick|1|')
     assert parts[2].startswith('pick|2|')
     assert len((problem.get('answer_field_options') or [])[2]) == 8
 
@@ -3851,13 +3855,17 @@ def test_eth_ai_bias_definition_and_example_fields():
     assert problem.get('answer_type') == 'number_fields'
     assert problem.get('answer_inline_sections') is True
     assert problem.get('answer_field_section_keys') == ['(a)', '(b)']
-    assert problem.get('answer_field_types') == ['text', 'pick']
+    assert problem.get('answer_field_types') == ['mcq', 'pick']
     assert problem.get('answer_field_pick_counts') == [None, 1]
     parts = (problem.get('correct_answer_raw') or '').split('\x1e')
     assert len(parts) == 2
-    assert 'unfair' in parts[0]
+    assert parts[0] in 'ABC'
     assert parts[1].startswith('pick|1|')
-    assert len((problem.get('answer_field_options') or [])[1]) == 6
+    opts = problem.get('answer_field_options') or []
+    assert len(opts) == 2
+    assert len(opts[0]) == 3
+    assert any('unfair' in str(o).lower() for o in opts[0])
+    assert len(opts[1]) == 6
 
 
 def test_eth_licence_compare_select_all_fields():
@@ -3935,13 +3943,15 @@ def test_eth_definition_mcq_variants():
     from generators.gcse.gcse_cs_ethical_lesson import gcse_ethical
 
     for variant_name in ('_eth_f3_copyright', '_eth_f5_open_source', '_eth_i3_copyright_example'):
-        problem = gcse_ethical('foundational', 'practice', variant_name=variant_name)
-        if variant_name.startswith('_eth_i'):
-            problem = gcse_ethical('intermediate', 'practice', variant_name=variant_name)
-        assert problem.get('options'), variant_name
-        assert problem.get('correct_answer') in 'ABCD', variant_name
-        assert len(problem['options']) == 4, variant_name
-        assert not problem.get('correct_answer_raw'), variant_name
+        difficulty = 'intermediate' if variant_name.startswith('_eth_i') else 'foundational'
+        problem = gcse_ethical(difficulty, 'practice', variant_name=variant_name)
+        assert problem.get('answer_type') == 'number_fields', variant_name
+        assert problem.get('answer_field_types') == ['mcq'], variant_name
+        assert problem.get('correct_answer_raw') in 'ABCD', variant_name
+        opts = (problem.get('answer_field_options') or [])[0]
+        assert len(opts) == 4, variant_name
+        assert not problem.get('options'), variant_name
+        assert not problem.get('correct_answer'), variant_name
 
 
 def test_eth_ethical_vs_legal_match_mcq():
@@ -3981,15 +3991,20 @@ def test_cs_text_partial_score_recorded():
 
     email = f'pt_{uuid.uuid4().hex[:8]}@example.com'
     handle = f'pt{uuid.uuid4().hex[:6]}'
-    av = gcse_cyber_security('foundational', 'practice', variant_name='_cy_f1_malware_virus')
+    problem = gcse_cyber_security('foundational', 'practice', variant_name='_cy_f5_strong_password')
+    correct_raw = problem['correct_answer_raw']
+    one_correct = correct_raw.split('|')[2]
     with app.test_client() as client:
         register(client, email, handle)
         r = client.post(
             '/api/v1/problems/check',
             json={
-                'user_answer': 'Malicious code damages systems',
-                'correct_answer_raw': av['correct_answer_raw'],
-                'answer_type': av['answer_type'],
+                'user_answer': one_correct,
+                'correct_answer_raw': correct_raw,
+                'answer_type': problem['answer_type'],
+                'answer_step_bank': problem.get('answer_step_bank'),
+                'answer_pick_count': problem.get('answer_pick_count'),
+                'answer_order_matters': problem.get('answer_order_matters'),
                 'level': 'gcse',
                 'subject': 'cs',
                 'topic': 'cyber_security',
@@ -4013,27 +4028,36 @@ def test_cs_text_partial_score_recorded():
 
 
 def test_cs_text_problems_expose_grading_keywords():
+    from generators.shared.answer_checkers import check_proof_steps
+
     av = gcse_cyber_security('foundational', 'practice', variant_name='_cy_f4_antivirus')
-    assert av.get('answer_type') == 'text'
-    assert av.get('answer_text_keywords')
+    assert av.get('answer_type') == 'number_fields'
+    assert av.get('answer_field_types') == ['mcq']
+    assert av.get('correct_answer_raw') in 'ABCD'
+    assert len((av.get('answer_field_options') or [])[0]) == 4
 
     phys = gcse_cyber_security('foundational', 'practice', variant_name='_cy_f8_physical_security')
-    assert phys.get('answer_text_required') == 2
-    assert len(phys.get('answer_text_keywords') or []) >= 5
-    assert phys['correct_answer_raw'].startswith('2@')
+    assert phys.get('answer_type') == 'proof_steps'
+    assert phys.get('answer_pick_count') == 2
+    assert len(phys.get('answer_step_bank') or []) >= 5
+    assert phys['correct_answer_raw'].startswith('pick|2|')
 
-    visitor = check_text(phys['correct_answer_raw'], 'visitor log and cable locks')
-    assert visitor['correct'] is True, visitor
-    assert visitor['score'] == 2
+    full = check_proof_steps(phys['correct_answer_raw'], '|'.join(
+        phys['correct_answer_raw'].split('|')[2:4]
+    ))
+    assert full['correct'] is True, full
+    assert full['score'] == 2
 
-    one_measure = check_text(phys['correct_answer_raw'], 'we keep a visitor log')
+    one_measure = check_proof_steps(phys['correct_answer_raw'], phys['correct_answer_raw'].split('|')[2])
     assert one_measure['correct'] is False
     assert one_measure['score'] == 1
     assert one_measure['score_total'] == 2
 
     bio = gcse_cyber_security('difficult', 'practice', variant_name='_cy_d4_bio_vs_password')
-    assert bio.get('answer_field_hints')
-    assert any('Advantage' in hint for hint in bio['answer_field_hints'])
+    assert bio.get('answer_type') == 'number_fields'
+    assert bio.get('answer_field_types') == ['pick', 'pick']
+    assert bio.get('answer_labels') == ['Advantage', 'Risk']
+    assert len(bio.get('answer_field_options') or []) == 2
 
 
 def test_cs_definition_variant_queues_are_graded():
@@ -4049,7 +4073,7 @@ def test_cs_definition_variant_queues_are_graded():
                     continue
                 problem = gen(difficulty, 'practice', variant_name=variant.__name__)
                 assert problem.get('correct_answer_raw'), (difficulty, variant.__name__)
-                assert problem.get('answer_type') in ('text', 'keyword', 'number_fields', 'proof_steps'), variant.__name__
+                assert problem.get('answer_type') in ('keyword', 'number_fields', 'proof_steps'), variant.__name__
 
 
 def test_computer_systems_networks_variant_queues():
@@ -5203,18 +5227,18 @@ TRANS_UNGRADED_VARIANTS = (
 
 CL_NUMBER_VARIANTS = (
     '_cl_f15_scale_drawing_length',
-    '_cl_i5_treasure_hunt',
     '_cl_i10_scale_bearing',
     '_cl_i14_count_loci_intersections',
     '_cl_i15_scale_area',
     '_cl_d3_chord_midpoint',
     '_cl_d6_difference_squares',
     '_cl_d11_sector_area_sprinkler',
-    '_cl_d17_treasure_hunt_multi',
 )
 
 CL_FIELDS_VARIANTS = (
+    '_cl_i5_treasure_hunt',
     '_cl_d10_incircle_radius',
+    '_cl_d17_treasure_hunt_multi',
     '_cl_d18_triangle_centres_multi',
 )
 
@@ -5255,11 +5279,11 @@ CL_PROOF_STEPS_VARIANTS = (
     '_cl_d9_regular_hexagon',
     '_cl_d13_construct_45',
     '_cl_d14_construct_30',
+    '_cl_d2_ladder_ellipse',
 )
 
 CL_UNGRADED_VARIANTS = (
     '_cl_d1_locus_proof',
-    '_cl_d2_ladder_ellipse',
     '_cl_d5_apollonius_circle',
 )
 
@@ -7573,10 +7597,16 @@ def test_sequences_check_api():
         assert data['correct'] is True
 
 
-SC_UNGRADED_VARIANTS = (
+SC_UNGRADED_VARIANTS = ()
+
+SC_PROOF_STEP_VARIANTS = (
     '_sc_i9_proof_aa_parallel',
     '_sc_d1_midpoint_theorem_proof',
     '_sc_d7_congruence_proof',
+)
+
+SC_PROOF_STEP_WITH_SVG = (
+    '_sc_d1_midpoint_theorem_proof',
 )
 
 SC_GRADED_VARIANTS = (
@@ -7614,6 +7644,62 @@ def test_similarity_congruence_graded_variants_are_graded():
         assert problem.get('answer_type') in ('number', 'number_fields'), name
 
 
+def test_sc_d12_similar_rectangle_algebra_is_randomizable():
+    import generators.gcse.maths_similarity_congruence as sc_mod
+    from generators.shared.variant_utils import variant_is_randomizable
+
+    assert variant_is_randomizable(sc_mod._sc_d12_similar_rectangle_algebra) is True
+    questions = {sc_mod._sc_d12_similar_rectangle_algebra()[0] for _ in range(16)}
+    assert len(questions) > 1
+
+
+def test_sc_d3_altitude_multipart_fields():
+    import generators.gcse.maths_similarity_congruence as sc_mod
+    from generators.shared.answer_checkers import check_proof_steps
+
+    problem = make_graded_problem(
+        sc_mod._sc_d3_altitude_in_right_triangle(),
+        'difficult', 'gcse', 'maths', 'similarity_congruence',
+    )
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_inline_sections') is True
+    assert problem.get('answer_field_section_keys') == ['(i)', '(ii)', '(iii)']
+    assert problem.get('answer_field_types') == ['mcq', 'pick', 'number']
+    assert problem.get('answer_field_pick_counts') == [None, 1, None]
+    parts = (problem.get('correct_answer_raw') or '').split('\x1e')
+    assert len(parts) == 3
+    assert parts[0] in 'ABCD'
+    assert parts[1].startswith('pick|1|')
+    assert parts[2].isdigit()
+    opts = problem.get('answer_field_options') or []
+    assert len(opts[0]) == 4
+    assert len(opts[1]) == 5
+    pick_id = parts[1].split('|')[2]
+    assert check_proof_steps(parts[1], pick_id)['correct'] is True
+
+
+def test_similarity_congruence_proof_step_variants_are_graded():
+    import generators.gcse.maths_similarity_congruence as sc_mod
+    from generators.shared.answer_checkers import check_proof_steps
+
+    for name in SC_PROOF_STEP_VARIANTS:
+        out = getattr(sc_mod, name)()
+        assert len(out) == 5, name
+        if name in SC_PROOF_STEP_WITH_SVG:
+            assert '<svg' in out[0], name
+        else:
+            assert '<svg' not in out[0], name
+        problem = make_graded_problem(out, 'difficult', 'gcse', 'maths', 'similarity_congruence')
+        assert problem.get('answer_type') == 'proof_steps', name
+        assert problem.get('answer_order_matters') is True, name
+        assert problem.get('answer_step_bank'), name
+        raw = problem.get('correct_answer_raw') or ''
+        assert raw.startswith('1|'), name
+        step_ids = raw.split('|')[1:]
+        assert check_proof_steps(raw, '|'.join(step_ids))['correct'] is True, name
+        assert check_proof_steps(raw, '|'.join(reversed(step_ids)))['correct'] is False, name
+
+
 def test_similarity_congruence_ungraded_variants_remain_ungraded():
     import generators.gcse.maths_similarity_congruence as sc_mod
 
@@ -7636,6 +7722,9 @@ def test_similarity_congruence_mcq_fields_have_options():
         assert 'mcq' in field_types, name
         field_options = problem.get('answer_field_options') or []
         assert any(opts for opts in field_options), name
+        opts = field_options[0]
+        assert len(opts) == 4, name
+        assert problem.get('correct_answer_raw') in 'ABCD', name
 
 
 def test_similarity_congruence_variant_queues_are_graded():
@@ -7677,6 +7766,43 @@ def test_similarity_congruence_check_api():
         data = r.get_json()
         assert data['ok'] is True
         assert data['correct'] is True
+
+
+def test_similarity_congruence_single_field_session_check():
+    """Per-field ratio/mcq checks must not 403 when raw matches a single-field problem."""
+    cases = (
+        ('_sc_f10_lsf_from_area', 'ratio'),
+        ('_sc_f1_congruence_sss', 'mcq'),
+    )
+    with app.test_client() as client:
+        for variant_name, field_type in cases:
+            problem = gcse_similarity_congruence(
+                'foundational', 'practice', variant_name=variant_name
+            )
+            assert problem.get('answer_type') == 'number_fields', variant_name
+            correct = problem['correct_answer_raw']
+            with client.session_transaction() as sess:
+                sess['last_problem_payload'] = {
+                    'level': 'gcse',
+                    'subject': 'maths',
+                    'topic': 'similarity_congruence',
+                    'mode': 'practice',
+                    'difficulty': 'foundational',
+                    'problem': problem,
+                }
+            r = client.post(
+                '/api/v1/problems/check',
+                json={
+                    'user_answer': correct,
+                    'correct_answer_raw': correct,
+                    'answer_type': field_type,
+                    'part_index': 0,
+                    'part_total': 1,
+                },
+                headers={'Accept': 'application/json'},
+            )
+            assert r.status_code == 200, (variant_name, r.get_json())
+            assert r.get_json()['correct'] is True, variant_name
 
 
 CT_UNGRADED_VARIANTS = (
@@ -8761,10 +8887,14 @@ def main():
     test_sequences_variant_queues_are_graded()
     test_sequences_check_api()
     test_similarity_congruence_graded_variants_are_graded()
+    test_sc_d12_similar_rectangle_algebra_is_randomizable()
+    test_sc_d3_altitude_multipart_fields()
+    test_similarity_congruence_proof_step_variants_are_graded()
     test_similarity_congruence_ungraded_variants_remain_ungraded()
     test_similarity_congruence_mcq_fields_have_options()
     test_similarity_congruence_variant_queues_are_graded()
     test_similarity_congruence_check_api()
+    test_similarity_congruence_single_field_session_check()
     test_circle_theorems_graded_variants_are_graded()
     test_circle_theorems_ungraded_variants_remain_ungraded()
     test_circle_theorems_algebra_variants_use_number_fields()
