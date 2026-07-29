@@ -3357,6 +3357,99 @@ def _parse_proof_steps_raw(raw):
     return {'mode': 'all', 'expected_ids': ids}
 
 
+def _proof_steps_step_feedback(mode, expected_ids, user_ids):
+    """Per-step status hints when a proof-steps answer is not fully correct."""
+    if not user_ids:
+        return []
+    expected_set = set(expected_ids)
+    feedback = []
+    if mode == 'ordered':
+        for i, uid in enumerate(user_ids):
+            if uid not in expected_set:
+                feedback.append({
+                    'id': uid,
+                    'status': 'wrong',
+                    'hint': 'This step does not belong in the proof.',
+                })
+            elif i < len(expected_ids) and uid == expected_ids[i]:
+                feedback.append({
+                    'id': uid,
+                    'status': 'correct',
+                    'hint': 'Correct step in the correct place.',
+                })
+            else:
+                try:
+                    target = expected_ids.index(uid) + 1
+                except ValueError:
+                    target = None
+                hint = (
+                    f'This step should be in position {target}, not {i + 1}.'
+                    if target is not None
+                    else 'This step is in the wrong order.'
+                )
+                feedback.append({
+                    'id': uid,
+                    'status': 'wrong_order',
+                    'hint': hint,
+                })
+    else:
+        for uid in user_ids:
+            if uid in expected_set:
+                feedback.append({
+                    'id': uid,
+                    'status': 'correct',
+                    'hint': 'This is a correct step.',
+                })
+            else:
+                feedback.append({
+                    'id': uid,
+                    'status': 'wrong',
+                    'hint': 'This step should not be selected.',
+                })
+    return feedback
+
+
+def _proof_steps_wrong_feedback(mode, step_feedback):
+    """Summary feedback when proof steps are partially or fully wrong."""
+    if not step_feedback:
+        if mode == 'ordered':
+            return 'Not quite — check which steps belong and their order.'
+        if mode == 'pick':
+            return 'Not quite — select the correct options and leave out the rest.'
+        return 'Not quite — select every correct statement and leave out the rest.'
+
+    correct_n = sum(1 for s in step_feedback if s['status'] == 'correct')
+    wrong_n = sum(1 for s in step_feedback if s['status'] == 'wrong')
+    order_n = sum(1 for s in step_feedback if s['status'] == 'wrong_order')
+
+    if mode == 'ordered':
+        parts = []
+        if correct_n:
+            parts.append(f'{correct_n} step{"s" if correct_n != 1 else ""} correct')
+        if order_n:
+            parts.append(
+                f'{order_n} in the wrong order'
+            )
+        if wrong_n:
+            parts.append(f'{wrong_n} do not belong')
+        summary = ', '.join(parts) + '.' if parts else ''
+        return (
+            f'Not quite — {summary} '
+            'Green = correct, amber = wrong order, red = not part of this proof.'
+        ).strip()
+
+    parts = []
+    if correct_n:
+        parts.append(f'{correct_n} correct')
+    if wrong_n:
+        parts.append(f'{wrong_n} should not be selected')
+    summary = ', '.join(parts) + '.' if parts else ''
+    return (
+        f'Not quite — {summary} '
+        'Green = correct choice, red = should not be selected.'
+    ).strip()
+
+
 @register_checker('proof_steps')
 def check_proof_steps(correct_raw, user_answer):
     """Plan C: selected step ids from a bank (order optional)."""
@@ -3394,13 +3487,11 @@ def check_proof_steps(correct_raw, user_answer):
             'feedback': 'Select your answer.',
         }
 
+    step_feedback = None
+
     if mode == 'ordered':
         correct = user_ids == expected_ids
-        feedback = (
-            'Correct!'
-            if correct
-            else 'Not quite — check which steps belong and their order.'
-        )
+        feedback = 'Correct!' if correct else None
     elif mode == 'pick':
         pick_count = parsed['pick_count']
         correct_pool = set(parsed['correct_ids'])
@@ -3421,6 +3512,15 @@ def check_proof_steps(correct_raw, user_answer):
             )
         else:
             feedback = f'{score}/{score_total} correct.'
+        if not correct:
+            step_feedback = _proof_steps_step_feedback(mode, expected_ids, user_ids)
+            if score > 0 and score < score_total:
+                feedback = (
+                    f'{score}/{score_total} correct. '
+                    + _proof_steps_wrong_feedback(mode, step_feedback)
+                )
+            else:
+                feedback = _proof_steps_wrong_feedback(mode, step_feedback)
         return {
             'correct': correct,
             'score': score,
@@ -3428,21 +3528,25 @@ def check_proof_steps(correct_raw, user_answer):
             'normalized_user': '|'.join(user_ids),
             'normalized_correct': normalized_correct,
             'feedback': feedback,
+            **({'step_feedback': step_feedback} if step_feedback else {}),
         }
     else:
         correct = set(user_ids) == set(expected_ids)
-        feedback = (
-            'Correct!'
-            if correct
-            else 'Not quite — select every correct statement and leave out the rest.'
-        )
+        feedback = 'Correct!' if correct else None
 
-    return {
+    if not correct:
+        step_feedback = _proof_steps_step_feedback(mode, expected_ids, user_ids)
+        feedback = _proof_steps_wrong_feedback(mode, step_feedback)
+
+    result = {
         'correct': correct,
         'normalized_user': '|'.join(user_ids),
         'normalized_correct': normalized_correct,
         'feedback': feedback,
     }
+    if step_feedback is not None:
+        result['step_feedback'] = step_feedback
+    return result
 
 
 @register_checker('number_list')

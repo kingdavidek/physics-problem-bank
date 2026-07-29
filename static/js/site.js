@@ -2535,6 +2535,11 @@
             remove.textContent = 'Remove';
             remove.addEventListener('click', function () {
               selected.splice(selIndex, 1);
+              clearProofStepFeedback(row);
+              if (fieldFeedback) {
+                fieldFeedback.textContent = '';
+                fieldFeedback.style.color = '';
+              }
               syncOrderBankState();
               renderOrderSelected();
             });
@@ -2561,6 +2566,11 @@
               var id = btn.getAttribute('data-step-id') || '';
               if (!id || selected.indexOf(id) >= 0) return;
               if (stepCount && selected.length >= stepCount) return;
+              clearProofStepFeedback(row);
+              if (fieldFeedback) {
+                fieldFeedback.textContent = '';
+                fieldFeedback.style.color = '';
+              }
               selected.push(id);
               syncOrderBankState();
               renderOrderSelected();
@@ -2572,6 +2582,7 @@
           clearBtn.addEventListener('click', function () {
             if (row.dataset.fieldCorrect === '1') return;
             selected = [];
+            clearProofStepFeedback(row);
             syncOrderBankState();
             renderOrderSelected();
             if (fieldFeedback) {
@@ -2595,23 +2606,24 @@
           submitNumberFieldAnswer(index, row, 'proof_steps', selected.join('|'), function (data) {
             if (data.correct) {
               row.dataset.fieldCorrect = '1';
-              if (fieldFeedback) {
-                fieldFeedback.textContent = '\u2713 Correct!';
-                fieldFeedback.style.color = '#16a34a';
-              }
-              if (bank) {
-                bank.querySelectorAll('.free-response-proof-step').forEach(function (btn) {
-                  btn.disabled = true;
-                });
-              }
-              if (clearBtn) clearBtn.disabled = true;
+              handleProofStepsCheckResult(data, {
+                feedbackEl: fieldFeedback,
+                listEl: list,
+                rowEl: row,
+                checkBtn: checkBtn,
+                bankEl: bank,
+                clearBtn: clearBtn,
+              });
               maybePersistAllFields();
             } else {
-              checkBtn.disabled = false;
-              if (fieldFeedback) {
-                fieldFeedback.textContent = '\u2717 ' + (data.feedback || 'Not quite — check which steps belong and their order.');
-                fieldFeedback.style.color = '#dc2626';
-              }
+              handleProofStepsCheckResult(data, {
+                feedbackEl: fieldFeedback,
+                listEl: list,
+                rowEl: row,
+                checkBtn: checkBtn,
+                bankEl: bank,
+                clearBtn: clearBtn,
+              });
             }
           }).catch(function (err) {
             checkBtn.disabled = false;
@@ -2654,6 +2666,11 @@
             remove.textContent = 'Remove';
             remove.addEventListener('click', function () {
               selected.splice(selIndex, 1);
+              clearProofStepFeedback(row);
+              if (fieldFeedback) {
+                fieldFeedback.textContent = '';
+                fieldFeedback.style.color = '';
+              }
               syncPickBankState();
               renderPickSelected();
             });
@@ -2677,6 +2694,11 @@
               if (row.dataset.fieldCorrect === '1') return;
               var id = btn.getAttribute('data-step-id') || '';
               if (!id) return;
+              clearProofStepFeedback(row);
+              if (fieldFeedback) {
+                fieldFeedback.textContent = '';
+                fieldFeedback.style.color = '';
+              }
               var idx = selected.indexOf(id);
               if (idx >= 0) {
                 selected.splice(idx, 1);
@@ -2693,6 +2715,7 @@
           clearBtn.addEventListener('click', function () {
             if (row.dataset.fieldCorrect === '1') return;
             selected = [];
+            clearProofStepFeedback(row);
             syncPickBankState();
             renderPickSelected();
             if (fieldFeedback) {
@@ -2718,31 +2741,24 @@
           submitNumberFieldAnswer(index, row, 'proof_steps', selected.join('|'), function (data) {
             if (data.correct) {
               row.dataset.fieldCorrect = '1';
-              if (fieldFeedback) {
-                fieldFeedback.textContent = '\u2713 Correct!';
-                fieldFeedback.style.color = '#16a34a';
-              }
-              if (bank) {
-                bank.querySelectorAll('.free-response-proof-step').forEach(function (btn) {
-                  btn.disabled = true;
-                });
-              }
-              if (clearBtn) clearBtn.disabled = true;
+              handleProofStepsCheckResult(data, {
+                feedbackEl: fieldFeedback,
+                listEl: list,
+                rowEl: row,
+                checkBtn: checkBtn,
+                bankEl: bank,
+                clearBtn: clearBtn,
+              });
               maybePersistAllFields();
-            } else if (isTextPartialScore(data)) {
-              checkBtn.disabled = false;
-              if (fieldFeedback) {
-                fieldFeedback.textContent = '\u25D0 ' + (data.feedback || (
-                  data.score + '/' + data.score_total + ' correct.'
-                ));
-                fieldFeedback.style.color = '#d97706';
-              }
             } else {
-              checkBtn.disabled = false;
-              if (fieldFeedback) {
-                fieldFeedback.textContent = '\u2717 ' + (data.feedback || 'Not quite — try again.');
-                fieldFeedback.style.color = '#dc2626';
-              }
+              handleProofStepsCheckResult(data, {
+                feedbackEl: fieldFeedback,
+                listEl: list,
+                rowEl: row,
+                checkBtn: checkBtn,
+                bankEl: bank,
+                clearBtn: clearBtn,
+              });
             }
           }).catch(function (err) {
             checkBtn.disabled = false;
@@ -2880,6 +2896,94 @@
     return 0;
   }
 
+  function proofStepStatusLabel(status) {
+    if (status === 'correct') return '\u2713 Correct';
+    if (status === 'wrong_order') return '\u21C4 Wrong order';
+    if (status === 'wrong') return '\u2717 Not a proof step';
+    return '';
+  }
+
+  function clearProofStepFeedback(container) {
+    if (!container) return;
+    container.querySelectorAll('.free-response-proof-selected li').forEach(function (li) {
+      li.classList.remove('proof-step-status--correct', 'proof-step-status--wrong', 'proof-step-status--wrong-order');
+      var badge = li.querySelector('.free-response-proof-status');
+      if (badge) badge.remove();
+    });
+  }
+
+  function applyProofStepFeedback(list, stepFeedback) {
+    if (!list || !stepFeedback || !stepFeedback.length) return;
+    var items = list.querySelectorAll('li');
+    stepFeedback.forEach(function (item, index) {
+      var li = items[index];
+      if (!li) return;
+      li.classList.remove('proof-step-status--correct', 'proof-step-status--wrong', 'proof-step-status--wrong-order');
+      var status = item.status || 'wrong';
+      if (status === 'correct') {
+        li.classList.add('proof-step-status--correct');
+      } else if (status === 'wrong_order') {
+        li.classList.add('proof-step-status--wrong-order');
+      } else {
+        li.classList.add('proof-step-status--wrong');
+      }
+      var badge = li.querySelector('.free-response-proof-status');
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'free-response-proof-status';
+        var removeBtn = li.querySelector('.free-response-proof-remove');
+        if (removeBtn) {
+          li.insertBefore(badge, removeBtn);
+        } else {
+          li.appendChild(badge);
+        }
+      }
+      badge.textContent = proofStepStatusLabel(status);
+      badge.title = item.hint || '';
+    });
+  }
+
+  function handleProofStepsCheckResult(data, context) {
+    var feedback = context.feedbackEl;
+    var list = context.listEl;
+    var row = context.rowEl;
+    var checkBtn = context.checkBtn;
+    var bank = context.bankEl;
+    var clearBtn = context.clearBtn;
+    var block = context.blockEl;
+
+    if (data.score_total != null && data.score != null && block) {
+      block.dataset.textScore = String(data.score);
+      block.dataset.textScoreTotal = String(data.score_total);
+    }
+
+    if (data.correct) {
+      if (feedback) {
+        feedback.textContent = '\u2713 Correct!';
+        feedback.style.color = '#16a34a';
+      }
+      if (row) row.classList.add('is-correct');
+      if (bank) {
+        bank.querySelectorAll('.free-response-proof-step').forEach(function (b) {
+          b.disabled = true;
+        });
+      }
+      if (clearBtn) clearBtn.disabled = true;
+    } else {
+      if (feedback) {
+        if (isTextPartialScore(data) && !data.step_feedback) {
+          feedback.textContent = '\u25D0 ' + (context.partialFeedback || freeResponseWrongFeedback(block, data));
+          feedback.style.color = '#d97706';
+        } else {
+          feedback.textContent = '\u2717 ' + (data.feedback || 'Not quite.');
+          feedback.style.color = '#dc2626';
+        }
+      }
+      applyProofStepFeedback(list, data.step_feedback);
+      if (checkBtn) checkBtn.disabled = false;
+    }
+  }
+
   function proofStepsPickCount(correctRaw, block, row) {
     var pickAttr = '';
     if (row && row.getAttribute('data-pick-count')) {
@@ -2934,6 +3038,11 @@
         remove.textContent = 'Remove';
         remove.addEventListener('click', function () {
           selected.splice(index, 1);
+          clearProofStepFeedback(row);
+          if (feedback) {
+            feedback.textContent = '';
+            feedback.style.color = '';
+          }
           syncBankState();
           renderSelected();
         });
@@ -2968,6 +3077,11 @@
           if (checkBtn && checkBtn.disabled) return;
           var id = btn.getAttribute('data-step-id') || '';
           if (!id) return;
+          clearProofStepFeedback(row);
+          if (feedback) {
+            feedback.textContent = '';
+            feedback.style.color = '';
+          }
           var idx = selected.indexOf(id);
           if (orderMatters) {
             if (idx >= 0) return;
@@ -2988,6 +3102,7 @@
       clearBtn.addEventListener('click', function () {
         if (checkBtn && checkBtn.disabled) return;
         selected = [];
+        clearProofStepFeedback(row);
         syncBankState();
         renderSelected();
         if (feedback) {
@@ -3042,33 +3157,15 @@
           });
         })
         .then(function (data) {
-          if (data.score_total != null && data.score != null) {
-            block.dataset.textScore = String(data.score);
-            block.dataset.textScoreTotal = String(data.score_total);
-          }
-          if (feedback) {
-            if (data.correct) {
-              feedback.textContent = '\u2713 Correct!';
-              feedback.style.color = '#16a34a';
-            } else if (isTextPartialScore(data)) {
-              feedback.textContent = '\u25D0 ' + freeResponseWrongFeedback(block, data);
-              feedback.style.color = '#d97706';
-            } else {
-              feedback.textContent = '\u2717 ' + (data.feedback || 'Not quite.');
-              feedback.style.color = '#dc2626';
-            }
-          }
-          if (data.correct) {
-            row.classList.add('is-correct');
-            if (bank) {
-              bank.querySelectorAll('.free-response-proof-step').forEach(function (b) {
-                b.disabled = true;
-              });
-            }
-            if (clearBtn) clearBtn.disabled = true;
-          } else {
-            checkBtn.disabled = false;
-          }
+          handleProofStepsCheckResult(data, {
+            feedbackEl: feedback,
+            listEl: list,
+            rowEl: row,
+            checkBtn: checkBtn,
+            bankEl: bank,
+            clearBtn: clearBtn,
+            blockEl: block,
+          });
         })
         .catch(function (err) {
           checkBtn.disabled = false;

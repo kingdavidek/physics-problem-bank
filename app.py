@@ -376,15 +376,20 @@ def split_question_sections(value, section_keys):
         return {'intro': q, 'sections': []}
 
     def _section_pos(text, key, start=0):
-        """Find section start; keys like (a) also match <strong>a)</strong> in question HTML."""
+        """Find section start; supports (a), (i), (ii), and <strong>(ii)</strong> markers."""
         key = str(key).strip()
-        if len(key) >= 3 and key[0] == '(' and key[-1] == ')' and key[1].isalpha():
-            letter = key[1]
-            for marker in (
-                f'<strong>{letter})</strong>',
-                f'({letter})',
-                f'{letter})',
-            ):
+        if not key:
+            return -1
+        if key.startswith('(') and key.endswith(')'):
+            inner = key[1:-1]
+            markers = [
+                f'<strong>{key}</strong>',
+                f'<strong>{inner})</strong>',
+                key,
+            ]
+            if len(inner) == 1:
+                markers.append(f'{inner})')
+            for marker in markers:
                 pos = text.find(marker, start)
                 if pos >= 0:
                     return pos

@@ -1315,13 +1315,31 @@ def test_check_proof_steps_order_and_set():
 
     ordered = check_proof_steps('1|s1|s2|s3', 's1|s2|s3')
     assert ordered['correct'] is True
-    assert check_proof_steps('1|s1|s2|s3', 's1|s3|s2')['correct'] is False
+    assert 'step_feedback' not in ordered
+
+    wrong_order = check_proof_steps('1|s1|s2|s3', 's1|s3|s2')
+    assert wrong_order['correct'] is False
+    assert wrong_order['step_feedback'] == [
+        {'id': 's1', 'status': 'correct', 'hint': 'Correct step in the correct place.'},
+        {'id': 's3', 'status': 'wrong_order', 'hint': 'This step should be in position 3, not 2.'},
+        {'id': 's2', 'status': 'wrong_order', 'hint': 'This step should be in position 2, not 3.'},
+    ]
+    assert 'Green = correct' in wrong_order['feedback']
+
+    mixed = check_proof_steps('1|s1|s2|s3', 's2|d1|s1|s3')
+    assert mixed['correct'] is False
+    assert mixed['step_feedback'][0]['status'] == 'wrong_order'
+    assert mixed['step_feedback'][1]['status'] == 'wrong'
+    assert mixed['step_feedback'][2]['status'] == 'wrong_order'
+
     assert check_proof_steps('1|s1|s2|s3', 's1|s2')['correct'] is False
 
     unordered = check_proof_steps('0|c1|c2|c3', 'c3|c1|c2')
     assert unordered['correct'] is True
+    wrong_set = check_proof_steps('0|c1|c2|c3', 'c1|c2|c3|d1')
+    assert wrong_set['correct'] is False
+    assert wrong_set['step_feedback'][-1]['status'] == 'wrong'
     assert check_proof_steps('0|c1|c2|c3', 'c1|c2')['correct'] is False
-    assert check_proof_steps('0|c1|c2|c3', 'c1|c2|c3|d1')['correct'] is False
 
     pick_two = check_proof_steps('pick|2|c1|c2|c3|c4|c5', 'c1|c3')
     assert pick_two['correct'] is True
@@ -1332,12 +1350,16 @@ def test_check_proof_steps_order_and_set():
     assert partial_pick['correct'] is False
     assert partial_pick['score'] == 1
     assert partial_pick['score_total'] == 2
-    assert partial_pick['feedback'] == '1/2 correct.'
+    assert partial_pick['step_feedback'] == [
+        {'id': 'c1', 'status': 'correct', 'hint': 'This is a correct step.'},
+        {'id': 'd1', 'status': 'wrong', 'hint': 'This step should not be selected.'},
+    ]
+    assert '1/2 correct' in partial_pick['feedback']
     pick_three = check_proof_steps('pick|3|c1|c2|c3', 'c1|d1|d2')
     assert pick_three['correct'] is False
     assert pick_three['score'] == 1
     assert pick_three['score_total'] == 3
-    assert pick_three['feedback'] == '1/3 correct.'
+    assert pick_three['feedback'].startswith('1/3 correct')
     assert check_proof_steps('pick|2|c1|c2|c3|c4|c5', 'c1')['correct'] is False
 
 
@@ -3760,6 +3782,21 @@ def test_split_question_sections_html_markers():
     assert parts['sections'][0]['text'].startswith('<strong>a)</strong>')
     assert parts['sections'][1]['text'].startswith('<strong>b)</strong>')
     assert parts['sections'][2]['text'].startswith('<strong>c)</strong>')
+
+    q_roman = (
+        "O is the centre. Angle AOB = 100°.<br>"
+        "<strong>(i)</strong> Find angle OAB.<br>"
+        "<strong>(ii)</strong> Find angle ACB.<br>"
+        "<strong>(iii)</strong> Find angle ADB.<br>"
+        "<strong>(iv)</strong> Select the correct relationship."
+    )
+    parts_roman = split_question_sections(q_roman, ['(i)', '(ii)', '(iii)', '(iv)'])
+    assert parts_roman['intro'].startswith('O is the centre')
+    assert len(parts_roman['sections']) == 4
+    assert parts_roman['sections'][0]['text'].startswith('<strong>(i)</strong>')
+    assert parts_roman['sections'][1]['text'].startswith('<strong>(ii)</strong>')
+    assert parts_roman['sections'][2]['text'].startswith('<strong>(iii)</strong>')
+    assert parts_roman['sections'][3]['text'].startswith('<strong>(iv)</strong>')
 
 
 def test_eth_multipart_smartphone_lifecycle_inline_fields():
@@ -7806,6 +7843,9 @@ def test_similarity_congruence_single_field_session_check():
 
 
 CT_UNGRADED_VARIANTS = (
+)
+
+CT_PROOF_STEPS_VARIANTS = (
     '_ct_d2_prove_angle',
     '_ct_d4_alternate_segment_proof',
     '_ct_d10_prove_cyclic',
@@ -7857,6 +7897,24 @@ def test_circle_theorems_ungraded_variants_remain_ungraded():
         assert problem.get('correct_answer_raw') is None, name
 
 
+def test_circle_theorems_proof_steps_variants_are_graded():
+    import generators.gcse.maths_circle_theorems as ct_mod
+    from generators.shared.answer_checkers import check_proof_steps
+
+    for name in CT_PROOF_STEPS_VARIANTS:
+        out = getattr(ct_mod, name)()
+        assert len(out) == 5, name
+        problem = gcse_circle_theorems('difficult', 'practice', variant_name=name)
+        assert problem.get('answer_type') == 'proof_steps', name
+        assert problem.get('correct_answer_raw'), name
+        assert problem.get('answer_step_bank'), name
+        assert problem.get('answer_order_matters') is True, name
+        raw = problem['correct_answer_raw']
+        step_ids = raw.split('|')[1:]
+        assert check_proof_steps(raw, '|'.join(step_ids))['correct'] is True, name
+        assert check_proof_steps(raw, '|'.join(reversed(step_ids)))['correct'] is False, name
+
+
 def test_circle_theorems_algebra_variants_use_number_fields():
     import generators.gcse.maths_circle_theorems as ct_mod
 
@@ -7867,6 +7925,31 @@ def test_circle_theorems_algebra_variants_use_number_fields():
         assert problem.get('correct_answer_raw'), name
 
 
+def test_ct_d1_three_theorems_multipart_fields():
+    import generators.gcse.maths_circle_theorems as ct_mod
+    from generators.shared.answer_checkers import check_proof_steps
+
+    problem = make_graded_problem(
+        ct_mod._ct_d1_three_theorems(),
+        'difficult', 'gcse', 'maths', 'circle_theorems',
+    )
+    assert problem.get('answer_type') == 'number_fields'
+    assert problem.get('answer_inline_sections') is True
+    assert problem.get('answer_field_section_keys') == ['(i)', '(ii)', '(iii)', '(iv)']
+    assert problem.get('answer_field_types') == ['number', 'number', 'number', 'pick']
+    assert problem.get('answer_field_pick_counts') == [None, None, None, 1]
+    parts = (problem.get('correct_answer_raw') or '').split('\x1e')
+    assert len(parts) == 4
+    assert parts[0].isdigit()
+    assert parts[1].isdigit()
+    assert parts[2].isdigit()
+    assert parts[3].startswith('pick|1|')
+    opts = problem.get('answer_field_options') or []
+    assert len(opts[3]) == 5
+    pick_id = parts[3].split('|')[2]
+    assert check_proof_steps(parts[3], pick_id)['correct'] is True
+
+
 def test_circle_theorems_variant_queues_are_graded():
     for difficulty in ('foundational', 'intermediate', 'difficult'):
         for variant in gcse_circle_theorems_variants(difficulty, 'practice'):
@@ -7875,6 +7958,10 @@ def test_circle_theorems_variant_queues_are_graded():
             )
             if variant.__name__ in CT_UNGRADED_VARIANTS:
                 assert problem.get('correct_answer_raw') is None, variant.__name__
+                continue
+            if variant.__name__ in CT_PROOF_STEPS_VARIANTS:
+                assert problem.get('answer_type') == 'proof_steps', variant.__name__
+                assert problem.get('correct_answer_raw'), variant.__name__
                 continue
             graded = problem.get('correct_answer_raw') or problem.get('correct_answer')
             assert graded, (difficulty, variant.__name__)

@@ -2,7 +2,6 @@
 GCSE Maths – Circle Theorems
 15 foundational · 15 intermediate · 15 difficult · 24 MCQ
 Graded practice variants return (question, solution, hint, marks, raw).
-Genuine proof-only variants (_ct_d2, _ct_d4, _ct_d10) stay as 4-tuples (no auto-grade).
 Final answers wrapped in <strong> tags.
 
 SVG convention:
@@ -27,6 +26,7 @@ from generators.shared.utils import (
     make_problem,
     make_graded_problem,
     graded_answer_number_fields,
+    proof_steps_answer,
 )
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from generators.shared.variant_utils import (
@@ -40,6 +40,31 @@ from generators.shared.variant_utils import (
 
 def _ct_num(value, label):
     return graded_answer_number_fields((value,), (label,))
+
+
+def _ct_proof_steps_answer(steps, distractors, *, format_hint='Put the proof steps in the correct order'):
+    bank = [{'id': f's{i + 1}', 'text': text} for i, text in enumerate(steps)]
+    for j, text in enumerate(distractors):
+        bank.append({'id': f'd{j + 1}', 'text': text})
+    random.shuffle(bank)
+    required = tuple(f's{i + 1}' for i in range(len(steps)))
+    return proof_steps_answer(
+        required,
+        bank,
+        order_matters=True,
+        format_hint=format_hint,
+    )
+
+
+def _ct_pick_field(correct_texts, distractor_texts, pick_count):
+    """Inline pick-N field for ``number_fields`` (returns raw, bank, count)."""
+    correct_ids = tuple(f'c{i + 1}' for i in range(len(correct_texts)))
+    bank = [{'id': cid, 'text': text} for cid, text in zip(correct_ids, correct_texts)]
+    for i, text in enumerate(distractor_texts):
+        bank.append({'id': f'd{i + 1}', 'text': text})
+    random.shuffle(bank)
+    raw = f"pick|{pick_count}|{'|'.join(correct_ids)}"
+    return raw, bank, pick_count
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -68,6 +93,12 @@ def _tangent_point_toward(A, toward, cx, cy, tan_len):
             return (round(A[0] + tan_len * tx, 1), round(A[1] + tan_len * ty, 1))
     tl = math.hypot(t1x, t1y) or 1.0
     return (round(A[0] + tan_len * t1x / tl, 1), round(A[1] + tan_len * t1y / tl, 1))
+
+
+def _tangent_point_alternate_segment(A, C, cx, cy, tan_len):
+    """Point on the tangent at A on the side opposite C (alternate segment side)."""
+    toward_c = _tangent_point_toward(A, C, cx, cy, tan_len)
+    return (round(2 * A[0] - toward_c[0], 1), round(2 * A[1] - toward_c[1], 1))
 
 
 def _arc_at(vx, vy, p1, p2, arc_r=20, color="#1a6fa8"):
@@ -117,22 +148,62 @@ def _arc_at(vx, vy, p1, p2, arc_r=20, color="#1a6fa8"):
     return path, lx, ly
 
 
-_SVG_SCALE = 0.6
-_SVG_PAD = 20  # viewBox margin so labels, tangents and points are not clipped
-_SVG_MAX_W = 240
+def _arc_at_acute(vx, vy, p1, p2, arc_r=20, color="#1a6fa8", max_deg=90):
+    """Like _arc_at but flip rays if the marked wedge would be obtuse."""
+    p1x, p1y = p1
+    p2x, p2y = p2
+    d1x, d1y = p1x - vx, p1y - vy
+    d2x, d2y = p2x - vx, p2y - vy
+    d1 = math.hypot(d1x, d1y)
+    d2 = math.hypot(d2x, d2y)
+    if d1 < 1e-6 or d2 < 1e-6:
+        return _arc_at(vx, vy, p1, p2, arc_r=arc_r, color=color)
+    d1x, d1y = d1x / d1, d1y / d1
+    d2x, d2y = d2x / d2, d2y / d2
+    dot = max(-1.0, min(1.0, d1x * d2x + d1y * d2y))
+    if math.degrees(math.acos(dot)) > max_deg:
+        return _arc_at(vx, vy, (vx - (p1x - vx), vy - (p1y - vy)),
+                       (vx - (p2x - vx), vy - (p2y - vy)), arc_r=arc_r, color=color)
+    return _arc_at(vx, vy, p1, p2, arc_r=arc_r, color=color)
 
 
-def _svg_open(w, h, pad=_SVG_PAD):
-    """SVG with padded viewBox — content coords stay 0..w × 0..h; frame includes margin."""
-    disp_w = w * _SVG_SCALE
-    disp_h = h * _SVG_SCALE
-    vb_w = disp_w + 2 * pad
-    vb_h = disp_h + 2 * pad
-    max_w = min(int(vb_w), _SVG_MAX_W)
+_SVG_SCALE = 1.26  # tight-framed display size (2× prior 0.42 render)
+_SVG_PAD = 36
+_SVG_MAX_W = 504
+
+
+def _svg_merge_bounds(*bounds):
     return (
-        f'<svg width="100%" viewBox="{-pad} {-pad} {vb_w} {vb_h}" '
-        f'style="background:#f9f8f5;border-radius:6px;max-width:{max_w}px;display:block;'
-        f'margin:0 auto;vertical-align:middle;overflow:visible;">'
+        min(b[0] for b in bounds),
+        min(b[1] for b in bounds),
+        max(b[2] for b in bounds),
+        max(b[3] for b in bounds),
+    )
+
+
+def _svg_bounds_circle(cx, cy, r, margin=16):
+    return cx - r - margin, cy - r - margin, cx + r + margin, cy + r + margin
+
+
+def _svg_bounds_points(points, margin=14):
+    xs = [p[0] for p in points]
+    ys = [p[1] for p in points]
+    return min(xs) - margin, min(ys) - margin, max(xs) + margin, max(ys) + margin
+
+
+def _svg_open_frame(x0, y0, x1, y1, pad=_SVG_PAD):
+    """Open SVG with viewBox fitted to logical content bounds (before scale transform)."""
+    vb_x = x0 * _SVG_SCALE - pad
+    vb_y = y0 * _SVG_SCALE - pad
+    vb_w = (x1 - x0) * _SVG_SCALE + 2 * pad
+    vb_h = (y1 - y0) * _SVG_SCALE + 2 * pad
+    display_w = min(max(int(round(vb_w)), 1), _SVG_MAX_W)
+    display_h = max(1, int(round(vb_h * display_w / vb_w))) if vb_w > 0 else max(1, int(round(vb_h)))
+    return (
+        f'<svg width="{display_w}" height="{display_h}" '
+        f'viewBox="{vb_x:.1f} {vb_y:.1f} {vb_w:.1f} {vb_h:.1f}" '
+        f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:block;'
+        f'margin:0 auto;vertical-align:middle;overflow:hidden;">'
         f'<g transform="scale({_SVG_SCALE})">'
     )
 
@@ -211,7 +282,7 @@ def _right_angle_radius_tangent(v, center, toward, size=10, color="#059669", w=1
 # Per-theorem SVG builders
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _svg_ct1(angle_centre, angle_circ=None, show_centre=True, w=300, h=300):
+def _svg_ct1(angle_centre, angle_circ=None, show_centre=True):
     """CT1: Angle at centre = 2× circumference. O at centre, A/B symmetric, C at bottom.
 
     Label only known angles; pass None / show_centre=False for unknowns (shown as '?').
@@ -227,9 +298,18 @@ def _svg_ct1(angle_centre, angle_circ=None, show_centre=True, w=300, h=300):
     arc_C, lCx, lCy = _arc_at(*C, A, B, arc_r=18, color="#059669")
     centre_lbl = "?" if not show_centre else f"{angle_centre}°"
     circ_lbl = "?" if angle_circ is None else f"{angle_circ}°"
+    frame = _svg_merge_bounds(
+        _svg_bounds_circle(cx, cy, r, 18),
+        _svg_bounds_points([
+            A, B, C, O,
+            (lOx, lOy), (lCx, lCy),
+            (C[0], C[1] + 14), (A[0] - 10, A[1] - 6), (B[0] + 10, B[1] - 6),
+            (cx + 8, cy + 5),
+        ], margin=8),
+    )
 
     return (
-        _svg_open(w, h)
+        _svg_open_frame(*frame)
         + _circle_el(cx, cy, r)
         + _line_el(*O, *A, "#a13544", 1.5)
         + _line_el(*O, *B, "#a13544", 1.5)
@@ -245,7 +325,7 @@ def _svg_ct1(angle_centre, angle_circ=None, show_centre=True, w=300, h=300):
     )
 
 
-def _svg_ct2(angle_bac=None, angle_acb=None, w=300, h=280):
+def _svg_ct2(angle_bac=None, angle_acb=None):
     """CT2: Angle in semicircle. AB is diameter, C on circle.
 
     Label only angles passed in; use None for unknown angles (shown as '?').
@@ -257,9 +337,13 @@ def _svg_ct2(angle_bac=None, angle_acb=None, w=300, h=280):
 
     arc_C, lCx, lCy = _arc_at(*C, A, B, arc_r=18, color="#059669")
     acb_lbl = "?" if angle_acb is None else f"{angle_acb}°"
+    frame = _svg_merge_bounds(
+        _svg_bounds_circle(cx, cy, r, 16),
+        _svg_bounds_points([A, B, C, (cx, cy), (lCx - 4, lCy), (cx, cy + r + 20)], margin=12),
+    )
 
     return (
-        _svg_open(w, h)
+        _svg_open_frame(*frame)
         + _circle_el(cx, cy, r)
         + _line_el(*A, *B, "#a13544", 2)   # diameter
         + _line_el(*C, *A, "#059669", 1.5)
@@ -276,7 +360,7 @@ def _svg_ct2(angle_bac=None, angle_acb=None, w=300, h=280):
     )
 
 
-def _svg_ct3(angle, known_at="C", w=300, h=300):
+def _svg_ct3(angle, known_at="C"):
     """CT3: Same segment. Chord AB, C and D on same arc.
 
     known_at: 'C' or 'D' — which inscribed angle is given (the other shows '?').
@@ -291,9 +375,13 @@ def _svg_ct3(angle, known_at="C", w=300, h=300):
     arc_D, lDx, lDy = _arc_at(*D, A, B, arc_r=18, color="#a13544")
     c_lbl = f"{angle}°" if known_at == "C" else "?"
     d_lbl = f"{angle}°" if known_at == "D" else "?"
+    frame = _svg_merge_bounds(
+        _svg_bounds_circle(cx, cy, r, 16),
+        _svg_bounds_points([A, B, C, D, (lCx, lCy), (lDx, lDy + 2)], margin=12),
+    )
 
     return (
-        _svg_open(w, h)
+        _svg_open_frame(*frame)
         + _circle_el(cx, cy, r)
         + _line_el(*C, *A, "#059669", 1.5)
         + _line_el(*C, *B, "#059669", 1.5)
@@ -309,7 +397,7 @@ def _svg_ct3(angle, known_at="C", w=300, h=300):
     )
 
 
-def _svg_ct4(angle_dab, angle_bcd=None, w=300, h=300):
+def _svg_ct4(angle_dab, angle_bcd=None):
     """CT4: Cyclic quad ABCD. Label DAB; BCD only if provided (else '?')."""
     cx, cy, r = 130, 130, 95
     A = _pt(cx, cy, r, 120)
@@ -320,9 +408,13 @@ def _svg_ct4(angle_dab, angle_bcd=None, w=300, h=300):
     arc_A, lAx, lAy = _arc_at(*A, D, B, arc_r=18, color="#1a6fa8")
     arc_C, lCx, lCy = _arc_at(*C, B, D, arc_r=18, color="#a13544")
     bcd_lbl = "?" if angle_bcd is None else f"{angle_bcd}°"
+    frame = _svg_merge_bounds(
+        _svg_bounds_circle(cx, cy, r, 16),
+        _svg_bounds_points([A, B, C, D, (lAx, lAy), (lCx, lCy)], margin=12),
+    )
 
     return (
-        _svg_open(w, h)
+        _svg_open_frame(*frame)
         + _circle_el(cx, cy, r)
         + _line_el(*A, *B) + _line_el(*B, *C) + _line_el(*C, *D) + _line_el(*D, *A)
         + arc_A + _txt(lAx, lAy, f"{angle_dab}°", "#1a6fa8", 11, "middle")
@@ -335,7 +427,7 @@ def _svg_ct4(angle_dab, angle_bcd=None, w=300, h=300):
     )
 
 
-def _svg_ct5(angle_top, show_otp=None, w=320, h=280):
+def _svg_ct5(angle_top, show_otp=None):
     """CT5: Tangent ⊥ radius. O at centre, T on circle, P external, tangent at T.
 
     angle_top: given angle TOP at O. show_otp: label OTP at T (None → '?').
@@ -350,9 +442,13 @@ def _svg_ct5(angle_top, show_otp=None, w=320, h=280):
     arc_O, lOx, lOy = _arc_at(*O, T, P, arc_r=20, color="#a13544")
     arc_T, lTx, lTy = _arc_at(*T, O, P, arc_r=14, color="#059669")
     otp_lbl = "?" if show_otp is None else f"{show_otp}°"
+    frame = _svg_merge_bounds(
+        _svg_bounds_circle(cx, cy, r, 14),
+        _svg_bounds_points([O, T, P, T_top, T_bottom, (lOx - 10, lOy), (lTx + 6, lTy), (T[0] - 6, T[1] - 58)], margin=10),
+    )
 
     return (
-        _svg_open(w, h)
+        _svg_open_frame(*frame)
         + _circle_el(cx, cy, r)
         + _line_el(*T_top, *T_bottom, "#a13544", 1.5)  # tangent line
         + _line_el(*O, *T, "#1a6fa8", 1.5)             # radius OT
@@ -369,7 +465,7 @@ def _svg_ct5(angle_top, show_otp=None, w=320, h=280):
     )
 
 
-def _svg_ct6(angle_at_P, w=280, h=220):
+def _svg_ct6(angle_at_P):
     """CT6: Two tangents from external point P. TA=TB, show kite OAPB."""
     cx, cy, r = 65, 100, 52
     # Symmetric tangents: angle AOB = 180° − angle APB (kite OAPB)
@@ -379,14 +475,20 @@ def _svg_ct6(angle_at_P, w=280, h=220):
     O = (cx, cy)
     px = cx + r / math.cos(math.radians(half_spread))
     P = (round(px, 1), cy)
-    w = max(w, int(px + 42))
-    h = max(h, int(cy + r + 28), int(max(A[1], B[1]) + 22))
 
     arc_P, lPx, lPy = _arc_at(*P, A, B, arc_r=22, color="#a13544")
     arc_O, lOx, lOy = _arc_at(*O, A, B, arc_r=24, color="#1a6fa8")
+    frame = _svg_merge_bounds(
+        _svg_bounds_circle(cx, cy, r, 12),
+        _svg_bounds_points([
+            A, B, O, P,
+            (P[0] + 18, P[1] + 4), (lPx + 20, lPy), (cx - 24, cy + 4),
+            (A[0] + 8, A[1] - 5), (B[0] + 8, B[1] + 8),
+        ], margin=6),
+    )
 
     return (
-        _svg_open(w, h)
+        _svg_open_frame(*frame)
         + _circle_el(cx, cy, r)
         + _line_el(*O, *A, "#1a6fa8", 1.5)
         + _line_el(*O, *B, "#1a6fa8", 1.5)
@@ -405,33 +507,43 @@ def _svg_ct6(angle_at_P, w=280, h=220):
     )
 
 
-def _svg_ct7(angle, known_at="A", w=300, h=300):
+def _svg_ct7(angle, known_at="A"):
     """CT7: Alternate segment theorem. Tangent at A, chord AB.
 
     known_at: 'A' (tangent–chord angle given) or 'C' (inscribed angle given).
+    Point layout is chosen so the drawn tangent–chord angle and angle ACB match `angle`.
     """
     cx, cy, r = 130, 140, 90
-    A = _pt(cx, cy, r, 210)    # lower-left (tangent point)
-    B = _pt(cx, cy, r, 330)    # lower-right
-    C = _pt(cx, cy, r, 90)     # top (alternate segment)
+    tab = int(angle)
+    a_deg = 210
+    b_deg = a_deg + 2 * tab          # minor arc AB = 2·tab → inscribed angle = tab
+    c_deg = (30 + tab) % 360         # C on major arc, above chord AB
+    A = _pt(cx, cy, r, a_deg)
+    B = _pt(cx, cy, r, b_deg)
+    C = _pt(cx, cy, r, c_deg)
 
     tan_len = 80
     T_toward_C = _tangent_point_toward(A, C, cx, cy, tan_len)
+    T_alt = _tangent_point_alternate_segment(A, C, cx, cy, tan_len)
     # Full tangent line through A (both directions)
     tdx, tdy = T_toward_C[0] - A[0], T_toward_C[1] - A[1]
     tl = math.hypot(tdx, tdy) or 1.0
     tdx, tdy = tdx / tl, tdy / tl
-    T1 = (round(A[0] - tan_len * tdx, 1), round(A[1] - tan_len * tdy, 1))
+    T1 = T_alt
     T2 = T_toward_C
 
-    # Arc at A: tangent–chord angle on the same side of AB as C (alternate segment)
-    arc_A, lAx, lAy = _arc_at(*A, T2, B, arc_r=20, color="#a13544")
+    # Tangent–chord angle at A: between tangent and chord AB on alternate segment side
+    arc_A, lAx, lAy = _arc_at_acute(*A, T_alt, B, arc_r=20, color="#a13544")
     arc_C, lCx, lCy = _arc_at(*C, A, B, arc_r=18, color="#059669")
     a_lbl = f"{angle}°" if known_at == "A" else "?"
     c_lbl = f"{angle}°" if known_at == "C" else "?"
+    frame = _svg_merge_bounds(
+        _svg_bounds_circle(cx, cy, r, 14),
+        _svg_bounds_points([A, B, C, T1, T2, (lAx, lAy + 2), (lCx, lCy - 4), (cx, cy + r + 22)], margin=10),
+    )
 
     return (
-        _svg_open(w, h)
+        _svg_open_frame(*frame)
         + _circle_el(cx, cy, r)
         + _line_el(*T1, *T2, "#a13544", 2)     # tangent
         + _line_el(*A, *B, "#1a6fa8", 1.5)     # chord
@@ -442,7 +554,7 @@ def _svg_ct7(angle, known_at="A", w=300, h=300):
         + _dot(*A) + _txt(A[0] - 12, A[1] + 5, "A", "#333", 12, "middle", True)
         + _dot(*B) + _txt(B[0] + 12, B[1] + 5, "B", "#333", 12, "middle", True)
         + _dot(*C) + _txt(C[0], C[1] - 10, "C", "#059669", 12, "middle", True)
-        + _txt(T2[0] - 5, T2[1] + 14, "T", "#a13544", 11, "middle")
+        + _txt(T1[0] - 5, T1[1] + 14, "T", "#a13544", 11, "middle")
         + _txt(cx, cy + r + 22, "Alternate segment theorem", "#555", 10, "middle")
         + _svg_close()
     )
@@ -461,7 +573,7 @@ def _line_cross(p1, p2, p3, p4):
     return (round(x1 + t * (x2 - x1), 1), round(y1 + t * (y2 - y1), 1))
 
 
-def _svg_intersecting_chords(arc_pr, arc_qs, angle_ptr=None, w=300, h=300):
+def _svg_intersecting_chords(arc_pr, arc_qs, angle_ptr=None):
     """Intersecting chords PQ and RS at T; arcs PR and QS given (angle at T optional)."""
     cx, cy, r = 130, 130, 95
     P = _pt(cx, cy, r, 145)
@@ -471,8 +583,12 @@ def _svg_intersecting_chords(arc_pr, arc_qs, angle_ptr=None, w=300, h=300):
     T = _line_cross(P, Q, R, S)
     arc_T, lTx, lTy = _arc_at(*T, P, R, arc_r=18, color="#a13544")
     ptr_lbl = "?" if angle_ptr is None else f"{angle_ptr}°"
+    frame = _svg_merge_bounds(
+        _svg_bounds_circle(cx, cy, r, 18),
+        _svg_bounds_points([P, Q, R, S, T, (lTx, lTy), (cx - r - 8, cy - 6), (cx + r + 8, cy + 10)], margin=10),
+    )
     return (
-        _svg_open(w, h)
+        _svg_open_frame(*frame)
         + _circle_el(cx, cy, r)
         + _line_el(*P, *Q, "#1a6fa8", 2)
         + _line_el(*R, *S, "#059669", 2)
@@ -998,37 +1114,82 @@ def _ct_d1_three_theorems():
     a_i = a_c // 2
     oab = (180 - a_c) // 2
     adb = a_i
+    rel_raw, rel_bank, rel_pick = _ct_pick_field(
+        ('angle ADB = 90° − angle OAB',),
+        (
+            'angle ADB = angle OAB',
+            'angle ADB = 180° − angle OAB',
+            'angle ADB = 2 × angle OAB',
+            'angle ADB = 90° + angle OAB',
+        ),
+        1,
+    )
     q = (f"O is the centre. Angle AOB = {a_c}°. OA = OB (radii). "
-         f"C and D are on the major arc. "
-         f"Find: (i) angle OAB, (ii) angle ACB, (iii) angle ADB, "
-         f"(iv) angle ADB in terms of angle OAB.")
-    s = (f"(i) OA=OB → isosceles: angle OAB = (180−{a_c})÷2 = <strong>{oab}°</strong><br>"
-         f"(ii) CT1: angle ACB = ½×{a_c}° = <strong>{a_i}°</strong><br>"
-         f"(iii) CT3: angle ADB = angle ACB = <strong>{a_i}°</strong><br>"
-         f"(iv) Notice angle OAB = {oab}° and angle ADB = {a_i}°. "
-         f"Since angle OAB = (180−2×angle ADB)/2... "
-         f"angle ADB = 90° − angle OAB = 90° − {oab}° = {90 - oab}°. "
-         f"Alternatively: angle ADB = {a_i}° = angle ACB, and angle OAB = {oab}°.")
-    return q, s, "Use isosceles for OAB, CT1 for ACB, CT3 for ADB. Then look for the relationship.", 6, graded_answer_number_fields(
-        (oab, a_i, adb), ('Angle OAB (°)', 'Angle ACB (°)', 'Angle ADB (°)'),
+         f"C and D are on the major arc.<br>"
+         f"<strong>(i)</strong> Find angle OAB.<br>"
+         f"<strong>(ii)</strong> Find angle ACB.<br>"
+         f"<strong>(iii)</strong> Find angle ADB.<br>"
+         f"<strong>(iv)</strong> Select the correct relationship between angle ADB and angle OAB.")
+    s = (f"<strong>(i)</strong> Triangle OAB is isosceles (OA = OB = radii).<br>"
+         f"Angle OAB = (180° − angle AOB) ÷ 2 = (180 − {a_c}) ÷ 2 = <strong>{oab}°</strong><br><br>"
+         f"<strong>(ii)</strong> C is on the major arc, so angle ACB is subtended by arc AB at the centre.<br>"
+         f"By CT1: angle ACB = ½ × angle AOB = ½ × {a_c}° = <strong>{a_i}°</strong><br><br>"
+         f"<strong>(iii)</strong> D is also on the major arc, so C and D lie in the same segment (above chord AB).<br>"
+         f"By CT3: angles in the same segment are equal → angle ADB = angle ACB = <strong>{adb}°</strong><br><br>"
+         f"<strong>(iv)</strong> From (i): angle OAB = (180° − angle AOB) ÷ 2.<br>"
+         f"From (ii)–(iii): angle ADB = ½ × angle AOB.<br>"
+         f"Adding: angle OAB + angle ADB = (180° − angle AOB)/2 + angle AOB/2 = 90°.<br>"
+         f"So <strong>angle ADB = 90° − angle OAB</strong>.<br>"
+         f"Check: 90° − {oab}° = {adb}° ✓")
+    return q, s, "Use isosceles for OAB, CT1 for ACB, CT3 for ADB. Then add the two expressions for OAB and ADB.", 6, graded_answer_number_fields(
+        (oab, a_i, adb, rel_raw),
+        ('Angle OAB (°)', 'Angle ACB (°)', 'Angle ADB (°)', 'Select the relationship'),
+        field_types=('number', 'number', 'number', 'pick'),
+        field_options=(None, None, None, rel_bank),
+        field_pick_counts=(None, None, None, rel_pick),
+        row_sizes=(1, 1, 1, 1),
+        group_labels=('(i)', '(ii)', '(iii)', '(iv)'),
+        inline_sections=True,
     )
 
 
 def _ct_d2_prove_angle():
-    """Prove that a specific angle equals a given value."""
+    """Prove that a specific angle equals a given value (CT1)."""
     a_c = random.choice([80, 100, 110, 120])
     a_i = a_c // 2
+    svg = _svg_ct1(a_c, angle_circ=None)
     q = (f"O is the centre of the circle. A, B, C are on the circle. "
-         f"Angle AOB = {a_c}°. Prove that angle ACB = {a_i}°.")
-    s = (f"Let angle ACB = x.<br>"
-         f"Join OA and OB (radii, so OA = OB).<br>"
-         f"Triangle OAC is isosceles (OA = OC = radius): let angle OAC = angle OCA = α.<br>"
-         f"Triangle OBC is isosceles (OB = OC = radius): let angle OBC = angle OCB = β.<br>"
-         f"Angle ACB = α + β ... <em>(see full proof below)</em><br>"
-         f"Full result: angle AOB = 2 × angle ACB (CT1).<br>"
-         f"∴ angle ACB = ½ × {a_c}° = <strong>{a_i}°</strong> ✓<br>"
-         f"[Proof uses exterior angle of triangle OAC = 2α, etc.]")
-    return q, s, "Join OC to split the angle; use isosceles triangles OAC and OBC; use exterior angle theorem.", 6
+         f"Angle AOB = {a_c}°. "
+         f"Prove that angle ACB = {a_i}° by putting the proof steps in the correct order.<br>{svg}")
+    s = (f"<strong>Step 1.</strong> Join OA, OB and OC. These are radii, so OA = OB = OC.<br>"
+         f"<strong>Step 2.</strong> Triangle OAC is isosceles (OA = OC). "
+         f"Let angle OCA = α.<br>"
+         f"<strong>Step 3.</strong> Triangle OBC is isosceles (OB = OC). "
+         f"Let angle OCB = β.<br>"
+         f"<strong>Step 4.</strong> Angle ACB = angle OCA + angle OCB = α + β.<br>"
+         f"<strong>Step 5.</strong> Angle AOB = 2α + 2β = 2(α + β) = 2 × angle ACB (CT1).<br>"
+         f"<strong>Step 6.</strong> Therefore angle ACB = ½ × angle AOB = ½ × {a_c}° = "
+         f"<strong>{a_i}°</strong> ✓")
+    steps = (
+        "Join OA, OB and OC. These are radii, so OA = OB = OC.",
+        "Triangle OAC is isosceles (OA = OC). Let angle OCA = α.",
+        "Triangle OBC is isosceles (OB = OC). Let angle OCB = β.",
+        "Angle ACB = angle OCA + angle OCB = α + β.",
+        "Angle AOB = 2α + 2β = 2(α + β) = 2 × angle ACB (CT1).",
+        f"Therefore angle ACB = ½ × angle AOB = ½ × {a_c}° = {a_i}°.",
+    )
+    distractors = (
+        "Angle ACB = 2 × angle AOB (CT1).",
+        f"Angle ACB = angle AOB = {a_c}°.",
+        "Angle AOB + angle ACB = 180°.",
+        "Triangle OAC is equilateral, so angle OCA = 60°.",
+        "Join AB only; OC is not needed for this proof.",
+    )
+    return q, s, "Join OC; use isosceles triangles OAC and OBC; apply CT1.", 6, _ct_proof_steps_answer(
+        steps,
+        distractors,
+        format_hint='Put the proof steps in the correct order',
+    )
 
 
 def _ct_d3_complex_cyclic_poly():
@@ -1050,17 +1211,45 @@ def _ct_d3_complex_cyclic_poly():
 def _ct_d4_alternate_segment_proof():
     """CT7: Prove alternate segment result given tangent and chord."""
     angle = random.choice([40, 45, 50, 55, 60])
-    acb = angle
+    oab = 90 - angle
+    svg = _svg_ct7(angle, known_at="A")
     q = (f"A tangent at A makes angle TAB = {angle}° with chord AB. "
          f"C is in the alternate segment. "
-         f"Prove that angle ACB = {angle}°.")
+         f"Prove that angle ACB = {angle}° by putting the proof steps in the correct order.<br>{svg}")
     s = (f"Let angle TAB = {angle}°. We prove angle ACB = {angle}°.<br>"
-         f"Draw radius OA. Since OA ⊥ tangent (CT5), angle OAB = 90° − {angle}° = {90-angle}°.<br>"
-         f"OA = OB = radius → triangle OAB isosceles → angle OAB = angle OBA = {90-angle}°.<br>"
-         f"Angle AOB = 180° − 2×{90-angle}° = {2*angle}°.<br>"
-         f"CT1: angle ACB = ½ × angle AOB = ½ × {2*angle}° = <strong>{angle}°</strong> ✓<br>"
+         f"Draw radius OA. Since OA ⊥ tangent (CT5), angle OAB = 90° − {angle}° = {oab}°.<br>"
+         f"OA = OB = radius → triangle OAB isosceles → angle OAB = angle OBA = {oab}°.<br>"
+         f"Angle AOB = 180° − 2×{oab}° = {2 * angle}°.<br>"
+         f"CT1: angle ACB = ½ × angle AOB = ½ × {2 * angle}° = <strong>{angle}°</strong> ✓<br>"
          f"This proves the alternate segment theorem for this case.")
-    return q, s, "Draw radius OA. Use CT5 (tangent ⊥ radius), isosceles triangle OAB, CT1.", 6
+    steps = (
+        "Draw radius OA.",
+        (
+            f"OA is perpendicular to the tangent at A (CT5), "
+            f"so angle OAB = 90° − {angle}° = {oab}°."
+        ),
+        (
+            f"OA = OB (both radii), so triangle OAB is isosceles "
+            f"and angle OBA = {oab}°."
+        ),
+        f"Angle AOB = 180° − 2 × {oab}° = {2 * angle}°.",
+        (
+            f"By CT1, angle ACB = ½ × angle AOB = ½ × {2 * angle}° = {angle}°, "
+            f"so angle ACB = angle TAB."
+        ),
+    )
+    distractors = (
+        f"Angle OAB = angle TAB = {angle}° (alternate angles with the tangent).",
+        f"OA is perpendicular to the tangent, so angle OAB = 90° + {angle}° = {90 + angle}°.",
+        f"By CT1, angle ACB = angle AOB = {2 * angle}°.",
+        "Draw radius OC and use triangle OAC is isosceles to find angle ACB.",
+        f"Angle AOB = 2 × angle TAB = {2 * angle}° because the tangent doubles the angle at A.",
+    )
+    return q, s, "Draw radius OA. Use CT5 (tangent ⊥ radius), isosceles triangle OAB, CT1.", 6, _ct_proof_steps_answer(
+        steps,
+        distractors,
+        format_hint='Put the proof steps in the correct order',
+    )
 
 
 def _ct_d5_find_radius_from_tangent():
@@ -1157,13 +1346,38 @@ def _ct_d10_prove_cyclic():
     """Show that four points lie on a circle (using converse of CT4)."""
     a = random.choice([70, 75, 80, 85])
     c = 180 - a
+    svg = _svg_ct4(a, c)
     q = (f"Quadrilateral ABCD has angle DAB = {a}° and angle BCD = {c}°. "
-         f"Prove that ABCD is a cyclic quadrilateral.")
+         f"Prove that ABCD is a cyclic quadrilateral by putting the proof steps "
+         f"in the correct order.<br>{svg}")
     s = (f"Angle DAB + angle BCD = {a}° + {c}° = 180°.<br>"
          f"The sum of opposite angles = 180° is the condition for a quadrilateral to be cyclic "
          f"(converse of CT4).<br>"
          f"Since opposite angles DAB and BCD sum to 180°, ABCD is a cyclic quadrilateral. ✓")
-    return q, s, "Converse of CT4: if opposite angles sum to 180°, the quadrilateral is cyclic.", 4
+    steps = (
+        "Angle DAB and angle BCD are opposite angles in quadrilateral ABCD.",
+        f"Angle DAB + angle BCD = {a}° + {c}° = 180°.",
+        (
+            "If opposite angles of a quadrilateral sum to 180°, "
+            "the quadrilateral is cyclic (converse of CT4)."
+        ),
+        (
+            "Since opposite angles DAB and BCD sum to 180°, "
+            "ABCD is a cyclic quadrilateral."
+        ),
+    )
+    distractors = (
+        f"Angle DAB + angle ABC = {a}° + {c}° = 180°, so ABCD is cyclic.",
+        "Opposite angles in a cyclic quadrilateral sum to 180° (CT4).",
+        f"Angle DAB = angle BCD = {a}°, so ABCD is cyclic.",
+        "Since the angles are supplementary, ABCD must be a parallelogram.",
+        "Draw the circumcircle through A, B, and C; D lies on it because all quadrilaterals are cyclic.",
+    )
+    return q, s, "Converse of CT4: if opposite angles sum to 180°, the quadrilateral is cyclic.", 4, _ct_proof_steps_answer(
+        steps,
+        distractors,
+        format_hint='Put the proof steps in the correct order',
+    )
 
 
 def _ct_d11_multi_step_tangent_chord():
