@@ -8,7 +8,6 @@ List/multipart variants may use inline ``number_fields`` (4- or 5-tuples).
 import random
 from generators.shared.utils import (
     make_problem,
-    graded_answer_keyword,
     graded_answer_number_fields,
     problem_extra_from_graded_answer,
     proof_steps_answer,
@@ -600,7 +599,11 @@ def _cy_d5_incident_response():
 def _cy_d6_cipher_caesar():
     q = "Caesar cipher shifts letters by 3. Encode <strong>CAT</strong>."
     s = "<strong>FDW</strong> (C→F, A→D, T→W)."
-    return q, s, "Easy to break by brute force — not secure today.", 2, graded_answer_keyword('fdw')
+    return q, s, "Easy to break by brute force — not secure today.", 2, _cy_mcq_graded_field(
+        "FDW",
+        ["EAV", "GDY", "CEZ"],
+        label='Encoded word',
+    )
 
 
 def _cy_d7_https_role():

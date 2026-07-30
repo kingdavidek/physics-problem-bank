@@ -3,27 +3,97 @@ from generators.shared.utils import (
     make_problem,
     format_cs_prose,
     format_cs_mcq_option,
+    graded_answer_python_run,
+    problem_extra_from_graded_answer,
 )
 from generators.shared.variant_utils import pick_named_variant
 
 # ------------------------------------------------------------
-# GCSE Python Programming – 42 exam-style questions
+# GCSE Python Programming – 46 exam-style questions
+# Tier-1: predict MCQ (5 variants). Tier-2/3: python_run (stdin, setup, files, validate).
+# All 46 practice variants are auto-graded in Check mode.
 # Solutions use <pre><code> for proper indentation
 # ------------------------------------------------------------
 
+
+def _py_mcq_payload(correct_text, distractors):
+    """Four-option practice MCQ; returns payload for ``_py_problem_from_output``."""
+    pool = [correct_text] + list(distractors[:3])
+    random.shuffle(pool)
+    letters = 'ABCD'
+    correct_letter = letters[pool.index(correct_text)]
+    options = [f'{letters[i]}  {pool[i]}' for i in range(len(pool))]
+    return {'type': 'mcq', 'options': options, 'correct': correct_letter}
+
+
+def _py_problem_from_output(out, difficulty):
+    q, s, hint, marks = out[:4]
+    if len(out) >= 5:
+        raw = out[4]
+        if isinstance(raw, dict) and raw.get('type') == 'mcq':
+            return make_problem(
+                format_cs_prose(q),
+                s,
+                format_cs_prose(hint),
+                difficulty,
+                marks,
+                'gcse',
+                'cs',
+                'python_programming',
+                options=[format_cs_mcq_option(opt) for opt in raw['options']],
+                correct_answer=raw['correct'],
+            )
+        extra = problem_extra_from_graded_answer(raw)
+        if extra:
+            return make_problem(
+                format_cs_prose(q),
+                s,
+                format_cs_prose(hint),
+                difficulty,
+                marks,
+                'gcse',
+                'cs',
+                'python_programming',
+                **extra,
+            )
+    return make_problem(
+        format_cs_prose(q),
+        s,
+        format_cs_prose(hint),
+        difficulty,
+        marks,
+        'gcse',
+        'cs',
+        'python_programming',
+    )
+
 # ---------- FOUNDATIONAL (4) ----------
 def py_found_hello():
-    q = "Write a line of Python code that prints the exact text: **Hello, World!**"
+    q = "Which line of Python code prints exactly **Hello, World!**?"
     s = r"""<pre><code>print('Hello, World!')</code></pre>"""
-    hint = "Use the `print()` function."
-    return q, s, hint, 1
+    hint = "Use the `print()` function with the exact text in quotes."
+    return q, s, hint, 1, _py_mcq_payload(
+        "print('Hello, World!')",
+        [
+            'print("Hello World")',
+            "print('Hello World')",
+            'print(Hello, World)',
+        ],
+    )
 
 def py_found_age():
     q = "Write Python code that asks the user for their age, converts it to an integer, and then prints 'Next year you will be `x`', where `x` is the age plus one."
     s = r"""<pre><code>age = int(input('Enter your age: '))
 print('Next year you will be', age + 1)</code></pre>"""
     hint = "Use `input()`, `int()`, and a comma in `print()`."
-    return q, s, hint, 2
+    return q, s, hint, 2, graded_answer_python_run(
+        [
+            {'stdin': '16', 'stdout': 'Next year you will be 17'},
+            {'stdin': '0', 'stdout': 'Next year you will be 1'},
+        ],
+        starter="age = int(input('Enter your age: '))\n",
+        format_hint='Write Python that reads age and prints next year\'s age.',
+    )
 
 def py_found_pass():
     q = "A variable `score` holds an integer. Write an `if`/`else` statement that prints **Pass** if `score` is 50 or higher, otherwise prints **Fail**."
@@ -32,14 +102,35 @@ def py_found_pass():
 else:
     print('Fail')</code></pre>"""
     hint = "Use `>=` for the comparison."
-    return q, s, hint, 2
+    return q, s, hint, 2, graded_answer_python_run(
+        [
+            {'setup': 'score = 75', 'stdout': 'Pass'},
+            {'setup': 'score = 40', 'stdout': 'Fail'},
+        ],
+        starter="""if score >= 50:
+    print('Pass')
+else:
+    print('Fail')
+""",
+        format_hint='Write if/else using score (already set).',
+    )
+
 
 def py_found_for():
-    q = "Write a `for` loop that prints every integer from **1 to 10** (inclusive)."
-    s = r"""<pre><code>for i in range(1, 11):
-    print(i)</code></pre>"""
+    q = (
+        "To print every integer from **1 to 10** (inclusive) using "
+        "`for i in range(1, stop):`, what value must **`stop`** be?"
+    )
+    s = (
+        r"<pre><code>for i in range(1, 11):"
+        "\n    print(i)</code></pre>"
+        "<br>`range(1, 11)` includes 1 up to 10 because 11 is not included."
+    )
     hint = "`range(start, stop)` goes up to, but does not include, `stop`."
-    return q, s, hint, 2
+    return q, s, hint, 2, _py_mcq_payload(
+        '11',
+        ['10', '9', '12'],
+    )
 
 def py_found_variables():
     q = "Write Python code that creates three variables: `name` (a string), `age` (an integer), and `height` (a float). Assign any sensible values and then print all three on one line separated by spaces."
@@ -48,7 +139,13 @@ age = 16
 height = 1.65
 print(name, age, height)</code></pre>"""
     hint = "Strings go in quotes; integers and floats do not. `print()` with commas adds spaces automatically."
-    return q, s, hint, 1
+    return q, s, hint, 1, graded_answer_python_run(
+        [
+            {'validate': 'variables_triple'},
+        ],
+        starter="name = \n",
+        format_hint='Print name, age, and height on one line separated by spaces.',
+    )
 
 def py_found_string_concat():
     q = "Write Python code that asks the user to enter their first name and then their last name. Print the message: **Hello, FirstName LastName!** (using the values they entered)."
@@ -56,7 +153,17 @@ def py_found_string_concat():
 last = input('Last name: ')
 print('Hello, ' + first + ' ' + last + '!')</code></pre>"""
     hint = "Use `+` to join strings together, or put the variables directly inside an f-string."
-    return q, s, hint, 2
+    return q, s, hint, 2, graded_answer_python_run(
+        [
+            {'stdin': 'Ada\nLovelace', 'stdout': 'Hello, Ada Lovelace!'},
+            {'stdin': 'Sam\nLee', 'stdout': 'Hello, Sam Lee!'},
+        ],
+        starter="""first = input('First name: ')
+last = input('Last name: ')
+""",
+        format_hint='Read two names and print a greeting.',
+    )
+
 
 def py_found_area():
     q = "Write Python code that asks the user for the **length** and **width** of a rectangle (both as decimal numbers), then prints the area."
@@ -64,7 +171,17 @@ def py_found_area():
 width = float(input('Width: '))
 print('Area:', length * width)</code></pre>"""
     hint = "Use `float()` to convert the input, then multiply."
-    return q, s, hint, 2
+    return q, s, hint, 2, graded_answer_python_run(
+        [
+            {'stdin': '4\n5', 'stdout': 'Area: 20.0'},
+            {'stdin': '2.5\n3', 'stdout': 'Area: 7.5'},
+        ],
+        starter="""length = float(input('Length: '))
+width = float(input('Width: '))
+""",
+        format_hint='Read length and width, then print the area.',
+    )
+
 
 def py_found_countdown():
     q = "Write a `while` loop that counts **down** from 10 to 1 (inclusive), printing each number, then prints **Blast off!** after the loop ends."
@@ -74,7 +191,16 @@ while count >= 1:
     count = count - 1
 print('Blast off!')</code></pre>"""
     hint = "Start `count` at 10, keep looping while `count >= 1`, and decrease by 1 each time."
-    return q, s, hint, 2
+    return q, s, hint, 2, graded_answer_python_run(
+        [
+            {'stdout': '10\n9\n8\n7\n6\n5\n4\n3\n2\n1\nBlast off!'},
+        ],
+        starter="""count = 10
+""",
+        lines=5,
+        format_hint='Count down from 10, then print Blast off!',
+    )
+
 
 def py_found_elif():
     q = "Write Python code that asks the user to enter a temperature as an integer. Print **Cold** if it is below 10, **Warm** if it is between 10 and 24 (inclusive), and **Hot** if it is 25 or above."
@@ -86,7 +212,17 @@ elif temp < 25:
 else:
     print('Hot')</code></pre>"""
     hint = "Use `if`/`elif`/`else`. The `elif` checks the next condition only if the `if` was False."
-    return q, s, hint, 2
+    return q, s, hint, 2, graded_answer_python_run(
+        [
+            {'stdin': '5', 'stdout': 'Cold'},
+            {'stdin': '20', 'stdout': 'Warm'},
+            {'stdin': '30', 'stdout': 'Hot'},
+        ],
+        starter="""temp = int(input('Temperature: '))
+""",
+        format_hint='Use if/elif/else for Cold, Warm, and Hot.',
+    )
+
 
 def py_found_list_build():
     q = "Write Python code that starts with an **empty list**, then appends the numbers **2, 4, 6, 8, 10** one at a time using `.append()`, and finally prints the list."
@@ -98,32 +234,79 @@ evens.append(8)
 evens.append(10)
 print(evens)</code></pre>"""
     hint = "Create `[]` first, then call `.append(value)` five times."
-    return q, s, hint, 2
+    return q, s, hint, 2, graded_answer_python_run(
+        [
+            {'stdout': '[2, 4, 6, 8, 10]'},
+        ],
+        starter='evens = []\n',
+        format_hint='Append 2, 4, 6, 8, 10 then print the list.',
+    )
+
 
 def py_found_index():
-    q = "Given the list `colours = ['red', 'green', 'blue', 'yellow', 'purple']`, write two lines of code that print the **first** element and the **last** element using index positions."
-    s = r"""<pre><code>colours = ['red', 'green', 'blue', 'yellow', 'purple']
-print(colours[0])
-print(colours[-1])</code></pre>"""
+    q = (
+        "What is printed by this code?<br>"
+        r"<pre><code>colours = ['red', 'green', 'blue', 'yellow', 'purple']"
+        "\nprint(colours[0])"
+        "\nprint(colours[-1])</code></pre>"
+    )
+    s = (
+        r"<pre><code>colours = ['red', 'green', 'blue', 'yellow', 'purple']"
+        "\nprint(colours[0])"
+        "\nprint(colours[-1])</code></pre>"
+        "<br>Prints <strong>red</strong> then <strong>purple</strong>."
+    )
     hint = "The first element is at index `0`; the last is at index `-1`."
-    return q, s, hint, 1
+    return q, s, hint, 1, _py_mcq_payload(
+        'red, then purple',
+        [
+            'purple, then red',
+            'green, then yellow',
+            'red, then green',
+        ],
+    )
 
 def py_found_round():
     q = "Write Python code that asks the user to enter a decimal number. Print the number **rounded to 2 decimal places** using the `round()` function."
     s = r"""<pre><code>num = float(input('Enter a decimal number: '))
 print(round(num, 2))</code></pre>"""
     hint = "Use `float()` to convert the input, then `round(value, 2)` to round to 2 places."
-    return q, s, hint, 2
+    return q, s, hint, 2, graded_answer_python_run(
+        [
+            {'stdin': '3.14159', 'stdout': '3.14'},
+            {'stdin': '2.718', 'stdout': '2.72'},
+        ],
+        starter="""num = float(input('Enter a decimal number: '))
+""",
+        format_hint='Round the input to 2 decimal places.',
+    )
+
 
 def py_found_modulo():
-    q = "Write Python code that asks the user for a whole number. If the number is exactly divisible by 3, print **Divisible by 3**, otherwise print **Not divisible by 3**."
-    s = r"""<pre><code>n = int(input('Enter a number: '))
-if n % 3 == 0:
-    print('Divisible by 3')
-else:
-    print('Not divisible by 3')</code></pre>"""
+    n = random.choice([9, 12, 10, 11, 14, 8])
+    if n % 3 == 0:
+        correct = 'Divisible by 3'
+        wrong = 'Not divisible by 3'
+    else:
+        correct = 'Not divisible by 3'
+        wrong = 'Divisible by 3'
+    q = (
+        f"What is printed when the user enters **{n}**?<br>"
+        r"<pre><code>n = int(input('Enter a number: '))"
+        "\nif n % 3 == 0:"
+        "\n    print('Divisible by 3')"
+        "\nelse:"
+        "\n    print('Not divisible by 3')</code></pre>"
+    )
+    s = (
+        rf"For <strong>n = {n}</strong>, <code>{n} % 3 == {n % 3}</code>, "
+        rf"so the program prints <strong>{correct}</strong>."
+    )
     hint = "The modulo operator `%` gives the remainder. If `n % 3 == 0`, it divides exactly."
-    return q, s, hint, 2
+    return q, s, hint, 2, _py_mcq_payload(
+        correct,
+        [wrong, 'Error', str(n % 3)],
+    )
 
 def py_found_upper_count():
     q = "Write Python code that asks the user to enter a sentence. Print the sentence in **all uppercase letters**, then on the next line print the **number of words** in the sentence."
@@ -131,7 +314,16 @@ def py_found_upper_count():
 print(sentence.upper())
 print(len(sentence.split()))</code></pre>"""
     hint = "Use `.upper()` to capitalise and `.split()` to break into words; `len()` counts them."
-    return q, s, hint, 2
+    return q, s, hint, 2, graded_answer_python_run(
+        [
+            {'stdin': 'hello world', 'stdout': 'HELLO WORLD\n2'},
+            {'stdin': 'Hi there friend', 'stdout': 'HI THERE FRIEND\n3'},
+        ],
+        starter="""sentence = input('Enter a sentence: ')
+""",
+        format_hint='Print uppercase text, then the word count on the next line.',
+    )
+
 
 # ---------- INTERMEDIATE (4) ----------
 def py_inter_reverse():
@@ -139,7 +331,16 @@ def py_inter_reverse():
     s = r"""<pre><code>word = input('Enter a word: ')
 print(word[::-1])</code></pre>"""
     hint = "You can use slicing with a negative step: `[::-1]`."
-    return q, s, hint, 2
+    return q, s, hint, 2, graded_answer_python_run(
+        [
+            {'stdin': 'hello', 'stdout': 'olleh'},
+            {'stdin': 'Python', 'stdout': 'nohtyP'},
+        ],
+        starter="""word = input('Enter a word: ')
+""",
+        format_hint='Print the word reversed.',
+    )
+
 
 def py_inter_is_even():
     q = "Write a function called `is_even(n)` that returns `True` if `n` is even, and `False` otherwise. Then write a line of code that calls the function with the number 42 and prints the result."
@@ -148,7 +349,18 @@ def py_inter_is_even():
 
 print(is_even(42))</code></pre>"""
     hint = "Use `%` (modulo) to check for a remainder after division by 2."
-    return q, s, hint, 3
+    return q, s, hint, 3, graded_answer_python_run(
+        [
+            {'stdout': 'True'},
+        ],
+        starter="""def is_even(n):
+    return n % 2 == 0
+
+""",
+        lines=5,
+        format_hint='Define is_even(n), then print is_even(42).',
+    )
+
 
 def py_inter_sum_list():
     q = "A list `numbers = [5, 12, 9, 22, 7]` is given. Write code that calculates and prints the **sum** of all the numbers **without** using the built‑in `sum()` function."
@@ -158,7 +370,15 @@ for n in numbers:
     total = total + n
 print(total)</code></pre>"""
     hint = "Use a `for` loop and a running total variable."
-    return q, s, hint, 3
+    return q, s, hint, 3, graded_answer_python_run(
+        [
+            {'setup': 'numbers = [5, 12, 9, 22, 7]', 'stdout': '55'},
+        ],
+        starter='total = 0\n',
+        lines=5,
+        format_hint='Sum the given list without using sum().',
+    )
+
 
 def py_inter_password():
     q = "Write a `while` loop that keeps asking the user to enter a password. It should stop and print **Access granted.** only when the password is `secure`."
@@ -167,21 +387,59 @@ while password != 'secure':
     password = input('Enter password: ')
 print('Access granted.')</code></pre>"""
     hint = "Use `!=` to keep looping while the passwords are different."
-    return q, s, hint, 3
+    return q, s, hint, 3, graded_answer_python_run(
+        [
+            {
+                'stdin': 'wrong\nsecure',
+                'stdout': 'Access granted.',
+                'min_inputs': 2,
+            },
+            {
+                'stdin': 'bad\nalso-bad\nsecure',
+                'stdout': 'Access granted.',
+                'min_inputs': 3,
+            },
+        ],
+        starter="""password = ''
+""",
+        lines=4,
+        format_hint='Loop until the password is secure.',
+    )
+
 
 def py_inter_fizzbuzz():
-    q = "Write a program that prints the numbers **1 to 30**. For multiples of 3 print **Fizz** instead of the number, for multiples of 5 print **Buzz**, and for multiples of both 3 and 5 print **FizzBuzz**."
-    s = r"""<pre><code>for i in range(1, 31):
-    if i % 3 == 0 and i % 5 == 0:
-        print('FizzBuzz')
-    elif i % 3 == 0:
-        print('Fizz')
-    elif i % 5 == 0:
-        print('Buzz')
+    i_val = random.choice([15, 30, 9, 10, 5, 7])
+    if i_val % 3 == 0 and i_val % 5 == 0:
+        correct = 'FizzBuzz'
+        distractors = ['Fizz', 'Buzz', str(i_val)]
+    elif i_val % 3 == 0:
+        correct = 'Fizz'
+        distractors = ['Buzz', 'FizzBuzz', str(i_val)]
+    elif i_val % 5 == 0:
+        correct = 'Buzz'
+        distractors = ['Fizz', 'FizzBuzz', str(i_val)]
     else:
-        print(i)</code></pre>"""
+        correct = str(i_val)
+        distractors = ['Fizz', 'Buzz', 'FizzBuzz']
+    q = (
+        "A FizzBuzz program prints **Fizz** for multiples of 3, **Buzz** for multiples of 5, "
+        "**FizzBuzz** for multiples of both, otherwise the number itself.<br>"
+        f"What is printed when <strong>i = {i_val}</strong>?"
+    )
+    s = (
+        r"<pre><code>for i in range(1, 31):"
+        "\n    if i % 3 == 0 and i % 5 == 0:"
+        "\n        print('FizzBuzz')"
+        "\n    elif i % 3 == 0:"
+        "\n        print('Fizz')"
+        "\n    elif i % 5 == 0:"
+        "\n        print('Buzz')"
+        "\n    else:"
+        "\n        print(i)</code></pre>"
+        f"<br>For <strong>i = {i_val}</strong>, the output is <strong>{correct}</strong>."
+    )
     hint = "Check for FizzBuzz *first* (both divisible), then Fizz, then Buzz, otherwise print the number."
-    return q, s, hint, 3
+    return q, s, hint, 3, _py_mcq_payload(correct, distractors)
 
 def py_inter_min_max():
     q = "Write a function `find_min_max(numbers)` that takes a list of integers and returns a **tuple** `(minimum, maximum)` **without** using the built-in `min()` or `max()` functions. Test it on `[4, 2, 9, 1, 7]` and print the result."
@@ -197,7 +455,18 @@ def py_inter_min_max():
 
 print(find_min_max([4, 2, 9, 1, 7]))</code></pre>"""
     hint = "Start both `minimum` and `maximum` as the first element, then update them as you loop."
-    return q, s, hint, 3
+    return q, s, hint, 3, graded_answer_python_run(
+        [
+            {'stdout': '(1, 9)'},
+        ],
+        starter="""def find_min_max(numbers):
+    minimum = numbers[0]
+    maximum = numbers[0]
+""",
+        lines=8,
+        format_hint='Return (min, max) without min()/max(), then test on [4, 2, 9, 1, 7].',
+    )
+
 
 def py_inter_palindrome():
     q = "Write a function `is_palindrome(word)` that returns `True` if the word reads the same forwards and backwards (ignoring case), and `False` otherwise. Test it with `'Racecar'` and `'Python'` and print both results."
@@ -208,7 +477,19 @@ def py_inter_palindrome():
 print(is_palindrome('Racecar'))
 print(is_palindrome('Python'))</code></pre>"""
     hint = "Convert to lowercase first, then compare the word with its reverse using `[::-1]`."
-    return q, s, hint, 3
+    return q, s, hint, 3, graded_answer_python_run(
+        [
+            {'stdout': 'True\nFalse'},
+        ],
+        starter="""def is_palindrome(word):
+    word = word.lower()
+    return word == word[::-1]
+
+""",
+        lines=6,
+        format_hint='Test with Racecar and Python; print each result.',
+    )
+
 
 def py_inter_letter_count():
     q = "Write Python code that asks the user for a word, then prints a **dictionary** showing how many times each letter appears (case-insensitive). For example, `'hello'` → `{'h': 1, 'e': 1, 'l': 2, 'o': 1}`."
@@ -221,14 +502,30 @@ for char in word:
         counts[char] = 1
 print(counts)</code></pre>"""
     hint = "Use a dictionary. For each character, if it is already a key, add 1; otherwise set it to 1."
-    return q, s, hint, 3
+    return q, s, hint, 3, graded_answer_python_run(
+        [
+            {'stdin': 'hello', 'stdout': "{'h': 1, 'e': 1, 'l': 2, 'o': 1}"},
+        ],
+        starter="""word = input('Enter a word: ').lower()
+counts = {}
+""",
+        lines=6,
+        format_hint='Build a letter-count dictionary and print it.',
+    )
+
 
 def py_inter_list_comp():
     q = "Use a **list comprehension** to create a list of the **squares** of all even numbers from 1 to 20 (inclusive). Print the resulting list."
     s = r"""<pre><code>squares = [n ** 2 for n in range(1, 21) if n % 2 == 0]
 print(squares)</code></pre>"""
     hint = "A list comprehension has the form `[expression for variable in range if condition]`."
-    return q, s, hint, 3
+    return q, s, hint, 3, graded_answer_python_run(
+        [
+            {'stdout': '[4, 16, 36, 64, 100, 144, 196, 256, 324, 400]'},
+        ],
+        format_hint='Use a list comprehension for even squares from 1 to 20.',
+    )
+
 
 def py_inter_grade():
     q = "Write a function `get_grade(score)` that takes an integer score (0–100) and returns the grade letter: **A** (90+), **B** (80–89), **C** (70–79), **D** (60–69), **F** (below 60). Test it by printing the grade for 85."
@@ -246,7 +543,18 @@ def py_inter_grade():
 
 print(get_grade(85))</code></pre>"""
     hint = "Use a chain of `if`/`elif`/`else`. Check the highest grade first."
-    return q, s, hint, 3
+    return q, s, hint, 3, graded_answer_python_run(
+        [
+            {'stdout': 'B'},
+        ],
+        starter="""def get_grade(score):
+    if score >= 90:
+        return 'A'
+""",
+        lines=10,
+        format_hint='Return A–F from score; print get_grade(85).',
+    )
+
 
 def py_inter_times_table():
     q = "Write Python code that uses **nested loops** to print a times table from **1 to 5**. Each row should show the products for that number, separated by tabs (`\\t`). Example first row: `1\t2\t3\t4\t5`."
@@ -256,7 +564,17 @@ def py_inter_times_table():
         row = row + str(i * j) + '\t'
     print(row)</code></pre>"""
     hint = "Outer loop picks the row number, inner loop picks the column. Multiply `i * j`."
-    return q, s, hint, 3
+    return q, s, hint, 3, graded_answer_python_run(
+        [
+            {'stdout': '1\t2\t3\t4\t5\t\n2\t4\t6\t8\t10\t\n3\t6\t9\t12\t15\t\n4\t8\t12\t16\t20\t\n5\t10\t15\t20\t25\t'},
+        ],
+        starter="""for i in range(1, 6):
+    row = ''
+""",
+        lines=6,
+        format_hint='Print a 5×5 times table with tab-separated values.',
+    )
+
 
 def py_inter_unique():
     q = "Write a function `unique_items(lst)` that returns a **new list** containing only the unique elements from `lst`, preserving their original order, **without** using `set()`. Test it on `[3, 1, 4, 1, 5, 9, 2, 6, 5, 3]` and print the result."
@@ -269,7 +587,17 @@ def py_inter_unique():
 
 print(unique_items([3, 1, 4, 1, 5, 9, 2, 6, 5, 3]))</code></pre>"""
     hint = "Keep a `seen` list. Only add an item if it isn't already in `seen`."
-    return q, s, hint, 3
+    return q, s, hint, 3, graded_answer_python_run(
+        [
+            {'stdout': '[3, 1, 4, 5, 9, 2, 6]'},
+        ],
+        starter="""def unique_items(lst):
+    seen = []
+""",
+        lines=7,
+        format_hint='Preserve order; test on the list in the question.',
+    )
+
 
 def py_inter_replace_words():
     q = "Write Python code that asks the user for a sentence and then for a word to replace. Replace every occurrence of that word with `***` (case-sensitive) and print the result."
@@ -278,7 +606,17 @@ word = input('Word to replace: ')
 result = sentence.replace(word, '***')
 print(result)</code></pre>"""
     hint = "Strings have a built-in `.replace(old, new)` method that replaces all occurrences."
-    return q, s, hint, 2
+    return q, s, hint, 2, graded_answer_python_run(
+        [
+            {'stdin': 'the cat sat on the mat\ncat', 'stdout': 'the *** sat on the mat'},
+            {'stdin': 'hello world\nworld', 'stdout': 'hello ***'},
+        ],
+        starter="""sentence = input('Enter a sentence: ')
+word = input('Word to replace: ')
+""",
+        format_hint='Replace every occurrence of the word with ***.',
+    )
+
 
 def py_inter_number_stats():
     q = "Write Python code that asks the user to enter **5 numbers**, stores them in a list, then prints the **mean**, **minimum**, and **maximum** (you may use `sum()`, `min()`, and `max()` here)."
@@ -291,7 +629,15 @@ print('Mean:', sum(numbers) / 5)
 print('Min:', min(numbers))
 print('Max:', max(numbers))</code></pre>"""
     hint = "Use a `for` loop with `range(5)` to collect input, then calculate using built-in functions."
-    return q, s, hint, 3
+    return q, s, hint, 3, graded_answer_python_run(
+        [
+            {'stdin': '10\n20\n30\n40\n50', 'stdout': 'Mean: 30.0\nMin: 10.0\nMax: 50.0'},
+        ],
+        starter='numbers = []\n',
+        lines=6,
+        format_hint='Read 5 numbers, then print mean, min, and max.',
+    )
+
 
 # ---------- DIFFICULT (4) ----------
 def py_diff_largest():
@@ -307,7 +653,18 @@ while True:
         largest = num
 print('Largest:', largest)</code></pre>"""
     hint = "Use a `while` loop and a variable to keep track of the maximum."
-    return q, s, hint, 4
+    return q, s, hint, 4, graded_answer_python_run(
+        [
+            {'stdin': '12\n45\n3\ndone', 'stdout': 'Largest: 45'},
+            {'stdin': '7\ndone', 'stdout': 'Largest: 7'},
+        ],
+        starter="""largest = None
+while True:
+""",
+        lines=6,
+        format_hint='Read numbers until done; print the largest.',
+    )
+
 
 def py_diff_vowels():
     q = r"""Write a function called `count_vowels(word)` that returns the number of vowels (a, e, i, o, u) in the given string. The function should work for both uppercase and lowercase letters.
@@ -322,7 +679,18 @@ Test it with the word `Education` and print the result."""
 
 print(count_vowels('Education'))</code></pre>"""
     hint = "Convert the word to lowercase and check each character against `'aeiou'`."
-    return q, s, hint, 5
+    return q, s, hint, 5, graded_answer_python_run(
+        [
+            {'stdout': '5'},
+        ],
+        starter="""def count_vowels(word):
+    vowels = 'aeiou'
+    count = 0
+""",
+        lines=8,
+        format_hint='Count vowels in Education and print the result.',
+    )
+
 
 def py_diff_2d():
     q = "Write a program that creates a 3×3 multiplication table (numbers 1 to 3) stored as a 2D list, and then prints each row on a separate line. The output should look like:\n`[1, 2, 3]`\n`[2, 4, 6]`\n`[3, 6, 9]`"
@@ -336,7 +704,15 @@ for i in range(1, 4):
 for row in table:
     print(row)</code></pre>"""
     hint = "Use nested `for` loops to fill a list of lists, then loop again to print each inner list."
-    return q, s, hint, 5
+    return q, s, hint, 5, graded_answer_python_run(
+        [
+            {'stdout': '[1, 2, 3]\n[2, 4, 6]\n[3, 6, 9]'},
+        ],
+        starter='table = []\n',
+        lines=8,
+        format_hint='Build and print the 3×3 multiplication table rows.',
+    )
+
 
 def py_diff_file():
     q = r"""Write a program that asks the user for a filename, then opens the file and prints its contents with line numbers (starting from 1). If the file does not exist, print **File not found.**
@@ -351,7 +727,26 @@ try:
 except FileNotFoundError:
     print('File not found.')</code></pre>"""
     hint = "Use `try`/`except FileNotFoundError` and `enumerate()` with `start=1`."
-    return q, s, hint, 6
+    return q, s, hint, 6, graded_answer_python_run(
+        [
+            {
+                'stdin': 'notes.txt',
+                'files': {'notes.txt': 'first line\nsecond line\n'},
+                'stdout': '1: first line\n2: second line',
+                'min_inputs': 1,
+            },
+            {
+                'stdin': 'missing.txt',
+                'files': {},
+                'stdout': 'File not found.',
+                'min_inputs': 1,
+            },
+        ],
+        starter="""filename = input('Enter filename: ')
+""",
+        lines=8,
+        format_hint='Open the file and print numbered lines, or handle a missing file.',
+    )
 
 def py_diff_fibonacci():
     q = "Write a function `fibonacci(n)` that returns a **list** of Fibonacci numbers up to (but not exceeding) `n`. For example, `fibonacci(50)` should return `[1, 1, 2, 3, 5, 8, 13, 21, 34]`. Test it with `n = 100` and print the result."
@@ -365,7 +760,18 @@ def py_diff_fibonacci():
 
 print(fibonacci(100))</code></pre>"""
     hint = "Use two variables `a` and `b`. Each step: append `a`, then update `a, b = b, a + b`."
-    return q, s, hint, 5
+    return q, s, hint, 5, graded_answer_python_run(
+        [
+            {'stdout': '[1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89]'},
+        ],
+        starter="""def fibonacci(n):
+    sequence = []
+    a, b = 1, 1
+""",
+        lines=8,
+        format_hint='Return Fibonacci numbers up to n; test with n = 100.',
+    )
+
 
 def py_diff_caesar():
     q = r"""Write a function `caesar(text, shift)` that applies a Caesar cipher to `text`: each **letter** is shifted forward by `shift` positions in the alphabet, wrapping around (Z → A). Non-letter characters are unchanged. Test it with `caesar('Hello, World!', 3)` and print the result."""
@@ -381,7 +787,17 @@ def py_diff_caesar():
 
 print(caesar('Hello, World!', 3))</code></pre>"""
     hint = "Use `ord()` to get the character code, shift it, use `% 26` to wrap, then `chr()` to convert back."
-    return q, s, hint, 6
+    return q, s, hint, 6, graded_answer_python_run(
+        [
+            {'stdout': 'Khoor, Zruog!'},
+        ],
+        starter="""def caesar(text, shift):
+    result = ''
+""",
+        lines=10,
+        format_hint='Shift letters; test caesar(\'Hello, World!\', 3).',
+    )
+
 
 def py_diff_word_freq():
     q = r"""Write a program that repeatedly asks the user to enter a line of text. Stop when they enter `STOP`. Then print the **three most common words** (case-insensitive) and how many times each appeared."""
@@ -398,7 +814,18 @@ counter = Counter(words)
 for word, count in counter.most_common(3):
     print(word, count)</code></pre>"""
     hint = "Use `collections.Counter` and its `.most_common(3)` method, or sort a dict by value."
-    return q, s, hint, 5
+    return q, s, hint, 5, graded_answer_python_run(
+        [
+            {'stdin': 'the cat sat on the mat\nSTOP', 'stdout': 'the 2\ncat 1\nsat 1'},
+        ],
+        starter="""from collections import Counter
+
+words = []
+""",
+        lines=8,
+        format_hint='Collect words until STOP; print the three most common.',
+    )
+
 
 def py_diff_stack():
     q = r"""Write a class `Stack` that uses a list internally and supports three methods:
@@ -429,7 +856,18 @@ s.push(30)
 print(s.pop())
 print(s.pop())</code></pre>"""
     hint = "A stack is LIFO (last in, first out). Use a list with `.append()` for push and `.pop()` for pop."
-    return q, s, hint, 6
+    return q, s, hint, 6, graded_answer_python_run(
+        [
+            {'stdout': '30\n20'},
+        ],
+        starter="""class Stack:
+    def __init__(self):
+        self.items = []
+""",
+        lines=12,
+        format_hint='Implement Stack; push 10, 20, 30 then pop twice.',
+    )
+
 
 def py_diff_binary():
     q = r"""Write a function `to_binary(n)` that converts a **positive integer** `n` to its binary representation as a **string**, **without** using `bin()` or any built-in base-conversion function. Test it with `n = 42` (expected: `'101010'`) and print the result."""
@@ -444,7 +882,18 @@ def py_diff_binary():
 
 print(to_binary(42))</code></pre>"""
     hint = "Repeatedly divide by 2 and collect the remainders in reverse order."
-    return q, s, hint, 5
+    return q, s, hint, 5, graded_answer_python_run(
+        [
+            {'stdout': '101010'},
+        ],
+        starter="""def to_binary(n):
+    if n == 0:
+        return '0'
+""",
+        lines=8,
+        format_hint='Convert to binary without bin(); test n = 42.',
+    )
+
 
 def py_diff_prime_sieve():
     """Prime-finder using a Boolean sieve — method is explained in the question (no jargon)."""
@@ -475,7 +924,16 @@ print(primes)</code></pre>"""
         "You do not need to have heard of Eratosthenes — follow the steps: "
         "Boolean list, cross out multiples of each prime starting at i²."
     )
-    return q, s, hint, 5
+    primes = _primes_up_to(limit)
+    return q, s, hint, 5, graded_answer_python_run(
+        [
+            {'stdout': str(primes)},
+        ],
+        starter=f'limit = {limit}\n',
+        lines=10,
+        format_hint='Use the sieve steps from the question; print the prime list.',
+    )
+
 
 def py_diff_anagram():
     q = r"""Write a function `is_anagram(word1, word2)` that returns `True` if the two words are anagrams of each other (contain the same letters, case-insensitive), and `False` otherwise. **Do not** use `sorted()`. Test with `('listen', 'silent')` and `('hello', 'world')` and print both results."""
@@ -494,7 +952,18 @@ def py_diff_anagram():
 print(is_anagram('listen', 'silent'))
 print(is_anagram('hello', 'world'))</code></pre>"""
     hint = "Count occurrences of each letter in word1, then subtract for word2. If all counts end at 0, they're anagrams."
-    return q, s, hint, 5
+    return q, s, hint, 5, graded_answer_python_run(
+        [
+            {'stdout': 'True\nFalse'},
+        ],
+        starter="""def is_anagram(word1, word2):
+    word1 = word1.lower()
+    word2 = word2.lower()
+""",
+        lines=10,
+        format_hint='Test listen/silent and hello/world.',
+    )
+
 
 def py_diff_roman():
     q = r"""Write a function `to_roman(n)` that converts an integer between **1 and 39** into its Roman numeral string. Test it with 14, 27, and 39, printing each result.
@@ -521,7 +990,17 @@ def py_diff_roman():
 for num in [14, 27, 39]:
     print(num, '->', to_roman(num))</code></pre>"""
     hint = "Use a greedy approach: always subtract the largest Roman value that fits, and add its symbol."
-    return q, s, hint, 5
+    return q, s, hint, 5, graded_answer_python_run(
+        [
+            {'stdout': '14 -> XIV\n27 -> XXVII\n39 -> XXXIX'},
+        ],
+        starter="""def to_roman(n):
+    values = [30, 29, 28, 27, 26, 25, 24, 23, 22, 21,
+""",
+        lines=12,
+        format_hint='Print Roman numerals for 14, 27, and 39.',
+    )
+
 
 def py_diff_exception_handling():
     q = r"""Write a program that repeatedly asks the user to enter two numbers and prints the result of dividing the first by the second. Handle two exceptions:
@@ -543,7 +1022,18 @@ The loop should stop when the user enters `q` for either number."""
     except ZeroDivisionError:
         print('Cannot divide by zero')</code></pre>"""
     hint = "Use `try`/`except` with multiple `except` clauses to catch different error types."
-    return q, s, hint, 5
+    return q, s, hint, 5, graded_answer_python_run(
+        [
+            {'stdin': 'abc\n5\nq', 'stdout': 'Invalid input'},
+            {'stdin': '10\n0\nq', 'stdout': 'Cannot divide by zero'},
+        ],
+        starter="""while True:
+    a = input('Enter first number (or q to quit): ')
+""",
+        lines=8,
+        format_hint='Handle ValueError and ZeroDivisionError; quit on q.',
+    )
+
 
 def py_diff_search():
     q = r"""Write a function `binary_search(lst, target)` that performs a **binary search** on a sorted list and returns the **index** of `target`, or `-1` if it is not found. Test it on `[2, 5, 8, 12, 16, 23, 38, 56, 72, 91]` searching for `23` and for `15`."""
@@ -563,7 +1053,17 @@ data = [2, 5, 8, 12, 16, 23, 38, 56, 72, 91]
 print(binary_search(data, 23))
 print(binary_search(data, 15))</code></pre>"""
     hint = "Keep `low` and `high` pointers. Compare the middle element with the target and halve the search space each time."
-    return q, s, hint, 6
+    return q, s, hint, 6, graded_answer_python_run(
+        [
+            {'stdout': '5\n-1'},
+        ],
+        starter="""def binary_search(lst, target):
+    low, high = 0, len(lst) - 1
+""",
+        lines=10,
+        format_hint='Binary search; test for 23 and 15 in the given list.',
+    )
+
 
 
 def py_diff_menu_dict():
@@ -584,7 +1084,18 @@ while True:
     else:
         print('Invalid choice')</code></pre>"""
     hint = "Use `in` to check dictionary keys before printing the value."
-    return q, s, hint, 5
+    return q, s, hint, 5, graded_answer_python_run(
+        [
+            {'stdin': '1\nq', 'stdout': 'Pizza'},
+            {'stdin': '9\nq', 'stdout': 'Invalid choice'},
+        ],
+        starter="""menu = {'1': 'Pizza', '2': 'Pasta', '3': 'Salad'}
+
+""",
+        lines=6,
+        format_hint='Print the meal or Invalid choice; quit on q.',
+    )
+
 
 
 def py_diff_read_scores_file():
@@ -601,7 +1112,21 @@ with open('scores.txt', 'r') as f:
 print('Highest:', max(scores))
 print('Average:', round(sum(scores) / len(scores), 1))</code></pre>"""
     hint = "Read each line inside a `with open(...)` block, convert to `int`, then use `max()` and `sum()`."
-    return q, s, hint, 5
+    return q, s, hint, 5, graded_answer_python_run(
+        [
+            {
+                'files': {'scores.txt': '55\n72\n90\n43\n68\n'},
+                'stdout': 'Highest: 90\nAverage: 65.6',
+            },
+            {
+                'files': {'scores.txt': '10\n20\n30\n'},
+                'stdout': 'Highest: 30\nAverage: 20.0',
+            },
+        ],
+        starter='scores = []\n',
+        lines=6,
+        format_hint='Read scores.txt and print highest and average (1 d.p.).',
+    )
 
 # ---------- Multi-part difficult questions (a, b, c) ----------
 def py_diff_multipart_scores():
@@ -637,7 +1162,17 @@ print('Highest:', highest(scores))</code></pre>
         "For (a) add the numbers with a loop then divide by `len(scores)`. "
         "For (b) keep a variable for the biggest value seen so far and update it in a loop."
     )
-    return q, s, hint, 8
+    return q, s, hint, 8, graded_answer_python_run(
+        [
+            {'stdout': 'Average: 65.6\nHighest: 90'},
+        ],
+        starter="""def average(scores):
+    total = 0
+""",
+        lines=12,
+        format_hint='Implement average and highest; print both for the given scores.',
+    )
+
 
 def py_diff_multipart_password():
     q = (
@@ -671,7 +1206,17 @@ print(is_strong('short'))</code></pre>
         "For (a) loop through each character and use `.isdigit()`. "
         "For (b) combine the length check and the digit count with `and`."
     )
-    return q, s, hint, 8
+    return q, s, hint, 8, graded_answer_python_run(
+        [
+            {'stdout': 'True\nFalse'},
+        ],
+        starter="""def count_digits(text):
+    count = 0
+""",
+        lines=12,
+        format_hint='Implement count_digits and is_strong; test password1 and short.',
+    )
+
 
 # ---------- MCQ (27 questions) ----------
 def py_mcq():
@@ -882,6 +1427,18 @@ def py_mcq():
         chosen["ans"]
     )
 
+
+
+def _primes_up_to(limit):
+    is_prime = [True] * (limit + 1)
+    is_prime[0] = False
+    is_prime[1] = False
+    for i in range(2, int(limit ** 0.5) + 1):
+        if is_prime[i]:
+            for j in range(i * i, limit + 1, i):
+                is_prime[j] = False
+    return [i for i in range(limit + 1) if is_prime[i]]
+
 # ---------- VARIANTS FUNCTION ----------
 def gcse_python_variants(difficulty, mode):
     if mode == 'mcq':
@@ -934,11 +1491,4 @@ def gcse_python_programming(difficulty, mode, variant_name=None):
 
     variants = gcse_python_variants(difficulty, mode)
     variant = pick_named_variant(variants, variant_name)
-    q, s, hint, marks = variant()
-    return make_problem(
-        format_cs_prose(q),
-        s,
-        format_cs_prose(hint),
-        difficulty, marks,
-        'gcse', 'cs', 'python_programming',
-    )
+    return _py_problem_from_output(variant(), difficulty)

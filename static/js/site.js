@@ -768,6 +768,16 @@
     } else {
       block.setAttribute('data-pair-sep', 'and');
     }
+    if (problem.answer_tests && problem.answer_tests.length) {
+      block.setAttribute('data-answer-tests', JSON.stringify(problem.answer_tests));
+    } else {
+      block.setAttribute('data-answer-tests', '[]');
+    }
+    if (problem.answer_python_starter) {
+      block.setAttribute('data-python-starter', problem.answer_python_starter);
+    } else {
+      block.removeAttribute('data-python-starter');
+    }
     var hint = block.querySelector('.free-response-csq-hint');
     if (hint && problem.answer_format_hint) {
       hint.textContent = problem.answer_format_hint;
@@ -816,6 +826,8 @@
     if (row.classList.contains('free-response-row--surd')) return 'surd';
     if (row.classList.contains('free-response-row--algebraic')) return 'algebraic';
     if (row.classList.contains('free-response-row--algebraic-fraction')) return 'algebraic_fraction';
+    if (row.classList.contains('free-response-row--python-run')) return 'python_run';
+    if (row.classList.contains('free-response-row--sql')) return 'sql';
     return 'number';
   }
 
@@ -2067,6 +2079,18 @@
         '</div>'
       );
     }
+    if (answerType === 'python_run') {
+      var pyPh = esc(formatHint || 'Write your Python code');
+      var pyLines = sqlInputLines(block, 4);
+      var pyRows = pyLines <= 1 ? 2 : Math.min(pyLines, 8);
+      var pyStarter = esc(block.getAttribute('data-python-starter') || '');
+      return (
+        '<div class="free-response-row free-response-row--number free-response-row--text free-response-row--python-run">' +
+        '<textarea class="free-response-input free-response-input--python free-response-input--sql" rows="' + pyRows + '" placeholder="' + pyPh + '" autocomplete="off" spellcheck="false" aria-label="Your Python code">' + pyStarter + '</textarea>' +
+        '<button type="button" class="btn free-response-check-btn">Check</button>' +
+        '</div>'
+      );
+    }
     if (answerType === 'proof_steps') {
       var stepBank = [];
       try {
@@ -2320,6 +2344,8 @@
       : (answerType === 'linear') ? 'linear'
       : (answerType === 'quadratic_roots') ? 'quadratic_roots'
       : (answerType === 'vector') ? 'vector'
+      : (answerType === 'sql') ? 'sql'
+      : (answerType === 'python_run') ? 'python_run'
       : answerType;
     if (!current || freeResponseRowKind(current) !== rowKind) {
       if (current) current.remove();
@@ -2351,6 +2377,13 @@
     }
     if (answerType === 'surd' || answerType === 'algebraic' || answerType === 'algebraic_fraction') {
       wireSurdInsertButton(block);
+    }
+    if (answerType === 'python_run') {
+      var starter = block.getAttribute('data-python-starter') || '';
+      var pyInput = block.querySelector('.free-response-input--python');
+      if (pyInput && starter && !pyInput.value) {
+        pyInput.value = starter;
+      }
     }
   }
 
@@ -3004,6 +3037,120 @@
     return 0;
   }
 
+  function wirePythonRunFreeResponse(block, correctRaw, trackable) {
+    var textarea = block.querySelector('.free-response-input--python');
+    var checkBtn = block.querySelector('.free-response-check-btn');
+    var feedback = block.querySelector('.free-response-feedback');
+    if (!textarea || !checkBtn) return;
+
+    checkBtn.addEventListener('click', function () {
+      if (textarea.disabled) return;
+      var code = (textarea.value || '').trim();
+      if (!code) {
+        if (feedback) {
+          feedback.textContent = 'Write your Python code first.';
+          feedback.style.color = '#dc2626';
+        }
+        textarea.classList.remove('is-correct', 'is-wrong');
+        return;
+      }
+      if (typeof globalThis.runPythonRunTests !== 'function') {
+        if (feedback) {
+          feedback.textContent = 'Python runner is still loading — try again in a moment.';
+          feedback.style.color = '#dc2626';
+        }
+        return;
+      }
+      var tests = [];
+      try {
+        tests = JSON.parse(block.getAttribute('data-answer-tests') || '[]');
+      } catch (parseErr) {
+        tests = [];
+      }
+      if (!tests.length) {
+        if (feedback) {
+          feedback.textContent = 'This question has no test fixtures configured.';
+          feedback.style.color = '#dc2626';
+        }
+        return;
+      }
+
+      checkBtn.disabled = true;
+      textarea.disabled = true;
+      if (feedback) {
+        feedback.textContent = 'Running your code…';
+        feedback.style.color = '';
+      }
+
+      globalThis.runPythonRunTests(code, tests).then(function (results) {
+        var body = {
+          user_answer: JSON.stringify(results),
+          correct_answer_raw: correctRaw,
+          answer_type: 'python_run',
+        };
+        if (trackable) {
+          body.level = block.dataset.level;
+          body.subject = block.dataset.subject;
+          body.topic = block.dataset.topic;
+          body.difficulty = block.dataset.difficulty || 'foundational';
+          if (block.dataset.freeResponsePersisted === '1') {
+            body.record_attempt = false;
+          }
+        }
+        return fetch('/api/v1/problems/check', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          credentials: 'same-origin',
+          body: JSON.stringify(body),
+        }).then(function (response) {
+          var contentType = response.headers.get('content-type') || '';
+          if (contentType.indexOf('application/json') === -1) {
+            throw new Error('Server returned an unexpected response — try refreshing the page.');
+          }
+          return response.json().then(function (data) {
+            if (!response.ok) {
+              var err = new Error(data.error || 'Check failed');
+              err.data = data;
+              throw err;
+            }
+            return data;
+          });
+        }).then(function (data) {
+          var ok = Boolean(data.correct);
+          textarea.classList.remove('is-correct', 'is-wrong');
+          if (ok) {
+            textarea.classList.add('is-correct');
+            textarea.disabled = true;
+            checkBtn.disabled = true;
+          } else {
+            textarea.classList.add('is-wrong');
+            textarea.disabled = false;
+            checkBtn.disabled = false;
+          }
+          if (feedback) {
+            feedback.textContent = data.feedback || (ok ? 'Correct!' : 'Not quite.');
+            feedback.style.color = ok ? '#16a34a' : '#dc2626';
+          }
+          if (ok && trackable) {
+            block.dataset.freeResponsePersisted = '1';
+          }
+        });
+      }).catch(function (err) {
+        textarea.disabled = false;
+        checkBtn.disabled = false;
+        textarea.classList.remove('is-correct');
+        textarea.classList.add('is-wrong');
+        if (feedback) {
+          feedback.textContent = (err && err.message) || 'Could not run your code — try again.';
+          feedback.style.color = '#dc2626';
+        }
+      });
+    });
+  }
+
   function wireProofStepsFreeResponse(block, correctRaw, trackable) {
     var row = block.querySelector('.free-response-row--proof-steps');
     if (!row) return;
@@ -3197,6 +3344,10 @@
     }
     if (answerType === 'proof_steps') {
       wireProofStepsFreeResponse(block, correctRaw, trackable);
+      return;
+    }
+    if (answerType === 'python_run') {
+      wirePythonRunFreeResponse(block, correctRaw, trackable);
       return;
     }
 

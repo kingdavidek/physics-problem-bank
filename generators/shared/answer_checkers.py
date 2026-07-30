@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 import math
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
@@ -2949,6 +2950,199 @@ def check_sql(correct_raw, user_answer):
             'Not quite — check your SQL syntax, clauses, and column names match the question.'
         )
     return result
+
+
+def _normalize_python_stdout(value) -> str:
+    return str(value or '').replace('\r\n', '\n').replace('\r', '\n').strip()
+
+
+_INTERNAL_PYTHON_ERROR_MARKERS = (
+    '_pyodide',
+    'pyodide',
+    'python311.zip',
+    '/lib/python',
+    '<exec>',
+    '<setup>',
+    '_base.py',
+    'eval_code',
+)
+
+
+def _sanitize_python_student_error(raw) -> str:
+    """Strip Pyodide/runtime paths; keep only student-code traceback lines."""
+    text = str(raw or '').strip()
+    if not text:
+        return 'Your code raised an error.'
+    lines = []
+    for line in text.splitlines():
+        lower = line.lower()
+        if 'traceback (most recent call last)' in lower:
+            continue
+        if any(marker in lower for marker in _INTERNAL_PYTHON_ERROR_MARKERS):
+            continue
+        stripped = line.lstrip()
+        if stripped.startswith('File "') and '<student>' not in line and 'your code' not in lower:
+            continue
+        if stripped.startswith('File ') and '<student>' not in line and 'your code' not in lower:
+            continue
+        line = line.replace('"<student>"', 'your code').replace('<student>', 'your code')
+        lines.append(line)
+    cleaned = '\n'.join(lines).strip()
+    if not cleaned:
+        return 'Your code raised an error.'
+    return cleaned
+
+
+def _python_run_validate_stdout(validate_key, stdout) -> tuple[bool, str]:
+    """Flexible stdout checks for open-ended python_run tasks."""
+    key = str(validate_key or '').strip()
+    text = _normalize_python_stdout(stdout)
+    if key == 'variables_triple':
+        parts = text.split()
+        if len(parts) != 3:
+            return False, (
+                'Print exactly three values on one line: '
+                'name (text), age (integer), height (number).'
+            )
+        name, age_s, height_s = parts
+        if not name or name.replace('_', '').isdigit():
+            return False, 'The first value should be a name (text), not a number.'
+        try:
+            age = int(age_s)
+        except ValueError:
+            return False, 'The second value should be an integer age.'
+        if '.' in age_s:
+            return False, 'The second value should be an integer age.'
+        try:
+            height = float(height_s)
+        except ValueError:
+            return False, 'The third value should be a height (decimal number).'
+        if age < 0 or age > 130:
+            return False, 'Choose a sensible integer age.'
+        if height <= 0 or height > 250:
+            return False, 'Choose a sensible height.'
+        return True, ''
+    return False, 'Could not validate your output.'
+
+
+def _python_run_check_result(correct_raw, user_answer, *, correct, feedback):
+    return {
+        'correct': correct,
+        'feedback': feedback,
+        'normalized_correct': str(correct_raw or '').strip(),
+        'normalized_user': str(user_answer or '').strip(),
+    }
+
+
+@register_checker('python_run')
+def check_python_run(correct_raw, user_answer):
+    """Compare client-side Pyodide stdout captures against expected fixtures."""
+    correct_s = str(correct_raw or '').strip()
+    if not correct_s:
+        raise ValueError('invalid_correct_answer')
+    user_s = str(user_answer or '').strip()
+    if not user_s:
+        return _python_run_check_result(
+            correct_raw,
+            user_answer,
+            correct=False,
+            feedback='Write your Python code first.',
+        )
+    try:
+        expected = json.loads(correct_s)
+        actual = json.loads(user_s)
+    except json.JSONDecodeError:
+        return _python_run_check_result(
+            correct_raw,
+            user_answer,
+            correct=False,
+            feedback='Could not read your program output — try Check again.',
+        )
+    if not isinstance(expected, list) or not isinstance(actual, list):
+        return _python_run_check_result(
+            correct_raw,
+            user_answer,
+            correct=False,
+            feedback='Could not read your program output — try Check again.',
+        )
+    if len(actual) != len(expected):
+        return _python_run_check_result(
+            correct_raw,
+            user_answer,
+            correct=False,
+            feedback=(
+                f'Expected {len(expected)} test run(s), got {len(actual)}.'
+            ),
+        )
+    for idx, (exp_item, act_item) in enumerate(zip(expected, actual), start=1):
+        if not isinstance(exp_item, dict) or not isinstance(act_item, dict):
+            return _python_run_check_result(
+                correct_raw,
+                user_answer,
+                correct=False,
+                feedback=f'Test {idx} output was invalid.',
+            )
+        err = act_item.get('error')
+        if err:
+            safe_err = _sanitize_python_student_error(err)
+            return _python_run_check_result(
+                correct_raw,
+                user_answer,
+                correct=False,
+                feedback=f'Test {idx} raised an error:\n{safe_err}',
+            )
+        exp_min = exp_item.get('min_inputs')
+        if exp_min is not None:
+            try:
+                required = int(exp_min)
+            except (TypeError, ValueError):
+                required = None
+            if required is not None and required > 0:
+                try:
+                    actual_calls = int(act_item.get('input_calls', 0))
+                except (TypeError, ValueError):
+                    actual_calls = 0
+                if actual_calls < required:
+                    return _python_run_check_result(
+                        correct_raw,
+                        user_answer,
+                        correct=False,
+                        feedback=(
+                            f'Test {idx}: your code must call input() '
+                            f'at least {required} time(s) '
+                            f'(got {actual_calls}).'
+                        ),
+                    )
+        exp_validate = exp_item.get('validate')
+        if exp_validate:
+            act_out = _normalize_python_stdout(act_item.get('stdout'))
+            ok, hint = _python_run_validate_stdout(exp_validate, act_out)
+            if not ok:
+                return _python_run_check_result(
+                    correct_raw,
+                    user_answer,
+                    correct=False,
+                    feedback=f'Test {idx}: {hint}',
+                )
+            continue
+        exp_out = _normalize_python_stdout(exp_item.get('stdout'))
+        act_out = _normalize_python_stdout(act_item.get('stdout'))
+        if act_out != exp_out:
+            return _python_run_check_result(
+                correct_raw,
+                user_answer,
+                correct=False,
+                feedback=(
+                    f'Test {idx} output did not match '
+                    '(check input(), int(), and print()).'
+                ),
+            )
+    return _python_run_check_result(
+        correct_raw,
+        user_answer,
+        correct=True,
+        feedback='Correct!',
+    )
 
 
 @register_checker('text')

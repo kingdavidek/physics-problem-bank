@@ -30,6 +30,7 @@ from generators.gcse.maths import (  # noqa: E402
     gcse_bidmas_simple,
     gcse_dec_fraction_to_decimal,
     gcse_dec_ordering,
+    gcse_dec_practice_order_mixed,
     gcse_dec_recurring,
     gcse_fdp_decimal_to_fraction,
     gcse_fdp_decimal_to_percentage,
@@ -202,6 +203,11 @@ from generators.gcse.gcse_cs_ethical_lesson import (  # noqa: E402
     _eth_problem_from_output,
     gcse_ethical,
     gcse_ethical_variants,
+)
+from generators.gcse.cs import (  # noqa: E402
+    _py_problem_from_output,
+    gcse_python_programming,
+    gcse_python_variants,
 )
 from generators.shared.answer_checkers import (  # noqa: E402
     check_answer,
@@ -675,7 +681,8 @@ def test_bidmas_variant_queue_always_graded():
 # Answer depends on a random branch (terminating vs. recurring decimal); only the
 # terminating branch is graded, so a single call can legitimately be ungraded.
 DEC_SOMETIMES_UNGRADED_VARIANTS = {'gcse_dec_fraction_to_decimal'}
-DEC_UNGRADED_VARIANTS = {'gcse_dec_practice_order_mixed'}
+DEC_UNGRADED_VARIANTS = set()
+DEC_ORDER_MIXED_VARIANTS = {'gcse_dec_practice_order_mixed'}
 DEC_NUMBER_LIST_VARIANTS = {'gcse_dec_ordering'}
 DEC_FRACTION_VARIANTS = {'gcse_dec_practice_decimal_to_fraction', 'gcse_dec_recurring'}
 DEC_NUMBER_PAIR_VARIANTS = {'gcse_dec_practice_bounds', 'gcse_dec_proc_bounds_dynamic'}
@@ -703,6 +710,8 @@ def test_decimals_variant_queue_is_graded():
             assert problem.get('correct_answer_raw') is not None, name
             if name in DEC_NUMBER_LIST_VARIANTS:
                 assert problem.get('answer_type') == 'number_list', name
+            elif name in DEC_ORDER_MIXED_VARIANTS:
+                assert problem.get('answer_type') == 'proof_steps', name
             elif name in DEC_FRACTION_VARIANTS:
                 assert problem.get('answer_type') == 'fraction', name
             elif name in DEC_NUMBER_PAIR_VARIANTS:
@@ -718,6 +727,14 @@ def test_decimals_ordering_uses_number_list_checker():
     raw = problem['correct_answer_raw']
     result = check_answer('number_list', raw, raw)
     assert result['correct'] is True
+
+
+def test_decimals_order_mixed_uses_order_checker():
+    out = gcse_dec_practice_order_mixed()
+    problem = _dec_problem_from_output(out, 'intermediate')
+    assert problem.get('answer_type') == 'proof_steps'
+    assert problem.get('answer_step_bank')
+    assert problem.get('answer_order_matters') is True
 
 
 def test_decimals_recurring_uses_fraction_checker():
@@ -752,10 +769,15 @@ def test_decimals_check_api():
         assert data['correct'] is True
 
 
-MF_UNGRADED_VARIANTS = {
+MF_UNGRADED_VARIANTS = set()
+MF_MCQ_VARIANTS = {
     'gcse_mf_find_factor',
-    'gcse_mf_factor_pairs',
     'gcse_mf_prime_factors',
+}
+MF_PICK_VARIANTS = {
+    'gcse_mf_factor_pairs',
+}
+MF_DIVISIBILITY_VARIANTS = {
     'gcse_mf_divisibility_digit',
 }
 MF_KEYWORD_VARIANTS = {'gcse_mf_prime', 'gcse_mf_lcm_buses_word'}
@@ -773,9 +795,23 @@ def test_multiples_factors_variant_queue_is_graded():
             if name in MF_UNGRADED_VARIANTS:
                 assert problem.get('correct_answer_raw') is None, name
                 continue
-            assert problem.get('correct_answer_raw') is not None, name
+            graded = (
+                problem.get('correct_answer_raw')
+                or problem.get('correct_answer')
+            )
+            assert graded, name
             if name in MF_KEYWORD_VARIANTS:
                 assert problem.get('answer_type') == 'keyword', name
+            elif name in MF_MCQ_VARIANTS:
+                assert problem.get('options'), name
+                assert problem.get('correct_answer'), name
+            elif name in MF_PICK_VARIANTS:
+                assert problem.get('answer_type') == 'proof_steps', name
+            elif name in MF_DIVISIBILITY_VARIANTS:
+                assert (
+                    problem.get('answer_type') == 'number_list'
+                    or problem.get('options')
+                ), name
             elif name in MF_NUMBER_PAIR_VARIANTS:
                 assert problem.get('answer_type') == 'number_pair', name
             elif name in MF_NUMBER_LIST_VARIANTS:
@@ -803,6 +839,41 @@ def test_multiples_factors_primes_in_range_uses_number_list_checker():
     assert result['correct'] is True
 
 
+def test_multiples_factors_mcq_variants_are_graded():
+    import generators.gcse.maths as m
+
+    for name in MF_MCQ_VARIANTS:
+        out = getattr(m, name)()
+        assert len(out) == 5, name
+        problem = _mf_problem_from_output(out, 'foundational')
+        assert problem.get('options'), name
+        assert problem.get('correct_answer'), name
+
+
+def test_multiples_factors_pick_variants_are_graded():
+    import generators.gcse.maths as m
+
+    for name in MF_PICK_VARIANTS:
+        out = getattr(m, name)()
+        assert len(out) == 5, name
+        problem = _mf_problem_from_output(out, 'intermediate')
+        assert problem.get('answer_type') == 'proof_steps', name
+        assert problem.get('answer_step_bank'), name
+
+
+def test_multiples_factors_divisibility_variants_are_graded():
+    import generators.gcse.maths as m
+
+    for _ in range(12):
+        out = m.gcse_mf_divisibility_digit()
+        problem = _mf_problem_from_output(out, 'intermediate')
+        graded = (
+            problem.get('correct_answer_raw')
+            or problem.get('correct_answer')
+        )
+        assert graded, 'gcse_mf_divisibility_digit'
+
+
 def test_multiples_factors_check_api():
     problem = gcse_maths_multiples_factors(
         'foundational', 'practice', variant_name='gcse_mf_hcf'
@@ -826,11 +897,22 @@ def test_multiples_factors_check_api():
         assert data['correct'] is True
 
 
-FDP_UNGRADED_VARIANTS = {
-    'gcse_fdp_multi_step',
-    'gcse_fdp_recurring',
-    'gcse_fdp_order_mixed_values',
+FDP_UNGRADED_VARIANTS = set()
+
+FDP_MCQ_VARIANTS = {
     'gcse_fdp_best_value_comparison',
+}
+
+FDP_ORDER_VARIANTS = {
+    'gcse_fdp_order_mixed_values',
+}
+
+FDP_MULTI_STEP_VARIANTS = {
+    'gcse_fdp_multi_step',
+}
+
+FDP_RECURRING_VARIANTS = {
+    'gcse_fdp_recurring',
 }
 
 FDP_FRACTION_VARIANTS = (
@@ -840,6 +922,7 @@ FDP_FRACTION_VARIANTS = (
 
 FDP_MULTIPART_VARIANTS = (
     'gcse_fdp_share_in_ratio',
+    'gcse_fdp_multi_step',
 )
 
 
@@ -938,7 +1021,49 @@ def test_fdp_variant_queues_are_graded():
             if name in FDP_UNGRADED_VARIANTS:
                 assert problem.get('correct_answer_raw') is None, name
                 continue
-            assert problem.get('correct_answer_raw') is not None, name
+            graded = (
+                problem.get('correct_answer_raw')
+                or problem.get('correct_answer')
+            )
+            assert graded, name
+            if name in FDP_MCQ_VARIANTS:
+                assert problem.get('options'), name
+            elif name in FDP_ORDER_VARIANTS:
+                assert problem.get('answer_type') == 'proof_steps', name
+            elif name in FDP_RECURRING_VARIANTS:
+                assert problem.get('answer_type') == 'fraction', name
+
+
+def test_fdp_mcq_variants_are_graded():
+    import generators.gcse.maths as m
+
+    for name in FDP_MCQ_VARIANTS:
+        out = getattr(m, name)()
+        assert len(out) == 5, name
+        problem = _fdp_problem_from_output(out, 'difficult')
+        assert problem.get('options'), name
+        assert problem.get('correct_answer'), name
+
+
+def test_fdp_order_variants_are_graded():
+    import generators.gcse.maths as m
+
+    for name in FDP_ORDER_VARIANTS:
+        out = getattr(m, name)()
+        assert len(out) == 5, name
+        problem = _fdp_problem_from_output(out, 'intermediate')
+        assert problem.get('answer_type') == 'proof_steps', name
+        assert problem.get('answer_step_bank'), name
+
+
+def test_fdp_recurring_variants_use_fraction_checker():
+    import generators.gcse.maths as m
+
+    for name in FDP_RECURRING_VARIANTS:
+        out = getattr(m, name)()
+        assert len(out) == 5, name
+        problem = _fdp_problem_from_output(out, 'difficult')
+        assert problem.get('answer_type') == 'fraction', name
 
 
 def test_fdp_check_api_fraction():
@@ -2054,12 +2179,32 @@ def test_number_share_ratio_graded():
     assert problem.get('answer_labels') and len(problem['answer_labels']) == 2
 
 
+def test_number_prime_factor_product_uses_mcq():
+    import generators.gcse.maths_num_stats_prob_rat as num_mod
+
+    problem = _number_problem_from_output(
+        num_mod._number_inter_prime_factor_product(), 'intermediate'
+    )
+    assert problem.get('options') and len(problem['options']) == 4
+    assert problem.get('correct_answer') in 'ABCD'
+
+
+def test_number_recurring_decimal_uses_fraction_checker():
+    import generators.gcse.maths_num_stats_prob_rat as num_mod
+
+    problem = _number_problem_from_output(
+        num_mod._number_diff_recurring_decimal_fraction(), 'difficult'
+    )
+    assert problem.get('answer_type') == 'fraction'
+    assert problem.get('correct_answer_raw')
+    assert '/' in problem['correct_answer_raw']
+
+
 def test_all_number_practice_variants_graded():
     import generators.gcse.maths_num_stats_prob_rat as num_mod
 
-    skip = {'_number_inter_prime_factor_product', '_number_diff_recurring_decimal_fraction'}
     for name in dir(num_mod):
-        if not name.startswith('_number_') or name in skip:
+        if not name.startswith('_number_'):
             continue
         fn = getattr(num_mod, name)
         if not callable(fn) or name.endswith('_raw') or 'random' in name or name.endswith('_answer'):
@@ -3283,6 +3428,277 @@ ETHICAL_UNGRADED = (
 NETWORKS_UNGRADED = (
 )
 
+PYTHON_MCQ_VARIANTS = (
+    'py_found_hello',
+    'py_found_for',
+    'py_found_index',
+    'py_found_modulo',
+    'py_inter_fizzbuzz',
+)
+
+PYTHON_RUN_VARIANTS = (
+    'py_found_age',
+)
+
+PYTHON_TIER3_VARIANTS = ()
+
+
+def _python_graded_run_variant_names():
+    return tuple(
+        name for name in _python_write_code_variant_names()
+        if name not in PYTHON_MCQ_VARIANTS
+    )
+
+
+def _python_write_code_variant_names():
+    import generators.gcse.cs as py_mod
+
+    names = []
+    for name in dir(py_mod):
+        if not (
+            name.startswith('py_found_')
+            or name.startswith('py_inter_')
+            or name.startswith('py_diff_')
+        ):
+            continue
+        fn = getattr(py_mod, name)
+        if callable(fn):
+            names.append(name)
+    return names
+
+
+def test_python_mcq_variants_are_graded():
+    import generators.gcse.cs as py_mod
+
+    for name in PYTHON_MCQ_VARIANTS:
+        out = getattr(py_mod, name)()
+        assert len(out) == 5, name
+        difficulty = (
+            'foundational'
+            if name.startswith('py_found_')
+            else 'intermediate'
+            if name.startswith('py_inter_')
+            else 'difficult'
+        )
+        problem = _py_problem_from_output(out, difficulty)
+        assert problem.get('options') and len(problem['options']) == 4, name
+        assert problem.get('correct_answer') in 'ABCD', name
+
+
+def test_python_ungraded_variants_remain_ungraded():
+    import generators.gcse.cs as py_mod
+
+    graded = set(PYTHON_MCQ_VARIANTS) | set(_python_graded_run_variant_names())
+    ungraded = []
+    for name in _python_write_code_variant_names():
+        if name in graded:
+            continue
+        out = getattr(py_mod, name)()
+        problem = _py_problem_from_output(out, 'intermediate')
+        if problem.get('correct_answer_raw') or problem.get('correct_answer'):
+            continue
+        ungraded.append(name)
+    assert ungraded == [], f'unexpected ungraded: {ungraded}'
+
+
+def test_python_run_variants_are_graded():
+    import generators.gcse.cs as py_mod
+
+    for name in _python_graded_run_variant_names():
+        out = getattr(py_mod, name)()
+        assert len(out) == 5, name
+        difficulty = (
+            'foundational'
+            if name.startswith('py_found_')
+            else 'intermediate'
+            if name.startswith('py_inter_')
+            else 'difficult'
+        )
+        problem = _py_problem_from_output(out, difficulty)
+        assert problem.get('answer_type') == 'python_run', name
+        assert problem.get('correct_answer_raw'), name
+        assert problem.get('answer_tests'), name
+        assert len(problem['answer_tests']) >= 1, name
+
+
+def test_python_run_checker_unit():
+    import json
+
+    from generators.gcse.cs import py_found_age
+
+    out = py_found_age()
+    problem = _py_problem_from_output(out, 'foundational')
+    raw = problem['correct_answer_raw']
+    good = json.dumps([
+        {'stdout': t['stdout']} for t in problem['answer_tests']
+    ])
+    assert check_answer('python_run', raw, good)['correct'] is True
+    bad = json.dumps([{'stdout': 'wrong'}] * len(problem['answer_tests']))
+    assert check_answer('python_run', raw, bad)['correct'] is False
+    err = json.dumps([{'stdout': '', 'error': 'ValueError'}])
+    assert check_answer('python_run', raw, err)['correct'] is False
+
+
+def test_python_run_error_sanitizer():
+    import json
+
+    from generators.shared.answer_checkers import _sanitize_python_student_error
+
+    leaky = (
+        'Traceback (most recent call last):\n'
+        '  File "/lib/python311.zip/_pyodide/_base.py", line 501, in eval_code\n'
+        '  File "<student>", line 2\n'
+        "    while password = 'secure':\n"
+        '    ^^^^^^^^^^^^^^^^^^^^\n'
+        "SyntaxError: invalid syntax. Maybe you meant '==' or ':=' instead of '='?"
+    )
+    cleaned = _sanitize_python_student_error(leaky)
+    assert '_pyodide' not in cleaned
+    assert '/lib/python' not in cleaned
+    assert 'your code' in cleaned
+    assert 'line 2' in cleaned
+    assert 'SyntaxError' in cleaned
+
+    result = check_answer(
+        'python_run',
+        '[{"stdout":"Access granted."}]',
+        json.dumps([{'stdout': '', 'error': leaky}]),
+    )
+    assert result['correct'] is False
+    assert '_pyodide' not in result['feedback']
+    assert 'your code' in result['feedback']
+
+
+def test_python_run_rejects_password_loop_without_input():
+    import json
+
+    from generators.gcse.cs import py_inter_password
+
+    problem = _py_problem_from_output(py_inter_password(), 'intermediate')
+    raw = problem['correct_answer_raw']
+    assert '"min_inputs":2' in raw.replace(' ', '')
+
+    skipped_loop = json.dumps([
+        {'stdout': 'Access granted.', 'input_calls': 0},
+        {'stdout': 'Access granted.', 'input_calls': 0},
+    ])
+    assert check_answer('python_run', raw, skipped_loop)['correct'] is False
+
+    correct_calls = json.dumps([
+        {'stdout': 'Access granted.', 'input_calls': 2},
+        {'stdout': 'Access granted.', 'input_calls': 3},
+    ])
+    assert check_answer('python_run', raw, correct_calls)['correct'] is True
+
+
+def test_python_tier3_variants_are_graded():
+    import json
+
+    from generators.gcse.cs import (
+        py_diff_file,
+        py_diff_read_scores_file,
+        py_found_variables,
+    )
+
+    vars_problem = _py_problem_from_output(py_found_variables(), 'foundational')
+    assert vars_problem.get('answer_type') == 'python_run'
+    assert '"validate":"variables_triple"' in vars_problem['correct_answer_raw'].replace(' ', '')
+    ok_vars = json.dumps([{'stdout': 'Alice 16 1.65', 'input_calls': 0}])
+    assert check_answer('python_run', vars_problem['correct_answer_raw'], ok_vars)['correct']
+    bad_vars = json.dumps([{'stdout': '16 16 16', 'input_calls': 0}])
+    assert not check_answer('python_run', vars_problem['correct_answer_raw'], bad_vars)['correct']
+
+    file_problem = _py_problem_from_output(py_diff_file(), 'difficult')
+    assert file_problem.get('answer_tests')[0].get('files')
+    file_ok = json.dumps([
+        {'stdout': '1: first line\n2: second line', 'input_calls': 1},
+        {'stdout': 'File not found.', 'input_calls': 1},
+    ])
+    assert check_answer('python_run', file_problem['correct_answer_raw'], file_ok)['correct']
+
+    scores_problem = _py_problem_from_output(py_diff_read_scores_file(), 'difficult')
+    scores_ok = json.dumps([
+        {'stdout': 'Highest: 90\nAverage: 65.6', 'input_calls': 0},
+        {'stdout': 'Highest: 30\nAverage: 20.0', 'input_calls': 0},
+    ])
+    assert check_answer('python_run', scores_problem['correct_answer_raw'], scores_ok)['correct']
+
+
+def test_python_run_check_api():
+    import json
+
+    problem = gcse_python_programming(
+        'foundational', 'practice', variant_name='py_found_age'
+    )
+    assert problem.get('answer_type') == 'python_run'
+    payload = json.dumps([
+        {'stdout': t['stdout']} for t in problem['answer_tests']
+    ])
+    result = check_answer('python_run', problem['correct_answer_raw'], payload)
+    assert result.get('normalized_correct')
+    assert result.get('normalized_user')
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'cs',
+                'topic': 'python_programming',
+                'difficulty': 'foundational',
+                'correct_answer_raw': problem['correct_answer_raw'],
+                'answer_type': 'python_run',
+                'user_answer': payload,
+            },
+        )
+        assert r.status_code == 200
+        data = r.get_json()
+        assert data['ok'] is True
+        assert data['correct'] is True
+
+
+def test_python_variant_queues_are_graded():
+    for difficulty in ('foundational', 'intermediate', 'difficult'):
+        pool = gcse_python_variants(difficulty, 'practice')
+        assert pool, difficulty
+        for variant in pool:
+            problem = gcse_python_programming(
+                difficulty, 'practice', variant_name=variant.__name__
+            )
+            if variant.__name__ in PYTHON_MCQ_VARIANTS:
+                assert problem.get('correct_answer') in 'ABCD', variant.__name__
+                assert problem.get('options'), variant.__name__
+                continue
+            assert problem.get('answer_type') == 'python_run', variant.__name__
+            assert problem.get('correct_answer_raw'), variant.__name__
+            assert problem.get('answer_tests'), variant.__name__
+
+
+def test_python_mcq_check_api():
+    problem = gcse_python_programming(
+        'foundational', 'practice', variant_name='py_found_hello'
+    )
+    letter = problem['correct_answer']
+    assert letter in 'ABCD'
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'cs',
+                'topic': 'python_programming',
+                'difficulty': 'foundational',
+                'correct_answer_raw': letter,
+                'answer_type': 'mcq',
+                'user_answer': letter,
+            },
+        )
+        assert r.status_code == 200
+        data = r.get_json()
+        assert data['ok'] is True
+        assert data['correct'] is True
+
 
 def test_computer_systems_numeric_variants_are_graded():
     import generators.gcse.cs_computer_systems as cs_mod
@@ -3560,12 +3976,10 @@ def test_cyber_security_definition_variants_are_graded():
                 continue
             assert len(out) == 5, fn.__name__
             assert problem.get('answer_type') in (
-                'number_fields', 'proof_steps', 'keyword',
+                'number_fields', 'proof_steps',
             ), fn.__name__
             assert problem.get('correct_answer_raw'), fn.__name__
-            if problem.get('answer_type') == 'text':
-                weak_text.append(fn.__name__)
-            if problem.get('answer_type') == 'keyword' and fn.__name__ != '_cy_d6_cipher_caesar':
+            if problem.get('answer_type') in ('text', 'keyword'):
                 weak_text.append(fn.__name__)
     assert not weak_text, weak_text
 
@@ -5313,6 +5727,7 @@ CL_PROOF_STEPS_VARIANTS = (
     '_cl_i9_perp_at_point_on_line',
     '_cl_i11_circumcircle',
     '_cl_i12_incircle',
+    '_cl_d1_locus_proof',
     '_cl_d9_regular_hexagon',
     '_cl_d13_construct_45',
     '_cl_d14_construct_30',
@@ -5320,7 +5735,6 @@ CL_PROOF_STEPS_VARIANTS = (
 )
 
 CL_UNGRADED_VARIANTS = (
-    '_cl_d1_locus_proof',
     '_cl_d5_apollonius_circle',
 )
 
@@ -7511,10 +7925,18 @@ SEQUENCES_FRACTION_VARIANTS = (
     '_seq_diff_nth_term_with_fractions',
 )
 
-SEQUENCES_UNGRADED_VARIANTS = (
+SEQUENCES_UNGRADED_VARIANTS = ()
+
+SEQUENCES_MCQ_VARIANTS = (
     '_seq_found_identify_rule',
     '_seq_found_term_to_term_rule',
+)
+
+SEQUENCES_NUMBER_LIST_VARIANTS = (
     '_seq_found_nth_term_find_terms',
+)
+
+SEQUENCES_ALGEBRAIC_VARIANTS = (
     '_seq_inter_find_nth_term',
     '_seq_inter_nth_term_negative_d',
     '_seq_inter_quadratic_identify',
@@ -7579,6 +8001,40 @@ def test_sequences_ungraded_variants_remain_ungraded():
         assert problem.get('correct_answer_raw') is None, name
 
 
+def test_sequences_mcq_variants_are_graded():
+    import generators.gcse.sequences as seq_mod
+
+    for name in SEQUENCES_MCQ_VARIANTS:
+        out = getattr(seq_mod, name)()
+        assert len(out) == 5, name
+        problem = _seq_problem_from_output(out, 'foundational')
+        assert problem.get('options'), name
+        assert problem.get('correct_answer'), name
+
+
+def test_sequences_number_list_variants_are_graded():
+    import generators.gcse.sequences as seq_mod
+
+    for name in SEQUENCES_NUMBER_LIST_VARIANTS:
+        out = getattr(seq_mod, name)()
+        assert len(out) == 5, name
+        problem = _seq_problem_from_output(out, 'foundational')
+        assert problem.get('answer_type') == 'number_list', name
+        assert problem.get('correct_answer_raw'), name
+
+
+def test_sequences_algebraic_variants_are_graded():
+    import generators.gcse.sequences as seq_mod
+
+    for name in SEQUENCES_ALGEBRAIC_VARIANTS:
+        out = getattr(seq_mod, name)()
+        assert len(out) == 5, name
+        difficulty = 'difficult' if name.startswith('_seq_diff_') else 'intermediate'
+        problem = _seq_problem_from_output(out, difficulty)
+        assert problem.get('answer_type') == 'algebraic', name
+        assert problem.get('correct_answer_raw'), name
+
+
 def test_sequences_plan_c_step_bank_variants_are_graded():
     import generators.gcse.sequences as seq_mod
 
@@ -7626,6 +8082,177 @@ def test_sequences_check_api():
                 'correct_answer_raw': correct,
                 'answer_type': 'number',
                 'user_answer': correct,
+            },
+        )
+        assert r.status_code == 200
+        data = r.get_json()
+        assert data['ok'] is True
+        assert data['correct'] is True
+
+
+def test_sequences_algebraic_check_api():
+    problem = gcse_sequences(
+        'intermediate', 'practice', variant_name='_seq_inter_find_nth_term'
+    )
+    correct = problem['correct_answer_raw']
+    assert problem.get('answer_type') == 'algebraic'
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'sequences',
+                'difficulty': 'intermediate',
+                'correct_answer_raw': correct,
+                'answer_type': 'algebraic',
+                'user_answer': correct.replace(' ', ''),
+            },
+        )
+        assert r.status_code == 200
+        data = r.get_json()
+        assert data['ok'] is True
+        assert data['correct'] is True
+
+
+AP_UNGRADED_VARIANTS = ()
+
+AP_ALGEBRAIC_VARIANTS = (
+    '_ap_f_expand_consecutive',
+    '_ap_i_identity_expand',
+)
+
+AP_MULTIPART_VARIANTS = (
+    '_ap_f_sum_consecutive',
+)
+
+AP_COUNTEREXAMPLE_VARIANTS = (
+    '_ap_f_counterexample',
+    '_ap_d_disprove_always_prime',
+)
+
+AP_PROOF_STEPS_VARIANTS = (
+    '_ap_f_even_form',
+    '_ap_f_odd_form',
+    '_ap_i_square_difference',
+    '_ap_i_product_consecutive',
+    '_ap_i_multiple_of_three',
+    '_ap_i_sum_three_consecutive',
+    '_ap_d_n_squared_plus_n',
+    '_ap_d_odd_square',
+    '_ap_d_even_sum_squares',
+    '_ap_d_four_consecutive',
+)
+
+
+def test_algebraic_proof_ungraded_variants_remain_ungraded():
+    import generators.gcse.algebraic_proof as ap_mod
+
+    for name in AP_UNGRADED_VARIANTS:
+        out = getattr(ap_mod, name)()
+        assert len(out) == 4, name
+        problem = ap_mod._ap_problem_from_output(out, 'foundational')
+        assert problem.get('correct_answer_raw') is None, name
+
+
+def test_algebraic_proof_proof_steps_variants_are_graded():
+    import generators.gcse.algebraic_proof as ap_mod
+    from generators.gcse.algebraic_proof import gcse_algebraic_proof
+
+    for name in AP_PROOF_STEPS_VARIANTS:
+        out = getattr(ap_mod, name)()
+        assert len(out) == 5, name
+        difficulty = (
+            'foundational' if name.startswith('_ap_f_')
+            else 'intermediate' if name.startswith('_ap_i_')
+            else 'difficult'
+        )
+        problem = gcse_algebraic_proof(difficulty, 'practice', variant_name=name)
+        assert problem.get('answer_type') == 'proof_steps', name
+        assert problem.get('correct_answer_raw'), name
+        assert problem.get('answer_step_bank'), name
+        assert problem.get('answer_order_matters') is True, name
+
+
+def test_algebraic_proof_algebraic_variants_are_graded():
+    import generators.gcse.algebraic_proof as ap_mod
+
+    for name in AP_ALGEBRAIC_VARIANTS:
+        out = getattr(ap_mod, name)()
+        assert len(out) == 5, name
+        difficulty = 'intermediate' if name.startswith('_ap_i_') else 'foundational'
+        problem = ap_mod._ap_problem_from_output(out, difficulty)
+        assert problem.get('answer_type') == 'algebraic', name
+        assert problem.get('correct_answer_raw'), name
+
+
+def test_algebraic_proof_multipart_variants_use_number_fields():
+    import generators.gcse.algebraic_proof as ap_mod
+
+    for name in AP_MULTIPART_VARIANTS:
+        out = getattr(ap_mod, name)()
+        assert len(out) == 5, name
+        problem = ap_mod._ap_problem_from_output(out, 'foundational')
+        assert problem.get('answer_type') == 'number_fields', name
+
+
+def test_algebraic_proof_counterexample_variants_are_graded():
+    import generators.gcse.algebraic_proof as ap_mod
+
+    for name in AP_COUNTEREXAMPLE_VARIANTS:
+        out = getattr(ap_mod, name)()
+        assert len(out) == 5, name
+        difficulty = 'difficult' if name.startswith('_ap_d_') else 'foundational'
+        problem = ap_mod._ap_problem_from_output(out, difficulty)
+        assert problem.get('answer_type') == 'number', name
+        assert problem.get('correct_answer_raw'), name
+
+
+def test_algebraic_proof_variant_queues_are_graded():
+    from generators.gcse.algebraic_proof import gcse_algebraic_proof, gcse_algebraic_proof_variants
+
+    graded_names = (
+        AP_ALGEBRAIC_VARIANTS + AP_MULTIPART_VARIANTS + AP_COUNTEREXAMPLE_VARIANTS
+        + AP_PROOF_STEPS_VARIANTS
+    )
+    for difficulty in ('foundational', 'intermediate', 'difficult'):
+        variants = gcse_algebraic_proof_variants(difficulty, 'practice')
+        for variant in variants:
+            problem = gcse_algebraic_proof(
+                difficulty, 'practice', variant_name=variant.__name__
+            )
+            if variant.__name__ in AP_UNGRADED_VARIANTS:
+                assert problem.get('correct_answer_raw') is None, variant.__name__
+                continue
+            if variant.__name__ in graded_names:
+                assert problem.get('correct_answer_raw'), variant.__name__
+            else:
+                assert problem.get('correct_answer_raw') or problem.get('correct_answer'), (
+                    difficulty, variant.__name__
+                )
+
+
+def test_algebraic_proof_algebraic_check_api():
+    from generators.gcse.algebraic_proof import gcse_algebraic_proof
+
+    problem = gcse_algebraic_proof(
+        'foundational', 'practice', variant_name='_ap_f_expand_consecutive'
+    )
+    correct = problem['correct_answer_raw']
+    assert problem.get('answer_type') == 'algebraic'
+
+    with app.test_client() as client:
+        r = client.post(
+            '/api/v1/problems/check',
+            json={
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'algebraic_proof',
+                'difficulty': 'foundational',
+                'correct_answer_raw': correct,
+                'answer_type': 'algebraic',
+                'user_answer': correct.replace(' ', ''),
             },
         )
         assert r.status_code == 200
@@ -8666,9 +9293,13 @@ def main():
     test_bidmas_variant_queue_always_graded()
     test_decimals_variant_queue_is_graded()
     test_decimals_ordering_uses_number_list_checker()
+    test_decimals_order_mixed_uses_order_checker()
     test_decimals_recurring_uses_fraction_checker()
     test_decimals_check_api()
     test_multiples_factors_variant_queue_is_graded()
+    test_multiples_factors_mcq_variants_are_graded()
+    test_multiples_factors_pick_variants_are_graded()
+    test_multiples_factors_divisibility_variants_are_graded()
     test_multiples_factors_prime_uses_keyword_checker()
     test_multiples_factors_primes_in_range_uses_number_list_checker()
     test_multiples_factors_check_api()
@@ -8676,6 +9307,9 @@ def main():
     test_fdp_ungraded_variants_remain_four_tuple()
     test_fdp_fraction_variants_use_fraction_checker()
     test_fdp_multipart_variants_use_number_fields()
+    test_fdp_mcq_variants_are_graded()
+    test_fdp_order_variants_are_graded()
+    test_fdp_recurring_variants_use_fraction_checker()
     test_fdp_generator_payload()
     test_fdp_variant_queues_are_graded()
     test_fdp_check_api_fraction()
@@ -8724,6 +9358,8 @@ def main():
     test_number_fraction_variants_graded()
     test_number_compare_choice_variants()
     test_number_share_ratio_graded()
+    test_number_prime_factor_product_uses_mcq()
+    test_number_recurring_decimal_uses_fraction_checker()
     test_all_number_practice_variants_graded()
     test_probability_core_variants_are_graded()
     test_probability_tree_diagrams_use_inline_inputs()
@@ -8814,6 +9450,16 @@ def main():
     test_cs_text_partial_score_recorded()
     test_cs_text_problems_expose_grading_keywords()
     test_cs_definition_variant_queues_are_graded()
+    test_python_mcq_variants_are_graded()
+    test_python_ungraded_variants_remain_ungraded()
+    test_python_run_variants_are_graded()
+    test_python_run_checker_unit()
+    test_python_run_error_sanitizer()
+    test_python_run_rejects_password_loop_without_input()
+    test_python_tier3_variants_are_graded()
+    test_python_variant_queues_are_graded()
+    test_python_mcq_check_api()
+    test_python_run_check_api()
     test_computer_networks_numeric_variants_are_graded()
     test_computer_networks_multipart_inline()
     test_computer_networks_mcq_option_length_not_biased()
@@ -8883,6 +9529,7 @@ def main():
     test_transformations_variant_queues_are_graded()
     test_constructions_loci_number_variants_are_graded()
     test_constructions_loci_fields_variants_are_graded()
+    test_constructions_loci_proof_steps_variants_are_graded()
     test_constructions_loci_ungraded_variants_remain_ungraded()
     test_constructions_loci_variant_queues_are_graded()
     test_trig_exact_fraction_check()
@@ -8970,9 +9617,20 @@ def main():
     test_sequences_multipart_variants_use_number_fields()
     test_sequences_fraction_variants_are_graded()
     test_sequences_ungraded_variants_remain_ungraded()
+    test_sequences_mcq_variants_are_graded()
+    test_sequences_number_list_variants_are_graded()
+    test_sequences_algebraic_variants_are_graded()
     test_sequences_plan_c_step_bank_variants_are_graded()
     test_sequences_variant_queues_are_graded()
     test_sequences_check_api()
+    test_sequences_algebraic_check_api()
+    test_algebraic_proof_ungraded_variants_remain_ungraded()
+    test_algebraic_proof_proof_steps_variants_are_graded()
+    test_algebraic_proof_algebraic_variants_are_graded()
+    test_algebraic_proof_multipart_variants_use_number_fields()
+    test_algebraic_proof_counterexample_variants_are_graded()
+    test_algebraic_proof_variant_queues_are_graded()
+    test_algebraic_proof_algebraic_check_api()
     test_similarity_congruence_graded_variants_are_graded()
     test_sc_d12_similar_rectangle_algebra_is_randomizable()
     test_sc_d3_altitude_multipart_fields()

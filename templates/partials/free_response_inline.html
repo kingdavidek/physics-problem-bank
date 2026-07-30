@@ -17,6 +17,8 @@
      data-pair-sep="{{ problem.answer_pair_sep or 'and' }}"
      data-format-hint="{{ problem.answer_format_hint or '' }}"
      data-answer-input-lines="{{ problem.answer_input_lines if problem.answer_input_lines is not none else '' }}"
+     data-answer-tests="{{ (problem.answer_tests or []) | tojson | forceescape }}"
+     data-python-starter="{{ problem.answer_python_starter or '' }}"
      data-wrong-hint="{{ problem.answer_wrong_hint or '' }}"
      data-answer-template-kind="{{ problem.answer_template_kind or '' }}"
      data-csq-subject="{{ problem.answer_subject or '' }}"
@@ -417,6 +419,17 @@
                   autocomplete="off"
                   spellcheck="false"
                   aria-label="Your SQL query"></textarea>
+        <button type="button" class="btn free-response-check-btn">Check</button>
+    </div>
+    {% elif problem.answer_type == 'python_run' %}
+    {% set py_rows = problem.answer_input_lines if problem.answer_input_lines else 4 %}
+    <div class="free-response-row free-response-row--number free-response-row--text free-response-row--python-run">
+        <textarea class="free-response-input free-response-input--python free-response-input--sql"
+                  rows="{{ py_rows if py_rows > 1 else 2 }}"
+                  placeholder="{{ problem.answer_format_hint or 'Write your Python code' }}"
+                  autocomplete="off"
+                  spellcheck="false"
+                  aria-label="Your Python code">{{ problem.answer_python_starter or '' }}</textarea>
         <button type="button" class="btn free-response-check-btn">Check</button>
     </div>
     {% elif problem.answer_type == 'keyword' %}

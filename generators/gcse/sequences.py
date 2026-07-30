@@ -2,12 +2,16 @@
 GCSE Maths – Sequences
 15 foundational · 15 intermediate · 15 difficult · 18 MCQ
 Graded practice variants return (question, solution, hint, marks, raw).
-Pure theorem proofs use Plan C proof_steps banks; some nth-term text variants stay ungraded.
+Pure theorem proofs use Plan C proof_steps banks; nth-term rules use MCQ or algebraic grading.
 """
 import random
 import math
 from fractions import Fraction
-from generators.shared.utils import make_problem, proof_steps_answer, proof_steps_problem_extra
+from generators.shared.utils import (
+    make_problem,
+    problem_extra_from_graded_answer,
+    proof_steps_answer,
+)
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from generators.shared.variant_utils import (
     select_tier_variants,
@@ -54,33 +58,69 @@ def _seq_fields_answer(values, labels, places=2):
     }
 
 
+def _seq_mcq_payload(correct_text, distractors):
+    pool = [correct_text] + list(distractors[:3])
+    random.shuffle(pool)
+    letters = 'ABCD'
+    correct_letter = letters[pool.index(correct_text)]
+    options = [f'{letters[i]}  {pool[i]}' for i in range(len(pool))]
+    return {'type': 'mcq', 'options': options, 'correct': correct_letter}
+
+
+def _seq_algebraic_answer(expr, format_hint=None):
+    payload = {'type': 'algebraic', 'value': str(expr)}
+    if format_hint:
+        payload['format_hint'] = format_hint
+    return payload
+
+
+def _seq_number_list_answer(values, format_hint=None):
+    payload = {'type': 'number_list', 'values': tuple(_seq_raw(v) for v in values)}
+    if format_hint:
+        payload['format_hint'] = format_hint
+    return payload
+
+
+def _seq_quadratic_nth_expr(a_coef, b_coef, c_coef):
+    return (
+        f"{a_coef}n^2"
+        + (f" + {b_coef}n" if b_coef > 0 else (f" - {-b_coef}n" if b_coef < 0 else ""))
+        + (f" + {c_coef}" if c_coef > 0 else (f" - {-c_coef}" if c_coef < 0 else ""))
+    )
+
+
 def _seq_problem_from_output(out, difficulty):
     q, s, hint, marks = out[:4]
     extra = {}
     if len(out) >= 5:
         raw = out[4]
-        if isinstance(raw, dict) and raw.get('type') == 'proof_steps':
-            extra = proof_steps_problem_extra(raw)
-        elif isinstance(raw, dict) and raw.get('type') == 'number_fields':
-            values = raw.get('values') or ()
-            labels = raw.get('labels') or ()
-            if values and len(values) == len(labels):
-                extra = {
-                    'correct_answer_raw': '|'.join(str(v) for v in values),
-                    'answer_type': 'number_fields',
-                    'answer_labels': list(labels),
-                    'answer_format_hint': (
-                        'Enter a number or fraction in every field'
-                    ),
-                }
-        elif isinstance(raw, dict) and raw.get('type') == 'keyword':
-            value = raw.get('value')
-            if value is not None and str(value).strip():
-                extra = {
-                    'correct_answer_raw': str(value).strip().lower(),
-                    'answer_type': 'keyword',
-                    'answer_format_hint': 'e.g. yes or no',
-                }
+        if isinstance(raw, dict) and raw.get('type') == 'mcq':
+            return make_problem(
+                q, s, hint, difficulty, marks, 'gcse', 'maths', 'sequences',
+                options=raw['options'],
+                correct_answer=raw['correct'],
+            )
+        if isinstance(raw, dict) and raw.get('type') == 'algebraic':
+            text = str(raw.get('value') or '')
+            extra = {
+                'correct_answer_raw': text,
+                'answer_type': 'algebraic',
+                'answer_format_hint': raw.get(
+                    'format_hint',
+                    'Enter the nth term, e.g. 3n + 2 or n^2 + 1',
+                ),
+            }
+        elif isinstance(raw, dict) and raw.get('type') == 'number_list':
+            extra = {
+                'correct_answer_raw': ','.join(str(v) for v in raw['values']),
+                'answer_type': 'number_list',
+                'answer_format_hint': raw.get(
+                    'format_hint',
+                    'Enter the terms separated by commas',
+                ),
+            }
+        elif isinstance(raw, dict):
+            extra = problem_extra_from_graded_answer(raw)
         elif isinstance(raw, Fraction):
             extra = {
                 'correct_answer_raw': str(raw),
@@ -145,11 +185,19 @@ def _seq_found_identify_rule():
     d = random.randint(3, 7)
     terms = [a + d * i for i in range(5)]
     seq_str = ", ".join(str(t) for t in terms)
-    q = rf"Describe the term-to-term rule for the sequence: {seq_str}"
+    correct = f"Start at {a} and add {d} each time"
+    q = rf"Which option describes the term-to-term rule for the sequence: {seq_str}?"
     s = (rf"The difference between consecutive terms is \({terms[1]} - {terms[0]} = {d}\).<br>"
          rf"<strong>Start at {a} and add {d} each time.</strong>")
     hint = "Subtract any term from the next term to find the common difference."
-    return q, s, hint, 2
+    return q, s, hint, 2, _seq_mcq_payload(
+        correct,
+        (
+            f"Start at {a} and subtract {d} each time",
+            f"Start at {terms[1]} and add {d} each time",
+            f"Multiply each term by {d}",
+        ),
+    )
 
 
 def _seq_found_nth_term_find_terms():
@@ -167,7 +215,7 @@ def _seq_found_nth_term_find_terms():
          rf"\(n=4\): \({terms[3]}\)<br>"
          rf"<strong>{terms_str}</strong>")
     hint = f"Substitute n = 1, 2, 3, 4 into the expression {expr_str}."
-    return q, s, hint, 2
+    return q, s, hint, 2, _seq_number_list_answer(terms[:4])
 
 
 def _seq_found_nth_term_find_value():
@@ -207,11 +255,19 @@ def _seq_found_term_to_term_rule():
     mult = random.choice([2, 3])
     terms = [start * mult**i for i in range(5)]
     seq_str = ", ".join(str(t) for t in terms[:4])
-    q = rf"A sequence starts: {seq_str}, ...<br>State the term-to-term rule."
+    correct = f"Multiply the previous term by {mult}"
+    q = rf"A sequence starts: {seq_str}, ...<br>Which option states the term-to-term rule?"
     s = (rf"Each term is multiplied by {mult}: \({terms[0]} \times {mult} = {terms[1]}\), etc.<br>"
          rf"<strong>Multiply the previous term by {mult}.</strong>")
     hint = "Divide each term by the previous term to find the multiplier."
-    return q, s, hint, 1
+    return q, s, hint, 1, _seq_mcq_payload(
+        correct,
+        (
+            f"Add {mult} to the previous term",
+            f"Multiply the previous term by {mult + 1}",
+            f"Divide the previous term by {mult}",
+        ),
+    )
 
 
 def _seq_found_geometric_next():
@@ -347,7 +403,7 @@ def _seq_inter_find_nth_term():
          rf"\(= {terms[0]} + {d}n - {d} = {d}n + {b}\)<br>"
          rf"<strong>nth term \(= {s_expr}\)</strong>")
     hint = "Use nth term = a + (n-1)d, then simplify."
-    return q, s, hint, 3
+    return q, s, hint, 3, _seq_algebraic_answer(s_expr)
 
 
 def _seq_inter_nth_term_negative_d():
@@ -363,7 +419,7 @@ def _seq_inter_nth_term_negative_d():
          rf"\(= {terms[0]} + {d}n - ({d}) = {d}n + {b}\)<br>"
          rf"<strong>nth term \(= {s_expr}\)</strong>")
     hint = "The common difference is negative. Use the same formula: nth term = a + (n−1)d."
-    return q, s, hint, 3
+    return q, s, hint, 3, _seq_algebraic_answer(s_expr)
 
 
 def _seq_inter_which_term():
@@ -490,7 +546,7 @@ def _seq_inter_quadratic_identify():
          rf"Compare \(n^2\): 1, 4, 9, 16, 25. The sequence exceeds \(n^2\) by {c}.<br>"
          rf"<strong>nth term \(= n^2 + {c}\)</strong>")
     hint = "Calculate first and second differences. Constant second differences → quadratic (starts with n²)."
-    return q, s, hint, 4
+    return q, s, hint, 4, _seq_algebraic_answer(f"n^2 + {c}")
 
 
 def _seq_inter_arithmetic_word():
@@ -609,11 +665,7 @@ def _seq_diff_quadratic_nth_term():
     c_coef = random.randint(-3, 5)
     terms = [a_coef*n**2 + b_coef*n + c_coef for n in range(1, 7)]
     seq_str = ", ".join(str(t) for t in terms[:5])
-    sign_b = "+" if b_coef >= 0 else "-"
-    sign_c = "+" if c_coef >= 0 else "-"
-    nth = (f"{a_coef}n^2"
-           + (f" + {b_coef}n" if b_coef > 0 else (f" - {-b_coef}n" if b_coef < 0 else ""))
-           + (f" + {c_coef}" if c_coef > 0 else (f" - {-c_coef}" if c_coef < 0 else "")))
+    nth = _seq_quadratic_nth_expr(a_coef, b_coef, c_coef)
     d1 = [terms[i+1]-terms[i] for i in range(4)]
     d2 = [d1[i+1]-d1[i] for i in range(3)]
     q = rf"Find the nth term of the sequence: {seq_str}, ..."
@@ -624,7 +676,7 @@ def _seq_diff_quadratic_nth_term():
          rf"Linear part: \({b_coef}n + {c_coef}\).<br>"
          rf"<strong>nth term \(= {nth}\)</strong>")
     hint = "Find second differences ÷ 2 for the n² coefficient, then subtract and find the linear part."
-    return q, s, hint, 5
+    return q, s, hint, 5, _seq_algebraic_answer(nth)
 
 
 def _seq_diff_quadratic_verify():

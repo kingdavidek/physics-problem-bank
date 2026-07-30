@@ -1118,7 +1118,38 @@ def _cl_d1_locus_proof():
          "If PA = PB, let P' be the foot of the perpendicular from P to AB. "
          "In triangles PAP' and PBP': PP' = PP' (common), PA = PB (given), so by RHS △PAP' ≅ △PBP', giving AP' = BP'. "
          "So P' = M, meaning P lies on the perpendicular through M — the <strong>perpendicular bisector of AB</strong>. ✓")
-    return q, s, "Prove both directions: (1) on perp bisector implies equidistant, (2) equidistant implies on perp bisector.", 6
+    hint = "Prove both directions: (1) on perp bisector implies equidistant, (2) equidistant implies on perp bisector."
+    return q, s, hint, 6, _cl_steps_answer(
+        (
+            "Let M be the midpoint of AB.",
+            (
+                "If P lies on the perpendicular bisector of AB, then PM ⊥ AB "
+                "and AM = BM."
+            ),
+            (
+                "In triangles PAM and PBM: PM is common, AM = BM, "
+                "and angle PMA = angle PMB = 90°."
+            ),
+            "By SAS congruence, △PAM ≅ △PBM, so PA = PB.",
+            (
+                "Conversely, if PA = PB, let P′ be the foot of the perpendicular "
+                "from P to AB."
+            ),
+            "By RHS, △PAP′ ≅ △PBP′, so AP′ = BP′.",
+            (
+                "Therefore P′ coincides with M, so P lies on the perpendicular "
+                "bisector of AB."
+            ),
+        ),
+        (
+            "If PA = PB then P must be the midpoint M of AB.",
+            "PA = PB implies triangle PAB is equilateral.",
+            "The locus of points equidistant from A and B is a circle centred at M.",
+            "By ASA congruence, △PAM ≅ △PBM.",
+            "P′ is the midpoint of AB, so P lies on line AB.",
+        ),
+        format_hint='Put the proof steps in the correct order',
+    )
 
 _cl_d1_locus_proof._fixed_stem = True
 

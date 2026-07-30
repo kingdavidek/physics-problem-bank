@@ -2053,6 +2053,7 @@
             margin-top: 8px;
             font-weight: 600;
             min-height: 1.25em;
+            white-space: pre-wrap;
         }
         .mcq-options {
             display: flex;
@@ -2774,7 +2775,8 @@
     <!-- MathJax CDN (SVG output, no eval needed) -->
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
     <!-- External site logic (dropdowns, MCQs, etc.) -->
-    <script src="{{ url_for('static', filename='js/site.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/python-run-grader.js') }}?v=3" defer></script>
+    <script src="{{ url_for('static', filename='js/site.js') }}?v=2" defer></script>
     <script src="{{ url_for('static', filename='js/site-search.js') }}?v=1" defer></script>
     <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=1" defer></script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=1" defer></script>

@@ -43,15 +43,30 @@
     <p class="sandbox-note">{{ item.plan_note }}</p>
 
     <div class="question">
-        {% if not problem.answer_inline_sections %}
-        <div class="question-content">{{ problem.question | format_question_html }}</div>
+        {% if problem.options %}
+            <div class="question-content">{{ problem.question | format_question_html }}</div>
+            <div id="sandbox-mcq-options" class="mcq-options"
+                 data-correct="{{ problem.correct_answer }}"
+                 data-level="gcse"
+                 data-subject="{{ item.subject | default('maths') }}"
+                 data-topic="{{ item.topic }}"
+                 data-difficulty="{{ item.difficulty }}">
+                {% for opt in problem.options %}
+                    <button type="button" class="btn mcq-btn" data-letter="{{ opt[0] }}">{{ opt | safe }}</button>
+                {% endfor %}
+            </div>
+            <p class="mcq-feedback" style="margin-top:12px;font-weight:600;"></p>
+        {% else %}
+            {% if not problem.answer_inline_sections %}
+            <div class="question-content">{{ problem.question | format_question_html }}</div>
+            {% endif %}
+            {% set fr_level = 'gcse' %}
+            {% set fr_subject = item.subject | default('maths') %}
+            {% set fr_topic = item.topic %}
+            {% set fr_difficulty = item.difficulty %}
+            {% set fr_id = 'sandbox-free-response' %}
+            {% include 'partials/free_response_inline.html' %}
         {% endif %}
-        {% set fr_level = 'gcse' %}
-        {% set fr_subject = item.subject | default('maths') %}
-        {% set fr_topic = item.topic %}
-        {% set fr_difficulty = item.difficulty %}
-        {% set fr_id = 'sandbox-free-response' %}
-        {% include 'partials/free_response_inline.html' %}
     </div>
 
     <details class="answer-reveal" open>

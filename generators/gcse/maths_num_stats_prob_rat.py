@@ -452,11 +452,15 @@ def _number_inter_index_power_of_power():
 
 
 def _number_inter_prime_factor_product():
-    n, ans = _number_random_prime_factor_composite()
-    q = rf"Write {n} as a product of prime factors."
+    from generators.gcse.maths import _mf_pf_mcq_distractors, _mf_pf_string
+
+    n, _ = _number_random_prime_factor_composite()
+    ans = _mf_pf_string(n)
+    q = rf"Which is the correct product of prime factors for {n}?"
     s = rf"Use a factor tree and split until every factor is prime. The product of prime factors is <strong>{ans}</strong>."
     hint = "Keep dividing by prime numbers such as 2, 3, 5 and 7."
-    return q, s, hint, 3
+    options, correct_letter = _number_mcq_options(ans, _mf_pf_mcq_distractors(n, ans))
+    return q, s, hint, 3, options, correct_letter
 
 
 def _number_inter_calculator_estimate_fraction():
@@ -665,7 +669,11 @@ def _number_diff_recurring_decimal_fraction():
     q = rf"Write {dec} as a fraction in its simplest form."
     s = rf"This is a recurring decimal. Using the standard recurring-decimal method gives <strong>{frac}</strong>."
     hint = "Let x equal the recurring decimal, multiply to line up the repeating part, then subtract."
-    return q, s, hint, 3
+    return q, s, hint, 3, {
+        'type': 'fraction',
+        'value': frac,
+        'format_hint': 'Enter a fraction in simplest form (e.g. 1/3)',
+    }
 
 
 def _number_diff_surds_estimate():
@@ -1037,6 +1045,12 @@ def _number_power_raw(base, exponent):
 
 
 def _number_problem_from_output(out, difficulty):
+    if len(out) == 6:
+        q, s, hint, marks, opts, correct = out[:6]
+        return make_problem(
+            q, s, hint, difficulty, marks, 'gcse', 'maths', 'number',
+            options=opts, correct_answer=correct,
+        )
     choice = problem_from_choice_output(out, difficulty, 'gcse', 'maths', 'number')
     if choice:
         return choice
@@ -1077,6 +1091,16 @@ def _number_problem_from_output(out, difficulty):
                     correct_answer_raw=raw_s,
                     answer_type='power',
                     answer_format_hint='Base and index',
+                )
+            if raw_type == 'fraction':
+                return make_problem(
+                    q, s, hint, difficulty, marks, 'gcse', 'maths', 'number',
+                    correct_answer_raw=str(raw['value']).strip(),
+                    answer_type='fraction',
+                    answer_format_hint=raw.get(
+                        'format_hint',
+                        'Enter a fraction (e.g. 3/4)',
+                    ),
                 )
         if isinstance(raw, str):
             fraction_hint = 'Enter a number or fraction (e.g. 1/16)'

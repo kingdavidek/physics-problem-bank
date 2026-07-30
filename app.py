@@ -362,6 +362,12 @@ def _problem_client_payload(problem):
         field_hints = problem.get('answer_field_hints')
         if field_hints:
             payload['answer_field_hints'] = field_hints
+        answer_tests = problem.get('answer_tests')
+        if answer_tests:
+            payload['answer_tests'] = answer_tests
+        python_starter = problem.get('answer_python_starter')
+        if python_starter:
+            payload['answer_python_starter'] = python_starter
     return payload
 
 _BLOCK_HTML_MARKERS = ('<svg', '<div', '<table', '<pre', '<figure')
@@ -3022,70 +3028,132 @@ def topics_index():
 # Sandbox review page for Plan A/B/C auto-grade variants.
 _SANDBOX_PLAN_A_ITEMS = (
     {
-        'label': 'Vectors — column meaning (Plan C)',
-        'topic': 'vectors',
+        'label': 'Python — pick print Hello, World! (MCQ)',
+        'topic': 'python_programming',
+        'subject': 'cs',
         'difficulty': 'foundational',
-        'variant': '_vectors_found_column_meaning',
-        'plan_note': 'Plan C step bank: select all correct statements about the column vector.',
+        'variant': 'py_found_hello',
+        'plan_note': 'Tier 1 MCQ: pick the correct print statement.',
     },
     {
-        'label': 'Vectors — triangle inequality (Plan C)',
-        'topic': 'vectors',
-        'difficulty': 'difficult',
-        'variant': '_vectors_diff_vector_inequality',
-        'plan_note': 'Plan C step bank: ordered proof of |a+b| ≤ |a|+|b|.',
-    },
-    {
-        'label': 'Sequences — sum of first n odds (Plan C)',
-        'topic': 'sequences',
-        'difficulty': 'difficult',
-        'variant': '_seq_diff_arithmetic_proof',
-        'plan_note': 'Plan C step bank: AP recognition → Sn formula → simplify to n².',
-    },
-    {
-        'label': 'Sequences — n(n+1) divisible by 2 (Plan C)',
-        'topic': 'sequences',
-        'difficulty': 'difficult',
-        'variant': '_seq_diff_show_divisible',
-        'plan_note': 'Plan C step bank: consecutive integers → product even.',
-    },
-    {
-        'label': 'Sequences — recurring decimal proof (Plan C)',
-        'topic': 'sequences',
-        'difficulty': 'difficult',
-        'variant': '_seq_diff_recurring_decimal_proof',
-        'plan_note': 'Plan C step bank: let x → multiply → subtract.',
-    },
-    {
-        'label': 'Constructions & Loci — construct 60° angle (proof steps)',
-        'topic': 'constructions_loci',
-        'difficulty': 'intermediate',
-        'variant': '_cl_i8_construct_60',
-        'plan_note': 'Proof-steps auto-grade: order ruler-and-compasses steps. Diagram shows setup only (line AB, point A).',
-    },
-    {
-        'label': 'Algorithms — flowchart wrong decision symbol (foundational)',
+        'label': 'Python — FizzBuzz predict output (MCQ)',
+        'topic': 'python_programming',
         'subject': 'cs',
-        'topic': 'algorithms',
+        'difficulty': 'intermediate',
+        'variant': 'py_inter_fizzbuzz',
+        'plan_note': 'Tier 1 MCQ: predict Fizz / Buzz / FizzBuzz for given i.',
+    },
+    {
+        'label': 'Python — age + 1 (stdin)',
+        'topic': 'python_programming',
+        'subject': 'cs',
         'difficulty': 'foundational',
-        'variant': '_alg_f12_flowchart_fix_decision',
-        'plan_note': 'Visible SVG flowchart; MCQ identifies rectangle used instead of diamond for a decision.',
+        'variant': 'py_found_age',
+        'plan_note': 'Tier 2: input + int + print; 2 stdin fixtures.',
     },
     {
-        'label': 'Algorithms — flowchart wrong I/O and process symbols (intermediate)',
+        'label': 'Python — Pass/Fail if score (setup)',
+        'topic': 'python_programming',
         'subject': 'cs',
-        'topic': 'algorithms',
+        'difficulty': 'foundational',
+        'variant': 'py_found_pass',
+        'plan_note': 'Tier 2: if/else only; score injected per test via setup.',
+    },
+    {
+        'label': 'Python — Cold / Warm / Hot (stdin branches)',
+        'topic': 'python_programming',
+        'subject': 'cs',
+        'difficulty': 'foundational',
+        'variant': 'py_found_elif',
+        'plan_note': 'Tier 2: if/elif/else on temperature input.',
+    },
+    {
+        'label': 'Python — countdown 10→1 + Blast off! (fixed output)',
+        'topic': 'python_programming',
+        'subject': 'cs',
+        'difficulty': 'foundational',
+        'variant': 'py_found_countdown',
+        'plan_note': 'Tier 2: while loop; no stdin, multi-line stdout.',
+    },
+    {
+        'label': 'Python — Hello, First Last! (two stdin lines)',
+        'topic': 'python_programming',
+        'subject': 'cs',
+        'difficulty': 'foundational',
+        'variant': 'py_found_string_concat',
+        'plan_note': 'Tier 2: two input() calls and string greeting.',
+    },
+    {
+        'label': 'Python — password until secure (stdin loop)',
+        'topic': 'python_programming',
+        'subject': 'cs',
         'difficulty': 'intermediate',
-        'variant': '_alg_i11_flowchart_fix_symbols',
-        'plan_note': 'Visible SVG flowchart; pick-2 identifies INPUT and PROCESS symbol errors.',
+        'variant': 'py_inter_password',
+        'plan_note': 'Tier 2: while loop with repeated input().',
     },
     {
-        'label': 'Algorithms — flowchart multipart fix (difficult)',
+        'label': 'Python — is_even(42) (function + print)',
+        'topic': 'python_programming',
         'subject': 'cs',
-        'topic': 'algorithms',
+        'difficulty': 'intermediate',
+        'variant': 'py_inter_is_even',
+        'plan_note': 'Tier 2: define function; fixed True output.',
+    },
+    {
+        'label': 'Python — palindrome tests (function, two prints)',
+        'topic': 'python_programming',
+        'subject': 'cs',
+        'difficulty': 'intermediate',
+        'variant': 'py_inter_palindrome',
+        'plan_note': 'Tier 2: two boolean results on separate lines.',
+    },
+    {
+        'label': 'Python — to_binary(42) (difficult function)',
+        'topic': 'python_programming',
+        'subject': 'cs',
         'difficulty': 'difficult',
-        'variant': '_alg_d16_flowchart_fix_multipart',
-        'plan_note': 'Visible SVG flowchart; inline MCQ fields for wrong symbol, correct symbol, and swapped branches.',
+        'variant': 'py_diff_binary',
+        'plan_note': 'Tier 2: algorithm function; expected 101010.',
+    },
+    {
+        'label': 'Python — Caesar cipher (difficult function)',
+        'topic': 'python_programming',
+        'subject': 'cs',
+        'difficulty': 'difficult',
+        'variant': 'py_diff_caesar',
+        'plan_note': 'Tier 2: string algorithm; print shifted text.',
+    },
+    {
+        'label': 'Python — divide-by-zero handling (stdin + exceptions)',
+        'topic': 'python_programming',
+        'subject': 'cs',
+        'difficulty': 'difficult',
+        'variant': 'py_diff_exception_handling',
+        'plan_note': 'Tier 2: try/except; Invalid input and divide-by-zero.',
+    },
+    {
+        'label': 'Python — name, age, height (flexible output)',
+        'topic': 'python_programming',
+        'subject': 'cs',
+        'difficulty': 'foundational',
+        'variant': 'py_found_variables',
+        'plan_note': 'Tier 3: validate name + int + float on one line.',
+    },
+    {
+        'label': 'Python — numbered file lines (mock open)',
+        'topic': 'python_programming',
+        'subject': 'cs',
+        'difficulty': 'difficult',
+        'variant': 'py_diff_file',
+        'plan_note': 'Tier 3: virtual files; numbered lines or File not found.',
+    },
+    {
+        'label': 'Python — highest & average from scores.txt',
+        'topic': 'python_programming',
+        'subject': 'cs',
+        'difficulty': 'difficult',
+        'variant': 'py_diff_read_scores_file',
+        'plan_note': 'Tier 3: virtual scores.txt; max and mean to 1 d.p.',
     },
 )
 

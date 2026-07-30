@@ -1,3 +1,4 @@
+import json
 import random
 import re
 
@@ -261,6 +262,39 @@ def graded_answer_sql(query, *, lines=3, format_hint=None):
     return payload
 
 
+def _normalize_python_stdout(value) -> str:
+    return str(value or '').replace('\r\n', '\n').replace('\r', '\n').strip()
+
+
+def graded_answer_python_run(tests, *, starter=None, lines=4, format_hint=None, setup=None):
+    """Tier-2 Python write-code grading via stdin/stdout fixtures."""
+    normalized = []
+    for item in tests:
+        entry = {
+            'stdin': str(item.get('stdin', '')),
+            'stdout': _normalize_python_stdout(item.get('stdout', '')),
+        }
+        test_setup = item.get('setup', setup)
+        if test_setup is not None and str(test_setup).strip():
+            entry['setup'] = str(test_setup)
+        if item.get('min_inputs') is not None:
+            entry['min_inputs'] = int(item['min_inputs'])
+        if item.get('validate'):
+            entry['validate'] = str(item['validate'])
+        files = item.get('files')
+        if files:
+            entry['files'] = {str(k): str(v) for k, v in files.items()}
+        normalized.append(entry)
+    payload = {'type': 'python_run', 'tests': tuple(normalized)}
+    if starter:
+        payload['starter'] = str(starter)
+    if lines != 4:
+        payload['lines'] = int(lines)
+    if format_hint:
+        payload['format_hint'] = format_hint
+    return payload
+
+
 def graded_answer_text(*keywords, required=None, format_hint=None, labels=None):
     kws = tuple(str(k).strip().lower() for k in keywords if str(k).strip())
     payload = {'type': 'text', 'keywords': kws}
@@ -389,6 +423,53 @@ def problem_extra_from_graded_answer(raw):
                     ),
                     'answer_input_lines': lines,
                 }
+        elif raw_type == 'python_run':
+            tests = raw.get('tests') or ()
+            if tests:
+                canonical = []
+                client_tests = []
+                for t in tests:
+                    if t.get('validate'):
+                        entry = {'validate': str(t['validate'])}
+                    else:
+                        entry = {
+                            'stdout': _normalize_python_stdout(t.get('stdout', '')),
+                        }
+                        if t.get('min_inputs') is not None:
+                            entry['min_inputs'] = int(t['min_inputs'])
+                    canonical.append(entry)
+                    client_item = {
+                        'stdin': str(t.get('stdin', '')),
+                        'stdout': _normalize_python_stdout(t.get('stdout', '')),
+                    }
+                    if t.get('setup') is not None and str(t.get('setup', '')).strip():
+                        client_item['setup'] = str(t['setup'])
+                    if t.get('min_inputs') is not None:
+                        client_item['min_inputs'] = int(t['min_inputs'])
+                    if t.get('validate'):
+                        client_item['validate'] = str(t['validate'])
+                    files = t.get('files')
+                    if files:
+                        client_item['files'] = {
+                            str(k): str(v) for k, v in files.items()
+                        }
+                    client_tests.append(client_item)
+                extra = {
+                    'correct_answer_raw': json.dumps(
+                        canonical,
+                        separators=(',', ':'),
+                    ),
+                    'answer_type': 'python_run',
+                    'answer_tests': client_tests,
+                    'answer_format_hint': raw.get(
+                        'format_hint',
+                        'Write Python code, then Check runs it against sample inputs.',
+                    ),
+                    'answer_input_lines': int(raw.get('lines', 4)),
+                }
+                starter = raw.get('starter')
+                if starter:
+                    extra['answer_python_starter'] = str(starter)
         elif raw_type == 'number_pair':
             val_a, val_b = raw['values']
             extra = {
@@ -397,6 +478,43 @@ def problem_extra_from_graded_answer(raw):
                 'answer_labels': [raw['label_a'], raw['label_b']],
                 'answer_pair_sep': raw.get('sep', 'and'),
             }
+        elif raw_type == 'number_list':
+            values = raw.get('values') or ()
+            if values:
+                extra = {
+                    'correct_answer_raw': ','.join(str(v) for v in values),
+                    'answer_type': 'number_list',
+                    'answer_format_hint': raw.get(
+                        'format_hint',
+                        'Enter numbers separated by commas',
+                    ),
+                }
+        elif raw_type == 'fraction':
+            value = raw.get('value')
+            if value is not None and str(value).strip():
+                extra = {
+                    'correct_answer_raw': str(value).strip(),
+                    'answer_type': 'fraction',
+                    'answer_format_hint': raw.get(
+                        'format_hint',
+                        'Enter a fraction (e.g. 3/4)',
+                    ),
+                }
+        elif raw_type == 'algebraic':
+            text = str(raw.get('value') or '')
+            if text.strip():
+                extra = {
+                    'correct_answer_raw': text,
+                    'answer_type': 'algebraic',
+                    'answer_format_hint': raw.get(
+                        'format_hint',
+                        'Enter the simplified expression',
+                    ),
+                }
+                if raw.get('subject'):
+                    extra['answer_subject'] = raw['subject']
+                if raw.get('wrong_hint'):
+                    extra['answer_wrong_hint'] = raw['wrong_hint']
         elif raw_type == 'number_fields':
             values = raw.get('values') or ()
             labels = raw.get('labels') or ()

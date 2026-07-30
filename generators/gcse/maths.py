@@ -521,6 +521,49 @@ def _fdp_fields_answer(values, labels):
     }
 
 
+def _maths_mcq_payload(correct_text, distractors):
+    pool = [correct_text] + list(distractors[:3])
+    random.shuffle(pool)
+    letters = 'ABCD'
+    correct_letter = letters[pool.index(correct_text)]
+    options = [f'{letters[i]}  {pool[i]}' for i in range(len(pool))]
+    return {'type': 'mcq', 'options': options, 'correct': correct_letter}
+
+
+def _maths_pick_from_bank(correct_texts, distractor_texts, pick_count, *, format_hint=None):
+    correct_ids = tuple(f'c{i + 1}' for i in range(len(correct_texts)))
+    bank = [{'id': cid, 'text': text} for cid, text in zip(correct_ids, correct_texts)]
+    for i, text in enumerate(distractor_texts):
+        bank.append({'id': f'd{i + 1}', 'text': text})
+    random.shuffle(bank)
+    return proof_steps_answer(
+        correct_ids,
+        bank,
+        pick_count=pick_count,
+        format_hint=format_hint,
+    )
+
+
+def _maths_order_from_bank(steps, *, format_hint=None):
+    """Shuffled bank: put values in the correct order (smallest → largest)."""
+    step_ids = tuple(f's{i + 1}' for i in range(len(steps)))
+    bank = [{'id': sid, 'text': text} for sid, text in zip(step_ids, steps)]
+    random.shuffle(bank)
+    return proof_steps_answer(
+        step_ids,
+        bank,
+        order_matters=True,
+        format_hint=format_hint,
+    )
+
+
+def _fdp_number_list_answer(values, format_hint=None):
+    payload = {'type': 'number_list', 'values': tuple(_fdp_raw(v) for v in values)}
+    if format_hint:
+        payload['format_hint'] = format_hint
+    return payload
+
+
 def _fdp_fraction_answer(value):
     return {'type': 'fraction', 'value': str(value)}
 
@@ -530,43 +573,13 @@ def _fdp_problem_from_output(out, difficulty):
     extra = {}
     if len(out) >= 5:
         raw = out[4]
-        if isinstance(raw, dict) and raw.get('type') == 'number_fields':
-            values = raw.get('values') or ()
-            labels = raw.get('labels') or ()
-            if values and len(values) == len(labels):
-                extra = {
-                    'correct_answer_raw': '|'.join(str(v) for v in values),
-                    'answer_type': 'number_fields',
-                    'answer_labels': list(labels),
-                    'answer_format_hint': 'Enter a number in every field',
-                }
-        elif isinstance(raw, dict) and raw.get('type') == 'fraction':
-            value = raw.get('value')
-            if value is not None and str(value).strip():
-                extra = {
-                    'correct_answer_raw': str(value).strip(),
-                    'answer_type': 'fraction',
-                    'answer_format_hint': 'Enter a fraction (e.g. 3/4)',
-                }
-        elif isinstance(raw, (int, float)):
-            extra = {
-                'correct_answer_raw': _fdp_raw(raw),
-                'answer_type': 'number',
-                'answer_format_hint': 'Enter a number',
-            }
-        elif isinstance(raw, str):
-            if '/' in raw:
-                extra = {
-                    'correct_answer_raw': raw,
-                    'answer_type': 'fraction',
-                    'answer_format_hint': 'Enter a fraction (e.g. 3/4)',
-                }
-            else:
-                extra = {
-                    'correct_answer_raw': raw,
-                    'answer_type': 'number',
-                    'answer_format_hint': 'Enter a number',
-                }
+        if isinstance(raw, dict) and raw.get('type') == 'mcq':
+            return make_problem(
+                q, s, hint, difficulty, marks, 'gcse', 'maths', 'fdp',
+                options=raw['options'],
+                correct_answer=raw['correct'],
+            )
+        extra = problem_extra_from_graded_answer(raw)
     return make_problem(q, s, hint, difficulty, marks, 'gcse', 'maths', 'fdp', **extra)
 
 
@@ -664,14 +677,20 @@ def gcse_fdp_multi_step():
         f"1. Divide: {a} ÷ {b} = {dec}<br>"
         f"2. Multiply by 100: {dec} × 100 = {pct.replace('%', '')}%"
     )
-    return q, s, hint, 2
+    pct_answer = pct_val if pct_val != int(pct_val) else int(pct_val)
+    return q, s, hint, 2, _fdp_fields_answer(
+        [a / b, pct_answer],
+        ('Decimal', 'Percentage (no % sign)'),
+    )
 
 def gcse_fdp_recurring():
     num, den = _fdp_random_recurring_fraction()
     dec = _fdp_recurring_decimal_display(num, den)
+    simp_num, simp_den = _fdp_simplify_fraction(num, den)
+    frac = _fdp_fraction_str(simp_num, simp_den)
     q = rf"Write {dec} as a fraction."
     s, hint = _fdp_recurring_algebra_working(num, den)
-    return q, s, hint, 3
+    return q, s, hint, 3, _fdp_fraction_answer(frac)
 
 
 # ── FDP: intermediate (non-conversion formats) ───────────────────────────────
@@ -785,6 +804,7 @@ def gcse_fdp_order_mixed_values():
     items, ordered = _fdp_random_order_items(4)
     random.shuffle(items)
     labels = [x[0] for x in items]
+    ordered_labels = [lab for lab, _ in sorted(items, key=lambda x: x[1])]
     q = (
         r"Write these values in order from <strong>smallest to largest</strong>:<br>"
         + ", ".join(labels)
@@ -796,11 +816,12 @@ def gcse_fdp_order_mixed_values():
     )
     hint = (
         "<strong>Key idea:</strong> you cannot compare fractions, decimals and percentages directly — "
-        "convert them all to the same form first.<br>"
-        "Easiest method: rewrite every value as a decimal, then order from smallest to largest.<br>"
-        "Check each conversion carefully before comparing."
+        "convert them all to decimals first, then order from smallest to largest."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, _maths_order_from_bank(
+        tuple(ordered_labels),
+        format_hint='Put the values in order from smallest to largest',
+    )
 
 
 # ── FDP: difficult (multi-step / reasoning, non-conversion) ───────────────────
@@ -905,7 +926,7 @@ def gcse_fdp_profit_loss_percentage():
 def gcse_fdp_best_value_comparison():
     """Compare offers using unit cost."""
     label_a, label_b, best, unit_a, unit_b = _fdp_best_value_case()
-    q = rf"Which is better value?<br><strong>{label_a}</strong><br><strong>{label_b}</strong>"
+    q = rf"Which pack is better value?<br><strong>{label_a}</strong><br><strong>{label_b}</strong>"
     s = (
         rf"Compare cost per item by dividing.<br>"
         rf"{label_a}: £{unit_a:.2f} per item<br>"
@@ -917,7 +938,15 @@ def gcse_fdp_best_value_comparison():
         "Divide each pack price by how many items it contains, then compare the unit costs.<br>"
         "The pack with the smaller cost per item is better value."
     )
-    return q, s, hint, 3
+    wrong_pack = "Pack B" if best == "Pack A" else "Pack A"
+    return q, s, hint, 3, _maths_mcq_payload(
+        best,
+        (
+            wrong_pack,
+            "Both packs are equal value",
+            "Neither pack — always buy the larger pack",
+        ),
+    )
 
 
 def gcse_fdp_fraction_word_problem():
@@ -1043,8 +1072,7 @@ def _mf_prime_factors_dict(n):
     return factors
 
 
-def _mf_pf_string(n):
-    pf = _mf_prime_factors_dict(n)
+def _mf_format_pf_dict(pf):
     parts = []
     for p in sorted(pf):
         if pf[p] == 1:
@@ -1052,6 +1080,28 @@ def _mf_pf_string(n):
         else:
             parts.append(f"{p}{_mf_sup(pf[p])}")
     return " × ".join(parts)
+
+
+def _mf_pf_mcq_distractors(n, correct):
+    pf = _mf_prime_factors_dict(n)
+    distractors = []
+    if len(pf) > 1:
+        partial = dict(pf)
+        del partial[sorted(pf)[-1]]
+        distractors.append(_mf_format_pf_dict(partial))
+    boosted = dict(pf)
+    first = sorted(pf)[0]
+    boosted[first] = boosted[first] + 1
+    distractors.append(_mf_format_pf_dict(boosted))
+    for extra in (2, 3, 5, 7):
+        if extra not in pf:
+            distractors.append(_mf_pf_string(n * extra))
+            break
+    return [d for d in distractors if d != correct][:3]
+
+
+def _mf_pf_string(n):
+    return _mf_format_pf_dict(_mf_prime_factors_dict(n))
 
 
 def _mf_hcf_pf_string(a, b):
@@ -1150,40 +1200,52 @@ def _mf_number_from_hcf_lcm_case():
     return hcf, lcm, known, unknown
 
 
+def _mf_missing_digit_number(before, after=''):
+    """Render a number with a visible missing-digit box (not a raw underscore)."""
+    return f'{before}<strong>□</strong>{after}'
+
+
 def _mf_divisibility_case():
     rule = random.choice([3, 5, 6, 9])
     if rule == 3:
         d1, d3 = random.randint(1, 9), random.randint(0, 9)
         options = [d for d in range(10) if (d1 + d + d3) % 3 == 0]
         digits = ", ".join(str(d) for d in options)
-        template = f"{d1}_ {d3}"
+        display = _mf_missing_digit_number(str(d1), str(d3))
         reason = f"Digit sum {d1} + the missing digit + {d3} must be a multiple of 3."
+        return rule, display, digits, reason, options
     elif rule == 5:
         d1 = random.randint(1, 9)
-        template = f"{d1}_ 5" if random.random() < 0.5 else f"{d1}_ 0"
-        digits = "any digit (0–9)" if template.endswith("5") else "0 only for 10; 0 or 5 for 5"
+        ends_five = random.random() < 0.5
+        display = _mf_missing_digit_number(str(d1), '5' if ends_five else '0')
+        digits = "any digit (0–9)" if ends_five else "0 only for 10; 0 or 5 for 5"
         reason = "Numbers divisible by 5 end in 0 or 5."
+        return rule, display, digits, reason, None
     elif rule == 6:
         d1 = random.randint(1, 9)
         options = [d for d in range(10) if (d1 + d + 4) % 3 == 0]
         digits = ", ".join(str(d) for d in options)
-        template = f"{d1}_ 4"
+        display = _mf_missing_digit_number(str(d1), '4')
         reason = "Must be even (ends in 4) and the digit sum must be divisible by 3."
+        return rule, display, digits, reason, options
     else:
         d1, d2 = random.randint(1, 9), random.randint(0, 9)
         options = [d for d in range(10) if (d1 + d2 + d) % 9 == 0]
         digits = ", ".join(str(d) for d in options)
-        template = f"{d1}{d2}_"
+        display = f'{d1}{d2}<strong>□</strong>'
         reason = f"Digit sum {d1} + {d2} + the missing digit must be a multiple of 9."
-    return rule, template.replace(" ", ""), digits, reason
+        return rule, display, digits, reason, options
 
 
 def _mf_primes_between(lo, hi):
     return [p for p in range(max(2, lo + 1), hi) if _mf_is_prime(p)]
 
 
-def _mf_number_list_answer(values):
-    return {'type': 'number_list', 'values': tuple(values)}
+def _mf_number_list_answer(values, format_hint=None):
+    payload = {'type': 'number_list', 'values': tuple(values)}
+    if format_hint:
+        payload['format_hint'] = format_hint
+    return payload
 
 
 def _mf_problem_from_output(out, difficulty):
@@ -1191,16 +1253,13 @@ def _mf_problem_from_output(out, difficulty):
     extra = {}
     if len(out) >= 5:
         raw = out[4]
-        if isinstance(raw, dict) and raw.get('type') == 'number_list':
-            values = raw.get('values') or ()
-            if values:
-                extra = {
-                    'correct_answer_raw': ','.join(_fdp_raw(v) for v in values),
-                    'answer_type': 'number_list',
-                    'answer_format_hint': 'Enter numbers separated by commas',
-                }
-        else:
-            extra = problem_extra_from_graded_answer(raw)
+        if isinstance(raw, dict) and raw.get('type') == 'mcq':
+            return make_problem(
+                q, s, hint, difficulty, marks, 'gcse', 'maths', 'multiples_factors',
+                options=raw['options'],
+                correct_answer=raw['correct'],
+            )
+        extra = problem_extra_from_graded_answer(raw)
     return make_problem(q, s, hint, difficulty, marks, 'gcse', 'maths', 'multiples_factors', **extra)
 
 
@@ -1219,19 +1278,42 @@ def gcse_mf_find_factor():
     factors = _mf_all_factors(n)
     proper = [f for f in factors if f not in (1, n)] or factors
     ans = random.choice(proper)
-    q = rf"Write down a factor of {n}."
+    distractors = []
+    for candidate in range(2, n + 8):
+        if n % candidate != 0 and candidate != ans and str(candidate) not in distractors:
+            distractors.append(str(candidate))
+            if len(distractors) == 3:
+                break
+    q = rf"Which of these is a factor of {n}?"
     s = rf"One factor of {n} is <strong>{ans}</strong> because it divides exactly into {n}."
     hint = "A factor divides exactly with no remainder."
-    return q, s, hint, 1
+    return q, s, hint, 1, _maths_mcq_payload(str(ans), tuple(distractors))
 
 
 def gcse_mf_factor_pairs():
     n = _mf_random_composite(18, 120)
-    pairs_str = _mf_factor_pairs_str(n)
-    q = rf"Write down all the factor pairs of {n}."
+    pairs = []
+    for i in range(1, int(math.sqrt(n)) + 1):
+        if n % i == 0:
+            j = n // i
+            pairs.append(f"{i} × {j}")
+    pairs_str = ", ".join(pairs)
+    distractors = []
+    while len(distractors) < 4:
+        a = random.randint(2, max(3, n // 2))
+        b = random.randint(2, n + 3)
+        wrong = f"{a} × {b}"
+        if a * b != n and wrong not in pairs and wrong not in distractors:
+            distractors.append(wrong)
+    q = rf"Select all the factor pairs of {n}."
     s = rf"The factor pairs of {n} are <strong>{pairs_str}</strong>."
     hint = "Start with 1 and the number itself, then test 2, 3, 4 and so on."
-    return q, s, hint, 2
+    return q, s, hint, 2, _maths_pick_from_bank(
+        tuple(pairs),
+        tuple(distractors),
+        len(pairs),
+        format_hint=f'Select all {len(pairs)} factor pairs',
+    )
 
 
 def gcse_mf_prime():
@@ -1273,10 +1355,10 @@ def gcse_mf_prime_factors():
     while _mf_is_prime(n):
         n += 1
     ans = _mf_pf_string(n)
-    q = rf"Write {n} as a product of prime factors."
+    q = rf"Which is the correct product of prime factors for {n}?"
     s = rf"The product of prime factors of {n} is <strong>{ans}</strong>."
     hint = "Use a factor tree and keep splitting until all branches are prime."
-    return q, s, hint, 3
+    return q, s, hint, 3, _maths_mcq_payload(ans, tuple(_mf_pf_mcq_distractors(n, ans)))
 
 
 # ── Multiples & factors: intermediate (word problems / reasoning) ─────────────
@@ -1347,9 +1429,9 @@ def gcse_mf_hcf_using_primes():
 
 def gcse_mf_divisibility_digit():
     """Find a missing digit using divisibility rules."""
-    rule, template, digits, reason = _mf_divisibility_case()
+    rule, display, digits, reason, valid = _mf_divisibility_case()
     q = (
-        rf"The number {template} is divisible by {rule}. "
+        rf"The number {display} is divisible by {rule}. "
         rf"Which digit(s) could replace the blank?"
     )
     s = (
@@ -1357,7 +1439,15 @@ def gcse_mf_divisibility_digit():
         rf"Possible digits: <strong>{digits}</strong>"
     )
     hint = "Use divisibility rules for 2, 3, 5, 6, 9 and 10 as appropriate."
-    return q, s, hint, 2
+    if valid is not None:
+        return q, s, hint, 2, _mf_number_list_answer(
+            valid,
+            format_hint='Enter all possible digits, separated by commas',
+        )
+    return q, s, hint, 2, _maths_mcq_payload(
+        "Any digit from 0 to 9",
+        ("0 only", "5 only", "Even digits only (0, 2, 4, 6, 8)"),
+    )
 
 
 # ── Multiples & factors: difficult (multi-step / puzzles) ─────────────────────
@@ -1525,8 +1615,11 @@ def _dec_bounds_from_value(value, dp):
     return lower, upper, half
 
 
-def _dec_number_list_answer(values):
-    return {'type': 'number_list', 'values': tuple(values)}
+def _dec_number_list_answer(values, format_hint=None):
+    payload = {'type': 'number_list', 'values': tuple(values)}
+    if format_hint:
+        payload['format_hint'] = format_hint
+    return payload
 
 
 def _dec_fraction_answer(value):
@@ -1538,24 +1631,13 @@ def _dec_problem_from_output(out, difficulty):
     extra = {}
     if len(out) >= 5:
         raw = out[4]
-        if isinstance(raw, dict) and raw.get('type') == 'number_list':
-            values = raw.get('values') or ()
-            if values:
-                extra = {
-                    'correct_answer_raw': ','.join(_fdp_raw(v) for v in values),
-                    'answer_type': 'number_list',
-                    'answer_format_hint': 'Enter numbers separated by commas',
-                }
-        elif isinstance(raw, dict) and raw.get('type') == 'fraction':
-            value = raw.get('value')
-            if value is not None and str(value).strip():
-                extra = {
-                    'correct_answer_raw': str(value).strip(),
-                    'answer_type': 'fraction',
-                    'answer_format_hint': 'Enter a fraction (e.g. 3/4)',
-                }
-        else:
-            extra = problem_extra_from_graded_answer(raw)
+        if isinstance(raw, dict) and raw.get('type') == 'mcq':
+            return make_problem(
+                q, s, hint, difficulty, marks, 'gcse', 'maths', 'decimals',
+                options=raw['options'],
+                correct_answer=raw['correct'],
+            )
+        extra = problem_extra_from_graded_answer(raw)
     return make_problem(q, s, hint, difficulty, marks, 'gcse', 'maths', 'decimals', **extra)
 
 
@@ -1819,6 +1901,7 @@ def gcse_dec_practice_order_mixed():
     """Order a mix of decimals and simple fractions."""
     items, order_str = _fdp_random_order_items(3)
     random.shuffle(items)
+    ordered_labels = [lab for lab, _ in sorted(items, key=lambda x: x[1])]
     q = (
         rf"Write these values in order from smallest to largest:<br><br>"
         rf"<strong>{', '.join(label for label, _ in items)}</strong>"
@@ -1832,11 +1915,13 @@ def gcse_dec_practice_order_mixed():
         + rf"<br>Order from smallest to largest: <strong>{order_str}</strong>"
     )
     hint = (
-        r"Put all values in the same form — usually decimals. "
-        r"Divide fractions (top ÷ bottom), move the decimal point for percentages (÷ 100), "
-        r"then compare place values from left to right."
+        r"Put all values in the same form — usually decimals — to compare, "
+        r"then order the original values from smallest to largest."
     )
-    return q, s, hint, 2
+    return q, s, hint, 2, _maths_order_from_bank(
+        tuple(ordered_labels),
+        format_hint='Put the values in order from smallest to largest',
+    )
 
 
 # ── Decimals: difficult (extra formats) ──────────────────────────────────────
