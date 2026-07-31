@@ -2072,6 +2072,58 @@
         .mcq-retry-btn {
             font-size: 0.9rem;
         }
+        .wrong-answer-reflection {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-soft);
+        }
+        .wrong-answer-reflection-title {
+            margin: 0 0 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .wrong-answer-reflection-optional {
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+        .wrong-answer-reflection-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .wrong-answer-reflection-chip.is-selected {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+        .wrong-answer-reflection-input {
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font: inherit;
+            resize: vertical;
+            min-height: 2.5em;
+        }
+        .wrong-answer-reflection-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+        }
+        .wrong-answer-reflection-status {
+            margin: 0;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .cohort-hint {
+            margin: 10px 0 0;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
         .problem-actions {
             display: flex;
             gap: 12px;
@@ -2776,7 +2828,7 @@
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
     <!-- External site logic (dropdowns, MCQs, etc.) -->
     <script src="{{ url_for('static', filename='js/python-run-grader.js') }}?v=3" defer></script>
-    <script src="{{ url_for('static', filename='js/site.js') }}?v=2" defer></script>
+    <script src="{{ url_for('static', filename='js/site.js') }}?v=4" defer></script>
     <script src="{{ url_for('static', filename='js/site-search.js') }}?v=1" defer></script>
     <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=1" defer></script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=1" defer></script>

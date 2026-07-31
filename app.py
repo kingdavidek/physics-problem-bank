@@ -250,6 +250,20 @@ from models.qotd import (
     record_qotd_answer,
 )
 from models.weak_topics import analyze_weak_topics, serialize_weak_topic
+from models.cohort_stats import (
+    MIN_SAMPLE_SIZE as COHORT_MIN_SAMPLE_SIZE,
+    compute_problem_key,
+    record_and_get_cohort,
+)
+from models.reflections import (
+    DEFAULT_LIMIT as REFLECTIONS_DEFAULT_LIMIT,
+    MAX_LIMIT as REFLECTIONS_MAX_LIMIT,
+    MAX_REFLECTION_TEXT,
+    PROMPT_TYPES as REFLECTION_PROMPT_TYPES,
+    get_reflection,
+    list_reflections,
+    save_reflection,
+)
 from models.revision_queue import (
     DUE_TODAY_LIMIT,
     complete_revision_item,
@@ -896,6 +910,42 @@ with get_db() as conn:
     conn.execute("""
         CREATE INDEX IF NOT EXISTS idx_user_revision_queue_due
         ON user_revision_queue (user_id, due_at)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_wrong_answer_reflections (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            level TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            topic TEXT NOT NULL,
+            difficulty TEXT NOT NULL DEFAULT 'foundational',
+            source TEXT NOT NULL,
+            attempt_id INTEGER,
+            prompt_type TEXT,
+            reflection_text TEXT NOT NULL DEFAULT '',
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (attempt_id) REFERENCES generator_mcq_attempts(id) ON DELETE SET NULL
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_user_wrong_answer_reflections_user
+        ON user_wrong_answer_reflections (user_id, id DESC)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS problem_cohort_stats (
+            problem_key TEXT PRIMARY KEY,
+            level TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            topic TEXT NOT NULL,
+            total_attempts INTEGER NOT NULL DEFAULT 0,
+            wrong_attempts INTEGER NOT NULL DEFAULT 0,
+            updated_at TEXT NOT NULL
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_problem_cohort_stats_topic
+        ON problem_cohort_stats (level, subject, topic)
     """)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS user_blocks (
@@ -1674,10 +1724,10 @@ def _track_mcq_answered(
     score_total=None,
 ):
     if not current_user.is_authenticated:
-        return
+        return None
     label = _topic_label(level, subject, topic)
     with get_db() as conn:
-        record_generator_mcq_attempt(
+        attempt_id = record_generator_mcq_attempt(
             conn,
             current_user.id,
             level,
@@ -1724,6 +1774,30 @@ def _track_mcq_answered(
             ACTIVITY_MCQ_ANSWERED,
             activity_payload,
             VISIBILITY_FOLLOWERS,
+        )
+    return attempt_id
+
+
+def _cohort_from_stored_problem(stored, correct, *, field_correct_raw=None):
+    """Record an anonymous cohort sample and return public stats if eligible."""
+    if not isinstance(stored, dict):
+        return None
+    problem = stored.get('problem') or {}
+    level = (stored.get('level') or '').strip()
+    subject = (stored.get('subject') or '').strip()
+    topic = (stored.get('topic') or '').strip()
+    if not (problem and level and subject and topic):
+        return None
+    with get_db() as conn:
+        return record_and_get_cohort(
+            conn,
+            problem,
+            level=level,
+            subject=subject,
+            topic=topic,
+            variant_name=stored.get('variant_name') or problem.get('variant_name'),
+            correct=bool(correct),
+            field_correct_raw=field_correct_raw,
         )
 
 
@@ -1959,6 +2033,30 @@ def _revision_queue_for_user(conn, user_id, *, limit=DUE_TODAY_LIMIT, due_only=T
             lesson_quiz_url=lesson_quiz_url,
         ))
     return out
+
+
+def _serialize_reflection(item, *, external_urls=False):
+    level, subject, topic = item['level'], item['subject'], item['topic']
+    return {
+        'id': item['id'],
+        'level': level,
+        'subject': subject,
+        'topic': topic,
+        'topic_label': _topic_label(level, subject, topic),
+        'difficulty': item.get('difficulty') or 'foundational',
+        'source': item['source'],
+        'attempt_id': item.get('attempt_id'),
+        'prompt_type': item.get('prompt_type'),
+        'reflection_text': item.get('reflection_text') or '',
+        'created_at': item.get('created_at'),
+        'topic_url': url_for(
+            'topic_page',
+            level=level,
+            subject=subject,
+            topic=topic,
+            _external=external_urls,
+        ),
+    }
 
 
 def _serialize_quiz_attempt_summary(item, *, external_urls=False):
@@ -3807,6 +3905,7 @@ def api_v1_problems_check():
 
     stored = session.get('last_problem_payload') or {}
     problem = stored.get('problem') or {}
+    partial_field = False
 
     if problem.get('correct_answer_raw') is not None:
         stored_raw = str(problem['correct_answer_raw'])
@@ -3819,7 +3918,6 @@ def api_v1_problems_check():
         difficulty = stored.get('difficulty') or 'foundational'
         client_raw = payload.get('correct_answer_raw')
         client_type = payload.get('answer_type')
-        partial_field = False
         client_raw_s = str(client_raw) if client_raw is not None else None
         if client_raw_s is not None:
             field_sep = '\x1e' if '\x1e' in stored_raw else '|'
@@ -3881,6 +3979,7 @@ def api_v1_problems_check():
             return _api_error(message, 400, 'unknown_answer_type')
         return _api_error(message, 400, 'invalid_correct_answer')
 
+    response = {'ok': True, **result}
     if current_user.is_authenticated and level and subject and topic:
         try:
             TOPICS[level][subject][topic]
@@ -3902,7 +4001,7 @@ def api_v1_problems_check():
                     part_total = None
             record_attempt = payload.get('record_attempt', True)
             if record_attempt is not False:
-                _track_mcq_answered(
+                attempt_id = _track_mcq_answered(
                     level,
                     subject,
                     topic,
@@ -3916,8 +4015,18 @@ def api_v1_problems_check():
                     score=result.get('score'),
                     score_total=result.get('score_total'),
                 )
+                if attempt_id is not None:
+                    response['attempt_id'] = attempt_id
 
-    response = {'ok': True, **result}
+    field_correct_raw = correct_answer_raw if partial_field else None
+    cohort = _cohort_from_stored_problem(
+        stored,
+        result['correct'],
+        field_correct_raw=field_correct_raw,
+    )
+    if cohort:
+        response['cohort'] = cohort
+
     if current_user.is_authenticated:
         with get_db() as conn:
             response['practice_streak'] = get_practice_streak(conn, current_user.id)
@@ -3951,7 +4060,7 @@ def api_v1_generator_mcq_answer():
     except KeyError:
         return _api_error('Invalid topic', 400, 'invalid_topic')
 
-    _track_mcq_answered(
+    attempt_id = _track_mcq_answered(
         level,
         subject,
         topic,
@@ -3963,7 +4072,19 @@ def api_v1_generator_mcq_answer():
     with get_db() as conn:
         streak = get_practice_streak(conn, current_user.id)
 
-    return jsonify({'ok': True, 'practice_streak': streak})
+    body = {'ok': True, 'practice_streak': streak}
+    if attempt_id is not None:
+        body['attempt_id'] = attempt_id
+    stored = session.get('last_problem_payload') or {}
+    if (
+        stored.get('level') == level
+        and stored.get('subject') == subject
+        and stored.get('topic') == topic
+    ):
+        cohort = _cohort_from_stored_problem(stored, correct)
+        if cohort:
+            body['cohort'] = cohort
+    return jsonify(body)
 
 
 @app.get('/api/v1/me/settings')
@@ -4377,6 +4498,114 @@ def api_v1_revision_queue_complete():
     if not ok:
         return _api_error('Revision queue item not found', 404, 'not_found')
     return jsonify({'ok': True})
+
+
+@app.post('/api/v1/me/reflections')
+@login_required
+def api_v1_create_reflection():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('JSON body required', 400, 'invalid_payload')
+
+    level = (payload.get('level') or '').strip()
+    subject = (payload.get('subject') or '').strip()
+    topic = (payload.get('topic') or '').strip()
+    source = (payload.get('source') or '').strip().lower()
+    difficulty = (payload.get('difficulty') or 'foundational').strip() or 'foundational'
+    prompt_type = payload.get('prompt_type')
+    reflection_text = payload.get('reflection_text') or ''
+    attempt_id = payload.get('attempt_id')
+
+    if not (level and subject and topic):
+        return _api_error('level, subject and topic are required', 400, 'missing_fields')
+    if source not in ('check', 'mcq'):
+        return _api_error('source must be check or mcq', 400, 'invalid_source')
+    try:
+        TOPICS[level][subject][topic]
+    except KeyError:
+        return _api_error('Invalid topic', 400, 'invalid_topic')
+
+    if prompt_type is not None:
+        normalized = str(prompt_type).strip().lower()
+        if normalized and normalized not in REFLECTION_PROMPT_TYPES:
+            return _api_error(
+                f'prompt_type must be one of: {", ".join(sorted(REFLECTION_PROMPT_TYPES))}',
+                400,
+                'invalid_prompt_type',
+            )
+        prompt_type = normalized or None
+
+    if attempt_id is not None:
+        try:
+            attempt_id = int(attempt_id)
+        except (TypeError, ValueError):
+            return _api_error('attempt_id must be an integer', 400, 'invalid_attempt_id')
+
+    try:
+        with get_db() as conn:
+            reflection_id = save_reflection(
+                conn,
+                current_user.id,
+                level,
+                subject,
+                topic,
+                source=source,
+                difficulty=difficulty,
+                prompt_type=prompt_type,
+                reflection_text=reflection_text,
+                attempt_id=attempt_id,
+            )
+            item = get_reflection(conn, current_user.id, reflection_id)
+    except ValueError as exc:
+        code = str(exc)
+        if code == 'empty_reflection':
+            return _api_error(
+                'prompt_type or reflection_text is required',
+                400,
+                'empty_reflection',
+            )
+        if code == 'reflection_too_long':
+            return _api_error(
+                f'reflection_text must be at most {MAX_REFLECTION_TEXT} characters',
+                400,
+                'reflection_too_long',
+            )
+        if code == 'invalid_attempt_id':
+            return _api_error('attempt_id not found', 404, 'not_found')
+        return _api_error(code, 400, 'invalid_request')
+
+    return jsonify({
+        'ok': True,
+        'reflection': _serialize_reflection(item, external_urls=True),
+    }), 201
+
+
+@app.get('/api/v1/me/reflections')
+@login_required
+def api_v1_list_reflections():
+    try:
+        limit = min(
+            max(int(request.args.get('limit', REFLECTIONS_DEFAULT_LIMIT)), 1),
+            REFLECTIONS_MAX_LIMIT,
+        )
+    except (TypeError, ValueError):
+        limit = REFLECTIONS_DEFAULT_LIMIT
+    before_id = request.args.get('before_id', type=int)
+    topic = (request.args.get('topic') or '').strip() or None
+    with get_db() as conn:
+        items = list_reflections(
+            conn,
+            current_user.id,
+            limit=limit,
+            before_id=before_id,
+            topic=topic,
+        )
+    serialized = [_serialize_reflection(item, external_urls=True) for item in items]
+    return jsonify({
+        'ok': True,
+        'reflections': serialized,
+        'next_before_id': serialized[-1]['id'] if serialized else None,
+    })
 
 
 @app.get('/api/v1/me/quiz-attempts')

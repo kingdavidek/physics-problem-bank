@@ -229,6 +229,43 @@ Response: `revision_queue[]` with `level`, `subject`, `topic`, `topic_label`, `p
 
 The profile page shows the top 3 due-today items in a "Due today" widget with the same actions.
 
+## Wrong-answer reflections (G4)
+
+Optional student notes after a wrong Check or MCQ answer (logged-in only). Reflections can link to a practice attempt when the client received `attempt_id` from the check or mcq-answer APIs.
+
+| Method | Path |
+|--------|------|
+| POST | `/api/v1/me/reflections` |
+| GET | `/api/v1/me/reflections` |
+
+**POST** body: `{ "level", "subject", "topic", "source" }` required (`source`: `check` or `mcq`); plus at least one of `prompt_type` or non-empty `reflection_text`. Optional: `difficulty`, `attempt_id` (must belong to the logged-in user).
+
+`prompt_type` values: `calculation_error`, `misread_question`, `forgot_formula`, `guessed`, `other`. `reflection_text` max 500 characters.
+
+Response `201`: `{ "ok": true, "reflection": { ... } }` with `id`, `topic_label`, `topic_url`, `attempt_id`, `prompt_type`, `reflection_text`, `created_at`.
+
+**GET** query: `limit` (1–100, default 20), `before_id` (cursor), optional `topic` filter.
+
+**Check / MCQ APIs** now include `attempt_id` in the JSON response when a practice attempt is recorded (logged-in, valid topic). Retries with `record_attempt: false` do not return a new `attempt_id`.
+
+After a wrong answer on the website (logged-in, generator / Quick Test / saved / shared practice with topic context), an optional **“What tripped you up?”** panel appears with quick-reason chips, optional free text, **Save note**, and **Not now**. Chip-only saves are one click when the text box is empty.
+
+## Cohort stats (G5)
+
+Anonymous aggregate difficulty for the **exact question** on screen (same stem + mark-scheme key). No individual student data is exposed. Stats appear only after at least **20** attempts on that question instance.
+
+Returned on **`POST /api/v1/problems/check`** and **`POST /api/v1/generator/mcq-answer`** (when the session holds the matching generated problem):
+
+```json
+"cohort": {
+  "wrong_pct": 68.0,
+  "sample_size": 142,
+  "min_sample_size": 20
+}
+```
+
+The website shows a muted line such as: *About 68% of students got this wrong (142 attempts).* Below the minimum sample size, `cohort` is omitted.
+
 ## Quiz history (G2)
 
 Paginated lesson quiz and generator MCQ history for the logged-in user.

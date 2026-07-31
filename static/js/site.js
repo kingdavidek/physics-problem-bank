@@ -396,6 +396,9 @@
     if (retryWrap) {
       retryWrap.hidden = true;
     }
+    removeWrongAnswerReflection(block);
+    delete block.dataset.reflectionOffered;
+    removeCohortHint(block);
     block.dispatchEvent(new CustomEvent('mcq-reset', { bubbles: true }));
   }
 
@@ -404,9 +407,233 @@
       || (block.parentElement && block.parentElement.querySelector('.mcq-feedback'));
   }
 
+  var REFLECTION_CHIP_OPTIONS = [
+    { type: 'calculation_error', label: 'Calculation slip' },
+    { type: 'misread_question', label: 'Misread the question' },
+    { type: 'forgot_formula', label: 'Forgot a formula or rule' },
+    { type: 'guessed', label: 'I guessed' },
+    { type: 'other', label: 'Something else' },
+  ];
+
+  function isReflectionEligible() {
+    var wrapper = document.querySelector('.site-wrapper');
+    return Boolean(wrapper && wrapper.getAttribute('data-user-logged-in') === '1');
+  }
+
+  function trackableFromBlock(block) {
+    if (!block || !block.dataset.level) return null;
+    return {
+      level: block.dataset.level,
+      subject: block.dataset.subject,
+      topic: block.dataset.topic,
+      difficulty: block.dataset.difficulty || 'foundational',
+    };
+  }
+
+  function removeWrongAnswerReflection(host) {
+    if (!host) return;
+    var panel = host.querySelector('.wrong-answer-reflection');
+    if (panel) panel.remove();
+  }
+
+  function saveWrongAnswerReflection(context, source, payload) {
+    var body = {
+      level: context.level,
+      subject: context.subject,
+      topic: context.topic,
+      difficulty: context.difficulty,
+      source: source,
+      reflection_text: payload.text || '',
+    };
+    if (payload.promptType) body.prompt_type = payload.promptType;
+    if (payload.attemptId) body.attempt_id = payload.attemptId;
+    return fetch('/api/v1/me/reflections', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify(body),
+    }).then(function (response) {
+      return response.json().then(function (data) {
+        if (!response.ok) {
+          var err = new Error((data && data.error) || 'Could not save reflection');
+          err.data = data;
+          throw err;
+        }
+        return data;
+      });
+    });
+  }
+
+  function showWrongAnswerReflection(host, context, source, attemptId) {
+    if (!host || !context) return;
+    removeWrongAnswerReflection(host);
+
+    var panel = document.createElement('div');
+    panel.className = 'wrong-answer-reflection';
+    panel.setAttribute('role', 'region');
+    panel.setAttribute('aria-label', 'Optional reflection');
+
+    var title = document.createElement('p');
+    title.className = 'wrong-answer-reflection-title';
+    title.textContent = 'What tripped you up?';
+    var optional = document.createElement('span');
+    optional.className = 'wrong-answer-reflection-optional';
+    optional.textContent = ' (optional)';
+    title.appendChild(optional);
+    panel.appendChild(title);
+
+    var chips = document.createElement('div');
+    chips.className = 'wrong-answer-reflection-chips';
+    var selectedPrompt = null;
+
+    var textarea = document.createElement('textarea');
+    textarea.className = 'wrong-answer-reflection-input';
+    textarea.rows = 2;
+    textarea.maxLength = 500;
+    textarea.placeholder = 'Anything else? (optional)';
+    textarea.setAttribute('aria-label', 'Optional reflection note');
+
+    var actions = document.createElement('div');
+    actions.className = 'wrong-answer-reflection-actions';
+
+    var saveBtn = document.createElement('button');
+    saveBtn.type = 'button';
+    saveBtn.className = 'btn btn-primary btn-sm wrong-answer-reflection-save';
+    saveBtn.textContent = 'Save note';
+
+    var skipBtn = document.createElement('button');
+    skipBtn.type = 'button';
+    skipBtn.className = 'btn-link wrong-answer-reflection-skip';
+    skipBtn.textContent = 'Not now';
+
+    var status = document.createElement('p');
+    status.className = 'wrong-answer-reflection-status';
+    status.hidden = true;
+
+    function dismissPanel() {
+      panel.remove();
+    }
+
+    function showSaved() {
+      chips.hidden = true;
+      textarea.hidden = true;
+      actions.hidden = true;
+      status.hidden = false;
+      status.textContent = 'Thanks \u2014 noted.';
+      status.style.color = '#16a34a';
+      window.setTimeout(dismissPanel, 1400);
+    }
+
+    function persistReflection(promptType) {
+      var text = (textarea.value || '').trim();
+      if (!promptType && !text) return Promise.reject(new Error('empty'));
+      saveBtn.disabled = true;
+      skipBtn.disabled = true;
+      chips.querySelectorAll('.wrong-answer-reflection-chip').forEach(function (btn) {
+        btn.disabled = true;
+      });
+      return saveWrongAnswerReflection(context, source, {
+        promptType: promptType,
+        text: text,
+        attemptId: attemptId,
+      }).then(function () {
+        showSaved();
+      }).catch(function () {
+        saveBtn.disabled = false;
+        skipBtn.disabled = false;
+        chips.querySelectorAll('.wrong-answer-reflection-chip').forEach(function (btn) {
+          btn.disabled = false;
+        });
+        if (typeof showAppToast === 'function') {
+          showAppToast('Could not save your note \u2014 try again.', 'error');
+        }
+      });
+    }
+
+    REFLECTION_CHIP_OPTIONS.forEach(function (option) {
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'btn btn-outline btn-sm wrong-answer-reflection-chip';
+      chip.textContent = option.label;
+      chip.setAttribute('data-prompt-type', option.type);
+      chip.addEventListener('click', function () {
+        selectedPrompt = option.type;
+        chips.querySelectorAll('.wrong-answer-reflection-chip').forEach(function (btn) {
+          btn.classList.toggle('is-selected', btn === chip);
+        });
+        var text = (textarea.value || '').trim();
+        if (!text) {
+          persistReflection(option.type);
+        }
+      });
+      chips.appendChild(chip);
+    });
+    panel.appendChild(chips);
+    panel.appendChild(textarea);
+
+    saveBtn.addEventListener('click', function () {
+      persistReflection(selectedPrompt);
+    });
+    skipBtn.addEventListener('click', dismissPanel);
+    actions.appendChild(saveBtn);
+    actions.appendChild(skipBtn);
+    panel.appendChild(actions);
+    panel.appendChild(status);
+    host.appendChild(panel);
+  }
+
+  function offerWrongAnswerReflection(block, source, data, recordThisAttempt) {
+    if (!recordThisAttempt || !isReflectionEligible() || !block) return;
+    if (data && (data.correct || isTextPartialScore(data))) return;
+    if (block.dataset.reflectionOffered === '1') return;
+    var context = trackableFromBlock(block);
+    if (!context) return;
+    block.dataset.reflectionOffered = '1';
+    var attemptId = data && data.attempt_id != null ? data.attempt_id : null;
+    showWrongAnswerReflection(block, context, source, attemptId);
+  }
+
+  function offerWrongAnswerReflectionMcq(block, attemptId, recordThisAttempt) {
+    if (!recordThisAttempt || !isReflectionEligible() || !block) return;
+    if (block.dataset.reflectionOffered === '1') return;
+    var context = trackableFromBlock(block);
+    if (!context) return;
+    block.dataset.reflectionOffered = '1';
+    showWrongAnswerReflection(block, context, 'mcq', attemptId);
+  }
+
+  function formatCohortHint(cohort) {
+    if (!cohort || cohort.wrong_pct == null || !cohort.sample_size) return '';
+    var pct = Math.round(Number(cohort.wrong_pct));
+    if (!isFinite(pct)) return '';
+    var attempts = Number(cohort.sample_size);
+    var attemptLabel = attempts === 1 ? 'attempt' : 'attempts';
+    return 'About ' + pct + '% of students got this wrong (' + attempts + ' ' + attemptLabel + ').';
+  }
+
+  function removeCohortHint(host) {
+    if (!host) return;
+    var el = host.querySelector('.cohort-hint');
+    if (el) el.remove();
+  }
+
+  function showCohortHint(host, cohort) {
+    if (!host) return;
+    var text = formatCohortHint(cohort);
+    removeCohortHint(host);
+    if (!text) return;
+    var el = document.createElement('p');
+    el.className = 'cohort-hint';
+    el.textContent = text;
+    host.appendChild(el);
+  }
+
   function persistMcqAnswer(block, userAnswer, correctAnswer, isCorrect) {
-    if (!block.dataset.level) return;
-    fetch('/api/v1/generator/mcq-answer', {
+    if (!block.dataset.level) return Promise.resolve({ attempt_id: null, cohort: null });
+    return fetch('/api/v1/generator/mcq-answer', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -422,7 +649,19 @@
         correct_answer: correctAnswer,
         correct: isCorrect,
       }),
-    }).catch(function () {});
+    })
+      .then(function (response) {
+        return response.json().then(function (data) {
+          if (!response.ok) {
+            return { attempt_id: null, cohort: null };
+          }
+          return {
+            attempt_id: data.attempt_id != null ? data.attempt_id : null,
+            cohort: data.cohort || null,
+          };
+        });
+      })
+      .catch(function () { return { attempt_id: null, cohort: null }; });
   }
 
   function wireMcqBlock(block) {
@@ -468,7 +707,14 @@
         }
         if (trackable && block.dataset.mcqPersisted !== '1') {
           block.dataset.mcqPersisted = '1';
-          persistMcqAnswer(block, letter, correctRaw, isCorrect);
+          var recordThisAttempt = true;
+          var persistPromise = persistMcqAnswer(block, letter, correctRaw, isCorrect);
+          persistPromise.then(function (result) {
+            if (!isCorrect) {
+              offerWrongAnswerReflectionMcq(block, result.attempt_id, recordThisAttempt);
+            }
+            showCohortHint(block, result.cohort);
+          });
         }
       });
     });
@@ -2415,6 +2661,9 @@
       feedback.textContent = '';
       feedback.style.color = '';
     }
+    removeWrongAnswerReflection(block);
+    delete block.dataset.reflectionOffered;
+    removeCohortHint(block);
     delete block.dataset.freeResponsePersisted;
   }
 
@@ -2533,6 +2782,7 @@
           if (typeof onDone === 'function') {
             onDone(data, userValue, fieldFeedback);
           }
+          showCohortHint(block, data.cohort);
           return data;
         });
     }
@@ -3083,6 +3333,7 @@
       }
 
       globalThis.runPythonRunTests(code, tests).then(function (results) {
+        var recordThisAttempt = trackable && block.dataset.freeResponsePersisted !== '1';
         var body = {
           user_answer: JSON.stringify(results),
           correct_answer_raw: correctRaw,
@@ -3136,7 +3387,13 @@
           }
           if (ok && trackable) {
             block.dataset.freeResponsePersisted = '1';
+          } else if (!ok) {
+            offerWrongAnswerReflection(block, 'check', data, recordThisAttempt);
+            if (trackable && block.dataset.freeResponsePersisted !== '1') {
+              block.dataset.freeResponsePersisted = '1';
+            }
           }
+          showCohortHint(block, data.cohort);
         });
       }).catch(function (err) {
         textarea.disabled = false;
@@ -3272,6 +3529,7 @@
         }
         return;
       }
+      var recordThisAttempt = trackable && block.dataset.freeResponsePersisted !== '1';
       var body = {
         user_answer: selected.join('|'),
         correct_answer_raw: correctRaw,
@@ -3282,6 +3540,9 @@
         body.subject = block.dataset.subject;
         body.topic = block.dataset.topic;
         body.difficulty = block.dataset.difficulty || 'foundational';
+        if (block.dataset.freeResponsePersisted === '1') {
+          body.record_attempt = false;
+        }
       }
       checkBtn.disabled = true;
       fetch('/api/v1/problems/check', {
@@ -3313,6 +3574,11 @@
             clearBtn: clearBtn,
             blockEl: block,
           });
+          offerWrongAnswerReflection(block, 'check', data, recordThisAttempt);
+          if (trackable && block.dataset.freeResponsePersisted !== '1') {
+            block.dataset.freeResponsePersisted = '1';
+          }
+          showCohortHint(block, data.cohort);
         })
         .catch(function (err) {
           checkBtn.disabled = false;
@@ -3692,6 +3958,8 @@
 
       var userAnswer = readUserAnswer();
 
+      var recordThisAttempt = trackable && block.dataset.freeResponsePersisted !== '1';
+
       var body = {
         user_answer: userAnswer,
         correct_answer_raw: correctRaw,
@@ -3768,7 +4036,9 @@
               feedback.textContent = '\u2717 ' + freeResponseWrongFeedback(block, data);
               feedback.style.color = '#dc2626';
             }
+            offerWrongAnswerReflection(block, 'check', data, recordThisAttempt);
           }
+          showCohortHint(block, data.cohort);
           if (trackable && block.dataset.freeResponsePersisted !== '1') {
             block.dataset.freeResponsePersisted = '1';
           }
