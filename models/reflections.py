@@ -18,6 +18,14 @@ PROMPT_TYPES = frozenset({
     'other',
 })
 
+PROMPT_TYPE_LABELS = {
+    'calculation_error': 'Calculation slip',
+    'misread_question': 'Misread the question',
+    'forgot_formula': 'Forgot a formula or rule',
+    'guessed': 'I guessed',
+    'other': 'Something else',
+}
+
 SOURCES = frozenset({'check', 'mcq'})
 
 
@@ -120,7 +128,15 @@ def get_reflection(conn, user_id, reflection_id):
     return _reflection_row(row)
 
 
-def list_reflections(conn, user_id, *, limit=DEFAULT_LIMIT, before_id=None, topic=None):
+def list_reflections(
+    conn,
+    user_id,
+    *,
+    limit=DEFAULT_LIMIT,
+    before_id=None,
+    topic=None,
+    prompt_type=None,
+):
     params = [user_id]
     clauses = ['user_id = ?']
     if before_id is not None:
@@ -129,6 +145,12 @@ def list_reflections(conn, user_id, *, limit=DEFAULT_LIMIT, before_id=None, topi
     if topic:
         clauses.append('topic = ?')
         params.append(topic.strip())
+    normalized_prompt = _normalize_prompt_type(prompt_type)
+    if prompt_type is not None and prompt_type != '':
+        if normalized_prompt is None:
+            return []
+        clauses.append('prompt_type = ?')
+        params.append(normalized_prompt)
     params.append(min(max(int(limit), 1), MAX_LIMIT))
     rows = conn.execute(
         f'''

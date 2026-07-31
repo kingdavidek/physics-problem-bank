@@ -105,6 +105,132 @@
 </section>
 {% endif %}
 
+<section class="section-panel" id="revision-plan">
+    <div class="section-panel-header">Exam revision plan</div>
+    <div class="section-panel-body">
+        <p class="profile-empty" style="margin-top:0;margin-bottom:12px;">Set an exam date and we'll spread your weak topics across the study days before it.</p>
+        <form method="POST" action="{{ url_for('profile_revision_plan_save') }}" class="revision-plan-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="revision-plan-fields">
+                <label>
+                    Exam date
+                    <input type="date" name="exam_date" required
+                           value="{{ revision_plan.exam_date if revision_plan else '' }}">
+                </label>
+                <label>
+                    Level
+                    <select name="level" required>
+                        {% set plan_level = revision_plan.level if revision_plan else 'gcse' %}
+                        {% for level in revision_plan_levels %}
+                        <option value="{{ level }}" {% if level == plan_level %}selected{% endif %}>{{ level | upper }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label>
+                    Subject
+                    <select name="subject" required>
+                        {% set plan_subject = revision_plan.subject if revision_plan else 'maths' %}
+                        {% for subject in revision_plan_subjects %}
+                        <option value="{{ subject }}" {% if subject == plan_subject %}selected{% endif %}>{{ subject | replace('_', ' ') | title }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <button type="submit" class="btn btn-primary btn-sm">Save plan</button>
+            </div>
+        </form>
+        {% if revision_plan %}
+        <p class="profile-empty" style="margin-top:14px;margin-bottom:10px;">
+            <strong>{{ revision_plan.level_label }} {{ revision_plan.subject_label }}</strong>
+            · Exam {{ revision_plan.exam_date }}
+            · {{ revision_plan.days_remaining }} day{{ 's' if revision_plan.days_remaining != 1 else '' }} left
+            · {{ revision_plan.topics_scheduled }} topic{{ 's' if revision_plan.topics_scheduled != 1 else '' }} scheduled
+        </p>
+        {% if revision_plan.sessions %}
+        <ul class="profile-list">
+            {% for session in revision_plan.sessions %}
+            {% if session.topics %}
+            <li class="profile-list-item">
+                <strong>{{ session.plan_date }}</strong>
+                <span class="profile-list-meta">
+                    {% for topic in session.topics %}
+                    <a href="{{ topic.topic_url }}">{{ topic.topic_label }}</a>{% if topic.reasons %} ({{ topic.reasons[0] }}){% endif %}{% if not loop.last %} · {% endif %}
+                    {% endfor %}
+                </span>
+            </li>
+            {% endif %}
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty">No weak topics in this subject yet — complete quizzes or practice questions first, then refresh your plan.</p>
+        {% endif %}
+        <form method="POST" action="{{ url_for('profile_revision_plan_save') }}" style="margin-top:12px;" onsubmit="return confirm('Clear your exam revision plan?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="clear">
+            <button type="submit" class="btn btn-outline btn-sm">Clear plan</button>
+        </form>
+        {% endif %}
+    </div>
+</section>
+
+{% if skill_gaps %}
+<section class="section-panel">
+    <div class="section-panel-header">Skill patterns</div>
+    <div class="section-panel-body">
+        <p class="profile-empty" style="margin-top:0;margin-bottom:12px;">Recurring reasons you gave after wrong answers — rolled up across topics.</p>
+        <ul class="profile-list">
+            {% for gap in skill_gaps %}
+            <li class="profile-list-item">
+                <strong>{{ gap.label }}</strong>
+                <span class="profile-list-meta">
+                    {{ gap.reflection_count }} reflection{{ 's' if gap.reflection_count != 1 else '' }}
+                    across {{ gap.topic_count }} topic{{ 's' if gap.topic_count != 1 else '' }}
+                    {% if gap.last_reflected_date %} · Last {{ gap.last_reflected_date }}{% endif %}
+                    {% if gap.overlaps_weak_topic %} · Also in topics to revisit{% endif %}
+                </span>
+                <span style="display:block;margin-top:6px;">
+                    {% for topic in gap.topics %}
+                    <a href="{{ topic.topic_url }}">{{ topic.topic_label }}</a>{% if topic.is_weak_topic %} (weak){% endif %}{% if not loop.last %} · {% endif %}
+                    {% endfor %}
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+{% endif %}
+
+<section class="section-panel" id="reflections">
+    <div class="section-panel-header">My reflections</div>
+    <div class="section-panel-body">
+        <p class="profile-empty" style="margin-top:0;margin-bottom:12px;">Notes you saved after wrong answers. Filter by mistake type:</p>
+        <div class="profile-reflection-filters">
+            <a href="{{ url_for('profile') }}#reflections" class="profile-reflection-filter{% if not reflection_type_filter %} is-active{% endif %}">All</a>
+            {% for pt, label in reflection_prompt_types %}
+            <a href="{{ url_for('profile', reflection_type=pt) }}#reflections" class="profile-reflection-filter{% if reflection_type_filter == pt %} is-active{% endif %}">{{ label }}</a>
+            {% endfor %}
+        </div>
+        {% if reflections %}
+        <ul class="profile-list" style="margin-top:14px;">
+            {% for item in reflections %}
+            <li class="profile-list-item">
+                <div class="profile-list-main">
+                    <a href="{{ item.topic_url }}"><strong>{{ item.topic_label }}</strong></a>
+                    <span class="profile-list-meta">
+                        {% if item.prompt_type_label %}{{ item.prompt_type_label }} · {% endif %}
+                        {{ item.created_at[:10] }}
+                        {% if item.reflection_text %} · {{ item.reflection_text | truncate(80) }}{% endif %}
+                    </span>
+                </div>
+                <a href="{{ url_for('index', level=item.level, subject=item.subject, topic=item.topic, difficulty=item.difficulty) }}" class="btn btn-outline btn-sm">Practise</a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty" style="margin-top:14px;">No reflections yet{% if reflection_type_filter %} for this filter{% endif %}. After a wrong Check or MCQ answer, use the optional “What tripped you up?” prompt on the question page.</p>
+        {% endif %}
+    </div>
+</section>
+
 {% if milestones %}
 <section class="section-panel">
     <div class="section-panel-header">

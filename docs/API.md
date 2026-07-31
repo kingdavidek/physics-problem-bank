@@ -244,7 +244,7 @@ Optional student notes after a wrong Check or MCQ answer (logged-in only). Refle
 
 Response `201`: `{ "ok": true, "reflection": { ... } }` with `id`, `topic_label`, `topic_url`, `attempt_id`, `prompt_type`, `reflection_text`, `created_at`.
 
-**GET** query: `limit` (1–100, default 20), `before_id` (cursor), optional `topic` filter.
+**GET** query: `limit` (1–100, default 20), `before_id` (cursor), optional `topic` filter, optional `prompt_type` chip filter.
 
 **Check / MCQ APIs** now include `attempt_id` in the JSON response when a practice attempt is recorded (logged-in, valid topic). Retries with `record_attempt: false` do not return a new `attempt_id`.
 
@@ -265,6 +265,39 @@ Returned on **`POST /api/v1/problems/check`** and **`POST /api/v1/generator/mcq-
 ```
 
 The website shows a muted line such as: *About 68% of students got this wrong (142 attempts).* Below the minimum sample size, `cohort` is omitted.
+
+## Skill gaps and reflections (G6)
+
+Cross-topic roll-up of wrong-answer reflection chips (logged-in only), plus profile history.
+
+| Method | Path |
+|--------|------|
+| GET | `/api/v1/me/skill-gaps` |
+| GET | `/api/v1/me/reflections` (extended) |
+
+**Skill gaps** query: `limit` (1–20, default 6), optional `lookback_days` (default 90). A gap appears when the same `prompt_type` has at least **2** reflections in the lookback window.
+
+Response `skill_gaps[]`: `prompt_type`, `label`, `reflection_count`, `topic_count`, `last_reflected_at`, `overlaps_weak_topic` (true when any linked topic is also in weak-topics), and `topics[]` with `topic_label`, `topic_url`, `lesson_quiz_url`, `is_weak_topic`, `reflection_count`.
+
+**Reflections list** adds query `prompt_type` (chip filter, same values as G4). Items include `prompt_type_label`.
+
+Profile page: **Skill patterns** section (when gaps exist) and **My reflections** with filter chips (`?reflection_type=`).
+
+## Revision planner (G7)
+
+Exam-date study schedule from weak topics (logged-in only). Spreads scoped weak topics across calendar days from **today** through the day **before** the exam (max **2 topics/day**, up to **180** days ahead).
+
+| Method | Path |
+|--------|------|
+| GET | `/api/v1/me/revision-plan` |
+| PUT | `/api/v1/me/revision-plan` |
+| DELETE | `/api/v1/me/revision-plan` |
+
+**PUT** body: `{ "level", "subject", "exam_date" }` (`exam_date`: `YYYY-MM-DD`, today or future).
+
+Response `revision_plan`: `exam_date`, `days_remaining`, `study_day_count`, `topics_scheduled`, `weak_topic_count`, `sessions[]` (`plan_date`, `topics[]` with `topic_label`, `topic_url`, `lesson_quiz_url`, `reasons`, weakness metadata).
+
+Profile page: **Exam revision plan** section with date/scope form and day-by-day schedule. Web form: `POST /profile/revision-plan` (CSRF); `action=clear` removes the plan.
 
 ## Quiz history (G2)
 

@@ -259,10 +259,25 @@ from models.reflections import (
     DEFAULT_LIMIT as REFLECTIONS_DEFAULT_LIMIT,
     MAX_LIMIT as REFLECTIONS_MAX_LIMIT,
     MAX_REFLECTION_TEXT,
+    PROMPT_TYPE_LABELS,
     PROMPT_TYPES as REFLECTION_PROMPT_TYPES,
     get_reflection,
     list_reflections,
     save_reflection,
+)
+from models.skill_gaps import (
+    DEFAULT_LIMIT as SKILL_GAPS_DEFAULT_LIMIT,
+    DEFAULT_LOOKBACK_DAYS as SKILL_GAPS_LOOKBACK_DAYS,
+    analyze_skill_gaps,
+    prompt_type_label,
+)
+from models.revision_planner import (
+    MAX_EXAM_LEAD_DAYS,
+    build_revision_plan,
+    delete_revision_plan_settings,
+    get_revision_plan_settings,
+    revision_plan_for_user,
+    upsert_revision_plan_settings,
 )
 from models.revision_queue import (
     DUE_TODAY_LIMIT,
@@ -933,6 +948,10 @@ with get_db() as conn:
         ON user_wrong_answer_reflections (user_id, id DESC)
     """)
     conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_user_wrong_answer_reflections_prompt
+        ON user_wrong_answer_reflections (user_id, prompt_type, id DESC)
+    """)
+    conn.execute("""
         CREATE TABLE IF NOT EXISTS problem_cohort_stats (
             problem_key TEXT PRIMARY KEY,
             level TEXT NOT NULL,
@@ -946,6 +965,17 @@ with get_db() as conn:
     conn.execute("""
         CREATE INDEX IF NOT EXISTS idx_problem_cohort_stats_topic
         ON problem_cohort_stats (level, subject, topic)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_revision_plans (
+            user_id INTEGER PRIMARY KEY,
+            level TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            exam_date TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
     """)
     conn.execute("""
         CREATE TABLE IF NOT EXISTS user_blocks (
@@ -2047,6 +2077,7 @@ def _serialize_reflection(item, *, external_urls=False):
         'source': item['source'],
         'attempt_id': item.get('attempt_id'),
         'prompt_type': item.get('prompt_type'),
+        'prompt_type_label': prompt_type_label(item.get('prompt_type')),
         'reflection_text': item.get('reflection_text') or '',
         'created_at': item.get('created_at'),
         'topic_url': url_for(
@@ -2056,6 +2087,134 @@ def _serialize_reflection(item, *, external_urls=False):
             topic=topic,
             _external=external_urls,
         ),
+    }
+
+
+def _skill_gaps_for_user(
+    conn,
+    user_id,
+    *,
+    limit=SKILL_GAPS_DEFAULT_LIMIT,
+    lookback_days=SKILL_GAPS_LOOKBACK_DAYS,
+    external_urls=False,
+):
+    weak_keys = {
+        (item['level'], item['subject'], item['topic'])
+        for item in analyze_weak_topics(conn, user_id, limit=50)
+    }
+    items = analyze_skill_gaps(
+        conn,
+        user_id,
+        limit=limit,
+        lookback_days=lookback_days,
+    )
+    out = []
+    for item in items:
+        topics_out = []
+        overlaps_weak = False
+        for topic_item in item.get('topics') or []:
+            level, subject, topic = (
+                topic_item['level'],
+                topic_item['subject'],
+                topic_item['topic'],
+            )
+            key = (level, subject, topic)
+            if key in weak_keys:
+                overlaps_weak = True
+            lesson_quiz_url = None
+            if _lesson_quiz_available(level, subject, topic):
+                lesson_quiz_url = url_for(
+                    'lesson_mcq_quiz',
+                    level=level,
+                    subject=subject,
+                    topic=topic,
+                    _external=external_urls,
+                )
+            topics_out.append({
+                **topic_item,
+                'topic_label': _topic_label(level, subject, topic),
+                'topic_url': url_for(
+                    'topic_page',
+                    level=level,
+                    subject=subject,
+                    topic=topic,
+                    _external=external_urls,
+                ),
+                'lesson_quiz_url': lesson_quiz_url,
+                'is_weak_topic': key in weak_keys,
+            })
+        out.append({
+            'prompt_type': item['prompt_type'],
+            'label': item['label'],
+            'reflection_count': item['reflection_count'],
+            'topic_count': item['topic_count'],
+            'last_reflected_at': item.get('last_reflected_at'),
+            'last_reflected_date': (item.get('last_reflected_at') or '')[:10] or None,
+            'topics': topics_out,
+            'overlaps_weak_topic': overlaps_weak,
+        })
+    return out
+
+
+def _revision_plan_scope_options():
+    options = []
+    for level, subjects in TOPICS.items():
+        for subject in subjects:
+            options.append({'level': level, 'subject': subject})
+    options.sort(key=lambda item: (item['level'], item['subject']))
+    return options
+
+
+def _revision_plan_levels():
+    return sorted(TOPICS.keys())
+
+
+def _revision_plan_subjects_for_level(level):
+    try:
+        return sorted(TOPICS[level].keys())
+    except KeyError:
+        return []
+
+
+def _revision_plan_for_user(conn, user_id, *, external_urls=False):
+    plan = revision_plan_for_user(conn, user_id)
+    if not plan:
+        return None
+    enriched_sessions = []
+    for session in plan.get('sessions') or []:
+        topics_out = []
+        for item in session.get('topics') or []:
+            level, subject, topic = item['level'], item['subject'], item['topic']
+            lesson_quiz_url = None
+            if _lesson_quiz_available(level, subject, topic):
+                lesson_quiz_url = url_for(
+                    'lesson_mcq_quiz',
+                    level=level,
+                    subject=subject,
+                    topic=topic,
+                    _external=external_urls,
+                )
+            topics_out.append({
+                **item,
+                'topic_label': _topic_label(level, subject, topic),
+                'topic_url': url_for(
+                    'topic_page',
+                    level=level,
+                    subject=subject,
+                    topic=topic,
+                    _external=external_urls,
+                ),
+                'lesson_quiz_url': lesson_quiz_url,
+            })
+        enriched_sessions.append({
+            'plan_date': session['plan_date'],
+            'topics': topics_out,
+        })
+    return {
+        **plan,
+        'subject_label': plan['subject'].replace('_', ' ').title(),
+        'level_label': plan['level'].replace('_', ' ').upper(),
+        'sessions': enriched_sessions,
     }
 
 
@@ -3449,6 +3608,17 @@ def profile():
         buddy_recap = buddy_weekly_recap(conn, current_user.id)
         weak_topics = _weak_topics_for_user(conn, current_user.id, limit=8)
         due_today = _revision_queue_for_user(conn, current_user.id)
+        skill_gaps = _skill_gaps_for_user(conn, current_user.id, limit=6)
+        reflection_type = (request.args.get('reflection_type') or '').strip().lower() or None
+        if reflection_type and reflection_type not in REFLECTION_PROMPT_TYPES:
+            reflection_type = None
+        reflections = list_reflections(
+            conn,
+            current_user.id,
+            limit=12,
+            prompt_type=reflection_type,
+        )
+        revision_plan = _revision_plan_for_user(conn, current_user.id)
     for item in saved:
         item['topic_label'] = _topic_label(item['level'], item['subject'], item['topic'])
     for item in progress:
@@ -3475,6 +3645,9 @@ def profile():
     for item in challenges:
         item['topic_label'] = _topic_label(item['level'], item['subject'], item['topic'])
         item['summary'] = serialize_challenge(item, current_user.id)
+    reflection_rows = [
+        _serialize_reflection(item, external_urls=False) for item in reflections
+    ]
     pending_challenges = sum(
         1 for c in challenges
         if c['status'] == CHALLENGE_PENDING
@@ -3499,8 +3672,63 @@ def profile():
         buddy_recap=buddy_recap,
         weak_topics=weak_topics,
         due_today=due_today,
+        skill_gaps=skill_gaps,
+        reflections=reflection_rows,
+        reflection_type_filter=reflection_type,
+        reflection_prompt_types=sorted(PROMPT_TYPE_LABELS.items()),
+        revision_plan=revision_plan,
+        revision_plan_levels=_revision_plan_levels(),
+        revision_plan_subjects=_revision_plan_subjects_for_level(
+            revision_plan['level'] if revision_plan else 'gcse'
+        ),
         public_profile_url=_public_profile_url(current_user.handle),
     )
+
+
+@app.post('/profile/revision-plan')
+@login_required
+def profile_revision_plan_save():
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash('Session expired — try again.', 'error')
+        return redirect(url_for('profile'))
+
+    if request.form.get('action') == 'clear':
+        with get_db() as conn:
+            delete_revision_plan_settings(conn, current_user.id)
+        flash('Exam revision plan cleared.', 'success')
+        return redirect(url_for('profile'))
+
+    level = (request.form.get('level') or '').strip()
+    subject = (request.form.get('subject') or '').strip()
+    exam_date = (request.form.get('exam_date') or '').strip()
+    try:
+        TOPICS[level][subject]
+    except KeyError:
+        flash('Choose a valid level and subject.', 'error')
+        return redirect(url_for('profile'))
+    try:
+        with get_db() as conn:
+            upsert_revision_plan_settings(
+                conn,
+                current_user.id,
+                level,
+                subject,
+                exam_date,
+            )
+    except ValueError as exc:
+        code = str(exc)
+        if code == 'exam_date_past':
+            flash('Exam date must be today or in the future.', 'error')
+        elif code == 'exam_date_too_far':
+            flash(f'Exam date must be within {MAX_EXAM_LEAD_DAYS} days.', 'error')
+        elif code == 'invalid_exam_date':
+            flash('Enter a valid exam date.', 'error')
+        else:
+            flash('Could not save revision plan — check your inputs.', 'error')
+        return redirect(url_for('profile'))
+
+    flash('Exam revision plan updated.', 'success')
+    return redirect(url_for('profile'))
 
 
 @app.route('/profile/settings', methods=['GET', 'POST'])
@@ -4592,6 +4820,7 @@ def api_v1_list_reflections():
         limit = REFLECTIONS_DEFAULT_LIMIT
     before_id = request.args.get('before_id', type=int)
     topic = (request.args.get('topic') or '').strip() or None
+    prompt_type = (request.args.get('prompt_type') or '').strip().lower() or None
     with get_db() as conn:
         items = list_reflections(
             conn,
@@ -4599,6 +4828,7 @@ def api_v1_list_reflections():
             limit=limit,
             before_id=before_id,
             topic=topic,
+            prompt_type=prompt_type,
         )
     serialized = [_serialize_reflection(item, external_urls=True) for item in items]
     return jsonify({
@@ -4606,6 +4836,87 @@ def api_v1_list_reflections():
         'reflections': serialized,
         'next_before_id': serialized[-1]['id'] if serialized else None,
     })
+
+
+@app.get('/api/v1/me/skill-gaps')
+@login_required
+def api_v1_me_skill_gaps():
+    try:
+        limit = min(max(int(request.args.get('limit', SKILL_GAPS_DEFAULT_LIMIT)), 1), 20)
+    except (TypeError, ValueError):
+        limit = SKILL_GAPS_DEFAULT_LIMIT
+    lookback_days = request.args.get('lookback_days', type=int)
+    if lookback_days is not None and lookback_days < 1:
+        lookback_days = SKILL_GAPS_LOOKBACK_DAYS
+    with get_db() as conn:
+        skill_gaps = _skill_gaps_for_user(
+            conn,
+            current_user.id,
+            limit=limit,
+            lookback_days=lookback_days,
+            external_urls=True,
+        )
+    return jsonify({'ok': True, 'skill_gaps': skill_gaps})
+
+
+@app.get('/api/v1/me/revision-plan')
+@login_required
+def api_v1_get_revision_plan():
+    with get_db() as conn:
+        plan = _revision_plan_for_user(conn, current_user.id, external_urls=True)
+    return jsonify({'ok': True, 'revision_plan': plan})
+
+
+@app.put('/api/v1/me/revision-plan')
+@login_required
+def api_v1_put_revision_plan():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('JSON body required', 400, 'invalid_payload')
+
+    level = (payload.get('level') or '').strip()
+    subject = (payload.get('subject') or '').strip()
+    exam_date = (payload.get('exam_date') or '').strip()
+    if not (level and subject and exam_date):
+        return _api_error('level, subject and exam_date are required', 400, 'missing_fields')
+    try:
+        TOPICS[level][subject]
+    except KeyError:
+        return _api_error('Invalid level or subject', 400, 'invalid_topic')
+
+    try:
+        with get_db() as conn:
+            upsert_revision_plan_settings(
+                conn,
+                current_user.id,
+                level,
+                subject,
+                exam_date,
+            )
+            plan = _revision_plan_for_user(conn, current_user.id, external_urls=True)
+    except ValueError as exc:
+        code = str(exc)
+        if code == 'exam_date_past':
+            return _api_error('exam_date must be today or in the future', 400, 'exam_date_past')
+        if code == 'exam_date_too_far':
+            return _api_error(
+                f'exam_date must be within {MAX_EXAM_LEAD_DAYS} days',
+                400,
+                'exam_date_too_far',
+            )
+        if code == 'invalid_exam_date':
+            return _api_error('exam_date must be YYYY-MM-DD', 400, 'invalid_exam_date')
+        return _api_error(code, 400, 'invalid_request')
+
+    return jsonify({'ok': True, 'revision_plan': plan})
+
+
+@app.delete('/api/v1/me/revision-plan')
+@login_required
+def api_v1_delete_revision_plan():
+    with get_db() as conn:
+        delete_revision_plan_settings(conn, current_user.id)
+    return jsonify({'ok': True})
 
 
 @app.get('/api/v1/me/quiz-attempts')
