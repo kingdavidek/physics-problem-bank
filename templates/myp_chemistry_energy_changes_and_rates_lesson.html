@@ -139,6 +139,7 @@
   <!-- Quick Test -->
   <div style="text-align:center; margin-top: 24px; margin-bottom: 48px;">
     <form method="POST" action="/quicktest/start" style="display:inline;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="level" value="myp">
       <input type="hidden" name="subject" value="chemistry">
       <input type="hidden" name="topic" value="energy_changes_and_rates">

@@ -1,0 +1,329 @@
+# Problem Bank — Architecture & Product Overview
+
+**Last updated:** 2026-07-31  
+**Repository:** `maths_generator/physics-problem-bank`  
+**Audience:** Developers, AI agents, and technical stakeholders  
+
+This document describes **what Problem Bank is today**: product goals, system architecture, major features, data model, and how the pieces fit together. For API contracts see `docs/API.md`. For deployment see `docs/DEPLOY.md`. For planned work see `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md`.
+
+---
+
+## 1. Product vision and goals
+
+### 1.1 What Problem Bank is
+
+Problem Bank is a **free curriculum problem bank** for secondary and early post-16 study. Learners browse revision content, generate fresh exam-style questions with instant worked solutions, and optionally create an account to track progress, save work, and study with friends.
+
+**Primary audiences:** GCSE, A-Level, and IB MYP students studying **maths**, **physics**, and **computer science**.
+
+**Core value proposition:**
+
+- **Learn** — topic pages with explanations, formulae, worked examples, and embedded quick checks.
+- **Practise** — unlimited generated questions at chosen difficulty and mode (written or MCQ).
+- **Check** — instant auto-grading for typed answers and MCQs, with hints and model solutions.
+- **Improve** — logged-in users get weak-topic detection, spaced revision, reflections, and exam planning (Phase G).
+
+### 1.2 Design principles (as implemented)
+
+| Principle | How it shows up |
+|-----------|-----------------|
+| **Same backend, web + API** | Flask serves Jinja templates and `/api/v1/*` JSON for PWA and future native clients |
+| **Generator-first** | Most practice content is procedurally generated, not a fixed question bank |
+| **Progressive account value** | Anonymous use is supported; accounts unlock difficult tier, saves, history, social, analytics |
+| **Privacy-aware social** | Follows, visibility settings, blocks; peer features are opt-in and separate from authority roles |
+| **Forward-compatible schema** | SQLite tables created with `CREATE IF NOT EXISTS`; no migration framework required for typical releases |
+
+### 1.3 What Problem Bank is not
+
+- Not a full LMS (no course authoring, timetabling, or school MIS integration today).
+- Not a live tutoring or chat platform (study pairs are accountability buddies, not messaging).
+- Not a paid subscription product in current code (free accounts, optional email digest).
+
+---
+
+## 2. Technology stack
+
+| Layer | Technology | Notes |
+|-------|------------|-------|
+| **Runtime** | Python 3.12+ | CI uses 3.12 |
+| **Web framework** | Flask ≥3.0 | Single main app in `app.py` (~7,600 lines) |
+| **Auth** | Flask-Login + Werkzeug password hashing | Session cookies + Bearer API tokens |
+| **Database** | SQLite | `data/quicktest.db`; schema init inline in `app.py` |
+| **Math / grading** | SymPy ≥1.12 | Symbolic equivalence for algebra, surds, quadratics, etc. |
+| **Templates** | Jinja2 | ~79 HTML templates under `templates/` |
+| **Frontend JS** | Vanilla JavaScript | `static/js/site.js` and feature modules |
+| **Math rendering** | MathJax | `static/js/mathjax-config.js` |
+| **CS Python grading** | Pyodide (in-browser) | `python-run-grader.js`, worker for write-code questions |
+| **PWA** | Service worker + manifest | Offline shell; API always network-only |
+| **Optional AI** | DeepSeek / OpenAI | Lesson/quiz assist via env-configured keys |
+| **Optional email** | Resend / SendGrid / SMTP | Weekly digest (`docs/EMAIL_SETUP.md`) |
+| **Deployment** | PythonAnywhere (documented) | WSGI entry: `from app import app as application` |
+
+**Legacy note:** `flask_app.py` is an early prototype with two topics only. Production uses `app.py`.
+
+---
+
+## 3. High-level system architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Clients                                   │
+│  Browser (Jinja pages) │ PWA │ Native app (Bearer token)        │
+└───────────────┬─────────────────────────────────────────────────┘
+                │ HTTP(S)
+                ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     app.py (Flask)                               │
+│  Routes │ CSRF/CSP/CORS │ Session │ API v1 │ PWA endpoints      │
+└───────┬─────────────────────────────────────────────────────────┘
+        │
+        ├──────────────┬──────────────┬──────────────┬──────────────┐
+        ▼              ▼              ▼              ▼              ▼
+   topic_registry   generators/    models/      templates/    static/js
+   topics_data.py   shared/        (SQLite)     Jinja HTML    PWA, UI
+                    answer_checkers
+        │              │              │
+        └──────────────┴──────────────┴──► data/quicktest.db
+```
+
+### 3.1 Request flow — generate and check
+
+1. User selects level / subject / topic / difficulty / mode on `/` or via API.
+2. `app.py` resolves generator from `topic_registry.py` → `TOPICS[level][subject][topic]`.
+3. Generator callable returns a **problem dict** (`question`, `solution`, optional grading fields).
+4. Problem stored in session as `last_problem_payload` (web) or returned in API JSON.
+5. **MCQ:** client posts answer → `POST /api/v1/generator/mcq-answer`.
+6. **Free response:** client posts typed answer → `POST /api/v1/problems/check` → `check_answer()` in `generators/shared/answer_checkers.py`.
+7. Logged-in users: attempts recorded; Phase G features (weak topics, reflections, cohort stats) consume this data.
+
+### 3.2 Curriculum map
+
+The canonical topic tree lives in **`topic_registry.py`**:
+
+```
+TOPICS[level][subject][topic] → { name, func, variants_func? }
+```
+
+Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.py`**.
+
+| Level | Subjects (implemented) | Approx. scale |
+|-------|------------------------|---------------|
+| **gcse** | maths (~30 topics), physics (2), cs (10) | Largest coverage |
+| **alevel** | physics (magnetism, photoelectric, particles) | 3 topics |
+| **myp** | chemistry (redox, energy_changes_and_rates) | 2 topics |
+
+---
+
+## 4. Repository layout
+
+| Path | Role |
+|------|------|
+| **`app.py`** | Main application: routes, DB schema, serializers, API v1, web UI |
+| **`topic_registry.py`** | Topic catalog → generator functions |
+| **`topics_data.py`** | Lesson/revision metadata per topic |
+| **`models/`** | Business logic and persistence helpers |
+| **`generators/`** | Problem generators by curriculum level |
+| **`generators/shared/`** | Answer checkers, lesson quiz builder, variant utils, lesson assist |
+| **`templates/`** | Jinja2 pages (lessons, generator, profile, social) |
+| **`static/`** | JavaScript, PWA manifest, icons, service worker |
+| **`scripts/`** | Smoke tests, maintenance, email digest |
+| **`docs/`** | API, deploy, architecture, future ideas |
+| **`data/quicktest.db`** | SQLite database (local/dev; backup in production) |
+
+---
+
+## 5. Core features (as shipped)
+
+### 5.1 Content and practice
+
+| Feature | Entry points | Key modules |
+|---------|--------------|-------------|
+| **Topic browser** | `/topics`, `/topic/<l>/<s>/<t>` | `topics_data.py`, lesson templates |
+| **Question generator** | `/`, `POST /api/v1/problems/generate` | `topic_registry.py`, `generators/` |
+| **Quick Test** | `/quicktest/*`, API v1 quicktest | `models/quicktest.py` |
+| **Lesson quizzes** | `/lesson-quiz/*`, API v1 lesson-quiz | `generators/shared/lesson_quiz.py`, `models/lesson_quiz.py` |
+| **Saved problems** | `/saved-problems`, API v1 saved-problems | `models/user_data.py` (cap 200) |
+| **Variant queue** | Per-user persisted queue | `models/problem_queue.py`, `variant_utils.py` |
+
+### 5.2 Auto-correct (grading)
+
+**Status:** Fully complete for Phase A (GCSE CS) and Phase B (GCSE Maths), including Python write-code via Pyodide.
+
+| Component | Location |
+|-----------|----------|
+| Checker registry | `generators/shared/answer_checkers.py` |
+| Entry point | `check_answer(answer_type, correct_raw, user_answer)` |
+| Check API | `POST /api/v1/problems/check` |
+| MCQ API | `POST /api/v1/generator/mcq-answer` |
+| SQL grading | `generators/shared/sql_checker.py` |
+| Keyword text | `generators/shared/text_keywords.py` |
+| Python run | Client Pyodide + `python_run` checker type |
+
+**Registered answer types include:** `number`, `fraction`, `algebraic`, `surd`, `quadratic_roots`, `vector`, `sql`, `python_run`, `keyword`, `mcq`, `proof_steps`, and many more (see `docs/API.md`).
+
+**Session binding:** When `last_problem_payload` contains grading keys, the server grades against stored values and rejects client mismatches (403 `session_mismatch`).
+
+### 5.3 Accounts and profile
+
+| Feature | Notes |
+|---------|-------|
+| **Registration** | Email, handle (`^[a-z0-9_]{3,20}$`), password; age 13+ |
+| **Login** | Web session + optional 30-day remember; API Bearer tokens |
+| **Profile dashboard** | `/profile` — saves, progress, quizzes, streaks, Phase G widgets |
+| **Settings** | Visibility, auto-share, notifications, token revoke |
+| **Lesson progress** | Bookmark position per topic |
+| **Practice streak** | Updated on graded attempts |
+
+### 5.4 Social and gamification
+
+| Feature | Module | Notes |
+|---------|--------|-------|
+| **Follow / unfollow** | `models/social.py` | Activity feed for followed users |
+| **Profile visibility** | `models/social.py` | `public`, `followers_only`, `private` |
+| **Share question** | `models/sharing.py` | Cap 200 shared |
+| **Suggest question** | `models/sharing.py` | Inbox cap 100 |
+| **Friend challenges** | `models/challenges.py` | Same MCQ set, compare scores |
+| **Study pairs** | `models/study_pairs.py` | One active buddy; weekly recap |
+| **Question of the Day** | `models/qotd.py` | Daily MCQ + friend leaderboard |
+| **Streaks & milestones** | `models/gamification.py` | Profile badges |
+| **Friend leaderboard** | `models/gamification.py` | Effort-based ranking |
+| **Notifications** | `models/notifications.py` | In-app events |
+| **Block / report** | `models/moderation.py` | User safety |
+
+Social features are **peer-to-peer**. There is no teacher role or class roster today.
+
+### 5.5 Phase G — Learning depth (G1–G7)
+
+Orthogonal to auto-correct; builds on attempt history and reflections.
+
+| Phase | Name | Purpose | Key file |
+|-------|------|---------|----------|
+| **G1** | Weak topics | Rank topics where quiz avg & MCQ accuracy fall below thresholds | `models/weak_topics.py` |
+| **G2** | Quiz history | Paginated lesson quiz + generator MCQ attempt lists | `models/user_data.py` |
+| **G3** | Revision queue | Rule-based spaced queue synced from weak topics; Due today widget | `models/revision_queue.py` |
+| **G4** | Wrong-answer reflections | Optional chips + note after wrong Check/MCQ | `models/reflections.py` |
+| **G5** | Cohort stats | Anonymous “X% got this wrong” after ≥20 samples | `models/cohort_stats.py` |
+| **G6** | Skill gaps | Cross-topic roll-up of reflection chip types | `models/skill_gaps.py` |
+| **G7** | Revision planner | Spread weak topics across days before an exam date | `models/revision_planner.py` |
+
+**Profile sections:** Topics to revisit, Due today, Skill patterns, My reflections, Exam revision plan.
+
+**APIs:** Documented in `docs/API.md` under `/api/v1/me/weak-topics`, `revision-queue`, `reflections`, `skill-gaps`, `revision-plan`, `quiz-attempts`.
+
+**Smoke tests:** `scripts/test_phase_g1_smoke.py` through `test_phase_g7_smoke.py`.
+
+### 5.6 PWA and API v1
+
+| Feature | Path |
+|---------|------|
+| Manifest | `/manifest.webmanifest` |
+| Service worker | `/sw.js` (cache-first static, network-only API) |
+| Offline page | `/offline` |
+| Health check | `GET /api/v1/health` |
+| Full API surface | ~70 endpoints — see `docs/API.md` |
+
+Auth: session cookie (same-origin) or `Authorization: Bearer pb_…`.
+
+---
+
+## 6. Data model (overview)
+
+Schema is created in `app.py` on startup. Major table groups:
+
+### 6.1 Users and auth
+
+- `users` — id, email, handle, password_hash, created_at, is_active
+- API tokens managed via `models/api_tokens.py`
+
+### 6.2 Practice and progress
+
+- `saved_problems`, `lesson_progress`, `quiz_attempts`, `generator_mcq_attempts`
+- `user_problem_queues` — variant queue state
+- Quick test and lesson quiz session data (session + persisted attempts)
+
+### 6.3 Social
+
+- `follows`, `user_profile_settings`, `activity_events`
+- `shared_questions`, `question_suggestions`
+- `quiz_challenges`, `study_pairs`, `qotd_attempts`
+- `user_blocks`, notifications tables
+
+### 6.4 Phase G
+
+- `user_wrong_answer_reflections` — G4/G6
+- `problem_cohort_stats` — G5 anonymous aggregates
+- `user_revision_plans` — G7
+- Revision queue state (G3) — see `models/revision_queue.py`
+
+Weak topics (G1) are computed at read time from attempt tables, not stored separately.
+
+---
+
+## 7. Generator contract
+
+Each topic registers a callable:
+
+```python
+func(difficulty, mode, variant_name=None)
+# difficulty: foundational | intermediate | difficult
+# mode: standard | mcq | lesson
+```
+
+Returns a dict with at least `question` and `solution`. Graded problems add:
+
+- `correct_answer_raw` — canonical answer for checking
+- `answer_type` — registry key for `check_answer()`
+- Optional: `options` (MCQ), `hint`, `answer_format_hint`, multipart fields
+
+Optional `variants_func(difficulty, mode)` provides named variants (typically 7 per tier) for queue diversity.
+
+Lesson quizzes (`generators/shared/lesson_quiz.py`): 10 questions — 3 foundational + 4 intermediate + 3 difficult — where MCQ mode is supported.
+
+---
+
+## 8. Security and operational concerns
+
+| Area | Implementation |
+|------|----------------|
+| **CSRF** | Web forms use CSRF tokens |
+| **CSP** | Content-Security-Policy on responses; Pyodide lessons add COOP/COEP |
+| **Rate limits** | Daily buckets per user/IP (`models/rate_limit.py`) |
+| **Cookies** | HttpOnly, SameSite=Lax |
+| **CORS** | Optional `CORS_ORIGINS` for separate frontends |
+| **Testing** | `PB_TESTING=1` disables rate limits (dev/smoke only) |
+| **CI** | `.github/workflows/smoke.yml` runs all `scripts/test_*_smoke.py` |
+
+---
+
+## 9. Key user flows (web)
+
+| Flow | Route(s) |
+|------|----------|
+| Browse → generate | `/topics` → `/topic/...` → `/` |
+| Quick Test | Generate → Quick Test → 10 questions → results |
+| Lesson quiz | Topic page → lesson quiz → results |
+| Wrong answer reflection | Check/MCQ wrong → optional “What tripped you up?” |
+| Profile analytics | `/profile` — weak topics, due today, skill patterns, exam plan |
+| Social | `/feed`, `/u/<handle>`, challenges, QOTD |
+
+---
+
+## 10. Related documentation
+
+| Document | Purpose |
+|----------|---------|
+| `docs/API.md` | REST API v1 contract |
+| `docs/DEPLOY.md` | Production deployment checklist |
+| `docs/EMAIL_SETUP.md` | Weekly digest configuration |
+| `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | Planned features (including teacher/class mode) |
+| `Problem_Bank_AI_Handoff_Plan.md` (parent dir) | Agent handoff: auto-correct playbook, Phase G order |
+
+---
+
+## 11. Maintenance notes for developers
+
+1. **Do not rebuild** checker infrastructure or G1–G7 features — extend them.
+2. After JS/template changes affecting cached assets, bump `site.js?v=N` and `CACHE_VERSION` in `static/js/sw.js`.
+3. Run `python scripts/run_smoke_tests.py` before deploy.
+4. Schema changes: add new `CREATE TABLE IF NOT EXISTS` blocks in `app.py`; no down-migrations required for typical releases.
+5. New topics: register in `topic_registry.py`, add lesson content in `topics_data.py` and templates as needed.

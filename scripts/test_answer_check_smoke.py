@@ -245,6 +245,60 @@ from generators.shared.answer_checkers import (  # noqa: E402
 from generators.shared.utils import problem_from_choice_output  # noqa: E402
 from app import app  # noqa: E402
 
+def _bind_check_session(client, *, level, subject, topic, difficulty, correct_answer_raw, answer_type, problem=None):
+    """Store grading keys in session so SymPy-backed check types are allowed."""
+    payload_problem = problem if isinstance(problem, dict) else {
+        'correct_answer_raw': correct_answer_raw,
+        'answer_type': answer_type,
+    }
+    if isinstance(payload_problem, dict) and payload_problem.get('correct_answer_raw') is None:
+        payload_problem = {
+            **payload_problem,
+            'correct_answer_raw': correct_answer_raw,
+            'answer_type': answer_type,
+        }
+    with client.session_transaction() as sess:
+        sess['last_problem_payload'] = {
+            'level': level,
+            'subject': subject,
+            'topic': topic,
+            'mode': 'practice',
+            'difficulty': difficulty,
+            'problem': payload_problem,
+        }
+
+
+def _post_problems_check(client, json_body, *, problem=None, headers=None):
+    """POST /api/v1/problems/check, binding session for SymPy-backed types."""
+    body = dict(json_body)
+    answer_type = (body.get('answer_type') or 'number').strip()
+    if answer_type in ('algebraic', 'quadratic_roots'):
+        _bind_check_session(
+            client,
+            level=body.get('level') or 'gcse',
+            subject=body.get('subject') or 'maths',
+            topic=body.get('topic') or 'bidmas',
+            difficulty=body.get('difficulty') or 'foundational',
+            correct_answer_raw=body.get('correct_answer_raw'),
+            answer_type=answer_type,
+            problem=problem,
+        )
+    else:
+        # Avoid session_mismatch when a prior SymPy check left grading keys in session.
+        with client.session_transaction() as sess:
+            sess.pop('last_problem_payload', None)
+    kwargs = {'json': body}
+    if headers is not None:
+        kwargs['headers'] = headers
+    response = client.post('/api/v1/problems/check', **kwargs)
+    # Drop bound keys so follow-up direct client.post checks are not poisoned.
+    if answer_type in ('algebraic', 'quadratic_roots'):
+        with client.session_transaction() as sess:
+            sess.pop('last_problem_payload', None)
+    return response
+
+
+
 
 def csrf_from(html: str) -> str:
     m = re.search(r'name="csrf_token" value="([^"]+)"', html)
@@ -1572,14 +1626,14 @@ def test_surds_algebraic_check_api():
     assert problem['correct_answer_raw'] == 'a-b'
 
     with app.test_client() as client:
-        r = client.post(
-            '/api/v1/problems/check',
-            json={
+        r = _post_problems_check(
+            client,
+            {
                 'user_answer': 'a - b',
                 'correct_answer_raw': problem['correct_answer_raw'],
                 'answer_type': 'algebraic',
             },
-            headers={'Accept': 'application/json'},
+            headers={'Accept': 'application/json'}
         )
         assert r.status_code == 200, r.data
         assert r.get_json()['correct'] is True
@@ -5069,9 +5123,9 @@ def test_equations_rearrange_complex_check_api():
     correct = problem['correct_answer_raw']
 
     with app.test_client() as client:
-        r = client.post(
-            '/api/v1/problems/check',
-            json={
+        r = _post_problems_check(
+            client,
+            {
                 'level': 'gcse',
                 'subject': 'maths',
                 'topic': 'equations_inequalities',
@@ -5079,14 +5133,14 @@ def test_equations_rearrange_complex_check_api():
                 'correct_answer_raw': correct,
                 'answer_type': 'algebraic',
                 'user_answer': 'v=sqrt(2E/m)',
-            },
+            }
         )
         assert r.status_code == 200
         assert r.get_json()['correct'] is True
 
-        wrong = client.post(
-            '/api/v1/problems/check',
-            json={
+        wrong = _post_problems_check(
+            client,
+            {
                 'level': 'gcse',
                 'subject': 'maths',
                 'topic': 'equations_inequalities',
@@ -5094,7 +5148,7 @@ def test_equations_rearrange_complex_check_api():
                 'correct_answer_raw': correct,
                 'answer_type': 'algebraic',
                 'user_answer': 'v=√(2e/m)+1',
-            },
+            }
         )
         assert wrong.status_code == 200
         assert wrong.get_json()['correct'] is False
@@ -5195,9 +5249,9 @@ def test_equations_kinetic_var_check_api():
     assert correct.startswith('v=√(2e/')
 
     with app.test_client() as client:
-        r = client.post(
-            '/api/v1/problems/check',
-            json={
+        r = _post_problems_check(
+            client,
+            {
                 'level': 'gcse',
                 'subject': 'maths',
                 'topic': 'equations_inequalities',
@@ -5205,7 +5259,7 @@ def test_equations_kinetic_var_check_api():
                 'correct_answer_raw': correct,
                 'answer_type': 'algebraic',
                 'user_answer': correct,
-            },
+            }
         )
         assert r.status_code == 200
         assert r.get_json()['correct'] is True
@@ -5224,9 +5278,9 @@ def test_equations_phone_plans_check_api():
     ]
 
     with app.test_client() as client:
-        r0 = client.post(
-            '/api/v1/problems/check',
-            json={
+        r0 = _post_problems_check(
+            client,
+            {
                 'level': 'gcse',
                 'subject': 'maths',
                 'topic': 'equations_inequalities',
@@ -5234,7 +5288,7 @@ def test_equations_phone_plans_check_api():
                 'correct_answer_raw': parts[0],
                 'answer_type': 'algebraic',
                 'user_answer': parts[0],
-            },
+            }
         )
         assert r0.status_code == 200
         assert r0.get_json()['correct'] is True
@@ -5319,9 +5373,9 @@ def test_equations_check_api_linear_and_quadratic():
         assert r.status_code == 200
         assert r.get_json()['correct'] is True
 
-        r2 = client.post(
-            '/api/v1/problems/check',
-            json={
+        r2 = _post_problems_check(
+            client,
+            {
                 'level': 'gcse',
                 'subject': 'maths',
                 'topic': 'equations_inequalities',
@@ -5329,7 +5383,7 @@ def test_equations_check_api_linear_and_quadratic():
                 'correct_answer_raw': correct_quad,
                 'answer_type': 'quadratic_roots',
                 'user_answer': correct_quad,
-            },
+            }
         )
         assert r2.status_code == 200
         assert r2.get_json()['correct'] is True
@@ -6230,9 +6284,9 @@ def test_completing_the_square_check_api():
     raw = problem['correct_answer_raw']
 
     with app.test_client() as client:
-        r = client.post(
-            '/api/v1/problems/check',
-            json={
+        r = _post_problems_check(
+            client,
+            {
                 'level': 'gcse',
                 'subject': 'maths',
                 'topic': 'completing_the_square',
@@ -6240,7 +6294,7 @@ def test_completing_the_square_check_api():
                 'correct_answer_raw': raw,
                 'answer_type': 'quadratic_roots',
                 'user_answer': raw,
-            },
+            }
         )
         assert r.status_code == 200
         assert r.get_json()['correct'] is True
@@ -6436,9 +6490,9 @@ def test_changing_the_subject_check_api():
     raw = problem['correct_answer_raw']
 
     with app.test_client() as client:
-        r = client.post(
-            '/api/v1/problems/check',
-            json={
+        r = _post_problems_check(
+            client,
+            {
                 'level': 'gcse',
                 'subject': 'maths',
                 'topic': 'changing_the_subject',
@@ -6446,7 +6500,7 @@ def test_changing_the_subject_check_api():
                 'correct_answer_raw': raw,
                 'answer_type': 'algebraic',
                 'user_answer': raw.replace('*', ' '),
-            },
+            }
         )
         assert r.status_code == 200
         assert r.get_json()['correct'] is True
@@ -6461,9 +6515,9 @@ def test_functions_inverse_linear_check_api():
     raw = problem['correct_answer_raw']
 
     with app.test_client() as client:
-        r = client.post(
-            '/api/v1/problems/check',
-            json={
+        r = _post_problems_check(
+            client,
+            {
                 'level': 'gcse',
                 'subject': 'maths',
                 'topic': 'functions',
@@ -6471,7 +6525,7 @@ def test_functions_inverse_linear_check_api():
                 'correct_answer_raw': raw,
                 'answer_type': 'algebraic',
                 'user_answer': raw,
-            },
+            }
         )
         assert r.status_code == 200
         assert r.get_json()['correct'] is True
@@ -6485,9 +6539,9 @@ def test_functions_composite_rule_check_api():
     raw = problem['correct_answer_raw']
 
     with app.test_client() as client:
-        r = client.post(
-            '/api/v1/problems/check',
-            json={
+        r = _post_problems_check(
+            client,
+            {
                 'level': 'gcse',
                 'subject': 'maths',
                 'topic': 'functions',
@@ -6495,7 +6549,7 @@ def test_functions_composite_rule_check_api():
                 'correct_answer_raw': raw,
                 'answer_type': 'algebraic',
                 'user_answer': raw.replace('+', ' + '),
-            },
+            }
         )
         assert r.status_code == 200
         assert r.get_json()['correct'] is True
@@ -6512,9 +6566,9 @@ def test_functions_multipart_composite_inverse_check_api():
     assert len(parts) == 3
 
     with app.test_client() as client:
-        r = client.post(
-            '/api/v1/problems/check',
-            json={
+        r = _post_problems_check(
+            client,
+            {
                 'level': 'gcse',
                 'subject': 'maths',
                 'topic': 'functions',
@@ -6522,7 +6576,7 @@ def test_functions_multipart_composite_inverse_check_api():
                 'correct_answer_raw': parts[0],
                 'answer_type': 'algebraic',
                 'user_answer': parts[0].replace('+', ' + '),
-            },
+            }
         )
         assert r.status_code == 200
         assert r.get_json()['correct'] is True
@@ -6542,9 +6596,9 @@ def test_functions_multipart_composite_inverse_check_api():
         assert r2.status_code == 200
         assert r2.get_json()['correct'] is True
 
-        r3 = client.post(
-            '/api/v1/problems/check',
-            json={
+        r3 = _post_problems_check(
+            client,
+            {
                 'level': 'gcse',
                 'subject': 'maths',
                 'topic': 'functions',
@@ -6552,7 +6606,7 @@ def test_functions_multipart_composite_inverse_check_api():
                 'correct_answer_raw': parts[2],
                 'answer_type': 'algebraic',
                 'user_answer': parts[2],
-            },
+            }
         )
         assert r3.status_code == 200
         assert r3.get_json()['correct'] is True
@@ -6846,9 +6900,9 @@ def test_algebra_quadratic_roots_check_api():
     reversed_raw = ','.join(reversed(roots))
 
     with app.test_client() as client:
-        r = client.post(
-            '/api/v1/problems/check',
-            json={
+        r = _post_problems_check(
+            client,
+            {
                 'level': 'gcse',
                 'subject': 'maths',
                 'topic': 'algebra',
@@ -6856,7 +6910,7 @@ def test_algebra_quadratic_roots_check_api():
                 'correct_answer_raw': raw,
                 'answer_type': 'quadratic_roots',
                 'user_answer': reversed_raw,
-            },
+            }
         )
         assert r.status_code == 200
         assert r.get_json()['correct'] is True
@@ -6894,9 +6948,9 @@ def test_algebra_expand_check_api():
     raw = problem['correct_answer_raw']
 
     with app.test_client() as client:
-        r = client.post(
-            '/api/v1/problems/check',
-            json={
+        r = _post_problems_check(
+            client,
+            {
                 'level': 'gcse',
                 'subject': 'maths',
                 'topic': 'algebra',
@@ -6904,7 +6958,7 @@ def test_algebra_expand_check_api():
                 'correct_answer_raw': raw,
                 'answer_type': 'algebraic',
                 'user_answer': raw,
-            },
+            }
         )
         assert r.status_code == 200
         assert r.get_json()['correct'] is True
@@ -6918,9 +6972,9 @@ def test_algebra_change_subject_check_api():
     raw = problem['correct_answer_raw']
 
     with app.test_client() as client:
-        r = client.post(
-            '/api/v1/problems/check',
-            json={
+        r = _post_problems_check(
+            client,
+            {
                 'level': 'gcse',
                 'subject': 'maths',
                 'topic': 'algebra',
@@ -6928,7 +6982,7 @@ def test_algebra_change_subject_check_api():
                 'correct_answer_raw': raw,
                 'answer_type': 'algebraic',
                 'user_answer': raw,
-            },
+            }
         )
         assert r.status_code == 200
         assert r.get_json()['correct'] is True
@@ -8098,9 +8152,9 @@ def test_sequences_algebraic_check_api():
     assert problem.get('answer_type') == 'algebraic'
 
     with app.test_client() as client:
-        r = client.post(
-            '/api/v1/problems/check',
-            json={
+        r = _post_problems_check(
+            client,
+            {
                 'level': 'gcse',
                 'subject': 'maths',
                 'topic': 'sequences',
@@ -8108,7 +8162,7 @@ def test_sequences_algebraic_check_api():
                 'correct_answer_raw': correct,
                 'answer_type': 'algebraic',
                 'user_answer': correct.replace(' ', ''),
-            },
+            }
         )
         assert r.status_code == 200
         data = r.get_json()
@@ -8243,9 +8297,9 @@ def test_algebraic_proof_algebraic_check_api():
     assert problem.get('answer_type') == 'algebraic'
 
     with app.test_client() as client:
-        r = client.post(
-            '/api/v1/problems/check',
-            json={
+        r = _post_problems_check(
+            client,
+            {
                 'level': 'gcse',
                 'subject': 'maths',
                 'topic': 'algebraic_proof',
@@ -8253,7 +8307,7 @@ def test_algebraic_proof_algebraic_check_api():
                 'correct_answer_raw': correct,
                 'answer_type': 'algebraic',
                 'user_answer': correct.replace(' ', ''),
-            },
+            }
         )
         assert r.status_code == 200
         data = r.get_json()

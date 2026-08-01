@@ -152,7 +152,18 @@ def main():
         assert check_body['correct'] is False
         assert isinstance(check_body.get('attempt_id'), int)
 
-        # MCQ answer API returns attempt_id.
+        # MCQ answer API returns attempt_id (graded from session problem).
+        with client.session_transaction() as sess:
+            sess['last_problem_payload'] = {
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'bidmas',
+                'difficulty': 'foundational',
+                'problem': {
+                    'correct_answer': 'A',
+                    'options': ['A  1', 'B  2', 'C  3', 'D  4'],
+                },
+            }
         r = client.post(
             '/api/v1/generator/mcq-answer',
             json={
@@ -161,13 +172,13 @@ def main():
                 'topic': 'bidmas',
                 'difficulty': 'foundational',
                 'user_answer': 'B',
-                'correct_answer': 'A',
-                'correct': False,
             },
             headers=auth,
         )
         assert r.status_code == 200, r.data
-        assert isinstance(r.get_json().get('attempt_id'), int)
+        mcq_body = r.get_json()
+        assert mcq_body.get('correct') is False
+        assert isinstance(mcq_body.get('attempt_id'), int)
 
         # Validation errors.
         r = client.post(

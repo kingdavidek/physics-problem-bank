@@ -27,8 +27,8 @@ def _parse_exam_date(value):
 
 
 def _study_dates(exam_date):
-    """Calendar dates from today through the day before the exam."""
-    today = date.today()
+    """Calendar dates from today (UTC) through the day before the exam."""
+    today = datetime.now(timezone.utc).date()
     if exam_date < today:
         raise ValueError('exam_date_past')
     if exam_date == today:
@@ -39,6 +39,8 @@ def _study_dates(exam_date):
     while current <= last_study:
         days.append(current)
         current += timedelta(days=1)
+        if len(days) > MAX_EXAM_LEAD_DAYS:
+            break
     return days
 
 
@@ -62,7 +64,7 @@ def upsert_revision_plan_settings(conn, user_id, level, subject, exam_date):
     exam_day = _parse_exam_date(exam_date)
     if not (level and subject):
         raise ValueError('missing_scope')
-    lead_days = (exam_day - date.today()).days
+    lead_days = (exam_day - datetime.now(timezone.utc).date()).days
     if lead_days > MAX_EXAM_LEAD_DAYS:
         raise ValueError('exam_date_too_far')
 
@@ -119,9 +121,10 @@ def build_revision_plan(conn, user_id, *, level, subject, exam_date):
         {'plan_date': day.isoformat(), 'topics': []}
         for day in study_days
     ]
+    capacity = len(sessions) * MAX_TOPICS_PER_DAY
     if sessions:
-        for index, item in enumerate(scoped):
-            day_index = min(index // MAX_TOPICS_PER_DAY, len(sessions) - 1)
+        for index, item in enumerate(scoped[:capacity]):
+            day_index = index // MAX_TOPICS_PER_DAY
             sessions[day_index]['topics'].append({
                 'level': item['level'],
                 'subject': item['subject'],
@@ -132,7 +135,7 @@ def build_revision_plan(conn, user_id, *, level, subject, exam_date):
                 'mcq_accuracy_pct': item.get('mcq_accuracy_pct'),
             })
 
-    days_remaining = (exam_day - date.today()).days
+    days_remaining = (exam_day - datetime.now(timezone.utc).date()).days
     return {
         'level': level,
         'subject': subject,

@@ -245,6 +245,7 @@
         </form>
         {% endif %}
         <form method="POST" action="/quicktest/start" id="quicktest-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="level" id="qt-level">
             <input type="hidden" name="subject" id="qt-subject">
             <input type="hidden" name="topic" id="qt-topic">

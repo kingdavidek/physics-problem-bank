@@ -269,7 +269,10 @@
 
     fetch('/api/lesson/explain', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': (document.querySelector('meta[name="csrf-token"]') || {}).content || '',
+      },
       credentials: 'same-origin',
       body: JSON.stringify({
         selection: {

@@ -1,5 +1,5 @@
 """Study streaks, milestones, weekly recap, and friend effort leaderboard."""
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from models.social import (
     ACTIVITY_LESSON_STEP_COMPLETED,
@@ -8,6 +8,10 @@ from models.social import (
     ACTIVITY_TOPIC_OPENED,
 )
 from models.user import utc_now_iso
+
+
+def _utc_today():
+    return datetime.now(timezone.utc).date()
 
 MILESTONE_FIRST_QUIZ = 'first_quiz'
 MILESTONE_FIRST_LESSON = 'first_lesson_step'
@@ -71,7 +75,7 @@ def ensure_user_streak(conn, user_id):
 def record_study_day(conn, user_id, on_date=None):
     """Mark a calendar day as active and update streak counters."""
     ensure_user_streak(conn, user_id)
-    day = (on_date or date.today()).isoformat()
+    day = (on_date or _utc_today()).isoformat()
     conn.execute(
         '''
         INSERT OR IGNORE INTO user_study_days (user_id, study_date)
@@ -136,7 +140,7 @@ def get_study_streak(conn, user_id):
     last_active = row['last_active_date']
     if last_active:
         last_day = date.fromisoformat(last_active)
-        gap = (date.today() - last_day).days
+        gap = (_utc_today() - last_day).days
         if gap > 1:
             current = 0
 
@@ -268,7 +272,7 @@ def list_user_milestones(conn, user_id):
 
 def get_weekly_recap(conn, user_id, days=7):
     """In-app weekly summary for the last `days` calendar days (inclusive)."""
-    start_day = (date.today() - timedelta(days=days - 1)).isoformat()
+    start_day = (_utc_today() - timedelta(days=days - 1)).isoformat()
 
     active_days = conn.execute(
         '''
@@ -346,27 +350,40 @@ def get_weekly_recap(conn, user_id, days=7):
 
 
 def _effort_score_since(conn, user_id, since_iso):
-    placeholders = ','.join('?' * len(EFFORT_EVENT_TYPES))
+    scores = _effort_scores_since(conn, [user_id], since_iso)
+    return scores.get(user_id, 0)
+
+
+def _effort_scores_since(conn, user_ids, since_iso):
+    """Batch effort scores for many users (avoids N+1 on friend leaderboard)."""
+    ids = [int(uid) for uid in user_ids if uid is not None]
+    scores = {uid: 0 for uid in ids}
+    if not ids:
+        return scores
+    type_ph = ','.join('?' * len(EFFORT_EVENT_TYPES))
+    user_ph = ','.join('?' * len(ids))
     rows = conn.execute(
         f'''
-        SELECT event_type, COUNT(*) AS n
+        SELECT user_id, event_type, COUNT(*) AS n
         FROM user_activity_events
-        WHERE user_id = ?
+        WHERE user_id IN ({user_ph})
           AND created_at >= ?
-          AND event_type IN ({placeholders})
-        GROUP BY event_type
+          AND event_type IN ({type_ph})
+        GROUP BY user_id, event_type
         ''',
-        (user_id, since_iso, *EFFORT_EVENT_TYPES),
+        (*ids, since_iso, *EFFORT_EVENT_TYPES),
     ).fetchall()
-    score = 0
     for row in rows:
-        score += EFFORT_WEIGHTS.get(row['event_type'], 1) * row['n']
-    return score
+        scores[row['user_id']] = (
+            scores.get(row['user_id'], 0)
+            + EFFORT_WEIGHTS.get(row['event_type'], 1) * row['n']
+        )
+    return scores
 
 
 def friend_effort_leaderboard(conn, viewer_id, days=7):
     """Effort-based ranking for people the viewer follows, plus the viewer."""
-    since_day = (date.today() - timedelta(days=days - 1)).isoformat()
+    since_day = (_utc_today() - timedelta(days=days - 1)).isoformat()
     since_iso = f'{since_day}T00:00:00'
 
     following = conn.execute(
@@ -389,12 +406,13 @@ def friend_effort_leaderboard(conn, viewer_id, days=7):
     if viewer:
         participants[viewer['id']] = viewer['handle']
 
+    scores = _effort_scores_since(conn, participants.keys(), since_iso)
     ranked = []
     for user_id, handle in participants.items():
         ranked.append({
             'user_id': user_id,
             'handle': handle,
-            'score': _effort_score_since(conn, user_id, since_iso),
+            'score': scores.get(user_id, 0),
             'is_viewer': user_id == viewer_id,
         })
 

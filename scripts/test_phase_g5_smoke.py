@@ -142,6 +142,18 @@ def main():
         assert cohort['sample_size'] >= MIN_SAMPLE_SIZE
         assert 0 <= cohort['wrong_pct'] <= 100
 
+        with get_db() as conn:
+            for i in range(MIN_SAMPLE_SIZE):
+                record_cohort_sample(conn, mcq_key, 'gcse', 'maths', 'bidmas', correct=(i % 2 == 0))
+
+        with client.session_transaction() as sess:
+            sess['last_problem_payload'] = {
+                'level': 'gcse',
+                'subject': 'maths',
+                'topic': 'bidmas',
+                'difficulty': 'foundational',
+                'problem': mcq_problem,
+            }
         r = client.post(
             '/api/v1/generator/mcq-answer',
             json={
@@ -150,12 +162,11 @@ def main():
                 'topic': 'bidmas',
                 'difficulty': 'foundational',
                 'user_answer': 'B',
-                'correct_answer': 'A',
-                'correct': False,
             },
             headers=auth,
         )
         assert r.status_code == 200, r.data
+        assert r.get_json().get('correct') is True
         assert r.get_json().get('cohort') is not None
 
     print('Phase G5 smoke tests passed.')

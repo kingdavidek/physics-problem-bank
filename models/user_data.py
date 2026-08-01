@@ -425,19 +425,22 @@ def list_generator_mcq_attempts_for_display(
 
 
 def get_practice_streak(conn, user_id):
+    from datetime import datetime, timezone, timedelta
+
     rows = conn.execute(
         '''
         SELECT DISTINCT substr(created_at, 1, 10) AS day
         FROM generator_mcq_attempts
         WHERE user_id = ?
         ORDER BY day DESC
+        LIMIT 400
         ''',
         (user_id,),
     ).fetchall()
     if not rows:
         return 0
     days = {row['day'] for row in rows}
-    today = date.today()
+    today = datetime.now(timezone.utc).date()
     yesterday = today - timedelta(days=1)
     if today.isoformat() in days:
         anchor = today

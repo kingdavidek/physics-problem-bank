@@ -558,6 +558,7 @@
   <!-- QUICK TEST -->
   <div style="text-align:center; margin-top: 24px; margin-bottom: 48px;">
     <form method="POST" action="/quicktest/start" style="display:inline;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="level" value="gcse">
       <input type="hidden" name="subject" value="maths">
       <input type="hidden" name="topic" value="vectors">

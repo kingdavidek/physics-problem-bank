@@ -2865,17 +2865,20 @@
         }
     </style>
 
-    {% if current_user.is_authenticated %}
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    {% endif %}
 
     <!-- MathJax configuration loaded first -->
-    <script type='text/javascript' src='https://www.pythonanywhere.com/b-H8Sf7rFLiUNlMxbabpIKaiH5rgNW_-giq2YPt5aeoK-56cJzDMWBJOkwZuQf8EH40lTI6mjtlZhVEBautRaP2s7nmQKw7qk4RSgLmGF94CF3CrRRA6PNfFQy_i8hJohchCtnB-nwpqXDCDIF-26Vmfzmi4JuOO47nKfOilkI2ZMGZAQp8-XZWGYeZve1ittaTOFfNCIAKQ6xa0foECaFD6Yj6iBy32F_VvjZPZuI1YWASrv4NliZMS-gjq1tNb2JAk01F3ERwVr-M5i6Jh7YnhGHq2hO9daZHWiNPxHY5VjXlqfXl5KpB9AaeQRxXMzoXD8_RDFfaOokj02fMYPDVbTvJ1k4_qpt8D75fWRBpUUH7gQ4CPvLJgqFjXQlnUtVQxhU0jWzzOMdRvLG1Es4UNCnClq2JkTdBytXJvRcJnxOAbY3oZ3stg-9y3kF1-0HCt3iPOIyhurZkZDaRzSrOJvZvhRCzQl5pi56kO2nWhNgVKu1OeVqUq4iMsWsivr-d5PiLnuHiVS9hyVz-tsp4H0TVUQ0ZlpCGd5J7Tfru2U5L6n8jkeCuocbNbm1i-_40'></script><script src="{{ url_for('static', filename='js/mathjax-config.js') }}"></script>
-    <!-- MathJax CDN (SVG output, no eval needed) -->
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
+    <script src="{{ url_for('static', filename='js/mathjax-config.js') }}"></script>
+    <!-- MathJax CDN (SVG output); SRI pins the published 3.2.2 build -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"
+      integrity="sha384-KKWa9jJ1MZvssLeOoXG6FiOAZfAgmzsIIfw8BXwI9+kYm0lPCbC6yTQPBC00F1/L"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
     <!-- External site logic (dropdowns, MCQs, etc.) -->
     <script src="{{ url_for('static', filename='js/python-run-grader.js') }}?v=3" defer></script>
-    <script src="{{ url_for('static', filename='js/site.js') }}?v=4" defer></script>
+    <script src="{{ url_for('static', filename='js/site.js') }}?v=5" defer></script>
     <script src="{{ url_for('static', filename='js/site-search.js') }}?v=1" defer></script>
     <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=1" defer></script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=1" defer></script>

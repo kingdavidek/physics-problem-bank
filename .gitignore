@@ -4,3 +4,10 @@ __pycache__/
 *.pyc
 *.pyo
 .pytest_cache/
+data/*.db
+data/*.db-*
+data/backups/
+*.bak
+_audit_*.py
+_*.probe.py
+

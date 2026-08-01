@@ -288,13 +288,59 @@ from models.revision_queue import (
     sync_revision_queue,
 )
 
+_DEFAULT_SECRET_KEY = 'dev-secret-key-for-local-testing'
+
+
+def _configure_secret_key():
+    configured = os.environ.get('SECRET_KEY')
+    testing = (
+        os.environ.get('PB_TESTING') == '1'
+        or os.environ.get('FLASK_ENV') == 'testing'
+        or bool(os.environ.get('PYTEST_CURRENT_TEST'))
+    )
+    allow_dev = os.environ.get('PB_ALLOW_DEV_SECRET') == '1'
+    if configured and configured != _DEFAULT_SECRET_KEY:
+        return configured
+    if testing or allow_dev:
+        return configured or _DEFAULT_SECRET_KEY
+    raise RuntimeError(
+        'SECRET_KEY must be set to a non-default value. '
+        'Copy .env.example to .env and set SECRET_KEY, or set PB_ALLOW_DEV_SECRET=1 for local-only use.'
+    )
+
+
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-for-local-testing')
+app.secret_key = _configure_secret_key()
 app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=30)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+# Secure cookies when explicitly enabled or when SITE_URL is https (production).
+_secure_cookies = (
+    os.environ.get('SESSION_COOKIE_SECURE', '').strip() in ('1', 'true', 'True')
+    or (os.environ.get('SITE_URL') or '').lower().startswith('https://')
+)
+app.config['SESSION_COOKIE_SECURE'] = _secure_cookies
+app.config['REMEMBER_COOKIE_HTTPONLY'] = True
+app.config['REMEMBER_COOKIE_SAMESITE'] = 'Lax'
+app.config['REMEMBER_COOKIE_SECURE'] = _secure_cookies
 
 login_manager = LoginManager()
+
+
+@app.before_request
+def _enforce_api_csrf():
+    if request.method not in ('POST', 'PUT', 'PATCH', 'DELETE'):
+        return None
+    if not request.path.startswith('/api/'):
+        return None
+    # Legacy lesson-progress validates CSRF itself; still OK to double-check.
+    if _api_csrf_ok():
+        return None
+    if _wants_json_response() or request.path.startswith('/api/'):
+        return _api_error('Invalid or missing CSRF token', 403, 'invalid_csrf')
+    flash('Your session expired. Please try again.', 'error')
+    return redirect(url_for('index'))
+
 
 def _csrf_token():
     token = session.get('_csrf_token')
@@ -306,10 +352,52 @@ def _csrf_token():
 
 
 def _validate_csrf(form_token):
+    # Smoke/CI: skip CSRF so scripted form posts stay simple (API still uses Bearer).
+    if os.environ.get('PB_TESTING') == '1' or app.config.get('TESTING'):
+        return True
     expected = session.get('_csrf_token', '')
     if not form_token or not expected:
         return False
-    return secrets.compare_digest(form_token, expected)
+    return secrets.compare_digest(str(form_token), str(expected))
+
+
+def _safe_redirect_target(candidate, default_endpoint='profile'):
+    """Allow only same-origin relative paths (reject protocol-relative //evil)."""
+    if not candidate or not isinstance(candidate, str):
+        return url_for(default_endpoint)
+    target = candidate.strip()
+    if not target.startswith('/') or target.startswith('//') or '\\' in target:
+        return url_for(default_endpoint)
+    if ':' in target.split('?', 1)[0]:
+        return url_for(default_endpoint)
+    return target
+
+
+def _bearer_authenticated():
+    return getattr(g, 'api_token_id', None) is not None
+
+
+def _extract_csrf_token():
+    token = request.headers.get('X-CSRF-Token') or request.headers.get('X-CSRFToken')
+    if token:
+        return token
+    if request.form:
+        token = request.form.get('csrf_token')
+        if token:
+            return token
+    payload = request.get_json(silent=True)
+    if isinstance(payload, dict):
+        return payload.get('csrf_token')
+    return None
+
+
+def _api_csrf_ok():
+    """Cookie-session API writes need CSRF; Bearer and PB_TESTING are exempt."""
+    if _rate_limits_disabled():
+        return True
+    if _bearer_authenticated():
+        return True
+    return _validate_csrf(_extract_csrf_token())
 
 
 def _wants_json_response():
@@ -584,11 +672,64 @@ def handle_cors_preflight():
 
 ## Database functions:
 
+def _db_path():
+    override = (os.environ.get('PB_DB_PATH') or '').strip()
+    if override:
+        return override
+    # Smoke / CI: never touch the developer SQLite file.
+    if os.environ.get('PB_TESTING') == '1':
+        sticky = (os.environ.get('PB_TEST_DB_PATH') or '').strip()
+        if sticky:
+            return sticky
+        import tempfile
+        path = os.path.join(tempfile.gettempdir(), f'pb_smoke_{os.getpid()}.db')
+        os.environ['PB_TEST_DB_PATH'] = path
+        return path
+    return os.path.join(app.root_path, 'data', 'quicktest.db')
+
+
 def get_db():
-    db_path = os.path.join(app.root_path, 'data', 'quicktest.db')
-    conn = sqlite3.connect(db_path)
+    """Return a request-scoped SQLite connection (closed on teardown).
+
+    Outside a request context (startup / scripts), returns a fresh connection;
+    callers must close it (``with get_db() as conn`` still commits/rolls back;
+    use ``closing`` or explicit ``close()`` when not using request scope).
+    """
+    try:
+        from flask import g, has_app_context
+        if has_app_context() and hasattr(g, 'db') and g.db is not None:
+            return g.db
+        use_g = has_app_context()
+    except Exception:
+        use_g = False
+
+    db_path = _db_path()
+    parent = os.path.dirname(db_path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    conn = sqlite3.connect(db_path, timeout=30)
     conn.row_factory = sqlite3.Row
+    try:
+        conn.execute('PRAGMA journal_mode=WAL')
+        conn.execute('PRAGMA busy_timeout=30000')
+        conn.execute('PRAGMA foreign_keys=ON')
+    except sqlite3.Error:
+        pass
+    if use_g:
+        from flask import g
+        g.db = conn
     return conn
+
+
+@app.teardown_appcontext
+def _close_db(exception=None):
+    from flask import g
+    conn = g.pop('db', None)
+    if conn is not None:
+        try:
+            conn.close()
+        except sqlite3.Error:
+            pass
 
 with get_db() as conn:
     conn.execute("""
@@ -1147,8 +1288,8 @@ def _handle_method_not_allowed(err):
 
 @app.errorhandler(500)
 def _handle_server_error(err):
+    app.logger.exception('Unhandled server error')
     if _is_api_path():
-        app.logger.exception('Unhandled API error')
         return _api_error('Internal server error', 500, 'server_error')
     return 'Internal Server Error', 500
 
@@ -1502,7 +1643,9 @@ def index():
 
 
     if request.method == 'POST':
-        if not can_access_difficulty(current_user, selected_diff):
+        if not _validate_csrf(request.form.get('csrf_token')):
+            error = 'Your session expired. Please try again.'
+        elif not can_access_difficulty(current_user, selected_diff):
             error = (
                 'Difficult questions require a free account. '
                 'Sign up or log in to continue.'
@@ -2397,7 +2540,9 @@ def _auth_rate_limit(action, limit):
 
 
 def _issue_api_token(conn, user, label=''):
-    raw_token, _token_id = create_api_token(conn, user.id, label=label)
+    from datetime import datetime, timedelta, timezone
+    expires_at = (datetime.now(timezone.utc) + timedelta(days=90)).replace(microsecond=0).isoformat()
+    raw_token, _token_id = create_api_token(conn, user.id, label=label, expires_at=expires_at)
     user.touch_login(conn)
     return raw_token
 
@@ -3005,6 +3150,27 @@ def _quicktest_results_summary(problems, answers):
     }
 
 
+_SESSION_PROBLEM_DROP_KEYS = frozenset({
+    'diagram_svg', 'figure_svg', 'svg', 'image_svg', 'graph_svg',
+    'solution_html', 'hint_html', 'question_html',
+})
+
+
+def _slim_problem_for_session(problem):
+    """Drop bulky SVG/HTML fields so cookie sessions stay under the size limit."""
+    if not isinstance(problem, dict):
+        return problem
+    slim = {}
+    for key, value in problem.items():
+        if key in _SESSION_PROBLEM_DROP_KEYS:
+            continue
+        if key in ('solution', 'hint', 'question') and isinstance(value, str) and len(value) > 4000:
+            slim[key] = value[:4000]
+        else:
+            slim[key] = value
+    return slim
+
+
 def _sync_last_problem_payload(problem, *, level, subject, topic, mode, difficulty):
     """Keep session check API aligned with the problem currently on screen."""
     session['last_problem_payload'] = {
@@ -3014,7 +3180,7 @@ def _sync_last_problem_payload(problem, *, level, subject, topic, mode, difficul
         'mode': mode,
         'difficulty': difficulty,
         'variant_name': problem.get('variant_name'),
-        'problem': problem,
+        'problem': _slim_problem_for_session(problem),
     }
     session.modified = True
 
@@ -3504,6 +3670,9 @@ def register():
         if not _validate_csrf(request.form.get('csrf_token')):
             errors['form'] = 'Your session expired. Please try again.'
         else:
+            allowed, _rem = _auth_rate_limit('register', 10)
+            if not allowed:
+                errors['form'] = 'Too many registration attempts. Try again tomorrow.'
             form['email'] = request.form.get('email', '')
             form['handle'] = request.form.get('handle', '')
             password = request.form.get('password', '')
@@ -3529,10 +3698,12 @@ def register():
                 email = normalize_email(form['email'])
                 handle = normalize_handle(form['handle'])
                 with get_db() as conn:
-                    if User.get_by_email(conn, email):
-                        errors['email'] = 'An account with that email already exists.'
-                    elif User.get_by_handle(conn, handle):
-                        errors['handle'] = 'That handle is already taken.'
+                    if User.get_by_email(conn, email) or User.get_by_handle(conn, handle):
+                        # Same message for email/handle conflicts (no account enumeration).
+                        errors['form'] = (
+                            'Could not create that account. '
+                            'Try a different email or handle.'
+                        )
                     else:
                         user = User.create(conn, email, handle, password)
                         ensure_user_profile(conn, user.id)
@@ -3556,23 +3727,30 @@ def login():
         if not _validate_csrf(request.form.get('csrf_token')):
             error = 'Your session expired. Please try again.'
         else:
-            email_value = request.form.get('email', '')
-            password = request.form.get('password', '')
-            remember = request.form.get('remember') == '1'
+            allowed, _rem = _auth_rate_limit('login', 30)
+            if not allowed:
+                error = 'Too many login attempts. Try again tomorrow.'
+            else:
+                email_value = request.form.get('email', '')
+                password = request.form.get('password', '')
+                remember = request.form.get('remember') == '1'
 
-            with get_db() as conn:
-                user = User.get_by_email(conn, normalize_email(email_value))
-
-            if user and user.is_active and user.check_password(password):
-                login_user(user, remember=remember)
                 with get_db() as conn:
-                    user.touch_login(conn)
-                next_url = request.args.get('next')
-                if next_url and next_url.startswith('/'):
-                    return redirect(next_url)
-                return redirect(url_for('profile'))
+                    user = User.get_by_email(conn, normalize_email(email_value))
 
-            error = 'Invalid email or password.'
+                # Constant-time-ish: always verify against a hash when user missing.
+                if user and user.is_active and user.check_password(password):
+                    login_user(user, remember=remember)
+                    with get_db() as conn:
+                        user.touch_login(conn)
+                    return redirect(_safe_redirect_target(request.args.get('next')))
+
+                from werkzeug.security import check_password_hash
+                check_password_hash(
+                    'scrypt:32768:8:1$dummy$0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+                    password or 'x',
+                )
+                error = 'Invalid email or password.'
 
     return render_template('login.html', error=error, email_value=email_value)
 
@@ -4121,7 +4299,11 @@ def api_v1_unfollow_user(handle):
 
 @app.post('/api/v1/problems/check')
 def api_v1_problems_check():
-    from generators.shared.answer_checkers import check_answer
+    from generators.shared.answer_checkers import (
+        MAX_USER_ANSWER_LEN,
+        SYMPY_ANSWER_TYPES,
+        check_answer,
+    )
 
     payload = request.get_json(silent=True)
     if not isinstance(payload, dict):
@@ -4130,12 +4312,15 @@ def api_v1_problems_check():
     user_answer = payload.get('user_answer')
     if user_answer is None or str(user_answer).strip() == '':
         return _api_error('user_answer is required', 400, 'missing_fields')
+    if len(str(user_answer)) > MAX_USER_ANSWER_LEN:
+        return _api_error('user_answer is too long', 400, 'answer_too_long')
 
     stored = session.get('last_problem_payload') or {}
     problem = stored.get('problem') or {}
     partial_field = False
+    session_bound = problem.get('correct_answer_raw') is not None
 
-    if problem.get('correct_answer_raw') is not None:
+    if session_bound:
         stored_raw = str(problem['correct_answer_raw'])
         stored_type = problem.get('answer_type') or 'number'
         correct_answer_raw = stored_raw
@@ -4198,6 +4383,13 @@ def api_v1_problems_check():
         difficulty = (payload.get('difficulty') or 'foundational').strip()
         if not correct_answer_raw:
             return _api_error('correct_answer_raw is required', 400, 'missing_fields')
+        # SymPy-backed types must use server-stored problem metadata (no client-chosen type).
+        if answer_type in SYMPY_ANSWER_TYPES:
+            return _api_error(
+                'Generate a question first, then check your answer',
+                400,
+                'session_required',
+            )
 
     try:
         result = check_answer(answer_type, correct_answer_raw, user_answer)
@@ -4272,21 +4464,34 @@ def api_v1_generator_mcq_answer():
     subject = (payload.get('subject') or '').strip()
     topic = (payload.get('topic') or '').strip()
     difficulty = (payload.get('difficulty') or 'foundational').strip()
-    user_answer = (payload.get('user_answer') or '').strip()
-    correct_answer = (payload.get('correct_answer') or '').strip()
-    correct = payload.get('correct')
+    user_answer = (payload.get('user_answer') or '').strip().upper()[:1]
 
     if not level or not subject or not topic:
         return _api_error('level, subject, and topic are required', 400, 'missing_fields')
-    if not user_answer or not correct_answer:
-        return _api_error('user_answer and correct_answer are required', 400, 'missing_fields')
-    if correct not in (True, False):
-        return _api_error('correct must be a boolean', 400, 'invalid_correct')
+    if not user_answer:
+        return _api_error('user_answer is required', 400, 'missing_fields')
 
     try:
         TOPICS[level][subject][topic]
     except KeyError:
         return _api_error('Invalid topic', 400, 'invalid_topic')
+
+    stored = session.get('last_problem_payload') or {}
+    problem = stored.get('problem') or {}
+    if (
+        stored.get('level') != level
+        or stored.get('subject') != subject
+        or stored.get('topic') != topic
+        or not problem.get('correct_answer')
+    ):
+        return _api_error(
+            'Generate a question first, then answer it',
+            400,
+            'session_required',
+        )
+
+    correct_answer = str(problem.get('correct_answer') or '').strip().upper()[:1]
+    correct = user_answer == correct_answer
 
     attempt_id = _track_mcq_answered(
         level,
@@ -4297,21 +4502,21 @@ def api_v1_generator_mcq_answer():
         correct_answer,
         correct,
     )
+    _record_study_activity(current_user.id)
     with get_db() as conn:
         streak = get_practice_streak(conn, current_user.id)
 
-    body = {'ok': True, 'practice_streak': streak}
+    body = {
+        'ok': True,
+        'correct': correct,
+        'correct_answer': correct_answer,
+        'practice_streak': streak,
+    }
     if attempt_id is not None:
         body['attempt_id'] = attempt_id
-    stored = session.get('last_problem_payload') or {}
-    if (
-        stored.get('level') == level
-        and stored.get('subject') == subject
-        and stored.get('topic') == topic
-    ):
-        cohort = _cohort_from_stored_problem(stored, correct)
-        if cohort:
-            body['cohort'] = cohort
+    cohort = _cohort_from_stored_problem(stored, correct)
+    if cohort:
+        body['cohort'] = cohort
     return jsonify(body)
 
 
@@ -4434,10 +4639,13 @@ def api_v1_auth_register():
     email = normalize_email(email)
     handle = normalize_handle(handle)
     with get_db() as conn:
-        if User.get_by_email(conn, email):
-            return _api_error('An account with that email already exists', 409, 'email_taken')
-        if User.get_by_handle(conn, handle):
-            return _api_error('That handle is already taken', 409, 'handle_taken')
+        if User.get_by_email(conn, email) or User.get_by_handle(conn, handle):
+            # Same response for email/handle conflicts (no account enumeration).
+            return _api_error(
+                'Could not create that account. Try a different email or handle.',
+                409,
+                'account_conflict',
+            )
         user = User.create(conn, email, handle, password)
         ensure_user_profile(conn, user.id)
         token = _issue_api_token(conn, user, label=label or 'Registration')
@@ -5018,8 +5226,9 @@ def _api_rate_limit(action, limit):
     if _rate_limits_disabled():
         return True, limit
     if current_user.is_authenticated:
-        return True, limit
-    bucket = f'{action}:ip:{_client_ip()}'
+        bucket = f'{action}:user:{current_user.id}'
+    else:
+        bucket = f'{action}:ip:{_client_ip()}'
     with get_db() as conn:
         allowed, remaining, _count = check_and_increment_rate_limit(conn, bucket, limit)
     return allowed, remaining
@@ -5064,6 +5273,11 @@ def _build_topics_catalog():
 
 @app.get('/api/v1/health')
 def api_v1_health():
+    try:
+        with get_db() as conn:
+            conn.execute('SELECT 1').fetchone()
+    except Exception:
+        return jsonify({'ok': False, 'status': 'down'}), 503
     return jsonify({'ok': True, 'status': 'up'})
 
 
@@ -5664,22 +5878,8 @@ def api_v1_get_saved_problem(saved_id):
 @app.post('/api/v1/me/saved-problems')
 @login_required
 def api_v1_save_problem():
-    payload = request.get_json(silent=True) or {}
+    # Only persist generator-produced problems from the server session (no client HTML).
     data = _problem_from_session_payload()
-    if not data and isinstance(payload.get('problem'), dict):
-        level = payload.get('level')
-        subject = payload.get('subject')
-        topic = payload.get('topic')
-        if not _topic_path_valid(level, subject, topic):
-            return _api_error('Topic not found', 404, 'topic_not_found')
-        data = {
-            'level': level,
-            'subject': subject,
-            'topic': topic,
-            'mode': normalize_mode(payload.get('mode', 'standard')),
-            'difficulty': payload.get('difficulty', 'foundational'),
-            'problem': payload['problem'],
-        }
     if not data:
         return _api_error('Generate a question first, then save it', 400, 'no_problem')
 
@@ -6861,6 +7061,9 @@ def lesson_explain():
 
 @app.route('/quicktest/start', methods=['POST'])
 def quicktest_start():
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash('Your session expired. Please try again.', 'error')
+        return redirect(url_for('index'))
     level = request.form.get('level', 'gcse')
     subject = request.form.get('subject', 'physics')
     topic = _resolve_topic_slug(level, subject, request.form.get('topic', 'forces'))
@@ -6921,6 +7124,9 @@ def quicktest_question():
 
 @app.route('/quicktest/next', methods=['POST'])
 def quicktest_next():
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash('Your session expired. Please try again.', 'error')
+        return redirect(url_for('index'))
     data = _load_qt()
     if not data:
         return redirect(url_for('index'))
@@ -7626,4 +7832,7 @@ def api_v1_qotd_leaderboard():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5001)
+    debug = os.environ.get("FLASK_DEBUG", "0").strip() in ("1", "true", "True")
+    host = os.environ.get("FLASK_RUN_HOST", "127.0.0.1").strip() or "127.0.0.1"
+    port = int(os.environ.get("FLASK_RUN_PORT", "5001"))
+    app.run(debug=debug, host=host, port=port)

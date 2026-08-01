@@ -1,5 +1,5 @@
 """Identify topics where the user is struggling from quiz and MCQ history."""
-from datetime import date, timedelta
+from datetime import datetime, timedelta, timezone
 
 MIN_MCQ_ATTEMPTS = 3
 MIN_QUIZ_ATTEMPTS = 1
@@ -8,6 +8,7 @@ WEAK_MCQ_PCT = 70.0
 RECENT_QUIZ_PCT = 60.0
 RECENT_DAYS = 14
 DEFAULT_LIMIT = 8
+DEFAULT_LOOKBACK_DAYS = 180
 
 
 def _topic_key(level, subject, topic):
@@ -35,7 +36,7 @@ def _empty_topic_stats():
 def _aggregate_topic_stats(conn, user_id, *, lookback_days=None):
     since_iso = None
     if lookback_days is not None:
-        since_day = (date.today() - timedelta(days=lookback_days - 1)).isoformat()
+        since_day = (datetime.now(timezone.utc).date() - timedelta(days=lookback_days - 1)).isoformat()
         since_iso = f'{since_day}T00:00:00'
 
     topics = {}
@@ -120,7 +121,7 @@ def _compute_weakness(stats):
         last_at = stats.get('quiz_last_at') or ''
         if (
             stats['quiz_last_total']
-            and last_at[:10] >= (date.today() - timedelta(days=RECENT_DAYS - 1)).isoformat()
+            and last_at[:10] >= (datetime.now(timezone.utc).date() - timedelta(days=RECENT_DAYS - 1)).isoformat()
         ):
             last_pct = 100.0 * stats['quiz_last_score'] / stats['quiz_last_total']
             if last_pct < RECENT_QUIZ_PCT:
@@ -153,7 +154,7 @@ def _compute_weakness(stats):
     }
 
 
-def analyze_weak_topics(conn, user_id, *, limit=DEFAULT_LIMIT, lookback_days=None):
+def analyze_weak_topics(conn, user_id, *, limit=DEFAULT_LIMIT, lookback_days=DEFAULT_LOOKBACK_DAYS):
     """
     Rank topics the user should revisit based on quiz and generator MCQ history.
     Returns list sorted by weakness_score descending.

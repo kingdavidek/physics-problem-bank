@@ -102,12 +102,18 @@
     openBtn.setAttribute('aria-expanded', 'false');
   }
 
+  function csrfToken() {
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+  }
+
   function markRead(id) {
     return fetch('/api/v1/me/notifications/read', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
+        'X-CSRF-Token': csrfToken(),
       },
       credentials: 'same-origin',
       body: JSON.stringify({ id: id }),
@@ -126,6 +132,7 @@
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
+        'X-CSRF-Token': csrfToken(),
       },
       credentials: 'same-origin',
       body: JSON.stringify({ all: true }),

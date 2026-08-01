@@ -55,6 +55,7 @@
 
 <div class="problem-actions" style="border-top: none; justify-content: flex-end;">
     <form method="POST" action="/quicktest/next" id="quicktest-next-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="qt_user_answer" id="qt-user-answer" value="">
         <input type="hidden" name="qt_checked" id="qt-checked" value="0">
         <input type="hidden" name="qt_correct" id="qt-correct" value="">

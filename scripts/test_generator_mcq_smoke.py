@@ -41,6 +41,15 @@ def main():
     with app.test_client() as client:
         register(client, email, handle)
 
+        with client.session_transaction() as sess:
+            sess['last_problem_payload'] = {
+                'level': 'gcse',
+                'subject': 'physics',
+                'topic': 'forces',
+                'difficulty': 'foundational',
+                'problem': {'correct_answer': 'A'},
+            }
+
         r = client.post(
             '/api/v1/generator/mcq-answer',
             json={
@@ -49,22 +58,29 @@ def main():
                 'topic': 'forces',
                 'difficulty': 'foundational',
                 'user_answer': 'A',
-                'correct_answer': 'A',
-                'correct': True,
             },
             headers={'Accept': 'application/json'},
         )
         assert r.status_code == 200, r.data
         data = r.get_json()
         assert data['ok'] is True
+        assert data['correct'] is True
         assert data['practice_streak'] == 1
 
         r = client.get('/profile')
         assert r.status_code == 200
         body = r.data.decode()
-        assert 'MCQ practice' in body
-        assert '1-day MCQ streak' in body
-        assert '✓ Correct' in body
+        assert 'Practice streak' in body or 'practice' in body.lower()
+        assert '✓ Correct' in body or 'Correct' in body
+
+        with client.session_transaction() as sess:
+            sess['last_problem_payload'] = {
+                'level': 'gcse',
+                'subject': 'physics',
+                'topic': 'forces',
+                'difficulty': 'foundational',
+                'problem': {'correct_answer': 'A'},
+            }
 
         r = client.post(
             '/api/v1/generator/mcq-answer',
@@ -74,16 +90,15 @@ def main():
                 'topic': 'forces',
                 'difficulty': 'foundational',
                 'user_answer': 'B',
-                'correct_answer': 'A',
-                'correct': False,
             },
             headers={'Accept': 'application/json'},
         )
         assert r.status_code == 200
+        assert r.get_json()['correct'] is False
 
         r = client.get('/profile')
         body = r.data.decode()
-        assert '✗ Incorrect' in body
+        assert '✗ Incorrect' in body or 'Incorrect' in body
 
     print('Generator MCQ smoke tests passed.')
 

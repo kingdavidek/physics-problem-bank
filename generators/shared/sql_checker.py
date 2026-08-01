@@ -1,6 +1,8 @@
 """GCSE SQL query comparison — structural token match (not keyword-only)."""
 import re
 
+MAX_SQL_QUERY_LEN = 2000
+
 _SQL_TOKEN_RE = re.compile(
     r"'(?:[^']|'')*'"
     r'|>=|<=|<>|!='
@@ -27,6 +29,8 @@ def _normalize_word_token(token: str) -> str:
 
 def tokenize_sql(sql: str) -> list[str]:
     s = normalize_sql_query(sql)
+    if len(s) > MAX_SQL_QUERY_LEN:
+        s = s[:MAX_SQL_QUERY_LEN]
     if not s:
         return []
     tokens = []

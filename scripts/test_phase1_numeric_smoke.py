@@ -197,6 +197,7 @@ def test_check_api_session_mismatch():
 
 
 def _first_graded_problem(level, subject, topic):
+    """Return (difficulty, variant_name, problem) for a checkable practice item."""
     cfg = TOPICS[level][subject][topic]
     func = cfg['func']
     variants_func = cfg.get('variants_func')
@@ -212,14 +213,27 @@ def _first_graded_problem(level, subject, topic):
                     problem = func(difficulty, 'practice', variant_name=name)
                 except TypeError:
                     problem = func(difficulty, 'practice')
-                if problem and problem.get('correct_answer_raw') and not problem.get('options'):
+                if _is_checkable_graded_problem(problem):
                     return difficulty, name, problem
         else:
             for _ in range(6):
                 problem = func(difficulty, 'practice')
-                if problem and problem.get('correct_answer_raw') and not problem.get('options'):
+                if _is_checkable_graded_problem(problem):
                     return difficulty, None, problem
     return None, None, None
+
+
+def _is_checkable_graded_problem(problem):
+    if not problem or not problem.get('correct_answer_raw') or problem.get('options'):
+        return False
+    raw = str(problem['correct_answer_raw'])
+    answer_type = problem.get('answer_type') or 'number'
+    user_answer = _user_answer_from_raw(raw, answer_type)
+    try:
+        result = check_answer(answer_type, raw, user_answer)
+    except (ValueError, TypeError, KeyError):
+        return False
+    return bool(result.get('correct'))
 
 
 def test_phase1_topics_expose_graded_problem_and_check():
@@ -286,8 +300,20 @@ def _user_answer_from_raw(raw, answer_type):
                 return f'√{rad}'
             return f'{coeff}√{rad}'
         return raw
-    if answer_type == 'pi_multiple':
-        return raw
+    if answer_type == 'proof_steps':
+        parts = [p for p in str(raw).split('|') if p != '']
+        if not parts:
+            return raw
+        # pick|N|id1|id2|... — submit exactly N correct ids
+        if parts[0] == 'pick' and len(parts) >= 3 and parts[1].isdigit():
+            n = int(parts[1])
+            return '|'.join(parts[2:2 + n])
+        # 0|ids or 1|ids — submit the id list only
+        if parts[0] in ('0', '1'):
+            return '|'.join(parts[1:])
+        if parts[0].isdigit():
+            return '|'.join(parts[1:])
+        return '|'.join(parts)
     return raw
 
 

@@ -1,6 +1,6 @@
 """Question of the day — one shared MCQ with a friend mini leaderboard."""
 import hashlib
-from datetime import date
+from datetime import datetime, timezone
 
 from generators.shared.lesson_quiz import build_lesson_mcq_quiz, topic_supports_lesson_mcq
 from models.user import utc_now_iso
@@ -8,7 +8,9 @@ from topic_registry import TOPICS
 
 
 def current_day_key(today=None):
-    return (today or date.today()).isoformat()
+    if today is None:
+        today = datetime.now(timezone.utc).date()
+    return today.isoformat()
 
 
 def _day_seed(day_key):

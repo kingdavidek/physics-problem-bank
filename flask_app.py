@@ -78,4 +78,7 @@ def topics_index():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    import os
+    debug = os.environ.get('FLASK_DEBUG', '0').strip() in ('1', 'true', 'True')
+    host = os.environ.get('FLASK_RUN_HOST', '127.0.0.1').strip() or '127.0.0.1'
+    app.run(debug=debug, host=host)

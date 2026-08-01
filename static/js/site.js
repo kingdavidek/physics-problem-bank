@@ -5,6 +5,18 @@
 (function () {
   'use strict';
 
+  function csrfToken() {
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    return meta ? meta.getAttribute('content') : '';
+  }
+
+  function apiHeaders(extra) {
+    var headers = Object.assign({ Accept: 'application/json' }, extra || {});
+    var token = csrfToken();
+    if (token) headers['X-CSRF-Token'] = token;
+    return headers;
+  }
+
   function setOptionVisibility(selectEl, predicate) {
     let firstVisible = null;
     for (const opt of selectEl.options) {
@@ -449,10 +461,9 @@
     if (payload.attemptId) body.attempt_id = payload.attemptId;
     return fetch('/api/v1/me/reflections', {
       method: 'POST',
-      headers: {
+      headers: apiHeaders({
         'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
+      }),
       credentials: 'same-origin',
       body: JSON.stringify(body),
     }).then(function (response) {
@@ -632,13 +643,12 @@
   }
 
   function persistMcqAnswer(block, userAnswer, correctAnswer, isCorrect) {
-    if (!block.dataset.level) return Promise.resolve({ attempt_id: null, cohort: null });
+    if (!block.dataset.level) return Promise.resolve({ attempt_id: null, cohort: null, correct: isCorrect });
     return fetch('/api/v1/generator/mcq-answer', {
       method: 'POST',
-      headers: {
+      headers: apiHeaders({
         'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
+      }),
       credentials: 'same-origin',
       body: JSON.stringify({
         level: block.dataset.level,
@@ -646,22 +656,22 @@
         topic: block.dataset.topic,
         difficulty: block.dataset.difficulty || 'foundational',
         user_answer: userAnswer,
-        correct_answer: correctAnswer,
-        correct: isCorrect,
       }),
     })
       .then(function (response) {
         return response.json().then(function (data) {
           if (!response.ok) {
-            return { attempt_id: null, cohort: null };
+            return { attempt_id: null, cohort: null, correct: isCorrect };
           }
           return {
             attempt_id: data.attempt_id != null ? data.attempt_id : null,
             cohort: data.cohort || null,
+            correct: typeof data.correct === 'boolean' ? data.correct : isCorrect,
+            correct_answer: data.correct_answer || correctAnswer,
           };
         });
       })
-      .catch(function () { return { attempt_id: null, cohort: null }; });
+      .catch(function () { return { attempt_id: null, cohort: null, correct: isCorrect }; });
   }
 
   function wireMcqBlock(block) {
@@ -2761,10 +2771,9 @@
 
       return fetch('/api/v1/problems/check', {
         method: 'POST',
-        headers: {
+        headers: apiHeaders({
           'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
+        }),
         credentials: 'same-origin',
         body: JSON.stringify(body),
       })
@@ -3350,10 +3359,9 @@
         }
         return fetch('/api/v1/problems/check', {
           method: 'POST',
-          headers: {
+          headers: apiHeaders({
             'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
+          }),
           credentials: 'same-origin',
           body: JSON.stringify(body),
         }).then(function (response) {
@@ -3547,10 +3555,9 @@
       checkBtn.disabled = true;
       fetch('/api/v1/problems/check', {
         method: 'POST',
-        headers: {
+        headers: apiHeaders({
           'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
+        }),
         credentials: 'same-origin',
         body: JSON.stringify(body),
       })
@@ -3992,10 +3999,9 @@
 
       fetch('/api/v1/problems/check', {
         method: 'POST',
-        headers: {
+        headers: apiHeaders({
           'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
+        }),
         credentials: 'same-origin',
         body: JSON.stringify(body),
       })
@@ -4399,7 +4405,7 @@
       btn.disabled = true;
       fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        headers: apiHeaders({ 'Content-Type': 'application/json' }),
         credentials: 'same-origin',
         body: JSON.stringify({
           level: item.dataset.level,

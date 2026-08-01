@@ -320,6 +320,7 @@
   <!-- Quick Test shortcut -->
   <div style="text-align:center; margin-top:24px; margin-bottom:48px;">
     <form method="POST" action="/quicktest/start" style="display:inline;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="level" value="alevel">
       <input type="hidden" name="subject" value="physics">
       <input type="hidden" name="topic" value="photoelectric">
@@ -328,6 +329,7 @@
       <button type="submit" class="btn btn-primary">⚡ Quick Test: Foundational</button>
     </form>
     <form method="POST" action="/quicktest/start" style="display:inline; margin-left:8px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="level" value="alevel">
       <input type="hidden" name="subject" value="physics">
       <input type="hidden" name="topic" value="photoelectric">

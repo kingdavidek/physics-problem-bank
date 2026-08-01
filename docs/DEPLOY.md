@@ -6,7 +6,7 @@
 - [ ] Serve the site over **HTTPS** (required for PWA install and secure cookies).
 - [ ] Configure **`CORS_ORIGINS`** if a native app or separate dev frontend calls the API (comma-separated origins, e.g. `https://app.example.com,http://localhost:5173`).
 - [ ] Do **not** set `PB_TESTING=1` in production (disables daily rate limits; smoke tests only).
-- [ ] Ensure `data/quicktest.db` is writable and backed up regularly.
+- [ ] Ensure `data/quicktest.db` is writable and backed up regularly (use `python scripts/backup_sqlite.py` on a schedule; keep backups off git).
 - [ ] Run smoke tests locally: `python scripts/run_smoke_tests.py`
 - [ ] Confirm `/api/v1/health` returns `{ "ok": true, "status": "up" }`.
 

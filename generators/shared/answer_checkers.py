@@ -8,7 +8,14 @@ import math
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from fractions import Fraction
 
-from sympy import nsimplify, simplify, sympify
+from sympy import nsimplify, simplify, sqrt, pi
+from sympy.core.sympify import SympifyError
+from sympy.parsing.sympy_parser import (
+    convert_xor,
+    implicit_multiplication_application,
+    parse_expr,
+    standard_transformations,
+)
 
 from generators.shared.sql_checker import (
     compare_sql_queries,
@@ -20,12 +27,67 @@ from generators.shared.text_keywords import text_keyword_aliases, text_keyword_l
 
 CHECKERS: dict[str, callable] = {}
 
+# Answer types that use SymPy expression parsing — require session-bound keys on the API.
+SYMPY_ANSWER_TYPES = frozenset({'algebraic', 'quadratic_roots'})
+
+MAX_USER_ANSWER_LEN = 2000
+MAX_SYMPY_EXPR_LEN = 200
+
+_SAFE_SYMPY_TRANSFORMATIONS = standard_transformations + (
+    implicit_multiplication_application,
+    convert_xor,
+)
+_SAFE_SYMPY_LOCALS = {
+    'sqrt': sqrt,
+    'pi': pi,
+}
+_SAFE_SYMPY_IDENTIFIERS = frozenset({'sqrt', 'pi'})
+_UNSAFE_SYMPY_CHARS = frozenset('\'"[]{};@`$\\!?=%<>|&~#')
+
 
 def register_checker(name: str):
     def decorator(fn):
         CHECKERS[name] = fn
         return fn
     return decorator
+
+
+def _is_safe_math_expr(expr: str) -> bool:
+    """Allow only simple arithmetic / single-letter symbols / sqrt / pi."""
+    s = str(expr or '').strip()
+    if not s or len(s) > MAX_SYMPY_EXPR_LEN:
+        return False
+    if '__' in s or any(ch in s for ch in _UNSAFE_SYMPY_CHARS):
+        return False
+    if re.search(r'(?i)\b(import|exec|eval|open|system|getattr|setattr|delattr|globals|locals|vars|breakpoint)\b', s):
+        return False
+    for ident in re.findall(r'[A-Za-z_][A-Za-z0-9_]*', s):
+        low = ident.lower()
+        if low in _SAFE_SYMPY_IDENTIFIERS:
+            continue
+        if len(ident) == 1 and ident.isalpha():
+            continue
+        return False
+    # Dots only as decimal points (e.g. 0.5), not attribute access.
+    if re.search(r'(?<!\d)\.|\.(?!\d)', s):
+        return False
+    return True
+
+
+def _safe_sympify(expr):
+    """Parse a math expression without evaluating arbitrary Python (no bare sympify)."""
+    s = str(expr or '').strip()
+    if not _is_safe_math_expr(s):
+        return None
+    try:
+        return parse_expr(
+            s,
+            local_dict=dict(_SAFE_SYMPY_LOCALS),
+            transformations=_SAFE_SYMPY_TRANSFORMATIONS,
+            evaluate=False,
+        )
+    except (SympifyError, SyntaxError, TypeError, ValueError, AttributeError, NameError, Exception):
+        return None
 
 
 def _normalize_numeric_string(value) -> str:
@@ -615,8 +677,12 @@ def _algebraic_prepare_for_sympy(value, *, context_raw=None) -> str:
 def _algebraic_sympy_equivalent(correct_raw, user_raw) -> bool:
     """Fallback: accept equivalent forms such as 0.5*3*t**2 and 3*t**2/2."""
     try:
-        correct_expr = sympify(_algebraic_prepare_for_sympy(correct_raw))
-        user_expr = sympify(_algebraic_prepare_for_sympy(user_raw, context_raw=correct_raw))
+        correct_expr = _safe_sympify(_algebraic_prepare_for_sympy(correct_raw))
+        user_expr = _safe_sympify(
+            _algebraic_prepare_for_sympy(user_raw, context_raw=correct_raw)
+        )
+        if correct_expr is None or user_expr is None:
+            return False
         return bool(simplify(correct_expr - user_expr) == 0)
     except (TypeError, ValueError, SyntaxError, AttributeError, ZeroDivisionError):
         return False
@@ -2414,7 +2480,10 @@ def _root_to_sympy(value):
 
     normalized = _normalize_quadratic_root_expr(s).replace('^', '**')
     try:
-        return nsimplify(sympify(normalized))
+        parsed = _safe_sympify(normalized)
+        if parsed is None:
+            return None
+        return nsimplify(parsed)
     except (TypeError, ValueError, AttributeError, SyntaxError):
         return None
 
