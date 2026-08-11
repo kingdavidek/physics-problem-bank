@@ -35,6 +35,7 @@
     font-family: var(--font-body);
     font-size: 0.95rem;
     line-height: 1.45;
+    min-height: var(--tap-min);
     transition: background 0.15s, border-color 0.15s, color 0.15s;
   }
   .lesson-quiz-mcq-btn:hover { border-color: #2563eb; }
@@ -45,8 +46,12 @@
   }
   .lesson-quiz-submit {
     margin-top: 8px;
-    padding-bottom: 48px;
+    padding-bottom: calc(48px + var(--safe-bottom));
     text-align: center;
+  }
+  @media (max-width: 640px) {
+    .lesson-quiz-mcq-btn { font-size: 16px; padding: 12px 14px; }
+    .lesson-quiz-submit .btn { width: 100%; min-height: var(--tap-min); }
   }
   .lesson-quiz-back {
     display: inline-block;

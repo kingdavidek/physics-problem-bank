@@ -1315,6 +1315,17 @@
             color: #fff;
         }
         .mcq-btn:disabled { opacity: 0.95; cursor: default; }
+        .mcq-btn.is-selected:not(.is-correct):not(.is-wrong) {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            box-shadow: var(--ring);
+        }
+        .mcq-inline {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 8px;
+        }
         .free-response-row {
             display: flex;
             flex-wrap: wrap;
@@ -2614,6 +2625,84 @@
                 grid-template-columns: 1fr;
                 gap: 4px 0;
             }
+
+            /* M1.2 — 44px tap targets on practice controls */
+            .btn,
+            .mcq-btn,
+            .free-response-check-btn,
+            .free-response-field-check-btn,
+            .free-response-proof-step,
+            .free-response-proof-clear,
+            .wrong-answer-reflection-chip {
+                min-height: var(--tap-min);
+            }
+
+            /* M1.1 — Check sits on its own full-width row under inputs */
+            .free-response-row > .free-response-check-btn,
+            .free-response-field-row > .free-response-check-btn,
+            .free-response-field-row > .free-response-field-check-btn {
+                flex: 1 1 100%;
+                width: 100%;
+                align-self: stretch;
+                margin-top: 4px;
+            }
+
+            /* M1.3 — multipart fields stack; no horizontal min-width traps */
+            .free-response-field-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .free-response-field-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .free-response-field-group-label {
+                align-self: flex-start;
+            }
+            .free-response-field-group-fields {
+                flex-direction: column;
+                align-items: stretch;
+                width: 100%;
+            }
+            .free-response-field-group-fields .free-response-field-row,
+            .free-response-field-group-fields .free-response-field,
+            .free-response-field-group-fields .free-response-field--text,
+            .free-response-field-row .free-response-field,
+            .free-response-field-row--text .free-response-field,
+            .free-response-field-row--text .free-response-field--text {
+                flex: 1 1 auto;
+                width: 100%;
+                min-width: 0;
+                max-width: none;
+            }
+            .free-response-field .free-response-input,
+            .free-response-field .free-response-input--text,
+            .free-response-field-group-fields .free-response-field .free-response-input,
+            .free-response-field-group-fields .free-response-field .free-response-input--text,
+            .free-response-row--text > .free-response-input--text,
+            .free-response-coord-pairs-stack,
+            .free-response-row--coordinate-pairs .free-response-input-coord-pair,
+            .free-response-row--number-list .free-response-input-list,
+            .free-response-row--linear-equation .free-response-input-linear-equation,
+            .free-response-number-line {
+                min-width: 0;
+                max-width: none;
+                width: 100%;
+            }
+            .free-response-proof-bank,
+            .free-response-proof-step,
+            .free-response-proof-selected-wrap,
+            .free-response-proof-clear {
+                width: 100%;
+            }
+            .mcq-options,
+            .mcq-inline {
+                gap: 10px;
+            }
+            .mcq-btn {
+                padding-top: 12px;
+                padding-bottom: 12px;
+            }
         }
 
         /* ---- SVG: instructional diagrams only (not MathJax — see mjx-container above) ---- */
@@ -3001,7 +3090,7 @@
     ></script>
     <!-- External site logic (dropdowns, MCQs, etc.) -->
     <script src="{{ url_for('static', filename='js/python-run-grader.js') }}?v=3" defer></script>
-    <script src="{{ url_for('static', filename='js/site.js') }}?v=5" defer></script>
+    <script src="{{ url_for('static', filename='js/site.js') }}?v=6" defer></script>
     <script src="{{ url_for('static', filename='js/site-search.js') }}?v=1" defer></script>
     <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=1" defer></script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=1" defer></script>

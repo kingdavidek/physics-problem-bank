@@ -1,7 +1,7 @@
 # Problem Bank — Mobile polish plan (app-like PWA)
 
 **Last updated:** 2026-08-11  
-**Status:** **M0 shipped.** M1–M4 planned — not implemented. M5–M7 gated on M4 + production URL.  
+**Status:** **M0–M1 shipped.** M2–M4 planned — not implemented. M5–M7 gated on M4 + production URL.  
 **Audience:** Next AI agent / developers  
 **Companion:** `docs/AI_HANDOFF.md`, `docs/ARCHITECTURE.md`, `docs/DEPLOY.md`
 
@@ -26,9 +26,9 @@ Take the site from **usable on a phone** to **basically mobile-polished and app-
 
 **Already OK:** `viewport`, ~860px shell, partial `@media` breakpoints, PWA manifest/install banner, fluid topic grids, many SVGs `max-width: 100%`, free-response `inputmode`, lesson-assist bottom sheet on small screens.
 
-**M0 closed:** 16px form controls (no iOS zoom on generate/login), 1-col `.form-grid`, stacked action rows, overflow-x on questions/math, `--safe-*` / `--tap-min` tokens.
+**M0–M1 closed:** 16px form controls; 1-col forms; stacked actions; overflow-x; safe-area tokens; stacked Check; 44px taps; vertical MCQ with selected/correct/wrong.
 
-**Main remaining gaps:** multipart free-response horizontal layouts (M1); tiny diagram/tree inputs (M3); Python/Pyodide awkward on phones (M3); keyboard covering actions (M2); no formal device QA matrix (M4).
+**Main remaining gaps:** nav sheets / keyboard covering Check (M2); tiny diagram/tree inputs and Python honesty (M3); no formal device QA matrix (M4).
 
 Primary CSS lives in [`templates/base.html`](../templates/base.html). Free-response markup: [`templates/partials/free_response_inline.html`](../templates/partials/free_response_inline.html).
 
@@ -106,14 +106,14 @@ flowchart TD
 
 | Step | Task | Where |
 |------|------|--------|
-| M1.1 | Stack `.free-response-row` variants to column; Check full-width under inputs | `base.html`, `free_response_inline.html` |
-| M1.2 | Min tap size **44px** on `.btn`, `.mcq-btn`, proof chips, check buttons | `base.html` |
-| M1.3 | `number_fields` / proof banks: wrap chips; labels above fields; kill horizontal min-width traps | free-response CSS + partial |
-| M1.4 | MCQ: vertical list, large hits, clear selected/correct/wrong | `base.html`, `site.js` |
-| M1.5 | Quick Test / saved / shared pages inherit the same free-response rules | templates using the partial |
+| M1.1 | Stack `.free-response-row` variants to column; Check full-width under inputs | `base.html` — **done** (Check `flex-basis: 100%`) |
+| M1.2 | Min tap size **44px** on `.btn`, `.mcq-btn`, proof chips, check buttons | `base.html` — **done** |
+| M1.3 | `number_fields` / proof banks: wrap chips; labels above fields; kill horizontal min-width traps | `base.html` — **done** (labels already above in the partial) |
+| M1.4 | MCQ: vertical list, large hits, clear selected/correct/wrong | `base.html` + `site.js` `is-selected` — **done** |
+| M1.5 | Quick Test / saved / shared pages inherit the same free-response rules | same partial / `.mcq-options` — **done** |
 | M1.6 | Smoke: answer-check + generator MCQ still pass | `PB_TESTING=1` + smoke scripts |
 
-**Exit:** Multipart Check usable on 360px; MCQ tappable without mis-hits.
+**Exit:** Multipart Check usable on 360px; MCQ tappable without mis-hits. **Shipped 2026-08-11** (layout/UX only).
 
 ---
 
@@ -268,8 +268,8 @@ flowchart LR
 ## Suggested order for the next AI
 
 1. Read this file and `docs/AI_HANDOFF.md` (and `docs/SOLID_DRAFT_SECURITY.md` before any grading changes — there should be none for mobile polish).
-2. **M0 is done.** Implement **M1** next (highest remaining learner impact).
-3. **M2** for app feel; **M3** content/diagrams; **M4** QA + status update.
+2. **M0–M1 are done.** Implement **M2** next (app chrome: nav sheets, visualViewport, focus/active).
+3. **M3** content/diagrams; **M4** QA + status update.
 4. Only then **M5** production HTTPS → **M6** TWA + Asset Links → **M7** Play Console.
 5. Do **not** regress solid-draft security or session grading trust while touching templates/JS.
 6. Do **not** build a parallel React Native / Flutter app unless product explicitly abandons the TWA path.

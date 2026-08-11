@@ -56,7 +56,7 @@ Problem Bank is a **free curriculum problem bank** for secondary and early post-
 | **Frontend JS** | Vanilla JavaScript | `static/js/site.js` and feature modules |
 | **Math rendering** | MathJax | `static/js/mathjax-config.js` |
 | **CS Python grading** | Pyodide (in-browser) | `python-run-grader.js`, worker for write-code questions |
-| **PWA** | Service worker + manifest | Offline shell; API always network-only. **M0** mobile foundation CSS shipped (`base.html`: 16px inputs, 1-col forms, overflow-x, safe-area tokens). M1–M4 still planned — `docs/MOBILE.md` |
+| **PWA** | Service worker + manifest | Offline shell; API always network-only. **M0–M1** shipped (`base.html`: 16px inputs, 1-col forms, overflow-x, safe-area, stacked Check, 44px taps, vertical MCQ). M2–M4 still planned — `docs/MOBILE.md` |
 | **Optional AI** | DeepSeek / OpenAI | Lesson/quiz assist via env-configured keys |
 | **Optional email** | Resend / SendGrid / SMTP | Weekly digest (`docs/EMAIL_SETUP.md`) |
 | **Deployment** | PythonAnywhere (documented) | WSGI entry: `from app import app as application` |

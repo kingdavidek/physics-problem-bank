@@ -15,7 +15,7 @@ Start here. Read the documents in the order below before changing behaviour that
 | **Auto-correct (Phases A/B)** | Complete (GCSE CS + Maths; Python via client Pyodide) |
 | **Phase G learning (G1–G7)** | Shipped (weak topics → exam revision planner) |
 | **Solid-draft security bar** | Done (2026-08-01). See `docs/SOLID_DRAFT_SECURITY.md` |
-| **Mobile polish (app-like PWA)** | **M0 shipped** (16px inputs, 1-col forms, overflow-x, safe-area tokens). **M1–M4** still planned — see `docs/MOBILE.md`. **M5–M7** HTTPS → TWA → Play Android after M4 |
+| **Mobile polish (app-like PWA)** | **M0–M1 shipped** (foundation CSS + stacked Check / 44px taps / vertical MCQ). **M2–M4** still planned — see `docs/MOBILE.md`. **M5–M7** HTTPS → TWA → Play Android after M4 |
 | **Engagement roadmap (E1–E3)** | **Planned, not implemented** — see §6 below |
 | **G8 teacher / class mode** | Designed, not implemented. See `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2 |
 | **Engagement stretch (E4)** | Long-term — see `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §3.0 |
@@ -196,7 +196,7 @@ Documented in **`docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §3.0** (real-world que
 
 Pick based on product priority; items are independent enough to sequence differently if needed:
 
-1. **Mobile polish M1** per `docs/MOBILE.md` — stack free-response, 44px taps, MCQ list (M0 is done).
+1. **Mobile polish M2** per `docs/MOBILE.md` — nav sheets, visualViewport, focus/active (M0–M1 are done).
 2. **Engagement E1** (§6) — assist smoke + mascot QOTD feed (fast wins).
 3. **Engagement E2 → E3** — FTS search, avatars, alien buddy, friend accuracy leaderboard.
 4. **G8 — Teacher / class mode** per `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2.

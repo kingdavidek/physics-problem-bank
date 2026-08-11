@@ -398,7 +398,7 @@
       || (block.parentElement && block.parentElement.querySelector('.mcq-feedback'));
     block.querySelectorAll('.mcq-btn').forEach(function (b) {
       b.disabled = false;
-      b.classList.remove('is-correct', 'is-wrong');
+      b.classList.remove('is-correct', 'is-wrong', 'is-selected');
     });
     if (feedback) {
       feedback.textContent = '';
@@ -690,7 +690,10 @@
         if (btn.disabled) {
           return;
         }
-        block.querySelectorAll('.mcq-btn').forEach(function (b) { b.disabled = true; });
+        block.querySelectorAll('.mcq-btn').forEach(function (b) {
+          b.disabled = true;
+          b.classList.toggle('is-selected', b === btn);
+        });
         var letter = (btn.dataset.letter || '').trim().charAt(0);
         block.dataset.userChoice = letter;
         var isCorrect = letter === correctLetter;
@@ -2661,7 +2664,7 @@
     });
     block.querySelectorAll('.free-response-field-mcq .mcq-btn').forEach(function (btn) {
       btn.disabled = false;
-      btn.classList.remove('is-correct', 'is-wrong');
+      btn.classList.remove('is-correct', 'is-wrong', 'is-selected');
     });
     block.querySelectorAll('.free-response-field-row').forEach(function (row) {
       delete row.dataset.fieldCorrect;
@@ -3071,7 +3074,10 @@
           btn.addEventListener('click', function () {
             if (row.dataset.fieldCorrect === '1') return;
             var letter = (btn.dataset.letter || '').trim().charAt(0).toUpperCase();
-            mcqWrap.querySelectorAll('.mcq-btn').forEach(function (b) { b.disabled = true; });
+            mcqWrap.querySelectorAll('.mcq-btn').forEach(function (b) {
+              b.disabled = true;
+              b.classList.toggle('is-selected', b === btn);
+            });
             submitNumberFieldAnswer(index, row, 'mcq', letter, function (data) {
               btn.classList.remove('is-correct', 'is-wrong');
               mcqWrap.querySelectorAll('.mcq-btn').forEach(function (b) {
