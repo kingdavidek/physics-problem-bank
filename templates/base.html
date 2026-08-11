@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#1a6fa8">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -52,11 +52,19 @@
             --ease:        cubic-bezier(0.4, 0, 0.2, 1);
             --font-body:   'Work Sans', system-ui, sans-serif;
             --font-serif:  'Source Serif 4', Georgia, serif;
+            --safe-top:    env(safe-area-inset-top, 0px);
+            --safe-right:  env(safe-area-inset-right, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+            --safe-left:   env(safe-area-inset-left, 0px);
+            --tap-min:     44px;
         }
 
         /* ---- BASE ---- */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; }
+        html {
+            scroll-behavior: smooth;
+            overflow-x: clip;
+        }
         body {
             font-family: var(--font-body);
             font-size: 1.025rem;
@@ -66,13 +74,16 @@
             min-height: 100dvh;
             line-height: 1.65;
             -webkit-font-smoothing: antialiased;
+            padding-left: var(--safe-left);
+            padding-right: var(--safe-right);
         }
 
         /* ---- LAYOUT ---- */
         .site-wrapper {
             max-width: 860px;
             margin: 0 auto;
-            padding: 12px 20px 60px;
+            padding: 12px 20px calc(60px + var(--safe-bottom));
+            overflow-x: clip;
         }
         .site-wrapper[data-lesson-content] {
             max-width: 860px;
@@ -89,7 +100,7 @@
             z-index: 100;
             border-bottom: 1px solid var(--border-soft);
             margin-bottom: 32px;
-            padding: 14px 0;
+            padding: calc(14px + var(--safe-top)) 0 14px;
             background: rgba(255, 255, 255, 0.88);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
@@ -417,9 +428,13 @@
             flex-wrap: wrap;
         }
         @media (max-width: 640px) {
-            .site-wrapper { padding: 10px 14px 72px; }
+            .site-wrapper { padding: 10px 14px calc(72px + var(--safe-bottom)); }
             .header-inner { padding: 0 12px; }
-            .pwa-install-banner { bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+            .pwa-install-banner { bottom: calc(12px + var(--safe-bottom)); }
+            .app-toast-host {
+                top: calc(72px + var(--safe-top));
+                right: 12px;
+            }
         }
         .profile-stats-row {
             display: grid;
@@ -700,7 +715,7 @@
             padding: 11px 14px;
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
-            font-size: 0.9375rem;
+            font-size: 1rem;
             font-family: var(--font-body);
             background: var(--surface);
             color: var(--text);
@@ -720,11 +735,16 @@
         }
         input[type="email"],
         input[type="password"],
-        input[type="text"] {
+        input[type="text"],
+        input[type="search"],
+        input[type="number"],
+        input[type="date"],
+        input[type="tel"],
+        textarea {
             padding: 11px 14px;
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
-            font-size: 0.9375rem;
+            font-size: 1rem;
             font-family: var(--font-body);
             background: var(--surface);
             color: var(--text);
@@ -734,7 +754,12 @@
         }
         input[type="email"]:focus,
         input[type="password"]:focus,
-        input[type="text"]:focus {
+        input[type="text"]:focus,
+        input[type="search"]:focus,
+        input[type="number"]:focus,
+        input[type="date"]:focus,
+        input[type="tel"]:focus,
+        textarea:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: var(--ring);
@@ -2246,11 +2271,17 @@
             font-size: 1.05rem;
             line-height: 1.75;
             margin-bottom: 20px;
+            overflow-x: auto;
+            max-width: 100%;
         }
         .question-content,
         .question p {
             margin: 0;
             line-height: 1.75;
+        }
+        .question-content {
+            overflow-x: auto;
+            max-width: 100%;
         }
         /* MathJax inline math — share baseline with surrounding text */
         mjx-container:not([display="true"]) {
@@ -2274,6 +2305,8 @@
             margin: 0.65em auto !important;
             text-align: center;
             line-height: normal;
+            overflow-x: auto;
+            max-width: 100%;
         }
         mjx-container[display="true"] svg {
             display: inline-block !important;
@@ -2329,6 +2362,18 @@
             border-top: 1px solid var(--border);
             font-family: var(--font-serif);
             line-height: 1.8;
+            overflow-x: auto;
+            max-width: 100%;
+        }
+        .question table,
+        .answer table,
+        .hint table,
+        .question-content table,
+        pre {
+            max-width: 100%;
+        }
+        pre {
+            overflow-x: auto;
         }
 
         .answer-grading-hint {
@@ -2413,6 +2458,8 @@
             border-top: 1px solid var(--hint-border);
             font-size: 0.95rem;
             line-height: 1.75;
+            overflow-x: auto;
+            max-width: 100%;
         }
 
         /* ---- TOPIC PAGE ---- */
@@ -2488,10 +2535,85 @@
             .answer { display: block !important; }
         }
 
-        /* ---- MOBILE ---- */
+        /* ---- MOBILE (M0 foundation) ---- */
         @media (max-width: 600px) {
-            .form-grid { grid-template-columns: 1fr 1fr; }
+            .form-grid { grid-template-columns: 1fr; }
             .problem-card { padding: 20px; }
+        }
+        @media (max-width: 640px) {
+            /* M0.1 — ≥16px controls so iOS Safari does not zoom on focus */
+            input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="image"]):not(.prob-tree-input),
+            select,
+            textarea,
+            .free-response-input,
+            .free-response-row--power .free-response-input-index,
+            .free-response-input--sql,
+            .lesson-assist-followup input,
+            .revision-plan-fields input,
+            .revision-plan-fields select,
+            .wrong-answer-reflection-input {
+                font-size: 16px;
+            }
+
+            /* M0.2 — generate form is one column on phones */
+            .form-grid { grid-template-columns: 1fr; }
+
+            /* M0.3 — action rows stack full-width */
+            .problem-actions,
+            .public-profile-actions,
+            .settings-form-actions,
+            .wrong-answer-reflection-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .problem-actions form,
+            .problem-actions .btn,
+            .public-profile-actions .btn,
+            .settings-form-actions .btn,
+            .auth-form .btn,
+            .form-inner > .btn {
+                width: 100%;
+                min-height: var(--tap-min);
+            }
+            .profile-list-item {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .profile-list-actions {
+                justify-content: stretch;
+            }
+            .profile-list-actions .btn {
+                width: 100%;
+                min-height: var(--tap-min);
+            }
+            .cta-panel-body {
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .cta-panel-body .btn,
+            .cta-panel-body .inline-logout-form,
+            .cta-panel-body .inline-logout-form .btn {
+                width: 100%;
+                min-height: var(--tap-min);
+            }
+            .inline-logout-form { margin-left: 0; }
+            .revision-plan-fields {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .revision-plan-fields input,
+            .revision-plan-fields select,
+            .revision-plan-fields .btn {
+                width: 100%;
+                min-width: 0;
+                min-height: var(--tap-min);
+            }
+            .profile-dl {
+                grid-template-columns: 1fr;
+                gap: 4px 0;
+            }
         }
 
         /* ---- SVG: instructional diagrams only (not MathJax — see mjx-container above) ---- */
@@ -2861,6 +2983,7 @@
                 width: 100%;
                 max-height: 65vh;
                 border-radius: var(--radius) var(--radius) 0 0;
+                padding-bottom: var(--safe-bottom);
             }
         }
     </style>

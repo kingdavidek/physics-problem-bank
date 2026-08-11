@@ -29,6 +29,7 @@
 <div class="form-card">
     <div class="section-panel-header">Choose your question</div>
     <form method="POST" id="main-form" class="form-inner">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-grid">
 
             <div class="form-group">
@@ -235,6 +236,7 @@
         {% endif %}
         {% if can_reroll_variant %}
         <form method="POST" id="reroll-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="action" value="reroll">
             <input type="hidden" name="level" id="rr-level">
             <input type="hidden" name="subject" id="rr-subject">

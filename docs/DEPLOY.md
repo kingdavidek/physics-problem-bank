@@ -2,13 +2,14 @@
 
 ## Pre-deploy checklist
 
-- [ ] Set a strong **`SECRET_KEY`** env var (never use the dev default in production).
-- [ ] Serve the site over **HTTPS** (required for PWA install and secure cookies).
+- [ ] Set a strong **`SECRET_KEY`** env var (app **refuses** to start with the default outside testing / `PB_ALLOW_DEV_SECRET`).
+- [ ] Serve the site over **HTTPS** (required for PWA install and secure cookies; `SITE_URL=https://…` enables Secure cookies).
 - [ ] Configure **`CORS_ORIGINS`** if a native app or separate dev frontend calls the API (comma-separated origins, e.g. `https://app.example.com,http://localhost:5173`).
-- [ ] Do **not** set `PB_TESTING=1` in production (disables daily rate limits; smoke tests only).
-- [ ] Ensure `data/quicktest.db` is writable and backed up regularly (use `python scripts/backup_sqlite.py` on a schedule; keep backups off git).
+- [ ] Do **not** set `PB_TESTING=1` or `PB_ALLOW_DEV_SECRET=1` in production.
+- [ ] Ensure `data/quicktest.db` is writable and backed up regularly (use `python scripts/backup_sqlite.py` on a schedule; keep backups off git — DB files are gitignored).
 - [ ] Run smoke tests locally: `python scripts/run_smoke_tests.py`
-- [ ] Confirm `/api/v1/health` returns `{ "ok": true, "status": "up" }`.
+- [ ] Confirm `/api/v1/health` returns `{ "ok": true, "status": "up" }` (pings the database).
+- [ ] Security posture details: `docs/SOLID_DRAFT_SECURITY.md`.
 
 ## PythonAnywhere notes
 
@@ -41,10 +42,12 @@ Quick production steps:
 
 ## Security
 
-- Session cookies: `HttpOnly`, `SameSite=Lax` (default in app config).
-- API tokens: Bearer only over HTTPS; users can revoke via Settings → **Log out all devices**.
-- Rate limits apply per user (or IP when anonymous) — see `docs/API.md`.
+- Session cookies: `HttpOnly`, `SameSite=Lax`; `Secure` when HTTPS / `SESSION_COOKIE_SECURE=1`.
+- API tokens: Bearer; default **90-day** expiry; users can revoke via Settings → **Log out all devices**.
+- Rate limits apply per user (or IP when anonymous), including web login/register — see `docs/API.md`.
+- Cookie-session JSON API mutations require CSRF (Bearer exempt).
 - Content-Security-Policy is set on all responses; Pyodide lessons add cross-origin isolation headers.
+- Full hardening notes: `docs/SOLID_DRAFT_SECURITY.md`.
 
 ## CI
 

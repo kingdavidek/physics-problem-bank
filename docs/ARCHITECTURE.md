@@ -1,10 +1,12 @@
 # Problem Bank — Architecture & Product Overview
 
-**Last updated:** 2026-07-31  
+**Last updated:** 2026-08-11  
 **Repository:** `maths_generator/physics-problem-bank`  
 **Audience:** Developers, AI agents, and technical stakeholders  
 
-This document describes **what Problem Bank is today**: product goals, system architecture, major features, data model, and how the pieces fit together. For API contracts see `docs/API.md`. For deployment see `docs/DEPLOY.md`. For planned work see `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md`.
+This document describes **what Problem Bank is today**: product goals, system architecture, major features, data model, and how the pieces fit together.
+
+**AI agents:** start with `docs/AI_HANDOFF.md`, then this file, then `docs/SOLID_DRAFT_SECURITY.md` before changing auth/grading/sessions. API: `docs/API.md`. Deploy: `docs/DEPLOY.md`. Planned work (incl. G8): `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md`.
 
 ---
 
@@ -46,15 +48,15 @@ Problem Bank is a **free curriculum problem bank** for secondary and early post-
 | Layer | Technology | Notes |
 |-------|------------|-------|
 | **Runtime** | Python 3.12+ | CI uses 3.12 |
-| **Web framework** | Flask ≥3.0 | Single main app in `app.py` (~7,600 lines) |
-| **Auth** | Flask-Login + Werkzeug password hashing | Session cookies + Bearer API tokens |
-| **Database** | SQLite | `data/quicktest.db`; schema init inline in `app.py` |
-| **Math / grading** | SymPy ≥1.12 | Symbolic equivalence for algebra, surds, quadratics, etc. |
+| **Web framework** | Flask 3.1.x (pinned in `requirements.txt`) | Single main app in `app.py` |
+| **Auth** | Flask-Login + Werkzeug password hashing | Session cookies + Bearer API tokens (default 90-day expiry) |
+| **Database** | SQLite | Local `data/quicktest.db` (**gitignored**); schema init inline in `app.py`; WAL |
+| **Math / grading** | SymPy (pinned) | Safe allowlisted parsing only — never bare `sympify` on untrusted input |
 | **Templates** | Jinja2 | ~79 HTML templates under `templates/` |
 | **Frontend JS** | Vanilla JavaScript | `static/js/site.js` and feature modules |
 | **Math rendering** | MathJax | `static/js/mathjax-config.js` |
 | **CS Python grading** | Pyodide (in-browser) | `python-run-grader.js`, worker for write-code questions |
-| **PWA** | Service worker + manifest | Offline shell; API always network-only |
+| **PWA** | Service worker + manifest | Offline shell; API always network-only. **M0** mobile foundation CSS shipped (`base.html`: 16px inputs, 1-col forms, overflow-x, safe-area tokens). M1–M4 still planned — `docs/MOBILE.md` |
 | **Optional AI** | DeepSeek / OpenAI | Lesson/quiz assist via env-configured keys |
 | **Optional email** | Resend / SendGrid / SMTP | Weekly digest (`docs/EMAIL_SETUP.md`) |
 | **Deployment** | PythonAnywhere (documented) | WSGI entry: `from app import app as application` |
@@ -91,9 +93,9 @@ Problem Bank is a **free curriculum problem bank** for secondary and early post-
 1. User selects level / subject / topic / difficulty / mode on `/` or via API.
 2. `app.py` resolves generator from `topic_registry.py` → `TOPICS[level][subject][topic]`.
 3. Generator callable returns a **problem dict** (`question`, `solution`, optional grading fields).
-4. Problem stored in session as `last_problem_payload` (web) or returned in API JSON.
-5. **MCQ:** client posts answer → `POST /api/v1/generator/mcq-answer`.
-6. **Free response:** client posts typed answer → `POST /api/v1/problems/check` → `check_answer()` in `generators/shared/answer_checkers.py`.
+4. Problem stored in session as **slim** `last_problem_payload` (grading keys; bulky SVG/HTML dropped) for web check/MCQ trust.
+5. **MCQ:** client posts chosen letter → `POST /api/v1/generator/mcq-answer` → **server** compares to session `correct_answer`.
+6. **Free response:** client posts typed answer → `POST /api/v1/problems/check` → `check_answer()`; SymPy-backed types require session metadata.
 7. Logged-in users: attempts recorded; Phase G features (weak topics, reflections, cohort stats) consume this data.
 
 ### 3.2 Curriculum map
@@ -128,7 +130,7 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | **`static/`** | JavaScript, PWA manifest, icons, service worker |
 | **`scripts/`** | Smoke tests, maintenance, email digest |
 | **`docs/`** | API, deploy, architecture, future ideas |
-| **`data/quicktest.db`** | SQLite database (local/dev; backup in production) |
+| **`data/quicktest.db`** | SQLite database (local/dev only; **not in git**; backup in production) |
 
 ---
 
@@ -161,7 +163,7 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 
 **Registered answer types include:** `number`, `fraction`, `algebraic`, `surd`, `quadratic_roots`, `vector`, `sql`, `python_run`, `keyword`, `mcq`, `proof_steps`, and many more (see `docs/API.md`).
 
-**Session binding:** When `last_problem_payload` contains grading keys, the server grades against stored values and rejects client mismatches (403 `session_mismatch`).
+**Session binding:** When `last_problem_payload` contains grading keys, the server grades against stored values and rejects client mismatches (403 `session_mismatch`). Types `algebraic` and `quadratic_roots` **require** a session problem (`session_required` if missing). See `docs/SOLID_DRAFT_SECURITY.md`.
 
 ### 5.3 Accounts and profile
 
@@ -283,14 +285,19 @@ Lesson quizzes (`generators/shared/lesson_quiz.py`): 10 questions — 3 foundati
 
 ## 8. Security and operational concerns
 
+**Full solid-draft write-up:** `docs/SOLID_DRAFT_SECURITY.md` (SymPy RCE fix, session trust, CSRF, SECRET_KEY, git hygiene).
+
 | Area | Implementation |
 |------|----------------|
-| **CSRF** | Web forms use CSRF tokens |
-| **CSP** | Content-Security-Policy on responses; Pyodide lessons add COOP/COEP |
-| **Rate limits** | Daily buckets per user/IP (`models/rate_limit.py`) |
-| **Cookies** | HttpOnly, SameSite=Lax |
+| **SECRET_KEY** | Required non-default outside testing; `PB_ALLOW_DEV_SECRET=1` local-only |
+| **SymPy grading** | Allowlisted safe parser; check API session-bound for SymPy types |
+| **CSRF** | Web forms + cookie-session `/api/*` mutations; Bearer / `PB_TESTING` exempt |
+| **CSP** | Content-Security-Policy on responses; MathJax/Pyodide still need unsafe-eval/wasm; CDN SRI where applied |
+| **Rate limits** | Daily UTC buckets per user or IP (`models/rate_limit.py`); web auth included |
+| **Cookies** | HttpOnly, SameSite=Lax; Secure when HTTPS / `SESSION_COOKIE_SECURE` |
 | **CORS** | Optional `CORS_ORIGINS` for separate frontends |
-| **Testing** | `PB_TESTING=1` disables rate limits (dev/smoke only) |
+| **DB** | Request-scoped connections, WAL, busy_timeout; DB files gitignored |
+| **Testing** | `PB_TESTING=1` → ephemeral DB + limit/CSRF exemptions (smoke only) |
 | **CI** | `.github/workflows/smoke.yml` runs all `scripts/test_*_smoke.py` |
 
 ---
@@ -312,18 +319,22 @@ Lesson quizzes (`generators/shared/lesson_quiz.py`): 10 questions — 3 foundati
 
 | Document | Purpose |
 |----------|---------|
+| `docs/AI_HANDOFF.md` | **Start here for AI agents** — status, reading order, invariants, engagement E1–E3 |
+| `docs/COMPLEX_MECHANISMS.md` | How the three hardest subsystems work (grading, queues, Phase G) |
+| `docs/MOBILE.md` | Mobile polish (M0–M4) + Play Android via TWA (M5–M7) |
+| `docs/SOLID_DRAFT_SECURITY.md` | Solid-draft audit fixes — do not regress |
 | `docs/API.md` | REST API v1 contract |
 | `docs/DEPLOY.md` | Production deployment checklist |
 | `docs/EMAIL_SETUP.md` | Weekly digest configuration |
-| `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | Planned features (including teacher/class mode) |
-| `Problem_Bank_AI_Handoff_Plan.md` (parent dir) | Agent handoff: auto-correct playbook, Phase G order |
+| `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | G8, engagement E4, other future ideas |
 
 ---
 
 ## 11. Maintenance notes for developers
 
-1. **Do not rebuild** checker infrastructure or G1–G7 features — extend them.
+1. **Do not rebuild** checker infrastructure or G1–G7 features — extend them. **Do not regress** solid-draft security invariants.
 2. After JS/template changes affecting cached assets, bump `site.js?v=N` and `CACHE_VERSION` in `static/js/sw.js`.
-3. Run `python scripts/run_smoke_tests.py` before deploy.
+3. Run `python scripts/run_smoke_tests.py` before deploy (includes SymPy security smoke).
 4. Schema changes: add new `CREATE TABLE IF NOT EXISTS` blocks in `app.py`; no down-migrations required for typical releases.
 5. New topics: register in `topic_registry.py`, add lesson content in `topics_data.py` and templates as needed.
+6. Never commit `data/*.db` or `*.bak`.

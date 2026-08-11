@@ -1,10 +1,10 @@
 # Problem Bank — Potential Future Functionality
 
-**Last updated:** 2026-07-31  
+**Last updated:** 2026-08-07  
 **Repository:** `maths_generator/physics-problem-bank`  
 **Audience:** Product owners, developers, AI agents  
 
-This document captures **ideas and designs that are not yet implemented**. It is separate from `docs/ARCHITECTURE.md`, which describes the live system. Items here may be promoted to implementation plans when prioritised.
+This document captures **ideas and designs that are not yet implemented**. It is separate from `docs/ARCHITECTURE.md`, which describes the live system. Items here may be promoted to implementation plans when prioritised. Agents: see `docs/AI_HANDOFF.md` first (includes **engagement phases E1–E3**).
 
 ---
 
@@ -16,7 +16,7 @@ This document captures **ideas and designs that are not yet implemented**. It is
 | **Idea** | Directionally useful; needs more design |
 | **Deferred** | Explicitly out of scope for near-term work |
 
-**Current product baseline:** Phase G G1–G7 shipped (weak topics through exam revision planner). Auto-correct is complete. **No teacher/class mode exists today.**
+**Current product baseline:** Phase G G1–G7 shipped. Auto-correct complete. Solid-draft security done. **Engagement E1–E3** live in `docs/AI_HANDOFF.md` §6 (planned). **Engagement E4** (content depth) is below §3.0. Mobile polish planned in `docs/MOBILE.md`. **No teacher/class mode exists today** (G8 designed in §2).
 
 ---
 
@@ -237,55 +237,93 @@ If implementing G8 without further product decisions:
 
 These are **not designed to the same depth as G8**. Listed for prioritisation discussion.
 
-### 3.1 Native mobile app
+**Near-term engagement (E1–E3)** is tracked for implementation in `docs/AI_HANDOFF.md` §6 — not duplicated here.
 
-- **Idea:** Consume existing `/api/v1/*` with Bearer auth; offline cache for saved problems.  
+### 3.0 Engagement Phase E4 — Content depth (long-term / stretch)
+
+Only after E1–E3 land and engagement metrics (DAU, session length, QOTD/feed participation) justify more content investment. Do **not** start by default in the same sprint as E1–E3.
+
+#### 3.0.1 New real-world GCSE question styles
+
+| | |
+|--|--|
+| **Idea** | Refactor **3–5 high-traffic GCSE topics** (e.g. percentages, ratios, compound measures / speed) so practice items use everyday scenarios (cooking, sports, shopping) while keeping the same graders and session trust model. |
+| **Action** | Pilot on a small set; measure engagement (attempts, accuracy, time-on-task) vs control variants before rolling out across 30+ topics. Prefer new/adjusted **variants** inside existing generators, not a second problem engine. |
+| **Depends on** | Stable generators + auto-correct; ideally basic analytics or attempt counts already available |
+| **Status** | Stretch — after E1–E3 |
+
+#### 3.0.2 Sub-mascot story / farm perks
+
+| | |
+|--|--|
+| **Idea** | Deeper mascot meta-game (story arcs, collectibles, “farm” perks) beyond E1’s bot QOTD card and E3’s alien buddy. |
+| **Action** | Only if DAU / session length clearly lift after E1–E3. Needs dedicated schema, economy design, and ongoing content — treat as its **own project**, not a quick add-on. |
+| **Depends on** | E1.2 mascot bot + E3.1 buddy patterns; product metrics |
+| **Status** | Deferred stretch |
+
+#### 3.0.3 Desmos-like graphing / transform SVGs
+
+| | |
+|--|--|
+| **Idea** | Interactive graphing / transformation playground (Desmos-class UX). |
+| **Action** | **Defer indefinitely** as a custom Canvas/SVG engine (likely 2000+ lines, high maintenance). If users explicitly request graphs, prefer **embedding a maintained library** (e.g. Chart.js / Plotly) for basic visualisations first — still only on demand. |
+| **Status** | Deferred — do not schedule unless there is a clear user request and capacity |
+
+### 3.1 Mobile polish (app-like PWA) + Play Android — planned
+
+- **Plan:** Polish the existing site (phases **M0–M4**), then optionally ship Android via **TWA** (**M5** HTTPS → **M6** wrapper → **M7** Play listing). One web codebase — not a separate native UI.  
+- **Doc:** `docs/MOBILE.md` (canonical step-by-step for agents).  
+- **Status:** M0 shipped; M1–M4 planned — see `docs/MOBILE.md`  
+
+### 3.2 Native mobile app (beyond TWA)
+
+- **Idea:** Full native or Capacitor app with offline cache / richer push — only if TWA + PWA prove insufficient. Prefer finishing `docs/MOBILE.md` through **M7** first.  
 - **Depends on:** Stable API (largely done), push notifications (not built).  
-- **Status:** Idea  
+- **Status:** Idea — after M5–M7 if still needed  
 
-### 3.2 Push notifications
+### 3.3 Push notifications
 
 - **Idea:** Mobile/web push for challenges, study-pair invites, revision due reminders.  
 - **Status:** Idea — in-app notifications exist; push does not  
 
-### 3.3 Assignments / teacher-suggested topics (post-G8)
+### 3.4 Assignments / teacher-suggested topics (post-G8)
 
 - **Idea:** Teacher sends “practise topic X” to class; track completion.  
 - **Status:** Deferred — after G8a monitor-only MVP  
 
-### 3.4 School / org billing (B2B)
+### 3.5 School / org billing (B2B)
 
 - **Idea:** School accounts, seat licensing, admin dashboard.  
 - **Status:** Deferred — G8c territory  
 
-### 3.5 Expanded curriculum coverage
+### 3.6 Expanded curriculum coverage
 
 - **Idea:** More GCSE/A-Level/MYP topics; additional subjects.  
 - **Status:** Ongoing content work, not a single feature flag  
 
-### 3.6 Improved profile subject dropdown for revision planner
+### 3.7 Improved profile subject dropdown for revision planner
 
 - **Idea:** Client-side subject list updates when level changes (currently server-rendered for saved plan level only).  
 - **Status:** Idea — small UX polish  
 
-### 3.7 Logged-out MCQ cohort recording
+### 3.8 Logged-out MCQ cohort recording
 
 - **Idea:** Record anonymous cohort stats for logged-out MCQ attempts (G5 currently strongest for logged-in flows).  
 - **Status:** Idea — privacy review needed  
 
-### 3.8 Parent / guardian view
+### 3.9 Parent / guardian view
 
 - **Idea:** Read-only progress for linked child account.  
 - **Status:** Deferred — significant consent/safeguarding design  
 
-### 3.9 Advanced spaced repetition
+### 3.10 Advanced spaced repetition
 
 - **Idea:** SM-2 or similar algorithm replacing rule-based G3 queue.  
 - **Status:** Idea — G3 works; upgrade if data shows benefit  
 
-### 3.10 AI tutoring depth
+### 3.11 AI tutoring depth
 
-- **Idea:** Expand lesson/quiz assist beyond current explain endpoint.  
+- **Idea:** Expand lesson/quiz assist beyond current explain endpoint (E1.1 validates the existing path first — see handoff).  
 - **Status:** Idea — optional AI already env-gated  
 
 ---
@@ -302,6 +340,8 @@ These are **not designed to the same depth as G8**. Listed for prioritisation di
 | G6 | Cross-topic skill gaps | ✅ Shipped |
 | G7 | Revision planner | ✅ Shipped |
 | **G8** | **Teacher / class mode** | **Designed — not started** |
+| E1–E3 | Engagement (assist smoke, mascot QOTD, FTS, avatars, buddy, friend accuracy LB) | Planned in `docs/AI_HANDOFF.md` §6 |
+| E4 | Content depth (real-world styles, farm perks, Desmos-class graphs) | Stretch — §3.0 this file |
 
 ---
 
@@ -309,9 +349,9 @@ These are **not designed to the same depth as G8**. Listed for prioritisation di
 
 When a feature ships:
 
-1. Move its description from this file into `docs/ARCHITECTURE.md`.  
+1. Move its description from this file (or from handoff §6) into `docs/ARCHITECTURE.md`.  
 2. Add API details to `docs/API.md`.  
 3. Add smoke tests under `scripts/`.  
-4. Update `Problem_Bank_AI_Handoff_Plan.md` status table if agents rely on it.
+4. Update `docs/AI_HANDOFF.md` status table.
 
 When prioritising G8 or other items, record the chosen options (especially §2.13 answers) at the top of the relevant section.
