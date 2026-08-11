@@ -703,8 +703,19 @@
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             gap: 16px;
             margin-bottom: 20px;
+            min-width: 0;
         }
-        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 0;
+        }
+        .form-group select {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+        }
         label {
             font-size: 0.8125rem;
             font-weight: 600;
@@ -2548,7 +2559,7 @@
 
         /* ---- MOBILE (M0 foundation) ---- */
         @media (max-width: 600px) {
-            .form-grid { grid-template-columns: 1fr; }
+            .form-grid { grid-template-columns: minmax(0, 1fr); }
             .problem-card { padding: 20px; }
         }
         @media (max-width: 640px) {
@@ -2566,8 +2577,9 @@
                 font-size: 16px;
             }
 
-            /* M0.2 — generate form is one column on phones */
-            .form-grid { grid-template-columns: 1fr; }
+            /* M0.2 — generate form is one column on phones.
+               minmax(0, 1fr) so long <option> labels cannot blow out the card. */
+            .form-grid { grid-template-columns: minmax(0, 1fr); }
 
             /* M0.3 — action rows stack full-width */
             .problem-actions,
@@ -2584,6 +2596,7 @@
             .auth-form .btn,
             .form-inner > .btn {
                 width: 100%;
+                max-width: 100%;
                 min-height: var(--tap-min);
             }
             .profile-list-item {
@@ -2647,10 +2660,23 @@
                 margin-top: 4px;
             }
 
-            /* M1.3 — multipart fields stack; no horizontal min-width traps */
-            .free-response-field-row {
-                flex-direction: column;
-                align-items: stretch;
+            /* M1.3 — multipart fields stack; no horizontal min-width traps.
+               Keep field-row as wrap (not column) so √ / π / x² stay on one row. */
+            .free-response-field-row > .free-response-field,
+            .free-response-field-row > .free-response-field--text {
+                flex: 1 1 100%;
+            }
+            .free-response-surd-btn,
+            .free-response-pi-btn,
+            .free-response-square-btn,
+            .free-response-roots-insert-btn,
+            .free-response-csq-sign,
+            .free-response-vcombo-sign,
+            .free-response-ineq-sign,
+            .free-response-compound-sign {
+                flex: 0 0 auto;
+                width: auto;
+                align-self: center;
             }
             .free-response-field-group {
                 flex-direction: column;

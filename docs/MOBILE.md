@@ -90,11 +90,11 @@ flowchart TD
 | Step | Task | Where |
 |------|------|--------|
 | M0.1 | `input` / `select` / `textarea` / free-response controls **≥16px** at `max-width: 640px` (or globally) — kills iOS zoom | `templates/base.html` — **done** |
-| M0.2 | `.form-grid` → **1 column** below ~480–600px (currently stays 2-col at 600px) | `base.html` — **done** |
+| M0.2 | `.form-grid` → **1 column** below ~480–600px; `minmax(0, 1fr)` + select `min-width: 0` so long topic labels cannot blow out the card | `base.html` — **done** |
 | M0.3 | `.problem-actions`, auth forms, profile action rows → wrap/stack full-width buttons | `base.html` — **done** |
 | M0.4 | `.question`, `.answer`, `mjx-container`, tables, `pre` → `overflow-x: auto; max-width: 100%` | `base.html` — **done** |
 | M0.5 | Tokens `--safe-bottom`, `--tap-min: 44px`; pad fixed UI with `env(safe-area-inset-*)` | `base.html` — **done** |
-| M0.6 | Bump cache query/`CACHE_VERSION` if SW serves stale CSS/JS | `static/js/sw.js` `pb-v7` — **done** |
+| M0.6 | Bump cache query/`CACHE_VERSION` if SW serves stale CSS/JS | `static/js/sw.js` `pb-v9` — **done** |
 
 **Exit:** Generate + login on iPhone Safari without zoom-jump; no unintended horizontal page scroll on home. **Shipped 2026-08-11** (CSS-only; confirm on a real iPhone when convenient).
 
@@ -108,7 +108,7 @@ flowchart TD
 |------|------|--------|
 | M1.1 | Stack `.free-response-row` variants to column; Check full-width under inputs | `base.html` — **done** (Check `flex-basis: 100%`) |
 | M1.2 | Min tap size **44px** on `.btn`, `.mcq-btn`, proof chips, check buttons | `base.html` — **done** |
-| M1.3 | `number_fields` / proof banks: wrap chips; labels above fields; kill horizontal min-width traps | `base.html` — **done** (labels already above in the partial) |
+| M1.3 | `number_fields` / proof banks: wrap chips; labels above fields; kill horizontal min-width traps. Insert/sign chips stay compact — do not stretch full-width | `base.html` — **done** |
 | M1.4 | MCQ: vertical list, large hits, clear selected/correct/wrong | `base.html` + `site.js` `is-selected` — **done** |
 | M1.5 | Quick Test / saved / shared pages inherit the same free-response rules | same partial / `.mcq-options` — **done** |
 | M1.6 | Smoke: answer-check + generator MCQ still pass | `PB_TESTING=1` + smoke scripts |
