@@ -93,14 +93,21 @@
       </ul>
 
       <div style="text-align:center;margin:16px 0;">
-        <svg width="240" height="160" viewBox="0 0 240 160" style="background:#f9f8f5; border-radius:8px;">
+        <svg width="240" height="160" viewBox="0 0 240 160" style="background:#f9f8f5; border-radius:8px;" role="img" aria-label="Column vector 3 over 2: 3 right and 2 up">
+          <defs><marker id="arrowcol" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#a13544"/></marker></defs>
           <line x1="50" y1="120" x2="200" y2="120" stroke="#ccc" stroke-width="1"/>
           <line x1="50" y1="20" x2="50" y2="120" stroke="#ccc" stroke-width="1"/>
+          <circle cx="70" cy="100" r="3.5" fill="#a13544"/>
           <line x1="70" y1="100" x2="160" y2="70" stroke="#a13544" stroke-width="3" marker-end="url(#arrowcol)"/>
-          <text x="100" y="80" font-size="16" fill="#a13544" font-weight="bold">\(\begin{pmatrix}3\\2\end{pmatrix}\)</text>
+          <!-- Native SVG column vector — MathJax cannot typeset TeX inside <text> -->
+          <g transform="translate(130, 36)" fill="#a13544" font-size="15" font-weight="bold">
+            <path d="M3,-4 Q-1,-4 -1,4 L-1,28 Q-1,36 3,36" fill="none" stroke="#a13544" stroke-width="1.7" stroke-linecap="round"/>
+            <path d="M21,-4 Q25,-4 25,4 L25,28 Q25,36 21,36" fill="none" stroke="#a13544" stroke-width="1.7" stroke-linecap="round"/>
+            <text x="12" y="14" text-anchor="middle">3</text>
+            <text x="12" y="32" text-anchor="middle">2</text>
+          </g>
           <text x="170" y="115" font-size="14" fill="#555">x</text>
           <text x="42" y="25" font-size="14" fill="#555">y</text>
-          <defs><marker id="arrowcol" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#a13544"/></marker></defs>
         </svg>
         <p style="font-size:0.85em; color:var(--text-muted);">The vector starts at the dot, moves 3 right and 2 up, and the arrow shows the direction.</p>
       </div>
