@@ -424,6 +424,7 @@
     {% elif problem.answer_type == 'python_run' %}
     {% set py_rows = problem.answer_input_lines if problem.answer_input_lines else 4 %}
     <div class="free-response-row free-response-row--number free-response-row--text free-response-row--python-run">
+        <p class="python-desktop-hint" role="note">Works best on a computer — the code editor is cramped on a phone.</p>
         <textarea class="free-response-input free-response-input--python free-response-input--sql"
                   rows="{{ py_rows if py_rows > 1 else 2 }}"
                   placeholder="{{ problem.answer_format_hint or 'Write your Python code' }}"

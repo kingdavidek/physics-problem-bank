@@ -2345,6 +2345,7 @@
       var pyStarter = esc(block.getAttribute('data-python-starter') || '');
       return (
         '<div class="free-response-row free-response-row--number free-response-row--text free-response-row--python-run">' +
+        '<p class="python-desktop-hint" role="note">Works best on a computer — the code editor is cramped on a phone.</p>' +
         '<textarea class="free-response-input free-response-input--python free-response-input--sql" rows="' + pyRows + '" placeholder="' + pyPh + '" autocomplete="off" spellcheck="false" aria-label="Your Python code">' + pyStarter + '</textarea>' +
         '<button type="button" class="btn free-response-check-btn">Check</button>' +
         '</div>'
@@ -4390,6 +4391,19 @@
       if (el.value.trim() === '') return;
       el.classList.add(matches(el.value, el.getAttribute('data-ans')) ? 'correct' : 'incorrect');
     });
+
+    var first = document.querySelector('.prob-tree-input');
+    if (first) {
+      var host = first.closest('svg') || first;
+      var wrap = host.parentElement;
+      if (wrap && !wrap.querySelector('.prob-tree-mobile-hint')) {
+        var hint = document.createElement('p');
+        hint.className = 'prob-tree-mobile-hint';
+        hint.setAttribute('role', 'note');
+        hint.textContent = 'On a phone, scroll the tree sideways to fill each box.';
+        wrap.appendChild(hint);
+      }
+    }
   }
 
   function initRevisionQueue() {

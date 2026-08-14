@@ -2320,6 +2320,8 @@
         }
         .problem-card-inner {
             padding: 22px 24px 24px;
+            overflow-x: auto;
+            max-width: 100%;
         }
         .problem-meta {
             display: flex;
@@ -2549,6 +2551,8 @@
             margin: 10px 0;
             font-size: 1.05rem;
             box-shadow: var(--shadow-sm);
+            overflow-x: auto;
+            max-width: 100%;
         }
         .tips-list { list-style: none; padding: 0; }
         .tips-list li {
@@ -2601,8 +2605,32 @@
             border-radius: var(--radius-sm) !important;
             transition: box-shadow 200ms var(--ease), transform 120ms var(--ease) !important;
         }
-        div[style*="max-width:860px"] a[style*="background:#1a6fa8"]:hover {
+        div[style*="max-width:860px"] a[style*="background:#1a6fa8"]:hover,
+        div[style*="max-width:860px"] a[style*="background:#1a6fa8"]:focus-visible {
             box-shadow: var(--shadow-hover) !important;
+        }
+        .sql-box,
+        .ps-code,
+        .schema-table,
+        [data-lesson-content] table {
+            max-width: 100%;
+        }
+        .sql-box,
+        .ps-code {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .python-desktop-hint,
+        .prob-tree-mobile-hint {
+            display: none;
+            margin: 0 0 10px;
+            padding: 10px 12px;
+            font-size: 0.875rem;
+            line-height: 1.45;
+            color: var(--text-muted);
+            background: var(--hint-bg);
+            border-left: 3px solid var(--hint-border);
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
         }
 
         /* ---- PRINT ---- */
@@ -2915,6 +2943,101 @@
             .pwa-install-banner {
                 bottom: calc(12px + var(--safe-bottom) + var(--kb-inset, 0px));
             }
+
+            /* M3.1 — lesson accordions: readable padding; sticky quiz CTA */
+            div[style*="max-width:860px"] > details {
+                overflow-x: auto !important;
+            }
+            div[style*="max-width:860px"] > details > summary {
+                min-height: var(--tap-min);
+                padding: 14px 16px !important;
+                flex-wrap: wrap;
+                row-gap: 6px;
+                align-items: center;
+            }
+            div[style*="max-width:860px"] > details > summary + div {
+                padding: 16px 14px !important;
+            }
+            [data-lesson-content] div[style*="text-align:right"] {
+                position: sticky;
+                top: calc(56px + var(--safe-top));
+                z-index: 40;
+                background: rgba(244, 246, 249, 0.94);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                margin: 0 -12px 12px;
+                padding: 8px 12px;
+                text-align: center !important;
+            }
+            [data-lesson-content] a[href*="/lesson-quiz/"] {
+                min-height: var(--tap-min);
+                display: inline-flex !important;
+                align-items: center;
+                justify-content: center;
+                padding-left: 16px !important;
+                padding-right: 16px !important;
+            }
+            .page-shell .problem-actions {
+                position: sticky;
+                bottom: calc(8px + var(--safe-bottom) + var(--kb-inset, 0px));
+                z-index: 8;
+                background: rgba(244, 246, 249, 0.94);
+                padding: 8px 0 calc(8px + var(--safe-bottom));
+            }
+
+            /* M3.2 — wide tables / SQL / code boxes scroll inside the card */
+            [data-lesson-content] details > div,
+            [data-lesson-content] .section-panel-body {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                max-width: 100%;
+            }
+            [data-lesson-content] table {
+                display: block;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* M3.3 — probability-tree fill-ins stay tappable; diagram scrolls */
+            .question svg:has(.prob-tree-input),
+            .question-content svg:has(.prob-tree-input) {
+                max-width: none !important;
+                width: auto !important;
+                min-width: 600px;
+                height: auto !important;
+            }
+            svg:has(.prob-tree-input) foreignObject {
+                overflow: visible;
+            }
+            .prob-tree-input {
+                font-size: 16px;
+                min-width: 44px;
+                min-height: 36px;
+                width: 44px;
+                height: 36px;
+            }
+            .prob-tree-mobile-hint { display: block; }
+
+            /* M3.5 — Python honesty; keep Check, enlarge lesson Run */
+            .python-desktop-hint {
+                display: block;
+                flex: 1 1 100%;
+            }
+            .free-response-row--python-run .free-response-input--python {
+                min-height: 7.5rem;
+            }
+            #py-run,
+            #py-send {
+                min-height: var(--tap-min);
+            }
+            #py-run { width: 100%; }
+
+            /* M3.6 — long MathJax scrolls in the parent, not clipped by the card */
+            mjx-container[display="true"] {
+                overflow-x: auto;
+                max-width: 100%;
+                -webkit-overflow-scrolling: touch;
+            }
         }
 
         /* ---- SVG: instructional diagrams only (not MathJax — see mjx-container above) ---- */
@@ -2957,6 +3080,8 @@
             border-radius: 6px !important;
             display: block !important;
             margin: 6px auto !important;
+            max-width: 100% !important;
+            width: 100% !important;
             height: auto !important;
         }
         /* Typeable self-checking probability-tree inputs (blank/difficult trees) */
@@ -3304,7 +3429,7 @@
     ></script>
     <!-- External site logic (dropdowns, MCQs, etc.) -->
     <script src="{{ url_for('static', filename='js/python-run-grader.js') }}?v=3" defer></script>
-    <script src="{{ url_for('static', filename='js/site.js') }}?v=7" defer></script>
+    <script src="{{ url_for('static', filename='js/site.js') }}?v=8" defer></script>
     <script src="{{ url_for('static', filename='js/site-search.js') }}?v=2" defer></script>
     <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=2" defer></script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=1" defer></script>

@@ -178,7 +178,7 @@ def _forces_inter_vt_graph_accel():
     def vy(vel): return int(130 - (vel / 40) * 110)
     def tx(time): return int(40 + (time / 15) * 180)
     svg = rf"""
-    <svg width="260" height="180" style="margin:12px 0;border:1px solid #ddd;border-radius:6px;background:#fafafa;">
+    <svg width="260" height="180" viewBox="0 0 260 180" style="margin:12px 0;border:1px solid #ddd;border-radius:6px;background:#fafafa;max-width:100%;height:auto;">
         <line x1="40" y1="20" x2="40" y2="150" stroke="#333" stroke-width="2"/>
         <line x1="40" y1="150" x2="240" y2="150" stroke="#333" stroke-width="2"/>
         <text x="140" y="172" text-anchor="middle" font-size="11" fill="#555">Time (s)</text>
@@ -374,7 +374,7 @@ def _forces_diff_vt_area():
     def vy(vel): return int(130 - (vel / 40) * 110)
     def tx(time): return int(40 + (time / 15) * 180)
     svg = rf"""
-    <svg width="260" height="180" style="margin:12px 0;border:1px solid #ddd;border-radius:6px;background:#fafafa;">
+    <svg width="260" height="180" viewBox="0 0 260 180" style="margin:12px 0;border:1px solid #ddd;border-radius:6px;background:#fafafa;max-width:100%;height:auto;">
         <line x1="40" y1="20" x2="40" y2="150" stroke="#333" stroke-width="2"/>
         <line x1="40" y1="150" x2="240" y2="150" stroke="#333" stroke-width="2"/>
         <text x="140" y="172" text-anchor="middle" font-size="11" fill="#555">Time (s)</text>

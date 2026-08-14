@@ -465,7 +465,7 @@ def _thermo_inter_energy_profile_read():
     r_y = ey(e_react); p_y = ey(e_prod); pk_y = ey(e_peak)
 
     svg = rf"""
-    <svg width="320" height="220" style="margin:14px 0;border:1px solid #ddd;border-radius:6px;background:#fafafa;">
+    <svg width="320" height="220" viewBox="0 0 320 220" style="margin:14px 0;border:1px solid #ddd;border-radius:6px;background:#fafafa;max-width:100%;height:auto;">
         <line x1="30" y1="10" x2="30" y2="200" stroke="#333" stroke-width="2"/>
         <line x1="30" y1="200" x2="300" y2="200" stroke="#333" stroke-width="2"/>
         <text x="8" y="110" font-size="11" fill="#555" transform="rotate(-90,8,110)" text-anchor="middle">Energy (kJ)</text>
@@ -697,7 +697,7 @@ def _thermo_diff_energy_profile_catalyst():
     r_y=ey(e_react); p_y=ey(e_prod); pk_y=ey(e_peak); pk_cat_y=ey(e_peak_cat)
 
     svg = rf"""
-    <svg width="340" height="230" style="margin:14px 0;border:1px solid #ddd;border-radius:6px;background:#fafafa;">
+    <svg width="340" height="230" viewBox="0 0 340 230" style="margin:14px 0;border:1px solid #ddd;border-radius:6px;background:#fafafa;max-width:100%;height:auto;">
         <line x1="30" y1="10" x2="30" y2="210" stroke="#333" stroke-width="2"/>
         <line x1="30" y1="210" x2="315" y2="210" stroke="#333" stroke-width="2"/>
         <text x="8" y="115" font-size="10" fill="#555" transform="rotate(-90,8,115)" text-anchor="middle">Energy</text>

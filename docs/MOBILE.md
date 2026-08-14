@@ -1,7 +1,7 @@
 # Problem Bank — Mobile polish plan (app-like PWA)
 
 **Last updated:** 2026-08-14  
-**Status:** **M0–M2 shipped.** M3–M4 planned — not implemented. M5–M7 gated on M4 + production URL.  
+**Status:** **M0–M3 shipped.** M4 planned — not implemented. M5–M7 gated on M4 + production URL.  
 **Audience:** Next AI agent / developers  
 **Companion:** `docs/AI_HANDOFF.md`, `docs/ARCHITECTURE.md`, `docs/DEPLOY.md`
 
@@ -26,9 +26,9 @@ Take the site from **usable on a phone** to **basically mobile-polished and app-
 
 **Already OK:** `viewport`, ~860px shell, partial `@media` breakpoints, PWA manifest/install banner, fluid topic grids, many SVGs `max-width: 100%`, free-response `inputmode`, lesson-assist bottom sheet on small screens.
 
-**M0–M2 closed:** 16px form controls; 1-col forms; stacked actions; overflow-x; safe-area tokens; stacked Check; 44px taps; vertical MCQ; nav/search/notif sheets; keyboard-aware Check; `:focus-visible`.
+**M0–M3 closed:** 16px form controls; 1-col forms; stacked actions; overflow-x; safe-area tokens; stacked Check; 44px taps; vertical MCQ; nav/search/notif sheets; keyboard-aware Check; `:focus-visible`; lesson accordion/CTA polish; scrolling tables/SQL; probability-tree fill-ins; Python desktop-best banner; MathJax parent scroll.
 
-**Main remaining gaps:** tiny diagram/tree inputs and Python honesty (M3); no formal device QA matrix (M4).
+**Main remaining gap:** no formal device QA matrix (M4).
 
 Primary CSS lives in [`templates/base.html`](../templates/base.html). Free-response markup: [`templates/partials/free_response_inline.html`](../templates/partials/free_response_inline.html).
 
@@ -94,7 +94,7 @@ flowchart TD
 | M0.3 | `.problem-actions`, auth forms, profile action rows → wrap/stack full-width buttons | `base.html` — **done** |
 | M0.4 | `.question`, `.answer`, `mjx-container`, tables, `pre` → `overflow-x: auto; max-width: 100%` | `base.html` — **done** |
 | M0.5 | Tokens `--safe-bottom`, `--tap-min: 44px`; pad fixed UI with `env(safe-area-inset-*)` | `base.html` — **done** |
-| M0.6 | Bump cache query/`CACHE_VERSION` if SW serves stale CSS/JS | `static/js/sw.js` `pb-v10` — **done** |
+| M0.6 | Bump cache query/`CACHE_VERSION` if SW serves stale CSS/JS | `static/js/sw.js` `pb-v11` — **done** |
 
 **Exit:** Generate + login on iPhone Safari without zoom-jump; no unintended horizontal page scroll on home. **Shipped 2026-08-11** (CSS-only; confirm on a real iPhone when convenient).
 
@@ -139,14 +139,14 @@ flowchart TD
 
 | Step | Task | Where |
 |------|------|--------|
-| M3.1 | Lesson accordions: readable padding; sticky quiz/quick-test CTAs on small screens | lesson templates / shared CSS |
-| M3.2 | Verify wide tables/SQL boxes scroll (`overflow-x: auto`) | CS/SQL and similar lessons |
-| M3.3 | Probability-tree / tiny SVG inputs: larger hits **or** fallback to normal free-response under a mobile breakpoint | CSS ± generator/JS |
-| M3.4 | Prefer `viewBox` + `max-width: 100%` on generator SVGs | generators emitting diagrams |
-| M3.5 | Python/Pyodide: “Works best on a computer” banner; optional hide Run on very narrow widths | Python lesson + grader JS |
-| M3.6 | Long MathJax: parent scroll, no card clipping | `base.html` / mathjax-config |
+| M3.1 | Lesson accordions: readable padding; sticky quiz/quick-test CTAs on small screens | `base.html` — **done** |
+| M3.2 | Verify wide tables/SQL boxes scroll (`overflow-x: auto`) | `base.html` + existing `.sql-box` / `.ps-code` — **done** |
+| M3.3 | Probability-tree / tiny SVG inputs: larger hits **or** fallback to normal free-response under a mobile breakpoint | CSS: no shrink + 16px/44px hits + sideways scroll; hint in `site.js` — **done** |
+| M3.4 | Prefer `viewBox` + `max-width: 100%` on generator SVGs | CSS already scaled diagrams; added `viewBox` on forces + MYP chemistry graphs — **done** |
+| M3.5 | Python/Pyodide: “Works best on a computer” banner; optional hide Run on very narrow widths | partial + `site.js` + Python lesson; Check/Run kept, 44px Run — **done** |
+| M3.6 | Long MathJax: parent scroll, no card clipping | `problem-card-inner` / `.formula-block` / `mjx-container` overflow-x — **done** |
 
-**Exit:** Lessons readable; trees usable or degraded; Python expectation clear.
+**Exit:** Lessons readable; trees usable or degraded; Python expectation clear. **Shipped 2026-08-14** (layout/UX only).
 
 ---
 
@@ -268,7 +268,7 @@ flowchart LR
 ## Suggested order for the next AI
 
 1. Read this file and `docs/AI_HANDOFF.md` (and `docs/SOLID_DRAFT_SECURITY.md` before any grading changes — there should be none for mobile polish).
-2. **M0–M2 are done.** Implement **M3** next (lessons, diagrams, Python honesty).
+2. **M0–M3 are done.** Implement **M4** next (PWA polish, device QA matrix, status update).
 3. **M3** content/diagrams; **M4** QA + status update.
 4. Only then **M5** production HTTPS → **M6** TWA + Asset Links → **M7** Play Console.
 5. Do **not** regress solid-draft security or session grading trust while touching templates/JS.
