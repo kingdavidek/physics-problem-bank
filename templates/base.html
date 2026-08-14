@@ -6,12 +6,21 @@
     <meta name="theme-color" content="#1a6fa8">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Problem Bank">
     <meta name="description" content="GCSE, A-Level and MYP practice problems, lessons, and study tools.">
     <link rel="manifest" href="{{ url_for('web_manifest') }}">
     <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='icons/icon-192.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+    <script>
+      (function () {
+        try {
+          var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+            || window.navigator.standalone === true;
+          if (standalone) document.documentElement.classList.add('pwa-standalone');
+        } catch (e) {}
+      })();
+    </script>
     <title>{% block title %}Problem Bank{% endblock %}</title>
 
     <!-- Fonts -->
@@ -386,8 +395,8 @@
         }
         .pwa-offline-bar {
             position: sticky;
-            top: 56px;
-            z-index: 90;
+            top: 0;
+            z-index: 110;
             background: #7a1f1f;
             color: #fff;
             text-align: center;
@@ -430,6 +439,16 @@
             gap: 8px;
             flex-wrap: wrap;
         }
+        html.pwa-standalone .pwa-install-banner { display: none !important; }
+        html.pwa-standalone .pwa-offline-bar {
+            padding-top: calc(8px + var(--safe-top));
+        }
+        html.pwa-standalone .site-wrapper {
+            padding-bottom: calc(72px + var(--safe-bottom));
+        }
+        @media (display-mode: standalone) {
+            html { min-height: 100dvh; }
+        }
         @media (max-width: 640px) {
             .site-wrapper { padding: 10px 14px calc(72px + var(--safe-bottom)); }
             .header-inner { padding: 0 12px; }
@@ -437,6 +456,9 @@
             .app-toast-host {
                 top: calc(72px + var(--safe-top));
                 right: 12px;
+            }
+            html.pwa-standalone header {
+                margin-bottom: 20px;
             }
         }
         .profile-stats-row {
@@ -3432,7 +3454,7 @@
     <script src="{{ url_for('static', filename='js/site.js') }}?v=9" defer></script>
     <script src="{{ url_for('static', filename='js/site-search.js') }}?v=2" defer></script>
     <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=3" defer></script>
-    <script src="{{ url_for('static', filename='js/pwa.js') }}?v=1" defer></script>
+    <script src="{{ url_for('static', filename='js/pwa.js') }}?v=2" defer></script>
     {% if current_user.is_authenticated %}
     <script src="{{ url_for('static', filename='js/notifications.js') }}?v=3" defer></script>
     {% endif %}
@@ -3596,6 +3618,15 @@
     <div class="pwa-install-actions">
         <button type="button" class="btn btn-primary btn-sm" id="pwa-install-btn">Install</button>
         <button type="button" class="btn btn-outline btn-sm" id="pwa-install-dismiss">Not now</button>
+    </div>
+</div>
+<div id="pwa-ios-hint" class="pwa-install-banner" hidden role="dialog" aria-label="Add Problem Bank to Home Screen">
+    <div class="pwa-install-copy">
+        <strong>Add to Home Screen</strong>
+        <span>Tap Share, then “Add to Home Screen” for an app-like shortcut.</span>
+    </div>
+    <div class="pwa-install-actions">
+        <button type="button" class="btn btn-outline btn-sm" id="pwa-ios-hint-dismiss">Got it</button>
     </div>
 </div>
 

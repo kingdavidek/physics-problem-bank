@@ -1,15 +1,19 @@
 {
+  "id": "/",
   "name": "Problem Bank",
   "short_name": "Problem Bank",
   "description": "GCSE, A-Level and MYP practice problems, lessons, and study tools.",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
+  "display_override": ["standalone", "browser"],
+  "orientation": "any",
   "background_color": "#f4f6f9",
   "theme_color": "#1a6fa8",
   "lang": "en",
+  "dir": "ltr",
   "categories": ["education", "productivity"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/static/icons/icon-192.png",
@@ -28,6 +32,34 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Generate a problem",
+      "short_name": "Generate",
+      "description": "Open the problem generator",
+      "url": "/?source=pwa-shortcut",
+      "icons": [
+        {
+          "src": "/static/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Browse topics",
+      "short_name": "Topics",
+      "description": "Browse lessons and topics",
+      "url": "/topics?source=pwa-shortcut",
+      "icons": [
+        {
+          "src": "/static/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
   ]
 }

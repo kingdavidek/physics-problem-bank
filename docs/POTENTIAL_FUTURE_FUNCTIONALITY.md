@@ -273,7 +273,7 @@ Only after E1–E3 land and engagement metrics (DAU, session length, QOTD/feed p
 
 - **Plan:** Polish the existing site (phases **M0–M4**), then optionally ship Android via **TWA** (**M5** HTTPS → **M6** wrapper → **M7** Play listing). One web codebase — not a separate native UI.  
 - **Doc:** `docs/MOBILE.md` (canonical step-by-step for agents).  
-- **Status:** M0–M1 shipped; M2–M4 planned — see `docs/MOBILE.md`  
+- **Status:** **Done (M0–M4)** — see `docs/MOBILE.md`. M5–M7 gated on production HTTPS.  
 
 ### 3.2 Native mobile app (beyond TWA)
 

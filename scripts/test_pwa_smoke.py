@@ -1,4 +1,5 @@
-"""M2 PWA smoke test — run: python scripts/test_pwa_smoke.py"""
+"""M4 PWA smoke test — run: python scripts/test_pwa_smoke.py"""
+import json
 import sys
 from pathlib import Path
 
@@ -14,18 +15,28 @@ def main():
         assert r.status_code == 200, r.data
         assert 'application/manifest+json' in (r.content_type or '')
         data = r.get_json(silent=True)
-        # Flask may return as bytes for send_from_directory — parse if needed
         if data is None:
-            import json
             data = json.loads(r.data.decode())
         assert data['name'] == 'Problem Bank'
         assert data['display'] == 'standalone'
-        assert data['start_url'] == '/'
-        assert any(icon['sizes'] == '192x192' for icon in data['icons'])
+        assert data['scope'] == '/'
+        assert data['start_url'] in ('/', '/?source=pwa')
+        assert data.get('id') == '/'
+        assert data.get('theme_color') == '#1a6fa8'
+        assert data.get('background_color') == '#f4f6f9'
+        sizes = {icon['sizes'] for icon in data['icons']}
+        assert '192x192' in sizes
+        assert '512x512' in sizes
+        assert any(icon.get('purpose') == 'maskable' for icon in data['icons'])
+        shortcuts = data.get('shortcuts') or []
+        assert len(shortcuts) >= 2
+        assert any('/topics' in (s.get('url') or '') for s in shortcuts)
 
         r = client.get('/sw.js')
         assert r.status_code == 200, r.data
-        assert 'serviceWorker' in r.data.decode() or 'STATIC_CACHE' in r.data.decode()
+        sw = r.data.decode()
+        assert 'STATIC_CACHE' in sw
+        assert 'pb-v13' in sw
         assert r.headers.get('Service-Worker-Allowed') == '/'
 
         r = client.get('/offline')
@@ -39,7 +50,11 @@ def main():
         assert 'pwa.js' in html
         assert 'theme-color' in html
         assert 'pwa-install-banner' in html
+        assert 'pwa-ios-hint' in html
         assert 'pwa-offline-bar' in html
+        assert 'pwa-standalone' in html
+        assert 'apple-mobile-web-app-capable' in html
+        assert 'black-translucent' in html
 
         for path in (
             '/static/icons/icon-192.png',
@@ -51,6 +66,10 @@ def main():
         ):
             r = client.get(path)
             assert r.status_code == 200, path
+
+        pwa = client.get('/static/js/pwa.js').data.decode()
+        assert 'isStandalone' in pwa or 'display-mode: standalone' in pwa
+        assert 'pwa_ios_hint_dismissed' in pwa
 
     print('PWA smoke tests passed.')
 

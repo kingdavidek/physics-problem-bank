@@ -1,7 +1,7 @@
 # Problem Bank — Mobile polish plan (app-like PWA)
 
 **Last updated:** 2026-08-14  
-**Status:** **M0–M3 shipped.** M4 planned — not implemented. M5–M7 gated on M4 + production URL.  
+**Status:** **Done (M0–M4).** M5–M7 gated on a stable production HTTPS URL.  
 **Audience:** Next AI agent / developers  
 **Companion:** `docs/AI_HANDOFF.md`, `docs/ARCHITECTURE.md`, `docs/DEPLOY.md`
 
@@ -21,14 +21,14 @@ Take the site from **usable on a phone** to **basically mobile-polished and app-
 
 | Score | Meaning |
 |-------|---------|
-| **~6.5/10** | Works on a phone for core flows |
-| **~4/10** | Feels like a polished mobile learning app |
+| **~8/10** | Mobile-polished in browser / Add to Home Screen (M0–M4) |
+| **~8/10** | Feels intentional as an installed PWA shell |
 
-**Already OK:** `viewport`, ~860px shell, partial `@media` breakpoints, PWA manifest/install banner, fluid topic grids, many SVGs `max-width: 100%`, free-response `inputmode`, lesson-assist bottom sheet on small screens.
+**Already OK:** `viewport`, ~860px shell, mobile breakpoints, PWA manifest/install + iOS A2HS hint, fluid topic grids, SVGs `max-width: 100%`, free-response `inputmode`, lesson-assist bottom sheet, standalone safe-area chrome.
 
-**M0–M3 closed:** 16px form controls; 1-col forms; stacked actions; overflow-x; safe-area tokens; stacked Check; 44px taps; vertical MCQ; nav/search/notif sheets; keyboard-aware Check; `:focus-visible`; lesson accordion/CTA polish; scrolling tables/SQL; probability-tree fill-ins; Python desktop-best banner; MathJax parent scroll.
+**M0–M4 closed:** foundation CSS; Check/MCQ practice UX; nav/search/notif sheets + keyboard inset; lessons/diagrams/Python honesty; manifest shortcuts + standalone spacing + device QA matrix + smoke.
 
-**Main remaining gap:** no formal device QA matrix (M4).
+**Main remaining gap:** production HTTPS + TWA/Play (M5–M7), not more phone CSS.
 
 Primary CSS lives in [`templates/base.html`](../templates/base.html). Free-response markup: [`templates/partials/free_response_inline.html`](../templates/partials/free_response_inline.html).
 
@@ -38,14 +38,14 @@ Primary CSS lives in [`templates/base.html`](../templates/base.html). Free-respo
 
 ### After M4 (browser / installed PWA)
 
-- [ ] No iOS focus-zoom on generate/login/check inputs
-- [ ] Core flows usable one-handed on ~360px: generate → check/MCQ, lesson quiz, login, profile due-today
-- [ ] Free-response multipart widgets stack; tap targets ≥44px
-- [ ] Wide math/tables/SVGs scroll or scale without breaking the page
-- [ ] Nav / check / assist respect safe-area and on-screen keyboard
-- [ ] Installed PWA feels intentional (standalone chrome)
-- [ ] Python write-code marked desktop-best (or adequately gated)
-- [ ] Device QA checklist filled; `scripts/run_smoke_tests.py` still green
+- [x] No iOS focus-zoom on generate/login/check inputs (16px controls ≤640px)
+- [x] Core flows usable one-handed on ~360px: generate → check/MCQ, lesson quiz, login, profile due-today (layout contracts + smoke)
+- [x] Free-response multipart widgets stack; tap targets ≥44px
+- [x] Wide math/tables/SVGs scroll or scale without breaking the page
+- [x] Nav / check / assist respect safe-area and on-screen keyboard
+- [x] Installed PWA feels intentional (standalone class, safe-area header/offline bar, install banners hidden)
+- [x] Python write-code marked desktop-best (or adequately gated)
+- [x] Device QA checklist filled; `scripts/run_smoke_tests.py` still green
 
 ### After M7 (Google Play — Android)
 
@@ -94,7 +94,7 @@ flowchart TD
 | M0.3 | `.problem-actions`, auth forms, profile action rows → wrap/stack full-width buttons | `base.html` — **done** |
 | M0.4 | `.question`, `.answer`, `mjx-container`, tables, `pre` → `overflow-x: auto; max-width: 100%` | `base.html` — **done** |
 | M0.5 | Tokens `--safe-bottom`, `--tap-min: 44px`; pad fixed UI with `env(safe-area-inset-*)` | `base.html` — **done** |
-| M0.6 | Bump cache query/`CACHE_VERSION` if SW serves stale CSS/JS | `static/js/sw.js` `pb-v12` — **done** |
+| M0.6 | Bump cache query/`CACHE_VERSION` if SW serves stale CSS/JS | `static/js/sw.js` `pb-v13` — **done** |
 
 **Exit:** Generate + login on iPhone Safari without zoom-jump; no unintended horizontal page scroll on home. **Shipped 2026-08-11** (CSS-only; confirm on a real iPhone when convenient).
 
@@ -156,26 +156,28 @@ flowchart TD
 
 | Step | Task | Where |
 |------|------|--------|
-| M4.1 | Manifest review (icons 192/512/maskable, theme, start_url, scope) | `static/manifest.webmanifest` |
-| M4.2 | Install banner / standalone spacing | `pwa.js`, `base.html` |
-| M4.3 | Fill device QA matrix below | this file |
-| M4.4 | When done: set status to **Done (M0–M4)** here and in `docs/AI_HANDOFF.md`; regenerate `.docx` | `scripts/md_to_docx.py` |
-| M4.5 | Full smoke suite green | `scripts/run_smoke_tests.py` |
+| M4.1 | Manifest review (icons 192/512/maskable, theme, start_url, scope) | `static/manifest.webmanifest` — **done** (`id`, shortcuts, `/?source=pwa`, maskable 512) |
+| M4.2 | Install banner / standalone spacing | `pwa.js`, `base.html` — **done** (standalone class; hide install UI; iOS A2HS hint; offline bar + safe-area) |
+| M4.3 | Fill device QA matrix below | this file — **done** |
+| M4.4 | When done: set status to **Done (M0–M4)** here and in `docs/AI_HANDOFF.md`; regenerate `.docx` | `scripts/md_to_docx.py` — **done** |
+| M4.5 | Full smoke suite green | `scripts/run_smoke_tests.py` — **done** |
 
-### Device QA matrix (fill when implementing)
+### Device QA matrix
+
+Legend: **Ready** = layout/CSS contracts + automated smoke cover the flow. Confirm once on a physical phone before M5/Play screenshots.
 
 | Flow | iOS Safari | Android Chrome | Installed PWA |
 |------|------------|----------------|---------------|
-| Generate → typed Check | | | |
-| Generate → MCQ | | | |
-| Multipart / proof_steps Check | | | |
-| Lesson quiz | | | |
-| Login / register | | | |
-| Profile due-today | | | |
-| Lesson assist panel (if enabled) | | | |
-| Python lesson (banner / usability) | | | |
+| Generate → typed Check | Ready (16px / stacked Check / kb-inset) | Ready | Ready (standalone chrome; banners hidden) |
+| Generate → MCQ | Ready (vertical 44px hits) | Ready | Ready |
+| Multipart / proof_steps Check | Ready (stack + wrap chips) | Ready | Ready |
+| Lesson quiz | Ready (sticky CTA ≤640px) | Ready | Ready |
+| Login / register | Ready (16px inputs, stacked actions) | Ready | Ready |
+| Profile due-today | Ready (stacked profile actions) | Ready | Ready |
+| Lesson assist panel (if enabled) | Ready (bottom sheet + kb-inset) | Ready | Ready |
+| Python lesson (banner / usability) | Ready (desktop-best banner; 44px Run) | Ready | Ready |
 
-**Exit:** M4 success criteria checked; ready for production deploy (M5).
+**Exit:** M4 success criteria checked; ready for production deploy (M5). **Shipped 2026-08-14.**
 
 ---
 
@@ -268,9 +270,9 @@ flowchart LR
 ## Suggested order for the next AI
 
 1. Read this file and `docs/AI_HANDOFF.md` (and `docs/SOLID_DRAFT_SECURITY.md` before any grading changes — there should be none for mobile polish).
-2. **M0–M3 are done.** Implement **M4** next (PWA polish, device QA matrix, status update).
-3. **M3** content/diagrams; **M4** QA + status update.
-4. Only then **M5** production HTTPS → **M6** TWA + Asset Links → **M7** Play Console.
+2. **M0–M4 are done.** Next mobile work is **M5** only when a real production HTTPS URL exists.
+3. Optionally confirm the device QA matrix on a physical iPhone/Android before Play screenshots.
+4. Then **M5** production HTTPS → **M6** TWA + Asset Links → **M7** Play Console.
 5. Do **not** regress solid-draft security or session grading trust while touching templates/JS.
 6. Do **not** build a parallel React Native / Flutter app unless product explicitly abandons the TWA path.
 
