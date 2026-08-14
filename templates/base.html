@@ -57,6 +57,7 @@
             --safe-bottom: env(safe-area-inset-bottom, 0px);
             --safe-left:   env(safe-area-inset-left, 0px);
             --tap-min:     44px;
+            --kb-inset:    0px;
         }
 
         /* ---- BASE ---- */
@@ -141,7 +142,8 @@
             transition: color 200ms var(--ease), background 200ms var(--ease);
             white-space: nowrap;
         }
-        .nav-handle:hover {
+        .nav-handle:hover,
+        .nav-handle:focus-visible {
             color: var(--primary);
             background: var(--primary-light);
         }
@@ -159,7 +161,8 @@
             border-radius: var(--radius-pill);
             transition: color 200ms var(--ease), background 200ms var(--ease);
         }
-        nav a:hover {
+        nav a:hover,
+        nav a:focus-visible {
             color: var(--primary);
             background: var(--primary-light);
         }
@@ -954,6 +957,7 @@
             transition: color 200ms var(--ease), background 200ms var(--ease);
         }
         .nav-search-btn:hover,
+        .nav-search-btn:focus-visible,
         .nav-search-btn[aria-expanded="true"] {
             color: var(--primary);
             background: var(--primary-light);
@@ -1014,7 +1018,8 @@
             cursor: pointer;
             padding: 0;
         }
-        .nav-notif-mark-all:hover { text-decoration: underline; }
+        .nav-notif-mark-all:hover,
+        .nav-notif-mark-all:focus-visible { text-decoration: underline; }
         .nav-notif-list {
             overflow: auto;
             flex: 1;
@@ -1027,7 +1032,9 @@
             border-bottom: 1px solid var(--border-soft);
             transition: background 160ms var(--ease);
         }
-        .nav-notif-item:hover { background: var(--primary-light); }
+        .nav-notif-item:hover,
+        .nav-notif-item:focus-visible,
+        .nav-notif-item:active { background: var(--primary-light); }
         .nav-notif-item.is-unread {
             background: rgba(42, 127, 186, 0.06);
         }
@@ -1126,7 +1133,9 @@
             color: inherit;
             transition: background 160ms var(--ease);
         }
-        .site-search-group a:hover { background: var(--primary-light); }
+        .site-search-group a:hover,
+        .site-search-group a:focus-visible,
+        .site-search-group a:active { background: var(--primary-light); }
         .site-search-title {
             display: block;
             font-weight: 600;
@@ -1193,7 +1202,8 @@
             font-family: var(--font-body);
             transition: color 200ms var(--ease), background 200ms var(--ease);
         }
-        .nav-link-btn:hover {
+        .nav-link-btn:hover,
+        .nav-link-btn:focus-visible {
             color: var(--primary);
             background: var(--primary-light);
         }
@@ -1233,7 +1243,11 @@
             transition: background 160ms var(--ease), color 160ms var(--ease);
         }
         .nav-menu-panel a:hover,
-        .nav-menu-panel button:hover {
+        .nav-menu-panel a:focus-visible,
+        .nav-menu-panel a:active,
+        .nav-menu-panel button:hover,
+        .nav-menu-panel button:focus-visible,
+        .nav-menu-panel button:active {
             background: var(--primary-light);
             color: var(--primary);
         }
@@ -1250,6 +1264,46 @@
         .nav-menu-logout-form {
             margin: 0;
             padding: 0;
+        }
+        .nav-sheet-backdrop {
+            display: none;
+        }
+        .nav-sheet-chrome {
+            display: none;
+        }
+        .nav-sheet-close,
+        .site-search-close {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: var(--radius-pill);
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 1.4rem;
+            line-height: 1;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .nav-sheet-close:hover,
+        .nav-sheet-close:focus-visible,
+        .site-search-close:hover,
+        .site-search-close:focus-visible {
+            color: var(--primary);
+            background: var(--primary-light);
+        }
+        .nav-notif-panel .nav-sheet-close { display: none; }
+        .btn:focus-visible,
+        .mcq-btn:focus-visible,
+        .nav-search-btn:focus-visible,
+        .free-response-check-btn:focus-visible,
+        .free-response-field-check-btn:focus-visible,
+        .lesson-assist-toolbar-btn:focus-visible,
+        .lesson-assist-preset:focus-visible {
+            outline: none;
+            box-shadow: var(--ring);
         }
 
         /* ---- BUTTONS ---- */
@@ -2729,6 +2783,138 @@
                 padding-top: 12px;
                 padding-bottom: 12px;
             }
+
+            /* M2.1 — full-width nav sheet, 44px hits, hide handle clutter */
+            .nav-handle { display: none; }
+            .nav-search-btn {
+                width: var(--tap-min);
+                height: var(--tap-min);
+            }
+            body.nav-menu-open,
+            body.nav-notif-open {
+                overflow: hidden;
+            }
+            .nav-sheet-backdrop:not([hidden]) {
+                display: block;
+                position: fixed;
+                inset: 0;
+                z-index: 210;
+                background: rgba(20, 24, 28, 0.42);
+                backdrop-filter: blur(2px);
+            }
+            .nav-sheet-chrome {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 4px 10px;
+            }
+            .nav-sheet-handle {
+                display: block;
+                width: 36px;
+                height: 4px;
+                border-radius: 999px;
+                background: var(--border);
+            }
+            .nav-sheet-title-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                width: 100%;
+                gap: 8px;
+            }
+            .nav-sheet-title {
+                font-size: 1rem;
+            }
+            .nav-sheet-close,
+            .site-search-close {
+                width: var(--tap-min);
+                height: var(--tap-min);
+            }
+            .nav-notif-panel .nav-sheet-close { display: inline-flex; }
+            .nav-menu-panel:not([hidden]) {
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                top: auto;
+                width: 100%;
+                min-width: 0;
+                max-height: min(85vh, 640px);
+                border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+                padding: 0 10px calc(12px + var(--safe-bottom));
+                z-index: 220;
+                overflow: auto;
+            }
+            .nav-menu-panel a,
+            .nav-menu-panel button {
+                min-height: var(--tap-min);
+                padding: 12px 14px;
+                font-size: 1rem;
+                display: flex;
+                align-items: center;
+            }
+
+            /* M2.2 — search + notifications as full-screen / bottom sheets */
+            .site-search-overlay {
+                padding: 0;
+                align-items: stretch;
+            }
+            .site-search-panel {
+                width: 100%;
+                max-width: none;
+                height: 100%;
+                border-radius: 0;
+                display: flex;
+                flex-direction: column;
+                padding-top: var(--safe-top);
+            }
+            .site-search-form {
+                padding: 10px 12px;
+            }
+            .site-search-results {
+                max-height: none;
+                flex: 1;
+            }
+            .site-search-group a {
+                min-height: var(--tap-min);
+                padding: 12px 16px;
+            }
+            .nav-notif-panel:not([hidden]) {
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                top: auto;
+                width: 100%;
+                max-height: min(85vh, 640px);
+                border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+                z-index: 220;
+                padding-bottom: var(--safe-bottom);
+            }
+            .nav-notif-panel-header {
+                padding: 10px 14px;
+            }
+            .nav-notif-item {
+                min-height: var(--tap-min);
+                padding: 14px 16px;
+            }
+            .nav-notif-mark-all {
+                min-height: var(--tap-min);
+                padding: 8px 10px;
+            }
+
+            /* M2.3 / M2.4 — Check stays above home indicator and keyboard */
+            body.kb-open .free-response-row > .free-response-check-btn,
+            body.kb-open .free-response-field-row > .free-response-check-btn,
+            body.kb-open .free-response-field-row > .free-response-field-check-btn {
+                position: sticky;
+                bottom: calc(8px + var(--kb-inset, 0px));
+                z-index: 6;
+            }
+            .pwa-install-banner {
+                bottom: calc(12px + var(--safe-bottom) + var(--kb-inset, 0px));
+            }
         }
 
         /* ---- SVG: instructional diagrams only (not MathJax — see mjx-container above) ---- */
@@ -2947,7 +3133,8 @@
             cursor: pointer;
             box-shadow: var(--shadow);
         }
-        .lesson-assist-toolbar-btn:hover {
+        .lesson-assist-toolbar-btn:hover,
+        .lesson-assist-toolbar-btn:focus-visible {
             background: var(--primary-hover);
         }
         .lesson-assist-panel {
@@ -3040,7 +3227,8 @@
             color: var(--text);
             cursor: pointer;
         }
-        .lesson-assist-preset:hover:not(:disabled) {
+        .lesson-assist-preset:hover:not(:disabled),
+        .lesson-assist-preset:focus-visible:not(:disabled) {
             border-color: var(--primary);
             color: var(--primary);
         }
@@ -3094,9 +3282,9 @@
         @media (max-width: 600px) {
             .lesson-assist-panel {
                 right: 0;
-                bottom: 0;
+                bottom: var(--kb-inset, 0px);
                 width: 100%;
-                max-height: 65vh;
+                max-height: min(65vh, calc(100dvh - var(--kb-inset, 0px) - var(--safe-top)));
                 border-radius: var(--radius) var(--radius) 0 0;
                 padding-bottom: var(--safe-bottom);
             }
@@ -3116,15 +3304,15 @@
     ></script>
     <!-- External site logic (dropdowns, MCQs, etc.) -->
     <script src="{{ url_for('static', filename='js/python-run-grader.js') }}?v=3" defer></script>
-    <script src="{{ url_for('static', filename='js/site.js') }}?v=6" defer></script>
-    <script src="{{ url_for('static', filename='js/site-search.js') }}?v=1" defer></script>
-    <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=1" defer></script>
+    <script src="{{ url_for('static', filename='js/site.js') }}?v=7" defer></script>
+    <script src="{{ url_for('static', filename='js/site-search.js') }}?v=2" defer></script>
+    <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=2" defer></script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=1" defer></script>
     {% if current_user.is_authenticated %}
-    <script src="{{ url_for('static', filename='js/notifications.js') }}?v=1" defer></script>
+    <script src="{{ url_for('static', filename='js/notifications.js') }}?v=2" defer></script>
     {% endif %}
     {% if lesson_assist_enabled and lesson_meta and not lesson_meta.get('quizReview') %}
-    <script src="{{ url_for('static', filename='js/lesson-assist.js') }}?v=4" defer></script>
+    <script src="{{ url_for('static', filename='js/lesson-assist.js') }}?v=5" defer></script>
     {% endif %}
     {% if lesson_assist_enabled and lesson_meta and lesson_meta.get('quizReview') %}
     <script src="{{ url_for('static', filename='js/quiz-assist.js') }}?v=1" defer></script>
@@ -3161,9 +3349,13 @@
                     <span class="nav-notif-badge" id="nav-notif-badge"{% if not unread_notifications %} hidden{% endif %}>{% if unread_notifications > 9 %}9+{% else %}{{ unread_notifications }}{% endif %}</span>
                 </button>
                 <div class="nav-notif-panel" id="nav-notif-panel" hidden role="region" aria-label="Notifications">
+                    <div class="nav-sheet-chrome">
+                        <span class="nav-sheet-handle" aria-hidden="true"></span>
+                    </div>
                     <div class="nav-notif-panel-header">
                         <strong>Notifications</strong>
                         <button type="button" class="nav-notif-mark-all" id="nav-notif-mark-all">Mark all read</button>
+                        <button type="button" class="nav-sheet-close" id="nav-notif-close" aria-label="Close notifications">&times;</button>
                     </div>
                     <div class="nav-notif-list" id="nav-notif-list">
                         <p class="nav-notif-empty">Loading…</p>
@@ -3179,6 +3371,13 @@
                     </svg>
                 </button>
                 <div class="nav-menu-panel" id="nav-menu-panel" hidden role="menu" aria-label="Site menu">
+                    <div class="nav-sheet-chrome">
+                        <span class="nav-sheet-handle" aria-hidden="true"></span>
+                        <div class="nav-sheet-title-row">
+                            <strong class="nav-sheet-title">Menu</strong>
+                            <button type="button" class="nav-sheet-close" id="nav-menu-close" aria-label="Close menu">&times;</button>
+                        </div>
+                    </div>
                     <a href="/" role="menuitem" class="{% if nav_endpoint == 'index' %}active{% endif %}">Generator</a>
                     <a href="/topics" role="menuitem" class="{% if nav_endpoint == 'topics_index' %}active{% endif %}">Topics</a>
                     <a href="/about" role="menuitem" class="{% if nav_endpoint == 'about' %}active{% endif %}">About</a>
@@ -3189,6 +3388,7 @@
                     <a href="{{ url_for('friend_leaderboard_page') }}" role="menuitem" class="{% if nav_endpoint == 'friend_leaderboard_page' %}active{% endif %}">Leaderboard</a>
                     <a href="{{ url_for('suggestions_inbox') }}" role="menuitem" class="{% if nav_endpoint in ('suggestions_inbox', 'view_suggestion') %}active{% endif %}">Suggestions</a>
                     <div class="nav-menu-divider" role="separator"></div>
+                    <a href="{{ url_for('profile') }}" role="menuitem" class="{% if nav_endpoint in ('profile', 'public_profile', 'public_profile_followers', 'public_profile_following') %}active{% endif %}">Profile</a>
                     <a href="{{ url_for('profile_settings') }}" role="menuitem" class="{% if nav_endpoint == 'profile_settings' %}active{% endif %}">Settings</a>
                     <form method="POST" action="{{ url_for('logout') }}" class="nav-menu-logout-form">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -3205,6 +3405,9 @@
     </div>
 </header>
 
+<div id="nav-menu-backdrop" class="nav-sheet-backdrop" hidden></div>
+<div id="nav-notif-backdrop" class="nav-sheet-backdrop" hidden></div>
+
 <div id="site-search-overlay" class="site-search-overlay" hidden aria-hidden="true">
     <div class="site-search-backdrop" data-close-search></div>
     <div class="site-search-panel" role="dialog" aria-modal="true" aria-label="Search">
@@ -3214,6 +3417,7 @@
                 <path d="M20 20L16.5 16.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
             </svg>
             <input type="search" name="q" id="site-search-input" placeholder="Search topics, lessons, users…" autocomplete="off" maxlength="80" aria-label="Search">
+            <button type="button" class="site-search-close" data-close-search aria-label="Close search">&times;</button>
         </form>
         <div id="site-search-results" class="site-search-results"></div>
     </div>

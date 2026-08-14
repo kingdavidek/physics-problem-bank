@@ -3,6 +3,8 @@
 
   var openBtn = document.getElementById('nav-menu-open');
   var panel = document.getElementById('nav-menu-panel');
+  var backdrop = document.getElementById('nav-menu-backdrop');
+  var closeBtn = document.getElementById('nav-menu-close');
   if (!openBtn || !panel) return;
 
   var isOpen = false;
@@ -11,12 +13,16 @@
     isOpen = true;
     panel.hidden = false;
     openBtn.setAttribute('aria-expanded', 'true');
+    document.body.classList.add('nav-menu-open');
+    if (backdrop) backdrop.hidden = false;
   }
 
   function closePanel() {
     isOpen = false;
     panel.hidden = true;
     openBtn.setAttribute('aria-expanded', 'false');
+    document.body.classList.remove('nav-menu-open');
+    if (backdrop) backdrop.hidden = true;
   }
 
   openBtn.addEventListener('click', function (event) {
@@ -24,6 +30,17 @@
     if (isOpen) closePanel();
     else openPanel();
   });
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function (event) {
+      event.stopPropagation();
+      closePanel();
+    });
+  }
+
+  if (backdrop) {
+    backdrop.addEventListener('click', closePanel);
+  }
 
   document.addEventListener('click', function (event) {
     if (!isOpen) return;

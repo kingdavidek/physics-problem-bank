@@ -6,6 +6,8 @@
   var listEl = document.getElementById('nav-notif-list');
   var badge = document.getElementById('nav-notif-badge');
   var markAllBtn = document.getElementById('nav-notif-mark-all');
+  var backdrop = document.getElementById('nav-notif-backdrop');
+  var closeBtn = document.getElementById('nav-notif-close');
   if (!openBtn || !panel || !listEl || !badge) return;
 
   var isOpen = false;
@@ -85,6 +87,8 @@
     isOpen = true;
     panel.hidden = false;
     openBtn.setAttribute('aria-expanded', 'true');
+    document.body.classList.add('nav-notif-open');
+    if (backdrop) backdrop.hidden = false;
     listEl.innerHTML = '<p class="nav-notif-empty">Loading…</p>';
     fetchNotifications()
       .then(function (data) {
@@ -100,6 +104,8 @@
     isOpen = false;
     panel.hidden = true;
     openBtn.setAttribute('aria-expanded', 'false');
+    document.body.classList.remove('nav-notif-open');
+    if (backdrop) backdrop.hidden = true;
   }
 
   function csrfToken() {
@@ -159,6 +165,17 @@
       event.stopPropagation();
       markAllRead().catch(function () {});
     });
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener('click', function (event) {
+      event.stopPropagation();
+      closePanel();
+    });
+  }
+
+  if (backdrop) {
+    backdrop.addEventListener('click', closePanel);
   }
 
   listEl.addEventListener('click', function (event) {

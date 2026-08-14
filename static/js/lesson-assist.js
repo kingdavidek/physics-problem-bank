@@ -125,10 +125,13 @@
 
   function positionToolbar(rect) {
     var bar = ensureToolbar();
+    var vv = window.visualViewport;
+    var viewTop = vv ? vv.offsetTop : 0;
+    var viewWidth = vv ? vv.width : window.innerWidth;
     var top = rect.top - 48;
     var left = rect.left + rect.width / 2;
-    top = Math.max(12, top);
-    left = Math.max(72, Math.min(left, window.innerWidth - 72));
+    top = Math.max(viewTop + 12, top);
+    left = Math.max(72, Math.min(left, viewWidth - 72));
     bar.style.top = top + 'px';
     bar.style.left = left + 'px';
     bar.hidden = false;
@@ -341,4 +344,12 @@
       if (!readSelection()) hideToolbar();
     }, 0);
   });
+
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', function () {
+      if (toolbar && !toolbar.hidden && state.selection && state.selection.rect) {
+        showToolbarForSelection();
+      }
+    });
+  }
 })();

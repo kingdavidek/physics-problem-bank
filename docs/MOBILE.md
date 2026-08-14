@@ -1,7 +1,7 @@
 # Problem Bank — Mobile polish plan (app-like PWA)
 
-**Last updated:** 2026-08-11  
-**Status:** **M0–M1 shipped.** M2–M4 planned — not implemented. M5–M7 gated on M4 + production URL.  
+**Last updated:** 2026-08-14  
+**Status:** **M0–M2 shipped.** M3–M4 planned — not implemented. M5–M7 gated on M4 + production URL.  
 **Audience:** Next AI agent / developers  
 **Companion:** `docs/AI_HANDOFF.md`, `docs/ARCHITECTURE.md`, `docs/DEPLOY.md`
 
@@ -26,9 +26,9 @@ Take the site from **usable on a phone** to **basically mobile-polished and app-
 
 **Already OK:** `viewport`, ~860px shell, partial `@media` breakpoints, PWA manifest/install banner, fluid topic grids, many SVGs `max-width: 100%`, free-response `inputmode`, lesson-assist bottom sheet on small screens.
 
-**M0–M1 closed:** 16px form controls; 1-col forms; stacked actions; overflow-x; safe-area tokens; stacked Check; 44px taps; vertical MCQ with selected/correct/wrong.
+**M0–M2 closed:** 16px form controls; 1-col forms; stacked actions; overflow-x; safe-area tokens; stacked Check; 44px taps; vertical MCQ; nav/search/notif sheets; keyboard-aware Check; `:focus-visible`.
 
-**Main remaining gaps:** nav sheets / keyboard covering Check (M2); tiny diagram/tree inputs and Python honesty (M3); no formal device QA matrix (M4).
+**Main remaining gaps:** tiny diagram/tree inputs and Python honesty (M3); no formal device QA matrix (M4).
 
 Primary CSS lives in [`templates/base.html`](../templates/base.html). Free-response markup: [`templates/partials/free_response_inline.html`](../templates/partials/free_response_inline.html).
 
@@ -94,7 +94,7 @@ flowchart TD
 | M0.3 | `.problem-actions`, auth forms, profile action rows → wrap/stack full-width buttons | `base.html` — **done** |
 | M0.4 | `.question`, `.answer`, `mjx-container`, tables, `pre` → `overflow-x: auto; max-width: 100%` | `base.html` — **done** |
 | M0.5 | Tokens `--safe-bottom`, `--tap-min: 44px`; pad fixed UI with `env(safe-area-inset-*)` | `base.html` — **done** |
-| M0.6 | Bump cache query/`CACHE_VERSION` if SW serves stale CSS/JS | `static/js/sw.js` `pb-v9` — **done** |
+| M0.6 | Bump cache query/`CACHE_VERSION` if SW serves stale CSS/JS | `static/js/sw.js` `pb-v10` — **done** |
 
 **Exit:** Generate + login on iPhone Safari without zoom-jump; no unintended horizontal page scroll on home. **Shipped 2026-08-11** (CSS-only; confirm on a real iPhone when convenient).
 
@@ -123,13 +123,13 @@ flowchart TD
 
 | Step | Task | Where |
 |------|------|--------|
-| M2.1 | Mobile nav: full-width sheet, larger hits; declutter logged-in header | `base.html`, `static/js/nav-menu.js` |
-| M2.2 | Search + notifications as full-screen or bottom sheet on small viewports | related JS/templates |
-| M2.3 | Bottom-aware primary actions (Check above home indicator) | CSS ± small JS |
-| M2.4 | `visualViewport` (or equivalent) so keyboard doesn’t cover Check / lesson-assist | `site.js`, `lesson-assist.js` |
-| M2.5 | `:focus-visible` / `:active` — not hover-only | `base.html` |
+| M2.1 | Mobile nav: full-width sheet, larger hits; declutter logged-in header | `base.html`, `nav-menu.js` — **done** (bottom sheet; Profile in menu; handle hidden ≤640px) |
+| M2.2 | Search + notifications as full-screen or bottom sheet on small viewports | `base.html`, `site-search.js`, `notifications.js` — **done** |
+| M2.3 | Bottom-aware primary actions (Check above home indicator) | `base.html` — **done** (`--kb-inset` + sticky Check while typing) |
+| M2.4 | `visualViewport` (or equivalent) so keyboard doesn’t cover Check / lesson-assist | `site.js`, `lesson-assist.js` — **done** |
+| M2.5 | `:focus-visible` / `:active` — not hover-only | `base.html` — **done** |
 
-**Exit:** One-handed nav + check-while-typing works in standalone PWA.
+**Exit:** One-handed nav + check-while-typing works in standalone PWA. **Shipped 2026-08-14** (layout/UX only; confirm keyboard inset on a real phone).
 
 ---
 
@@ -268,7 +268,7 @@ flowchart LR
 ## Suggested order for the next AI
 
 1. Read this file and `docs/AI_HANDOFF.md` (and `docs/SOLID_DRAFT_SECURITY.md` before any grading changes — there should be none for mobile polish).
-2. **M0–M1 are done.** Implement **M2** next (app chrome: nav sheets, visualViewport, focus/active).
+2. **M0–M2 are done.** Implement **M3** next (lessons, diagrams, Python honesty).
 3. **M3** content/diagrams; **M4** QA + status update.
 4. Only then **M5** production HTTPS → **M6** TWA + Asset Links → **M7** Play Console.
 5. Do **not** regress solid-draft security or session grading trust while touching templates/JS.

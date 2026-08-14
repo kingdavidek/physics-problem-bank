@@ -4452,6 +4452,60 @@
     });
   }
 
+  function initKeyboardInset() {
+    var root = document.documentElement;
+
+    function keyboardInset() {
+      var vv = window.visualViewport;
+      if (!vv) return 0;
+      return Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    }
+
+    function revealPrimaryAction() {
+      var active = document.activeElement;
+      if (!active || !active.closest) return;
+      var row = active.closest(
+        '.free-response-row, .free-response-field-row, .free-response-field-group, .lesson-assist-followup'
+      );
+      if (!row) return;
+      var target = row.querySelector(
+        '.free-response-check-btn, .free-response-field-check-btn, .lesson-assist-send'
+      ) || row;
+      var vv = window.visualViewport;
+      var rect = target.getBoundingClientRect();
+      var viewBottom = vv ? vv.offsetTop + vv.height : window.innerHeight;
+      var viewTop = vv ? vv.offsetTop : 0;
+      if (rect.bottom > viewBottom - 12) {
+        window.scrollBy(0, rect.bottom - viewBottom + 16);
+      } else if (rect.top < viewTop + 12) {
+        window.scrollBy(0, rect.top - viewTop - 16);
+      }
+    }
+
+    function update() {
+      var inset = keyboardInset();
+      root.style.setProperty('--kb-inset', inset + 'px');
+      document.body.classList.toggle('kb-open', inset > 40);
+      if (inset > 40) {
+        window.setTimeout(revealPrimaryAction, 50);
+      }
+    }
+
+    update();
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', update);
+      window.visualViewport.addEventListener('scroll', update);
+    } else {
+      window.addEventListener('resize', update);
+    }
+    document.addEventListener('focusin', function () {
+      window.setTimeout(update, 80);
+    });
+    document.addEventListener('focusout', function () {
+      window.setTimeout(update, 80);
+    });
+  }
+
   window.showAppToast = showAppToast;
 
   document.addEventListener('DOMContentLoaded', function () {
@@ -4467,5 +4521,6 @@
     initProbTreeInputs();
     initAnswerRevealMathJax();
     initRevisionQueue();
+    initKeyboardInset();
   });
 })();
