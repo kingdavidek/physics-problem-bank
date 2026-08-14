@@ -87,8 +87,10 @@
     isOpen = true;
     panel.hidden = false;
     openBtn.setAttribute('aria-expanded', 'true');
-    document.body.classList.add('nav-notif-open');
-    if (backdrop) backdrop.hidden = false;
+    if (window.matchMedia('(max-width: 640px)').matches) {
+      document.body.classList.add('nav-notif-open');
+      if (backdrop) backdrop.hidden = false;
+    }
     listEl.innerHTML = '<p class="nav-notif-empty">Loading…</p>';
     fetchNotifications()
       .then(function (data) {
@@ -196,6 +198,19 @@
   document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape' && isOpen) closePanel();
   });
+
+  if (window.matchMedia) {
+    window.matchMedia('(max-width: 640px)').addEventListener('change', function (event) {
+      if (!isOpen) return;
+      if (event.matches) {
+        document.body.classList.add('nav-notif-open');
+        if (backdrop) backdrop.hidden = false;
+      } else {
+        document.body.classList.remove('nav-notif-open');
+        if (backdrop) backdrop.hidden = true;
+      }
+    });
+  }
 
   pollTimer = window.setInterval(refreshBadge, 60000);
   window.addEventListener('beforeunload', function () {

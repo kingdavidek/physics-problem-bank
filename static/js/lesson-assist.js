@@ -127,11 +127,10 @@
     var bar = ensureToolbar();
     var vv = window.visualViewport;
     var viewTop = vv ? vv.offsetTop : 0;
-    var viewWidth = vv ? vv.width : window.innerWidth;
     var top = rect.top - 48;
     var left = rect.left + rect.width / 2;
     top = Math.max(viewTop + 12, top);
-    left = Math.max(72, Math.min(left, viewWidth - 72));
+    left = Math.max(72, Math.min(left, window.innerWidth - 72));
     bar.style.top = top + 'px';
     bar.style.left = left + 'px';
     bar.hidden = false;

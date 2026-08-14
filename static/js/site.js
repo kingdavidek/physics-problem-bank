@@ -4404,6 +4404,27 @@
         wrap.appendChild(hint);
       }
     }
+
+    // Diagram foreignObjects are ~22px tall; enlarge on phones so 16px text fits.
+    if (window.matchMedia && window.matchMedia('(max-width: 640px)').matches) {
+      document.querySelectorAll('svg foreignObject').forEach(function (fo) {
+        var input = fo.querySelector('.prob-tree-input');
+        if (!input) return;
+        var w = parseFloat(fo.getAttribute('width')) || 0;
+        var h = parseFloat(fo.getAttribute('height')) || 0;
+        var x = parseFloat(fo.getAttribute('x')) || 0;
+        var y = parseFloat(fo.getAttribute('y')) || 0;
+        var nextW = Math.max(w, 56);
+        var nextH = Math.max(h, 36);
+        if (nextW === w && nextH === h) return;
+        fo.setAttribute('width', String(nextW));
+        fo.setAttribute('height', String(nextH));
+        fo.setAttribute('y', String(y - (nextH - h) / 2));
+        if (input.getAttribute('aria-label') !== 'outcome probability') {
+          fo.setAttribute('x', String(x - (nextW - w) / 2));
+        }
+      });
+    }
   }
 
   function initRevisionQueue() {
@@ -4472,7 +4493,8 @@
     function keyboardInset() {
       var vv = window.visualViewport;
       if (!vv) return 0;
-      return Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      var layoutH = Math.max(window.innerHeight, document.documentElement.clientHeight);
+      return Math.max(0, Math.round(layoutH - vv.height - vv.offsetTop));
     }
 
     function revealPrimaryAction() {
@@ -4496,27 +4518,26 @@
       }
     }
 
-    function update() {
+    function update(opts) {
       var inset = keyboardInset();
       root.style.setProperty('--kb-inset', inset + 'px');
       document.body.classList.toggle('kb-open', inset > 40);
-      if (inset > 40) {
+      if (inset > 40 && opts && opts.reveal) {
         window.setTimeout(revealPrimaryAction, 50);
       }
     }
 
     update();
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', update);
-      window.visualViewport.addEventListener('scroll', update);
+      window.visualViewport.addEventListener('resize', function () { update({ reveal: true }); });
     } else {
-      window.addEventListener('resize', update);
+      window.addEventListener('resize', function () { update({ reveal: true }); });
     }
     document.addEventListener('focusin', function () {
-      window.setTimeout(update, 80);
+      window.setTimeout(function () { update({ reveal: true }); }, 80);
     });
     document.addEventListener('focusout', function () {
-      window.setTimeout(update, 80);
+      window.setTimeout(function () { update(); }, 80);
     });
   }
 

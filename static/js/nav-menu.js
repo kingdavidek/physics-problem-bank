@@ -9,12 +9,18 @@
 
   var isOpen = false;
 
+  function isMobileSheet() {
+    return window.matchMedia('(max-width: 640px)').matches;
+  }
+
   function openPanel() {
     isOpen = true;
     panel.hidden = false;
     openBtn.setAttribute('aria-expanded', 'true');
-    document.body.classList.add('nav-menu-open');
-    if (backdrop) backdrop.hidden = false;
+    if (isMobileSheet()) {
+      document.body.classList.add('nav-menu-open');
+      if (backdrop) backdrop.hidden = false;
+    }
   }
 
   function closePanel() {
@@ -51,4 +57,17 @@
   document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape' && isOpen) closePanel();
   });
+
+  if (window.matchMedia) {
+    window.matchMedia('(max-width: 640px)').addEventListener('change', function (event) {
+      if (!isOpen) return;
+      if (event.matches) {
+        document.body.classList.add('nav-menu-open');
+        if (backdrop) backdrop.hidden = false;
+      } else {
+        document.body.classList.remove('nav-menu-open');
+        if (backdrop) backdrop.hidden = true;
+      }
+    });
+  }
 })();

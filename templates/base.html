@@ -1065,6 +1065,8 @@
             border-top: 1px solid var(--border-soft);
             text-decoration: none;
         }
+        body.nav-menu-open,
+        body.nav-notif-open,
         body.site-search-open { overflow: hidden; }
         .site-search-overlay {
             position: fixed;
@@ -2818,10 +2820,6 @@
                 width: var(--tap-min);
                 height: var(--tap-min);
             }
-            body.nav-menu-open,
-            body.nav-notif-open {
-                overflow: hidden;
-            }
             .nav-sheet-backdrop:not([hidden]) {
                 display: block;
                 position: fixed;
@@ -2900,6 +2898,9 @@
             .site-search-form {
                 padding: 10px 12px;
             }
+            .site-search-form input {
+                min-width: 0;
+            }
             .site-search-results {
                 max-height: none;
                 flex: 1;
@@ -2958,7 +2959,7 @@
             div[style*="max-width:860px"] > details > summary + div {
                 padding: 16px 14px !important;
             }
-            [data-lesson-content] div[style*="text-align:right"] {
+            [data-lesson-content] div[style*="max-width:860px"] > div[style*="text-align:right"] {
                 position: sticky;
                 top: calc(56px + var(--safe-top));
                 z-index: 40;
@@ -2977,7 +2978,7 @@
                 padding-left: 16px !important;
                 padding-right: 16px !important;
             }
-            .page-shell .problem-actions {
+            [data-lesson-content] .page-shell .problem-actions {
                 position: sticky;
                 bottom: calc(8px + var(--safe-bottom) + var(--kb-inset, 0px));
                 z-index: 8;
@@ -2993,9 +2994,7 @@
                 max-width: 100%;
             }
             [data-lesson-content] table {
-                display: block;
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
+                max-width: none;
             }
 
             /* M3.3 — probability-tree fill-ins stay tappable; diagram scrolls */
@@ -3009,19 +3008,13 @@
             svg:has(.prob-tree-input) foreignObject {
                 overflow: visible;
             }
-            .prob-tree-input {
-                font-size: 16px;
-                min-width: 44px;
-                min-height: 36px;
-                width: 44px;
-                height: 36px;
-            }
             .prob-tree-mobile-hint { display: block; }
 
             /* M3.5 — Python honesty; keep Check, enlarge lesson Run */
             .python-desktop-hint {
                 display: block;
                 flex: 1 1 100%;
+                width: 100%;
             }
             .free-response-row--python-run .free-response-input--python {
                 min-height: 7.5rem;
@@ -3115,6 +3108,13 @@
             border-color: #dc2626;
             background: #fde8e8;
             color: #991b1b;
+        }
+        /* Must follow the base .prob-tree-input rule or 10px font-size wins on phones. */
+        @media (max-width: 640px) {
+            .prob-tree-input {
+                font-size: 16px;
+                line-height: 1.2;
+            }
         }
         svg.graphs-lesson-graph {
             background: #f9f8f5 !important;
@@ -3429,15 +3429,15 @@
     ></script>
     <!-- External site logic (dropdowns, MCQs, etc.) -->
     <script src="{{ url_for('static', filename='js/python-run-grader.js') }}?v=3" defer></script>
-    <script src="{{ url_for('static', filename='js/site.js') }}?v=8" defer></script>
+    <script src="{{ url_for('static', filename='js/site.js') }}?v=9" defer></script>
     <script src="{{ url_for('static', filename='js/site-search.js') }}?v=2" defer></script>
-    <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=2" defer></script>
+    <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=3" defer></script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=1" defer></script>
     {% if current_user.is_authenticated %}
-    <script src="{{ url_for('static', filename='js/notifications.js') }}?v=2" defer></script>
+    <script src="{{ url_for('static', filename='js/notifications.js') }}?v=3" defer></script>
     {% endif %}
     {% if lesson_assist_enabled and lesson_meta and not lesson_meta.get('quizReview') %}
-    <script src="{{ url_for('static', filename='js/lesson-assist.js') }}?v=5" defer></script>
+    <script src="{{ url_for('static', filename='js/lesson-assist.js') }}?v=6" defer></script>
     {% endif %}
     {% if lesson_assist_enabled and lesson_meta and lesson_meta.get('quizReview') %}
     <script src="{{ url_for('static', filename='js/quiz-assist.js') }}?v=1" defer></script>
