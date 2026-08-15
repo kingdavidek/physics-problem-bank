@@ -1,6 +1,7 @@
 """Study streaks, milestones, weekly recap, and friend effort leaderboard."""
 from datetime import date, datetime, timedelta, timezone
 
+from models.avatar import attach_avatars
 from models.social import (
     ACTIVITY_LESSON_STEP_COMPLETED,
     ACTIVITY_QUESTION_GENERATED,
@@ -419,4 +420,5 @@ def friend_effort_leaderboard(conn, viewer_id, days=7):
     ranked.sort(key=lambda item: (-item['score'], item['handle'].lower()))
     for index, item in enumerate(ranked, start=1):
         item['rank'] = index
+    attach_avatars(conn, ranked)
     return ranked

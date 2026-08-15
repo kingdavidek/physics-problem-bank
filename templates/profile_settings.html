@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/user_avatar.html" import user_avatar %}
 {% block title %}Settings – Problem Bank{% endblock %}
 
 {% block content %}
@@ -39,6 +40,53 @@
             </dl>
             <p class="profile-empty" style="margin-top:8px;">Handle and email cannot be changed here yet.</p>
             <p style="margin-top:12px;"><a href="{{ public_profile_url }}">Preview your public profile →</a></p>
+        </div>
+    </section>
+
+    <section class="section-panel settings-section">
+        <div class="section-panel-header">Avatar</div>
+        <div class="section-panel-body">
+            <div class="lesson-hero-with-avatar" style="margin-bottom:12px;">
+                {{ user_avatar(settings.avatar, 'lg') }}
+                <p class="page-intro" style="margin:0;">Pick a face, colour, and optional extra. No photo upload.</p>
+            </div>
+            <fieldset class="avatar-picker">
+                <legend>Face</legend>
+                {% for face in avatar_faces %}
+                <label class="avatar-choice">
+                    <input type="radio" name="avatar_face" value="{{ face }}"
+                           {% if settings.avatar and settings.avatar.face == face %}checked{% endif %}>
+                    <span>{{ face }}</span>
+                </label>
+                {% endfor %}
+            </fieldset>
+            <fieldset class="avatar-picker">
+                <legend>Colour</legend>
+                {% for bg in avatar_backgrounds %}
+                <label class="avatar-choice avatar-choice--bg">
+                    <input type="radio" name="avatar_bg" value="{{ bg }}"
+                           {% if settings.avatar and settings.avatar.bg == bg %}checked{% endif %}>
+                    <span style="background: {{ bg }};" title="{{ bg }}"></span>
+                </label>
+                {% endfor %}
+            </fieldset>
+            <fieldset class="avatar-picker">
+                <legend>Extra</legend>
+                <label class="avatar-choice">
+                    <input type="radio" name="avatar_extra" value=""
+                           {% if not settings.avatar or not settings.avatar.extra %}checked{% endif %}>
+                    <span>None</span>
+                </label>
+                {% for extra in avatar_extras %}
+                {% if extra %}
+                <label class="avatar-choice">
+                    <input type="radio" name="avatar_extra" value="{{ extra }}"
+                           {% if settings.avatar and settings.avatar.extra == extra %}checked{% endif %}>
+                    <span>{{ extra }}</span>
+                </label>
+                {% endif %}
+                {% endfor %}
+            </fieldset>
         </div>
     </section>
 

@@ -1,0 +1,7 @@
+{% macro user_avatar(avatar, size='') -%}
+{%- set av = avatar or {'face': '🙂', 'bg': '#eef6fc', 'extra': ''} -%}
+<span class="user-avatar{% if size %} user-avatar--{{ size }}{% endif %}" style="background: {{ av.bg }};" aria-hidden="true">
+    <span class="user-avatar-face">{{ av.face }}</span>
+    {% if av.extra %}<span class="user-avatar-extra">{{ av.extra }}</span>{% endif %}
+</span>
+{%- endmacro %}

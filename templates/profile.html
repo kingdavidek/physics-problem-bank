@@ -1,15 +1,19 @@
 {% extends "base.html" %}
+{% from "partials/user_avatar.html" import user_avatar %}
 {% block title %}Profile – Problem Bank{% endblock %}
 
 {% block content %}
 <div class="page-shell">
 
-<div class="lesson-hero">
+<div class="lesson-hero lesson-hero-with-avatar">
+    {{ user_avatar(avatar, 'lg') }}
+    <div>
     <h1>{{ current_user.display_handle }}</h1>
     <p class="hero-sub">
         Your saved questions, lesson progress, and quiz history ·
         <a href="{{ public_profile_url }}">Public profile</a>
     </p>
+    </div>
 </div>
 
 {% with messages = get_flashed_messages(with_categories=true) %}

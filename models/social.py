@@ -1,5 +1,6 @@
 import json
 
+from models.avatar import avatar_to_json, parse_avatar
 from models.user import User, normalize_handle, utc_now_iso
 
 VISIBILITY_PUBLIC = 'public'
@@ -88,23 +89,36 @@ def get_profile_settings(conn, user_id):
                show_last_activity, show_lesson_progress, show_quiz_stats,
                show_shared_questions, auto_share_quiz, auto_share_lesson,
                default_share_visibility, show_study_streak, show_milestones,
-               email_weekly_digest
+               email_weekly_digest, avatar_json
         FROM user_profile_settings
         WHERE user_id = ?
         ''',
         (user_id,),
     ).fetchone()
-    return dict(row) if row else {}
+    data = dict(row) if row else {}
+    data['avatar'] = parse_avatar(data.get('avatar_json'))
+    return data
 
 
 def update_profile_settings(conn, user_id, settings):
     ensure_user_profile(conn, user_id)
+
     visibility = settings.get('profile_visibility', VISIBILITY_PUBLIC)
     if visibility not in VISIBILITY_CHOICES:
         visibility = VISIBILITY_PUBLIC
     share_visibility = settings.get('default_share_visibility', VISIBILITY_FOLLOWERS)
     if share_visibility not in VISIBILITY_CHOICES:
         share_visibility = VISIBILITY_FOLLOWERS
+    if 'avatar' in settings or settings.get('avatar_json'):
+        avatar_json = avatar_to_json(
+            settings.get('avatar') or parse_avatar(settings.get('avatar_json'))
+        )
+    else:
+        existing = conn.execute(
+            'SELECT avatar_json FROM user_profile_settings WHERE user_id = ?',
+            (user_id,),
+        ).fetchone()
+        avatar_json = (existing['avatar_json'] if existing else '') or avatar_to_json({})
     conn.execute(
         '''
         UPDATE user_profile_settings
@@ -120,7 +134,8 @@ def update_profile_settings(conn, user_id, settings):
             default_share_visibility = ?,
             show_study_streak = ?,
             show_milestones = ?,
-            email_weekly_digest = ?
+            email_weekly_digest = ?,
+            avatar_json = ?
         WHERE user_id = ?
         ''',
         (
@@ -137,6 +152,7 @@ def update_profile_settings(conn, user_id, settings):
             _bool_int(settings.get('show_study_streak', False)),
             _bool_int(settings.get('show_milestones', False)),
             _bool_int(settings.get('email_weekly_digest', False)),
+            avatar_json,
             user_id,
         ),
     )
@@ -214,9 +230,10 @@ def list_followed_feed(
     rows = conn.execute(
         f'''
         SELECT e.id, e.user_id, e.event_type, e.payload_json, e.visibility, e.created_at,
-               u.handle AS actor_handle
+               u.handle AS actor_handle, ups.avatar_json AS actor_avatar_json
         FROM user_activity_events e
         JOIN users u ON u.id = e.user_id
+        LEFT JOIN user_profile_settings ups ON ups.user_id = e.user_id
         WHERE e.user_id IN (
             SELECT following_id FROM follows WHERE follower_id = ?
         )
@@ -241,6 +258,7 @@ def list_followed_feed(
             data['payload'] = json.loads(raw)
         except (TypeError, ValueError, json.JSONDecodeError):
             data['payload'] = {}
+        data['avatar'] = parse_avatar(data.pop('actor_avatar_json', None))
         out.append(data)
     return out
 
@@ -521,6 +539,7 @@ def search_users_by_handle(
         item = {
             'handle': row['handle'],
             'profile_accessible': accessible,
+            'avatar': settings.get('avatar') or parse_avatar(None),
         }
         if accessible and settings.get('show_member_since'):
             created = row['created_at'] or ''

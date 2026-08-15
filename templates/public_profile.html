@@ -1,12 +1,16 @@
 {% extends "base.html" %}
+{% from "partials/user_avatar.html" import user_avatar %}
 {% block title %}{{ profile_user.display_handle }} – Problem Bank{% endblock %}
 
 {% block content %}
 <div class="page-shell">
 
-<div class="lesson-hero">
+<div class="lesson-hero lesson-hero-with-avatar">
+    {{ user_avatar(avatar, 'lg') }}
+    <div>
     <h1>{{ profile_user.display_handle }}</h1>
     <p class="hero-sub">{% if is_system_bot %}A Problem Bank bot — not a person.{% else %}Public profile{% endif %}</p>
+    </div>
 </div>
 
 <div class="public-profile-stats">

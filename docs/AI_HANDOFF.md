@@ -16,7 +16,7 @@ Start here. Read the documents in the order below before changing behaviour that
 | **Phase G learning (G1–G7)** | Shipped (weak topics → exam revision planner) |
 | **Solid-draft security bar** | Done (2026-08-01). See `docs/SOLID_DRAFT_SECURITY.md` |
 | **Mobile polish (app-like PWA)** | **Done (M0–M4)** — foundation, practice UX, app chrome, lessons/diagrams, PWA polish + device QA. **M5–M7** HTTPS → TWA → Play Android when a production URL exists — see `docs/MOBILE.md` |
-| **Engagement roadmap (E1–E3)** | **E1 shipped** (lesson-assist mock smoke + daily `@problem_bot` QOTD card). **E2–E3 planned** — see §6. Visual tokens: `docs/ENGAGEMENT_VISUAL.md` |
+| **Engagement roadmap (E1–E3)** | **E1–E2 shipped** (assist mock smoke, `@problem_bot` QOTD card, FTS lesson search, emoji/colour avatars). **E3 planned** — see §6. Visual tokens: `docs/ENGAGEMENT_VISUAL.md` |
 | **G8 teacher / class mode** | Designed, not implemented. See `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2 |
 | **Engagement stretch (E4)** | Long-term — see `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §3.0 |
 | **Git tip (post-hardening)** | Harden commit on `main`; history purged of `data/quicktest.db` |
@@ -92,7 +92,8 @@ WSGI / production entry: `from app import app as application` (see `docs/DEPLOY.
 | System bot / daily QOTD card | `models/bot.py`, feed template + `/api/v1/feed` `qotd_challenge` |
 | Generators | `generators/gcse/`, `alevel/`, `myp/` |
 | Phase G / social / streaks / QOTD | `models/*.py` (`qotd.py`, `social.py`, `gamification.py`, `weak_topics.py`, …) |
-| Site search | `app.py` (`_unified_search`, `/api/v1/search`), `static/js/site-search.js` |
+| Site search | `app.py` (`_unified_search`, `/api/v1/search`), `models/lesson_search.py` (FTS5), `static/js/site-search.js` |
+| Avatars | `models/avatar.py`, `user_profile_settings.avatar_json`, settings picker |
 | Front-end | `templates/`, `static/js/site.js` (+ feature JS) |
 | Smoke / backup | `scripts/test_*_smoke.py`, `scripts/backup_sqlite.py` |
 
@@ -100,7 +101,7 @@ WSGI / production entry: `from app import app as application` (see `docs/DEPLOY.
 
 ## 6. Engagement roadmap (Phases E1–E3)
 
-Near-term product work to improve retention and discovery. **E1 is shipped.** Stretch / content-depth items are **Phase E4** in `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §3.0. Light visual tokens for E2–E3: `docs/ENGAGEMENT_VISUAL.md`.
+Near-term product work to improve retention and discovery. **E1 and E2 are shipped.** Stretch / content-depth items are **Phase E4** in `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §3.0. Light visual tokens for E3: `docs/ENGAGEMENT_VISUAL.md`.
 
 Suggested calendar (flexible): E1 ≈ weeks 1–2, E2 ≈ weeks 3–4, E3 ≈ weeks 5–6.
 
@@ -160,7 +161,7 @@ Unblocks validation and gives an immediate daily-return hook.
 | **Constraints** | No image-upload CDN in v1; keep payload small; Jinja-safe rendering |
 | **Touch** | `app.py` schema + settings routes, `templates/profile_settings.html`, `base.html`/CSS, serializers for feed/profile |
 
-**E2 exit:** Search returns lesson-keyword hits; users can set and see a simple avatar.
+**E2 exit:** Search returns lesson-keyword hits; users can set and see a simple avatar. **Shipped 2026-08-15** (`models/lesson_search.py`, `models/avatar.py`, `scripts/test_user_search_smoke.py`, `scripts/test_avatar_smoke.py`).
 
 ---
 
@@ -198,11 +199,10 @@ Documented in **`docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §3.0** (real-world que
 
 Pick based on product priority; items are independent enough to sequence differently if needed:
 
-1. **Engagement E2** (§6) — FTS lesson search + simple emoji/colour avatars (`docs/ENGAGEMENT_VISUAL.md`).
-2. **Engagement E3** — alien buddy widget + friend-only weekly quiz-accuracy leaderboard.
-3. **G8 — Teacher / class mode** per `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2.
-4. **Mobile M5+** only with a real production HTTPS URL — see `docs/MOBILE.md` (M0–M4 done).
-5. **E4 / other stretch** only after metrics or explicit product call — future-functionality doc.
+1. **Engagement E3** (§6) — alien buddy widget + friend-only weekly quiz-accuracy leaderboard.
+2. **G8 — Teacher / class mode** per `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2.
+3. **Mobile M5+** only with a real production HTTPS URL — see `docs/MOBILE.md` (M0–M4 done).
+4. **E4 / other stretch** only after metrics or explicit product call — future-functionality doc.
 
 ---
 

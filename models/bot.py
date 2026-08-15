@@ -1,7 +1,9 @@
 """System bot account and daily QOTD challenge card (engagement E1.2)."""
 import secrets
 
+from models.avatar import BOT_AVATAR, avatar_to_json
 from models.qotd import current_day_key, get_daily_question, get_user_attempt
+from models.social import ensure_user_profile
 from models.user import User
 
 BOT_HANDLE = 'problem_bot'
@@ -29,11 +31,19 @@ def ensure_system_bot(conn):
     """Idempotent seed of the non-human QOTD bot. Unguessable password; no extra PII."""
     existing = User.get_by_handle(conn, BOT_HANDLE)
     if existing:
-        return existing
-    existing_email = User.get_by_email(conn, BOT_EMAIL)
-    if existing_email:
-        return existing_email
-    return User.create(conn, BOT_EMAIL, BOT_HANDLE, secrets.token_urlsafe(32))
+        user = existing
+    else:
+        existing_email = User.get_by_email(conn, BOT_EMAIL)
+        if existing_email:
+            user = existing_email
+        else:
+            user = User.create(conn, BOT_EMAIL, BOT_HANDLE, secrets.token_urlsafe(32))
+    ensure_user_profile(conn, user.id)
+    conn.execute(
+        'UPDATE user_profile_settings SET avatar_json = ? WHERE user_id = ?',
+        (avatar_to_json(BOT_AVATAR), user.id),
+    )
+    return user
 
 
 def qotd_challenge_card(conn, viewer_id, *, day_key=None):
@@ -63,4 +73,5 @@ def qotd_challenge_card(conn, viewer_id, *, day_key=None):
         'day_key': day_key,
         'topic_label': topic_name,
         'bot_note': 'A Problem Bank bot — not a person.',
+        'avatar': dict(BOT_AVATAR),
     }

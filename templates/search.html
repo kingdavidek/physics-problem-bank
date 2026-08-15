@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/user_avatar.html" import user_avatar %}
 {% block title %}Search – Problem Bank{% endblock %}
 
 {% block content %}
@@ -33,7 +34,7 @@
             <li class="profile-list-item">
                 <div class="profile-list-main">
                     <a href="{{ item.url }}">{{ item.name }}</a>
-                    <span class="profile-list-meta">{{ item.group }}</span>
+                    <span class="profile-list-meta">{{ item.group }}{% if item.via == 'keywords' %} · lesson text{% endif %}</span>
                 </div>
             </li>
             {% endfor %}
@@ -48,7 +49,8 @@
     <div class="section-panel-body">
         <ul class="profile-list">
             {% for item in users %}
-            <li class="profile-list-item">
+            <li class="profile-list-item user-row">
+                {{ user_avatar(item.avatar, 'sm') }}
                 <div class="profile-list-main">
                     <a href="{{ item.profile_url }}">@{{ item.handle }}</a>
                     <span class="profile-list-meta">
@@ -73,13 +75,13 @@
 <section class="section-panel">
     <div class="section-panel-header">No results</div>
     <div class="section-panel-body">
-        <p class="profile-empty">Nothing matched “{{ query }}”. Try a topic name or part of a handle.</p>
+        <p class="profile-empty">Nothing matched “{{ query }}”. Try a topic name, a lesson keyword, or part of a handle.</p>
     </div>
 </section>
 {% endif %}
 
 {% elif not query %}
-<p class="page-intro">Search topics by name (e.g. “vectors”, “trigonometry”) or users by handle (e.g. “alex_maths”).</p>
+<p class="page-intro">Search topics by name or lesson keywords (e.g. “newton”, “overflow”) or users by handle (e.g. “alex_maths”).</p>
 {% endif %}
 
 <p><a href="{{ url_for('profile') if current_user.is_authenticated else url_for('index') }}">← Back</a></p>

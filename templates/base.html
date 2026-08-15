@@ -399,6 +399,86 @@
             font-size: 0.8rem;
             color: var(--text-muted);
         }
+        .user-avatar {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            font-size: 1.15rem;
+            line-height: 1;
+            border: 2px solid var(--primary-light);
+        }
+        .user-avatar--sm { width: 28px; height: 28px; font-size: 0.95rem; }
+        .user-avatar--lg { width: 72px; height: 72px; font-size: 2.1rem; }
+        .user-avatar-face { line-height: 1; }
+        .user-avatar-extra {
+            position: absolute;
+            right: -4px;
+            bottom: -4px;
+            font-size: 0.72em;
+            line-height: 1;
+        }
+        .lesson-hero-with-avatar {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .lesson-hero-with-avatar h1 { margin: 0; }
+        .profile-list-item.feed-card,
+        .profile-list-item.user-row {
+            justify-content: flex-start;
+        }
+        .avatar-picker {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            border: 0;
+            margin: 12px 0 4px;
+            padding: 0;
+        }
+        .avatar-picker legend {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        .avatar-choice {
+            cursor: pointer;
+            margin: 0;
+        }
+        .avatar-choice input {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .avatar-choice span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            height: 40px;
+            padding: 0 8px;
+            border-radius: 999px;
+            border: 2px solid var(--border);
+            background: var(--surface);
+            font-size: 1.2rem;
+        }
+        .avatar-choice input:checked + span,
+        .avatar-choice input:focus-visible + span {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+        .avatar-choice--bg span {
+            width: 40px;
+            min-width: 40px;
+            padding: 0;
+            border-radius: 50%;
+        }
         .feed-poll-note {
             font-size: 0.85rem;
             color: var(--text-muted);
@@ -1162,11 +1242,17 @@
             padding: 0;
         }
         .site-search-group a {
-            display: block;
+            display: flex;
+            align-items: center;
+            gap: 10px;
             padding: 10px 16px;
             text-decoration: none;
             color: inherit;
             transition: background 160ms var(--ease);
+        }
+        .site-search-copy {
+            min-width: 0;
+            flex: 1;
         }
         .site-search-group a:hover,
         .site-search-group a:focus-visible,
@@ -3463,7 +3549,7 @@
     <!-- External site logic (dropdowns, MCQs, etc.) -->
     <script src="{{ url_for('static', filename='js/python-run-grader.js') }}?v=3" defer></script>
     <script src="{{ url_for('static', filename='js/site.js') }}?v=9" defer></script>
-    <script src="{{ url_for('static', filename='js/site-search.js') }}?v=2" defer></script>
+    <script src="{{ url_for('static', filename='js/site-search.js') }}?v=3" defer></script>
     <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=3" defer></script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=2" defer></script>
     {% if current_user.is_authenticated %}

@@ -43,6 +43,18 @@
     resultsEl.innerHTML = '<p class="site-search-empty">' + escapeHtml(message) + '</p>';
   }
 
+  function renderAvatar(avatar) {
+    var av = avatar || {};
+    var face = escapeHtml(av.face || '🙂');
+    var bg = escapeHtml(av.bg || '#eef6fc');
+    var extra = av.extra ? escapeHtml(av.extra) : '';
+    var html =
+      '<span class="user-avatar user-avatar--sm" style="background: ' + bg + ';" aria-hidden="true">' +
+      '<span class="user-avatar-face">' + face + '</span>';
+    if (extra) html += '<span class="user-avatar-extra">' + extra + '</span>';
+    return html + '</span>';
+  }
+
   function renderResults(data) {
     var topics = data.topics || [];
     var users = data.users || [];
@@ -56,8 +68,11 @@
       html += '<section class="site-search-group"><h3>Topics &amp; lessons</h3><ul>';
       topics.forEach(function (item) {
         html += '<li><a href="' + escapeHtml(item.url) + '">';
+        html += '<span class="site-search-copy">';
         html += '<span class="site-search-title">' + escapeHtml(item.name) + '</span>';
-        html += '<span class="site-search-meta">' + escapeHtml(item.group) + '</span>';
+        html += '<span class="site-search-meta">' + escapeHtml(item.group);
+        if (item.via === 'keywords') html += ' · lesson text';
+        html += '</span></span>';
         html += '</a></li>';
       });
       html += '</ul></section>';
@@ -70,9 +85,11 @@
           : 'Private profile';
         if (item.viewer_follows) meta += ' · Following';
         html += '<li><a href="' + escapeHtml(item.profile_url) + '">';
+        html += renderAvatar(item.avatar);
+        html += '<span class="site-search-copy">';
         html += '<span class="site-search-title">@' + escapeHtml(item.handle) + '</span>';
         html += '<span class="site-search-meta">' + escapeHtml(meta) + '</span>';
-        html += '</a></li>';
+        html += '</span></a></li>';
       });
       html += '</ul></section>';
     }

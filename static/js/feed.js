@@ -30,6 +30,19 @@
     return iso.slice(0, 10);
   }
 
+  function renderAvatar(avatar, size) {
+    var av = avatar || {};
+    var face = escapeHtml(av.face || '🙂');
+    var bg = escapeHtml(av.bg || '#eef6fc');
+    var extra = av.extra ? escapeHtml(av.extra) : '';
+    var sizeClass = size ? ' user-avatar--' + size : '';
+    var html =
+      '<span class="user-avatar' + sizeClass + '" style="background: ' + bg + ';" aria-hidden="true">' +
+      '<span class="user-avatar-face">' + face + '</span>';
+    if (extra) html += '<span class="user-avatar-extra">' + extra + '</span>';
+    return html + '</span>';
+  }
+
   function renderChallenge(challenge) {
     if (!challenge) return '';
     return (
@@ -37,6 +50,7 @@
       '<li class="profile-list-item feed-card feed-card--bot" data-feed-id="' +
       escapeHtml(String(challenge.id)) +
       '">' +
+      renderAvatar(challenge.avatar, 'sm') +
       '<div class="profile-list-main">' +
       '<span class="feed-card-badge feed-card-badge--' +
       escapeHtml(challenge.card_type || 'challenge') +
@@ -75,6 +89,7 @@
     items.forEach(function (item) {
       html +=
         '<li class="profile-list-item feed-card" data-feed-id="' + item.id + '">' +
+        renderAvatar(item.actor_avatar, 'sm') +
         '<div class="profile-list-main">' +
         '<span class="feed-card-badge feed-card-badge--' + escapeHtml(item.card_type) + '">' +
         escapeHtml(item.card_label) +

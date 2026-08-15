@@ -1,4 +1,5 @@
 # topics_data.py
+import re
 
 TOPIC_CONTENT = {
     ('gcse', 'physics', 'forces'): {
@@ -651,3 +652,33 @@ TOPIC_CONTENT = {
         'generate_url': '/?level=alevel&subject=physics&topic=magnetism',
     },
 }
+
+
+_LATEX_BITS = re.compile(r'\\[a-zA-Z]+|[{}^_]|\$')
+_HTML_BITS = re.compile(r'<[^>]+>')
+_SPACE = re.compile(r'\s+')
+
+
+def extract_lesson_search_text(content):
+    """Flatten lesson metadata into plain text for FTS / keyword search."""
+    if not content or not isinstance(content, dict):
+        return ''
+    parts = [
+        str(content.get('title') or ''),
+        str(content.get('summary') or ''),
+    ]
+    for key in ('tips', 'formulae', 'key_ideas'):
+        values = content.get(key) or []
+        if isinstance(values, (list, tuple)):
+            parts.extend(str(item) for item in values)
+    for section in content.get('method_sections') or []:
+        if not isinstance(section, dict):
+            continue
+        parts.append(str(section.get('title') or ''))
+        steps = section.get('steps') or []
+        if isinstance(steps, (list, tuple)):
+            parts.extend(str(step) for step in steps)
+    text = ' '.join(parts)
+    text = _HTML_BITS.sub(' ', text)
+    text = _LATEX_BITS.sub(' ', text)
+    return _SPACE.sub(' ', text).strip()

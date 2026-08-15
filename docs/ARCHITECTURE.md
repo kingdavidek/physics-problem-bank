@@ -187,6 +187,8 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | **Friend challenges** | `models/challenges.py` | Same MCQ set, compare scores |
 | **Study pairs** | `models/study_pairs.py` | One active buddy; weekly recap |
 | **Question of the Day** | `models/qotd.py`, `models/bot.py` | Daily MCQ + friend leaderboard; `@problem_bot` feed card (E1) |
+| **Lesson keyword search** | `models/lesson_search.py` | SQLite FTS5 over `topics_data.py` lesson text (E2) |
+| **Avatars** | `models/avatar.py` | Emoji + colour JSON on `user_profile_settings.avatar_json` (E2) |
 | **Streaks & milestones** | `models/gamification.py` | Profile badges |
 | **Friend leaderboard** | `models/gamification.py` | Effort-based ranking |
 | **Notifications** | `models/notifications.py` | In-app events |
@@ -245,10 +247,11 @@ Schema is created in `app.py` on startup. Major table groups:
 
 ### 6.3 Social
 
-- `follows`, `user_profile_settings`, `activity_events`
+- `follows`, `user_profile_settings` (including `avatar_json`), `activity_events`
 - `shared_questions`, `question_suggestions`
 - `quiz_challenges`, `study_pairs`, `qotd_attempts`
 - `user_blocks`, notifications tables
+- `lesson_search_fts` / `lesson_search_meta` — FTS5 lesson keyword index (E2)
 
 ### 6.4 Phase G
 
@@ -319,7 +322,7 @@ Lesson quizzes (`generators/shared/lesson_quiz.py`): 10 questions — 3 foundati
 
 | Document | Purpose |
 |----------|---------|
-| `docs/AI_HANDOFF.md` | **Start here for AI agents** — status, reading order, invariants, engagement E1–E3 |
+| `docs/AI_HANDOFF.md` | **Start here for AI agents** — status, reading order, invariants, engagement E1–E3 (E1–E2 shipped) |
 | `docs/COMPLEX_MECHANISMS.md` | How the three hardest subsystems work (grading, queues, Phase G) |
 | `docs/MOBILE.md` | Mobile polish (M0–M4) + Play Android via TWA (M5–M7) |
 | `docs/SOLID_DRAFT_SECURITY.md` | Solid-draft audit fixes — do not regress |

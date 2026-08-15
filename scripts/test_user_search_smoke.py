@@ -92,6 +92,25 @@ def main():
         assert r.status_code == 400
         assert r.get_json()['code'] == 'query_too_short'
 
+        r = client.get('/search?q=newton')
+        assert r.status_code == 200
+        assert b'Forces' in r.data
+        assert b'lesson text' in r.data
+
+        r = client.get('/api/v1/search?q=overflow')
+        assert r.status_code == 200
+        topics = r.get_json()['topics']
+        assert any(
+            item['slug'] == 'data_rep' or 'data representation' in item['name'].lower()
+            for item in topics
+        )
+        assert any(item.get('via') == 'keywords' for item in topics)
+
+        r = client.get('/api/v1/search?q=elimination')
+        assert r.status_code == 200
+        topics = r.get_json()['topics']
+        assert any('simultaneous' in item['name'].lower() for item in topics)
+
     print('Unified search smoke tests passed.')
 
 

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/user_avatar.html" import user_avatar %}
 {% block title %}Friend leaderboard – Problem Bank{% endblock %}
 
 {% block content %}
@@ -16,6 +17,7 @@
             {% for item in leaderboard %}
             <li class="leaderboard-item{% if item.is_viewer %} is-viewer{% endif %}">
                 <span class="leaderboard-rank">#{{ item.rank }}</span>
+                {{ user_avatar(item.avatar, 'sm') }}
                 <div class="leaderboard-main">
                     <a href="{{ item.profile_url }}">@{{ item.handle }}</a>
                     {% if item.is_viewer %}<span class="profile-list-meta"> (you)</span>{% endif %}

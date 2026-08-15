@@ -1,10 +1,10 @@
 # Engagement visual tokens (E2–E3)
 
 **Last updated:** 2026-08-15  
-**Status:** Light tokens only — not a character bible. **E1 shipped** without custom mascot art.  
+**Status:** Light tokens only — not a character bible. **E1 and E2 shipped.** E3 still uses the buddy placeholder below.
 **Companion:** `docs/AI_HANDOFF.md` §6
 
-Use this page **before E2 (avatars) and E3 (alien buddy)**. Do **not** block E1 on illustrations.
+Use this page **before E3 (alien buddy)**. Avatar v1 emoji/colours below are the live picker list.
 
 ---
 
@@ -32,9 +32,9 @@ Avatar backgrounds (E2 v1 — pick from these, check contrast with dark text `#1
 
 `#eef6fc` `#e8f4fd` `#eef7ee` `#fff8e6` `#fdf0f7` `#f4f6f9` `#dceaf4` `#edf7ef`
 
-## 3. Avatar v1 (E2) — no drawings
+## 3. Avatar v1 (E2) — shipped, no drawings
 
-**Format:** emoji + background colour. **No image upload / CDN.**
+**Format:** emoji + background colour. **No image upload / CDN.** Stored as `avatar_json` on `user_profile_settings`.
 
 Suggested picker (trim or swap later):
 
@@ -61,4 +61,4 @@ Must respect `prefers-reduced-motion` and a dismiss control. Must **not** block 
 
 ---
 
-When E2 starts, extend this file with the chosen emoji list if it changes; regenerate `.docx` via `python scripts/md_to_docx.py docs/ENGAGEMENT_VISUAL.md`.
+When E3 starts, keep this emoji list unless product changes it; regenerate `.docx` via `python scripts/md_to_docx.py docs/ENGAGEMENT_VISUAL.md`.

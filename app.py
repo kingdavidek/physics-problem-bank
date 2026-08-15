@@ -254,6 +254,15 @@ from models.bot import (
     is_bot_user,
     qotd_challenge_card,
 )
+from models.avatar import (
+    AVATAR_BACKGROUNDS,
+    AVATAR_EXTRAS,
+    AVATAR_FACES,
+    DEFAULT_AVATAR,
+    attach_avatars,
+    parse_avatar,
+)
+from models.lesson_search import ensure_lesson_search_index, search_lesson_keywords
 from models.weak_topics import analyze_weak_topics, serialize_weak_topic
 from models.cohort_stats import (
     MIN_SAMPLE_SIZE as COHORT_MIN_SAMPLE_SIZE,
@@ -981,6 +990,7 @@ with get_db() as conn:
         ('show_study_streak', 'INTEGER NOT NULL DEFAULT 0'),
         ('show_milestones', 'INTEGER NOT NULL DEFAULT 0'),
         ('email_weekly_digest', 'INTEGER NOT NULL DEFAULT 0'),
+        ('avatar_json', "TEXT NOT NULL DEFAULT ''"),
     ):
         if col not in profile_cols:
             conn.execute(f'ALTER TABLE user_profile_settings ADD COLUMN {col} {ddl}')
@@ -1232,6 +1242,7 @@ with get_db() as conn:
         )
     """)
     ensure_system_bot(conn)
+    ensure_lesson_search_index(conn)
     conn.commit()
 
 login_manager.init_app(app)
@@ -2097,6 +2108,7 @@ def _build_public_profile_context(target_user, viewer_id=None):
         'can_challenge': can_challenge,
         'can_invite_study_pair': can_invite_study_pair,
         'is_system_bot': is_bot_user(target_user),
+        'avatar': settings.get('avatar') or dict(DEFAULT_AVATAR),
     }
 
 
@@ -2717,6 +2729,7 @@ def _serialize_feed_item(item):
         'message': message,
         'url': url,
         'created_at': item.get('created_at'),
+        'actor_avatar': parse_avatar(item.get('avatar')),
     }
 
 
@@ -2770,7 +2783,24 @@ def _settings_to_json(settings):
         'show_study_streak': bool(settings.get('show_study_streak', False)),
         'show_milestones': bool(settings.get('show_milestones', False)),
         'email_weekly_digest': bool(settings.get('email_weekly_digest', False)),
+        'avatar': parse_avatar(settings.get('avatar')),
     }
+
+
+def _avatar_from_request_data(data, existing=None):
+    current = parse_avatar(existing)
+    if not isinstance(data, dict):
+        return current
+    if 'avatar' in data and data['avatar'] is not None:
+        return parse_avatar(data['avatar'])
+    patch = dict(current)
+    if data.get('avatar_face'):
+        patch['face'] = data['avatar_face']
+    if data.get('avatar_bg'):
+        patch['bg'] = data['avatar_bg']
+    if 'avatar_extra' in data:
+        patch['extra'] = data['avatar_extra'] or ''
+    return parse_avatar(patch)
 
 
 def _normalize_share_visibility(value):
@@ -2853,6 +2883,7 @@ def _build_public_profile_json(target_user, viewer_id=None):
         'following_count': context['following_count'],
         'is_own_profile': context['is_own_profile'],
         'viewer_follows': context['viewer_follows'],
+        'avatar': parse_avatar(context.get('avatar') or settings.get('avatar')),
     }
     if settings.get('show_member_since'):
         created = target_user.created_at or ''
@@ -2925,6 +2956,7 @@ def _serialize_user_search_results(rows):
             entry['member_since'] = item['member_since']
         if 'viewer_follows' in item:
             entry['viewer_follows'] = item['viewer_follows']
+        entry['avatar'] = parse_avatar(item.get('avatar'))
         serialized.append(entry)
     return serialized
 
@@ -3443,6 +3475,7 @@ def _search_topics(query, limit=8):
 
     tokens = query.split()
     matches = []
+    seen = set()
     for item in _get_topic_index():
         haystack = ' '.join([
             item['name'].lower(),
@@ -3450,12 +3483,28 @@ def _search_topics(query, limit=8):
             item['group'].lower(),
         ])
         if all(token in haystack for token in tokens):
-            matches.append(item)
+            hit = dict(item)
+            hit['via'] = 'title'
+            matches.append(hit)
+            seen.add(item['url'])
 
     matches.sort(key=lambda item: (
         0 if item['name'].lower().startswith(query) else 1,
         item['name'].lower(),
     ))
+
+    remaining = max(0, limit - len(matches))
+    if remaining > 0:
+        with get_db() as conn:
+            keyword_hits = search_lesson_keywords(conn, query, limit=limit)
+        for hit in keyword_hits:
+            if hit.get('url') in seen:
+                continue
+            matches.append(hit)
+            seen.add(hit['url'])
+            remaining -= 1
+            if remaining <= 0:
+                break
     return matches[:limit]
 
 
@@ -3807,6 +3856,7 @@ def profile():
         weak_topics = _weak_topics_for_user(conn, current_user.id, limit=8)
         due_today = _revision_queue_for_user(conn, current_user.id)
         skill_gaps = _skill_gaps_for_user(conn, current_user.id, limit=6)
+        avatar = get_profile_settings(conn, current_user.id).get('avatar')
         reflection_type = (request.args.get('reflection_type') or '').strip().lower() or None
         if reflection_type and reflection_type not in REFLECTION_PROMPT_TYPES:
             reflection_type = None
@@ -3880,6 +3930,7 @@ def profile():
             revision_plan['level'] if revision_plan else 'gcse'
         ),
         public_profile_url=_public_profile_url(current_user.handle),
+        avatar=avatar or dict(DEFAULT_AVATAR),
     )
 
 
@@ -3983,6 +4034,15 @@ def profile_settings():
                 'show_milestones': request.form.get('show_milestones') == '1',
                 'email_weekly_digest': request.form.get('email_weekly_digest') == '1',
             }
+            if (
+                request.form.get('avatar_face')
+                or request.form.get('avatar_bg')
+                or 'avatar_extra' in request.form
+            ):
+                updated['avatar'] = _avatar_from_request_data(
+                    request.form,
+                    settings.get('avatar'),
+                )
             with get_db() as conn:
                 update_profile_settings(conn, current_user.id, updated)
                 settings = get_profile_settings(conn, current_user.id)
@@ -4002,6 +4062,9 @@ def profile_settings():
         ),
         errors=errors,
         public_profile_url=_public_profile_url(current_user.handle),
+        avatar_faces=AVATAR_FACES,
+        avatar_backgrounds=AVATAR_BACKGROUNDS,
+        avatar_extras=AVATAR_EXTRAS,
     )
 
 
@@ -4097,6 +4160,7 @@ def public_profile_followers(handle):
         if not can_view_profile(conn, viewer_id, target.id, settings):
             return render_template('public_profile_private.html', profile_user=target)
         users = list_followers(conn, target.id, limit=100)
+        attach_avatars(conn, users)
 
     for item in users:
         item['profile_url'] = _public_profile_url(item['handle'])
@@ -4119,6 +4183,7 @@ def public_profile_following(handle):
         if not can_view_profile(conn, viewer_id, target.id, settings):
             return render_template('public_profile_private.html', profile_user=target)
         users = list_following(conn, target.id, limit=100)
+        attach_avatars(conn, users)
 
     for item in users:
         item['profile_url'] = _public_profile_url(item['handle'])
@@ -4569,6 +4634,10 @@ def api_v1_patch_settings():
         'show_study_streak',
         'show_milestones',
         'email_weekly_digest',
+        'avatar',
+        'avatar_face',
+        'avatar_bg',
+        'avatar_extra',
     }
     unknown = set(payload.keys()) - allowed_keys
     if unknown:
@@ -4613,8 +4682,18 @@ def api_v1_patch_settings():
         if field in payload and not isinstance(payload[field], bool):
             return _api_error(f'{field} must be a boolean', 400, 'invalid_field')
 
+    if 'avatar' in payload and payload['avatar'] is not None and not isinstance(payload['avatar'], dict):
+        return _api_error('avatar must be an object', 400, 'invalid_field')
+
+    avatar_keys = ('avatar', 'avatar_face', 'avatar_bg', 'avatar_extra')
+    wants_avatar = any(key in payload for key in avatar_keys)
+
     with get_db() as conn:
         current = _settings_to_json(get_profile_settings(conn, current_user.id))
+        if wants_avatar:
+            current['avatar'] = _avatar_from_request_data(payload, current.get('avatar'))
+        for key in avatar_keys:
+            payload.pop(key, None)
         current.update(payload)
         update_profile_settings(conn, current_user.id, current)
         settings = _settings_to_json(get_profile_settings(conn, current_user.id))
@@ -4876,6 +4955,7 @@ def api_v1_me_gamification():
                 'handle': item['handle'],
                 'score': item['score'],
                 'is_viewer': item['is_viewer'],
+                'avatar': parse_avatar(item.get('avatar')),
             }
             for item in leaderboard
         ],
