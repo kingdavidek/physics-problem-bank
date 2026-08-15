@@ -65,9 +65,11 @@
 
     var html = '';
     if (topics.length) {
-      html += '<section class="site-search-group"><h3>Topics &amp; lessons</h3><ul>';
-      topics.forEach(function (item) {
+      html += '<section class="site-search-group"><h3>Topics &amp; lessons <span class="search-rank-note">Ranked in order of relevance</span></h3><ol>';
+      topics.forEach(function (item, index) {
+        var rank = item.rank || (index + 1);
         html += '<li><a href="' + escapeHtml(item.url) + '">';
+        html += '<span class="search-result-rank">#' + escapeHtml(String(rank)) + '</span>';
         html += '<span class="site-search-copy">';
         html += '<span class="site-search-title">' + escapeHtml(item.name) + '</span>';
         html += '<span class="site-search-meta">' + escapeHtml(item.group);
@@ -75,7 +77,7 @@
         html += '</span></span>';
         html += '</a></li>';
       });
-      html += '</ul></section>';
+      html += '</ol></section>';
     }
     if (users.length) {
       html += '<section class="site-search-group"><h3>Users</h3><ul>';

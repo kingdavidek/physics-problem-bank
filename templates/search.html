@@ -27,18 +27,22 @@
 
 {% if topics %}
 <section class="section-panel">
-    <div class="section-panel-header">Topics &amp; lessons</div>
+    <div class="section-panel-header">
+        Topics &amp; lessons
+        <span class="search-rank-note">Ranked in order of relevance</span>
+    </div>
     <div class="section-panel-body">
-        <ul class="profile-list">
+        <ol class="profile-list search-rank-list">
             {% for item in topics %}
             <li class="profile-list-item">
+                <span class="search-result-rank">#{{ item.rank }}</span>
                 <div class="profile-list-main">
                     <a href="{{ item.url }}">{{ item.name }}</a>
                     <span class="profile-list-meta">{{ item.group }}{% if item.via == 'keywords' %} · lesson text{% endif %}</span>
                 </div>
             </li>
             {% endfor %}
-        </ul>
+        </ol>
     </div>
 </section>
 {% endif %}

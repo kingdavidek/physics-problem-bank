@@ -117,6 +117,8 @@ def main():
         assert topics, 'pythagoras should return topics'
         assert topics[0]['slug'] == 'pythagoras'
         assert topics[0].get('via') == 'title'
+        assert topics[0]['rank'] == 1
+        assert [item['rank'] for item in topics] == list(range(1, len(topics) + 1))
         related = {item['slug'] for item in topics[1:]}
         assert related & {
             'trigonometry',
@@ -133,6 +135,8 @@ def main():
         html = r.data.decode().lower()
         assert 'pythagoras' in html
         assert 'lesson text' in html
+        assert 'ranked in order of relevance' in html
+        assert '#1' in r.data.decode()
 
     print('Unified search smoke tests passed.')
 

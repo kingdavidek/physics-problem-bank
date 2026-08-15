@@ -3507,7 +3507,10 @@ def _search_topics(query, limit=8):
             remaining -= 1
             if remaining <= 0:
                 break
-    return matches[:limit]
+    ranked = matches[:limit]
+    for index, item in enumerate(ranked, start=1):
+        item['rank'] = index
+    return ranked
 
 
 @app.route('/topics')

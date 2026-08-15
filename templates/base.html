@@ -1229,6 +1229,11 @@
             padding: 8px 0 12px;
         }
         .site-search-group h3 {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
             margin: 8px 16px 6px;
             font-size: 0.78rem;
             font-weight: 700;
@@ -1236,7 +1241,8 @@
             text-transform: uppercase;
             color: var(--text-muted);
         }
-        .site-search-group ul {
+        .site-search-group ul,
+        .site-search-group ol {
             list-style: none;
             margin: 0;
             padding: 0;
@@ -1273,6 +1279,29 @@
             padding: 18px 16px;
             color: var(--text-muted);
             font-size: 0.92rem;
+        }
+        .search-rank-note {
+            display: inline-block;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            text-transform: none;
+            color: var(--text-muted);
+            background: var(--surface, #fff);
+            border: 1px solid var(--border-soft, #e4e9f0);
+            border-radius: 999px;
+            padding: 3px 8px;
+            white-space: nowrap;
+        }
+        .search-rank-list { list-style: none; }
+        .search-rank-list .profile-list-item {
+            justify-content: flex-start;
+        }
+        .search-result-rank {
+            font-weight: 700;
+            color: var(--text-muted);
+            min-width: 1.75rem;
+            flex-shrink: 0;
         }
         .share-suggest-header {
             padding: 14px 16px;
@@ -3549,7 +3578,7 @@
     <!-- External site logic (dropdowns, MCQs, etc.) -->
     <script src="{{ url_for('static', filename='js/python-run-grader.js') }}?v=3" defer></script>
     <script src="{{ url_for('static', filename='js/site.js') }}?v=9" defer></script>
-    <script src="{{ url_for('static', filename='js/site-search.js') }}?v=4" defer></script>
+    <script src="{{ url_for('static', filename='js/site-search.js') }}?v=5" defer></script>
     <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=3" defer></script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=2" defer></script>
     {% if current_user.is_authenticated %}

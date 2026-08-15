@@ -326,7 +326,7 @@ See prior phases. Pagination: `?limit=&before_id=` on feed and notifications.
 
 `GET /api/v1/feed` (auth) also returns `qotd_challenge`: today’s `@problem_bot` card on `filter=all` with no `before_id`, or `null`. The card is synthetic (not an activity-event `id`). Web `/feed` shows the same card. Feed items include `actor_avatar` (`face`, `bg`, `extra`); the QOTD card includes `avatar`.
 
-`GET /api/v1/search` also matches **lesson body keywords** (FTS5) as well as topic name/slug/group. The index covers `topics_data.py` metadata and stripped `*_lesson.html` pages. Name/slug hits rank first (`"via": "title"`); other lesson-text hits use `"via": "keywords"`. User rows include `avatar`.
+`GET /api/v1/search` also matches **lesson body keywords** (FTS5) as well as topic name/slug/group. The index covers `topics_data.py` metadata and stripped `*_lesson.html` pages. Name/slug hits rank first (`"via": "title"`); other lesson-text hits use `"via": "keywords"`. Topic rows include 1-based `"rank"` (name matches first, then keyword relevance). User rows include `avatar`.
 
 `GET`/`PATCH /api/v1/me/settings` include `avatar: { face, bg, extra }`. PATCH accepts that object, or `avatar_face` / `avatar_bg` / `avatar_extra`. Unknown emoji/colours fall back to the default 🙂 on `#eef6fc`. No image upload. Public profiles (`GET /api/v1/users/<handle>/profile`) and `GET /api/v1/me/gamification` friend leaderboard rows also include `avatar`.
 
