@@ -166,12 +166,14 @@ from models.user_data import (
 )
 from models.gamification import (
     evaluate_milestones,
+    friend_accuracy_leaderboard,
     friend_effort_leaderboard,
     get_study_streak,
     get_weekly_recap,
     list_user_milestones,
     record_study_day,
 )
+from models.buddy import build_buddy_prompt
 from models.problem_queue import (
     clear_problem_queue as clear_db_problem_queue,
     get_problem_queue as get_db_problem_queue,
@@ -991,6 +993,7 @@ with get_db() as conn:
         ('show_milestones', 'INTEGER NOT NULL DEFAULT 0'),
         ('email_weekly_digest', 'INTEGER NOT NULL DEFAULT 0'),
         ('avatar_json', "TEXT NOT NULL DEFAULT ''"),
+        ('show_accuracy_leaderboard', 'INTEGER NOT NULL DEFAULT 1'),
     ):
         if col not in profile_cols:
             conn.execute(f'ALTER TABLE user_profile_settings ADD COLUMN {col} {ddl}')
@@ -2783,6 +2786,7 @@ def _settings_to_json(settings):
         'show_study_streak': bool(settings.get('show_study_streak', False)),
         'show_milestones': bool(settings.get('show_milestones', False)),
         'email_weekly_digest': bool(settings.get('email_weekly_digest', False)),
+        'show_accuracy_leaderboard': bool(settings.get('show_accuracy_leaderboard', True)),
         'avatar': parse_avatar(settings.get('avatar')),
     }
 
@@ -4038,6 +4042,7 @@ def profile_settings():
                 'show_study_streak': request.form.get('show_study_streak') == '1',
                 'show_milestones': request.form.get('show_milestones') == '1',
                 'email_weekly_digest': request.form.get('email_weekly_digest') == '1',
+                'show_accuracy_leaderboard': request.form.get('show_accuracy_leaderboard') == '1',
             }
             if (
                 request.form.get('avatar_face')
@@ -4639,6 +4644,7 @@ def api_v1_patch_settings():
         'show_study_streak',
         'show_milestones',
         'email_weekly_digest',
+        'show_accuracy_leaderboard',
         'avatar',
         'avatar_face',
         'avatar_bg',
@@ -4682,6 +4688,7 @@ def api_v1_patch_settings():
         'show_study_streak',
         'show_milestones',
         'email_weekly_digest',
+        'show_accuracy_leaderboard',
     )
     for field in bool_fields:
         if field in payload and not isinstance(payload[field], bool):
@@ -4921,17 +4928,59 @@ def api_v1_feed():
     })
 
 
+def _serialize_buddy_prompt(prompt):
+    if not prompt:
+        return None
+    kind = prompt.get('action_kind')
+    url = url_for('topics_index')
+    if kind == 'qotd':
+        url = url_for('qotd_page')
+    elif kind == 'topic' and prompt.get('level') and prompt.get('topic'):
+        url = url_for(
+            'topic_page',
+            level=prompt['level'],
+            subject=prompt.get('subject'),
+            topic=prompt['topic'],
+        )
+    return {
+        'type': prompt.get('type'),
+        'message': prompt.get('message'),
+        'detail': prompt.get('detail'),
+        'action_url': url,
+        'action_label': prompt.get('action_label') or 'Open',
+    }
+
+
+@app.get('/api/v1/me/buddy')
+@login_required
+def api_v1_me_buddy():
+    with get_db() as conn:
+        prompt = build_buddy_prompt(
+            conn,
+            current_user.id,
+            topic_label_fn=_topic_label,
+        )
+    return jsonify({'ok': True, 'buddy': _serialize_buddy_prompt(prompt)})
+
+
 @app.get('/leaderboard/friends')
 @login_required
 def friend_leaderboard_page():
+    board = (request.args.get('board') or 'effort').strip().lower()
+    if board not in ('effort', 'accuracy'):
+        board = 'effort'
     with get_db() as conn:
-        leaderboard = friend_effort_leaderboard(conn, current_user.id, days=7)
+        if board == 'accuracy':
+            leaderboard = friend_accuracy_leaderboard(conn, current_user.id, days=7)
+        else:
+            leaderboard = friend_effort_leaderboard(conn, current_user.id, days=7)
     for item in leaderboard:
         item['profile_url'] = url_for('public_profile', handle=item['handle'])
     return render_template(
         'leaderboard_friends.html',
         leaderboard=leaderboard,
         period_days=7,
+        board=board,
     )
 
 
@@ -4943,6 +4992,7 @@ def api_v1_me_gamification():
         milestones = list_user_milestones(conn, current_user.id)
         recap = get_weekly_recap(conn, current_user.id)
         leaderboard = friend_effort_leaderboard(conn, current_user.id, days=7)
+        accuracy_board = friend_accuracy_leaderboard(conn, current_user.id, days=7)
         buddy_recap = buddy_weekly_recap(conn, current_user.id)
         qotd_board = friend_qotd_leaderboard(conn, current_user.id)
     if recap.get('best_quiz'):
@@ -4963,6 +5013,20 @@ def api_v1_me_gamification():
                 'avatar': parse_avatar(item.get('avatar')),
             }
             for item in leaderboard
+        ],
+        'friend_accuracy_leaderboard': [
+            {
+                'rank': item['rank'],
+                'handle': item['handle'],
+                'accuracy_pct': item['accuracy_pct'],
+                'earned': item['earned'],
+                'possible': item['possible'],
+                'quiz_attempts': item['quiz_attempts'],
+                'mcq_attempts': item['mcq_attempts'],
+                'is_viewer': item['is_viewer'],
+                'avatar': parse_avatar(item.get('avatar')),
+            }
+            for item in accuracy_board
         ],
         'qotd_leaderboard': qotd_board,
     })

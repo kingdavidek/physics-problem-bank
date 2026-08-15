@@ -1303,6 +1303,85 @@
             min-width: 1.75rem;
             flex-shrink: 0;
         }
+        .study-buddy {
+            position: fixed;
+            left: max(12px, var(--safe-left, 0px));
+            bottom: calc(16px + var(--safe-bottom, 0px) + var(--kb-inset, 0px));
+            z-index: 90;
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            max-width: min(360px, calc(100vw - 24px));
+            pointer-events: none;
+        }
+        .study-buddy[hidden] { display: none !important; }
+        .study-buddy-face {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.7rem;
+            flex-shrink: 0;
+            box-shadow: var(--shadow);
+            pointer-events: auto;
+        }
+        .study-buddy-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 10px 12px 10px 14px;
+            pointer-events: auto;
+            min-width: 0;
+        }
+        .study-buddy-detail {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .study-buddy-message {
+            margin: 0 0 8px;
+            font-size: 0.9rem;
+            color: var(--text);
+            line-height: 1.4;
+        }
+        .study-buddy-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .study-buddy-dismiss {
+            border: 0;
+            background: none;
+            color: var(--text-muted);
+            font: inherit;
+            font-size: 0.8rem;
+            cursor: pointer;
+            padding: 0;
+        }
+        .study-buddy-dismiss:hover,
+        .study-buddy-dismiss:focus-visible { color: var(--text); }
+        @media (prefers-reduced-motion: no-preference) {
+            .study-buddy-face {
+                animation: study-buddy-pop 420ms var(--ease, ease);
+            }
+        }
+        @keyframes study-buddy-pop {
+            from { transform: scale(0.86); opacity: 0.4; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        html.pwa-standalone .study-buddy {
+            bottom: calc(80px + var(--safe-bottom, 0px) + var(--kb-inset, 0px));
+        }
         .share-suggest-header {
             padding: 14px 16px;
             border-bottom: 1px solid var(--border-soft);
@@ -3583,6 +3662,7 @@
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=2" defer></script>
     {% if current_user.is_authenticated %}
     <script src="{{ url_for('static', filename='js/notifications.js') }}?v=3" defer></script>
+    <script src="{{ url_for('static', filename='js/buddy.js') }}?v=1" defer></script>
     {% endif %}
     {% if lesson_assist_enabled and lesson_meta and not lesson_meta.get('quizReview') %}
     <script src="{{ url_for('static', filename='js/lesson-assist.js') }}?v=6" defer></script>
@@ -3755,6 +3835,20 @@
         <button type="button" class="btn btn-outline btn-sm" id="pwa-ios-hint-dismiss">Got it</button>
     </div>
 </div>
+
+{% if current_user.is_authenticated %}
+<aside id="study-buddy" class="study-buddy" hidden data-buddy-root>
+    <span class="study-buddy-face" aria-hidden="true">👾</span>
+    <div class="study-buddy-card">
+        <span class="study-buddy-detail" data-buddy-detail></span>
+        <p class="study-buddy-message" data-buddy-message></p>
+        <div class="study-buddy-actions">
+            <a class="btn btn-primary btn-sm" data-buddy-action href="/topics">Open</a>
+            <button type="button" class="study-buddy-dismiss" data-buddy-dismiss>Not now</button>
+        </div>
+    </div>
+</aside>
+{% endif %}
 
 </body>
 </html>

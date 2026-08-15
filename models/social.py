@@ -89,7 +89,7 @@ def get_profile_settings(conn, user_id):
                show_last_activity, show_lesson_progress, show_quiz_stats,
                show_shared_questions, auto_share_quiz, auto_share_lesson,
                default_share_visibility, show_study_streak, show_milestones,
-               email_weekly_digest, avatar_json
+               email_weekly_digest, avatar_json, show_accuracy_leaderboard
         FROM user_profile_settings
         WHERE user_id = ?
         ''',
@@ -135,7 +135,8 @@ def update_profile_settings(conn, user_id, settings):
             show_study_streak = ?,
             show_milestones = ?,
             email_weekly_digest = ?,
-            avatar_json = ?
+            avatar_json = ?,
+            show_accuracy_leaderboard = ?
         WHERE user_id = ?
         ''',
         (
@@ -153,6 +154,7 @@ def update_profile_settings(conn, user_id, settings):
             _bool_int(settings.get('show_milestones', False)),
             _bool_int(settings.get('email_weekly_digest', False)),
             avatar_json,
+            _bool_int(settings.get('show_accuracy_leaderboard', True)),
             user_id,
         ),
     )

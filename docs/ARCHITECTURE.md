@@ -1,6 +1,6 @@
 # Problem Bank — Architecture & Product Overview
 
-**Last updated:** 2026-08-11  
+**Last updated:** 2026-08-15  
 **Repository:** `maths_generator/physics-problem-bank`  
 **Audience:** Developers, AI agents, and technical stakeholders  
 
@@ -189,8 +189,9 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | **Question of the Day** | `models/qotd.py`, `models/bot.py` | Daily MCQ + friend leaderboard; `@problem_bot` feed card (E1) |
 | **Lesson keyword search** | `models/lesson_search.py` | SQLite FTS5 over `topics_data.py` plus stripped `*_lesson.html` pages (E2) |
 | **Avatars** | `models/avatar.py` | Emoji + colour JSON on `user_profile_settings.avatar_json` (E2) |
+| **Alien buddy** | `models/buddy.py` | Corner widget: celebrate quiz, streak risk, weak topic (E3) |
 | **Streaks & milestones** | `models/gamification.py` | Profile badges |
-| **Friend leaderboard** | `models/gamification.py` | Effort-based ranking |
+| **Friend leaderboard** | `models/gamification.py` | Effort points and weekly quiz+MCQ accuracy (friends only) |
 | **Notifications** | `models/notifications.py` | In-app events |
 | **Block / report** | `models/moderation.py` | User safety |
 
@@ -247,7 +248,7 @@ Schema is created in `app.py` on startup. Major table groups:
 
 ### 6.3 Social
 
-- `follows`, `user_profile_settings` (including `avatar_json`), `activity_events`
+- `follows`, `user_profile_settings` (including `avatar_json`, `show_accuracy_leaderboard`), `activity_events`
 - `shared_questions`, `question_suggestions`
 - `quiz_challenges`, `study_pairs`, `qotd_attempts`
 - `user_blocks`, notifications tables
@@ -322,7 +323,7 @@ Lesson quizzes (`generators/shared/lesson_quiz.py`): 10 questions — 3 foundati
 
 | Document | Purpose |
 |----------|---------|
-| `docs/AI_HANDOFF.md` | **Start here for AI agents** — status, reading order, invariants, engagement E1–E3 (E1–E2 shipped) |
+| `docs/AI_HANDOFF.md` | **Start here for AI agents** — status, reading order, invariants, engagement E1–E3 (shipped) |
 | `docs/COMPLEX_MECHANISMS.md` | How the three hardest subsystems work (grading, queues, Phase G) |
 | `docs/MOBILE.md` | Mobile polish (M0–M4) + Play Android via TWA (M5–M7) |
 | `docs/SOLID_DRAFT_SECURITY.md` | Solid-draft audit fixes — do not regress |

@@ -1,10 +1,10 @@
 # Engagement visual tokens (E2–E3)
 
 **Last updated:** 2026-08-15  
-**Status:** Light tokens only — not a character bible. **E1 and E2 shipped.** E3 still uses the buddy placeholder below.
+**Status:** Light tokens only — not a character bible. **E1–E3 shipped.**
 **Companion:** `docs/AI_HANDOFF.md` §6
 
-Use this page **before E3 (alien buddy)**. Avatar v1 emoji/colours below are the live picker list.
+Avatar v1 emoji/colours below are the live picker list. Buddy v0 uses the 👾 placeholder.
 
 ---
 
@@ -44,14 +44,14 @@ Suggested picker (trim or swap later):
 
 Default for new users: 🙂 on `#eef6fc`. Render with Jinja-safe text, never raw HTML from the user.
 
-## 4. Buddy v0 (E3) — placeholder first
+## 4. Buddy v0 (E3) — shipped placeholder
 
-Ship a **corner widget** (~48–64px) that can later swap art:
+Corner widget (~56px) on logged-in pages:
 
-- v0: emoji 👾 or a flat CSS circle in `--primary`
-- v1: optional SVG sprite in `static/icons/` once E1/E2 are in use
+- v0: emoji 👾 in a `--primary` circle (`static/js/buddy.js`)
+- v1: optional SVG sprite in `static/icons/` later
 
-Must respect `prefers-reduced-motion` and a dismiss control. Must **not** block Check / generate if JS fails.
+Respects `prefers-reduced-motion` and a **Not now** dismiss (restores next UTC day). Does **not** block Check / generate if JS fails.
 
 ## 5. Safeguarding (already in E1)
 
@@ -61,4 +61,4 @@ Must respect `prefers-reduced-motion` and a dismiss control. Must **not** block 
 
 ---
 
-When E3 starts, keep this emoji list unless product changes it; regenerate `.docx` via `python scripts/md_to_docx.py docs/ENGAGEMENT_VISUAL.md`.
+When changing buddy copy or avatar emoji, regenerate `.docx` via `python scripts/md_to_docx.py docs/ENGAGEMENT_VISUAL.md`.

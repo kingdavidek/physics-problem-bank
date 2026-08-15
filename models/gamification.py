@@ -1,5 +1,6 @@
-"""Study streaks, milestones, weekly recap, and friend effort leaderboard."""
+"""Study streaks, milestones, weekly recap, and friend effort/accuracy leaderboards."""
 from datetime import date, datetime, timedelta, timezone
+import sqlite3
 
 from models.avatar import attach_avatars
 from models.social import (
@@ -418,6 +419,145 @@ def friend_effort_leaderboard(conn, viewer_id, days=7):
         })
 
     ranked.sort(key=lambda item: (-item['score'], item['handle'].lower()))
+    for index, item in enumerate(ranked, start=1):
+        item['rank'] = index
+    attach_avatars(conn, ranked)
+    return ranked
+
+
+def _follow_graph_participants(conn, viewer_id):
+    following = conn.execute(
+        '''
+        SELECT u.id, u.handle
+        FROM follows f
+        JOIN users u ON u.id = f.following_id
+        WHERE f.follower_id = ?
+        ORDER BY u.handle COLLATE NOCASE
+        ''',
+        (viewer_id,),
+    ).fetchall()
+    viewer = conn.execute(
+        'SELECT id, handle FROM users WHERE id = ?',
+        (viewer_id,),
+    ).fetchone()
+    participants = {row['id']: row['handle'] for row in following}
+    if viewer:
+        participants[viewer['id']] = viewer['handle']
+    return participants
+
+
+def _accuracy_stats_since(conn, user_ids, since_iso):
+    stats = {
+        uid: {'earned': 0, 'possible': 0, 'quiz_n': 0, 'mcq_n': 0}
+        for uid in user_ids
+    }
+    if not user_ids:
+        return stats
+    ids = list(user_ids)
+    placeholders = ','.join('?' * len(ids))
+    for row in conn.execute(
+        f'''
+        SELECT user_id,
+               COALESCE(SUM(score), 0) AS earned,
+               COALESCE(SUM(total), 0) AS possible,
+               COUNT(*) AS n
+        FROM quiz_attempts
+        WHERE user_id IN ({placeholders})
+          AND created_at >= ?
+        GROUP BY user_id
+        ''',
+        (*ids, since_iso),
+    ).fetchall():
+        item = stats[row['user_id']]
+        item['earned'] += int(row['earned'] or 0)
+        item['possible'] += int(row['possible'] or 0)
+        item['quiz_n'] = int(row['n'] or 0)
+    for row in conn.execute(
+        f'''
+        SELECT user_id,
+               COALESCE(SUM(
+                   CASE WHEN COALESCE(score_total, 0) > 0
+                        THEN COALESCE(score, 0)
+                        ELSE correct END
+               ), 0) AS earned,
+               COALESCE(SUM(
+                   CASE WHEN COALESCE(score_total, 0) > 0
+                        THEN score_total
+                        ELSE 1 END
+               ), 0) AS possible,
+               COUNT(*) AS n
+        FROM generator_mcq_attempts
+        WHERE user_id IN ({placeholders})
+          AND created_at >= ?
+        GROUP BY user_id
+        ''',
+        (*ids, since_iso),
+    ).fetchall():
+        item = stats[row['user_id']]
+        item['earned'] += int(row['earned'] or 0)
+        item['possible'] += int(row['possible'] or 0)
+        item['mcq_n'] = int(row['n'] or 0)
+    return stats
+
+
+def friend_accuracy_leaderboard(conn, viewer_id, days=7):
+    """Weekly quiz+MCQ accuracy among people the viewer follows, plus the viewer.
+
+    Accuracy = (lesson-quiz marks earned + generator-MCQ marks earned)
+    / (lesson-quiz marks possible + generator-MCQ marks possible) over the last
+    ``days`` UTC days. Users who opted out of the accuracy board are hidden from
+    everyone except themselves. No global ranking.
+    """
+    since_day = (_utc_today() - timedelta(days=days - 1)).isoformat()
+    since_iso = f'{since_day}T00:00:00'
+    participants = _follow_graph_participants(conn, viewer_id)
+    if not participants:
+        return []
+
+    ids = list(participants.keys())
+    placeholders = ','.join('?' * len(ids))
+    opted_in = {uid: True for uid in ids}
+    try:
+        rows = conn.execute(
+            f'''
+            SELECT user_id, show_accuracy_leaderboard
+            FROM user_profile_settings
+            WHERE user_id IN ({placeholders})
+            ''',
+            ids,
+        ).fetchall()
+        for row in rows:
+            opted_in[row['user_id']] = bool(row['show_accuracy_leaderboard'])
+    except sqlite3.OperationalError:
+        pass
+
+    visible_ids = [
+        uid for uid in ids
+        if uid == viewer_id or opted_in.get(uid, True)
+    ]
+    stats = _accuracy_stats_since(conn, visible_ids, since_iso)
+    ranked = []
+    for user_id in visible_ids:
+        item_stats = stats.get(user_id) or {'earned': 0, 'possible': 0, 'quiz_n': 0, 'mcq_n': 0}
+        possible = item_stats['possible']
+        accuracy = round(100.0 * item_stats['earned'] / possible, 1) if possible else None
+        ranked.append({
+            'user_id': user_id,
+            'handle': participants[user_id],
+            'accuracy_pct': accuracy,
+            'earned': item_stats['earned'],
+            'possible': possible,
+            'quiz_attempts': item_stats['quiz_n'],
+            'mcq_attempts': item_stats['mcq_n'],
+            'is_viewer': user_id == viewer_id,
+        })
+
+    ranked.sort(key=lambda item: (
+        item['accuracy_pct'] is None,
+        -(item['accuracy_pct'] if item['accuracy_pct'] is not None else -1),
+        -(item['possible'] or 0),
+        item['handle'].lower(),
+    ))
     for index, item in enumerate(ranked, start=1):
         item['rank'] = index
     attach_avatars(conn, ranked)

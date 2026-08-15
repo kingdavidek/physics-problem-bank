@@ -330,6 +330,10 @@ See prior phases. Pagination: `?limit=&before_id=` on feed and notifications.
 
 `GET`/`PATCH /api/v1/me/settings` include `avatar: { face, bg, extra }`. PATCH accepts that object, or `avatar_face` / `avatar_bg` / `avatar_extra`. Unknown emoji/colours fall back to the default 🙂 on `#eef6fc`. No image upload. Public profiles (`GET /api/v1/users/<handle>/profile`) and `GET /api/v1/me/gamification` friend leaderboard rows also include `avatar`.
 
+`GET /api/v1/me/buddy` (auth) returns `{ type, message, detail, action_url, action_label }`. Types: `celebrate` (quiz today), `streak_risk` (streak would break tomorrow), `weak_topic` (G1), `nudge`. The web widget is non-blocking; dismiss lasts until the next UTC day.
+
+`GET /api/v1/me/gamification` includes `friend_accuracy_leaderboard`: friends-only weekly lesson-quiz + generator-MCQ accuracy (`accuracy_pct`, `earned`/`possible`). `show_accuracy_leaderboard` (settings, default true) hides you from other people’s accuracy boards. Web: `/leaderboard/friends?board=accuracy`. **No global ranking.**
+
 ## Error codes
 
 | Code | HTTP | Meaning |
