@@ -10,7 +10,7 @@ _EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 RESERVED_HANDLES = frozenset({
     'admin', 'administrator', 'api', 'app', 'help', 'login', 'logout',
     'moderator', 'profile', 'register', 'root', 'settings', 'signup',
-    'support', 'system', 'topics', 'user', 'users', 'www',
+    'support', 'system', 'topics', 'user', 'users', 'www', 'problem_bot',
 })
 
 

@@ -8,6 +8,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 os.environ.setdefault('CORS_ORIGINS', 'https://app.example.com')
 os.environ['PB_TESTING'] = '1'
+if os.environ.get('LESSON_ASSIST_LIVE_SMOKE', '').strip() not in ('1', 'true', 'yes', 'on'):
+    os.environ['LESSON_ASSIST_MOCK'] = '1'
 # Ephemeral DB so smoke never writes into a tracked/developer database file.
 _smoke_dir = tempfile.mkdtemp(prefix='pb_smoke_')
 os.environ['PB_DB_PATH'] = str(Path(_smoke_dir) / 'smoke.db')

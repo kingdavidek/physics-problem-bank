@@ -249,6 +249,11 @@ from models.qotd import (
     get_user_attempt,
     record_qotd_answer,
 )
+from models.bot import (
+    ensure_system_bot,
+    is_bot_user,
+    qotd_challenge_card,
+)
 from models.weak_topics import analyze_weak_topics, serialize_weak_topic
 from models.cohort_stats import (
     MIN_SAMPLE_SIZE as COHORT_MIN_SAMPLE_SIZE,
@@ -1226,6 +1231,7 @@ with get_db() as conn:
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     """)
+    ensure_system_bot(conn)
     conn.commit()
 
 login_manager.init_app(app)
@@ -2041,7 +2047,7 @@ def _build_public_profile_context(target_user, viewer_id=None):
             milestones = list_user_milestones(conn, target_user.id)
         can_challenge = False
         can_invite_study_pair = False
-        if viewer_id and not is_own:
+        if viewer_id and not is_own and not is_bot_user(target_user):
             can_challenge = not is_blocked(conn, viewer_id, target_user.id)
             can_invite_study_pair = can_challenge
 
@@ -2090,6 +2096,7 @@ def _build_public_profile_context(target_user, viewer_id=None):
         'milestones': milestones,
         'can_challenge': can_challenge,
         'can_invite_study_pair': can_invite_study_pair,
+        'is_system_bot': is_bot_user(target_user),
     }
 
 
@@ -2737,6 +2744,15 @@ def _feed_items_for_viewer(viewer_id, filter_name=FEED_FILTER_ALL, limit=50, bef
                     continue
             items.append(_serialize_feed_item(item))
         return items
+
+
+def _qotd_challenge_for_viewer(viewer_id, filter_name=FEED_FILTER_ALL, before_id=None):
+    if normalize_feed_filter(filter_name) != FEED_FILTER_ALL:
+        return None
+    if before_id is not None:
+        return None
+    with get_db() as conn:
+        return qotd_challenge_card(conn, viewer_id)
 
 
 def _settings_to_json(settings):
@@ -3739,17 +3755,21 @@ def login():
                     user = User.get_by_email(conn, normalize_email(email_value))
 
                 # Constant-time-ish: always verify against a hash when user missing.
-                if user and user.is_active and user.check_password(password):
+                from werkzeug.security import check_password_hash
+                dummy_hash = (
+                    'scrypt:32768:8:1$dummy$0123456789abcdef0123456789abcdef'
+                    '0123456789abcdef0123456789abcdef'
+                )
+                if user and is_bot_user(user):
+                    check_password_hash(dummy_hash, password or 'x')
+                    error = 'Invalid email or password.'
+                elif user and user.is_active and user.check_password(password):
                     login_user(user, remember=remember)
                     with get_db() as conn:
                         user.touch_login(conn)
                     return redirect(_safe_redirect_target(request.args.get('next')))
 
-                from werkzeug.security import check_password_hash
-                check_password_hash(
-                    'scrypt:32768:8:1$dummy$0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
-                    password or 'x',
-                )
+                check_password_hash(dummy_hash, password or 'x')
                 error = 'Invalid email or password.'
 
     return render_template('login.html', error=error, email_value=email_value)
@@ -4671,7 +4691,7 @@ def api_v1_auth_login():
 
     with get_db() as conn:
         user = User.get_by_email(conn, email)
-        if not user or not user.is_active or not user.check_password(password):
+        if not user or is_bot_user(user) or not user.is_active or not user.check_password(password):
             return _api_error('Invalid email or password', 401, 'invalid_credentials')
         token = _issue_api_token(conn, user, label=label or 'Login')
 
@@ -4779,10 +4799,12 @@ def api_v1_mark_notifications_read():
 def activity_feed():
     filter_name = normalize_feed_filter(request.args.get('filter', FEED_FILTER_ALL))
     items = _feed_items_for_viewer(current_user.id, filter_name)
+    challenge = _qotd_challenge_for_viewer(current_user.id, filter_name)
     return render_template(
         'feed.html',
         filter=filter_name,
         items=items,
+        qotd_challenge=challenge,
         feed_filters=(
             (FEED_FILTER_ALL, 'All'),
             (FEED_FILTER_LESSONS, 'Lessons'),
@@ -4808,6 +4830,9 @@ def api_v1_feed():
         'ok': True,
         'filter': filter_name,
         'items': items,
+        'qotd_challenge': _qotd_challenge_for_viewer(
+            current_user.id, filter_name, before_id
+        ),
         'next_before_id': items[-1]['id'] if items else None,
     })
 

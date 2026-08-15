@@ -500,6 +500,7 @@ def search_users_by_handle(
     if exclude_user_id is not None:
         sql += ' AND id != ?'
         params.append(exclude_user_id)
+    sql += " AND handle != 'problem_bot' COLLATE NOCASE"
     sql += '''
         ORDER BY
             CASE

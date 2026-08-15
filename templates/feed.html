@@ -20,6 +20,18 @@
 <section class="section-panel">
     <div class="section-panel-body">
         <div id="feed-list" data-feed-filter="{{ filter }}">
+            {% if qotd_challenge %}
+            <ul class="profile-list feed-list feed-challenge-list">
+                <li class="profile-list-item feed-card feed-card--bot" data-feed-id="{{ qotd_challenge.id }}">
+                    <div class="profile-list-main">
+                        <span class="feed-card-badge feed-card-badge--{{ qotd_challenge.card_type }}">{{ qotd_challenge.card_label }}</span>
+                        <a href="{{ qotd_challenge.url }}">{{ qotd_challenge.message }}</a>
+                        <span class="profile-list-meta">{{ qotd_challenge.detail }} · @{{ qotd_challenge.actor_handle }}</span>
+                        <span class="feed-card-bot-note">{{ qotd_challenge.bot_note }}</span>
+                    </div>
+                </li>
+            </ul>
+            {% endif %}
             {% if items %}
             <ul class="profile-list feed-list">
                 {% for item in items %}
@@ -48,5 +60,5 @@
 <p class="feed-poll-note">Feed refreshes automatically every minute.</p>
 
 </div>
-<script src="{{ url_for('static', filename='js/feed.js') }}?v=1" defer></script>
+<script src="{{ url_for('static', filename='js/feed.js') }}?v=2" defer></script>
 {% endblock %}

@@ -30,18 +30,48 @@
     return iso.slice(0, 10);
   }
 
-  function renderItems(items) {
+  function renderChallenge(challenge) {
+    if (!challenge) return '';
+    return (
+      '<ul class="profile-list feed-list feed-challenge-list">' +
+      '<li class="profile-list-item feed-card feed-card--bot" data-feed-id="' +
+      escapeHtml(String(challenge.id)) +
+      '">' +
+      '<div class="profile-list-main">' +
+      '<span class="feed-card-badge feed-card-badge--' +
+      escapeHtml(challenge.card_type || 'challenge') +
+      '">' +
+      escapeHtml(challenge.card_label || 'Daily challenge') +
+      '</span>' +
+      '<a href="' +
+      escapeHtml(challenge.url || '/qotd') +
+      '">' +
+      escapeHtml(challenge.message || '') +
+      '</a>' +
+      '<span class="profile-list-meta">' +
+      escapeHtml((challenge.detail || '') + ' · @' + (challenge.actor_handle || 'problem_bot')) +
+      '</span>' +
+      '<span class="feed-card-bot-note">' +
+      escapeHtml(challenge.bot_note || 'A Problem Bank bot — not a person.') +
+      '</span>' +
+      '</div></li></ul>'
+    );
+  }
+
+  function renderItems(items, challenge) {
+    var html = renderChallenge(challenge);
     if (!items.length) {
-      listEl.innerHTML =
+      html +=
         '<p class="profile-empty feed-empty">' +
         'Follow people to see their activity. ' +
         '<a href="/search">Search users</a> ' +
         'or browse <a href="/topics">topics</a>.' +
         '</p>';
+      listEl.innerHTML = html;
       return;
     }
 
-    var html = '<ul class="profile-list feed-list">';
+    html += '<ul class="profile-list feed-list">';
     items.forEach(function (item) {
       html +=
         '<li class="profile-list-item feed-card" data-feed-id="' + item.id + '">' +
@@ -76,7 +106,7 @@
     return fetchFeed()
       .then(function (data) {
         if (data.filter) currentFilter = data.filter;
-        renderItems(data.items || []);
+        renderItems(data.items || [], data.qotd_challenge || null);
       })
       .catch(function () {});
   }

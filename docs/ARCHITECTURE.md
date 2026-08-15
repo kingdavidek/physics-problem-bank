@@ -186,7 +186,7 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | **Suggest question** | `models/sharing.py` | Inbox cap 100 |
 | **Friend challenges** | `models/challenges.py` | Same MCQ set, compare scores |
 | **Study pairs** | `models/study_pairs.py` | One active buddy; weekly recap |
-| **Question of the Day** | `models/qotd.py` | Daily MCQ + friend leaderboard |
+| **Question of the Day** | `models/qotd.py`, `models/bot.py` | Daily MCQ + friend leaderboard; `@problem_bot` feed card (E1) |
 | **Streaks & milestones** | `models/gamification.py` | Profile badges |
 | **Friend leaderboard** | `models/gamification.py` | Effort-based ranking |
 | **Notifications** | `models/notifications.py` | In-app events |
@@ -327,6 +327,7 @@ Lesson quizzes (`generators/shared/lesson_quiz.py`): 10 questions — 3 foundati
 | `docs/DEPLOY.md` | Production deployment checklist |
 | `docs/EMAIL_SETUP.md` | Weekly digest configuration |
 | `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | G8, engagement E4, other future ideas |
+| `docs/ENGAGEMENT_VISUAL.md` | Avatar / buddy visual tokens for E2–E3 |
 
 ---
 

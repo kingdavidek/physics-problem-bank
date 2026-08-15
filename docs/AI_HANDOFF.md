@@ -1,6 +1,6 @@
 # Problem Bank — AI agent handoff
 
-**Last updated:** 2026-08-14  
+**Last updated:** 2026-08-15  
 **Repository:** `maths_generator/physics-problem-bank` (GitHub: `kingdavidek/physics-problem-bank`)  
 **Audience:** The next AI agent (or human) continuing product work  
 
@@ -16,7 +16,7 @@ Start here. Read the documents in the order below before changing behaviour that
 | **Phase G learning (G1–G7)** | Shipped (weak topics → exam revision planner) |
 | **Solid-draft security bar** | Done (2026-08-01). See `docs/SOLID_DRAFT_SECURITY.md` |
 | **Mobile polish (app-like PWA)** | **Done (M0–M4)** — foundation, practice UX, app chrome, lessons/diagrams, PWA polish + device QA. **M5–M7** HTTPS → TWA → Play Android when a production URL exists — see `docs/MOBILE.md` |
-| **Engagement roadmap (E1–E3)** | **Planned, not implemented** — see §6 below |
+| **Engagement roadmap (E1–E3)** | **E1 shipped** (lesson-assist mock smoke + daily `@problem_bot` QOTD card). **E2–E3 planned** — see §6. Visual tokens: `docs/ENGAGEMENT_VISUAL.md` |
 | **G8 teacher / class mode** | Designed, not implemented. See `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2 |
 | **Engagement stretch (E4)** | Long-term — see `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §3.0 |
 | **Git tip (post-hardening)** | Harden commit on `main`; history purged of `data/quicktest.db` |
@@ -38,6 +38,7 @@ Start here. Read the documents in the order below before changing behaviour that
 | **5** | `docs/API.md` | REST `/api/v1/*` contracts when touching APIs |
 | **6** | `docs/DEPLOY.md` | Env, HTTPS, backups, smoke, production checklist |
 | *as needed* | `docs/EMAIL_SETUP.md` | Weekly digest only |
+| *as needed* | `docs/ENGAGEMENT_VISUAL.md` | Avatar / buddy colour and emoji tokens (after E1) |
 | *as needed* | `.env.example` | Local secrets and feature flags |
 
 Word (`.docx`) copies exist for key docs. **Markdown is the source of truth** for agents.
@@ -88,6 +89,7 @@ WSGI / production entry: `from app import app as application` (see `docs/DEPLOY.
 | Lesson metadata | `topics_data.py` |
 | Grading | `generators/shared/answer_checkers.py`, `sql_checker.py` |
 | Lesson AI assist | `generators/shared/lesson_assist.py`, `static/js/lesson-assist.js` |
+| System bot / daily QOTD card | `models/bot.py`, feed template + `/api/v1/feed` `qotd_challenge` |
 | Generators | `generators/gcse/`, `alevel/`, `myp/` |
 | Phase G / social / streaks / QOTD | `models/*.py` (`qotd.py`, `social.py`, `gamification.py`, `weak_topics.py`, …) |
 | Site search | `app.py` (`_unified_search`, `/api/v1/search`), `static/js/site-search.js` |
@@ -96,9 +98,9 @@ WSGI / production entry: `from app import app as application` (see `docs/DEPLOY.
 
 ---
 
-## 6. Engagement roadmap (Phases E1–E3) — planned
+## 6. Engagement roadmap (Phases E1–E3)
 
-Near-term product work to improve retention and discovery. **Not implemented yet.** Stretch / content-depth items are **Phase E4** in `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §3.0.
+Near-term product work to improve retention and discovery. **E1 is shipped.** Stretch / content-depth items are **Phase E4** in `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §3.0. Light visual tokens for E2–E3: `docs/ENGAGEMENT_VISUAL.md`.
 
 Suggested calendar (flexible): E1 ≈ weeks 1–2, E2 ≈ weeks 3–4, E3 ≈ weeks 5–6.
 
@@ -135,7 +137,7 @@ Unblocks validation and gives an immediate daily-return hook.
 | **Safeguarding** | Bot account must be clearly non-human; no DMs; no collecting extra PII |
 | **Touch** | `app.py` (login or feed seed), `models/social.py` / activity events, maybe a small template/JS feed card |
 
-**E1 exit:** Assist smoke green in CI (mock); logged-in user sees a daily mascot/QOTD challenge in the feed.
+**E1 exit:** Assist smoke green in CI (mock); logged-in user sees a daily mascot/QOTD challenge in the feed. **Shipped 2026-08-15** (`scripts/test_lesson_assist_smoke.py`, `scripts/test_bot_qotd_smoke.py`, `@problem_bot` card on `/feed`).
 
 ---
 
@@ -196,10 +198,10 @@ Documented in **`docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §3.0** (real-world que
 
 Pick based on product priority; items are independent enough to sequence differently if needed:
 
-1. **Mobile M5+** only with a real production HTTPS URL — see `docs/MOBILE.md` (M0–M4 done). Optional: confirm device QA on a physical phone before Play screenshots.
-2. **Engagement E1** (§6) — assist smoke + mascot QOTD feed (fast wins).
-3. **Engagement E2 → E3** — FTS search, avatars, alien buddy, friend accuracy leaderboard.
-4. **G8 — Teacher / class mode** per `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2.
+1. **Engagement E2** (§6) — FTS lesson search + simple emoji/colour avatars (`docs/ENGAGEMENT_VISUAL.md`).
+2. **Engagement E3** — alien buddy widget + friend-only weekly quiz-accuracy leaderboard.
+3. **G8 — Teacher / class mode** per `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2.
+4. **Mobile M5+** only with a real production HTTPS URL — see `docs/MOBILE.md` (M0–M4 done).
 5. **E4 / other stretch** only after metrics or explicit product call — future-functionality doc.
 
 ---

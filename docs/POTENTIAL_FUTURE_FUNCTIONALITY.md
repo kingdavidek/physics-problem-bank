@@ -16,7 +16,7 @@ This document captures **ideas and designs that are not yet implemented**. It is
 | **Idea** | Directionally useful; needs more design |
 | **Deferred** | Explicitly out of scope for near-term work |
 
-**Current product baseline:** Phase G G1–G7 shipped. Auto-correct complete. Solid-draft security done. **Engagement E1–E3** live in `docs/AI_HANDOFF.md` §6 (planned). **Engagement E4** (content depth) is below §3.0. Mobile polish planned in `docs/MOBILE.md`. **No teacher/class mode exists today** (G8 designed in §2).
+**Current product baseline:** Phase G G1–G7 shipped. Auto-correct complete. Solid-draft security done. **Engagement E1 shipped**; E2–E3 planned in `docs/AI_HANDOFF.md` §6. **Engagement E4** (content depth) is below §3.0. Mobile polish **M0–M4 done** (`docs/MOBILE.md`). **No teacher/class mode exists today** (G8 designed in §2).
 
 ---
 
@@ -340,7 +340,7 @@ Only after E1–E3 land and engagement metrics (DAU, session length, QOTD/feed p
 | G6 | Cross-topic skill gaps | ✅ Shipped |
 | G7 | Revision planner | ✅ Shipped |
 | **G8** | **Teacher / class mode** | **Designed — not started** |
-| E1–E3 | Engagement (assist smoke, mascot QOTD, FTS, avatars, buddy, friend accuracy LB) | Planned in `docs/AI_HANDOFF.md` §6 |
+| E1–E3 | Engagement (assist smoke, mascot QOTD, FTS, avatars, buddy, friend accuracy LB) | **E1 shipped**; E2–E3 planned in `docs/AI_HANDOFF.md` §6 |
 | E4 | Content depth (real-world styles, farm perks, Desmos-class graphs) | Stretch — §3.0 this file |
 
 ---

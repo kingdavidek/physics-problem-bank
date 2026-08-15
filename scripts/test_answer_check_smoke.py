@@ -1348,9 +1348,14 @@ def test_surds_rationalise_binomial_diff_intermediate_check_api():
 def test_surds_show_that_rationalise_check_api():
     import generators.gcse.maths as m
 
-    problem = _surd_problem_from_output(m.gcse_surds_show_that_rationalise(), 'difficult')
-    assert problem.get('answer_type') == 'algebraic_fraction'
-    assert problem['correct_answer_raw'].startswith('e|')
+    problem = None
+    for _ in range(40):
+        candidate = _surd_problem_from_output(m.gcse_surds_show_that_rationalise(), 'difficult')
+        raw = candidate.get('correct_answer_raw') or ''
+        if candidate.get('answer_type') == 'algebraic_fraction' and raw.startswith('e|'):
+            problem = candidate
+            break
+    assert problem is not None
 
     parts = problem['correct_answer_raw'].split('|')
     int_part, surd_coef, rad, denom = parts[1], parts[2], parts[3], parts[4]

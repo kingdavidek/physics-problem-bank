@@ -324,6 +324,8 @@ Pagination: responses include `next_before_id` (null when no more pages).
 
 See prior phases. Pagination: `?limit=&before_id=` on feed and notifications.
 
+`GET /api/v1/feed` (auth) also returns `qotd_challenge`: today’s `@problem_bot` card on `filter=all` with no `before_id`, or `null`. The card is synthetic (not an activity-event `id`). Web `/feed` shows the same card.
+
 ## Error codes
 
 | Code | HTTP | Meaning |

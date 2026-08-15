@@ -6,7 +6,7 @@
 
 <div class="lesson-hero">
     <h1>{{ profile_user.display_handle }}</h1>
-    <p class="hero-sub">Public profile</p>
+    <p class="hero-sub">{% if is_system_bot %}A Problem Bank bot — not a person.{% else %}Public profile{% endif %}</p>
 </div>
 
 <div class="public-profile-stats">
@@ -25,6 +25,8 @@
     <a href="{{ url_for('profile_settings') }}" class="btn btn-outline">Settings</a>
     <a href="{{ url_for('profile') }}" class="btn btn-secondary">Your account</a>
 </div>
+{% elif is_system_bot %}
+<p class="profile-empty">This bot posts the daily challenge. Open <a href="{{ url_for('qotd_page') }}">Question of the Day</a>.</p>
 {% elif current_user.is_authenticated %}
 <div class="public-profile-actions">
     {% if viewer_follows %}
