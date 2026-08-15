@@ -1,10 +1,13 @@
-"""Question of the day — one shared MCQ with a friend mini leaderboard."""
+"""Question of the day — one shared difficult MCQ with a friend mini leaderboard."""
 import hashlib
+import random
 from datetime import datetime, timezone
 
-from generators.shared.lesson_quiz import build_lesson_mcq_quiz, topic_supports_lesson_mcq
+from generators.shared.lesson_quiz import build_single_mcq, topic_supports_lesson_mcq
 from models.user import utc_now_iso
 from topic_registry import TOPICS
+
+QOTD_DIFFICULTY = 'difficult'
 
 
 def current_day_key(today=None):
@@ -35,19 +38,33 @@ def get_daily_question(*, day_key=None):
     if not paths:
         raise ValueError('no_mcq_topics')
     seed = _day_seed(day_key)
-    level, subject, topic, cfg = paths[seed % len(paths)]
-    quiz_seed = _day_seed(f'{day_key}-{level}-{subject}-{topic}')
-    problems = build_lesson_mcq_quiz(level, subject, topic, cfg, seed=quiz_seed)
-    problem = problems[0]
-    return {
-        'day_key': day_key,
-        'level': level,
-        'subject': subject,
-        'topic': topic,
-        'topic_name': cfg.get('name', topic.replace('_', ' ').title()),
-        'problem': problem,
-        'seed': quiz_seed,
-    }
+    rng_state = random.getstate()
+    try:
+        random.seed(seed)
+        start = seed % len(paths)
+        for offset in range(len(paths)):
+            level, subject, topic, cfg = paths[(start + offset) % len(paths)]
+            problem = build_single_mcq(
+                level,
+                subject,
+                topic,
+                cfg,
+                difficulty=QOTD_DIFFICULTY,
+                rng=random,
+            )
+            if problem and problem.get('options') and problem.get('correct_answer'):
+                return {
+                    'day_key': day_key,
+                    'level': level,
+                    'subject': subject,
+                    'topic': topic,
+                    'topic_name': cfg.get('name', topic.replace('_', ' ').title()),
+                    'problem': problem,
+                    'seed': seed,
+                }
+        raise ValueError('no_mcq_topics')
+    finally:
+        random.setstate(rng_state)
 
 
 def get_user_attempt(conn, user_id, day_key):

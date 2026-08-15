@@ -5,17 +5,40 @@
 <div class="page-shell">
 <div class="lesson-hero">
     <h1>Question of the day</h1>
-    <p class="hero-sub">{{ daily.topic_name }} — one MCQ, same for everyone today</p>
+    <p class="hero-sub">{{ daily.topic_name }} — one difficult MCQ, same for everyone today</p>
 </div>
 
 <section class="section-panel">
     <div class="section-panel-body">
         <div style="margin-bottom:16px;line-height:1.55;">{{ problem.question | safe }}</div>
         {% if attempt %}
+        <div class="mcq-inline" style="margin-bottom:12px;">
+            {% for opt in problem.options %}
+            <button type="button" class="btn mcq-btn{% if opt[0] == problem.correct_answer %} is-correct{% elif opt[0] == attempt.answer %} is-wrong{% endif %}" disabled>{{ opt | safe }}</button>
+            {% endfor %}
+        </div>
         <p class="{% if attempt.correct %}flash-success{% else %}error{% endif %}">
             You answered <strong>{{ attempt.answer }}</strong>
-            {% if attempt.correct %}— correct!{% else %}— not quite.{% endif %}
+            {% if attempt.correct %}— correct!{% else %}— not quite. The answer is {{ problem.correct_answer }}.{% endif %}
         </p>
+        {% if not attempt.correct %}
+        <details class="answer-reveal" open>
+            <summary>Show Answer</summary>
+            <div class="answer">
+                {% if '<pre>' in problem.solution %}
+                    {{ problem.solution | safe }}
+                {% else %}
+                    {{ problem.solution | format_question_html }}
+                {% endif %}
+            </div>
+            {% if problem.hint %}
+            <details class="hint-reveal">
+                <summary>💡 I still don't understand — show me the key concept</summary>
+                <div class="hint">{{ problem.hint | safe }}</div>
+            </details>
+            {% endif %}
+        </details>
+        {% endif %}
         {% else %}
         <form method="POST" class="auth-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

@@ -9042,10 +9042,11 @@ def test_quicktest_check_wrong_answer_not_session_mismatch():
             problem = stored.get('problem') or {}
         assert problem.get('correct_answer_raw') is not None
         assert str(problem.get('correct_answer_raw')) != '999'
+        wrong = '5' if str(problem['correct_answer_raw']).strip() != '5' else '7'
         r = client.post(
             '/api/v1/problems/check',
             json={
-                'user_answer': '5',
+                'user_answer': wrong,
                 'correct_answer_raw': str(problem['correct_answer_raw']),
                 'answer_type': problem.get('answer_type', 'number'),
                 'level': 'gcse',

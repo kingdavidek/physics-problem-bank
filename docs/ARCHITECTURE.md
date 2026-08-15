@@ -186,7 +186,7 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | **Suggest question** | `models/sharing.py` | Inbox cap 100 |
 | **Friend challenges** | `models/challenges.py` | Same MCQ set, compare scores |
 | **Study pairs** | `models/study_pairs.py` | One active buddy; weekly recap |
-| **Question of the Day** | `models/qotd.py`, `models/bot.py` | Daily MCQ + friend leaderboard; `@problem_bot` feed card (E1) |
+| **Question of the Day** | `models/qotd.py`, `models/bot.py` | One **difficult** MCQ per UTC day + friend leaderboard; `@problem_bot` feed card (E1). Counts for study streak only — not topic / MCQ history. Wrong answers show the worked solution. |
 | **Lesson keyword search** | `models/lesson_search.py` | SQLite FTS5 over `topics_data.py` plus stripped `*_lesson.html` pages (E2) |
 | **Avatars** | `models/avatar.py` | Emoji + colour JSON on `user_profile_settings.avatar_json` (E2) |
 | **Alien buddy** | `models/buddy.py` | Corner widget: celebrate quiz, streak risk, weak topic (E3) |

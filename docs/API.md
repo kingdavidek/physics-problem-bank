@@ -334,6 +334,8 @@ See prior phases. Pagination: `?limit=&before_id=` on feed and notifications.
 
 `GET /api/v1/me/gamification` includes `friend_accuracy_leaderboard`: friends-only weekly lesson-quiz + generator-MCQ accuracy (`accuracy_pct`, `earned`/`possible`). `show_accuracy_leaderboard` (settings, default true) hides you from other people’s accuracy boards. Web: `/leaderboard/friends?board=accuracy`. **No global ranking.**
 
+`GET /api/v1/qotd/today` is a **difficult** MCQ. Solution HTML and `correct_answer` are omitted until the user has answered. `POST /api/v1/qotd/today/answer` records the attempt for the friend mini-leaderboard and the study streak only — it does **not** write generator MCQ history or topic activity. After a wrong answer the JSON includes `solution_html` (same idea as the generator “Show Answer” panel).
+
 ## Error codes
 
 | Code | HTTP | Meaning |

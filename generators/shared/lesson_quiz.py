@@ -88,6 +88,21 @@ def _fill_quiz_slot(generator, variants_func, difficulty, count, problems, seen_
         added += 1
 
 
+def build_single_mcq(level, subject, topic, topic_config, *, difficulty='difficult', rng=None):
+    """One MCQ at ``difficulty``, or None if the topic cannot produce one."""
+    rng = rng or random
+    problem = _generate_mcq_problem(
+        topic_config['func'],
+        topic_config.get('variants_func'),
+        difficulty,
+        set(),
+        rng,
+    )
+    if problem:
+        problem['difficulty'] = difficulty
+    return problem
+
+
 def build_lesson_mcq_quiz(level, subject, topic, topic_config, *, seed=None):
     """
     Build 10 shuffled MCQs: 3 foundational, 4 intermediate, 3 difficult.

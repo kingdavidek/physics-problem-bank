@@ -9,7 +9,10 @@ sys.path.insert(0, str(ROOT))
 
 os.environ['PB_TESTING'] = '1'
 
-from app import app  # noqa: E402
+from app import app, get_db  # noqa: E402
+from generators.gcse.maths_num_stats_prob_rat import graphs_mcq  # noqa: E402
+from models.gamification import get_study_streak  # noqa: E402
+from models.qotd import get_daily_question  # noqa: E402
 
 
 def bearer(token: str) -> dict:
@@ -104,7 +107,87 @@ def main():
         assert r.status_code == 200
         assert r.get_json()['challenge']['status'] == 'complete'
 
-        # QOTD
+        # QOTD: scatter MCQ letters must match option text (not an empty "correct")
+        saw_correlation = False
+        for slot in range(7):
+            q, _s, _h, _m, opts, letter = graphs_mcq(slot_index=slot, difficulty='foundational')
+            if 'type of correlation' not in q.lower():
+                continue
+            saw_correlation = True
+            chosen = next(opt for opt in opts if str(opt)[:1] == letter)
+            assert chosen.strip() != letter
+            assert any(
+                word in chosen.lower()
+                for word in ('positive', 'negative', 'no correlation')
+            )
+        assert saw_correlation
+        for slot in range(7):
+            q, *_rest = graphs_mcq(slot_index=slot, difficulty='difficult')
+            assert 'What type of correlation does this show?' not in q
+
+        suffix_c = uuid.uuid4().hex[:8]
+        token_c, uid_c = register(client, f'c_{suffix_c}')
+        auth_c = bearer(token_c)
+
+        r = client.get('/api/v1/qotd/today', headers=auth_c)
+        assert r.status_code == 200
+        qotd = r.get_json()
+        assert qotd['question_html']
+        assert qotd['options']
+        assert qotd['difficulty'] == 'difficult'
+        assert not qotd.get('solution_html')
+        assert not qotd.get('correct_answer')
+
+        daily = get_daily_question()
+        assert daily['problem']['difficulty'] == 'difficult'
+        again = get_daily_question()
+        assert again['problem']['correct_answer'] == daily['problem']['correct_answer']
+        assert again['topic'] == daily['topic']
+        correct_letter = daily['problem']['correct_answer']
+        wrong_letter = 'B' if correct_letter != 'B' else 'A'
+
+        with get_db() as conn:
+            before_mcq = conn.execute(
+                'SELECT COUNT(*) AS n FROM generator_mcq_attempts WHERE user_id = ?',
+                (uid_c,),
+            ).fetchone()['n']
+            before_events = conn.execute(
+                'SELECT COUNT(*) AS n FROM user_activity_events WHERE user_id = ?',
+                (uid_c,),
+            ).fetchone()['n']
+
+        r = client.post(
+            '/api/v1/qotd/today/answer',
+            json={'answer': wrong_letter},
+            headers=auth_c,
+        )
+        assert r.status_code == 200
+        answered = r.get_json()
+        assert answered['correct'] is False
+        assert answered['correct_answer'] == correct_letter
+        assert answered['solution_html']
+
+        r = client.get('/api/v1/qotd/today', headers=auth_c)
+        replay = r.get_json()
+        assert replay['answered'] is True
+        assert replay['solution_html']
+        assert replay['correct_answer'] == correct_letter
+
+        with get_db() as conn:
+            after_mcq = conn.execute(
+                'SELECT COUNT(*) AS n FROM generator_mcq_attempts WHERE user_id = ?',
+                (uid_c,),
+            ).fetchone()['n']
+            after_events = conn.execute(
+                'SELECT COUNT(*) AS n FROM user_activity_events WHERE user_id = ?',
+                (uid_c,),
+            ).fetchone()['n']
+            streak = get_study_streak(conn, uid_c)
+        assert after_mcq == before_mcq
+        assert after_events == before_events
+        assert streak['current'] >= 1
+
+        # Existing A/B answers still feed the friend mini-leaderboard
         r = client.get('/api/v1/qotd/today', headers=auth_a)
         assert r.status_code == 200
         qotd = r.get_json()

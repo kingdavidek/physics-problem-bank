@@ -1298,6 +1298,37 @@ def _simp_frac(a, b):
     return a // g, b // g
 
 
+def _mcq_from_variant_output(out):
+    """Use a variant's choice payload when present, instead of scraping <strong>."""
+    if not out or len(out) < 5:
+        return None
+    raw = out[4]
+    if not (isinstance(raw, dict) and raw.get('type') == 'choice'):
+        return None
+    q, s, hint, marks = out[:4]
+    options = list(raw.get('options') or [])
+    correct = str(raw.get('correct') or '').strip().upper()[:1]
+    if not options or not correct:
+        return None
+    return q, s, hint, marks, options, correct
+
+
+def _mcq_numeric_correct(out):
+    """Plain numeric/string 5th-tuple value, used when solution has no <strong>."""
+    if not out or len(out) < 5:
+        return ''
+    raw = out[4]
+    if isinstance(raw, bool) or isinstance(raw, dict):
+        return ''
+    if isinstance(raw, int):
+        return str(raw)
+    if isinstance(raw, float):
+        return str(int(raw)) if raw == int(raw) else str(raw)
+    if isinstance(raw, str) and raw.strip():
+        return raw.strip()
+    return ''
+
+
 def _mcq_options(correct, distractors):
     correct = str(correct)
     choices = [correct]
@@ -4084,12 +4115,19 @@ _STATISTICS_MCQ_GENERATORS = [
 ]
 
 
-def statistics_mcq(slot_index=None):
+def statistics_mcq(slot_index=None, difficulty='foundational'):
+    pool = list(_STATISTICS_MCQ_GENERATORS)
+    if difficulty == 'difficult':
+        pool = [fn for fn in pool if fn is not _stats_scatter_correlation]
     if slot_index is None:
-        func = random.choice(_STATISTICS_MCQ_GENERATORS)
+        func = random.choice(pool)
     else:
-        func = _STATISTICS_MCQ_GENERATORS[slot_index % len(_STATISTICS_MCQ_GENERATORS)]
-    q, full_s, hint_text, marks = func()[:4]
+        func = pool[slot_index % len(pool)]
+    out = func()
+    packed = _mcq_from_variant_output(out)
+    if packed:
+        return packed
+    q, full_s, hint_text, marks = out[:4]
 
     # Extract correct answer from the full solution
     correct = ""
@@ -4099,6 +4137,8 @@ def statistics_mcq(slot_index=None):
             rest = parts[1].split('</strong>', 1)
             if rest:
                 correct = rest[0].strip()
+    if not correct:
+        correct = _mcq_numeric_correct(out)
 
     # Distractors based on the CONTENT of the question
     if 'typical value' in q.lower() or 'more consistent' in q.lower():
@@ -4206,8 +4246,11 @@ def _stats_problem_from_output(out, difficulty):
 
 def gcse_statistics_variants(difficulty, mode):
     if mode == 'mcq':
+        def _tiered(slot_index=None, _d=difficulty):
+            return statistics_mcq(slot_index=slot_index, difficulty=_d)
+
         return mcq_variants_from_fn(
-            statistics_mcq, 'statistics', difficulty, slot_param='slot_index'
+            _tiered, 'statistics', difficulty, slot_param='slot_index'
         )
     found = [_stats_found_01,_stats_found_02,_stats_found_03,_stats_found_04,_stats_found_05,_stats_found_06,_stats_found_07,_stats_found_08,_stats_found_09,_stats_found_10,_stats_found_11,_stats_found_12,_stats_found_13,_stats_found_14,_stats_found_15]
     inter = [_stats_inter_01,_stats_inter_02,_stats_inter_03,_stats_inter_04,_stats_inter_05,_stats_inter_06,_stats_inter_07,_stats_inter_08,_stats_inter_09,_stats_inter_10,_stats_inter_11,_stats_inter_12,_stats_inter_13,_stats_inter_14,_stats_inter_15]
@@ -5256,28 +5299,52 @@ def _gra_diff_17(): return _gra_diff_quadratic_intersection_multipart()
 
 
 # --- MCQ ---
-_GRAPHS_MCQ_GENERATORS = [
+_GRAPHS_MCQ_FOUND = [
     _gra_coordinate_quadrant,
     _gra_substitute_linear,
     _gra_y_intercept,
-    _gra_equation_from_gradient_intercept,
-    _gra_parallel_gradient,
-    _gra_distance_time_speed,
     _gra_scatter_positive,
     _gra_scatter_negative,
     _gra_scatter_no_correlation,
-    _gra_midpoint,
-    _gra_reciprocal_value,
+    _gra_parallel_gradient,
+]
+_GRAPHS_MCQ_INTER = [
+    _gra_gradient_two_points,
+    _gra_parallel_gradient,
+    _gra_distance_time_speed,
+    _gra_quadratic_substitute,
+    _gra_y_intercept,
+    _gra_substitute_linear,
     _gra_cubic_substitute,
 ]
+_GRAPHS_MCQ_DIFF = [
+    _gra_quadratic_substitute,
+    _gra_reciprocal_value,
+    _gra_cubic_substitute,
+    _gra_gradient_two_points,
+    _gra_distance_time_speed,
+    _gra_parallel_gradient,
+    _gra_substitute_linear,
+]
+_GRAPHS_MCQ_GENERATORS = _GRAPHS_MCQ_FOUND
+_GRAPHS_MCQ_BY_DIFFICULTY = {
+    'foundational': _GRAPHS_MCQ_FOUND,
+    'intermediate': _GRAPHS_MCQ_INTER,
+    'difficult': _GRAPHS_MCQ_DIFF,
+}
 
 
-def graphs_mcq(slot_index=None):
+def graphs_mcq(slot_index=None, difficulty='foundational'):
+    pool = _GRAPHS_MCQ_BY_DIFFICULTY.get(difficulty) or _GRAPHS_MCQ_FOUND
     if slot_index is None:
-        func = random.choice(_GRAPHS_MCQ_GENERATORS)
+        func = random.choice(pool)
     else:
-        func = _GRAPHS_MCQ_GENERATORS[slot_index % len(_GRAPHS_MCQ_GENERATORS)]
-    q, s, hint, marks = func()[:4]
+        func = pool[slot_index % len(pool)]
+    out = func()
+    packed = _mcq_from_variant_output(out)
+    if packed:
+        return packed
+    q, s, hint, marks = out[:4]
 
     correct = ""
     if '<strong>' in s:
@@ -5286,6 +5353,8 @@ def graphs_mcq(slot_index=None):
             rest = parts[1].split('</strong>', 1)
             if rest:
                 correct = rest[0].strip()
+    if not correct:
+        correct = _mcq_numeric_correct(out)
 
     # Build distractors based on question type
     if 'quadrant' in q:
@@ -5383,8 +5452,11 @@ def _gr_problem_from_output(out, difficulty):
 
 def gcse_graphs_variants(difficulty, mode):
     if mode == 'mcq':
+        def _tiered(slot_index=None, _d=difficulty):
+            return graphs_mcq(slot_index=slot_index, difficulty=_d)
+
         return mcq_variants_from_fn(
-            graphs_mcq, 'graphs', difficulty, slot_param='slot_index'
+            _tiered, 'graphs', difficulty, slot_param='slot_index'
         )
     found = [_gra_found_01, _gra_found_02, _gra_found_03, _gra_found_04,
              _gra_found_05, _gra_found_06, _gra_found_07, _gra_found_08,

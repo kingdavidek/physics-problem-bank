@@ -7692,15 +7692,7 @@ def qotd_page():
             except ValueError:
                 flash('You already answered today.', 'error')
             else:
-                _track_mcq_answered(
-                    daily['level'],
-                    daily['subject'],
-                    daily['topic'],
-                    problem.get('difficulty', 'foundational'),
-                    letter,
-                    correct_answer,
-                    correct,
-                )
+                # Streak only — QOTD must not count as practising this topic.
                 _record_study_activity(current_user.id)
                 flash('Correct!' if correct else f'Not quite — answer was {correct_answer}.', 'success' if correct else 'error')
         return redirect(url_for('qotd_page'))
@@ -7931,6 +7923,31 @@ def api_v1_study_pair_end():
     return jsonify({'ok': True})
 
 
+def _qotd_json(daily, attempt):
+    problem = daily['problem']
+    body = {
+        'ok': True,
+        'day_key': daily['day_key'],
+        'level': daily['level'],
+        'subject': daily['subject'],
+        'topic': daily['topic'],
+        'topic_name': daily['topic_name'],
+        'difficulty': problem.get('difficulty') or 'difficult',
+        'question_html': problem.get('question', ''),
+        'options': problem.get('options') or [],
+        'answered': attempt is not None,
+        'correct': bool(attempt['correct']) if attempt else None,
+        'your_answer': attempt['answer'] if attempt else None,
+    }
+    if attempt:
+        body['correct_answer'] = (problem.get('correct_answer') or '').strip().upper()[:1]
+        body['solution_html'] = _render_problem_field(problem.get('solution'))
+        hint = _render_problem_field(problem.get('hint'))
+        if hint:
+            body['hint_html'] = hint
+    return body
+
+
 @app.get('/api/v1/qotd/today')
 @login_required
 def api_v1_qotd_today():
@@ -7939,22 +7956,9 @@ def api_v1_qotd_today():
         daily = get_daily_question(day_key=day_key)
     except ValueError:
         return _api_error('No question today', 503, 'unavailable')
-    problem = daily['problem']
     with get_db() as conn:
         attempt = get_user_attempt(conn, current_user.id, day_key)
-    return jsonify({
-        'ok': True,
-        'day_key': day_key,
-        'level': daily['level'],
-        'subject': daily['subject'],
-        'topic': daily['topic'],
-        'topic_name': daily['topic_name'],
-        'question_html': problem.get('question', ''),
-        'options': problem.get('options') or [],
-        'answered': attempt is not None,
-        'correct': bool(attempt['correct']) if attempt else None,
-        'your_answer': attempt['answer'] if attempt else None,
-    })
+    return jsonify(_qotd_json(daily, attempt))
 
 
 @app.post('/api/v1/qotd/today/answer')
@@ -7979,21 +7983,13 @@ def api_v1_qotd_answer():
             record_qotd_answer(conn, current_user.id, day_key, letter, correct)
         except ValueError:
             return _api_error('Already answered today', 409, 'already_answered')
-    _track_mcq_answered(
-        daily['level'],
-        daily['subject'],
-        daily['topic'],
-        problem.get('difficulty', 'foundational'),
-        letter,
-        correct_answer,
-        correct,
-    )
     _record_study_activity(current_user.id)
-    return jsonify({
-        'ok': True,
-        'correct': correct,
-        'correct_answer': correct_answer,
-    })
+    with get_db() as conn:
+        attempt = get_user_attempt(conn, current_user.id, day_key)
+    body = _qotd_json(daily, attempt)
+    body['correct'] = correct
+    body['correct_answer'] = correct_answer
+    return jsonify(body)
 
 
 @app.get('/api/v1/qotd/today/leaderboard')
