@@ -187,7 +187,7 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | **Friend challenges** | `models/challenges.py` | Same MCQ set, compare scores |
 | **Study pairs** | `models/study_pairs.py` | One active buddy; weekly recap |
 | **Question of the Day** | `models/qotd.py`, `models/bot.py` | Daily MCQ + friend leaderboard; `@problem_bot` feed card (E1) |
-| **Lesson keyword search** | `models/lesson_search.py` | SQLite FTS5 over `topics_data.py` lesson text (E2) |
+| **Lesson keyword search** | `models/lesson_search.py` | SQLite FTS5 over `topics_data.py` plus stripped `*_lesson.html` pages (E2) |
 | **Avatars** | `models/avatar.py` | Emoji + colour JSON on `user_profile_settings.avatar_json` (E2) |
 | **Streaks & milestones** | `models/gamification.py` | Profile badges |
 | **Friend leaderboard** | `models/gamification.py` | Effort-based ranking |

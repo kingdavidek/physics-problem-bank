@@ -3496,7 +3496,9 @@ def _search_topics(query, limit=8):
     remaining = max(0, limit - len(matches))
     if remaining > 0:
         with get_db() as conn:
-            keyword_hits = search_lesson_keywords(conn, query, limit=limit)
+            keyword_hits = search_lesson_keywords(
+                conn, query, limit=max(limit * 2, 12)
+            )
         for hit in keyword_hits:
             if hit.get('url') in seen:
                 continue

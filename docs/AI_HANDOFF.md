@@ -92,7 +92,7 @@ WSGI / production entry: `from app import app as application` (see `docs/DEPLOY.
 | System bot / daily QOTD card | `models/bot.py`, feed template + `/api/v1/feed` `qotd_challenge` |
 | Generators | `generators/gcse/`, `alevel/`, `myp/` |
 | Phase G / social / streaks / QOTD | `models/*.py` (`qotd.py`, `social.py`, `gamification.py`, `weak_topics.py`, …) |
-| Site search | `app.py` (`_unified_search`, `/api/v1/search`), `models/lesson_search.py` (FTS5), `static/js/site-search.js` |
+| Site search | `app.py` (`_unified_search`, `/api/v1/search`), `models/lesson_search.py` (FTS5 over metadata + lesson HTML), `static/js/site-search.js` |
 | Avatars | `models/avatar.py`, `user_profile_settings.avatar_json`, settings picker |
 | Front-end | `templates/`, `static/js/site.js` (+ feature JS) |
 | Smoke / backup | `scripts/test_*_smoke.py`, `scripts/backup_sqlite.py` |
@@ -161,7 +161,7 @@ Unblocks validation and gives an immediate daily-return hook.
 | **Constraints** | No image-upload CDN in v1; keep payload small; Jinja-safe rendering |
 | **Touch** | `app.py` schema + settings routes, `templates/profile_settings.html`, `base.html`/CSS, serializers for feed/profile |
 
-**E2 exit:** Search returns lesson-keyword hits; users can set and see a simple avatar. **Shipped 2026-08-15** (`models/lesson_search.py`, `models/avatar.py`, `scripts/test_user_search_smoke.py`, `scripts/test_avatar_smoke.py`).
+**E2 exit:** Search returns lesson-keyword hits (including stripped lesson HTML); users can set and see a simple avatar. **Shipped 2026-08-15** (`models/lesson_search.py`, `models/avatar.py`, `scripts/test_user_search_smoke.py`, `scripts/test_avatar_smoke.py`).
 
 ---
 

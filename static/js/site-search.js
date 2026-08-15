@@ -100,7 +100,7 @@
     if (activeController) activeController.abort();
     activeController = new AbortController();
 
-    fetch('/api/v1/search?q=' + encodeURIComponent(query) + '&limit=6', {
+    fetch('/api/v1/search?q=' + encodeURIComponent(query) + '&limit=8', {
       headers: { Accept: 'application/json' },
       signal: activeController.signal,
     })

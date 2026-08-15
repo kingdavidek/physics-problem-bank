@@ -1,14 +1,16 @@
-"""SQLite FTS5 index of lesson titles, summaries, formulae, and tips."""
+"""SQLite FTS5 index of lesson titles, summaries, formulae, tips, and HTML."""
 from __future__ import annotations
 
 import hashlib
 import json
 import re
 import sqlite3
+from pathlib import Path
 
 from topic_registry import TOPICS
 from topics_data import TOPIC_CONTENT, extract_lesson_search_text
 
+_TEMPLATES_DIR = Path(__file__).resolve().parents[1] / 'templates'
 _LEVEL_LABELS = {
     'gcse': 'GCSE',
     'alevel': 'A-Level',
@@ -21,6 +23,27 @@ _SUBJECT_LABELS = {
     'chemistry': 'Chemistry',
 }
 _TOKEN_RE = re.compile(r'[a-z0-9]{2,}', re.I)
+_JINJA_COMMENT = re.compile(r'\{#.*?#\}', re.S)
+_JINJA_TAG = re.compile(r'\{%.*?%\}', re.S)
+_JINJA_EXPR = re.compile(r'\{\{.*?\}\}', re.S)
+_SCRIPT_STYLE = re.compile(r'<(script|style)\b[^>]*>.*?</\1>', re.I | re.S)
+_HTML_BITS = re.compile(r'<[^>]+>')
+_LATEX_BITS = re.compile(r'\\[a-zA-Z]+|[{}^_]|\$')
+_SPACE = re.compile(r'\s+')
+_ENTITIES = (
+    ('&nbsp;', ' '),
+    ('&amp;', '&'),
+    ('&lt;', '<'),
+    ('&gt;', '>'),
+    ('&quot;', '"'),
+    ('&#39;', "'"),
+    ('&rsquo;', "'"),
+    ('&lsquo;', "'"),
+    ('&rdquo;', '"'),
+    ('&ldquo;', '"'),
+    ('&ndash;', '-'),
+    ('&mdash;', '-'),
+)
 
 
 def _group_label(level, subject):
@@ -28,6 +51,26 @@ def _group_label(level, subject):
         f"{_LEVEL_LABELS.get(level, str(level).title())} "
         f"{_SUBJECT_LABELS.get(subject, str(subject).title())}"
     )
+
+
+def extract_lesson_html_text(level, subject, topic):
+    """Plain text from a topic's lesson template, if one exists."""
+    path = _TEMPLATES_DIR / f'{level}_{subject}_{topic}_lesson.html'
+    if not path.is_file():
+        return ''
+    try:
+        raw = path.read_text(encoding='utf-8')
+    except OSError:
+        return ''
+    text = _JINJA_COMMENT.sub(' ', raw)
+    text = _SCRIPT_STYLE.sub(' ', text)
+    text = _JINJA_TAG.sub(' ', text)
+    text = _JINJA_EXPR.sub(' ', text)
+    text = _HTML_BITS.sub(' ', text)
+    for entity, repl in _ENTITIES:
+        text = text.replace(entity, repl)
+    text = _LATEX_BITS.sub(' ', text)
+    return _SPACE.sub(' ', text).strip()
 
 
 def build_lesson_search_docs():
@@ -41,6 +84,7 @@ def build_lesson_search_docs():
                     name,
                     slug.replace('_', ' '),
                     extract_lesson_search_text(content),
+                    extract_lesson_html_text(level, subject, slug),
                 ]).strip()
                 docs.append({
                     'path': f'{level}/{subject}/{slug}',

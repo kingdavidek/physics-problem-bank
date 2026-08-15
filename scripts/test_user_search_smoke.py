@@ -111,6 +111,29 @@ def main():
         topics = r.get_json()['topics']
         assert any('simultaneous' in item['name'].lower() for item in topics)
 
+        r = client.get('/api/v1/search?q=pythagoras')
+        assert r.status_code == 200
+        topics = r.get_json()['topics']
+        assert topics, 'pythagoras should return topics'
+        assert topics[0]['slug'] == 'pythagoras'
+        assert topics[0].get('via') == 'title'
+        related = {item['slug'] for item in topics[1:]}
+        assert related & {
+            'trigonometry',
+            'mensuration',
+            'circle_theorems',
+            'bearings',
+            'vectors',
+            'constructions_loci',
+        }
+        assert any(item.get('via') == 'keywords' for item in topics)
+
+        r = client.get('/search?q=pythagoras')
+        assert r.status_code == 200
+        html = r.data.decode().lower()
+        assert 'pythagoras' in html
+        assert 'lesson text' in html
+
     print('Unified search smoke tests passed.')
 
 
