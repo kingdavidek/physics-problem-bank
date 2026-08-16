@@ -1,6 +1,6 @@
 # Problem Bank — AI agent handoff
 
-**Last updated:** 2026-08-15  
+**Last updated:** 2026-08-16  
 **Repository:** `maths_generator/physics-problem-bank` (GitHub: `kingdavidek/physics-problem-bank`)  
 **Audience:** The next AI agent (or human) continuing product work  
 
@@ -15,10 +15,13 @@ Start here. Read the documents in the order below before changing behaviour that
 | **Auto-correct (Phases A/B)** | Complete (GCSE CS + Maths; Python via client Pyodide) |
 | **Phase G learning (G1–G7)** | Shipped (weak topics → exam revision planner) |
 | **Solid-draft security bar** | Done (2026-08-01). See `docs/SOLID_DRAFT_SECURITY.md` |
+| **Security + UK GDPR compliance** | **Planned, fully specified — `docs/SECURITY_AND_GDPR.md`.** Phase **S0 is a launch blocker**: no privacy notice, no account deletion, no data export, no DPIA, public-by-default profiles for a 13+ audience. Do S0 with (not after) `docs/MOBILE.md` M5 |
 | **Mobile polish (app-like PWA)** | **Done (M0–M4)** — foundation, practice UX, app chrome, lessons/diagrams, PWA polish + device QA. **M5–M7** HTTPS → TWA → Play Android when a production URL exists — see `docs/MOBILE.md` |
 | **Engagement roadmap (E1–E3)** | **E1–E3 shipped** (assist mock smoke, `@problem_bot` QOTD card, FTS lesson search, emoji/colour avatars, alien buddy, friend quiz-accuracy leaderboard). Visual tokens: `docs/ENGAGEMENT_VISUAL.md` |
 | **G8 teacher / class mode** | Designed, not implemented. See `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2 |
-| **Engagement stretch (E4)** | Long-term — see `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §3.0 |
+| **Real-world question style (E4.1)** | **Planned, fully specified** — `docs/REAL_WORLD_QUESTIONS.md`. Third generator mode (`real_world`) across percentages, ratio, compound measures |
+| **Engagement E5 (retention polish)** | **E5.2 shipped 2026-08-16** (four extra badges). Rest planned — `docs/ENGAGEMENT_E5.md`. Buddy v0.5, QOTD week, streak freeze, avatar unlocks, planner dropdown, push (HTTPS-gated) |
+| **Engagement stretch (E4.2–E4.3)** | Long-term — see `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §3.0 (mascot farm, Desmos-class graphs) |
 | **Git tip (post-hardening)** | Harden commit on `main`; history purged of `data/quicktest.db` |
 
 **Do not regress solid-draft security** when shipping engagement or mobile work. Prefer extending existing models (QOTD, social feed, gamification, search) over rebuilding them.
@@ -34,9 +37,12 @@ Start here. Read the documents in the order below before changing behaviour that
 | **2b** | `docs/COMPLEX_MECHANISMS.md` | Deep dive: grading, generator queues, Phase G (Flask/JS/CSS roles) |
 | **2c** | `docs/MOBILE.md` | Mobile polish (M0–M4) + Play Android via TWA (M5–M7) |
 | **3** | `docs/SOLID_DRAFT_SECURITY.md` | Critical/high fixes just shipped; **do not regress** |
+| **3b** | `docs/SECURITY_AND_GDPR.md` | Compliance gaps, data inventory, and the phased S0–S3 plan. **Read before touching auth, personal data, defaults, or anything that leaves the server** |
 | **4** | `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | G8 design + engagement E4 + other future ideas |
 | **5** | `docs/API.md` | REST `/api/v1/*` contracts when touching APIs |
 | **6** | `docs/DEPLOY.md` | Env, HTTPS, backups, smoke, production checklist |
+| *before starting E4.1* | `docs/REAL_WORLD_QUESTIONS.md` | Step-by-step plan for the real-world generator mode |
+| *before starting E5* | `docs/ENGAGEMENT_E5.md` | Step-by-step plan for buddy v0.5, badges, QOTD week, streak freeze, avatar unlocks |
 | *as needed* | `docs/EMAIL_SETUP.md` | Weekly digest only |
 | *as needed* | `docs/ENGAGEMENT_VISUAL.md` | Avatar / buddy colour and emoji tokens (after E1) |
 | *as needed* | `.env.example` | Local secrets and feature flags |
@@ -56,6 +62,10 @@ Word (`.docx`) copies exist for key docs. **Markdown is the source of truth** fo
 7. **Do not set `PB_TESTING=1` in production** (disables rate limits and CSRF exemptions used by smoke).
 8. Prefer **extending** `answer_checkers`, Phase G models, and `topic_registry` — do not rebuild them.
 9. **Friend-only leaderboards** for learner competition (no global public ranking of minors) — safeguarding default for E3.
+10. **Never send a handle, email, or user ID to an external AI provider.** Lesson assist may send lesson text and the student's typed question only, and only when explicitly enabled.
+11. **No analytics, advertising, or third-party tracking.** The site needs no cookie-consent banner precisely because none exists; adding any requires a consent flow and a rewritten privacy notice in the same release.
+12. **Anything that makes a child more visible to others defaults to off.** See `docs/SECURITY_AND_GDPR.md` §S0.3.
+13. **Never store a raw IP address** where a keyed hash serves the same purpose (rate-limit and usage buckets are compared, never read back).
 
 ---
 
@@ -100,20 +110,20 @@ WSGI / production entry: `from app import app as application` (see `docs/DEPLOY.
 
 ---
 
-## 6. Engagement roadmap (Phases E1–E3)
+## 6. Engagement roadmap (E1–E5)
 
-Near-term product work to improve retention and discovery. **E1–E3 are shipped.** Stretch / content-depth items are **Phase E4** in `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §3.0. Light visual tokens: `docs/ENGAGEMENT_VISUAL.md`.
-
-Suggested calendar (flexible): E1 ≈ weeks 1–2, E2 ≈ weeks 3–4, E3 ≈ weeks 5–6.
+Near-term product work to improve retention and discovery. **E1–E3 are shipped. E5.2 (badges) is shipped.** **E4.1** (real-world question style) and the rest of **E5** are planned and have their own step-by-step docs. Light visual tokens: `docs/ENGAGEMENT_VISUAL.md`.
 
 ```mermaid
 flowchart LR
-  E1[E1_Foundation]
-  E2[E2_Discovery_Identity]
-  E3[E3_Sticky_Gamification]
-  E4[E4_Content_Depth_future_doc]
+  E1[E1_Foundation_shipped]
+  E2[E2_Discovery_Identity_shipped]
+  E3[E3_Sticky_Gamification_shipped]
+  E5[E5_Retention_Polish_in_progress]
+  E4[E4_1_Real_World_Questions_planned]
   E1 --> E2 --> E3
-  E3 -.-> E4
+  E3 --> E5
+  E3 --> E4
 ```
 
 ### E1 — Foundation and low-hanging fruit (weeks 1–2)
@@ -192,7 +202,17 @@ Unblocks validation and gives an immediate daily-return hook.
 
 ### E4 — Content depth (stretch)
 
-Documented in **`docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §3.0** (real-world question styles, sub-mascot farm, Desmos-like graphs). Do **not** start E4 until E1–E3 engagement metrics justify it.
+Three items were scoped in **`docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §3.0**. Only the first is worth doing now:
+
+| Item | Verdict |
+|------|---------|
+| **E4.1 Real-world question styles** | **Do this** — content work plus one new mode string. Full plan: `docs/REAL_WORLD_QUESTIONS.md` |
+| **E4.2 Sub-mascot story / farm** | Defer — needs its own schema, economy design, and ongoing content |
+| **E4.3 Desmos-like graphing** | Defer indefinitely — embed a maintained library if graphs are ever requested |
+
+### E5 — Retention polish (E5.2 shipped; rest planned)
+
+Small extensions of shipped systems, specified in **`docs/ENGAGEMENT_E5.md`**. **E5.2 shipped 2026-08-16:** four extra badges (`qotd_first`, `qotd_7`, `questions_50`, `accuracy_top_friend`) plus catalog emoji on the profile. Remaining: buddy v0.5, 7-day friends-only QOTD board, weekly streak freeze, avatar extras gated on milestones, revision planner subject dropdown, and web push (blocked on production HTTPS / `docs/MOBILE.md` M5).
 
 ---
 
@@ -200,9 +220,13 @@ Documented in **`docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §3.0** (real-world que
 
 Pick based on product priority; items are independent enough to sequence differently if needed:
 
-1. **G8 — Teacher / class mode** per `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2.
-2. **Mobile M5+** only with a real production HTTPS URL — see `docs/MOBILE.md` (M0–M4 done).
-3. **E4 / other stretch** only after metrics or explicit product call — future-functionality doc.
+**If the site is about to go public, `docs/SECURITY_AND_GDPR.md` Phase S0 comes first** — it is the only item on this list with legal exposure attached. Everything below assumes the site is still development-only.
+
+1. **E5 retention polish** — remaining items in `docs/ENGAGEMENT_E5.md`. **E5.2 badges shipped.** Suggested next: avatar unlocks → QOTD week → buddy v0.5 → streak freeze → planner dropdown.
+2. **E4.1 real-world question style** — highest content value per line of code (`docs/REAL_WORLD_QUESTIONS.md`).
+3. **G8 — Teacher / class mode** per `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2. Note this adds teacher oversight of children's data — DPIA review required first.
+4. **Mobile M5+** only with a real production HTTPS URL — see `docs/MOBILE.md` (M0–M4 done). Pair with compliance S0; unblocks web push (E5.7).
+5. **E4.2 / E4.3 and other stretch** only after metrics or an explicit product call.
 
 ---
 

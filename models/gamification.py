@@ -21,31 +21,61 @@ MILESTONE_TOPICS_10 = 'topics_10'
 MILESTONE_STREAK_7 = 'streak_7'
 MILESTONE_STREAK_30 = 'streak_30'
 MILESTONE_QUESTIONS_25 = 'questions_25'
+MILESTONE_QOTD_FIRST = 'qotd_first'
+MILESTONE_QOTD_7 = 'qotd_7'
+MILESTONE_QUESTIONS_50 = 'questions_50'
+MILESTONE_ACCURACY_TOP_FRIEND = 'accuracy_top_friend'
 
 MILESTONE_CATALOG = {
     MILESTONE_FIRST_QUIZ: {
         'title': 'First quiz',
         'description': 'Complete your first lesson quiz',
+        'emoji': '📝',
     },
     MILESTONE_FIRST_LESSON: {
         'title': 'Lesson learner',
         'description': 'Complete a lesson quick check',
+        'emoji': '📖',
     },
     MILESTONE_TOPICS_10: {
         'title': 'Broad explorer',
         'description': 'Practise 10 different topics',
+        'emoji': '🧭',
     },
     MILESTONE_STREAK_7: {
         'title': 'Week warrior',
         'description': 'Reach a 7-day study streak',
+        'emoji': '🔥',
     },
     MILESTONE_STREAK_30: {
         'title': 'Dedicated',
         'description': 'Reach a 30-day study streak',
+        'emoji': '💪',
     },
     MILESTONE_QUESTIONS_25: {
         'title': 'Practice regular',
         'description': 'Generate 25 practice questions',
+        'emoji': '✏️',
+    },
+    MILESTONE_QOTD_FIRST: {
+        'title': 'Daily starter',
+        'description': 'Answer the question of the day',
+        'emoji': '☀️',
+    },
+    MILESTONE_QOTD_7: {
+        'title': 'Seven days of questions',
+        'description': 'Answer the question of the day on 7 different days',
+        'emoji': '📅',
+    },
+    MILESTONE_QUESTIONS_50: {
+        'title': 'Practice veteran',
+        'description': 'Generate 50 practice questions',
+        'emoji': '🏅',
+    },
+    MILESTONE_ACCURACY_TOP_FRIEND: {
+        'title': 'Top of the class',
+        'description': 'Rank first among friends on weekly quiz accuracy',
+        'emoji': '🥇',
     },
 }
 
@@ -201,6 +231,36 @@ def _distinct_topics_count(conn, user_id):
     return row['n'] if row else 0
 
 
+def _weekly_answered_marks(conn, user_id, days=7):
+    """Quiz + generator-MCQ marks possible for this user in the last `days` UTC days."""
+    since_day = (_utc_today() - timedelta(days=days - 1)).isoformat()
+    since_iso = f'{since_day}T00:00:00'
+    stats = _accuracy_stats_since(conn, [user_id], since_iso)
+    item = stats.get(user_id) or {}
+    return int(item.get('possible') or 0)
+
+
+def _maybe_award_accuracy_top_friend(conn, user_id):
+    """Award Top of the class only when cheap guards pass, then the full friend board.
+
+    Skips the leaderboard query when the badge is already held or the user has
+    fewer than 10 answered questions this week. Needs at least two participants
+    with a score (friends-only; a lone user never qualifies).
+    """
+    if _has_milestone(conn, user_id, MILESTONE_ACCURACY_TOP_FRIEND):
+        return False
+    if _weekly_answered_marks(conn, user_id) < 10:
+        return False
+    board = friend_accuracy_leaderboard(conn, user_id, days=7)
+    scored = [item for item in board if item.get('accuracy_pct') is not None]
+    if len(scored) < 2:
+        return False
+    viewer = next((item for item in board if item.get('is_viewer')), None)
+    if not viewer or viewer.get('rank') != 1:
+        return False
+    return _award_milestone(conn, user_id, MILESTONE_ACCURACY_TOP_FRIEND)
+
+
 def evaluate_milestones(conn, user_id):
     """Award any newly earned milestones; returns list of newly earned keys."""
     streak = get_study_streak(conn, user_id)
@@ -238,11 +298,25 @@ def evaluate_milestones(conn, user_id):
     ).fetchone()['n']
     if question_count >= 25 and _award_milestone(conn, user_id, MILESTONE_QUESTIONS_25):
         earned.append(MILESTONE_QUESTIONS_25)
+    if question_count >= 50 and _award_milestone(conn, user_id, MILESTONE_QUESTIONS_50):
+        earned.append(MILESTONE_QUESTIONS_50)
 
     if streak['longest'] >= 7 and _award_milestone(conn, user_id, MILESTONE_STREAK_7):
         earned.append(MILESTONE_STREAK_7)
     if streak['longest'] >= 30 and _award_milestone(conn, user_id, MILESTONE_STREAK_30):
         earned.append(MILESTONE_STREAK_30)
+
+    qotd_days = conn.execute(
+        'SELECT COUNT(DISTINCT day_key) AS n FROM qotd_attempts WHERE user_id = ?',
+        (user_id,),
+    ).fetchone()['n']
+    if qotd_days >= 1 and _award_milestone(conn, user_id, MILESTONE_QOTD_FIRST):
+        earned.append(MILESTONE_QOTD_FIRST)
+    if qotd_days >= 7 and _award_milestone(conn, user_id, MILESTONE_QOTD_7):
+        earned.append(MILESTONE_QOTD_7)
+
+    if _maybe_award_accuracy_top_friend(conn, user_id):
+        earned.append(MILESTONE_ACCURACY_TOP_FRIEND)
 
     if earned:
         conn.commit()
@@ -267,6 +341,7 @@ def list_user_milestones(conn, user_id):
             'key': key,
             'title': meta.get('title', key),
             'description': meta.get('description', ''),
+            'emoji': meta.get('emoji', '★'),
             'earned_at': row['earned_at'],
         })
     return out

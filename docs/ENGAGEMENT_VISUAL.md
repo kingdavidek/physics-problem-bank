@@ -1,8 +1,8 @@
-# Engagement visual tokens (E2–E3)
+# Engagement visual tokens (E2–E5)
 
-**Last updated:** 2026-08-15  
-**Status:** Light tokens only — not a character bible. **E1–E3 shipped.**
-**Companion:** `docs/AI_HANDOFF.md` §6
+**Last updated:** 2026-08-16  
+**Status:** Light tokens only — not a character bible. **E1–E3 shipped; E5.2 shipped; remaining E5 planned.**
+**Companion:** `docs/AI_HANDOFF.md` §6, `docs/ENGAGEMENT_E5.md`
 
 Avatar v1 emoji/colours below are the live picker list. Buddy v0 uses the 👾 placeholder.
 
@@ -52,6 +52,25 @@ Corner widget (~56px) on logged-in pages:
 - v1: optional SVG sprite in `static/icons/` later
 
 Respects `prefers-reduced-motion` and a **Not now** dismiss (restores next UTC day). Does **not** block Check / generate if JS fails.
+
+Message types today: `celebrate`, `streak_risk`, `weak_topic`, `nudge` (first match wins, one per page load).
+
+## 4b. Buddy v0.5 faces (E5.1) — planned
+
+One emoji per message type, sent by the API as `face` so the widget can change expression. Text emoji only — still no assets.
+
+| Type | Face | Type | Face |
+|------|------|------|------|
+| `milestone` | 🎉 | `streak_risk` | 🔥 |
+| `celebrate` | 😄 | `weak_topic` | 🤔 |
+| `qotd_nudge` | ❓ | `friend_challenge` | 🤝 |
+| `nudge` (fallback) | 👾 | | |
+
+Avatar extras 🎓 / 🎧 / ⭐ become badge-gated in E5.5; locked options stay visible but disabled with an "earn X to unlock" caption. Full spec: `docs/ENGAGEMENT_E5.md`.
+
+## 4c. Badge emoji (E5.2) — shipped
+
+`MILESTONE_CATALOG` entries include an `emoji` field rendered on the profile milestone list (fallback ★). Buddy v0.5 (E5.1) can reuse the same glyph in the "New badge: …" line.
 
 ## 5. Safeguarding (already in E1)
 

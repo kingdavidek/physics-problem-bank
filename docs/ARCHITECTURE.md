@@ -1,6 +1,6 @@
 # Problem Bank — Architecture & Product Overview
 
-**Last updated:** 2026-08-15  
+**Last updated:** 2026-08-16  
 **Repository:** `maths_generator/physics-problem-bank`  
 **Audience:** Developers, AI agents, and technical stakeholders  
 
@@ -189,8 +189,8 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | **Question of the Day** | `models/qotd.py`, `models/bot.py` | One **difficult** MCQ per UTC day + friend leaderboard; `@problem_bot` feed card (E1). Counts for study streak only — not topic / MCQ history. Wrong answers show the worked solution. |
 | **Lesson keyword search** | `models/lesson_search.py` | SQLite FTS5 over `topics_data.py` plus stripped `*_lesson.html` pages (E2) |
 | **Avatars** | `models/avatar.py` | Emoji + colour JSON on `user_profile_settings.avatar_json` (E2) |
-| **Alien buddy** | `models/buddy.py` | Corner widget: celebrate quiz, streak risk, weak topic (E3) |
-| **Streaks & milestones** | `models/gamification.py` | Profile badges |
+| **Alien buddy** | `models/buddy.py` | Corner widget, one message per page load: celebrate quiz, streak risk, weak topic, generic nudge (E3). Dismiss lasts until the next UTC day |
+| **Streaks & milestones** | `models/gamification.py` | UTC study-day streak; ten-badge `MILESTONE_CATALOG` (incl. QOTD and friends-only accuracy) shown on the profile with catalog emoji. Awarded via `evaluate_milestones` on any study activity |
 | **Friend leaderboard** | `models/gamification.py` | Effort points and weekly quiz+MCQ accuracy (friends only) |
 | **Notifications** | `models/notifications.py` | In-app events |
 | **Block / report** | `models/moderation.py` | User safety |
@@ -283,6 +283,8 @@ Returns a dict with at least `question` and `solution`. Graded problems add:
 
 Optional `variants_func(difficulty, mode)` provides named variants (typically 7 per tier) for queue diversity.
 
+`normalize_mode()` (`generators/shared/variant_utils.py`) maps legacy `revision`/`exam`/`practice` onto `standard` and collapses anything unrecognised to `standard`. A planned fourth mode, `real_world`, is specified in `docs/REAL_WORLD_QUESTIONS.md`.
+
 Lesson quizzes (`generators/shared/lesson_quiz.py`): 10 questions — 3 foundational + 4 intermediate + 3 difficult — where MCQ mode is supported.
 
 ---
@@ -327,11 +329,14 @@ Lesson quizzes (`generators/shared/lesson_quiz.py`): 10 questions — 3 foundati
 | `docs/COMPLEX_MECHANISMS.md` | How the three hardest subsystems work (grading, queues, Phase G) |
 | `docs/MOBILE.md` | Mobile polish (M0–M4) + Play Android via TWA (M5–M7) |
 | `docs/SOLID_DRAFT_SECURITY.md` | Solid-draft audit fixes — do not regress |
+| `docs/SECURITY_AND_GDPR.md` | **Planned** — data inventory, compliance gaps, phased S0–S3 plan (S0 blocks public launch) |
 | `docs/API.md` | REST API v1 contract |
 | `docs/DEPLOY.md` | Production deployment checklist |
 | `docs/EMAIL_SETUP.md` | Weekly digest configuration |
 | `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | G8, engagement E4, other future ideas |
 | `docs/ENGAGEMENT_VISUAL.md` | Avatar / buddy visual tokens for E2–E3 |
+| `docs/REAL_WORLD_QUESTIONS.md` | **Planned** — real-world question style (E4.1) implementation plan |
+| `docs/ENGAGEMENT_E5.md` | **Planned** — buddy v0.5, richer badges, QOTD week challenge, streak freeze, avatar unlocks |
 
 ---
 

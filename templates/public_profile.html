@@ -106,13 +106,13 @@
 </section>
 
 {% if milestones and (is_own_profile or settings.show_milestones) %}
-<section class="section-panel">
+<section class="section-panel" id="milestones">
     <div class="section-panel-header">Milestones</div>
     <div class="section-panel-body">
         <ul class="milestone-list">
             {% for item in milestones %}
             <li class="milestone-item">
-                <span class="milestone-badge" aria-hidden="true">★</span>
+                <span class="milestone-badge" aria-hidden="true">{{ item.emoji or '★' }}</span>
                 <div>
                     <strong>{{ item.title }}</strong>
                     <span class="profile-list-meta">{{ item.description }}</span>

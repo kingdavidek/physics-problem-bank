@@ -332,9 +332,20 @@ See prior phases. Pagination: `?limit=&before_id=` on feed and notifications.
 
 `GET /api/v1/me/buddy` (auth) returns `{ type, message, detail, action_url, action_label }`. Types: `celebrate` (quiz today), `streak_risk` (streak would break tomorrow), `weak_topic` (G1), `nudge`. The web widget is non-blocking; dismiss lasts until the next UTC day.
 
-`GET /api/v1/me/gamification` includes `friend_accuracy_leaderboard`: friends-only weekly lesson-quiz + generator-MCQ accuracy (`accuracy_pct`, `earned`/`possible`). `show_accuracy_leaderboard` (settings, default true) hides you from other people’s accuracy boards. Web: `/leaderboard/friends?board=accuracy`. **No global ranking.**
+`GET /api/v1/me/gamification` includes `friend_accuracy_leaderboard`: friends-only weekly lesson-quiz + generator-MCQ accuracy (`accuracy_pct`, `earned`/`possible`). `show_accuracy_leaderboard` (settings, default true) hides you from other people’s accuracy boards. Web: `/leaderboard/friends?board=accuracy`. **No global ranking.** `milestones` items are `{key, title, description, emoji, earned_at}`. Catalog includes QOTD badges (`qotd_first`, `qotd_7`), `questions_50`, and friends-only `accuracy_top_friend` (E5.2 — awarded only at rank 1 with ≥2 scored friends and ≥10 answered questions in the week).
 
 `GET /api/v1/qotd/today` is a **difficult** MCQ. Solution HTML and `correct_answer` are omitted until the user has answered. `POST /api/v1/qotd/today/answer` records the attempt for the friend mini-leaderboard and the study streak only — it does **not** write generator MCQ history or topic activity. After a wrong answer the JSON includes `solution_html` (same idea as the generator “Show Answer” panel).
+
+### Planned additions (not implemented)
+
+Document these here when they ship — specs live in `docs/ENGAGEMENT_E5.md`:
+
+- `GET /api/v1/qotd/week/leaderboard` — 7-day friends-only QOTD board (E5.3)
+- `GET /api/v1/me/buddy` gains `face` plus the `milestone` / `qotd_nudge` / `friend_challenge` types (E5.1)
+- `GET /api/v1/me/gamification` gains `qotd_week_leaderboard` and `study_streak.freeze_available` (E5.3 / E5.4)
+- `POST /api/v1/me/push/subscribe`, `DELETE /api/v1/me/push/subscription` — blocked on production HTTPS (E5.7)
+
+The generator endpoints gain a `real_world` value for `mode` when `docs/REAL_WORLD_QUESTIONS.md` is implemented; the request/response shape is otherwise unchanged from `standard`.
 
 ## Error codes
 
