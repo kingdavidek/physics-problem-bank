@@ -5079,6 +5079,11 @@ def test_equations_number_line_check_api():
         assert r.status_code == 200
         assert r.get_json()['correct'] is True
 
+        parts = str(correct).split('|')
+        assert len(parts) == 5, correct
+        parts[1] = '<' if parts[1] == '<=' else '<='
+        derived_wrong = '|'.join(parts)
+        assert derived_wrong != correct
         wrong = client.post(
             '/api/v1/problems/check',
             json={
@@ -5088,7 +5093,7 @@ def test_equations_number_line_check_api():
                 'difficulty': 'intermediate',
                 'correct_answer_raw': correct,
                 'answer_type': 'number_line',
-                'user_answer': 'x|<=|0|<=|5',
+                'user_answer': derived_wrong,
             },
         )
         assert wrong.status_code == 200
