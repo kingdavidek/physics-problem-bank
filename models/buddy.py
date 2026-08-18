@@ -3,8 +3,10 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
+from generators.shared.lesson_quiz import topic_supports_lesson_mcq
 from models.gamification import get_study_streak
 from models.weak_topics import analyze_weak_topics
+from topic_registry import TOPICS
 
 BUDDY_CELEBRATE = 'celebrate'
 BUDDY_STREAK_RISK = 'streak_risk'
@@ -31,7 +33,136 @@ def _latest_quiz_today(conn, user_id, today_iso):
     ).fetchone()
 
 
-def build_buddy_prompt(conn, user_id, *, now=None, topic_label_fn=None):
+def _mcq_count_today(conn, user_id, today_iso, level, subject, topic):
+    row = conn.execute(
+        '''
+        SELECT COUNT(*) AS n FROM generator_mcq_attempts
+        WHERE user_id = ?
+          AND level = ? AND subject = ? AND topic = ?
+          AND created_at >= ?
+        ''',
+        (user_id, level, subject, topic, f'{today_iso}T00:00:00'),
+    ).fetchone()
+    return int(row['n'] or 0) if row else 0
+
+
+def _same_topic(level, subject, topic, other_level, other_subject, other_topic):
+    if not (level and topic and other_level and other_topic):
+        return False
+    if str(level).lower() != str(other_level).lower():
+        return False
+    if str(topic).lower() != str(other_topic).lower():
+        return False
+    left = str(subject or '').lower()
+    right = str(other_subject or '').lower()
+    if left and right and left != right:
+        return False
+    return True
+
+
+def _quiz_available(level, subject, topic):
+    if level != 'gcse' or subject not in ('maths', 'cs'):
+        return False
+    try:
+        return topic_supports_lesson_mcq(TOPICS[level][subject][topic])
+    except KeyError:
+        return False
+
+
+def _weak_topic_prompt(item, topic_label, *, on_topic, practised_mcq_today):
+    level = item['level']
+    subject = item['subject']
+    topic = item['topic']
+    quiz_ok = _quiz_available(level, subject, topic)
+
+    if not on_topic:
+        return {
+            'type': BUDDY_WEAK_TOPIC,
+            'message': f'{topic_label} looks shaky. A short practice set will help.',
+            'detail': 'Weak topic',
+            'action_kind': 'topic',
+            'level': level,
+            'subject': subject,
+            'topic': topic,
+            'action_label': 'Practise this',
+            'actions': [
+                {
+                    'kind': 'link',
+                    'action_kind': 'topic',
+                    'label': 'Practise this',
+                    'level': level,
+                    'subject': subject,
+                    'topic': topic,
+                },
+            ],
+        }
+
+    if practised_mcq_today:
+        message = (
+            f'Nice — want a quiz on {topic_label} to check it sticks?'
+            if quiz_ok
+            else f'Nice work on {topic_label}. A few more questions will help it stick.'
+        )
+    else:
+        message = (
+            f'Try a few questions on {topic_label}, or take a quiz to check it sticks.'
+            if quiz_ok
+            else f'Try a few practice questions on {topic_label}.'
+        )
+
+    actions = []
+    mcq_action = {
+        'kind': 'link',
+        'action_kind': 'generate_mcq',
+        'label': 'Practise MCQ',
+        'level': level,
+        'subject': subject,
+        'topic': topic,
+    }
+    quiz_action = {
+        'kind': 'link',
+        'action_kind': 'lesson_quiz',
+        'label': 'Take a quiz',
+        'level': level,
+        'subject': subject,
+        'topic': topic,
+    }
+    if practised_mcq_today and quiz_ok:
+        actions.append(quiz_action)
+        actions.append(mcq_action)
+    else:
+        actions.append(mcq_action)
+        if quiz_ok:
+            actions.append(quiz_action)
+    actions.append({
+        'kind': 'stay',
+        'label': f'Keep learning {topic_label}',
+    })
+
+    primary = next((action for action in actions if action.get('kind') == 'link'), actions[0])
+    return {
+        'type': BUDDY_WEAK_TOPIC,
+        'message': message,
+        'detail': 'Weak topic',
+        'action_kind': primary.get('action_kind', 'topic'),
+        'level': level,
+        'subject': subject,
+        'topic': topic,
+        'action_label': primary.get('label', 'Practise this'),
+        'actions': actions,
+    }
+
+
+def build_buddy_prompt(
+    conn,
+    user_id,
+    *,
+    now=None,
+    topic_label_fn=None,
+    current_level=None,
+    current_subject=None,
+    current_topic=None,
+):
     """Pick one short encouragement for the corner widget. Never raises."""
     now = now or _utc_now()
     today = now.date()
@@ -78,16 +209,30 @@ def build_buddy_prompt(conn, user_id, *, now=None, topic_label_fn=None):
     if weak:
         item = weak[0]
         topic_label = label_fn(item['level'], item['subject'], item['topic'])
-        return {
-            'type': BUDDY_WEAK_TOPIC,
-            'message': f'{topic_label} looks shaky. A short practice set will help.',
-            'detail': 'Weak topic',
-            'action_kind': 'topic',
-            'level': item['level'],
-            'subject': item['subject'],
-            'topic': item['topic'],
-            'action_label': 'Practise this',
-        }
+        on_topic = _same_topic(
+            item['level'],
+            item['subject'],
+            item['topic'],
+            current_level,
+            current_subject,
+            current_topic,
+        )
+        practised_mcq = False
+        if on_topic:
+            practised_mcq = _mcq_count_today(
+                conn,
+                user_id,
+                today_iso,
+                item['level'],
+                item['subject'],
+                item['topic'],
+            ) >= 1
+        return _weak_topic_prompt(
+            item,
+            topic_label,
+            on_topic=on_topic,
+            practised_mcq_today=practised_mcq,
+        )
 
     return {
         'type': BUDDY_NUDGE,

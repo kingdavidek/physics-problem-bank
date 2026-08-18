@@ -1,6 +1,6 @@
 # Problem Bank — Engagement Phase E5 (retention polish)
 
-**Last updated:** 2026-08-16
+**Last updated:** 2026-08-17
 **Status:** E5.2 shipped; remaining items planned
 **Audience:** The next AI agent implementing this
 **Predecessor:** E1–E3 shipped 2026-08-15 (see `docs/AI_HANDOFF.md` §6)
@@ -37,8 +37,9 @@ Recommended sequence: **E5.2 (done) → E5.5 → E5.3 → E5.1 → E5.4 → E5.6
 
 - `build_buddy_prompt(conn, user_id, *, now, topic_label_fn)` in `models/buddy.py` — returns one dict, never raises, first match wins.
 - `_serialize_buddy_prompt()` + `GET /api/v1/me/buddy` in `app.py` (~line 4931) — maps `action_kind` (`topic` / `topics` / `qotd`) to a URL.
-- `static/js/buddy.js` — fetches once per page, writes text into `[data-buddy-message]`, honours a per-UTC-day localStorage dismiss.
+- `static/js/buddy.js` — fetches once per page, writes text into `[data-buddy-message]`. Off-page hide uses `pb-buddy-hide-{utcDay}` (a one-time HTML snippet clears the older `pb-buddy-dismissed-*` keys). On-page coach ignores that key and uses `pb-buddy-stay-weak_topic-{topic}-{utcDay}` for **Keep learning**. Page context comes from `data-buddy-*` on the widget (set in `inject_nav`), not only from the URL.
 - Widget markup with the hard-coded face in `templates/base.html` (~line 3840).
+- **On-page weak-topic coach (2026-08-17):** if `GET /api/v1/me/buddy` is called with the current `level`/`subject`/`topic` and that topic is the weak one, the widget offers **Practise MCQ**, **Take a quiz**, and **Keep learning {topic}** instead of repeating “go to this lesson”. After a generator MCQ on that topic today, **Take a quiz** is first.
 
 ### Changes
 

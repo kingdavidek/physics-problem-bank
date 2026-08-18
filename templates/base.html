@@ -3644,8 +3644,7 @@
     </style>
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
-
-    <!-- MathJax configuration loaded first -->
+    <!-- Problem Bank build: buddy-embed-v3 -->
     <script src="{{ url_for('static', filename='js/mathjax-config.js') }}"></script>
     <!-- MathJax CDN (SVG output); SRI pins the published 3.2.2 build -->
     <script
@@ -3659,10 +3658,23 @@
     <script src="{{ url_for('static', filename='js/site.js') }}?v=9" defer></script>
     <script src="{{ url_for('static', filename='js/site-search.js') }}?v=5" defer></script>
     <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=3" defer></script>
-    <script src="{{ url_for('static', filename='js/pwa.js') }}?v=2" defer></script>
+    <script src="{{ url_for('static', filename='js/pwa.js') }}?v=3" defer></script>
     {% if current_user.is_authenticated %}
     <script src="{{ url_for('static', filename='js/notifications.js') }}?v=3" defer></script>
-    <script src="{{ url_for('static', filename='js/buddy.js') }}?v=1" defer></script>
+    <script>
+    try {
+      if (window.localStorage.getItem('pb-buddy-storage') !== 'v2') {
+        var _buddyKeys = [];
+        for (var _i = 0; _i < window.localStorage.length; _i += 1) {
+          var _k = window.localStorage.key(_i);
+          if (_k && _k.indexOf('pb-buddy-dismissed-') === 0) _buddyKeys.push(_k);
+        }
+        _buddyKeys.forEach(function (key) { window.localStorage.removeItem(key); });
+        window.localStorage.setItem('pb-buddy-storage', 'v2');
+      }
+    } catch (e) {}
+    </script>
+    <script src="{{ url_for('static', filename='js/study-buddy.js') }}?v=3" defer></script>
     {% endif %}
     {% if lesson_assist_enabled and lesson_meta and not lesson_meta.get('quizReview') %}
     <script src="{{ url_for('static', filename='js/lesson-assist.js') }}?v=6" defer></script>
@@ -3837,17 +3849,68 @@
 </div>
 
 {% if current_user.is_authenticated %}
-<aside id="study-buddy" class="study-buddy" hidden data-buddy-root>
+<!-- pb-buddy-embed-v3 -->
+{% if buddy_page %}<script type="application/json" id="pb-buddy-page">{{ buddy_page|tojson }}</script>{% endif %}
+{% if buddy_prompt %}<script type="application/json" id="pb-buddy-prompt">{{ buddy_prompt|tojson }}</script>{% endif %}
+<aside id="study-buddy" class="study-buddy" hidden data-buddy-root data-pb-buddy-build="v3"
+       {% if buddy_page %}data-buddy-level="{{ buddy_page.level }}" data-buddy-subject="{{ buddy_page.subject }}" data-buddy-topic="{{ buddy_page.topic }}"{% endif %}>
     <span class="study-buddy-face" aria-hidden="true">👾</span>
     <div class="study-buddy-card">
-        <span class="study-buddy-detail" data-buddy-detail></span>
-        <p class="study-buddy-message" data-buddy-message></p>
-        <div class="study-buddy-actions">
-            <a class="btn btn-primary btn-sm" data-buddy-action href="/topics">Open</a>
-            <button type="button" class="study-buddy-dismiss" data-buddy-dismiss>Not now</button>
+        <span class="study-buddy-detail" data-buddy-detail>{% if buddy_prompt %}{{ buddy_prompt.detail }}{% endif %}</span>
+        <p class="study-buddy-message" data-buddy-message>{% if buddy_prompt %}{{ buddy_prompt.message }}{% endif %}</p>
+        <div class="study-buddy-actions" data-buddy-actions>
+            {% if buddy_prompt and buddy_prompt.actions %}
+                {% set ns = namespace(primary=none, extras=[], stay=none) %}
+                {% for item in buddy_prompt.actions %}
+                    {% if item.kind == 'stay' %}
+                        {% set ns.stay = item %}
+                    {% elif item.url and not ns.primary %}
+                        {% set ns.primary = item %}
+                    {% elif item.url %}
+                        {% set _ = ns.extras.append(item) %}
+                    {% endif %}
+                {% endfor %}
+                <a class="btn btn-primary btn-sm" data-buddy-action href="{{ (ns.primary.url if ns.primary else buddy_prompt.action_url) or '/topics' }}">{{ (ns.primary.label if ns.primary else buddy_prompt.action_label) or 'Open' }}</a>
+                {% for item in ns.extras %}
+                <a class="btn btn-outline btn-sm" data-buddy-extra href="{{ item.url }}">{{ item.label }}</a>
+                {% endfor %}
+                <button type="button" class="study-buddy-dismiss" data-buddy-dismiss data-buddy-stay="{{ '1' if ns.stay else '0' }}">{{ ns.stay.label if ns.stay else 'Not now' }}</button>
+            {% else %}
+                <a class="btn btn-primary btn-sm" data-buddy-action href="/topics">Open</a>
+                <button type="button" class="study-buddy-dismiss" data-buddy-dismiss>Not now</button>
+            {% endif %}
         </div>
     </div>
 </aside>
+{% if buddy_prompt %}
+<script>
+(function () {
+  var root = document.querySelector('[data-buddy-root]');
+  var promptEl = document.getElementById('pb-buddy-prompt');
+  if (!root || !promptEl) return;
+  try {
+    var prompt = JSON.parse(promptEl.textContent || 'null');
+    if (!prompt || !prompt.message) return;
+    var day = new Date().toISOString().slice(0, 10);
+    var hasStay = (prompt.actions || []).some(function (item) {
+      return item && item.kind === 'stay';
+    });
+    if (hasStay && prompt.topic) {
+      if (window.localStorage.getItem('pb-buddy-stay-weak_topic-' + prompt.topic + '-' + day) === '1') {
+        return;
+      }
+    } else if (window.localStorage.getItem('pb-buddy-hide-' + day) === '1') {
+      return;
+    }
+    root.removeAttribute('hidden');
+    root.setAttribute('data-buddy-server', '1');
+    if (prompt.topic) {
+      root.setAttribute('data-buddy-topic', prompt.topic);
+    }
+  } catch (err) {}
+})();
+</script>
+{% endif %}
 {% endif %}
 
 </body>

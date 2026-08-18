@@ -2,6 +2,7 @@ import os
 import secrets
 from datetime import date, timedelta
 import urllib.error
+from urllib.parse import parse_qs, urlparse
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parent
@@ -590,10 +591,54 @@ def inject_nav():
 
     assist_on = lesson_assist_enabled() and lesson_meta is not None
     lesson_progress_on = assist_on and not (lesson_meta or {}).get('quizReview')
+    buddy_page = None
+    from_path = _buddy_page_from_location(
+        request.path,
+        request.query_string.decode() if request.query_string else '',
+    )
+    if from_path:
+        buddy_page = {
+            'level': from_path[0],
+            'subject': from_path[1],
+            'topic': from_path[2],
+        }
+    else:
+        resolved_page = _resolve_buddy_path(
+            view_args.get('level'),
+            view_args.get('subject'),
+            view_args.get('topic'),
+        )
+        if not resolved_page and request.endpoint == 'index':
+            resolved_page = _resolve_buddy_path(
+                request.args.get('level'),
+                request.args.get('subject'),
+                request.args.get('topic'),
+            )
+        if resolved_page:
+            buddy_page = {
+                'level': resolved_page[0],
+                'subject': resolved_page[1],
+                'topic': resolved_page[2],
+            }
     unread_notifications = 0
+    buddy_prompt = None
     if current_user.is_authenticated:
         with get_db() as conn:
             unread_notifications = count_unread_notifications(conn, current_user.id)
+            page_level = page_subject = page_topic = None
+            if buddy_page:
+                page_level = buddy_page['level']
+                page_subject = buddy_page['subject']
+                page_topic = buddy_page['topic']
+            raw_prompt = build_buddy_prompt(
+                conn,
+                current_user.id,
+                topic_label_fn=_topic_label,
+                current_level=page_level,
+                current_subject=page_subject,
+                current_topic=page_topic,
+            )
+            buddy_prompt = _serialize_buddy_prompt(raw_prompt)
     return {
         'nav_endpoint': request.endpoint,
         'lesson_meta': lesson_meta,
@@ -601,6 +646,8 @@ def inject_nav():
         'lesson_progress_enabled': lesson_progress_on,
         'csrf_token': _csrf_token,
         'unread_notifications': unread_notifications,
+        'buddy_page': buddy_page,
+        'buddy_prompt': buddy_prompt,
     }
 
 
@@ -3004,8 +3051,75 @@ def _topic_path_valid(level, subject, topic):
     try:
         TOPICS[level][subject][topic]
         return True
-    except KeyError:
+    except (KeyError, TypeError):
         return False
+
+
+def _resolve_buddy_path(level, subject, topic):
+    """Return canonical (level, subject, topic) or None. Infers subject if omitted."""
+    level = (level or '').strip()
+    subject = (subject or '').strip()
+    topic = (topic or '').strip()
+    if not level or not topic:
+        return None
+    level_key = next((lv for lv in TOPICS if str(lv).lower() == level.lower()), None)
+    if level_key is None:
+        return None
+    matches = []
+    for sub, topics in (TOPICS.get(level_key) or {}).items():
+        if not isinstance(topics, dict):
+            continue
+        slug = next((key for key in topics if str(key).lower() == topic.lower()), None)
+        if slug is None:
+            continue
+        if subject and str(sub).lower() != subject.lower():
+            continue
+        matches.append((level_key, sub, slug))
+    if matches:
+        return matches[0]
+    if subject:
+        return _resolve_buddy_path(level, '', topic)
+    return None
+
+
+def _buddy_page_from_location(path, query=''):
+    path = (path or '').strip() or '/'
+    query = (query or '').lstrip('?')
+    parts = [item for item in path.split('/') if item]
+    if len(parts) >= 4 and parts[0] in ('topic', 'lesson-quiz'):
+        return _resolve_buddy_path(parts[1], parts[2], parts[3])
+    parsed_q = parse_qs(query, keep_blank_values=True)
+    topic = (parsed_q.get('topic') or [''])[0]
+    if topic and (not parts or path in ('/', '')):
+        return _resolve_buddy_path(
+            (parsed_q.get('level') or ['gcse'])[0],
+            (parsed_q.get('subject') or [''])[0],
+            topic,
+        )
+    return None
+
+
+def _buddy_page_from_request():
+    resolved = _resolve_buddy_path(
+        request.args.get('level'),
+        request.args.get('subject'),
+        request.args.get('topic'),
+    )
+    if resolved:
+        return resolved
+    header = (request.headers.get('X-PB-Buddy-Path') or '').strip()
+    if header:
+        path, _, query = header.partition('?')
+        resolved = _buddy_page_from_location(path, query)
+        if resolved:
+            return resolved
+    ref = request.referrer or request.headers.get('Referer') or ''
+    if ref:
+        parsed = urlparse(ref)
+        resolved = _buddy_page_from_location(parsed.path, parsed.query)
+        if resolved:
+            return resolved
+    return None
 
 
 def _lesson_render_spec(level, subject, topic):
@@ -3703,6 +3817,11 @@ def sandbox_plan_a_checkpoints():
 @app.route('/about')
 def about():
     return render_template('about.html')
+
+
+@app.get('/api/v1/build-info')
+def api_v1_build_info():
+    return jsonify({'ok': True, 'buddy_embed': 'v3', 'study_buddy_js': 'v3'})
 
 
 @app.get('/offline')
@@ -4928,39 +5047,91 @@ def api_v1_feed():
     })
 
 
+def _buddy_action_url(item, prompt):
+    kind = item.get('action_kind') or prompt.get('action_kind')
+    level = item.get('level') or prompt.get('level')
+    subject = item.get('subject') or prompt.get('subject')
+    topic = item.get('topic') or prompt.get('topic')
+    if kind == 'qotd':
+        return url_for('qotd_page')
+    if kind == 'topics':
+        return url_for('topics_index')
+    if kind == 'generate_mcq' and level and topic:
+        return url_for(
+            'index',
+            level=level,
+            subject=subject,
+            topic=topic,
+            mode='mcq',
+        )
+    if kind == 'lesson_quiz' and level and topic:
+        if not _lesson_quiz_available(level, subject, topic):
+            return None
+        return url_for('lesson_mcq_quiz', level=level, subject=subject, topic=topic)
+    if kind == 'topic' and level and topic:
+        return url_for('topic_page', level=level, subject=subject, topic=topic)
+    return url_for('topics_index')
+
+
 def _serialize_buddy_prompt(prompt):
     if not prompt:
         return None
-    kind = prompt.get('action_kind')
-    url = url_for('topics_index')
-    if kind == 'qotd':
-        url = url_for('qotd_page')
-    elif kind == 'topic' and prompt.get('level') and prompt.get('topic'):
-        url = url_for(
-            'topic_page',
-            level=prompt['level'],
-            subject=prompt.get('subject'),
-            topic=prompt['topic'],
-        )
+    raw_actions = prompt.get('actions')
+    if not raw_actions:
+        raw_actions = [{
+            'kind': 'link',
+            'action_kind': prompt.get('action_kind'),
+            'label': prompt.get('action_label') or 'Open',
+            'level': prompt.get('level'),
+            'subject': prompt.get('subject'),
+            'topic': prompt.get('topic'),
+        }]
+    actions = []
+    for item in raw_actions:
+        kind = item.get('kind') or 'link'
+        label = item.get('label') or 'Open'
+        if kind == 'stay':
+            actions.append({'kind': 'stay', 'label': label})
+            continue
+        url = _buddy_action_url(item, prompt)
+        if not url:
+            continue
+        actions.append({
+            'kind': 'link',
+            'label': label,
+            'url': url,
+        })
+    first_link = next((item for item in actions if item.get('url')), None)
+    fallback_url = _buddy_action_url(prompt, prompt) or url_for('topics_index')
     return {
         'type': prompt.get('type'),
         'message': prompt.get('message'),
         'detail': prompt.get('detail'),
-        'action_url': url,
-        'action_label': prompt.get('action_label') or 'Open',
+        'action_url': (first_link or {}).get('url') or fallback_url,
+        'action_label': (first_link or {}).get('label') or prompt.get('action_label') or 'Open',
+        'actions': actions,
+        'topic': prompt.get('topic'),
     }
 
 
 @app.get('/api/v1/me/buddy')
 @login_required
 def api_v1_me_buddy():
+    page = _buddy_page_from_request()
+    current_level = current_subject = current_topic = None
+    if page:
+        current_level, current_subject, current_topic = page
     with get_db() as conn:
         prompt = build_buddy_prompt(
             conn,
             current_user.id,
             topic_label_fn=_topic_label,
+            current_level=current_level,
+            current_subject=current_subject,
+            current_topic=current_topic,
         )
-    return jsonify({'ok': True, 'buddy': _serialize_buddy_prompt(prompt)})
+    serialized = _serialize_buddy_prompt(prompt)
+    return jsonify({'ok': True, 'buddy': serialized})
 
 
 @app.get('/leaderboard/friends')
@@ -8005,4 +8176,5 @@ if __name__ == "__main__":
     debug = os.environ.get("FLASK_DEBUG", "0").strip() in ("1", "true", "True")
     host = os.environ.get("FLASK_RUN_HOST", "127.0.0.1").strip() or "127.0.0.1"
     port = int(os.environ.get("FLASK_RUN_PORT", "5001"))
+    print(f"Problem Bank running at http://127.0.0.1:{port}  (buddy embed v3 — use this URL, not :5000)")
     app.run(debug=debug, host=host, port=port)

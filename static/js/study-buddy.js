@@ -1,4 +1,3 @@
-/* Legacy URL — service worker may still serve this path from cache. Keep in sync with study-buddy.js. */
 (function () {
   'use strict';
 
@@ -157,7 +156,7 @@
     root.hidden = false;
   }
 
-  function maybeShow(prompt) {
+  function maybeShow(prompt, source) {
     if (!prompt || !prompt.message) return false;
     if (prompt.topic) {
       root.setAttribute('data-buddy-topic', prompt.topic);
@@ -195,7 +194,7 @@
   }
 
   var embedded = readEmbeddedPrompt();
-  if (embedded && maybeShow(embedded)) {
+  if (embedded && maybeShow(embedded, 'embedded')) {
     root.setAttribute('data-buddy-server', '1');
     return;
   }
@@ -223,7 +222,7 @@
     })
     .then(function (data) {
       if (!(data && data.ok && data.buddy)) return;
-      maybeShow(data.buddy);
+      maybeShow(data.buddy, 'fetch');
     })
     .catch(function () {});
 })();

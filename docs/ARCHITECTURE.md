@@ -1,6 +1,6 @@
 # Problem Bank — Architecture & Product Overview
 
-**Last updated:** 2026-08-16  
+**Last updated:** 2026-08-17  
 **Repository:** `maths_generator/physics-problem-bank`  
 **Audience:** Developers, AI agents, and technical stakeholders  
 
@@ -189,7 +189,7 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | **Question of the Day** | `models/qotd.py`, `models/bot.py` | One **difficult** MCQ per UTC day + friend leaderboard; `@problem_bot` feed card (E1). Counts for study streak only — not topic / MCQ history. Wrong answers show the worked solution. |
 | **Lesson keyword search** | `models/lesson_search.py` | SQLite FTS5 over `topics_data.py` plus stripped `*_lesson.html` pages (E2) |
 | **Avatars** | `models/avatar.py` | Emoji + colour JSON on `user_profile_settings.avatar_json` (E2) |
-| **Alien buddy** | `models/buddy.py` | Corner widget, one message per page load: celebrate quiz, streak risk, weak topic, generic nudge (E3). Dismiss lasts until the next UTC day |
+| **Alien buddy** | `models/buddy.py` | Corner widget, one message per page load: celebrate quiz, streak risk, weak topic, generic nudge (E3). On a weak topic’s own lesson page: Practise MCQ / Take a quiz / Keep learning {topic}. **Not now** (off-page) lasts until the next UTC day; **Keep learning** only hides that topic’s on-page card for the day |
 | **Streaks & milestones** | `models/gamification.py` | UTC study-day streak; ten-badge `MILESTONE_CATALOG` (incl. QOTD and friends-only accuracy) shown on the profile with catalog emoji. Awarded via `evaluate_milestones` on any study activity |
 | **Friend leaderboard** | `models/gamification.py` | Effort points and weekly quiz+MCQ accuracy (friends only) |
 | **Notifications** | `models/notifications.py` | In-app events |

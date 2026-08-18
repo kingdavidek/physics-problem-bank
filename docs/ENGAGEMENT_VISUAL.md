@@ -51,7 +51,7 @@ Corner widget (~56px) on logged-in pages:
 - v0: emoji 👾 in a `--primary` circle (`static/js/buddy.js`)
 - v1: optional SVG sprite in `static/icons/` later
 
-Respects `prefers-reduced-motion` and a **Not now** dismiss (restores next UTC day). Does **not** block Check / generate if JS fails.
+Respects `prefers-reduced-motion`. Off-page **Not now** restores next UTC day; on a weak topic’s lesson page **Keep learning** hides only that card for the day. Does **not** block Check / generate if JS fails.
 
 Message types today: `celebrate`, `streak_risk`, `weak_topic`, `nudge` (first match wins, one per page load).
 

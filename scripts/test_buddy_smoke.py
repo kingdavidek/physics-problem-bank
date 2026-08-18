@@ -88,10 +88,15 @@ def main():
         email_a = f'e3a_{suffix}@example.com'
         email_b = f'e3b_{suffix}@example.com'
 
+        r = client.get('/api/v1/build-info')
+        assert r.status_code == 200
+        assert r.get_json()['buddy_embed'] == 'v3'
+
         r = client.get('/')
         assert r.status_code == 200
         assert b'data-buddy-root' not in r.data
         assert b'buddy.js' not in r.data
+        assert b'study-buddy.js' not in r.data
 
         r = client.get('/api/v1/me/buddy')
         assert r.status_code in (401, 403)
@@ -103,7 +108,7 @@ def main():
         assert r.status_code == 200
         html = r.data.decode()
         assert 'study-buddy' in html
-        assert 'buddy.js' in html
+        assert 'study-buddy.js' in html
         assert '👾' in html
 
         r = client.get('/api/v1/me/buddy')
@@ -152,6 +157,85 @@ def main():
         r = client.get('/api/v1/me/buddy')
         assert r.get_json()['buddy']['type'] == BUDDY_WEAK_TOPIC
         assert r.get_json()['buddy']['action_url']
+        off_page = r.get_json()['buddy']
+        assert off_page['action_label'] == 'Practise this'
+        assert '/topic/' in off_page['action_url']
+        stay_off = [item for item in off_page.get('actions') or [] if item.get('kind') == 'stay']
+        assert stay_off == []
+
+        r = client.get('/api/v1/me/buddy?level=gcse&subject=maths&topic=algebra')
+        on_page = r.get_json()['buddy']
+        assert on_page['type'] == BUDDY_WEAK_TOPIC
+        labels = [item['label'] for item in on_page['actions']]
+        assert 'Practise MCQ' in labels
+        assert 'Take a quiz' in labels
+        assert any(item.get('kind') == 'stay' and 'Keep learning' in item.get('label', '') for item in on_page['actions'])
+        assert 'algebra' in on_page['actions'][0]['url'] or 'mode=mcq' in on_page['actions'][0]['url']
+        assert on_page['actions'][0]['label'] == 'Practise MCQ'
+        assert 'mode=mcq' in on_page['action_url']
+        assert '/lesson-quiz/' in next(item['url'] for item in on_page['actions'] if item['label'] == 'Take a quiz')
+        assert 'Keep learning' in on_page['actions'][-1]['label']
+
+        now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        with get_db() as conn:
+            conn.execute(
+                '''
+                INSERT INTO generator_mcq_attempts (
+                    user_id, level, subject, topic, mode, difficulty,
+                    user_answer, correct_answer, correct, created_at
+                ) VALUES (?, 'gcse', 'maths', 'algebra', 'mcq', 'foundational', 'A', 'B', 0, ?)
+                ''',
+                (uid_a, now),
+            )
+            conn.commit()
+        r = client.get('/api/v1/me/buddy?level=gcse&subject=maths&topic=algebra')
+        after_mcq = r.get_json()['buddy']
+        assert after_mcq['actions'][0]['label'] == 'Take a quiz'
+        assert 'quiz' in after_mcq['message'].lower()
+
+        r = client.get('/topic/gcse/maths/algebra')
+        assert r.status_code == 200
+        assert b'data-buddy-actions' in r.data
+        assert b'study-buddy.js' in r.data
+        html_lesson = r.data.decode()
+        assert 'data-buddy-level="gcse"' in html_lesson
+        assert 'data-buddy-subject="maths"' in html_lesson
+        assert 'data-buddy-topic="algebra"' in html_lesson
+        assert 'study-buddy.js?v=3' in html_lesson
+        assert 'Problem Bank build: buddy-embed-v3' in html_lesson
+        assert 'pb-buddy-embed-v3' in html_lesson
+        assert 'id="pb-buddy-page"' in html_lesson
+        assert 'id="pb-buddy-prompt"' in html_lesson
+        assert 'Practise MCQ' in html_lesson
+        assert 'Keep learning' in html_lesson
+        assert '"topic": "algebra"' in html_lesson or '"topic":"algebra"' in html_lesson
+
+        r = client.get('/topic/gcse/maths/functions')
+        assert r.status_code == 200
+        html_fn = r.data.decode()
+        assert 'data-buddy-topic="functions"' in html_fn
+        assert 'id="pb-buddy-prompt"' in html_fn
+
+        r = client.get(
+            '/api/v1/me/buddy',
+            headers={'Referer': 'http://localhost/topic/gcse/maths/algebra'},
+        )
+        via_ref = r.get_json()['buddy']
+        assert via_ref['type'] == BUDDY_WEAK_TOPIC
+        assert any(item.get('kind') == 'stay' for item in via_ref['actions'])
+        assert 'Practise this' not in [item.get('label') for item in via_ref['actions']]
+
+        r = client.get('/api/v1/me/buddy?level=gcse&topic=algebra')
+        via_infer = r.get_json()['buddy']
+        assert any(item.get('kind') == 'stay' for item in via_infer['actions'])
+
+        r = client.get(
+            '/api/v1/me/buddy',
+            headers={'X-PB-Buddy-Path': '/topic/gcse/maths/algebra'},
+        )
+        via_header = r.get_json()['buddy']
+        assert any(item.get('kind') == 'stay' for item in via_header['actions'])
+        assert 'pb-buddy-storage' in html_lesson
 
         logout(client)
         register(client, email_b, handle_b)
@@ -159,6 +243,10 @@ def main():
         with get_db() as conn:
             follow_user(conn, uid_b, uid_a)
             conn.execute('DELETE FROM quiz_attempts WHERE user_id IN (?, ?)', (uid_a, uid_b))
+            conn.execute(
+                'DELETE FROM generator_mcq_attempts WHERE user_id IN (?, ?)',
+                (uid_a, uid_b),
+            )
             conn.commit()
 
         insert_quiz(uid_b, 9, 10)

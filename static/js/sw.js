@@ -1,5 +1,5 @@
 /* Problem Bank service worker — cache static assets; network-first for pages/API. */
-const CACHE_VERSION = 'pb-v16';
+const CACHE_VERSION = 'pb-v24';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline';
 
@@ -34,6 +34,10 @@ function isStaticAsset(url) {
   return url.pathname.startsWith('/static/');
 }
 
+function isJsAsset(url) {
+  return isStaticAsset(url) && url.pathname.endsWith('.js');
+}
+
 self.addEventListener('fetch', (event) => {
   const request = event.request;
   if (request.method !== 'GET') return;
@@ -54,7 +58,23 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets: cache-first
+  // JS: network-first so ?v= cache-busts are not stuck behind an old service worker entry
+  if (isJsAsset(url)) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response && response.ok) {
+            const clone = response.clone();
+            caches.open(STATIC_CACHE).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // Other static assets: cache-first
   if (isStaticAsset(url)) {
     event.respondWith(
       caches.match(request).then((cached) => {

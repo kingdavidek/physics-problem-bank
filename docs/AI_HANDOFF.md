@@ -1,6 +1,6 @@
 # Problem Bank — AI agent handoff
 
-**Last updated:** 2026-08-16  
+**Last updated:** 2026-08-17  
 **Repository:** `maths_generator/physics-problem-bank` (GitHub: `kingdavidek/physics-problem-bank`)  
 **Audience:** The next AI agent (or human) continuing product work  
 
@@ -100,7 +100,7 @@ WSGI / production entry: `from app import app as application` (see `docs/DEPLOY.
 | Grading | `generators/shared/answer_checkers.py`, `sql_checker.py` |
 | Lesson AI assist | `generators/shared/lesson_assist.py`, `static/js/lesson-assist.js` |
 | System bot / daily QOTD card | `models/bot.py`, feed template + `/api/v1/feed` `qotd_challenge` |
-| Alien buddy | `models/buddy.py`, `static/js/buddy.js`, `GET /api/v1/me/buddy` |
+| Alien buddy | `models/buddy.py`, `static/js/buddy.js`, `GET /api/v1/me/buddy` (optional current topic → Practise MCQ / Take a quiz / Keep learning) |
 | Generators | `generators/gcse/`, `alevel/`, `myp/` |
 | Phase G / social / streaks / QOTD | `models/*.py` (`qotd.py`, `social.py`, `gamification.py`, `weak_topics.py`, …) |
 | Site search | `app.py` (`_unified_search`, `/api/v1/search`), `models/lesson_search.py` (FTS5 over metadata + lesson HTML), `static/js/site-search.js` |

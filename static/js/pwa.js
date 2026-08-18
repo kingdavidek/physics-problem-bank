@@ -33,6 +33,21 @@
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
       navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function () {});
+      if (storageGet('pb_buddy_sw_migrate') !== 'v3') {
+        if ('caches' in window) {
+          caches.keys().then(function (keys) {
+            keys.forEach(function (key) {
+              caches.delete(key);
+            });
+          });
+        }
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+          regs.forEach(function (reg) {
+            reg.update();
+          });
+        });
+        storageSet('pb_buddy_sw_migrate', 'v3');
+      }
     });
   }
 
