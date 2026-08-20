@@ -6,6 +6,8 @@
 
 This document records **what was wrong**, **what we changed**, and **what the next agent must preserve**. It complements `docs/ARCHITECTURE.md` (system overview) and `docs/AI_HANDOFF.md` (reading order / next steps).
 
+**Forward-looking companion:** `docs/SECURITY_AND_GDPR.md` covers what is still missing — data subject rights, retention, transparency, the remaining header and CSP work, and the compliance obligations that attach once real users exist. This file is the record of what was fixed; that one is the plan for what comes next.
+
 ---
 
 ## 1. Why this existed

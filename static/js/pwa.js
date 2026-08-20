@@ -33,7 +33,7 @@
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function () {
       navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function () {});
-      if (storageGet('pb_buddy_sw_migrate') !== 'v3') {
+      if (storageGet('pb_buddy_sw_migrate') !== 'v4') {
         if ('caches' in window) {
           caches.keys().then(function (keys) {
             keys.forEach(function (key) {
@@ -46,7 +46,7 @@
             reg.update();
           });
         });
-        storageSet('pb_buddy_sw_migrate', 'v3');
+        storageSet('pb_buddy_sw_migrate', 'v4');
       }
     });
   }

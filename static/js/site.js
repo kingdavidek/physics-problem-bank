@@ -727,6 +727,15 @@
               offerWrongAnswerReflectionMcq(block, result.attempt_id, recordThisAttempt);
             }
             showCohortHint(block, result.cohort);
+            if (block.dataset.level && block.dataset.topic) {
+              document.dispatchEvent(new CustomEvent('pb-buddy-refetch', {
+                detail: {
+                  level: block.dataset.level,
+                  subject: block.dataset.subject || '',
+                  topic: block.dataset.topic,
+                },
+              }));
+            }
           });
         }
       });

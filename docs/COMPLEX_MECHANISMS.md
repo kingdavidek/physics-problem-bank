@@ -1,6 +1,6 @@
 # Problem Bank — Three complex mechanisms
 
-**Last updated:** 2026-08-04  
+**Last updated:** 2026-08-15  
 **Audience:** Developers and AI agents who already know the product overview  
 **Companion docs:** `docs/ARCHITECTURE.md` (system map), `docs/AI_HANDOFF.md` (start here), `docs/SOLID_DRAFT_SECURITY.md` (trust boundaries)
 
@@ -197,6 +197,8 @@ make_problem(…) normalises dict
 ## Mental model
 
 Think of the registry as a **catalogue of factories**. Flask is the **dispatcher + queue cursor**. Generators are **pure content factories**. Templates/JS are **renderers** of the resulting dict. Grading (Mechanism 1) is a separate concern that only needs the grading keys left on the dict and in session.
+
+**Mode:** every entry point passes the requested mode through `normalize_mode()` before touching a queue or a generator. It recognises `standard` (with legacy `revision`/`exam`/`practice` aliases), `mcq`, and `lesson`; **anything else silently becomes `standard`**. Adding a mode means changing that function first — see `docs/REAL_WORLD_QUESTIONS.md` for the planned `real_world` style.
 
 ## Key files
 

@@ -1,6 +1,6 @@
 # Problem Bank — Mobile polish plan (app-like PWA)
 
-**Last updated:** 2026-08-14  
+**Last updated:** 2026-08-15  
 **Status:** **Done (M0–M4).** M5–M7 gated on a stable production HTTPS URL.  
 **Audience:** Next AI agent / developers  
 **Companion:** `docs/AI_HANDOFF.md`, `docs/ARCHITECTURE.md`, `docs/DEPLOY.md`
@@ -204,6 +204,7 @@ flowchart LR
 
 | Step | Task | Notes |
 |------|------|--------|
+| M5.0 | **Compliance gate** — complete Phase S0 of `docs/SECURITY_AND_GDPR.md` before the URL is open to pupils | Privacy notice, deletion, export, high-privacy defaults, retention |
 | M5.1 | Deploy Flask app to production host (e.g. PythonAnywhere or equivalent) | See `docs/DEPLOY.md` |
 | M5.2 | Force **HTTPS**; set `SITE_URL=https://your-domain` | Enables Secure session cookies |
 | M5.3 | Set strong `SECRET_KEY`; never `PB_TESTING` / `PB_ALLOW_DEV_SECRET` in prod | Solid-draft invariants |
@@ -261,7 +262,7 @@ flowchart LR
 | Topic | Guidance |
 |-------|----------|
 | **Apple App Store** | Separate project (often Capacitor + Apple Developer Program + stricter review). Do not block Android TWA on iOS. |
-| **Push notifications** | Not free with TWA; needs Web Push + service worker and/or FCM — see future-functionality “Push notifications.” |
+| **Push notifications** | Not free with TWA; needs Web Push + service worker and/or FCM. Specified as **E5.7 in `docs/ENGAGEMENT_E5.md`** and blocked on M5 — the Push API requires a secure origin, so do not start it before production HTTPS. |
 | **True offline** | Problem Bank is server/SQLite-backed; TWA will not magically offline-grade. Keep expectations honest in the store description. |
 | **Domain change** | Re-issue Asset Links and often a new Play release; avoid renaming production origin after M6. |
 

@@ -1,7 +1,7 @@
 # Problem Bank — Engagement Phase E5 (retention polish)
 
-**Last updated:** 2026-08-17
-**Status:** E5.2 shipped; remaining items planned
+**Last updated:** 2026-08-20
+**Status:** E5.1–E5.2 shipped; E5.3–E5.7 planned
 **Audience:** The next AI agent implementing this
 **Predecessor:** E1–E3 shipped 2026-08-15 (see `docs/AI_HANDOFF.md` §6)
 
@@ -13,7 +13,7 @@ E5 is deliberately small. Every item extends something that already exists — t
 
 | # | Item | Size | Schema change | Depends on | Status |
 |---|---|---|---|---|---|
-| **E5.1** | Buddy v0.5 — more message types and faces | S | none | — | Planned |
+| **E5.1** | Buddy v0.5 — more message types and faces | S | none | — | **Shipped 2026-08-20** |
 | **E5.2** | Richer badges — 4 new milestones | S | none | — | **Shipped 2026-08-16** |
 | **E5.3** | QOTD week challenge — 7-day friend board | M | none | — | Planned |
 | **E5.4** | Streak freeze — one skip per week | M | `user_streaks` + 1 table | — | Planned |
@@ -21,7 +21,7 @@ E5 is deliberately small. Every item extends something that already exists — t
 | **E5.6** | Revision planner subject dropdown (polish) | XS | none | — | Planned |
 | **E5.7** | Web push | L | new table | production HTTPS (M5) | Planned (blocked) |
 
-Recommended sequence: **E5.2 (done) → E5.5 → E5.3 → E5.1 → E5.4 → E5.6**, then E5.7 only once a real HTTPS origin exists. Badges first because the buddy and the avatar unlocks both want to talk about them.
+Recommended sequence: **E5.2 (done) → E5.1 (done) → E5.5 → E5.3 → E5.4 → E5.6**, then E5.7 only once a real HTTPS origin exists. Badges first because the buddy and the avatar unlocks both want to talk about them.
 
 **Safeguarding invariants (unchanged from E3):** friends/follows scope only, no global public ranking, every social surface respects the profile opt-out settings.
 
@@ -37,9 +37,9 @@ Recommended sequence: **E5.2 (done) → E5.5 → E5.3 → E5.1 → E5.4 → E5.6
 
 - `build_buddy_prompt(conn, user_id, *, now, topic_label_fn)` in `models/buddy.py` — returns one dict, never raises, first match wins.
 - `_serialize_buddy_prompt()` + `GET /api/v1/me/buddy` in `app.py` (~line 4931) — maps `action_kind` (`topic` / `topics` / `qotd`) to a URL.
-- `static/js/buddy.js` — fetches once per page, writes text into `[data-buddy-message]`. Off-page hide uses `pb-buddy-hide-{utcDay}` (a one-time HTML snippet clears the older `pb-buddy-dismissed-*` keys). On-page coach ignores that key and uses `pb-buddy-stay-weak_topic-{topic}-{utcDay}` for **Keep learning**. Page context comes from `data-buddy-*` on the widget (set in `inject_nav`), not only from the URL.
-- Widget markup with the hard-coded face in `templates/base.html` (~line 3840).
-- **On-page weak-topic coach (2026-08-17):** if `GET /api/v1/me/buddy` is called with the current `level`/`subject`/`topic` and that topic is the weak one, the widget offers **Practise MCQ**, **Take a quiz**, and **Keep learning {topic}** instead of repeating “go to this lesson”. After a generator MCQ on that topic today, **Take a quiz** is first.
+- `static/js/study-buddy.js` (canonical; `static/js/buddy.js` legacy cache shim) — listens for `pb-buddy-refetch`, refetches `/api/v1/me/buddy`. Off-page hide: `pb-buddy-hide-{utcDay}`. On-page: `pb-buddy-stay-weak_topic-{topic}-{utcDay}` for **Keep learning**. Milestone: `pb-buddy-milestone-{key}` set by **Not now** or **View badges**.
+- Widget markup in `templates/base.html` (~line 3850): server-rendered prompt, `data-buddy-face`, `data-buddy-milestone-key`, inline show script, `#pb-buddy-prompt` JSON.
+- **On-page weak-topic coach (2026-08-17):** if `GET /api/v1/me/buddy` is called with the current `level`/`subject`/`topic` and that topic is the weak one, the widget offers **Practise MCQ**, **Take a quiz**, and **Keep learning {topic}** instead of repeating “go to this lesson”. After a generator MCQ on that topic today, **Take a quiz** is first. `site.js` dispatches `pb-buddy-refetch` after each persisted MCQ answer; `study-buddy.js` refetches the API and updates the card in place (respecting dismiss / **Keep learning** localStorage).
 
 ### Changes
 
@@ -69,7 +69,7 @@ BUDDY_FACES = {
 
 Add `'face'` to the dict returned by `build_buddy_prompt` and to `_serialize_buddy_prompt`. In `base.html`, give the face span `data-buddy-face`; in `buddy.js`, set its `textContent` from the payload (default 👾 if absent). Keep the emoji as text — no new assets.
 
-**Milestone de-duplication:** the buddy must not repeat the same badge every page load. Store the shown key in localStorage (`pb-buddy-milestone-<key>`) client-side and, server-side, only consider milestones with `earned_at` within 24 h. Do not add a table for this.
+**Milestone de-duplication:** the buddy must not repeat the same badge every page load. Store the shown key in localStorage (`pb-buddy-milestone-<key>`) when the user clicks **Not now** or **View badges** (primary action). Server-side, only consider milestones with `earned_at` within 24 h. Set `data-buddy-milestone-key` on the widget in HTML so dismiss handlers work on server-rendered pages. Do not add a table for this.
 
 **Action kinds:** `_serialize_buddy_prompt` gains `milestone` → `url_for('profile') + '#milestones'` and `challenge` → the friend's public profile.
 
@@ -274,8 +274,8 @@ When M5 lands, the shape is:
 
 ## Definition of done (per item)
 
+- [x] E5.1 buddy v0.5 (all message types incl. `friend_challenge`, faces, on-page coach, MCQ refetch, milestone dismiss; `scripts/test_buddy_smoke.py`)
 - [x] E5.2 richer badges (four new keys, catalog emoji, `scripts/test_milestones_smoke.py`)
-- [ ] Remaining items: behaviour matches the rules above, including the edge cases named in the tests section
 - [ ] Smoke test added and registered in `scripts/run_smoke_tests.py`
 - [ ] Full suite green with `PB_TESTING=1`
 - [ ] `CACHE_VERSION` in `static/js/sw.js` bumped if JS/CSS/templates changed (and `scripts/test_pwa_smoke.py` updated)

@@ -14,7 +14,10 @@ sys.path.insert(0, str(ROOT))
 from app import app, get_db  # noqa: E402
 from models.buddy import (  # noqa: E402
     BUDDY_CELEBRATE,
+    BUDDY_FRIEND_CHALLENGE,
+    BUDDY_MILESTONE,
     BUDDY_NUDGE,
+    BUDDY_QOTD_NUDGE,
     BUDDY_STREAK_RISK,
     BUDDY_WEAK_TOPIC,
 )
@@ -90,7 +93,8 @@ def main():
 
         r = client.get('/api/v1/build-info')
         assert r.status_code == 200
-        assert r.get_json()['buddy_embed'] == 'v3'
+        assert r.get_json()['buddy_embed'] == 'v4'
+        assert r.get_json()['study_buddy_js'] == 'v7'
 
         r = client.get('/')
         assert r.status_code == 200
@@ -116,19 +120,68 @@ def main():
         data = r.get_json()
         assert data['ok'] is True
         assert data['buddy']['type'] == BUDDY_NUDGE
+        assert data['buddy']['face'] == '👾'
         assert data['buddy']['message']
         assert data['buddy']['action_url']
         assert data['buddy']['action_label']
 
         insert_quiz(uid_a, 8, 10)
         r = client.get('/api/v1/me/buddy')
-        assert r.get_json()['buddy']['type'] == BUDDY_CELEBRATE
-        assert '8/10' in r.get_json()['buddy']['message']
+        celebrate = r.get_json()['buddy']
+        assert celebrate['type'] == BUDDY_CELEBRATE
+        assert celebrate['face'] == '😄'
+        assert '8/10' in celebrate['message']
+
+        now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        with get_db() as conn:
+            conn.execute(
+                '''
+                INSERT INTO user_milestones (user_id, milestone_key, earned_at)
+                VALUES (?, 'first_quiz', ?)
+                ''',
+                (uid_a, now),
+            )
+            conn.commit()
+        r = client.get('/api/v1/me/buddy')
+        milestone = r.get_json()['buddy']
+        assert milestone['type'] == BUDDY_MILESTONE
+        assert milestone['face'] == '🎉'
+        assert milestone['milestone_key'] == 'first_quiz'
+        assert 'First quiz' in milestone['message']
+        assert '#milestones' in milestone['action_url']
+        r = client.get('/profile')
+        assert r.status_code == 200
+        profile_html = r.data.decode()
+        assert 'data-buddy-milestone-key="first_quiz"' in profile_html
+        with get_db() as conn:
+            conn.execute('DELETE FROM user_milestones WHERE user_id = ?', (uid_a,))
+            conn.commit()
+
+        today_iso = datetime.now(timezone.utc).date().isoformat()
+        with get_db() as conn:
+            conn.execute('DELETE FROM quiz_attempts WHERE user_id = ?', (uid_a,))
+            conn.execute(
+                'UPDATE user_streaks SET current_streak = 0, last_active_date = NULL WHERE user_id = ?',
+                (uid_a,),
+            )
+            conn.execute(
+                'INSERT OR IGNORE INTO user_study_days (user_id, study_date) VALUES (?, ?)',
+                (uid_a, today_iso),
+            )
+            conn.execute('DELETE FROM qotd_attempts WHERE user_id = ?', (uid_a,))
+            conn.commit()
+        r = client.get('/api/v1/me/buddy')
+        qotd = r.get_json()['buddy']
+        assert qotd['type'] == BUDDY_QOTD_NUDGE
+        assert qotd['face'] == '❓'
+        assert '/qotd' in qotd['action_url']
 
         yesterday = (datetime.now(timezone.utc).date() - timedelta(days=1)).isoformat()
         old = (datetime.now(timezone.utc) - timedelta(days=3)).replace(microsecond=0).isoformat()
         with get_db() as conn:
             conn.execute('DELETE FROM quiz_attempts WHERE user_id = ?', (uid_a,))
+            conn.execute('DELETE FROM user_study_days WHERE user_id = ?', (uid_a,))
+            conn.execute('DELETE FROM qotd_attempts WHERE user_id = ?', (uid_a,))
             ensure_user_streak(conn, uid_a)
             conn.execute(
                 '''
@@ -140,8 +193,10 @@ def main():
             )
             conn.commit()
         r = client.get('/api/v1/me/buddy')
-        assert r.get_json()['buddy']['type'] == BUDDY_STREAK_RISK
-        assert 'streak' in r.get_json()['buddy']['message'].lower()
+        streak = r.get_json()['buddy']
+        assert streak['type'] == BUDDY_STREAK_RISK
+        assert streak['face'] == '🔥'
+        assert 'streak' in streak['message'].lower()
 
         with get_db() as conn:
             conn.execute(
@@ -153,11 +208,23 @@ def main():
                 (uid_a,),
             )
             conn.commit()
+        today_iso = datetime.now(timezone.utc).date().isoformat()
+        with get_db() as conn:
+            conn.execute(
+                '''
+                INSERT OR IGNORE INTO qotd_attempts (user_id, day_key, correct, answer, answered_at)
+                VALUES (?, ?, 1, 'A', ?)
+                ''',
+                (uid_a, today_iso, datetime.now(timezone.utc).replace(microsecond=0).isoformat()),
+            )
+            conn.commit()
         insert_quiz(uid_a, 1, 10, created_at=old, topic='algebra')
         r = client.get('/api/v1/me/buddy')
         assert r.get_json()['buddy']['type'] == BUDDY_WEAK_TOPIC
         assert r.get_json()['buddy']['action_url']
         off_page = r.get_json()['buddy']
+        assert off_page['type'] == BUDDY_WEAK_TOPIC
+        assert off_page['face'] == '🤔'
         assert off_page['action_label'] == 'Practise this'
         assert '/topic/' in off_page['action_url']
         stay_off = [item for item in off_page.get('actions') or [] if item.get('kind') == 'stay']
@@ -193,6 +260,19 @@ def main():
         assert after_mcq['actions'][0]['label'] == 'Take a quiz'
         assert 'quiz' in after_mcq['message'].lower()
 
+        old_milestone_at = (datetime.now(timezone.utc) - timedelta(days=2)).replace(microsecond=0).isoformat()
+        with get_db() as conn:
+            conn.execute('DELETE FROM user_milestones WHERE user_id = ?', (uid_a,))
+            for key in ('first_quiz', 'qotd_first'):
+                conn.execute(
+                    '''
+                    INSERT INTO user_milestones (user_id, milestone_key, earned_at)
+                    VALUES (?, ?, ?)
+                    ''',
+                    (uid_a, key, old_milestone_at),
+                )
+            conn.commit()
+
         r = client.get('/topic/gcse/maths/algebra')
         assert r.status_code == 200
         assert b'data-buddy-actions' in r.data
@@ -201,9 +281,9 @@ def main():
         assert 'data-buddy-level="gcse"' in html_lesson
         assert 'data-buddy-subject="maths"' in html_lesson
         assert 'data-buddy-topic="algebra"' in html_lesson
-        assert 'study-buddy.js?v=3' in html_lesson
-        assert 'Problem Bank build: buddy-embed-v3' in html_lesson
-        assert 'pb-buddy-embed-v3' in html_lesson
+        assert 'study-buddy.js?v=7' in html_lesson
+        assert 'Problem Bank build: buddy-embed-v4' in html_lesson
+        assert 'pb-buddy-embed-v4' in html_lesson
         assert 'id="pb-buddy-page"' in html_lesson
         assert 'id="pb-buddy-prompt"' in html_lesson
         assert 'Practise MCQ' in html_lesson
@@ -240,6 +320,94 @@ def main():
         logout(client)
         register(client, email_b, handle_b)
         uid_b = user_id_for(handle_b)
+        logout(client)
+        r = client.get('/login')
+        client.post(
+            '/login',
+            data={
+                'csrf_token': csrf_from(r.data.decode()),
+                'email': email_a,
+                'password': 'password123',
+            },
+            follow_redirects=True,
+        )
+        with get_db() as conn:
+            follow_user(conn, uid_a, uid_b)
+            conn.execute('DELETE FROM quiz_attempts WHERE user_id IN (?, ?)', (uid_a, uid_b))
+            conn.execute(
+                'DELETE FROM generator_mcq_attempts WHERE user_id IN (?, ?)',
+                (uid_a, uid_b),
+            )
+            conn.execute('DELETE FROM quiz_challenges WHERE creator_id = ?', (uid_a,))
+            conn.execute('DELETE FROM user_milestones WHERE user_id = ?', (uid_a,))
+            conn.execute('DELETE FROM user_study_days WHERE user_id = ?', (uid_a,))
+            conn.execute('DELETE FROM qotd_attempts WHERE user_id = ?', (uid_a,))
+            conn.execute(
+                '''
+                UPDATE user_streaks
+                SET current_streak = 0, last_active_date = NULL
+                WHERE user_id = ?
+                ''',
+                (uid_a,),
+            )
+            conn.commit()
+
+        r = client.get('/api/v1/me/buddy')
+        friend = r.get_json()['buddy']
+        assert friend['type'] == BUDDY_FRIEND_CHALLENGE
+        assert friend['face'] == '🤝'
+        assert f'@{handle_b}' in friend['message']
+        assert friend['friend_handle'] == handle_b
+        assert handle_b in friend['action_url']
+        assert friend['action_label'] == 'Send challenge'
+
+        recent_challenge_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        with get_db() as conn:
+            conn.execute(
+                '''
+                INSERT INTO quiz_challenges (
+                    creator_id, opponent_id, level, subject, topic, seed,
+                    problems_json, status, created_at
+                ) VALUES (?, ?, 'gcse', 'maths', 'algebra', 1, '[]', 'pending', ?)
+                ''',
+                (uid_a, uid_b, recent_challenge_at),
+            )
+            conn.commit()
+        r = client.get('/api/v1/me/buddy')
+        assert r.get_json()['buddy']['type'] == BUDDY_NUDGE
+
+        with get_db() as conn:
+            conn.execute('DELETE FROM quiz_challenges WHERE creator_id = ?', (uid_a,))
+            conn.commit()
+        insert_quiz(uid_a, 1, 10, created_at=old, topic='algebra')
+        r = client.get('/api/v1/me/buddy')
+        assert r.get_json()['buddy']['type'] == BUDDY_WEAK_TOPIC
+
+        with get_db() as conn:
+            conn.execute('DELETE FROM quiz_attempts WHERE user_id = ?', (uid_a,))
+            milestone_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+            conn.execute(
+                '''
+                INSERT INTO user_milestones (user_id, milestone_key, earned_at)
+                VALUES (?, 'first_quiz', ?)
+                ''',
+                (uid_a, milestone_at),
+            )
+            conn.commit()
+        r = client.get('/api/v1/me/buddy')
+        assert r.get_json()['buddy']['type'] == BUDDY_MILESTONE
+
+        logout(client)
+        r = client.get('/login')
+        client.post(
+            '/login',
+            data={
+                'csrf_token': csrf_from(r.data.decode()),
+                'email': email_b,
+                'password': 'password123',
+            },
+            follow_redirects=True,
+        )
         with get_db() as conn:
             follow_user(conn, uid_b, uid_a)
             conn.execute('DELETE FROM quiz_attempts WHERE user_id IN (?, ?)', (uid_a, uid_b))

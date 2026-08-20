@@ -3644,7 +3644,7 @@
     </style>
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <!-- Problem Bank build: buddy-embed-v3 -->
+    <!-- Problem Bank build: buddy-embed-v4 -->
     <script src="{{ url_for('static', filename='js/mathjax-config.js') }}"></script>
     <!-- MathJax CDN (SVG output); SRI pins the published 3.2.2 build -->
     <script
@@ -3655,7 +3655,7 @@
     ></script>
     <!-- External site logic (dropdowns, MCQs, etc.) -->
     <script src="{{ url_for('static', filename='js/python-run-grader.js') }}?v=3" defer></script>
-    <script src="{{ url_for('static', filename='js/site.js') }}?v=9" defer></script>
+    <script src="{{ url_for('static', filename='js/site.js') }}?v=10" defer></script>
     <script src="{{ url_for('static', filename='js/site-search.js') }}?v=5" defer></script>
     <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=3" defer></script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=3" defer></script>
@@ -3674,7 +3674,7 @@
       }
     } catch (e) {}
     </script>
-    <script src="{{ url_for('static', filename='js/study-buddy.js') }}?v=3" defer></script>
+    <script src="{{ url_for('static', filename='js/study-buddy.js') }}?v=7" defer></script>
     {% endif %}
     {% if lesson_assist_enabled and lesson_meta and not lesson_meta.get('quizReview') %}
     <script src="{{ url_for('static', filename='js/lesson-assist.js') }}?v=6" defer></script>
@@ -3849,12 +3849,13 @@
 </div>
 
 {% if current_user.is_authenticated %}
-<!-- pb-buddy-embed-v3 -->
+<!-- pb-buddy-embed-v4 -->
 {% if buddy_page %}<script type="application/json" id="pb-buddy-page">{{ buddy_page|tojson }}</script>{% endif %}
 {% if buddy_prompt %}<script type="application/json" id="pb-buddy-prompt">{{ buddy_prompt|tojson }}</script>{% endif %}
-<aside id="study-buddy" class="study-buddy" hidden data-buddy-root data-pb-buddy-build="v3"
-       {% if buddy_page %}data-buddy-level="{{ buddy_page.level }}" data-buddy-subject="{{ buddy_page.subject }}" data-buddy-topic="{{ buddy_page.topic }}"{% endif %}>
-    <span class="study-buddy-face" aria-hidden="true">👾</span>
+<aside id="study-buddy" class="study-buddy" hidden data-buddy-root data-pb-buddy-build="v4"
+       {% if buddy_page %}data-buddy-level="{{ buddy_page.level }}" data-buddy-subject="{{ buddy_page.subject }}" data-buddy-topic="{{ buddy_page.topic }}"{% endif %}
+       {% if buddy_prompt and buddy_prompt.type == 'milestone' and buddy_prompt.milestone_key %}data-buddy-milestone-key="{{ buddy_prompt.milestone_key }}"{% endif %}>
+    <span class="study-buddy-face" data-buddy-face aria-hidden="true">{% if buddy_prompt and buddy_prompt.face %}{{ buddy_prompt.face }}{% else %}👾{% endif %}</span>
     <div class="study-buddy-card">
         <span class="study-buddy-detail" data-buddy-detail>{% if buddy_prompt %}{{ buddy_prompt.detail }}{% endif %}</span>
         <p class="study-buddy-message" data-buddy-message>{% if buddy_prompt %}{{ buddy_prompt.message }}{% endif %}</p>
@@ -3899,11 +3900,18 @@
       if (window.localStorage.getItem('pb-buddy-stay-weak_topic-' + prompt.topic + '-' + day) === '1') {
         return;
       }
+    } else if (prompt.type === 'milestone' && prompt.milestone_key) {
+      if (window.localStorage.getItem('pb-buddy-milestone-' + prompt.milestone_key) === '1') {
+        return;
+      }
     } else if (window.localStorage.getItem('pb-buddy-hide-' + day) === '1') {
       return;
     }
     root.removeAttribute('hidden');
     root.setAttribute('data-buddy-server', '1');
+    if (prompt.type === 'milestone' && prompt.milestone_key) {
+      root.setAttribute('data-buddy-milestone-key', prompt.milestone_key);
+    }
     if (prompt.topic) {
       root.setAttribute('data-buddy-topic', prompt.topic);
     }

@@ -1,5 +1,7 @@
 # Deploying Problem Bank (PythonAnywhere / production)
 
+> **Before the first deploy that real users can reach:** complete Phase **S0** of `docs/SECURITY_AND_GDPR.md`. The site takes accounts from 13-year-olds and currently has no privacy notice, no account deletion, and no data export — those are legal obligations, not polish. Deploying privately for testing is fine; opening the URL to pupils is not.
+
 ## Pre-deploy checklist
 
 - [ ] Set a strong **`SECRET_KEY`** env var (app **refuses** to start with the default outside testing / `PB_ALLOW_DEV_SECRET`).
@@ -10,6 +12,7 @@
 - [ ] Run smoke tests locally: `python scripts/run_smoke_tests.py`
 - [ ] Confirm `/api/v1/health` returns `{ "ok": true, "status": "up" }` (pings the database).
 - [ ] Security posture details: `docs/SOLID_DRAFT_SECURITY.md`.
+- [ ] **Compliance gate:** `docs/SECURITY_AND_GDPR.md` §7 Phase S0 checklist complete — privacy notice live, deletion and export working, high-privacy defaults, retention prune scheduled, ICO fee paid.
 
 ## PythonAnywhere notes
 

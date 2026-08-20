@@ -174,7 +174,7 @@ from models.gamification import (
     list_user_milestones,
     record_study_day,
 )
-from models.buddy import build_buddy_prompt
+from models.buddy import BUDDY_FACES, build_buddy_prompt
 from models.problem_queue import (
     clear_problem_queue as clear_db_problem_queue,
     get_problem_queue as get_db_problem_queue,
@@ -3821,7 +3821,7 @@ def about():
 
 @app.get('/api/v1/build-info')
 def api_v1_build_info():
-    return jsonify({'ok': True, 'buddy_embed': 'v3', 'study_buddy_js': 'v3'})
+    return jsonify({'ok': True, 'buddy_embed': 'v4', 'study_buddy_js': 'v7'})
 
 
 @app.get('/offline')
@@ -5052,6 +5052,13 @@ def _buddy_action_url(item, prompt):
     level = item.get('level') or prompt.get('level')
     subject = item.get('subject') or prompt.get('subject')
     topic = item.get('topic') or prompt.get('topic')
+    if kind == 'milestone':
+        return url_for('profile') + '#milestones'
+    if kind == 'challenge':
+        handle = item.get('friend_handle') or prompt.get('friend_handle')
+        if handle:
+            return url_for('public_profile', handle=handle)
+        return url_for('challenges_list')
     if kind == 'qotd':
         return url_for('qotd_page')
     if kind == 'topics':
@@ -5107,10 +5114,13 @@ def _serialize_buddy_prompt(prompt):
         'type': prompt.get('type'),
         'message': prompt.get('message'),
         'detail': prompt.get('detail'),
+        'face': prompt.get('face') or BUDDY_FACES.get(prompt.get('type'), '👾'),
         'action_url': (first_link or {}).get('url') or fallback_url,
         'action_label': (first_link or {}).get('label') or prompt.get('action_label') or 'Open',
         'actions': actions,
         'topic': prompt.get('topic'),
+        'milestone_key': prompt.get('milestone_key'),
+        'friend_handle': prompt.get('friend_handle'),
     }
 
 
@@ -8176,5 +8186,5 @@ if __name__ == "__main__":
     debug = os.environ.get("FLASK_DEBUG", "0").strip() in ("1", "true", "True")
     host = os.environ.get("FLASK_RUN_HOST", "127.0.0.1").strip() or "127.0.0.1"
     port = int(os.environ.get("FLASK_RUN_PORT", "5001"))
-    print(f"Problem Bank running at http://127.0.0.1:{port}  (buddy embed v3 — use this URL, not :5000)")
+    print(f"Problem Bank running at http://127.0.0.1:{port}  (buddy embed v4 — use this URL, not :5000)")
     app.run(debug=debug, host=host, port=port)

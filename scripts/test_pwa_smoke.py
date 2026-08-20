@@ -36,7 +36,7 @@ def main():
         assert r.status_code == 200, r.data
         sw = r.data.decode()
         assert 'STATIC_CACHE' in sw
-        assert 'pb-v24' in sw
+        assert 'pb-v25' in sw
         assert r.headers.get('Service-Worker-Allowed') == '/'
 
         r = client.get('/offline')

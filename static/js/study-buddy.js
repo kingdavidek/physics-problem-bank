@@ -9,7 +9,12 @@
   var actionsEl = root.querySelector('[data-buddy-actions]');
   var actionEl = root.querySelector('[data-buddy-action]');
   var dismissEl = root.querySelector('[data-buddy-dismiss]');
+  var faceEl = root.querySelector('[data-buddy-face]');
   if (!messageEl || !actionEl || !dismissEl) return;
+
+  function milestoneStorageKey(key) {
+    return 'pb-buddy-milestone-' + (key || '');
+  }
 
   function utcDayKey() {
     return new Date().toISOString().slice(0, 10);
@@ -107,6 +112,15 @@
     }
   }
 
+  function milestoneDismissed(key) {
+    if (!key) return false;
+    try {
+      return window.localStorage.getItem(milestoneStorageKey(key)) === '1';
+    } catch (err) {
+      return false;
+    }
+  }
+
   function clearExtraActions() {
     if (!actionsEl) return;
     var extras = actionsEl.querySelectorAll('[data-buddy-extra]');
@@ -119,6 +133,7 @@
     if (!prompt || !prompt.message) return;
     messageEl.textContent = escapeText(prompt.message);
     if (detailEl) detailEl.textContent = escapeText(prompt.detail || 'Buddy');
+    if (faceEl) faceEl.textContent = escapeText(prompt.face || '👾');
     clearExtraActions();
 
     var actions = Array.isArray(prompt.actions) && prompt.actions.length
@@ -153,6 +168,11 @@
 
     dismissEl.textContent = stay ? escapeText(stay.label) : 'Not now';
     dismissEl.setAttribute('data-buddy-stay', stay ? '1' : '0');
+    if (prompt.type === 'milestone' && prompt.milestone_key) {
+      root.setAttribute('data-buddy-milestone-key', prompt.milestone_key);
+    } else {
+      root.removeAttribute('data-buddy-milestone-key');
+    }
     root.hidden = false;
   }
 
@@ -160,6 +180,11 @@
     if (!prompt || !prompt.message) return false;
     if (prompt.topic) {
       root.setAttribute('data-buddy-topic', prompt.topic);
+    }
+    if (prompt.type === 'milestone' && prompt.milestone_key) {
+      if (milestoneDismissed(prompt.milestone_key)) return true;
+      show(prompt);
+      return true;
     }
     if (hasStayAction(prompt)) {
       if (stayDismissed(prompt.topic)) return true;
@@ -171,6 +196,32 @@
     return true;
   }
 
+  function acknowledgeMilestone(key) {
+    if (!key) return;
+    try {
+      window.localStorage.setItem(milestoneStorageKey(key), '1');
+    } catch (err) {}
+  }
+
+  function readEmbeddedMilestoneKey() {
+    try {
+      var jsonEl = document.getElementById('pb-buddy-prompt');
+      if (!jsonEl) return '';
+      var parsed = JSON.parse(jsonEl.textContent || 'null');
+      if (parsed && parsed.type === 'milestone' && parsed.milestone_key) {
+        return String(parsed.milestone_key);
+      }
+    } catch (err) {}
+    return '';
+  }
+
+  actionEl.addEventListener('click', function () {
+    var key = (root.getAttribute('data-buddy-milestone-key') || '').trim();
+    if (!key) return;
+    acknowledgeMilestone(key);
+    root.hidden = true;
+  });
+
   dismissEl.addEventListener('click', function () {
     root.hidden = true;
     var isStay = dismissEl.getAttribute('data-buddy-stay') === '1';
@@ -179,9 +230,65 @@
         var topic = (root.getAttribute('data-buddy-topic') || '').trim();
         window.localStorage.setItem(stayStorageKey(topic), '1');
       } else {
-        window.localStorage.setItem(storageKey(), '1');
+        var milestoneKey = (root.getAttribute('data-buddy-milestone-key') || '').trim();
+        if (!milestoneKey) {
+          milestoneKey = readEmbeddedMilestoneKey();
+        }
+        if (milestoneKey) {
+          acknowledgeMilestone(milestoneKey);
+        } else {
+          window.localStorage.setItem(storageKey(), '1');
+        }
       }
     } catch (err) {}
+  });
+
+  function fetchBuddy() {
+    var ctx = currentContext();
+    var query = '';
+    if (ctx.level && ctx.topic) {
+      query =
+        '?level=' + encodeURIComponent(ctx.level) +
+        '&subject=' + encodeURIComponent(ctx.subject || '') +
+        '&topic=' + encodeURIComponent(ctx.topic);
+    }
+
+    return fetch('/api/v1/me/buddy' + query, {
+      headers: {
+        Accept: 'application/json',
+        'X-PB-Buddy-Path': (window.location.pathname || '') + (window.location.search || ''),
+      },
+      credentials: 'same-origin',
+      referrerPolicy: 'same-origin',
+    })
+      .then(function (response) {
+        if (!response.ok) return null;
+        return response.json();
+      })
+      .then(function (data) {
+        if (!(data && data.ok && data.buddy)) return;
+        maybeShow(data.buddy, 'fetch');
+      })
+      .catch(function () {});
+  }
+
+  function refetchMatchesPage(detail) {
+    if (!detail || !detail.topic) return true;
+    var page = currentContext();
+    if (!page.topic) return true;
+    if (String(detail.topic).toLowerCase() !== String(page.topic).toLowerCase()) {
+      return false;
+    }
+    if (detail.level && page.level && String(detail.level).toLowerCase() !== String(page.level).toLowerCase()) {
+      return false;
+    }
+    return true;
+  }
+
+  document.addEventListener('pb-buddy-refetch', function (event) {
+    var detail = (event && event.detail) || {};
+    if (!refetchMatchesPage(detail)) return;
+    fetchBuddy();
   });
 
   if (root.getAttribute('data-buddy-server') === '1') {
@@ -199,30 +306,5 @@
     return;
   }
 
-  var ctx = currentContext();
-  if (!ctx.level || !ctx.topic) {
-    return;
-  }
-  var query =
-    '?level=' + encodeURIComponent(ctx.level) +
-    '&subject=' + encodeURIComponent(ctx.subject || '') +
-    '&topic=' + encodeURIComponent(ctx.topic);
-
-  fetch('/api/v1/me/buddy' + query, {
-    headers: {
-      Accept: 'application/json',
-      'X-PB-Buddy-Path': (window.location.pathname || '') + (window.location.search || ''),
-    },
-    credentials: 'same-origin',
-    referrerPolicy: 'same-origin',
-  })
-    .then(function (response) {
-      if (!response.ok) return null;
-      return response.json();
-    })
-    .then(function (data) {
-      if (!(data && data.ok && data.buddy)) return;
-      maybeShow(data.buddy, 'fetch');
-    })
-    .catch(function () {});
+  fetchBuddy();
 })();

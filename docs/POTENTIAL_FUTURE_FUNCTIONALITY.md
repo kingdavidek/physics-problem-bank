@@ -237,20 +237,20 @@ If implementing G8 without further product decisions:
 
 These are **not designed to the same depth as G8**. Listed for prioritisation discussion.
 
-**Near-term engagement (E1–E3)** is tracked for implementation in `docs/AI_HANDOFF.md` §6 — not duplicated here.
+**Near-term engagement (E1–E3, shipped)** and the planned **E5** are tracked in `docs/AI_HANDOFF.md` §6 — not duplicated here.
 
-### 3.0 Engagement Phase E4 — Content depth (long-term / stretch)
+### 3.0 Engagement Phase E4 — Content depth
 
-Only after E1–E3 land and engagement metrics (DAU, session length, QOTD/feed participation) justify more content investment. Do **not** start by default in the same sprint as E1–E3.
+E1–E3 shipped 2026-08-15. Of the three E4 items below, only **E4.1** is scheduled; the other two remain stretch.
 
 #### 3.0.1 New real-world GCSE question styles
 
 | | |
 |--|--|
-| **Idea** | Refactor **3–5 high-traffic GCSE topics** (e.g. percentages, ratios, compound measures / speed) so practice items use everyday scenarios (cooking, sports, shopping) while keeping the same graders and session trust model. |
-| **Action** | Pilot on a small set; measure engagement (attempts, accuracy, time-on-task) vs control variants before rolling out across 30+ topics. Prefer new/adjusted **variants** inside existing generators, not a second problem engine. |
-| **Depends on** | Stable generators + auto-correct; ideally basic analytics or attempt counts already available |
-| **Status** | Stretch — after E1–E3 |
+| **Idea** | Everyday scenarios (cooking, sport, shopping, travel) for high-traffic GCSE topics, keeping the same graders and session trust model. |
+| **Scope now** | A third generator **question style** (`real_world`) alongside Standard and Multiple Choice, piloted on **percentages (`fdp`), ratio and proportion, compound measures**. New variants inside the existing generators — no second problem engine, no A/B testing in v1. |
+| **Plan** | **`docs/REAL_WORLD_QUESTIONS.md`** — step-by-step implementation, content authoring rules, and tests |
+| **Status** | **Planned and specified** — ready to implement |
 
 #### 3.0.2 Sub-mascot story / farm perks
 
@@ -283,8 +283,10 @@ Only after E1–E3 land and engagement metrics (DAU, session length, QOTD/feed p
 
 ### 3.3 Push notifications
 
-- **Idea:** Mobile/web push for challenges, study-pair invites, revision due reminders.  
-- **Status:** Idea — in-app notifications exist; push does not  
+- **Idea:** Mobile/web push for challenges, study-pair invites, revision due reminders. In-app notifications and the weekly email digest already exist; push means waking the user when the app is closed.  
+- **Blocked by:** a production HTTPS origin (`docs/MOBILE.md` M5). The Push API needs a secure origin, so this cannot be tested end to end today.  
+- **Scope when unblocked:** VAPID keys, `push_subscriptions` table, subscribe/unsubscribe endpoints, `push`/`notificationclick` handlers in `static/js/sw.js`, default-off opt-in, quiet hours, no question content or real names in payloads — written up as **E5.7 in `docs/ENGAGEMENT_E5.md`**.  
+- **Status:** Specified, gated on M5  
 
 ### 3.4 Assignments / teacher-suggested topics (post-G8)
 
@@ -303,8 +305,8 @@ Only after E1–E3 land and engagement metrics (DAU, session length, QOTD/feed p
 
 ### 3.7 Improved profile subject dropdown for revision planner
 
-- **Idea:** Client-side subject list updates when level changes (currently server-rendered for saved plan level only).  
-- **Status:** Idea — small UX polish  
+- **Idea:** On `/profile`, the exam-plan Subject list is server-rendered for one level (the saved plan's, else `gcse`), so changing Level in the browser can leave an invalid level/subject pair selected. Filter the list client-side, reusing `initGeneratorForm`'s `setOptionVisibility` helper in `static/js/site.js`.  
+- **Status:** Specified as **E5.6 in `docs/ENGAGEMENT_E5.md`** — small UX polish  
 
 ### 3.8 Logged-out MCQ cohort recording
 
@@ -341,7 +343,9 @@ Only after E1–E3 land and engagement metrics (DAU, session length, QOTD/feed p
 | G7 | Revision planner | ✅ Shipped |
 | **G8** | **Teacher / class mode** | **Designed — not started** |
 | E1–E3 | Engagement (assist smoke, mascot QOTD, FTS, avatars, buddy, friend accuracy LB) | **E1–E3 shipped** |
-| E4 | Content depth (real-world styles, farm perks, Desmos-class graphs) | Stretch — §3.0 this file |
+| E4.1 | Real-world question style (percentages, ratio, compound measures) | Planned — `docs/REAL_WORLD_QUESTIONS.md` |
+| E4.2 / E4.3 | Mascot farm perks, Desmos-class graphs | Stretch — §3.0 this file |
+| E5 | Retention polish (buddy v0.5, badges, QOTD week, streak freeze, avatar unlocks, planner dropdown, push) | Planned — `docs/ENGAGEMENT_E5.md` |
 
 ---
 
