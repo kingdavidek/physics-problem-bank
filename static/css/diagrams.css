@@ -1,0 +1,213 @@
+/* Problem Bank - diagrams.css
+ * Instructional SVG, probability-tree inputs, lesson quick-reference panels.
+ *
+ * Extracted verbatim from templates/base.html (U0.1, docs/UI_REDESIGN.md).
+ * LOAD ORDER IS SIGNIFICANT: see the <link> block in templates/base.html.
+ */
+
+/* ---- SVG: instructional diagrams only (not MathJax — see mjx-container above) ---- */
+.question-diagram svg,
+.question-content svg,
+.question-content .question-diagram svg,
+.question-content > div > svg,
+.question > svg,
+.answer > svg,
+.hint > svg,
+.solution > svg {
+    background: #f9f8f5 !important;
+    border-radius: 8px !important;
+    display: block !important;
+    margin: 10px 0 !important;
+    max-width: 100% !important;
+    height: auto !important;
+}
+svg.trig-diagram {
+    background: #f9f8f5 !important;
+    border-radius: 8px !important;
+    display: block !important;
+    margin: 10px auto !important;
+    max-width: 340px !important;
+    width: 100% !important;
+    height: 220px !important;
+}
+svg.gsim-diagram {
+    background: #fafbfc !important;
+    border: 1px solid #d4e6f1 !important;
+    border-radius: 8px !important;
+    display: block !important;
+    margin: 10px auto !important;
+    max-width: 360px !important;
+    width: 100% !important;
+    height: auto !important;
+}
+svg.geom-diagram {
+    background: #f9f8f5 !important;
+    border-radius: 6px !important;
+    display: block !important;
+    margin: 6px auto !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+}
+/* Typeable self-checking probability-tree inputs (blank/difficult trees) */
+.prob-tree-input {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 1px 2px;
+    border: 1px solid #bbb;
+    border-radius: 3px;
+    background: #fffef5;
+    color: #333;
+    font-family: inherit;
+    font-size: 10px;
+    line-height: 1.1;
+    text-align: center;
+    appearance: none;
+    -webkit-appearance: none;
+}
+.prob-tree-input:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 0;
+}
+.prob-tree-input.correct {
+    border-color: var(--success);
+    background: var(--correct-100);
+    color: var(--correct-700);
+}
+.prob-tree-input.incorrect {
+    border-color: var(--danger);
+    background: var(--wrong-100);
+    color: var(--wrong-700);
+}
+/* Must follow the base .prob-tree-input rule or 10px font-size wins on phones. */
+@media (max-width: 640px) {
+    .prob-tree-input {
+        font-size: 16px;
+        line-height: 1.2;
+    }
+}
+svg.graphs-lesson-graph {
+    background: #f9f8f5 !important;
+    border-radius: 8px !important;
+    display: block !important;
+    margin: 10px auto !important;
+    max-width: 400px !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+}
+svg.graphs-lesson-graph--wide {
+    max-width: 440px !important;
+}
+svg.graphs-revision-card {
+    display: block !important;
+    margin: 10px auto !important;
+    max-width: 100% !important;
+    height: auto !important;
+}
+
+/* ---- LESSON QUICK REFERENCE / FORMULA PANELS ---- */
+.lesson-formula-panel {
+    font-size: 1rem !important;
+    line-height: 1.65;
+    color: var(--text);
+}
+.lesson-formula-panel strong {
+    color: var(--primary);
+}
+.lesson-quick-ref svg text,
+svg.lesson-quick-ref text,
+svg.revision-card-svg text {
+    font-family: var(--font-body), 'Work Sans', sans-serif;
+}
+.revision-card-wrap {
+    margin: 16px 0;
+    max-width: 760px;
+    margin-left: auto;
+    margin-right: auto;
+}
+svg.revision-card-svg {
+    display: block;
+    width: 100%;
+    max-width: 760px;
+    height: auto;
+    margin: 0 auto;
+    overflow: visible;
+}
+.lesson-quick-ref-card {
+    background: #f9f8f5;
+    border: 1px solid #d4e6f1;
+    border-radius: 10px;
+    padding: 24px 28px;
+    font-size: 1rem;
+    line-height: 1.75;
+    color: var(--text);
+    max-width: 100%;
+    margin: 0 auto;
+    overflow-wrap: anywhere;
+}
+.lesson-quick-ref-card > h3 {
+    margin: 0 0 20px;
+    text-align: center;
+    font-family: var(--font-serif);
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--primary);
+    line-height: 1.35;
+}
+.lesson-quick-ref-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px 32px;
+}
+.lesson-quick-ref-grid--2col {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.lesson-quick-ref-grid--3col {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.lesson-quick-ref-grid h4 {
+    margin: 0 0 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+.lesson-quick-ref-grid ul {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+.lesson-quick-ref-grid li {
+    margin-bottom: 8px;
+    overflow-wrap: anywhere;
+}
+.lesson-quick-ref-grid li:last-child {
+    margin-bottom: 0;
+}
+.lesson-quick-ref-advanced {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid #d4e6f1;
+}
+.lesson-quick-ref-advanced h4 {
+    margin: 0 0 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+.lesson-quick-ref-advanced ul {
+    margin: 0;
+    padding-left: 18px;
+}
+.lesson-quick-ref-advanced li {
+    margin-bottom: 6px;
+}
+@media (max-width: 720px) {
+    .lesson-quick-ref-grid,
+    .lesson-quick-ref-grid--2col,
+    .lesson-quick-ref-grid--3col {
+        grid-template-columns: 1fr;
+    }
+}
+

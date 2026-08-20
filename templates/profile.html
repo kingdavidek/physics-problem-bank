@@ -9,6 +9,12 @@
     {{ user_avatar(avatar, 'lg') }}
     <div>
     <h1>{{ current_user.display_handle }}</h1>
+    {% if viewer_xp is not none %}
+    <div class="profile-xp-chip" aria-label="Level {{ viewer_level }}, {{ viewer_xp }} effort points this week">
+        <span class="profile-xp-level" aria-hidden="true">{{ viewer_level }}</span>
+        <span class="profile-xp-points">{{ viewer_xp }} XP this week</span>
+    </div>
+    {% endif %}
     <p class="hero-sub">
         Your saved questions, lesson progress, and quiz history ·
         <a href="{{ public_profile_url }}">Public profile</a>
@@ -47,7 +53,11 @@
 {% endif %}
 
 <div class="profile-stats-row">
-    <div class="profile-stat-card">
+    <div class="profile-stat-card profile-stat-card--xp">
+        <strong>{{ viewer_xp or 0 }}</strong>
+        <span>XP this week</span>
+    </div>
+    <div class="profile-stat-card profile-stat-card--streak">
         <strong>{{ study_streak.current }}</strong>
         <span>Day study streak</span>
         {% if study_streak.freeze_available %}
@@ -300,7 +310,7 @@
 </section>
 
 {% if milestones %}
-<section class="section-panel" id="milestones">
+<section class="section-panel milestone-shelf" id="milestones">
     <div class="section-panel-header">
         Milestones
         <a href="{{ url_for('profile_settings') }}" class="profile-section-link">Sharing settings</a>

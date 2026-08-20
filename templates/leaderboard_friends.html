@@ -27,7 +27,7 @@
             {% if leaderboard|length > 1 or (leaderboard and leaderboard[0].possible) %}
             <ol class="leaderboard-list">
                 {% for item in leaderboard %}
-                <li class="leaderboard-item{% if item.is_viewer %} is-viewer{% endif %}">
+                <li class="leaderboard-item{% if item.rank == 1 %} leaderboard-item--gold{% endif %}{% if item.is_viewer %} is-viewer{% endif %}">
                     <span class="leaderboard-rank">#{{ item.rank }}</span>
                     {{ user_avatar(item.avatar, 'sm') }}
                     <div class="leaderboard-main">
@@ -61,7 +61,7 @@
             {% if leaderboard|length > 1 or (leaderboard and leaderboard[0].score > 0) %}
             <ol class="leaderboard-list">
                 {% for item in leaderboard %}
-                <li class="leaderboard-item{% if item.is_viewer %} is-viewer{% endif %}">
+                <li class="leaderboard-item{% if item.rank == 1 %} leaderboard-item--gold{% endif %}{% if item.is_viewer %} is-viewer{% endif %}">
                     <span class="leaderboard-rank">#{{ item.rank }}</span>
                     {{ user_avatar(item.avatar, 'sm') }}
                     <div class="leaderboard-main">

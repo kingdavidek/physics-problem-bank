@@ -28,7 +28,7 @@ def _load_env_file(path: Path) -> None:
 
 _load_env_file(_ROOT / ".env")
 
-from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash, g, send_from_directory, Response
+from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash, g, send_from_directory, Response, abort
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from jinja2.exceptions import TemplateNotFound
 from markupsafe import Markup
@@ -174,6 +174,8 @@ from models.gamification import (
     get_weekly_recap,
     list_user_milestones,
     record_study_day,
+    weekly_effort_xp,
+    xp_level_from_points,
 )
 from models.buddy import BUDDY_FACES, build_buddy_prompt
 from models.problem_queue import (
@@ -628,9 +630,13 @@ def inject_nav():
             }
     unread_notifications = 0
     buddy_prompt = None
+    viewer_xp = None
+    viewer_level = None
     if current_user.is_authenticated:
         with get_db() as conn:
             unread_notifications = count_unread_notifications(conn, current_user.id)
+            viewer_xp = weekly_effort_xp(conn, current_user.id)
+            viewer_level = xp_level_from_points(viewer_xp)
             page_level = page_subject = page_topic = None
             if buddy_page:
                 page_level = buddy_page['level']
@@ -654,6 +660,8 @@ def inject_nav():
         'unread_notifications': unread_notifications,
         'buddy_page': buddy_page,
         'buddy_prompt': buddy_prompt,
+        'viewer_xp': viewer_xp,
+        'viewer_level': viewer_level,
     }
 
 
@@ -3612,6 +3620,7 @@ def _build_topic_groups():
             ]
             groups.append({
                 'title': f"{LEVEL_LABELS.get(level, level.title())} {SUBJECT_LABELS.get(subject, subject.title())}",
+                'subject': subject,
                 'topics': items,
             })
     return groups
@@ -3875,6 +3884,17 @@ def sandbox_plan_a_checkpoints():
         items=items,
         index=index,
     )
+
+
+@app.get('/styleguide')
+def styleguide():
+    """Component gallery for the Phase U redesign (docs/UI_REDESIGN.md U0.11).
+
+    Dev-only: set PB_STYLEGUIDE=1 to view. Never reachable in production.
+    """
+    if os.environ.get('PB_STYLEGUIDE') != '1' and os.environ.get('PB_TESTING') != '1':
+        abort(404)
+    return render_template('styleguide.html')
 
 
 @app.route('/about')

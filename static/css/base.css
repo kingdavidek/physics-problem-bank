@@ -1,0 +1,175 @@
+/* Problem Bank - base.css
+ * Reset, document, page shell, header/nav, typography.
+ *
+ * Extracted verbatim from templates/base.html (U0.1, docs/UI_REDESIGN.md).
+ * LOAD ORDER IS SIGNIFICANT: see the <link> block in templates/base.html.
+ */
+
+/* ---- BASE ---- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html {
+    scroll-behavior: smooth;
+    overflow-x: clip;
+}
+body {
+    font-family: var(--font-body);
+    font-size: 1.025rem;
+    background: linear-gradient(165deg, var(--bg) 0%, var(--bg-accent) 45%, var(--bg) 100%);
+    background-attachment: fixed;
+    color: var(--text);
+    min-height: 100dvh;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
+}
+
+/* ---- LAYOUT ---- */
+.site-wrapper {
+    max-width: var(--shell-max);
+    margin: 0 auto;
+    padding: var(--space-3) var(--space-5) calc(60px + var(--safe-bottom));
+    overflow-x: clip;
+}
+.site-wrapper[data-lesson-content] {
+    max-width: var(--shell-max);
+}
+.page-shell {
+    max-width: var(--shell-max);
+    margin: 0 auto;
+}
+
+/* ---- HEADER / NAV ---- */
+header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid var(--border-soft);
+    margin-bottom: 32px;
+    padding: calc(14px + var(--safe-top)) 0 14px;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+.header-inner {
+    max-width: var(--shell-max);
+    margin: 0 auto;
+    padding: 0 var(--space-5);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.site-title {
+    font-family: var(--font-body);
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    color: var(--text);
+    text-decoration: none;
+}
+.site-title span { color: var(--brand-500); }
+nav { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+.nav-handle {
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: var(--radius-pill);
+    transition: color 200ms var(--ease), background 200ms var(--ease);
+    white-space: nowrap;
+}
+.nav-handle:hover,
+.nav-handle:focus-visible {
+    color: var(--primary);
+    background: var(--primary-light);
+}
+.nav-handle.active {
+    color: var(--primary);
+    background: var(--primary-light);
+    font-weight: 600;
+}
+nav a {
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: var(--radius-pill);
+    transition: color 200ms var(--ease), background 200ms var(--ease);
+}
+nav a:hover,
+nav a:focus-visible {
+    color: var(--primary);
+    background: var(--primary-light);
+}
+nav a.active {
+    color: var(--primary);
+    background: var(--primary-light);
+    font-weight: 600;
+}
+
+/* ---- TYPOGRAPHY (U1) ----
+ * Serif is kept for prose and question content; UI headings are sans and
+ * heavier so a section title clearly outranks the body text under it.
+ */
+h1 {
+    font-family: var(--font-body);
+    font-size: clamp(1.55rem, 4vw, var(--text-2xl));
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: var(--space-2);
+    line-height: 1.15;
+}
+h2 {
+    font-family: var(--font-body);
+    font-size: var(--text-xl);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: var(--space-8) 0 var(--space-3);
+    line-height: 1.25;
+}
+h3 {
+    font-family: var(--font-body);
+    font-size: var(--text-lg);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: var(--space-6) 0 var(--space-2);
+    line-height: 1.3;
+}
+h4 {
+    font-family: var(--font-body);
+    font-size: var(--text-base);
+    font-weight: 700;
+    margin: var(--space-5) 0 var(--space-2);
+}
+p { margin-bottom: var(--space-3); max-width: 70ch; }
+ul, ol { padding-left: var(--space-5); margin-bottom: var(--space-3); }
+li { margin-bottom: var(--space-1); }
+a { color: var(--brand-600); }
+
+/* ---- MOTION (U7.2) ----
+ * One global gate. Colour and state changes survive; movement does not.
+ */
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    .btn:active,
+    .mcq-btn:active,
+    .topic-card:hover,
+    .topic-card:active { transform: none; }
+}
+

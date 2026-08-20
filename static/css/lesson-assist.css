@@ -1,0 +1,182 @@
+/* Problem Bank - lesson-assist.css
+ * Lesson AI assistant panel and toolbar.
+ *
+ * Extracted verbatim from templates/base.html (U0.1, docs/UI_REDESIGN.md).
+ * LOAD ORDER IS SIGNIFICANT: see the <link> block in templates/base.html.
+ */
+
+/* ---- Lesson AI assistant ---- */
+.lesson-assist-toolbar {
+    position: fixed;
+    z-index: 1200;
+    transform: translateX(-50%);
+    pointer-events: auto;
+}
+.lesson-assist-toolbar-btn {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+    background: var(--primary);
+    border: none;
+    border-radius: var(--radius-pill);
+    padding: 8px 14px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+}
+.lesson-assist-toolbar-btn:hover,
+.lesson-assist-toolbar-btn:focus-visible {
+    background: var(--primary-hover);
+}
+.lesson-assist-panel {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 1300;
+    width: min(380px, calc(100vw - 32px));
+    max-height: min(70vh, 520px);
+    overflow: auto;
+}
+.lesson-assist-panel-inner {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px 18px;
+}
+.lesson-assist-panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.lesson-assist-panel-header h2 {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    color: var(--primary);
+}
+.lesson-assist-close {
+    border: none;
+    background: transparent;
+    font-size: 1.4rem;
+    line-height: 1;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0 4px;
+}
+.lesson-assist-quote {
+    margin: 0 0 8px;
+    padding: 10px 12px;
+    background: var(--primary-light);
+    border-left: 3px solid var(--primary);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 0.92rem;
+    color: var(--text);
+}
+.lesson-assist-section {
+    margin: 0 0 10px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+.lesson-assist-mcq-note {
+    margin: 0 0 10px;
+    padding: 8px 10px;
+    background: var(--hint-bg);
+    border-left: 3px solid var(--hint-border);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 0.85rem;
+}
+.lesson-assist-body {
+    min-height: 48px;
+    font-size: 0.95rem;
+    line-height: 1.65;
+    color: var(--text);
+    margin-bottom: 12px;
+}
+.lesson-assist-loading {
+    color: var(--text-muted);
+    font-style: italic;
+}
+.lesson-assist-error {
+    color: var(--wrong-700);
+}
+.lesson-assist-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+.lesson-assist-preset {
+    font-family: var(--font-body);
+    font-size: 0.78rem;
+    padding: 5px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+}
+.lesson-assist-preset:hover:not(:disabled),
+.lesson-assist-preset:focus-visible:not(:disabled) {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+.lesson-assist-preset.is-active {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    color: var(--primary);
+}
+.lesson-assist-preset:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.lesson-assist-followup {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.lesson-assist-followup input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+}
+.lesson-assist-send {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 8px 12px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--primary);
+    color: #fff;
+    cursor: pointer;
+}
+.lesson-assist-send:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.lesson-assist-footnote,
+.lesson-assist-remaining {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+.lesson-assist-remaining {
+    margin-top: 6px;
+}
+@media (max-width: 600px) {
+    .lesson-assist-panel {
+        right: 0;
+        bottom: var(--kb-inset);
+        width: 100%;
+        max-height: min(65vh, calc(100dvh - var(--kb-inset) - var(--safe-top)));
+        border-radius: var(--radius) var(--radius) 0 0;
+        padding-bottom: var(--safe-bottom);
+    }
+}

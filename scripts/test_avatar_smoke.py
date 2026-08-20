@@ -200,6 +200,12 @@ def main():
 
         r = client.get('/leaderboard/friends')
         assert r.status_code == 200
+
+        # The leaderboard is empty without friends, so assert avatar markup on a
+        # page that always renders one. (Before U0 this passed against the
+        # `.user-avatar` rule in the inline <style> block rather than markup.)
+        r = client.get('/profile')
+        assert r.status_code == 200
         assert 'user-avatar' in r.data.decode()
 
     print('Avatar smoke tests passed.')

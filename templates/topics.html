@@ -20,12 +20,12 @@
 </p>
 
 {% for group in topic_groups %}
-<section class="topic-group">
+<section class="topic-group topic-group--{{ group.subject }}">
     <h2 class="topic-group-title">{{ group.title }}</h2>
     <ul class="topic-grid">
         {% for topic in group.topics %}
         <li>
-            <a class="topic-card" href="{{ topic.url }}">
+            <a class="topic-card topic-card--{{ group.subject }}" href="{{ topic.url }}">
                 <span class="topic-card-title">{{ topic.name }}</span>
                 <span class="topic-card-meta">Open topic →</span>
             </a>

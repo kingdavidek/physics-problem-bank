@@ -530,6 +530,20 @@ def _effort_score_since(conn, user_id, since_iso):
     return scores.get(user_id, 0)
 
 
+def weekly_effort_xp(conn, user_id, days=7):
+    """Effort points (displayed as XP) for the last N UTC days."""
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).strftime('%Y-%m-%d %H:%M:%S')
+    return _effort_score_since(conn, user_id, since)
+
+
+def xp_level_from_points(xp):
+    """Simple level curve: L2 at 50 XP, L3 at 200, L4 at 450, …"""
+    xp = max(0, int(xp or 0))
+    if xp <= 0:
+        return 1
+    return max(1, int((xp / 50) ** 0.5))
+
+
 def _effort_scores_since(conn, user_ids, since_iso):
     """Batch effort scores for many users (avoids N+1 on friend leaderboard)."""
     ids = [int(uid) for uid in user_ids if uid is not None]

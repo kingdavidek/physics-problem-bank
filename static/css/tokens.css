@@ -1,0 +1,262 @@
+/* Problem Bank - tokens.css
+ * Design tokens. This is the ONLY file allowed to contain raw colour values.
+ *
+ * Phase U (docs/UI_REDESIGN.md). Structure:
+ *   1. Primitive scales   - brand / energy / ink ramps. Never used directly in
+ *                           components; they exist so semantic tokens can be
+ *                           retuned (and a dark theme added) in one place.
+ *   2. Semantic tokens    - what components actually reference.
+ *   3. Legacy aliases     - the pre-U0 token names, remapped onto the new
+ *                           scales so untouched CSS shifts palette for free.
+ *                           Delete an alias once its last consumer is migrated.
+ *
+ * LOAD ORDER IS SIGNIFICANT: see the <link> block in templates/base.html.
+ *
+ * ---------------------------------------------------------------------------
+ * SEMANTIC COLOUR RULES (lock these — do not drift in components.css)
+ * ---------------------------------------------------------------------------
+ * PRIMARY ACTIONS     Blue (--brand-500). .btn-primary, links, form focus.
+ *                     Never put violet/purple on a primary button.
+ *
+ * XP / PROGRESSION    Violet (--xp-*). Profile XP count, level ring, badge
+ *                     shelf tint. Not for CTAs or decorative borders elsewhere.
+ *
+ * STREAK / URGENCY    Amber (--streak-*). Streak counts, freeze hints, nudges.
+ *
+ * CORRECT / COMPLETE  Green (--correct-*). Answer correct, quiz pass, done
+ *                     states only. Never use green for navigation or branding.
+ *
+ * WRONG / DANGER      Red (--wrong-*). Incorrect answers, errors, destructive.
+ *
+ * GOLD / PEAK         (--gold-500). Rank #1, new milestones, level-up only.
+ *                     If gold appears on everyday UI, it stops feeling special.
+ *
+ * SUBJECT ACCENTS     (--subject-*). Topic cards + lesson heroes ONLY. Maths
+ *                     blue, CS violet, physics amber, chemistry teal. Do not
+ *                     paint whole pages or primary buttons with subject colours.
+ *
+ * THEME v1            Light shell only. A future dark mode is a single :root
+ *                     override block here — not a mid-flight redesign.
+ * ---------------------------------------------------------------------------
+ */
+
+:root {
+    /* ============================================================
+     * 1. PRIMITIVE SCALES
+     * ============================================================ */
+
+    /* Brand - the existing blue, saturated. Same hue family, more chroma. */
+    --brand-50:  #eff8ff;
+    --brand-100: #dbeefd;
+    --brand-200: #b9dffb;
+    --brand-300: #86c9f6;
+    --brand-400: #4aabec;
+    --brand-500: #1a86d4;
+    --brand-600: #126aae;
+    --brand-700: #0e5389;
+    --brand-800: #0f4670;
+    --brand-900: #123c5e;
+
+    /* Streak / XP energy - amber. Reserved for streaks, effort, urgency. */
+    --streak-100: #fef3c7;
+    --streak-300: #fcd34d;
+    --streak-400: #fbbf24;
+    --streak-500: #f59e0b;
+    --streak-600: #d97706;
+    --streak-700: #b45309;
+
+    /* Levels, badges, rare unlocks - violet. */
+    --xp-100: #ede9fe;
+    --xp-300: #c4b5fd;
+    --xp-400: #a78bfa;
+    --xp-500: #8b5cf6;
+    --xp-600: #7c3aed;
+    --xp-700: #6d28d9;
+
+    /* Correct / success - green. */
+    --correct-50:  #f0fdf4;
+    --correct-100: #dcfce7;
+    --correct-300: #86efac;
+    --correct-500: #22c55e;
+    --correct-600: #16a34a;
+    --correct-700: #15803d;
+
+    /* Wrong / danger - red. */
+    --wrong-50:  #fef2f2;
+    --wrong-100: #fee2e2;
+    --wrong-300: #fca5a5;
+    --wrong-500: #ef4444;
+    --wrong-600: #dc2626;
+    --wrong-700: #b91c1c;
+
+    /* Chemistry subject accent (teal — distinct from brand blue and correct green). */
+    --chem-100: #ccfbf1;
+    --chem-300: #5eead4;
+    --chem-500: #0d9488;
+    --chem-600: #0f766e;
+
+    /* Podium / top rank / milestone unlocks. */
+    --gold-500:   #eab308;
+    --gold-600:   #ca8a04;
+    --silver-500: #94a3b8;
+    --bronze-500: #b45309;
+
+    /* Neutral ink ramp. */
+    --ink-50:  #f8fafc;
+    --ink-100: #f1f5f9;
+    --ink-200: #e4ebf2;
+    --ink-300: #cbd5e1;
+    --ink-400: #94a3b8;
+    --ink-500: #64748b;
+    --ink-600: #475569;
+    --ink-700: #334155;
+    --ink-800: #1c2430;
+    --ink-900: #0f172a;
+
+    /* ============================================================
+     * 2. SEMANTIC TOKENS
+     * ============================================================ */
+
+    /* -- Surfaces. Three levels, so cards can stop looking identical. -- */
+    --surface:         #ffffff;
+    --surface-sunken:  var(--ink-100);
+    --surface-tint:    var(--brand-50);
+    --surface-inverse: var(--ink-900);
+
+    /* -- Text -- */
+    --text:          var(--ink-800);
+    --text-muted:    var(--ink-500);
+    --text-subtle:   var(--ink-400);
+    --text-on-brand: #ffffff;
+
+    /* -- Lines. Used sparingly by design: depth comes from elevation. -- */
+    --border:      var(--ink-200);
+    --border-soft: rgba(15, 23, 42, 0.06);
+    --border-strong: var(--ink-300);
+    /* Bottom edge for neutral pressable surfaces. Needs more weight than
+     * --border or the press affordance disappears. */
+    --edge: #c3d0de;
+
+    /* -- Semantic status -- */
+    --success:        var(--correct-600);
+    --success-bg:     var(--correct-50);
+    --success-border: var(--correct-300);
+    --danger:         var(--wrong-600);
+    --danger-bg:      var(--wrong-50);
+    --danger-border:  var(--wrong-300);
+    --warning:        var(--streak-600);
+    --warning-bg:     #fffbeb;
+    --warning-border: var(--streak-300);
+
+    /* -- Subject accents (topic cards + lesson heroes only) -- */
+    --subject-maths:      var(--brand-500);
+    --subject-maths-soft: var(--brand-100);
+    --subject-maths-edge: var(--brand-300);
+    --subject-cs:         var(--xp-500);
+    --subject-cs-soft:    var(--xp-100);
+    --subject-cs-edge:    var(--xp-300);
+    --subject-physics:      var(--streak-500);
+    --subject-physics-soft: var(--streak-100);
+    --subject-physics-edge: var(--streak-300);
+    --subject-chemistry:      var(--chem-500);
+    --subject-chemistry-soft: var(--chem-100);
+    --subject-chemistry-edge: var(--chem-300);
+
+    /* -- Gamification semantics -- */
+    --action-primary: var(--brand-500);
+    --progress-xp:    var(--xp-500);
+    --reward-gold:    var(--gold-500);
+    --state-correct:  var(--correct-500);
+    --state-wrong:    var(--wrong-500);
+
+    /* -- Spacing: strict 4px scale. -- */
+    --space-1:  4px;
+    --space-2:  8px;
+    --space-3:  12px;
+    --space-4:  16px;
+    --space-5:  20px;
+    --space-6:  24px;
+    --space-8:  32px;
+    --space-10: 40px;
+    --space-12: 48px;
+    --space-16: 64px;
+
+    /* -- Radii. Rounder than pre-U0 (12/8/16). -- */
+    --radius-xs:   6px;
+    --radius-sm:   10px;
+    --radius-md:   14px;
+    --radius:      16px;
+    --radius-lg:   20px;
+    --radius-xl:   28px;
+    --radius-pill: 999px;
+
+    /* -- Elevation -- */
+    --elev-1: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
+    --elev-2: 0 2px 4px rgba(15, 23, 42, 0.04), 0 6px 16px rgba(15, 23, 42, 0.07);
+    --elev-3: 0 4px 8px rgba(15, 23, 42, 0.05), 0 14px 32px rgba(18, 106, 174, 0.14);
+    --elev-press: inset 0 2px 4px rgba(15, 23, 42, 0.10);
+    --ring: 0 0 0 3px rgba(26, 134, 212, 0.28);
+
+    /* -- Typography -- */
+    --font-body:  'Work Sans', system-ui, -apple-system, sans-serif;
+    --font-serif: 'Source Serif 4', Georgia, serif;
+    --font-mono:  ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+
+    --text-xs:   0.75rem;
+    --text-sm:   0.875rem;
+    --text-base: 1rem;
+    --text-lg:   1.125rem;
+    --text-xl:   1.375rem;
+    --text-2xl:  1.75rem;
+    --text-3xl:  2.5rem;
+    --text-4xl:  3.25rem;
+
+    /* -- Motion. Gate every transform on prefers-reduced-motion. -- */
+    --dur-fast: 120ms;
+    --dur:      200ms;
+    --dur-slow: 400ms;
+    --ease:        cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    /* -- Device chrome (MOBILE.md M0.5) -- */
+    --safe-top:    env(safe-area-inset-top, 0px);
+    --safe-right:  env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left:   env(safe-area-inset-left, 0px);
+    --tap-min:     44px;
+    --kb-inset:    0px;
+    --tab-bar-h:   64px;
+
+    /* -- Layout -- */
+    --shell-max: 880px;
+
+    /* ============================================================
+     * 3. LEGACY ALIASES (pre-U0 names)
+     * Remapped onto the scales above. Remove each one when its last
+     * consumer has been migrated to a semantic token.
+     * ============================================================ */
+
+    --bg:            #f2f6fa;
+    --bg-accent:     var(--brand-50);
+    --primary:       var(--brand-500);
+    --primary-dark:  var(--brand-700);
+    --primary-hover: var(--brand-600);
+    --primary-light: var(--brand-50);
+    --color-primary: var(--brand-600);   /* was an undefined var falling back to teal #01696f */
+    --muted:         var(--text-muted);
+    --surface-alt:   var(--surface-sunken);
+    --font-sans:     var(--font-body);
+    --panel-bg:      var(--surface-sunken);
+
+    --hint-bg:     var(--warning-bg);
+    --hint-border: var(--warning-border);
+
+    --badge-found: var(--brand-100);
+    --badge-inter: var(--streak-100);
+    --badge-diff:  var(--wrong-100);
+
+    --shadow-sm:    var(--elev-1);
+    --shadow:       var(--elev-2);
+    --shadow-hover: var(--elev-3);
+}

@@ -22,8 +22,8 @@ def main():
         assert data['scope'] == '/'
         assert data['start_url'] in ('/', '/?source=pwa')
         assert data.get('id') == '/'
-        assert data.get('theme_color') == '#1a6fa8'
-        assert data.get('background_color') == '#f4f6f9'
+        assert data.get('theme_color') == '#1a86d4'
+        assert data.get('background_color') == '#f2f6fa'
         sizes = {icon['sizes'] for icon in data['icons']}
         assert '192x192' in sizes
         assert '512x512' in sizes
@@ -36,7 +36,10 @@ def main():
         assert r.status_code == 200, r.data
         sw = r.data.decode()
         assert 'STATIC_CACHE' in sw
-        assert 'pb-v26' in sw
+        assert 'pb-v30' in sw
+        # JS and CSS must stay network-first or ?v= cache-busts never land.
+        assert 'isVersionedAsset' in sw
+        assert '/static/css/tokens.css' in sw
         assert r.headers.get('Service-Worker-Allowed') == '/'
 
         r = client.get('/offline')
@@ -56,6 +59,17 @@ def main():
         assert 'apple-mobile-web-app-capable' in html
         assert 'black-translucent' in html
 
+        # U0.10 — every stylesheet linked by base.html must actually serve, and
+        # the load order in the template must match the order asserted here.
+        stylesheets = [
+            'tokens.css', 'base.css', 'components.css', 'chrome.css',
+            'practice.css', 'pages.css', 'responsive.css', 'diagrams.css',
+            'lesson-assist.css',
+        ]
+        positions = [html.index(f'css/{name}') for name in stylesheets]
+        assert positions == sorted(positions), 'stylesheet load order changed'
+        assert '<style>' not in html, 'CSS belongs in static/css, not inline'
+
         for path in (
             '/static/icons/icon-192.png',
             '/static/icons/icon-512.png',
@@ -63,6 +77,7 @@ def main():
             '/static/js/pwa.js',
             '/static/js/sw.js',
             '/static/manifest.webmanifest',
+            *(f'/static/css/{name}' for name in stylesheets),
         ):
             r = client.get(path)
             assert r.status_code == 200, path

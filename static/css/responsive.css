@@ -1,0 +1,399 @@
+/* Problem Bank - responsive.css
+ * Mobile media queries (MOBILE.md M0-M3). Must load after the rules it overrides.
+ *
+ * Extracted verbatim from templates/base.html (U0.1, docs/UI_REDESIGN.md).
+ * LOAD ORDER IS SIGNIFICANT: see the <link> block in templates/base.html.
+ */
+
+/* ---- MOBILE (M0 foundation) ---- */
+@media (max-width: 600px) {
+    .form-grid { grid-template-columns: minmax(0, 1fr); }
+    .problem-card { padding: 20px; }
+}
+@media (max-width: 640px) {
+    /* M0.1 — ≥16px controls so iOS Safari does not zoom on focus */
+    input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="image"]):not(.prob-tree-input),
+    select,
+    textarea,
+    .free-response-input,
+    .free-response-row--power .free-response-input-index,
+    .free-response-input--sql,
+    .lesson-assist-followup input,
+    .revision-plan-fields input,
+    .revision-plan-fields select,
+    .wrong-answer-reflection-input {
+        font-size: 16px;
+    }
+
+    /* M0.2 — generate form is one column on phones.
+       minmax(0, 1fr) so long <option> labels cannot blow out the card. */
+    .form-grid { grid-template-columns: minmax(0, 1fr); }
+
+    /* M0.3 — action rows stack full-width */
+    .problem-actions,
+    .public-profile-actions,
+    .settings-form-actions,
+    .wrong-answer-reflection-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .problem-actions form,
+    .problem-actions .btn,
+    .public-profile-actions .btn,
+    .settings-form-actions .btn,
+    .auth-form .btn,
+    .form-inner > .btn {
+        width: 100%;
+        max-width: 100%;
+        min-height: var(--tap-min);
+    }
+    .profile-list-item {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .profile-list-actions {
+        justify-content: stretch;
+    }
+    .profile-list-actions .btn {
+        width: 100%;
+        min-height: var(--tap-min);
+    }
+    .cta-panel-body {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    .cta-panel-body .btn,
+    .cta-panel-body .inline-logout-form,
+    .cta-panel-body .inline-logout-form .btn {
+        width: 100%;
+        min-height: var(--tap-min);
+    }
+    .inline-logout-form { margin-left: 0; }
+    .revision-plan-fields {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .revision-plan-fields input,
+    .revision-plan-fields select,
+    .revision-plan-fields .btn {
+        width: 100%;
+        min-width: 0;
+        min-height: var(--tap-min);
+    }
+    .profile-dl {
+        grid-template-columns: 1fr;
+        gap: 4px 0;
+    }
+
+    /* M1.2 — 44px tap targets on practice controls */
+    .btn,
+    .mcq-btn,
+    .free-response-check-btn,
+    .free-response-field-check-btn,
+    .free-response-proof-step,
+    .free-response-proof-clear,
+    .wrong-answer-reflection-chip {
+        min-height: var(--tap-min);
+    }
+
+    /* M1.1 — Check sits on its own full-width row under inputs */
+    .free-response-row > .free-response-check-btn,
+    .free-response-field-row > .free-response-check-btn,
+    .free-response-field-row > .free-response-field-check-btn {
+        flex: 1 1 100%;
+        width: 100%;
+        align-self: stretch;
+        margin-top: 4px;
+    }
+
+    /* M1.3 — multipart fields stack; no horizontal min-width traps.
+       Keep field-row as wrap (not column) so √ / π / x² stay on one row. */
+    .free-response-field-row > .free-response-field,
+    .free-response-field-row > .free-response-field--text {
+        flex: 1 1 100%;
+    }
+    .free-response-surd-btn,
+    .free-response-pi-btn,
+    .free-response-square-btn,
+    .free-response-roots-insert-btn,
+    .free-response-csq-sign,
+    .free-response-vcombo-sign,
+    .free-response-ineq-sign,
+    .free-response-compound-sign {
+        flex: 0 0 auto;
+        width: auto;
+        align-self: center;
+    }
+    .free-response-field-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .free-response-field-group-label {
+        align-self: flex-start;
+    }
+    .free-response-field-group-fields {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+    }
+    .free-response-field-group-fields .free-response-field-row,
+    .free-response-field-group-fields .free-response-field,
+    .free-response-field-group-fields .free-response-field--text,
+    .free-response-field-row .free-response-field,
+    .free-response-field-row--text .free-response-field,
+    .free-response-field-row--text .free-response-field--text {
+        flex: 1 1 auto;
+        width: 100%;
+        min-width: 0;
+        max-width: none;
+    }
+    .free-response-field .free-response-input,
+    .free-response-field .free-response-input--text,
+    .free-response-field-group-fields .free-response-field .free-response-input,
+    .free-response-field-group-fields .free-response-field .free-response-input--text,
+    .free-response-row--text > .free-response-input--text,
+    .free-response-coord-pairs-stack,
+    .free-response-row--coordinate-pairs .free-response-input-coord-pair,
+    .free-response-row--number-list .free-response-input-list,
+    .free-response-row--linear-equation .free-response-input-linear-equation,
+    .free-response-number-line {
+        min-width: 0;
+        max-width: none;
+        width: 100%;
+    }
+    .free-response-proof-bank,
+    .free-response-proof-step,
+    .free-response-proof-selected-wrap,
+    .free-response-proof-clear {
+        width: 100%;
+    }
+    .mcq-options,
+    .mcq-inline {
+        gap: 10px;
+    }
+    .mcq-btn {
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
+
+    /* M2.1 — full-width nav sheet, 44px hits, hide handle clutter */
+    .nav-handle { display: none; }
+    .nav-search-btn {
+        width: var(--tap-min);
+        height: var(--tap-min);
+    }
+    .nav-sheet-backdrop:not([hidden]) {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 210;
+        background: rgba(20, 24, 28, 0.42);
+        backdrop-filter: blur(2px);
+    }
+    .nav-sheet-chrome {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 4px 10px;
+    }
+    .nav-sheet-handle {
+        display: block;
+        width: 36px;
+        height: 4px;
+        border-radius: 999px;
+        background: var(--border);
+    }
+    .nav-sheet-title-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        gap: 8px;
+    }
+    .nav-sheet-title {
+        font-size: 1rem;
+    }
+    .nav-sheet-close,
+    .site-search-close {
+        width: var(--tap-min);
+        height: var(--tap-min);
+    }
+    .nav-notif-panel .nav-sheet-close { display: inline-flex; }
+    .nav-menu-panel:not([hidden]) {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: auto;
+        width: 100%;
+        min-width: 0;
+        max-height: min(85vh, 640px);
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        padding: 0 10px calc(12px + var(--safe-bottom));
+        z-index: 220;
+        overflow: auto;
+    }
+    .nav-menu-panel a,
+    .nav-menu-panel button {
+        min-height: var(--tap-min);
+        padding: 12px 14px;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+    }
+
+    /* M2.2 — search + notifications as full-screen / bottom sheets */
+    .site-search-overlay {
+        padding: 0;
+        align-items: stretch;
+    }
+    .site-search-panel {
+        width: 100%;
+        max-width: none;
+        height: 100%;
+        border-radius: 0;
+        display: flex;
+        flex-direction: column;
+        padding-top: var(--safe-top);
+    }
+    .site-search-form {
+        padding: 10px 12px;
+    }
+    .site-search-form input {
+        min-width: 0;
+    }
+    .site-search-results {
+        max-height: none;
+        flex: 1;
+    }
+    .site-search-group a {
+        min-height: var(--tap-min);
+        padding: 12px 16px;
+    }
+    .nav-notif-panel:not([hidden]) {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: auto;
+        width: 100%;
+        max-height: min(85vh, 640px);
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        z-index: 220;
+        padding-bottom: var(--safe-bottom);
+    }
+    .nav-notif-panel-header {
+        padding: 10px 14px;
+    }
+    .nav-notif-item {
+        min-height: var(--tap-min);
+        padding: 14px 16px;
+    }
+    .nav-notif-mark-all {
+        min-height: var(--tap-min);
+        padding: 8px 10px;
+    }
+
+    /* M2.3 / M2.4 — Check stays above home indicator and keyboard */
+    body.kb-open .free-response-row > .free-response-check-btn,
+    body.kb-open .free-response-field-row > .free-response-check-btn,
+    body.kb-open .free-response-field-row > .free-response-field-check-btn {
+        position: sticky;
+        bottom: calc(8px + var(--kb-inset));
+        z-index: 6;
+    }
+    .pwa-install-banner {
+        bottom: calc(12px + var(--safe-bottom) + var(--kb-inset));
+    }
+
+    /* M3.1 — lesson accordions: readable padding; sticky quiz CTA */
+    div[style*="max-width:860px"] > details {
+        overflow-x: auto !important;
+    }
+    div[style*="max-width:860px"] > details > summary {
+        min-height: var(--tap-min);
+        padding: 14px 16px !important;
+        flex-wrap: wrap;
+        row-gap: 6px;
+        align-items: center;
+    }
+    div[style*="max-width:860px"] > details > summary + div {
+        padding: 16px 14px !important;
+    }
+    [data-lesson-content] div[style*="max-width:860px"] > div[style*="text-align:right"] {
+        position: sticky;
+        top: calc(56px + var(--safe-top));
+        z-index: 40;
+        background: rgba(244, 246, 249, 0.94);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        margin: 0 -12px 12px;
+        padding: 8px 12px;
+        text-align: center !important;
+    }
+    [data-lesson-content] a[href*="/lesson-quiz/"] {
+        min-height: var(--tap-min);
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+    }
+    [data-lesson-content] .page-shell .problem-actions {
+        position: sticky;
+        bottom: calc(8px + var(--safe-bottom) + var(--kb-inset));
+        z-index: 8;
+        background: rgba(244, 246, 249, 0.94);
+        padding: 8px 0 calc(8px + var(--safe-bottom));
+    }
+
+    /* M3.2 — wide tables / SQL / code boxes scroll inside the card */
+    [data-lesson-content] details > div,
+    [data-lesson-content] .section-panel-body {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        max-width: 100%;
+    }
+    [data-lesson-content] table {
+        max-width: none;
+    }
+
+    /* M3.3 — probability-tree fill-ins stay tappable; diagram scrolls */
+    .question svg:has(.prob-tree-input),
+    .question-content svg:has(.prob-tree-input) {
+        max-width: none !important;
+        width: auto !important;
+        min-width: 600px;
+        height: auto !important;
+    }
+    svg:has(.prob-tree-input) foreignObject {
+        overflow: visible;
+    }
+    .prob-tree-mobile-hint { display: block; }
+
+    /* M3.5 — Python honesty; keep Check, enlarge lesson Run */
+    .python-desktop-hint {
+        display: block;
+        flex: 1 1 100%;
+        width: 100%;
+    }
+    .free-response-row--python-run .free-response-input--python {
+        min-height: 7.5rem;
+    }
+    #py-run,
+    #py-send {
+        min-height: var(--tap-min);
+    }
+    #py-run { width: 100%; }
+
+    /* M3.6 — long MathJax scrolls in the parent, not clipped by the card */
+    mjx-container[display="true"] {
+        overflow-x: auto;
+        max-width: 100%;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+

@@ -18,6 +18,12 @@
         <span class="hero-pill">Standard questions</span>
         <span class="hero-pill">Multiple choice</span>
         <span class="hero-pill">Foundational · Intermediate · Difficult</span>
+        {% if current_user.is_authenticated and viewer_xp is not none %}
+        <span class="hero-pill profile-xp-pill">
+            <span class="profile-xp-level profile-xp-level--sm">{{ viewer_level }}</span>
+            {{ viewer_xp }} XP this week
+        </span>
+        {% endif %}
     </div>
     <p style="margin:14px 0 0;">
         <a href="{{ url_for('sandbox_plan_a_checkpoints') }}" class="btn btn-secondary">
