@@ -17,7 +17,7 @@ E5 is deliberately small. Every item extends something that already exists — t
 | **E5.2** | Richer badges — 4 new milestones | S | none | — | **Shipped 2026-08-16** |
 | **E5.3** | QOTD week challenge — 7-day friend board | M | none | — | Planned |
 | **E5.4** | Streak freeze — one skip per week | M | `user_streaks` + 1 table | — | Planned |
-| **E5.5** | Avatar extras unlocked by badges | S | none | E5.2 | Planned |
+| **E5.5** | Avatar extras unlocked by badges | S | none | E5.2 | **Shipped 2026-08-20** |
 | **E5.6** | Revision planner subject dropdown (polish) | XS | none | — | Planned |
 | **E5.7** | Web push | L | new table | production HTTPS (M5) | Planned (blocked) |
 
@@ -276,6 +276,7 @@ When M5 lands, the shape is:
 
 - [x] E5.1 buddy v0.5 (all message types incl. `friend_challenge`, faces, on-page coach, MCQ refetch, milestone dismiss; `scripts/test_buddy_smoke.py`)
 - [x] E5.2 richer badges (four new keys, catalog emoji, `scripts/test_milestones_smoke.py`)
+- [x] E5.5 avatar extras gated on milestones (`scripts/test_avatar_smoke.py`)
 - [ ] Smoke test added and registered in `scripts/run_smoke_tests.py`
 - [ ] Full suite green with `PB_TESTING=1`
 - [ ] `CACHE_VERSION` in `static/js/sw.js` bumped if JS/CSS/templates changed (and `scripts/test_pwa_smoke.py` updated)

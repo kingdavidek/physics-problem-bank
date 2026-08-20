@@ -214,9 +214,11 @@ Three items were scoped in **`docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §3.0**. O
 
 Small extensions of shipped systems, specified in **`docs/ENGAGEMENT_E5.md`**. **E5.2 shipped 2026-08-16:** four extra badges (`qotd_first`, `qotd_7`, `questions_50`, `accuracy_top_friend`) plus catalog emoji on the profile.
 
-**E5.1 shipped 2026-08-20** on `cursor/buddy-on-page-coach-embed`: page-aware on-topic coach, per-type faces, all message types (`milestone`, `qotd_nudge`, `friend_challenge`, etc.), server HTML embed, MCQ refetch (`pb-buddy-refetch`), milestone dismiss via **Not now** or **View badges**.
+**E5.1 shipped 2026-08-20** on `cursor/buddy-on-page-coach-embed` (merged to `main`): page-aware on-topic coach, per-type faces, all message types, server HTML embed, MCQ refetch, milestone dismiss.
 
-Remaining E5: 7-day friends-only QOTD board, weekly streak freeze, avatar extras gated on milestones, revision planner subject dropdown, and web push (blocked on production HTTPS / `docs/MOBILE.md` M5).
+**E5.5 shipped 2026-08-20:** avatar extras 🎓/🎧/⭐ unlocked by `topics_10` / `questions_25` / `streak_7` badges; server-side enforcement + locked settings UI.
+
+Remaining E5: 7-day friends-only QOTD board, weekly streak freeze, revision planner subject dropdown, and web push (blocked on production HTTPS / `docs/MOBILE.md` M5).
 
 ---
 
@@ -226,7 +228,7 @@ Pick based on product priority; items are independent enough to sequence differe
 
 **If the site is about to go public, `docs/SECURITY_AND_GDPR.md` Phase S0 comes first** — it is the only item on this list with legal exposure attached. Everything below assumes the site is still development-only.
 
-1. **Continue E5** per recommended order: **E5.5** (avatar unlocks) → **E5.3** (QOTD week board) → **E5.4** (streak freeze) → **E5.6** (planner dropdown). Merge/push `cursor/buddy-on-page-coach-embed` when ready.
+1. **Continue E5** per recommended order: **E5.3** (QOTD week board) → **E5.4** (streak freeze) → **E5.6** (planner dropdown).
 2. **E4.1 real-world question style** — highest content value per line of code (`docs/REAL_WORLD_QUESTIONS.md`).
 3. **G8 — Teacher / class mode** per `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2. Note this adds teacher oversight of children's data — DPIA review required first.
 4. **Mobile M5+** only with a real production HTTPS URL — see `docs/MOBILE.md` (M0–M4 done). Pair with compliance S0; unblocks web push (E5.7).
@@ -243,10 +245,8 @@ Pick based on product priority; items are independent enough to sequence differe
 
 ---
 
-## 9. Active work handoff — E5.5 next (2026-08-20)
+## 9. Active work handoff — E5.3 next (2026-08-20)
 
-**E5.1 shipped** on `cursor/buddy-on-page-coach-embed` (buddy v0.5: all message types incl. `friend_challenge`, on-page coach, faces, MCQ refetch, milestone dismiss). See `docs/ENGAGEMENT_E5.md` §E5.5 for the next item (avatar extras unlocked by badges).
-
-**Verify:** `python scripts/test_buddy_smoke.py` and `python scripts/run_smoke_tests.py` with `PB_TESTING=1`.
+**E5.1** and **E5.5** shipped on `main`. Next: **E5.3** QOTD week challenge — see `docs/ENGAGEMENT_E5.md` §E5.3.
 
 ---

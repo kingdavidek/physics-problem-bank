@@ -77,14 +77,16 @@
                            {% if not settings.avatar or not settings.avatar.extra %}checked{% endif %}>
                     <span>None</span>
                 </label>
-                {% for extra in avatar_extras %}
-                {% if extra %}
-                <label class="avatar-choice">
-                    <input type="radio" name="avatar_extra" value="{{ extra }}"
-                           {% if settings.avatar and settings.avatar.extra == extra %}checked{% endif %}>
-                    <span>{{ extra }}</span>
+                {% for option in avatar_extra_options %}
+                <label class="avatar-choice{% if option.disabled %} avatar-choice--locked{% endif %}">
+                    <input type="radio" name="avatar_extra" value="{{ option.extra }}"
+                           {% if option.disabled %}disabled{% endif %}
+                           {% if settings.avatar and settings.avatar.extra == option.extra %}checked{% endif %}>
+                    <span>{{ option.extra }}</span>
+                    {% if option.disabled and option.unlock_title %}
+                    <span class="profile-empty avatar-choice-hint">Earn <em>{{ option.unlock_title }}</em> to unlock</span>
+                    {% endif %}
                 </label>
-                {% endif %}
                 {% endfor %}
             </fieldset>
         </div>

@@ -262,7 +262,9 @@ from models.avatar import (
     AVATAR_EXTRAS,
     AVATAR_FACES,
     DEFAULT_AVATAR,
+    apply_avatar_extra_policy,
     attach_avatars,
+    avatar_extra_options,
     parse_avatar,
 )
 from models.lesson_search import ensure_lesson_search_index, search_lesson_keywords
@@ -2854,6 +2856,10 @@ def _avatar_from_request_data(data, existing=None):
     return parse_avatar(patch)
 
 
+def _save_avatar_for_user(conn, user_id, avatar, *, previous=None):
+    return apply_avatar_extra_policy(conn, user_id, avatar, previous=previous)
+
+
 def _normalize_share_visibility(value):
     if value in VISIBILITY_CHOICES:
         return value
@@ -4163,21 +4169,27 @@ def profile_settings():
                 'email_weekly_digest': request.form.get('email_weekly_digest') == '1',
                 'show_accuracy_leaderboard': request.form.get('show_accuracy_leaderboard') == '1',
             }
-            if (
-                request.form.get('avatar_face')
-                or request.form.get('avatar_bg')
-                or 'avatar_extra' in request.form
-            ):
-                updated['avatar'] = _avatar_from_request_data(
-                    request.form,
-                    settings.get('avatar'),
-                )
             with get_db() as conn:
+                if (
+                    request.form.get('avatar_face')
+                    or request.form.get('avatar_bg')
+                    or 'avatar_extra' in request.form
+                ):
+                    previous_avatar = settings.get('avatar')
+                    updated['avatar'] = _save_avatar_for_user(
+                        conn,
+                        current_user.id,
+                        _avatar_from_request_data(request.form, previous_avatar),
+                        previous=previous_avatar,
+                    )
                 update_profile_settings(conn, current_user.id, updated)
                 settings = get_profile_settings(conn, current_user.id)
                 api_token_sessions = list_user_tokens(conn, current_user.id)
             flash('Settings saved.', 'success')
             return redirect(url_for('profile_settings'))
+
+    with get_db() as conn:
+        extra_options = avatar_extra_options(conn, current_user.id, settings.get('avatar'))
 
     return render_template(
         'profile_settings.html',
@@ -4194,6 +4206,7 @@ def profile_settings():
         avatar_faces=AVATAR_FACES,
         avatar_backgrounds=AVATAR_BACKGROUNDS,
         avatar_extras=AVATAR_EXTRAS,
+        avatar_extra_options=extra_options,
     )
 
 
@@ -4822,7 +4835,13 @@ def api_v1_patch_settings():
     with get_db() as conn:
         current = _settings_to_json(get_profile_settings(conn, current_user.id))
         if wants_avatar:
-            current['avatar'] = _avatar_from_request_data(payload, current.get('avatar'))
+            previous_avatar = current.get('avatar')
+            current['avatar'] = _save_avatar_for_user(
+                conn,
+                current_user.id,
+                _avatar_from_request_data(payload, previous_avatar),
+                previous=previous_avatar,
+            )
         for key in avatar_keys:
             payload.pop(key, None)
         current.update(payload)

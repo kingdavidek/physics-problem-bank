@@ -188,7 +188,7 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | **Study pairs** | `models/study_pairs.py` | One active buddy; weekly recap |
 | **Question of the Day** | `models/qotd.py`, `models/bot.py` | One **difficult** MCQ per UTC day + friend leaderboard; `@problem_bot` feed card (E1). Counts for study streak only — not topic / MCQ history. Wrong answers show the worked solution. |
 | **Lesson keyword search** | `models/lesson_search.py` | SQLite FTS5 over `topics_data.py` plus stripped `*_lesson.html` pages (E2) |
-| **Avatars** | `models/avatar.py` | Emoji + colour JSON on `user_profile_settings.avatar_json` (E2) |
+| **Avatars** | `models/avatar.py` | Emoji + colour JSON on `user_profile_settings.avatar_json` (E2). Extras 🎓/🎧/⭐ gated on milestones (E5.5) |
 | **Alien buddy** | `models/buddy.py` | Corner widget (E3 + E5.1): types `milestone`, `celebrate`, `qotd_nudge`, `streak_risk`, `weak_topic`, `friend_challenge`, `nudge`; per-type face emoji. Server HTML embed + `study-buddy.js`. On weak topic’s lesson page: **Practise MCQ** / **Take a quiz** / **Keep learning**; refetches after generator MCQ. Milestone dismiss: `pb-buddy-milestone-<key>` via **Not now** or **View badges**. `friend_challenge` links to a followed friend's profile. Off-page **Not now** = UTC day; on-page **Keep learning** = per-topic per day |
 | **Streaks & milestones** | `models/gamification.py` | UTC study-day streak; ten-badge `MILESTONE_CATALOG` (incl. QOTD and friends-only accuracy) shown on the profile with catalog emoji. Awarded via `evaluate_milestones` on any study activity |
 | **Friend leaderboard** | `models/gamification.py` | Effort points and weekly quiz+MCQ accuracy (friends only) |
