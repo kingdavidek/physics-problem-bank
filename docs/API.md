@@ -297,7 +297,7 @@ Exam-date study schedule from weak topics (logged-in only). Spreads scoped weak 
 
 Response `revision_plan`: `exam_date`, `days_remaining`, `study_day_count`, `topics_scheduled`, `weak_topic_count`, `sessions[]` (`plan_date`, `topics[]` with `topic_label`, `topic_url`, `lesson_quiz_url`, `reasons`, weakness metadata).
 
-Profile page: **Exam revision plan** section with date/scope form and day-by-day schedule. Web form: `POST /profile/revision-plan` (CSRF); `action=clear` removes the plan.
+Profile page: **Exam revision plan** section with date/scope form and day-by-day schedule. Web form: `POST /profile/revision-plan` (CSRF); `action=clear` removes the plan. The Subject `<select>` lists every level/subject pair (`data-level`) and is filtered client-side when Level changes (`initRevisionPlanForm` in `site.js`). Invalid pairs are rejected: web form flashes an error and does not save; `PUT` returns `400 invalid_topic`.
 
 ## Quiz history (G2)
 
@@ -332,16 +332,18 @@ See prior phases. Pagination: `?limit=&before_id=` on feed and notifications.
 
 `GET /api/v1/me/buddy` (auth) returns `{ type, message, detail, face, action_url, action_label, actions, topic, milestone_key?, friend_handle? }`. Types: `milestone` (badge earned in last 24 h), `celebrate` (quiz today), `qotd_nudge` (activity today but no QOTD attempt), `streak_risk` (streak would break tomorrow), `weak_topic` (G1), `friend_challenge` (follows ≥1 person, no challenge sent in 7 days — links to followed friend's profile), `nudge`. Priority: milestone > celebrate > qotd_nudge > streak_risk > weak_topic > friend_challenge > nudge. Optional query `level`, `subject`, `topic` is the page the widget is on (the widget also sends `X-PB-Buddy-Path` and the API falls back to the Referer). On that weak topic’s lesson/generator page, `actions` is **Practise MCQ**, **Take a quiz** (when a lesson quiz exists), and a `stay` action **Keep learning {topic}** (hides the card for that topic today; not a global dismiss). `action_url` / `action_label` remain the first link for older clients. Off that page, weak topic still has a single **Practise this** link. Milestone prompts link to `profile#milestones`; **Not now** or **View badges** stores `pb-buddy-milestone-<key>` in localStorage so the same badge is not repeated. After a persisted generator MCQ on the current topic, the client dispatches `pb-buddy-refetch` and the widget updates in place. `GET /api/v1/build-info` returns `{ buddy_embed, study_buddy_js }` version strings for cache debugging. The web widget is non-blocking. Off that page, **Not now** lasts until the next UTC day. On the weak topic’s own lesson page the last button is **Keep learning {topic}** (hides only that on-page card for the UTC day); a previous **Not now** does not hide the on-page coach.
 
-`GET /api/v1/me/gamification` includes `friend_accuracy_leaderboard`: friends-only weekly lesson-quiz + generator-MCQ accuracy (`accuracy_pct`, `earned`/`possible`). `show_accuracy_leaderboard` (settings, default true) hides you from other people’s accuracy boards. Web: `/leaderboard/friends?board=accuracy`. **No global ranking.** `milestones` items are `{key, title, description, emoji, earned_at}`. Catalog includes QOTD badges (`qotd_first`, `qotd_7`), `questions_50`, and friends-only `accuracy_top_friend` (E5.2 — awarded only at rank 1 with ≥2 scored friends and ≥10 answered questions in the week).
+`GET /api/v1/me/gamification` includes `friend_accuracy_leaderboard`: friends-only weekly lesson-quiz + generator-MCQ accuracy (`accuracy_pct`, `earned`/`possible`). `show_accuracy_leaderboard` (settings, default true) hides you from other people’s accuracy boards. Web: `/leaderboard/friends?board=accuracy`. **No global ranking.** `milestones` items are `{key, title, description, emoji, earned_at}`. Catalog includes QOTD badges (`qotd_first`, `qotd_7`), `questions_50`, and friends-only `accuracy_top_friend` (E5.2 — awarded only at rank 1 with ≥2 scored friends and ≥10 answered questions in the week). Also includes `qotd_leaderboard` (today) and `qotd_week_leaderboard` (last 7 UTC days).
 
 `GET /api/v1/qotd/today` is a **difficult** MCQ. Solution HTML and `correct_answer` are omitted until the user has answered. `POST /api/v1/qotd/today/answer` records the attempt for the friend mini-leaderboard and the study streak only — it does **not** write generator MCQ history or topic activity. After a wrong answer the JSON includes `solution_html` (same idea as the generator “Show Answer” panel).
+
+`GET /api/v1/qotd/week/leaderboard` (auth) returns `{ ok, day_keys, leaderboard }` for the last 7 UTC days (override with `?days=` and `?end_day=YYYY-MM-DD`). Rows: `{ rank, user_id, handle, correct_days, answered_days, days_in_window, is_viewer }`, sorted by correct days, then answered days, then earliest answer time, then handle. Respects `show_accuracy_leaderboard` (same opt-out as the accuracy board). Web: `/qotd?board=week`.
+
+`GET /api/v1/me/gamification` includes `study_streak.freeze_available` and `study_streak.freeze_used_dates` (last 7 UTC days). Profile streak card shows "❄️ 1 skip available this week" when a freeze is unused. Buddy `streak_risk` copy is softer when a freeze is available.
 
 ### Planned additions (not implemented)
 
 Document these here when they ship — specs live in `docs/ENGAGEMENT_E5.md`:
 
-- `GET /api/v1/qotd/week/leaderboard` — 7-day friends-only QOTD board (E5.3)
-- `GET /api/v1/me/gamification` gains `qotd_week_leaderboard` and `study_streak.freeze_available` (E5.3 / E5.4)
 - `POST /api/v1/me/push/subscribe`, `DELETE /api/v1/me/push/subscription` — blocked on production HTTPS (E5.7)
 
 The generator endpoints gain a `real_world` value for `mode` when `docs/REAL_WORLD_QUESTIONS.md` is implemented; the request/response shape is otherwise unchanged from `standard`.

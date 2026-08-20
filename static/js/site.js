@@ -100,6 +100,24 @@
     syncSubjectDropdown();
   }
 
+  function initRevisionPlanForm() {
+    var form = document.querySelector('.revision-plan-form');
+    if (!form) return;
+    var levelSel = form.querySelector('#revision-plan-level') || form.querySelector('select[name="level"]');
+    var subjectSel = form.querySelector('#revision-plan-subject') || form.querySelector('select[name="subject"]');
+    if (!levelSel || !subjectSel) return;
+
+    function syncSubjectDropdown() {
+      var level = levelSel.value;
+      var prevSubject = subjectSel.value;
+      setOptionVisibility(subjectSel, subjectPredicate(level));
+      ensureValidSelection(subjectSel, prevSubject);
+    }
+
+    levelSel.addEventListener('change', syncSubjectDropdown);
+    syncSubjectDropdown();
+  }
+
   function syncProblemActionHiddenFields() {
     var levelSel = document.getElementById('level-select');
     var subjectSel = document.getElementById('subject-select');
@@ -4554,6 +4572,7 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     initGeneratorForm();
+    initRevisionPlanForm();
     initQuickTestForm();
     initQuickTestNextForm();
     initMcqInline();

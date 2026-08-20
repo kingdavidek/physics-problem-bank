@@ -218,7 +218,13 @@ Small extensions of shipped systems, specified in **`docs/ENGAGEMENT_E5.md`**. *
 
 **E5.5 shipped 2026-08-20:** avatar extras 🎓/🎧/⭐ unlocked by `topics_10` / `questions_25` / `streak_7` badges; server-side enforcement + locked settings UI.
 
-Remaining E5: 7-day friends-only QOTD board, weekly streak freeze, revision planner subject dropdown, and web push (blocked on production HTTPS / `docs/MOBILE.md` M5).
+**E5.3 shipped 2026-08-20:** 7-day friends-only QOTD leaderboard on `/qotd?board=week` and `GET /api/v1/qotd/week/leaderboard`.
+
+**E5.4 shipped 2026-08-20:** weekly streak freeze — one skip per ISO week, auto-consumed after a single missed day; profile card + gamification API + softer buddy `streak_risk` copy.
+
+**E5.6 shipped 2026-08-20:** exam revision plan Subject dropdown lists every level/subject pair and filters client-side when Level changes; mismatched POST/PUT is rejected.
+
+Remaining E5: web push (blocked on production HTTPS / `docs/MOBILE.md` M5).
 
 ---
 
@@ -228,7 +234,7 @@ Pick based on product priority; items are independent enough to sequence differe
 
 **If the site is about to go public, `docs/SECURITY_AND_GDPR.md` Phase S0 comes first** — it is the only item on this list with legal exposure attached. Everything below assumes the site is still development-only.
 
-1. **Continue E5** per recommended order: **E5.3** (QOTD week board) → **E5.4** (streak freeze) → **E5.6** (planner dropdown).
+1. **Continue E5:** **E5.7** (web push) only after production HTTPS (`docs/MOBILE.md` M5).
 2. **E4.1 real-world question style** — highest content value per line of code (`docs/REAL_WORLD_QUESTIONS.md`).
 3. **G8 — Teacher / class mode** per `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2. Note this adds teacher oversight of children's data — DPIA review required first.
 4. **Mobile M5+** only with a real production HTTPS URL — see `docs/MOBILE.md` (M0–M4 done). Pair with compliance S0; unblocks web push (E5.7).
@@ -245,8 +251,8 @@ Pick based on product priority; items are independent enough to sequence differe
 
 ---
 
-## 9. Active work handoff — E5.3 next (2026-08-20)
+## 9. Active work handoff — E5 complete except push (2026-08-20)
 
-**E5.1** and **E5.5** shipped on `main`. Next: **E5.3** QOTD week challenge — see `docs/ENGAGEMENT_E5.md` §E5.3.
+**E5.6 shipped:** revision planner subject dropdown. Remaining E5 is **E5.7** web push — blocked until `docs/MOBILE.md` M5.
 
 ---

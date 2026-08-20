@@ -94,20 +94,111 @@ EFFORT_WEIGHTS = {
 }
 
 
-def ensure_user_streak(conn, user_id):
+def _iso_week_key(day):
+    year, week, _ = day.isocalendar()
+    return f'{year}-W{week:02d}'
+
+
+def _grant_weekly_freeze(conn, user_id, today):
+    week_key = _iso_week_key(today)
+    row = conn.execute(
+        '''
+        SELECT freeze_available, freeze_week_key
+        FROM user_streaks
+        WHERE user_id = ?
+        ''',
+        (user_id,),
+    ).fetchone()
+    if not row:
+        return
+    if row['freeze_week_key'] != week_key:
+        conn.execute(
+            '''
+            UPDATE user_streaks
+            SET freeze_available = 1, freeze_week_key = ?
+            WHERE user_id = ?
+            ''',
+            (week_key, user_id),
+        )
+
+
+def _freeze_covers(conn, user_id, freeze_date):
+    row = conn.execute(
+        '''
+        SELECT 1 FROM user_streak_freezes
+        WHERE user_id = ? AND freeze_date = ?
+        LIMIT 1
+        ''',
+        (user_id, freeze_date),
+    ).fetchone()
+    return row is not None
+
+
+def _consume_freeze(conn, user_id, freeze_date):
     conn.execute(
         '''
-        INSERT OR IGNORE INTO user_streaks (user_id, current_streak, longest_streak, last_active_date)
-        VALUES (?, 0, 0, NULL)
+        INSERT INTO user_streak_freezes (user_id, freeze_date, used_at)
+        VALUES (?, ?, ?)
+        ''',
+        (user_id, freeze_date, utc_now_iso()),
+    )
+    conn.execute(
+        '''
+        UPDATE user_streaks
+        SET freeze_available = 0
+        WHERE user_id = ?
         ''',
         (user_id,),
     )
 
 
+def _freeze_used_dates(conn, user_id, *, as_of=None):
+    today = as_of or _utc_today()
+    since = (today - timedelta(days=6)).isoformat()
+    rows = conn.execute(
+        '''
+        SELECT freeze_date
+        FROM user_streak_freezes
+        WHERE user_id = ? AND freeze_date >= ?
+        ORDER BY freeze_date ASC
+        ''',
+        (user_id, since),
+    ).fetchall()
+    return [row['freeze_date'] for row in rows]
+
+
+def _streak_row(conn, user_id):
+    return conn.execute(
+        '''
+        SELECT current_streak, longest_streak, last_active_date,
+               freeze_available, freeze_week_key
+        FROM user_streaks
+        WHERE user_id = ?
+        ''',
+        (user_id,),
+    ).fetchone()
+
+
+def ensure_user_streak(conn, user_id, on_date=None):
+    conn.execute(
+        '''
+        INSERT OR IGNORE INTO user_streaks (
+            user_id, current_streak, longest_streak, last_active_date,
+            freeze_available, freeze_week_key
+        )
+        VALUES (?, 0, 0, NULL, 1, NULL)
+        ''',
+        (user_id,),
+    )
+    _grant_weekly_freeze(conn, user_id, on_date or _utc_today())
+
+
 def record_study_day(conn, user_id, on_date=None):
     """Mark a calendar day as active and update streak counters."""
-    ensure_user_streak(conn, user_id)
-    day = (on_date or _utc_today()).isoformat()
+    today = on_date or _utc_today()
+    ensure_user_streak(conn, user_id, on_date=today)
+    day = today.isoformat()
+    _grant_weekly_freeze(conn, user_id, today)
     conn.execute(
         '''
         INSERT OR IGNORE INTO user_study_days (user_id, study_date)
@@ -116,26 +207,24 @@ def record_study_day(conn, user_id, on_date=None):
         (user_id, day),
     )
 
-    row = conn.execute(
-        '''
-        SELECT current_streak, longest_streak, last_active_date
-        FROM user_streaks
-        WHERE user_id = ?
-        ''',
-        (user_id,),
-    ).fetchone()
+    row = _streak_row(conn, user_id)
     last_active = row['last_active_date']
     current = row['current_streak'] or 0
     longest = row['longest_streak'] or 0
+    freeze_available = int(row['freeze_available'] or 0)
 
     if last_active == day:
         conn.commit()
-        return get_study_streak(conn, user_id)
+        return get_study_streak(conn, user_id, as_of=today)
 
     if last_active:
         previous = date.fromisoformat(last_active)
-        today = date.fromisoformat(day)
-        if (today - previous).days == 1:
+        gap_days = (today - previous).days
+        if gap_days == 1:
+            current += 1
+        elif gap_days == 2 and freeze_available:
+            missed_day = (previous + timedelta(days=1)).isoformat()
+            _consume_freeze(conn, user_id, missed_day)
             current += 1
         else:
             current = 1
@@ -152,34 +241,44 @@ def record_study_day(conn, user_id, on_date=None):
         (current, longest, day, user_id),
     )
     conn.commit()
-    return get_study_streak(conn, user_id)
+    return get_study_streak(conn, user_id, as_of=today)
 
 
-def get_study_streak(conn, user_id):
-    ensure_user_streak(conn, user_id)
-    row = conn.execute(
-        '''
-        SELECT current_streak, longest_streak, last_active_date
-        FROM user_streaks
-        WHERE user_id = ?
-        ''',
-        (user_id,),
-    ).fetchone()
+def get_study_streak(conn, user_id, as_of=None):
+    today = as_of or _utc_today()
+    ensure_user_streak(conn, user_id, on_date=today)
+    _grant_weekly_freeze(conn, user_id, today)
+    row = _streak_row(conn, user_id)
     if not row:
-        return {'current': 0, 'longest': 0, 'last_active_date': None}
+        return {
+            'current': 0,
+            'longest': 0,
+            'last_active_date': None,
+            'freeze_available': 1,
+            'freeze_used_dates': [],
+        }
 
     current = row['current_streak'] or 0
     last_active = row['last_active_date']
+    freeze_available = int(row['freeze_available'] or 0)
     if last_active:
         last_day = date.fromisoformat(last_active)
-        gap = (_utc_today() - last_day).days
-        if gap > 1:
-            current = 0
+        gap_days = (today - last_day).days
+        if gap_days > 1:
+            missed_days = gap_days - 1
+            if missed_days == 1:
+                missed_day = (last_day + timedelta(days=1)).isoformat()
+                if not _freeze_covers(conn, user_id, missed_day) and not freeze_available:
+                    current = 0
+            else:
+                current = 0
 
     return {
         'current': current,
         'longest': row['longest_streak'] or 0,
         'last_active_date': last_active,
+        'freeze_available': freeze_available,
+        'freeze_used_dates': _freeze_used_dates(conn, user_id, as_of=today),
     }
 
 

@@ -14,6 +14,7 @@ os.environ['PB_TESTING'] = '1'
 from app import app, get_db  # noqa: E402
 from models.revision_planner import (  # noqa: E402
     build_revision_plan,
+    get_revision_plan_settings,
     revision_plan_for_user,
     upsert_revision_plan_settings,
 )
@@ -110,6 +111,24 @@ def main():
         r = client.put(
             '/api/v1/me/revision-plan',
             json={
+                'level': 'alevel',
+                'subject': 'cs',
+                'exam_date': exam_date,
+            },
+            headers=auth,
+        )
+        assert r.status_code == 400, r.data
+        assert r.get_json()['code'] == 'invalid_topic'
+        r = client.get('/api/v1/me/revision-plan', headers=auth)
+        assert r.status_code == 200, r.data
+        saved = r.get_json()['revision_plan']
+        assert saved['level'] == 'gcse'
+        assert saved['subject'] == 'maths'
+        assert saved['days_remaining'] == 21
+
+        r = client.put(
+            '/api/v1/me/revision-plan',
+            json={
                 'level': 'gcse',
                 'subject': 'maths',
                 'exam_date': (date.today() - timedelta(days=1)).isoformat(),
@@ -147,6 +166,31 @@ def main():
         )
         assert r.status_code == 200
         assert b'Exam revision plan' in r.data
+
+        profile_page = client.get('/profile')
+        html = profile_page.data.decode()
+        assert 'id="revision-plan-subject"' in html
+        assert 'data-level="gcse"' in html
+        assert 'data-level="alevel"' in html
+        assert 'value="cs"' in html
+
+        r = client.post(
+            '/profile/revision-plan',
+            data={
+                'csrf_token': csrf_from(html),
+                'level': 'alevel',
+                'subject': 'cs',
+                'exam_date': exam_date,
+            },
+            follow_redirects=True,
+        )
+        assert r.status_code == 200
+        assert b'Choose a valid level and subject.' in r.data
+        with get_db() as conn:
+            settings = get_revision_plan_settings(conn, user_id)
+            assert settings is not None
+            assert settings['level'] == 'gcse'
+            assert settings['subject'] == 'maths'
 
         r = client.get('/profile')
         assert b'Exam revision plan' in r.data

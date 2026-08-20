@@ -186,7 +186,7 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | **Suggest question** | `models/sharing.py` | Inbox cap 100 |
 | **Friend challenges** | `models/challenges.py` | Same MCQ set, compare scores |
 | **Study pairs** | `models/study_pairs.py` | One active buddy; weekly recap |
-| **Question of the Day** | `models/qotd.py`, `models/bot.py` | One **difficult** MCQ per UTC day + friend leaderboard; `@problem_bot` feed card (E1). Counts for study streak only — not topic / MCQ history. Wrong answers show the worked solution. |
+| **Question of the Day** | `models/qotd.py`, `models/bot.py` | One **difficult** MCQ per UTC day + today and 7-day friend leaderboards (E5.3); `@problem_bot` feed card (E1). Counts for study streak only — not topic / MCQ history. Wrong answers show the worked solution. |
 | **Lesson keyword search** | `models/lesson_search.py` | SQLite FTS5 over `topics_data.py` plus stripped `*_lesson.html` pages (E2) |
 | **Avatars** | `models/avatar.py` | Emoji + colour JSON on `user_profile_settings.avatar_json` (E2). Extras 🎓/🎧/⭐ gated on milestones (E5.5) |
 | **Alien buddy** | `models/buddy.py` | Corner widget (E3 + E5.1): types `milestone`, `celebrate`, `qotd_nudge`, `streak_risk`, `weak_topic`, `friend_challenge`, `nudge`; per-type face emoji. Server HTML embed + `study-buddy.js`. On weak topic’s lesson page: **Practise MCQ** / **Take a quiz** / **Keep learning**; refetches after generator MCQ. Milestone dismiss: `pb-buddy-milestone-<key>` via **Not now** or **View badges**. `friend_challenge` links to a followed friend's profile. Off-page **Not now** = UTC day; on-page **Keep learning** = per-topic per day |
@@ -336,7 +336,7 @@ Lesson quizzes (`generators/shared/lesson_quiz.py`): 10 questions — 3 foundati
 | `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | G8, engagement E4, other future ideas |
 | `docs/ENGAGEMENT_VISUAL.md` | Avatar / buddy visual tokens for E2–E3 |
 | `docs/REAL_WORLD_QUESTIONS.md` | **Planned** — real-world question style (E4.1) implementation plan |
-| `docs/ENGAGEMENT_E5.md` | **In progress** — E5.1–E5.2 shipped; QOTD week, streak freeze, avatar unlocks planned |
+| `docs/ENGAGEMENT_E5.md` | **In progress** — E5.1–E5.6 shipped; web push (E5.7) blocked on HTTPS |
 
 ---
 

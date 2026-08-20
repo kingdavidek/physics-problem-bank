@@ -26,6 +26,9 @@
     <div class="profile-stat-card">
         <strong>{{ study_streak.current }}</strong>
         <span>Day study streak</span>
+        {% if study_streak.freeze_available %}
+        <span class="profile-list-meta">❄️ 1 skip available this week</span>
+        {% endif %}
         {% if study_streak.longest > study_streak.current %}
         <span class="profile-list-meta">Best: {{ study_streak.longest }} days</span>
         {% endif %}
@@ -116,6 +119,8 @@
         <form method="POST" action="{{ url_for('profile_revision_plan_save') }}" class="revision-plan-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="revision-plan-fields">
+                {% set plan_level = revision_plan.level if revision_plan else 'gcse' %}
+                {% set plan_subject = revision_plan.subject if revision_plan else 'maths' %}
                 <label>
                     Exam date
                     <input type="date" name="exam_date" required
@@ -123,8 +128,7 @@
                 </label>
                 <label>
                     Level
-                    <select name="level" required>
-                        {% set plan_level = revision_plan.level if revision_plan else 'gcse' %}
+                    <select name="level" id="revision-plan-level" required>
                         {% for level in revision_plan_levels %}
                         <option value="{{ level }}" {% if level == plan_level %}selected{% endif %}>{{ level | upper }}</option>
                         {% endfor %}
@@ -132,10 +136,10 @@
                 </label>
                 <label>
                     Subject
-                    <select name="subject" required>
-                        {% set plan_subject = revision_plan.subject if revision_plan else 'maths' %}
-                        {% for subject in revision_plan_subjects %}
-                        <option value="{{ subject }}" {% if subject == plan_subject %}selected{% endif %}>{{ subject | replace('_', ' ') | title }}</option>
+                    <select name="subject" id="revision-plan-subject" required>
+                        {% for pair in revision_plan_subjects %}
+                        <option value="{{ pair.subject }}" data-level="{{ pair.level }}"
+                                {% if pair.level == plan_level and pair.subject == plan_subject %}selected{% endif %}>{{ pair.subject | replace('_', ' ') | title }}</option>
                         {% endfor %}
                     </select>
                 </label>

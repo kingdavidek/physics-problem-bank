@@ -186,7 +186,8 @@ def main():
             conn.execute(
                 '''
                 UPDATE user_streaks
-                SET current_streak = 4, longest_streak = 4, last_active_date = ?
+                SET current_streak = 4, longest_streak = 4, last_active_date = ?,
+                    freeze_available = 0
                 WHERE user_id = ?
                 ''',
                 (yesterday, uid_a),

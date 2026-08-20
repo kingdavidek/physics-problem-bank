@@ -352,9 +352,15 @@ def build_buddy_prompt(
         yesterday = (today - timedelta(days=1)).isoformat()
         if last_day == yesterday:
             days = int(streak['current'])
+            if streak.get('freeze_available'):
+                message = (
+                    'You have one skip left this week — but a question now keeps the run honest.'
+                )
+            else:
+                message = f'Your {days}-day streak is at risk. Open a topic today to keep it.'
             return _finish({
                 'type': BUDDY_STREAK_RISK,
-                'message': f'Your {days}-day streak is at risk. Open a topic today to keep it.',
+                'message': message,
                 'detail': 'Streak reminder',
                 'action_kind': 'topics',
                 'action_label': 'Browse topics',

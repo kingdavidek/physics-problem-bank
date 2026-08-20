@@ -248,8 +248,10 @@ from models.study_pairs import (
 from models.qotd import (
     current_day_key,
     friend_qotd_leaderboard,
+    friend_qotd_week_leaderboard,
     get_daily_question,
     get_user_attempt,
+    qotd_window_day_keys,
     record_qotd_answer,
 )
 from models.bot import (
@@ -1067,6 +1069,26 @@ with get_db() as conn:
             current_streak INTEGER NOT NULL DEFAULT 0,
             longest_streak INTEGER NOT NULL DEFAULT 0,
             last_active_date TEXT,
+            freeze_available INTEGER NOT NULL DEFAULT 1,
+            freeze_week_key TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    streak_cols = {
+        row[1] for row in conn.execute('PRAGMA table_info(user_streaks)').fetchall()
+    }
+    if 'freeze_available' not in streak_cols:
+        conn.execute(
+            'ALTER TABLE user_streaks ADD COLUMN freeze_available INTEGER NOT NULL DEFAULT 1'
+        )
+    if 'freeze_week_key' not in streak_cols:
+        conn.execute('ALTER TABLE user_streaks ADD COLUMN freeze_week_key TEXT')
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_streak_freezes (
+            user_id INTEGER NOT NULL,
+            freeze_date TEXT NOT NULL,
+            used_at TEXT NOT NULL,
+            PRIMARY KEY (user_id, freeze_date),
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     """)
@@ -4060,9 +4082,7 @@ def profile():
         reflection_prompt_types=sorted(PROMPT_TYPE_LABELS.items()),
         revision_plan=revision_plan,
         revision_plan_levels=_revision_plan_levels(),
-        revision_plan_subjects=_revision_plan_subjects_for_level(
-            revision_plan['level'] if revision_plan else 'gcse'
-        ),
+        revision_plan_subjects=_revision_plan_scope_options(),
         public_profile_url=_public_profile_url(current_user.handle),
         avatar=avatar or dict(DEFAULT_AVATAR),
     )
@@ -5195,6 +5215,7 @@ def api_v1_me_gamification():
         accuracy_board = friend_accuracy_leaderboard(conn, current_user.id, days=7)
         buddy_recap = buddy_weekly_recap(conn, current_user.id)
         qotd_board = friend_qotd_leaderboard(conn, current_user.id)
+        qotd_week_board = friend_qotd_week_leaderboard(conn, current_user.id)
     if recap.get('best_quiz'):
         bq = recap['best_quiz']
         bq['topic_label'] = _topic_label(bq['level'], bq['subject'], bq['topic'])
@@ -5229,6 +5250,7 @@ def api_v1_me_gamification():
             for item in accuracy_board
         ],
         'qotd_leaderboard': qotd_board,
+        'qotd_week_leaderboard': qotd_week_board,
     })
 
 
@@ -7899,7 +7921,15 @@ def qotd_page():
 
     with get_db() as conn:
         attempt = get_user_attempt(conn, current_user.id, day_key)
-        leaderboard = friend_qotd_leaderboard(conn, current_user.id, day_key)
+        board = (request.args.get('board') or 'today').strip().lower()
+        if board not in ('today', 'week'):
+            board = 'today'
+        if board == 'week':
+            leaderboard = friend_qotd_week_leaderboard(conn, current_user.id)
+            week_day_keys = qotd_window_day_keys()
+        else:
+            leaderboard = friend_qotd_leaderboard(conn, current_user.id, day_key)
+            week_day_keys = []
 
     return render_template(
         'qotd.html',
@@ -7907,6 +7937,8 @@ def qotd_page():
         attempt=attempt,
         leaderboard=leaderboard,
         problem=problem,
+        board=board,
+        week_day_keys=week_day_keys,
     )
 
 
@@ -8199,6 +8231,30 @@ def api_v1_qotd_leaderboard():
     with get_db() as conn:
         board = friend_qotd_leaderboard(conn, current_user.id, day_key)
     return jsonify({'ok': True, 'day_key': day_key, 'leaderboard': board})
+
+
+@app.get('/api/v1/qotd/week/leaderboard')
+@login_required
+def api_v1_qotd_week_leaderboard():
+    try:
+        days = min(max(int(request.args.get('days', 7)), 1), 31)
+    except (TypeError, ValueError):
+        days = 7
+    end_day = (request.args.get('end_day') or '').strip() or None
+    if end_day:
+        try:
+            date.fromisoformat(end_day)
+        except ValueError:
+            return _api_error('end_day must be YYYY-MM-DD', 400, 'invalid_field')
+    day_keys = qotd_window_day_keys(days=days, end_day=end_day)
+    with get_db() as conn:
+        leaderboard = friend_qotd_week_leaderboard(
+            conn,
+            current_user.id,
+            days=days,
+            end_day=end_day,
+        )
+    return jsonify({'ok': True, 'day_keys': day_keys, 'leaderboard': leaderboard})
 
 
 if __name__ == "__main__":
