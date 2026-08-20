@@ -12,9 +12,19 @@
   var subject = wrapper.dataset.lessonSubject;
   var topic = wrapper.dataset.lessonTopic;
   var isLoggedIn = wrapper.dataset.userLoggedIn === '1';
+  var userId = (wrapper.dataset.userId || '').trim();
   var csrfMeta = document.querySelector('meta[name="csrf-token"]');
   var csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
-  var storageKey = 'lesson-progress:' + level + ':' + subject + ':' + topic;
+  var topicStorageSuffix = level + ':' + subject + ':' + topic;
+  var guestStorageKey = 'lesson-progress:' + topicStorageSuffix;
+  var storageKey = null;
+  if (isLoggedIn) {
+    if (userId) {
+      storageKey = 'lesson-progress:u' + userId + ':' + topicStorageSuffix;
+    }
+  } else {
+    storageKey = guestStorageKey;
+  }
 
   var contentRoot;
 
@@ -111,6 +121,7 @@
   }
 
   function readLocalProgress() {
+    if (!storageKey) return [];
     try {
       var raw = window.localStorage.getItem(storageKey);
       if (!raw) return [];
@@ -123,11 +134,19 @@
   }
 
   function writeLocalProgress(keys) {
+    if (!storageKey) return;
     try {
       window.localStorage.setItem(
         storageKey,
         JSON.stringify({ completed_keys: keys })
       );
+    } catch (err) {}
+  }
+
+  function dropSharedGuestProgress() {
+    if (!isLoggedIn) return;
+    try {
+      window.localStorage.removeItem(guestStorageKey);
     } catch (err) {}
   }
 
@@ -300,6 +319,7 @@
     MathJax.startup.promise.then(scheduleLayout).catch(function () {});
   }
 
+  dropSharedGuestProgress();
   applyCompletedKeys(readLocalProgress());
   updateRail();
 
@@ -313,8 +333,10 @@
     )
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        if (!data || !data.progress) return;
-        var serverKeys = (data.progress.completed_keys || []).map(normalizeStepKey);
+        var serverKeys = [];
+        if (data && data.progress) {
+          serverKeys = (data.progress.completed_keys || []).map(normalizeStepKey).filter(Boolean);
+        }
         var localKeys = readLocalProgress();
         var merged = {};
         localKeys.concat(serverKeys).forEach(function (key) {

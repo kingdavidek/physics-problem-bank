@@ -3683,7 +3683,7 @@
     <script src="{{ url_for('static', filename='js/quiz-assist.js') }}?v=1" defer></script>
     {% endif %}
     {% if lesson_meta and not lesson_meta.get('quizReview') %}
-    <script src="{{ url_for('static', filename='js/lesson-progress.js') }}?v=6" defer></script>
+    <script src="{{ url_for('static', filename='js/lesson-progress.js') }}?v=8" defer></script>
     {% endif %}
 </head>
 
@@ -3822,7 +3822,7 @@
 <script src="{{ url_for('static', filename='js/share-suggest.js') }}?v=1" defer></script>
 {% endif %}
 
-<div class="site-wrapper" data-user-logged-in="{% if current_user.is_authenticated %}1{% else %}0{% endif %}"{% if lesson_meta %} data-lesson-level="{{ lesson_meta.level }}" data-lesson-subject="{{ lesson_meta.subject }}" data-lesson-topic="{{ lesson_meta.topic }}" data-lesson-title="{{ lesson_meta.topicTitle|e }}"{% if lesson_meta.get('quizReview') %} data-quiz-review="1"{% else %} data-lesson-content{% endif %}{% endif %}>
+<div class="site-wrapper" data-user-logged-in="{% if current_user.is_authenticated %}1{% else %}0{% endif %}"{% if current_user.is_authenticated %} data-user-id="{{ current_user.id }}"{% endif %}{% if lesson_meta %} data-lesson-level="{{ lesson_meta.level }}" data-lesson-subject="{{ lesson_meta.subject }}" data-lesson-topic="{{ lesson_meta.topic }}" data-lesson-title="{{ lesson_meta.topicTitle|e }}"{% if lesson_meta.get('quizReview') %} data-quiz-review="1"{% else %} data-lesson-content{% endif %}{% endif %}>
     {% block content %}{% endblock %}
 </div>
 

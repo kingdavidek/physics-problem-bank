@@ -173,7 +173,7 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | **Login** | Web session + optional 30-day remember; API Bearer tokens |
 | **Profile dashboard** | `/profile` — saves, progress, quizzes, streaks, Phase G widgets |
 | **Settings** | Visibility, auto-share, notifications, token revoke |
-| **Lesson progress** | Bookmark position per topic |
+| **Lesson progress** | Bookmark position per topic (server + per-user localStorage; logged-in users never inherit another account's browser cache) |
 | **Practice streak** | Updated on graded attempts |
 
 ### 5.4 Social and gamification
