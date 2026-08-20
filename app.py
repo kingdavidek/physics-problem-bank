@@ -143,6 +143,7 @@ from models.notifications import (
     list_notifications,
     mark_all_notifications_read,
     mark_notification_read,
+    mark_study_pair_notifications_read,
     mark_suggestion_notifications_read,
 )
 from models.user_data import (
@@ -241,6 +242,7 @@ from models.study_pairs import (
     decline_study_pair,
     end_study_pair,
     get_active_study_pair,
+    get_study_pair_row,
     invite_study_pair,
     list_pending_study_pair_invites,
     serialize_study_pair,
@@ -2690,6 +2692,26 @@ def _notify_challenge_complete(conn, user_id, challenge_id, creator_handle, oppo
     )
 
 
+def _study_pair_error_message(exc):
+    code = str(exc)
+    messages = {
+        'pair_not_found': 'This study buddy invite is no longer available.',
+        'invite_not_pending': 'This invite was already accepted or declined.',
+        'not_recipient': 'This invite is not for your account.',
+        'already_paired': 'You already have a study buddy.',
+        'target_paired': 'That user already has a study buddy.',
+    }
+    return messages.get(code, code.replace('_', ' '))
+
+
+def _study_pair_api_error(exc):
+    code = str(exc)
+    status = 404 if code == 'pair_not_found' else 409 if code in (
+        'invite_not_pending', 'not_recipient', 'already_paired', 'target_paired',
+    ) else 400
+    return _api_error(_study_pair_error_message(exc), status, code)
+
+
 def _notify_study_pair_invite(conn, to_user_id, from_handle, pair_id):
     create_notification(
         conn,
@@ -2699,9 +2721,11 @@ def _notify_study_pair_invite(conn, to_user_id, from_handle, pair_id):
     )
 
 
-def _serialize_notification_item(item):
+def _serialize_notification_item(item, *, conn=None, viewer_id=None):
     payload = item.get('payload') or {}
     ntype = item.get('notification_type', '')
+    pair_id = payload.get('pair_id')
+    actions = []
     if ntype == NOTIFICATION_SUGGESTION:
         handle = payload.get('sender_handle', 'someone')
         topic = payload.get('topic_label', 'a topic')
@@ -2725,7 +2749,16 @@ def _serialize_notification_item(item):
     elif ntype == NOTIFICATION_STUDY_PAIR:
         handle = payload.get('from_handle', 'someone')
         message = f'@{handle} invited you to be study buddies'
-        url = url_for('profile')
+        url = url_for('public_profile', handle=handle)
+        if conn is not None and viewer_id is not None and pair_id:
+            row = get_study_pair_row(conn, int(pair_id))
+            if (
+                row
+                and row['status'] == PAIR_PENDING
+                and int(row['to_user_id']) == int(viewer_id)
+            ):
+                actions = ['accept', 'ignore']
+                url = None
     else:
         message = 'New notification'
         url = url_for('profile')
@@ -2734,6 +2767,8 @@ def _serialize_notification_item(item):
         'type': ntype,
         'message': message,
         'url': url,
+        'pair_id': pair_id if ntype == NOTIFICATION_STUDY_PAIR else None,
+        'actions': actions,
         'read': item.get('read_at') is not None,
         'created_at': item.get('created_at'),
     }
@@ -5018,7 +5053,12 @@ def api_v1_list_notifications():
     return jsonify({
         'ok': True,
         'unread_count': unread,
-        'notifications': [_serialize_notification_item(item) for item in items],
+        'notifications': [
+            _serialize_notification_item(
+                item, conn=conn, viewer_id=current_user.id,
+            )
+            for item in items
+        ],
         'next_before_id': items[-1]['id'] if items else None,
     })
 
@@ -7856,13 +7896,11 @@ def study_pair_accept(pair_id):
     with get_db() as conn:
         try:
             pair = accept_study_pair(conn, pair_id, current_user.id)
-        except ValueError:
-            flash('Could not accept — one of you may already have a buddy.', 'error')
+        except ValueError as exc:
+            flash(_study_pair_error_message(exc), 'error')
         else:
-            if pair:
-                flash('Study buddy connected!', 'success')
-            else:
-                flash('Invite not found.', 'error')
+            mark_study_pair_notifications_read(conn, current_user.id, pair_id)
+            flash('Study buddy connected!', 'success')
     return redirect(url_for('profile'))
 
 
@@ -7873,7 +7911,12 @@ def study_pair_decline(pair_id):
         flash('Your session expired.', 'error')
         return redirect(url_for('profile'))
     with get_db() as conn:
-        if decline_study_pair(conn, pair_id, current_user.id):
+        try:
+            decline_study_pair(conn, pair_id, current_user.id)
+        except ValueError as exc:
+            flash(_study_pair_error_message(exc), 'error')
+        else:
+            mark_study_pair_notifications_read(conn, current_user.id, pair_id)
             flash('Invite declined.', 'success')
     return redirect(url_for('profile'))
 
@@ -8131,9 +8174,8 @@ def api_v1_study_pair_accept(pair_id):
         try:
             pair = accept_study_pair(conn, pair_id, current_user.id)
         except ValueError as exc:
-            return _api_error(str(exc).replace('_', ' '), 409, str(exc))
-        if not pair:
-            return _api_error('Not found', 404, 'not_found')
+            return _study_pair_api_error(exc)
+        mark_study_pair_notifications_read(conn, current_user.id, pair_id)
     return jsonify({'ok': True, 'study_pair': serialize_study_pair(pair, current_user.id)})
 
 
@@ -8141,8 +8183,11 @@ def api_v1_study_pair_accept(pair_id):
 @login_required
 def api_v1_study_pair_decline(pair_id):
     with get_db() as conn:
-        if not decline_study_pair(conn, pair_id, current_user.id):
-            return _api_error('Cannot decline', 400, 'invalid_state')
+        try:
+            decline_study_pair(conn, pair_id, current_user.id)
+        except ValueError as exc:
+            return _study_pair_api_error(exc)
+        mark_study_pair_notifications_read(conn, current_user.id, pair_id)
     return jsonify({'ok': True})
 
 

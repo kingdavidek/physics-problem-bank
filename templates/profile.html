@@ -22,6 +22,30 @@
     {% endfor %}
 {% endwith %}
 
+{% if study_pair_invites %}
+<section class="section-panel profile-study-buddy-alert" id="study-buddy">
+    <div class="section-panel-header">Study buddy invite</div>
+    <div class="section-panel-body">
+        <p class="profile-empty" style="margin-top:0;margin-bottom:12px;">Someone wants to be your accountability buddy. Respond here or from the notification bell.</p>
+        <ul class="profile-list">
+            {% for inv in study_pair_invites %}
+            <li>
+                <strong>@{{ inv.invited_by_handle }}</strong>
+                <form method="POST" action="{{ url_for('study_pair_accept', pair_id=inv.id) }}" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-primary btn-sm">Accept</button>
+                </form>
+                <form method="POST" action="{{ url_for('study_pair_decline', pair_id=inv.id) }}" style="display:inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline btn-sm">Ignore</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+{% endif %}
+
 <div class="profile-stats-row">
     <div class="profile-stat-card">
         <strong>{{ study_streak.current }}</strong>
@@ -41,7 +65,43 @@
         <strong>{{ weekly_recap.topics_practised }}</strong>
         <span>Topics this week</span>
     </div>
+    {% if study_pair %}
+    <div class="profile-stat-card">
+        <strong>@{{ study_pair.buddy_handle }}</strong>
+        <span>Study buddy</span>
+        <a href="#study-buddy" class="profile-list-meta">View details</a>
+    </div>
+    {% endif %}
 </div>
+
+{% if study_pair %}
+<section class="section-panel" id="study-buddy">
+    <div class="section-panel-header">Study buddy</div>
+    <div class="section-panel-body">
+        <p>Accountability partner: <strong>@{{ study_pair.buddy_handle }}</strong></p>
+        {% if buddy_recap %}
+        <p class="profile-empty" style="margin-top:8px;">
+            This week: you {{ buddy_recap.your_active_days }} active days · buddy {{ buddy_recap.buddy_active_days }} ·
+            {{ buddy_recap.shared_topics }} topic(s) in common
+        </p>
+        {% endif %}
+        <p class="profile-empty" style="margin-top:8px;">
+            <a href="{{ url_for('public_profile', handle=study_pair.buddy_handle) }}">View @{{ study_pair.buddy_handle }}'s profile</a>
+        </p>
+        <form method="POST" action="{{ url_for('study_pair_end') }}" style="margin-top:12px;" onsubmit="return confirm('End study buddy link?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline">End buddy link</button>
+        </form>
+    </div>
+</section>
+{% elif not study_pair_invites %}
+<section class="section-panel" id="study-buddy">
+    <div class="section-panel-header">Study buddy</div>
+    <div class="section-panel-body">
+        <p class="profile-empty">Invite one friend as an accountability buddy from their public profile.</p>
+    </div>
+</section>
+{% endif %}
 
 <section class="section-panel">
     <div class="section-panel-header">This week</div>
@@ -260,46 +320,6 @@
     </div>
 </section>
 {% endif %}
-
-<section class="section-panel">
-    <div class="section-panel-header">
-        Study buddy
-    </div>
-    <div class="section-panel-body">
-        {% if study_pair %}
-        <p>Accountability partner: <strong>@{{ study_pair.buddy_handle }}</strong></p>
-        {% if buddy_recap %}
-        <p class="profile-empty" style="margin-top:8px;">
-            This week: you {{ buddy_recap.your_active_days }} active days · buddy {{ buddy_recap.buddy_active_days }} ·
-            {{ buddy_recap.shared_topics }} topic(s) in common
-        </p>
-        {% endif %}
-        <form method="POST" action="{{ url_for('study_pair_end') }}" style="margin-top:12px;" onsubmit="return confirm('End study buddy link?');">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-outline">End buddy link</button>
-        </form>
-        {% elif study_pair_invites %}
-        <p class="profile-empty">Pending invites:</p>
-        <ul class="profile-list">
-            {% for inv in study_pair_invites %}
-            <li>
-                @{{ inv.invited_by_handle }}
-                <form method="POST" action="{{ url_for('study_pair_accept', pair_id=inv.id) }}" style="display:inline;">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-primary btn-sm">Accept</button>
-                </form>
-                <form method="POST" action="{{ url_for('study_pair_decline', pair_id=inv.id) }}" style="display:inline;">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-outline btn-sm">Decline</button>
-                </form>
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <p class="profile-empty">Invite one friend as an accountability buddy from their public profile.</p>
-        {% endif %}
-    </div>
-</section>
 
 <section class="section-panel">
     <div class="section-panel-header">

@@ -54,9 +54,21 @@ def main():
         assert r.status_code == 200
         assert len(r.get_json()['pending_invites']) == 1
 
+        r = client.get('/api/v1/me/notifications', headers=auth_b)
+        assert r.status_code == 200
+        invite_notif = next(
+            n for n in r.get_json()['notifications']
+            if n['type'] == 'study_pair_invite' and n['pair_id'] == pair_id
+        )
+        assert invite_notif['actions'] == ['accept', 'ignore']
+
         r = client.post(f'/api/v1/study-pairs/{pair_id}/accept', headers=auth_b)
         assert r.status_code == 200
         assert r.get_json()['study_pair']['status'] == 'active'
+
+        r = client.post(f'/api/v1/study-pairs/{pair_id}/accept', headers=auth_b)
+        assert r.status_code == 409
+        assert r.get_json()['code'] == 'invite_not_pending'
 
         r = client.get('/api/v1/me/study-pair', headers=auth_a)
         assert r.get_json()['study_pair']['buddy_handle'] == handle_b

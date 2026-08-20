@@ -92,6 +92,32 @@ def mark_all_notifications_read(conn, user_id):
     return cursor.rowcount
 
 
+def mark_study_pair_notifications_read(conn, user_id, pair_id):
+    rows = conn.execute(
+        '''
+        SELECT id, payload_json FROM user_notifications
+        WHERE user_id = ? AND notification_type = ? AND read_at IS NULL
+        ''',
+        (user_id, NOTIFICATION_STUDY_PAIR),
+    ).fetchall()
+    now = utc_now_iso()
+    marked = 0
+    for row in rows:
+        try:
+            payload = json.loads(row['payload_json'] or '{}')
+        except (TypeError, ValueError, json.JSONDecodeError):
+            payload = {}
+        if int(payload.get('pair_id') or 0) == int(pair_id):
+            conn.execute(
+                'UPDATE user_notifications SET read_at = ? WHERE id = ?',
+                (now, row['id']),
+            )
+            marked += 1
+    if marked:
+        conn.commit()
+    return marked
+
+
 def mark_suggestion_notifications_read(conn, user_id, suggestion_id):
     rows = conn.execute(
         '''
