@@ -29,15 +29,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 
     <!-- App CSS - load order is significant (docs/UI_REDESIGN.md U0) -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}?v=16">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=16">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=16">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=16">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/practice.css') }}?v=16">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=16">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}?v=16">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/diagrams.css') }}?v=16">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/lesson-assist.css') }}?v=16">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}?v=17">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=17">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=17">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=18">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/practice.css') }}?v=17">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=18">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}?v=17">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/diagrams.css') }}?v=17">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/lesson-assist.css') }}?v=17">
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- Problem Bank build: buddy-embed-v4 -->
@@ -51,15 +51,15 @@
     ></script>
     <!-- External site logic (dropdowns, MCQs, etc.) -->
     <script src="{{ url_for('static', filename='js/python-run-grader.js') }}?v=4" defer></script>
-    <script src="{{ url_for('static', filename='js/site.js') }}?v=16" defer></script>
-    <script src="{{ url_for('static', filename='js/site-search.js') }}?v=16" defer></script>
+    <script src="{{ url_for('static', filename='js/site.js') }}?v=18" defer></script>
+    <script src="{{ url_for('static', filename='js/site-search.js') }}?v=17" defer></script>
     <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=4" defer></script>
     <script src="{{ url_for('static', filename='js/tab-bar.js') }}?v=1" defer></script>
     <script src="{{ url_for('static', filename='js/celebrate.js') }}?v=2" defer></script>
     <script src="{{ url_for('static', filename='js/u4.js') }}?v=2" defer></script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=4" defer></script>
     {% if current_user.is_authenticated %}
-    <script src="{{ url_for('static', filename='js/notifications.js') }}?v=16" defer></script>
+    <script src="{{ url_for('static', filename='js/notifications.js') }}?v=17" defer></script>
     <script>
     try {
       if (window.localStorage.getItem('pb-buddy-storage') !== 'v2') {
@@ -73,20 +73,20 @@
       }
     } catch (e) {}
     </script>
-    <script src="{{ url_for('static', filename='js/study-buddy.js') }}?v=16" defer></script>
+    <script src="{{ url_for('static', filename='js/study-buddy.js') }}?v=17" defer></script>
     {% endif %}
     {% if lesson_assist_enabled and lesson_meta and not lesson_meta.get('quizReview') %}
-    <script src="{{ url_for('static', filename='js/lesson-assist.js') }}?v=16" defer></script>
+    <script src="{{ url_for('static', filename='js/lesson-assist.js') }}?v=17" defer></script>
     {% endif %}
     {% if lesson_assist_enabled and lesson_meta and lesson_meta.get('quizReview') %}
     <script src="{{ url_for('static', filename='js/quiz-assist.js') }}?v=1" defer></script>
     {% endif %}
     {% if lesson_meta and not lesson_meta.get('quizReview') %}
-    <script src="{{ url_for('static', filename='js/lesson-progress.js') }}?v=16" defer></script>
+    <script src="{{ url_for('static', filename='js/lesson-progress.js') }}?v=17" defer></script>
     {% endif %}
 </head>
 
-<body>
+<body{% if quiz_runner_mode %} class="quiz-runner-active"{% endif %}>
 
 <div id="pwa-offline-bar" class="pwa-offline-bar" hidden role="status">You’re offline — some features need a connection.</div>
 
@@ -233,7 +233,7 @@
 <script src="{{ url_for('static', filename='js/share-suggest.js') }}?v=1" defer></script>
 {% endif %}
 
-<div class="site-wrapper" data-user-logged-in="{% if current_user.is_authenticated %}1{% else %}0{% endif %}"{% if lesson_meta %} data-lesson-level="{{ lesson_meta.level }}" data-lesson-subject="{{ lesson_meta.subject }}" data-lesson-topic="{{ lesson_meta.topic }}" data-lesson-title="{{ lesson_meta.topicTitle|e }}"{% if lesson_meta.get('quizUrl') %} data-lesson-quiz-url="{{ lesson_meta.quizUrl }}" data-lesson-quiz-count="{{ lesson_meta.quizCount }}"{% endif %}{% if lesson_meta.get('practiceUrl') %} data-lesson-practice-url="{{ lesson_meta.practiceUrl }}"{% endif %}{% if lesson_meta.get('quizReview') %} data-quiz-review="1"{% else %} data-lesson-content{% endif %}{% endif %}>
+<div class="site-wrapper{% if quiz_runner_mode %} site-wrapper--quiz-runner{% endif %}" data-user-logged-in="{% if current_user.is_authenticated %}1{% else %}0{% endif %}"{% if lesson_meta %} data-lesson-level="{{ lesson_meta.level }}" data-lesson-subject="{{ lesson_meta.subject }}" data-lesson-topic="{{ lesson_meta.topic }}" data-lesson-title="{{ lesson_meta.topicTitle|e }}"{% if lesson_meta.get('quizUrl') %} data-lesson-quiz-url="{{ lesson_meta.quizUrl }}" data-lesson-quiz-count="{{ lesson_meta.quizCount }}"{% endif %}{% if lesson_meta.get('practiceUrl') %} data-lesson-practice-url="{{ lesson_meta.practiceUrl }}"{% endif %}{% if lesson_meta.get('quizReview') %} data-quiz-review="1"{% else %} data-lesson-content{% endif %}{% endif %}>
     {% block content %}{% endblock %}
 </div>
 
@@ -332,7 +332,7 @@
 {% endif %}
 {% endif %}
 
-<nav class="app-tab-bar{% if not current_user.is_authenticated %} app-tab-bar--guest{% endif %}" id="app-tab-bar" aria-label="Main navigation">
+<nav class="app-tab-bar{% if not current_user.is_authenticated %} app-tab-bar--guest{% endif %}{% if quiz_runner_mode %} app-tab-bar--hidden{% endif %}" id="app-tab-bar" aria-label="Main navigation"{% if quiz_runner_mode %} hidden{% endif %}>
     {% if current_user.is_authenticated %}
     <a href="/" class="app-tab{% if nav_tab == 'practice' %} is-active{% endif %}">
         <span class="app-tab-icon" aria-hidden="true">

@@ -391,23 +391,36 @@
     };
   }
 
+  function syncQuickTestFormFields() {
+    var state = collectQuickTestAnswerState();
+    var userEl = document.getElementById('qt-user-answer');
+    var checkedEl = document.getElementById('qt-checked');
+    var correctEl = document.getElementById('qt-correct');
+    var scoreEl = document.getElementById('qt-score');
+    var scoreTotalEl = document.getElementById('qt-score-total');
+    if (userEl) userEl.value = state.userAnswer || '';
+    if (checkedEl) checkedEl.value = state.checked ? '1' : '0';
+    if (correctEl) {
+      correctEl.value = state.correct === true ? '1' : (state.correct === false ? '0' : '');
+    }
+    if (scoreEl) scoreEl.value = state.score != null ? String(state.score) : '';
+    if (scoreTotalEl) scoreTotalEl.value = state.scoreTotal != null ? String(state.scoreTotal) : '';
+    return state;
+  }
+
+  function dispatchQuicktestChecked(detail) {
+    if (!document.getElementById('quicktest-quiz-runner')) return;
+    document.dispatchEvent(new CustomEvent('pb-quicktest-checked', {
+      bubbles: true,
+      detail: detail || collectQuickTestAnswerState(),
+    }));
+  }
+
   function initQuickTestNextForm() {
     var form = document.getElementById('quicktest-next-form');
     if (!form) return;
     form.addEventListener('submit', function () {
-      var state = collectQuickTestAnswerState();
-      var userEl = document.getElementById('qt-user-answer');
-      var checkedEl = document.getElementById('qt-checked');
-      var correctEl = document.getElementById('qt-correct');
-      var scoreEl = document.getElementById('qt-score');
-      var scoreTotalEl = document.getElementById('qt-score-total');
-      if (userEl) userEl.value = state.userAnswer || '';
-      if (checkedEl) checkedEl.value = state.checked ? '1' : '0';
-      if (correctEl) {
-        correctEl.value = state.correct === true ? '1' : (state.correct === false ? '0' : '');
-      }
-      if (scoreEl) scoreEl.value = state.score != null ? String(state.score) : '';
-      if (scoreTotalEl) scoreTotalEl.value = state.scoreTotal != null ? String(state.scoreTotal) : '';
+      syncQuickTestFormFields();
     });
   }
 
@@ -760,6 +773,11 @@
             }
           });
         }
+        dispatchQuicktestChecked({
+          userAnswer: letter,
+          checked: true,
+          correct: isCorrect,
+        });
       });
     });
   }
@@ -4090,6 +4108,7 @@
           if (trackable && block.dataset.freeResponsePersisted !== '1') {
             block.dataset.freeResponsePersisted = '1';
           }
+          dispatchQuicktestChecked(freeResponseCheckState(block));
         })
         .catch(function (err) {
           if (answerType === 'number_line') {
@@ -4106,6 +4125,9 @@
           if (feedback) {
             feedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
             feedback.style.color = '#dc2626';
+          }
+          if (document.getElementById('quicktest-quiz-runner')) {
+            document.dispatchEvent(new CustomEvent('pb-quicktest-check-failed', { bubbles: true }));
           }
         });
     }
@@ -4577,6 +4599,10 @@
   }
 
   window.showAppToast = showAppToast;
+  window.pbQuicktest = {
+    collectState: collectQuickTestAnswerState,
+    syncFormFields: syncQuickTestFormFields,
+  };
 
   document.addEventListener('DOMContentLoaded', function () {
     initGeneratorForm();

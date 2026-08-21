@@ -371,7 +371,7 @@ def _enforce_api_csrf():
         return None
     if _wants_json_response() or request.path.startswith('/api/'):
         return _api_error('Invalid or missing CSRF token', 403, 'invalid_csrf')
-    flash('Your session expired. Please try again.', 'error')
+    flash_for('index', 'Your session expired. Please try again.', 'error')
     return redirect(url_for('index'))
 
 
@@ -392,6 +392,31 @@ def _validate_csrf(form_token):
     if not form_token or not expected:
         return False
     return secrets.compare_digest(str(form_token), str(expected))
+
+
+_PAGE_FLASH_SESSION_KEY = '_page_flashes'
+
+
+def flash_for(page, message, category='message'):
+    """Queue a flash message visible only on templates that call pop_flashes_for(page)."""
+    bucket = session.setdefault(_PAGE_FLASH_SESSION_KEY, {})
+    bucket.setdefault(page, []).append({'category': category, 'message': message})
+    session.modified = True
+
+
+def pop_flashes_for(page):
+    """Return and clear flash messages scoped to a page endpoint name."""
+    bucket = session.get(_PAGE_FLASH_SESSION_KEY, {})
+    messages = bucket.pop(page, [])
+    if bucket:
+        session[_PAGE_FLASH_SESSION_KEY] = bucket
+    else:
+        session.pop(_PAGE_FLASH_SESSION_KEY, None)
+    session.modified = True
+    return [(item['category'], item['message']) for item in messages]
+
+
+app.template_global()(pop_flashes_for)
 
 
 def _safe_redirect_target(candidate, default_endpoint='profile'):
@@ -585,7 +610,7 @@ def format_question_html(value):
 
 
 _NAV_TAB_ENDPOINTS = {
-    'practice': {'index'},
+    'practice': {'index', 'quicktest_question', 'quicktest_results'},
     'learn': {'topics_index', 'topic_page', 'lesson_mcq_quiz', 'lesson_mcq_results', 'view_quiz_attempt'},
     'daily': {'qotd_page'},
     'compete': {'friend_leaderboard_page', 'challenges_list', 'challenge_new', 'challenge_detail'},
@@ -607,6 +632,13 @@ def _resolve_nav_tab(endpoint):
     return None
 
 
+_QUIZ_RUNNER_ENDPOINTS = frozenset({
+    'lesson_mcq_quiz',
+    'lesson_mcq_results',
+    'quicktest_question',
+    'quicktest_results',
+    'view_quiz_attempt',
+})
 @app.context_processor
 def inject_nav():
     lesson_meta = None
@@ -713,6 +745,7 @@ def inject_nav():
         'nav_avatar': nav_avatar,
         'nav_streak': nav_streak,
         'tab_badges': tab_badges,
+        'quiz_runner_mode': request.endpoint in _QUIZ_RUNNER_ENDPOINTS,
     }
 
 
@@ -1514,6 +1547,15 @@ def _quiz_assist_item(problem, user_answer, question_number):
     }
 
 
+def _lesson_quiz_session_can_retry(level, subject, topic):
+    data = _load_lq()
+    if not data:
+        return False
+    if data.get('level') != level or data.get('subject') != subject or data.get('topic') != topic:
+        return False
+    return bool(data.get('answers'))
+
+
 def _render_quiz_results(
     problems,
     score,
@@ -1529,7 +1571,10 @@ def _render_quiz_results(
     back_label=None,
     show_wrong_explanations_only=True,
     quiz_attempt_id=None,
+    can_retry_wrong=None,
 ):
+    if can_retry_wrong is None:
+        can_retry_wrong = _lesson_quiz_session_can_retry(level, subject, topic)
     return render_template(
         'lesson_mcq_results.html',
         problems=problems,
@@ -1548,6 +1593,7 @@ def _render_quiz_results(
         back_label=back_label or '← Back to lesson',
         show_wrong_explanations_only=show_wrong_explanations_only,
         quiz_attempt_id=quiz_attempt_id,
+        can_retry_wrong=can_retry_wrong,
     )
 
 
@@ -3454,6 +3500,30 @@ def _quicktest_results_summary(problems, answers):
     }
 
 
+def _quicktest_answer_is_wrong(problem, answer):
+    """Whether a completed Quick Test question should be offered for retry."""
+    answer = answer or {}
+    if problem.get('options'):
+        return not answer.get('correct')
+    if problem.get('correct_answer_raw'):
+        if not answer.get('checked'):
+            return True
+        score_total = answer.get('score_total')
+        if score_total:
+            return int(answer.get('score') or 0) < int(score_total)
+        return not answer.get('correct')
+    return False
+
+
+def _quicktest_wrong_count(problems, answers):
+    wrong = 0
+    for i, problem in enumerate(problems):
+        answer = answers[i] if i < len(answers) else {}
+        if _quicktest_answer_is_wrong(problem, answer):
+            wrong += 1
+    return wrong
+
+
 _SESSION_PROBLEM_DROP_KEYS = frozenset({
     'diagram_svg', 'figure_svg', 'svg', 'image_svg', 'graph_svg',
     'solution_html', 'hint_html', 'question_html',
@@ -4067,7 +4137,7 @@ def register():
                         ensure_user_profile(conn, user.id)
                         login_user(user, remember=True)
                         user.touch_login(conn)
-                        flash('Welcome to Problem Bank!', 'success')
+                        flash_for('profile', 'Welcome to Problem Bank!', 'success')
                         return redirect(url_for('profile'))
 
     return render_template('register.html', errors=errors, form=form)
@@ -4120,10 +4190,10 @@ def login():
 @app.post('/logout')
 def logout():
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired. Please try again.', 'error')
+        flash_for('index', 'Your session expired. Please try again.', 'error')
         return redirect(url_for('index'))
     logout_user()
-    flash('You have been logged out.', 'success')
+    flash_for('index', 'You have been logged out.', 'success')
     return redirect(url_for('index'))
 
 
@@ -4233,13 +4303,13 @@ def profile():
 @login_required
 def profile_revision_plan_save():
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Session expired — try again.', 'error')
+        flash_for('profile', 'Session expired — try again.', 'error')
         return redirect(url_for('profile'))
 
     if request.form.get('action') == 'clear':
         with get_db() as conn:
             delete_revision_plan_settings(conn, current_user.id)
-        flash('Exam revision plan cleared.', 'success')
+        flash_for('profile', 'Exam revision plan cleared.', 'success')
         return redirect(url_for('profile'))
 
     level = (request.form.get('level') or '').strip()
@@ -4248,7 +4318,7 @@ def profile_revision_plan_save():
     try:
         TOPICS[level][subject]
     except KeyError:
-        flash('Choose a valid level and subject.', 'error')
+        flash_for('profile', 'Choose a valid level and subject.', 'error')
         return redirect(url_for('profile'))
     try:
         with get_db() as conn:
@@ -4262,16 +4332,16 @@ def profile_revision_plan_save():
     except ValueError as exc:
         code = str(exc)
         if code == 'exam_date_past':
-            flash('Exam date must be today or in the future.', 'error')
+            flash_for('profile', 'Exam date must be today or in the future.', 'error')
         elif code == 'exam_date_too_far':
-            flash(f'Exam date must be within {MAX_EXAM_LEAD_DAYS} days.', 'error')
+            flash_for('profile', f'Exam date must be within {MAX_EXAM_LEAD_DAYS} days.', 'error')
         elif code == 'invalid_exam_date':
-            flash('Enter a valid exam date.', 'error')
+            flash_for('profile', 'Enter a valid exam date.', 'error')
         else:
-            flash('Could not save revision plan — check your inputs.', 'error')
+            flash_for('profile', 'Could not save revision plan — check your inputs.', 'error')
         return redirect(url_for('profile'))
 
-    flash('Exam revision plan updated.', 'success')
+    flash_for('profile', 'Exam revision plan updated.', 'success')
     return redirect(url_for('profile'))
 
 
@@ -4289,12 +4359,13 @@ def profile_settings():
         elif request.form.get('action') == 'revoke_all_api_tokens':
             with get_db() as conn:
                 revoke_all_tokens(conn, current_user.id)
-            flash('All app sessions have been signed out.', 'success')
+            flash_for('profile_settings', 'All app sessions have been signed out.', 'success')
             return redirect(url_for('profile_settings'))
         elif request.form.get('action') == 'send_test_digest':
             cfg = mail_config()
             if not cfg['enabled'] and cfg['provider'] != 'console':
-                flash(
+                flash_for(
+                    'profile_settings',
                     'Email sending is not enabled yet. See docs/EMAIL_SETUP.md when you launch.',
                     'error',
                 )
@@ -4306,9 +4377,9 @@ def profile_settings():
                         topic_label_fn=_topic_label,
                     )
                 if ok:
-                    flash('Test recap email sent (check your inbox or server logs).', 'success')
+                    flash_for('profile_settings', 'Test recap email sent (check your inbox or server logs).', 'success')
                 else:
-                    flash(f'Could not send test email: {err}', 'error')
+                    flash_for('profile_settings', f'Could not send test email: {err}', 'error')
             return redirect(url_for('profile_settings'))
         else:
             updated = {
@@ -4346,7 +4417,7 @@ def profile_settings():
                 update_profile_settings(conn, current_user.id, updated)
                 settings = get_profile_settings(conn, current_user.id)
                 api_token_sessions = list_user_tokens(conn, current_user.id)
-            flash('Settings saved.', 'success')
+            flash_for('profile_settings', 'Settings saved.', 'success')
             return redirect(url_for('profile_settings'))
 
     with get_db() as conn:
@@ -4502,13 +4573,13 @@ def public_profile_following(handle):
 @login_required
 def follow_user_route(handle):
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired. Please try again.', 'error')
+        flash_for('index', 'Your session expired. Please try again.', 'error')
         return redirect(request.referrer or url_for('index'))
 
     with get_db() as conn:
         target = get_user_by_handle(conn, handle)
         if not target or not target.is_active:
-            flash('User not found.', 'error')
+            flash_for('index', 'User not found.', 'error')
             return redirect(url_for('index'))
         if target.id == current_user.id:
             return redirect(_public_profile_url(handle))
@@ -4516,7 +4587,7 @@ def follow_user_route(handle):
         if followed:
             _notify_new_follower(conn, target.id, current_user.handle)
 
-    flash(f'You are now following @{target.handle}.', 'success')
+    flash_for('public_profile', f'You are now following @{target.handle}.', 'success')
     return redirect(_public_profile_url(handle))
 
 
@@ -4524,17 +4595,17 @@ def follow_user_route(handle):
 @login_required
 def unfollow_user_route(handle):
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired. Please try again.', 'error')
+        flash_for('index', 'Your session expired. Please try again.', 'error')
         return redirect(request.referrer or url_for('index'))
 
     with get_db() as conn:
         target = get_user_by_handle(conn, handle)
         if not target:
-            flash('User not found.', 'error')
+            flash_for('index', 'User not found.', 'error')
             return redirect(url_for('index'))
         unfollow_user(conn, current_user.id, target.id)
 
-    flash(f'You unfollowed @{target.handle}.', 'success')
+    flash_for('public_profile', f'You unfollowed @{target.handle}.', 'success')
     return redirect(_public_profile_url(handle))
 
 
@@ -6592,7 +6663,7 @@ def save_problem_route():
         message = 'Your session expired. Please try again.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 403
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(url_for('index'))
 
     payload = session.get('last_problem_payload')
@@ -6600,7 +6671,7 @@ def save_problem_route():
         message = 'Generate a question first, then save it.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 400
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(url_for('index'))
 
     level = payload['level']
@@ -6617,14 +6688,14 @@ def save_problem_route():
         message = 'Could not save that question.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 400
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(url_for('index'))
 
     if not problem.get('question'):
         message = 'Could not save that question.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 400
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(url_for('index'))
 
     try:
@@ -6643,7 +6714,7 @@ def save_problem_route():
         message = 'You have reached the saved question limit (200). Delete some to save more.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 400
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(url_for('index'))
 
     message = 'Question saved to your profile.'
@@ -6655,7 +6726,7 @@ def save_problem_route():
             'saved_url': url_for('view_saved_problem', saved_id=saved_id),
         })
 
-    flash(message, 'success')
+    flash_for('index', message, 'success')
     return redirect(url_for('index'))
 
 
@@ -6668,7 +6739,7 @@ def reroll_saved_problem_route(saved_id):
         message = 'Your session expired. Please try again.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 403
-        flash(message, 'error')
+        flash_for('view_saved_problem', message, 'error')
         return redirect(url_for('view_saved_problem', saved_id=saved_id))
 
     with get_db() as conn:
@@ -6677,7 +6748,7 @@ def reroll_saved_problem_route(saved_id):
         message = 'Saved question not found.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 404
-        flash(message, 'error')
+        flash_for('saved_problems_index', message, 'error')
         return redirect(url_for('saved_problems_index'))
 
     problem = saved['problem']
@@ -6694,14 +6765,14 @@ def reroll_saved_problem_route(saved_id):
         message = 'Could not refresh this question.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 400
-        flash(message, 'error')
+        flash_for('view_saved_problem', message, 'error')
         return redirect(url_for('view_saved_problem', saved_id=saved_id))
 
     if not _can_reroll_variant(topic_config, mode, difficulty, variant_name):
         message = 'This saved question cannot be refreshed with new numbers.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 400
-        flash(message, 'error')
+        flash_for('view_saved_problem', message, 'error')
         return redirect(url_for('view_saved_problem', saved_id=saved_id))
 
     try:
@@ -6713,7 +6784,7 @@ def reroll_saved_problem_route(saved_id):
         message = 'Could not refresh this question. Try again later.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 500
-        flash(message, 'error')
+        flash_for('view_saved_problem', message, 'error')
         return redirect(url_for('view_saved_problem', saved_id=saved_id))
 
     new_problem = dict(new_problem)
@@ -6725,7 +6796,7 @@ def reroll_saved_problem_route(saved_id):
         message = 'Saved question not found.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 404
-        flash(message, 'error')
+        flash_for('saved_problems_index', message, 'error')
         return redirect(url_for('saved_problems_index'))
 
     message = 'New numbers generated for this saved question.'
@@ -6745,7 +6816,7 @@ def reroll_saved_problem_route(saved_id):
             'can_reroll_variant': True,
         })
 
-    flash(message, 'success')
+    flash_for('view_saved_problem', message, 'success')
     return redirect(url_for('view_saved_problem', saved_id=saved_id))
 
 
@@ -6753,15 +6824,15 @@ def reroll_saved_problem_route(saved_id):
 @login_required
 def delete_saved_problem_route(saved_id):
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired. Please try again.', 'error')
+        flash_for('profile', 'Your session expired. Please try again.', 'error')
         return redirect(url_for('profile'))
 
     with get_db() as conn:
         deleted = delete_saved_problem(conn, current_user.id, saved_id)
     if deleted:
-        flash('Saved question removed.', 'success')
+        flash_for('profile', 'Saved question removed.', 'success')
     else:
-        flash('Saved question not found.', 'error')
+        flash_for('profile', 'Saved question not found.', 'error')
     next_url = request.form.get('next') or url_for('profile')
     if not next_url.startswith('/'):
         next_url = url_for('profile')
@@ -6809,14 +6880,14 @@ def share_question_route():
         if wants_json:
             body, status = err
             return body, status
-        flash('Daily share limit reached. Try again tomorrow.', 'error')
+        flash_for('index', 'Daily share limit reached. Try again tomorrow.', 'error')
         return redirect(request.referrer or url_for('index'))
 
     if not _validate_csrf(request.form.get('csrf_token')):
         message = 'Your session expired. Please try again.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 403
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(request.referrer or url_for('index'))
 
     visibility = _normalize_share_visibility(
@@ -6832,7 +6903,7 @@ def share_question_route():
             message = 'Saved question not found.'
             if wants_json:
                 return jsonify({'ok': False, 'error': message}), 404
-            flash(message, 'error')
+            flash_for('profile', message, 'error')
             return redirect(url_for('profile'))
         data = {
             'level': saved['level'],
@@ -6848,7 +6919,7 @@ def share_question_route():
             message = 'Generate a question first, then share it.'
             if wants_json:
                 return jsonify({'ok': False, 'error': message}), 400
-            flash(message, 'error')
+            flash_for('index', message, 'error')
             return redirect(url_for('index'))
 
     try:
@@ -6857,7 +6928,7 @@ def share_question_route():
         message = 'You have reached the shared question limit (200).'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 400
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(request.referrer or url_for('index'))
 
     share_url = url_for('view_shared_question', share_id=share_id)
@@ -6870,7 +6941,7 @@ def share_question_route():
             'share_url': share_url,
             'rate_limit_remaining': remaining,
         })
-    flash(message, 'success')
+    flash_for('view_shared_question', message, 'success')
     return redirect(share_url)
 
 
@@ -6936,14 +7007,14 @@ def create_suggestion_route():
         if wants_json:
             body, status = err
             return body, status
-        flash('Daily suggestion limit reached. Try again tomorrow.', 'error')
+        flash_for('index', 'Daily suggestion limit reached. Try again tomorrow.', 'error')
         return redirect(request.referrer or url_for('index'))
 
     if not _validate_csrf(request.form.get('csrf_token')):
         message = 'Your session expired. Please try again.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 403
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(request.referrer or url_for('index'))
 
     recipient_handle = normalize_handle(request.form.get('recipient_handle', ''))
@@ -6954,7 +7025,7 @@ def create_suggestion_route():
         message = 'Enter a recipient handle.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 400
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(request.referrer or url_for('index'))
 
     with get_db() as conn:
@@ -6963,7 +7034,7 @@ def create_suggestion_route():
         message = 'User not found.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 404
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(request.referrer or url_for('index'))
 
     if saved_id:
@@ -6973,7 +7044,7 @@ def create_suggestion_route():
             message = 'Saved question not found.'
             if wants_json:
                 return jsonify({'ok': False, 'error': message}), 404
-            flash(message, 'error')
+            flash_for('profile', message, 'error')
             return redirect(url_for('profile'))
         data = {
             'level': saved['level'],
@@ -6989,7 +7060,7 @@ def create_suggestion_route():
             message = 'Generate a question first, then suggest it.'
             if wants_json:
                 return jsonify({'ok': False, 'error': message}), 400
-            flash(message, 'error')
+            flash_for('index', message, 'error')
             return redirect(url_for('index'))
 
     try:
@@ -7035,13 +7106,13 @@ def create_suggestion_route():
             message = 'That user has too many pending suggestions.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 400
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(request.referrer or url_for('index'))
 
     message = f'Question sent to @{recipient.handle}.'
     if wants_json:
         return jsonify({'ok': True, 'message': message, 'suggestion_id': suggestion_id})
-    flash(message, 'success')
+    flash_for('suggestions_inbox', message, 'success')
     return redirect(url_for('suggestions_inbox'))
 
 
@@ -7076,14 +7147,14 @@ def view_suggestion(suggestion_id):
 @login_required
 def dismiss_suggestion_route(suggestion_id):
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired. Please try again.', 'error')
+        flash_for('suggestions_inbox', 'Your session expired. Please try again.', 'error')
         return redirect(url_for('suggestions_inbox'))
     with get_db() as conn:
         dismissed = dismiss_suggestion(conn, suggestion_id, current_user.id)
     if dismissed:
-        flash('Suggestion dismissed.', 'success')
+        flash_for('suggestions_inbox', 'Suggestion dismissed.', 'success')
     else:
-        flash('Suggestion not found.', 'error')
+        flash_for('suggestions_inbox', 'Suggestion not found.', 'error')
     return redirect(url_for('suggestions_inbox'))
 
 
@@ -7095,7 +7166,7 @@ def share_quiz_attempt_route(attempt_id):
         message = 'Your session expired. Please try again.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 403
-        flash(message, 'error')
+        flash_for('profile', message, 'error')
         return redirect(url_for('profile'))
 
     visibility = _normalize_share_visibility(
@@ -7107,7 +7178,7 @@ def share_quiz_attempt_route(attempt_id):
         message = 'Quiz attempt not found.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 404
-        flash(message, 'error')
+        flash_for('profile', message, 'error')
         return redirect(url_for('profile'))
 
     _record_user_activity(
@@ -7128,7 +7199,7 @@ def share_quiz_attempt_route(attempt_id):
     message = 'Quiz score shared to your activity feed.'
     if wants_json:
         return jsonify({'ok': True, 'message': message})
-    flash(message, 'success')
+    flash_for('view_quiz_attempt', message, 'success')
     return redirect(url_for('view_quiz_attempt', attempt_id=attempt_id))
 
 
@@ -7402,12 +7473,12 @@ def api_save_lesson_progress():
 @login_required
 def clear_lesson_progress_route(level, subject, topic):
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired. Please try again.', 'error')
+        flash_for('profile', 'Your session expired. Please try again.', 'error')
         return redirect(url_for('profile'))
 
     with get_db() as conn:
         clear_lesson_progress(conn, current_user.id, level, subject, topic)
-    flash('Lesson bookmark cleared.', 'success')
+    flash_for('profile', 'Lesson bookmark cleared.', 'success')
     return redirect(url_for('profile'))
 
 
@@ -7419,7 +7490,7 @@ def view_quiz_attempt(attempt_id):
     if not attempt:
         return 'Quiz attempt not found', 404
     if not attempt.get('problems'):
-        flash(
+        flash_for('profile', 
             'Full review is not available for this older attempt. Try a new quiz on the same topic.',
             'error',
         )
@@ -7606,7 +7677,7 @@ def lesson_explain():
 @app.route('/quicktest/start', methods=['POST'])
 def quicktest_start():
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired. Please try again.', 'error')
+        flash_for('index', 'Your session expired. Please try again.', 'error')
         return redirect(url_for('index'))
     level = request.form.get('level', 'gcse')
     subject = request.form.get('subject', 'physics')
@@ -7664,12 +7735,13 @@ def quicktest_question():
         qt_topic=data.get('topic', 'forces'),
         qt_mode=data.get('mode', 'standard'),
         qt_difficulty=data.get('difficulty', 'foundational'),
+        retry_mode=data.get('retry_mode', False),
     )
 
 @app.route('/quicktest/next', methods=['POST'])
 def quicktest_next():
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired. Please try again.', 'error')
+        flash_for('index', 'Your session expired. Please try again.', 'error')
         return redirect(url_for('index'))
     data = _load_qt()
     if not data:
@@ -7721,6 +7793,7 @@ def lesson_mcq_quiz(level, subject, topic):
         subject=subject,
         topic=topic,
         total=len(problems),
+        retry_mode=data.get('retry_mode', False),
     )
 
 
@@ -7770,6 +7843,40 @@ def lesson_mcq_submit(level, subject, topic):
     return redirect(url_for('lesson_mcq_results', level=level, subject=subject, topic=topic))
 
 
+@app.route('/lesson-quiz/<level>/<subject>/<topic>/retry-wrong', methods=['POST'])
+def lesson_mcq_retry_wrong(level, subject, topic):
+    if not _lesson_quiz_available(level, subject, topic):
+        return 'Lesson quiz not available for this topic', 404
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash_for('lesson_mcq_results', 'Your session expired. Please try again.', 'error')
+        return redirect(url_for('lesson_mcq_results', level=level, subject=subject, topic=topic))
+
+    data = _load_lq()
+    if not data or data.get('topic') != topic or 'answers' not in data:
+        return redirect(url_for('lesson_mcq_quiz', level=level, subject=subject, topic=topic))
+
+    wrong_problems = []
+    for problem, answer in zip(data['problems'], data['answers']):
+        letter = (answer or '').strip().upper()[:1]
+        if letter != problem.get('correct_answer'):
+            wrong_problems.append(problem)
+    if not wrong_problems:
+        return redirect(url_for('lesson_mcq_results', level=level, subject=subject, topic=topic))
+
+    retry_data = {
+        'problems': wrong_problems,
+        'topic_name': data['topic_name'],
+        'level': level,
+        'subject': subject,
+        'topic': topic,
+        'lesson_url': data['lesson_url'],
+        'total': len(wrong_problems),
+        'retry_mode': True,
+    }
+    _save_lq(retry_data)
+    return redirect(url_for('lesson_mcq_quiz', level=level, subject=subject, topic=topic))
+
+
 @app.route('/lesson-quiz/<level>/<subject>/<topic>/results')
 def lesson_mcq_results(level, subject, topic):
     if not _lesson_quiz_available(level, subject, topic):
@@ -7795,6 +7902,7 @@ def lesson_mcq_results(level, subject, topic):
         subject,
         topic,
         show_wrong_explanations_only=False,
+        can_retry_wrong=True,
     )
 
 
@@ -7807,6 +7915,7 @@ def quicktest_results():
     answers = data.get('answers') or []
     total_marks = sum(p['marks'] for p in problems)
     summary = _quicktest_results_summary(problems, answers)
+    wrong_count = _quicktest_wrong_count(problems, answers)
     attempt_id = _finalize_quicktest_session(data)
     return render_template(
         'quicktest_results.html',
@@ -7815,8 +7924,43 @@ def quicktest_results():
         topic_name=data['topic_name'],
         total_marks=total_marks,
         quiz_attempt_id=attempt_id,
+        wrong_count=wrong_count,
+        can_retry_wrong=wrong_count > 0,
         **summary,
     )
+
+
+@app.route('/quicktest/retry-wrong', methods=['POST'])
+def quicktest_retry_wrong():
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash_for('quicktest_results', 'Your session expired. Please try again.', 'error')
+        return redirect(url_for('quicktest_results'))
+    data = _load_qt()
+    if not data or not data.get('answers'):
+        return redirect(url_for('index'))
+
+    wrong_problems = []
+    for problem, answer in zip(data['problems'], data['answers']):
+        if _quicktest_answer_is_wrong(problem, answer):
+            wrong_problems.append(problem)
+    if not wrong_problems:
+        return redirect(url_for('quicktest_results'))
+
+    retry_data = {
+        'problems': wrong_problems,
+        'answers': [],
+        'index': 0,
+        'topic_name': data['topic_name'],
+        'level': data.get('level', 'gcse'),
+        'subject': data.get('subject', 'physics'),
+        'topic': data.get('topic', 'forces'),
+        'difficulty': data.get('difficulty', 'foundational'),
+        'mode': data.get('mode', 'standard'),
+        'owner_user_id': data.get('owner_user_id'),
+        'retry_mode': True,
+    }
+    _save_qt(retry_data)
+    return redirect(url_for('quicktest_question'))
 
 
 # --- Phase E: challenges, study pairs, question of the day ---
@@ -7846,7 +7990,7 @@ def challenge_new():
         else:
             err, _ = _require_rate_limit('challenge_create', CHALLENGE_DAILY_LIMIT, label='challenge')
             if err:
-                flash(err.get_json()['error'], 'error')
+                flash_for('challenge_new', err.get_json()['error'], 'error')
                 return redirect(url_for('challenge_new', handle=opponent_handle))
             opponent_handle = (request.form.get('handle') or '').strip().lstrip('@')
             parsed = _parse_topic_choice(request.form.get('topic_choice'))
@@ -7876,7 +8020,7 @@ def challenge_new():
                             else:
                                 errors['topic'] = 'Quiz not available for that topic.'
                         else:
-                            flash(f'Challenge sent to @{opponent.handle}.', 'success')
+                            flash_for('challenge_detail', f'Challenge sent to @{opponent.handle}.', 'success')
                             return redirect(url_for('challenge_detail', challenge_id=challenge_id))
 
     return render_template(
@@ -7904,7 +8048,7 @@ def challenge_detail(challenge_id):
 
     if request.method == 'POST' and request.form.get('action') == 'submit':
         if not _validate_csrf(request.form.get('csrf_token')):
-            flash('Your session expired. Please try again.', 'error')
+            flash_for('challenge_detail', 'Your session expired. Please try again.', 'error')
             return redirect(url_for('challenge_detail', challenge_id=challenge_id))
         if user_has_submitted(challenge, current_user.id):
             return redirect(url_for('challenge_detail', challenge_id=challenge_id))
@@ -7932,7 +8076,7 @@ def challenge_detail(challenge_id):
                     updated['creator_score'],
                     updated['opponent_score'],
                 )
-        flash(f'Score recorded: {score}/{total}.', 'success')
+        flash_for('challenge_detail', f'Score recorded: {score}/{total}.', 'success')
         return redirect(url_for('challenge_detail', challenge_id=challenge_id))
 
     show_quiz = (
@@ -7954,13 +8098,13 @@ def challenge_detail(challenge_id):
 @login_required
 def challenge_decline(challenge_id):
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired.', 'error')
+        flash_for('challenges_list', 'Your session expired.', 'error')
         return redirect(url_for('challenges_list'))
     with get_db() as conn:
         if decline_challenge(conn, challenge_id, current_user.id):
-            flash('Challenge declined.', 'success')
+            flash_for('challenges_list', 'Challenge declined.', 'success')
         else:
-            flash('Could not decline that challenge.', 'error')
+            flash_for('challenges_list', 'Could not decline that challenge.', 'error')
     return redirect(url_for('challenges_list'))
 
 
@@ -7968,16 +8112,16 @@ def challenge_decline(challenge_id):
 @login_required
 def study_pair_invite(handle):
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired.', 'error')
+        flash_for('public_profile', 'Your session expired.', 'error')
         return redirect(url_for('public_profile', handle=handle))
     with get_db() as conn:
         target = get_user_by_handle(conn, handle)
         if not target or not target.is_active:
-            flash('User not found.', 'error')
+            flash_for('public_profile', 'User not found.', 'error')
         elif target.id == current_user.id:
-            flash('You cannot pair with yourself.', 'error')
+            flash_for('public_profile', 'You cannot pair with yourself.', 'error')
         elif is_blocked(conn, current_user.id, target.id):
-            flash('You cannot invite this user.', 'error')
+            flash_for('public_profile', 'You cannot invite this user.', 'error')
         else:
             try:
                 pair_id = invite_study_pair(conn, current_user.id, target.id)
@@ -7988,10 +8132,10 @@ def study_pair_invite(handle):
                     'pending_outgoing': 'You already sent a study buddy invite.',
                     'pending_incoming': 'You have a pending invite to respond to first.',
                 }
-                flash(messages.get(str(exc), 'Could not send invite.'), 'error')
+                flash_for('public_profile', messages.get(str(exc), 'Could not send invite.'), 'error')
             else:
                 _notify_study_pair_invite(conn, target.id, current_user.handle, pair_id)
-                flash(f'Study buddy invite sent to @{target.handle}.', 'success')
+                flash_for('public_profile', f'Study buddy invite sent to @{target.handle}.', 'success')
     return redirect(url_for('public_profile', handle=handle))
 
 
@@ -7999,16 +8143,16 @@ def study_pair_invite(handle):
 @login_required
 def study_pair_accept(pair_id):
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired.', 'error')
+        flash_for('profile', 'Your session expired.', 'error')
         return redirect(url_for('profile'))
     with get_db() as conn:
         try:
             pair = accept_study_pair(conn, pair_id, current_user.id)
         except ValueError as exc:
-            flash(_study_pair_error_message(exc), 'error')
+            flash_for('profile', _study_pair_error_message(exc), 'error')
         else:
             mark_study_pair_notifications_read(conn, current_user.id, pair_id)
-            flash('Study buddy connected!', 'success')
+            flash_for('profile', 'Study buddy connected!', 'success')
     return redirect(url_for('profile'))
 
 
@@ -8016,16 +8160,16 @@ def study_pair_accept(pair_id):
 @login_required
 def study_pair_decline(pair_id):
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired.', 'error')
+        flash_for('profile', 'Your session expired.', 'error')
         return redirect(url_for('profile'))
     with get_db() as conn:
         try:
             decline_study_pair(conn, pair_id, current_user.id)
         except ValueError as exc:
-            flash(_study_pair_error_message(exc), 'error')
+            flash_for('profile', _study_pair_error_message(exc), 'error')
         else:
             mark_study_pair_notifications_read(conn, current_user.id, pair_id)
-            flash('Invite declined.', 'success')
+            flash_for('profile', 'Invite declined.', 'success')
     return redirect(url_for('profile'))
 
 
@@ -8033,11 +8177,11 @@ def study_pair_decline(pair_id):
 @login_required
 def study_pair_end():
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired.', 'error')
+        flash_for('profile', 'Your session expired.', 'error')
         return redirect(url_for('profile'))
     with get_db() as conn:
         if end_study_pair(conn, current_user.id):
-            flash('Study buddy link ended.', 'success')
+            flash_for('profile', 'Study buddy link ended.', 'success')
     return redirect(url_for('profile'))
 
 
@@ -8055,7 +8199,7 @@ def qotd_page():
 
     if request.method == 'POST':
         if not _validate_csrf(request.form.get('csrf_token')):
-            flash('Your session expired.', 'error')
+            flash_for('qotd_page', 'Your session expired.', 'error')
             return redirect(url_for('qotd_page'))
         letter = (request.form.get('answer') or '').strip().upper()[:1]
         correct = letter == correct_answer
@@ -8063,11 +8207,10 @@ def qotd_page():
             try:
                 record_qotd_answer(conn, current_user.id, day_key, letter, correct)
             except ValueError:
-                flash('You already answered today.', 'error')
+                flash_for('qotd_page', 'You already answered today.', 'error')
             else:
                 # Streak only — QOTD must not count as practising this topic.
                 _record_study_activity(current_user.id)
-                flash('Correct!' if correct else f'Not quite — answer was {correct_answer}.', 'success' if correct else 'error')
         return redirect(url_for('qotd_page'))
 
     with get_db() as conn:

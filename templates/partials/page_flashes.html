@@ -1,0 +1,7 @@
+{% macro render(page) %}
+{% with messages = pop_flashes_for(page) %}
+  {% for category, message in messages %}
+  <p class="{% if category == 'error' %}error{% else %}flash-success{% endif %}">{{ message }}</p>
+  {% endfor %}
+{% endwith %}
+{% endmacro %}

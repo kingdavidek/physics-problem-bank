@@ -13,19 +13,31 @@
 <section class="section-panel">
     <div class="section-panel-body">
         {% if users %}
-        <ul class="profile-list">
+        <ul class="profile-list profile-list--rows">
             {% for item in users %}
-            <li class="profile-list-item user-row">
-                {{ user_avatar(item.avatar, 'sm') }}
-                <div class="profile-list-main">
-                    <a href="{{ item.profile_url }}">@{{ item.handle }}</a>
-                    <span class="profile-list-meta">Since {{ item.followed_at[:10] }}</span>
-                </div>
+            <li>
+                <a href="{{ item.profile_url }}" class="profile-list-item list-row">
+                    {{ user_avatar(item.avatar, 'sm') }}
+                    <span class="list-row-main">
+                        <span>@{{ item.handle }}</span>
+                        <span class="list-row-meta">Since {{ item.followed_at[:10] }}</span>
+                    </span>
+                    <span class="list-row-chevron" aria-hidden="true"></span>
+                </a>
             </li>
             {% endfor %}
         </ul>
         {% else %}
-        <p class="profile-empty">No users to show yet.</p>
+        <div class="empty-state">
+            <div class="empty-state-icon">👥</div>
+            <h3>No users to show yet</h3>
+            {% if list_title == 'Followers' %}
+            <p>When someone follows {{ profile_user.display_handle }}, they will appear here.</p>
+            {% else %}
+            <p>Find other learners and follow them to see their activity in your feed.</p>
+            {% endif %}
+            <a href="{{ url_for('site_search') }}" class="btn btn-primary">Find people</a>
+        </div>
         {% endif %}
     </div>
 </section>

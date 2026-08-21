@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/page_flashes.html" import render as page_flashes %}
 {% block title %}Practice Generator – Problem Bank{% endblock %}
 
 {% block content %}
@@ -155,11 +156,7 @@
     <p class="error">{{ error }}</p>
 {% endif %}
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% for category, message in messages %}
-        <p class="{% if category == 'error' %}error{% else %}flash-success{% endif %}">{{ message }}</p>
-    {% endfor %}
-{% endwith %}
+{{ page_flashes('index') }}
 
 {% if limit_hit %}
 <div class="section-panel">

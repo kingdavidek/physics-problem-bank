@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "partials/user_avatar.html" import user_avatar %}
+{% from "partials/page_flashes.html" import render as page_flashes %}
 {% block title %}Settings – Problem Bank{% endblock %}
 
 {% block content %}
@@ -12,11 +13,7 @@
 
 <p class="profile-page-back"><a href="{{ url_for('profile') }}">← Back to account</a></p>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% for category, message in messages %}
-        <p class="{% if category == 'error' %}error{% else %}flash-success{% endif %}">{{ message }}</p>
-    {% endfor %}
-{% endwith %}
+{{ page_flashes('profile_settings') }}
 
 {% if errors.form %}
 <p class="error">{{ errors.form }}</p>

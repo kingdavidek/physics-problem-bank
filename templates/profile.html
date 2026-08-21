@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "partials/user_avatar.html" import user_avatar %}
+{% from "partials/page_flashes.html" import render as page_flashes %}
 {% block title %}Profile – Problem Bank{% endblock %}
 
 {% block content %}
@@ -38,11 +39,7 @@
     <button type="button" role="tab" id="profile-tab-btn-history" data-tab="history" aria-controls="profile-tab-history" aria-selected="false">History</button>
 </nav>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% for category, message in messages %}
-        <p class="{% if category == 'error' %}error{% else %}flash-success{% endif %}">{{ message }}</p>
-    {% endfor %}
-{% endwith %}
+{{ page_flashes('profile') }}
 
 {% if study_pair_invites %}
 <section class="section-panel profile-study-buddy-alert profile-tab-panel" id="study-buddy-invite" data-profile-tab="overview">

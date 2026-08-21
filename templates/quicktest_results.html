@@ -30,6 +30,12 @@
             {% endif %}
         </p>
         {% endif %}
+        {% if can_retry_wrong %}
+        <form method="POST" action="{{ url_for('quicktest_retry_wrong') }}" class="quicktest-retry-form" style="margin-top: 16px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-primary btn-lg">Retry wrong ones ({{ wrong_count }})</button>
+        </form>
+        {% endif %}
     </div>
 </div>
 {% endif %}
@@ -77,8 +83,14 @@
 {% endfor %}
 
 <div class="section-panel">
-    <div class="section-panel-body" style="text-align: center;">
-        <a href="/" class="btn btn-primary">Start another test</a>
+    <div class="section-panel-body quicktest-results-actions">
+        {% if can_retry_wrong %}
+        <form method="POST" action="{{ url_for('quicktest_retry_wrong') }}" class="quicktest-retry-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-primary btn-lg">Retry wrong ones ({{ wrong_count }})</button>
+        </form>
+        {% endif %}
+        <a href="/" class="btn btn-outline">Start another test</a>
     </div>
 </div>
 

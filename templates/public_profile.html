@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "partials/user_avatar.html" import user_avatar %}
+{% from "partials/page_flashes.html" import render as page_flashes %}
 {% block title %}{{ profile_user.display_handle }} – Problem Bank{% endblock %}
 
 {% block content %}
@@ -12,6 +13,8 @@
     <p class="hero-sub">{% if is_system_bot %}A Problem Bank bot — not a person.{% else %}Public profile{% endif %}</p>
     </div>
 </div>
+
+{{ page_flashes('public_profile') }}
 
 <div class="public-profile-stats">
     <a href="{{ url_for('public_profile_followers', handle=profile_user.handle) }}" class="public-profile-stat">

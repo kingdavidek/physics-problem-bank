@@ -566,8 +566,12 @@ body.site-search-open { overflow: hidden; }
     padding: 3px 8px;
     white-space: nowrap;
 }
-.search-rank-list { list-style: none; }
-.search-rank-list .profile-list-item {
+.search-page-form {
+    max-width: 520px;
+    margin-bottom: var(--space-5);
+}
+.search-rank-list { list-style: none; margin: 0; padding: 0; }
+.search-rank-list .profile-list-item.list-row {
     justify-content: flex-start;
 }
 .search-result-rank {
