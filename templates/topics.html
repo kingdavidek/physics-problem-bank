@@ -6,32 +6,51 @@
 
 <div class="lesson-hero">
     <h1>All topics</h1>
-    <p class="hero-sub">Open a lesson-style topic page, then practise with the generator or quick test.</p>
-    <div class="hero-pills">
-        <span class="hero-pill">Revision notes</span>
-        <span class="hero-pill">Formulae &amp; tips</span>
-        <span class="hero-pill">Practice questions</span>
+    <p class="hero-sub">Follow the syllabus path — open a lesson, then practise with the generator or quick test.</p>
+    <div class="pill-row">
+        <span class="pill pill--hero">Revision notes</span>
+        <span class="pill pill--hero">Formulae &amp; tips</span>
+        <span class="pill pill--hero">Practice questions</span>
     </div>
 </div>
 
-<p class="page-intro">
-    Each topic links to explanations and worked examples. Use the
-    <a href="/">practice generator</a> for unlimited questions at your chosen difficulty.
-</p>
+<nav class="topics-level-bar segmented-control" aria-label="Filter by level">
+    <button type="button" data-level-filter="all" class="is-active" aria-selected="true">All</button>
+    <button type="button" data-level-filter="gcse" aria-selected="false">GCSE</button>
+    <button type="button" data-level-filter="alevel" aria-selected="false">A-Level</button>
+    <button type="button" data-level-filter="myp" aria-selected="false">MYP</button>
+</nav>
+
+{% set subject_icons = {'maths': '📐', 'physics': '⚛️', 'cs': '💻', 'chemistry': '🧪'} %}
 
 {% for group in topic_groups %}
-<section class="topic-group topic-group--{{ group.subject }}">
-    <h2 class="topic-group-title">{{ group.title }}</h2>
-    <ul class="topic-grid">
+<section class="topic-group topic-group--{{ group.subject }}" data-level="{{ group.level }}" id="topics-{{ group.level }}-{{ group.subject }}">
+    <div class="topic-group-header">
+        <span class="topic-group-icon" aria-hidden="true">{{ subject_icons.get(group.subject, '📚') }}</span>
+        <h2 class="topic-group-title">{{ group.title }}</h2>
+    </div>
+    <ol class="topic-path">
         {% for topic in group.topics %}
-        <li>
-            <a class="topic-card topic-card--{{ group.subject }}" href="{{ topic.url }}">
+        <li class="topic-path-node{% if topic.mastery and topic.mastery >= 0.8 %} is-complete{% endif %}">
+            <span class="topic-path-dot" aria-hidden="true"></span>
+            <a class="topic-card topic-card--{{ group.subject }}" href="{{ topic.url }}"
+                data-topic-order="{{ topic.order }}">
+                {% if topic.mastery %}
+                <span class="topic-mastery" aria-label="{{ topic.mastery_pct }}% mastery">
+                    <svg viewBox="0 0 32 32" aria-hidden="true">
+                        <circle class="topic-mastery-track" cx="16" cy="16" r="12"></circle>
+                        <circle class="topic-mastery-fill" cx="16" cy="16" r="12"
+                            stroke-dasharray="75.4"
+                            stroke-dashoffset="{{ (75.4 * (1 - topic.mastery)) | round(1) }}"></circle>
+                    </svg>
+                </span>
+                {% endif %}
                 <span class="topic-card-title">{{ topic.name }}</span>
-                <span class="topic-card-meta">Open topic →</span>
+                <span class="topic-card-meta">{% if topic.mastery %}{{ topic.mastery_pct }}% · Continue →{% else %}Start →{% endif %}</span>
             </a>
         </li>
         {% endfor %}
-    </ul>
+    </ol>
 </section>
 {% endfor %}
 

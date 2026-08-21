@@ -8,29 +8,40 @@
     <p class="hero-sub">Same 10 questions as a friend — compare scores when you are both done</p>
 </div>
 
-<p class="profile-page-back"><a href="{{ url_for('profile') }}">← Back to account</a></p>
+<p class="profile-page-back"><a href="{{ url_for('profile') }}#social">← Back to profile</a></p>
 
-<p style="margin-bottom:16px;"><a href="{{ url_for('challenge_new') }}" class="btn btn-primary">Challenge a friend</a></p>
+<p style="margin-bottom:16px;"><a href="{{ url_for('challenge_new') }}" class="btn btn-primary btn-lg">Challenge a friend</a></p>
 
 {% if challenges %}
-<ul class="profile-list">
+<div class="challenge-list">
     {% for item in challenges %}
     {% set s = item.summary %}
-    <li class="profile-list-item">
-        <a href="{{ url_for('challenge_detail', challenge_id=item.id) }}">
+    <a href="{{ url_for('challenge_detail', challenge_id=item.id) }}" class="challenge-vs-card{% if item.status == 'pending' and not s.viewer_submitted %} is-pending{% endif %}">
+        <div class="challenge-vs-player">
+            <div class="user-avatar user-avatar--sm" aria-hidden="true"><span class="user-avatar-face">@</span></div>
+            <div>@{{ item.creator_handle }}</div>
+            {% if s.creator_score is not none %}<span class="list-row-meta">{{ s.creator_score }}/{{ s.total }}</span>{% endif %}
+        </div>
+        <div class="challenge-vs-divider">VS</div>
+        <div class="challenge-vs-player">
+            <div class="user-avatar user-avatar--sm" aria-hidden="true"><span class="user-avatar-face">@</span></div>
+            <div>@{{ item.opponent_handle }}</div>
+            {% if s.opponent_score is not none %}<span class="list-row-meta">{{ s.opponent_score }}/{{ s.total }}</span>{% endif %}
+        </div>
+        <div style="grid-column:1/-1;text-align:center;margin-top:8px;">
             <strong>{{ item.topic_label }}</strong>
-        </a>
-        <span class="profile-list-meta">
-            @{{ item.creator_handle }} vs @{{ item.opponent_handle }}
-            · {{ item.status }}
-            {% if s.creator_score is not none %} · {{ s.creator_score }}/{{ s.total }}{% endif %}
-            {% if s.opponent_score is not none %} vs {{ s.opponent_score }}/{{ s.total }}{% endif %}
-        </span>
-    </li>
+            <span class="pill pill--surface" style="margin-left:8px;">{{ item.status | replace('_', ' ') | title }}</span>
+        </div>
+    </a>
     {% endfor %}
-</ul>
+</div>
 {% else %}
-<p class="profile-empty">No challenges yet. Challenge someone from their public profile or start one here.</p>
+<div class="empty-state">
+    <div class="empty-state-icon">⚔️</div>
+    <h3>No challenges yet</h3>
+    <p>Challenge someone from their public profile or start one here.</p>
+    <a href="{{ url_for('challenge_new') }}" class="btn btn-primary">Challenge a friend</a>
+</div>
 {% endif %}
 </div>
 {% endblock %}

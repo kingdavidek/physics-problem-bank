@@ -2,20 +2,16 @@
 {% block title %}Log in – Problem Bank{% endblock %}
 
 {% block content %}
-<div class="page-shell">
-
-<div class="lesson-hero">
+<div class="page-shell auth-page">
+<div class="auth-card">
     <h1>Log in</h1>
     <p class="hero-sub">Pick up where you left off with your Problem Bank account.</p>
-</div>
 
-{% if error %}
-    <p class="error">{{ error }}</p>
-{% endif %}
+    {% if error %}
+        <p class="error">{{ error }}</p>
+    {% endif %}
 
-<div class="form-card">
-    <div class="section-panel-header">Log in</div>
-    <form method="POST" class="form-inner auth-form">
+    <form method="POST" class="auth-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <div class="form-group">
@@ -35,10 +31,9 @@
             </label>
         </div>
 
-        <button type="submit" class="btn btn-primary">Log in</button>
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Log in</button>
         <p class="auth-switch">No account yet? <a href="{{ url_for('register') }}">Sign up free</a></p>
     </form>
 </div>
-
 </div>
 {% endblock %}

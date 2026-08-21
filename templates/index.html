@@ -11,31 +11,41 @@
 
 <div class="page-shell">
 
-<div class="lesson-hero">
-    <h1>Practice Generator</h1>
+<div class="practice-hero">
+    <h1>{% if current_user.is_authenticated %}Hi, {{ current_user.display_handle }}{% else %}Ready to practise?{% endif %}</h1>
     <p class="hero-sub">GCSE, A-Level, and IB MYP — Maths, Physics, and Computer Science</p>
-    <div class="hero-pills">
-        <span class="hero-pill">Standard questions</span>
-        <span class="hero-pill">Multiple choice</span>
-        <span class="hero-pill">Foundational · Intermediate · Difficult</span>
+    <div class="practice-hero-chips">
+        {% if current_user.is_authenticated and nav_streak %}
+        <span class="pill pill--accent">🔥 {{ nav_streak }} day streak</span>
+        {% endif %}
         {% if current_user.is_authenticated and viewer_xp is not none %}
-        <span class="hero-pill profile-xp-pill">
-            <span class="profile-xp-level profile-xp-level--sm">{{ viewer_level }}</span>
-            {{ viewer_xp }} XP this week
+        <span class="pill pill--accent practice-xp-pill">
+            <span class="practice-xp-level" aria-hidden="true">{{ viewer_level }}</span>
+            <span>{{ viewer_xp }} XP this week</span>
         </span>
         {% endif %}
+        <span class="pill pill--surface">Standard &amp; MCQ</span>
     </div>
-    <p style="margin:14px 0 0;">
-        <a href="{{ url_for('sandbox_plan_a_checkpoints') }}" class="btn btn-secondary">
-            Sandbox: Plan A/B checkpoints
-        </a>
-    </p>
 </div>
 
-<div class="form-card">
-    <div class="section-panel-header">Choose your question</div>
-    <form method="POST" id="main-form" class="form-inner">
+<div class="section-panel practice-picker-card">
+    <h2>What do you want to practise?</h2>
+    <div class="practice-picker-summary" aria-live="polite">
+        <button type="button" class="pill pill--surface practice-picker-pill" data-picker="level" data-open-picker>GCSE</button>
+        <button type="button" class="pill pill--surface practice-picker-pill" data-picker="subject" data-open-picker>Physics</button>
+        <button type="button" class="pill pill--surface practice-picker-pill" data-picker="topic" data-open-picker>Forces</button>
+        <button type="button" class="pill pill--surface practice-picker-pill" data-picker="mode" data-open-picker>Standard</button>
+        <button type="button" class="pill pill--surface practice-picker-pill" data-picker="difficulty" data-open-picker>Foundational</button>
+    </div>
+    <form method="POST" id="main-form" class="form-inner practice-picker-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="practice-picker-actions">
+            <button type="submit" class="btn btn-primary btn-lg practice-picker-submit">
+                {% if problem %}New question{% else %}Start practising{% endif %}
+            </button>
+            <button type="button" class="btn btn-outline btn-sm practice-picker-edit" aria-expanded="false">Change selection</button>
+        </div>
+        <div class="practice-picker-drawer" hidden>
         <div class="form-grid">
 
             <div class="form-group">
@@ -136,7 +146,7 @@
                 </select>
             </div>
 
-            <button type="submit" class="btn btn-primary">Generate problem</button>
+        </div>
         </div>
     </form>
 </div>
@@ -165,8 +175,11 @@
 </div>
 
 {% elif problem %}
-<div class="problem-card">
-    <div class="section-panel-header">Your question</div>
+<div class="section-panel problem-card card-quiz">
+    <div class="section-panel-header">
+        <span>Your question</span>
+        <span class="pill pill--surface">{{ problem.difficulty | title }}</span>
+    </div>
     <div class="problem-card-inner">
 
     <div class="problem-meta">
@@ -231,7 +244,10 @@
         </div>
     </details>
 
-    <div class="problem-actions">
+    </div>
+</div>
+
+<div class="problem-actions practice-action-bar" id="practice-action-bar">
         {% if current_user.is_authenticated %}
         <form method="POST" action="{{ url_for('save_problem_route') }}" id="save-problem-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -261,10 +277,8 @@
             <input type="hidden" name="difficulty" id="qt-difficulty">
             <button type="submit" class="btn btn-primary" id="quicktest-btn">⚡ Quick test</button>
         </form>
-    </div>
-
-    </div>
 </div>
+
 {% endif %}
 
 </div>

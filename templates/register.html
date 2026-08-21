@@ -2,20 +2,16 @@
 {% block title %}Sign up – Problem Bank{% endblock %}
 
 {% block content %}
-<div class="page-shell">
-
-<div class="lesson-hero">
+<div class="page-shell auth-page">
+<div class="auth-card">
     <h1>Create your account</h1>
     <p class="hero-sub">Free to join — save your progress and unlock difficult questions.</p>
-</div>
 
-{% if errors.form %}
-    <p class="error">{{ errors.form }}</p>
-{% endif %}
+    {% if errors.form %}
+        <p class="error">{{ errors.form }}</p>
+    {% endif %}
 
-<div class="form-card">
-    <div class="section-panel-header">Sign up</div>
-    <form method="POST" class="form-inner auth-form">
+    <form method="POST" class="auth-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
         <div class="form-group">
@@ -30,7 +26,7 @@
                 <span class="handle-prefix">@</span>
                 <input type="text" name="handle" id="handle" value="{{ form.handle }}" autocomplete="username" pattern="[a-zA-Z0-9_]{3,20}" required>
             </div>
-            <p class="form-hint">3–20 characters: letters, numbers, and underscores. Shown as @handle on your profile.</p>
+            <p class="form-hint">3–20 characters: letters, numbers, and underscores.</p>
             {% if errors.handle %}<p class="field-error">{{ errors.handle }}</p>{% endif %}
         </div>
 
@@ -59,10 +55,9 @@
             See the <a href="{{ url_for('about') }}">About</a> page for more information.
         </p>
 
-        <button type="submit" class="btn btn-primary">Create account</button>
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Create account</button>
         <p class="auth-switch">Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
     </form>
 </div>
-
 </div>
 {% endblock %}

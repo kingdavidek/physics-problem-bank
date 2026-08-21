@@ -63,7 +63,7 @@ def main():
         r = client.get('/profile')
         assert r.status_code == 200
         body = r.data.decode()
-        assert 'Day study streak' in body
+        assert 'streak-ring-label' in body
         assert 'This week' in body
 
         r = client.get('/api/v1/me/gamification')

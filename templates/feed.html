@@ -10,20 +10,20 @@
     <p class="hero-sub">See what people you follow are practising</p>
 </div>
 
-<div class="hero-pills feed-filters" style="margin-bottom:16px;">
+<nav class="segmented-control segmented-control--links feed-filters" aria-label="Feed filter" style="margin-bottom:16px;">
     {% for key, label in feed_filters %}
     <a href="{{ url_for('activity_feed', filter=key) }}"
-       class="hero-pill feed-filter-pill {% if filter == key %}active-pill{% endif %}"
+       class="{% if filter == key %}is-active{% endif %}"
        data-feed-filter="{{ key }}">{{ label }}</a>
     {% endfor %}
-</div>
+</nav>
 
 <section class="section-panel">
     <div class="section-panel-body">
         <div id="feed-list" data-feed-filter="{{ filter }}">
             {% if qotd_challenge %}
             <ul class="profile-list feed-list feed-challenge-list">
-                <li class="profile-list-item feed-card feed-card--bot" data-feed-id="{{ qotd_challenge.id }}">
+                <li class="profile-list-item feed-card list-row feed-card--bot" data-feed-id="{{ qotd_challenge.id }}">
                     {{ user_avatar(qotd_challenge.avatar, 'sm') }}
                     <div class="profile-list-main">
                         <span class="feed-card-badge feed-card-badge--{{ qotd_challenge.card_type }}">{{ qotd_challenge.card_label }}</span>
@@ -37,7 +37,7 @@
             {% if items %}
             <ul class="profile-list feed-list">
                 {% for item in items %}
-                <li class="profile-list-item feed-card" data-feed-id="{{ item.id }}">
+                <li class="profile-list-item feed-card list-row" data-feed-id="{{ item.id }}">
                     {{ user_avatar(item.actor_avatar, 'sm') }}
                     <div class="profile-list-main">
                         <span class="feed-card-badge feed-card-badge--{{ item.card_type }}">{{ item.card_label }}</span>

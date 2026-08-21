@@ -31,51 +31,61 @@ MILESTONE_CATALOG = {
         'title': 'First quiz',
         'description': 'Complete your first lesson quiz',
         'emoji': '📝',
+        'tier': 'bronze',
     },
     MILESTONE_FIRST_LESSON: {
         'title': 'Lesson learner',
         'description': 'Complete a lesson quick check',
         'emoji': '📖',
+        'tier': 'bronze',
     },
     MILESTONE_TOPICS_10: {
         'title': 'Broad explorer',
         'description': 'Practise 10 different topics',
         'emoji': '🧭',
+        'tier': 'silver',
     },
     MILESTONE_STREAK_7: {
         'title': 'Week warrior',
         'description': 'Reach a 7-day study streak',
         'emoji': '🔥',
+        'tier': 'gold',
     },
     MILESTONE_STREAK_30: {
         'title': 'Dedicated',
         'description': 'Reach a 30-day study streak',
         'emoji': '💪',
+        'tier': 'gold',
     },
     MILESTONE_QUESTIONS_25: {
         'title': 'Practice regular',
         'description': 'Generate 25 practice questions',
         'emoji': '✏️',
+        'tier': 'silver',
     },
     MILESTONE_QOTD_FIRST: {
         'title': 'Daily starter',
         'description': 'Answer the question of the day',
         'emoji': '☀️',
+        'tier': 'bronze',
     },
     MILESTONE_QOTD_7: {
         'title': 'Seven days of questions',
         'description': 'Answer the question of the day on 7 different days',
         'emoji': '📅',
+        'tier': 'silver',
     },
     MILESTONE_QUESTIONS_50: {
         'title': 'Practice veteran',
         'description': 'Generate 50 practice questions',
         'emoji': '🏅',
+        'tier': 'gold',
     },
     MILESTONE_ACCURACY_TOP_FRIEND: {
         'title': 'Top of the class',
         'description': 'Rank first among friends on weekly quiz accuracy',
         'emoji': '🥇',
+        'tier': 'violet',
     },
 }
 
@@ -441,9 +451,105 @@ def list_user_milestones(conn, user_id):
             'title': meta.get('title', key),
             'description': meta.get('description', ''),
             'emoji': meta.get('emoji', '★'),
+            'tier': meta.get('tier', 'bronze'),
             'earned_at': row['earned_at'],
         })
     return out
+
+
+def list_milestone_shelf(conn, user_id):
+    """Full catalog for the profile grid: earned badges plus locked silhouettes."""
+    earned = {item['key']: item for item in list_user_milestones(conn, user_id)}
+    shelf = []
+    for key, meta in MILESTONE_CATALOG.items():
+        item = earned.get(key)
+        shelf.append({
+            'key': key,
+            'title': meta.get('title', key),
+            'description': meta.get('description', ''),
+            'emoji': meta.get('emoji', '★'),
+            'tier': meta.get('tier', 'bronze'),
+            'earned': item is not None,
+            'earned_at': item['earned_at'] if item else None,
+        })
+    shelf.sort(key=lambda row: (not row['earned'], row['title']))
+    return shelf
+
+
+def streak_week_dots(conn, user_id, as_of=None):
+    """Last 7 UTC days for the streak ring: studied, frozen, or missed."""
+    today = as_of or _utc_today()
+    start = today - timedelta(days=6)
+    rows = conn.execute(
+        '''
+        SELECT study_date FROM user_study_days
+        WHERE user_id = ? AND study_date >= ?
+        ''',
+        (user_id, start.isoformat()),
+    ).fetchall()
+    studied = {row['study_date'] for row in rows}
+    frozen = set(_freeze_used_dates(conn, user_id, as_of=today))
+    dots = []
+    for offset in range(6, -1, -1):
+        day = today - timedelta(days=offset)
+        key = day.isoformat()
+        if key in studied:
+            state = 'studied'
+        elif key in frozen:
+            state = 'frozen'
+        else:
+            state = 'missed'
+        dots.append({
+            'date': key,
+            'label': day.strftime('%a')[0],
+            'state': state,
+            'is_today': offset == 0,
+        })
+    return dots
+
+
+def streak_ring_progress(current):
+    """Progress toward the next streak milestone (7 / 30 / 100)."""
+    days = max(0, int(current or 0))
+    target = 7
+    for candidate in (7, 30, 100):
+        target = candidate
+        if days < candidate:
+            break
+    pct = 1.0 if days >= 100 else min(1.0, days / float(target))
+    return {'current': days, 'target': target, 'pct': pct}
+
+
+def topic_mastery_map(conn, user_id):
+    """(level, subject, topic) → 0–1 mastery from lesson steps + best quiz."""
+    mastery = {}
+    lesson_rows = conn.execute(
+        '''
+        SELECT level, subject, topic, COUNT(*) AS n
+        FROM lesson_progress
+        WHERE user_id = ?
+        GROUP BY level, subject, topic
+        ''',
+        (user_id,),
+    ).fetchall()
+    for row in lesson_rows:
+        lesson_share = min(1.0, (row['n'] or 0) / 4.0)
+        mastery[(row['level'], row['subject'], row['topic'])] = 0.5 * lesson_share
+    quiz_rows = conn.execute(
+        '''
+        SELECT level, subject, topic,
+               MAX(CASE WHEN total > 0 THEN (1.0 * score) / total ELSE 0 END) AS best
+        FROM quiz_attempts
+        WHERE user_id = ?
+        GROUP BY level, subject, topic
+        ''',
+        (user_id,),
+    ).fetchall()
+    for row in quiz_rows:
+        key = (row['level'], row['subject'], row['topic'])
+        quiz_share = max(0.0, min(1.0, float(row['best'] or 0)))
+        mastery[key] = min(1.0, mastery.get(key, 0) + 0.5 * quiz_share)
+    return mastery
 
 
 def get_weekly_recap(conn, user_id, days=7):
@@ -536,12 +642,54 @@ def weekly_effort_xp(conn, user_id, days=7):
     return _effort_score_since(conn, user_id, since)
 
 
+def lifetime_effort_xp(conn, user_id):
+    """All-time effort points for the level ring."""
+    return _effort_score_since(conn, user_id, '1970-01-01 00:00:00')
+
+
 def xp_level_from_points(xp):
-    """Simple level curve: L2 at 50 XP, L3 at 200, L4 at 450, …"""
+    """Level curve: L1 below 200 XP, then L = floor(sqrt(xp / 50))."""
     xp = max(0, int(xp or 0))
     if xp <= 0:
         return 1
     return max(1, int((xp / 50) ** 0.5))
+
+
+def xp_level_progress(xp):
+    """Fill for the level ring: share of XP between this level and the next."""
+    xp = max(0, int(xp or 0))
+    level = xp_level_from_points(xp)
+    if level <= 1:
+        start, nxt = 0, 200
+    else:
+        start = 50 * level * level
+        nxt = 50 * (level + 1) * (level + 1)
+    span = max(1, nxt - start)
+    pct = min(1.0, max(0.0, (xp - start) / span))
+    return {
+        'level': level,
+        'xp': xp,
+        'start': start,
+        'next': nxt,
+        'pct': pct,
+        'remaining': max(0, nxt - xp),
+    }
+
+
+def study_streak_at_risk(conn, user_id, as_of=None):
+    """True when the user has an active streak but has not studied today."""
+    today = as_of or _utc_today()
+    streak = get_study_streak(conn, user_id, as_of=today)
+    if streak.get('current', 0) < 1:
+        return False
+    last_active = streak.get('last_active_date')
+    if not last_active:
+        return False
+    last_day = last_active[:10]
+    if last_day == today.isoformat():
+        return False
+    yesterday = (today - timedelta(days=1)).isoformat()
+    return last_day == yesterday
 
 
 def _effort_scores_since(conn, user_ids, since_iso):

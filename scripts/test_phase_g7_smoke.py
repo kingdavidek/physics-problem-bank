@@ -3,7 +3,7 @@ import os
 import re
 import sys
 import uuid
-from datetime import date, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -32,7 +32,9 @@ def csrf_from(html: str) -> str:
 
 
 def main():
-    exam_date = (date.today() + timedelta(days=14)).isoformat()
+    utc_today = datetime.now(timezone.utc).date()
+    exam_date = (utc_today + timedelta(days=14)).isoformat()
+    exam_date_21 = (utc_today + timedelta(days=21)).isoformat()
 
     with app.test_client() as client:
         suffix = uuid.uuid4().hex[:8]
@@ -101,7 +103,7 @@ def main():
             json={
                 'level': 'gcse',
                 'subject': 'maths',
-                'exam_date': (date.today() + timedelta(days=21)).isoformat(),
+                'exam_date': exam_date_21,
             },
             headers=auth,
         )
@@ -131,7 +133,7 @@ def main():
             json={
                 'level': 'gcse',
                 'subject': 'maths',
-                'exam_date': (date.today() - timedelta(days=1)).isoformat(),
+                'exam_date': (utc_today - timedelta(days=1)).isoformat(),
             },
             headers=auth,
         )

@@ -36,7 +36,7 @@ def main():
         assert r.status_code == 200, r.data
         sw = r.data.decode()
         assert 'STATIC_CACHE' in sw
-        assert 'pb-v30' in sw
+        assert 'pb-v36' in sw
         # JS and CSS must stay network-first or ?v= cache-busts never land.
         assert 'isVersionedAsset' in sw
         assert '/static/css/tokens.css' in sw
@@ -56,6 +56,9 @@ def main():
         assert 'pwa-ios-hint' in html
         assert 'pwa-offline-bar' in html
         assert 'pwa-standalone' in html
+        assert 'app-tab-bar' in html
+        assert 'tab-bar.js' in html
+        assert 'header-primary-nav' in html
         assert 'apple-mobile-web-app-capable' in html
         assert 'black-translucent' in html
 

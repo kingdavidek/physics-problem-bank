@@ -119,6 +119,26 @@ def user_has_submitted(challenge, user_id):
     return False
 
 
+def count_actionable_challenges(conn, user_id):
+    """Pending challenges where the user still needs to play."""
+    rows = conn.execute(
+        '''
+        SELECT creator_id, opponent_id, creator_score, opponent_score
+        FROM quiz_challenges
+        WHERE status = ? AND (creator_id = ? OR opponent_id = ?)
+        ''',
+        (CHALLENGE_PENDING, user_id, user_id),
+    ).fetchall()
+    count = 0
+    for row in rows:
+        if row['creator_id'] == user_id:
+            if row['creator_score'] is None:
+                count += 1
+        elif row['opponent_score'] is None:
+            count += 1
+    return count
+
+
 def submit_challenge_attempt(conn, challenge_id, user_id, answers):
     challenge = get_challenge(conn, challenge_id)
     if not challenge:

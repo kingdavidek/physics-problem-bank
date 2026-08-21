@@ -721,15 +721,19 @@
             feedback.textContent = '\u2713 Correct!';
             feedback.style.color = '#16a34a';
           }
+          if (window.pbCelebrate) window.pbCelebrate.correct(btn);
           block.dispatchEvent(new CustomEvent('mcq-correct', { bubbles: true }));
         } else {
           btn.classList.add('is-wrong');
+          var correctBtn = null;
           block.querySelectorAll('.mcq-btn').forEach(function (b) {
             var bLetter = (b.dataset.letter || '').trim().charAt(0);
             if (bLetter === correctLetter) {
               b.classList.add('is-correct');
+              correctBtn = b;
             }
           });
+          if (window.pbCelebrate) window.pbCelebrate.wrong(btn, correctBtn);
           if (feedback) {
             feedback.textContent = '\u2717 Not quite \u2014 the correct answer is highlighted.';
             feedback.style.color = '#dc2626';
@@ -3118,15 +3122,19 @@
                   fieldFeedback.textContent = '\u2713 Correct!';
                   fieldFeedback.style.color = '#16a34a';
                 }
+                if (window.pbCelebrate) window.pbCelebrate.correct(btn);
                 maybePersistAllFields();
               } else {
                 btn.classList.add('is-wrong');
+                var fieldCorrectBtn = null;
                 mcqWrap.querySelectorAll('.mcq-btn').forEach(function (b) {
                   var bLetter = (b.dataset.letter || '').trim().charAt(0).toUpperCase();
                   if (bLetter === correctLetter) {
                     b.classList.add('is-correct');
+                    fieldCorrectBtn = b;
                   }
                 });
+                if (window.pbCelebrate) window.pbCelebrate.wrong(btn, fieldCorrectBtn);
                 mcqWrap.querySelectorAll('.mcq-btn').forEach(function (b) { b.disabled = false; });
                 if (fieldFeedback) {
                   fieldFeedback.textContent = '\u2717 Not quite \u2014 the correct answer is highlighted.';

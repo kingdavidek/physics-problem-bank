@@ -36,7 +36,7 @@ import sqlite3
 import json
 import uuid
 from topics_data import TOPIC_CONTENT
-from topic_registry import TOPICS
+from topic_registry import TOPICS, iter_topics
 from generators.shared.lesson_quiz import (
     build_lesson_mcq_quiz,
     topic_supports_lesson_mcq,
@@ -172,10 +172,16 @@ from models.gamification import (
     friend_effort_leaderboard,
     get_study_streak,
     get_weekly_recap,
+    lifetime_effort_xp,
+    list_milestone_shelf,
     list_user_milestones,
     record_study_day,
+    streak_ring_progress,
+    streak_week_dots,
+    study_streak_at_risk,
+    topic_mastery_map,
     weekly_effort_xp,
-    xp_level_from_points,
+    xp_level_progress,
 )
 from models.buddy import BUDDY_FACES, build_buddy_prompt
 from models.problem_queue import (
@@ -227,6 +233,7 @@ from models.challenges import (
     CHALLENGE_COMPLETE,
     CHALLENGE_DECLINED,
     CHALLENGE_PENDING,
+    count_actionable_challenges,
     create_challenge,
     decline_challenge,
     get_challenge,
@@ -576,6 +583,29 @@ def format_question_html(value):
     return Markup(format_light_markdown(text))
 
 
+_NAV_TAB_ENDPOINTS = {
+    'practice': {'index'},
+    'learn': {'topics_index', 'topic_page', 'lesson_mcq_quiz', 'lesson_mcq_results', 'view_quiz_attempt'},
+    'daily': {'qotd_page'},
+    'compete': {'friend_leaderboard_page', 'challenges_list', 'challenge_new', 'challenge_detail'},
+    'profile': {
+        'profile', 'profile_settings', 'public_profile', 'public_profile_followers',
+        'public_profile_following', 'site_search', 'suggestions_inbox', 'view_suggestion',
+    },
+    'about': {'about'},
+    'login': {'login', 'register'},
+}
+
+
+def _resolve_nav_tab(endpoint):
+    if not endpoint:
+        return None
+    for tab, names in _NAV_TAB_ENDPOINTS.items():
+        if endpoint in names:
+            return tab
+    return None
+
+
 @app.context_processor
 def inject_nav():
     lesson_meta = None
@@ -632,11 +662,26 @@ def inject_nav():
     buddy_prompt = None
     viewer_xp = None
     viewer_level = None
+    nav_tab = _resolve_nav_tab(request.endpoint)
+    nav_avatar = None
+    nav_streak = 0
+    xp_progress = None
+    tab_badges = {}
     if current_user.is_authenticated:
         with get_db() as conn:
             unread_notifications = count_unread_notifications(conn, current_user.id)
             viewer_xp = weekly_effort_xp(conn, current_user.id)
-            viewer_level = xp_level_from_points(viewer_xp)
+            lifetime_xp = lifetime_effort_xp(conn, current_user.id)
+            xp_progress = xp_level_progress(lifetime_xp)
+            viewer_level = xp_progress['level']
+            nav_avatar = get_profile_settings(conn, current_user.id).get('avatar') or dict(DEFAULT_AVATAR)
+            streak = get_study_streak(conn, current_user.id)
+            nav_streak = int(streak.get('current') or 0)
+            tab_badges = {
+                'qotd_unanswered': get_user_attempt(conn, current_user.id, current_day_key()) is None,
+                'pending_challenges': count_actionable_challenges(conn, current_user.id),
+                'streak_at_risk': study_streak_at_risk(conn, current_user.id),
+            }
             page_level = page_subject = page_topic = None
             if buddy_page:
                 page_level = buddy_page['level']
@@ -662,6 +707,11 @@ def inject_nav():
         'buddy_prompt': buddy_prompt,
         'viewer_xp': viewer_xp,
         'viewer_level': viewer_level,
+        'xp_progress': xp_progress,
+        'nav_tab': nav_tab,
+        'nav_avatar': nav_avatar,
+        'nav_streak': nav_streak,
+        'tab_badges': tab_badges,
     }
 
 
@@ -3614,12 +3664,17 @@ def _build_topic_groups():
                 {
                     'slug': slug,
                     'name': cfg['name'],
+                    'level': level,
+                    'subject': subject,
                     'url': f'/topic/{level}/{subject}/{slug}',
+                    'order': cfg.get('order'),
+                    'prereqs': list(cfg.get('prereqs') or ()),
                 }
-                for slug, cfg in sorted(topics.items(), key=lambda x: x[1]['name'].lower())
+                for slug, cfg in iter_topics(topics)
             ]
             groups.append({
                 'title': f"{LEVEL_LABELS.get(level, level.title())} {SUBJECT_LABELS.get(subject, subject.title())}",
+                'level': level,
                 'subject': subject,
                 'topics': items,
             })
@@ -3647,7 +3702,7 @@ def _get_topic_index():
                 f"{LEVEL_LABELS.get(level, level.title())} "
                 f"{SUBJECT_LABELS.get(subject, subject.title())}"
             )
-            for slug, cfg in sorted(topics.items(), key=lambda x: x[1]['name'].lower()):
+            for slug, cfg in iter_topics(topics):
                 items.append({
                     'name': cfg['name'],
                     'slug': slug,
@@ -3705,7 +3760,17 @@ def _search_topics(query, limit=8):
 
 @app.route('/topics')
 def topics_index():
-    return render_template('topics.html', topic_groups=_build_topic_groups())
+    groups = _build_topic_groups()
+    mastery = {}
+    if current_user.is_authenticated:
+        with get_db() as conn:
+            mastery = topic_mastery_map(conn, current_user.id)
+    for group in groups:
+        for topic in group['topics']:
+            pct = mastery.get((topic.get('level'), topic.get('subject'), topic.get('slug')), 0)
+            topic['mastery'] = pct
+            topic['mastery_pct'] = int(round(pct * 100))
+    return render_template('topics.html', topic_groups=groups)
 
 
 # Sandbox review page for Plan A/B/C auto-grade variants.
@@ -4056,7 +4121,9 @@ def profile():
         mcq_attempts = list_generator_mcq_attempts_for_display(conn, current_user.id, limit=10)
         practice_streak = get_practice_streak(conn, current_user.id)
         study_streak = get_study_streak(conn, current_user.id)
-        milestones = list_user_milestones(conn, current_user.id)
+        streak_dots = streak_week_dots(conn, current_user.id)
+        streak_ring = streak_ring_progress(study_streak.get('current'))
+        milestones = list_milestone_shelf(conn, current_user.id)
         weekly_recap = get_weekly_recap(conn, current_user.id)
         leaderboard = friend_effort_leaderboard(conn, current_user.id, days=7)
         pending_suggestions = count_pending_suggestions(conn, current_user.id)
@@ -4120,6 +4187,8 @@ def profile():
         mcq_attempts=mcq_attempts,
         practice_streak=practice_streak,
         study_streak=study_streak,
+        streak_dots=streak_dots,
+        streak_ring=streak_ring,
         milestones=milestones,
         weekly_recap=weekly_recap,
         friend_leaderboard=leaderboard[:5],
@@ -5698,7 +5767,7 @@ def _build_topics_catalog():
         for subject in _TOPIC_SUBJECT_ORDER.get(level, tuple(subjects_map.keys())):
             topics_map = subjects_map.get(subject) or {}
             topics = []
-            for slug, cfg in sorted(topics_map.items(), key=lambda x: x[1]['name'].lower()):
+            for slug, cfg in iter_topics(topics_map):
                 has_variants = bool(cfg.get('variants_func'))
                 modes = ['standard']
                 if has_variants:
@@ -5709,6 +5778,8 @@ def _build_topics_catalog():
                     'slug': slug,
                     'name': cfg['name'],
                     'url': f'/topic/{level}/{subject}/{slug}',
+                    'order': cfg.get('order'),
+                    'prereqs': list(cfg.get('prereqs') or ()),
                     'has_variants': has_variants,
                     'supports_lesson_mcq': topic_supports_lesson_mcq(cfg),
                     'modes': modes,

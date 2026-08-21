@@ -32,26 +32,26 @@
 {% elif is_system_bot %}
 <p class="profile-empty">This bot posts the daily challenge. Open <a href="{{ url_for('qotd_page') }}">Question of the Day</a>.</p>
 {% elif current_user.is_authenticated %}
-<div class="public-profile-actions">
+<div class="public-profile-actions public-profile-actions--stacked">
     {% if viewer_follows %}
     <form method="POST" action="{{ url_for('unfollow_user_route', handle=profile_user.handle) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="btn btn-secondary">Unfollow</button>
+        <button type="submit" class="btn btn-secondary btn-lg btn-block">Unfollow</button>
     </form>
     {% else %}
     <form method="POST" action="{{ url_for('follow_user_route', handle=profile_user.handle) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="btn btn-primary">Follow</button>
+        <button type="submit" class="btn btn-primary btn-lg btn-block">Follow</button>
     </form>
     {% endif %}
     {% if can_invite_study_pair %}
-    <form method="POST" action="{{ url_for('study_pair_invite', handle=profile_user.handle) }}" style="display:inline;">
+    <form method="POST" action="{{ url_for('study_pair_invite', handle=profile_user.handle) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="btn btn-outline">Study buddy invite</button>
+        <button type="submit" class="btn btn-outline btn-lg btn-block">Study buddy invite</button>
     </form>
     {% endif %}
     {% if can_challenge %}
-    <a href="{{ url_for('challenge_new', handle=profile_user.handle) }}" class="btn btn-outline">Challenge to quiz</a>
+    <a href="{{ url_for('challenge_new', handle=profile_user.handle) }}" class="btn btn-outline btn-lg btn-block">Challenge to quiz</a>
     {% endif %}
 </div>
 {% else %}
