@@ -309,7 +309,7 @@
         bottom: calc(12px + var(--safe-bottom) + var(--kb-inset));
     }
 
-    /* M3.1 — lesson accordions: readable padding; sticky quiz CTA */
+    /* M3.1 — lesson accordions: readable padding; inline quiz CTA hidden when chrome bar is present */
     div[style*="max-width:860px"] > details {
         overflow-x: auto !important;
     }
@@ -322,17 +322,6 @@
     }
     div[style*="max-width:860px"] > details > summary + div {
         padding: 16px 14px !important;
-    }
-    [data-lesson-content] div[style*="max-width:860px"] > div[style*="text-align:right"] {
-        position: sticky;
-        top: calc(56px + var(--safe-top));
-        z-index: 40;
-        background: rgba(244, 246, 249, 0.94);
-        backdrop-filter: blur(8px);
-        -webkit-backdrop-filter: blur(8px);
-        margin: 0 -12px 12px;
-        padding: 8px 12px;
-        text-align: center !important;
     }
     [data-lesson-content] a[href*="/lesson-quiz/"] {
         min-height: var(--tap-min);

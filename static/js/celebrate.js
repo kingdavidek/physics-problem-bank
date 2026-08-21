@@ -69,5 +69,10 @@
   window.pbCelebrate = {
     correct: celebrateCorrect,
     wrong: celebrateWrong,
+    lessonComplete: function () {
+      showXpToast(25);
+      burstConfetti();
+      correctStreak = 0;
+    },
   };
 })();

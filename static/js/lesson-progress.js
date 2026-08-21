@@ -1,6 +1,7 @@
 /**
  * Lesson progress rail — a subsection counts as complete only after its Quick Check
  * MCQ is answered correctly (mcq-correct event).
+ * U4.3 chrome: mobile progress bar, sticky quiz CTA, completion celebration.
  */
 (function () {
   'use strict';
@@ -15,8 +16,47 @@
   var csrfMeta = document.querySelector('meta[name="csrf-token"]');
   var csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
   var storageKey = 'lesson-progress:' + level + ':' + subject + ':' + topic;
+  var celebrateKey = storageKey + ':celebrated';
 
   var contentRoot;
+  var topbarEl;
+  var topbarFillEl;
+  var topbarLabelEl;
+  var topbarToastEl;
+  var topbarToastFillEl;
+  var topbarToastLabelEl;
+  var topbarHideTimer;
+  var quizCtaBar;
+  var celebrated = false;
+  var TOPBAR_SHOW_MS = 2800;
+  var TOPBAR_FADE_MS = 420;
+
+  function isMobileLesson() {
+    return window.matchMedia('(max-width: 960px)').matches;
+  }
+
+  function hideMobileTopbarToast() {
+    if (!topbarToastEl) return;
+    clearTimeout(topbarHideTimer);
+    topbarToastEl.classList.remove('is-showing');
+    topbarHideTimer = setTimeout(function () {
+      topbarToastEl.classList.remove('is-visible');
+    }, TOPBAR_FADE_MS);
+  }
+
+  function showMobileTopbarPulse() {
+    if (!topbarToastEl || !topbarLabelEl || !topbarFillEl || !isMobileLesson()) return;
+    topbarToastLabelEl.textContent = topbarLabelEl.textContent;
+    topbarToastFillEl.style.width = topbarFillEl.style.width;
+    topbarToastEl.setAttribute('aria-valuenow', topbarEl.getAttribute('aria-valuenow') || '0');
+    topbarToastEl.setAttribute('aria-valuemax', topbarEl.getAttribute('aria-valuemax') || '0');
+    clearTimeout(topbarHideTimer);
+    topbarToastEl.classList.add('is-visible');
+    window.requestAnimationFrame(function () {
+      topbarToastEl.classList.add('is-showing');
+    });
+    topbarHideTimer = setTimeout(hideMobileTopbarToast, TOPBAR_SHOW_MS);
+  }
 
   function findLessonContentRoot(root) {
     var candidates = root.querySelectorAll(
@@ -24,6 +64,129 @@
     );
     if (candidates.length) return candidates[0];
     return root.firstElementChild || root;
+  }
+
+  function hideInlineQuizCta(root) {
+    var quizLink = root.querySelector('a[href*="/lesson-quiz/"]');
+    if (!quizLink) return;
+    var host = quizLink.closest('div');
+    if (host) host.classList.add('lesson-quiz-cta-source-wrap');
+  }
+
+  function removeLegacyLessonEndCtas(scope) {
+    scope.querySelectorAll('form[action="/quicktest/start"]').forEach(function (form) {
+      var host = form.closest('div');
+      if (host && host !== scope) host.remove();
+      else form.remove();
+    });
+
+    scope.querySelectorAll('a[href*="/lesson-quiz/"]').forEach(function (link) {
+      var label = (link.textContent || '').replace(/\s+/g, ' ').trim();
+      if (label === 'Start Practice Quiz') {
+        var block = link.closest('div');
+        if (block) block.remove();
+      }
+    });
+
+    scope.querySelectorAll('p').forEach(function (paragraph) {
+      if ((paragraph.textContent || '').replace(/\s+/g, ' ').trim() !== 'Ready to practise?') return;
+      var block = paragraph.closest('div');
+      if (block) block.remove();
+      else paragraph.remove();
+    });
+  }
+
+  function initGeneratorCta(scope) {
+    var practiceUrl = wrapper.dataset.lessonPracticeUrl;
+    if (!practiceUrl) return;
+
+    removeLegacyLessonEndCtas(scope);
+
+    var footer = document.createElement('div');
+    footer.className = 'lesson-generator-cta';
+    footer.innerHTML =
+      '<p>Want more practice questions?</p>' +
+      '<a href="' + practiceUrl + '" class="btn btn-outline btn-lg">' +
+      'Practice this topic with the generator' +
+      '</a>';
+    scope.appendChild(footer);
+  }
+
+  function initQuizCtaBar() {
+    var quizUrl = wrapper.dataset.lessonQuizUrl;
+    var quizCount = parseInt(wrapper.dataset.lessonQuizCount || '10', 10);
+    if (!quizUrl) return;
+
+    hideInlineQuizCta(contentRoot);
+
+    quizCtaBar = document.createElement('div');
+    quizCtaBar.className = 'lesson-quiz-cta-bar';
+    quizCtaBar.innerHTML =
+      '<a href="' + quizUrl + '" class="btn btn-primary lesson-quiz-cta-btn">' +
+      'Take the quiz · ' + quizCount + ' questions' +
+      '</a>';
+    document.body.appendChild(quizCtaBar);
+    document.body.classList.add('lesson-quiz-cta-active');
+  }
+
+  function initMobileTopbar(shell) {
+    var topbarMarkup =
+      '<span class="lesson-progress-topbar-label"></span>' +
+      '<div class="lesson-progress-topbar-track">' +
+      '<div class="lesson-progress-topbar-fill"></div>' +
+      '</div>';
+
+    topbarEl = document.createElement('div');
+    topbarEl.className = 'lesson-progress-topbar is-pinned';
+    topbarEl.setAttribute('role', 'progressbar');
+    topbarEl.setAttribute('aria-valuemin', '0');
+    topbarEl.innerHTML = topbarMarkup;
+    shell.insertBefore(topbarEl, contentRoot);
+    topbarLabelEl = topbarEl.querySelector('.lesson-progress-topbar-label');
+    topbarFillEl = topbarEl.querySelector('.lesson-progress-topbar-fill');
+
+    topbarToastEl = document.createElement('div');
+    topbarToastEl.className = 'lesson-progress-topbar lesson-progress-topbar-toast';
+    topbarToastEl.setAttribute('role', 'status');
+    topbarToastEl.setAttribute('aria-live', 'polite');
+    topbarToastEl.innerHTML = topbarMarkup;
+    document.body.appendChild(topbarToastEl);
+    topbarToastLabelEl = topbarToastEl.querySelector('.lesson-progress-topbar-label');
+    topbarToastFillEl = topbarToastEl.querySelector('.lesson-progress-topbar-fill');
+  }
+
+  function updateMobileTopbar(steps, pulse) {
+    if (!topbarFillEl || !topbarLabelEl || !steps.length) return;
+    var completed = steps.filter(function (step) { return step.completed; }).length;
+    var total = steps.length;
+    var pct = total ? Math.round((completed / total) * 100) : 0;
+    topbarFillEl.style.width = pct + '%';
+    topbarLabelEl.textContent = completed + ' of ' + total + ' quick checks complete';
+    topbarEl.setAttribute('aria-valuenow', String(completed));
+    topbarEl.setAttribute('aria-valuemax', String(total));
+    if (pulse) showMobileTopbarPulse();
+  }
+
+  function maybeCelebrateAllComplete(steps) {
+    if (!steps.length || celebrated) return;
+    var allDone = steps.every(function (step) { return step.completed; });
+    if (!allDone) return;
+    celebrated = true;
+    try {
+      window.localStorage.setItem(celebrateKey, '1');
+    } catch (err) {}
+    if (quizCtaBar) quizCtaBar.classList.add('is-complete');
+    if (window.pbCelebrate && window.pbCelebrate.lessonComplete) {
+      window.pbCelebrate.lessonComplete();
+    }
+  }
+
+  function readCelebratedFlag() {
+    try {
+      return window.localStorage.getItem(celebrateKey) === '1';
+    } catch (err) {
+      return false;
+    }
   }
 
   function subsectionForMcq(mcq) {
@@ -131,31 +294,23 @@
     } catch (err) {}
   }
 
-  function applyCompletedKeys(keys) {
-    var keySet = {};
-    (keys || []).forEach(function (key) {
-      keySet[normalizeStepKey(key)] = true;
-    });
-
-    steps.forEach(function (step) {
-      var done = !!keySet[step.key];
-      step.completed = done;
-      step.subsection.classList.toggle('lesson-subsection-complete', done);
-      step.subsection.dataset.mcqCompleted = done ? '1' : '0';
-    });
-    updateRail();
-  }
-
   contentRoot = findLessonContentRoot(wrapper);
-  contentRoot.classList.add('lesson-progress-content');
+  initQuizCtaBar();
+  initGeneratorCta(wrapper);
+  celebrated = readCelebratedFlag();
+  if (celebrated && quizCtaBar) quizCtaBar.classList.add('is-complete');
 
   var steps = buildSteps(contentRoot);
   if (!steps.length) return;
+
+  contentRoot.classList.add('lesson-progress-content');
 
   var shell = document.createElement('div');
   shell.className = 'lesson-progress-shell';
   contentRoot.parentNode.insertBefore(shell, contentRoot);
   shell.appendChild(contentRoot);
+
+  initMobileTopbar(shell);
 
   var rail = document.createElement('div');
   rail.className = 'lesson-progress-rail';
@@ -179,13 +334,32 @@
   startNode.setAttribute('aria-hidden', 'true');
   railInner.appendChild(startNode);
 
+  function applyCompletedKeys(keys) {
+    var keySet = {};
+    (keys || []).forEach(function (key) {
+      keySet[normalizeStepKey(key)] = true;
+    });
+
+    steps.forEach(function (step) {
+      var done = !!keySet[step.key];
+      step.completed = done;
+      step.subsection.classList.toggle('lesson-subsection-complete', done);
+      step.subsection.dataset.mcqCompleted = done ? '1' : '0';
+    });
+    updateRail();
+    updateMobileTopbar(steps);
+    maybeCelebrateAllComplete(steps);
+  }
+
   function markStepComplete(step) {
     if (step.completed) return;
     step.completed = true;
     step.subsection.classList.add('lesson-subsection-complete');
     step.subsection.dataset.mcqCompleted = '1';
     updateRail();
+    updateMobileTopbar(steps, true);
     persistProgress(step);
+    maybeCelebrateAllComplete(steps);
   }
 
   function wireMcqCompletion(step) {
@@ -258,6 +432,8 @@
       node.classList.toggle('is-reached', step.completed);
       node.classList.toggle('is-current', index === highest && step.completed);
     });
+
+    updateMobileTopbar(steps);
   }
 
   function scheduleLayout() {
@@ -301,7 +477,6 @@
   }
 
   applyCompletedKeys(readLocalProgress());
-  updateRail();
 
   if (isLoggedIn && level && subject && topic) {
     fetch(

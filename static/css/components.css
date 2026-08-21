@@ -913,6 +913,149 @@ details.lesson-subsection-complete > summary::after {
     .lesson-progress-rail { display: none; }
     .lesson-progress-shell { display: block; }
 }
+/* U4.3 — mobile lesson chrome: pinned progress + answer toast + bottom quiz CTA */
+.lesson-progress-topbar {
+    display: none;
+    position: relative;
+    z-index: 1;
+    margin: 0 0 var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    box-shadow: var(--elev-1);
+}
+.lesson-progress-topbar.is-pinned {
+    display: block;
+}
+.lesson-progress-topbar-toast {
+    position: fixed;
+    top: calc(56px + var(--safe-top));
+    left: var(--space-4);
+    right: var(--space-4);
+    z-index: 90;
+    margin: 0;
+    opacity: 0;
+    transform: translateY(-6px);
+    pointer-events: none;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition:
+        opacity 420ms var(--ease-out),
+        transform 420ms var(--ease-out);
+}
+.lesson-progress-topbar-toast.is-visible {
+    display: block;
+}
+.lesson-progress-topbar-toast.is-showing {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+@media (min-width: 961px) {
+    .lesson-progress-topbar.is-pinned,
+    .lesson-progress-topbar-toast {
+        display: none !important;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .lesson-progress-topbar-toast {
+        transition: none;
+    }
+}
+.lesson-progress-topbar-label {
+    display: block;
+    font-size: var(--text-xs);
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: var(--space-2);
+}
+.lesson-progress-topbar-track {
+    height: 6px;
+    border-radius: var(--radius-pill);
+    background: var(--brand-100);
+    overflow: hidden;
+}
+.lesson-progress-topbar-fill {
+    height: 100%;
+    width: 0;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--brand-500), var(--brand-400));
+    transition: width var(--dur) var(--ease);
+}
+.lesson-quiz-cta-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--tab-bar-h) + var(--safe-bottom));
+    z-index: 105;
+    display: flex;
+    justify-content: center;
+    margin: 0;
+    padding: var(--space-2) var(--space-4);
+    background: rgba(255, 255, 255, 0.98);
+    border: 1px solid var(--border-soft);
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    box-shadow: 0 -2px 12px rgba(15, 23, 42, 0.08);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+body.lesson-quiz-cta-active .site-wrapper {
+    padding-bottom: calc(var(--tab-bar-h) + var(--safe-bottom) + 58px);
+}
+.lesson-quiz-cta-bar .btn {
+    width: 100%;
+    max-width: 420px;
+    min-height: 40px;
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--text-sm);
+}
+.lesson-quiz-cta-bar.is-complete {
+    border-color: var(--correct-300);
+    background: linear-gradient(180deg, rgba(240, 253, 244, 0.98), rgba(255, 255, 255, 0.98));
+}
+.lesson-generator-cta {
+    text-align: center;
+    margin: var(--space-6) auto var(--space-4);
+    padding: var(--space-5);
+    max-width: 860px;
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--elev-1);
+}
+.lesson-generator-cta p {
+    margin: 0 0 var(--space-3);
+    font-weight: 600;
+    color: var(--text);
+}
+.lesson-generator-cta .btn {
+    width: 100%;
+    max-width: 360px;
+}
+.lesson-quiz-cta-source-wrap {
+    display: none !important;
+}
+@media (min-width: 961px) {
+    .lesson-progress-topbar { display: none !important; }
+}
+@media (min-width: 900px) {
+    .lesson-quiz-cta-bar {
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        width: min(860px, calc(100% - 2 * var(--space-5)));
+        bottom: var(--space-4);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-soft);
+    }
+    body.lesson-quiz-cta-active .site-wrapper {
+        padding-bottom: calc(72px + var(--safe-bottom));
+    }
+}
 .section-panel-body {
     padding: var(--space-5);
 }

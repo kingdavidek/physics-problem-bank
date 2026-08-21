@@ -38,6 +38,7 @@ import uuid
 from topics_data import TOPIC_CONTENT
 from topic_registry import TOPICS, iter_topics
 from generators.shared.lesson_quiz import (
+    LESSON_QUIZ_MIX,
     build_lesson_mcq_quiz,
     topic_supports_lesson_mcq,
 )
@@ -3165,6 +3166,22 @@ def _lesson_meta_for_topic(level, subject, topic, *, quiz_review=False):
     }
     if quiz_review:
         meta['quizReview'] = True
+    elif _lesson_quiz_available(level, subject, topic):
+        meta['quizUrl'] = url_for(
+            'lesson_mcq_quiz',
+            level=level,
+            subject=subject,
+            topic=topic,
+        )
+        meta['quizCount'] = sum(count for _, count in LESSON_QUIZ_MIX)
+    meta['practiceUrl'] = url_for(
+        'index',
+        level=level,
+        subject=subject,
+        topic=topic,
+        mode='standard',
+        difficulty='foundational',
+    )
     return meta
 
 
