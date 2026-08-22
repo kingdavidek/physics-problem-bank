@@ -836,6 +836,20 @@ def _accuracy_stats_since(conn, user_ids, since_iso):
     return stats
 
 
+def user_accuracy_pct(conn, user_id, days=None):
+    """Quiz + generator-MCQ accuracy as a 0–100 int, or None if no attempts."""
+    if days:
+        since_day = (_utc_today() - timedelta(days=days - 1)).isoformat()
+        since_iso = f'{since_day}T00:00:00'
+    else:
+        since_iso = '1970-01-01T00:00:00'
+    stats = _accuracy_stats_since(conn, [user_id], since_iso).get(user_id) or {}
+    possible = int(stats.get('possible') or 0)
+    if possible <= 0:
+        return None
+    return int(round(100.0 * int(stats.get('earned') or 0) / possible))
+
+
 def friend_accuracy_leaderboard(conn, viewer_id, days=7):
     """Weekly quiz+MCQ accuracy among people the viewer follows, plus the viewer.
 

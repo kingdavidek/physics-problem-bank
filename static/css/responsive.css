@@ -36,9 +36,11 @@
     .wrong-answer-reflection-actions {
         flex-direction: column;
         align-items: stretch;
+        grid-template-columns: 1fr;
     }
     .problem-actions form,
     .problem-actions .btn,
+    .public-profile-actions form,
     .public-profile-actions .btn,
     .settings-form-actions .btn,
     .auth-form .btn,

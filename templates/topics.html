@@ -27,26 +27,40 @@
 <section class="topic-group topic-group--{{ group.subject }}" data-level="{{ group.level }}" id="topics-{{ group.level }}-{{ group.subject }}">
     <div class="topic-group-header">
         <span class="topic-group-icon" aria-hidden="true">{{ subject_icons.get(group.subject, '📚') }}</span>
-        <h2 class="topic-group-title">{{ group.title }}</h2>
+        <div class="topic-group-heading">
+            <h2 class="topic-group-title">{{ group.title }}</h2>
+            <p class="topic-group-progress">{{ group.completed_count }} of {{ group.topic_count }} mastered</p>
+        </div>
     </div>
     <ol class="topic-path">
         {% for topic in group.topics %}
-        <li class="topic-path-node{% if topic.mastery and topic.mastery >= 0.8 %} is-complete{% endif %}">
-            <span class="topic-path-dot" aria-hidden="true"></span>
+        <li class="topic-path-node topic-path-node--{{ 'a' if loop.index0 % 2 == 0 else 'b' }}{% if topic.is_complete %} is-complete{% endif %}{% if topic.is_current %} is-current{% endif %}{% if topic.is_later %} is-later{% endif %}">
+            <span class="topic-path-rail" aria-hidden="true">
+                <span class="topic-path-dot">{% if topic.is_complete %}✓{% else %}{{ topic.order }}{% endif %}</span>
+            </span>
             <a class="topic-card topic-card--{{ group.subject }}" href="{{ topic.url }}"
-                data-topic-order="{{ topic.order }}">
-                {% if topic.mastery %}
+                data-topic-order="{{ topic.order }}"
+                {% if topic.is_current %}aria-current="step"{% endif %}>
                 <span class="topic-mastery" aria-label="{{ topic.mastery_pct }}% mastery">
                     <svg viewBox="0 0 32 32" aria-hidden="true">
                         <circle class="topic-mastery-track" cx="16" cy="16" r="12"></circle>
                         <circle class="topic-mastery-fill" cx="16" cy="16" r="12"
                             stroke-dasharray="75.4"
-                            stroke-dashoffset="{{ (75.4 * (1 - topic.mastery)) | round(1) }}"></circle>
+                            stroke-dashoffset="{{ (75.4 * (1 - (topic.mastery or 0))) | round(1) }}"></circle>
                     </svg>
                 </span>
-                {% endif %}
                 <span class="topic-card-title">{{ topic.name }}</span>
-                <span class="topic-card-meta">{% if topic.mastery %}{{ topic.mastery_pct }}% · Continue →{% else %}Start →{% endif %}</span>
+                <span class="topic-card-meta">
+                    {% if topic.is_complete %}
+                    {{ topic.mastery_pct }}% · Practise again →
+                    {% elif topic.is_current %}
+                    {% if topic.mastery %}{{ topic.mastery_pct }}% · Continue →{% else %}Start here →{% endif %}
+                    {% elif topic.prereq_hint %}
+                    {% if topic.mastery %}{{ topic.mastery_pct }}% · {% endif %}After {{ topic.prereq_hint }}
+                    {% else %}
+                    {% if topic.mastery %}{{ topic.mastery_pct }}% · Continue →{% else %}Start →{% endif %}
+                    {% endif %}
+                </span>
             </a>
         </li>
         {% endfor %}

@@ -1,7 +1,7 @@
 /**
  * Lesson progress rail — a subsection counts as complete only after its Quick Check
  * MCQ is answered correctly (mcq-correct event).
- * U4.3 chrome: mobile progress bar, sticky quiz CTA, completion celebration.
+ * U4.3 chrome: mobile progress bar, inline quiz CTA, completion celebration.
  */
 (function () {
   'use strict';
@@ -66,11 +66,15 @@
     return root.firstElementChild || root;
   }
 
-  function hideInlineQuizCta(root) {
-    var quizLink = root.querySelector('a[href*="/lesson-quiz/"]');
-    if (!quizLink) return;
-    var host = quizLink.closest('div');
-    if (host) host.classList.add('lesson-quiz-cta-source-wrap');
+  function removeInlineQuizCtas(root) {
+    root.querySelectorAll('a[href*="/lesson-quiz/"]').forEach(function (link) {
+      var host = link.parentElement;
+      if (host && host !== root && host.tagName === 'DIV' && host.children.length === 1) {
+        host.remove();
+      } else {
+        link.remove();
+      }
+    });
   }
 
   function removeLegacyLessonEndCtas(scope) {
@@ -112,12 +116,12 @@
     scope.appendChild(footer);
   }
 
-  function initQuizCtaBar() {
+  function initQuizCta(root) {
     var quizUrl = wrapper.dataset.lessonQuizUrl;
     var quizCount = parseInt(wrapper.dataset.lessonQuizCount || '10', 10);
     if (!quizUrl) return;
 
-    hideInlineQuizCta(contentRoot);
+    removeInlineQuizCtas(root);
 
     quizCtaBar = document.createElement('div');
     quizCtaBar.className = 'lesson-quiz-cta-bar';
@@ -125,8 +129,7 @@
       '<a href="' + quizUrl + '" class="btn btn-primary lesson-quiz-cta-btn">' +
       'Take the quiz · ' + quizCount + ' questions' +
       '</a>';
-    document.body.appendChild(quizCtaBar);
-    document.body.classList.add('lesson-quiz-cta-active');
+    root.appendChild(quizCtaBar);
   }
 
   function initMobileTopbar(shell) {
@@ -155,15 +158,68 @@
     topbarToastFillEl = topbarToastEl.querySelector('.lesson-progress-topbar-fill');
   }
 
+  function enhanceSectionCards(steps) {
+    steps.forEach(function (step) {
+      var subsection = step.subsection;
+      var sectionNum = step.index + 1;
+      subsection.classList.add('lesson-section', 'lesson-section-card');
+      subsection.setAttribute('data-lesson-section', String(sectionNum));
+
+      var summary = subsection.querySelector(':scope > summary');
+      if (!summary) return;
+      summary.classList.add('lesson-section-summary');
+
+      var chip = summary.querySelector('.lesson-section-chip');
+      if (!chip) {
+        var spans = summary.querySelectorAll(':scope > span');
+        var i;
+        for (i = 0; i < spans.length; i += 1) {
+          if (/^\d+$/.test((spans[i].textContent || '').trim())) {
+            chip = spans[i];
+            break;
+          }
+        }
+        if (chip) {
+          chip.classList.add('lesson-section-chip');
+        } else {
+          chip = document.createElement('span');
+          chip.className = 'lesson-section-chip';
+          chip.textContent = String(sectionNum);
+          summary.insertBefore(chip, summary.firstChild);
+        }
+      }
+
+      if (!summary.querySelector('.lesson-section-status')) {
+        var status = document.createElement('span');
+        status.className = 'lesson-section-status';
+        summary.appendChild(status);
+      }
+    });
+  }
+
+  function updateSectionStatus(step) {
+    var summary = step.subsection.querySelector(':scope > summary');
+    if (!summary) return;
+    var status = summary.querySelector('.lesson-section-status');
+    if (!status) return;
+    status.classList.toggle('is-complete', step.completed);
+    status.setAttribute(
+      'aria-label',
+      step.completed ? 'Section complete' : 'Section incomplete'
+    );
+  }
+
   function updateMobileTopbar(steps, pulse) {
     if (!topbarFillEl || !topbarLabelEl || !steps.length) return;
     var completed = steps.filter(function (step) { return step.completed; }).length;
     var total = steps.length;
     var pct = total ? Math.round((completed / total) * 100) : 0;
     topbarFillEl.style.width = pct + '%';
-    topbarLabelEl.textContent = completed + ' of ' + total + ' quick checks complete';
+    topbarLabelEl.textContent =
+      completed + ' of ' + total + ' sections · ' + pct + '%';
     topbarEl.setAttribute('aria-valuenow', String(completed));
     topbarEl.setAttribute('aria-valuemax', String(total));
+    topbarEl.setAttribute('aria-valuetext', completed + ' of ' + total + ' sections complete');
     if (pulse) showMobileTopbarPulse();
   }
 
@@ -295,14 +351,15 @@
   }
 
   contentRoot = findLessonContentRoot(wrapper);
-  initQuizCtaBar();
   initGeneratorCta(wrapper);
+  initQuizCta(contentRoot);
   celebrated = readCelebratedFlag();
   if (celebrated && quizCtaBar) quizCtaBar.classList.add('is-complete');
 
   var steps = buildSteps(contentRoot);
   if (!steps.length) return;
 
+  enhanceSectionCards(steps);
   contentRoot.classList.add('lesson-progress-content');
 
   var shell = document.createElement('div');
@@ -345,6 +402,7 @@
       step.completed = done;
       step.subsection.classList.toggle('lesson-subsection-complete', done);
       step.subsection.dataset.mcqCompleted = done ? '1' : '0';
+      updateSectionStatus(step);
     });
     updateRail();
     updateMobileTopbar(steps);
@@ -356,6 +414,7 @@
     step.completed = true;
     step.subsection.classList.add('lesson-subsection-complete');
     step.subsection.dataset.mcqCompleted = '1';
+    updateSectionStatus(step);
     updateRail();
     updateMobileTopbar(steps, true);
     persistProgress(step);

@@ -4,38 +4,69 @@
 {% block title %}{{ profile_user.display_handle }} – Problem Bank{% endblock %}
 
 {% block content %}
-<div class="page-shell">
+<div class="page-shell public-profile">
 
-<div class="lesson-hero lesson-hero-with-avatar">
-    {{ user_avatar(avatar, 'lg') }}
-    <div>
-    <h1>{{ profile_user.display_handle }}</h1>
-    <p class="hero-sub">{% if is_system_bot %}A Problem Bank bot — not a person.{% else %}Public profile{% endif %}</p>
+<header class="profile-dashboard-hero">
+    <div class="profile-dashboard-main">
+        {{ user_avatar(avatar, 'lg') }}
+        <div class="profile-dashboard-copy">
+            <h1>{{ profile_user.display_handle }}</h1>
+            <p class="hero-sub">{% if is_system_bot %}A Problem Bank bot — not a person.{% elif is_own_profile %}Your public profile{% else %}Public profile{% endif %}</p>
+            <div class="profile-dashboard-chips">
+                <a class="profile-hero-chip" href="{{ url_for('public_profile_followers', handle=profile_user.handle) }}">
+                    <strong>{{ followers_count }}</strong> follower{% if followers_count != 1 %}s{% endif %}
+                </a>
+                <a class="profile-hero-chip" href="{{ url_for('public_profile_following', handle=profile_user.handle) }}">
+                    <strong>{{ following_count }}</strong> following
+                </a>
+                {% if study_streak and (is_own_profile or settings.show_study_streak) and study_streak.current %}
+                <span class="profile-hero-chip profile-hero-chip--streak">
+                    <span aria-hidden="true">🔥</span> {{ study_streak.current }}-day streak
+                </span>
+                {% endif %}
+            </div>
+            {% if badge_shelf and (is_own_profile or settings.show_milestones) %}
+            <ul class="badge-shelf" aria-label="Recent badges">
+                {% for item in badge_shelf %}
+                <li class="badge-shelf-item badge-shelf-item--{{ item.tier or 'bronze' }}" title="{{ item.title }} — {{ item.description }}">
+                    <span class="milestone-badge" aria-hidden="true">{{ item.emoji or '★' }}</span>
+                    <span class="badge-shelf-caption">{{ item.title }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
     </div>
-</div>
+</header>
 
 {{ page_flashes('public_profile') }}
 
-<div class="public-profile-stats">
-    <a href="{{ url_for('public_profile_followers', handle=profile_user.handle) }}" class="public-profile-stat">
-        <strong>{{ followers_count }}</strong>
-        <span>Followers</span>
-    </a>
-    <a href="{{ url_for('public_profile_following', handle=profile_user.handle) }}" class="public-profile-stat">
-        <strong>{{ following_count }}</strong>
-        <span>Following</span>
-    </a>
+{% if (study_streak is not none) or (topics_count is not none) %}
+<div class="profile-stats-row public-profile-stats-row">
+    {% if study_streak is not none %}
+    <div class="stat-card profile-stat-card profile-stat-card--streak">
+        <strong>{{ study_streak.current }}</strong>
+        <span>Day streak{% if study_streak.longest > study_streak.current %} · best {{ study_streak.longest }}{% endif %}</span>
+    </div>
+    {% endif %}
+    {% if topics_count is not none %}
+    <div class="stat-card profile-stat-card profile-stat-card--social">
+        <strong>{{ topics_count }}</strong>
+        <span>Topic{% if topics_count != 1 %}s{% endif %} practised</span>
+    </div>
+    {% endif %}
 </div>
+{% endif %}
 
 {% if is_own_profile %}
 <div class="public-profile-actions">
-    <a href="{{ url_for('profile_settings') }}" class="btn btn-outline">Settings</a>
-    <a href="{{ url_for('profile') }}" class="btn btn-secondary">Your account</a>
+    <a href="{{ url_for('profile_settings') }}" class="btn btn-outline btn-lg btn-block">Settings</a>
+    <a href="{{ url_for('profile') }}" class="btn btn-secondary btn-lg btn-block">Your account</a>
 </div>
 {% elif is_system_bot %}
 <p class="profile-empty">This bot posts the daily challenge. Open <a href="{{ url_for('qotd_page') }}">Question of the Day</a>.</p>
 {% elif current_user.is_authenticated %}
-<div class="public-profile-actions public-profile-actions--stacked">
+<div class="public-profile-actions">
     {% if viewer_follows %}
     <form method="POST" action="{{ url_for('unfollow_user_route', handle=profile_user.handle) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -47,20 +78,21 @@
         <button type="submit" class="btn btn-primary btn-lg btn-block">Follow</button>
     </form>
     {% endif %}
+    {% if can_challenge %}
+    <a href="{{ url_for('challenge_new', handle=profile_user.handle) }}" class="btn btn-outline btn-lg btn-block">Challenge</a>
+    {% endif %}
     {% if can_invite_study_pair %}
     <form method="POST" action="{{ url_for('study_pair_invite', handle=profile_user.handle) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit" class="btn btn-outline btn-lg btn-block">Study buddy invite</button>
+        <button type="submit" class="btn btn-outline btn-lg btn-block">Study buddy</button>
     </form>
-    {% endif %}
-    {% if can_challenge %}
-    <a href="{{ url_for('challenge_new', handle=profile_user.handle) }}" class="btn btn-outline btn-lg btn-block">Challenge to quiz</a>
     {% endif %}
 </div>
 {% else %}
 <p class="profile-empty">Log in to follow {{ profile_user.display_handle }}.</p>
 {% endif %}
 
+{% if settings.show_member_since or settings.show_last_topic or settings.show_last_activity %}
 <section class="section-panel">
     <div class="section-panel-header">Overview</div>
     <div class="section-panel-body">
@@ -68,15 +100,6 @@
             {% if settings.show_member_since %}
             <dt>Member since</dt>
             <dd>{{ profile_user.created_at[:10] if profile_user.created_at else '—' }}</dd>
-            {% endif %}
-            {% if study_streak and (is_own_profile or settings.show_study_streak) %}
-            <dt>Study streak</dt>
-            <dd>
-                {{ study_streak.current }} day{% if study_streak.current != 1 %}s{% endif %}
-                {% if study_streak.longest > study_streak.current %}
-                <span class="profile-list-meta"> · Best {{ study_streak.longest }} days</span>
-                {% endif %}
-            </dd>
             {% endif %}
             {% if settings.show_last_topic and activity.last_topic_label %}
             <dt>Last topic opened</dt>
@@ -107,6 +130,7 @@
         </dl>
     </div>
 </section>
+{% endif %}
 
 {% if milestones and (is_own_profile or settings.show_milestones) %}
 <section class="section-panel" id="milestones">
@@ -132,16 +156,19 @@
     <div class="section-panel-header">Lesson progress</div>
     <div class="section-panel-body">
         {% if lesson_progress %}
-        <ul class="profile-list">
+        <ul class="profile-list profile-list--rows">
             {% for item in lesson_progress %}
-            <li class="profile-list-item">
-                <div class="profile-list-main">
-                    <a href="{{ item.lesson_url }}">{{ item.topic_label }}</a>
-                    <span class="profile-list-meta">
-                        {% if item.completed_count %}{{ item.completed_count }} quick check{% if item.completed_count != 1 %}s{% endif %} complete{% if item.section_label %} · {{ item.section_label | truncate(50) }}{% endif %}{% elif item.section_label %}{{ item.section_label | truncate(60) }}{% endif %}
-                        · {{ item.updated_at[:10] }}
+            <li>
+                <a href="{{ item.lesson_url }}" class="profile-list-item list-row">
+                    <span class="list-row-main">
+                        <span>{{ item.topic_label }}</span>
+                        <span class="list-row-meta">
+                            {% if item.completed_count %}{{ item.completed_count }} quick check{% if item.completed_count != 1 %}s{% endif %} complete{% if item.section_label %} · {{ item.section_label | truncate(50) }}{% endif %}{% elif item.section_label %}{{ item.section_label | truncate(60) }}{% endif %}
+                            {% if item.updated_at %} · {{ item.updated_at[:10] }}{% endif %}
+                        </span>
                     </span>
-                </div>
+                    <span class="list-row-chevron" aria-hidden="true"></span>
+                </a>
             </li>
             {% endfor %}
         </ul>
@@ -157,18 +184,18 @@
     <div class="section-panel-header">Recent quizzes</div>
     <div class="section-panel-body">
         {% if quiz_attempts %}
-        <ul class="profile-list">
+        <ul class="profile-list profile-list--rows">
             {% for item in quiz_attempts %}
-            <li class="profile-list-item">
-                <div class="profile-list-main">
+            <li class="profile-list-item list-row">
+                <div class="list-row-main">
                     <span>{{ item.topic_label }}</span>
-                    <span class="profile-list-meta">{{ item.score }}/{{ item.total }} · {{ item.created_at[:10] }}</span>
+                    <span class="list-row-meta">{% if item.created_at %}{{ item.created_at[:10] }}{% endif %}</span>
                 </div>
             </li>
             {% endfor %}
         </ul>
         {% else %}
-        <p class="profile-empty">No quiz scores shared yet.</p>
+        <p class="profile-empty">No recent quizzes shared yet.</p>
         {% endif %}
     </div>
 </section>

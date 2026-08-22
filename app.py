@@ -1971,6 +1971,7 @@ def index():
         queue_active=bool(session.get('problem_queue')),
         can_reroll_variant=can_reroll_variant,
         generator_launch_gcse_only=GENERATOR_LAUNCH_GCSE_MATHS_CS,
+        generator_topics=_generator_topic_options(),
     )
 
 
@@ -2261,10 +2262,13 @@ def _build_public_profile_context(target_user, viewer_id=None):
             quiz_rows = quiz_stats_summary(conn, target_user.id, limit=5)
         study_streak = None
         milestones = []
+        topics_count = None
         if is_own or settings.get('show_study_streak'):
             study_streak = get_study_streak(conn, target_user.id)
         if is_own or settings.get('show_milestones'):
             milestones = list_user_milestones(conn, target_user.id)
+        if is_own or settings.get('show_lesson_progress') or settings.get('show_quiz_stats'):
+            topics_count = len(topic_mastery_map(conn, target_user.id))
         can_challenge = False
         can_invite_study_pair = False
         if viewer_id and not is_own and not is_bot_user(target_user):
@@ -2314,6 +2318,8 @@ def _build_public_profile_context(target_user, viewer_id=None):
         'last_activity_url': last_activity_url,
         'study_streak': study_streak,
         'milestones': milestones,
+        'badge_shelf': list(reversed(milestones[-5:])) if milestones else [],
+        'topics_count': topics_count,
         'can_challenge': can_challenge,
         'can_invite_study_pair': can_invite_study_pair,
         'is_system_bot': is_bot_user(target_user),
@@ -3166,8 +3172,6 @@ def _build_public_profile_json(target_user, viewer_id=None):
                 'subject': item['subject'],
                 'topic': item['topic'],
                 'topic_label': item['topic_label'],
-                'score': item['score'],
-                'total': item['total'],
                 'created_at': item['created_at'],
             }
             for item in context['quiz_attempts']
@@ -3176,10 +3180,13 @@ def _build_public_profile_json(target_user, viewer_id=None):
         context['is_own_profile'] or settings.get('show_study_streak')
     ):
         profile['study_streak'] = context['study_streak']
+    if context.get('topics_count') is not None:
+        profile['topics_count'] = context['topics_count']
     if context.get('milestones') and (
         context['is_own_profile'] or settings.get('show_milestones')
     ):
         profile['milestones'] = context['milestones']
+        profile['badge_shelf'] = context.get('badge_shelf') or []
     return profile
 
 
@@ -3796,6 +3803,54 @@ def _build_topic_groups():
     return groups
 
 
+def _annotate_topic_path_groups(groups, mastery):
+    """Attach mastery, current-node, and prereq-hint flags for the /topics path."""
+    mastery = mastery or {}
+    for group in groups:
+        by_slug = {topic['slug']: topic for topic in group['topics']}
+        completed = 0
+        for topic in group['topics']:
+            pct = mastery.get((topic.get('level'), topic.get('subject'), topic.get('slug')), 0) or 0
+            topic['mastery'] = pct
+            topic['mastery_pct'] = int(round(pct * 100))
+            topic['is_complete'] = pct >= 0.8
+            if topic['is_complete']:
+                completed += 1
+            unmet = []
+            for slug in topic.get('prereqs') or []:
+                prev = by_slug.get(slug)
+                if prev is not None and not prev.get('is_complete'):
+                    unmet.append(prev['name'])
+            topic['prereq_hint'] = unmet[0] if unmet else None
+            topic['is_current'] = False
+        current_assigned = False
+        for topic in group['topics']:
+            if not topic['is_complete'] and not current_assigned:
+                topic['is_current'] = True
+                current_assigned = True
+            topic['is_later'] = not topic['is_complete'] and not topic['is_current']
+        group['completed_count'] = completed
+        group['topic_count'] = len(group['topics'])
+    return groups
+
+
+def _generator_topic_options():
+    """Topic picker rows in syllabus order (U4.2a)."""
+    items = []
+    for level in _TOPIC_LEVEL_ORDER:
+        subjects = TOPICS.get(level) or {}
+        for subject in _TOPIC_SUBJECT_ORDER.get(level, tuple(subjects.keys())):
+            topics = subjects.get(subject) or {}
+            for slug, cfg in iter_topics(topics):
+                items.append({
+                    'slug': slug,
+                    'name': cfg.get('name') or slug.replace('_', ' ').title(),
+                    'level': level,
+                    'subject': subject,
+                })
+    return items
+
+
 _TOPIC_INDEX = None
 
 
@@ -3880,11 +3935,7 @@ def topics_index():
     if current_user.is_authenticated:
         with get_db() as conn:
             mastery = topic_mastery_map(conn, current_user.id)
-    for group in groups:
-        for topic in group['topics']:
-            pct = mastery.get((topic.get('level'), topic.get('subject'), topic.get('slug')), 0)
-            topic['mastery'] = pct
-            topic['mastery_pct'] = int(round(pct * 100))
+    _annotate_topic_path_groups(groups, mastery)
     return render_template('topics.html', topic_groups=groups)
 
 

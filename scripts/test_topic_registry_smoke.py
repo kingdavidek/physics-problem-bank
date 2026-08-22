@@ -11,7 +11,7 @@ sys.path.insert(0, str(ROOT))
 
 os.environ['PB_TESTING'] = '1'
 
-from app import app, _build_topic_groups, _topic_path_valid  # noqa: E402
+from app import app, _annotate_topic_path_groups, _build_topic_groups, _topic_path_valid  # noqa: E402
 from topic_registry import TOPICS, iter_topics, validate_topic_registry  # noqa: E402
 
 
@@ -52,6 +52,31 @@ def main():
         bidmas_pos = body.index('/topic/gcse/maths/bidmas')
         algebra_pos = body.index('/topic/gcse/maths/algebra')
         assert bidmas_pos < algebra_pos
+        assert 'topic-path-node' in body
+        assert 'is-current' in body
+        assert 'Start here' in body
+        assert 'After Decimals' in body
+        assert 'of ' in body and ' mastered' in body
+        assert 'href="/topic/gcse/maths/fdp"' in body
+
+        groups = _build_topic_groups()
+        _annotate_topic_path_groups(groups, {})
+        maths = next(
+            group for group in groups
+            if group['level'] == 'gcse' and group['subject'] == 'maths'
+        )
+        assert maths['topics'][0]['slug'] == 'bidmas'
+        assert maths['topics'][0]['is_current']
+        assert maths['completed_count'] == 0
+        fdp = next(topic for topic in maths['topics'] if topic['slug'] == 'fdp')
+        assert fdp['prereq_hint'] == 'Decimals'
+        assert fdp['is_later']
+        assert fdp['url'] == '/topic/gcse/maths/fdp'
+
+        _annotate_topic_path_groups(groups, {('gcse', 'maths', 'bidmas'): 1.0})
+        assert maths['topics'][0]['is_complete']
+        assert maths['topics'][1]['is_current']
+        assert maths['completed_count'] == 1
 
         r = client.get('/api/v1/topics')
         assert r.status_code == 200
@@ -65,7 +90,15 @@ def main():
         )
         assert gcse_maths[0]['slug'] == 'bidmas'
 
-    print('U4.2a topic registry smoke tests passed.')
+        r = client.get('/')
+        assert r.status_code == 200
+        home = r.data.decode()
+        bidmas_opt = home.index('value="bidmas"')
+        algebra_opt = home.index('value="algebra"')
+        vectors_opt = home.index('value="vectors"')
+        assert bidmas_opt < algebra_opt < vectors_opt
+
+    print('U4.2 topic registry + path UI smoke tests passed.')
 
 
 if __name__ == '__main__':

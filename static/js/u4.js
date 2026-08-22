@@ -80,6 +80,17 @@
     setTab(initial, false);
   }
 
+  function levelFromHash(hash) {
+    var level = 'all';
+    if (hash === 'gcse' || hash === 'alevel' || hash === 'myp') {
+      level = hash;
+    } else if (hash.indexOf('topics-') === 0) {
+      level = hash.split('-')[1] || 'all';
+    }
+    if (level === 'gcse' || level === 'alevel' || level === 'myp') return level;
+    return 'all';
+  }
+
   function initTopicsFilter() {
     var bar = document.querySelector('.topics-level-bar');
     if (!bar) return;
@@ -87,7 +98,7 @@
     var groups = document.querySelectorAll('.topic-group[data-level]');
     var buttons = bar.querySelectorAll('[data-level-filter]');
 
-    function apply(level) {
+    function apply(level, persist) {
       buttons.forEach(function (btn) {
         var active = btn.dataset.levelFilter === level;
         btn.classList.toggle('is-active', active);
@@ -97,6 +108,22 @@
         var show = level === 'all' || group.dataset.level === level;
         group.hidden = !show;
       });
+      if (persist === false) return;
+      if (window.history && window.history.replaceState) {
+        var next = window.location.pathname + window.location.search;
+        if (level !== 'all') next += '#' + level;
+        window.history.replaceState(null, '', next);
+      }
+    }
+
+    function scrollToGroup(hash) {
+      if (hash.indexOf('topics-') !== 0) return;
+      var target = document.getElementById(hash);
+      if (target && !target.hidden && target.scrollIntoView) {
+        window.setTimeout(function () {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 0);
+      }
     }
 
     buttons.forEach(function (btn) {
@@ -105,7 +132,15 @@
       });
     });
 
-    apply('all');
+    window.addEventListener('hashchange', function () {
+      var nextHash = (window.location.hash || '').replace(/^#/, '');
+      apply(levelFromHash(nextHash), false);
+      scrollToGroup(nextHash);
+    });
+
+    var hash = (window.location.hash || '').replace(/^#/, '');
+    apply(levelFromHash(hash), false);
+    scrollToGroup(hash);
   }
 
   function labelForSelect(selectEl) {
