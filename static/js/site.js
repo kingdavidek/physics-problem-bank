@@ -62,6 +62,7 @@
     var subjectSel = document.getElementById('subject-select');
     var topicSel = document.getElementById('topic-select');
     if (!levelSel || !subjectSel || !topicSel) return;
+    var launchMode = !!document.querySelector('[data-launch-gcse-only="1"]');
 
     function syncTopicDropdown() {
       var level = levelSel.value;
@@ -74,7 +75,12 @@
     function syncSubjectDropdown() {
       var level = levelSel.value;
       var prevSubject = subjectSel.value;
-      setOptionVisibility(subjectSel, subjectPredicate(level));
+      setOptionVisibility(subjectSel, function (opt) {
+        if (launchMode && level === 'gcse' && opt.dataset.launchSubject !== '1') {
+          return false;
+        }
+        return opt.dataset.level === level;
+      });
       ensureValidSelection(subjectSel, prevSubject);
       if (subjectSel.value !== prevSubject) {
         topicSel.dataset.pendingTopic = '';
@@ -98,6 +104,48 @@
     subjectSel.addEventListener('change', onSubjectChange);
 
     syncSubjectDropdown();
+  }
+
+  function initPracticePrimaryBar() {
+    var session = document.getElementById('practice-session');
+    if (!session) return;
+
+    var checkBtn = document.getElementById('practice-check-btn');
+    var hintBtn = document.getElementById('practice-hint-btn');
+    var hintDrawer = document.getElementById('practice-hint');
+    var question = document.getElementById('practice-question');
+    var skipBtn = document.getElementById('practice-skip-btn');
+    var mainForm = document.getElementById('main-form');
+
+    if (checkBtn && question) {
+      checkBtn.addEventListener('click', function () {
+        var target = question.querySelector(
+          '.free-response-check-btn:not([disabled]), .free-response-field-check-btn:not([disabled])'
+        );
+        if (target) {
+          target.click();
+          return;
+        }
+        var input = question.querySelector('.free-response-input:not([disabled])');
+        if (input) input.focus();
+      });
+    }
+
+    if (hintBtn && hintDrawer) {
+      hintBtn.addEventListener('click', function () {
+        hintDrawer.open = true;
+        hintDrawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        if (window.MathJax && MathJax.typesetPromise) {
+          MathJax.typesetPromise([hintDrawer.querySelector('.hint')]).catch(function () {});
+        }
+      });
+    }
+
+    if (skipBtn && mainForm) {
+      skipBtn.addEventListener('click', function () {
+        try { sessionStorage.setItem('scrollToProblem', '1'); } catch (e) {}
+      });
+    }
   }
 
   function initRevisionPlanForm() {
@@ -4535,7 +4583,7 @@
   }
 
   function initAnswerRevealMathJax() {
-    document.querySelectorAll('details.answer-reveal').forEach(function (details) {
+    document.querySelectorAll('details.answer-reveal, details.practice-hint-drawer').forEach(function (details) {
       details.addEventListener('toggle', function () {
         if (!details.open || !window.MathJax || !MathJax.typesetPromise) return;
         var targets = [details.querySelector('.answer'), details.querySelector('.hint')];
@@ -4604,6 +4652,240 @@
     syncFormFields: syncQuickTestFormFields,
   };
 
+  var _EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  var _HANDLE_RE = /^[a-z0-9_]{3,20}$/;
+
+  function passwordStrengthScore(value) {
+    var score = 0;
+    if (!value) return 0;
+    if (value.length >= 8) score += 1;
+    if (value.length >= 12) score += 1;
+    if (/[a-z]/.test(value) && /[A-Z]/.test(value)) score += 1;
+    if (/\d/.test(value)) score += 1;
+    if (/[^A-Za-z0-9]/.test(value)) score += 1;
+    if (score <= 1) return 1;
+    if (score === 2) return 2;
+    if (score === 3) return 3;
+    return 4;
+  }
+
+  function passwordStrengthLabel(level) {
+    if (level === 1) return 'Weak — try a longer mix of letters and numbers';
+    if (level === 2) return 'Fair — add uppercase, numbers, or symbols';
+    if (level === 3) return 'Good password';
+    if (level === 4) return 'Strong password';
+    return '';
+  }
+
+  function setFieldFeedback(group, message, ok) {
+    if (!group) return false;
+    var feedback = group.querySelector('.field-feedback');
+    var serverError = group.querySelector('[data-server-error]');
+    if (serverError) {
+      serverError.hidden = true;
+    }
+    if (feedback) {
+      if (message) {
+        feedback.textContent = message;
+        feedback.hidden = false;
+        feedback.classList.toggle('is-error', !ok);
+        feedback.classList.toggle('is-ok', !!ok);
+      } else {
+        feedback.textContent = '';
+        feedback.hidden = true;
+        feedback.classList.remove('is-error', 'is-ok');
+      }
+    }
+    group.classList.toggle('is-invalid', !!message && !ok);
+    group.classList.toggle('is-valid', ok === true);
+    return !message || ok;
+  }
+
+  function validateRegisterEmail(value) {
+    var email = (value || '').trim().toLowerCase();
+    if (!email) return 'Email is required.';
+    if (email.length > 254) return 'Email is too long.';
+    if (!_EMAIL_RE.test(email)) return 'Enter a valid email address.';
+    return null;
+  }
+
+  function validateRegisterHandle(value) {
+    var handle = (value || '').trim().toLowerCase().replace(/^@/, '');
+    if (!handle) return 'Handle is required.';
+    if (!_HANDLE_RE.test(handle)) {
+      return 'Handle must be 3–20 characters: lowercase letters, numbers, and underscores only.';
+    }
+    return null;
+  }
+
+  function validateRegisterPassword(value) {
+    if (!value) return 'Password is required.';
+    if (value.length < 8) return 'Password must be at least 8 characters.';
+    if (value.length > 128) return 'Password is too long.';
+    return null;
+  }
+
+  function initRegisterForm() {
+    var form = document.getElementById('register-form');
+    if (!form) return;
+
+    var emailInput = form.querySelector('#email');
+    var handleInput = form.querySelector('#handle');
+    var passwordInput = form.querySelector('#password');
+    var confirmInput = form.querySelector('#confirm_password');
+    var ageInput = form.querySelector('#age_confirm');
+    var ageRow = document.getElementById('age-confirm-row');
+    var submitBtn = document.getElementById('register-submit');
+    var strengthWrap = document.getElementById('password-strength');
+    var strengthFill = strengthWrap ? strengthWrap.querySelector('.password-strength-fill') : null;
+    var strengthLabel = document.getElementById('password-strength-label');
+    var touched = {
+      email: false,
+      handle: false,
+      password: false,
+      confirm_password: false,
+      age_confirm: false,
+    };
+
+    function groupFor(name) {
+      return form.querySelector('[data-validate="' + name + '"]');
+    }
+
+    function updatePasswordStrength() {
+      if (!strengthWrap || !strengthFill || !strengthLabel) return;
+      var value = passwordInput.value;
+      if (!value) {
+        strengthWrap.hidden = true;
+        strengthFill.setAttribute('data-level', '0');
+        strengthLabel.textContent = '';
+        return;
+      }
+      var level = passwordStrengthScore(value);
+      strengthWrap.hidden = false;
+      strengthFill.setAttribute('data-level', String(level));
+      strengthLabel.textContent = passwordStrengthLabel(level);
+    }
+
+    function validateField(name, showFeedback) {
+      var group = groupFor(name);
+      if (!group) return true;
+      var message = null;
+      var ok = false;
+      if (name === 'email') {
+        message = validateRegisterEmail(emailInput.value);
+        ok = !message;
+      } else if (name === 'handle') {
+        message = validateRegisterHandle(handleInput.value);
+        ok = !message;
+      } else if (name === 'password') {
+        message = validateRegisterPassword(passwordInput.value);
+        ok = !message;
+        updatePasswordStrength();
+      } else if (name === 'confirm_password') {
+        if (!confirmInput.value) {
+          message = 'Please confirm your password.';
+        } else if (confirmInput.value !== passwordInput.value) {
+          message = 'Passwords do not match.';
+        }
+        ok = !message;
+      } else if (name === 'age_confirm') {
+        if (!ageInput.checked) {
+          message = 'You must confirm you are 13 or older to create an account.';
+        }
+        ok = !message;
+        if (ageRow) ageRow.classList.toggle('is-invalid', !!message);
+      }
+      if (showFeedback || touched[name]) {
+        setFieldFeedback(group, message, ok);
+      }
+      return ok;
+    }
+
+    function formIsValid() {
+      return (
+        validateRegisterEmail(emailInput.value) === null &&
+        validateRegisterHandle(handleInput.value) === null &&
+        validateRegisterPassword(passwordInput.value) === null &&
+        confirmInput.value === passwordInput.value &&
+        !!ageInput.checked
+      );
+    }
+
+    function refreshSubmit() {
+      if (submitBtn) submitBtn.disabled = !formIsValid();
+    }
+
+    function bindField(input, name) {
+      if (!input) return;
+      input.addEventListener('input', function () {
+        touched[name] = true;
+        validateField(name, true);
+        if (name === 'password' && (touched.confirm_password || confirmInput.value)) {
+          validateField('confirm_password', true);
+        }
+        refreshSubmit();
+      });
+      input.addEventListener('blur', function () {
+        touched[name] = true;
+        validateField(name, true);
+        refreshSubmit();
+      });
+    }
+
+    bindField(emailInput, 'email');
+    bindField(handleInput, 'handle');
+    bindField(passwordInput, 'password');
+    bindField(confirmInput, 'confirm_password');
+
+    if (handleInput) {
+      handleInput.addEventListener('input', function () {
+        var start = handleInput.selectionStart;
+        var end = handleInput.selectionEnd;
+        var next = handleInput.value.toLowerCase();
+        if (next !== handleInput.value) {
+          handleInput.value = next;
+          if (start != null && end != null) {
+            handleInput.setSelectionRange(start, end);
+          }
+        }
+      });
+    }
+
+    if (ageInput) {
+      ageInput.addEventListener('change', function () {
+        touched.age_confirm = true;
+        validateField('age_confirm', true);
+        refreshSubmit();
+      });
+    }
+
+    form.addEventListener('submit', function (event) {
+      touched.email = true;
+      touched.handle = true;
+      touched.password = true;
+      touched.confirm_password = true;
+      touched.age_confirm = true;
+      var valid = ['email', 'handle', 'password', 'confirm_password', 'age_confirm']
+        .every(function (name) { return validateField(name, true); });
+      if (!valid) {
+        event.preventDefault();
+        refreshSubmit();
+      }
+    });
+
+    ['email', 'handle', 'password', 'confirm_password'].forEach(function (name) {
+      var group = groupFor(name);
+      if (group && group.querySelector('[data-server-error]')) {
+        group.classList.add('is-invalid');
+      }
+    });
+    if (groupFor('age_confirm') && groupFor('age_confirm').querySelector('[data-server-error]')) {
+      if (ageRow) ageRow.classList.add('is-invalid');
+    }
+
+    refreshSubmit();
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     initGeneratorForm();
     initRevisionPlanForm();
@@ -4619,5 +4901,7 @@
     initAnswerRevealMathJax();
     initRevisionQueue();
     initKeyboardInset();
+    initRegisterForm();
+    initPracticePrimaryBar();
   });
 })();

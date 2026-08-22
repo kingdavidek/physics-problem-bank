@@ -32,9 +32,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}?v=17">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=17">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=17">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=18">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=20">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/practice.css') }}?v=17">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=18">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=23">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}?v=17">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/diagrams.css') }}?v=17">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/lesson-assist.css') }}?v=17">
@@ -51,12 +51,12 @@
     ></script>
     <!-- External site logic (dropdowns, MCQs, etc.) -->
     <script src="{{ url_for('static', filename='js/python-run-grader.js') }}?v=4" defer></script>
-    <script src="{{ url_for('static', filename='js/site.js') }}?v=18" defer></script>
+    <script src="{{ url_for('static', filename='js/site.js') }}?v=20" defer></script>
     <script src="{{ url_for('static', filename='js/site-search.js') }}?v=17" defer></script>
     <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=4" defer></script>
     <script src="{{ url_for('static', filename='js/tab-bar.js') }}?v=1" defer></script>
     <script src="{{ url_for('static', filename='js/celebrate.js') }}?v=2" defer></script>
-    <script src="{{ url_for('static', filename='js/u4.js') }}?v=2" defer></script>
+    <script src="{{ url_for('static', filename='js/u4.js') }}?v=5" defer></script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=4" defer></script>
     {% if current_user.is_authenticated %}
     <script src="{{ url_for('static', filename='js/notifications.js') }}?v=17" defer></script>
@@ -211,7 +211,10 @@
             <input type="hidden" name="saved_id" id="share-suggest-saved-id" value="">
             <div class="form-group share-suggest-recipient" hidden>
                 <label for="share-suggest-recipient">Send to</label>
-                <input type="text" name="recipient_handle" id="share-suggest-recipient" placeholder="@handle" maxlength="20" autocomplete="off">
+                <div class="share-suggest-combobox">
+                    <input type="text" name="recipient_handle" id="share-suggest-recipient" placeholder="@handle" maxlength="20" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="share-suggest-recipient-list" aria-haspopup="listbox">
+                    <ul class="share-suggest-suggestions" id="share-suggest-recipient-list" role="listbox" hidden></ul>
+                </div>
             </div>
             <div class="form-group">
                 <label for="share-suggest-visibility">Who can see this?</label>
@@ -230,7 +233,7 @@
         </form>
     </div>
 </div>
-<script src="{{ url_for('static', filename='js/share-suggest.js') }}?v=1" defer></script>
+<script src="{{ url_for('static', filename='js/share-suggest.js') }}?v=2" defer></script>
 {% endif %}
 
 <div class="site-wrapper{% if quiz_runner_mode %} site-wrapper--quiz-runner{% endif %}" data-user-logged-in="{% if current_user.is_authenticated %}1{% else %}0{% endif %}"{% if lesson_meta %} data-lesson-level="{{ lesson_meta.level }}" data-lesson-subject="{{ lesson_meta.subject }}" data-lesson-topic="{{ lesson_meta.topic }}" data-lesson-title="{{ lesson_meta.topicTitle|e }}"{% if lesson_meta.get('quizUrl') %} data-lesson-quiz-url="{{ lesson_meta.quizUrl }}" data-lesson-quiz-count="{{ lesson_meta.quizCount }}"{% endif %}{% if lesson_meta.get('practiceUrl') %} data-lesson-practice-url="{{ lesson_meta.practiceUrl }}"{% endif %}{% if lesson_meta.get('quizReview') %} data-quiz-review="1"{% else %} data-lesson-content{% endif %}{% endif %}>

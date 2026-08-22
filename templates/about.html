@@ -7,29 +7,49 @@
 <div class="lesson-hero">
     <h1>About Problem Bank</h1>
     <p class="hero-sub">Free revision and practice for GCSE, A-Level, and IB MYP — maths, physics, and computer science.</p>
-    <div class="hero-pills">
-        <span class="hero-pill">Revision notes</span>
-        <span class="hero-pill">Generated questions</span>
-        <span class="hero-pill">Instant answers</span>
-    </div>
 </div>
 
-<p class="page-intro">
-    Problem Bank helps you revise a topic, then practise with fresh exam-style questions.
-    Content is aimed at UK exam boards; many topics also suit general study and revision.
-</p>
+<ol class="how-it-works" aria-label="How it works">
+    <li>
+        <span class="how-it-works-step">1</span>
+        <strong>Browse a topic</strong> — read explanations, worked examples, and quick checks on the lesson page.
+    </li>
+    <li>
+        <span class="how-it-works-step">2</span>
+        <strong>Practise</strong> — generate fresh exam-style questions or run a quick test on the same settings.
+    </li>
+    <li>
+        <span class="how-it-works-step">3</span>
+        <strong>Check &amp; track</strong> — reveal solutions, save questions, and see progress on your profile.
+    </li>
+</ol>
 
-<section class="section-panel">
-    <div class="section-panel-header">What you can do</div>
-    <div class="section-panel-body">
-        <ul>
-            <li><strong><a href="{{ url_for('topics_index') }}">Browse topics</a></strong> — open a subject area for explanations, worked examples, and quick checks.</li>
-            <li><strong><a href="{{ url_for('index') }}">Generate a question</a></strong> — pick a level, subject, topic, and difficulty to get a new problem with a full solution.</li>
-            <li><strong>Quick test</strong> — after generating a question, start a short run of 10 questions on the same settings.</li>
-            <li><strong>Lesson quizzes</strong> — on some topic pages, try a short multiple-choice quiz to check what you remember.</li>
-        </ul>
-    </div>
-</section>
+<div class="feature-card-grid">
+    <article class="feature-card">
+        <div class="feature-card-icon" aria-hidden="true">📚</div>
+        <h3>Browse topics</h3>
+        <p>Open a subject area for explanations, worked examples, and quick checks.</p>
+        <a href="{{ url_for('topics_index') }}">Open topics →</a>
+    </article>
+    <article class="feature-card">
+        <div class="feature-card-icon" aria-hidden="true">⚡</div>
+        <h3>Generate questions</h3>
+        <p>Pick level, subject, topic, and difficulty to get a new problem with a full solution.</p>
+        <a href="{{ url_for('index') }}">Go to generator →</a>
+    </article>
+    <article class="feature-card">
+        <div class="feature-card-icon" aria-hidden="true">📝</div>
+        <h3>Quick test</h3>
+        <p>After generating a question, start a short run of 10 questions on the same settings.</p>
+        <a href="{{ url_for('index') }}">Start practising →</a>
+    </article>
+    <article class="feature-card">
+        <div class="feature-card-icon" aria-hidden="true">✅</div>
+        <h3>Lesson quizzes</h3>
+        <p>On many topic pages, try a short multiple-choice quiz to check what you remember.</p>
+        <a href="{{ url_for('topics_index') }}">Find a lesson quiz →</a>
+    </article>
+</div>
 
 <section class="section-panel">
     <div class="section-panel-header">Practice generator options</div>
@@ -42,9 +62,7 @@
             <li><strong>Mode</strong> — standard written questions, or multiple choice</li>
             <li><strong>Difficulty</strong> — foundational, intermediate, or difficult</li>
         </ul>
-        <p style="margin-bottom: 0; color: var(--text-muted); font-size: 0.95rem;">
-            Each question includes a worked answer. Many also include a hint if you are stuck.
-        </p>
+        <p class="settings-note">Each question includes a worked answer. Many also include a hint if you are stuck.</p>
     </div>
 </section>
 
@@ -59,9 +77,7 @@
             <li><strong>A-Level Physics</strong> — fields, particles, photoelectric effect, and related areas</li>
             <li><strong>IB MYP Chemistry</strong> — selected units such as redox and energy changes</li>
         </ul>
-        <p style="margin-bottom: 0;">
-            See the full list on the <a href="{{ url_for('topics_index') }}">Topics</a> page.
-        </p>
+        <p>See the full list on the <a href="{{ url_for('topics_index') }}">Topics</a> page.</p>
     </div>
 </section>
 
@@ -73,7 +89,7 @@
             <strong>difficult</strong> questions, <strong>save questions</strong>, bookmark your place in lessons,
             and track lesson quiz scores.
         </p>
-        <p style="margin-bottom: 0;">
+        <p>
             You must be <strong>13 or older</strong> to register. By signing up you agree to use Problem Bank
             for personal study. We store your email and handle so you can log in; we do not sell your data.
         </p>
@@ -83,7 +99,7 @@
 <div class="section-panel cta-panel">
     <div class="section-panel-body cta-panel-body">
         <a href="{{ url_for('topics_index') }}" class="btn btn-primary">Browse topics</a>
-        <a href="{{ url_for('index') }}" class="btn btn-secondary" style="margin-left: 12px;">Go to generator</a>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Go to generator</a>
     </div>
 </div>
 

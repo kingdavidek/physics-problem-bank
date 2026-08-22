@@ -13,19 +13,33 @@
     'revision-plan': 'progress',
     reflections: 'progress',
     'study-buddy': 'overview',
+    'study-buddy-invite': 'overview',
   };
+
+  var TAB_IDS = ['overview', 'progress', 'social', 'history'];
 
   function initProfileTabs() {
     var nav = document.querySelector('.profile-tabs');
     if (!nav) return;
 
     var buttons = nav.querySelectorAll('[role="tab"]');
-    var panels = document.querySelectorAll('[data-profile-tab]');
-    if (!buttons.length || !panels.length) return;
+    var stacks = document.querySelectorAll('.profile-tab-stack');
+    if (!buttons.length || !stacks.length) return;
+
+    function scrollToHashTarget() {
+      var raw = (window.location.hash || '').replace(/^#/, '');
+      if (!raw || TAB_IDS.indexOf(raw) !== -1) return;
+      var el = document.getElementById(raw);
+      if (el) {
+        window.requestAnimationFrame(function () {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      }
+    }
 
     function setTab(name, pushHash) {
       var tab = TAB_HASH[name] || name;
-      if (!['overview', 'progress', 'social', 'history'].includes(tab)) {
+      if (TAB_IDS.indexOf(tab) === -1) {
         tab = 'overview';
       }
 
@@ -35,10 +49,10 @@
         btn.classList.toggle('is-active', active);
       });
 
-      panels.forEach(function (panel) {
-        var show = panel.dataset.profileTab === tab;
-        panel.hidden = !show;
-        panel.classList.toggle('is-active', show);
+      stacks.forEach(function (stack) {
+        var show = stack.dataset.profileTab === tab;
+        stack.hidden = !show;
+        stack.classList.toggle('is-active', show);
       });
 
       if (pushHash !== false) {
@@ -47,6 +61,8 @@
           history.replaceState(null, '', hash);
         }
       }
+
+      scrollToHashTarget();
     }
 
     buttons.forEach(function (btn) {
@@ -109,6 +125,8 @@
     var diffSel = document.getElementById('difficulty');
     var drawer = card.querySelector('.practice-picker-drawer');
     var toggleBtn = card.querySelector('.practice-picker-edit');
+    var backdrop = document.getElementById('practice-picker-backdrop');
+    var pageShell = document.querySelector('.page-shell');
     var pills = {
       level: card.querySelector('[data-picker="level"]'),
       subject: card.querySelector('[data-picker="subject"]'),
@@ -122,17 +140,29 @@
       drawer.hidden = false;
       toggleBtn.setAttribute('aria-expanded', 'true');
       toggleBtn.textContent = 'Hide options';
+      if (backdrop) backdrop.hidden = false;
+      if (pageShell) pageShell.classList.add('practice-picker-open');
+    }
+
+    function closeDrawer() {
+      if (!drawer || !toggleBtn) return;
+      drawer.hidden = true;
+      toggleBtn.setAttribute('aria-expanded', 'false');
+      toggleBtn.textContent = 'Change selection';
+      if (backdrop) backdrop.hidden = true;
+      if (pageShell) pageShell.classList.remove('practice-picker-open');
     }
 
     function syncPills() {
       Object.keys(pills).forEach(function (key) {
         var el = pills[key];
+        if (!el) return;
         var select = key === 'level' ? levelSel
           : key === 'subject' ? subjectSel
           : key === 'topic' ? topicSel
           : key === 'mode' ? modeSel
           : diffSel;
-        if (el && select) {
+        if (select) {
           var label = labelForSelect(select);
           if (key === 'mode') label = label.replace(/^[^\w]+/, '').trim();
           el.textContent = label;
@@ -146,17 +176,17 @@
 
     if (toggleBtn) {
       toggleBtn.addEventListener('click', function () {
-        var drawer = card.querySelector('.practice-picker-drawer');
         if (!drawer) return;
-        var open = drawer.hidden;
-        if (open) {
+        if (drawer.hidden) {
           openDrawer();
         } else {
-          drawer.hidden = true;
-          toggleBtn.setAttribute('aria-expanded', 'false');
-          toggleBtn.textContent = 'Change selection';
+          closeDrawer();
         }
       });
+    }
+
+    if (backdrop) {
+      backdrop.addEventListener('click', closeDrawer);
     }
 
     card.querySelectorAll('[data-open-picker]').forEach(function (pill) {

@@ -10,11 +10,15 @@
      data-topic="{{ selected_topic }}"
      style="display:none;"></div>
 
-<div class="page-shell">
+<div class="page-shell{% if problem %} practice-page--active{% endif %}"{% if generator_launch_gcse_only %} data-launch-gcse-only="1"{% endif %}>
 
 <div class="practice-hero">
     <h1>{% if current_user.is_authenticated %}Hi, {{ current_user.display_handle }}{% else %}Ready to practise?{% endif %}</h1>
+    {% if generator_launch_gcse_only %}
+    <p class="hero-sub">GCSE Maths and Computer Science — fresh exam-style questions with worked answers</p>
+    {% else %}
     <p class="hero-sub">GCSE, A-Level, and IB MYP — Maths, Physics, and Computer Science</p>
+    {% endif %}
     <div class="practice-hero-chips">
         {% if current_user.is_authenticated and nav_streak %}
         <span class="pill pill--accent">🔥 {{ nav_streak }} day streak</span>
@@ -29,12 +33,16 @@
     </div>
 </div>
 
-<div class="section-panel practice-picker-card">
-    <h2>What do you want to practise?</h2>
+<button type="button" class="practice-picker-backdrop" id="practice-picker-backdrop" hidden aria-label="Close selection options"></button>
+
+<div class="section-panel practice-picker-card{% if problem %} practice-picker-card--compact{% endif %}">
+    <h2>{% if problem %}Practising{% else %}What do you want to practise?{% endif %}</h2>
     <div class="practice-picker-summary" aria-live="polite">
+        {% if not generator_launch_gcse_only %}
         <button type="button" class="pill pill--surface practice-picker-pill" data-picker="level" data-open-picker>GCSE</button>
-        <button type="button" class="pill pill--surface practice-picker-pill" data-picker="subject" data-open-picker>Physics</button>
-        <button type="button" class="pill pill--surface practice-picker-pill" data-picker="topic" data-open-picker>Forces</button>
+        {% endif %}
+        <button type="button" class="pill pill--surface practice-picker-pill" data-picker="subject" data-open-picker>Maths</button>
+        <button type="button" class="pill pill--surface practice-picker-pill" data-picker="topic" data-open-picker>Algebra</button>
         <button type="button" class="pill pill--surface practice-picker-pill" data-picker="mode" data-open-picker>Standard</button>
         <button type="button" class="pill pill--surface practice-picker-pill" data-picker="difficulty" data-open-picker>Foundational</button>
     </div>
@@ -49,6 +57,9 @@
         <div class="practice-picker-drawer" hidden>
         <div class="form-grid">
 
+            {% if generator_launch_gcse_only %}
+            <input type="hidden" name="level" id="level-select" value="gcse">
+            {% else %}
             <div class="form-group">
                 <label for="level-select">Level</label>
                 <select name="level" id="level-select">
@@ -57,15 +68,16 @@
                     <option value="myp" {% if selected_level == 'myp' %}selected{% endif %}>IB MYP</option>
                 </select>
             </div>
+            {% endif %}
 
             <div class="form-group">
                 <label for="subject-select">Subject</label>
                 <select name="subject" id="subject-select">
-                    <option value="physics" data-level="gcse" {% if selected_level == 'gcse' and selected_subject == 'physics' %}selected{% endif %}>Physics</option>
-                    <option value="maths" data-level="gcse" {% if selected_level == 'gcse' and selected_subject == 'maths' %}selected{% endif %}>Maths</option>
-                    <option value="cs" data-level="gcse" {% if selected_level == 'gcse' and selected_subject == 'cs' %}selected{% endif %}>Computer Science</option>
-                    <option value="physics" data-level="alevel" {% if selected_level == 'alevel' and selected_subject == 'physics' %}selected{% endif %}>Physics</option>
-                    <option value="chemistry" data-level="myp" {% if selected_level == 'myp' and selected_subject == 'chemistry' %}selected{% endif %}>Chemistry</option>
+                    <option value="physics" data-level="gcse" class="launch-hidden" {% if selected_level == 'gcse' and selected_subject == 'physics' %}selected{% endif %}>Physics</option>
+                    <option value="maths" data-level="gcse" data-launch-subject="1" {% if selected_level == 'gcse' and selected_subject == 'maths' %}selected{% endif %}>Maths</option>
+                    <option value="cs" data-level="gcse" data-launch-subject="1" {% if selected_level == 'gcse' and selected_subject == 'cs' %}selected{% endif %}>Computer Science</option>
+                    <option value="physics" data-level="alevel" class="launch-hidden" {% if selected_level == 'alevel' and selected_subject == 'physics' %}selected{% endif %}>Physics</option>
+                    <option value="chemistry" data-level="myp" class="launch-hidden" {% if selected_level == 'myp' and selected_subject == 'chemistry' %}selected{% endif %}>Chemistry</option>
                 </select>
             </div>
 
@@ -172,7 +184,9 @@
 </div>
 
 {% elif problem %}
-<div class="section-panel problem-card card-quiz">
+<div class="practice-session" id="practice-session">
+
+<div class="section-panel problem-card card-quiz practice-question-hero" id="practice-question">
     <div class="section-panel-header">
         <span>Your question</span>
         <span class="pill pill--surface">{{ problem.difficulty | title }}</span>
@@ -201,7 +215,7 @@
                     <button type="button" class="btn mcq-btn" data-letter="{{ opt[0] }}">{{ opt | safe }}</button>
                 {% endfor %}
             </div>
-            <p class="mcq-feedback" id="mcq-feedback" style="margin-top:12px;font-weight:600;"></p>
+            <p class="mcq-feedback" id="mcq-feedback"></p>
         {% else %}
             {% if not problem.answer_inline_sections %}
             <div class="question-content">{{ problem.question | format_question_html }}</div>
@@ -218,8 +232,15 @@
         📖 <a href="{{ problem.topic_url }}">Revise: {{ problem.topic_name }}</a>
     </p>
 
+    <details class="practice-hint-drawer" id="practice-hint">
+        <summary class="practice-hint-drawer-label">Hint</summary>
+        <div class="hint practice-hint-body">
+            {{ problem.hint | safe }}
+        </div>
+    </details>
+
     <details class="answer-reveal">
-        <summary>Show Answer</summary>
+        <summary>Show answer</summary>
         <div class="answer">
             {% if '<pre>' in problem.solution %}
                 {{ problem.solution | safe }}
@@ -228,13 +249,7 @@
             {% endif %}
         </div>
         {% include 'partials/answer_grading_hint.html' %}
-        <details class="hint-reveal">
-            <summary>💡 I still don't understand — show me the key concept</summary>
-            <div class="hint">
-                {{ problem.hint | safe }}
-            </div>
-        </details>
-        <div style="padding: 16px;">
+        <div class="answer-reveal-footer">
             <p class="topic-link">
                 📖 <a href="{{ problem.topic_url }}">Read the full {{ problem.topic_name }} topic page →</a>
             </p>
@@ -244,7 +259,13 @@
     </div>
 </div>
 
-<div class="problem-actions practice-action-bar" id="practice-action-bar">
+<div class="practice-primary-bar" id="practice-primary-bar" role="toolbar" aria-label="Question actions">
+    <button type="button" class="btn btn-primary btn-lg" id="practice-check-btn"{% if problem.options %} hidden{% endif %}>Check</button>
+    <button type="button" class="btn btn-outline btn-lg" id="practice-hint-btn">Hint</button>
+    <button type="submit" form="main-form" class="btn btn-secondary btn-lg" id="practice-skip-btn">New question</button>
+</div>
+
+<div class="problem-actions practice-action-bar practice-secondary-bar" id="practice-action-bar">
         {% if current_user.is_authenticated %}
         <form method="POST" action="{{ url_for('save_problem_route') }}" id="save-problem-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -276,6 +297,7 @@
         </form>
 </div>
 
+</div>
 {% endif %}
 
 </div>

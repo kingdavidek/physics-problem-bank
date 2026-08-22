@@ -552,6 +552,52 @@ def search_users_by_handle(
     return results
 
 
+def search_following_by_handle(conn, follower_id, query, *, limit=8):
+    """Handles among people the viewer follows (for suggest-to-friend autocomplete)."""
+    query = normalize_handle(query)
+    if not query:
+        return []
+
+    limit = min(max(int(limit), 1), SEARCH_MAX_LIMIT)
+    pattern = f'%{_like_escape(query)}%'
+    prefix_pattern = f'{_like_escape(query)}%'
+
+    rows = conn.execute(
+        '''
+        SELECT u.id, u.handle, u.created_at
+        FROM follows f
+        JOIN users u ON u.id = f.following_id
+        WHERE f.follower_id = ?
+          AND u.is_active = 1
+          AND u.handle LIKE ? ESCAPE '\\'
+        ORDER BY
+            CASE
+                WHEN u.handle = ? COLLATE NOCASE THEN 0
+                WHEN u.handle LIKE ? ESCAPE '\\' COLLATE NOCASE THEN 1
+                ELSE 2
+            END,
+            u.handle COLLATE NOCASE
+        LIMIT ?
+        ''',
+        (follower_id, pattern, query, prefix_pattern, limit),
+    ).fetchall()
+
+    results = []
+    for row in rows:
+        settings = get_profile_settings(conn, row['id'])
+        item = {
+            'handle': row['handle'],
+            'profile_accessible': True,
+            'avatar': settings.get('avatar') or parse_avatar(None),
+            'viewer_follows': True,
+        }
+        if settings.get('show_member_since'):
+            created = row['created_at'] or ''
+            item['member_since'] = created[:10] if created else None
+        results.append(item)
+    return results
+
+
 def lesson_progress_summary(conn, user_id, limit=8):
     rows = conn.execute(
         '''

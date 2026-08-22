@@ -116,6 +116,7 @@ from models.social import (
     record_quiz_completed,
     record_topic_opened,
     search_users_by_handle,
+    search_following_by_handle,
     unfollow_user,
     update_profile_settings,
 )
@@ -1461,7 +1462,7 @@ def load_user_from_bearer_token(req):
 def _handle_not_found(err):
     if _is_api_path():
         return _api_error('Not found', 404, 'not_found')
-    return 'Not Found', 404
+    return render_template('errors/404.html'), 404
 
 
 @app.errorhandler(405)
@@ -1476,7 +1477,7 @@ def _handle_server_error(err):
     app.logger.exception('Unhandled server error')
     if _is_api_path():
         return _api_error('Internal server error', 500, 'server_error')
-    return 'Internal Server Error', 500
+    return render_template('errors/500.html'), 500
 
 
 def _save_qt(data):
@@ -1809,6 +1810,29 @@ def _resolve_topic_slug(level, subject, topic):
 
 ## ROUTES
 
+# Launch generator scope: GCSE Maths + Computer Science only in the UI.
+# A-Level / other subjects stay in TOPICS and templates for a later release.
+GENERATOR_LAUNCH_GCSE_MATHS_CS = True
+GENERATOR_LAUNCH_SUBJECTS = frozenset({'maths', 'cs'})
+GENERATOR_DEFAULT_LEVEL = 'gcse'
+GENERATOR_DEFAULT_SUBJECT = 'maths'
+GENERATOR_DEFAULT_TOPIC = 'algebra'
+
+
+def _normalize_generator_scope(level, subject, topic):
+    """Clamp generator selections during launch (GCSE maths + CS only)."""
+    if not GENERATOR_LAUNCH_GCSE_MATHS_CS:
+        return level, subject, topic
+    level = GENERATOR_DEFAULT_LEVEL
+    if subject not in GENERATOR_LAUNCH_SUBJECTS:
+        subject = GENERATOR_DEFAULT_SUBJECT
+    try:
+        TOPICS[level][subject][topic]
+    except KeyError:
+        topic = GENERATOR_DEFAULT_TOPIC
+    return level, subject, topic
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if 'anon_count' not in session:
@@ -1820,23 +1844,26 @@ def index():
     ANON_DAILY_LIMIT = 999
 
     if request.method == 'POST':
-        selected_level = request.form.get('level', 'gcse')
-        selected_subject = request.form.get('subject', 'physics')
+        selected_level = request.form.get('level', GENERATOR_DEFAULT_LEVEL)
+        selected_subject = request.form.get('subject', GENERATOR_DEFAULT_SUBJECT)
         selected_topic = _resolve_topic_slug(
-            selected_level, selected_subject, request.form.get('topic', 'forces')
+            selected_level, selected_subject, request.form.get('topic', GENERATOR_DEFAULT_TOPIC)
         )
         raw_mode = request.form.get('mode', 'standard')
         selected_diff = request.form.get('difficulty', 'foundational')
         action = request.form.get('action', 'start')
     else:
-        selected_level = request.args.get('level', 'gcse')
-        selected_subject = request.args.get('subject', 'physics')
+        selected_level = request.args.get('level', GENERATOR_DEFAULT_LEVEL)
+        selected_subject = request.args.get('subject', GENERATOR_DEFAULT_SUBJECT)
         selected_topic = _resolve_topic_slug(
-            selected_level, selected_subject, request.args.get('topic', 'forces')
+            selected_level, selected_subject, request.args.get('topic', GENERATOR_DEFAULT_TOPIC)
         )
         raw_mode = request.args.get('mode', 'standard')
         selected_diff = request.args.get('difficulty', 'foundational')
         action = 'start'
+    selected_level, selected_subject, selected_topic = _normalize_generator_scope(
+        selected_level, selected_subject, selected_topic,
+    )
     selected_mode = normalize_mode(raw_mode)
 
 
@@ -1943,6 +1970,7 @@ def index():
         selected_diff=selected_diff,
         queue_active=bool(session.get('problem_queue')),
         can_reroll_variant=can_reroll_variant,
+        generator_launch_gcse_only=GENERATOR_LAUNCH_GCSE_MATHS_CS,
     )
 
 
@@ -4232,6 +4260,30 @@ def profile():
             prompt_type=reflection_type,
         )
         revision_plan = _revision_plan_for_user(conn, current_user.id)
+        mastery_map = topic_mastery_map(conn, current_user.id)
+        mastery_topics = []
+        for (level, subject, topic), pct in sorted(
+            mastery_map.items(),
+            key=lambda item: (-item[1], item[0][0], item[0][1], item[0][2]),
+        ):
+            if pct <= 0:
+                continue
+            mastery_topics.append({
+                'level': level,
+                'subject': subject,
+                'topic': topic,
+                'topic_label': _topic_label(level, subject, topic),
+                'topic_url': url_for(
+                    'topic_page',
+                    level=level,
+                    subject=subject,
+                    topic=topic,
+                ),
+                'mastery_pct': int(round(pct * 100)),
+            })
+            if len(mastery_topics) >= 12:
+                break
+        badges_earned = sum(1 for item in milestones if item.get('earned'))
     for item in saved:
         item['topic_label'] = _topic_label(item['level'], item['subject'], item['topic'])
     for item in progress:
@@ -4296,6 +4348,8 @@ def profile():
         revision_plan_subjects=_revision_plan_scope_options(),
         public_profile_url=_public_profile_url(current_user.handle),
         avatar=avatar or dict(DEFAULT_AVATAR),
+        mastery_topics=mastery_topics,
+        badges_earned=badges_earned,
     )
 
 
@@ -4683,6 +4737,34 @@ def api_v1_search_users():
         'ok': True,
         'query': normalize_handle(query),
         'users': _serialize_user_search_results(user_rows),
+    })
+
+
+@app.get('/api/v1/me/following/search')
+@login_required
+def api_v1_search_following():
+    query = (request.args.get('q') or '').strip()
+    normalized = normalize_handle(query)
+    if not normalized:
+        return jsonify({'ok': True, 'query': '', 'users': []})
+
+    try:
+        limit = int(request.args.get('limit', 8))
+    except (TypeError, ValueError):
+        limit = 8
+
+    with get_db() as conn:
+        rows = search_following_by_handle(
+            conn,
+            current_user.id,
+            normalized,
+            limit=limit,
+        )
+
+    return jsonify({
+        'ok': True,
+        'query': normalized,
+        'users': _serialize_user_search_results(rows),
     })
 
 
