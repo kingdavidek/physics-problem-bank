@@ -185,6 +185,7 @@ from models.gamification import (
     weekly_effort_xp,
     xp_level_progress,
 )
+from models.topic_status import topic_status_map
 from models.buddy import BUDDY_FACES, build_buddy_prompt
 from models.problem_queue import (
     clear_problem_queue as clear_db_problem_queue,
@@ -1024,6 +1025,10 @@ with get_db() as conn:
     if 'completed_keys_json' not in lesson_cols:
         conn.execute(
             'ALTER TABLE lesson_progress ADD COLUMN completed_keys_json TEXT NOT NULL DEFAULT \'[]\''
+        )
+    if 'step_total' not in lesson_cols:
+        conn.execute(
+            'ALTER TABLE lesson_progress ADD COLUMN step_total INTEGER NOT NULL DEFAULT 0'
         )
     conn.execute("""
         CREATE TABLE IF NOT EXISTS user_profile_settings (
@@ -3725,6 +3730,7 @@ def _apply_lesson_progress_update(
     section_key,
     section_label,
     completed_keys=None,
+    step_total=None,
 ):
     with get_db() as conn:
         upsert_lesson_progress(
@@ -3736,6 +3742,7 @@ def _apply_lesson_progress_update(
             section_key,
             section_label,
             completed_keys=completed_keys,
+            step_total=step_total,
         )
         progress = get_lesson_progress(conn, user_id, level, subject, topic)
         settings = get_profile_settings(conn, user_id)
@@ -3803,19 +3810,57 @@ def _build_topic_groups():
     return groups
 
 
-def _annotate_topic_path_groups(groups, mastery):
-    """Attach mastery, current-node, and prereq-hint flags for the /topics path."""
-    mastery = mastery or {}
+def _coerce_step_total(value):
+    if value is None or value == '':
+        return None
+    try:
+        total = int(value)
+    except (TypeError, ValueError):
+        return None
+    if total < 0 or total > 80:
+        return None
+    return total
+
+
+def _status_from_progress_entry(entry):
+    if isinstance(entry, dict):
+        return {
+            'mastery': float(entry.get('mastery') or 0),
+            'lesson_complete': bool(entry.get('lesson_complete')),
+            'ninja': bool(entry.get('ninja')),
+            'master_active': bool(entry.get('master_active')),
+        }
+    pct = float(entry or 0)
+    return {
+        'mastery': pct,
+        'lesson_complete': pct >= 0.8,
+        'ninja': pct >= 0.67,
+        'master_active': pct >= 1.0,
+    }
+
+
+def _annotate_topic_path_groups(groups, statuses):
+    """Attach lesson-complete / ninja / master flags for the /topics path."""
+    statuses = statuses or {}
     for group in groups:
         by_slug = {topic['slug']: topic for topic in group['topics']}
         completed = 0
+        ninja_count = 0
+        master_count = 0
         for topic in group['topics']:
-            pct = mastery.get((topic.get('level'), topic.get('subject'), topic.get('slug')), 0) or 0
-            topic['mastery'] = pct
-            topic['mastery_pct'] = int(round(pct * 100))
-            topic['is_complete'] = pct >= 0.8
+            key = (topic.get('level'), topic.get('subject'), topic.get('slug'))
+            status = _status_from_progress_entry(statuses.get(key))
+            topic['mastery'] = status['mastery']
+            topic['mastery_pct'] = int(round(status['mastery'] * 100))
+            topic['is_complete'] = status['lesson_complete']
+            topic['is_ninja'] = status['ninja']
+            topic['is_master'] = status['master_active']
             if topic['is_complete']:
                 completed += 1
+            if topic['is_ninja']:
+                ninja_count += 1
+            if topic['is_master']:
+                master_count += 1
             unmet = []
             for slug in topic.get('prereqs') or []:
                 prev = by_slug.get(slug)
@@ -3830,6 +3875,8 @@ def _annotate_topic_path_groups(groups, mastery):
                 current_assigned = True
             topic['is_later'] = not topic['is_complete'] and not topic['is_current']
         group['completed_count'] = completed
+        group['ninja_count'] = ninja_count
+        group['master_count'] = master_count
         group['topic_count'] = len(group['topics'])
     return groups
 
@@ -3931,11 +3978,11 @@ def _search_topics(query, limit=8):
 @app.route('/topics')
 def topics_index():
     groups = _build_topic_groups()
-    mastery = {}
+    statuses = {}
     if current_user.is_authenticated:
         with get_db() as conn:
-            mastery = topic_mastery_map(conn, current_user.id)
-    _annotate_topic_path_groups(groups, mastery)
+            statuses = topic_status_map(conn, current_user.id)
+    _annotate_topic_path_groups(groups, statuses)
     return render_template('topics.html', topic_groups=groups)
 
 
@@ -6434,6 +6481,7 @@ def api_v1_save_lesson_progress():
             for key in completed_keys
             if str(key).strip()
         ]
+    step_total = _coerce_step_total(payload.get('step_total'))
 
     if not _topic_path_valid(level, subject, topic):
         return _api_error('Topic not found', 404, 'topic_not_found')
@@ -6448,6 +6496,7 @@ def api_v1_save_lesson_progress():
         section_key,
         section_label,
         completed_keys=completed_keys,
+        step_total=step_total,
     )
     return jsonify({'ok': True, 'progress': progress})
 
@@ -7578,6 +7627,7 @@ def api_save_lesson_progress():
             for key in completed_keys
             if str(key).strip()
         ]
+    step_total = _coerce_step_total(payload.get('step_total'))
 
     if not _topic_path_valid(level, subject, topic):
         return _legacy_api_response(
@@ -7598,6 +7648,7 @@ def api_save_lesson_progress():
         section_key,
         section_label,
         completed_keys=completed_keys,
+        step_total=step_total,
     )
     return _legacy_api_response({'ok': True, 'progress': progress})
 

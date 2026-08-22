@@ -29,12 +29,12 @@
         <span class="topic-group-icon" aria-hidden="true">{{ subject_icons.get(group.subject, '📚') }}</span>
         <div class="topic-group-heading">
             <h2 class="topic-group-title">{{ group.title }}</h2>
-            <p class="topic-group-progress">{{ group.completed_count }} of {{ group.topic_count }} mastered</p>
+            <p class="topic-group-progress">{{ group.completed_count }} of {{ group.topic_count }} lessons · {{ group.ninja_count }} ninja · {{ group.master_count }} masters</p>
         </div>
     </div>
     <ol class="topic-path">
         {% for topic in group.topics %}
-        <li class="topic-path-node topic-path-node--{{ 'a' if loop.index0 % 2 == 0 else 'b' }}{% if topic.is_complete %} is-complete{% endif %}{% if topic.is_current %} is-current{% endif %}{% if topic.is_later %} is-later{% endif %}">
+        <li class="topic-path-node topic-path-node--{{ 'a' if loop.index0 % 2 == 0 else 'b' }}{% if topic.is_master %} is-complete is-master{% elif topic.is_complete %} is-complete{% endif %}{% if topic.is_current %} is-current{% endif %}{% if topic.is_later %} is-later{% endif %}">
             <span class="topic-path-rail" aria-hidden="true">
                 <span class="topic-path-dot">{% if topic.is_complete %}✓{% else %}{{ topic.order }}{% endif %}</span>
             </span>
@@ -51,8 +51,12 @@
                 </span>
                 <span class="topic-card-title">{{ topic.name }}</span>
                 <span class="topic-card-meta">
-                    {% if topic.is_complete %}
-                    {{ topic.mastery_pct }}% · Practise again →
+                    {% if topic.is_master %}
+                    Topic master
+                    {% elif topic.is_ninja %}
+                    Topic ninja
+                    {% elif topic.is_complete %}
+                    Lesson complete →
                     {% elif topic.is_current %}
                     {% if topic.mastery %}{{ topic.mastery_pct }}% · Continue →{% else %}Start here →{% endif %}
                     {% elif topic.prereq_hint %}

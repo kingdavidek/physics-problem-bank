@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 
 from generators.shared.lesson_quiz import topic_supports_lesson_mcq
-from models.gamification import MILESTONE_CATALOG, get_study_streak
+from models.gamification import get_study_streak, milestone_meta
 from models.moderation import is_blocked
 from models.qotd import get_daily_question
 from models.social import list_following
@@ -65,7 +65,7 @@ def _recent_milestone(conn, user_id, now):
     if not row:
         return None
     key = row['milestone_key']
-    meta = MILESTONE_CATALOG.get(key, {})
+    meta = milestone_meta(key)
     return {
         'key': key,
         'title': meta.get('title', key.replace('_', ' ').title()),

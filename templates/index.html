@@ -33,28 +33,10 @@
     </div>
 </div>
 
-<button type="button" class="practice-picker-backdrop" id="practice-picker-backdrop" hidden aria-label="Close selection options"></button>
-
 <div class="section-panel practice-picker-card{% if problem %} practice-picker-card--compact{% endif %}">
     <h2>{% if problem %}Practising{% else %}What do you want to practise?{% endif %}</h2>
-    <div class="practice-picker-summary" aria-live="polite">
-        {% if not generator_launch_gcse_only %}
-        <button type="button" class="pill pill--surface practice-picker-pill" data-picker="level" data-open-picker>GCSE</button>
-        {% endif %}
-        <button type="button" class="pill pill--surface practice-picker-pill" data-picker="subject" data-open-picker>Maths</button>
-        <button type="button" class="pill pill--surface practice-picker-pill" data-picker="topic" data-open-picker>Algebra</button>
-        <button type="button" class="pill pill--surface practice-picker-pill" data-picker="mode" data-open-picker>Standard</button>
-        <button type="button" class="pill pill--surface practice-picker-pill" data-picker="difficulty" data-open-picker>Foundational</button>
-    </div>
     <form method="POST" id="main-form" class="form-inner practice-picker-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div class="practice-picker-actions">
-            <button type="submit" class="btn btn-primary btn-lg practice-picker-submit">
-                {% if problem %}New question{% else %}Start practising{% endif %}
-            </button>
-            <button type="button" class="btn btn-outline btn-sm practice-picker-edit" aria-expanded="false">Change selection</button>
-        </div>
-        <div class="practice-picker-drawer" hidden>
         <div class="form-grid">
 
             {% if generator_launch_gcse_only %}
@@ -109,6 +91,10 @@
             </div>
 
         </div>
+        <div class="practice-picker-actions">
+            <button type="submit" class="btn btn-primary btn-lg practice-picker-submit">
+                {% if problem %}New question{% else %}Start practising{% endif %}
+            </button>
         </div>
     </form>
 </div>

@@ -34,7 +34,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=20">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=21">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/practice.css') }}?v=17">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=25">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=27">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}?v=18">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/diagrams.css') }}?v=17">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/lesson-assist.css') }}?v=17">
@@ -56,7 +56,7 @@
     <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=4" defer></script>
     <script src="{{ url_for('static', filename='js/tab-bar.js') }}?v=1" defer></script>
     <script src="{{ url_for('static', filename='js/celebrate.js') }}?v=2" defer></script>
-    <script src="{{ url_for('static', filename='js/u4.js') }}?v=6" defer></script>
+    <script src="{{ url_for('static', filename='js/u4.js') }}?v=7" defer></script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=4" defer></script>
     {% if current_user.is_authenticated %}
     <script src="{{ url_for('static', filename='js/notifications.js') }}?v=17" defer></script>
@@ -82,7 +82,7 @@
     <script src="{{ url_for('static', filename='js/quiz-assist.js') }}?v=1" defer></script>
     {% endif %}
     {% if lesson_meta and not lesson_meta.get('quizReview') %}
-    <script src="{{ url_for('static', filename='js/lesson-progress.js') }}?v=20" defer></script>
+    <script src="{{ url_for('static', filename='js/lesson-progress.js') }}?v=21" defer></script>
     {% endif %}
 </head>
 

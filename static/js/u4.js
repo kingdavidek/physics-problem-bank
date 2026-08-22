@@ -1,5 +1,5 @@
 /**
- * Phase U4 — page chrome: profile tabs, topics level filter, practice picker labels.
+ * Phase U4 — page chrome: profile tabs, topics level filter, collapsible lists.
  */
 (function () {
   'use strict';
@@ -143,96 +143,6 @@
     scrollToGroup(hash);
   }
 
-  function labelForSelect(selectEl) {
-    if (!selectEl) return '';
-    var opt = selectEl.selectedOptions[0];
-    return opt ? opt.textContent.trim() : '';
-  }
-
-  function initPracticePicker() {
-    var card = document.querySelector('.practice-picker-card');
-    if (!card) return;
-
-    var levelSel = document.getElementById('level-select');
-    var subjectSel = document.getElementById('subject-select');
-    var topicSel = document.getElementById('topic-select');
-    var modeSel = document.getElementById('mode-select');
-    var diffSel = document.getElementById('difficulty');
-    var drawer = card.querySelector('.practice-picker-drawer');
-    var toggleBtn = card.querySelector('.practice-picker-edit');
-    var backdrop = document.getElementById('practice-picker-backdrop');
-    var pageShell = document.querySelector('.page-shell');
-    var pills = {
-      level: card.querySelector('[data-picker="level"]'),
-      subject: card.querySelector('[data-picker="subject"]'),
-      topic: card.querySelector('[data-picker="topic"]'),
-      mode: card.querySelector('[data-picker="mode"]'),
-      difficulty: card.querySelector('[data-picker="difficulty"]'),
-    };
-
-    function openDrawer() {
-      if (!drawer || !toggleBtn) return;
-      drawer.hidden = false;
-      toggleBtn.setAttribute('aria-expanded', 'true');
-      toggleBtn.textContent = 'Hide options';
-      if (backdrop) backdrop.hidden = false;
-      if (pageShell) pageShell.classList.add('practice-picker-open');
-    }
-
-    function closeDrawer() {
-      if (!drawer || !toggleBtn) return;
-      drawer.hidden = true;
-      toggleBtn.setAttribute('aria-expanded', 'false');
-      toggleBtn.textContent = 'Change selection';
-      if (backdrop) backdrop.hidden = true;
-      if (pageShell) pageShell.classList.remove('practice-picker-open');
-    }
-
-    function syncPills() {
-      Object.keys(pills).forEach(function (key) {
-        var el = pills[key];
-        if (!el) return;
-        var select = key === 'level' ? levelSel
-          : key === 'subject' ? subjectSel
-          : key === 'topic' ? topicSel
-          : key === 'mode' ? modeSel
-          : diffSel;
-        if (select) {
-          var label = labelForSelect(select);
-          if (key === 'mode') label = label.replace(/^[^\w]+/, '').trim();
-          el.textContent = label;
-        }
-      });
-    }
-
-    [levelSel, subjectSel, topicSel, modeSel, diffSel].forEach(function (sel) {
-      if (sel) sel.addEventListener('change', syncPills);
-    });
-
-    if (toggleBtn) {
-      toggleBtn.addEventListener('click', function () {
-        if (!drawer) return;
-        if (drawer.hidden) {
-          openDrawer();
-        } else {
-          closeDrawer();
-        }
-      });
-    }
-
-    if (backdrop) {
-      backdrop.addEventListener('click', closeDrawer);
-    }
-
-    card.querySelectorAll('[data-open-picker]').forEach(function (pill) {
-      pill.addEventListener('click', function () {
-        openDrawer();
-      });
-    });
-
-    syncPills();
-  }
-
   function initCollapsibleLists() {
     document.querySelectorAll('[data-collapsible-list]').forEach(function (root) {
       var limit = parseInt(root.dataset.collapsibleList, 10) || 5;
@@ -275,7 +185,6 @@
   document.addEventListener('DOMContentLoaded', function () {
     initProfileTabs();
     initTopicsFilter();
-    initPracticePicker();
     initCollapsibleLists();
     initSegmentedLinks();
   });

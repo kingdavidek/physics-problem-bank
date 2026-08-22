@@ -10,6 +10,12 @@ from models.social import (
     ACTIVITY_TOPIC_OPENED,
 )
 from models.user import utc_now_iso
+from models.topic_status import (
+    catalog_extra_entries,
+    evaluate_topic_milestones,
+    topic_badge_meta,
+    topic_status_map as load_topic_status_map,
+)
 
 
 def _utc_today():
@@ -88,6 +94,8 @@ MILESTONE_CATALOG = {
         'tier': 'violet',
     },
 }
+
+MILESTONE_CATALOG.update(catalog_extra_entries())
 
 EFFORT_EVENT_TYPES = (
     ACTIVITY_TOPIC_OPENED,
@@ -316,6 +324,19 @@ def _award_milestone(conn, user_id, milestone_key):
     return True
 
 
+def milestone_meta(key):
+    """Catalog or dynamically generated topic-status badge metadata."""
+    meta = MILESTONE_CATALOG.get(key)
+    if meta:
+        return meta
+    return topic_badge_meta(key) or {
+        'title': str(key).replace('_', ' ').replace(':', ' · '),
+        'description': '',
+        'emoji': '★',
+        'tier': 'bronze',
+    }
+
+
 def _distinct_topics_count(conn, user_id):
     row = conn.execute(
         '''
@@ -427,6 +448,8 @@ def evaluate_milestones(conn, user_id):
     if _maybe_award_accuracy_top_friend(conn, user_id):
         earned.append(MILESTONE_ACCURACY_TOP_FRIEND)
 
+    earned.extend(evaluate_topic_milestones(conn, user_id, _award_milestone))
+
     if earned:
         conn.commit()
     return earned
@@ -445,7 +468,7 @@ def list_user_milestones(conn, user_id):
     out = []
     for row in rows:
         key = row['milestone_key']
-        meta = MILESTONE_CATALOG.get(key, {})
+        meta = milestone_meta(key)
         out.append({
             'key': key,
             'title': meta.get('title', key),
@@ -471,6 +494,18 @@ def list_milestone_shelf(conn, user_id):
             'tier': meta.get('tier', 'bronze'),
             'earned': item is not None,
             'earned_at': item['earned_at'] if item else None,
+        })
+    for key, item in earned.items():
+        if key in MILESTONE_CATALOG:
+            continue
+        shelf.append({
+            'key': key,
+            'title': item.get('title', key),
+            'description': item.get('description', ''),
+            'emoji': item.get('emoji', '★'),
+            'tier': item.get('tier', 'bronze'),
+            'earned': True,
+            'earned_at': item.get('earned_at'),
         })
     shelf.sort(key=lambda row: (not row['earned'], row['title']))
     return shelf
@@ -521,35 +556,11 @@ def streak_ring_progress(current):
 
 
 def topic_mastery_map(conn, user_id):
-    """(level, subject, topic) → 0–1 mastery from lesson steps + best quiz."""
-    mastery = {}
-    lesson_rows = conn.execute(
-        '''
-        SELECT level, subject, topic, COUNT(*) AS n
-        FROM lesson_progress
-        WHERE user_id = ?
-        GROUP BY level, subject, topic
-        ''',
-        (user_id,),
-    ).fetchall()
-    for row in lesson_rows:
-        lesson_share = min(1.0, (row['n'] or 0) / 4.0)
-        mastery[(row['level'], row['subject'], row['topic'])] = 0.5 * lesson_share
-    quiz_rows = conn.execute(
-        '''
-        SELECT level, subject, topic,
-               MAX(CASE WHEN total > 0 THEN (1.0 * score) / total ELSE 0 END) AS best
-        FROM quiz_attempts
-        WHERE user_id = ?
-        GROUP BY level, subject, topic
-        ''',
-        (user_id,),
-    ).fetchall()
-    for row in quiz_rows:
-        key = (row['level'], row['subject'], row['topic'])
-        quiz_share = max(0.0, min(1.0, float(row['best'] or 0)))
-        mastery[key] = min(1.0, mastery.get(key, 0) + 0.5 * quiz_share)
-    return mastery
+    """(level, subject, topic) → 0–1 mastery from lesson-complete / ninja / master."""
+    return {
+        key: float(status.get('mastery') or 0)
+        for key, status in load_topic_status_map(conn, user_id).items()
+    }
 
 
 def get_weekly_recap(conn, user_id, days=7):

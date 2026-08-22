@@ -500,6 +500,27 @@
     layoutTimer = setTimeout(updateRail, 50);
   }
 
+  function persistSnapshot(keys) {
+    if (!isLoggedIn || !csrfToken || !steps.length || !keys.length) return;
+    var lastKey = keys[keys.length - 1];
+    var step = steps.filter(function (item) { return item.key === lastKey; })[0] || steps[0];
+    fetch('/api/lesson-progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        csrf_token: csrfToken,
+        level: level,
+        subject: subject,
+        topic: topic,
+        section_key: step.key,
+        section_label: sectionLabel(step.subsection),
+        completed_keys: keys,
+        step_total: steps.length,
+      }),
+      credentials: 'same-origin',
+    }).catch(function () {});
+  }
+
   function persistProgress(step) {
     var keys = completedKeys(steps);
     writeLocalProgress(keys);
@@ -507,20 +528,7 @@
     if (!isLoggedIn || !csrfToken || !step) return;
     clearTimeout(saveTimer);
     saveTimer = setTimeout(function () {
-      fetch('/api/lesson-progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          csrf_token: csrfToken,
-          level: level,
-          subject: subject,
-          topic: topic,
-          section_key: step.key,
-          section_label: sectionLabel(step.subsection),
-          completed_keys: keys,
-        }),
-        credentials: 'same-origin',
-      }).catch(function () {});
+      persistSnapshot(keys);
     }, 400);
   }
 
@@ -557,6 +565,7 @@
         var keys = Object.keys(merged);
         writeLocalProgress(keys);
         applyCompletedKeys(keys);
+        persistSnapshot(keys);
       })
       .catch(function () {});
   }

@@ -56,7 +56,7 @@ def main():
         assert 'is-current' in body
         assert 'Start here' in body
         assert 'After Decimals' in body
-        assert 'of ' in body and ' mastered' in body
+        assert 'of ' in body and 'lessons' in body
         assert 'href="/topic/gcse/maths/fdp"' in body
 
         groups = _build_topic_groups()
