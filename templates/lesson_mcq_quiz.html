@@ -2,7 +2,7 @@
 {% block title %}Practice Quiz — {{ topic_name }}{% endblock %}
 
 {% block content %}
-<div class="quiz-runner" id="lesson-quiz-runner">
+<div class="quiz-runner" id="lesson-quiz-runner" data-quiz-runner data-submit-label="Submit quiz">
   {% set quiz_exit_url = lesson_url %}
   {% set quiz_runner_title = topic_name ~ (' — retry' if retry_mode|default(false) else ' — quiz') %}
   {% set quiz_runner_total = total %}
@@ -40,5 +40,5 @@
   </div>
 </div>
 
-<script src="{{ url_for('static', filename='js/quiz-runner.js') }}?v=1" defer></script>
+<script src="{{ url_for('static', filename='js/quiz-runner.js') }}?v=3" defer></script>
 {% endblock %}

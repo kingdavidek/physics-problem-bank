@@ -682,6 +682,45 @@ a.list-row {
     gap: var(--space-2);
     align-items: center;
 }
+.recent-practised {
+    margin: 0 0 var(--space-4);
+}
+.practice-page--active .recent-practised {
+    margin-bottom: var(--space-3);
+}
+.recent-practised-label {
+    margin: 0 0 var(--space-2);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.recent-practised-strip {
+    display: flex;
+    gap: var(--space-2);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 2px 0 var(--space-1);
+    scrollbar-width: thin;
+}
+.recent-practised-chip-form {
+    margin: 0;
+    flex: 0 0 auto;
+}
+.recent-practised-chip {
+    min-height: var(--tap-min);
+    white-space: nowrap;
+    cursor: pointer;
+    font: inherit;
+    border: 1px solid var(--border-soft);
+    background: var(--surface);
+}
+.recent-practised-chip.is-current {
+    background: var(--brand-100);
+    border-color: var(--brand-400);
+    color: var(--brand-800);
+}
 .practice-xp-pill {
     display: inline-flex;
     align-items: center;
@@ -1954,4 +1993,64 @@ body.quiz-runner-active .app-tab-bar {
     margin-top: var(--space-3);
     padding-top: var(--space-3);
     border-top: 1px solid var(--border-soft);
+}
+.quiz-runner-decline {
+    margin: 0 0 var(--space-4);
+}
+.challenge-h2h-hero {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: var(--space-3);
+    align-items: center;
+    text-align: center;
+}
+.challenge-h2h-hero .quiz-results-ring {
+    width: 96px;
+    height: 96px;
+}
+.challenge-h2h-hero .quiz-results-ring-inner {
+    width: 76px;
+    height: 76px;
+}
+.challenge-h2h-hero .quiz-results-score {
+    font-size: var(--text-lg);
+}
+.challenge-h2h-player-name {
+    margin: var(--space-2) 0 0;
+    font-weight: 700;
+}
+.challenge-h2h-outcome {
+    text-align: center;
+    font-size: var(--text-lg);
+    font-weight: 800;
+    margin: 0 0 var(--space-5);
+}
+.challenge-h2h-topic {
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+}
+.challenge-h2h-answers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+}
+.challenge-h2h-answer {
+    font-size: var(--text-sm);
+    font-weight: 700;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border-soft);
+    background: var(--surface);
+}
+.challenge-h2h-answer.is-correct {
+    background: var(--correct-100);
+    color: var(--correct-800);
+    border-color: var(--correct-300);
+}
+.challenge-h2h-answer.is-wrong {
+    background: var(--wrong-100);
+    color: var(--wrong-800);
+    border-color: var(--wrong-300);
 }

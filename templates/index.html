@@ -33,6 +33,26 @@
     </div>
 </div>
 
+{% if current_user.is_authenticated and recent_topics %}
+<section class="recent-practised" aria-label="Recently practised">
+    <h2 class="recent-practised-label">Recently practised</h2>
+    <div class="recent-practised-strip">
+        {% for item in recent_topics %}
+        <form method="POST" class="recent-practised-chip-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="start">
+            <input type="hidden" name="level" value="{{ item.level }}">
+            <input type="hidden" name="subject" value="{{ item.subject }}">
+            <input type="hidden" name="topic" value="{{ item.topic }}">
+            <input type="hidden" name="mode" value="{{ selected_mode }}">
+            <input type="hidden" name="difficulty" value="{{ item.difficulty }}">
+            <button type="submit" class="pill pill--surface recent-practised-chip{% if item.level == selected_level and item.subject == selected_subject and item.topic == selected_topic %} is-current{% endif %}">{{ item.label }}</button>
+        </form>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
 <div class="section-panel practice-picker-card{% if problem %} practice-picker-card--compact{% endif %}">
     <h2>{% if problem %}Practising{% else %}What do you want to practise?{% endif %}</h2>
     <form method="POST" id="main-form" class="form-inner practice-picker-form">

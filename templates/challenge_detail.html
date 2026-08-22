@@ -3,84 +3,157 @@
 {% block title %}Challenge – {{ topic_label }}{% endblock %}
 
 {% block content %}
-<style>
-  .lesson-quiz-page { max-width: 720px; margin: 0 auto; }
-  .lesson-quiz-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 20px 22px;
-    margin-bottom: 20px;
-  }
-  .lesson-quiz-mcq-btn {
-    text-align: left; width: 100%; padding: 10px 14px;
-    border: 1px solid var(--border); border-radius: var(--radius);
-    background: var(--surface); cursor: pointer;
-  }
-  .lesson-quiz-mcq-btn.selected { background: #2563eb; color: #fff; border-color: #1d4ed8; }
-</style>
-
-<div class="page-shell lesson-quiz-page">
-<p class="profile-page-back"><a href="{{ url_for('challenges_list') }}">← All challenges</a></p>
-
-<div class="lesson-hero">
-    <h1>{{ topic_label }}</h1>
-    <p class="hero-sub">@{{ challenge.creator_handle }} vs @{{ challenge.opponent_handle }}</p>
-</div>
-
-{{ page_flashes('challenge_detail') }}
-
-<section class="section-panel" style="margin-bottom:20px;">
-    <div class="section-panel-body">
-        <p>
-            <strong>Status:</strong> {{ summary.status }}
-            {% if summary.creator_score is not none %}
-            · @{{ challenge.creator_handle }}: {{ summary.creator_score }}/{{ summary.total }}
-            {% endif %}
-            {% if summary.opponent_score is not none %}
-            · @{{ challenge.opponent_handle }}: {{ summary.opponent_score }}/{{ summary.total }}
-            {% endif %}
-        </p>
-        {% if summary.status == 'pending' and summary.viewer_role == 'opponent' and not summary.viewer_submitted %}
-        <form method="POST" action="{{ url_for('challenge_decline', challenge_id=challenge.id) }}" style="display:inline;">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-outline">Decline</button>
-        </form>
-        {% endif %}
-    </div>
-</section>
+{% set other_handle = challenge.opponent_handle if summary.viewer_role == 'creator' else challenge.creator_handle %}
+{% set viewer_score = summary.creator_score if summary.viewer_role == 'creator' else summary.opponent_score %}
 
 {% if show_quiz %}
-<form method="POST" id="challenge-quiz-form">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <input type="hidden" name="action" value="submit">
-    {% for problem in problems %}
-    {% set q_index = loop.index0 %}
-    <div class="lesson-quiz-card">
-        <h2 style="font-size:1rem;color:var(--text-muted);">Question {{ loop.index }} of {{ total }}</h2>
-        <div style="margin-bottom:12px;">{{ problem.question | safe }}</div>
-        <div class="lesson-quiz-options">
+<div class="quiz-runner" id="challenge-quiz-runner" data-quiz-runner data-submit-label="Submit challenge">
+  {% set quiz_exit_url = url_for('challenges_list') %}
+  {% set quiz_runner_title = topic_label ~ ' — challenge' %}
+  {% set quiz_runner_total = total %}
+  {% set quiz_runner_current = 1 %}
+  {% include 'partials/quiz_runner_bar.html' %}
+
+  <div class="quiz-runner-body">
+    {{ page_flashes('challenge_detail') }}
+    <p class="quiz-runner-intro">
+      Same questions as @{{ other_handle }}. Answer each one, tap <strong>Check</strong>, then continue.
+      {% if summary.status == 'pending' and summary.viewer_role == 'opponent' %}
+      Prefer not to play?
+      {% endif %}
+    </p>
+    {% if summary.status == 'pending' and summary.viewer_role == 'opponent' %}
+    <form method="POST" action="{{ url_for('challenge_decline', challenge_id=challenge.id) }}" class="quiz-runner-decline">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-outline btn-sm">Decline challenge</button>
+    </form>
+    {% endif %}
+
+    <form method="POST" id="challenge-quiz-form" class="quiz-runner-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="action" value="submit">
+      {% for problem in problems %}
+      {% set q_index = loop.index0 %}
+      <section class="quiz-runner-step" data-index="{{ q_index }}" data-correct="{{ problem.correct_answer }}"{% if not loop.first %} hidden{% endif %}>
+        <div class="quiz-runner-card">
+          <div class="quiz-runner-question">{{ problem.question | safe }}</div>
+          <div class="quiz-runner-options" role="group" aria-label="Question {{ loop.index }} options">
             {% for opt in problem.options %}
-            <button type="button" class="lesson-quiz-mcq-btn" data-q="{{ q_index }}" data-letter="{{ opt[0] }}">{{ opt | safe }}</button>
+            <button type="button" class="quiz-runner-option" data-letter="{{ opt[0] }}">{{ opt | safe }}</button>
             {% endfor %}
+          </div>
+          <input type="hidden" name="answer_{{ q_index }}" value="">
         </div>
-        <input type="hidden" name="answer_{{ q_index }}" id="answer_{{ q_index }}" value="">
-    </div>
-    {% endfor %}
-    <p style="text-align:center;margin:24px 0;"><button type="submit" class="btn btn-primary">Submit challenge</button></p>
-</form>
-<script>
-document.querySelectorAll('.lesson-quiz-mcq-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        var q = btn.getAttribute('data-q');
-        document.querySelectorAll('.lesson-quiz-mcq-btn[data-q="' + q + '"]').forEach(function(b) { b.classList.remove('selected'); });
-        btn.classList.add('selected');
-        document.getElementById('answer_' + q).value = btn.getAttribute('data-letter');
-    });
-});
-</script>
-{% elif summary.viewer_submitted %}
-<p class="profile-empty">Your score is recorded. Waiting for the other player or view final results above.</p>
-{% endif %}
+      </section>
+      {% endfor %}
+
+      <div class="quiz-runner-actions">
+        <button type="button" class="btn btn-primary btn-lg quiz-runner-check" id="quiz-runner-check" disabled>Check</button>
+      </div>
+    </form>
+  </div>
 </div>
+<script src="{{ url_for('static', filename='js/quiz-runner.js') }}?v=3" defer></script>
+
+{% elif show_head_to_head and comparison %}
+{% set creator_pct = ((summary.creator_score / total * 100) | round(0)) if total else 0 %}
+{% set opponent_pct = ((summary.opponent_score / total * 100) | round(0)) if total else 0 %}
+<div class="quiz-runner-results">
+  <a href="{{ url_for('challenges_list') }}" class="quiz-runner-results-back">← All challenges</a>
+  {{ page_flashes('challenge_detail') }}
+
+  <div class="quiz-results-hero challenge-h2h-hero">
+    <div class="challenge-h2h-player">
+      <div class="quiz-results-ring" style="--quiz-pct: {{ creator_pct }};">
+        <div class="quiz-results-ring-inner">
+          <span class="quiz-results-score">{{ summary.creator_score }}/{{ total }}</span>
+          <span class="quiz-results-accuracy">{{ creator_pct | int }}%</span>
+        </div>
+      </div>
+      <p class="challenge-h2h-player-name">@{{ challenge.creator_handle }}</p>
+    </div>
+    <div class="challenge-vs-divider">VS</div>
+    <div class="challenge-h2h-player">
+      <div class="quiz-results-ring" style="--quiz-pct: {{ opponent_pct }};">
+        <div class="quiz-results-ring-inner">
+          <span class="quiz-results-score">{{ summary.opponent_score }}/{{ total }}</span>
+          <span class="quiz-results-accuracy">{{ opponent_pct | int }}%</span>
+        </div>
+      </div>
+      <p class="challenge-h2h-player-name">@{{ challenge.opponent_handle }}</p>
+    </div>
+  </div>
+
+  <p class="challenge-h2h-outcome">
+    {% if comparison.winner == 'draw' %}
+    It’s a draw
+    {% elif comparison.winner == 'creator' %}
+    @{{ challenge.creator_handle }} wins
+    {% elif comparison.winner == 'opponent' %}
+    @{{ challenge.opponent_handle }} wins
+    {% endif %}
+    <span class="challenge-h2h-topic"> · {{ topic_label }}</span>
+  </p>
+
+  <div class="quiz-results-review">
+    {% for item in comparison.questions %}
+    <article class="quiz-results-item{% if item.creator_correct and item.opponent_correct %} is-correct{% elif not item.creator_correct and not item.opponent_correct %} is-wrong{% endif %}">
+      <header class="quiz-results-item-head">
+        <h2>Question {{ loop.index }}</h2>
+        <span class="quiz-results-verdict">Correct: {{ item.correct or '—' }}</span>
+      </header>
+      <div class="quiz-results-question">{{ item.question | safe }}</div>
+      {% if item.options %}
+      <div class="quiz-results-options">
+        {% for opt in item.options %}
+        {% set letter = option_letter(opt) %}
+        <div class="quiz-results-opt{% if letter == item.correct %} is-correct{% endif %}">{{ opt | safe }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <div class="challenge-h2h-answers">
+        <span class="challenge-h2h-answer{% if item.creator_correct %} is-correct{% elif item.creator_answer %} is-wrong{% endif %}">
+          @{{ challenge.creator_handle }}: {{ item.creator_answer or '—' }}
+          {% if item.creator_answer %}{% if item.creator_correct %} ✓{% else %} ✗{% endif %}{% endif %}
+        </span>
+        <span class="challenge-h2h-answer{% if item.opponent_correct %} is-correct{% elif item.opponent_answer %} is-wrong{% endif %}">
+          @{{ challenge.opponent_handle }}: {{ item.opponent_answer or '—' }}
+          {% if item.opponent_answer %}{% if item.opponent_correct %} ✓{% else %} ✗{% endif %}{% endif %}
+        </span>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+
+  <div class="quiz-results-actions">
+    <a href="{{ url_for('challenges_list') }}" class="btn btn-primary btn-lg">Back to challenges</a>
+    <a href="{{ url_for('challenge_new') }}" class="btn btn-outline">Challenge again</a>
+  </div>
+</div>
+
+{% else %}
+<div class="quiz-runner-results">
+  <a href="{{ url_for('challenges_list') }}" class="quiz-runner-results-back">← All challenges</a>
+  {{ page_flashes('challenge_detail') }}
+
+  {% if summary.status == 'declined' %}
+  <div class="empty-state">
+    <div class="empty-state-icon">⚔️</div>
+    <h3>Challenge declined</h3>
+    <p>@{{ challenge.opponent_handle }} declined this {{ topic_label }} challenge.</p>
+    <a href="{{ url_for('challenges_list') }}" class="btn btn-primary">Back to challenges</a>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">⏳</div>
+    <h3>Waiting for @{{ other_handle }}</h3>
+    <p>
+      Your score is recorded{% if viewer_score is not none %}: <strong>{{ viewer_score }}/{{ total }}</strong>{% endif %}.
+      You’ll see a head-to-head comparison when they finish.
+    </p>
+    <a href="{{ url_for('challenges_list') }}" class="btn btn-primary">Back to challenges</a>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
 {% endblock %}

@@ -104,6 +104,7 @@ from models.social import (
     list_followers,
     list_following,
     list_followed_feed,
+    list_recent_practised_topics,
     normalize_feed_filter,
     FEED_FILTER_ALL,
     FEED_FILTER_LESSONS,
@@ -237,6 +238,7 @@ from models.challenges import (
     CHALLENGE_DECLINED,
     CHALLENGE_PENDING,
     count_actionable_challenges,
+    build_head_to_head,
     create_challenge,
     decline_challenge,
     get_challenge,
@@ -640,6 +642,7 @@ _QUIZ_RUNNER_ENDPOINTS = frozenset({
     'quicktest_question',
     'quicktest_results',
     'view_quiz_attempt',
+    'challenge_detail',
 })
 @app.context_processor
 def inject_nav():
@@ -1372,6 +1375,8 @@ with get_db() as conn:
             status TEXT NOT NULL DEFAULT 'pending',
             creator_score INTEGER,
             opponent_score INTEGER,
+            creator_answers_json TEXT,
+            opponent_answers_json TEXT,
             creator_completed_at TEXT,
             opponent_completed_at TEXT,
             created_at TEXT NOT NULL,
@@ -1383,6 +1388,13 @@ with get_db() as conn:
         CREATE INDEX IF NOT EXISTS idx_quiz_challenges_users
         ON quiz_challenges (creator_id, opponent_id, created_at DESC)
     """)
+    challenge_cols = {
+        row[1] for row in conn.execute('PRAGMA table_info(quiz_challenges)').fetchall()
+    }
+    if 'creator_answers_json' not in challenge_cols:
+        conn.execute('ALTER TABLE quiz_challenges ADD COLUMN creator_answers_json TEXT')
+    if 'opponent_answers_json' not in challenge_cols:
+        conn.execute('ALTER TABLE quiz_challenges ADD COLUMN opponent_answers_json TEXT')
     conn.execute("""
         CREATE TABLE IF NOT EXISTS study_pairs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1838,6 +1850,45 @@ def _normalize_generator_scope(level, subject, topic):
     return level, subject, topic
 
 
+_GENERATOR_DIFFICULTIES = frozenset({'foundational', 'intermediate', 'difficult'})
+
+
+def _recent_topics_for_generator(conn, user_id, *, selected_diff='foundational'):
+    """Topic chips for the home strip, clamped to the live generator catalogue."""
+    fallback_diff = selected_diff if selected_diff in _GENERATOR_DIFFICULTIES else 'foundational'
+    items = list_recent_practised_topics(conn, user_id, limit=16)
+    out = []
+    seen = set()
+    for item in items:
+        level = item.get('level') or ''
+        subject = item.get('subject') or ''
+        topic = _resolve_topic_slug(level, subject, item.get('topic') or '')
+        if GENERATOR_LAUNCH_GCSE_MATHS_CS:
+            if level != GENERATOR_DEFAULT_LEVEL or subject not in GENERATOR_LAUNCH_SUBJECTS:
+                continue
+        try:
+            cfg = TOPICS[level][subject][topic]
+        except KeyError:
+            continue
+        key = (level, subject, topic)
+        if key in seen:
+            continue
+        seen.add(key)
+        difficulty = item.get('difficulty') or fallback_diff
+        if difficulty not in _GENERATOR_DIFFICULTIES:
+            difficulty = fallback_diff
+        out.append({
+            'level': level,
+            'subject': subject,
+            'topic': topic,
+            'label': item.get('topic_label') or cfg.get('name') or topic.replace('_', ' ').title(),
+            'difficulty': difficulty,
+        })
+        if len(out) >= 8:
+            break
+    return out
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if 'anon_count' not in session:
@@ -1963,6 +2014,13 @@ def index():
         except KeyError:
             can_reroll_variant = False
 
+    recent_topics = []
+    if current_user.is_authenticated:
+        with get_db() as conn:
+            recent_topics = _recent_topics_for_generator(
+                conn, current_user.id, selected_diff=selected_diff,
+            )
+
     return render_template(
         'index.html',
         problem=problem,
@@ -1977,6 +2035,7 @@ def index():
         can_reroll_variant=can_reroll_variant,
         generator_launch_gcse_only=GENERATOR_LAUNCH_GCSE_MATHS_CS,
         generator_topics=_generator_topic_options(),
+        recent_topics=recent_topics,
     )
 
 
@@ -8267,6 +8326,12 @@ def challenge_detail(challenge_id):
         challenge['status'] != CHALLENGE_DECLINED
         and not user_has_submitted(challenge, current_user.id)
     )
+    show_head_to_head = (
+        challenge['status'] == CHALLENGE_COMPLETE
+        and challenge.get('creator_score') is not None
+        and challenge.get('opponent_score') is not None
+    )
+    comparison = build_head_to_head(challenge) if show_head_to_head else None
     return render_template(
         'challenge_detail.html',
         challenge=challenge,
@@ -8275,6 +8340,9 @@ def challenge_detail(challenge_id):
         problems=problems,
         total=total,
         show_quiz=show_quiz,
+        show_head_to_head=show_head_to_head,
+        comparison=comparison,
+        option_letter=_option_letter,
     )
 
 

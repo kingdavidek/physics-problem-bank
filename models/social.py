@@ -205,6 +205,59 @@ def list_activity_events(conn, user_id, limit=20):
     return out
 
 
+RECENT_PRACTISED_LIMIT = 8
+RECENT_PRACTISED_SCAN = 80
+RECENT_PRACTISED_EVENTS = (
+    ACTIVITY_QUESTION_GENERATED,
+    ACTIVITY_TOPIC_OPENED,
+    ACTIVITY_QUIZ_COMPLETED,
+    ACTIVITY_LESSON_STEP_COMPLETED,
+    ACTIVITY_MCQ_ANSWERED,
+)
+
+
+def list_recent_practised_topics(conn, user_id, *, limit=RECENT_PRACTISED_LIMIT, scan=RECENT_PRACTISED_SCAN):
+    """Distinct topics the user practised, newest first (for the home chip strip)."""
+    rows = conn.execute(
+        '''
+        SELECT payload_json, created_at
+        FROM user_activity_events
+        WHERE user_id = ?
+          AND event_type IN (?, ?, ?, ?, ?)
+        ORDER BY created_at DESC, id DESC
+        LIMIT ?
+        ''',
+        (user_id, *RECENT_PRACTISED_EVENTS, scan),
+    ).fetchall()
+    out = []
+    seen = set()
+    for row in rows:
+        try:
+            payload = json.loads(row['payload_json'] or '{}')
+        except (TypeError, ValueError, json.JSONDecodeError):
+            payload = {}
+        level = payload.get('level')
+        subject = payload.get('subject')
+        topic = payload.get('topic')
+        if not topic:
+            continue
+        key = (level, subject, topic)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append({
+            'level': level,
+            'subject': subject,
+            'topic': topic,
+            'topic_label': payload.get('topic_label') or '',
+            'difficulty': payload.get('difficulty') or '',
+            'last_at': row['created_at'],
+        })
+        if len(out) >= limit:
+            break
+    return out
+
+
 def normalize_feed_filter(value):
     if value in FEED_FILTER_CHOICES:
         return value

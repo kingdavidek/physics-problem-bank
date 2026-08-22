@@ -2,8 +2,8 @@
   'use strict';
 
   function initLessonQuizRunner() {
-    var root = document.getElementById('lesson-quiz-runner');
-    var form = document.getElementById('lesson-quiz-form');
+    var root = document.querySelector('[data-quiz-runner]') || document.getElementById('lesson-quiz-runner');
+    var form = root ? (root.querySelector('form.quiz-runner-form') || document.getElementById('lesson-quiz-form')) : null;
     if (!root || !form) return;
 
     var steps = Array.prototype.slice.call(form.querySelectorAll('.quiz-runner-step'));
@@ -12,6 +12,11 @@
     var segments = document.querySelectorAll('.quiz-runner-segment');
     var total = steps.length;
     var current = 0;
+    var submitLabel = root.getAttribute('data-submit-label') || 'Submit quiz';
+
+    function afterCheckLabel() {
+      return current === total - 1 ? submitLabel : 'Next question';
+    }
 
     function updateChrome() {
       if (counterEl) counterEl.textContent = (current + 1) + ' / ' + total;
@@ -31,7 +36,7 @@
       var selected = active.querySelector('.quiz-runner-option.is-selected');
       if (checkBtn) {
         checkBtn.disabled = !selected;
-        checkBtn.textContent = index === total - 1 ? 'Submit quiz' : 'Check';
+        checkBtn.textContent = active.dataset.checked === '1' ? afterCheckLabel() : 'Check';
       }
     }
 
@@ -58,7 +63,7 @@
       step.dataset.checked = '1';
       if (checkBtn) {
         checkBtn.disabled = false;
-        checkBtn.textContent = current === total - 1 ? 'Submit quiz' : 'Next question';
+        checkBtn.textContent = afterCheckLabel();
       }
       return isCorrect;
     }
