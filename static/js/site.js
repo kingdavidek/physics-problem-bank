@@ -106,48 +106,6 @@
     syncSubjectDropdown();
   }
 
-  function initPracticePrimaryBar() {
-    var session = document.getElementById('practice-session');
-    if (!session) return;
-
-    var checkBtn = document.getElementById('practice-check-btn');
-    var hintBtn = document.getElementById('practice-hint-btn');
-    var hintDrawer = document.getElementById('practice-hint');
-    var question = document.getElementById('practice-question');
-    var skipBtn = document.getElementById('practice-skip-btn');
-    var mainForm = document.getElementById('main-form');
-
-    if (checkBtn && question) {
-      checkBtn.addEventListener('click', function () {
-        var target = question.querySelector(
-          '.free-response-check-btn:not([disabled]), .free-response-field-check-btn:not([disabled])'
-        );
-        if (target) {
-          target.click();
-          return;
-        }
-        var input = question.querySelector('.free-response-input:not([disabled])');
-        if (input) input.focus();
-      });
-    }
-
-    if (hintBtn && hintDrawer) {
-      hintBtn.addEventListener('click', function () {
-        hintDrawer.open = true;
-        hintDrawer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        if (window.MathJax && MathJax.typesetPromise) {
-          MathJax.typesetPromise([hintDrawer.querySelector('.hint')]).catch(function () {});
-        }
-      });
-    }
-
-    if (skipBtn && mainForm) {
-      skipBtn.addEventListener('click', function () {
-        try { sessionStorage.setItem('scrollToProblem', '1'); } catch (e) {}
-      });
-    }
-  }
-
   function initRevisionPlanForm() {
     var form = document.querySelector('.revision-plan-form');
     if (!form) return;
@@ -4902,6 +4860,5 @@
     initRevisionQueue();
     initKeyboardInset();
     initRegisterForm();
-    initPracticePrimaryBar();
   });
 })();

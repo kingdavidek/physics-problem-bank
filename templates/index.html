@@ -214,12 +214,6 @@
     </div>
 </div>
 
-<div class="practice-primary-bar" id="practice-primary-bar" role="toolbar" aria-label="Question actions">
-    <button type="button" class="btn btn-primary btn-lg" id="practice-check-btn"{% if problem.options %} hidden{% endif %}>Check</button>
-    <button type="button" class="btn btn-outline btn-lg" id="practice-hint-btn">Hint</button>
-    <button type="submit" form="main-form" class="btn btn-secondary btn-lg" id="practice-skip-btn">New question</button>
-</div>
-
 <div class="problem-actions practice-action-bar practice-secondary-bar" id="practice-action-bar">
         {% if current_user.is_authenticated %}
         <form method="POST" action="{{ url_for('save_problem_route') }}" id="save-problem-form">
