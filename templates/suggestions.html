@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "partials/page_flashes.html" import render as page_flashes %}
+{% from "partials/spot.html" import spot %}
 {% block title %}Question suggestions – Problem Bank{% endblock %}
 
 {% block content %}
@@ -44,7 +45,7 @@
         </ul>
         {% else %}
         <div class="empty-state">
-            <div class="empty-state-icon">💡</div>
+            <div class="empty-state-icon" aria-hidden="true">{{ spot('caught-up') }}</div>
             <h3>No suggestions here</h3>
             <p>When someone sends you a question from the generator, it will appear in this inbox.</p>
             <a href="{{ url_for('index') }}" class="btn btn-primary">Start practising</a>

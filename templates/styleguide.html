@@ -1,4 +1,8 @@
 {% extends "base.html" %}
+{% from "partials/icon.html" import icon %}
+{% from "partials/wordmark.html" import wordmark, mark %}
+{% from "partials/spot.html" import spot %}
+{% from "partials/buddy.html" import buddy_mascot %}
 {% block title %}Styleguide – Problem Bank{% endblock %}
 
 {% block content %}
@@ -11,6 +15,10 @@
         <span class="hero-pill">Pill</span>
         <span class="hero-pill is-active">Active pill</span>
         <a href="#colour" class="hero-pill">Link pill</a>
+        <a href="#icons" class="hero-pill">Icons</a>
+        <a href="#brand" class="hero-pill">Brand</a>
+        <a href="#mascot" class="hero-pill">Mascot</a>
+        <a href="#diagrams" class="hero-pill">Diagrams</a>
     </div>
 </div>
 
@@ -38,6 +46,62 @@
             gold = rank #1 / milestones / level-up · subject accents on topic cards + lesson heroes only.
             Light theme v1 — dark mode is a future <code>:root</code> override, not a redesign.
         </p>
+    </div>
+</section>
+
+<section class="section-panel" id="icons">
+    <div class="section-panel-header">Icons (U5.6)</div>
+    <div class="section-panel-body">
+        <p class="profile-empty">Stroke sprite, 24×24, <code>currentColor</code>. Macro <code>icon('book')</code> from <code>partials/icon.html</code>. Chrome uses the sprite; emoji stay on avatars, buddy, and badges.</p>
+        <ul class="sg-icon-grid">
+            {% for name in [
+                'bolt', 'book', 'calendar', 'podium', 'info', 'log-in',
+                'search', 'bell', 'menu', 'close',
+                'chevron-left', 'chevron-right', 'chevron-down',
+                'save', 'share', 'retry', 'hint', 'check', 'cross',
+                'flame', 'trophy', 'target', 'lock', 'star',
+                'maths', 'physics', 'cs', 'chemistry',
+            ] %}
+            <li class="sg-icon-cell">
+                {{ icon(name, size=24) }}
+                <code>{{ name }}</code>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+
+<section class="section-panel" id="brand">
+    <div class="section-panel-header">Brand (U5.7)</div>
+    <div class="section-panel-body">
+        <p class="profile-empty">Wordmark lock-up (header), PWA mark, and empty-state spots. Flat two-tone, brand tokens only. Mascot is U5.8.</p>
+        <div class="sg-row" style="margin-top:var(--space-4);">
+            <a href="/" class="site-title">{{ wordmark() }}</a>
+            {{ mark(48) }}
+        </div>
+        <div class="sg-spot-grid">
+            {% for name in ['search', 'friends', 'offline', 'caught-up'] %}
+            <figure class="sg-spot-cell">
+                {{ spot(name) }}
+                <figcaption><code>{{ name }}</code></figcaption>
+            </figure>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section-panel" id="mascot">
+    <div class="section-panel-header">Mascot (U5.8)</div>
+    <div class="section-panel-body">
+        <p class="profile-empty">Custom SVG buddy. One sprite, seven faces swapped via <code>data-buddy-face</code> / <code>data-face</code>. API <code>face</code> stays an emoji. Emoji remain on avatars and badges.</p>
+        <div class="sg-mascot-grid">
+            {% for name in ['nudge', 'milestone', 'celebrate', 'qotd_nudge', 'streak_risk', 'weak_topic', 'friend_challenge'] %}
+            <figure class="sg-mascot-cell">
+                <span class="study-buddy-face" data-buddy-face data-face="{{ name }}" aria-hidden="true">{{ buddy_mascot() }}</span>
+                <figcaption><code>{{ name }}</code></figcaption>
+            </figure>
+            {% endfor %}
+        </div>
     </div>
 </section>
 
@@ -176,6 +240,59 @@
     </div>
 </section>
 
+<section class="section-panel" id="diagrams">
+    <div class="section-panel-header">Diagram primitives</div>
+    <div class="section-panel-body">
+        <p class="profile-empty">Phase U5.2–U5.5 — mensuration solids, charts, probability visuals (pie, Venn, tree), and construction loci setups. Always <code>viewBox</code>, <code>role="img"</code>, <code>&lt;title&gt;</code> + <code>&lt;desc&gt;</code>; sizing is CSS (<code>width:100%; max-width</code>), never a fixed pixel width on the root.</p>
+        <div class="sg-diagram-grid">
+            <figure class="sg-diagram">
+                {{ svg_kit.demo_strokes() }}
+                <figcaption>Wrapper sample — 2px outline, 1.5px measure, 1px dashed hidden, ink + red labels</figcaption>
+            </figure>
+            <figure class="sg-diagram">
+                {{ svg_kit.cylinder('r', 'h', caption='V = πr²h') }}
+                <figcaption><code>cylinder()</code> — body gradient, dashed hidden base, r / h</figcaption>
+            </figure>
+            <figure class="sg-diagram">
+                {{ svg_kit.cone('r', 'h', slant_label='l', caption='V = ⅓πr²h') }}
+                <figcaption><code>cone()</code></figcaption>
+            </figure>
+            <figure class="sg-diagram">
+                {{ svg_kit.sphere('r', caption='V = ⁴⁄₃πr³') }}
+                <figcaption><code>sphere()</code></figcaption>
+            </figure>
+            <figure class="sg-diagram">
+                {{ svg_kit.cuboid('l', 'w', 'h', caption='V = lwh') }}
+                <figcaption><code>cuboid()</code></figcaption>
+            </figure>
+            <figure class="sg-diagram">
+                {{ svg_kit.cylinder_hemisphere('r', 'h') }}
+                <figcaption><code>cylinder_hemisphere()</code> silo</figcaption>
+            </figure>
+            <figure class="sg-diagram">
+                {{ svg_kit.circle_with_radius('r') }}
+                <figcaption><code>circle_with_radius()</code></figcaption>
+            </figure>
+            <figure class="sg-diagram">
+                {{ svg_kit.right_triangle('b', 'h') }}
+                <figcaption><code>right_triangle()</code></figcaption>
+            </figure>
+            <figure class="sg-diagram">
+                {{ svg_kit.pie_chart([12, 8, 5], labels=['Maths', 'Science', 'Other'], highlight_index=0) }}
+                <figcaption><code>pie_chart()</code> — part-of-whole sectors</figcaption>
+            </figure>
+            <figure class="sg-diagram">
+                {{ svg_kit.venn2(4, 3, 2, 6) }}
+                <figcaption><code>venn2()</code> — two-set counts</figcaption>
+            </figure>
+            <figure class="sg-diagram">
+                {{ svg_kit.prob_tree('black', 'white', 4, 7, 3, 7, 4, 7, 3, 7, 3, 6, 2, 6, show_probs=True) }}
+                <figcaption><code>prob_tree()</code> — two-stage tree</figcaption>
+            </figure>
+        </div>
+    </div>
+</section>
+
 <section class="section-panel">
     <div class="section-panel-header">Lists &amp; leaderboard</div>
     <div class="section-panel-body">
@@ -233,6 +350,30 @@
         color: rgba(0, 0, 0, 0.45);
         padding-bottom: 2px;
         box-shadow: var(--elev-1);
+    }
+    .sg-diagram-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: var(--space-5);
+        margin-top: var(--space-4);
+    }
+    .sg-diagram {
+        margin: 0;
+        padding: var(--space-3);
+        background: var(--surface-sunken);
+        border-radius: var(--radius-sm);
+        box-shadow: var(--elev-1);
+    }
+    .sg-diagram svg.svg-kit {
+        display: block;
+        margin: 0 auto;
+    }
+    .sg-diagram figcaption {
+        margin-top: var(--space-2);
+        font-size: var(--text-xs);
+        color: var(--text-muted);
+        text-align: center;
+        line-height: 1.35;
     }
 </style>
 {% endblock %}

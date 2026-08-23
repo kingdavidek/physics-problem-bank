@@ -15,6 +15,7 @@ from generators.shared.variant_utils import (
     run_mcq_variant,
     pick_named_variant,
 )
+from models import svg_kit
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -161,15 +162,16 @@ _STD_SVG_MAX_W = 320
 _STD_SVG_MAX_H = 320
 
 
-def _std_svg_open(min_x, min_y, vw, vh):
-    """Standard responsive opening <svg> tag used by all problem diagrams."""
-    return (
-        f'<svg width="100%" viewBox="{min_x:.0f} {min_y:.0f} {vw:.0f} {vh:.0f}" '
-        f'preserveAspectRatio="xMidYMid meet" '
-        f'style="background:#f9f8f5;border-radius:6px;'
-        f'max-width:{_STD_SVG_MAX_W}px;max-height:{_STD_SVG_MAX_H}px;'
-        f'display:block;margin:10px auto;vertical-align:middle;">'
-    )
+def _std_svg(min_x, min_y, vw, vh, inner, title='Bearings diagram'):
+    """Accessible bearings diagram via svg_kit (explicit viewBox origin)."""
+    return str(svg_kit.viewbox_svg(
+        min_x, min_y, vw, vh,
+        title=title,
+        desc='Bearings diagram for this question.',
+        body=inner,
+        max_width=_STD_SVG_MAX_W,
+        variant='wide',
+    ))
 
 
 _BRG_SVG_MAX_W = _STD_SVG_MAX_W
@@ -195,15 +197,15 @@ def _brg_arc_label_xy(cx, cy, bearing, arc_r, label_gap):
     )
 
 
-def _brg_svg_fitted(xs, ys, margin=_BRG_FIT_MARGIN):
-    """Open SVG with viewBox cropped to content (+ margin for labels)."""
+def _brg_svg_fitted(xs, ys, inner, margin=_BRG_FIT_MARGIN, title='Bearings diagram'):
+    """Fitted bearings diagram cropped to content (+ margin for labels)."""
     min_x = min(xs) - margin
     max_x = max(xs) + margin
     min_y = min(ys) - margin
     max_y = max(ys) + margin
     vw = max(max_x - min_x, 60)
     vh = max(max_y - min_y, 60)
-    return _std_svg_open(min_x, min_y, vw, vh)
+    return _std_svg(min_x, min_y, vw, vh, inner, title=title)
 
 
 def _north_elements(cx, cy, n_len=55, font_size=14):
@@ -254,16 +256,14 @@ def _single_brg_svg(bearing, pt="A", dest="B",
     dlx = max(10.0, min(w - 10.0, dlx))
     dly = max(12.0, min(h - 6.0, dly))
     arc_path, arc_label = _bearing_arc(cx, cy, bearing, arc_r)
-    return (
-        _std_svg_open(0, 0, w, h)
-        + _north_elements(cx, cy, n_len)
+    return _std_svg(0, 0, w, h,
+        _north_elements(cx, cy, n_len)
         + f'<line x1="{cx}" y1="{cy}" x2="{rx:.1f}" y2="{ry:.1f}" '
           f'stroke="#a13544" stroke-width="2"/>'
         + arc_path + arc_label
         + f'<circle cx="{cx}" cy="{cy}" r="3.5" fill="#333"/>'
         + f'<text x="{cx-11}" y="{cy+5}" font-size="12" fill="#333" font-weight="bold">{pt}</text>'
         + f'<text x="{dlx:.1f}" y="{dly:.1f}" font-size="12" fill="#a13544" font-weight="bold">{dest}</text>'
-        + '</svg>'
     )
 
 
@@ -297,17 +297,11 @@ def _two_pt_svg(bearing, dist_px=70, ax=90, ay=135,
     qly = by - (arc_r + 14) * math.cos(mid_b)
 
     svg = (
-        _std_svg_open(0, 0, w, h)
-        # North at A
-        + _north_elements(ax, ay, n_len)
-        # North at B
+        _north_elements(ax, ay, n_len)
         + _north_elements(bx, by, n_len)
-        # Dashed line AB
         + f'<line x1="{ax}" y1="{ay}" x2="{bx}" y2="{by}" '
           f'stroke="#888" stroke-width="1.5" stroke-dasharray="5,3"/>'
-        # Arc at A (bearing shown)
         + arc_a_path + arc_a_label
-        # Arc at B (back bearing "?" if show_back)
     )
     if show_back:
         svg += (
@@ -321,9 +315,8 @@ def _two_pt_svg(bearing, dist_px=70, ax=90, ay=135,
         f'<text x="{ax-11}" y="{ay+5}" font-size="12" fill="#333" font-weight="bold">{label_a}</text>'
         f'<circle cx="{bx}" cy="{by}" r="3.5" fill="#a13544"/>'
         f'<text x="{bx+8:.1f}" y="{by+5:.1f}" font-size="12" fill="#a13544" font-weight="bold">{label_b}</text>'
-        '</svg>'
     )
-    return svg
+    return _std_svg(0, 0, w, h, svg)
 
 
 def _right_triangle_svg(brg, d, comp_label="d"):
@@ -343,11 +336,8 @@ def _right_triangle_svg(brg, d, comp_label="d"):
     n_len = _BRG_N_LEN
     bounds_x = [cx, rx, ex, cx - 24, (cx + ex) // 2]
     bounds_y = [cy, ry, ey, (cy + ey) // 2, cy - n_len - 8]
-    svg_open = _brg_svg_fitted(bounds_x, bounds_y)
-
-    return (
-        svg_open
-        + _north_elements(cx, cy, n_len, font_size=_BRG_N_FONT)
+    return _brg_svg_fitted(bounds_x, bounds_y,
+        _north_elements(cx, cy, n_len, font_size=_BRG_N_FONT)
         + f'<line x1="{cx}" y1="{cy}" x2="{rx}" y2="{ry}" stroke="#a13544" stroke-width="{_BRG_ROUTE_STROKE}"/>'
         + f'<line x1="{cx}" y1="{ey}" x2="{ex}" y2="{ey}" stroke="#059669" stroke-width="1.5" stroke-dasharray="4,3"/>'
         + f'<line x1="{cx}" y1="{cy}" x2="{cx}" y2="{ey}" stroke="#1a6fa8" stroke-width="1.5" stroke-dasharray="4,3"/>'
@@ -359,7 +349,6 @@ def _right_triangle_svg(brg, d, comp_label="d"):
         + f'<text x="{cx-11}" y="{cy+5}" font-size="{_BRG_LBL_FONT}" fill="#333" font-weight="bold">A</text>'
         + f'<circle cx="{rx}" cy="{ry}" r="{_BRG_DOT_R}" fill="#a13544"/>'
         + f'<text x="{rx+8}" y="{ry+5}" font-size="{_BRG_LBL_FONT}" fill="#a13544" font-weight="bold">B</text>'
-        + '</svg>'
     )
 
 
@@ -383,7 +372,7 @@ def _port_two_rays_svg(b1, b2, ray1=_BRG_RAY_LEN, ray2=_BRG_RAY_LEN - 2,
         lx, ly = _brg_arc_label_xy(cx, cy, brg, arc_r, label_gap)
         bounds_x.append(lx)
         bounds_y.append(ly)
-    svg = _brg_svg_fitted(bounds_x, bounds_y) + _north_elements(cx, cy, n_len, font_size=_BRG_N_FONT)
+    svg = _north_elements(cx, cy, n_len, font_size=_BRG_N_FONT)
     for brg, px, py, lbl in pts:
         svg += (
             f'<line x1="{cx}" y1="{cy}" x2="{px}" y2="{py}" '
@@ -405,9 +394,8 @@ def _port_two_rays_svg(b1, b2, ray1=_BRG_RAY_LEN, ray2=_BRG_RAY_LEN - 2,
     svg += (
         f'<circle cx="{cx}" cy="{cy}" r="{_BRG_DOT_R}" fill="#333"/>'
         f'<text x="{cx-11}" y="{cy+5}" font-size="{_BRG_LBL_FONT}" fill="#333" font-weight="bold">{label_o}</text>'
-        '</svg>'
     )
-    return svg
+    return _brg_svg_fitted(bounds_x, bounds_y, svg)
 
 
 def _journey_legs_svg(legs, labels=None, max_span=_BRG_JOURNEY_SPAN, cx=54, cy=132):
@@ -446,7 +434,7 @@ def _journey_legs_svg(legs, labels=None, max_span=_BRG_JOURNEY_SPAN, cx=54, cy=1
         else:
             bounds_x.append(px + 11)
         bounds_y.append(py + 6)
-    svg = _brg_svg_fitted(bounds_x, bounds_y) + _north_elements(cx, cy, n_len, font_size=_BRG_N_FONT)
+    svg = _north_elements(cx, cy, n_len, font_size=_BRG_N_FONT)
     ox, oy = cx, cy
     for i, (brg, dist) in enumerate(legs):
         bx, by = points[i + 1]
@@ -467,8 +455,7 @@ def _journey_legs_svg(legs, labels=None, max_span=_BRG_JOURNEY_SPAN, cx=54, cy=1
             f'<circle cx="{px}" cy="{py}" r="{_BRG_DOT_R}" fill="{fill}"/>'
             f'<text x="{lx:.1f}" y="{ly:.1f}" font-size="{_BRG_LBL_FONT}" fill="{fill}" font-weight="bold">{lbl}</text>'
         )
-    svg += '</svg>'
-    return svg
+    return _brg_svg_fitted(bounds_x, bounds_y, svg)
 
 
 def _brg_abc_block(*parts):

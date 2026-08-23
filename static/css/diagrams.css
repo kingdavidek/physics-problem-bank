@@ -7,13 +7,13 @@
 
 /* ---- SVG: instructional diagrams only (not MathJax — see mjx-container above) ---- */
 .question-diagram svg,
-.question-content svg,
+.question-content svg:not(.svg-kit),
 .question-content .question-diagram svg,
-.question-content > div > svg,
-.question > svg,
-.answer > svg,
-.hint > svg,
-.solution > svg {
+.question-content > div > svg:not(.svg-kit),
+.question > svg:not(.svg-kit),
+.answer > svg:not(.svg-kit),
+.hint > svg:not(.svg-kit),
+.solution > svg:not(.svg-kit) {
     background: #f9f8f5 !important;
     border-radius: 8px !important;
     display: block !important;
@@ -21,6 +21,83 @@
     max-width: 100% !important;
     height: auto !important;
 }
+
+/* svg_kit: cap size in practice cards — do not inherit max-width:100% from legacy rule */
+.question-content svg.svg-kit,
+.question svg.svg-kit,
+.hint svg.svg-kit,
+.solution svg.svg-kit,
+.answer svg.svg-kit {
+    background: var(--surface-sunken) !important;
+    border-radius: var(--radius-sm) !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: min(100%, 200px) !important;
+    height: auto !important;
+    margin: 12px auto !important;
+}
+
+.question-content svg.svg-kit.svg-kit--inline,
+.question svg.svg-kit.svg-kit--inline {
+    max-width: min(100%, 170px) !important;
+}
+
+.question-content svg.svg-kit.svg-kit--chart,
+.question svg.svg-kit.svg-kit--chart {
+    max-width: min(100%, 320px) !important;
+}
+
+.question-content svg.svg-kit.svg-kit--tree,
+.question svg.svg-kit.svg-kit--tree,
+.quiz-runner-question svg.svg-kit.svg-kit--tree {
+    max-width: min(100%, 480px) !important;
+}
+
+.question-content svg.svg-kit.svg-kit--wide,
+.question svg.svg-kit.svg-kit--wide {
+    max-width: min(100%, 360px) !important;
+}
+
+svg.svg-kit {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: var(--surface-sunken);
+    border-radius: var(--radius-sm);
+}
+
+.lesson-diagram-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    justify-content: center;
+    align-items: flex-end;
+    margin: 16px 0;
+}
+
+.lesson-diagram-row > .svg-kit {
+    flex: 0 1 160px;
+    max-width: min(100%, 200px) !important;
+    min-width: 0;
+    width: 100%;
+}
+
+.lesson-diagram-row--wide > .svg-kit {
+    flex: 0 1 180px;
+    max-width: min(100%, 220px) !important;
+}
+
+.lesson-diagram-note {
+    margin: 0;
+    padding: var(--space-3);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--text);
+    text-align: center;
+    line-height: 1.45;
+    align-self: center;
+}
+
 svg.trig-diagram {
     background: #f9f8f5 !important;
     border-radius: 8px !important;

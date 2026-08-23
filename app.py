@@ -275,6 +275,7 @@ from models.bot import (
     is_bot_user,
     qotd_challenge_card,
 )
+from models import svg_kit
 from models.avatar import (
     AVATAR_BACKGROUNDS,
     AVATAR_EXTRAS,
@@ -360,6 +361,7 @@ app.config['SESSION_COOKIE_SECURE'] = _secure_cookies
 app.config['REMEMBER_COOKIE_HTTPONLY'] = True
 app.config['REMEMBER_COOKIE_SAMESITE'] = 'Lax'
 app.config['REMEMBER_COOKIE_SECURE'] = _secure_cookies
+app.jinja_env.globals['svg_kit'] = svg_kit
 
 login_manager = LoginManager()
 
@@ -4265,6 +4267,15 @@ def web_manifest():
         _ROOT / 'static',
         'manifest.webmanifest',
         mimetype='application/manifest+json',
+    )
+
+
+@app.get('/favicon.ico')
+def favicon_ico():
+    return send_from_directory(
+        _ROOT / 'static' / 'icons',
+        'favicon.ico',
+        mimetype='image/x-icon',
     )
 
 

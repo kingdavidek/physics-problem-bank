@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "partials/page_flashes.html" import render as page_flashes %}
+{% from "partials/icon.html" import icon %}
 {% block title %}Practice Generator – Problem Bank{% endblock %}
 
 {% block content %}
@@ -218,9 +219,9 @@
         {% if current_user.is_authenticated %}
         <form method="POST" action="{{ url_for('save_problem_route') }}" id="save-problem-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-outline">⭐ Save question</button>
+            <button type="submit" class="btn btn-outline">{{ icon('save', size=16) }}Save question</button>
         </form>
-        <button type="button" class="btn btn-outline share-suggest-open" data-action="share">Share</button>
+        <button type="button" class="btn btn-outline share-suggest-open" data-action="share">{{ icon('share', size=16) }}Share</button>
         <button type="button" class="btn btn-outline share-suggest-open" data-action="suggest">Send to @user</button>
         {% endif %}
         {% if can_reroll_variant %}
@@ -232,7 +233,7 @@
             <input type="hidden" name="topic" id="rr-topic">
             <input type="hidden" name="mode" id="rr-mode">
             <input type="hidden" name="difficulty" id="rr-difficulty">
-            <button type="submit" class="btn btn-secondary" id="reroll-btn">🎲 New numbers</button>
+            <button type="submit" class="btn btn-secondary" id="reroll-btn">{{ icon('retry', size=16) }}New numbers</button>
         </form>
         {% endif %}
         <form method="POST" action="/quicktest/start" id="quicktest-form">
@@ -242,7 +243,7 @@
             <input type="hidden" name="topic" id="qt-topic">
             <input type="hidden" name="mode" id="qt-mode">
             <input type="hidden" name="difficulty" id="qt-difficulty">
-            <button type="submit" class="btn btn-primary" id="quicktest-btn">⚡ Quick test</button>
+            <button type="submit" class="btn btn-primary" id="quicktest-btn">{{ icon('bolt', size=16) }}Quick test</button>
         </form>
 </div>
 
@@ -250,4 +251,12 @@
 {% endif %}
 
 </div>
+{% endblock %}
+
+{% block sticky_footer %}
+{% if problem %}
+<div class="practice-new-question-bar" id="practice-new-question-bar">
+    <button type="submit" form="main-form" class="btn btn-primary btn-lg practice-new-question-btn" id="practice-new-question-btn">New question</button>
+</div>
+{% endif %}
 {% endblock %}

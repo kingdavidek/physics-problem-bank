@@ -16,6 +16,7 @@ from generators.shared.variant_utils import (
     run_mcq_variant,
     pick_named_variant,
 )
+from models import svg_kit
 
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -101,15 +102,14 @@ def _geom_problem_from_output(out, difficulty):
 
 
 def _geom_svg(w, h, inner, max_w=300):
-    display_h = max(1, round(max_w * h / w))
-    return (
-        f'<svg class="geom-diagram" viewBox="0 0 {w} {h}" '
-        f'width="{max_w}" height="{display_h}" '
-        f'style="background:#f9f8f5;border-radius:6px;'
-        f'max-width:{max_w}px !important;width:{max_w}px !important;height:auto;'
-        f'display:block;margin:6px auto;">'
-        f'{inner}</svg>'
-    )
+    return str(svg_kit.svg(
+        w, h,
+        title='Geometry diagram',
+        desc='Angle or polygon diagram for this question.',
+        body=inner,
+        max_width=max_w,
+        variant='wide',
+    ))
 
 
 def _g_line(x1, y1, x2, y2, color="#444", w=1.8, dash=""):

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "partials/user_avatar.html" import user_avatar %}
+{% from "partials/spot.html" import spot %}
 {% block title %}Friend leaderboard – Problem Bank{% endblock %}
 
 {% block content %}
@@ -67,7 +68,7 @@
             </p>
             {% else %}
             <div class="empty-state">
-                <div class="empty-state-icon">🎯</div>
+                <div class="empty-state-icon" aria-hidden="true">{{ spot('friends') }}</div>
                 <h3>No accuracy data yet</h3>
                 <p>Follow people and complete quizzes to compare weekly accuracy.</p>
                 <a href="{{ url_for('site_search') }}" class="btn btn-primary">Find friends</a>
@@ -107,7 +108,7 @@
             </p>
             {% else %}
             <div class="empty-state">
-                <div class="empty-state-icon">🏆</div>
+                <div class="empty-state-icon" aria-hidden="true">{{ spot('friends') }}</div>
                 <h3>Start competing with friends</h3>
                 <p>Follow people to compare weekly effort.</p>
                 <a href="{{ url_for('site_search') }}" class="btn btn-primary">Find friends</a>

@@ -22,6 +22,7 @@ Seven theorems covered:
 """
 import random
 import math
+from models import svg_kit
 from generators.shared.utils import (
     make_problem,
     make_graded_problem,
@@ -191,25 +192,21 @@ def _svg_bounds_points(points, margin=14):
     return min(xs) - margin, min(ys) - margin, max(xs) + margin, max(ys) + margin
 
 
-def _svg_open_frame(x0, y0, x1, y1, pad=_SVG_PAD):
-    """Open SVG with viewBox fitted to logical content bounds (before scale transform)."""
+def _svg_wrap(x0, y0, x1, y1, inner, pad=_SVG_PAD, title='Circle theorem diagram'):
+    """Accessible circle-theorem diagram; geometry is scaled then wrapped."""
     vb_x = x0 * _SVG_SCALE - pad
     vb_y = y0 * _SVG_SCALE - pad
     vb_w = (x1 - x0) * _SVG_SCALE + 2 * pad
     vb_h = (y1 - y0) * _SVG_SCALE + 2 * pad
-    display_w = min(max(int(round(vb_w)), 1), _SVG_MAX_W)
-    display_h = max(1, int(round(vb_h * display_w / vb_w))) if vb_w > 0 else max(1, int(round(vb_h)))
-    return (
-        f'<svg width="{display_w}" height="{display_h}" '
-        f'viewBox="{vb_x:.1f} {vb_y:.1f} {vb_w:.1f} {vb_h:.1f}" '
-        f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:block;'
-        f'margin:0 auto;vertical-align:middle;overflow:hidden;">'
-        f'<g transform="scale({_SVG_SCALE})">'
-    )
-
-
-def _svg_close():
-    return '</g></svg>'
+    body = f'<g transform="scale({_SVG_SCALE})">{inner}</g>'
+    return str(svg_kit.viewbox_svg(
+        vb_x, vb_y, vb_w, vb_h,
+        title=title,
+        desc='Circle theorem diagram for this question.',
+        body=body,
+        max_width=_SVG_MAX_W,
+        variant='wide',
+    ))
 
 
 def _circle_el(cx, cy, r):
@@ -308,9 +305,8 @@ def _svg_ct1(angle_centre, angle_circ=None, show_centre=True):
         ], margin=8),
     )
 
-    return (
-        _svg_open_frame(*frame)
-        + _circle_el(cx, cy, r)
+    return _svg_wrap(*frame,
+        _circle_el(cx, cy, r)
         + _line_el(*O, *A, "#a13544", 1.5)
         + _line_el(*O, *B, "#a13544", 1.5)
         + _line_el(*C, *A, "#059669", 1.5)
@@ -321,7 +317,6 @@ def _svg_ct1(angle_centre, angle_circ=None, show_centre=True):
         + _dot(*A, "#1a6fa8") + _txt(A[0] - 10, A[1] - 6, "A", "#1a6fa8", 12, "middle", True)
         + _dot(*B, "#1a6fa8") + _txt(B[0] + 10, B[1] - 6, "B", "#1a6fa8", 12, "middle", True)
         + _dot(*C, "#059669") + _txt(C[0], C[1] + 14, "C", "#059669", 12, "middle", True)
-        + _svg_close()
     )
 
 
@@ -342,9 +337,8 @@ def _svg_ct2(angle_bac=None, angle_acb=None):
         _svg_bounds_points([A, B, C, (cx, cy), (lCx - 4, lCy), (cx, cy + r + 20)], margin=12),
     )
 
-    return (
-        _svg_open_frame(*frame)
-        + _circle_el(cx, cy, r)
+    return _svg_wrap(*frame,
+        _circle_el(cx, cy, r)
         + _line_el(*A, *B, "#a13544", 2)   # diameter
         + _line_el(*C, *A, "#059669", 1.5)
         + _line_el(*C, *B, "#059669", 1.5)
@@ -356,7 +350,6 @@ def _svg_ct2(angle_bac=None, angle_acb=None):
         + _dot(*C, "#059669") + _txt(C[0] - 12, C[1] - 6, "C", "#059669", 12, "middle", True)
         + _dot(cx, cy, "#a13544") + _txt(cx + 8, cy + 5, "O", "#a13544", 11, "start", True)
         + _txt(cx, cy + r + 20, "AB is a diameter", "#555", 11, "middle")
-        + _svg_close()
     )
 
 
@@ -380,9 +373,8 @@ def _svg_ct3(angle, known_at="C"):
         _svg_bounds_points([A, B, C, D, (lCx, lCy), (lDx, lDy + 2)], margin=12),
     )
 
-    return (
-        _svg_open_frame(*frame)
-        + _circle_el(cx, cy, r)
+    return _svg_wrap(*frame,
+        _circle_el(cx, cy, r)
         + _line_el(*C, *A, "#059669", 1.5)
         + _line_el(*C, *B, "#059669", 1.5)
         + _line_el(*D, *A, "#a13544", 1.5)
@@ -393,7 +385,6 @@ def _svg_ct3(angle, known_at="C"):
         + _dot(*B) + _txt(B[0] + 12, B[1] + 5, "B", "#333", 12, "middle", True)
         + _dot(*C, "#059669") + _txt(C[0] + 10, C[1] - 5, "C", "#059669", 12, "middle", True)
         + _dot(*D, "#a13544") + _txt(D[0] - 10, D[1] - 5, "D", "#a13544", 12, "middle", True)
-        + _svg_close()
     )
 
 
@@ -413,9 +404,8 @@ def _svg_ct4(angle_dab, angle_bcd=None):
         _svg_bounds_points([A, B, C, D, (lAx, lAy), (lCx, lCy)], margin=12),
     )
 
-    return (
-        _svg_open_frame(*frame)
-        + _circle_el(cx, cy, r)
+    return _svg_wrap(*frame,
+        _circle_el(cx, cy, r)
         + _line_el(*A, *B) + _line_el(*B, *C) + _line_el(*C, *D) + _line_el(*D, *A)
         + arc_A + _txt(lAx, lAy, f"{angle_dab}°", "#1a6fa8", 11, "middle")
         + arc_C + _txt(lCx, lCy, bcd_lbl, "#a13544", 11, "middle")
@@ -423,7 +413,6 @@ def _svg_ct4(angle_dab, angle_bcd=None):
         + _dot(*B) + _txt(B[0] + 12, B[1] - 5, "B", "#333", 12, "middle", True)
         + _dot(*C) + _txt(C[0] + 12, C[1] + 5, "C", "#333", 12, "middle", True)
         + _dot(*D) + _txt(D[0] - 12, D[1] + 5, "D", "#333", 12, "middle", True)
-        + _svg_close()
     )
 
 
@@ -447,9 +436,8 @@ def _svg_ct5(angle_top, show_otp=None):
         _svg_bounds_points([O, T, P, T_top, T_bottom, (lOx - 10, lOy), (lTx + 6, lTy), (T[0] - 6, T[1] - 58)], margin=10),
     )
 
-    return (
-        _svg_open_frame(*frame)
-        + _circle_el(cx, cy, r)
+    return _svg_wrap(*frame,
+        _circle_el(cx, cy, r)
         + _line_el(*T_top, *T_bottom, "#a13544", 1.5)  # tangent line
         + _line_el(*O, *T, "#1a6fa8", 1.5)             # radius OT
         + _line_el(*T, *P, "#555", 1.5)                # line to P
@@ -461,7 +449,6 @@ def _svg_ct5(angle_top, show_otp=None):
         + _dot(*T)            + _txt(T[0] + 10, T[1] - 8, "T", "#333", 12, "start", True)
         + _dot(*P)            + _txt(P[0] + 8, P[1] + 4, "P", "#333", 12, "start", True)
         + _txt(T[0] - 6, T[1] - 58, "tangent", "#a13544", 10, "middle")
-        + _svg_close()
     )
 
 
@@ -487,9 +474,8 @@ def _svg_ct6(angle_at_P):
         ], margin=6),
     )
 
-    return (
-        _svg_open_frame(*frame)
-        + _circle_el(cx, cy, r)
+    return _svg_wrap(*frame,
+        _circle_el(cx, cy, r)
         + _line_el(*O, *A, "#1a6fa8", 1.5)
         + _line_el(*O, *B, "#1a6fa8", 1.5)
         + _line_el(*P, *A, "#a13544", 1.5)
@@ -503,7 +489,6 @@ def _svg_ct6(angle_at_P):
         + _dot(*A)            + _txt(A[0] + 8, A[1] - 5, "A", "#333", 12, "start", True)
         + _dot(*B)            + _txt(B[0] + 8, B[1] + 8, "B", "#333", 12, "start", True)
         + _dot(*P)            + _txt(P[0] + 8, P[1] + 4, "P", "#333", 12, "start", True)
-        + _svg_close()
     )
 
 
@@ -542,9 +527,8 @@ def _svg_ct7(angle, known_at="A"):
         _svg_bounds_points([A, B, C, T1, T2, (lAx, lAy + 2), (lCx, lCy - 4), (cx, cy + r + 22)], margin=10),
     )
 
-    return (
-        _svg_open_frame(*frame)
-        + _circle_el(cx, cy, r)
+    return _svg_wrap(*frame,
+        _circle_el(cx, cy, r)
         + _line_el(*T1, *T2, "#a13544", 2)     # tangent
         + _line_el(*A, *B, "#1a6fa8", 1.5)     # chord
         + _line_el(*C, *A, "#059669", 1.5)
@@ -556,7 +540,6 @@ def _svg_ct7(angle, known_at="A"):
         + _dot(*C) + _txt(C[0], C[1] - 10, "C", "#059669", 12, "middle", True)
         + _txt(T1[0] - 5, T1[1] + 14, "T", "#a13544", 11, "middle")
         + _txt(cx, cy + r + 22, "Alternate segment theorem", "#555", 10, "middle")
-        + _svg_close()
     )
 
 
@@ -587,9 +570,8 @@ def _svg_intersecting_chords(arc_pr, arc_qs, angle_ptr=None):
         _svg_bounds_circle(cx, cy, r, 18),
         _svg_bounds_points([P, Q, R, S, T, (lTx, lTy), (cx - r - 8, cy - 6), (cx + r + 8, cy + 10)], margin=10),
     )
-    return (
-        _svg_open_frame(*frame)
-        + _circle_el(cx, cy, r)
+    return _svg_wrap(*frame,
+        _circle_el(cx, cy, r)
         + _line_el(*P, *Q, "#1a6fa8", 2)
         + _line_el(*R, *S, "#059669", 2)
         + arc_T + _txt(lTx, lTy, ptr_lbl, "#a13544", 11, "middle")
@@ -600,7 +582,6 @@ def _svg_intersecting_chords(arc_pr, arc_qs, angle_ptr=None):
         + _dot(*R) + _txt(R[0] + 10, R[1] - 8, "R", "#333", 12, "middle", True)
         + _dot(*S) + _txt(S[0] - 10, S[1] + 8, "S", "#333", 12, "middle", True)
         + _dot(*T, "#a13544") + _txt(T[0], T[1] + 14, "T", "#a13544", 12, "middle", True)
-        + _svg_close()
     )
 
 

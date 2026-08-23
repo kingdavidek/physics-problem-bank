@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "partials/user_avatar.html" import user_avatar %}
+{% from "partials/spot.html" import spot %}
 {% block title %}{{ list_title }} – {{ profile_user.display_handle }}{% endblock %}
 
 {% block content %}
@@ -29,7 +30,7 @@
         </ul>
         {% else %}
         <div class="empty-state">
-            <div class="empty-state-icon">👥</div>
+            <div class="empty-state-icon" aria-hidden="true">{{ spot('friends') }}</div>
             <h3>No users to show yet</h3>
             {% if list_title == 'Followers' %}
             <p>When someone follows {{ profile_user.display_handle }}, they will appear here.</p>

@@ -13,6 +13,38 @@
   var faceEl = root.querySelector('[data-buddy-face]');
   if (!messageEl || !actionEl || !dismissEl) return;
 
+  var FACE_OK = {
+    milestone: 1,
+    celebrate: 1,
+    qotd_nudge: 1,
+    streak_risk: 1,
+    weak_topic: 1,
+    friend_challenge: 1,
+    nudge: 1,
+  };
+  var FACE_FROM_EMOJI = {
+    '🎉': 'milestone',
+    '😄': 'celebrate',
+    '❓': 'qotd_nudge',
+    '🔥': 'streak_risk',
+    '🤔': 'weak_topic',
+    '🤝': 'friend_challenge',
+    '👾': 'nudge',
+  };
+
+  function resolveFace(prompt) {
+    var type = prompt && prompt.type;
+    if (type && FACE_OK[type]) return type;
+    var emoji = prompt && prompt.face;
+    if (emoji && FACE_FROM_EMOJI[emoji]) return FACE_FROM_EMOJI[emoji];
+    return 'nudge';
+  }
+
+  function applyFace(prompt) {
+    if (!faceEl) return;
+    faceEl.setAttribute('data-face', resolveFace(prompt));
+  }
+
   function milestoneStorageKey(key) {
     return 'pb-buddy-milestone-' + (key || '');
   }
@@ -134,7 +166,7 @@
     if (!prompt || !prompt.message) return;
     messageEl.textContent = escapeText(prompt.message);
     if (detailEl) detailEl.textContent = escapeText(prompt.detail || 'Buddy');
-    if (faceEl) faceEl.textContent = escapeText(prompt.face || '👾');
+    applyFace(prompt);
     clearExtraActions();
 
     var actions = Array.isArray(prompt.actions) && prompt.actions.length

@@ -1,3 +1,6 @@
+{% from "partials/icon.html" import icon, icon_sprite %}
+{% from "partials/wordmark.html" import wordmark %}
+{% from "partials/buddy.html" import buddy_mascot %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,7 +13,8 @@
     <meta name="apple-mobile-web-app-title" content="Problem Bank">
     <meta name="description" content="GCSE, A-Level and MYP practice problems, lessons, and study tools.">
     <link rel="manifest" href="{{ url_for('web_manifest') }}">
-    <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='icons/icon-192.png') }}">
+    <link rel="icon" href="{{ url_for('static', filename='icons/favicon.svg') }}" type="image/svg+xml">
+    <link rel="icon" href="{{ url_for('static', filename='icons/favicon.ico') }}" sizes="32x32">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
     <script>
       (function () {
@@ -30,13 +34,13 @@
 
     <!-- App CSS - load order is significant (docs/UI_REDESIGN.md U0) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}?v=17">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=17">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=19">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=20">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=21">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=23">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/practice.css') }}?v=17">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=29">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=36">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}?v=18">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/diagrams.css') }}?v=17">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/diagrams.css') }}?v=22">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/lesson-assist.css') }}?v=17">
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -54,7 +58,7 @@
     <script src="{{ url_for('static', filename='js/site.js') }}?v=21" defer></script>
     <script src="{{ url_for('static', filename='js/site-search.js') }}?v=17" defer></script>
     <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=4" defer></script>
-    <script src="{{ url_for('static', filename='js/tab-bar.js') }}?v=1" defer></script>
+    <script src="{{ url_for('static', filename='js/tab-bar.js') }}?v=2" defer></script>
     <script src="{{ url_for('static', filename='js/celebrate.js') }}?v=2" defer></script>
     <script src="{{ url_for('static', filename='js/u4.js') }}?v=7" defer></script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=4" defer></script>
@@ -73,7 +77,7 @@
       }
     } catch (e) {}
     </script>
-    <script src="{{ url_for('static', filename='js/study-buddy.js') }}?v=17" defer></script>
+    <script src="{{ url_for('static', filename='js/study-buddy.js') }}?v=18" defer></script>
     {% endif %}
     {% if lesson_assist_enabled and lesson_meta and not lesson_meta.get('quizReview') %}
     <script src="{{ url_for('static', filename='js/lesson-assist.js') }}?v=17" defer></script>
@@ -87,12 +91,13 @@
 </head>
 
 <body{% if quiz_runner_mode %} class="quiz-runner-active"{% endif %}>
+{{ icon_sprite() }}
 
 <div id="pwa-offline-bar" class="pwa-offline-bar" hidden role="status">You’re offline — some features need a connection.</div>
 
 <header>
     <div class="header-inner">
-        <a href="/" class="site-title"><span>Problem</span> Bank</a>
+        <a href="/" class="site-title">{{ wordmark() }}</a>
         <nav class="header-primary-nav" aria-label="Main">
             {% if current_user.is_authenticated %}
             <a href="/" class="header-primary-link{% if nav_tab == 'practice' %} is-active{% endif %}">Practice</a>
@@ -114,18 +119,12 @@
             </a>
             {% endif %}
             <button type="button" class="nav-search-btn" id="site-search-open" aria-label="Search" aria-expanded="false" aria-controls="site-search-overlay">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"></circle>
-                    <path d="M20 20L16.5 16.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-                </svg>
+                {{ icon('search', size=18) }}
             </button>
             {% if current_user.is_authenticated %}
             <div class="nav-notif-wrap">
                 <button type="button" class="nav-search-btn nav-notif-btn" id="nav-notif-open" aria-label="Notifications" aria-expanded="false" aria-controls="nav-notif-panel">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                        <path d="M13.7 21a2 2 0 01-3.4 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-                    </svg>
+                    {{ icon('bell', size=18) }}
                     <span class="nav-notif-badge" id="nav-notif-badge"{% if not unread_notifications %} hidden{% endif %}>{% if unread_notifications > 9 %}9+{% else %}{{ unread_notifications }}{% endif %}</span>
                 </button>
                 <div class="nav-notif-panel" id="nav-notif-panel" hidden role="region" aria-label="Notifications">
@@ -135,7 +134,7 @@
                     <div class="nav-notif-panel-header">
                         <strong>Notifications</strong>
                         <button type="button" class="nav-notif-mark-all" id="nav-notif-mark-all">Mark all read</button>
-                        <button type="button" class="nav-sheet-close" id="nav-notif-close" aria-label="Close notifications">&times;</button>
+                        <button type="button" class="nav-sheet-close" id="nav-notif-close" aria-label="Close notifications">{{ icon('close', size=18) }}</button>
                     </div>
                     <div class="nav-notif-list" id="nav-notif-list">
                         <p class="nav-notif-empty">Loading…</p>
@@ -146,16 +145,14 @@
             {% endif %}
             <div class="nav-menu-wrap">
                 <button type="button" class="nav-search-btn" id="nav-menu-open" aria-label="Menu" aria-expanded="false" aria-controls="nav-menu-panel">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-                    </svg>
+                    {{ icon('menu', size=18) }}
                 </button>
                 <div class="nav-menu-panel" id="nav-menu-panel" hidden role="menu" aria-label="Site menu">
                     <div class="nav-sheet-chrome">
                         <span class="nav-sheet-handle" aria-hidden="true"></span>
                         <div class="nav-sheet-title-row">
                             <strong class="nav-sheet-title">Menu</strong>
-                            <button type="button" class="nav-sheet-close" id="nav-menu-close" aria-label="Close menu">&times;</button>
+                            <button type="button" class="nav-sheet-close" id="nav-menu-close" aria-label="Close menu">{{ icon('close', size=18) }}</button>
                         </div>
                     </div>
                     {% if current_user.is_authenticated %}
@@ -188,12 +185,9 @@
     <div class="site-search-backdrop" data-close-search></div>
     <div class="site-search-panel" role="dialog" aria-modal="true" aria-label="Search">
         <form method="GET" action="{{ url_for('site_search') }}" class="site-search-form">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"></circle>
-                <path d="M20 20L16.5 16.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
-            </svg>
+            {{ icon('search', size=18) }}
             <input type="search" name="q" id="site-search-input" placeholder="Search topics, lessons, users…" autocomplete="off" maxlength="80" aria-label="Search">
-            <button type="button" class="site-search-close" data-close-search aria-label="Close search">&times;</button>
+            <button type="button" class="site-search-close" data-close-search aria-label="Close search">{{ icon('close', size=18) }}</button>
         </form>
         <div id="site-search-results" class="site-search-results"></div>
     </div>
@@ -240,6 +234,8 @@
     {% block content %}{% endblock %}
 </div>
 
+{% block sticky_footer %}{% endblock %}
+
 <div id="app-toast-host" class="app-toast-host" aria-live="polite" aria-atomic="true"></div>
 
 <div id="pwa-install-banner" class="pwa-install-banner" hidden role="dialog" aria-label="Install Problem Bank">
@@ -269,7 +265,7 @@
 <aside id="study-buddy" class="study-buddy" hidden data-buddy-root data-pb-buddy-build="v4"
        {% if buddy_page %}data-buddy-level="{{ buddy_page.level }}" data-buddy-subject="{{ buddy_page.subject }}" data-buddy-topic="{{ buddy_page.topic }}"{% endif %}
        {% if buddy_prompt and buddy_prompt.type == 'milestone' and buddy_prompt.milestone_key %}data-buddy-milestone-key="{{ buddy_prompt.milestone_key }}"{% endif %}>
-    <span class="study-buddy-face" data-buddy-face aria-hidden="true">{% if buddy_prompt and buddy_prompt.face %}{{ buddy_prompt.face }}{% else %}👾{% endif %}</span>
+    <span class="study-buddy-face" data-buddy-face data-face="{{ buddy_prompt.type if buddy_prompt and buddy_prompt.type else 'nudge' }}" aria-hidden="true">{{ buddy_mascot() }}</span>
     <div class="study-buddy-card">
         <span class="study-buddy-detail" data-buddy-detail>{% if buddy_prompt %}{{ buddy_prompt.detail }}{% endif %}</span>
         <p class="study-buddy-message" data-buddy-message>{% if buddy_prompt %}{{ buddy_prompt.message }}{% endif %}</p>
@@ -338,28 +334,20 @@
 <nav class="app-tab-bar{% if not current_user.is_authenticated %} app-tab-bar--guest{% endif %}{% if quiz_runner_mode %} app-tab-bar--hidden{% endif %}" id="app-tab-bar" aria-label="Main navigation"{% if quiz_runner_mode %} hidden{% endif %}>
     {% if current_user.is_authenticated %}
     <a href="/" class="app-tab{% if nav_tab == 'practice' %} is-active{% endif %}">
-        <span class="app-tab-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M13 2L4.5 13.5H11L10 22L19.5 10.5H13L13 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-        </span>
+        <span class="app-tab-icon" aria-hidden="true">{{ icon('bolt', size=22) }}</span>
         <span class="app-tab-label">Practice</span>
     </a>
     <a href="{{ url_for('topics_index') }}" class="app-tab{% if nav_tab == 'learn' %} is-active{% endif %}">
-        <span class="app-tab-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M5 5.5A2.5 2.5 0 017.5 3H18v16H7.5A2.5 2.5 0 005 16.5v-11Z" stroke="currentColor" stroke-width="2"/><path d="M7.5 5.5H18" stroke="currentColor" stroke-width="2"/></svg>
-        </span>
+        <span class="app-tab-icon" aria-hidden="true">{{ icon('book', size=22) }}</span>
         <span class="app-tab-label">Learn</span>
     </a>
     <a href="{{ url_for('qotd_page') }}" class="app-tab{% if nav_tab == 'daily' %} is-active{% endif %}">
-        <span class="app-tab-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="5" width="16" height="15" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 3v4M16 3v4M4 10h16M12 14l1.2 1.2L16 12.4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </span>
+        <span class="app-tab-icon" aria-hidden="true">{{ icon('calendar', size=22) }}</span>
         <span class="app-tab-label">Daily</span>
         {% if tab_badges.get('qotd_unanswered') %}<span class="app-tab-badge app-tab-badge--dot" aria-label="Today's question unanswered"></span>{% endif %}
     </a>
     <a href="{{ url_for('friend_leaderboard_page') }}" class="app-tab{% if nav_tab == 'compete' %} is-active{% endif %}">
-        <span class="app-tab-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M7 4h4v7H7V4ZM13 7h4v4h-4V7ZM7 13h4v7H7v-7ZM13 15h4v5h-4v-5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        </span>
+        <span class="app-tab-icon" aria-hidden="true">{{ icon('podium', size=22) }}</span>
         <span class="app-tab-label">Compete</span>
         {% if tab_badges.get('pending_challenges') %}
         <span class="app-tab-badge app-tab-badge--count" aria-label="{{ tab_badges.pending_challenges }} pending challenges">{{ tab_badges.pending_challenges if tab_badges.pending_challenges < 10 else '9+' }}</span>
@@ -370,31 +358,23 @@
             {{ (nav_avatar or {'face': '🙂'}).face }}
         </span>
         <span class="app-tab-label">Profile</span>
-        {% if tab_badges.get('streak_at_risk') %}<span class="app-tab-badge app-tab-badge--flame" aria-label="Study streak at risk">🔥</span>{% endif %}
+        {% if tab_badges.get('streak_at_risk') %}<span class="app-tab-badge app-tab-badge--flame" aria-label="Study streak at risk">{{ icon('flame', size=12) }}</span>{% endif %}
     </a>
     {% else %}
     <a href="/" class="app-tab{% if nav_tab == 'practice' %} is-active{% endif %}">
-        <span class="app-tab-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M13 2L4.5 13.5H11L10 22L19.5 10.5H13L13 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-        </span>
+        <span class="app-tab-icon" aria-hidden="true">{{ icon('bolt', size=22) }}</span>
         <span class="app-tab-label">Practice</span>
     </a>
     <a href="{{ url_for('topics_index') }}" class="app-tab{% if nav_tab == 'learn' %} is-active{% endif %}">
-        <span class="app-tab-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M5 5.5A2.5 2.5 0 017.5 3H18v16H7.5A2.5 2.5 0 005 16.5v-11Z" stroke="currentColor" stroke-width="2"/><path d="M7.5 5.5H18" stroke="currentColor" stroke-width="2"/></svg>
-        </span>
+        <span class="app-tab-icon" aria-hidden="true">{{ icon('book', size=22) }}</span>
         <span class="app-tab-label">Learn</span>
     </a>
     <a href="{{ url_for('about') }}" class="app-tab{% if nav_tab == 'about' %} is-active{% endif %}">
-        <span class="app-tab-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v6M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        </span>
+        <span class="app-tab-icon" aria-hidden="true">{{ icon('info', size=22) }}</span>
         <span class="app-tab-label">About</span>
     </a>
     <a href="{{ url_for('login') }}" class="app-tab{% if nav_tab == 'login' %} is-active{% endif %}">
-        <span class="app-tab-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M15 12H4M11 8l-4 4 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 5H6a2 2 0 00-2 2v10a2 2 0 002 2h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        </span>
+        <span class="app-tab-icon" aria-hidden="true">{{ icon('log-in', size=22) }}</span>
         <span class="app-tab-label">Log in</span>
     </a>
     {% endif %}

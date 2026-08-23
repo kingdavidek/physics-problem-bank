@@ -17,6 +17,7 @@ from generators.shared.variant_utils import (
     run_mcq_variant,
     pick_named_variant,
 )
+from models import svg_kit
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -189,24 +190,12 @@ def _pyth_problem_from_output(out, difficulty):
 # ── Standard problem-diagram display size ──
 _PYTH_SVG_MAX_W = 260
 _PYTH_SVG_MAX_H = 200
-_PYTH_FIT_PAD = 12
 
 
-def _pyth_svg_fitted(xs, ys, pad=_PYTH_FIT_PAD):
-    """Open <svg> cropped tightly to content with a consistent on-screen footprint."""
-    min_x = min(xs) - pad
-    max_x = max(xs) + pad
-    min_y = min(ys) - pad
-    max_y = max(ys) + pad
-    vw = max(max_x - min_x, 48)
-    vh = max(max_y - min_y, 48)
-    return (
-        f'<svg width="100%" viewBox="{min_x:.0f} {min_y:.0f} {vw:.0f} {vh:.0f}" '
-        f'preserveAspectRatio="xMidYMid meet" '
-        f'style="background:#f9f8f5;border-radius:6px;'
-        f'max-width:{_PYTH_SVG_MAX_W}px;max-height:{_PYTH_SVG_MAX_H}px;'
-        f'display:block;margin:8px auto;vertical-align:middle;">'
-    )
+def _pyth_diagram(bounds_x, bounds_y, inner, title='Pythagoras diagram'):
+    return str(svg_kit.fitted_svg(
+        bounds_x, bounds_y, title=title, body=inner, max_width=_PYTH_SVG_MAX_W, variant='wide',
+    ))
 
 
 def _pyth_tri_svg(leg_a, leg_b, hyp, find=None):
@@ -222,18 +211,18 @@ def _pyth_tri_svg(leg_a, leg_b, hyp, find=None):
     lc = "?" if find == "c" else f"{hyp}"
     bounds_x = [ax, bx, cx, 38, 120, 128, 188]
     bounds_y = [ay, by, cy, 88, 102, 172]
-    return (
-        _pyth_svg_fitted(bounds_x, bounds_y)
-        + '<polygon points="55,155 185,155 55,45" fill="#e8f4fd" stroke="none"/>'
-        + f'<line x1="{ax}" y1="{ay}" x2="{bx}" y2="{by}" stroke="#1a6fa8" stroke-width="2"/>'
-        + f'<line x1="{ax}" y1="{ay}" x2="{cx}" y2="{cy}" stroke="#059669" stroke-width="2"/>'
-        + f'<line x1="{cx}" y1="{cy}" x2="{bx}" y2="{by}" stroke="#a13544" stroke-width="2.5"/>'
-        + '<polyline points="64,155 64,146 55,146" fill="none" stroke="#333" stroke-width="1.5"/>'
-        + f'<text x="120" y="172" font-size="13" fill="#1a6fa8" text-anchor="middle" font-weight="bold">{la} cm</text>'
-        + f'<text x="38" y="102" font-size="13" fill="#059669" text-anchor="middle" font-weight="bold">{lb} cm</text>'
-        + f'<text x="128" y="88" font-size="13" fill="#a13544" text-anchor="middle" font-weight="bold">{lc} cm</text>'
-        + '</svg>'
+    p = svg_kit.PALETTE
+    inner = (
+        f'<polygon points="55,155 185,155 55,45" fill="{p["brand_soft"]}" stroke="none"/>'
+        + f'<line x1="{ax}" y1="{ay}" x2="{bx}" y2="{by}" stroke="{p["brand"]}" stroke-width="2"/>'
+        + f'<line x1="{ax}" y1="{ay}" x2="{cx}" y2="{cy}" stroke="{p["success"]}" stroke-width="2"/>'
+        + f'<line x1="{cx}" y1="{cy}" x2="{bx}" y2="{by}" stroke="{p["measure"]}" stroke-width="2.5"/>'
+        + f'<polyline points="64,155 64,146 55,146" fill="none" stroke="{p["ink"]}" stroke-width="1.5"/>'
+        + f'<text x="120" y="172" font-size="13" fill="{p["brand"]}" text-anchor="middle" font-weight="bold">{la} cm</text>'
+        + f'<text x="38" y="102" font-size="13" fill="{p["success"]}" text-anchor="middle" font-weight="bold">{lb} cm</text>'
+        + f'<text x="128" y="88" font-size="13" fill="{p["measure"]}" text-anchor="middle" font-weight="bold">{lc} cm</text>'
     )
+    return _pyth_diagram(bounds_x, bounds_y, inner, title='Right triangle')
 
 
 def _rect_diag_svg(w_cm, h_cm, diag, find=None):
@@ -243,16 +232,16 @@ def _rect_diag_svg(w_cm, h_cm, diag, find=None):
     dl = "?" if find == "d" else f"{diag}"
     bounds_x = [rx, rx + rw, rx - 18, rx + rw // 2 + 12]
     bounds_y = [ry, ry + rh, ry + rh + 22, ry + rh // 2]
-    return (
-        _pyth_svg_fitted(bounds_x, bounds_y)
-        + f'<rect x="{rx}" y="{ry}" width="{rw}" height="{rh}" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>'
-        + f'<line x1="{rx}" y1="{ry}" x2="{rx+rw}" y2="{ry+rh}" stroke="#a13544" stroke-width="2.5" stroke-dasharray="6,3"/>'
-        + '<polyline points="68,150 68,141 59,141" fill="none" stroke="#333" stroke-width="1.5"/>'
-        + f'<text x="{rx+rw//2}" y="{ry+rh+22}" font-size="13" fill="#1a6fa8" text-anchor="middle" font-weight="bold">{wl} cm</text>'
-        + f'<text x="{rx-18}" y="{ry+rh//2}" font-size="13" fill="#059669" text-anchor="middle" font-weight="bold">{hl} cm</text>'
-        + f'<text x="{rx+rw//2+12}" y="{ry+rh//2-8}" font-size="13" fill="#a13544" font-weight="bold">{dl} cm</text>'
-        + '</svg>'
+    p = svg_kit.PALETTE
+    inner = (
+        f'<rect x="{rx}" y="{ry}" width="{rw}" height="{rh}" fill="{p["brand_soft"]}" stroke="{p["brand"]}" stroke-width="2"/>'
+        + f'<line x1="{rx}" y1="{ry}" x2="{rx+rw}" y2="{ry+rh}" stroke="{p["measure"]}" stroke-width="2.5" stroke-dasharray="6,3"/>'
+        + f'<polyline points="68,150 68,141 59,141" fill="none" stroke="{p["ink"]}" stroke-width="1.5"/>'
+        + f'<text x="{rx+rw//2}" y="{ry+rh+22}" font-size="13" fill="{p["brand"]}" text-anchor="middle" font-weight="bold">{wl} cm</text>'
+        + f'<text x="{rx-18}" y="{ry+rh//2}" font-size="13" fill="{p["success"]}" text-anchor="middle" font-weight="bold">{hl} cm</text>'
+        + f'<text x="{rx+rw//2+12}" y="{ry+rh//2-8}" font-size="13" fill="{p["measure"]}" font-weight="bold">{dl} cm</text>'
     )
+    return _pyth_diagram(bounds_x, bounds_y, inner, title='Rectangle with diagonal')
 
 
 def _roof_truss_svg(half_span=60, rise=80, span_m=12, height_m=8):
@@ -262,18 +251,18 @@ def _roof_truss_svg(half_span=60, rise=80, span_m=12, height_m=8):
     rx, ry = ox + half_span, 165
     bounds_x = [lx, rx, ox, ox - 42, 168]
     bounds_y = [ly, peak_y, ly + 22, 108]
-    return (
-        _pyth_svg_fitted(bounds_x, bounds_y)
-        + f'<line x1="{lx}" y1="{ly}" x2="{rx}" y2="{ry}" stroke="#1a6fa8" stroke-width="2"/>'
-        + f'<line x1="{lx}" y1="{ly}" x2="{ox}" y2="{peak_y}" stroke="#a13544" stroke-width="2.5"/>'
-        + f'<line x1="{rx}" y1="{ry}" x2="{ox}" y2="{peak_y}" stroke="#a13544" stroke-width="2.5"/>'
-        + f'<line x1="{ox}" y1="{peak_y}" x2="{ox}" y2="{ly}" stroke="#059669" stroke-width="1.5" stroke-dasharray="5,3"/>'
-        + '<polyline points="144,165 144,156 135,156" fill="none" stroke="#333" stroke-width="1.5"/>'
-        + f'<text x="{ox}" y="{ly+22}" font-size="12" fill="#1a6fa8" text-anchor="middle" font-weight="bold">{span_m} m</text>'
-        + f'<text x="{ox-42}" y="108" font-size="12" fill="#059669" text-anchor="middle">{height_m} m</text>'
-        + f'<text x="168" y="108" font-size="12" fill="#a13544" font-weight="bold">? m</text>'
-        + '</svg>'
+    p = svg_kit.PALETTE
+    inner = (
+        f'<line x1="{lx}" y1="{ly}" x2="{rx}" y2="{ry}" stroke="{p["brand"]}" stroke-width="2"/>'
+        + f'<line x1="{lx}" y1="{ly}" x2="{ox}" y2="{peak_y}" stroke="{p["measure"]}" stroke-width="2.5"/>'
+        + f'<line x1="{rx}" y1="{ry}" x2="{ox}" y2="{peak_y}" stroke="{p["measure"]}" stroke-width="2.5"/>'
+        + f'<line x1="{ox}" y1="{peak_y}" x2="{ox}" y2="{ly}" stroke="{p["success"]}" stroke-width="1.5" stroke-dasharray="5,3"/>'
+        + f'<polyline points="144,165 144,156 135,156" fill="none" stroke="{p["ink"]}" stroke-width="1.5"/>'
+        + f'<text x="{ox}" y="{ly+22}" font-size="12" fill="{p["brand"]}" text-anchor="middle" font-weight="bold">{span_m} m</text>'
+        + f'<text x="{ox-42}" y="108" font-size="12" fill="{p["success"]}" text-anchor="middle">{height_m} m</text>'
+        + f'<text x="168" y="108" font-size="12" fill="{p["measure"]}" font-weight="bold">? m</text>'
     )
+    return _pyth_diagram(bounds_x, bounds_y, inner, title='Roof truss')
 
 
 def _coord_journey_svg(dx=60, dy=80, east_km=None, north_km=None):
@@ -284,18 +273,18 @@ def _coord_journey_svg(dx=60, dy=80, east_km=None, north_km=None):
     north_km = north_km if north_km is not None else dy // 10
     bounds_x = [ox - 12, px + 50, ox + dx // 2]
     bounds_y = [py - 8, oy + 16, oy - dy // 2]
-    return (
-        _pyth_svg_fitted(bounds_x, bounds_y)
-        + f'<line x1="{ox}" y1="{oy}" x2="{px}" y2="{oy}" stroke="#1a6fa8" stroke-width="2"/>'
-        + f'<line x1="{px}" y1="{oy}" x2="{px}" y2="{py}" stroke="#059669" stroke-width="2"/>'
-        + f'<line x1="{ox}" y1="{oy}" x2="{px}" y2="{py}" stroke="#a13544" stroke-width="2.5" stroke-dasharray="6,3"/>'
-        + f'<circle cx="{ox}" cy="{oy}" r="4" fill="#333"/><circle cx="{px}" cy="{py}" r="4" fill="#333"/>'
-        + f'<text x="{ox-12}" y="{oy+16}" font-size="11" fill="#333" font-weight="bold">O</text>'
-        + f'<text x="{px+4}" y="{py-4}" font-size="11" fill="#333" font-weight="bold">L</text>'
-        + f'<text x="{ox+dx//2}" y="{oy+16}" font-size="11" fill="#1a6fa8" text-anchor="middle">{east_km} km E</text>'
-        + f'<text x="{px+14}" y="{oy-dy//2}" font-size="11" fill="#059669">{north_km} km N</text>'
-        + '</svg>'
+    p = svg_kit.PALETTE
+    inner = (
+        f'<line x1="{ox}" y1="{oy}" x2="{px}" y2="{oy}" stroke="{p["brand"]}" stroke-width="2"/>'
+        + f'<line x1="{px}" y1="{oy}" x2="{px}" y2="{py}" stroke="{p["success"]}" stroke-width="2"/>'
+        + f'<line x1="{ox}" y1="{oy}" x2="{px}" y2="{py}" stroke="{p["measure"]}" stroke-width="2.5" stroke-dasharray="6,3"/>'
+        + f'<circle cx="{ox}" cy="{oy}" r="4" fill="{p["ink"]}"/><circle cx="{px}" cy="{py}" r="4" fill="{p["ink"]}"/>'
+        + f'<text x="{ox-12}" y="{oy+16}" font-size="11" fill="{p["ink"]}" font-weight="bold">O</text>'
+        + f'<text x="{px+4}" y="{py-4}" font-size="11" fill="{p["ink"]}" font-weight="bold">L</text>'
+        + f'<text x="{ox+dx//2}" y="{oy+16}" font-size="11" fill="{p["brand"]}" text-anchor="middle">{east_km} km E</text>'
+        + f'<text x="{px+14}" y="{oy-dy//2}" font-size="11" fill="{p["success"]}">{north_km} km N</text>'
     )
+    return _pyth_diagram(bounds_x, bounds_y, inner, title='Coordinate journey')
 
 
 def _ladder_two_position_svg(base1_m, base2_m, height1_m, height2_m, length_m=None):
@@ -314,25 +303,22 @@ def _ladder_two_position_svg(base1_m, base2_m, height1_m, height2_m, length_m=No
     wall_top = min(ty1, ty2) - 12
     bounds_x = [min(bx1, bx2) - 20, wx + 28]
     bounds_y = [wall_top, ground + 16]
-    return (
-        _pyth_svg_fitted(bounds_x, bounds_y)
-        + f'<line x1="{wx}" y1="{wall_top}" x2="{wx}" y2="{ground}" stroke="#555" stroke-width="2"/>'
-        + f'<line x1="{min(bx1, bx2) - 16}" y1="{ground}" x2="{wx + 10}" y2="{ground}" stroke="#555" stroke-width="2"/>'
-        # First (closer) position — faded
-        + f'<line x1="{bx1}" y1="{ground}" x2="{wx}" y2="{ty1}" stroke="#a13544" stroke-width="2.5" opacity="0.45"/>'
-        + f'<circle cx="{bx1}" cy="{ground}" r="3" fill="#94a3b8"/>'
-        + f'<circle cx="{wx}" cy="{ty1}" r="3" fill="#94a3b8"/>'
-        + f'<text x="{wx + 14}" y="{ty1 + 4}" font-size="12" fill="#64748b" font-weight="bold">?</text>'
-        # Second (further) position — solid
-        + f'<line x1="{bx2}" y1="{ground}" x2="{wx}" y2="{ty2}" stroke="#a13544" stroke-width="2.5"/>'
-        + f'<circle cx="{bx2}" cy="{ground}" r="4" fill="#a13544"/>'
-        + f'<circle cx="{wx}" cy="{ty2}" r="3.5" fill="#a13544"/>'
-        + f'<text x="{wx + 14}" y="{ty2 + 4}" font-size="12" fill="#a13544" font-weight="bold">?</text>'
-        # Foot distances only (given in the question)
-        + f'<text x="{bx1}" y="{ground + 14}" font-size="11" fill="#666" text-anchor="middle">{base1_m} m</text>'
-        + f'<text x="{bx2}" y="{ground + 14}" font-size="11" fill="#a13544" text-anchor="middle">{base2_m} m</text>'
-        + '</svg>'
+    p = svg_kit.PALETTE
+    inner = (
+        f'<line x1="{wx}" y1="{wall_top}" x2="{wx}" y2="{ground}" stroke="{p["ink_muted"]}" stroke-width="2"/>'
+        + f'<line x1="{min(bx1, bx2) - 16}" y1="{ground}" x2="{wx + 10}" y2="{ground}" stroke="{p["ink_muted"]}" stroke-width="2"/>'
+        + f'<line x1="{bx1}" y1="{ground}" x2="{wx}" y2="{ty1}" stroke="{p["measure"]}" stroke-width="2.5" opacity="0.45"/>'
+        + f'<circle cx="{bx1}" cy="{ground}" r="3" fill="{p["hidden"]}"/>'
+        + f'<circle cx="{wx}" cy="{ty1}" r="3" fill="{p["hidden"]}"/>'
+        + f'<text x="{wx + 14}" y="{ty1 + 4}" font-size="12" fill="{p["ink_muted"]}" font-weight="bold">?</text>'
+        + f'<line x1="{bx2}" y1="{ground}" x2="{wx}" y2="{ty2}" stroke="{p["measure"]}" stroke-width="2.5"/>'
+        + f'<circle cx="{bx2}" cy="{ground}" r="4" fill="{p["measure"]}"/>'
+        + f'<circle cx="{wx}" cy="{ty2}" r="3.5" fill="{p["measure"]}"/>'
+        + f'<text x="{wx + 14}" y="{ty2 + 4}" font-size="12" fill="{p["measure"]}" font-weight="bold">?</text>'
+        + f'<text x="{bx1}" y="{ground + 14}" font-size="11" fill="{p["ink_muted"]}" text-anchor="middle">{base1_m} m</text>'
+        + f'<text x="{bx2}" y="{ground + 14}" font-size="11" fill="{p["measure"]}" text-anchor="middle">{base2_m} m</text>'
     )
+    return _pyth_diagram(bounds_x, bounds_y, inner, title='Ladder against a wall')
 
 
 def _cuboid_svg(l, w, h, diag, find=None):
@@ -342,24 +328,21 @@ def _cuboid_svg(l, w, h, diag, find=None):
     dl = "?" if find == "d" else f"{diag}"
     bounds_x = [ox - 12, ox + 80 + dx, ox + 95]
     bounds_y = [oy + 18, oy + dy - 90, oy - 55, oy - 40]
-    return (
-        _pyth_svg_fitted(bounds_x, bounds_y)
-        # front face
-        + f'<polygon points="{ox},{oy} {ox+dx},{oy+dy} {ox+dx+80},{oy+dy} {ox+80},{oy}" '
-        'fill="#e8f4fd" stroke="#1a6fa8" stroke-width="1.5"/>'
-        # top
+    p = svg_kit.PALETTE
+    inner = (
+        f'<polygon points="{ox},{oy} {ox+dx},{oy+dy} {ox+dx+80},{oy+dy} {ox+80},{oy}" '
+        f'fill="{p["brand_soft"]}" stroke="{p["brand"]}" stroke-width="1.5"/>'
         + f'<polygon points="{ox},{oy} {ox+80},{oy} {ox+80+dx},{oy+dy} {ox+dx},{oy+dy}" '
-        'fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>'
-        # side
+        f'fill="{p["fill"]}" stroke="{p["brand"]}" stroke-width="1.5"/>'
         + f'<polygon points="{ox+80},{oy} {ox+80+dx},{oy+dy} {ox+80+dx},{oy+dy-90} {ox+80},{oy-90}" '
-        'fill="#bfdbfe" stroke="#1a6fa8" stroke-width="1.5"/>'
-        + f'<line x1="{ox}" y1="{oy}" x2="{ox+80+dx}" y2="{oy+dy-90}" stroke="#a13544" stroke-width="2" stroke-dasharray="5,3"/>'
-        + f'<text x="{ox+40}" y="{oy+18}" font-size="12" fill="#1a6fa8" text-anchor="middle">{l} cm</text>'
-        + f'<text x="{ox+95}" y="{oy-42}" font-size="12" fill="#059669">{w} cm</text>'
-        + f'<text x="{ox-12}" y="{oy-40}" font-size="12" fill="#059669">{h} cm</text>'
-        + f'<text x="{ox+55}" y="{oy-55}" font-size="12" fill="#a13544" font-weight="bold">{dl} cm</text>'
-        + '</svg>'
+        f'fill="{p["brand_mid"]}" stroke="{p["brand"]}" stroke-width="1.5"/>'
+        + f'<line x1="{ox}" y1="{oy}" x2="{ox+80+dx}" y2="{oy+dy-90}" stroke="{p["measure"]}" stroke-width="2" stroke-dasharray="5,3"/>'
+        + f'<text x="{ox+40}" y="{oy+18}" font-size="12" fill="{p["brand"]}" text-anchor="middle">{l} cm</text>'
+        + f'<text x="{ox+95}" y="{oy-42}" font-size="12" fill="{p["success"]}">{w} cm</text>'
+        + f'<text x="{ox-12}" y="{oy-40}" font-size="12" fill="{p["success"]}">{h} cm</text>'
+        + f'<text x="{ox+55}" y="{oy-55}" font-size="12" fill="{p["measure"]}" font-weight="bold">{dl} cm</text>'
     )
+    return _pyth_diagram(bounds_x, bounds_y, inner, title='Cuboid with space diagonal')
 
 
 # ══════════════════════════════════════════════════════════════════════════════

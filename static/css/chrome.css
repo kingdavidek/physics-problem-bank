@@ -337,7 +337,26 @@ nav .nav-logout-form { display: inline; margin: 0; }
     color: var(--primary);
     background: var(--primary-light);
 }
-.nav-search-btn svg { display: block; }
+.nav-search-btn svg,
+.nav-search-btn .icon { display: block; }
+
+.icon-sprite {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+.icon {
+    display: inline-block;
+    flex-shrink: 0;
+    vertical-align: -0.15em;
+    fill: none;
+    stroke: currentColor;
+    pointer-events: none;
+}
+.btn .icon {
+    margin-inline-end: 0.4em;
+}
 .nav-notif-wrap {
     position: relative;
     display: inline-flex;
@@ -598,16 +617,32 @@ body.site-search-open { overflow: hidden; }
 .study-buddy-face {
     width: 56px;
     height: 56px;
-    border-radius: 50%;
-    background: var(--primary);
-    color: #fff;
+    border-radius: 0;
+    background: transparent;
+    color: var(--brand-700);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.7rem;
     flex-shrink: 0;
-    box-shadow: var(--shadow);
     pointer-events: auto;
+    overflow: visible;
+}
+.buddy-mascot {
+    width: 56px;
+    height: 56px;
+    display: block;
+    filter: drop-shadow(0 4px 10px rgba(28, 36, 48, 0.18));
+}
+.buddy-face { display: none; }
+.study-buddy-face[data-face="nudge"] .buddy-face--nudge,
+.study-buddy-face:not([data-face]) .buddy-face--nudge,
+.study-buddy-face[data-face="milestone"] .buddy-face--milestone,
+.study-buddy-face[data-face="celebrate"] .buddy-face--celebrate,
+.study-buddy-face[data-face="qotd_nudge"] .buddy-face--qotd-nudge,
+.study-buddy-face[data-face="streak_risk"] .buddy-face--streak-risk,
+.study-buddy-face[data-face="weak_topic"] .buddy-face--weak-topic,
+.study-buddy-face[data-face="friend_challenge"] .buddy-face--friend-challenge {
+    display: inline;
 }
 .study-buddy-card {
     background: var(--surface);

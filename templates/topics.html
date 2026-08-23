@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/icon.html" import icon %}
 {% block title %}Topics – Problem Bank{% endblock %}
 
 {% block content %}
@@ -21,12 +22,12 @@
     <button type="button" data-level-filter="myp" aria-selected="false">MYP</button>
 </nav>
 
-{% set subject_icons = {'maths': '📐', 'physics': '⚛️', 'cs': '💻', 'chemistry': '🧪'} %}
+{% set subject_icons = {'maths': 'maths', 'physics': 'physics', 'cs': 'cs', 'chemistry': 'chemistry'} %}
 
 {% for group in topic_groups %}
 <section class="topic-group topic-group--{{ group.subject }}" data-level="{{ group.level }}" id="topics-{{ group.level }}-{{ group.subject }}">
     <div class="topic-group-header">
-        <span class="topic-group-icon" aria-hidden="true">{{ subject_icons.get(group.subject, '📚') }}</span>
+        <span class="topic-group-icon" aria-hidden="true">{{ icon(subject_icons.get(group.subject, 'book'), size=22) }}</span>
         <div class="topic-group-heading">
             <h2 class="topic-group-title">{{ group.title }}</h2>
             <p class="topic-group-progress">{{ group.completed_count }} of {{ group.topic_count }} lessons · {{ group.ninja_count }} ninja · {{ group.master_count }} masters</p>

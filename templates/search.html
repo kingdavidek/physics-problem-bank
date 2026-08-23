@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "partials/user_avatar.html" import user_avatar %}
+{% from "partials/spot.html" import spot %}
 {% block title %}Search – Problem Bank{% endblock %}
 
 {% block content %}
@@ -85,7 +86,7 @@
 <section class="section-panel">
     <div class="section-panel-body">
         <div class="empty-state">
-            <div class="empty-state-icon">🔍</div>
+            <div class="empty-state-icon" aria-hidden="true">{{ spot('search') }}</div>
             <h3>No results for “{{ query }}”</h3>
             <p>Try a topic name, a lesson keyword, or part of a handle.</p>
             <a href="{{ url_for('topics_index') }}" class="btn btn-primary">Browse topics</a>
