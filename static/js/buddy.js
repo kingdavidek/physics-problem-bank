@@ -207,6 +207,9 @@
       root.removeAttribute('data-buddy-milestone-key');
     }
     root.hidden = false;
+    if (window.pbCelebrate && window.pbCelebrate.fromBuddy) {
+      window.pbCelebrate.fromBuddy(prompt);
+    }
   }
 
   function maybeShow(prompt) {

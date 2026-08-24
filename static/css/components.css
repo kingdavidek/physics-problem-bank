@@ -421,8 +421,10 @@ html.pwa-standalone .site-wrapper {
     .header-inner { padding: 0 12px; }
     .pwa-install-banner { bottom: calc(var(--tab-bar-h) + var(--safe-bottom) + var(--space-3)); }
     .app-toast-host {
-        top: calc(72px + var(--safe-top));
+        top: calc(64px + var(--safe-top));
+        left: 12px;
         right: 12px;
+        width: auto;
     }
     html.pwa-standalone header {
         margin-bottom: 20px;
@@ -1244,5 +1246,79 @@ details.lesson-section-card > summary.lesson-section-summary::-webkit-details-ma
 .cta-panel-body {
     text-align: center;
     padding: 24px 22px;
+}
+
+/* U7.6 — skeleton loaders (feed, notifications, leaderboards) */
+.pb-skeleton {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+}
+.pb-skeleton-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+.pb-skeleton-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-2);
+}
+.pb-skeleton-lines {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.pb-skeleton-block {
+    display: block;
+    background: var(--ink-100);
+    border-radius: var(--radius-sm);
+}
+.pb-skeleton-block--avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.pb-skeleton-block--title {
+    height: 12px;
+    width: 72%;
+}
+.pb-skeleton-block--meta {
+    height: 10px;
+    width: 44%;
+}
+.pb-skeleton-block--score {
+    width: 2.5rem;
+    height: 12px;
+    flex-shrink: 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+    .pb-skeleton-block {
+        background-image: linear-gradient(
+            90deg,
+            var(--ink-100) 0%,
+            var(--ink-50) 45%,
+            var(--ink-100) 90%
+        );
+        background-size: 200% 100%;
+        animation: pb-skeleton-shimmer 1.15s var(--ease) infinite;
+    }
+}
+@keyframes pb-skeleton-shimmer {
+    from { background-position: 100% 0; }
+    to { background-position: -100% 0; }
 }
 

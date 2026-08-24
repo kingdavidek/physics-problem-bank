@@ -562,10 +562,10 @@ Currently there are 4 inline nav SVGs and everything else is emoji. Emoji are fi
 | U7.1 | Motion tokens: `--dur-fast 120ms`, `--dur 200ms`, `--dur-slow 400ms`, `--ease-out`, `--ease-spring` | **Done** (in `tokens.css`) |
 | U7.2 | A global `@media (prefers-reduced-motion: reduce)` block that disables transforms/animations and `scroll-behavior: smooth` | **Done** (`base.css`; JS `scrollIntoView` gated in `u4.js` / `lesson-progress.js`) |
 | U7.3 | Correct-answer celebration: scale-pop + checkmark draw + `+XP` float | **Done** (MCQ + generator check; `celebrate.js`) |
-| U7.4 | Confetti on milestone/badge/streak-round-number — CSS particles, no library, ~40 elements, self-cleaning | Partial — 40-particle burst exists (3-in-a-row + lesson complete + styleguide). Milestone/badge triggers still open. |
+| U7.4 | Confetti on milestone/badge/streak-round-number — CSS particles, no library, ~40 elements, self-cleaning | **Done** (buddy `milestone` prompt; streak 7/30/100 on nav + profile ring; once per key via localStorage) |
 | U7.5 | Streak ring fill animation on profile load | **Done** |
-| U7.6 | Skeleton loaders for feed, notifications, and leaderboards instead of "Loading…" text | Open |
-| U7.7 | Toast redesign — icon + message + optional action, slide + fade, stacking | Open |
+| U7.6 | Skeleton loaders for feed, notifications, and leaderboards instead of "Loading…" text | **Done** |
+| U7.7 | Toast redesign — icon + message + optional action, slide + fade, stacking | **Done** (`.app-toast` stack; flash messages hydrate via `pb-flash-data`) |
 | U7.8 | Buddy: idle bob, reaction on refetch | Open |
 | U7.9 | **Optional sound** — short correct/incorrect/celebrate clips, default **off**, toggle in settings, `<audio>` preloaded. Recommend shipping muted-by-default; a school-context app that makes noise unprompted is a problem. | Open |
 

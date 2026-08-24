@@ -23,6 +23,23 @@
     else window.pbCelebrate.wrong(target, revealTarget || null);
   }
 
+  function celebratePayload(data) {
+    if (window.pbCelebrate && window.pbCelebrate.fromPayload) {
+      window.pbCelebrate.fromPayload(data);
+    }
+  }
+
+  function refetchBuddyFromBlock(block) {
+    if (!block || !block.dataset.level || !block.dataset.topic) return;
+    document.dispatchEvent(new CustomEvent('pb-buddy-refetch', {
+      detail: {
+        level: block.dataset.level,
+        subject: block.dataset.subject || '',
+        topic: block.dataset.topic,
+      },
+    }));
+  }
+
   function setOptionVisibility(selectEl, predicate) {
     let firstVisible = null;
     for (const opt of selectEl.options) {
@@ -774,15 +791,8 @@
               offerWrongAnswerReflectionMcq(block, result.attempt_id, recordThisAttempt);
             }
             showCohortHint(block, result.cohort);
-            if (block.dataset.level && block.dataset.topic) {
-              document.dispatchEvent(new CustomEvent('pb-buddy-refetch', {
-                detail: {
-                  level: block.dataset.level,
-                  subject: block.dataset.subject || '',
-                  topic: block.dataset.topic,
-                },
-              }));
-            }
+            celebratePayload(result);
+            refetchBuddyFromBlock(block);
           });
         }
         dispatchQuicktestChecked({
@@ -4122,6 +4132,8 @@
             offerWrongAnswerReflection(block, 'check', data, recordThisAttempt);
           }
           showCohortHint(block, data.cohort);
+          celebratePayload(data);
+          refetchBuddyFromBlock(block);
           if (trackable && block.dataset.freeResponsePersisted !== '1') {
             block.dataset.freeResponsePersisted = '1';
           }
@@ -4168,29 +4180,106 @@
 
   function showAppToast(message, type, options) {
     var host = document.getElementById('app-toast-host');
-    if (!host) return;
+    if (!host || message == null || message === '') return;
+    options = options || {};
 
-    var toast = document.createElement('div');
-    toast.className = 'app-toast is-' + (type === 'error' ? 'error' : 'success');
+    var kind = type === 'error' ? 'error' : (type === 'info' ? 'info' : 'success');
+    var iconName = kind === 'error' ? 'cross' : (kind === 'info' ? 'info' : 'check');
+    var MAX_TOASTS = 4;
 
-    if (options && options.linkUrl && options.linkLabel) {
-      toast.appendChild(document.createTextNode(message + ' '));
-      var link = document.createElement('a');
-      link.href = options.linkUrl;
-      link.textContent = options.linkLabel;
-      toast.appendChild(link);
-    } else {
-      toast.textContent = message;
+    function spriteIcon(name) {
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'app-toast-glyph');
+      svg.setAttribute('width', '18');
+      svg.setAttribute('height', '18');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      svg.setAttribute('aria-hidden', 'true');
+      svg.setAttribute('focusable', 'false');
+      var use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+      use.setAttribute('href', '#icon-' + name);
+      use.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#icon-' + name);
+      svg.appendChild(use);
+      return svg;
     }
 
-    host.appendChild(toast);
-    window.setTimeout(function () {
-      toast.style.opacity = '0';
-      toast.style.transition = 'opacity 0.2s ease';
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function dismissToast(el) {
+      if (!el || el.classList.contains('is-leaving')) return;
+      el.classList.add('is-leaving');
       window.setTimeout(function () {
-        toast.remove();
-      }, 220);
-    }, 4200);
+        if (el.parentNode) el.remove();
+      }, reduceMotion ? 0 : 180);
+    }
+
+    var existing = host.querySelectorAll('.app-toast:not(.is-leaving)');
+    if (existing.length >= MAX_TOASTS) {
+      dismissToast(existing[0]);
+    }
+
+    var toast = document.createElement('div');
+    toast.className = 'app-toast is-' + kind;
+    toast.setAttribute('role', kind === 'error' ? 'alert' : 'status');
+
+    var iconWrap = document.createElement('span');
+    iconWrap.className = 'app-toast-icon';
+    iconWrap.setAttribute('aria-hidden', 'true');
+    iconWrap.appendChild(spriteIcon(iconName));
+    toast.appendChild(iconWrap);
+
+    var body = document.createElement('div');
+    body.className = 'app-toast-body';
+    var text = document.createElement('p');
+    text.className = 'app-toast-message';
+    text.textContent = String(message);
+    body.appendChild(text);
+    var linkUrl = options.linkUrl;
+    var linkLabel = options.linkLabel;
+    if (linkUrl && linkLabel) {
+      var action = document.createElement('a');
+      action.className = 'app-toast-action';
+      action.href = linkUrl;
+      action.textContent = linkLabel;
+      body.appendChild(action);
+    }
+    toast.appendChild(body);
+
+    var dismiss = document.createElement('button');
+    dismiss.type = 'button';
+    dismiss.className = 'app-toast-dismiss';
+    dismiss.setAttribute('aria-label', 'Dismiss');
+    dismiss.appendChild(spriteIcon('close'));
+    toast.appendChild(dismiss);
+
+    var lifetime = options.duration || (linkUrl ? 5600 : 4200);
+    var timer = null;
+
+    dismiss.addEventListener('click', function () {
+      if (timer) window.clearTimeout(timer);
+      dismissToast(toast);
+    });
+    toast.addEventListener('mouseenter', function () {
+      if (timer) window.clearTimeout(timer);
+    });
+    toast.addEventListener('mouseleave', function () {
+      timer = window.setTimeout(function () { dismissToast(toast); }, 1600);
+    });
+
+    host.appendChild(toast);
+    timer = window.setTimeout(function () { dismissToast(toast); }, lifetime);
+  }
+
+  function hydratePageFlashes() {
+    document.querySelectorAll('script.pb-flash-data').forEach(function (el) {
+      try {
+        var rows = JSON.parse(el.textContent || '[]');
+        rows.forEach(function (row) {
+          if (!row || !row.length) return;
+          var cat = row[0] === 'error' ? 'error' : (row[0] === 'info' ? 'info' : 'success');
+          showAppToast(row[1], cat);
+        });
+      } catch (err) {}
+      el.remove();
+    });
   }
 
   function postJsonForm(form) {
@@ -4871,5 +4960,6 @@
     initRevisionQueue();
     initKeyboardInset();
     initRegisterForm();
+    hydratePageFlashes();
   });
 })();

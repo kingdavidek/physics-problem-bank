@@ -86,7 +86,7 @@
 
 {% if streak_ring %}
 <section class="streak-panel" aria-label="Study streak">
-    <div class="streak-ring-wrap">
+    <div class="streak-ring-wrap" data-streak-current="{{ streak_ring.current }}">
         <svg class="streak-ring" viewBox="0 0 120 120" aria-hidden="true">
             <circle class="streak-ring-track" cx="60" cy="60" r="52"></circle>
             <circle class="streak-ring-fill" cx="60" cy="60" r="52"

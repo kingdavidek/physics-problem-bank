@@ -74,6 +74,11 @@
     );
   }
 
+  function skeletonHtml() {
+    if (window.pbSkeletonMarkup) return window.pbSkeletonMarkup('notif', 4);
+    return '<p class="nav-notif-empty">Loading</p>';
+  }
+
   function renderList(notifications) {
     if (!notifications.length) {
       listEl.innerHTML = '<p class="nav-notif-empty">No notifications yet.</p>';
@@ -111,7 +116,7 @@
       document.body.classList.add('nav-notif-open');
       if (backdrop) backdrop.hidden = false;
     }
-    listEl.innerHTML = '<p class="nav-notif-empty">Loading…</p>';
+    listEl.innerHTML = skeletonHtml();
     fetchNotifications()
       .then(function (data) {
         formatBadge(data.unread_count || 0);

@@ -14,7 +14,8 @@
     {% for key, label in feed_filters %}
     <a href="{{ url_for('activity_feed', filter=key) }}"
        class="{% if filter == key %}is-active{% endif %}"
-       data-feed-filter="{{ key }}">{{ label }}</a>
+       data-feed-filter="{{ key }}"
+       {% if filter == key %}aria-current="page"{% endif %}>{{ label }}</a>
     {% endfor %}
 </nav>
 
@@ -63,5 +64,5 @@
 <p class="feed-poll-note">Feed refreshes automatically every minute.</p>
 
 </div>
-<script src="{{ url_for('static', filename='js/feed.js') }}?v=3" defer></script>
+<script src="{{ url_for('static', filename='js/feed.js') }}?v=4" defer></script>
 {% endblock %}

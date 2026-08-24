@@ -1,5 +1,5 @@
 /* Problem Bank service worker — cache static assets; network-first for pages/API. */
-const CACHE_VERSION = 'pb-v48';
+const CACHE_VERSION = 'pb-v51';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline';
 

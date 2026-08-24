@@ -16,14 +16,18 @@
     {% endif %}
     <nav class="segmented-control segmented-control--links" aria-label="Leaderboard type">
         <a href="{{ url_for('friend_leaderboard_page', board='effort') }}"
-           class="{% if board != 'accuracy' %}is-active{% endif %}">Effort</a>
+           class="{% if board != 'accuracy' %}is-active{% endif %}"
+           data-skeleton-nav="#leaderboard-results"
+           data-skeleton-kind="leaderboard">Effort</a>
         <a href="{{ url_for('friend_leaderboard_page', board='accuracy') }}"
-           class="{% if board == 'accuracy' %}is-active{% endif %}">Quiz accuracy</a>
+           class="{% if board == 'accuracy' %}is-active{% endif %}"
+           data-skeleton-nav="#leaderboard-results"
+           data-skeleton-kind="leaderboard">Quiz accuracy</a>
     </nav>
 </div>
 
 <section class="section-panel">
-    <div class="section-panel-body">
+    <div class="section-panel-body" id="leaderboard-results">
         {% if board == 'accuracy' %}
             {% if leaderboard|length > 1 or (leaderboard and leaderboard[0].possible) %}
             {% if leaderboard|length >= 3 %}

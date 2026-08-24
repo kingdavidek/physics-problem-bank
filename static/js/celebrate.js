@@ -2,6 +2,10 @@
   'use strict';
 
   var correctStreak = 0;
+  var lastBurstAt = 0;
+  var STREAK_ROUNDS = { 7: 1, 30: 1, 100: 1 };
+  var LS_MILESTONE = 'pb-u74-ms-';
+  var LS_STREAK = 'pb-u74-streak-';
   var CHECK_MARK_SVG =
     '<circle class="answer-check-mark-ring" cx="12" cy="12" r="10"/>' +
     '<path class="answer-check-mark-tick" d="M7 12.5l3.2 3.2L17 8.8"/>';
@@ -62,8 +66,21 @@
     anchor.appendChild(svg);
   }
 
+  function claimed(storageKey) {
+    try {
+      if (window.localStorage.getItem(storageKey) === '1') return true;
+      window.localStorage.setItem(storageKey, '1');
+      return false;
+    } catch (err) {
+      return false;
+    }
+  }
+
   function burstConfetti() {
     if (prefersReducedMotion()) return;
+    var now = Date.now();
+    if (now - lastBurstAt < 1600) return;
+    lastBurstAt = now;
     var root = document.createElement('div');
     root.className = 'confetti-burst';
     root.setAttribute('aria-hidden', 'true');
@@ -114,14 +131,69 @@
     }
   }
 
+  function celebrateMilestone(key) {
+    var token = String(key || 'badge').replace(/\s+/g, '_');
+    if (claimed(LS_MILESTONE + token)) return false;
+    burstConfetti();
+    return true;
+  }
+
+  function celebrateStreakRound(days) {
+    var n = parseInt(days, 10);
+    if (!STREAK_ROUNDS[n]) return false;
+    if (claimed(LS_STREAK + n)) return false;
+    burstConfetti();
+    return true;
+  }
+
+  function fromPayload(data) {
+    if (!data) return;
+    var keys = data.new_milestones || data.awarded_milestones;
+    if (Array.isArray(keys)) {
+      keys.forEach(function (key) { celebrateMilestone(key); });
+    }
+    if (data.milestone_key) celebrateMilestone(data.milestone_key);
+    var streak = data.study_streak;
+    if (streak && typeof streak === 'object') {
+      celebrateStreakRound(streak.current);
+    } else if (data.study_streak_current != null) {
+      celebrateStreakRound(data.study_streak_current);
+    }
+  }
+
+  function fromBuddyPrompt(prompt) {
+    if (!prompt || prompt.type !== 'milestone') return;
+    celebrateMilestone(prompt.milestone_key);
+  }
+
+  function scanPageTriggers() {
+    var promptEl = document.getElementById('pb-buddy-prompt');
+    var buddyRoot = document.querySelector('[data-buddy-root]');
+    if (promptEl && buddyRoot && !buddyRoot.hidden) {
+      try {
+        fromBuddyPrompt(JSON.parse(promptEl.textContent || 'null'));
+      } catch (err) {}
+    }
+    var ring = document.querySelector('[data-streak-current]');
+    if (ring) celebrateStreakRound(ring.getAttribute('data-streak-current'));
+    var nav = document.querySelector('.nav-streak[data-streak]');
+    if (nav) celebrateStreakRound(nav.getAttribute('data-streak'));
+  }
+
   window.pbCelebrate = {
     correct: celebrateCorrect,
     wrong: celebrateWrong,
     confetti: burstConfetti,
+    milestone: celebrateMilestone,
+    streakRound: celebrateStreakRound,
+    fromPayload: fromPayload,
+    fromBuddy: fromBuddyPrompt,
     lessonComplete: function () {
       showXpFloat(null, 25);
       burstConfetti();
       correctStreak = 0;
     },
   };
+
+  scanPageTriggers();
 })();
