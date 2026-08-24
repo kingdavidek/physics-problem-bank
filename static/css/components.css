@@ -1283,7 +1283,7 @@ details.lesson-section-card > summary.lesson-section-summary::-webkit-details-ma
 }
 .pb-skeleton-block {
     display: block;
-    background: var(--ink-100);
+    background: var(--ink-200);
     border-radius: var(--radius-sm);
 }
 .pb-skeleton-block--avatar {
@@ -1309,9 +1309,9 @@ details.lesson-section-card > summary.lesson-section-summary::-webkit-details-ma
     .pb-skeleton-block {
         background-image: linear-gradient(
             90deg,
-            var(--ink-100) 0%,
-            var(--ink-50) 45%,
-            var(--ink-100) 90%
+            var(--ink-200) 0%,
+            var(--ink-50) 40%,
+            var(--ink-200) 80%
         );
         background-size: 200% 100%;
         animation: pb-skeleton-shimmer 1.15s var(--ease) infinite;

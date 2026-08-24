@@ -201,6 +201,14 @@
             <button type="button" class="btn btn-danger" id="sg-toast-error">Error toast</button>
             <button type="button" class="btn btn-outline" id="sg-toast-action">Toast with action</button>
         </div>
+        <p class="profile-empty" style="margin-top:var(--space-4);">Buddy idle bob on the corner widget; a short hop when the prompt refetches after you answer. Gated on <code>prefers-reduced-motion</code>.</p>
+        <div class="sg-row" style="margin-top:var(--space-3); align-items:flex-end;">
+            <div class="study-buddy sg-buddy-demo">
+                <span class="study-buddy-face" id="sg-buddy-react" data-buddy-face data-face="celebrate" aria-hidden="true">{{ buddy_mascot() }}</span>
+            </div>
+            <button type="button" class="btn btn-outline" id="sg-buddy-react-btn">Buddy react</button>
+        </div>
+        <div class="streak-ring-wrap" aria-hidden="true" style="margin-top:var(--space-4);">
             <svg class="streak-ring" viewBox="0 0 120 120">
                 <circle class="streak-ring-track" cx="60" cy="60" r="52"></circle>
                 <circle class="streak-ring-fill" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="81.7"></circle>
@@ -212,7 +220,7 @@
             </div>
         </div>
         <p class="profile-empty" style="margin-top:var(--space-4);">Skeleton loaders replace “Loading…” on feed filters, notifications, and leaderboard tabs.</p>
-        <div class="pb-skeleton pb-skeleton--feed" role="status" aria-busy="true" style="margin-top:var(--space-3);">
+        <div class="pb-skeleton pb-skeleton--feed" role="status" aria-busy="true" style="margin-top:var(--space-3); background:var(--surface); border:1px solid var(--border-soft); border-radius:var(--radius);">
             <span class="pb-skeleton-label">Loading</span>
             <div class="pb-skeleton-row"><span class="pb-skeleton-block pb-skeleton-block--avatar"></span><span class="pb-skeleton-lines"><span class="pb-skeleton-block pb-skeleton-block--title"></span><span class="pb-skeleton-block pb-skeleton-block--meta"></span></span></div>
             <div class="pb-skeleton-row"><span class="pb-skeleton-block pb-skeleton-block--avatar"></span><span class="pb-skeleton-lines"><span class="pb-skeleton-block pb-skeleton-block--title"></span><span class="pb-skeleton-block pb-skeleton-block--meta"></span></span><span class="pb-skeleton-block pb-skeleton-block--score"></span></div>
@@ -449,6 +457,13 @@
         text-align: center;
         line-height: 1.35;
     }
+    .sg-buddy-demo.study-buddy {
+        position: static;
+        left: auto;
+        bottom: auto;
+        max-width: none;
+        pointer-events: auto;
+    }
 </style>
 <script>
 (function () {
@@ -490,6 +505,16 @@
         window.showAppToast('Problem saved.', 'success', { linkUrl: '/saved', linkLabel: 'View saved' });
       }
     });
+    var buddyFace = document.getElementById('sg-buddy-react');
+    var buddyBtn = document.getElementById('sg-buddy-react-btn');
+    if (buddyBtn && buddyFace) {
+      buddyBtn.addEventListener('click', function () {
+        buddyFace.classList.remove('is-reacting');
+        void buddyFace.offsetWidth;
+        buddyFace.classList.add('is-reacting');
+        window.setTimeout(function () { buddyFace.classList.remove('is-reacting'); }, 560);
+      });
+    }
   });
 })();
 </script>

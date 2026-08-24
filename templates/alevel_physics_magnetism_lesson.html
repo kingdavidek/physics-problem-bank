@@ -2,13 +2,13 @@
 {% block title %}Magnetic Fields — AQA A-Level Physics{% endblock %}
 {% block content %}
 
-<div style="max-width:820px; margin:0 auto; padding: 0 16px;">
+<div class="lesson-shell">
 
 <h1>Magnetic Fields and Electromagnetism</h1>
 <p style="color:var(--text-muted);">AQA A-Level Physics — Section 7.5</p>
 
 <!-- SECTION 1: Motor Effect -->
-<div class="problem-card" style="background: var(--color-surface-2);">
+<div class="problem-card">
     <h2>1. The Motor Effect</h2>
     <p>A magnetic field is created by moving charges (currents). Field lines run from North to South and show the direction of force on a North-seeking pole. The closer the lines, the stronger the field.</p>
     <p><strong>Magnetic Flux Density \(B\):</strong> The force per unit current per unit length on a wire at right angles to the field. Measured in Tesla (T), where \(1\,\text{T} = 1\,\text{kg\,s}^{-2}\text{A}^{-1}\).</p>
@@ -25,7 +25,7 @@
     <h3>Practice: The Motor Effect</h3>
     <p>{{ p1.question | safe }}</p>
     <details>
-        <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Show Solution</summary>
+        <summary>Show Solution</summary>
         <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset); border-radius:4px;">
             <p>{{ p1.solution | safe }}</p>
         </div>
@@ -33,7 +33,7 @@
 </div>
 
 <!-- SECTION 2: Moving Charges -->
-<div class="problem-card" style="background: var(--color-surface-2);">
+<div class="problem-card">
     <h2>2. Moving Charges in Magnetic Fields</h2>
     <p>A single particle of charge \(Q\) moving at velocity \(v\) at angle \(\theta\) to a field \(B\) experiences:</p>
     \[ F = BQv\sin\theta \]
@@ -54,7 +54,7 @@
     <h3>Practice: Circular Paths</h3>
     <p>{{ p2.question | safe }}</p>
     <details>
-        <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Show Solution</summary>
+        <summary>Show Solution</summary>
         <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset); border-radius:4px;">
             <p>{{ p2.solution | safe }}</p>
         </div>
@@ -62,7 +62,7 @@
 </div>
 
 <!-- SECTION 2b: Cyclotrons -->
-<div class="problem-card" style="background: var(--color-surface-2);">
+<div class="problem-card">
     <h2>3. Cyclotrons</h2>
     <p>A cyclotron is a particle accelerator made of two D-shaped electrodes called <strong>Dees</strong>, with a magnetic field perpendicular to their plane and an alternating voltage across the gap between them.</p>
     <ul style="margin-top:8px; padding-left:20px;">
@@ -75,7 +75,7 @@
 </div>
 
 <!-- SECTION 3: Magnetic Flux -->
-<div class="problem-card" style="background: var(--color-surface-2);">
+<div class="problem-card">
     <h2>4. Magnetic Flux and Flux Linkage</h2>
     <p><strong>Magnetic Flux \(\Phi\):</strong> The total field passing through a surface of area \(A\). Measured in Webers (Wb), where \(1\,\text{Wb} = 1\,\text{T\,m}^2\).</p>
     \[ \Phi = BA\cos\theta \]
@@ -91,7 +91,7 @@
     <h3>Practice: Flux Linkage</h3>
     <p>{{ p3.question | safe }}</p>
     <details>
-        <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Show Solution</summary>
+        <summary>Show Solution</summary>
         <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset); border-radius:4px;">
             <p>{{ p3.solution | safe }}</p>
         </div>
@@ -99,7 +99,7 @@
 </div>
 
 <!-- SECTION 4: Induction -->
-<div class="problem-card" style="background: var(--color-surface-2);">
+<div class="problem-card">
     <h2>5. Electromagnetic Induction</h2>
     <p>An e.m.f. is induced whenever magnetic flux linkage changes. There are two laws:</p>
     <ul style="margin-top:8px; padding-left:20px;">
@@ -124,7 +124,7 @@
     <h3>Practice: Faraday's Law</h3>
     <p>{{ p4.question | safe }}</p>
     <details>
-        <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Show Solution</summary>
+        <summary>Show Solution</summary>
         <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset); border-radius:4px;">
             <p>{{ p4.solution | safe }}</p>
         </div>
@@ -132,7 +132,7 @@
 </div>
 
 <!-- SECTION 5: Alternating Current -->
-<div class="problem-card" style="background: var(--color-surface-2);">
+<div class="problem-card">
     <h2>6. Alternating Current</h2>
     <p>Alternating current changes direction sinusoidally. Key quantities:</p>
     <ul style="margin-top:8px; padding-left:20px;">
@@ -145,7 +145,7 @@
 </div>
 
 <!-- SECTION 6: Transformers -->
-<div class="problem-card" style="background: var(--color-surface-2);">
+<div class="problem-card">
     <h2>7. Transformers and Power Transmission</h2>
     <p>A transformer changes alternating voltage using two coils wound around a <strong>laminated soft iron core</strong>. The alternating primary current creates a changing flux, inducing an e.m.f. in the secondary coil by Faraday's law.</p>
     <p><strong>Transformer equation</strong> (derived from equal rates of flux change in each turn):</p>
@@ -169,7 +169,7 @@
     <h3>Practice: Transformers</h3>
     <p>{{ p5.question | safe }}</p>
     <details>
-        <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Show Solution</summary>
+        <summary>Show Solution</summary>
         <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset); border-radius:4px;">
             <p>{{ p5.solution | safe }}</p>
         </div>
@@ -177,61 +177,61 @@
 </div>
 
 <!-- QUICK REFERENCE -->
-<div class="problem-card" style="background: var(--color-surface-2);">
+<div class="problem-card">
     <h2>Quick Reference</h2>
-    <table style="width:100%; border-collapse:collapse; font-size:0.97em;">
+    <table class="lesson-table">
         <thead>
-            <tr style="border-bottom:2px solid var(--color-border);">
-                <th style="text-align:left; padding:8px;">Quantity</th>
-                <th style="text-align:left; padding:8px;">Equation</th>
-                <th style="text-align:left; padding:8px;">Notes</th>
+            <tr>
+                <th>Quantity</th>
+                <th>Equation</th>
+                <th>Notes</th>
             </tr>
         </thead>
         <tbody>
-            <tr style="border-bottom:1px solid var(--color-border);">
-                <td style="padding:8px;">Force on wire</td>
-                <td style="padding:8px;">\(F = BIl\sin\theta\)</td>
-                <td style="padding:8px;">Max when \(\theta = 90°\)</td>
-            </tr>
-            <tr style="border-bottom:1px solid var(--color-border);">
-                <td style="padding:8px;">Force on charge</td>
-                <td style="padding:8px;">\(F = BQv\sin\theta\)</td>
-                <td style="padding:8px;">Always \(\perp\) to velocity</td>
-            </tr>
-            <tr style="border-bottom:1px solid var(--color-border);">
-                <td style="padding:8px;">Circular radius</td>
-                <td style="padding:8px;">\(r = mv/BQ\)</td>
-                <td style="padding:8px;">From \(BQv = mv^2/r\)</td>
-            </tr>
-            <tr style="border-bottom:1px solid var(--color-border);">
-                <td style="padding:8px;">Magnetic flux</td>
-                <td style="padding:8px;">\(\Phi = BA\cos\theta\)</td>
-                <td style="padding:8px;">\(\theta\) = angle to normal</td>
-            </tr>
-            <tr style="border-bottom:1px solid var(--color-border);">
-                <td style="padding:8px;">Flux linkage</td>
-                <td style="padding:8px;">\(N\Phi = BAN\cos\theta\)</td>
-                <td style="padding:8px;">Units: Wb turns</td>
-            </tr>
-            <tr style="border-bottom:1px solid var(--color-border);">
-                <td style="padding:8px;">Faraday's law</td>
-                <td style="padding:8px;">\(\varepsilon = -\Delta(N\Phi)/\Delta t\)</td>
-                <td style="padding:8px;">Minus sign = Lenz's law</td>
-            </tr>
-            <tr style="border-bottom:1px solid var(--color-border);">
-                <td style="padding:8px;">Motional e.m.f.</td>
-                <td style="padding:8px;">\(\varepsilon = Blv\)</td>
-                <td style="padding:8px;">Conductor moving in field</td>
-            </tr>
-            <tr style="border-bottom:1px solid var(--color-border);">
-                <td style="padding:8px;">Transformer ratio</td>
-                <td style="padding:8px;">\(V_s/V_p = N_s/N_p\)</td>
-                <td style="padding:8px;">AC only</td>
+            <tr>
+                <td>Force on wire</td>
+                <td>\(F = BIl\sin\theta\)</td>
+                <td>Max when \(\theta = 90°\)</td>
             </tr>
             <tr>
-                <td style="padding:8px;">RMS voltage</td>
-                <td style="padding:8px;">\(V_{rms} = V_0/\sqrt{2}\)</td>
-                <td style="padding:8px;">Sinusoidal AC</td>
+                <td>Force on charge</td>
+                <td>\(F = BQv\sin\theta\)</td>
+                <td>Always \(\perp\) to velocity</td>
+            </tr>
+            <tr>
+                <td>Circular radius</td>
+                <td>\(r = mv/BQ\)</td>
+                <td>From \(BQv = mv^2/r\)</td>
+            </tr>
+            <tr>
+                <td>Magnetic flux</td>
+                <td>\(\Phi = BA\cos\theta\)</td>
+                <td>\(\theta\) = angle to normal</td>
+            </tr>
+            <tr>
+                <td>Flux linkage</td>
+                <td>\(N\Phi = BAN\cos\theta\)</td>
+                <td>Units: Wb turns</td>
+            </tr>
+            <tr>
+                <td>Faraday's law</td>
+                <td>\(\varepsilon = -\Delta(N\Phi)/\Delta t\)</td>
+                <td>Minus sign = Lenz's law</td>
+            </tr>
+            <tr>
+                <td>Motional e.m.f.</td>
+                <td>\(\varepsilon = Blv\)</td>
+                <td>Conductor moving in field</td>
+            </tr>
+            <tr>
+                <td>Transformer ratio</td>
+                <td>\(V_s/V_p = N_s/N_p\)</td>
+                <td>AC only</td>
+            </tr>
+            <tr>
+                <td>RMS voltage</td>
+                <td>\(V_{rms} = V_0/\sqrt{2}\)</td>
+                <td>Sinusoidal AC</td>
             </tr>
         </tbody>
     </table>

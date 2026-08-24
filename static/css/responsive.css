@@ -312,17 +312,21 @@
     }
 
     /* M3.1 — lesson accordions: readable padding; inline quiz CTA hidden when chrome bar is present */
-    div[style*="max-width:860px"] > details {
+    div[style*="max-width:860px"] > details,
+    .lesson-shell > details,
+    .lesson-section {
         overflow-x: auto !important;
     }
-    div[style*="max-width:860px"] > details > summary {
+    div[style*="max-width:860px"] > details > summary,
+    .lesson-shell > details > summary {
         min-height: var(--tap-min);
         padding: 14px 16px !important;
         flex-wrap: wrap;
         row-gap: 6px;
         align-items: center;
     }
-    div[style*="max-width:860px"] > details > summary + div {
+    div[style*="max-width:860px"] > details > summary + div,
+    .lesson-section-body {
         padding: 16px 14px !important;
     }
     [data-lesson-content] a[href*="/lesson-quiz/"] {

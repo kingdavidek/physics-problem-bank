@@ -2,22 +2,21 @@
 {% block title %}Bearings – GCSE Mathematics{% endblock %}
 
 {% block content %}
-<div style="max-width:860px;margin:0 auto;padding:12px;">
+<div class="lesson-shell">
 
   <!-- Header -->
-  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
-    <h1 style="margin:0 0 6px;font-size:1.7rem;">Bearings</h1>
-    <p style="margin:0;opacity:.9;font-size:.97rem;">A <strong>bearing</strong> tells you which way to go, like on a map or when a pilot gives a heading. You measure the angle <strong>clockwise from North</strong>. We use bearings in navigation, maps, and exam geometry questions.</p>
-    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
-      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
-      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+  <div class="lesson-hero">
+    <h1>Bearings</h1>
+    <p class="hero-sub">A <strong>bearing</strong> tells you which way to go, like on a map or when a pilot gives a heading. You measure the angle <strong>clockwise from North</strong>. We use bearings in navigation, maps, and exam geometry questions.</p>
+    <div class="hero-pills">
+      <span class="hero-pill">AQA</span>
+      <span class="hero-pill">Edexcel</span>
+      <span class="hero-pill">OCR</span>
     </div>
   </div>
   <!-- Quick Test button -->
-  <div style="text-align:right;margin-bottom:14px;">
-    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='bearings') }}"
-       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='bearings') }}">
       ▶ Practice Quiz (10 MCQs)
     </a>
   </div>
@@ -25,19 +24,19 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 1. WHAT IS A BEARING?                          -->
   <!-- ══════════════════════════════════════════════ -->
-  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
       What Is a Bearing?
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 9</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 9</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> You stand at point A and face <strong>due East</strong>. You turned <strong>90°</strong> clockwise from North, so the bearing is written <strong>090°</strong> (always three digits).</p>
 
       <p>Three rules you must follow:</p>
-      <ol style="line-height:1.9;">
+      <ol>
         <li>Measure <strong>clockwise</strong> from North.</li>
         <li>Write <strong>three digits</strong> (e.g. 008°, 045°, 270°).</li>
         <li>Start from the <strong>North line at the place you stand</strong> — not at the other town.</li>
@@ -50,8 +49,8 @@
         Also showing NE=045°, SE=135°, SW=225°, NW=315°.
         Key SVG convention: x = cx + r·sin(θ), y = cy - r·cos(θ).
       -->
-      <div style="text-align:center;margin:16px 0;">
-        <svg width="460" height="380" viewBox="0 0 340 280" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="460" height="380" viewBox="0 0 340 280">
 
           <!-- central point -->
           <circle cx="170" cy="145" r="4" fill="#333"/>
@@ -96,57 +95,57 @@
         </svg>
       </div>
 
-      <table style="border-collapse:collapse;width:100%;margin-top:8px;">
-        <thead><tr style="background:var(--color-surface-2);">
-          <th style="padding:7px;border:1px solid var(--color-border);">Direction</th>
-          <th style="padding:7px;border:1px solid var(--color-border);">Bearing</th>
-          <th style="padding:7px;border:1px solid var(--color-border);">Direction</th>
-          <th style="padding:7px;border:1px solid var(--color-border);">Bearing</th>
+      <table class="lesson-table">
+        <thead><tr>
+          <th>Direction</th>
+          <th>Bearing</th>
+          <th>Direction</th>
+          <th>Bearing</th>
         </tr></thead>
         <tbody>
           <tr>
-            <td style="padding:7px;border:1px solid var(--color-border);">North</td>
-            <td style="padding:7px;border:1px solid var(--color-border);">000°</td>
-            <td style="padding:7px;border:1px solid var(--color-border);">South</td>
-            <td style="padding:7px;border:1px solid var(--color-border);">180°</td>
+            <td>North</td>
+            <td>000°</td>
+            <td>South</td>
+            <td>180°</td>
           </tr>
           <tr>
-            <td style="padding:7px;border:1px solid var(--color-border);">North-East</td>
-            <td style="padding:7px;border:1px solid var(--color-border);">045°</td>
-            <td style="padding:7px;border:1px solid var(--color-border);">South-West</td>
-            <td style="padding:7px;border:1px solid var(--color-border);">225°</td>
+            <td>North-East</td>
+            <td>045°</td>
+            <td>South-West</td>
+            <td>225°</td>
           </tr>
           <tr>
-            <td style="padding:7px;border:1px solid var(--color-border);">East</td>
-            <td style="padding:7px;border:1px solid var(--color-border);">090°</td>
-            <td style="padding:7px;border:1px solid var(--color-border);">West</td>
-            <td style="padding:7px;border:1px solid var(--color-border);">270°</td>
+            <td>East</td>
+            <td>090°</td>
+            <td>West</td>
+            <td>270°</td>
           </tr>
           <tr>
-            <td style="padding:7px;border:1px solid var(--color-border);">South-East</td>
-            <td style="padding:7px;border:1px solid var(--color-border);">135°</td>
-            <td style="padding:7px;border:1px solid var(--color-border);">North-West</td>
-            <td style="padding:7px;border:1px solid var(--color-border);">315°</td>
+            <td>South-East</td>
+            <td>135°</td>
+            <td>North-West</td>
+            <td>315°</td>
           </tr>
         </tbody>
       </table>
 
       <p style="margin-top:8px;"><strong>Compass notation (older style):</strong> N40°E → 040° · S30°W → 210° · N25°W → 335° · S15°E → 165°</p>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="B">
-          <p style="margin:0 0 10px;">Which bearing is written correctly?</p>
+          <p>Which bearing is written correctly?</p>
           <button class="btn mcq-btn" data-letter="A">45°</button>
           <button class="btn mcq-btn" data-letter="B">045°</button>
           <button class="btn mcq-btn" data-letter="C">N45E</button>
           <button class="btn mcq-btn" data-letter="D">4.5°</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='bearings') }}?difficulty=foundational" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Reading Bearings</a>
+      <div>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='bearings') }}?difficulty=foundational">Quick Test – Reading Bearings</a>
       </div>
     </div>
   </details>
@@ -154,23 +153,23 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 2. BACK BEARINGS (REVERSE BEARINGS)            -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
       Back Bearings (Reverse Bearings)
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 10</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> The bearing of B from A is <strong>065°</strong>. To travel back from B to A, add 180°: 065° + 180° = <strong>245°</strong>.</p>
 
       <p>The <strong>back bearing</strong> is the bearing for the return trip (opposite direction):</p>
-      <p style="text-align:center;font-size:1.1rem;">
+      <p class="lesson-callout lesson-callout--formula">
         If bearing &lt; 180°: &emsp; back bearing = bearing + 180°<br>
         If bearing ≥ 180°: &emsp; back bearing = bearing − 180°
       </p>
-      <p style="text-align:center;">Same idea: turn around = add or subtract <strong>180°</strong>.</p>
+      <p>Same idea: turn around = add or subtract <strong>180°</strong>.</p>
 
       <!--
         SVG: Two-point back-bearing diagram.
@@ -186,8 +185,8 @@
           to 245°: (161.5+22·sin245°, 117-22·cos245°) = (161.5-19.9, 117+9.3) = (141.6, 126.3)
           245° > 180° → large=1, sweep=1.
       -->
-      <div style="text-align:center;margin:16px 0;">
-        <svg width="460" height="340" viewBox="0 0 310 230" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="460" height="340" viewBox="0 0 310 230">
 
           <!-- Dashed line AB -->
           <line x1="80" y1="155" x2="162" y2="117" stroke="#888" stroke-width="1.5" stroke-dasharray="5,3"/>
@@ -223,7 +222,7 @@
       </div>
 
       <p><strong>More examples:</strong></p>
-      <ul style="line-height:1.9;">
+      <ul>
         <li>070° → back bearing <strong>250°</strong></li>
         <li>150° → back bearing <strong>330°</strong></li>
         <li>200° → back bearing <strong>020°</strong></li>
@@ -231,20 +230,20 @@
       </ul>
       <p><strong>Why it works:</strong> North lines at A and B are parallel. Line AB cuts across them like a transversal, so alternate angles match — that is the same as adding 180° to the bearing.</p>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="C">
-          <p style="margin:0 0 10px;">The bearing of B from A is <strong>047°</strong>. What is the back bearing of A from B?</p>
+          <p>The bearing of B from A is <strong>047°</strong>. What is the back bearing of A from B?</p>
           <button class="btn mcq-btn" data-letter="A">047°</button>
           <button class="btn mcq-btn" data-letter="B">133°</button>
           <button class="btn mcq-btn" data-letter="C">227°</button>
           <button class="btn mcq-btn" data-letter="D">317°</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='bearings') }}?difficulty=foundational" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Back Bearings</a>
+      <div>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='bearings') }}?difficulty=foundational">Quick Test – Back Bearings</a>
       </div>
     </div>
   </details>
@@ -252,20 +251,20 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 3. PARALLEL NORTH LINES AND ANGLE FACTS        -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
       Parallel North Lines and Angle Facts
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 10</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> Bearing of B from A is <strong>063°</strong>. At B, the alternate angle between line BA and the South line is also <strong>63°</strong>, so the back bearing is 63° + 180° = <strong>243°</strong>.</p>
 
       <p>Every North line points the same way, so North lines at different places are <strong>parallel</strong>. When path AB crosses them, you can use parallel-line angle facts:</p>
 
-      <ul style="line-height:1.9;">
+      <ul>
         <li><strong>Alternate angles (Z-shape)</strong> — equal. This links the bearing at A to the angle at B.</li>
         <li><strong>Co-interior angles (C-shape)</strong> — add to 180°.</li>
       </ul>
@@ -285,8 +284,8 @@
           going clockwise... actually alternate angle is shown ABOVE B between BA and south direction.
           To show this more simply: use color-coded arcs with labels "θ" at both locations.
       -->
-      <div style="text-align:center;margin:16px 0;">
-        <svg width="540" height="360" viewBox="0 0 380 255" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="540" height="360" viewBox="0 0 380 255">
 
           <!-- North at A (80,165) -->
           <line x1="80" y1="165" x2="80" y2="108" stroke="#666" stroke-width="1.5" stroke-dasharray="5,4"/>
@@ -342,20 +341,20 @@
 
       <p><strong>In exams:</strong> You may be told to “use angle facts” instead of just adding 180°. Draw the North lines and mark the Z-shape alternate angles.</p>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="A">
-          <p style="margin:0 0 10px;">North lines at two different places on a map are:</p>
+          <p>North lines at two different places on a map are:</p>
           <button class="btn mcq-btn" data-letter="A">Parallel</button>
           <button class="btn mcq-btn" data-letter="B">Perpendicular</button>
           <button class="btn mcq-btn" data-letter="C">Always 90° apart</button>
           <button class="btn mcq-btn" data-letter="D">Different on every map</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='bearings') }}?difficulty=foundational" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Angle Facts</a>
+      <div>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='bearings') }}?difficulty=foundational">Quick Test – Angle Facts</a>
       </div>
     </div>
   </details>
@@ -363,25 +362,25 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 4. TRIGONOMETRY WITH BEARINGS                  -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
       Trigonometry with Bearings
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 10</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> A boat sails <strong>50 km</strong> on bearing <strong>090°</strong> (due East). East = \(50\sin 90° = 50\) km. North = \(50\cos 90° = 0\) km — it does not move north or south.</p>
 
       <p>If you travel distance \(d\) on bearing \(\theta\), split the journey into East and North parts:</p>
-      <p style="text-align:center;font-size:1.1rem;">
+      <p class="lesson-callout lesson-callout--formula">
         \(\text{East} = d\sin\theta \qquad \text{North} = d\cos\theta\)
       </p>
       <p>If North comes out negative, you went south. If East is negative, you went west. Check the quadrant before you write the final bearing.</p>
 
       <p>To find the <strong>bearing</strong> when you know East and North:</p>
-      <p style="text-align:center;">
+      <p>
         \(\theta = \arctan\!\left(\dfrac{\text{East}}{\text{North}}\right)\) — then adjust for the correct quadrant
       </p>
 
@@ -396,8 +395,8 @@
         North arrow at A: (60,85).
         Bearing arc at A: from (60,114) to (60+26·sin60°,140-26·cos60°)=(60+22.5,140-13)=(82.5,127). sweep=1.
       -->
-      <div style="text-align:center;margin:16px 0;">
-        <svg width="540" height="340" viewBox="0 0 430 260" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="540" height="340" viewBox="0 0 430 260">
 
           <!-- North arrow at A(95,185) -->
           <line x1="95" y1="185" x2="95" y2="48" stroke="#666" stroke-width="1.5" stroke-dasharray="5,4"/>
@@ -441,25 +440,25 @@
       </div>
 
       <p><strong>Another example:</strong> Bearing <strong>135°</strong> for <strong>60 km</strong>:</p>
-      <ul style="line-height:1.9;">
+      <ul>
         <li>East = \(60\sin 135° \approx 42.4\) km</li>
         <li>North = \(60\cos 135° \approx -42.4\) km (about 42.4 km <strong>south</strong>)</li>
       </ul>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="D">
-          <p style="margin:0 0 10px;">A ship sails <strong>80 km</strong> on bearing <strong>000°</strong> (due North). What is the North component?</p>
+          <p>A ship sails <strong>80 km</strong> on bearing <strong>000°</strong> (due North). What is the North component?</p>
           <button class="btn mcq-btn" data-letter="A">0 km</button>
           <button class="btn mcq-btn" data-letter="B">40 km</button>
           <button class="btn mcq-btn" data-letter="C">80 km East</button>
           <button class="btn mcq-btn" data-letter="D">80 km North</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='bearings') }}?difficulty=intermediate" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Trig and Bearings</a>
+      <div>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='bearings') }}?difficulty=intermediate">Quick Test – Trig and Bearings</a>
       </div>
     </div>
   </details>
@@ -467,19 +466,19 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 5. MULTI-LEG JOURNEYS                          -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
       Multi-Leg Journeys
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 11</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> Leg 1: 40 km on 050°. Leg 2: 30 km on 140°. Work out East and North for each leg, <strong>add</strong> them, then use Pythagoras for the straight-line distance from start to finish.</p>
 
       <p>When a journey has several legs, we split each leg into East and North, then combine:</p>
-      <ol style="line-height:1.9;">
+      <ol>
         <li>Each leg: East = \(d\sin\theta\), North = \(d\cos\theta\)</li>
         <li>Add all East values; add all North values</li>
         <li>Resultant distance = \(\sqrt{E_{\text{total}}^2 + N_{\text{total}}^2}\)</li>
@@ -495,8 +494,8 @@
         Displacement AD: (95-60,179-165)=(35,14) in SVG → E=35, N=-14 (southward since y increases downward)
         D is shown with a dashed line from A.
       -->
-      <div style="text-align:center;margin:16px 0;">
-        <svg width="500" height="390" viewBox="0 0 360 280" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="500" height="390" viewBox="0 0 360 280">
 
           <!-- Leg 1: A(60,165) → B(110,123), bearing 050° -->
           <line x1="60" y1="165" x2="110" y2="123" stroke="#1a6fa8" stroke-width="2"/>
@@ -541,20 +540,20 @@
         </svg>
       </div>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="B">
-          <p style="margin:0 0 10px;">After two legs, total East = <strong>30 km</strong> and total North = <strong>40 km</strong>. What is the resultant distance?</p>
+          <p>After two legs, total East = <strong>30 km</strong> and total North = <strong>40 km</strong>. What is the resultant distance?</p>
           <button class="btn mcq-btn" data-letter="A">70 km</button>
           <button class="btn mcq-btn" data-letter="B">50 km</button>
           <button class="btn mcq-btn" data-letter="C">35 km</button>
           <button class="btn mcq-btn" data-letter="D">1200 km</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='bearings') }}?difficulty=intermediate" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Multi-leg Journeys</a>
+      <div>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='bearings') }}?difficulty=intermediate">Quick Test – Multi-leg Journeys</a>
       </div>
     </div>
   </details>
@@ -562,20 +561,20 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 6. SINE AND COSINE RULE WITH BEARINGS          -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
       Sine and Cosine Rule with Bearings
-      <span style="font-size:0.65rem;margin-left:8px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Higher Tier</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span class="lesson-tag lesson-tag--warn">Higher Tier</span>
+      <span class="lesson-tag lesson-tag--warn">Year 11</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> Two boats leave port O. One goes on <strong>030°</strong> for <strong>80 km</strong>, the other on <strong>090°</strong> for <strong>60 km</strong>. Angle at O = 090° − 030° = <strong>60°</strong>. Then use the cosine rule to find how far apart they are.</p>
 
       <p>When two paths start from the same point on different bearings, they make a <strong>triangle</strong>. If there is no right angle, use the sine rule or cosine rule.</p>
 
-      <p style="text-align:center;">
+      <p>
         <strong>Cosine rule:</strong> \(c^2 = a^2 + b^2 - 2ab\cos C\)
         &emsp;&emsp;
         <strong>Sine rule:</strong> \(\dfrac{a}{\sin A} = \dfrac{b}{\sin B}\)
@@ -591,8 +590,8 @@
         Angle at O = 130°-40° = 90°.
         AB line for reference.
       -->
-      <div style="text-align:center;margin:16px 0;">
-        <svg width="460" height="300" viewBox="0 0 460 300" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="460" height="300" viewBox="0 0 460 300">
 
           <!-- North at O(170,170) -->
           <line x1="170" y1="170" x2="170" y2="95" stroke="#666" stroke-width="1.5" stroke-dasharray="5,4"/>
@@ -636,20 +635,20 @@
 
       <p><strong>Full working:</strong> \(AB^2 = 80^2 + 60^2 - 2 \times 80 \times 60 \times \cos 60° = 5200\), so \(AB \approx \mathbf{72.1}\) km.</p>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="A">
-          <p style="margin:0 0 10px;">Two paths leave O on bearings <strong>040°</strong> and <strong>130°</strong>. What is the angle at O?</p>
+          <p>Two paths leave O on bearings <strong>040°</strong> and <strong>130°</strong>. What is the angle at O?</p>
           <button class="btn mcq-btn" data-letter="A">90°</button>
           <button class="btn mcq-btn" data-letter="B">170°</button>
           <button class="btn mcq-btn" data-letter="C">40°</button>
           <button class="btn mcq-btn" data-letter="D">130°</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='bearings') }}?difficulty=difficult" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Sine and Cosine Rule</a>
+      <div>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='bearings') }}?difficulty=difficult">Quick Test – Sine and Cosine Rule</a>
       </div>
     </div>
   </details>
@@ -657,21 +656,21 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 7. KEY FACTS QUICK REFERENCE                   -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">7</span>
       Bearings — Quick Reference
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 11</span>
+      <span class="lesson-tag">Revision Card</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p>Use this card before a test. Each section above has a diagram and a Quick Check — open the one you need if you forget a step.</p>
 
-      <div style="text-align:center;margin:16px 0;">
+      <div class="lesson-figure">
               <div class="revision-card-wrap">
-        <svg class="revision-card-svg lesson-quick-ref" width="100%" viewBox="0 0 600 300" style="max-width:760px;width:100%;height:auto;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:10px;">
+        <svg class="revision-card-svg lesson-quick-ref lesson-diagram" width="100%" viewBox="0 0 600 300">
           <text x="270" y="24" font-size="17" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Bearings – Key Facts</text>
 
           <!-- Column 1 -->
@@ -710,20 +709,20 @@
       </div>
       </div>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="B">
-          <p style="margin:0 0 10px;">The bearing of a town is <strong>315°</strong>. What is the back bearing?</p>
+          <p>The bearing of a town is <strong>315°</strong>. What is the back bearing?</p>
           <button class="btn mcq-btn" data-letter="A">315°</button>
           <button class="btn mcq-btn" data-letter="B">135°</button>
           <button class="btn mcq-btn" data-letter="C">225°</button>
           <button class="btn mcq-btn" data-letter="D">045°</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='bearings') }}?difficulty=difficult&amp;mode=mcq" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Mixed MCQ</a>
+      <div>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='bearings') }}?difficulty=difficult&amp;mode=mcq">Quick Test – Mixed MCQ</a>
       </div>
     </div>
   </details>
@@ -731,10 +730,9 @@
 </div>
 
   <!-- Practice link -->
-  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
-    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
-    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='bearings') }}"
-       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='bearings') }}">
       Start Practice Quiz
     </a>
   </div>

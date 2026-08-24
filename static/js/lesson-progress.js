@@ -59,6 +59,8 @@
   }
 
   function findLessonContentRoot(root) {
+    var shell = root.querySelector('.lesson-shell');
+    if (shell) return shell;
     var candidates = root.querySelectorAll(
       '.page-shell, [style*="max-width:860px"], [style*="max-width: 860px"]'
     );

@@ -45,6 +45,20 @@
     faceEl.setAttribute('data-face', resolveFace(prompt));
   }
 
+  var reactTimer = null;
+  function reactBuddy() {
+    if (!faceEl) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    faceEl.classList.remove('is-reacting');
+    void faceEl.offsetWidth;
+    faceEl.classList.add('is-reacting');
+    if (reactTimer) window.clearTimeout(reactTimer);
+    reactTimer = window.setTimeout(function () {
+      faceEl.classList.remove('is-reacting');
+      reactTimer = null;
+    }, 560);
+  }
+
   function milestoneStorageKey(key) {
     return 'pb-buddy-milestone-' + (key || '');
   }
@@ -279,7 +293,7 @@
     } catch (err) {}
   });
 
-  function fetchBuddy() {
+  function fetchBuddy(fromRefetch) {
     var ctx = currentContext();
     var query = '';
     if (ctx.level && ctx.topic) {
@@ -303,7 +317,8 @@
       })
       .then(function (data) {
         if (!(data && data.ok && data.buddy)) return;
-        maybeShow(data.buddy);
+        maybeShow(data.buddy, fromRefetch ? 'refetch' : 'fetch');
+        if (fromRefetch && !root.hidden) reactBuddy();
       })
       .catch(function () {});
   }
@@ -324,7 +339,7 @@
   document.addEventListener('pb-buddy-refetch', function (event) {
     var detail = (event && event.detail) || {};
     if (!refetchMatchesPage(detail)) return;
-    fetchBuddy();
+    fetchBuddy(true);
   });
 
   if (root.getAttribute('data-buddy-server') === '1') {

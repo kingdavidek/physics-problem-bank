@@ -284,7 +284,7 @@ def main():
         assert 'data-buddy-level="gcse"' in html_lesson
         assert 'data-buddy-subject="maths"' in html_lesson
         assert 'data-buddy-topic="algebra"' in html_lesson
-        assert 'study-buddy.js?v=18' in html_lesson
+        assert 'study-buddy.js?v=20' in html_lesson
         assert 'Problem Bank build: buddy-embed-v4' in html_lesson
         assert 'pb-buddy-embed-v4' in html_lesson
         assert 'id="pb-buddy-page"' in html_lesson

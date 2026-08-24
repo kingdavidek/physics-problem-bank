@@ -782,10 +782,27 @@ body.site-search-open { overflow: hidden; }
     .study-buddy-face {
         animation: study-buddy-pop 420ms var(--ease);
     }
+    .study-buddy .buddy-mascot {
+        animation: study-buddy-bob 2.8s var(--ease-out) infinite;
+        transform-origin: 50% 88%;
+    }
+    .study-buddy-face.is-reacting .buddy-mascot {
+        animation: study-buddy-react 520ms var(--ease-spring);
+    }
 }
 @keyframes study-buddy-pop {
     from { transform: scale(0.86); opacity: 0.4; }
     to { transform: scale(1); opacity: 1; }
+}
+@keyframes study-buddy-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+@keyframes study-buddy-react {
+    0% { transform: translateY(0) scale(1) rotate(0deg); }
+    32% { transform: translateY(-10px) scale(1.08) rotate(-7deg); }
+    64% { transform: translateY(-2px) scale(1.03) rotate(5deg); }
+    100% { transform: translateY(0) scale(1) rotate(0deg); }
 }
 html.pwa-standalone .study-buddy {
     bottom: calc(var(--tab-bar-h) + var(--safe-bottom) + var(--space-4) + var(--kb-inset));

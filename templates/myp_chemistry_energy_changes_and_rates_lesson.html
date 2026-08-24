@@ -2,17 +2,17 @@
 {% block title %}Energy Changes and Rates – MYP Chemistry{% endblock %}
 
 {% block content %}
-<div style="max-width:860px; margin:0 auto; padding:0 16px;">
+<div class="lesson-shell">
 
   <h1>Energy Changes and Rates of Reaction</h1>
   <p style="color:var(--text-muted);">MYP Chemistry – Energetics and Kinetics</p>
 
   <!-- 1. EXOTHERMIC & ENDOTHERMIC REACTIONS -->
   <details class="lesson-section" open>
-    <summary style="cursor:pointer; padding:14px 18px; background:var(--color-surface-2); border-radius:var(--radius); font-weight:600; font-size:1.05rem; margin-bottom:4px;">
+    <summary class="lesson-section-summary">
       1. Exothermic &amp; Endothermic Reactions
     </summary>
-    <div style="padding:16px; background:var(--color-surface); border-radius:0 0 var(--radius) var(--radius); margin-bottom:12px;">
+    <div class="lesson-section-body">
       <p>Chemical reactions involve energy changes. They can be classified as:</p>
       <ul>
         <li><strong>Exothermic</strong> – energy is released to the surroundings (ΔH is negative).</li>
@@ -26,10 +26,10 @@
 
   <!-- 2. ENTHALPY & ENERGY LEVEL DIAGRAMS -->
   <details class="lesson-section">
-    <summary style="cursor:pointer; padding:14px 18px; background:var(--color-surface-2); border-radius:var(--radius); font-weight:600; font-size:1.05rem; margin-bottom:4px;">
+    <summary class="lesson-section-summary">
       2. Enthalpy and Energy Level Diagrams
     </summary>
-    <div style="padding:16px; background:var(--color-surface); border-radius:0 0 var(--radius) var(--radius); margin-bottom:12px;">
+    <div class="lesson-section-body">
       <p><strong>Enthalpy (H)</strong> is the total heat content of a system. We measure <strong>ΔH</strong> (change in enthalpy).</p>
       <p>Energy level diagrams show the relative energies of reactants and products.</p>
 
@@ -37,12 +37,12 @@
         <div style="flex: 1; min-width: 250px; text-align: center;">
           <p style="font-weight: bold; color: var(--primary);">Exothermic Reaction</p>
           <img src="{{ url_for('static', filename='images/exothermic_reaction.webp') }}" alt="Exothermic reaction energy level diagram" style="max-width: 100%; height: auto; border-radius: 8px;">
-          <p style="font-size: 0.9em; color: var(--text-muted);">ΔH is negative – energy released</p>
+          <p>ΔH is negative – energy released</p>
         </div>
         <div style="flex: 1; min-width: 250px; text-align: center;">
           <p style="font-weight: bold; color: var(--primary);">Endothermic Reaction</p>
           <img src="{{ url_for('static', filename='images/Endothermic_Reaction.png') }}" alt="Endothermic reaction energy level diagram" style="max-width: 100%; height: auto; border-radius: 8px;">
-          <p style="font-size: 0.9em; color: var(--text-muted);">ΔH is positive – energy absorbed</p>
+          <p>ΔH is positive – energy absorbed</p>
         </div>
       </div>
     </div>
@@ -50,10 +50,10 @@
 
   <!-- 3. BOND ENERGY CALCULATIONS -->
   <details class="lesson-section">
-    <summary style="cursor:pointer; padding:14px 18px; background:var(--color-surface-2); border-radius:var(--radius); font-weight:600; font-size:1.05rem; margin-bottom:4px;">
+    <summary class="lesson-section-summary">
       3. Bond Energy Calculations
     </summary>
-    <div style="padding:16px; background:var(--color-surface); border-radius:0 0 var(--radius) var(--radius); margin-bottom:12px;">
+    <div class="lesson-section-body">
       <p>ΔH can be estimated from bond energies:</p>
       <p style="text-align:center; font-weight:bold;">ΔH = Σ (bond energies broken) − Σ (bond energies made)</p>
       <p>If the energy released forming new bonds is greater than the energy absorbed breaking old bonds, the reaction is exothermic.</p>
@@ -66,10 +66,10 @@
 
   <!-- 4. CALORIMETRY -->
   <details class="lesson-section">
-    <summary style="cursor:pointer; padding:14px 18px; background:var(--color-surface-2); border-radius:var(--radius); font-weight:600; font-size:1.05rem; margin-bottom:4px;">
+    <summary class="lesson-section-summary">
       4. Calorimetry
     </summary>
-    <div style="padding:16px; background:var(--color-surface); border-radius:0 0 var(--radius) var(--radius); margin-bottom:12px;">
+    <div class="lesson-section-body">
       <p>Calorimetry measures heat changes in reactions. The basic equation is:</p>
       <p style="text-align:center; font-weight:bold;">q = m × c × ΔT</p>
       <ul>
@@ -84,10 +84,10 @@
 
   <!-- 5. RATES OF REACTION -->
   <details class="lesson-section">
-    <summary style="cursor:pointer; padding:14px 18px; background:var(--color-surface-2); border-radius:var(--radius); font-weight:600; font-size:1.05rem; margin-bottom:4px;">
+    <summary class="lesson-section-summary">
       5. Rates of Reaction
     </summary>
-    <div style="padding:16px; background:var(--color-surface); border-radius:0 0 var(--radius) var(--radius); margin-bottom:12px;">
+    <div class="lesson-section-body">
       <p>The <strong>rate of reaction</strong> measures how quickly reactants turn into products. It can be increased by:</p>
       <ul>
         <li>Increasing temperature – particles move faster, collide more often and with more energy.</li>
@@ -101,10 +101,10 @@
 
   <!-- 6. ACTIVATION ENERGY & CATALYSTS -->
   <details class="lesson-section">
-    <summary style="cursor:pointer; padding:14px 18px; background:var(--color-surface-2); border-radius:var(--radius); font-weight:600; font-size:1.05rem; margin-bottom:4px;">
+    <summary class="lesson-section-summary">
       6. Activation Energy &amp; Catalysts
     </summary>
-    <div style="padding:16px; background:var(--color-surface); border-radius:0 0 var(--radius) var(--radius); margin-bottom:12px;">
+    <div class="lesson-section-body">
       <p><strong>Activation energy (Ea)</strong> is the minimum energy needed for particles to react when they collide.</p>
       <p>A <strong>catalyst</strong> speeds up a reaction without being used up. It lowers the activation energy by providing an alternative reaction pathway.</p>
       <p>Catalysts do **not** change ΔH or the energy of reactants/products – they only lower the energy barrier.</p>
@@ -114,10 +114,10 @@
 
   <!-- 7. CALORIMETRY CALCULATOR (Interactive) -->
   <details class="lesson-section">
-    <summary style="cursor:pointer; padding:14px 18px; background:var(--color-surface-2); border-radius:var(--radius); font-weight:600; font-size:1.05rem; margin-bottom:4px;">
+    <summary class="lesson-section-summary">
       7. Calorimetry Calculator
     </summary>
-    <div style="padding:16px; background:var(--color-surface); border-radius:0 0 var(--radius) var(--radius); margin-bottom:12px;">
+    <div class="lesson-section-body">
       <p>Use the sliders to see how heat energy changes with mass, specific heat capacity, and temperature.</p>
       <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:flex-end;">
         <div>
@@ -132,7 +132,7 @@
           q = <span id="q-result">2090</span> J
         </div>
       </div>
-      <p style="margin-top:8px; font-size:0.85em; color:var(--text-muted);">c = 4.18 J g⁻¹ °C⁻¹ (water)</p>
+      <p>c = 4.18 J g⁻¹ °C⁻¹ (water)</p>
     </div>
   </details>
 

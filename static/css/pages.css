@@ -285,7 +285,170 @@ pre {
     margin-bottom: 16px;
 }
 
-/* ---- LESSON PAGES (inline-styled templates) ---- */
+/* ---- LESSON PAGES (U6.1 vocabulary; U6.2 mensuration uses classes, others still inline) */
+/* `.lesson-hero` chrome lives in components.css (subject accents, pills). */
+.lesson-section {
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-3);
+    overflow: hidden;
+    background: var(--surface);
+    box-shadow: var(--elev-1);
+}
+.lesson-section > .lesson-section-summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    row-gap: 6px;
+    padding: var(--space-3) var(--space-4);
+    background: var(--ink-100);
+    color: var(--ink-800);
+    font-size: var(--text-md);
+    font-weight: 700;
+    cursor: pointer;
+    min-height: var(--tap-min);
+}
+.lesson-section[open] > .lesson-section-summary {
+    border-bottom: 1px solid var(--border-soft);
+}
+.lesson-section > .lesson-section-summary::-webkit-details-marker {
+    display: none;
+}
+.lesson-subsection {
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    margin-bottom: 10px;
+    overflow: hidden;
+    background: var(--surface);
+}
+.lesson-subsection > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 10px 14px;
+    font-weight: 600;
+}
+.lesson-subsection > summary::-webkit-details-marker { display: none; }
+.lesson-callout,
+.lesson-example,
+.lesson-quickcheck,
+.lesson-callout--note {
+    background: var(--hint-bg, var(--ink-50));
+    border-left: 3px solid var(--primary);
+    padding: 14px 20px;
+    margin: 16px 0;
+    border-radius: 0 var(--radius) var(--radius) 0;
+}
+.lesson-callout--warning {
+    background: var(--danger-bg);
+    border-left-color: var(--wrong-500);
+}
+.lesson-callout--exam {
+    background: var(--xp-50, var(--ink-50));
+    border-left-color: var(--xp-600);
+}
+.lesson-callout--formula {
+    background: var(--surface-sunken);
+    border-left-color: var(--brand-600);
+}
+.lesson-quickcheck-title {
+    font-weight: 700;
+    margin: 0 0 8px;
+    color: var(--brand-700);
+}
+.lesson-quickref {
+    background: var(--surface-sunken);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    padding: 24px 28px;
+    font-size: 1rem;
+    line-height: 1.75;
+    max-width: 100%;
+    margin: 0 auto;
+}
+/* U6.2 pilot (mensuration) — supporting chrome used by the converted template */
+.lesson-shell {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 12px;
+}
+.lesson-quiz-cta {
+    text-align: right;
+    margin-bottom: var(--space-4);
+}
+.lesson-section-body {
+    padding: 18px 20px;
+    background: var(--surface);
+}
+.lesson-section-body ol,
+.lesson-section-body ul {
+    line-height: 1.9;
+}
+.lesson-tag {
+    font-size: 0.65rem;
+    margin-left: 6px;
+    background: var(--brand-50, var(--ink-100));
+    color: var(--brand-700);
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 700;
+}
+.lesson-tag--warn {
+    background: var(--streak-100, #fef4e8);
+    color: var(--streak-700, #8a5300);
+}
+.lesson-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0;
+}
+.lesson-table th,
+.lesson-table td {
+    padding: 8px;
+    border: 1px solid var(--border, var(--ink-200));
+    text-align: left;
+    vertical-align: top;
+}
+.lesson-table thead tr,
+.lesson-table th {
+    background: var(--surface-sunken);
+}
+.lesson-figure {
+    text-align: center;
+    margin: 16px 0;
+}
+svg.lesson-diagram {
+    background: var(--surface-sunken);
+    border-radius: var(--radius-sm);
+    max-width: 100%;
+    height: auto;
+}
+p.lesson-callout--formula {
+    text-align: center;
+    font-size: 1.05rem;
+}
+.lesson-quickref h4,
+.lesson-quick-ref-card h4 {
+    color: var(--brand-700);
+    margin-top: 14px;
+}
+.lesson-quickref h4:first-child,
+.lesson-quick-ref-card h4:first-child {
+    margin-top: 0;
+}
+.lesson-practice-cta {
+    text-align: center;
+    margin-top: 20px;
+    padding: 16px;
+    background: var(--brand-50, #f0f9ff);
+    border-radius: var(--radius);
+}
+.lesson-practice-cta p {
+    margin: 0 0 10px;
+    font-weight: 600;
+    color: var(--brand-700);
+}
 div[style*="max-width:860px"] > div[style*="linear-gradient"] {
     border-radius: var(--radius-lg) !important;
     box-shadow: var(--shadow) !important;

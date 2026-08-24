@@ -98,24 +98,23 @@
   .board-edx { background: #fef3c7; color: #92400e; }
 </style>
 
-<div style="max-width:860px;margin:0 auto;padding:12px;">
+<div class="lesson-shell">
 
-  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
-    <h1 style="margin:0 0 6px;font-size:1.7rem;">Fundamentals of Data Representation</h1>
-    <p style="margin:0;opacity:.92;font-size:.97rem;max-width:56ch;line-height:1.55;">
+  <div class="lesson-hero">
+    <h1>Fundamentals of Data Representation</h1>
+    <p class="hero-sub">
       How computers store numbers, text, pictures and sound. Each topic starts with something you already know — then we show the GCSE method.
     </p>
-    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
-      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
-      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
-      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">WJEC</span>
+    <div class="hero-pills">
+      <span class="hero-pill">AQA</span>
+      <span class="hero-pill">OCR</span>
+      <span class="hero-pill">Edexcel</span>
+      <span class="hero-pill">WJEC</span>
     </div>
   </div>
 
-  <div style="text-align:right;margin-bottom:14px;">
-    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='cs', topic='data_rep') }}"
-       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='cs', topic='data_rep') }}">
       ▶ Practice Quiz (10 MCQs)
     </a>
   </div>
@@ -125,13 +124,13 @@
   </div>
 
   <!-- 0. OVERVIEW -->
-  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">0</span>
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">0</span>
       What is data representation?
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Start here</span>
+      <span class="lesson-tag lesson-tag--warn">Start here</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <div class="everyday-box">
         <strong>Everyday idea:</strong> When you send a photo on WhatsApp, your phone does not send “colours” and “shapes” in a way humans see them. It sends a long list of numbers. Those numbers are stored as <strong>0s and 1s</strong> inside the file. Data representation is the topic about <em>how</em> those 0s and 1s stand for numbers, letters, pixels and sound.
@@ -145,32 +144,32 @@
         <li>explain compression (ZIP vs JPEG-style).</li>
       </ul>
 
-      <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="B">
-          <p style="margin:0 0 10px;">At the lowest level, digital data is stored as:</p>
+          <p>At the lowest level, digital data is stored as:</p>
           <button class="btn mcq-btn" data-letter="A">Letters and symbols only</button>
           <button class="btn mcq-btn" data-letter="B">Patterns of 0s and 1s (bits)</button>
           <button class="btn mcq-btn" data-letter="C">Hexadecimal digits only</button>
           <button class="btn mcq-btn" data-letter="D">Voltage levels with no pattern</button>
-          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
     </div>
   </details>
 
   <!-- 1. BINARY & DENARY -->
-  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
       Binary &amp; Denary
       <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
     </summary>
-    <div style="padding:14px 16px 8px;background:#fff;">
+    <div class="lesson-section-body">
 
-      <details class="lesson-inner" open style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
-        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">1.1 Why computers use binary</summary>
-        <div style="padding:14px 16px;">
+      <details class="lesson-inner lesson-subsection" open>
+        <summary>1.1 Why computers use binary</summary>
+        <div class="lesson-section-body">
 
           <div class="everyday-box">
             <strong>Everyday idea:</strong> A light switch is either <strong>off</strong> or <strong>on</strong>. Inside a chip, millions of tiny switches work the same way. We call <strong>off = 0</strong> and <strong>on = 1</strong>. That is one <strong>bit</strong> (binary digit).
@@ -189,23 +188,23 @@
             <strong>Exam answer (short):</strong> “Computers use binary because electronic circuits represent two stable states (on/off), which maps directly to 0 and 1.”
           </div>
 
-          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
-            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+          <div class="lesson-quickcheck">
+            <p class="lesson-quickcheck-title">Quick Check</p>
             <div class="mcq-inline" data-correct="B">
-              <p style="margin:0 0 10px;">A single bit can represent how many different values?</p>
+              <p>A single bit can represent how many different values?</p>
               <button class="btn mcq-btn" data-letter="A">1</button>
               <button class="btn mcq-btn" data-letter="B">2</button>
               <button class="btn mcq-btn" data-letter="C">8</button>
               <button class="btn mcq-btn" data-letter="D">10</button>
-              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+              <p class="mcq-feedback"></p>
             </div>
           </div>
         </div>
       </details>
 
-      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
-        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">1.2 Converting denary ↔ binary</summary>
-        <div style="padding:14px 16px;">
+      <details class="lesson-inner lesson-subsection">
+        <summary>1.2 Converting denary ↔ binary</summary>
+        <div class="lesson-section-body">
 
           <div class="everyday-box">
             <strong>Everyday idea — binary → denary:</strong> Imagine four switches labelled <strong>8, 4, 2, 1</strong>. Flip a switch <strong>on</strong> and you add that number. Binary <span class="bit-grid">1101</span> means: 8 on, 4 off, 2 on, 1 on → 8 + 2 + 1 = <strong>13</strong>.
@@ -233,15 +232,15 @@
             <strong>Common mistake:</strong> Reading the remainders top-to-bottom. The first remainder you get is the <em>right-hand</em> bit of the answer.
           </div>
 
-          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
-            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+          <div class="lesson-quickcheck">
+            <p class="lesson-quickcheck-title">Quick Check</p>
             <div class="mcq-inline" data-correct="B">
-              <p style="margin:0 0 10px;">Binary 1101₂ in denary is:</p>
+              <p>Binary 1101₂ in denary is:</p>
               <button class="btn mcq-btn" data-letter="A">11</button>
               <button class="btn mcq-btn" data-letter="B">13</button>
               <button class="btn mcq-btn" data-letter="C">14</button>
               <button class="btn mcq-btn" data-letter="D">15</button>
-              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+              <p class="mcq-feedback"></p>
             </div>
           </div>
         </div>
@@ -250,17 +249,17 @@
   </details>
 
   <!-- 2. HEXADECIMAL -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
       Hexadecimal (Base 16)
       <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
     </summary>
-    <div style="padding:14px 16px 8px;background:#fff;">
+    <div class="lesson-section-body">
 
-      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
-        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">2.1 Why hex exists</summary>
-        <div style="padding:14px 16px;">
+      <details class="lesson-inner lesson-subsection">
+        <summary>2.1 Why hex exists</summary>
+        <div class="lesson-section-body">
 
           <div class="everyday-box">
             <strong>Everyday idea:</strong> A web colour might be written <code>#FF5733</code> instead of a 24-character binary string. Hex is a <strong>shorthand</strong> for binary: one hex digit = exactly <strong>four bits</strong> (a <strong>nybble</strong>). Two hex digits = 8 bits = one byte.
@@ -268,23 +267,23 @@
 
           <p>After 9, hex uses letters: A=10, B=11, … F=15. So <strong>FF</strong> in one byte means “both nybbles are full” → 255 in denary (the biggest 8-bit unsigned value).</p>
 
-          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
-            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+          <div class="lesson-quickcheck">
+            <p class="lesson-quickcheck-title">Quick Check</p>
             <div class="mcq-inline" data-correct="B">
-              <p style="margin:0 0 10px;">One hexadecimal digit represents how many bits?</p>
+              <p>One hexadecimal digit represents how many bits?</p>
               <button class="btn mcq-btn" data-letter="A">2</button>
               <button class="btn mcq-btn" data-letter="B">4</button>
               <button class="btn mcq-btn" data-letter="C">8</button>
               <button class="btn mcq-btn" data-letter="D">16</button>
-              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+              <p class="mcq-feedback"></p>
             </div>
           </div>
         </div>
       </details>
 
-      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
-        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">2.2 Converting hex, binary and denary</summary>
-        <div style="padding:14px 16px;">
+      <details class="lesson-inner lesson-subsection">
+        <summary>2.2 Converting hex, binary and denary</summary>
+        <div class="lesson-section-body">
 
           <div class="everyday-box">
             <strong>Everyday idea — hex → denary:</strong> Hex <code>2A</code> is like saying “2 tens and A ones” but in base 16: (2 × 16) + 10 = <strong>42</strong>.
@@ -299,15 +298,15 @@
             <strong>Exam method:</strong> Pad with leading zeros if needed (<code>110101</code> → <code>00110101</code>). Denary → hex: divide by 16, remainders 10–15 become A–F.
           </div>
 
-          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
-            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+          <div class="lesson-quickcheck">
+            <p class="lesson-quickcheck-title">Quick Check</p>
             <div class="mcq-inline" data-correct="C">
-              <p style="margin:0 0 10px;">Hexadecimal F in denary is:</p>
+              <p>Hexadecimal F in denary is:</p>
               <button class="btn mcq-btn" data-letter="A">14</button>
               <button class="btn mcq-btn" data-letter="B">16</button>
               <button class="btn mcq-btn" data-letter="C">15</button>
               <button class="btn mcq-btn" data-letter="D">255</button>
-              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+              <p class="mcq-feedback"></p>
             </div>
           </div>
         </div>
@@ -316,17 +315,17 @@
   </details>
 
   <!-- 3. BINARY ARITHMETIC -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
       Binary Arithmetic
       <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
     </summary>
-    <div style="padding:14px 16px 8px;background:#fff;">
+    <div class="lesson-section-body">
 
-      <details class="lesson-inner" open style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
-        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">3.1 Binary addition</summary>
-        <div style="padding:14px 16px;">
+      <details class="lesson-inner lesson-subsection" open>
+        <summary>3.1 Binary addition</summary>
+        <div class="lesson-section-body">
 
           <div class="everyday-box">
             <strong>Everyday idea:</strong> You already add in columns in maths. Adding <strong>27 + 15</strong>:
@@ -373,23 +372,23 @@ Column by column (start on the RIGHT):
             </ul>
           </div>
 
-          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
-            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+          <div class="lesson-quickcheck">
+            <p class="lesson-quickcheck-title">Quick Check</p>
             <div class="mcq-inline" data-correct="A">
-              <p style="margin:0 0 10px;">Binary 101 + 11 equals (same as 5 + 3 in denary):</p>
+              <p>Binary 101 + 11 equals (same as 5 + 3 in denary):</p>
               <button class="btn mcq-btn" data-letter="A">1000</button>
               <button class="btn mcq-btn" data-letter="B">110</button>
               <button class="btn mcq-btn" data-letter="C">111</button>
               <button class="btn mcq-btn" data-letter="D">1010</button>
-              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+              <p class="mcq-feedback"></p>
             </div>
           </div>
         </div>
       </details>
 
-      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
-        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">3.2 Shifts and overflow</summary>
-        <div style="padding:14px 16px;">
+      <details class="lesson-inner lesson-subsection">
+        <summary>3.2 Shifts and overflow</summary>
+        <div class="lesson-section-body">
 
           <div class="everyday-box">
             <strong>Everyday idea — left shift:</strong> Writing <strong>37</strong> in denary and shifting digits left (adding a zero) makes <strong>370</strong> — you multiplied by 10. In binary, shifting every bit <strong>one place left</strong> (and putting 0 in the empty end) <strong>doubles</strong> the value: 5 → 10 → 20.
@@ -407,15 +406,15 @@ Column by column (start on the RIGHT):
             <strong>Everyday idea — overflow:</strong> A car odometer shows 99999 miles. Add one mile and it shows <strong>00000</strong> — it ran out of digits. An 8-bit register maxes at <strong>255</strong>; add 1 and it can “wrap” to 0 because there is nowhere to store 256.
           </div>
 
-          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
-            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+          <div class="lesson-quickcheck">
+            <p class="lesson-quickcheck-title">Quick Check</p>
             <div class="mcq-inline" data-correct="A">
-              <p style="margin:0 0 10px;">An unsigned binary number shifted left by one place (no overflow) generally:</p>
+              <p>An unsigned binary number shifted left by one place (no overflow) generally:</p>
               <button class="btn mcq-btn" data-letter="A">Multiplies the value by 2</button>
               <button class="btn mcq-btn" data-letter="B">Divides the value by 2</button>
               <button class="btn mcq-btn" data-letter="C">Stays the same</button>
               <button class="btn mcq-btn" data-letter="D">Converts to hex automatically</button>
-              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+              <p class="mcq-feedback"></p>
             </div>
           </div>
         </div>
@@ -426,17 +425,17 @@ Column by column (start on the RIGHT):
   </details>
 
   <!-- 4. STORAGE UNITS -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
       Units of Storage
       <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
     </summary>
-    <div style="padding:14px 16px 8px;background:#fff;">
+    <div class="lesson-section-body">
 
-      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
-        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">4.1 Bits, bytes and prefixes</summary>
-        <div style="padding:14px 16px;">
+      <details class="lesson-inner lesson-subsection">
+        <summary>4.1 Bits, bytes and prefixes</summary>
+        <div class="lesson-section-body">
 
           <div class="everyday-box">
             <strong>Everyday idea:</strong> A text message “Hi” is not stored as ink on paper — the phone stores a short list of numbers for H and i. Each character needs a small chunk of memory; GCSE calls that chunk a <strong>byte</strong> (8 bits). A photo is thousands of times bigger, so we use <strong>kilobytes</strong> and <strong>megabytes</strong>.
@@ -446,23 +445,23 @@ Column by column (start on the RIGHT):
 
           <p>Watch the capital letter: <strong>Mb</strong> (megabit) is used for download <em>speed</em>; <strong>MB</strong> (megabyte) is file <em>size</em>.</p>
 
-          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
-            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+          <div class="lesson-quickcheck">
+            <p class="lesson-quickcheck-title">Quick Check</p>
             <div class="mcq-inline" data-correct="B">
-              <p style="margin:0 0 10px;">How many bits in one byte?</p>
+              <p>How many bits in one byte?</p>
               <button class="btn mcq-btn" data-letter="A">4</button>
               <button class="btn mcq-btn" data-letter="B">8</button>
               <button class="btn mcq-btn" data-letter="C">16</button>
               <button class="btn mcq-btn" data-letter="D">1000</button>
-              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+              <p class="mcq-feedback"></p>
             </div>
           </div>
         </div>
       </details>
 
-      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
-        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">4.2 Capacity calculations</summary>
-        <div style="padding:14px 16px;">
+      <details class="lesson-inner lesson-subsection">
+        <summary>4.2 Capacity calculations</summary>
+        <div class="lesson-section-body">
 
           <div class="everyday-box">
             <strong>Everyday idea:</strong> A combination lock with <strong>3</strong> wheels, each 0–9, has 10 × 10 × 10 = <strong>1000</strong> codes. A binary field with <strong>3 bits</strong> has 2 × 2 × 2 = <strong>8</strong> patterns (0–7). The biggest code is always <strong>one less</strong> than the number of patterns: 3 bits → max value <strong>7</strong> (formula: 2ⁿ − 1).
@@ -475,15 +474,15 @@ Column by column (start on the RIGHT):
             • 5 KB (if 1 KB = 1000 B) → 5 × 1000 = <strong>5000 bytes</strong>
           </div>
 
-          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
-            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+          <div class="lesson-quickcheck">
+            <p class="lesson-quickcheck-title">Quick Check</p>
             <div class="mcq-inline" data-correct="C">
-              <p style="margin:0 0 10px;">Maximum denary value in 5 unsigned bits?</p>
+              <p>Maximum denary value in 5 unsigned bits?</p>
               <button class="btn mcq-btn" data-letter="A">32</button>
               <button class="btn mcq-btn" data-letter="B">64</button>
               <button class="btn mcq-btn" data-letter="C">31</button>
               <button class="btn mcq-btn" data-letter="D">16</button>
-              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+              <p class="mcq-feedback"></p>
             </div>
           </div>
         </div>
@@ -492,17 +491,17 @@ Column by column (start on the RIGHT):
   </details>
 
   <!-- 5. TEXT -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
       Representing Text
       <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
     </summary>
-    <div style="padding:14px 16px 8px;background:#fff;">
+    <div class="lesson-section-body">
 
-      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
-        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">5.1 ASCII and Unicode</summary>
-        <div style="padding:14px 16px;">
+      <details class="lesson-inner lesson-subsection">
+        <summary>5.1 ASCII and Unicode</summary>
+        <div class="lesson-section-body">
 
           <div class="everyday-box">
             <strong>Everyday idea:</strong> Morse code uses dots and dashes for letters — the receiver looks up each pattern in a table. Computers do the same with numbers: <strong>A</strong> might be stored as <strong>65</strong>, <strong>B</strong> as 66, and so on. That table is called a <strong>character set</strong>.
@@ -522,15 +521,15 @@ Column by column (start on the RIGHT):
             <strong>AQA note:</strong> If the question says <strong>7-bit ASCII</strong>, multiply the character count by <strong>7</strong> (bits), not 8.
           </div>
 
-          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
-            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+          <div class="lesson-quickcheck">
+            <p class="lesson-quickcheck-title">Quick Check</p>
             <div class="mcq-inline" data-correct="B">
-              <p style="margin:0 0 10px;">Unicode is used instead of basic ASCII mainly because Unicode:</p>
+              <p>Unicode is used instead of basic ASCII mainly because Unicode:</p>
               <button class="btn mcq-btn" data-letter="A">Uses fewer bits for every character</button>
               <button class="btn mcq-btn" data-letter="B">Represents many more characters worldwide</button>
               <button class="btn mcq-btn" data-letter="C">Only stores images</button>
               <button class="btn mcq-btn" data-letter="D">Cannot represent English letters</button>
-              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+              <p class="mcq-feedback"></p>
             </div>
           </div>
         </div>
@@ -539,17 +538,17 @@ Column by column (start on the RIGHT):
   </details>
 
   <!-- 6. IMAGES -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
       Representing Images
       <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
     </summary>
-    <div style="padding:14px 16px 8px;background:#fff;">
+    <div class="lesson-section-body">
 
-      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
-        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">6.1 Resolution and colour depth</summary>
-        <div style="padding:14px 16px;">
+      <details class="lesson-inner lesson-subsection">
+        <summary>6.1 Resolution and colour depth</summary>
+        <div class="lesson-section-body">
 
           <div class="everyday-box">
             <strong>Everyday idea:</strong> Zoom into any digital photo and you see tiny coloured squares — <strong>pixels</strong>, like a mosaic. A bigger mosaic (more pixels across and down) looks sharper: that is <strong>resolution</strong> (width × height). How many colours each square can be depends on <strong>colour depth</strong> — more bits per pixel → more possible colours.
@@ -557,23 +556,23 @@ Column by column (start on the RIGHT):
 
           <p>Examples: 1 bit per pixel → only black or white (2 colours). 8 bits → 2⁸ = <strong>256 colours</strong>. 24 bits → millions of colours (typical phone photo).</p>
 
-          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
-            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
-            <p style="margin:0 0 10px;font-size:0.9rem;color:var(--text-muted);">8-bit colour depth allows how many colours?</p>
+          <div class="lesson-quickcheck">
+            <p class="lesson-quickcheck-title">Quick Check</p>
+            <p>8-bit colour depth allows how many colours?</p>
             <div class="mcq-inline" data-correct="C">
               <button class="btn mcq-btn" data-letter="A">8</button>
               <button class="btn mcq-btn" data-letter="B">16</button>
               <button class="btn mcq-btn" data-letter="C">256</button>
               <button class="btn mcq-btn" data-letter="D">1024</button>
-              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+              <p class="mcq-feedback"></p>
             </div>
           </div>
         </div>
       </details>
 
-      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
-        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">6.2 Image file size (uncompressed)</summary>
-        <div style="padding:14px 16px;">
+      <details class="lesson-inner lesson-subsection">
+        <summary>6.2 Image file size (uncompressed)</summary>
+        <div class="lesson-section-body">
 
           <div class="everyday-box">
             <strong>Everyday idea:</strong> A 10×10 mosaic has 100 tiles. If each tile needs a 24-digit colour code, you need 100 × 24 = <strong>2400</strong> digits of data. Replace “tiles” with pixels and “digits” with bits — that is the file size formula.
@@ -592,15 +591,15 @@ Column by column (start on the RIGHT):
             <strong>Common mistake:</strong> Adding width + height + depth. You are counting every pixel’s colour — always <strong>multiply</strong> all three.
           </div>
 
-          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
-            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+          <div class="lesson-quickcheck">
+            <p class="lesson-quickcheck-title">Quick Check</p>
             <div class="mcq-inline" data-correct="B">
-              <p style="margin:0 0 10px;">Uncompressed image size in bits equals:</p>
+              <p>Uncompressed image size in bits equals:</p>
               <button class="btn mcq-btn" data-letter="A">width + height + depth</button>
               <button class="btn mcq-btn" data-letter="B">width × height × colour depth</button>
               <button class="btn mcq-btn" data-letter="C">width × height ÷ depth</button>
               <button class="btn mcq-btn" data-letter="D">depth only</button>
-              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+              <p class="mcq-feedback"></p>
             </div>
           </div>
         </div>
@@ -611,17 +610,17 @@ Column by column (start on the RIGHT):
   </details>
 
   <!-- 7. SOUND -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">7</span>
       Representing Sound
       <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
     </summary>
-    <div style="padding:14px 16px 8px;background:#fff;">
+    <div class="lesson-section-body">
 
-      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
-        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">7.1 Sample rate and bit depth</summary>
-        <div style="padding:14px 16px;">
+      <details class="lesson-inner lesson-subsection">
+        <summary>7.1 Sample rate and bit depth</summary>
+        <div class="lesson-section-body">
 
           <div class="everyday-box">
             <strong>Everyday idea:</strong> Real sound is a smooth wave. A computer cannot store every point on the wave — it takes <strong>snapshots</strong> (samples) many times per second, like a flip-book animation. <strong>Sample rate</strong> = how many snapshots per second (CD quality ≈ 44 100 per second). <strong>Bit depth</strong> = how accurately each snapshot height is stored (more bits → smoother replay, bigger file).
@@ -629,23 +628,23 @@ Column by column (start on the RIGHT):
 
           <p>More samples per second or more bits per sample → better quality → <strong>larger file</strong>. Voice notes on a phone use lower settings than studio music.</p>
 
-          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
-            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+          <div class="lesson-quickcheck">
+            <p class="lesson-quickcheck-title">Quick Check</p>
             <div class="mcq-inline" data-correct="C">
-              <p style="margin:0 0 10px;">Doubling sample rate (same duration, bit depth, mono) will:</p>
+              <p>Doubling sample rate (same duration, bit depth, mono) will:</p>
               <button class="btn mcq-btn" data-letter="A">Halve file size</button>
               <button class="btn mcq-btn" data-letter="B">Keep file size the same</button>
               <button class="btn mcq-btn" data-letter="C">Double file size</button>
               <button class="btn mcq-btn" data-letter="D">Quarter file size</button>
-              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+              <p class="mcq-feedback"></p>
             </div>
           </div>
         </div>
       </details>
 
-      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
-        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">7.2 Sound file size (uncompressed)</summary>
-        <div style="padding:14px 16px;">
+      <details class="lesson-inner lesson-subsection">
+        <summary>7.2 Sound file size (uncompressed)</summary>
+        <div class="lesson-section-body">
 
           <div class="everyday-box">
             <strong>Everyday idea:</strong> A 10-second voice clip with more snapshots per second stores more numbers. Stereo headphones need a height value for <strong>left and right</strong> each time — twice the data of mono.
@@ -660,15 +659,15 @@ Column by column (start on the RIGHT):
             Same clip in stereo → × 2 = <strong>1 764 000 bytes</strong>
           </div>
 
-          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
-            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+          <div class="lesson-quickcheck">
+            <p class="lesson-quickcheck-title">Quick Check</p>
             <div class="mcq-inline" data-correct="A">
-              <p style="margin:0 0 10px;">Stereo sound needs ×2 in the formula because:</p>
+              <p>Stereo sound needs ×2 in the formula because:</p>
               <button class="btn mcq-btn" data-letter="A">There are two channels (left and right)</button>
               <button class="btn mcq-btn" data-letter="B">Bit depth doubles automatically</button>
               <button class="btn mcq-btn" data-letter="C">Sample rate halves</button>
               <button class="btn mcq-btn" data-letter="D">Duration is squared</button>
-              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+              <p class="mcq-feedback"></p>
             </div>
           </div>
         </div>
@@ -677,17 +676,17 @@ Column by column (start on the RIGHT):
   </details>
 
   <!-- 8. COMPRESSION -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">8</span>
       Compression
       <span class="board-tag board-aqa">AQA</span><span class="board-tag board-ocr">OCR</span><span class="board-tag board-edx">Edexcel</span>
     </summary>
-    <div style="padding:14px 16px 8px;background:#fff;">
+    <div class="lesson-section-body">
 
-      <details class="lesson-inner" style="border:1px solid #e2e8f0;border-radius:6px;margin-bottom:10px;">
-        <summary style="background:#f8fafc;padding:10px 14px;cursor:pointer;font-size:.95rem;font-weight:600;color:#334155;">8.1 Lossy and lossless compression</summary>
-        <div style="padding:14px 16px;">
+      <details class="lesson-inner lesson-subsection">
+        <summary>8.1 Lossy and lossless compression</summary>
+        <div class="lesson-section-body">
 
           <div class="everyday-box">
             <strong>Everyday idea — lossless:</strong> Instead of writing “WWWWWWWWWW” on a form, you write <strong>“10 × W”</strong>. Anyone can expand it back to the exact original. That is <strong>run-length encoding (RLE)</strong> — a lossless trick exams love.
@@ -703,15 +702,15 @@ Column by column (start on the RIGHT):
             • Streaming music / social photos → often <strong>lossy</strong> (smaller, “good enough” quality)
           </div>
 
-          <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:12px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
-            <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+          <div class="lesson-quickcheck">
+            <p class="lesson-quickcheck-title">Quick Check</p>
             <div class="mcq-inline" data-correct="C">
-              <p style="margin:0 0 10px;">Lossy compression:</p>
+              <p>Lossy compression:</p>
               <button class="btn mcq-btn" data-letter="A">Restores data perfectly every time</button>
               <button class="btn mcq-btn" data-letter="B">Cannot reduce file size</button>
               <button class="btn mcq-btn" data-letter="C">Permanently removes some data</button>
               <button class="btn mcq-btn" data-letter="D">Is only for spreadsheets</button>
-              <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+              <p class="mcq-feedback"></p>
             </div>
           </div>
         </div>
@@ -722,18 +721,18 @@ Column by column (start on the RIGHT):
   </details>
 
   <!-- QUICK REFERENCE -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">★</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">★</span>
       Quick Reference
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
-      <p style="margin:0 0 12px;color:var(--text-muted);font-size:0.95rem;">Use this after you have read the examples above — not as your first introduction.</p>
+    <div class="lesson-section-body">
+      <p>Use this after you have read the examples above — not as your first introduction.</p>
       <div class="lesson-quick-ref-card" style="max-width:100%;">
         <h3 style="margin:0 0 14px;text-align:center;font-family:var(--font-serif);font-size:1.1rem;color:#1a6fa8;">Data representation — exam checklist</h3>
         <div class="lesson-quick-ref-grid">
           <div>
-            <h4 style="margin:0 0 8px;color:#1a6fa8;">Conversions</h4>
+            <h4>Conversions</h4>
             <ul style="margin:0;padding-left:18px;line-height:1.75;font-size:0.95rem;">
               <li>Denary → bin: divide by 2, remainders up</li>
               <li>Bin → denary: sum powers of 2 (switch/coin idea)</li>
@@ -741,7 +740,7 @@ Column by column (start on the RIGHT):
             </ul>
           </div>
           <div>
-            <h4 style="margin:0 0 8px;color:#1a6fa8;">Formulas</h4>
+            <h4>Formulas</h4>
             <ul style="margin:0;padding-left:18px;line-height:1.75;font-size:0.95rem;">
               <li>Max n-bit unsigned: 2ⁿ − 1</li>
               <li>Image bits: W × H × depth</li>
@@ -749,7 +748,7 @@ Column by column (start on the RIGHT):
             </ul>
           </div>
           <div>
-            <h4 style="margin:0 0 8px;color:#1a6fa8;">Binary add</h4>
+            <h4>Binary add</h4>
             <ul style="margin:0;padding-left:18px;line-height:1.75;font-size:0.95rem;">
               <li>Same as column add in maths</li>
               <li>1 + 1 → write 0, carry 1</li>
@@ -759,15 +758,15 @@ Column by column (start on the RIGHT):
         </div>
       </div>
 
-      <div style="background:var(--hint-bg);border-left:3px solid var(--primary);padding:14px 20px;margin:16px 0 0;border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px;font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="B">
-          <p style="margin:0 0 10px;">1 KB (decimal, as used in many GCSE questions) equals:</p>
+          <p>1 KB (decimal, as used in many GCSE questions) equals:</p>
           <button class="btn mcq-btn" data-letter="A">1024 bytes</button>
           <button class="btn mcq-btn" data-letter="B">1000 bytes</button>
           <button class="btn mcq-btn" data-letter="C">8 bytes</button>
           <button class="btn mcq-btn" data-letter="D">100 bytes</button>
-          <p class="mcq-feedback" style="margin-top:8px;font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
     </div>
@@ -775,10 +774,9 @@ Column by column (start on the RIGHT):
 
 </div>
 
-<div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;max-width:860px;margin-left:auto;margin-right:auto;">
-  <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
-  <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='cs', topic='data_rep') }}"
-     style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+<div class="lesson-practice-cta">
+  <p>Ready to practise?</p>
+  <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='cs', topic='data_rep') }}">
     Start Practice Quiz
   </a>
 </div>

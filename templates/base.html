@@ -35,11 +35,11 @@
     <!-- App CSS - load order is significant (docs/UI_REDESIGN.md U0) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}?v=18">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=20">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=24">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=26">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=25">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=27">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/practice.css') }}?v=19">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=38">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}?v=18">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=40">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}?v=19">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/diagrams.css') }}?v=23">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/lesson-assist.css') }}?v=17">
 
@@ -77,7 +77,7 @@
       }
     } catch (e) {}
     </script>
-    <script src="{{ url_for('static', filename='js/study-buddy.js') }}?v=19" defer></script>
+    <script src="{{ url_for('static', filename='js/study-buddy.js') }}?v=20" defer></script>
     {% endif %}
     {% if lesson_assist_enabled and lesson_meta and not lesson_meta.get('quizReview') %}
     <script src="{{ url_for('static', filename='js/lesson-assist.js') }}?v=17" defer></script>
@@ -86,7 +86,7 @@
     <script src="{{ url_for('static', filename='js/quiz-assist.js') }}?v=1" defer></script>
     {% endif %}
     {% if lesson_meta and not lesson_meta.get('quizReview') %}
-    <script src="{{ url_for('static', filename='js/lesson-progress.js') }}?v=22" defer></script>
+    <script src="{{ url_for('static', filename='js/lesson-progress.js') }}?v=23" defer></script>
     {% endif %}
 </head>
 
