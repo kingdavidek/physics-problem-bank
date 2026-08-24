@@ -196,11 +196,17 @@ textarea:focus {
     width: 8px;
     height: 12px;
     border-radius: 2px;
-    animation: confetti-fall 800ms var(--ease-out) forwards;
+    background: var(--xp-500);
+    animation: confetti-fall 900ms var(--ease-out) forwards;
 }
+.confetti-bit--0 { background: var(--xp-500); }
+.confetti-bit--1 { background: var(--streak-500); }
+.confetti-bit--2 { background: var(--correct-500); }
+.confetti-bit--3 { background: var(--gold-500); }
+.confetti-bit--4 { background: var(--brand-400); }
 @keyframes confetti-fall {
     to {
-        transform: translate(var(--drift, 0), 40vh) rotate(220deg);
+        transform: translate(var(--drift, 0), 42vh) rotate(var(--spin, 220deg));
         opacity: 0;
     }
 }

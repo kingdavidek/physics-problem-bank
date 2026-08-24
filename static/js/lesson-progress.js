@@ -441,7 +441,8 @@
       window.requestAnimationFrame(function () {
         var target = step.mcq;
         if (target && target.scrollIntoView) {
-          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
         }
         scheduleLayout();
       });

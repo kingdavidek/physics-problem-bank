@@ -154,9 +154,13 @@
 }
 .mcq-btn.is-correct::after { content: "\2713"; color: var(--correct-600); }
 .mcq-btn.is-wrong::after   { content: "\2717"; color: var(--wrong-600); }
+.mcq-btn.has-drawn-check::after { content: none; }
 @media (prefers-reduced-motion: no-preference) {
-    .mcq-btn.is-pop { animation: mcq-pop 380ms var(--ease-spring); }
-    .mcq-btn.is-shake { animation: mcq-shake 360ms var(--ease); }
+    .mcq-btn.is-pop,
+    .btn.is-pop,
+    .is-celebrate-host.is-pop { animation: mcq-pop 380ms var(--ease-spring); }
+    .mcq-btn.is-shake,
+    .btn.is-shake { animation: mcq-shake 360ms var(--ease); }
     .mcq-btn.is-reveal { animation: mcq-reveal 500ms var(--ease-out); }
 }
 @keyframes mcq-pop {
@@ -1094,5 +1098,71 @@
     background: linear-gradient(90deg, var(--primary), #3d9fd4);
     border-radius: var(--radius-pill);
     transition: width 0.35s var(--ease);
+}
+
+/* U7.3 — correct-answer celebration (checkmark draw + local +XP float) */
+.is-celebrate-host { position: relative; overflow: visible; }
+.answer-check-mark {
+    width: 1.35rem;
+    height: 1.35rem;
+    margin-left: auto;
+    flex-shrink: 0;
+    overflow: visible;
+}
+.answer-check-mark-ring,
+.answer-check-mark-tick {
+    fill: none;
+    stroke: var(--correct-600);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.answer-check-mark-ring { stroke-width: 2; }
+.answer-check-mark-tick { stroke-width: 2.25; }
+.answer-xp-float {
+    position: absolute;
+    right: var(--space-2);
+    top: -0.35rem;
+    z-index: 2;
+    pointer-events: none;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    background: var(--xp-600);
+    color: #fff;
+    font-weight: 800;
+    font-size: var(--text-xs);
+    letter-spacing: 0.02em;
+    box-shadow: var(--elev-2);
+    white-space: nowrap;
+}
+@media (prefers-reduced-motion: no-preference) {
+    .answer-check-mark-ring {
+        stroke-dasharray: 64;
+        stroke-dashoffset: 64;
+        animation: answer-check-ring var(--dur-slow) var(--ease-out) both;
+    }
+    .answer-check-mark-tick {
+        stroke-dasharray: 24;
+        stroke-dashoffset: 24;
+        animation: answer-check-tick var(--dur) var(--ease-out) 120ms both;
+    }
+    .answer-xp-float {
+        animation: answer-xp-float 1.15s var(--ease-out) both;
+    }
+}
+@keyframes answer-check-ring {
+    to { stroke-dashoffset: 0; }
+}
+@keyframes answer-check-tick {
+    to { stroke-dashoffset: 0; }
+}
+@keyframes answer-xp-float {
+    from { opacity: 0; transform: translateY(6px) scale(0.92); }
+    18% { opacity: 1; transform: translateY(0) scale(1); }
+    to { opacity: 0; transform: translateY(-22px) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .answer-xp-float { animation: none; }
+    .answer-check-mark-ring,
+    .answer-check-mark-tick { animation: none; stroke-dashoffset: 0; }
 }
 

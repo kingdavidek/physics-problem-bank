@@ -19,6 +19,7 @@
         <a href="#brand" class="hero-pill">Brand</a>
         <a href="#mascot" class="hero-pill">Mascot</a>
         <a href="#progress-viz" class="hero-pill">Progress</a>
+        <a href="#motion" class="hero-pill">Motion</a>
         <a href="#diagrams" class="hero-pill">Diagrams</a>
     </div>
 </div>
@@ -183,6 +184,28 @@
             <button class="btn mcq-btn is-selected">Selected option</button>
             <button class="btn mcq-btn is-correct" disabled>Correct option</button>
             <button class="btn mcq-btn is-wrong" disabled>Wrong option</button>
+        </div>
+    </div>
+</section>
+
+<section class="section-panel" id="motion">
+    <div class="section-panel-header">Motion (U7)</div>
+    <div class="section-panel-body">
+        <p class="profile-empty">Correct-answer celebration: scale-pop, drawn checkmark, local <code>+XP</code> float. Confetti is 40 CSS particles, self-cleaning. All of it is gated on <code>prefers-reduced-motion</code>.</p>
+        <div class="sg-row" style="margin-top:var(--space-4);">
+            <button type="button" class="btn mcq-btn" id="sg-celebrate-correct" data-letter="A">Correct option</button>
+            <button type="button" class="btn btn-outline" id="sg-celebrate-confetti">Confetti burst</button>
+        </div>
+        <div class="streak-ring-wrap" aria-hidden="true" style="margin-top:var(--space-4);">
+            <svg class="streak-ring" viewBox="0 0 120 120">
+                <circle class="streak-ring-track" cx="60" cy="60" r="52"></circle>
+                <circle class="streak-ring-fill" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="81.7"></circle>
+            </svg>
+            <div class="streak-ring-core">
+                <span class="streak-ring-flame">🔥</span>
+                <strong class="streak-ring-count">12</strong>
+                <span class="streak-ring-label">days</span>
+            </div>
         </div>
     </div>
 </section>
@@ -417,4 +440,32 @@
         line-height: 1.35;
     }
 </style>
+<script>
+(function () {
+  function ready(fn) {
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
+    else fn();
+  }
+  ready(function () {
+    var correctBtn = document.getElementById('sg-celebrate-correct');
+    if (correctBtn) {
+      correctBtn.addEventListener('click', function () {
+        var mark = correctBtn.querySelector('.answer-check-mark');
+        if (mark) mark.remove();
+        var xp = correctBtn.querySelector('.answer-xp-float');
+        if (xp) xp.remove();
+        correctBtn.classList.remove('has-drawn-check', 'is-pop');
+        correctBtn.classList.add('is-correct');
+        if (window.pbCelebrate) window.pbCelebrate.correct(correctBtn);
+      });
+    }
+    var confettiBtn = document.getElementById('sg-celebrate-confetti');
+    if (confettiBtn) {
+      confettiBtn.addEventListener('click', function () {
+        if (window.pbCelebrate && window.pbCelebrate.confetti) window.pbCelebrate.confetti();
+      });
+    }
+  });
+})();
+</script>
 {% endblock %}

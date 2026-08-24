@@ -1,7 +1,7 @@
 # Problem Bank — UI & graphics redesign (Phase U)
 
 **Last updated:** 2026-08-24
-**Status:** **U0–U5 shipped.** U6 (lesson unification), U7 (motion), U8 (a11y/QA) remain.
+**Status:** **U0–U5 shipped.** U7 in progress (U7.1–U7.3, U7.5). U6 (lesson unification), remaining U7, U8 (a11y/QA) remain.
 **Audience:** The next AI agent / developer implementing this
 **Companions:** `docs/MOBILE.md` (M0–M4 shipped), `docs/ARCHITECTURE.md`, `docs/ENGAGEMENT_VISUAL.md`
 
@@ -559,15 +559,15 @@ Currently there are 4 inline nav SVGs and everything else is emoji. Emoji are fi
 
 | Step | Task |
 |---|---|
-| U7.1 | Motion tokens: `--dur-fast 120ms`, `--dur 200ms`, `--dur-slow 400ms`, `--ease-out`, `--ease-spring` |
-| U7.2 | A global `@media (prefers-reduced-motion: reduce)` block that disables transforms/animations and `scroll-behavior: smooth` (currently ungated at `base.html:75`) |
-| U7.3 | Correct-answer celebration: scale-pop + checkmark draw + `+XP` float |
-| U7.4 | Confetti on milestone/badge/streak-round-number — CSS particles, no library, ~40 elements, self-cleaning |
-| U7.5 | Streak ring fill animation on profile load |
-| U7.6 | Skeleton loaders for feed, notifications, and leaderboards instead of "Loading…" text |
-| U7.7 | Toast redesign — icon + message + optional action, slide + fade, stacking |
-| U7.8 | Buddy: idle bob, reaction on refetch |
-| U7.9 | **Optional sound** — short correct/incorrect/celebrate clips, default **off**, toggle in settings, `<audio>` preloaded. Recommend shipping muted-by-default; a school-context app that makes noise unprompted is a problem. |
+| U7.1 | Motion tokens: `--dur-fast 120ms`, `--dur 200ms`, `--dur-slow 400ms`, `--ease-out`, `--ease-spring` | **Done** (in `tokens.css`) |
+| U7.2 | A global `@media (prefers-reduced-motion: reduce)` block that disables transforms/animations and `scroll-behavior: smooth` | **Done** (`base.css`; JS `scrollIntoView` gated in `u4.js` / `lesson-progress.js`) |
+| U7.3 | Correct-answer celebration: scale-pop + checkmark draw + `+XP` float | **Done** (MCQ + generator check; `celebrate.js`) |
+| U7.4 | Confetti on milestone/badge/streak-round-number — CSS particles, no library, ~40 elements, self-cleaning | Partial — 40-particle burst exists (3-in-a-row + lesson complete + styleguide). Milestone/badge triggers still open. |
+| U7.5 | Streak ring fill animation on profile load | **Done** |
+| U7.6 | Skeleton loaders for feed, notifications, and leaderboards instead of "Loading…" text | Open |
+| U7.7 | Toast redesign — icon + message + optional action, slide + fade, stacking | Open |
+| U7.8 | Buddy: idle bob, reaction on refetch | Open |
+| U7.9 | **Optional sound** — short correct/incorrect/celebrate clips, default **off**, toggle in settings, `<audio>` preloaded. Recommend shipping muted-by-default; a school-context app that makes noise unprompted is a problem. | Open |
 
 ---
 
@@ -607,13 +607,13 @@ Currently there are 4 inline nav SVGs and everything else is emoji. Emoji are fi
 - [x] `static/css/` exists; `base.html` `<style>` block removed; no hex values outside `tokens.css` *(diagram/lesson hex remains until U6)*
 - [x] `/styleguide` renders every component and diagram primitive
 - [x] Bottom tab bar on mobile; persistent nav on desktop
-- [ ] Streak ring, XP, badge medallions, answer celebration shipped *(U5.9 rings/charts shipped; U7.3 celebration still open)*
+- [x] Streak ring, XP, badge medallions, answer celebration shipped *(U5.9 rings/charts; U7.3 celebration; U7.5 ring fill)*
 - [x] U4.2a shipped as its own commit (`order` on every `TOPICS` entry); U4.2b path UI only after that
 - [x] Every page in §7 redesigned
 - [x] `models/svg_kit.py` exists; mensuration solids (incl. the cylinder) redrawn; generator cylinder added
 - [x] Icon sprite + topic icons + empty-state illustrations
 - [ ] All 40 lesson templates on the component system; no inline `style="` in lesson content *(U6)*
-- [ ] `prefers-reduced-motion` respected globally *(U7.2)*
+- [x] `prefers-reduced-motion` respected globally *(U7.2)*
 - [ ] Contrast audit passed; smoke suite green; `CACHE_VERSION` bumped *(U8)*
 - [x] `docs/ARCHITECTURE.md`, `docs/ENGAGEMENT_VISUAL.md`, `docs/AI_HANDOFF.md` updated *(U5 close-out 2026-08-24)*
 

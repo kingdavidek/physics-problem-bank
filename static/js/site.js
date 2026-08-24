@@ -17,6 +17,12 @@
     return headers;
   }
 
+  function celebrateResult(ok, target, revealTarget) {
+    if (!window.pbCelebrate) return;
+    if (ok) window.pbCelebrate.correct(target);
+    else window.pbCelebrate.wrong(target, revealTarget || null);
+  }
+
   function setOptionVisibility(selectEl, predicate) {
     let firstVisible = null;
     for (const opt of selectEl.options) {
@@ -740,7 +746,7 @@
             feedback.textContent = '\u2713 Correct!';
             feedback.style.color = '#16a34a';
           }
-          if (window.pbCelebrate) window.pbCelebrate.correct(btn);
+          celebrateResult(true, btn);
           block.dispatchEvent(new CustomEvent('mcq-correct', { bubbles: true }));
         } else {
           btn.classList.add('is-wrong');
@@ -752,7 +758,7 @@
               correctBtn = b;
             }
           });
-          if (window.pbCelebrate) window.pbCelebrate.wrong(btn, correctBtn);
+          celebrateResult(false, btn, correctBtn);
           if (feedback) {
             feedback.textContent = '\u2717 Not quite \u2014 the correct answer is highlighted.';
             feedback.style.color = '#dc2626';
@@ -3146,7 +3152,7 @@
                   fieldFeedback.textContent = '\u2713 Correct!';
                   fieldFeedback.style.color = '#16a34a';
                 }
-                if (window.pbCelebrate) window.pbCelebrate.correct(btn);
+                celebrateResult(true, btn);
                 maybePersistAllFields();
               } else {
                 btn.classList.add('is-wrong');
@@ -3158,7 +3164,7 @@
                     fieldCorrectBtn = b;
                   }
                 });
-                if (window.pbCelebrate) window.pbCelebrate.wrong(btn, fieldCorrectBtn);
+                celebrateResult(false, btn, fieldCorrectBtn);
                 mcqWrap.querySelectorAll('.mcq-btn').forEach(function (b) { b.disabled = false; });
                 if (fieldFeedback) {
                   fieldFeedback.textContent = '\u2717 Not quite \u2014 the correct answer is highlighted.';
@@ -3208,6 +3214,7 @@
               fieldFeedback.textContent = '\u2713 ' + freeResponseCorrectFeedback(data, userValue);
               fieldFeedback.style.color = '#16a34a';
             }
+            celebrateResult(true, checkBtn || row);
             maybePersistAllFields();
           } else if (isTextPartialScore(data)) {
             input.classList.add('is-partial');
@@ -3321,6 +3328,7 @@
         feedback.style.color = '#16a34a';
       }
       if (row) row.classList.add('is-correct');
+      celebrateResult(true, checkBtn || row);
       if (bank) {
         bank.querySelectorAll('.free-response-proof-step').forEach(function (b) {
           b.disabled = true;
@@ -3455,6 +3463,7 @@
             textarea.disabled = false;
             checkBtn.disabled = false;
           }
+          celebrateResult(ok, checkBtn || textarea);
           if (feedback) {
             feedback.textContent = data.feedback || (ok ? 'Correct!' : 'Not quite.');
             feedback.style.color = ok ? '#16a34a' : '#dc2626';
@@ -4092,6 +4101,7 @@
               feedback.textContent = '\u2713 ' + freeResponseCorrectFeedback(data, userAnswer);
               feedback.style.color = '#16a34a';
             }
+            celebrateResult(true, checkBtn || block);
           } else if (isTextPartialScore(data)) {
             setInputStatePartial();
             if (feedback) {
@@ -4108,6 +4118,7 @@
               feedback.textContent = '\u2717 ' + freeResponseWrongFeedback(block, data);
               feedback.style.color = '#dc2626';
             }
+            celebrateResult(false, checkBtn || block);
             offerWrongAnswerReflection(block, 'check', data, recordThisAttempt);
           }
           showCohortHint(block, data.cohort);

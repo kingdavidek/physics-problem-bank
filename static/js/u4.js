@@ -4,6 +4,14 @@
 (function () {
   'use strict';
 
+  function prefersReducedMotion() {
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  function scrollBehavior() {
+    return prefersReducedMotion() ? 'auto' : 'smooth';
+  }
+
   var TAB_HASH = {
     overview: 'overview',
     progress: 'progress',
@@ -32,7 +40,7 @@
       var el = document.getElementById(raw);
       if (el) {
         window.requestAnimationFrame(function () {
-          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          el.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
         });
       }
     }
@@ -121,7 +129,7 @@
       var target = document.getElementById(hash);
       if (target && !target.hidden && target.scrollIntoView) {
         window.setTimeout(function () {
-          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          target.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
         }, 0);
       }
     }

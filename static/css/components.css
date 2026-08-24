@@ -675,6 +675,14 @@ html.pwa-standalone .site-wrapper {
     stroke: var(--streak-500);
     stroke-linecap: round;
 }
+@media (prefers-reduced-motion: no-preference) {
+    .streak-ring-fill {
+        animation: streak-ring-draw 800ms var(--ease-out) 80ms both;
+    }
+}
+@keyframes streak-ring-draw {
+    from { stroke-dashoffset: 326.7; }
+}
 .streak-ring-core {
     position: absolute;
     inset: 26px 20px;

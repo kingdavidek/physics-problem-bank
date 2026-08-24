@@ -142,6 +142,7 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 |---------|--------------|-------------|
 | **Topic browser** | `/topics`, `/topic/<l>/<s>/<t>` | `topics_data.py`, lesson templates |
 | **Diagrams (`svg_kit`)** | lessons, generator questions, `/styleguide`, profile progress | `models/svg_kit.py` (Phase U5) |
+| **Motion / celebration** | MCQ + generator check, profile streak ring, `/styleguide#motion` | `static/js/celebrate.js`, motion tokens in `tokens.css` (Phase U7) |
 | **Question generator** | `/`, `POST /api/v1/problems/generate` | `topic_registry.py`, `generators/` |
 | **Quick Test** | `/quicktest/*`, API v1 quicktest | `models/quicktest.py` |
 | **Lesson quizzes** | `/lesson-quiz/*`, API v1 lesson-quiz | `generators/shared/lesson_quiz.py`, `models/lesson_quiz.py` |
