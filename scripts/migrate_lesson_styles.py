@@ -4,7 +4,7 @@
 Dry-run by default. Idempotent: a second pass is a no-op.
 
 Does not rewrite teaching copy. Leaves unmatched `style=""` in place and
-reports them. Skips `gcse_physics_radioactivity_lesson.html` (U6.6).
+reports them.
 
 Usage (from repo root):
   python scripts/migrate_lesson_styles.py
@@ -21,10 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATES = ROOT / 'templates'
 
-SKIP_FILES = {
-    # Standalone page with its own :root / palette — U6.6, not this codemod.
-    'gcse_physics_radioactivity_lesson.html',
-}
+SKIP_FILES: set[str] = set()
 
 STYLE_ATTR_RE = re.compile(r'\s+style="[^"]*"', re.I)
 CLASS_ATTR_RE = re.compile(r'\bclass="([^"]*)"')
@@ -310,7 +307,7 @@ def main() -> int:
             return 1
         if path.name in SKIP_FILES:
             skipped += 1
-            print(f'  skip {path.name} (U6.6 radioactivity — not this migrator)')
+            print(f'  skip {path.name}')
             continue
         original = path.read_text(encoding='utf-8')
         updated, mapped, unmapped = migrate_text(original)

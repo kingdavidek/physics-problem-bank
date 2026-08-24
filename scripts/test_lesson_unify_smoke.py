@@ -48,8 +48,6 @@ RADIOACTIVITY = 'gcse_physics_radioactivity_lesson.html'
 
 def test_migrated_lessons_have_shell_and_keep_mcqs():
     for path in sorted((ROOT / 'templates').glob('*_lesson.html')):
-        if path.name == RADIOACTIVITY:
-            continue
         src = path.read_text(encoding='utf-8')
         assert 'class="lesson-shell"' in src, path.name
         assert src.count('class="mcq-inline"') == src.count('data-correct='), path.name
@@ -58,8 +56,6 @@ def test_migrated_lessons_have_shell_and_keep_mcqs():
 def test_every_lesson_route_is_ok():
     client = app.test_client()
     for path in sorted((ROOT / 'templates').glob('*_lesson.html')):
-        if path.name == RADIOACTIVITY:
-            continue
         match = FILENAME_RE.match(path.name)
         assert match, path.name
         level, subject, topic = match.groups()
@@ -68,9 +64,43 @@ def test_every_lesson_route_is_ok():
         assert response.status_code == 200, f'{url} -> {response.status_code}'
         html = response.data.decode()
         src = path.read_text(encoding='utf-8')
-        if path.name != RADIOACTIVITY:
-            assert 'lesson-shell' in html, url
+        assert 'lesson-shell' in html, url
         assert html.count('mcq-inline') == src.count('class="mcq-inline"'), url
+
+
+def test_radioactivity_uses_base_tokens():
+    src = (ROOT / 'templates' / RADIOACTIVITY).read_text(encoding='utf-8')
+    assert '{% extends "base.html" %}' in src
+    assert 'class="lesson-shell"' in src
+    assert ':root' not in src
+    assert '<style>' not in src
+    assert 'pythonanywhere.com' not in src
+    assert src.count('class="lesson-section"') == 8
+    assert 'style="' not in src
+    client = app.test_client()
+    response = client.get('/topic/gcse/physics/radioactivity')
+    assert response.status_code == 200, response.data[:500]
+    html = response.data.decode()
+    assert 'lesson-shell' in html
+    assert 'relative charge' in html
+    assert 'Generate a question' in html
+    assert 'pythonanywhere.com' not in html
+
+
+def test_no_maxwidth_attribute_selectors():
+    css_dir = ROOT / 'static' / 'css'
+    needle = 'style*="max-width:860px"'
+    for path in css_dir.glob('*.css'):
+        text = path.read_text(encoding='utf-8')
+        assert needle not in text, path.name
+        assert "style*='max-width:860px'" not in text, path.name
+    js = (ROOT / 'static' / 'js' / 'lesson-progress.js').read_text(encoding='utf-8')
+    assert 'max-width:860px' not in js
+    assert 'max-width: 860px' not in js
+    for path in (ROOT / 'templates').glob('*_lesson.html'):
+        src = path.read_text(encoding='utf-8')
+        assert 'max-width:860px' not in src, path.name
+        assert 'max-width: 860px' not in src, path.name
 
 
 if __name__ == '__main__':
@@ -78,4 +108,6 @@ if __name__ == '__main__':
     test_mensuration_route()
     test_migrated_lessons_have_shell_and_keep_mcqs()
     test_every_lesson_route_is_ok()
+    test_radioactivity_uses_base_tokens()
+    test_no_maxwidth_attribute_selectors()
     print('Lesson unify smoke OK')

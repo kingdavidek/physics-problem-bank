@@ -38,8 +38,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=25">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=27">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/practice.css') }}?v=19">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=40">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}?v=19">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=42">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}?v=20">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/diagrams.css') }}?v=23">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/lesson-assist.css') }}?v=17">
 
@@ -86,7 +86,7 @@
     <script src="{{ url_for('static', filename='js/quiz-assist.js') }}?v=1" defer></script>
     {% endif %}
     {% if lesson_meta and not lesson_meta.get('quizReview') %}
-    <script src="{{ url_for('static', filename='js/lesson-progress.js') }}?v=23" defer></script>
+    <script src="{{ url_for('static', filename='js/lesson-progress.js') }}?v=24" defer></script>
     {% endif %}
 </head>
 

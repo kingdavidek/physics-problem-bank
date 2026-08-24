@@ -1,4 +1,4 @@
-"""U6.3 — lesson style migrator is dry-run, idempotent, and skips radioactivity.
+"""U6.3 — lesson style migrator is dry-run, idempotent, and a no-op on converted lessons.
 
 Run: python scripts/test_migrate_lesson_styles_smoke.py
 """
@@ -86,11 +86,16 @@ def test_mensuration_is_already_migrated_noop():
     assert unmapped == []
 
 
-def test_radioactivity_is_skipped_by_default_list():
-    assert 'gcse_physics_radioactivity_lesson.html' in mig.SKIP_FILES
+def test_radioactivity_is_migrator_noop():
+    assert 'gcse_physics_radioactivity_lesson.html' not in mig.SKIP_FILES
     listed = [p.name for p in mig.lesson_files(None)]
     assert 'gcse_maths_number_lesson.html' in listed
     assert 'gcse_physics_radioactivity_lesson.html' in listed
+    src = (ROOT / 'templates' / 'gcse_physics_radioactivity_lesson.html').read_text(encoding='utf-8')
+    updated, mapped, unmapped = mig.migrate_text(src)
+    assert updated == src
+    assert mapped == 0
+    assert unmapped == []
 
 
 def test_applied_lessons_are_idempotent():
@@ -106,6 +111,6 @@ def test_applied_lessons_are_idempotent():
 if __name__ == '__main__':
     test_sample_maps_known_styles_and_keeps_copy()
     test_mensuration_is_already_migrated_noop()
-    test_radioactivity_is_skipped_by_default_list()
+    test_radioactivity_is_migrator_noop()
     test_applied_lessons_are_idempotent()
     print('U6.3 migrator smoke OK')

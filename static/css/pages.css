@@ -285,7 +285,7 @@ pre {
     margin-bottom: 16px;
 }
 
-/* ---- LESSON PAGES (U6.1 vocabulary; U6.2 mensuration uses classes, others still inline) */
+/* ---- LESSON PAGES (U6 vocabulary; wrappers are .lesson-shell) */
 /* `.lesson-hero` chrome lives in components.css (subject accents, pills). */
 .lesson-section {
     border: 1px solid var(--border-soft);
@@ -449,31 +449,32 @@ p.lesson-callout--formula {
     font-weight: 600;
     color: var(--brand-700);
 }
-div[style*="max-width:860px"] > div[style*="linear-gradient"] {
-    border-radius: var(--radius-lg) !important;
-    box-shadow: var(--shadow) !important;
+/* Nested CS subsections (was attribute-selector compensation on the old 860px wrapper). */
+.lesson-shell .lesson-inner {
+    border-radius: var(--radius-sm);
+    border-color: var(--border-soft);
 }
-div[style*="max-width:860px"] > details {
-    border-radius: var(--radius) !important;
-    border-color: var(--border-soft) !important;
-    box-shadow: var(--shadow-sm) !important;
-    margin-bottom: 14px !important;
+.lesson-shell .lesson-split {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--space-4);
+    align-items: start;
 }
-div[style*="max-width:860px"] > details > summary {
-    font-weight: 600 !important;
-    letter-spacing: 0.01em;
+.lesson-shell .lesson-split--even {
+    grid-template-columns: 1fr 1fr;
 }
-div[style*="max-width:860px"] .lesson-inner {
-    border-radius: var(--radius-sm) !important;
-    border-color: var(--border-soft) !important;
+.lesson-shell .lesson-formula-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-3);
+    margin-top: var(--space-3);
 }
-div[style*="max-width:860px"] a[style*="background:var(--primary)"] {
-    border-radius: var(--radius-sm) !important;
-    transition: box-shadow 200ms var(--ease), transform 120ms var(--ease) !important;
-}
-div[style*="max-width:860px"] a[style*="background:var(--primary)"]:hover,
-div[style*="max-width:860px"] a[style*="background:var(--primary)"]:focus-visible {
-    box-shadow: var(--shadow-hover) !important;
+@media (max-width: 900px) {
+    .lesson-shell .lesson-split,
+    .lesson-shell .lesson-split--even,
+    .lesson-shell .lesson-formula-grid {
+        grid-template-columns: 1fr;
+    }
 }
 .sql-box,
 .ps-code,

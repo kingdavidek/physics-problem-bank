@@ -118,9 +118,37 @@ score = score + 10   # value can change</code></pre>
         <summary>1.2 The four data types</summary>
         <div class="lesson-section-body">
           <p>Every value in Python has a <strong>data type</strong>. The type tells the computer how to store the value and which operations are allowed — for example, you can add two integers, but joining two strings uses <code>+</code> to mean “stick together”, not “add mathematically”. At GCSE you need to recognise and use four main types:</p>
-          <p class="lesson-callout lesson-callout--formula">
-            <code>int</code> whole numbers · <code>float</code> decimals · <code>str</code> text · <code>bool</code> True/False
-          </p>
+          <table class="lesson-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>What it stores</th>
+                <th>Example</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>int</code></td>
+                <td>Whole numbers</td>
+                <td><code>16</code></td>
+              </tr>
+              <tr>
+                <td><code>float</code></td>
+                <td>Decimals</td>
+                <td><code>1.72</code></td>
+              </tr>
+              <tr>
+                <td><code>str</code></td>
+                <td>Text</td>
+                <td><code>"Alice"</code></td>
+              </tr>
+              <tr>
+                <td><code>bool</code></td>
+                <td>True or False</td>
+                <td><code>True</code></td>
+              </tr>
+            </tbody>
+          </table>
           <p><strong>Example:</strong> storing details for a student — their name is text (<code>str</code>), age is a whole number (<code>int</code>), height might be <code>1.72</code> metres (<code>float</code>), and whether they are enrolled is either <code>True</code> or <code>False</code> (<code>bool</code>). Booleans are essential later for <code>if</code> statements and loops.</p>
           <pre class="py-snippet"><code>name = "Alice"        # string (str)
 age = 16              # integer (int)

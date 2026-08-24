@@ -544,10 +544,10 @@ Currently there are 4 inline nav SVGs and everything else is emoji. Emoji are fi
 |---|---|
 | U6.1 | **Shipped.** Lesson component vocabulary in `pages.css`: `.lesson-hero`, `.lesson-section`, `.lesson-subsection`, `.lesson-callout--{note,warning,exam,formula}`, `.lesson-example`, `.lesson-quickcheck`, `.lesson-quickref`. Remaining lessons still inline-styled. |
 | U6.2 | **Shipped.** Converted `gcse_maths_mensuration_lesson.html` by hand (`.lesson-shell`, no inline `style="`). Progress / Quick Check / quiz CTA contracts kept. Smoke: `scripts/test_lesson_unify_smoke.py`. |
-| U6.3 | **Shipped.** `scripts/migrate_lesson_styles.py` — idempotent, **dry-run by default**. Maps known inline-style signatures onto the U6 classes and prints leftovers. Skips radioactivity (U6.6). Smoke: `scripts/test_migrate_lesson_styles_smoke.py`. |
+| U6.3 | **Shipped.** `scripts/migrate_lesson_styles.py` — idempotent, **dry-run by default**. Maps known inline-style signatures onto the U6 classes and prints leftovers. Radioactivity is a converted lesson (U6.6), not a migrator skip. Smoke: `scripts/test_migrate_lesson_styles_smoke.py`. |
 | U6.4 | **Shipped.** Applied migrator to 38 lessons (mensuration already clean; radioactivity skipped). Teaching copy / `.mcq-inline` / `data-correct` / `<details>` counts unchanged vs pre-apply. Leftover unmatched `style=""` remain (constructions/loci, A-level, a few one-offs) — do not strip those by hand in U6.5. Attribute-selector compensation stays until U6.5. |
-| U6.5 | Remove the brittle attribute-selector compensation in `base.html` (2829–2854) once no lesson relies on it |
-| U6.6 | Fold `gcse_physics_radioactivity_lesson.html`'s separate `:root` (its own teal palette, lines 8–22) into the main system |
+| U6.5 | **Shipped.** Removed `div[style*="max-width:860px"]` compensation from `pages.css` / `responsive.css` (the spec’s old `base.html` line numbers — those rules had already been extracted). Nested CS `.lesson-inner` is styled under `.lesson-shell`. Progress JS finds `.lesson-shell` then `.page-shell` only. Cache: `pb-v56`. |
+| U6.6 | **Shipped.** `gcse_physics_radioactivity_lesson.html` extends `base.html`, uses `.lesson-shell` / U6 classes (no standalone `:root` or page CSS). Route and lesson API pass `p1`–`p3` via `_lesson_render_spec`. Cache: `pb-v57`. |
 | U6.7 | Delete the 5 legacy unrouted stubs (`gcse_maths_surds.html`, `gcse_maths_fdp.html`, `gcse_maths_decimals.html`, `gcse_maths_bidmas.html`, `gcse_combined_physics_radioactivity.html`) after confirming no route reaches them |
 | U6.8 | Move the two stray `.py` files out of `templates/` |
 

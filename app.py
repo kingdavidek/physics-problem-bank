@@ -56,6 +56,11 @@ from generators.alevel.photoelectric import (
     aqa_pe_stopping_potential,
     aqa_pe_threshold_frequency,
 )
+from generators.gcse.physics import (
+    rad_diff_compare_alpha_beta_gamma,
+    rad_found_atom_structure,
+    rad_inter_alpha_equation,
+)
 from generators.shared.utils import format_light_markdown
 from generators.shared.lesson_assist import (
     daily_limit_ip,
@@ -2052,56 +2057,13 @@ def index():
 
 @app.route("/topic/<level>/<subject>/<topic>")
 def topic_page(level, subject, topic):
-    try:
-        topic_data = TOPICS[level][subject][topic]
-    except KeyError:
+    spec = _lesson_render_spec(level, subject, topic)
+    if not spec:
         return "Topic not found", 404
 
     _track_topic_opened(level, subject, topic)
-
-    if level == "alevel" and subject == "physics" and topic == "photoelectric":
-        p1 = lesson_problem(aqa_pe_basic)
-        p2 = lesson_problem(aqa_pe_threshold_frequency)
-        p3 = lesson_problem(aqa_pe_photoelectric_equation)
-        p4 = lesson_problem(aqa_pe_stopping_potential)
-        p5 = lesson_problem(aqa_pe_debroglie)
-
-        return render_template(
-            "alevel_physics_photoelectric_lesson.html",
-            p1=p1,
-            p2=p2,
-            p3=p3,
-            p4=p4,
-            p5=p5,
-        )
-
-    if level == "alevel" and subject == "physics" and topic == "magnetism":
-        p1 = aqa_mag_motor_effect()
-        p2 = aqa_mag_particle_path()
-        p3 = aqa_mag_flux_linkage()
-        p4 = aqa_mag_faradays_law()
-        p5 = aqa_mag_transformers()
-
-        return render_template(
-            "alevel_physics_magnetism_lesson.html",
-            p1=p1, p2=p2, p3=p3, p4=p4, p5=p5
-        )
-
-    custom = f"{level}_{subject}_{topic}_lesson.html"
-    try:
-        return render_template(custom)
-    except TemplateNotFound:
-        content = get_topic_content(level, subject, topic)
-        if not content:
-            return "Topic not found", 404
-        return render_template(
-            "topic.html",
-            content=content,
-            level=level,
-            subject=subject,
-            topic=topic,
-            supports_lesson_quiz=_lesson_quiz_available(level, subject, topic),
-        )
+    template_name, context = spec
+    return render_template(template_name, **context)
 
 
 
@@ -3443,6 +3405,16 @@ def _lesson_render_spec(level, subject, topic):
                 'p3': aqa_mag_flux_linkage(),
                 'p4': aqa_mag_faradays_law(),
                 'p5': aqa_mag_transformers(),
+            },
+        )
+
+    if level == 'gcse' and subject == 'physics' and topic == 'radioactivity':
+        return (
+            'gcse_physics_radioactivity_lesson.html',
+            {
+                'p1': lesson_problem(rad_found_atom_structure),
+                'p2': lesson_problem(rad_inter_alpha_equation),
+                'p3': lesson_problem(rad_diff_compare_alpha_beta_gamma),
             },
         )
 
