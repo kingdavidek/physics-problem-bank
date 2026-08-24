@@ -1,12 +1,12 @@
 # Problem Bank — Architecture & Product Overview
 
-**Last updated:** 2026-08-17  
+**Last updated:** 2026-08-24  
 **Repository:** `maths_generator/physics-problem-bank`  
 **Audience:** Developers, AI agents, and technical stakeholders  
 
 This document describes **what Problem Bank is today**: product goals, system architecture, major features, data model, and how the pieces fit together.
 
-**AI agents:** start with `docs/AI_HANDOFF.md`, then this file, then `docs/SOLID_DRAFT_SECURITY.md` before changing auth/grading/sessions. API: `docs/API.md`. Deploy: `docs/DEPLOY.md`. Planned work (incl. G8): `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md`.
+**AI agents:** start with `docs/AI_HANDOFF.md`, then this file, then `docs/SOLID_DRAFT_SECURITY.md` before changing auth/grading/sessions. API: `docs/API.md`. Deploy: `docs/DEPLOY.md`. Planned work (incl. G8): `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md`. Phase U graphics: `models/svg_kit.py` and `docs/UI_REDESIGN.md` §8.
 
 ---
 
@@ -123,11 +123,11 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | **`app.py`** | Main application: routes, DB schema, serializers, API v1, web UI |
 | **`topic_registry.py`** | Topic catalog → generator functions |
 | **`topics_data.py`** | Lesson/revision metadata per topic |
-| **`models/`** | Business logic and persistence helpers |
+| **`models/`** | Business logic and persistence helpers. Diagrams: `models/svg_kit.py` (Phase U5) |
 | **`generators/`** | Problem generators by curriculum level |
 | **`generators/shared/`** | Answer checkers, lesson quiz builder, variant utils, lesson assist |
 | **`templates/`** | Jinja2 pages (lessons, generator, profile, social) |
-| **`static/`** | JavaScript, PWA manifest, icons, service worker |
+| **`static/`** | CSS (`static/css/tokens.css` first), JavaScript, PWA manifest, icons, service worker |
 | **`scripts/`** | Smoke tests, maintenance, email digest |
 | **`docs/`** | API, deploy, architecture, future ideas |
 | **`data/quicktest.db`** | SQLite database (local/dev only; **not in git**; backup in production) |
@@ -141,6 +141,7 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | Feature | Entry points | Key modules |
 |---------|--------------|-------------|
 | **Topic browser** | `/topics`, `/topic/<l>/<s>/<t>` | `topics_data.py`, lesson templates |
+| **Diagrams (`svg_kit`)** | lessons, generator questions, `/styleguide`, profile progress | `models/svg_kit.py` (Phase U5) |
 | **Question generator** | `/`, `POST /api/v1/problems/generate` | `topic_registry.py`, `generators/` |
 | **Quick Test** | `/quicktest/*`, API v1 quicktest | `models/quicktest.py` |
 | **Lesson quizzes** | `/lesson-quiz/*`, API v1 lesson-quiz | `generators/shared/lesson_quiz.py`, `models/lesson_quiz.py` |

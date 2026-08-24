@@ -15,7 +15,8 @@
  * ---------------------------------------------------------------------------
  * SEMANTIC COLOUR RULES (lock these — do not drift in components.css)
  * ---------------------------------------------------------------------------
- * PRIMARY ACTIONS     Blue (--brand-500). .btn-primary, links, form focus.
+ * PRIMARY ACTIONS     Blue (--brand-500). .btn-primary, active nav, form focus.
+ *                     Body links are --ink-700 and turn blue on hover.
  *                     Never put violet/purple on a primary button.
  *
  * XP / PROGRESSION    Violet (--xp-*). Profile XP count, level ring, badge
@@ -32,7 +33,7 @@
  *                     If gold appears on everyday UI, it stops feeling special.
  *
  * SUBJECT ACCENTS     (--subject-*). Topic cards + lesson heroes ONLY. Maths
- *                     blue, CS violet, physics amber, chemistry teal. Do not
+ *                     indigo, CS violet, physics amber, chemistry teal. Do not
  *                     paint whole pages or primary buttons with subject colours.
  *
  * THEME v1            Light shell only. A future dark mode is a single :root
@@ -89,6 +90,12 @@
     --wrong-600: #dc2626;
     --wrong-700: #b91c1c;
 
+    /* Maths subject accent (indigo — distinct from brand blue and CS violet). */
+    --maths-100: #e0e7ff;
+    --maths-300: #a5b4fc;
+    --maths-500: #4f46e5;
+    --maths-600: #4338ca;
+
     /* Chemistry subject accent (teal — distinct from brand blue and correct green). */
     --chem-100: #ccfbf1;
     --chem-300: #5eead4;
@@ -120,7 +127,7 @@
     /* -- Surfaces. Three levels, so cards can stop looking identical. -- */
     --surface:         #ffffff;
     --surface-sunken:  var(--ink-100);
-    --surface-tint:    var(--brand-50);
+    --surface-tint:    var(--ink-100);
     --surface-inverse: var(--ink-900);
 
     /* -- Text -- */
@@ -149,9 +156,9 @@
     --warning-border: var(--streak-300);
 
     /* -- Subject accents (topic cards + lesson heroes only) -- */
-    --subject-maths:      var(--brand-500);
-    --subject-maths-soft: var(--brand-100);
-    --subject-maths-edge: var(--brand-300);
+    --subject-maths:      var(--maths-500);
+    --subject-maths-soft: var(--maths-100);
+    --subject-maths-edge: var(--maths-300);
     --subject-cs:         var(--xp-500);
     --subject-cs-soft:    var(--xp-100);
     --subject-cs-edge:    var(--xp-300);
@@ -238,7 +245,7 @@
      * ============================================================ */
 
     --bg:            #f2f6fa;
-    --bg-accent:     var(--brand-50);
+    --bg-accent:     var(--ink-100);
     --primary:       var(--brand-500);
     --primary-dark:  var(--brand-700);
     --primary-hover: var(--brand-600);

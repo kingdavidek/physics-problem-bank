@@ -31,6 +31,17 @@
       {% if current_user.is_authenticated and score == total %}
       <p class="quiz-results-xp">+{{ score * 5 }} XP earned</p>
       {% endif %}
+      {% if accuracy_trend and accuracy_trend|length > 1 %}
+      <div class="quiz-results-trend progress-viz-panel">
+        <p class="quiz-results-trend-label">Your recent accuracy</p>
+        {{ svg_kit.accuracy_sparkline(
+            accuracy_trend | map(attribute='pct') | list,
+            title='Your recent quiz accuracy',
+            max_width=200,
+            height=64,
+        ) }}
+      </div>
+      {% endif %}
     </div>
   </div>
 

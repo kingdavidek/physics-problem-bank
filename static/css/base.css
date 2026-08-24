@@ -228,7 +228,9 @@ h4 {
 p { margin-bottom: var(--space-3); max-width: 70ch; }
 ul, ol { padding-left: var(--space-5); margin-bottom: var(--space-3); }
 li { margin-bottom: var(--space-1); }
-a { color: var(--brand-600); }
+a { color: var(--ink-700); }
+a:hover,
+a:focus-visible { color: var(--brand-600); }
 
 /* ---- MOTION (U7.2) ----
  * One global gate. Colour and state changes survive; movement does not.

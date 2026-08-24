@@ -18,6 +18,7 @@
         <a href="#icons" class="hero-pill">Icons</a>
         <a href="#brand" class="hero-pill">Brand</a>
         <a href="#mascot" class="hero-pill">Mascot</a>
+        <a href="#progress-viz" class="hero-pill">Progress</a>
         <a href="#diagrams" class="hero-pill">Diagrams</a>
     </div>
 </div>
@@ -101,6 +102,38 @@
                 <figcaption><code>{{ name }}</code></figcaption>
             </figure>
             {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section-panel" id="progress-viz">
+    <div class="section-panel-header">Progress visualisation (U5.9)</div>
+    <div class="section-panel-body">
+        <p class="profile-empty">Streak calendar, accuracy sparkline, weekly effort bars, and reusable mastery rings — all from <code>svg_kit</code> with <code>role="img"</code>.</p>
+        <div class="progress-viz-row">
+            <figure class="sg-diagram">
+                {{ svg_kit.streak_calendar([
+                    [{'state': 'studied'}, {'state': 'studied'}, {'state': 'missed'}, {'state': 'studied'}, {'state': 'frozen'}, {'state': 'studied'}, {'state': 'studied'}],
+                    [{'state': 'studied'}, {'state': 'missed'}, {'state': 'studied'}, {'state': 'studied'}, {'state': 'studied'}, {'state': 'missed'}, {'state': 'studied'}],
+                    [{'state': 'studied'}, {'state': 'studied'}, {'state': 'studied'}, {'state': 'frozen'}, {'state': 'studied'}, {'state': 'studied'}, {'state': 'missed'}],
+                    [{'state': 'studied'}, {'state': 'studied'}, {'state': 'studied'}, {'state': 'studied'}, {'state': 'studied'}, {'state': 'studied'}, {'state': 'studied', 'is_today': true}],
+                ], weeks=4) }}
+                <figcaption>Streak calendar (4 weeks)</figcaption>
+            </figure>
+            <figure class="sg-diagram">
+                {{ svg_kit.accuracy_sparkline([62, 70, 55, 80, 75, 90, 85, 88, 92, 95]) }}
+                <figcaption>Accuracy sparkline</figcaption>
+            </figure>
+            <figure class="sg-diagram">
+                {{ svg_kit.weekly_effort_bars([2, 5, 0, 8, 3, 12, 6], labels=['M', 'T', 'W', 'T', 'F', 'S', 'S']) }}
+                <figcaption>Weekly effort bars</figcaption>
+            </figure>
+            <figure class="sg-diagram">
+                <span class="topic-mastery" style="position:static;width:32px;height:32px;">
+                    {{ svg_kit.progress_ring(0.76, track_class='topic-mastery-track', fill_class='topic-mastery-fill') }}
+                </span>
+                <figcaption>Mastery ring (topic card)</figcaption>
+            </figure>
         </div>
     </div>
 </section>
@@ -280,6 +313,14 @@
             <figure class="sg-diagram">
                 {{ svg_kit.pie_chart([12, 8, 5], labels=['Maths', 'Science', 'Other'], highlight_index=0) }}
                 <figcaption><code>pie_chart()</code> — part-of-whole sectors</figcaption>
+            </figure>
+            <figure class="sg-diagram">
+                {{ svg_kit.fraction_bar(3, 8) }}
+                <figcaption><code>fraction_bar()</code> — 3 of 8 equal parts</figcaption>
+            </figure>
+            <figure class="sg-diagram">
+                {{ svg_kit.fraction_pie(3, 8) }}
+                <figcaption><code>fraction_pie()</code> — 3 of 8 equal sectors</figcaption>
             </figure>
             <figure class="sg-diagram">
                 {{ svg_kit.venn2(4, 3, 2, 6) }}

@@ -543,6 +543,141 @@ def streak_week_dots(conn, user_id, as_of=None):
     return dots
 
 
+def streak_calendar(conn, user_id, weeks=4, as_of=None):
+    """7×N UTC day grid for profile Progress (oldest week first, Mon–Sun columns)."""
+    today = as_of or _utc_today()
+    weeks = max(1, int(weeks))
+    days_total = weeks * 7
+    start = today - timedelta(days=days_total - 1)
+    studied = {
+        row['study_date']
+        for row in conn.execute(
+            '''
+            SELECT study_date FROM user_study_days
+            WHERE user_id = ? AND study_date >= ?
+            ''',
+            (user_id, start.isoformat()),
+        ).fetchall()
+    }
+    frozen = {
+        row['freeze_date']
+        for row in conn.execute(
+            '''
+            SELECT freeze_date FROM user_streak_freezes
+            WHERE user_id = ? AND freeze_date >= ?
+            ''',
+            (user_id, start.isoformat()),
+        ).fetchall()
+    }
+    rows = []
+    for week_index in range(weeks):
+        week_cells = []
+        for col in range(7):
+            day_offset = week_index * 7 + col
+            day = start + timedelta(days=day_offset)
+            key = day.isoformat()
+            if key in studied:
+                state = 'studied'
+            elif key in frozen:
+                state = 'frozen'
+            else:
+                state = 'missed'
+            week_cells.append({
+                'date': key,
+                'label': day.strftime('%a')[0],
+                'state': state,
+                'is_today': day == today,
+            })
+        rows.append(week_cells)
+    return rows
+
+
+def weekly_effort_by_day(conn, user_id, days=7):
+    """Effort points per UTC calendar day for the last ``days`` days (Mon→today order)."""
+    today = _utc_today()
+    days = max(1, int(days))
+    start = today - timedelta(days=days - 1)
+    since_iso = f'{start.isoformat()}T00:00:00'
+    type_ph = ','.join('?' * len(EFFORT_EVENT_TYPES))
+    scores = { (start + timedelta(days=i)).isoformat(): 0 for i in range(days) }
+    rows = conn.execute(
+        f'''
+        SELECT substr(created_at, 1, 10) AS day, event_type, COUNT(*) AS n
+        FROM user_activity_events
+        WHERE user_id = ?
+          AND created_at >= ?
+          AND event_type IN ({type_ph})
+        GROUP BY day, event_type
+        ''',
+        (user_id, since_iso, *EFFORT_EVENT_TYPES),
+    ).fetchall()
+    for row in rows:
+        day = row['day']
+        if day not in scores:
+            continue
+        scores[day] += EFFORT_WEIGHTS.get(row['event_type'], 1) * int(row['n'] or 0)
+    out = []
+    for offset in range(days):
+        day = start + timedelta(days=offset)
+        key = day.isoformat()
+        out.append({
+            'date': key,
+            'label': day.strftime('%a')[0],
+            'score': scores.get(key, 0),
+            'is_today': day == today,
+        })
+    return out
+
+
+def recent_accuracy_trend(conn, user_id, limit=10):
+    """Last ``limit`` quiz + generator-MCQ accuracies, oldest→newest for sparklines."""
+    limit = max(1, int(limit))
+    points = []
+    for row in conn.execute(
+        '''
+        SELECT created_at, score, total
+        FROM quiz_attempts
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+        LIMIT ?
+        ''',
+        (user_id, limit),
+    ).fetchall():
+        total = int(row['total'] or 0)
+        score = int(row['score'] or 0)
+        if total <= 0:
+            continue
+        points.append({
+            'created_at': row['created_at'],
+            'pct': round(100.0 * score / total, 1),
+            'kind': 'quiz',
+        })
+    for row in conn.execute(
+        '''
+        SELECT created_at, score, score_total, correct
+        FROM generator_mcq_attempts
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+        LIMIT ?
+        ''',
+        (user_id, limit),
+    ).fetchall():
+        total = int(row['score_total'] or 0)
+        if total > 0:
+            pct = round(100.0 * int(row['score'] or 0) / total, 1)
+        else:
+            pct = 100.0 if int(row['correct'] or 0) else 0.0
+        points.append({
+            'created_at': row['created_at'],
+            'pct': pct,
+            'kind': 'mcq',
+        })
+    points.sort(key=lambda item: item['created_at'], reverse=True)
+    points = points[:limit]
+    points.sort(key=lambda item: item['created_at'])
+    return points
+
+
 def streak_ring_progress(current):
     """Progress toward the next streak milestone (7 / 30 / 100)."""
     days = max(0, int(current or 0))

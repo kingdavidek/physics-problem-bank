@@ -181,9 +181,12 @@ from models.gamification import (
     record_study_day,
     streak_ring_progress,
     streak_week_dots,
+    streak_calendar,
     study_streak_at_risk,
     topic_mastery_map,
+    weekly_effort_by_day,
     weekly_effort_xp,
+    recent_accuracy_trend,
     xp_level_progress,
 )
 from models.topic_status import topic_status_map
@@ -1595,6 +1598,10 @@ def _render_quiz_results(
 ):
     if can_retry_wrong is None:
         can_retry_wrong = _lesson_quiz_session_can_retry(level, subject, topic)
+    accuracy_trend = []
+    if current_user.is_authenticated:
+        with get_db() as conn:
+            accuracy_trend = recent_accuracy_trend(conn, current_user.id, limit=10)
     return render_template(
         'lesson_mcq_results.html',
         problems=problems,
@@ -1614,6 +1621,7 @@ def _render_quiz_results(
         show_wrong_explanations_only=show_wrong_explanations_only,
         quiz_attempt_id=quiz_attempt_id,
         can_retry_wrong=can_retry_wrong,
+        accuracy_trend=accuracy_trend,
     )
 
 
@@ -4405,6 +4413,9 @@ def profile():
         practice_streak = get_practice_streak(conn, current_user.id)
         study_streak = get_study_streak(conn, current_user.id)
         streak_dots = streak_week_dots(conn, current_user.id)
+        streak_calendar_rows = streak_calendar(conn, current_user.id, weeks=4)
+        weekly_effort_days = weekly_effort_by_day(conn, current_user.id)
+        accuracy_trend = recent_accuracy_trend(conn, current_user.id, limit=10)
         streak_ring = streak_ring_progress(study_streak.get('current'))
         milestones = list_milestone_shelf(conn, current_user.id)
         weekly_recap = get_weekly_recap(conn, current_user.id)
@@ -4495,6 +4506,9 @@ def profile():
         practice_streak=practice_streak,
         study_streak=study_streak,
         streak_dots=streak_dots,
+        streak_calendar_rows=streak_calendar_rows,
+        weekly_effort_days=weekly_effort_days,
+        accuracy_trend=accuracy_trend,
         streak_ring=streak_ring,
         milestones=milestones,
         weekly_recap=weekly_recap,

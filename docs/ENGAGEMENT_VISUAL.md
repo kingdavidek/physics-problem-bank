@@ -1,10 +1,10 @@
 # Engagement visual tokens (E2–E5)
 
-**Last updated:** 2026-08-16  
-**Status:** Light tokens only — not a character bible. **E1–E3 shipped; E5.2 shipped; remaining E5 planned.**
+**Last updated:** 2026-08-24  
+**Status:** Light tokens only — not a character bible. **E1–E3 shipped; E5.2 shipped; remaining E5 planned. Phase U5 shipped** (custom SVG buddy, brand lock-up).
 **Companion:** `docs/AI_HANDOFF.md` §6, `docs/ENGAGEMENT_E5.md`
 
-Avatar v1 emoji/colours below are the live picker list. Buddy v0 uses the 👾 placeholder.
+Avatar v1 emoji/colours below are the live picker list. Buddy uses the custom SVG mascot (`templates/partials/buddy.html`); emoji remain on avatars and badges.
 
 ---
 
@@ -18,15 +18,15 @@ Encouraging tutor, not childish and not corporate.
 
 ## 2. Colour
 
-Reuse `templates/base.html` tokens — do not invent a second palette.
+Reuse `static/css/tokens.css` — do not invent a second palette.
 
 | Token | Hex | Use |
 |-------|-----|-----|
-| `--primary` | `#1a6fa8` | Challenge card accent, buddy, avatar ring |
-| `--primary-light` | `#eef6fc` | Badge / picker selected |
-| `--primary-dark` | `#0e4e7a` | Hover / pressed |
-| `--success` | `#2d7a3a` | Answered / streak-safe |
-| `--hint-bg` / `--hint-border` | `#fffbf5` / `#ecd9a8` | Soft callouts |
+| `--brand-500` | `#1a86d4` | Primary CTAs, active nav, form focus |
+| `--ink-700` | `#334155` | Body links (turn brand on hover) |
+| `--maths-500` | `#4f46e5` | Maths topic/lesson accent (not brand blue) |
+| `--xp-500` | `#8b5cf6` | Accuracy charts, mastery rings, CS subject |
+| `--streak-500` | `#f59e0b` | Effort bars, studied-day calendar |
 
 Avatar backgrounds (E2 v1 — pick from these, check contrast with dark text `#1c2430`):
 
@@ -44,27 +44,20 @@ Suggested picker (trim or swap later):
 
 Default for new users: 🙂 on `#eef6fc`. Render with Jinja-safe text, never raw HTML from the user.
 
-## 4. Buddy v0 (E3) — shipped placeholder
+## 4. Buddy (E3 + U5.8) — shipped
 
 Corner widget (~56px) on logged-in pages:
 
-- v0: emoji 👾 in a `--primary` circle (`static/js/buddy.js`)
-- v1: optional SVG sprite in `static/icons/` later
+- **U5.8:** custom SVG mascot in `templates/partials/buddy.html`, seven faces (`nudge`, `milestone`, `celebrate`, `qotd_nudge`, `streak_risk`, `weak_topic`, `friend_challenge`) swapped via `data-buddy-face` / `data-face`. JS lives in `static/js/buddy.js` (and `study-buddy.js`). API `face` field remains an emoji for older clients.
+- Avatars and badges still use emoji.
 
 Respects `prefers-reduced-motion`. Off-page **Not now** restores next UTC day; on a weak topic’s lesson page **Keep learning** hides only that card for the day. Does **not** block Check / generate if JS fails.
 
 Message types today: `celebrate`, `streak_risk`, `weak_topic`, `nudge` (first match wins, one per page load).
 
-## 4b. Buddy v0.5 faces (E5.1) — planned
+## 4b. Buddy faces (E5.1 / U5.8) — shipped as SVG
 
-One emoji per message type, sent by the API as `face` so the widget can change expression. Text emoji only — still no assets.
-
-| Type | Face | Type | Face |
-|------|------|------|------|
-| `milestone` | 🎉 | `streak_risk` | 🔥 |
-| `celebrate` | 😄 | `weak_topic` | 🤔 |
-| `qotd_nudge` | ❓ | `friend_challenge` | 🤝 |
-| `nudge` (fallback) | 👾 | | |
+API `face` remains an emoji for older clients. The widget maps `prompt.type` onto the SVG faces in §4.
 
 Avatar extras 🎓 / 🎧 / ⭐ become badge-gated in E5.5; locked options stay visible but disabled with an "earn X to unlock" caption. Full spec: `docs/ENGAGEMENT_E5.md`.
 

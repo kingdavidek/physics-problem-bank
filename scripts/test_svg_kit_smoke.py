@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT))
 
 from models.svg_kit import (  # noqa: E402
     PALETTE,
+    accuracy_sparkline,
     bar_chart,
     box_plot,
     cone,
@@ -25,14 +26,19 @@ from models.svg_kit import (  # noqa: E402
     formula_triangle,
     fitted_svg,
     freq_table,
+    fraction_bar,
+    fraction_pie,
     pie_chart,
     prob_tree,
+    progress_ring,
     sphere,
+    streak_calendar,
     svg,
     velocity_time_graph,
     venn2,
     venn3,
     viewbox_svg,
+    weekly_effort_bars,
 )
 
 
@@ -88,8 +94,8 @@ def test_demo_and_palette_tokens():
     tokens = (ROOT / 'static' / 'css' / 'tokens.css').read_text(encoding='utf-8')
     tokens_lower = tokens.lower()
     required = (
-        'ink', 'brand', 'brand_soft', 'brand_pale', 'measure',
-        'hidden', 'surface', 'cyl_left', 'cyl_mid', 'cyl_right',
+        'ink', 'ink_line', 'brand', 'brand_soft', 'brand_pale', 'xp', 'streak',
+        'measure', 'hidden', 'surface', 'cyl_left', 'cyl_mid', 'cyl_right',
     )
     for key in required:
         hexval = PALETTE[key].lower()
@@ -317,6 +323,13 @@ def test_u54_generator_batch():
 
 def test_u55_primitives():
     _assert_wrapper(str(pie_chart([3, 7], labels=['A', 'B'], highlight_index=0)))
+    bar = str(fraction_bar(3, 8))
+    _assert_wrapper(bar)
+    assert bar.count('<rect') >= 8
+    pie = str(fraction_pie(3, 8))
+    _assert_wrapper(pie)
+    assert '<path' in pie
+    assert '3/8' in pie
     _assert_wrapper(str(venn2(2, 3, 1, 4)))
     _assert_wrapper(str(venn3(1, 2, 3, 1, 0, 0, 0, 5)))
     _assert_wrapper(str(prob_tree(
@@ -352,6 +365,47 @@ def test_u55_generator_batch():
     assert re.search(r'<svg\b[^>]*\bwidth\s*=', q_cl) is None
 
 
+def test_u59_progress_viz():
+    sample_week = [
+        {'state': 'studied'},
+        {'state': 'missed'},
+        {'state': 'frozen', 'is_today': True},
+        {'state': 'studied'},
+        {'state': 'studied'},
+        {'state': 'missed'},
+        {'state': 'studied'},
+    ]
+    cal = str(streak_calendar([sample_week], weeks=1, title='Calendar'))
+    _assert_wrapper(cal)
+    assert 'svg-kit--progress' in cal
+    assert PALETTE['streak'] in cal
+    assert PALETTE['brand'] not in cal
+
+    spark = str(accuracy_sparkline([40, 55, 70, 85, 90]))
+    _assert_wrapper(spark)
+    assert '<polyline' in spark
+    assert PALETTE['xp'] in spark
+    assert PALETTE['ink_line'] in spark
+    assert PALETTE['brand'] not in spark
+
+    bars = str(weekly_effort_bars([1, 3, 0, 5, 2, 8, 4], labels=['M', 'T', 'W', 'T', 'F', 'S', 'S']))
+    _assert_wrapper(bars)
+    assert bars.count('<rect') >= 7
+    assert PALETTE['streak'] in bars
+    assert PALETTE['ink_line'] in bars
+    assert PALETTE['brand'] not in bars
+
+    ring = str(progress_ring(0.5, track_class='topic-mastery-track', fill_class='topic-mastery-fill'))
+    assert 'topic-mastery-fill' in ring
+    assert 'stroke-dashoffset' in ring
+    assert 'transform="rotate' not in ring
+
+    default_ring = str(progress_ring(0.25))
+    assert 'progress-ring-fill' in default_ring
+    assert 'transform="rotate' in default_ring
+    assert PALETTE['xp'] in default_ring
+
+
 def main():
     test_wrapper_rules()
     test_title_is_escaped_and_required()
@@ -367,6 +421,7 @@ def main():
     test_u56_icon_sprite()
     test_u57_brand_assets()
     test_u58_mascot()
+    test_u59_progress_viz()
     print('svg_kit smoke OK')
 
 

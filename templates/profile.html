@@ -149,6 +149,21 @@
     {% endif %}
 </div>
 
+{% if weekly_effort_days %}
+<section class="section-panel progress-viz-panel">
+    <div class="section-panel-header">This week's effort</div>
+    <div class="section-panel-body">
+        <p class="profile-section-intro">Practice points per day (topics, questions, lesson steps, quizzes).</p>
+        {{ svg_kit.weekly_effort_bars(
+            weekly_effort_days | map(attribute='score') | list,
+            labels=weekly_effort_days | map(attribute='label') | list,
+            title='Weekly effort bars',
+            desc='Effort points for each day this week.'
+        ) }}
+    </div>
+</section>
+{% endif %}
+
 {% if study_pair %}
 <section class="section-panel" id="study-buddy">
     <div class="section-panel-header">Study buddy</div>
@@ -226,6 +241,37 @@
 </div>
 
 <div id="profile-tab-progress" class="profile-tab-stack" role="tabpanel" aria-labelledby="profile-tab-btn-progress" data-profile-tab="progress" hidden>
+
+{% if streak_calendar_rows or accuracy_trend %}
+<section class="section-panel progress-viz-panel">
+    <div class="section-panel-header">Progress charts</div>
+    <div class="section-panel-body">
+        <div class="progress-viz-row">
+            {% if streak_calendar_rows %}
+            <div class="progress-viz-cell">
+                <h3 class="progress-viz-heading">Study calendar</h3>
+                {{ svg_kit.streak_calendar(streak_calendar_rows, weeks=4, title='Four-week study calendar') }}
+                <p class="progress-viz-legend" aria-hidden="true">
+                    <span class="legend-studied">Studied</span>
+                    <span class="legend-frozen">Freeze used</span>
+                    <span class="legend-missed">No activity</span>
+                </p>
+            </div>
+            {% endif %}
+            {% if accuracy_trend %}
+            <div class="progress-viz-cell">
+                <h3 class="progress-viz-heading">Quiz accuracy</h3>
+                {{ svg_kit.accuracy_sparkline(
+                    accuracy_trend | map(attribute='pct') | list,
+                    title='Recent quiz accuracy trend',
+                    desc='Last ten marked quiz and practice attempts.'
+                ) }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endif %}
 
 {% if weak_topics %}
 <section class="section-panel">

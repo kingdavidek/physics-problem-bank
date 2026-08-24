@@ -58,6 +58,12 @@
     max-width: min(100%, 360px) !important;
 }
 
+.question-content svg.svg-kit.svg-kit--progress,
+.profile-dashboard svg.svg-kit.svg-kit--progress,
+.quiz-runner-results svg.svg-kit.svg-kit--progress {
+    max-width: min(100%, 320px) !important;
+}
+
 svg.svg-kit {
     display: block;
     width: 100%;

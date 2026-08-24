@@ -731,7 +731,7 @@ html.pwa-standalone .site-wrapper {
     color: var(--ink-300);
 }
 .streak-dot.is-studied .streak-dot-mark { color: var(--streak-600); }
-.streak-dot.is-frozen .streak-dot-mark { color: var(--brand-500); }
+.streak-dot.is-frozen .streak-dot-mark { color: var(--streak-500); }
 .streak-dot.is-today .streak-dot-day { font-weight: 800; color: var(--text); }
 .streak-dot-day {
     font-size: 0.65rem;
@@ -922,8 +922,8 @@ details.lesson-section-card > summary.lesson-section-summary {
     gap: var(--space-2);
     row-gap: 6px;
     padding: var(--space-3) var(--space-4) !important;
-    background: var(--brand-50) !important;
-    color: var(--brand-700) !important;
+    background: var(--ink-100) !important;
+    color: var(--ink-800) !important;
     font-size: var(--text-md) !important;
     font-weight: 700;
     cursor: pointer;

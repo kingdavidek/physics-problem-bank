@@ -1,6 +1,6 @@
 # Problem Bank — AI agent handoff
 
-**Last updated:** 2026-08-20  
+**Last updated:** 2026-08-24  
 **Repository:** `maths_generator/physics-problem-bank` (GitHub: `kingdavidek/physics-problem-bank`)  
 **Audience:** The next AI agent (or human) continuing product work  
 
@@ -17,7 +17,8 @@ Start here. Read the documents in the order below before changing behaviour that
 | **Solid-draft security bar** | Done (2026-08-01). See `docs/SOLID_DRAFT_SECURITY.md` |
 | **Security + UK GDPR compliance** | **Planned, fully specified — `docs/SECURITY_AND_GDPR.md`.** Phase **S0 is a launch blocker**: no privacy notice, no account deletion, no data export, no DPIA, public-by-default profiles for a 13+ audience. Do S0 with (not after) `docs/MOBILE.md` M5 |
 | **Mobile polish (app-like PWA)** | **Done (M0–M4)** — foundation, practice UX, app chrome, lessons/diagrams, PWA polish + device QA. **M5–M7** HTTPS → TWA → Play Android when a production URL exists — see `docs/MOBILE.md` |
-| **Engagement roadmap (E1–E3)** | **E1–E3 shipped** (assist mock smoke, `@problem_bot` QOTD card, FTS lesson search, emoji/colour avatars, alien buddy, friend quiz-accuracy leaderboard). Visual tokens: `docs/ENGAGEMENT_VISUAL.md` |
+| **Phase U (UI redesign)** | **U0–U5 shipped** (tokens, chrome, gamification layer, page redesign, `svg_kit` diagrams, icon sprite, brand lock-up, SVG buddy, progress viz). Next: U7 motion, then U6 lesson unification, then U8. Spec: `docs/UI_REDESIGN.md` |
+| **Engagement roadmap (E1–E3)** | **E1–E3 shipped** (assist mock smoke, `@problem_bot` QOTD card, FTS lesson search, emoji/colour avatars, study buddy, friend quiz-accuracy leaderboard). Visual tokens: `docs/ENGAGEMENT_VISUAL.md` |
 | **G8 teacher / class mode** | Designed, not implemented. See `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2 |
 | **Real-world question style (E4.1)** | **Planned, fully specified** — `docs/REAL_WORLD_QUESTIONS.md`. Third generator mode (`real_world`) across percentages, ratio, compound measures |
 | **Engagement E5 (retention polish)** | **E5.2 shipped 2026-08-16** (four extra badges). **E5.1 partial on branch** `cursor/buddy-on-page-coach-embed` (faces, milestone toast, QOTD nudge, on-page coach, MCQ refetch, milestone dismiss — see §9). Rest planned — `docs/ENGAGEMENT_E5.md` |
@@ -100,7 +101,8 @@ WSGI / production entry: `from app import app as application` (see `docs/DEPLOY.
 | Grading | `generators/shared/answer_checkers.py`, `sql_checker.py` |
 | Lesson AI assist | `generators/shared/lesson_assist.py`, `static/js/lesson-assist.js` |
 | System bot / daily QOTD card | `models/bot.py`, feed template + `/api/v1/feed` `qotd_challenge` |
-| Alien buddy | `models/buddy.py`, `static/js/study-buddy.js` (legacy `buddy.js`), `templates/base.html` embed, `GET /api/v1/me/buddy`, `GET /api/v1/build-info` |
+| Alien buddy | `models/buddy.py`, `static/js/study-buddy.js` (legacy `buddy.js`), `templates/partials/buddy.html` SVG mascot, `templates/base.html` embed, `GET /api/v1/me/buddy`, `GET /api/v1/build-info` |
+| Diagrams | `models/svg_kit.py` (Jinja `svg_kit`), `static/css/diagrams.css`, `/styleguide` |
 | Generators | `generators/gcse/`, `alevel/`, `myp/` |
 | Phase G / social / streaks / QOTD | `models/*.py` (`qotd.py`, `social.py`, `gamification.py`, `weak_topics.py`, …) |
 | Site search | `app.py` (`_unified_search`, `/api/v1/search`), `models/lesson_search.py` (FTS5 over metadata + lesson HTML), `static/js/site-search.js` |

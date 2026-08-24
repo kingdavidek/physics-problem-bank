@@ -15,23 +15,6 @@
 
 <div class="practice-hero">
     <h1>{% if current_user.is_authenticated %}Hi, {{ current_user.display_handle }}{% else %}Ready to practise?{% endif %}</h1>
-    {% if generator_launch_gcse_only %}
-    <p class="hero-sub">GCSE Maths and Computer Science — fresh exam-style questions with worked answers</p>
-    {% else %}
-    <p class="hero-sub">GCSE, A-Level, and IB MYP — Maths, Physics, and Computer Science</p>
-    {% endif %}
-    <div class="practice-hero-chips">
-        {% if current_user.is_authenticated and nav_streak %}
-        <span class="pill pill--accent">🔥 {{ nav_streak }} day streak</span>
-        {% endif %}
-        {% if current_user.is_authenticated and viewer_xp is not none %}
-        <span class="pill pill--accent practice-xp-pill">
-            <span class="practice-xp-level" aria-hidden="true">{{ viewer_level }}</span>
-            <span>{{ viewer_xp }} XP this week</span>
-        </span>
-        {% endif %}
-        <span class="pill pill--surface">Standard &amp; MCQ</span>
-    </div>
 </div>
 
 {% if current_user.is_authenticated and recent_topics %}

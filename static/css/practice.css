@@ -48,11 +48,11 @@
 .btn-secondary,
 .btn-outline {
     background: var(--surface);
-    color: var(--brand-600);
+    color: var(--ink-700);
     --btn-edge: var(--edge);
 }
 .btn-secondary:hover,
-.btn-outline:hover { background: var(--brand-50); color: var(--brand-700); }
+.btn-outline:hover { background: var(--ink-100); color: var(--brand-700); }
 .btn-correct {
     background: var(--correct-500);
     --btn-edge: var(--correct-700);
@@ -98,10 +98,10 @@
 }
 .mcq-btn:active { transform: translateY(3px); }
 .mcq-btn:hover:not(:disabled) {
-    background: var(--brand-50);
-    border-color: var(--brand-300);
-    --btn-edge: var(--brand-300);
-    color: var(--brand-700);
+    background: var(--ink-100);
+    border-color: var(--ink-300);
+    --btn-edge: var(--ink-300);
+    color: var(--ink-800);
 }
 .mcq-btn.is-correct {
     background: var(--correct-50);

@@ -1,7 +1,7 @@
 # Problem Bank — UI & graphics redesign (Phase U)
 
-**Last updated:** 2026-08-20
-**Status:** **U0 shipped. U1 core primitives shipped; remaining U1 items open.** U2–U8 planned.
+**Last updated:** 2026-08-24
+**Status:** **U0–U5 shipped.** U6 (lesson unification), U7 (motion), U8 (a11y/QA) remain.
 **Audience:** The next AI agent / developer implementing this
 **Companions:** `docs/MOBILE.md` (M0–M4 shipped), `docs/ARCHITECTURE.md`, `docs/ENGAGEMENT_VISUAL.md`
 
@@ -33,7 +33,7 @@ Secondary: ~3,627 lines of CSS inline in `base.html` with no `static/css/` direc
 | **U3** | Gamification layer — streak, XP, celebration | M | Low | **High** | U1 |
 | **U4** | Page-by-page redesign | L | Medium | High | U1–U3 |
 | **U4.2a** | Syllabus `order` in `topic_registry.py` | S | Medium | None (data) | — (own PR; **not** CSS) |
-| **U5** | Graphics & diagram system | L | Medium | High | U0 |
+| **U5** | Graphics & diagram system — **shipped** | L | Medium | High | U0 |
 | **U6** | Lesson template unification (40 files) | L | **High** | Medium | U1, U5 |
 | **U7** | Motion, sound, delight | S | Low | Medium | U1–U4 |
 | **U8** | Accessibility, performance, QA | M | Low | — | all |
@@ -497,10 +497,10 @@ The same treatment applies to the cone, sphere, and the composite silo (423–45
 
 | Gap | Add |
 |---|---|
-| Pie charts discussed but never drawn (statistics lesson; `_stats_pie_angle` generator) | `pie_chart()` primitive + use it in both |
-| Fractions have no part-of-whole visual | fraction bar + pie in `svg_kit` |
-| No progress charts anywhere | see 8.5 |
-| No topic icons | see 8.6 |
+| Pie charts discussed but never drawn (statistics lesson; `_stats_pie_angle` generator) | **Done** — `pie_chart()` + `_stats_pie_angle` |
+| Fractions have no part-of-whole visual | **Done** — `fraction_bar()` + `fraction_pie()` (FDP lesson + styleguide) |
+| No progress charts anywhere | **Done** — see 8.5 (U5.9) |
+| No topic icons | **Done** — see 8.6 |
 
 ### 8.5 Progress visualisation (new)
 
@@ -526,7 +526,9 @@ Currently there are 4 inline nav SVGs and everything else is emoji. Emoji are fi
 - Redraw the 3 PWA icons from it (`icon-192`, `icon-512`, `icon-maskable-512`) — currently the only raster art in the repo.
 - A `favicon.ico` / `favicon.svg` (none exists).
 - 2–4 simple spot illustrations for empty states (no results, no friends, offline, all caught up). Flat, two-tone, brand palette, SVG.
-- **Mascot:** the buddy is currently the emoji 👾. Consider a simple custom SVG character with 4–6 expressions matching `BUDDY_FACES`. This is the single largest personality lever available. Flag as **U5-stretch** — it needs either illustration skill or a commissioned asset, and emoji are an acceptable v1.
+- **Mascot:** **Done (U5.8)** — custom SVG buddy with seven faces matching `BUDDY_FACES`, swapped via `data-buddy-face`.
+
+**U5 shipped 2026-08-24:** `models/svg_kit.py` (U5.1–U5.5, U5.9), icon sprite (U5.6), brand lock-up / PWA / empty-state spots (U5.7), mascot (U5.8). Lesson inline SVGs stay on U6.
 
 ---
 
@@ -602,18 +604,18 @@ Currently there are 4 inline nav SVGs and everything else is emoji. Emoji are fi
 
 ## 13. Definition of done
 
-- [ ] `static/css/` exists; `base.html` `<style>` block removed; no hex values outside `tokens.css`
-- [ ] `/styleguide` renders every component and diagram primitive
-- [ ] Bottom tab bar on mobile; persistent nav on desktop
-- [ ] Streak ring, XP, badge medallions, answer celebration shipped
-- [ ] U4.2a shipped as its own commit (`order` on every `TOPICS` entry); U4.2b path UI only after that
-- [ ] Every page in §7 redesigned
-- [ ] `models/svg_kit.py` exists; mensuration solids (incl. the cylinder) redrawn; generator cylinder added
-- [ ] Icon sprite + topic icons + empty-state illustrations
-- [ ] All 40 lesson templates on the component system; no inline `style="` in lesson content
-- [ ] `prefers-reduced-motion` respected globally
-- [ ] Contrast audit passed; smoke suite green; `CACHE_VERSION` bumped
-- [ ] `docs/ARCHITECTURE.md`, `docs/ENGAGEMENT_VISUAL.md`, `docs/AI_HANDOFF.md` updated
+- [x] `static/css/` exists; `base.html` `<style>` block removed; no hex values outside `tokens.css` *(diagram/lesson hex remains until U6)*
+- [x] `/styleguide` renders every component and diagram primitive
+- [x] Bottom tab bar on mobile; persistent nav on desktop
+- [ ] Streak ring, XP, badge medallions, answer celebration shipped *(U5.9 rings/charts shipped; U7.3 celebration still open)*
+- [x] U4.2a shipped as its own commit (`order` on every `TOPICS` entry); U4.2b path UI only after that
+- [x] Every page in §7 redesigned
+- [x] `models/svg_kit.py` exists; mensuration solids (incl. the cylinder) redrawn; generator cylinder added
+- [x] Icon sprite + topic icons + empty-state illustrations
+- [ ] All 40 lesson templates on the component system; no inline `style="` in lesson content *(U6)*
+- [ ] `prefers-reduced-motion` respected globally *(U7.2)*
+- [ ] Contrast audit passed; smoke suite green; `CACHE_VERSION` bumped *(U8)*
+- [x] `docs/ARCHITECTURE.md`, `docs/ENGAGEMENT_VISUAL.md`, `docs/AI_HANDOFF.md` updated *(U5 close-out 2026-08-24)*
 
 ---
 

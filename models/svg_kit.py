@@ -19,11 +19,15 @@ from markupsafe import Markup
 PALETTE = {
     'ink': '#1c2430',          # --ink-800 / --text
     'ink_muted': '#64748b',    # --ink-500
+    'ink_line': '#e4ebf2',     # --ink-200 (grid / axes)
     'brand': '#1a86d4',        # --brand-500
     'brand_soft': '#dbeefd',   # --brand-100
     'brand_mid': '#b9dffb',    # --brand-200
     'brand_pale': '#eff8ff',   # --brand-50
     'brand_edge': '#86c9f6',   # --brand-300
+    'xp': '#8b5cf6',           # --xp-500 (accuracy / mastery)
+    'streak': '#f59e0b',       # --streak-500 (effort / studied days)
+    'streak_soft': '#fcd34d',  # --streak-300
     'measure': '#ef4444',      # --wrong-500 (dimension labels + measure lines)
     'success': '#16a34a',      # --correct-500 (secondary leg / positive quantity)
     'hidden': '#94a3b8',       # --ink-400 (dashed hidden edges)
@@ -835,6 +839,116 @@ def pie_chart(
     return svg(200, 220, title=title, desc=desc_text, body=lambda ids: body, max_width=max_width, variant='chart')
 
 
+def fraction_bar(
+    numerator,
+    denominator,
+    *,
+    title=None,
+    desc=None,
+    max_width=260,
+):
+    """Horizontal bar split into ``denominator`` equal parts, first ``numerator`` shaded."""
+    n = int(numerator)
+    d = int(denominator)
+    if d < 1:
+        raise ValueError('denominator must be a positive integer')
+    if n < 0 or n > d:
+        raise ValueError('numerator must be between 0 and the denominator')
+    p = PALETTE
+    pad_l, pad_r, pad_t, pad_b = 12, 12, 16, 28
+    bar_h = 36
+    inner_w = max(d * 28, 160)
+    W = pad_l + inner_w + pad_r
+    H = pad_t + bar_h + pad_b
+    cell_w = inner_w / d
+    label = f'{n}/{d}'
+
+    def body(_ids):
+        parts = []
+        for i in range(d):
+            x = pad_l + i * cell_w
+            fill = p['brand'] if i < n else p['surface']
+            parts.append(
+                f'<rect x="{_num(x)}" y="{_num(pad_t)}" width="{_num(cell_w)}" '
+                f'height="{_num(bar_h)}" fill="{fill}" stroke="{p["ink"]}" '
+                f'stroke-width="{STROKE_OUTLINE}"/>'
+            )
+        parts.append(shape_label(pad_l + inner_w / 2, H - 8, label))
+        return ''.join(parts)
+
+    return svg(
+        W, H,
+        title=title or f'Fraction bar showing {label}',
+        desc=desc or f'{n} of {d} equal parts shaded.',
+        body=body,
+        max_width=max_width,
+        variant='progress',
+    )
+
+
+def fraction_pie(
+    numerator,
+    denominator,
+    *,
+    title=None,
+    desc=None,
+    max_width=180,
+):
+    """Textbook fraction pie: ``numerator`` of ``denominator`` equal sectors shaded."""
+    n = int(numerator)
+    d = int(denominator)
+    if d < 1:
+        raise ValueError('denominator must be a positive integer')
+    if n < 0 or n > d:
+        raise ValueError('numerator must be between 0 and the denominator')
+    p = PALETTE
+    cx, cy, r = 90, 88, 64
+    W, H = 180, 200
+    label = f'{n}/{d}'
+
+    def body(_ids):
+        fill = p['brand'] if n == d else p['surface']
+        parts = [
+            f'<circle cx="{cx}" cy="{cy}" r="{r}" fill="{fill}" '
+            f'stroke="{p["ink"]}" stroke-width="{STROKE_OUTLINE}"/>'
+        ]
+        if 0 < n < d:
+            sweep = 360.0 * n / d
+            start_rad = math.radians(-90)
+            end_rad = math.radians(-90 + sweep)
+            x1 = cx + r * math.cos(start_rad)
+            y1 = cy + r * math.sin(start_rad)
+            x2 = cx + r * math.cos(end_rad)
+            y2 = cy + r * math.sin(end_rad)
+            large = 1 if sweep > 180 else 0
+            parts.append(
+                f'<path d="M {cx:.1f} {cy:.1f} L {x1:.1f} {y1:.1f} '
+                f'A {r} {r} 0 {large} 1 {x2:.1f} {y2:.1f} Z" fill="{p["brand"]}" '
+                f'stroke="{p["ink"]}" stroke-width="{STROKE_OUTLINE}"/>'
+            )
+        for i in range(d):
+            ang = math.radians(-90 + 360.0 * i / d)
+            x1 = cx + (r - 8) * math.cos(ang)
+            y1 = cy + (r - 8) * math.sin(ang)
+            x2 = cx + r * math.cos(ang)
+            y2 = cy + r * math.sin(ang)
+            parts.append(
+                f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
+                f'stroke="{p["ink"]}" stroke-width="1"/>'
+            )
+        parts.append(shape_label(cx, H - 14, label))
+        return ''.join(parts)
+
+    return svg(
+        W, H,
+        title=title or f'Fraction pie showing {label}',
+        desc=desc or f'{n} of {d} equal sectors shaded.',
+        body=body,
+        max_width=max_width,
+        variant='progress',
+    )
+
+
 def _venn_cell(x, y, value, font_size=13):
     if value is None:
         w, h = 34, 18
@@ -1444,3 +1558,208 @@ def velocity_time_graph(
         return ''.join(parts)
 
     return svg(W, H, title=title, desc=desc_text, body=body, max_width=max_width, variant='chart')
+
+
+def progress_ring(
+    pct,
+    *,
+    size=32,
+    r=12,
+    track_class='progress-ring-track',
+    fill_class='progress-ring-fill',
+    stroke=None,
+    center_text=None,
+    title=None,
+    desc=None,
+    aria_hidden=True,
+):
+    """Reusable ring for mastery, XP level, and topic cards (fragment SVG)."""
+    pct = min(1.0, max(0.0, float(pct or 0)))
+    cx = cy = size / 2.0
+    circumference = 2 * math.pi * r
+    offset = circumference * (1.0 - pct)
+    fill_stroke = stroke or PALETTE['xp']
+    hidden = ' aria-hidden="true"' if aria_hidden else ''
+    label = ''
+    if title and not aria_hidden:
+        label = f'<title>{_esc(title)}</title>'
+        if desc:
+            label += f'<desc>{_esc(desc)}</desc>'
+    center = ''
+    if center_text is not None:
+        center = (
+            f'<text x="{_num(cx)}" y="{_num(cy + 1)}" fill="{PALETTE["ink"]}" '
+            f'font-size="{max(9, size * 0.38):.0f}" font-weight="{FONT_WEIGHT}" '
+            f'font-family="{FONT_FAMILY}" text-anchor="middle" '
+            f'dominant-baseline="middle">{_esc(center_text)}</text>'
+        )
+    topic_ring = fill_class.startswith('topic-') or track_class.startswith('topic-')
+    fill_stroke_attr = ''
+    if stroke:
+        fill_stroke_attr = f' stroke="{fill_stroke}"'
+    elif not topic_ring:
+        fill_stroke_attr = f' stroke="{fill_stroke}"'
+    rotate_attr = ''
+    if not topic_ring:
+        rotate_attr = f' transform="rotate(-90 {_num(cx)} {_num(cy)})"'
+    return Markup(
+        f'<svg class="progress-ring-svg" width="{int(size)}" height="{int(size)}" '
+        f'viewBox="0 0 {_num(size)} {_num(size)}" focusable="false"{hidden}>'
+        f'{label}'
+        f'<circle class="{track_class}" cx="{_num(cx)}" cy="{_num(cy)}" r="{_num(r)}" '
+        f'fill="none" stroke-width="3.5"/>'
+        f'<circle class="{fill_class}" cx="{_num(cx)}" cy="{_num(cy)}" r="{_num(r)}" '
+        f'fill="none"{fill_stroke_attr} stroke-width="3.5" stroke-linecap="round" '
+        f'stroke-dasharray="{_num(circumference)}" '
+        f'stroke-dashoffset="{_num(offset)}"{rotate_attr}/>'
+        f'{center}'
+        f'</svg>'
+    )
+
+
+def streak_calendar(cells, *, weeks=None, title='Study streak calendar', desc=None, max_width=280):
+    """7×N dot grid. ``cells`` is a list of week rows (each 7 dicts with ``state``)."""
+    if not cells:
+        return Markup('')
+    rows = list(cells)
+    if weeks is not None:
+        rows = rows[-int(weeks):]
+    cols = 7
+    row_count = len(rows)
+    p = PALETTE
+    gap = 4
+    dot = 10
+    pad = 8
+    W = pad * 2 + cols * dot + (cols - 1) * gap
+    H = pad * 2 + row_count * dot + (row_count - 1) * gap
+    state_fill = {
+        'studied': p['streak'],
+        'frozen': p['streak_soft'],
+        'missed': p['ink_muted'],
+    }
+    parts = []
+    for row_i, week in enumerate(rows):
+        for col_i, cell in enumerate(week[:cols]):
+            x = pad + col_i * (dot + gap)
+            y = pad + row_i * (dot + gap)
+            state = cell.get('state', 'missed')
+            fill = state_fill.get(state, p['ink_muted'])
+            rx = dot / 2
+            parts.append(
+                f'<circle cx="{_num(x + rx)}" cy="{_num(y + rx)}" r="{_num(rx)}" fill="{fill}"/>'
+            )
+            if cell.get('is_today'):
+                parts.append(
+                    f'<circle cx="{_num(x + rx)}" cy="{_num(y + rx)}" r="{_num(rx + 2)}" '
+                    f'fill="none" stroke="{p["streak"]}" stroke-width="1.5"/>'
+                )
+    desc_text = desc or f'{row_count} weeks of daily study activity.'
+    return svg(
+        W, H,
+        title=title,
+        desc=desc_text,
+        body=lambda _ids: ''.join(parts),
+        max_width=max_width,
+        variant='progress',
+    )
+
+
+def accuracy_sparkline(
+    values,
+    *,
+    title='Recent quiz accuracy',
+    desc=None,
+    max_width=240,
+    height=72,
+):
+    """Line chart of 0–100 accuracy percentages (oldest→newest)."""
+    nums = [float(v) for v in values if v is not None]
+    if not nums:
+        return Markup('')
+    p = PALETTE
+    W = 240
+    H = height
+    pad_l, pad_r, pad_t, pad_b = 28, 12, 10, 22
+    plot_w = W - pad_l - pad_r
+    plot_h = H - pad_t - pad_b
+    n = len(nums)
+    xs = [pad_l + (plot_w * i / max(1, n - 1)) for i in range(n)]
+    ys = [pad_t + plot_h * (1.0 - min(100.0, max(0.0, v)) / 100.0) for v in nums]
+    points = ' '.join(f'{_num(x)},{_num(y)}' for x, y in zip(xs, ys))
+    desc_text = desc or f'Last {n} marked attempts from {nums[0]:.0f}% to {nums[-1]:.0f}%.'
+
+    def body(_ids):
+        mid_y = pad_t + plot_h * 0.5
+        parts = [
+            f'<line x1="{pad_l}" y1="{pad_t}" x2="{W - pad_r}" y2="{pad_t}" '
+            f'stroke="{p["ink_line"]}" stroke-width="1"/>',
+            f'<line x1="{pad_l}" y1="{mid_y}" x2="{W - pad_r}" y2="{mid_y}" '
+            f'stroke="{p["ink_line"]}" stroke-width="1"/>',
+            f'<line x1="{pad_l}" y1="{pad_t + plot_h}" x2="{W - pad_r}" y2="{pad_t + plot_h}" '
+            f'stroke="{p["ink_muted"]}" stroke-width="1"/>',
+            f'<polyline points="{points}" fill="none" stroke="{p["xp"]}" '
+            f'stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>',
+        ]
+        for x, y, v in zip(xs, ys, nums):
+            parts.append(
+                f'<circle cx="{_num(x)}" cy="{_num(y)}" r="3.5" fill="{p["xp"]}"/>'
+            )
+        parts.append(shape_label(pad_l - 4, pad_t + 4, '100', anchor='end'))
+        parts.append(shape_label(pad_l - 4, pad_t + plot_h, '0', anchor='end'))
+        return ''.join(parts)
+
+    return svg(W, H, title=title, desc=desc_text, body=body, max_width=max_width, variant='progress')
+
+
+def weekly_effort_bars(
+    values,
+    labels=None,
+    *,
+    title='Weekly effort',
+    desc=None,
+    max_width=280,
+    height=100,
+):
+    """Seven effort bars (points per day)."""
+    nums = [max(0, int(v or 0)) for v in values]
+    if not nums:
+        return Markup('')
+    labels = list(labels or [])
+    while len(labels) < len(nums):
+        labels.append('')
+    p = PALETTE
+    W = 280
+    H = height
+    pad_l, pad_r, pad_t, pad_b = 8, 8, 8, 24
+    plot_w = W - pad_l - pad_r
+    plot_h = H - pad_t - pad_b
+    n = len(nums)
+    max_val = max(nums) or 1
+    bar_gap = 6
+    bar_w = (plot_w - bar_gap * (n - 1)) / n
+    desc_text = desc or f'Effort points over {n} days (max {max_val} in one day).'
+
+    def body(_ids):
+        parts = [
+            f'<line x1="{pad_l}" y1="{pad_t + plot_h}" x2="{W - pad_r}" y2="{pad_t + plot_h}" '
+            f'stroke="{p["ink_line"]}" stroke-width="1"/>',
+        ]
+        for i, val in enumerate(nums):
+            x = pad_l + i * (bar_w + bar_gap)
+            h = (val / max_val) * plot_h if max_val else 0
+            y = pad_t + plot_h - h
+            parts.append(
+                f'<rect x="{_num(x)}" y="{_num(y)}" width="{_num(bar_w)}" '
+                f'height="{_num(max(h, 2 if val else 0))}" '
+                f'rx="3" fill="{p["streak"]}" opacity="{"1" if val else "0.25"}"/>'
+            )
+            label = labels[i] or ''
+            if label:
+                parts.append(
+                    f'<text x="{_num(x + bar_w / 2)}" y="{_num(H - 6)}" fill="{p["ink_muted"]}" '
+                    f'font-size="11" font-weight="{FONT_WEIGHT}" font-family="{FONT_FAMILY}" '
+                    f'text-anchor="middle">{_esc(label)}</text>'
+                )
+        return ''.join(parts)
+
+    return svg(W, H, title=title, desc=desc_text, body=body, max_width=max_width, variant='progress')

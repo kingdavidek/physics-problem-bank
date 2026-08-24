@@ -751,8 +751,8 @@ html.pwa-standalone .study-buddy {
 }
 .share-suggest-suggestion:hover,
 .share-suggest-suggestion.is-active {
-    background: var(--brand-50);
-    color: var(--brand-700);
+    background: var(--ink-100);
+    color: var(--ink-800);
 }
 .share-suggest-suggestion-handle {
     font-weight: 700;
