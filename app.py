@@ -360,6 +360,13 @@ def _configure_secret_key():
 
 app = Flask(__name__)
 app.secret_key = _configure_secret_key()
+# Local dev: reload Jinja templates when files change (debug off still caches by default).
+_dev_local = (
+    os.environ.get('FLASK_DEBUG', '0').strip() in ('1', 'true', 'True')
+    or os.environ.get('PB_ALLOW_DEV_SECRET', '').strip() in ('1', 'true', 'True')
+    or os.environ.get('PB_TESTING') == '1'
+)
+app.config['TEMPLATES_AUTO_RELOAD'] = _dev_local
 app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=30)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
@@ -4241,7 +4248,15 @@ def about():
 
 @app.get('/api/v1/build-info')
 def api_v1_build_info():
-    return jsonify({'ok': True, 'buddy_embed': 'v4', 'study_buddy_js': 'v7'})
+    return jsonify({
+        'ok': True,
+        'buddy_embed': 'v4',
+        'study_buddy_js': 'v7',
+        'theme_settings': True,
+        'repo_root': str(_ROOT),
+        'db_path': _db_path(),
+        'pb_testing': os.environ.get('PB_TESTING') == '1',
+    })
 
 
 @app.get('/offline')
@@ -4370,26 +4385,31 @@ def login():
                 password = request.form.get('password', '')
                 remember = request.form.get('remember') == '1'
 
-                with get_db() as conn:
-                    user = User.get_by_email(conn, normalize_email(email_value))
+                if not normalize_email(email_value):
+                    error = 'Email is required.'
+                elif not password:
+                    error = 'Password is required.'
+                else:
+                    with get_db() as conn:
+                        user = User.get_by_email(conn, normalize_email(email_value))
 
-                # Constant-time-ish: always verify against a hash when user missing.
-                from werkzeug.security import check_password_hash
-                dummy_hash = (
-                    'scrypt:32768:8:1$dummy$0123456789abcdef0123456789abcdef'
-                    '0123456789abcdef0123456789abcdef'
-                )
-                if user and is_bot_user(user):
+                    # Constant-time-ish: always verify against a hash when user missing.
+                    from werkzeug.security import check_password_hash
+                    dummy_hash = (
+                        'scrypt:32768:8:1$dummy$0123456789abcdef0123456789abcdef'
+                        '0123456789abcdef0123456789abcdef'
+                    )
+                    if user and is_bot_user(user):
+                        check_password_hash(dummy_hash, password or 'x')
+                        error = 'Invalid email or password.'
+                    elif user and user.is_active and user.check_password(password):
+                        login_user(user, remember=remember)
+                        with get_db() as conn:
+                            user.touch_login(conn)
+                        return redirect(_safe_redirect_target(request.args.get('next')))
+
                     check_password_hash(dummy_hash, password or 'x')
                     error = 'Invalid email or password.'
-                elif user and user.is_active and user.check_password(password):
-                    login_user(user, remember=remember)
-                    with get_db() as conn:
-                        user.touch_login(conn)
-                    return redirect(_safe_redirect_target(request.args.get('next')))
-
-                check_password_hash(dummy_hash, password or 'x')
-                error = 'Invalid email or password.'
 
     return render_template('login.html', error=error, email_value=email_value)
 
@@ -8848,8 +8868,19 @@ def api_v1_qotd_week_leaderboard():
 
 
 if __name__ == "__main__":
+    # Never run the dev server against the ephemeral smoke DB.
+    os.environ.pop("PB_TESTING", None)
+    os.environ.pop("PB_TEST_DB_PATH", None)
+
     debug = os.environ.get("FLASK_DEBUG", "0").strip() in ("1", "true", "True")
     host = os.environ.get("FLASK_RUN_HOST", "127.0.0.1").strip() or "127.0.0.1"
     port = int(os.environ.get("FLASK_RUN_PORT", "5001"))
-    print(f"Problem Bank running at http://127.0.0.1:{port}  (buddy embed v4 — use this URL, not :5000)")
+    url = f"http://{host}:{port}"
+    print(f"Problem Bank running at {url}  (buddy embed v4 — use this URL, not :5000)")
+    print(f"  Repo: {_ROOT}")
+    print("  Settings > Appearance (theme) is in this tree; restart here after git pull.")
+    if os.environ.get('PB_TESTING') == '1':
+        print('  WARNING: PB_TESTING=1 — using ephemeral DB, not data/quicktest.db')
+    else:
+        print(f"  Database: {_db_path()}")
     app.run(debug=debug, host=host, port=port)

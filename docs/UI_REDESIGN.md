@@ -652,4 +652,6 @@ A `:root` override in `tokens.css` is the *core*, not the whole job. Status ramp
 | **D2** | Diagrams: `svg_kit` PALETTE emits CSS variables; `--diagram-paper` / `--diagram-body-*`; leftover lesson SVG hex remapped in `lesson-pages.css`; number-line JS + MathJax inherit `--text`. Cache `pb-v64`. | **Shipped** |
 | **D3** | Settings toggle (system / light / dark), PWA `background_color` from `pb_theme` cookie, `theme.js` + `data-theme` boot, switch knob tokenised. Cache `pb-v65`. | **Shipped** |
 
+D3 follow-up (not blocking): `/profile/settings` switches (including sound) may not stay on after Save — see `docs/AI_HANDOFF.md` §1.1. Revert any overlay/absolute `.switch` CSS; do not mix with D3 theme work.
+
 D2 makes generator and lesson diagrams follow the same tokens as the shell. `svg_kit` bakes `var(--…)` (not hex) so solids retint with `--diagram-body-*`. Lesson inline SVG keeps its hex in the template and is remapped in CSS; quark-builder particle colours stay literal (they are the RGB convention, not chrome).

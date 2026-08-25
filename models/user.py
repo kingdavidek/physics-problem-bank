@@ -78,6 +78,7 @@ class User(UserMixin):
     def create(cls, conn, email, handle, password):
         email = normalize_email(email)
         handle = normalize_handle(handle)
+        password = normalize_credential_password(password)
         now = utc_now_iso()
         password_hash = generate_password_hash(password)
         cursor = conn.execute(
@@ -91,7 +92,12 @@ class User(UserMixin):
         return cls.get_by_id(conn, cursor.lastrowid)
 
     def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+        normalized = normalize_credential_password(password)
+        if check_password_hash(self.password_hash, normalized):
+            return True
+        if password and password != normalized:
+            return check_password_hash(self.password_hash, password)
+        return False
 
     def touch_login(self, conn):
         now = utc_now_iso()
@@ -105,6 +111,13 @@ class User(UserMixin):
 
 def normalize_email(email):
     return (email or '').strip().lower()
+
+
+def normalize_credential_password(password):
+    """Strip trailing CR/LF sometimes appended by browsers or password managers."""
+    if password is None:
+        return ''
+    return password.rstrip('\r\n')
 
 
 def normalize_handle(handle):

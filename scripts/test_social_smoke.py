@@ -95,6 +95,8 @@ def main():
 
         r = client.get('/profile/settings')
         assert r.status_code == 200
+        assert b'Appearance' in r.data
+        assert b'name="theme_preference"' in r.data
         r = client.post(
             '/profile/settings',
             data={
