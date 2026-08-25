@@ -18,6 +18,9 @@
     margin-bottom: var(--space-5);
     overflow: hidden;
 }
+.form-card.card-tinted {
+    background: var(--surface-tint);
+}
 .form-card .section-panel-header { margin: 0; }
 .form-card .form-inner {
     padding: var(--space-2) var(--space-5) var(--space-5);

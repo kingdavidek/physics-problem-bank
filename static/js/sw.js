@@ -1,5 +1,5 @@
 /* Problem Bank service worker — cache static assets; network-first for pages/API. */
-const CACHE_VERSION = 'pb-v60';
+const CACHE_VERSION = 'pb-v62';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline';
 
@@ -18,6 +18,7 @@ const PRECACHE_URLS = [
   '/static/css/pages.css',
   '/static/css/responsive.css',
   '/static/css/diagrams.css',
+  '/static/css/lesson-pages.css',
   '/static/css/lesson-assist.css',
 ];
 

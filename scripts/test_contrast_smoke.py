@@ -1,4 +1,4 @@
-"""U8.1 — WCAG 2.1 AA contrast smoke for semantic token pairs.
+"""U8.1 / D0 — WCAG 2.1 AA contrast smoke for semantic token pairs.
 
 Run: python scripts/test_contrast_smoke.py
 """
@@ -10,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TOKENS = ROOT / 'static' / 'css' / 'tokens.css'
+DARK_MARKER = '@media (prefers-color-scheme: dark)'
 
 
 def _srgb_channel(value: float) -> float:
@@ -34,6 +35,13 @@ def parse_hex_tokens(css: str) -> dict[str, str]:
     return found
 
 
+def parse_aliases(css: str) -> dict[str, str]:
+    aliases: dict[str, str] = {}
+    for name, value in re.findall(r'--([a-z0-9-]+):\s*([^;]+);', css):
+        aliases[name] = value.strip()
+    return aliases
+
+
 def resolve(name: str, hex_tokens: dict[str, str], aliases: dict[str, str]) -> str:
     if name in hex_tokens:
         return hex_tokens[name]
@@ -46,11 +54,11 @@ def resolve(name: str, hex_tokens: dict[str, str], aliases: dict[str, str]) -> s
     raise KeyError(name)
 
 
-def parse_aliases(css: str) -> dict[str, str]:
-    aliases: dict[str, str] = {}
-    for name, value in re.findall(r'--([a-z0-9-]+):\s*([^;]+);', css):
-        aliases[name] = value.strip()
-    return aliases
+def split_theme_css(css: str) -> tuple[str, str]:
+    if DARK_MARKER not in css:
+        return css, ''
+    light, rest = css.split(DARK_MARKER, 1)
+    return light, rest
 
 
 # Body-sized text on surfaces must be >= 4.5:1. White-on-primary is the CTA pair.
@@ -68,17 +76,32 @@ PAIRS = (
 )
 
 
-def main() -> None:
-    css = TOKENS.read_text(encoding='utf-8')
-    hex_tokens = parse_hex_tokens(css)
-    aliases = parse_aliases(css)
+def check_pairs(label: str, hex_tokens: dict[str, str], aliases: dict[str, str]) -> list[str]:
     failed = []
+    print(f'--- {label} ---')
     for fg, bg, minimum in PAIRS:
         ratio = contrast_ratio(resolve(fg, hex_tokens, aliases), resolve(bg, hex_tokens, aliases))
         status = 'OK' if ratio + 1e-9 >= minimum else 'FAIL'
         print(f'{ratio:5.2f}  {status:4}  {fg} on {bg} (need {minimum})')
         if status == 'FAIL':
-            failed.append(f'{fg} on {bg}: {ratio:.2f} < {minimum}')
+            failed.append(f'{label} {fg} on {bg}: {ratio:.2f} < {minimum}')
+    return failed
+
+
+def main() -> None:
+    css = TOKENS.read_text(encoding='utf-8')
+    assert DARK_MARKER in css, 'D0 dark override missing from tokens.css'
+    light_css, dark_css = split_theme_css(css)
+    light_hex = parse_hex_tokens(light_css)
+    light_aliases = parse_aliases(light_css)
+    failed = check_pairs('light', light_hex, light_aliases)
+
+    dark_hex = dict(light_hex)
+    dark_hex.update(parse_hex_tokens(dark_css))
+    dark_aliases = dict(light_aliases)
+    dark_aliases.update(parse_aliases(dark_css))
+    failed.extend(check_pairs('dark', dark_hex, dark_aliases))
+
     if failed:
         print('FAILED: ' + '; '.join(failed))
         sys.exit(1)

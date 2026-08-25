@@ -37,12 +37,15 @@
  *                     indigo, CS violet, physics amber, chemistry teal. Do not
  *                     paint whole pages or primary buttons with subject colours.
  *
- * THEME v1            Light shell only. A future dark mode is a single :root
- *                     override block here — not a mid-flight redesign.
+ * THEME               Light is the default :root. Dark is D0: a prefers-color-
+ *                     scheme override of shell + ink tokens in this file.
+ *                     D1–D3 (hex sweep, diagrams, toggle) are later segments.
  * ---------------------------------------------------------------------------
  */
 
 :root {
+    color-scheme: light;
+
     /* ============================================================
      * 1. PRIMITIVE SCALES
      * ============================================================ */
@@ -247,6 +250,7 @@
 
     --bg:            #f2f6fa;
     --bg-accent:     var(--ink-100);
+    --header-bg:     rgba(255, 255, 255, 0.88);
     --primary:       var(--brand-500);
     --primary-dark:  var(--brand-700);
     --primary-hover: var(--brand-600);
@@ -267,4 +271,50 @@
     --shadow-sm:    var(--elev-1);
     --shadow:       var(--elev-2);
     --shadow-hover: var(--elev-3);
+}
+
+/* D0 — dark shell. System preference only (no user toggle yet).
+ * Ink 50–200 become fills/borders; 600–900 become text. Status ramps
+ * (brand/correct/wrong 50–700) stay light so chip text on tint still
+ * reads until D1 remaps those pairs. */
+@media (prefers-color-scheme: dark) {
+    :root {
+        color-scheme: dark;
+
+        --ink-50:  #1a2332;
+        --ink-100: #222c3d;
+        --ink-200: #334155;
+        --ink-300: #475569;
+        --ink-400: #64748b;
+        --ink-500: #94a3b8;
+        --ink-600: #cbd5e1;
+        --ink-700: #e2e8f0;
+        --ink-800: #f1f5f9;
+        --ink-900: #f8fafc;
+
+        --surface:         #1c2736;
+        --surface-sunken:  #141c28;
+        --surface-tint:    #1a2a3c;
+        --surface-inverse: #f1f5f9;
+
+        --text:          var(--ink-800);
+        --text-muted:    var(--ink-500);
+        --text-subtle:   var(--ink-500);
+        --text-on-brand: #ffffff;
+
+        --border:        var(--ink-200);
+        --border-soft:   rgba(248, 250, 252, 0.08);
+        --border-strong: var(--ink-300);
+        --edge:          #4a5d73;
+
+        --elev-1: 0 1px 2px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.32);
+        --elev-2: 0 2px 4px rgba(0, 0, 0, 0.4), 0 8px 20px rgba(0, 0, 0, 0.42);
+        --elev-3: 0 4px 8px rgba(0, 0, 0, 0.38), 0 16px 36px rgba(18, 106, 174, 0.22);
+        --elev-press: inset 0 2px 4px rgba(0, 0, 0, 0.45);
+        --ring: 0 0 0 3px rgba(74, 171, 236, 0.4);
+
+        --bg:        #0f1724;
+        --bg-accent: #162033;
+        --header-bg: rgba(15, 23, 36, 0.88);
+    }
 }

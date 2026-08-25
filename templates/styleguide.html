@@ -14,6 +14,7 @@
     <div class="pill-row">
         <span class="pill pill--hero">Pill</span>
         <span class="hero-pill is-active">Active pill</span>
+        <a href="#cards" class="pill pill--hero">Cards</a>
         <a href="#colour" class="pill pill--hero">Link pill</a>
         <a href="#icons" class="pill pill--hero">Icons</a>
         <a href="#brand" class="pill pill--hero">Brand</a>
@@ -23,6 +24,24 @@
         <a href="#diagrams" class="pill pill--hero">Diagrams</a>
     </div>
 </div>
+
+<section class="section-panel" id="cards">
+    <div class="section-panel-header">Cards (U1.2)</div>
+    <div class="section-panel-body">
+        <p class="profile-empty">Named card vocabulary. <code>.section-panel</code> is the default card; <code>.problem-card</code> is raised.</p>
+        <div class="sg-row" style="align-items:stretch; margin-top:var(--space-4);">
+            <div class="card" style="flex:1; min-width:140px;">
+                <div class="card-body"><strong>Default</strong><span class="profile-empty">.card</span></div>
+            </div>
+            <div class="card card-raised" style="flex:1; min-width:140px;">
+                <div class="card-body"><strong>Raised</strong><span class="profile-empty">.card-raised</span></div>
+            </div>
+            <div class="card card-tinted" style="flex:1; min-width:140px;">
+                <div class="card-body"><strong>Tinted</strong><span class="profile-empty">.card-tinted</span></div>
+            </div>
+        </div>
+    </div>
+</section>
 
 <section class="section-panel" id="colour">
     <div class="section-panel-header">Colour</div>
@@ -46,7 +65,7 @@
         <p class="profile-empty" style="margin-top:var(--space-4);">
             <strong>Semantic rules:</strong> blue = primary CTA · violet = XP/progression · green = correct only ·
             gold = rank #1 / milestones / level-up · subject accents on topic cards + lesson heroes only.
-            Light theme v1 — dark mode is a future <code>:root</code> override, not a redesign.
+            Light theme plus D0 dark shell (`prefers-color-scheme`). D1–D3 still to do.
         </p>
     </div>
 </section>
@@ -180,10 +199,10 @@
     <div class="section-panel-header">Multiple choice</div>
     <div class="section-panel-body">
         <div class="mcq-inline">
-            <button class="btn mcq-btn">Default option</button>
-            <button class="btn mcq-btn is-selected">Selected option</button>
-            <button class="btn mcq-btn is-correct" disabled>Correct option</button>
-            <button class="btn mcq-btn is-wrong" disabled>Wrong option</button>
+            <button class="btn mcq-btn" data-letter="A"><span class="mcq-letter" aria-hidden="true">A</span>Default option</button>
+            <button class="btn mcq-btn is-selected" data-letter="B"><span class="mcq-letter" aria-hidden="true">B</span>Selected option</button>
+            <button class="btn mcq-btn is-correct" data-letter="C" disabled><span class="mcq-letter" aria-hidden="true">C</span>Correct option</button>
+            <button class="btn mcq-btn is-wrong" data-letter="D" disabled><span class="mcq-letter" aria-hidden="true">D</span>Wrong option</button>
         </div>
     </div>
 </section>
@@ -193,7 +212,7 @@
     <div class="section-panel-body">
         <p class="profile-empty">Correct-answer celebration: scale-pop, drawn checkmark, local <code>+XP</code> float. Confetti (40 CSS particles, self-cleaning) also fires once per new badge/milestone and on streak round-numbers 7 / 30 / 100. All of it is gated on <code>prefers-reduced-motion</code>.</p>
         <div class="sg-row" style="margin-top:var(--space-4);">
-            <button type="button" class="btn mcq-btn" id="sg-celebrate-correct" data-letter="A">Correct option</button>
+            <button type="button" class="btn mcq-btn" id="sg-celebrate-correct" data-letter="A"><span class="mcq-letter" aria-hidden="true">A</span>Correct option</button>
             <button type="button" class="btn btn-outline" id="sg-celebrate-confetti">Confetti burst</button>
         </div>
         <div class="sg-row" style="margin-top:var(--space-4);">

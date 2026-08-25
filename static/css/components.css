@@ -131,17 +131,33 @@ a.hero-pill.is-active,
     cursor: pointer;
     transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
+/* ---- CARDS (U1.2) ----
+ * Named vocabulary. Existing .section-panel / .problem-card / .form-card keep
+ * working as aliases so templates do not need a mass rename.
+ */
+.card,
+.section-panel {
+    background: var(--surface);
+    border: none;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--elev-1);
+    overflow: hidden;
+}
+.card-raised {
+    box-shadow: var(--elev-3);
+}
+.card-tinted {
+    background: var(--surface-tint);
+}
+.card-body {
+    padding: var(--space-5);
+}
 /* ---- PANELS (U1.2, U1.3) ----
  * Depth comes from elevation, not outlines. The old tinted header strip is
  * replaced by a real heading so sections rank against each other by type size.
  */
 .section-panel {
-    border: none;
-    border-radius: var(--radius-lg);
-    background: var(--surface);
     margin-bottom: var(--space-5);
-    overflow: hidden;
-    box-shadow: var(--elev-1);
     transition: box-shadow var(--dur) var(--ease);
 }
 .profile-tab-stack:not([hidden]) .section-panel {

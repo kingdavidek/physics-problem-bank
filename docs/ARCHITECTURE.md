@@ -53,7 +53,7 @@ Problem Bank is a **free curriculum problem bank** for secondary and early post-
 | **Database** | SQLite | Local `data/quicktest.db` (**gitignored**); schema init inline in `app.py`; WAL |
 | **Math / grading** | SymPy (pinned) | Safe allowlisted parsing only — never bare `sympify` on untrusted input |
 | **Templates** | Jinja2 | HTML under `templates/` (lessons are `*_lesson.html`; generator snippets live in `scripts/legacy/`) |
-| **Frontend CSS** | Token-first sheets in `static/css/` | `tokens.css` first; lesson-assist CSS is lesson-only (U8) |
+| **Frontend CSS** | Token-first sheets in `static/css/` | `tokens.css` first; `lesson-pages.css` and lesson-assist CSS are lesson-only (U8.6) |
 | **Frontend JS** | Vanilla JavaScript | `static/js/site.js` and feature modules |
 | **Math rendering** | MathJax | `static/js/mathjax-config.js` |
 | **CS Python grading** | Pyodide (in-browser) | `python-run-grader.js`, worker for write-code questions |
@@ -128,7 +128,7 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | **`generators/`** | Problem generators by curriculum level |
 | **`generators/shared/`** | Answer checkers, lesson quiz builder, variant utils, lesson assist |
 | **`templates/`** | Jinja2 pages (lessons, generator, profile, social) |
-| **`static/`** | CSS (`static/css/tokens.css` first; lesson-assist CSS is lesson-only), JavaScript, PWA, icons, SW. Contrast/ARIA smokes: `scripts/test_contrast_smoke.py`, `scripts/test_u8_a11y_smoke.py` |
+| **`static/`** | CSS (`static/css/tokens.css` first; `lesson-pages.css` / lesson-assist CSS are lesson-only), JavaScript, PWA, icons, SW. Contrast/ARIA smokes: `scripts/test_contrast_smoke.py`, `scripts/test_u8_a11y_smoke.py` |
 | **`scripts/`** | Smoke tests, maintenance, email digest |
 | **`docs/`** | API, deploy, architecture, future ideas |
 | **`data/quicktest.db`** | SQLite database (local/dev only; **not in git**; backup in production) |

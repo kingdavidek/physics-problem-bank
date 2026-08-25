@@ -1,7 +1,7 @@
 # Problem Bank — UI & graphics redesign (Phase U)
 
-**Last updated:** 2026-08-24
-**Status:** **U0–U5 shipped.** U7 in progress (U7.1–U7.3, U7.5). U6 (lesson unification), remaining U7, U8 (a11y/QA) remain.
+**Last updated:** 2026-08-25
+**Status:** **U0–U8 shipped.** Dark mode **D0 shipped** (system preference shell). D1–D3 remain.
 **Audience:** The next AI agent / developer implementing this
 **Companions:** `docs/MOBILE.md` (M0–M4 shipped), `docs/ARCHITECTURE.md`, `docs/ENGAGEMENT_VISUAL.md`
 
@@ -91,7 +91,7 @@ Keep blue as the brand anchor (it is already the PWA `theme-color` and the avata
 
 **Semantic aliases** (`--success`, `--error`, `--warning`) map onto the above so the ~20 hardcoded hex values across MCQ, inputs, and proof steps can be swept in one pass.
 
-**Dark mode:** out of scope for U0–U8, but *all* colours must be defined as tokens in one `:root` block so a later `@media (prefers-color-scheme: dark)` override is a single file change. Do not hardcode hex outside `tokens.css`.
+**Dark mode:** Phase U left this as a later token override. That is **not** a one-file finish — see **§15**. D0 (this file) overrides the page shell under `@media (prefers-color-scheme: dark)`.
 
 ### 2.3 Spacing and radius scale
 
@@ -206,28 +206,27 @@ friends, so the assertion was passing against the `.user-avatar` rule in the
 inline `<style>` block, not against markup. Repointed at `/profile`, which
 always renders the viewer's own avatar.
 
-**Known debt:** total shipped CSS is ~192KB uncompressed vs the 60KB U8.6
-stretch target (`pages.css` alone is ~59KB of live U4 chrome). U8.6 gates
-growth at 210KB, page-loads `lesson-assist.css` only when assist is on, and
-dropped unused pre-U4/U6 selectors. Hitting 60KB would need a split or rewrite,
-not more selector deletion.
+**Known debt:** the uncompressed CSS *tree* stays above the original 60KB U8.6
+stretch target because live U4 chrome is large. U8.6 splits lesson vocabulary
+into `lesson-pages.css` (lesson routes only) and budgets **core** sheets
+separately. Hitting 60KB on every page would need a rewrite, not more deletion.
 
 ---
 
-## 4. Phase U1 — Core components — **PARTLY SHIPPED**
+## 4. Phase U1 — Core components — **SHIPPED**
 
 **Outcome:** Same pages, same structure, but they stop looking like a spreadsheet.
 
 | Step | Task | Status |
 |---|---|---|
 | U1.1 | Buttons per §2.6 — `.btn-primary`, `.btn-secondary`/`.btn-outline`, `.btn-correct`, `.btn-danger`, `.btn-streak`, `.btn-sm`/`.btn-lg`/`.btn-block`, `min-height: var(--tap-min)` | **Done** |
-| U1.2 | **Card variants.** Panels, problem card and topic cards de-bordered and re-elevated; topic cards got hover-lift + press | **Partly** — the named `.card` / `.card-raised` / `.card-tinted` vocabulary is not built yet; existing classes were restyled in place |
+| U1.2 | **Card variants.** Panels, problem card and topic cards de-bordered and re-elevated; topic cards got hover-lift + press | **Done** (`.card` / `.card-raised` / `.card-tinted`; `.section-panel` / `.problem-card` / `.form-card` remain as aliases) |
 | U1.3 | **Kill the header strip.** `.section-panel-header` is now an in-flow `1.375rem/700` heading instead of a tinted bar | **Done** |
 | U1.4 | `.profile-stat-card` — `--text-3xl/800` number, muted label, left accent bar with `--streak`/`--correct`/`--xp`/`--social` modifiers | **Done** (modifiers not yet wired into `profile.html` — that is U4.4) |
 | U1.5 | Form controls — sunken fill instead of white+border, 2px brand focus ring, uppercase labels, 44px min height | **Done** |
 | U1.6 | `.pill` unified — replaces `.hero-pill`, `.feed-filter-pill`, `.profile-reflection-filter`, `.badge-*` which are four near-identical implementations | **Done** (hero pills → `pill pill--hero`; filter pills share `pill--filter`) |
 | U1.7 | `.list-row` — replaces `.profile-list-item`; hover tint, no bottom border, chevron affordance when it links somewhere | **Done** (profile lists; `:has()` chevron on linked rows) |
-| U1.8 | MCQ options — `--radius`, 2px border that becomes brand/green/red, press edge, tick/cross so colour is not the only signal | **Done** (letter chips A/B/C/D still open; needs markup changes in `site.js`) |
+| U1.8 | MCQ options — `--radius`, 2px border that becomes brand/green/red, press edge, tick/cross so colour is not the only signal | **Done** (letter chips A/B/C/D as `.mcq-letter` markup via `site.js`) |
 | U1.9 | Avatars — keep emoji, add `--elev-1` ring and size scale | **Done** (`--xs`–`--xl` scale; elev ring on `.user-avatar`) |
 
 **Also shipped:** `h1`–`h4` defined globally (only `h1`/`h2` existed before) and
@@ -583,11 +582,11 @@ Currently there are 4 inline nav SVGs and everything else is emoji. Emoji are fi
 | U8.3 | **Shipped.** Profile tabs: `tablist` + `aria-orientation`, roving `tabindex`, arrow-key activation (`u4.js`). Bottom tab bar and desktop header nav set `aria-current="page"` on the active item. |
 | U8.4 | **Shipped.** `svg_kit` already uses `role="img"` + `<title>`. Lesson inline diagrams get the same via `initLessonDiagrams()` in `u4.js`. Chrome icons stay `aria-hidden="true"`. |
 | U8.5 | **Shipped (U1.8).** MCQ options keep letter chips plus tick/cross, not colour alone. |
-| U8.6 | **Partial.** `lesson-assist.css` loads only when assist is on. Conservative dead-rule purge removed unused pre-U4/U6 selectors (old nav-handle, quicktest chrome, orphan diagram classes, unused pills). Tree is ~192KB vs the 60KB stretch target — remaining bulk is live page chrome. Budget smoke caps growth at 210KB. |
+| U8.6 | **Shipped.** `lesson-assist.css` and `lesson-pages.css` load only on lesson routes. Core (always-on) sheets are budgeted separately from the full tree. Conservative dead-rule purge already landed; remaining bulk is live page chrome. Stretch 60KB is a rewrite, not more deletion. |
 | U8.7 | **Shipped.** `content-visibility: auto` on `.lesson-section` and visible profile `.section-panel`. |
 | U8.8 | **Shipped.** Viewport QA on generator, `/topics`, and radioactivity lesson at 360/390/430/768/1280/1920. No horizontal overflow. 360: generate → Check (wrong-state uses ✗ plus copy). 1280: desktop header `aria-current`, tab bar hidden. |
 | U8.9 | **Shipped.** `docs/ARCHITECTURE.md`, `docs/ENGAGEMENT_VISUAL.md`, `docs/AI_HANDOFF.md` updated for U8 tokens/a11y. |
-| U8.10 | **Shipped.** Cache `pb-v59`; contrast + U8 a11y + PWA smokes. |
+| U8.10 | **Shipped.** Cache `pb-v61`; contrast + U8 a11y + PWA smokes. |
 
 ---
 
@@ -631,7 +630,7 @@ Currently there are 4 inline nav SVGs and everything else is emoji. Emoji are fi
 | 3 | Mascot | **Custom SVG mascot** replaces the emoji buddy, with expressions matching `BUDDY_FACES` | U5.7 |
 | 4 | Topic path | **Skill-tree / path layout is in scope.** Split: **U4.2a** = `order` (and optional `prereqs`) on `topic_registry.py` as a **separate reviewed, non-CSS change**; **U4.2b** = path UI, blocked on U4.2a. | U4.2a then U4.2b |
 | 5 | Sound | **In scope, default off**, toggle in settings | U7.9 |
-| 6 | Dark mode | Out of scope for Phase U, but tokens must make it a single-file addition later | U0.2 |
+| 6 | Dark mode | Not a one-file pass. **D0** = system-preference shell in `tokens.css`. **D1–D3** = hex sweep, diagrams, toggle/PWA | D0–D3 |
 | 7 | Starting point | **U0 + U1** | — |
 
 ### Consequences
@@ -639,3 +638,18 @@ Currently there are 4 inline nav SVGs and everything else is emoji. Emoji are fi
 - **U4.2a is a separate reviewed change, not part of any CSS phase.** The skill tree needs a syllabus order that `topic_registry.py` does not have. Spec: §7.2. Sequence: U4.2a (data, own commit) → rest of U4 chrome → U4.2b (path UI). Do not fold registry edits into U0–U3 or a stylesheet PR. This is the only Phase U item that is allowed to touch non-presentational code.
 - **U5.7 is promoted from stretch to committed.** The mascot needs 6 expressions (`milestone`, `celebrate`, `qotd_nudge`, `streak_risk`, `weak_topic`, `friend_challenge`) plus the `nudge` default, delivered as a single inline SVG sprite with swappable face paths so the existing `data-buddy-face` API in `static/js/buddy.js` keeps working.
 - **U7.9 needs an asset decision and a settings field.** Three short clips (correct / incorrect / celebrate), CC0 or self-generated, plus a `sound_enabled` boolean on `user_profile_settings`.
+
+---
+
+## 15. Dark mode (after Phase U)
+
+A `:root` override in `tokens.css` is the *core*, not the whole job. Status ramps (`--correct-700` on `--correct-50`) are both chip text and button edges; leftover hex, inline SVG, and `svg_kit` PALETTE do not follow CSS variables.
+
+| Segment | Scope | Status |
+|---|---|---|
+| **D0** | System `prefers-color-scheme: dark`: invert ink + shell (`--bg`, `--surface`, `--text`, `--header-bg`, elevation). Native `color-scheme`. Contrast smoke tests both themes. Cache `pb-v62`. | **Shipped** |
+| **D1** | Sweep hardcoded hex in CSS/JS/templates; retint status 50/100 chips so 700-as-text still reads (or introduce `--on-correct` tokens). JS `style.color` feedback. | Next |
+| **D2** | Diagrams: `models/svg_kit.py` palette, lesson inline SVG, `diagrams.css`, MathJax if fills are baked. | After D1 |
+| **D3** | Settings toggle (system / light / dark), PWA `background_color`, remaining chrome. | After D2 |
+
+D0 leaves pale status chips (MCQ correct/wrong) as light-mode islands so they stay readable. Do not invert `--correct-50` until D1 remaps the 700-step.

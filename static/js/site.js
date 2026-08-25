@@ -734,8 +734,71 @@
       .catch(function () { return { attempt_id: null, cohort: null, correct: isCorrect }; });
   }
 
+  function mcqOptionLetter(btn, index) {
+    var fromData = (btn.getAttribute('data-letter') || '').trim().charAt(0).toUpperCase();
+    if (fromData && 'ABCD'.indexOf(fromData) !== -1) return fromData;
+    var text = (btn.textContent || '').trim();
+    var match = text.match(/^([A-D])(?:\s{2}|[).:]\s*)/i);
+    if (match) return match[1].toUpperCase();
+    return 'ABCD'.charAt(index || 0) || '';
+  }
+
+  function stripMcqLetterPrefix(btn, letter) {
+    if (!btn || !letter) return;
+    var re = new RegExp('^\\s*' + letter + '(?:\\s{2}|[).:]\\s*)', 'i');
+    function walk(node) {
+      if (node.nodeType === 3) {
+        var value = node.nodeValue || '';
+        if (re.test(value)) {
+          node.nodeValue = value.replace(re, '');
+          return true;
+        }
+        return false;
+      }
+      var kids = node.childNodes;
+      for (var i = 0; i < kids.length; i += 1) {
+        if (walk(kids[i])) return true;
+      }
+      return false;
+    }
+    walk(btn);
+  }
+
+  function decorateMcqButton(btn, index) {
+    if (!btn || btn.querySelector('.mcq-letter')) return;
+    var letter = mcqOptionLetter(btn, index);
+    if (!letter) return;
+    btn.setAttribute('data-letter', letter);
+    stripMcqLetterPrefix(btn, letter);
+    var chip = document.createElement('span');
+    chip.className = 'mcq-letter';
+    chip.setAttribute('aria-hidden', 'true');
+    chip.textContent = letter;
+    btn.insertBefore(chip, btn.firstChild);
+  }
+
+  function decorateMcqButtons(root) {
+    var scope = root && root.querySelectorAll ? root : document;
+    var buttons = scope.querySelectorAll('.mcq-btn');
+    buttons.forEach(function (btn, i) { decorateMcqButton(btn, i); });
+  }
+
+  function mcqButtonHtml(letter, bodyHtml) {
+    var prefix = new RegExp('^' + letter + '(?:\\s{2}|[).:]\\s*)');
+    var body = String(bodyHtml || '');
+    if (letter && prefix.test(body)) body = body.replace(prefix, '');
+    return (
+      '<button type="button" class="btn mcq-btn" data-letter="' + letter + '">' +
+      '<span class="mcq-letter" aria-hidden="true">' + letter + '</span>' +
+      body +
+      '</button>'
+    );
+  }
+
   function wireMcqBlock(block) {
-    if (!block || block.dataset.mcqInit === '1') return;
+    if (!block) return;
+    decorateMcqButtons(block);
+    if (block.dataset.mcqInit === '1') return;
 
     var correctRaw = (block.getAttribute('data-correct') || block.dataset.correct || '').trim();
     if (!correctRaw) return;
@@ -823,7 +886,10 @@
   }
 
   function initMcqInline() {
-    document.querySelectorAll('.mcq-inline').forEach(wireMcqBlock);
+    document.querySelectorAll('.mcq-inline').forEach(function (block) {
+      decorateMcqButtons(block);
+      wireMcqBlock(block);
+    });
   }
 
   function normalizeFeedbackText(value) {
@@ -2019,11 +2085,7 @@
     var letters = 'ABCD';
     var esc = htmlEscape;
     var buttons = (options || []).map(function (opt, i) {
-      return (
-        '<button type="button" class="btn mcq-btn" data-letter="' + letters.charAt(i) + '">' +
-        esc(opt) +
-        '</button>'
-      );
+      return mcqButtonHtml(letters.charAt(i), esc(opt));
     }).join('');
     return (
       '<div class="free-response-field-row">' +
@@ -4402,13 +4464,14 @@
       delete mcq.dataset.mcqInit;
       delete mcq.dataset.mcqPersisted;
       mcq.innerHTML = '';
-      problem.options.forEach(function (opt) {
+      problem.options.forEach(function (opt, i) {
         var btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'btn mcq-btn';
         btn.dataset.letter = (opt.charAt(0) || '').trim();
         btn.innerHTML = opt;
         mcq.appendChild(btn);
+        decorateMcqButton(btn, i);
       });
       var feedback = document.getElementById('saved-mcq-feedback');
       if (feedback) {
@@ -4952,6 +5015,7 @@
     initMcqInline();
     initFreeResponseInline();
     initMcqButtons();
+    decorateMcqButtons(document);
     initSaveProblemForm();
     initRerollSavedForm();
     initScrollToProblem();

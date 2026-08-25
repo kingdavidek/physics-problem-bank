@@ -56,7 +56,7 @@ header {
     border-bottom: 1px solid var(--border-soft);
     margin-bottom: 24px;
     padding: calc(8px + var(--safe-top)) 0 8px;
-    background: rgba(255, 255, 255, 0.88);
+    background: var(--header-bg);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
 }

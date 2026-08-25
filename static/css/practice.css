@@ -122,9 +122,8 @@
     background: var(--brand-50);
     color: var(--brand-700);
 }
-/* Colour is never the only signal (U8.5). */
-.mcq-btn[data-letter]::before {
-    content: attr(data-letter);
+/* Colour is never the only signal (U8.5). Letter chip is real markup (U1.8). */
+.mcq-letter {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -138,11 +137,11 @@
     font-weight: 800;
     flex-shrink: 0;
 }
-.mcq-btn.is-correct[data-letter]::before {
+.mcq-btn.is-correct .mcq-letter {
     background: var(--correct-100);
     color: var(--correct-700);
 }
-.mcq-btn.is-wrong[data-letter]::before {
+.mcq-btn.is-wrong .mcq-letter {
     background: var(--wrong-100);
     color: var(--wrong-700);
 }
