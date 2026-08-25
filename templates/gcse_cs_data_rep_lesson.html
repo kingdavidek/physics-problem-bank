@@ -105,11 +105,11 @@
     <p class="hero-sub">
       How computers store numbers, text, pictures and sound. Each topic starts with something you already know — then we show the GCSE method.
     </p>
-    <div class="hero-pills">
-      <span class="hero-pill">AQA</span>
-      <span class="hero-pill">OCR</span>
-      <span class="hero-pill">Edexcel</span>
-      <span class="hero-pill">WJEC</span>
+    <div class="pill-row">
+      <span class="pill pill--hero">AQA</span>
+      <span class="pill pill--hero">OCR</span>
+      <span class="pill pill--hero">Edexcel</span>
+      <span class="pill pill--hero">WJEC</span>
     </div>
   </div>
 
@@ -119,7 +119,7 @@
     </a>
   </div>
 
-  <div class="note-box" style="margin-bottom:16px;">
+  <div class="note-box lesson-mb-lg">
     <strong>How this lesson is written:</strong> Look for the green <strong>“Everyday idea”</strong> boxes first — they explain the concept in normal language. The grey <strong>“Exam method”</strong> boxes are what you write in the test. Tables and formulas come <em>after</em> the examples, not before.
   </div>
 
@@ -137,7 +137,7 @@
       </div>
 
       <p>In GCSE you will:</p>
-      <ul style="line-height:1.85;margin:12px 0 12px 20px;">
+      <ul>
         <li>convert between normal numbers (denary), binary and hex;</li>
         <li>add binary numbers (same idea as column addition in maths);</li>
         <li>work out how big a text file, image or sound clip is;</li>
@@ -178,7 +178,7 @@
           <p>Using only 0 and 1 is reliable. Trying to store ten different voltage levels (for denary 0–9) on every wire would cause mistakes when the hardware gets warm or old.</p>
 
           <p>More bits = more combinations, like more digits in a PIN:</p>
-          <ul style="line-height:1.75;margin:8px 0 12px 20px;">
+          <ul>
             <li>1 bit → 2 choices (0 or 1)</li>
             <li>4 bits → 16 choices (enough for one hex digit)</li>
             <li>8 bits → 256 choices (one <strong>byte</strong> — often one character in English text)</li>
@@ -291,7 +291,7 @@
 
           <div class="everyday-box">
             <strong>Everyday idea — binary ↔ hex:</strong> Split the binary into chunks of <strong>four bits</strong> (from the right). Each chunk is one hex digit — like grouping letters into syllables.<br>
-            <span class="bit-grid" style="letter-spacing:1px;">1010 1101</span> → first chunk 1010 = A, second 1101 = D → hex <strong>AD</strong>.
+            <span class="bit-grid">1010 1101</span> → first chunk 1010 = A, second 1101 = D → hex <strong>AD</strong>.
           </div>
 
           <div class="method-box">
@@ -329,7 +329,7 @@
 
           <div class="everyday-box">
             <strong>Everyday idea:</strong> You already add in columns in maths. Adding <strong>27 + 15</strong>:
-            <ul style="margin:8px 0 0 20px;line-height:1.7;">
+            <ul>
               <li>Units column: 7 + 5 = <strong>12</strong> → write <strong>2</strong>, carry <strong>1</strong> to the tens column</li>
               <li>Tens column: 2 + 1 + carry = <strong>4</strong></li>
               <li>Answer: <strong>42</strong></li>
@@ -365,7 +365,7 @@ Column by column (start on the RIGHT):
 
           <div class="method-box">
             <strong>Summary (after you understand the steps):</strong>
-            <ul style="margin:8px 0 0 20px;line-height:1.7;">
+            <ul>
               <li>0 + 0 → write 0, no carry</li>
               <li>0 + 1 or 1 + 0 → write 1, no carry</li>
               <li>1 + 1 → write 0, carry 1 (and treat “1 + 1 + carry” the same way as in denary)</li>
@@ -420,7 +420,7 @@ Column by column (start on the RIGHT):
         </div>
       </details>
 
-      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='data_rep') }}?difficulty=foundational&amp;mode=standard" class="btn btn-primary" style="display:inline-block;margin:8px 0;">⚡ Quick Test – Foundational</a>
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='data_rep') }}?difficulty=foundational&amp;mode=standard" class="btn btn-primary lesson-mt-md">⚡ Quick Test – Foundational</a>
     </div>
   </details>
 
@@ -605,7 +605,7 @@ Column by column (start on the RIGHT):
         </div>
       </details>
 
-      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='data_rep') }}?difficulty=intermediate&amp;mode=standard" class="btn btn-primary" style="display:inline-block;margin:8px 0;">⚡ Quick Test – Intermediate</a>
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='data_rep') }}?difficulty=intermediate&amp;mode=standard" class="btn btn-primary lesson-mt-md">⚡ Quick Test – Intermediate</a>
     </div>
   </details>
 
@@ -716,7 +716,7 @@ Column by column (start on the RIGHT):
         </div>
       </details>
 
-      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='data_rep') }}?difficulty=difficult&amp;mode=standard" class="btn btn-primary" style="display:inline-block;margin:8px 0;">⚡ Quick Test – Difficult</a>
+      <a href="{{ url_for('topic_page', level='gcse', subject='cs', topic='data_rep') }}?difficulty=difficult&amp;mode=standard" class="btn btn-primary lesson-mt-md">⚡ Quick Test – Difficult</a>
     </div>
   </details>
 
@@ -728,12 +728,12 @@ Column by column (start on the RIGHT):
     </summary>
     <div class="lesson-section-body">
       <p>Use this after you have read the examples above — not as your first introduction.</p>
-      <div class="lesson-quick-ref-card" style="max-width:100%;">
-        <h3 style="margin:0 0 14px;text-align:center;font-family:var(--font-serif);font-size:1.1rem;color:#1a6fa8;">Data representation — exam checklist</h3>
+      <div class="lesson-quick-ref-card">
+        <h3 class="lesson-h3-brand">Data representation — exam checklist</h3>
         <div class="lesson-quick-ref-grid">
           <div>
             <h4>Conversions</h4>
-            <ul style="margin:0;padding-left:18px;line-height:1.75;font-size:0.95rem;">
+            <ul class="lesson-list-tight">
               <li>Denary → bin: divide by 2, remainders up</li>
               <li>Bin → denary: sum powers of 2 (switch/coin idea)</li>
               <li>Bin ↔ hex: nybbles of 4 bits</li>
@@ -741,7 +741,7 @@ Column by column (start on the RIGHT):
           </div>
           <div>
             <h4>Formulas</h4>
-            <ul style="margin:0;padding-left:18px;line-height:1.75;font-size:0.95rem;">
+            <ul class="lesson-list-tight">
               <li>Max n-bit unsigned: 2ⁿ − 1</li>
               <li>Image bits: W × H × depth</li>
               <li>Sound bits: rate × depth × s × ch</li>
@@ -749,7 +749,7 @@ Column by column (start on the RIGHT):
           </div>
           <div>
             <h4>Binary add</h4>
-            <ul style="margin:0;padding-left:18px;line-height:1.75;font-size:0.95rem;">
+            <ul class="lesson-list-tight">
               <li>Same as column add in maths</li>
               <li>1 + 1 → write 0, carry 1</li>
               <li>Left shift → ×2</li>

@@ -139,6 +139,15 @@
     </section>
 
     <section class="section-panel settings-section">
+        <div class="section-panel-header">Sound &amp; feedback</div>
+        <div class="section-panel-body settings-switch-group">
+            <p class="page-intro settings-intro">Short correct/incorrect sounds when you check answers. Off by default — useful in class when muted.</p>
+            {{ settings_switch('sound_enabled', 'Play sound effects for correct and incorrect answers', settings.sound_enabled) }}
+            <p class="profile-empty settings-note">Toggle on, then tap Check on a practice question to hear feedback. A short preview plays when you turn this on.</p>
+        </div>
+    </section>
+
+    <section class="section-panel settings-section">
         <div class="section-panel-header">Sharing &amp; activity feed</div>
         <div class="section-panel-body">
             <div class="settings-switch-group">
@@ -212,4 +221,16 @@
 </section>
 
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var input = document.querySelector('input[name="sound_enabled"]');
+  if (!input || !window.pbSound) return;
+  window.pbSound.setEnabled(input.checked);
+  input.addEventListener('change', function () {
+    window.pbSound.setEnabled(input.checked);
+    if (input.checked) window.pbSound.preview();
+  });
+});
+</script>
 {% endblock %}

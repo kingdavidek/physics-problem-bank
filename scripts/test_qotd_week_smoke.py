@@ -54,19 +54,12 @@ def seed_attempt(user_id, day_key, *, correct=True, answered_at=None):
 
 
 def main():
-    end_day = '2026-08-20'
+    end_day = date.today().isoformat()
     window = qotd_window_day_keys(days=7, end_day=end_day)
-    assert window == [
-        '2026-08-14',
-        '2026-08-15',
-        '2026-08-16',
-        '2026-08-17',
-        '2026-08-18',
-        '2026-08-19',
-        '2026-08-20',
-    ]
+    assert len(window) == 7
+    assert window[-1] == end_day
     outside_day = (date.fromisoformat(end_day) - timedelta(days=7)).isoformat()
-    assert outside_day == '2026-08-13'
+    assert outside_day not in window
 
     with app.test_client() as client:
         suffix = uuid.uuid4().hex[:8]

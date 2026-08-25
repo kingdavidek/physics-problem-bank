@@ -36,7 +36,7 @@ def main():
         assert r.status_code == 200, r.data
         sw = r.data.decode()
         assert 'STATIC_CACHE' in sw
-        assert 'pb-v57' in sw
+        assert 'pb-v60' in sw
         # JS and CSS must stay network-first or ?v= cache-busts never land.
         assert 'isVersionedAsset' in sw
         assert '/static/css/tokens.css' in sw
@@ -62,15 +62,14 @@ def main():
         assert 'apple-mobile-web-app-capable' in html
         assert 'black-translucent' in html
 
-        # U0.10 — every stylesheet linked by base.html must actually serve, and
-        # the load order in the template must match the order asserted here.
+        # U0.10 / U8.6 — core sheets on every page; lesson-assist.css is lesson-only.
         stylesheets = [
             'tokens.css', 'base.css', 'components.css', 'chrome.css',
             'practice.css', 'pages.css', 'responsive.css', 'diagrams.css',
-            'lesson-assist.css',
         ]
         positions = [html.index(f'css/{name}') for name in stylesheets]
         assert positions == sorted(positions), 'stylesheet load order changed'
+        assert 'lesson-assist.css' not in html
         assert '<style>' not in html, 'CSS belongs in static/css, not inline'
 
         for path in (
@@ -84,6 +83,7 @@ def main():
             '/static/js/sw.js',
             '/static/manifest.webmanifest',
             *(f'/static/css/{name}' for name in stylesheets),
+            '/static/css/lesson-assist.css',
         ):
             r = client.get(path)
             assert r.status_code == 200, path

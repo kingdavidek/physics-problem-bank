@@ -8,10 +8,10 @@
   <div class="lesson-hero">
     <h1>Vectors</h1>
     <p class="hero-sub">GCSE Mathematics – Higher Tier · All Exam Boards</p>
-    <div class="hero-pills">
-      <span class="hero-pill">AQA</span>
-      <span class="hero-pill">Edexcel</span>
-      <span class="hero-pill">OCR</span>
+    <div class="pill-row">
+      <span class="pill pill--hero">AQA</span>
+      <span class="pill pill--hero">Edexcel</span>
+      <span class="pill pill--hero">OCR</span>
     </div>
   </div>
   <!-- Quick Test button -->
@@ -352,7 +352,7 @@
         <li>So \(\overrightarrow{OM} = \mathbf{a} + \frac{1}{2}(\mathbf{b} - \mathbf{a}) = \frac{\mathbf{a} + \mathbf{b}}{2}\)</li>
       </ul>
 
-      <blockquote style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:10px 16px; margin:12px 0; border-radius:0 var(--radius) var(--radius) 0;">
+      <blockquote class="lesson-callout">
         <strong>Golden rule:</strong> Build a route from where you start to where you want to end, using vectors you already know.
       </blockquote>
 
@@ -562,8 +562,8 @@
   </details>
 
   <!-- QUICK TEST -->
-  <div style="text-align:center; margin-top: 24px; margin-bottom: 48px;">
-    <form method="POST" action="/quicktest/start" style="display:inline;">
+  <div class="lesson-page-nav">
+    <form class="lesson-form-inline" method="POST" action="/quicktest/start">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="level" value="gcse">
       <input type="hidden" name="subject" value="maths">

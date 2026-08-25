@@ -149,8 +149,8 @@ def main():
         settings_html = r.data.decode()
         token = csrf_from(settings_html)
         assert 'avatar_face' in settings_html
-        assert 'Earn <em>Practice regular</em> to unlock' in settings_html
-        assert 'Earn <em>Week warrior</em> to unlock' in settings_html
+        assert 'Earn <em>Practice regular</em>' in settings_html
+        assert 'Earn <em>Week warrior</em>' in settings_html
         assert 'avatar-choice--locked' in settings_html
 
         r = client.patch(

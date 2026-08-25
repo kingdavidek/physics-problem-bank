@@ -117,6 +117,9 @@
   }
 
   function initQuizCta(root) {
+    if (document.querySelector('[data-quiz-runner]') || document.body.classList.contains('quiz-runner-active')) {
+      return;
+    }
     var quizUrl = wrapper.dataset.lessonQuizUrl;
     var quizCount = parseInt(wrapper.dataset.lessonQuizCount || '10', 10);
     if (!quizUrl) return;

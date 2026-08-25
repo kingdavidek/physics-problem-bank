@@ -712,6 +712,7 @@ def inject_nav():
     viewer_level = None
     nav_tab = _resolve_nav_tab(request.endpoint)
     nav_avatar = None
+    sound_enabled = False
     nav_streak = 0
     xp_progress = None
     tab_badges = {}
@@ -722,7 +723,9 @@ def inject_nav():
             lifetime_xp = lifetime_effort_xp(conn, current_user.id)
             xp_progress = xp_level_progress(lifetime_xp)
             viewer_level = xp_progress['level']
-            nav_avatar = get_profile_settings(conn, current_user.id).get('avatar') or dict(DEFAULT_AVATAR)
+            profile_settings = get_profile_settings(conn, current_user.id)
+            nav_avatar = profile_settings.get('avatar') or dict(DEFAULT_AVATAR)
+            sound_enabled = bool(profile_settings.get('sound_enabled', False))
             streak = get_study_streak(conn, current_user.id)
             nav_streak = int(streak.get('current') or 0)
             tab_badges = {
@@ -758,6 +761,7 @@ def inject_nav():
         'xp_progress': xp_progress,
         'nav_tab': nav_tab,
         'nav_avatar': nav_avatar,
+        'sound_enabled': sound_enabled,
         'nav_streak': nav_streak,
         'tab_badges': tab_badges,
         'quiz_runner_mode': request.endpoint in _QUIZ_RUNNER_ENDPOINTS,
@@ -1158,6 +1162,7 @@ with get_db() as conn:
         ('email_weekly_digest', 'INTEGER NOT NULL DEFAULT 0'),
         ('avatar_json', "TEXT NOT NULL DEFAULT ''"),
         ('show_accuracy_leaderboard', 'INTEGER NOT NULL DEFAULT 1'),
+        ('sound_enabled', 'INTEGER NOT NULL DEFAULT 0'),
     ):
         if col not in profile_cols:
             conn.execute(f'ALTER TABLE user_profile_settings ADD COLUMN {col} {ddl}')
@@ -3068,6 +3073,7 @@ def _settings_to_json(settings):
         'show_milestones': bool(settings.get('show_milestones', False)),
         'email_weekly_digest': bool(settings.get('email_weekly_digest', False)),
         'show_accuracy_leaderboard': bool(settings.get('show_accuracy_leaderboard', True)),
+        'sound_enabled': bool(settings.get('sound_enabled', False)),
         'avatar': parse_avatar(settings.get('avatar')),
     }
 
@@ -4608,6 +4614,7 @@ def profile_settings():
                 'show_milestones': request.form.get('show_milestones') == '1',
                 'email_weekly_digest': request.form.get('email_weekly_digest') == '1',
                 'show_accuracy_leaderboard': request.form.get('show_accuracy_leaderboard') == '1',
+                'sound_enabled': request.form.get('sound_enabled') == '1',
             }
             with get_db() as conn:
                 if (
@@ -5245,6 +5252,7 @@ def api_v1_patch_settings():
         'show_milestones',
         'email_weekly_digest',
         'show_accuracy_leaderboard',
+        'sound_enabled',
         'avatar',
         'avatar_face',
         'avatar_bg',
@@ -5289,6 +5297,7 @@ def api_v1_patch_settings():
         'show_milestones',
         'email_weekly_digest',
         'show_accuracy_leaderboard',
+        'sound_enabled',
     )
     for field in bool_fields:
         if field in payload and not isinstance(payload[field], bool):

@@ -53,13 +53,6 @@
         flex-direction: column;
         align-items: stretch;
     }
-    .profile-list-actions {
-        justify-content: stretch;
-    }
-    .profile-list-actions .btn {
-        width: 100%;
-        min-height: var(--tap-min);
-    }
     .cta-panel-body {
         display: flex;
         flex-direction: column;
@@ -180,8 +173,7 @@
         padding-bottom: 12px;
     }
 
-    /* M2.1 — full-width nav sheet, 44px hits, hide handle clutter */
-    .nav-handle { display: none; }
+    /* M2.1 — full-width nav sheet, 44px hits */
     .nav-search-btn {
         width: var(--tap-min);
         height: var(--tap-min);

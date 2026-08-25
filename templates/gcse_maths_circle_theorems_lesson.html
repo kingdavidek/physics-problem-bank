@@ -8,10 +8,10 @@
   <div class="lesson-hero">
     <h1>Circle Theorems</h1>
     <p class="hero-sub">Circles hide neat angle rules. Once you spot which theorem fits, you can find missing angles quickly. We will work through the main GCSE circle theorems step by step.</p>
-    <div class="hero-pills">
-      <span class="hero-pill">AQA</span>
-      <span class="hero-pill">Edexcel</span>
-      <span class="hero-pill">OCR</span>
+    <div class="pill-row">
+      <span class="pill pill--hero">AQA</span>
+      <span class="pill pill--hero">Edexcel</span>
+      <span class="pill pill--hero">OCR</span>
     </div>
   </div>
   <!-- Quick Test button -->
@@ -403,7 +403,7 @@
         Tangent ⊥ Radius at point of contact
       </p>
 
-      <p style="margin-top:12px;"><strong>Example (CT6):</strong> From point P outside the circle you draw two tangents to touch at A and B. If PA = <strong>7 cm</strong>, then PB = <strong>7 cm</strong> as well.</p>
+      <p><strong>Example (CT6):</strong> From point P outside the circle you draw two tangents to touch at A and B. If PA = <strong>7 cm</strong>, then PB = <strong>7 cm</strong> as well.</p>
 
       <p><strong>Theorem CT6:</strong> Tangents from the same <strong>outside point</strong> to a circle are the <strong>same length</strong>.</p>
       <p class="lesson-callout lesson-callout--formula">
@@ -824,9 +824,9 @@
         </div>
       </div>
 
-      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+      <div class="lesson-cta-row">
         <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='circle_theorems') }}?difficulty=difficult&amp;mode=practice">Quick Test – Difficult</a>
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='circle_theorems') }}?difficulty=foundational&amp;mode=mcq" style="display:inline-block;padding:8px 16px;background:#059669;color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">MCQ Practice</a>
+        <a class="btn btn-correct btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='circle_theorems') }}?difficulty=foundational&amp;mode=mcq">MCQ Practice</a>
       </div>
     </div>
   </details>

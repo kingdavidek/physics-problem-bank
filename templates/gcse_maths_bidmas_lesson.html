@@ -8,10 +8,10 @@
   <div class="lesson-hero">
     <h1>Order of Operations &amp; Negative Numbers</h1>
     <p class="hero-sub">GCSE Mathematics – Foundation and Higher Tier · All Exam Boards</p>
-    <div class="hero-pills">
-      <span class="hero-pill">AQA</span>
-      <span class="hero-pill">Edexcel</span>
-      <span class="hero-pill">OCR</span>
+    <div class="pill-row">
+      <span class="pill pill--hero">AQA</span>
+      <span class="pill pill--hero">Edexcel</span>
+      <span class="pill pill--hero">OCR</span>
     </div>
   </div>
   <!-- Quick Test button -->
@@ -233,16 +233,16 @@
 
       <p>Multiplying and dividing with negatives has a simple two-case rule:</p>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:14px 0;">
-        <div style="background:#dcfce7; border:1px solid #059669; border-radius:8px; padding:14px; text-align:center;">
-          <div style="font-size:1.4rem; font-weight:700; color:#059669;">+</div>
-          <div style="font-weight:600; margin:4px 0;">Same signs</div>
-          <div style="font-size:.88rem; color:#444;">positive × positive = positive<br>negative × negative = positive</div>
+      <div class="lesson-sign-grid lesson-sign-grid--wide">
+        <div class="lesson-sign-tile lesson-sign-tile--pos">
+          <div class="lesson-sign-symbol lesson-sign-symbol--pos">+</div>
+          <div class="lesson-sign-heading">Same signs</div>
+          <div class="lesson-sign-body">positive × positive = positive<br>negative × negative = positive</div>
         </div>
-        <div style="background:#fce7f3; border:1px solid #a13544; border-radius:8px; padding:14px; text-align:center;">
-          <div style="font-size:1.4rem; font-weight:700; color:#a13544;">−</div>
-          <div style="font-weight:600; margin:4px 0;">Different signs</div>
-          <div style="font-size:.88rem; color:#444;">positive × negative = negative<br>negative × positive = negative</div>
+        <div class="lesson-sign-tile lesson-sign-tile--neg">
+          <div class="lesson-sign-symbol lesson-sign-symbol--neg">−</div>
+          <div class="lesson-sign-heading">Different signs</div>
+          <div class="lesson-sign-body">positive × negative = negative<br>negative × positive = negative</div>
         </div>
       </div>
 
@@ -297,18 +297,18 @@
 
       <p><em>Compare these two carefully:</em></p>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:14px 0;">
-        <div style="background:#dcfce7; border:2px solid #059669; border-radius:8px; padding:16px; text-align:center;">
-          <div style="font-size:1.2rem; font-weight:700; margin-bottom:6px;">(−3)²</div>
-          <div style="font-size:.88rem; color:#444; margin-bottom:8px;">The negative is <strong>inside</strong> the brackets.<br>The whole thing gets squared.</div>
-          <div style="font-size:1rem; font-weight:600; color:#059669;">(−3) × (−3) = <strong>+9</strong></div>
-          <div style="font-size:.8rem; color:#555; margin-top:6px;">negative × negative = positive</div>
+      <div class="lesson-sign-grid lesson-sign-grid--wide">
+        <div class="lesson-sign-tile lesson-sign-tile--pos-strong">
+          <div class="lesson-sign-heading">(−3)²</div>
+          <div class="lesson-sign-body lesson-sign-body--spaced">The negative is <strong>inside</strong> the brackets.<br>The whole thing gets squared.</div>
+          <div class="lesson-sign-result lesson-sign-result--pos">(−3) × (−3) = <strong>+9</strong></div>
+          <div class="lesson-sign-note">negative × negative = positive</div>
         </div>
-        <div style="background:#fce7f3; border:2px solid #a13544; border-radius:8px; padding:16px; text-align:center;">
-          <div style="font-size:1.2rem; font-weight:700; margin-bottom:6px;">−(3²)</div>
-          <div style="font-size:.88rem; color:#444; margin-bottom:8px;">The minus is <strong>outside</strong> the brackets — only <strong>3</strong> is squared.</div>
-          <div style="font-size:1rem; font-weight:600; color:#a13544;">−(3 × 3) = <strong>−9</strong></div>
-          <div style="font-size:.8rem; color:#555; margin-top:6px;">apply the negative after squaring</div>
+        <div class="lesson-sign-tile lesson-sign-tile--neg-strong">
+          <div class="lesson-sign-heading">−(3²)</div>
+          <div class="lesson-sign-body lesson-sign-body--spaced">The minus is <strong>outside</strong> the brackets — only <strong>3</strong> is squared.</div>
+          <div class="lesson-sign-result lesson-sign-result--neg">−(3 × 3) = <strong>−9</strong></div>
+          <div class="lesson-sign-note">apply the negative after squaring</div>
         </div>
       </div>
 
@@ -318,7 +318,7 @@
         <li>−(3²) = −(3 × 3) = <strong>−9</strong> — only 3 is squared; the negative sign stays outside</li>
       </ul>
 
-      <div style="background:#fce7f3; border-left:4px solid #a13544; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0; font-weight:600; color:var(--color-warning);">
+      <div class="lesson-warn-banner">
         ⚠️ This is one of the most common errors in GCSE exams. Always check whether the negative is inside or outside the brackets before squaring.
       </div>
 

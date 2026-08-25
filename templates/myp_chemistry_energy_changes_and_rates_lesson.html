@@ -5,7 +5,7 @@
 <div class="lesson-shell">
 
   <h1>Energy Changes and Rates of Reaction</h1>
-  <p style="color:var(--text-muted);">MYP Chemistry – Energetics and Kinetics</p>
+  <p class="lesson-muted">MYP Chemistry – Energetics and Kinetics</p>
 
   <!-- 1. EXOTHERMIC & ENDOTHERMIC REACTIONS -->
   <details class="lesson-section" open>
@@ -33,15 +33,15 @@
       <p><strong>Enthalpy (H)</strong> is the total heat content of a system. We measure <strong>ΔH</strong> (change in enthalpy).</p>
       <p>Energy level diagrams show the relative energies of reactants and products.</p>
 
-      <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin: 20px 0;">
-        <div style="flex: 1; min-width: 250px; text-align: center;">
-          <p style="font-weight: bold; color: var(--primary);">Exothermic Reaction</p>
-          <img src="{{ url_for('static', filename='images/exothermic_reaction.webp') }}" alt="Exothermic reaction energy level diagram" style="max-width: 100%; height: auto; border-radius: 8px;">
+      <div class="lesson-flex-center">
+        <div class="lesson-flex-item lesson-flex-item--250">
+          <p class="lesson-h3-brand">Exothermic Reaction</p>
+          <img class="lesson-img" src="{{ url_for('static', filename='images/exothermic_reaction.webp') }}" alt="Exothermic reaction energy level diagram">
           <p>ΔH is negative – energy released</p>
         </div>
-        <div style="flex: 1; min-width: 250px; text-align: center;">
-          <p style="font-weight: bold; color: var(--primary);">Endothermic Reaction</p>
-          <img src="{{ url_for('static', filename='images/Endothermic_Reaction.png') }}" alt="Endothermic reaction energy level diagram" style="max-width: 100%; height: auto; border-radius: 8px;">
+        <div class="lesson-flex-item lesson-flex-item--250">
+          <p class="lesson-h3-brand">Endothermic Reaction</p>
+          <img class="lesson-img" src="{{ url_for('static', filename='images/Endothermic_Reaction.png') }}" alt="Endothermic reaction energy level diagram">
           <p>ΔH is positive – energy absorbed</p>
         </div>
       </div>
@@ -55,7 +55,7 @@
     </summary>
     <div class="lesson-section-body">
       <p>ΔH can be estimated from bond energies:</p>
-      <p style="text-align:center; font-weight:bold;">ΔH = Σ (bond energies broken) − Σ (bond energies made)</p>
+      <p class="lesson-caption-center">ΔH = Σ (bond energies broken) − Σ (bond energies made)</p>
       <p>If the energy released forming new bonds is greater than the energy absorbed breaking old bonds, the reaction is exothermic.</p>
       <p>Example: H₂ + Cl₂ → 2HCl<br>
       Bonds broken: H–H (436) + Cl–Cl (242) = 678 kJ<br>
@@ -71,7 +71,7 @@
     </summary>
     <div class="lesson-section-body">
       <p>Calorimetry measures heat changes in reactions. The basic equation is:</p>
-      <p style="text-align:center; font-weight:bold;">q = m × c × ΔT</p>
+      <p class="lesson-caption-center">q = m × c × ΔT</p>
       <ul>
         <li>q = heat energy (J)</li>
         <li>m = mass of solution (g)</li>
@@ -119,16 +119,16 @@
     </summary>
     <div class="lesson-section-body">
       <p>Use the sliders to see how heat energy changes with mass, specific heat capacity, and temperature.</p>
-      <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:flex-end;">
+      <div class="lesson-flex-end">
         <div>
-          <label for="mass-slider" style="display:block; font-size:0.9em; margin-bottom:4px;">Mass (g): <span id="mass-val">50</span></label>
+          <label class="lesson-label" for="mass-slider">Mass (g): <span id="mass-val">50</span></label>
           <input type="range" id="mass-slider" min="10" max="100" value="50" oninput="updateCalc()">
         </div>
         <div>
-          <label for="temp-slider" style="display:block; font-size:0.9em; margin-bottom:4px;">ΔT (°C): <span id="temp-val">10</span></label>
+          <label class="lesson-label" for="temp-slider">ΔT (°C): <span id="temp-val">10</span></label>
           <input type="range" id="temp-slider" min="1" max="50" value="10" oninput="updateCalc()">
         </div>
-        <div style="font-weight:bold;">
+        <div>
           q = <span id="q-result">2090</span> J
         </div>
       </div>
@@ -137,8 +137,8 @@
   </details>
 
   <!-- Quick Test -->
-  <div style="text-align:center; margin-top: 24px; margin-bottom: 48px;">
-    <form method="POST" action="/quicktest/start" style="display:inline;">
+  <div class="lesson-page-nav">
+    <form class="lesson-form-inline" method="POST" action="/quicktest/start">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="level" value="myp">
       <input type="hidden" name="subject" value="chemistry">

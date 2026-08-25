@@ -206,8 +206,11 @@ friends, so the assertion was passing against the `.user-avatar` rule in the
 inline `<style>` block, not against markup. Repointed at `/profile`, which
 always renders the viewer's own avatar.
 
-**Known debt:** total shipped CSS is ~95KB uncompressed against the 60KB U8.6
-budget. Expected — the dead-rule audit happens after U6.
+**Known debt:** total shipped CSS is ~192KB uncompressed vs the 60KB U8.6
+stretch target (`pages.css` alone is ~59KB of live U4 chrome). U8.6 gates
+growth at 210KB, page-loads `lesson-assist.css` only when assist is on, and
+dropped unused pre-U4/U6 selectors. Hitting 60KB would need a split or rewrite,
+not more selector deletion.
 
 ---
 
@@ -222,10 +225,10 @@ budget. Expected — the dead-rule audit happens after U6.
 | U1.3 | **Kill the header strip.** `.section-panel-header` is now an in-flow `1.375rem/700` heading instead of a tinted bar | **Done** |
 | U1.4 | `.profile-stat-card` — `--text-3xl/800` number, muted label, left accent bar with `--streak`/`--correct`/`--xp`/`--social` modifiers | **Done** (modifiers not yet wired into `profile.html` — that is U4.4) |
 | U1.5 | Form controls — sunken fill instead of white+border, 2px brand focus ring, uppercase labels, 44px min height | **Done** |
-| U1.6 | `.pill` unified — replaces `.hero-pill`, `.feed-filter-pill`, `.profile-reflection-filter`, `.badge-*` which are four near-identical implementations | Open (badges and hero pills restyled; not yet unified) |
-| U1.7 | `.list-row` — replaces `.profile-list-item`; hover tint, no bottom border, chevron affordance when it links somewhere | Open |
+| U1.6 | `.pill` unified — replaces `.hero-pill`, `.feed-filter-pill`, `.profile-reflection-filter`, `.badge-*` which are four near-identical implementations | **Done** (hero pills → `pill pill--hero`; filter pills share `pill--filter`) |
+| U1.7 | `.list-row` — replaces `.profile-list-item`; hover tint, no bottom border, chevron affordance when it links somewhere | **Done** (profile lists; `:has()` chevron on linked rows) |
 | U1.8 | MCQ options — `--radius`, 2px border that becomes brand/green/red, press edge, tick/cross so colour is not the only signal | **Done** (letter chips A/B/C/D still open; needs markup changes in `site.js`) |
-| U1.9 | Avatars — keep emoji, add `--elev-1` ring and size scale | Open |
+| U1.9 | Avatars — keep emoji, add `--elev-1` ring and size scale | **Done** (`--xs`–`--xl` scale; elev ring on `.user-avatar`) |
 
 **Also shipped:** `h1`–`h4` defined globally (only `h1`/`h2` existed before) and
 moved to the sans face at heavier weights; serif retained for question prose. A
@@ -548,8 +551,8 @@ Currently there are 4 inline nav SVGs and everything else is emoji. Emoji are fi
 | U6.4 | **Shipped.** Applied migrator to 38 lessons (mensuration already clean; radioactivity skipped). Teaching copy / `.mcq-inline` / `data-correct` / `<details>` counts unchanged vs pre-apply. Leftover unmatched `style=""` remain (constructions/loci, A-level, a few one-offs) — do not strip those by hand in U6.5. Attribute-selector compensation stays until U6.5. |
 | U6.5 | **Shipped.** Removed `div[style*="max-width:860px"]` compensation from `pages.css` / `responsive.css` (the spec’s old `base.html` line numbers — those rules had already been extracted). Nested CS `.lesson-inner` is styled under `.lesson-shell`. Progress JS finds `.lesson-shell` then `.page-shell` only. Cache: `pb-v56`. |
 | U6.6 | **Shipped.** `gcse_physics_radioactivity_lesson.html` extends `base.html`, uses `.lesson-shell` / U6 classes (no standalone `:root` or page CSS). Route and lesson API pass `p1`–`p3` via `_lesson_render_spec`. Cache: `pb-v57`. |
-| U6.7 | Delete the 5 legacy unrouted stubs (`gcse_maths_surds.html`, `gcse_maths_fdp.html`, `gcse_maths_decimals.html`, `gcse_maths_bidmas.html`, `gcse_combined_physics_radioactivity.html`) after confirming no route reaches them |
-| U6.8 | Move the two stray `.py` files out of `templates/` |
+| U6.7 | **Shipped.** Deleted 5 unrouted stubs (`gcse_maths_surds.html`, `gcse_maths_fdp.html`, `gcse_maths_decimals.html`, `gcse_maths_bidmas.html`, `gcse_combined_physics_radioactivity.html`). Live pages remain the `*_lesson.html` templates. Smoke: `test_legacy_unrouted_stubs_are_gone`. |
+| U6.8 | **Shipped.** Moved `gcse_number_generator_additions.py` and `gcse_three_topics_generator_additions.py` from `templates/` to `scripts/legacy/` (live generators are `generators/gcse/maths_num_stats_prob_rat.py`). Smoke: `test_no_python_in_templates`. |
 
 **Guard:** add a smoke test that loads every lesson route, asserts HTTP 200, asserts the expected number of `<details data-lesson-section>` elements, and asserts no inline `style="` remains in migrated files.
 
@@ -567,7 +570,7 @@ Currently there are 4 inline nav SVGs and everything else is emoji. Emoji are fi
 | U7.6 | Skeleton loaders for feed, notifications, and leaderboards instead of "Loading…" text | **Done** |
 | U7.7 | Toast redesign — icon + message + optional action, slide + fade, stacking | **Done** (`.app-toast` stack; flash messages hydrate via `pb-flash-data`) |
 | U7.8 | Buddy: idle bob, reaction on refetch | **Done** (CSS bob on `.buddy-mascot`; `.is-reacting` hop after `pb-buddy-refetch`) |
-| U7.9 | **Optional sound** — short correct/incorrect/celebrate clips, default **off**, toggle in settings, `<audio>` preloaded. Recommend shipping muted-by-default; a school-context app that makes noise unprompted is a problem. | Open |
+| U7.9 | **Optional sound** — short correct/incorrect/celebrate clips, default **off**, toggle in settings. Web Audio tones in `sound.js` (no asset files). | **Done** (`sound_enabled` on `user_profile_settings`; settings toggle) |
 
 ---
 
@@ -575,16 +578,16 @@ Currently there are 4 inline nav SVGs and everything else is emoji. Emoji are fi
 
 | Step | Task |
 |---|---|
-| U8.1 | Contrast audit — every text/background pair ≥ 4.5:1 (the new saturated accents need checking, especially amber on white) |
-| U8.2 | Focus-visible rings on every interactive element; tab order verified on the new tab bar and profile tabs |
-| U8.3 | Profile tabs as a proper ARIA tablist; bottom tab bar as `<nav>` with `aria-current="page"` |
-| U8.4 | Every diagram has `role="img"` + `<title>`; decorative SVG `aria-hidden="true"` |
-| U8.5 | Colour is never the sole signal — correct/wrong also carry an icon |
-| U8.6 | CSS budget: total shipped CSS < 60KB uncompressed; audit for dead rules after U6 |
-| U8.7 | `content-visibility: auto` on long profile/lesson sections |
-| U8.8 | Re-run the `docs/MOBILE.md` device QA matrix at 360/390/430px and 768/1280/1920px |
-| U8.9 | Update `docs/ARCHITECTURE.md`, `docs/ENGAGEMENT_VISUAL.md` (it currently pins the old palette), and `docs/AI_HANDOFF.md` |
-| U8.10 | Full smoke suite green; `CACHE_VERSION` bumped |
+| U8.1 | **Shipped.** Semantic text tokens darkened (`--text-muted` / `--text-subtle` → `--ink-600`). Filled CTAs use `--brand-600` / `--correct-600` / `--wrong-600` / `--streak-700` so white labels pass 4.5:1. Smoke: `scripts/test_contrast_smoke.py`. |
+| U8.2 | **Shipped.** Global `:focus-visible` ring in `base.css`; tab bar / buttons keep `--ring` where already defined. |
+| U8.3 | **Shipped.** Profile tabs: `tablist` + `aria-orientation`, roving `tabindex`, arrow-key activation (`u4.js`). Bottom tab bar and desktop header nav set `aria-current="page"` on the active item. |
+| U8.4 | **Shipped.** `svg_kit` already uses `role="img"` + `<title>`. Lesson inline diagrams get the same via `initLessonDiagrams()` in `u4.js`. Chrome icons stay `aria-hidden="true"`. |
+| U8.5 | **Shipped (U1.8).** MCQ options keep letter chips plus tick/cross, not colour alone. |
+| U8.6 | **Partial.** `lesson-assist.css` loads only when assist is on. Conservative dead-rule purge removed unused pre-U4/U6 selectors (old nav-handle, quicktest chrome, orphan diagram classes, unused pills). Tree is ~192KB vs the 60KB stretch target — remaining bulk is live page chrome. Budget smoke caps growth at 210KB. |
+| U8.7 | **Shipped.** `content-visibility: auto` on `.lesson-section` and visible profile `.section-panel`. |
+| U8.8 | **Shipped.** Viewport QA on generator, `/topics`, and radioactivity lesson at 360/390/430/768/1280/1920. No horizontal overflow. 360: generate → Check (wrong-state uses ✗ plus copy). 1280: desktop header `aria-current`, tab bar hidden. |
+| U8.9 | **Shipped.** `docs/ARCHITECTURE.md`, `docs/ENGAGEMENT_VISUAL.md`, `docs/AI_HANDOFF.md` updated for U8 tokens/a11y. |
+| U8.10 | **Shipped.** Cache `pb-v59`; contrast + U8 a11y + PWA smokes. |
 
 ---
 
@@ -612,10 +615,10 @@ Currently there are 4 inline nav SVGs and everything else is emoji. Emoji are fi
 - [x] Every page in §7 redesigned
 - [x] `models/svg_kit.py` exists; mensuration solids (incl. the cylinder) redrawn; generator cylinder added
 - [x] Icon sprite + topic icons + empty-state illustrations
-- [ ] All 40 lesson templates on the component system; no inline `style="` in lesson content *(U6)*
+- [x] All 40 lesson templates on the component system; no inline `style="` in lesson content *(U6.5 finish)*
 - [x] `prefers-reduced-motion` respected globally *(U7.2)*
-- [ ] Contrast audit passed; smoke suite green; `CACHE_VERSION` bumped *(U8)*
-- [x] `docs/ARCHITECTURE.md`, `docs/ENGAGEMENT_VISUAL.md`, `docs/AI_HANDOFF.md` updated *(U5 close-out 2026-08-24)*
+- [x] Contrast audit passed for semantic text/CTA pairs; smoke suite green; `CACHE_VERSION` bumped *(U8)*
+- [x] `docs/ARCHITECTURE.md`, `docs/ENGAGEMENT_VISUAL.md`, `docs/AI_HANDOFF.md` updated *(U8)*
 
 ---
 

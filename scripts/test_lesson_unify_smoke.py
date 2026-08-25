@@ -17,6 +17,18 @@ from app import app  # noqa: E402
 LESSON = ROOT / 'templates' / 'gcse_maths_mensuration_lesson.html'
 
 
+def test_all_lesson_templates_have_no_inline_style():
+    """U6 definition of done — no inline style= in lesson teaching copy."""
+    import re as _re
+    pat = _re.compile(r'\sstyle="')
+    offenders = []
+    for path in sorted((ROOT / 'templates').glob('*_lesson.html')):
+        n = len(pat.findall(path.read_text(encoding='utf-8')))
+        if n:
+            offenders.append(f'{path.name} ({n})')
+    assert offenders == [], 'inline style= remains: ' + ', '.join(offenders)
+
+
 def test_mensuration_template_has_no_inline_style():
     src = LESSON.read_text(encoding='utf-8')
     assert 'style="' not in src
@@ -103,11 +115,72 @@ def test_no_maxwidth_attribute_selectors():
         assert 'max-width: 860px' not in src, path.name
 
 
+LEGACY_STUBS = (
+    'gcse_maths_surds.html',
+    'gcse_maths_fdp.html',
+    'gcse_maths_decimals.html',
+    'gcse_maths_bidmas.html',
+    'gcse_combined_physics_radioactivity.html',
+)
+LIVE_AFTER_STUBS = (
+    'gcse_maths_surds_lesson.html',
+    'gcse_maths_fdp_lesson.html',
+    'gcse_maths_decimals_lesson.html',
+    'gcse_maths_bidmas_lesson.html',
+    'gcse_physics_radioactivity_lesson.html',
+)
+
+
+def test_legacy_unrouted_stubs_are_gone():
+    templates = ROOT / 'templates'
+    for name in LEGACY_STUBS:
+        assert not (templates / name).exists(), name
+    for name in LIVE_AFTER_STUBS:
+        assert (templates / name).exists(), name
+    client = app.test_client()
+    for url in (
+        '/topic/gcse/maths/surds',
+        '/topic/gcse/maths/fdp',
+        '/topic/gcse/maths/decimals',
+        '/topic/gcse/maths/bidmas',
+        '/topic/gcse/physics/radioactivity',
+    ):
+        response = client.get(url)
+        assert response.status_code == 200, f'{url} -> {response.status_code}'
+        assert 'lesson-shell' in response.data.decode()
+
+
+def test_no_python_in_templates():
+    py_files = sorted(p.name for p in (ROOT / 'templates').glob('*.py'))
+    assert py_files == []
+    legacy = ROOT / 'scripts' / 'legacy'
+    assert (legacy / 'gcse_number_generator_additions.py').is_file()
+    assert (legacy / 'gcse_three_topics_generator_additions.py').is_file()
+
+
+def test_lesson_quiz_page_skips_lesson_progress_chrome():
+    client = app.test_client()
+    lesson = client.get('/topic/gcse/maths/geometry_angles')
+    lesson_html = lesson.data.decode()
+    assert 'data-lesson-content' in lesson_html
+
+    quiz = client.get('/lesson-quiz/gcse/maths/geometry_angles')
+    assert quiz.status_code == 200
+    quiz_html = quiz.data.decode()
+    assert 'data-lesson-content' not in quiz_html
+    assert 'data-quiz-runner' in quiz_html
+    assert 'quiz-runner-active' in quiz_html
+
+
 if __name__ == '__main__':
+    test_all_lesson_templates_have_no_inline_style()
     test_mensuration_template_has_no_inline_style()
     test_mensuration_route()
     test_migrated_lessons_have_shell_and_keep_mcqs()
     test_every_lesson_route_is_ok()
     test_radioactivity_uses_base_tokens()
     test_no_maxwidth_attribute_selectors()
+    test_legacy_unrouted_stubs_are_gone()
+    test_no_python_in_templates()
+    test_lesson_quiz_page_skips_lesson_progress_chrome()
     print('Lesson unify smoke OK')

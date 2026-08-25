@@ -16,11 +16,11 @@
   <div class="lesson-hero">
     <h1>Fundamentals of Algorithms</h1>
     <p class="hero-sub">GCSE Computer Science — computational thinking, representing algorithms with flowcharts and pseudocode, searching and sorting, and trace tables. Revise each section, check your understanding with the Quick Checks, then practise exam-style questions.</p>
-    <div class="hero-pills">
-      <span class="hero-pill">AQA</span>
-      <span class="hero-pill">OCR</span>
-      <span class="hero-pill">Edexcel</span>
-      <span class="hero-pill">WJEC</span>
+    <div class="pill-row">
+      <span class="pill pill--hero">AQA</span>
+      <span class="pill pill--hero">OCR</span>
+      <span class="pill pill--hero">Edexcel</span>
+      <span class="pill pill--hero">WJEC</span>
     </div>
   </div>
 
@@ -71,7 +71,7 @@
         <div class="lesson-section-body">
           <p><strong>Decomposition</strong> means breaking a large problem into smaller sub-problems that are easier to solve, test, and debug. Each sub-task can be given to a different part of the program (or a different person in a team).</p>
           <p><strong>Example:</strong> “Build a quiz game” could be decomposed into:</p>
-          <ol style="line-height:1.9;margin:8px 0 12px 20px;">
+          <ol>
             <li>Store questions and correct answers</li>
             <li>Display one question and read the user’s answer</li>
             <li>Check the answer and update the score</li>
@@ -135,7 +135,7 @@
         <div class="lesson-section-body">
           <p>Flowcharts use <strong>standard shapes</strong> linked by arrows to show the order of steps. Each shape tells you what <em>kind</em> of step happens — start/stop, input, calculation, or a yes/no choice. You must learn these symbols; exam papers often show or ask you to complete a flowchart.</p>
 
-          <p style="font-weight:600;margin:16px 0 8px;color:#1a6fa8;">Standard flowchart symbols</p>
+          <p class="lesson-h3-brand">Standard flowchart symbols</p>
           <div class="lesson-figure">
             <svg class="lesson-diagram" width="100%" viewBox="0 0 520 200" aria-label="GCSE flowchart symbol legend">
               <!-- Terminator -->
@@ -171,7 +171,7 @@
             <tr><td>Parallelogram</td><td>Input from or output to the user</td><td>INPUT age, OUTPUT "Pass"</td></tr>
           </table>
 
-          <p style="font-weight:600;margin:20px 0 8px;color:#1a6fa8;">Worked example: “Is the user an adult?”</p>
+          <p class="lesson-h3-brand">Worked example: “Is the user an adult?”</p>
           <p>This algorithm asks for the user’s age, then prints <strong>Adult</strong> or <strong>Child</strong>. Trace it with your finger: only <em>one</em> path runs after the diamond.</p>
           <div class="lesson-figure">
             <svg class="lesson-diagram" width="100%" viewBox="0 0 320 520" aria-label="Example flowchart: check if age is 18 or over">
@@ -214,7 +214,7 @@
               </defs>
             </svg>
           </div>
-          <p style="font-size:1rem;color:#555;margin-top:8px;"><strong>Reading the diagram:</strong> START → read <code>age</code> → test the condition → exactly one OUTPUT runs → both paths lead to STOP. A <strong>rectangle</strong> could be added between INPUT and the decision if you had a separate calculation step (e.g. “increment visit count”).</p>
+          <p class="lesson-caption-sm"><strong>Reading the diagram:</strong> START → read <code>age</code> → test the condition → exactly one OUTPUT runs → both paths lead to STOP. A <strong>rectangle</strong> could be added between INPUT and the decision if you had a separate calculation step (e.g. “increment visit count”).</p>
           <div class="lesson-quickcheck">
             <p class="lesson-quickcheck-title">Quick Check</p>
             <div class="mcq-inline" data-correct="D">
@@ -303,7 +303,7 @@ ENDFOR</pre>
         <div class="lesson-section-body">
           <p><strong>Binary search</strong> only works on a <strong>sorted</strong> list. Compare the target with the <strong>middle</strong> item; discard the half where the target cannot be; repeat until found or no items left.</p>
           <p><strong>Example:</strong> Sorted [2, 5, 9, 14, 18, 23], find 14. Mid = 9 (too small) → search right half [14, 18, 23] → mid 18 (too big) → [14] → found. Far fewer steps than checking every item.</p>
-          <p style="font-size:1rem;color:#8a5300;"><strong>Remember:</strong> mid index = (low + high) DIV 2. Update <code>low</code> or <code>high</code> after each comparison.</p>
+          <p class="lesson-warn-text"><strong>Remember:</strong> mid index = (low + high) DIV 2. Update <code>low</code> or <code>high</code> after each comparison.</p>
           <div class="lesson-quickcheck">
             <p class="lesson-quickcheck-title">Quick Check</p>
             <div class="mcq-inline" data-correct="A">

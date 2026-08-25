@@ -8,10 +8,10 @@
   <div class="lesson-hero">
     <h1>Compound Measures</h1>
     <p class="hero-sub">A <strong>compound measure</strong> joins two everyday measures together — like how fast you go (speed), how heavy something is for its size (density), or how hard a force presses on an area (pressure). We use simple triangles and unit conversions to solve GCSE questions.</p>
-    <div class="hero-pills">
-      <span class="hero-pill">AQA</span>
-      <span class="hero-pill">Edexcel</span>
-      <span class="hero-pill">OCR</span>
+    <div class="pill-row">
+      <span class="pill pill--hero">AQA</span>
+      <span class="pill pill--hero">Edexcel</span>
+      <span class="pill pill--hero">OCR</span>
     </div>
   </div>
   <!-- Quick Test button -->
@@ -38,7 +38,7 @@
 
       <p>Speed, distance and time are linked. You can picture them in the <strong>SDT triangle</strong> — cover the letter you want and the triangle tells you what to do:</p>
 
-      <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin:20px 0;">
+      <div class="lesson-flex-row">
         <!-- Large SDT triangle SVG -->
         <svg class="lesson-diagram" width="240" height="200" viewBox="0 0 240 200">
           <!-- Top: D (cover D → multiply S and T below) -->
@@ -58,10 +58,10 @@
         </svg>
 
         <div>
-          <p style="margin:4px 0;"><strong>Cover D:</strong> &ensp;D = S × T</p>
-          <p style="margin:4px 0;"><strong>Cover S:</strong> &ensp;S = D ÷ T</p>
-          <p style="margin:4px 0;"><strong>Cover T:</strong> &ensp;T = D ÷ S</p>
-          <hr style="margin:10px 0;">
+          <p><strong>Cover D:</strong> &ensp;D = S × T</p>
+          <p><strong>Cover S:</strong> &ensp;S = D ÷ T</p>
+          <p><strong>Cover T:</strong> &ensp;T = D ÷ S</p>
+          <hr>
           <p>D = Distance (km, m, miles)</p>
           <p>S = Speed (km/h, m/s, mph)</p>
           <p>T = Time (hours, seconds, minutes)</p>
@@ -169,7 +169,7 @@
 
       <p><strong>Density</strong> tells you how “squashed in” the mass is. The <strong>DMV triangle</strong> works just like SDT:</p>
 
-      <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin:20px 0;">
+      <div class="lesson-flex-row">
         <!-- Large DMV triangle SVG -->
         <svg class="lesson-diagram" width="240" height="200" viewBox="0 0 240 200">
           <polygon points="120,12 70,92 170,92" fill="#fce7f3" stroke="#a13544" stroke-width="2"/>
@@ -185,10 +185,10 @@
         </svg>
 
         <div>
-          <p style="margin:4px 0;"><strong>Cover M:</strong> &ensp;M = ρ × V</p>
-          <p style="margin:4px 0;"><strong>Cover ρ:</strong> &ensp;ρ = M ÷ V</p>
-          <p style="margin:4px 0;"><strong>Cover V:</strong> &ensp;V = M ÷ ρ</p>
-          <hr style="margin:10px 0;">
+          <p><strong>Cover M:</strong> &ensp;M = ρ × V</p>
+          <p><strong>Cover ρ:</strong> &ensp;ρ = M ÷ V</p>
+          <p><strong>Cover V:</strong> &ensp;V = M ÷ ρ</p>
+          <hr>
           <p>M = Mass (g, kg)</p>
           <p>ρ = Density (g/cm³, kg/m³)</p>
           <p>V = Volume (cm³, m³, L)</p>
@@ -251,7 +251,7 @@
 
       <p><strong>Pressure</strong> is how much force is pushing on each square metre (or cm²) of surface. We use the <strong>PFA triangle</strong>:</p>
 
-      <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin:20px 0;">
+      <div class="lesson-flex-row">
         <!-- Large PFA triangle SVG -->
         <svg class="lesson-diagram" width="240" height="200" viewBox="0 0 240 200">
           <polygon points="120,12 70,92 170,92" fill="#fef9c3" stroke="#059669" stroke-width="2"/>
@@ -267,10 +267,10 @@
         </svg>
 
         <div>
-          <p style="margin:4px 0;"><strong>Cover F:</strong> &ensp;F = P × A</p>
-          <p style="margin:4px 0;"><strong>Cover P:</strong> &ensp;P = F ÷ A</p>
-          <p style="margin:4px 0;"><strong>Cover A:</strong> &ensp;A = F ÷ P</p>
-          <hr style="margin:10px 0;">
+          <p><strong>Cover F:</strong> &ensp;F = P × A</p>
+          <p><strong>Cover P:</strong> &ensp;P = F ÷ A</p>
+          <p><strong>Cover A:</strong> &ensp;A = F ÷ P</p>
+          <hr>
           <p>F = Force (N, Newtons)</p>
           <p>P = Pressure (Pa, N/m², N/cm²)</p>
           <p>A = Area (m², cm²)</p>
@@ -666,9 +666,9 @@
         </div>
       </div>
 
-      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+      <div class="lesson-cta-row">
         <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=intermediate&amp;mode=practice">Quick Test – Intermediate</a>
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=foundational&amp;mode=mcq" style="display:inline-block;padding:8px 16px;background:#059669;color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">MCQ Practice</a>
+        <a class="btn btn-correct btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=foundational&amp;mode=mcq">MCQ Practice</a>
       </div>
     </div>
   </details>

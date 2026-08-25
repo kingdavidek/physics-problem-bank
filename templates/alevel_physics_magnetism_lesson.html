@@ -5,7 +5,7 @@
 <div class="lesson-shell">
 
 <h1>Magnetic Fields and Electromagnetism</h1>
-<p style="color:var(--text-muted);">AQA A-Level Physics — Section 7.5</p>
+<p class="lesson-muted">AQA A-Level Physics — Section 7.5</p>
 
 <!-- SECTION 1: Motor Effect -->
 <div class="problem-card">
@@ -16,17 +16,17 @@
     \[ F = BIl\sin\theta \]
     <p>The force is maximum when the wire is perpendicular to the field (\(\theta = 90°\)), and zero when parallel (\(\theta = 0°\)).</p>
     <p><strong>Fleming's Left-Hand Rule:</strong> Point the <em>First finger</em> in the direction of the <strong>F</strong>ield, the se<em>C</em>ond finger in the direction of the <strong>C</strong>urrent — the thu<em>M</em>b gives the direction of <strong>M</strong>otion (force).</p>
-    <img src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/1764082d8dc8d7a2dc22b5f309e8c20cf829bbb4.jpg"
-         alt="Fleming's left-hand rule diagram" style="max-width:380px; margin:16px auto; display:block; border-radius:8px;">
+    <img class="lesson-img lesson-img--sm" src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/1764082d8dc8d7a2dc22b5f309e8c20cf829bbb4.jpg"
+         alt="Fleming's left-hand rule diagram">
 </div>
 
 <!-- PROBLEM 1 -->
-<div class="problem-card" style="border-left: 4px solid var(--color-primary);">
+<div class="problem-card problem-card--accent">
     <h3>Practice: The Motor Effect</h3>
     <p>{{ p1.question | safe }}</p>
     <details>
         <summary>Show Solution</summary>
-        <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset); border-radius:4px;">
+        <div class="lesson-solution">
             <p>{{ p1.solution | safe }}</p>
         </div>
     </details>
@@ -44,18 +44,17 @@
     <p>The period of one full orbit is:</p>
     \[ T = \frac{2\pi m}{BQ} \]
     <p>Notice that \(T\) is independent of speed — this is the principle behind the <strong>cyclotron</strong>.</p>
-    <img src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/26bc3615d01f85a2ef89742bf3670a0b26783c1f.jpg"
-         alt="Circular motion of charged particle in magnetic field"
-         style="max-width:420px; margin:16px auto; display:block; border-radius:8px;">
+    <img class="lesson-img lesson-img--md" src="https://pplx-res.cloudinary.com/image/upload/pplx_search_images/26bc3615d01f85a2ef89742bf3670a0b26783c1f.jpg"
+         alt="Circular motion of charged particle in magnetic field">
 </div>
 
 <!-- PROBLEM 2 -->
-<div class="problem-card" style="border-left: 4px solid var(--color-primary);">
+<div class="problem-card problem-card--accent">
     <h3>Practice: Circular Paths</h3>
     <p>{{ p2.question | safe }}</p>
     <details>
         <summary>Show Solution</summary>
-        <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset); border-radius:4px;">
+        <div class="lesson-solution">
             <p>{{ p2.solution | safe }}</p>
         </div>
     </details>
@@ -65,13 +64,13 @@
 <div class="problem-card">
     <h2>3. Cyclotrons</h2>
     <p>A cyclotron is a particle accelerator made of two D-shaped electrodes called <strong>Dees</strong>, with a magnetic field perpendicular to their plane and an alternating voltage across the gap between them.</p>
-    <ul style="margin-top:8px; padding-left:20px;">
+    <ul>
         <li>Particles spiral outward, gaining energy each time they cross the gap.</li>
         <li>The magnetic field keeps them in a circular orbit inside each Dee.</li>
         <li>Because \(T = 2\pi m / BQ\) is independent of speed, the alternating voltage can stay at a fixed frequency (the <em>cyclotron frequency</em>).</li>
         <li>As speed increases, the radius of the path increases: \(r = mv/BQ\).</li>
     </ul>
-    <p style="margin-top:10px;">Applications include producing radioactive tracers for medical imaging (PET scans) and ion beams for radiotherapy.</p>
+    <p>Applications include producing radioactive tracers for medical imaging (PET scans) and ion beams for radiotherapy.</p>
 </div>
 
 <!-- SECTION 3: Magnetic Flux -->
@@ -87,12 +86,12 @@
 </div>
 
 <!-- PROBLEM 3 -->
-<div class="problem-card" style="border-left: 4px solid var(--color-primary);">
+<div class="problem-card problem-card--accent">
     <h3>Practice: Flux Linkage</h3>
     <p>{{ p3.question | safe }}</p>
     <details>
         <summary>Show Solution</summary>
-        <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset); border-radius:4px;">
+        <div class="lesson-solution">
             <p>{{ p3.solution | safe }}</p>
         </div>
     </details>
@@ -102,30 +101,30 @@
 <div class="problem-card">
     <h2>5. Electromagnetic Induction</h2>
     <p>An e.m.f. is induced whenever magnetic flux linkage changes. There are two laws:</p>
-    <ul style="margin-top:8px; padding-left:20px;">
+    <ul>
         <li><strong>Faraday's Law:</strong> The induced e.m.f. equals the rate of change of flux linkage.</li>
         <li><strong>Lenz's Law:</strong> The induced current opposes the change that caused it (conservation of energy).</li>
     </ul>
     \[ \varepsilon = -\frac{\Delta(N\Phi)}{\Delta t} \]
     <p>The minus sign encodes Lenz's law — the induced e.m.f. acts to oppose the flux change.</p>
 
-    <h3 style="margin-top:18px;">Motional e.m.f. derivation</h3>
+    <h3 class="lesson-h3-spaced">Motional e.m.f. derivation</h3>
     <p>A conductor of length \(l\) moving at speed \(v\) perpendicular to field \(B\) sweeps out area \(A = lvt\) in time \(t\). The flux change is \(\Delta\Phi = Blvt\), so:</p>
     \[ \varepsilon = \frac{\Delta\Phi}{\Delta t} = Blv \]
 
-    <h3 style="margin-top:18px;">Rotating coil</h3>
+    <h3 class="lesson-h3-spaced">Rotating coil</h3>
     <p>For a coil rotating at angular speed \(\omega\), flux linkage varies as \(N\Phi = BAN\cos(\omega t)\). Differentiating with respect to time gives the induced e.m.f.:</p>
     \[ \varepsilon = BAN\omega\sin(\omega t) \]
     <p>This is sinusoidal — the basis of the alternating current generator.</p>
 </div>
 
 <!-- PROBLEM 4 -->
-<div class="problem-card" style="border-left: 4px solid var(--color-primary);">
+<div class="problem-card problem-card--accent">
     <h3>Practice: Faraday's Law</h3>
     <p>{{ p4.question | safe }}</p>
     <details>
         <summary>Show Solution</summary>
-        <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset); border-radius:4px;">
+        <div class="lesson-solution">
             <p>{{ p4.solution | safe }}</p>
         </div>
     </details>
@@ -135,7 +134,7 @@
 <div class="problem-card">
     <h2>6. Alternating Current</h2>
     <p>Alternating current changes direction sinusoidally. Key quantities:</p>
-    <ul style="margin-top:8px; padding-left:20px;">
+    <ul>
         <li><strong>Peak voltage \(V_0\):</strong> Maximum voltage from equilibrium.</li>
         <li><strong>Peak-to-peak voltage:</strong> Distance from minimum to maximum.</li>
         <li><strong>RMS voltage \(V_{rms}\):</strong> The equivalent DC voltage that delivers the same power.</li>
@@ -153,24 +152,24 @@
     <p><strong>Ideal transformer</strong> (power in = power out):</p>
     \[ V_p I_p = V_s I_s \implies \frac{I_s}{I_p} = \frac{N_p}{N_s} \]
 
-    <h3 style="margin-top:18px;">Energy losses and how to reduce them</h3>
-    <ul style="padding-left:20px;">
+    <h3 class="lesson-h3-spaced">Energy losses and how to reduce them</h3>
+    <ul>
         <li><strong>Eddy currents</strong> — induced in the core, waste energy as heat. Reduced by <em>laminating</em> the core (layers of iron insulated from each other).</li>
         <li><strong>Coil resistance</strong> — heating in the wire. Reduced by using <em>thick copper wire</em>.</li>
         <li><strong>Magnetisation of core</strong> — energy needed to repeatedly magnetise/demagnetise. Reduced by using <em>soft iron</em> (easy to magnetise and demagnetise).</li>
     </ul>
 
-    <h3 style="margin-top:18px;">Power transmission</h3>
+    <h3 class="lesson-h3-spaced">Power transmission</h3>
     <p>Power lost in cables is \(P = I^2R\). By stepping voltage up (reducing current), losses are dramatically reduced. That is why the National Grid transmits at hundreds of kilovolts.</p>
 </div>
 
 <!-- PROBLEM 5 -->
-<div class="problem-card" style="border-left: 4px solid var(--color-primary);">
+<div class="problem-card problem-card--accent">
     <h3>Practice: Transformers</h3>
     <p>{{ p5.question | safe }}</p>
     <details>
         <summary>Show Solution</summary>
-        <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset); border-radius:4px;">
+        <div class="lesson-solution">
             <p>{{ p5.solution | safe }}</p>
         </div>
     </details>

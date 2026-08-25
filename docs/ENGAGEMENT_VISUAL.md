@@ -22,7 +22,9 @@ Reuse `static/css/tokens.css` — do not invent a second palette.
 
 | Token | Hex | Use |
 |-------|-----|-----|
-| `--brand-500` | `#1a86d4` | Primary CTAs, active nav, form focus |
+| `--brand-500` | `#1a86d4` | Accents, active indicators |
+| `--brand-600` | `#126aae` | Filled primary CTAs (white label, 4.5:1) |
+| `--ink-600` | `#475569` | Muted / subtle text on white and `--bg` |
 | `--ink-700` | `#334155` | Body links (turn brand on hover) |
 | `--maths-500` | `#4f46e5` | Maths topic/lesson accent (not brand blue) |
 | `--xp-500` | `#8b5cf6` | Accuracy charts, mastery rings, CS subject |

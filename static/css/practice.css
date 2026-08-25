@@ -40,11 +40,11 @@
     transform: none;
 }
 .btn-primary {
-    background: var(--brand-500);
-    --btn-edge: var(--brand-700);
+    background: var(--action-primary);
+    --btn-edge: var(--brand-800);
     color: var(--text-on-brand);
 }
-.btn-primary:hover { background: var(--brand-400); color: var(--text-on-brand); }
+.btn-primary:hover { background: var(--brand-700); color: var(--text-on-brand); }
 .btn-secondary,
 .btn-outline {
     background: var(--surface);
@@ -54,23 +54,23 @@
 .btn-secondary:hover,
 .btn-outline:hover { background: var(--ink-100); color: var(--brand-700); }
 .btn-correct {
-    background: var(--correct-500);
+    background: var(--correct-600);
     --btn-edge: var(--correct-700);
     color: #fff;
 }
-.btn-correct:hover { background: var(--correct-600); color: #fff; }
+.btn-correct:hover { background: var(--correct-700); color: #fff; }
 .btn-danger {
-    background: var(--wrong-500);
+    background: var(--wrong-600);
     --btn-edge: var(--wrong-700);
     color: #fff;
 }
-.btn-danger:hover { background: var(--wrong-600); color: #fff; }
+.btn-danger:hover { background: var(--wrong-700); color: #fff; }
 .btn-streak {
-    background: var(--streak-500);
-    --btn-edge: var(--streak-700);
+    background: var(--streak-700);
+    --btn-edge: var(--bronze-500);
     color: #fff;
 }
-.btn-streak:hover { background: var(--streak-400); color: #fff; }
+.btn-streak:hover { background: var(--streak-600); color: #fff; }
 .btn-lg {
     padding: var(--space-4) var(--space-8);
     min-height: 56px;
@@ -1074,31 +1074,6 @@
     border-top: 1px solid var(--border);
 }
 .problem-actions form { margin: 0; }
-
-.quicktest-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-.quicktest-progress {
-    height: 8px;
-    background: var(--primary-light);
-    border-radius: var(--radius-pill);
-    margin-bottom: 18px;
-    overflow: hidden;
-}
-.quicktest-progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, var(--primary), #3d9fd4);
-    border-radius: var(--radius-pill);
-    transition: width 0.35s var(--ease);
-}
 
 /* U7.3 — correct-answer celebration (checkmark draw + local +XP float) */
 .is-celebrate-host { position: relative; overflow: visible; }

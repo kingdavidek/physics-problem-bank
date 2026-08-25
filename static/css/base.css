@@ -133,26 +133,6 @@ nav { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
     gap: 2px;
     flex-shrink: 0;
 }
-.nav-handle {
-    text-decoration: none;
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    font-weight: 500;
-    padding: 8px 14px;
-    border-radius: var(--radius-pill);
-    transition: color 200ms var(--ease), background 200ms var(--ease);
-    white-space: nowrap;
-}
-.nav-handle:hover,
-.nav-handle:focus-visible {
-    color: var(--primary);
-    background: var(--primary-light);
-}
-.nav-handle.active {
-    color: var(--primary);
-    background: var(--primary-light);
-    font-weight: 600;
-}
 nav a {
     text-decoration: none;
     color: var(--text-muted);
@@ -231,6 +211,22 @@ li { margin-bottom: var(--space-1); }
 a { color: var(--ink-700); }
 a:hover,
 a:focus-visible { color: var(--brand-600); }
+
+/* U8.2 — keyboard focus is visible on every control, not only branded buttons. */
+:focus { outline: none; }
+:focus-visible {
+    outline: 2px solid var(--brand-600);
+    outline-offset: 2px;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+    outline: 2px solid var(--brand-600);
+    outline-offset: 2px;
+}
 
 /* ---- MOTION (U7.2) ----
  * One global gate. Colour and state changes survive; movement does not.

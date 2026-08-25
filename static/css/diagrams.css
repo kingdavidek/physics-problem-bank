@@ -6,9 +6,7 @@
  */
 
 /* ---- SVG: instructional diagrams only (not MathJax — see mjx-container above) ---- */
-.question-diagram svg,
 .question-content svg:not(.svg-kit),
-.question-content .question-diagram svg,
 .question-content > div > svg:not(.svg-kit),
 .question > svg:not(.svg-kit),
 .answer > svg:not(.svg-kit),
@@ -104,34 +102,6 @@ svg.svg-kit {
     align-self: center;
 }
 
-svg.trig-diagram {
-    background: #f9f8f5 !important;
-    border-radius: 8px !important;
-    display: block !important;
-    margin: 10px auto !important;
-    max-width: 340px !important;
-    width: 100% !important;
-    height: 220px !important;
-}
-svg.gsim-diagram {
-    background: #fafbfc !important;
-    border: 1px solid #d4e6f1 !important;
-    border-radius: 8px !important;
-    display: block !important;
-    margin: 10px auto !important;
-    max-width: 360px !important;
-    width: 100% !important;
-    height: auto !important;
-}
-svg.geom-diagram {
-    background: #f9f8f5 !important;
-    border-radius: 6px !important;
-    display: block !important;
-    margin: 6px auto !important;
-    max-width: 100% !important;
-    width: 100% !important;
-    height: auto !important;
-}
 /* Typeable self-checking probability-tree inputs (blank/difficult trees) */
 .prob-tree-input {
     width: 100%;

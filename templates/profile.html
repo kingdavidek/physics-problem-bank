@@ -44,11 +44,11 @@
     </div>
 </header>
 
-<nav class="profile-tabs segmented-control" role="tablist" aria-label="Profile sections">
-    <button type="button" role="tab" id="profile-tab-btn-overview" data-tab="overview" aria-controls="profile-tab-overview" aria-selected="true" class="is-active">Overview</button>
-    <button type="button" role="tab" id="profile-tab-btn-progress" data-tab="progress" aria-controls="profile-tab-progress" aria-selected="false">Progress</button>
-    <button type="button" role="tab" id="profile-tab-btn-social" data-tab="social" aria-controls="profile-tab-social" aria-selected="false">Social</button>
-    <button type="button" role="tab" id="profile-tab-btn-history" data-tab="history" aria-controls="profile-tab-history" aria-selected="false">History</button>
+<nav class="profile-tabs segmented-control" role="tablist" aria-label="Profile sections" aria-orientation="horizontal">
+    <button type="button" role="tab" id="profile-tab-btn-overview" data-tab="overview" aria-controls="profile-tab-overview" aria-selected="true" tabindex="0" class="is-active">Overview</button>
+    <button type="button" role="tab" id="profile-tab-btn-progress" data-tab="progress" aria-controls="profile-tab-progress" aria-selected="false" tabindex="-1">Progress</button>
+    <button type="button" role="tab" id="profile-tab-btn-social" data-tab="social" aria-controls="profile-tab-social" aria-selected="false" tabindex="-1">Social</button>
+    <button type="button" role="tab" id="profile-tab-btn-history" data-tab="history" aria-controls="profile-tab-history" aria-selected="false" tabindex="-1">History</button>
 </nav>
 
 {{ page_flashes('profile') }}

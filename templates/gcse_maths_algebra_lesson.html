@@ -8,10 +8,10 @@
   <div class="lesson-hero">
     <h1>Algebra</h1>
     <p class="hero-sub">GCSE Mathematics – Foundation and Higher Tier · All Exam Boards</p>
-    <div class="hero-pills">
-      <span class="hero-pill">AQA</span>
-      <span class="hero-pill">Edexcel</span>
-      <span class="hero-pill">OCR</span>
+    <div class="pill-row">
+      <span class="pill pill--hero">AQA</span>
+      <span class="pill pill--hero">Edexcel</span>
+      <span class="pill pill--hero">OCR</span>
     </div>
   </div>
   <!-- Quick Test button -->
@@ -454,10 +454,9 @@
         <strong>Exam tip:</strong> Show halving the x-coefficient and the constant adjustment — method marks are given for correct completing-the-square steps.
       </div>
 
-      <p style="margin-top:14px;">Practise: topic <strong>Completing the Square</strong> in the generator (5 questions per difficulty; MCQ mode uses new random numbers each time).</p>
-      <p style="margin:8px 0 0;">
-        <a href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=completing_the_square"
-           style="color:#1a6fa8;font-weight:600;">Open Completing the Square in the generator →</a>
+      <p>Practise: topic <strong>Completing the Square</strong> in the generator (5 questions per difficulty; MCQ mode uses new random numbers each time).</p>
+      <p>
+        <a class="lesson-link" href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=completing_the_square">Open Completing the Square in the generator →</a>
       </p>
 
       <div class="lesson-quickcheck">
@@ -510,7 +509,7 @@
         <li>x = 2/4 = <strong>0.5</strong> &nbsp; or &nbsp; x = −8/4 = <strong>−2</strong></li>
       </ul>
 
-      <div style="background:#fce7f3; border-left:4px solid #a13544; padding:12px 14px; border-radius:0 6px 6px 0; margin:12px 0;">
+      <div class="lesson-warn-banner">
         <strong>The discriminant b² − 4ac tells you how many solutions:</strong><br>
         • &gt; 0: <strong>two</strong> real solutions &nbsp; • = 0: <strong>one</strong> repeated solution &nbsp; • &lt; 0: <strong>no</strong> real solutions
       </div>
@@ -620,10 +619,9 @@
         <strong>Exam tip:</strong> Show which equation you multiply (if needed) and which you subtract — method marks are awarded for elimination steps, not just the final answer.
       </div>
 
-      <p style="margin-top:14px;">Practise in the generator: choose topic <strong>Simultaneous Equations</strong> on the home page (5 questions per difficulty, plus MCQ mode).</p>
-      <p style="margin:8px 0 0;">
-        <a href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=simultaneous_equations"
-           style="color:#1a6fa8;font-weight:600;">Open Simultaneous Equations in the generator →</a>
+      <p>Practise in the generator: choose topic <strong>Simultaneous Equations</strong> on the home page (5 questions per difficulty, plus MCQ mode).</p>
+      <p>
+        <a class="lesson-link" href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=simultaneous_equations">Open Simultaneous Equations in the generator →</a>
       </p>
 
       <div class="lesson-quickcheck">
@@ -672,10 +670,9 @@
         <strong>Exam tip:</strong> State both coordinate pairs clearly. Show substitution, the quadratic in \(x\), and how you find each \(y\).
       </div>
 
-      <p style="margin-top:14px;">Practise in the generator: choose <strong>Quadratic Simultaneous Equations</strong> (5 per difficulty, plus MCQ mode with randomised values).</p>
-      <p style="margin:8px 0 0;">
-        <a href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=quadratic_simultaneous_equations"
-           style="color:#1a6fa8;font-weight:600;">Open Quadratic Simultaneous Equations in the generator →</a>
+      <p>Practise in the generator: choose <strong>Quadratic Simultaneous Equations</strong> (5 per difficulty, plus MCQ mode with randomised values).</p>
+      <p>
+        <a class="lesson-link" href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=quadratic_simultaneous_equations">Open Quadratic Simultaneous Equations in the generator →</a>
       </p>
 
       <div class="lesson-quickcheck">
@@ -708,7 +705,7 @@
       <p>You can solve simultaneous equations <strong>from a graph</strong> instead of algebra. Plot both equations on the same axes; the solution is where the graphs <strong>meet</strong>.</p>
 
       <p><strong>Two straight lines</strong> — one crossing point (usually one solution):</p>
-      <svg width="100%" viewBox="0 0 280 200" style="max-width:300px;display:block;margin:12px auto;background:#fafbfc;border:1px solid #d4e6f1;border-radius:8px;">
+      <svg width="100%" viewBox="0 0 280 200" class="lesson-svg-diagram">
         <line x1="40" y1="160" x2="240" y2="160" stroke="#94a3b8" stroke-width="1.2"/>
         <line x1="140" y1="180" x2="140" y2="30" stroke="#94a3b8" stroke-width="1.2"/>
         <line x1="50" y1="150" x2="230" y2="50" stroke="#1a6fa8" stroke-width="2.5"/>
@@ -726,10 +723,9 @@
 
       <p>Algebra (Sections 10–11) and graphs should agree: the same \((x, y)\) pairs appear as intersection points.</p>
 
-      <p style="margin-top:14px;">Practise with diagrams in the generator: <strong>Graphical Simultaneous Equations</strong> (5 per difficulty, 4 randomised MCQs).</p>
-      <p style="margin:8px 0 0;">
-        <a href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=graphical_simultaneous_equations"
-           style="color:#1a6fa8;font-weight:600;">Open Graphical Simultaneous Equations in the generator →</a>
+      <p>Practise with diagrams in the generator: <strong>Graphical Simultaneous Equations</strong> (5 per difficulty, 4 randomised MCQs).</p>
+      <p>
+        <a class="lesson-link" href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=graphical_simultaneous_equations">Open Graphical Simultaneous Equations in the generator →</a>
       </p>
 
       <div class="lesson-quickcheck">
@@ -779,10 +775,9 @@
         <strong>Exam tip:</strong> When solving equations with fractions in \(x\), multiply <strong>every</strong> term by the denominator and state values that make a denominator zero.
       </div>
 
-      <p style="margin-top:14px;">Practise: <strong>Algebraic Fractions</strong> in the generator (5 per difficulty, 4 randomised MCQs).</p>
-      <p style="margin:8px 0 0;">
-        <a href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=algebraic_fractions"
-           style="color:#1a6fa8;font-weight:600;">Open Algebraic Fractions in the generator →</a>
+      <p>Practise: <strong>Algebraic Fractions</strong> in the generator (5 per difficulty, 4 randomised MCQs).</p>
+      <p>
+        <a class="lesson-link" href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=algebraic_fractions">Open Algebraic Fractions in the generator →</a>
       </p>
 
       <div class="lesson-quickcheck">
@@ -814,13 +809,11 @@
       <p><strong>Algebraic proof</strong> shows a statement is true for <em>every</em> integer (not just a few examples). You use \(n\) to represent any integer and explain the structure — even/odd, consecutive numbers, or factorising.</p>
 
       <p>Full lesson (even/odd, consecutive integers, identities, counterexamples):</p>
-      <p style="margin:8px 0 0;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='algebraic_proof') }}"
-           style="color:#1a6fa8;font-weight:600;">Open the Algebraic Proof lesson →</a>
+      <p>
+        <a class="lesson-link" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='algebraic_proof') }}">Open the Algebraic Proof lesson →</a>
       </p>
-      <p style="margin:14px 0 0;">
-        <a href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=algebraic_proof"
-           style="color:#1a6fa8;font-weight:600;">Practise in the generator (Algebraic Proof) →</a>
+      <p class="lesson-mt-note">
+        <a class="lesson-link" href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=algebraic_proof">Practise in the generator (Algebraic Proof) →</a>
       </p>
 
     </div>

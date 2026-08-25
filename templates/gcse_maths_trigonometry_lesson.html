@@ -8,10 +8,10 @@
   <div class="lesson-hero">
     <h1>Trigonometry</h1>
     <p class="hero-sub">GCSE Mathematics – Higher Tier · All Exam Boards</p>
-    <div class="hero-pills">
-      <span class="hero-pill">AQA</span>
-      <span class="hero-pill">Edexcel</span>
-      <span class="hero-pill">OCR</span>
+    <div class="pill-row">
+      <span class="pill pill--hero">AQA</span>
+      <span class="pill pill--hero">Edexcel</span>
+      <span class="pill pill--hero">OCR</span>
     </div>
   </div>
   <!-- Quick Test button -->
@@ -90,7 +90,7 @@
         <li>Substitute and solve.</li>
       </ol>
         <div class="lesson-figure">
-        <img src="{{ url_for('static', filename='images/Sohcahtoa.png') }}" alt="SOH CAH TOA triangle diagram" style="max-width:300px; height:auto; border-radius:8px;">
+        <img class="lesson-img lesson-img--lg" src="{{ url_for('static', filename='images/Sohcahtoa.png') }}" alt="SOH CAH TOA triangle diagram">
       </div>
       <p><strong>Finding an angle?</strong> Use the inverse on your calculator: \(\sin^{-1}\), \(\cos^{-1}\), or \(\tan^{-1}\) (often SHIFT + sin/cos/tan).</p>
 
@@ -243,7 +243,7 @@
         <li>Two sides and a non-included angle (SSA).</li>
       </ul>
             <div class="lesson-figure">
-        <img src="{{ url_for('static', filename='images/sine_rule.png') }}" alt="Sine rule triangle diagram" style="max-width:350px; height:auto; border-radius:8px;">
+        <img class="lesson-img lesson-img--md" src="{{ url_for('static', filename='images/sine_rule.png') }}" alt="Sine rule triangle diagram">
       </div>
       <p><strong>OCR note:</strong> OCR does not require you to consider the ambiguous case of the sine rule (where two different triangles are possible).</p>
 
@@ -359,7 +359,7 @@
       </div>
     </div>
           <div class="lesson-figure">
-        <img src="{{ url_for('static', filename='images/trig_graphs.png') }}" alt="Sine, cosine, and tangent graphs" style="max-width:100%; height:auto; border-radius:8px;">
+        <img class="lesson-img" src="{{ url_for('static', filename='images/trig_graphs.png') }}" alt="Sine, cosine, and tangent graphs">
       </div>
   </details>
 
@@ -376,7 +376,7 @@
       <p>Think of a ship or plane on a map: North is “up”, and you turn clockwise to the bearing.</p>
       <p>Bearing questions often mean drawing a diagram with North lines, then using angle facts and trigonometry (or the cosine rule) to find distances.</p>
     <div class="lesson-figure">
-        <img src="{{ url_for('static', filename='images/bearings_1.png') }}" alt="Bearings diagram" style="max-width:400px; height:auto; border-radius:8px;">
+        <img class="lesson-img lesson-img--md" src="{{ url_for('static', filename='images/bearings_1.png') }}" alt="Bearings diagram">
       </div>
       <p><strong>Typical exam question:</strong> "A ship sails 12 km on a bearing of 070°, then 8 km on a bearing of 150°.  Find its distance from its starting point."</p>
       <p>For these problems, draw the two legs, add North lines, and use angle facts to find the angle between the two paths.  Then apply the cosine rule.</p>
@@ -407,13 +407,13 @@
       <p><strong>Angle of elevation:</strong> you look <em>up</em> from the horizontal — like spotting a bird in the sky.</p>
       <p><strong>Angle of depression:</strong> you look <em>down</em> from the horizontal — like standing on a cliff looking at a boat.</p>
       <p>These always become a <strong>right-angled triangle</strong> in your diagram. Label the sides, pick SOH CAH TOA, and solve.</p>
-      <div style="display:flex; flex-wrap:wrap; gap:20px; justify-content:center; margin:20px 0;">
-        <div style="flex:1; min-width:200px; text-align:center;">
-          <img src="{{ url_for('static', filename='images/angle_elevation.png') }}" alt="Angle of elevation" style="max-width:280px; height:auto; border-radius:8px;">
+      <div class="lesson-flex-center">
+        <div class="lesson-flex-item">
+          <img class="lesson-img lesson-img--lg" src="{{ url_for('static', filename='images/angle_elevation.png') }}" alt="Angle of elevation">
           <p>Angle of elevation</p>
         </div>
-        <div style="flex:1; min-width:200px; text-align:center;">
-          <img src="{{ url_for('static', filename='images/angle_depression.png') }}" alt="Angle of depression" style="max-width:280px; height:auto; border-radius:8px;">
+        <div class="lesson-flex-item">
+          <img class="lesson-img lesson-img--lg" src="{{ url_for('static', filename='images/angle_depression.png') }}" alt="Angle of depression">
           <p>Angle of depression</p>
         </div>
       </div>
@@ -556,8 +556,8 @@
   </details>
 
   <!-- QUICK TEST BUTTONS -->
-  <div style="text-align:center; margin-top: 32px; margin-bottom: 48px;">
-    <form method="POST" action="/quicktest/start" style="display:inline;">
+  <div class="lesson-page-nav lesson-page-nav--spaced">
+    <form class="lesson-form-inline" method="POST" action="/quicktest/start">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="level" value="gcse">
       <input type="hidden" name="subject" value="maths">
@@ -566,7 +566,7 @@
       <input type="hidden" name="difficulty" value="foundational">
       <button type="submit" class="btn btn-primary">⚡ Quick Test: Trigonometry (Foundational)</button>
     </form>
-    <form method="POST" action="/quicktest/start" style="display:inline; margin-left:8px;">
+    <form class="lesson-form-inline lesson-form-inline--gap" method="POST" action="/quicktest/start">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="level" value="gcse">
       <input type="hidden" name="subject" value="maths">

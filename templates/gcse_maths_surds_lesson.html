@@ -7,11 +7,11 @@
   <div class="lesson-hero">
     <h1>Surds</h1>
     <p class="hero-sub">A <strong>surd</strong> is an exact square root that cannot be written as a whole number or simple fraction. Higher-tier GCSE questions often insist on surd form rather than decimals.</p>
-    <div class="hero-pills">
-      <span class="hero-pill">AQA</span>
-      <span class="hero-pill">Edexcel</span>
-      <span class="hero-pill">OCR</span>
-      <span style="background:#fef4e8;color:#8a5300;border-radius:20px;padding:3px 12px;font-size:.8rem;">Higher Tier</span>
+    <div class="pill-row">
+      <span class="pill pill--hero">AQA</span>
+      <span class="pill pill--hero">Edexcel</span>
+      <span class="pill pill--hero">OCR</span>
+      <span class="pill pill--hero-warn">Higher Tier</span>
     </div>
   </div>
 
@@ -131,7 +131,7 @@
         </svg>
       </div>
 
-      <p style="color:#8a5300;background:#fef4e8;padding:8px 12px;border-radius:6px;font-size:.92rem;">
+      <p class="lesson-warn-pill">
         <strong>Tip:</strong> Using a smaller square factor (e.g. √48 = 2√12) means you must simplify again. Always use the <em>largest</em> square factor first.
       </p>
 
@@ -335,8 +335,8 @@
       </div>
       </div>
 
-      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='surds') }}?difficulty=foundational&amp;mode=mcq" style="display:inline-block;padding:8px 16px;background:#059669;color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Start Practice</a>
+      <div class="lesson-cta-row">
+        <a class="btn btn-correct btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='surds') }}?difficulty=foundational&amp;mode=mcq">Start Practice</a>
       </div>
     </div>
   </details>

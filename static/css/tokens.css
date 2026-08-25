@@ -15,7 +15,8 @@
  * ---------------------------------------------------------------------------
  * SEMANTIC COLOUR RULES (lock these — do not drift in components.css)
  * ---------------------------------------------------------------------------
- * PRIMARY ACTIONS     Blue (--brand-500). .btn-primary, active nav, form focus.
+ * PRIMARY ACTIONS     Blue (--brand-600 for filled CTAs so white text is 4.5:1).
+ *                     --brand-500 remains the accent / indicator colour.
  *                     Body links are --ink-700 and turn blue on hover.
  *                     Never put violet/purple on a primary button.
  *
@@ -132,8 +133,8 @@
 
     /* -- Text -- */
     --text:          var(--ink-800);
-    --text-muted:    var(--ink-500);
-    --text-subtle:   var(--ink-400);
+    --text-muted:    var(--ink-600);
+    --text-subtle:   var(--ink-600);
     --text-on-brand: #ffffff;
 
     /* -- Lines. Used sparingly by design: depth comes from elevation. -- */
@@ -151,7 +152,7 @@
     --danger:         var(--wrong-600);
     --danger-bg:      var(--wrong-50);
     --danger-border:  var(--wrong-300);
-    --warning:        var(--streak-600);
+    --warning:        var(--streak-700);
     --warning-bg:     #fffbeb;
     --warning-border: var(--streak-300);
 
@@ -170,7 +171,7 @@
     --subject-chemistry-edge: var(--chem-300);
 
     /* -- Gamification semantics -- */
-    --action-primary: var(--brand-500);
+    --action-primary: var(--brand-600);
     --progress-xp:    var(--xp-500);
     --reward-gold:    var(--gold-500);
     --state-correct:  var(--correct-500);

@@ -5,7 +5,7 @@
 <div class="lesson-shell">
 
   <h1>Photoelectric Effect and Wave‑Particle Duality</h1>
-  <p style="color:var(--text-muted);">AQA A‑Level Physics – Quantum Phenomena (Section 2.2)</p>
+  <p class="lesson-muted">AQA A‑Level Physics – Quantum Phenomena (Section 2.2)</p>
 
   <!-- 1. THE PHOTOELECTRIC EFFECT -->
   <div class="problem-card">
@@ -19,7 +19,7 @@
       <summary>
         Why the wave theory failed
       </summary>
-      <div style="margin-top:8px; padding:12px; background:var(--color-surface-offset);">
+      <div class="lesson-solution">
         <p>
           Classical wave theory predicted that <em>any</em> frequency of light should eventually
           cause emission, because the energy absorbed by each electron would accumulate over
@@ -31,7 +31,7 @@
     <p>
       The <strong>photon model</strong> explains this:
     </p>
-    <ul style="padding-left:20px;">
+    <ul>
       <li>Light travels as discrete packets (photons), each with energy <strong>E = hf</strong>.</li>
       <li>An electron can absorb only <strong>one photon</strong> at a time.</li>
       <li>If a single photon has insufficient energy, the electron cannot escape.</li>
@@ -41,12 +41,12 @@
   </div>
 
   <!-- PRACTICE 1: Basic photoelectric effect -->
-  <div class="problem-card" style="border-left: 4px solid var(--color-primary);">
+  <div class="problem-card problem-card--accent">
     <h3>📝 Your turn</h3>
     <p>{{ p1.question | safe }}</p>
     <details>
       <summary>Show solution</summary>
-      <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset);">
+      <div class="lesson-solution">
         {{ p1.solution | safe }}
       </div>
     </details>
@@ -70,7 +70,7 @@
       <summary>
         The potential well model
       </summary>
-      <div style="margin-top:8px; padding:12px; background:var(--color-surface-offset);">
+      <div class="lesson-solution">
         <p>
           Electrons in a metal can be thought of as sitting in a <strong>potential well</strong> — a
           region of electrostatic attraction. The depth of the well is the work function:
@@ -87,12 +87,12 @@
   </div>
 
   <!-- PRACTICE 2: Threshold frequency -->
-  <div class="problem-card" style="border-left: 4px solid var(--color-primary);">
+  <div class="problem-card problem-card--accent">
     <h3>📝 Your turn</h3>
     <p>{{ p2.question | safe }}</p>
     <details>
       <summary>Show solution</summary>
-      <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset);">
+      <div class="lesson-solution">
         {{ p2.solution | safe }}
       </div>
     </details>
@@ -123,12 +123,12 @@
   </div>
 
   <!-- PRACTICE 3: Photoelectric equation -->
-  <div class="problem-card" style="border-left: 4px solid var(--color-primary);">
+  <div class="problem-card problem-card--accent">
     <h3>📝 Your turn</h3>
     <p>{{ p3.question | safe }}</p>
     <details>
       <summary>Show solution</summary>
-      <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset);">
+      <div class="lesson-solution">
         {{ p3.solution | safe }}
       </div>
     </details>
@@ -154,12 +154,12 @@
   </div>
 
   <!-- PRACTICE 4: Stopping potential -->
-  <div class="problem-card" style="border-left: 4px solid var(--color-primary);">
+  <div class="problem-card problem-card--accent">
     <h3>📝 Your turn</h3>
     <p>{{ p4.question | safe }}</p>
     <details>
       <summary>Show solution</summary>
-      <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset);">
+      <div class="lesson-solution">
         {{ p4.solution | safe }}
       </div>
     </details>
@@ -169,9 +169,9 @@
   <div class="problem-card">
     <h2>💻 Try it yourself: Photon Energy &amp; Kinetic Energy</h2>
     <p>Choose a metal (work function) and a light frequency to see the maximum kinetic energy.</p>
-    <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:flex-end;">
+    <div class="lesson-flex-end">
       <div>
-        <label for="metal-select" style="display:block; font-size:0.9em; margin-bottom:4px;">Metal:</label>
+        <label class="lesson-label" for="metal-select">Metal:</label>
         <select id="metal-select" onchange="updateCalc()">
           <option value="2.0">Zinc (2.0 eV)</option>
           <option value="2.3">Sodium (2.3 eV)</option>
@@ -180,12 +180,12 @@
         </select>
       </div>
       <div>
-        <label for="freq-slider" style="display:block; font-size:0.9em; margin-bottom:4px;">
+        <label class="lesson-label" for="freq-slider">
           Frequency (×10<sup>14</sup> Hz): <span id="freq-display">8.0</span>
         </label>
         <input type="range" id="freq-slider" min="4.0" max="12.0" step="0.1" value="8.0" oninput="updateCalc()">
       </div>
-      <div style="font-weight:bold;">
+      <div>
         \(E_k\) = <span id="ke-result">1.4</span> eV
       </div>
     </div>
@@ -219,12 +219,12 @@
   </div>
 
   <!-- PRACTICE 5: de Broglie wavelength -->
-  <div class="problem-card" style="border-left: 4px solid var(--color-primary);">
+  <div class="problem-card problem-card--accent">
     <h3>📝 Your turn</h3>
     <p>{{ p5.question | safe }}</p>
     <details>
       <summary>Show solution</summary>
-      <div style="margin-top:12px; padding:12px; background:var(--color-surface-offset);">
+      <div class="lesson-solution">
         {{ p5.solution | safe }}
       </div>
     </details>
@@ -251,9 +251,9 @@
   </p>
 
   <!-- Interactive energy-level diagram -->
-  <div style="margin: 20px 0; background: #f9f8f5; border-radius: 8px; padding: 12px;">
-    <p style="font-weight: bold; text-align: center;">Click on a transition arrow to see the photon details</p>
-    <svg viewBox="0 0 320 220" style="width: 100%; max-width: 400px; display: block; margin: 0 auto;">
+  <div class="lesson-tile">
+    <p class="lesson-caption-center">Click on a transition arrow to see the photon details</p>
+    <svg class="lesson-svg-chart" viewBox="0 0 320 220">
       <!-- vertical axis -->
       <line x1="80" y1="20" x2="80" y2="180" stroke="#333" stroke-width="2"/>
       <text x="15" y="105" transform="rotate(-90 15 105)" font-size="14" font-family="sans-serif">Energy</text>
@@ -270,13 +270,13 @@
 
       <!-- Transition arrows (clickable) -->
       <!-- Ground → A (absorption, up) -->
-      <line x1="120" y1="160" x2="120" y2="90" stroke="#d19900" stroke-width="2" marker-end="url(#arrowhead)" style="cursor: pointer;" onclick="showTransition('Ground to A', 16.60, this)"/>
+      <line x1="120" y1="160" x2="120" y2="90" stroke="#d19900" stroke-width="2" marker-end="url(#arrowhead)" onclick="showTransition('Ground to A', 16.60, this)"/>
       <!-- A → B (absorption, up) -->
-      <line x1="150" y1="90" x2="150" y2="50" stroke="#d19900" stroke-width="2" marker-end="url(#arrowhead)" style="cursor: pointer;" onclick="showTransition('A to B', 1.80, this)"/>
+      <line x1="150" y1="90" x2="150" y2="50" stroke="#d19900" stroke-width="2" marker-end="url(#arrowhead)" onclick="showTransition('A to B', 1.80, this)"/>
       <!-- B → A (emission, down) -->
-      <line x1="180" y1="50" x2="180" y2="90" stroke="#35a16b" stroke-width="2" marker-end="url(#arrowhead)" style="cursor: pointer;" onclick="showTransition('B to A', 1.80, this)"/>
+      <line x1="180" y1="50" x2="180" y2="90" stroke="#35a16b" stroke-width="2" marker-end="url(#arrowhead)" onclick="showTransition('B to A', 1.80, this)"/>
       <!-- B → ground (emission, down) -->
-      <line x1="210" y1="50" x2="210" y2="160" stroke="#35a16b" stroke-width="2" marker-end="url(#arrowhead)" style="cursor: pointer;" onclick="showTransition('B to ground', 18.40, this)"/>
+      <line x1="210" y1="50" x2="210" y2="160" stroke="#35a16b" stroke-width="2" marker-end="url(#arrowhead)" onclick="showTransition('B to ground', 18.40, this)"/>
 
       <!-- arrowhead marker -->
       <defs>
@@ -285,7 +285,7 @@
         </marker>
       </defs>
     </svg>
-    <p id="transition-info" style="text-align: center; margin-top: 8px; font-weight: 500;"></p>
+    <p class="lesson-caption-center" id="transition-info"></p>
   </div>
 
   <p>
@@ -318,8 +318,8 @@
   </div>
 
   <!-- Quick Test shortcut -->
-  <div style="text-align:center; margin-top:24px; margin-bottom:48px;">
-    <form method="POST" action="/quicktest/start" style="display:inline;">
+  <div class="lesson-page-nav">
+    <form class="lesson-form-inline" method="POST" action="/quicktest/start">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="level" value="alevel">
       <input type="hidden" name="subject" value="physics">
@@ -328,7 +328,7 @@
       <input type="hidden" name="difficulty" value="foundational">
       <button type="submit" class="btn btn-primary">⚡ Quick Test: Foundational</button>
     </form>
-    <form method="POST" action="/quicktest/start" style="display:inline; margin-left:8px;">
+    <form class="lesson-form-inline lesson-form-inline--gap" method="POST" action="/quicktest/start">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="level" value="alevel">
       <input type="hidden" name="subject" value="physics">

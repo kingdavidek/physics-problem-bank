@@ -68,11 +68,11 @@
   <div class="lesson-hero">
     <h1>Python Programming</h1>
     <p class="hero-sub">GCSE Computer Science programming in Python — variables, selection, iteration, strings, lists, functions, and file handling. Use this lesson for revision, then practise with generated exam-style questions.</p>
-    <div class="hero-pills">
-      <span class="hero-pill">AQA</span>
-      <span class="hero-pill">OCR</span>
-      <span class="hero-pill">Edexcel</span>
-      <span class="hero-pill">WJEC</span>
+    <div class="pill-row">
+      <span class="pill pill--hero">AQA</span>
+      <span class="pill pill--hero">OCR</span>
+      <span class="pill pill--hero">Edexcel</span>
+      <span class="pill pill--hero">WJEC</span>
     </div>
   </div>
 
@@ -324,7 +324,7 @@ if age >= 18:
     print("You are an adult.")
 else:
     print("You are not yet an adult.")</code></pre>
-          <p style="font-size:1rem;color:#8a5300;"><strong>Exam pitfall:</strong> comparing a string to a number always fails. <code>"10" == 10</code> is <code>False</code> because the types differ — always use <code>int(input(...))</code> when you need numeric comparisons.</p>
+          <p class="lesson-warn-text"><strong>Exam pitfall:</strong> comparing a string to a number always fails. <code>"10" == 10</code> is <code>False</code> because the types differ — always use <code>int(input(...))</code> when you need numeric comparisons.</p>
           <div class="lesson-quickcheck">
             <p class="lesson-quickcheck-title">Quick Check</p>
             <div class="mcq-inline" data-correct="D">
@@ -966,17 +966,17 @@ with open("data.txt", "r") as f:
 
       <p class="python-desktop-hint" role="note">Works best on a computer — typing and running code is cramped on a phone.</p>
 
-      <div style="margin-bottom:12px;">
-        <label style="display:block;font-weight:600;margin-bottom:4px;color:#1a6fa8;">Your Python code:</label>
+      <div class="lesson-mb-md">
+        <label class="lesson-label">Your Python code:</label>
         <textarea id="py-code" class="py-editor" rows="8" placeholder="print('Hello')">name = input("What is your name? ")
 print("Hello, " + name)</textarea>
       </div>
 
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+      <div class="lesson-cta-row">
         <button class="btn btn-primary" id="py-run" type="button" onclick="runInteractive()">Run ▶</button>
-        <div id="py-input-container" style="display:none;gap:6px;align-items:center;flex:1;min-width:200px;">
-          <span style="font-weight:600;color:var(--text-muted);">Input:</span>
-          <input type="text" id="py-input" placeholder="type your response and press Enter" style="padding:6px 10px;border-radius:4px;border:1px solid #2a2a2a;font-family:'Share Tech Mono','Consolas','Courier New',monospace;flex:1;background:#0a0a0a;color:#f8f8f2;">
+        <div id="py-input-container">
+          <span class="py-repl-label">Input:</span>
+          <input type="text" id="py-input" class="py-repl-input" placeholder="type your response and press Enter">
           <button class="btn btn-primary" id="py-send" type="button">Send ↵</button>
         </div>
       </div>

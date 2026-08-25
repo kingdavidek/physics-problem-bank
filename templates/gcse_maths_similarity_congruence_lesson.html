@@ -8,10 +8,10 @@
   <div class="lesson-hero">
     <h1>Similarity and Congruence</h1>
     <p class="hero-sub"><strong>Congruent</strong> shapes match exactly — same size and shape, like two identical puzzle pieces. <strong>Similar</strong> shapes look the same but one is a scaled-up or scaled-down copy. We use clear rules to prove congruence or similarity in GCSE questions.</p>
-    <div class="hero-pills">
-      <span class="hero-pill">AQA</span>
-      <span class="hero-pill">Edexcel</span>
-      <span class="hero-pill">OCR</span>
+    <div class="pill-row">
+      <span class="pill pill--hero">AQA</span>
+      <span class="pill pill--hero">Edexcel</span>
+      <span class="pill pill--hero">OCR</span>
     </div>
   </div>
   <!-- Quick Test button -->
@@ -38,11 +38,11 @@
 
       <p>Two triangles are <strong>congruent (≅)</strong> if any one of these four conditions is true:</p>
 
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:20px 0;">
+      <div class="lesson-tile-grid">
 
         <!-- SSS: A(80,22) B(20,100) C(140,100) — one tick per side (all sides equal) -->
         <div class="lesson-callout lesson-callout--formula">
-          <svg width="160" height="120" viewBox="0 0 160 120" style="max-width:100%;">
+          <svg class="lesson-svg-chart" width="160" height="120" viewBox="0 0 160 120">
             <polygon points="20,100 80,22 140,100" fill="#bfdbfe" stroke="#1a6fa8" stroke-width="2"/>
             <!-- tick on AB (mid ≈ 50,61, ⟂ to side) -->
             <line x1="47" y1="58" x2="53" y2="64" stroke="#1a6fa8" stroke-width="2"/>
@@ -54,13 +54,13 @@
             <text x="8"  y="112" font-size="14" fill="#333" font-weight="bold">B</text>
             <text x="148" y="112" font-size="14" fill="#333" text-anchor="end" font-weight="bold">C</text>
           </svg>
-          <p style="margin:4px 0;font-weight:bold;color:#1a6fa8;font-size:1.1rem;">SSS</p>
-          <p style="margin:2px 0;font-size:1rem;">Side-Side-Side<br>All 3 sides equal</p>
+          <p class="lesson-sign-heading">SSS</p>
+          <p>Side-Side-Side<br>All 3 sides equal</p>
         </div>
 
         <!-- SAS: ticks on AB &amp; AC, included angle arc at A -->
-        <div style="background:#fce7f3;border-radius:8px;padding:12px;text-align:center;">
-          <svg width="160" height="120" viewBox="0 0 160 120" style="max-width:100%;">
+        <div class="lesson-sign-tile lesson-sign-tile--neg">
+          <svg class="lesson-svg-chart" width="160" height="120" viewBox="0 0 160 120">
             <polygon points="20,100 80,22 140,100" fill="#fbcfe8" stroke="#a13544" stroke-width="2"/>
             <line x1="47" y1="58" x2="53" y2="64" stroke="#1a6fa8" stroke-width="2"/>
             <line x1="107" y1="64" x2="113" y2="58" stroke="#1a6fa8" stroke-width="2"/>
@@ -70,13 +70,13 @@
             <text x="8"  y="112" font-size="14" fill="#333" font-weight="bold">B</text>
             <text x="148" y="112" font-size="14" fill="#333" text-anchor="end" font-weight="bold">C</text>
           </svg>
-          <p style="margin:4px 0;font-weight:bold;color:#a13544;font-size:1.1rem;">SAS</p>
-          <p style="margin:2px 0;font-size:1rem;">Side-Angle-Side<br>2 sides + included angle</p>
+          <p class="lesson-sign-heading">SAS</p>
+          <p>Side-Angle-Side<br>2 sides + included angle</p>
         </div>
 
         <!-- ASA: included side BC, angle arcs at B and C -->
-        <div style="background:#e0fdf4;border-radius:8px;padding:12px;text-align:center;">
-          <svg width="160" height="120" viewBox="0 0 160 120" style="max-width:100%;">
+        <div class="lesson-sign-tile lesson-sign-tile--pos">
+          <svg class="lesson-svg-chart" width="160" height="120" viewBox="0 0 160 120">
             <polygon points="20,100 80,22 140,100" fill="#a7f3d0" stroke="#059669" stroke-width="2"/>
             <!-- tick on included side BC -->
             <line x1="77" y1="100" x2="83" y2="100" stroke="#1a6fa8" stroke-width="2"/>
@@ -88,13 +88,13 @@
             <text x="8"  y="112" font-size="14" fill="#333" font-weight="bold">B</text>
             <text x="148" y="112" font-size="14" fill="#333" text-anchor="end" font-weight="bold">C</text>
           </svg>
-          <p style="margin:4px 0;font-weight:bold;color:#059669;font-size:1.1rem;">ASA</p>
-          <p style="margin:2px 0;font-size:1rem;">Angle-Side-Angle<br>2 angles + included side</p>
+          <p class="lesson-sign-heading">ASA</p>
+          <p>Angle-Side-Angle<br>2 angles + included side</p>
         </div>
 
         <!-- RHS: right angle at B, A above B, C to the right; tick leg + double tick hyp -->
-        <div style="background:#fef9c3;border-radius:8px;padding:12px;text-align:center;">
-          <svg width="160" height="120" viewBox="0 0 160 120" style="max-width:100%;">
+        <div class="lesson-callout-strip">
+          <svg class="lesson-svg-chart" width="160" height="120" viewBox="0 0 160 120">
             <polygon points="24,100 24,24 136,100" fill="#fef08a" stroke="#b45309" stroke-width="2"/>
             <!-- right-angle mark at B (24,100) -->
             <polyline points="24,90 34,90 34,100" fill="none" stroke="#b45309" stroke-width="1.5"/>
@@ -109,8 +109,8 @@
             <text x="30" y="62" font-size="9" fill="#b45309">leg</text>
             <text x="88" y="48" font-size="9" fill="#1a6fa8">hyp</text>
           </svg>
-          <p style="margin:4px 0;font-weight:bold;color:#b45309;font-size:1.1rem;">RHS</p>
-          <p style="margin:2px 0;font-size:1rem;">Right angle–Hyp–Side<br>Right triangles only</p>
+          <p class="lesson-sign-heading">RHS</p>
+          <p>Right angle–Hyp–Side<br>Right triangles only</p>
         </div>
       </div>
 
@@ -403,11 +403,11 @@
 
       <p>These two set-ups appear a lot in GCSE papers:</p>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:16px 0;flex-wrap:wrap;">
+      <div class="lesson-tile-grid lesson-tile-grid--2">
 
         <!-- Config 1: DE parallel to BC inside triangle -->
         <div>
-          <p style="font-weight:600;margin-bottom:8px;">Case 1: DE ∥ BC within triangle ABC</p>
+          <p>Case 1: DE ∥ BC within triangle ABC</p>
           <svg class="lesson-diagram" width="200" height="190" viewBox="0 0 200 190">
             <!-- Triangle ABC -->
             <polygon points="100,12 15,178 185,178" fill="#e0f2fe" stroke="#1a6fa8" stroke-width="2"/>
@@ -424,7 +424,7 @@
             <text x="100" y="104" font-size="14" fill="#a13544" text-anchor="middle">DE ∥ BC</text>
             <text x="100" y="178" font-size="14" fill="#1a6fa8" text-anchor="middle">△ADE ~ △ABC</text>
           </svg>
-          <p style="font-size:1rem;margin-top:6px;">
+          <p class="lesson-caption-sm">
             Angle A is common; angle ADE = angle ABC (corresponding).<br>
             <strong>SF = AD/AB = AE/AC = DE/BC</strong>
           </p>
@@ -432,7 +432,7 @@
 
         <!-- Config 2: Two triangles sharing a vertex (bowtie / X shape) -->
         <div>
-          <p style="font-weight:600;margin-bottom:8px;">Case 2: AB ∥ DE — "bowtie" configuration</p>
+          <p>Case 2: AB ∥ DE — "bowtie" configuration</p>
           <svg class="lesson-diagram" width="200" height="190" viewBox="0 0 200 190">
             <!-- Upper triangle △AOB; lower triangle △DOE; transversals cross at O -->
             <polygon points="35,28 165,28 100,95" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2"/>
@@ -449,7 +449,7 @@
             <text x="100" y="108" font-size="14" fill="#333" text-anchor="middle" font-weight="bold">O</text>
             <text x="100" y="78" font-size="14" fill="#555" text-anchor="middle">AB ∥ DE</text>
           </svg>
-          <p style="font-size:1rem;margin-top:6px;">
+          <p class="lesson-caption-sm">
             Lines AD and BE cross at O. Vertically opposite angles at O are equal; alternate angles because <strong>AB ∥ DE</strong>.<br>
             <strong>△AOB ~ △DOE (by AA)</strong>
           </p>
@@ -491,7 +491,7 @@
       <p><strong>Example:</strong> You spot angle A = angle P and angle B = angle Q. You write both facts with reasons, then finish with “∴ △ABC ~ △PQR (AA similarity).” That is enough for full similarity marks.</p>
 
       <p><strong>Proof template for similarity (AA):</strong></p>
-      <div style="background:#f1f5f9;padding:12px 16px;border-radius:6px;font-family:monospace;font-size:1rem;margin:12px 0;">
+      <div class="lesson-code-box">
         In triangles ABC and PQR:<br>
         1. Angle A = Angle P [reason — e.g. given / corresponding / alternate / vertically opposite]<br>
         2. Angle B = Angle Q [reason]<br>
@@ -499,7 +499,7 @@
       </div>
 
       <p><strong>Proof template for congruence (SSS example):</strong></p>
-      <div style="background:#f1f5f9;padding:12px 16px;border-radius:6px;font-family:monospace;font-size:1rem;margin:12px 0;">
+      <div class="lesson-code-box">
         In triangles ABM and ACM:<br>
         1. AB = AC &ensp;[isosceles triangle]<br>
         2. BM = MC &ensp;[M is midpoint of BC]<br>
@@ -676,9 +676,9 @@
         </div>
       </div>
 
-      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+      <div class="lesson-cta-row">
         <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='similarity_congruence') }}?difficulty=intermediate&amp;mode=practice">Intermediate Practice</a>
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='similarity_congruence') }}?difficulty=foundational&amp;mode=mcq" style="display:inline-block;padding:8px 16px;background:#059669;color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">MCQ Practice</a>
+        <a class="btn btn-correct btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='similarity_congruence') }}?difficulty=foundational&amp;mode=mcq">MCQ Practice</a>
       </div>
     </div>
   </details>

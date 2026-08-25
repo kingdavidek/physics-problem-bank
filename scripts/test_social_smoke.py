@@ -71,7 +71,7 @@ def main():
 
         r = client.get(f'/u/{handle_a}')
         assert r.status_code == 200
-        assert b'Public profile' in r.data
+        assert b'public profile' in r.data.lower()
 
         r = client.post(
             '/',

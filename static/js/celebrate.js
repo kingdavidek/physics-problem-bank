@@ -78,6 +78,7 @@
 
   function burstConfetti() {
     if (prefersReducedMotion()) return;
+    if (window.pbSound && window.pbSound.celebrate) window.pbSound.celebrate();
     var now = Date.now();
     if (now - lastBurstAt < 1600) return;
     lastBurstAt = now;
@@ -106,6 +107,7 @@
     correctStreak += 1;
     var anchor = celebrateAnchor(target);
     var xp = typeof points === 'number' ? points : 10;
+    if (window.pbSound && window.pbSound.correct) window.pbSound.correct();
     if (anchor && !prefersReducedMotion()) {
       anchor.classList.add('is-pop');
       window.setTimeout(function () { anchor.classList.remove('is-pop'); }, 420);
@@ -120,6 +122,7 @@
 
   function celebrateWrong(target, correctTarget) {
     correctStreak = 0;
+    if (window.pbSound && window.pbSound.wrong) window.pbSound.wrong();
     if (prefersReducedMotion()) return;
     if (target) {
       target.classList.add('is-shake');

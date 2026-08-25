@@ -54,6 +54,7 @@
       buttons.forEach(function (btn) {
         var active = btn.dataset.tab === tab;
         btn.setAttribute('aria-selected', active ? 'true' : 'false');
+        btn.setAttribute('tabindex', active ? '0' : '-1');
         btn.classList.toggle('is-active', active);
       });
 
@@ -77,6 +78,27 @@
       btn.addEventListener('click', function () {
         setTab(btn.dataset.tab, true);
       });
+    });
+
+    nav.addEventListener('keydown', function (event) {
+      var list = Array.prototype.slice.call(buttons);
+      var current = list.indexOf(document.activeElement);
+      if (current < 0) return;
+      var next = current;
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+        next = (current + 1) % list.length;
+      } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+        next = (current - 1 + list.length) % list.length;
+      } else if (event.key === 'Home') {
+        next = 0;
+      } else if (event.key === 'End') {
+        next = list.length - 1;
+      } else {
+        return;
+      }
+      event.preventDefault();
+      list[next].focus();
+      setTab(list[next].dataset.tab, true);
     });
 
     window.addEventListener('hashchange', function () {
@@ -230,11 +252,29 @@
     });
   }
 
+  function initLessonDiagrams() {
+    document.querySelectorAll('svg.lesson-diagram').forEach(function (svg) {
+      if (svg.getAttribute('aria-hidden') === 'true') return;
+      if (!svg.getAttribute('role')) svg.setAttribute('role', 'img');
+      if (svg.getAttribute('aria-label') || svg.querySelector('title')) return;
+      var heading = svg.closest('.lesson-section, .lesson-figure, .lesson-section-body');
+      var label = '';
+      if (heading) {
+        var summary = heading.querySelector('.lesson-section-summary, h2, h3, figcaption');
+        if (summary) label = (summary.textContent || '').replace(/\s+/g, ' ').trim();
+      }
+      var title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+      title.textContent = label ? 'Diagram: ' + label.slice(0, 120) : 'Lesson diagram';
+      svg.insertBefore(title, svg.firstChild);
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     initProfileTabs();
     initTopicsFilter();
     initCollapsibleLists();
     initSegmentedLinks();
     initSkeletonNav();
+    initLessonDiagrams();
   });
 })();

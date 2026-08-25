@@ -7,10 +7,10 @@
   <div class="lesson-hero">
     <h1>Functions</h1>
     <p class="hero-sub">Start with <strong>function machines</strong> (input → rule → output), then move to <strong>f(x)</strong> notation, composite functions, and inverses.</p>
-    <div class="hero-pills">
-      <span class="hero-pill">AQA</span>
-      <span class="hero-pill">Edexcel</span>
-      <span class="hero-pill">OCR</span>
+    <div class="pill-row">
+      <span class="pill pill--hero">AQA</span>
+      <span class="pill pill--hero">Edexcel</span>
+      <span class="pill pill--hero">OCR</span>
     </div>
   </div>
 
@@ -201,12 +201,11 @@
       Functions and graphs
     </summary>
     <div class="lesson-section-body">
-      <p>The graph of <strong>y = f(x)</strong> shows all input–output pairs. Reading the graph is the <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='graphs') }}" style="color:#1a6fa8;">Graphs</a> topic; here we focus on the algebra of f(x).</p>
+      <p>The graph of <strong>y = f(x)</strong> shows all input–output pairs. Reading the graph is the <a class="lesson-link-plain" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='graphs') }}">Graphs</a> topic; here we focus on the algebra of f(x).</p>
       <p>Each point on the graph has coordinates <strong>(input, output)</strong>. For example, if <strong>f(2) = 7</strong>, the graph of <strong>y = f(x)</strong> passes through <strong>(2, 7)</strong>. If the graph is not defined for a value, such as <strong>x = 0</strong> in <strong>f(x) = 1/x</strong>, that input is outside the domain.</p>
-      <p style="margin-top:14px;">Practise in the generator: <strong>Functions</strong> (5 per difficulty, 4 randomised MCQs).</p>
-      <p style="margin:8px 0 0;">
-        <a href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=functions"
-           style="color:#1a6fa8;font-weight:600;">Open Functions in the generator →</a>
+      <p>Practise in the generator: <strong>Functions</strong> (5 per difficulty, 4 randomised MCQs).</p>
+      <p>
+        <a class="lesson-link" href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=functions">Open Functions in the generator →</a>
       </p>
     </div>
   </details>
@@ -267,7 +266,7 @@
     Quick Test – Functions
   </a>
   <a href="{{ url_for('index') }}?level=gcse&amp;subject=maths&amp;topic=functions"
-     style="display:inline-block;margin-left:10px;background:#fff;color:#1a6fa8;border:1px solid #1a6fa8;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:700;">
+     class="btn btn-outline">
     Open Generator
   </a>
 </div>

@@ -5,7 +5,7 @@
 <div class="lesson-shell">
 
   <h1>Particle Physics &amp; the Standard Model</h1>
-  <p style="color:var(--text-muted);">AQA A‑Level Physics – Particles and Radiation</p>
+  <p class="lesson-muted">AQA A‑Level Physics – Particles and Radiation</p>
 
   <!-- 1. ATOM BASICS -->
   <div class="problem-card">
@@ -64,7 +64,7 @@
     </p>
     <details>
       <summary>Full particle table</summary>
-      <div style="margin-top:8px; padding:12px; background:var(--color-surface-offset);">
+      <div class="lesson-solution">
         <table class="lesson-table">
           <thead><tr><th>Generation</th><th>Quarks</th><th>Leptons</th></tr></thead>
           <tbody>
@@ -107,10 +107,10 @@
       <strong>Kaons:</strong> Kaons are mesons containing a strange quark (or antiquark). K⁺ = u\(\bar{s}\) (S = +1), K⁻ = s\(\bar{u}\) (S = -1), K⁰ = d\(\bar{s}\), \(\bar{K}^0\) = s\(\bar{d}\). They were historically important in the discovery of strangeness and CP violation.
     </p>
     <!-- Quark composition builder (unchanged) -->
-    <div style="margin-top: 16px; padding: 16px; background: var(--color-surface-offset); border-radius: 8px;">
+    <div class="lesson-solution">
       <p><strong>Quark Composition Builder</strong></p>
       <p>Select a particle to see its quark structure:</p>
-      <select id="particle-select" style="margin-bottom: 12px;">
+      <select class="lesson-mb-md" id="particle-select">
         <option value="proton">Proton (p⁺)</option>
         <option value="neutron">Neutron (n)</option>
         <option value="piplus">π⁺ (pion)</option>
@@ -118,10 +118,10 @@
         <option value="kplus">K⁺ (kaon)</option>
         <option value="kminus">K⁻ (kaon)</option>
       </select>
-      <div id="quark-display" style="display: flex; gap: 12px; font-size: 1.2em; font-weight: bold; align-items: center;">
+      <div class="lesson-flex-row" id="quark-display">
         <!-- filled by JS -->
       </div>
-      <p id="charge-display" style="margin-top: 8px; font-weight: 500;"></p>
+      <p class="lesson-mt-sm" id="charge-display"></p>
     </div>
   </div>
 
@@ -170,48 +170,43 @@
     </p>
 
     <!-- Electromagnetic repulsion -->
-    <div style="margin: 24px 0;">
+    <div>
       <h3>Electromagnetic Repulsion (e⁻ e⁻ → e⁻ e⁻)</h3>
-      <img src="{{ url_for('static', filename='images/electron_repulsion.png') }}"
-           alt="Electromagnetic repulsion Feynman diagram"
-           style="max-width:100%; height:auto; display:block; margin:0 auto;">
-      <p style="font-size:0.9em; text-align:center;">Repulsion via virtual photon exchange.</p>
+      <img class="lesson-img" src="{{ url_for('static', filename='images/electron_repulsion.png') }}"
+           alt="Electromagnetic repulsion Feynman diagram">
+      <p class="lesson-caption-center">Repulsion via virtual photon exchange.</p>
     </div>
 
     <!-- Beta-minus decay -->
-    <div style="margin: 24px 0;">
+    <div>
       <h3>Weak Interaction – Beta‑Minus Decay (n → p + e⁻ + \(\bar{\nu}_e\))</h3>
-      <img src="{{ url_for('static', filename='images/beta_minus_decay.png') }}"
-           alt="Beta-minus decay Feynman diagram showing quark structure"
-           style="max-width:100%; height:auto; display:block; margin:0 auto;">
-      <p style="font-size:0.9em; text-align:center;">Down → up quark transformation, emitting a W⁻ boson that decays to e⁻ + \(\bar{\nu}_e\).</p>
+      <img class="lesson-img" src="{{ url_for('static', filename='images/beta_minus_decay.png') }}"
+           alt="Beta-minus decay Feynman diagram showing quark structure">
+      <p class="lesson-caption-center">Down → up quark transformation, emitting a W⁻ boson that decays to e⁻ + \(\bar{\nu}_e\).</p>
     </div>
 
     <!-- Beta-plus decay -->
-    <div style="margin: 24px 0;">
+    <div>
       <h3>Weak Interaction – Beta‑Plus Decay (p → n + e⁺ + νₑ)</h3>
-      <img src="{{ url_for('static', filename='images/beta_plus_decay.png') }}"
-           alt="Beta-plus decay Feynman diagram"
-           style="max-width:100%; height:auto; display:block; margin:0 auto;">
-      <p style="font-size:0.9em; text-align:center;">Up → down quark transformation, emitting a W⁺ boson that decays to e⁺ + νₑ.</p>
+      <img class="lesson-img" src="{{ url_for('static', filename='images/beta_plus_decay.png') }}"
+           alt="Beta-plus decay Feynman diagram">
+      <p class="lesson-caption-center">Up → down quark transformation, emitting a W⁺ boson that decays to e⁺ + νₑ.</p>
     </div>
 
     <!-- Electron capture -->
-    <div style="margin: 24px 0;">
+    <div>
       <h3>Weak Interaction – Electron Capture (p + e⁻ → n + νₑ)</h3>
-      <img src="{{ url_for('static', filename='images/electron_capture.png') }}"
-           alt="Electron capture Feynman diagram"
-           style="max-width:100%; height:auto; display:block; margin:0 auto;">
-      <p style="font-size:0.9em; text-align:center;">Proton absorbs an electron, emitting a W⁺ boson that produces a neutron and a neutrino.</p>
+      <img class="lesson-img" src="{{ url_for('static', filename='images/electron_capture.png') }}"
+           alt="Electron capture Feynman diagram">
+      <p class="lesson-caption-center">Proton absorbs an electron, emitting a W⁺ boson that produces a neutron and a neutrino.</p>
     </div>
 
     <!-- Strong interaction (gluon exchange between quarks) -->
-    <div style="margin: 24px 0;">
+    <div>
       <h3>Strong Interaction – Gluon Exchange Between Quarks</h3>
-      <img src="{{ url_for('static', filename='images/Nucleon_strong_force.png') }}"
-           alt="Gluon exchange between quarks Feynman diagram"
-           style="max-width:100%; height:auto; display:block; margin:0 auto;">
-      <p style="font-size:0.9em; text-align:center;">Gluons bind quarks inside a nucleon. The squiggly line represents the strong‑force carrier.</p>
+      <img class="lesson-img" src="{{ url_for('static', filename='images/Nucleon_strong_force.png') }}"
+           alt="Gluon exchange between quarks Feynman diagram">
+      <p class="lesson-caption-center">Gluons bind quarks inside a nucleon. The squiggly line represents the strong‑force carrier.</p>
     </div>
   </div>
 
@@ -287,8 +282,8 @@
   </div>
 
   <!-- Quick Test button -->
-  <div style="text-align:center; margin-top: 24px; margin-bottom: 48px;">
-    <form method="POST" action="/quicktest/start" style="display:inline;">
+  <div class="lesson-page-nav">
+    <form class="lesson-form-inline" method="POST" action="/quicktest/start">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="level" value="alevel">
       <input type="hidden" name="subject" value="physics">

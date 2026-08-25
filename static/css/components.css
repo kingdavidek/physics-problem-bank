@@ -109,6 +109,28 @@ a.hero-pill.is-active,
     color: var(--brand-700);
     border-color: #fff;
 }
+.pill--hero-accent,
+.pill--hero-warn {
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--radius-pill);
+    padding: 3px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+.pill--hero-accent {
+    background: rgba(255, 255, 255, 0.28);
+    color: #fff;
+}
+.pill--hero-warn {
+    background: var(--streak-50, #fef4e8);
+    color: var(--streak-700, #8a5300);
+}
+.pill--filter {
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
 /* ---- PANELS (U1.2, U1.3) ----
  * Depth comes from elevation, not outlines. The old tinted header strip is
  * replaced by a real heading so sections rank against each other by type size.
@@ -122,8 +144,9 @@ a.hero-pill.is-active,
     box-shadow: var(--elev-1);
     transition: box-shadow var(--dur) var(--ease);
 }
-.section-panel:hover {
-    box-shadow: var(--elev-2);
+.profile-tab-stack:not([hidden]) .section-panel {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 280px;
 }
 .section-panel-header {
     background: transparent;
@@ -171,12 +194,6 @@ a.hero-pill.is-active,
     gap: 12px;
     padding: 12px 0;
     border-bottom: 1px solid var(--border-soft);
-}
-.profile-list-actions {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
 }
 .profile-list-item:last-child { border-bottom: none; padding-bottom: 0; }
 .profile-list-item:first-child { padding-top: 0; }
@@ -285,11 +302,14 @@ a.hero-pill.is-active,
     flex-shrink: 0;
     font-size: 1.15rem;
     line-height: 1;
-    border: 2px solid #fff;
-    box-shadow: var(--elev-1);
+    border: 2px solid var(--surface);
+    box-shadow: var(--elev-1), 0 0 0 1px var(--border-soft);
 }
+.user-avatar--xs { width: 22px; height: 22px; font-size: 0.75rem; }
 .user-avatar--sm { width: 28px; height: 28px; font-size: 0.95rem; }
+.user-avatar--md { width: 48px; height: 48px; font-size: 1.35rem; }
 .user-avatar--lg { width: 72px; height: 72px; font-size: 2.1rem; }
+.user-avatar--xl { width: 96px; height: 96px; font-size: 2.75rem; }
 .user-avatar-face { line-height: 1; }
 .user-avatar-extra {
     position: absolute;
@@ -298,14 +318,7 @@ a.hero-pill.is-active,
     font-size: 0.72em;
     line-height: 1;
 }
-.lesson-hero-with-avatar {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-.lesson-hero-with-avatar h1 { margin: 0; }
-.profile-list-item.feed-card,
-.profile-list-item.user-row {
+.profile-list-item.feed-card {
     justify-content: flex-start;
 }
 .avatar-picker {
@@ -534,13 +547,6 @@ html.pwa-standalone .site-wrapper {
     box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.14);
     flex-shrink: 0;
 }
-.profile-xp-level--sm {
-    width: 28px;
-    height: 28px;
-    border-width: 2px;
-    font-size: var(--text-xs);
-    box-shadow: none;
-}
 .profile-xp-points {
     font-weight: 700;
     color: var(--xp-600);
@@ -577,14 +583,6 @@ html.pwa-standalone .site-wrapper {
     font-size: var(--text-base);
     font-weight: 800;
     letter-spacing: -0.01em;
-}
-.hero-pill.profile-xp-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    background: rgba(237, 233, 254, 0.92);
-    border-color: rgba(167, 139, 250, 0.45);
-    color: var(--xp-700);
 }
 
 /* ---- MILESTONE MEDALLIONS (U3.3) ---- */
@@ -741,7 +739,7 @@ html.pwa-standalone .site-wrapper {
     color: var(--ink-300);
 }
 .streak-dot.is-studied .streak-dot-mark { color: var(--streak-600); }
-.streak-dot.is-frozen .streak-dot-mark { color: var(--streak-500); }
+.streak-dot.is-frozen .streak-dot-mark { color: var(--streak-700); }
 .streak-dot.is-today .streak-dot-day { font-weight: 800; color: var(--text); }
 .streak-dot-day {
     font-size: 0.65rem;
@@ -1079,8 +1077,10 @@ details.lesson-section-card > summary.lesson-section-summary::-webkit-details-ma
     background: linear-gradient(90deg, var(--brand-500), var(--brand-400));
     transition: width var(--dur) var(--ease);
 }
-.lesson-quiz-cta-bar {
-    text-align: center;
+body.quiz-runner-active .lesson-quiz-cta-bar,
+.quiz-runner .lesson-quiz-cta-bar {
+    display: none !important;
+}
     margin: var(--space-6) auto var(--space-4);
     padding: var(--space-5);
     max-width: 860px;
@@ -1118,9 +1118,6 @@ details.lesson-section-card > summary.lesson-section-summary::-webkit-details-ma
 .lesson-generator-cta .btn {
     width: 100%;
     max-width: 360px;
-}
-@media (min-width: 961px) {
-    .lesson-progress-topbar { display: none !important; }
 }
 .section-panel-body {
     padding: var(--space-5);
