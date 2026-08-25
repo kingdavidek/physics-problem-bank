@@ -75,7 +75,7 @@
 .lesson-quickcheck-title {
     font-weight: 700;
     margin: 0 0 8px;
-    color: var(--brand-700);
+    color: var(--on-brand);
 }
 .lesson-quickref {
     background: var(--surface-sunken);
@@ -109,14 +109,14 @@
     font-size: 0.65rem;
     margin-left: 6px;
     background: var(--brand-50, var(--ink-100));
-    color: var(--brand-700);
+    color: var(--on-brand);
     padding: 2px 6px;
     border-radius: 10px;
     font-weight: 700;
 }
 .lesson-tag--warn {
     background: var(--streak-100, #fef4e8);
-    color: var(--streak-700, #8a5300);
+    color: var(--on-streak);
 }
 .lesson-table {
     border-collapse: collapse;
@@ -150,7 +150,7 @@ p.lesson-callout--formula {
 }
 .lesson-quickref h4,
 .lesson-quick-ref-card h4 {
-    color: var(--brand-700);
+    color: var(--on-brand);
     margin-top: 14px;
 }
 .lesson-quickref h4:first-child,
@@ -167,7 +167,7 @@ p.lesson-callout--formula {
 .lesson-practice-cta p {
     margin: 0 0 10px;
     font-weight: 600;
-    color: var(--brand-700);
+    color: var(--on-brand);
 }
 /* Nested CS subsections (was attribute-selector compensation on the old 860px wrapper). */
 .lesson-shell .lesson-inner {
@@ -219,7 +219,7 @@ p.lesson-callout--formula {
 }
 .lesson-tile-title {
     font-weight: 700;
-    color: var(--brand-700);
+    color: var(--on-brand);
     margin-bottom: 8px;
 }
 .lesson-tile-caption {
@@ -235,11 +235,11 @@ p.lesson-callout--formula {
     border-radius: var(--radius-sm);
 }
 .lesson-link {
-    color: var(--brand-700);
+    color: var(--on-brand);
     font-weight: 600;
 }
 .lesson-link:hover { color: var(--brand-600); }
-.lesson-link-plain { color: var(--brand-700); }
+.lesson-link-plain { color: var(--on-brand); }
 .lesson-img {
     max-width: 100%;
     height: auto;
@@ -262,11 +262,11 @@ p.lesson-callout--formula {
 .lesson-h3-spaced { margin-top: 18px; }
 .lesson-h3-brand {
     margin: 0 0 10px;
-    color: var(--brand-700);
+    color: var(--on-brand);
 }
 .lesson-step-col h3 {
     margin: 0 0 10px;
-    color: var(--brand-700);
+    color: var(--on-brand);
 }
 .lesson-step-col ol {
     margin: 0;
@@ -313,20 +313,20 @@ p.lesson-callout--formula {
     padding: 16px;
 }
 .lesson-sign-tile--neg {
-    background: #fce7f3;
-    border: 1px solid #a13544;
+    background: var(--wrong-50);
+    border: 1px solid var(--wrong-600);
 }
 .lesson-sign-tile--neg-strong {
-    background: #fce7f3;
-    border: 2px solid #a13544;
+    background: var(--wrong-50);
+    border: 2px solid var(--wrong-600);
     padding: 16px;
 }
 .lesson-sign-symbol {
     font-size: 1.4rem;
     font-weight: 700;
 }
-.lesson-sign-symbol--pos { color: var(--correct-600, #059669); }
-.lesson-sign-symbol--neg { color: #a13544; }
+.lesson-sign-symbol--pos { color: var(--on-correct); }
+.lesson-sign-symbol--neg { color: var(--on-wrong); }
 .lesson-sign-heading {
     font-size: 1.2rem;
     font-weight: 700;
@@ -341,21 +341,21 @@ p.lesson-callout--formula {
     font-size: 1rem;
     font-weight: 600;
 }
-.lesson-sign-result--pos { color: var(--correct-600, #059669); }
-.lesson-sign-result--neg { color: #a13544; }
+.lesson-sign-result--pos { color: var(--on-correct); }
+.lesson-sign-result--neg { color: var(--on-wrong); }
 .lesson-sign-note {
     font-size: 0.8rem;
     color: var(--ink-500);
     margin-top: 6px;
 }
 .lesson-warn-banner {
-    background: #fce7f3;
-    border-left: 4px solid #a13544;
+    background: var(--wrong-50);
+    border-left: 4px solid var(--wrong-600);
     padding: 12px 14px;
     border-radius: 0 6px 6px 0;
     margin: 12px 0;
     font-weight: 600;
-    color: var(--color-warning, var(--streak-700));
+    color: var(--on-streak);
 }
 .lesson-surface-chip {
     background: var(--color-surface-2, var(--surface-sunken));
@@ -366,10 +366,10 @@ p.lesson-callout--formula {
 }
 .lesson-warn-text {
     font-size: 1rem;
-    color: var(--streak-700);
+    color: var(--on-streak);
 }
 .lesson-warn-pill {
-    color: var(--streak-700);
+    color: var(--on-streak);
     background: var(--streak-50, #fef4e8);
     padding: 8px 12px;
     border-radius: 6px;
@@ -445,12 +445,12 @@ p.lesson-callout--formula {
 }
 .lesson-hint-title--brand {
     font-weight: 700;
-    color: var(--brand-700);
+    color: var(--on-brand);
     margin-bottom: 6px;
 }
 .lesson-hint-title--correct {
     font-weight: 700;
-    color: var(--correct-600, #059669);
+    color: var(--on-correct);
     margin-bottom: 6px;
 }
 .lesson-callout--brand {
@@ -495,7 +495,7 @@ p.lesson-callout--formula {
     border-radius: var(--radius);
 }
 .lesson-warn-inline {
-    color: #a13544;
+    color: var(--on-wrong);
     font-size: 0.92rem;
 }
 .lesson-note-muted {
@@ -557,6 +557,91 @@ p.lesson-callout--formula {
 .lesson-section-body .lesson-mb-md { margin-bottom: 14px; }
 .lesson-section-body .lesson-mb-lg { margin-bottom: 16px; }
 .lesson-section-body .lesson-my-lg { margin: 24px 0; }
+@media (max-width: 700px) {
+    .lesson-tile-grid--2,
+    .lesson-sign-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* D2: leftover inline SVG hex (U6) follows theme. Fill and stroke stay separate
+ * so fill="none" is not overwritten. svg_kit uses CSS variables at render time. */
+.lesson-shell svg:not(.svg-kit) :is(
+    [fill="#1a6fa8"], [fill="#01696f"], [fill="#2563eb"], [fill="#1e40af"], [fill="#3b82f6"]
+) { fill: var(--brand-500); }
+.lesson-shell svg:not(.svg-kit) :is(
+    [stroke="#1a6fa8"], [stroke="#01696f"], [stroke="#2563eb"], [stroke="#1e40af"], [stroke="#3b82f6"]
+) { stroke: var(--brand-500); }
+.lesson-shell svg:not(.svg-kit) :is(
+    [fill="#dbeafe"], [fill="#e8f4fd"], [fill="#bfdbfe"], [fill="#e0f2fe"]
+) { fill: var(--brand-100); }
+.lesson-shell svg:not(.svg-kit) :is(
+    [stroke="#dbeafe"], [stroke="#e8f4fd"], [stroke="#bfdbfe"], [stroke="#e0f2fe"]
+) { stroke: var(--brand-100); }
+.lesson-shell svg:not(.svg-kit) :is(
+    [fill="#333"], [fill="#222"], [fill="#000"], [fill="#28251d"], [fill="#374151"],
+    [fill="#444"], [fill="#555"], [fill="#555555"], [fill="#666"], [fill="#334155"]
+) { fill: var(--text); }
+.lesson-shell svg:not(.svg-kit) :is(
+    [stroke="#333"], [stroke="#222"], [stroke="#000"], [stroke="#28251d"], [stroke="#374151"],
+    [stroke="#444"], [stroke="#555"], [stroke="#555555"], [stroke="#666"], [stroke="#334155"]
+) { stroke: var(--text); }
+.lesson-shell svg:not(.svg-kit) :is(
+    [fill="#888"], [fill="#777"], [fill="#aaa"], [fill="#bbb"], [fill="#ccc"],
+    [fill="#ddd"], [fill="#999"], [fill="#6b7280"], [fill="#9ca3af"], [fill="#94a3b8"]
+) { fill: var(--text-muted); }
+.lesson-shell svg:not(.svg-kit) :is(
+    [stroke="#888"], [stroke="#777"], [stroke="#aaa"], [stroke="#bbb"], [stroke="#ccc"],
+    [stroke="#ddd"], [stroke="#999"], [stroke="#6b7280"], [stroke="#9ca3af"], [stroke="#94a3b8"]
+) { stroke: var(--text-muted); }
+.lesson-shell svg:not(.svg-kit) :is([fill="#fff"], [fill="#ffffff"]) { fill: var(--surface); }
+.lesson-shell svg:not(.svg-kit) :is([stroke="#fff"], [stroke="#ffffff"]) { stroke: var(--surface); }
+.lesson-shell svg:not(.svg-kit) :is(
+    [fill="#059669"], [fill="#16a34a"], [fill="#15803d"], [fill="#397a2f"],
+    [fill="#35a16b"], [fill="#34d399"], [fill="#2d6a35"]
+) { fill: var(--correct-600); }
+.lesson-shell svg:not(.svg-kit) :is(
+    [stroke="#059669"], [stroke="#16a34a"], [stroke="#15803d"], [stroke="#397a2f"],
+    [stroke="#35a16b"], [stroke="#34d399"], [stroke="#2d6a35"]
+) { stroke: var(--correct-600); }
+.lesson-shell svg:not(.svg-kit) :is(
+    [fill="#dcfce7"], [fill="#d1fae5"], [fill="#a7f3d0"], [fill="#ecfdf5"],
+    [fill="#e0fdf4"], [fill="#eef7ea"]
+) { fill: var(--correct-100); }
+.lesson-shell svg:not(.svg-kit) :is(
+    [fill="#a13544"], [fill="#dc2626"], [fill="#c0392b"]
+) { fill: var(--wrong-600); }
+.lesson-shell svg:not(.svg-kit) :is(
+    [stroke="#a13544"], [stroke="#dc2626"], [stroke="#c0392b"]
+) { stroke: var(--wrong-600); }
+.lesson-shell svg:not(.svg-kit) :is(
+    [fill="#fee2e2"], [fill="#fecaca"], [fill="#fdecef"], [fill="#fce7f3"]
+) { fill: var(--wrong-100); }
+.lesson-shell svg:not(.svg-kit) :is(
+    [fill="#7c3aed"], [fill="#7a4f9a"], [fill="#7a3fa0"], [fill="#4c1d95"]
+) { fill: var(--xp-600); }
+.lesson-shell svg:not(.svg-kit) :is(
+    [stroke="#7c3aed"], [stroke="#7a4f9a"], [stroke="#7a3fa0"], [stroke="#4c1d95"]
+) { stroke: var(--xp-600); }
+.lesson-shell svg:not(.svg-kit) :is([fill="#ede9fe"], [fill="#f5eafa"]) { fill: var(--xp-100); }
+.lesson-shell svg:not(.svg-kit) :is(
+    [fill="#d97706"], [fill="#ea580c"], [fill="#f59e0b"], [fill="#ca8a04"],
+    [fill="#b45309"], [fill="#8a5300"], [fill="#b36a00"], [fill="#78350f"], [fill="#fbbf24"]
+) { fill: var(--streak-600); }
+.lesson-shell svg:not(.svg-kit) :is(
+    [stroke="#d97706"], [stroke="#ea580c"], [stroke="#f59e0b"], [stroke="#ca8a04"],
+    [stroke="#b45309"], [stroke="#8a5300"], [stroke="#b36a00"], [stroke="#78350f"], [stroke="#fbbf24"]
+) { stroke: var(--streak-600); }
+.lesson-shell svg:not(.svg-kit) :is(
+    [fill="#fef4e8"], [fill="#fef9c3"], [fill="#fed7aa"]
+) { fill: var(--streak-100); }
+.lesson-shell svg:not(.svg-kit) :is([fill="#db2777"], [fill="#9d174d"]) { fill: var(--wrong-600); }
+.lesson-shell svg:not(.svg-kit) :is([stroke="#db2777"], [stroke="#9d174d"]) { stroke: var(--wrong-600); }
+.lesson-shell svg:not(.svg-kit) :is([fill="#e5e7eb"], [fill="#f3f4f6"]) { fill: var(--ink-100); }
+.lesson-shell svg:not(.svg-kit) :is([stroke="#e5e7eb"], [stroke="#f3f4f6"]) { stroke: var(--ink-100); }
+.lesson-shell svg:not(.svg-kit) :is([fill="#d4e6f1"], [fill="#b8c9d4"]) { fill: var(--border); }
+.lesson-shell svg:not(.svg-kit) :is([stroke="#d4e6f1"], [stroke="#b8c9d4"]) { stroke: var(--border); }
+.lesson-shell svg:not(.svg-kit) :is([fill="#e8e4dc"], [fill="#eaf7f6"]) { fill: var(--diagram-paper); }
 @media (max-width: 700px) {
     .lesson-tile-grid--2,
     .lesson-sign-grid {

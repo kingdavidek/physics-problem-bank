@@ -115,6 +115,9 @@ from models.social import (
     FEED_FILTER_LESSONS,
     FEED_FILTER_QUIZZES,
     FEED_FILTER_SHARES,
+    THEME_CHOICES,
+    THEME_SYSTEM,
+    normalize_theme_preference,
     quiz_stats_summary,
     record_activity_event,
     record_mcq_answered,
@@ -713,6 +716,7 @@ def inject_nav():
     nav_tab = _resolve_nav_tab(request.endpoint)
     nav_avatar = None
     sound_enabled = False
+    theme_preference = THEME_SYSTEM
     nav_streak = 0
     xp_progress = None
     tab_badges = {}
@@ -726,6 +730,9 @@ def inject_nav():
             profile_settings = get_profile_settings(conn, current_user.id)
             nav_avatar = profile_settings.get('avatar') or dict(DEFAULT_AVATAR)
             sound_enabled = bool(profile_settings.get('sound_enabled', False))
+            theme_preference = normalize_theme_preference(
+                profile_settings.get('theme_preference', THEME_SYSTEM)
+            )
             streak = get_study_streak(conn, current_user.id)
             nav_streak = int(streak.get('current') or 0)
             tab_badges = {
@@ -762,6 +769,7 @@ def inject_nav():
         'nav_tab': nav_tab,
         'nav_avatar': nav_avatar,
         'sound_enabled': sound_enabled,
+        'theme_preference': theme_preference,
         'nav_streak': nav_streak,
         'tab_badges': tab_badges,
         'quiz_runner_mode': request.endpoint in _QUIZ_RUNNER_ENDPOINTS,
@@ -1163,6 +1171,7 @@ with get_db() as conn:
         ('avatar_json', "TEXT NOT NULL DEFAULT ''"),
         ('show_accuracy_leaderboard', 'INTEGER NOT NULL DEFAULT 1'),
         ('sound_enabled', 'INTEGER NOT NULL DEFAULT 0'),
+        ('theme_preference', "TEXT NOT NULL DEFAULT 'system'"),
     ):
         if col not in profile_cols:
             conn.execute(f'ALTER TABLE user_profile_settings ADD COLUMN {col} {ddl}')
@@ -3074,6 +3083,9 @@ def _settings_to_json(settings):
         'email_weekly_digest': bool(settings.get('email_weekly_digest', False)),
         'show_accuracy_leaderboard': bool(settings.get('show_accuracy_leaderboard', True)),
         'sound_enabled': bool(settings.get('sound_enabled', False)),
+        'theme_preference': normalize_theme_preference(
+            settings.get('theme_preference', THEME_SYSTEM)
+        ),
         'avatar': parse_avatar(settings.get('avatar')),
     }
 
@@ -4249,11 +4261,24 @@ def service_worker():
 
 @app.get('/manifest.webmanifest')
 def web_manifest():
-    return send_from_directory(
-        _ROOT / 'static',
-        'manifest.webmanifest',
-        mimetype='application/manifest+json',
-    )
+    manifest_path = _ROOT / 'static' / 'manifest.webmanifest'
+    with manifest_path.open(encoding='utf-8') as handle:
+        data = json.load(handle)
+    theme = normalize_theme_preference(request.cookies.get('pb_theme', THEME_SYSTEM))
+    if theme == 'dark':
+        data['background_color'] = '#0f1724'
+        data['theme_color'] = '#0f1724'
+    elif theme == 'light':
+        data['background_color'] = '#f2f6fa'
+        data['theme_color'] = '#1a86d4'
+    else:
+        prefers_dark = request.headers.get('Sec-CH-Prefers-Color-Scheme') == 'dark'
+        if prefers_dark:
+            data['background_color'] = '#0f1724'
+            data['theme_color'] = '#0f1724'
+    response = jsonify(data)
+    response.mimetype = 'application/manifest+json'
+    return response
 
 
 @app.get('/favicon.ico')
@@ -4615,6 +4640,7 @@ def profile_settings():
                 'email_weekly_digest': request.form.get('email_weekly_digest') == '1',
                 'show_accuracy_leaderboard': request.form.get('show_accuracy_leaderboard') == '1',
                 'sound_enabled': request.form.get('sound_enabled') == '1',
+                'theme_preference': request.form.get('theme_preference', THEME_SYSTEM),
             }
             with get_db() as conn:
                 if (
@@ -5253,6 +5279,7 @@ def api_v1_patch_settings():
         'email_weekly_digest',
         'show_accuracy_leaderboard',
         'sound_enabled',
+        'theme_preference',
         'avatar',
         'avatar_face',
         'avatar_bg',
@@ -5282,6 +5309,15 @@ def api_v1_patch_settings():
                 f'default_share_visibility must be one of: {", ".join(VISIBILITY_CHOICES)}',
                 400,
                 'invalid_visibility',
+            )
+
+    if 'theme_preference' in payload:
+        theme = payload['theme_preference']
+        if theme not in THEME_CHOICES:
+            return _api_error(
+                f'theme_preference must be one of: {", ".join(THEME_CHOICES)}',
+                400,
+                'invalid_theme',
             )
 
     bool_fields = (

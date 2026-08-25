@@ -594,7 +594,7 @@
       actions.hidden = true;
       status.hidden = false;
       status.textContent = 'Thanks \u2014 noted.';
-      status.style.color = '#16a34a';
+      status.style.color = 'var(--on-correct)';
       window.setTimeout(dismissPanel, 1400);
     }
 
@@ -824,7 +824,7 @@
           btn.classList.add('is-correct');
           if (feedback) {
             feedback.textContent = '\u2713 Correct!';
-            feedback.style.color = '#16a34a';
+            feedback.style.color = 'var(--on-correct)';
           }
           celebrateResult(true, btn);
           block.dispatchEvent(new CustomEvent('mcq-correct', { bubbles: true }));
@@ -841,7 +841,7 @@
           celebrateResult(false, btn, correctBtn);
           if (feedback) {
             feedback.textContent = '\u2717 Not quite \u2014 the correct answer is highlighted.';
-            feedback.style.color = '#dc2626';
+            feedback.style.color = 'var(--on-wrong)';
           }
           showMcqRetry(block);
         }
@@ -1566,13 +1566,13 @@
       var tx = numberLineXForValue(v, axis, pad, width);
       ticks +=
         '<line x1="' + tx + '" y1="' + (y - 7) + '" x2="' + tx + '" y2="' + (y + 7) +
-        '" stroke="#475569" stroke-width="1.5"/>' +
+        '" stroke="var(--text-muted)" stroke-width="1.5"/>' +
         '<text x="' + tx + '" y="' + (y + 24) +
-        '" text-anchor="middle" fill="#475569" font-size="13">' + v + '</text>';
+        '" text-anchor="middle" fill="var(--text-muted)" font-size="13">' + v + '</text>';
     }
 
-    var leftFill = state.leftClosed ? '#1a6fa8' : '#ffffff';
-    var rightFill = state.rightClosed ? '#1a6fa8' : '#ffffff';
+    var leftFill = state.leftClosed ? 'var(--brand-500)' : 'var(--surface)';
+    var rightFill = state.rightClosed ? 'var(--brand-500)' : 'var(--surface)';
     var leftLabel = state.leftClosed ? 'closed' : 'open';
     var rightLabel = state.rightClosed ? 'closed' : 'open';
 
@@ -1580,20 +1580,20 @@
       '<svg viewBox="0 0 ' + width + ' ' + height +
       '" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
       '<line x1="' + pad + '" y1="' + y + '" x2="' + (width - pad) + '" y2="' + y +
-      '" stroke="#334155" stroke-width="2"/>' +
+      '" stroke="var(--text)" stroke-width="2"/>' +
       '<polygon points="' + (width - pad) + ',' + (y - 5) + ' ' + (width - pad + 12) + ',' + y +
-      ' ' + (width - pad) + ',' + (y + 5) + '" fill="#334155"/>' +
+      ' ' + (width - pad) + ',' + (y + 5) + '" fill="var(--text)"/>' +
       ticks +
       '<line class="nl-segment" x1="' + leftX + '" y1="' + y + '" x2="' + rightX +
-      '" y2="' + y + '" stroke="#1a6fa8" stroke-width="5" stroke-linecap="round"/>' +
+      '" y2="' + y + '" stroke="var(--brand-500)" stroke-width="5" stroke-linecap="round"/>' +
       '<circle class="nl-endpoint nl-left' + (state.leftClosed ? ' nl-closed' : '') +
       '" data-end="left" cx="' + leftX + '" cy="' + y + '" r="9" fill="' + leftFill +
-      '" stroke="#1a6fa8" stroke-width="2.5" tabindex="0" role="button" ' +
+      '" stroke="var(--brand-500)" stroke-width="2.5" tabindex="0" role="button" ' +
       'aria-label="Left endpoint at ' + state.left + ', ' + leftLabel +
       ' circle. Drag to move, click or press Enter to toggle."/>' +
       '<circle class="nl-endpoint nl-right' + (state.rightClosed ? ' nl-closed' : '') +
       '" data-end="right" cx="' + rightX + '" cy="' + y + '" r="9" fill="' + rightFill +
-      '" stroke="#1a6fa8" stroke-width="2.5" tabindex="0" role="button" ' +
+      '" stroke="var(--brand-500)" stroke-width="2.5" tabindex="0" role="button" ' +
       'aria-label="Right endpoint at ' + state.right + ', ' + rightLabel +
       ' circle. Drag to move, click or press Enter to toggle."/>' +
       '</svg>' +
@@ -2882,7 +2882,7 @@
       if (!allFieldsCorrect()) return;
       if (blockFeedback) {
         blockFeedback.textContent = '\u2713 All parts correct!';
-        blockFeedback.style.color = '#16a34a';
+        blockFeedback.style.color = 'var(--on-correct)';
       }
     }
 
@@ -3027,7 +3027,7 @@
           if (!selected.length) {
             if (fieldFeedback) {
               fieldFeedback.textContent = 'Put the steps in the correct order.';
-              fieldFeedback.style.color = '#dc2626';
+              fieldFeedback.style.color = 'var(--on-wrong)';
             }
             return;
           }
@@ -3058,7 +3058,7 @@
             checkBtn.disabled = false;
             if (fieldFeedback) {
               fieldFeedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
-              fieldFeedback.style.color = '#dc2626';
+              fieldFeedback.style.color = 'var(--on-wrong)';
             }
           });
         });
@@ -3162,7 +3162,7 @@
               fieldFeedback.textContent = pickCount
                 ? ('Select ' + pickCount + ' correct options.')
                 : 'Select your answer.';
-              fieldFeedback.style.color = '#dc2626';
+              fieldFeedback.style.color = 'var(--on-wrong)';
             }
             return;
           }
@@ -3193,7 +3193,7 @@
             checkBtn.disabled = false;
             if (fieldFeedback) {
               fieldFeedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
-              fieldFeedback.style.color = '#dc2626';
+              fieldFeedback.style.color = 'var(--on-wrong)';
             }
           });
         });
@@ -3222,7 +3222,7 @@
                 row.dataset.fieldCorrect = '1';
                 if (fieldFeedback) {
                   fieldFeedback.textContent = '\u2713 Correct!';
-                  fieldFeedback.style.color = '#16a34a';
+                  fieldFeedback.style.color = 'var(--on-correct)';
                 }
                 celebrateResult(true, btn);
                 maybePersistAllFields();
@@ -3240,14 +3240,14 @@
                 mcqWrap.querySelectorAll('.mcq-btn').forEach(function (b) { b.disabled = false; });
                 if (fieldFeedback) {
                   fieldFeedback.textContent = '\u2717 Not quite \u2014 the correct answer is highlighted.';
-                  fieldFeedback.style.color = '#dc2626';
+                  fieldFeedback.style.color = 'var(--on-wrong)';
                 }
               }
             }).catch(function (err) {
               mcqWrap.querySelectorAll('.mcq-btn').forEach(function (b) { b.disabled = false; });
               if (fieldFeedback) {
                 fieldFeedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
-                fieldFeedback.style.color = '#dc2626';
+                fieldFeedback.style.color = 'var(--on-wrong)';
               }
             });
           });
@@ -3268,7 +3268,7 @@
         if (!userValue) {
           if (fieldFeedback) {
             fieldFeedback.textContent = 'Enter an answer.';
-            fieldFeedback.style.color = '#dc2626';
+            fieldFeedback.style.color = 'var(--on-wrong)';
           }
           return;
         }
@@ -3284,7 +3284,7 @@
             checkBtn.disabled = true;
             if (fieldFeedback) {
               fieldFeedback.textContent = '\u2713 ' + freeResponseCorrectFeedback(data, userValue);
-              fieldFeedback.style.color = '#16a34a';
+              fieldFeedback.style.color = 'var(--on-correct)';
             }
             celebrateResult(true, checkBtn || row);
             maybePersistAllFields();
@@ -3294,7 +3294,7 @@
             checkBtn.disabled = false;
             if (fieldFeedback) {
               fieldFeedback.textContent = '\u25D0 ' + freeResponseWrongFeedback(block, data);
-              fieldFeedback.style.color = '#d97706';
+              fieldFeedback.style.color = 'var(--on-streak)';
             }
           } else {
             input.classList.add('is-wrong');
@@ -3302,7 +3302,7 @@
             checkBtn.disabled = false;
             if (fieldFeedback) {
               fieldFeedback.textContent = '\u2717 ' + freeResponseWrongFeedback(block, data);
-              fieldFeedback.style.color = '#dc2626';
+              fieldFeedback.style.color = 'var(--on-wrong)';
             }
           }
         }).catch(function (err) {
@@ -3310,7 +3310,7 @@
           checkBtn.disabled = false;
           if (fieldFeedback) {
             fieldFeedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
-            fieldFeedback.style.color = '#dc2626';
+            fieldFeedback.style.color = 'var(--on-wrong)';
           }
         });
       }
@@ -3397,7 +3397,7 @@
     if (data.correct) {
       if (feedback) {
         feedback.textContent = '\u2713 Correct!';
-        feedback.style.color = '#16a34a';
+        feedback.style.color = 'var(--on-correct)';
       }
       if (row) row.classList.add('is-correct');
       celebrateResult(true, checkBtn || row);
@@ -3411,10 +3411,10 @@
       if (feedback) {
         if (isTextPartialScore(data) && !data.step_feedback) {
           feedback.textContent = '\u25D0 ' + (context.partialFeedback || freeResponseWrongFeedback(block, data));
-          feedback.style.color = '#d97706';
+          feedback.style.color = 'var(--on-streak)';
         } else {
           feedback.textContent = '\u2717 ' + (data.feedback || 'Not quite.');
-          feedback.style.color = '#dc2626';
+          feedback.style.color = 'var(--on-wrong)';
         }
       }
       applyProofStepFeedback(list, data.step_feedback);
@@ -3454,7 +3454,7 @@
       if (!code) {
         if (feedback) {
           feedback.textContent = 'Write your Python code first.';
-          feedback.style.color = '#dc2626';
+          feedback.style.color = 'var(--on-wrong)';
         }
         textarea.classList.remove('is-correct', 'is-wrong');
         return;
@@ -3462,7 +3462,7 @@
       if (typeof globalThis.runPythonRunTests !== 'function') {
         if (feedback) {
           feedback.textContent = 'Python runner is still loading — try again in a moment.';
-          feedback.style.color = '#dc2626';
+          feedback.style.color = 'var(--on-wrong)';
         }
         return;
       }
@@ -3475,7 +3475,7 @@
       if (!tests.length) {
         if (feedback) {
           feedback.textContent = 'This question has no test fixtures configured.';
-          feedback.style.color = '#dc2626';
+          feedback.style.color = 'var(--on-wrong)';
         }
         return;
       }
@@ -3538,7 +3538,7 @@
           celebrateResult(ok, checkBtn || textarea);
           if (feedback) {
             feedback.textContent = data.feedback || (ok ? 'Correct!' : 'Not quite.');
-            feedback.style.color = ok ? '#16a34a' : '#dc2626';
+            feedback.style.color = ok ? 'var(--on-correct)' : 'var(--on-wrong)';
           }
           if (ok && trackable) {
             block.dataset.freeResponsePersisted = '1';
@@ -3557,7 +3557,7 @@
         textarea.classList.add('is-wrong');
         if (feedback) {
           feedback.textContent = (err && err.message) || 'Could not run your code — try again.';
-          feedback.style.color = '#dc2626';
+          feedback.style.color = 'var(--on-wrong)';
         }
       });
     });
@@ -3680,7 +3680,7 @@
             : (pickCount
               ? ('Select ' + pickCount + ' correct options.')
               : 'Select all correct statements.');
-          feedback.style.color = '#dc2626';
+          feedback.style.color = 'var(--on-wrong)';
         }
         return;
       }
@@ -3738,7 +3738,7 @@
           checkBtn.disabled = false;
           if (feedback) {
             feedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
-            feedback.style.color = '#dc2626';
+            feedback.style.color = 'var(--on-wrong)';
           }
         });
     });
@@ -4105,7 +4105,7 @@
       if (isEmptyAnswer()) {
         if (feedback) {
           feedback.textContent = emptyMessage();
-          feedback.style.color = '#dc2626';
+          feedback.style.color = 'var(--on-wrong)';
         }
         return;
       }
@@ -4171,14 +4171,14 @@
             setInputState(true);
             if (feedback) {
               feedback.textContent = '\u2713 ' + freeResponseCorrectFeedback(data, userAnswer);
-              feedback.style.color = '#16a34a';
+              feedback.style.color = 'var(--on-correct)';
             }
             celebrateResult(true, checkBtn || block);
           } else if (isTextPartialScore(data)) {
             setInputStatePartial();
             if (feedback) {
               feedback.textContent = '\u25D0 ' + freeResponseWrongFeedback(block, data);
-              feedback.style.color = '#d97706';
+              feedback.style.color = 'var(--on-streak)';
             }
           } else {
             setInputState(false);
@@ -4188,7 +4188,7 @@
             }
             if (feedback) {
               feedback.textContent = '\u2717 ' + freeResponseWrongFeedback(block, data);
-              feedback.style.color = '#dc2626';
+              feedback.style.color = 'var(--on-wrong)';
             }
             celebrateResult(false, checkBtn || block);
             offerWrongAnswerReflection(block, 'check', data, recordThisAttempt);
@@ -4215,7 +4215,7 @@
           });
           if (feedback) {
             feedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
-            feedback.style.color = '#dc2626';
+            feedback.style.color = 'var(--on-wrong)';
           }
           if (document.getElementById('quicktest-quiz-runner')) {
             document.dispatchEvent(new CustomEvent('pb-quicktest-check-failed', { bubbles: true }));

@@ -52,25 +52,25 @@
     --btn-edge: var(--edge);
 }
 .btn-secondary:hover,
-.btn-outline:hover { background: var(--ink-100); color: var(--brand-700); }
+.btn-outline:hover { background: var(--ink-100); color: var(--on-brand); }
 .btn-correct {
     background: var(--correct-600);
     --btn-edge: var(--correct-700);
-    color: #fff;
+    color: var(--text-on-brand);
 }
-.btn-correct:hover { background: var(--correct-700); color: #fff; }
+.btn-correct:hover { background: var(--correct-700); color: var(--text-on-brand); }
 .btn-danger {
     background: var(--wrong-600);
     --btn-edge: var(--wrong-700);
-    color: #fff;
+    color: var(--text-on-brand);
 }
-.btn-danger:hover { background: var(--wrong-700); color: #fff; }
+.btn-danger:hover { background: var(--wrong-700); color: var(--text-on-brand); }
 .btn-streak {
     background: var(--streak-700);
     --btn-edge: var(--bronze-500);
-    color: #fff;
+    color: var(--text-on-brand);
 }
-.btn-streak:hover { background: var(--streak-600); color: #fff; }
+.btn-streak:hover { background: var(--streak-600); color: var(--text-on-brand); }
 .btn-lg {
     padding: var(--space-4) var(--space-8);
     min-height: 56px;
@@ -107,20 +107,20 @@
     background: var(--correct-50);
     border-color: var(--correct-500);
     --btn-edge: var(--correct-500);
-    color: var(--correct-700);
+    color: var(--on-correct);
 }
 .mcq-btn.is-wrong {
     background: var(--wrong-50);
     border-color: var(--wrong-500);
     --btn-edge: var(--wrong-500);
-    color: var(--wrong-700);
+    color: var(--on-wrong);
 }
 .mcq-btn:disabled { opacity: 1; cursor: default; }
 .mcq-btn.is-selected:not(.is-correct):not(.is-wrong) {
     border-color: var(--brand-500);
     --btn-edge: var(--brand-500);
     background: var(--brand-50);
-    color: var(--brand-700);
+    color: var(--on-brand);
 }
 /* Colour is never the only signal (U8.5). Letter chip is real markup (U1.8). */
 .mcq-letter {
@@ -139,11 +139,11 @@
 }
 .mcq-btn.is-correct .mcq-letter {
     background: var(--correct-100);
-    color: var(--correct-700);
+    color: var(--on-correct);
 }
 .mcq-btn.is-wrong .mcq-letter {
     background: var(--wrong-100);
-    color: var(--wrong-700);
+    color: var(--on-wrong);
 }
 .mcq-btn.is-correct::after,
 .mcq-btn.is-wrong::after {
@@ -151,8 +151,8 @@
     padding-left: var(--space-3);
     font-weight: 800;
 }
-.mcq-btn.is-correct::after { content: "\2713"; color: var(--correct-600); }
-.mcq-btn.is-wrong::after   { content: "\2717"; color: var(--wrong-600); }
+.mcq-btn.is-correct::after { content: "\2713"; color: var(--on-correct); }
+.mcq-btn.is-wrong::after   { content: "\2717"; color: var(--on-wrong); }
 .mcq-btn.has-drawn-check::after { content: none; }
 @media (prefers-reduced-motion: no-preference) {
     .mcq-btn.is-pop,
@@ -475,7 +475,7 @@
     display: inline-block;
 }
 .free-response-number-line-legend .nl-legend-dot.open {
-    background: #fff;
+    background: var(--surface);
 }
 .free-response-number-line-legend .nl-legend-dot.closed {
     background: var(--primary);
@@ -543,7 +543,7 @@
     padding: 0.35rem 0.5rem;
 }
 .free-response-proof-selected li.proof-step-status--correct {
-    background: #ecfdf5;
+    background: var(--correct-50);
     border-left: 3px solid var(--success);
 }
 .free-response-proof-selected li.proof-step-status--wrong {
@@ -568,7 +568,7 @@
     color: var(--danger);
 }
 .free-response-proof-selected li.proof-step-status--wrong-order .free-response-proof-status {
-    color: var(--streak-700);
+    color: var(--on-streak);
 }
 .free-response-proof-selected .free-response-proof-remove {
     margin-left: 0.45rem;
@@ -1101,7 +1101,7 @@
     padding: 2px 8px;
     border-radius: var(--radius-pill);
     background: var(--xp-600);
-    color: #fff;
+    color: var(--text-on-brand);
     font-weight: 800;
     font-size: var(--text-xs);
     letter-spacing: 0.02em;

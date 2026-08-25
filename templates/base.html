@@ -27,6 +27,21 @@
         } catch (e) {}
       })();
     </script>
+    <script>
+      (function () {
+        var theme = {{ theme_preference|tojson }};
+        try {
+          var stored = localStorage.getItem('pb-theme');
+          if (stored && ['system', 'light', 'dark'].indexOf(stored) >= 0) {
+            theme = stored;
+          }
+        } catch (e) {}
+        if (!theme || ['system', 'light', 'dark'].indexOf(theme) < 0) {
+          theme = 'system';
+        }
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
     <title>{% block title %}Problem Bank{% endblock %}</title>
 
     <!-- Fonts -->
@@ -35,19 +50,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 
     <!-- App CSS - load order is significant (docs/UI_REDESIGN.md U0) -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}?v=20">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=23">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=30">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=31">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/practice.css') }}?v=23">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=46">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}?v=23">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=24">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=31">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=32">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/practice.css') }}?v=24">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=49">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}?v=21">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/diagrams.css') }}?v=24">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/diagrams.css') }}?v=26">
     {% if lesson_meta %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/lesson-pages.css') }}?v=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/lesson-pages.css') }}?v=3">
     {% endif %}
     {% if lesson_assist_enabled %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/lesson-assist.css') }}?v=17">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/lesson-assist.css') }}?v=18">
     {% endif %}
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -62,7 +77,8 @@
     ></script>
     <!-- External site logic (dropdowns, MCQs, etc.) -->
     <script src="{{ url_for('static', filename='js/python-run-grader.js') }}?v=4" defer></script>
-    <script src="{{ url_for('static', filename='js/site.js') }}?v=26" defer></script>
+    <script src="{{ url_for('static', filename='js/theme.js') }}?v=1" defer></script>
+    <script src="{{ url_for('static', filename='js/site.js') }}?v=28" defer></script>
     <script src="{{ url_for('static', filename='js/site-search.js') }}?v=17" defer></script>
     <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=4" defer></script>
     <script src="{{ url_for('static', filename='js/tab-bar.js') }}?v=2" defer></script>

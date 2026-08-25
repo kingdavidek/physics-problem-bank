@@ -12,6 +12,17 @@ VISIBILITY_CHOICES = (
     VISIBILITY_PRIVATE,
 )
 
+THEME_SYSTEM = 'system'
+THEME_LIGHT = 'light'
+THEME_DARK = 'dark'
+THEME_CHOICES = (THEME_SYSTEM, THEME_LIGHT, THEME_DARK)
+
+
+def normalize_theme_preference(value):
+    if value in THEME_CHOICES:
+        return value
+    return THEME_SYSTEM
+
 ACTIVITY_TOPIC_OPENED = 'topic_opened'
 ACTIVITY_QUESTION_GENERATED = 'question_generated'
 ACTIVITY_MCQ_ANSWERED = 'mcq_answered'
@@ -90,7 +101,7 @@ def get_profile_settings(conn, user_id):
                show_shared_questions, auto_share_quiz, auto_share_lesson,
                default_share_visibility, show_study_streak, show_milestones,
                email_weekly_digest, avatar_json, show_accuracy_leaderboard,
-               sound_enabled
+               sound_enabled, theme_preference
         FROM user_profile_settings
         WHERE user_id = ?
         ''',
@@ -110,6 +121,7 @@ def update_profile_settings(conn, user_id, settings):
     share_visibility = settings.get('default_share_visibility', VISIBILITY_FOLLOWERS)
     if share_visibility not in VISIBILITY_CHOICES:
         share_visibility = VISIBILITY_FOLLOWERS
+    theme_preference = normalize_theme_preference(settings.get('theme_preference', THEME_SYSTEM))
     if 'avatar' in settings or settings.get('avatar_json'):
         avatar_json = avatar_to_json(
             settings.get('avatar') or parse_avatar(settings.get('avatar_json'))
@@ -138,7 +150,8 @@ def update_profile_settings(conn, user_id, settings):
             email_weekly_digest = ?,
             avatar_json = ?,
             show_accuracy_leaderboard = ?,
-            sound_enabled = ?
+            sound_enabled = ?,
+            theme_preference = ?
         WHERE user_id = ?
         ''',
         (
@@ -158,6 +171,7 @@ def update_profile_settings(conn, user_id, settings):
             avatar_json,
             _bool_int(settings.get('show_accuracy_leaderboard', True)),
             _bool_int(settings.get('sound_enabled', False)),
+            theme_preference,
             user_id,
         ),
     )

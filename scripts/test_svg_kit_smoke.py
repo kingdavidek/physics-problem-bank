@@ -92,14 +92,16 @@ def test_demo_and_palette_tokens():
     assert 'role="img"' in markup
     assert 'viewBox=' in markup
     tokens = (ROOT / 'static' / 'css' / 'tokens.css').read_text(encoding='utf-8')
-    tokens_lower = tokens.lower()
     required = (
         'ink', 'ink_line', 'brand', 'brand_soft', 'brand_pale', 'xp', 'streak',
         'measure', 'hidden', 'surface', 'cyl_left', 'cyl_mid', 'cyl_right',
     )
     for key in required:
-        hexval = PALETTE[key].lower()
-        assert hexval in tokens_lower, f'{key} {hexval} missing from tokens.css'
+        value = PALETTE[key]
+        match = re.fullmatch(r'var\((--[a-z0-9-]+)\)', value)
+        assert match, f'{key} should be a CSS var, got {value!r}'
+        assert match.group(1) in tokens, f'{key} {match.group(1)} missing from tokens.css'
+    assert 'var(--diagram-body-left)' in str(cylinder('3 cm', '5 cm'))
 
 
 def test_solids_are_textbook_drawings():

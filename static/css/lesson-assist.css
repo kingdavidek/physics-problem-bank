@@ -100,7 +100,7 @@
     font-style: italic;
 }
 .lesson-assist-error {
-    color: var(--wrong-700);
+    color: var(--on-wrong);
 }
 .lesson-assist-presets {
     display: flex;

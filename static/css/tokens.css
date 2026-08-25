@@ -37,9 +37,8 @@
  *                     indigo, CS violet, physics amber, chemistry teal. Do not
  *                     paint whole pages or primary buttons with subject colours.
  *
- * THEME               Light is the default :root. Dark is D0: a prefers-color-
- *                     scheme override of shell + ink tokens in this file.
- *                     D1–D3 (hex sweep, diagrams, toggle) are later segments.
+ * THEME               Light is the default :root. Dark D0 is the shell; D1 adds
+ *                     on-tint text tokens and dark status 50/100 fills.
  * ---------------------------------------------------------------------------
  */
 
@@ -63,6 +62,7 @@
     --brand-900: #123c5e;
 
     /* Streak / XP energy - amber. Reserved for streaks, effort, urgency. */
+    --streak-50:  #fffbeb;
     --streak-100: #fef3c7;
     --streak-300: #fcd34d;
     --streak-400: #fbbf24;
@@ -148,15 +148,27 @@
      * --border or the press affordance disappears. */
     --edge: #c3d0de;
 
+    /* Diagram paper + solid-body gradients (svg_kit + leftover lesson SVG). */
+    --diagram-paper: #f9f8f5;
+    --diagram-body-left:  var(--brand-200);
+    --diagram-body-mid:   var(--brand-50);
+    --diagram-body-right: var(--brand-300);
+
     /* -- Semantic status -- */
+    --on-brand:   var(--brand-700);
+    --on-correct: var(--correct-700);
+    --on-wrong:   var(--wrong-700);
+    --on-streak:  var(--streak-700);
+    --on-xp:      var(--xp-700);
     --success:        var(--correct-600);
     --success-bg:     var(--correct-50);
     --success-border: var(--correct-300);
+    --success-50:     var(--correct-50);
     --danger:         var(--wrong-600);
     --danger-bg:      var(--wrong-50);
     --danger-border:  var(--wrong-300);
-    --warning:        var(--streak-700);
-    --warning-bg:     #fffbeb;
+    --warning:        var(--on-streak);
+    --warning-bg:     var(--streak-50);
     --warning-border: var(--streak-300);
 
     /* -- Subject accents (topic cards + lesson heroes only) -- */
@@ -273,12 +285,10 @@
     --shadow-hover: var(--elev-3);
 }
 
-/* D0 — dark shell. System preference only (no user toggle yet).
- * Ink 50–200 become fills/borders; 600–900 become text. Status ramps
- * (brand/correct/wrong 50–700) stay light so chip text on tint still
- * reads until D1 remaps those pairs. */
+/* D0 shell + D1 status tints. 700-steps stay dark for button edges.
+ * Chip/badge text uses --on-* (300-steps in dark). */
 @media (prefers-color-scheme: dark) {
-    :root {
+    :root:not([data-theme="light"]) {
         color-scheme: dark;
 
         --ink-50:  #1a2332;
@@ -291,6 +301,18 @@
         --ink-700: #e2e8f0;
         --ink-800: #f1f5f9;
         --ink-900: #f8fafc;
+
+        --brand-50:  #10283c;
+        --brand-100: #16344d;
+        --streak-50:  #2a210c;
+        --streak-100: #2c2108;
+        --xp-100: #23184a;
+        --correct-50:  #10291a;
+        --correct-100: #163822;
+        --wrong-50:  #2c1416;
+        --wrong-100: #3a1a1d;
+        --maths-100: #1c2048;
+        --chem-100: #0f2e2b;
 
         --surface:         #1c2736;
         --surface-sunken:  #141c28;
@@ -307,6 +329,12 @@
         --border-strong: var(--ink-300);
         --edge:          #4a5d73;
 
+        --on-brand:   var(--brand-300);
+        --on-correct: var(--correct-300);
+        --on-wrong:   var(--wrong-300);
+        --on-streak:  var(--streak-300);
+        --on-xp:      var(--xp-300);
+
         --elev-1: 0 1px 2px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.32);
         --elev-2: 0 2px 4px rgba(0, 0, 0, 0.4), 0 8px 20px rgba(0, 0, 0, 0.42);
         --elev-3: 0 4px 8px rgba(0, 0, 0, 0.38), 0 16px 36px rgba(18, 106, 174, 0.22);
@@ -316,5 +344,74 @@
         --bg:        #0f1724;
         --bg-accent: #162033;
         --header-bg: rgba(15, 23, 36, 0.88);
+
+        --diagram-paper: var(--surface-sunken);
+        --diagram-body-left:  #1a4d73;
+        --diagram-body-mid:   #25638f;
+        --diagram-body-right: #163e5c;
     }
+}
+
+/* D3: forced dark when OS is light or user picks Dark in settings. */
+:root[data-theme="dark"] {
+    color-scheme: dark;
+
+    --ink-50:  #1a2332;
+    --ink-100: #222c3d;
+    --ink-200: #334155;
+    --ink-300: #475569;
+    --ink-400: #64748b;
+    --ink-500: #94a3b8;
+    --ink-600: #cbd5e1;
+    --ink-700: #e2e8f0;
+    --ink-800: #f1f5f9;
+    --ink-900: #f8fafc;
+
+    --brand-50:  #10283c;
+    --brand-100: #16344d;
+    --streak-50:  #2a210c;
+    --streak-100: #2c2108;
+    --xp-100: #23184a;
+    --correct-50:  #10291a;
+    --correct-100: #163822;
+    --wrong-50:  #2c1416;
+    --wrong-100: #3a1a1d;
+    --maths-100: #1c2048;
+    --chem-100: #0f2e2b;
+
+    --surface:         #1c2736;
+    --surface-sunken:  #141c28;
+    --surface-tint:    #1a2a3c;
+    --surface-inverse: #f1f5f9;
+
+    --text:          var(--ink-800);
+    --text-muted:    var(--ink-500);
+    --text-subtle:   var(--ink-500);
+    --text-on-brand: #ffffff;
+
+    --border:        var(--ink-200);
+    --border-soft:   rgba(248, 250, 252, 0.08);
+    --border-strong: var(--ink-300);
+    --edge:          #4a5d73;
+
+    --on-brand:   var(--brand-300);
+    --on-correct: var(--correct-300);
+    --on-wrong:   var(--wrong-300);
+    --on-streak:  var(--streak-300);
+    --on-xp:      var(--xp-300);
+
+    --elev-1: 0 1px 2px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.32);
+    --elev-2: 0 2px 4px rgba(0, 0, 0, 0.4), 0 8px 20px rgba(0, 0, 0, 0.42);
+    --elev-3: 0 4px 8px rgba(0, 0, 0, 0.38), 0 16px 36px rgba(18, 106, 174, 0.22);
+    --elev-press: inset 0 2px 4px rgba(0, 0, 0, 0.45);
+    --ring: 0 0 0 3px rgba(74, 171, 236, 0.4);
+
+    --bg:        #0f1724;
+    --bg-accent: #162033;
+    --header-bg: rgba(15, 23, 36, 0.88);
+
+    --diagram-paper: var(--surface-sunken);
+    --diagram-body-left:  #1a4d73;
+    --diagram-body-mid:   #25638f;
+    --diagram-body-right: #163e5c;
 }

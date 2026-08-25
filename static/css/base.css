@@ -95,7 +95,7 @@ header {
     background: var(--brand-50);
 }
 .header-primary-link.is-active {
-    color: var(--brand-700);
+    color: var(--on-brand);
     background: var(--brand-100);
     font-weight: 700;
 }
@@ -160,7 +160,7 @@ nav a.active {
     padding: 4px 10px;
     border-radius: var(--radius-pill);
     background: var(--streak-100);
-    color: var(--streak-700);
+    color: var(--on-streak);
     font-weight: 800;
     font-size: var(--text-sm);
     text-decoration: none;
@@ -168,7 +168,7 @@ nav a.active {
 }
 .nav-streak.is-risk {
     background: var(--wrong-100);
-    color: var(--wrong-700);
+    color: var(--on-wrong);
 }
 
 /* ---- TYPOGRAPHY (U1) ----

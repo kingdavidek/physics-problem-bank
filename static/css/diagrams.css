@@ -12,7 +12,7 @@
 .answer > svg:not(.svg-kit),
 .hint > svg:not(.svg-kit),
 .solution > svg:not(.svg-kit) {
-    background: #f9f8f5 !important;
+    background: var(--diagram-paper) !important;
     border-radius: 8px !important;
     display: block !important;
     margin: 10px 0 !important;
@@ -109,10 +109,10 @@ svg.svg-kit {
     box-sizing: border-box;
     margin: 0;
     padding: 1px 2px;
-    border: 1px solid #bbb;
+    border: 1px solid var(--border-strong);
     border-radius: 3px;
-    background: #fffef5;
-    color: #333;
+    background: var(--surface);
+    color: var(--text);
     font-family: inherit;
     font-size: 10px;
     line-height: 1.1;
@@ -127,12 +127,12 @@ svg.svg-kit {
 .prob-tree-input.correct {
     border-color: var(--success);
     background: var(--correct-100);
-    color: var(--correct-700);
+    color: var(--on-correct);
 }
 .prob-tree-input.incorrect {
     border-color: var(--danger);
     background: var(--wrong-100);
-    color: var(--wrong-700);
+    color: var(--on-wrong);
 }
 /* Must follow the base .prob-tree-input rule or 10px font-size wins on phones. */
 @media (max-width: 640px) {
@@ -142,7 +142,7 @@ svg.svg-kit {
     }
 }
 svg.graphs-lesson-graph {
-    background: #f9f8f5 !important;
+    background: var(--diagram-paper) !important;
     border-radius: 8px !important;
     display: block !important;
     margin: 10px auto !important;
@@ -190,8 +190,8 @@ svg.revision-card-svg {
     overflow: visible;
 }
 .lesson-quick-ref-card {
-    background: #f9f8f5;
-    border: 1px solid #d4e6f1;
+    background: var(--diagram-paper);
+    border: 1px solid var(--border);
     border-radius: 10px;
     padding: 24px 28px;
     font-size: 1rem;
@@ -241,7 +241,7 @@ svg.revision-card-svg {
 .lesson-quick-ref-advanced {
     margin-top: 18px;
     padding-top: 18px;
-    border-top: 1px solid #d4e6f1;
+    border-top: 1px solid var(--border);
 }
 .lesson-quick-ref-advanced h4 {
     margin: 0 0 10px;

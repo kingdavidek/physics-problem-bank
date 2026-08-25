@@ -32,11 +32,19 @@ def main():
         assert len(shortcuts) >= 2
         assert any('/topics' in (s.get('url') or '') for s in shortcuts)
 
+        client.set_cookie('pb_theme', 'dark')
+        r = client.get('/manifest.webmanifest')
+        data = r.get_json(silent=True)
+        if data is None:
+            data = json.loads(r.data.decode())
+        assert data.get('background_color') == '#0f1724'
+        assert data.get('theme_color') == '#0f1724'
+
         r = client.get('/sw.js')
         assert r.status_code == 200, r.data
         sw = r.data.decode()
         assert 'STATIC_CACHE' in sw
-        assert 'pb-v62' in sw
+        assert 'pb-v65' in sw
         # JS and CSS must stay network-first or ?v= cache-busts never land.
         assert 'isVersionedAsset' in sw
         assert '/static/css/tokens.css' in sw
@@ -51,6 +59,8 @@ def main():
         html = r.data.decode()
         assert 'manifest.webmanifest' in html or 'web_manifest' in html or 'rel="manifest"' in html
         assert 'pwa.js' in html
+        assert 'theme.js' in html
+        assert 'data-theme' in html
         assert 'theme-color' in html
         assert 'pwa-install-banner' in html
         assert 'pwa-ios-hint' in html

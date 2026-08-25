@@ -14,28 +14,28 @@ from itertools import count
 
 from markupsafe import Markup
 
-# Hex values copied from static/css/tokens.css so generator fragments stay
-# aligned with the semantic palette even when CSS variables are unavailable.
+# CSS variables so inline svg_kit markup follows light/dark tokens (D2).
+# These diagrams are always served inside pages that load tokens.css.
 PALETTE = {
-    'ink': '#1c2430',          # --ink-800 / --text
-    'ink_muted': '#64748b',    # --ink-500
-    'ink_line': '#e4ebf2',     # --ink-200 (grid / axes)
-    'brand': '#1a86d4',        # --brand-500
-    'brand_soft': '#dbeefd',   # --brand-100
-    'brand_mid': '#b9dffb',    # --brand-200
-    'brand_pale': '#eff8ff',   # --brand-50
-    'brand_edge': '#86c9f6',   # --brand-300
-    'xp': '#8b5cf6',           # --xp-500 (accuracy / mastery)
-    'streak': '#f59e0b',       # --streak-500 (effort / studied days)
-    'streak_soft': '#fcd34d',  # --streak-300
-    'measure': '#ef4444',      # --wrong-500 (dimension labels + measure lines)
-    'success': '#16a34a',      # --correct-500 (secondary leg / positive quantity)
-    'hidden': '#94a3b8',       # --ink-400 (dashed hidden edges)
-    'surface': '#ffffff',      # --surface
-    'fill': '#dbeefd',         # --brand-100 (shape fill)
-    'cyl_left': '#b9dffb',     # --brand-200 (body gradient, §8.3)
-    'cyl_mid': '#eff8ff',      # --brand-50
-    'cyl_right': '#86c9f6',    # --brand-300
+    'ink': 'var(--text)',
+    'ink_muted': 'var(--text-muted)',
+    'ink_line': 'var(--border)',
+    'brand': 'var(--brand-500)',
+    'brand_soft': 'var(--brand-100)',
+    'brand_mid': 'var(--diagram-body-left)',
+    'brand_pale': 'var(--diagram-body-mid)',
+    'brand_edge': 'var(--diagram-body-right)',
+    'xp': 'var(--xp-500)',
+    'streak': 'var(--streak-500)',
+    'streak_soft': 'var(--streak-300)',
+    'measure': 'var(--wrong-500)',
+    'success': 'var(--correct-600)',
+    'hidden': 'var(--ink-400)',
+    'surface': 'var(--surface)',
+    'fill': 'var(--brand-100)',
+    'cyl_left': 'var(--diagram-body-left)',
+    'cyl_mid': 'var(--diagram-body-mid)',
+    'cyl_right': 'var(--diagram-body-right)',
 }
 
 STROKE_OUTLINE = 2

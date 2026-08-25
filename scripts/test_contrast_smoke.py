@@ -1,4 +1,4 @@
-"""U8.1 / D0 — WCAG 2.1 AA contrast smoke for semantic token pairs.
+"""U8.1 / D0 / D1 — WCAG 2.1 AA contrast smoke for semantic token pairs.
 
 Run: python scripts/test_contrast_smoke.py
 """
@@ -68,11 +68,14 @@ PAIRS = (
     ('text-subtle', 'surface', 4.5),
     ('text-muted', 'bg', 4.5),
     ('text-on-brand', 'brand-600', 4.5),
-    ('correct-700', 'correct-50', 4.5),
-    ('wrong-700', 'wrong-50', 4.5),
-    ('streak-700', 'streak-100', 4.5),
-    ('xp-700', 'xp-100', 4.5),
-    ('brand-700', 'brand-50', 4.5),
+    ('on-correct', 'correct-50', 4.5),
+    ('on-wrong', 'wrong-50', 4.5),
+    ('on-streak', 'streak-100', 4.5),
+    ('on-xp', 'xp-100', 4.5),
+    ('on-brand', 'brand-50', 4.5),
+    ('on-correct', 'correct-100', 4.5),
+    ('on-wrong', 'wrong-100', 4.5),
+    ('text', 'diagram-paper', 4.5),
 )
 
 
@@ -99,7 +102,12 @@ def main() -> None:
     dark_hex = dict(light_hex)
     dark_hex.update(parse_hex_tokens(dark_css))
     dark_aliases = dict(light_aliases)
-    dark_aliases.update(parse_aliases(dark_css))
+    dark_block_aliases = parse_aliases(dark_css)
+    dark_aliases.update(dark_block_aliases)
+    # A dark `var(--…)` override must beat the light hex for the same name.
+    for name, value in dark_block_aliases.items():
+        if not value.startswith('#'):
+            dark_hex.pop(name, None)
     failed.extend(check_pairs('dark', dark_hex, dark_aliases))
 
     if failed:

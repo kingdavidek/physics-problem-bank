@@ -15,8 +15,8 @@ from app import app  # noqa: E402
 
 CSS_DIR = ROOT / 'static' / 'css'
 LESSON_ONLY = {'lesson-pages.css', 'lesson-assist.css'}
-# Uncompressed tree is larger than the original 60KB stretch; fail if it grows.
-CSS_BUDGET_BYTES = 210_000
+# Uncompressed tree; D2 lesson SVG remaps live in lesson-pages.css.
+CSS_BUDGET_BYTES = 216_000
 # Core sheets loaded on every page after the U8.6 lesson split.
 # Measured ~184KB; leave a little room for token/component tweaks.
 CSS_CORE_BUDGET_BYTES = 190_000
@@ -69,6 +69,24 @@ def test_card_vocabulary_and_mcq_letter_markup():
     js = (ROOT / 'static' / 'js' / 'site.js').read_text(encoding='utf-8')
     assert 'decorateMcqButton' in js
     assert 'mcq-letter' in js
+    assert '#16a34a' not in js
+    assert '#dc2626' not in js
+    tokens = (ROOT / 'static' / 'css' / 'tokens.css').read_text(encoding='utf-8')
+    assert '--on-correct' in tokens
+    assert '--on-wrong' in tokens
+    assert '--diagram-paper' in tokens
+    assert ':root[data-theme="dark"]' in tokens
+    assert ':root:not([data-theme="light"])' in tokens
+    theme_js = (ROOT / 'static' / 'js' / 'theme.js').read_text(encoding='utf-8')
+    assert 'pb-theme' in theme_js
+    pages = (ROOT / 'static' / 'css' / 'pages.css').read_text(encoding='utf-8')
+    switch_knob = pages.split('.switch::after')[1].split('}')[0]
+    assert 'background: #fff' not in switch_knob
+    lesson_pages = (ROOT / 'static' / 'css' / 'lesson-pages.css').read_text(encoding='utf-8')
+    assert '[fill="#1a6fa8"]' in lesson_pages
+    diagrams = (ROOT / 'static' / 'css' / 'diagrams.css').read_text(encoding='utf-8')
+    assert '#f9f8f5' not in diagrams
+    assert 'var(--diagram-paper)' in diagrams
     sg = (ROOT / 'templates' / 'styleguide.html').read_text(encoding='utf-8')
     assert 'class="card card-raised"' in sg
     assert 'class="mcq-letter"' in sg

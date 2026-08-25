@@ -1,7 +1,7 @@
 # Problem Bank — UI & graphics redesign (Phase U)
 
 **Last updated:** 2026-08-25
-**Status:** **U0–U8 shipped.** Dark mode **D0 shipped** (system preference shell). D1–D3 remain.
+**Status:** **U0–U8 shipped.** Dark mode **D0–D2 shipped**. D3 remains.
 **Audience:** The next AI agent / developer implementing this
 **Companions:** `docs/MOBILE.md` (M0–M4 shipped), `docs/ARCHITECTURE.md`, `docs/ENGAGEMENT_VISUAL.md`
 
@@ -648,8 +648,8 @@ A `:root` override in `tokens.css` is the *core*, not the whole job. Status ramp
 | Segment | Scope | Status |
 |---|---|---|
 | **D0** | System `prefers-color-scheme: dark`: invert ink + shell (`--bg`, `--surface`, `--text`, `--header-bg`, elevation). Native `color-scheme`. Contrast smoke tests both themes. Cache `pb-v62`. | **Shipped** |
-| **D1** | Sweep hardcoded hex in CSS/JS/templates; retint status 50/100 chips so 700-as-text still reads (or introduce `--on-correct` tokens). JS `style.color` feedback. | Next |
-| **D2** | Diagrams: `models/svg_kit.py` palette, lesson inline SVG, `diagrams.css`, MathJax if fills are baked. | After D1 |
-| **D3** | Settings toggle (system / light / dark), PWA `background_color`, remaining chrome. | After D2 |
+| **D1** | `--on-*` text-on-tint tokens; dark 50/100 status fills; chip/badge text uses `--on-*` (700 stays for edges/hovers/white islands); JS `style.color` feedback via tokens. Cache `pb-v63`. | **Shipped** |
+| **D2** | Diagrams: `svg_kit` PALETTE emits CSS variables; `--diagram-paper` / `--diagram-body-*`; leftover lesson SVG hex remapped in `lesson-pages.css`; number-line JS + MathJax inherit `--text`. Cache `pb-v64`. | **Shipped** |
+| **D3** | Settings toggle (system / light / dark), PWA `background_color` from `pb_theme` cookie, `theme.js` + `data-theme` boot, switch knob tokenised. Cache `pb-v65`. | **Shipped** |
 
-D0 leaves pale status chips (MCQ correct/wrong) as light-mode islands so they stay readable. Do not invert `--correct-50` until D1 remaps the 700-step.
+D2 makes generator and lesson diagrams follow the same tokens as the shell. `svg_kit` bakes `var(--…)` (not hex) so solids retint with `--diagram-body-*`. Lesson inline SVG keeps its hex in the template and is remapped in CSS; quark-builder particle colours stay literal (they are the RGB convention, not chrome).

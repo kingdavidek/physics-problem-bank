@@ -139,6 +139,30 @@
     </section>
 
     <section class="section-panel settings-section">
+        <div class="section-panel-header">Appearance</div>
+        <div class="section-panel-body">
+            <p class="page-intro settings-intro">Choose light, dark, or match your device. Applies across practice, lessons, and the installed app.</p>
+            <div class="form-group">
+                <label class="privacy-radio">
+                    <input type="radio" name="theme_preference" value="system"
+                           {% if settings.theme_preference|default('system') == 'system' %}checked{% endif %}>
+                    <span><strong>System</strong> — follow device light/dark setting</span>
+                </label>
+                <label class="privacy-radio">
+                    <input type="radio" name="theme_preference" value="light"
+                           {% if settings.theme_preference == 'light' %}checked{% endif %}>
+                    <span><strong>Light</strong> — always use light colours</span>
+                </label>
+                <label class="privacy-radio">
+                    <input type="radio" name="theme_preference" value="dark"
+                           {% if settings.theme_preference == 'dark' %}checked{% endif %}>
+                    <span><strong>Dark</strong> — always use dark colours</span>
+                </label>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-panel settings-section">
         <div class="section-panel-header">Sound &amp; feedback</div>
         <div class="section-panel-body settings-switch-group">
             <p class="page-intro settings-intro">Short correct/incorrect sounds when you check answers. Off by default — useful in class when muted.</p>

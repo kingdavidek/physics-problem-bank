@@ -119,10 +119,10 @@ textarea:focus {
 .field-error {
     margin: 0;
     font-size: 0.8125rem;
-    color: var(--wrong-700);
+    color: var(--on-wrong);
 }
 .flash-success {
-    color: var(--correct-700);
+    color: var(--on-correct);
     background: var(--success-bg);
     padding: 12px 16px;
     border-radius: var(--radius-sm);
@@ -159,12 +159,12 @@ textarea:focus {
     pointer-events: none;
 }
 .app-toast.is-success {
-    color: var(--correct-700);
+    color: var(--on-correct);
     background: var(--surface);
     border-color: var(--success-border);
 }
 .app-toast.is-error {
-    color: var(--wrong-700);
+    color: var(--on-wrong);
     background: var(--surface);
     border-color: var(--danger-border);
 }
@@ -184,11 +184,11 @@ textarea:focus {
 }
 .app-toast.is-success .app-toast-icon {
     background: var(--correct-100);
-    color: var(--correct-600);
+    color: var(--on-correct);
 }
 .app-toast.is-error .app-toast-icon {
     background: var(--wrong-100);
-    color: var(--wrong-600);
+    color: var(--on-wrong);
 }
 .app-toast.is-info .app-toast-icon {
     background: var(--ink-100);
@@ -218,7 +218,7 @@ textarea:focus {
 }
 .app-toast-action:hover,
 .app-toast-action:focus-visible {
-    color: var(--brand-700);
+    color: var(--on-brand);
     text-decoration: underline;
 }
 .app-toast-dismiss {
@@ -695,7 +695,7 @@ body.site-search-open { overflow: hidden; }
     height: 56px;
     border-radius: 0;
     background: transparent;
-    color: var(--brand-700);
+    color: var(--on-brand);
     display: inline-flex;
     align-items: center;
     justify-content: center;
