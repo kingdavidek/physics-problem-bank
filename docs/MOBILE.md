@@ -204,7 +204,7 @@ flowchart LR
 
 | Step | Task | Notes |
 |------|------|--------|
-| M5.0 | **Compliance gate** — complete Phase S0 of `docs/SECURITY_AND_GDPR.md` before the URL is open to pupils | Privacy notice, deletion, export, high-privacy defaults, retention |
+| M5.0 | **Compliance gate** — S0 **code** is shipped; David must complete **`docs/OPERATOR_LAUNCH.md`** before the URL is open to pupils | ICO fee, privacy inbox, prune/backup cron |
 | M5.1 | Deploy Flask app to production host (e.g. PythonAnywhere or equivalent) | See `docs/DEPLOY.md` |
 | M5.2 | Force **HTTPS**; set `SITE_URL=https://your-domain` | Enables Secure session cookies |
 | M5.3 | Set strong `SECRET_KEY`; never `PB_TESTING` / `PB_ALLOW_DEV_SECRET` in prod | Solid-draft invariants |

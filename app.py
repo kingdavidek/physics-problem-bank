@@ -221,6 +221,26 @@ from models.api_tokens import (
     revoke_token_by_raw,
     touch_token_use,
 )
+from models.account_deletion import delete_user_account
+from models.data_export import build_user_export
+from models.login_lockout import (
+    clear_login_failures,
+    is_login_locked,
+    record_login_failure,
+)
+from models.auth_tokens import (
+    consume_email_verification_token,
+    consume_password_reset_token,
+    create_email_verification_token,
+    create_password_reset_token,
+    peek_password_reset_token,
+)
+from models.privacy import (
+    controller_name,
+    hashed_ip,
+    ico_registration_number,
+    privacy_contact_email,
+)
 from models.quicktest import (
     build_quicktest_problems,
     can_access_quicktest,
@@ -242,6 +262,7 @@ from models.email_digest import (
     render_digest_subject,
     render_digest_text,
     send_test_weekly_digest,
+    send_email_message,
     verify_unsubscribe_token,
 )
 from models.challenges import (
@@ -338,6 +359,22 @@ from models.revision_queue import (
 )
 
 _DEFAULT_SECRET_KEY = 'dev-secret-key-for-local-testing'
+
+
+def _is_production_signal():
+    site = (os.environ.get('SITE_URL') or '').strip().lower()
+    return site.startswith('https://') or os.environ.get('FLASK_ENV') == 'production'
+
+
+def _refuse_testing_in_production():
+    if os.environ.get('PB_TESTING') == '1' and _is_production_signal():
+        raise RuntimeError(
+            'PB_TESTING=1 cannot be combined with a production SITE_URL or FLASK_ENV=production. '
+            'That flag disables CSRF and rate limits.'
+        )
+
+
+_refuse_testing_in_production()
 
 
 def _configure_secret_key():
@@ -438,6 +475,56 @@ def pop_flashes_for(page):
         session.pop(_PAGE_FLASH_SESSION_KEY, None)
     session.modified = True
     return [(item['category'], item['message']) for item in messages]
+
+
+def _public_site_url():
+    cfg = mail_config()
+    base = (cfg.get('site_url') or '').rstrip('/')
+    if base:
+        return base
+    try:
+        return (request.url_root or '').rstrip('/')
+    except RuntimeError:
+        return ''
+
+
+def _send_verify_email(user, raw_token):
+    link = f'{_public_site_url()}/verify-email/{raw_token}'
+    subject = 'Confirm your Problem Bank email'
+    text = (
+        f'Hi @{user.handle},\n\nConfirm your email by opening this link:\n{link}\n\n'
+        'If you did not create this account, you can ignore this message.\n'
+    )
+    html = (
+        f'<p>Hi @{user.handle},</p><p>Confirm your email: '
+        f'<a href="{link}">{link}</a></p>'
+        '<p>If you did not create this account, ignore this message.</p>'
+    )
+    send_email_message(user.email, subject, html, text)
+
+
+def _send_reset_email(user, raw_token):
+    link = f'{_public_site_url()}/reset-password/{raw_token}'
+    subject = 'Reset your Problem Bank password'
+    text = (
+        f'Hi @{user.handle},\n\nReset your password using this link (valid for 60 minutes):\n{link}\n\n'
+        'If you did not ask for this, you can ignore this message.\n'
+    )
+    html = (
+        f'<p>Hi @{user.handle},</p><p>Reset your password (valid for 60 minutes): '
+        f'<a href="{link}">{link}</a></p>'
+        '<p>If you did not ask for this, ignore this message.</p>'
+    )
+    send_email_message(user.email, subject, html, text)
+
+
+def _require_verified_email():
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
+    if current_user.email_verified:
+        return None
+    flash_for('profile_settings', 'Confirm your email before exporting or deleting your account.', 'error')
+    return redirect(url_for('profile_settings'))
 
 
 app.template_global()(pop_flashes_for)
@@ -780,6 +867,10 @@ def inject_nav():
         'nav_streak': nav_streak,
         'tab_badges': tab_badges,
         'quiz_runner_mode': request.endpoint in _QUIZ_RUNNER_ENDPOINTS,
+        'email_verified': bool(getattr(current_user, 'email_verified', False))
+        if current_user.is_authenticated
+        else True,
+        'privacy_contact_email': privacy_contact_email(),
     }
 
 
@@ -800,9 +891,9 @@ def apply_csp(response):
         # 'unsafe-inline' allows <script> blocks and onclick= handlers in templates.
         # 'unsafe-eval' is required by MathJax; 'wasm-unsafe-eval' is required by Pyodide.
         "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; "
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "style-src 'self' 'unsafe-inline'; "
         "img-src 'self' data: https:; "
-        "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; "
+        "font-src 'self'; "
         # Pyodide fetches pyodide.wasm and the Python stdlib zip from the CDN at runtime.
         "connect-src 'self' https://cdn.jsdelivr.net; "
         # Pyodide uses blob: workers internally for async execution; SW is same-origin.
@@ -816,6 +907,19 @@ def apply_csp(response):
         # SharedArrayBuffer (blocking stdin in the Pyodide worker) needs cross-origin isolation.
         response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
         response.headers['Cross-Origin-Embedder-Policy'] = 'credentialless'
+    return response
+
+
+@app.after_request
+def apply_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Permissions-Policy'] = (
+        'geolocation=(), microphone=(), camera=(), interest-cohort=()'
+    )
+    response.headers['X-Frame-Options'] = 'DENY'
+    if request.is_secure or _secure_cookies:
+        response.headers['Strict-Transport-Security'] = 'max-age=86400; includeSubDomains'
     return response
 
 
@@ -949,9 +1053,15 @@ with get_db() as conn:
             password_hash TEXT NOT NULL,
             created_at TEXT NOT NULL,
             last_login_at TEXT,
-            is_active INTEGER NOT NULL DEFAULT 1
+            is_active INTEGER NOT NULL DEFAULT 1,
+            email_verified_at TEXT
         )
     """)
+    user_cols = {
+        row[1] for row in conn.execute('PRAGMA table_info(users)').fetchall()
+    }
+    if 'email_verified_at' not in user_cols:
+        conn.execute('ALTER TABLE users ADD COLUMN email_verified_at TEXT')
     conn.execute("""
         CREATE TABLE IF NOT EXISTS saved_problems (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1065,12 +1175,12 @@ with get_db() as conn:
     conn.execute("""
         CREATE TABLE IF NOT EXISTS user_profile_settings (
             user_id INTEGER PRIMARY KEY,
-            profile_visibility TEXT NOT NULL DEFAULT 'public',
+            profile_visibility TEXT NOT NULL DEFAULT 'followers_only',
             show_member_since INTEGER NOT NULL DEFAULT 1,
-            show_last_topic INTEGER NOT NULL DEFAULT 1,
-            show_last_activity INTEGER NOT NULL DEFAULT 1,
-            show_lesson_progress INTEGER NOT NULL DEFAULT 1,
-            show_quiz_stats INTEGER NOT NULL DEFAULT 1,
+            show_last_topic INTEGER NOT NULL DEFAULT 0,
+            show_last_activity INTEGER NOT NULL DEFAULT 0,
+            show_lesson_progress INTEGER NOT NULL DEFAULT 0,
+            show_quiz_stats INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     """)
@@ -1182,6 +1292,30 @@ with get_db() as conn:
     ):
         if col not in profile_cols:
             conn.execute(f'ALTER TABLE user_profile_settings ADD COLUMN {col} {ddl}')
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS schema_migrations (
+            name TEXT PRIMARY KEY,
+            applied_at TEXT NOT NULL
+        )
+    """)
+    migrated = {
+        row[0] for row in conn.execute('SELECT name FROM schema_migrations').fetchall()
+    }
+    if 's0_high_privacy_defaults' not in migrated:
+        conn.execute(
+            '''
+            UPDATE user_profile_settings
+            SET profile_visibility = 'followers_only',
+                show_last_topic = 0,
+                show_last_activity = 0,
+                show_lesson_progress = 0,
+                show_quiz_stats = 0
+            '''
+        )
+        conn.execute(
+            "INSERT INTO schema_migrations (name, applied_at) VALUES (?, datetime('now'))",
+            ('s0_high_privacy_defaults',),
+        )
     conn.execute("""
         CREATE TABLE IF NOT EXISTS email_digest_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1365,9 +1499,15 @@ with get_db() as conn:
             note TEXT NOT NULL DEFAULT '',
             context_json TEXT NOT NULL DEFAULT '{}',
             created_at TEXT NOT NULL,
+            resolved_at TEXT,
             FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE
         )
     """)
+    report_cols = {
+        row[1] for row in conn.execute('PRAGMA table_info(user_reports)').fetchall()
+    }
+    if 'resolved_at' not in report_cols:
+        conn.execute('ALTER TABLE user_reports ADD COLUMN resolved_at TEXT')
     conn.execute("""
         CREATE TABLE IF NOT EXISTS rate_limit_buckets (
             bucket_key TEXT NOT NULL,
@@ -1455,6 +1595,43 @@ with get_db() as conn:
             answer TEXT NOT NULL,
             answered_at TEXT NOT NULL,
             PRIMARY KEY (user_id, day_key),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            token_hash TEXT NOT NULL UNIQUE,
+            created_at TEXT NOT NULL,
+            expires_at TEXT NOT NULL,
+            used_at TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS email_verification_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            token_hash TEXT NOT NULL UNIQUE,
+            created_at TEXT NOT NULL,
+            expires_at TEXT NOT NULL,
+            used_at TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS deleted_handles (
+            handle TEXT PRIMARY KEY COLLATE NOCASE,
+            deleted_at TEXT NOT NULL
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS login_lockouts (
+            user_id INTEGER PRIMARY KEY,
+            fail_count INTEGER NOT NULL DEFAULT 0,
+            locked_until TEXT,
+            updated_at TEXT NOT NULL,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     """)
@@ -2824,7 +3001,7 @@ def _rate_limits_disabled():
 def _auth_rate_limit(action, limit):
     if _rate_limits_disabled():
         return True, limit
-    bucket = f'auth:{action}:ip:{_client_ip()}'
+    bucket = f'auth:{action}:ip:{_client_ip_hash()}'
     with get_db() as conn:
         allowed, remaining, _count = check_and_increment_rate_limit(conn, bucket, limit)
     return allowed, remaining
@@ -3075,12 +3252,12 @@ def _qotd_challenge_for_viewer(viewer_id, filter_name=FEED_FILTER_ALL, before_id
 
 def _settings_to_json(settings):
     return {
-        'profile_visibility': settings.get('profile_visibility', VISIBILITY_PUBLIC),
+        'profile_visibility': settings.get('profile_visibility', VISIBILITY_FOLLOWERS),
         'show_member_since': bool(settings.get('show_member_since', True)),
-        'show_last_topic': bool(settings.get('show_last_topic', True)),
-        'show_last_activity': bool(settings.get('show_last_activity', True)),
-        'show_lesson_progress': bool(settings.get('show_lesson_progress', True)),
-        'show_quiz_stats': bool(settings.get('show_quiz_stats', True)),
+        'show_last_topic': bool(settings.get('show_last_topic', False)),
+        'show_last_activity': bool(settings.get('show_last_activity', False)),
+        'show_lesson_progress': bool(settings.get('show_lesson_progress', False)),
+        'show_quiz_stats': bool(settings.get('show_quiz_stats', False)),
         'show_shared_questions': bool(settings.get('show_shared_questions', True)),
         'auto_share_quiz': bool(settings.get('auto_share_quiz', False)),
         'auto_share_lesson': bool(settings.get('auto_share_lesson', False)),
@@ -4246,6 +4423,30 @@ def about():
     return render_template('about.html')
 
 
+def _legal_context():
+    ico = ico_registration_number()
+    return {
+        'controller_name': controller_name(),
+        'privacy_contact_email': privacy_contact_email(),
+        'ico_registration_number': ico or 'Not yet registered — required before public launch',
+    }
+
+
+@app.route('/privacy')
+def legal_privacy():
+    return render_template('legal_privacy.html', **_legal_context())
+
+
+@app.route('/privacy/simple')
+def legal_privacy_simple():
+    return render_template('legal_privacy_simple.html', **_legal_context())
+
+
+@app.route('/terms')
+def legal_terms():
+    return render_template('legal_terms.html', **_legal_context())
+
+
 @app.get('/api/v1/build-info')
 def api_v1_build_info():
     return jsonify({
@@ -4348,7 +4549,10 @@ def register():
                 email = normalize_email(form['email'])
                 handle = normalize_handle(form['handle'])
                 with get_db() as conn:
-                    if User.get_by_email(conn, email) or User.get_by_handle(conn, handle):
+                    reserved_msg = validate_handle(handle, conn)
+                    if reserved_msg:
+                        errors['handle'] = reserved_msg
+                    elif User.get_by_email(conn, email) or User.get_by_handle(conn, handle):
                         # Same message for email/handle conflicts (no account enumeration).
                         errors['form'] = (
                             'Could not create that account. '
@@ -4357,9 +4561,15 @@ def register():
                     else:
                         user = User.create(conn, email, handle, password)
                         ensure_user_profile(conn, user.id)
+                        raw = create_email_verification_token(conn, user.id)
+                        _send_verify_email(user, raw)
                         login_user(user, remember=True)
                         user.touch_login(conn)
-                        flash_for('profile', 'Welcome to Problem Bank!', 'success')
+                        flash_for(
+                            'profile',
+                            'Welcome to Problem Bank! Check your email to confirm your address.',
+                            'success',
+                        )
                         return redirect(url_for('profile'))
 
     return render_template('register.html', errors=errors, form=form)
@@ -4390,26 +4600,29 @@ def login():
                 elif not password:
                     error = 'Password is required.'
                 else:
-                    with get_db() as conn:
-                        user = User.get_by_email(conn, normalize_email(email_value))
-
-                    # Constant-time-ish: always verify against a hash when user missing.
                     from werkzeug.security import check_password_hash
                     dummy_hash = (
                         'scrypt:32768:8:1$dummy$0123456789abcdef0123456789abcdef'
                         '0123456789abcdef0123456789abcdef'
                     )
-                    if user and is_bot_user(user):
-                        check_password_hash(dummy_hash, password or 'x')
-                        error = 'Invalid email or password.'
-                    elif user and user.is_active and user.check_password(password):
-                        login_user(user, remember=remember)
-                        with get_db() as conn:
+                    with get_db() as conn:
+                        user = User.get_by_email(conn, normalize_email(email_value))
+                        if user and is_bot_user(user):
+                            check_password_hash(dummy_hash, password or 'x')
+                            error = 'Invalid email or password.'
+                        elif user and is_login_locked(conn, user.id):
+                            check_password_hash(dummy_hash, password or 'x')
+                            error = 'Invalid email or password.'
+                        elif user and user.is_active and user.check_password(password):
+                            clear_login_failures(conn, user.id)
+                            login_user(user, remember=remember)
                             user.touch_login(conn)
-                        return redirect(_safe_redirect_target(request.args.get('next')))
-
-                    check_password_hash(dummy_hash, password or 'x')
-                    error = 'Invalid email or password.'
+                            return redirect(_safe_redirect_target(request.args.get('next')))
+                        else:
+                            if user and not is_bot_user(user):
+                                record_login_failure(conn, user.id)
+                            check_password_hash(dummy_hash, password or 'x')
+                            error = 'Invalid email or password.'
 
     return render_template('login.html', error=error, email_value=email_value)
 
@@ -4422,6 +4635,93 @@ def logout():
     logout_user()
     flash_for('index', 'You have been logged out.', 'success')
     return redirect(url_for('index'))
+
+
+FORGOT_PASSWORD_DAILY_LIMIT = 5
+EXPORT_DAILY_LIMIT = 2
+GENERIC_RESET_NOTICE = 'If that email is on an account, we sent a reset link.'
+
+
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if current_user.is_authenticated:
+        return redirect(url_for('profile'))
+    notice = None
+    if request.method == 'POST':
+        if not _validate_csrf(request.form.get('csrf_token')):
+            notice = 'Your session expired. Please try again.'
+        else:
+            allowed, _rem = _auth_rate_limit('forgot_password', FORGOT_PASSWORD_DAILY_LIMIT)
+            if not allowed:
+                notice = 'Too many reset requests. Try again tomorrow.'
+            else:
+                email = normalize_email(request.form.get('email', ''))
+                if email:
+                    with get_db() as conn:
+                        user = User.get_by_email(conn, email)
+                        if user and user.is_active and not is_bot_user(user):
+                            raw = create_password_reset_token(conn, user.id)
+                            _send_reset_email(user, raw)
+                notice = GENERIC_RESET_NOTICE
+    return render_template('forgot_password.html', notice=notice)
+
+
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('profile'))
+    error = None
+    with get_db() as conn:
+        valid = peek_password_reset_token(conn, token)
+    if request.method == 'GET' and not valid:
+        return render_template('reset_password.html', token=token, error='This reset link is invalid or has expired.', invalid=True)
+
+    if request.method == 'POST':
+        if not _validate_csrf(request.form.get('csrf_token')):
+            error = 'Your session expired. Please try again.'
+        else:
+            allowed, _rem = _auth_rate_limit('reset_password', FORGOT_PASSWORD_DAILY_LIMIT)
+            if not allowed:
+                error = 'Too many reset attempts. Try again tomorrow.'
+            else:
+                password = request.form.get('password', '')
+                confirm = request.form.get('confirm_password', '')
+                msg = validate_password(password)
+                if msg:
+                    error = msg
+                elif password != confirm:
+                    error = 'Passwords do not match.'
+                else:
+                    with get_db() as conn:
+                        user_id = consume_password_reset_token(conn, token)
+                        if not user_id:
+                            error = 'This reset link is invalid or has expired.'
+                        else:
+                            user = User.get_by_id(conn, user_id)
+                            if not user:
+                                error = 'This reset link is invalid or has expired.'
+                            else:
+                                user.set_password(conn, password)
+                                flash_for('login', 'Password updated. You can log in now.', 'success')
+                                return redirect(url_for('login'))
+    return render_template('reset_password.html', token=token, error=error, invalid=False)
+
+
+@app.route('/verify-email/<token>')
+def verify_email(token):
+    with get_db() as conn:
+        user_id = consume_email_verification_token(conn, token)
+    if user_id:
+        flash_for('profile', 'Your email is confirmed.', 'success')
+        if current_user.is_authenticated:
+            with get_db() as conn:
+                refreshed = User.get_by_id(conn, current_user.id)
+            if refreshed:
+                login_user(refreshed, remember=True)
+            return redirect(url_for('profile'))
+        return redirect(url_for('login'))
+    flash_for('login', 'That confirmation link is invalid or has expired.', 'error')
+    return redirect(url_for('login'))
 
 
 @app.route('/profile')
@@ -4640,9 +4940,35 @@ def profile_settings():
                 else:
                     flash_for('profile_settings', f'Could not send test email: {err}', 'error')
             return redirect(url_for('profile_settings'))
+        elif request.form.get('action') == 'change_password':
+            current_password = request.form.get('current_password', '')
+            new_password = request.form.get('new_password', '')
+            confirm = request.form.get('confirm_new_password', '')
+            if not current_user.check_password(current_password):
+                flash_for('profile_settings', 'Current password is incorrect.', 'error')
+            else:
+                msg = validate_password(new_password)
+                if msg:
+                    flash_for('profile_settings', msg, 'error')
+                elif new_password != confirm:
+                    flash_for('profile_settings', 'New passwords do not match.', 'error')
+                else:
+                    with get_db() as conn:
+                        current_user.set_password(conn, new_password)
+                    flash_for('profile_settings', 'Password updated.', 'success')
+            return redirect(url_for('profile_settings'))
+        elif request.form.get('action') == 'resend_verification':
+            if current_user.email_verified:
+                flash_for('profile_settings', 'Your email is already confirmed.', 'success')
+            else:
+                with get_db() as conn:
+                    raw = create_email_verification_token(conn, current_user.id)
+                    _send_verify_email(current_user, raw)
+                flash_for('profile_settings', 'Confirmation email sent.', 'success')
+            return redirect(url_for('profile_settings'))
         else:
             updated = {
-                'profile_visibility': request.form.get('profile_visibility', 'public'),
+                'profile_visibility': request.form.get('profile_visibility', VISIBILITY_FOLLOWERS),
                 'show_member_since': request.form.get('show_member_since') == '1',
                 'show_last_topic': request.form.get('show_last_topic') == '1',
                 'show_last_activity': request.form.get('show_last_activity') == '1',
@@ -4691,8 +5017,8 @@ def profile_settings():
         mail_configured=mail_config()['enabled'] or mail_config()['provider'] == 'console',
         visibility_choices=VISIBILITY_CHOICES,
         profile_visibility_label=PROFILE_VISIBILITY_LABELS.get(
-            settings.get('profile_visibility', VISIBILITY_PUBLIC),
-            'Public',
+            settings.get('profile_visibility', VISIBILITY_FOLLOWERS),
+            'Followers only',
         ),
         errors=errors,
         public_profile_url=_public_profile_url(current_user.handle),
@@ -4701,6 +5027,62 @@ def profile_settings():
         avatar_extras=AVATAR_EXTRAS,
         avatar_extra_options=extra_options,
     )
+
+
+@app.route('/me/delete', methods=['GET', 'POST'])
+@login_required
+def account_delete():
+    blocked = _require_verified_email()
+    if blocked:
+        return blocked
+    error = None
+    if request.method == 'POST':
+        if not _validate_csrf(request.form.get('csrf_token')):
+            error = 'Your session expired. Please try again.'
+        elif not current_user.check_password(request.form.get('password', '')):
+            error = 'Password is incorrect.'
+        elif normalize_handle(request.form.get('confirm_handle', '')) != current_user.handle:
+            error = 'Type your handle exactly to confirm deletion.'
+        else:
+            user_id = current_user.id
+            with get_db() as conn:
+                delete_user_account(conn, user_id)
+            logout_user()
+            flash_for('index', 'Your account has been deleted.', 'success')
+            return redirect(url_for('index'))
+    return render_template('account_delete.html', error=error)
+
+
+@app.route('/me/export')
+@login_required
+def account_export():
+    blocked = _require_verified_email()
+    if blocked:
+        return blocked
+    allowed, _rem = _auth_rate_limit('export', EXPORT_DAILY_LIMIT)
+    if not allowed:
+        flash_for('profile_settings', 'Export limit reached. Try again tomorrow.', 'error')
+        return redirect(url_for('profile_settings'))
+    with get_db() as conn:
+        payload = build_user_export(conn, current_user.id)
+    body = json.dumps(payload, indent=2, default=str)
+    filename = f"problem-bank-export-{current_user.handle}-{date.today().isoformat()}.json"
+    response = Response(body, mimetype='application/json')
+    response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
+@app.get('/api/v1/me/export')
+@login_required
+def api_v1_me_export():
+    if not current_user.email_verified:
+        return _api_error('Confirm your email before exporting data', 403, 'email_unverified')
+    allowed, remaining = _api_rate_limit('export', EXPORT_DAILY_LIMIT)
+    if not allowed:
+        return _api_error('Export limit reached', 429, 'rate_limited')
+    with get_db() as conn:
+        payload = build_user_export(conn, current_user.id)
+    return jsonify({'ok': True, 'export': payload, 'rate_limit_remaining': remaining})
 
 
 @app.route('/email/unsubscribe')
@@ -5421,6 +5803,14 @@ def api_v1_auth_register():
     email = normalize_email(email)
     handle = normalize_handle(handle)
     with get_db() as conn:
+        reserved_msg = validate_handle(handle, conn)
+        if reserved_msg:
+            return jsonify({
+                'ok': False,
+                'error': 'Validation failed',
+                'code': 'validation_error',
+                'fields': {'handle': reserved_msg},
+            }), 400
         if User.get_by_email(conn, email) or User.get_by_handle(conn, handle):
             # Same response for email/handle conflicts (no account enumeration).
             return _api_error(
@@ -5430,6 +5820,8 @@ def api_v1_auth_register():
             )
         user = User.create(conn, email, handle, password)
         ensure_user_profile(conn, user.id)
+        raw = create_email_verification_token(conn, user.id)
+        _send_verify_email(user, raw)
         token = _issue_api_token(conn, user, label=label or 'Registration')
 
     return jsonify({'ok': True, 'token': token, 'user': _serialize_auth_user(user)}), 201
@@ -5453,8 +5845,21 @@ def api_v1_auth_login():
 
     with get_db() as conn:
         user = User.get_by_email(conn, email)
-        if not user or is_bot_user(user) or not user.is_active or not user.check_password(password):
+        from werkzeug.security import check_password_hash
+        dummy_hash = (
+            'scrypt:32768:8:1$dummy$0123456789abcdef0123456789abcdef'
+            '0123456789abcdef0123456789abcdef'
+        )
+        if not user or is_bot_user(user) or not user.is_active:
+            check_password_hash(dummy_hash, password or 'x')
             return _api_error('Invalid email or password', 401, 'invalid_credentials')
+        if is_login_locked(conn, user.id):
+            check_password_hash(dummy_hash, password or 'x')
+            return _api_error('Invalid email or password', 401, 'invalid_credentials')
+        if not user.check_password(password):
+            record_login_failure(conn, user.id)
+            return _api_error('Invalid email or password', 401, 'invalid_credentials')
+        clear_login_failures(conn, user.id)
         token = _issue_api_token(conn, user, label=label or 'Login')
 
     return jsonify({'ok': True, 'token': token, 'user': _serialize_auth_user(user)})
@@ -5497,6 +5902,20 @@ def api_v1_auth_list_tokens():
             for item in tokens
         ],
     })
+
+
+@app.delete('/api/v1/auth/tokens/<int:token_id>')
+@login_required
+def api_v1_auth_revoke_token(token_id):
+    with get_db() as conn:
+        cursor = conn.execute(
+            'DELETE FROM api_tokens WHERE id = ? AND user_id = ?',
+            (token_id, current_user.id),
+        )
+        conn.commit()
+        if cursor.rowcount == 0:
+            return _api_error('Token not found', 404, 'not_found')
+    return jsonify({'ok': True})
 
 
 @app.post('/api/v1/auth/revoke-all')
@@ -5960,6 +6379,19 @@ def api_v1_list_reflections():
     })
 
 
+@app.get('/api/v1/me/reflections/<int:reflection_id>')
+@login_required
+def api_v1_get_reflection(reflection_id):
+    with get_db() as conn:
+        item = get_reflection(conn, current_user.id, reflection_id)
+    if not item:
+        return _api_error('Reflection not found', 404, 'not_found')
+    return jsonify({
+        'ok': True,
+        'reflection': _serialize_reflection(item, external_urls=True),
+    })
+
+
 @app.get('/api/v1/me/skill-gaps')
 @login_required
 def api_v1_me_skill_gaps():
@@ -6135,6 +6567,10 @@ def _client_ip():
     return forwarded or (request.remote_addr or 'unknown')
 
 
+def _client_ip_hash():
+    return hashed_ip(app.secret_key, _client_ip())
+
+
 def _api_rate_limit(action, limit):
     """Return (allowed, remaining) or abort with JSON error via tuple (False, 0)."""
     if _rate_limits_disabled():
@@ -6142,7 +6578,7 @@ def _api_rate_limit(action, limit):
     if current_user.is_authenticated:
         bucket = f'{action}:user:{current_user.id}'
     else:
-        bucket = f'{action}:ip:{_client_ip()}'
+        bucket = f'{action}:ip:{_client_ip_hash()}'
     with get_db() as conn:
         allowed, remaining, _count = check_and_increment_rate_limit(conn, bucket, limit)
     return allowed, remaining
@@ -7876,7 +8312,7 @@ def _lesson_assist_rate_limit():
         return False, 0, 'assistant_unavailable'
 
     day = date.today().isoformat()
-    ip_key = f"ip:{_lesson_assist_client_ip()}"
+    ip_key = f"ip:{_client_ip_hash()}"
     session_key = f"session:{_lesson_assist_session_key()}"
 
     ip_count = _lesson_assist_usage_count(day, ip_key)
@@ -7893,7 +8329,7 @@ def _lesson_assist_rate_limit():
 
 def _lesson_assist_record_usage():
     day = date.today().isoformat()
-    _lesson_assist_increment(day, f"ip:{_lesson_assist_client_ip()}")
+    _lesson_assist_increment(day, f"ip:{_client_ip_hash()}")
     _lesson_assist_increment(day, f"session:{_lesson_assist_session_key()}")
 
 

@@ -332,9 +332,12 @@ Lesson quizzes (`generators/shared/lesson_quiz.py`): 10 questions — 3 foundati
 | `docs/COMPLEX_MECHANISMS.md` | How the three hardest subsystems work (grading, queues, Phase G) |
 | `docs/MOBILE.md` | Mobile polish (M0–M4) + Play Android via TWA (M5–M7) |
 | `docs/SOLID_DRAFT_SECURITY.md` | Solid-draft audit fixes — do not regress |
-| `docs/SECURITY_AND_GDPR.md` | **Planned** — data inventory, compliance gaps, phased S0–S3 plan (S0 blocks public launch) |
+| `docs/SECURITY_AND_GDPR.md` | S0 **and S1 shipped in code**; S2 next. DPIA/ROPA/subprocessors drafts alongside |
+| `docs/INCIDENT_RESPONSE.md` | Breach runbook (72-hour ICO clock) |
+| `docs/DATA_RIGHTS.md` | How to answer an access/erasure email |
 | `docs/API.md` | REST API v1 contract |
-| `docs/DEPLOY.md` | Production deployment checklist |
+| `docs/DEPLOY.md` | Production deployment checklist (encrypted backups, CI scanning) |
+| `docs/OPERATOR_LAUNCH.md` | **Operator (David)** — ICO fee, privacy inbox, prune/backup cron; do at public HTTPS / M5 |
 | `docs/EMAIL_SETUP.md` | Weekly digest configuration |
 | `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | G8, engagement E4, other future ideas |
 | `docs/ENGAGEMENT_VISUAL.md` | Avatar / buddy visual tokens for E2–E3 |

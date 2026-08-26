@@ -1,6 +1,6 @@
 # Problem Bank — AI agent handoff
 
-**Last updated:** 2026-08-25  
+**Last updated:** 2026-08-26  
 **Repository:** `maths_generator/physics-problem-bank` (GitHub: `kingdavidek/physics-problem-bank`)  
 **Audience:** The next AI agent (or human) continuing product work  
 
@@ -15,7 +15,7 @@ Start here. Read the documents in the order below before changing behaviour that
 | **Auto-correct (Phases A/B)** | Complete (GCSE CS + Maths; Python via client Pyodide) |
 | **Phase G learning (G1–G7)** | Shipped (weak topics → exam revision planner) |
 | **Solid-draft security bar** | Done (2026-08-01). See `docs/SOLID_DRAFT_SECURITY.md` |
-| **Security + UK GDPR compliance** | **Planned, fully specified — `docs/SECURITY_AND_GDPR.md`.** Phase **S0 is a launch blocker**: no privacy notice, no account deletion, no data export, no DPIA, public-by-default profiles for a 13+ audience. Do S0 with (not after) `docs/MOBILE.md` M5 |
+| **Security + UK GDPR compliance** | **S0 + S1 shipped in code (2026-08-26)** — `docs/SECURITY_AND_GDPR.md`. **Operator S0.1** (ICO fee, live contact, prune cron) is written for David in **`docs/OPERATOR_LAUNCH.md`** — do that at public HTTPS / M5, not during product tracks. **Next engineering on this track: S2** (`unsafe-inline` CSP, self-host MathJax/Pyodide) |
 | **Mobile polish (app-like PWA)** | **Done (M0–M4)** — foundation, practice UX, app chrome, lessons/diagrams, PWA polish + device QA. **M5–M7** HTTPS → TWA → Play Android when a production URL exists — see `docs/MOBILE.md` |
 | **Phase U (UI redesign)** | **U closed.** Dark mode **D0–D3 shipped** (shell, status chips, diagrams, settings toggle). Cache: `pb-v65`. Spec: `docs/UI_REDESIGN.md` §15. **Follow-up:** settings switches may not persist (see §1.1). |
 | **Engagement roadmap (E1–E3)** | **E1–E3 shipped** (assist mock smoke, `@problem_bot` QOTD card, FTS lesson search, emoji/colour avatars, study buddy, friend quiz-accuracy leaderboard). Visual tokens: `docs/ENGAGEMENT_VISUAL.md` |
@@ -42,10 +42,11 @@ Start here. Read the documents in the order below before changing behaviour that
 | **2b** | `docs/COMPLEX_MECHANISMS.md` | Deep dive: grading, generator queues, Phase G (Flask/JS/CSS roles) |
 | **2c** | `docs/MOBILE.md` | Mobile polish (M0–M4) + Play Android via TWA (M5–M7) |
 | **3** | `docs/SOLID_DRAFT_SECURITY.md` | Critical/high fixes just shipped; **do not regress** |
-| **3b** | `docs/SECURITY_AND_GDPR.md` | Compliance gaps, data inventory, and the phased S0–S3 plan. **Read before touching auth, personal data, defaults, or anything that leaves the server** |
+| **3b** | `docs/SECURITY_AND_GDPR.md` | S0–S3 plan. **S0 and S1 are done in code.** Read before touching auth, personal data, defaults, or anything that leaves the server. Drafts: `docs/DPIA.md`, `docs/ROPA.md`, `docs/SUBPROCESSORS.md`. Runbooks: `docs/INCIDENT_RESPONSE.md`, `docs/DATA_RIGHTS.md` |
 | **4** | `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | G8 design + engagement E4 + other future ideas |
 | **5** | `docs/API.md` | REST `/api/v1/*` contracts when touching APIs |
 | **6** | `docs/DEPLOY.md` | Env, HTTPS, backups, smoke, production checklist |
+| *at public launch / M5* | **`docs/OPERATOR_LAUNCH.md`** | **David’s** ICO / privacy-inbox / prune-cron checklist. Surface this when starting production HTTPS; skip it during E4.1, UI, etc. |
 | *before starting E4.1* | `docs/REAL_WORLD_QUESTIONS.md` | Step-by-step plan for the real-world generator mode |
 | *before starting E5* | `docs/ENGAGEMENT_E5.md` | Step-by-step plan for buddy v0.5, badges, QOTD week, streak freeze, avatar unlocks |
 | *as needed* | `docs/EMAIL_SETUP.md` | Weekly digest only |
@@ -238,14 +239,15 @@ Remaining E5: web push (blocked on production HTTPS / `docs/MOBILE.md` M5).
 
 Pick based on product priority; items are independent enough to sequence differently if needed:
 
-**If the site is about to go public, `docs/SECURITY_AND_GDPR.md` Phase S0 comes first** — it is the only item on this list with legal exposure attached. Everything below assumes the site is still development-only.
+Product tracks (E4.1, UI, etc.) can proceed on a local/dev site. **Do not** start `docs/OPERATOR_LAUNCH.md` until he is doing public HTTPS / M5. When that session starts, walk him through that doc first.
 
-1. **Continue E5:** **E5.7** (web push) only after production HTTPS (`docs/MOBILE.md` M5).
-2. **E4.1 real-world question style** — highest content value per line of code (`docs/REAL_WORLD_QUESTIONS.md`).
+1. **E4.1 real-world question style** — highest content value per line of code (`docs/REAL_WORLD_QUESTIONS.md`).
+2. **Continue E5:** **E5.7** (web push) only after production HTTPS (`docs/MOBILE.md` M5).
 3. **G8 — Teacher / class mode** per `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2. Note this adds teacher oversight of children's data — DPIA review required first.
-4. **Mobile M5+** only with a real production HTTPS URL — see `docs/MOBILE.md` (M0–M4 done). Pair with compliance S0; unblocks web push (E5.7).
-5. **Settings switch persist** — later; see §1.1. Do not block other work on this.
-6. **E4.2 / E4.3 and other stretch** only after metrics or an explicit product call.
+4. **Mobile M5+ / public launch** — production HTTPS (`docs/MOBILE.md`). **Gate:** `docs/OPERATOR_LAUNCH.md` (David: ICO, privacy inbox, prune cron + `PB_BACKUP_PASSPHRASE`), then `docs/DEPLOY.md`. Unblocks web push (E5.7).
+5. **Compliance S2** — remove `unsafe-inline` from the CSP; self-host MathJax/Pyodide (`docs/SECURITY_AND_GDPR.md`). S1 is shipped.
+6. **Settings switch persist** — later; see §1.1. Do not block other work on this.
+7. **E4.2 / E4.3 and other stretch** only after metrics or an explicit product call.
 
 ---
 
@@ -258,7 +260,11 @@ Pick based on product priority; items are independent enough to sequence differe
 
 ---
 
-## 9. Active work handoff — E5 complete except push (2026-08-20)
+## 9. Active work handoff — S1 shipped (2026-08-26)
+
+**S0 and S1 GDPR/security shipped in code.** Remaining **human** work is deferred to public launch: **`docs/OPERATOR_LAUNCH.md`** (ICO, privacy inbox, prune cron, `PB_BACKUP_PASSPHRASE`, GitHub secret scanning). Do not do that during E4.1 / UI / other product tracks. When M5 or production deploy starts, remind David and follow that doc.
+
+**Next on this track: Phase S2** (`docs/SECURITY_AND_GDPR.md`): remove `unsafe-inline` from the CSP (move inline scripts into `static/js/`), self-host MathJax and Pyodide, OWASP ZAP baseline, personal-data action log for CLI export/erase.
 
 **E5.6 shipped:** revision planner subject dropdown. Remaining E5 is **E5.7** web push — blocked until `docs/MOBILE.md` M5.
 

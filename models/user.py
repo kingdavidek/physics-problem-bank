@@ -19,7 +19,17 @@ def utc_now_iso():
 
 
 class User(UserMixin):
-    def __init__(self, id, email, handle, password_hash, created_at, last_login_at, is_active):
+    def __init__(
+        self,
+        id,
+        email,
+        handle,
+        password_hash,
+        created_at,
+        last_login_at,
+        is_active,
+        email_verified_at=None,
+    ):
         self.id = id
         self.email = email
         self.handle = handle
@@ -27,10 +37,15 @@ class User(UserMixin):
         self.created_at = created_at
         self.last_login_at = last_login_at
         self._is_active = bool(is_active)
+        self.email_verified_at = email_verified_at
 
     @property
     def is_active(self):
         return self._is_active
+
+    @property
+    def email_verified(self):
+        return bool(self.email_verified_at)
 
     @property
     def display_handle(self):
@@ -40,6 +55,7 @@ class User(UserMixin):
     def from_row(cls, row):
         if row is None:
             return None
+        keys = row.keys()
         return cls(
             id=row['id'],
             email=row['email'],
@@ -48,6 +64,7 @@ class User(UserMixin):
             created_at=row['created_at'],
             last_login_at=row['last_login_at'],
             is_active=row['is_active'],
+            email_verified_at=row['email_verified_at'] if 'email_verified_at' in keys else None,
         )
 
     @classmethod
@@ -99,6 +116,17 @@ class User(UserMixin):
             return check_password_hash(self.password_hash, password)
         return False
 
+    def set_password(self, conn, password):
+        password = normalize_credential_password(password)
+        self.password_hash = generate_password_hash(password)
+        conn.execute(
+            'UPDATE users SET password_hash = ? WHERE id = ?',
+            (self.password_hash, self.id),
+        )
+        from models.auth_tokens import invalidate_password_reset_tokens
+        invalidate_password_reset_tokens(conn, self.id)
+        conn.commit()
+
     def touch_login(self, conn):
         now = utc_now_iso()
         conn.execute(
@@ -107,6 +135,15 @@ class User(UserMixin):
         )
         conn.commit()
         self.last_login_at = now
+
+
+def mark_email_verified(conn, user_id):
+    now = utc_now_iso()
+    conn.execute(
+        'UPDATE users SET email_verified_at = ? WHERE id = ?',
+        (now, user_id),
+    )
+    conn.commit()
 
 
 def normalize_email(email):
@@ -138,7 +175,7 @@ def validate_email(email):
     return None
 
 
-def validate_handle(handle):
+def validate_handle(handle, conn=None):
     handle = normalize_handle(handle)
     if not handle:
         return 'Handle is required.'
@@ -146,6 +183,10 @@ def validate_handle(handle):
         return 'Handle must be 3–20 characters: lowercase letters, numbers, and underscores only.'
     if handle in RESERVED_HANDLES:
         return 'That handle is reserved. Please choose another.'
+    if conn is not None:
+        from models.account_deletion import handle_is_reserved
+        if handle_is_reserved(conn, handle):
+            return 'That handle is reserved. Please choose another.'
     return None
 
 

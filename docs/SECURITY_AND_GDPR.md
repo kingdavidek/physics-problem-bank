@@ -1,9 +1,9 @@
 # Problem Bank — Security and UK GDPR compliance plan
 
-**Last updated:** 2026-08-15
-**Status:** Planned — not implemented
+**Last updated:** 2026-08-26
+**Status:** Phases S0 and S1 implemented in code. Operator S0.1 (ICO fee, live contact address) is still required before the URL is public. GitHub secret scanning / push protection is a UI setting (S1.4).
 **Audience:** The next AI agent (and the operator, for the non-code actions)
-**Companions:** `docs/SOLID_DRAFT_SECURITY.md` (what is already hardened — do not regress), `docs/DEPLOY.md`, `docs/MOBILE.md` (M5 production HTTPS)
+**Companions:** `docs/SOLID_DRAFT_SECURITY.md` (what is already hardened — do not regress), `docs/DEPLOY.md`, `docs/OPERATOR_LAUNCH.md`, `docs/INCIDENT_RESPONSE.md`, `docs/DATA_RIGHTS.md`, `docs/MOBILE.md` (M5 production HTTPS), `docs/DPIA.md`, `docs/ROPA.md`, `docs/SUBPROCESSORS.md`
 
 > **Not legal advice.** This is an engineering plan written against the UK GDPR, the Data Protection Act 2018, PECR, and the ICO's Age Appropriate Design Code (the "Children's Code"). Before taking real users, have the privacy notice and DPIA read by someone qualified. Everything in §2–§4 is factual about the codebase; the legal framing in §1 is a good-faith summary.
 
@@ -11,7 +11,7 @@
 
 ## 0. The one-paragraph summary
 
-The platform is a UK-facing study site whose users are **mainly children (13+)**. It stores emails, password hashes, IP-derived rate-limit keys, and a rich behavioural record (every attempt, score, weak topic, streak, and social interaction). The security engineering is already better than average for a solo project — safe grading, hashed tokens, parameterised SQL, CSRF, rate limits, a real CSP. The **compliance** side is close to empty: no privacy notice, no way to delete an account, no way to export data, no retention limits, no DPIA, and default profile settings that are more open than the Children's Code expects. Almost all of that is fixable in code you already know how to write, and the site is **not yet public** — which is the cheapest possible moment to fix it.
+The platform is a UK-facing study site whose users are **mainly children (13+)**. It stores emails, password hashes, IP-derived rate-limit keys, and a rich behavioural record (every attempt, score, weak topic, streak, and social interaction). The security engineering is already better than average for a solo project — safe grading, hashed tokens, parameterised SQL, CSRF, rate limits, a real CSP. **Phases S0 and S1 are implemented in code:** privacy notice, high-privacy defaults, account deletion, data export, hashed IPs, retention prune, password reset, email verification, security headers, production boot guard, self-hosted fonts, drafted DPIA/ROPA, **encrypted backups**, incident and data-rights runbooks, CI scanning, authz tests, login lockout, log hygiene, and expiry on unsubscribe tokens. Remaining launch blockers are **operator actions** (S0.1, GitHub secret scanning) and **Phase S2** (`unsafe-inline` CSP, self-host MathJax/Pyodide).
 
 ---
 
@@ -106,7 +106,7 @@ Each item is written as *Why → Do → Files → Acceptance*.
 
 **Why:** Every other document needs a named controller and a working contact address.
 **Do:** Decide the trading name and a dedicated address (e.g. `privacy@yourdomain`). Register with the ICO and pay the data protection fee. Record the ICO registration number.
-**Files:** none — operator action; record the outcome in the privacy notice and `docs/DEPLOY.md`.
+**Files:** none in the app — operator action. Step-by-step for David: **`docs/OPERATOR_LAUNCH.md`**. Record the outcome on `/privacy` via env vars (`CONTROLLER_NAME`, `PRIVACY_CONTACT_EMAIL`, `ICO_REGISTRATION_NUMBER`).
 **Acceptance:** an address that a parent could email, and someone reads it.
 
 #### S0.2 Publish a privacy notice, terms, and a child-friendly summary
@@ -242,8 +242,8 @@ The ROPA is a single table: purpose, categories of data, categories of subjects,
 
 **Why:** `generators/shared/lesson_assist.py` sends selected lesson text, up to 1200 characters of surrounding context, and **the child's own typed question** to OpenAI, Anthropic, or DeepSeek depending on configuration. DeepSeek in particular means a transfer to China, which has no UK adequacy decision and would need an IDTA plus a transfer risk assessment. Today this is env-gated and defaults to mock, so **nothing leaks unless a key is configured** — the decision is what happens at launch.
 
-**Do:** pick one and write it down.
-- **Option A (recommended for launch):** keep `LESSON_ASSIST_ENABLED=0` in production. Zero transfer, zero paperwork, feature stays available locally.
+**Do:** pick one and write it down. **Decision (2026-08-26): Option A.**
+- **Option A (implemented):** production stays off unless `LESSON_ASSIST_ENABLED=1`. Zero transfer, zero paperwork, feature stays available locally. `is_enabled()` treats HTTPS `SITE_URL` / `FLASK_ENV=production` as off when the flag is not an explicit on-value.
 - **Option B:** enable with a single provider that offers a DPA, a no-training-on-inputs commitment, and UK/EU or adequacy-covered processing. Then: add the provider to the subprocessor list, add a transfer mechanism, show a one-time notice at the point of use ("your question and the highlighted text are sent to *X* to generate an explanation — don't include personal details"), and strip identifiers from the payload (it already sends no handle or email — keep it that way).
 
 **Never** send the user's handle, email, or user ID to an LLM provider. Add that as an invariant.
@@ -259,16 +259,18 @@ The ROPA is a single table: purpose, categories of data, categories of subjects,
 
 ### Phase S1 — First fortnight after launch
 
+**Implemented in code (2026-08-26).** Operator still enables GitHub secret scanning and push protection in the GitHub UI (S1.4).
+
 | # | Item | Detail |
 |---|---|---|
-| S1.1 | **Encrypt backups** | `scripts/backup_sqlite.py` currently does a plain `shutil.copy2`. Encrypt with a passphrase from `PB_BACKUP_PASSPHRASE` (Fernet via `cryptography`, or shell out to `gpg` if it is available on the host). **Then actually restore one** into a scratch directory and open it — an untested backup is not a backup. Document the restore steps in `docs/DEPLOY.md`. |
-| S1.2 | **Breach response runbook** | `docs/INCIDENT_RESPONSE.md`: what counts as a breach, the 72-hour ICO clock and when it starts, who decides, how to notify affected users (you will need the verified emails from S0.7), how to preserve evidence, and a template notification. Include the "contain → assess → notify → learn" sequence and a decision table for *risk* vs *high risk*. |
+| S1.1 | **Encrypt backups** | `scripts/backup_sqlite.py` encrypts with Fernet (`cryptography`) from `PB_BACKUP_PASSPHRASE` (PBKDF2-HMAC-SHA256, 480k iterations, `PBENC1` header). Production refuses a missing passphrase. Restore: `scripts/restore_sqlite.py`. Proven in `scripts/test_backup_smoke.py`. Steps in `docs/DEPLOY.md`. |
+| S1.2 | **Breach response runbook** | `docs/INCIDENT_RESPONSE.md`: what counts as a breach, the 72-hour ICO clock and when it starts, who decides, how to notify affected users (verified emails from S0.7), how to preserve evidence, and a template notification. Include the "contain → assess → notify → learn" sequence and a decision table for *risk* vs *high risk*. |
 | S1.3 | **Rights-request workflow** | `docs/DATA_RIGHTS.md`: one calendar month to respond; how to verify identity without collecting more data than necessary (respond to the registered email; never ask for ID documents for a simple export); how to handle a parent requesting on behalf of a child; the CLI commands from S0.4/S0.5; a log of requests and outcomes. |
-| S1.4 | **CI security gates** | Add to `.github/workflows/smoke.yml` (or a second workflow): `pip-audit` for known CVEs, `gitleaks` for secrets, `ruff` for lint. Enable GitHub secret scanning and push protection on the repo. Add `.github/dependabot.yml` for `pip` and `github-actions`, weekly. Start them non-blocking for a week, then make them required. |
+| S1.4 | **CI security gates** | Added to `.github/workflows/smoke.yml`: `pip-audit`, `gitleaks` (binary), `ruff`. `.github/dependabot.yml` for `pip` and `github-actions`, weekly. **Non-blocking** (`continue-on-error`) until a clean week. **Operator:** enable GitHub secret scanning and push protection in the repo settings. |
 | S1.5 | **Authorisation regression tests** | `scripts/test_authz_smoke.py`: user B attempts to read, update, and delete user A's saved problem, quiz attempt, reflection, revision plan, notification, and API token, by ID — every one must 403/404. Also assert a private profile stays private to a logged-out visitor and to a non-follower. This closes the assurance gap: the queries already filter by `user_id`, but nothing proves it stays that way. |
-| S1.6 | **Login abuse controls** | Per-account failed-attempt throttling (exponential backoff or a 15-minute lock after 10 failures) on top of the existing per-IP daily cap, so one account cannot be sprayed from many IPs. Keep the generic error messages. |
-| S1.7 | **Log hygiene** | Decide what the production host logs and for how long (30 days is a defensible default). Remove recipient emails from digest stdout in non-console providers (`models/email_digest.py:238`, `scripts/send_weekly_digest.py:77`) or gate them behind a debug flag. Never log passwords, tokens, session cookies, or answer content. |
-| S1.8 | **Unsubscribe token expiry** | Add a timestamp to the HMAC payload and reject tokens older than 90 days (`models/email_digest.py:52`). Low risk, five minutes. |
+| S1.6 | **Login abuse controls** | Per-account failed-attempt throttling: **15-minute lock after 10 failures** (`models/login_lockout.py`) on top of the existing per-IP daily cap, so one account cannot be sprayed from many IPs. Keep the generic error messages. |
+| S1.7 | **Log hygiene** | Host access logs: **30 days** (`docs/DEPLOY.md`). Recipient emails are omitted from digest stdout for non-console providers unless `MAIL_LOG_RECIPIENTS=1`. Never log passwords, tokens, session cookies, or answer content. |
+| S1.8 | **Unsubscribe token expiry** | HMAC payload is `{uid}.{unix_ts}.{sig}`; tokens older than 90 days are rejected (`models/email_digest.py`). Old two-part tokens are invalid. |
 
 ---
 
@@ -360,13 +362,18 @@ docs/ROPA.md                   record of processing activities
 docs/SUBPROCESSORS.md          third-party list
 docs/INCIDENT_RESPONSE.md      breach runbook
 docs/DATA_RIGHTS.md            how to answer a rights request
+docs/OPERATOR_LAUNCH.md        operator ICO / inbox / cron (S0.1)
 models/account_deletion.py     erasure
 models/data_export.py          access + portability
+models/login_lockout.py        per-account lock
 scripts/gdpr_erase_user.py     operator CLI
 scripts/gdpr_export_user.py    operator CLI
 scripts/prune_expired_data.py  retention
+scripts/backup_sqlite.py       encrypted backup
+scripts/restore_sqlite.py      backup restore
 scripts/test_gdpr_smoke.py     erasure + export + retention tests
 scripts/test_authz_smoke.py    cross-user access tests
+scripts/test_backup_smoke.py   encrypt + restore
 templates/legal_privacy.html   /privacy
 templates/legal_privacy_simple.html   /privacy/simple
 templates/legal_terms.html     /terms
@@ -382,19 +389,28 @@ The site needs no consent banner **today** because it stores only what is strict
 
 **Phase S0 (before any real user can reach the site):**
 
-- [ ] Controller identified, ICO fee paid, contact address monitored
-- [ ] `/privacy`, `/privacy/simple`, `/terms` live and linked from the footer and registration
-- [ ] New accounts default to high privacy; anonymous visitors see nothing but handle and avatar
-- [ ] Account deletion works self-serve and by CLI, verified by test across every table
-- [ ] Data export works self-serve and by CLI, contains no other user's data and no password hash
-- [ ] IPs pseudonymised; prune job written and scheduled
-- [ ] Password reset and email verification live; password change form added
-- [ ] Security headers set; production boot guard refuses `PB_TESTING`
-- [ ] `docs/DPIA.md` and `docs/ROPA.md` written and reviewed
-- [ ] Lesson-assist position decided and documented (default: disabled in production)
-- [ ] Fonts self-hosted; CSP no longer names Google
-- [ ] Full smoke suite green, including the new GDPR tests
+- [ ] Controller identified, ICO fee paid, contact address monitored (**operator — S0.1**; how-to: `docs/OPERATOR_LAUNCH.md`; env `CONTROLLER_NAME`, `PRIVACY_CONTACT_EMAIL`, `ICO_REGISTRATION_NUMBER`)
+- [x] `/privacy`, `/privacy/simple`, `/terms` live and linked from the footer and registration
+- [x] New accounts default to high privacy; anonymous visitors see nothing but handle and avatar
+- [x] Account deletion works self-serve and by CLI, verified by test across every table
+- [x] Data export works self-serve and by CLI, contains no other user's data and no password hash
+- [x] IPs pseudonymised; prune job written (`scripts/prune_expired_data.py` — schedule it on the host)
+- [x] Password reset and email verification live; password change form added
+- [x] Security headers set; production boot guard refuses `PB_TESTING`
+- [x] `docs/DPIA.md` and `docs/ROPA.md` written (operator should still have them read by someone qualified)
+- [x] Lesson-assist position decided and documented (Option A: disabled in production unless `LESSON_ASSIST_ENABLED=1`)
+- [x] Fonts self-hosted; CSP no longer names Google
+- [x] Full smoke suite includes `scripts/test_gdpr_smoke.py`
 
-**Phase S1:** backups encrypted and a restore proven; incident and rights runbooks written; CI scanning enabled; authorisation tests green; login abuse controls live; log hygiene done.
+**Phase S1:**
+
+- [x] Backups encrypted (`PB_BACKUP_PASSPHRASE` / Fernet) and a restore proven (`scripts/test_backup_smoke.py`); restore steps in `docs/DEPLOY.md`
+- [x] `docs/INCIDENT_RESPONSE.md` (72-hour ICO clock, contain → assess → notify → learn)
+- [x] `docs/DATA_RIGHTS.md` (one month, verify via registered email, parent-on-behalf, CLI)
+- [x] CI: `pip-audit`, `ruff`, `gitleaks` (non-blocking); Dependabot weekly. **Operator:** GitHub secret scanning + push protection
+- [x] `scripts/test_authz_smoke.py` green (cross-user 404/403)
+- [x] Per-account lockout: 15 min after 10 failures; generic login error
+- [x] Log hygiene: recipient emails gated; host logs 30 days documented
+- [x] Unsubscribe tokens timestamped; reject after 90 days
 
 **Phase S2:** `unsafe-inline` gone; CDN assets self-hosted; baseline scan clean or triaged; personal-data action log in place.

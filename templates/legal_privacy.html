@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Privacy notice – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+<div class="lesson-hero">
+    <h1>Privacy notice</h1>
+    <p class="hero-sub">How Problem Bank uses personal data (UK GDPR).</p>
+</div>
+<p><a href="{{ url_for('legal_privacy_simple') }}">Shorter version for students →</a></p>
+
+<section class="section-panel">
+    <div class="section-panel-header">Who we are</div>
+    <div class="section-panel-body">
+        <p>The controller is <strong>{{ controller_name }}</strong>. Contact: <a href="mailto:{{ privacy_contact_email }}">{{ privacy_contact_email }}</a>.</p>
+        <p>ICO registration: {{ ico_registration_number }}.</p>
+        <p>This service is aimed at people aged 13 and over in the UK. We do not ask for your real name, school, photos, or payment details.</p>
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">What we collect</div>
+    <div class="section-panel-body">
+        <ul>
+            <li><strong>Account:</strong> email, handle, password hash, last login time</li>
+            <li><strong>Study record:</strong> practice attempts, quiz scores, lesson progress, streaks, badges, revision plans, reflections you type</li>
+            <li><strong>Social:</strong> follows, challenges, suggestions, blocks, reports</li>
+            <li><strong>Settings:</strong> visibility, avatar (emoji), theme, sound, digest opt-in</li>
+            <li><strong>Security:</strong> hashed rate-limit keys (not raw IP addresses), API token hashes</li>
+        </ul>
+        <p>We do not use advertising or analytics cookies. Session and remember-me cookies are needed to keep you signed in.</p>
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">Why we use it</div>
+    <div class="section-panel-body">
+        <ul>
+            <li><strong>Contract:</strong> to run your account and study features</li>
+            <li><strong>Legitimate interests:</strong> security, abuse prevention, moderation</li>
+            <li><strong>Consent:</strong> optional weekly recap email, and lesson AI assist only if you (and the site operator) turn it on</li>
+        </ul>
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">How long we keep it</div>
+    <div class="section-panel-body">
+        <ul>
+            <li>Account and study data: for as long as the account exists, then deleted immediately on request</li>
+            <li>Inactive accounts: warning after 24 months without login; deletion after 30 months</li>
+            <li>Rate-limit records: 7 days. Lesson-assist usage counters: 30 days</li>
+            <li>Email send logs: 12 months. Resolved reports: 12 months after resolution</li>
+            <li>Backups: 14 days. Deleted data leaves live systems immediately and backups within 14 days</li>
+        </ul>
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">Your rights</div>
+    <div class="section-panel-body">
+        <p>You can access, export, or delete your data from Settings once your email is confirmed. You can also email {{ privacy_contact_email }}.</p>
+        <p>You can complain to the <a href="https://ico.org.uk/make-a-complaint/">Information Commissioner’s Office</a>.</p>
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">Who else sees data</div>
+    <div class="section-panel-body">
+        <p>Hosting and (if configured) email providers process data for us under their contracts. MathJax/Pyodide may load from a CDN (visitor IP). Lesson AI is <strong>off in production unless explicitly enabled</strong>; if enabled it receives lesson text and your typed question only — never your handle or email.</p>
+        <p>See <a href="{{ url_for('legal_terms') }}">Terms</a> and the subprocessors list in the project documentation.</p>
+    </div>
+</section>
+</div>
+{% endblock %}

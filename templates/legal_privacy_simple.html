@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Privacy (simple) – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+<div class="lesson-hero">
+    <h1>Privacy, in plain words</h1>
+    <p class="hero-sub">For students aged 13+.</p>
+</div>
+
+<section class="section-panel">
+    <div class="section-panel-body">
+        <p><strong>What we know about you.</strong> Your email, a username you pick, your password (stored as a secret hash), and your study work: questions you try, quiz scores, streaks, and notes you type.</p>
+        <p><strong>Who can see it.</strong> By default, strangers on the internet cannot see your study activity. Only your username is shown unless you choose a public profile. Public means <em>anyone on the internet</em>, including people who are not logged in.</p>
+        <p><strong>How to delete it.</strong> Open Settings → Your data → Delete my account. Or ask a parent to email {{ privacy_contact_email }}.</p>
+        <p><strong>Don’t type secrets in notes.</strong> Do not put your real name, school, address, or phone number in reflections or share notes.</p>
+        <p><strong>How to complain.</strong> Email {{ privacy_contact_email }}. You can also contact the ICO (the UK privacy watchdog) at ico.org.uk.</p>
+        <p><a href="{{ url_for('legal_privacy') }}">Full privacy notice →</a></p>
+    </div>
+</section>
+</div>
+{% endblock %}

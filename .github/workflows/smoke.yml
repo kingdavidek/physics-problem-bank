@@ -23,3 +23,31 @@ jobs:
           PB_TESTING: '1'
           CORS_ORIGINS: https://app.example.com
         run: python scripts/run_smoke_tests.py
+
+  # S1.4 — non-blocking for now; make required once the first week of output is clean.
+  security:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: pip-audit
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt
+
+      - name: ruff
+        run: |
+          pip install ruff
+          ruff check .
+
+      - name: gitleaks
+        run: |
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz" | tar -xz gitleaks
+          ./gitleaks detect --source . --no-banner --exit-code 1

@@ -94,6 +94,7 @@
         <div class="section-panel-header">Profile visibility</div>
         <div class="section-panel-body">
             <p class="page-intro settings-intro">Who can view your <a href="{{ public_profile_url }}">public profile</a> at /u/{{ current_user.handle }}?</p>
+            <p class="profile-empty settings-note">Public means anyone on the internet, including people who are not logged in.</p>
             <div class="form-group">
                 <label class="privacy-radio">
                     <input type="radio" name="profile_visibility" value="public"
@@ -241,6 +242,47 @@
             <input type="hidden" name="action" value="revoke_all_api_tokens">
             <button type="submit" class="btn btn-outline">Log out all devices</button>
         </form>
+    </div>
+</section>
+
+<section class="section-panel settings-section">
+    <div class="section-panel-header">Password</div>
+    <div class="section-panel-body">
+        <form method="POST" class="auth-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="change_password">
+            <div class="form-group">
+                <label for="current_password">Current password</label>
+                <input type="password" name="current_password" id="current_password" autocomplete="current-password" required>
+            </div>
+            <div class="form-group">
+                <label for="new_password">New password</label>
+                <input type="password" name="new_password" id="new_password" autocomplete="new-password" minlength="8" required>
+            </div>
+            <div class="form-group">
+                <label for="confirm_new_password">Confirm new password</label>
+                <input type="password" name="confirm_new_password" id="confirm_new_password" autocomplete="new-password" minlength="8" required>
+            </div>
+            <button type="submit" class="btn btn-outline">Change password</button>
+        </form>
+    </div>
+</section>
+
+<section class="section-panel settings-section">
+    <div class="section-panel-header">Your data</div>
+    <div class="section-panel-body">
+        {% if not current_user.email_verified %}
+        <p class="page-intro settings-intro">Confirm your email to download or delete your data.</p>
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="resend_verification">
+            <button type="submit" class="btn btn-outline">Resend confirmation email</button>
+        </form>
+        {% else %}
+        <p class="page-intro settings-intro">Download a copy of what we store about you, or permanently delete your account.</p>
+        <p><a class="btn btn-outline" href="{{ url_for('account_export') }}">Download my data (JSON)</a></p>
+        <p><a class="btn btn-outline" href="{{ url_for('account_delete') }}">Delete my account</a></p>
+        {% endif %}
     </div>
 </section>
 

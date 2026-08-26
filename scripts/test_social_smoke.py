@@ -90,9 +90,6 @@ def main():
         r = client.get('/topic/gcse/maths/bidmas')
         assert r.status_code == 200
 
-        r = client.get(f'/u/{handle_a}')
-        assert b'Last topic opened' in r.data or b'Order of Operations' in r.data
-
         r = client.get('/profile/settings')
         assert r.status_code == 200
         assert b'Appearance' in r.data
@@ -111,6 +108,9 @@ def main():
             follow_redirects=True,
         )
         assert b'Settings saved' in r.data
+
+        r = client.get(f'/u/{handle_a}')
+        assert b'Last topic opened' in r.data or b'Order of Operations' in r.data
 
         # B views A and follows
         client.post('/logout', data={'csrf_token': csrf_from(client.get('/profile').data.decode())})

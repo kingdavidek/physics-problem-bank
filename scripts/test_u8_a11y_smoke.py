@@ -18,8 +18,8 @@ LESSON_ONLY = {'lesson-pages.css', 'lesson-assist.css'}
 # Uncompressed tree; D2 lesson SVG remaps live in lesson-pages.css.
 CSS_BUDGET_BYTES = 216_000
 # Core sheets loaded on every page after the U8.6 lesson split.
-# Measured ~184KB; leave a little room for token/component tweaks.
-CSS_CORE_BUDGET_BYTES = 190_000
+# S0 added fonts.css (~1KB) plus legal-footer / email-verify chrome.
+CSS_CORE_BUDGET_BYTES = 191_000
 
 
 def test_tab_bar_aria_current():

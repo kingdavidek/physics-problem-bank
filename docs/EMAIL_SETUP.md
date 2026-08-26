@@ -6,7 +6,7 @@ This guide is for **after** the digest code is deployed. The app already include
 
 - **Opt-in** — Settings → “Send me a weekly study recap email” (`email_weekly_digest`, default off)
 - **Content** — Same weekly recap as on your profile (active days, topics, best quiz, streak)
-- **Unsubscribe** — Signed link at `/email/unsubscribe?token=…`
+- **Unsubscribe** — Signed link at `/email/unsubscribe?token=…` (HMAC + timestamp; rejected after 90 days; older two-part tokens are invalid)
 - **API** — `PATCH /api/v1/me/settings` with `email_weekly_digest`; preview via `GET /api/v1/me/email/digest-preview`; test send via `POST /api/v1/me/email/test-digest`
 - **Scripts** — `scripts/preview_weekly_digest.py`, `scripts/send_weekly_digest.py`
 - **Send log** — `email_digest_log` table (one row per user per week, prevents duplicates)
@@ -49,7 +49,7 @@ MAIL_FROM_NAME=Problem Bank
 RESEND_API_KEY=re_xxxxxxxx
 ```
 
-**Important:** `SECRET_KEY` must be stable in production — it signs unsubscribe links. Changing it invalidates old unsubscribe URLs.
+**Important:** `SECRET_KEY` must be stable in production — it signs unsubscribe links. Changing it invalidates old unsubscribe URLs. Links also expire after **90 days**.
 
 Optional:
 

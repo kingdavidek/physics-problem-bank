@@ -28,11 +28,13 @@ Same-origin web and PWA do **not** need CORS.
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
 | POST | `/api/v1/auth/register` | No | Rate limit: 10/day/IP |
-| POST | `/api/v1/auth/login` | No | Rate limit: 30/day/IP |
+| POST | `/api/v1/auth/login` | No | Rate limit: 30/day/IP. Per-account lock: 15 min after 10 failures. Always `Invalid email or password` |
 | POST | `/api/v1/auth/logout` | Bearer | Revokes current token |
 | GET | `/api/v1/auth/me` | Yes | Current user |
 | GET | `/api/v1/auth/tokens` | Yes | List app sessions |
+| DELETE | `/api/v1/auth/tokens/<id>` | Yes | Revoke one session. `404` if it is not yours |
 | POST | `/api/v1/auth/revoke-all` | Yes | Optional `{ "keep_current": true }` |
+| GET | `/api/v1/me/export` | Yes | JSON portable copy. Email must be verified. Rate limit 2/day. Web: `GET /me/export`. No `password_hash`; follows are handles only |
 
 Example: `Authorization: Bearer pb_xxxxxxxx`
 
@@ -48,6 +50,7 @@ Example: `Authorization: Bearer pb_xxxxxxxx`
 | Share question | 50 | `POST /api/v1/shared-questions`, web share form |
 | Suggest question | 50 | `POST /api/v1/suggestions`, web suggest form |
 | Report user | 20 | `POST /api/v1/users/<handle>/report` |
+| Export data | 2 | `GET /api/v1/me/export`, `GET /me/export` |
 
 Limited responses use HTTP **429** with `"code": "rate_limited"` and `"rate_limit_remaining": 0`.
 Successful share/suggest/generate responses may include `"rate_limit_remaining"`.
@@ -237,6 +240,7 @@ Optional student notes after a wrong Check or MCQ answer (logged-in only). Refle
 |--------|------|
 | POST | `/api/v1/me/reflections` |
 | GET | `/api/v1/me/reflections` |
+| GET | `/api/v1/me/reflections/<id>` |
 
 **POST** body: `{ "level", "subject", "topic", "source" }` required (`source`: `check` or `mcq`); plus at least one of `prompt_type` or non-empty `reflection_text`. Optional: `difficulty`, `attempt_id` (must belong to the logged-in user).
 

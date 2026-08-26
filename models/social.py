@@ -115,9 +115,9 @@ def get_profile_settings(conn, user_id):
 def update_profile_settings(conn, user_id, settings):
     ensure_user_profile(conn, user_id)
 
-    visibility = settings.get('profile_visibility', VISIBILITY_PUBLIC)
+    visibility = settings.get('profile_visibility', VISIBILITY_FOLLOWERS)
     if visibility not in VISIBILITY_CHOICES:
-        visibility = VISIBILITY_PUBLIC
+        visibility = VISIBILITY_FOLLOWERS
     share_visibility = settings.get('default_share_visibility', VISIBILITY_FOLLOWERS)
     if share_visibility not in VISIBILITY_CHOICES:
         share_visibility = VISIBILITY_FOLLOWERS
@@ -157,10 +157,10 @@ def update_profile_settings(conn, user_id, settings):
         (
             visibility,
             _bool_int(settings.get('show_member_since', True)),
-            _bool_int(settings.get('show_last_topic', True)),
-            _bool_int(settings.get('show_last_activity', True)),
-            _bool_int(settings.get('show_lesson_progress', True)),
-            _bool_int(settings.get('show_quiz_stats', True)),
+            _bool_int(settings.get('show_last_topic', False)),
+            _bool_int(settings.get('show_last_activity', False)),
+            _bool_int(settings.get('show_lesson_progress', False)),
+            _bool_int(settings.get('show_quiz_stats', False)),
             _bool_int(settings.get('show_shared_questions', True)),
             _bool_int(settings.get('auto_share_quiz', False)),
             _bool_int(settings.get('auto_share_lesson', False)),
@@ -552,7 +552,7 @@ def can_view_profile(conn, viewer_id, target_user_id, settings):
     from models.moderation import is_blocked
     if is_blocked(conn, viewer_id, target_user_id):
         return False
-    visibility = settings.get('profile_visibility', VISIBILITY_PUBLIC)
+    visibility = settings.get('profile_visibility', VISIBILITY_FOLLOWERS)
     if visibility == VISIBILITY_PRIVATE:
         return False
     if visibility == VISIBILITY_FOLLOWERS:

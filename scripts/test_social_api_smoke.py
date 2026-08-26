@@ -73,11 +73,12 @@ def main():
         register(client, email_b, handle_b)
         logout(client)
 
-        # Anonymous profile fetch
+        # Anonymous profile fetch — high-privacy default is followers-only
         r = client.get(f'/api/v1/users/{handle_a}/profile')
-        assert r.status_code == 200
+        assert r.status_code == 403
         data = r.get_json()
-        assert data['ok'] is True
+        assert data['ok'] is False
+        assert data['code'] == 'profile_private'
         assert data['profile']['handle'] == handle_a
 
         # Settings require auth
@@ -87,7 +88,7 @@ def main():
         login(client, email_a)
         r = client.get('/api/v1/me/settings')
         assert r.status_code == 200
-        assert r.get_json()['settings']['profile_visibility'] == 'public'
+        assert r.get_json()['settings']['profile_visibility'] == 'followers_only'
 
         r = client.patch(
             '/api/v1/me/settings',

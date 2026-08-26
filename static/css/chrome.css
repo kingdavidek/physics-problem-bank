@@ -1106,3 +1106,29 @@ html.pwa-standalone .study-buddy {
     top: 4px;
 }
 
+.email-verify-banner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--surface-2, var(--surface));
+    border-bottom: 1px solid var(--border);
+    font-size: var(--text-sm);
+}
+.email-verify-banner-form {
+    margin: 0;
+}
+.site-legal-footer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    justify-content: center;
+    padding: 16px 16px calc(16px + var(--tab-bar-space, 0px));
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+.site-legal-footer a {
+    color: inherit;
+}
+
