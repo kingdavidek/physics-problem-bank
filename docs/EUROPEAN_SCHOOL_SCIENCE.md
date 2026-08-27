@@ -1,218 +1,335 @@
-# European School Integrated Science S1–S3 — lesson suite plan
+# European School Integrated Science S1–S3 — full lesson-suite plan
 
 **Last updated:** 2026-08-27
-**Status:** Planned (designed) — not started
-**Source syllabus:** Schola Europaea, *Integrated Science Syllabus S1-S3*, ref **2018-12-D-6-en-2**, approved by the Joint Teaching Committee 7–8 February 2019. In force 1 Sept 2019 (S1), 2020 (S2), 2021 (S3). [Official PDF](https://www.eursc.eu/Syllabuses/2018-12-D-6-en-2.pdf)
-**Companion docs:** `docs/ARCHITECTURE.md` (registry + templates), `docs/AI_HANDOFF.md` (phases), `docs/UI_REDESIGN.md` (lesson shell)
+**Status:** Planned (fully scoped) — not started
+**Official source:** Schola Europaea, *Integrated Science Syllabus S1–S3*, ref **2018-12-D-6-en-2**, approved 7–8 February 2019 and phased into force for S1–S3 from 2019–2021. [Official PDF](https://www.eursc.eu/Syllabuses/2018-12-D-6-en-2.pdf)
+**Platform question contract:** `docs/API.md` §Problems and `docs/COMPLEX_MECHANISMS.md` §1
+**Decisions locked:** full curriculum-faithful puberty/sexuality coverage; launch **lessons + lesson quizzes**, while the main Practice generator remains GCSE maths/CS only.
 
-Adds a new level `eursc` with one subject `science`, covering the compulsory Observation Cycle science course (4 periods/week, all three years). This is a **content track**, not a new engine: it reuses the existing lesson shell, quick-check MCQs, lesson quiz, and Quick Test.
-
----
-
-## 1. What the syllabus actually contains
-
-Integrated Science is a **thematic** course, not three separate sciences. Nine units across three years, each broken into numbered subsections. Biology, chemistry and physics are interleaved inside each theme.
-
-| Year | Unit | Subsections |
-|------|------|-------------|
-| S1 | 1.1 Science Lab | 1.1.1 What is science? · 1.1.2 Measurement · 1.1.3 A science lab |
-| S1 | 1.2 Food, Cooking and Nutrition | 1.2.1 Food formulas · 1.2.2 Water and heating · 1.2.3 Heat transfer · 1.2.4 Acidity · 1.2.5 Salt · 1.2.6 Fermentation · 1.2.7 Nutrition · 1.2.8 Capstone meal |
-| S1 | 1.3 Sports | 1.3.1 Movement · 1.3.2 Forces · 1.3.3 Body mechanics · 1.3.4 Sports and health |
-| S1 | 1.4 Puberty and Sexuality | 1.4.1 Puberty · 1.4.2 Reproductive anatomy · 1.4.3 Pregnancy, contraception, STIs |
-| S2 | 2.1 Our Place in the Universe | 2.1.1 Solar system · 2.1.2 Light · 2.1.3 Life on Earth · 2.1.4 Atoms |
-| S2 | 2.2 Mens Sana in Corpore Sano | 2.2.1 Healthy living · 2.2.2 Infectious disease · 2.2.3 Noninfectious disorders · 2.2.4 Dependence · 2.2.5 Tobacco |
-| S2 | 2.3 The Senses | 2.3.1 Vision · 2.3.2 Hearing · 2.3.3 Touch · 2.3.4 Smell · 2.3.5 Taste · 2.3.6 Proprioception · 2.3.7 Interoception · 2.3.8 Nonhuman senses |
-| S3 | 3.1 Machines and How They Work | 3.1.1 Force and machines · 3.1.2 Energy · 3.1.3 Electrostatics · 3.1.4 Electric current · 3.1.5 Magnetism · 3.1.6 Capstone robotics |
-| S3 | 3.2 Our Living Earth | 3.2.1 Human impact · 3.2.2 Ecosystems · 3.2.3 Ecosystem dynamics · 3.2.4 Classification · 3.2.5 Capstone field study |
-
-That is ~46 subsections including three **optional practical capstones** (cook a meal, build a robot, run a field study). Capstones cannot be auto-assessed, so they become a project-brief section inside the neighbouring lesson, never a standalone topic.
-
-### Consequence for this platform
-
-The site is built around **generated, auto-graded practice**. Much of Integrated Science is qualitative (classification, anatomy, disease, senses). Only part of it supports numeric generators:
-
-| Practice model | Subsections |
-|----------------|-------------|
-| **Numeric generator** (free response, answer checker) | Measurement / SI conversion, movement (speed–distance–time), forces, energy and power, electric current (V = IR), astronomical scale, nutrition energy (kJ/kcal), ecosystem data |
-| **MCQ bank only** | Everything else (~22 topics) |
-
-So the default practice mode for this subject is **MCQ**, with numeric generators layered on the ~10 quantitative topics. This is a deliberate departure from GCSE maths and must be accepted up front.
+This adds level `eursc`, subject `science`, covering the compulsory four-period-per-week Observation Cycle course. Biology, chemistry and physics remain integrated around the syllabus themes.
 
 ---
 
-## 2. Proposed topic map (32 lessons)
+## 1. Corrections to the first draft
 
-Subsections are merged where they are too thin to carry a full lesson. `order` runs 1–32 continuously so `/topics` renders one syllabus path S1 → S3.
+The official detailed tables do **not** support a fixed “6–7 sections and 6–7 checks per lesson” rule. Breadth varies sharply:
 
-### S1 — orders 1–12
+- compact modules need 4–5 teaching sections;
+- broad practical/data modules need 8–10;
+- project modules need 4–6 project phases and rubric checkpoints;
+- every normal lesson still receives a 10-question end quiz so the current ninja/mastery model remains coherent.
 
-| # | Slug | Name | Covers | Practice |
-|---|------|------|--------|----------|
-| 1 | `what_is_science` | What Science Is and How It Works | 1.1.1 | MCQ |
-| 2 | `measurement` | Measurement and SI Units | 1.1.2 | Numeric |
-| 3 | `science_lab` | The Science Lab: Instruments and Safety | 1.1.3 | MCQ |
-| 4 | `food_molecules` | Molecules of Life | 1.2.1 | MCQ |
-| 5 | `water_and_heat` | Water, Heat and Phase Change | 1.2.2 | Numeric |
-| 6 | `heat_transfer` | Cooking with Heat: Conduction, Convection, Radiation | 1.2.3 | MCQ |
-| 7 | `acid_salt_fermentation` | Acids, Salt and Fermentation | 1.2.4–1.2.6 | MCQ |
-| 8 | `nutrition` | Nutrition and Healthy Eating | 1.2.7, 1.2.8 brief | Numeric |
-| 9 | `movement` | Movement: Speed, Distance and Time | 1.3.1 | Numeric |
-| 10 | `forces` | Forces in Sport | 1.3.2 | Numeric |
-| 11 | `body_mechanics` | Muscles, Bones and Joints | 1.3.3–1.3.4 | MCQ |
-| 12 | `puberty_reproduction` | Puberty, Reproduction and Sexual Health | 1.4.1–1.4.3 | MCQ · see §5 |
+The first draft also merged unrelated or very broad official subsections. This revision maps **each of the 46 numbered syllabus subsections to its own module**. Three capstones are first-class project modules rather than footnotes.
 
-### S2 — orders 13–23
+Corrections from the official headings/content:
 
-| # | Slug | Name | Covers | Practice |
-|---|------|------|--------|----------|
-| 13 | `solar_system` | The Solar System | 2.1.1 | Numeric |
-| 14 | `light_and_telescopes` | Light and Telescopes | 2.1.2 | Numeric |
-| 15 | `life_on_earth` | Life on Earth and Elsewhere | 2.1.3 | MCQ |
-| 16 | `atoms` | Atoms: Building Blocks of Matter | 2.1.4 | MCQ |
-| 17 | `healthy_living` | Healthy Living: Diet, Exercise, Sleep | 2.2.1 | MCQ |
-| 18 | `infectious_disease` | Infectious Disease and Immunity | 2.2.2 | MCQ |
-| 19 | `noninfectious_disease` | Noninfectious and Environmental Disease | 2.2.3 | MCQ |
-| 20 | `dependence_tobacco` | Dependence, Addiction and Tobacco | 2.2.4–2.2.5 | MCQ |
-| 21 | `vision_hearing` | Vision and Hearing | 2.3.1–2.3.2 | MCQ |
-| 22 | `touch_smell_taste` | Touch, Smell and Taste | 2.3.3–2.3.5 | MCQ |
-| 23 | `other_senses` | Balance, Body Awareness and Animal Senses | 2.3.6–2.3.8 | MCQ |
-
-### S3 — orders 24–32
-
-| # | Slug | Name | Covers | Practice |
-|---|------|------|--------|----------|
-| 24 | `simple_machines` | Forces and Simple Machines | 3.1.1 | Numeric |
-| 25 | `energy_work_power` | Energy, Work and Power | 3.1.2 | Numeric |
-| 26 | `electrostatics` | Electrostatics | 3.1.3 | MCQ |
-| 27 | `electric_circuits` | Electric Current and Circuits | 3.1.4 | Numeric |
-| 28 | `magnetism` | Magnetism and Electromagnetism | 3.1.5, 3.1.6 brief | MCQ |
-| 29 | `human_impact` | Human Production and Consumption | 3.2.1 | MCQ |
-| 30 | `ecosystems` | Ecosystems, Water and Carbon Cycles | 3.2.2 | Numeric |
-| 31 | `biodiversity` | Ecosystem Dynamics and Biodiversity | 3.2.3, 3.2.5 brief | MCQ |
-| 32 | `classification` | Classification of Living Things | 3.2.4 | MCQ |
-
-`prereqs` follow the syllabus sequence within a year only (for example `forces` after `movement`, `electric_circuits` after `electrostatics`). No cross-year prereqs, so an S3 pupil is not blocked by S1 topics.
+- 1.2.2 is **Water and Other Substances**, not merely “water and heating”.
+- 1.3.3 is **Breathing**; it includes respiration, circulation, pulse, pressure and buoyancy.
+- 3.1.1 is **Force and Work**; 3.1.2 is **Energy**. Power calculations are not claimed.
+- 3.1.4 treats current and voltage qualitatively. \(V=IR\) and resistance calculations are not claimed.
+- 3.2.1 is **Human Nutrition and Its Effects on Our Environment**.
+- Biodiversity and sustainable development sit mainly under 3.2.4 Classification.
+- Section 2.3 requires at least three senses in depth. This suite offers all eight as a comprehensive resource, not as a claim that every school must teach all eight equally.
+- Capstones are not fully auto-gradable, but planning, safety, method, data, iteration and presentation can receive rubric checkpoints.
 
 ---
 
-## 3. Platform enablement (blocking, do first)
+## 2. Question formats: what exists and where it will be used
 
-Three hardcoded gates currently make any non-GCSE content second class. All three must be widened before content lands.
+The platform already has richer grading than MCQ. The canonical list is in `docs/API.md`; implementations are in `generators/shared/answer_checkers.py` and `templates/partials/free_response_inline.html`.
 
-| # | File | Current | Change |
-|---|------|---------|--------|
-| 1 | [`app.py`](app.py) `_lesson_quiz_available` (~1892) | `if level != "gcse" or subject not in ("maths", "cs")` | Allowlist `('eursc', 'science')` |
-| 2 | [`models/buddy.py`](models/buddy.py) `_quiz_available` (~146) | same gate, duplicated | Share one helper instead of duplicating |
-| 3 | [`app.py`](app.py) `GENERATOR_LAUNCH_GCSE_MATHS_CS` (~2101) | clamps generator UI to GCSE maths + CS | Add `eursc/science` to launch scope, or leave lessons-only (see §5) |
+| Format | Existing token | Science use |
+|--------|----------------|-------------|
+| Single best answer | MCQ | misconceptions, diagrams, safety scenarios |
+| Ordered steps | `proof_steps`, order flag `1` | scientific method, heat/food processes, disease chains, life cycles |
+| Select a set / pick N | `proof_steps`, order flag `0` or `pick` | classify variables, identify controls, choose valid evidence |
+| Numeric | `number`, `number_estimate`, `number_pair` | measurement, speed, scales, work, energy, graph/data work |
+| Multi-part structured response | `number_fields` with per-field `number`, `mcq`, `order`, `pick` | tables, linked calculations, investigation plans |
+| Keyword | `keyword` | units, named structures and processes |
+| Short text | `text` | tightly constrained scientific vocabulary; use sparingly |
+| Diagram/data interpretation | existing SVG/chart + one of the above graders | circuits, optics, food webs, graphs |
 
-Then the standard new-level wiring:
+There is no dedicated matching grader. Matching tasks use a pick/set bank or a structured multi-field question; do not invent a new type unless testing shows these are inadequate.
+
+### Current surface limitation
+
+Native ordering already works in the generator and Quick Test, but:
+
+- lesson inline progress currently listens only for `.mcq-inline`;
+- the current lesson quiz builder and runner accept MCQ letters only.
+
+Therefore **mixed-format lesson quizzes are an enablement task**, not merely content authoring. Inline lesson checkpoints remain lightweight MCQs in the first release; rich ordering/pick/numeric questions appear in each end-of-lesson quiz. A later enhancement can make inline lesson checkpoints mixed-format without blocking this curriculum.
+
+### Mixed quiz design
+
+Generalise the current MCQ-only lesson quiz into a session-bound mixed quiz:
+
+1. Rename/generalise `build_lesson_mcq_quiz()` in `generators/shared/lesson_quiz.py` to build 10 unique problems from a topic’s **lesson bank**.
+2. Permit both:
+   - `{options, correct_answer}` for MCQ; and
+   - `{correct_answer_raw, answer_type, ...}` for existing typed questions.
+3. Reuse the rendering branch in `templates/quicktest_question.html`: options for MCQ, otherwise `partials/free_response_inline.html`.
+4. Grade typed answers server-side against the problem saved in the lesson-quiz session; never trust a client-supplied answer key.
+5. Store per-question `score` / `score_total`, while preserving the quiz’s overall ten-question score for existing progress, ninja and retry behaviour.
+6. Keep the web and `/api/v1/lesson-quiz/*` flows equivalent.
+
+Target mix varies by module, but a typical conceptual quiz is 4 MCQ + 2 pick/set + 2 ordering + 1 diagram/data + 1 keyword. A quantitative quiz uses 3–4 numeric/data questions. Project quizzes assess readiness, method and safety; the practical product itself uses a rubric.
+
+---
+
+## 3. Full curriculum map: 46 modules with variable depth
+
+`order` runs 1–46, but every entry also carries `year`, `unit_code` and `unit_name`. `/topics` groups the long path by S1/S2/S3 and the nine official themes.
+
+**Legend:** `S` = teaching sections, `C` = inline progress checkpoints (MCQ in v1), `Q` = recommended end-quiz formats. Every normal module has a 10-question mixed quiz.
+
+### S1 — 18 modules
+
+| # | Ref / slug | Lesson | Scope | S / C | Q emphasis |
+|---|------------|--------|-------|-------|------------|
+| 1 | 1.1.1 `what_is_science` | What Is Science? | reliable knowledge, reproducibility, evidence, peer critique, provisional explanations | 5 / 4 | MCQ, pick, evidence order |
+| 2 | 1.1.2 `measurement` | Measurement and SI Units | universal units, SI prefixes, conversion, calibration, accuracy/precision/error | 6 / 7 | numeric, estimate, data |
+| 3 | 1.1.3 `science_lab` | The Science Laboratory | instruments, safety, technical drawings, controlled investigations, reducing error | 8 / 7 | diagram, pick, order |
+| 4 | 1.2.1 `food_formulas` | Food Formulas: Molecules of Life | water, proteins, fats, carbohydrates, food sources, plant/animal nutrition | 5 / 5 | classify, pick, MCQ |
+| 5 | 1.2.2 `water_substances` | Water and Other Substances | states, phase change, mixtures, separation, non-additive volume | 6 / 6 | diagrams, order, data |
+| 6 | 1.2.3 `cooking_heat` | Basic Cooking: Heat | conduction, convection, radiation, cooking methods, denaturing and browning | 6 / 6 | process order, prediction |
+| 7 | 1.2.4 `cooking_acid` | Basic Cooking: Acid | sensory acidity, pH/indicators, acid cooking and preservation | 5 / 4 | pH/data, pick |
+| 8 | 1.2.5 `cooking_salt` | Basic Cooking: Salt | inorganic mineral, solutions, concentration, crystallisation, preservation | 5 / 5 | numeric, order, MCQ |
+| 9 | 1.2.6 `cooking_fermentation` | Basic Cooking: Fermentation | microorganisms, yeast/alcoholic and bacterial/lactic fermentation, controlled spoilage | 6 / 5 | order, matching via pick |
+| 10 | 1.2.7 `nutrition` | Nutrition and Food Information | balanced diet, deficiencies, allergy/intolerance, obesity/eating disorders, labels, kJ/kcal, additives, marketing | 10 / 9 | label maths, claim critique |
+| 11 | 1.2.8 `healthy_meal_project` | Project: A Healthy Meal | plan, safety, preparation, evidence-based menu, presentation and reflection | 4 phases / 4 rubric | readiness/safety quiz + rubric |
+| 12 | 1.3.1 `movement` | Movement | distance/time measurement, average speed, \(v=d/t\), unit conversion, distance–time graphs | 6 / 7 | numeric, graph/data |
+| 13 | 1.3.2 `forces_sport` | Forces in Sport | effects, interaction, newtons, friction, mass/weight, centre of gravity, equilibrium | 8 / 7 | numeric, diagrams, classify |
+| 14 | 1.3.3 `breathing` | Breathing, Respiration and Circulation | air gases, inhaled/exhaled air, respiration, pulse, heart/blood/oxygen, pressure/buoyancy | 8 / 7 | anatomy, data, order |
+| 15 | 1.3.4 `sport_health` | Sport and Health | skeleton, joints, antagonistic muscles, injury/infection/UV protection, drugs, sweating, water/minerals | 7 / 6 | labels, scenarios, pick |
+| 16 | 1.4.1 `puberty_maturity` | Puberty and Sexual Maturity | physical/emotional changes, hormones, variation and maturity | 5 / 4 | clinical MCQ, sequence |
+| 17 | 1.4.2 `reproductive_anatomy` | Human Reproductive Anatomy | reproductive/urinary anatomy, gametes, menstrual cycle, fertilisation | 6 / 5 | labels, ordering, keyword |
+| 18 | 1.4.3 `pregnancy_sexual_health` | Pregnancy and Sexual Health | intercourse, pregnancy, fetal development, birth, contraception, STIs, identity/orientation, media, consent, communication and healthy relationships | 8 / 7 | clinical scenarios, sequence, misconception correction |
+
+### S2 — 17 modules
+
+| # | Ref / slug | Lesson | Scope | S / C | Q emphasis |
+|---|------------|--------|-------|-------|------------|
+| 19 | 2.1.1 `solar_system` | The Solar System | rotation/revolution, seasons, Moon, planets/bodies, scale, universe age/expansion, historical models | 9 / 8 | scale numeric, order, models |
+| 20 | 2.1.2 `light_telescopes` | Light and Telescopes | propagation/speed, light-year, shadows, phases/eclipses, reflection/refraction, colour, lenses, instruments | 9 / 8 | ray diagrams, numeric/data |
+| 21 | 2.1.3 `life_earth_elsewhere` | Life on Earth and Elsewhere | requirements for life, early Earth/LUCA, extraterrestrial life, travel/habitation constraints | 5 / 4 | evidence pick, constraints |
+| 22 | 2.1.4 `atoms_molecules` | Atoms and Molecules | particle model, elements/atoms, symbols, molecules, reactions/rearrangement, word equations | 7 / 7 | particle diagrams, order |
+| 23 | 2.2.1 `healthy_living` | Healthy Living | diet, physical/mental health, microbiome, relationships, screen-time management | 6 / 5 | case studies, data, pick |
+| 24 | 2.2.2 `infectious_disease` | Infectious Disease and Immunity | bacteria/viruses, transmission, spread, immunity, vaccination, antibiotics/resistance, epidemiology, sanitation | 9 / 8 | chain order, outbreak data |
+| 25 | 2.2.3 `noninfectious_disease` | Noninfectious and Environmental Disease | systemic/inherited, deficiency, pollution/occupation, mental illness, treatment/support | 7 / 6 | classify, sources, scenarios |
+| 26 | 2.2.4 `dependence_addiction` | Pleasure, Dependence and Addiction | substance/behavioural dependence, risk, social context, consequences and support | 6 / 5 | scenarios, pick, evidence |
+| 27 | 2.2.5 `tobacco` | Tobacco, Nicotine and Vaping | mortality/disease, addiction/initiation, industry influence, vaping uncertainty, prevention | 6 / 5 | advert critique, data |
+| 28 | 2.3.1 `vision` | Vision | eye anatomy/optics, accommodation, near/far sight, stereo depth, brain processing/illusions | 7 / 6 | labels, ray diagrams |
+| 29 | 2.3.2 `hearing` | Hearing | ear anatomy, vibration/medium, acoustics, stereo localisation, aids and illusions | 7 / 6 | labels, sequence, data |
+| 30 | 2.3.3 `touch` | Touch | receptor types/density, temperature perception, mapping and controlled investigation | 5 / 4 | data, experiment design |
+| 31 | 2.3.4 `smell` | Smell | receptor diversity, categorisation, context and perception | 4 / 4 | classify, evidence |
+| 32 | 2.3.5 `taste` | Taste | five tastes, taste–smell interaction, colour/context effects | 4 / 4 | pick, controlled method |
+| 33 | 2.3.6 `proprioception_balance` | Proprioception and Balance | body position, balance, semicircular canals | 5 / 4 | labels, sequence |
+| 34 | 2.3.7 `interoception` | Interoception | sensing internal bodily states and interpreting wellbeing | 4 / 4 | scenarios, classify |
+| 35 | 2.3.8 `nonhuman_senses` | Nonhuman Senses | UV/IR/polarised light, electromagnetic sensing, echolocation, infra/ultrasound, chemical senses, technology | 7 / 6 | adaptation matching/pick |
+
+### S3 — 11 modules
+
+| # | Ref / slug | Lesson | Scope | S / C | Q emphasis |
+|---|------------|--------|-------|-------|------------|
+| 36 | 3.1.1 `force_work_machines` | Force, Work and Simple Machines | force vectors/models, machine types, levers/torque, force–distance trade-off, \(W=Fd\), body levers | 8 / 8 | numeric, diagrams, models |
+| 37 | 3.1.2 `energy` | Energy | forms, transformations/transfers/losses, Sankey diagrams, food/appliances, sources, impacts, conservation | 9 / 8 | chains, Sankey/data, compare |
+| 38 | 3.1.3 `electrostatics` | Electrostatics | friction/contact, charges, transfer/induction, grounding, insulators, atomic model, sparks/lightning | 6 / 6 | charge diagrams, prediction |
+| 39 | 3.1.4 `electric_current` | Electric Current and Circuits | series/parallel circuits, conventional current, electrons, conductors, effects, meters, qualitative current/voltage, safety | 9 / 8 | circuit diagnosis, diagrams; no \(V=IR\) |
+| 40 | 3.1.5 `magnetism` | Magnetism and Electromagnetism | poles, materials/magnetisation, fields, electromagnets, Earth/compass/magnetotaxis | 8 / 7 | fields, classify, explain |
+| 41 | 3.1.6 `robotics_project` | Project: Build a Simple Robot | requirements, machines, electromagnetism/electronics, programming, build/test/iterate, presentation | 5 phases / 5 rubric | readiness quiz + rubric |
+| 42 | 3.2.1 `food_environment` | Human Nutrition and the Environment | atmosphere/GHGs, climate, land/biodiversity, food lifecycle/waste, footprints, sustainable choices | 8 / 7 | lifecycle order, carbon data |
+| 43 | 3.2.2 `ecosystems_cycles` | Ecosystems, Matter and Energy | ecosystems, water/carbon cycles, nutrition, trophic roles, flows, webs/pyramids, photosynthesis/respiration | 9 / 8 | cycles, webs, word equations |
+| 44 | 3.2.3 `ecosystem_characteristics` | Ecosystem Characteristics | trophic models, abiotic/biotic factors, measurement, activity and thermoregulation, surveys | 8 / 7 | field data, model critique |
+| 45 | 3.2.4 `classification_biodiversity` | Classification and Biodiversity | life/species, grouping, dichotomous keys, taxonomy/Linnaeus, common descent, groups, biodiversity loss, sustainability | 9 / 8 | keys, taxonomy order, classify |
+| 46 | 3.2.5 `ecology_field_project` | Project: An Ecological Field Study | question, risk, sampling, method, data, analysis, report, presentation/reflection | 6 phases / 6 rubric | readiness/data quiz + rubric |
+
+### Curriculum-sensitive content rules
+
+Unit 1.4 ships **completely and faithfully**, as requested:
+
+- clinical, age-appropriate language;
+- labelled educational diagrams only;
+- no sensational imagery;
+- no first-person prompts asking pupils to disclose health, sexuality, relationships or experiences;
+- scenarios use fictional third parties;
+- signpost teacher/qualified-health guidance where the curriculum concerns personal decisions;
+- question banks assess knowledge and healthy decision-making, not personal identity or behaviour.
+
+This avoids creating special-category profile data. Ordinary attempt records store answers to curriculum questions, never a pupil’s personal health information.
+
+---
+
+## 4. Inquiry-based learning and projects
+
+The syllabus requires **at least two substantial inquiry-based learning units (≥10 class periods) per year**. An online lesson cannot claim to replace the practical work.
+
+The suite includes planning, data and rubric support for six IBL tracks:
+
+| Year | IBL 1 | IBL 2 |
+|------|-------|-------|
+| S1 | Measurement/controlled-investigation lab | Healthy meal or fermentation investigation |
+| S2 | Light/telescope investigation | Disease-spread model or model-rocket investigation |
+| S3 | Simple robot project | Ecological field study |
+
+Each project support page provides:
+
+1. brief and learning objectives;
+2. planning template and variables;
+3. safety/risk checklist;
+4. data-table and graph guidance;
+5. analysis/evaluation prompts;
+6. teacher rubric for method, evidence, collaboration, communication and reflection.
+
+Rubrics are printable/local UI in v1; no teacher grading database is introduced.
+
+---
+
+## 5. What the “hidden gates” mean
+
+They are ordinary code allowlists left over from the initial GCSE launch—not access-control or payment gates.
+
+| Gate | Current effect | Decision/change |
+|------|----------------|-----------------|
+| `app.py::_lesson_quiz_available` | Returns false for anything except GCSE maths/CS, even if a science quiz bank exists; the quiz URL then 404s and CTA is omitted | Replace curriculum-name check with capability detection and allow `eursc/science` mixed quizzes |
+| `models/buddy.py::_quiz_available` | Duplicate check makes Zorp say no quiz is available and withholds quiz links | Remove duplication; call the shared capability helper |
+| `GENERATOR_LAUNCH_GCSE_MATHS_CS` | Forces the **main Practice page** back to GCSE maths/CS | **Leave closed in v1**, per decision. Backend lesson banks still power lesson quizzes |
+| `scripts/test_lesson_unify_smoke.py::FILENAME_RE` | CI treats `eursc_science_*.html` as an invalid filename and fails | Add `eursc`; this is only a test allowlist |
+
+So lessons and quizzes can launch without exposing Integrated Science in the main Practice generator. The generator clamp is intentional for v1; the other three checks must change.
+
+---
+
+## 6. Registry and topic-path model
+
+Add metadata without changing existing topic entries:
+
+```python
+"measurement": {
+    "name": "Measurement and SI Units",
+    "order": 2,
+    "year": "s1",
+    "unit_code": "1.1",
+    "unit_name": "Science Lab",
+    "syllabus_ref": "1.1.2",
+    "func": eursc_science_measurement,
+    "variants_func": eursc_science_measurement_variants,
+}
+```
+
+Platform wiring:
 
 | File | Change |
 |------|--------|
-| [`topic_registry.py`](topic_registry.py) | `TOPICS['eursc']['science']` with 32 entries (`name`, `order`, `func`, `variants_func`, `prereqs`). **`func` is mandatory** — `app.py` does `topic_config['func']` and raises `KeyError` without it |
-| [`app.py`](app.py) | `_TOPIC_LEVEL_ORDER += ('eursc',)`; `_TOPIC_SUBJECT_ORDER['eursc'] = ('science',)`; `LEVEL_LABELS['eursc'] = 'European School'`; `SUBJECT_LABELS['science'] = 'Integrated Science'` |
-| [`models/lesson_search.py`](models/lesson_search.py) | `_LEVEL_LABELS` / `_SUBJECT_LABELS` entries (index itself is automatic) |
-| [`models/topic_status.py`](models/topic_status.py) | Same label dicts; generalise `gcse_subject_slugs()` if subject-wide badges are wanted |
-| [`templates/topics.html`](templates/topics.html) | Level filter button + `subject_icons['science']` |
-| [`static/js/u4.js`](static/js/u4.js) | Level whitelist at ~115 and ~120 |
-| [`templates/partials/icon.html`](templates/partials/icon.html) | New `#icon-science` symbol |
-| [`templates/index.html`](templates/index.html) | Level and subject `<option>` entries (only if generator scope opens) |
-| [`scripts/test_lesson_unify_smoke.py`](scripts/test_lesson_unify_smoke.py) | `FILENAME_RE` currently `^(gcse\|alevel\|myp)_…` — **must add `eursc` or CI fails** |
-| [`static/js/sw.js`](static/js/sw.js) | `CACHE_VERSION` bump |
+| `topic_registry.py` | Add `TOPICS['eursc']['science']` with 46 entries and validate optional year/unit metadata |
+| `app.py` | Add `eursc` level and `science` subject labels/orders; group topic cards by year/unit |
+| `models/lesson_search.py`, `models/topic_status.py` | Add display labels |
+| `templates/topics.html`, `static/js/u4.js` | European School filter; S1/S2/S3 and unit headings; science icon |
+| `templates/partials/icon.html` | Original Integrated Science SVG icon |
+| `scripts/test_lesson_unify_smoke.py` | Extend filename regex |
+| `models/topic_status.py` | Generalise GCSE-only subject-completion badge helper |
 
-What updates automatically once registered: `/topics` grid, `/api/v1/topics`, lesson search index, QOTD pool, revision planner, weak-topic detection, mastery rings.
+No cross-year prerequisite locks. Within each unit, use prerequisites only when required for comprehension; an S3 learner may start S3 without completing S1 cards.
+
+Lesson search indexing, revision planner, progress rings and API topic catalog update automatically from the registry once labels are added. Exclude `eursc/science` from QOTD until its first complete year is live so incomplete banks do not leak.
 
 ---
 
-## 4. Per-lesson shape
+## 7. Content architecture
 
-Match the GCSE maths standard so lesson progress, ninja badges and the quiz all work.
+Split generators/banks by official unit to keep files reviewable:
 
+```text
+generators/eursc/
+  __init__.py
+  science_shared.py
+  s1_science_lab.py
+  s1_food.py
+  s1_sports.py
+  s1_puberty.py
+  s2_universe.py
+  s2_health.py
+  s2_senses.py
+  s3_machines.py
+  s3_living_earth.py
 ```
-templates/eursc_science_{topic}_lesson.html
-  {% extends "base.html" %}
-  .lesson-shell
-    .lesson-hero          h1 + hero-sub + pill-row (year tag "S1")
-    .lesson-quiz-cta      -> lesson_mcq_quiz(level='eursc', subject='science', topic=...)
-    details.lesson-section  x6-7   (chip number, summary, body)
-      .lesson-quickcheck > .mcq-inline[data-correct]   one per section
-    final section: quick reference card
-    .lesson-practice-cta
+
+Each normal module provides:
+
+- variable-depth lesson template `templates/eursc_science_{slug}_lesson.html`;
+- inline MCQ checkpoint after each assessable concept cluster (counts in §3);
+- ≥15 MCQs plus ≥8 non-MCQ typed problems, enough to assemble varied ten-question quizzes;
+- `variants_func(difficulty, 'lesson')` for the mixed lesson bank;
+- at least one diagram/data question where appropriate;
+- concise quick-reference card;
+- explicit `syllabus_ref` shown in metadata.
+
+Project modules provide a readiness/method question bank, project phases, printable rubric and quick-reference checklist. They do not pretend the physical product is auto-graded.
+
+Hard lesson-template rules remain: `lesson-shell`, no inline `style=`, matching checkpoint markup, 200 route, CSP-safe external JS only.
+
+---
+
+## 8. Delivery phases
+
+| Phase | Scope | Exit |
+|-------|-------|------|
+| **ES0 — Mixed-quiz engine + hierarchy** | Generalise lesson quiz to existing typed formats; capability-based quiz gate; `eursc` labels/icon/filter; year/unit path grouping; filename test; keep Practice generator closed | Synthetic MCQ/order/pick/numeric quiz passes web/API/retry/session-security tests |
+| **ES1 — Pilot** | 1.1.2 Measurement, chosen because it exercises numeric, data, MCQ and progress | Complete lesson + ten-question mixed quiz; mastery ring; mobile/a11y pass |
+| **ES2 — S1 Science Lab** | 1.1.1–1.1.3 | Official objectives covered; first IBL support |
+| **ES3 — S1 Food** | 1.2.1–1.2.8 | Eight modules including meal project |
+| **ES4 — S1 Sports + Puberty** | 1.3.1–1.4.3 | Seven modules; clinical/safeguarding review; S1 complete |
+| **ES5 — S2 Universe** | 2.1.1–2.1.4 | Four modules + IBL support |
+| **ES6 — S2 Health** | 2.2.1–2.2.5 | Five modules |
+| **ES7 — S2 Senses** | 2.3.1–2.3.8 | Eight modules; S2 complete |
+| **ES8 — S3 Machines** | 3.1.1–3.1.6 | Six modules including robot project |
+| **ES9 — S3 Living Earth** | 3.2.1–3.2.5 | Five modules including field project; S3 complete |
+| **ES10 — Whole-suite QA** | Search, revision planning, subject badges, content matrix, browser/mobile/accessibility, docs/cache | Every official learning objective traced to a lesson section and question/rubric; full smoke suite green |
+
+Each official unit is one reviewed change. Never register partially authored topics: build the templates and banks behind tests, then add that complete unit to `TOPICS`.
+
+---
+
+## 9. Verification
+
+Add:
+
+- curriculum coverage test: all 46 official refs appear exactly once;
+- registry test: valid year/unit/ref metadata and unique order;
+- lesson depth test: expected section/checkpoint counts come from a manifest, not a global 6–7 assertion;
+- mixed-quiz tests for MCQ, numeric, keyword, ordered `proof_steps`, pick/set, partial structured score, retry and results;
+- session-security tests: answer keys come only from saved quiz sessions;
+- content safety test: no first-person disclosure prompts in 1.4/2.2;
+- project tests: six IBL support pages, rubrics and printable view;
+- route/search/progress tests for each registered module;
+- existing CSS budget, CSP, accessibility, PWA and full smoke suite.
+
+Maintain a machine-readable curriculum manifest alongside the bank:
+
+```python
+SYLLABUS_MODULES = {
+    "1.1.2": {
+        "slug": "measurement",
+        "sections": 6,
+        "checkpoints": 7,
+        "objectives": (...),
+    },
+}
 ```
 
-Hard rules enforced by [`scripts/test_lesson_unify_smoke.py`](scripts/test_lesson_unify_smoke.py):
-
-- No inline `style="…"` anywhere in a lesson template
-- `class="lesson-shell"` present
-- `mcq-inline` count must equal `data-correct=` count
-- Route must return 200
-
-`lesson_step_total` counts `class="mcq-inline"` occurrences, so **6–7 quick checks per lesson** gives a sensible progress bar and unlocks lesson-complete / ninja status.
-
-Per topic the deliverables are:
-
-1. Lesson template (~450–700 lines, 6–7 sections, 6–7 quick checks)
-2. MCQ bank of **≥15 items** (needed so a 10-question lesson quiz can deduplicate)
-3. Generator function + `variants_func` in `generators/eursc/science_*.py`
-4. Registry entry
-5. Optional `topics_data.py` entry for search enrichment
-
-Diagrams should use [`models/svg_kit.py`](models/svg_kit.py) where a primitive already exists (bar charts, pie charts, tables); new science diagrams (cell, circuit, eye) are hand-authored inline SVG using CSS variable colours, matching the existing lesson pattern.
+Tests compare registry, templates and manifest so “full curriculum” is measurable rather than a documentation claim.
 
 ---
 
-## 5. Decisions needed before content starts
+## 10. Definition of done
 
-**A. Unit 1.4 Puberty and Sexuality — safeguarding.**
-This is compulsory syllabus content (anatomy, pregnancy, contraception, STIs) for pupils around 12. The platform is used by minors and has a strict safeguarding posture (`docs/ENGAGEMENT_VISUAL.md` §5). Options:
-
-1. Ship it with clinical, curriculum-faithful framing and no imagery beyond labelled diagrams — matches the syllabus and what pupils are taught in class
-2. Ship a reduced version (puberty and reproduction only, no contraception/STI detail)
-3. Defer the topic; the path shows 31 lessons and one "covered in class" placeholder
-
-Recommendation: **option 1**, because omitting compulsory content makes the suite incomplete, but this is a product call, not an engineering one.
-
-**B. Generator scope.** `GENERATOR_LAUNCH_GCSE_MATHS_CS = True` deliberately hides everything except GCSE maths/CS from the practice generator. Either open it for `eursc/science` (more surface, more risk of half-finished generators being visible) or ship **lessons + lesson quizzes only** and leave the generator GCSE-only. Recommendation: lessons + quizzes first, open the generator in a later slice once MCQ banks are proven.
-
-**C. Depth.** Full GCSE-quality lessons across 32 topics is roughly **16,000+ lines** of lesson HTML plus ~32 generator modules — the dominant cost is authoring, not wiring. The alternative is MYP-style thin pages (~150 lines, no quick checks), which ship far faster but give no progress tracking, no ninja badges and no quiz. Recommendation: **full quality**, phased by year, rather than 32 thin pages.
-
----
-
-## 6. Phasing
-
-| Phase | Scope | Exit criteria |
-|-------|-------|---------------|
-| **E0 — Enablement + pilot** | All of §3, plus **one** complete lesson (`measurement`, order 2 — quantitative, so it exercises numeric generator + MCQ bank + quiz together) | `/topic/eursc/science/measurement` renders; quiz runs 10 MCQs; Quick Test works; progress ring moves; all smoke tests green |
-| **E1 — S1** | Orders 1–12 | 12 lessons live, each with quiz; `/topics` shows the S1 path |
-| **E2 — S2** | Orders 13–23 | 11 lessons live |
-| **E3 — S3** | Orders 24–32 | 9 lessons live; subject-complete badge fires |
-| **E4 — Polish** | `topics_data.py` entries, revision-plan tuning, subject badges, docs, screenshots | Search returns science lessons; docs updated |
-
-Within E1–E3, work in **unit-sized batches** (one thematic unit per commit) so review stays manageable and a half-finished unit never ships.
-
----
-
-## 7. Risks
-
-| Risk | Mitigation |
-|------|------------|
-| Qualitative content does not fit an auto-graded generator | MCQ-first practice model; numeric generators only on the ~10 quantitative topics |
-| Content volume dwarfs previous phases | Unit-sized batches; pilot first to lock the template pattern |
-| Sensitive content (1.4) | Explicit product decision in §5A before authoring |
-| CSS budget | Lessons reuse existing classes; `lesson-pages.css` is route-only and outside the core budget. No new keyframes expected |
-| Three hardcoded GCSE gates silently degrade the new level | Fixed in E0 before any content lands |
-| Syllabus drift | Pin to ref `2018-12-D-6-en-2`; re-check the [all-syllabi index](https://www.eursc.eu/en/european-schools/studies/syllabuses/all-syllabi/) before each phase |
-
----
-
-## 8. Definition of done
-
-- [ ] `eursc` / `science` registered, 32 topics, `validate_topic_registry()` clean
-- [ ] All three GCSE-only gates widened or consciously left closed with a comment
-- [ ] 32 lesson templates, each 6–7 sections with 6–7 quick checks, no inline styles
-- [ ] MCQ bank ≥15 items per topic; lesson quiz returns 10 unique questions
-- [ ] Numeric generators on the 10 quantitative topics with `variants_func`
-- [ ] `/topics` shows a European School path S1 → S3 with working mastery rings
-- [ ] Lesson search returns science lessons with correct level/subject labels
-- [ ] `python scripts/run_smoke_tests.py` green, `FILENAME_RE` updated, cache bumped
-- [ ] `docs/ARCHITECTURE.md` curriculum table and `docs/AI_HANDOFF.md` updated
+- [ ] `eursc/science` presents all 46 numbered syllabus modules under nine official units and three years.
+- [ ] Section/checkpoint counts follow §3; there is no fixed 6–7 rule.
+- [ ] Every official objective is mapped to teaching content and an auto-graded or rubric checkpoint.
+- [ ] Every normal lesson has a secure ten-question mixed quiz using appropriate existing graders.
+- [ ] Ordering and pick/set questions are used where pedagogically appropriate; matching is represented with existing formats.
+- [ ] Six substantial IBL support tracks exist, while clearly requiring classroom practical work.
+- [ ] Puberty/sexuality is complete, clinical, age-appropriate and never solicits personal disclosure.
+- [ ] Main Practice generator remains GCSE maths/CS only; European Science banks are lesson-quiz-only in v1.
+- [ ] Topic path, progress, search, revision planner and subject badges work for S1–S3.
+- [ ] Curriculum coverage, security, browser/mobile/accessibility and all smoke tests pass.
