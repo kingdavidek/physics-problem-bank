@@ -133,6 +133,23 @@
             <button type="button" class="btn btn-outline" data-zorp-gesture="shake">Shake</button>
             <button type="button" class="btn btn-outline" data-zorp-gesture="tap">Tap</button>
         </div>
+        <p class="profile-empty" style="margin-top: var(--space-5);">Pose kit stills — insert with <code>zorp_kit.pose('jump')</code>. Not the live sprite. Original outfits only.</p>
+        <div class="sg-mascot-grid" id="sg-zorp-poses">
+            {% for name in zorp_kit.ACTION_TOKENS %}
+            <figure class="sg-mascot-cell">
+                {{ zorp_kit.pose(name, size=80) }}
+                <figcaption><code>{{ name }}</code></figcaption>
+            </figure>
+            {% endfor %}
+        </div>
+        <div class="sg-mascot-grid" id="sg-zorp-costumes">
+            {% for name in zorp_kit.COSTUME_TOKENS %}
+            <figure class="sg-mascot-cell">
+                {{ zorp_kit.pose(name, size=80) }}
+                <figcaption><code>{{ name }}</code></figcaption>
+            </figure>
+            {% endfor %}
+        </div>
     </div>
 </section>
 
@@ -417,7 +434,7 @@
             <li class="leaderboard-item"><span class="leaderboard-rank">#3</span><div class="leaderboard-main"><a href="#">@grace</a></div><span class="leaderboard-score">204</span></li>
         </ol>
         <ul class="badge-grid" style="margin-top:var(--space-5);">
-            <li class="badge-medallion badge-medallion--gold"><span class="badge-medallion-face">🔥</span><strong>Week warrior</strong><span class="profile-list-meta">Earned</span></li>
+            <li class="badge-medallion badge-medallion--gold"><span class="badge-medallion-face badge-medallion-face--zorp">{{ zorp_kit.pose('jump', size=36) }}</span><strong>Week warrior</strong><span class="profile-list-meta">Earned</span></li>
             <li class="badge-medallion badge-medallion--bronze is-locked"><span class="badge-medallion-face">📝</span><strong>First quiz</strong><span class="profile-list-meta">Complete a lesson quiz</span></li>
             <li class="badge-medallion badge-medallion--violet"><span class="badge-medallion-face">🥇</span><strong>Top of the class</strong><span class="profile-list-meta">Rare</span></li>
         </ul>

@@ -1,10 +1,10 @@
 # Engagement visual tokens (E2–E5)
 
-**Last updated:** 2026-08-24  
+**Last updated:** 2026-08-27  
 **Status:** Light tokens only — not a character bible. **E1–E3 shipped; E5.2 shipped; remaining E5 planned. Phase U5 shipped** (custom SVG buddy, brand lock-up).
 **Companion:** `docs/AI_HANDOFF.md` §6, `docs/ENGAGEMENT_E5.md`, `docs/ANIMATION_ONBOARDING.md` (A1 Guide overlay shipped — same mascot, bigger stage)
 
-Avatar v1 emoji/colours below are the live picker list. Buddy uses the custom SVG mascot (`templates/partials/buddy.html`); emoji remain on avatars and badges.
+Avatar v1 emoji/colours below are the live picker list. Buddy uses the custom SVG mascot (`templates/partials/buddy.html`); emoji remain the API fallback on avatars and badges. Optional Zorp stills (`zorp_kit.pose`) can sit on a few badges.
 
 ---
 
@@ -51,7 +51,7 @@ Default for new users: 🙂 on `#eef6fc`. Render with Jinja-safe text, never raw
 Corner widget (~56px) on logged-in pages:
 
 - **U5.8:** custom SVG mascot in `templates/partials/buddy.html`, seven faces (`nudge`, `milestone`, `celebrate`, `qotd_nudge`, `streak_risk`, `weak_topic`, `friend_challenge`) swapped via `data-buddy-face` / `data-face`. JS lives in `static/js/buddy.js` (and `study-buddy.js`). API `face` field remains an emoji for older clients.
-- Avatars and badges still use emoji.
+- Avatars still use emoji. A few badges may show a Zorp still (`pose`) with emoji as the API fallback.
 
 Respects `prefers-reduced-motion`. Off-page **Not now** restores next UTC day; on a weak topic’s lesson page **Keep learning** hides only that card for the day. Does **not** block Check / generate if JS fails.
 
@@ -67,7 +67,18 @@ Avatar extras 🎓 / 🎧 / ⭐ become badge-gated in E5.5; locked options stay 
 
 ## 4c. Badge emoji (E5.2) — shipped
 
-`MILESTONE_CATALOG` entries include an `emoji` field rendered on the profile milestone list (fallback ★). Buddy v0.5 (E5.1) can reuse the same glyph in the "New badge: …" line.
+`MILESTONE_CATALOG` entries include an `emoji` field rendered on the profile milestone list (fallback ★). Buddy v0.5 (E5.1) can reuse the same glyph in the "New badge: …" line. Optional `pose` stills (week warrior, lesson learner, daily starter) use `zorp_kit` — see §4d.
+
+## 4d. Zorp pose kit (stills) — shipped
+
+Reusable **still** drawings, separate from the live sprite. Insert with `zorp_kit.pose('jump', size=64)` (`models/zorp_kit.py`, art in `templates/partials/zorp_kit.html`). Not inlined on every page.
+
+| Kind | Tokens |
+|------|--------|
+| Action | `idle` `run` `jump` `sing` `eat` `wave` `think` |
+| Costume | `showman` `scholar` `explorer` `chef` (original outfits only) |
+
+Unknown tokens → `idle`. Gallery: `/styleguide` Poses / Costumes grids. **Not** E4.2 farm / unlocks.
 
 ## 5. Safeguarding (already in E1)
 

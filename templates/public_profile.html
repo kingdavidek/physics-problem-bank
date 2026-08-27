@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "partials/user_avatar.html" import user_avatar %}
 {% from "partials/page_flashes.html" import render as page_flashes %}
+{% from "partials/zorp_badge.html" import zorp_badge_face %}
 {% block title %}{{ profile_user.display_handle }} – Problem Bank{% endblock %}
 
 {% block content %}
@@ -29,7 +30,7 @@
             <ul class="badge-shelf" aria-label="Recent badges">
                 {% for item in badge_shelf %}
                 <li class="badge-shelf-item badge-shelf-item--{{ item.tier or 'bronze' }}" title="{{ item.title }} — {{ item.description }}">
-                    <span class="milestone-badge" aria-hidden="true">{{ item.emoji or '★' }}</span>
+                    {{ zorp_badge_face(item, size=28, variant='shelf') }}
                     <span class="badge-shelf-caption">{{ item.title }}</span>
                 </li>
                 {% endfor %}
@@ -139,7 +140,7 @@
         <ul class="milestone-list">
             {% for item in milestones %}
             <li class="milestone-item">
-                <span class="milestone-badge" aria-hidden="true">{{ item.emoji or '★' }}</span>
+                {{ zorp_badge_face(item, size=28, variant='shelf') }}
                 <div>
                     <strong>{{ item.title }}</strong>
                     <span class="profile-list-meta">{{ item.description }}</span>

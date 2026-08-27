@@ -643,6 +643,14 @@ html.pwa-standalone .site-wrapper {
 .badge-medallion--violet .badge-medallion-face {
     background: linear-gradient(160deg, var(--xp-400), var(--xp-700));
 }
+.badge-medallion-face--zorp {
+    padding: 6px;
+}
+.badge-medallion-face--zorp .zorp-pose {
+    display: block;
+    width: 40px;
+    height: 40px;
+}
 .badge-medallion strong {
     font-size: var(--text-sm);
     line-height: 1.25;
@@ -789,6 +797,14 @@ html.pwa-standalone .site-wrapper {
     color: #fff;
     font-size: 1.15rem;
     flex-shrink: 0;
+}
+.milestone-badge--zorp {
+    padding: 4px;
+}
+.milestone-badge--zorp .zorp-pose {
+    display: block;
+    width: 28px;
+    height: 28px;
 }
 .leaderboard-list {
     list-style: none;

@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "partials/user_avatar.html" import user_avatar %}
 {% from "partials/page_flashes.html" import render as page_flashes %}
+{% from "partials/zorp_badge.html" import zorp_badge_face %}
 {% block title %}Profile – Problem Bank{% endblock %}
 
 {% block content %}
@@ -459,7 +460,7 @@
         <ul class="badge-grid">
             {% for item in milestones %}
             <li class="badge-medallion badge-medallion--{{ item.tier }}{% if not item.earned %} is-locked{% endif %}">
-                <span class="badge-medallion-face" aria-hidden="true">{{ item.emoji or '★' }}</span>
+                {{ zorp_badge_face(item, size=36, variant='medallion') }}
                 <strong>{{ item.title }}</strong>
                 <span class="profile-list-meta">
                     {% if item.earned %}{{ item.earned_at[:10] }}{% else %}{{ item.description }}{% endif %}

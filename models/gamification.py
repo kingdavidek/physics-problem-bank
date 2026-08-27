@@ -16,6 +16,7 @@ from models.topic_status import (
     topic_badge_meta,
     topic_status_map as load_topic_status_map,
 )
+from models.zorp_kit import POSE_TOKENS as ZORP_POSE_TOKENS
 
 
 def _utc_today():
@@ -44,6 +45,7 @@ MILESTONE_CATALOG = {
         'description': 'Complete a lesson quick check',
         'emoji': '📖',
         'tier': 'bronze',
+        'pose': 'scholar',
     },
     MILESTONE_TOPICS_10: {
         'title': 'Broad explorer',
@@ -56,6 +58,7 @@ MILESTONE_CATALOG = {
         'description': 'Reach a 7-day study streak',
         'emoji': '🔥',
         'tier': 'gold',
+        'pose': 'jump',
     },
     MILESTONE_STREAK_30: {
         'title': 'Dedicated',
@@ -74,6 +77,7 @@ MILESTONE_CATALOG = {
         'description': 'Answer the question of the day',
         'emoji': '☀️',
         'tier': 'bronze',
+        'pose': 'wave',
     },
     MILESTONE_QOTD_7: {
         'title': 'Seven days of questions',
@@ -337,6 +341,16 @@ def milestone_meta(key):
     }
 
 
+def _pose_from_meta(meta):
+    raw = (meta or {}).get('pose')
+    if not raw:
+        return None
+    token = str(raw).strip().lower().replace('-', '_')
+    if token in ZORP_POSE_TOKENS:
+        return token
+    return None
+
+
 def _distinct_topics_count(conn, user_id):
     row = conn.execute(
         '''
@@ -475,6 +489,7 @@ def list_user_milestones(conn, user_id):
             'description': meta.get('description', ''),
             'emoji': meta.get('emoji', '★'),
             'tier': meta.get('tier', 'bronze'),
+            'pose': _pose_from_meta(meta),
             'earned_at': row['earned_at'],
         })
     return out
@@ -492,6 +507,7 @@ def list_milestone_shelf(conn, user_id):
             'description': meta.get('description', ''),
             'emoji': meta.get('emoji', '★'),
             'tier': meta.get('tier', 'bronze'),
+            'pose': _pose_from_meta(meta),
             'earned': item is not None,
             'earned_at': item['earned_at'] if item else None,
         })
@@ -504,6 +520,7 @@ def list_milestone_shelf(conn, user_id):
             'description': item.get('description', ''),
             'emoji': item.get('emoji', '★'),
             'tier': item.get('tier', 'bronze'),
+            'pose': item.get('pose'),
             'earned': True,
             'earned_at': item.get('earned_at'),
         })

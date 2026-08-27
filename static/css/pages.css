@@ -2066,6 +2066,10 @@ body.quiz-runner-active .app-tab-bar {
     margin-top: var(--space-2);
     color: var(--text-muted);
 }
+.sg-mascot-cell .zorp-pose {
+    display: block;
+    margin: 0 auto;
+}
 
 /* U5.9 — progress visualisation */
 .progress-viz-panel .svg-kit--progress {
