@@ -64,13 +64,13 @@ Erasure is immediate on live data. Backups drop it within 14 days (say so if the
 
 ## 5. Log of requests
 
-Keep a private log **off git** (spreadsheet or a locked note). Columns:
+Keep a private log **off git** (spreadsheet or a locked note) for email requests, **and** check `data/gdpr_actions.log` (gitignored) for CLI export/erase. Columns for the human log:
 
 | Date received | Handle | Request type | How verified | Date completed | Outcome | Notes |
 |---|---|---|---|---|---|---|
 | | | export / erase / other | registered email reply | | done / refused | |
 
-S2 will add an append-only file when the CLI runs. Until then, this log is your evidence you answered in time.
+CLI lines are JSON: `ts`, `action`, `handle`, `operator`, `row_counts`. Override path with `PB_GDPR_ACTION_LOG`.
 
 ---
 

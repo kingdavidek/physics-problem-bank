@@ -15,12 +15,5 @@
     </div>
   </section>
 </div>
-<script>
-  document.getElementById('offline-retry').addEventListener('click', function (event) {
-    if (!navigator.onLine) {
-      event.preventDefault();
-      window.location.reload();
-    }
-  });
-</script>
+<script src="{{ url_for('static', filename='js/offline-retry.js') }}?v=1" defer></script>
 {% endblock %}

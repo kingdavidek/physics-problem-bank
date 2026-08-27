@@ -145,4 +145,4 @@ Reply from the privacy address. Full runbook: **`docs/DATA_RIGHTS.md`**. Breach:
 | ICO number on `/privacy` | Matches the ICO confirmation |
 | Daily jobs | PythonAnywhere (or cron) log shows backup **and** prune succeeding |
 
-Then continue `docs/DEPLOY.md` and, if you want Play/PWA install, `docs/MOBILE.md` M5. Compliance **S1 is shipped**; next engineering on that track is **S2** (`unsafe-inline` CSP, self-host MathJax/Pyodide).
+Then continue `docs/DEPLOY.md` and, if you want Play/PWA install, `docs/MOBILE.md` M5. After launch, keep the calendar in **`docs/CADENCE.md`** (weekly backup check, monthly reports, quarterly restore). Operator S0.1 above is still the public-HTTPS gate.

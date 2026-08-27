@@ -11,6 +11,7 @@ sys.path.insert(0, str(ROOT))
 
 from app import get_db  # noqa: E402
 from models.data_export import build_user_export  # noqa: E402
+from models.gdpr_action_log import append_gdpr_action  # noqa: E402
 from models.user import User, normalize_handle  # noqa: E402
 
 
@@ -26,6 +27,7 @@ def main():
             print(f'No user @{handle}', file=sys.stderr)
             return 1
         payload = build_user_export(conn, user.id)
+    append_gdpr_action('export', handle, row_counts={'keys': len(payload)})
     text = json.dumps(payload, indent=2, default=str)
     if args.out:
         Path(args.out).write_text(text, encoding='utf-8')

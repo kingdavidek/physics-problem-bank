@@ -10,6 +10,7 @@ sys.path.insert(0, str(ROOT))
 
 from app import get_db  # noqa: E402
 from models.account_deletion import delete_user_account  # noqa: E402
+from models.gdpr_action_log import append_gdpr_action  # noqa: E402
 from models.user import User, normalize_handle  # noqa: E402
 
 
@@ -28,6 +29,7 @@ def main():
             print(f'Would delete @{handle} (id={user.id}). Re-run with --confirm.')
             return 0
         counts = delete_user_account(conn, user.id)
+    append_gdpr_action('erase', handle, row_counts=counts)
     print(counts)
     return 0
 

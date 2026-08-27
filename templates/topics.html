@@ -24,6 +24,7 @@
 
 {% set subject_icons = {'maths': 'maths', 'physics': 'physics', 'cs': 'cs', 'chemistry': 'chemistry'} %}
 
+<div id="topics-grid">
 {% for group in topic_groups %}
 <section class="topic-group topic-group--{{ group.subject }}" data-level="{{ group.level }}" id="topics-{{ group.level }}-{{ group.subject }}">
     <div class="topic-group-header">
@@ -73,6 +74,7 @@
     </ol>
 </section>
 {% endfor %}
+</div>
 
 <div class="section-panel cta-panel">
     <div class="section-panel-body cta-panel-body">

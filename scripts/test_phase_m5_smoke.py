@@ -60,6 +60,8 @@ def main():
         assert "font-src 'self'" in csp
         assert 'fonts.googleapis.com' not in csp
         assert 'fonts.gstatic.com' not in csp
+        assert 'cdn.jsdelivr.net' not in csp
+        assert "'unsafe-inline'" not in (csp.split('script-src')[1].split(';')[0])
 
         https = client.get(
             '/api/v1/health',

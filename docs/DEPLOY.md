@@ -1,6 +1,6 @@
 # Deploying Problem Bank (PythonAnywhere / production)
 
-> **Before the first deploy that real users can reach:** follow **`docs/OPERATOR_LAUNCH.md`** (your ICO fee, privacy inbox, prune/backup schedule). Phases **S0 and S1 code are shipped**. Set `PB_BACKUP_PASSPHRASE` before the first production backup.
+> **Before the first deploy that real users can reach:** follow **`docs/OPERATOR_LAUNCH.md`** (your ICO fee, privacy inbox, prune/backup schedule). Phases **S0–S2 code are shipped**. Set `PB_BACKUP_PASSPHRASE` before the first production backup.
 
 ## Pre-deploy checklist
 
@@ -67,6 +67,10 @@ python scripts/gdpr_export_user.py --handle NAME --out export.json
 python scripts/gdpr_erase_user.py --handle NAME --confirm
 ```
 
+Each CLI run appends one JSON line to `data/gdpr_actions.log` (or `PB_GDPR_ACTION_LOG`). The log records handle, action, and timestamp — not emails. Gitignored.
+
+Triage user reports with `python scripts/moderate_reports.py list` (`docs/MODERATION.md`). Optional ZAP baseline: `docs/ZAP.md`.
+
 ## Weekly email digest
 
 Code and opt-in UI ship with the app; **you** configure the provider and cron when launching. Full checklist: **`docs/EMAIL_SETUP.md`**.
@@ -90,12 +94,23 @@ Quick production steps:
 - API tokens: Bearer; default **90-day** expiry; users can revoke via Settings → **Log out all devices**.
 - Rate limits apply per user (or IP when anonymous), including web login/register — see `docs/API.md`. Per-account login lockout: **15 minutes after 10 failures** (generic “Invalid email or password”).
 - Cookie-session JSON API mutations require CSRF (Bearer exempt).
-- Content-Security-Policy is set on all responses; Pyodide lessons add cross-origin isolation headers.
+- Content-Security-Policy is set on all responses (`script-src` has no `unsafe-inline`; MathJax/Pyodide keep `unsafe-eval`). Pyodide lessons add cross-origin isolation headers.
+- MathJax and Pyodide are self-hosted (`static/vendor/`). Disk: ~13 MB Pyodide core + ~2 MB MathJax.
 - Full hardening notes: `docs/SOLID_DRAFT_SECURITY.md`.
 
 ## CI
 
-GitHub Actions workflow `.github/workflows/smoke.yml` runs all `scripts/test_*_smoke.py` on push/PR, plus a **non-blocking** `security` job (`pip-audit`, `ruff`, `gitleaks`). Dependabot is weekly for `pip` and `github-actions` (`.github/dependabot.yml`).
+GitHub Actions workflow `.github/workflows/smoke.yml` runs all `scripts/test_*_smoke.py` on push/PR, plus a **non-blocking** `security` job (`pip-audit`, `ruff`, `gitleaks`). Dependabot is weekly for `pip` and `github-actions` (`.github/dependabot.yml`). A Monday `pip-audit` also runs from `.github/workflows/cadence.yml` even when there are no PRs.
+
+Keep-it-true calendar after launch: **`docs/CADENCE.md`**. On the host:
+
+```bash
+python scripts/ops_cadence.py weekly
+python scripts/ops_cadence.py monthly
+python scripts/ops_cadence.py restore-drill
+```
+
+`restore-drill` writes `data/restore-scratch.db` and **refuses** to overwrite the live database.
 
 **Operator (GitHub UI, cannot be set in YAML):** Settings → Code security → enable **Secret scanning** and **Push protection**. After a clean week of security-job output, remove `continue-on-error: true` so the job is required.
 

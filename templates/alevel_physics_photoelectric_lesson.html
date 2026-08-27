@@ -172,7 +172,7 @@
     <div class="lesson-flex-end">
       <div>
         <label class="lesson-label" for="metal-select">Metal:</label>
-        <select id="metal-select" onchange="updateCalc()">
+        <select id="metal-select">
           <option value="2.0">Zinc (2.0 eV)</option>
           <option value="2.3">Sodium (2.3 eV)</option>
           <option value="2.9">Calcium (2.9 eV)</option>
@@ -183,7 +183,7 @@
         <label class="lesson-label" for="freq-slider">
           Frequency (×10<sup>14</sup> Hz): <span id="freq-display">8.0</span>
         </label>
-        <input type="range" id="freq-slider" min="4.0" max="12.0" step="0.1" value="8.0" oninput="updateCalc()">
+        <input type="range" id="freq-slider" min="4.0" max="12.0" step="0.1" value="8.0">
       </div>
       <div>
         \(E_k\) = <span id="ke-result">1.4</span> eV
@@ -270,13 +270,13 @@
 
       <!-- Transition arrows (clickable) -->
       <!-- Ground → A (absorption, up) -->
-      <line x1="120" y1="160" x2="120" y2="90" stroke="#d19900" stroke-width="2" marker-end="url(#arrowhead)" onclick="showTransition('Ground to A', 16.60, this)"/>
+      <line x1="120" y1="160" x2="120" y2="90" stroke="#d19900" stroke-width="2" marker-end="url(#arrowhead)" class="transition-arrow" data-transition-label="Ground to A" data-transition-delta="16.60"/>
       <!-- A → B (absorption, up) -->
-      <line x1="150" y1="90" x2="150" y2="50" stroke="#d19900" stroke-width="2" marker-end="url(#arrowhead)" onclick="showTransition('A to B', 1.80, this)"/>
+      <line x1="150" y1="90" x2="150" y2="50" stroke="#d19900" stroke-width="2" marker-end="url(#arrowhead)" class="transition-arrow" data-transition-label="A to B" data-transition-delta="1.80"/>
       <!-- B → A (emission, down) -->
-      <line x1="180" y1="50" x2="180" y2="90" stroke="#35a16b" stroke-width="2" marker-end="url(#arrowhead)" onclick="showTransition('B to A', 1.80, this)"/>
+      <line x1="180" y1="50" x2="180" y2="90" stroke="#35a16b" stroke-width="2" marker-end="url(#arrowhead)" class="transition-arrow" data-transition-label="B to A" data-transition-delta="1.80"/>
       <!-- B → ground (emission, down) -->
-      <line x1="210" y1="50" x2="210" y2="160" stroke="#35a16b" stroke-width="2" marker-end="url(#arrowhead)" onclick="showTransition('B to ground', 18.40, this)"/>
+      <line x1="210" y1="50" x2="210" y2="160" stroke="#35a16b" stroke-width="2" marker-end="url(#arrowhead)" class="transition-arrow" data-transition-label="B to ground" data-transition-delta="18.40"/>
 
       <!-- arrowhead marker -->
       <defs>
@@ -341,56 +341,5 @@
 
 </div>
 
-<script type='text/javascript' src='https://www.pythonanywhere.com/sKliY-O1sPHWamuwxr3nKRAaHzptbXPfSGFsgm3lwvEVOLXb5R__koZQTSywLYBYTrYuU0MFbm2rA7KzFSNgbnxgYyHP59ggY2SktHI2iTad03n0RVUQFVhFIDK3P5VHC79uUaCgeysUMc3C6FvEFQhUhZYBDN-58bsN8ecwcca_hsCF4Z4e9y6be5SjYOslWSisjhMlNCBN2uCAKpsU0TlXnxt2HcUKihxa1Msg4xQVnY4gphQmUlfcNkDz-QJZViZ5tuSzrgjqJ2UD6lryDinOmvNeJN9uiP_MVHdFgvPJEBDT7_CVQyWZOhK6hQPGDd3Oeaj7qXpXCiFy4pTZHPWY-LGjnz9FjPuqtyNY1l0HLYK9uRRNVGNXYuhCTAm3zANyAF1AtywTXh53d9UvLgYkujLHwCAaD9fipjjxXMumXarMgp0DDM6huknte5WKE5wqi1duI5dzghWLNpqnY0oqvhuyfrLZsbCycxgYF7960hO0mFT0H7gB2eyodzLdFvb7Zsbirg4LiweZXVLNGjzAnK6jOR8y-Be-bjaE87iG2V6OxgiL-RBcXD46LMW862_4Z0wm31uujOwtoDg-fwxjQkWv_TF_FY2yXEEjWOILAw'></script><script>
-  // Photon energy & kinetic energy calculator
-  function updateCalc() {
-    const metalSelect = document.getElementById('metal-select');
-    const freqSlider = document.getElementById('freq-slider');
-    const freqDisplay = document.getElementById('freq-display');
-    const keResult = document.getElementById('ke-result');
-
-    const phi_eV = parseFloat(metalSelect.value);                   // work function in eV
-    const f = parseFloat(freqSlider.value) * 1e14;                 // frequency in Hz
-    const h = 6.63e-34;                                            // Planck constant
-    const e = 1.60e-19;                                            // elementary charge
-
-    const photonEnergy_J = h * f;
-    const photonEnergy_eV = photonEnergy_J / e;
-    const ke_eV = photonEnergy_eV - phi_eV;
-
-    freqDisplay.textContent = freqSlider.value;                    // keep slider value
-    if (ke_eV < 0) {
-      keResult.textContent = "no emission (below threshold)";
-      keResult.style.color = "var(--color-text-muted)";
-    } else {
-      keResult.textContent = ke_eV.toFixed(2) + ' eV';
-      keResult.style.color = "var(--color-text)";
-    }
-  }
-
-  function showTransition(label, deltaE_eV, element) {
-    const h = 6.63e-34;
-    const c = 3.00e8;
-    const e = 1.60e-19;
-    const deltaE_J = deltaE_eV * e;
-    const wavelength = (h * c) / deltaE_J;
-    const info = document.getElementById('transition-info');
-    info.innerHTML = `${label}: ΔE = ${deltaE_eV.toFixed(2)} eV, λ ≈ ${(wavelength * 1e9).toFixed(0)} nm`;
-    // reset any previous highlight
-    document.querySelectorAll('#transition-info').forEach(el => el.style.color = '');
-    if (deltaE_eV >= 1.6 && deltaE_eV <= 3.2) {
-        info.style.color = '#35a16b';   // visible
-        info.innerHTML += ' (visible)';
-    } else {
-        info.style.color = '#a13544';   // UV / not visible
-    }
-    // briefly highlight the clicked arrow
-    element.style.stroke = '#ff4500';
-    setTimeout(() => { element.style.stroke = (deltaE_eV <= 3.2 ? '#35a16b' : '#d19900'); }, 300);
-    }
-
-  // initial call
-  updateCalc();
-</script>
-
+<script src="{{ url_for('static', filename='js/photoelectric-lesson.js') }}?v=1" defer></script>
 {% endblock %}

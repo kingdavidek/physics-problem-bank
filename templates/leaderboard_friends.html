@@ -14,7 +14,7 @@
     <h1>Friend effort leaderboard</h1>
     <p class="hero-sub">Last {{ period_days }} days — effort points from topics, practice, lessons, and quizzes</p>
     {% endif %}
-    <nav class="segmented-control segmented-control--links" aria-label="Leaderboard type">
+    <nav class="segmented-control segmented-control--links" id="leaderboard-board-tabs" aria-label="Leaderboard type">
         <a href="{{ url_for('friend_leaderboard_page', board='effort') }}"
            class="{% if board != 'accuracy' %}is-active{% endif %}"
            data-skeleton-nav="#leaderboard-results"
@@ -24,6 +24,7 @@
            data-skeleton-nav="#leaderboard-results"
            data-skeleton-kind="leaderboard">Quiz accuracy</a>
     </nav>
+    <p class="hero-sub"><a href="{{ url_for('challenges_list') }}" id="compete-challenges">Challenges</a> are optional. No DMs.</p>
 </div>
 
 <section class="section-panel">

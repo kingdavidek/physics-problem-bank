@@ -1,9 +1,9 @@
 # Problem Bank — Security and UK GDPR compliance plan
 
 **Last updated:** 2026-08-26
-**Status:** Phases S0 and S1 implemented in code. Operator S0.1 (ICO fee, live contact address) is still required before the URL is public. GitHub secret scanning / push protection is a UI setting (S1.4).
+**Status:** Phases S0–S3 implemented. S3 is the keep-it-true calendar (`docs/CADENCE.md`). Operator S0.1 (ICO fee, live contact address) is still required before the URL is public. GitHub secret scanning / push protection is a UI setting (S1.4).
 **Audience:** The next AI agent (and the operator, for the non-code actions)
-**Companions:** `docs/SOLID_DRAFT_SECURITY.md` (what is already hardened — do not regress), `docs/DEPLOY.md`, `docs/OPERATOR_LAUNCH.md`, `docs/INCIDENT_RESPONSE.md`, `docs/DATA_RIGHTS.md`, `docs/MOBILE.md` (M5 production HTTPS), `docs/DPIA.md`, `docs/ROPA.md`, `docs/SUBPROCESSORS.md`
+**Companions:** `docs/SOLID_DRAFT_SECURITY.md` (what is already hardened — do not regress), `docs/DEPLOY.md`, `docs/OPERATOR_LAUNCH.md`, `docs/CADENCE.md` (S3 calendar), `docs/INCIDENT_RESPONSE.md`, `docs/DATA_RIGHTS.md`, `docs/MODERATION.md`, `docs/ZAP.md`, `docs/MOBILE.md` (M5 production HTTPS), `docs/DPIA.md`, `docs/ROPA.md`, `docs/SUBPROCESSORS.md`
 
 > **Not legal advice.** This is an engineering plan written against the UK GDPR, the Data Protection Act 2018, PECR, and the ICO's Age Appropriate Design Code (the "Children's Code"). Before taking real users, have the privacy notice and DPIA read by someone qualified. Everything in §2–§4 is factual about the codebase; the legal framing in §1 is a good-faith summary.
 
@@ -11,7 +11,7 @@
 
 ## 0. The one-paragraph summary
 
-The platform is a UK-facing study site whose users are **mainly children (13+)**. It stores emails, password hashes, IP-derived rate-limit keys, and a rich behavioural record (every attempt, score, weak topic, streak, and social interaction). The security engineering is already better than average for a solo project — safe grading, hashed tokens, parameterised SQL, CSRF, rate limits, a real CSP. **Phases S0 and S1 are implemented in code:** privacy notice, high-privacy defaults, account deletion, data export, hashed IPs, retention prune, password reset, email verification, security headers, production boot guard, self-hosted fonts, drafted DPIA/ROPA, **encrypted backups**, incident and data-rights runbooks, CI scanning, authz tests, login lockout, log hygiene, and expiry on unsubscribe tokens. Remaining launch blockers are **operator actions** (S0.1, GitHub secret scanning) and **Phase S2** (`unsafe-inline` CSP, self-host MathJax/Pyodide).
+The platform is a UK-facing study site whose users are **mainly children (13+)**. It stores emails, password hashes, IP-derived rate-limit keys, and a rich behavioural record (every attempt, score, weak topic, streak, and social interaction). The security engineering is already better than average for a solo project — safe grading, hashed tokens, parameterised SQL, CSRF, rate limits, a real CSP. **Phases S0–S3 are implemented:** S0/S1 rights and launch blockers, **S2** (no `unsafe-inline` in `script-src`, self-hosted MathJax/Pyodide, ZAP runbook, GDPR action log, reports CLI), and **S3** (cadence runbook, `scripts/ops_cadence.py`, Monday `pip-audit` workflow). Remaining launch blockers are **operator actions** (S0.1, GitHub secret scanning). Keep the calendar in `docs/CADENCE.md`.
 
 ---
 
@@ -48,7 +48,7 @@ Verified against the code on 2026-08-15. Schema is created in `app.py` lines ~75
 | Category | Where | Notes |
 |---|---|---|
 | Identity | `users` (`app.py:766`) — email, handle, password hash, created/last login | Werkzeug scrypt hash (`models/user.py:82`) |
-| Preferences and privacy settings | `user_profile_settings` (`app.py:883`) — visibility toggles, avatar, digest opt-in | Defaults discussed in §3.1 |
+| Preferences and privacy settings | `user_profile_settings` (`app.py`) — visibility toggles, avatar, digest opt-in, `guide_json` (onboarding/tour/reward seen flags) | Defaults discussed in §3.1 |
 | Behavioural / educational record | `saved_problems`, `quiz_attempts`, `generator_mcq_attempts`, `lesson_progress`, `user_activity_events`, `user_activity_summary`, `user_streaks`, `user_study_days`, `user_milestones`, `qotd_attempts`, `user_revision_queue`, `user_revision_plans` | The richest and most sensitive set — it profiles a child's academic weaknesses |
 | Free text written by users | `user_wrong_answer_reflections.reflection_text` (≤500), `shared_questions.note` (≤200), `question_suggestions`, `user_reports.note` (≤500) | Users can type anything, including personal details |
 | Social graph | `follows`, `study_pairs`, `quiz_challenges`, `user_blocks`, `user_reports` | |
@@ -82,10 +82,10 @@ Severity is about **risk to users and to you**, not difficulty. "Effort" is a ro
 | G11 | No breach detection or response plan; 72-hour ICO clock would start with nothing prepared | GDPR (Art 33) | **High** | 0.5 |
 | G12 | CI has no dependency, secret, or static analysis scanning; no Dependabot | Security | Medium | 0.5 |
 | G13 | No account lockout beyond a 30/day per-IP login limit; no password change flow | Security | Medium | 1 |
-| G14 | Google Fonts, MathJax, and Pyodide load from third-party CDNs, disclosing every visitor's IP | GDPR transfers | Medium | 1 |
+| G14 | Google Fonts, MathJax, and Pyodide no longer load from third-party CDNs (S0.11 + S2.2). Remaining third-party: hosting, mail, optional lesson-assist | GDPR transfers | Medium | done |
 | G15 | `PB_TESTING=1` disables CSRF **and** rate limits, with no guard against it reaching production | Security | Medium | 0.25 |
 | G16 | No cross-user authorisation (IDOR) regression test, though the queries do filter by `user_id` | Security assurance | Medium | 0.5 |
-| G17 | CSP still allows `'unsafe-inline'` and `'unsafe-eval'` | Security | Medium | 3 |
+| G17 | CSP `script-src` no longer allows `'unsafe-inline'` (S2.1). `'unsafe-eval'` / `'wasm-unsafe-eval'` remain for MathJax and Pyodide; `style-src` still has `'unsafe-inline'` | Security | Medium | done |
 | G18 | Unsubscribe HMAC tokens never expire (`models/email_digest.py:52`) | Security | Low | 0.25 |
 | G19 | Digest console/CLI paths print recipient emails to stdout (`models/email_digest.py:238`, `scripts/send_weekly_digest.py:77`) | Data minimisation | Low | 0.25 |
 | G20 | API token hashes are unsalted SHA-256 | Security | **Low — see note** | — |
@@ -276,27 +276,31 @@ The ROPA is a single table: purpose, categories of data, categories of subjects,
 
 ### Phase S2 — Hardening (when the basics are stable)
 
+**Implemented in code (2026-08-26).** `unsafe-eval` / `wasm-unsafe-eval` stay for MathJax and Pyodide. S2.5 (operator 2FA) is skipped — there is no admin role.
+
 | # | Item | Detail |
 |---|---|---|
-| S2.1 | **Remove `unsafe-inline` from the CSP** | The real work is moving inline `<script>` blocks and `onclick=` handlers out of templates into `static/js/`. Do it a template at a time, then switch to per-request nonces. `unsafe-eval` must stay for MathJax and Pyodide — document that as an accepted, scoped exception rather than pretending it will go away. Budget several days; this is the biggest remaining security item. |
-| S2.2 | **Self-host MathJax and Pyodide** | Removes two more third-party IP disclosures and a supply-chain dependency. Pyodide is large — check the hosting quota first. Keep SRI if you stay on a CDN. |
-| S2.3 | **Automated baseline scan** | OWASP ZAP baseline against a throwaway instance in CI, or run it manually each release. Triage and record accepted findings. |
-| S2.4 | **Personal-data action log** | When the CLI erase/export scripts run, append to an append-only log (who, when, which handle, row counts). This is your evidence that you honoured a request. |
-| S2.5 | **Two-factor for the operator account** | Only if an admin surface ever exists. Today there is no admin role, which is itself a good control — think hard before adding one. |
-| S2.6 | **Moderation depth** | Report action on suggestions and shared notes; a triage view (even a CLI listing of open reports); documented takedown timescales. Safeguarding matters more than most security controls for this audience. |
+| S2.1 | **Remove `unsafe-inline` from script CSP** | Inline `<script>` and `onclick`/`oninput` moved to `static/js/`. Per-request nonce is on `script-src` if any inline script returns. `unsafe-eval` stays for MathJax/Pyodide. `style-src` still allows `'unsafe-inline'` for SVG/presentation. |
+| S2.2 | **Self-host MathJax and Pyodide** | `static/vendor/mathjax/tex-svg.js` (3.2.2) and `static/vendor/pyodide/` (0.25.0 core). Re-download: `python scripts/vendor_cdn_assets.py`. jsDelivr removed from CSP. |
+| S2.3 | **Automated baseline scan** | `docs/ZAP.md` plus `.github/workflows/zap.yml` (`workflow_dispatch`, non-blocking). Triage table for accepted findings. |
+| S2.4 | **Personal-data action log** | CLI export/erase append JSON lines to `data/gdpr_actions.log` (`models/gdpr_action_log.py`). |
+| S2.5 | **Two-factor for the operator account** | **Skipped.** No admin surface exists; do not add one to justify 2FA. |
+| S2.6 | **Moderation depth** | `scripts/moderate_reports.py` lists/resolves reports and can hide a shared question or dismiss a suggestion. Timescales: `docs/MODERATION.md`. |
 
 ---
 
 ### Phase S3 — Keep it true
 
-| Cadence | Task |
-|---|---|
-| Every release | Run the full smoke suite; confirm `PB_TESTING` is not set in production; bump `CACHE_VERSION` when assets change |
-| Weekly | Review Dependabot and `pip-audit` output; check the backup ran and prune job logged sensible counts |
-| Monthly | Read the open reports queue; skim auth failure rates for spraying |
-| Quarterly | Restore a backup for real; re-read the privacy notice against what the code now does; review the subprocessor list |
-| Annually, or on any material change | Revisit the DPIA (new feature that profiles, any new data category, any new processor); renew the ICO fee |
-| On every new feature | Ask the four questions in §6.1 before writing code |
+**Implemented 2026-08-26.** This is a calendar, not a product feature. How to run it: **`docs/CADENCE.md`**. CLI: `python scripts/ops_cadence.py weekly|monthly|restore-drill|feature-gate`. Monday `pip-audit`: `.github/workflows/cadence.yml`.
+
+| Cadence | Task | How |
+|---|---|---|
+| Every release | Full smoke suite; `PB_TESTING` off in production; bump `CACHE_VERSION` when assets change | CI `smoke.yml`; `scripts/run_smoke_tests.py` |
+| Weekly | Review Dependabot and `pip-audit`; check the backup ran and prune logged counts | `ops_cadence.py weekly`; Dependabot; `cadence.yml` |
+| Monthly | Open reports queue; skim auth failure / lockout counts | `ops_cadence.py monthly` then `moderate_reports.py list` |
+| Quarterly | Restore a backup for real; re-read the privacy notice; review subprocessors | `ops_cadence.py restore-drill` (scratch DB only) |
+| Annually, or on any material change | Revisit the DPIA; renew the ICO fee | `docs/DPIA.md` review log; `docs/OPERATOR_LAUNCH.md` |
+| On every new feature | Ask the four questions in §6.1 before writing code | `ops_cadence.py feature-gate` |
 
 ---
 
@@ -329,7 +333,7 @@ Maintain this as `docs/SUBPROCESSORS.md` and mirror it in the privacy notice.
 |---|---|---|---|---|
 | Hosting provider | Runs the app and database | Everything | Confirm at deploy | Their DPA |
 | Resend / SendGrid / SMTP host | Weekly digest, password reset, verification | Email address, handle, digest stats | Provider-dependent | Their DPA |
-| jsDelivr (MathJax, Pyodide) | Static assets | Visitor IP, user agent | Global CDN | None — remove via S2.2 |
+| jsDelivr (MathJax, Pyodide) | Static assets | Visitor IP, user agent | Global CDN | None — **removed in S2.2** (self-hosted) |
 | Google Fonts | Fonts | Visitor IP | Global | None — remove via S0.11 |
 | Cloudinary / PythonAnywhere assets in some lesson templates | Images and scripts embedded in lessons | Visitor IP | Global | Audit and self-host where practical |
 | OpenAI / Anthropic / DeepSeek | Lesson assist, **only if enabled** | Lesson text, surrounding context, the child's typed question | US / China | DPA + transfer mechanism, or keep disabled (S0.10) |
@@ -362,7 +366,13 @@ docs/ROPA.md                   record of processing activities
 docs/SUBPROCESSORS.md          third-party list
 docs/INCIDENT_RESPONSE.md      breach runbook
 docs/DATA_RIGHTS.md            how to answer a rights request
+docs/MODERATION.md             report triage CLI and takedown timescales
+docs/ZAP.md                    OWASP ZAP baseline + accepted findings
 docs/OPERATOR_LAUNCH.md        operator ICO / inbox / cron (S0.1)
+docs/CADENCE.md                S3 weekly / monthly / quarterly calendar
+models/cadence_log.py          cadence CLI log
+scripts/ops_cadence.py         weekly backup check, monthly reports, restore drill
+scripts/test_s3_cadence_smoke.py
 models/account_deletion.py     erasure
 models/data_export.py          access + portability
 models/login_lockout.py        per-account lock
@@ -374,6 +384,11 @@ scripts/restore_sqlite.py      backup restore
 scripts/test_gdpr_smoke.py     erasure + export + retention tests
 scripts/test_authz_smoke.py    cross-user access tests
 scripts/test_backup_smoke.py   encrypt + restore
+scripts/test_csp_smoke.py      no script unsafe-inline; no jsDelivr
+scripts/test_s2_ops_smoke.py   GDPR action log + reports CLI
+scripts/moderate_reports.py    report triage CLI
+models/gdpr_action_log.py      CLI export/erase log
+static/vendor/                 self-hosted MathJax + Pyodide core
 templates/legal_privacy.html   /privacy
 templates/legal_privacy_simple.html   /privacy/simple
 templates/legal_terms.html     /terms
@@ -413,4 +428,20 @@ The site needs no consent banner **today** because it stores only what is strict
 - [x] Log hygiene: recipient emails gated; host logs 30 days documented
 - [x] Unsubscribe tokens timestamped; reject after 90 days
 
-**Phase S2:** `unsafe-inline` gone; CDN assets self-hosted; baseline scan clean or triaged; personal-data action log in place.
+**Phase S2:**
+
+- [x] `script-src` has no `'unsafe-inline'` (nonce + external JS); `'unsafe-eval'` documented for MathJax/Pyodide
+- [x] MathJax and Pyodide self-hosted under `static/vendor/`
+- [x] ZAP baseline documented and optional CI (`docs/ZAP.md`)
+- [x] CLI export/erase append to `data/gdpr_actions.log`
+- [x] No admin role — 2FA skipped on purpose
+- [x] `scripts/moderate_reports.py` + `docs/MODERATION.md`
+
+**Phase S3:**
+
+- [x] Cadence runbook (`docs/CADENCE.md`)
+- [x] `scripts/ops_cadence.py` weekly / monthly / restore-drill / feature-gate
+- [x] Restore drill refuses to overwrite the live DB (`scripts/test_s3_cadence_smoke.py`)
+- [x] Weekly scheduled `pip-audit` (`.github/workflows/cadence.yml`); Dependabot already weekly (S1.4)
+- [x] DPIA review log + triggers (`docs/DPIA.md`)
+- [x] Four questions before new features in the handoff invariants

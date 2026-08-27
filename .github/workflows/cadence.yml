@@ -1,0 +1,25 @@
+name: S3 cadence (pip-audit)
+
+# Weekly reminder even when there are no PRs. Non-blocking.
+# Operator still reviews Dependabot PRs by hand (docs/CADENCE.md).
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+jobs:
+  pip-audit:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: pip-audit
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt

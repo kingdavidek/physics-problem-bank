@@ -284,7 +284,7 @@ def main():
         assert 'data-buddy-level="gcse"' in html_lesson
         assert 'data-buddy-subject="maths"' in html_lesson
         assert 'data-buddy-topic="algebra"' in html_lesson
-        assert 'study-buddy.js?v=20' in html_lesson
+        assert 'study-buddy.js?v=21' in html_lesson
         assert 'Problem Bank build: buddy-embed-v4' in html_lesson
         assert 'pb-buddy-embed-v4' in html_lesson
         assert 'id="pb-buddy-page"' in html_lesson
@@ -318,7 +318,8 @@ def main():
         )
         via_header = r.get_json()['buddy']
         assert any(item.get('kind') == 'stay' for item in via_header['actions'])
-        assert 'pb-buddy-storage' in html_lesson
+        buddy_js = client.get('/static/js/study-buddy.js').data.decode()
+        assert 'pb-buddy-storage' in buddy_js
 
         logout(client)
         register(client, email_b, handle_b)
