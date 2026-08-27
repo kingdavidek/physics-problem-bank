@@ -61,11 +61,11 @@
                     {% elif topic.is_complete %}
                     Lesson complete →
                     {% elif topic.is_current %}
-                    {% if topic.mastery %}{{ topic.mastery_pct }}% · Continue →{% else %}Start here →{% endif %}
+                    {% if topic.completed_count and topic.step_total and not topic.is_complete %}{{ topic.completed_count }}/{{ topic.step_total }} · Continue →{% elif topic.mastery %}{{ topic.mastery_pct }}% · Continue →{% else %}Start here →{% endif %}
                     {% elif topic.prereq_hint %}
-                    {% if topic.mastery %}{{ topic.mastery_pct }}% · {% endif %}After {{ topic.prereq_hint }}
+                    {% if topic.completed_count and topic.step_total and not topic.is_complete %}{{ topic.completed_count }}/{{ topic.step_total }} · {% elif topic.mastery %}{{ topic.mastery_pct }}% · {% endif %}After {{ topic.prereq_hint }}
                     {% else %}
-                    {% if topic.mastery %}{{ topic.mastery_pct }}% · Continue →{% else %}Start →{% endif %}
+                    {% if topic.completed_count and topic.step_total and not topic.is_complete %}{{ topic.completed_count }}/{{ topic.step_total }} · Continue →{% elif topic.mastery %}{{ topic.mastery_pct }}% · Continue →{% else %}Start →{% endif %}
                     {% endif %}
                 </span>
             </a>

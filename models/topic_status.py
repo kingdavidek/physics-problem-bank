@@ -3,6 +3,7 @@ from calendar import monthrange
 from datetime import datetime, timezone
 import json
 
+from models.lesson_steps import lesson_step_total
 from topic_registry import TOPICS, iter_topics
 
 QUIZ_LENGTH = 10
@@ -168,6 +169,17 @@ def catalog_extra_entries():
     return entries
 
 
+def resolve_step_total(level, subject, topic, step_total, completed_keys=None):
+    """Use stored step_total when set; otherwise fall back to the lesson template."""
+    stored = int(step_total or 0)
+    if stored > 0:
+        return stored
+    canonical = lesson_step_total(level, subject, topic)
+    if canonical > 0:
+        return canonical
+    return 0
+
+
 def compute_topic_status(completed_keys, step_total, quizzes, now=None):
     """Return status flags for one topic.
 
@@ -271,9 +283,19 @@ def topic_status_map(conn, user_id, now=None):
         step_total = 0
         if 'step_total' in row.keys():
             step_total = int(row['step_total'] or 0)
-        lessons[(row['level'], row['subject'], row['topic'])] = {
-            'completed_keys': [k for k in keys if isinstance(k, str) and k.strip()],
-            'step_total': step_total,
+        level = row['level']
+        subject = row['subject']
+        topic = row['topic']
+        cleaned_keys = [k for k in keys if isinstance(k, str) and k.strip()]
+        lessons[(level, subject, topic)] = {
+            'completed_keys': cleaned_keys,
+            'step_total': resolve_step_total(
+                level,
+                subject,
+                topic,
+                step_total,
+                cleaned_keys,
+            ),
         }
 
     quizzes = {}

@@ -2,6 +2,7 @@ import json
 from datetime import date, timedelta
 
 from models.user import utc_now_iso
+from models.lesson_steps import lesson_step_total
 
 MAX_SAVED_PROBLEMS = 200
 
@@ -112,6 +113,10 @@ def upsert_lesson_progress(
         stored_total = existing_total
     else:
         stored_total = max(existing_total, int(step_total))
+    if stored_total <= 0:
+        canonical = lesson_step_total(level, subject, topic)
+        if canonical > 0:
+            stored_total = canonical
     conn.execute(
         '''
         INSERT INTO lesson_progress (

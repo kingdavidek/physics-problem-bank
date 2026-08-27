@@ -4,6 +4,7 @@ Run: python scripts/test_topic_status_smoke.py
 """
 import json
 import os
+import re
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -23,6 +24,28 @@ from models.topic_status import (  # noqa: E402
 )
 from models.user import utc_now_iso  # noqa: E402
 from topic_registry import TOPICS  # noqa: E402
+
+
+def csrf_from(html: str) -> str:
+    match = re.search(r'name="csrf_token" value="([^"]+)"', html)
+    if match:
+        return match.group(1)
+    match = re.search(r'name="csrf-token" content="([^"]+)"', html)
+    assert match, 'csrf token not found'
+    return match.group(1)
+
+
+def login_user(client, email):
+    page = client.get('/login')
+    client.post(
+        '/login',
+        data={
+            'csrf_token': csrf_from(page.data.decode()),
+            'email': email,
+            'password': 'password123',
+        },
+        follow_redirects=True,
+    )
 
 
 def _dt(days_ago=0, now=None):
@@ -143,6 +166,18 @@ def main():
     short_quiz = compute_topic_status(keys, 3, [_quiz(7, total=7, now=now)], now=now)
     assert short_quiz['ninja'] is False
 
+    partial = compute_topic_status(['step-0', 'step-1', 'step-2'], 6, [], now=now)
+    assert partial['lesson_complete'] is False
+    assert partial['completed_count'] == 3
+    assert partial['step_total'] == 6
+    assert partial['mastery'] == round(0.34 * 0.5, 3)
+
+    from models.lesson_steps import lesson_step_total
+    from models.topic_status import resolve_step_total, topic_status_map
+
+    assert lesson_step_total('gcse', 'maths', 'bidmas') == 6
+    assert resolve_step_total('gcse', 'maths', 'bidmas', 0, ['step-0']) == 6
+
     problems, _cfg = build_quicktest_problems(
         'gcse', 'maths', 'bidmas', 'standard', 'foundational', TOPICS
     )
@@ -184,6 +219,29 @@ def main():
                 earned = evaluate_milestones(conn, user_id2)
                 assert aggregate_badge_key('completed', 5) in earned
                 assert aggregate_badge_key('completed', 10) not in earned
+
+            token3, user_id3 = register(client, 'stat3')
+            with get_db() as conn:
+                insert_lesson(
+                    conn,
+                    user_id3,
+                    'bidmas',
+                    ['step-0', 'step-1', 'step-2'],
+                    0,
+                )
+                conn.commit()
+                statuses = topic_status_map(conn, user_id3, now=now)
+                bidmas = statuses[('gcse', 'maths', 'bidmas')]
+                assert bidmas['completed_count'] == 3
+                assert bidmas['step_total'] == 6
+                assert bidmas['mastery'] == round(0.34 * 0.5, 3)
+
+            login_user(client, 'ts_stat3@example.com')
+            r_topics = client.get('/topics')
+            assert r_topics.status_code == 200
+            topics_html = r_topics.data.decode()
+            assert '3/6' in topics_html
+            assert 'aria-label="17% mastery"' in topics_html
 
             r = client.get('/topics')
             assert r.status_code == 200

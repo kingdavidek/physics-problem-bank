@@ -1345,6 +1345,31 @@ with get_db() as conn:
             "INSERT INTO schema_migrations (name, applied_at) VALUES (?, datetime('now'))",
             ('s0_high_privacy_defaults',),
         )
+    if 'lesson_progress_step_totals' not in migrated:
+        from models.lesson_steps import lesson_step_total
+
+        rows = conn.execute(
+            '''
+            SELECT level, subject, topic
+            FROM lesson_progress
+            WHERE step_total <= 0
+            '''
+        ).fetchall()
+        for row in rows:
+            total = lesson_step_total(row['level'], row['subject'], row['topic'])
+            if total > 0:
+                conn.execute(
+                    '''
+                    UPDATE lesson_progress
+                    SET step_total = ?
+                    WHERE level = ? AND subject = ? AND topic = ?
+                    ''',
+                    (total, row['level'], row['subject'], row['topic']),
+                )
+        conn.execute(
+            "INSERT INTO schema_migrations (name, applied_at) VALUES (?, datetime('now'))",
+            ('lesson_progress_step_totals',),
+        )
     conn.execute("""
         CREATE TABLE IF NOT EXISTS email_digest_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -4105,6 +4130,8 @@ def _status_from_progress_entry(entry):
             'lesson_complete': bool(entry.get('lesson_complete')),
             'ninja': bool(entry.get('ninja')),
             'master_active': bool(entry.get('master_active')),
+            'completed_count': int(entry.get('completed_count') or 0),
+            'step_total': int(entry.get('step_total') or 0),
         }
     pct = float(entry or 0)
     return {
@@ -4112,6 +4139,8 @@ def _status_from_progress_entry(entry):
         'lesson_complete': pct >= 0.8,
         'ninja': pct >= 0.67,
         'master_active': pct >= 1.0,
+        'completed_count': 0,
+        'step_total': 0,
     }
 
 
@@ -4128,6 +4157,8 @@ def _annotate_topic_path_groups(groups, statuses):
             status = _status_from_progress_entry(statuses.get(key))
             topic['mastery'] = status['mastery']
             topic['mastery_pct'] = int(round(status['mastery'] * 100))
+            topic['completed_count'] = status['completed_count']
+            topic['step_total'] = status['step_total']
             topic['is_complete'] = status['lesson_complete']
             topic['is_ninja'] = status['ninja']
             topic['is_master'] = status['master_active']
