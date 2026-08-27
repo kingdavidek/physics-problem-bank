@@ -1,0 +1,18 @@
+{# Guide overlay (E6 / A1). Hidden until guide.js opens it. No inline handlers. #}
+<div id="guide-root" class="guide-overlay" hidden aria-hidden="true" data-guide-root>
+    <div class="guide-backdrop" data-guide-backdrop></div>
+    <div class="guide-spot" data-guide-spot hidden aria-hidden="true"></div>
+    <div class="guide-panel" role="dialog" aria-modal="true" aria-labelledby="guide-heading" aria-describedby="guide-bubble">
+        <span class="guide-face study-buddy-face" data-guide-face data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot() }}</span>
+        <span class="guide-medal" data-guide-medal aria-hidden="true"></span>
+        <div class="guide-speech">
+            <h2 id="guide-heading" class="guide-heading">Zorp</h2>
+            <p id="guide-bubble" class="guide-bubble" data-guide-bubble aria-live="polite"></p>
+            <p class="guide-bot-note">A Problem Bank bot — not a person.</p>
+        </div>
+        <div class="guide-actions">
+            <button type="button" class="btn btn-primary" data-guide-primary>Continue</button>
+            <button type="button" class="btn btn-outline" data-guide-skip>Skip intro</button>
+        </div>
+    </div>
+</div>

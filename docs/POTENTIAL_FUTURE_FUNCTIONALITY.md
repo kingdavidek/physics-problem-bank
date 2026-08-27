@@ -260,6 +260,7 @@ E1–E3 shipped 2026-08-15. Of the three E4 items below, only **E4.1** is schedu
 | **Action** | Only if DAU / session length clearly lift after E1–E3. Needs dedicated schema, economy design, and ongoing content — treat as its **own project**, not a quick add-on. |
 | **Depends on** | E1.2 mascot bot + E3.1 buddy patterns; product metrics |
 | **Status** | Deferred stretch |
+| **Do not confuse with** | **E6 Guide** (`docs/ANIMATION_ONBOARDING.md`) — origin story + tours + celebration. That is lore and overlay UX, not an economy. |
 
 #### 3.0.3 Desmos-like graphing / transform SVGs
 
@@ -345,7 +346,8 @@ E1–E3 shipped 2026-08-15. Of the three E4 items below, only **E4.1** is schedu
 | E1–E3 | Engagement (assist smoke, mascot QOTD, FTS, avatars, buddy, friend accuracy LB) | **E1–E3 shipped** |
 | E4.1 | Real-world question style (percentages, ratio, compound measures) | Planned — `docs/REAL_WORLD_QUESTIONS.md` |
 | E4.2 / E4.3 | Mascot farm perks, Desmos-class graphs | Stretch — §3.0 this file |
-| E5 | Retention polish (buddy v0.5, badges, QOTD week, streak freeze, avatar unlocks, planner dropdown, push) | Planned — `docs/ENGAGEMENT_E5.md` |
+| E5 | Retention polish | **E5.1–E5.6 shipped**; E5.7 push blocked — `docs/ENGAGEMENT_E5.md` |
+| **E6 / Phase A** | Guide & celebration (origin story, first-visit tours, badge/streak moments) | **A1–A6 shipped** (origin, tours, reward beats, `guide_json` persist + Replay intro, CSS streak fire). Spec: `docs/ANIMATION_ONBOARDING.md` |
 
 ---
 

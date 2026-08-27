@@ -2,7 +2,7 @@
 {% from "partials/wordmark.html" import wordmark %}
 {% from "partials/buddy.html" import buddy_mascot %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="{{ theme_preference }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -18,30 +18,7 @@
     <link rel="icon" href="{{ url_for('static', filename='icons/favicon.svg') }}" type="image/svg+xml">
     <link rel="icon" href="{{ url_for('static', filename='icons/favicon.ico') }}" sizes="32x32">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
-    <script>
-      (function () {
-        try {
-          var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
-            || window.navigator.standalone === true;
-          if (standalone) document.documentElement.classList.add('pwa-standalone');
-        } catch (e) {}
-      })();
-    </script>
-    <script>
-      (function () {
-        var theme = {{ theme_preference|tojson }};
-        try {
-          var stored = localStorage.getItem('pb-theme');
-          if (stored && ['system', 'light', 'dark'].indexOf(stored) >= 0) {
-            theme = stored;
-          }
-        } catch (e) {}
-        if (!theme || ['system', 'light', 'dark'].indexOf(theme) < 0) {
-          theme = 'system';
-        }
-        document.documentElement.setAttribute('data-theme', theme);
-      })();
-    </script>
+    <script src="{{ url_for('static', filename='js/boot-head.js') }}?v=1"></script>
     <title>{% block title %}Problem Bank{% endblock %}</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/fonts.css') }}?v=1">
@@ -50,7 +27,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}?v=23">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=24">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=31">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=33">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=38">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/practice.css') }}?v=24">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=49">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}?v=21">
@@ -65,41 +42,26 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- Problem Bank build: buddy-embed-v4 -->
     <script src="{{ url_for('static', filename='js/mathjax-config.js') }}"></script>
-    <!-- MathJax CDN (SVG output); SRI pins the published 3.2.2 build -->
-    <script
-      src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"
-      integrity="sha384-KKWa9jJ1MZvssLeOoXG6FiOAZfAgmzsIIfw8BXwI9+kYm0lPCbC6yTQPBC00F1/L"
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    ></script>
+    <script src="{{ url_for('static', filename='vendor/mathjax/tex-svg.js') }}"></script>
     <!-- External site logic (dropdowns, MCQs, etc.) -->
-    <script src="{{ url_for('static', filename='js/python-run-grader.js') }}?v=4" defer></script>
+    <script src="{{ url_for('static', filename='js/python-run-grader.js') }}?v=5" defer></script>
     <script src="{{ url_for('static', filename='js/theme.js') }}?v=1" defer></script>
-    <script src="{{ url_for('static', filename='js/site.js') }}?v=28" defer></script>
+    <script src="{{ url_for('static', filename='js/site.js') }}?v=29" defer></script>
     <script src="{{ url_for('static', filename='js/site-search.js') }}?v=17" defer></script>
     <script src="{{ url_for('static', filename='js/nav-menu.js') }}?v=4" defer></script>
     <script src="{{ url_for('static', filename='js/tab-bar.js') }}?v=2" defer></script>
     <script src="{{ url_for('static', filename='js/sound.js') }}?v=2" defer></script>
-    <script src="{{ url_for('static', filename='js/celebrate.js') }}?v=5" defer></script>
     <script src="{{ url_for('static', filename='js/u4.js') }}?v=11" defer></script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=4" defer></script>
     {% if current_user.is_authenticated %}
     <script src="{{ url_for('static', filename='js/notifications.js') }}?v=18" defer></script>
-    <script>
-    try {
-      if (window.localStorage.getItem('pb-buddy-storage') !== 'v2') {
-        var _buddyKeys = [];
-        for (var _i = 0; _i < window.localStorage.length; _i += 1) {
-          var _k = window.localStorage.key(_i);
-          if (_k && _k.indexOf('pb-buddy-dismissed-') === 0) _buddyKeys.push(_k);
-        }
-        _buddyKeys.forEach(function (key) { window.localStorage.removeItem(key); });
-        window.localStorage.setItem('pb-buddy-storage', 'v2');
-      }
-    } catch (e) {}
-    </script>
-    <script src="{{ url_for('static', filename='js/study-buddy.js') }}?v=20" defer></script>
+    <script src="{{ url_for('static', filename='js/study-buddy.js') }}?v=21" defer></script>
     {% endif %}
+    {% if current_user.is_authenticated or guide_preview_mode %}
+    <script src="{{ url_for('static', filename='js/guide-catalog.js') }}?v=6" defer></script>
+    <script src="{{ url_for('static', filename='js/guide.js') }}?v=10" defer></script>
+    {% endif %}
+    <script src="{{ url_for('static', filename='js/celebrate.js') }}?v=7" defer></script>
     {% if lesson_assist_enabled and lesson_meta and not lesson_meta.get('quizReview') %}
     <script src="{{ url_for('static', filename='js/lesson-assist.js') }}?v=17" defer></script>
     {% endif %}
@@ -111,7 +73,7 @@
     {% endif %}
 </head>
 
-<body{% if quiz_runner_mode %} class="quiz-runner-active"{% endif %}{% if current_user.is_authenticated and sound_enabled %} data-sound-enabled="1"{% endif %}>
+<body{% if quiz_runner_mode %} class="quiz-runner-active"{% endif %}{% if current_user.is_authenticated and sound_enabled %} data-sound-enabled="1"{% endif %}{% if guide_preview_mode %} data-guide-preview="1"{% endif %} data-guide-endpoint="{{ request.endpoint or '' }}"{% if quiz_runner_mode %} data-guide-quiz="1"{% endif %}>
 {{ icon_sprite() }}
 
 {% if current_user.is_authenticated and not email_verified %}
@@ -266,6 +228,12 @@
 </div>
 <script src="{{ url_for('static', filename='js/share-suggest.js') }}?v=2" defer></script>
 {% endif %}
+{% if current_user.is_authenticated or guide_preview_mode %}
+{% include 'partials/guide.html' %}
+{% endif %}
+{% if current_user.is_authenticated %}
+<script type="application/json" id="pb-guide-state"{% if guide_json_persisted %} data-guide-persisted="1"{% endif %}>{{ guide_state | tojson }}</script>
+{% endif %}
 
 <div class="site-wrapper{% if quiz_runner_mode %} site-wrapper--quiz-runner{% endif %}" data-user-logged-in="{% if current_user.is_authenticated %}1{% else %}0{% endif %}"{% if lesson_meta %} data-lesson-level="{{ lesson_meta.level }}" data-lesson-subject="{{ lesson_meta.subject }}" data-lesson-topic="{{ lesson_meta.topic }}" data-lesson-title="{{ lesson_meta.topicTitle|e }}"{% if lesson_meta.get('quizUrl') %} data-lesson-quiz-url="{{ lesson_meta.quizUrl }}" data-lesson-quiz-count="{{ lesson_meta.quizCount }}"{% endif %}{% if lesson_meta.get('practiceUrl') %} data-lesson-practice-url="{{ lesson_meta.practiceUrl }}"{% endif %}{% if lesson_meta.get('quizReview') %} data-quiz-review="1"{% elif not quiz_runner_mode %} data-lesson-content{% endif %}{% endif %}>
     {% block content %}{% endblock %}
@@ -295,6 +263,9 @@
     </div>
 </div>
 
+{% if current_user.is_authenticated or guide_preview_mode %}
+<script type="application/json" id="pb-milestone-catalog">{{ guide_milestones|tojson }}</script>
+{% endif %}
 {% if current_user.is_authenticated %}
 <!-- pb-buddy-embed-v4 -->
 {% if buddy_page %}<script type="application/json" id="pb-buddy-page">{{ buddy_page|tojson }}</script>{% endif %}
@@ -330,42 +301,6 @@
         </div>
     </div>
 </aside>
-{% if buddy_prompt %}
-<script>
-(function () {
-  var root = document.querySelector('[data-buddy-root]');
-  var promptEl = document.getElementById('pb-buddy-prompt');
-  if (!root || !promptEl) return;
-  try {
-    var prompt = JSON.parse(promptEl.textContent || 'null');
-    if (!prompt || !prompt.message) return;
-    var day = new Date().toISOString().slice(0, 10);
-    var hasStay = (prompt.actions || []).some(function (item) {
-      return item && item.kind === 'stay';
-    });
-    if (hasStay && prompt.topic) {
-      if (window.localStorage.getItem('pb-buddy-stay-weak_topic-' + prompt.topic + '-' + day) === '1') {
-        return;
-      }
-    } else if (prompt.type === 'milestone' && prompt.milestone_key) {
-      if (window.localStorage.getItem('pb-buddy-milestone-' + prompt.milestone_key) === '1') {
-        return;
-      }
-    } else if (window.localStorage.getItem('pb-buddy-hide-' + day) === '1') {
-      return;
-    }
-    root.removeAttribute('hidden');
-    root.setAttribute('data-buddy-server', '1');
-    if (prompt.type === 'milestone' && prompt.milestone_key) {
-      root.setAttribute('data-buddy-milestone-key', prompt.milestone_key);
-    }
-    if (prompt.topic) {
-      root.setAttribute('data-buddy-topic', prompt.topic);
-    }
-  } catch (err) {}
-})();
-</script>
-{% endif %}
 {% endif %}
 
 <nav class="app-tab-bar{% if not current_user.is_authenticated %} app-tab-bar--guest{% endif %}{% if quiz_runner_mode %} app-tab-bar--hidden{% endif %}" id="app-tab-bar" aria-label="Main navigation"{% if quiz_runner_mode %} hidden{% endif %}>

@@ -1132,3 +1132,135 @@ html.pwa-standalone .study-buddy {
     color: inherit;
 }
 
+body.guide-open:not(.guide-tour-open) { overflow: hidden; }
+body.guide-open .study-buddy { visibility: hidden; }
+.guide-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 230;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(24px + var(--safe-top)) calc(16px + var(--safe-right)) calc(24px + var(--safe-bottom) + var(--tab-bar-h)) calc(16px + var(--safe-left));
+}
+.guide-overlay[hidden] { display: none; }
+.guide-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 36, 0.55);
+    pointer-events: none;
+}
+.guide-spot {
+    position: fixed;
+    pointer-events: none;
+    border-radius: var(--radius);
+    box-shadow: 0 0 0 9999px rgba(15, 23, 36, 0.55);
+    outline: 2px solid var(--primary);
+}
+.guide-panel {
+    position: relative;
+    z-index: 2;
+    width: min(440px, 100%);
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    padding: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+}
+.guide-overlay .guide-face,
+.guide-overlay .guide-face .buddy-mascot { width: 128px; height: 128px; }
+.guide-speech {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    padding: var(--space-4) var(--space-5);
+}
+.guide-heading {
+    margin: 0 0 var(--space-2);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+.guide-bubble {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.45;
+    color: var(--text);
+    white-space: pre-wrap;
+    min-height: 2.9em;
+}
+.guide-bot-note {
+    margin: var(--space-3) 0 0;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+}
+.guide-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-3);
+    width: 100%;
+}
+.guide-actions .btn { min-height: var(--tap-min); min-width: var(--tap-min); }
+.guide-actions .btn[hidden] { display: none !important; }
+.guide-medal {
+    display: none;
+    font-size: 3rem;
+    line-height: 1;
+}
+.guide-overlay[data-guide-mode="tour"] { align-items: flex-end; }
+.guide-overlay[data-guide-mode="tour"] .guide-backdrop { background: transparent; }
+.guide-overlay[data-guide-mode="reward"] .guide-medal { display: block; }
+.guide-overlay[data-guide-mode="tour"] .guide-bot-note,
+.guide-overlay[data-guide-mode="reward"] .guide-bot-note { display: none; }
+.guide-overlay[data-guide-mode="tour"] .guide-face,
+.guide-overlay[data-guide-mode="tour"] .guide-face .buddy-mascot,
+.guide-overlay[data-guide-mode="reward"] .guide-face,
+.guide-overlay[data-guide-mode="reward"] .guide-face .buddy-mascot { width: 72px; height: 72px; }
+.guide-overlay[data-guide-mode="reward"] .guide-heading {
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 1.15rem;
+    color: var(--text);
+}
+.guide-overlay[data-guide-mode="tour"] .guide-bubble,
+.guide-overlay[data-guide-mode="reward"] .guide-bubble { min-height: 0; }
+@media (max-width: 640px) {
+    .guide-overlay { align-items: flex-end; padding: 0; }
+    .guide-overlay[data-guide-mode="tour"] .guide-backdrop { background: rgba(15, 23, 36, 0.55); }
+    .guide-overlay[data-guide-mode="tour"] .guide-spot { display: none !important; }
+    .guide-panel {
+        width: 100%;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        padding: var(--space-5) var(--space-5) calc(var(--space-5) + var(--safe-bottom));
+    }
+}
+@media (prefers-reduced-motion: no-preference) {
+    .guide-overlay .guide-face .buddy-mascot {
+        animation: study-buddy-bob 2.8s var(--ease-out) infinite;
+        transform-origin: 50% 88%;
+    }
+    /* E6 A6: streak fire on reward only — not tab change */
+    .nav-streak.is-flame > [aria-hidden],
+    .streak-ring-wrap.is-flame .streak-ring-flame,
+    .guide-medal.is-flame,
+    .app-tab.is-flame .app-tab-icon {
+        animation: pb-streak-fire 1.6s ease-in-out 2;
+        transform-origin: 50% 80%;
+    }
+    .nav-streak.is-flame > [aria-hidden] { display: inline-block; }
+}
+@keyframes pb-streak-fire {
+    0%, 100% { transform: scale(1) rotate(0deg); }
+    40% { transform: scale(1.22) rotate(-8deg); }
+    70% { transform: scale(1.12) rotate(6deg); }
+}
+

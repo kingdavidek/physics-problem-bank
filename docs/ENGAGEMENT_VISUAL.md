@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-08-24  
 **Status:** Light tokens only — not a character bible. **E1–E3 shipped; E5.2 shipped; remaining E5 planned. Phase U5 shipped** (custom SVG buddy, brand lock-up).
-**Companion:** `docs/AI_HANDOFF.md` §6, `docs/ENGAGEMENT_E5.md`
+**Companion:** `docs/AI_HANDOFF.md` §6, `docs/ENGAGEMENT_E5.md`, `docs/ANIMATION_ONBOARDING.md` (A1 Guide overlay shipped — same mascot, bigger stage)
 
 Avatar v1 emoji/colours below are the live picker list. Buddy uses the custom SVG mascot (`templates/partials/buddy.html`); emoji remain on avatars and badges.
 
@@ -56,6 +56,8 @@ Corner widget (~56px) on logged-in pages:
 Respects `prefers-reduced-motion`. Off-page **Not now** restores next UTC day; on a weak topic’s lesson page **Keep learning** hides only that card for the day. Does **not** block Check / generate if JS fails.
 
 Message types today: `celebrate`, `streak_risk`, `weak_topic`, `nudge` (first match wins, one per page load).
+
+**E6 A1–A6:** the same SVG appears in the larger Guide overlay for the origin story, reward modal, and section tours (`templates/partials/guide.html`). Streak rewards add a CSS fire beat on the nav chip / ring / medal — not a second mascot, not Lottie.
 
 ## 4b. Buddy faces (E5.1 / U5.8) — shipped as SVG
 

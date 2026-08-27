@@ -1,6 +1,18 @@
 (function () {
   'use strict';
 
+  try {
+    if (window.localStorage.getItem('pb-buddy-storage') !== 'v2') {
+      var buddyKeys = [];
+      for (var i = 0; i < window.localStorage.length; i += 1) {
+        var key = window.localStorage.key(i);
+        if (key && key.indexOf('pb-buddy-dismissed-') === 0) buddyKeys.push(key);
+      }
+      buddyKeys.forEach(function (item) { window.localStorage.removeItem(item); });
+      window.localStorage.setItem('pb-buddy-storage', 'v2');
+    }
+  } catch (e) {}
+
   var root = document.querySelector('[data-buddy-root]');
   if (!root) return;
 

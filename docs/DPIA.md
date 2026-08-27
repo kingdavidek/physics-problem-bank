@@ -2,7 +2,7 @@
 
 **Controller:** set via `CONTROLLER_NAME` (placeholder until S0.1 is completed by the operator)  
 **Contact:** `PRIVACY_CONTACT_EMAIL`  
-**Last reviewed:** 2026-08-26  
+**Last reviewed:** 2026-08-27  
 **Status:** Draft for operator review — not legal advice  
 **Companion:** `docs/SECURITY_AND_GDPR.md`, `docs/ROPA.md`, `docs/SUBPROCESSORS.md`
 
@@ -45,12 +45,12 @@ Users are told, in language a 13-year-old can follow, on `/privacy/simple`. Pare
 | A child's academic weaknesses are visible to others | High / High | Weak topics, revision queues, and skill gaps are private to the account. Friend leaderboards are friends-only; there is **no global ranking**. | Keep weak topics out of the public profile and activity feed forever. |
 | Stranger contact through follows, challenges, suggestions | Medium / High | No DMs. Block and report exist. System bot cannot be messaged as a person. Follows are one-way and do not expose email. | S2: report action on suggestions; documented escalation. Operator must read reports. |
 | Public exposure of study activity | High / High | Default visibility is `followers_only`. Last topic, last activity, lesson progress, and quiz stats default **off**. Logged-out visitors see handle (and the private-profile page), not study data. | Users can still opt into a public profile; the settings page explains that public means anyone on the internet. |
-| Competitive pressure / compulsive use (streaks, boards, buddy nudges) | Medium / Medium | Friends-only boards. Dismissible buddy. No streak-loss shaming copy. No push notifications until production HTTPS (E5.7), and quiet hours are specified there. | Children's Code standard 13: do not add night-time push or public ranking. Revisit this table if G8 teacher mode ships. |
+| Competitive pressure / compulsive use (streaks, boards, buddy nudges) | Medium / Medium | Friends-only boards. Dismissible buddy. No streak-loss shaming copy. No push notifications until production HTTPS (E5.7), and quiet hours are specified there. **A1–A4 Guide (2026-08-27):** optional onboarding dialogue, first-visit section tours, and once-only first-correct / lesson-complete reward modals; Skip / Not now / Escape always; seen-flag in localStorage only; no extra processors. | Children's Code standard 12/13: each tour/origin/reward once; no streak-loss shaming; no night-time push or public ranking. Revisit this table if G8 teacher mode ships. |
 | Free-text fields leaking name, school, or address | Medium / High | Length caps; Jinja autoescape. Child-friendly notice: do not put real name, school, or address in notes. | Cannot fully prevent. Moderation/report remains the backstop. |
 | Child's question sent to an LLM (OpenAI / Anthropic / DeepSeek) | High / High if enabled | **Option A:** disabled in production unless `LESSON_ASSIST_ENABLED=1`. Payload must not contain handle, email, or user id. Mock mode for local/CI. | Do not enable DeepSeek (no UK adequacy) without an IDTA and transfer risk assessment. Prefer a UK/EU or adequacy-covered provider with a DPA and no-training commitment. |
 | Account takeover / rights requests to the wrong person | Medium / High | Password reset (60 min, single use). Email verification required before export and deletion. Password change on settings. | S1: per-account login lockout. Operator CLI erase/export for email requests. |
 | IP addresses retained forever | Medium / Medium | Rate-limit and lesson-assist keys store a keyed hash, not the raw IP. Daily prune. | Host access logs still need a 30-day cap on the hosting panel (operator). |
-| Breach of the SQLite file / backups | Medium / High | Parameterised SQL, hashed passwords, hashed API tokens, HTTPS cookies in production. | **S1:** encrypt backups and prove a restore. Unencrypted copies are the largest remaining Art 32 gap. |
+| Breach of the SQLite file / backups | Medium / High | Parameterised SQL, hashed passwords, hashed API tokens, HTTPS cookies in production. Encrypted backups (S1) and a quarterly restore drill (`docs/CADENCE.md`). | Operator must set `PB_BACKUP_PASSPHRASE` and run the drill on the host. |
 | `PB_TESTING=1` in production (CSRF and rate limits off) | Low / Critical | Boot refuses to start when `PB_TESTING=1` is combined with `SITE_URL=https://…` or `FLASK_ENV=production`. | Keep the flag out of the hosting env. |
 
 ---
@@ -67,7 +67,7 @@ Users are told, in language a 13-year-old can follow, on `/privacy/simple`. Pare
 | 6 Default settings | Followers-only; activity toggles off. |
 | 7 Data minimisation | Email + handle only for identity. |
 | 8 Data sharing | Subprocessors listed; lesson assist off by default. |
-| 12 Nudge techniques | Friends-only competition; no public league table. |
+| 12 Nudge techniques | Friends-only competition; no public league table. Origin overlay and (later) tours are dismissible, once per browser, no analytics. |
 | 13 Connected toys / geolocation | Not used. Permissions-Policy disables camera/mic/geo. |
 
 ---
@@ -86,6 +86,15 @@ Proceed to public launch **only after**:
 
 1. Operator completes S0.1 at public launch (`docs/OPERATOR_LAUNCH.md`: real controller name, monitored privacy inbox, ICO fee / registration number in `ICO_REGISTRATION_NUMBER`).
 2. `docs/SECURITY_AND_GDPR.md` Phase S0 code items remain green (they are implemented as of this date).
-3. Phase S1 backup encryption is implemented (`PB_BACKUP_PASSPHRASE` / Fernet). Keep the passphrase off git and prove a restore after host changes (`docs/DEPLOY.md`).
+3. Phase S1 backup encryption, S2 CSP/self-hosting, and S3 cadence (`docs/CADENCE.md`) are implemented. Keep `PB_BACKUP_PASSPHRASE` off git.
 
 **Review triggers:** any new data category; teacher/class mode (G8); enabling lesson assist; adding analytics; transferring hosting or mail provider; a personal-data breach.
+
+---
+
+## 8. Review log
+
+| Date | What changed | Outcome |
+|---|---|---|
+| 2026-08-26 | S0–S2 code shipped; S3 cadence runbook and restore-drill CLI added | Draft still pending qualified review before public launch. Next scheduled re-read: first quarter after launch, or sooner on a review trigger. |
+| 2026-08-27 | E6 A5 `guide_json` on `user_profile_settings` (boolean seen-flags; no extra processors). Privacy notice + ROPA updated. | Residual: dismissible onboarding persisted per account. Replay intro is user-initiated. |

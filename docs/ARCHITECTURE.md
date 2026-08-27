@@ -1,6 +1,6 @@
 # Problem Bank — Architecture & Product Overview
 
-**Last updated:** 2026-08-24  
+**Last updated:** 2026-08-26  
 **Repository:** `maths_generator/physics-problem-bank`  
 **Audience:** Developers, AI agents, and technical stakeholders  
 
@@ -193,6 +193,7 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | **Lesson keyword search** | `models/lesson_search.py` | SQLite FTS5 over `topics_data.py` plus stripped `*_lesson.html` pages (E2) |
 | **Avatars** | `models/avatar.py` | Emoji + colour JSON on `user_profile_settings.avatar_json` (E2). Extras 🎓/🎧/⭐ gated on milestones (E5.5) |
 | **Alien buddy** | `models/buddy.py` | Corner widget (E3 + E5.1): types `milestone`, `celebrate`, `qotd_nudge`, `streak_risk`, `weak_topic`, `friend_challenge`, `nudge`; per-type face emoji. Server HTML embed + `study-buddy.js`. On weak topic’s lesson page: **Practise MCQ** / **Take a quiz** / **Keep learning**; refetches after generator MCQ. Milestone dismiss: `pb-buddy-milestone-<key>` via **Not now** or **View badges**. `friend_challenge` links to a followed friend's profile. Off-page **Not now** = UTC day; on-page **Keep learning** = per-topic per day |
+| **Guide overlay (E6 A1–A6)** | `static/js/guide.js`, `guide-catalog.js`, `celebrate.js` | Logged-in origin story once (`pb-guide-v1` + `guide_json`). Badge/streak/first-correct/lesson-complete once; celebrate still confetti. CSS streak fire on streak reward only. First-visit Practice / Profile / Daily / Learn / Compete tours. Replay intro in Settings. Same mascot as the corner buddy. Skip / Escape / reduced-motion. |
 | **Streaks & milestones** | `models/gamification.py` | UTC study-day streak; ten-badge `MILESTONE_CATALOG` (incl. QOTD and friends-only accuracy) shown on the profile with catalog emoji. Awarded via `evaluate_milestones` on any study activity |
 | **Friend leaderboard** | `models/gamification.py` | Effort points and weekly quiz+MCQ accuracy (friends only) |
 | **Notifications** | `models/notifications.py` | In-app events |
@@ -251,7 +252,7 @@ Schema is created in `app.py` on startup. Major table groups:
 
 ### 6.3 Social
 
-- `follows`, `user_profile_settings` (including `avatar_json`, `show_accuracy_leaderboard`), `activity_events`
+- `follows`, `user_profile_settings` (including `avatar_json`, `show_accuracy_leaderboard`, `guide_json`), `activity_events`
 - `shared_questions`, `question_suggestions`
 - `quiz_challenges`, `study_pairs`, `qotd_attempts`
 - `user_blocks`, notifications tables
@@ -301,7 +302,7 @@ Lesson quizzes (`generators/shared/lesson_quiz.py`): 10 questions — 3 foundati
 | **SECRET_KEY** | Required non-default outside testing; `PB_ALLOW_DEV_SECRET=1` local-only |
 | **SymPy grading** | Allowlisted safe parser; check API session-bound for SymPy types |
 | **CSRF** | Web forms + cookie-session `/api/*` mutations; Bearer / `PB_TESTING` exempt |
-| **CSP** | Content-Security-Policy on responses; MathJax/Pyodide still need unsafe-eval/wasm; CDN SRI where applied |
+| **CSP** | Content-Security-Policy on responses; `script-src` has no `unsafe-inline` (per-request nonce). MathJax/Pyodide still need `unsafe-eval` / `wasm-unsafe-eval`. Self-hosted under `static/vendor/`. |
 | **Rate limits** | Daily UTC buckets per user or IP (`models/rate_limit.py`); web auth included |
 | **Cookies** | HttpOnly, SameSite=Lax; Secure when HTTPS / `SESSION_COOKIE_SECURE` |
 | **CORS** | Optional `CORS_ORIGINS` for separate frontends |
@@ -332,9 +333,12 @@ Lesson quizzes (`generators/shared/lesson_quiz.py`): 10 questions — 3 foundati
 | `docs/COMPLEX_MECHANISMS.md` | How the three hardest subsystems work (grading, queues, Phase G) |
 | `docs/MOBILE.md` | Mobile polish (M0–M4) + Play Android via TWA (M5–M7) |
 | `docs/SOLID_DRAFT_SECURITY.md` | Solid-draft audit fixes — do not regress |
-| `docs/SECURITY_AND_GDPR.md` | S0 **and S1 shipped in code**; S2 next. DPIA/ROPA/subprocessors drafts alongside |
+| `docs/SECURITY_AND_GDPR.md` | S0–S3 **shipped**; S3 calendar is `docs/CADENCE.md`. DPIA/ROPA/subprocessors drafts alongside |
 | `docs/INCIDENT_RESPONSE.md` | Breach runbook (72-hour ICO clock) |
 | `docs/DATA_RIGHTS.md` | How to answer an access/erasure email |
+| `docs/MODERATION.md` | Report triage CLI and takedown timescales |
+| `docs/ZAP.md` | OWASP ZAP baseline + accepted findings |
+| `docs/CADENCE.md` | S3 weekly / monthly / quarterly operator calendar |
 | `docs/API.md` | REST API v1 contract |
 | `docs/DEPLOY.md` | Production deployment checklist (encrypted backups, CI scanning) |
 | `docs/OPERATOR_LAUNCH.md` | **Operator (David)** — ICO fee, privacy inbox, prune/backup cron; do at public HTTPS / M5 |
@@ -342,7 +346,8 @@ Lesson quizzes (`generators/shared/lesson_quiz.py`): 10 questions — 3 foundati
 | `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | G8, engagement E4, other future ideas |
 | `docs/ENGAGEMENT_VISUAL.md` | Avatar / buddy visual tokens for E2–E3 |
 | `docs/REAL_WORLD_QUESTIONS.md` | **Planned** — real-world question style (E4.1) implementation plan |
-| `docs/ENGAGEMENT_E5.md` | **In progress** — E5.1–E5.6 shipped; web push (E5.7) blocked on HTTPS |
+| `docs/ANIMATION_ONBOARDING.md` | **A1–A6 shipped** — Guide overlay, five tours, reward beats, `guide_json` persist + Replay intro, CSS streak fire (no Lottie) |
+| `docs/ENGAGEMENT_E5.md` | **E5.1–E5.6 shipped**; web push (E5.7) blocked on HTTPS |
 
 ---
 

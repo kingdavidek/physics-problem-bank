@@ -173,6 +173,18 @@
     </section>
 
     <section class="section-panel settings-section">
+        <div class="section-panel-header">Guide</div>
+        <div class="section-panel-body">
+            <p class="page-intro settings-intro">Zorp’s origin story plays once. Replay it if you want to see it again — tours you have already skipped stay skipped.</p>
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="replay_guide_intro">
+                <button type="submit" class="btn btn-outline" id="guide-replay-intro">Replay intro</button>
+            </form>
+        </div>
+    </section>
+
+    <section class="section-panel settings-section">
         <div class="section-panel-header">Sharing &amp; activity feed</div>
         <div class="section-panel-body">
             <div class="settings-switch-group">
@@ -288,15 +300,5 @@
 
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  var input = document.querySelector('input[name="sound_enabled"]');
-  if (!input || !window.pbSound) return;
-  window.pbSound.setEnabled(input.checked);
-  input.addEventListener('change', function () {
-    window.pbSound.setEnabled(input.checked);
-    if (input.checked) window.pbSound.preview();
-  });
-});
-</script>
+<script src="{{ url_for('static', filename='js/settings-sound.js') }}?v=1" defer></script>
 {% endblock %}

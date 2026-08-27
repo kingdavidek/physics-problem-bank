@@ -35,6 +35,9 @@ from markupsafe import Markup
 import sqlite3
 import json
 import uuid
+import mimetypes
+
+mimetypes.add_type('application/wasm', '.wasm')
 from topics_data import TOPIC_CONTENT
 from topic_registry import TOPICS, iter_topics
 from generators.shared.lesson_quiz import (
@@ -118,6 +121,7 @@ from models.social import (
     THEME_CHOICES,
     THEME_SYSTEM,
     normalize_theme_preference,
+    public_guide_state,
     quiz_stats_summary,
     record_activity_event,
     record_mcq_answered,
@@ -128,6 +132,7 @@ from models.social import (
     search_following_by_handle,
     unfollow_user,
     update_profile_settings,
+    validate_guide_patch,
 )
 from models.sharing import (
     SUGGESTION_DISMISSED,
@@ -178,6 +183,7 @@ from models.user_data import (
     upsert_lesson_progress,
 )
 from models.gamification import (
+    MILESTONE_CATALOG,
     evaluate_milestones,
     friend_accuracy_leaderboard,
     friend_effort_leaderboard,
@@ -419,6 +425,11 @@ app.config['REMEMBER_COOKIE_SECURE'] = _secure_cookies
 app.jinja_env.globals['svg_kit'] = svg_kit
 
 login_manager = LoginManager()
+
+
+@app.before_request
+def _assign_csp_nonce():
+    g.csp_nonce = secrets.token_urlsafe(16)
 
 
 @app.before_request
@@ -743,6 +754,14 @@ def _resolve_nav_tab(endpoint):
     return None
 
 
+_GUIDE_MILESTONES = {
+    key: {
+        'emoji': (meta or {}).get('emoji') or '★',
+        'title': (meta or {}).get('title') or key,
+    }
+    for key, meta in MILESTONE_CATALOG.items()
+}
+
 _QUIZ_RUNNER_ENDPOINTS = frozenset({
     'lesson_mcq_quiz',
     'lesson_mcq_results',
@@ -811,6 +830,8 @@ def inject_nav():
     nav_avatar = None
     sound_enabled = False
     theme_preference = THEME_SYSTEM
+    guide_state = {'v': 1, 'origin': False, 'tours': {}, 'rewards': {}}
+    guide_json_persisted = False
     nav_streak = 0
     xp_progress = None
     tab_badges = {}
@@ -827,6 +848,8 @@ def inject_nav():
             theme_preference = normalize_theme_preference(
                 profile_settings.get('theme_preference', THEME_SYSTEM)
             )
+            guide_state = profile_settings.get('guide') or guide_state
+            guide_json_persisted = bool(profile_settings.get('guide_json_persisted'))
             streak = get_study_streak(conn, current_user.id)
             nav_streak = int(streak.get('current') or 0)
             tab_badges = {
@@ -864,13 +887,18 @@ def inject_nav():
         'nav_avatar': nav_avatar,
         'sound_enabled': sound_enabled,
         'theme_preference': theme_preference,
+        'guide_state': guide_state,
+        'guide_json_persisted': guide_json_persisted,
         'nav_streak': nav_streak,
         'tab_badges': tab_badges,
         'quiz_runner_mode': request.endpoint in _QUIZ_RUNNER_ENDPOINTS,
+        'guide_preview_mode': False,
+        'guide_milestones': _GUIDE_MILESTONES,
         'email_verified': bool(getattr(current_user, 'email_verified', False))
         if current_user.is_authenticated
         else True,
         'privacy_contact_email': privacy_contact_email(),
+        'csp_nonce': getattr(g, 'csp_nonce', ''),
     }
 
 
@@ -886,17 +914,17 @@ def _is_python_lesson_page():
 
 @app.after_request
 def apply_csp(response):
+    nonce = getattr(g, 'csp_nonce', None) or secrets.token_urlsafe(16)
+    # script-src: no 'unsafe-inline'. Remaining inline scripts (if any) must carry this nonce.
+    # 'unsafe-eval' / 'wasm-unsafe-eval' stay for MathJax and Pyodide (accepted S2 exception).
+    # style-src keeps 'unsafe-inline' for lesson SVG/presentation attributes.
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
-        # 'unsafe-inline' allows <script> blocks and onclick= handlers in templates.
-        # 'unsafe-eval' is required by MathJax; 'wasm-unsafe-eval' is required by Pyodide.
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; "
+        f"script-src 'self' 'nonce-{nonce}' 'unsafe-eval' 'wasm-unsafe-eval'; "
         "style-src 'self' 'unsafe-inline'; "
         "img-src 'self' data: https:; "
         "font-src 'self'; "
-        # Pyodide fetches pyodide.wasm and the Python stdlib zip from the CDN at runtime.
-        "connect-src 'self' https://cdn.jsdelivr.net; "
-        # Pyodide uses blob: workers internally for async execution; SW is same-origin.
+        "connect-src 'self'; "
         "worker-src 'self' blob:; "
         "manifest-src 'self'; "
         "frame-src 'none'; "
@@ -1289,6 +1317,7 @@ with get_db() as conn:
         ('show_accuracy_leaderboard', 'INTEGER NOT NULL DEFAULT 1'),
         ('sound_enabled', 'INTEGER NOT NULL DEFAULT 0'),
         ('theme_preference', "TEXT NOT NULL DEFAULT 'system'"),
+        ('guide_json', "TEXT NOT NULL DEFAULT '{}'"),
     ):
         if col not in profile_cols:
             conn.execute(f'ALTER TABLE user_profile_settings ADD COLUMN {col} {ddl}')
@@ -3271,6 +3300,10 @@ def _settings_to_json(settings):
             settings.get('theme_preference', THEME_SYSTEM)
         ),
         'avatar': parse_avatar(settings.get('avatar')),
+        'guide': public_guide_state(
+            settings.get('guide') if isinstance(settings.get('guide'), dict)
+            else settings.get('guide_json')
+        ),
     }
 
 
@@ -4407,6 +4440,17 @@ def sandbox_plan_a_checkpoints():
     )
 
 
+def _guide_preview_enabled():
+    """Dev-only Guide origin preview — localhost always; else PB_STYLEGUIDE / PB_TESTING."""
+    if os.environ.get('PB_STYLEGUIDE') == '1' or os.environ.get('PB_TESTING') == '1':
+        return True
+    host = (request.host or '').split(':', 1)[0].lower()
+    if host in ('127.0.0.1', 'localhost', '[::1]'):
+        return True
+    site = (os.environ.get('SITE_URL') or '').strip()
+    return not site.startswith('https://')
+
+
 @app.get('/styleguide')
 def styleguide():
     """Component gallery for the Phase U redesign (docs/UI_REDESIGN.md U0.11).
@@ -4416,6 +4460,14 @@ def styleguide():
     if os.environ.get('PB_STYLEGUIDE') != '1' and os.environ.get('PB_TESTING') != '1':
         abort(404)
     return render_template('styleguide.html')
+
+
+@app.get('/guide-preview')
+def guide_preview():
+    """E6 / A1 — preview origin overlay without logging in. Dev-only."""
+    if not _guide_preview_enabled():
+        abort(404)
+    return render_template('guide_preview.html', guide_preview_mode=True)
 
 
 @app.route('/about')
@@ -4454,6 +4506,7 @@ def api_v1_build_info():
         'buddy_embed': 'v4',
         'study_buddy_js': 'v7',
         'theme_settings': True,
+        'guide_preview': '/guide-preview',
         'repo_root': str(_ROOT),
         'db_path': _db_path(),
         'pb_testing': os.environ.get('PB_TESTING') == '1',
@@ -4966,6 +5019,14 @@ def profile_settings():
                     _send_verify_email(current_user, raw)
                 flash_for('profile_settings', 'Confirmation email sent.', 'success')
             return redirect(url_for('profile_settings'))
+        elif request.form.get('action') == 'replay_guide_intro':
+            with get_db() as conn:
+                current = get_profile_settings(conn, current_user.id)
+                updated = _settings_to_json(current)
+                updated['guide'] = {'origin': False}
+                update_profile_settings(conn, current_user.id, updated)
+            flash_for('index', 'Intro will play on Practice.', 'success')
+            return redirect(url_for('index'))
         else:
             updated = {
                 'profile_visibility': request.form.get('profile_visibility', VISIBILITY_FOLLOWERS),
@@ -5686,6 +5747,7 @@ def api_v1_patch_settings():
         'avatar_face',
         'avatar_bg',
         'avatar_extra',
+        'guide',
     }
     unknown = set(payload.keys()) - allowed_keys
     if unknown:
@@ -5744,6 +5806,12 @@ def api_v1_patch_settings():
     if 'avatar' in payload and payload['avatar'] is not None and not isinstance(payload['avatar'], dict):
         return _api_error('avatar must be an object', 400, 'invalid_field')
 
+    guide_patch = None
+    if 'guide' in payload:
+        guide_patch, guide_err = validate_guide_patch(payload['guide'])
+        if guide_err:
+            return _api_error(guide_err, 400, 'invalid_field')
+
     avatar_keys = ('avatar', 'avatar_face', 'avatar_bg', 'avatar_extra')
     wants_avatar = any(key in payload for key in avatar_keys)
 
@@ -5759,8 +5827,16 @@ def api_v1_patch_settings():
             )
         for key in avatar_keys:
             payload.pop(key, None)
+        payload.pop('guide', None)
         current.update(payload)
-        update_profile_settings(conn, current_user.id, current)
+        if guide_patch is not None:
+            current['guide'] = guide_patch
+        else:
+            current.pop('guide', None)
+        try:
+            update_profile_settings(conn, current_user.id, current)
+        except ValueError as err:
+            return _api_error(str(err), 400, 'invalid_field')
         settings = _settings_to_json(get_profile_settings(conn, current_user.id))
 
     return jsonify({'ok': True, 'settings': settings})

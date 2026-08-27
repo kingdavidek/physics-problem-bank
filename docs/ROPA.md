@@ -3,12 +3,12 @@
 **Controller:** `CONTROLLER_NAME` env (see `.env.example`)  
 **Contact:** `PRIVACY_CONTACT_EMAIL`  
 **ICO registration:** `ICO_REGISTRATION_NUMBER` (required before public launch)  
-**Last reviewed:** 2026-08-26  
+**Last reviewed:** 2026-08-27  
 **UK GDPR Art 30** — keep this aligned with `docs/SECURITY_AND_GDPR.md` §2.1 and §4.
 
 | # | Purpose | Lawful basis | Data categories | Data subjects | Recipients / processors | Transfers | Retention | Security |
 |---|---|---|---|---|---|---|---|---|
-| 1 | Account and authentication | Contract (Art 6(1)(b)) | Email, handle, password hash, last login, email verified at, API token hashes, password-reset and email-verify token hashes | Registered users 13+ | Hosting provider | Hosting region (confirm at deploy) | Life of the account; deleted on request; inactive deleted at 30 months (warning at 24) | Scrypt password hashes; hashed tokens; HTTPS cookies in production; CSRF; rate limits |
+| 1 | Account and authentication | Contract (Art 6(1)(b)) | Email, handle, password hash, last login, email verified at, API token hashes, password-reset and email-verify token hashes, settings including Guide seen-flags (`guide_json`) | Registered users 13+ | Hosting provider | Hosting region (confirm at deploy) | Life of the account; deleted on request; inactive deleted at 30 months (warning at 24) | Scrypt password hashes; hashed tokens; HTTPS cookies in production; CSRF; rate limits |
 | 2 | Study record (practice, quizzes, lessons, reflections, streaks, revision) | Contract | Saved problems, quiz/MCQ attempts, lesson progress, activity events, streaks, study days, milestones, revision queue/plans, QOTD attempts, free-text reflections/notes | Registered users | Hosting only | None extra | Life of the account; erased with the user | Parameterised SQL; FK cascade; export excludes other people's emails |
 | 3 | Social graph and moderation | Contract + legitimate interests (Art 6(1)(f)) for reports | Follows, challenges, study pairs, blocks, reports, notifications | Registered users | Hosting; operator reads reports | None extra | Reports kept 12 months after resolution (safeguarding); other rows die with the account. Reported user id anonymised on erasure | Block/report; no DMs; bot cannot log in |
 | 4 | Security / abuse prevention | Legitimate interests | Hashed IP rate-limit keys, hashed lesson-assist usage keys, host access logs | Users and anonymous visitors | Hosting | None extra | Rate-limit buckets 7 days; lesson-assist usage 30 days; host logs 30 days (hosting config) | Keyed HMAC of IP (`SECRET_KEY`); never store raw IP in app DB |

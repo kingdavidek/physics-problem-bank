@@ -1,4 +1,5 @@
 import json
+import re
 
 from models.avatar import avatar_to_json, parse_avatar
 from models.user import User, normalize_handle, utc_now_iso
@@ -16,6 +17,92 @@ THEME_SYSTEM = 'system'
 THEME_LIGHT = 'light'
 THEME_DARK = 'dark'
 THEME_CHOICES = (THEME_SYSTEM, THEME_LIGHT, THEME_DARK)
+
+GUIDE_JSON_MAX = 4096
+_GUIDE_TOUR_KEY = re.compile(r'^[a-z][a-z0-9_]{0,31}$')
+_GUIDE_REWARD_KEY = re.compile(r'^[a-z0-9_:]{1,64}$')
+_GUIDE_FLAG_LIMIT = 40
+
+
+def empty_guide_state():
+    return {'v': 1, 'origin': False, 'tours': {}, 'rewards': {}}
+
+
+def guide_json_is_stored(raw):
+    text = (raw or '').strip()
+    return bool(text) and text not in ('{}', 'null')
+
+
+def _guide_bool_flags(src, key_re):
+    out = {}
+    if not isinstance(src, dict):
+        return out
+    for key, value in src.items():
+        if len(out) >= _GUIDE_FLAG_LIMIT:
+            break
+        if not isinstance(key, str) or not key_re.match(key):
+            continue
+        if isinstance(value, bool):
+            out[key] = value
+    return out
+
+
+def public_guide_state(raw_or_dict):
+    if isinstance(raw_or_dict, dict):
+        data = raw_or_dict
+    else:
+        try:
+            data = json.loads(raw_or_dict or '{}')
+        except (TypeError, ValueError):
+            data = {}
+    if not isinstance(data, dict):
+        data = {}
+    state = empty_guide_state()
+    if 'origin' in data:
+        state['origin'] = bool(data['origin'])
+    state['tours'] = _guide_bool_flags(data.get('tours'), _GUIDE_TOUR_KEY)
+    state['rewards'] = _guide_bool_flags(data.get('rewards'), _GUIDE_REWARD_KEY)
+    return state
+
+
+def validate_guide_patch(data):
+    if not isinstance(data, dict):
+        return None, 'guide must be an object'
+    if 'origin' in data and not isinstance(data['origin'], bool):
+        return None, 'guide.origin must be a boolean'
+    if 'tours' in data and not isinstance(data['tours'], dict):
+        return None, 'guide.tours must be an object'
+    if 'rewards' in data and not isinstance(data['rewards'], dict):
+        return None, 'guide.rewards must be an object'
+    dumped = json.dumps(data, separators=(',', ':'))
+    if len(dumped) > GUIDE_JSON_MAX:
+        return None, 'guide is too large'
+    return data, None
+
+
+def merge_guide_json(existing_raw, incoming):
+    try:
+        base = json.loads(existing_raw or '{}')
+    except (TypeError, ValueError):
+        base = {}
+    if not isinstance(base, dict):
+        base = {}
+    if isinstance(incoming, dict):
+        if 'origin' in incoming:
+            base['origin'] = bool(incoming['origin'])
+        if 'tours' in incoming and isinstance(incoming['tours'], dict):
+            tours = base.get('tours') if isinstance(base.get('tours'), dict) else {}
+            tours.update(_guide_bool_flags(incoming['tours'], _GUIDE_TOUR_KEY))
+            base['tours'] = tours
+        if 'rewards' in incoming and isinstance(incoming['rewards'], dict):
+            rewards = base.get('rewards') if isinstance(base.get('rewards'), dict) else {}
+            rewards.update(_guide_bool_flags(incoming['rewards'], _GUIDE_REWARD_KEY))
+            base['rewards'] = rewards
+    base['v'] = 1
+    dumped = json.dumps(base, separators=(',', ':'))
+    if len(dumped) > GUIDE_JSON_MAX:
+        raise ValueError('guide_json too large')
+    return dumped
 
 
 def normalize_theme_preference(value):
@@ -101,7 +188,7 @@ def get_profile_settings(conn, user_id):
                show_shared_questions, auto_share_quiz, auto_share_lesson,
                default_share_visibility, show_study_streak, show_milestones,
                email_weekly_digest, avatar_json, show_accuracy_leaderboard,
-               sound_enabled, theme_preference
+               sound_enabled, theme_preference, guide_json
         FROM user_profile_settings
         WHERE user_id = ?
         ''',
@@ -109,6 +196,8 @@ def get_profile_settings(conn, user_id):
     ).fetchone()
     data = dict(row) if row else {}
     data['avatar'] = parse_avatar(data.get('avatar_json'))
+    data['guide'] = public_guide_state(data.get('guide_json'))
+    data['guide_json_persisted'] = guide_json_is_stored(data.get('guide_json'))
     return data
 
 
@@ -122,16 +211,23 @@ def update_profile_settings(conn, user_id, settings):
     if share_visibility not in VISIBILITY_CHOICES:
         share_visibility = VISIBILITY_FOLLOWERS
     theme_preference = normalize_theme_preference(settings.get('theme_preference', THEME_SYSTEM))
+    existing = conn.execute(
+        'SELECT avatar_json, guide_json FROM user_profile_settings WHERE user_id = ?',
+        (user_id,),
+    ).fetchone()
     if 'avatar' in settings or settings.get('avatar_json'):
         avatar_json = avatar_to_json(
             settings.get('avatar') or parse_avatar(settings.get('avatar_json'))
         )
     else:
-        existing = conn.execute(
-            'SELECT avatar_json FROM user_profile_settings WHERE user_id = ?',
-            (user_id,),
-        ).fetchone()
         avatar_json = (existing['avatar_json'] if existing else '') or avatar_to_json({})
+    if 'guide' in settings:
+        guide_json = merge_guide_json(
+            existing['guide_json'] if existing else '',
+            settings.get('guide'),
+        )
+    else:
+        guide_json = (existing['guide_json'] if existing else '') or '{}'
     conn.execute(
         '''
         UPDATE user_profile_settings
@@ -151,7 +247,8 @@ def update_profile_settings(conn, user_id, settings):
             avatar_json = ?,
             show_accuracy_leaderboard = ?,
             sound_enabled = ?,
-            theme_preference = ?
+            theme_preference = ?,
+            guide_json = ?
         WHERE user_id = ?
         ''',
         (
@@ -172,6 +269,7 @@ def update_profile_settings(conn, user_id, settings):
             _bool_int(settings.get('show_accuracy_leaderboard', True)),
             _bool_int(settings.get('sound_enabled', False)),
             theme_preference,
+            guide_json,
             user_id,
         ),
     )

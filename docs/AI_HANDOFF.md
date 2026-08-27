@@ -15,13 +15,14 @@ Start here. Read the documents in the order below before changing behaviour that
 | **Auto-correct (Phases A/B)** | Complete (GCSE CS + Maths; Python via client Pyodide) |
 | **Phase G learning (G1–G7)** | Shipped (weak topics → exam revision planner) |
 | **Solid-draft security bar** | Done (2026-08-01). See `docs/SOLID_DRAFT_SECURITY.md` |
-| **Security + UK GDPR compliance** | **S0 + S1 shipped in code (2026-08-26)** — `docs/SECURITY_AND_GDPR.md`. **Operator S0.1** (ICO fee, live contact, prune cron) is written for David in **`docs/OPERATOR_LAUNCH.md`** — do that at public HTTPS / M5, not during product tracks. **Next engineering on this track: S2** (`unsafe-inline` CSP, self-host MathJax/Pyodide) |
+| **Security + UK GDPR compliance** | **S0–S3 shipped (2026-08-26)** — `docs/SECURITY_AND_GDPR.md`. S3 is the keep-it-true calendar: **`docs/CADENCE.md`**. **Operator S0.1** (ICO fee, live contact, prune cron) is written for David in **`docs/OPERATOR_LAUNCH.md`** — do that at public HTTPS / M5, not during product tracks. |
 | **Mobile polish (app-like PWA)** | **Done (M0–M4)** — foundation, practice UX, app chrome, lessons/diagrams, PWA polish + device QA. **M5–M7** HTTPS → TWA → Play Android when a production URL exists — see `docs/MOBILE.md` |
-| **Phase U (UI redesign)** | **U closed.** Dark mode **D0–D3 shipped** (shell, status chips, diagrams, settings toggle). Cache: `pb-v65`. Spec: `docs/UI_REDESIGN.md` §15. **Follow-up:** settings switches may not persist (see §1.1). |
+| **Phase U (UI redesign)** | **U closed.** Dark mode **D0–D3 shipped** (shell, status chips, diagrams, settings toggle). Cache: `pb-v77`. Spec: `docs/UI_REDESIGN.md` §15. **Follow-up:** settings switches may not persist (see §1.1). |
 | **Engagement roadmap (E1–E3)** | **E1–E3 shipped** (assist mock smoke, `@problem_bot` QOTD card, FTS lesson search, emoji/colour avatars, study buddy, friend quiz-accuracy leaderboard). Visual tokens: `docs/ENGAGEMENT_VISUAL.md` |
 | **G8 teacher / class mode** | Designed, not implemented. See `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2 |
 | **Real-world question style (E4.1)** | **Planned, fully specified** — `docs/REAL_WORLD_QUESTIONS.md`. Third generator mode (`real_world`) across percentages, ratio, compound measures |
-| **Engagement E5 (retention polish)** | **E5.2 shipped 2026-08-16** (four extra badges). **E5.1 partial on branch** `cursor/buddy-on-page-coach-embed` (faces, milestone toast, QOTD nudge, on-page coach, MCQ refetch, milestone dismiss — see §9). Rest planned — `docs/ENGAGEMENT_E5.md` |
+| **Guide & celebration (E6 / Phase A)** | **A1–A6 shipped** (origin, badge/streak/first-correct/lesson-complete, five tours, `guide_json` persist + Replay intro, CSS streak fire). Spec: `docs/ANIMATION_ONBOARDING.md`. Not the E4.2 mascot farm. |
+| **Engagement E5 (retention polish)** | **E5.1–E5.6 shipped.** Remaining **E5.7** web push — blocked until `docs/MOBILE.md` M5. Spec: `docs/ENGAGEMENT_E5.md` |
 | **Engagement stretch (E4.2–E4.3)** | Long-term — see `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §3.0 (mascot farm, Desmos-class graphs) |
 | **Git tip (post-hardening)** | Harden commit on `main`; history purged of `data/quicktest.db` |
 
@@ -42,12 +43,13 @@ Start here. Read the documents in the order below before changing behaviour that
 | **2b** | `docs/COMPLEX_MECHANISMS.md` | Deep dive: grading, generator queues, Phase G (Flask/JS/CSS roles) |
 | **2c** | `docs/MOBILE.md` | Mobile polish (M0–M4) + Play Android via TWA (M5–M7) |
 | **3** | `docs/SOLID_DRAFT_SECURITY.md` | Critical/high fixes just shipped; **do not regress** |
-| **3b** | `docs/SECURITY_AND_GDPR.md` | S0–S3 plan. **S0 and S1 are done in code.** Read before touching auth, personal data, defaults, or anything that leaves the server. Drafts: `docs/DPIA.md`, `docs/ROPA.md`, `docs/SUBPROCESSORS.md`. Runbooks: `docs/INCIDENT_RESPONSE.md`, `docs/DATA_RIGHTS.md` |
+| **3b** | `docs/SECURITY_AND_GDPR.md` | S0–S3 plan. **S0–S3 are done** (S3 = calendar, not a feature). Read before touching auth, personal data, defaults, or anything that leaves the server. Calendar: `docs/CADENCE.md`. Drafts: `docs/DPIA.md`, `docs/ROPA.md`, `docs/SUBPROCESSORS.md`. Runbooks: `docs/INCIDENT_RESPONSE.md`, `docs/DATA_RIGHTS.md`, `docs/MODERATION.md`, `docs/ZAP.md` |
 | **4** | `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | G8 design + engagement E4 + other future ideas |
 | **5** | `docs/API.md` | REST `/api/v1/*` contracts when touching APIs |
 | **6** | `docs/DEPLOY.md` | Env, HTTPS, backups, smoke, production checklist |
 | *at public launch / M5* | **`docs/OPERATOR_LAUNCH.md`** | **David’s** ICO / privacy-inbox / prune-cron checklist. Surface this when starting production HTTPS; skip it during E4.1, UI, etc. |
 | *before starting E4.1* | `docs/REAL_WORLD_QUESTIONS.md` | Step-by-step plan for the real-world generator mode |
+| *before starting E6 / Guide* | `docs/ANIMATION_ONBOARDING.md` | Origin story, section tours, badge/streak celebration; includes the next-agent prompt |
 | *before starting E5* | `docs/ENGAGEMENT_E5.md` | Step-by-step plan for buddy v0.5, badges, QOTD week, streak freeze, avatar unlocks |
 | *as needed* | `docs/EMAIL_SETUP.md` | Weekly digest only |
 | *as needed* | `docs/ENGAGEMENT_VISUAL.md` | Avatar / buddy colour and emoji tokens (after E1) |
@@ -72,6 +74,7 @@ Word (`.docx`) copies exist for key docs. **Markdown is the source of truth** fo
 11. **No analytics, advertising, or third-party tracking.** The site needs no cookie-consent banner precisely because none exists; adding any requires a consent flow and a rewritten privacy notice in the same release.
 12. **Anything that makes a child more visible to others defaults to off.** See `docs/SECURITY_AND_GDPR.md` §S0.3.
 13. **Never store a raw IP address** where a keyed hash serves the same purpose (rate-limit and usage buckets are compared, never read back).
+14. **Before any new feature**, answer the four questions in `docs/SECURITY_AND_GDPR.md` §6.1 (`python scripts/ops_cadence.py feature-gate`). Privacy / ROPA / DPIA / subprocessor edits ship in the same PR if any answer is yes.
 
 ---
 
@@ -233,6 +236,24 @@ Small extensions of shipped systems, specified in **`docs/ENGAGEMENT_E5.md`**. *
 
 Remaining E5: web push (blocked on production HTTPS / `docs/MOBILE.md` M5).
 
+### E6 — Guide & celebration (A1–A6 shipped)
+
+Origin story, first-visit section tours, and badge/streak “moments” using the existing alien buddy. **Not** E4.2 farm. Full plan: **`docs/ANIMATION_ONBOARDING.md`**.
+
+**A1 shipped 2026-08-26:** overlay shell (`templates/partials/guide.html`), `static/js/guide.js` + origin catalog, localStorage `pb-guide-v1`. Plays once after login; Skip / Escape / reduced-motion; logged-in only.
+
+**A2 shipped 2026-08-26:** reward modal for badges and streak 7/30/100. `celebrate.js` hooks `pbGuide.reward`; Guide records seen; confetti still fires. Origin still wins if both would show.
+
+**A3 shipped 2026-08-26:** Practice / Profile / Daily first-visit tours. Spotlight + mobile bottom sheet. Settings / legal / auth / quiz never auto-tour. Origin still blocks tours on the same load.
+
+**A3b shipped 2026-08-27:** Learn + Compete first-visit tours. Compete copy is friends-only; Challenges are optional, no DMs.
+
+**A4 shipped 2026-08-27:** first-correct and lesson-complete reward modals, once each (`pb-guide-v1` rewards). Later lessons stay confetti-only. No extra CSS.
+
+**A5 shipped 2026-08-27:** `guide_json` on `user_profile_settings` (boolean flags). Hydrate `#pb-guide-state`; PATCH merge; Settings **Replay intro**. Privacy notice + ROPA updated. localStorage remains a cache.
+
+**A6 shipped 2026-08-27:** CSS streak fire (`pb-streak-fire`) when a 7/30/100 streak reward plays — nav chip, profile ring, medal, Profile tab. Not on tab change. No Lottie / WebM / CDN.
+
 ---
 
 ## 7. Suggested next work (priority menu)
@@ -245,7 +266,7 @@ Product tracks (E4.1, UI, etc.) can proceed on a local/dev site. **Do not** star
 2. **Continue E5:** **E5.7** (web push) only after production HTTPS (`docs/MOBILE.md` M5).
 3. **G8 — Teacher / class mode** per `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2. Note this adds teacher oversight of children's data — DPIA review required first.
 4. **Mobile M5+ / public launch** — production HTTPS (`docs/MOBILE.md`). **Gate:** `docs/OPERATOR_LAUNCH.md` (David: ICO, privacy inbox, prune cron + `PB_BACKUP_PASSPHRASE`), then `docs/DEPLOY.md`. Unblocks web push (E5.7).
-5. **Compliance S2** — remove `unsafe-inline` from the CSP; self-host MathJax/Pyodide (`docs/SECURITY_AND_GDPR.md`). S1 is shipped.
+5. **Compliance calendar** — keep `docs/CADENCE.md` (S3). Not a build phase.
 6. **Settings switch persist** — later; see §1.1. Do not block other work on this.
 7. **E4.2 / E4.3 and other stretch** only after metrics or an explicit product call.
 
@@ -260,12 +281,10 @@ Product tracks (E4.1, UI, etc.) can proceed on a local/dev site. **Do not** star
 
 ---
 
-## 9. Active work handoff — S1 shipped (2026-08-26)
+## 9. Active work handoff — S3 shipped (2026-08-26)
 
-**S0 and S1 GDPR/security shipped in code.** Remaining **human** work is deferred to public launch: **`docs/OPERATOR_LAUNCH.md`** (ICO, privacy inbox, prune cron, `PB_BACKUP_PASSPHRASE`, GitHub secret scanning). Do not do that during E4.1 / UI / other product tracks. When M5 or production deploy starts, remind David and follow that doc.
+**S0–S3 GDPR/security shipped.** S3 is the calendar in **`docs/CADENCE.md`** (`scripts/ops_cadence.py`). Remaining **human** work at public launch: **`docs/OPERATOR_LAUNCH.md`**. Do not do that during E4.1 / UI / other product tracks. When M5 or production deploy starts, remind David and follow that doc.
 
-**Next on this track: Phase S2** (`docs/SECURITY_AND_GDPR.md`): remove `unsafe-inline` from the CSP (move inline scripts into `static/js/`), self-host MathJax and Pyodide, OWASP ZAP baseline, personal-data action log for CLI export/erase.
-
-**E5.6 shipped:** revision planner subject dropdown. Remaining E5 is **E5.7** web push — blocked until `docs/MOBILE.md` M5.
+**This GDPR/security track has no further build phase.** Product next is **E4.1**. Remaining E5 is **E5.7** web push — blocked until `docs/MOBILE.md` M5.
 
 ---

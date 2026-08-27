@@ -44,7 +44,7 @@ def main():
         assert r.status_code == 200, r.data
         sw = r.data.decode()
         assert 'STATIC_CACHE' in sw
-        assert 'pb-v66' in sw
+        assert 'pb-v77' in sw
         # JS and CSS must stay network-first or ?v= cache-busts never land.
         assert 'isVersionedAsset' in sw
         assert '/static/css/tokens.css' in sw
@@ -65,7 +65,7 @@ def main():
         assert 'pwa-install-banner' in html
         assert 'pwa-ios-hint' in html
         assert 'pwa-offline-bar' in html
-        assert 'pwa-standalone' in html
+        assert 'boot-head.js' in html
         assert 'app-tab-bar' in html
         assert 'tab-bar.js' in html
         assert 'header-primary-nav' in html
@@ -91,6 +91,7 @@ def main():
             '/static/icons/favicon.ico',
             '/favicon.ico',
             '/static/js/pwa.js',
+            '/static/js/boot-head.js',
             '/static/js/sw.js',
             '/static/manifest.webmanifest',
             *(f'/static/css/{name}' for name in stylesheets),
@@ -103,6 +104,9 @@ def main():
         pwa = client.get('/static/js/pwa.js').data.decode()
         assert 'isStandalone' in pwa or 'display-mode: standalone' in pwa
         assert 'pwa_ios_hint_dismissed' in pwa
+        boot = client.get('/static/js/boot-head.js').data.decode()
+        assert 'pwa-standalone' in boot
+        assert 'pb-theme' in boot
 
     print('PWA smoke tests passed.')
 

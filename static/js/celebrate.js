@@ -114,6 +114,10 @@
     }
     drawCheckmark(anchor);
     showXpFloat(anchor, xp);
+    if (window.pbGuide && typeof window.pbGuide.reward === 'function') {
+      var openedFirst = window.pbGuide.reward({ type: 'first_correct' });
+      if (openedFirst) burstConfetti();
+    }
     if (correctStreak >= 3) {
       burstConfetti();
       correctStreak = 0;
@@ -136,6 +140,14 @@
 
   function celebrateMilestone(key) {
     var token = String(key || 'badge').replace(/\s+/g, '_');
+    if (window.pbGuide && typeof window.pbGuide.reward === 'function') {
+      var opened = window.pbGuide.reward({ type: 'milestone', key: token });
+      if (opened !== false) {
+        burstConfetti();
+        try { window.localStorage.setItem(LS_MILESTONE + token, '1'); } catch (err) {}
+      }
+      return opened !== false;
+    }
     if (claimed(LS_MILESTONE + token)) return false;
     burstConfetti();
     return true;
@@ -144,6 +156,14 @@
   function celebrateStreakRound(days) {
     var n = parseInt(days, 10);
     if (!STREAK_ROUNDS[n]) return false;
+    if (window.pbGuide && typeof window.pbGuide.reward === 'function') {
+      var opened = window.pbGuide.reward({ type: 'streak', days: n });
+      if (opened !== false) {
+        burstConfetti();
+        try { window.localStorage.setItem(LS_STREAK + n, '1'); } catch (err) {}
+      }
+      return opened !== false;
+    }
     if (claimed(LS_STREAK + n)) return false;
     burstConfetti();
     return true;
@@ -195,6 +215,9 @@
       showXpFloat(null, 25);
       burstConfetti();
       correctStreak = 0;
+      if (window.pbGuide && typeof window.pbGuide.reward === 'function') {
+        window.pbGuide.reward({ type: 'lesson_complete' });
+      }
     },
   };
 
