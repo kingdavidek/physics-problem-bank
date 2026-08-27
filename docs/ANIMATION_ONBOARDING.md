@@ -1,7 +1,7 @@
 # Problem Bank — Guide & celebration (Phase A / E6)
 
 **Last updated:** 2026-08-27  
-**Status:** A1–A6 shipped — origin overlay, badge/streak/first-correct/lesson-complete rewards, five section tours, `guide_json` persist + Replay intro, CSS streak-fire on streak rewards. No Lottie.  
+**Status:** A1–A6 + B shipped — origin overlay, badge/streak/first-correct/lesson-complete rewards, five section tours, `guide_json` persist + Replay intro, CSS streak-fire, overlay wink/nod/shake/tap. No Lottie.  
 **Audience:** The next AI agent implementing this (and David, for copy/tone)  
 **Parent:** new engagement track. Distinct from **E4.2 mascot farm** (economy / collectibles — still deferred).  
 **Companions:** `docs/ENGAGEMENT_VISUAL.md`, `docs/ENGAGEMENT_E5.md`, `docs/UI_REDESIGN.md` §10 (U7 motion), `docs/SECURITY_AND_GDPR.md` §6.1, `docs/DPIA.md`
@@ -351,6 +351,10 @@ Same pattern. Compete copy: friends-only.
 
 **Shipped:** CSS `pb-streak-fire` on `.nav-streak` / profile ring / reward medal / Profile tab icon when a **streak** reward plays (`playStreakFlame` in `guide.js`). Gated on `prefers-reduced-motion: no-preference`. Does **not** animate every tab change. CSS can do this beat — **no Lottie, WebM, jsDelivr, or extra vendor**.
 
+### B — Overlay gestures (CSS)
+
+**Shipped:** SVG regroup (`.buddy-head`, `.buddy-foot`, `.buddy-eye`) with visual parity. Catalog `gesture` on a few origin/tour steps: wink / nod / tap / shake. `playGesture` sets `data-gesture` on the overlay mascot (~1.2s), then clears. Gated on `prefers-reduced-motion`. Corner 56px widget is **not** wired. Preview + styleguide have Play buttons. No extra faces, no Lottie, no `guide_json` keys.
+
 ---
 
 ## 7. How it would look in code (contracts)
@@ -362,7 +366,8 @@ window.pbGuide = {
   play: function (id) {},      // 'origin' | 'practice' | …
   reward: function (spec) {},  // { type: 'milestone', key } | { type: 'streak', days }
   seen: function (id) {},
-  resetOrigin: function () {}  // settings Replay
+  resetOrigin: function () {}, // settings Replay
+  gesture: function (name) {}  // 'wink' | 'nod' | 'shake' | 'tap' — overlay/preview
 };
 ```
 
@@ -433,9 +438,10 @@ Do **not** change grading, generators, or `normalize_mode`.
 - [x] First-correct and lesson-complete reward modals, once each (A4)
 - [x] Skip / Escape / reduced-motion / no inline JS
 - [x] `scripts/test_guide_smoke.py` green; full `python scripts/run_smoke_tests.py`
-- [x] Cache bump; docs status updated *(A6 — `pb-v77`)*
+- [x] Cache bump; docs status updated *(B — `pb-v78`)*
 - [x] Persist `guide_json` + Replay intro (A5)
 - [x] CSS streak fire on streak reward (A6; no Lottie)
+- [x] Overlay wink / nod / shake / tap (B; catalog `gesture`; no Lottie)
 
 **E6 Guide track is complete.** Next product item is E4.1 if David asks.
 
@@ -443,7 +449,7 @@ Do **not** change grading, generators, or `normalize_mode`.
 
 ## 11. Suggested build order for the next agent
 
-**A1–A6 shipped.** Do not reopen Guide unless David asks.
+**A1–A6 + B shipped.** Do not reopen Guide unless David asks.
 
 Do not start E4.1, M5, or E5.7 in the same session unless asked.
 

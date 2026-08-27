@@ -47,5 +47,24 @@
         window.setTimeout(function () { buddyFace.classList.remove('is-reacting'); }, 560);
       });
     }
+    var gestureDemo = document.getElementById('sg-zorp-gesture');
+    var gestureTimer = 0;
+    var gestureBtns = document.querySelectorAll('[data-zorp-gesture]');
+    for (var i = 0; i < gestureBtns.length; i += 1) {
+      gestureBtns[i].addEventListener('click', function (event) {
+        if (!gestureDemo) return;
+        var name = event.currentTarget.getAttribute('data-zorp-gesture');
+        if (!name) return;
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (gestureTimer) window.clearTimeout(gestureTimer);
+        gestureDemo.removeAttribute('data-gesture');
+        void gestureDemo.getBoundingClientRect();
+        gestureDemo.setAttribute('data-gesture', name);
+        gestureTimer = window.setTimeout(function () {
+          gestureTimer = 0;
+          gestureDemo.removeAttribute('data-gesture');
+        }, 1200);
+      });
+    }
   });
 })();

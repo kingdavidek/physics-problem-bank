@@ -57,7 +57,7 @@ Respects `prefers-reduced-motion`. Off-page **Not now** restores next UTC day; o
 
 Message types today: `celebrate`, `streak_risk`, `weak_topic`, `nudge` (first match wins, one per page load).
 
-**E6 A1–A6:** the same SVG appears in the larger Guide overlay for the origin story, reward modal, and section tours (`templates/partials/guide.html`). Streak rewards add a CSS fire beat on the nav chip / ring / medal — not a second mascot, not Lottie.
+**E6 A1–A6 + B:** the same SVG appears in the larger Guide overlay for the origin story, reward modal, and section tours (`templates/partials/guide.html`). Streak rewards add a CSS fire beat on the nav chip / ring / medal. Overlay steps may wink, nod, shake, or tap a foot (`data-gesture`) — not a second mascot, not Lottie, not the 56px corner widget.
 
 ## 4b. Buddy faces (E5.1 / U5.8) — shipped as SVG
 

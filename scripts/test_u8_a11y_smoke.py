@@ -16,12 +16,12 @@ from app import app  # noqa: E402
 CSS_DIR = ROOT / 'static' / 'css'
 LESSON_ONLY = {'lesson-pages.css', 'lesson-assist.css'}
 # Uncompressed tree; D2 lesson SVG remaps live in lesson-pages.css.
-# E6 Guide overlay + A3 spotlight + A6 streak fire live in chrome.css.
-CSS_BUDGET_BYTES = 219_000
+# E6 Guide overlay + A3 spotlight + A6 streak fire + B gestures live in chrome.css.
+CSS_BUDGET_BYTES = 221_000
 # Core sheets loaded on every page after the U8.6 lesson split.
 # S0 added fonts.css (~1KB) plus legal-footer / email-verify chrome.
-# E6 A1–A3 overlay/spotlight and A6 streak-fire keyframes live in chrome.css.
-CSS_CORE_BUDGET_BYTES = 195_000
+# E6 A1–A6 overlay/spotlight/streak-fire and B wink/nod/shake/tap live in chrome.css.
+CSS_CORE_BUDGET_BYTES = 196_500
 
 
 def test_tab_bar_aria_current():

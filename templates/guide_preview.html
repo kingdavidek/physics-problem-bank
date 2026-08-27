@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/buddy.html" import buddy_mascot %}
 {% block title %}Guide preview – Problem Bank{% endblock %}
 
 {% block content %}
@@ -30,6 +31,21 @@
                 <button type="button" class="btn btn-outline" id="guide-preview-lesson">Play lesson complete</button>
             </div>
             <a href="/profile" class="nav-streak" id="guide-preview-nav-streak" data-streak="7" aria-label="7 day study streak" style="margin-top: var(--space-4);"><span aria-hidden="true">🔥</span>7</a>
+        </div>
+    </section>
+    <section class="section-panel">
+        <div class="section-panel-header">Gestures (E6 B)</div>
+        <div class="section-panel-body">
+            <p class="profile-empty">Short CSS beats on the 128px overlay mascot. Does not write <code>pb-guide-v1</code>. Reduced motion skips these.</p>
+            <div class="sg-row" style="margin-top: var(--space-4);">
+                <span class="study-buddy-face sg-zorp-gesture" id="guide-preview-zorp" data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot() }}</span>
+            </div>
+            <div class="sg-row" style="margin-top: var(--space-4);">
+                <button type="button" class="btn btn-outline" id="guide-preview-wink">Wink</button>
+                <button type="button" class="btn btn-outline" id="guide-preview-nod">Nod</button>
+                <button type="button" class="btn btn-outline" id="guide-preview-shake">Shake</button>
+                <button type="button" class="btn btn-outline" id="guide-preview-tap">Tap</button>
+            </div>
         </div>
     </section>
     <section class="section-panel">
@@ -72,5 +88,5 @@
         </div>
     </section>
 </div>
-<script src="{{ url_for('static', filename='js/guide-preview.js') }}?v=5" defer></script>
+<script src="{{ url_for('static', filename='js/guide-preview.js') }}?v=6" defer></script>
 {% endblock %}

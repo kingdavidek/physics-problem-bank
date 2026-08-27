@@ -54,6 +54,8 @@
   var memoryState = null;
   var flameTimer = 0;
   var flameNodes = [];
+  var gestureTimer = 0;
+  var gestureEl = null;
 
   function isPreview() {
     return !!(document.body && document.body.getAttribute('data-guide-preview') === '1');
@@ -345,6 +347,45 @@
     }, 3200);
   }
 
+  function clearGesture() {
+    if (gestureTimer) {
+      window.clearTimeout(gestureTimer);
+      gestureTimer = 0;
+    }
+    if (gestureEl) {
+      gestureEl.removeAttribute('data-gesture');
+      gestureEl = null;
+    }
+  }
+
+  function playGesture(name, target) {
+    if (prefersReducedMotion()) return false;
+    var ok = { wink: 1, nod: 1, shake: 1, tap: 1 };
+    if (!ok[name]) return false;
+    var el = target || faceEl;
+    if (!el) return false;
+    if (gestureTimer) {
+      window.clearTimeout(gestureTimer);
+      gestureTimer = 0;
+    }
+    if (gestureEl && gestureEl !== el) gestureEl.removeAttribute('data-gesture');
+    gestureEl = el;
+    el.removeAttribute('data-gesture');
+    void el.getBoundingClientRect();
+    el.setAttribute('data-gesture', name);
+    gestureTimer = window.setTimeout(function () {
+      gestureTimer = 0;
+      if (gestureEl) gestureEl.removeAttribute('data-gesture');
+      gestureEl = null;
+    }, 1200);
+    return true;
+  }
+
+  function gesture(name) {
+    var demo = document.getElementById('guide-preview-zorp');
+    return playGesture(name, demo || faceEl);
+  }
+
   function clearSpot() {
     if (!spotEl) return;
     spotEl.hidden = true;
@@ -506,6 +547,7 @@
     if (step.mode === 'tour') document.body.classList.add('guide-tour-open');
     else document.body.classList.remove('guide-tour-open');
     highlightTarget(step);
+    if (prefersReducedMotion() || lineIndex === lines.length) playGesture(step.gesture);
     if (step.rewardType === 'streak') playStreakFlame();
   }
 
@@ -535,6 +577,7 @@
     lineIndex = 0;
     setMedal('');
     clearSpot();
+    clearGesture();
     if (lastFocus && typeof lastFocus.focus === 'function') {
       try { lastFocus.focus(); } catch (err) {}
     }
@@ -723,6 +766,7 @@
     reward: reward,
     seen: seen,
     resetOrigin: resetOrigin,
+    gesture: gesture,
   };
 
   if (primaryBtn) primaryBtn.addEventListener('click', onPrimary);

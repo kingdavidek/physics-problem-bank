@@ -123,6 +123,16 @@
             </figure>
             {% endfor %}
         </div>
+        <p class="profile-empty" style="margin-top: var(--space-5);">E6 B gestures (Guide overlay size). Play once; reduced motion skips.</p>
+        <div class="sg-row" style="margin-top: var(--space-4);">
+            <span class="study-buddy-face sg-zorp-gesture" id="sg-zorp-gesture" data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot() }}</span>
+        </div>
+        <div class="sg-row" style="margin-top: var(--space-4);">
+            <button type="button" class="btn btn-outline" data-zorp-gesture="wink">Wink</button>
+            <button type="button" class="btn btn-outline" data-zorp-gesture="nod">Nod</button>
+            <button type="button" class="btn btn-outline" data-zorp-gesture="shake">Shake</button>
+            <button type="button" class="btn btn-outline" data-zorp-gesture="tap">Tap</button>
+        </div>
     </div>
 </section>
 
@@ -484,5 +494,5 @@
         pointer-events: auto;
     }
 </style>
-<script src="{{ url_for('static', filename='js/styleguide.js') }}?v=1" defer></script>
+<script src="{{ url_for('static', filename='js/styleguide.js') }}?v=2" defer></script>
 {% endblock %}

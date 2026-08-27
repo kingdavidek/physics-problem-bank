@@ -69,11 +69,22 @@ def main():
     assert 'pb-streak-fire' in chrome
     assert '.nav-streak.is-flame' in chrome
     assert 'prefers-reduced-motion' in chrome
+    assert 'pb-zorp-wink' in chrome
+    assert 'pb-zorp-nod' in chrome
+    assert 'pb-zorp-shake' in chrome
+    assert 'pb-zorp-tap' in chrome
+    assert 'data-gesture="wink"' in chrome
     assert 'lottie' not in chrome.lower()
+    buddy_svg = (ROOT / 'templates' / 'partials' / 'buddy.html').read_text(encoding='utf-8')
+    assert 'buddy-head' in buddy_svg
+    assert 'buddy-foot' in buddy_svg
+    assert 'buddy-eye--r' in buddy_svg
     js_src = (ROOT / 'static' / 'js' / 'guide.js').read_text(encoding='utf-8')
     assert 'playStreakFlame' in js_src
     assert "rewardType === 'streak'" in js_src
     assert 'is-flame' in js_src
+    assert 'playGesture' in js_src
+    assert 'data-gesture' in js_src
     assert 'lottie' not in js_src.lower()
     assert 'jsdelivr' not in js_src.lower()
     assert 'data-guide-spot' in partial
@@ -105,6 +116,8 @@ def main():
         assert 'data-guide-preview' in guide_js
         assert 'isPreview' in guide_js
         assert 'function reward' in guide_js
+        assert 'function playGesture' in guide_js
+        assert 'gesture: gesture' in guide_js
         assert 'copyFlags' in guide_js
         assert "type === 'milestone'" in guide_js
         assert "type === 'streak'" in guide_js
@@ -161,6 +174,10 @@ def main():
         assert "id: 'learn.grid'" in catalog
         assert "id: 'compete.board'" in catalog
         assert 'Not now' in catalog
+        assert "gesture: 'wink'" in catalog
+        assert "gesture: 'nod'" in catalog
+        assert "gesture: 'tap'" in catalog
+        assert "gesture: 'shake'" in catalog
         assert 'profile_settings' not in catalog
         assert 'friend_leaderboard_page' not in catalog
         assert 'topics_index' not in catalog
@@ -335,6 +352,11 @@ def main():
         assert 'guide-preview-daily' in preview
         assert 'guide-preview-learn' in preview
         assert 'guide-preview-compete' in preview
+        assert 'id="guide-preview-zorp"' in preview
+        assert 'guide-preview-wink' in preview
+        assert 'guide-preview-nod' in preview
+        assert 'guide-preview-shake' in preview
+        assert 'guide-preview-tap' in preview
         assert 'data-guide-endpoint="guide_preview"' in preview
         assert 'onclick=' not in preview.lower()
 

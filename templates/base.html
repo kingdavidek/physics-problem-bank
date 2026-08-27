@@ -27,9 +27,9 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}?v=23">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=24">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=31">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=38">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=39">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/practice.css') }}?v=24">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=49">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=50">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}?v=21">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/diagrams.css') }}?v=26">
     {% if lesson_meta %}
@@ -58,8 +58,8 @@
     <script src="{{ url_for('static', filename='js/study-buddy.js') }}?v=21" defer></script>
     {% endif %}
     {% if current_user.is_authenticated or guide_preview_mode %}
-    <script src="{{ url_for('static', filename='js/guide-catalog.js') }}?v=6" defer></script>
-    <script src="{{ url_for('static', filename='js/guide.js') }}?v=10" defer></script>
+    <script src="{{ url_for('static', filename='js/guide-catalog.js') }}?v=7" defer></script>
+    <script src="{{ url_for('static', filename='js/guide.js') }}?v=11" defer></script>
     {% endif %}
     <script src="{{ url_for('static', filename='js/celebrate.js') }}?v=7" defer></script>
     {% if lesson_assist_enabled and lesson_meta and not lesson_meta.get('quizReview') %}

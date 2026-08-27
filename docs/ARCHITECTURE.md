@@ -193,7 +193,7 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | **Lesson keyword search** | `models/lesson_search.py` | SQLite FTS5 over `topics_data.py` plus stripped `*_lesson.html` pages (E2) |
 | **Avatars** | `models/avatar.py` | Emoji + colour JSON on `user_profile_settings.avatar_json` (E2). Extras 🎓/🎧/⭐ gated on milestones (E5.5) |
 | **Alien buddy** | `models/buddy.py` | Corner widget (E3 + E5.1): types `milestone`, `celebrate`, `qotd_nudge`, `streak_risk`, `weak_topic`, `friend_challenge`, `nudge`; per-type face emoji. Server HTML embed + `study-buddy.js`. On weak topic’s lesson page: **Practise MCQ** / **Take a quiz** / **Keep learning**; refetches after generator MCQ. Milestone dismiss: `pb-buddy-milestone-<key>` via **Not now** or **View badges**. `friend_challenge` links to a followed friend's profile. Off-page **Not now** = UTC day; on-page **Keep learning** = per-topic per day |
-| **Guide overlay (E6 A1–A6)** | `static/js/guide.js`, `guide-catalog.js`, `celebrate.js` | Logged-in origin story once (`pb-guide-v1` + `guide_json`). Badge/streak/first-correct/lesson-complete once; celebrate still confetti. CSS streak fire on streak reward only. First-visit Practice / Profile / Daily / Learn / Compete tours. Replay intro in Settings. Same mascot as the corner buddy. Skip / Escape / reduced-motion. |
+| **Guide overlay (E6 A1–A6 + B)** | `static/js/guide.js`, `guide-catalog.js`, `celebrate.js` | Logged-in origin story once (`pb-guide-v1` + `guide_json`). Badge/streak/first-correct/lesson-complete once; celebrate still confetti. CSS streak fire on streak reward only. Overlay wink/nod/shake/tap from catalog `gesture`. First-visit Practice / Profile / Daily / Learn / Compete tours. Replay intro in Settings. Same mascot as the corner buddy. Skip / Escape / reduced-motion. |
 | **Streaks & milestones** | `models/gamification.py` | UTC study-day streak; ten-badge `MILESTONE_CATALOG` (incl. QOTD and friends-only accuracy) shown on the profile with catalog emoji. Awarded via `evaluate_milestones` on any study activity |
 | **Friend leaderboard** | `models/gamification.py` | Effort points and weekly quiz+MCQ accuracy (friends only) |
 | **Notifications** | `models/notifications.py` | In-app events |
@@ -346,7 +346,7 @@ Lesson quizzes (`generators/shared/lesson_quiz.py`): 10 questions — 3 foundati
 | `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | G8, engagement E4, other future ideas |
 | `docs/ENGAGEMENT_VISUAL.md` | Avatar / buddy visual tokens for E2–E3 |
 | `docs/REAL_WORLD_QUESTIONS.md` | **Planned** — real-world question style (E4.1) implementation plan |
-| `docs/ANIMATION_ONBOARDING.md` | **A1–A6 shipped** — Guide overlay, five tours, reward beats, `guide_json` persist + Replay intro, CSS streak fire (no Lottie) |
+| `docs/ANIMATION_ONBOARDING.md` | **A1–A6 + B shipped** — Guide overlay, five tours, reward beats, `guide_json` persist + Replay intro, CSS streak fire, overlay gestures (no Lottie) |
 | `docs/ENGAGEMENT_E5.md` | **E5.1–E5.6 shipped**; web push (E5.7) blocked on HTTPS |
 
 ---

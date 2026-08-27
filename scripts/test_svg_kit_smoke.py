@@ -243,6 +243,11 @@ def test_u58_mascot():
         assert 'data-face="weak_topic"' in sg
         assert 'data-face="friend_challenge"' in sg
         assert 'buddy-face--nudge' in sg
+        assert 'buddy-head' in sg
+        assert 'buddy-foot' in sg
+        assert 'buddy-eye--r' in sg
+        assert 'id="sg-zorp-gesture"' in sg
+        assert 'data-zorp-gesture="wink"' in sg
         assert sg.count('class="buddy-mascot"') >= 7
 
 

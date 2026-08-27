@@ -347,7 +347,7 @@ E1–E3 shipped 2026-08-15. Of the three E4 items below, only **E4.1** is schedu
 | E4.1 | Real-world question style (percentages, ratio, compound measures) | Planned — `docs/REAL_WORLD_QUESTIONS.md` |
 | E4.2 / E4.3 | Mascot farm perks, Desmos-class graphs | Stretch — §3.0 this file |
 | E5 | Retention polish | **E5.1–E5.6 shipped**; E5.7 push blocked — `docs/ENGAGEMENT_E5.md` |
-| **E6 / Phase A** | Guide & celebration (origin story, first-visit tours, badge/streak moments) | **A1–A6 shipped** (origin, tours, reward beats, `guide_json` persist + Replay intro, CSS streak fire). Spec: `docs/ANIMATION_ONBOARDING.md` |
+| **E6 / Phase A** | Guide & celebration (origin story, first-visit tours, badge/streak moments) | **A1–A6 + B shipped** (origin, tours, reward beats, `guide_json` persist + Replay intro, CSS streak fire, overlay wink/nod/shake/tap). Spec: `docs/ANIMATION_ONBOARDING.md` |
 
 ---
 

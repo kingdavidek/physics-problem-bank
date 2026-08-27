@@ -19,6 +19,10 @@
     var competeBtn = document.getElementById('guide-preview-compete');
     var firstBtn = document.getElementById('guide-preview-first');
     var lessonBtn = document.getElementById('guide-preview-lesson');
+    var winkBtn = document.getElementById('guide-preview-wink');
+    var nodBtn = document.getElementById('guide-preview-nod');
+    var shakeBtn = document.getElementById('guide-preview-shake');
+    var tapBtn = document.getElementById('guide-preview-tap');
 
     if (playBtn) {
       playBtn.addEventListener('click', function () {
@@ -76,5 +80,17 @@
         window.pbGuide.reward({ type: 'lesson_complete' });
       });
     }
+    function bindGesture(btn, name) {
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        if (window.pbGuide && typeof window.pbGuide.gesture === 'function') {
+          window.pbGuide.gesture(name);
+        }
+      });
+    }
+    bindGesture(winkBtn, 'wink');
+    bindGesture(nodBtn, 'nod');
+    bindGesture(shakeBtn, 'shake');
+    bindGesture(tapBtn, 'tap');
   });
 })();
