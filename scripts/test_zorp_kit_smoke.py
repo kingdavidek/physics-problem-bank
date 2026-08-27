@@ -126,6 +126,20 @@ def test_templates_use_kit():
     assert "partials/zorp_kit.html" not in base
 
 
+def test_styleguide_localhost_without_env_flag():
+    old_styleguide = os.environ.pop('PB_STYLEGUIDE', None)
+    old_testing = os.environ.pop('PB_TESTING', None)
+    try:
+        client = app.test_client()
+        response = client.get('/styleguide', headers={'Host': 'localhost:5001'})
+        assert response.status_code == 200, response.status_code
+    finally:
+        if old_styleguide is not None:
+            os.environ['PB_STYLEGUIDE'] = old_styleguide
+        if old_testing is not None:
+            os.environ['PB_TESTING'] = old_testing
+
+
 def main():
     test_tokens_and_resolve()
     test_pose_markup()
@@ -133,6 +147,7 @@ def main():
     test_live_mascot_unchanged()
     test_proof_badges()
     test_styleguide_gallery()
+    test_styleguide_localhost_without_env_flag()
     test_templates_use_kit()
     print('Zorp pose kit smoke OK')
 

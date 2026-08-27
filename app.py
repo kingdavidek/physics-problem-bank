@@ -4474,7 +4474,7 @@ def sandbox_plan_a_checkpoints():
 
 
 def _guide_preview_enabled():
-    """Dev-only Guide origin preview — localhost always; else PB_STYLEGUIDE / PB_TESTING."""
+    """Dev-only preview pages — localhost always; else PB_STYLEGUIDE / PB_TESTING."""
     if os.environ.get('PB_STYLEGUIDE') == '1' or os.environ.get('PB_TESTING') == '1':
         return True
     host = (request.host or '').split(':', 1)[0].lower()
@@ -4488,9 +4488,10 @@ def _guide_preview_enabled():
 def styleguide():
     """Component gallery for the Phase U redesign (docs/UI_REDESIGN.md U0.11).
 
-    Dev-only: set PB_STYLEGUIDE=1 to view. Never reachable in production.
+    Dev-only: available on localhost; elsewhere set PB_STYLEGUIDE=1 (or PB_TESTING=1).
+ 404 on production HTTPS.
     """
-    if os.environ.get('PB_STYLEGUIDE') != '1' and os.environ.get('PB_TESTING') != '1':
+    if not _guide_preview_enabled():
         abort(404)
     return render_template('styleguide.html')
 
