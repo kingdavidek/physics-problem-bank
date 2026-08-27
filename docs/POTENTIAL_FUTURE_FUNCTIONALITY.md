@@ -344,6 +344,7 @@ E1–E3 shipped 2026-08-15. Of the three E4 items below, only **E4.1** is schedu
 | **G8** | **Teacher / class mode** | **Designed — not started** |
 | E1–E3 | Engagement (assist smoke, mascot QOTD, FTS, avatars, buddy, friend accuracy LB) | **E1–E3 shipped** |
 | E4.1 | Real-world question style (percentages, ratio, compound measures) | Planned — `docs/REAL_WORLD_QUESTIONS.md` |
+| — | European School Integrated Science S1–S3 (new `eursc` level, 46 syllabus modules) | Fully planned — `docs/EUROPEAN_SCHOOL_SCIENCE.md` |
 | E4.2 / E4.3 | Mascot farm perks, Desmos-class graphs | Stretch — §3.0 this file |
 | E5 | Retention polish (buddy v0.5, badges, QOTD week, streak freeze, avatar unlocks, planner dropdown, push) | Planned — `docs/ENGAGEMENT_E5.md` |
 

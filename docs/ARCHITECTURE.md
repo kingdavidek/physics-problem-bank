@@ -113,6 +113,7 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | **gcse** | maths (~30 topics), physics (2), cs (10) | Largest coverage |
 | **alevel** | physics (magnetism, photoelectric, particles) | 3 topics |
 | **myp** | chemistry (redox, energy_changes_and_rates) | 2 topics |
+| **eursc** | science (Integrated Science S1–S3) | **Planned** — `docs/EUROPEAN_SCHOOL_SCIENCE.md` |
 
 ---
 
@@ -336,6 +337,7 @@ Lesson quizzes (`generators/shared/lesson_quiz.py`): 10 questions — 3 foundati
 | `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | G8, engagement E4, other future ideas |
 | `docs/ENGAGEMENT_VISUAL.md` | Avatar / buddy visual tokens for E2–E3 |
 | `docs/REAL_WORLD_QUESTIONS.md` | **Planned** — real-world question style (E4.1) implementation plan |
+| `docs/EUROPEAN_SCHOOL_SCIENCE.md` | **Planned** — European School Integrated Science S1–S3 lesson suite (new `eursc` level) |
 | `docs/ENGAGEMENT_E5.md` | **In progress** — E5.1–E5.2 shipped; QOTD week, streak freeze, avatar unlocks planned |
 
 ---
