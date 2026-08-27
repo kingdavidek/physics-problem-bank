@@ -43,7 +43,8 @@ Start here. Read the documents in the order below before changing behaviour that
 | **5** | `docs/API.md` | REST `/api/v1/*` contracts when touching APIs |
 | **6** | `docs/DEPLOY.md` | Env, HTTPS, backups, smoke, production checklist |
 | *before starting E4.1* | `docs/REAL_WORLD_QUESTIONS.md` | Step-by-step plan for the real-world generator mode |
-| *before adding a new level or curriculum* | `docs/EUROPEAN_SCHOOL_SCIENCE.md` | New-level wiring checklist and the European School science lesson plan |
+| *before ES0 (European School platform)* | `docs/ES0_HANDOFF.md` | **Start here** — Phase ES0 only; sync `main` first |
+| *before adding a new level or curriculum* | `docs/EUROPEAN_SCHOOL_SCIENCE.md` | Full curriculum plan (46 modules); read after ES0 handoff |
 | *before starting E5* | `docs/ENGAGEMENT_E5.md` | Step-by-step plan for buddy v0.5, badges, QOTD week, streak freeze, avatar unlocks |
 | *as needed* | `docs/EMAIL_SETUP.md` | Weekly digest only |
 | *as needed* | `docs/ENGAGEMENT_VISUAL.md` | Avatar / buddy colour and emoji tokens (after E1) |
