@@ -20,9 +20,10 @@
     <button type="button" data-level-filter="gcse" aria-selected="false">GCSE</button>
     <button type="button" data-level-filter="alevel" aria-selected="false">A-Level</button>
     <button type="button" data-level-filter="myp" aria-selected="false">MYP</button>
+    <button type="button" data-level-filter="eursc" aria-selected="false">European School</button>
 </nav>
 
-{% set subject_icons = {'maths': 'maths', 'physics': 'physics', 'cs': 'cs', 'chemistry': 'chemistry'} %}
+{% set subject_icons = {'maths': 'maths', 'physics': 'physics', 'cs': 'cs', 'chemistry': 'chemistry', 'science': 'science'} %}
 
 <div id="topics-grid">
 {% for group in topic_groups %}
@@ -35,7 +36,18 @@
         </div>
     </div>
     <ol class="topic-path">
+        {% set unit_ns = namespace(year='', unit='') %}
         {% for topic in group.topics %}
+        {% if topic.year or topic.unit_name %}
+        {% if topic.year != unit_ns.year or topic.unit_code != unit_ns.unit %}
+        <li class="topic-path-unit">
+            {% if topic.year_label %}<span class="topic-path-year">{{ topic.year_label }}</span>{% endif %}
+            <span class="topic-path-unit-name">{% if topic.unit_code %}{{ topic.unit_code }} {% endif %}{{ topic.unit_name }}</span>
+        </li>
+        {% set unit_ns.year = topic.year %}
+        {% set unit_ns.unit = topic.unit_code %}
+        {% endif %}
+        {% endif %}
         <li class="topic-path-node topic-path-node--{{ 'a' if loop.index0 % 2 == 0 else 'b' }}{% if topic.is_master %} is-complete is-master{% elif topic.is_complete %} is-complete{% endif %}{% if topic.is_current %} is-current{% endif %}{% if topic.is_later %} is-later{% endif %}">
             <span class="topic-path-rail" aria-hidden="true">
                 <span class="topic-path-dot">{% if topic.is_complete %}✓{% else %}{{ topic.order }}{% endif %}</span>

@@ -111,13 +111,14 @@
   }
 
   function levelFromHash(hash) {
+    var known = { gcse: 1, alevel: 1, myp: 1, eursc: 1 };
     var level = 'all';
-    if (hash === 'gcse' || hash === 'alevel' || hash === 'myp') {
+    if (known[hash]) {
       level = hash;
     } else if (hash.indexOf('topics-') === 0) {
       level = hash.split('-')[1] || 'all';
     }
-    if (level === 'gcse' || level === 'alevel' || level === 'myp') return level;
+    if (known[level]) return level;
     return 'all';
   }
 

@@ -1221,6 +1221,7 @@ body.quiz-runner-active .lesson-quiz-cta-bar,
     --topic-accent: var(--subject-chemistry);
     --topic-edge: var(--subject-chemistry-edge);
 }
+.topic-card--science { --topic-accent: var(--subject-science); --topic-edge: var(--subject-science-edge); }
 .topic-card:hover {
     box-shadow: 0 3px 0 var(--topic-accent), var(--elev-3);
     transform: translateY(-2px);

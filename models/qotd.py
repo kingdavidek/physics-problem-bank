@@ -41,6 +41,8 @@ def list_mcq_topic_paths():
     for level, subjects in TOPICS.items():
         for subject, topics in subjects.items():
             for slug, cfg in topics.items():
+                if level == 'eursc':
+                    continue
                 if topic_supports_lesson_mcq(cfg):
                     paths.append((level, subject, slug, cfg))
     paths.sort()

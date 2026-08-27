@@ -1,5 +1,6 @@
 #topic registry
 
+import os
 
 from generators.gcse.physics_forces import (gcse_physics_forces,)
 from generators.gcse.physics import (edexcel_combined_physics_radioactivity,)
@@ -423,7 +424,31 @@ TOPICS = {
             },
         },
     },
+    "eursc": {
+        "science": {},
+    },
 }
+
+_VALID_YEARS = frozenset({"s1", "s2", "s3"})
+
+
+if os.environ.get("PB_TESTING") == "1":
+    from generators.eursc.science_es0_fixture import (
+        eursc_science_es0_fixture,
+        eursc_science_es0_fixture_variants,
+    )
+
+    TOPICS["eursc"]["science"]["es0_fixture"] = {
+        "name": "ES0 Mixed Quiz Fixture",
+        "order": 1,
+        "year": "s1",
+        "unit_code": "1.1",
+        "unit_name": "Science Lab",
+        "syllabus_ref": "es0",
+        "lesson_bank": True,
+        "func": eursc_science_es0_fixture,
+        "variants_func": eursc_science_es0_fixture_variants,
+    }
 
 
 def topic_sort_key(item):
@@ -448,6 +473,18 @@ def validate_topic_registry():
             seen_orders = {}
             topic_slugs = set(topics.keys())
             for slug, cfg in topics.items():
+                year = cfg.get('year')
+                if year is not None and year not in _VALID_YEARS:
+                    errors.append(
+                        f'{level}/{subject}/{slug}: invalid year {year!r} '
+                        f'(expected one of {sorted(_VALID_YEARS)})'
+                    )
+                unit_code = cfg.get('unit_code')
+                unit_name = cfg.get('unit_name')
+                if (unit_code and not unit_name) or (unit_name and not unit_code):
+                    errors.append(
+                        f'{level}/{subject}/{slug}: unit_code and unit_name must be set together'
+                    )
                 order = cfg.get('order')
                 if order is None:
                     errors.append(f'{level}/{subject}/{slug}: missing order')

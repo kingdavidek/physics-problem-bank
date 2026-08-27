@@ -53,7 +53,7 @@ def test_mensuration_route():
 
 
 FILENAME_RE = re.compile(
-    r'^(gcse|alevel|myp)_([a-z]+)_([a-z0-9_]+)_lesson\.html$'
+    r'^(gcse|alevel|myp|eursc)_([a-z]+)_([a-z0-9_]+)_lesson\.html$'
 )
 RADIOACTIVITY = 'gcse_physics_radioactivity_lesson.html'
 

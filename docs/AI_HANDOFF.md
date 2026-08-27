@@ -21,7 +21,7 @@ Start here. Read the documents in the order below before changing behaviour that
 | **Engagement roadmap (E1–E3)** | **E1–E3 shipped** (assist mock smoke, `@problem_bot` QOTD card, FTS lesson search, emoji/colour avatars, study buddy, friend quiz-accuracy leaderboard). Visual tokens: `docs/ENGAGEMENT_VISUAL.md` |
 | **G8 teacher / class mode** | Designed, not implemented. See `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2 |
 | **Real-world question style (E4.1)** | **Planned, fully specified** — `docs/REAL_WORLD_QUESTIONS.md`. Third generator mode (`real_world`) across percentages, ratio, compound measures |
-| **European School Integrated Science S1–S3** | **Planned, fully specified** — `docs/EUROPEAN_SCHOOL_SCIENCE.md`. New `eursc` level, 46 syllabus modules, variable lesson depth, mixed-format quizzes. Product decisions are locked; ES0 platform enablement is next |
+| **European School Integrated Science S1–S3** | **ES0 shipped** (mixed lesson quiz + `eursc` hierarchy shell). ES1+ lesson content is next — `docs/ES0_HANDOFF.md`, `docs/EUROPEAN_SCHOOL_SCIENCE.md` |
 | **Guide & celebration (E6 / Phase A)** | **A1–A6 + B shipped** (origin, badge/streak/first-correct/lesson-complete, five tours, `guide_json` persist + Replay intro, CSS streak fire, overlay wink/nod/shake/tap). Spec: `docs/ANIMATION_ONBOARDING.md`. Not the E4.2 mascot farm. |
 | **Engagement E5 (retention polish)** | **E5.1–E5.6 shipped.** Remaining **E5.7** web push — blocked until `docs/MOBILE.md` M5. Spec: `docs/ENGAGEMENT_E5.md` |
 | **Engagement stretch (E4.2–E4.3)** | Long-term — see `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §3.0 (mascot farm, Desmos-class graphs) |
@@ -50,7 +50,8 @@ Start here. Read the documents in the order below before changing behaviour that
 | **6** | `docs/DEPLOY.md` | Env, HTTPS, backups, smoke, production checklist |
 | *at public launch / M5* | **`docs/OPERATOR_LAUNCH.md`** | **David’s** ICO / privacy-inbox / prune-cron checklist. Surface this when starting production HTTPS; skip it during E4.1, UI, etc. |
 | *before starting E4.1* | `docs/REAL_WORLD_QUESTIONS.md` | Step-by-step plan for the real-world generator mode |
-| *before adding a new level or curriculum* | `docs/EUROPEAN_SCHOOL_SCIENCE.md` | New-level wiring checklist and the European School science lesson plan |
+| *before ES0 (European School platform)* | `docs/ES0_HANDOFF.md` | **Start here** — Phase ES0 only; sync `main` first |
+| *before adding a new level or curriculum* | `docs/EUROPEAN_SCHOOL_SCIENCE.md` | Full curriculum plan (46 modules); read after ES0 handoff |
 | *before starting E6 / Guide* | `docs/ANIMATION_ONBOARDING.md` | Origin story, section tours, badge/streak celebration; includes the next-agent prompt |
 | *before starting E5* | `docs/ENGAGEMENT_E5.md` | Step-by-step plan for buddy v0.5, badges, QOTD week, streak freeze, avatar unlocks |
 | *as needed* | `docs/EMAIL_SETUP.md` | Weekly digest only |
@@ -273,7 +274,7 @@ Product tracks (E4.1, UI, etc.) can proceed on a local/dev site. **Do not** star
 4. **Mobile M5+ / public launch** — production HTTPS (`docs/MOBILE.md`). **Gate:** `docs/OPERATOR_LAUNCH.md` (David: ICO, privacy inbox, prune cron + `PB_BACKUP_PASSPHRASE`), then `docs/DEPLOY.md`. Unblocks web push (E5.7).
 5. **Compliance calendar** — keep `docs/CADENCE.md` (S3). Not a build phase.
 6. **Settings switch persist** — later; see §1.1. Do not block other work on this.
-7. **E4.2 / E4.3 and other stretch** only after metrics or an explicit product call.
+7. **European School ES1** — Measurement pilot after ES0 (`docs/ES0_HANDOFF.md`).
 
 ---
 

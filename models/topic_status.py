@@ -15,11 +15,13 @@ _SUBJECT_LABELS = {
     'physics': 'Physics',
     'cs': 'Computer Science',
     'chemistry': 'Chemistry',
+    'science': 'Integrated Science',
 }
 _LEVEL_LABELS = {
     'gcse': 'GCSE',
     'alevel': 'A-Level',
     'myp': 'MYP',
+    'eursc': 'European School',
 }
 _KIND_EMOJI = {
     'completed': '📘',
@@ -139,7 +141,7 @@ def topic_badge_meta(key):
 
 
 def catalog_extra_entries():
-    """Global 5/10/20 and GCSE-subject badges (not per-topic)."""
+    """Global 5/10/20 and per-subject badges (not per-topic)."""
     entries = {}
     labels = {
         'completed': 'lessons complete',
@@ -154,18 +156,21 @@ def catalog_extra_entries():
                 'emoji': _TIER_EMOJI.get(count, '★'),
                 'tier': _TIER_TIER.get(count, 'bronze'),
             }
-    for subject, topics in (TOPICS.get('gcse') or {}).items():
-        slugs = [slug for slug, _cfg in iter_topics(topics)]
-        if not slugs:
+    for level, subjects in TOPICS.items():
+        if not isinstance(subjects, dict):
             continue
-        title = _subject_title('gcse', subject)
-        for kind in ('completed', 'ninja', 'master'):
-            entries[subject_badge_key(kind, 'gcse', subject)] = {
-                'title': f'{title} {kind}' if kind != 'completed' else f'{title} complete',
-                'description': f'Reach {kind} on every {title} topic',
-                'emoji': '🎓',
-                'tier': 'gold',
-            }
+        for subject, topics in subjects.items():
+            slugs = [slug for slug, _cfg in iter_topics(topics)]
+            if not slugs:
+                continue
+            title = _subject_title(level, subject)
+            for kind in ('completed', 'ninja', 'master'):
+                entries[subject_badge_key(kind, level, subject)] = {
+                    'title': f'{title} {kind}' if kind != 'completed' else f'{title} complete',
+                    'description': f'Reach {kind} on every {title} topic',
+                    'emoji': '🎓',
+                    'tier': 'gold',
+                }
     return entries
 
 
@@ -328,13 +333,24 @@ def topic_status_map(conn, user_id, now=None):
     return out
 
 
-def gcse_subject_slugs():
+def subject_slugs_for_badges():
     subjects = []
-    for subject, topics in (TOPICS.get('gcse') or {}).items():
-        slugs = [slug for slug, _cfg in iter_topics(topics)]
-        if slugs:
-            subjects.append(('gcse', subject, slugs))
+    for level, subjects_map in TOPICS.items():
+        if not isinstance(subjects_map, dict):
+            continue
+        for subject, topics in subjects_map.items():
+            slugs = [slug for slug, _cfg in iter_topics(topics)]
+            if slugs:
+                subjects.append((level, subject, slugs))
     return subjects
+
+
+def gcse_subject_slugs():
+    """Backward-compatible alias for GCSE subject badge groups."""
+    return [
+        item for item in subject_slugs_for_badges()
+        if item[0] == 'gcse'
+    ]
 
 
 def milestone_keys_for_statuses(statuses):
@@ -355,7 +371,7 @@ def milestone_keys_for_statuses(statuses):
         for threshold in STATUS_TIERS:
             if n >= threshold:
                 keys.append(aggregate_badge_key(kind, threshold))
-    for level, subject, slugs in gcse_subject_slugs():
+    for level, subject, slugs in subject_slugs_for_badges():
         if slugs and all(
             statuses.get((level, subject, slug), {}).get('lesson_complete')
             for slug in slugs

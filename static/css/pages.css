@@ -883,6 +883,7 @@ a.list-row {
 .topic-group--cs { --topic-accent: var(--subject-cs); --topic-soft: var(--subject-cs-soft); }
 .topic-group--physics { --topic-accent: var(--subject-physics); --topic-soft: var(--subject-physics-soft); }
 .topic-group--chemistry { --topic-accent: var(--subject-chemistry); --topic-soft: var(--subject-chemistry-soft); }
+.topic-group--science { --topic-accent: var(--subject-science); --topic-soft: var(--subject-science-soft); }
 .topic-group-header {
     display: flex;
     align-items: center;
@@ -924,6 +925,19 @@ a.list-row {
     flex-direction: column;
     gap: var(--space-3);
 }
+.topic-path-unit {
+    margin: var(--space-4) 0 var(--space-1);
+    padding-left: 40px;
+}
+.topic-path-year {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--topic-accent, var(--brand-600));
+}
+.topic-path-unit-name { font-weight: 700; }
 .topic-path-node {
     display: grid;
     grid-template-columns: 28px minmax(0, 1fr);

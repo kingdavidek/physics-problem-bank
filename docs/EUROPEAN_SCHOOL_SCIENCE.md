@@ -1,7 +1,9 @@
 # European School Integrated Science S1–S3 — full lesson-suite plan
 
+**Repo path:** `docs/EUROPEAN_SCHOOL_SCIENCE.md` (from repository root)  
+**ES0 agent entry point:** `docs/ES0_HANDOFF.md` — platform enablement only; run `git checkout main && git pull` first  
 **Last updated:** 2026-08-27
-**Status:** Planned (fully scoped) — not started
+**Status:** ES0 shipped (mixed-quiz engine + `eursc` hierarchy). ES1+ not started.
 **Official source:** Schola Europaea, *Integrated Science Syllabus S1–S3*, ref **2018-12-D-6-en-2**, approved 7–8 February 2019 and phased into force for S1–S3 from 2019–2021. [Official PDF](https://www.eursc.eu/Syllabuses/2018-12-D-6-en-2.pdf)
 **Platform question contract:** `docs/API.md` §Problems and `docs/COMPLEX_MECHANISMS.md` §1
 **Decisions locked:** full curriculum-faithful puberty/sexuality coverage; launch **lessons + lesson quizzes**, while the main Practice generator remains GCSE maths/CS only.

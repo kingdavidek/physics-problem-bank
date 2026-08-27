@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from generators.shared.lesson_quiz import topic_supports_lesson_mcq
+from generators.shared.lesson_quiz import topic_supports_lesson_quiz
 from models.gamification import get_study_streak, milestone_meta
 from models.moderation import is_blocked
 from models.qotd import get_daily_question
@@ -143,10 +143,8 @@ def _same_topic(level, subject, topic, other_level, other_subject, other_topic):
 
 
 def _quiz_available(level, subject, topic):
-    if level != 'gcse' or subject not in ('maths', 'cs'):
-        return False
     try:
-        return topic_supports_lesson_mcq(TOPICS[level][subject][topic])
+        return topic_supports_lesson_quiz(TOPICS[level][subject][topic])
     except KeyError:
         return False
 

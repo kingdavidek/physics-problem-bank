@@ -5,7 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATES = ROOT / 'templates'
-FILENAME_RE = re.compile(r'^(gcse|alevel|myp)_([a-z]+)_([a-z0-9_]+)_lesson\.html$')
+FILENAME_RE = re.compile(r'^(gcse|alevel|myp|eursc)_([a-z]+)_([a-z0-9_]+)_lesson\.html$')
 _MCQ_MARKER = 'class="mcq-inline"'
 
 

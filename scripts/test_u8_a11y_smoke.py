@@ -17,11 +17,13 @@ CSS_DIR = ROOT / 'static' / 'css'
 LESSON_ONLY = {'lesson-pages.css', 'lesson-assist.css'}
 # Uncompressed tree; D2 lesson SVG remaps live in lesson-pages.css.
 # E6 Guide overlay + A3 spotlight + A6 streak fire + B gestures live in chrome.css.
-CSS_BUDGET_BYTES = 221_000
+# ES0 science subject tokens + year/unit topic-path headings.
+CSS_BUDGET_BYTES = 222_000
 # Core sheets loaded on every page after the U8.6 lesson split.
 # S0 added fonts.css (~1KB) plus legal-footer / email-verify chrome.
 # E6 A1–A6 overlay/spotlight/streak-fire and B wink/nod/shake/tap live in chrome.css.
-CSS_CORE_BUDGET_BYTES = 196_500
+# ES0 science subject + /topics year-unit grouping.
+CSS_CORE_BUDGET_BYTES = 198_000
 
 
 def test_tab_bar_aria_current():

@@ -43,7 +43,11 @@ from topic_registry import TOPICS, iter_topics
 from generators.shared.lesson_quiz import (
     LESSON_QUIZ_MIX,
     build_lesson_mcq_quiz,
+    build_lesson_quiz,
+    grade_lesson_quiz_problem,
+    lesson_quiz_problems_are_mixed,
     topic_supports_lesson_mcq,
+    topic_supports_lesson_quiz,
 )
 from generators.alevel.magnetism import (
     aqa_mag_faradays_law,
@@ -766,6 +770,7 @@ _GUIDE_MILESTONES = {
 
 _QUIZ_RUNNER_ENDPOINTS = frozenset({
     'lesson_mcq_quiz',
+    'lesson_mcq_question',
     'lesson_mcq_results',
     'quicktest_question',
     'quicktest_results',
@@ -783,7 +788,11 @@ def inject_nav():
             view_args.get('subject'),
             view_args.get('topic'),
         )
-    elif request.endpoint in ('lesson_mcq_results', 'lesson_mcq_quiz'):
+    elif request.endpoint in (
+        'lesson_mcq_results',
+        'lesson_mcq_quiz',
+        'lesson_mcq_question',
+    ):
         lesson_meta = _lesson_meta_for_topic(
             view_args.get('level'),
             view_args.get('subject'),
@@ -1889,9 +1898,7 @@ def _lesson_quiz_available(level, subject, topic):
         topic_config = TOPICS[level][subject][topic]
     except KeyError:
         return False
-    if level != "gcse" or subject not in ("maths", "cs"):
-        return False
-    return topic_supports_lesson_mcq(topic_config)
+    return topic_supports_lesson_quiz(topic_config)
 
 ## Problems functionality:
 
@@ -2325,12 +2332,19 @@ LEVEL_LABELS = {
     'gcse': 'GCSE',
     'alevel': 'A-Level',
     'myp': 'IB MYP',
+    'eursc': 'European School',
+}
+YEAR_LABELS = {
+    's1': 'S1',
+    's2': 'S2',
+    's3': 'S3',
 }
 SUBJECT_LABELS = {
     'maths': 'Mathematics',
     'physics': 'Physics',
     'cs': 'Computer Science',
     'chemistry': 'Chemistry',
+    'science': 'Integrated Science',
 }
 PROFILE_VISIBILITY_LABELS = {
     'public': 'Public',
@@ -3744,6 +3758,14 @@ def _quicktest_question_payload(problem, *, reveal=False):
     return payload
 
 
+def _lesson_quiz_question_payload(problem, *, reveal=False):
+    payload = _quicktest_question_payload(problem, reveal=reveal)
+    if not reveal:
+        payload.pop('correct_answer', None)
+        payload.pop('correct_answer_raw', None)
+    return payload
+
+
 def _quicktest_session_summary(data, session_id):
     idx = int(data.get('index', 0))
     total = len(data.get('problems') or [])
@@ -3982,11 +4004,19 @@ def _get_lesson_quiz_session_or_error(session_id):
     return data, None
 
 
+def _lesson_quiz_user_answer(answers, index):
+    if index >= len(answers or []):
+        return ''
+    value = answers[index]
+    if isinstance(value, dict):
+        return str(value.get('user_answer') or '')
+    return str(value or '')
+
+
 def _lesson_quiz_score(problems, answers):
     score = 0
     for i, problem in enumerate(problems):
-        letter = answers[i] if i < len(answers) else ''
-        if letter and letter == (problem.get('correct_answer') or '').strip().upper()[:1]:
+        if grade_lesson_quiz_problem(problem, _lesson_quiz_user_answer(answers, i))['correct']:
             score += 1
     return score
 
@@ -4074,11 +4104,12 @@ def _apply_lesson_progress_update(
     return progress
 
 
-_TOPIC_LEVEL_ORDER = ('gcse', 'alevel', 'myp')
+_TOPIC_LEVEL_ORDER = ('gcse', 'alevel', 'myp', 'eursc')
 _TOPIC_SUBJECT_ORDER = {
     'gcse': ('maths', 'physics', 'cs'),
     'alevel': ('physics',),
     'myp': ('chemistry',),
+    'eursc': ('science',),
 }
 
 
@@ -4090,7 +4121,7 @@ def _build_topic_groups():
             continue
         for subject in _TOPIC_SUBJECT_ORDER.get(level, tuple(subjects.keys())):
             topics = subjects.get(subject)
-            if not topics:
+            if topics is None:
                 continue
             items = [
                 {
@@ -4101,6 +4132,11 @@ def _build_topic_groups():
                     'url': f'/topic/{level}/{subject}/{slug}',
                     'order': cfg.get('order'),
                     'prereqs': list(cfg.get('prereqs') or ()),
+                    'year': cfg.get('year'),
+                    'year_label': YEAR_LABELS.get(cfg.get('year'), (cfg.get('year') or '').upper()),
+                    'unit_code': cfg.get('unit_code'),
+                    'unit_name': cfg.get('unit_name'),
+                    'syllabus_ref': cfg.get('syllabus_ref'),
                 }
                 for slug, cfg in iter_topics(topics)
             ]
@@ -6715,8 +6751,13 @@ def _build_topics_catalog():
                     'url': f'/topic/{level}/{subject}/{slug}',
                     'order': cfg.get('order'),
                     'prereqs': list(cfg.get('prereqs') or ()),
+                    'year': cfg.get('year'),
+                    'unit_code': cfg.get('unit_code'),
+                    'unit_name': cfg.get('unit_name'),
+                    'syllabus_ref': cfg.get('syllabus_ref'),
                     'has_variants': has_variants,
                     'supports_lesson_mcq': topic_supports_lesson_mcq(cfg),
+                    'supports_lesson_quiz': _lesson_quiz_available(level, subject, slug),
                     'modes': modes,
                     'difficulties': list(DIFFICULTIES),
                 })
@@ -6965,7 +7006,7 @@ def api_v1_lesson_quiz_start():
 
     try:
         topic_config = TOPICS[level][subject][topic]
-        problems = build_lesson_mcq_quiz(level, subject, topic, topic_config)
+        problems = build_lesson_quiz(level, subject, topic, topic_config)
     except (KeyError, ValueError):
         return _api_error('Lesson quiz not available for this topic', 404, 'quiz_not_available')
 
@@ -6988,7 +7029,7 @@ def api_v1_lesson_quiz_start():
         save_lesson_quiz_session(conn, session_id, data)
 
     summary = _lesson_quiz_session_summary(data, session_id)
-    first = _quicktest_question_payload(problems[0]) if problems else None
+    first = _lesson_quiz_question_payload(problems[0]) if problems else None
     return jsonify({'ok': True, **summary, 'problem': first}), 201
 
 
@@ -7006,7 +7047,7 @@ def api_v1_lesson_quiz_question(session_id):
     return jsonify({
         'ok': True,
         **_lesson_quiz_session_summary(data, session_id),
-        'problem': _quicktest_question_payload(problems[idx]),
+        'problem': _lesson_quiz_question_payload(problems[idx]),
         'question_number': idx + 1,
     })
 
@@ -7028,11 +7069,12 @@ def api_v1_lesson_quiz_answer(session_id):
 
     user_answer = ''
     if isinstance(payload, dict):
-        user_answer = (payload.get('user_answer') or '').strip().upper()[:1]
+        user_answer = payload.get('user_answer')
 
     problem = problems[idx]
-    correct_answer = (problem.get('correct_answer') or '').strip().upper()[:1]
-    correct = bool(user_answer and correct_answer and user_answer == correct_answer)
+    graded = grade_lesson_quiz_problem(problem, user_answer)
+    user_answer = graded['user_answer']
+    correct = graded['correct']
 
     answers = list(data.get('answers') or [])
     answers.append(user_answer)
@@ -7083,12 +7125,13 @@ def api_v1_lesson_quiz_results(session_id):
 
     enriched = []
     for i, problem in enumerate(problems):
-        entry = _quicktest_question_payload(problem, reveal=True)
-        entry['user_answer'] = answers[i] if i < len(answers) else ''
-        correct_answer = (problem.get('correct_answer') or '').strip().upper()[:1]
-        entry['was_correct'] = bool(
-            entry['user_answer'] and entry['user_answer'] == correct_answer
-        )
+        entry = _lesson_quiz_question_payload(problem, reveal=True)
+        user_answer = _lesson_quiz_user_answer(answers, i)
+        graded = grade_lesson_quiz_problem(problem, user_answer)
+        entry['user_answer'] = user_answer
+        entry['was_correct'] = graded['correct']
+        entry['score'] = graded['score']
+        entry['score_total'] = graded['score_total']
         enriched.append(entry)
 
     result = {
@@ -8621,20 +8664,43 @@ def lesson_mcq_quiz(level, subject, topic):
     except KeyError:
         return 'Topic not found', 404
 
-    try:
-        problems = build_lesson_mcq_quiz(level, subject, topic, topic_config)
-    except ValueError:
-        return 'Lesson quiz not available for this topic', 404
-    data = {
-        'problems': problems,
-        'topic_name': topic_config.get('name', topic),
-        'level': level,
-        'subject': subject,
-        'topic': topic,
-        'lesson_url': url_for('topic_page', level=level, subject=subject, topic=topic),
-        'total': len(problems),
-    }
-    _save_lq(data)
+    data = None
+    if session.pop('lq_resume', None):
+        existing = _load_lq()
+        if (
+            existing
+            and existing.get('topic') == topic
+            and existing.get('level') == level
+            and existing.get('subject') == subject
+            and existing.get('problems')
+        ):
+            data = existing
+            data.setdefault('index', 0)
+            data.setdefault('answers', [])
+
+    if data is None:
+        try:
+            problems = build_lesson_quiz(level, subject, topic, topic_config)
+        except ValueError:
+            return 'Lesson quiz not available for this topic', 404
+        data = {
+            'problems': problems,
+            'answers': [],
+            'index': 0,
+            'topic_name': topic_config.get('name', topic),
+            'level': level,
+            'subject': subject,
+            'topic': topic,
+            'lesson_url': url_for('topic_page', level=level, subject=subject, topic=topic),
+            'total': len(problems),
+            'retry_mode': False,
+        }
+        _save_lq(data)
+
+    problems = data['problems']
+    if lesson_quiz_problems_are_mixed(problems):
+        return redirect(url_for('lesson_mcq_question', level=level, subject=subject, topic=topic))
+
     return render_template(
         'lesson_mcq_quiz.html',
         problems=problems,
@@ -8648,6 +8714,111 @@ def lesson_mcq_quiz(level, subject, topic):
     )
 
 
+def _render_lesson_quiz_question(data, level, subject, topic):
+    problems = data.get('problems') or []
+    idx = int(data.get('index', 0))
+    if idx >= len(problems):
+        return redirect(url_for('lesson_mcq_results', level=level, subject=subject, topic=topic))
+    problem = problems[idx]
+    _sync_last_problem_payload(
+        problem,
+        level=level,
+        subject=subject,
+        topic=topic,
+        mode='lesson',
+        difficulty=problem.get('difficulty', 'foundational'),
+    )
+    return render_template(
+        'lesson_quiz_question.html',
+        problem=problem,
+        current=idx + 1,
+        total=len(problems),
+        topic_name=data['topic_name'],
+        lesson_url=data['lesson_url'],
+        level=level,
+        subject=subject,
+        topic=topic,
+        qt_level=level,
+        qt_subject=subject,
+        qt_topic=topic,
+        qt_mode='lesson',
+        qt_difficulty=problem.get('difficulty', 'foundational'),
+        retry_mode=data.get('retry_mode', False),
+    )
+
+
+@app.route('/lesson-quiz/<level>/<subject>/<topic>/question')
+def lesson_mcq_question(level, subject, topic):
+    if not _lesson_quiz_available(level, subject, topic):
+        return 'Lesson quiz not available for this topic', 404
+    data = _load_lq()
+    if (
+        not data
+        or data.get('topic') != topic
+        or data.get('level') != level
+        or data.get('subject') != subject
+    ):
+        return redirect(url_for('lesson_mcq_quiz', level=level, subject=subject, topic=topic))
+    return _render_lesson_quiz_question(data, level, subject, topic)
+
+
+@app.route('/lesson-quiz/<level>/<subject>/<topic>/next', methods=['POST'])
+def lesson_mcq_next(level, subject, topic):
+    if not _lesson_quiz_available(level, subject, topic):
+        return 'Lesson quiz not available for this topic', 404
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash_for('lesson_mcq_quiz', 'Your session expired. Please try again.', 'error')
+        return redirect(url_for('lesson_mcq_quiz', level=level, subject=subject, topic=topic))
+
+    data = _load_lq()
+    if (
+        not data
+        or data.get('topic') != topic
+        or data.get('level') != level
+        or data.get('subject') != subject
+    ):
+        return redirect(url_for('lesson_mcq_quiz', level=level, subject=subject, topic=topic))
+
+    problems = data.get('problems') or []
+    idx = int(data.get('index', 0))
+    if idx < len(problems):
+        captured = _quicktest_answer_from_form(problems[idx], request.form)
+        graded = grade_lesson_quiz_problem(problems[idx], captured.get('user_answer'))
+        answers = list(data.get('answers') or [])
+        answers.append(graded['user_answer'])
+        data['answers'] = answers
+        data['index'] = idx + 1
+        _save_lq(data)
+
+    if data['index'] >= len(problems):
+        score = _lesson_quiz_score(problems, data.get('answers') or [])
+        data['score'] = score
+        _save_lq(data)
+        if current_user.is_authenticated:
+            with get_db() as conn:
+                attempt_id = record_quiz_attempt(
+                    conn,
+                    current_user.id,
+                    level,
+                    subject,
+                    topic,
+                    score,
+                    data.get('total', len(problems)),
+                    data.get('answers') or [],
+                    problems,
+                )
+            _track_quiz_completed(
+                level,
+                subject,
+                topic,
+                score,
+                data.get('total', len(problems)),
+            )
+            return redirect(url_for('view_quiz_attempt', attempt_id=attempt_id))
+        return redirect(url_for('lesson_mcq_results', level=level, subject=subject, topic=topic))
+    return redirect(url_for('lesson_mcq_question', level=level, subject=subject, topic=topic))
+
+
 @app.route('/lesson-quiz/<level>/<subject>/<topic>/submit', methods=['POST'])
 def lesson_mcq_submit(level, subject, topic):
     if not _lesson_quiz_available(level, subject, topic):
@@ -8658,12 +8829,11 @@ def lesson_mcq_submit(level, subject, topic):
         return redirect(url_for('lesson_mcq_quiz', level=level, subject=subject, topic=topic))
 
     answers = []
-    score = 0
     for i, problem in enumerate(data['problems']):
-        letter = (request.form.get(f'answer_{i}', '') or '').strip().upper()[:1]
-        answers.append(letter)
-        if letter and letter == problem.get('correct_answer'):
-            score += 1
+        raw = (request.form.get(f'answer_{i}', '') or '').strip()
+        graded = grade_lesson_quiz_problem(problem, raw)
+        answers.append(graded['user_answer'])
+    score = _lesson_quiz_score(data['problems'], answers)
 
     data['answers'] = answers
     data['score'] = score
@@ -8707,15 +8877,17 @@ def lesson_mcq_retry_wrong(level, subject, topic):
         return redirect(url_for('lesson_mcq_quiz', level=level, subject=subject, topic=topic))
 
     wrong_problems = []
-    for problem, answer in zip(data['problems'], data['answers']):
-        letter = (answer or '').strip().upper()[:1]
-        if letter != problem.get('correct_answer'):
+    for i, problem in enumerate(data['problems']):
+        user_answer = _lesson_quiz_user_answer(data.get('answers') or [], i)
+        if not grade_lesson_quiz_problem(problem, user_answer)['correct']:
             wrong_problems.append(problem)
     if not wrong_problems:
         return redirect(url_for('lesson_mcq_results', level=level, subject=subject, topic=topic))
 
     retry_data = {
         'problems': wrong_problems,
+        'answers': [],
+        'index': 0,
         'topic_name': data['topic_name'],
         'level': level,
         'subject': subject,
@@ -8725,6 +8897,8 @@ def lesson_mcq_retry_wrong(level, subject, topic):
         'retry_mode': True,
     }
     _save_lq(retry_data)
+    session['lq_resume'] = True
+    session.modified = True
     return redirect(url_for('lesson_mcq_quiz', level=level, subject=subject, topic=topic))
 
 
@@ -8738,14 +8912,24 @@ def lesson_mcq_results(level, subject, topic):
         return redirect(url_for('lesson_mcq_quiz', level=level, subject=subject, topic=topic))
 
     enriched = []
+    answers = data.get('answers') or []
     for i, problem in enumerate(data['problems']):
         p = dict(problem)
-        p['user_answer'] = data['answers'][i] if i < len(data['answers']) else ''
+        user_answer = _lesson_quiz_user_answer(answers, i)
+        graded = grade_lesson_quiz_problem(problem, user_answer)
+        p['user_answer'] = user_answer
+        p['answered_correctly'] = graded['correct']
+        p['score'] = graded['score']
+        p['score_total'] = graded['score_total']
         enriched.append(p)
+
+    score = data.get('score')
+    if score is None:
+        score = _lesson_quiz_score(data['problems'], answers)
 
     return _render_quiz_results(
         enriched,
-        data['score'],
+        score,
         data.get('total', len(enriched)),
         data['topic_name'],
         data['lesson_url'],

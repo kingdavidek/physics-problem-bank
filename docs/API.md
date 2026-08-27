@@ -178,7 +178,7 @@ Phase 2 adds dedicated `fraction` and SymPy-backed `surd` types; ungraded concep
 
 ## Lesson quiz (M4b)
 
-10-question mixed-difficulty MCQ quiz (same as web `/lesson-quiz/...`). GCSE Maths and GCSE CS topics with MCQ support.
+10-question mixed-difficulty quiz (MCQ and typed formats). GCSE Maths/CS MCQ quizzes plus topics with a mixed lesson bank (`eursc/science` when registered).
 
 | Method | Path |
 |--------|------|
