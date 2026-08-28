@@ -40,6 +40,26 @@ import mimetypes
 mimetypes.add_type('application/wasm', '.wasm')
 from topics_data import TOPIC_CONTENT
 from topic_registry import TOPICS, iter_topics
+from generators.eursc.science_shared import (
+    IBL_PAGES,
+    antagonistic_pair,
+    atom_molecule_boxes,
+    canal_boxes,
+    circulation_boxes,
+    distance_time_graph,
+    ear_boxes,
+    earth_sun_moon,
+    eye_boxes,
+    force_pair,
+    habit_bars,
+    infection_chain,
+    lab_bench,
+    organ_labels,
+    outbreak_bars,
+    particle_states,
+    ph_scale,
+    reflection_rays,
+)
 from generators.shared.lesson_quiz import (
     LESSON_QUIZ_MIX,
     build_lesson_mcq_quiz,
@@ -2327,6 +2347,14 @@ def topic_page(level, subject, topic):
     return render_template(template_name, **context)
 
 
+@app.route("/ibl/eursc/science/<slug>")
+def eursc_ibl_page(slug):
+    page = IBL_PAGES.get(slug)
+    if not page:
+        return "Not found", 404
+    return render_template(page["template"], ibl=page)
+
+
 
 LEVEL_LABELS = {
     'gcse': 'GCSE',
@@ -3697,7 +3725,43 @@ def _lesson_render_spec(level, subject, topic):
     custom = f'{level}_{subject}_{topic}_lesson.html'
     try:
         app.jinja_env.get_template(custom)
-        return custom, {}
+        extra = {}
+        if level == 'eursc' and subject == 'science' and topic == 'science_lab':
+            extra['science_lab_bench'] = lab_bench()
+        if level == 'eursc' and subject == 'science' and topic == 'water_substances':
+            extra['particle_states'] = particle_states()
+        if level == 'eursc' and subject == 'science' and topic == 'cooking_acid':
+            extra['ph_scale_fig'] = ph_scale()
+        if level == 'eursc' and subject == 'science' and topic == 'movement':
+            extra['dt_graph'] = distance_time_graph()
+        if level == 'eursc' and subject == 'science' and topic == 'forces_sport':
+            extra['force_pair_fig'] = force_pair()
+        if level == 'eursc' and subject == 'science' and topic == 'breathing':
+            extra['circulation_fig'] = circulation_boxes()
+        if level == 'eursc' and subject == 'science' and topic == 'sport_health':
+            extra['muscle_pair_fig'] = antagonistic_pair()
+        if level == 'eursc' and subject == 'science' and topic == 'reproductive_anatomy':
+            extra['organ_labels_fig'] = organ_labels()
+        if level == 'eursc' and subject == 'science' and topic == 'solar_system':
+            extra['earth_sun_moon_fig'] = earth_sun_moon()
+        if level == 'eursc' and subject == 'science' and topic == 'light_telescopes':
+            extra['reflection_fig'] = reflection_rays()
+        if level == 'eursc' and subject == 'science' and topic == 'atoms_molecules':
+            extra['atom_molecule_fig'] = atom_molecule_boxes()
+        if level == 'eursc' and subject == 'science' and topic == 'healthy_living':
+            extra['habit_bars_fig'] = habit_bars()
+        if level == 'eursc' and subject == 'science' and topic == 'infectious_disease':
+            extra['infection_chain_fig'] = infection_chain()
+            extra['outbreak_fig'] = outbreak_bars()
+        if level == 'eursc' and subject == 'science' and topic == 'tobacco':
+            extra['outbreak_fig'] = outbreak_bars()
+        if level == 'eursc' and subject == 'science' and topic == 'vision':
+            extra['eye_fig'] = eye_boxes()
+        if level == 'eursc' and subject == 'science' and topic == 'hearing':
+            extra['ear_fig'] = ear_boxes()
+        if level == 'eursc' and subject == 'science' and topic == 'proprioception_balance':
+            extra['canal_fig'] = canal_boxes()
+        return custom, extra
     except TemplateNotFound:
         pass
 

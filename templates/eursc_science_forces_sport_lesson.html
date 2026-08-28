@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% block title %}Forces in Sport – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Forces in Sport</h1>
+    <p class="hero-sub">S1 Integrated Science · Unit 1.3 Sports · syllabus 1.3.2. Effects of forces, interactions, newtons, friction, mass and weight, centre of gravity, equilibrium.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S1</span>
+      <span class="pill pill--hero">1.3 Sports</span>
+      <span class="pill pill--hero">1.3.2</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='forces_sport') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Effects of a force
+      <span class="lesson-tag">1.3.2</span>
+      <span class="lesson-tag">S1</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>A <strong>force</strong> can start, stop, speed up, slow down, change direction or change shape. Forces do not appear from nowhere: they are interactions between objects.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A force can</p>
+          <button class="btn mcq-btn" data-letter="A">only change an object's colour</button>
+          <button class="btn mcq-btn" data-letter="B">change motion or shape</button>
+          <button class="btn mcq-btn" data-letter="C">remove mass from the universe</button>
+          <button class="btn mcq-btn" data-letter="D">replace time</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Interactions
+    </summary>
+    <div class="lesson-section-body">
+      <p>If a footballer pushes a ball, the ball pushes back. In the sketch, <strong>A</strong> and <strong>B</strong> push each other.</p>
+      <div class="lesson-figure">
+        {{ force_pair_fig }}
+      </div>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>If a footballer pushes a ball, the ball</p>
+          <button class="btn mcq-btn" data-letter="A">does nothing back</button>
+          <button class="btn mcq-btn" data-letter="B">pushes back on the footballer (an interaction)</button>
+          <button class="btn mcq-btn" data-letter="C">gains infinite mass</button>
+          <button class="btn mcq-btn" data-letter="D">stops time</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      The newton
+    </summary>
+    <div class="lesson-section-body">
+      <p>Force is measured in <strong>newtons</strong> (N). A spring balance that reads \(10\,\mathrm{N}\) is reporting a force (often weight), not a mass in kilograms.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>The SI unit of force is the</p>
+          <button class="btn mcq-btn" data-letter="A">metre</button>
+          <button class="btn mcq-btn" data-letter="B">newton</button>
+          <button class="btn mcq-btn" data-letter="C">second</button>
+          <button class="btn mcq-btn" data-letter="D">candela</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Friction
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Friction</strong> can help a shoe grip (useful) or slow a sliding puck (opposing motion). Air resistance on a cyclist usually acts against motion through air.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Friction between shoe and track can</p>
+          <button class="btn mcq-btn" data-letter="A">only exist in a vacuum</button>
+          <button class="btn mcq-btn" data-letter="B">help the athlete push forward without slipping</button>
+          <button class="btn mcq-btn" data-letter="C">be the same as weight in newtons always</button>
+          <button class="btn mcq-btn" data-letter="D">remove the need for mass</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Mass and weight
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Mass</strong> is amount of matter in kilograms. <strong>Weight</strong> is the gravitational force on that mass, in newtons. On the Moon the mass of a shot-put stays the same; its weight is smaller.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Weight is</p>
+          <button class="btn mcq-btn" data-letter="A">mass in kilograms</button>
+          <button class="btn mcq-btn" data-letter="B">the gravitational force on a mass, in newtons</button>
+          <button class="btn mcq-btn" data-letter="C">friction only</button>
+          <button class="btn mcq-btn" data-letter="D">speed</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Centre of gravity
+    </summary>
+    <div class="lesson-section-body">
+      <p>The <strong>centre of gravity</strong> is the point where the object's weight can be thought to act. A high centre of gravity on a narrow base is less stable. A wide stance helps keep that line over the base.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A high centre of gravity on a narrow base tends to be</p>
+          <button class="btn mcq-btn" data-letter="A">more stable</button>
+          <button class="btn mcq-btn" data-letter="B">less stable</button>
+          <button class="btn mcq-btn" data-letter="C">heavier in kilograms automatically</button>
+          <button class="btn mcq-btn" data-letter="D">frictionless</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">7</span>
+      Equilibrium
+    </summary>
+    <div class="lesson-section-body">
+      <p>A gymnast still on a beam is not force-free. <strong>Equilibrium</strong> means balanced forces: the resultant is zero, so there is no acceleration.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A gymnast still on a beam with no acceleration has</p>
+          <button class="btn mcq-btn" data-letter="A">no forces at all</button>
+          <button class="btn mcq-btn" data-letter="B">balanced forces (equilibrium)</button>
+          <button class="btn mcq-btn" data-letter="C">infinite speed</button>
+          <button class="btn mcq-btn" data-letter="D">zero mass</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">8</span>
+      Putting forces together
+    </summary>
+    <div class="lesson-section-body">
+      <p>Sport mixes several forces at once: weight, friction, air resistance, and pushes from other people or equipment. Name each interaction; do not invent a force with no object.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref lesson-quick-ref-card" role="region" aria-label="Forces in sport quick reference">
+    <h3>Quick reference</h3>
+    <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+      <div>
+        <h4>Force</h4>
+        <ul>
+          <li>Changes motion or shape</li>
+          <li>Unit: newton</li>
+          <li>Comes in interaction pairs</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Sport</h4>
+        <ul>
+          <li>Friction: grip or slowing</li>
+          <li>Mass kg · weight N</li>
+          <li>Equilibrium: resultant 0</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='forces_sport') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

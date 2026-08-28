@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Classroom investigation – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>{{ ibl.title }}</h1>
+    <p class="hero-sub">S1 Integrated Science · Unit 1.1 Science Lab. Planning support for a classroom practical. This page does not replace classroom practical work.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S1</span>
+      <span class="pill pill--hero">1.1 Science Lab</span>
+      <span class="pill pill--hero">IBL</span>
+    </div>
+  </div>
+
+  <p class="lesson-callout">Use this sheet with your teacher in the laboratory. An online page cannot stand in for the practical: you still need real instruments, a risk assessment and the class around you. Related lessons: <a href="{{ url_for('topic_page', level='eursc', subject='science', topic='what_is_science') }}">What Is Science?</a>, <a href="{{ url_for('topic_page', level='eursc', subject='science', topic='measurement') }}">Measurement and SI Units</a>, <a href="{{ url_for('topic_page', level='eursc', subject='science', topic='science_lab') }}">The Science Laboratory</a>.</p>
+
+  <p>To print the brief and rubric, use your browser’s Print command (Ctrl+P or Cmd+P). Buttons are hidden in the print view. Rubrics stay on this page; there is no teacher grading database.</p>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Brief and learning objectives
+      <span class="lesson-tag">IBL</span>
+      <span class="lesson-tag">S1</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Investigation:</strong> How does the temperature of water affect how long it takes a measured mass of sugar to dissolve?</p>
+      <p>This joins the three Science Lab lessons: you need public, testable evidence (1.1.1), SI units and a thermometer you can read (1.1.2), and a fair test with labelled apparatus (1.1.3).</p>
+      <p>By the end of the practical you should be able to:</p>
+      <ul>
+        <li>write a testable question and name independent, dependent and control variables;</li>
+        <li>choose a thermometer and a stopwatch that match the size of the change;</li>
+        <li>record repeats with units in the table headings;</li>
+        <li>say what limited the accuracy and how the next trial would improve.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Planning and variables
+    </summary>
+    <div class="lesson-section-body">
+      <ul>
+        <li><strong>Independent:</strong> water temperature (for example 20 °C, 40 °C, 60 °C — values your teacher approves).</li>
+        <li><strong>Dependent:</strong> time for the sugar to disappear, in seconds.</li>
+        <li><strong>Controls:</strong> mass of sugar, volume of water, stirring (same number of stirs, same spoon), same beaker size.</li>
+      </ul>
+      <p>Change <strong>one</strong> independent variable at a time. Write a method another group could follow: quantities, instruments, how you start and stop the watch, and how many repeats.</p>
+      <p>Draft your question here in your lab book: “How does _____ affect _____ when _____ is kept the same?”</p>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Safety and risk
+    </summary>
+    <div class="lesson-section-body">
+      <ul>
+        <li>Wear eye protection when heating water.</li>
+        <li>Tie back long hair. No running. Bags off the floor.</li>
+        <li>Point heating tubes and beakers away from people. Do not taste the mixture.</li>
+        <li>Hot water is a burn and spill hazard: carry beakers with dry hands, wipe spills at once.</li>
+        <li>Your teacher’s risk assessment is the one that counts. Add any extra hazard they name.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Data table and graph
+    </summary>
+    <div class="lesson-section-body">
+      <p>Put units in the headings. Keep every raw reading, then calculate the mean. Do not delete an inconvenient value without saying so in the evaluation.</p>
+      <table class="lesson-table">
+        <thead>
+          <tr>
+            <th>Temperature / °C</th>
+            <th>Time 1 / s</th>
+            <th>Time 2 / s</th>
+            <th>Time 3 / s</th>
+            <th>Mean time / s</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+      <p>A simple graph: independent variable on the horizontal axis (temperature), mean time on the vertical axis. Label both axes with quantity and unit. Plot the means; you may mark the range of the repeats as a short bar if your teacher asks.</p>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Analysis and evaluation
+    </summary>
+    <div class="lesson-section-body">
+      <p>Look at the pattern: as temperature increases, does mean dissolving time rise, fall, or stay similar? Quote numbers from the table, not only a feeling.</p>
+      <p>Was the result reproducible? Compare repeats at the same temperature. A large scatter means reaction time, uneven stirring or a poorly read scale.</p>
+      <p>Evaluation prompts:</p>
+      <ul>
+        <li>What limited the accuracy (thermometer resolution, starting the watch late, a control that drifted)?</li>
+        <li>Would a mean of more repeats reduce random scatter?</li>
+        <li>Would a systematic offset (a clock that always reads high) need calibration instead of averaging?</li>
+        <li>What would you change in the next trial so another group could trust the evidence?</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Teacher rubric
+    </summary>
+    <div class="lesson-section-body">
+      <p>Local classroom judgement only. Circle one column per row. This is not stored in the app.</p>
+      <table class="lesson-table">
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            <th>Developing</th>
+            <th>Secure</th>
+            <th>Strong</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Method</td>
+            <td>Steps missing or two variables change at once</td>
+            <td>Followable method; one independent variable</td>
+            <td>Quantities, instruments and repeats are explicit</td>
+          </tr>
+          <tr>
+            <td>Evidence</td>
+            <td>Incomplete table or missing units</td>
+            <td>Raw readings and a mean with units</td>
+            <td>Repeats, mean and a graph that matches the table</td>
+          </tr>
+          <tr>
+            <td>Collaboration</td>
+            <td>Roles unclear; one person does all the measuring</td>
+            <td>Shared roles for timing, reading and recording</td>
+            <td>Peers check the method and the scale reading</td>
+          </tr>
+          <tr>
+            <td>Communication</td>
+            <td>Conclusion is a feeling with no numbers</td>
+            <td>Pattern stated with units from the table</td>
+            <td>Pattern, scatter and limits of the method are all said clearly</td>
+          </tr>
+          <tr>
+            <td>Reflection</td>
+            <td>No comment on error or next steps</td>
+            <td>Names one limit and one improvement</td>
+            <td>Separates random scatter from systematic offset</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+</div>
+{% endblock %}

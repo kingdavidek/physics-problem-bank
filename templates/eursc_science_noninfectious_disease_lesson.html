@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}Noninfectious and Environmental Disease – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Noninfectious and Environmental Disease</h1>
+    <p class="hero-sub">S2 Integrated Science · Unit 2.2 Health · syllabus 2.2.3. Infectious vs noninfectious, inherited and long-term conditions, deficiency, pollution and occupation, mental illness, treatment and support. Fictional cases only. No family medical files.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S2</span>
+      <span class="pill pill--hero">2.2 Health</span>
+      <span class="pill pill--hero">2.2.3</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='noninfectious_disease') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Infectious vs noninfectious
+      <span class="lesson-tag">2.2.3</span>
+      <span class="lesson-tag">S2</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>An <strong>infectious</strong> disease can pass from a source along a route to a new host. A <strong>noninfectious</strong> disease does not spread that way. Treating a noninfectious condition as catching can stigmatise a person who is not a source of infection.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A noninfectious disease</p>
+          <button class="btn mcq-btn" data-letter="A">always jumps from host to host like a cold</button>
+          <button class="btn mcq-btn" data-letter="B">does not spread like an infection</button>
+          <button class="btn mcq-btn" data-letter="C">is always a virus</button>
+          <button class="btn mcq-btn" data-letter="D">must be listed from home in the quiz</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Inherited and long-term conditions
+    </summary>
+    <div class="lesson-section-body">
+      <p>Some conditions are <strong>inherited</strong> or long-term <strong>systemic</strong>. Public examples teach the idea. This quiz does not collect family medical histories and does not rank whose relative is ill.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>An inherited condition in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">proof the quiz should store family files</button>
+          <button class="btn mcq-btn" data-letter="B">a long-term or genetic idea taught with public examples, not a family survey</button>
+          <button class="btn mcq-btn" data-letter="C">always an infection</button>
+          <button class="btn mcq-btn" data-letter="D">a ranking of classmates</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Deficiency
+    </summary>
+    <div class="lesson-section-body">
+      <p>Some diseases link to <strong>missing nutrients</strong> over time (historical public examples such as scurvy). That is not a demand for private menus or a ranking of lunches.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A deficiency disease can link to</p>
+          <button class="btn mcq-btn" data-letter="A">a light-year</button>
+          <button class="btn mcq-btn" data-letter="B">missing nutrients in the diet over time, using public examples</button>
+          <button class="btn mcq-btn" data-letter="C">a class vote</button>
+          <button class="btn mcq-btn" data-letter="D">a demand for private menus</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Pollution and occupation
+    </summary>
+    <div class="lesson-section-body">
+      <p>Some diseases link to <strong>pollution</strong> or <strong>occupation</strong> in public evidence. That is a reason to study exposures and controls, not to harvest job titles or household details from pupils.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Pollution or occupation can matter because</p>
+          <button class="btn mcq-btn" data-letter="A">air quality is a rumour only</button>
+          <button class="btn mcq-btn" data-letter="B">some exposures are linked to disease in public evidence</button>
+          <button class="btn mcq-btn" data-letter="C">the quiz must list every workplace of relatives</button>
+          <button class="btn mcq-btn" data-letter="D">occupation is a virus</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Mental illness
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Mental illness</strong> is a health condition, not a joke and not a mood ranking. This app does not diagnose. Personal distress belongs with a trusted adult or qualified professional.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Mental illness in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">a joke</button>
+          <button class="btn mcq-btn" data-letter="B">a health condition that can be supported; the app does not diagnose</button>
+          <button class="btn mcq-btn" data-letter="C">always an infection from a cough</button>
+          <button class="btn mcq-btn" data-letter="D">a mood ranking</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Treatment and support
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Treatment</strong> and <strong>support</strong> are clinical. The page teaches categories. It does not collect who attends a clinic and does not replace a nurse or doctor. Blaming a person as the whole cause of every condition is often unfair: inherited, environmental and infectious causes differ.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Treatment and support belong with</p>
+          <button class="btn mcq-btn" data-letter="A">this quiz storing diagnoses</button>
+          <button class="btn mcq-btn" data-letter="B">qualified people; the page teaches categories, not personal files</button>
+          <button class="btn mcq-btn" data-letter="C">a popularity poll</button>
+          <button class="btn mcq-btn" data-letter="D">ignoring symptoms as a science method</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">7</span>
+      Using the categories
+    </summary>
+    <div class="lesson-section-body">
+      <p>Keep infectious vs noninfectious, cause-groups and support as separate boxes. Dependence and tobacco continue later in this unit. Personal questions stay off this page.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Kinds</h4>
+        <ul>
+          <li>Infectious: can spread</li>
+          <li>Noninfectious: does not spread that way</li>
+          <li>Causes can differ</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Care</h4>
+        <ul>
+          <li>No family-file harvest</li>
+          <li>Mental illness is real</li>
+          <li>Signpost qualified support</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='noninfectious_disease') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Taste – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Taste</h1>
+    <p class="hero-sub">S2 Integrated Science · Unit 2.3 Senses · syllabus 2.3.5. Five tastes, taste–smell flavour, colour and context, controlled tasting with teacher rules. Nobody is forced to eat. Menus are not stored.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S2</span>
+      <span class="pill pill--hero">2.3 Senses</span>
+      <span class="pill pill--hero">2.3.5</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='taste') }}">▶ Practice Quiz (10 questions)</a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Five tastes
+      <span class="lesson-tag">2.3.5</span>
+      <span class="lesson-tag">S2</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>This S2 set names five tastes: <strong>sweet, salt, sour, bitter, umami</strong>. That is a teaching set, not a ranking of tongues.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>This S2 model names how many tastes as a teaching set?</p>
+          <button class="btn mcq-btn" data-letter="A">one</button>
+          <button class="btn mcq-btn" data-letter="B">five</button>
+          <button class="btn mcq-btn" data-letter="C">eighty</button>
+          <button class="btn mcq-btn" data-letter="D">zero</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">2</span> Taste and smell</summary>
+    <div class="lesson-section-body">
+      <p><strong>Flavour</strong> uses taste and smell together. A fictional blocked-nose case can make food seem bland because smell is reduced.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Flavour in this lesson</p>
+          <button class="btn mcq-btn" data-letter="A">ignores smell</button>
+          <button class="btn mcq-btn" data-letter="B">uses taste and smell together</button>
+          <button class="btn mcq-btn" data-letter="C">is a glasses file</button>
+          <button class="btn mcq-btn" data-letter="D">ranks tongues</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">3</span> Colour and context</summary>
+    <div class="lesson-section-body">
+      <p>The colour of a drink can change how it is judged. The same yoghurt dyed different colours can be labelled differently. That is a cue effect, not a private menu upload.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Colour of a drink can</p>
+          <button class="btn mcq-btn" data-letter="A">never affect a judgement</button>
+          <button class="btn mcq-btn" data-letter="B">change how the drink is judged in some demos</button>
+          <button class="btn mcq-btn" data-letter="C">store a menu</button>
+          <button class="btn mcq-btn" data-letter="D">force unknown foods</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">4</span> Controlled tasting</summary>
+    <div class="lesson-section-body">
+      <p>A classroom tasting needs teacher rules, a fair test (same base, same temperature if colour is the independent variable), and <strong>no force</strong>. Nobody must eat an unknown food because this quiz says so. This page does not replace practical work.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A classroom tasting</p>
+          <button class="btn mcq-btn" data-letter="A">must force unknown foods</button>
+          <button class="btn mcq-btn" data-letter="B">needs teacher rules; nobody is forced to eat</button>
+          <button class="btn mcq-btn" data-letter="C">stores private menus here</button>
+          <button class="btn mcq-btn" data-letter="D">ranks tongues</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Five</h4>
+        <ul>
+          <li>Sweet, salt, sour, bitter, umami</li>
+          <li>Flavour includes smell</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Method</h4>
+        <ul>
+          <li>Colour can steer judgement</li>
+          <li>No forced eating</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='taste') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

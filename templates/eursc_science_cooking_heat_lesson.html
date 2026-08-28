@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}Basic Cooking: Heat – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Basic Cooking: Heat</h1>
+    <p class="hero-sub">S1 Integrated Science · Unit 1.2 Food · syllabus 1.2.3. Conduction, convection, radiation, denaturing and browning.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S1</span>
+      <span class="pill pill--hero">1.2 Food</span>
+      <span class="pill pill--hero">1.2.3</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='cooking_heat') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Conduction
+      <span class="lesson-tag">1.2.3</span>
+      <span class="lesson-tag">S1</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Conduction</strong> is heat through a solid by particle vibration. A metal pan conducts well; a wooden handle does not, so it stays cooler.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Heat travelling through a metal pan into the food is mainly</p>
+          <button class="btn mcq-btn" data-letter="A">convection in a solid crystal of air only</button>
+          <button class="btn mcq-btn" data-letter="B">conduction</button>
+          <button class="btn mcq-btn" data-letter="C">a rumour</button>
+          <button class="btn mcq-btn" data-letter="D">filtration</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Convection
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Convection</strong> is heat carried by a moving fluid. Hot water rises; an oven’s air heats the food; stirring forces the fluid to mix.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Hot water rising and cooler water sinking in a pan is</p>
+          <button class="btn mcq-btn" data-letter="A">conduction in a vacuum</button>
+          <button class="btn mcq-btn" data-letter="B">convection</button>
+          <button class="btn mcq-btn" data-letter="C">radiation only</button>
+          <button class="btn mcq-btn" data-letter="D">melting of the pan</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Radiation
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Radiation</strong> is infrared from a hot object. A grill or glowing charcoal can brown food without touching it. Radiation does not need a material medium.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A grill browning the top of food without touching it is mainly</p>
+          <button class="btn mcq-btn" data-letter="A">conduction through a spoon</button>
+          <button class="btn mcq-btn" data-letter="B">radiation</button>
+          <button class="btn mcq-btn" data-letter="C">filtration</button>
+          <button class="btn mcq-btn" data-letter="D">a magnetic field</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Cooking methods
+    </summary>
+    <div class="lesson-section-body">
+      <p>Real cooking combines transfers: a hob pan uses conduction in the metal and convection in the sauce. Match the method to the main process, then notice the others.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>An oven heating the air that then heats the food is mainly</p>
+          <button class="btn mcq-btn" data-letter="A">conduction through empty space only</button>
+          <button class="btn mcq-btn" data-letter="B">convection</button>
+          <button class="btn mcq-btn" data-letter="C">a chemical named 'ovenium'</button>
+          <button class="btn mcq-btn" data-letter="D">chromatography</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Denaturing
+    </summary>
+    <div class="lesson-section-body">
+      <p>Heat changes <strong>protein</strong> shape. An egg white sets. Cooling does not un-cook it: that is not a simple melt of ice. The texture change is also a clue that minced meat has been heated through.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>An egg white turning from runny to solid when heated is</p>
+          <button class="btn mcq-btn" data-letter="A">the pan disappearing</button>
+          <button class="btn mcq-btn" data-letter="B">protein denaturing and setting</button>
+          <button class="btn mcq-btn" data-letter="C">only a colour trick</button>
+          <button class="btn mcq-btn" data-letter="D">filtration</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Browning
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Browning</strong> is a chemical change in sugars and proteins. Toast turning brown is wanted chemistry; black burnt toast has gone further into charring.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Toast turning brown is best described as</p>
+          <button class="btn mcq-btn" data-letter="A">a reversible melting of metal</button>
+          <button class="btn mcq-btn" data-letter="B">a chemical change in sugars and proteins</button>
+          <button class="btn mcq-btn" data-letter="C">the bread becoming a gas instantly</button>
+          <button class="btn mcq-btn" data-letter="D">filtration</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <div class="lesson-quickref lesson-quick-ref-card" role="region" aria-label="Cooking heat quick reference">
+    <h3>Quick reference</h3>
+    <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+      <div>
+        <h4>Transfer</h4>
+        <ul>
+          <li>Conduction — solids in contact</li>
+          <li>Convection — moving fluid</li>
+          <li>Radiation — infrared across a gap</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Food change</h4>
+        <ul>
+          <li>Denature — protein shape</li>
+          <li>Browning — chemical, not just melting</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='cooking_heat') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

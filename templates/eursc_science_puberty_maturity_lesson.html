@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Puberty and Sexual Maturity – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Puberty and Sexual Maturity</h1>
+    <p class="hero-sub">S1 Integrated Science · Unit 1.4 Puberty · syllabus 1.4.1. Physical and emotional changes, hormones, and variation in timing. Scenarios use fictional people. This lesson never asks a pupil to describe their own body or feelings.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S1</span>
+      <span class="pill pill--hero">1.4 Puberty</span>
+      <span class="pill pill--hero">1.4.1</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='puberty_maturity') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Physical changes
+      <span class="lesson-tag">1.4.1</span>
+      <span class="lesson-tag">S1</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>At <strong>puberty</strong> many young people grow faster and develop new body hair and other typical changes. These are general patterns. Classwork does not inspect anyone and does not rank who “looks older”.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A typical physical change at puberty is</p>
+          <button class="btn mcq-btn" data-letter="A">the skeleton turning into helium</button>
+          <button class="btn mcq-btn" data-letter="B">growth and new body hair for many young people</button>
+          <button class="btn mcq-btn" data-letter="C">mass becoming zero</button>
+          <button class="btn mcq-btn" data-letter="D">air becoming a hormone</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Emotional and social changes
+    </summary>
+    <div class="lesson-section-body">
+      <p>Moods and friendships can change. That is discussed in the third person. The quiz does not collect private diaries or require anyone to submit feelings to this site.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Emotional changes at puberty</p>
+          <button class="btn mcq-btn" data-letter="A">never happen</button>
+          <button class="btn mcq-btn" data-letter="B">can include stronger moods; this is discussed in third person, not as a confession</button>
+          <button class="btn mcq-btn" data-letter="C">must be ranked in class</button>
+          <button class="btn mcq-btn" data-letter="D">are measured in newtons</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Hormones
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Hormones</strong> are chemical messengers in the blood. They help trigger puberty changes. Media images of “ideal” teenage bodies are not a measurement of healthy puberty.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Hormones in this lesson are</p>
+          <button class="btn mcq-btn" data-letter="A">rumours</button>
+          <button class="btn mcq-btn" data-letter="B">chemical messengers that help trigger puberty changes</button>
+          <button class="btn mcq-btn" data-letter="C">bones</button>
+          <button class="btn mcq-btn" data-letter="D">banned sports drinks only</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Variation and maturity
+    </summary>
+    <div class="lesson-section-body">
+      <p>The age when puberty starts <strong>varies</strong>. Starting earlier or later than a friend can still be healthy. <strong>Sexual maturity</strong> here means the body becoming able to produce mature gametes — at a time that varies. Sam and Lee in a scenario must not be mocked for timing.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>The age when puberty starts</p>
+          <button class="btn mcq-btn" data-letter="A">is identical for every person on Earth</button>
+          <button class="btn mcq-btn" data-letter="B">varies; starting earlier or later than a friend can still be healthy</button>
+          <button class="btn mcq-btn" data-letter="C">must be announced to the class</button>
+          <button class="btn mcq-btn" data-letter="D">is set by kit colour</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Where to get help
+    </summary>
+    <div class="lesson-section-body">
+      <p>Personal questions about body changes belong with a teacher or qualified health professional. This app does not store health stories, timing lists or mood files. Continue with labelled anatomy in the next module if the class is following the unit order.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref lesson-quick-ref-card" role="region" aria-label="Puberty quick reference">
+    <h3>Quick reference</h3>
+    <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+      <div>
+        <h4>Science</h4>
+        <ul>
+          <li>Physical and emotional patterns</li>
+          <li>Hormones = chemical messengers</li>
+          <li>Timing varies — that is normal</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Classroom rules</h4>
+        <ul>
+          <li>Third-person scenarios only</li>
+          <li>No ranking bodies</li>
+          <li>Signpost teacher / health care</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='puberty_maturity') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

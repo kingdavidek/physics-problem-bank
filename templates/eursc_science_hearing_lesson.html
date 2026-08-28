@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Hearing – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Hearing</h1>
+    <p class="hero-sub">S2 Integrated Science · Unit 2.3 Senses · syllabus 2.3.2. Outer, middle and inner ear, vibration in a medium, pitch and loudness, stereo localisation, aids and illusions. This lesson does not store hearing tests or whose aid it is.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S2</span>
+      <span class="pill pill--hero">2.3 Senses</span>
+      <span class="pill pill--hero">2.3.2</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='hearing') }}">▶ Practice Quiz (10 questions)</a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Ear schematic
+      <span class="lesson-tag">2.3.2</span>
+      <span class="lesson-tag">S2</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>A</strong> outer ear (collects sound), <strong>B</strong> middle ear (passes vibration inward), <strong>C</strong> inner ear (sensing structures such as the cochlea). Boxes, not a realistic drawing.</p>
+      <div class="lesson-figure">{{ ear_fig }}</div>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>The outer ear mainly</p>
+          <button class="btn mcq-btn" data-letter="A">stores a medical file</button>
+          <button class="btn mcq-btn" data-letter="B">collects sound</button>
+          <button class="btn mcq-btn" data-letter="C">is a retina</button>
+          <button class="btn mcq-btn" data-letter="D">ranks classmates</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">2</span> Vibration and a medium</summary>
+    <div class="lesson-section-body">
+      <p>Sound is <strong>vibration</strong> that needs a <strong>medium</strong> in this model. A classroom vacuum is a poor place for sound to travel as it does in air.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Sound in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">a light-year of mass</button>
+          <button class="btn mcq-btn" data-letter="B">vibration that needs a medium</button>
+          <button class="btn mcq-btn" data-letter="C">a vaccine</button>
+          <button class="btn mcq-btn" data-letter="D">a private score</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">3</span> Pitch and loudness</summary>
+    <div class="lesson-section-body">
+      <p><strong>Pitch</strong> is how high or low a sound is taken to be. <strong>Loudness</strong> is how strong it is taken to be. These are acoustic ideas, not a class hearing league.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Pitch in this S2 acoustic idea is about</p>
+          <button class="btn mcq-btn" data-letter="A">how heavy a planet is</button>
+          <button class="btn mcq-btn" data-letter="B">how high or low a sound is taken to be</button>
+          <button class="btn mcq-btn" data-letter="C">a glasses file</button>
+          <button class="btn mcq-btn" data-letter="D">a class ranking</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">4</span> Stereo localisation</summary>
+    <div class="lesson-section-body">
+      <p>Two ears help locate a source. Covering one ear in a fictional case can make location harder. That is not a stored clinical file.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Two ears help to</p>
+          <button class="btn mcq-btn" data-letter="A">store prescriptions</button>
+          <button class="btn mcq-btn" data-letter="B">locate a sound source (stereo)</button>
+          <button class="btn mcq-btn" data-letter="C">create a vacuum</button>
+          <button class="btn mcq-btn" data-letter="D">rank the class</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">5</span> Hearing aids</summary>
+    <div class="lesson-section-body">
+      <p>A hearing aid is a tool that can help. This app does not store whose aid it is and does not publish hearing-test scores.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A hearing aid in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">a class league</button>
+          <button class="btn mcq-btn" data-letter="B">a tool that can help; the app does not store whose it is</button>
+          <button class="btn mcq-btn" data-letter="C">a bacterium</button>
+          <button class="btn mcq-btn" data-letter="D">a demand for a private test</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">6</span> Auditory illusions</summary>
+    <div class="lesson-section-body">
+      <p>An auditory illusion can be the brain interpreting sound cues. It is not a class hearing-test league.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>An auditory illusion can be</p>
+          <button class="btn mcq-btn" data-letter="A">proof science is a vote</button>
+          <button class="btn mcq-btn" data-letter="B">the brain interpreting sound cues</button>
+          <button class="btn mcq-btn" data-letter="C">a stored clinical test</button>
+          <button class="btn mcq-btn" data-letter="D">a canal made of food</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">7</span> Using this lesson</summary>
+    <div class="lesson-section-body">
+      <p>Keep the three ear regions, vibration, acoustics, stereo, aids and illusions separate. Touch continues next.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Path</h4>
+        <ul>
+          <li>Outer → middle → inner</li>
+          <li>Sound needs a medium</li>
+          <li>Two ears locate</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Tools</h4>
+        <ul>
+          <li>Aid = a tool, no file here</li>
+          <li>Illusion = interpretation</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='hearing') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

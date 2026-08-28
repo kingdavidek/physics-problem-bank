@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% block title %}Breathing, Respiration and Circulation – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Breathing, Respiration and Circulation</h1>
+    <p class="hero-sub">S1 Integrated Science · Unit 1.3 Sports · syllabus 1.3.3. Air gases, inhaled and exhaled air, respiration, pulse, heart and blood, pressure and buoyancy.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S1</span>
+      <span class="pill pill--hero">1.3 Sports</span>
+      <span class="pill pill--hero">1.3.3</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='breathing') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Gases in air
+      <span class="lesson-tag">1.3.3</span>
+      <span class="lesson-tag">S1</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>Ordinary air is mostly <strong>nitrogen</strong>, with a smaller share of <strong>oxygen</strong>, plus carbon dioxide and other gases. It is not mostly helium and it is not “thoughts”.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Ordinary air is mostly</p>
+          <button class="btn mcq-btn" data-letter="A">oxygen only</button>
+          <button class="btn mcq-btn" data-letter="B">nitrogen, with oxygen as a smaller share</button>
+          <button class="btn mcq-btn" data-letter="C">pure carbon dioxide</button>
+          <button class="btn mcq-btn" data-letter="D">liquid water</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Inhaled and exhaled air
+    </summary>
+    <div class="lesson-section-body">
+      <p>Exhaled air usually has <strong>less oxygen</strong> and <strong>more carbon dioxide</strong> than inhaled air. That is evidence of respiration, not proof that nitrogen vanished.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Compared with inhaled air, exhaled air usually has</p>
+          <button class="btn mcq-btn" data-letter="A">more oxygen and less carbon dioxide</button>
+          <button class="btn mcq-btn" data-letter="B">less oxygen and more carbon dioxide</button>
+          <button class="btn mcq-btn" data-letter="C">no nitrogen</button>
+          <button class="btn mcq-btn" data-letter="D">only helium</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Respiration
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Respiration</strong> here means cells using oxygen to release energy from food. Chest movement is <strong>ventilation</strong> (breathing). The two words are linked but not the same.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Respiration in this lesson means</p>
+          <button class="btn mcq-btn" data-letter="A">only the chest moving</button>
+          <button class="btn mcq-btn" data-letter="B">cells using oxygen to release energy from food</button>
+          <button class="btn mcq-btn" data-letter="C">the skeleton growing</button>
+          <button class="btn mcq-btn" data-letter="D">friction</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Pulse
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Pulse</strong> is a clue to how often the heart beats. Count beats in a known time, then scale to a minute if the rate stays steady. This lesson does not collect anyone’s private fitness diary.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Pulse rate is a clue to</p>
+          <button class="btn mcq-btn" data-letter="A">shoe size</button>
+          <button class="btn mcq-btn" data-letter="B">how often the heart is beating</button>
+          <button class="btn mcq-btn" data-letter="C">the newton</button>
+          <button class="btn mcq-btn" data-letter="D">air's colour</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Heart, blood and oxygen
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>A</strong> heart pumps blood. <strong>B</strong> lungs add oxygen. <strong>C</strong> body tissues use oxygen and produce carbon dioxide. Educational boxes, not a realistic dissection drawing.</p>
+      <div class="lesson-figure">
+        {{ circulation_fig }}
+      </div>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>The heart's job in this unit is to</p>
+          <button class="btn mcq-btn" data-letter="A">digest food</button>
+          <button class="btn mcq-btn" data-letter="B">pump blood</button>
+          <button class="btn mcq-btn" data-letter="C">store oxygen as a metal</button>
+          <button class="btn mcq-btn" data-letter="D">measure distance</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Sport and oxygen demand
+    </summary>
+    <div class="lesson-section-body">
+      <p>In hard exercise, muscles need more oxygen. Pulse often rises. After a sprint, breathing can stay fast while extra carbon dioxide is cleared. Breathing, blood and cell respiration work together.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>During hard exercise, pulse often rises because</p>
+          <button class="btn mcq-btn" data-letter="A">the skeleton wants fame</button>
+          <button class="btn mcq-btn" data-letter="B">muscles need more oxygen delivered by blood</button>
+          <button class="btn mcq-btn" data-letter="C">time stops</button>
+          <button class="btn mcq-btn" data-letter="D">air contains no oxygen</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">7</span>
+      Pressure in water
+    </summary>
+    <div class="lesson-section-body">
+      <p>Deeper under water, <strong>pressure</strong> on the body increases. That is a measurement idea, not a dare. Follow the teacher’s pool rules.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Deeper under water, pressure on the body</p>
+          <button class="btn mcq-btn" data-letter="A">falls to zero</button>
+          <button class="btn mcq-btn" data-letter="B">increases</button>
+          <button class="btn mcq-btn" data-letter="C">becomes a mass in kilograms</button>
+          <button class="btn mcq-btn" data-letter="D">removes buoyancy</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">8</span>
+      Buoyancy
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Buoyancy</strong> (upthrust) is the upward force from a liquid. Denser salty water can make floating easier. The online page does not replace a supervised pool session.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref lesson-quick-ref-card" role="region" aria-label="Breathing quick reference">
+    <h3>Quick reference</h3>
+    <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+      <div>
+        <h4>Gases</h4>
+        <ul>
+          <li>Air: mostly nitrogen + oxygen</li>
+          <li>Exhale: less O2, more CO2</li>
+          <li>Respiration: cells use O2</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Sport</h4>
+        <ul>
+          <li>Pulse tracks heart rate</li>
+          <li>Heart pumps; lungs oxygenate</li>
+          <li>Depth → pressure; liquid → buoyancy</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='breathing') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

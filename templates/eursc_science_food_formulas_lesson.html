@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}Food Formulas: Molecules of Life – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Food Formulas: Molecules of Life</h1>
+    <p class="hero-sub">S1 Integrated Science · Unit 1.2 Food · syllabus 1.2.1. Water, proteins, fats and carbohydrates, and whether a food comes from plants or animals.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S1</span>
+      <span class="pill pill--hero">1.2 Food</span>
+      <span class="pill pill--hero">1.2.1</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='food_formulas') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Water in food and life
+      <span class="lesson-tag">1.2.1</span>
+      <span class="lesson-tag">S1</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>Living things and many foods contain a lot of <strong>water</strong>. In the kitchen it is the usual <strong>solvent</strong>: salt, sugar and flavours dissolve in it.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Why is water listed with the main molecules of food?</p>
+          <button class="btn mcq-btn" data-letter="A">It is a celebrity ingredient</button>
+          <button class="btn mcq-btn" data-letter="B">Living things and many foods contain it and it acts as a solvent</button>
+          <button class="btn mcq-btn" data-letter="C">It is a protein</button>
+          <button class="btn mcq-btn" data-letter="D">It has no role in cooking</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Proteins
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Proteins</strong> are especially for <strong>growth and repair</strong>. Sources include beans, fish, eggs and yoghurt. Heat or acid can <strong>denature</strong> them (an egg white setting).</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Proteins in food are especially important for</p>
+          <button class="btn mcq-btn" data-letter="A">only changing the colour of a plate</button>
+          <button class="btn mcq-btn" data-letter="B">growth and repair of the body</button>
+          <button class="btn mcq-btn" data-letter="C">replacing the need to drink water</button>
+          <button class="btn mcq-btn" data-letter="D">making plastic</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Fats
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Fats and oils</strong> store a large amount of energy and carry some vitamins. Olive oil is a plant fat; butter is an animal fat. Per gram they are usually more energy-dense than carbohydrate.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Fats and oils in a diet mainly</p>
+          <button class="btn mcq-btn" data-letter="A">are never needed</button>
+          <button class="btn mcq-btn" data-letter="B">store a large amount of energy and carry some vitamins</button>
+          <button class="btn mcq-btn" data-letter="C">are the same as table salt</button>
+          <button class="btn mcq-btn" data-letter="D">are a type of metal</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Carbohydrates
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Carbohydrates</strong> include sugars and starch. Bread, rice and fruit are everyday sources of energy. Green plants can <strong>make</strong> carbohydrate using light; animals eat ready-made food molecules.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Bread, rice and fruit are useful mainly as sources of</p>
+          <button class="btn mcq-btn" data-letter="A">plastic</button>
+          <button class="btn mcq-btn" data-letter="B">carbohydrate for energy</button>
+          <button class="btn mcq-btn" data-letter="C">iron nails</button>
+          <button class="btn mcq-btn" data-letter="D">pure water only</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Plant and animal sources
+    </summary>
+    <div class="lesson-section-body">
+      <p>Beans and lentils are <strong>plant</strong> protein foods. Eggs, yoghurt and fish are <strong>animal</strong> sources. A plate of rice, beans and oil can cover carbohydrate, protein and fat without meat.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Eggs and yoghurt are examples of</p>
+          <button class="btn mcq-btn" data-letter="A">plant oils only</button>
+          <button class="btn mcq-btn" data-letter="B">animal-source foods that can supply protein</button>
+          <button class="btn mcq-btn" data-letter="C">pure carbohydrate crystals</button>
+          <button class="btn mcq-btn" data-letter="D">metals</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <div class="lesson-quickref lesson-quick-ref-card" role="region" aria-label="Food formulas quick reference">
+    <h3>Quick reference</h3>
+    <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+      <div>
+        <h4>Molecules</h4>
+        <ul>
+          <li>Water — solvent in food and cells</li>
+          <li>Protein — growth and repair</li>
+          <li>Fat — energy store</li>
+          <li>Carbohydrate — sugars and starch</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Sources</h4>
+        <ul>
+          <li>Plants: beans, grains, oils, fruit</li>
+          <li>Animals: eggs, yoghurt, fish</li>
+          <li>Fame is not a nutrient group</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='food_formulas') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

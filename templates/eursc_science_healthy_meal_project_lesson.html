@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Project: A Healthy Meal – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Project: A Healthy Meal</h1>
+    <p class="hero-sub">S1 Integrated Science · Unit 1.2 Food · syllabus 1.2.8. Plan, hygiene, prepare, present. The physical meal is judged in class with a rubric; this page does not replace practical work and does not store private diet information.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S1</span>
+      <span class="pill pill--hero">1.2 Food</span>
+      <span class="pill pill--hero">1.2.8</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='healthy_meal_project') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Plan
+      <span class="lesson-tag">1.2.8</span>
+      <span class="lesson-tag">S1</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>Choose a <strong>menu</strong> using food-group evidence from 1.2.1–1.2.7. Include more than one group. Use label energy and ingredients for packaged items. Do not ask classmates to describe private eating habits.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>The first phase of the classroom meal project is to</p>
+          <button class="btn mcq-btn" data-letter="A">skip to plating leftovers</button>
+          <button class="btn mcq-btn" data-letter="B">plan a menu using food-group evidence from the unit</button>
+          <button class="btn mcq-btn" data-letter="C">ask everyone to describe their private eating</button>
+          <button class="btn mcq-btn" data-letter="D">hide the method</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Safety
+    </summary>
+    <div class="lesson-section-body">
+      <p>Wash hands. Keep raw meat separate from ready-to-eat food. Follow the teacher’s allergy and kitchen rules — the app does not store medical history. Hot oil and knives need approved controls.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Before preparing food you should</p>
+          <button class="btn mcq-btn" data-letter="A">taste raw meat to check it</button>
+          <button class="btn mcq-btn" data-letter="B">wash hands and keep raw meat separate from ready-to-eat food</button>
+          <button class="btn mcq-btn" data-letter="C">run in the kitchen</button>
+          <button class="btn mcq-btn" data-letter="D">skip the teacher's risk assessment</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Preparation
+    </summary>
+    <div class="lesson-section-body">
+      <p>Follow a written method another group could repeat: quantities, times, equipment. An optional yoghurt or bread ferment needs teacher-approved time and temperature. Record what was prepared and label energy.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A useful method is one that</p>
+          <button class="btn mcq-btn" data-letter="A">only the original group can remember</button>
+          <button class="btn mcq-btn" data-letter="B">another group could follow</button>
+          <button class="btn mcq-btn" data-letter="C">is kept secret</button>
+          <button class="btn mcq-btn" data-letter="D">has no quantities</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Presentation and reflection
+    </summary>
+    <div class="lesson-section-body">
+      <p>Explain the menu with evidence (groups, kJ, hygiene). Reflection names what limited the method and how to improve. Do not rank bodies or diagnose health conditions. Rubric scores stay on paper in class; this app has no teacher grading database.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Presentation in this project means</p>
+          <button class="btn mcq-btn" data-letter="A">ranking classmates' bodies</button>
+          <button class="btn mcq-btn" data-letter="B">explaining the menu with evidence (groups, labels, hygiene)</button>
+          <button class="btn mcq-btn" data-letter="C">a talent show</button>
+          <button class="btn mcq-btn" data-letter="D">deleting inconvenient steps</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+      <p class="lesson-callout">Use the printable <a href="{{ url_for('eursc_ibl_page', slug='s1_food') }}">classroom investigation support</a> with your teacher. This page does not replace classroom practical work.</p>
+      <h4>Classroom rubric (local only)</h4>
+      <table class="lesson-table">
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            <th>Developing</th>
+            <th>Secure</th>
+            <th>Strong</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Method</td>
+            <td>Steps or quantities missing</td>
+            <td>Followable method with hygiene</td>
+            <td>Another group could repeat from the write-up</td>
+          </tr>
+          <tr>
+            <td>Evidence</td>
+            <td>Slogan only</td>
+            <td>Food groups or label kJ used</td>
+            <td>Groups, kJ and ingredients all cited</td>
+          </tr>
+          <tr>
+            <td>Collaboration</td>
+            <td>Roles unclear</td>
+            <td>Shared prep and recording</td>
+            <td>Peers check hygiene and the record</td>
+          </tr>
+          <tr>
+            <td>Communication</td>
+            <td>No explanation of choices</td>
+            <td>Menu explained with units</td>
+            <td>Limits of the method are said clearly</td>
+          </tr>
+          <tr>
+            <td>Reflection</td>
+            <td>No next step</td>
+            <td>One improvement named</td>
+            <td>Separates method limits from taste preference</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <div class="lesson-quickref lesson-quick-ref-card" role="region" aria-label="Healthy meal project quick reference">
+    <h3>Quick reference</h3>
+    <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+      <div>
+        <h4>Phases</h4>
+        <ul>
+          <li>Plan menu from evidence</li>
+          <li>Safety and hygiene</li>
+          <li>Prepare with a method</li>
+          <li>Present and reflect</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Do not</h4>
+        <ul>
+          <li>Collect private diet stories</li>
+          <li>Treat this page as the kitchen</li>
+          <li>Upload rubric scores to the app</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='healthy_meal_project') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

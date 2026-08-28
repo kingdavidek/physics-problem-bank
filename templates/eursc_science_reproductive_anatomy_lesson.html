@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Human Reproductive Anatomy – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Human Reproductive Anatomy</h1>
+    <p class="hero-sub">S1 Integrated Science · Unit 1.4 Puberty · syllabus 1.4.2. Educational labelled diagrams only — schematic boxes, not realistic or sensational images. Gametes, menstrual cycle, fertilisation. The lesson never asks who has started periods or for private anatomy stories.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S1</span>
+      <span class="pill pill--hero">1.4 Puberty</span>
+      <span class="pill pill--hero">1.4.2</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='reproductive_anatomy') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Female structures
+      <span class="lesson-tag">1.4.2</span>
+      <span class="lesson-tag">S1</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>A</strong> ovary (can release an egg). <strong>B</strong> uterus (where a fetus can develop). After release, an egg typically travels in the oviduct toward the uterus. Clinical names, schematic boxes only.</p>
+      <div class="lesson-figure">
+        {{ organ_labels_fig }}
+      </div>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>The uterus is</p>
+          <button class="btn mcq-btn" data-letter="A">a bone in the arm</button>
+          <button class="btn mcq-btn" data-letter="B">the organ where a fetus can develop</button>
+          <button class="btn mcq-btn" data-letter="C">a lung</button>
+          <button class="btn mcq-btn" data-letter="D">a unit of speed</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Male structures and urine
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>C</strong> on the schematic is a testis, which can produce sperm. The urethra can carry urine. In males it can also carry sperm at ejaculation: two jobs, one pathway — urine and gametes are still different. The penis can deliver sperm into the vagina. That is anatomy, not a prompt for personal stories.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A testis can</p>
+          <button class="btn mcq-btn" data-letter="A">release eggs</button>
+          <button class="btn mcq-btn" data-letter="B">produce sperm</button>
+          <button class="btn mcq-btn" data-letter="C">be a distance–time graph</button>
+          <button class="btn mcq-btn" data-letter="D">replace the kidney as the only urinary organ</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Gametes
+    </summary>
+    <div class="lesson-section-body">
+      <p>A <strong>gamete</strong> is a sex cell. The female gamete is the <strong>egg</strong> (ovum). The male gamete is the <strong>sperm</strong>. A bone cell is not a gamete. A rumour is not a gamete.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>The female gamete is the</p>
+          <button class="btn mcq-btn" data-letter="A">sperm</button>
+          <button class="btn mcq-btn" data-letter="B">egg (ovum)</button>
+          <button class="btn mcq-btn" data-letter="C">femur</button>
+          <button class="btn mcq-btn" data-letter="D">newton</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Menstrual cycle
+    </summary>
+    <div class="lesson-section-body">
+      <p>The <strong>menstrual cycle</strong> is a repeating sequence: the uterus lining thickens, an egg is released (<strong>ovulation</strong>), and if the egg is not fertilised the lining is shed (a <strong>period</strong>). Teaching this must not become a roll-call of who has periods.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>The menstrual cycle is</p>
+          <button class="btn mcq-btn" data-letter="A">a one-off event that never repeats</button>
+          <button class="btn mcq-btn" data-letter="B">a repeating sequence involving hormones, ovulation and the uterus lining</button>
+          <button class="btn mcq-btn" data-letter="C">a sports tournament</button>
+          <button class="btn mcq-btn" data-letter="D">a graph of speed</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Fertilisation
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Fertilisation</strong> is egg and sperm joining. If that happens, the early embryo can implant in the uterus lining. This is a mechanism, not a request for anyone’s private history.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Fertilisation is</p>
+          <button class="btn mcq-btn" data-letter="A">a muscle pair</button>
+          <button class="btn mcq-btn" data-letter="B">the joining of egg and sperm</button>
+          <button class="btn mcq-btn" data-letter="C">a pulse measurement</button>
+          <button class="btn mcq-btn" data-letter="D">a banned drug</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Clinical language in class
+    </summary>
+    <div class="lesson-section-body">
+      <p>Use the official names. Do not sensationalise. Do not collect who has started periods or who has had sexual contact. Personal questions go to a teacher or health professional, not this app.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref lesson-quick-ref-card" role="region" aria-label="Reproductive anatomy quick reference">
+    <h3>Quick reference</h3>
+    <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+      <div>
+        <h4>Structures</h4>
+        <ul>
+          <li>Ovary → egg</li>
+          <li>Uterus → possible pregnancy</li>
+          <li>Testis → sperm</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Process</h4>
+        <ul>
+          <li>Gametes: egg and sperm</li>
+          <li>Cycle: lining, ovulation, period</li>
+          <li>Fertilisation: join</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='reproductive_anatomy') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

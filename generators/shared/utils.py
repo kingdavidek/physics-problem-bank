@@ -378,6 +378,20 @@ def problem_extra_from_graded_answer(raw):
                 'answer_type': 'number',
                 'answer_format_hint': 'Enter a number',
             }
+        elif raw_type == 'number_estimate':
+            value = raw.get('value')
+            tolerance = raw.get('tolerance')
+            if value is not None and tolerance is not None:
+                extra = {
+                    'correct_answer_raw': (
+                        f'{_graded_format_num(value)}~{_graded_format_num(tolerance)}'
+                    ),
+                    'answer_type': 'number_estimate',
+                    'answer_format_hint': raw.get(
+                        'format_hint',
+                        'Enter your estimate from the scale',
+                    ),
+                }
         elif raw_type == 'keyword':
             value = raw.get('value')
             if value is not None and str(value).strip():

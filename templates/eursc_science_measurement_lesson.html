@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+{% block title %}Measurement and SI Units – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Measurement and SI Units</h1>
+    <p class="hero-sub">S1 Integrated Science · Unit 1.1 Science Lab · syllabus 1.1.2. Why we use universal units, how SI prefixes work, and how to judge a measurement as accurate, precise, or in error.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S1</span>
+      <span class="pill pill--hero">1.1 Science Lab</span>
+      <span class="pill pill--hero">1.1.2</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='measurement') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Why we measure with universal units
+      <span class="lesson-tag">1.1.2</span>
+      <span class="lesson-tag">S1</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>A measurement is a comparison with a standard: how many of that standard fit the quantity you are describing. Without an agreed standard, “about two sticks long” cannot be checked by anyone else.</p>
+      <p>Scientists use the <strong>Système International (SI)</strong> so that a length, a mass or a time recorded in Madrid can be repeated in Helsinki. That is what <strong>universal units</strong> are for: results can be compared, reproduced and criticised.</p>
+      <ul>
+        <li>Write the <strong>number and the unit</strong> every time (4.7 cm, not “4.7”).</li>
+        <li>Choose a unit that keeps the number a sensible size (2.3 km, not 2 300 000 mm).</li>
+        <li>The same investigation, done again, should be able to get a similar result.</li>
+      </ul>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Why do scientists in different countries use the same SI units?</p>
+          <button class="btn mcq-btn" data-letter="A">Each country should keep its own units so results look familiar</button>
+          <button class="btn mcq-btn" data-letter="B">Shared units let anyone repeat and compare measurements</button>
+          <button class="btn mcq-btn" data-letter="C">SI units always make the numbers larger</button>
+          <button class="btn mcq-btn" data-letter="D">Units only matter in physics, not in biology</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      SI base units
+    </summary>
+    <div class="lesson-section-body">
+      <p>Seven <strong>base units</strong> sit at the root of SI. S1 laboratory work uses the first five constantly. The last two appear later in the course.</p>
+      <table class="lesson-table">
+        <thead>
+          <tr><th>Quantity</th><th>Unit</th><th>Symbol</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>length</td><td>metre</td><td>\(m\)</td></tr>
+          <tr><td>mass</td><td>kilogram</td><td>\(kg\)</td></tr>
+          <tr><td>time</td><td>second</td><td>\(s\)</td></tr>
+          <tr><td>electric current</td><td>ampere</td><td>\(A\)</td></tr>
+          <tr><td>temperature</td><td>kelvin</td><td>\(K\)</td></tr>
+          <tr><td>amount of substance</td><td>mole</td><td>\(\mathrm{mol}\)</td></tr>
+          <tr><td>luminous intensity</td><td>candela</td><td>\(\mathrm{cd}\)</td></tr>
+        </tbody>
+      </table>
+      <p>The <strong>litre</strong> (\(1\,\mathrm{L} = 1\,\mathrm{dm}^3 = 1000\,\mathrm{cm}^3\)) is a handy volume unit in the lab, but it is <em>not</em> a base unit. The newton is a derived unit of force.</p>
+      <p class="lesson-callout">Mass is the kilogram, not the gram. Temperature in SI is the kelvin. Celsius uses the same degree size but starts at a different zero (\(0\,\mathrm{^\circ C} = 273.15\,\mathrm{K}\)).</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Which is the SI base unit of mass?</p>
+          <button class="btn mcq-btn" data-letter="A">gram</button>
+          <button class="btn mcq-btn" data-letter="B">kilogram</button>
+          <button class="btn mcq-btn" data-letter="C">tonne</button>
+          <button class="btn mcq-btn" data-letter="D">newton</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      SI prefixes
+    </summary>
+    <div class="lesson-section-body">
+      <p>A <strong>prefix</strong> scales a unit by a power of ten. Write the prefix letter immediately in front of the unit symbol: km, mg, µs.</p>
+      <table class="lesson-table">
+        <thead>
+          <tr><th>Prefix</th><th>Symbol</th><th>Factor</th><th>Meaning</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>giga</td><td>G</td><td>\(10^9\)</td><td>1 000 000 000</td></tr>
+          <tr><td>mega</td><td>M</td><td>\(10^6\)</td><td>1 000 000</td></tr>
+          <tr><td>kilo</td><td>k</td><td>\(10^3\)</td><td>1000</td></tr>
+          <tr><td>centi</td><td>c</td><td>\(10^{-2}\)</td><td>0.01</td></tr>
+          <tr><td>milli</td><td>m</td><td>\(10^{-3}\)</td><td>0.001</td></tr>
+          <tr><td>micro</td><td>µ</td><td>\(10^{-6}\)</td><td>0.000001</td></tr>
+          <tr><td>nano</td><td>n</td><td>\(10^{-9}\)</td><td>0.000000001</td></tr>
+        </tbody>
+      </table>
+      <p>Going <strong>down</strong> the table (to a smaller unit) makes the number larger: \(2\,\mathrm{m} = 2000\,\mathrm{mm}\). Going <strong>up</strong> makes the number smaller: \(3000\,\mathrm{mm} = 3\,\mathrm{m}\).</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p>The SI prefix kilo means</p>
+          <button class="btn mcq-btn" data-letter="A">1000</button>
+          <button class="btn mcq-btn" data-letter="B">0.001</button>
+          <button class="btn mcq-btn" data-letter="C">100</button>
+          <button class="btn mcq-btn" data-letter="D">1 000 000</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p>1 millimetre is</p>
+          <button class="btn mcq-btn" data-letter="A">1000 m</button>
+          <button class="btn mcq-btn" data-letter="B">0.1 m</button>
+          <button class="btn mcq-btn" data-letter="C">0.001 m</button>
+          <button class="btn mcq-btn" data-letter="D">0.01 m</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Converting units
+    </summary>
+    <div class="lesson-section-body">
+      <p>Conversion is multiplying or dividing by the right power of ten. Keep the quantity the same; only the unit label changes.</p>
+      <ol>
+        <li>Write the number with its current unit.</li>
+        <li>Multiply (smaller unit) or divide (larger unit) by the factor.</li>
+        <li>Check that the new size is sensible: a classroom is about 8 m, not 8 km.</li>
+      </ol>
+      <p><strong>Example:</strong> \(2.4\,\mathrm{km}\) to metres. Kilo means 1000, so \(2.4 \times 1000 = 2400\,\mathrm{m}\).</p>
+      <p><strong>Example:</strong> \(3.2\,\mathrm{cm}\) to metres. Centi means \(10^{-2}\), so divide by 100: \(0.032\,\mathrm{m}\).</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p>Convert 2.4 km to metres.</p>
+          <button class="btn mcq-btn" data-letter="A">24 m</button>
+          <button class="btn mcq-btn" data-letter="B">240 m</button>
+          <button class="btn mcq-btn" data-letter="C">2400 m</button>
+          <button class="btn mcq-btn" data-letter="D">24 000 m</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Instruments, scales and calibration
+    </summary>
+    <div class="lesson-section-body">
+      <p>Choose an instrument that can resolve the quantity you care about: a 30 cm ruler for a pencil, a measuring cylinder for a liquid, a digital balance for mass, a stopwatch for time.</p>
+      <p>On an analogue scale, read from <strong>directly in front</strong> so your eye is perpendicular to the mark (avoids parallax). Estimate to the nearest half or tenth of a division when the pointer sits between marks.</p>
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="100%" viewBox="0 0 400 124" role="img" aria-labelledby="meas-ruler-title meas-ruler-desc">
+          <title id="meas-ruler-title">Centimetre scale with a pointer at 4.7 cm</title>
+          <desc id="meas-ruler-desc">A horizontal centimetre ruler from 0 to 8. A triangular pointer sits seven small divisions past the 4 cm mark.</desc>
+          <line x1="28" y1="52" x2="372" y2="52" stroke="var(--text)" stroke-width="2.5" stroke-linecap="round"/>
+          <line x1="28" y1="34" x2="28" y2="70" stroke="var(--text)" stroke-width="2"/>
+          <line x1="71" y1="34" x2="71" y2="70" stroke="var(--text)" stroke-width="2"/>
+          <line x1="114" y1="34" x2="114" y2="70" stroke="var(--text)" stroke-width="2"/>
+          <line x1="157" y1="34" x2="157" y2="70" stroke="var(--text)" stroke-width="2"/>
+          <line x1="200" y1="34" x2="200" y2="70" stroke="var(--text)" stroke-width="2"/>
+          <line x1="243" y1="34" x2="243" y2="70" stroke="var(--text)" stroke-width="2"/>
+          <line x1="286" y1="34" x2="286" y2="70" stroke="var(--text)" stroke-width="2"/>
+          <line x1="329" y1="34" x2="329" y2="70" stroke="var(--text)" stroke-width="2"/>
+          <line x1="372" y1="34" x2="372" y2="70" stroke="var(--text)" stroke-width="2"/>
+          <text x="28" y="92" text-anchor="middle" fill="var(--text)" font-size="14" font-weight="600">0</text>
+          <text x="71" y="92" text-anchor="middle" fill="var(--text)" font-size="14" font-weight="600">1</text>
+          <text x="114" y="92" text-anchor="middle" fill="var(--text)" font-size="14" font-weight="600">2</text>
+          <text x="157" y="92" text-anchor="middle" fill="var(--text)" font-size="14" font-weight="600">3</text>
+          <text x="200" y="92" text-anchor="middle" fill="var(--text)" font-size="14" font-weight="600">4</text>
+          <text x="243" y="92" text-anchor="middle" fill="var(--text)" font-size="14" font-weight="600">5</text>
+          <text x="286" y="92" text-anchor="middle" fill="var(--text)" font-size="14" font-weight="600">6</text>
+          <text x="329" y="92" text-anchor="middle" fill="var(--text)" font-size="14" font-weight="600">7</text>
+          <text x="372" y="92" text-anchor="middle" fill="var(--text)" font-size="14" font-weight="600">8</text>
+          <polygon points="230.1,30 222.1,12 238.1,12" fill="var(--wrong-500)"/>
+          <text x="200" y="116" text-anchor="middle" fill="var(--text-muted)" font-size="14" font-weight="600">cm</text>
+        </svg>
+        <p>Each small tick is 0.1 cm. The pointer is at <strong>4.7 cm</strong>.</p>
+      </div>
+      <p><strong>Calibration</strong> means checking the instrument against a <strong>known standard</strong> (a 100 g mass, a reference thermometer) and adjusting it, or recording the correction. A balance that reads 2 g when empty has a <strong>zero error</strong> — that is a calibration problem, not bad luck.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A laboratory balance is calibrated when you</p>
+          <button class="btn mcq-btn" data-letter="A">wipe it clean before use</button>
+          <button class="btn mcq-btn" data-letter="B">compare it with a known standard mass</button>
+          <button class="btn mcq-btn" data-letter="C">use it in a warmer room</button>
+          <button class="btn mcq-btn" data-letter="D">read it from an angle</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Accuracy, precision and error
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Accuracy</strong> is closeness to the true value. <strong>Precision</strong> is how tightly repeats cluster, even if that cluster is in the wrong place.</p>
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="100%" viewBox="0 0 420 150" role="img" aria-labelledby="meas-target-title meas-target-desc">
+          <title id="meas-target-title">Four targets comparing accuracy and precision</title>
+          <desc id="meas-target-desc">Four circles. Left to right: hits in the centre; a tight group off-centre; a spread around the centre; a spread away from the centre.</desc>
+          <circle cx="55" cy="64" r="40" fill="var(--brand-100)" stroke="var(--text)" stroke-width="1.5"/>
+          <circle cx="55" cy="64" r="8" fill="none" stroke="var(--text)" stroke-width="1"/>
+          <circle cx="53" cy="62" r="3.5" fill="var(--correct-600)"/>
+          <circle cx="58" cy="66" r="3.5" fill="var(--correct-600)"/>
+          <circle cx="50" cy="67" r="3.5" fill="var(--correct-600)"/>
+          <text x="55" y="122" text-anchor="middle" fill="var(--text)" font-size="12" font-weight="600">accurate</text>
+          <text x="55" y="138" text-anchor="middle" fill="var(--text)" font-size="12" font-weight="600">and precise</text>
+          <circle cx="160" cy="64" r="40" fill="var(--brand-100)" stroke="var(--text)" stroke-width="1.5"/>
+          <circle cx="160" cy="64" r="8" fill="none" stroke="var(--text)" stroke-width="1"/>
+          <circle cx="178" cy="50" r="3.5" fill="var(--wrong-500)"/>
+          <circle cx="182" cy="54" r="3.5" fill="var(--wrong-500)"/>
+          <circle cx="176" cy="55" r="3.5" fill="var(--wrong-500)"/>
+          <text x="160" y="122" text-anchor="middle" fill="var(--text)" font-size="12" font-weight="600">precise,</text>
+          <text x="160" y="138" text-anchor="middle" fill="var(--text)" font-size="12" font-weight="600">not accurate</text>
+          <circle cx="265" cy="64" r="40" fill="var(--brand-100)" stroke="var(--text)" stroke-width="1.5"/>
+          <circle cx="265" cy="64" r="8" fill="none" stroke="var(--text)" stroke-width="1"/>
+          <circle cx="248" cy="50" r="3.5" fill="var(--xp-500)"/>
+          <circle cx="280" cy="58" r="3.5" fill="var(--xp-500)"/>
+          <circle cx="258" cy="80" r="3.5" fill="var(--xp-500)"/>
+          <text x="265" y="122" text-anchor="middle" fill="var(--text)" font-size="12" font-weight="600">accurate,</text>
+          <text x="265" y="138" text-anchor="middle" fill="var(--text)" font-size="12" font-weight="600">not precise</text>
+          <circle cx="370" cy="64" r="40" fill="var(--brand-100)" stroke="var(--text)" stroke-width="1.5"/>
+          <circle cx="370" cy="64" r="8" fill="none" stroke="var(--text)" stroke-width="1"/>
+          <circle cx="348" cy="42" r="3.5" fill="var(--text-muted)"/>
+          <circle cx="392" cy="70" r="3.5" fill="var(--text-muted)"/>
+          <circle cx="360" cy="88" r="3.5" fill="var(--text-muted)"/>
+          <text x="370" y="122" text-anchor="middle" fill="var(--text)" font-size="12" font-weight="600">neither</text>
+        </svg>
+      </div>
+      <ul>
+        <li><strong>Random error</strong> scatters repeats (reaction time, parallax). Reduce it by repeating and taking the mean.</li>
+        <li><strong>Systematic error</strong> shifts every reading the same way (zero error, a damaged ruler). Calibration or a better instrument is the fix; averaging will not remove it.</li>
+        <li>The <strong>range</strong> of a set is largest minus smallest. The <strong>mean</strong> is the sum divided by how many readings you took.</li>
+      </ul>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p>A measurement is accurate when it is</p>
+          <button class="btn mcq-btn" data-letter="A">close to the true value</button>
+          <button class="btn mcq-btn" data-letter="B">the same every time, even if it is wrong</button>
+          <button class="btn mcq-btn" data-letter="C">written with many decimal places</button>
+          <button class="btn mcq-btn" data-letter="D">larger than the true value</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <p class="lesson-callout">This page does not replace practical work. Use the <a href="{{ url_for('eursc_ibl_page', slug='s1_lab') }}">classroom investigation support</a> with your teacher for a controlled measurement in the lab.</p>
+
+  <div class="lesson-quickref lesson-quick-ref-card" role="region" aria-label="Measurement quick reference">
+    <h3>Quick reference</h3>
+    <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+      <div>
+        <h4>SI base units</h4>
+        <ul>
+          <li>length \(m\) · mass \(kg\) · time \(s\)</li>
+          <li>current \(A\) · temperature \(K\)</li>
+          <li>litre is useful, not a base unit</li>
+        </ul>
+        <h4>Prefixes</h4>
+        <ul>
+          <li>kilo \(10^3\) · mega \(10^6\) · giga \(10^9\)</li>
+          <li>centi \(10^{-2}\) · milli \(10^{-3}\) · micro \(10^{-6}\)</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Quality of data</h4>
+        <ul>
+          <li>Accurate: close to the true value</li>
+          <li>Precise: repeats cluster together</li>
+          <li>Calibrate against a known standard</li>
+          <li>Range = max − min · mean = sum / n</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='measurement') }}" class="btn btn-primary">
+      Start Practice Quiz
+    </a>
+  </div>
+
+</div>
+{% endblock %}

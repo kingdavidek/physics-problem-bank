@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}Basic Cooking: Fermentation – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Basic Cooking: Fermentation</h1>
+    <p class="hero-sub">S1 Integrated Science · Unit 1.2 Food · syllabus 1.2.6. Yeast, lactic bacteria, and fermentation as useful controlled spoilage.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S1</span>
+      <span class="pill pill--hero">1.2 Food</span>
+      <span class="pill pill--hero">1.2.6</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='cooking_fermentation') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Microorganisms
+      <span class="lesson-tag">1.2.6</span>
+      <span class="lesson-tag">S1</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>Food fermentation uses living <strong>microorganisms</strong> such as yeast or bacteria. They are not magnets, bleach or stones. Unwanted mould on bread is a different growth, not the planned starter.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Fermentation in food uses</p>
+          <button class="btn mcq-btn" data-letter="A">only magnets</button>
+          <button class="btn mcq-btn" data-letter="B">microorganisms such as yeast or bacteria</button>
+          <button class="btn mcq-btn" data-letter="C">pure helium</button>
+          <button class="btn mcq-btn" data-letter="D">sand filters only</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Yeast
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Yeast</strong> in dough produces <strong>carbon dioxide</strong> that makes bread rise, and can produce alcohol. That pathway does not need extra oxygen, so a covered vat can still bubble.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Yeast in bread dough mainly produces</p>
+          <button class="btn mcq-btn" data-letter="A">table salt crystals</button>
+          <button class="btn mcq-btn" data-letter="B">carbon dioxide that makes the dough rise</button>
+          <button class="btn mcq-btn" data-letter="C">iron nails</button>
+          <button class="btn mcq-btn" data-letter="D">a vacuum</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Lactic bacteria
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Lactic bacteria</strong> make yoghurt and sauerkraut tangy by lowering pH. The acid also helps preservation. Boiling the live culture would kill the bacteria you wanted.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Yoghurt tang is often from</p>
+          <button class="btn mcq-btn" data-letter="A">a grill only</button>
+          <button class="btn mcq-btn" data-letter="B">lactic bacteria acting on milk</button>
+          <button class="btn mcq-btn" data-letter="C">pure sodium metal</button>
+          <button class="btn mcq-btn" data-letter="D">chromatography paper</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Controlled spoilage
+    </summary>
+    <div class="lesson-section-body">
+      <p>Fermentation is <strong>useful, controlled spoilage</strong>: chosen microbes, clean tools, known time and temperature. Leaving meat warm with no plan is not a kitchen method.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Fermentation can be called useful spoilage because</p>
+          <button class="btn mcq-btn" data-letter="A">all microbes are equally dangerous always</button>
+          <button class="btn mcq-btn" data-letter="B">chosen microbes change food in a controlled way we want</button>
+          <button class="btn mcq-btn" data-letter="C">it removes the need for hygiene</button>
+          <button class="btn mcq-btn" data-letter="D">it is filtration</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Conditions
+    </summary>
+    <div class="lesson-section-body">
+      <p>Microbes need a <strong>food</strong> source (sugar, milk) and a suitable <strong>temperature</strong>. Disinfectant is not a starter. Evidence that dough worked: rise in volume or bubbles, with a method another group can repeat.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Yeast needs a food source such as</p>
+          <button class="btn mcq-btn" data-letter="A">sand</button>
+          <button class="btn mcq-btn" data-letter="B">sugar</button>
+          <button class="btn mcq-btn" data-letter="C">argon</button>
+          <button class="btn mcq-btn" data-letter="D">a magnet</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Classroom practical
+    </summary>
+    <div class="lesson-section-body">
+      <p>A yoghurt or bread ferment in class still needs the teacher’s risk assessment. This page does not replace the kitchen.</p>
+      <p class="lesson-callout">Plan a classroom meal or ferment with the <a href="{{ url_for('eursc_ibl_page', slug='s1_food') }}">healthy meal investigation support</a>.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref lesson-quick-ref-card" role="region" aria-label="Fermentation quick reference">
+    <h3>Quick reference</h3>
+    <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+      <div>
+        <h4>Microbes</h4>
+        <ul>
+          <li>Yeast — CO2 (and alcohol)</li>
+          <li>Lactic bacteria — yoghurt, sauerkraut</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Control</h4>
+        <ul>
+          <li>Hygiene · food source · temperature</li>
+          <li>Wanted change, not random spoilage</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='cooking_fermentation') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

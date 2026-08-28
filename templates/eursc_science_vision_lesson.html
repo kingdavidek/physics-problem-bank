@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}Vision – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Vision</h1>
+    <p class="hero-sub">S2 Integrated Science · Unit 2.3 Senses · syllabus 2.3.1. Eye schematic, lens, retina, accommodation, near- and far-sight, stereo depth and illusions. This lesson does not store prescriptions or rank eyesight.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S2</span>
+      <span class="pill pill--hero">2.3 Senses</span>
+      <span class="pill pill--hero">2.3.1</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='vision') }}">▶ Practice Quiz (10 questions)</a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Eye schematic
+      <span class="lesson-tag">2.3.1</span>
+      <span class="lesson-tag">S2</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>A</strong> lens (refracts light), <strong>B</strong> retina (detects the image), <strong>C</strong> path of signals toward the brain. Schematic only, not a realistic photograph and not a ranking of classmates.</p>
+      <div class="lesson-figure">{{ eye_fig }}</div>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>In this schematic the lens mainly</p>
+          <button class="btn mcq-btn" data-letter="A">stores a glasses file</button>
+          <button class="btn mcq-btn" data-letter="B">refracts light to help form an image</button>
+          <button class="btn mcq-btn" data-letter="C">is a food group</button>
+          <button class="btn mcq-btn" data-letter="D">ranks classmates</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">2</span> Forming an image</summary>
+    <div class="lesson-section-body">
+      <p>The lens helps form an image on the retina. Signals then travel toward the brain, which interprets them. Two people can see the same drawing differently because of cues, not because this quiz ranks brains.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>The retina</p>
+          <button class="btn mcq-btn" data-letter="A">is a unit of time</button>
+          <button class="btn mcq-btn" data-letter="B">detects the image at the back of the eye in this model</button>
+          <button class="btn mcq-btn" data-letter="C">is an advert</button>
+          <button class="btn mcq-btn" data-letter="D">must be photographed for the quiz</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">3</span> Accommodation</summary>
+    <div class="lesson-section-body">
+      <p><strong>Accommodation</strong> is changing lens shape so near or far can be in focus. The quiz does not store whose glasses they are.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Accommodation is</p>
+          <button class="btn mcq-btn" data-letter="A">a class vote on posters</button>
+          <button class="btn mcq-btn" data-letter="B">changing lens shape so near or far can be in focus</button>
+          <button class="btn mcq-btn" data-letter="C">a demand for a prescription list</button>
+          <button class="btn mcq-btn" data-letter="D">an antibiotic</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">4</span> Near-sight and far-sight</summary>
+    <div class="lesson-section-body">
+      <p>In this S2 model, <strong>near-sight</strong> means distant objects are not in focus. <strong>Far-sight</strong> means near objects are not in focus. Fictional cases only; no prescription harvest.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Near-sight in this S2 model means</p>
+          <button class="btn mcq-btn" data-letter="A">near objects cannot be seen at all</button>
+          <button class="btn mcq-btn" data-letter="B">distant objects are not in focus</button>
+          <button class="btn mcq-btn" data-letter="C">the retina is a virus</button>
+          <button class="btn mcq-btn" data-letter="D">the quiz stores a prescription</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">5</span> Stereo depth</summary>
+    <div class="lesson-section-body">
+      <p>Two slightly different views from two eyes help judge depth. One identical photo is not the same as stereo in this model.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Stereo depth uses</p>
+          <button class="btn mcq-btn" data-letter="A">one identical view only, always</button>
+          <button class="btn mcq-btn" data-letter="B">two slightly different views from two eyes</button>
+          <button class="btn mcq-btn" data-letter="C">a rumour</button>
+          <button class="btn mcq-btn" data-letter="D">a private scoreboard</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">6</span> Brain and illusions</summary>
+    <div class="lesson-section-body">
+      <p>An illusion can be the brain interpreting cues in a way that mismatches the object. It is not a stored clinical eye test and not a class league.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A visual illusion is often</p>
+          <button class="btn mcq-btn" data-letter="A">proof the instrument is always broken</button>
+          <button class="btn mcq-btn" data-letter="B">the brain interpreting cues in a way that mismatches the object</button>
+          <button class="btn mcq-btn" data-letter="C">a vaccination</button>
+          <button class="btn mcq-btn" data-letter="D">a class eye-test league</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">7</span> Using this lesson</summary>
+    <div class="lesson-section-body">
+      <p>Keep lens, retina, accommodation, focusing errors, stereo and illusions as separate ideas. Hearing continues next. This quiz does not rank eyesight.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Path</h4>
+        <ul>
+          <li>Lens refracts</li>
+          <li>Retina detects</li>
+          <li>Brain interprets</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Focus</h4>
+        <ul>
+          <li>Accommodation = lens shape</li>
+          <li>Near-sight: distant blur</li>
+          <li>No prescription files here</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='vision') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

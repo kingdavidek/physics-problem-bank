@@ -1,6 +1,8 @@
 # ES0 handoff — European School Integrated Science (platform only)
 
-**Start here.** This file is the agent entry point for Phase ES0.
+**Shipped.** Mixed-quiz engine + `eursc` hierarchy. ES1 (Measurement) is the next content phase — see `docs/EUROPEAN_SCHOOL_SCIENCE.md` §8.
+
+**Start here only if redoing ES0.** This file is the agent entry point for Phase ES0.
 
 | | |
 |--|--|

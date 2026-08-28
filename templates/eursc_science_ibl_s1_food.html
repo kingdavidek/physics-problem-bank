@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Classroom investigation – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>{{ ibl.title }}</h1>
+    <p class="hero-sub">S1 Integrated Science · Unit 1.2 Food. Planning support for a classroom practical. This page does not replace classroom practical work.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S1</span>
+      <span class="pill pill--hero">1.2 Food</span>
+      <span class="pill pill--hero">IBL</span>
+    </div>
+  </div>
+
+  <p class="lesson-callout">Use this sheet with your teacher in the kitchen or food room. An online page cannot stand in for the practical: you still need real food, hygiene rules and the class around you. Related lessons: <a href="{{ url_for('topic_page', level='eursc', subject='science', topic='food_formulas') }}">Food Formulas</a>, <a href="{{ url_for('topic_page', level='eursc', subject='science', topic='cooking_fermentation') }}">Fermentation</a>, <a href="{{ url_for('topic_page', level='eursc', subject='science', topic='nutrition') }}">Nutrition</a>, <a href="{{ url_for('topic_page', level='eursc', subject='science', topic='healthy_meal_project') }}">Project: A Healthy Meal</a>.</p>
+
+  <p>To print the brief and rubric, use your browser’s Print command (Ctrl+P or Cmd+P). Buttons are hidden in the print view. Rubrics stay on this page; there is no teacher grading database. Do not collect private diet or health stories.</p>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Brief and learning objectives
+      <span class="lesson-tag">IBL</span>
+      <span class="lesson-tag">S1</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Investigation:</strong> Plan and prepare a balanced classroom meal using food-group evidence and pack labels. Optionally include a teacher-approved yoghurt or bread ferment as a side.</p>
+      <p>This joins the Food unit: molecules of food (1.2.1), kitchen chemistry (1.2.2–1.2.6), labels and claims (1.2.7), and the meal project (1.2.8).</p>
+      <p>By the end of the practical you should be able to:</p>
+      <ul>
+        <li>write a menu that uses more than one food group;</li>
+        <li>apply hygiene and the teacher’s risk assessment;</li>
+        <li>record label energy in kJ and the ingredients you used;</li>
+        <li>present evidence and reflect on the method, not on anyone’s private eating.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Planning and variables
+    </summary>
+    <div class="lesson-section-body">
+      <ul>
+        <li><strong>Independent (if you compare two menus):</strong> the dish or ingredient set you change on purpose.</li>
+        <li><strong>Dependent:</strong> label energy in kJ, or a simple check that food groups are present.</li>
+        <li><strong>Controls:</strong> serving size, the same recording method, the same hygiene rules.</li>
+      </ul>
+      <p>If you ferment yoghurt or dough: independent might be time or temperature (teacher-approved values only); dependent is rise, tang, or pH if you measure it; controls are starter amount and vessel.</p>
+      <p>Draft in the lab book: “We will include _____ food groups. We will record _____ kJ from labels. We will not ask anyone about their private diet.”</p>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Safety and risk
+    </summary>
+    <div class="lesson-section-body">
+      <ul>
+        <li>Wash hands. Tie back hair. No running.</li>
+        <li>Keep raw meat separate from ready-to-eat food. Use clean boards.</li>
+        <li>Hot oil, ovens and knives: teacher-approved controls only.</li>
+        <li>Follow the teacher’s allergy rules. Do not quiz classmates about medical history in this app.</li>
+        <li>Live cultures: do not boil the starter you want to keep; do not use bleach as food.</li>
+        <li>Your teacher’s risk assessment is the one that counts.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Data table and graph
+    </summary>
+    <div class="lesson-section-body">
+      <p>Put units in the headings. Record every packaged item you use. This course treats 1 kcal as 4 kJ.</p>
+      <table class="lesson-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Food group</th>
+            <th>Energy / kJ per serving</th>
+            <th>Servings used</th>
+            <th>Energy / kJ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td>Total</td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+      <p>A simple display: food group on the horizontal axis, kJ on the vertical axis, or a labelled bar for each item. If you ferment, add a time column and a yes/no for rise or tang.</p>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Analysis and evaluation
+    </summary>
+    <div class="lesson-section-body">
+      <p>Does the plate show more than one food group? Quote kJ from the table, not only a slogan. If two menus were compared, which had more energy per serving, and was serving size controlled?</p>
+      <p>Evaluation prompts:</p>
+      <ul>
+        <li>What limited the evidence (missing labels, estimated servings, a hygiene step that drifted)?</li>
+        <li>Would a written method let another group repeat the meal?</li>
+        <li>If you fermented, was the culture kept at a suitable temperature?</li>
+        <li>What would you change next time so the evidence is easier to check?</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Teacher rubric
+    </summary>
+    <div class="lesson-section-body">
+      <p>Local classroom judgement only. Circle one column per row. This is not stored in the app.</p>
+      <table class="lesson-table">
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            <th>Developing</th>
+            <th>Secure</th>
+            <th>Strong</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Method</td>
+            <td>Steps or hygiene missing</td>
+            <td>Followable method; hygiene named</td>
+            <td>Quantities, times and roles are explicit</td>
+          </tr>
+          <tr>
+            <td>Evidence</td>
+            <td>Slogan only; no kJ</td>
+            <td>Food groups and some label energy</td>
+            <td>Complete table with units and a clear total</td>
+          </tr>
+          <tr>
+            <td>Collaboration</td>
+            <td>One person does all the recording</td>
+            <td>Shared prep, timing and recording</td>
+            <td>Peers check hygiene and the table</td>
+          </tr>
+          <tr>
+            <td>Communication</td>
+            <td>No explanation of choices</td>
+            <td>Menu explained with groups or kJ</td>
+            <td>Pattern, limits and next steps are all said clearly</td>
+          </tr>
+          <tr>
+            <td>Reflection</td>
+            <td>Comments on people, not the method</td>
+            <td>Names one method limit and one improvement</td>
+            <td>Separates taste preference from checkable evidence</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+</div>
+{% endblock %}
