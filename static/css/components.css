@@ -1238,6 +1238,23 @@ body.quiz-runner-active .lesson-quiz-cta-bar,
     font-size: var(--text-base);
     letter-spacing: -0.01em;
 }
+.topic-card-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    margin-right: 6px;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 700;
+    vertical-align: 0.1em;
+    letter-spacing: 0.02em;
+}
+.topic-card-badge--ibl {
+    background: var(--brand-50, var(--ink-100));
+    color: var(--on-brand);
+}
+.topic-card--ibl {
+    padding-right: var(--space-5);
+}
 .topic-card-meta {
     font-size: var(--text-xs);
     font-weight: 600;

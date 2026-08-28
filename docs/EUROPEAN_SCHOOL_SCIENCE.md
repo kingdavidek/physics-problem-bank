@@ -3,7 +3,7 @@
 **Repo path:** `docs/EUROPEAN_SCHOOL_SCIENCE.md` (from repository root)  
 **ES0 agent entry point:** `docs/ES0_HANDOFF.md` — platform enablement only; run `git checkout main && git pull` first  
 **Last updated:** 2026-08-28
-**Status:** ES9 shipped (S3 Living Earth 3.2.1–3.2.5 + field IBL). S1 complete; S2 complete; **S3 complete**. ES10 (whole-suite QA) not started. QOTD still excludes `eursc` (clinical 1.4 / 2.2 / interoception must not appear as site-wide daily questions).
+**Status:** **ES10 shipped** — whole-suite QA complete. S1–S3 complete (46 syllabus modules, six IBL tracks). Curriculum track closed. QOTD still excludes `eursc` (clinical 1.4 / 2.2 / interoception must not appear as site-wide daily questions).
 **Official source:** Schola Europaea, *Integrated Science Syllabus S1–S3*, ref **2018-12-D-6-en-2**, approved 7–8 February 2019 and phased into force for S1–S3 from 2019–2021. [Official PDF](https://www.eursc.eu/Syllabuses/2018-12-D-6-en-2.pdf)
 **Platform question contract:** `docs/API.md` §Problems and `docs/COMPLEX_MECHANISMS.md` §1
 **Decisions locked:** full curriculum-faithful puberty/sexuality coverage; launch **lessons + lesson quizzes**, while the main Practice generator remains GCSE maths/CS only.
@@ -286,7 +286,7 @@ Hard lesson-template rules remain: `lesson-shell`, no inline `style=`, matching 
 | **ES7 — S2 Senses** | 2.3.1–2.3.8 | Eight modules; S2 complete |
 | **ES8 — S3 Machines** | 3.1.1–3.1.6 | Six modules including robot project |
 | **ES9 — S3 Living Earth** | 3.2.1–3.2.5 | Five modules including field project; S3 complete |
-| **ES10 — Whole-suite QA** | Search, revision planning, subject badges, content matrix, browser/mobile/accessibility, docs/cache | Every official learning objective traced to a lesson section and question/rubric; full smoke suite green |
+| **ES10 — Whole-suite QA** | Search, revision planning, subject badges, content matrix, browser/mobile/accessibility, docs/cache | **Shipped** — `scripts/test_es10_whole_suite_smoke.py`; 62 smoke files green |
 
 Each official unit is one reviewed change. Never register partially authored topics: build the templates and banks behind tests, then add that complete unit to `TOPICS`.
 
@@ -325,13 +325,13 @@ Tests compare registry, templates and manifest so “full curriculum” is measu
 
 ## 10. Definition of done
 
-- [ ] `eursc/science` presents all 46 numbered syllabus modules under nine official units and three years.
-- [ ] Section/checkpoint counts follow §3; there is no fixed 6–7 rule.
-- [ ] Every official objective is mapped to teaching content and an auto-graded or rubric checkpoint.
-- [ ] Every normal lesson has a secure ten-question mixed quiz using appropriate existing graders.
-- [ ] Ordering and pick/set questions are used where pedagogically appropriate; matching is represented with existing formats.
-- [ ] Six substantial IBL support tracks exist, while clearly requiring classroom practical work.
-- [ ] Puberty/sexuality is complete, clinical, age-appropriate and never solicits personal disclosure.
-- [ ] Main Practice generator remains GCSE maths/CS only; European Science banks are lesson-quiz-only in v1.
-- [ ] Topic path, progress, search, revision planner and subject badges work for S1–S3.
-- [ ] Curriculum coverage, security, browser/mobile/accessibility and all smoke tests pass.
+- [x] `eursc/science` presents all 46 numbered syllabus modules under nine official units and three years.
+- [x] Section/checkpoint counts follow §3; there is no fixed 6–7 rule.
+- [x] Every official objective is mapped to teaching content and an auto-graded or rubric checkpoint.
+- [x] Every normal lesson has a secure ten-question mixed quiz using appropriate existing graders.
+- [x] Ordering and pick/set questions are used where pedagogically appropriate; matching is represented with existing formats.
+- [x] Six substantial IBL support tracks exist, while clearly requiring classroom practical work.
+- [x] Puberty/sexuality is complete, clinical, age-appropriate and never solicits personal disclosure.
+- [x] Main Practice generator remains GCSE maths/CS only; European Science banks are lesson-quiz-only in v1.
+- [x] Topic path, progress, search, revision planner and subject badges work for S1–S3.
+- [x] Curriculum coverage, security, browser/mobile/accessibility and all smoke tests pass.

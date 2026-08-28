@@ -275,7 +275,8 @@ def test_lesson_routes_topics_search():
         assert '/topic/eursc/science/food_environment' in topics_html
         assert '/topic/eursc/science/ecology_field_project' in topics_html
         assert '3.2 Living Earth' in topics_html
-        assert '/ibl/eursc/science/s3_field' not in topics_html
+        assert '/ibl/eursc/science/s3_field' in topics_html
+        assert 'topic-card-badge--ibl' in topics_html
         hrefs = re.findall(r'/topic/eursc/science/([a-z0-9_]+)', topics_html)
         shipped = {h for h in hrefs if h != 'es0_fixture'}
         assert len(shipped) >= 46, shipped

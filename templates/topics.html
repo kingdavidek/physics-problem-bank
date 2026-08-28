@@ -52,9 +52,10 @@
             <span class="topic-path-rail" aria-hidden="true">
                 <span class="topic-path-dot">{% if topic.is_complete %}✓{% else %}{{ topic.order }}{% endif %}</span>
             </span>
-            <a class="topic-card topic-card--{{ group.subject }}" href="{{ topic.url }}"
+            <a class="topic-card topic-card--{{ group.subject }}{% if topic.is_ibl %} topic-card--ibl{% endif %}" href="{{ topic.url }}"
                 data-topic-order="{{ topic.order }}"
                 {% if topic.is_current %}aria-current="step"{% endif %}>
+                {% if not topic.is_ibl %}
                 <span class="topic-mastery" aria-label="{{ topic.mastery_pct }}% mastery">
                     {{ svg_kit.progress_ring(
                         topic.mastery or 0,
@@ -64,9 +65,15 @@
                         fill_class='topic-mastery-fill',
                     ) }}
                 </span>
-                <span class="topic-card-title">{{ topic.name }}</span>
+                {% endif %}
+                <span class="topic-card-title">
+                    {% if topic.is_ibl %}<span class="topic-card-badge topic-card-badge--ibl">IBL</span>{% endif %}
+                    {{ topic.name }}
+                </span>
                 <span class="topic-card-meta">
-                    {% if topic.is_master %}
+                    {% if topic.is_ibl %}
+                    Classroom investigation →
+                    {% elif topic.is_master %}
                     Topic master
                     {% elif topic.is_ninja %}
                     Topic ninja

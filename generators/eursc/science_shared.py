@@ -839,6 +839,7 @@ IBL_PAGES = {
         "year": "s1",
         "unit_code": "1.1",
         "unit_name": "Science Lab",
+        "path_order": 3.5,
         "template": "eursc_science_ibl_s1_lab.html",
         "related": ("what_is_science", "measurement", "science_lab"),
         "sections": 6,
@@ -848,6 +849,7 @@ IBL_PAGES = {
         "year": "s1",
         "unit_code": "1.2",
         "unit_name": "Food",
+        "path_order": 11.5,
         "template": "eursc_science_ibl_s1_food.html",
         "related": (
             "food_formulas",
@@ -862,6 +864,7 @@ IBL_PAGES = {
         "year": "s2",
         "unit_code": "2.1",
         "unit_name": "Universe",
+        "path_order": 23.5,
         "template": "eursc_science_ibl_s2_light.html",
         "related": ("solar_system", "light_telescopes"),
         "sections": 6,
@@ -871,6 +874,7 @@ IBL_PAGES = {
         "year": "s2",
         "unit_code": "2.2",
         "unit_name": "Health",
+        "path_order": 27.5,
         "template": "eursc_science_ibl_s2_disease.html",
         "related": ("healthy_living", "infectious_disease"),
         "sections": 6,
@@ -880,6 +884,7 @@ IBL_PAGES = {
         "year": "s3",
         "unit_code": "3.1",
         "unit_name": "Machines",
+        "path_order": 41.5,
         "template": "eursc_science_ibl_s3_robot.html",
         "related": (
             "force_work_machines",
@@ -894,6 +899,7 @@ IBL_PAGES = {
         "year": "s3",
         "unit_code": "3.2",
         "unit_name": "Living Earth",
+        "path_order": 46.5,
         "template": "eursc_science_ibl_s3_field.html",
         "related": (
             "ecosystems_cycles",

@@ -241,7 +241,8 @@ def test_lesson_routes_topics_search():
         assert '/topic/eursc/science/solar_system' in topics_html
         assert '/topic/eursc/science/atoms_molecules' in topics_html
         assert '2.1 Universe' in topics_html
-        assert '/ibl/eursc/science/s2_light' not in topics_html
+        assert '/ibl/eursc/science/s2_light' in topics_html
+        assert 'topic-card-badge--ibl' in topics_html
 
         catalog = client.get('/api/v1/topics')
         assert catalog.status_code == 200

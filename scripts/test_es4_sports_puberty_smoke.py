@@ -273,7 +273,8 @@ def test_lesson_routes_topics_search():
         assert '/topic/eursc/science/pregnancy_sexual_health' in topics_html
         assert '1.3 Sports' in topics_html
         assert '1.4 Puberty' in topics_html
-        assert '/ibl/eursc/science/' not in topics_html
+        assert '/ibl/eursc/science/s1_lab' in topics_html
+        assert '/ibl/eursc/science/s1_food' in topics_html
 
         catalog = client.get('/api/v1/topics')
         assert catalog.status_code == 200

@@ -4204,6 +4204,28 @@ _TOPIC_SUBJECT_ORDER = {
 }
 
 
+def _eursc_ibl_path_topics():
+    items = []
+    for slug, page in IBL_PAGES.items():
+        year = page.get('year')
+        items.append({
+            'slug': slug,
+            'name': page['title'],
+            'level': 'eursc',
+            'subject': 'science',
+            'url': f'/ibl/eursc/science/{slug}',
+            'order': page.get('path_order'),
+            'prereqs': [],
+            'year': year,
+            'year_label': YEAR_LABELS.get(year, (year or '').upper()),
+            'unit_code': page.get('unit_code'),
+            'unit_name': page.get('unit_name'),
+            'syllabus_ref': None,
+            'is_ibl': True,
+        })
+    return items
+
+
 def _build_topic_groups():
     groups = []
     for level in _TOPIC_LEVEL_ORDER:
@@ -4231,6 +4253,9 @@ def _build_topic_groups():
                 }
                 for slug, cfg in iter_topics(topics)
             ]
+            if level == 'eursc' and subject == 'science':
+                items.extend(_eursc_ibl_path_topics())
+                items.sort(key=lambda item: (item.get('order') or 0, item.get('slug') or ''))
             groups.append({
                 'title': f"{LEVEL_LABELS.get(level, level.title())} {SUBJECT_LABELS.get(subject, subject.title())}",
                 'level': level,
@@ -4277,11 +4302,27 @@ def _annotate_topic_path_groups(groups, statuses):
     """Attach lesson-complete / ninja / master flags for the /topics path."""
     statuses = statuses or {}
     for group in groups:
-        by_slug = {topic['slug']: topic for topic in group['topics']}
+        by_slug = {
+            topic['slug']: topic
+            for topic in group['topics']
+            if not topic.get('is_ibl')
+        }
         completed = 0
         ninja_count = 0
         master_count = 0
         for topic in group['topics']:
+            if topic.get('is_ibl'):
+                topic['mastery'] = 0
+                topic['mastery_pct'] = 0
+                topic['completed_count'] = 0
+                topic['step_total'] = 0
+                topic['is_complete'] = False
+                topic['is_ninja'] = False
+                topic['is_master'] = False
+                topic['prereq_hint'] = None
+                topic['is_current'] = False
+                topic['is_later'] = False
+                continue
             key = (topic.get('level'), topic.get('subject'), topic.get('slug'))
             status = _status_from_progress_entry(statuses.get(key))
             topic['mastery'] = status['mastery']
@@ -4306,6 +4347,8 @@ def _annotate_topic_path_groups(groups, statuses):
             topic['is_current'] = False
         current_assigned = False
         for topic in group['topics']:
+            if topic.get('is_ibl'):
+                continue
             if not topic['is_complete'] and not current_assigned:
                 topic['is_current'] = True
                 current_assigned = True
@@ -4313,7 +4356,7 @@ def _annotate_topic_path_groups(groups, statuses):
         group['completed_count'] = completed
         group['ninja_count'] = ninja_count
         group['master_count'] = master_count
-        group['topic_count'] = len(group['topics'])
+        group['topic_count'] = sum(1 for topic in group['topics'] if not topic.get('is_ibl'))
     return groups
 
 

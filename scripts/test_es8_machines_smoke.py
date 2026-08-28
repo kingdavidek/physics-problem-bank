@@ -279,7 +279,8 @@ def test_lesson_routes_topics_search():
         assert '/topic/eursc/science/force_work_machines' in topics_html
         assert '/topic/eursc/science/robotics_project' in topics_html
         assert '3.1 Machines' in topics_html
-        assert '/ibl/eursc/science/s3_robot' not in topics_html
+        assert '/ibl/eursc/science/s3_robot' in topics_html
+        assert 'topic-card-badge--ibl' in topics_html
         hrefs = re.findall(r'/topic/eursc/science/([a-z0-9_]+)', topics_html)
         shipped = {h for h in hrefs if h != 'es0_fixture'}
         assert len(shipped) >= 41, shipped

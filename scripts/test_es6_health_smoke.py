@@ -262,7 +262,8 @@ def test_lesson_routes_topics_search():
         assert '/topic/eursc/science/healthy_living' in topics_html
         assert '/topic/eursc/science/tobacco' in topics_html
         assert '2.2 Health' in topics_html
-        assert '/ibl/eursc/science/s2_disease' not in topics_html
+        assert '/ibl/eursc/science/s2_disease' in topics_html
+        assert 'topic-card-badge--ibl' in topics_html
 
         catalog = client.get('/api/v1/topics')
         assert catalog.status_code == 200
