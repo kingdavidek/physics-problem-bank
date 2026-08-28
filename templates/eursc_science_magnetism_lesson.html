@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Magnetism and Electromagnetism – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Magnetism and Electromagnetism</h1>
+    <p class="hero-sub">S3 Integrated Science · Unit 3.1 Machines · syllabus 3.1.5. Poles, materials, magnetisation, fields, electromagnets, Earth and compass, magnetotaxis as a public example. This lesson does not rank whose magnet is strongest.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S3</span>
+      <span class="pill pill--hero">3.1 Machines</span>
+      <span class="pill pill--hero">3.1.5</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='magnetism') }}">▶ Practice Quiz (10 questions)</a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">1</span> Poles <span class="lesson-tag">3.1.5</span> <span class="lesson-tag">S3</span></summary>
+    <div class="lesson-section-body">
+      <p>A magnet has <strong>poles</strong> that attract or repel. Like poles repel; unlike poles attract. This is not a strength league.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Magnetic poles in this lesson</p>
+          <button class="btn mcq-btn" data-letter="A">are a food</button>
+          <button class="btn mcq-btn" data-letter="B">attract or repel</button>
+          <button class="btn mcq-btn" data-letter="C">must be a home file</button>
+          <button class="btn mcq-btn" data-letter="D">rank classmates</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">2</span> Materials</summary>
+    <div class="lesson-section-body">
+      <p>Some materials are magnetic in this S3 model and some are not. Classify kit objects; do not rank pupils.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Materials in this S3 model</p>
+          <button class="btn mcq-btn" data-letter="A">are all magnets always</button>
+          <button class="btn mcq-btn" data-letter="B">can be magnetic or not</button>
+          <button class="btn mcq-btn" data-letter="C">are diets</button>
+          <button class="btn mcq-btn" data-letter="D">are private scores</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">3</span> Magnetisation</summary>
+    <div class="lesson-section-body">
+      <p><strong>Magnetisation</strong> is aligning or making a magnet in this model. Stroking with another magnet is a classroom story, not a stored ranking.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Magnetisation in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">a class vote</button>
+          <button class="btn mcq-btn" data-letter="B">aligning or making a magnet in this model</button>
+          <button class="btn mcq-btn" data-letter="C">a shock file</button>
+          <button class="btn mcq-btn" data-letter="D">a ramp</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">4</span> Fields</summary>
+    <div class="lesson-section-body">
+      <p><strong>A</strong> one pole, <strong>B</strong> the other pole, <strong>C</strong> the field region between them. Schematic only.</p>
+      <div class="lesson-figure">{{ magnet_fig }}</div>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A magnetic field in this schematic is</p>
+          <button class="btn mcq-btn" data-letter="A">a menu</button>
+          <button class="btn mcq-btn" data-letter="B">a region where a magnetic effect can be shown</button>
+          <button class="btn mcq-btn" data-letter="C">a private diary</button>
+          <button class="btn mcq-btn" data-letter="D">a vaccination</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">5</span> Electromagnets</summary>
+    <div class="lesson-section-body">
+      <p>An <strong>electromagnet</strong> is a current-made magnet that can be <strong>switched</strong>. A coil that drops paperclips when the current stops is a public demo.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>An electromagnet is</p>
+          <button class="btn mcq-btn" data-letter="A">a stored ranking</button>
+          <button class="btn mcq-btn" data-letter="B">a current-made magnet that can be switched</button>
+          <button class="btn mcq-btn" data-letter="C">a joule of time</button>
+          <button class="btn mcq-btn" data-letter="D">a shock survey</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">6</span> Earth and compass</summary>
+    <div class="lesson-section-body">
+      <p>Earth can be modelled as having a magnetic field a <strong>compass</strong> uses. That is a public model, not a household rank.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Earth in this lesson is modelled as</p>
+          <button class="btn mcq-btn" data-letter="A">having no field</button>
+          <button class="btn mcq-btn" data-letter="B">having a magnetic field a compass can use</button>
+          <button class="btn mcq-btn" data-letter="C">a household rank</button>
+          <button class="btn mcq-btn" data-letter="D">a V = IR claim</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">7</span> Magnetotaxis</summary>
+    <div class="lesson-section-body">
+      <p><strong>Magnetotaxis</strong> is a public animal example of lining up with a field. It is not a pupil superpower ranking.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Magnetotaxis here is</p>
+          <button class="btn mcq-btn" data-letter="A">a pupil ranking</button>
+          <button class="btn mcq-btn" data-letter="B">a public animal example, not a superpower quiz</button>
+          <button class="btn mcq-btn" data-letter="C">a stored clinical file</button>
+          <button class="btn mcq-btn" data-letter="D">a diet</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">8</span> Using this lesson</summary>
+    <div class="lesson-section-body">
+      <p>Keep poles, materials, magnetisation, fields, electromagnets, Earth and magnetotaxis separate. The robot project continues next. This quiz does not rank magnets.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Poles</h4>
+        <ul>
+          <li>Attract or repel</li>
+          <li>A and B poles, C field</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Current</h4>
+        <ul>
+          <li>Electromagnet can be switched</li>
+          <li>No strength league</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='magnetism') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

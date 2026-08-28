@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Human Nutrition and the Environment – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Human Nutrition and the Environment</h1>
+    <p class="hero-sub">S3 Integrated Science · Unit 3.2 Living Earth · syllabus 3.2.1. Greenhouse gases, climate, land and biodiversity, a food lifecycle, waste, public footprints and sustainable choices. This lesson does not store private plates, fridge photos or a family carbon diary, and it does not rank whose household is greenest.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S3</span>
+      <span class="pill pill--hero">3.2 Living Earth</span>
+      <span class="pill pill--hero">3.2.1</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='food_environment') }}">▶ Practice Quiz (10 questions)</a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">1</span> Greenhouse gases <span class="lesson-tag">3.2.1</span> <span class="lesson-tag">S3</span></summary>
+    <div class="lesson-section-body">
+      <p><strong>Greenhouse gases</strong> in the atmosphere are a public climate idea. Name them from class evidence. This quiz does not collect a private diet.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Greenhouse gases in this lesson are</p>
+          <button class="btn mcq-btn" data-letter="A">a private confession</button>
+          <button class="btn mcq-btn" data-letter="B">a public atmosphere and climate idea</button>
+          <button class="btn mcq-btn" data-letter="C">a stored diet file</button>
+          <button class="btn mcq-btn" data-letter="D">a class rank</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">2</span> Climate</summary>
+    <div class="lesson-section-body">
+      <p><strong>Climate change</strong> is linked to public evidence here, not a household interrogation or a live family diary.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Climate change in this lesson is linked to</p>
+          <button class="btn mcq-btn" data-letter="A">a class popularity prize</button>
+          <button class="btn mcq-btn" data-letter="B">public evidence, not a household interrogation</button>
+          <button class="btn mcq-btn" data-letter="C">a joint map</button>
+          <button class="btn mcq-btn" data-letter="D">a vaccination</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">3</span> Land and biodiversity</summary>
+    <div class="lesson-section-body">
+      <p>Food systems use land. In this model that can affect habitats and <strong>biodiversity</strong>. Keep examples public.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Land use in a food system can</p>
+          <button class="btn mcq-btn" data-letter="A">never affect biodiversity</button>
+          <button class="btn mcq-btn" data-letter="B">affect habitats and biodiversity in this model</button>
+          <button class="btn mcq-btn" data-letter="C">replace climate evidence</button>
+          <button class="btn mcq-btn" data-letter="D">rank classmates</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">4</span> Food lifecycle</summary>
+    <div class="lesson-section-body">
+      <p><strong>A</strong> produce, <strong>B</strong> use, <strong>C</strong> waste. Schematic stages, not a private plate survey.</p>
+      <div class="lesson-figure">{{ lifecycle_fig }}</div>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A food lifecycle in this model</p>
+          <button class="btn mcq-btn" data-letter="A">starts at waste only</button>
+          <button class="btn mcq-btn" data-letter="B">runs from produce through use to waste</button>
+          <button class="btn mcq-btn" data-letter="C">must be a home photo</button>
+          <button class="btn mcq-btn" data-letter="D">ranks families</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">5</span> Waste</summary>
+    <div class="lesson-section-body">
+      <p><strong>Waste</strong> is leftover material in the system. This quiz does not demand plate photographs.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Food waste in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">a demand to photograph plates</button>
+          <button class="btn mcq-btn" data-letter="B">a system leftover, not a private plate survey</button>
+          <button class="btn mcq-btn" data-letter="C">a magnet</button>
+          <button class="btn mcq-btn" data-letter="D">a shock survey</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">6</span> Footprints</summary>
+    <div class="lesson-section-body">
+      <p>Read a <strong>footprint</strong> idea from public tables. Do not store a live family carbon diary in this app.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A footprint idea here is</p>
+          <button class="btn mcq-btn" data-letter="A">a live family diary</button>
+          <button class="btn mcq-btn" data-letter="B">a public comparison, not a stored household file</button>
+          <button class="btn mcq-btn" data-letter="C">a lever</button>
+          <button class="btn mcq-btn" data-letter="D">a shock story</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">7</span> Sustainable choices</summary>
+    <div class="lesson-section-body">
+      <p><strong>Sustainable choices</strong> are public options the class can discuss. This quiz does not rank whose household is greenest.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Sustainable choices in this lesson are</p>
+          <button class="btn mcq-btn" data-letter="A">a private confession</button>
+          <button class="btn mcq-btn" data-letter="B">public options the class can discuss</button>
+          <button class="btn mcq-btn" data-letter="C">a stored medical file</button>
+          <button class="btn mcq-btn" data-letter="D">a magnet pole</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">8</span> Using this lesson</summary>
+    <div class="lesson-section-body">
+      <p>Keep gases, climate, land, lifecycle, waste, footprints and choices as public science. Ecosystems continue next. This quiz does not store plates or diaries.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Lifecycle</h4>
+        <ul>
+          <li>A produce, B use, C waste</li>
+          <li>Waste is a system leftover</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Public data</h4>
+        <ul>
+          <li>Footprints from class tables</li>
+          <li>No household ranking here</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='food_environment') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

@@ -348,7 +348,7 @@ Lesson quizzes (`generators/shared/lesson_quiz.py`): 10 questions — 3 foundati
 | `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | G8, engagement E4, other future ideas |
 | `docs/ENGAGEMENT_VISUAL.md` | Avatar / buddy visual tokens for E2–E3 |
 | `docs/REAL_WORLD_QUESTIONS.md` | **Planned** — real-world question style (E4.1) implementation plan |
-| `docs/EUROPEAN_SCHOOL_SCIENCE.md` | **ES7 shipped** — S1 complete + **S2 complete** (Universe, Health, Senses); S3 still planned |
+| `docs/EUROPEAN_SCHOOL_SCIENCE.md` | **ES9 shipped** — S1–S3 complete (incl. field IBL); ES10 whole-suite QA not started |
 | `docs/ANIMATION_ONBOARDING.md` | **A1–A6 + B shipped** — Guide overlay, five tours, reward beats, `guide_json` persist + Replay intro, CSS streak fire, overlay gestures (no Lottie) |
 | `docs/ENGAGEMENT_E5.md` | **E5.1–E5.6 shipped**; web push (E5.7) blocked on HTTPS |
 

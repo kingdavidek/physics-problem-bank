@@ -1,6 +1,6 @@
-"""ES7 — S2 Senses (2.3.1–2.3.8). No new IBL page.
+"""ES8 — S3 Machines (3.1.1–3.1.6) + robot IBL smoke.
 
-Run: python scripts/test_es7_senses_smoke.py
+Run: python scripts/test_es8_machines_smoke.py
 """
 import os
 import re
@@ -23,13 +23,20 @@ from models.qotd import list_mcq_topic_paths  # noqa: E402
 from topic_registry import TOPICS  # noqa: E402
 
 TEMPLATES = ROOT / 'templates'
-NEW_REFS = ('2.3.1', '2.3.2', '2.3.3', '2.3.4', '2.3.5', '2.3.6', '2.3.7', '2.3.8')
-QUIZ_SLUGS = ('vision', 'taste', 'nonhuman_senses')
+IBL_SLUG = 's3_robot'
+IBL_TEMPLATE = TEMPLATES / IBL_PAGES[IBL_SLUG]['template']
+NEW_REFS = ('3.1.1', '3.1.2', '3.1.3', '3.1.4', '3.1.5', '3.1.6')
+QUIZ_SLUGS = ('force_work_machines', 'electric_current', 'robotics_project')
 SVG_SLUGS = {
-    'vision': 'Eye schematic',
-    'hearing': 'Ear schematic',
-    'proprioception_balance': 'Three semicircular canals',
+    'force_work_machines': 'Lever: effort, fulcrum and load',
+    'energy': 'Sankey-style energy split',
+    'electrostatics': 'Two kinds of charge',
+    'electric_current': 'Series circuit boxes: cell, lamp, switch',
+    'magnetism': 'Magnet poles and field region',
 }
+IBL_LINK_SLUGS = ('robotics_project',)
+VIR_RE = re.compile(r'calculate resistance|what is the resistance|R\s*=\s*V\s*/\s*I', re.I)
+POWER_WATT_RE = re.compile(r'power in watts\?', re.I)
 DISCLOSE_RE = re.compile(
     r'\b(your diet|have you ever|tell us about your|describe your eating|'
     r'are you allergic|what are you allergic|your body|when did you|'
@@ -54,8 +61,8 @@ def register(client, suffix):
     r = client.post(
         '/api/v1/auth/register',
         json={
-            'email': f'es7_{suffix}@example.com',
-            'handle': f'es7_{suffix}',
+            'email': f'es8_{suffix}@example.com',
+            'handle': f'es8_{suffix}',
             'password': 'password123',
             'age_confirm': True,
         },
@@ -141,9 +148,9 @@ def test_manifest_registry_templates():
 
         assert cfg['name'] == module['name']
         assert cfg['order'] == module['order']
-        assert cfg['year'] == 's2'
-        assert cfg['unit_code'] == '2.3'
-        assert cfg['unit_name'] == 'Senses'
+        assert cfg['year'] == 's3'
+        assert cfg['unit_code'] == '3.1'
+        assert cfg['unit_name'] == 'Machines'
         assert cfg['syllabus_ref'] == ref
         assert cfg.get('lesson_bank') is True
         assert topic_supports_lesson_quiz(cfg)
@@ -157,15 +164,22 @@ def test_manifest_registry_templates():
         assert 'lesson-quickref' in src
         assert lesson_step_total('eursc', 'science', slug) == module['checkpoints']
         assert not DISCLOSE_RE.search(src), slug
-        assert "url_for('eursc_ibl_page'" not in src
+        if slug in IBL_LINK_SLUGS:
+            assert "url_for('eursc_ibl_page'" in src
 
     shipped = [slug for slug in science if slug != 'es0_fixture']
-    assert len(shipped) >= 35, shipped
+    assert len(shipped) >= 41, shipped
     orders = [science[slug]['order'] for slug in shipped]
     assert len(orders) == len(set(orders)), orders
-    assert 's2_senses' not in science
-    assert 's2_touch' not in IBL_PAGES
-    assert {'s1_lab', 's1_food', 's2_light', 's2_disease'}.issubset(IBL_PAGES)
+    assert IBL_SLUG not in science
+    assert IBL_SLUG in IBL_PAGES
+    assert {
+        's1_lab',
+        's1_food',
+        's2_light',
+        's2_disease',
+        's3_robot',
+    }.issubset(IBL_PAGES)
 
 
 def test_bank_size_and_formats():
@@ -190,6 +204,8 @@ def test_bank_size_and_formats():
                     ]
                 )
                 assert not DISCLOSE_RE.search(blob), (slug, stem[:80])
+                assert not VIR_RE.search(blob), (slug, stem[:80])
+                assert not POWER_WATT_RE.search(blob), (slug, stem[:80])
                 if problem.get('options') and problem.get('correct_answer'):
                     mcq += 1
                     kinds.add('mcq')
@@ -230,7 +246,7 @@ def test_practice_and_qotd_stay_closed():
                 'csrf_token': csrf,
                 'level': 'eursc',
                 'subject': 'science',
-                'topic': 'vision',
+                'topic': 'force_work_machines',
                 'mode': 'standard',
                 'difficulty': 'foundational',
             },
@@ -260,13 +276,13 @@ def test_lesson_routes_topics_search():
         topics = client.get('/topics')
         assert topics.status_code == 200
         topics_html = topics.data.decode()
-        assert '/topic/eursc/science/vision' in topics_html
-        assert '/topic/eursc/science/nonhuman_senses' in topics_html
-        assert '2.3 Senses' in topics_html
-        assert '/ibl/eursc/science/s2_senses' not in topics_html
+        assert '/topic/eursc/science/force_work_machines' in topics_html
+        assert '/topic/eursc/science/robotics_project' in topics_html
+        assert '3.1 Machines' in topics_html
+        assert '/ibl/eursc/science/s3_robot' not in topics_html
         hrefs = re.findall(r'/topic/eursc/science/([a-z0-9_]+)', topics_html)
         shipped = {h for h in hrefs if h != 'es0_fixture'}
-        assert len(shipped) >= 35, shipped
+        assert len(shipped) >= 41, shipped
 
         catalog = client.get('/api/v1/topics')
         assert catalog.status_code == 200
@@ -280,8 +296,35 @@ def test_lesson_routes_topics_search():
         slugs = {t['slug'] for t in science['topics']}
         for ref in NEW_REFS:
             assert SYLLABUS_MODULES[ref]['slug'] in slugs
-        assert 's2_senses' not in slugs
-        assert len({s for s in slugs if s != 'es0_fixture'}) >= 35
+        assert 's3_robot' not in slugs
+        assert len({s for s in slugs if s != 'es0_fixture'}) >= 41
+
+
+def test_ibl_page():
+    page = IBL_PAGES[IBL_SLUG]
+    src = IBL_TEMPLATE.read_text(encoding='utf-8')
+    assert src.count('class="lesson-section"') == page['sections']
+    assert 'class="mcq-inline"' not in src
+    assert 'style="' not in src
+    assert 'class="lesson-shell"' in src
+    assert 'does not replace classroom practical work' in src
+    assert 'Teacher rubric' in src
+    assert 'window.print' not in src
+    assert not DISCLOSE_RE.search(src)
+
+    with app.test_client() as client:
+        ok = client.get('/ibl/eursc/science/s3_robot')
+        assert ok.status_code == 200, ok.data[:400]
+        html = ok.data.decode()
+        assert 'lesson-shell' in html
+        assert html.count('class="lesson-section"') == page['sections']
+        assert 'mcq-inline' not in html
+        assert 'data-lesson-content' not in html
+        assert 'does not replace classroom practical work' in html
+        assert 'Teacher rubric' in html
+        assert 'Ctrl+P' in html or 'Print' in html
+        missing = client.get('/ibl/eursc/science/not_a_page')
+        assert missing.status_code == 404
 
 
 def _run_mixed_quiz(client, slug):
@@ -336,8 +379,9 @@ def main():
     test_bank_size_and_formats()
     test_practice_and_qotd_stay_closed()
     test_lesson_routes_topics_search()
+    test_ibl_page()
     test_mixed_quiz_api()
-    print('ES7 Senses lessons smoke tests passed.')
+    print('ES8 Machines lessons + IBL smoke tests passed.')
 
 
 if __name__ == '__main__':

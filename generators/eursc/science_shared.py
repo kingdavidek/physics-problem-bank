@@ -622,6 +622,214 @@ SYLLABUS_MODULES = {
             "Link chemical senses and technology (for example a sensor) to the same idea of detecting a signal",
         ),
     },
+    "3.1.1": {
+        "slug": "force_work_machines",
+        "name": "Force, Work and Simple Machines",
+        "year": "s3",
+        "unit_code": "3.1",
+        "unit_name": "Machines",
+        "order": 36,
+        "sections": 8,
+        "checkpoints": 8,
+        "objectives": (
+            "Describe a force as a vector model of a push or pull",
+            "Name simple machine types used in this S3 model (lever, pulley, ramp)",
+            "Describe a lever as effort, fulcrum and load",
+            "Explain the force–distance trade-off of a simple machine",
+            "Calculate work as W = Fd in joules when force and distance are along the same line",
+            "Describe a body lever with a fictional case, not a private joint map",
+            "State that this lesson does not claim power calculations",
+            "Use the schematic to label effort, fulcrum and load",
+        ),
+    },
+    "3.1.2": {
+        "slug": "energy",
+        "name": "Energy",
+        "year": "s3",
+        "unit_code": "3.1",
+        "unit_name": "Machines",
+        "order": 37,
+        "sections": 9,
+        "checkpoints": 8,
+        "objectives": (
+            "Name energy forms used in this S3 model",
+            "Describe energy as transformed from one form to another",
+            "Describe energy as transferred from one store or place to another",
+            "Explain that some energy is wasted as less useful forms such as thermal",
+            "Read a Sankey-style split of useful and wasted energy",
+            "Compare food and appliance energy uses with public data, not a private diary",
+            "Link energy sources to impacts without ranking households",
+            "State conservation of energy as a model: it is not created or destroyed",
+        ),
+    },
+    "3.1.3": {
+        "slug": "electrostatics",
+        "name": "Electrostatics",
+        "year": "s3",
+        "unit_code": "3.1",
+        "unit_name": "Machines",
+        "order": 38,
+        "sections": 6,
+        "checkpoints": 6,
+        "objectives": (
+            "Describe charging by friction or contact in this S3 model",
+            "Distinguish two kinds of charge that attract or repel",
+            "Describe transfer and induction as ways charge can be rearranged",
+            "Explain grounding and insulators as safety and materials ideas",
+            "Link charge to a simple atomic model (electrons can move)",
+            "Describe sparks and lightning as discharge, with classroom safety",
+        ),
+    },
+    "3.1.4": {
+        "slug": "electric_current",
+        "name": "Electric Current and Circuits",
+        "year": "s3",
+        "unit_code": "3.1",
+        "unit_name": "Machines",
+        "order": 39,
+        "sections": 9,
+        "checkpoints": 8,
+        "objectives": (
+            "Describe a complete circuit as a loop that allows current",
+            "Describe a series circuit as one path",
+            "Describe a parallel circuit as more than one path",
+            "Distinguish conventional current from electron flow in this teaching model",
+            "Name conductors and insulators with public examples",
+            "Describe heating, lighting and magnetic effects of current",
+            "Read meters qualitatively; this lesson does not claim V = IR calculations",
+            "State electrical safety rules for the classroom, not a home inspection",
+        ),
+    },
+    "3.1.5": {
+        "slug": "magnetism",
+        "name": "Magnetism and Electromagnetism",
+        "year": "s3",
+        "unit_code": "3.1",
+        "unit_name": "Machines",
+        "order": 40,
+        "sections": 8,
+        "checkpoints": 7,
+        "objectives": (
+            "Describe magnetic poles that attract or repel",
+            "Classify materials as magnetic or not in this S3 model",
+            "Describe magnetisation as aligning or making a magnet",
+            "Read a schematic field between poles",
+            "Describe an electromagnet as a current-made magnet that can be switched",
+            "Link Earth, a compass and magnetotaxis as public models, not a pupil ranking",
+            "Use field ideas without claiming a stored 'whose magnet is strongest' league",
+        ),
+    },
+    "3.1.6": {
+        "slug": "robotics_project",
+        "name": "Project: Build a Simple Robot",
+        "year": "s3",
+        "unit_code": "3.1",
+        "unit_name": "Machines",
+        "order": 41,
+        "sections": 5,
+        "checkpoints": 5,
+        "objectives": (
+            "Write requirements for a classroom robot that another group could test",
+            "Choose simple machines that match the requirements",
+            "Plan electromagnetism or electronics only with teacher-approved parts",
+            "Describe a classroom program as sense–decide–act, not a private code upload",
+            "Iterate after a test and present evidence; the physical robot is not auto-graded here",
+        ),
+    },
+    "3.2.1": {
+        "slug": "food_environment",
+        "name": "Human Nutrition and the Environment",
+        "year": "s3",
+        "unit_code": "3.2",
+        "unit_name": "Living Earth",
+        "order": 42,
+        "sections": 8,
+        "checkpoints": 7,
+        "objectives": (
+            "Describe greenhouse gases in the atmosphere as a public climate idea",
+            "Link climate change to public evidence, not a household interrogation",
+            "Describe land use and biodiversity as effects of food systems",
+            "Order a food lifecycle from produce to waste with public examples",
+            "Describe food waste as a system idea, not a private plate survey",
+            "Read a footprint idea from public data, not a live family diary",
+            "Outline sustainable choices as public options the class can discuss",
+        ),
+    },
+    "3.2.2": {
+        "slug": "ecosystems_cycles",
+        "name": "Ecosystems, Matter and Energy",
+        "year": "s3",
+        "unit_code": "3.2",
+        "unit_name": "Living Earth",
+        "order": 43,
+        "sections": 9,
+        "checkpoints": 8,
+        "objectives": (
+            "Describe an ecosystem as living things and their surroundings in this model",
+            "Outline the water cycle with public stages",
+            "Outline the carbon cycle with public stages",
+            "Name trophic roles: producer, consumer, decomposer",
+            "Describe energy and matter flows in a simple web",
+            "Read a pyramid or web schematic without ranking classmates as animals",
+            "Link photosynthesis and respiration as word-equation ideas at S3",
+        ),
+    },
+    "3.2.3": {
+        "slug": "ecosystem_characteristics",
+        "name": "Ecosystem Characteristics",
+        "year": "s3",
+        "unit_code": "3.2",
+        "unit_name": "Living Earth",
+        "order": 44,
+        "sections": 8,
+        "checkpoints": 7,
+        "objectives": (
+            "Critique a simple trophic model as incomplete, not the whole ecosystem",
+            "Give abiotic factor examples (light, temperature, water) from public cases",
+            "Give biotic factor examples (competition, feeding) from public cases",
+            "Describe a classroom measurement of an abiotic factor with teacher rules",
+            "Describe activity and thermoregulation as public animal examples",
+            "Outline a survey method another group could repeat",
+            "State that this page does not replace a field visit",
+        ),
+    },
+    "3.2.4": {
+        "slug": "classification_biodiversity",
+        "name": "Classification and Biodiversity",
+        "year": "s3",
+        "unit_code": "3.2",
+        "unit_name": "Living Earth",
+        "order": 45,
+        "sections": 9,
+        "checkpoints": 8,
+        "objectives": (
+            "Describe a species as a grouping idea used in this S3 model",
+            "Use grouping features that another pupil could check",
+            "Follow a dichotomous key on a public example, not a private collection",
+            "Describe taxonomy and Linnaeus as a historical grouping system",
+            "State common descent as a scientific model, not a class ranking",
+            "Name broad groups used in this lesson",
+            "Link biodiversity loss to public evidence and sustainability ideas",
+        ),
+    },
+    "3.2.5": {
+        "slug": "ecology_field_project",
+        "name": "Project: An Ecological Field Study",
+        "year": "s3",
+        "unit_code": "3.2",
+        "unit_name": "Living Earth",
+        "order": 46,
+        "sections": 6,
+        "checkpoints": 6,
+        "objectives": (
+            "Write a field question another group could test",
+            "Plan risk with the teacher's assessment, not a home-garden photo harvest",
+            "Choose a sampling idea such as a quadrat that the teacher approves",
+            "Record method and data with units so another group could repeat them",
+            "Analyse the pattern with numbers from the table",
+            "Present and reflect; the field product is not auto-graded here",
+        ),
+    },
 }
 
 # Classroom IBL support pages (not syllabus module slugs; not in TOPICS).
@@ -665,6 +873,34 @@ IBL_PAGES = {
         "unit_name": "Health",
         "template": "eursc_science_ibl_s2_disease.html",
         "related": ("healthy_living", "infectious_disease"),
+        "sections": 6,
+    },
+    "s3_robot": {
+        "title": "Classroom investigation: a simple robot",
+        "year": "s3",
+        "unit_code": "3.1",
+        "unit_name": "Machines",
+        "template": "eursc_science_ibl_s3_robot.html",
+        "related": (
+            "force_work_machines",
+            "electric_current",
+            "magnetism",
+            "robotics_project",
+        ),
+        "sections": 6,
+    },
+    "s3_field": {
+        "title": "Classroom investigation: an ecological field study",
+        "year": "s3",
+        "unit_code": "3.2",
+        "unit_name": "Living Earth",
+        "template": "eursc_science_ibl_s3_field.html",
+        "related": (
+            "ecosystems_cycles",
+            "ecosystem_characteristics",
+            "classification_biodiversity",
+            "ecology_field_project",
+        ),
         "sections": 6,
     },
 }
@@ -1278,6 +1514,293 @@ def canal_boxes(*, title=None, max_width=360):
         132,
         title=title or "Three semicircular canals",
         desc="A, B and C are three looped canals that detect rotation in different planes. Schematic rings, not a realistic inner ear.",
+        body=body,
+        max_width=max_width,
+        variant="wide",
+    )
+
+
+def lever_boxes(*, title=None, max_width=360):
+    """A effort, B fulcrum, C load."""
+    p = PALETTE
+
+    def body(_ids):
+        return "".join(
+            [
+                f'<line x1="40" y1="56" x2="360" y2="56" stroke="{p["ink"]}" stroke-width="6"/>',
+                f'<polygon points="200,56 184,88 216,88" fill="{p["brand"]}"/>',
+                f'<circle cx="70" cy="40" r="12" fill="{p["measure"]}"/>',
+                f'<rect x="320" y="28" width="28" height="28" fill="{p["xp"]}"/>',
+                shape_label(70, 118, "A"),
+                shape_label(200, 118, "B"),
+                shape_label(334, 118, "C"),
+            ]
+        )
+
+    return svg(
+        400,
+        140,
+        title=title or "Lever: effort, fulcrum and load",
+        desc="A is the effort, B is the fulcrum, and C is the load. Schematic bar, not a realistic machine.",
+        body=body,
+        max_width=max_width,
+        variant="wide",
+    )
+
+
+def sankey_bars(*, title=None, max_width=360):
+    """A input, B useful output, C wasted output."""
+    p = PALETTE
+
+    def body(_ids):
+        return "".join(
+            [
+                f'<rect x="24" y="28" width="80" height="72" fill="{p["brand"]}"/>',
+                shape_label(64, 118, "A"),
+                f'<rect x="160" y="28" width="80" height="44" fill="{p["measure"]}"/>',
+                shape_label(200, 118, "B"),
+                f'<rect x="296" y="28" width="80" height="24" fill="{p["xp"]}"/>',
+                shape_label(336, 118, "C"),
+            ]
+        )
+
+    return svg(
+        400,
+        140,
+        title=title or "Sankey-style energy split",
+        desc="A is the energy input, B is the useful output, and C is the wasted output. Schematic bars, not a measured appliance.",
+        body=body,
+        max_width=max_width,
+        variant="wide",
+    )
+
+
+def charge_pair(*, title=None, max_width=360):
+    """A one charge, B the other charge."""
+    p = PALETTE
+
+    def body(_ids):
+        return "".join(
+            [
+                f'<circle cx="120" cy="56" r="32" fill="{p["brand_soft"]}" '
+                f'stroke="{p["brand"]}" stroke-width="3"/>',
+                shape_label(120, 118, "A"),
+                f'<circle cx="280" cy="56" r="32" fill="{p["brand_soft"]}" '
+                f'stroke="{p["measure"]}" stroke-width="3"/>',
+                shape_label(280, 118, "B"),
+            ]
+        )
+
+    return svg(
+        400,
+        140,
+        title=title or "Two kinds of charge",
+        desc="A and B are two opposite charges in this schematic. Opposite charges attract; like charges repel.",
+        body=body,
+        max_width=max_width,
+        variant="wide",
+    )
+
+
+def circuit_boxes(*, title=None, max_width=360):
+    """A cell, B lamp, C switch in a series loop."""
+    p = PALETTE
+
+    def _box(x, letter):
+        return "".join(
+            [
+                f'<rect x="{x}" y="24" width="90" height="56" rx="8" fill="{p["brand_soft"]}" '
+                f'stroke="{p["brand"]}" stroke-width="2"/>',
+                shape_label(x + 45, 112, letter),
+            ]
+        )
+
+    def body(_ids):
+        return "".join(
+            [
+                _box(30, "A"),
+                f'<line x1="120" y1="52" x2="148" y2="52" stroke="{p["ink"]}" stroke-width="3"/>',
+                _box(150, "B"),
+                f'<line x1="240" y1="52" x2="268" y2="52" stroke="{p["ink"]}" stroke-width="3"/>',
+                _box(270, "C"),
+            ]
+        )
+
+    return svg(
+        400,
+        132,
+        title=title or "Series circuit boxes: cell, lamp, switch",
+        desc="A is the cell, B is the lamp, and C is the switch. Schematic boxes in one path, not a realistic drawing.",
+        body=body,
+        max_width=max_width,
+        variant="wide",
+    )
+
+
+def magnet_poles(*, title=None, max_width=360):
+    """A north, B south, C field region between them."""
+    p = PALETTE
+
+    def body(_ids):
+        return "".join(
+            [
+                f'<rect x="40" y="28" width="70" height="56" rx="6" fill="{p["brand"]}"/>',
+                shape_label(75, 118, "A"),
+                f'<path d="M120 40 Q200 8 280 40" fill="none" stroke="{p["measure"]}" '
+                f'stroke-width="3"/>',
+                f'<path d="M120 72 Q200 104 280 72" fill="none" stroke="{p["measure"]}" '
+                f'stroke-width="3"/>',
+                shape_label(200, 118, "C"),
+                f'<rect x="290" y="28" width="70" height="56" rx="6" fill="{p["xp"]}"/>',
+                shape_label(325, 118, "B"),
+            ]
+        )
+
+    return svg(
+        400,
+        140,
+        title=title or "Magnet poles and field region",
+        desc="A is one pole, B is the other pole, and C is the field region between them. Schematic only.",
+        body=body,
+        max_width=max_width,
+        variant="wide",
+    )
+
+
+def lifecycle_boxes(*, title=None, max_width=360):
+    """A produce, B use, C waste."""
+    p = PALETTE
+
+    def _box(x, letter):
+        return "".join(
+            [
+                f'<rect x="{x}" y="24" width="90" height="56" rx="8" fill="{p["brand_soft"]}" '
+                f'stroke="{p["brand"]}" stroke-width="2"/>',
+                shape_label(x + 45, 112, letter),
+            ]
+        )
+
+    def body(_ids):
+        return "".join(
+            [
+                _box(30, "A"),
+                f'<line x1="120" y1="52" x2="148" y2="52" stroke="{p["ink"]}" stroke-width="3"/>',
+                _box(150, "B"),
+                f'<line x1="240" y1="52" x2="268" y2="52" stroke="{p["ink"]}" stroke-width="3"/>',
+                _box(270, "C"),
+            ]
+        )
+
+    return svg(
+        400,
+        132,
+        title=title or "Food lifecycle: produce, use, waste",
+        desc="A is produce, B is use, and C is waste. Schematic boxes, not a private plate survey.",
+        body=body,
+        max_width=max_width,
+        variant="wide",
+    )
+
+
+def trophic_boxes(*, title=None, max_width=360):
+    """A producer, B consumer, C decomposer."""
+    p = PALETTE
+
+    def _box(x, letter):
+        return "".join(
+            [
+                f'<rect x="{x}" y="24" width="90" height="56" rx="8" fill="{p["brand_soft"]}" '
+                f'stroke="{p["brand"]}" stroke-width="2"/>',
+                shape_label(x + 45, 112, letter),
+            ]
+        )
+
+    def body(_ids):
+        return "".join(
+            [
+                _box(30, "A"),
+                f'<line x1="120" y1="52" x2="148" y2="52" stroke="{p["ink"]}" stroke-width="3"/>',
+                _box(150, "B"),
+                f'<line x1="240" y1="52" x2="268" y2="52" stroke="{p["ink"]}" stroke-width="3"/>',
+                _box(270, "C"),
+            ]
+        )
+
+    return svg(
+        400,
+        132,
+        title=title or "Trophic roles: producer, consumer, decomposer",
+        desc="A is a producer, B is a consumer, and C is a decomposer. Schematic only, not a classmate ranking.",
+        body=body,
+        max_width=max_width,
+        variant="wide",
+    )
+
+
+def factor_boxes(*, title=None, max_width=360):
+    """A abiotic, B biotic, C survey."""
+    p = PALETTE
+
+    def _box(x, letter):
+        return "".join(
+            [
+                f'<rect x="{x}" y="24" width="90" height="56" rx="8" fill="{p["brand_soft"]}" '
+                f'stroke="{p["brand"]}" stroke-width="2"/>',
+                shape_label(x + 45, 112, letter),
+            ]
+        )
+
+    def body(_ids):
+        return "".join(
+            [
+                _box(30, "A"),
+                f'<line x1="120" y1="52" x2="148" y2="52" stroke="{p["ink"]}" stroke-width="3"/>',
+                _box(150, "B"),
+                f'<line x1="240" y1="52" x2="268" y2="52" stroke="{p["ink"]}" stroke-width="3"/>',
+                _box(270, "C"),
+            ]
+        )
+
+    return svg(
+        400,
+        132,
+        title=title or "Abiotic, biotic and a survey",
+        desc="A is an abiotic factor, B is a biotic factor, and C is a survey step. Schematic only.",
+        body=body,
+        max_width=max_width,
+        variant="wide",
+    )
+
+
+def key_boxes(*, title=None, max_width=360):
+    """A first couplet, B second couplet, C named group."""
+    p = PALETTE
+
+    def _box(x, letter):
+        return "".join(
+            [
+                f'<rect x="{x}" y="24" width="90" height="56" rx="8" fill="{p["brand_soft"]}" '
+                f'stroke="{p["brand"]}" stroke-width="2"/>',
+                shape_label(x + 45, 112, letter),
+            ]
+        )
+
+    def body(_ids):
+        return "".join(
+            [
+                _box(30, "A"),
+                f'<line x1="120" y1="52" x2="148" y2="52" stroke="{p["ink"]}" stroke-width="3"/>',
+                _box(150, "B"),
+                f'<line x1="240" y1="52" x2="268" y2="52" stroke="{p["ink"]}" stroke-width="3"/>',
+                _box(270, "C"),
+            ]
+        )
+
+    return svg(
+        400,
+        132,
+        title=title or "Dichotomous key: couplet, couplet, group",
+        desc="A is the first couplet, B is the second couplet, and C is the named group. Public example, not a private collection.",
         body=body,
         max_width=max_width,
         variant="wide",

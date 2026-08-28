@@ -45,20 +45,29 @@ from generators.eursc.science_shared import (
     antagonistic_pair,
     atom_molecule_boxes,
     canal_boxes,
+    charge_pair,
+    circuit_boxes,
     circulation_boxes,
     distance_time_graph,
     ear_boxes,
     earth_sun_moon,
     eye_boxes,
+    factor_boxes,
     force_pair,
     habit_bars,
     infection_chain,
+    key_boxes,
     lab_bench,
+    lever_boxes,
+    lifecycle_boxes,
+    magnet_poles,
     organ_labels,
     outbreak_bars,
     particle_states,
     ph_scale,
     reflection_rays,
+    sankey_bars,
+    trophic_boxes,
 )
 from generators.shared.lesson_quiz import (
     LESSON_QUIZ_MIX,
@@ -3761,6 +3770,24 @@ def _lesson_render_spec(level, subject, topic):
             extra['ear_fig'] = ear_boxes()
         if level == 'eursc' and subject == 'science' and topic == 'proprioception_balance':
             extra['canal_fig'] = canal_boxes()
+        if level == 'eursc' and subject == 'science' and topic == 'force_work_machines':
+            extra['lever_fig'] = lever_boxes()
+        if level == 'eursc' and subject == 'science' and topic == 'energy':
+            extra['sankey_fig'] = sankey_bars()
+        if level == 'eursc' and subject == 'science' and topic == 'electrostatics':
+            extra['charge_fig'] = charge_pair()
+        if level == 'eursc' and subject == 'science' and topic == 'electric_current':
+            extra['circuit_fig'] = circuit_boxes()
+        if level == 'eursc' and subject == 'science' and topic == 'magnetism':
+            extra['magnet_fig'] = magnet_poles()
+        if level == 'eursc' and subject == 'science' and topic == 'food_environment':
+            extra['lifecycle_fig'] = lifecycle_boxes()
+        if level == 'eursc' and subject == 'science' and topic == 'ecosystems_cycles':
+            extra['trophic_fig'] = trophic_boxes()
+        if level == 'eursc' and subject == 'science' and topic == 'ecosystem_characteristics':
+            extra['factor_fig'] = factor_boxes()
+        if level == 'eursc' and subject == 'science' and topic == 'classification_biodiversity':
+            extra['key_fig'] = key_boxes()
         return custom, extra
     except TemplateNotFound:
         pass

@@ -3,7 +3,7 @@
 **Repo path:** `docs/EUROPEAN_SCHOOL_SCIENCE.md` (from repository root)  
 **ES0 agent entry point:** `docs/ES0_HANDOFF.md` — platform enablement only; run `git checkout main && git pull` first  
 **Last updated:** 2026-08-28
-**Status:** ES7 shipped (S2 Senses 2.3.1–2.3.8). S1 complete; **S2 complete**. ES8+ not started. QOTD still excludes `eursc` (clinical 1.4 / 2.2 / interoception must not appear as site-wide daily questions).
+**Status:** ES9 shipped (S3 Living Earth 3.2.1–3.2.5 + field IBL). S1 complete; S2 complete; **S3 complete**. ES10 (whole-suite QA) not started. QOTD still excludes `eursc` (clinical 1.4 / 2.2 / interoception must not appear as site-wide daily questions).
 **Official source:** Schola Europaea, *Integrated Science Syllabus S1–S3*, ref **2018-12-D-6-en-2**, approved 7–8 February 2019 and phased into force for S1–S3 from 2019–2021. [Official PDF](https://www.eursc.eu/Syllabuses/2018-12-D-6-en-2.pdf)
 **Platform question contract:** `docs/API.md` §Problems and `docs/COMPLEX_MECHANISMS.md` §1
 **Decisions locked:** full curriculum-faithful puberty/sexuality coverage; launch **lessons + lesson quizzes**, while the main Practice generator remains GCSE maths/CS only.

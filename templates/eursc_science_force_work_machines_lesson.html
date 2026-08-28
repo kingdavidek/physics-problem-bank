@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}Force, Work and Simple Machines – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Force, Work and Simple Machines</h1>
+    <p class="hero-sub">S3 Integrated Science · Unit 3.1 Machines · syllabus 3.1.1. Force as a vector, levers, the force–distance trade-off, and work as W = Fd. This lesson does not claim power calculations and does not store a private joint map.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S3</span>
+      <span class="pill pill--hero">3.1 Machines</span>
+      <span class="pill pill--hero">3.1.1</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='force_work_machines') }}">▶ Practice Quiz (10 questions)</a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">1</span> Force as a vector <span class="lesson-tag">3.1.1</span> <span class="lesson-tag">S3</span></summary>
+    <div class="lesson-section-body">
+      <p>A <strong>force</strong> is a push or pull. In this S3 model it can be drawn as a <strong>vector</strong>: it has size and direction. Forces are interactions, not a ranking of classmates.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>In this S3 model a force is</p>
+          <button class="btn mcq-btn" data-letter="A">a food group</button>
+          <button class="btn mcq-btn" data-letter="B">a push or pull that can be drawn as a vector</button>
+          <button class="btn mcq-btn" data-letter="C">a stored joint file</button>
+          <button class="btn mcq-btn" data-letter="D">a class league</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">2</span> Simple machines</summary>
+    <div class="lesson-section-body">
+      <p>This lesson names three types: a <strong>lever</strong>, a <strong>pulley</strong> and a <strong>ramp</strong>. They can change the size or direction of a force. They do not create energy.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Simple machines named here include</p>
+          <button class="btn mcq-btn" data-letter="A">only a computer</button>
+          <button class="btn mcq-btn" data-letter="B">a lever, a pulley and a ramp</button>
+          <button class="btn mcq-btn" data-letter="C">a vaccination</button>
+          <button class="btn mcq-btn" data-letter="D">a mood survey</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">3</span> Lever parts</summary>
+    <div class="lesson-section-body">
+      <p><strong>A</strong> effort (input force), <strong>B</strong> fulcrum (pivot), <strong>C</strong> load (what is moved). Schematic bar, not a realistic machine and not a private joint map.</p>
+      <div class="lesson-figure">{{ lever_fig }}</div>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>The fulcrum of a lever is</p>
+          <button class="btn mcq-btn" data-letter="A">a private diary</button>
+          <button class="btn mcq-btn" data-letter="B">the pivot the bar turns about</button>
+          <button class="btn mcq-btn" data-letter="C">a joule of time</button>
+          <button class="btn mcq-btn" data-letter="D">a ranking</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">4</span> Force–distance trade-off</summary>
+    <div class="lesson-section-body">
+      <p>A simple machine can trade a <strong>smaller force</strong> for a <strong>larger distance</strong> (or the reverse). A ramp is a public example: a longer path can mean a smaller effort force.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A force–distance trade-off means</p>
+          <button class="btn mcq-btn" data-letter="A">force and distance must both shrink</button>
+          <button class="btn mcq-btn" data-letter="B">a smaller force can act over a larger distance</button>
+          <button class="btn mcq-btn" data-letter="C">work becomes a vaccine</button>
+          <button class="btn mcq-btn" data-letter="D">the quiz stores a body map</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">5</span> Work as W = Fd</summary>
+    <div class="lesson-section-body">
+      <p><strong>Work</strong> in this lesson is force times distance along the same line. The unit used here is the <strong>joule</strong>. Example: 5 N along 3 m is 15 J. This is not a power calculation.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Work in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">force divided by time</button>
+          <button class="btn mcq-btn" data-letter="B">force times distance along the same line</button>
+          <button class="btn mcq-btn" data-letter="C">a private score</button>
+          <button class="btn mcq-btn" data-letter="D">a colour</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">6</span> Body levers</summary>
+    <div class="lesson-section-body">
+      <p>A forearm raising a bag can be modelled as a lever. Use a <strong>fictional case</strong> only. This quiz does not store a map of a pupil's joints.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A body lever in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">a demand to map a pupil's joints live</button>
+          <button class="btn mcq-btn" data-letter="B">a teaching model using a fictional case, not a private map</button>
+          <button class="btn mcq-btn" data-letter="C">a stored medical file</button>
+          <button class="btn mcq-btn" data-letter="D">a class rank</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">7</span> Limits: no power claim</summary>
+    <div class="lesson-section-body">
+      <p>Power (work per time) is <strong>not claimed</strong> in this S3 module. Keep work as Fd. A machine does not create energy; it trades force and distance.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Power calculations in watts</p>
+          <button class="btn mcq-btn" data-letter="A">are required in every item</button>
+          <button class="btn mcq-btn" data-letter="B">are not claimed in this lesson</button>
+          <button class="btn mcq-btn" data-letter="C">replace work</button>
+          <button class="btn mcq-btn" data-letter="D">store whose arms they are</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">8</span> Using this lesson</summary>
+    <div class="lesson-section-body">
+      <p>Keep force, machine type, lever parts, trade-off, work and the no-power limit as separate ideas. Energy continues next.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A machine in this lesson</p>
+          <button class="btn mcq-btn" data-letter="A">creates energy from nothing</button>
+          <button class="btn mcq-btn" data-letter="B">can trade force and distance; it does not create energy</button>
+          <button class="btn mcq-btn" data-letter="C">must upload a joint map</button>
+          <button class="btn mcq-btn" data-letter="D">replaces the joule</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Lever</h4>
+        <ul>
+          <li>A effort, B fulcrum, C load</li>
+          <li>Trade force and distance</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Work</h4>
+        <ul>
+          <li>W = Fd along the same line</li>
+          <li>Unit: joule; no power claim</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='force_work_machines') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

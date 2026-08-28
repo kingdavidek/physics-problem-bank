@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}Energy – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Energy</h1>
+    <p class="hero-sub">S3 Integrated Science · Unit 3.1 Machines · syllabus 3.1.2. Forms, transformations, transfers, losses, Sankey-style splits, public appliance data and conservation. This lesson does not store private bills or rank households.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S3</span>
+      <span class="pill pill--hero">3.1 Machines</span>
+      <span class="pill pill--hero">3.1.2</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='energy') }}">▶ Practice Quiz (10 questions)</a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">1</span> Forms <span class="lesson-tag">3.1.2</span> <span class="lesson-tag">S3</span></summary>
+    <div class="lesson-section-body">
+      <p>This S3 set names example forms: <strong>kinetic</strong> (motion), <strong>chemical</strong> (food and fuels) and <strong>thermal</strong> (often the less useful leftover in a story).</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Energy forms named in this S3 model include</p>
+          <button class="btn mcq-btn" data-letter="A">only a rumour</button>
+          <button class="btn mcq-btn" data-letter="B">kinetic, chemical and thermal examples</button>
+          <button class="btn mcq-btn" data-letter="C">a glasses file</button>
+          <button class="btn mcq-btn" data-letter="D">a class rank</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">2</span> Transformations</summary>
+    <div class="lesson-section-body">
+      <p>A <strong>transformation</strong> changes energy from one form to another, for example chemical to kinetic in a fictional bicycle story.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A transformation is</p>
+          <button class="btn mcq-btn" data-letter="A">deleting energy</button>
+          <button class="btn mcq-btn" data-letter="B">changing energy from one form to another</button>
+          <button class="btn mcq-btn" data-letter="C">a private diary</button>
+          <button class="btn mcq-btn" data-letter="D">a vaccination</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">3</span> Transfers</summary>
+    <div class="lesson-section-body">
+      <p>A <strong>transfer</strong> moves energy from one store or place to another. Heating a room is a public example, not a household interrogation.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A transfer is</p>
+          <button class="btn mcq-btn" data-letter="A">a class vote</button>
+          <button class="btn mcq-btn" data-letter="B">energy moving from one store or place to another</button>
+          <button class="btn mcq-btn" data-letter="C">creating energy</button>
+          <button class="btn mcq-btn" data-letter="D">a joint map</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">4</span> Losses</summary>
+    <div class="lesson-section-body">
+      <p>Some energy is <strong>wasted</strong> as a less useful form such as thermal. Conservation still holds: the energy has not vanished.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Wasted energy in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">proof conservation is false</button>
+          <button class="btn mcq-btn" data-letter="B">energy transferred into a less useful form such as thermal</button>
+          <button class="btn mcq-btn" data-letter="C">a stored household bill</button>
+          <button class="btn mcq-btn" data-letter="D">a league</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">5</span> Sankey-style split</summary>
+    <div class="lesson-section-body">
+      <p><strong>A</strong> input, <strong>B</strong> useful output, <strong>C</strong> wasted output. Schematic bars, not a measured home meter.</p>
+      <div class="lesson-figure">{{ sankey_fig }}</div>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A Sankey-style split is used to</p>
+          <button class="btn mcq-btn" data-letter="A">rank classmates</button>
+          <button class="btn mcq-btn" data-letter="B">show how an input splits into useful and wasted parts</button>
+          <button class="btn mcq-btn" data-letter="C">store bills</button>
+          <button class="btn mcq-btn" data-letter="D">claim energy is created</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">6</span> Food and appliances</summary>
+    <div class="lesson-section-body">
+      <p>Use <strong>public</strong> tables for food or appliance examples. This quiz does not store a private energy diary or a live menu.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Food energy in this S3 model is</p>
+          <button class="btn mcq-btn" data-letter="A">a demand to log meals here</button>
+          <button class="btn mcq-btn" data-letter="B">a chemical store example, not a private menu</button>
+          <button class="btn mcq-btn" data-letter="C">a magnet pole</button>
+          <button class="btn mcq-btn" data-letter="D">a circuit</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">7</span> Sources and impacts</summary>
+    <div class="lesson-section-body">
+      <p>Energy sources have public environmental impacts. Compare textbook figures. Do not rank households in this app.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>An energy source impact in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">a private confession</button>
+          <button class="btn mcq-btn" data-letter="B">a public environmental idea, not a household rank</button>
+          <button class="btn mcq-btn" data-letter="C">a glasses file</button>
+          <button class="btn mcq-btn" data-letter="D">a joke only</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">8</span> Conservation</summary>
+    <div class="lesson-section-body">
+      <p><strong>Conservation</strong> means energy is not created or destroyed in this model. A machine does not make energy from nothing.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Conservation of energy in this model means</p>
+          <button class="btn mcq-btn" data-letter="A">energy can appear from nowhere</button>
+          <button class="btn mcq-btn" data-letter="B">energy is not created or destroyed</button>
+          <button class="btn mcq-btn" data-letter="C">bills must be uploaded</button>
+          <button class="btn mcq-btn" data-letter="D">homes are ranked</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">9</span> Using this lesson</summary>
+    <div class="lesson-section-body">
+      <p>Keep forms, transform, transfer, waste, Sankey, public data and conservation separate. Electrostatics continues next. This quiz does not store bills.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Change</h4>
+        <ul>
+          <li>Transform = change form</li>
+          <li>Transfer = change place or store</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Sankey</h4>
+        <ul>
+          <li>A input, B useful, C wasted</li>
+          <li>Conservation still holds</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='energy') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}
