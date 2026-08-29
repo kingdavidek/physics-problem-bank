@@ -1,5 +1,6 @@
 """S2 Unit 2.1 Universe — 2.1.1–2.1.4."""
 from generators.eursc.science_shared import (
+    bind_eursc_topic,
     atom_molecule_boxes,
     earth_sun_moon,
     reflection_rays,
@@ -9,7 +10,6 @@ from generators.shared.utils import (
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
-from generators.shared.variant_utils import normalize_mode, pick_named_variant
 
 _LEVEL = "eursc"
 _SUBJECT = "science"
@@ -101,24 +101,6 @@ def _topic_bank(topic):
     return mcq, number, keyword, order, pick
 
 
-def _bind(topic, pools):
-    def variants(difficulty, mode="lesson"):
-        mode = normalize_mode(mode)
-        pool = list(pools.get(difficulty) or [])
-        if mode == "mcq":
-            return [fn for fn in pool if getattr(fn, "_kind", "") == "mcq"]
-        return pool
-
-    def generate(difficulty, mode="lesson", variant_name=None):
-        chosen = variants(difficulty, mode)
-        if not chosen:
-            chosen = variants(difficulty, "lesson")
-        fn = pick_named_variant(chosen, variant_name)
-        return fn()
-
-    return generate, variants
-
-
 def _mcq_opts(a, b, c, d):
     return [f"A  {a}", f"B  {b}", f"C  {c}", f"D  {d}"]
 
@@ -198,7 +180,7 @@ _SS_POOLS = {
     ],
 }
 
-eursc_science_solar_system, eursc_science_solar_system_variants = _bind(
+eursc_science_solar_system, eursc_science_solar_system_variants = bind_eursc_topic(
     "solar_system", _SS_POOLS
 )
 
@@ -266,7 +248,7 @@ _LT_POOLS = {
     ],
 }
 
-eursc_science_light_telescopes, eursc_science_light_telescopes_variants = _bind(
+eursc_science_light_telescopes, eursc_science_light_telescopes_variants = bind_eursc_topic(
     "light_telescopes", _LT_POOLS
 )
 
@@ -334,7 +316,7 @@ _LF_POOLS = {
     ],
 }
 
-eursc_science_life_earth_elsewhere, eursc_science_life_earth_elsewhere_variants = _bind(
+eursc_science_life_earth_elsewhere, eursc_science_life_earth_elsewhere_variants = bind_eursc_topic(
     "life_earth_elsewhere", _LF_POOLS
 )
 
@@ -396,6 +378,6 @@ _AM_POOLS = {
     ],
 }
 
-eursc_science_atoms_molecules, eursc_science_atoms_molecules_variants = _bind(
+eursc_science_atoms_molecules, eursc_science_atoms_molecules_variants = bind_eursc_topic(
     "atoms_molecules", _AM_POOLS
 )

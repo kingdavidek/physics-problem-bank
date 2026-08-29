@@ -4,7 +4,8 @@ from generators.shared.utils import (
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
-from generators.shared.variant_utils import normalize_mode, pick_named_variant
+from generators.eursc.science_shared import eursc_variants_for_mode
+from generators.shared.variant_utils import pick_named_variant
 
 _LEVEL = "eursc"
 _SUBJECT = "science"
@@ -237,11 +238,7 @@ _POOLS = {
 
 
 def eursc_science_es0_fixture_variants(difficulty, mode="lesson"):
-    mode = normalize_mode(mode)
-    pool = list(_POOLS.get(difficulty) or [])
-    if mode == "mcq":
-        return [fn for fn in pool if getattr(fn, "_kind", "") == "mcq"]
-    return pool
+    return eursc_variants_for_mode(_POOLS.get(difficulty) or [], mode)
 
 
 def eursc_science_es0_fixture(difficulty, mode="lesson", variant_name=None):

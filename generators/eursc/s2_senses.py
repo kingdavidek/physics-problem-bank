@@ -1,11 +1,10 @@
 """S2 Unit 2.3 Senses — 2.3.1–2.3.8."""
-from generators.eursc.science_shared import canal_boxes, ear_boxes, eye_boxes
+from generators.eursc.science_shared import bind_eursc_topic, canal_boxes, ear_boxes, eye_boxes
 from generators.shared.utils import (
     make_problem,
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
-from generators.shared.variant_utils import normalize_mode, pick_named_variant
 
 _LEVEL = "eursc"
 _SUBJECT = "science"
@@ -87,24 +86,6 @@ def _topic_bank(topic):
     return mcq, number, keyword, order, pick
 
 
-def _bind(topic, pools):
-    def variants(difficulty, mode="lesson"):
-        mode = normalize_mode(mode)
-        pool = list(pools.get(difficulty) or [])
-        if mode == "mcq":
-            return [fn for fn in pool if getattr(fn, "_kind", "") == "mcq"]
-        return pool
-
-    def generate(difficulty, mode="lesson", variant_name=None):
-        chosen = variants(difficulty, mode)
-        if not chosen:
-            chosen = variants(difficulty, "lesson")
-        fn = pick_named_variant(chosen, variant_name)
-        return fn()
-
-    return generate, variants
-
-
 def _mcq_opts(a, b, c, d):
     return [f"A  {a}", f"B  {b}", f"C  {c}", f"D  {d}"]
 
@@ -176,7 +157,7 @@ _VI_POOLS = {
     ],
 }
 
-eursc_science_vision, eursc_science_vision_variants = _bind("vision", _VI_POOLS)
+eursc_science_vision, eursc_science_vision_variants = bind_eursc_topic("vision", _VI_POOLS)
 
 _EAR_BANK = (
     {"id": "outer", "text": "The outer ear collects sound"},
@@ -236,7 +217,7 @@ _HE_POOLS = {
     ],
 }
 
-eursc_science_hearing, eursc_science_hearing_variants = _bind("hearing", _HE_POOLS)
+eursc_science_hearing, eursc_science_hearing_variants = bind_eursc_topic("hearing", _HE_POOLS)
 
 _REC_BANK = (
     {"id": "pressure", "text": "Some receptors detect pressure or contact"},
@@ -290,7 +271,7 @@ _TO_POOLS = {
     ],
 }
 
-eursc_science_touch, eursc_science_touch_variants = _bind("touch", _TO_POOLS)
+eursc_science_touch, eursc_science_touch_variants = bind_eursc_topic("touch", _TO_POOLS)
 
 _SMELL_BANK = (
     {"id": "receptors", "text": "Smell receptors detect a range of airborne chemicals"},
@@ -344,7 +325,7 @@ _SM_POOLS = {
     ],
 }
 
-eursc_science_smell, eursc_science_smell_variants = _bind("smell", _SM_POOLS)
+eursc_science_smell, eursc_science_smell_variants = bind_eursc_topic("smell", _SM_POOLS)
 
 _TASTE_BANK = (
     {"id": "five", "text": "This lesson names five tastes"},
@@ -398,7 +379,7 @@ _TA_POOLS = {
     ],
 }
 
-eursc_science_taste, eursc_science_taste_variants = _bind("taste", _TA_POOLS)
+eursc_science_taste, eursc_science_taste_variants = bind_eursc_topic("taste", _TA_POOLS)
 
 _PROP_BANK = (
     {"id": "position", "text": "Proprioception senses body position without looking"},
@@ -452,7 +433,7 @@ _PR_POOLS = {
     ],
 }
 
-eursc_science_proprioception_balance, eursc_science_proprioception_balance_variants = _bind(
+eursc_science_proprioception_balance, eursc_science_proprioception_balance_variants = bind_eursc_topic(
     "proprioception_balance", _PR_POOLS
 )
 
@@ -508,7 +489,7 @@ _IN_POOLS = {
     ],
 }
 
-eursc_science_interoception, eursc_science_interoception_variants = _bind(
+eursc_science_interoception, eursc_science_interoception_variants = bind_eursc_topic(
     "interoception", _IN_POOLS
 )
 
@@ -565,6 +546,6 @@ _NH_POOLS = {
     ],
 }
 
-eursc_science_nonhuman_senses, eursc_science_nonhuman_senses_variants = _bind(
+eursc_science_nonhuman_senses, eursc_science_nonhuman_senses_variants = bind_eursc_topic(
     "nonhuman_senses", _NH_POOLS
 )

@@ -1,11 +1,10 @@
 """S1 Unit 1.2 Food — 1.2.1–1.2.8."""
-from generators.eursc.science_shared import particle_states, ph_scale
+from generators.eursc.science_shared import bind_eursc_topic, particle_states, ph_scale
 from generators.shared.utils import (
     make_problem,
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
-from generators.shared.variant_utils import normalize_mode, pick_named_variant
 
 _LEVEL = "eursc"
 _SUBJECT = "science"
@@ -97,24 +96,6 @@ def _topic_bank(topic):
         )
 
     return mcq, number, keyword, order, pick
-
-
-def _bind(topic, pools):
-    def variants(difficulty, mode="lesson"):
-        mode = normalize_mode(mode)
-        pool = list(pools.get(difficulty) or [])
-        if mode == "mcq":
-            return [fn for fn in pool if getattr(fn, "_kind", "") == "mcq"]
-        return pool
-
-    def generate(difficulty, mode="lesson", variant_name=None):
-        chosen = variants(difficulty, mode)
-        if not chosen:
-            chosen = variants(difficulty, "lesson")
-        fn = pick_named_variant(chosen, variant_name)
-        return fn()
-
-    return generate, variants
 
 
 _FF_MCQ, _FF_NUM, _FF_KEY, _FF_ORD, _FF_PICK = _topic_bank("food_formulas")
@@ -289,7 +270,7 @@ _FF_POOLS = {
 }
 
 
-eursc_science_food_formulas, eursc_science_food_formulas_variants = _bind(
+eursc_science_food_formulas, eursc_science_food_formulas_variants = bind_eursc_topic(
     "food_formulas", _FF_POOLS
 )
 
@@ -334,7 +315,7 @@ _WS_POOLS = {
     ],
 }
 
-eursc_science_water_substances, eursc_science_water_substances_variants = _bind(
+eursc_science_water_substances, eursc_science_water_substances_variants = bind_eursc_topic(
     "water_substances", _WS_POOLS
 )
 
@@ -385,7 +366,7 @@ _HT_POOLS = {
     ],
 }
 
-eursc_science_cooking_heat, eursc_science_cooking_heat_variants = _bind(
+eursc_science_cooking_heat, eursc_science_cooking_heat_variants = bind_eursc_topic(
     "cooking_heat", _HT_POOLS
 )
 
@@ -434,7 +415,7 @@ _AC_POOLS = {
     ],
 }
 
-eursc_science_cooking_acid, eursc_science_cooking_acid_variants = _bind(
+eursc_science_cooking_acid, eursc_science_cooking_acid_variants = bind_eursc_topic(
     "cooking_acid", _AC_POOLS
 )
 
@@ -478,7 +459,7 @@ _SA_POOLS = {
     ],
 }
 
-eursc_science_cooking_salt, eursc_science_cooking_salt_variants = _bind(
+eursc_science_cooking_salt, eursc_science_cooking_salt_variants = bind_eursc_topic(
     "cooking_salt", _SA_POOLS
 )
 
@@ -522,7 +503,7 @@ _FE_POOLS = {
     ],
 }
 
-eursc_science_cooking_fermentation, eursc_science_cooking_fermentation_variants = _bind(
+eursc_science_cooking_fermentation, eursc_science_cooking_fermentation_variants = bind_eursc_topic(
     "cooking_fermentation", _FE_POOLS
 )
 
@@ -573,7 +554,7 @@ _NU_POOLS = {
     ],
 }
 
-eursc_science_nutrition, eursc_science_nutrition_variants = _bind(
+eursc_science_nutrition, eursc_science_nutrition_variants = bind_eursc_topic(
     "nutrition", _NU_POOLS
 )
 
@@ -622,6 +603,6 @@ _MP_POOLS = {
     ],
 }
 
-eursc_science_healthy_meal_project, eursc_science_healthy_meal_project_variants = _bind(
+eursc_science_healthy_meal_project, eursc_science_healthy_meal_project_variants = bind_eursc_topic(
     "healthy_meal_project", _MP_POOLS
 )

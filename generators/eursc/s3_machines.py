@@ -1,5 +1,6 @@
 """S3 Unit 3.1 Machines — 3.1.1–3.1.6."""
 from generators.eursc.science_shared import (
+    bind_eursc_topic,
     charge_pair,
     circuit_boxes,
     lever_boxes,
@@ -11,7 +12,6 @@ from generators.shared.utils import (
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
-from generators.shared.variant_utils import normalize_mode, pick_named_variant
 
 _LEVEL = "eursc"
 _SUBJECT = "science"
@@ -93,24 +93,6 @@ def _topic_bank(topic):
     return mcq, number, keyword, order, pick
 
 
-def _bind(topic, pools):
-    def variants(difficulty, mode="lesson"):
-        mode = normalize_mode(mode)
-        pool = list(pools.get(difficulty) or [])
-        if mode == "mcq":
-            return [fn for fn in pool if getattr(fn, "_kind", "") == "mcq"]
-        return pool
-
-    def generate(difficulty, mode="lesson", variant_name=None):
-        chosen = variants(difficulty, mode)
-        if not chosen:
-            chosen = variants(difficulty, "lesson")
-        fn = pick_named_variant(chosen, variant_name)
-        return fn()
-
-    return generate, variants
-
-
 def _mcq_opts(a, b, c, d):
     return [f"A  {a}", f"B  {b}", f"C  {c}", f"D  {d}"]
 
@@ -180,7 +162,7 @@ _FW_POOLS = {
     ],
 }
 
-eursc_science_force_work_machines, eursc_science_force_work_machines_variants = _bind(
+eursc_science_force_work_machines, eursc_science_force_work_machines_variants = bind_eursc_topic(
     "force_work_machines", _FW_POOLS
 )
 
@@ -200,7 +182,7 @@ _CONS_BANK = (
 _EN_POOLS = {
     "foundational": [
         _EN_MCQ("foundational", "forms", "Energy forms named in this S3 model include", _mcq_opts("only a rumour", "kinetic, chemical and thermal examples", "a glasses file", "a class rank"), "B", "Named forms."),
-        _EN_MCQ("foundational", "transform", "A transformation is", _mcq_opts("deleting energy", "changing energy from one form to another", "a private diary", "a vaccination"), "B", "Form change."),
+        _EN_MCQ("foundational", "transform", "An energy transformation in this lesson is", _mcq_opts("deleting energy", "changing energy from one form to another", "a private diary", "a vaccination"), "B", "Form change."),
         _EN_MCQ("foundational", "input_letter", "<p>Which letter is the energy input?</p>" + str(sankey_bars(title="Input letter")), _mcq_opts("B", "A", "C", "a handle"), "B", "A is the input."),
         _EN_MCQ("foundational", "waste", "Wasted energy in this lesson is", _mcq_opts("proof conservation is false", "energy transferred into a less useful form such as thermal", "a stored household bill", "a league"), "B", "Less useful form."),
         _EN_MCQ("foundational", "alex_en", "Alex (fictional) reads a public appliance table. A science use is", _mcq_opts("rank Alex's home", "compare public figures, not a private diary", "upload a bill", "skip conservation"), "B", "Public data."),
@@ -211,7 +193,7 @@ _EN_POOLS = {
         _EN_PICK("foundational", "form_ok", "Select kinetic and chemical energy.", ["kinetic", "chem"], _FORM_BANK, 2, "Two forms. No diary."),
     ],
     "intermediate": [
-        _EN_MCQ("intermediate", "transfer", "A transfer is", _mcq_opts("a class vote", "energy moving from one store or place to another", "creating energy", "a joint map"), "B", "Place or store change."),
+        _EN_MCQ("intermediate", "transfer", "An energy transfer in this lesson is", _mcq_opts("a class vote", "energy moving from one store or place to another", "creating energy", "a joint map"), "B", "Place or store change."),
         _EN_MCQ("intermediate", "useful_letter", "<p>Which letter is the useful output?</p>" + str(sankey_bars(title="Useful letter")), _mcq_opts("A", "B", "C", "a brand"), "B", "B is useful."),
         _EN_MCQ("intermediate", "conserve", "Conservation of energy in this model means", _mcq_opts("energy can appear from nowhere", "energy is not created or destroyed", "bills must be uploaded", "homes are ranked"), "B", "Not created or destroyed."),
         _EN_MCQ("intermediate", "sam_en", "Sam (fictional) says a wasted bar means energy vanished. A science reply is", _mcq_opts("agree", "the energy is still there as a less useful form", "store Sam's bill", "rank Sam"), "B", "Still there."),
@@ -236,7 +218,7 @@ _EN_POOLS = {
     ],
 }
 
-eursc_science_energy, eursc_science_energy_variants = _bind("energy", _EN_POOLS)
+eursc_science_energy, eursc_science_energy_variants = bind_eursc_topic("energy", _EN_POOLS)
 
 _CHARGE_BANK = (
     {"id": "friction", "text": "Charging by friction can separate charge in this model"},
@@ -290,7 +272,7 @@ _ES_POOLS = {
     ],
 }
 
-eursc_science_electrostatics, eursc_science_electrostatics_variants = _bind(
+eursc_science_electrostatics, eursc_science_electrostatics_variants = bind_eursc_topic(
     "electrostatics", _ES_POOLS
 )
 
@@ -323,7 +305,7 @@ _EC_POOLS = {
     "intermediate": [
         _EC_MCQ("intermediate", "parallel", "A parallel circuit has", _mcq_opts("zero paths", "more than one path", "only a magnet", "a private diary"), "B", "More than one path."),
         _EC_MCQ("intermediate", "lamp_letter", "<p>Which letter is the lamp?</p>" + str(circuit_boxes(title="Lamp letter")), _mcq_opts("A", "B", "C", "a brand"), "B", "B is the lamp."),
-        _EC_MCQ("intermediate", "conventional", "Conventional current in this teaching model is", _mcq_opts("a demand for a home photo", "a direction convention, distinct from electron flow", "a joule of mass", "a class league"), "B", "Convention vs electrons."),
+        _EC_MCQ("intermediate", "conventional", "Conventional current (the arrow convention) in this teaching model is", _mcq_opts("a demand for a home photo", "a direction convention, distinct from electron flow", "a joule of mass", "a class league"), "B", "Convention vs electrons."),
         _EC_MCQ("intermediate", "effects", "Effects of current named here include", _mcq_opts("only a rumour", "heating, lighting and a magnetic effect", "a joint map", "a menu"), "B", "Heat, light, magnetic."),
         _EC_MCQ("intermediate", "sam_ec", "Sam (fictional) adds a second lamp on its own branch. That fits", _mcq_opts("a series-only rule always", "a parallel path idea", "V = IR as a required calculation", "a home inspection"), "B", "Parallel."),
         _EC_MCQ("intermediate", "meter", "A meter in this lesson is used", _mcq_opts("to store whose home it is", "qualitatively; this lesson does not claim V = IR calculations", "to rank sparks", "to skip safety"), "B", "Qualitative meters."),
@@ -346,7 +328,7 @@ _EC_POOLS = {
     ],
 }
 
-eursc_science_electric_current, eursc_science_electric_current_variants = _bind(
+eursc_science_electric_current, eursc_science_electric_current_variants = bind_eursc_topic(
     "electric_current", _EC_POOLS
 )
 
@@ -402,7 +384,7 @@ _MG_POOLS = {
     ],
 }
 
-eursc_science_magnetism, eursc_science_magnetism_variants = _bind("magnetism", _MG_POOLS)
+eursc_science_magnetism, eursc_science_magnetism_variants = bind_eursc_topic("magnetism", _MG_POOLS)
 
 _REQ_BANK = (
     {"id": "require", "text": "Write requirements another group could test"},
@@ -456,7 +438,7 @@ _RB_POOLS = {
     ],
 }
 
-eursc_science_robotics_project, eursc_science_robotics_project_variants = _bind(
+eursc_science_robotics_project, eursc_science_robotics_project_variants = bind_eursc_topic(
     "robotics_project", _RB_POOLS
 )
 

@@ -1,11 +1,11 @@
 """S1 Unit 1.1 Science Lab — 1.1.1–1.1.3."""
-from generators.eursc.science_shared import lab_bench, ruler_scale
+from generators.eursc.science_shared import eursc_variants_for_mode, lab_bench, ruler_scale
 from generators.shared.utils import (
     make_problem,
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
-from generators.shared.variant_utils import normalize_mode, pick_named_variant
+from generators.shared.variant_utils import pick_named_variant
 from models.svg_kit import bar_chart
 
 _LEVEL = "eursc"
@@ -263,7 +263,7 @@ _POOLS = {
         _mcq(
             "intermediate",
             "accuracy",
-            "A measurement is accurate when it is",
+            "In this lesson, a measurement is accurate when it is",
             [
                 "A  close to the true value",
                 "B  the same every time, even if it is wrong",
@@ -276,7 +276,7 @@ _POOLS = {
         _mcq(
             "intermediate",
             "precision",
-            "Repeated readings that are very close to each other are",
+            "In this lesson, repeated readings that are very close to each other are",
             ["A  accurate", "B  precise", "C  calibrated", "D  systematic"],
             "B",
             "Precision is how close repeats are to one another.",
@@ -486,11 +486,7 @@ _POOLS = {
 
 
 def eursc_science_measurement_variants(difficulty, mode="lesson"):
-    mode = normalize_mode(mode)
-    pool = list(_POOLS.get(difficulty) or [])
-    if mode == "mcq":
-        return [fn for fn in pool if getattr(fn, "_kind", "") == "mcq"]
-    return pool
+    return eursc_variants_for_mode(_POOLS.get(difficulty) or [], mode)
 
 
 def eursc_science_measurement(difficulty, mode="lesson", variant_name=None):
@@ -955,11 +951,7 @@ _WIS_POOLS = {
 
 
 def eursc_science_what_is_science_variants(difficulty, mode="lesson"):
-    mode = normalize_mode(mode)
-    pool = list(_WIS_POOLS.get(difficulty) or [])
-    if mode == "mcq":
-        return [fn for fn in pool if getattr(fn, "_kind", "") == "mcq"]
-    return pool
+    return eursc_variants_for_mode(_WIS_POOLS.get(difficulty) or [], mode)
 
 
 def eursc_science_what_is_science(difficulty, mode="lesson", variant_name=None):
@@ -1343,11 +1335,7 @@ _LAB_POOLS = {
 
 
 def eursc_science_science_lab_variants(difficulty, mode="lesson"):
-    mode = normalize_mode(mode)
-    pool = list(_LAB_POOLS.get(difficulty) or [])
-    if mode == "mcq":
-        return [fn for fn in pool if getattr(fn, "_kind", "") == "mcq"]
-    return pool
+    return eursc_variants_for_mode(_LAB_POOLS.get(difficulty) or [], mode)
 
 
 def eursc_science_science_lab(difficulty, mode="lesson", variant_name=None):

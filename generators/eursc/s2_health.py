@@ -1,5 +1,6 @@
 """S2 Unit 2.2 Health — 2.2.1–2.2.5."""
 from generators.eursc.science_shared import (
+    bind_eursc_topic,
     habit_bars,
     infection_chain,
     outbreak_bars,
@@ -9,7 +10,6 @@ from generators.shared.utils import (
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
-from generators.shared.variant_utils import normalize_mode, pick_named_variant
 
 _LEVEL = "eursc"
 _SUBJECT = "science"
@@ -101,24 +101,6 @@ def _topic_bank(topic):
     return mcq, number, keyword, order, pick
 
 
-def _bind(topic, pools):
-    def variants(difficulty, mode="lesson"):
-        mode = normalize_mode(mode)
-        pool = list(pools.get(difficulty) or [])
-        if mode == "mcq":
-            return [fn for fn in pool if getattr(fn, "_kind", "") == "mcq"]
-        return pool
-
-    def generate(difficulty, mode="lesson", variant_name=None):
-        chosen = variants(difficulty, mode)
-        if not chosen:
-            chosen = variants(difficulty, "lesson")
-        fn = pick_named_variant(chosen, variant_name)
-        return fn()
-
-    return generate, variants
-
-
 def _mcq_opts(a, b, c, d):
     return [f"A  {a}", f"B  {b}", f"C  {c}", f"D  {d}"]
 
@@ -193,7 +175,7 @@ _HL_POOLS = {
     ],
 }
 
-eursc_science_healthy_living, eursc_science_healthy_living_variants = _bind(
+eursc_science_healthy_living, eursc_science_healthy_living_variants = bind_eursc_topic(
     "healthy_living", _HL_POOLS
 )
 
@@ -266,7 +248,7 @@ _ID_POOLS = {
 
 # Actually wait I counted difficult: 7 mcq (not_abx, double, host, vax2, model, host_letter, bar_c) + key + num + ord + pick = 11. Good.
 
-eursc_science_infectious_disease, eursc_science_infectious_disease_variants = _bind(
+eursc_science_infectious_disease, eursc_science_infectious_disease_variants = bind_eursc_topic(
     "infectious_disease", _ID_POOLS
 )
 
@@ -328,7 +310,7 @@ _NI_POOLS = {
     ],
 }
 
-eursc_science_noninfectious_disease, eursc_science_noninfectious_disease_variants = _bind(
+eursc_science_noninfectious_disease, eursc_science_noninfectious_disease_variants = bind_eursc_topic(
     "noninfectious_disease", _NI_POOLS
 )
 
@@ -390,7 +372,7 @@ _DA_POOLS = {
     ],
 }
 
-eursc_science_dependence_addiction, eursc_science_dependence_addiction_variants = _bind(
+eursc_science_dependence_addiction, eursc_science_dependence_addiction_variants = bind_eursc_topic(
     "dependence_addiction", _DA_POOLS
 )
 
@@ -452,4 +434,4 @@ _TB_POOLS = {
     ],
 }
 
-eursc_science_tobacco, eursc_science_tobacco_variants = _bind("tobacco", _TB_POOLS)
+eursc_science_tobacco, eursc_science_tobacco_variants = bind_eursc_topic("tobacco", _TB_POOLS)

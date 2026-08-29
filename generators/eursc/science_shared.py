@@ -2252,6 +2252,85 @@ def _sample_ruler():
     return ruler_scale(4.7)
 
 
+# Stage 6 — five practice slots per topic per difficulty (lesson bank stays full).
+from generators.shared.variant_utils import normalize_mode, pick_named_variant  # noqa: E402
+
+EURSC_PRACTICE_SLOT_COUNT = 5
+
+_PRACTICE_KIND_ORDER = (
+    "mcq",
+    "keyword",
+    "number",
+    "number_estimate",
+    "order",
+    "pick",
+)
+
+
+def eursc_practice_pool(pool, count=EURSC_PRACTICE_SLOT_COUNT):
+    """Return up to ``count`` practice slots with a stable mix of question kinds."""
+    items = list(pool)
+    if len(items) <= count:
+        return items
+
+    by_kind = {}
+    for fn in sorted(items, key=lambda f: getattr(f, "__name__", "")):
+        kind = getattr(fn, "_kind", "other")
+        by_kind.setdefault(kind, []).append(fn)
+
+    picked = []
+    kind_idx = {k: 0 for k in by_kind}
+    while len(picked) < count:
+        progress = False
+        for kind in _PRACTICE_KIND_ORDER:
+            bucket = by_kind.get(kind, [])
+            idx = kind_idx.get(kind, 0)
+            if idx < len(bucket):
+                picked.append(bucket[idx])
+                kind_idx[kind] = idx + 1
+                progress = True
+                if len(picked) >= count:
+                    break
+        if not progress:
+            break
+
+    if len(picked) < count:
+        seen = {id(fn) for fn in picked}
+        for fn in sorted(items, key=lambda f: getattr(f, "__name__", "")):
+            if id(fn) not in seen:
+                picked.append(fn)
+                if len(picked) >= count:
+                    break
+    return picked[:count]
+
+
+def eursc_variants_for_mode(pool, mode):
+    """Lesson bank (full pool), MCQ filter, or five practice slots per tier."""
+    mode = normalize_mode(mode)
+    pool = list(pool or [])
+    if mode == "mcq":
+        return [fn for fn in pool if getattr(fn, "_kind", "") == "mcq"]
+    if mode == "lesson":
+        return pool
+    return eursc_practice_pool(pool)
+
+
+def bind_eursc_topic(topic, pools):
+    """Wire generate + variants for one syllabus slug."""
+
+    def variants(difficulty, mode="lesson"):
+        return eursc_variants_for_mode(pools.get(difficulty) or [], mode)
+
+    def generate(difficulty, mode="lesson", variant_name=None):
+        chosen = variants(difficulty, mode)
+        if not chosen:
+            chosen = eursc_variants_for_mode(pools.get(difficulty) or [], "lesson")
+        fn = pick_named_variant(chosen, variant_name)
+        return fn()
+
+    return generate, variants
+
+
 SCIENCE_SVG_FIGURES = (
     ("ruler_scale", _sample_ruler),
     ("accuracy_targets", accuracy_targets),

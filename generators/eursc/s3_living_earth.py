@@ -1,5 +1,6 @@
 """S3 Unit 3.2 Living Earth — 3.2.1–3.2.5."""
 from generators.eursc.science_shared import (
+    bind_eursc_topic,
     factor_boxes,
     key_boxes,
     lifecycle_boxes,
@@ -10,7 +11,6 @@ from generators.shared.utils import (
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
-from generators.shared.variant_utils import normalize_mode, pick_named_variant
 
 _LEVEL = "eursc"
 _SUBJECT = "science"
@@ -92,24 +92,6 @@ def _topic_bank(topic):
     return mcq, number, keyword, order, pick
 
 
-def _bind(topic, pools):
-    def variants(difficulty, mode="lesson"):
-        mode = normalize_mode(mode)
-        pool = list(pools.get(difficulty) or [])
-        if mode == "mcq":
-            return [fn for fn in pool if getattr(fn, "_kind", "") == "mcq"]
-        return pool
-
-    def generate(difficulty, mode="lesson", variant_name=None):
-        chosen = variants(difficulty, mode)
-        if not chosen:
-            chosen = variants(difficulty, "lesson")
-        fn = pick_named_variant(chosen, variant_name)
-        return fn()
-
-    return generate, variants
-
-
 def _mcq_opts(a, b, c, d):
     return [f"A  {a}", f"B  {b}", f"C  {c}", f"D  {d}"]
 
@@ -172,7 +154,7 @@ _FE_POOLS = {
     ],
 }
 
-eursc_science_food_environment, eursc_science_food_environment_variants = _bind(
+eursc_science_food_environment, eursc_science_food_environment_variants = bind_eursc_topic(
     "food_environment", _FE_POOLS
 )
 
@@ -228,7 +210,7 @@ _ECY_POOLS = {
     ],
 }
 
-eursc_science_ecosystems_cycles, eursc_science_ecosystems_cycles_variants = _bind(
+eursc_science_ecosystems_cycles, eursc_science_ecosystems_cycles_variants = bind_eursc_topic(
     "ecosystems_cycles", _ECY_POOLS
 )
 
@@ -284,7 +266,7 @@ _CH_POOLS = {
     ],
 }
 
-eursc_science_ecosystem_characteristics, eursc_science_ecosystem_characteristics_variants = _bind(
+eursc_science_ecosystem_characteristics, eursc_science_ecosystem_characteristics_variants = bind_eursc_topic(
     "ecosystem_characteristics", _CH_POOLS
 )
 
@@ -340,7 +322,7 @@ _CL_POOLS = {
     ],
 }
 
-eursc_science_classification_biodiversity, eursc_science_classification_biodiversity_variants = _bind(
+eursc_science_classification_biodiversity, eursc_science_classification_biodiversity_variants = bind_eursc_topic(
     "classification_biodiversity", _CL_POOLS
 )
 
@@ -396,7 +378,7 @@ _FP_POOLS = {
     ],
 }
 
-eursc_science_ecology_field_project, eursc_science_ecology_field_project_variants = _bind(
+eursc_science_ecology_field_project, eursc_science_ecology_field_project_variants = bind_eursc_topic(
     "ecology_field_project", _FP_POOLS
 )
 

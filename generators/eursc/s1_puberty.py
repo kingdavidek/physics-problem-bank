@@ -3,13 +3,12 @@
 Clinical, third-person banks. No prompts that ask a pupil to disclose
 health, sexuality, relationships or experiences.
 """
-from generators.eursc.science_shared import organ_labels
+from generators.eursc.science_shared import bind_eursc_topic, organ_labels
 from generators.shared.utils import (
     make_problem,
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
-from generators.shared.variant_utils import normalize_mode, pick_named_variant
 
 _LEVEL = "eursc"
 _SUBJECT = "science"
@@ -99,24 +98,6 @@ def _topic_bank(topic):
         )
 
     return mcq, number, keyword, order, pick
-
-
-def _bind(topic, pools):
-    def variants(difficulty, mode="lesson"):
-        mode = normalize_mode(mode)
-        pool = list(pools.get(difficulty) or [])
-        if mode == "mcq":
-            return [fn for fn in pool if getattr(fn, "_kind", "") == "mcq"]
-        return pool
-
-    def generate(difficulty, mode="lesson", variant_name=None):
-        chosen = variants(difficulty, mode)
-        if not chosen:
-            chosen = variants(difficulty, "lesson")
-        fn = pick_named_variant(chosen, variant_name)
-        return fn()
-
-    return generate, variants
 
 
 def _mcq_opts(a, b, c, d):
@@ -210,7 +191,7 @@ _PM_POOLS = {
     ],
 }
 
-eursc_science_puberty_maturity, eursc_science_puberty_maturity_variants = _bind(
+eursc_science_puberty_maturity, eursc_science_puberty_maturity_variants = bind_eursc_topic(
     "puberty_maturity", _PM_POOLS
 )
 
@@ -254,7 +235,7 @@ _RA_POOLS = {
     ],
 }
 
-eursc_science_reproductive_anatomy, eursc_science_reproductive_anatomy_variants = _bind(
+eursc_science_reproductive_anatomy, eursc_science_reproductive_anatomy_variants = bind_eursc_topic(
     "reproductive_anatomy", _RA_POOLS
 )
 
@@ -303,6 +284,6 @@ _PS_POOLS = {
     ],
 }
 
-eursc_science_pregnancy_sexual_health, eursc_science_pregnancy_sexual_health_variants = _bind(
+eursc_science_pregnancy_sexual_health, eursc_science_pregnancy_sexual_health_variants = bind_eursc_topic(
     "pregnancy_sexual_health", _PS_POOLS
 )

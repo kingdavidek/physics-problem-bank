@@ -4,7 +4,7 @@
 **Use:** Every agent editing a lesson, figure, table, quick check, or unit bank in this track.  
 **Source of truth:** `generators/eursc/science_shared.py` (`SYLLABUS_MODULES`, `IBL_PAGES`) and `docs/EUROPEAN_SCHOOL_SCIENCE.md`.  
 **Priorities:** optional canvas `eursc-lesson-quality-plan.canvas.tsx` (lesson-by-lesson worklist).  
-**Last updated:** 2026-08-29 (Stage 5 S3 pass complete)
+**Last updated:** 2026-08-29 (Stage 7 verification complete — track done)
 
 This is not a rewrite. Structure, checkpoint coverage and safeguarding are already in place. Improve explanations, examples and visuals where they help learning.
 
@@ -22,8 +22,8 @@ Do **one stage per user cue**. Stop and report when the stage is done.
 | **3** | S1 pass | Units 1.1–1.4 (18 lessons). Prioritise 1.1.2, 1.3.3, 1.4.2 | **Complete** (2026-08-29) |
 | **4** | S2 pass | Units 2.1–2.3 (17 lessons). Prioritise 2.1.1–2.1.2, 2.2.2, 2.2.4–2.2.5, 2.3.8 | **Complete** (2026-08-29) |
 | **5** | S3 pass | Units 3.1–3.2 (11 lessons). Prioritise 3.1.2, 3.1.4–3.1.5, 3.2.1–3.2.4 | **Complete** (2026-08-29) |
-| 6 | Question alignment | Five Practice slots per topic per difficulty — **do not start until Stage 6** | **Next** |
-| 7 | Verification | Full smoke + manual mobile/dark/print + sensitive-lesson sample | Pending |
+| **6** | Question alignment | Five Practice slots per topic per difficulty; align stems with lesson objectives | **Complete** (2026-08-29) |
+| 7 | Verification | Full smoke + manual mobile/dark/print + sensitive-lesson sample | **Complete** (2026-08-29) |
 
 ---
 
@@ -101,6 +101,30 @@ Units 3.1–3.2 (11 lessons). Checkpoint and section counts unchanged. No inline
 | **3.2.3** ecosystem characteristics | Abiotic/biotic/survey figure caption; model-critique example |
 | **3.2.4** classification | Dichotomous `science_branch` key; taxonomy/descent glosses |
 | Other S3 | Lever labels and \(W=Fd\) example (no power); charge attract/repel caption; fictional robot and field-plan examples |
+
+## Stage 6 question alignment (shipped)
+
+All 46 `eursc/science` topics. Lesson banks (mode `lesson`) unchanged for ten-question quizzes. Practice mode (`standard`) returns five stable slots per difficulty.
+
+| Piece | Where |
+|-------|--------|
+| Slot count | `EURSC_PRACTICE_SLOT_COUNT = 5` in `science_shared.py` |
+| Curation | `eursc_practice_pool()` — stable kind mix (MCQ, keyword, number, order, pick) |
+| Wiring | `bind_eursc_topic()` / `eursc_variants_for_mode()` across `s1_*.py` … `s3_*.py` |
+| Practice home | Still closed to `eursc` (ES10 `test_practice_and_qotd_stay_closed`) |
+| Stem alignment | Measurement accuracy/precision; S3 energy transform/transfer; conventional-current wording |
+| Tests | `scripts/test_es_practice_slots_smoke.py` |
+
+## Stage 7 verification (shipped)
+
+| Piece | Result |
+|-------|--------|
+| Automated sample | `scripts/test_es_stage7_verification_smoke.py` — measurement, reproductive_anatomy, dependence_addiction, ecosystems_cycles |
+| Mobile | Viewport meta + responsive lesson CSS breakpoints |
+| Dark | Token + `theme.js` contract; SVG colour remaps in `lesson-pages.css` |
+| Print | `@media print` section expansion |
+| Safeguarding | Sensitive 1.4/2.2 templates and HTML pass `DISCLOSE_RE` |
+| Regression | Practice home closed; five slots; ten-question quizzes |
 
 ---
 
@@ -218,7 +242,7 @@ IBL templates must **not** contain `.mcq-inline` (ES smokes assert this).
 - [ ] **3.1.4** Electric Current: qualitative current and voltage; **no \(V=IR\)** and no resistance calculations.
 - [ ] **2.3.8** Nonhuman senses: close chemical-sense / technology gaps **inside** the current section/checkpoint counts unless a manifest change is approved.
 - [ ] IBL pages (`templates/eursc_science_ibl_*.html`) are classroom practical support — not a second lesson rewrite.
-- [ ] Do not open `eursc/science` on the main Practice generator until **Stage 6**.
+- [x] Practice slots: five per topic per difficulty via `eursc_variants_for_mode` (Stage 6). Main Practice home still GCSE-only.
 - [ ] Do not register incomplete topics; do not invent new answer types.
 
 ### 8. Quiz-key and progress stability
@@ -228,7 +252,7 @@ Lesson progress keys are `step-0`, `step-1`, … in **DOM order** of `.mcq-inlin
 - [ ] Same checkpoint **count** and **order** as the manifest (no inserts, deletes, or swaps).
 - [ ] When polishing a check, keep the same correct **letter** if the same option remains the right answer.
 - [ ] If you must rewrite options, update `data-correct` in the same edit and keep four `data-letter` buttons A–D.
-- [ ] End-of-lesson quiz banks (`generators/eursc/s1_*.py` … `s3_*.py`): do not drop items or change `correct_answer` / `correct_answer_raw` when only improving lesson wording. Recuration of Practice slots is **Stage 6**.
+- [x] End-of-lesson quiz banks: full lesson pools preserved; practice slots curated in Stage 6 without changing `correct_answer` / `correct_answer_raw`.
 - [ ] Mixed quiz still uses session-stored keys — never a client-supplied correct flag.
 
 ### 9. Template and CSS contract
@@ -267,7 +291,7 @@ Lesson progress keys are `step-0`, `step-1`, … in **DOM order** of `.mcq-inlin
 3. Units 1.4 and 2.2: clinical, third-person, fictional/public data; `DISCLOSE_RE` must stay clean.
 4. S3 machines: no power; `electric_current` has no \(V=IR\).
 5. IBL pages are practical support only.
-6. No Practice-generator admission for `eursc/science` until Stage 6.
+6. Main Practice generator for `eursc/science` stays closed until a separate launch decision (slots are backend-ready after Stage 6).
 7. Commit only when the user asks.
 
 ---

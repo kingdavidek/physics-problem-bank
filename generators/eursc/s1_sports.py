@@ -1,5 +1,6 @@
 """S1 Unit 1.3 Sports — 1.3.1–1.3.4."""
 from generators.eursc.science_shared import (
+    bind_eursc_topic,
     antagonistic_pair,
     circulation_boxes,
     distance_time_graph,
@@ -10,7 +11,6 @@ from generators.shared.utils import (
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
-from generators.shared.variant_utils import normalize_mode, pick_named_variant
 
 _LEVEL = "eursc"
 _SUBJECT = "science"
@@ -100,24 +100,6 @@ def _topic_bank(topic):
         )
 
     return mcq, number, keyword, order, pick
-
-
-def _bind(topic, pools):
-    def variants(difficulty, mode="lesson"):
-        mode = normalize_mode(mode)
-        pool = list(pools.get(difficulty) or [])
-        if mode == "mcq":
-            return [fn for fn in pool if getattr(fn, "_kind", "") == "mcq"]
-        return pool
-
-    def generate(difficulty, mode="lesson", variant_name=None):
-        chosen = variants(difficulty, mode)
-        if not chosen:
-            chosen = variants(difficulty, "lesson")
-        fn = pick_named_variant(chosen, variant_name)
-        return fn()
-
-    return generate, variants
 
 
 def _mcq_opts(a, b, c, d):
@@ -218,7 +200,7 @@ _MV_POOLS = {
     ],
 }
 
-eursc_science_movement, eursc_science_movement_variants = _bind("movement", _MV_POOLS)
+eursc_science_movement, eursc_science_movement_variants = bind_eursc_topic("movement", _MV_POOLS)
 
 
 _FS_POOLS = {
@@ -260,7 +242,7 @@ _FS_POOLS = {
     ],
 }
 
-eursc_science_forces_sport, eursc_science_forces_sport_variants = _bind(
+eursc_science_forces_sport, eursc_science_forces_sport_variants = bind_eursc_topic(
     "forces_sport", _FS_POOLS
 )
 
@@ -304,7 +286,7 @@ _BR_POOLS = {
     ],
 }
 
-eursc_science_breathing, eursc_science_breathing_variants = _bind("breathing", _BR_POOLS)
+eursc_science_breathing, eursc_science_breathing_variants = bind_eursc_topic("breathing", _BR_POOLS)
 
 
 _SH_POOLS = {
@@ -351,6 +333,6 @@ _SH_POOLS = {
     ],
 }
 
-eursc_science_sport_health, eursc_science_sport_health_variants = _bind(
+eursc_science_sport_health, eursc_science_sport_health_variants = bind_eursc_topic(
     "sport_health", _SH_POOLS
 )

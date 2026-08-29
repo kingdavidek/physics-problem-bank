@@ -2,7 +2,7 @@
 
 **Track:** Lesson clarity, examples, diagrams and tables for Integrated Science S1–S3 (46 lessons).  
 **Prerequisite:** ES10 curriculum shipped — see `docs/EUROPEAN_SCHOOL_SCIENCE.md`.  
-**Out of scope for this track (until Stage 6):** Practice generator admission, five-question curation, QOTD changes.
+**Out of scope for this track (until Stage 7):** Opening the main Practice home page to `eursc/science`, QOTD changes.
 
 ---
 
@@ -21,27 +21,11 @@ Optional visual plans (Cursor canvas, if available in the workspace):
 - eursc-lesson-quality-plan.canvas.tsx   — lesson-by-lesson priorities and delivery stages 0–7
 - eursc-generator-question-plan.canvas.tsx — Practice generator plan (Stage 6)
 
-YOUR TASK THIS SESSION: Stage 6 only — “question alignment”.
-Do NOT start Stage 7 verification unless the user asks.
-When Stage 6 is complete, stop and report. Wait for the user to say “continue” before Stage 7.
+YOUR TASK THIS SESSION: Track complete (Stages 0–7). Only work further if the user requests follow-ups.
 
-Read the review checklist: docs/EURSC_LESSON_REVIEW_RUBRIC.md (Stages 0–5 complete).
+Read the review checklist: docs/EURSC_LESSON_REVIEW_RUBRIC.md (all stages complete).
 
-Stage 6 deliverables:
-1. Five Practice slots per topic per difficulty for `eursc/science` (see generator plan canvas if present).
-2. Align Practice-generator items with lesson objectives; do not drop existing lesson-quiz `correct_answer` values unless a stem is actually wrong.
-3. Follow ES10 safeguarding: no disclosure prompts; 1.4/2.2 clinical third-person; S3 no power calculations and no \(V=IR\).
-4. Run PB_TESTING=1 python scripts/run_smoke_tests.py. Note: Stage 0 saw a rare ES0 flake (unseeded API quiz with no MCQ); re-run scripts/test_es0_mixed_quiz_smoke.py in isolation if it fails.
-
-Hard constraints (all stages):
-- Preserve SYLLABUS_MODULES section/checkpoint counts unless the user explicitly approves a manifest change.
-- No inline style= on lesson templates; use lesson-shell and existing CSS classes.
-- Puberty (1.4) and Health (2.2): clinical, third-person, fictional/public data only — no disclosure prompts (see ES10 DISCLOSE_RE pattern in scripts/test_es10_whole_suite_smoke.py).
-- S3 Machines: no power calculations; electric_current has no V=IR.
-- IBL pages are practical support only — not lesson rewrites.
-- Only commit if the user asks.
-
-End message: “Stage 6 complete. Question alignment: [brief list]. Smoke: [N] tests. Ready for Stage 7 (verification) on your cue.”
+If the user asks for fixes or polish, scope narrowly and preserve shipped constraints.
 ```
 
 ---
@@ -68,8 +52,8 @@ git pull   # if on a tracking branch and behind
 | **3** | **S1 pass** | **Complete** (2026-08-29) — 18 S1 lessons; priority 1.1.2, 1.3.3, 1.4.2 |
 | **4** | **S2 pass** | **Complete** (2026-08-29) — 17 S2 lessons; priority 2.1.1–2.1.2, 2.2.2, 2.2.4–2.2.5, 2.3.8 |
 | **5** | **S3 pass** | **Complete** (2026-08-29) — 11 S3 lessons; priority 3.1.2, 3.1.4–3.1.5, 3.2.1–3.2.4 |
-| **6** | **Question alignment** | **NEXT** — five Practice slots per topic per difficulty (see generator plan canvas) |
-| 7 | Verification | Full smoke + manual mobile/dark/print + sensitive-lesson sample |
+| **6** | **Question alignment** | **Complete** (2026-08-29) — five practice slots per topic per difficulty; lesson banks unchanged for quizzes |
+| **7** | **Verification** | **Complete** (2026-08-29) — full smoke + mobile/dark/print sample + sensitive-lesson checks |
 
 **Rule:** Complete one stage, report, **stop**. Do not proceed to the next stage until the user explicitly asks.
 
@@ -84,6 +68,9 @@ git pull   # if on a tracking branch and behind
 | IBL templates | `templates/eursc_science_ibl_*.html` (6) |
 | Figure injection | `app.py` — `_lesson_render_spec()` |
 | Quiz banks | `generators/eursc/s1_*.py` … `s3_*.py` |
+| Practice slots (Stage 6) | `generators/eursc/science_shared.py` — `EURSC_PRACTICE_SLOT_COUNT`, `eursc_variants_for_mode`, `bind_eursc_topic` |
+| Practice-slot QA | `scripts/test_es_practice_slots_smoke.py` |
+| Stage 7 verification | `scripts/test_es_stage7_verification_smoke.py` |
 | Lesson CSS | `static/css/lesson-pages.css`, `static/css/components.css`, `static/css/diagrams.css` |
 | SVG kit | `models/svg_kit.py` |
 | Whole-suite QA | `scripts/test_es10_whole_suite_smoke.py` |
@@ -115,3 +102,30 @@ git pull   # if on a tracking branch and behind
 ## When Stage 6 is done
 
 Report Practice-slot / generator alignment, smoke result, and wait for the user before Stage 7.
+
+## Stage 6 question alignment (shipped 2026-08-29)
+
+| Piece | Where |
+|-------|--------|
+| Five practice slots per tier | `EURSC_PRACTICE_SLOT_COUNT = 5`; `eursc_practice_pool()` picks a stable MCQ + typed mix |
+| Lesson bank unchanged | `mode='lesson'` still returns the full pool (≥10 items/tier) for ten-question quizzes |
+| Shared bind | `bind_eursc_topic()` in `science_shared.py`; all `s1_*.py` … `s3_*.py` banks use it |
+| Practice home | Still GCSE maths/CS only (`GENERATOR_LAUNCH_GCSE_MATHS_CS`); slots are backend-ready |
+| Stem tweaks | Measurement accuracy/precision; S3 energy transform/transfer; electric_current conventional-current wording |
+| Tests | `scripts/test_es_practice_slots_smoke.py`; ES1–ES10 smokes green |
+
+## When Stage 7 is done
+
+Report verification results. The lesson-improvement track (Stages 0–7) is complete unless the user requests follow-ups.
+
+## Stage 7 verification (shipped 2026-08-29)
+
+| Piece | Result |
+|-------|--------|
+| Full smoke | **65/65** smoke files green (`PB_TESTING=1 python scripts/run_smoke_tests.py`) |
+| ES suite | ES0–ES10, practice slots, SVG contract, Stage 7 sample — all pass in isolation |
+| Mobile sample | Viewport meta, `lesson-shell`, 700px/900px breakpoints, `lesson-table-wrap` on measurement, reproductive_anatomy, dependence_addiction, ecosystems_cycles |
+| Dark sample | `tokens.css` dark tokens + `theme.js` `pb_theme`; lesson SVG remaps via CSS variables |
+| Print sample | `@media print` expands lesson sections in `lesson-pages.css` |
+| Sensitive sample | No `DISCLOSE_RE` hits on 1.4 (`reproductive_anatomy`) and 2.2 (`dependence_addiction`) templates or rendered HTML |
+| Practice / quizzes | Home still GCSE-only; five practice slots per tier; ten-question lesson quizzes on sample topics |
