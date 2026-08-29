@@ -24,15 +24,16 @@ Optional visual plan (Cursor canvas — treat as the slot-recipe source of truth
 
 Do NOT reopen the completed lesson-clarity track (Stages 0–7) unless fixing a regression.
 
-YOUR TASK THIS SESSION: Phase 0 only — “Baseline and contract”.
-Do NOT open the Practice home page, change GENERATOR_LAUNCH_*, or rewrite banks yet.
-When Phase 0 is complete, stop and wait for my cue before Phase 1.
+YOUR TASK THIS SESSION: Phase 3 only — “Launch gate”.
+Open Practice home for `eursc/science` by replacing `GENERATOR_LAUNCH_GCSE_MATHS_CS` with an allowlist (GCSE Maths, GCSE CS, European School Integrated Science). Fix home selectors, POST, and `problems/generate` validation.
+Do NOT put eursc in QOTD. IBL stays outside the generator.
+When Phase 3 is complete, stop and wait for my cue before Phase 4.
 
-Phase 0 deliverables:
-1. Confirm current state: EURSC_PRACTICE_SLOT_COUNT = 5 and eursc_variants_for_mode() already return five standard slots; lesson mode still returns the full bank; Practice home still GCSE-only; QOTD excludes eursc.
-2. Write docs/EURSC_GENERATOR_REVIEW_RUBRIC.md with: the five-slot recipe (MCQ, keyword, data/numeric, ordered, pick/set), canvas coverage matrix summary, rollout by year (S1→S2→S3), acceptance gate, and what Stage 6 already shipped vs what remains.
-3. Run PB_TESTING=1 python scripts/run_smoke_tests.py and record the pass line as baseline.
-4. Note gaps vs the canvas: kind-mix selection vs explicit named slots; generate() still falls back from standard→lesson; launch gate still GCSE-only boolean.
+Phase 3 deliverables:
+1. Replace the GCSE-only boolean with an allowlist including `eursc/science`.
+2. Home level/subject/topic selectors, recent-topic chips, web POST, and API generate accept eursc/science.
+3. Keep QOTD excluding eursc. Keep lesson quizzes working.
+4. Run PB_TESTING=1 python scripts/run_smoke_tests.py.
 
 Hard constraints (all phases):
 - Lesson banks (mode=lesson) and 10-question lesson quizzes must keep working; do not drop correct_answer / correct_answer_raw unless a stem is wrong.
@@ -44,7 +45,7 @@ Hard constraints (all phases):
 - S3 Machines: no power calculations; electric_current has no V=IR.
 - Only commit if the user asks.
 
-End message: “Phase 0 complete. Baseline: [smoke line]. Rubric: docs/EURSC_GENERATOR_REVIEW_RUBRIC.md. Ready for Phase 1 on your cue.”
+End message: “Phase 3 complete. Smoke: [smoke line]. Ready for Phase 4 on your cue.”
 ```
 
 ---
@@ -53,9 +54,9 @@ End message: “Phase 0 complete. Baseline: [smoke line]. Rubric: docs/EURSC_GEN
 
 | Phase | Name | Scope |
 |-------|------|--------|
-| **0** | **Baseline and contract** | **NEXT** — smoke baseline + `docs/EURSC_GENERATOR_REVIEW_RUBRIC.md` |
-| 1 | Explicit standard pools | Name five curated slots per topic×difficulty in the nine `generators/eursc` unit modules; `standard` returns exactly those five; **no** fallback from standard → lesson |
-| 2 | Align to canvas recipes | Curate/lightly rewrite so each tier matches MCQ / keyword / data / ordered / pick-set intent; align terminology with improved lessons |
+| **0** | **Baseline and contract** | **Complete** (2026-08-29) — smoke baseline + `docs/EURSC_GENERATOR_REVIEW_RUBRIC.md` |
+| **1** | **Explicit standard pools** | **Complete** (2026-08-29) — named five-slot lists; no standard → lesson fallback |
+| **2** | **Align to canvas recipes** | **Complete** (2026-08-29) — five-family recipe on all 138 tiers; S1 data/ordered gaps filled |
 | 3 | Launch gate | Replace `GENERATOR_LAUNCH_GCSE_MATHS_CS` boolean with an allowlist including `eursc/science`; fix home selectors, POST, and `problems/generate` validation |
 | 4 | Safety regression | Sensitive banks + templates still pass `DISCLOSE_RE`; no QOTD eursc; IBL not in generator |
 | 5 | Matrix smoke | Assert 46×3×5 standard variants, unique names, valid payloads, API/web generate, no leakage |
@@ -70,13 +71,13 @@ End message: “Phase 0 complete. Baseline: [smoke line]. Rubric: docs/EURSC_GEN
 
 | Piece | Where |
 |-------|--------|
-| Five-slot helper | `EURSC_PRACTICE_SLOT_COUNT`, `eursc_practice_pool()`, `eursc_variants_for_mode()`, `bind_eursc_topic()` in `generators/eursc/science_shared.py` |
-| Wiring | All `s1_*.py` … `s3_*.py` + measurement/lab/es0 fixture variants |
-| Slot smoke | `scripts/test_es_practice_slots_smoke.py` |
+| Five-slot helper | `EURSC_PRACTICE_SLOT_COUNT`, `eursc_resolve_standard_slots()`, `bind_eursc_topic(topic, pools, standard_slots)` in `generators/eursc/science_shared.py` |
+| Named lists | `_XX_STANDARD` in `s1_*.py` … `s3_*.py`; lab/es0 converted to `bind_eursc_topic` |
+| Slot smoke | `scripts/test_es_practice_slots_smoke.py` (count, no leak, no empty-pool fallback, recipe order, movement kinematics) |
 | Practice home | **Still closed** — `GENERATOR_LAUNCH_GCSE_MATHS_CS = True` |
 | Lesson quizzes | Unchanged full `lesson` pools |
 
-**Gaps vs canvas:** slots are a **stable kind-mix sample** of the lesson bank, not yet **explicit named five-slot pools**; `generate()` still falls back to `lesson` when the practice pool is empty; launch allowlist not done.
+**Gaps vs canvas (Phase 3):** launch allowlist not done — Practice home still GCSE-only.
 
 ---
 

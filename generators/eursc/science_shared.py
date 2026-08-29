@@ -2252,80 +2252,151 @@ def _sample_ruler():
     return ruler_scale(4.7)
 
 
-# Stage 6 — five practice slots per topic per difficulty (lesson bank stays full).
+# Stage 6 / Phase 1 — five named practice slots per topic per difficulty.
 from generators.shared.variant_utils import normalize_mode, pick_named_variant  # noqa: E402
 
 EURSC_PRACTICE_SLOT_COUNT = 5
 
-_PRACTICE_KIND_ORDER = (
-    "mcq",
-    "keyword",
-    "number",
-    "number_estimate",
-    "order",
-    "pick",
+EURSC_RECIPE_FAMILIES = (
+    ("mcq", frozenset({"mcq"})),
+    ("keyword", frozenset({"keyword"})),
+    (
+        "data",
+        frozenset(
+            {
+                "number",
+                "number_estimate",
+                "number_fields",
+                "number_pair",
+                "number_list",
+            }
+        ),
+    ),
+    ("order", frozenset({"order"})),
+    ("pick", frozenset({"pick"})),
 )
 
 
-def eursc_practice_pool(pool, count=EURSC_PRACTICE_SLOT_COUNT):
-    """Return up to ``count`` practice slots with a stable mix of question kinds."""
-    items = list(pool)
+def eursc_slot_family(kind):
+    kind = kind or "other"
+    for family, kinds in EURSC_RECIPE_FAMILIES:
+        if kind in kinds:
+            return family
+    return "other"
+
+
+def eursc_select_recipe_slots(pool, count=EURSC_PRACTICE_SLOT_COUNT):
+    """Pick one callable per recipe family, then fill to ``count`` from leftovers.
+
+    Used to author explicit ``standard_slots`` lists. Runtime standard mode
+    resolves named slots only — it does not call this sampler.
+    """
+    items = sorted(list(pool or []), key=lambda fn: getattr(fn, "__name__", ""))
     if len(items) <= count:
-        return items
+        return list(items)
 
-    by_kind = {}
-    for fn in sorted(items, key=lambda f: getattr(f, "__name__", "")):
-        kind = getattr(fn, "_kind", "other")
-        by_kind.setdefault(kind, []).append(fn)
-
+    used = set()
     picked = []
-    kind_idx = {k: 0 for k in by_kind}
-    while len(picked) < count:
-        progress = False
-        for kind in _PRACTICE_KIND_ORDER:
-            bucket = by_kind.get(kind, [])
-            idx = kind_idx.get(kind, 0)
-            if idx < len(bucket):
-                picked.append(bucket[idx])
-                kind_idx[kind] = idx + 1
-                progress = True
-                if len(picked) >= count:
-                    break
-        if not progress:
+    for _family, kinds in EURSC_RECIPE_FAMILIES:
+        if len(picked) >= count:
             break
-
-    if len(picked) < count:
-        seen = {id(fn) for fn in picked}
-        for fn in sorted(items, key=lambda f: getattr(f, "__name__", "")):
-            if id(fn) not in seen:
+        for fn in items:
+            if id(fn) in used:
+                continue
+            if getattr(fn, "_kind", "") in kinds:
                 picked.append(fn)
-                if len(picked) >= count:
-                    break
+                used.add(id(fn))
+                break
+    for fn in items:
+        if len(picked) >= count:
+            break
+        if id(fn) in used:
+            continue
+        picked.append(fn)
+        used.add(id(fn))
     return picked[:count]
 
 
-def eursc_variants_for_mode(pool, mode):
-    """Lesson bank (full pool), MCQ filter, or five practice slots per tier."""
+def eursc_resolve_standard_slots(pool, names):
+    """Resolve an explicit named slot list from the lesson pool. No silent fill."""
+    by_name = {fn.__name__: fn for fn in pool or []}
+    resolved = []
+    missing = []
+    seen = set()
+    for name in names or ():
+        if name in seen:
+            raise ValueError(f"duplicate standard slot name: {name}")
+        seen.add(name)
+        fn = by_name.get(name)
+        if fn is None:
+            missing.append(name)
+        else:
+            resolved.append(fn)
+    if missing:
+        raise ValueError(f"standard slots not in lesson pool: {missing}")
+    return resolved
+
+
+def eursc_practice_pool(pool, count=EURSC_PRACTICE_SLOT_COUNT, names=None):
+    """Return named standard slots, or a recipe-family sample for authoring."""
+    if names is not None:
+        return eursc_resolve_standard_slots(pool, names)
+    return eursc_select_recipe_slots(pool, count=count)
+
+
+def eursc_variants_for_mode(pool, mode, standard_names=None):
+    """Lesson bank (full pool), MCQ filter, or explicit standard slots."""
     mode = normalize_mode(mode)
     pool = list(pool or [])
     if mode == "mcq":
         return [fn for fn in pool if getattr(fn, "_kind", "") == "mcq"]
     if mode == "lesson":
         return pool
-    return eursc_practice_pool(pool)
+    if standard_names is None:
+        raise ValueError("standard mode requires explicit standard_names")
+    return eursc_resolve_standard_slots(pool, standard_names)
 
 
-def bind_eursc_topic(topic, pools):
-    """Wire generate + variants for one syllabus slug."""
+def _pick_bound_variant(chosen, variant_name, *, topic, difficulty, mode):
+    """Pick from the mode pool only — never look up a hidden lesson item."""
+    if not chosen:
+        raise ValueError(
+            f"No {mode} variants for eursc/science/{topic} ({difficulty})"
+        )
+    if variant_name is None:
+        return pick_named_variant(chosen, None)
+    by_name = {fn.__name__: fn for fn in chosen}
+    fn = by_name.get(variant_name)
+    if fn is None:
+        raise ValueError(
+            f"Unknown {mode} variant {variant_name!r} for "
+            f"eursc/science/{topic} ({difficulty})"
+        )
+    return fn
+
+
+def bind_eursc_topic(topic, pools, standard_slots):
+    """Wire generate + variants for one syllabus slug.
+
+    ``standard_slots`` maps difficulty → exactly five lesson-bank function names.
+    ``generate(..., mode='standard')`` never falls back to the lesson pool.
+    """
 
     def variants(difficulty, mode="lesson"):
-        return eursc_variants_for_mode(pools.get(difficulty) or [], mode)
+        lesson = pools.get(difficulty) or []
+        names = standard_slots.get(difficulty) or ()
+        return eursc_variants_for_mode(lesson, mode, names)
 
     def generate(difficulty, mode="lesson", variant_name=None):
+        mode = normalize_mode(mode)
         chosen = variants(difficulty, mode)
-        if not chosen:
-            chosen = eursc_variants_for_mode(pools.get(difficulty) or [], "lesson")
-        fn = pick_named_variant(chosen, variant_name)
+        fn = _pick_bound_variant(
+            chosen,
+            variant_name,
+            topic=topic,
+            difficulty=difficulty,
+            mode=mode,
+        )
         return fn()
 
     return generate, variants

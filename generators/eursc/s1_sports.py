@@ -170,6 +170,7 @@ _MV_POOLS = {
         _MV_MCQ("foundational", "unit_s", "The SI unit of time in v = d/t is usually the", _mcq_opts("kilogram", "second", "ampere", "candela"), "B", "Time is in seconds in SI."),
         _MV_MCQ("foundational", "graph_rest", "<p>Which labelled part of this distance–time graph shows rest?</p>" + str(distance_time_graph()), _mcq_opts("A", "B", "C", "the word time"), "B", "B is the flat section."),
         _MV_KEY("foundational", "speed_word", "Write the word for distance divided by time.", "speed", "Average speed is distance over time."),
+        _MV_NUM("foundational", "v0", "Distance 10 m, time 2 s. What is average speed in m/s?", 5, "10 / 2 = 5."),
         _MV_ORD("foundational", "calc", "Order measuring, then dividing, to get average speed.", ["measure", "divide"], _SPEED_BANK, "Measure d and t, then divide."),
         _MV_PICK("foundational", "need_two", "Select the two steps that belong in a speed investigation.", ["measure", "divide"], _SPEED_BANK, 2, "Measure and divide. Guessing kit colour is not a method."),
         _MV_PICK("foundational", "graph_ok", "Select the two correct graph ideas.", ["slope", "flat"], _GRAPH_BANK, 2, "Slope means moving; flat means rest."),
@@ -200,7 +201,30 @@ _MV_POOLS = {
     ],
 }
 
-eursc_science_movement, eursc_science_movement_variants = bind_eursc_topic("movement", _MV_POOLS)
+_MV_STANDARD = {
+    "foundational": (
+        'movement_foundational_mcq_avg',
+        'movement_foundational_keyword_speed_word',
+        'movement_foundational_number_v0',
+        'movement_foundational_order_calc',
+        'movement_foundational_pick_graph_ok',
+    ),
+    "intermediate": (
+        'movement_intermediate_mcq_num',
+        'movement_intermediate_keyword_metre_word',
+        'movement_intermediate_number_v1',
+        'movement_intermediate_order_graph_read',
+        'movement_intermediate_pick_not_method',
+    ),
+    "difficult": (
+        'movement_difficult_mcq_avg_vs',
+        'movement_difficult_keyword_average_word',
+        'movement_difficult_number_v2',
+        'movement_difficult_order_full',
+        'movement_difficult_pick_graph_false',
+    ),
+}
+eursc_science_movement, eursc_science_movement_variants = bind_eursc_topic('movement', _MV_POOLS, _MV_STANDARD)
 
 
 _FS_POOLS = {
@@ -212,6 +236,7 @@ _FS_POOLS = {
         _FS_MCQ("foundational", "mass", "Mass is", _mcq_opts("the pull of the Earth in newtons", "the amount of matter, in kilograms", "a type of friction", "a feeling of tiredness"), "B", "Mass is kilograms of matter."),
         _FS_MCQ("foundational", "boxes", "<p>In this sketch the two boxes push on each other. The interaction idea is that</p>" + str(force_pair()), _mcq_opts("only A can push", "A and B push each other", "there is no force", "mass is zero"), "B", "Each pushes the other."),
         _FS_KEY("foundational", "newton_word", "Write the SI unit of force.", "newton", "The newton is the force unit."),
+        _FS_NUM("foundational", "net0", "Two 2 N forces pull a ring equally opposite. The net force in newtons is", 0, "Equal opposite forces cancel."),
         _FS_ORD("foundational", "think", "Order a force effect, then the interaction idea.", ["push", "pair"], _FORCE_BANK, "Effects, then pairs. Magic forces are not used."),
         _FS_PICK("foundational", "force_ok", "Select the two scientific force ideas.", ["push", "pair"], _FORCE_BANK, 2, "Effects and interactions."),
         _FS_PICK("foundational", "fric_ok", "Select the two friction ideas that belong in sport.", ["grip", "slow"], _FRIC_BANK, 2, "Grip and slowing. Vacuum-only and mass mix-ups are wrong."),
@@ -242,8 +267,31 @@ _FS_POOLS = {
     ],
 }
 
+_FS_STANDARD = {
+    "foundational": (
+        'forces_sport_foundational_mcq_boxes',
+        'forces_sport_foundational_keyword_newton_word',
+        'forces_sport_foundational_number_net0',
+        'forces_sport_foundational_order_think',
+        'forces_sport_foundational_pick_force_ok',
+    ),
+    "intermediate": (
+        'forces_sport_intermediate_mcq_balance',
+        'forces_sport_intermediate_keyword_friction_word',
+        'forces_sport_intermediate_number_n1',
+        'forces_sport_intermediate_order_fric_order',
+        'forces_sport_intermediate_pick_not_force',
+    ),
+    "difficult": (
+        'forces_sport_difficult_mcq_air',
+        'forces_sport_difficult_keyword_weight_word',
+        'forces_sport_difficult_number_sum',
+        'forces_sport_difficult_order_pair_after',
+        'forces_sport_difficult_pick_bad_f',
+    ),
+}
 eursc_science_forces_sport, eursc_science_forces_sport_variants = bind_eursc_topic(
-    "forces_sport", _FS_POOLS
+    'forces_sport', _FS_POOLS, _FS_STANDARD
 )
 
 
@@ -256,6 +304,7 @@ _BR_POOLS = {
         _BR_MCQ("foundational", "heart", "The heart's job in this unit is to", _mcq_opts("digest food", "pump blood", "store oxygen as a metal", "measure distance"), "B", "The heart is a pump."),
         _BR_MCQ("foundational", "boxes", "<p>Which letter is the heart on this schematic?</p>" + str(circulation_boxes()), _mcq_opts("B", "A", "C", "the word lungs"), "B", "A is labelled heart."),
         _BR_KEY("foundational", "oxygen_word", "Write the gas cells use in respiration.", "oxygen", "Oxygen is used by cells."),
+        _BR_NUM("foundational", "pulse60", "A pulse of 10 beats in 10 s is how many beats in 60 s if the rate stays the same?", 60, "10 × 6 = 60."),
         _BR_ORD("foundational", "path", "Order heart pump, then lungs adding oxygen, then body use.", ["heart", "lungs", "body"], _CIRC_BANK, "Heart, lungs, tissues."),
         _BR_PICK("foundational", "air_ok", "Select the two true statements about air gases.", ["nitrogen", "oxygen"], _AIR_BANK, 2, "Nitrogen majority; oxygen used in respiration."),
         _BR_PICK("foundational", "circ_ok", "Select the two circulation jobs.", ["heart", "lungs"], _CIRC_BANK, 2, "Heart pumps; lungs oxygenate."),
@@ -286,7 +335,30 @@ _BR_POOLS = {
     ],
 }
 
-eursc_science_breathing, eursc_science_breathing_variants = bind_eursc_topic("breathing", _BR_POOLS)
+_BR_STANDARD = {
+    "foundational": (
+        'breathing_foundational_mcq_air',
+        'breathing_foundational_keyword_oxygen_word',
+        'breathing_foundational_number_pulse60',
+        'breathing_foundational_order_path',
+        'breathing_foundational_pick_air_ok',
+    ),
+    "intermediate": (
+        'breathing_intermediate_mcq_blood',
+        'breathing_intermediate_keyword_pulse_word',
+        'breathing_intermediate_number_beats',
+        'breathing_intermediate_order_circ2',
+        'breathing_intermediate_pick_air_myth',
+    ),
+    "difficult": (
+        'breathing_difficult_mcq_body_box',
+        'breathing_difficult_keyword_buoyancy_word',
+        'breathing_difficult_number_pulse2',
+        'breathing_difficult_order_full_circ',
+        'breathing_difficult_pick_circ_three',
+    ),
+}
+eursc_science_breathing, eursc_science_breathing_variants = bind_eursc_topic('breathing', _BR_POOLS, _BR_STANDARD)
 
 
 _SH_POOLS = {
@@ -298,6 +370,7 @@ _SH_POOLS = {
         _SH_MCQ("foundational", "sweat", "Sweating helps because", _mcq_opts("it adds mass in kilograms to the bones", "evaporation of water can cool the body", "it is a joint", "it is a newton"), "B", "Evaporative cooling."),
         _SH_MCQ("foundational", "muscle_fig", "<p>A and B in this sketch are</p>" + str(antagonistic_pair()), _mcq_opts("two lungs", "an antagonistic pair of muscles", "two distances", "two food groups"), "B", "A and B pull opposite ways."),
         _SH_KEY("foundational", "joint_word", "Write the word for the place where two bones meet and can move.", "joint", "Joints allow movement."),
+        _SH_NUM("foundational", "rest2", "A coach tables 2 rest days in a 7-day week. How many rest days is that?", 2, "Two rest days."),
         _SH_ORD("foundational", "body", "Order skeleton, then joint, then muscle pair.", ["skeleton", "joint", "pair"], _BODY_BANK, "Support, then joints, then antagonistic muscles."),
         _SH_PICK("foundational", "body_ok", "Select the two anatomy facts.", ["skeleton", "joint"], _BODY_BANK, 2, "Skeleton and joint. A slogan is not anatomy."),
         _SH_PICK("foundational", "safe_ok", "Select the two sport-health protections.", ["injury", "uv"], _SAFE_BANK, 2, "Injury sense and UV protection."),
@@ -333,6 +406,29 @@ _SH_POOLS = {
     ],
 }
 
+_SH_STANDARD = {
+    "foundational": (
+        'sport_health_foundational_mcq_antag',
+        'sport_health_foundational_keyword_joint_word',
+        'sport_health_foundational_number_rest2',
+        'sport_health_foundational_order_body',
+        'sport_health_foundational_pick_body_ok',
+    ),
+    "intermediate": (
+        'sport_health_intermediate_mcq_b_label',
+        'sport_health_intermediate_keyword_muscle_word',
+        'sport_health_intermediate_number_pair_n',
+        'sport_health_intermediate_order_safe_ord',
+        'sport_health_intermediate_pick_not_body',
+    ),
+    "difficult": (
+        'sport_health_difficult_mcq_a_label',
+        'sport_health_difficult_keyword_skeleton_word',
+        'sport_health_difficult_number_rest',
+        'sport_health_difficult_order_chain',
+        'sport_health_difficult_pick_drug_uv',
+    ),
+}
 eursc_science_sport_health, eursc_science_sport_health_variants = bind_eursc_topic(
-    "sport_health", _SH_POOLS
+    'sport_health', _SH_POOLS, _SH_STANDARD
 )

@@ -175,8 +175,31 @@ _HL_POOLS = {
     ],
 }
 
+_HL_STANDARD = {
+    "foundational": (
+        'healthy_living_foundational_mcq_activity',
+        'healthy_living_foundational_keyword_diet_word',
+        'healthy_living_foundational_number_sleep_h',
+        'healthy_living_foundational_order_diet_act',
+        'healthy_living_foundational_pick_diet_ok',
+    ),
+    "intermediate": (
+        'healthy_living_intermediate_mcq_activity_bar',
+        'healthy_living_intermediate_keyword_sleep_word',
+        'healthy_living_intermediate_number_groups3',
+        'healthy_living_intermediate_order_mind',
+        'healthy_living_intermediate_pick_habit_ok',
+    ),
+    "difficult": (
+        'healthy_living_difficult_mcq_both',
+        'healthy_living_difficult_keyword_health_word',
+        'healthy_living_difficult_number_bars3',
+        'healthy_living_difficult_order_micro_ord',
+        'healthy_living_difficult_pick_mind_not',
+    ),
+}
 eursc_science_healthy_living, eursc_science_healthy_living_variants = bind_eursc_topic(
-    "healthy_living", _HL_POOLS
+    'healthy_living', _HL_POOLS, _HL_STANDARD
 )
 
 _PATH_BANK = (
@@ -248,8 +271,31 @@ _ID_POOLS = {
 
 # Actually wait I counted difficult: 7 mcq (not_abx, double, host, vax2, model, host_letter, bar_c) + key + num + ord + pick = 11. Good.
 
+_ID_STANDARD = {
+    "foundational": (
+        'infectious_disease_foundational_mcq_bact',
+        'infectious_disease_foundational_keyword_virus_word',
+        'infectious_disease_foundational_number_chain3',
+        'infectious_disease_foundational_order_chain_ord',
+        'infectious_disease_foundational_pick_path_ok',
+    ),
+    "intermediate": (
+        'infectious_disease_intermediate_mcq_abx',
+        'infectious_disease_intermediate_keyword_vax_word',
+        'infectious_disease_intermediate_number_day3',
+        'infectious_disease_intermediate_order_vax_ord',
+        'infectious_disease_intermediate_pick_hyg_ok',
+    ),
+    "difficult": (
+        'infectious_disease_difficult_mcq_bar_c',
+        'infectious_disease_difficult_keyword_imm_word',
+        'infectious_disease_difficult_number_abx0',
+        'infectious_disease_difficult_order_full_chain',
+        'infectious_disease_difficult_pick_path_not',
+    ),
+}
 eursc_science_infectious_disease, eursc_science_infectious_disease_variants = bind_eursc_topic(
-    "infectious_disease", _ID_POOLS
+    'infectious_disease', _ID_POOLS, _ID_STANDARD
 )
 
 _CLASS_BANK = (
@@ -310,8 +356,31 @@ _NI_POOLS = {
     ],
 }
 
+_NI_STANDARD = {
+    "foundational": (
+        'noninfectious_disease_foundational_mcq_defic',
+        'noninfectious_disease_foundational_keyword_support_word',
+        'noninfectious_disease_foundational_number_two_kinds',
+        'noninfectious_disease_foundational_order_split_ord',
+        'noninfectious_disease_foundational_pick_class_ok',
+    ),
+    "intermediate": (
+        'noninfectious_disease_intermediate_mcq_both',
+        'noninfectious_disease_intermediate_keyword_pollute_word',
+        'noninfectious_disease_intermediate_number_causes3',
+        'noninfectious_disease_intermediate_order_cause_ord',
+        'noninfectious_disease_intermediate_pick_cause_ok',
+    ),
+    "difficult": (
+        'noninfectious_disease_difficult_mcq_alex_def',
+        'noninfectious_disease_difficult_keyword_inherit_word',
+        'noninfectious_disease_difficult_number_zero_file',
+        'noninfectious_disease_difficult_order_sup_ord',
+        'noninfectious_disease_difficult_pick_sup_not',
+    ),
+}
 eursc_science_noninfectious_disease, eursc_science_noninfectious_disease_variants = bind_eursc_topic(
-    "noninfectious_disease", _NI_POOLS
+    'noninfectious_disease', _NI_POOLS, _NI_STANDARD
 )
 
 _PLEA_BANK = (
@@ -372,8 +441,31 @@ _DA_POOLS = {
     ],
 }
 
+_DA_STANDARD = {
+    "foundational": (
+        'dependence_addiction_foundational_mcq_behaviour',
+        'dependence_addiction_foundational_keyword_add_word',
+        'dependence_addiction_foundational_number_kinds2',
+        'dependence_addiction_foundational_order_plea_dep',
+        'dependence_addiction_foundational_pick_plea_ok',
+    ),
+    "intermediate": (
+        'dependence_addiction_intermediate_mcq_adult',
+        'dependence_addiction_intermediate_keyword_depend_word',
+        'dependence_addiction_intermediate_number_zero_use',
+        'dependence_addiction_intermediate_order_kind_ord',
+        'dependence_addiction_intermediate_pick_kind_ok',
+    ),
+    "difficult": (
+        'dependence_addiction_difficult_mcq_alex_stop',
+        'dependence_addiction_difficult_keyword_harm_word',
+        'dependence_addiction_difficult_number_signpost1',
+        'dependence_addiction_difficult_order_help_ord',
+        'dependence_addiction_difficult_pick_help_not',
+    ),
+}
 eursc_science_dependence_addiction, eursc_science_dependence_addiction_variants = bind_eursc_topic(
-    "dependence_addiction", _DA_POOLS
+    'dependence_addiction', _DA_POOLS, _DA_STANDARD
 )
 
 _TOB_BANK = (
@@ -434,4 +526,27 @@ _TB_POOLS = {
     ],
 }
 
-eursc_science_tobacco, eursc_science_tobacco_variants = bind_eursc_topic("tobacco", _TB_POOLS)
+_TB_STANDARD = {
+    "foundational": (
+        'tobacco_foundational_mcq_advert',
+        'tobacco_foundational_keyword_nic_word',
+        'tobacco_foundational_number_zero_ask',
+        'tobacco_foundational_order_dis_nic',
+        'tobacco_foundational_pick_tob_ok',
+    ),
+    "intermediate": (
+        'tobacco_intermediate_mcq_bar_more',
+        'tobacco_intermediate_keyword_tob_word',
+        'tobacco_intermediate_number_eight_model',
+        'tobacco_intermediate_order_mkt',
+        'tobacco_intermediate_pick_mkt_ok',
+    ),
+    "difficult": (
+        'tobacco_difficult_mcq_alex_ad',
+        'tobacco_difficult_keyword_prevent_word',
+        'tobacco_difficult_number_bars_n',
+        'tobacco_difficult_order_prev_ord',
+        'tobacco_difficult_pick_prev_not',
+    ),
+}
+eursc_science_tobacco, eursc_science_tobacco_variants = bind_eursc_topic('tobacco', _TB_POOLS, _TB_STANDARD)

@@ -162,8 +162,31 @@ _FW_POOLS = {
     ],
 }
 
+_FW_STANDARD = {
+    "foundational": (
+        'force_work_machines_foundational_mcq_alex',
+        'force_work_machines_foundational_keyword_force_word',
+        'force_work_machines_foundational_number_w15',
+        'force_work_machines_foundational_order_efl',
+        'force_work_machines_foundational_pick_lever_ok',
+    ),
+    "intermediate": (
+        'force_work_machines_intermediate_mcq_body',
+        'force_work_machines_intermediate_keyword_work_word',
+        'force_work_machines_intermediate_number_w12',
+        'force_work_machines_intermediate_order_w_trade',
+        'force_work_machines_intermediate_pick_work_ok',
+    ),
+    "difficult": (
+        'force_work_machines_difficult_mcq_jordan',
+        'force_work_machines_difficult_keyword_joule_word',
+        'force_work_machines_difficult_number_w16',
+        'force_work_machines_difficult_order_efl2',
+        'force_work_machines_difficult_pick_not_claim',
+    ),
+}
 eursc_science_force_work_machines, eursc_science_force_work_machines_variants = bind_eursc_topic(
-    "force_work_machines", _FW_POOLS
+    'force_work_machines', _FW_POOLS, _FW_STANDARD
 )
 
 _FORM_BANK = (
@@ -218,7 +241,30 @@ _EN_POOLS = {
     ],
 }
 
-eursc_science_energy, eursc_science_energy_variants = bind_eursc_topic("energy", _EN_POOLS)
+_EN_STANDARD = {
+    "foundational": (
+        'energy_foundational_mcq_alex_en',
+        'energy_foundational_keyword_energy_word',
+        'energy_foundational_number_useful60',
+        'energy_foundational_order_forms_ord',
+        'energy_foundational_pick_form_ok',
+    ),
+    "intermediate": (
+        'energy_intermediate_mcq_conserve',
+        'energy_intermediate_keyword_conserve_word',
+        'energy_intermediate_number_waste25',
+        'energy_intermediate_order_ttc',
+        'energy_intermediate_pick_cons_ok',
+    ),
+    "difficult": (
+        'energy_difficult_mcq_both',
+        'energy_difficult_keyword_thermal_word',
+        'energy_difficult_number_in90',
+        'energy_difficult_order_tf2',
+        'energy_difficult_pick_not_en',
+    ),
+}
+eursc_science_energy, eursc_science_energy_variants = bind_eursc_topic('energy', _EN_POOLS, _EN_STANDARD)
 
 _CHARGE_BANK = (
     {"id": "friction", "text": "Charging by friction can separate charge in this model"},
@@ -272,8 +318,31 @@ _ES_POOLS = {
     ],
 }
 
+_ES_STANDARD = {
+    "foundational": (
+        'electrostatics_foundational_mcq_a_letter',
+        'electrostatics_foundational_keyword_charge_word',
+        'electrostatics_foundational_number_two_n',
+        'electrostatics_foundational_order_fr_two',
+        'electrostatics_foundational_pick_ch_ok',
+    ),
+    "intermediate": (
+        'electrostatics_intermediate_mcq_atom',
+        'electrostatics_intermediate_keyword_induction_word',
+        'electrostatics_intermediate_number_zero_shock',
+        'electrostatics_intermediate_order_ti',
+        'electrostatics_intermediate_pick_ind_ok',
+    ),
+    "difficult": (
+        'electrostatics_difficult_mcq_both_es',
+        'electrostatics_difficult_keyword_insulator_word',
+        'electrostatics_difficult_number_kinds2',
+        'electrostatics_difficult_order_gi',
+        'electrostatics_difficult_pick_not_es',
+    ),
+}
 eursc_science_electrostatics, eursc_science_electrostatics_variants = bind_eursc_topic(
-    "electrostatics", _ES_POOLS
+    'electrostatics', _ES_POOLS, _ES_STANDARD
 )
 
 _PATH_BANK = (
@@ -328,8 +397,31 @@ _EC_POOLS = {
     ],
 }
 
+_EC_STANDARD = {
+    "foundational": (
+        'electric_current_foundational_mcq_alex_ec',
+        'electric_current_foundational_keyword_current_word',
+        'electric_current_foundational_number_one_path',
+        'electric_current_foundational_order_loop_ser',
+        'electric_current_foundational_pick_path_ok',
+    ),
+    "intermediate": (
+        'electric_current_intermediate_mcq_conventional',
+        'electric_current_intermediate_keyword_series_word',
+        'electric_current_intermediate_number_zero_vir',
+        'electric_current_intermediate_order_sp',
+        'electric_current_intermediate_pick_par_ok',
+    ),
+    "difficult": (
+        'electric_current_difficult_mcq_electrons',
+        'electric_current_difficult_keyword_parallel_word',
+        'electric_current_difficult_number_paths2',
+        'electric_current_difficult_order_cs',
+        'electric_current_difficult_pick_not_ec',
+    ),
+}
 eursc_science_electric_current, eursc_science_electric_current_variants = bind_eursc_topic(
-    "electric_current", _EC_POOLS
+    'electric_current', _EC_POOLS, _EC_STANDARD
 )
 
 _POLE_BANK = (
@@ -384,7 +476,30 @@ _MG_POOLS = {
     ],
 }
 
-eursc_science_magnetism, eursc_science_magnetism_variants = bind_eursc_topic("magnetism", _MG_POOLS)
+_MG_STANDARD = {
+    "foundational": (
+        'magnetism_foundational_mcq_alex_mg',
+        'magnetism_foundational_keyword_magnet_word',
+        'magnetism_foundational_number_two_poles',
+        'magnetism_foundational_order_pf',
+        'magnetism_foundational_pick_pole_ok',
+    ),
+    "intermediate": (
+        'magnetism_intermediate_mcq_earth',
+        'magnetism_intermediate_keyword_pole_word',
+        'magnetism_intermediate_number_zero_rank',
+        'magnetism_intermediate_order_et',
+        'magnetism_intermediate_pick_earth_ok',
+    ),
+    "difficult": (
+        'magnetism_difficult_mcq_c_letter',
+        'magnetism_difficult_keyword_electro_word',
+        'magnetism_difficult_number_switch1',
+        'magnetism_difficult_order_fe',
+        'magnetism_difficult_pick_not_mg',
+    ),
+}
+eursc_science_magnetism, eursc_science_magnetism_variants = bind_eursc_topic('magnetism', _MG_POOLS, _MG_STANDARD)
 
 _REQ_BANK = (
     {"id": "require", "text": "Write requirements another group could test"},
@@ -438,8 +553,31 @@ _RB_POOLS = {
     ],
 }
 
+_RB_STANDARD = {
+    "foundational": (
+        'robotics_project_foundational_mcq_alex_rb',
+        'robotics_project_foundational_keyword_requirement_word',
+        'robotics_project_foundational_number_zero_grade',
+        'robotics_project_foundational_order_rm',
+        'robotics_project_foundational_pick_req_ok',
+    ),
+    "intermediate": (
+        'robotics_project_intermediate_mcq_iterate',
+        'robotics_project_intermediate_keyword_iterate_word',
+        'robotics_project_intermediate_number_phases5',
+        'robotics_project_intermediate_order_si',
+        'robotics_project_intermediate_pick_build_ok',
+    ),
+    "difficult": (
+        'robotics_project_difficult_mcq_code',
+        'robotics_project_difficult_keyword_safety_word',
+        'robotics_project_difficult_number_zero_upload',
+        'robotics_project_difficult_order_mi',
+        'robotics_project_difficult_pick_not_rb',
+    ),
+}
 eursc_science_robotics_project, eursc_science_robotics_project_variants = bind_eursc_topic(
-    "robotics_project", _RB_POOLS
+    'robotics_project', _RB_POOLS, _RB_STANDARD
 )
 
 

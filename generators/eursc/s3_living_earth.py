@@ -154,8 +154,31 @@ _FE_POOLS = {
     ],
 }
 
+_FE_STANDARD = {
+    "foundational": (
+        'food_environment_foundational_mcq_alex',
+        'food_environment_foundational_keyword_carbon_word',
+        'food_environment_foundational_number_three_st',
+        'food_environment_foundational_order_puw',
+        'food_environment_foundational_pick_life_ok',
+    ),
+    "intermediate": (
+        'food_environment_intermediate_mcq_choice',
+        'food_environment_intermediate_keyword_climate_word',
+        'food_environment_intermediate_number_zero_diary',
+        'food_environment_intermediate_order_gc',
+        'food_environment_intermediate_pick_clim_ok',
+    ),
+    "difficult": (
+        'food_environment_difficult_mcq_bio',
+        'food_environment_difficult_keyword_waste_word',
+        'food_environment_difficult_number_stages3',
+        'food_environment_difficult_order_uw',
+        'food_environment_difficult_pick_not_fe',
+    ),
+}
 eursc_science_food_environment, eursc_science_food_environment_variants = bind_eursc_topic(
-    "food_environment", _FE_POOLS
+    'food_environment', _FE_POOLS, _FE_STANDARD
 )
 
 _TROPH_BANK = (
@@ -210,8 +233,31 @@ _ECY_POOLS = {
     ],
 }
 
+_ECY_STANDARD = {
+    "foundational": (
+        'ecosystems_cycles_foundational_mcq_alex_ec',
+        'ecosystems_cycles_foundational_keyword_ecosystem_word',
+        'ecosystems_cycles_foundational_number_roles3',
+        'ecosystems_cycles_foundational_order_pcd',
+        'ecosystems_cycles_foundational_pick_troph_ok',
+    ),
+    "intermediate": (
+        'ecosystems_cycles_intermediate_mcq_carbon',
+        'ecosystems_cycles_intermediate_keyword_producer_word',
+        'ecosystems_cycles_intermediate_number_cycles2',
+        'ecosystems_cycles_intermediate_order_wc',
+        'ecosystems_cycles_intermediate_pick_cyc_ok',
+    ),
+    "difficult": (
+        'ecosystems_cycles_difficult_mcq_both_ec',
+        'ecosystems_cycles_difficult_keyword_photo_word',
+        'ecosystems_cycles_difficult_number_roles_again',
+        'ecosystems_cycles_difficult_order_cp',
+        'ecosystems_cycles_difficult_pick_not_ec',
+    ),
+}
 eursc_science_ecosystems_cycles, eursc_science_ecosystems_cycles_variants = bind_eursc_topic(
-    "ecosystems_cycles", _ECY_POOLS
+    'ecosystems_cycles', _ECY_POOLS, _ECY_STANDARD
 )
 
 _FACT_BANK = (
@@ -266,8 +312,31 @@ _CH_POOLS = {
     ],
 }
 
+_CH_STANDARD = {
+    "foundational": (
+        'ecosystem_characteristics_foundational_mcq_a_letter',
+        'ecosystem_characteristics_foundational_keyword_abiotic_word',
+        'ecosystem_characteristics_foundational_number_two_fact',
+        'ecosystem_characteristics_foundational_order_ab',
+        'ecosystem_characteristics_foundational_pick_fact_ok',
+    ),
+    "intermediate": (
+        'ecosystem_characteristics_intermediate_mcq_activity',
+        'ecosystem_characteristics_intermediate_keyword_biotic_word',
+        'ecosystem_characteristics_intermediate_number_zero_replace',
+        'ecosystem_characteristics_intermediate_order_tm',
+        'ecosystem_characteristics_intermediate_pick_mod_ok',
+    ),
+    "difficult": (
+        'ecosystem_characteristics_difficult_mcq_both_ch',
+        'ecosystem_characteristics_difficult_keyword_survey_word',
+        'ecosystem_characteristics_difficult_number_types2',
+        'ecosystem_characteristics_difficult_order_mt',
+        'ecosystem_characteristics_difficult_pick_not_ch',
+    ),
+}
 eursc_science_ecosystem_characteristics, eursc_science_ecosystem_characteristics_variants = bind_eursc_topic(
-    "ecosystem_characteristics", _CH_POOLS
+    'ecosystem_characteristics', _CH_POOLS, _CH_STANDARD
 )
 
 _KEY_BANK = (
@@ -322,8 +391,31 @@ _CL_POOLS = {
     ],
 }
 
+_CL_STANDARD = {
+    "foundational": (
+        'classification_biodiversity_foundational_mcq_a_letter',
+        'classification_biodiversity_foundational_keyword_species_word',
+        'classification_biodiversity_foundational_number_zero_collect',
+        'classification_biodiversity_foundational_order_cg',
+        'classification_biodiversity_foundational_pick_key_ok',
+    ),
+    "intermediate": (
+        'classification_biodiversity_intermediate_mcq_b_letter',
+        'classification_biodiversity_intermediate_keyword_taxonomy_word',
+        'classification_biodiversity_intermediate_number_two_coup',
+        'classification_biodiversity_intermediate_order_td',
+        'classification_biodiversity_intermediate_pick_tax_ok',
+    ),
+    "difficult": (
+        'classification_biodiversity_difficult_mcq_both_cl',
+        'classification_biodiversity_difficult_keyword_biodiversity_word',
+        'classification_biodiversity_difficult_number_zero_rank',
+        'classification_biodiversity_difficult_order_dl',
+        'classification_biodiversity_difficult_pick_not_cl',
+    ),
+}
 eursc_science_classification_biodiversity, eursc_science_classification_biodiversity_variants = bind_eursc_topic(
-    "classification_biodiversity", _CL_POOLS
+    'classification_biodiversity', _CL_POOLS, _CL_STANDARD
 )
 
 _FIELD_BANK = (
@@ -378,8 +470,31 @@ _FP_POOLS = {
     ],
 }
 
+_FP_STANDARD = {
+    "foundational": (
+        'ecology_field_project_foundational_mcq_alex_fp',
+        'ecology_field_project_foundational_keyword_sampling_word',
+        'ecology_field_project_foundational_number_zero_grade',
+        'ecology_field_project_foundational_order_qr',
+        'ecology_field_project_foundational_pick_q_ok',
+    ),
+    "intermediate": (
+        'ecology_field_project_intermediate_mcq_analyse',
+        'ecology_field_project_intermediate_keyword_quadrat_word',
+        'ecology_field_project_intermediate_number_phases6',
+        'ecology_field_project_intermediate_order_ma',
+        'ecology_field_project_intermediate_pick_data_ok',
+    ),
+    "difficult": (
+        'ecology_field_project_difficult_mcq_fail',
+        'ecology_field_project_difficult_keyword_safety_word',
+        'ecology_field_project_difficult_number_zero_upload',
+        'ecology_field_project_difficult_order_sp',
+        'ecology_field_project_difficult_pick_not_fp',
+    ),
+}
 eursc_science_ecology_field_project, eursc_science_ecology_field_project_variants = bind_eursc_topic(
-    "ecology_field_project", _FP_POOLS
+    'ecology_field_project', _FP_POOLS, _FP_STANDARD
 )
 
 

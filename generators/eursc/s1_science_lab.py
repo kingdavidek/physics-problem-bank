@@ -1,11 +1,10 @@
 """S1 Unit 1.1 Science Lab — 1.1.1–1.1.3."""
-from generators.eursc.science_shared import eursc_variants_for_mode, lab_bench, ruler_scale
+from generators.eursc.science_shared import bind_eursc_topic, lab_bench, ruler_scale
 from generators.shared.utils import (
     make_problem,
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
-from generators.shared.variant_utils import pick_named_variant
 from models.svg_kit import bar_chart
 
 _LEVEL = "eursc"
@@ -241,6 +240,14 @@ _POOLS = {
             4.0,
             0.1,
             "The pointer sits on the 4 cm mark.",
+        ),
+        _order(
+            "foundational",
+            "convert_steps",
+            "Put these SI length-conversion steps in the correct order, starting from writing the quantity.",
+            ["write", "factor", "check"],
+            _CONVERT_BANK,
+            "Write the quantity, apply the power of ten, then check the result.",
         ),
     ],
     "intermediate": [
@@ -484,17 +491,32 @@ _POOLS = {
     ],
 }
 
-
-def eursc_science_measurement_variants(difficulty, mode="lesson"):
-    return eursc_variants_for_mode(_POOLS.get(difficulty) or [], mode)
-
-
-def eursc_science_measurement(difficulty, mode="lesson", variant_name=None):
-    variants = eursc_science_measurement_variants(difficulty, mode)
-    if not variants:
-        variants = eursc_science_measurement_variants(difficulty, "lesson")
-    fn = pick_named_variant(variants, variant_name)
-    return fn()
+_MEAS_STANDARD = {
+    "foundational": (
+        'meas_foundational_mcq_kilo',
+        'meas_foundational_keyword_time_unit',
+        'meas_foundational_number_estimate_ruler_4',
+        'meas_foundational_order_convert_steps',
+        'meas_foundational_pick_two_base',
+    ),
+    "intermediate": (
+        'meas_intermediate_mcq_accuracy',
+        'meas_intermediate_keyword_mass_word',
+        'meas_intermediate_number_estimate_ruler_47',
+        'meas_intermediate_order_convert_steps',
+        'meas_intermediate_pick_random_sources',
+    ),
+    "difficult": (
+        'meas_difficult_mcq_cm_to_m',
+        'meas_difficult_keyword_temp_unit',
+        'meas_difficult_number_estimate_ruler_63',
+        'meas_difficult_order_calibrate_steps',
+        'meas_difficult_pick_three_base',
+    ),
+}
+eursc_science_measurement, eursc_science_measurement_variants = bind_eursc_topic(
+    "measurement", _POOLS, _MEAS_STANDARD
+)
 
 
 def _topic_bank(topic):
@@ -700,6 +722,13 @@ _WIS_POOLS = {
             "evidence",
             "Evidence is the data that can support or challenge a claim.",
         ),
+        _WIS_NUM(
+            "foundational",
+            "mean_len",
+            "Three groups measure a length as 10 cm, 12 cm and 14 cm. What is the mean length in centimetres?",
+            12,
+            "Mean = (10 + 12 + 14) / 3 = 12 cm.",
+        ),
         _WIS_ORD(
             "foundational",
             "share_steps",
@@ -812,6 +841,13 @@ _WIS_POOLS = {
             "Write the word that means another group can follow the method and get a similar result.",
             "reproducible",
             "Reproducible work can be repeated independently.",
+        ),
+        _WIS_NUM(
+            "intermediate",
+            "mean_time",
+            "Five drop times in seconds are 8, 10, 12, 10 and 10. What is the mean time in seconds?",
+            10,
+            "Mean = (8 + 10 + 12 + 10 + 10) / 5 = 10 s.",
         ),
         _WIS_ORD(
             "intermediate",
@@ -949,17 +985,32 @@ _WIS_POOLS = {
     ],
 }
 
-
-def eursc_science_what_is_science_variants(difficulty, mode="lesson"):
-    return eursc_variants_for_mode(_WIS_POOLS.get(difficulty) or [], mode)
-
-
-def eursc_science_what_is_science(difficulty, mode="lesson", variant_name=None):
-    variants = eursc_science_what_is_science_variants(difficulty, mode)
-    if not variants:
-        variants = eursc_science_what_is_science_variants(difficulty, "lesson")
-    fn = pick_named_variant(variants, variant_name)
-    return fn()
+_WIS_STANDARD = {
+    "foundational": (
+        'what_is_science_foundational_mcq_authority',
+        'what_is_science_foundational_keyword_evidence_word',
+        'what_is_science_foundational_number_mean_len',
+        'what_is_science_foundational_order_share_steps',
+        'what_is_science_foundational_pick_not_science',
+    ),
+    "intermediate": (
+        'what_is_science_intermediate_mcq_book',
+        'what_is_science_intermediate_keyword_reproducible',
+        'what_is_science_intermediate_number_mean_time',
+        'what_is_science_intermediate_order_enquiry',
+        'what_is_science_intermediate_pick_public',
+    ),
+    "difficult": (
+        'what_is_science_difficult_mcq_anecdote',
+        'what_is_science_difficult_keyword_hypothesis_word',
+        'what_is_science_difficult_number_groups',
+        'what_is_science_difficult_order_check_chain',
+        'what_is_science_difficult_pick_method_keep',
+    ),
+}
+eursc_science_what_is_science, eursc_science_what_is_science_variants = bind_eursc_topic(
+    "what_is_science", _WIS_POOLS, _WIS_STANDARD
+)
 
 
 _VAR_BANK = (
@@ -1080,6 +1131,13 @@ _LAB_POOLS = {
             "Write the word for the variable you change on purpose in a fair test.",
             "independent",
             "The independent variable is the one you change.",
+        ),
+        _LAB_NUM(
+            "foundational",
+            "mean_temp",
+            "A results table lists 19, 21 and 23 degrees Celsius. What is the mean temperature in degrees Celsius?",
+            21,
+            "Mean = (19 + 21 + 23) / 3 = 21.",
         ),
         _LAB_ORD(
             "foundational",
@@ -1333,15 +1391,30 @@ _LAB_POOLS = {
     ],
 }
 
-
-def eursc_science_science_lab_variants(difficulty, mode="lesson"):
-    return eursc_variants_for_mode(_LAB_POOLS.get(difficulty) or [], mode)
-
-
-def eursc_science_science_lab(difficulty, mode="lesson", variant_name=None):
-    variants = eursc_science_science_lab_variants(difficulty, mode)
-    if not variants:
-        variants = eursc_science_science_lab_variants(difficulty, "lesson")
-    fn = pick_named_variant(variants, variant_name)
-    return fn()
+_LAB_STANDARD = {
+    "foundational": (
+        'science_lab_foundational_mcq_bench_thermo',
+        'science_lab_foundational_keyword_independent_word',
+        'science_lab_foundational_number_mean_temp',
+        'science_lab_foundational_order_plan_order',
+        'science_lab_foundational_pick_safety_two',
+    ),
+    "intermediate": (
+        'science_lab_intermediate_mcq_bench_heat',
+        'science_lab_intermediate_keyword_dependent_word',
+        'science_lab_intermediate_number_mean_time',
+        'science_lab_intermediate_order_draw_order',
+        'science_lab_intermediate_pick_reduce_error',
+    ),
+    "difficult": (
+        'science_lab_difficult_mcq_control_list',
+        'science_lab_difficult_keyword_control_word',
+        'science_lab_difficult_number_range_lab',
+        'science_lab_difficult_order_full_plan',
+        'science_lab_difficult_pick_three_vars',
+    ),
+}
+eursc_science_science_lab, eursc_science_science_lab_variants = bind_eursc_topic(
+    "science_lab", _LAB_POOLS, _LAB_STANDARD
+)
 

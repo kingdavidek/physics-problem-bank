@@ -4,8 +4,7 @@ from generators.shared.utils import (
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
-from generators.eursc.science_shared import eursc_variants_for_mode
-from generators.shared.variant_utils import pick_named_variant
+from generators.eursc.science_shared import bind_eursc_topic
 
 _LEVEL = "eursc"
 _SUBJECT = "science"
@@ -236,14 +235,29 @@ _POOLS = {
     ],
 }
 
-
-def eursc_science_es0_fixture_variants(difficulty, mode="lesson"):
-    return eursc_variants_for_mode(_POOLS.get(difficulty) or [], mode)
-
-
-def eursc_science_es0_fixture(difficulty, mode="lesson", variant_name=None):
-    variants = eursc_science_es0_fixture_variants(difficulty, mode)
-    if not variants:
-        variants = eursc_science_es0_fixture_variants(difficulty, "lesson")
-    fn = pick_named_variant(variants, variant_name)
-    return fn()
+_STANDARD = {
+    "foundational": (
+        'es0_foundational_mcq_1',
+        'es0_foundational_keyword_1',
+        'es0_foundational_number_1',
+        'es0_foundational_order_1',
+        'es0_foundational_pick_1',
+    ),
+    "intermediate": (
+        'es0_intermediate_mcq_1',
+        'es0_intermediate_keyword_1',
+        'es0_intermediate_number_1',
+        'es0_intermediate_order_1',
+        'es0_intermediate_pick_1',
+    ),
+    "difficult": (
+        'es0_difficult_mcq_1',
+        'es0_difficult_keyword_1',
+        'es0_difficult_number_1',
+        'es0_difficult_order_1',
+        'es0_difficult_pick_1',
+    ),
+}
+eursc_science_es0_fixture, eursc_science_es0_fixture_variants = bind_eursc_topic(
+    "es0_fixture", _POOLS, _STANDARD
+)

@@ -157,7 +157,30 @@ _VI_POOLS = {
     ],
 }
 
-eursc_science_vision, eursc_science_vision_variants = bind_eursc_topic("vision", _VI_POOLS)
+_VI_STANDARD = {
+    "foundational": (
+        'vision_foundational_mcq_accom',
+        'vision_foundational_keyword_lens_word',
+        'vision_foundational_number_eyes2',
+        'vision_foundational_order_path',
+        'vision_foundational_pick_eye_ok',
+    ),
+    "intermediate": (
+        'vision_intermediate_mcq_alex',
+        'vision_intermediate_keyword_retina_word',
+        'vision_intermediate_number_focus2',
+        'vision_intermediate_order_accom_near',
+        'vision_intermediate_pick_stereo_ok',
+    ),
+    "difficult": (
+        'vision_difficult_mcq_accom2',
+        'vision_difficult_keyword_accom_word',
+        'vision_difficult_number_zero_rx',
+        'vision_difficult_order_full',
+        'vision_difficult_pick_focus_not',
+    ),
+}
+eursc_science_vision, eursc_science_vision_variants = bind_eursc_topic('vision', _VI_POOLS, _VI_STANDARD)
 
 _EAR_BANK = (
     {"id": "outer", "text": "The outer ear collects sound"},
@@ -217,7 +240,30 @@ _HE_POOLS = {
     ],
 }
 
-eursc_science_hearing, eursc_science_hearing_variants = bind_eursc_topic("hearing", _HE_POOLS)
+_HE_STANDARD = {
+    "foundational": (
+        'hearing_foundational_mcq_aid',
+        'hearing_foundational_keyword_vib_word',
+        'hearing_foundational_number_ears2',
+        'hearing_foundational_order_path',
+        'hearing_foundational_pick_ear_ok',
+    ),
+    "intermediate": (
+        'hearing_intermediate_mcq_illusion',
+        'hearing_intermediate_keyword_cochlea_word',
+        'hearing_intermediate_number_parts3',
+        'hearing_intermediate_order_vib_st',
+        'hearing_intermediate_pick_sound_ok',
+    ),
+    "difficult": (
+        'hearing_difficult_mcq_both',
+        'hearing_difficult_keyword_coch2',
+        'hearing_difficult_number_zero_aid',
+        'hearing_difficult_order_aid_ill',
+        'hearing_difficult_pick_aid_not',
+    ),
+}
+eursc_science_hearing, eursc_science_hearing_variants = bind_eursc_topic('hearing', _HE_POOLS, _HE_STANDARD)
 
 _REC_BANK = (
     {"id": "pressure", "text": "Some receptors detect pressure or contact"},
@@ -271,7 +317,30 @@ _TO_POOLS = {
     ],
 }
 
-eursc_science_touch, eursc_science_touch_variants = bind_eursc_topic("touch", _TO_POOLS)
+_TO_STANDARD = {
+    "foundational": (
+        'touch_foundational_mcq_consent',
+        'touch_foundational_keyword_rec_word',
+        'touch_foundational_number_types3',
+        'touch_foundational_order_pt',
+        'touch_foundational_pick_rec_ok',
+    ),
+    "intermediate": (
+        'touch_intermediate_mcq_alex',
+        'touch_intermediate_keyword_dense_word',
+        'touch_intermediate_number_points2',
+        'touch_intermediate_order_map_ord',
+        'touch_intermediate_pick_dens_ok',
+    ),
+    "difficult": (
+        'touch_difficult_mcq_app',
+        'touch_difficult_keyword_pain_word',
+        'touch_difficult_number_zero_map',
+        'touch_difficult_order_rec3',
+        'touch_difficult_pick_dens_not',
+    ),
+}
+eursc_science_touch, eursc_science_touch_variants = bind_eursc_topic('touch', _TO_POOLS, _TO_STANDARD)
 
 _SMELL_BANK = (
     {"id": "receptors", "text": "Smell receptors detect a range of airborne chemicals"},
@@ -325,7 +394,30 @@ _SM_POOLS = {
     ],
 }
 
-eursc_science_smell, eursc_science_smell_variants = bind_eursc_topic("smell", _SM_POOLS)
+_SM_STANDARD = {
+    "foundational": (
+        'smell_foundational_mcq_cat',
+        'smell_foundational_keyword_smell_word',
+        'smell_foundational_number_air1',
+        'smell_foundational_order_rec_ctx',
+        'smell_foundational_pick_smell_ok',
+    ),
+    "intermediate": (
+        'smell_intermediate_mcq_alex',
+        'smell_intermediate_keyword_context_word',
+        'smell_intermediate_number_zero_list',
+        'smell_intermediate_order_cat_dif',
+        'smell_intermediate_pick_cat_ok',
+    ),
+    "difficult": (
+        'smell_difficult_mcq_airborne',
+        'smell_difficult_keyword_chem_word',
+        'smell_difficult_number_zero_rank',
+        'smell_difficult_order_rec_ctx2',
+        'smell_difficult_pick_cat_not',
+    ),
+}
+eursc_science_smell, eursc_science_smell_variants = bind_eursc_topic('smell', _SM_POOLS, _SM_STANDARD)
 
 _TASTE_BANK = (
     {"id": "five", "text": "This lesson names five tastes"},
@@ -379,7 +471,30 @@ _TA_POOLS = {
     ],
 }
 
-eursc_science_taste, eursc_science_taste_variants = bind_eursc_topic("taste", _TA_POOLS)
+_TA_STANDARD = {
+    "foundational": (
+        'taste_foundational_mcq_block',
+        'taste_foundational_keyword_taste_word',
+        'taste_foundational_number_five_n',
+        'taste_foundational_order_five_smell',
+        'taste_foundational_pick_taste_ok',
+    ),
+    "intermediate": (
+        'taste_intermediate_mcq_alex',
+        'taste_intermediate_keyword_flavour_word',
+        'taste_intermediate_number_zero_force',
+        'taste_intermediate_order_sw_sa',
+        'taste_intermediate_pick_five_col',
+    ),
+    "difficult": (
+        'taste_difficult_mcq_app',
+        'taste_difficult_keyword_umami_word',
+        'taste_difficult_number_five_again',
+        'taste_difficult_order_col_after',
+        'taste_difficult_pick_taste_not',
+    ),
+}
+eursc_science_taste, eursc_science_taste_variants = bind_eursc_topic('taste', _TA_POOLS, _TA_STANDARD)
 
 _PROP_BANK = (
     {"id": "position", "text": "Proprioception senses body position without looking"},
@@ -433,8 +548,31 @@ _PR_POOLS = {
     ],
 }
 
+_PR_STANDARD = {
+    "foundational": (
+        'proprioception_balance_foundational_mcq_a_letter',
+        'proprioception_balance_foundational_keyword_bal_word',
+        'proprioception_balance_foundational_number_canals3',
+        'proprioception_balance_foundational_order_pos_bal',
+        'proprioception_balance_foundational_pick_prop_ok',
+    ),
+    "intermediate": (
+        'proprioception_balance_intermediate_mcq_alex',
+        'proprioception_balance_intermediate_keyword_canal_word',
+        'proprioception_balance_intermediate_number_systems3',
+        'proprioception_balance_intermediate_order_vis_tog',
+        'proprioception_balance_intermediate_pick_tog_ok',
+    ),
+    "difficult": (
+        'proprioception_balance_difficult_mcq_app',
+        'proprioception_balance_difficult_keyword_prop_word',
+        'proprioception_balance_difficult_number_zero_dizzy',
+        'proprioception_balance_difficult_order_pos_can',
+        'proprioception_balance_difficult_pick_tog_not',
+    ),
+}
 eursc_science_proprioception_balance, eursc_science_proprioception_balance_variants = bind_eursc_topic(
-    "proprioception_balance", _PR_POOLS
+    'proprioception_balance', _PR_POOLS, _PR_STANDARD
 )
 
 _INT_BANK = (
@@ -489,8 +627,31 @@ _IN_POOLS = {
     ],
 }
 
+_IN_STANDARD = {
+    "foundational": (
+        'interoception_foundational_mcq_heart',
+        'interoception_foundational_keyword_hunger_word',
+        'interoception_foundational_number_zero_mood',
+        'interoception_foundational_order_int_int',
+        'interoception_foundational_pick_int_ok',
+    ),
+    "intermediate": (
+        'interoception_intermediate_mcq_alex',
+        'interoception_intermediate_keyword_thirst_word',
+        'interoception_intermediate_number_two_ex',
+        'interoception_intermediate_order_well_sig',
+        'interoception_intermediate_pick_well_ok',
+    ),
+    "difficult": (
+        'interoception_difficult_mcq_both',
+        'interoception_difficult_keyword_intero_word',
+        'interoception_difficult_number_zero_feel',
+        'interoception_difficult_order_int2',
+        'interoception_difficult_pick_well_not',
+    ),
+}
 eursc_science_interoception, eursc_science_interoception_variants = bind_eursc_topic(
-    "interoception", _IN_POOLS
+    'interoception', _IN_POOLS, _IN_STANDARD
 )
 
 _NH_BANK = (
@@ -546,6 +707,29 @@ _NH_POOLS = {
     ],
 }
 
+_NH_STANDARD = {
+    "foundational": (
+        'nonhuman_senses_foundational_mcq_echo',
+        'nonhuman_senses_foundational_keyword_echo_word',
+        'nonhuman_senses_foundational_number_bands2',
+        'nonhuman_senses_foundational_order_uv_echo',
+        'nonhuman_senses_foundational_pick_nh_ok',
+    ),
+    "intermediate": (
+        'nonhuman_senses_intermediate_mcq_alex',
+        'nonhuman_senses_intermediate_keyword_ultra_word',
+        'nonhuman_senses_intermediate_number_zero_super',
+        'nonhuman_senses_intermediate_order_polar_em',
+        'nonhuman_senses_intermediate_pick_tech_ok',
+    ),
+    "difficult": (
+        'nonhuman_senses_difficult_mcq_both_sound',
+        'nonhuman_senses_difficult_keyword_infra_word',
+        'nonhuman_senses_difficult_number_echo1',
+        'nonhuman_senses_difficult_order_uv_ir_ord',
+        'nonhuman_senses_difficult_pick_tech_not',
+    ),
+}
 eursc_science_nonhuman_senses, eursc_science_nonhuman_senses_variants = bind_eursc_topic(
-    "nonhuman_senses", _NH_POOLS
+    'nonhuman_senses', _NH_POOLS, _NH_STANDARD
 )

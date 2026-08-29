@@ -180,8 +180,31 @@ _SS_POOLS = {
     ],
 }
 
+_SS_STANDARD = {
+    "foundational": (
+        'solar_system_foundational_mcq_au',
+        'solar_system_foundational_keyword_spin_word',
+        'solar_system_foundational_number_eight',
+        'solar_system_foundational_order_spin_then_orbit',
+        'solar_system_foundational_pick_spin_ok',
+    ),
+    "intermediate": (
+        'solar_system_intermediate_mcq_day',
+        'solar_system_intermediate_keyword_orbit_word',
+        'solar_system_intermediate_number_tilt_deg',
+        'solar_system_intermediate_order_season_ord',
+        'solar_system_intermediate_pick_moon_ok',
+    ),
+    "difficult": (
+        'solar_system_difficult_mcq_age',
+        'solar_system_difficult_keyword_season_word',
+        'solar_system_difficult_number_age_n',
+        'solar_system_difficult_order_models',
+        'solar_system_difficult_pick_scale_ok',
+    ),
+}
 eursc_science_solar_system, eursc_science_solar_system_variants = bind_eursc_topic(
-    "solar_system", _SS_POOLS
+    'solar_system', _SS_POOLS, _SS_STANDARD
 )
 
 _RAY_BANK = (
@@ -248,8 +271,31 @@ _LT_POOLS = {
     ],
 }
 
+_LT_STANDARD = {
+    "foundational": (
+        'light_telescopes_foundational_mcq_incident',
+        'light_telescopes_foundational_keyword_reflect_word',
+        'light_telescopes_foundational_number_c_kms',
+        'light_telescopes_foundational_order_travel',
+        'light_telescopes_foundational_pick_shadow_ok',
+    ),
+    "intermediate": (
+        'light_telescopes_intermediate_mcq_eclipse',
+        'light_telescopes_intermediate_keyword_refract_word',
+        'light_telescopes_intermediate_number_two_sec',
+        'light_telescopes_intermediate_order_eclipse_ord',
+        'light_telescopes_intermediate_pick_optic_two',
+    ),
+    "difficult": (
+        'light_telescopes_difficult_mcq_angle40',
+        'light_telescopes_difficult_keyword_lens_word',
+        'light_telescopes_difficult_number_i40',
+        'light_telescopes_difficult_order_colour_lens',
+        'light_telescopes_difficult_pick_ray_not',
+    ),
+}
 eursc_science_light_telescopes, eursc_science_light_telescopes_variants = bind_eursc_topic(
-    "light_telescopes", _LT_POOLS
+    'light_telescopes', _LT_POOLS, _LT_STANDARD
 )
 
 _NEED_BANK = (
@@ -316,8 +362,31 @@ _LF_POOLS = {
     ],
 }
 
+_LF_STANDARD = {
+    "foundational": (
+        'life_earth_elsewhere_foundational_mcq_elsewhere',
+        'life_earth_elsewhere_foundational_keyword_water_word',
+        'life_earth_elsewhere_foundational_number_needs_n',
+        'life_earth_elsewhere_foundational_order_need_ord',
+        'life_earth_elsewhere_foundational_pick_need_ok',
+    ),
+    "intermediate": (
+        'life_earth_elsewhere_intermediate_mcq_air',
+        'life_earth_elsewhere_intermediate_keyword_energy_word',
+        'life_earth_elsewhere_intermediate_number_proxima',
+        'life_earth_elsewhere_intermediate_order_earth_ord',
+        'life_earth_elsewhere_intermediate_pick_alien_ok',
+    ),
+    "difficult": (
+        'life_earth_elsewhere_difficult_mcq_chemicals',
+        'life_earth_elsewhere_difficult_keyword_habitat_word',
+        'life_earth_elsewhere_difficult_number_shield',
+        'life_earth_elsewhere_difficult_order_travel_ord',
+        'life_earth_elsewhere_difficult_pick_travel_not',
+    ),
+}
 eursc_science_life_earth_elsewhere, eursc_science_life_earth_elsewhere_variants = bind_eursc_topic(
-    "life_earth_elsewhere", _LF_POOLS
+    'life_earth_elsewhere', _LF_POOLS, _LF_STANDARD
 )
 
 _PART_BANK = (
@@ -378,6 +447,29 @@ _AM_POOLS = {
     ],
 }
 
+_AM_STANDARD = {
+    "foundational": (
+        'atoms_molecules_foundational_mcq_atom_box',
+        'atoms_molecules_foundational_keyword_atom_word',
+        'atoms_molecules_foundational_number_water_n',
+        'atoms_molecules_foundational_order_part_el',
+        'atoms_molecules_foundational_pick_part_ok',
+    ),
+    "intermediate": (
+        'atoms_molecules_intermediate_mcq_h_symbol',
+        'atoms_molecules_intermediate_keyword_mol_word',
+        'atoms_molecules_intermediate_number_h_in_water',
+        'atoms_molecules_intermediate_order_mol_ord',
+        'atoms_molecules_intermediate_pick_sym_ok',
+    ),
+    "difficult": (
+        'atoms_molecules_difficult_mcq_co2',
+        'atoms_molecules_difficult_keyword_el_word',
+        'atoms_molecules_difficult_number_o_in_water',
+        'atoms_molecules_difficult_order_rxn_ord',
+        'atoms_molecules_difficult_pick_rxn_ok',
+    ),
+}
 eursc_science_atoms_molecules, eursc_science_atoms_molecules_variants = bind_eursc_topic(
-    "atoms_molecules", _AM_POOLS
+    'atoms_molecules', _AM_POOLS, _AM_STANDARD
 )

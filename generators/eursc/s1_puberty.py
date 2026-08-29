@@ -161,6 +161,7 @@ _PM_POOLS = {
         _PM_MCQ("foundational", "not_ask", "This lesson must not", _mcq_opts("name hormones", "ask a pupil to describe their own puberty or private body", "use third-person examples", "mention that timing varies"), "B", "No personal disclosure."),
         _PM_MCQ("foundational", "help", "If a fictional character is worried about puberty timing, a scientific classroom response is", _mcq_opts("diagnose them in the quiz comments", "suggest a teacher or qualified health professional, not a pupil survey", "rank the class", "ignore science"), "B", "Signpost care."),
         _PM_KEY("foundational", "hormone_word", "Write the word for a chemical messenger in the blood that helps control puberty.", "hormone", "Hormones are messengers."),
+        _PM_NUM("foundational", "chart100", "A public textbook chart of 100 fictional young people marks 40 as having started a typical physical change. How many of those 100 have not yet started, on this chart?", 60, "100 - 40 = 60. Aggregate chart only, not a class survey."),
         _PM_ORD("foundational", "talk", "Order a physical-change idea, then an emotional-change idea.", ["physical", "emotional"], _CHANGE_BANK, "Both can happen. Confession quizzes do not."),
         _PM_PICK("foundational", "ok_change", "Select the two puberty ideas that belong in science class.", ["physical", "emotional"], _CHANGE_BANK, 2, "General changes. Not ranking or confession."),
         _PM_PICK("foundational", "horm_ok", "Select the two hormone and timing facts.", ["messenger", "vary"], _HORMONE_BANK, 2, "Messengers and variation. Not a single calendar day."),
@@ -191,8 +192,31 @@ _PM_POOLS = {
     ],
 }
 
+_PM_STANDARD = {
+    "foundational": (
+        'puberty_maturity_foundational_mcq_hormone',
+        'puberty_maturity_foundational_keyword_hormone_word',
+        'puberty_maturity_foundational_number_chart100',
+        'puberty_maturity_foundational_order_talk',
+        'puberty_maturity_foundational_pick_horm_ok',
+    ),
+    "intermediate": (
+        'puberty_maturity_intermediate_mcq_blood',
+        'puberty_maturity_intermediate_keyword_puberty_word',
+        'puberty_maturity_intermediate_number_ages',
+        'puberty_maturity_intermediate_order_horm_then',
+        'puberty_maturity_intermediate_pick_not_class',
+    ),
+    "difficult": (
+        'puberty_maturity_difficult_mcq_emotion_ok',
+        'puberty_maturity_difficult_keyword_variation_word',
+        'puberty_maturity_difficult_number_two_people',
+        'puberty_maturity_difficult_order_phys_em',
+        'puberty_maturity_difficult_pick_keep_h',
+    ),
+}
 eursc_science_puberty_maturity, eursc_science_puberty_maturity_variants = bind_eursc_topic(
-    "puberty_maturity", _PM_POOLS
+    'puberty_maturity', _PM_POOLS, _PM_STANDARD
 )
 
 
@@ -205,6 +229,7 @@ _RA_POOLS = {
         _RA_MCQ("foundational", "testis", "A testis can", _mcq_opts("release eggs", "produce sperm", "be a distance–time graph", "replace the kidney as the only urinary organ"), "B", "Testes produce sperm."),
         _RA_MCQ("foundational", "fig", "<p>Which letter labels the uterus on this educational schematic?</p>" + str(organ_labels()), _mcq_opts("A", "B", "C", "none"), "B", "B is uterus. Schematic boxes only."),
         _RA_KEY("foundational", "gamete_word", "Write the word for a sex cell such as an egg or a sperm.", "gamete", "Gametes are sex cells."),
+        _RA_NUM("foundational", "two_gametes", "This lesson names egg and sperm. How many types of human gamete is that?", 2, "Two types. The question is about the model, not anyone's body."),
         _RA_ORD("foundational", "cycle", "Order lining thickens, then ovulation, then a period if no fertilisation.", ["lining", "ovulation", "period"], _CYCLE_BANK, "Do not collect who has periods."),
         _RA_PICK("foundational", "gametes", "Select the two genuine gametes.", ["egg", "sperm"], _GAMETE_BANK, 2, "Egg and sperm. Bones and rumours are not gametes."),
         _RA_PICK("foundational", "organs", "Select the two organs that belong in this reproductive list.", ["ovary", "uterus"], _ORGAN_BANK, 2, "Ovary and uterus."),
@@ -235,8 +260,31 @@ _RA_POOLS = {
     ],
 }
 
+_RA_STANDARD = {
+    "foundational": (
+        'reproductive_anatomy_foundational_mcq_egg',
+        'reproductive_anatomy_foundational_keyword_gamete_word',
+        'reproductive_anatomy_foundational_number_two_gametes',
+        'reproductive_anatomy_foundational_order_cycle',
+        'reproductive_anatomy_foundational_pick_gametes',
+    ),
+    "intermediate": (
+        'reproductive_anatomy_intermediate_mcq_cycle_point',
+        'reproductive_anatomy_intermediate_keyword_uterus_word',
+        'reproductive_anatomy_intermediate_number_gamete_n',
+        'reproductive_anatomy_intermediate_order_org_ord',
+        'reproductive_anatomy_intermediate_pick_not_gamete',
+    ),
+    "difficult": (
+        'reproductive_anatomy_difficult_mcq_fig_testis',
+        'reproductive_anatomy_difficult_keyword_sperm_word',
+        'reproductive_anatomy_difficult_number_one_egg',
+        'reproductive_anatomy_difficult_order_cycle2',
+        'reproductive_anatomy_difficult_pick_keep_g',
+    ),
+}
 eursc_science_reproductive_anatomy, eursc_science_reproductive_anatomy_variants = bind_eursc_topic(
-    "reproductive_anatomy", _RA_POOLS
+    'reproductive_anatomy', _RA_POOLS, _RA_STANDARD
 )
 
 
@@ -249,6 +297,7 @@ _PS_POOLS = {
         _PS_MCQ("foundational", "consent", "Consent means", _mcq_opts("silence after someone looks famous", "a clear, voluntary agreement that can be withdrawn", "the other person already started so it is too late", "a teacher collecting relationship lists"), "B", "Yes can be withdrawn."),
         _PS_MCQ("foundational", "orient", "Sexual orientation in this syllabus is the idea that", _mcq_opts("everyone must announce theirs in the quiz", "people can be attracted to different sexes; the lesson does not ask which applies to a pupil", "orientation is a newton", "science forbids the topic"), "B", "Fact without disclosure."),
         _PS_KEY("foundational", "consent_word", "Write the word for a clear voluntary yes that can be taken back.", "consent", "Consent can be withdrawn."),
+        _PS_NUM("foundational", "two_agree", "A public leaflet says consent in a two-person scenario needs both people to agree. How many people is that?", 2, "Both must agree. The item is about the rule, not a pupil's relationships."),
         _PS_ORD("foundational", "preg_ord", "Order fertilisation, then fetal development, then birth.", ["fertilise", "develop", "birth"], _PREG_BANK, "Join, develop, birth. No personal sexual history."),
         _PS_PICK("foundational", "health_ok", "Select the two sexual-health ideas.", ["contraception", "sti"], _HEALTH_BANK, 2, "Contraception and STIs. Pressure-after-no is wrong."),
         _PS_PICK("foundational", "preg_ok", "Select the two pregnancy science steps.", ["fertilise", "develop"], _PREG_BANK, 2, "Fertilisation and development."),
@@ -284,6 +333,29 @@ _PS_POOLS = {
     ],
 }
 
+_PS_STANDARD = {
+    "foundational": (
+        'pregnancy_sexual_health_foundational_mcq_consent',
+        'pregnancy_sexual_health_foundational_keyword_consent_word',
+        'pregnancy_sexual_health_foundational_number_two_agree',
+        'pregnancy_sexual_health_foundational_order_preg_ord',
+        'pregnancy_sexual_health_foundational_pick_health_ok',
+    ),
+    "intermediate": (
+        'pregnancy_sexual_health_intermediate_mcq_birth',
+        'pregnancy_sexual_health_intermediate_keyword_contraception_word',
+        'pregnancy_sexual_health_intermediate_number_two_people',
+        'pregnancy_sexual_health_intermediate_order_health_ord',
+        'pregnancy_sexual_health_intermediate_pick_not_disclose',
+    ),
+    "difficult": (
+        'pregnancy_sexual_health_difficult_mcq_comm',
+        'pregnancy_sexual_health_difficult_keyword_fertilisation_word',
+        'pregnancy_sexual_health_difficult_number_withdraw',
+        'pregnancy_sexual_health_difficult_order_full_p',
+        'pregnancy_sexual_health_difficult_pick_keep_p',
+    ),
+}
 eursc_science_pregnancy_sexual_health, eursc_science_pregnancy_sexual_health_variants = bind_eursc_topic(
-    "pregnancy_sexual_health", _PS_POOLS
+    'pregnancy_sexual_health', _PS_POOLS, _PS_STANDARD
 )

@@ -224,6 +224,7 @@ _FF_POOLS = {
         _FF_MCQ("foundational", "beans", "Beans and lentils are plant foods that are rich in", _mcq_opts("only table salt", "protein", "helium", "sand"), "B", "Many pulses are protein-rich plant foods."),
         _FF_MCQ("foundational", "animal", "Eggs and yoghurt are examples of", _mcq_opts("plant oils only", "animal-source foods that can supply protein", "pure carbohydrate crystals", "metals"), "B", "Eggs and dairy come from animals and can supply protein."),
         _FF_KEY("foundational", "protein_word", "Write the nutrient group used especially for growth and repair.", "protein", "Protein supports growth and repair."),
+        _FF_NUM("foundational", "h2o_h", "Water is written H2O. How many hydrogen atoms are in one water molecule?", 2, "H2O has two hydrogen atoms."),
         _FF_ORD("foundational", "classify", "Order how to classify an unknown food using evidence.", ["protein", "fat", "carb"], _NUTRIENT_BANK, "Use the three nutrient roles; a rumour is not evidence."),
         _FF_PICK("foundational", "real_nutes", "Select the two nutrient groups that are molecules of food in this lesson.", ["protein", "carb"], _NUTRIENT_BANK, 2, "Protein and carbohydrate are food molecules. A rumour is not."),
         _FF_PICK("foundational", "sources", "Select the two lists that are real food sources.", ["plant", "animal"], _SOURCE_BANK, 2, "Plants and animals both contribute nutrients. Plastic and air are not protein sources."),
@@ -236,6 +237,7 @@ _FF_POOLS = {
         _FF_MCQ("intermediate", "balanced_src", "A meal of rice, beans and oil includes", _mcq_opts("only animal foods", "carbohydrate, plant protein and fat", "only metal", "no molecules of food"), "B", "Those three foods cover carb, protein and fat from plants."),
         _FF_MCQ("intermediate", "fish", "Fish can be a source of", _mcq_opts("only table sugar", "protein and some fats", "pure cellulose packaging", "argon"), "B", "Fish is an animal-source protein food and can supply fats."),
         _FF_KEY("intermediate", "carb_word", "Write the nutrient group that includes sugars and starch.", "carbohydrate", "Carbohydrates include sugars and starch."),
+        _FF_NUM("intermediate", "fatty_n", "A simple fat model uses 1 glycerol and 3 fatty acids. How many fatty-acid parts is that?", 3, "Three fatty acids join the glycerol."),
         _FF_ORD("intermediate", "check_food", "Order a fair way to decide what a food supplies.", ["protein", "carb", "fat"], _NUTRIENT_BANK, "Check protein, carbohydrate and fat roles with evidence."),
         _FF_PICK("intermediate", "plant_pair", "Select the two items that come from plants in this list.", ["plant", "carb"], (
             {"id": "plant", "text": "Beans, oats and vegetable oil from plants"},
@@ -270,8 +272,31 @@ _FF_POOLS = {
 }
 
 
+_FF_STANDARD = {
+    "foundational": (
+        'food_formulas_foundational_mcq_animal',
+        'food_formulas_foundational_keyword_protein_word',
+        'food_formulas_foundational_number_h2o_h',
+        'food_formulas_foundational_order_classify',
+        'food_formulas_foundational_pick_real_nutes',
+    ),
+    "intermediate": (
+        'food_formulas_intermediate_mcq_amino',
+        'food_formulas_intermediate_keyword_carb_word',
+        'food_formulas_intermediate_number_fatty_n',
+        'food_formulas_intermediate_order_check_food',
+        'food_formulas_intermediate_pick_not_food',
+    ),
+    "difficult": (
+        'food_formulas_difficult_mcq_label',
+        'food_formulas_difficult_keyword_fat_word',
+        'food_formulas_difficult_number_groups',
+        'food_formulas_difficult_order_source_then',
+        'food_formulas_difficult_pick_avoid',
+    ),
+}
 eursc_science_food_formulas, eursc_science_food_formulas_variants = bind_eursc_topic(
-    "food_formulas", _FF_POOLS
+    'food_formulas', _FF_POOLS, _FF_STANDARD
 )
 
 
@@ -284,6 +309,7 @@ _WS_POOLS = {
         _WS_MCQ("foundational", "mixture", "Salt stirred into water is a", _mcq_opts("new element", "mixture (a solution)", "pure metal", "gas only"), "B", "The salt and water can be separated; it is a mixture."),
         _WS_MCQ("foundational", "filter", "Sand in water is best separated by", _mcq_opts("a magnet only", "filtration", "tasting", "freezing the labels"), "B", "Insoluble sand is trapped by a filter."),
         _WS_KEY("foundational", "solvent", "Write the word for a liquid that dissolves another substance.", "solvent", "Water is a common solvent in food."),
+        _WS_NUM("foundational", "ice_mass", "100 g of ice melts completely. What is the mass of liquid water in grams?", 100, "Mass is conserved; only the state changes."),
         _WS_ORD("foundational", "heat_ice", "Order the changes as ice is heated in an open pan.", ["melt", "boil", "condense"], _PHASE_BANK, "Melt, then boil; steam can later condense."),
         _WS_PICK("foundational", "states", "Select the two particle pictures that are condensed states (not a gas).", ["solid", "liquid"], _STATE_BANK, 2, "Solid and liquid particles stay close. Gas particles do not."),
         _WS_MCQ("foundational", "box_gas", "<p>Which labelled box shows particles of a gas?</p>" + str(particle_states()), _mcq_opts("A", "B", "C", "none of them"), "C", "C has particles far apart."),
@@ -315,8 +341,31 @@ _WS_POOLS = {
     ],
 }
 
+_WS_STANDARD = {
+    "foundational": (
+        'water_substances_foundational_mcq_box_gas',
+        'water_substances_foundational_keyword_solvent',
+        'water_substances_foundational_number_ice_mass',
+        'water_substances_foundational_order_heat_ice',
+        'water_substances_foundational_pick_states',
+    ),
+    "intermediate": (
+        'water_substances_intermediate_mcq_box_solid',
+        'water_substances_intermediate_keyword_mixture_word',
+        'water_substances_intermediate_number_mass_ice',
+        'water_substances_intermediate_order_separate',
+        'water_substances_intermediate_pick_unsafe_sep',
+    ),
+    "difficult": (
+        'water_substances_difficult_mcq_boil_vs',
+        'water_substances_difficult_keyword_condense_word',
+        'water_substances_difficult_number_range_vol',
+        'water_substances_difficult_order_cycle',
+        'water_substances_difficult_pick_good_sep',
+    ),
+}
 eursc_science_water_substances, eursc_science_water_substances_variants = bind_eursc_topic(
-    "water_substances", _WS_POOLS
+    'water_substances', _WS_POOLS, _WS_STANDARD
 )
 
 
@@ -336,6 +385,7 @@ _HT_POOLS = {
         _HT_MCQ("foundational", "denature", "An egg white turning from runny to solid when heated is", _mcq_opts("the pan disappearing", "protein denaturing and setting", "only a colour trick", "filtration"), "B", "Heat changes protein shape."),
         _HT_MCQ("foundational", "brown", "Toast turning brown is best described as", _mcq_opts("a reversible melting of metal", "a chemical change in sugars and proteins", "the bread becoming a gas instantly", "filtration"), "B", "Browning is a chemical change."),
         _HT_KEY("foundational", "conduct_word", "Write the word for heat transfer through a solid by particle vibration.", "conduction", "Conduction is through solids in contact."),
+        _HT_NUM("foundational", "rise40", "Soup is heated from 20 C to 60 C. By how many degrees Celsius did the temperature rise?", 40, "60 - 20 = 40."),
         _HT_ORD("foundational", "egg", "Order what happens when an egg is heated.", ["heat", "protein", "texture"], _COOK_ORDER_BANK, "Heat, denature, then the texture sets."),
         _HT_PICK("foundational", "three_heat", "Select the three genuine heat-transfer processes.", ["conduct", "convect", "radiate"], _HEAT_BANK, 3, "There is no secret untestable fourth process here."),
         _HT_PICK("foundational", "fluid_heat", "Select the two processes that need a material in this kitchen list.", ["conduct", "convect"], _HEAT_BANK, 2, "Conduction and convection need matter."),
@@ -366,8 +416,31 @@ _HT_POOLS = {
     ],
 }
 
+_HT_STANDARD = {
+    "foundational": (
+        'cooking_heat_foundational_mcq_brown',
+        'cooking_heat_foundational_keyword_conduct_word',
+        'cooking_heat_foundational_number_rise40',
+        'cooking_heat_foundational_order_egg',
+        'cooking_heat_foundational_pick_fluid_heat',
+    ),
+    "intermediate": (
+        'cooking_heat_intermediate_mcq_boil_conv',
+        'cooking_heat_intermediate_keyword_convection_word',
+        'cooking_heat_intermediate_number_temps',
+        'cooking_heat_intermediate_order_methods',
+        'cooking_heat_intermediate_pick_not_heat',
+    ),
+    "difficult": (
+        'cooking_heat_difficult_mcq_both',
+        'cooking_heat_difficult_keyword_radiation_word',
+        'cooking_heat_difficult_number_rise2',
+        'cooking_heat_difficult_order_cook_chain',
+        'cooking_heat_difficult_pick_egg_keep',
+    ),
+}
 eursc_science_cooking_heat, eursc_science_cooking_heat_variants = bind_eursc_topic(
-    "cooking_heat", _HT_POOLS
+    'cooking_heat', _HT_POOLS, _HT_STANDARD
 )
 
 
@@ -380,6 +453,7 @@ _AC_POOLS = {
         _AC_MCQ("foundational", "pickle", "Acid in a pickle helps preservation because it", _mcq_opts("feeds every microbe equally", "makes conditions harder for many spoilage microbes", "removes the need for a lid ever", "is a protein powder"), "B", "Low pH slows many microbes."),
         _AC_MCQ("foundational", "scale", "<p>On this pH scale, which letter is the alkali side?</p>" + str(ph_scale()), _mcq_opts("A", "B", "C", "the word acid"), "C", "C is labelled alkali."),
         _AC_KEY("foundational", "acid_word", "Write the word for a substance with pH below 7 that often tastes sour.", "acid", "Acids have pH below 7."),
+        _AC_NUM("foundational", "ph_neutral", "On the 0 to 14 pH scale, which number is used for a neutral solution such as pure water?", 7, "Neutral is pH 7."),
         _AC_ORD("foundational", "test", "Order sour check, then pH idea, when testing a kitchen liquid.", ["sour", "lowph"], _ACID_BANK, "Sour taste is a clue; pH confirms acid."),
         _AC_PICK("foundational", "acid_clues", "Select the two clues that a food is acidic.", ["sour", "lowph"], _ACID_BANK, 2, "Sour and pH below 7. Sweet and pH 14 are not."),
         _AC_PICK("foundational", "preserve_ok", "Select the two preservation ideas from this unit.", ["acid", "salt"], _PRESERVE_BANK, 2, "Acid pickle and salt. Dust and guessing are not."),
@@ -415,8 +489,31 @@ _AC_POOLS = {
     ],
 }
 
+_AC_STANDARD = {
+    "foundational": (
+        'cooking_acid_foundational_mcq_ind',
+        'cooking_acid_foundational_keyword_acid_word',
+        'cooking_acid_foundational_number_ph_neutral',
+        'cooking_acid_foundational_order_test',
+        'cooking_acid_foundational_pick_acid_clues',
+    ),
+    "intermediate": (
+        'cooking_acid_intermediate_mcq_alk',
+        'cooking_acid_intermediate_keyword_indicator',
+        'cooking_acid_intermediate_number_ph7',
+        'cooking_acid_intermediate_order_pickle_steps',
+        'cooking_acid_intermediate_pick_not_acid',
+    ),
+    "difficult": (
+        'cooking_acid_difficult_mcq_compare',
+        'cooking_acid_difficult_keyword_alkali_word',
+        'cooking_acid_difficult_number_ph3',
+        'cooking_acid_difficult_order_test_chain',
+        'cooking_acid_difficult_pick_bad_keep',
+    ),
+}
 eursc_science_cooking_acid, eursc_science_cooking_acid_variants = bind_eursc_topic(
-    "cooking_acid", _AC_POOLS
+    'cooking_acid', _AC_POOLS, _AC_STANDARD
 )
 
 
@@ -429,6 +526,7 @@ _SA_POOLS = {
         _SA_MCQ("foundational", "preserve", "Salted fish keeps longer mainly because salt", _mcq_opts("paints the fish", "draws water out of many microbes", "is a vitamin C source", "raises pH to 14 always"), "B", "Less available water slows spoilage."),
         _SA_MCQ("foundational", "taste", "A little salt can change flavour. That does not mean", _mcq_opts("it is a mineral", "unlimited salt is automatically healthy", "it can dissolve", "it can form crystals"), "B", "Culinary use is not a health instruction to add as much as possible."),
         _SA_KEY("foundational", "solution_word", "Write the word for a mixture of a dissolved substance in a liquid.", "solution", "Salt water is a solution."),
+        _SA_NUM("foundational", "salt_double", "A brine has 3 g of salt in 100 cm3. How many grams are in 200 cm3 of the same brine?", 6, "Twice the volume at the same concentration: 6 g."),
         _SA_ORD("foundational", "make_salt", "Order dissolving, then crystals forming as water leaves.", ["solution", "crystal"], _SALT_BANK, "Dissolve, then crystallise by evaporation."),
         _SA_PICK("foundational", "salt_facts", "Select the two correct salt ideas.", ["mineral", "solution"], _SALT_BANK, 2, "Mineral and solution. Vitamin-from-dark-leaves is not."),
         _SA_PICK("foundational", "conc_ok", "Select the two fair concentration ideas.", ["more", "same"], _CONC_BANK, 2, "More salt in the same volume, compared fairly."),
@@ -459,8 +557,31 @@ _SA_POOLS = {
     ],
 }
 
+_SA_STANDARD = {
+    "foundational": (
+        'cooking_salt_foundational_mcq_conc',
+        'cooking_salt_foundational_keyword_solution_word',
+        'cooking_salt_foundational_number_salt_double',
+        'cooking_salt_foundational_order_make_salt',
+        'cooking_salt_foundational_pick_conc_ok',
+    ),
+    "intermediate": (
+        'cooking_salt_intermediate_mcq_compare',
+        'cooking_salt_intermediate_keyword_crystal_word',
+        'cooking_salt_intermediate_number_grams',
+        'cooking_salt_intermediate_order_conc_then',
+        'cooking_salt_intermediate_pick_bad_conc',
+    ),
+    "difficult": (
+        'cooking_salt_difficult_mcq_mass',
+        'cooking_salt_difficult_keyword_mineral_word',
+        'cooking_salt_difficult_number_per_litre',
+        'cooking_salt_difficult_order_story',
+        'cooking_salt_difficult_pick_fair_two',
+    ),
+}
 eursc_science_cooking_salt, eursc_science_cooking_salt_variants = bind_eursc_topic(
-    "cooking_salt", _SA_POOLS
+    'cooking_salt', _SA_POOLS, _SA_STANDARD
 )
 
 
@@ -473,6 +594,7 @@ _FE_POOLS = {
         _FE_MCQ("foundational", "need", "Yeast needs a food source such as", _mcq_opts("sand", "sugar", "argon", "a magnet"), "B", "Yeast respires sugars."),
         _FE_MCQ("foundational", "unsafe", "Leaving meat warm for days with no plan is", _mcq_opts("the same as yoghurt making", "uncontrolled spoilage, not a kitchen fermentation method", "distillation", "pH 7 by definition"), "B", "Wanted ferments are planned and hygienic."),
         _FE_KEY("foundational", "yeast_word", "Write the word for the microorganism that raises bread dough.", "yeast", "Yeast produces gas in dough."),
+        _FE_NUM("foundational", "rest_min", "Dough rests 30 minutes, then another 30 minutes. Total rest time in minutes?", 60, "30 + 30 = 60."),
         _FE_ORD("foundational", "bread", "Order food for the microbe, then a suitable temperature.", ["food", "temp"], _COND_BANK, "Give sugar/milk and do not boil the culture."),
         _FE_PICK("foundational", "good_micro", "Select the two useful food microbes in this lesson.", ["yeast", "lactic"], _FERMENT_BANK, 2, "Yeast and lactic bacteria. Bleach and stones are not starters."),
         _FE_PICK("foundational", "need_two", "Select the two conditions microorganisms need in this list.", ["food", "temp"], _COND_BANK, 2, "Food and a suitable temperature."),
@@ -503,8 +625,31 @@ _FE_POOLS = {
     ],
 }
 
+_FE_STANDARD = {
+    "foundational": (
+        'cooking_fermentation_foundational_mcq_lactic',
+        'cooking_fermentation_foundational_keyword_yeast_word',
+        'cooking_fermentation_foundational_number_rest_min',
+        'cooking_fermentation_foundational_order_bread',
+        'cooking_fermentation_foundational_pick_good_micro',
+    ),
+    "intermediate": (
+        'cooking_fermentation_intermediate_mcq_alcohol',
+        'cooking_fermentation_intermediate_keyword_ferment_word',
+        'cooking_fermentation_intermediate_number_days',
+        'cooking_fermentation_intermediate_order_plan_fe',
+        'cooking_fermentation_intermediate_pick_bad_start',
+    ),
+    "difficult": (
+        'cooking_fermentation_difficult_mcq_acid_keep',
+        'cooking_fermentation_difficult_keyword_bacteria_word',
+        'cooking_fermentation_difficult_number_hours2',
+        'cooking_fermentation_difficult_order_cond_order',
+        'cooking_fermentation_difficult_pick_kill_pair',
+    ),
+}
 eursc_science_cooking_fermentation, eursc_science_cooking_fermentation_variants = bind_eursc_topic(
-    "cooking_fermentation", _FE_POOLS
+    'cooking_fermentation', _FE_POOLS, _FE_STANDARD
 )
 
 
@@ -524,6 +669,7 @@ _NU_POOLS = {
         _NU_MCQ("foundational", "label_e", "A food label's energy value is usually given in", _mcq_opts("metres", "kilojoules or kilocalories", "amperes", "decibels"), "B", "Energy on packs is kJ or kcal."),
         _NU_MCQ("foundational", "add", "Additives are listed so that", _mcq_opts("companies can hide them", "people can see extra ingredients and their job, such as colour or preserve", "SI units fail", "the food becomes a metal"), "B", "Labels make additives public."),
         _NU_KEY("foundational", "allergy_word", "Write the word for an immune reaction to a food that can be serious.", "allergy", "Allergy is immune."),
+        _NU_NUM("foundational", "kcal_kj", "This course treats 1 kcal as 4 kJ. How many kJ are in 50 kcal?", 200, "50 × 4 = 200 kJ."),
         _NU_ORD("foundational", "read_label", "Order energy information, then the ingredients list, when checking a pack.", ["energy", "ingredients"], _LABEL_BANK, "Read energy and ingredients. A slogan is not enough."),
         _NU_PICK("foundational", "def_pair", "Select the two nutrient-deficiency links.", ["scurvy", "anaemia"], _DEF_BANK, 2, "Vitamin C–scurvy and iron–anaemia. Rumour and fame are not."),
         _NU_PICK("foundational", "label_ok", "Select the two useful label facts.", ["energy", "ingredients"], _LABEL_BANK, 2, "Energy and ingredients. Slogan and secrecy are not."),
@@ -554,8 +700,31 @@ _NU_POOLS = {
     ],
 }
 
+_NU_STANDARD = {
+    "foundational": (
+        'nutrition_foundational_mcq_add',
+        'nutrition_foundational_keyword_allergy_word',
+        'nutrition_foundational_number_kcal_kj',
+        'nutrition_foundational_order_read_label',
+        'nutrition_foundational_pick_def_pair',
+    ),
+    "intermediate": (
+        'nutrition_intermediate_mcq_disorder',
+        'nutrition_intermediate_keyword_intolerance_word',
+        'nutrition_intermediate_number_kj',
+        'nutrition_intermediate_order_claim_check',
+        'nutrition_intermediate_pick_not_evidence',
+    ),
+    "difficult": (
+        'nutrition_difficult_mcq_balance_e',
+        'nutrition_difficult_keyword_kilojoule',
+        'nutrition_difficult_number_two_serv',
+        'nutrition_difficult_order_pack',
+        'nutrition_difficult_pick_useful_pack',
+    ),
+}
 eursc_science_nutrition, eursc_science_nutrition_variants = bind_eursc_topic(
-    "nutrition", _NU_POOLS
+    'nutrition', _NU_POOLS, _NU_STANDARD
 )
 
 
@@ -568,6 +737,7 @@ _MP_POOLS = {
         _MP_MCQ("foundational", "not_quiz", "This project must not", _mcq_opts("use a written plan", "collect pupils' private diet or health stories as answers", "include a hygiene check", "use food-group ideas"), "B", "No special-category health data."),
         _MP_MCQ("foundational", "groups", "An evidence-based plate should include", _mcq_opts("only one food group always", "more than one food group from the unit", "only packaging", "only slogans"), "B", "Variety is the point of the unit."),
         _MP_KEY("foundational", "hygiene_word", "Write the word for cleanliness habits that reduce microbes on hands and surfaces.", "hygiene", "Hygiene is part of kitchen safety."),
+        _MP_NUM("foundational", "menu_kj", "A planned meal label shows 200 kJ plus 100 kJ. Combined energy in kJ?", 300, "200 + 100 = 300 kJ."),
         _MP_ORD("foundational", "phases", "Order menu planning, then safety, then prepare.", ["menu", "safety", "prepare"], _PHASE_MEAL_BANK, "Plan, check safety, then prepare. Do not skip the method."),
         _MP_PICK("foundational", "good_proj", "Select the two project actions that belong.", ["plan", "hygiene"], _MEAL_BANK, 2, "Plan and hygiene. Do not collect private eating stories."),
         _MP_PICK("foundational", "bad_proj", "Select the two actions that do not belong in this classroom project.", ["disclose", "skip"], (
@@ -603,6 +773,29 @@ _MP_POOLS = {
     ],
 }
 
+_MP_STANDARD = {
+    "foundational": (
+        'healthy_meal_project_foundational_mcq_groups',
+        'healthy_meal_project_foundational_keyword_hygiene_word',
+        'healthy_meal_project_foundational_number_menu_kj',
+        'healthy_meal_project_foundational_order_phases',
+        'healthy_meal_project_foundational_pick_bad_proj',
+    ),
+    "intermediate": (
+        'healthy_meal_project_intermediate_mcq_allergy_plan',
+        'healthy_meal_project_intermediate_keyword_menu_word',
+        'healthy_meal_project_intermediate_number_groups_n',
+        'healthy_meal_project_intermediate_order_full',
+        'healthy_meal_project_intermediate_pick_record_pair',
+    ),
+    "difficult": (
+        'healthy_meal_project_difficult_mcq_claim_meal',
+        'healthy_meal_project_difficult_keyword_reflection_word',
+        'healthy_meal_project_difficult_number_kj_menu',
+        'healthy_meal_project_difficult_order_chain',
+        'healthy_meal_project_difficult_pick_phase_three',
+    ),
+}
 eursc_science_healthy_meal_project, eursc_science_healthy_meal_project_variants = bind_eursc_topic(
-    "healthy_meal_project", _MP_POOLS
+    'healthy_meal_project', _MP_POOLS, _MP_STANDARD
 )
