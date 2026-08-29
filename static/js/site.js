@@ -462,6 +462,7 @@
     });
     if (feedback) {
       feedback.textContent = '';
+      feedback.classList.remove('is-correct', 'is-wrong');
       feedback.style.color = '';
     }
     var retryWrap = block.querySelector('.mcq-retry-wrap');
@@ -477,6 +478,54 @@
   function findMcqFeedback(block) {
     return block.querySelector('.mcq-feedback')
       || (block.parentElement && block.parentElement.querySelector('.mcq-feedback'));
+  }
+
+  function enhanceMcqFeedback(feedback) {
+    if (!feedback) return;
+    if (!feedback.getAttribute('aria-live')) {
+      feedback.setAttribute('aria-live', 'polite');
+    }
+    if (!feedback.getAttribute('role')) {
+      feedback.setAttribute('role', 'status');
+    }
+  }
+
+  function enhanceLessonTables(root) {
+    if (!root) return;
+    root.querySelectorAll('table.lesson-table').forEach(function (table) {
+      var parent = table.parentElement;
+      if (parent && !parent.classList.contains('lesson-table-wrap')) {
+        var wrap = document.createElement('div');
+        wrap.className = 'lesson-table-wrap';
+        parent.insertBefore(wrap, table);
+        wrap.appendChild(table);
+      }
+      table.querySelectorAll('thead th').forEach(function (th) {
+        if (!th.getAttribute('scope')) {
+          th.setAttribute('scope', 'col');
+        }
+      });
+    });
+  }
+
+  function enhanceLessonFigures(root) {
+    if (!root) return;
+    root.querySelectorAll('div.lesson-figure').forEach(function (node) {
+      var figure = document.createElement('figure');
+      figure.className = node.className;
+      while (node.firstChild) {
+        figure.appendChild(node.firstChild);
+      }
+      node.parentNode.replaceChild(figure, node);
+    });
+  }
+
+  function initLessonPresentation() {
+    var shell = document.querySelector('.lesson-shell');
+    if (!shell) return;
+    enhanceLessonTables(shell);
+    enhanceLessonFigures(shell);
+    shell.querySelectorAll('.mcq-feedback').forEach(enhanceMcqFeedback);
   }
 
   var REFLECTION_CHIP_OPTIONS = [
@@ -806,6 +855,7 @@
     block.dataset.mcqInit = '1';
     var correctLetter = correctRaw.charAt(0);
     var feedback = findMcqFeedback(block);
+    enhanceMcqFeedback(feedback);
     var trackable = Boolean(block.dataset.level);
 
     block.querySelectorAll('.mcq-btn').forEach(function (btn) {
@@ -824,7 +874,9 @@
           btn.classList.add('is-correct');
           if (feedback) {
             feedback.textContent = '\u2713 Correct!';
-            feedback.style.color = 'var(--on-correct)';
+            feedback.classList.remove('is-wrong');
+            feedback.classList.add('is-correct');
+            feedback.style.color = '';
           }
           celebrateResult(true, btn);
           block.dispatchEvent(new CustomEvent('mcq-correct', { bubbles: true }));
@@ -841,7 +893,9 @@
           celebrateResult(false, btn, correctBtn);
           if (feedback) {
             feedback.textContent = '\u2717 Not quite \u2014 the correct answer is highlighted.';
-            feedback.style.color = 'var(--on-wrong)';
+            feedback.classList.remove('is-correct');
+            feedback.classList.add('is-wrong');
+            feedback.style.color = '';
           }
           showMcqRetry(block);
         }
@@ -5013,6 +5067,7 @@
     initQuickTestForm();
     initQuickTestNextForm();
     initMcqInline();
+    initLessonPresentation();
     initFreeResponseInline();
     initMcqButtons();
     decorateMcqButtons(document);

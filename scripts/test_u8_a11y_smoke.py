@@ -18,12 +18,14 @@ LESSON_ONLY = {'lesson-pages.css', 'lesson-assist.css'}
 # Uncompressed tree; D2 lesson SVG remaps live in lesson-pages.css.
 # E6 Guide overlay + A3 spotlight + A6 streak fire + B gestures live in chrome.css.
 # ES0 science subject tokens + year/unit topic-path headings.
-CSS_BUDGET_BYTES = 222_000
+# Stage 1 science hero + figure/table/print/gloss (lesson-pages) + MCQ feedback states.
+CSS_BUDGET_BYTES = 226_000
 # Core sheets loaded on every page after the U8.6 lesson split.
 # S0 added fonts.css (~1KB) plus legal-footer / email-verify chrome.
 # E6 A1–A6 overlay/spotlight/streak-fire and B wink/nod/shake/tap live in chrome.css.
 # ES0 science subject + /topics year-unit grouping.
-CSS_CORE_BUDGET_BYTES = 198_000
+# Stage 1 science hero accent (components) + MCQ live-feedback classes (practice).
+CSS_CORE_BUDGET_BYTES = 199_000
 
 
 def test_tab_bar_aria_current():
@@ -88,6 +90,8 @@ def test_card_vocabulary_and_mcq_letter_markup():
     assert 'background: #fff' not in switch_knob
     lesson_pages = (ROOT / 'static' / 'css' / 'lesson-pages.css').read_text(encoding='utf-8')
     assert '[fill="#1a6fa8"]' in lesson_pages
+    assert 'lesson-table-wrap' in lesson_pages
+    assert '@media print' in lesson_pages
     diagrams = (ROOT / 'static' / 'css' / 'diagrams.css').read_text(encoding='utf-8')
     assert '#f9f8f5' not in diagrams
     assert 'var(--diagram-paper)' in diagrams

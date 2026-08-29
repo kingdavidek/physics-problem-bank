@@ -232,6 +232,9 @@ def test_ibl_suite():
             assert 'Teacher rubric' in src, slug
             ok = client.get(f'/ibl/eursc/science/{slug}')
             assert ok.status_code == 200, slug
+            html = ok.data.decode()
+            assert 'data-lesson-subject="science"' in html, slug
+            assert 'lesson-pages.css' in html, slug
             assert client.get('/ibl/eursc/science/not_a_page').status_code == 404
 
 
@@ -336,6 +339,29 @@ def test_practice_and_qotd_stay_closed():
     assert all(level != 'eursc' for level, *_rest in list_mcq_topic_paths())
 
 
+def test_shared_lesson_system():
+    components = (ROOT / 'static' / 'css' / 'components.css').read_text(encoding='utf-8')
+    assert '[data-lesson-subject="science"] .lesson-hero' in components
+    lesson_css = (ROOT / 'static' / 'css' / 'lesson-pages.css').read_text(encoding='utf-8')
+    assert 'lesson-figure-caption' in lesson_css
+    assert 'lesson-table-wrap' in lesson_css
+    assert 'lesson-gloss' in lesson_css
+    assert '@media print' in lesson_css
+    practice = (ROOT / 'static' / 'css' / 'practice.css').read_text(encoding='utf-8')
+    assert '.mcq-feedback.is-correct' in practice
+    js = (ROOT / 'static' / 'js' / 'site.js').read_text(encoding='utf-8')
+    assert 'function enhanceMcqFeedback' in js
+    assert "setAttribute('aria-live', 'polite')" in js
+    assert 'function initLessonPresentation' in js
+    with app.test_client() as client:
+        lesson = client.get('/topic/eursc/science/measurement')
+        assert lesson.status_code == 200, lesson.data[:400]
+        html = lesson.data.decode()
+        assert 'data-lesson-subject="science"' in html
+        assert 'lesson-pages.css' in html
+        assert 'style="' not in Path(TEMPLATES / 'eursc_science_measurement_lesson.html').read_text(encoding='utf-8')
+
+
 def main():
     test_manifest_registry_bijection()
     test_templates_depth_and_objectives()
@@ -346,6 +372,7 @@ def main():
     test_subject_badges_catalog()
     test_sensitive_content_regression()
     test_practice_and_qotd_stay_closed()
+    test_shared_lesson_system()
     print('ES10 whole-suite QA smoke tests passed.')
 
 

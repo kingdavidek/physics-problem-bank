@@ -42,9 +42,11 @@ from topics_data import TOPIC_CONTENT
 from topic_registry import TOPICS, iter_topics
 from generators.eursc.science_shared import (
     IBL_PAGES,
+    accuracy_targets,
     antagonistic_pair,
     atom_molecule_boxes,
     canal_boxes,
+    carbon_cycle_steps,
     charge_pair,
     circuit_boxes,
     circulation_boxes,
@@ -61,13 +63,18 @@ from generators.eursc.science_shared import (
     lever_boxes,
     lifecycle_boxes,
     magnet_poles,
+    menstrual_cycle_steps,
     organ_labels,
     outbreak_bars,
     particle_states,
     ph_scale,
     reflection_rays,
+    ruler_scale,
     sankey_bars,
+    signal_detect,
+    solar_scale,
     trophic_boxes,
+    water_cycle_steps,
 )
 from generators.shared.lesson_quiz import (
     LESSON_QUIZ_MIX,
@@ -3735,6 +3742,9 @@ def _lesson_render_spec(level, subject, topic):
     try:
         app.jinja_env.get_template(custom)
         extra = {}
+        if level == 'eursc' and subject == 'science' and topic == 'measurement':
+            extra['ruler_fig'] = ruler_scale(4.7)
+            extra['accuracy_fig'] = accuracy_targets()
         if level == 'eursc' and subject == 'science' and topic == 'science_lab':
             extra['science_lab_bench'] = lab_bench()
         if level == 'eursc' and subject == 'science' and topic == 'water_substances':
@@ -3751,8 +3761,10 @@ def _lesson_render_spec(level, subject, topic):
             extra['muscle_pair_fig'] = antagonistic_pair()
         if level == 'eursc' and subject == 'science' and topic == 'reproductive_anatomy':
             extra['organ_labels_fig'] = organ_labels()
+            extra['cycle_fig'] = menstrual_cycle_steps()
         if level == 'eursc' and subject == 'science' and topic == 'solar_system':
             extra['earth_sun_moon_fig'] = earth_sun_moon()
+            extra['solar_scale_fig'] = solar_scale()
         if level == 'eursc' and subject == 'science' and topic == 'light_telescopes':
             extra['reflection_fig'] = reflection_rays()
         if level == 'eursc' and subject == 'science' and topic == 'atoms_molecules':
@@ -3770,6 +3782,8 @@ def _lesson_render_spec(level, subject, topic):
             extra['ear_fig'] = ear_boxes()
         if level == 'eursc' and subject == 'science' and topic == 'proprioception_balance':
             extra['canal_fig'] = canal_boxes()
+        if level == 'eursc' and subject == 'science' and topic == 'nonhuman_senses':
+            extra['signal_fig'] = signal_detect()
         if level == 'eursc' and subject == 'science' and topic == 'force_work_machines':
             extra['lever_fig'] = lever_boxes()
         if level == 'eursc' and subject == 'science' and topic == 'energy':
@@ -3784,6 +3798,8 @@ def _lesson_render_spec(level, subject, topic):
             extra['lifecycle_fig'] = lifecycle_boxes()
         if level == 'eursc' and subject == 'science' and topic == 'ecosystems_cycles':
             extra['trophic_fig'] = trophic_boxes()
+            extra['water_cycle_fig'] = water_cycle_steps()
+            extra['carbon_cycle_fig'] = carbon_cycle_steps()
         if level == 'eursc' and subject == 'science' and topic == 'ecosystem_characteristics':
             extra['factor_fig'] = factor_boxes()
         if level == 'eursc' and subject == 'science' and topic == 'classification_biodiversity':

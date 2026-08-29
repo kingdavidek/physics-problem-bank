@@ -932,6 +932,89 @@ SI_PREFIXES = (
 )
 
 
+def science_arrow(ids, x1, y1, x2, y2, *, stroke=None):
+    """Straight arrow using the shared svg_kit marker (not colour-only)."""
+    color = stroke or PALETTE["ink"]
+    return (
+        f'<line x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}" stroke="{color}" '
+        f'stroke-width="2" stroke-linecap="round" marker-end="url(#{ids["arrow"]})"/>'
+    )
+
+
+def science_axes(
+    ids,
+    *,
+    origin,
+    x_len,
+    y_len,
+    x_label,
+    y_label,
+    x_unit="",
+    y_unit="",
+):
+    """Named axes with optional units. ``origin`` is the (x, y) of the origin."""
+    ox, oy = origin
+    xlab = f"{x_label} ({x_unit})" if x_unit else x_label
+    ylab = f"{y_label} ({y_unit})" if y_unit else y_label
+    return "".join(
+        [
+            science_arrow(ids, ox, oy, ox + x_len, oy),
+            science_arrow(ids, ox, oy, ox, oy - y_len),
+            shape_label(ox + x_len / 2, oy + 22, xlab),
+            shape_label(ox - 10, oy - y_len / 2, ylab, anchor="end"),
+        ]
+    )
+
+
+def science_cue(kind, cx, cy, *, fill=None, size=5):
+    """Colour-independent mark: circle, square, diamond, or plus."""
+    color = fill or PALETTE["ink"]
+    if kind == "circle":
+        return f'<circle cx="{cx}" cy="{cy}" r="{size}" fill="{color}"/>'
+    if kind == "square":
+        return (
+            f'<rect x="{cx - size}" y="{cy - size}" width="{size * 2}" '
+            f'height="{size * 2}" fill="{color}"/>'
+        )
+    if kind == "diamond":
+        return (
+            f'<polygon points="{cx},{cy - size} {cx + size},{cy} '
+            f'{cx},{cy + size} {cx - size},{cy}" fill="{color}"/>'
+        )
+    if kind == "plus":
+        return (
+            f'<line x1="{cx - size}" y1="{cy}" x2="{cx + size}" y2="{cy}" '
+            f'stroke="{color}" stroke-width="2" stroke-linecap="round"/>'
+            f'<line x1="{cx}" y1="{cy - size}" x2="{cx}" y2="{cy + size}" '
+            f'stroke="{color}" stroke-width="2" stroke-linecap="round"/>'
+        )
+    raise ValueError(f"unknown cue kind: {kind!r}")
+
+
+def science_legend(entries, *, x, y, row_h=18):
+    """Legend rows of (kind, label). Kinds match :func:`science_cue`."""
+    parts = []
+    for index, (kind, label) in enumerate(entries):
+        cy = y + index * row_h
+        parts.append(science_cue(kind, x, cy, fill=PALETTE["ink"], size=4))
+        parts.append(shape_label(x + 14, cy + 4, label, anchor="start"))
+    return "".join(parts)
+
+
+def science_branch(ids, *, fork, left, right, prompt):
+    """Y-fork for dichotomous keys: prompt at the fork, two labelled arms."""
+    fx, fy = fork
+    lx, ly = left
+    rx, ry = right
+    return "".join(
+        [
+            shape_label(fx, fy - 14, prompt),
+            science_arrow(ids, fx, fy, lx, ly),
+            science_arrow(ids, fx, fy, rx, ry),
+        ]
+    )
+
+
 def ruler_scale(reading_cm, *, span_cm=8, title=None, max_width=360):
     """Analogue centimetre ruler with a pointer at ``reading_cm``."""
     p = PALETTE
@@ -979,6 +1062,82 @@ def ruler_scale(reading_cm, *, span_cm=8, title=None, max_width=360):
         124,
         title=title or "Reading a centimetre scale",
         desc=desc,
+        body=body,
+        max_width=max_width,
+        variant="wide",
+    )
+
+
+def accuracy_targets(*, title=None, max_width=360):
+    """Four targets: accurate+precise, precise only, accurate only, neither.
+
+    Hits use different shapes so colour is not the only cue.
+    """
+    p = PALETTE
+
+    def _target(cx, letter, line1, line2, marks, fill):
+        parts = [
+            f'<circle cx="{cx}" cy="64" r="40" fill="{p["brand_soft"]}" '
+            f'stroke="{p["ink"]}" stroke-width="1.5"/>',
+            f'<circle cx="{cx}" cy="64" r="8" fill="none" stroke="{p["ink"]}" '
+            f'stroke-width="1"/>',
+        ]
+        for kind, mx, my in marks:
+            parts.append(science_cue(kind, mx, my, fill=fill, size=4))
+        parts.append(shape_label(cx, 118, letter))
+        parts.append(shape_label(cx, 134, line1))
+        if line2:
+            parts.append(shape_label(cx, 148, line2))
+        return "".join(parts)
+
+    def body(_ids):
+        return "".join(
+            [
+                _target(
+                    55,
+                    "A",
+                    "accurate",
+                    "and precise",
+                    (("circle", 53, 62), ("circle", 58, 66), ("circle", 50, 67)),
+                    p["success"],
+                ),
+                _target(
+                    160,
+                    "B",
+                    "precise,",
+                    "not accurate",
+                    (("square", 178, 50), ("square", 182, 54), ("square", 176, 55)),
+                    p["measure"],
+                ),
+                _target(
+                    265,
+                    "C",
+                    "accurate,",
+                    "not precise",
+                    (("diamond", 248, 50), ("diamond", 280, 58), ("diamond", 258, 80)),
+                    p["xp"],
+                ),
+                _target(
+                    370,
+                    "D",
+                    "neither",
+                    "",
+                    (("plus", 348, 42), ("plus", 392, 70), ("plus", 360, 88)),
+                    p["ink_muted"],
+                ),
+            ]
+        )
+
+    return svg(
+        420,
+        160,
+        title=title or "Four targets comparing accuracy and precision",
+        desc=(
+            "A: circles clustered on the centre (accurate and precise). "
+            "B: squares clustered off-centre (precise, not accurate). "
+            "C: diamonds spread around the centre (accurate, not precise). "
+            "D: plus marks scattered away from the centre (neither)."
+        ),
         body=body,
         max_width=max_width,
         variant="wide",
@@ -1102,32 +1261,39 @@ def ph_scale(*, title=None, max_width=360):
 def distance_time_graph(*, title=None, max_width=360):
     """Distance–time sketch: A moving, B rest, C moving again."""
     p = PALETTE
-    ox, oy = 48, 108
-    top, right = 28, 360
+    ox, oy = 64, 108
 
-    def body(_ids):
+    def body(ids):
         return "".join(
             [
-                f'<line x1="{ox}" y1="{oy}" x2="{right}" y2="{oy}" '
-                f'stroke="{p["ink"]}" stroke-width="2" stroke-linecap="round"/>',
-                f'<line x1="{ox}" y1="{oy}" x2="{ox}" y2="{top}" '
-                f'stroke="{p["ink"]}" stroke-width="2" stroke-linecap="round"/>',
-                f'<polyline points="{ox},{oy} 150,48 230,48 330,28" fill="none" '
+                science_axes(
+                    ids,
+                    origin=(ox, oy),
+                    x_len=292,
+                    y_len=78,
+                    x_label="time",
+                    y_label="distance",
+                    x_unit="s",
+                    y_unit="m",
+                ),
+                f'<polyline points="{ox},{oy} 160,48 240,48 340,32" fill="none" '
                 f'stroke="{p["brand"]}" stroke-width="3" stroke-linecap="round" '
                 f'stroke-linejoin="round"/>',
-                shape_label(100, 92, "A"),
-                shape_label(190, 68, "B"),
-                shape_label(290, 52, "C"),
-                shape_label(200, 128, "time"),
-                shape_label(22, 68, "d"),
+                shape_label(112, 92, "A"),
+                shape_label(200, 72, "B"),
+                shape_label(300, 54, "C"),
             ]
         )
 
     return svg(
         400,
-        148,
+        160,
         title=title or "Distance–time graph with three labelled parts",
-        desc="A is a sloping line (moving), B is a flat line (rest), and C is a slope again (moving).",
+        desc=(
+            "Axes are time in seconds and distance in metres. "
+            "A is a sloping line (moving), B is a flat line (rest), "
+            "and C is a slope again (moving)."
+        ),
         body=body,
         max_width=max_width,
         variant="wide",
@@ -1138,25 +1304,24 @@ def force_pair(*, title=None, max_width=360):
     """Two boxes pushing: A left-to-right, B right-to-left."""
     p = PALETTE
 
-    def body(_ids):
+    def body(ids):
         return "".join(
             [
-                f'<rect x="70" y="40" width="90" height="50" rx="6" fill="{p["brand_soft"]}" '
+                f'<rect x="70" y="32" width="90" height="50" rx="6" fill="{p["brand_soft"]}" '
                 f'stroke="{p["brand"]}" stroke-width="2"/>',
-                f'<rect x="240" y="40" width="90" height="50" rx="6" fill="{p["brand_soft"]}" '
+                f'<rect x="240" y="32" width="90" height="50" rx="6" fill="{p["brand_soft"]}" '
                 f'stroke="{p["brand"]}" stroke-width="2"/>',
-                f'<line x1="165" y1="65" x2="228" y2="65" stroke="{p["measure"]}" '
-                f'stroke-width="3" marker-end="none"/>',
-                f'<polygon points="228,65 214,58 214,72" fill="{p["measure"]}"/>',
-                f'<polygon points="172,65 186,58 186,72" fill="{p["xp"]}"/>',
-                shape_label(115, 118, "A"),
-                shape_label(285, 118, "B"),
+                science_arrow(ids, 164, 48, 236, 48, stroke=p["measure"]),
+                science_arrow(ids, 236, 72, 164, 72, stroke=p["xp"]),
+                shape_label(115, 108, "A"),
+                shape_label(285, 108, "B"),
+                shape_label(200, 128, "equal and opposite"),
             ]
         )
 
     return svg(
         400,
-        140,
+        148,
         title=title or "Two objects pushing on each other",
         desc="Box A pushes right on box B. Box B pushes left on box A with a matching interaction.",
         body=body,
@@ -1166,27 +1331,41 @@ def force_pair(*, title=None, max_width=360):
 
 
 def circulation_boxes(*, title=None, max_width=360):
-    """A heart, B lungs, C body tissues — schematic boxes only."""
+    """A heart, B lungs, C body tissues — schematic boxes with flow arrows."""
     p = PALETTE
 
     def _box(x, letter, caption):
         return "".join(
             [
-                f'<rect x="{x}" y="28" width="100" height="64" rx="8" fill="{p["brand_soft"]}" '
+                f'<rect x="{x}" y="40" width="96" height="52" rx="8" fill="{p["brand_soft"]}" '
                 f'stroke="{p["brand"]}" stroke-width="2"/>',
-                shape_label(x + 50, 64, letter),
-                shape_label(x + 50, 114, caption),
+                shape_label(x + 48, 70, letter),
+                shape_label(x + 48, 110, caption),
             ]
         )
 
-    def body(_ids):
-        return _box(28, "A", "heart") + _box(150, "B", "lungs") + _box(272, "C", "body")
+    def body(ids):
+        return "".join(
+            [
+                _box(16, "A", "heart"),
+                _box(152, "B", "lungs"),
+                _box(288, "C", "body"),
+                science_arrow(ids, 116, 66, 148, 66, stroke=p["measure"]),
+                science_arrow(ids, 252, 66, 284, 66, stroke=p["measure"]),
+                shape_label(132, 28, "O2 in"),
+                shape_label(268, 28, "O2 out"),
+            ]
+        )
 
     return svg(
         400,
-        140,
+        132,
         title=title or "Circulation schematic with three labelled organs",
-        desc="A is the heart, B is the lungs, and C is body tissue. Educational boxes only.",
+        desc=(
+            "A is the heart, B is the lungs, and C is body tissue. "
+            "Arrows show oxygenated blood from heart to lungs to body. "
+            "Educational boxes only."
+        ),
         body=body,
         max_width=max_width,
         variant="wide",
@@ -1226,21 +1405,74 @@ def organ_labels(*, title=None, max_width=360):
     def _box(x, letter, caption):
         return "".join(
             [
-                f'<rect x="{x}" y="24" width="108" height="70" rx="8" fill="{p["brand_soft"]}" '
+                f'<rect x="{x}" y="36" width="100" height="56" rx="8" fill="{p["brand_soft"]}" '
                 f'stroke="{p["brand"]}" stroke-width="2"/>',
-                shape_label(x + 54, 58, letter),
-                shape_label(x + 54, 114, caption),
+                shape_label(x + 50, 68, letter),
+                shape_label(x + 50, 112, caption),
             ]
         )
 
-    def body(_ids):
-        return _box(20, "A", "ovary") + _box(146, "B", "uterus") + _box(272, "C", "testis")
+    def body(ids):
+        return "".join(
+            [
+                _box(16, "A", "ovary"),
+                _box(152, "B", "uterus"),
+                _box(288, "C", "testis"),
+                science_arrow(ids, 120, 64, 148, 64, stroke=p["measure"]),
+                shape_label(134, 24, "egg path"),
+            ]
+        )
 
     return svg(
         400,
-        140,
+        136,
         title=title or "Educational labels for reproductive organs",
-        desc="A is an ovary, B is a uterus, and C is a testis. Schematic boxes, not a realistic image.",
+        desc=(
+            "A is an ovary, B is a uterus, and C is a testis. "
+            "An arrow from A to B marks the usual egg path. "
+            "Schematic boxes, not a realistic image."
+        ),
+        body=body,
+        max_width=max_width,
+        variant="wide",
+    )
+
+
+def menstrual_cycle_steps(*, title=None, max_width=360):
+    """A lining thickens → B ovulation → C lining shed if not fertilised."""
+    p = PALETTE
+
+    def _box(x, letter, caption):
+        return "".join(
+            [
+                f'<rect x="{x}" y="36" width="100" height="56" rx="8" fill="{p["brand_soft"]}" '
+                f'stroke="{p["brand"]}" stroke-width="2"/>',
+                shape_label(x + 50, 68, letter),
+                shape_label(x + 50, 112, caption),
+            ]
+        )
+
+    def body(ids):
+        return "".join(
+            [
+                _box(16, "A", "lining"),
+                _box(152, "B", "ovulation"),
+                _box(288, "C", "period"),
+                science_arrow(ids, 120, 64, 148, 64, stroke=p["measure"]),
+                science_arrow(ids, 256, 64, 284, 64, stroke=p["measure"]),
+                shape_label(200, 24, "repeats if not fertilised"),
+            ]
+        )
+
+    return svg(
+        400,
+        136,
+        title=title or "Menstrual cycle as three labelled steps",
+        desc=(
+            "A is the uterus lining thickening, B is ovulation (egg release), "
+            "and C is the lining being shed (a period) if the egg is not fertilised. "
+            "Schematic sequence, not a realistic image."
+        ),
         body=body,
         max_width=max_width,
         variant="wide",
@@ -1251,23 +1483,64 @@ def earth_sun_moon(*, title=None, max_width=360):
     """Schematic: A Sun, B Earth, C Moon."""
     p = PALETTE
 
-    def body(_ids):
+    def body(ids):
         return "".join(
             [
-                f'<circle cx="70" cy="64" r="28" fill="{p["xp"]}"/>',
-                shape_label(70, 112, "A"),
-                f'<circle cx="200" cy="64" r="16" fill="{p["brand"]}"/>',
-                shape_label(200, 112, "B"),
-                f'<circle cx="310" cy="48" r="10" fill="{p["ink_muted"]}"/>',
-                shape_label(310, 112, "C"),
+                f'<circle cx="70" cy="56" r="28" fill="{p["xp"]}"/>',
+                shape_label(70, 108, "A"),
+                science_arrow(ids, 102, 56, 178, 56, stroke=p["measure"]),
+                f'<circle cx="200" cy="56" r="16" fill="{p["brand"]}"/>',
+                f'<line x1="192" y1="28" x2="208" y2="84" stroke="{p["ink"]}" '
+                f'stroke-width="1.5" stroke-dasharray="3 3"/>',
+                shape_label(200, 108, "B"),
+                f'<circle cx="310" cy="40" r="10" fill="{p["ink_muted"]}"/>',
+                shape_label(310, 108, "C"),
+                shape_label(140, 28, "sunlight"),
+                shape_label(200, 128, "tilt (not to scale)"),
             ]
         )
 
     return svg(
         400,
-        136,
+        148,
         title=title or "Sun, Earth and Moon schematic",
-        desc="A is the Sun, B is the Earth, and C is the Moon. Sizes are not to scale.",
+        desc=(
+            "A is the Sun, B is the Earth with a dashed tilt line, and C is the Moon. "
+            "An arrow marks sunlight. Sizes and distances are not to scale."
+        ),
+        body=body,
+        max_width=max_width,
+        variant="wide",
+    )
+
+
+def solar_scale(*, title=None, max_width=360):
+    """Sun at 0 AU and Earth at 1 AU on a labelled distance axis."""
+    p = PALETTE
+
+    def body(ids):
+        oy = 64
+        return "".join(
+            [
+                science_arrow(ids, 36, oy, 368, oy, stroke=p["ink"]),
+                science_cue("circle", 56, oy, fill=p["xp"], size=14),
+                science_cue("circle", 200, oy, fill=p["brand"], size=6),
+                science_cue("plus", 340, oy, fill=p["ink_muted"], size=6),
+                shape_label(56, 100, "Sun 0 AU"),
+                shape_label(200, 100, "Earth 1 AU"),
+                shape_label(340, 100, "farther"),
+                shape_label(200, 128, "distance (AU)"),
+            ]
+        )
+
+    return svg(
+        400,
+        148,
+        title=title or "Solar System distance scale in astronomical units",
+        desc=(
+            "A circle at the Sun marks 0 AU. A smaller circle marks Earth at 1 AU. "
+            "A plus mark shows a farther body. Sizes are not to scale."
+        ),
         body=body,
         max_width=max_width,
         variant="wide",
@@ -1278,27 +1551,28 @@ def reflection_rays(*, title=None, max_width=360):
     """A incident ray, B reflected ray, C the mirror line."""
     p = PALETTE
 
-    def body(_ids):
+    def body(ids):
         return "".join(
             [
-                f'<line x1="40" y1="100" x2="360" y2="100" stroke="{p["ink"]}" stroke-width="3"/>',
-                f'<line x1="200" y1="100" x2="200" y2="28" stroke="{p["ink_muted"]}" '
+                f'<line x1="40" y1="108" x2="360" y2="108" stroke="{p["ink"]}" stroke-width="3"/>',
+                f'<line x1="200" y1="108" x2="200" y2="28" stroke="{p["ink_muted"]}" '
                 f'stroke-width="1.5" stroke-dasharray="4 4"/>',
-                f'<line x1="70" y1="36" x2="200" y2="100" stroke="{p["brand"]}" stroke-width="3"/>',
-                f'<polygon points="200,100 186,90 194,86" fill="{p["brand"]}"/>',
-                f'<line x1="200" y1="100" x2="330" y2="36" stroke="{p["measure"]}" stroke-width="3"/>',
-                f'<polygon points="330,36 316,42 322,50" fill="{p["measure"]}"/>',
+                science_arrow(ids, 70, 40, 196, 104, stroke=p["brand"]),
+                science_arrow(ids, 204, 104, 330, 40, stroke=p["measure"]),
                 shape_label(100, 52, "A"),
                 shape_label(300, 52, "B"),
-                shape_label(200, 122, "C"),
+                shape_label(200, 128, "C  i = r"),
             ]
         )
 
     return svg(
         400,
-        140,
+        148,
         title=title or "Reflection at a mirror",
-        desc="A is the incident ray, B is the reflected ray, and C is the mirror surface.",
+        desc=(
+            "A is the incident ray, B is the reflected ray, and C is the mirror surface. "
+            "The dashed line is the normal. Angles of incidence and reflection are equal."
+        ),
         body=body,
         max_width=max_width,
         variant="wide",
@@ -1373,25 +1647,24 @@ def infection_chain(*, title=None, max_width=360):
     """A source, B route, C new host."""
     p = PALETTE
 
-    def _box(x, letter):
+    def _box(x, letter, caption):
         return "".join(
             [
-                f'<rect x="{x}" y="24" width="100" height="64" rx="8" fill="{p["brand_soft"]}" '
+                f'<rect x="{x}" y="36" width="96" height="52" rx="8" fill="{p["brand_soft"]}" '
                 f'stroke="{p["brand"]}" stroke-width="2"/>',
-                shape_label(x + 50, 112, letter),
+                shape_label(x + 48, 66, letter),
+                shape_label(x + 48, 108, caption),
             ]
         )
 
-    def body(_ids):
+    def body(ids):
         return "".join(
             [
-                _box(20, "A"),
-                f'<line x1="120" y1="56" x2="148" y2="56" stroke="{p["ink"]}" stroke-width="3"/>',
-                f'<polygon points="148,56 136,50 136,62" fill="{p["ink"]}"/>',
-                _box(150, "B"),
-                f'<line x1="250" y1="56" x2="278" y2="56" stroke="{p["ink"]}" stroke-width="3"/>',
-                f'<polygon points="278,56 266,50 266,62" fill="{p["ink"]}"/>',
-                _box(280, "C"),
+                _box(16, "A", "source"),
+                science_arrow(ids, 116, 62, 148, 62, stroke=p["measure"]),
+                _box(152, "B", "route"),
+                science_arrow(ids, 252, 62, 284, 62, stroke=p["measure"]),
+                _box(288, "C", "new host"),
             ]
         )
 
@@ -1409,24 +1682,72 @@ def infection_chain(*, title=None, max_width=360):
 def outbreak_bars(*, title=None, max_width=360):
     """A 2 cases, B 4 cases, C 8 cases on three days."""
     p = PALETTE
+    ox, oy = 48, 116
 
-    def body(_ids):
+    def body(ids):
         return "".join(
             [
-                f'<rect x="50" y="88" width="70" height="20" rx="4" fill="{p["brand"]}"/>',
-                shape_label(85, 128, "A"),
-                f'<rect x="165" y="68" width="70" height="40" rx="4" fill="{p["xp"]}"/>',
-                shape_label(200, 128, "B"),
-                f'<rect x="280" y="28" width="70" height="80" rx="4" fill="{p["measure"]}"/>',
-                shape_label(315, 128, "C"),
+                science_axes(
+                    ids,
+                    origin=(ox, oy),
+                    x_len=300,
+                    y_len=88,
+                    x_label="day",
+                    y_label="cases",
+                ),
+                f'<rect x="80" y="96" width="48" height="20" rx="4" fill="{p["brand"]}"/>',
+                shape_label(104, 90, "A"),
+                f'<rect x="176" y="76" width="48" height="40" rx="4" fill="{p["xp"]}"/>',
+                shape_label(200, 70, "B"),
+                f'<rect x="272" y="36" width="48" height="80" rx="4" fill="{p["measure"]}"/>',
+                shape_label(296, 30, "C"),
             ]
         )
 
     return svg(
         400,
-        148,
+        164,
         title=title or "Outbreak cases on three days",
-        desc="A is 2 cases, B is 4 cases, and C is 8 cases. A classroom model, not a real outbreak.",
+        desc="A is 2 cases, B is 4 cases, and C is 8 cases. Axes are day and cases. A classroom model, not a real outbreak.",
+        body=body,
+        max_width=max_width,
+        variant="wide",
+    )
+
+
+def signal_detect(*, title=None, max_width=360):
+    """A chemical signal, B sensor, C reading — animal or technology."""
+    p = PALETTE
+
+    def _box(x, letter, caption):
+        return "".join(
+            [
+                f'<rect x="{x}" y="36" width="96" height="52" rx="8" fill="{p["brand_soft"]}" '
+                f'stroke="{p["brand"]}" stroke-width="2"/>',
+                shape_label(x + 48, 66, letter),
+                shape_label(x + 48, 108, caption),
+            ]
+        )
+
+    def body(ids):
+        return "".join(
+            [
+                _box(16, "A", "chemical"),
+                science_arrow(ids, 116, 62, 148, 62, stroke=p["measure"]),
+                _box(152, "B", "sensor"),
+                science_arrow(ids, 252, 62, 284, 62, stroke=p["measure"]),
+                _box(288, "C", "reading"),
+            ]
+        )
+
+    return svg(
+        400,
+        132,
+        title=title or "Chemical signal detected by a sensor",
+        desc=(
+            "A is a chemical signal, B is a sensor (an animal receptor or a device), "
+            "and C is a reading. Same idea of detecting a signal."
+        ),
         body=body,
         max_width=max_width,
         variant="wide",
@@ -1530,22 +1851,26 @@ def lever_boxes(*, title=None, max_width=360):
     """A effort, B fulcrum, C load."""
     p = PALETTE
 
-    def body(_ids):
+    def body(ids):
         return "".join(
             [
+                science_arrow(ids, 70, 14, 70, 28, stroke=p["measure"]),
                 f'<line x1="40" y1="56" x2="360" y2="56" stroke="{p["ink"]}" stroke-width="6"/>',
                 f'<polygon points="200,56 184,88 216,88" fill="{p["brand"]}"/>',
                 f'<circle cx="70" cy="40" r="12" fill="{p["measure"]}"/>',
                 f'<rect x="320" y="28" width="28" height="28" fill="{p["xp"]}"/>',
                 shape_label(70, 118, "A"),
+                shape_label(70, 134, "effort"),
                 shape_label(200, 118, "B"),
+                shape_label(200, 134, "fulcrum"),
                 shape_label(334, 118, "C"),
+                shape_label(334, 134, "load"),
             ]
         )
 
     return svg(
         400,
-        140,
+        152,
         title=title or "Lever: effort, fulcrum and load",
         desc="A is the effort, B is the fulcrum, and C is the load. Schematic bar, not a realistic machine.",
         body=body,
@@ -1558,23 +1883,31 @@ def sankey_bars(*, title=None, max_width=360):
     """A input, B useful output, C wasted output."""
     p = PALETTE
 
-    def body(_ids):
+    def body(ids):
         return "".join(
             [
-                f'<rect x="24" y="28" width="80" height="72" fill="{p["brand"]}"/>',
-                shape_label(64, 118, "A"),
-                f'<rect x="160" y="28" width="80" height="44" fill="{p["measure"]}"/>',
-                shape_label(200, 118, "B"),
-                f'<rect x="296" y="28" width="80" height="24" fill="{p["xp"]}"/>',
-                shape_label(336, 118, "C"),
+                f'<rect x="24" y="20" width="80" height="72" fill="{p["brand"]}"/>',
+                shape_label(64, 108, "A"),
+                shape_label(64, 124, "input 100 J"),
+                science_arrow(ids, 108, 40, 152, 40, stroke=p["measure"]),
+                science_arrow(ids, 108, 72, 248, 72, stroke=p["measure"]),
+                f'<rect x="156" y="20" width="80" height="32" fill="{p["measure"]}"/>',
+                shape_label(196, 108, "B"),
+                shape_label(196, 124, "useful 40 J"),
+                f'<rect x="252" y="56" width="80" height="36" fill="{p["xp"]}"/>',
+                shape_label(292, 108, "C"),
+                shape_label(292, 124, "wasted 60 J"),
             ]
         )
 
     return svg(
         400,
-        140,
+        148,
         title=title or "Sankey-style energy split",
-        desc="A is the energy input, B is the useful output, and C is the wasted output. Schematic bars, not a measured appliance.",
+        desc=(
+            "A is the energy input (100 J in this classroom example), B is the useful output (40 J), "
+            "and C is the wasted output (60 J). Schematic bars, not a measured appliance."
+        ),
         body=body,
         max_width=max_width,
         variant="wide",
@@ -1585,14 +1918,18 @@ def charge_pair(*, title=None, max_width=360):
     """A one charge, B the other charge."""
     p = PALETTE
 
-    def body(_ids):
+    def body(ids):
         return "".join(
             [
                 f'<circle cx="120" cy="56" r="32" fill="{p["brand_soft"]}" '
                 f'stroke="{p["brand"]}" stroke-width="3"/>',
+                shape_label(120, 62, "+"),
                 shape_label(120, 118, "A"),
+                science_arrow(ids, 168, 48, 232, 48, stroke=p["measure"]),
+                science_arrow(ids, 232, 64, 168, 64, stroke=p["measure"]),
                 f'<circle cx="280" cy="56" r="32" fill="{p["brand_soft"]}" '
                 f'stroke="{p["measure"]}" stroke-width="3"/>',
+                shape_label(280, 62, "−"),
                 shape_label(280, 118, "B"),
             ]
         )
@@ -1601,7 +1938,7 @@ def charge_pair(*, title=None, max_width=360):
         400,
         140,
         title=title or "Two kinds of charge",
-        desc="A and B are two opposite charges in this schematic. Opposite charges attract; like charges repel.",
+        desc="A and B are two opposite charges in this schematic. Opposite charges attract; like charges repel. Plus and minus marks are not colour-only.",
         body=body,
         max_width=max_width,
         variant="wide",
@@ -1612,31 +1949,36 @@ def circuit_boxes(*, title=None, max_width=360):
     """A cell, B lamp, C switch in a series loop."""
     p = PALETTE
 
-    def _box(x, letter):
+    def _box(x, letter, caption):
         return "".join(
             [
-                f'<rect x="{x}" y="24" width="90" height="56" rx="8" fill="{p["brand_soft"]}" '
+                f'<rect x="{x}" y="16" width="96" height="48" rx="8" fill="{p["brand_soft"]}" '
                 f'stroke="{p["brand"]}" stroke-width="2"/>',
-                shape_label(x + 45, 112, letter),
+                shape_label(x + 48, 44, letter),
+                shape_label(x + 48, 80, caption),
             ]
         )
 
-    def body(_ids):
+    def body(ids):
         return "".join(
             [
-                _box(30, "A"),
-                f'<line x1="120" y1="52" x2="148" y2="52" stroke="{p["ink"]}" stroke-width="3"/>',
-                _box(150, "B"),
-                f'<line x1="240" y1="52" x2="268" y2="52" stroke="{p["ink"]}" stroke-width="3"/>',
-                _box(270, "C"),
+                _box(16, "A", "cell"),
+                science_arrow(ids, 116, 40, 148, 40, stroke=p["measure"]),
+                _box(152, "B", "lamp"),
+                science_arrow(ids, 252, 40, 284, 40, stroke=p["measure"]),
+                _box(288, "C", "switch"),
+                f'<line x1="336" y1="64" x2="336" y2="108" stroke="{p["ink"]}" stroke-width="2"/>',
+                science_arrow(ids, 336, 108, 64, 108, stroke=p["measure"]),
+                f'<line x1="64" y1="108" x2="64" y2="64" stroke="{p["ink"]}" stroke-width="2"/>',
+                shape_label(200, 132, "closed loop"),
             ]
         )
 
     return svg(
         400,
-        132,
+        152,
         title=title or "Series circuit boxes: cell, lamp, switch",
-        desc="A is the cell, B is the lamp, and C is the switch. Schematic boxes in one path, not a realistic drawing.",
+        desc="A is the cell, B is the lamp, and C is the switch. One closed series loop; schematic boxes, not a realistic drawing.",
         body=body,
         max_width=max_width,
         variant="wide",
@@ -1647,18 +1989,22 @@ def magnet_poles(*, title=None, max_width=360):
     """A north, B south, C field region between them."""
     p = PALETTE
 
-    def body(_ids):
+    def body(ids):
         return "".join(
             [
                 f'<rect x="40" y="28" width="70" height="56" rx="6" fill="{p["brand"]}"/>',
-                shape_label(75, 118, "A"),
+                shape_label(75, 60, "N"),
+                shape_label(75, 118, "A north"),
                 f'<path d="M120 40 Q200 8 280 40" fill="none" stroke="{p["measure"]}" '
                 f'stroke-width="3"/>',
+                science_arrow(ids, 150, 20, 250, 20, stroke=p["measure"]),
                 f'<path d="M120 72 Q200 104 280 72" fill="none" stroke="{p["measure"]}" '
                 f'stroke-width="3"/>',
-                shape_label(200, 118, "C"),
+                science_arrow(ids, 150, 96, 250, 96, stroke=p["measure"]),
+                shape_label(200, 118, "C field"),
                 f'<rect x="290" y="28" width="70" height="56" rx="6" fill="{p["xp"]}"/>',
-                shape_label(325, 118, "B"),
+                shape_label(325, 60, "S"),
+                shape_label(325, 118, "B south"),
             ]
         )
 
@@ -1666,7 +2012,7 @@ def magnet_poles(*, title=None, max_width=360):
         400,
         140,
         title=title or "Magnet poles and field region",
-        desc="A is one pole, B is the other pole, and C is the field region between them. Schematic only.",
+        desc="A is the north pole, B is the south pole, and C is the field region between them. N and S labels are not colour-only. Schematic only.",
         body=body,
         max_width=max_width,
         variant="wide",
@@ -1677,23 +2023,24 @@ def lifecycle_boxes(*, title=None, max_width=360):
     """A produce, B use, C waste."""
     p = PALETTE
 
-    def _box(x, letter):
+    def _box(x, letter, caption):
         return "".join(
             [
-                f'<rect x="{x}" y="24" width="90" height="56" rx="8" fill="{p["brand_soft"]}" '
+                f'<rect x="{x}" y="36" width="96" height="52" rx="8" fill="{p["brand_soft"]}" '
                 f'stroke="{p["brand"]}" stroke-width="2"/>',
-                shape_label(x + 45, 112, letter),
+                shape_label(x + 48, 66, letter),
+                shape_label(x + 48, 108, caption),
             ]
         )
 
-    def body(_ids):
+    def body(ids):
         return "".join(
             [
-                _box(30, "A"),
-                f'<line x1="120" y1="52" x2="148" y2="52" stroke="{p["ink"]}" stroke-width="3"/>',
-                _box(150, "B"),
-                f'<line x1="240" y1="52" x2="268" y2="52" stroke="{p["ink"]}" stroke-width="3"/>',
-                _box(270, "C"),
+                _box(16, "A", "produce"),
+                science_arrow(ids, 116, 62, 148, 62, stroke=p["measure"]),
+                _box(152, "B", "use"),
+                science_arrow(ids, 252, 62, 284, 62, stroke=p["measure"]),
+                _box(288, "C", "waste"),
             ]
         )
 
@@ -1712,23 +2059,24 @@ def trophic_boxes(*, title=None, max_width=360):
     """A producer, B consumer, C decomposer."""
     p = PALETTE
 
-    def _box(x, letter):
+    def _box(x, letter, caption):
         return "".join(
             [
-                f'<rect x="{x}" y="24" width="90" height="56" rx="8" fill="{p["brand_soft"]}" '
+                f'<rect x="{x}" y="36" width="96" height="52" rx="8" fill="{p["brand_soft"]}" '
                 f'stroke="{p["brand"]}" stroke-width="2"/>',
-                shape_label(x + 45, 112, letter),
+                shape_label(x + 48, 66, letter),
+                shape_label(x + 48, 108, caption),
             ]
         )
 
-    def body(_ids):
+    def body(ids):
         return "".join(
             [
-                _box(30, "A"),
-                f'<line x1="120" y1="52" x2="148" y2="52" stroke="{p["ink"]}" stroke-width="3"/>',
-                _box(150, "B"),
-                f'<line x1="240" y1="52" x2="268" y2="52" stroke="{p["ink"]}" stroke-width="3"/>',
-                _box(270, "C"),
+                _box(16, "A", "producer"),
+                science_arrow(ids, 116, 62, 148, 62, stroke=p["measure"]),
+                _box(152, "B", "consumer"),
+                science_arrow(ids, 252, 62, 284, 62, stroke=p["measure"]),
+                _box(288, "C", "decomposer"),
             ]
         )
 
@@ -1747,23 +2095,24 @@ def factor_boxes(*, title=None, max_width=360):
     """A abiotic, B biotic, C survey."""
     p = PALETTE
 
-    def _box(x, letter):
+    def _box(x, letter, caption):
         return "".join(
             [
-                f'<rect x="{x}" y="24" width="90" height="56" rx="8" fill="{p["brand_soft"]}" '
+                f'<rect x="{x}" y="36" width="96" height="52" rx="8" fill="{p["brand_soft"]}" '
                 f'stroke="{p["brand"]}" stroke-width="2"/>',
-                shape_label(x + 45, 112, letter),
+                shape_label(x + 48, 66, letter),
+                shape_label(x + 48, 108, caption),
             ]
         )
 
-    def body(_ids):
+    def body(ids):
         return "".join(
             [
-                _box(30, "A"),
-                f'<line x1="120" y1="52" x2="148" y2="52" stroke="{p["ink"]}" stroke-width="3"/>',
-                _box(150, "B"),
-                f'<line x1="240" y1="52" x2="268" y2="52" stroke="{p["ink"]}" stroke-width="3"/>',
-                _box(270, "C"),
+                _box(16, "A", "abiotic"),
+                science_arrow(ids, 116, 62, 148, 62, stroke=p["measure"]),
+                _box(152, "B", "biotic"),
+                science_arrow(ids, 252, 62, 284, 62, stroke=p["measure"]),
+                _box(288, "C", "survey"),
             ]
         )
 
@@ -1782,32 +2131,159 @@ def key_boxes(*, title=None, max_width=360):
     """A first couplet, B second couplet, C named group."""
     p = PALETTE
 
-    def _box(x, letter):
+    def _box(x, y, letter, caption):
         return "".join(
             [
-                f'<rect x="{x}" y="24" width="90" height="56" rx="8" fill="{p["brand_soft"]}" '
+                f'<rect x="{x}" y="{y}" width="100" height="44" rx="8" fill="{p["brand_soft"]}" '
                 f'stroke="{p["brand"]}" stroke-width="2"/>',
-                shape_label(x + 45, 112, letter),
+                shape_label(x + 50, y + 28, letter),
+                shape_label(x + 50, y + 62, caption),
             ]
         )
 
-    def body(_ids):
+    def body(ids):
         return "".join(
             [
-                _box(30, "A"),
-                f'<line x1="120" y1="52" x2="148" y2="52" stroke="{p["ink"]}" stroke-width="3"/>',
-                _box(150, "B"),
-                f'<line x1="240" y1="52" x2="268" y2="52" stroke="{p["ink"]}" stroke-width="3"/>',
-                _box(270, "C"),
+                shape_label(200, 18, "A first couplet"),
+                science_branch(
+                    ids,
+                    fork=(200, 36),
+                    left=(100, 72),
+                    right=(300, 72),
+                    prompt="wings?",
+                ),
+                _box(50, 84, "B", "second couplet"),
+                _box(250, 84, "C", "named group"),
+            ]
+        )
+
+    return svg(
+        400,
+        164,
+        title=title or "Dichotomous key: couplet, couplet, group",
+        desc="A is the first couplet (one checkable feature), B is the second couplet, and C is the named group. Public example, not a private collection.",
+        body=body,
+        max_width=max_width,
+        variant="wide",
+    )
+
+
+def water_cycle_steps(*, title=None, max_width=360):
+    """A evaporate, B condense, C precipitate."""
+    p = PALETTE
+
+    def _box(x, letter, caption):
+        return "".join(
+            [
+                f'<rect x="{x}" y="36" width="96" height="52" rx="8" fill="{p["brand_soft"]}" '
+                f'stroke="{p["brand"]}" stroke-width="2"/>',
+                shape_label(x + 48, 66, letter),
+                shape_label(x + 48, 108, caption),
+            ]
+        )
+
+    def body(ids):
+        return "".join(
+            [
+                _box(16, "A", "evaporate"),
+                science_arrow(ids, 116, 62, 148, 62, stroke=p["measure"]),
+                _box(152, "B", "condense"),
+                science_arrow(ids, 252, 62, 284, 62, stroke=p["measure"]),
+                _box(288, "C", "rain"),
+                shape_label(200, 24, "repeats"),
             ]
         )
 
     return svg(
         400,
         132,
-        title=title or "Dichotomous key: couplet, couplet, group",
-        desc="A is the first couplet, B is the second couplet, and C is the named group. Public example, not a private collection.",
+        title=title or "Water cycle: evaporate, condense, precipitate",
+        desc=(
+            "A is evaporation, B is condensation, and C is precipitation (rain in this schematic). "
+            "Public stages water can move through, not a private diary."
+        ),
         body=body,
         max_width=max_width,
         variant="wide",
     )
+
+
+def carbon_cycle_steps(*, title=None, max_width=360):
+    """A photosynthesis, B respiration, C atmosphere store."""
+    p = PALETTE
+
+    def _box(x, letter, caption):
+        return "".join(
+            [
+                f'<rect x="{x}" y="36" width="96" height="52" rx="8" fill="{p["brand_soft"]}" '
+                f'stroke="{p["brand"]}" stroke-width="2"/>',
+                shape_label(x + 48, 66, letter),
+                shape_label(x + 48, 108, caption),
+            ]
+        )
+
+    def body(ids):
+        return "".join(
+            [
+                _box(16, "A", "photosynthesis"),
+                science_arrow(ids, 116, 62, 148, 62, stroke=p["measure"]),
+                _box(152, "B", "respiration"),
+                science_arrow(ids, 252, 62, 284, 62, stroke=p["measure"]),
+                _box(288, "C", "air store"),
+                shape_label(200, 24, "carbon moves"),
+            ]
+        )
+
+    return svg(
+        400,
+        132,
+        title=title or "Carbon cycle: photosynthesis, respiration, air",
+        desc=(
+            "A is photosynthesis taking carbon dioxide into a plant store, B is respiration releasing it, "
+            "and C is carbon dioxide in the air. Public stages, not a fridge photo."
+        ),
+        body=body,
+        max_width=max_width,
+        variant="wide",
+    )
+
+
+def _sample_ruler():
+    return ruler_scale(4.7)
+
+
+SCIENCE_SVG_FIGURES = (
+    ("ruler_scale", _sample_ruler),
+    ("accuracy_targets", accuracy_targets),
+    ("lab_bench", lab_bench),
+    ("particle_states", particle_states),
+    ("ph_scale", ph_scale),
+    ("distance_time_graph", distance_time_graph),
+    ("force_pair", force_pair),
+    ("circulation_boxes", circulation_boxes),
+    ("antagonistic_pair", antagonistic_pair),
+    ("organ_labels", organ_labels),
+    ("menstrual_cycle_steps", menstrual_cycle_steps),
+    ("earth_sun_moon", earth_sun_moon),
+    ("solar_scale", solar_scale),
+    ("reflection_rays", reflection_rays),
+    ("atom_molecule_boxes", atom_molecule_boxes),
+    ("habit_bars", habit_bars),
+    ("infection_chain", infection_chain),
+    ("outbreak_bars", outbreak_bars),
+    ("signal_detect", signal_detect),
+    ("eye_boxes", eye_boxes),
+    ("ear_boxes", ear_boxes),
+    ("canal_boxes", canal_boxes),
+    ("lever_boxes", lever_boxes),
+    ("sankey_bars", sankey_bars),
+    ("charge_pair", charge_pair),
+    ("circuit_boxes", circuit_boxes),
+    ("magnet_poles", magnet_poles),
+    ("lifecycle_boxes", lifecycle_boxes),
+    ("trophic_boxes", trophic_boxes),
+    ("factor_boxes", factor_boxes),
+    ("key_boxes", key_boxes),
+    ("water_cycle_steps", water_cycle_steps),
+    ("carbon_cycle_steps", carbon_cycle_steps),
+)

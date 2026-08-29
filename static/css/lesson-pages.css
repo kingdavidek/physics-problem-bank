@@ -134,9 +134,57 @@
 .lesson-table th {
     background: var(--surface-sunken);
 }
-.lesson-figure {
+.lesson-figure,
+figure.lesson-figure {
     text-align: center;
     margin: 16px 0;
+}
+.lesson-figure > figcaption,
+.lesson-figure-caption {
+    display: block;
+    text-align: left;
+    font-size: var(--text-sm);
+    line-height: 1.45;
+    color: var(--text-muted);
+    margin: 8px auto 0;
+    max-width: 62ch;
+}
+.lesson-table-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 12px 0;
+}
+.lesson-table-wrap > .lesson-table {
+    margin: 0;
+}
+.lesson-table caption {
+    caption-side: bottom;
+    text-align: left;
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    padding-top: 8px;
+}
+.lesson-gloss,
+dfn.lesson-gloss {
+    font-style: normal;
+    font-weight: 700;
+    border-bottom: 1px dotted currentColor;
+    text-decoration: none;
+    cursor: help;
+}
+.site-wrapper[data-lesson-subject="science"] .lesson-gloss,
+.site-wrapper[data-lesson-subject="science"] dfn.lesson-gloss {
+    border-bottom-color: var(--subject-science);
+}
+.lesson-gloss-def {
+    display: block;
+    font-weight: 400;
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    margin: 4px 0 10px;
+    max-width: 62ch;
 }
 svg.lesson-diagram {
     background: var(--surface-sunken);
@@ -646,5 +694,38 @@ p.lesson-callout--formula {
     .lesson-tile-grid--2,
     .lesson-sign-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Stage 1 — print: open sections, keep figures/tables, hide chrome. */
+@media print {
+    .lesson-section {
+        content-visibility: visible;
+        contain-intrinsic-size: auto;
+        box-shadow: none;
+        break-inside: avoid;
+    }
+    .lesson-shell details.lesson-section > .lesson-section-body,
+    .lesson-shell details.lesson-section > *:not(summary) {
+        display: block !important;
+    }
+    .lesson-progress-rail,
+    .lesson-progress-topbar,
+    .lesson-progress-topbar-toast,
+    .lesson-quiz-cta,
+    .lesson-practice-cta {
+        display: none !important;
+    }
+    .lesson-figure,
+    figure.lesson-figure,
+    .lesson-table-wrap,
+    .lesson-table,
+    .lesson-hero {
+        break-inside: avoid;
+        box-shadow: none;
+    }
+    .lesson-hero {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
     }
 }

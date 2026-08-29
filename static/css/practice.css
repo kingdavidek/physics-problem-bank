@@ -182,6 +182,13 @@
     gap: 8px;
     margin-top: 8px;
 }
+.mcq-feedback {
+    min-height: 1.25em;
+    margin: 8px 0 0;
+    font-weight: 600;
+}
+.mcq-feedback.is-correct { color: var(--on-correct); }
+.mcq-feedback.is-wrong { color: var(--on-wrong); }
 .free-response-row {
     display: flex;
     flex-wrap: wrap;

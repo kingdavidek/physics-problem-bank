@@ -198,6 +198,8 @@ def test_lesson_route_topics_search():
         html = lesson.data.decode()
         assert 'lesson-shell' in html
         assert html.count('mcq-inline') == 7
+        assert 'class="svg-kit' in html
+        assert '4.7' in html
         assert 'data-lesson-content' in html
         assert '/lesson-quiz/eursc/science/measurement' in html
         assert '1.1.2' in html
