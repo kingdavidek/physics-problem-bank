@@ -6,7 +6,7 @@
 
 This document describes **what Problem Bank is today**: product goals, system architecture, major features, data model, and how the pieces fit together.
 
-**AI agents:** start with `docs/AI_HANDOFF.md`, then this file, then `docs/SOLID_DRAFT_SECURITY.md` before changing auth/grading/sessions. API: `docs/API.md`. Deploy: `docs/DEPLOY.md`. Planned work (incl. G8): `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md`. Phase U graphics: `models/svg_kit.py` and `docs/UI_REDESIGN.md` §8.
+**AI agents:** start with `docs/AI_HANDOFF.md`, then this file, then `docs/SOLID_DRAFT_SECURITY.md` before changing auth/grading/sessions. API: `docs/API.md`. Deploy: `docs/DEPLOY.md`. Planned work (incl. G8): `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` and `docs/G8_TEACHER_HANDOFF.md`. Phase U graphics: `models/svg_kit.py` and `docs/UI_REDESIGN.md` §8.
 
 ---
 
@@ -201,7 +201,7 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | **Notifications** | `models/notifications.py` | In-app events |
 | **Block / report** | `models/moderation.py` | User safety |
 
-Social features are **peer-to-peer**. There is no teacher role or class roster today.
+Social features are **peer-to-peer**. There is no teacher role or class roster in the live app. **G8** is designed with locked decisions — `docs/G8_TEACHER_HANDOFF.md` (track not started).
 
 ### 5.5 Phase G — Learning depth (G1–G7)
 
@@ -345,7 +345,7 @@ Lesson quizzes (`generators/shared/lesson_quiz.py`): 10 questions — 3 foundati
 | `docs/DEPLOY.md` | Production deployment checklist (encrypted backups, CI scanning) |
 | `docs/OPERATOR_LAUNCH.md` | **Operator (David)** — ICO fee, privacy inbox, prune/backup cron; do at public HTTPS / M5 |
 | `docs/EMAIL_SETUP.md` | Weekly digest configuration |
-| `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | G8, engagement E4, other future ideas |
+| `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | G8 (locked §2.2), engagement E4, other future ideas. Delivery: `docs/G8_TEACHER_HANDOFF.md` |
 | `docs/ENGAGEMENT_VISUAL.md` | Avatar / buddy visual tokens for E2–E3 |
 | `docs/REAL_WORLD_QUESTIONS.md` | **Planned** — real-world question style (E4.1) implementation plan |
 | `docs/EUROPEAN_SCHOOL_SCIENCE.md` | **ES10 shipped** — full S1–S3 curriculum (46 modules, six IBL tracks, whole-suite QA) |

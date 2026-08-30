@@ -1,6 +1,6 @@
 # Problem Bank — AI agent handoff
 
-**Last updated:** 2026-08-28  
+**Last updated:** 2026-08-30  
 **Repository:** `maths_generator/physics-problem-bank` (GitHub: `kingdavidek/physics-problem-bank`)  
 **Audience:** The next AI agent (or human) continuing product work  
 
@@ -19,7 +19,7 @@ Start here. Read the documents in the order below before changing behaviour that
 | **Mobile polish (app-like PWA)** | **Done (M0–M4)** — foundation, practice UX, app chrome, lessons/diagrams, PWA polish + device QA. **M5–M7** HTTPS → TWA → Play Android when a production URL exists — see `docs/MOBILE.md` |
 | **Phase U (UI redesign)** | **U closed.** Dark mode **D0–D3 shipped** (shell, status chips, diagrams, settings toggle). Cache: `pb-v79`. Spec: `docs/UI_REDESIGN.md` §15. **Follow-up:** settings switches may not persist (see §1.1). |
 | **Engagement roadmap (E1–E3)** | **E1–E3 shipped** (assist mock smoke, `@problem_bot` QOTD card, FTS lesson search, emoji/colour avatars, study buddy, friend quiz-accuracy leaderboard). Visual tokens: `docs/ENGAGEMENT_VISUAL.md` |
-| **G8 teacher / class mode** | Designed, not implemented. See `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2 |
+| **G8 teacher / class mode** | Designed; decisions locked 2026-08-30. Track **not started** (Phase 0 next). `docs/G8_TEACHER_HANDOFF.md`, `docs/G8_TEACHER_REVIEW_RUBRIC.md`, `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2 |
 | **Real-world question style (E4.1)** | **Planned, fully specified** — `docs/REAL_WORLD_QUESTIONS.md`. Third generator mode (`real_world`) across percentages, ratio, compound measures |
 | **European School Integrated Science S1–S3** | **ES10 shipped** — full curriculum (46 modules, six IBL tracks, whole-suite QA). **Lesson-improvement track complete (Stages 0–7).** **Practice generator complete (Phases 0–7)** (`docs/EURSC_GENERATOR_HANDOFF.md`, `docs/EURSC_GENERATOR_REVIEW_RUBRIC.md`, canvas `eursc-generator-question-plan.canvas.tsx`). Curriculum: `docs/EUROPEAN_SCHOOL_SCIENCE.md` |
 | **Guide & celebration (E6 / Phase A)** | **A1–A6 + B shipped** (origin, badge/streak/first-correct/lesson-complete, five tours, `guide_json` persist + Replay intro, CSS streak fire, overlay wink/nod/shake/tap). Spec: `docs/ANIMATION_ONBOARDING.md`. Not the E4.2 mascot farm. |
@@ -45,7 +45,7 @@ Start here. Read the documents in the order below before changing behaviour that
 | **2c** | `docs/MOBILE.md` | Mobile polish (M0–M4) + Play Android via TWA (M5–M7) |
 | **3** | `docs/SOLID_DRAFT_SECURITY.md` | Critical/high fixes just shipped; **do not regress** |
 | **3b** | `docs/SECURITY_AND_GDPR.md` | S0–S3 plan. **S0–S3 are done** (S3 = calendar, not a feature). Read before touching auth, personal data, defaults, or anything that leaves the server. Calendar: `docs/CADENCE.md`. Drafts: `docs/DPIA.md`, `docs/ROPA.md`, `docs/SUBPROCESSORS.md`. Runbooks: `docs/INCIDENT_RESPONSE.md`, `docs/DATA_RIGHTS.md`, `docs/MODERATION.md`, `docs/ZAP.md` |
-| **4** | `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | G8 design + engagement E4 + other future ideas |
+| **4** | `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | G8 design (locked §2.2) + engagement E4 + other future ideas |
 | **5** | `docs/API.md` | REST `/api/v1/*` contracts when touching APIs |
 | **6** | `docs/DEPLOY.md` | Env, HTTPS, backups, smoke, production checklist |
 | *at public launch / M5* | **`docs/OPERATOR_LAUNCH.md`** | **David’s** ICO / privacy-inbox / prune-cron checklist. Surface this when starting production HTTPS; skip it during E4.1, UI, etc. |
@@ -53,6 +53,7 @@ Start here. Read the documents in the order below before changing behaviour that
 | *before European School content* | `docs/EUROPEAN_SCHOOL_SCIENCE.md` | Full curriculum plan (46 modules). **ES10 shipped** — curriculum track closed |
 | *European School lesson-clarity track* | `docs/EURSC_LESSON_IMPROVEMENT_HANDOFF.md`, `docs/EURSC_LESSON_REVIEW_RUBRIC.md` | **Complete** (Stages 0–7) |
 | *European School Practice generator* | `docs/EURSC_GENERATOR_HANDOFF.md`, `docs/EURSC_GENERATOR_REVIEW_RUBRIC.md`, canvas `eursc-generator-question-plan.canvas.tsx` | **Complete** (Phases 0–7) |
+| *before starting G8 teacher / class* | `docs/G8_TEACHER_HANDOFF.md`, `docs/G8_TEACHER_REVIEW_RUBRIC.md`, `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2 | **Phase 0 next** — one phase per cue. Decisions locked 2026-08-30 |
 | *redoing ES0 only* | `docs/ES0_HANDOFF.md` | Phase ES0 platform enablement; sync `main` first |
 | *before starting E6 / Guide* | `docs/ANIMATION_ONBOARDING.md` | Origin story, section tours, badge/streak celebration; includes the next-agent prompt |
 | *before starting E5* | `docs/ENGAGEMENT_E5.md` | Step-by-step plan for buddy v0.5, badges, QOTD week, streak freeze, avatar unlocks |
@@ -270,13 +271,13 @@ Pick based on product priority; items are independent enough to sequence differe
 
 Product tracks (E4.1, UI, etc.) can proceed on a local/dev site. **Do not** start `docs/OPERATOR_LAUNCH.md` until he is doing public HTTPS / M5. When that session starts, walk him through that doc first.
 
-1. **E4.1 real-world question style** — highest content value per line of code (`docs/REAL_WORLD_QUESTIONS.md`).
-2. **Continue E5:** **E5.7** (web push) only after production HTTPS (`docs/MOBILE.md` M5).
-3. **G8 — Teacher / class mode** per `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2. Note this adds teacher oversight of children's data — DPIA review required first.
+1. **G8 teacher / class mode — Phase 0** (`docs/G8_TEACHER_HANDOFF.md`). One phase per cue. Do not skip to schema. DPIA draft notes in Phase 0; qualified legal review before public HTTPS.
+2. **E4.1 real-world question style** — specified, not started (`docs/REAL_WORLD_QUESTIONS.md`). Independent of G8.
+3. **Continue E5:** **E5.7** (web push) only after production HTTPS (`docs/MOBILE.md` M5).
 4. **Mobile M5+ / public launch** — production HTTPS (`docs/MOBILE.md`). **Gate:** `docs/OPERATOR_LAUNCH.md` (David: ICO, privacy inbox, prune cron + `PB_BACKUP_PASSPHRASE`), then `docs/DEPLOY.md`. Unblocks web push (E5.7).
 5. **Compliance calendar** — keep `docs/CADENCE.md` (S3). Not a build phase.
 6. **Settings switch persist** — later; see §1.1. Do not block other work on this.
-7. **European School lesson improvements** — Stages 0–2 done. Next is Stage 3 (S1 pass) on cue; see `docs/EURSC_LESSON_IMPROVEMENT_HANDOFF.md` and `docs/EURSC_LESSON_REVIEW_RUBRIC.md`.
+7. **European School** lesson-clarity and Practice-generator tracks are **complete**. Do not reopen unless the user reports a regression.
 
 ---
 
@@ -289,10 +290,12 @@ Product tracks (E4.1, UI, etc.) can proceed on a local/dev site. **Do not** star
 
 ---
 
-## 9. Active work handoff — S3 shipped (2026-08-26)
+## 9. Active work handoff — G8 Phase 0 next (2026-08-30)
 
-**S0–S3 GDPR/security shipped.** S3 is the calendar in **`docs/CADENCE.md`** (`scripts/ops_cadence.py`). Remaining **human** work at public launch: **`docs/OPERATOR_LAUNCH.md`**. Do not do that during E4.1 / UI / other product tracks. When M5 or production deploy starts, remind David and follow that doc.
+**S0–S3 GDPR/security shipped.** S3 is the calendar in **`docs/CADENCE.md`**. Remaining **human** work at public HTTPS: **`docs/OPERATOR_LAUNCH.md`** — not during G8 product phases.
 
-**This GDPR/security track has no further build phase.** Product next is **E4.1**. Remaining E5 is **E5.7** web push — blocked until `docs/MOBILE.md` M5.
+**EURSC lesson-clarity and Practice-generator tracks are complete.** Do not reopen without a regression.
+
+**Product next:** **G8 teacher / class mode**, starting at **Phase 0** (`docs/G8_TEACHER_HANDOFF.md`). Copy-paste prompt is at the top of that file. E4.1 remains specified but is not the active cue. Remaining E5 is **E5.7** web push — blocked until `docs/MOBILE.md` M5.
 
 ---

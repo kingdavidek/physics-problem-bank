@@ -1,6 +1,6 @@
 # Problem Bank — Potential Future Functionality
 
-**Last updated:** 2026-08-15  
+**Last updated:** 2026-08-30  
 **Repository:** `maths_generator/physics-problem-bank`  
 **Audience:** Product owners, developers, AI agents  
 
@@ -16,143 +16,146 @@ This document captures **ideas and designs that are not yet implemented**. It is
 | **Idea** | Directionally useful; needs more design |
 | **Deferred** | Explicitly out of scope for near-term work |
 
-**Current product baseline:** Phase G G1–G7 shipped. Auto-correct complete. Solid-draft security done. **Engagement E1–E3 shipped.** **Engagement E4** (content depth) is below §3.0. Mobile polish **M0–M4 done** (`docs/MOBILE.md`). **No teacher/class mode exists today** (G8 designed in §2).
+**Current product baseline:** Phase G G1–G7 shipped. Auto-correct complete. Solid-draft security done. **Engagement E1–E3 shipped.** **Engagement E4** (content depth) is below §3.0. Mobile polish **M0–M4 done** (`docs/MOBILE.md`). **G8 teacher/class mode** is designed with locked decisions (2026-08-30); implementation track not started — `docs/G8_TEACHER_HANDOFF.md`.
 
 ---
 
 ## 2. G8 — Teacher / class mode (planned, designed)
 
+**Status:** Designed — implementation track not started.  
+**Decisions locked:** 2026-08-30 (David).  
+**Delivery track:** `docs/G8_TEACHER_HANDOFF.md` (one phase per user cue).  
+**Review contract:** `docs/G8_TEACHER_REVIEW_RUBRIC.md`.
+
 ### 2.1 Summary
 
-Give teachers an **optional teacher capability** with **class rosters** and **read-focused progress dashboards** over students who **explicitly join** their class. Reuse existing learning data (quizzes, weak topics, revision queue, skill gaps). This is **not** a full LMS.
+Give **solo tutors and classroom teachers** an optional teacher capability: **class rosters**, **progress dashboards**, and the ability to **set a frozen set of specific questions** to some or all students in a class. Students **join by code** (consent). After that, **only the teacher can remove** a student from the class. Reuse G1–G7 analytics. This is **not** a full LMS (no custom lessons, no uploaded scripts, no school SSO).
 
-**Handoff plan reference:** Phase G step G8 — “Teacher / class mode — B2B last.” Depends on lesson/quiz APIs (already shipped in G2).
+### 2.2 Locked product decisions (2026-08-30)
 
-### 2.2 Goals
+| # | Question | Decision |
+|---|----------|----------|
+| 1 | Audience | **Solo tutors and teachers** for now. Soft teacher flag. No school org, verification, or multi-teacher co-teaching in this track. Cap **40 active students per class**. Nullable `org_id` on `classes` so B2B can layer later. |
+| 2 | Many classes | **Yes.** A student may be active in more than one class at once. |
+| 3 | Skill-gap chips (T2) | **In the dashboard from the first progress phase**, as part of the join disclosure — **no extra student checkbox**. Chips are G6 rollups, not free text. |
+| 4 | Extra “never see” list | **No.** The only progress-data hard block remains **T3 free-text reflections**. Operational exclusions still apply (passwords, emails, private follows/feed, buddy copy). |
+| 5 | Leaving a class | **Teacher-only.** No student Leave control. Account **deletion** still erases memberships (GDPR), which is not “leave class”. |
+| 6 | Set work | **In this track** (not deferred). Teacher sets **X frozen questions** for **selected students or the whole class**. |
+
+### 2.3 Goals
 
 | Goal | Detail |
 |------|--------|
-| **Optional teacher mode** | Not every account is a teacher; enable when needed |
-| **Classes / rosters** | Named groups with a join mechanism |
-| **Progress visibility** | Teachers see aggregated and per-student activity for roster members only |
-| **Reuse existing analytics** | Weak topics, quiz history, lesson progress, revision queue — no duplicate tracking |
-| **Safeguarding-first** | Student opt-in; no silent enrollment; minimal sensitive data in v1 |
+| **Optional teacher mode** | Soft flag; one login; tutors who also practise keep a student app |
+| **Classes / rosters** | Named groups; join code; teacher remove |
+| **Progress visibility** | T0 class aggregates + T1 named progress + T2 skill-gap chips, roster only |
+| **Set work** | Same frozen question set assigned to n students or all; teacher sees completion |
+| **Reuse analytics** | Weak topics, quiz history, lesson progress, revision queue, skill-gap chips — no duplicate tracking of study history |
+| **Safeguarding** | Join is opt-in; no silent add; no T3 notes; teacher sees roster members only |
 
-### 2.3 Non-goals (version 1)
+### 2.4 Non-goals (this track)
 
-- School SSO / MIS / Google Classroom sync  
-- Assigning homework or marking teacher-uploaded scripts  
-- Live lesson control or seating plans  
-- Parent accounts  
-- Replacing friends / follows / study buddies (peer social stays separate)  
-- Free-text reflection notes visible to teachers (high risk for minors)
+- School SSO / MIS / Google Classroom / org billing
+- Teacher-uploaded worksheets or custom lesson authoring
+- Live lesson control, seating plans, parent accounts
+- Replacing friends / follows / study buddies
+- T3 free-text reflection notes visible to teachers
+- Student self-remove from a class
+- Due-by-Friday calendars and late-work workflows (completion tracking is enough for v1)
 
-### 2.4 Actors
+### 2.5 Actors
 
 | Actor | Capability |
 |-------|------------|
-| **Student** | Same app as today; optionally joins one or more classes |
-| **Teacher** | Optional teacher mode; create classes; view roster progress |
-| **Class** | Named group with optional level/subject metadata and join code |
+| **Student** | Same app as today; joins one or more classes by code; **cannot** leave; completes assigned question sets |
+| **Teacher** | Enable teacher mode; create classes; rotate join code; remove students; view T0–T2; set work |
+| **Class** | Named group, optional level/subject, join code, ≤40 active members |
 
-One account may be both teacher and student (e.g. tutor who also practises).
+One account may be both teacher and student.
 
-### 2.5 Design decisions and options
+### 2.6 Join, stay, and remove
 
-#### A. How “teacher” exists
+| Action | Who |
+|--------|-----|
+| Join with code (after disclosure) | Student |
+| Accept handle invite (later hardening) | Student |
+| Rotate / expire join code | Teacher |
+| Remove from roster | **Teacher only** |
+| Silent add to roster | **Never** |
+| Erase memberships with the account | System (GDPR delete) |
 
-| Option | Pros | Cons | Recommendation |
-|--------|------|------|----------------|
-| **Soft flag** — `is_teacher` / “Enable teacher mode” | Fast; one login | Easy to abuse | **Start here (v1)** |
-| **Role + verification** — email domain or manual approve | Better trust | Approval flow needed | Phase 2 |
-| **Org/school entity** — school → teachers → classes | Real B2B | Heavy | Later |
+Join disclosure must say, in plain language: the teacher can see class and named progress (including skill-gap labels), can set questions, and **only the teacher can take you off the class**. If the student wants to leave, they ask the teacher.
 
-Design schema with nullable `org_id` so B/C can layer on without rewrite.
+### 2.7 What teachers can see (data tiers)
 
-#### B. How students join a class
+| Tier | Data | This track |
+|------|------|------------|
+| **T0 — Class aggregates** | Avg quiz %, top weak topics, activity counts, set-work completion | Yes |
+| **T1 — Named progress** | Per student: weak topics, recent quizzes, lesson summary, due-today count | Yes |
+| **T2 — Diagnostic** | Skill-gap **chip** rollups (not free text) | **Yes** — join disclosure, no extra toggle |
+| **T3 — Full reflections** | Free-text “what tripped me up” | **No** |
 
-| Option | Pros | Cons | Recommendation |
-|--------|------|------|----------------|
-| **Class join code** (6–8 chars, rotatable) | Simple classroom UX | Codes can leak | **v1 primary** |
-| **Invite link** (token URL) | Nice share UX | Same leak risk | Optional alongside code |
-| **Teacher invites by handle** + student accepts | Explicit consent | Needs handle knowledge | **v1 secondary** |
-| **Email invite** | Familiar for schools | Email infra + minors | Later |
-| **Teacher adds silently** | Zero friction | Bad for privacy | **Never** |
+Also exclude: passwords, classmates’ emails, private follows/feed, study-buddy content.
 
-**Default package:** Join code for bulk in-class join; optional invite-by-handle with accept. Codes expire or rotate.
+### 2.8 Set work (specific questions)
 
-#### C. What teachers can see (data tiers)
+Not a “practise this topic” nudge and not peer `quiz_challenges`.
 
-| Tier | Data | v1? |
-|------|------|-----|
-| **T0 — Class aggregates** | Class avg quiz %, top weak topics, activity counts | Yes |
-| **T1 — Named progress** | Per student: weak topics, recent quiz scores, lesson progress, due-today count | Yes |
-| **T2 — Diagnostic** | Skill-gap labels (reflection chip rollups, not free text) | Optional toggle |
-| **T3 — Full reflections** | Free-text “what tripped me up” notes | **No** |
+1. Teacher picks **level / subject / topic / difficulty / mode** from the live generator catalogue and a count **X** (cap **1–20**).
+2. Server **generates and freezes** X problem payloads (same session-trust model as challenges / shared questions — stored JSON, graded from the stored set, never from a client-supplied answer key).
+3. Teacher assigns that **same frozen set** to **selected roster members** or **all active members**.
+4. To give Alice different questions from Bob, the teacher creates **two sets** and assigns each to the matching students.
+5. Students open **My class work**, answer the frozen items, cannot reroll onto a different bank item.
+6. Teacher sees per-student **n / X** and scores.
 
-Also **exclude:** passwords, classmates’ emails, private follows/feed, study-buddy content.
+Do **not** reuse `study_pairs`. Do **not** fan out `question_suggestions` (1:1 optional inbox). New assignment tables (names may be refined in implementation). Friend challenges stay peer-vs-peer.
 
-#### D. What teachers can do (beyond view)
-
-| Option | Scope | v1? |
-|--------|-------|-----|
-| **Monitor only** | Dashboard + optional CSV export | **Yes (MVP)** |
-| **Suggest** | “Try this topic” link (like existing suggestions) | Phase 2 |
-| **Assign** | “Complete quiz X by Friday” + tracking | Later |
-| **Create class content** | Custom questions / lessons | Out of scope |
-
-#### E. Privacy and consent
-
-**Must-haves:**
-
-1. Student **opts in** by joining or accepting invite.  
-2. Student can **leave** anytime; teacher can **remove**.  
-3. Clear copy before join: “Your teacher can see X.”  
-4. Teacher sees only **roster members**, never whole user directory.  
-5. Assume many GCSE users are minors — default to **less** data.  
-6. Optional audit log for teacher views of individual student detail (G8b).
-
-**Recommended consent model:** Join implies T1 visibility. T2 (skill-gap chips) behind explicit student checkbox on join or in settings.
-
-### 2.6 Proposed data model (MVP)
+### 2.9 Proposed data model
 
 ```
 teacher_profiles
-  user_id PK, enabled_at, display_name_optional
+  user_id PK, enabled_at
 
 classes
-  id, teacher_id, name, level?, subject?,
+  id, teacher_id, name, level?, subject?, org_id NULL,
   join_code, join_code_rotated_at, created_at, archived_at?
 
 class_memberships
-  class_id, student_id, status (active|left|removed),
-  joined_at, left_at,
-  share_skill_gaps INTEGER DEFAULT 0
+  class_id, student_id, status (active|removed),
+  joined_at, removed_at, removed_by_teacher_id
   UNIQUE(class_id, student_id)
 
-class_invites (optional v1)
-  id, class_id, from_teacher_id, to_user_id,
-  status (pending|accepted|declined), created_at
+class_assignments
+  id, class_id, teacher_id,
+  level, subject, topic, mode, difficulty,
+  problems_json, question_count, created_at
+
+class_assignment_recipients
+  assignment_id, student_id, status (assigned|complete),
+  answers_json, score, completed_at
+  UNIQUE(assignment_id, student_id)
 ```
 
-Progress metrics read from existing tables: `quiz_attempts`, weak-topic analysis, `lesson_progress`, revision queue, skill gaps (only if `share_skill_gaps`).
+Progress metrics still read from existing G1–G7 tables. T2 skill gaps are included whenever the student is an active member (no `share_skill_gaps` column).
 
-### 2.7 Proposed UX
+### 2.10 Proposed UX
 
-**Teacher journey**
+**Teacher**
 
-1. Profile → “Teacher mode” → Enable  
-2. Create class (name, optional level/subject) → receive join code  
-3. Class page: roster, last active, quiz count (7d), top weak topics (aggregate)  
-4. Student detail: weak topics, recent quizzes, due-today count, skill patterns if shared  
+1. Profile → Enable teacher mode
+2. Create class → join code
+3. Roster: last active, quiz count (7d), remove student
+4. Student detail: T1 + T2 chips
+5. Set work: pick topic / X questions / generate preview → assign to selected or all
+6. Assignment results: n/X and scores
 
-**Student journey**
+**Student**
 
-1. “Join a class” → enter code or accept invite  
-2. Confirm visibility disclosure → Join  
-3. Profile lists enrolled classes; Leave class anytime  
+1. Join a class → disclosure → enter code
+2. Profile lists classes (no Leave)
+3. My class work → frozen questions → Check
 
-### 2.8 Proposed API sketch
+### 2.11 Proposed API sketch
 
 | Method | Path |
 |--------|------|
@@ -160,76 +163,44 @@ Progress metrics read from existing tables: `quiz_attempts`, weak-topic analysis
 | POST / GET | `/api/v1/teacher/classes` |
 | POST | `/api/v1/teacher/classes/<id>/rotate-code` |
 | GET | `/api/v1/teacher/classes/<id>/roster` |
+| POST | `/api/v1/teacher/classes/<id>/members/<student_id>/remove` |
 | GET | `/api/v1/teacher/classes/<id>/students/<id>/progress` |
+| POST | `/api/v1/teacher/classes/<id>/assignments` |
+| GET | `/api/v1/teacher/classes/<id>/assignments/<id>` |
 | POST | `/api/v1/me/classes/join` `{ "code": "..." }` |
-| POST | `/api/v1/me/classes/<id>/leave` |
 | GET | `/api/v1/me/classes` |
+| GET | `/api/v1/me/class-work` |
+| POST | `/api/v1/me/class-work/<assignment_id>/answer` |
 
-Web UI first; APIs in same pass so mobile can follow.
+**No** `POST /api/v1/me/classes/<id>/leave`.
 
-**Authz helper:** `teacher_can_view(conn, teacher_id, student_id) → class_id | None` — checked on every progress endpoint.
+**Authz:** `teacher_can_view(conn, teacher_id, student_id)` and `teacher_owns_class` on every class/progress/assignment endpoint.
 
-### 2.9 Implementation approach
+### 2.12 Implementation approach
 
 | Approach | Verdict |
 |----------|---------|
-| **Thin teacher layer** — new `models/classes.py`; progress endpoints call G1–G7 helpers with membership authz | **Preferred** |
-| **Extend study_pairs** for teacher–student | Rejected — wrong trust model |
-| **Org-first B2B** with billing | Deferred |
+| Thin layer — `models/classes.py` + assignment module; G1–G7 helpers behind membership authz | **Preferred** |
+| Extend `study_pairs` or `quiz_challenges` | Rejected |
+| Org-first B2B | Deferred |
 
-### 2.10 Phased delivery
+### 2.13 Delivery on this track
 
-#### G8a — MVP (ship first)
+Phases are in `docs/G8_TEACHER_HANDOFF.md`. Order: contract → teacher/classes → roster (teacher-only remove) → T0–T2 dashboards → set work → hardening → verification.
 
-- Opt-in teacher mode  
-- Create class + join code  
-- Join / leave / remove  
-- Class roster + aggregate stats (T0)  
-- Per-student T1 progress (weak topics, recent quizzes, lesson summary)  
-- Smoke tests + `docs/API.md` updates  
+**Later (not this track):** teacher verification, school org, co-teaching, due-date workflows.
 
-#### G8b — Hardening
-
-- Invite-by-handle  
-- Rotate / expire join codes  
-- Skill-gap sharing toggle (T2)  
-- CSV export for class  
-- Teacher view audit log  
-
-#### G8c — B2B polish (later)
-
-- Teacher verification / school org entity  
-- “Suggest topic to class” or lightweight assignments  
-- Multi-teacher co-teaching  
-- GDPR export/delete for class-related data  
-
-### 2.11 Risks and mitigations
+### 2.14 Risks and mitigations
 
 | Risk | Mitigation |
 |------|------------|
-| Join codes shared outside class | Rotate code; visible member list; teacher remove |
-| Over-sharing reflections | No free-text to teachers in v1 |
-| Teacher views non-students | Strict membership check on every API |
-| Scope creep into LMS | Monitor-only MVP; assignments explicitly later |
-| Large class performance | Cap page size; aggregate queries; index memberships |
-
-### 2.12 Recommended default package
-
-If implementing G8 without further product decisions:
-
-1. Soft teacher opt-in  
-2. Join codes + leave/remove  
-3. T1 per-student + T0 class aggregates; no reflection text  
-4. Monitor only (no assignments)  
-5. Thin module on existing G1–G7 analytics  
-6. Ship **G8a**, then iterate from real usage  
-
-### 2.13 Open product questions
-
-1. Prioritise solo tutors (≤40 students) or multi-teacher orgs soon?  
-2. Allow students in many classes simultaneously? (Recommend: yes)  
-3. Include skill-gap chips in MVP or only after student toggle?  
-4. Any hard “teacher must never see X” beyond free-text reflections?
+| Join codes leak | Rotate code; roster; teacher remove |
+| Student cannot leave a bad class | Teacher remove; GDPR account delete; join disclosure; report/block still exist for the person |
+| Frozen set leaks answers | Same as challenges: strip keys from student GET until graded server-side |
+| Over-sharing reflections | No T3 |
+| Teacher views non-students | Membership check on every API |
+| LMS scope creep | No custom content; no SSO; set work is frozen generator items only |
+| Large classes | Cap 40 active members; paginate roster |
 
 ---
 
@@ -289,10 +260,10 @@ E1–E3 shipped 2026-08-15. Of the three E4 items below, only **E4.1** is schedu
 - **Scope when unblocked:** VAPID keys, `push_subscriptions` table, subscribe/unsubscribe endpoints, `push`/`notificationclick` handlers in `static/js/sw.js`, default-off opt-in, quiet hours, no question content or real names in payloads — written up as **E5.7 in `docs/ENGAGEMENT_E5.md`**.  
 - **Status:** Specified, gated on M5  
 
-### 3.4 Assignments / teacher-suggested topics (post-G8)
+### 3.4 Assignments / teacher-suggested topics
 
-- **Idea:** Teacher sends “practise topic X” to class; track completion.  
-- **Status:** Deferred — after G8a monitor-only MVP  
+- **Idea:** Teacher sets frozen generator questions for selected or all class members.
+- **Status:** **Moved into G8** — see §2.8 and `docs/G8_TEACHER_HANDOFF.md` Phase 4. Do not implement as a separate track.
 
 ### 3.5 School / org billing (B2B)
 
@@ -342,7 +313,7 @@ E1–E3 shipped 2026-08-15. Of the three E4 items below, only **E4.1** is schedu
 | G5 | Anonymous cohort stats | ✅ Shipped |
 | G6 | Cross-topic skill gaps | ✅ Shipped |
 | G7 | Revision planner | ✅ Shipped |
-| **G8** | **Teacher / class mode** | **Designed — not started** |
+| **G8** | **Teacher / class mode** | **Designed, decisions locked 2026-08-30 — track not started** (`docs/G8_TEACHER_HANDOFF.md`) |
 | E1–E3 | Engagement (assist smoke, mascot QOTD, FTS, avatars, buddy, friend accuracy LB) | **E1–E3 shipped** |
 | E4.1 | Real-world question style (percentages, ratio, compound measures) | Planned — `docs/REAL_WORLD_QUESTIONS.md` |
 | — | European School Integrated Science S1–S3 (new `eursc` level, 46 syllabus modules) | Fully planned — `docs/EUROPEAN_SCHOOL_SCIENCE.md` |
@@ -361,4 +332,4 @@ When a feature ships:
 3. Add smoke tests under `scripts/`.  
 4. Update `docs/AI_HANDOFF.md` status table.
 
-When prioritising G8 or other items, record the chosen options (especially §2.13 answers) at the top of the relevant section.
+G8 product decisions are locked in §2.2. Do not reopen them without an explicit user cue. Delivery phases live in `docs/G8_TEACHER_HANDOFF.md`.

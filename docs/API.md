@@ -352,6 +352,8 @@ Document these here when they ship — specs live in `docs/ENGAGEMENT_E5.md`:
 
 The generator endpoints gain a `real_world` value for `mode` when `docs/REAL_WORLD_QUESTIONS.md` is implemented; the request/response shape is otherwise unchanged from `standard`.
 
+G8 teacher/class APIs are specified in `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2.11 and `docs/G8_TEACHER_HANDOFF.md`. Not implemented. There is **no** student leave endpoint. Document them here when they ship.
+
 ## Error codes
 
 | Code | HTTP | Meaning |

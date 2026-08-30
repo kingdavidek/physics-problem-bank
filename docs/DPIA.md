@@ -2,7 +2,7 @@
 
 **Controller:** set via `CONTROLLER_NAME` (placeholder until S0.1 is completed by the operator)  
 **Contact:** `PRIVACY_CONTACT_EMAIL`  
-**Last reviewed:** 2026-08-27  
+**Last reviewed:** 2026-08-30  
 **Status:** Draft for operator review — not legal advice  
 **Companion:** `docs/SECURITY_AND_GDPR.md`, `docs/ROPA.md`, `docs/SUBPROCESSORS.md`
 
@@ -42,10 +42,10 @@ Users are told, in language a 13-year-old can follow, on `/privacy/simple`. Pare
 
 | Risk | Likelihood / impact (unmitigated) | Mitigation already in place | Residual / gap |
 |---|---|---|---|
-| A child's academic weaknesses are visible to others | High / High | Weak topics, revision queues, and skill gaps are private to the account. Friend leaderboards are friends-only; there is **no global ranking**. | Keep weak topics out of the public profile and activity feed forever. |
+| A child's academic weaknesses are visible to others | High / High | Weak topics, revision queues, and skill gaps are private to the account. Friend leaderboards are friends-only; there is **no global ranking**. | Keep weak topics out of the public profile and activity feed forever. **G8 (planned, not shipped):** a teacher who the student joined will see T0–T2 (including skill-gap chips) for roster members only. T3 free-text stays off. Join is opt-in; only the teacher can remove. Revisit this row when G8 Phase 3+ ships. |
 | Stranger contact through follows, challenges, suggestions | Medium / High | No DMs. Block and report exist. System bot cannot be messaged as a person. Follows are one-way and do not expose email. | S2: report action on suggestions; documented escalation. Operator must read reports. |
 | Public exposure of study activity | High / High | Default visibility is `followers_only`. Last topic, last activity, lesson progress, and quiz stats default **off**. Logged-out visitors see handle (and the private-profile page), not study data. | Users can still opt into a public profile; the settings page explains that public means anyone on the internet. |
-| Competitive pressure / compulsive use (streaks, boards, buddy nudges) | Medium / Medium | Friends-only boards. Dismissible buddy. No streak-loss shaming copy. No push notifications until production HTTPS (E5.7), and quiet hours are specified there. **A1–A4 Guide (2026-08-27):** optional onboarding dialogue, first-visit section tours, and once-only first-correct / lesson-complete reward modals; Skip / Not now / Escape always; seen-flag in localStorage only; no extra processors. | Children's Code standard 12/13: each tour/origin/reward once; no streak-loss shaming; no night-time push or public ranking. Revisit this table if G8 teacher mode ships. |
+| Competitive pressure / compulsive use (streaks, boards, buddy nudges) | Medium / Medium | Friends-only boards. Dismissible buddy. No streak-loss shaming copy. No push notifications until production HTTPS (E5.7), and quiet hours are specified there. **A1–A4 Guide (2026-08-27):** optional onboarding dialogue, first-visit section tours, and once-only first-correct / lesson-complete reward modals; Skip / Not now / Escape always; seen-flag in localStorage only; no extra processors. | Children's Code standard 12/13: each tour/origin/reward once; no streak-loss shaming; no night-time push or public ranking. **G8 (planned):** teacher-set frozen question work can add class pressure — keep it class-roster only, no public ranking of assignments. Revisit this table when G8 ships. |
 | Free-text fields leaking name, school, or address | Medium / High | Length caps; Jinja autoescape. Child-friendly notice: do not put real name, school, or address in notes. | Cannot fully prevent. Moderation/report remains the backstop. |
 | Child's question sent to an LLM (OpenAI / Anthropic / DeepSeek) | High / High if enabled | **Option A:** disabled in production unless `LESSON_ASSIST_ENABLED=1`. Payload must not contain handle, email, or user id. Mock mode for local/CI. | Do not enable DeepSeek (no UK adequacy) without an IDTA and transfer risk assessment. Prefer a UK/EU or adequacy-covered provider with a DPA and no-training commitment. |
 | Account takeover / rights requests to the wrong person | Medium / High | Password reset (60 min, single use). Email verification required before export and deletion. Password change on settings. | S1: per-account login lockout. Operator CLI erase/export for email requests. |
@@ -98,3 +98,4 @@ Proceed to public launch **only after**:
 |---|---|---|
 | 2026-08-26 | S0–S2 code shipped; S3 cadence runbook and restore-drill CLI added | Draft still pending qualified review before public launch. Next scheduled re-read: first quarter after launch, or sooner on a review trigger. |
 | 2026-08-27 | E6 A5 `guide_json` on `user_profile_settings` (boolean seen-flags; no extra processors). Privacy notice + ROPA updated. | Residual: dismissible onboarding persisted per account. Replay intro is user-initiated. |
+| 2026-08-30 | G8 product decisions locked (solo tutors/teachers; many classes; T2 chips with join disclosure; teacher-only remove; frozen set-work in-track). Implementation **not started**. | Draft still pending qualified review. Phase 0 of `docs/G8_TEACHER_HANDOFF.md` records feature-gate answers. Revisit this DPIA when G8 schema ships. |
