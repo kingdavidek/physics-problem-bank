@@ -86,7 +86,7 @@
                 </select>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" id="mode-row"{% if hide_generator_mode %} hidden{% endif %}>
                 <label for="mode-select">Mode</label>
                 <select name="mode" id="mode-select">
                     <option value="standard" {% if selected_mode == 'standard' %}selected{% endif %}>📝 Standard question</option>

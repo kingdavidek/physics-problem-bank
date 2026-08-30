@@ -44,7 +44,7 @@ def main():
         assert r.status_code == 200, r.data
         sw = r.data.decode()
         assert 'STATIC_CACHE' in sw
-        assert 'pb-v81' in sw
+        assert 'pb-v82' in sw
         # JS and CSS must stay network-first or ?v= cache-busts never land.
         assert 'isVersionedAsset' in sw
         assert '/static/css/tokens.css' in sw

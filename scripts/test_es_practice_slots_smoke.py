@@ -11,7 +11,14 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 os.environ["PB_TESTING"] = "1"
 
-from app import GENERATOR_LAUNCH_PATHS, _generator_topic_options, app  # noqa: E402
+from app import (  # noqa: E402
+    GENERATOR_DEFAULT_LEVEL,
+    GENERATOR_DEFAULT_SUBJECT,
+    GENERATOR_DEFAULT_TOPIC,
+    GENERATOR_LAUNCH_PATHS,
+    _generator_topic_options,
+    app,
+)
 from generators.eursc.science_shared import (  # noqa: E402
     EURSC_PRACTICE_SLOT_COUNT,
     IBL_PAGES,
@@ -162,6 +169,14 @@ def test_practice_home_and_api_accept_eursc():
         assert 'value="eursc"' in html
         assert 'value="science"' in html
         assert 'Measurement and SI Units' in html
+        chunk = html.split('id="page-data"', 1)[1][:500]
+        assert 'data-level="eursc"' in chunk
+        assert 'data-subject="science"' in chunk
+        assert 'data-topic="what_is_science"' in chunk
+        assert GENERATOR_DEFAULT_LEVEL == 'eursc'
+        assert GENERATOR_DEFAULT_SUBJECT == 'science'
+        assert GENERATOR_DEFAULT_TOPIC == 'what_is_science'
+        assert 'id="mode-row" hidden' in html
         posted = client.post(
             '/',
             data={
@@ -215,6 +230,71 @@ def test_practice_home_and_api_accept_eursc():
             assert blocked.status_code == 404
 
 
+def test_practice_home_hides_mode_and_remembers_selection():
+    with app.test_client() as client:
+        home = client.get('/')
+        html = home.data.decode()
+        chunk = html.split('id="page-data"', 1)[1][:500]
+        assert 'data-level="eursc"' in chunk
+        assert 'data-topic="what_is_science"' in chunk
+        assert 'id="mode-row" hidden' in html
+
+        gcse = client.get('/?level=gcse&subject=maths&topic=algebra')
+        gcse_html = gcse.data.decode()
+        gcse_chunk = gcse_html.split('id="page-data"', 1)[1][:500]
+        assert 'data-level="gcse"' in gcse_chunk
+        assert 'data-topic="algebra"' in gcse_chunk
+        assert 'id="mode-row"' in gcse_html
+        assert 'id="mode-row" hidden' not in gcse_html
+
+        posted = client.post(
+            '/',
+            data={
+                'level': 'eursc',
+                'subject': 'science',
+                'topic': 'measurement',
+                'mode': 'mcq',
+                'difficulty': 'intermediate',
+            },
+        )
+        assert posted.status_code == 200
+        body = posted.data.decode()
+        post_chunk = body.split('id="page-data"', 1)[1][:500]
+        assert 'data-topic="measurement"' in post_chunk
+        assert 'badge-mcq' not in body
+        assert 'id="mode-row" hidden' in body
+
+        remembered = client.get('/')
+        remembered_html = remembered.data.decode()
+        remembered_chunk = remembered_html.split('id="page-data"', 1)[1][:500]
+        assert 'data-level="eursc"' in remembered_chunk
+        assert 'data-topic="measurement"' in remembered_chunk
+        assert 'value="intermediate"' in remembered_html
+        assert re.search(
+            r'<option value="intermediate"[^>]*selected',
+            remembered_html,
+        )
+        assert 'id="mode-row" hidden' in remembered_html
+
+        with app.test_client() as api_client:
+            gen = api_client.post(
+                '/api/v1/problems/generate',
+                json={
+                    'level': 'eursc',
+                    'subject': 'science',
+                    'topic': 'measurement',
+                    'mode': 'mcq',
+                    'difficulty': 'foundational',
+                    'action': 'start',
+                },
+                headers={'Accept': 'application/json'},
+            )
+            assert gen.status_code == 200, gen.data[:400]
+            payload = gen.get_json()
+            assert payload['ok'] is True
+            assert payload['problem']['mode'] == 'standard'
+
+
 # Keep in sync with scripts/test_es10_whole_suite_smoke.py::DISCLOSE_RE
 DISCLOSE_RE = re.compile(
     r'\b(your diet|have you ever|tell us about your|describe your eating|'
@@ -244,6 +324,7 @@ def _problem_blob(problem):
         [
             str(problem.get('question') or ''),
             str(problem.get('solution') or ''),
+            str(problem.get('hint') or ''),
             ' '.join(str(o) for o in (problem.get('options') or [])),
         ]
     )
@@ -538,6 +619,70 @@ def test_web_and_api_generate_all_years():
                         assert problem.get('answer_type')
 
 
+def test_phase7_verification_samples():
+    """Final gate: sensitive + S3 Practice-home samples, IBL/QOTD invariants."""
+    samples = (
+        SYLLABUS_MODULES['1.4.1']['slug'],
+        SYLLABUS_MODULES['2.2.1']['slug'],
+        SYLLABUS_MODULES['2.3.7']['slug'],
+        SYLLABUS_MODULES['3.1.4']['slug'],
+    )
+    assert samples == (
+        'puberty_maturity',
+        'healthy_living',
+        'interoception',
+        'electric_current',
+    )
+    assert all(level != 'eursc' for level, *_rest in list_mcq_topic_paths())
+    science_slugs = set(SCIENCE)
+    picker = {(row['level'], row['subject'], row['slug']) for row in _generator_topic_options()}
+    for slug in IBL_PAGES:
+        assert slug not in science_slugs, slug
+        assert ('eursc', 'science', slug) not in picker
+    with app.test_client() as client:
+        for slug in samples:
+            posted = client.post(
+                '/',
+                data={
+                    'level': 'eursc',
+                    'subject': 'science',
+                    'topic': slug,
+                    'mode': 'standard',
+                    'difficulty': 'foundational',
+                },
+            )
+            assert posted.status_code == 200, slug
+            _assert_practice_home_body(posted.data.decode(), slug, 'foundational')
+            api = client.post(
+                '/api/v1/problems/generate',
+                json={
+                    'level': 'eursc',
+                    'subject': 'science',
+                    'topic': slug,
+                    'mode': 'standard',
+                    'difficulty': 'foundational',
+                    'action': 'start',
+                },
+                headers={'Accept': 'application/json'},
+            )
+            assert api.status_code == 200, (slug, api.data[:400])
+            payload = api.get_json()
+            assert payload['ok'] is True, slug
+            problem = payload['problem']
+            assert problem.get('question_html'), slug
+            blob = ' '.join(
+                [
+                    str(problem.get('question_html') or ''),
+                    str(problem.get('solution_html') or ''),
+                ]
+            )
+            if slug in SENSITIVE_SLUGS:
+                assert not DISCLOSE_RE.search(blob), slug
+            if slug == 'electric_current':
+                assert not VIR_CALC_RE.search(blob), slug
+                assert not POWER_CALC_RE.search(blob), slug
+
+
 def main():
     test_practice_slot_count()
     test_practice_slots_are_explicit_and_stable()
@@ -547,6 +692,7 @@ def main():
     test_standard_recipe_order()
     test_movement_standard_is_kinematics()
     test_practice_home_and_api_accept_eursc()
+    test_practice_home_hides_mode_and_remembers_selection()
     test_sensitive_standard_slots_and_templates_pass_disclose()
     test_ibl_pages_are_not_generator_topics()
     test_s3_standard_slots_have_no_power_or_vir_calculations()
@@ -554,6 +700,7 @@ def main():
     test_standard_generate_never_leaks_lesson_items()
     test_web_and_api_generate_year_sample()
     test_web_and_api_generate_all_years()
+    test_phase7_verification_samples()
     print("ES practice-slot smoke tests passed.")
 
 

@@ -5,7 +5,7 @@
 **Slot-recipe source of truth:** Cursor canvas `eursc-generator-question-plan.canvas.tsx`.  
 **Curriculum / safeguarding:** `docs/EUROPEAN_SCHOOL_SCIENCE.md`; `DISCLOSE_RE` in `scripts/test_es10_whole_suite_smoke.py`.  
 **Handoff:** `docs/EURSC_GENERATOR_HANDOFF.md`.  
-**Last updated:** 2026-08-30 (Phase 6 year-by-year Practice-home QA)
+**Last updated:** 2026-08-30 (Phase 7 verification — track complete)
 
 This is not a rewrite of the 46 lesson templates. Lesson banks (`mode=lesson`) and ten-question quizzes stay as they are. Practice work is **select / lightly rewrite** five generator-safe items per topic per difficulty from those banks.
 
@@ -24,7 +24,7 @@ Do **one phase per user cue**. Stop and report when the phase is done. Do not re
 | **4** | **Safety regression** | Sensitive banks + templates still pass `DISCLOSE_RE`; no QOTD eursc; IBL not in generator | **Complete** (2026-08-30) |
 | **5** | **Matrix smoke** | Assert 46×3×5 standard variants, unique names, valid payloads, API/web generate, no leakage | **Complete** (2026-08-30) |
 | **6** | **Roll out by year** | Year-by-year Practice-home QA (S1 then S2 then S3); full smoke + desktop/mobile after each year | **Complete** (2026-08-30) |
-| 7 | Verification | Full suite green + sample generate on Practice home for sensitive and S3 topics | Pending |
+| **7** | **Verification** | Full suite green + sample generate on Practice home for sensitive and S3 topics | **Complete** (2026-08-30) |
 
 ---
 
@@ -158,7 +158,26 @@ Live catalogue already includes `eursc/science`. This phase generated every syll
 - Foundational `electric_current` MCQ lists `compute V = IR` as a **distractor**, not a calculation prompt.
 - On a 390px viewport the guest tab bar can cover the lowest MCQ option until the student scrolls; the option is tappable after scroll.
 
-**Left for later phases:** final verification samples (Phase 7).
+**Left for later phases:** none — track complete.
+
+---
+
+## Phase 7 verification (2026-08-30)
+
+Final gate. Sensitive and S3 topics generate on Practice home and the API. DISCLOSE / IBL / QOTD / no-power invariants still hold. Lesson templates and named slot lists were not reopened.
+
+| Item | Result |
+|------|--------|
+| Command | `PB_TESTING=1 python scripts/run_smoke_tests.py` |
+| Result | **All 65 smoke tests passed.** |
+| Samples | `puberty_maturity`, `healthy_living`, `interoception`, `electric_current` — web POST `/` + `POST /api/v1/problems/generate` (foundational) |
+| Live home | Same four slugs generate on `http://127.0.0.1:5001/` (CSRF session); browser showed 1.4 hormone keyword (third-person) |
+| Disclose | Rendered bodies for 1.4 / 2.2 / 2.3.7 still pass `DISCLOSE_RE` |
+| S3 | `electric_current` rendered body has no power / resistance-calculation stems |
+| IBL / QOTD | `IBL_PAGES` not in `TOPICS` or picker; `list_mcq_topic_paths` still skips `eursc` |
+| Slot smoke | `test_phase7_verification_samples` |
+
+**Track complete.** Do not reopen unless a regression is reported.
 
 ---
 
@@ -219,14 +238,12 @@ Lesson-improvement **Stage 6** (do not redo blindly) wired a **stable kind-mix s
 |-------------------|------------------|
 | `EURSC_PRACTICE_SLOT_COUNT`, `eursc_practice_pool()`, `eursc_variants_for_mode()`, `bind_eursc_topic()` | **Phase 1 (done):** explicit named five-slot pools in `s1_*.py` … `s3_*.py`; no `generate()` fallback |
 | All unit modules + measurement/lab/es0 fixture variants call the helper | Keep lesson pools full |
-| `scripts/test_es_practice_slots_smoke.py` (count + stability + no leak + matrix/API + year-wave) | **Phase 6 (done):** 46×3 Practice-home + API generate |
+| `scripts/test_es_practice_slots_smoke.py` (count + no leak + matrix/API + year-wave + Phase 7 samples) | **Phase 7 (done):** sensitive + S3 Practice-home verification |
 | Lesson quizzes still use the full `lesson` pool | Keep that invariant in every later phase |
 | Practice home **open** for `eursc/science`; QOTD excludes `eursc` | **Phase 3 (done):** `GENERATOR_LAUNCH_PATHS`; **never** add eursc to QOTD |
 | Some stem wording aligned with improved lessons | **Phase 2 (done):** five-family recipe on all 138 tiers; S1 gaps filled |
 
-**Code gaps vs canvas (Phase 6 year-wave done):**
-
-1. **Phase 7 remains:** final Practice-home verification samples.
+**Code gaps vs canvas (track complete):** none for this track. Do not reopen unless a regression is reported.
 
 ---
 

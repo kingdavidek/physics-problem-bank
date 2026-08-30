@@ -43,12 +43,12 @@ _ERROR_BANK = (
 )
 
 
-def _mcq(difficulty, suffix, question, options, answer, solution):
+def _mcq(difficulty, suffix, question, options, answer, solution, hint):
     def _fn():
         return make_problem(
             question,
             solution,
-            "Use SI units, prefixes and the meaning of accuracy.",
+            hint,
             difficulty,
             1,
             _LEVEL,
@@ -63,7 +63,7 @@ def _mcq(difficulty, suffix, question, options, answer, solution):
     return _fn
 
 
-def _typed(difficulty, suffix, kind, question, extra, solution):
+def _typed(difficulty, suffix, kind, question, extra, solution, hint):
     def _fn():
         payload = (
             problem_extra_from_graded_answer(extra)
@@ -73,7 +73,7 @@ def _typed(difficulty, suffix, kind, question, extra, solution):
         return make_problem(
             question,
             solution,
-            "Check the unit, prefix and whether the size is sensible.",
+            hint,
             difficulty,
             1,
             _LEVEL,
@@ -87,7 +87,7 @@ def _typed(difficulty, suffix, kind, question, extra, solution):
     return _fn
 
 
-def _number(difficulty, suffix, question, value, solution):
+def _number(difficulty, suffix, question, value, solution, hint):
     return _typed(
         difficulty,
         suffix,
@@ -95,10 +95,11 @@ def _number(difficulty, suffix, question, value, solution):
         question,
         {"type": "number", "value": value},
         solution,
+        hint,
     )
 
 
-def _estimate(difficulty, suffix, question, value, tolerance, solution):
+def _estimate(difficulty, suffix, question, value, tolerance, solution, hint):
     return _typed(
         difficulty,
         suffix,
@@ -111,10 +112,11 @@ def _estimate(difficulty, suffix, question, value, tolerance, solution):
             "format_hint": "Enter the reading from the scale",
         },
         solution,
+        hint,
     )
 
 
-def _keyword(difficulty, suffix, question, value, solution):
+def _keyword(difficulty, suffix, question, value, solution, hint):
     return _typed(
         difficulty,
         suffix,
@@ -122,10 +124,11 @@ def _keyword(difficulty, suffix, question, value, solution):
         question,
         {"type": "keyword", "value": value},
         solution,
+        hint,
     )
 
 
-def _order(difficulty, suffix, question, required_ids, bank, solution):
+def _order(difficulty, suffix, question, required_ids, bank, solution, hint):
     return _typed(
         difficulty,
         suffix,
@@ -133,10 +136,11 @@ def _order(difficulty, suffix, question, required_ids, bank, solution):
         question,
         proof_steps_answer(required_ids, bank, order_matters=True),
         solution,
+        hint,
     )
 
 
-def _pick(difficulty, suffix, question, required_ids, bank, pick_count, solution):
+def _pick(difficulty, suffix, question, required_ids, bank, pick_count, solution, hint):
     return _typed(
         difficulty,
         suffix,
@@ -144,6 +148,7 @@ def _pick(difficulty, suffix, question, required_ids, bank, pick_count, solution
         question,
         proof_steps_answer(required_ids, bank, pick_count=pick_count),
         solution,
+        hint,
     )
 
 
@@ -161,6 +166,7 @@ _POOLS = {
             ],
             "B",
             "Universal SI units make results reproducible and comparable.",
+            "Shared units let people in different countries compare results without converting from local systems.",
         ),
         _mcq(
             "foundational",
@@ -169,6 +175,7 @@ _POOLS = {
             ["A  kilometre", "B  metre", "C  centimetre", "D  inch"],
             "B",
             "The metre (m) is the SI base unit of length.",
+            "Think of the SI base unit for how far something is, not a bigger or smaller version of it.",
         ),
         _mcq(
             "foundational",
@@ -177,6 +184,7 @@ _POOLS = {
             ["A  gram", "B  kilogram", "C  tonne", "D  newton"],
             "B",
             "Mass in SI is the kilogram, not the gram.",
+            "The SI mass unit is not the small everyday one and not a unit of force.",
         ),
         _mcq(
             "foundational",
@@ -185,6 +193,7 @@ _POOLS = {
             ["A  1000", "B  0.001", "C  100", "D  1 000 000"],
             "A",
             "kilo (k) means 10^3 = 1000.",
+            "This prefix makes a unit a thousand times larger.",
         ),
         _mcq(
             "foundational",
@@ -193,6 +202,7 @@ _POOLS = {
             ["A  1000", "B  0.01", "C  0.001", "D  0.000001"],
             "C",
             "milli (m) means 10^-3 = 0.001.",
+            "This prefix makes a unit a thousand times smaller.",
         ),
         _mcq(
             "foundational",
@@ -201,6 +211,7 @@ _POOLS = {
             ["A  second", "B  kelvin", "C  litre", "D  ampere"],
             "C",
             "The litre is a common derived unit of volume, not a base unit.",
+            "Volume has a common everyday unit that is not one of the seven SI base units.",
         ),
         _number(
             "foundational",
@@ -208,6 +219,7 @@ _POOLS = {
             "Convert 3 km to metres. Enter the number of metres only.",
             3000,
             "3 km = 3 x 1000 = 3000 m.",
+            "Kilo means a thousand, so multiply the kilometre value by that factor.",
         ),
         _number(
             "foundational",
@@ -215,6 +227,7 @@ _POOLS = {
             "Convert 2 m to centimetres. Enter the number of centimetres only.",
             200,
             "2 m = 2 x 100 = 200 cm.",
+            "There are a hundred centimetres in one metre, so multiply by that factor.",
         ),
         _keyword(
             "foundational",
@@ -222,6 +235,7 @@ _POOLS = {
             "Write the SI base unit of time. Use the full word, not the symbol.",
             "second",
             "The SI base unit of time is the second.",
+            "Write the full word for how long something lasts in SI, not the letter s.",
         ),
         _pick(
             "foundational",
@@ -231,6 +245,7 @@ _POOLS = {
             _BASE_BANK,
             2,
             "Metre and second are SI base units; litre and newton are not.",
+            "Choose the two units that sit at the root of SI length and time, not volume or force.",
         ),
         _estimate(
             "foundational",
@@ -240,6 +255,7 @@ _POOLS = {
             4.0,
             0.1,
             "The pointer sits on the 4 cm mark.",
+            "Look at the whole-centimetre mark the pointer sits on. Enter that number.",
         ),
         _order(
             "foundational",
@@ -248,6 +264,7 @@ _POOLS = {
             ["write", "factor", "check"],
             _CONVERT_BANK,
             "Write the quantity, apply the power of ten, then check the result.",
+            "Start by writing the quantity, then change it with a power of ten, then check the size.",
         ),
     ],
     "intermediate": [
@@ -258,6 +275,7 @@ _POOLS = {
             ["A  0.1 m", "B  0.01 m", "C  0.001 m", "D  10 m"],
             "B",
             "centi means 10^-2, so 1 cm = 0.01 m.",
+            "This prefix means a hundredth, so one centimetre is that fraction of a metre.",
         ),
         _mcq(
             "intermediate",
@@ -266,6 +284,7 @@ _POOLS = {
             ["A  1000", "B  1 000 000", "C  0.000001", "D  100"],
             "B",
             "mega (M) means 10^6 = 1 000 000.",
+            "This prefix is a million, a thousand times larger than kilo.",
         ),
         _mcq(
             "intermediate",
@@ -279,6 +298,7 @@ _POOLS = {
             ],
             "A",
             "Accuracy means closeness to the true value.",
+            "This word is about how close a reading is to the true value, not how repeatable it is.",
         ),
         _mcq(
             "intermediate",
@@ -287,6 +307,7 @@ _POOLS = {
             ["A  accurate", "B  precise", "C  calibrated", "D  systematic"],
             "B",
             "Precision is how close repeats are to one another.",
+            "This word is about how tightly repeats cluster, even if they all miss the true value.",
         ),
         _mcq(
             "intermediate",
@@ -300,6 +321,7 @@ _POOLS = {
             ],
             "B",
             "Calibration checks the instrument against a known standard.",
+            "You check an instrument by comparing it with something whose value you already know.",
         ),
         _mcq(
             "intermediate",
@@ -313,6 +335,7 @@ _POOLS = {
             ],
             "C",
             "Random errors scatter repeats around the true value.",
+            "Look for scatter that jumps around from trial to trial, not a fault that always pulls the same way.",
         ),
         _number(
             "intermediate",
@@ -320,6 +343,7 @@ _POOLS = {
             "Convert 2.5 km to metres. Enter the number of metres only.",
             2500,
             "2.5 km = 2.5 x 1000 = 2500 m.",
+            "Turn each kilometre into a thousand metres, including the extra half kilometre.",
         ),
         _number(
             "intermediate",
@@ -327,6 +351,7 @@ _POOLS = {
             "How many millimetres are there in 4 m? Enter the number only.",
             4000,
             "4 m = 4 x 1000 = 4000 mm.",
+            "Milli means a thousandth of a metre, so one metre holds a thousand of them. Scale that up for 4 m.",
         ),
         _number(
             "intermediate",
@@ -343,6 +368,7 @@ _POOLS = {
             + "<p>What is the mean length in cm?</p>",
             10.2,
             "Sum = 51.0 cm. Mean = 51.0 / 5 = 10.2 cm.",
+            "Add the five length readings, then divide by how many readings there are.",
         ),
         _keyword(
             "intermediate",
@@ -350,6 +376,7 @@ _POOLS = {
             "Write the SI base unit of mass. Use the full word, not the symbol.",
             "kilogram",
             "The SI base unit of mass is the kilogram.",
+            "Write the full word for the SI base unit of how heavy something is, not the everyday gram.",
         ),
         _order(
             "intermediate",
@@ -358,6 +385,7 @@ _POOLS = {
             ["write", "factor", "check"],
             _CONVERT_BANK,
             "Write the quantity, apply the power of ten, then check the result.",
+            "Record what you have first, scale by a power of ten, then sense-check that the new unit and size look right.",
         ),
         _pick(
             "intermediate",
@@ -367,6 +395,7 @@ _POOLS = {
             _ERROR_BANK,
             2,
             "Parallax and reaction time scatter repeats. Zero error and a damaged ruler are systematic.",
+            "Choose the two faults that scatter repeats around, not the ones that always shift every reading the same way.",
         ),
         _estimate(
             "intermediate",
@@ -376,6 +405,7 @@ _POOLS = {
             4.7,
             0.1,
             "The pointer is 7 small divisions past 4 cm, so 4.7 cm.",
+            "Count the small divisions past the 4 cm mark. Each small division is 0.1 cm.",
         ),
     ],
     "difficult": [
@@ -391,6 +421,7 @@ _POOLS = {
             ],
             "B",
             "The repeats cluster, so they are precise, but they are far from 11.0 cm.",
+            "The four readings sit close together, but compare that cluster with the true length of 11.0 cm.",
         ),
         _mcq(
             "difficult",
@@ -399,6 +430,7 @@ _POOLS = {
             ["A  0.001", "B  0.000001", "C  0.01", "D  1 000 000"],
             "B",
             "micro means 10^-6 = 0.000001.",
+            "This prefix is a millionth, a thousand times smaller than milli.",
         ),
         _mcq(
             "difficult",
@@ -412,6 +444,7 @@ _POOLS = {
             ],
             "B",
             "The SI base unit is the kelvin. Celsius uses the same degree size but a different zero.",
+            "The SI temperature unit is named after a scientist and starts at absolute zero, not at ice.",
         ),
         _mcq(
             "difficult",
@@ -425,6 +458,7 @@ _POOLS = {
             ],
             "B",
             "A non-zero empty reading is a systematic zero error. Calibrate or subtract it.",
+            "If the empty pan already shows a mass, that offset is built into every later reading.",
         ),
         _mcq(
             "difficult",
@@ -433,6 +467,7 @@ _POOLS = {
             ["A  32 m", "B  3.2 m", "C  0.32 m", "D  0.032 m"],
             "D",
             "Divide by 100: 3.2 cm = 0.032 m.",
+            "A centimetre is a hundredth of a metre, so divide 3.2 by 100.",
         ),
         _number(
             "difficult",
@@ -440,6 +475,7 @@ _POOLS = {
             "Convert 0.003 km to millimetres. Enter the number of millimetres only.",
             3000,
             "0.003 km = 3 m = 3000 mm.",
+            "Go through metres in the middle: kilometres to metres, then metres to millimetres.",
         ),
         _number(
             "difficult",
@@ -447,6 +483,7 @@ _POOLS = {
             "Convert 1.5 L to cubic centimetres. Enter the number of cm^3 only. (1 L = 1000 cm^3)",
             1500,
             "1.5 L = 1.5 x 1000 = 1500 cm^3.",
+            "The question already gives how many cubic centimetres sit in one litre. Multiply 1.5 by that.",
         ),
         _number(
             "difficult",
@@ -454,6 +491,7 @@ _POOLS = {
             "Five length readings in cm are 10.2, 10.4, 10.1, 10.3 and 10.0. What is the range in cm?",
             0.4,
             "Range = largest - smallest = 10.4 - 10.0 = 0.4 cm.",
+            "Range is the gap between the largest reading and the smallest. Subtract those two.",
         ),
         _keyword(
             "difficult",
@@ -461,6 +499,7 @@ _POOLS = {
             "Write the SI base unit of thermodynamic temperature. Use the full word, not the symbol.",
             "kelvin",
             "The SI base unit of temperature is the kelvin.",
+            "Write the full word for the SI temperature scale that starts at absolute zero, not the everyday weather scale.",
         ),
         _order(
             "difficult",
@@ -469,6 +508,7 @@ _POOLS = {
             ["standard", "compare", "adjust"],
             _CALIBRATE_BANK,
             "Use a known standard, measure it, then adjust or record the correction.",
+            "First get a known standard, then measure it with the instrument, then correct the instrument.",
         ),
         _pick(
             "difficult",
@@ -478,6 +518,7 @@ _POOLS = {
             _BASE_BANK,
             3,
             "Metre, kilogram and second are base units.",
+            "Choose the three SI base units for length, mass and time from the list.",
         ),
         _estimate(
             "difficult",
@@ -487,6 +528,7 @@ _POOLS = {
             6.3,
             0.1,
             "The pointer is 3 small divisions past 6 cm, so 6.3 cm.",
+            "Find the whole centimetre just below the pointer, then count the extra tenths.",
         ),
     ],
 }
@@ -522,12 +564,12 @@ eursc_science_measurement, eursc_science_measurement_variants = bind_eursc_topic
 def _topic_bank(topic):
     """MCQ / typed factories bound to one syllabus slug."""
 
-    def mcq(difficulty, suffix, question, options, answer, solution):
+    def mcq(difficulty, suffix, question, options, answer, solution, hint):
         def _fn():
             return make_problem(
                 question,
                 solution,
-                "Use evidence, variables and laboratory method.",
+                hint,
                 difficulty,
                 1,
                 _LEVEL,
@@ -541,7 +583,7 @@ def _topic_bank(topic):
         _fn._kind = "mcq"
         return _fn
 
-    def typed(difficulty, suffix, kind, question, extra, solution):
+    def typed(difficulty, suffix, kind, question, extra, solution, hint):
         def _fn():
             payload = (
                 problem_extra_from_graded_answer(extra)
@@ -551,7 +593,7 @@ def _topic_bank(topic):
             return make_problem(
                 question,
                 solution,
-                "Check the method, the evidence and the variables.",
+                hint,
                 difficulty,
                 1,
                 _LEVEL,
@@ -564,7 +606,7 @@ def _topic_bank(topic):
         _fn._kind = kind
         return _fn
 
-    def number(difficulty, suffix, question, value, solution):
+    def number(difficulty, suffix, question, value, solution, hint):
         return typed(
             difficulty,
             suffix,
@@ -572,9 +614,10 @@ def _topic_bank(topic):
             question,
             {"type": "number", "value": value},
             solution,
+            hint,
         )
 
-    def keyword(difficulty, suffix, question, value, solution):
+    def keyword(difficulty, suffix, question, value, solution, hint):
         return typed(
             difficulty,
             suffix,
@@ -582,9 +625,10 @@ def _topic_bank(topic):
             question,
             {"type": "keyword", "value": value},
             solution,
+            hint,
         )
 
-    def order(difficulty, suffix, question, required_ids, bank, solution):
+    def order(difficulty, suffix, question, required_ids, bank, solution, hint):
         return typed(
             difficulty,
             suffix,
@@ -592,9 +636,10 @@ def _topic_bank(topic):
             question,
             proof_steps_answer(required_ids, bank, order_matters=True),
             solution,
+            hint,
         )
 
-    def pick(difficulty, suffix, question, required_ids, bank, pick_count, solution):
+    def pick(difficulty, suffix, question, required_ids, bank, pick_count, solution, hint):
         return typed(
             difficulty,
             suffix,
@@ -602,6 +647,7 @@ def _topic_bank(topic):
             question,
             proof_steps_answer(required_ids, bank, pick_count=pick_count),
             solution,
+            hint,
         )
 
     return mcq, number, keyword, order, pick
@@ -649,6 +695,7 @@ _WIS_POOLS = {
             ],
             "B",
             "Science relies on public, testable evidence, not on confidence or secrecy.",
+            "Science needs a test other people can run, not just how sure a friend sounds.",
         ),
         _WIS_MCQ(
             "foundational",
@@ -662,6 +709,7 @@ _WIS_POOLS = {
             ],
             "B",
             "Reliability comes from evidence that can be reproduced, not from length or votes.",
+            "Think about whether someone else could check the same measurements, not how long the sentence is.",
         ),
         _WIS_MCQ(
             "foundational",
@@ -675,6 +723,7 @@ _WIS_POOLS = {
             ],
             "B",
             "Reproducibility means an independent repeat of the method gives a similar result.",
+            "Ask whether a different group, using the same method, would get a similar number.",
         ),
         _WIS_MCQ(
             "foundational",
@@ -688,6 +737,7 @@ _WIS_POOLS = {
             ],
             "B",
             "Peers examine methods and evidence, not the person.",
+            "Critique looks at the method and the data, not at insulting the person.",
         ),
         _WIS_MCQ(
             "foundational",
@@ -701,6 +751,7 @@ _WIS_POOLS = {
             ],
             "B",
             "Explanations stay open to new evidence; they are not frozen forever.",
+            "An explanation can be the best we have today and still change if better measurements arrive.",
         ),
         _WIS_MCQ(
             "foundational",
@@ -714,6 +765,7 @@ _WIS_POOLS = {
             ],
             "B",
             "Fame is not evidence. Ask how it was tested.",
+            "Fame is not a measurement. Ask how the drink was tested and whether there was a control.",
         ),
         _WIS_KEY(
             "foundational",
@@ -721,6 +773,7 @@ _WIS_POOLS = {
             "Write the word for observations or measurements used to support or challenge a claim.",
             "evidence",
             "Evidence is the data that can support or challenge a claim.",
+            "Think of the word for the measurements or observations that can back up a claim or show it is wrong.",
         ),
         _WIS_NUM(
             "foundational",
@@ -728,6 +781,7 @@ _WIS_POOLS = {
             "Three groups measure a length as 10 cm, 12 cm and 14 cm. What is the mean length in centimetres?",
             12,
             "Mean = (10 + 12 + 14) / 3 = 12 cm.",
+            "Add the three length values, then divide by three.",
         ),
         _WIS_ORD(
             "foundational",
@@ -736,6 +790,7 @@ _WIS_POOLS = {
             ["measure", "repeat", "share"],
             _EVIDENCE_BANK,
             "Measure, repeat, then share so others can criticise the work.",
+            "Start with taking data, then do it again so others can check, then let others see the method.",
         ),
         _WIS_PICK(
             "foundational",
@@ -745,6 +800,7 @@ _WIS_POOLS = {
             _CLAIM_BANK,
             2,
             "Data and a followable method are evidence. Rumour and celebrity are not.",
+            "Choose the two things another group could check: recorded numbers and a method they can follow.",
         ),
         _WIS_PICK(
             "foundational",
@@ -754,6 +810,7 @@ _WIS_POOLS = {
             _NOT_SCIENCE_BANK,
             2,
             "Authority-only and secret methods block testing.",
+            "Choose the two ways that stop other people testing the claim: trusting fame alone, or hiding the method.",
         ),
     ],
     "intermediate": [
@@ -769,6 +826,7 @@ _WIS_POOLS = {
             ],
             "B",
             "Unexpected results need repeats and independent checks.",
+            "A single surprise is not a law. Think about repeating and letting another group try the same method.",
         ),
         _WIS_MCQ(
             "intermediate",
@@ -782,6 +840,7 @@ _WIS_POOLS = {
             ],
             "B",
             "Models explain and predict; they are not final photographs of reality.",
+            "A model is a tool for explaining and predicting, not a photograph of every particle.",
         ),
         _WIS_MCQ(
             "intermediate",
@@ -795,6 +854,7 @@ _WIS_POOLS = {
             ],
             "B",
             "Repeats scatter. Compare methods and the size of the difference.",
+            "Small differences between groups are common. Compare how they measured and how large the gap is.",
         ),
         _WIS_MCQ(
             "intermediate",
@@ -808,6 +868,7 @@ _WIS_POOLS = {
             ],
             "B",
             "A hypothesis is a testable proposed explanation or prediction.",
+            "This is a testable idea about what might happen and why, not a finished law or a table of results.",
         ),
         _WIS_MCQ(
             "intermediate",
@@ -821,6 +882,7 @@ _WIS_POOLS = {
             ],
             "B",
             "Good critique targets the method, which can be improved.",
+            "The comment is about how the thermometer was read, which can push every reading the same way.",
         ),
         _WIS_MCQ(
             "intermediate",
@@ -834,6 +896,7 @@ _WIS_POOLS = {
             ],
             "B",
             "Provisional means open to better evidence, not that anything goes.",
+            "Printed pages can still be updated when new measurements improve the explanation.",
         ),
         _WIS_KEY(
             "intermediate",
@@ -841,6 +904,7 @@ _WIS_POOLS = {
             "Write the word that means another group can follow the method and get a similar result.",
             "reproducible",
             "Reproducible work can be repeated independently.",
+            "Think of the word for work that an independent group can copy and still get a similar result.",
         ),
         _WIS_NUM(
             "intermediate",
@@ -848,6 +912,7 @@ _WIS_POOLS = {
             "Five drop times in seconds are 8, 10, 12, 10 and 10. What is the mean time in seconds?",
             10,
             "Mean = (8 + 10 + 12 + 10 + 10) / 5 = 10 s.",
+            "Add the five drop times, then divide by how many times were recorded.",
         ),
         _WIS_ORD(
             "intermediate",
@@ -856,6 +921,7 @@ _WIS_POOLS = {
             ["question", "plan", "collect"],
             _METHOD_BANK,
             "Question, then plan, then collect data. Do not ignore inconvenient results.",
+            "Start with something you can test, then plan a fair method, then gather the readings. Skip hiding awkward results.",
         ),
         _WIS_PICK(
             "intermediate",
@@ -865,6 +931,7 @@ _WIS_POOLS = {
             _EVIDENCE_BANK,
             2,
             "Measuring and sharing the method make the work checkable.",
+            "Choose taking measurements and making the method available, not keeping it secret.",
         ),
         _WIS_PICK(
             "intermediate",
@@ -874,6 +941,7 @@ _WIS_POOLS = {
             _CLAIM_BANK,
             2,
             "Rumour and celebrity endorsement are not measurements.",
+            "Choose the two claims that are not measurements: a feeling that something is right, and a famous person saying so.",
         ),
     ],
     "difficult": [
@@ -889,6 +957,7 @@ _WIS_POOLS = {
             ],
             "B",
             "Even strong explanations stay open to a better test.",
+            "Even a well-tested idea stays open in case a better test or a wider set of observations appears.",
         ),
         _WIS_MCQ(
             "difficult",
@@ -902,6 +971,7 @@ _WIS_POOLS = {
             ],
             "B",
             "Failed predictions are how models improve.",
+            "If a fair test disagrees with the model, the model should change, not the data.",
         ),
         _WIS_MCQ(
             "difficult",
@@ -915,6 +985,7 @@ _WIS_POOLS = {
             ],
             "B",
             "A single uncontrolled story cannot separate cause from coincidence.",
+            "One person's story has no comparison group, no control and no repeat, so cause is hard to prove.",
         ),
         _WIS_MCQ(
             "difficult",
@@ -928,6 +999,7 @@ _WIS_POOLS = {
             ],
             "B",
             "Without a method, the claim is not scientifically checkable.",
+            "If nobody else can see how the test was done, they cannot check or repeat it.",
         ),
         _WIS_MCQ(
             "difficult",
@@ -941,6 +1013,7 @@ _WIS_POOLS = {
             ],
             "B",
             "Fix the method. That is how critique improves reliability.",
+            "When a control was missed, the honest move is to improve the method and collect new readings.",
         ),
         _WIS_KEY(
             "difficult",
@@ -948,6 +1021,7 @@ _WIS_POOLS = {
             "Write the word for a testable idea about what might happen and why.",
             "hypothesis",
             "A hypothesis is a testable proposed explanation or prediction.",
+            "Think of the word for a proposed explanation you can actually test, not a finished law.",
         ),
         _WIS_ORD(
             "difficult",
@@ -956,6 +1030,7 @@ _WIS_POOLS = {
             ["measure", "repeat", "share"],
             _EVIDENCE_BANK,
             "Measure carefully, repeat, then share for critique.",
+            "Treat a surprise like any claim: measure it, repeat it, then open the method to critique.",
         ),
         _WIS_PICK(
             "difficult",
@@ -965,6 +1040,7 @@ _WIS_POOLS = {
             _NOT_SCIENCE_BANK,
             2,
             "Testable predictions and repeatable results are scientific. Authority and secrecy are not.",
+            "Choose the prediction you can test and the result other groups can get again, not fame or secrecy.",
         ),
         _WIS_PICK(
             "difficult",
@@ -974,6 +1050,7 @@ _WIS_POOLS = {
             _METHOD_BANK,
             2,
             "Planning and collecting data belong. Ignoring inconvenient results does not.",
+            "Choose the two enquiry steps that belong: setting up a fair plan, and gathering the readings. Skip ignoring awkward results.",
         ),
         _WIS_NUM(
             "difficult",
@@ -981,6 +1058,7 @@ _WIS_POOLS = {
             "Four independent groups repeat a method. Three get a mean near 12.1 cm and one gets 18.0 cm with a different ruler. How many groups support the original result? Enter a number.",
             3,
             "Three groups reproduce the original result; the fourth used a different instrument.",
+            "Count how many groups got a mean near 12.1 cm with the same kind of instrument. The odd ruler does not count as support.",
         ),
     ],
 }
@@ -1059,6 +1137,7 @@ _LAB_POOLS = {
             ],
             "B",
             "Mass is measured with a balance.",
+            "Mass is how much stuff is there. Which instrument is built to measure that, not length or time?",
         ),
         _LAB_MCQ(
             "foundational",
@@ -1072,6 +1151,7 @@ _LAB_POOLS = {
             ],
             "B",
             "Tie hair back before using a flame.",
+            "A flame can catch loose hair. Think what you do before lighting a Bunsen burner.",
         ),
         _LAB_MCQ(
             "foundational",
@@ -1085,6 +1165,7 @@ _LAB_POOLS = {
             ],
             "B",
             "The independent variable is the one you change.",
+            "The variable you change on purpose has a special name in a fair test.",
         ),
         _LAB_MCQ(
             "foundational",
@@ -1098,6 +1179,7 @@ _LAB_POOLS = {
             ],
             "C",
             "The dependent variable is the outcome you measure.",
+            "The outcome you time or measure has a different name from the thing you change.",
         ),
         _LAB_MCQ(
             "foundational",
@@ -1111,6 +1193,7 @@ _LAB_POOLS = {
             ],
             "B",
             "Controls stay the same so only one factor is tested.",
+            "In a fair test, the extra factors that could spoil the comparison should not change.",
         ),
         _LAB_MCQ(
             "foundational",
@@ -1124,6 +1207,7 @@ _LAB_POOLS = {
             ],
             "B",
             "Eye protection and pointing away reduce harm if the liquid spatters.",
+            "Hot liquid can spatter. Think about eyes and which way the tube points.",
         ),
         _LAB_KEY(
             "foundational",
@@ -1131,6 +1215,7 @@ _LAB_POOLS = {
             "Write the word for the variable you change on purpose in a fair test.",
             "independent",
             "The independent variable is the one you change.",
+            "One word for the factor you deliberately change in a fair test, not the outcome you measure.",
         ),
         _LAB_NUM(
             "foundational",
@@ -1138,6 +1223,7 @@ _LAB_POOLS = {
             "A results table lists 19, 21 and 23 degrees Celsius. What is the mean temperature in degrees Celsius?",
             21,
             "Mean = (19 + 21 + 23) / 3 = 21.",
+            "Add 19, 21 and 23, then divide by how many temperatures were listed.",
         ),
         _LAB_ORD(
             "foundational",
@@ -1146,6 +1232,7 @@ _LAB_POOLS = {
             ["question", "vars", "method"],
             _PLAN_BANK,
             "Question, variables, then a followable method.",
+            "Begin with what you want to find out, then name the variables, then write a method someone else could follow.",
         ),
         _LAB_PICK(
             "foundational",
@@ -1155,6 +1242,7 @@ _LAB_POOLS = {
             _SAFETY_BANK,
             2,
             "Eye protection and tying hair back are required. Tasting and running are not.",
+            "Choose the two actions that protect eyes and keep hair away from a flame. Skip tasting and running.",
         ),
         _LAB_MCQ(
             "foundational",
@@ -1164,6 +1252,7 @@ _LAB_POOLS = {
             ["A  A, the heat source", "B  B, the beaker", "C  C, the thermometer", "D  the bench itself"],
             "C",
             "C is the thermometer.",
+            "Find the labelled object that sits in the liquid and is used to read how hot it is.",
         ),
     ],
     "intermediate": [
@@ -1179,6 +1268,7 @@ _LAB_POOLS = {
             ],
             "B",
             "Use a measuring cylinder and read the meniscus correctly.",
+            "Liquids sit in a curved surface in a cylinder. You read the bottom of that curve on a volume instrument.",
         ),
         _LAB_MCQ(
             "intermediate",
@@ -1192,6 +1282,7 @@ _LAB_POOLS = {
             ],
             "B",
             "Simple labelled 2D views let another group rebuild the set-up.",
+            "Another group should be able to rebuild the set-up from a simple labelled side view, not a painting.",
         ),
         _LAB_MCQ(
             "intermediate",
@@ -1205,6 +1296,7 @@ _LAB_POOLS = {
             ],
             "B",
             "Two independent variables at once spoil a fair test.",
+            "If two things change at once, you cannot tell which one caused the outcome.",
         ),
         _LAB_MCQ(
             "intermediate",
@@ -1218,6 +1310,7 @@ _LAB_POOLS = {
             ],
             "B",
             "Means reduce random scatter. They do not fix a broken instrument.",
+            "Taking a mean of several timings reduces scatter from reaction time. It does not fix a clock that is always wrong.",
         ),
         _LAB_MCQ(
             "intermediate",
@@ -1231,6 +1324,7 @@ _LAB_POOLS = {
             ],
             "A",
             "Units and raw readings let someone else check the work.",
+            "Someone else should be able to check the work from the headings and the raw readings, not only from a mean.",
         ),
         _LAB_MCQ(
             "intermediate",
@@ -1244,6 +1338,7 @@ _LAB_POOLS = {
             ],
             "B",
             "Spills are slip hazards even when the liquid is water.",
+            "Even water on the floor is a slip hazard. Think what to do before carrying on.",
         ),
         _LAB_KEY(
             "intermediate",
@@ -1251,6 +1346,7 @@ _LAB_POOLS = {
             "Write the word for the variable you measure as the outcome.",
             "dependent",
             "The dependent variable is the measured outcome.",
+            "One word for the outcome you measure, not the factor you change on purpose.",
         ),
         _LAB_NUM(
             "intermediate",
@@ -1258,6 +1354,7 @@ _LAB_POOLS = {
             "Three dissolving times in seconds are 18, 20 and 22. What is the mean time in seconds?",
             20,
             "Mean = (18 + 20 + 22) / 3 = 20 s.",
+            "Add 18, 20 and 22, then divide by how many timings there are.",
         ),
         _LAB_ORD(
             "intermediate",
@@ -1266,6 +1363,7 @@ _LAB_POOLS = {
             ["simple", "labels"],
             _DRAW_BANK,
             "Draw a simple side view, then label each part.",
+            "First sketch a simple 2D side view, then name each piece of apparatus.",
         ),
         _LAB_PICK(
             "intermediate",
@@ -1275,6 +1373,7 @@ _LAB_POOLS = {
             _ERROR_REDUCE_BANK,
             2,
             "Repeats and reading from in front help. Changing two variables or skipping units does not.",
+            "Choose the two habits that tighten readings: more trials with a mean, and looking straight at the scale.",
         ),
         _LAB_MCQ(
             "intermediate",
@@ -1284,6 +1383,7 @@ _LAB_POOLS = {
             ["A  A", "B  B", "C  C", "D  none of them"],
             "A",
             "A is the heat source under the beaker.",
+            "Look under the beaker for the labelled object that supplies heat.",
         ),
     ],
     "difficult": [
@@ -1299,6 +1399,7 @@ _LAB_POOLS = {
             ],
             "B",
             "A constant offset is systematic. Averaging will not remove it.",
+            "If every timing is high by the same amount, averaging will not remove that offset.",
         ),
         _LAB_MCQ(
             "difficult",
@@ -1312,6 +1413,7 @@ _LAB_POOLS = {
             ],
             "B",
             "Match the instrument's resolution to the size of the change.",
+            "The instrument's smallest marked step should be smaller than the change you hope to see.",
         ),
         _LAB_MCQ(
             "difficult",
@@ -1325,6 +1427,7 @@ _LAB_POOLS = {
             ],
             "B",
             "Evaluate limits and improvements, not entertainment.",
+            "A good evaluation names what limited accuracy and how the next trial could be better, not whether it was fun.",
         ),
         _LAB_MCQ(
             "difficult",
@@ -1338,6 +1441,7 @@ _LAB_POOLS = {
             ],
             "B",
             "Keep sugar mass and water volume the same; temperature is independent; time is dependent.",
+            "Temperature is what you change; time is what you measure. Which other quantities should stay the same?",
         ),
         _LAB_MCQ(
             "difficult",
@@ -1347,6 +1451,7 @@ _LAB_POOLS = {
             ["A  A", "B  B", "C  C", "D  the bench edge"],
             "C",
             "The thermometer (C) is in the liquid.",
+            "Look for the labelled instrument whose bulb is in the liquid, not the heat source or the beaker.",
         ),
         _LAB_KEY(
             "difficult",
@@ -1354,6 +1459,7 @@ _LAB_POOLS = {
             "Write the word for a variable you keep the same so the test is fair.",
             "control",
             "Control variables are kept the same.",
+            "One word for a factor you keep the same so the test stays fair, not the factor you change or the outcome.",
         ),
         _LAB_NUM(
             "difficult",
@@ -1361,6 +1467,7 @@ _LAB_POOLS = {
             "Five timings in seconds are 19, 21, 20, 22 and 18. What is the range in seconds?",
             4,
             "Range = 22 - 18 = 4 s.",
+            "Subtract the smallest timing from the largest. That gap is the range.",
         ),
         _LAB_ORD(
             "difficult",
@@ -1369,6 +1476,7 @@ _LAB_POOLS = {
             ["question", "vars", "method"],
             _PLAN_BANK,
             "Question, variables, method. Do not invent the conclusion first.",
+            "A complete plan names a testable question, then the variables, then a followable method. Do not write the conclusion first.",
         ),
         _LAB_PICK(
             "difficult",
@@ -1378,6 +1486,7 @@ _LAB_POOLS = {
             _VAR_BANK,
             3,
             "Independent, dependent and control are the three roles. Invented numbers are not.",
+            "Choose the three real roles: the factor you change, the outcome you measure, and the factors you keep the same. Skip invented numbers.",
         ),
         _LAB_PICK(
             "difficult",
@@ -1387,6 +1496,7 @@ _LAB_POOLS = {
             _SAFETY_BANK,
             2,
             "Tasting chemicals and running in the lab are unsafe.",
+            "Choose the two actions that would harm you or others in a lab: putting chemicals in your mouth, and moving too fast.",
         ),
     ],
 }

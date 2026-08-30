@@ -80,12 +80,25 @@
     if (first) first.selected = true;
   }
 
-  function initGeneratorForm() {
+    function initGeneratorForm() {
     var levelSel = document.getElementById('level-select');
     var subjectSel = document.getElementById('subject-select');
     var topicSel = document.getElementById('topic-select');
+    var modeRow = document.getElementById('mode-row');
+    var modeSel = document.getElementById('mode-select');
     if (!levelSel || !subjectSel || !topicSel) return;
     var launchMode = !!document.querySelector('[data-launch-gcse-only="1"]');
+
+    function scienceHidesMode(level, subject) {
+      return level === 'eursc' && subject === 'science';
+    }
+
+    function syncModeRow() {
+      if (!modeRow || !modeSel) return;
+      var hide = scienceHidesMode(levelSel.value, subjectSel.value);
+      modeRow.hidden = hide;
+      if (hide) modeSel.value = 'standard';
+    }
 
     function syncTopicDropdown() {
       var level = levelSel.value;
@@ -109,6 +122,7 @@
         topicSel.dataset.pendingTopic = '';
       }
       syncTopicDropdown();
+      syncModeRow();
     }
 
     function onLevelChange() {
@@ -121,6 +135,7 @@
       var prevTopic = topicSel.value;
       topicSel.dataset.pendingTopic = prevTopic;
       syncTopicDropdown();
+      syncModeRow();
     }
 
     levelSel.addEventListener('change', onLevelChange);

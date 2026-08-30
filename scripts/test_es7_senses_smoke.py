@@ -186,6 +186,7 @@ def test_bank_size_and_formats():
                     [
                         stem,
                         str(problem.get('solution') or ''),
+                        str(problem.get('hint') or ''),
                         ' '.join(str(o) for o in (problem.get('options') or [])),
                     ]
                 )

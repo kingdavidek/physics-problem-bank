@@ -328,6 +328,7 @@ def test_sensitive_content_regression():
                     [
                         str(problem.get('question') or ''),
                         str(problem.get('solution') or ''),
+                        str(problem.get('hint') or ''),
                         ' '.join(str(o) for o in (problem.get('options') or [])),
                     ]
                 )

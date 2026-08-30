@@ -2145,13 +2145,28 @@ GENERATOR_LAUNCH_PATHS = frozenset({
     ('gcse', 'cs'),
     ('eursc', 'science'),
 })
-GENERATOR_DEFAULT_LEVEL = 'gcse'
-GENERATOR_DEFAULT_SUBJECT = 'maths'
-GENERATOR_DEFAULT_TOPIC = 'algebra'
+GENERATOR_DEFAULT_LEVEL = 'eursc'
+GENERATOR_DEFAULT_SUBJECT = 'science'
+GENERATOR_DEFAULT_TOPIC = 'what_is_science'
+GENERATOR_DEFAULT_MODE = 'standard'
+GENERATOR_DEFAULT_DIFFICULTY = 'foundational'
+_GENERATOR_PICKER_KEYS = ('level', 'subject', 'topic', 'mode', 'difficulty')
 
 
 def _generator_path_allowed(level, subject):
     return (level, subject) in GENERATOR_LAUNCH_PATHS
+
+
+def _eursc_science_hides_mode(level, subject):
+    return level == 'eursc' and subject == 'science'
+
+
+def _normalize_generator_mode(level, subject, mode):
+    """Integrated Science has one practice mix; MCQ is not a separate mode."""
+    mode = normalize_mode(mode)
+    if _eursc_science_hides_mode(level, subject) and mode == 'mcq':
+        return 'standard'
+    return mode
 
 
 def _generator_launch_restricted():
@@ -2184,6 +2199,77 @@ def _normalize_generator_scope(level, subject, topic):
 
 
 _GENERATOR_DIFFICULTIES = frozenset({'foundational', 'intermediate', 'difficult'})
+
+
+def _remember_generator_selection(level, subject, topic, mode, difficulty):
+    session['generator_selection'] = {
+        'level': level,
+        'subject': subject,
+        'topic': topic,
+        'mode': mode,
+        'difficulty': difficulty,
+    }
+    session.modified = True
+
+
+def _selection_tuple_from_mapping(data):
+    if not isinstance(data, dict):
+        return None
+    level = data.get('level') or GENERATOR_DEFAULT_LEVEL
+    subject = data.get('subject') or GENERATOR_DEFAULT_SUBJECT
+    topic = _resolve_topic_slug(
+        level, subject, data.get('topic') or GENERATOR_DEFAULT_TOPIC,
+    )
+    level, subject, topic = _normalize_generator_scope(level, subject, topic)
+    difficulty = data.get('difficulty') or GENERATOR_DEFAULT_DIFFICULTY
+    if difficulty not in _GENERATOR_DIFFICULTIES:
+        difficulty = GENERATOR_DEFAULT_DIFFICULTY
+    mode = _normalize_generator_mode(level, subject, data.get('mode') or GENERATOR_DEFAULT_MODE)
+    return level, subject, topic, mode, difficulty
+
+
+def _restored_generator_selection():
+    stored = _selection_tuple_from_mapping(session.get('generator_selection'))
+    if stored:
+        return stored
+    if current_user.is_authenticated:
+        with get_db() as conn:
+            items = list_recent_practised_topics(conn, current_user.id, limit=16)
+        for item in items:
+            if not item.get('difficulty'):
+                continue
+            if not _generator_path_allowed(item.get('level') or '', item.get('subject') or ''):
+                continue
+            restored = _selection_tuple_from_mapping(item)
+            if restored:
+                return restored
+    return (
+        GENERATOR_DEFAULT_LEVEL,
+        GENERATOR_DEFAULT_SUBJECT,
+        GENERATOR_DEFAULT_TOPIC,
+        GENERATOR_DEFAULT_MODE,
+        GENERATOR_DEFAULT_DIFFICULTY,
+    )
+
+
+def _picker_values_from(values, fallback):
+    level, subject, topic, mode, difficulty = fallback
+    if values.get('level'):
+        level = values.get('level')
+    if values.get('subject'):
+        subject = values.get('subject')
+    if values.get('topic'):
+        topic = values.get('topic')
+    if values.get('mode'):
+        mode = values.get('mode')
+    if values.get('difficulty'):
+        difficulty = values.get('difficulty')
+    topic = _resolve_topic_slug(level, subject, topic)
+    level, subject, topic = _normalize_generator_scope(level, subject, topic)
+    if difficulty not in _GENERATOR_DIFFICULTIES:
+        difficulty = GENERATOR_DEFAULT_DIFFICULTY
+    mode = _normalize_generator_mode(level, subject, mode)
+    return level, subject, topic, mode, difficulty
 
 
 def _recent_topics_for_generator(conn, user_id, *, selected_diff='foundational'):
@@ -2231,28 +2317,22 @@ def index():
     limit_hit = False
     ANON_DAILY_LIMIT = 999
 
+    fallback = _restored_generator_selection()
     if request.method == 'POST':
-        selected_level = request.form.get('level', GENERATOR_DEFAULT_LEVEL)
-        selected_subject = request.form.get('subject', GENERATOR_DEFAULT_SUBJECT)
-        selected_topic = _resolve_topic_slug(
-            selected_level, selected_subject, request.form.get('topic', GENERATOR_DEFAULT_TOPIC)
+        selected_level, selected_subject, selected_topic, selected_mode, selected_diff = (
+            _picker_values_from(request.form, fallback)
         )
-        raw_mode = request.form.get('mode', 'standard')
-        selected_diff = request.form.get('difficulty', 'foundational')
         action = request.form.get('action', 'start')
-    else:
-        selected_level = request.args.get('level', GENERATOR_DEFAULT_LEVEL)
-        selected_subject = request.args.get('subject', GENERATOR_DEFAULT_SUBJECT)
-        selected_topic = _resolve_topic_slug(
-            selected_level, selected_subject, request.args.get('topic', GENERATOR_DEFAULT_TOPIC)
+    elif any(request.args.get(key) for key in _GENERATOR_PICKER_KEYS):
+        selected_level, selected_subject, selected_topic, selected_mode, selected_diff = (
+            _picker_values_from(request.args, fallback)
         )
-        raw_mode = request.args.get('mode', 'standard')
-        selected_diff = request.args.get('difficulty', 'foundational')
         action = 'start'
-    selected_level, selected_subject, selected_topic = _normalize_generator_scope(
-        selected_level, selected_subject, selected_topic,
-    )
-    selected_mode = normalize_mode(raw_mode)
+    else:
+        selected_level, selected_subject, selected_topic, selected_mode, selected_diff = fallback
+        if not can_access_difficulty(current_user, selected_diff):
+            selected_diff = GENERATOR_DEFAULT_DIFFICULTY
+        action = 'start'
 
 
     if request.method == 'POST':
@@ -2321,6 +2401,13 @@ def index():
                         'problem': problem,
                     }
                     session.modified = True
+                    _remember_generator_selection(
+                        selected_level,
+                        selected_subject,
+                        selected_topic,
+                        selected_mode,
+                        selected_diff,
+                    )
                     _track_question_generated(
                         selected_level,
                         selected_subject,
@@ -2363,6 +2450,7 @@ def index():
         selected_topic=selected_topic,
         selected_mode=selected_mode,
         selected_diff=selected_diff,
+        hide_generator_mode=_eursc_science_hides_mode(selected_level, selected_subject),
         queue_active=bool(session.get('problem_queue')),
         can_reroll_variant=can_reroll_variant,
         generator_launch_restricted=_generator_launch_restricted(),
@@ -6986,7 +7074,7 @@ def api_v1_quicktest_start():
     level = payload.get('level', 'gcse')
     subject = payload.get('subject', 'physics')
     topic = _resolve_topic_slug(level, subject, payload.get('topic', 'forces'))
-    mode = normalize_mode(payload.get('mode', 'standard'))
+    mode = _normalize_generator_mode(level, subject, payload.get('mode', 'standard'))
     difficulty = payload.get('difficulty', 'foundational')
 
     if not _topic_path_valid(level, subject, topic):
@@ -7411,7 +7499,7 @@ def api_v1_generate_problem():
     level = (payload.get('level') or 'gcse').strip()
     subject = (payload.get('subject') or 'maths').strip()
     topic = _resolve_topic_slug(level, subject, (payload.get('topic') or '').strip())
-    mode = normalize_mode(payload.get('mode') or 'standard')
+    mode = _normalize_generator_mode(level, subject, payload.get('mode') or 'standard')
     difficulty = (payload.get('difficulty') or 'foundational').strip()
     action = (payload.get('action') or 'start').strip().lower()
 
@@ -8756,7 +8844,7 @@ def quicktest_start():
     level = request.form.get('level', 'gcse')
     subject = request.form.get('subject', 'physics')
     topic = _resolve_topic_slug(level, subject, request.form.get('topic', 'forces'))
-    mode = normalize_mode(request.form.get('mode', 'standard'))
+    mode = _normalize_generator_mode(level, subject, request.form.get('mode', 'standard'))
     difficulty = request.form.get('difficulty', 'foundational')
 
     try:
