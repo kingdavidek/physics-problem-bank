@@ -14,8 +14,8 @@ sys.path.insert(0, str(ROOT / 'scripts'))
 os.environ['PB_TESTING'] = '1'
 os.environ['MAIL_PROVIDER'] = 'console'
 os.environ['SITE_URL'] = 'http://127.0.0.1:5000'
-os.environ.setdefault('SECRET_KEY', 'test-secret-key-for-s3-cadence-smoke')
-os.environ['PB_BACKUP_PASSPHRASE'] = 's3-cadence-passphrase-not-for-prod'
+os.environ.setdefault('SECRET_KEY', 'pb-testing')
+os.environ['PB_BACKUP_PASSPHRASE'] = 'pb-testing-passphrase'
 
 from backup_sqlite import MAGIC, run_backup  # noqa: E402
 

@@ -10,7 +10,7 @@ sys.path.insert(0, str(ROOT))
 os.environ['PB_TESTING'] = '1'
 os.environ['MAIL_PROVIDER'] = 'console'
 os.environ['SITE_URL'] = 'http://127.0.0.1:5000'
-os.environ.setdefault('SECRET_KEY', 'test-secret-key-for-lockout-smoke')
+os.environ.setdefault('SECRET_KEY', 'pb-testing')
 
 from app import app, get_db  # noqa: E402
 from models.login_lockout import (  # noqa: E402

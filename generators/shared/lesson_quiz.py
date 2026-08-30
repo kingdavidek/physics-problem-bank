@@ -148,6 +148,15 @@ def _fill_quiz_slot(
     """Append up to `count` unique problems for one difficulty band."""
     rng = rng or random
     added = 0
+    # Mixed lesson banks: take one MCQ first when the band has one, so a random
+    # 10-question draw cannot be typed-only (ES0 fixture has 1 MCQ in 5 items).
+    if mode == "lesson":
+        mcq = _generate_mcq_problem(
+            generator, variants_func, difficulty, seen_keys, rng
+        )
+        if mcq:
+            problems.append(mcq)
+            added += 1
     while added < count:
         problem = _generate_quiz_problem(
             generator, variants_func, difficulty, seen_keys, rng, mode=mode

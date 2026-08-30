@@ -225,6 +225,9 @@ def test_mixed_quiz_api_web_retry_security():
             kinds.add(problem.get('answer_type') or 'typed')
     assert 'mcq' in kinds
     assert any(k != 'mcq' for k in kinds)
+    for _ in range(12):
+        sample = build_lesson_quiz('eursc', 'science', 'es0_fixture', cfg)
+        assert any(item.get('options') for item in sample)
 
     with app.test_client() as client:
         suffix = uuid.uuid4().hex[:8]

@@ -100,7 +100,7 @@ Or via API (Bearer token):
 
 ```bash
 curl -X POST https://yourdomain.com/api/v1/me/email/test-digest \
-  -H "Authorization: Bearer YOUR_TOKEN"
+  -H "Authorization: Bearer $PB_API_TOKEN"
 ```
 
 ## Step 6 — Schedule the weekly job
