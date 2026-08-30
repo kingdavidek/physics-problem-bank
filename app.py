@@ -2139,26 +2139,47 @@ def _resolve_topic_slug(level, subject, topic):
 
 ## ROUTES
 
-# Launch generator scope: GCSE Maths + Computer Science only in the UI.
-# A-Level / other subjects stay in TOPICS and templates for a later release.
-GENERATOR_LAUNCH_GCSE_MATHS_CS = True
-GENERATOR_LAUNCH_SUBJECTS = frozenset({'maths', 'cs'})
+# Live Practice catalogue. A-Level / Physics / MYP stay in TOPICS for later.
+GENERATOR_LAUNCH_PATHS = frozenset({
+    ('gcse', 'maths'),
+    ('gcse', 'cs'),
+    ('eursc', 'science'),
+})
 GENERATOR_DEFAULT_LEVEL = 'gcse'
 GENERATOR_DEFAULT_SUBJECT = 'maths'
 GENERATOR_DEFAULT_TOPIC = 'algebra'
 
 
+def _generator_path_allowed(level, subject):
+    return (level, subject) in GENERATOR_LAUNCH_PATHS
+
+
+def _generator_launch_restricted():
+    live = {(lv, sub) for lv, subjects in TOPICS.items() for sub in subjects}
+    return frozenset(live) != GENERATOR_LAUNCH_PATHS
+
+
+def _generator_launch_level_ids():
+    allowed = {lv for lv, _sub in GENERATOR_LAUNCH_PATHS}
+    return [lv for lv in ('gcse', 'alevel', 'myp', 'eursc') if lv in allowed]
+
+
+def _launch_default_topic(level, subject):
+    topics = (TOPICS.get(level) or {}).get(subject) or {}
+    for slug, _cfg in iter_topics(topics):
+        if slug != 'es0_fixture':
+            return slug
+    return GENERATOR_DEFAULT_TOPIC
+
+
 def _normalize_generator_scope(level, subject, topic):
-    """Clamp generator selections during launch (GCSE maths + CS only)."""
-    if not GENERATOR_LAUNCH_GCSE_MATHS_CS:
-        return level, subject, topic
-    level = GENERATOR_DEFAULT_LEVEL
-    if subject not in GENERATOR_LAUNCH_SUBJECTS:
-        subject = GENERATOR_DEFAULT_SUBJECT
+    """Clamp generator selections to GENERATOR_LAUNCH_PATHS."""
+    if not _generator_path_allowed(level, subject):
+        return GENERATOR_DEFAULT_LEVEL, GENERATOR_DEFAULT_SUBJECT, GENERATOR_DEFAULT_TOPIC
     try:
         TOPICS[level][subject][topic]
     except KeyError:
-        topic = GENERATOR_DEFAULT_TOPIC
+        topic = _launch_default_topic(level, subject)
     return level, subject, topic
 
 
@@ -2175,9 +2196,8 @@ def _recent_topics_for_generator(conn, user_id, *, selected_diff='foundational')
         level = item.get('level') or ''
         subject = item.get('subject') or ''
         topic = _resolve_topic_slug(level, subject, item.get('topic') or '')
-        if GENERATOR_LAUNCH_GCSE_MATHS_CS:
-            if level != GENERATOR_DEFAULT_LEVEL or subject not in GENERATOR_LAUNCH_SUBJECTS:
-                continue
+        if not _generator_path_allowed(level, subject):
+            continue
         try:
             cfg = TOPICS[level][subject][topic]
         except KeyError:
@@ -2345,7 +2365,11 @@ def index():
         selected_diff=selected_diff,
         queue_active=bool(session.get('problem_queue')),
         can_reroll_variant=can_reroll_variant,
-        generator_launch_gcse_only=GENERATOR_LAUNCH_GCSE_MATHS_CS,
+        generator_launch_restricted=_generator_launch_restricted(),
+        generator_launch_levels=[
+            {'id': lv, 'label': LEVEL_LABELS.get(lv, lv.title())}
+            for lv in _generator_launch_level_ids()
+        ],
         generator_topics=_generator_topic_options(),
         recent_topics=recent_topics,
     )
@@ -4377,13 +4401,17 @@ def _annotate_topic_path_groups(groups, statuses):
 
 
 def _generator_topic_options():
-    """Topic picker rows in syllabus order (U4.2a)."""
+    """Topic picker rows in syllabus order, limited to the live launch allowlist."""
     items = []
     for level in _TOPIC_LEVEL_ORDER:
         subjects = TOPICS.get(level) or {}
         for subject in _TOPIC_SUBJECT_ORDER.get(level, tuple(subjects.keys())):
+            if not _generator_path_allowed(level, subject):
+                continue
             topics = subjects.get(subject) or {}
             for slug, cfg in iter_topics(topics):
+                if slug == 'es0_fixture':
+                    continue
                 items.append({
                     'slug': slug,
                     'name': cfg.get('name') or slug.replace('_', ' ').title(),
@@ -7397,6 +7425,8 @@ def api_v1_generate_problem():
         )
     if not _topic_path_valid(level, subject, topic):
         return _api_error('Topic not found', 404, 'topic_not_found')
+    if not _generator_path_allowed(level, subject):
+        return _api_error('Topic not in the live Practice catalogue', 404, 'topic_not_found')
     if not can_access_difficulty(current_user, difficulty):
         return _api_error(
             'Difficult questions require a free account',

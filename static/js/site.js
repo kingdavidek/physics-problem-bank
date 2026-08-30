@@ -99,7 +99,7 @@
       var level = levelSel.value;
       var prevSubject = subjectSel.value;
       setOptionVisibility(subjectSel, function (opt) {
-        if (launchMode && level === 'gcse' && opt.dataset.launchSubject !== '1') {
+        if (launchMode && opt.dataset.launchSubject !== '1') {
           return false;
         }
         return opt.dataset.level === level;

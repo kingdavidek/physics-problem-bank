@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 os.environ['PB_TESTING'] = '1'
 
-from app import GENERATOR_LAUNCH_GCSE_MATHS_CS, app  # noqa: E402
+from app import GENERATOR_LAUNCH_PATHS, app  # noqa: E402
 from generators.shared.lesson_quiz import (  # noqa: E402
     build_lesson_quiz,
     grade_lesson_quiz_problem,
@@ -82,14 +82,15 @@ def test_filename_pattern():
     assert match.groups() == ('eursc', 'science', 'es0_fixture')
 
 
-def test_practice_generator_stays_closed():
-    assert GENERATOR_LAUNCH_GCSE_MATHS_CS is True
+def test_practice_generator_accepts_eursc():
+    assert ('eursc', 'science') in GENERATOR_LAUNCH_PATHS
     with app.test_client() as client:
         home = client.get('/')
         assert home.status_code == 200
         html = home.data.decode()
         assert 'data-launch-gcse-only="1"' in html
-        assert 'value="science"' not in html
+        assert 'value="science"' in html
+        assert 'value="eursc"' in html
         assert 'data-level-filter="eursc"' not in html
 
         csrf = re.search(r'name="csrf-token" content="([^"]+)"', html).group(1)
@@ -106,11 +107,11 @@ def test_practice_generator_stays_closed():
         )
         assert posted.status_code == 200
         body = posted.data.decode()
-        assert 'value="gcse"' in body or 'id="level-select" value="gcse"' in body
-        assert 'selected_subject' not in body
-        assert 'value="maths"' in body
-        assert 'ES0-MCQ' not in body
-        assert 'ES0-NUM' not in body
+        chunk = body.split('id="page-data"', 1)[1][:500]
+        assert 'data-level="eursc"' in chunk
+        assert 'data-subject="science"' in chunk
+        assert 'data-topic="es0_fixture"' in chunk
+        assert 'ES0-MCQ-F' in body
 
 
 def test_eursc_hierarchy_shell():
@@ -358,7 +359,7 @@ def test_mixed_quiz_api_web_retry_security():
 
 def main():
     test_filename_pattern()
-    test_practice_generator_stays_closed()
+    test_practice_generator_accepts_eursc()
     test_eursc_hierarchy_shell()
     test_grade_each_mixed_format()
     test_mixed_quiz_api_web_retry_security()

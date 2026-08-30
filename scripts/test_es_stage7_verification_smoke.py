@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 os.environ["PB_TESTING"] = "1"
 
-from app import GENERATOR_LAUNCH_GCSE_MATHS_CS, app  # noqa: E402
+from app import GENERATOR_LAUNCH_PATHS, app  # noqa: E402
 from generators.eursc.science_shared import EURSC_PRACTICE_SLOT_COUNT, SYLLABUS_MODULES  # noqa: E402
 from generators.shared.lesson_quiz import build_lesson_quiz  # noqa: E402
 from models.qotd import list_mcq_topic_paths  # noqa: E402
@@ -100,7 +100,7 @@ def test_sensitive_templates_third_person():
 
 
 def test_practice_home_and_slots_unchanged():
-    assert GENERATOR_LAUNCH_GCSE_MATHS_CS is True
+    assert ('eursc', 'science') in GENERATOR_LAUNCH_PATHS
     assert all(level != "eursc" for level, *_rest in list_mcq_topic_paths())
 
     science = TOPICS["eursc"]["science"]
@@ -119,12 +119,14 @@ def test_practice_home_and_slots_unchanged():
         assert len(quiz) == 10, slug
 
 
-def test_practice_generator_rejects_eursc_post():
+def test_practice_generator_accepts_eursc_post():
     with app.test_client() as client:
         home = client.get("/")
         assert home.status_code == 200
         html = home.data.decode()
         assert 'data-launch-gcse-only="1"' in html
+        assert 'value="science"' in html
+        assert 'value="eursc"' in html
         csrf = re.search(r'name="csrf-token" content="([^"]+)"', html).group(1)
         posted = client.post(
             "/",
@@ -139,7 +141,11 @@ def test_practice_generator_rejects_eursc_post():
         )
         assert posted.status_code == 200
         body = posted.data.decode()
-        assert 'value="gcse"' in body or 'id="level-select" value="gcse"' in body
+        chunk = body.split('id="page-data"', 1)[1][:500]
+        assert 'data-level="eursc"' in chunk
+        assert 'data-subject="science"' in chunk
+        assert 'data-topic="measurement"' in chunk
+        assert "question-content" in body
 
 
 def main():
@@ -148,7 +154,7 @@ def main():
     test_dark_mode_contract()
     test_sensitive_templates_third_person()
     test_practice_home_and_slots_unchanged()
-    test_practice_generator_rejects_eursc_post()
+    test_practice_generator_accepts_eursc_post()
     print("ES Stage 7 verification smoke tests passed.")
 
 

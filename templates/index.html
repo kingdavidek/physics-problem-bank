@@ -11,7 +11,7 @@
      data-topic="{{ selected_topic }}"
      style="display:none;"></div>
 
-<div class="page-shell{% if problem %} practice-page--active{% endif %}"{% if generator_launch_gcse_only %} data-launch-gcse-only="1"{% endif %}>
+<div class="page-shell{% if problem %} practice-page--active{% endif %}"{% if generator_launch_restricted %} data-launch-gcse-only="1"{% endif %}>
 
 <div class="practice-hero">
     <h1>{% if current_user.is_authenticated %}Hi, {{ current_user.display_handle }}{% else %}Ready to practise?{% endif %}</h1>
@@ -43,8 +43,15 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-grid">
 
-            {% if generator_launch_gcse_only %}
-            <input type="hidden" name="level" id="level-select" value="gcse">
+            {% if generator_launch_restricted %}
+            <div class="form-group">
+                <label for="level-select">Level</label>
+                <select name="level" id="level-select">
+                    {% for lv in generator_launch_levels %}
+                    <option value="{{ lv.id }}" {% if selected_level == lv.id %}selected{% endif %}>{{ lv.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
             {% else %}
             <div class="form-group">
                 <label for="level-select">Level</label>
@@ -52,6 +59,7 @@
                     <option value="gcse" {% if selected_level == 'gcse' %}selected{% endif %}>GCSE</option>
                     <option value="alevel" {% if selected_level == 'alevel' %}selected{% endif %}>A-Level</option>
                     <option value="myp" {% if selected_level == 'myp' %}selected{% endif %}>IB MYP</option>
+                    <option value="eursc" {% if selected_level == 'eursc' %}selected{% endif %}>European School</option>
                 </select>
             </div>
             {% endif %}
@@ -62,6 +70,7 @@
                     <option value="physics" data-level="gcse" class="launch-hidden" {% if selected_level == 'gcse' and selected_subject == 'physics' %}selected{% endif %}>Physics</option>
                     <option value="maths" data-level="gcse" data-launch-subject="1" {% if selected_level == 'gcse' and selected_subject == 'maths' %}selected{% endif %}>Maths</option>
                     <option value="cs" data-level="gcse" data-launch-subject="1" {% if selected_level == 'gcse' and selected_subject == 'cs' %}selected{% endif %}>Computer Science</option>
+                    <option value="science" data-level="eursc" data-launch-subject="1" {% if selected_level == 'eursc' and selected_subject == 'science' %}selected{% endif %}>Integrated Science</option>
                     <option value="physics" data-level="alevel" class="launch-hidden" {% if selected_level == 'alevel' and selected_subject == 'physics' %}selected{% endif %}>Physics</option>
                     <option value="chemistry" data-level="myp" class="launch-hidden" {% if selected_level == 'myp' and selected_subject == 'chemistry' %}selected{% endif %}>Chemistry</option>
                 </select>

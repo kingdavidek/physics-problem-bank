@@ -195,10 +195,10 @@ They are ordinary code allowlists left over from the initial GCSE launch—not a
 |------|----------------|-----------------|
 | `app.py::_lesson_quiz_available` | Returns false for anything except GCSE maths/CS, even if a science quiz bank exists; the quiz URL then 404s and CTA is omitted | Replace curriculum-name check with capability detection and allow `eursc/science` mixed quizzes |
 | `models/buddy.py::_quiz_available` | Duplicate check makes Zorp say no quiz is available and withholds quiz links | Remove duplication; call the shared capability helper |
-| `GENERATOR_LAUNCH_GCSE_MATHS_CS` | Forces the **main Practice page** back to GCSE maths/CS | **Leave closed in v1**, per decision. Backend lesson banks still power lesson quizzes |
+| `GENERATOR_LAUNCH_PATHS` | Live Practice catalogue: GCSE maths, GCSE CS, `eursc/science` | **Open for Integrated Science (Phase 3).** Physics / A-Level / MYP stay out. QOTD still skips eursc |
 | `scripts/test_lesson_unify_smoke.py::FILENAME_RE` | CI treats `eursc_science_*.html` as an invalid filename and fails | Add `eursc`; this is only a test allowlist |
 
-So lessons and quizzes can launch without exposing Integrated Science in the main Practice generator. The generator clamp is intentional for v1; the other three checks must change.
+So lessons, quizzes, and the main Practice generator all expose Integrated Science. QOTD still excludes `eursc`. Physics / A-Level / MYP stay out of the live Practice catalogue.
 
 ---
 

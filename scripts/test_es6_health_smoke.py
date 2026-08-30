@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 os.environ['PB_TESTING'] = '1'
 
-from app import GENERATOR_LAUNCH_GCSE_MATHS_CS, app  # noqa: E402
+from app import GENERATOR_LAUNCH_PATHS, app  # noqa: E402
 from generators.eursc.science_shared import IBL_PAGES, SYLLABUS_MODULES  # noqa: E402
 from generators.shared.lesson_quiz import (  # noqa: E402
     build_lesson_quiz,
@@ -215,13 +215,16 @@ def test_bank_size_and_formats():
 
 
 def test_practice_and_qotd_stay_closed():
-    assert GENERATOR_LAUNCH_GCSE_MATHS_CS is True
+    assert ('eursc', 'science') in GENERATOR_LAUNCH_PATHS
+    assert ('gcse', 'maths') in GENERATOR_LAUNCH_PATHS
     assert all(level != 'eursc' for level, *_rest in list_mcq_topic_paths())
     with app.test_client() as client:
         home = client.get('/')
         assert home.status_code == 200
         html = home.data.decode()
         assert 'data-launch-gcse-only="1"' in html
+        assert 'value="science"' in html
+        assert 'value="eursc"' in html
         csrf = re.search(r'name="csrf-token" content="([^"]+)"', html).group(1)
         posted = client.post(
             '/',
@@ -236,7 +239,11 @@ def test_practice_and_qotd_stay_closed():
         )
         assert posted.status_code == 200
         body = posted.data.decode()
-        assert 'value="gcse"' in body or 'id="level-select" value="gcse"' in body
+        chunk = body.split('id="page-data"', 1)[1][:500]
+        assert 'data-level="eursc"' in chunk
+        assert 'data-subject="science"' in chunk
+        assert 'data-topic="healthy_living"' in chunk
+        assert 'question-content' in body
 
 
 def test_lesson_routes_topics_search():

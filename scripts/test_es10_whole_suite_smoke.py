@@ -14,7 +14,7 @@ import sys
 sys.path.insert(0, str(ROOT))
 os.environ['PB_TESTING'] = '1'
 
-from app import GENERATOR_LAUNCH_GCSE_MATHS_CS, app, get_db  # noqa: E402
+from app import GENERATOR_LAUNCH_PATHS, app, get_db  # noqa: E402
 from generators.eursc.science_shared import IBL_PAGES, SYLLABUS_MODULES  # noqa: E402
 from generators.shared.lesson_quiz import topic_supports_lesson_quiz  # noqa: E402
 from models.lesson_search import build_lesson_search_docs  # noqa: E402
@@ -334,8 +334,10 @@ def test_sensitive_content_regression():
                 assert not DISCLOSE_RE.search(blob), (slug, difficulty)
 
 
-def test_practice_and_qotd_stay_closed():
-    assert GENERATOR_LAUNCH_GCSE_MATHS_CS is True
+def test_qotd_excludes_eursc_and_practice_allows_science():
+    assert ('eursc', 'science') in GENERATOR_LAUNCH_PATHS
+    assert ('gcse', 'maths') in GENERATOR_LAUNCH_PATHS
+    assert ('gcse', 'cs') in GENERATOR_LAUNCH_PATHS
     assert all(level != 'eursc' for level, *_rest in list_mcq_topic_paths())
 
 
@@ -371,7 +373,7 @@ def main():
     test_revision_planner_eursc()
     test_subject_badges_catalog()
     test_sensitive_content_regression()
-    test_practice_and_qotd_stay_closed()
+    test_qotd_excludes_eursc_and_practice_allows_science()
     test_shared_lesson_system()
     print('ES10 whole-suite QA smoke tests passed.')
 

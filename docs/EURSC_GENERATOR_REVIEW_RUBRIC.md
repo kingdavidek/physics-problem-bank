@@ -5,7 +5,7 @@
 **Slot-recipe source of truth:** Cursor canvas `eursc-generator-question-plan.canvas.tsx`.  
 **Curriculum / safeguarding:** `docs/EUROPEAN_SCHOOL_SCIENCE.md`; `DISCLOSE_RE` in `scripts/test_es10_whole_suite_smoke.py`.  
 **Handoff:** `docs/EURSC_GENERATOR_HANDOFF.md`.  
-**Last updated:** 2026-08-29 (Phase 2 canvas recipes)
+**Last updated:** 2026-08-30 (Phase 6 year-by-year Practice-home QA)
 
 This is not a rewrite of the 46 lesson templates. Lesson banks (`mode=lesson`) and ten-question quizzes stay as they are. Practice work is **select / lightly rewrite** five generator-safe items per topic per difficulty from those banks.
 
@@ -20,10 +20,10 @@ Do **one phase per user cue**. Stop and report when the phase is done. Do not re
 | **0** | **Baseline and contract** | Smoke baseline + this rubric | **Complete** (2026-08-29) |
 | **1** | **Explicit standard pools** | Name five curated slots per topic×difficulty; `standard` returns exactly those five; **no** fallback from standard → lesson | **Complete** (2026-08-29) |
 | **2** | **Align to canvas recipes** | Curate/lightly rewrite so each tier matches MCQ / keyword / data / ordered / pick-set intent | **Complete** (2026-08-29) |
-| 3 | Launch gate | Replace `GENERATOR_LAUNCH_GCSE_MATHS_CS` boolean with an allowlist including `eursc/science`; fix home selectors, POST, and `problems/generate` validation | Pending |
-| 4 | Safety regression | Sensitive banks + templates still pass `DISCLOSE_RE`; no QOTD eursc; IBL not in generator | Pending |
-| 5 | Matrix smoke | Assert 46×3×5 standard variants, unique names, valid payloads, API/web generate, no leakage | Pending |
-| 6 | Roll out by year | Ship S1, then S2, then S3 (or one allowlist with year-by-year content QA); full smoke + manual desktop/mobile after each year | Pending |
+| **3** | **Launch gate** | Replace `GENERATOR_LAUNCH_GCSE_MATHS_CS` boolean with an allowlist including `eursc/science`; fix home selectors, POST, and `problems/generate` validation | **Complete** (2026-08-29) |
+| **4** | **Safety regression** | Sensitive banks + templates still pass `DISCLOSE_RE`; no QOTD eursc; IBL not in generator | **Complete** (2026-08-30) |
+| **5** | **Matrix smoke** | Assert 46×3×5 standard variants, unique names, valid payloads, API/web generate, no leakage | **Complete** (2026-08-30) |
+| **6** | **Roll out by year** | Year-by-year Practice-home QA (S1 then S2 then S3); full smoke + desktop/mobile after each year | **Complete** (2026-08-30) |
 | 7 | Verification | Full suite green + sample generate on Practice home for sensitive and S3 topics | Pending |
 
 ---
@@ -78,7 +78,87 @@ Every `standard` tier is now **MCQ, keyword, data/numeric, ordered, pick/set** i
 | S3 | Existing no-power / no \(V=IR\) claims kept; numeric slots use \(W=Fd\) or qualitative path counts |
 | Slot smoke | `test_standard_recipe_order` + `test_movement_standard_is_kinematics` |
 
-**Left for later phases:** launch allowlist (Phase 3); payload/API matrix (Phase 5); year-by-year Practice-home QA (Phase 6).
+**Left for later phases:** launch allowlist (Phase 3 — done); payload/API matrix (Phase 5); year-by-year Practice-home QA (Phase 6).
+
+---
+
+## Phase 3 launch gate (2026-08-29)
+
+Practice home and `POST /api/v1/problems/generate` accept GCSE Maths, GCSE CS, and European School Integrated Science. Physics, A-Level, and MYP stay out of the live catalogue. QOTD still skips `eursc`. IBL pages are not generator topics.
+
+| Item | Result |
+|------|--------|
+| Command | `PB_TESTING=1 python scripts/run_smoke_tests.py` |
+| Result | **All 65 smoke tests passed.** |
+| Allowlist | `GENERATOR_LAUNCH_PATHS` = `{('gcse','maths'), ('gcse','cs'), ('eursc','science')}` |
+| Home | Level select shows GCSE + European School; subject includes Integrated Science; topic list is allowlisted (es0 fixture omitted from the picker) |
+| API | `problems/generate` accepts `eursc/science`; rejects `gcse/physics` |
+| QOTD | `list_mcq_topic_paths` still skips `level == 'eursc'` |
+| Slot smoke | `test_practice_home_and_api_accept_eursc` |
+
+**Left for later phases:** payload/API matrix (Phase 5); year-by-year Practice-home QA (Phase 6).
+
+---
+
+## Phase 4 safety regression (2026-08-30)
+
+No disclose hits, no QOTD eursc, IBL stays off the Practice catalogue, and S3 standard slots do not ask for power or \(V=IR\) calculations. Lesson templates were not reopened.
+
+| Item | Result |
+|------|--------|
+| Command | `PB_TESTING=1 python scripts/run_smoke_tests.py` |
+| Result | **All 65 smoke tests passed.** |
+| Disclose | 1.4 / 2.2 / 2.3.7 (`interoception`) templates + lesson and standard banks clean under ES10 `DISCLOSE_RE` |
+| QOTD | `list_mcq_topic_paths` still skips `level == 'eursc'` |
+| IBL | `IBL_PAGES` slugs are not in `TOPICS` or the Practice topic picker; `/ibl/eursc/science/<slug>` still 200 |
+| S3 | `force_work_machines`, `energy`, `electric_current` standard slots: no `power in watts?` / `P=W/t` / resistance-calculation stems |
+| Slot smoke | `test_sensitive_standard_slots_and_templates_pass_disclose`, `test_ibl_pages_are_not_generator_topics`, `test_s3_standard_slots_have_no_power_or_vir_calculations` |
+
+**Left for later phases:** final verification samples (Phase 7).
+
+---
+
+## Phase 5 matrix smoke (2026-08-30)
+
+Every syllabus topic×difficulty returns five named standard variants with unique names and the MCQ / keyword / data / ordered / pick recipe. Direct `fn()` and `generate(..., variant_name=...)` payloads are grader-ready. Web POST `/` and `POST /api/v1/problems/generate` succeed for S1 measurement, 1.4.1 puberty, 2.2.1 health, and 3.1.4 electric current. Standard generate still cannot pull a lesson-only name. IBL and QOTD invariants unchanged.
+
+| Item | Result |
+|------|--------|
+| Command | `PB_TESTING=1 python scripts/run_smoke_tests.py` |
+| Result | **All 65 smoke tests passed.** |
+| Matrix | 46 topics × 3 difficulties × 5 slots = **690**; unique names per tier; recipe families in order |
+| Payloads | MCQ: `options` + `correct_answer`; typed: `correct_answer_raw` + `answer_type`; order/pick: `proof_steps` |
+| Web / API | Foundational generate for `measurement`, `puberty_maturity`, `healthy_living`, `electric_current` |
+| Leakage | Every topic×difficulty with extra lesson items rejects hidden names (`Unknown standard variant`) |
+| Slot smoke | `test_standard_matrix_payloads`, `test_standard_generate_never_leaks_lesson_items`, `test_web_and_api_generate_year_sample` |
+
+**Left for later phases:** final verification samples (Phase 7).
+
+---
+
+## Phase 6 year-by-year Practice-home QA (2026-08-30)
+
+Live catalogue already includes `eursc/science`. This phase generated every syllabus topic on Practice home and the API, then sampled S1 / S2 / S3 in the browser at desktop and a 390px mobile viewport. Lesson templates were not reopened.
+
+| Item | Result |
+|------|--------|
+| Command | `PB_TESTING=1 python scripts/run_smoke_tests.py` |
+| Result | **All 65 smoke tests passed.** |
+| Picker | Home topic list includes all **46** syllabus slugs (es0 fixture still omitted) |
+| Web / API | Registered session: every S1 (18) / S2 (17) / S3 (11) topic × 3 difficulties; guest `difficult` still account-gated |
+| Sensitive HTML | Rendered Practice-home bodies for 1.4 / 2.2 / 2.3.7 pass `DISCLOSE_RE` |
+| S3 HTML | `force_work_machines`, `energy`, `electric_current` rendered bodies have no power / resistance-calculation stems |
+| Browser (desktop) | `what_is_science` keyword Check → Correct; `puberty_maturity` (hormone, third-person); `healthy_living` MCQ Check → Correct; `interoception` third-person heartbeat model; `electric_current` switch/lamp loop, Check → Correct |
+| Browser (mobile 390px) | Same `electric_current` MCQ grades after scrolling option D above the tab bar; `puberty_maturity` MCQ renders |
+| Slot smoke | `test_web_and_api_generate_all_years` |
+
+**Observations (not blocking; do not reopen banks for these):**
+
+- `make_problem` `topic_name` still uses hyphens only, so Revise links show `What_Is_Science` / `Puberty_Maturity`.
+- Foundational `electric_current` MCQ lists `compute V = IR` as a **distractor**, not a calculation prompt.
+- On a 390px viewport the guest tab bar can cover the lowest MCQ option until the student scrolls; the option is tappable after scroll.
+
+**Left for later phases:** final verification samples (Phase 7).
 
 ---
 
@@ -139,14 +219,14 @@ Lesson-improvement **Stage 6** (do not redo blindly) wired a **stable kind-mix s
 |-------------------|------------------|
 | `EURSC_PRACTICE_SLOT_COUNT`, `eursc_practice_pool()`, `eursc_variants_for_mode()`, `bind_eursc_topic()` | **Phase 1 (done):** explicit named five-slot pools in `s1_*.py` … `s3_*.py`; no `generate()` fallback |
 | All unit modules + measurement/lab/es0 fixture variants call the helper | Keep lesson pools full |
-| `scripts/test_es_practice_slots_smoke.py` (count + stability + no leak) | **Phase 5:** matrix smoke (payloads, API/web generate) |
+| `scripts/test_es_practice_slots_smoke.py` (count + stability + no leak + matrix/API + year-wave) | **Phase 6 (done):** 46×3 Practice-home + API generate |
 | Lesson quizzes still use the full `lesson` pool | Keep that invariant in every later phase |
-| Practice home **closed**; QOTD excludes `eursc` | **Phase 3:** allowlist `eursc/science` on the generator; **never** add eursc to QOTD |
+| Practice home **open** for `eursc/science`; QOTD excludes `eursc` | **Phase 3 (done):** `GENERATOR_LAUNCH_PATHS`; **never** add eursc to QOTD |
 | Some stem wording aligned with improved lessons | **Phase 2 (done):** five-family recipe on all 138 tiers; S1 gaps filled |
 
-**Code gaps vs canvas (Phase 2 content done; launch remains):**
+**Code gaps vs canvas (Phase 6 year-wave done):**
 
-1. **Launch gate is still a GCSE-only boolean.** `GENERATOR_LAUNCH_GCSE_MATHS_CS` plus `_normalize_generator_scope` clamps level/subject/topic to GCSE maths/CS. Phase 3 replaces this with an allowlist (GCSE Maths, GCSE CS, `eursc/science`).
+1. **Phase 7 remains:** final Practice-home verification samples.
 
 ---
 
@@ -234,7 +314,7 @@ Work through this list for **each** topic×difficulty you curate.
 5. Keep eursc out of QOTD.
 6. Puberty (1.4) and Health (2.2): fictional/public/aggregate only — no disclosure prompts.
 7. S3 Machines: no power calculations; `electric_current` has no \(V=IR\).
-8. Do **not** open Practice home or change `GENERATOR_LAUNCH_*` until **Phase 3**.
+8. Practice home is open for `eursc/science` via `GENERATOR_LAUNCH_PATHS`. Do not add A-Level / Physics / MYP without an explicit cue. Do not add eursc to QOTD.
 9. Commit only when the user asks.
 
 ---
@@ -246,7 +326,7 @@ Work through this list for **each** topic×difficulty you curate.
 | Canvas plan | `eursc-generator-question-plan.canvas.tsx` |
 | Practice helpers | `generators/eursc/science_shared.py` |
 | Unit banks | `generators/eursc/s1_*.py` … `s3_*.py` |
-| Launch gate | `app.py` — `GENERATOR_LAUNCH_GCSE_MATHS_CS`, `_normalize_generator_scope` |
+| Launch gate | `app.py` — `GENERATOR_LAUNCH_PATHS`, `_normalize_generator_scope` |
 | Variant / mode | `generators/shared/variant_utils.py` — `normalize_mode`, queues |
 | Lesson quiz | `generators/shared/lesson_quiz.py` |
 | QOTD exclusion | `models/qotd.py` — `list_mcq_topic_paths` |
