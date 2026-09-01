@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% from "partials/page_flashes.html" import render as page_flashes %}
+{% block title %}Teacher classes – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+<div class="lesson-hero">
+    <h1>Teacher classes</h1>
+    <p class="hero-sub">Optional teacher tools on this same account. Students join by code after a disclosure. Only you can take someone off a class.</p>
+</div>
+
+<p class="profile-page-back"><a href="{{ url_for('profile') }}">← Back to profile</a></p>
+
+{{ page_flashes('teacher_classes') }}
+
+{% if not teacher_enabled %}
+<section class="section-panel">
+    <div class="section-panel-header">Enable teacher mode</div>
+    <div class="section-panel-body">
+        <p class="page-intro">This does not create a second login. You keep practising as a student.</p>
+        <p class="profile-empty settings-note">Students who enter your class code will share class progress (including skill-gap labels) and you can set frozen questions. Private reflection notes stay theirs. Only you can take someone off a class.</p>
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="enable">
+            <button type="submit" class="btn btn-primary">Enable teacher tools</button>
+        </form>
+    </div>
+</section>
+{% else %}
+
+<section class="section-panel">
+    <div class="section-panel-header">Create a class</div>
+    <div class="section-panel-body">
+        <p class="page-intro">Cap {{ active_member_cap }} active students per class. Join codes can be rotated if one leaks.</p>
+        <form method="POST" class="auth-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="create">
+            <div class="form-group">
+                <label for="class-name">Class name</label>
+                <input type="text" id="class-name" name="name" maxlength="80" required autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label for="class-scope">Level and subject (optional)</label>
+                <select id="class-scope" name="scope">
+                    <option value="">None</option>
+                    {% for pair in class_subjects %}
+                    <option value="{{ pair.level }}:{{ pair.subject }}">{{ pair.level | upper }} · {{ pair.subject | replace('_', ' ') | title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <p class="profile-empty settings-note">Students join by code after they confirm the disclosure. They cannot leave themselves.</p>
+            <button type="submit" class="btn btn-primary">Create class</button>
+        </form>
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">Your classes</div>
+    <div class="section-panel-body">
+        {% if classes %}
+        <ul class="profile-list profile-list--rows">
+            {% for item in classes %}
+            <li class="profile-list-item list-row">
+                <div class="list-row-main">
+                    <strong>{{ item.name }}</strong>
+                    <span class="list-row-meta">
+                        {% if item.level and item.subject %}{{ item.level | upper }} · {{ item.subject | replace('_', ' ') | title }} · {% endif %}
+                        {% if item.archived_at %}
+                        Archived
+                        {% else %}
+                        Join code <code>{{ item.join_code }}</code>
+                        · {{ item.active_member_count or 0 }} / {{ active_member_cap }}
+                        {% endif %}
+                    </span>
+                </div>
+                {% if not item.archived_at %}
+                <div class="list-row-actions">
+                    <a href="{{ url_for('teacher_class_roster', class_id=item.id) }}" class="btn btn-outline btn-sm">Roster</a>
+                    <a href="{{ url_for('teacher_class_assignments', class_id=item.id) }}" class="btn btn-outline btn-sm">Set work</a>
+                    <form method="POST" action="{{ url_for('teacher_class_rotate_code', class_id=item.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline btn-sm">Rotate code</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('teacher_class_archive', class_id=item.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline btn-sm">Archive</button>
+                    </form>
+                </div>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty">No classes yet. Create one to get a join code.</p>
+        {% endif %}
+        <p class="profile-empty settings-note"><a href="{{ url_for('student_classes') }}">Join another teacher’s class</a> — you still study on this same account.</p>
+    </div>
+</section>
+{% endif %}
+</div>
+{% endblock %}

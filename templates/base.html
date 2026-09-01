@@ -158,6 +158,11 @@
                     <a href="{{ url_for('activity_feed') }}" role="menuitem" class="{% if nav_endpoint == 'activity_feed' %}active{% endif %}">Feed</a>
                     <a href="{{ url_for('challenges_list') }}" role="menuitem" class="{% if nav_endpoint in ('challenges_list', 'challenge_new', 'challenge_detail') %}active{% endif %}">Challenges</a>
                     <a href="{{ url_for('suggestions_inbox') }}" role="menuitem" class="{% if nav_endpoint in ('suggestions_inbox', 'view_suggestion') %}active{% endif %}">Suggestions</a>
+                    {% if teacher_enabled %}
+                    <a href="{{ url_for('teacher_classes') }}" role="menuitem" class="{% if nav_endpoint in ('teacher_classes', 'teacher_class_rotate_code', 'teacher_class_archive', 'teacher_class_roster', 'teacher_class_remove_member', 'teacher_student_progress', 'teacher_class_assignments', 'teacher_class_assignment') %}active{% endif %}">Classes</a>
+                    {% else %}
+                    <a href="{{ url_for('student_classes') }}" role="menuitem" class="{% if nav_endpoint in ('student_classes', 'student_class_work', 'student_class_work_detail') %}active{% endif %}">Classes</a>
+                    {% endif %}
                     <a href="{{ url_for('about') }}" role="menuitem" class="{% if nav_endpoint == 'about' %}active{% endif %}">About</a>
                     <div class="nav-menu-divider" role="separator"></div>
                     <a href="{{ url_for('profile_settings') }}" role="menuitem" class="{% if nav_endpoint == 'profile_settings' %}active{% endif %}">Settings</a>

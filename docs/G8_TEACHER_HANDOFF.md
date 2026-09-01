@@ -1,10 +1,10 @@
 # G8 — Teacher / class mode — agent handoff
 
-**Track:** Optional teacher mode, class rosters, progress dashboards (T0–T2), and teacher-set frozen question work.  
+**Track:** Optional teacher mode, class rosters, progress dashboards (T0–T2), teacher-set frozen question work, handle invites, audit log, and CSV export.  
 **Audience:** Solo tutors and classroom teachers (not school orgs).  
 **Design (locked 2026-08-30):** `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2.  
 **Review contract:** `docs/G8_TEACHER_REVIEW_RUBRIC.md`.  
-**Privacy:** Revisit `docs/DPIA.md` in Phase 0 (draft updates). Qualified legal review remains the operator’s before public HTTPS.  
+**Privacy:** Phase 1–6 shipped. Qualified legal review remains the operator’s before public HTTPS. T3 stays private. No student Leave.  
 **Prerequisite:** G1–G7 shipped; solid-draft security + S0–S3 code shipped.
 
 ---
@@ -12,27 +12,14 @@
 ## Copy-paste prompt for the next agent
 
 ```
-You are starting the G8 teacher / class mode track. Do Phase 0 only, then stop.
+G8 teacher / class mode is complete (Phases 0–6, 2026-08-30 / 2026-08-31).
+Post-track audit landed 2026-09-01 (join/invite/class-work hardening). Do not start a new G8 phase unless the user explicitly asks.
+Do not add student Leave.
+Do not show T3 free-text to teachers.
+Do not reopen locked product decisions in docs/POTENTIAL_FUTURE_FUNCTIONALITY.md §2.2.
+Do not start docs/OPERATOR_LAUNCH.md during a product session.
 
-Read first:
-1. docs/G8_TEACHER_HANDOFF.md
-2. docs/G8_TEACHER_REVIEW_RUBRIC.md
-3. docs/POTENTIAL_FUTURE_FUNCTIONALITY.md §2 (decisions are locked)
-4. docs/AI_HANDOFF.md
-5. docs/DPIA.md (review trigger: teacher/class mode)
-6. docs/SECURITY_AND_GDPR.md §6.1
-
-Phase 0 — Baseline and contract:
-- Run `PB_TESTING=1 python scripts/run_smoke_tests.py` and record the suite size and result in docs/G8_TEACHER_REVIEW_RUBRIC.md (Phase 0 baseline table).
-- Run `python scripts/ops_cadence.py feature-gate` and record the four answers in the rubric (G8 shares children’s study data with a teacher).
-- Draft DPIA residual/gap notes for G8 as planned processing (join consent, teacher-only remove, T0–T2, no T3, frozen set-work). Do not claim a qualified legal review is complete.
-- Confirm there is still no teacher/class schema or route in the live app.
-- Do NOT create tables, routes, templates, or APIs.
-- Do NOT implement join, remove, dashboards, or set work.
-- Do NOT reopen locked product decisions in §2.2.
-- Commit only if the user asks.
-
-When Phase 0 is done: report, then wait for an explicit cue before Phase 1.
+If the user has not named the next track, read docs/AI_HANDOFF.md §7 and wait.
 ```
 
 ---
@@ -41,21 +28,21 @@ When Phase 0 is done: report, then wait for an explicit cue before Phase 1.
 
 | Phase | Name | Scope |
 |-------|------|--------|
-| **0** | **Baseline and contract** | **Next.** Smoke baseline + feature-gate + DPIA draft notes. No code. |
-| **1** | **Teacher identity and classes** | Soft teacher enable; create / list / archive class; join code + rotate. Cap 40 later enforced on join. |
-| **2** | **Roster (teacher-only remove)** | Student join by code + disclosure; many classes; **no student leave**; teacher remove; GDPR delete still erases memberships. |
-| **3** | **Progress dashboards T0–T2** | Class aggregates + named progress + skill-gap chips. No T3. Authz on every endpoint. |
-| **4** | **Set work** | Frozen X questions (1–20) for selected students or whole class; student class-work UI; teacher n/X + scores. |
-| **5** | **Hardening** | Handle invites; view audit log; CSV export; erase/export class rows; indexes / caps. |
-| **6** | **Verification** | Full smoke; teacher and student sample flows; confirm no leave route; no T3 leak. |
+| **0** | **Baseline and contract** | **Done (2026-08-30).** 65/65 smoke; feature-gate recorded; DPIA §9 draft. No schema/routes. |
+| **1** | **Teacher identity and classes** | **Done (2026-08-30).** Soft teacher enable; create / list / archive class; join code + rotate. Cap 40 later enforced on join. |
+| **2** | **Roster (teacher-only remove)** | **Done (2026-08-30).** Student join by code + disclosure; many classes; **no student leave**; teacher remove; cap 40 on join; GDPR delete still erases memberships. |
+| **3** | **Progress dashboards T0–T2** | **Done (2026-08-30).** Class aggregates + named progress + skill-gap chips. No T3. Authz on every endpoint. |
+| **4** | **Set work** | **Done (2026-08-31).** Frozen X questions (1–20) from the live catalogue; preview then assign to selected or all; student class-work cannot reroll; teacher n/X + scores; graded from stored JSON. |
+| **5** | **Hardening** | **Done (2026-08-31).** Handle invites (opt-in + disclosure); view audit log; CSV (handles only); erase/export leftovers for invites and audit; pending-invite prune. |
+| **6** | **Verification** | **Done (2026-08-31).** Full suite **71/71**; sample teacher/student flows; no Leave route; no T3 in teacher payloads; invites still require disclosure; CSV/audit handles only. **Post-track audit 2026-09-01:** pending-invite cap on re-invite; join-by-code respects blocks and treats archived codes as unknown; 14-day invite expiry on accept/list; invite status claim; membership insert races map to `already_member`; class-work GET requires active membership; assignment previews expire after 2 hours on consume. |
 
-**Rule:** Complete one phase, report, **stop**. Do not proceed until the user explicitly asks.
+**Rule:** This track is complete. Do not proceed to extra G8 work until the user explicitly asks.
 
 ---
 
 ## Locked invariants (do not “fix” these)
 
-1. **Join is opt-in** (code after disclosure). **Silent add is never allowed.**
+1. **Join is opt-in** (code or handle invite after disclosure). **Silent add is never allowed.**
 2. **No student Leave.** Only the teacher removes. Account deletion is GDPR, not leave.
 3. **T3 free-text reflections stay private** to the student. T2 chips are in from Phase 3 with join copy, no extra toggle.
 4. **Set work is frozen generator payloads**, graded server-side from the stored set. Same trust model as challenges / shared questions.
@@ -67,19 +54,19 @@ When Phase 0 is done: report, then wait for an explicit cue before Phase 1.
 
 ---
 
-## Key paths (when implementation starts)
+## Key paths
 
 | Area | Path |
 |------|------|
 | Design | `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2 |
-| New models | `models/classes.py` (and assignment module) — Phase 1+ |
+| Models | `models/classes.py`, `models/class_progress.py`, `models/class_assignments.py`, `models/class_invites.py`, `models/class_audit.py`, `models/class_csv.py` |
 | Authz | `teacher_can_view` / `teacher_owns_class` on every class endpoint |
 | G1–G7 reuse | `models/weak_topics.py`, quiz history, `lesson_progress`, revision queue, `models/skill_gaps.py` |
-| Frozen sets | Same pattern as `models/challenges.py` `problems_json` |
-| Erase | `models/account_deletion.py` must cover new tables (Phase 5 at latest; schema from Phase 1 should be listed) |
-| API | `docs/API.md` when routes ship |
-| Smoke | `scripts/test_g8_*_smoke.py` (name as you add them) |
-| Full smoke | `scripts/run_smoke_tests.py` (`PB_TESTING=1`) |
+| Frozen sets | `models/class_assignments.py` — same trust model as `models/challenges.py` `problems_json` |
+| Erase | `models/account_deletion.py` leftover checks include assignment, invite, and audit tables; FK CASCADE; audit handles scrubbed |
+| API | `docs/API.md` |
+| Smoke | `scripts/test_g8_phase1_smoke.py` … `test_g8_phase6_smoke.py` |
+| Full smoke | `scripts/run_smoke_tests.py` (`PB_TESTING=1`) — **71** passed 2026-08-31; G8 hardening re-checked 2026-09-01 |
 
 ---
 
@@ -90,3 +77,4 @@ When Phase 0 is done: report, then wait for an explicit cue before Phase 1.
 - Show free-text reflections to teachers
 - Let the client send `correct_answer` / problem HTML that the server trusts
 - Reopen §2.2 decisions without an explicit user cue
+- Silently add a student to a roster (invite still requires accept + disclosure)

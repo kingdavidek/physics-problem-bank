@@ -1,6 +1,6 @@
 # Problem Bank — Potential Future Functionality
 
-**Last updated:** 2026-08-30  
+**Last updated:** 2026-08-31  
 **Repository:** `maths_generator/physics-problem-bank`  
 **Audience:** Product owners, developers, AI agents  
 
@@ -16,13 +16,13 @@ This document captures **ideas and designs that are not yet implemented**. It is
 | **Idea** | Directionally useful; needs more design |
 | **Deferred** | Explicitly out of scope for near-term work |
 
-**Current product baseline:** Phase G G1–G7 shipped. Auto-correct complete. Solid-draft security done. **Engagement E1–E3 shipped.** **Engagement E4** (content depth) is below §3.0. Mobile polish **M0–M4 done** (`docs/MOBILE.md`). **G8 teacher/class mode** is designed with locked decisions (2026-08-30); implementation track not started — `docs/G8_TEACHER_HANDOFF.md`.
+**Current product baseline:** Phase G G1–G7 shipped. Auto-correct complete. Solid-draft security done. **Engagement E1–E3 shipped.** **Engagement E4** (content depth) is below §3.0. Mobile polish **M0–M4 done** (`docs/MOBILE.md`). **G8 teacher/class mode** is designed with locked decisions (2026-08-30); **Phases 0–6 complete** — `docs/G8_TEACHER_HANDOFF.md`.
 
 ---
 
-## 2. G8 — Teacher / class mode (planned, designed)
+## 2. G8 — Teacher / class mode (designed; Phases 0–6 complete)
 
-**Status:** Designed — implementation track not started.  
+**Status:** Phases 0–6 complete (2026-08-30 / 2026-08-31) — teacher enable, classes, join codes, roster, teacher-only remove, T0–T2 dashboards, frozen set-work, handle invites, audit log, CSV, verification. Track closed unless the user opens a follow-up.  
 **Decisions locked:** 2026-08-30 (David).  
 **Delivery track:** `docs/G8_TEACHER_HANDOFF.md` (one phase per user cue).  
 **Review contract:** `docs/G8_TEACHER_REVIEW_RUBRIC.md`.
@@ -78,7 +78,7 @@ One account may be both teacher and student.
 | Action | Who |
 |--------|-----|
 | Join with code (after disclosure) | Student |
-| Accept handle invite (later hardening) | Student |
+| Accept handle invite (after disclosure) | Student |
 | Rotate / expire join code | Teacher |
 | Remove from roster | **Teacher only** |
 | Silent add to roster | **Never** |
@@ -263,7 +263,7 @@ E1–E3 shipped 2026-08-15. Of the three E4 items below, only **E4.1** is schedu
 ### 3.4 Assignments / teacher-suggested topics
 
 - **Idea:** Teacher sets frozen generator questions for selected or all class members.
-- **Status:** **Moved into G8** — see §2.8 and `docs/G8_TEACHER_HANDOFF.md` Phase 4. Do not implement as a separate track.
+- **Status:** **Shipped in G8 Phase 4** — see §2.8 and `docs/G8_TEACHER_HANDOFF.md`. Do not implement as a separate track.
 
 ### 3.5 School / org billing (B2B)
 
@@ -313,7 +313,7 @@ E1–E3 shipped 2026-08-15. Of the three E4 items below, only **E4.1** is schedu
 | G5 | Anonymous cohort stats | ✅ Shipped |
 | G6 | Cross-topic skill gaps | ✅ Shipped |
 | G7 | Revision planner | ✅ Shipped |
-| **G8** | **Teacher / class mode** | **Designed, decisions locked 2026-08-30 — track not started** (`docs/G8_TEACHER_HANDOFF.md`) |
+| **G8** | **Teacher / class mode** | **Designed, decisions locked 2026-08-30 — Phases 0–6 complete** (`docs/G8_TEACHER_HANDOFF.md`) |
 | E1–E3 | Engagement (assist smoke, mascot QOTD, FTS, avatars, buddy, friend accuracy LB) | **E1–E3 shipped** |
 | E4.1 | Real-world question style (percentages, ratio, compound measures) | Planned — `docs/REAL_WORLD_QUESTIONS.md` |
 | — | European School Integrated Science S1–S3 (new `eursc` level, 46 syllabus modules) | Fully planned — `docs/EUROPEAN_SCHOOL_SCIENCE.md` |

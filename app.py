@@ -191,6 +191,7 @@ from models.sharing import (
 from models.notifications import (
     NOTIFICATION_CHALLENGE,
     NOTIFICATION_CHALLENGE_COMPLETE,
+    NOTIFICATION_CLASS_INVITE,
     NOTIFICATION_FOLLOW,
     NOTIFICATION_STUDY_PAIR,
     NOTIFICATION_SUGGESTION,
@@ -198,6 +199,7 @@ from models.notifications import (
     create_notification,
     list_notifications,
     mark_all_notifications_read,
+    mark_class_invite_notifications_read,
     mark_notification_read,
     mark_study_pair_notifications_read,
     mark_suggestion_notifications_read,
@@ -395,6 +397,62 @@ from models.revision_planner import (
     get_revision_plan_settings,
     revision_plan_for_user,
     upsert_revision_plan_settings,
+)
+from models.class_progress import (
+    class_aggregates,
+    enrich_roster,
+    student_progress,
+)
+from models.class_assignments import (
+    MAX_ASSIGNMENT_QUESTIONS,
+    MIN_ASSIGNMENT_QUESTIONS,
+    consume_preview,
+    create_assignment,
+    get_assignment_for_teacher,
+    get_class_work_for_student,
+    list_assignments_for_teacher,
+    list_class_work_for_student,
+    resolve_recipients,
+    save_preview,
+    serialize_assignment_summary,
+    serialize_preview,
+    serialize_student_work,
+    serialize_student_work_list_item,
+    serialize_teacher_assignment,
+    submit_student_answer,
+)
+from models.class_audit import list_class_audit, serialize_audit_event
+from models.class_csv import assignments_csv, roster_csv
+from models.class_invites import (
+    accept_invite,
+    cancel_invite,
+    decline_invite,
+    invite_student,
+    list_pending_invites_for_class,
+    list_pending_invites_for_student,
+    serialize_invite,
+)
+from models.classes import (
+    CLASS_ACTIVE_MEMBER_CAP,
+    CLASS_NAME_MAX,
+    JOIN_DISCLOSURE,
+    archive_class,
+    create_class,
+    disclosure_payload,
+    enable_teacher,
+    get_class_for_teacher,
+    join_class,
+    list_classes_for_student,
+    list_classes_for_teacher,
+    list_roster,
+    remove_student,
+    rotate_join_code,
+    serialize_class,
+    serialize_roster_member,
+    serialize_student_class,
+    serialize_teacher_status,
+    teacher_is_enabled,
+    teacher_owns_class,
 )
 from models.revision_queue import (
     DUE_TODAY_LIMIT,
@@ -873,6 +931,7 @@ def inject_nav():
     buddy_prompt = None
     viewer_xp = None
     viewer_level = None
+    teacher_enabled = False
     nav_tab = _resolve_nav_tab(request.endpoint)
     nav_avatar = None
     sound_enabled = False
@@ -899,6 +958,7 @@ def inject_nav():
             guide_json_persisted = bool(profile_settings.get('guide_json_persisted'))
             streak = get_study_streak(conn, current_user.id)
             nav_streak = int(streak.get('current') or 0)
+            teacher_enabled = teacher_is_enabled(conn, current_user.id)
             tab_badges = {
                 'qotd_unanswered': get_user_attempt(conn, current_user.id, current_day_key()) is None,
                 'pending_challenges': count_actionable_challenges(conn, current_user.id),
@@ -937,6 +997,7 @@ def inject_nav():
         'guide_state': guide_state,
         'guide_json_persisted': guide_json_persisted,
         'nav_streak': nav_streak,
+        'teacher_enabled': teacher_enabled,
         'tab_badges': tab_badges,
         'quiz_runner_mode': request.endpoint in _QUIZ_RUNNER_ENDPOINTS,
         'guide_preview_mode': False,
@@ -1736,6 +1797,157 @@ with get_db() as conn:
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS teacher_profiles (
+            user_id INTEGER PRIMARY KEY,
+            enabled_at TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS classes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            teacher_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            level TEXT,
+            subject TEXT,
+            org_id INTEGER,
+            join_code TEXT NOT NULL UNIQUE,
+            join_code_rotated_at TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            archived_at TEXT,
+            FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_classes_teacher
+        ON classes (teacher_id)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS class_memberships (
+            class_id INTEGER NOT NULL,
+            student_id INTEGER NOT NULL,
+            status TEXT NOT NULL,
+            joined_at TEXT NOT NULL,
+            removed_at TEXT,
+            removed_by_teacher_id INTEGER,
+            PRIMARY KEY (class_id, student_id),
+            FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+            FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (removed_by_teacher_id) REFERENCES users(id) ON DELETE SET NULL
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_class_memberships_student
+        ON class_memberships (student_id)
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_class_memberships_class_status
+        ON class_memberships (class_id, status)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS class_assignments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            class_id INTEGER NOT NULL,
+            teacher_id INTEGER NOT NULL,
+            level TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            topic TEXT NOT NULL,
+            mode TEXT NOT NULL,
+            difficulty TEXT NOT NULL,
+            problems_json TEXT NOT NULL,
+            question_count INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+            FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_class_assignments_class
+        ON class_assignments (class_id)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS class_assignment_recipients (
+            assignment_id INTEGER NOT NULL,
+            student_id INTEGER NOT NULL,
+            status TEXT NOT NULL,
+            answers_json TEXT,
+            score INTEGER,
+            completed_at TEXT,
+            PRIMARY KEY (assignment_id, student_id),
+            FOREIGN KEY (assignment_id) REFERENCES class_assignments(id) ON DELETE CASCADE,
+            FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_class_assignment_recipients_student
+        ON class_assignment_recipients (student_id)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS class_assignment_previews (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            teacher_id INTEGER NOT NULL,
+            class_id INTEGER NOT NULL,
+            level TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            topic TEXT NOT NULL,
+            mode TEXT NOT NULL,
+            difficulty TEXT NOT NULL,
+            problems_json TEXT NOT NULL,
+            question_count INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_class_assignment_previews_teacher
+        ON class_assignment_previews (teacher_id, created_at)
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_class_assignments_teacher
+        ON class_assignments (teacher_id)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS class_invites (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            class_id INTEGER NOT NULL,
+            teacher_id INTEGER NOT NULL,
+            student_id INTEGER NOT NULL,
+            status TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            responded_at TEXT,
+            UNIQUE (class_id, student_id),
+            FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+            FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_class_invites_student_status
+        ON class_invites (student_id, status)
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_class_invites_class_status
+        ON class_invites (class_id, status)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS class_audit_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            class_id INTEGER NOT NULL,
+            actor_id INTEGER,
+            action TEXT NOT NULL,
+            subject_handle TEXT,
+            meta_json TEXT,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+            FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_class_audit_class
+        ON class_audit_events (class_id, id)
+    """)
     ensure_system_bot(conn)
     ensure_lesson_search_index(conn)
     conn.commit()
@@ -2199,6 +2411,97 @@ def _normalize_generator_scope(level, subject, topic):
 
 
 _GENERATOR_DIFFICULTIES = frozenset({'foundational', 'intermediate', 'difficult'})
+
+
+def _problem_is_gradable(problem):
+    if not problem:
+        return False
+    if problem.get('options') and problem.get('correct_answer'):
+        return True
+    if problem.get('correct_answer_raw') is not None:
+        return True
+    if problem.get('correct_answer'):
+        return True
+    return False
+
+
+def _freeze_problem_payload(problem):
+    payload = _problem_client_payload(problem)
+    if not payload.get('question'):
+        payload['question'] = problem.get('question') or ''
+    return json.loads(json.dumps(payload, default=str))
+
+
+def _live_catalogue_topics():
+    out = []
+    for level, subject in sorted(GENERATOR_LAUNCH_PATHS):
+        topics = (TOPICS.get(level) or {}).get(subject) or {}
+        for slug, cfg in iter_topics(topics):
+            if slug == 'es0_fixture' or not cfg.get('func'):
+                continue
+            out.append({
+                'level': level,
+                'subject': subject,
+                'topic': slug,
+                'label': cfg.get('name', slug.replace('_', ' ').title()),
+            })
+    return out
+
+
+def _freeze_class_work_problems(level, subject, topic, mode, difficulty, count):
+    if not _generator_path_allowed(level, subject):
+        raise ValueError('invalid_topic')
+    try:
+        topic_config = TOPICS[level][subject][topic]
+    except KeyError:
+        raise ValueError('invalid_topic')
+    if not topic_config.get('func'):
+        raise ValueError('invalid_topic')
+    if difficulty not in _GENERATOR_DIFFICULTIES:
+        raise ValueError('invalid_difficulty')
+    try:
+        count = int(count)
+    except (TypeError, ValueError):
+        raise ValueError('invalid_count')
+    if count < MIN_ASSIGNMENT_QUESTIONS or count > MAX_ASSIGNMENT_QUESTIONS:
+        raise ValueError('invalid_count')
+    mode = _normalize_generator_mode(level, subject, mode)
+    generator = topic_config['func']
+    queue = _build_problem_queue(topic_config, level, subject, topic, mode, difficulty) or []
+    problems = []
+    for i in range(count):
+        problem = None
+        for attempt in range(3):
+            try:
+                if queue:
+                    variant = queue[(i + attempt) % len(queue)]
+                    try:
+                        problem = generator(difficulty, mode, variant_name=variant)
+                    except TypeError:
+                        problem = generator(difficulty, mode)
+                else:
+                    problem = generator(difficulty, mode)
+            except (TypeError, ValueError):
+                try:
+                    problem = generator(difficulty, mode)
+                except (TypeError, ValueError):
+                    problem = None
+            if _problem_is_gradable(problem):
+                break
+        if not _problem_is_gradable(problem):
+            raise ValueError('generate_failed')
+        problems.append(_freeze_problem_payload(problem))
+    return problems, mode
+
+
+def _parse_assignment_scope(payload):
+    level = (payload.get('level') or '').strip()
+    subject = (payload.get('subject') or '').strip()
+    topic = (payload.get('topic') or '').strip()
+    difficulty = (payload.get('difficulty') or '').strip() or GENERATOR_DEFAULT_DIFFICULTY
+    mode = payload.get('mode') or GENERATOR_DEFAULT_MODE
+    count = payload.get('count')
+    return level, subject, topic, difficulty, mode, count
 
 
 def _remember_generator_selection(level, subject, topic, mode, difficulty):
@@ -3320,6 +3623,19 @@ def _notify_study_pair_invite(conn, to_user_id, from_handle, pair_id):
     )
 
 
+def _notify_class_invite(conn, to_user_id, from_handle, invite_id, class_name):
+    create_notification(
+        conn,
+        to_user_id,
+        NOTIFICATION_CLASS_INVITE,
+        {
+            'invite_id': invite_id,
+            'from_handle': from_handle,
+            'class_name': class_name,
+        },
+    )
+
+
 def _serialize_notification_item(item, *, conn=None, viewer_id=None):
     payload = item.get('payload') or {}
     ntype = item.get('notification_type', '')
@@ -3358,6 +3674,11 @@ def _serialize_notification_item(item, *, conn=None, viewer_id=None):
             ):
                 actions = ['accept', 'ignore']
                 url = None
+    elif ntype == NOTIFICATION_CLASS_INVITE:
+        handle = payload.get('from_handle', 'someone')
+        class_name = payload.get('class_name') or 'a class'
+        message = f'@{handle} invited you to join {class_name}'
+        url = url_for('student_classes')
     else:
         message = 'New notification'
         url = url_for('profile')
@@ -5293,6 +5614,661 @@ def profile_revision_plan_save():
     return redirect(url_for('profile'))
 
 
+def _class_value_error_api(exc):
+    code = str(exc)
+    messages = {
+        'teacher_required': ('Enable teacher mode first', 403, 'teacher_required'),
+        'name_required': ('Class name is required', 400, 'missing_fields'),
+        'name_too_long': (f'Class name must be {CLASS_NAME_MAX} characters or fewer', 400, 'invalid_field'),
+        'level_subject_pair': ('level and subject must be set together', 400, 'invalid_field'),
+        'invalid_topic': ('Invalid level or subject', 400, 'invalid_topic'),
+        'class_limit': ('Too many active classes', 400, 'class_limit'),
+        'not_found': ('Class not found', 404, 'not_found'),
+        'class_archived': ('This class is archived', 400, 'class_archived'),
+        'join_disclosure_required': (
+            'Confirm the join disclosure before joining',
+            400,
+            'join_disclosure_required',
+        ),
+        'invalid_join_code': ('That join code is not valid', 404, 'invalid_join_code'),
+        'self_join': ('You cannot join a class you teach', 400, 'self_join'),
+        'already_member': ('You are already in this class', 409, 'already_member'),
+        'class_full': ('This class is full', 400, 'class_full'),
+        'invalid_count': (
+            f'Choose between {MIN_ASSIGNMENT_QUESTIONS} and {MAX_ASSIGNMENT_QUESTIONS} questions',
+            400,
+            'invalid_count',
+        ),
+        'invalid_difficulty': ('Invalid difficulty', 400, 'invalid_difficulty'),
+        'generate_failed': ('Could not generate those questions', 400, 'generate_failed'),
+        'no_recipients': ('Choose at least one student, or all active members', 400, 'no_recipients'),
+        'not_in_class': ('That student is not an active member of this class', 400, 'not_in_class'),
+        'invalid_student': ('Invalid student id', 400, 'invalid_field'),
+        'assignment_limit': ('Too many assignments for this class', 400, 'assignment_limit'),
+        'missing_answer': ('An answer is required', 400, 'missing_fields'),
+        'answer_too_long': ('That answer is too long', 400, 'answer_too_long'),
+        'already_answered': ('That question is already answered', 400, 'already_answered'),
+        'already_complete': ('This set is already complete', 400, 'already_complete'),
+        'invalid_index': ('Invalid question index', 400, 'invalid_index'),
+        'not_gradable': ('That question cannot be graded', 400, 'not_gradable'),
+        'user_not_found': ('That handle was not found', 404, 'user_not_found'),
+        'self_invite': ('You cannot invite yourself', 400, 'self_invite'),
+        'already_invited': ('That student already has a pending invite', 409, 'already_invited'),
+        'invite_not_pending': ('That invite is no longer pending', 409, 'invite_not_pending'),
+        'invite_limit': ('Too many pending invites for this class', 400, 'invite_limit'),
+        'blocked': ('You cannot join or invite this user', 403, 'blocked'),
+    }
+    message, status, err_code = messages.get(code, (code, 400, 'invalid_request'))
+    return _api_error(message, status, err_code)
+
+
+def _class_value_error_flash(exc):
+    code = str(exc)
+    messages = {
+        'teacher_required': 'Enable teacher mode first.',
+        'name_required': 'Give the class a name.',
+        'name_too_long': 'That class name is too long.',
+        'level_subject_pair': 'Choose both a level and a subject, or leave both blank.',
+        'invalid_topic': 'Choose a valid level and subject.',
+        'class_limit': 'You already have as many active classes as allowed.',
+        'not_found': 'That class was not found.',
+        'class_archived': 'This class is archived.',
+        'join_disclosure_required': 'Tick the box to confirm you have read what joining means.',
+        'invalid_join_code': 'That join code is not valid.',
+        'self_join': 'You cannot join a class you teach.',
+        'already_member': 'You are already in this class.',
+        'class_full': 'This class is full (40 students).',
+        'invalid_count': f'Choose between {MIN_ASSIGNMENT_QUESTIONS} and {MAX_ASSIGNMENT_QUESTIONS} questions.',
+        'invalid_difficulty': 'Choose a valid difficulty.',
+        'generate_failed': 'Could not generate those questions. Try another topic.',
+        'no_recipients': 'Choose at least one student, or all active members.',
+        'not_in_class': 'That student is not an active member of this class.',
+        'invalid_student': 'Choose students from the roster.',
+        'assignment_limit': 'This class already has as many assignments as allowed.',
+        'missing_answer': 'Enter an answer first.',
+        'answer_too_long': 'That answer is too long.',
+        'already_answered': 'You have already answered that question.',
+        'already_complete': 'This set is already complete.',
+        'invalid_index': 'That question is not in this set.',
+        'not_gradable': 'That question cannot be graded.',
+        'user_not_found': 'That handle was not found.',
+        'self_invite': 'You cannot invite yourself.',
+        'already_invited': 'That student already has a pending invite.',
+        'invite_not_pending': 'That invite is no longer pending.',
+        'invite_limit': 'This class already has as many pending invites as allowed.',
+        'blocked': 'You cannot join or invite this user.',
+    }
+    return messages.get(code, 'Could not update the class.')
+
+
+def _json_flag(payload, key):
+    value = payload.get(key) if isinstance(payload, dict) else None
+    if value is True or value == 1:
+        return True
+    if isinstance(value, str) and value.strip().lower() in ('1', 'true', 'yes', 'on'):
+        return True
+    return False
+
+
+def _class_csv_response(filename, body):
+    return Response(
+        body,
+        mimetype='text/csv; charset=utf-8',
+        headers={
+            'Content-Disposition': f'attachment; filename="{filename}"',
+            'X-Content-Type-Options': 'nosniff',
+        },
+    )
+
+
+def _invite_target_user(conn, handle):
+    target = get_user_by_handle(conn, normalize_handle(handle))
+    if not target or not target.is_active or is_bot_user(target):
+        raise ValueError('user_not_found')
+    return target
+
+
+def _assignment_student_ids(payload):
+    raw = payload.get('student_ids') if isinstance(payload, dict) else None
+    if raw is None:
+        return []
+    if not isinstance(raw, list):
+        raise ValueError('invalid_student')
+    return raw
+
+
+def _teacher_create_assignment(conn, teacher_id, class_id, payload):
+    preview_id = payload.get('preview_id')
+    if preview_id not in (None, ''):
+        try:
+            preview_id = int(preview_id)
+        except (TypeError, ValueError):
+            raise ValueError('not_found')
+        assign_all = _json_flag(payload, 'all')
+        student_ids = resolve_recipients(
+            conn,
+            teacher_id,
+            class_id,
+            assign_all=assign_all,
+            student_ids=_assignment_student_ids(payload),
+        )
+        preview = consume_preview(conn, teacher_id, class_id, preview_id)
+        return create_assignment(
+            conn,
+            teacher_id,
+            class_id,
+            level=preview['level'],
+            subject=preview['subject'],
+            topic=preview['topic'],
+            mode=preview['mode'],
+            difficulty=preview['difficulty'],
+            problems=preview['problems'],
+            student_ids=student_ids,
+        )
+    level, subject, topic, difficulty, mode, count = _parse_assignment_scope(payload)
+    problems, mode = _freeze_class_work_problems(
+        level, subject, topic, mode, difficulty, count,
+    )
+    assign_all = _json_flag(payload, 'all')
+    student_ids = resolve_recipients(
+        conn,
+        teacher_id,
+        class_id,
+        assign_all=assign_all,
+        student_ids=_assignment_student_ids(payload),
+    )
+    return create_assignment(
+        conn,
+        teacher_id,
+        class_id,
+        level=level,
+        subject=subject,
+        topic=topic,
+        mode=mode,
+        difficulty=difficulty,
+        problems=problems,
+        student_ids=student_ids,
+    )
+
+
+def _teacher_preview_assignment(conn, teacher_id, class_id, payload):
+    level, subject, topic, difficulty, mode, count = _parse_assignment_scope(payload)
+    problems, mode = _freeze_class_work_problems(
+        level, subject, topic, mode, difficulty, count,
+    )
+    return save_preview(
+        conn,
+        teacher_id,
+        class_id,
+        level=level,
+        subject=subject,
+        topic=topic,
+        mode=mode,
+        difficulty=difficulty,
+        problems=problems,
+    )
+
+
+@app.route('/teacher/classes', methods=['GET', 'POST'])
+@login_required
+def teacher_classes():
+    if request.method == 'POST':
+        if not _validate_csrf(request.form.get('csrf_token')):
+            flash_for('teacher_classes', 'Session expired — try again.', 'error')
+            return redirect(url_for('teacher_classes'))
+        action = (request.form.get('action') or '').strip()
+        if action == 'enable':
+            with get_db() as conn:
+                enable_teacher(conn, current_user.id)
+            flash_for('teacher_classes', 'Teacher tools are on. You still use this account to study.', 'success')
+            return redirect(url_for('teacher_classes'))
+        if action == 'create':
+            scope = (request.form.get('scope') or '').strip()
+            level = ''
+            subject = ''
+            if scope:
+                if ':' not in scope:
+                    flash_for('teacher_classes', 'Choose a valid level and subject.', 'error')
+                    return redirect(url_for('teacher_classes'))
+                level, subject = scope.split(':', 1)
+            try:
+                with get_db() as conn:
+                    created = create_class(
+                        conn,
+                        current_user.id,
+                        request.form.get('name'),
+                        level,
+                        subject,
+                    )
+            except ValueError as exc:
+                flash_for('teacher_classes', _class_value_error_flash(exc), 'error')
+                return redirect(url_for('teacher_classes'))
+            flash_for(
+                'teacher_classes',
+                f'Class created. Join code {created["join_code"]}. Students join after reading the disclosure — only you can remove them.',
+                'success',
+            )
+            return redirect(url_for('teacher_classes'))
+        flash_for('teacher_classes', 'Unknown action.', 'error')
+        return redirect(url_for('teacher_classes'))
+
+    with get_db() as conn:
+        enabled = teacher_is_enabled(conn, current_user.id)
+        classes = list_classes_for_teacher(conn, current_user.id) if enabled else []
+    return render_template(
+        'teacher_classes.html',
+        teacher_enabled=enabled,
+        classes=classes,
+        class_subjects=_revision_plan_scope_options(),
+        active_member_cap=CLASS_ACTIVE_MEMBER_CAP,
+    )
+
+
+@app.post('/teacher/classes/<int:class_id>/rotate-code')
+@login_required
+def teacher_class_rotate_code(class_id):
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash_for('teacher_classes', 'Session expired — try again.', 'error')
+        return redirect(url_for('teacher_classes'))
+    try:
+        with get_db() as conn:
+            updated = rotate_join_code(conn, current_user.id, class_id)
+    except ValueError as exc:
+        flash_for('teacher_classes', _class_value_error_flash(exc), 'error')
+        return redirect(url_for('teacher_classes'))
+    flash_for('teacher_classes', f'New join code: {updated["join_code"]}.', 'success')
+    return redirect(url_for('teacher_classes'))
+
+
+@app.post('/teacher/classes/<int:class_id>/archive')
+@login_required
+def teacher_class_archive(class_id):
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash_for('teacher_classes', 'Session expired — try again.', 'error')
+        return redirect(url_for('teacher_classes'))
+    try:
+        with get_db() as conn:
+            archive_class(conn, current_user.id, class_id)
+    except ValueError as exc:
+        flash_for('teacher_classes', _class_value_error_flash(exc), 'error')
+        return redirect(url_for('teacher_classes'))
+    flash_for('teacher_classes', 'Class archived. Students will not be able to join it.', 'success')
+    return redirect(url_for('teacher_classes'))
+
+
+@app.get('/teacher/classes/<int:class_id>/roster')
+@login_required
+def teacher_class_roster(class_id):
+    with get_db() as conn:
+        if not teacher_owns_class(conn, current_user.id, class_id):
+            abort(404)
+        klass = get_class_for_teacher(conn, current_user.id, class_id)
+        roster = enrich_roster(conn, list_roster(conn, current_user.id, class_id))
+        aggregates = class_aggregates(conn, current_user.id, class_id)
+        pending_invites = list_pending_invites_for_class(conn, current_user.id, class_id)
+    return render_template(
+        'teacher_class_roster.html',
+        klass=klass,
+        roster=roster,
+        aggregates=aggregates,
+        pending_invites=pending_invites,
+        active_member_cap=CLASS_ACTIVE_MEMBER_CAP,
+    )
+
+
+@app.post('/teacher/classes/<int:class_id>/invites')
+@login_required
+def teacher_class_invite(class_id):
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash_for('teacher_class_roster', 'Session expired — try again.', 'error')
+        return redirect(url_for('teacher_class_roster', class_id=class_id))
+    try:
+        with get_db() as conn:
+            if not teacher_owns_class(conn, current_user.id, class_id):
+                abort(404)
+            target = _invite_target_user(conn, request.form.get('handle'))
+            invite = invite_student(conn, current_user.id, class_id, target.id)
+            klass = get_class_for_teacher(conn, current_user.id, class_id)
+            _notify_class_invite(
+                conn, target.id, current_user.handle, invite['id'], klass['name'],
+            )
+    except ValueError as exc:
+        if str(exc) == 'not_found':
+            abort(404)
+        flash_for('teacher_class_roster', _class_value_error_flash(exc), 'error')
+        return redirect(url_for('teacher_class_roster', class_id=class_id))
+    flash_for(
+        'teacher_class_roster',
+        f'Invite sent to @{target.handle}. They must accept after reading the disclosure — they are not on the roster yet.',
+        'success',
+    )
+    return redirect(url_for('teacher_class_roster', class_id=class_id))
+
+
+@app.post('/teacher/classes/<int:class_id>/invites/<int:invite_id>/cancel')
+@login_required
+def teacher_class_cancel_invite(class_id, invite_id):
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash_for('teacher_class_roster', 'Session expired — try again.', 'error')
+        return redirect(url_for('teacher_class_roster', class_id=class_id))
+    try:
+        with get_db() as conn:
+            cancel_invite(conn, current_user.id, class_id, invite_id)
+    except ValueError as exc:
+        if str(exc) == 'not_found':
+            abort(404)
+        flash_for('teacher_class_roster', _class_value_error_flash(exc), 'error')
+        return redirect(url_for('teacher_class_roster', class_id=class_id))
+    flash_for('teacher_class_roster', 'Invite cancelled.', 'success')
+    return redirect(url_for('teacher_class_roster', class_id=class_id))
+
+
+@app.get('/teacher/classes/<int:class_id>/audit')
+@login_required
+def teacher_class_audit(class_id):
+    with get_db() as conn:
+        if not teacher_owns_class(conn, current_user.id, class_id):
+            abort(404)
+        klass = get_class_for_teacher(conn, current_user.id, class_id)
+        events = [
+            serialize_audit_event(row)
+            for row in list_class_audit(conn, current_user.id, class_id)
+        ]
+    return render_template(
+        'teacher_class_audit.html',
+        klass=klass,
+        events=events,
+    )
+
+
+@app.get('/teacher/classes/<int:class_id>/roster.csv')
+@login_required
+def teacher_class_roster_csv(class_id):
+    try:
+        with get_db() as conn:
+            filename, body = roster_csv(conn, current_user.id, class_id)
+    except ValueError as exc:
+        if str(exc) == 'not_found':
+            abort(404)
+        raise
+    return _class_csv_response(filename, body)
+
+
+@app.get('/teacher/classes/<int:class_id>/assignments.csv')
+@login_required
+def teacher_class_assignments_csv(class_id):
+    try:
+        with get_db() as conn:
+            filename, body = assignments_csv(conn, current_user.id, class_id)
+    except ValueError as exc:
+        if str(exc) == 'not_found':
+            abort(404)
+        raise
+    return _class_csv_response(filename, body)
+
+
+@app.post('/teacher/classes/<int:class_id>/members/<int:student_id>/remove')
+@login_required
+def teacher_class_remove_member(class_id, student_id):
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash_for('teacher_class_roster', 'Session expired — try again.', 'error')
+        return redirect(url_for('teacher_class_roster', class_id=class_id))
+    try:
+        with get_db() as conn:
+            remove_student(conn, current_user.id, class_id, student_id)
+    except ValueError as exc:
+        if str(exc) == 'not_found':
+            abort(404)
+        flash_for('teacher_class_roster', _class_value_error_flash(exc), 'error')
+        return redirect(url_for('teacher_class_roster', class_id=class_id))
+    flash_for('teacher_class_roster', 'Student removed from the class.', 'success')
+    return redirect(url_for('teacher_class_roster', class_id=class_id))
+
+
+@app.get('/teacher/classes/<int:class_id>/students/<int:student_id>')
+@login_required
+def teacher_student_progress(class_id, student_id):
+    try:
+        with get_db() as conn:
+            if not teacher_owns_class(conn, current_user.id, class_id):
+                abort(404)
+            klass = get_class_for_teacher(conn, current_user.id, class_id)
+            progress = student_progress(conn, current_user.id, class_id, student_id)
+    except ValueError as exc:
+        if str(exc) == 'not_found':
+            abort(404)
+        raise
+    return render_template(
+        'teacher_student_progress.html',
+        klass=klass,
+        progress=progress,
+    )
+
+
+def _assignment_form_payload(form):
+    scope = (form.get('scope') or '').strip()
+    level = subject = topic = ''
+    if scope.count(':') >= 2:
+        level, subject, topic = scope.split(':', 2)
+    payload = {
+        'level': level or form.get('level'),
+        'subject': subject or form.get('subject'),
+        'topic': topic or form.get('topic'),
+        'difficulty': form.get('difficulty') or GENERATOR_DEFAULT_DIFFICULTY,
+        'mode': form.get('mode') or GENERATOR_DEFAULT_MODE,
+        'count': form.get('count') or 5,
+        'all': form.get('all') or form.get('assign_all'),
+        'student_ids': form.getlist('student_ids'),
+        'preview_id': form.get('preview_id'),
+    }
+    return payload
+
+
+@app.route('/teacher/classes/<int:class_id>/assignments', methods=['GET', 'POST'])
+@login_required
+def teacher_class_assignments(class_id):
+    if request.method == 'POST':
+        if not _validate_csrf(request.form.get('csrf_token')):
+            flash_for('teacher_class_assignments', 'Session expired — try again.', 'error')
+            return redirect(url_for('teacher_class_assignments', class_id=class_id))
+        payload = _assignment_form_payload(request.form)
+        action = (request.form.get('action') or 'assign').strip()
+        try:
+            with get_db() as conn:
+                if not teacher_owns_class(conn, current_user.id, class_id):
+                    abort(404)
+                if action == 'preview':
+                    preview = _teacher_preview_assignment(
+                        conn, current_user.id, class_id, payload,
+                    )
+                    klass = get_class_for_teacher(conn, current_user.id, class_id)
+                    roster = list_roster(conn, current_user.id, class_id)
+                    assignments = list_assignments_for_teacher(
+                        conn, current_user.id, class_id,
+                    )
+                    return render_template(
+                        'teacher_class_assignments.html',
+                        klass=klass,
+                        roster=roster,
+                        assignments=assignments,
+                        preview=serialize_preview(preview),
+                        catalogue=_live_catalogue_topics(),
+                        max_questions=MAX_ASSIGNMENT_QUESTIONS,
+                        form=payload,
+                    )
+                created = _teacher_create_assignment(
+                    conn, current_user.id, class_id, payload,
+                )
+        except ValueError as exc:
+            if str(exc) == 'not_found':
+                abort(404)
+            flash_for('teacher_class_assignments', _class_value_error_flash(exc), 'error')
+            return redirect(url_for('teacher_class_assignments', class_id=class_id))
+        flash_for('teacher_class_assignment', 'Set work assigned. Students cannot reroll these questions.', 'success')
+        return redirect(url_for(
+            'teacher_class_assignment', class_id=class_id, assignment_id=created['id'],
+        ))
+
+    with get_db() as conn:
+        if not teacher_owns_class(conn, current_user.id, class_id):
+            abort(404)
+        klass = get_class_for_teacher(conn, current_user.id, class_id)
+        roster = list_roster(conn, current_user.id, class_id)
+        assignments = list_assignments_for_teacher(conn, current_user.id, class_id)
+    return render_template(
+        'teacher_class_assignments.html',
+        klass=klass,
+        roster=roster,
+        assignments=assignments,
+        preview=None,
+        catalogue=_live_catalogue_topics(),
+        max_questions=MAX_ASSIGNMENT_QUESTIONS,
+        form=None,
+    )
+
+
+@app.get('/teacher/classes/<int:class_id>/assignments/<int:assignment_id>')
+@login_required
+def teacher_class_assignment(class_id, assignment_id):
+    try:
+        with get_db() as conn:
+            if not teacher_owns_class(conn, current_user.id, class_id):
+                abort(404)
+            klass = get_class_for_teacher(conn, current_user.id, class_id)
+            assignment = get_assignment_for_teacher(
+                conn, current_user.id, class_id, assignment_id,
+            )
+    except ValueError as exc:
+        if str(exc) == 'not_found':
+            abort(404)
+        raise
+    return render_template(
+        'teacher_class_assignment.html',
+        klass=klass,
+        assignment=serialize_teacher_assignment(assignment),
+    )
+
+
+@app.route('/classes', methods=['GET', 'POST'])
+@login_required
+def student_classes():
+    if request.method == 'POST':
+        if not _validate_csrf(request.form.get('csrf_token')):
+            flash_for('student_classes', 'Session expired — try again.', 'error')
+            return redirect(url_for('student_classes'))
+        disclosed = (request.form.get('disclosed') or '').strip() in ('1', 'on', 'true', 'yes')
+        try:
+            with get_db() as conn:
+                join_class(
+                    conn,
+                    current_user.id,
+                    request.form.get('code'),
+                    disclosed=disclosed,
+                )
+        except ValueError as exc:
+            flash_for('student_classes', _class_value_error_flash(exc), 'error')
+            return redirect(url_for('student_classes'))
+        flash_for('student_classes', 'You joined the class. Only the teacher can take you off it.', 'success')
+        return redirect(url_for('student_classes'))
+
+    with get_db() as conn:
+        classes = list_classes_for_student(conn, current_user.id)
+        class_work = list_class_work_for_student(conn, current_user.id)
+        pending_invites = list_pending_invites_for_student(conn, current_user.id)
+    return render_template(
+        'student_classes.html',
+        classes=classes,
+        class_work=class_work,
+        pending_invites=pending_invites,
+        join_disclosure=JOIN_DISCLOSURE,
+        active_member_cap=CLASS_ACTIVE_MEMBER_CAP,
+    )
+
+
+@app.post('/classes/invites/<int:invite_id>/accept')
+@login_required
+def student_class_invite_accept(invite_id):
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash_for('student_classes', 'Session expired — try again.', 'error')
+        return redirect(url_for('student_classes'))
+    disclosed = (request.form.get('disclosed') or '').strip() in ('1', 'on', 'true', 'yes')
+    try:
+        with get_db() as conn:
+            accept_invite(conn, current_user.id, invite_id, disclosed=disclosed)
+            mark_class_invite_notifications_read(conn, current_user.id, invite_id)
+    except ValueError as exc:
+        if str(exc) == 'not_found':
+            abort(404)
+        flash_for('student_classes', _class_value_error_flash(exc), 'error')
+        return redirect(url_for('student_classes'))
+    flash_for('student_classes', 'You joined the class. Only the teacher can take you off it.', 'success')
+    return redirect(url_for('student_classes'))
+
+
+@app.post('/classes/invites/<int:invite_id>/decline')
+@login_required
+def student_class_invite_decline(invite_id):
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash_for('student_classes', 'Session expired — try again.', 'error')
+        return redirect(url_for('student_classes'))
+    try:
+        with get_db() as conn:
+            decline_invite(conn, current_user.id, invite_id)
+            mark_class_invite_notifications_read(conn, current_user.id, invite_id)
+    except ValueError as exc:
+        if str(exc) == 'not_found':
+            abort(404)
+        flash_for('student_classes', _class_value_error_flash(exc), 'error')
+        return redirect(url_for('student_classes'))
+    flash_for('student_classes', 'Invite declined.', 'success')
+    return redirect(url_for('student_classes'))
+
+
+@app.get('/class-work')
+@login_required
+def student_class_work():
+    with get_db() as conn:
+        items = list_class_work_for_student(conn, current_user.id)
+    return render_template('student_class_work.html', items=items)
+
+
+@app.route('/class-work/<int:assignment_id>', methods=['GET', 'POST'])
+@login_required
+def student_class_work_detail(assignment_id):
+    if request.method == 'POST':
+        if not _validate_csrf(request.form.get('csrf_token')):
+            flash_for('student_class_work_detail', 'Session expired — try again.', 'error')
+            return redirect(url_for('student_class_work_detail', assignment_id=assignment_id))
+        try:
+            with get_db() as conn:
+                submit_student_answer(
+                    conn,
+                    current_user.id,
+                    assignment_id,
+                    request.form.get('index'),
+                    request.form.get('user_answer'),
+                )
+        except ValueError as exc:
+            if str(exc) == 'not_found':
+                abort(404)
+            flash_for('student_class_work_detail', _class_value_error_flash(exc), 'error')
+            return redirect(url_for('student_class_work_detail', assignment_id=assignment_id))
+        flash_for('student_class_work_detail', 'Answer checked.', 'success')
+        return redirect(url_for('student_class_work_detail', assignment_id=assignment_id))
+
+    try:
+        with get_db() as conn:
+            work = get_class_work_for_student(conn, current_user.id, assignment_id)
+    except ValueError as exc:
+        if str(exc) == 'not_found':
+            abort(404)
+        raise
+    return render_template(
+        'student_class_work_detail.html',
+        work=serialize_student_work(work),
+    )
+
+
 @app.route('/profile/settings', methods=['GET', 'POST'])
 @login_required
 def profile_settings():
@@ -6292,6 +7268,432 @@ def api_v1_auth_logout():
 @login_required
 def api_v1_auth_me():
     return jsonify({'ok': True, 'user': _serialize_auth_user(current_user)})
+
+
+@app.get('/api/v1/me/teacher')
+@login_required
+def api_v1_me_teacher():
+    with get_db() as conn:
+        status = serialize_teacher_status(conn, current_user.id)
+    return jsonify({'ok': True, **status})
+
+
+@app.post('/api/v1/me/teacher/enable')
+@login_required
+def api_v1_me_teacher_enable():
+    with get_db() as conn:
+        enable_teacher(conn, current_user.id)
+        status = serialize_teacher_status(conn, current_user.id)
+    return jsonify({'ok': True, **status})
+
+
+@app.get('/api/v1/teacher/classes')
+@login_required
+def api_v1_teacher_list_classes():
+    include_archived = request.args.get('include_archived', '1') not in ('0', 'false', 'False')
+    with get_db() as conn:
+        if not teacher_is_enabled(conn, current_user.id):
+            return _api_error('Enable teacher mode first', 403, 'teacher_required')
+        rows = list_classes_for_teacher(
+            conn, current_user.id, include_archived=include_archived
+        )
+    return jsonify({
+        'ok': True,
+        'classes': [serialize_class(row) for row in rows],
+        'active_member_cap': CLASS_ACTIVE_MEMBER_CAP,
+    })
+
+
+@app.post('/api/v1/teacher/classes')
+@login_required
+def api_v1_teacher_create_class():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('JSON body required', 400, 'invalid_payload')
+    if payload.get('org_id') not in (None, ''):
+        return _api_error('org_id is not accepted in this track', 400, 'invalid_field')
+    try:
+        with get_db() as conn:
+            row = create_class(
+                conn,
+                current_user.id,
+                payload.get('name'),
+                payload.get('level'),
+                payload.get('subject'),
+            )
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({'ok': True, 'class': serialize_class(row)}), 201
+
+
+@app.get('/api/v1/teacher/classes/<int:class_id>')
+@login_required
+def api_v1_teacher_get_class(class_id):
+    with get_db() as conn:
+        if not teacher_owns_class(conn, current_user.id, class_id):
+            return _api_error('Class not found', 404, 'not_found')
+        row = get_class_for_teacher(conn, current_user.id, class_id)
+    return jsonify({'ok': True, 'class': serialize_class(row)})
+
+
+@app.post('/api/v1/teacher/classes/<int:class_id>/rotate-code')
+@login_required
+def api_v1_teacher_rotate_code(class_id):
+    try:
+        with get_db() as conn:
+            row = rotate_join_code(conn, current_user.id, class_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({'ok': True, 'class': serialize_class(row)})
+
+
+@app.post('/api/v1/teacher/classes/<int:class_id>/archive')
+@login_required
+def api_v1_teacher_archive_class(class_id):
+    try:
+        with get_db() as conn:
+            row = archive_class(conn, current_user.id, class_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({'ok': True, 'class': serialize_class(row)})
+
+
+@app.get('/api/v1/teacher/classes/<int:class_id>/roster')
+@login_required
+def api_v1_teacher_class_roster(class_id):
+    with get_db() as conn:
+        if not teacher_owns_class(conn, current_user.id, class_id):
+            return _api_error('Class not found', 404, 'not_found')
+        row = get_class_for_teacher(conn, current_user.id, class_id)
+        roster = enrich_roster(conn, list_roster(conn, current_user.id, class_id))
+        aggregates = class_aggregates(conn, current_user.id, class_id)
+        pending_invites = list_pending_invites_for_class(conn, current_user.id, class_id)
+    members = [serialize_roster_member(item) for item in roster]
+    payload = serialize_class(row)
+    payload['active_member_count'] = len(members)
+    return jsonify({
+        'ok': True,
+        'class': payload,
+        'roster': members,
+        'pending_invites': [serialize_invite(item) for item in pending_invites],
+        'aggregates': aggregates,
+    })
+
+
+@app.get('/api/v1/teacher/classes/<int:class_id>/progress')
+@login_required
+def api_v1_teacher_class_progress(class_id):
+    try:
+        with get_db() as conn:
+            if not teacher_owns_class(conn, current_user.id, class_id):
+                return _api_error('Class not found', 404, 'not_found')
+            row = get_class_for_teacher(conn, current_user.id, class_id)
+            aggregates = class_aggregates(conn, current_user.id, class_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({
+        'ok': True,
+        'class': serialize_class(row),
+        'aggregates': aggregates,
+    })
+
+
+@app.get('/api/v1/teacher/classes/<int:class_id>/students/<int:student_id>/progress')
+@login_required
+def api_v1_teacher_student_progress(class_id, student_id):
+    try:
+        with get_db() as conn:
+            progress = student_progress(conn, current_user.id, class_id, student_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({'ok': True, 'progress': progress})
+
+
+@app.post('/api/v1/teacher/classes/<int:class_id>/members/<int:student_id>/remove')
+@login_required
+def api_v1_teacher_remove_member(class_id, student_id):
+    try:
+        with get_db() as conn:
+            membership = remove_student(conn, current_user.id, class_id, student_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({'ok': True, 'membership': {
+        'student_id': membership['student_id'],
+        'status': membership['status'],
+        'removed_at': membership.get('removed_at'),
+    }})
+
+
+@app.get('/api/v1/teacher/classes/<int:class_id>/invites')
+@login_required
+def api_v1_teacher_list_invites(class_id):
+    try:
+        with get_db() as conn:
+            rows = list_pending_invites_for_class(conn, current_user.id, class_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({
+        'ok': True,
+        'invites': [serialize_invite(row) for row in rows],
+    })
+
+
+@app.post('/api/v1/teacher/classes/<int:class_id>/invites')
+@login_required
+def api_v1_teacher_create_invite(class_id):
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('JSON body required', 400, 'invalid_payload')
+    try:
+        with get_db() as conn:
+            if not teacher_owns_class(conn, current_user.id, class_id):
+                return _api_error('Class not found', 404, 'not_found')
+            target = _invite_target_user(conn, payload.get('handle'))
+            invite = invite_student(conn, current_user.id, class_id, target.id)
+            klass = get_class_for_teacher(conn, current_user.id, class_id)
+            _notify_class_invite(
+                conn, target.id, current_user.handle, invite['id'], klass['name'],
+            )
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({'ok': True, 'invite': serialize_invite(invite)}), 201
+
+
+@app.post('/api/v1/teacher/classes/<int:class_id>/invites/<int:invite_id>/cancel')
+@login_required
+def api_v1_teacher_cancel_invite(class_id, invite_id):
+    try:
+        with get_db() as conn:
+            cancel_invite(conn, current_user.id, class_id, invite_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({'ok': True})
+
+
+@app.get('/api/v1/teacher/classes/<int:class_id>/audit')
+@login_required
+def api_v1_teacher_class_audit(class_id):
+    try:
+        with get_db() as conn:
+            events = list_class_audit(conn, current_user.id, class_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({
+        'ok': True,
+        'events': [serialize_audit_event(row) for row in events],
+    })
+
+
+@app.get('/api/v1/teacher/classes/<int:class_id>/roster.csv')
+@login_required
+def api_v1_teacher_roster_csv(class_id):
+    try:
+        with get_db() as conn:
+            filename, body = roster_csv(conn, current_user.id, class_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return _class_csv_response(filename, body)
+
+
+@app.get('/api/v1/teacher/classes/<int:class_id>/assignments.csv')
+@login_required
+def api_v1_teacher_assignments_csv(class_id):
+    try:
+        with get_db() as conn:
+            filename, body = assignments_csv(conn, current_user.id, class_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return _class_csv_response(filename, body)
+
+
+@app.get('/api/v1/teacher/classes/<int:class_id>/assignments')
+@login_required
+def api_v1_teacher_list_assignments(class_id):
+    try:
+        with get_db() as conn:
+            if not teacher_owns_class(conn, current_user.id, class_id):
+                return _api_error('Class not found', 404, 'not_found')
+            rows = list_assignments_for_teacher(conn, current_user.id, class_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({
+        'ok': True,
+        'assignments': [serialize_assignment_summary(row) for row in rows],
+    })
+
+
+@app.post('/api/v1/teacher/classes/<int:class_id>/assignments')
+@login_required
+def api_v1_teacher_create_assignment(class_id):
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('JSON body required', 400, 'invalid_payload')
+    try:
+        with get_db() as conn:
+            if not teacher_owns_class(conn, current_user.id, class_id):
+                return _api_error('Class not found', 404, 'not_found')
+            if _json_flag(payload, 'preview'):
+                preview = _teacher_preview_assignment(
+                    conn, current_user.id, class_id, payload,
+                )
+                return jsonify({'ok': True, 'preview': serialize_preview(preview)})
+            assignment = _teacher_create_assignment(
+                conn, current_user.id, class_id, payload,
+            )
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({
+        'ok': True,
+        'assignment': serialize_teacher_assignment(assignment),
+    }), 201
+
+
+@app.get('/api/v1/teacher/classes/<int:class_id>/assignments/<int:assignment_id>')
+@login_required
+def api_v1_teacher_get_assignment(class_id, assignment_id):
+    try:
+        with get_db() as conn:
+            if not teacher_owns_class(conn, current_user.id, class_id):
+                return _api_error('Class not found', 404, 'not_found')
+            assignment = get_assignment_for_teacher(
+                conn, current_user.id, class_id, assignment_id,
+            )
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({
+        'ok': True,
+        'assignment': serialize_teacher_assignment(assignment),
+    })
+
+
+@app.get('/api/v1/me/classes')
+@login_required
+def api_v1_me_classes():
+    with get_db() as conn:
+        rows = list_classes_for_student(conn, current_user.id)
+        invites = list_pending_invites_for_student(conn, current_user.id)
+    return jsonify({
+        'ok': True,
+        'classes': [serialize_student_class(row) for row in rows],
+        'invites': [serialize_invite(row, for_student=True) for row in invites],
+        **disclosure_payload(),
+    })
+
+
+@app.post('/api/v1/me/classes/join')
+@login_required
+def api_v1_me_classes_join():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('JSON body required', 400, 'invalid_payload')
+    try:
+        with get_db() as conn:
+            membership = join_class(
+                conn,
+                current_user.id,
+                payload.get('code'),
+                disclosed=_json_flag(payload, 'disclosed'),
+            )
+            rows = list_classes_for_student(conn, current_user.id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    joined = next(
+        (serialize_student_class(row) for row in rows if row['id'] == membership['class_id']),
+        None,
+    )
+    return jsonify({'ok': True, 'class': joined, **disclosure_payload()}), 201
+
+
+@app.get('/api/v1/me/class-invites')
+@login_required
+def api_v1_me_class_invites():
+    with get_db() as conn:
+        rows = list_pending_invites_for_student(conn, current_user.id)
+    return jsonify({
+        'ok': True,
+        'invites': [serialize_invite(row, for_student=True) for row in rows],
+        **disclosure_payload(),
+    })
+
+
+@app.post('/api/v1/me/class-invites/<int:invite_id>/accept')
+@login_required
+def api_v1_me_class_invite_accept(invite_id):
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('JSON body required', 400, 'invalid_payload')
+    try:
+        with get_db() as conn:
+            membership = accept_invite(
+                conn,
+                current_user.id,
+                invite_id,
+                disclosed=_json_flag(payload, 'disclosed'),
+            )
+            mark_class_invite_notifications_read(conn, current_user.id, invite_id)
+            rows = list_classes_for_student(conn, current_user.id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    joined = next(
+        (serialize_student_class(row) for row in rows if row['id'] == membership['class_id']),
+        None,
+    )
+    return jsonify({'ok': True, 'class': joined, **disclosure_payload()})
+
+
+@app.post('/api/v1/me/class-invites/<int:invite_id>/decline')
+@login_required
+def api_v1_me_class_invite_decline(invite_id):
+    try:
+        with get_db() as conn:
+            decline_invite(conn, current_user.id, invite_id)
+            mark_class_invite_notifications_read(conn, current_user.id, invite_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({'ok': True})
+
+
+@app.get('/api/v1/me/class-work')
+@login_required
+def api_v1_me_class_work():
+    with get_db() as conn:
+        rows = list_class_work_for_student(conn, current_user.id)
+    return jsonify({
+        'ok': True,
+        'class_work': [serialize_student_work_list_item(row) for row in rows],
+        'can_leave': False,
+    })
+
+
+@app.get('/api/v1/me/class-work/<int:assignment_id>')
+@login_required
+def api_v1_me_class_work_detail(assignment_id):
+    try:
+        with get_db() as conn:
+            work = get_class_work_for_student(conn, current_user.id, assignment_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({'ok': True, 'class_work': serialize_student_work(work)})
+
+
+@app.post('/api/v1/me/class-work/<int:assignment_id>/answer')
+@login_required
+def api_v1_me_class_work_answer(assignment_id):
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('JSON body required', 400, 'invalid_payload')
+    try:
+        with get_db() as conn:
+            work = submit_student_answer(
+                conn,
+                current_user.id,
+                assignment_id,
+                payload.get('index'),
+                payload.get('user_answer'),
+            )
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({'ok': True, 'class_work': serialize_student_work(work)})
 
 
 @app.get('/api/v1/auth/tokens')

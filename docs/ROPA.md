@@ -3,7 +3,7 @@
 **Controller:** `CONTROLLER_NAME` env (see `.env.example`)  
 **Contact:** `PRIVACY_CONTACT_EMAIL`  
 **ICO registration:** `ICO_REGISTRATION_NUMBER` (required before public launch)  
-**Last reviewed:** 2026-08-27  
+**Last reviewed:** 2026-08-31  
 **UK GDPR Art 30** — keep this aligned with `docs/SECURITY_AND_GDPR.md` §2.1 and §4.
 
 | # | Purpose | Lawful basis | Data categories | Data subjects | Recipients / processors | Transfers | Retention | Security |
@@ -16,7 +16,10 @@
 | 6 | Password reset and email verification | Contract | Email, token hash, expiry | Users who request reset or register | Email sender | Provider-dependent | Tokens unused after 60 minutes (reset) / 48 hours (verify); pruned 24 hours after expiry | Single-use hashed tokens; generic forgot-password response |
 | 7 | Optional AI lesson assist | Consent at point of use, **only if enabled** | Lesson excerpt, surrounding context, typed question — **never** handle, email, or user id | Users who invoke the assistant | LLM provider (OpenAI / Anthropic / DeepSeek) | US and/or China if enabled | Provider's retention per their DPA | **Default off in production** (`LESSON_ASSIST_ENABLED` must be `1`). Identity keys stripped before POST |
 | 8 | Database backups | Legitimate interests (availability) | Full SQLite copy | All of the above | Operator / hosting disk | Same as hosting | 14-day rolling | Encrypted with `PB_BACKUP_PASSPHRASE` (Fernet). Notice states live delete is immediate and backups drop data within 14 days |
+| 9 | Teacher / class mode (G8 Phases 0–6) | Contract (Art 6(1)(b)) for the teacher’s own classes; after opt-in join (code or handle invite), sharing class progress (T0–T2) and set-work completion with that teacher | Teacher flag (`teacher_profiles`); class name, optional level/subject, join code (`classes`); membership (`class_memberships`: class, student, status, joined/removed); handle invites (`class_invites`); class activity log (`class_audit_events`: action, actor, subject handle snapshot, small meta — no emails/T3/keys); frozen assignment payloads (`class_assignments.problems_json`); per-student answers and scores (`class_assignment_recipients`). Progress metrics are read from existing G1–G7 tables (not copied). `org_id` is always null in this track | Registered users who enable teacher tools; students who join a class | Hosting only. The teacher is another user of this controller, not a new processor | None extra | Life of the account; erased on delete (FK cascade for profiles, classes, memberships, assignments, recipients, previews, invites). Audit `actor_id` SET NULL; matching `subject_handle` scrubbed. Pending invites pruned after 14 days. Audit capped at 200 events per class | Membership authz on class, progress, assignment, invite, audit, and CSV endpoints; join codes rotatable; join and invite-accept require disclosure; no silent add; no student Leave; roster/CSV/audit are handles not emails; T3 reflections never shown to teachers; student GET strips answer keys until after server grade; completion is roster-only |
 
 Special category data: **none intended**. Do not add health, ethnicity, or SEN fields.
 
 Rights: access and portability via `GET /me/export` and `scripts/gdpr_export_user.py`; erasure via `POST /me/delete` and `scripts/gdpr_erase_user.py`; objection/complaint via the privacy contact and the ICO.
+
+**G8:** Phases 0–6 complete (verified 2026-08-31). Draft residuals: `docs/DPIA.md` §9. Qualified legal review is still required before public HTTPS.

@@ -201,7 +201,7 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | **Notifications** | `models/notifications.py` | In-app events |
 | **Block / report** | `models/moderation.py` | User safety |
 
-Social features are **peer-to-peer**. There is no teacher role or class roster in the live app. **G8** is designed with locked decisions — `docs/G8_TEACHER_HANDOFF.md` (track not started).
+Social features are **peer-to-peer**, plus optional **G8 teacher/class** (Phases 0–6 complete: enable, classes, join, handle invites, roster, teacher-only remove, T0–T2 dashboards, frozen set-work, audit log, CSV). Design: `docs/G8_TEACHER_HANDOFF.md`.
 
 ### 5.5 Phase G — Learning depth (G1–G7)
 
@@ -267,6 +267,19 @@ Schema is created in `app.py` on startup. Major table groups:
 - `user_revision_plans` — G7
 - Revision queue state (G3) — see `models/revision_queue.py`
 
+### 6.5 G8 teacher / class (Phases 0–6 complete)
+
+- `teacher_profiles` — soft teacher enable (`user_id`, `enabled_at`)
+- `classes` — name, optional level/subject, nullable `org_id` (always null in this track), unique `join_code`, `archived_at`
+- `class_memberships` — `(class_id, student_id)` PK; `status` active|removed; teacher-only remove
+- `class_assignments` — frozen generator payloads (`problems_json`), live catalogue only
+- `class_assignment_recipients` — per-student answers and scores; unique `(assignment_id, student_id)`
+- `class_assignment_previews` — short-lived preview before assign
+- `class_invites` — handle invites; pending until the student accepts after disclosure (no silent add)
+- `class_audit_events` — teacher-visible class actions; handles only; cap 200 per class; `actor_id` SET NULL on delete
+
+Join is opt-in by code or handle invite after disclosure. Cap 40 active members. No student Leave endpoint. T0–T2 progress is read from existing G1–G7 tables behind membership authz (`models/class_progress.py`). T3 free-text is never shown to teachers. Set-work is graded from stored JSON (`models/class_assignments.py`); student GET strips keys until after server grade. CSV export is handles only (`models/class_csv.py`). Design: `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2. Routes: `docs/API.md`.
+
 Weak topics (G1) are computed at read time from attempt tables, not stored separately.
 
 ---
@@ -323,6 +336,9 @@ Lesson quizzes (`generators/shared/lesson_quiz.py`): 10 questions — 3 foundati
 | Lesson quiz | Topic page → lesson quiz → results |
 | Wrong answer reflection | Check/MCQ wrong → optional “What tripped you up?” |
 | Profile analytics | `/profile` — weak topics, due today, skill patterns, exam plan |
+| Teacher classes | `/teacher/classes`, `/teacher/classes/<id>/roster`, `/teacher/classes/<id>/students/<id>`, `/teacher/classes/<id>/assignments`, `/teacher/classes/<id>/audit` |
+| Join a class | `/classes` (disclosure + code or handle invite; no Leave) |
+| Class work | `/class-work`, `/class-work/<id>` |
 | Social | `/feed`, `/u/<handle>`, challenges, QOTD |
 
 ---

@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% from "partials/page_flashes.html" import render as page_flashes %}
+{% block title %}Set work – {{ klass.name }} – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+<div class="lesson-hero">
+    <h1>Set work</h1>
+    <p class="hero-sub">Generate frozen questions from the live catalogue, then assign that same set to selected students or everyone active. Students cannot reroll. Completion stays on this roster — not a public ranking.</p>
+</div>
+
+<p class="profile-page-back"><a href="{{ url_for('teacher_class_roster', class_id=klass.id) }}">← Back to roster</a>
+ · <a href="{{ url_for('teacher_class_assignments_csv', class_id=klass.id) }}">Download set-work CSV</a></p>
+
+{{ page_flashes('teacher_class_assignments') }}
+
+<section class="section-panel">
+    <div class="section-panel-header">Generate and assign</div>
+    <div class="section-panel-body">
+        <form method="POST" class="auth-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% if preview %}
+            <input type="hidden" name="preview_id" value="{{ preview.preview_id }}">
+            {% endif %}
+            <div class="form-group">
+                <label for="set-work-scope">Topic</label>
+                <select id="set-work-scope" name="scope" required>
+                    {% for item in catalogue %}
+                    {% set value = item.level ~ ':' ~ item.subject ~ ':' ~ item.topic %}
+                    <option value="{{ value }}"{% if form and form.level == item.level and form.subject == item.subject and form.topic == item.topic %} selected{% endif %}>{{ item.level | upper }} · {{ item.subject | replace('_', ' ') | title }} · {{ item.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="set-work-mode">Mode</label>
+                <select id="set-work-mode" name="mode">
+                    <option value="standard"{% if not form or form.mode == 'standard' %} selected{% endif %}>Standard</option>
+                    <option value="mcq"{% if form and form.mode == 'mcq' %} selected{% endif %}>MCQ</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="set-work-difficulty">Difficulty</label>
+                <select id="set-work-difficulty" name="difficulty">
+                    <option value="foundational"{% if not form or form.difficulty == 'foundational' %} selected{% endif %}>Foundational</option>
+                    <option value="intermediate"{% if form and form.difficulty == 'intermediate' %} selected{% endif %}>Intermediate</option>
+                    <option value="difficult"{% if form and form.difficulty == 'difficult' %} selected{% endif %}>Difficult</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="set-work-count">Number of questions (1–{{ max_questions }})</label>
+                <input type="number" id="set-work-count" name="count" min="1" max="{{ max_questions }}" value="{{ form.count if form and form.count else 5 }}" required>
+            </div>
+
+            {% if preview %}
+            <p class="page-intro">Preview of {{ preview.question_count }} frozen question{{ 's' if preview.question_count != 1 else '' }}. Assign these exact questions, or generate a new preview.</p>
+            <ol class="profile-list">
+                {% for problem in preview.problems %}
+                <li class="profile-list-item">
+                    <div class="quiz-runner-question">{{ (problem.question_html or problem.question or '') | safe }}</div>
+                    {% if problem.options %}
+                    <ul>
+                        {% for opt in problem.options %}
+                        <li>{{ opt | safe }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ol>
+            {% endif %}
+
+            {% if roster %}
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="all" value="1"{% if form and form.all %} checked{% endif %}>
+                    All active members
+                </label>
+            </div>
+            <fieldset class="form-group">
+                <legend>Or choose students</legend>
+                {% for member in roster %}
+                <label>
+                    <input type="checkbox" name="student_ids" value="{{ member.student_id }}">
+                    @{{ member.handle }}
+                </label>
+                {% endfor %}
+            </fieldset>
+            {% else %}
+            <p class="profile-empty">No active students yet. Share the join code first.</p>
+            {% endif %}
+
+            <div class="list-row-actions">
+                <button type="submit" name="action" value="preview" class="btn btn-outline">Preview questions</button>
+                {% if roster %}
+                <button type="submit" name="action" value="assign" class="btn btn-primary">{% if preview %}Assign this set{% else %}Generate and assign{% endif %}</button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">Assigned sets</div>
+    <div class="section-panel-body">
+        {% if assignments %}
+        <ul class="profile-list profile-list--rows">
+            {% for item in assignments %}
+            <li class="profile-list-item list-row">
+                <div class="list-row-main">
+                    <strong>{{ item.topic | replace('_', ' ') | title }}</strong>
+                    <span class="list-row-meta">{{ item.question_count }} question{{ 's' if item.question_count != 1 else '' }} · {{ item.complete_count }} / {{ item.recipient_count }} complete · {{ item.created_at }}</span>
+                </div>
+                <div class="list-row-actions">
+                    <a href="{{ url_for('teacher_class_assignment', class_id=klass.id, assignment_id=item.id) }}" class="btn btn-outline btn-sm">Scores</a>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty">No set work yet.</p>
+        {% endif %}
+    </div>
+</section>
+</div>
+{% endblock %}

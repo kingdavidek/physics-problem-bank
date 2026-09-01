@@ -1,4 +1,6 @@
 """Subject-access / portability export (UK GDPR Art 15/20 / S0.5)."""
+import json
+
 from models.user import utc_now_iso
 
 SCHEMA_VERSION = 1
@@ -94,6 +96,166 @@ def build_user_export(conn, user_id):
             (user_id,),
         )
 
+    teacher = None
+    if _table_exists(conn, 'teacher_profiles'):
+        profile = conn.execute(
+            'SELECT user_id, enabled_at FROM teacher_profiles WHERE user_id = ?',
+            (user_id,),
+        ).fetchone()
+        classes = []
+        if _table_exists(conn, 'classes'):
+            classes = _rows(
+                conn,
+                '''
+                SELECT id, name, level, subject, org_id, join_code,
+                       join_code_rotated_at, created_at, archived_at
+                FROM classes WHERE teacher_id = ?
+                ORDER BY created_at
+                ''',
+                (user_id,),
+            )
+        teacher = {
+            'enabled': bool(profile),
+            'enabled_at': profile['enabled_at'] if profile else None,
+            'classes': classes,
+        }
+
+    classes_joined = []
+    if _table_exists(conn, 'class_memberships'):
+        classes_joined = _rows(
+            conn,
+            '''
+            SELECT c.id, c.name, c.level, c.subject, c.archived_at,
+                   u.handle AS teacher_handle,
+                   m.status, m.joined_at, m.removed_at
+            FROM class_memberships m
+            JOIN classes c ON c.id = m.class_id
+            JOIN users u ON u.id = c.teacher_id
+            WHERE m.student_id = ?
+            ORDER BY m.joined_at
+            ''',
+            (user_id,),
+        )
+
+    class_work = []
+    if _table_exists(conn, 'class_assignment_recipients'):
+        raw_work = _rows(
+            conn,
+            '''
+            SELECT a.id AS assignment_id, a.class_id, c.name AS class_name,
+                   a.level, a.subject, a.topic, a.mode, a.difficulty,
+                   a.question_count, a.created_at,
+                   r.status, r.answers_json, r.score, r.completed_at
+            FROM class_assignment_recipients r
+            JOIN class_assignments a ON a.id = r.assignment_id
+            JOIN classes c ON c.id = a.class_id
+            WHERE r.student_id = ?
+            ORDER BY a.created_at
+            ''',
+            (user_id,),
+        )
+        for item in raw_work:
+            answers = []
+            try:
+                parsed = json.loads(item.pop('answers_json', None) or '[]')
+            except (TypeError, ValueError):
+                parsed = []
+            if isinstance(parsed, list):
+                for index, slot in enumerate(parsed):
+                    if not isinstance(slot, dict):
+                        continue
+                    answers.append({
+                        'index': index,
+                        'user_answer': slot.get('user_answer'),
+                        'correct': bool(slot.get('correct')),
+                    })
+            item['answers'] = answers
+            class_work.append(item)
+
+    assignments_created = []
+    if teacher is not None and _table_exists(conn, 'class_assignments'):
+        assignments_created = _rows(
+            conn,
+            '''
+            SELECT a.id, a.class_id, c.name AS class_name,
+                   a.level, a.subject, a.topic, a.mode, a.difficulty,
+                   a.question_count, a.created_at,
+                   COUNT(r.student_id) AS recipient_count,
+                   SUM(CASE WHEN r.status = 'complete' THEN 1 ELSE 0 END) AS complete_count
+            FROM class_assignments a
+            JOIN classes c ON c.id = a.class_id
+            LEFT JOIN class_assignment_recipients r ON r.assignment_id = a.id
+            WHERE a.teacher_id = ?
+            GROUP BY a.id
+            ORDER BY a.created_at
+            ''',
+            (user_id,),
+        )
+        teacher['assignments_created'] = assignments_created
+
+    class_invites_received = []
+    class_invites_sent = []
+    if _table_exists(conn, 'class_invites'):
+        class_invites_received = _rows(
+            conn,
+            '''
+            SELECT i.id, i.class_id, c.name AS class_name, u.handle AS teacher_handle,
+                   i.status, i.created_at, i.responded_at
+            FROM class_invites i
+            JOIN classes c ON c.id = i.class_id
+            JOIN users u ON u.id = i.teacher_id
+            WHERE i.student_id = ?
+            ORDER BY i.created_at
+            ''',
+            (user_id,),
+        )
+        class_invites_sent = _rows(
+            conn,
+            '''
+            SELECT i.id, i.class_id, c.name AS class_name, u.handle AS student_handle,
+                   i.status, i.created_at, i.responded_at
+            FROM class_invites i
+            JOIN classes c ON c.id = i.class_id
+            JOIN users u ON u.id = i.student_id
+            WHERE i.teacher_id = ?
+            ORDER BY i.created_at
+            ''',
+            (user_id,),
+        )
+
+    class_audit = []
+    if teacher is not None and _table_exists(conn, 'class_audit_events'):
+        class_audit = _rows(
+            conn,
+            '''
+            SELECT e.id, e.class_id, c.name AS class_name, e.action,
+                   e.subject_handle, e.meta_json, e.created_at
+            FROM class_audit_events e
+            JOIN classes c ON c.id = e.class_id
+            WHERE c.teacher_id = ?
+            ORDER BY e.id
+            ''',
+            (user_id,),
+        )
+        for item in class_audit:
+            try:
+                meta = json.loads(item.pop('meta_json', None) or '{}')
+            except (TypeError, ValueError, json.JSONDecodeError):
+                meta = {}
+            if not isinstance(meta, dict):
+                meta = {}
+            item['meta'] = {
+                key: value for key, value in meta.items()
+                if key in (
+                    'name', 'via', 'topic', 'question_count',
+                    'recipient_count', 'assignment_id', 'invite_id',
+                )
+            }
+        teacher['class_audit'] = class_audit
+
+    if teacher is not None:
+        teacher['invites_sent'] = class_invites_sent
+
     return {
         'generated_at': utc_now_iso(),
         'schema_version': SCHEMA_VERSION,
@@ -104,6 +266,10 @@ def build_user_export(conn, user_id):
             'following': following,
             'followers': followers,
         },
+        'teacher': teacher,
+        'classes_joined': classes_joined,
+        'class_work': class_work,
+        'class_invites_received': class_invites_received,
         'notes': {
             'api_sessions': tokens,
         },

@@ -28,6 +28,7 @@ from models.auth_tokens import (  # noqa: E402
     create_password_reset_token,
     peek_password_reset_token,
 )
+from models.classes import create_class, enable_teacher  # noqa: E402
 from models.data_export import build_user_export  # noqa: E402
 from models.notifications import create_notification  # noqa: E402
 from models.privacy import hashed_ip  # noqa: E402
@@ -163,6 +164,8 @@ def main():
                 source='check', prompt_type='guessed',
                 reflection_text='I guessed the order of operations.',
             )
+            enable_teacher(conn, uid_a)
+            create_class(conn, uid_a, 'Smoke class', 'gcse', 'maths')
             follow_user(conn, uid_b, uid_a)
             create_notification(
                 conn, uid_b, 'new_follower',
@@ -203,6 +206,10 @@ def main():
         exported = json.loads(r.data.decode())
         assert exported['account']['handle'] == handle_a
         assert 'password_hash' not in json.dumps(exported)
+        assert exported['teacher']['enabled'] is True
+        assert exported['teacher']['classes'][0]['name'] == 'Smoke class'
+        assert exported['teacher']['classes'][0]['join_code']
+        assert exported['classes_joined'] == []
 
         r = client.get('/api/v1/me/export', headers={'Accept': 'application/json'})
         assert r.status_code == 200

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "partials/page_flashes.html" import render as page_flashes %}
+{% block title %}{{ work.topic | replace('_', ' ') | title }} – class work – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+<div class="lesson-hero">
+    <h1>{{ work.topic | replace('_', ' ') | title }}</h1>
+    <p class="hero-sub">{{ work.class_name }} · {{ work.answered_count }} / {{ work.question_count }} answered. These questions are frozen — you cannot reroll.</p>
+</div>
+
+<p class="profile-page-back"><a href="{{ url_for('student_class_work') }}">← All class work</a></p>
+
+{{ page_flashes('student_class_work_detail') }}
+
+{% if work.status == 'complete' %}
+<p class="page-intro">Score {{ work.score }} / {{ work.question_count }}.</p>
+{% endif %}
+
+{% for problem in work.problems %}
+<section class="section-panel">
+    <div class="section-panel-header">Question {{ problem.index + 1 }}</div>
+    <div class="section-panel-body">
+        <div class="quiz-runner-question">{{ (problem.question_html or problem.question or '') | safe }}</div>
+        {% if problem.answered %}
+        <p class="list-row-meta">Your answer: {{ problem.user_answer }} · {% if problem.correct %}Correct{% else %}Incorrect{% endif %}</p>
+        {% if problem.solution_html %}
+        <div class="quiz-runner-question">{{ problem.solution_html | safe }}</div>
+        {% endif %}
+        {% else %}
+        <form method="POST" class="auth-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="index" value="{{ problem.index }}">
+            {% if problem.options %}
+            <div class="form-group" role="group" aria-label="Options">
+                {% for opt in problem.options %}
+                <label>
+                    <input type="radio" name="user_answer" value="{{ opt[0] }}" required>
+                    {{ opt | safe }}
+                </label>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="form-group">
+                <label for="class-work-answer-{{ problem.index }}">Your answer</label>
+                <input type="text" id="class-work-answer-{{ problem.index }}" name="user_answer" required autocomplete="off">
+            </div>
+            {% endif %}
+            <button type="submit" class="btn btn-primary">Check</button>
+        </form>
+        {% endif %}
+    </div>
+</section>
+{% endfor %}
+</div>
+{% endblock %}

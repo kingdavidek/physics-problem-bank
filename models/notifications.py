@@ -7,6 +7,7 @@ NOTIFICATION_FOLLOW = 'new_follower'
 NOTIFICATION_CHALLENGE = 'challenge_received'
 NOTIFICATION_CHALLENGE_COMPLETE = 'challenge_complete'
 NOTIFICATION_STUDY_PAIR = 'study_pair_invite'
+NOTIFICATION_CLASS_INVITE = 'class_invite'
 
 
 def create_notification(conn, user_id, notification_type, payload):
@@ -108,6 +109,32 @@ def mark_study_pair_notifications_read(conn, user_id, pair_id):
         except (TypeError, ValueError, json.JSONDecodeError):
             payload = {}
         if int(payload.get('pair_id') or 0) == int(pair_id):
+            conn.execute(
+                'UPDATE user_notifications SET read_at = ? WHERE id = ?',
+                (now, row['id']),
+            )
+            marked += 1
+    if marked:
+        conn.commit()
+    return marked
+
+
+def mark_class_invite_notifications_read(conn, user_id, invite_id):
+    rows = conn.execute(
+        '''
+        SELECT id, payload_json FROM user_notifications
+        WHERE user_id = ? AND notification_type = ? AND read_at IS NULL
+        ''',
+        (user_id, NOTIFICATION_CLASS_INVITE),
+    ).fetchall()
+    now = utc_now_iso()
+    marked = 0
+    for row in rows:
+        try:
+            payload = json.loads(row['payload_json'] or '{}')
+        except (TypeError, ValueError, json.JSONDecodeError):
+            payload = {}
+        if int(payload.get('invite_id') or 0) == int(invite_id):
             conn.execute(
                 'UPDATE user_notifications SET read_at = ? WHERE id = ?',
                 (now, row['id']),

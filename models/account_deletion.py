@@ -31,6 +31,7 @@ USER_SCOPED_CHECKS = (
     ('password_reset_tokens', 'user_id'),
     ('email_verification_tokens', 'user_id'),
     ('login_lockouts', 'user_id'),
+    ('teacher_profiles', 'user_id'),
 )
 
 
@@ -143,6 +144,29 @@ def delete_user_account(conn, user_id):
                 scrubbed += 1
     counts['payload_handles_scrubbed'] = scrubbed
 
+    audit_scrubbed = 0
+    if _table_exists(conn, 'class_audit_events'):
+        conn.execute(
+            '''
+            UPDATE class_audit_events
+            SET subject_handle = ?
+            WHERE subject_handle = ? COLLATE NOCASE
+            ''',
+            (DELETED_HANDLE_LABEL, handle),
+        )
+        audit_rows = conn.execute(
+            'SELECT id, meta_json FROM class_audit_events'
+        ).fetchall()
+        for item in audit_rows:
+            new_payload, changed = _scrub_payload_handle(item['meta_json'], handle)
+            if changed:
+                conn.execute(
+                    'UPDATE class_audit_events SET meta_json = ? WHERE id = ?',
+                    (new_payload, item['id']),
+                )
+                audit_scrubbed += 1
+    counts['class_audit_handles_scrubbed'] = audit_scrubbed
+
     conn.execute('DELETE FROM users WHERE id = ?', (user_id,))
 
     now = utc_now_iso()
@@ -193,6 +217,40 @@ def remaining_user_rows(conn, user_id):
         'SELECT COUNT(*) FROM user_blocks WHERE blocker_id = ? OR blocked_id = ?',
         (user_id, user_id),
     ) if _table_exists(conn, 'user_blocks') else 0
+    leftover['classes'] = _count(
+        conn, 'SELECT COUNT(*) FROM classes WHERE teacher_id = ?', (user_id,)
+    ) if _table_exists(conn, 'classes') else 0
+    if _table_exists(conn, 'class_memberships'):
+        leftover['class_memberships'] = _count(
+            conn,
+            'SELECT COUNT(*) FROM class_memberships WHERE student_id = ? OR removed_by_teacher_id = ?',
+            (user_id, user_id),
+        )
+    # Phase 4 — listed when those tables exist.
+    if _table_exists(conn, 'class_assignments'):
+        leftover['class_assignments'] = _count(
+            conn, 'SELECT COUNT(*) FROM class_assignments WHERE teacher_id = ?', (user_id,)
+        )
+    if _table_exists(conn, 'class_assignment_recipients'):
+        leftover['class_assignment_recipients'] = _count(
+            conn,
+            'SELECT COUNT(*) FROM class_assignment_recipients WHERE student_id = ?',
+            (user_id,),
+        )
+    if _table_exists(conn, 'class_assignment_previews'):
+        leftover['class_assignment_previews'] = _count(
+            conn, 'SELECT COUNT(*) FROM class_assignment_previews WHERE teacher_id = ?', (user_id,)
+        )
+    if _table_exists(conn, 'class_invites'):
+        leftover['class_invites'] = _count(
+            conn,
+            'SELECT COUNT(*) FROM class_invites WHERE teacher_id = ? OR student_id = ?',
+            (user_id, user_id),
+        )
+    if _table_exists(conn, 'class_audit_events'):
+        leftover['class_audit_events'] = _count(
+            conn, 'SELECT COUNT(*) FROM class_audit_events WHERE actor_id = ?', (user_id,)
+        )
     return leftover
 
 

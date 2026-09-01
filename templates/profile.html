@@ -40,6 +40,9 @@
             <p class="profile-dashboard-links">
                 <a href="{{ public_profile_url }}">Public profile</a>
                 · <a href="{{ url_for('profile_settings') }}">Settings</a>
+                · <a href="{{ url_for('teacher_classes') }}">{% if teacher_enabled %}Teacher classes{% else %}Enable teacher tools{% endif %}</a>
+                · <a href="{{ url_for('student_classes') }}">My classes</a>
+                · <a href="{{ url_for('student_class_work') }}">Class work</a>
             </p>
         </div>
     </div>

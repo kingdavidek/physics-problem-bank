@@ -352,7 +352,56 @@ Document these here when they ship — specs live in `docs/ENGAGEMENT_E5.md`:
 
 The generator endpoints gain a `real_world` value for `mode` when `docs/REAL_WORLD_QUESTIONS.md` is implemented; the request/response shape is otherwise unchanged from `standard`.
 
-G8 teacher/class APIs are specified in `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2.11 and `docs/G8_TEACHER_HANDOFF.md`. Not implemented. There is **no** student leave endpoint. Document them here when they ship.
+### G8 teacher / class mode (Phase 1–6 complete)
+
+Soft teacher flag, classes, join codes, roster, T0–T2 dashboards, frozen set-work, handle invites, audit log, CSV export. **Student Leave is not implemented.** There is **no** `POST /api/v1/me/classes/<id>/leave`. T3 free-text reflections are never in teacher payloads. Set-work uses the **live** generator catalogue (`GENERATOR_LAUNCH_PATHS`); A-Level / Physics / MYP are not added as a side effect. Handle invite still requires the student to accept after disclosure — **no silent add**.
+
+| Method | Path | Auth | Notes |
+|--------|------|------|--------|
+| GET | `/api/v1/me/teacher` | Yes | `{ enabled, enabled_at, class_count, active_member_cap }` |
+| POST | `/api/v1/me/teacher/enable` | Yes | Idempotent. Same login; student app stays |
+| GET | `/api/v1/teacher/classes` | Yes | Teacher only (`403 teacher_required` otherwise). `?include_archived=0` hides archived |
+| POST | `/api/v1/teacher/classes` | Yes | `{ name, level?, subject? }`. `org_id` is rejected. `201` + class |
+| GET | `/api/v1/teacher/classes/<id>` | Yes | Owner only; others `404` |
+| POST | `/api/v1/teacher/classes/<id>/rotate-code` | Yes | Owner, not archived |
+| POST | `/api/v1/teacher/classes/<id>/archive` | Yes | Sets `archived_at`; pending invites are cancelled |
+| GET | `/api/v1/teacher/classes/<id>/roster` | Yes | Owner only; others `404`. Handles, never emails. Includes `aggregates` (T0), per-member `last_active`, `quiz_count_7d`, and `pending_invites` |
+| POST | `/api/v1/teacher/classes/<id>/members/<student_id>/remove` | Yes | Owner only; others `404` |
+| GET | `/api/v1/teacher/classes/<id>/progress` | Yes | T0 class aggregates. Owner only; others `404` |
+| GET | `/api/v1/teacher/classes/<id>/students/<student_id>/progress` | Yes | T1 named progress + T2 skill-gap chips + that student’s set-work n/X. Active member of this class; others `404`. Never `reflection_text` |
+| GET | `/api/v1/teacher/classes/<id>/assignments` | Yes | Owner only; others `404` |
+| POST | `/api/v1/teacher/classes/<id>/assignments` | Yes | Live catalogue `{ level, subject, topic, difficulty, mode, count (1–20) }`. `{ preview: true }` returns stripped stems + `preview_id`. Assign with `{ preview_id, student_ids[] }` or `{ all: true }`, or generate-and-assign in one POST. Graded later from stored JSON. Owner only |
+| GET | `/api/v1/teacher/classes/<id>/assignments/<id>` | Yes | Stems + per-recipient n/X and scores. No answer keys. Owner only |
+| GET | `/api/v1/teacher/classes/<id>/invites` | Yes | Pending handle invites. Owner only |
+| POST | `/api/v1/teacher/classes/<id>/invites` | Yes | `{ handle }`. Creates a pending invite; does **not** add to the roster. `201`. `404 user_not_found` / `403 blocked` / `409 already_member` / `already_invited` / `400 invite_limit`. Re-inviting after decline still counts toward the 40 pending cap. Pending invites older than 14 days cannot be accepted (same window as retention prune) |
+| POST | `/api/v1/teacher/classes/<id>/invites/<invite_id>/cancel` | Yes | Owner only |
+| GET | `/api/v1/teacher/classes/<id>/audit` | Yes | Recent class actions (cap 200). Handles, never emails. Owner only |
+| GET | `/api/v1/teacher/classes/<id>/roster.csv` | Yes | Roster CSV. Handles, never emails. Owner only |
+| GET | `/api/v1/teacher/classes/<id>/assignments.csv` | Yes | Set-work scores CSV. Handles, never emails. Owner only |
+| GET | `/api/v1/me/classes` | Yes | Classes the student has joined plus pending `invites`. Includes join `disclosure`. `can_leave` is always `false` |
+| POST | `/api/v1/me/classes/join` | Yes | `{ code, disclosed: true }`. Missing disclosure → `400 join_disclosure_required`. Archived or blocked codes → `404 invalid_join_code` |
+| GET | `/api/v1/me/class-invites` | Yes | Pending handle invites for the current user, with `disclosure` |
+| POST | `/api/v1/me/class-invites/<id>/accept` | Yes | `{ disclosed: true }`. Missing disclosure → `400 join_disclosure_required`. Recipient only |
+| POST | `/api/v1/me/class-invites/<id>/decline` | Yes | Recipient only |
+| GET | `/api/v1/me/class-work` | Yes | Frozen sets assigned to the current user while they are an **active** member. `can_reroll` / `can_leave` always `false` |
+| GET | `/api/v1/me/class-work/<assignment_id>` | Yes | Frozen items. Strips `correct_answer` / `correct_answer_raw` / solution until that item is server-graded. Active member and recipient only |
+| POST | `/api/v1/me/class-work/<assignment_id>/answer` | Yes | `{ index, user_answer }`. Client `correct_answer` / `correct_answer_raw` are ignored. Grades from stored `problems_json` |
+
+Class JSON: `id`, `name`, `level`, `subject`, `org_id` (always `null`), `join_code` (teacher payloads only), `join_code_rotated_at`, `created_at`, `archived_at`, `active_member_cap` (`40`), `active_member_count`.
+
+Student class JSON: `id`, `name`, `level`, `subject`, `teacher_handle`, `joined_at`, `archived_at`, `can_leave` (`false`). No join code.
+
+Roster member JSON: `student_id`, `handle`, `status`, `joined_at`, `removed_at`, `last_active`, `quiz_count_7d`. Never email.
+
+T0 `aggregates`: `student_count`, `avg_quiz_pct`, `students_with_quizzes`, `quiz_attempts_7d`, `mcq_attempts_7d`, `top_weak_topics[]`, `set_work` (`available` once any assignment exists; `assigned` / `complete` recipient counts). Roster only — not a public ranking.
+
+T1+T2 `progress`: `student_id`, `handle`, `weak_topics`, `recent_quizzes` (score/total/topic/date only), `lessons` (completed step counts), `due_today_count`, `skill_gaps` (chip labels, not free text), `set_work` (n/X and scores for this class).
+
+Web: `/teacher/classes`, `/teacher/classes/<id>/roster` (invite by handle + CSV + activity log), `/teacher/classes/<id>/students/<id>`, `/teacher/classes/<id>/assignments` (preview then assign), `/teacher/classes/<id>/assignments/<id>` (n/X + scores), `/teacher/classes/<id>/audit`, `/teacher/classes/<id>/roster.csv`, `/teacher/classes/<id>/assignments.csv`, `/classes` (join after checkbox, accept/decline invites; no Leave), `/class-work`, `/class-work/<id>`.
+
+Not in this track: student Leave, T3 to teachers.
+
+`GET /api/v1/me/export` includes `teacher: { enabled, enabled_at, classes, assignments_created, invites_sent, class_audit }` (join codes for classes you own; assignment metadata without answer keys or other students’ emails; audit handles only), `classes_joined` (no join codes), `class_work` (your answers and scores, not stored answer keys), and `class_invites_received`. Account deletion cascades `teacher_profiles`, `classes`, `class_memberships`, `class_assignments`, `class_assignment_recipients`, `class_assignment_previews`, and `class_invites`. `class_audit_events.actor_id` is SET NULL; `subject_handle` matching the deleted handle is scrubbed.
 
 ## Error codes
 
@@ -395,6 +444,23 @@ G8 teacher/class APIs are specified in `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` 
 | `saved_limit` | 400 | 200 saved problems cap |
 | `inbox_limit` | 400 | Recipient inbox full |
 | `invalid_csrf` | 403 | Legacy lesson-progress CSRF |
+| `teacher_required` | 403 | Teacher endpoints before enable |
+| `class_limit` | 400 | Too many active classes |
+| `class_archived` | 400 | Teacher action on an archived class (rotate, assign, invite) |
+| `join_disclosure_required` | 400 | Join without confirming disclosure |
+| `invalid_join_code` | 404 | Unknown, archived, or unusable join code |
+| `self_join` | 400 | Teacher joining their own class |
+| `already_member` | 409 | Already an active member |
+| `class_full` | 400 | Active member cap (40) reached |
+| `invalid_count` | 400 | Set-work question count not in 1–20 |
+| `no_recipients` | 400 | Assign without students or empty roster |
+| `not_in_class` | 400 | Assign to someone not an active member |
+| `assignment_limit` | 400 | Too many assignments on one class |
+| `already_answered` | 400 | Class-work item already graded |
+| `already_complete` | 400 | Frozen set already finished |
+| `invalid_index` | 400 | Class-work question index out of range |
+| `invite_limit` | 400 | 40 live pending invites on the class |
+| `invite_not_pending` | 409 | Invite already answered or past 14 days |
 
 Success shape: `{ "ok": true, ... }`.
 

@@ -24,6 +24,7 @@
         <ul>
             <li><strong>Account:</strong> email, handle, password hash, last login time</li>
             <li><strong>Study record:</strong> practice attempts, quiz scores, lesson progress, streaks, badges, revision plans, reflections you type</li>
+            <li><strong>Teacher / classes (optional):</strong> if you turn on teacher tools, we store that flag, class names, join codes, handle invites, a class activity log, and frozen set-work scores. If you join a class (by code or by accepting an invite), we store that membership. Teachers can download roster and set-work CSVs that use handles, never emails. We do not store a school name unless you type one into a class title.</li>
             <li><strong>Social:</strong> follows, challenges, suggestions, blocks, reports</li>
             <li><strong>Settings:</strong> visibility, avatar (emoji), theme, sound, digest opt-in, and whether you have already seen the Guide intro and section tours</li>
             <li><strong>Security:</strong> hashed rate-limit keys (not raw IP addresses), API token hashes</li>
@@ -48,6 +49,7 @@
     <div class="section-panel-body">
         <ul>
             <li>Account and study data: for as long as the account exists, then deleted immediately on request</li>
+            <li>Teacher classes, join codes, handle invites, class activity logs, and frozen set-work: with the teacher’s account. Class memberships, invites you received, and a student’s assignment answers die with that student’s account. Pending invites older than 14 days are removed.</li>
             <li>Inactive accounts: warning after 24 months without login; deletion after 30 months</li>
             <li>Rate-limit records: 7 days. Lesson-assist usage counters: 30 days</li>
             <li>Email send logs: 12 months. Resolved reports: 12 months after resolution</li>
@@ -68,6 +70,7 @@
     <div class="section-panel-header">Who else sees data</div>
     <div class="section-panel-body">
         <p>Hosting and (if configured) email providers process data for us under their contracts. MathJax/Pyodide may load from a CDN (visitor IP). Lesson AI is <strong>off in production unless explicitly enabled</strong>; if enabled it receives lesson text and your typed question only — never your handle or email.</p>
+        <p>If you join a class (by code or by accepting a handle invite), the teacher of that class can see your class progress: class averages, quiz summaries, weak topics, skill-gap labels, and set-work completion (how many frozen questions you finished and your score). They cannot see your free-text reflection notes, your email, or your password. Only the teacher can take you off the class — there is no Leave button. Account deletion removes class memberships, invites, and assignment answers.</p>
         <p>See <a href="{{ url_for('legal_terms') }}">Terms</a> and the subprocessors list in the project documentation.</p>
     </div>
 </section>

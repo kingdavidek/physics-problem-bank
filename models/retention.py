@@ -117,6 +117,20 @@ def prune_expired_data(conn, *, now=None, delete_inactive=True):
             (cutoff,),
         ).rowcount
 
+    if _table_exists(conn, 'class_invites'):
+        cutoff = (now - timedelta(days=14)).isoformat()
+        counts['class_invites'] = conn.execute(
+            "DELETE FROM class_invites WHERE status = 'pending' AND created_at < ?",
+            (cutoff,),
+        ).rowcount
+
+    if _table_exists(conn, 'class_assignment_previews'):
+        cutoff = (now - timedelta(hours=2)).isoformat()
+        counts['class_assignment_previews'] = conn.execute(
+            'DELETE FROM class_assignment_previews WHERE created_at < ?',
+            (cutoff,),
+        ).rowcount
+
     inactive_deleted = 0
     inactive_warned = 0
     if delete_inactive and _table_exists(conn, 'users'):

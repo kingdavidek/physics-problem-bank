@@ -311,6 +311,7 @@ Put this table in the privacy notice and implement it in `scripts/prune_expired_
 | Data | Retention | Mechanism |
 |---|---|---|
 | Account and all linked practice/social data | Life of the account, deleted immediately on request | S0.4 cascade delete |
+| Teacher profiles, classes, memberships, set-work, invites, and class audit (G8 Phases 0–6) | Life of the account; erased with the user. Pending invites older than 14 days are pruned. Audit capped at 200 events per class | FK `ON DELETE CASCADE` on `teacher_profiles`, `classes`, `class_memberships`, `class_assignments`, `class_assignment_recipients`, `class_assignment_previews`, `class_invites`. `class_audit_events.actor_id` `ON DELETE SET NULL`; matching `subject_handle` scrubbed on erase |
 | Inactive accounts | Email a warning at 24 months of no logins; delete at 30 months | Prune job + digest mailer |
 | `rate_limit_buckets` | 7 days | Prune job (rows are already day-keyed) |
 | `lesson_assist_usage` | 30 days | Prune job |
