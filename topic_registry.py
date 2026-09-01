@@ -2,6 +2,14 @@
 
 import os
 
+from generators.shared.variant_utils import (
+    ADVANCED_MODES,
+    MCQ_MODE,
+    MULTI_STEP_MODE,
+    SITUATIONAL_MULTI_STEP_MODE,
+    STANDARD_MODE,
+    normalize_mode,
+)
 from generators.gcse.physics_forces import (gcse_physics_forces,)
 from generators.gcse.physics import (edexcel_combined_physics_radioactivity,)
 from generators.myp.chemistry import (myp_chemistry_redox, myp_chemistry_energy_changes_and_rates,)
@@ -1047,6 +1055,40 @@ TOPICS = {
 }
 
 _VALID_YEARS = frozenset({"s1", "s2", "s3"})
+
+# Optional product-level overrides live in one place. EURSC advanced capability
+# is otherwise derived from bind_eursc_topic's dedicated advanced pools.
+TOPIC_MODE_CAPABILITY_OVERRIDES = {}
+
+
+def topic_mode_capabilities(level, subject, topic):
+    """Return public Practice modes supported by one registered topic."""
+    try:
+        cfg = TOPICS[level][subject][topic]
+    except KeyError:
+        return (STANDARD_MODE,)
+
+    override = TOPIC_MODE_CAPABILITY_OVERRIDES.get((level, subject, topic))
+    if override is not None:
+        modes = {normalize_mode(mode) for mode in override}
+    elif level == "eursc" and subject == "science":
+        declared = getattr(cfg.get("variants_func"), "_supported_modes", ())
+        modes = {STANDARD_MODE, *(mode for mode in declared if mode in ADVANCED_MODES)}
+    else:
+        modes = {STANDARD_MODE, MCQ_MODE}
+
+    order = (
+        STANDARD_MODE,
+        MCQ_MODE,
+        MULTI_STEP_MODE,
+        SITUATIONAL_MULTI_STEP_MODE,
+    )
+    return tuple(mode for mode in order if mode in modes)
+
+
+def topic_supports_mode(level, subject, topic, mode):
+    """Whether a normalized public mode is available for a topic."""
+    return normalize_mode(mode) in topic_mode_capabilities(level, subject, topic)
 
 
 if os.environ.get("PB_TESTING") == "1":

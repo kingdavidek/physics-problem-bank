@@ -39,7 +39,7 @@ import mimetypes
 
 mimetypes.add_type('application/wasm', '.wasm')
 from topics_data import TOPIC_CONTENT
-from topic_registry import TOPICS, iter_topics
+from topic_registry import TOPICS, iter_topics, topic_mode_capabilities
 from generators.eursc.science_shared import (
     IBL_PAGES,
     accuracy_targets,
@@ -2369,16 +2369,11 @@ def _generator_path_allowed(level, subject):
     return (level, subject) in GENERATOR_LAUNCH_PATHS
 
 
-def _eursc_science_hides_mode(level, subject):
-    return level == 'eursc' and subject == 'science'
-
-
-def _normalize_generator_mode(level, subject, mode):
-    """Integrated Science has one practice mix; MCQ is not a separate mode."""
+def _normalize_generator_mode(level, subject, topic, mode):
+    """Normalize a mode and safely clamp it to the topic's capabilities."""
     mode = normalize_mode(mode)
-    if _eursc_science_hides_mode(level, subject) and mode == 'mcq':
-        return 'standard'
-    return mode
+    supported = topic_mode_capabilities(level, subject, topic)
+    return mode if mode in supported else 'standard'
 
 
 def _generator_launch_restricted():
@@ -2465,7 +2460,7 @@ def _freeze_class_work_problems(level, subject, topic, mode, difficulty, count):
         raise ValueError('invalid_count')
     if count < MIN_ASSIGNMENT_QUESTIONS or count > MAX_ASSIGNMENT_QUESTIONS:
         raise ValueError('invalid_count')
-    mode = _normalize_generator_mode(level, subject, mode)
+    mode = _normalize_generator_mode(level, subject, topic, mode)
     generator = topic_config['func']
     queue = _build_problem_queue(topic_config, level, subject, topic, mode, difficulty) or []
     problems = []
@@ -2527,7 +2522,9 @@ def _selection_tuple_from_mapping(data):
     difficulty = data.get('difficulty') or GENERATOR_DEFAULT_DIFFICULTY
     if difficulty not in _GENERATOR_DIFFICULTIES:
         difficulty = GENERATOR_DEFAULT_DIFFICULTY
-    mode = _normalize_generator_mode(level, subject, data.get('mode') or GENERATOR_DEFAULT_MODE)
+    mode = _normalize_generator_mode(
+        level, subject, topic, data.get('mode') or GENERATOR_DEFAULT_MODE
+    )
     return level, subject, topic, mode, difficulty
 
 
@@ -2571,7 +2568,7 @@ def _picker_values_from(values, fallback):
     level, subject, topic = _normalize_generator_scope(level, subject, topic)
     if difficulty not in _GENERATOR_DIFFICULTIES:
         difficulty = GENERATOR_DEFAULT_DIFFICULTY
-    mode = _normalize_generator_mode(level, subject, mode)
+    mode = _normalize_generator_mode(level, subject, topic, mode)
     return level, subject, topic, mode, difficulty
 
 
@@ -2753,7 +2750,7 @@ def index():
         selected_topic=selected_topic,
         selected_mode=selected_mode,
         selected_diff=selected_diff,
-        hide_generator_mode=_eursc_science_hides_mode(selected_level, selected_subject),
+        hide_generator_mode=False,
         queue_active=bool(session.get('problem_queue')),
         can_reroll_variant=can_reroll_variant,
         generator_launch_restricted=_generator_launch_restricted(),
@@ -4826,6 +4823,7 @@ def _generator_topic_options():
                     'name': cfg.get('name') or slug.replace('_', ' ').title(),
                     'level': level,
                     'subject': subject,
+                    'modes': topic_mode_capabilities(level, subject, slug),
                 })
     return items
 
@@ -8476,7 +8474,9 @@ def api_v1_quicktest_start():
     level = payload.get('level', 'gcse')
     subject = payload.get('subject', 'physics')
     topic = _resolve_topic_slug(level, subject, payload.get('topic', 'forces'))
-    mode = _normalize_generator_mode(level, subject, payload.get('mode', 'standard'))
+    mode = _normalize_generator_mode(
+        level, subject, topic, payload.get('mode', 'standard')
+    )
     difficulty = payload.get('difficulty', 'foundational')
 
     if not _topic_path_valid(level, subject, topic):
@@ -8901,7 +8901,9 @@ def api_v1_generate_problem():
     level = (payload.get('level') or 'gcse').strip()
     subject = (payload.get('subject') or 'maths').strip()
     topic = _resolve_topic_slug(level, subject, (payload.get('topic') or '').strip())
-    mode = _normalize_generator_mode(level, subject, payload.get('mode') or 'standard')
+    mode = _normalize_generator_mode(
+        level, subject, topic, payload.get('mode') or 'standard'
+    )
     difficulty = (payload.get('difficulty') or 'foundational').strip()
     action = (payload.get('action') or 'start').strip().lower()
 
@@ -10246,7 +10248,9 @@ def quicktest_start():
     level = request.form.get('level', 'gcse')
     subject = request.form.get('subject', 'physics')
     topic = _resolve_topic_slug(level, subject, request.form.get('topic', 'forces'))
-    mode = _normalize_generator_mode(level, subject, request.form.get('mode', 'standard'))
+    mode = _normalize_generator_mode(
+        level, subject, topic, request.form.get('mode', 'standard')
+    )
     difficulty = request.form.get('difficulty', 'foundational')
 
     try:

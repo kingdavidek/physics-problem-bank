@@ -81,6 +81,7 @@
                 <select name="topic" id="topic-select">
                     {% for t in generator_topics %}
                     <option value="{{ t.slug }}" data-subject="{{ t.subject }}" data-level="{{ t.level }}"
+                            data-modes="{{ t.modes | join(',') }}"
                             {% if selected_topic == t.slug and selected_subject == t.subject and selected_level == t.level %}selected{% endif %}>{{ t.name }}</option>
                     {% endfor %}
                 </select>
@@ -91,6 +92,8 @@
                 <select name="mode" id="mode-select">
                     <option value="standard" {% if selected_mode == 'standard' %}selected{% endif %}>📝 Standard question</option>
                     <option value="mcq" {% if selected_mode == 'mcq' %}selected{% endif %}>🔘 Multiple Choice</option>
+                    <option value="multi_step" {% if selected_mode == 'multi_step' %}selected{% endif %}>🧩 Multi-step</option>
+                    <option value="situational_multi_step" {% if selected_mode == 'situational_multi_step' %}selected{% endif %}>🔬 Situational multi-step</option>
                 </select>
             </div>
 

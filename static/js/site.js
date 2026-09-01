@@ -89,15 +89,18 @@
     if (!levelSel || !subjectSel || !topicSel) return;
     var launchMode = !!document.querySelector('[data-launch-gcse-only="1"]');
 
-    function scienceHidesMode(level, subject) {
-      return level === 'eursc' && subject === 'science';
-    }
-
-    function syncModeRow() {
+    function syncModeOptions() {
       if (!modeRow || !modeSel) return;
-      var hide = scienceHidesMode(levelSel.value, subjectSel.value);
-      modeRow.hidden = hide;
-      if (hide) modeSel.value = 'standard';
+      var topicOption = topicSel.selectedOptions[0];
+      var supported = ((topicOption && topicOption.dataset.modes) || 'standard')
+        .split(',')
+        .filter(Boolean);
+      var previousMode = modeSel.value;
+      setOptionVisibility(modeSel, function (opt) {
+        return supported.indexOf(opt.value) !== -1;
+      });
+      ensureValidSelection(modeSel, previousMode);
+      modeRow.hidden = false;
     }
 
     function syncTopicDropdown() {
@@ -106,6 +109,7 @@
       setOptionVisibility(topicSel, topicPredicate(level, subject));
       ensureValidSelection(topicSel, topicSel.dataset.pendingTopic || topicSel.value);
       delete topicSel.dataset.pendingTopic;
+      syncModeOptions();
     }
 
     function syncSubjectDropdown() {
@@ -122,7 +126,6 @@
         topicSel.dataset.pendingTopic = '';
       }
       syncTopicDropdown();
-      syncModeRow();
     }
 
     function onLevelChange() {
@@ -135,11 +138,15 @@
       var prevTopic = topicSel.value;
       topicSel.dataset.pendingTopic = prevTopic;
       syncTopicDropdown();
-      syncModeRow();
+    }
+
+    function onTopicChange() {
+      syncModeOptions();
     }
 
     levelSel.addEventListener('change', onLevelChange);
     subjectSel.addEventListener('change', onSubjectChange);
+    topicSel.addEventListener('change', onTopicChange);
 
     syncSubjectDropdown();
   }

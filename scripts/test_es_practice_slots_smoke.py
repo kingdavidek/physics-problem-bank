@@ -176,7 +176,7 @@ def test_practice_home_and_api_accept_eursc():
         assert GENERATOR_DEFAULT_LEVEL == 'eursc'
         assert GENERATOR_DEFAULT_SUBJECT == 'science'
         assert GENERATOR_DEFAULT_TOPIC == 'what_is_science'
-        assert 'id="mode-row" hidden' in html
+        assert 'id="mode-row" hidden' not in html
         posted = client.post(
             '/',
             data={
@@ -230,14 +230,14 @@ def test_practice_home_and_api_accept_eursc():
             assert blocked.status_code == 404
 
 
-def test_practice_home_hides_mode_and_remembers_selection():
+def test_practice_home_filters_mode_and_remembers_selection():
     with app.test_client() as client:
         home = client.get('/')
         html = home.data.decode()
         chunk = html.split('id="page-data"', 1)[1][:500]
         assert 'data-level="eursc"' in chunk
         assert 'data-topic="what_is_science"' in chunk
-        assert 'id="mode-row" hidden' in html
+        assert 'id="mode-row" hidden' not in html
 
         gcse = client.get('/?level=gcse&subject=maths&topic=algebra')
         gcse_html = gcse.data.decode()
@@ -262,7 +262,7 @@ def test_practice_home_hides_mode_and_remembers_selection():
         post_chunk = body.split('id="page-data"', 1)[1][:500]
         assert 'data-topic="measurement"' in post_chunk
         assert 'badge-mcq' not in body
-        assert 'id="mode-row" hidden' in body
+        assert 'id="mode-row" hidden' not in body
 
         remembered = client.get('/')
         remembered_html = remembered.data.decode()
@@ -274,7 +274,7 @@ def test_practice_home_hides_mode_and_remembers_selection():
             r'<option value="intermediate"[^>]*selected',
             remembered_html,
         )
-        assert 'id="mode-row" hidden' in remembered_html
+        assert 'id="mode-row" hidden' not in remembered_html
 
         with app.test_client() as api_client:
             gen = api_client.post(
@@ -692,7 +692,7 @@ def main():
     test_standard_recipe_order()
     test_movement_standard_is_kinematics()
     test_practice_home_and_api_accept_eursc()
-    test_practice_home_hides_mode_and_remembers_selection()
+    test_practice_home_filters_mode_and_remembers_selection()
     test_sensitive_standard_slots_and_templates_pass_disclose()
     test_ibl_pages_are_not_generator_topics()
     test_s3_standard_slots_have_no_power_or_vir_calculations()

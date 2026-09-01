@@ -13,21 +13,39 @@ _RANDOM_VALUE_OPS = re.compile(
 
 TIER_VARIANT_COUNT = 7
 
-STANDARD_MODE_ALIASES = frozenset({"revision", "exam", "practice", "standard"})
+STANDARD_MODE = "standard"
+MCQ_MODE = "mcq"
+LESSON_MODE = "lesson"
+MULTI_STEP_MODE = "multi_step"
+SITUATIONAL_MULTI_STEP_MODE = "situational_multi_step"
+
+ADVANCED_MODES = frozenset({MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE})
+MODE_ALIASES = {
+    "revision": STANDARD_MODE,
+    "exam": STANDARD_MODE,
+    "practice": STANDARD_MODE,
+    STANDARD_MODE: STANDARD_MODE,
+    MCQ_MODE: MCQ_MODE,
+    LESSON_MODE: LESSON_MODE,
+    "multi-step": MULTI_STEP_MODE,
+    "multistep": MULTI_STEP_MODE,
+    MULTI_STEP_MODE: MULTI_STEP_MODE,
+    "situational": SITUATIONAL_MULTI_STEP_MODE,
+    "situational-multi-step": SITUATIONAL_MULTI_STEP_MODE,
+    "situational_multistep": SITUATIONAL_MULTI_STEP_MODE,
+    SITUATIONAL_MULTI_STEP_MODE: SITUATIONAL_MULTI_STEP_MODE,
+}
+STANDARD_MODE_ALIASES = frozenset(
+    alias for alias, canonical in MODE_ALIASES.items() if canonical == STANDARD_MODE
+)
 
 
 def normalize_mode(mode):
-    """Map legacy revision/exam modes to standard practice; keep mcq and lesson."""
+    """Return a canonical generator mode, defaulting unknown values to standard."""
     if not mode:
-        return "standard"
+        return STANDARD_MODE
     m = str(mode).strip().lower()
-    if m in STANDARD_MODE_ALIASES:
-        return "standard"
-    if m == "mcq":
-        return "mcq"
-    if m == "lesson":
-        return "lesson"
-    return "standard"
+    return MODE_ALIASES.get(m, STANDARD_MODE)
 
 
 def select_tier_variants(pool, count=TIER_VARIANT_COUNT):

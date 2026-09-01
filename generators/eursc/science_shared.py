@@ -2253,7 +2253,11 @@ def _sample_ruler():
 
 
 # Stage 6 / Phase 1 — five named practice slots per topic per difficulty.
-from generators.shared.variant_utils import normalize_mode, pick_named_variant  # noqa: E402
+from generators.shared.variant_utils import (  # noqa: E402
+    ADVANCED_MODES,
+    normalize_mode,
+    pick_named_variant,
+)
 
 EURSC_PRACTICE_SLOT_COUNT = 5
 
@@ -2375,14 +2379,28 @@ def _pick_bound_variant(chosen, variant_name, *, topic, difficulty, mode):
     return fn
 
 
-def bind_eursc_topic(topic, pools, standard_slots):
+def bind_eursc_topic(topic, pools, standard_slots, advanced_pools=None):
     """Wire generate + variants for one syllabus slug.
 
     ``standard_slots`` maps difficulty → exactly five lesson-bank function names.
     ``generate(..., mode='standard')`` never falls back to the lesson pool.
+    ``advanced_pools`` optionally maps each advanced mode to its own
+    difficulty → callable-list mapping. Advanced modes never fall back to
+    either the lesson pool or the standard slots.
     """
+    advanced_pools = {
+        normalize_mode(mode): {
+            difficulty: list(mode_pool or [])
+            for difficulty, mode_pool in (difficulty_pools or {}).items()
+        }
+        for mode, difficulty_pools in (advanced_pools or {}).items()
+        if normalize_mode(mode) in ADVANCED_MODES
+    }
 
     def variants(difficulty, mode="lesson"):
+        mode = normalize_mode(mode)
+        if mode in ADVANCED_MODES:
+            return list((advanced_pools.get(mode) or {}).get(difficulty) or [])
         lesson = pools.get(difficulty) or []
         names = standard_slots.get(difficulty) or ()
         return eursc_variants_for_mode(lesson, mode, names)
@@ -2399,6 +2417,13 @@ def bind_eursc_topic(topic, pools, standard_slots):
         )
         return fn()
 
+    supported_advanced_modes = frozenset(
+        mode
+        for mode, difficulty_pools in advanced_pools.items()
+        if any(difficulty_pools.values())
+    )
+    generate._supported_modes = supported_advanced_modes
+    variants._supported_modes = supported_advanced_modes
     return generate, variants
 
 
