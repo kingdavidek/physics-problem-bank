@@ -2713,11 +2713,12 @@
       if (pickCount) orderMatters = false;
       var proofHint = esc(formatHint || (
         orderMatters
-          ? 'Select the correct proof steps in order'
+          ? 'Put the steps in the correct order'
           : (pickCount
             ? ('Select ' + pickCount + ' correct options')
             : 'Select all correct statements')
       ));
+      var selectedLabel = pickCount ? 'Your selections' : 'Your order';
       var bankHtml = stepBank.map(function (step) {
         return (
           '<button type="button" class="btn btn-secondary free-response-proof-step" data-step-id="' +
@@ -2734,9 +2735,9 @@
         (pickCount ? (' data-pick-count="' + pickCount + '"') : '') +
         '>' +
         '<p class="free-response-proof-hint">' + proofHint + '</p>' +
-        '<div class="free-response-proof-bank" aria-label="Proof step bank">' + bankHtml + '</div>' +
+        '<div class="free-response-proof-bank" aria-label="Answer options">' + bankHtml + '</div>' +
         '<div class="free-response-proof-selected-wrap">' +
-        '<p class="free-response-proof-selected-label">Your proof</p>' +
+        '<p class="free-response-proof-selected-label">' + selectedLabel + '</p>' +
         '<ol class="free-response-proof-selected" aria-live="polite"></ol>' +
         '<button type="button" class="btn btn-secondary free-response-proof-clear">Clear</button>' +
         '</div>' +
@@ -3175,6 +3176,9 @@
 
       if (fieldType === 'order') {
         var stepCount = proofStepsOrderCount(correctParts[index] || '');
+        if (!stepCount) {
+          stepCount = parseInt(row.getAttribute('data-pick-count') || '0', 10);
+        }
         var selected = [];
         var bank = row.querySelector('.free-response-proof-bank');
         var list = row.querySelector('.free-response-proof-selected');
@@ -3915,11 +3919,14 @@
     checkBtn.addEventListener('click', function () {
       if (!selected.length) {
         if (feedback) {
-          feedback.textContent = orderMatters
-            ? 'Select the correct proof steps in order.'
-            : (pickCount
-              ? ('Select ' + pickCount + ' correct options.')
-              : 'Select all correct statements.');
+          var emptyHint = (block.getAttribute('data-format-hint') || '').trim();
+          feedback.textContent = emptyHint
+            ? (/[.!?]$/.test(emptyHint) ? emptyHint : emptyHint + '.')
+            : (orderMatters
+              ? 'Put the steps in the correct order.'
+              : (pickCount
+                ? ('Select ' + pickCount + ' correct options.')
+                : 'Select all correct statements.'));
           feedback.style.color = 'var(--on-wrong)';
         }
         return;
@@ -4164,9 +4171,7 @@
         return (inputs.base.value || '').trim() + '|' + (inputs.index.value || '').trim();
       }
       if (answerType === 'number_fields') {
-        return inputs.fields.map(function (input) {
-          return (input.value || '').trim();
-        }).join('|');
+        return readNumberFieldsUserAnswer(block);
       }
       if (answerType === 'completed_square') {
         return readCompletedSquareAnswer(block);
@@ -4222,8 +4227,10 @@
         return !(inputs.base && (inputs.base.value || '').trim()) || !(inputs.index && (inputs.index.value || '').trim());
       }
       if (answerType === 'number_fields') {
-        return !inputs.fields.length || inputs.fields.some(function (input) {
-          return !(input.value || '').trim();
+        var nfRows = block.querySelectorAll('.free-response-field-row');
+        var nfTypes = numberFieldTypes(block);
+        return !nfRows.length || Array.prototype.some.call(nfRows, function (row, index) {
+          return !readNumberFieldRowValue(row, numberFieldRowType(row, index, nfTypes));
         });
       }
       if (answerType === 'completed_square') {

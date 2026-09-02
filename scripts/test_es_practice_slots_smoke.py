@@ -370,8 +370,70 @@ def test_s3_standard_slots_have_no_power_or_vir_calculations():
                 assert not VIR_CALC_RE.search(blob), (slug, difficulty, fn.__name__, blob[:120])
                 assert not POWER_CALC_RE.search(blob), (slug, difficulty, fn.__name__, blob[:120])
     fw_src = (ROOT / 'generators' / 'eursc' / 's3_machines.py').read_text(encoding='utf-8')
-    assert 'are not claimed in this lesson' in fw_src
+    assert 'Calculate the work done, in joules' in fw_src
+    assert '_FW_STANDARD' in fw_src
     assert '_EC_STANDARD' in fw_src
+
+
+def _option_body(option):
+    text = str(option or '')
+    if len(text) >= 3 and text[0] in 'ABCD' and text[1:3] == '  ':
+        return text[3:].strip()
+    return text.strip()
+
+
+def test_force_work_machines_wording():
+    banned = re.compile(
+        r'in this lesson|a science line is|work in joules\?|science reply|'
+        r'select the correct proof steps|the quiz should store a private map',
+        re.I,
+    )
+    cfg = SCIENCE['force_work_machines']
+    vf = cfg['variants_func']
+    for difficulty in DIFFS:
+        for fn in vf(difficulty, 'lesson'):
+            problem = fn()
+            blob = _problem_blob(problem)
+            assert not banned.search(blob), (fn.__name__, blob[:220])
+            if problem.get('options') and problem.get('correct_answer'):
+                letter = str(problem['correct_answer'])[:1]
+                body = ''
+                for option in problem['options']:
+                    if str(option)[:1] == letter:
+                        body = _option_body(option)
+                        break
+                sol = str(problem.get('solution') or '')
+                assert len(sol) > 20, (fn.__name__, sol)
+                if body and body not in ('A', 'B', 'C', 'None of these letters'):
+                    stop = {
+                        'using', 'which', 'these', 'those', 'about', 'being',
+                        'with', 'from', 'that', 'this', 'only', 'none',
+                    }
+                    tokens = [
+                        t.lower()
+                        for t in re.findall(r'[A-Za-z]{4,}', body)
+                        if t.lower() not in stop
+                    ]
+                    sol_l = sol.lower()
+                    assert tokens and any(t in sol_l for t in tokens[:8]), (
+                        fn.__name__,
+                        body,
+                        sol,
+                    )
+            if problem.get('answer_type') == 'proof_steps':
+                hint = str(problem.get('answer_format_hint') or '')
+                assert 'proof' not in hint.lower(), (fn.__name__, hint)
+                raw = str(problem.get('correct_answer_raw') or '')
+                parts = raw.split('|')
+                ids = parts[2:] if parts and parts[0] == 'pick' else parts[1:]
+                id_to_text = {
+                    str(step.get('id')): str(step.get('text') or '')
+                    for step in (problem.get('answer_step_bank') or [])
+                }
+                sol = str(problem.get('solution') or '')
+                for sid in ids:
+                    text = id_to_text.get(sid, '')
+                    assert text and text in sol, (fn.__name__, sid, text, sol)
 
 
 def _assert_grader_ready(problem, family, *, slug, difficulty, name):
@@ -696,6 +758,7 @@ def main():
     test_sensitive_standard_slots_and_templates_pass_disclose()
     test_ibl_pages_are_not_generator_topics()
     test_s3_standard_slots_have_no_power_or_vir_calculations()
+    test_force_work_machines_wording()
     test_standard_matrix_payloads()
     test_standard_generate_never_leaks_lesson_items()
     test_web_and_api_generate_year_sample()

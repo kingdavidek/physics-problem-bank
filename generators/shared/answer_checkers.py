@@ -3878,7 +3878,7 @@ def check_proof_steps(correct_raw, user_answer):
     user_s = str(user_answer or '').strip()
     if not user_s:
         empty_feedback = {
-            'ordered': 'Select the correct proof steps in order.',
+            'ordered': 'Put the steps in the correct order.',
             'all': 'Select all correct statements.',
             'pick': f"Select {parsed.get('pick_count', 0)} correct options.",
         }

@@ -230,13 +230,14 @@
     {% else %}
         {% set field_ph = 'Number or fraction' %}
     {% endif %}
+    {% set pick_n = (problem.answer_field_pick_counts or [])[field_idx] if problem.answer_field_pick_counts and field_idx < (problem.answer_field_pick_counts|length) else none %}
     <div class="free-response-field-row{% if field_type == 'pick' %} free-response-field-row--pick{% elif field_type == 'order' %} free-response-field-row--order{% elif field_type in ('text', 'keyword', 'sql') %} free-response-field-row--text{% if field_type == 'sql' %} free-response-field-row--sql{% endif %}{% endif %}"
          data-field-type="{{ field_type }}"
          {% if field_type == 'pick' %}
-         {% set pick_n = (problem.answer_field_pick_counts or [])[field_idx] if problem.answer_field_pick_counts and field_idx < (problem.answer_field_pick_counts|length) else none %}
          {% if pick_n is not none %}data-pick-count="{{ pick_n }}"{% endif %}
          {% elif field_type == 'order' %}
          data-order-matters="1"
+         {% if pick_n is not none %}data-pick-count="{{ pick_n }}"{% endif %}
          {% endif %}>
         {% if field_type == 'mcq' %}
         <span class="free-response-field-label">{{ label }}</span>
@@ -839,8 +840,8 @@
     <div class="free-response-row free-response-row--proof-steps"
          data-order-matters="{{ '1' if problem.answer_order_matters else '0' }}"
          {% if problem.answer_pick_count is not none %}data-pick-count="{{ problem.answer_pick_count }}"{% endif %}>
-        <p class="free-response-proof-hint">{{ problem.answer_format_hint or 'Select the correct proof steps' }}</p>
-        <div class="free-response-proof-bank" aria-label="Proof step bank">
+        <p class="free-response-proof-hint">{% if problem.answer_format_hint %}{{ problem.answer_format_hint }}{% elif problem.answer_pick_count %}Select {{ problem.answer_pick_count }} correct options{% else %}Put the steps in the correct order{% endif %}</p>
+        <div class="free-response-proof-bank" aria-label="Answer options">
             {% for step in problem.answer_step_bank or [] %}
             <button type="button"
                     class="btn btn-secondary free-response-proof-step"
@@ -848,7 +849,7 @@
             {% endfor %}
         </div>
         <div class="free-response-proof-selected-wrap">
-            <p class="free-response-proof-selected-label">Your proof</p>
+            <p class="free-response-proof-selected-label">{% if problem.answer_pick_count %}Your selections{% else %}Your order{% endif %}</p>
             <ol class="free-response-proof-selected" aria-live="polite"></ol>
             <button type="button" class="btn btn-secondary free-response-proof-clear">Clear</button>
         </div>
