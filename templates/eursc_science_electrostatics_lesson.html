@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}Electrostatics – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Electrostatics</h1>
+    <p class="hero-sub">S3 Integrated Science · Unit 3.1 Machines · syllabus 3.1.3. Friction, two kinds of charge, transfer and induction, grounding, insulators, a simple atomic link, sparks and lightning. This lesson does not collect shock stories.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S3</span>
+      <span class="pill pill--hero">3.1 Machines</span>
+      <span class="pill pill--hero">3.1.3</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='electrostatics') }}">▶ Practice Quiz (10 questions)</a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">1</span> Friction and contact <span class="lesson-tag">3.1.3</span> <span class="lesson-tag">S3</span></summary>
+    <div class="lesson-section-body">
+      <p>Charging by <strong>friction</strong> or contact can separate charge. A balloon-and-jumper demo is a public example, not a shock survey.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Charging by friction in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">a diet</button>
+          <button class="btn mcq-btn" data-letter="B">rubbing or contact that can separate charge</button>
+          <button class="btn mcq-btn" data-letter="C">a stored shock file</button>
+          <button class="btn mcq-btn" data-letter="D">a class rank</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">2</span> Two kinds of charge</summary>
+    <div class="lesson-section-body">
+      <p>This model uses <strong>two</strong> kinds of charge. Opposite charges <dfn class="lesson-gloss" title="Pull toward each other">attract</dfn>; like charges <dfn class="lesson-gloss" title="Push away from each other">repel</dfn>. <strong>A</strong> and <strong>B</strong> are schematic charges, not a ranking of hair.
+      <span class="lesson-gloss-def">Opposite charges attract (pull together). Like charges repel (push apart). Plus and minus marks name the two kinds; colour alone is not enough.</span></p>
+      <p><strong>Worked example:</strong> Two balloons rubbed on a jumper in a teacher demo: unlike charges pull together; two balloons given the same kind of charge push apart. The class names attract or repel. This quiz does not collect shock stories.</p>
+      <figure class="lesson-figure">
+        {{ charge_fig }}
+        <figcaption class="lesson-figure-caption">A (+) and B (−) as opposite charges. Arrows show they attract. Schematic only; not a ranking of hair.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Opposite charges in this model</p>
+          <button class="btn mcq-btn" data-letter="A">must be uploaded</button>
+          <button class="btn mcq-btn" data-letter="B">attract</button>
+          <button class="btn mcq-btn" data-letter="C">rank classmates</button>
+          <button class="btn mcq-btn" data-letter="D">are food</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">3</span> Transfer and induction</summary>
+    <div class="lesson-section-body">
+      <p><strong>Transfer</strong> can move charge by contact. <strong>Induction</strong> can rearrange charge without contact in this model.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Induction in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">a vaccination</button>
+          <button class="btn mcq-btn" data-letter="B">rearranging charge without needing contact in this model</button>
+          <button class="btn mcq-btn" data-letter="C">a joint map</button>
+          <button class="btn mcq-btn" data-letter="D">a league</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">4</span> Grounding and insulators</summary>
+    <div class="lesson-section-body">
+      <p><strong>Grounding</strong> can provide a path for charge to leave an object. An <strong>insulator</strong> does not let charge flow easily. Follow the teacher's materials list.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Grounding is</p>
+          <button class="btn mcq-btn" data-letter="A">a class vote</button>
+          <button class="btn mcq-btn" data-letter="B">a path that can let charge leave an object</button>
+          <button class="btn mcq-btn" data-letter="C">a stored diary</button>
+          <button class="btn mcq-btn" data-letter="D">a food</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">5</span> Atomic model link</summary>
+    <div class="lesson-section-body">
+      <p>A simple link: <strong>electrons can move</strong>. This is a teaching model, not a demand to upload a nucleus file.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A simple atomic link in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">that nuclei must be uploaded</button>
+          <button class="btn mcq-btn" data-letter="B">that electrons can move</button>
+          <button class="btn mcq-btn" data-letter="C">that charge is a diet</button>
+          <button class="btn mcq-btn" data-letter="D">that sparks are a league</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">6</span> Sparks, lightning and safety</summary>
+    <div class="lesson-section-body">
+      <p>A spark or lightning is a <strong>discharge</strong>. Classroom demos follow the teacher's risk assessment. This quiz does not ask who has been shocked.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Lightning in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">a stored clinical file</button>
+          <button class="btn mcq-btn" data-letter="B">a large discharge; follow teacher safety, not a shock survey</button>
+          <button class="btn mcq-btn" data-letter="C">a food</button>
+          <button class="btn mcq-btn" data-letter="D">a magnet only</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Charge</h4>
+        <ul>
+          <li>Two kinds; opposite attract</li>
+          <li>Friction can separate charge</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Safety</h4>
+        <ul>
+          <li>Grounding = a path off</li>
+          <li>No shock survey here</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='electrostatics') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Something went wrong – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell error-page">
+    <div class="empty-state">
+        <div class="empty-state-icon" aria-hidden="true">⚙️</div>
+        <h1>Something went wrong</h1>
+        <p>We hit an unexpected error. Try again in a moment, or head back to a safe page.</p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary">Go to generator</a>
+        <p style="margin-top: var(--space-4);"><a href="{{ url_for('about') }}">About Problem Bank</a></p>
+    </div>
+</div>
+{% endblock %}

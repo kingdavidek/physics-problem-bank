@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block title %}What Is Science? – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>What Is Science?</h1>
+    <p class="hero-sub">S1 Integrated Science · Unit 1.1 Science Lab · syllabus 1.1.1. Science is a public way of testing ideas: evidence, reproducibility, peer critique, and explanations that can improve.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S1</span>
+      <span class="pill pill--hero">1.1 Science Lab</span>
+      <span class="pill pill--hero">1.1.1</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='what_is_science') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Reliable knowledge, not just opinion
+      <span class="lesson-tag">1.1.1</span>
+      <span class="lesson-tag">S1</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>An <strong>opinion</strong> can be honest and still be wrong. Scientific knowledge is more <strong>reliable</strong> when it is tied to <strong>evidence</strong> — observations and measurements that another person could, in principle, check.</p>
+      <p>Authority is not enough. A famous presenter, a confident classmate or a neat textbook diagram can still be mistaken. The question is always: <em>how was this tested?</em></p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Which statement is a scientific approach to a claim?</p>
+          <button class="btn mcq-btn" data-letter="A">Believe it if a friend is very sure</button>
+          <button class="btn mcq-btn" data-letter="B">Test it with evidence that others can check</button>
+          <button class="btn mcq-btn" data-letter="C">Keep the method secret so rivals cannot copy it</button>
+          <button class="btn mcq-btn" data-letter="D">Change the question until the answer looks nicer</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Evidence that can be tested
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Evidence</strong> is not a rumour and not a slogan. It is a record of what was done and what was observed: a table, a method, a graph, a photograph of a scale.</p>
+      <p>A <strong>hypothesis</strong> is a testable idea about what might happen and why. If you cannot imagine a fair test that would challenge it, it is not yet a scientific hypothesis.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A TV presenter says a drink “boosts energy”. What should a scientist do first?</p>
+          <button class="btn mcq-btn" data-letter="A">Trust the presenter because they are famous</button>
+          <button class="btn mcq-btn" data-letter="B">Ask for the measurements and whether the test was controlled</button>
+          <button class="btn mcq-btn" data-letter="C">Repeat the advert in a louder voice</button>
+          <button class="btn mcq-btn" data-letter="D">Ban the drink without looking at any data</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Reproducibility
+    </summary>
+    <div class="lesson-section-body">
+      <p>A result is <dfn class="lesson-gloss" title="Another group can get a similar outcome">reproducible</dfn>
+      <span class="lesson-gloss-def">Another group can follow the same method and get a similar outcome. One surprising trial is a clue, not a law.</span>
+      Repeats also show <strong>scatter</strong>. Small differences are normal in measurement. Large unexplained gaps mean the method, the instrument or the recording needs another look.</p>
+      <p><strong>Worked example:</strong> Two groups melt the same ice sample with the same method and both record about \(0\,\mathrm{^\circ C}\). That is reproducibility. A third group that skipped stirring and got \(8\,\mathrm{^\circ C}\) has not disproved the others — the method was not the same.</p>
+      <p>This lesson has no extra checkpoint here: the idea is practised in the quiz and in the classroom investigation.</p>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Peer critique
+    </summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="Checking methods and evidence, not the person">Peer critique</dfn> is not insulting the person. It is checking the <em>method</em> and the <em>evidence</em>: Was a control missing? Was the scale read from an angle? Was a result dropped because it looked inconvenient?
+      <span class="lesson-gloss-def">Checking the method and the evidence — not insulting the person who did the work.</span></p>
+      <p>Sharing the method is part of being scientific. A secret “miracle test” cannot be reproduced, so it cannot be criticised fairly.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Peer critique in science means</p>
+          <button class="btn mcq-btn" data-letter="A">insulting the person who did the work</button>
+          <button class="btn mcq-btn" data-letter="B">checking the method and the evidence</button>
+          <button class="btn mcq-btn" data-letter="C">copying the conclusion without reading the method</button>
+          <button class="btn mcq-btn" data-letter="D">deleting results you dislike</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Provisional explanations
+    </summary>
+    <div class="lesson-section-body">
+      <p>Scientific explanations are <dfn class="lesson-gloss" title="Can change if better evidence appears">provisional</dfn>: they are the best current account, not a promise that nothing will ever improve them.
+      <span class="lesson-gloss-def">A scientific explanation that can change if better evidence appears.</span>
+      New measurements, a wider range of conditions, or a better model can replace an old story.</p>
+      <p>That is not the same as “anything goes”. A failed fair test is a reason to <strong>revise the model</strong>, not to invent data or to appeal to fame.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A scientific explanation is provisional. That means it is</p>
+          <button class="btn mcq-btn" data-letter="A">a wild guess with no evidence</button>
+          <button class="btn mcq-btn" data-letter="B">the best current account, open to better evidence</button>
+          <button class="btn mcq-btn" data-letter="C">true forever once printed in a book</button>
+          <button class="btn mcq-btn" data-letter="D">only allowed in physics</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <p class="lesson-callout">This page does not replace practical work. Use the <a href="{{ url_for('eursc_ibl_page', slug='s1_lab') }}">classroom investigation support</a> with your teacher for a controlled measurement in the lab.</p>
+
+  <div class="lesson-quickref lesson-quick-ref-card" role="region" aria-label="What is science quick reference">
+    <h3>Quick reference</h3>
+    <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+      <div>
+        <h4>Make it scientific</h4>
+        <ul>
+          <li>Evidence others can check</li>
+          <li>A method another group can follow</li>
+          <li>Repeats → reproducibility</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Keep it honest</h4>
+        <ul>
+          <li>Critique the method, not the person</li>
+          <li>Explanations stay provisional</li>
+          <li>Fame and secrecy are not evidence</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='what_is_science') }}" class="btn btn-primary">
+      Start Practice Quiz
+    </a>
+  </div>
+
+</div>
+{% endblock %}

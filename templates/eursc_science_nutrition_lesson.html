@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+{% block title %}Nutrition and Food Information – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Nutrition and Food Information</h1>
+    <p class="hero-sub">S1 Integrated Science · Unit 1.2 Food · syllabus 1.2.7. Balanced diet, deficiencies, allergy and intolerance, energy labels and claims. Scenarios use fictional people. This lesson never asks for your own diet or health.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S1</span>
+      <span class="pill pill--hero">1.2 Food</span>
+      <span class="pill pill--hero">1.2.7</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='nutrition') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Balanced diet
+      <span class="lesson-tag">1.2.7</span>
+      <span class="lesson-tag">S1</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>A <strong>balanced diet</strong> is a mix of food groups over time so the body gets water, protein, fat, carbohydrate, vitamins and minerals. It is not a single magic food and not a ranking of classmates.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A balanced diet means</p>
+          <button class="btn mcq-btn" data-letter="A">only one food group at every meal</button>
+          <button class="btn mcq-btn" data-letter="B">a mix of food groups over time so the body gets what it needs</button>
+          <button class="btn mcq-btn" data-letter="C">never drinking water</button>
+          <button class="btn mcq-btn" data-letter="D">only packaged snacks</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Deficiencies
+    </summary>
+    <div class="lesson-section-body">
+      <p>Named gaps have named links: vitamin C and <strong>scurvy</strong>, iron and <strong>anaemia</strong>. Vitamin D supports bones. Class work does not diagnose a pupil; a qualified professional gives personal advice.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A lack of vitamin C has been linked with</p>
+          <button class="btn mcq-btn" data-letter="A">being famous</button>
+          <button class="btn mcq-btn" data-letter="B">scurvy</button>
+          <button class="btn mcq-btn" data-letter="C">turning into a metal</button>
+          <button class="btn mcq-btn" data-letter="D">pH 14</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Allergy and intolerance
+    </summary>
+    <div class="lesson-section-body">
+      <p>A food <dfn class="lesson-gloss" title="An immune reaction that can be serious">allergy</dfn> is an immune reaction that can be serious (for example swelling after peanuts in a scenario). An <dfn class="lesson-gloss" title="Difficulty digesting a food">intolerance</dfn> is difficulty digesting a food — unpleasant, but a different mechanism.
+      <span class="lesson-gloss-def">Allergy: immune system, can be serious. Intolerance: digestion difficulty, different mechanism. This quiz never asks what a pupil personally cannot eat.</span></p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A food allergy is mainly</p>
+          <button class="btn mcq-btn" data-letter="A">disliking a colour</button>
+          <button class="btn mcq-btn" data-letter="B">an immune system reaction that can be serious</button>
+          <button class="btn mcq-btn" data-letter="C">the same as choosing not to eat bread</button>
+          <button class="btn mcq-btn" data-letter="D">a marketing slogan</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Obesity
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Obesity</strong> is a health condition linked with energy intake and health risks. Science uses third-person evidence. It is not a joke about a classmate and not a classroom weigh-in.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Obesity is discussed in science as</p>
+          <button class="btn mcq-btn" data-letter="A">a joke about a classmate</button>
+          <button class="btn mcq-btn" data-letter="B">a health condition linked with energy intake and health risks, using third-person evidence</button>
+          <button class="btn mcq-btn" data-letter="C">a moral failing to debate in public</button>
+          <button class="btn mcq-btn" data-letter="D">a food group</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Eating disorders
+    </summary>
+    <div class="lesson-section-body">
+      <p>Eating disorders are health conditions that need <strong>qualified care</strong>. If a fictional character shows warning signs, tell a teacher or health professional. Do not diagnose classmates and do not collect private eating stories in this app.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Eating disorders are</p>
+          <button class="btn mcq-btn" data-letter="A">a quiz to see who in the class has one</button>
+          <button class="btn mcq-btn" data-letter="B">health conditions that need qualified care; a teacher or health professional is the right contact, not a lesson confession</button>
+          <button class="btn mcq-btn" data-letter="C">cured by a slogan</button>
+          <button class="btn mcq-btn" data-letter="D">the same as disliking broccoli</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Food labels
+    </summary>
+    <div class="lesson-section-body">
+      <p>Useful pack evidence: <strong>energy</strong> in kJ or kcal per serving, and an <strong>ingredients</strong> list in order of amount. A slogan with no numbers is not evidence.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A food label's energy value is usually given in</p>
+          <button class="btn mcq-btn" data-letter="A">metres</button>
+          <button class="btn mcq-btn" data-letter="B">kilojoules or kilocalories</button>
+          <button class="btn mcq-btn" data-letter="C">amperes</button>
+          <button class="btn mcq-btn" data-letter="D">decibels</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">7</span>
+      Kilojoules and kilocalories
+    </summary>
+    <div class="lesson-section-body">
+      <p>This course treats <strong>1 kcal as 4 kJ</strong> (a rounded S1 figure). Two servings means twice the energy on the per-serving line.</p>
+      <p><strong>Worked example:</strong> A fictional pack lists 200 kcal per serving. \(200 \times 4 = 800\,\mathrm{kJ}\). The other way: \(840\,\mathrm{kJ} \div 4 = 210\,\mathrm{kcal}\). Use the pack line, not a classmate's plate.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Using 1 kcal = 4 kJ, 840 kJ is how the pack might also show about</p>
+          <button class="btn mcq-btn" data-letter="A">840 kcal</button>
+          <button class="btn mcq-btn" data-letter="B">210 kcal</button>
+          <button class="btn mcq-btn" data-letter="C">4 kcal</button>
+          <button class="btn mcq-btn" data-letter="D">0 kcal</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">8</span>
+      Additives
+    </summary>
+    <div class="lesson-section-body">
+      <p>Additives (including <strong>E-numbers</strong> on European packs) are listed so they can be identified: colour, preserve, and so on. They are not a secret code.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Additives are listed so that</p>
+          <button class="btn mcq-btn" data-letter="A">companies can hide them</button>
+          <button class="btn mcq-btn" data-letter="B">people can see extra ingredients and their job, such as colour or preserve</button>
+          <button class="btn mcq-btn" data-letter="C">SI units fail</button>
+          <button class="btn mcq-btn" data-letter="D">the food becomes a metal</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">9</span>
+      Marketing claims
+    </summary>
+    <div class="lesson-section-body">
+      <p>A drink that “boosts energy” with no test is a claim, not evidence. Ask for measurements and a controlled comparison, the same scientific habit as in Science Lab.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A drink advert says 'boosts energy' with no test. A scientific response is</p>
+          <button class="btn mcq-btn" data-letter="A">believe the fame of the actor</button>
+          <button class="btn mcq-btn" data-letter="B">ask for the measurements and a controlled comparison</button>
+          <button class="btn mcq-btn" data-letter="C">ban all drinks</button>
+          <button class="btn mcq-btn" data-letter="D">ignore kJ on the label forever</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">10</span>
+      Using this unit
+    </summary>
+    <div class="lesson-section-body">
+      <p>Apply food groups, labels and hygiene in the classroom meal project. Do not use this page as a clinic or a survey of private eating.</p>
+      <p class="lesson-callout">Continue with <a href="{{ url_for('topic_page', level='eursc', subject='science', topic='healthy_meal_project') }}">Project: A Healthy Meal</a> and the <a href="{{ url_for('eursc_ibl_page', slug='s1_food') }}">classroom investigation support</a>.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref lesson-quick-ref-card" role="region" aria-label="Nutrition quick reference">
+    <h3>Quick reference</h3>
+    <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+      <div>
+        <h4>Health ideas</h4>
+        <ul>
+          <li>Balance = variety of groups</li>
+          <li>Allergy immune · intolerance digestive</li>
+          <li>Signpost teacher/health care; no confession quizzes</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Packs</h4>
+        <ul>
+          <li>kJ / kcal · ingredients list</li>
+          <li>1 kcal ≈ 4 kJ in this course</li>
+          <li>Claims need measurements</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='nutrition') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

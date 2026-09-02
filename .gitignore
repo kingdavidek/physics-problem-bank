@@ -7,6 +7,10 @@ __pycache__/
 data/*.db
 data/*.db-*
 data/backups/
+data/gdpr_actions.log
+data/cadence_log.jsonl
+data/restore-scratch.db
+data/restore-scratch.db-*
 *.bak
 _audit_*.py
 _*.probe.py

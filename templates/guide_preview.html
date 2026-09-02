@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% from "partials/buddy.html" import buddy_mascot %}
+{% block title %}Guide preview – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+    <div class="lesson-hero">
+        <h1>Guide preview</h1>
+        <p class="hero-sub">Dev-only. Play the origin story and badge moments without logging in. Preview does not save to <code>pb-guide-v1</code>, so your real account is unaffected.</p>
+    </div>
+
+    <section class="section-panel">
+        <div class="section-panel-header">Origin story</div>
+        <div class="section-panel-body">
+            <p class="profile-empty">Same overlay as after first login: Continue line-by-line, Skip intro, Escape to dismiss. Use Reset &amp; replay to run it again on this page.</p>
+            <div class="sg-row" style="margin-top: var(--space-4);">
+                <button type="button" class="btn btn-primary" id="guide-preview-play">Play origin</button>
+                <button type="button" class="btn btn-outline" id="guide-preview-reset">Reset &amp; replay</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-panel">
+        <div class="section-panel-header">Badge &amp; streak</div>
+        <div class="section-panel-body">
+            <p class="profile-empty">Reward modal (A2 + A4). Close or Escape. Preview does not mark badges as seen. Play 7-day streak also lights the demo chip below (A6 CSS fire — guests have no header streak).</p>
+            <div class="sg-row" style="margin-top: var(--space-4);">
+                <button type="button" class="btn btn-primary" id="guide-preview-badge">Play badge</button>
+                <button type="button" class="btn btn-outline" id="guide-preview-streak">Play 7-day streak</button>
+                <button type="button" class="btn btn-outline" id="guide-preview-first">Play first correct</button>
+                <button type="button" class="btn btn-outline" id="guide-preview-lesson">Play lesson complete</button>
+            </div>
+            <a href="/profile" class="nav-streak" id="guide-preview-nav-streak" data-streak="7" aria-label="7 day study streak" style="margin-top: var(--space-4);"><span aria-hidden="true">🔥</span>7</a>
+        </div>
+    </section>
+    <section class="section-panel">
+        <div class="section-panel-header">Gestures (E6 B)</div>
+        <div class="section-panel-body">
+            <p class="profile-empty">Short CSS beats on the 128px overlay mascot. Does not write <code>pb-guide-v1</code>. Reduced motion skips these.</p>
+            <div class="sg-row" style="margin-top: var(--space-4);">
+                <span class="study-buddy-face sg-zorp-gesture" id="guide-preview-zorp" data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot() }}</span>
+            </div>
+            <div class="sg-row" style="margin-top: var(--space-4);">
+                <button type="button" class="btn btn-outline" id="guide-preview-wink">Wink</button>
+                <button type="button" class="btn btn-outline" id="guide-preview-nod">Nod</button>
+                <button type="button" class="btn btn-outline" id="guide-preview-shake">Shake</button>
+                <button type="button" class="btn btn-outline" id="guide-preview-tap">Tap</button>
+            </div>
+        </div>
+    </section>
+    <section class="section-panel">
+        <div class="section-panel-header">Section tours (A3)</div>
+        <div class="section-panel-body">
+            <p class="profile-empty">Practice, Profile, Daily, Learn, and Compete. Missing targets are skipped. Not now or Escape marks the tour seen (not saved in preview).</p>
+            <div class="sg-row" style="margin-top: var(--space-4);">
+                <button type="button" class="btn btn-primary" id="guide-preview-practice">Play Practice tour</button>
+                <button type="button" class="btn btn-outline" id="guide-preview-profile">Play Profile tour</button>
+                <button type="button" class="btn btn-outline" id="guide-preview-daily">Play Daily tour</button>
+                <button type="button" class="btn btn-outline" id="guide-preview-learn">Play Learn tour</button>
+                <button type="button" class="btn btn-outline" id="guide-preview-compete">Play Compete tour</button>
+            </div>
+            <form id="main-form" class="practice-picker-card" style="margin-top: var(--space-4);">
+                <label for="mode-select">Mode</label>
+                <select id="mode-select"><option>Standard</option></select>
+            </form>
+            <div class="profile-dashboard-chips" style="margin-top: var(--space-4);">
+                <span class="profile-xp-chip">XP</span>
+            </div>
+            <section class="section-panel milestone-shelf" id="milestones" style="margin-top: var(--space-4);">
+                <div class="section-panel-header">Badges</div>
+            </section>
+            <section class="section-panel" id="revision-plan" style="margin-top: var(--space-4);">
+                <div class="section-panel-header">Revision plan</div>
+            </section>
+            <section class="qotd-daily-card" style="margin-top: var(--space-4);">Today’s question (demo)</section>
+            <section class="section-panel" id="qotd-board" style="margin-top: var(--space-4);">
+                <div class="section-panel-header">Friends board (demo)</div>
+            </section>
+            <div id="topics-grid" class="topic-path" style="margin-top: var(--space-4);">Topic list (demo)</div>
+            <nav class="topics-level-bar segmented-control" aria-label="Filter by level" style="margin-top: var(--space-4);">
+                <button type="button" class="is-active">All</button>
+            </nav>
+            <nav class="segmented-control" id="leaderboard-board-tabs" aria-label="Leaderboard type" style="margin-top: var(--space-4);">
+                <a href="#" class="is-active">Effort</a>
+                <a href="#">Quiz accuracy</a>
+            </nav>
+            <p class="hero-sub"><a href="/challenges" id="compete-challenges">Challenges</a> (demo)</p>
+        </div>
+    </section>
+</div>
+<script src="{{ url_for('static', filename='js/guide-preview.js') }}?v=6" defer></script>
+{% endblock %}

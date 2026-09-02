@@ -1,4 +1,5 @@
 import json
+import re
 
 from models.avatar import avatar_to_json, parse_avatar
 from models.user import User, normalize_handle, utc_now_iso
@@ -11,6 +12,103 @@ VISIBILITY_CHOICES = (
     VISIBILITY_FOLLOWERS,
     VISIBILITY_PRIVATE,
 )
+
+THEME_SYSTEM = 'system'
+THEME_LIGHT = 'light'
+THEME_DARK = 'dark'
+THEME_CHOICES = (THEME_SYSTEM, THEME_LIGHT, THEME_DARK)
+
+GUIDE_JSON_MAX = 4096
+_GUIDE_TOUR_KEY = re.compile(r'^[a-z][a-z0-9_]{0,31}$')
+_GUIDE_REWARD_KEY = re.compile(r'^[a-z0-9_:]{1,64}$')
+_GUIDE_FLAG_LIMIT = 40
+
+
+def empty_guide_state():
+    return {'v': 1, 'origin': False, 'tours': {}, 'rewards': {}}
+
+
+def guide_json_is_stored(raw):
+    text = (raw or '').strip()
+    return bool(text) and text not in ('{}', 'null')
+
+
+def _guide_bool_flags(src, key_re):
+    out = {}
+    if not isinstance(src, dict):
+        return out
+    for key, value in src.items():
+        if len(out) >= _GUIDE_FLAG_LIMIT:
+            break
+        if not isinstance(key, str) or not key_re.match(key):
+            continue
+        if isinstance(value, bool):
+            out[key] = value
+    return out
+
+
+def public_guide_state(raw_or_dict):
+    if isinstance(raw_or_dict, dict):
+        data = raw_or_dict
+    else:
+        try:
+            data = json.loads(raw_or_dict or '{}')
+        except (TypeError, ValueError):
+            data = {}
+    if not isinstance(data, dict):
+        data = {}
+    state = empty_guide_state()
+    if 'origin' in data:
+        state['origin'] = bool(data['origin'])
+    state['tours'] = _guide_bool_flags(data.get('tours'), _GUIDE_TOUR_KEY)
+    state['rewards'] = _guide_bool_flags(data.get('rewards'), _GUIDE_REWARD_KEY)
+    return state
+
+
+def validate_guide_patch(data):
+    if not isinstance(data, dict):
+        return None, 'guide must be an object'
+    if 'origin' in data and not isinstance(data['origin'], bool):
+        return None, 'guide.origin must be a boolean'
+    if 'tours' in data and not isinstance(data['tours'], dict):
+        return None, 'guide.tours must be an object'
+    if 'rewards' in data and not isinstance(data['rewards'], dict):
+        return None, 'guide.rewards must be an object'
+    dumped = json.dumps(data, separators=(',', ':'))
+    if len(dumped) > GUIDE_JSON_MAX:
+        return None, 'guide is too large'
+    return data, None
+
+
+def merge_guide_json(existing_raw, incoming):
+    try:
+        base = json.loads(existing_raw or '{}')
+    except (TypeError, ValueError):
+        base = {}
+    if not isinstance(base, dict):
+        base = {}
+    if isinstance(incoming, dict):
+        if 'origin' in incoming:
+            base['origin'] = bool(incoming['origin'])
+        if 'tours' in incoming and isinstance(incoming['tours'], dict):
+            tours = base.get('tours') if isinstance(base.get('tours'), dict) else {}
+            tours.update(_guide_bool_flags(incoming['tours'], _GUIDE_TOUR_KEY))
+            base['tours'] = tours
+        if 'rewards' in incoming and isinstance(incoming['rewards'], dict):
+            rewards = base.get('rewards') if isinstance(base.get('rewards'), dict) else {}
+            rewards.update(_guide_bool_flags(incoming['rewards'], _GUIDE_REWARD_KEY))
+            base['rewards'] = rewards
+    base['v'] = 1
+    dumped = json.dumps(base, separators=(',', ':'))
+    if len(dumped) > GUIDE_JSON_MAX:
+        raise ValueError('guide_json too large')
+    return dumped
+
+
+def normalize_theme_preference(value):
+    if value in THEME_CHOICES:
+        return value
+    return THEME_SYSTEM
 
 ACTIVITY_TOPIC_OPENED = 'topic_opened'
 ACTIVITY_QUESTION_GENERATED = 'question_generated'
@@ -89,7 +187,8 @@ def get_profile_settings(conn, user_id):
                show_last_activity, show_lesson_progress, show_quiz_stats,
                show_shared_questions, auto_share_quiz, auto_share_lesson,
                default_share_visibility, show_study_streak, show_milestones,
-               email_weekly_digest, avatar_json, show_accuracy_leaderboard
+               email_weekly_digest, avatar_json, show_accuracy_leaderboard,
+               sound_enabled, theme_preference, guide_json
         FROM user_profile_settings
         WHERE user_id = ?
         ''',
@@ -97,28 +196,38 @@ def get_profile_settings(conn, user_id):
     ).fetchone()
     data = dict(row) if row else {}
     data['avatar'] = parse_avatar(data.get('avatar_json'))
+    data['guide'] = public_guide_state(data.get('guide_json'))
+    data['guide_json_persisted'] = guide_json_is_stored(data.get('guide_json'))
     return data
 
 
 def update_profile_settings(conn, user_id, settings):
     ensure_user_profile(conn, user_id)
 
-    visibility = settings.get('profile_visibility', VISIBILITY_PUBLIC)
+    visibility = settings.get('profile_visibility', VISIBILITY_FOLLOWERS)
     if visibility not in VISIBILITY_CHOICES:
-        visibility = VISIBILITY_PUBLIC
+        visibility = VISIBILITY_FOLLOWERS
     share_visibility = settings.get('default_share_visibility', VISIBILITY_FOLLOWERS)
     if share_visibility not in VISIBILITY_CHOICES:
         share_visibility = VISIBILITY_FOLLOWERS
+    theme_preference = normalize_theme_preference(settings.get('theme_preference', THEME_SYSTEM))
+    existing = conn.execute(
+        'SELECT avatar_json, guide_json FROM user_profile_settings WHERE user_id = ?',
+        (user_id,),
+    ).fetchone()
     if 'avatar' in settings or settings.get('avatar_json'):
         avatar_json = avatar_to_json(
             settings.get('avatar') or parse_avatar(settings.get('avatar_json'))
         )
     else:
-        existing = conn.execute(
-            'SELECT avatar_json FROM user_profile_settings WHERE user_id = ?',
-            (user_id,),
-        ).fetchone()
         avatar_json = (existing['avatar_json'] if existing else '') or avatar_to_json({})
+    if 'guide' in settings:
+        guide_json = merge_guide_json(
+            existing['guide_json'] if existing else '',
+            settings.get('guide'),
+        )
+    else:
+        guide_json = (existing['guide_json'] if existing else '') or '{}'
     conn.execute(
         '''
         UPDATE user_profile_settings
@@ -136,16 +245,19 @@ def update_profile_settings(conn, user_id, settings):
             show_milestones = ?,
             email_weekly_digest = ?,
             avatar_json = ?,
-            show_accuracy_leaderboard = ?
+            show_accuracy_leaderboard = ?,
+            sound_enabled = ?,
+            theme_preference = ?,
+            guide_json = ?
         WHERE user_id = ?
         ''',
         (
             visibility,
             _bool_int(settings.get('show_member_since', True)),
-            _bool_int(settings.get('show_last_topic', True)),
-            _bool_int(settings.get('show_last_activity', True)),
-            _bool_int(settings.get('show_lesson_progress', True)),
-            _bool_int(settings.get('show_quiz_stats', True)),
+            _bool_int(settings.get('show_last_topic', False)),
+            _bool_int(settings.get('show_last_activity', False)),
+            _bool_int(settings.get('show_lesson_progress', False)),
+            _bool_int(settings.get('show_quiz_stats', False)),
             _bool_int(settings.get('show_shared_questions', True)),
             _bool_int(settings.get('auto_share_quiz', False)),
             _bool_int(settings.get('auto_share_lesson', False)),
@@ -155,6 +267,9 @@ def update_profile_settings(conn, user_id, settings):
             _bool_int(settings.get('email_weekly_digest', False)),
             avatar_json,
             _bool_int(settings.get('show_accuracy_leaderboard', True)),
+            _bool_int(settings.get('sound_enabled', False)),
+            theme_preference,
+            guide_json,
             user_id,
         ),
     )
@@ -202,6 +317,59 @@ def list_activity_events(conn, user_id, limit=20):
         except (TypeError, ValueError, json.JSONDecodeError):
             data['payload'] = {}
         out.append(data)
+    return out
+
+
+RECENT_PRACTISED_LIMIT = 8
+RECENT_PRACTISED_SCAN = 80
+RECENT_PRACTISED_EVENTS = (
+    ACTIVITY_QUESTION_GENERATED,
+    ACTIVITY_TOPIC_OPENED,
+    ACTIVITY_QUIZ_COMPLETED,
+    ACTIVITY_LESSON_STEP_COMPLETED,
+    ACTIVITY_MCQ_ANSWERED,
+)
+
+
+def list_recent_practised_topics(conn, user_id, *, limit=RECENT_PRACTISED_LIMIT, scan=RECENT_PRACTISED_SCAN):
+    """Distinct topics the user practised, newest first (for the home chip strip)."""
+    rows = conn.execute(
+        '''
+        SELECT payload_json, created_at
+        FROM user_activity_events
+        WHERE user_id = ?
+          AND event_type IN (?, ?, ?, ?, ?)
+        ORDER BY created_at DESC, id DESC
+        LIMIT ?
+        ''',
+        (user_id, *RECENT_PRACTISED_EVENTS, scan),
+    ).fetchall()
+    out = []
+    seen = set()
+    for row in rows:
+        try:
+            payload = json.loads(row['payload_json'] or '{}')
+        except (TypeError, ValueError, json.JSONDecodeError):
+            payload = {}
+        level = payload.get('level')
+        subject = payload.get('subject')
+        topic = payload.get('topic')
+        if not topic:
+            continue
+        key = (level, subject, topic)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append({
+            'level': level,
+            'subject': subject,
+            'topic': topic,
+            'topic_label': payload.get('topic_label') or '',
+            'difficulty': payload.get('difficulty') or '',
+            'last_at': row['created_at'],
+        })
+        if len(out) >= limit:
+            break
     return out
 
 
@@ -482,7 +650,7 @@ def can_view_profile(conn, viewer_id, target_user_id, settings):
     from models.moderation import is_blocked
     if is_blocked(conn, viewer_id, target_user_id):
         return False
-    visibility = settings.get('profile_visibility', VISIBILITY_PUBLIC)
+    visibility = settings.get('profile_visibility', VISIBILITY_FOLLOWERS)
     if visibility == VISIBILITY_PRIVATE:
         return False
     if visibility == VISIBILITY_FOLLOWERS:
@@ -548,6 +716,52 @@ def search_users_by_handle(
             item['member_since'] = created[:10] if created else None
         if viewer_id is not None and viewer_id != row['id']:
             item['viewer_follows'] = is_following(conn, viewer_id, row['id'])
+        results.append(item)
+    return results
+
+
+def search_following_by_handle(conn, follower_id, query, *, limit=8):
+    """Handles among people the viewer follows (for suggest-to-friend autocomplete)."""
+    query = normalize_handle(query)
+    if not query:
+        return []
+
+    limit = min(max(int(limit), 1), SEARCH_MAX_LIMIT)
+    pattern = f'%{_like_escape(query)}%'
+    prefix_pattern = f'{_like_escape(query)}%'
+
+    rows = conn.execute(
+        '''
+        SELECT u.id, u.handle, u.created_at
+        FROM follows f
+        JOIN users u ON u.id = f.following_id
+        WHERE f.follower_id = ?
+          AND u.is_active = 1
+          AND u.handle LIKE ? ESCAPE '\\'
+        ORDER BY
+            CASE
+                WHEN u.handle = ? COLLATE NOCASE THEN 0
+                WHEN u.handle LIKE ? ESCAPE '\\' COLLATE NOCASE THEN 1
+                ELSE 2
+            END,
+            u.handle COLLATE NOCASE
+        LIMIT ?
+        ''',
+        (follower_id, pattern, query, prefix_pattern, limit),
+    ).fetchall()
+
+    results = []
+    for row in rows:
+        settings = get_profile_settings(conn, row['id'])
+        item = {
+            'handle': row['handle'],
+            'profile_accessible': True,
+            'avatar': settings.get('avatar') or parse_avatar(None),
+            'viewer_follows': True,
+        }
+        if settings.get('show_member_since'):
+            created = row['created_at'] or ''
+            item['member_since'] = created[:10] if created else None
         results.append(item)
     return results
 

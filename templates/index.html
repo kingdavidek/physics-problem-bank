@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% from "partials/page_flashes.html" import render as page_flashes %}
+{% from "partials/icon.html" import icon %}
 {% block title %}Practice Generator – Problem Bank{% endblock %}
 
 {% block content %}
@@ -9,115 +11,89 @@
      data-topic="{{ selected_topic }}"
      style="display:none;"></div>
 
-<div class="page-shell">
+<div class="page-shell{% if problem %} practice-page--active{% endif %}"{% if generator_launch_restricted %} data-launch-gcse-only="1"{% endif %}>
 
-<div class="lesson-hero">
-    <h1>Practice Generator</h1>
-    <p class="hero-sub">GCSE, A-Level, and IB MYP — Maths, Physics, and Computer Science</p>
-    <div class="hero-pills">
-        <span class="hero-pill">Standard questions</span>
-        <span class="hero-pill">Multiple choice</span>
-        <span class="hero-pill">Foundational · Intermediate · Difficult</span>
-    </div>
-    <p style="margin:14px 0 0;">
-        <a href="{{ url_for('sandbox_plan_a_checkpoints') }}" class="btn btn-secondary">
-            Sandbox: Plan A/B checkpoints
-        </a>
-    </p>
+<div class="practice-hero">
+    <h1>{% if current_user.is_authenticated %}Hi, {{ current_user.display_handle }}{% else %}Ready to practise?{% endif %}</h1>
 </div>
 
-<div class="form-card">
-    <div class="section-panel-header">Choose your question</div>
-    <form method="POST" id="main-form" class="form-inner">
+{% if current_user.is_authenticated and recent_topics %}
+<section class="recent-practised" aria-label="Recently practised">
+    <h2 class="recent-practised-label">Recently practised</h2>
+    <div class="recent-practised-strip">
+        {% for item in recent_topics %}
+        <form method="POST" class="recent-practised-chip-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="start">
+            <input type="hidden" name="level" value="{{ item.level }}">
+            <input type="hidden" name="subject" value="{{ item.subject }}">
+            <input type="hidden" name="topic" value="{{ item.topic }}">
+            <input type="hidden" name="mode" value="{{ selected_mode }}">
+            <input type="hidden" name="difficulty" value="{{ item.difficulty }}">
+            <button type="submit" class="pill pill--surface recent-practised-chip{% if item.level == selected_level and item.subject == selected_subject and item.topic == selected_topic %} is-current{% endif %}">{{ item.label }}</button>
+        </form>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<div class="section-panel practice-picker-card{% if problem %} practice-picker-card--compact{% endif %}">
+    <h2>{% if problem %}Practising{% else %}What do you want to practise?{% endif %}</h2>
+    <form method="POST" id="main-form" class="form-inner practice-picker-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="form-grid">
 
+            {% if generator_launch_restricted %}
+            <div class="form-group">
+                <label for="level-select">Level</label>
+                <select name="level" id="level-select">
+                    {% for lv in generator_launch_levels %}
+                    <option value="{{ lv.id }}" {% if selected_level == lv.id %}selected{% endif %}>{{ lv.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% else %}
             <div class="form-group">
                 <label for="level-select">Level</label>
                 <select name="level" id="level-select">
                     <option value="gcse" {% if selected_level == 'gcse' %}selected{% endif %}>GCSE</option>
                     <option value="alevel" {% if selected_level == 'alevel' %}selected{% endif %}>A-Level</option>
                     <option value="myp" {% if selected_level == 'myp' %}selected{% endif %}>IB MYP</option>
+                    <option value="eursc" {% if selected_level == 'eursc' %}selected{% endif %}>European School</option>
                 </select>
             </div>
+            {% endif %}
 
             <div class="form-group">
                 <label for="subject-select">Subject</label>
                 <select name="subject" id="subject-select">
-                    <option value="physics" data-level="gcse" {% if selected_level == 'gcse' and selected_subject == 'physics' %}selected{% endif %}>Physics</option>
-                    <option value="maths" data-level="gcse" {% if selected_level == 'gcse' and selected_subject == 'maths' %}selected{% endif %}>Maths</option>
-                    <option value="cs" data-level="gcse" {% if selected_level == 'gcse' and selected_subject == 'cs' %}selected{% endif %}>Computer Science</option>
-                    <option value="physics" data-level="alevel" {% if selected_level == 'alevel' and selected_subject == 'physics' %}selected{% endif %}>Physics</option>
-                    <option value="chemistry" data-level="myp" {% if selected_level == 'myp' and selected_subject == 'chemistry' %}selected{% endif %}>Chemistry</option>
+                    <option value="physics" data-level="gcse" class="launch-hidden" {% if selected_level == 'gcse' and selected_subject == 'physics' %}selected{% endif %}>Physics</option>
+                    <option value="maths" data-level="gcse" data-launch-subject="1" {% if selected_level == 'gcse' and selected_subject == 'maths' %}selected{% endif %}>Maths</option>
+                    <option value="cs" data-level="gcse" data-launch-subject="1" {% if selected_level == 'gcse' and selected_subject == 'cs' %}selected{% endif %}>Computer Science</option>
+                    <option value="science" data-level="eursc" data-launch-subject="1" {% if selected_level == 'eursc' and selected_subject == 'science' %}selected{% endif %}>Integrated Science</option>
+                    <option value="physics" data-level="alevel" class="launch-hidden" {% if selected_level == 'alevel' and selected_subject == 'physics' %}selected{% endif %}>Physics</option>
+                    <option value="chemistry" data-level="myp" class="launch-hidden" {% if selected_level == 'myp' and selected_subject == 'chemistry' %}selected{% endif %}>Chemistry</option>
                 </select>
             </div>
 
             <div class="form-group">
                 <label for="topic-select">Topic</label>
                 <select name="topic" id="topic-select">
-                    <!-- options unchanged -->
-                    <option value="forces" data-subject="physics" data-level="gcse" {% if selected_topic == 'forces' %}selected{% endif %}>Forces</option>
-                    <option value="radioactivity" data-subject="physics" data-level="gcse" {% if selected_topic == 'radioactivity' %}selected{% endif %}>Edexcel Combined Physics Higher — Radioactivity</option>
-
-
-                    <option value="vectors" data-subject="maths" data-level="gcse" {% if selected_topic == 'vectors' %}selected{% endif %}>Vectors</option>
-                    <option value="algebra" data-subject="maths" data-level="gcse" {% if selected_topic == 'algebra' %}selected{% endif %}>Algebra</option>
-                    <option value="algebraic_fractions" data-subject="maths" data-level="gcse" {% if selected_topic == 'algebraic_fractions' %}selected{% endif %}>Algebraic Fractions</option>
-                    <option value="algebraic_proof" data-subject="maths" data-level="gcse" {% if selected_topic == 'algebraic_proof' %}selected{% endif %}>Algebraic Proof</option>
-                    <option value="simultaneous_equations" data-subject="maths" data-level="gcse" {% if selected_topic == 'simultaneous_equations' %}selected{% endif %}>Simultaneous Equations</option>
-                    <option value="completing_the_square" data-subject="maths" data-level="gcse" {% if selected_topic == 'completing_the_square' %}selected{% endif %}>Completing the Square</option>
-                    <option value="quadratic_simultaneous_equations" data-subject="maths" data-level="gcse" {% if selected_topic == 'quadratic_simultaneous_equations' %}selected{% endif %}>Quadratic Simultaneous Equations</option>
-                    <option value="graphical_simultaneous_equations" data-subject="maths" data-level="gcse" {% if selected_topic == 'graphical_simultaneous_equations' %}selected{% endif %}>Graphical Simultaneous Equations</option>
-                    <option value="surds" data-subject="maths" data-level="gcse" {% if selected_topic == 'surds' %}selected{% endif %}>Surds</option>
-                    <option value="fdp" data-subject="maths" data-level="gcse" {% if selected_topic == 'fdp' %}selected{% endif %}>Fractions, Decimals and Percentages</option>
-                    <option value="multiples_factors" data-subject="maths" data-level="gcse" {% if selected_topic == 'multiples_factors' %}selected{% endif %}>Multiples and Factors</option>
-                    <option value="decimals" data-subject="maths" data-level="gcse" {% if selected_topic == 'decimals' %}selected{% endif %}>Decimals</option>
-                    <option value="bidmas" data-subject="maths" data-level="gcse" {% if selected_topic == 'bidmas' %}selected{% endif %}>Order of Operations &amp; Negatives</option>
-                    <option value="trigonometry" data-subject="maths" data-level="gcse" {% if selected_topic == 'trigonometry' %}selected{% endif %}>Trigonometry</option>
-                    <option value="number" data-subject="maths" data-level="gcse" {% if selected_topic == 'number' %}selected{% endif %}>Number</option>
-                    <option value="ratio_proportion" data-subject="maths" data-level="gcse" {% if selected_topic == 'ratio_proportion' %}selected{% endif %}>Ratio and Proportion</option>
-                    <option value="probability" data-subject="maths" data-level="gcse" {% if selected_topic == 'probability' %}selected{% endif %}>Probability</option>
-                    <option value="statistics" data-subject="maths" data-level="gcse" {% if selected_topic == 'statistics' %}selected{% endif %}>Statistics</option>
-                    <option value="graphs" data-subject="maths" data-level="gcse" {% if selected_topic == 'graphs' %}selected{% endif %}>Graphs</option>
-                    <option value="functions" data-subject="maths" data-level="gcse" {% if selected_topic == 'functions' %}selected{% endif %}>Functions</option>
-                    <option value="equations_inequalities" data-subject="maths" data-level="gcse" {% if selected_topic == 'equations_inequalities' %}selected{% endif %}>Equations and Inequalities</option>
-                    <option value="changing_the_subject" data-subject="maths" data-level="gcse" {% if selected_topic == 'changing_the_subject' %}selected{% endif %}>Changing the Subject</option>
-                    <option value="sequences" data-subject="maths" data-level="gcse" {% if selected_topic == 'sequences' %}selected{% endif %}>Sequences</option>
-                    <option value="geometry_angles" data-subject="maths" data-level="gcse" {% if selected_topic == 'geometry_angles' %}selected{% endif %}>Geometry and Angles</option>
-                    <option value="transformations" data-subject="maths" data-level="gcse" {% if selected_topic == 'transformations' %}selected{% endif %}>Transformations</option>
-                    <option value="mensuration" data-subject="maths" data-level="gcse" {% if selected_topic == 'mensuration' %}selected{% endif %}>Mensuration</option>
-                    <option value="bearings" data-subject="maths" data-level="gcse" {% if selected_topic == 'bearings' %}selected{% endif %}>Bearings</option>
-                    <option value="circle_theorems" data-subject="maths" data-level="gcse" {% if selected_topic == 'circle_theorems' %}selected{% endif %}>Circle Theorems</option>
-                    <option value="compound_measures" data-subject="maths" data-level="gcse" {% if selected_topic == 'compound_measures' %}selected{% endif %}>Compound Measures</option>
-                    <option value="similarity_congruence" data-subject="maths" data-level="gcse" {% if selected_topic == 'similarity_congruence' %}selected{% endif %}>Similarity and Congruence</option>
-                    <option value="constructions_loci" data-subject="maths" data-level="gcse" {% if selected_topic == 'constructions_loci' %}selected{% endif %}>Constructions and Loci</option>
-                    <option value="pythagoras" data-subject="maths" data-level="gcse" {% if selected_topic == 'pythagoras' %}selected{% endif %}>Pythagoras' Theorem</option>
-
-
-                    <option value="magnetism" data-subject="physics" data-level="alevel" {% if selected_topic == 'magnetism' %}selected{% endif %}>Fields — Magnetism</option>
-                    <option value="photoelectric" data-subject="physics" data-level="alevel" {% if selected_topic == 'photoelectric' %}selected{% endif %}>Photoelectric Effect and Wave-Particle Duality</option>
-                    <option value="particles" data-subject="physics" data-level="alevel" {% if selected_topic == 'particles' %}selected{% endif %}>Particle Physics &amp; the Standard Model</option>
-                    <option value="redox" data-subject="chemistry" data-level="myp" {% if selected_topic == 'redox' %}selected{% endif %}>Redox Reactions</option>
-                    <option value="energy_changes_and_rates" data-subject="chemistry" data-level="myp" {% if selected_topic == 'energy_changes_and_rates' %}selected{% endif %}>Energy Changes and Rates of Reaction</option>
-
-                    <option value="python_programming" data-subject="cs" data-level="gcse" {% if selected_topic == 'python_programming' %}selected{% endif %}> Python Programming </option>
-                    <option value="algorithms" data-subject="cs" data-level="gcse" {% if selected_topic == 'algorithms' %}selected{% endif %}>Fundamentals of Algorithms</option>
-                    <option value="data_rep" data-subject="cs" data-level="gcse" {% if selected_topic == 'data_rep' %}selected{% endif %}>Fundamentals of Data Representation</option>
-                    <option value="computer_systems" data-subject="cs" data-level="gcse" {% if selected_topic == 'computer_systems' %}selected{% endif %}>Computer Systems</option>
-                    <option value="computer_networks" data-subject="cs" data-level="gcse" {% if selected_topic == 'computer_networks' %}selected{% endif %}>Computer Networks</option>
-                    <option value="cyber_security" data-subject="cs" data-level="gcse" {% if selected_topic == 'cyber_security' %}selected{% endif %}>Cyber Security</option>
-                    <option value="db_sql" data-subject="cs" data-level="gcse" {% if selected_topic == 'db_sql' %}selected{% endif %}>Relational Databases &amp; SQL</option>
-                    <option value="ethical" data-subject="cs" data-level="gcse" {% if selected_topic == 'ethical' %}selected{% endif %}>Ethical, Legal &amp; Environmental Impacts</option>
-                    <option value="systems_software" data-subject="cs" data-level="gcse" {% if selected_topic == 'systems_software' %}selected{% endif %}>Systems Software (OCR)</option>
-
+                    {% for t in generator_topics %}
+                    <option value="{{ t.slug }}" data-subject="{{ t.subject }}" data-level="{{ t.level }}"
+                            data-modes="{{ t.modes | join(',') }}"
+                            {% if selected_topic == t.slug and selected_subject == t.subject and selected_level == t.level %}selected{% endif %}>{{ t.name }}</option>
+                    {% endfor %}
                 </select>
             </div>
 
-            <div class="form-group">
+            <div class="form-group" id="mode-row"{% if hide_generator_mode %} hidden{% endif %}>
                 <label for="mode-select">Mode</label>
                 <select name="mode" id="mode-select">
                     <option value="standard" {% if selected_mode == 'standard' %}selected{% endif %}>📝 Standard question</option>
                     <option value="mcq" {% if selected_mode == 'mcq' %}selected{% endif %}>🔘 Multiple Choice</option>
+                    <option value="multi_step" {% if selected_mode == 'multi_step' %}selected{% endif %}>🧩 Multi-step</option>
+                    <option value="situational_multi_step" {% if selected_mode == 'situational_multi_step' %}selected{% endif %}>🔬 Situational multi-step</option>
                 </select>
             </div>
 
@@ -130,7 +106,11 @@
                 </select>
             </div>
 
-            <button type="submit" class="btn btn-primary">Generate problem</button>
+        </div>
+        <div class="practice-picker-actions">
+            <button type="submit" class="btn btn-primary btn-lg practice-picker-submit">
+                {% if problem %}New question{% else %}Start practising{% endif %}
+            </button>
         </div>
     </form>
 </div>
@@ -139,11 +119,7 @@
     <p class="error">{{ error }}</p>
 {% endif %}
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% for category, message in messages %}
-        <p class="{% if category == 'error' %}error{% else %}flash-success{% endif %}">{{ message }}</p>
-    {% endfor %}
-{% endwith %}
+{{ page_flashes('index') }}
 
 {% if limit_hit %}
 <div class="section-panel">
@@ -159,8 +135,13 @@
 </div>
 
 {% elif problem %}
-<div class="problem-card">
-    <div class="section-panel-header">Your question</div>
+<div class="practice-session" id="practice-session">
+
+<div class="section-panel problem-card card-quiz practice-question-hero" id="practice-question">
+    <div class="section-panel-header">
+        <span>Your question</span>
+        <span class="pill pill--surface">{{ problem.difficulty | title }}</span>
+    </div>
     <div class="problem-card-inner">
 
     <div class="problem-meta">
@@ -185,7 +166,7 @@
                     <button type="button" class="btn mcq-btn" data-letter="{{ opt[0] }}">{{ opt | safe }}</button>
                 {% endfor %}
             </div>
-            <p class="mcq-feedback" id="mcq-feedback" style="margin-top:12px;font-weight:600;"></p>
+            <p class="mcq-feedback" id="mcq-feedback"></p>
         {% else %}
             {% if not problem.answer_inline_sections %}
             <div class="question-content">{{ problem.question | format_question_html }}</div>
@@ -202,8 +183,15 @@
         📖 <a href="{{ problem.topic_url }}">Revise: {{ problem.topic_name }}</a>
     </p>
 
+    <details class="practice-hint-drawer" id="practice-hint">
+        <summary class="practice-hint-drawer-label">Hint</summary>
+        <div class="hint practice-hint-body">
+            {{ problem.hint | safe }}
+        </div>
+    </details>
+
     <details class="answer-reveal">
-        <summary>Show Answer</summary>
+        <summary>Show answer</summary>
         <div class="answer">
             {% if '<pre>' in problem.solution %}
                 {{ problem.solution | safe }}
@@ -212,26 +200,23 @@
             {% endif %}
         </div>
         {% include 'partials/answer_grading_hint.html' %}
-        <details class="hint-reveal">
-            <summary>💡 I still don't understand — show me the key concept</summary>
-            <div class="hint">
-                {{ problem.hint | safe }}
-            </div>
-        </details>
-        <div style="padding: 16px;">
+        <div class="answer-reveal-footer">
             <p class="topic-link">
                 📖 <a href="{{ problem.topic_url }}">Read the full {{ problem.topic_name }} topic page →</a>
             </p>
         </div>
     </details>
 
-    <div class="problem-actions">
+    </div>
+</div>
+
+<div class="problem-actions practice-action-bar practice-secondary-bar" id="practice-action-bar">
         {% if current_user.is_authenticated %}
         <form method="POST" action="{{ url_for('save_problem_route') }}" id="save-problem-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-outline">⭐ Save question</button>
+            <button type="submit" class="btn btn-outline">{{ icon('save', size=16) }}Save question</button>
         </form>
-        <button type="button" class="btn btn-outline share-suggest-open" data-action="share">Share</button>
+        <button type="button" class="btn btn-outline share-suggest-open" data-action="share">{{ icon('share', size=16) }}Share</button>
         <button type="button" class="btn btn-outline share-suggest-open" data-action="suggest">Send to @user</button>
         {% endif %}
         {% if can_reroll_variant %}
@@ -243,7 +228,7 @@
             <input type="hidden" name="topic" id="rr-topic">
             <input type="hidden" name="mode" id="rr-mode">
             <input type="hidden" name="difficulty" id="rr-difficulty">
-            <button type="submit" class="btn btn-secondary" id="reroll-btn">🎲 New numbers</button>
+            <button type="submit" class="btn btn-secondary" id="reroll-btn">{{ icon('retry', size=16) }}New numbers</button>
         </form>
         {% endif %}
         <form method="POST" action="/quicktest/start" id="quicktest-form">
@@ -253,13 +238,20 @@
             <input type="hidden" name="topic" id="qt-topic">
             <input type="hidden" name="mode" id="qt-mode">
             <input type="hidden" name="difficulty" id="qt-difficulty">
-            <button type="submit" class="btn btn-primary" id="quicktest-btn">⚡ Quick test</button>
+            <button type="submit" class="btn btn-primary" id="quicktest-btn">{{ icon('bolt', size=16) }}Quick test</button>
         </form>
-    </div>
+</div>
 
-    </div>
 </div>
 {% endif %}
 
 </div>
+{% endblock %}
+
+{% block sticky_footer %}
+{% if problem %}
+<div class="practice-new-question-bar" id="practice-new-question-bar">
+    <button type="submit" form="main-form" class="btn btn-primary btn-lg practice-new-question-btn" id="practice-new-question-btn">New question</button>
+</div>
+{% endif %}
 {% endblock %}

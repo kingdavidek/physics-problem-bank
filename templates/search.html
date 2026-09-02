@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "partials/user_avatar.html" import user_avatar %}
+{% from "partials/spot.html" import spot %}
 {% block title %}Search – Problem Bank{% endblock %}
 
 {% block content %}
@@ -10,7 +11,7 @@
     <p class="hero-sub">Find lessons, topics, and other learners.</p>
 </div>
 
-<form method="GET" action="{{ url_for('site_search') }}" class="auth-form" style="max-width:520px;margin-bottom:20px;">
+<form method="GET" action="{{ url_for('site_search') }}" class="auth-form search-page-form">
     <div class="form-group">
         <label for="q">Search</label>
         <input type="search" name="q" id="q" value="{{ query }}" placeholder="Topics, lessons, @handles…" autocomplete="off" maxlength="80" autofocus>
@@ -32,14 +33,17 @@
         <span class="search-rank-note">Ranked in order of relevance</span>
     </div>
     <div class="section-panel-body">
-        <ol class="profile-list search-rank-list">
+        <ol class="profile-list profile-list--rows search-rank-list">
             {% for item in topics %}
-            <li class="profile-list-item">
-                <span class="search-result-rank">#{{ item.rank }}</span>
-                <div class="profile-list-main">
-                    <a href="{{ item.url }}">{{ item.name }}</a>
-                    <span class="profile-list-meta">{{ item.group }}{% if item.via == 'keywords' %} · lesson text{% endif %}</span>
-                </div>
+            <li>
+                <a href="{{ item.url }}" class="profile-list-item list-row">
+                    <span class="search-result-rank">#{{ item.rank }}</span>
+                    <span class="list-row-main">
+                        <span>{{ item.name }}</span>
+                        <span class="list-row-meta">{{ item.group }}{% if item.via == 'keywords' %} · lesson text{% endif %}</span>
+                    </span>
+                    <span class="list-row-chevron" aria-hidden="true"></span>
+                </a>
             </li>
             {% endfor %}
         </ol>
@@ -51,23 +55,26 @@
 <section class="section-panel">
     <div class="section-panel-header">Users</div>
     <div class="section-panel-body">
-        <ul class="profile-list">
+        <ul class="profile-list profile-list--rows">
             {% for item in users %}
-            <li class="profile-list-item user-row">
-                {{ user_avatar(item.avatar, 'sm') }}
-                <div class="profile-list-main">
-                    <a href="{{ item.profile_url }}">@{{ item.handle }}</a>
-                    <span class="profile-list-meta">
-                        {% if item.member_since %}
-                        Member since {{ item.member_since }}
-                        {% elif not item.profile_accessible %}
-                        Private profile
-                        {% endif %}
-                        {% if current_user.is_authenticated and item.viewer_follows is defined and item.viewer_follows %}
-                        · Following
-                        {% endif %}
+            <li>
+                <a href="{{ item.profile_url }}" class="profile-list-item list-row">
+                    {{ user_avatar(item.avatar, 'sm') }}
+                    <span class="list-row-main">
+                        <span>@{{ item.handle }}</span>
+                        <span class="list-row-meta">
+                            {% if item.member_since %}
+                            Member since {{ item.member_since }}
+                            {% elif not item.profile_accessible %}
+                            Private profile
+                            {% endif %}
+                            {% if current_user.is_authenticated and item.viewer_follows is defined and item.viewer_follows %}
+                            · Following
+                            {% endif %}
+                        </span>
                     </span>
-                </div>
+                    <span class="list-row-chevron" aria-hidden="true"></span>
+                </a>
             </li>
             {% endfor %}
         </ul>
@@ -77,9 +84,13 @@
 
 {% if total == 0 %}
 <section class="section-panel">
-    <div class="section-panel-header">No results</div>
     <div class="section-panel-body">
-        <p class="profile-empty">Nothing matched “{{ query }}”. Try a topic name, a lesson keyword, or part of a handle.</p>
+        <div class="empty-state">
+            <div class="empty-state-icon" aria-hidden="true">{{ spot('search') }}</div>
+            <h3>No results for “{{ query }}”</h3>
+            <p>Try a topic name, a lesson keyword, or part of a handle.</p>
+            <a href="{{ url_for('topics_index') }}" class="btn btn-primary">Browse topics</a>
+        </div>
     </div>
 </section>
 {% endif %}

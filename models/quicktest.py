@@ -1,9 +1,12 @@
 """Quick Test session storage and problem building."""
 import json
+import random
 import uuid
 
 from generators.shared.variant_utils import normalize_mode
 from models.user import utc_now_iso
+
+QUICKTEST_LENGTH = 10
 
 
 def make_session_id(user_id=None):
@@ -14,23 +17,50 @@ def make_session_id(user_id=None):
 
 
 def build_quicktest_problems(level, subject, topic, mode, difficulty, topics_registry):
-    """Return (problems, topic_config) or raise KeyError."""
+    """Return (problems, topic_config) or raise KeyError.
+
+    Always builds ``QUICKTEST_LENGTH`` questions (pad by regenerating if a
+    topic exposes fewer variants; sample if it exposes more).
+    """
     topic_config = topics_registry[level][subject][topic]
     generator = topic_config['func']
     variants_func = topic_config.get('variants_func')
     mode = normalize_mode(mode)
 
     problems = []
+    variant_list = []
     if variants_func:
-        variant_list = variants_func(difficulty, mode)
-        for variant_fn in variant_list:
-            problems.append(
-                generator(difficulty, mode, variant_name=variant_fn.__name__)
-            )
-    else:
-        for _ in range(10):
+        variant_list = list(variants_func(difficulty, mode) or [])
+        if variant_list:
+            if len(variant_list) >= QUICKTEST_LENGTH:
+                chosen = random.sample(variant_list, QUICKTEST_LENGTH)
+            else:
+                chosen = list(variant_list)
+            for variant_fn in chosen:
+                problems.append(
+                    generator(difficulty, mode, variant_name=variant_fn.__name__)
+                )
+            i = 0
+            while len(problems) < QUICKTEST_LENGTH:
+                variant_fn = variant_list[i % len(variant_list)]
+                problems.append(
+                    generator(difficulty, mode, variant_name=variant_fn.__name__)
+                )
+                i += 1
+                if i > QUICKTEST_LENGTH * 8:
+                    break
+    while len(problems) < QUICKTEST_LENGTH:
+        try:
             problems.append(generator(difficulty, mode, variant_name=None))
-    return problems, topic_config
+        except TypeError:
+            if not (variants_func and variant_list):
+                problems.append(generator(difficulty, mode))
+            else:
+                variant_fn = variant_list[len(problems) % len(variant_list)]
+                problems.append(
+                    generator(difficulty, mode, variant_name=variant_fn.__name__)
+                )
+    return problems[:QUICKTEST_LENGTH], topic_config
 
 
 def save_quicktest_session(conn, session_id, data):

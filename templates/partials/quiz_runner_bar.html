@@ -1,0 +1,13 @@
+<div class="quiz-runner-bar">
+  <a href="{{ quiz_exit_url }}" class="quiz-runner-exit" aria-label="Exit quiz">&times;</a>
+  <div class="quiz-runner-bar-main">
+    <p class="quiz-runner-title">{{ quiz_runner_title | default(topic_name) }}</p>
+    <p class="quiz-runner-counter" id="quiz-runner-counter">{{ quiz_runner_current | default(1) }} / {{ quiz_runner_total | default(total) }}</p>
+  </div>
+  <div class="quiz-runner-segments" id="quiz-runner-segments" role="list" aria-label="Question progress">
+    {% set seg_total = quiz_runner_total | default(total) %}
+    {% for i in range(seg_total) %}
+    <span class="quiz-runner-segment{% if quiz_runner_current and i < quiz_runner_current - 1 %} is-done{% elif quiz_runner_current and i == quiz_runner_current - 1 %} is-current{% endif %}" data-index="{{ i }}" role="listitem"></span>
+    {% endfor %}
+  </div>
+</div>

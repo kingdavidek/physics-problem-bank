@@ -7,6 +7,7 @@ or an MCQ 6-tuple (question, solution, hint, marks, options, correct_letter).
 import math
 import random
 from generators.shared.utils import make_problem
+from models import svg_kit
 from generators.shared.variant_utils import (
     select_tier_variants,
     mcq_variants_from_pool,
@@ -164,15 +165,18 @@ def _xy(bounds, x, y):
     return round(sx, 1), round(sy, 1)
 
 
-def _svg_open():
+def _svg_wrap(inner):
     p = _GSIM_PAD
     vb_w = _GSIM_W + 2 * p
     vb_h = _GSIM_H + 2 * p
-    return (
-        f'<svg class="gsim-diagram" width="{_GSIM_MAX_W}" height="{_gsim_display_h()}" '
-        f'viewBox="{-p} {-p} {vb_w} {vb_h}" preserveAspectRatio="xMidYMid meet" '
-        f'xmlns="http://www.w3.org/2000/svg">'
-    )
+    return str(svg_kit.viewbox_svg(
+        -p, -p, vb_w, vb_h,
+        title='Graphical simultaneous equations',
+        desc='Coordinate graph of the equations in this question.',
+        body=inner,
+        max_width=_GSIM_MAX_W,
+        variant='chart',
+    ))
 
 
 def _svg_grid(bounds):
@@ -338,7 +342,7 @@ def _svg_two_lines(
             for item in extra_points:
                 pts.append((item[1], item[2]))
         bounds = _bounds(pts, 1)
-    svg = _svg_open() + _svg_grid(bounds)
+    svg = _svg_grid(bounds)
     if axis_numbers:
         svg += _svg_axis_numbers(bounds)
     svg += _svg_polyline(bounds, _line_pts(m1, c1, bounds[0], bounds[1]), "#1a6fa8")
@@ -367,19 +371,19 @@ def _svg_two_lines(
             svg += f'<text x="{lx}" y="{ly - 6}" font-size="11" fill="#1a6fa8">{lbl1}</text>'
             lx2, ly2 = _xy(bounds, bounds[1] - 0.5, m2 * (bounds[1] - 0.5) + c2)
             svg += f'<text x="{lx2}" y="{ly2 + 14}" font-size="11" fill="#c0392b">{lbl2}</text>'
-    return svg + "</svg>"
+    return _svg_wrap(svg)
 
 
 def _svg_parallel_lines(m, c1, c2, axis_numbers=False):
     x0, x1 = 0, 6
     pts = [(x0, m * x0 + c1), (x1, m * x1 + c1), (x0, m * x0 + c2), (x1, m * x1 + c2)]
     bounds = _bounds(pts, 1)
-    svg = _svg_open() + _svg_grid(bounds)
+    svg = _svg_grid(bounds)
     if axis_numbers:
         svg += _svg_axis_numbers(bounds)
     svg += _svg_polyline(bounds, _line_pts(m, c1, bounds[0], bounds[1]), "#1a6fa8")
     svg += _svg_polyline(bounds, _line_pts(m, c2, bounds[0], bounds[1]), "#c0392b", dash="6 4")
-    return svg + "</svg>"
+    return _svg_wrap(svg)
 
 
 def _svg_parabola_line(r1, r2, a, b, mark="none", axis_numbers=False):
@@ -394,7 +398,7 @@ def _svg_parabola_line(r1, r2, a, b, mark="none", axis_numbers=False):
     if mark == "both":
         pts.append((r2, y2))
     bounds = _bounds(pts, 1)
-    svg = _svg_open() + _svg_grid(bounds)
+    svg = _svg_grid(bounds)
     if axis_numbers:
         svg += _svg_axis_numbers(bounds)
     svg += _svg_polyline(bounds, _parabola_pts(bounds[0], bounds[1]), "#059669", width=2.8)
@@ -403,7 +407,7 @@ def _svg_parabola_line(r1, r2, a, b, mark="none", axis_numbers=False):
         svg += _svg_point(bounds, r1, y1)
     if mark == "both":
         svg += _svg_point(bounds, r2, y2)
-    return svg + "</svg>"
+    return _svg_wrap(svg)
 
 
 def _parse_coord_pair(text):
@@ -676,10 +680,10 @@ def _gsim_d_line_misses_parabola():
     # x² - mx - c = 0 → disc = m² + 4c; with c <= -4 and m <= 3, disc < 0.
     pts = _parabola_pts(-2, 4) + _line_pts(m, c, -2, 4)
     bounds = _bounds(pts, 1)
-    svg = _svg_open() + _svg_grid(bounds)
+    svg = _svg_grid(bounds)
     svg += _svg_polyline(bounds, _parabola_pts(bounds[0], bounds[1]), "#059669", width=2.8)
     svg += _svg_polyline(bounds, _line_pts(m, c, bounds[0], bounds[1]), "#1a6fa8")
-    svg += "</svg>"
+    svg = _svg_wrap(svg)
     q = (
         rf"The graphs of \(y = x^2\) and {_fmt_line_eq(m, c)} are sketched on the same axes.<br>{svg}<br>"
         r"How many real simultaneous solutions are there?"

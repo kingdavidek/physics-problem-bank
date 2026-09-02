@@ -483,6 +483,47 @@ def test_checker_number_fields_unit():
     mixed_registry = check_answer('number_fields', '27|12|22:21', '27|12|22:21')
     assert mixed_registry['correct'] is True
 
+    letter_sep = '\x1e'
+    mixed_mcq = check_number_fields(
+        '60' + letter_sep + 'B',
+        '60' + letter_sep + 'B',
+        field_types=['number', 'mcq'],
+    )
+    assert mixed_mcq['correct'] is True
+    assert mixed_mcq['score'] == 2
+    assert mixed_mcq['score_total'] == 2
+
+    mixed_mcq_wrong = check_number_fields(
+        '60' + letter_sep + 'B',
+        '60' + letter_sep + 'A',
+        field_types=['number', 'mcq'],
+    )
+    assert mixed_mcq_wrong['correct'] is False
+    assert mixed_mcq_wrong['score'] == 1
+
+    pick_raw = 'pick|2|c1|c2'
+    mixed_pick = check_number_fields(
+        '8' + letter_sep + pick_raw,
+        '8' + letter_sep + 'c1|c2',
+        field_types=['number', 'pick'],
+    )
+    assert mixed_pick['correct'] is True
+
+    order_raw = '1|s1|s2|s3'
+    mixed_order = check_number_fields(
+        order_raw + letter_sep + 'C',
+        's1|s2|s3' + letter_sep + 'C',
+        field_types=['order', 'mcq'],
+    )
+    assert mixed_order['correct'] is True
+
+    inferred = check_answer(
+        'number_fields',
+        '12' + letter_sep + 'B',
+        '12' + letter_sep + 'B',
+    )
+    assert inferred['correct'] is True
+
 
 def test_checker_ratio_unit():
     ok = check_ratio('3|5', '3:5')

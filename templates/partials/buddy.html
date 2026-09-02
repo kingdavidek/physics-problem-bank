@@ -1,0 +1,117 @@
+{#
+  Study-buddy mascot (Phase U5.8, docs/UI_REDESIGN.md §14).
+
+  One inline SVG: shared body, seven face groups. Show a face with
+  data-face on [data-buddy-face] — static/js/buddy.js and study-buddy.js
+  only flip that attribute. API `face` stays an emoji for clients.
+
+  E6 B: .buddy-head / .buddy-foot / .buddy-eye groups for overlay gestures.
+#}
+
+{% macro buddy_mascot() -%}
+<svg class="buddy-mascot" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+  <g class="buddy-head">
+  {# Antennae #}
+  <path d="M24 16L17 6" fill="none" stroke="var(--brand-700)" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="16" cy="5.2" r="3.1" fill="var(--brand-400)"/>
+  <path d="M40 16L47 6" fill="none" stroke="var(--brand-700)" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="48" cy="5.2" r="3.1" fill="var(--brand-400)"/>
+  {# Body #}
+  <ellipse cx="32" cy="36" rx="21" ry="21.5" fill="var(--brand-500)"/>
+  <ellipse cx="22" cy="30" rx="6" ry="8" fill="var(--brand-400)" opacity="0.35"/>
+  {# Face plate #}
+  <ellipse cx="32" cy="38" rx="15.5" ry="13.5" fill="var(--brand-50)"/>
+
+  <g class="buddy-face buddy-face--nudge">
+    <g class="buddy-eye buddy-eye--l">
+      <ellipse cx="26.2" cy="35.2" rx="2.6" ry="3.2" fill="var(--ink-800)"/>
+      <circle cx="27" cy="34.2" r="0.8" fill="#fff"/>
+    </g>
+    <g class="buddy-eye buddy-eye--r">
+      <ellipse cx="37.8" cy="35.2" rx="2.6" ry="3.2" fill="var(--ink-800)"/>
+      <circle cx="38.6" cy="34.2" r="0.8" fill="#fff"/>
+    </g>
+    <path d="M26.5 43.5q5.5 5 11 0" fill="none" stroke="var(--ink-800)" stroke-width="1.8" stroke-linecap="round"/>
+  </g>
+  <g class="buddy-face buddy-face--milestone">
+    <g class="buddy-eye buddy-eye--l">
+      <ellipse cx="26.2" cy="35" rx="2.7" ry="3.3" fill="var(--ink-800)"/>
+      <circle cx="27.1" cy="33.9" r="0.85" fill="#fff"/>
+    </g>
+    <g class="buddy-eye buddy-eye--r">
+      <ellipse cx="37.8" cy="35" rx="2.7" ry="3.3" fill="var(--ink-800)"/>
+      <circle cx="38.7" cy="33.9" r="0.85" fill="#fff"/>
+    </g>
+    <path d="M25.5 42.2q6.5 7.2 13 0" fill="none" stroke="var(--ink-800)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M14 24l1.1 2.4 2.4.2-1.9 1.6.6 2.4-2.2-1.4-2.2 1.4.6-2.4-1.9-1.6 2.4-.2z" fill="var(--gold-500)"/>
+    <path d="M50 22l.9 2 2 .15-1.6 1.3.5 2-1.8-1.2-1.8 1.2.5-2-1.6-1.3 2-.15z" fill="var(--gold-500)"/>
+  </g>
+  <g class="buddy-face buddy-face--celebrate">
+    <g class="buddy-eye buddy-eye--l">
+      <path d="M23.4 36.2q2.8-4.2 5.6 0" fill="none" stroke="var(--ink-800)" stroke-width="2" stroke-linecap="round"/>
+    </g>
+    <g class="buddy-eye buddy-eye--r">
+      <path d="M35 36.2q2.8-4.2 5.6 0" fill="none" stroke="var(--ink-800)" stroke-width="2" stroke-linecap="round"/>
+    </g>
+    <path d="M25.2 42.4q6.8 6.8 13.6 0" fill="none" stroke="var(--ink-800)" stroke-width="2.1" stroke-linecap="round"/>
+    <circle cx="21.5" cy="41" r="2.1" fill="var(--streak-300)"/>
+    <circle cx="42.5" cy="41" r="2.1" fill="var(--streak-300)"/>
+  </g>
+  <g class="buddy-face buddy-face--qotd-nudge">
+    <path d="M22.8 30.2q3.4-2.2 6.4.2" fill="none" stroke="var(--ink-800)" stroke-width="1.6" stroke-linecap="round"/>
+    <g class="buddy-eye buddy-eye--l">
+      <ellipse cx="26.2" cy="36.2" rx="2.8" ry="3.4" fill="var(--ink-800)"/>
+      <circle cx="27" cy="35.2" r="0.85" fill="#fff"/>
+    </g>
+    <g class="buddy-eye buddy-eye--r">
+      <ellipse cx="38" cy="36.6" rx="2.5" ry="3.1" fill="var(--ink-800)"/>
+      <circle cx="38.7" cy="35.6" r="0.75" fill="#fff"/>
+    </g>
+    <circle cx="32" cy="44.2" r="2.15" fill="none" stroke="var(--ink-800)" stroke-width="1.7"/>
+  </g>
+  <g class="buddy-face buddy-face--streak-risk">
+    <g class="buddy-eye buddy-eye--l">
+      <ellipse cx="26" cy="35.4" rx="3.1" ry="3.6" fill="var(--ink-800)"/>
+      <circle cx="27" cy="34.2" r="0.9" fill="#fff"/>
+    </g>
+    <g class="buddy-eye buddy-eye--r">
+      <ellipse cx="38.2" cy="35.4" rx="3.1" ry="3.6" fill="var(--ink-800)"/>
+      <circle cx="39.2" cy="34.2" r="0.9" fill="#fff"/>
+    </g>
+    <path d="M26.8 45.2q5.2-4.4 10.4 0" fill="none" stroke="var(--ink-800)" stroke-width="1.8" stroke-linecap="round"/>
+    <path d="M46.5 20q2.2 6 0.4 9.5" fill="none" stroke="var(--streak-500)" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="46.2" cy="30.4" r="2.1" fill="var(--streak-400)"/>
+  </g>
+  <g class="buddy-face buddy-face--weak-topic">
+    <path d="M22.5 29.8h7.2" fill="none" stroke="var(--ink-800)" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M35.2 31.4q3.2-2.6 7.2-.4" fill="none" stroke="var(--ink-800)" stroke-width="1.6" stroke-linecap="round"/>
+    <g class="buddy-eye buddy-eye--l">
+      <ellipse cx="26.2" cy="36.4" rx="2.4" ry="2.8" fill="var(--ink-800)"/>
+      <circle cx="26.8" cy="35.6" r="0.7" fill="#fff"/>
+    </g>
+    <g class="buddy-eye buddy-eye--r">
+      <ellipse cx="38" cy="36.8" rx="2.4" ry="2.8" fill="var(--ink-800)"/>
+      <circle cx="38.6" cy="36" r="0.7" fill="#fff"/>
+    </g>
+    <path d="M28.5 44.2h7" fill="none" stroke="var(--ink-800)" stroke-width="1.7" stroke-linecap="round"/>
+  </g>
+  <g class="buddy-face buddy-face--friend-challenge">
+    <g class="buddy-eye buddy-eye--l">
+      <path d="M23.6 35.6q2.6-3.6 5.4 0" fill="none" stroke="var(--ink-800)" stroke-width="2" stroke-linecap="round"/>
+    </g>
+    <g class="buddy-eye buddy-eye--r">
+      <ellipse cx="38" cy="35.2" rx="2.6" ry="3.2" fill="var(--ink-800)"/>
+      <circle cx="38.8" cy="34.2" r="0.8" fill="#fff"/>
+    </g>
+    <path d="M26 43q6 5.4 12.2 0" fill="none" stroke="var(--ink-800)" stroke-width="1.9" stroke-linecap="round"/>
+  </g>
+  </g>
+  {# Feet — outside head so nod/shake leave them planted #}
+  <g class="buddy-foot buddy-foot--l">
+    <ellipse cx="24" cy="56.5" rx="6.5" ry="3.6" fill="var(--brand-700)"/>
+  </g>
+  <g class="buddy-foot buddy-foot--r">
+    <ellipse cx="40" cy="56.5" rx="6.5" ry="3.6" fill="var(--brand-700)"/>
+  </g>
+</svg>
+{%- endmacro %}

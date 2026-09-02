@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Classroom investigation – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>{{ ibl.title }}</h1>
+    <p class="hero-sub">S2 Integrated Science · Unit 2.1 Universe. Planning support for a classroom practical. This page does not replace classroom practical work.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S2</span>
+      <span class="pill pill--hero">2.1 Universe</span>
+      <span class="pill pill--hero">IBL</span>
+    </div>
+  </div>
+
+  <p class="lesson-callout">Use this sheet with your teacher in the laboratory. An online page cannot stand in for the practical: you still need a real ray box or lamp, a plane mirror or a teacher-approved lens, a risk assessment and the class around you. Related lessons: <a href="{{ url_for('topic_page', level='eursc', subject='science', topic='solar_system') }}">The Solar System</a>, <a href="{{ url_for('topic_page', level='eursc', subject='science', topic='light_telescopes') }}">Light and Telescopes</a>.</p>
+
+  <p>To print the brief and rubric, use your browser’s Print command (Ctrl+P or Cmd+P). Buttons are hidden in the print view. Rubrics stay on this page; there is no teacher grading database.</p>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Brief and learning objectives
+      <span class="lesson-tag">IBL</span>
+      <span class="lesson-tag">S2</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Investigation:</strong> How does the angle of incidence affect the angle of reflection at a plane mirror?</p>
+      <p>This joins the Universe light lesson with Solar System geometry (straight rays, shadows, the idea that alignment matters). You need a ray you can see, a way to measure two angles from the normal, and repeats.</p>
+      <p>By the end of the practical you should be able to:</p>
+      <ul>
+        <li>write a testable question and name independent, dependent and control variables;</li>
+        <li>measure angle of incidence and angle of reflection with a protractor from a drawn normal;</li>
+        <li>record repeats with units in the table headings;</li>
+        <li>say whether i = r within the limits of the method, and what you would change next.</li>
+      </ul>
+      <p>If your teacher sets a lens or pinhole version instead, keep the same planning rules: one independent variable, SI-friendly units, and no looking at the Sun through any instrument.</p>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Planning and variables
+    </summary>
+    <div class="lesson-section-body">
+      <ul>
+        <li><strong>Independent:</strong> angle of incidence (for example 20°, 40°, 60° — values your teacher approves).</li>
+        <li><strong>Dependent:</strong> angle of reflection, in degrees.</li>
+        <li><strong>Controls:</strong> same plane mirror, same ray box or lamp, same distance from the slit to the mirror, same room lighting, same way of drawing the normal.</li>
+      </ul>
+      <p>Change <strong>one</strong> independent variable at a time. Write a method another group could follow: how you mark the ray, how you draw the normal, where you place the protractor, and how many repeats.</p>
+      <p>Draft your question in your lab book: “How does _____ affect _____ when _____ is kept the same?”</p>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Safety and risk
+    </summary>
+    <div class="lesson-section-body">
+      <ul>
+        <li>Ray boxes and lamps get hot. Allow cooling before packing away. Do not touch the bulb housing.</li>
+        <li>Do not look into the lamp, a laser, or a focused beam. Lasers only if the teacher supplies them and has assessed the risk.</li>
+        <li>Never look at the Sun through a telescope, binoculars, a lens or a mirror arrangement.</li>
+        <li>Tie back long hair. Bags off the floor. No running with glass or metal stands.</li>
+        <li>Your teacher’s risk assessment is the one that counts. Add any extra hazard they name.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Data table and graph
+    </summary>
+    <div class="lesson-section-body">
+      <p>Put units in the headings. Keep every raw reading, then calculate the mean. Do not delete an inconvenient value without saying so in the evaluation.</p>
+      <table class="lesson-table">
+        <thead>
+          <tr>
+            <th>Angle of incidence / °</th>
+            <th>Reflection 1 / °</th>
+            <th>Reflection 2 / °</th>
+            <th>Reflection 3 / °</th>
+            <th>Mean reflection / °</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+      <p>A simple graph: independent variable on the horizontal axis (angle of incidence), mean reflection on the vertical axis. Label both axes with quantity and unit. If i = r, the points should lie close to a straight line through the origin with gradient 1, within protractor error.</p>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Analysis and evaluation
+    </summary>
+    <div class="lesson-section-body">
+      <p>Look at the pattern: as the angle of incidence increases, does the mean angle of reflection rise with it? Quote numbers from the table, not only a feeling.</p>
+      <p>Was the result reproducible? Compare repeats at the same incidence. A large scatter means a thick ray, a poorly drawn normal, or a protractor that slipped.</p>
+      <p>Evaluation prompts:</p>
+      <ul>
+        <li>What limited the accuracy (ray width, protractor resolution, the mirror not being plane, a normal that was not perpendicular)?</li>
+        <li>Would a mean of more repeats reduce random scatter?</li>
+        <li>Would a systematic offset (always reading 2° high) need a better method rather than averaging?</li>
+        <li>What would you change in the next trial so another group could trust the evidence?</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Teacher rubric
+    </summary>
+    <div class="lesson-section-body">
+      <p>Local classroom judgement only. Circle one column per row. This is not stored in the app.</p>
+      <table class="lesson-table">
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            <th>Developing</th>
+            <th>Secure</th>
+            <th>Strong</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Method</td>
+            <td>Steps missing or two variables change at once</td>
+            <td>Followable method; one independent variable</td>
+            <td>Quantities, instruments and repeats are explicit</td>
+          </tr>
+          <tr>
+            <td>Evidence</td>
+            <td>Incomplete table or missing units</td>
+            <td>Raw readings and a mean with units</td>
+            <td>Repeats, mean and a graph that matches the table</td>
+          </tr>
+          <tr>
+            <td>Collaboration</td>
+            <td>Roles unclear; one person does all the measuring</td>
+            <td>Shared roles for tracing, measuring and recording</td>
+            <td>Peers check the normal and the protractor reading</td>
+          </tr>
+          <tr>
+            <td>Communication</td>
+            <td>Conclusion is a feeling with no numbers</td>
+            <td>Pattern stated with units from the table</td>
+            <td>Pattern, scatter and limits of the method are all said clearly</td>
+          </tr>
+          <tr>
+            <td>Reflection</td>
+            <td>No comment on error or next steps</td>
+            <td>Names one limit and one improvement</td>
+            <td>Separates random scatter from systematic offset</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+</div>
+{% endblock %}

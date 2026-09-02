@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from generators.shared.lesson_quiz import topic_supports_lesson_mcq
-from models.gamification import MILESTONE_CATALOG, get_study_streak
+from generators.shared.lesson_quiz import topic_supports_lesson_quiz
+from models.gamification import get_study_streak, milestone_meta
 from models.moderation import is_blocked
 from models.qotd import get_daily_question
 from models.social import list_following
@@ -65,7 +65,7 @@ def _recent_milestone(conn, user_id, now):
     if not row:
         return None
     key = row['milestone_key']
-    meta = MILESTONE_CATALOG.get(key, {})
+    meta = milestone_meta(key)
     return {
         'key': key,
         'title': meta.get('title', key.replace('_', ' ').title()),
@@ -143,10 +143,8 @@ def _same_topic(level, subject, topic, other_level, other_subject, other_topic):
 
 
 def _quiz_available(level, subject, topic):
-    if level != 'gcse' or subject not in ('maths', 'cs'):
-        return False
     try:
-        return topic_supports_lesson_mcq(TOPICS[level][subject][topic])
+        return topic_supports_lesson_quiz(TOPICS[level][subject][topic])
     except KeyError:
         return False
 
@@ -352,9 +350,15 @@ def build_buddy_prompt(
         yesterday = (today - timedelta(days=1)).isoformat()
         if last_day == yesterday:
             days = int(streak['current'])
+            if streak.get('freeze_available'):
+                message = (
+                    'You have one skip left this week — but a question now keeps the run honest.'
+                )
+            else:
+                message = f'Your {days}-day streak is at risk. Open a topic today to keep it.'
             return _finish({
                 'type': BUDDY_STREAK_RISK,
-                'message': f'Your {days}-day streak is at risk. Open a topic today to keep it.',
+                'message': message,
                 'detail': 'Streak reminder',
                 'action_kind': 'topics',
                 'action_label': 'Browse topics',

@@ -2,22 +2,21 @@
 {% block title %}Compound Measures – GCSE Mathematics{% endblock %}
 
 {% block content %}
-<div style="max-width:860px;margin:0 auto;padding:12px;">
+<div class="lesson-shell">
 
   <!-- Header -->
-  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
-    <h1 style="margin:0 0 6px;font-size:1.7rem;">Compound Measures</h1>
-    <p style="margin:0;opacity:.9;font-size:.97rem;">A <strong>compound measure</strong> joins two everyday measures together — like how fast you go (speed), how heavy something is for its size (density), or how hard a force presses on an area (pressure). We use simple triangles and unit conversions to solve GCSE questions.</p>
-    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
-      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
-      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+  <div class="lesson-hero">
+    <h1>Compound Measures</h1>
+    <p class="hero-sub">A <strong>compound measure</strong> joins two everyday measures together — like how fast you go (speed), how heavy something is for its size (density), or how hard a force presses on an area (pressure). We use simple triangles and unit conversions to solve GCSE questions.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">AQA</span>
+      <span class="pill pill--hero">Edexcel</span>
+      <span class="pill pill--hero">OCR</span>
     </div>
   </div>
   <!-- Quick Test button -->
-  <div style="text-align:right;margin-bottom:14px;">
-    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='compound_measures') }}"
-       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='compound_measures') }}">
       ▶ Practice Quiz (10 MCQs)
     </a>
   </div>
@@ -26,22 +25,22 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 1. SPEED, DISTANCE, TIME                       -->
   <!-- ══════════════════════════════════════════════ -->
-  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
       Speed, Distance and Time
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 9</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 9</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> You cycle <strong>60 km</strong> in <strong>2 hours</strong>. Your average speed is 60 ÷ 2 = <strong>30 km/h</strong>.</p>
 
       <p>Speed, distance and time are linked. You can picture them in the <strong>SDT triangle</strong> — cover the letter you want and the triangle tells you what to do:</p>
 
-      <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin:20px 0;">
+      <div class="lesson-flex-row">
         <!-- Large SDT triangle SVG -->
-        <svg width="240" height="200" viewBox="0 0 240 200" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+        <svg class="lesson-diagram" width="240" height="200" viewBox="0 0 240 200">
           <!-- Top: D (cover D → multiply S and T below) -->
           <polygon points="120,12 70,92 170,92" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2"/>
           <!-- Bottom left: S (trapezium — no centre wedge) -->
@@ -59,13 +58,13 @@
         </svg>
 
         <div>
-          <p style="margin:4px 0;"><strong>Cover D:</strong> &ensp;D = S × T</p>
-          <p style="margin:4px 0;"><strong>Cover S:</strong> &ensp;S = D ÷ T</p>
-          <p style="margin:4px 0;"><strong>Cover T:</strong> &ensp;T = D ÷ S</p>
-          <hr style="margin:10px 0;">
-          <p style="margin:4px 0;font-size:1rem;color:var(--text-muted);">D = Distance (km, m, miles)</p>
-          <p style="margin:4px 0;font-size:1rem;color:var(--text-muted);">S = Speed (km/h, m/s, mph)</p>
-          <p style="margin:4px 0;font-size:1rem;color:var(--text-muted);">T = Time (hours, seconds, minutes)</p>
+          <p><strong>Cover D:</strong> &ensp;D = S × T</p>
+          <p><strong>Cover S:</strong> &ensp;S = D ÷ T</p>
+          <p><strong>Cover T:</strong> &ensp;T = D ÷ S</p>
+          <hr>
+          <p>D = Distance (km, m, miles)</p>
+          <p>S = Speed (km/h, m/s, mph)</p>
+          <p>T = Time (hours, seconds, minutes)</p>
         </div>
       </div>
 
@@ -76,7 +75,7 @@
         <li>If time is in hours and minutes, turn it into decimal hours first. For example, 1 h 30 min = <strong>1.5 h</strong>.</li>
       </ul>
 
-      <p style="background:#fffbeb;padding:10px 14px;border-radius:6px;border-left:4px solid #f59e0b;">
+      <p class="lesson-callout lesson-callout--warning">
         <strong>Average speed trap:</strong> Average speed = <em>total distance ÷ total time</em>, NOT the average of the two speeds.
         For a journey at speed s₁ then s₂ over <em>equal distances</em>, average = 2s₁s₂/(s₁+s₂) (the harmonic mean).
       </p>
@@ -89,8 +88,8 @@
         Scale: x: 0→5 maps to 40→220 (width 180, 36px/h)
                y: 0→200 maps to 170→10 (height 160, 0.8px/km)
       -->
-      <div style="text-align:center;margin:20px 0;">
-        <svg width="300" height="210" viewBox="0 0 300 210" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="300" height="210" viewBox="0 0 300 210">
           <!-- Axes -->
           <line x1="45" y1="170" x2="265" y2="170" stroke="#333" stroke-width="1.5"/>
           <line x1="45" y1="170" x2="45"  y2="15"  stroke="#333" stroke-width="1.5"/>
@@ -136,20 +135,20 @@
 
       <p>On a <strong>distance–time graph</strong>, the gradient (steepness) of each straight line is the speed. In the graph above, the first part is steeper (60 km/h) and the second part is gentler (30 km/h).</p>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="B">
-          <p style="margin:0 0 10px;">A car drives <strong>90 km</strong> in <strong>3 hours</strong> at a steady speed. How fast is it going?</p>
+          <p>A car drives <strong>90 km</strong> in <strong>3 hours</strong> at a steady speed. How fast is it going?</p>
           <button class="btn mcq-btn" data-letter="A">27 km/h</button>
           <button class="btn mcq-btn" data-letter="B">30 km/h</button>
           <button class="btn mcq-btn" data-letter="C">93 km/h</button>
           <button class="btn mcq-btn" data-letter="D">270 km/h</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=foundational&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Speed</a>
+      <div>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=foundational&amp;mode=practice">Quick Test – Speed</a>
       </div>
     </div>
   </details>
@@ -157,22 +156,22 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 2. DENSITY, MASS, VOLUME                      -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
       Density, Mass and Volume
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 10</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> A metal block has <strong>mass 200 g</strong> and <strong>volume 100 cm³</strong>. Its density is 200 ÷ 100 = <strong>2 g/cm³</strong> — that means 2 grams in every 1 cm³ of space.</p>
 
       <p><strong>Density</strong> tells you how “squashed in” the mass is. The <strong>DMV triangle</strong> works just like SDT:</p>
 
-      <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin:20px 0;">
+      <div class="lesson-flex-row">
         <!-- Large DMV triangle SVG -->
-        <svg width="240" height="200" viewBox="0 0 240 200" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+        <svg class="lesson-diagram" width="240" height="200" viewBox="0 0 240 200">
           <polygon points="120,12 70,92 170,92" fill="#fce7f3" stroke="#a13544" stroke-width="2"/>
           <polygon points="70,92 12,186 120,186 120,92" fill="#dbeafe" stroke="#a13544" stroke-width="2"/>
           <polygon points="120,92 170,92 228,186 120,186" fill="#e0fdf4" stroke="#a13544" stroke-width="2"/>
@@ -186,52 +185,52 @@
         </svg>
 
         <div>
-          <p style="margin:4px 0;"><strong>Cover M:</strong> &ensp;M = ρ × V</p>
-          <p style="margin:4px 0;"><strong>Cover ρ:</strong> &ensp;ρ = M ÷ V</p>
-          <p style="margin:4px 0;"><strong>Cover V:</strong> &ensp;V = M ÷ ρ</p>
-          <hr style="margin:10px 0;">
-          <p style="margin:4px 0;font-size:1rem;color:var(--text-muted);">M = Mass (g, kg)</p>
-          <p style="margin:4px 0;font-size:1rem;color:var(--text-muted);">ρ = Density (g/cm³, kg/m³)</p>
-          <p style="margin:4px 0;font-size:1rem;color:var(--text-muted);">V = Volume (cm³, m³, L)</p>
+          <p><strong>Cover M:</strong> &ensp;M = ρ × V</p>
+          <p><strong>Cover ρ:</strong> &ensp;ρ = M ÷ V</p>
+          <p><strong>Cover V:</strong> &ensp;V = M ÷ ρ</p>
+          <hr>
+          <p>M = Mass (g, kg)</p>
+          <p>ρ = Density (g/cm³, kg/m³)</p>
+          <p>V = Volume (cm³, m³, L)</p>
         </div>
       </div>
 
       <p><strong>Common densities to know:</strong></p>
-      <table style="border-collapse:collapse;font-size:1rem;margin-bottom:12px;">
-        <thead><tr style="background:var(--color-surface-2);">
-          <th style="padding:6px 12px;border:1px solid var(--color-border);">Material</th>
-          <th style="padding:6px 12px;border:1px solid var(--color-border);">Density (g/cm³)</th>
-          <th style="padding:6px 12px;border:1px solid var(--color-border);">Density (kg/m³)</th>
+      <table class="lesson-table">
+        <thead><tr>
+          <th>Material</th>
+          <th>Density (g/cm³)</th>
+          <th>Density (kg/m³)</th>
         </tr></thead>
         <tbody>
-          <tr><td style="padding:6px 12px;border:1px solid var(--color-border);">Water</td><td style="padding:6px 12px;border:1px solid var(--color-border);">1.0</td><td style="padding:6px 12px;border:1px solid var(--color-border);">1000</td></tr>
-          <tr style="background:var(--color-surface-2);"><td style="padding:6px 12px;border:1px solid var(--color-border);">Aluminium</td><td style="padding:6px 12px;border:1px solid var(--color-border);">2.7</td><td style="padding:6px 12px;border:1px solid var(--color-border);">2700</td></tr>
-          <tr><td style="padding:6px 12px;border:1px solid var(--color-border);">Iron / Steel</td><td style="padding:6px 12px;border:1px solid var(--color-border);">7.8</td><td style="padding:6px 12px;border:1px solid var(--color-border);">7800</td></tr>
-          <tr style="background:var(--color-surface-2);"><td style="padding:6px 12px;border:1px solid var(--color-border);">Copper</td><td style="padding:6px 12px;border:1px solid var(--color-border);">8.9</td><td style="padding:6px 12px;border:1px solid var(--color-border);">8900</td></tr>
-          <tr><td style="padding:6px 12px;border:1px solid var(--color-border);">Lead</td><td style="padding:6px 12px;border:1px solid var(--color-border);">11.3</td><td style="padding:6px 12px;border:1px solid var(--color-border);">11300</td></tr>
-          <tr style="background:var(--color-surface-2);"><td style="padding:6px 12px;border:1px solid var(--color-border);">Gold</td><td style="padding:6px 12px;border:1px solid var(--color-border);">19.3</td><td style="padding:6px 12px;border:1px solid var(--color-border);">19300</td></tr>
+          <tr><td>Water</td><td>1.0</td><td>1000</td></tr>
+          <tr><td>Aluminium</td><td>2.7</td><td>2700</td></tr>
+          <tr><td>Iron / Steel</td><td>7.8</td><td>7800</td></tr>
+          <tr><td>Copper</td><td>8.9</td><td>8900</td></tr>
+          <tr><td>Lead</td><td>11.3</td><td>11300</td></tr>
+          <tr><td>Gold</td><td>19.3</td><td>19300</td></tr>
         </tbody>
       </table>
 
-      <p style="background:#fffbeb;padding:10px 14px;border-radius:6px;border-left:4px solid #f59e0b;">
+      <p class="lesson-callout lesson-callout--warning">
         <strong>Floating and sinking:</strong> An object floats in a liquid if its density is <em>less than</em> the liquid's density.
         Since water has density 1 g/cm³, any object with density &lt; 1 g/cm³ floats.
       </p>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="C">
-          <p style="margin:0 0 10px;">A block has mass <strong>540 g</strong> and volume <strong>200 cm³</strong>. What is its density?</p>
+          <p>A block has mass <strong>540 g</strong> and volume <strong>200 cm³</strong>. What is its density?</p>
           <button class="btn mcq-btn" data-letter="A">0.37 g/cm³</button>
           <button class="btn mcq-btn" data-letter="B">1.08 g/cm³</button>
           <button class="btn mcq-btn" data-letter="C">2.7 g/cm³</button>
           <button class="btn mcq-btn" data-letter="D">7.4 g/cm³</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=foundational&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Density</a>
+      <div>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=foundational&amp;mode=practice">Quick Test – Density</a>
       </div>
     </div>
   </details>
@@ -239,22 +238,22 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 3. PRESSURE, FORCE, AREA                      -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
       Pressure, Force and Area
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 10</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> A box weighs <strong>400 N</strong> and its base covers <strong>2 m²</strong>. The pressure on the floor is 400 ÷ 2 = <strong>200 Pa</strong> (pascals).</p>
 
       <p><strong>Pressure</strong> is how much force is pushing on each square metre (or cm²) of surface. We use the <strong>PFA triangle</strong>:</p>
 
-      <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin:20px 0;">
+      <div class="lesson-flex-row">
         <!-- Large PFA triangle SVG -->
-        <svg width="240" height="200" viewBox="0 0 240 200" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+        <svg class="lesson-diagram" width="240" height="200" viewBox="0 0 240 200">
           <polygon points="120,12 70,92 170,92" fill="#fef9c3" stroke="#059669" stroke-width="2"/>
           <polygon points="70,92 12,186 120,186 120,92" fill="#dbeafe" stroke="#059669" stroke-width="2"/>
           <polygon points="120,92 170,92 228,186 120,186" fill="#fce7f3" stroke="#059669" stroke-width="2"/>
@@ -268,13 +267,13 @@
         </svg>
 
         <div>
-          <p style="margin:4px 0;"><strong>Cover F:</strong> &ensp;F = P × A</p>
-          <p style="margin:4px 0;"><strong>Cover P:</strong> &ensp;P = F ÷ A</p>
-          <p style="margin:4px 0;"><strong>Cover A:</strong> &ensp;A = F ÷ P</p>
-          <hr style="margin:10px 0;">
-          <p style="margin:4px 0;font-size:1rem;color:var(--text-muted);">F = Force (N, Newtons)</p>
-          <p style="margin:4px 0;font-size:1rem;color:var(--text-muted);">P = Pressure (Pa, N/m², N/cm²)</p>
-          <p style="margin:4px 0;font-size:1rem;color:var(--text-muted);">A = Area (m², cm²)</p>
+          <p><strong>Cover F:</strong> &ensp;F = P × A</p>
+          <p><strong>Cover P:</strong> &ensp;P = F ÷ A</p>
+          <p><strong>Cover A:</strong> &ensp;A = F ÷ P</p>
+          <hr>
+          <p>F = Force (N, Newtons)</p>
+          <p>P = Pressure (Pa, N/m², N/cm²)</p>
+          <p>A = Area (m², cm²)</p>
         </div>
       </div>
 
@@ -292,8 +291,8 @@
         Area label "A = 2 m²" at base of box.
         Pressure annotation: P = 200 N ÷ 2 m² = 100 Pa
       -->
-      <div style="text-align:center;margin:20px 0;">
-        <svg width="300" height="220" viewBox="0 0 300 220" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="300" height="220" viewBox="0 0 300 220">
           <!-- box -->
           <rect x="80" y="90" width="140" height="80" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2"/>
           <text x="150" y="133" font-size="15" fill="#1a6fa8" text-anchor="middle" font-weight="bold">mass = 40 kg</text>
@@ -318,26 +317,26 @@
         </svg>
       </div>
 
-      <p style="background:#e0fdf4;padding:10px 14px;border-radius:6px;border-left:4px solid #059669;">
+      <p class="lesson-callout lesson-callout--exam">
         <strong>Hydraulic systems (Pascal's Law):</strong> Pressure is transmitted equally through a fluid.
         If the input force acts on a small piston (small A) and the output piston has a large area, the output force is amplified:
         F<sub>out</sub> = P × A<sub>out</sub> = (F<sub>in</sub>/A<sub>in</sub>) × A<sub>out</sub>
       </p>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="A">
-          <p style="margin:0 0 10px;">A force of <strong>600 N</strong> acts on an area of <strong>3 m²</strong>. What is the pressure?</p>
+          <p>A force of <strong>600 N</strong> acts on an area of <strong>3 m²</strong>. What is the pressure?</p>
           <button class="btn mcq-btn" data-letter="A">200 Pa</button>
           <button class="btn mcq-btn" data-letter="B">1800 Pa</button>
           <button class="btn mcq-btn" data-letter="C">0.005 Pa</button>
           <button class="btn mcq-btn" data-letter="D">597 Pa</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=intermediate&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Pressure</a>
+      <div>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=intermediate&amp;mode=practice">Quick Test – Pressure</a>
       </div>
     </div>
   </details>
@@ -345,19 +344,19 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 4. UNIT CONVERSIONS                           -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
       Unit Conversions for Compound Measures
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 10</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> A car travels at <strong>72 km/h</strong>. To change to m/s, divide by 3.6: 72 ÷ 3.6 = <strong>20 m/s</strong>.</p>
 
       <p><strong>Speed conversions (km/h ↔ m/s):</strong></p>
-      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;text-align:center;font-size:1.1rem;">
+      <p class="lesson-callout lesson-callout--formula">
         m/s = km/h ÷ 3.6 &nbsp;&nbsp;&nbsp; km/h = m/s × 3.6
       </p>
       <p>This comes from: 1 km = 1000 m and 1 hour = 3600 s, so 1 km/h = 1000/3600 m/s = 5/18 m/s.</p>
@@ -368,8 +367,8 @@
         Top arrow right: "× 5/18 (or ÷ 3.6)"
         Bottom arrow left: "× 3.6 (or × 18/5)"
       -->
-      <div style="text-align:center;margin:16px 0;">
-        <svg width="380" height="100" viewBox="0 0 380 100" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="380" height="100" viewBox="0 0 380 100">
           <!-- Labels -->
           <text x="70"  y="55" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">km/h</text>
           <text x="310" y="55" font-size="18" fill="#a13544" text-anchor="middle" font-weight="bold">m/s</text>
@@ -387,30 +386,30 @@
       <p><strong>Example:</strong> Aluminium has density <strong>2.7 g/cm³</strong>. In kg/m³ that is 2.7 × 1000 = <strong>2700 kg/m³</strong>.</p>
 
       <p><strong>Density conversions (g/cm³ ↔ kg/m³):</strong></p>
-      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;text-align:center;font-size:1.1rem;">
+      <p class="lesson-callout lesson-callout--formula">
         kg/m³ = g/cm³ × 1000
       </p>
       <p>Reason: 1 g = 0.001 kg and 1 cm³ = 10⁻⁶ m³, so 1 g/cm³ = 0.001/10⁻⁶ = 1000 kg/m³.</p>
 
       <p><strong>Pressure conversions (N/cm² ↔ Pa):</strong></p>
-      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;text-align:center;font-size:1.1rem;">
+      <p class="lesson-callout lesson-callout--formula">
         Pa = N/cm² × 10 000 &nbsp;&nbsp;&nbsp; (since 1 m² = 10 000 cm²)
       </p>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="B">
-          <p style="margin:0 0 10px;">Convert <strong>54 km/h</strong> to m/s.</p>
+          <p>Convert <strong>54 km/h</strong> to m/s.</p>
           <button class="btn mcq-btn" data-letter="A">194.4 m/s</button>
           <button class="btn mcq-btn" data-letter="B">15 m/s</button>
           <button class="btn mcq-btn" data-letter="C">9 m/s</button>
           <button class="btn mcq-btn" data-letter="D">0.015 m/s</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=foundational&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Conversions</a>
+      <div>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=foundational&amp;mode=practice">Quick Test – Conversions</a>
       </div>
     </div>
   </details>
@@ -418,40 +417,40 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 5. POPULATION DENSITY AND OTHER RATES         -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
       Population Density and Other Rates
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 10</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> A town has <strong>36,000 people</strong> in an area of <strong>60 km²</strong>. Population density = 36,000 ÷ 60 = <strong>600 people per km²</strong>.</p>
 
       <p>The same triangle idea works whenever you have <strong>Rate = Quantity ÷ Measure</strong>:</p>
 
-      <table style="border-collapse:collapse;width:100%;font-size:1rem;margin-bottom:16px;">
-        <thead><tr style="background:var(--color-surface-2);">
-          <th style="padding:8px 12px;border:1px solid var(--color-border);">Measure</th>
-          <th style="padding:8px 12px;border:1px solid var(--color-border);">Formula</th>
-          <th style="padding:8px 12px;border:1px solid var(--color-border);">Units</th>
+      <table class="lesson-table">
+        <thead><tr>
+          <th>Measure</th>
+          <th>Formula</th>
+          <th>Units</th>
         </tr></thead>
         <tbody>
-          <tr><td style="padding:8px 12px;border:1px solid var(--color-border);">Population Density</td>
-              <td style="padding:8px 12px;border:1px solid var(--color-border);">Population ÷ Area</td>
-              <td style="padding:8px 12px;border:1px solid var(--color-border);">people/km²</td></tr>
-          <tr style="background:var(--color-surface-2);">
-              <td style="padding:8px 12px;border:1px solid var(--color-border);">Flow Rate</td>
-              <td style="padding:8px 12px;border:1px solid var(--color-border);">Volume ÷ Time</td>
-              <td style="padding:8px 12px;border:1px solid var(--color-border);">L/min, cm³/s, m³/h</td></tr>
-          <tr><td style="padding:8px 12px;border:1px solid var(--color-border);">Concentration</td>
-              <td style="padding:8px 12px;border:1px solid var(--color-border);">Mass of solute ÷ Volume</td>
-              <td style="padding:8px 12px;border:1px solid var(--color-border);">g/L, mol/L</td></tr>
-          <tr style="background:var(--color-surface-2);">
-              <td style="padding:8px 12px;border:1px solid var(--color-border);">Water Pressure</td>
-              <td style="padding:8px 12px;border:1px solid var(--color-border);">P = ρgh</td>
-              <td style="padding:8px 12px;border:1px solid var(--color-border);">Pa (ρ in kg/m³, g = 10, h in m)</td></tr>
+          <tr><td>Population Density</td>
+              <td>Population ÷ Area</td>
+              <td>people/km²</td></tr>
+          <tr>
+              <td>Flow Rate</td>
+              <td>Volume ÷ Time</td>
+              <td>L/min, cm³/s, m³/h</td></tr>
+          <tr><td>Concentration</td>
+              <td>Mass of solute ÷ Volume</td>
+              <td>g/L, mol/L</td></tr>
+          <tr>
+              <td>Water Pressure</td>
+              <td>P = ρgh</td>
+              <td>Pa (ρ in kg/m³, g = 10, h in m)</td></tr>
         </tbody>
       </table>
 
@@ -465,8 +464,8 @@
         Right panel: pipe (horizontal rectangle) with arrow through it.
         Label: "Flow rate = 5 L/min". Tank showing accumulation.
       -->
-      <div style="text-align:center;margin:20px 0;">
-        <svg width="340" height="180" viewBox="0 0 340 180" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="340" height="180" viewBox="0 0 340 180">
 
           <!-- LEFT: Population density panel -->
           <rect x="10" y="20" width="140" height="90" rx="4" fill="#dbeafe" stroke="#1a6fa8" stroke-width="1.5"/>
@@ -499,15 +498,15 @@
 
       <p>If water flows at <strong>5 L/min</strong> for <strong>20 minutes</strong>, you get 5 × 20 = <strong>100 litres</strong> — that is volume = rate × time.</p>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="C">
-          <p style="margin:0 0 10px;">A pipe delivers <strong>8 L/min</strong>. How much water flows in <strong>15 minutes</strong>?</p>
+          <p>A pipe delivers <strong>8 L/min</strong>. How much water flows in <strong>15 minutes</strong>?</p>
           <button class="btn mcq-btn" data-letter="A">23 L</button>
           <button class="btn mcq-btn" data-letter="B">53 L</button>
           <button class="btn mcq-btn" data-letter="C">120 L</button>
           <button class="btn mcq-btn" data-letter="D">800 L</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
@@ -517,14 +516,14 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 6. AVERAGE SPEED AND PROBLEM TYPES            -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
       Average Speed — Common Exam Traps
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 11</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> You drive from A to B at <strong>40 km/h</strong> and drive back at <strong>60 km/h</strong>. Do NOT average the speeds as (40+60)/2 = 50 km/h — that is wrong!</p>
 
@@ -546,8 +545,8 @@
         Show A and B with journey divided into two halves.
         Annotate both speeds.
       -->
-      <div style="text-align:center;margin:16px 0;">
-        <svg width="380" height="130" viewBox="0 0 380 130" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="380" height="130" viewBox="0 0 380 130">
           <!-- Road line -->
           <line x1="50" y1="65" x2="330" y2="65" stroke="#888" stroke-width="3"/>
           <!-- Points A and B -->
@@ -577,20 +576,20 @@
 
       <p><strong>Overtaking problems:</strong> When a faster object catches a slower one, the closing speed is the difference of the speeds. Time to catch = head-start distance ÷ closing speed.</p>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="B">
-          <p style="margin:0 0 10px;">You go to town at <strong>30 km/h</strong> and return at <strong>60 km/h</strong> on the same road. What is your average speed for the whole return trip?</p>
+          <p>You go to town at <strong>30 km/h</strong> and return at <strong>60 km/h</strong> on the same road. What is your average speed for the whole return trip?</p>
           <button class="btn mcq-btn" data-letter="A">45 km/h</button>
           <button class="btn mcq-btn" data-letter="B">40 km/h</button>
           <button class="btn mcq-btn" data-letter="C">50 km/h</button>
           <button class="btn mcq-btn" data-letter="D">35 km/h</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=difficult&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Difficult</a>
+      <div>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=difficult&amp;mode=practice">Quick Test – Difficult</a>
       </div>
     </div>
   </details>
@@ -598,24 +597,24 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 7. KEY FORMULAE QUICK REFERENCE               -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">7</span>
       Compound Measures — Quick Reference
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 11</span>
+      <span class="lesson-tag">Revision Card</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p>Use this section to revise before a test. We have put all three triangles and the main conversion facts on one card for you.</p>
 
       <!--
         Dark revision card SVG
       -->
-      <div style="text-align:center;margin:16px 0;">
+      <div class="lesson-figure">
               <div class="revision-card-wrap">
-        <svg class="revision-card-svg lesson-quick-ref" width="100%" viewBox="0 0 760 300" style="max-width:760px;width:100%;height:auto;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:10px;" role="img" aria-label="Compound measures revision card">
+        <svg class="revision-card-svg lesson-quick-ref lesson-diagram" width="100%" viewBox="0 0 760 300" role="img" aria-label="Compound measures revision card">
           <text x="380" y="28" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Compound Measures — Revision Card</text>
           <line x1="20" y1="38" x2="740" y2="38" stroke="#d4e6f1" stroke-width="1"/>
 
@@ -655,31 +654,30 @@
       </div>
       </div>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="C">
-          <p style="margin:0 0 10px;">You cover <strong>D</strong> in the SDT triangle. Which formula do you use?</p>
+          <p>You cover <strong>D</strong> in the SDT triangle. Which formula do you use?</p>
           <button class="btn mcq-btn" data-letter="A">S = D ÷ T</button>
           <button class="btn mcq-btn" data-letter="B">T = D ÷ S</button>
           <button class="btn mcq-btn" data-letter="C">D = S × T</button>
           <button class="btn mcq-btn" data-letter="D">D = S ÷ T</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=intermediate&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Intermediate</a>
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=foundational&amp;mode=mcq" style="display:inline-block;padding:8px 16px;background:#059669;color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">MCQ Practice</a>
+      <div class="lesson-cta-row">
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=intermediate&amp;mode=practice">Quick Test – Intermediate</a>
+        <a class="btn btn-correct btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='compound_measures') }}?difficulty=foundational&amp;mode=mcq">MCQ Practice</a>
       </div>
     </div>
   </details>
 
 </div>
   <!-- Practice link -->
-  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
-    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
-    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='compound_measures') }}"
-       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='compound_measures') }}">
       Start Practice Quiz
     </a>
   </div>

@@ -16,6 +16,7 @@ from generators.shared.utils import (
     problem_extra_from_graded_answer,
 )
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
+from models import svg_kit
 from generators.shared.variant_utils import (
     select_tier_variants,
     normalize_mcq_bank,
@@ -4112,13 +4113,14 @@ def vectors_mcq():
 def _vectors_diagram_svg(width, height, inner):
     """Compact, MathJax-safe SVG wrapper for practice questions."""
     compact = ' '.join(inner.split())
-    return (
-        '<div class="question-diagram tex2jax_ignore" style="text-align:center;margin:10px 0;">'
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
-        f'viewBox="0 0 {width} {height}" '
-        'style="background:#f9f8f5;border-radius:8px;display:block;margin:0 auto;max-width:100%;" '
-        f'role="img" aria-hidden="true">{compact}</svg></div>'
-    )
+    return str(svg_kit.svg(
+        width, height,
+        title='Vector diagram',
+        desc='Vector diagram for this question.',
+        body=compact,
+        max_width=min(width, 360),
+        variant='wide',
+    ))
 
 
 def _svg_vector(x1, y1, x2, y2, label="", color="#01696f", width=200, height=120):
@@ -5602,24 +5604,26 @@ _TRIG_DIAGRAM_H = 220
 _TRIG_SVG_PAD = 20
 
 
-def _trig_diagram_shell_open(viewbox):
-    """Fixed-size frame for every trigonometry question diagram."""
-    return (
-        f'<div style="text-align:center;margin:10px auto 14px;max-width:{_TRIG_DIAGRAM_W}px;">'
-        f'<svg class="trig-diagram" width="{_TRIG_DIAGRAM_W}" height="{_TRIG_DIAGRAM_H}" '
-        f'viewBox="{viewbox}" preserveAspectRatio="xMidYMid meet" '
-        f'style="background:#f9f8f5;border-radius:8px;display:block;margin:0 auto;'
-        f'width:100%;max-width:{_TRIG_DIAGRAM_W}px;height:{_TRIG_DIAGRAM_H}px;">'
-    )
+def _trig_diagram_shell(viewbox, inner):
+    """Accessible frame for every trigonometry question diagram."""
+    vx, vy, vw, vh = (float(part) for part in viewbox.split())
+    return str(svg_kit.viewbox_svg(
+        vx, vy, vw, vh,
+        title='Trigonometry diagram',
+        desc='Trigonometry diagram for this question.',
+        body=inner,
+        max_width=_TRIG_DIAGRAM_W,
+        variant='wide',
+    ))
 
 
-def _trig_svg_open(w, h, pad=_TRIG_SVG_PAD):
+def _trig_svg(w, h, inner, pad=_TRIG_SVG_PAD):
     vb_w, vb_h = w + 2 * pad, h + 2 * pad
-    return _trig_diagram_shell_open(f"{-pad} {-pad} {vb_w} {vb_h}")
+    return _trig_diagram_shell(f"{-pad} {-pad} {vb_w} {vb_h}", inner)
 
 
-def _trig_svg_open_bounded(vx, vy, vw, vh):
-    return _trig_diagram_shell_open(f"{vx:.1f} {vy:.1f} {vw:.1f} {vh:.1f}")
+def _trig_svg_bounded(vx, vy, vw, vh, inner):
+    return _trig_diagram_shell(f"{vx:.1f} {vy:.1f} {vw:.1f} {vh:.1f}", inner)
 
 
 def _trig_svg_right_tri(adj, opp,
@@ -5669,11 +5673,11 @@ def _trig_svg_right_tri(adj, opp,
     hyp_lbl = (f'<text x="{hmx:.0f}" y="{hmy:.0f}" text-anchor="middle"'
                f' font-size="12" fill="#333">{label_hyp}</text>')
 
-    return (f'{_trig_svg_open(W, H)}'
+    return _trig_svg(W, H,
             f'<polygon points="{Ax:.0f},{Ay:.0f} {Bx:.0f},{By:.0f} {Cx:.0f},{Cy:.0f}"'
             f' fill="#e8f4f4" stroke="#01696f" stroke-width="2"/>'
             f'{ra}{arc}{ang_lbl}{adj_lbl}{opp_lbl}{hyp_lbl}'
-            f'</svg></div>')
+            )
 
 
 def _trig_svg_isosceles(equal, base,
@@ -5730,10 +5734,8 @@ def _trig_svg_isosceles(equal, base,
     all_x = [Ax, Bx, Cx, x1, x2, lx, ax1, ax2, bx]
     all_y = [Ay, By, Cy, y1, y2, ly, ay1, ay2, by]
     vx, vy, vw, vh = _trig_diagram_viewbox_from_coords(all_x, all_y)
-    return (
-        f'{_trig_svg_open_bounded(vx, vy, vw, vh)}'
+    return _trig_svg_bounded(vx, vy, vw, vh,
         f'{tri}{arc}{ang_lbl}{leq_a}{leq_b}{lbase}'
-        f'</svg></div>'
     )
 
 
@@ -5870,10 +5872,8 @@ def _trig_svg_bearing_triangle(d1, d2, bearing1_deg, turn_angle_deg,
     all_x = [Ax, Bx, Cx, *ax_v, *bx_v, *cx_v, *ax_s, *bx_s, *cx_s]
     all_y = [Ay, By, Cy, *ay_v, *by_v, *cy_v, *ay_s, *by_s, *cy_s]
     vx, vy, vw, vh = _trig_diagram_viewbox_from_coords(all_x, all_y)
-    return (
-        f'{_trig_svg_open_bounded(vx, vy, vw, vh)}'
+    return _trig_svg_bounded(vx, vy, vw, vh,
         f'{tri}{lA}{lB}{lC}{lsa}{lsb}{lsc}'
-        f'</svg></div>'
     )
 
 
@@ -5908,10 +5908,8 @@ def _trig_svg_general_tri(A_deg, B_deg,
     all_x = [Ax, Bx, Cx, *ax_v, *bx_v, *cx_v, *ax_s, *bx_s, *cx_s]
     all_y = [Ay, By, Cy, *ay_v, *by_v, *cy_v, *ay_s, *by_s, *cy_s]
     vx, vy, vw, vh = _trig_diagram_viewbox_from_coords(all_x, all_y)
-    return (
-        f'{_trig_svg_open_bounded(vx, vy, vw, vh)}'
+    return _trig_svg_bounded(vx, vy, vw, vh,
         f'{tri}{lA}{lB}{lC}{lsa}{lsb}{lsc}'
-        f'</svg></div>'
     )
 
 
@@ -5954,7 +5952,7 @@ def _trig_svg_ladder(length, angle_deg, height):
     mid_x = (foot_x + wall_x) / 2 - sin_a * 10
     mid_y = (foot_y + wall_y) / 2 - cos_a * 10
 
-    return (f'{_trig_svg_open(W, H)}'
+    return _trig_svg(W, H, (
             f'<line x1="{gx1}" y1="{gy}" x2="{wall_x}" y2="{gy}" stroke="#555" stroke-width="2"/>'
             f'<line x1="{wall_x}" y1="{wy1}" x2="{wall_x}" y2="{gy}" stroke="#555" stroke-width="2"/>'
             f'<line x1="{foot_x:.1f}" y1="{foot_y}" x2="{wall_x}" y2="{wall_y:.1f}"'
@@ -5965,7 +5963,7 @@ def _trig_svg_ladder(length, angle_deg, height):
             f'<text x="{wall_x+12}" y="{(wall_y+foot_y)//2}" text-anchor="start" font-size="12" fill="#333">? m</text>'
             f'<text x="{gx1}" y="{gy+18}" font-size="11" fill="#888">ground</text>'
             f'<text x="{wall_x-4}" y="{wy1-4}" font-size="11" fill="#888" text-anchor="end">wall</text>'
-            f'</svg></div>')
+            ))
 
 
 def _trig_svg_elevation(height, dist, angle_deg=None):
@@ -5996,7 +5994,7 @@ def _trig_svg_elevation(height, dist, angle_deg=None):
                f'{angle_deg}\u00b0</text>' if angle_deg is not None else
                f'<text x="{lx:.0f}" y="{ly:.0f}" text-anchor="middle" font-size="12" font-style="italic" fill="#a13544">\u03b8?</text>')
 
-    return (f'{_trig_svg_open(W, H)}'
+    return _trig_svg(W, H, (
             f'<line x1="{obs_x}" y1="{obs_y}" x2="{base_x}" y2="{base_y}" stroke="#555" stroke-width="2"/>'
             f'<line x1="{base_x}" y1="{base_y}" x2="{top_x}" y2="{top_y}" stroke="#01696f" stroke-width="3"/>'
             f'<line x1="{obs_x}" y1="{obs_y}" x2="{top_x}" y2="{top_y}" stroke="#01696f" stroke-width="2" stroke-dasharray="6,4"/>'
@@ -6004,7 +6002,7 @@ def _trig_svg_elevation(height, dist, angle_deg=None):
             f'<text x="{(obs_x+base_x)//2}" y="{obs_y+18}" text-anchor="middle" font-size="12" fill="#333">{dist} m</text>'
             f'<text x="{top_x+16}" y="{(top_y+base_y)//2}" text-anchor="start" font-size="12" fill="#333">{height} m</text>'
             f'<circle cx="{obs_x}" cy="{obs_y}" r="4" fill="#a13544"/>'
-            f'</svg></div>')
+            ))
 
 
 def _trig_svg_depression(height, dist, angle_deg=None):
@@ -6028,7 +6026,7 @@ def _trig_svg_depression(height, dist, angle_deg=None):
                f'{angle_deg}\u00b0</text>' if angle_deg is not None else
                f'<text x="{lx:.0f}" y="{ly:.0f}" text-anchor="middle" font-size="12" font-style="italic" fill="#a13544">\u03b8?</text>')
 
-    return (f'{_trig_svg_open(W, H)}'
+    return _trig_svg(W, H, (
             f'<line x1="{obs_x}" y1="{obs_y}" x2="{obs_x}" y2="{base_y}" stroke="#aaa" stroke-width="1" stroke-dasharray="4,4"/>'
             f'<line x1="{obs_x}" y1="{base_y}" x2="{base_x}" y2="{base_y}" stroke="#555" stroke-width="2"/>'
             f'<line x1="{obs_x}" y1="{obs_y}" x2="{base_x}" y2="{base_y}" stroke="#01696f" stroke-width="2" stroke-dasharray="6,4"/>'
@@ -6039,7 +6037,7 @@ def _trig_svg_depression(height, dist, angle_deg=None):
             f'<circle cx="{base_x}" cy="{base_y}" r="4" fill="#01696f"/>'
             f'<text x="{obs_x+8}" y="{obs_y-6}" font-size="11" fill="#888">observer</text>'
             f'<text x="{base_x+5}" y="{base_y+4}" font-size="11" fill="#888">object</text>'
-            f'</svg></div>')
+            ))
 
 
 def _trig_svg_bearing(north_km, east_km, dist=None):
@@ -6055,7 +6053,7 @@ def _trig_svg_bearing(north_km, east_km, dist=None):
     ra = (f'<polyline points="{north_x},{north_y+sq} {north_x+sq},{north_y+sq} {north_x+sq},{north_y}"'
           f' fill="none" stroke="#555" stroke-width="1.5"/>')
 
-    return (f'{_trig_svg_open(W, H)}'
+    return _trig_svg(W, H, (
             f'<line x1="{start_x}" y1="{start_y}" x2="{north_x}" y2="{north_y}" stroke="#01696f" stroke-width="2.5"/>'
             f'<line x1="{north_x}" y1="{north_y}" x2="{end_x}" y2="{end_y}" stroke="#01696f" stroke-width="2.5"/>'
             f'<line x1="{start_x}" y1="{start_y}" x2="{end_x}" y2="{end_y}" stroke="#a13544" stroke-width="2" stroke-dasharray="6,4"/>'
@@ -6069,7 +6067,7 @@ def _trig_svg_bearing(north_km, east_km, dist=None):
             f'<text x="{start_x-5}" y="{start_y+14}" font-size="11" fill="#888" text-anchor="end">Start</text>'
             f'<text x="{end_x+5}" y="{end_y+5}" font-size="11" fill="#888">Finish</text>'
             f'<text x="{north_x}" y="{start_y+5}" font-size="20" fill="#888" text-anchor="middle">\u2191N</text>'
-            f'</svg></div>')
+            ))
 
 
 def _trig_raw(val):
@@ -6689,13 +6687,13 @@ def _trig_diff_3d():
     # Base diagonal: from p[0] to p[3]
     base_line = (f'<line x1="{p[0][0]:.0f}" y1="{p[0][1]:.0f}" x2="{p[3][0]:.0f}" y2="{p[3][1]:.0f}"'
                  f' stroke="#01696f" stroke-width="2" stroke-dasharray="5,3"/>')
-    svg = (f'{_trig_svg_open(W, H)}'
+    svg = _trig_svg(W, H, (
            f'{edges}{diag_line}{base_line}'
            f'<text x="{p[0][0]-8:.0f}" y="{p[0][1]+12:.0f}" font-size="11" fill="#333">A</text>'
            f'<text x="{p[7][0]+4:.0f}" y="{p[7][1]-4:.0f}" font-size="11" fill="#333">G</text>'
            f'<text x="{p[3][0]+4:.0f}" y="{p[3][1]+4:.0f}" font-size="11" fill="#333">C</text>'
            f'<text x="{p[0][0]+5:.0f}" y="{p[0][1]+18:.0f}" font-size="10" fill="#888">{l}cm\xd7{w}cm\xd7{h}cm</text>'
-           f'</svg></div>')
+           ))
     q = (f"{svg}"
          f"A cuboid has length {l} cm, width {w} cm, and height {h} cm. "
          f"Calculate the angle between the space diagonal AG and the base diagonal AC. "

@@ -28,18 +28,67 @@ def _load_env_file(path: Path) -> None:
 
 _load_env_file(_ROOT / ".env")
 
-from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash, g, send_from_directory, Response
+from flask import Flask, render_template, request, session, redirect, url_for, jsonify, flash, g, send_from_directory, Response, abort
 from flask_login import LoginManager, current_user, login_required, login_user, logout_user
 from jinja2.exceptions import TemplateNotFound
 from markupsafe import Markup
 import sqlite3
 import json
 import uuid
+import mimetypes
+
+mimetypes.add_type('application/wasm', '.wasm')
 from topics_data import TOPIC_CONTENT
-from topic_registry import TOPICS
+from topic_registry import TOPICS, iter_topics, topic_mode_capabilities
+from generators.eursc.science_shared import (
+    IBL_PAGES,
+    accuracy_targets,
+    antagonistic_pair,
+    atom_molecule_boxes,
+    body_lever,
+    canal_boxes,
+    carbon_cycle_steps,
+    charge_pair,
+    circuit_boxes,
+    circulation_boxes,
+    distance_time_graph,
+    ear_boxes,
+    earth_sun_moon,
+    eye_boxes,
+    factor_boxes,
+    force_pair,
+    force_vectors,
+    habit_bars,
+    infection_chain,
+    key_boxes,
+    lab_bench,
+    lever_boxes,
+    lifecycle_boxes,
+    magnet_poles,
+    menstrual_cycle_steps,
+    organ_labels,
+    outbreak_bars,
+    particle_states,
+    ph_scale,
+    ramp_tradeoff,
+    reflection_rays,
+    ruler_scale,
+    sankey_bars,
+    simple_machines,
+    signal_detect,
+    solar_scale,
+    trophic_boxes,
+    water_cycle_steps,
+    work_fd,
+)
 from generators.shared.lesson_quiz import (
+    LESSON_QUIZ_MIX,
     build_lesson_mcq_quiz,
+    build_lesson_quiz,
+    grade_lesson_quiz_problem,
+    lesson_quiz_problems_are_mixed,
     topic_supports_lesson_mcq,
+    topic_supports_lesson_quiz,
 )
 from generators.alevel.magnetism import (
     aqa_mag_faradays_law,
@@ -55,6 +104,11 @@ from generators.alevel.photoelectric import (
     aqa_pe_stopping_potential,
     aqa_pe_threshold_frequency,
 )
+from generators.gcse.physics import (
+    rad_diff_compare_alpha_beta_gamma,
+    rad_found_atom_structure,
+    rad_inter_alpha_equation,
+)
 from generators.shared.utils import format_light_markdown
 from generators.shared.lesson_assist import (
     daily_limit_ip,
@@ -65,6 +119,7 @@ from generators.shared.lesson_assist import (
     validate_payload,
 )
 from generators.shared.variant_utils import (
+    ADVANCED_MODES,
     normalize_mode,
     resolve_variant_callable,
     variant_is_randomizable,
@@ -103,11 +158,16 @@ from models.social import (
     list_followers,
     list_following,
     list_followed_feed,
+    list_recent_practised_topics,
     normalize_feed_filter,
     FEED_FILTER_ALL,
     FEED_FILTER_LESSONS,
     FEED_FILTER_QUIZZES,
     FEED_FILTER_SHARES,
+    THEME_CHOICES,
+    THEME_SYSTEM,
+    normalize_theme_preference,
+    public_guide_state,
     quiz_stats_summary,
     record_activity_event,
     record_mcq_answered,
@@ -115,8 +175,10 @@ from models.social import (
     record_quiz_completed,
     record_topic_opened,
     search_users_by_handle,
+    search_following_by_handle,
     unfollow_user,
     update_profile_settings,
+    validate_guide_patch,
 )
 from models.sharing import (
     SUGGESTION_DISMISSED,
@@ -135,6 +197,7 @@ from models.sharing import (
 from models.notifications import (
     NOTIFICATION_CHALLENGE,
     NOTIFICATION_CHALLENGE_COMPLETE,
+    NOTIFICATION_CLASS_INVITE,
     NOTIFICATION_FOLLOW,
     NOTIFICATION_STUDY_PAIR,
     NOTIFICATION_SUGGESTION,
@@ -142,7 +205,9 @@ from models.notifications import (
     create_notification,
     list_notifications,
     mark_all_notifications_read,
+    mark_class_invite_notifications_read,
     mark_notification_read,
+    mark_study_pair_notifications_read,
     mark_suggestion_notifications_read,
 )
 from models.user_data import (
@@ -166,14 +231,27 @@ from models.user_data import (
     upsert_lesson_progress,
 )
 from models.gamification import (
+    MILESTONE_CATALOG,
     evaluate_milestones,
     friend_accuracy_leaderboard,
     friend_effort_leaderboard,
     get_study_streak,
     get_weekly_recap,
+    lifetime_effort_xp,
+    list_milestone_shelf,
     list_user_milestones,
     record_study_day,
+    streak_ring_progress,
+    streak_week_dots,
+    streak_calendar,
+    study_streak_at_risk,
+    topic_mastery_map,
+    weekly_effort_by_day,
+    weekly_effort_xp,
+    recent_accuracy_trend,
+    xp_level_progress,
 )
+from models.topic_status import topic_status_map
 from models.buddy import BUDDY_FACES, build_buddy_prompt
 from models.problem_queue import (
     clear_problem_queue as clear_db_problem_queue,
@@ -197,6 +275,26 @@ from models.api_tokens import (
     revoke_token_by_raw,
     touch_token_use,
 )
+from models.account_deletion import delete_user_account
+from models.data_export import build_user_export
+from models.login_lockout import (
+    clear_login_failures,
+    is_login_locked,
+    record_login_failure,
+)
+from models.auth_tokens import (
+    consume_email_verification_token,
+    consume_password_reset_token,
+    create_email_verification_token,
+    create_password_reset_token,
+    peek_password_reset_token,
+)
+from models.privacy import (
+    controller_name,
+    hashed_ip,
+    ico_registration_number,
+    privacy_contact_email,
+)
 from models.quicktest import (
     build_quicktest_problems,
     can_access_quicktest,
@@ -218,12 +316,15 @@ from models.email_digest import (
     render_digest_subject,
     render_digest_text,
     send_test_weekly_digest,
+    send_email_message,
     verify_unsubscribe_token,
 )
 from models.challenges import (
     CHALLENGE_COMPLETE,
     CHALLENGE_DECLINED,
     CHALLENGE_PENDING,
+    count_actionable_challenges,
+    build_head_to_head,
     create_challenge,
     decline_challenge,
     get_challenge,
@@ -241,6 +342,7 @@ from models.study_pairs import (
     decline_study_pair,
     end_study_pair,
     get_active_study_pair,
+    get_study_pair_row,
     invite_study_pair,
     list_pending_study_pair_invites,
     serialize_study_pair,
@@ -248,8 +350,10 @@ from models.study_pairs import (
 from models.qotd import (
     current_day_key,
     friend_qotd_leaderboard,
+    friend_qotd_week_leaderboard,
     get_daily_question,
     get_user_attempt,
+    qotd_window_day_keys,
     record_qotd_answer,
 )
 from models.bot import (
@@ -257,6 +361,8 @@ from models.bot import (
     is_bot_user,
     qotd_challenge_card,
 )
+from models import svg_kit
+from models import zorp_kit
 from models.avatar import (
     AVATAR_BACKGROUNDS,
     AVATAR_EXTRAS,
@@ -298,6 +404,62 @@ from models.revision_planner import (
     revision_plan_for_user,
     upsert_revision_plan_settings,
 )
+from models.class_progress import (
+    class_aggregates,
+    enrich_roster,
+    student_progress,
+)
+from models.class_assignments import (
+    MAX_ASSIGNMENT_QUESTIONS,
+    MIN_ASSIGNMENT_QUESTIONS,
+    consume_preview,
+    create_assignment,
+    get_assignment_for_teacher,
+    get_class_work_for_student,
+    list_assignments_for_teacher,
+    list_class_work_for_student,
+    resolve_recipients,
+    save_preview,
+    serialize_assignment_summary,
+    serialize_preview,
+    serialize_student_work,
+    serialize_student_work_list_item,
+    serialize_teacher_assignment,
+    submit_student_answer,
+)
+from models.class_audit import list_class_audit, serialize_audit_event
+from models.class_csv import assignments_csv, roster_csv
+from models.class_invites import (
+    accept_invite,
+    cancel_invite,
+    decline_invite,
+    invite_student,
+    list_pending_invites_for_class,
+    list_pending_invites_for_student,
+    serialize_invite,
+)
+from models.classes import (
+    CLASS_ACTIVE_MEMBER_CAP,
+    CLASS_NAME_MAX,
+    JOIN_DISCLOSURE,
+    archive_class,
+    create_class,
+    disclosure_payload,
+    enable_teacher,
+    get_class_for_teacher,
+    join_class,
+    list_classes_for_student,
+    list_classes_for_teacher,
+    list_roster,
+    remove_student,
+    rotate_join_code,
+    serialize_class,
+    serialize_roster_member,
+    serialize_student_class,
+    serialize_teacher_status,
+    teacher_is_enabled,
+    teacher_owns_class,
+)
 from models.revision_queue import (
     DUE_TODAY_LIMIT,
     complete_revision_item,
@@ -308,6 +470,22 @@ from models.revision_queue import (
 )
 
 _DEFAULT_SECRET_KEY = 'dev-secret-key-for-local-testing'
+
+
+def _is_production_signal():
+    site = (os.environ.get('SITE_URL') or '').strip().lower()
+    return site.startswith('https://') or os.environ.get('FLASK_ENV') == 'production'
+
+
+def _refuse_testing_in_production():
+    if os.environ.get('PB_TESTING') == '1' and _is_production_signal():
+        raise RuntimeError(
+            'PB_TESTING=1 cannot be combined with a production SITE_URL or FLASK_ENV=production. '
+            'That flag disables CSRF and rate limits.'
+        )
+
+
+_refuse_testing_in_production()
 
 
 def _configure_secret_key():
@@ -330,6 +508,13 @@ def _configure_secret_key():
 
 app = Flask(__name__)
 app.secret_key = _configure_secret_key()
+# Local dev: reload Jinja templates when files change (debug off still caches by default).
+_dev_local = (
+    os.environ.get('FLASK_DEBUG', '0').strip() in ('1', 'true', 'True')
+    or os.environ.get('PB_ALLOW_DEV_SECRET', '').strip() in ('1', 'true', 'True')
+    or os.environ.get('PB_TESTING') == '1'
+)
+app.config['TEMPLATES_AUTO_RELOAD'] = _dev_local
 app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=30)
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
@@ -342,8 +527,15 @@ app.config['SESSION_COOKIE_SECURE'] = _secure_cookies
 app.config['REMEMBER_COOKIE_HTTPONLY'] = True
 app.config['REMEMBER_COOKIE_SAMESITE'] = 'Lax'
 app.config['REMEMBER_COOKIE_SECURE'] = _secure_cookies
+app.jinja_env.globals['svg_kit'] = svg_kit
+app.jinja_env.globals['zorp_kit'] = zorp_kit
 
 login_manager = LoginManager()
+
+
+@app.before_request
+def _assign_csp_nonce():
+    g.csp_nonce = secrets.token_urlsafe(16)
 
 
 @app.before_request
@@ -357,7 +549,7 @@ def _enforce_api_csrf():
         return None
     if _wants_json_response() or request.path.startswith('/api/'):
         return _api_error('Invalid or missing CSRF token', 403, 'invalid_csrf')
-    flash('Your session expired. Please try again.', 'error')
+    flash_for('index', 'Your session expired. Please try again.', 'error')
     return redirect(url_for('index'))
 
 
@@ -378,6 +570,81 @@ def _validate_csrf(form_token):
     if not form_token or not expected:
         return False
     return secrets.compare_digest(str(form_token), str(expected))
+
+
+_PAGE_FLASH_SESSION_KEY = '_page_flashes'
+
+
+def flash_for(page, message, category='message'):
+    """Queue a flash message visible only on templates that call pop_flashes_for(page)."""
+    bucket = session.setdefault(_PAGE_FLASH_SESSION_KEY, {})
+    bucket.setdefault(page, []).append({'category': category, 'message': message})
+    session.modified = True
+
+
+def pop_flashes_for(page):
+    """Return and clear flash messages scoped to a page endpoint name."""
+    bucket = session.get(_PAGE_FLASH_SESSION_KEY, {})
+    messages = bucket.pop(page, [])
+    if bucket:
+        session[_PAGE_FLASH_SESSION_KEY] = bucket
+    else:
+        session.pop(_PAGE_FLASH_SESSION_KEY, None)
+    session.modified = True
+    return [(item['category'], item['message']) for item in messages]
+
+
+def _public_site_url():
+    cfg = mail_config()
+    base = (cfg.get('site_url') or '').rstrip('/')
+    if base:
+        return base
+    try:
+        return (request.url_root or '').rstrip('/')
+    except RuntimeError:
+        return ''
+
+
+def _send_verify_email(user, raw_token):
+    link = f'{_public_site_url()}/verify-email/{raw_token}'
+    subject = 'Confirm your Problem Bank email'
+    text = (
+        f'Hi @{user.handle},\n\nConfirm your email by opening this link:\n{link}\n\n'
+        'If you did not create this account, you can ignore this message.\n'
+    )
+    html = (
+        f'<p>Hi @{user.handle},</p><p>Confirm your email: '
+        f'<a href="{link}">{link}</a></p>'
+        '<p>If you did not create this account, ignore this message.</p>'
+    )
+    send_email_message(user.email, subject, html, text)
+
+
+def _send_reset_email(user, raw_token):
+    link = f'{_public_site_url()}/reset-password/{raw_token}'
+    subject = 'Reset your Problem Bank password'
+    text = (
+        f'Hi @{user.handle},\n\nReset your password using this link (valid for 60 minutes):\n{link}\n\n'
+        'If you did not ask for this, you can ignore this message.\n'
+    )
+    html = (
+        f'<p>Hi @{user.handle},</p><p>Reset your password (valid for 60 minutes): '
+        f'<a href="{link}">{link}</a></p>'
+        '<p>If you did not ask for this, ignore this message.</p>'
+    )
+    send_email_message(user.email, subject, html, text)
+
+
+def _require_verified_email():
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
+    if current_user.email_verified:
+        return None
+    flash_for('profile_settings', 'Confirm your email before exporting or deleting your account.', 'error')
+    return redirect(url_for('profile_settings'))
+
+
+app.template_global()(pop_flashes_for)
 
 
 def _safe_redirect_target(candidate, default_endpoint='profile'):
@@ -509,6 +776,63 @@ def _problem_client_payload(problem):
 _BLOCK_HTML_MARKERS = ('<svg', '<div', '<table', '<pre', '<figure')
 
 
+def _field_option_labels(options):
+    labels = {}
+    for item in options or []:
+        if isinstance(item, dict):
+            sid = str(item.get('id') or '').strip()
+            text = str(item.get('text') or '').strip()
+            if sid:
+                labels[sid] = text or sid
+    return labels
+
+
+def format_readable_multipart_answer(value, problem=None):
+    """Turn stored number_fields answers into a student-readable line."""
+    text = str(value or '')
+    if not text:
+        return ''
+    problem = problem or {}
+    types = list(problem.get('answer_field_types') or [])
+    options = list(problem.get('answer_field_options') or [])
+    if not types:
+        return text.replace('\x1e', ' · ')
+
+    if '\x1e' in text:
+        parts = text.split('\x1e')
+    elif any(ft in ('pick', 'order') for ft in types):
+        parts = [text]
+    else:
+        parts = text.split('|')
+
+    rendered = []
+    for i, part in enumerate(parts):
+        ft = types[i] if i < len(types) else 'number'
+        part = str(part or '').strip()
+        field_opts = options[i] if i < len(options) else None
+        if ft in ('pick', 'order'):
+            mapping = _field_option_labels(field_opts)
+            labels = [mapping.get(item, item) for item in part.split('|') if item]
+            rendered.append(', '.join(labels) if labels else part)
+        elif ft == 'mcq':
+            letter = part[:1].upper()
+            if isinstance(field_opts, (list, tuple)) and letter:
+                idx = ord(letter) - ord('A')
+                if 0 <= idx < len(field_opts) and not isinstance(field_opts[idx], dict):
+                    rendered.append(f'{letter}. {field_opts[idx]}')
+                    continue
+            rendered.append(letter or part)
+        else:
+            rendered.append(part)
+    return ' · '.join(item for item in rendered if item)
+
+
+@app.template_filter('readable_multipart_answer')
+def readable_multipart_answer(value, problem=None):
+    """Show structured number_fields answers without the RS separator."""
+    return format_readable_multipart_answer(value, problem)
+
+
 @app.template_filter('split_question_sections')
 def split_question_sections(value, section_keys):
     """Split a multipart question into intro + labelled sections for inline fields."""
@@ -570,6 +894,46 @@ def format_question_html(value):
     return Markup(format_light_markdown(text))
 
 
+_NAV_TAB_ENDPOINTS = {
+    'practice': {'index', 'quicktest_question', 'quicktest_results'},
+    'learn': {'topics_index', 'topic_page', 'lesson_mcq_quiz', 'lesson_mcq_results', 'view_quiz_attempt'},
+    'daily': {'qotd_page'},
+    'compete': {'friend_leaderboard_page', 'challenges_list', 'challenge_new', 'challenge_detail'},
+    'profile': {
+        'profile', 'profile_settings', 'public_profile', 'public_profile_followers',
+        'public_profile_following', 'site_search', 'suggestions_inbox', 'view_suggestion',
+    },
+    'about': {'about'},
+    'login': {'login', 'register'},
+}
+
+
+def _resolve_nav_tab(endpoint):
+    if not endpoint:
+        return None
+    for tab, names in _NAV_TAB_ENDPOINTS.items():
+        if endpoint in names:
+            return tab
+    return None
+
+
+_GUIDE_MILESTONES = {
+    key: {
+        'emoji': (meta or {}).get('emoji') or '★',
+        'title': (meta or {}).get('title') or key,
+    }
+    for key, meta in MILESTONE_CATALOG.items()
+}
+
+_QUIZ_RUNNER_ENDPOINTS = frozenset({
+    'lesson_mcq_quiz',
+    'lesson_mcq_question',
+    'lesson_mcq_results',
+    'quicktest_question',
+    'quicktest_results',
+    'view_quiz_attempt',
+    'challenge_detail',
+})
 @app.context_processor
 def inject_nav():
     lesson_meta = None
@@ -581,7 +945,11 @@ def inject_nav():
             view_args.get('subject'),
             view_args.get('topic'),
         )
-    elif request.endpoint in ('lesson_mcq_results', 'lesson_mcq_quiz'):
+    elif request.endpoint in (
+        'lesson_mcq_results',
+        'lesson_mcq_quiz',
+        'lesson_mcq_question',
+    ):
         lesson_meta = _lesson_meta_for_topic(
             view_args.get('level'),
             view_args.get('subject'),
@@ -624,9 +992,41 @@ def inject_nav():
             }
     unread_notifications = 0
     buddy_prompt = None
+    viewer_xp = None
+    viewer_level = None
+    teacher_enabled = False
+    nav_tab = _resolve_nav_tab(request.endpoint)
+    nav_avatar = None
+    sound_enabled = False
+    theme_preference = THEME_SYSTEM
+    guide_state = {'v': 1, 'origin': False, 'tours': {}, 'rewards': {}}
+    guide_json_persisted = False
+    nav_streak = 0
+    xp_progress = None
+    tab_badges = {}
     if current_user.is_authenticated:
         with get_db() as conn:
             unread_notifications = count_unread_notifications(conn, current_user.id)
+            viewer_xp = weekly_effort_xp(conn, current_user.id)
+            lifetime_xp = lifetime_effort_xp(conn, current_user.id)
+            xp_progress = xp_level_progress(lifetime_xp)
+            viewer_level = xp_progress['level']
+            profile_settings = get_profile_settings(conn, current_user.id)
+            nav_avatar = profile_settings.get('avatar') or dict(DEFAULT_AVATAR)
+            sound_enabled = bool(profile_settings.get('sound_enabled', False))
+            theme_preference = normalize_theme_preference(
+                profile_settings.get('theme_preference', THEME_SYSTEM)
+            )
+            guide_state = profile_settings.get('guide') or guide_state
+            guide_json_persisted = bool(profile_settings.get('guide_json_persisted'))
+            streak = get_study_streak(conn, current_user.id)
+            nav_streak = int(streak.get('current') or 0)
+            teacher_enabled = teacher_is_enabled(conn, current_user.id)
+            tab_badges = {
+                'qotd_unanswered': get_user_attempt(conn, current_user.id, current_day_key()) is None,
+                'pending_challenges': count_actionable_challenges(conn, current_user.id),
+                'streak_at_risk': study_streak_at_risk(conn, current_user.id),
+            }
             page_level = page_subject = page_topic = None
             if buddy_page:
                 page_level = buddy_page['level']
@@ -650,6 +1050,26 @@ def inject_nav():
         'unread_notifications': unread_notifications,
         'buddy_page': buddy_page,
         'buddy_prompt': buddy_prompt,
+        'viewer_xp': viewer_xp,
+        'viewer_level': viewer_level,
+        'xp_progress': xp_progress,
+        'nav_tab': nav_tab,
+        'nav_avatar': nav_avatar,
+        'sound_enabled': sound_enabled,
+        'theme_preference': theme_preference,
+        'guide_state': guide_state,
+        'guide_json_persisted': guide_json_persisted,
+        'nav_streak': nav_streak,
+        'teacher_enabled': teacher_enabled,
+        'tab_badges': tab_badges,
+        'quiz_runner_mode': request.endpoint in _QUIZ_RUNNER_ENDPOINTS,
+        'guide_preview_mode': False,
+        'guide_milestones': _GUIDE_MILESTONES,
+        'email_verified': bool(getattr(current_user, 'email_verified', False))
+        if current_user.is_authenticated
+        else True,
+        'privacy_contact_email': privacy_contact_email(),
+        'csp_nonce': getattr(g, 'csp_nonce', ''),
     }
 
 
@@ -665,17 +1085,17 @@ def _is_python_lesson_page():
 
 @app.after_request
 def apply_csp(response):
+    nonce = getattr(g, 'csp_nonce', None) or secrets.token_urlsafe(16)
+    # script-src: no 'unsafe-inline'. Remaining inline scripts (if any) must carry this nonce.
+    # 'unsafe-eval' / 'wasm-unsafe-eval' stay for MathJax and Pyodide (accepted S2 exception).
+    # style-src keeps 'unsafe-inline' for lesson SVG/presentation attributes.
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
-        # 'unsafe-inline' allows <script> blocks and onclick= handlers in templates.
-        # 'unsafe-eval' is required by MathJax; 'wasm-unsafe-eval' is required by Pyodide.
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; "
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        f"script-src 'self' 'nonce-{nonce}' 'unsafe-eval' 'wasm-unsafe-eval'; "
+        "style-src 'self' 'unsafe-inline'; "
         "img-src 'self' data: https:; "
-        "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; "
-        # Pyodide fetches pyodide.wasm and the Python stdlib zip from the CDN at runtime.
-        "connect-src 'self' https://cdn.jsdelivr.net; "
-        # Pyodide uses blob: workers internally for async execution; SW is same-origin.
+        "font-src 'self'; "
+        "connect-src 'self'; "
         "worker-src 'self' blob:; "
         "manifest-src 'self'; "
         "frame-src 'none'; "
@@ -686,6 +1106,19 @@ def apply_csp(response):
         # SharedArrayBuffer (blocking stdin in the Pyodide worker) needs cross-origin isolation.
         response.headers['Cross-Origin-Opener-Policy'] = 'same-origin'
         response.headers['Cross-Origin-Embedder-Policy'] = 'credentialless'
+    return response
+
+
+@app.after_request
+def apply_security_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    response.headers['Permissions-Policy'] = (
+        'geolocation=(), microphone=(), camera=(), interest-cohort=()'
+    )
+    response.headers['X-Frame-Options'] = 'DENY'
+    if request.is_secure or _secure_cookies:
+        response.headers['Strict-Transport-Security'] = 'max-age=86400; includeSubDomains'
     return response
 
 
@@ -819,9 +1252,15 @@ with get_db() as conn:
             password_hash TEXT NOT NULL,
             created_at TEXT NOT NULL,
             last_login_at TEXT,
-            is_active INTEGER NOT NULL DEFAULT 1
+            is_active INTEGER NOT NULL DEFAULT 1,
+            email_verified_at TEXT
         )
     """)
+    user_cols = {
+        row[1] for row in conn.execute('PRAGMA table_info(users)').fetchall()
+    }
+    if 'email_verified_at' not in user_cols:
+        conn.execute('ALTER TABLE users ADD COLUMN email_verified_at TEXT')
     conn.execute("""
         CREATE TABLE IF NOT EXISTS saved_problems (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -928,15 +1367,19 @@ with get_db() as conn:
         conn.execute(
             'ALTER TABLE lesson_progress ADD COLUMN completed_keys_json TEXT NOT NULL DEFAULT \'[]\''
         )
+    if 'step_total' not in lesson_cols:
+        conn.execute(
+            'ALTER TABLE lesson_progress ADD COLUMN step_total INTEGER NOT NULL DEFAULT 0'
+        )
     conn.execute("""
         CREATE TABLE IF NOT EXISTS user_profile_settings (
             user_id INTEGER PRIMARY KEY,
-            profile_visibility TEXT NOT NULL DEFAULT 'public',
+            profile_visibility TEXT NOT NULL DEFAULT 'followers_only',
             show_member_since INTEGER NOT NULL DEFAULT 1,
-            show_last_topic INTEGER NOT NULL DEFAULT 1,
-            show_last_activity INTEGER NOT NULL DEFAULT 1,
-            show_lesson_progress INTEGER NOT NULL DEFAULT 1,
-            show_quiz_stats INTEGER NOT NULL DEFAULT 1,
+            show_last_topic INTEGER NOT NULL DEFAULT 0,
+            show_last_activity INTEGER NOT NULL DEFAULT 0,
+            show_lesson_progress INTEGER NOT NULL DEFAULT 0,
+            show_quiz_stats INTEGER NOT NULL DEFAULT 0,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     """)
@@ -1043,9 +1486,61 @@ with get_db() as conn:
         ('email_weekly_digest', 'INTEGER NOT NULL DEFAULT 0'),
         ('avatar_json', "TEXT NOT NULL DEFAULT ''"),
         ('show_accuracy_leaderboard', 'INTEGER NOT NULL DEFAULT 1'),
+        ('sound_enabled', 'INTEGER NOT NULL DEFAULT 0'),
+        ('theme_preference', "TEXT NOT NULL DEFAULT 'system'"),
+        ('guide_json', "TEXT NOT NULL DEFAULT '{}'"),
     ):
         if col not in profile_cols:
             conn.execute(f'ALTER TABLE user_profile_settings ADD COLUMN {col} {ddl}')
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS schema_migrations (
+            name TEXT PRIMARY KEY,
+            applied_at TEXT NOT NULL
+        )
+    """)
+    migrated = {
+        row[0] for row in conn.execute('SELECT name FROM schema_migrations').fetchall()
+    }
+    if 's0_high_privacy_defaults' not in migrated:
+        conn.execute(
+            '''
+            UPDATE user_profile_settings
+            SET profile_visibility = 'followers_only',
+                show_last_topic = 0,
+                show_last_activity = 0,
+                show_lesson_progress = 0,
+                show_quiz_stats = 0
+            '''
+        )
+        conn.execute(
+            "INSERT INTO schema_migrations (name, applied_at) VALUES (?, datetime('now'))",
+            ('s0_high_privacy_defaults',),
+        )
+    if 'lesson_progress_step_totals' not in migrated:
+        from models.lesson_steps import lesson_step_total
+
+        rows = conn.execute(
+            '''
+            SELECT level, subject, topic
+            FROM lesson_progress
+            WHERE step_total <= 0
+            '''
+        ).fetchall()
+        for row in rows:
+            total = lesson_step_total(row['level'], row['subject'], row['topic'])
+            if total > 0:
+                conn.execute(
+                    '''
+                    UPDATE lesson_progress
+                    SET step_total = ?
+                    WHERE level = ? AND subject = ? AND topic = ?
+                    ''',
+                    (total, row['level'], row['subject'], row['topic']),
+                )
+        conn.execute(
+            "INSERT INTO schema_migrations (name, applied_at) VALUES (?, datetime('now'))",
+            ('lesson_progress_step_totals',),
+        )
     conn.execute("""
         CREATE TABLE IF NOT EXISTS email_digest_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1067,6 +1562,26 @@ with get_db() as conn:
             current_streak INTEGER NOT NULL DEFAULT 0,
             longest_streak INTEGER NOT NULL DEFAULT 0,
             last_active_date TEXT,
+            freeze_available INTEGER NOT NULL DEFAULT 1,
+            freeze_week_key TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    streak_cols = {
+        row[1] for row in conn.execute('PRAGMA table_info(user_streaks)').fetchall()
+    }
+    if 'freeze_available' not in streak_cols:
+        conn.execute(
+            'ALTER TABLE user_streaks ADD COLUMN freeze_available INTEGER NOT NULL DEFAULT 1'
+        )
+    if 'freeze_week_key' not in streak_cols:
+        conn.execute('ALTER TABLE user_streaks ADD COLUMN freeze_week_key TEXT')
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_streak_freezes (
+            user_id INTEGER NOT NULL,
+            freeze_date TEXT NOT NULL,
+            used_at TEXT NOT NULL,
+            PRIMARY KEY (user_id, freeze_date),
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     """)
@@ -1209,9 +1724,15 @@ with get_db() as conn:
             note TEXT NOT NULL DEFAULT '',
             context_json TEXT NOT NULL DEFAULT '{}',
             created_at TEXT NOT NULL,
+            resolved_at TEXT,
             FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE
         )
     """)
+    report_cols = {
+        row[1] for row in conn.execute('PRAGMA table_info(user_reports)').fetchall()
+    }
+    if 'resolved_at' not in report_cols:
+        conn.execute('ALTER TABLE user_reports ADD COLUMN resolved_at TEXT')
     conn.execute("""
         CREATE TABLE IF NOT EXISTS rate_limit_buckets (
             bucket_key TEXT NOT NULL,
@@ -1250,6 +1771,8 @@ with get_db() as conn:
             status TEXT NOT NULL DEFAULT 'pending',
             creator_score INTEGER,
             opponent_score INTEGER,
+            creator_answers_json TEXT,
+            opponent_answers_json TEXT,
             creator_completed_at TEXT,
             opponent_completed_at TEXT,
             created_at TEXT NOT NULL,
@@ -1261,6 +1784,13 @@ with get_db() as conn:
         CREATE INDEX IF NOT EXISTS idx_quiz_challenges_users
         ON quiz_challenges (creator_id, opponent_id, created_at DESC)
     """)
+    challenge_cols = {
+        row[1] for row in conn.execute('PRAGMA table_info(quiz_challenges)').fetchall()
+    }
+    if 'creator_answers_json' not in challenge_cols:
+        conn.execute('ALTER TABLE quiz_challenges ADD COLUMN creator_answers_json TEXT')
+    if 'opponent_answers_json' not in challenge_cols:
+        conn.execute('ALTER TABLE quiz_challenges ADD COLUMN opponent_answers_json TEXT')
     conn.execute("""
         CREATE TABLE IF NOT EXISTS study_pairs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1292,6 +1822,194 @@ with get_db() as conn:
             PRIMARY KEY (user_id, day_key),
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            token_hash TEXT NOT NULL UNIQUE,
+            created_at TEXT NOT NULL,
+            expires_at TEXT NOT NULL,
+            used_at TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS email_verification_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            token_hash TEXT NOT NULL UNIQUE,
+            created_at TEXT NOT NULL,
+            expires_at TEXT NOT NULL,
+            used_at TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS deleted_handles (
+            handle TEXT PRIMARY KEY COLLATE NOCASE,
+            deleted_at TEXT NOT NULL
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS login_lockouts (
+            user_id INTEGER PRIMARY KEY,
+            fail_count INTEGER NOT NULL DEFAULT 0,
+            locked_until TEXT,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS teacher_profiles (
+            user_id INTEGER PRIMARY KEY,
+            enabled_at TEXT NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS classes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            teacher_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            level TEXT,
+            subject TEXT,
+            org_id INTEGER,
+            join_code TEXT NOT NULL UNIQUE,
+            join_code_rotated_at TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            archived_at TEXT,
+            FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_classes_teacher
+        ON classes (teacher_id)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS class_memberships (
+            class_id INTEGER NOT NULL,
+            student_id INTEGER NOT NULL,
+            status TEXT NOT NULL,
+            joined_at TEXT NOT NULL,
+            removed_at TEXT,
+            removed_by_teacher_id INTEGER,
+            PRIMARY KEY (class_id, student_id),
+            FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+            FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (removed_by_teacher_id) REFERENCES users(id) ON DELETE SET NULL
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_class_memberships_student
+        ON class_memberships (student_id)
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_class_memberships_class_status
+        ON class_memberships (class_id, status)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS class_assignments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            class_id INTEGER NOT NULL,
+            teacher_id INTEGER NOT NULL,
+            level TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            topic TEXT NOT NULL,
+            mode TEXT NOT NULL,
+            difficulty TEXT NOT NULL,
+            problems_json TEXT NOT NULL,
+            question_count INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+            FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_class_assignments_class
+        ON class_assignments (class_id)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS class_assignment_recipients (
+            assignment_id INTEGER NOT NULL,
+            student_id INTEGER NOT NULL,
+            status TEXT NOT NULL,
+            answers_json TEXT,
+            score INTEGER,
+            completed_at TEXT,
+            PRIMARY KEY (assignment_id, student_id),
+            FOREIGN KEY (assignment_id) REFERENCES class_assignments(id) ON DELETE CASCADE,
+            FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_class_assignment_recipients_student
+        ON class_assignment_recipients (student_id)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS class_assignment_previews (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            teacher_id INTEGER NOT NULL,
+            class_id INTEGER NOT NULL,
+            level TEXT NOT NULL,
+            subject TEXT NOT NULL,
+            topic TEXT NOT NULL,
+            mode TEXT NOT NULL,
+            difficulty TEXT NOT NULL,
+            problems_json TEXT NOT NULL,
+            question_count INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_class_assignment_previews_teacher
+        ON class_assignment_previews (teacher_id, created_at)
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_class_assignments_teacher
+        ON class_assignments (teacher_id)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS class_invites (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            class_id INTEGER NOT NULL,
+            teacher_id INTEGER NOT NULL,
+            student_id INTEGER NOT NULL,
+            status TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            responded_at TEXT,
+            UNIQUE (class_id, student_id),
+            FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+            FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE,
+            FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_class_invites_student_status
+        ON class_invites (student_id, status)
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_class_invites_class_status
+        ON class_invites (class_id, status)
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS class_audit_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            class_id INTEGER NOT NULL,
+            actor_id INTEGER,
+            action TEXT NOT NULL,
+            subject_handle TEXT,
+            meta_json TEXT,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+            FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL
+        )
+    """)
+    conn.execute("""
+        CREATE INDEX IF NOT EXISTS idx_class_audit_class
+        ON class_audit_events (class_id, id)
     """)
     ensure_system_bot(conn)
     ensure_lesson_search_index(conn)
@@ -1345,7 +2063,7 @@ def load_user_from_bearer_token(req):
 def _handle_not_found(err):
     if _is_api_path():
         return _api_error('Not found', 404, 'not_found')
-    return 'Not Found', 404
+    return render_template('errors/404.html'), 404
 
 
 @app.errorhandler(405)
@@ -1360,7 +2078,7 @@ def _handle_server_error(err):
     app.logger.exception('Unhandled server error')
     if _is_api_path():
         return _api_error('Internal server error', 500, 'server_error')
-    return 'Internal Server Error', 500
+    return render_template('errors/500.html'), 500
 
 
 def _save_qt(data):
@@ -1431,6 +2149,15 @@ def _quiz_assist_item(problem, user_answer, question_number):
     }
 
 
+def _lesson_quiz_session_can_retry(level, subject, topic):
+    data = _load_lq()
+    if not data:
+        return False
+    if data.get('level') != level or data.get('subject') != subject or data.get('topic') != topic:
+        return False
+    return bool(data.get('answers'))
+
+
 def _render_quiz_results(
     problems,
     score,
@@ -1446,7 +2173,14 @@ def _render_quiz_results(
     back_label=None,
     show_wrong_explanations_only=True,
     quiz_attempt_id=None,
+    can_retry_wrong=None,
 ):
+    if can_retry_wrong is None:
+        can_retry_wrong = _lesson_quiz_session_can_retry(level, subject, topic)
+    accuracy_trend = []
+    if current_user.is_authenticated:
+        with get_db() as conn:
+            accuracy_trend = recent_accuracy_trend(conn, current_user.id, limit=10)
     return render_template(
         'lesson_mcq_results.html',
         problems=problems,
@@ -1465,6 +2199,8 @@ def _render_quiz_results(
         back_label=back_label or '← Back to lesson',
         show_wrong_explanations_only=show_wrong_explanations_only,
         quiz_attempt_id=quiz_attempt_id,
+        can_retry_wrong=can_retry_wrong,
+        accuracy_trend=accuracy_trend,
     )
 
 
@@ -1473,9 +2209,7 @@ def _lesson_quiz_available(level, subject, topic):
         topic_config = TOPICS[level][subject][topic]
     except KeyError:
         return False
-    if level != "gcse" or subject not in ("maths", "cs"):
-        return False
-    return topic_supports_lesson_mcq(topic_config)
+    return topic_supports_lesson_quiz(topic_config)
 
 ## Problems functionality:
 
@@ -1680,6 +2414,286 @@ def _resolve_topic_slug(level, subject, topic):
 
 ## ROUTES
 
+# Live Practice catalogue. A-Level / Physics / MYP stay in TOPICS for later.
+GENERATOR_LAUNCH_PATHS = frozenset({
+    ('gcse', 'maths'),
+    ('gcse', 'cs'),
+    ('eursc', 'science'),
+})
+GENERATOR_DEFAULT_LEVEL = 'eursc'
+GENERATOR_DEFAULT_SUBJECT = 'science'
+GENERATOR_DEFAULT_TOPIC = 'what_is_science'
+GENERATOR_DEFAULT_MODE = 'standard'
+GENERATOR_DEFAULT_DIFFICULTY = 'foundational'
+_GENERATOR_PICKER_KEYS = ('level', 'subject', 'topic', 'mode', 'difficulty')
+
+
+def _generator_path_allowed(level, subject):
+    return (level, subject) in GENERATOR_LAUNCH_PATHS
+
+
+def _normalize_generator_mode(level, subject, topic, mode, difficulty=None):
+    """Normalize a mode and safely clamp it to the topic's capabilities.
+
+    Pass ``difficulty`` at generate time so an advertised advanced mode that
+    is empty at this tier (for example ``what_is_science`` foundational
+    ``multi_step``) clamps to standard instead of 500ing.
+    """
+    mode = normalize_mode(mode)
+    supported = topic_mode_capabilities(level, subject, topic)
+    if mode not in supported:
+        return 'standard'
+    if (
+        difficulty in ('foundational', 'intermediate', 'difficult')
+        and mode in ADVANCED_MODES
+    ):
+        try:
+            vf = TOPICS[level][subject][topic].get('variants_func')
+        except KeyError:
+            return mode
+        if callable(vf):
+            try:
+                if not vf(difficulty, mode):
+                    return 'standard'
+            except (TypeError, ValueError):
+                return 'standard'
+    return mode
+
+
+def _generator_launch_restricted():
+    live = {(lv, sub) for lv, subjects in TOPICS.items() for sub in subjects}
+    return frozenset(live) != GENERATOR_LAUNCH_PATHS
+
+
+def _generator_launch_level_ids():
+    allowed = {lv for lv, _sub in GENERATOR_LAUNCH_PATHS}
+    return [lv for lv in ('gcse', 'alevel', 'myp', 'eursc') if lv in allowed]
+
+
+def _launch_default_topic(level, subject):
+    topics = (TOPICS.get(level) or {}).get(subject) or {}
+    for slug, _cfg in iter_topics(topics):
+        if slug != 'es0_fixture':
+            return slug
+    return GENERATOR_DEFAULT_TOPIC
+
+
+def _normalize_generator_scope(level, subject, topic):
+    """Clamp generator selections to GENERATOR_LAUNCH_PATHS."""
+    if not _generator_path_allowed(level, subject):
+        return GENERATOR_DEFAULT_LEVEL, GENERATOR_DEFAULT_SUBJECT, GENERATOR_DEFAULT_TOPIC
+    try:
+        TOPICS[level][subject][topic]
+    except KeyError:
+        topic = _launch_default_topic(level, subject)
+    return level, subject, topic
+
+
+_GENERATOR_DIFFICULTIES = frozenset({'foundational', 'intermediate', 'difficult'})
+
+
+def _problem_is_gradable(problem):
+    if not problem:
+        return False
+    if problem.get('options') and problem.get('correct_answer'):
+        return True
+    if problem.get('correct_answer_raw') is not None:
+        return True
+    if problem.get('correct_answer'):
+        return True
+    return False
+
+
+def _freeze_problem_payload(problem):
+    payload = _problem_client_payload(problem)
+    if not payload.get('question'):
+        payload['question'] = problem.get('question') or ''
+    return json.loads(json.dumps(payload, default=str))
+
+
+def _live_catalogue_topics():
+    out = []
+    for level, subject in sorted(GENERATOR_LAUNCH_PATHS):
+        topics = (TOPICS.get(level) or {}).get(subject) or {}
+        for slug, cfg in iter_topics(topics):
+            if slug == 'es0_fixture' or not cfg.get('func'):
+                continue
+            out.append({
+                'level': level,
+                'subject': subject,
+                'topic': slug,
+                'label': cfg.get('name', slug.replace('_', ' ').title()),
+                'modes': topic_mode_capabilities(level, subject, slug),
+            })
+    return out
+
+
+def _freeze_class_work_problems(level, subject, topic, mode, difficulty, count):
+    if not _generator_path_allowed(level, subject):
+        raise ValueError('invalid_topic')
+    try:
+        topic_config = TOPICS[level][subject][topic]
+    except KeyError:
+        raise ValueError('invalid_topic')
+    if not topic_config.get('func'):
+        raise ValueError('invalid_topic')
+    if difficulty not in _GENERATOR_DIFFICULTIES:
+        raise ValueError('invalid_difficulty')
+    try:
+        count = int(count)
+    except (TypeError, ValueError):
+        raise ValueError('invalid_count')
+    if count < MIN_ASSIGNMENT_QUESTIONS or count > MAX_ASSIGNMENT_QUESTIONS:
+        raise ValueError('invalid_count')
+    mode = _normalize_generator_mode(
+        level, subject, topic, mode, difficulty=difficulty
+    )
+    generator = topic_config['func']
+    queue = _build_problem_queue(topic_config, level, subject, topic, mode, difficulty) or []
+    problems = []
+    for i in range(count):
+        problem = None
+        for attempt in range(3):
+            try:
+                if queue:
+                    variant = queue[(i + attempt) % len(queue)]
+                    try:
+                        problem = generator(difficulty, mode, variant_name=variant)
+                    except TypeError:
+                        problem = generator(difficulty, mode)
+                else:
+                    problem = generator(difficulty, mode)
+            except (TypeError, ValueError):
+                try:
+                    problem = generator(difficulty, mode)
+                except (TypeError, ValueError):
+                    problem = None
+            if _problem_is_gradable(problem):
+                break
+        if not _problem_is_gradable(problem):
+            raise ValueError('generate_failed')
+        problems.append(_freeze_problem_payload(problem))
+    return problems, mode
+
+
+def _parse_assignment_scope(payload):
+    level = (payload.get('level') or '').strip()
+    subject = (payload.get('subject') or '').strip()
+    topic = (payload.get('topic') or '').strip()
+    difficulty = (payload.get('difficulty') or '').strip() or GENERATOR_DEFAULT_DIFFICULTY
+    mode = payload.get('mode') or GENERATOR_DEFAULT_MODE
+    count = payload.get('count')
+    return level, subject, topic, difficulty, mode, count
+
+
+def _remember_generator_selection(level, subject, topic, mode, difficulty):
+    session['generator_selection'] = {
+        'level': level,
+        'subject': subject,
+        'topic': topic,
+        'mode': mode,
+        'difficulty': difficulty,
+    }
+    session.modified = True
+
+
+def _selection_tuple_from_mapping(data):
+    if not isinstance(data, dict):
+        return None
+    level = data.get('level') or GENERATOR_DEFAULT_LEVEL
+    subject = data.get('subject') or GENERATOR_DEFAULT_SUBJECT
+    topic = _resolve_topic_slug(
+        level, subject, data.get('topic') or GENERATOR_DEFAULT_TOPIC,
+    )
+    level, subject, topic = _normalize_generator_scope(level, subject, topic)
+    difficulty = data.get('difficulty') or GENERATOR_DEFAULT_DIFFICULTY
+    if difficulty not in _GENERATOR_DIFFICULTIES:
+        difficulty = GENERATOR_DEFAULT_DIFFICULTY
+    mode = _normalize_generator_mode(
+        level, subject, topic, data.get('mode') or GENERATOR_DEFAULT_MODE
+    )
+    return level, subject, topic, mode, difficulty
+
+
+def _restored_generator_selection():
+    stored = _selection_tuple_from_mapping(session.get('generator_selection'))
+    if stored:
+        return stored
+    if current_user.is_authenticated:
+        with get_db() as conn:
+            items = list_recent_practised_topics(conn, current_user.id, limit=16)
+        for item in items:
+            if not item.get('difficulty'):
+                continue
+            if not _generator_path_allowed(item.get('level') or '', item.get('subject') or ''):
+                continue
+            restored = _selection_tuple_from_mapping(item)
+            if restored:
+                return restored
+    return (
+        GENERATOR_DEFAULT_LEVEL,
+        GENERATOR_DEFAULT_SUBJECT,
+        GENERATOR_DEFAULT_TOPIC,
+        GENERATOR_DEFAULT_MODE,
+        GENERATOR_DEFAULT_DIFFICULTY,
+    )
+
+
+def _picker_values_from(values, fallback):
+    level, subject, topic, mode, difficulty = fallback
+    if values.get('level'):
+        level = values.get('level')
+    if values.get('subject'):
+        subject = values.get('subject')
+    if values.get('topic'):
+        topic = values.get('topic')
+    if values.get('mode'):
+        mode = values.get('mode')
+    if values.get('difficulty'):
+        difficulty = values.get('difficulty')
+    topic = _resolve_topic_slug(level, subject, topic)
+    level, subject, topic = _normalize_generator_scope(level, subject, topic)
+    if difficulty not in _GENERATOR_DIFFICULTIES:
+        difficulty = GENERATOR_DEFAULT_DIFFICULTY
+    mode = _normalize_generator_mode(level, subject, topic, mode)
+    return level, subject, topic, mode, difficulty
+
+
+def _recent_topics_for_generator(conn, user_id, *, selected_diff='foundational'):
+    """Topic chips for the home strip, clamped to the live generator catalogue."""
+    fallback_diff = selected_diff if selected_diff in _GENERATOR_DIFFICULTIES else 'foundational'
+    items = list_recent_practised_topics(conn, user_id, limit=16)
+    out = []
+    seen = set()
+    for item in items:
+        level = item.get('level') or ''
+        subject = item.get('subject') or ''
+        topic = _resolve_topic_slug(level, subject, item.get('topic') or '')
+        if not _generator_path_allowed(level, subject):
+            continue
+        try:
+            cfg = TOPICS[level][subject][topic]
+        except KeyError:
+            continue
+        key = (level, subject, topic)
+        if key in seen:
+            continue
+        seen.add(key)
+        difficulty = item.get('difficulty') or fallback_diff
+        if difficulty not in _GENERATOR_DIFFICULTIES:
+            difficulty = fallback_diff
+        out.append({
+            'level': level,
+            'subject': subject,
+            'topic': topic,
+            'label': item.get('topic_label') or cfg.get('name') or topic.replace('_', ' ').title(),
+            'difficulty': difficulty,
+        })
+        if len(out) >= 8:
+            break
+    return out
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if 'anon_count' not in session:
@@ -1690,25 +2704,29 @@ def index():
     limit_hit = False
     ANON_DAILY_LIMIT = 999
 
+    fallback = _restored_generator_selection()
     if request.method == 'POST':
-        selected_level = request.form.get('level', 'gcse')
-        selected_subject = request.form.get('subject', 'physics')
-        selected_topic = _resolve_topic_slug(
-            selected_level, selected_subject, request.form.get('topic', 'forces')
+        selected_level, selected_subject, selected_topic, selected_mode, selected_diff = (
+            _picker_values_from(request.form, fallback)
         )
-        raw_mode = request.form.get('mode', 'standard')
-        selected_diff = request.form.get('difficulty', 'foundational')
+        selected_mode = _normalize_generator_mode(
+            selected_level,
+            selected_subject,
+            selected_topic,
+            selected_mode,
+            difficulty=selected_diff,
+        )
         action = request.form.get('action', 'start')
-    else:
-        selected_level = request.args.get('level', 'gcse')
-        selected_subject = request.args.get('subject', 'physics')
-        selected_topic = _resolve_topic_slug(
-            selected_level, selected_subject, request.args.get('topic', 'forces')
+    elif any(request.args.get(key) for key in _GENERATOR_PICKER_KEYS):
+        selected_level, selected_subject, selected_topic, selected_mode, selected_diff = (
+            _picker_values_from(request.args, fallback)
         )
-        raw_mode = request.args.get('mode', 'standard')
-        selected_diff = request.args.get('difficulty', 'foundational')
         action = 'start'
-    selected_mode = normalize_mode(raw_mode)
+    else:
+        selected_level, selected_subject, selected_topic, selected_mode, selected_diff = fallback
+        if not can_access_difficulty(current_user, selected_diff):
+            selected_diff = GENERATOR_DEFAULT_DIFFICULTY
+        action = 'start'
 
 
     if request.method == 'POST':
@@ -1777,6 +2795,13 @@ def index():
                         'problem': problem,
                     }
                     session.modified = True
+                    _remember_generator_selection(
+                        selected_level,
+                        selected_subject,
+                        selected_topic,
+                        selected_mode,
+                        selected_diff,
+                    )
                     _track_question_generated(
                         selected_level,
                         selected_subject,
@@ -1802,6 +2827,13 @@ def index():
         except KeyError:
             can_reroll_variant = False
 
+    recent_topics = []
+    if current_user.is_authenticated:
+        with get_db() as conn:
+            recent_topics = _recent_topics_for_generator(
+                conn, current_user.id, selected_diff=selected_diff,
+            )
+
     return render_template(
         'index.html',
         problem=problem,
@@ -1812,64 +2844,37 @@ def index():
         selected_topic=selected_topic,
         selected_mode=selected_mode,
         selected_diff=selected_diff,
+        hide_generator_mode=False,
         queue_active=bool(session.get('problem_queue')),
         can_reroll_variant=can_reroll_variant,
+        generator_launch_restricted=_generator_launch_restricted(),
+        generator_launch_levels=[
+            {'id': lv, 'label': LEVEL_LABELS.get(lv, lv.title())}
+            for lv in _generator_launch_level_ids()
+        ],
+        generator_topics=_generator_topic_options(),
+        recent_topics=recent_topics,
     )
 
 
 
 @app.route("/topic/<level>/<subject>/<topic>")
 def topic_page(level, subject, topic):
-    try:
-        topic_data = TOPICS[level][subject][topic]
-    except KeyError:
+    spec = _lesson_render_spec(level, subject, topic)
+    if not spec:
         return "Topic not found", 404
 
     _track_topic_opened(level, subject, topic)
+    template_name, context = spec
+    return render_template(template_name, **context)
 
-    if level == "alevel" and subject == "physics" and topic == "photoelectric":
-        p1 = lesson_problem(aqa_pe_basic)
-        p2 = lesson_problem(aqa_pe_threshold_frequency)
-        p3 = lesson_problem(aqa_pe_photoelectric_equation)
-        p4 = lesson_problem(aqa_pe_stopping_potential)
-        p5 = lesson_problem(aqa_pe_debroglie)
 
-        return render_template(
-            "alevel_physics_photoelectric_lesson.html",
-            p1=p1,
-            p2=p2,
-            p3=p3,
-            p4=p4,
-            p5=p5,
-        )
-
-    if level == "alevel" and subject == "physics" and topic == "magnetism":
-        p1 = aqa_mag_motor_effect()
-        p2 = aqa_mag_particle_path()
-        p3 = aqa_mag_flux_linkage()
-        p4 = aqa_mag_faradays_law()
-        p5 = aqa_mag_transformers()
-
-        return render_template(
-            "alevel_physics_magnetism_lesson.html",
-            p1=p1, p2=p2, p3=p3, p4=p4, p5=p5
-        )
-
-    custom = f"{level}_{subject}_{topic}_lesson.html"
-    try:
-        return render_template(custom)
-    except TemplateNotFound:
-        content = get_topic_content(level, subject, topic)
-        if not content:
-            return "Topic not found", 404
-        return render_template(
-            "topic.html",
-            content=content,
-            level=level,
-            subject=subject,
-            topic=topic,
-            supports_lesson_quiz=_lesson_quiz_available(level, subject, topic),
-        )
+@app.route("/ibl/eursc/science/<slug>")
+def eursc_ibl_page(slug):
+    page = IBL_PAGES.get(slug)
+    if not page:
+        return "Not found", 404
+    return render_template(page["template"], ibl=page)
 
 
 
@@ -1877,12 +2882,19 @@ LEVEL_LABELS = {
     'gcse': 'GCSE',
     'alevel': 'A-Level',
     'myp': 'IB MYP',
+    'eursc': 'European School',
+}
+YEAR_LABELS = {
+    's1': 'S1',
+    's2': 'S2',
+    's3': 'S3',
 }
 SUBJECT_LABELS = {
     'maths': 'Mathematics',
     'physics': 'Physics',
     'cs': 'Computer Science',
     'chemistry': 'Chemistry',
+    'science': 'Integrated Science',
 }
 PROFILE_VISIBILITY_LABELS = {
     'public': 'Public',
@@ -2104,10 +3116,13 @@ def _build_public_profile_context(target_user, viewer_id=None):
             quiz_rows = quiz_stats_summary(conn, target_user.id, limit=5)
         study_streak = None
         milestones = []
+        topics_count = None
         if is_own or settings.get('show_study_streak'):
             study_streak = get_study_streak(conn, target_user.id)
         if is_own or settings.get('show_milestones'):
             milestones = list_user_milestones(conn, target_user.id)
+        if is_own or settings.get('show_lesson_progress') or settings.get('show_quiz_stats'):
+            topics_count = len(topic_mastery_map(conn, target_user.id))
         can_challenge = False
         can_invite_study_pair = False
         if viewer_id and not is_own and not is_bot_user(target_user):
@@ -2157,6 +3172,8 @@ def _build_public_profile_context(target_user, viewer_id=None):
         'last_activity_url': last_activity_url,
         'study_streak': study_streak,
         'milestones': milestones,
+        'badge_shelf': list(reversed(milestones[-5:])) if milestones else [],
+        'topics_count': topics_count,
         'can_challenge': can_challenge,
         'can_invite_study_pair': can_invite_study_pair,
         'is_system_bot': is_bot_user(target_user),
@@ -2604,7 +3621,7 @@ def _rate_limits_disabled():
 def _auth_rate_limit(action, limit):
     if _rate_limits_disabled():
         return True, limit
-    bucket = f'auth:{action}:ip:{_client_ip()}'
+    bucket = f'auth:{action}:ip:{_client_ip_hash()}'
     with get_db() as conn:
         allowed, remaining, _count = check_and_increment_rate_limit(conn, bucket, limit)
     return allowed, remaining
@@ -2668,6 +3685,26 @@ def _notify_challenge_complete(conn, user_id, challenge_id, creator_handle, oppo
     )
 
 
+def _study_pair_error_message(exc):
+    code = str(exc)
+    messages = {
+        'pair_not_found': 'This study buddy invite is no longer available.',
+        'invite_not_pending': 'This invite was already accepted or declined.',
+        'not_recipient': 'This invite is not for your account.',
+        'already_paired': 'You already have a study buddy.',
+        'target_paired': 'That user already has a study buddy.',
+    }
+    return messages.get(code, code.replace('_', ' '))
+
+
+def _study_pair_api_error(exc):
+    code = str(exc)
+    status = 404 if code == 'pair_not_found' else 409 if code in (
+        'invite_not_pending', 'not_recipient', 'already_paired', 'target_paired',
+    ) else 400
+    return _api_error(_study_pair_error_message(exc), status, code)
+
+
 def _notify_study_pair_invite(conn, to_user_id, from_handle, pair_id):
     create_notification(
         conn,
@@ -2677,9 +3714,24 @@ def _notify_study_pair_invite(conn, to_user_id, from_handle, pair_id):
     )
 
 
-def _serialize_notification_item(item):
+def _notify_class_invite(conn, to_user_id, from_handle, invite_id, class_name):
+    create_notification(
+        conn,
+        to_user_id,
+        NOTIFICATION_CLASS_INVITE,
+        {
+            'invite_id': invite_id,
+            'from_handle': from_handle,
+            'class_name': class_name,
+        },
+    )
+
+
+def _serialize_notification_item(item, *, conn=None, viewer_id=None):
     payload = item.get('payload') or {}
     ntype = item.get('notification_type', '')
+    pair_id = payload.get('pair_id')
+    actions = []
     if ntype == NOTIFICATION_SUGGESTION:
         handle = payload.get('sender_handle', 'someone')
         topic = payload.get('topic_label', 'a topic')
@@ -2703,7 +3755,21 @@ def _serialize_notification_item(item):
     elif ntype == NOTIFICATION_STUDY_PAIR:
         handle = payload.get('from_handle', 'someone')
         message = f'@{handle} invited you to be study buddies'
-        url = url_for('profile')
+        url = url_for('public_profile', handle=handle)
+        if conn is not None and viewer_id is not None and pair_id:
+            row = get_study_pair_row(conn, int(pair_id))
+            if (
+                row
+                and row['status'] == PAIR_PENDING
+                and int(row['to_user_id']) == int(viewer_id)
+            ):
+                actions = ['accept', 'ignore']
+                url = None
+    elif ntype == NOTIFICATION_CLASS_INVITE:
+        handle = payload.get('from_handle', 'someone')
+        class_name = payload.get('class_name') or 'a class'
+        message = f'@{handle} invited you to join {class_name}'
+        url = url_for('student_classes')
     else:
         message = 'New notification'
         url = url_for('profile')
@@ -2712,6 +3778,8 @@ def _serialize_notification_item(item):
         'type': ntype,
         'message': message,
         'url': url,
+        'pair_id': pair_id if ntype == NOTIFICATION_STUDY_PAIR else None,
+        'actions': actions,
         'read': item.get('read_at') is not None,
         'created_at': item.get('created_at'),
     }
@@ -2822,12 +3890,12 @@ def _qotd_challenge_for_viewer(viewer_id, filter_name=FEED_FILTER_ALL, before_id
 
 def _settings_to_json(settings):
     return {
-        'profile_visibility': settings.get('profile_visibility', VISIBILITY_PUBLIC),
+        'profile_visibility': settings.get('profile_visibility', VISIBILITY_FOLLOWERS),
         'show_member_since': bool(settings.get('show_member_since', True)),
-        'show_last_topic': bool(settings.get('show_last_topic', True)),
-        'show_last_activity': bool(settings.get('show_last_activity', True)),
-        'show_lesson_progress': bool(settings.get('show_lesson_progress', True)),
-        'show_quiz_stats': bool(settings.get('show_quiz_stats', True)),
+        'show_last_topic': bool(settings.get('show_last_topic', False)),
+        'show_last_activity': bool(settings.get('show_last_activity', False)),
+        'show_lesson_progress': bool(settings.get('show_lesson_progress', False)),
+        'show_quiz_stats': bool(settings.get('show_quiz_stats', False)),
         'show_shared_questions': bool(settings.get('show_shared_questions', True)),
         'auto_share_quiz': bool(settings.get('auto_share_quiz', False)),
         'auto_share_lesson': bool(settings.get('auto_share_lesson', False)),
@@ -2836,7 +3904,15 @@ def _settings_to_json(settings):
         'show_milestones': bool(settings.get('show_milestones', False)),
         'email_weekly_digest': bool(settings.get('email_weekly_digest', False)),
         'show_accuracy_leaderboard': bool(settings.get('show_accuracy_leaderboard', True)),
+        'sound_enabled': bool(settings.get('sound_enabled', False)),
+        'theme_preference': normalize_theme_preference(
+            settings.get('theme_preference', THEME_SYSTEM)
+        ),
         'avatar': parse_avatar(settings.get('avatar')),
+        'guide': public_guide_state(
+            settings.get('guide') if isinstance(settings.get('guide'), dict)
+            else settings.get('guide_json')
+        ),
     }
 
 
@@ -2976,8 +4052,6 @@ def _build_public_profile_json(target_user, viewer_id=None):
                 'subject': item['subject'],
                 'topic': item['topic'],
                 'topic_label': item['topic_label'],
-                'score': item['score'],
-                'total': item['total'],
                 'created_at': item['created_at'],
             }
             for item in context['quiz_attempts']
@@ -2986,10 +4060,13 @@ def _build_public_profile_json(target_user, viewer_id=None):
         context['is_own_profile'] or settings.get('show_study_streak')
     ):
         profile['study_streak'] = context['study_streak']
+    if context.get('topics_count') is not None:
+        profile['topics_count'] = context['topics_count']
     if context.get('milestones') and (
         context['is_own_profile'] or settings.get('show_milestones')
     ):
         profile['milestones'] = context['milestones']
+        profile['badge_shelf'] = context.get('badge_shelf') or []
     return profile
 
 
@@ -3050,6 +4127,22 @@ def _lesson_meta_for_topic(level, subject, topic, *, quiz_review=False):
     }
     if quiz_review:
         meta['quizReview'] = True
+    elif _lesson_quiz_available(level, subject, topic):
+        meta['quizUrl'] = url_for(
+            'lesson_mcq_quiz',
+            level=level,
+            subject=subject,
+            topic=topic,
+        )
+        meta['quizCount'] = sum(count for _, count in LESSON_QUIZ_MIX)
+    meta['practiceUrl'] = url_for(
+        'index',
+        level=level,
+        subject=subject,
+        topic=topic,
+        mode='standard',
+        difficulty='foundational',
+    )
     return meta
 
 
@@ -3159,10 +4252,88 @@ def _lesson_render_spec(level, subject, topic):
             },
         )
 
+    if level == 'gcse' and subject == 'physics' and topic == 'radioactivity':
+        return (
+            'gcse_physics_radioactivity_lesson.html',
+            {
+                'p1': lesson_problem(rad_found_atom_structure),
+                'p2': lesson_problem(rad_inter_alpha_equation),
+                'p3': lesson_problem(rad_diff_compare_alpha_beta_gamma),
+            },
+        )
+
     custom = f'{level}_{subject}_{topic}_lesson.html'
     try:
         app.jinja_env.get_template(custom)
-        return custom, {}
+        extra = {}
+        if level == 'eursc' and subject == 'science' and topic == 'measurement':
+            extra['ruler_fig'] = ruler_scale(4.7)
+            extra['accuracy_fig'] = accuracy_targets()
+        if level == 'eursc' and subject == 'science' and topic == 'science_lab':
+            extra['science_lab_bench'] = lab_bench()
+        if level == 'eursc' and subject == 'science' and topic == 'water_substances':
+            extra['particle_states'] = particle_states()
+        if level == 'eursc' and subject == 'science' and topic == 'cooking_acid':
+            extra['ph_scale_fig'] = ph_scale()
+        if level == 'eursc' and subject == 'science' and topic == 'movement':
+            extra['dt_graph'] = distance_time_graph()
+        if level == 'eursc' and subject == 'science' and topic == 'forces_sport':
+            extra['force_pair_fig'] = force_pair()
+        if level == 'eursc' and subject == 'science' and topic == 'breathing':
+            extra['circulation_fig'] = circulation_boxes()
+        if level == 'eursc' and subject == 'science' and topic == 'sport_health':
+            extra['muscle_pair_fig'] = antagonistic_pair()
+        if level == 'eursc' and subject == 'science' and topic == 'reproductive_anatomy':
+            extra['organ_labels_fig'] = organ_labels()
+            extra['cycle_fig'] = menstrual_cycle_steps()
+        if level == 'eursc' and subject == 'science' and topic == 'solar_system':
+            extra['earth_sun_moon_fig'] = earth_sun_moon()
+            extra['solar_scale_fig'] = solar_scale()
+        if level == 'eursc' and subject == 'science' and topic == 'light_telescopes':
+            extra['reflection_fig'] = reflection_rays()
+        if level == 'eursc' and subject == 'science' and topic == 'atoms_molecules':
+            extra['atom_molecule_fig'] = atom_molecule_boxes()
+        if level == 'eursc' and subject == 'science' and topic == 'healthy_living':
+            extra['habit_bars_fig'] = habit_bars()
+        if level == 'eursc' and subject == 'science' and topic == 'infectious_disease':
+            extra['infection_chain_fig'] = infection_chain()
+            extra['outbreak_fig'] = outbreak_bars()
+        if level == 'eursc' and subject == 'science' and topic == 'tobacco':
+            extra['outbreak_fig'] = outbreak_bars()
+        if level == 'eursc' and subject == 'science' and topic == 'vision':
+            extra['eye_fig'] = eye_boxes()
+        if level == 'eursc' and subject == 'science' and topic == 'hearing':
+            extra['ear_fig'] = ear_boxes()
+        if level == 'eursc' and subject == 'science' and topic == 'proprioception_balance':
+            extra['canal_fig'] = canal_boxes()
+        if level == 'eursc' and subject == 'science' and topic == 'nonhuman_senses':
+            extra['signal_fig'] = signal_detect()
+        if level == 'eursc' and subject == 'science' and topic == 'force_work_machines':
+            extra['lever_fig'] = lever_boxes()
+            extra['force_vectors_fig'] = force_vectors()
+            extra['simple_machines_fig'] = simple_machines()
+            extra['ramp_fig'] = ramp_tradeoff()
+            extra['work_fd_fig'] = work_fd()
+            extra['body_lever_fig'] = body_lever()
+        if level == 'eursc' and subject == 'science' and topic == 'energy':
+            extra['sankey_fig'] = sankey_bars()
+        if level == 'eursc' and subject == 'science' and topic == 'electrostatics':
+            extra['charge_fig'] = charge_pair()
+        if level == 'eursc' and subject == 'science' and topic == 'electric_current':
+            extra['circuit_fig'] = circuit_boxes()
+        if level == 'eursc' and subject == 'science' and topic == 'magnetism':
+            extra['magnet_fig'] = magnet_poles()
+        if level == 'eursc' and subject == 'science' and topic == 'food_environment':
+            extra['lifecycle_fig'] = lifecycle_boxes()
+        if level == 'eursc' and subject == 'science' and topic == 'ecosystems_cycles':
+            extra['trophic_fig'] = trophic_boxes()
+            extra['water_cycle_fig'] = water_cycle_steps()
+            extra['carbon_cycle_fig'] = carbon_cycle_steps()
+        if level == 'eursc' and subject == 'science' and topic == 'ecosystem_characteristics':
+            extra['factor_fig'] = factor_boxes()
+        if level == 'eursc' and subject == 'science' and topic == 'classification_biodiversity':
+            extra['key_fig'] = key_boxes()
+        return custom, extra
     except TemplateNotFound:
         pass
 
@@ -3223,6 +4394,14 @@ def _quicktest_question_payload(problem, *, reveal=False):
     return payload
 
 
+def _lesson_quiz_question_payload(problem, *, reveal=False):
+    payload = _quicktest_question_payload(problem, reveal=reveal)
+    if not reveal:
+        payload.pop('correct_answer', None)
+        payload.pop('correct_answer_raw', None)
+    return payload
+
+
 def _quicktest_session_summary(data, session_id):
     idx = int(data.get('index', 0))
     total = len(data.get('problems') or [])
@@ -3270,6 +4449,26 @@ def _quicktest_answer_from_form(problem, form):
             'correct': None,
             'checked': checked,
         }
+
+    if user_answer and (problem.get('answer_type') or '') == 'number_fields':
+        from generators.shared.answer_checkers import check_number_fields
+
+        try:
+            result = check_number_fields(
+                str(problem.get('correct_answer_raw')),
+                user_answer,
+                field_types=problem.get('answer_field_types'),
+            )
+        except (TypeError, ValueError):
+            result = None
+        if result is not None:
+            return {
+                'user_answer': user_answer,
+                'correct': bool(result.get('correct')),
+                'checked': True,
+                'score': result.get('score'),
+                'score_total': result.get('score_total'),
+            }
 
     correct = None
     if correct_flag == '1':
@@ -3320,6 +4519,30 @@ def _quicktest_results_summary(problems, answers):
         'graded_total': graded_total,
         'checked_total': checked_total,
     }
+
+
+def _quicktest_answer_is_wrong(problem, answer):
+    """Whether a completed Quick Test question should be offered for retry."""
+    answer = answer or {}
+    if problem.get('options'):
+        return not answer.get('correct')
+    if problem.get('correct_answer_raw'):
+        if not answer.get('checked'):
+            return True
+        score_total = answer.get('score_total')
+        if score_total:
+            return int(answer.get('score') or 0) < int(score_total)
+        return not answer.get('correct')
+    return False
+
+
+def _quicktest_wrong_count(problems, answers):
+    wrong = 0
+    for i, problem in enumerate(problems):
+        answer = answers[i] if i < len(answers) else {}
+        if _quicktest_answer_is_wrong(problem, answer):
+            wrong += 1
+    return wrong
 
 
 _SESSION_PROBLEM_DROP_KEYS = frozenset({
@@ -3437,11 +4660,19 @@ def _get_lesson_quiz_session_or_error(session_id):
     return data, None
 
 
+def _lesson_quiz_user_answer(answers, index):
+    if index >= len(answers or []):
+        return ''
+    value = answers[index]
+    if isinstance(value, dict):
+        return str(value.get('user_answer') or '')
+    return str(value or '')
+
+
 def _lesson_quiz_score(problems, answers):
     score = 0
     for i, problem in enumerate(problems):
-        letter = answers[i] if i < len(answers) else ''
-        if letter and letter == (problem.get('correct_answer') or '').strip().upper()[:1]:
+        if grade_lesson_quiz_problem(problem, _lesson_quiz_user_answer(answers, i))['correct']:
             score += 1
     return score
 
@@ -3488,6 +4719,7 @@ def _apply_lesson_progress_update(
     section_key,
     section_label,
     completed_keys=None,
+    step_total=None,
 ):
     with get_db() as conn:
         upsert_lesson_progress(
@@ -3499,6 +4731,7 @@ def _apply_lesson_progress_update(
             section_key,
             section_label,
             completed_keys=completed_keys,
+            step_total=step_total,
         )
         progress = get_lesson_progress(conn, user_id, level, subject, topic)
         settings = get_profile_settings(conn, user_id)
@@ -3527,12 +4760,35 @@ def _apply_lesson_progress_update(
     return progress
 
 
-_TOPIC_LEVEL_ORDER = ('gcse', 'alevel', 'myp')
+_TOPIC_LEVEL_ORDER = ('gcse', 'alevel', 'myp', 'eursc')
 _TOPIC_SUBJECT_ORDER = {
     'gcse': ('maths', 'physics', 'cs'),
     'alevel': ('physics',),
     'myp': ('chemistry',),
+    'eursc': ('science',),
 }
+
+
+def _eursc_ibl_path_topics():
+    items = []
+    for slug, page in IBL_PAGES.items():
+        year = page.get('year')
+        items.append({
+            'slug': slug,
+            'name': page['title'],
+            'level': 'eursc',
+            'subject': 'science',
+            'url': f'/ibl/eursc/science/{slug}',
+            'order': page.get('path_order'),
+            'prereqs': [],
+            'year': year,
+            'year_label': YEAR_LABELS.get(year, (year or '').upper()),
+            'unit_code': page.get('unit_code'),
+            'unit_name': page.get('unit_name'),
+            'syllabus_ref': None,
+            'is_ibl': True,
+        })
+    return items
 
 
 def _build_topic_groups():
@@ -3543,21 +4799,152 @@ def _build_topic_groups():
             continue
         for subject in _TOPIC_SUBJECT_ORDER.get(level, tuple(subjects.keys())):
             topics = subjects.get(subject)
-            if not topics:
+            if topics is None:
                 continue
             items = [
                 {
                     'slug': slug,
                     'name': cfg['name'],
+                    'level': level,
+                    'subject': subject,
                     'url': f'/topic/{level}/{subject}/{slug}',
+                    'order': cfg.get('order'),
+                    'prereqs': list(cfg.get('prereqs') or ()),
+                    'year': cfg.get('year'),
+                    'year_label': YEAR_LABELS.get(cfg.get('year'), (cfg.get('year') or '').upper()),
+                    'unit_code': cfg.get('unit_code'),
+                    'unit_name': cfg.get('unit_name'),
+                    'syllabus_ref': cfg.get('syllabus_ref'),
                 }
-                for slug, cfg in sorted(topics.items(), key=lambda x: x[1]['name'].lower())
+                for slug, cfg in iter_topics(topics)
             ]
+            if level == 'eursc' and subject == 'science':
+                items.extend(_eursc_ibl_path_topics())
+                items.sort(key=lambda item: (item.get('order') or 0, item.get('slug') or ''))
             groups.append({
                 'title': f"{LEVEL_LABELS.get(level, level.title())} {SUBJECT_LABELS.get(subject, subject.title())}",
+                'level': level,
+                'subject': subject,
                 'topics': items,
             })
     return groups
+
+
+def _coerce_step_total(value):
+    if value is None or value == '':
+        return None
+    try:
+        total = int(value)
+    except (TypeError, ValueError):
+        return None
+    if total < 0 or total > 80:
+        return None
+    return total
+
+
+def _status_from_progress_entry(entry):
+    if isinstance(entry, dict):
+        return {
+            'mastery': float(entry.get('mastery') or 0),
+            'lesson_complete': bool(entry.get('lesson_complete')),
+            'ninja': bool(entry.get('ninja')),
+            'master_active': bool(entry.get('master_active')),
+            'completed_count': int(entry.get('completed_count') or 0),
+            'step_total': int(entry.get('step_total') or 0),
+        }
+    pct = float(entry or 0)
+    return {
+        'mastery': pct,
+        'lesson_complete': pct >= 0.8,
+        'ninja': pct >= 0.67,
+        'master_active': pct >= 1.0,
+        'completed_count': 0,
+        'step_total': 0,
+    }
+
+
+def _annotate_topic_path_groups(groups, statuses):
+    """Attach lesson-complete / ninja / master flags for the /topics path."""
+    statuses = statuses or {}
+    for group in groups:
+        by_slug = {
+            topic['slug']: topic
+            for topic in group['topics']
+            if not topic.get('is_ibl')
+        }
+        completed = 0
+        ninja_count = 0
+        master_count = 0
+        for topic in group['topics']:
+            if topic.get('is_ibl'):
+                topic['mastery'] = 0
+                topic['mastery_pct'] = 0
+                topic['completed_count'] = 0
+                topic['step_total'] = 0
+                topic['is_complete'] = False
+                topic['is_ninja'] = False
+                topic['is_master'] = False
+                topic['prereq_hint'] = None
+                topic['is_current'] = False
+                topic['is_later'] = False
+                continue
+            key = (topic.get('level'), topic.get('subject'), topic.get('slug'))
+            status = _status_from_progress_entry(statuses.get(key))
+            topic['mastery'] = status['mastery']
+            topic['mastery_pct'] = int(round(status['mastery'] * 100))
+            topic['completed_count'] = status['completed_count']
+            topic['step_total'] = status['step_total']
+            topic['is_complete'] = status['lesson_complete']
+            topic['is_ninja'] = status['ninja']
+            topic['is_master'] = status['master_active']
+            if topic['is_complete']:
+                completed += 1
+            if topic['is_ninja']:
+                ninja_count += 1
+            if topic['is_master']:
+                master_count += 1
+            unmet = []
+            for slug in topic.get('prereqs') or []:
+                prev = by_slug.get(slug)
+                if prev is not None and not prev.get('is_complete'):
+                    unmet.append(prev['name'])
+            topic['prereq_hint'] = unmet[0] if unmet else None
+            topic['is_current'] = False
+        current_assigned = False
+        for topic in group['topics']:
+            if topic.get('is_ibl'):
+                continue
+            if not topic['is_complete'] and not current_assigned:
+                topic['is_current'] = True
+                current_assigned = True
+            topic['is_later'] = not topic['is_complete'] and not topic['is_current']
+        group['completed_count'] = completed
+        group['ninja_count'] = ninja_count
+        group['master_count'] = master_count
+        group['topic_count'] = sum(1 for topic in group['topics'] if not topic.get('is_ibl'))
+    return groups
+
+
+def _generator_topic_options():
+    """Topic picker rows in syllabus order, limited to the live launch allowlist."""
+    items = []
+    for level in _TOPIC_LEVEL_ORDER:
+        subjects = TOPICS.get(level) or {}
+        for subject in _TOPIC_SUBJECT_ORDER.get(level, tuple(subjects.keys())):
+            if not _generator_path_allowed(level, subject):
+                continue
+            topics = subjects.get(subject) or {}
+            for slug, cfg in iter_topics(topics):
+                if slug == 'es0_fixture':
+                    continue
+                items.append({
+                    'slug': slug,
+                    'name': cfg.get('name') or slug.replace('_', ' ').title(),
+                    'level': level,
+                    'subject': subject,
+                    'modes': topic_mode_capabilities(level, subject, slug),
+                })
+    return items
 
 
 _TOPIC_INDEX = None
@@ -3581,7 +4968,7 @@ def _get_topic_index():
                 f"{LEVEL_LABELS.get(level, level.title())} "
                 f"{SUBJECT_LABELS.get(subject, subject.title())}"
             )
-            for slug, cfg in sorted(topics.items(), key=lambda x: x[1]['name'].lower()):
+            for slug, cfg in iter_topics(topics):
                 items.append({
                     'name': cfg['name'],
                     'slug': slug,
@@ -3639,7 +5026,13 @@ def _search_topics(query, limit=8):
 
 @app.route('/topics')
 def topics_index():
-    return render_template('topics.html', topic_groups=_build_topic_groups())
+    groups = _build_topic_groups()
+    statuses = {}
+    if current_user.is_authenticated:
+        with get_db() as conn:
+            statuses = topic_status_map(conn, current_user.id)
+    _annotate_topic_path_groups(groups, statuses)
+    return render_template('topics.html', topic_groups=groups)
 
 
 # Sandbox review page for Plan A/B/C auto-grade variants.
@@ -3820,14 +5213,78 @@ def sandbox_plan_a_checkpoints():
     )
 
 
+def _guide_preview_enabled():
+    """Dev-only preview pages — localhost always; else PB_STYLEGUIDE / PB_TESTING."""
+    if os.environ.get('PB_STYLEGUIDE') == '1' or os.environ.get('PB_TESTING') == '1':
+        return True
+    host = (request.host or '').split(':', 1)[0].lower()
+    if host in ('127.0.0.1', 'localhost', '[::1]'):
+        return True
+    site = (os.environ.get('SITE_URL') or '').strip()
+    return not site.startswith('https://')
+
+
+@app.get('/styleguide')
+def styleguide():
+    """Component gallery for the Phase U redesign (docs/UI_REDESIGN.md U0.11).
+
+    Dev-only: available on localhost; elsewhere set PB_STYLEGUIDE=1 (or PB_TESTING=1).
+ 404 on production HTTPS.
+    """
+    if not _guide_preview_enabled():
+        abort(404)
+    return render_template('styleguide.html')
+
+
+@app.get('/guide-preview')
+def guide_preview():
+    """E6 / A1 — preview origin overlay without logging in. Dev-only."""
+    if not _guide_preview_enabled():
+        abort(404)
+    return render_template('guide_preview.html', guide_preview_mode=True)
+
+
 @app.route('/about')
 def about():
     return render_template('about.html')
 
 
+def _legal_context():
+    ico = ico_registration_number()
+    return {
+        'controller_name': controller_name(),
+        'privacy_contact_email': privacy_contact_email(),
+        'ico_registration_number': ico or 'Not yet registered — required before public launch',
+    }
+
+
+@app.route('/privacy')
+def legal_privacy():
+    return render_template('legal_privacy.html', **_legal_context())
+
+
+@app.route('/privacy/simple')
+def legal_privacy_simple():
+    return render_template('legal_privacy_simple.html', **_legal_context())
+
+
+@app.route('/terms')
+def legal_terms():
+    return render_template('legal_terms.html', **_legal_context())
+
+
 @app.get('/api/v1/build-info')
 def api_v1_build_info():
-    return jsonify({'ok': True, 'buddy_embed': 'v4', 'study_buddy_js': 'v7'})
+    return jsonify({
+        'ok': True,
+        'buddy_embed': 'v4',
+        'study_buddy_js': 'v7',
+        'theme_settings': True,
+        'guide_preview': '/guide-preview',
+        'repo_root': str(_ROOT),
+        'db_path': _db_path(),
+        'pb_testing': os.environ.get('PB_TESTING') == '1',
+    })
 
 
 @app.get('/offline')
@@ -3847,10 +5304,32 @@ def service_worker():
 
 @app.get('/manifest.webmanifest')
 def web_manifest():
+    manifest_path = _ROOT / 'static' / 'manifest.webmanifest'
+    with manifest_path.open(encoding='utf-8') as handle:
+        data = json.load(handle)
+    theme = normalize_theme_preference(request.cookies.get('pb_theme', THEME_SYSTEM))
+    if theme == 'dark':
+        data['background_color'] = '#0f1724'
+        data['theme_color'] = '#0f1724'
+    elif theme == 'light':
+        data['background_color'] = '#f2f6fa'
+        data['theme_color'] = '#1a86d4'
+    else:
+        prefers_dark = request.headers.get('Sec-CH-Prefers-Color-Scheme') == 'dark'
+        if prefers_dark:
+            data['background_color'] = '#0f1724'
+            data['theme_color'] = '#0f1724'
+    response = jsonify(data)
+    response.mimetype = 'application/manifest+json'
+    return response
+
+
+@app.get('/favicon.ico')
+def favicon_ico():
     return send_from_directory(
-        _ROOT / 'static',
-        'manifest.webmanifest',
-        mimetype='application/manifest+json',
+        _ROOT / 'static' / 'icons',
+        'favicon.ico',
+        mimetype='image/x-icon',
     )
 
 
@@ -3897,7 +5376,10 @@ def register():
                 email = normalize_email(form['email'])
                 handle = normalize_handle(form['handle'])
                 with get_db() as conn:
-                    if User.get_by_email(conn, email) or User.get_by_handle(conn, handle):
+                    reserved_msg = validate_handle(handle, conn)
+                    if reserved_msg:
+                        errors['handle'] = reserved_msg
+                    elif User.get_by_email(conn, email) or User.get_by_handle(conn, handle):
                         # Same message for email/handle conflicts (no account enumeration).
                         errors['form'] = (
                             'Could not create that account. '
@@ -3906,9 +5388,15 @@ def register():
                     else:
                         user = User.create(conn, email, handle, password)
                         ensure_user_profile(conn, user.id)
+                        raw = create_email_verification_token(conn, user.id)
+                        _send_verify_email(user, raw)
                         login_user(user, remember=True)
                         user.touch_login(conn)
-                        flash('Welcome to Problem Bank!', 'success')
+                        flash_for(
+                            'profile',
+                            'Welcome to Problem Bank! Check your email to confirm your address.',
+                            'success',
+                        )
                         return redirect(url_for('profile'))
 
     return render_template('register.html', errors=errors, form=form)
@@ -3934,26 +5422,34 @@ def login():
                 password = request.form.get('password', '')
                 remember = request.form.get('remember') == '1'
 
-                with get_db() as conn:
-                    user = User.get_by_email(conn, normalize_email(email_value))
-
-                # Constant-time-ish: always verify against a hash when user missing.
-                from werkzeug.security import check_password_hash
-                dummy_hash = (
-                    'scrypt:32768:8:1$dummy$0123456789abcdef0123456789abcdef'
-                    '0123456789abcdef0123456789abcdef'
-                )
-                if user and is_bot_user(user):
-                    check_password_hash(dummy_hash, password or 'x')
-                    error = 'Invalid email or password.'
-                elif user and user.is_active and user.check_password(password):
-                    login_user(user, remember=remember)
+                if not normalize_email(email_value):
+                    error = 'Email is required.'
+                elif not password:
+                    error = 'Password is required.'
+                else:
+                    from werkzeug.security import check_password_hash
+                    dummy_hash = (
+                        'scrypt:32768:8:1$dummy$0123456789abcdef0123456789abcdef'
+                        '0123456789abcdef0123456789abcdef'
+                    )
                     with get_db() as conn:
-                        user.touch_login(conn)
-                    return redirect(_safe_redirect_target(request.args.get('next')))
-
-                check_password_hash(dummy_hash, password or 'x')
-                error = 'Invalid email or password.'
+                        user = User.get_by_email(conn, normalize_email(email_value))
+                        if user and is_bot_user(user):
+                            check_password_hash(dummy_hash, password or 'x')
+                            error = 'Invalid email or password.'
+                        elif user and is_login_locked(conn, user.id):
+                            check_password_hash(dummy_hash, password or 'x')
+                            error = 'Invalid email or password.'
+                        elif user and user.is_active and user.check_password(password):
+                            clear_login_failures(conn, user.id)
+                            login_user(user, remember=remember)
+                            user.touch_login(conn)
+                            return redirect(_safe_redirect_target(request.args.get('next')))
+                        else:
+                            if user and not is_bot_user(user):
+                                record_login_failure(conn, user.id)
+                            check_password_hash(dummy_hash, password or 'x')
+                            error = 'Invalid email or password.'
 
     return render_template('login.html', error=error, email_value=email_value)
 
@@ -3961,11 +5457,98 @@ def login():
 @app.post('/logout')
 def logout():
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired. Please try again.', 'error')
+        flash_for('index', 'Your session expired. Please try again.', 'error')
         return redirect(url_for('index'))
     logout_user()
-    flash('You have been logged out.', 'success')
+    flash_for('index', 'You have been logged out.', 'success')
     return redirect(url_for('index'))
+
+
+FORGOT_PASSWORD_DAILY_LIMIT = 5
+EXPORT_DAILY_LIMIT = 2
+GENERIC_RESET_NOTICE = 'If that email is on an account, we sent a reset link.'
+
+
+@app.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if current_user.is_authenticated:
+        return redirect(url_for('profile'))
+    notice = None
+    if request.method == 'POST':
+        if not _validate_csrf(request.form.get('csrf_token')):
+            notice = 'Your session expired. Please try again.'
+        else:
+            allowed, _rem = _auth_rate_limit('forgot_password', FORGOT_PASSWORD_DAILY_LIMIT)
+            if not allowed:
+                notice = 'Too many reset requests. Try again tomorrow.'
+            else:
+                email = normalize_email(request.form.get('email', ''))
+                if email:
+                    with get_db() as conn:
+                        user = User.get_by_email(conn, email)
+                        if user and user.is_active and not is_bot_user(user):
+                            raw = create_password_reset_token(conn, user.id)
+                            _send_reset_email(user, raw)
+                notice = GENERIC_RESET_NOTICE
+    return render_template('forgot_password.html', notice=notice)
+
+
+@app.route('/reset-password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('profile'))
+    error = None
+    with get_db() as conn:
+        valid = peek_password_reset_token(conn, token)
+    if request.method == 'GET' and not valid:
+        return render_template('reset_password.html', token=token, error='This reset link is invalid or has expired.', invalid=True)
+
+    if request.method == 'POST':
+        if not _validate_csrf(request.form.get('csrf_token')):
+            error = 'Your session expired. Please try again.'
+        else:
+            allowed, _rem = _auth_rate_limit('reset_password', FORGOT_PASSWORD_DAILY_LIMIT)
+            if not allowed:
+                error = 'Too many reset attempts. Try again tomorrow.'
+            else:
+                password = request.form.get('password', '')
+                confirm = request.form.get('confirm_password', '')
+                msg = validate_password(password)
+                if msg:
+                    error = msg
+                elif password != confirm:
+                    error = 'Passwords do not match.'
+                else:
+                    with get_db() as conn:
+                        user_id = consume_password_reset_token(conn, token)
+                        if not user_id:
+                            error = 'This reset link is invalid or has expired.'
+                        else:
+                            user = User.get_by_id(conn, user_id)
+                            if not user:
+                                error = 'This reset link is invalid or has expired.'
+                            else:
+                                user.set_password(conn, password)
+                                flash_for('login', 'Password updated. You can log in now.', 'success')
+                                return redirect(url_for('login'))
+    return render_template('reset_password.html', token=token, error=error, invalid=False)
+
+
+@app.route('/verify-email/<token>')
+def verify_email(token):
+    with get_db() as conn:
+        user_id = consume_email_verification_token(conn, token)
+    if user_id:
+        flash_for('profile', 'Your email is confirmed.', 'success')
+        if current_user.is_authenticated:
+            with get_db() as conn:
+                refreshed = User.get_by_id(conn, current_user.id)
+            if refreshed:
+                login_user(refreshed, remember=True)
+            return redirect(url_for('profile'))
+        return redirect(url_for('login'))
+    flash_for('login', 'That confirmation link is invalid or has expired.', 'error')
+    return redirect(url_for('login'))
 
 
 @app.route('/profile')
@@ -3979,7 +5562,12 @@ def profile():
         mcq_attempts = list_generator_mcq_attempts_for_display(conn, current_user.id, limit=10)
         practice_streak = get_practice_streak(conn, current_user.id)
         study_streak = get_study_streak(conn, current_user.id)
-        milestones = list_user_milestones(conn, current_user.id)
+        streak_dots = streak_week_dots(conn, current_user.id)
+        streak_calendar_rows = streak_calendar(conn, current_user.id, weeks=4)
+        weekly_effort_days = weekly_effort_by_day(conn, current_user.id)
+        accuracy_trend = recent_accuracy_trend(conn, current_user.id, limit=10)
+        streak_ring = streak_ring_progress(study_streak.get('current'))
+        milestones = list_milestone_shelf(conn, current_user.id)
         weekly_recap = get_weekly_recap(conn, current_user.id)
         leaderboard = friend_effort_leaderboard(conn, current_user.id, days=7)
         pending_suggestions = count_pending_suggestions(conn, current_user.id)
@@ -4001,6 +5589,30 @@ def profile():
             prompt_type=reflection_type,
         )
         revision_plan = _revision_plan_for_user(conn, current_user.id)
+        mastery_map = topic_mastery_map(conn, current_user.id)
+        mastery_topics = []
+        for (level, subject, topic), pct in sorted(
+            mastery_map.items(),
+            key=lambda item: (-item[1], item[0][0], item[0][1], item[0][2]),
+        ):
+            if pct <= 0:
+                continue
+            mastery_topics.append({
+                'level': level,
+                'subject': subject,
+                'topic': topic,
+                'topic_label': _topic_label(level, subject, topic),
+                'topic_url': url_for(
+                    'topic_page',
+                    level=level,
+                    subject=subject,
+                    topic=topic,
+                ),
+                'mastery_pct': int(round(pct * 100)),
+            })
+            if len(mastery_topics) >= 12:
+                break
+        badges_earned = sum(1 for item in milestones if item.get('earned'))
     for item in saved:
         item['topic_label'] = _topic_label(item['level'], item['subject'], item['topic'])
     for item in progress:
@@ -4043,6 +5655,11 @@ def profile():
         mcq_attempts=mcq_attempts,
         practice_streak=practice_streak,
         study_streak=study_streak,
+        streak_dots=streak_dots,
+        streak_calendar_rows=streak_calendar_rows,
+        weekly_effort_days=weekly_effort_days,
+        accuracy_trend=accuracy_trend,
+        streak_ring=streak_ring,
         milestones=milestones,
         weekly_recap=weekly_recap,
         friend_leaderboard=leaderboard[:5],
@@ -4060,11 +5677,11 @@ def profile():
         reflection_prompt_types=sorted(PROMPT_TYPE_LABELS.items()),
         revision_plan=revision_plan,
         revision_plan_levels=_revision_plan_levels(),
-        revision_plan_subjects=_revision_plan_subjects_for_level(
-            revision_plan['level'] if revision_plan else 'gcse'
-        ),
+        revision_plan_subjects=_revision_plan_scope_options(),
         public_profile_url=_public_profile_url(current_user.handle),
         avatar=avatar or dict(DEFAULT_AVATAR),
+        mastery_topics=mastery_topics,
+        badges_earned=badges_earned,
     )
 
 
@@ -4072,13 +5689,13 @@ def profile():
 @login_required
 def profile_revision_plan_save():
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Session expired — try again.', 'error')
+        flash_for('profile', 'Session expired — try again.', 'error')
         return redirect(url_for('profile'))
 
     if request.form.get('action') == 'clear':
         with get_db() as conn:
             delete_revision_plan_settings(conn, current_user.id)
-        flash('Exam revision plan cleared.', 'success')
+        flash_for('profile', 'Exam revision plan cleared.', 'success')
         return redirect(url_for('profile'))
 
     level = (request.form.get('level') or '').strip()
@@ -4087,7 +5704,7 @@ def profile_revision_plan_save():
     try:
         TOPICS[level][subject]
     except KeyError:
-        flash('Choose a valid level and subject.', 'error')
+        flash_for('profile', 'Choose a valid level and subject.', 'error')
         return redirect(url_for('profile'))
     try:
         with get_db() as conn:
@@ -4101,17 +5718,672 @@ def profile_revision_plan_save():
     except ValueError as exc:
         code = str(exc)
         if code == 'exam_date_past':
-            flash('Exam date must be today or in the future.', 'error')
+            flash_for('profile', 'Exam date must be today or in the future.', 'error')
         elif code == 'exam_date_too_far':
-            flash(f'Exam date must be within {MAX_EXAM_LEAD_DAYS} days.', 'error')
+            flash_for('profile', f'Exam date must be within {MAX_EXAM_LEAD_DAYS} days.', 'error')
         elif code == 'invalid_exam_date':
-            flash('Enter a valid exam date.', 'error')
+            flash_for('profile', 'Enter a valid exam date.', 'error')
         else:
-            flash('Could not save revision plan — check your inputs.', 'error')
+            flash_for('profile', 'Could not save revision plan — check your inputs.', 'error')
         return redirect(url_for('profile'))
 
-    flash('Exam revision plan updated.', 'success')
+    flash_for('profile', 'Exam revision plan updated.', 'success')
     return redirect(url_for('profile'))
+
+
+def _class_value_error_api(exc):
+    code = str(exc)
+    messages = {
+        'teacher_required': ('Enable teacher mode first', 403, 'teacher_required'),
+        'name_required': ('Class name is required', 400, 'missing_fields'),
+        'name_too_long': (f'Class name must be {CLASS_NAME_MAX} characters or fewer', 400, 'invalid_field'),
+        'level_subject_pair': ('level and subject must be set together', 400, 'invalid_field'),
+        'invalid_topic': ('Invalid level or subject', 400, 'invalid_topic'),
+        'class_limit': ('Too many active classes', 400, 'class_limit'),
+        'not_found': ('Class not found', 404, 'not_found'),
+        'class_archived': ('This class is archived', 400, 'class_archived'),
+        'join_disclosure_required': (
+            'Confirm the join disclosure before joining',
+            400,
+            'join_disclosure_required',
+        ),
+        'invalid_join_code': ('That join code is not valid', 404, 'invalid_join_code'),
+        'self_join': ('You cannot join a class you teach', 400, 'self_join'),
+        'already_member': ('You are already in this class', 409, 'already_member'),
+        'class_full': ('This class is full', 400, 'class_full'),
+        'invalid_count': (
+            f'Choose between {MIN_ASSIGNMENT_QUESTIONS} and {MAX_ASSIGNMENT_QUESTIONS} questions',
+            400,
+            'invalid_count',
+        ),
+        'invalid_difficulty': ('Invalid difficulty', 400, 'invalid_difficulty'),
+        'generate_failed': ('Could not generate those questions', 400, 'generate_failed'),
+        'no_recipients': ('Choose at least one student, or all active members', 400, 'no_recipients'),
+        'not_in_class': ('That student is not an active member of this class', 400, 'not_in_class'),
+        'invalid_student': ('Invalid student id', 400, 'invalid_field'),
+        'assignment_limit': ('Too many assignments for this class', 400, 'assignment_limit'),
+        'missing_answer': ('An answer is required', 400, 'missing_fields'),
+        'answer_too_long': ('That answer is too long', 400, 'answer_too_long'),
+        'already_answered': ('That question is already answered', 400, 'already_answered'),
+        'already_complete': ('This set is already complete', 400, 'already_complete'),
+        'invalid_index': ('Invalid question index', 400, 'invalid_index'),
+        'not_gradable': ('That question cannot be graded', 400, 'not_gradable'),
+        'user_not_found': ('That handle was not found', 404, 'user_not_found'),
+        'self_invite': ('You cannot invite yourself', 400, 'self_invite'),
+        'already_invited': ('That student already has a pending invite', 409, 'already_invited'),
+        'invite_not_pending': ('That invite is no longer pending', 409, 'invite_not_pending'),
+        'invite_limit': ('Too many pending invites for this class', 400, 'invite_limit'),
+        'blocked': ('You cannot join or invite this user', 403, 'blocked'),
+    }
+    message, status, err_code = messages.get(code, (code, 400, 'invalid_request'))
+    return _api_error(message, status, err_code)
+
+
+def _class_value_error_flash(exc):
+    code = str(exc)
+    messages = {
+        'teacher_required': 'Enable teacher mode first.',
+        'name_required': 'Give the class a name.',
+        'name_too_long': 'That class name is too long.',
+        'level_subject_pair': 'Choose both a level and a subject, or leave both blank.',
+        'invalid_topic': 'Choose a valid level and subject.',
+        'class_limit': 'You already have as many active classes as allowed.',
+        'not_found': 'That class was not found.',
+        'class_archived': 'This class is archived.',
+        'join_disclosure_required': 'Tick the box to confirm you have read what joining means.',
+        'invalid_join_code': 'That join code is not valid.',
+        'self_join': 'You cannot join a class you teach.',
+        'already_member': 'You are already in this class.',
+        'class_full': 'This class is full (40 students).',
+        'invalid_count': f'Choose between {MIN_ASSIGNMENT_QUESTIONS} and {MAX_ASSIGNMENT_QUESTIONS} questions.',
+        'invalid_difficulty': 'Choose a valid difficulty.',
+        'generate_failed': 'Could not generate those questions. Try another topic.',
+        'no_recipients': 'Choose at least one student, or all active members.',
+        'not_in_class': 'That student is not an active member of this class.',
+        'invalid_student': 'Choose students from the roster.',
+        'assignment_limit': 'This class already has as many assignments as allowed.',
+        'missing_answer': 'Enter an answer first.',
+        'answer_too_long': 'That answer is too long.',
+        'already_answered': 'You have already answered that question.',
+        'already_complete': 'This set is already complete.',
+        'invalid_index': 'That question is not in this set.',
+        'not_gradable': 'That question cannot be graded.',
+        'user_not_found': 'That handle was not found.',
+        'self_invite': 'You cannot invite yourself.',
+        'already_invited': 'That student already has a pending invite.',
+        'invite_not_pending': 'That invite is no longer pending.',
+        'invite_limit': 'This class already has as many pending invites as allowed.',
+        'blocked': 'You cannot join or invite this user.',
+    }
+    return messages.get(code, 'Could not update the class.')
+
+
+def _json_flag(payload, key):
+    value = payload.get(key) if isinstance(payload, dict) else None
+    if value is True or value == 1:
+        return True
+    if isinstance(value, str) and value.strip().lower() in ('1', 'true', 'yes', 'on'):
+        return True
+    return False
+
+
+def _class_csv_response(filename, body):
+    return Response(
+        body,
+        mimetype='text/csv; charset=utf-8',
+        headers={
+            'Content-Disposition': f'attachment; filename="{filename}"',
+            'X-Content-Type-Options': 'nosniff',
+        },
+    )
+
+
+def _invite_target_user(conn, handle):
+    target = get_user_by_handle(conn, normalize_handle(handle))
+    if not target or not target.is_active or is_bot_user(target):
+        raise ValueError('user_not_found')
+    return target
+
+
+def _assignment_student_ids(payload):
+    raw = payload.get('student_ids') if isinstance(payload, dict) else None
+    if raw is None:
+        return []
+    if not isinstance(raw, list):
+        raise ValueError('invalid_student')
+    return raw
+
+
+def _teacher_create_assignment(conn, teacher_id, class_id, payload):
+    preview_id = payload.get('preview_id')
+    if preview_id not in (None, ''):
+        try:
+            preview_id = int(preview_id)
+        except (TypeError, ValueError):
+            raise ValueError('not_found')
+        assign_all = _json_flag(payload, 'all')
+        student_ids = resolve_recipients(
+            conn,
+            teacher_id,
+            class_id,
+            assign_all=assign_all,
+            student_ids=_assignment_student_ids(payload),
+        )
+        preview = consume_preview(conn, teacher_id, class_id, preview_id)
+        return create_assignment(
+            conn,
+            teacher_id,
+            class_id,
+            level=preview['level'],
+            subject=preview['subject'],
+            topic=preview['topic'],
+            mode=preview['mode'],
+            difficulty=preview['difficulty'],
+            problems=preview['problems'],
+            student_ids=student_ids,
+        )
+    level, subject, topic, difficulty, mode, count = _parse_assignment_scope(payload)
+    problems, mode = _freeze_class_work_problems(
+        level, subject, topic, mode, difficulty, count,
+    )
+    assign_all = _json_flag(payload, 'all')
+    student_ids = resolve_recipients(
+        conn,
+        teacher_id,
+        class_id,
+        assign_all=assign_all,
+        student_ids=_assignment_student_ids(payload),
+    )
+    return create_assignment(
+        conn,
+        teacher_id,
+        class_id,
+        level=level,
+        subject=subject,
+        topic=topic,
+        mode=mode,
+        difficulty=difficulty,
+        problems=problems,
+        student_ids=student_ids,
+    )
+
+
+def _teacher_preview_assignment(conn, teacher_id, class_id, payload):
+    level, subject, topic, difficulty, mode, count = _parse_assignment_scope(payload)
+    problems, mode = _freeze_class_work_problems(
+        level, subject, topic, mode, difficulty, count,
+    )
+    return save_preview(
+        conn,
+        teacher_id,
+        class_id,
+        level=level,
+        subject=subject,
+        topic=topic,
+        mode=mode,
+        difficulty=difficulty,
+        problems=problems,
+    )
+
+
+@app.route('/teacher/classes', methods=['GET', 'POST'])
+@login_required
+def teacher_classes():
+    if request.method == 'POST':
+        if not _validate_csrf(request.form.get('csrf_token')):
+            flash_for('teacher_classes', 'Session expired — try again.', 'error')
+            return redirect(url_for('teacher_classes'))
+        action = (request.form.get('action') or '').strip()
+        if action == 'enable':
+            with get_db() as conn:
+                enable_teacher(conn, current_user.id)
+            flash_for('teacher_classes', 'Teacher tools are on. You still use this account to study.', 'success')
+            return redirect(url_for('teacher_classes'))
+        if action == 'create':
+            scope = (request.form.get('scope') or '').strip()
+            level = ''
+            subject = ''
+            if scope:
+                if ':' not in scope:
+                    flash_for('teacher_classes', 'Choose a valid level and subject.', 'error')
+                    return redirect(url_for('teacher_classes'))
+                level, subject = scope.split(':', 1)
+            try:
+                with get_db() as conn:
+                    created = create_class(
+                        conn,
+                        current_user.id,
+                        request.form.get('name'),
+                        level,
+                        subject,
+                    )
+            except ValueError as exc:
+                flash_for('teacher_classes', _class_value_error_flash(exc), 'error')
+                return redirect(url_for('teacher_classes'))
+            flash_for(
+                'teacher_classes',
+                f'Class created. Join code {created["join_code"]}. Students join after reading the disclosure — only you can remove them.',
+                'success',
+            )
+            return redirect(url_for('teacher_classes'))
+        flash_for('teacher_classes', 'Unknown action.', 'error')
+        return redirect(url_for('teacher_classes'))
+
+    with get_db() as conn:
+        enabled = teacher_is_enabled(conn, current_user.id)
+        classes = list_classes_for_teacher(conn, current_user.id) if enabled else []
+    return render_template(
+        'teacher_classes.html',
+        teacher_enabled=enabled,
+        classes=classes,
+        class_subjects=_revision_plan_scope_options(),
+        active_member_cap=CLASS_ACTIVE_MEMBER_CAP,
+    )
+
+
+@app.post('/teacher/classes/<int:class_id>/rotate-code')
+@login_required
+def teacher_class_rotate_code(class_id):
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash_for('teacher_classes', 'Session expired — try again.', 'error')
+        return redirect(url_for('teacher_classes'))
+    try:
+        with get_db() as conn:
+            updated = rotate_join_code(conn, current_user.id, class_id)
+    except ValueError as exc:
+        flash_for('teacher_classes', _class_value_error_flash(exc), 'error')
+        return redirect(url_for('teacher_classes'))
+    flash_for('teacher_classes', f'New join code: {updated["join_code"]}.', 'success')
+    return redirect(url_for('teacher_classes'))
+
+
+@app.post('/teacher/classes/<int:class_id>/archive')
+@login_required
+def teacher_class_archive(class_id):
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash_for('teacher_classes', 'Session expired — try again.', 'error')
+        return redirect(url_for('teacher_classes'))
+    try:
+        with get_db() as conn:
+            archive_class(conn, current_user.id, class_id)
+    except ValueError as exc:
+        flash_for('teacher_classes', _class_value_error_flash(exc), 'error')
+        return redirect(url_for('teacher_classes'))
+    flash_for('teacher_classes', 'Class archived. Students will not be able to join it.', 'success')
+    return redirect(url_for('teacher_classes'))
+
+
+@app.get('/teacher/classes/<int:class_id>/roster')
+@login_required
+def teacher_class_roster(class_id):
+    with get_db() as conn:
+        if not teacher_owns_class(conn, current_user.id, class_id):
+            abort(404)
+        klass = get_class_for_teacher(conn, current_user.id, class_id)
+        roster = enrich_roster(conn, list_roster(conn, current_user.id, class_id))
+        aggregates = class_aggregates(conn, current_user.id, class_id)
+        pending_invites = list_pending_invites_for_class(conn, current_user.id, class_id)
+    return render_template(
+        'teacher_class_roster.html',
+        klass=klass,
+        roster=roster,
+        aggregates=aggregates,
+        pending_invites=pending_invites,
+        active_member_cap=CLASS_ACTIVE_MEMBER_CAP,
+    )
+
+
+@app.post('/teacher/classes/<int:class_id>/invites')
+@login_required
+def teacher_class_invite(class_id):
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash_for('teacher_class_roster', 'Session expired — try again.', 'error')
+        return redirect(url_for('teacher_class_roster', class_id=class_id))
+    try:
+        with get_db() as conn:
+            if not teacher_owns_class(conn, current_user.id, class_id):
+                abort(404)
+            target = _invite_target_user(conn, request.form.get('handle'))
+            invite = invite_student(conn, current_user.id, class_id, target.id)
+            klass = get_class_for_teacher(conn, current_user.id, class_id)
+            _notify_class_invite(
+                conn, target.id, current_user.handle, invite['id'], klass['name'],
+            )
+    except ValueError as exc:
+        if str(exc) == 'not_found':
+            abort(404)
+        flash_for('teacher_class_roster', _class_value_error_flash(exc), 'error')
+        return redirect(url_for('teacher_class_roster', class_id=class_id))
+    flash_for(
+        'teacher_class_roster',
+        f'Invite sent to @{target.handle}. They must accept after reading the disclosure — they are not on the roster yet.',
+        'success',
+    )
+    return redirect(url_for('teacher_class_roster', class_id=class_id))
+
+
+@app.post('/teacher/classes/<int:class_id>/invites/<int:invite_id>/cancel')
+@login_required
+def teacher_class_cancel_invite(class_id, invite_id):
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash_for('teacher_class_roster', 'Session expired — try again.', 'error')
+        return redirect(url_for('teacher_class_roster', class_id=class_id))
+    try:
+        with get_db() as conn:
+            cancel_invite(conn, current_user.id, class_id, invite_id)
+    except ValueError as exc:
+        if str(exc) == 'not_found':
+            abort(404)
+        flash_for('teacher_class_roster', _class_value_error_flash(exc), 'error')
+        return redirect(url_for('teacher_class_roster', class_id=class_id))
+    flash_for('teacher_class_roster', 'Invite cancelled.', 'success')
+    return redirect(url_for('teacher_class_roster', class_id=class_id))
+
+
+@app.get('/teacher/classes/<int:class_id>/audit')
+@login_required
+def teacher_class_audit(class_id):
+    with get_db() as conn:
+        if not teacher_owns_class(conn, current_user.id, class_id):
+            abort(404)
+        klass = get_class_for_teacher(conn, current_user.id, class_id)
+        events = [
+            serialize_audit_event(row)
+            for row in list_class_audit(conn, current_user.id, class_id)
+        ]
+    return render_template(
+        'teacher_class_audit.html',
+        klass=klass,
+        events=events,
+    )
+
+
+@app.get('/teacher/classes/<int:class_id>/roster.csv')
+@login_required
+def teacher_class_roster_csv(class_id):
+    try:
+        with get_db() as conn:
+            filename, body = roster_csv(conn, current_user.id, class_id)
+    except ValueError as exc:
+        if str(exc) == 'not_found':
+            abort(404)
+        raise
+    return _class_csv_response(filename, body)
+
+
+@app.get('/teacher/classes/<int:class_id>/assignments.csv')
+@login_required
+def teacher_class_assignments_csv(class_id):
+    try:
+        with get_db() as conn:
+            filename, body = assignments_csv(conn, current_user.id, class_id)
+    except ValueError as exc:
+        if str(exc) == 'not_found':
+            abort(404)
+        raise
+    return _class_csv_response(filename, body)
+
+
+@app.post('/teacher/classes/<int:class_id>/members/<int:student_id>/remove')
+@login_required
+def teacher_class_remove_member(class_id, student_id):
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash_for('teacher_class_roster', 'Session expired — try again.', 'error')
+        return redirect(url_for('teacher_class_roster', class_id=class_id))
+    try:
+        with get_db() as conn:
+            remove_student(conn, current_user.id, class_id, student_id)
+    except ValueError as exc:
+        if str(exc) == 'not_found':
+            abort(404)
+        flash_for('teacher_class_roster', _class_value_error_flash(exc), 'error')
+        return redirect(url_for('teacher_class_roster', class_id=class_id))
+    flash_for('teacher_class_roster', 'Student removed from the class.', 'success')
+    return redirect(url_for('teacher_class_roster', class_id=class_id))
+
+
+@app.get('/teacher/classes/<int:class_id>/students/<int:student_id>')
+@login_required
+def teacher_student_progress(class_id, student_id):
+    try:
+        with get_db() as conn:
+            if not teacher_owns_class(conn, current_user.id, class_id):
+                abort(404)
+            klass = get_class_for_teacher(conn, current_user.id, class_id)
+            progress = student_progress(conn, current_user.id, class_id, student_id)
+    except ValueError as exc:
+        if str(exc) == 'not_found':
+            abort(404)
+        raise
+    return render_template(
+        'teacher_student_progress.html',
+        klass=klass,
+        progress=progress,
+    )
+
+
+def _assignment_form_payload(form):
+    scope = (form.get('scope') or '').strip()
+    level = subject = topic = ''
+    if scope.count(':') >= 2:
+        level, subject, topic = scope.split(':', 2)
+    payload = {
+        'level': level or form.get('level'),
+        'subject': subject or form.get('subject'),
+        'topic': topic or form.get('topic'),
+        'difficulty': form.get('difficulty') or GENERATOR_DEFAULT_DIFFICULTY,
+        'mode': form.get('mode') or GENERATOR_DEFAULT_MODE,
+        'count': form.get('count') or 5,
+        'all': form.get('all') or form.get('assign_all'),
+        'student_ids': form.getlist('student_ids'),
+        'preview_id': form.get('preview_id'),
+    }
+    return payload
+
+
+@app.route('/teacher/classes/<int:class_id>/assignments', methods=['GET', 'POST'])
+@login_required
+def teacher_class_assignments(class_id):
+    if request.method == 'POST':
+        if not _validate_csrf(request.form.get('csrf_token')):
+            flash_for('teacher_class_assignments', 'Session expired — try again.', 'error')
+            return redirect(url_for('teacher_class_assignments', class_id=class_id))
+        payload = _assignment_form_payload(request.form)
+        action = (request.form.get('action') or 'assign').strip()
+        try:
+            with get_db() as conn:
+                if not teacher_owns_class(conn, current_user.id, class_id):
+                    abort(404)
+                if action == 'preview':
+                    preview = _teacher_preview_assignment(
+                        conn, current_user.id, class_id, payload,
+                    )
+                    klass = get_class_for_teacher(conn, current_user.id, class_id)
+                    roster = list_roster(conn, current_user.id, class_id)
+                    assignments = list_assignments_for_teacher(
+                        conn, current_user.id, class_id,
+                    )
+                    return render_template(
+                        'teacher_class_assignments.html',
+                        klass=klass,
+                        roster=roster,
+                        assignments=assignments,
+                        preview=serialize_preview(preview),
+                        catalogue=_live_catalogue_topics(),
+                        max_questions=MAX_ASSIGNMENT_QUESTIONS,
+                        form=payload,
+                    )
+                created = _teacher_create_assignment(
+                    conn, current_user.id, class_id, payload,
+                )
+        except ValueError as exc:
+            if str(exc) == 'not_found':
+                abort(404)
+            flash_for('teacher_class_assignments', _class_value_error_flash(exc), 'error')
+            return redirect(url_for('teacher_class_assignments', class_id=class_id))
+        flash_for('teacher_class_assignment', 'Set work assigned. Students cannot reroll these questions.', 'success')
+        return redirect(url_for(
+            'teacher_class_assignment', class_id=class_id, assignment_id=created['id'],
+        ))
+
+    with get_db() as conn:
+        if not teacher_owns_class(conn, current_user.id, class_id):
+            abort(404)
+        klass = get_class_for_teacher(conn, current_user.id, class_id)
+        roster = list_roster(conn, current_user.id, class_id)
+        assignments = list_assignments_for_teacher(conn, current_user.id, class_id)
+    return render_template(
+        'teacher_class_assignments.html',
+        klass=klass,
+        roster=roster,
+        assignments=assignments,
+        preview=None,
+        catalogue=_live_catalogue_topics(),
+        max_questions=MAX_ASSIGNMENT_QUESTIONS,
+        form=None,
+    )
+
+
+@app.get('/teacher/classes/<int:class_id>/assignments/<int:assignment_id>')
+@login_required
+def teacher_class_assignment(class_id, assignment_id):
+    try:
+        with get_db() as conn:
+            if not teacher_owns_class(conn, current_user.id, class_id):
+                abort(404)
+            klass = get_class_for_teacher(conn, current_user.id, class_id)
+            assignment = get_assignment_for_teacher(
+                conn, current_user.id, class_id, assignment_id,
+            )
+    except ValueError as exc:
+        if str(exc) == 'not_found':
+            abort(404)
+        raise
+    return render_template(
+        'teacher_class_assignment.html',
+        klass=klass,
+        assignment=serialize_teacher_assignment(assignment),
+    )
+
+
+@app.route('/classes', methods=['GET', 'POST'])
+@login_required
+def student_classes():
+    if request.method == 'POST':
+        if not _validate_csrf(request.form.get('csrf_token')):
+            flash_for('student_classes', 'Session expired — try again.', 'error')
+            return redirect(url_for('student_classes'))
+        disclosed = (request.form.get('disclosed') or '').strip() in ('1', 'on', 'true', 'yes')
+        try:
+            with get_db() as conn:
+                join_class(
+                    conn,
+                    current_user.id,
+                    request.form.get('code'),
+                    disclosed=disclosed,
+                )
+        except ValueError as exc:
+            flash_for('student_classes', _class_value_error_flash(exc), 'error')
+            return redirect(url_for('student_classes'))
+        flash_for('student_classes', 'You joined the class. Only the teacher can take you off it.', 'success')
+        return redirect(url_for('student_classes'))
+
+    with get_db() as conn:
+        classes = list_classes_for_student(conn, current_user.id)
+        class_work = list_class_work_for_student(conn, current_user.id)
+        pending_invites = list_pending_invites_for_student(conn, current_user.id)
+    return render_template(
+        'student_classes.html',
+        classes=classes,
+        class_work=class_work,
+        pending_invites=pending_invites,
+        join_disclosure=JOIN_DISCLOSURE,
+        active_member_cap=CLASS_ACTIVE_MEMBER_CAP,
+    )
+
+
+@app.post('/classes/invites/<int:invite_id>/accept')
+@login_required
+def student_class_invite_accept(invite_id):
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash_for('student_classes', 'Session expired — try again.', 'error')
+        return redirect(url_for('student_classes'))
+    disclosed = (request.form.get('disclosed') or '').strip() in ('1', 'on', 'true', 'yes')
+    try:
+        with get_db() as conn:
+            accept_invite(conn, current_user.id, invite_id, disclosed=disclosed)
+            mark_class_invite_notifications_read(conn, current_user.id, invite_id)
+    except ValueError as exc:
+        if str(exc) == 'not_found':
+            abort(404)
+        flash_for('student_classes', _class_value_error_flash(exc), 'error')
+        return redirect(url_for('student_classes'))
+    flash_for('student_classes', 'You joined the class. Only the teacher can take you off it.', 'success')
+    return redirect(url_for('student_classes'))
+
+
+@app.post('/classes/invites/<int:invite_id>/decline')
+@login_required
+def student_class_invite_decline(invite_id):
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash_for('student_classes', 'Session expired — try again.', 'error')
+        return redirect(url_for('student_classes'))
+    try:
+        with get_db() as conn:
+            decline_invite(conn, current_user.id, invite_id)
+            mark_class_invite_notifications_read(conn, current_user.id, invite_id)
+    except ValueError as exc:
+        if str(exc) == 'not_found':
+            abort(404)
+        flash_for('student_classes', _class_value_error_flash(exc), 'error')
+        return redirect(url_for('student_classes'))
+    flash_for('student_classes', 'Invite declined.', 'success')
+    return redirect(url_for('student_classes'))
+
+
+@app.get('/class-work')
+@login_required
+def student_class_work():
+    with get_db() as conn:
+        items = list_class_work_for_student(conn, current_user.id)
+    return render_template('student_class_work.html', items=items)
+
+
+@app.route('/class-work/<int:assignment_id>', methods=['GET', 'POST'])
+@login_required
+def student_class_work_detail(assignment_id):
+    if request.method == 'POST':
+        if not _validate_csrf(request.form.get('csrf_token')):
+            flash_for('student_class_work_detail', 'Session expired — try again.', 'error')
+            return redirect(url_for('student_class_work_detail', assignment_id=assignment_id))
+        try:
+            with get_db() as conn:
+                submit_student_answer(
+                    conn,
+                    current_user.id,
+                    assignment_id,
+                    request.form.get('index'),
+                    request.form.get('user_answer'),
+                )
+        except ValueError as exc:
+            if str(exc) == 'not_found':
+                abort(404)
+            flash_for('student_class_work_detail', _class_value_error_flash(exc), 'error')
+            return redirect(url_for('student_class_work_detail', assignment_id=assignment_id))
+        flash_for('student_class_work_detail', 'Answer checked.', 'success')
+        return redirect(url_for('student_class_work_detail', assignment_id=assignment_id))
+
+    try:
+        with get_db() as conn:
+            work = get_class_work_for_student(conn, current_user.id, assignment_id)
+    except ValueError as exc:
+        if str(exc) == 'not_found':
+            abort(404)
+        raise
+    return render_template(
+        'student_class_work_detail.html',
+        work=serialize_student_work(work),
+    )
 
 
 @app.route('/profile/settings', methods=['GET', 'POST'])
@@ -4128,12 +6400,13 @@ def profile_settings():
         elif request.form.get('action') == 'revoke_all_api_tokens':
             with get_db() as conn:
                 revoke_all_tokens(conn, current_user.id)
-            flash('All app sessions have been signed out.', 'success')
+            flash_for('profile_settings', 'All app sessions have been signed out.', 'success')
             return redirect(url_for('profile_settings'))
         elif request.form.get('action') == 'send_test_digest':
             cfg = mail_config()
             if not cfg['enabled'] and cfg['provider'] != 'console':
-                flash(
+                flash_for(
+                    'profile_settings',
                     'Email sending is not enabled yet. See docs/EMAIL_SETUP.md when you launch.',
                     'error',
                 )
@@ -4145,13 +6418,47 @@ def profile_settings():
                         topic_label_fn=_topic_label,
                     )
                 if ok:
-                    flash('Test recap email sent (check your inbox or server logs).', 'success')
+                    flash_for('profile_settings', 'Test recap email sent (check your inbox or server logs).', 'success')
                 else:
-                    flash(f'Could not send test email: {err}', 'error')
+                    flash_for('profile_settings', f'Could not send test email: {err}', 'error')
             return redirect(url_for('profile_settings'))
+        elif request.form.get('action') == 'change_password':
+            current_password = request.form.get('current_password', '')
+            new_password = request.form.get('new_password', '')
+            confirm = request.form.get('confirm_new_password', '')
+            if not current_user.check_password(current_password):
+                flash_for('profile_settings', 'Current password is incorrect.', 'error')
+            else:
+                msg = validate_password(new_password)
+                if msg:
+                    flash_for('profile_settings', msg, 'error')
+                elif new_password != confirm:
+                    flash_for('profile_settings', 'New passwords do not match.', 'error')
+                else:
+                    with get_db() as conn:
+                        current_user.set_password(conn, new_password)
+                    flash_for('profile_settings', 'Password updated.', 'success')
+            return redirect(url_for('profile_settings'))
+        elif request.form.get('action') == 'resend_verification':
+            if current_user.email_verified:
+                flash_for('profile_settings', 'Your email is already confirmed.', 'success')
+            else:
+                with get_db() as conn:
+                    raw = create_email_verification_token(conn, current_user.id)
+                    _send_verify_email(current_user, raw)
+                flash_for('profile_settings', 'Confirmation email sent.', 'success')
+            return redirect(url_for('profile_settings'))
+        elif request.form.get('action') == 'replay_guide_intro':
+            with get_db() as conn:
+                current = get_profile_settings(conn, current_user.id)
+                updated = _settings_to_json(current)
+                updated['guide'] = {'origin': False}
+                update_profile_settings(conn, current_user.id, updated)
+            flash_for('index', 'Intro will play on Practice.', 'success')
+            return redirect(url_for('index'))
         else:
             updated = {
-                'profile_visibility': request.form.get('profile_visibility', 'public'),
+                'profile_visibility': request.form.get('profile_visibility', VISIBILITY_FOLLOWERS),
                 'show_member_since': request.form.get('show_member_since') == '1',
                 'show_last_topic': request.form.get('show_last_topic') == '1',
                 'show_last_activity': request.form.get('show_last_activity') == '1',
@@ -4168,6 +6475,8 @@ def profile_settings():
                 'show_milestones': request.form.get('show_milestones') == '1',
                 'email_weekly_digest': request.form.get('email_weekly_digest') == '1',
                 'show_accuracy_leaderboard': request.form.get('show_accuracy_leaderboard') == '1',
+                'sound_enabled': request.form.get('sound_enabled') == '1',
+                'theme_preference': request.form.get('theme_preference', THEME_SYSTEM),
             }
             with get_db() as conn:
                 if (
@@ -4185,7 +6494,7 @@ def profile_settings():
                 update_profile_settings(conn, current_user.id, updated)
                 settings = get_profile_settings(conn, current_user.id)
                 api_token_sessions = list_user_tokens(conn, current_user.id)
-            flash('Settings saved.', 'success')
+            flash_for('profile_settings', 'Settings saved.', 'success')
             return redirect(url_for('profile_settings'))
 
     with get_db() as conn:
@@ -4198,8 +6507,8 @@ def profile_settings():
         mail_configured=mail_config()['enabled'] or mail_config()['provider'] == 'console',
         visibility_choices=VISIBILITY_CHOICES,
         profile_visibility_label=PROFILE_VISIBILITY_LABELS.get(
-            settings.get('profile_visibility', VISIBILITY_PUBLIC),
-            'Public',
+            settings.get('profile_visibility', VISIBILITY_FOLLOWERS),
+            'Followers only',
         ),
         errors=errors,
         public_profile_url=_public_profile_url(current_user.handle),
@@ -4208,6 +6517,62 @@ def profile_settings():
         avatar_extras=AVATAR_EXTRAS,
         avatar_extra_options=extra_options,
     )
+
+
+@app.route('/me/delete', methods=['GET', 'POST'])
+@login_required
+def account_delete():
+    blocked = _require_verified_email()
+    if blocked:
+        return blocked
+    error = None
+    if request.method == 'POST':
+        if not _validate_csrf(request.form.get('csrf_token')):
+            error = 'Your session expired. Please try again.'
+        elif not current_user.check_password(request.form.get('password', '')):
+            error = 'Password is incorrect.'
+        elif normalize_handle(request.form.get('confirm_handle', '')) != current_user.handle:
+            error = 'Type your handle exactly to confirm deletion.'
+        else:
+            user_id = current_user.id
+            with get_db() as conn:
+                delete_user_account(conn, user_id)
+            logout_user()
+            flash_for('index', 'Your account has been deleted.', 'success')
+            return redirect(url_for('index'))
+    return render_template('account_delete.html', error=error)
+
+
+@app.route('/me/export')
+@login_required
+def account_export():
+    blocked = _require_verified_email()
+    if blocked:
+        return blocked
+    allowed, _rem = _auth_rate_limit('export', EXPORT_DAILY_LIMIT)
+    if not allowed:
+        flash_for('profile_settings', 'Export limit reached. Try again tomorrow.', 'error')
+        return redirect(url_for('profile_settings'))
+    with get_db() as conn:
+        payload = build_user_export(conn, current_user.id)
+    body = json.dumps(payload, indent=2, default=str)
+    filename = f"problem-bank-export-{current_user.handle}-{date.today().isoformat()}.json"
+    response = Response(body, mimetype='application/json')
+    response.headers['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
+@app.get('/api/v1/me/export')
+@login_required
+def api_v1_me_export():
+    if not current_user.email_verified:
+        return _api_error('Confirm your email before exporting data', 403, 'email_unverified')
+    allowed, remaining = _api_rate_limit('export', EXPORT_DAILY_LIMIT)
+    if not allowed:
+        return _api_error('Export limit reached', 429, 'rate_limited')
+    with get_db() as conn:
+        payload = build_user_export(conn, current_user.id)
+    return jsonify({'ok': True, 'export': payload, 'rate_limit_remaining': remaining})
 
 
 @app.route('/email/unsubscribe')
@@ -4341,13 +6706,13 @@ def public_profile_following(handle):
 @login_required
 def follow_user_route(handle):
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired. Please try again.', 'error')
+        flash_for('index', 'Your session expired. Please try again.', 'error')
         return redirect(request.referrer or url_for('index'))
 
     with get_db() as conn:
         target = get_user_by_handle(conn, handle)
         if not target or not target.is_active:
-            flash('User not found.', 'error')
+            flash_for('index', 'User not found.', 'error')
             return redirect(url_for('index'))
         if target.id == current_user.id:
             return redirect(_public_profile_url(handle))
@@ -4355,7 +6720,7 @@ def follow_user_route(handle):
         if followed:
             _notify_new_follower(conn, target.id, current_user.handle)
 
-    flash(f'You are now following @{target.handle}.', 'success')
+    flash_for('public_profile', f'You are now following @{target.handle}.', 'success')
     return redirect(_public_profile_url(handle))
 
 
@@ -4363,17 +6728,17 @@ def follow_user_route(handle):
 @login_required
 def unfollow_user_route(handle):
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired. Please try again.', 'error')
+        flash_for('index', 'Your session expired. Please try again.', 'error')
         return redirect(request.referrer or url_for('index'))
 
     with get_db() as conn:
         target = get_user_by_handle(conn, handle)
         if not target:
-            flash('User not found.', 'error')
+            flash_for('index', 'User not found.', 'error')
             return redirect(url_for('index'))
         unfollow_user(conn, current_user.id, target.id)
 
-    flash(f'You unfollowed @{target.handle}.', 'success')
+    flash_for('public_profile', f'You unfollowed @{target.handle}.', 'success')
     return redirect(_public_profile_url(handle))
 
 
@@ -4451,6 +6816,34 @@ def api_v1_search_users():
         'ok': True,
         'query': normalize_handle(query),
         'users': _serialize_user_search_results(user_rows),
+    })
+
+
+@app.get('/api/v1/me/following/search')
+@login_required
+def api_v1_search_following():
+    query = (request.args.get('q') or '').strip()
+    normalized = normalize_handle(query)
+    if not normalized:
+        return jsonify({'ok': True, 'query': '', 'users': []})
+
+    try:
+        limit = int(request.args.get('limit', 8))
+    except (TypeError, ValueError):
+        limit = 8
+
+    with get_db() as conn:
+        rows = search_following_by_handle(
+            conn,
+            current_user.id,
+            normalized,
+            limit=limit,
+        )
+
+    return jsonify({
+        'ok': True,
+        'query': normalized,
+        'users': _serialize_user_search_results(rows),
     })
 
 
@@ -4619,7 +7012,16 @@ def api_v1_problems_check():
             )
 
     try:
-        result = check_answer(answer_type, correct_answer_raw, user_answer)
+        if not partial_field and answer_type == 'number_fields':
+            from generators.shared.answer_checkers import check_number_fields
+            field_types = problem.get('answer_field_types') if session_bound else None
+            result = check_number_fields(
+                correct_answer_raw,
+                user_answer,
+                field_types=field_types,
+            )
+        else:
+            result = check_answer(answer_type, correct_answer_raw, user_answer)
     except ValueError as exc:
         message = str(exc)
         if message.startswith('unknown_answer_type:'):
@@ -4777,10 +7179,13 @@ def api_v1_patch_settings():
         'show_milestones',
         'email_weekly_digest',
         'show_accuracy_leaderboard',
+        'sound_enabled',
+        'theme_preference',
         'avatar',
         'avatar_face',
         'avatar_bg',
         'avatar_extra',
+        'guide',
     }
     unknown = set(payload.keys()) - allowed_keys
     if unknown:
@@ -4808,6 +7213,15 @@ def api_v1_patch_settings():
                 'invalid_visibility',
             )
 
+    if 'theme_preference' in payload:
+        theme = payload['theme_preference']
+        if theme not in THEME_CHOICES:
+            return _api_error(
+                f'theme_preference must be one of: {", ".join(THEME_CHOICES)}',
+                400,
+                'invalid_theme',
+            )
+
     bool_fields = (
         'show_member_since',
         'show_last_topic',
@@ -4821,6 +7235,7 @@ def api_v1_patch_settings():
         'show_milestones',
         'email_weekly_digest',
         'show_accuracy_leaderboard',
+        'sound_enabled',
     )
     for field in bool_fields:
         if field in payload and not isinstance(payload[field], bool):
@@ -4828,6 +7243,12 @@ def api_v1_patch_settings():
 
     if 'avatar' in payload and payload['avatar'] is not None and not isinstance(payload['avatar'], dict):
         return _api_error('avatar must be an object', 400, 'invalid_field')
+
+    guide_patch = None
+    if 'guide' in payload:
+        guide_patch, guide_err = validate_guide_patch(payload['guide'])
+        if guide_err:
+            return _api_error(guide_err, 400, 'invalid_field')
 
     avatar_keys = ('avatar', 'avatar_face', 'avatar_bg', 'avatar_extra')
     wants_avatar = any(key in payload for key in avatar_keys)
@@ -4844,8 +7265,16 @@ def api_v1_patch_settings():
             )
         for key in avatar_keys:
             payload.pop(key, None)
+        payload.pop('guide', None)
         current.update(payload)
-        update_profile_settings(conn, current_user.id, current)
+        if guide_patch is not None:
+            current['guide'] = guide_patch
+        else:
+            current.pop('guide', None)
+        try:
+            update_profile_settings(conn, current_user.id, current)
+        except ValueError as err:
+            return _api_error(str(err), 400, 'invalid_field')
         settings = _settings_to_json(get_profile_settings(conn, current_user.id))
 
     return jsonify({'ok': True, 'settings': settings})
@@ -4888,6 +7317,14 @@ def api_v1_auth_register():
     email = normalize_email(email)
     handle = normalize_handle(handle)
     with get_db() as conn:
+        reserved_msg = validate_handle(handle, conn)
+        if reserved_msg:
+            return jsonify({
+                'ok': False,
+                'error': 'Validation failed',
+                'code': 'validation_error',
+                'fields': {'handle': reserved_msg},
+            }), 400
         if User.get_by_email(conn, email) or User.get_by_handle(conn, handle):
             # Same response for email/handle conflicts (no account enumeration).
             return _api_error(
@@ -4897,6 +7334,8 @@ def api_v1_auth_register():
             )
         user = User.create(conn, email, handle, password)
         ensure_user_profile(conn, user.id)
+        raw = create_email_verification_token(conn, user.id)
+        _send_verify_email(user, raw)
         token = _issue_api_token(conn, user, label=label or 'Registration')
 
     return jsonify({'ok': True, 'token': token, 'user': _serialize_auth_user(user)}), 201
@@ -4920,8 +7359,21 @@ def api_v1_auth_login():
 
     with get_db() as conn:
         user = User.get_by_email(conn, email)
-        if not user or is_bot_user(user) or not user.is_active or not user.check_password(password):
+        from werkzeug.security import check_password_hash
+        dummy_hash = (
+            'scrypt:32768:8:1$dummy$0123456789abcdef0123456789abcdef'
+            '0123456789abcdef0123456789abcdef'
+        )
+        if not user or is_bot_user(user) or not user.is_active:
+            check_password_hash(dummy_hash, password or 'x')
             return _api_error('Invalid email or password', 401, 'invalid_credentials')
+        if is_login_locked(conn, user.id):
+            check_password_hash(dummy_hash, password or 'x')
+            return _api_error('Invalid email or password', 401, 'invalid_credentials')
+        if not user.check_password(password):
+            record_login_failure(conn, user.id)
+            return _api_error('Invalid email or password', 401, 'invalid_credentials')
+        clear_login_failures(conn, user.id)
         token = _issue_api_token(conn, user, label=label or 'Login')
 
     return jsonify({'ok': True, 'token': token, 'user': _serialize_auth_user(user)})
@@ -4944,6 +7396,432 @@ def api_v1_auth_me():
     return jsonify({'ok': True, 'user': _serialize_auth_user(current_user)})
 
 
+@app.get('/api/v1/me/teacher')
+@login_required
+def api_v1_me_teacher():
+    with get_db() as conn:
+        status = serialize_teacher_status(conn, current_user.id)
+    return jsonify({'ok': True, **status})
+
+
+@app.post('/api/v1/me/teacher/enable')
+@login_required
+def api_v1_me_teacher_enable():
+    with get_db() as conn:
+        enable_teacher(conn, current_user.id)
+        status = serialize_teacher_status(conn, current_user.id)
+    return jsonify({'ok': True, **status})
+
+
+@app.get('/api/v1/teacher/classes')
+@login_required
+def api_v1_teacher_list_classes():
+    include_archived = request.args.get('include_archived', '1') not in ('0', 'false', 'False')
+    with get_db() as conn:
+        if not teacher_is_enabled(conn, current_user.id):
+            return _api_error('Enable teacher mode first', 403, 'teacher_required')
+        rows = list_classes_for_teacher(
+            conn, current_user.id, include_archived=include_archived
+        )
+    return jsonify({
+        'ok': True,
+        'classes': [serialize_class(row) for row in rows],
+        'active_member_cap': CLASS_ACTIVE_MEMBER_CAP,
+    })
+
+
+@app.post('/api/v1/teacher/classes')
+@login_required
+def api_v1_teacher_create_class():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('JSON body required', 400, 'invalid_payload')
+    if payload.get('org_id') not in (None, ''):
+        return _api_error('org_id is not accepted in this track', 400, 'invalid_field')
+    try:
+        with get_db() as conn:
+            row = create_class(
+                conn,
+                current_user.id,
+                payload.get('name'),
+                payload.get('level'),
+                payload.get('subject'),
+            )
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({'ok': True, 'class': serialize_class(row)}), 201
+
+
+@app.get('/api/v1/teacher/classes/<int:class_id>')
+@login_required
+def api_v1_teacher_get_class(class_id):
+    with get_db() as conn:
+        if not teacher_owns_class(conn, current_user.id, class_id):
+            return _api_error('Class not found', 404, 'not_found')
+        row = get_class_for_teacher(conn, current_user.id, class_id)
+    return jsonify({'ok': True, 'class': serialize_class(row)})
+
+
+@app.post('/api/v1/teacher/classes/<int:class_id>/rotate-code')
+@login_required
+def api_v1_teacher_rotate_code(class_id):
+    try:
+        with get_db() as conn:
+            row = rotate_join_code(conn, current_user.id, class_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({'ok': True, 'class': serialize_class(row)})
+
+
+@app.post('/api/v1/teacher/classes/<int:class_id>/archive')
+@login_required
+def api_v1_teacher_archive_class(class_id):
+    try:
+        with get_db() as conn:
+            row = archive_class(conn, current_user.id, class_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({'ok': True, 'class': serialize_class(row)})
+
+
+@app.get('/api/v1/teacher/classes/<int:class_id>/roster')
+@login_required
+def api_v1_teacher_class_roster(class_id):
+    with get_db() as conn:
+        if not teacher_owns_class(conn, current_user.id, class_id):
+            return _api_error('Class not found', 404, 'not_found')
+        row = get_class_for_teacher(conn, current_user.id, class_id)
+        roster = enrich_roster(conn, list_roster(conn, current_user.id, class_id))
+        aggregates = class_aggregates(conn, current_user.id, class_id)
+        pending_invites = list_pending_invites_for_class(conn, current_user.id, class_id)
+    members = [serialize_roster_member(item) for item in roster]
+    payload = serialize_class(row)
+    payload['active_member_count'] = len(members)
+    return jsonify({
+        'ok': True,
+        'class': payload,
+        'roster': members,
+        'pending_invites': [serialize_invite(item) for item in pending_invites],
+        'aggregates': aggregates,
+    })
+
+
+@app.get('/api/v1/teacher/classes/<int:class_id>/progress')
+@login_required
+def api_v1_teacher_class_progress(class_id):
+    try:
+        with get_db() as conn:
+            if not teacher_owns_class(conn, current_user.id, class_id):
+                return _api_error('Class not found', 404, 'not_found')
+            row = get_class_for_teacher(conn, current_user.id, class_id)
+            aggregates = class_aggregates(conn, current_user.id, class_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({
+        'ok': True,
+        'class': serialize_class(row),
+        'aggregates': aggregates,
+    })
+
+
+@app.get('/api/v1/teacher/classes/<int:class_id>/students/<int:student_id>/progress')
+@login_required
+def api_v1_teacher_student_progress(class_id, student_id):
+    try:
+        with get_db() as conn:
+            progress = student_progress(conn, current_user.id, class_id, student_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({'ok': True, 'progress': progress})
+
+
+@app.post('/api/v1/teacher/classes/<int:class_id>/members/<int:student_id>/remove')
+@login_required
+def api_v1_teacher_remove_member(class_id, student_id):
+    try:
+        with get_db() as conn:
+            membership = remove_student(conn, current_user.id, class_id, student_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({'ok': True, 'membership': {
+        'student_id': membership['student_id'],
+        'status': membership['status'],
+        'removed_at': membership.get('removed_at'),
+    }})
+
+
+@app.get('/api/v1/teacher/classes/<int:class_id>/invites')
+@login_required
+def api_v1_teacher_list_invites(class_id):
+    try:
+        with get_db() as conn:
+            rows = list_pending_invites_for_class(conn, current_user.id, class_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({
+        'ok': True,
+        'invites': [serialize_invite(row) for row in rows],
+    })
+
+
+@app.post('/api/v1/teacher/classes/<int:class_id>/invites')
+@login_required
+def api_v1_teacher_create_invite(class_id):
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('JSON body required', 400, 'invalid_payload')
+    try:
+        with get_db() as conn:
+            if not teacher_owns_class(conn, current_user.id, class_id):
+                return _api_error('Class not found', 404, 'not_found')
+            target = _invite_target_user(conn, payload.get('handle'))
+            invite = invite_student(conn, current_user.id, class_id, target.id)
+            klass = get_class_for_teacher(conn, current_user.id, class_id)
+            _notify_class_invite(
+                conn, target.id, current_user.handle, invite['id'], klass['name'],
+            )
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({'ok': True, 'invite': serialize_invite(invite)}), 201
+
+
+@app.post('/api/v1/teacher/classes/<int:class_id>/invites/<int:invite_id>/cancel')
+@login_required
+def api_v1_teacher_cancel_invite(class_id, invite_id):
+    try:
+        with get_db() as conn:
+            cancel_invite(conn, current_user.id, class_id, invite_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({'ok': True})
+
+
+@app.get('/api/v1/teacher/classes/<int:class_id>/audit')
+@login_required
+def api_v1_teacher_class_audit(class_id):
+    try:
+        with get_db() as conn:
+            events = list_class_audit(conn, current_user.id, class_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({
+        'ok': True,
+        'events': [serialize_audit_event(row) for row in events],
+    })
+
+
+@app.get('/api/v1/teacher/classes/<int:class_id>/roster.csv')
+@login_required
+def api_v1_teacher_roster_csv(class_id):
+    try:
+        with get_db() as conn:
+            filename, body = roster_csv(conn, current_user.id, class_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return _class_csv_response(filename, body)
+
+
+@app.get('/api/v1/teacher/classes/<int:class_id>/assignments.csv')
+@login_required
+def api_v1_teacher_assignments_csv(class_id):
+    try:
+        with get_db() as conn:
+            filename, body = assignments_csv(conn, current_user.id, class_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return _class_csv_response(filename, body)
+
+
+@app.get('/api/v1/teacher/classes/<int:class_id>/assignments')
+@login_required
+def api_v1_teacher_list_assignments(class_id):
+    try:
+        with get_db() as conn:
+            if not teacher_owns_class(conn, current_user.id, class_id):
+                return _api_error('Class not found', 404, 'not_found')
+            rows = list_assignments_for_teacher(conn, current_user.id, class_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({
+        'ok': True,
+        'assignments': [serialize_assignment_summary(row) for row in rows],
+    })
+
+
+@app.post('/api/v1/teacher/classes/<int:class_id>/assignments')
+@login_required
+def api_v1_teacher_create_assignment(class_id):
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('JSON body required', 400, 'invalid_payload')
+    try:
+        with get_db() as conn:
+            if not teacher_owns_class(conn, current_user.id, class_id):
+                return _api_error('Class not found', 404, 'not_found')
+            if _json_flag(payload, 'preview'):
+                preview = _teacher_preview_assignment(
+                    conn, current_user.id, class_id, payload,
+                )
+                return jsonify({'ok': True, 'preview': serialize_preview(preview)})
+            assignment = _teacher_create_assignment(
+                conn, current_user.id, class_id, payload,
+            )
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({
+        'ok': True,
+        'assignment': serialize_teacher_assignment(assignment),
+    }), 201
+
+
+@app.get('/api/v1/teacher/classes/<int:class_id>/assignments/<int:assignment_id>')
+@login_required
+def api_v1_teacher_get_assignment(class_id, assignment_id):
+    try:
+        with get_db() as conn:
+            if not teacher_owns_class(conn, current_user.id, class_id):
+                return _api_error('Class not found', 404, 'not_found')
+            assignment = get_assignment_for_teacher(
+                conn, current_user.id, class_id, assignment_id,
+            )
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({
+        'ok': True,
+        'assignment': serialize_teacher_assignment(assignment),
+    })
+
+
+@app.get('/api/v1/me/classes')
+@login_required
+def api_v1_me_classes():
+    with get_db() as conn:
+        rows = list_classes_for_student(conn, current_user.id)
+        invites = list_pending_invites_for_student(conn, current_user.id)
+    return jsonify({
+        'ok': True,
+        'classes': [serialize_student_class(row) for row in rows],
+        'invites': [serialize_invite(row, for_student=True) for row in invites],
+        **disclosure_payload(),
+    })
+
+
+@app.post('/api/v1/me/classes/join')
+@login_required
+def api_v1_me_classes_join():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('JSON body required', 400, 'invalid_payload')
+    try:
+        with get_db() as conn:
+            membership = join_class(
+                conn,
+                current_user.id,
+                payload.get('code'),
+                disclosed=_json_flag(payload, 'disclosed'),
+            )
+            rows = list_classes_for_student(conn, current_user.id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    joined = next(
+        (serialize_student_class(row) for row in rows if row['id'] == membership['class_id']),
+        None,
+    )
+    return jsonify({'ok': True, 'class': joined, **disclosure_payload()}), 201
+
+
+@app.get('/api/v1/me/class-invites')
+@login_required
+def api_v1_me_class_invites():
+    with get_db() as conn:
+        rows = list_pending_invites_for_student(conn, current_user.id)
+    return jsonify({
+        'ok': True,
+        'invites': [serialize_invite(row, for_student=True) for row in rows],
+        **disclosure_payload(),
+    })
+
+
+@app.post('/api/v1/me/class-invites/<int:invite_id>/accept')
+@login_required
+def api_v1_me_class_invite_accept(invite_id):
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('JSON body required', 400, 'invalid_payload')
+    try:
+        with get_db() as conn:
+            membership = accept_invite(
+                conn,
+                current_user.id,
+                invite_id,
+                disclosed=_json_flag(payload, 'disclosed'),
+            )
+            mark_class_invite_notifications_read(conn, current_user.id, invite_id)
+            rows = list_classes_for_student(conn, current_user.id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    joined = next(
+        (serialize_student_class(row) for row in rows if row['id'] == membership['class_id']),
+        None,
+    )
+    return jsonify({'ok': True, 'class': joined, **disclosure_payload()})
+
+
+@app.post('/api/v1/me/class-invites/<int:invite_id>/decline')
+@login_required
+def api_v1_me_class_invite_decline(invite_id):
+    try:
+        with get_db() as conn:
+            decline_invite(conn, current_user.id, invite_id)
+            mark_class_invite_notifications_read(conn, current_user.id, invite_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({'ok': True})
+
+
+@app.get('/api/v1/me/class-work')
+@login_required
+def api_v1_me_class_work():
+    with get_db() as conn:
+        rows = list_class_work_for_student(conn, current_user.id)
+    return jsonify({
+        'ok': True,
+        'class_work': [serialize_student_work_list_item(row) for row in rows],
+        'can_leave': False,
+    })
+
+
+@app.get('/api/v1/me/class-work/<int:assignment_id>')
+@login_required
+def api_v1_me_class_work_detail(assignment_id):
+    try:
+        with get_db() as conn:
+            work = get_class_work_for_student(conn, current_user.id, assignment_id)
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({'ok': True, 'class_work': serialize_student_work(work)})
+
+
+@app.post('/api/v1/me/class-work/<int:assignment_id>/answer')
+@login_required
+def api_v1_me_class_work_answer(assignment_id):
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return _api_error('JSON body required', 400, 'invalid_payload')
+    try:
+        with get_db() as conn:
+            work = submit_student_answer(
+                conn,
+                current_user.id,
+                assignment_id,
+                payload.get('index'),
+                payload.get('user_answer'),
+            )
+    except ValueError as exc:
+        return _class_value_error_api(exc)
+    return jsonify({'ok': True, 'class_work': serialize_student_work(work)})
+
+
 @app.get('/api/v1/auth/tokens')
 @login_required
 def api_v1_auth_list_tokens():
@@ -4964,6 +7842,20 @@ def api_v1_auth_list_tokens():
             for item in tokens
         ],
     })
+
+
+@app.delete('/api/v1/auth/tokens/<int:token_id>')
+@login_required
+def api_v1_auth_revoke_token(token_id):
+    with get_db() as conn:
+        cursor = conn.execute(
+            'DELETE FROM api_tokens WHERE id = ? AND user_id = ?',
+            (token_id, current_user.id),
+        )
+        conn.commit()
+        if cursor.rowcount == 0:
+            return _api_error('Token not found', 404, 'not_found')
+    return jsonify({'ok': True})
 
 
 @app.post('/api/v1/auth/revoke-all')
@@ -4998,7 +7890,12 @@ def api_v1_list_notifications():
     return jsonify({
         'ok': True,
         'unread_count': unread,
-        'notifications': [_serialize_notification_item(item) for item in items],
+        'notifications': [
+            _serialize_notification_item(
+                item, conn=conn, viewer_id=current_user.id,
+            )
+            for item in items
+        ],
         'next_before_id': items[-1]['id'] if items else None,
     })
 
@@ -5195,6 +8092,7 @@ def api_v1_me_gamification():
         accuracy_board = friend_accuracy_leaderboard(conn, current_user.id, days=7)
         buddy_recap = buddy_weekly_recap(conn, current_user.id)
         qotd_board = friend_qotd_leaderboard(conn, current_user.id)
+        qotd_week_board = friend_qotd_week_leaderboard(conn, current_user.id)
     if recap.get('best_quiz'):
         bq = recap['best_quiz']
         bq['topic_label'] = _topic_label(bq['level'], bq['subject'], bq['topic'])
@@ -5229,6 +8127,7 @@ def api_v1_me_gamification():
             for item in accuracy_board
         ],
         'qotd_leaderboard': qotd_board,
+        'qotd_week_leaderboard': qotd_week_board,
     })
 
 
@@ -5420,6 +8319,19 @@ def api_v1_list_reflections():
     })
 
 
+@app.get('/api/v1/me/reflections/<int:reflection_id>')
+@login_required
+def api_v1_get_reflection(reflection_id):
+    with get_db() as conn:
+        item = get_reflection(conn, current_user.id, reflection_id)
+    if not item:
+        return _api_error('Reflection not found', 404, 'not_found')
+    return jsonify({
+        'ok': True,
+        'reflection': _serialize_reflection(item, external_urls=True),
+    })
+
+
 @app.get('/api/v1/me/skill-gaps')
 @login_required
 def api_v1_me_skill_gaps():
@@ -5595,6 +8507,10 @@ def _client_ip():
     return forwarded or (request.remote_addr or 'unknown')
 
 
+def _client_ip_hash():
+    return hashed_ip(app.secret_key, _client_ip())
+
+
 def _api_rate_limit(action, limit):
     """Return (allowed, remaining) or abort with JSON error via tuple (False, 0)."""
     if _rate_limits_disabled():
@@ -5602,7 +8518,7 @@ def _api_rate_limit(action, limit):
     if current_user.is_authenticated:
         bucket = f'{action}:user:{current_user.id}'
     else:
-        bucket = f'{action}:ip:{_client_ip()}'
+        bucket = f'{action}:ip:{_client_ip_hash()}'
     with get_db() as conn:
         allowed, remaining, _count = check_and_increment_rate_limit(conn, bucket, limit)
     return allowed, remaining
@@ -5616,7 +8532,7 @@ def _build_topics_catalog():
         for subject in _TOPIC_SUBJECT_ORDER.get(level, tuple(subjects_map.keys())):
             topics_map = subjects_map.get(subject) or {}
             topics = []
-            for slug, cfg in sorted(topics_map.items(), key=lambda x: x[1]['name'].lower()):
+            for slug, cfg in iter_topics(topics_map):
                 has_variants = bool(cfg.get('variants_func'))
                 modes = ['standard']
                 if has_variants:
@@ -5627,8 +8543,15 @@ def _build_topics_catalog():
                     'slug': slug,
                     'name': cfg['name'],
                     'url': f'/topic/{level}/{subject}/{slug}',
+                    'order': cfg.get('order'),
+                    'prereqs': list(cfg.get('prereqs') or ()),
+                    'year': cfg.get('year'),
+                    'unit_code': cfg.get('unit_code'),
+                    'unit_name': cfg.get('unit_name'),
+                    'syllabus_ref': cfg.get('syllabus_ref'),
                     'has_variants': has_variants,
                     'supports_lesson_mcq': topic_supports_lesson_mcq(cfg),
+                    'supports_lesson_quiz': _lesson_quiz_available(level, subject, slug),
                     'modes': modes,
                     'difficulties': list(DIFFICULTIES),
                 })
@@ -5679,7 +8602,6 @@ def api_v1_quicktest_start():
     level = payload.get('level', 'gcse')
     subject = payload.get('subject', 'physics')
     topic = _resolve_topic_slug(level, subject, payload.get('topic', 'forces'))
-    mode = normalize_mode(payload.get('mode', 'standard'))
     difficulty = payload.get('difficulty', 'foundational')
 
     if not _topic_path_valid(level, subject, topic):
@@ -5690,6 +8612,9 @@ def api_v1_quicktest_start():
             400,
             'invalid_difficulty',
         )
+    mode = _normalize_generator_mode(
+        level, subject, topic, payload.get('mode', 'standard'), difficulty=difficulty
+    )
     if not can_access_difficulty(current_user, difficulty):
         return _api_error(
             'Difficult questions require a free account',
@@ -5877,7 +8802,7 @@ def api_v1_lesson_quiz_start():
 
     try:
         topic_config = TOPICS[level][subject][topic]
-        problems = build_lesson_mcq_quiz(level, subject, topic, topic_config)
+        problems = build_lesson_quiz(level, subject, topic, topic_config)
     except (KeyError, ValueError):
         return _api_error('Lesson quiz not available for this topic', 404, 'quiz_not_available')
 
@@ -5900,7 +8825,7 @@ def api_v1_lesson_quiz_start():
         save_lesson_quiz_session(conn, session_id, data)
 
     summary = _lesson_quiz_session_summary(data, session_id)
-    first = _quicktest_question_payload(problems[0]) if problems else None
+    first = _lesson_quiz_question_payload(problems[0]) if problems else None
     return jsonify({'ok': True, **summary, 'problem': first}), 201
 
 
@@ -5918,7 +8843,7 @@ def api_v1_lesson_quiz_question(session_id):
     return jsonify({
         'ok': True,
         **_lesson_quiz_session_summary(data, session_id),
-        'problem': _quicktest_question_payload(problems[idx]),
+        'problem': _lesson_quiz_question_payload(problems[idx]),
         'question_number': idx + 1,
     })
 
@@ -5940,11 +8865,12 @@ def api_v1_lesson_quiz_answer(session_id):
 
     user_answer = ''
     if isinstance(payload, dict):
-        user_answer = (payload.get('user_answer') or '').strip().upper()[:1]
+        user_answer = payload.get('user_answer')
 
     problem = problems[idx]
-    correct_answer = (problem.get('correct_answer') or '').strip().upper()[:1]
-    correct = bool(user_answer and correct_answer and user_answer == correct_answer)
+    graded = grade_lesson_quiz_problem(problem, user_answer)
+    user_answer = graded['user_answer']
+    correct = graded['correct']
 
     answers = list(data.get('answers') or [])
     answers.append(user_answer)
@@ -5995,12 +8921,13 @@ def api_v1_lesson_quiz_results(session_id):
 
     enriched = []
     for i, problem in enumerate(problems):
-        entry = _quicktest_question_payload(problem, reveal=True)
-        entry['user_answer'] = answers[i] if i < len(answers) else ''
-        correct_answer = (problem.get('correct_answer') or '').strip().upper()[:1]
-        entry['was_correct'] = bool(
-            entry['user_answer'] and entry['user_answer'] == correct_answer
-        )
+        entry = _lesson_quiz_question_payload(problem, reveal=True)
+        user_answer = _lesson_quiz_user_answer(answers, i)
+        graded = grade_lesson_quiz_problem(problem, user_answer)
+        entry['user_answer'] = user_answer
+        entry['was_correct'] = graded['correct']
+        entry['score'] = graded['score']
+        entry['score_total'] = graded['score_total']
         enriched.append(entry)
 
     result = {
@@ -6060,6 +8987,7 @@ def api_v1_save_lesson_progress():
             for key in completed_keys
             if str(key).strip()
         ]
+    step_total = _coerce_step_total(payload.get('step_total'))
 
     if not _topic_path_valid(level, subject, topic):
         return _api_error('Topic not found', 404, 'topic_not_found')
@@ -6074,6 +9002,7 @@ def api_v1_save_lesson_progress():
         section_key,
         section_label,
         completed_keys=completed_keys,
+        step_total=step_total,
     )
     return jsonify({'ok': True, 'progress': progress})
 
@@ -6100,7 +9029,6 @@ def api_v1_generate_problem():
     level = (payload.get('level') or 'gcse').strip()
     subject = (payload.get('subject') or 'maths').strip()
     topic = _resolve_topic_slug(level, subject, (payload.get('topic') or '').strip())
-    mode = normalize_mode(payload.get('mode') or 'standard')
     difficulty = (payload.get('difficulty') or 'foundational').strip()
     action = (payload.get('action') or 'start').strip().lower()
 
@@ -6112,8 +9040,17 @@ def api_v1_generate_problem():
             400,
             'invalid_difficulty',
         )
+    mode = _normalize_generator_mode(
+        level,
+        subject,
+        topic,
+        payload.get('mode') or 'standard',
+        difficulty=difficulty,
+    )
     if not _topic_path_valid(level, subject, topic):
         return _api_error('Topic not found', 404, 'topic_not_found')
+    if not _generator_path_allowed(level, subject):
+        return _api_error('Topic not in the live Practice catalogue', 404, 'topic_not_found')
     if not can_access_difficulty(current_user, difficulty):
         return _api_error(
             'Difficult questions require a free account',
@@ -6422,7 +9359,7 @@ def save_problem_route():
         message = 'Your session expired. Please try again.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 403
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(url_for('index'))
 
     payload = session.get('last_problem_payload')
@@ -6430,7 +9367,7 @@ def save_problem_route():
         message = 'Generate a question first, then save it.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 400
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(url_for('index'))
 
     level = payload['level']
@@ -6447,14 +9384,14 @@ def save_problem_route():
         message = 'Could not save that question.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 400
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(url_for('index'))
 
     if not problem.get('question'):
         message = 'Could not save that question.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 400
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(url_for('index'))
 
     try:
@@ -6473,7 +9410,7 @@ def save_problem_route():
         message = 'You have reached the saved question limit (200). Delete some to save more.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 400
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(url_for('index'))
 
     message = 'Question saved to your profile.'
@@ -6485,7 +9422,7 @@ def save_problem_route():
             'saved_url': url_for('view_saved_problem', saved_id=saved_id),
         })
 
-    flash(message, 'success')
+    flash_for('index', message, 'success')
     return redirect(url_for('index'))
 
 
@@ -6498,7 +9435,7 @@ def reroll_saved_problem_route(saved_id):
         message = 'Your session expired. Please try again.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 403
-        flash(message, 'error')
+        flash_for('view_saved_problem', message, 'error')
         return redirect(url_for('view_saved_problem', saved_id=saved_id))
 
     with get_db() as conn:
@@ -6507,7 +9444,7 @@ def reroll_saved_problem_route(saved_id):
         message = 'Saved question not found.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 404
-        flash(message, 'error')
+        flash_for('saved_problems_index', message, 'error')
         return redirect(url_for('saved_problems_index'))
 
     problem = saved['problem']
@@ -6524,14 +9461,14 @@ def reroll_saved_problem_route(saved_id):
         message = 'Could not refresh this question.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 400
-        flash(message, 'error')
+        flash_for('view_saved_problem', message, 'error')
         return redirect(url_for('view_saved_problem', saved_id=saved_id))
 
     if not _can_reroll_variant(topic_config, mode, difficulty, variant_name):
         message = 'This saved question cannot be refreshed with new numbers.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 400
-        flash(message, 'error')
+        flash_for('view_saved_problem', message, 'error')
         return redirect(url_for('view_saved_problem', saved_id=saved_id))
 
     try:
@@ -6543,7 +9480,7 @@ def reroll_saved_problem_route(saved_id):
         message = 'Could not refresh this question. Try again later.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 500
-        flash(message, 'error')
+        flash_for('view_saved_problem', message, 'error')
         return redirect(url_for('view_saved_problem', saved_id=saved_id))
 
     new_problem = dict(new_problem)
@@ -6555,7 +9492,7 @@ def reroll_saved_problem_route(saved_id):
         message = 'Saved question not found.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 404
-        flash(message, 'error')
+        flash_for('saved_problems_index', message, 'error')
         return redirect(url_for('saved_problems_index'))
 
     message = 'New numbers generated for this saved question.'
@@ -6575,7 +9512,7 @@ def reroll_saved_problem_route(saved_id):
             'can_reroll_variant': True,
         })
 
-    flash(message, 'success')
+    flash_for('view_saved_problem', message, 'success')
     return redirect(url_for('view_saved_problem', saved_id=saved_id))
 
 
@@ -6583,15 +9520,15 @@ def reroll_saved_problem_route(saved_id):
 @login_required
 def delete_saved_problem_route(saved_id):
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired. Please try again.', 'error')
+        flash_for('profile', 'Your session expired. Please try again.', 'error')
         return redirect(url_for('profile'))
 
     with get_db() as conn:
         deleted = delete_saved_problem(conn, current_user.id, saved_id)
     if deleted:
-        flash('Saved question removed.', 'success')
+        flash_for('profile', 'Saved question removed.', 'success')
     else:
-        flash('Saved question not found.', 'error')
+        flash_for('profile', 'Saved question not found.', 'error')
     next_url = request.form.get('next') or url_for('profile')
     if not next_url.startswith('/'):
         next_url = url_for('profile')
@@ -6639,14 +9576,14 @@ def share_question_route():
         if wants_json:
             body, status = err
             return body, status
-        flash('Daily share limit reached. Try again tomorrow.', 'error')
+        flash_for('index', 'Daily share limit reached. Try again tomorrow.', 'error')
         return redirect(request.referrer or url_for('index'))
 
     if not _validate_csrf(request.form.get('csrf_token')):
         message = 'Your session expired. Please try again.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 403
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(request.referrer or url_for('index'))
 
     visibility = _normalize_share_visibility(
@@ -6662,7 +9599,7 @@ def share_question_route():
             message = 'Saved question not found.'
             if wants_json:
                 return jsonify({'ok': False, 'error': message}), 404
-            flash(message, 'error')
+            flash_for('profile', message, 'error')
             return redirect(url_for('profile'))
         data = {
             'level': saved['level'],
@@ -6678,7 +9615,7 @@ def share_question_route():
             message = 'Generate a question first, then share it.'
             if wants_json:
                 return jsonify({'ok': False, 'error': message}), 400
-            flash(message, 'error')
+            flash_for('index', message, 'error')
             return redirect(url_for('index'))
 
     try:
@@ -6687,7 +9624,7 @@ def share_question_route():
         message = 'You have reached the shared question limit (200).'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 400
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(request.referrer or url_for('index'))
 
     share_url = url_for('view_shared_question', share_id=share_id)
@@ -6700,7 +9637,7 @@ def share_question_route():
             'share_url': share_url,
             'rate_limit_remaining': remaining,
         })
-    flash(message, 'success')
+    flash_for('view_shared_question', message, 'success')
     return redirect(share_url)
 
 
@@ -6766,14 +9703,14 @@ def create_suggestion_route():
         if wants_json:
             body, status = err
             return body, status
-        flash('Daily suggestion limit reached. Try again tomorrow.', 'error')
+        flash_for('index', 'Daily suggestion limit reached. Try again tomorrow.', 'error')
         return redirect(request.referrer or url_for('index'))
 
     if not _validate_csrf(request.form.get('csrf_token')):
         message = 'Your session expired. Please try again.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 403
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(request.referrer or url_for('index'))
 
     recipient_handle = normalize_handle(request.form.get('recipient_handle', ''))
@@ -6784,7 +9721,7 @@ def create_suggestion_route():
         message = 'Enter a recipient handle.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 400
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(request.referrer or url_for('index'))
 
     with get_db() as conn:
@@ -6793,7 +9730,7 @@ def create_suggestion_route():
         message = 'User not found.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 404
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(request.referrer or url_for('index'))
 
     if saved_id:
@@ -6803,7 +9740,7 @@ def create_suggestion_route():
             message = 'Saved question not found.'
             if wants_json:
                 return jsonify({'ok': False, 'error': message}), 404
-            flash(message, 'error')
+            flash_for('profile', message, 'error')
             return redirect(url_for('profile'))
         data = {
             'level': saved['level'],
@@ -6819,7 +9756,7 @@ def create_suggestion_route():
             message = 'Generate a question first, then suggest it.'
             if wants_json:
                 return jsonify({'ok': False, 'error': message}), 400
-            flash(message, 'error')
+            flash_for('index', message, 'error')
             return redirect(url_for('index'))
 
     try:
@@ -6865,13 +9802,13 @@ def create_suggestion_route():
             message = 'That user has too many pending suggestions.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 400
-        flash(message, 'error')
+        flash_for('index', message, 'error')
         return redirect(request.referrer or url_for('index'))
 
     message = f'Question sent to @{recipient.handle}.'
     if wants_json:
         return jsonify({'ok': True, 'message': message, 'suggestion_id': suggestion_id})
-    flash(message, 'success')
+    flash_for('suggestions_inbox', message, 'success')
     return redirect(url_for('suggestions_inbox'))
 
 
@@ -6906,14 +9843,14 @@ def view_suggestion(suggestion_id):
 @login_required
 def dismiss_suggestion_route(suggestion_id):
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired. Please try again.', 'error')
+        flash_for('suggestions_inbox', 'Your session expired. Please try again.', 'error')
         return redirect(url_for('suggestions_inbox'))
     with get_db() as conn:
         dismissed = dismiss_suggestion(conn, suggestion_id, current_user.id)
     if dismissed:
-        flash('Suggestion dismissed.', 'success')
+        flash_for('suggestions_inbox', 'Suggestion dismissed.', 'success')
     else:
-        flash('Suggestion not found.', 'error')
+        flash_for('suggestions_inbox', 'Suggestion not found.', 'error')
     return redirect(url_for('suggestions_inbox'))
 
 
@@ -6925,7 +9862,7 @@ def share_quiz_attempt_route(attempt_id):
         message = 'Your session expired. Please try again.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 403
-        flash(message, 'error')
+        flash_for('profile', message, 'error')
         return redirect(url_for('profile'))
 
     visibility = _normalize_share_visibility(
@@ -6937,7 +9874,7 @@ def share_quiz_attempt_route(attempt_id):
         message = 'Quiz attempt not found.'
         if wants_json:
             return jsonify({'ok': False, 'error': message}), 404
-        flash(message, 'error')
+        flash_for('profile', message, 'error')
         return redirect(url_for('profile'))
 
     _record_user_activity(
@@ -6958,7 +9895,7 @@ def share_quiz_attempt_route(attempt_id):
     message = 'Quiz score shared to your activity feed.'
     if wants_json:
         return jsonify({'ok': True, 'message': message})
-    flash(message, 'success')
+    flash_for('view_quiz_attempt', message, 'success')
     return redirect(url_for('view_quiz_attempt', attempt_id=attempt_id))
 
 
@@ -7204,6 +10141,7 @@ def api_save_lesson_progress():
             for key in completed_keys
             if str(key).strip()
         ]
+    step_total = _coerce_step_total(payload.get('step_total'))
 
     if not _topic_path_valid(level, subject, topic):
         return _legacy_api_response(
@@ -7224,6 +10162,7 @@ def api_save_lesson_progress():
         section_key,
         section_label,
         completed_keys=completed_keys,
+        step_total=step_total,
     )
     return _legacy_api_response({'ok': True, 'progress': progress})
 
@@ -7232,12 +10171,12 @@ def api_save_lesson_progress():
 @login_required
 def clear_lesson_progress_route(level, subject, topic):
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired. Please try again.', 'error')
+        flash_for('profile', 'Your session expired. Please try again.', 'error')
         return redirect(url_for('profile'))
 
     with get_db() as conn:
         clear_lesson_progress(conn, current_user.id, level, subject, topic)
-    flash('Lesson bookmark cleared.', 'success')
+    flash_for('profile', 'Lesson bookmark cleared.', 'success')
     return redirect(url_for('profile'))
 
 
@@ -7249,7 +10188,7 @@ def view_quiz_attempt(attempt_id):
     if not attempt:
         return 'Quiz attempt not found', 404
     if not attempt.get('problems'):
-        flash(
+        flash_for('profile', 
             'Full review is not available for this older attempt. Try a new quiz on the same topic.',
             'error',
         )
@@ -7330,7 +10269,7 @@ def _lesson_assist_rate_limit():
         return False, 0, 'assistant_unavailable'
 
     day = date.today().isoformat()
-    ip_key = f"ip:{_lesson_assist_client_ip()}"
+    ip_key = f"ip:{_client_ip_hash()}"
     session_key = f"session:{_lesson_assist_session_key()}"
 
     ip_count = _lesson_assist_usage_count(day, ip_key)
@@ -7347,7 +10286,7 @@ def _lesson_assist_rate_limit():
 
 def _lesson_assist_record_usage():
     day = date.today().isoformat()
-    _lesson_assist_increment(day, f"ip:{_lesson_assist_client_ip()}")
+    _lesson_assist_increment(day, f"ip:{_client_ip_hash()}")
     _lesson_assist_increment(day, f"session:{_lesson_assist_session_key()}")
 
 
@@ -7436,13 +10375,19 @@ def lesson_explain():
 @app.route('/quicktest/start', methods=['POST'])
 def quicktest_start():
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired. Please try again.', 'error')
+        flash_for('index', 'Your session expired. Please try again.', 'error')
         return redirect(url_for('index'))
     level = request.form.get('level', 'gcse')
     subject = request.form.get('subject', 'physics')
     topic = _resolve_topic_slug(level, subject, request.form.get('topic', 'forces'))
-    mode = normalize_mode(request.form.get('mode', 'standard'))
     difficulty = request.form.get('difficulty', 'foundational')
+    mode = _normalize_generator_mode(
+        level,
+        subject,
+        topic,
+        request.form.get('mode', 'standard'),
+        difficulty=difficulty if difficulty in DIFFICULTIES else None,
+    )
 
     try:
         problems, topic_config = build_quicktest_problems(
@@ -7494,12 +10439,13 @@ def quicktest_question():
         qt_topic=data.get('topic', 'forces'),
         qt_mode=data.get('mode', 'standard'),
         qt_difficulty=data.get('difficulty', 'foundational'),
+        retry_mode=data.get('retry_mode', False),
     )
 
 @app.route('/quicktest/next', methods=['POST'])
 def quicktest_next():
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired. Please try again.', 'error')
+        flash_for('index', 'Your session expired. Please try again.', 'error')
         return redirect(url_for('index'))
     data = _load_qt()
     if not data:
@@ -7528,20 +10474,43 @@ def lesson_mcq_quiz(level, subject, topic):
     except KeyError:
         return 'Topic not found', 404
 
-    try:
-        problems = build_lesson_mcq_quiz(level, subject, topic, topic_config)
-    except ValueError:
-        return 'Lesson quiz not available for this topic', 404
-    data = {
-        'problems': problems,
-        'topic_name': topic_config.get('name', topic),
-        'level': level,
-        'subject': subject,
-        'topic': topic,
-        'lesson_url': url_for('topic_page', level=level, subject=subject, topic=topic),
-        'total': len(problems),
-    }
-    _save_lq(data)
+    data = None
+    if session.pop('lq_resume', None):
+        existing = _load_lq()
+        if (
+            existing
+            and existing.get('topic') == topic
+            and existing.get('level') == level
+            and existing.get('subject') == subject
+            and existing.get('problems')
+        ):
+            data = existing
+            data.setdefault('index', 0)
+            data.setdefault('answers', [])
+
+    if data is None:
+        try:
+            problems = build_lesson_quiz(level, subject, topic, topic_config)
+        except ValueError:
+            return 'Lesson quiz not available for this topic', 404
+        data = {
+            'problems': problems,
+            'answers': [],
+            'index': 0,
+            'topic_name': topic_config.get('name', topic),
+            'level': level,
+            'subject': subject,
+            'topic': topic,
+            'lesson_url': url_for('topic_page', level=level, subject=subject, topic=topic),
+            'total': len(problems),
+            'retry_mode': False,
+        }
+        _save_lq(data)
+
+    problems = data['problems']
+    if lesson_quiz_problems_are_mixed(problems):
+        return redirect(url_for('lesson_mcq_question', level=level, subject=subject, topic=topic))
+
     return render_template(
         'lesson_mcq_quiz.html',
         problems=problems,
@@ -7551,7 +10520,113 @@ def lesson_mcq_quiz(level, subject, topic):
         subject=subject,
         topic=topic,
         total=len(problems),
+        retry_mode=data.get('retry_mode', False),
     )
+
+
+def _render_lesson_quiz_question(data, level, subject, topic):
+    problems = data.get('problems') or []
+    idx = int(data.get('index', 0))
+    if idx >= len(problems):
+        return redirect(url_for('lesson_mcq_results', level=level, subject=subject, topic=topic))
+    problem = problems[idx]
+    _sync_last_problem_payload(
+        problem,
+        level=level,
+        subject=subject,
+        topic=topic,
+        mode='lesson',
+        difficulty=problem.get('difficulty', 'foundational'),
+    )
+    return render_template(
+        'lesson_quiz_question.html',
+        problem=problem,
+        current=idx + 1,
+        total=len(problems),
+        topic_name=data['topic_name'],
+        lesson_url=data['lesson_url'],
+        level=level,
+        subject=subject,
+        topic=topic,
+        qt_level=level,
+        qt_subject=subject,
+        qt_topic=topic,
+        qt_mode='lesson',
+        qt_difficulty=problem.get('difficulty', 'foundational'),
+        retry_mode=data.get('retry_mode', False),
+    )
+
+
+@app.route('/lesson-quiz/<level>/<subject>/<topic>/question')
+def lesson_mcq_question(level, subject, topic):
+    if not _lesson_quiz_available(level, subject, topic):
+        return 'Lesson quiz not available for this topic', 404
+    data = _load_lq()
+    if (
+        not data
+        or data.get('topic') != topic
+        or data.get('level') != level
+        or data.get('subject') != subject
+    ):
+        return redirect(url_for('lesson_mcq_quiz', level=level, subject=subject, topic=topic))
+    return _render_lesson_quiz_question(data, level, subject, topic)
+
+
+@app.route('/lesson-quiz/<level>/<subject>/<topic>/next', methods=['POST'])
+def lesson_mcq_next(level, subject, topic):
+    if not _lesson_quiz_available(level, subject, topic):
+        return 'Lesson quiz not available for this topic', 404
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash_for('lesson_mcq_quiz', 'Your session expired. Please try again.', 'error')
+        return redirect(url_for('lesson_mcq_quiz', level=level, subject=subject, topic=topic))
+
+    data = _load_lq()
+    if (
+        not data
+        or data.get('topic') != topic
+        or data.get('level') != level
+        or data.get('subject') != subject
+    ):
+        return redirect(url_for('lesson_mcq_quiz', level=level, subject=subject, topic=topic))
+
+    problems = data.get('problems') or []
+    idx = int(data.get('index', 0))
+    if idx < len(problems):
+        captured = _quicktest_answer_from_form(problems[idx], request.form)
+        graded = grade_lesson_quiz_problem(problems[idx], captured.get('user_answer'))
+        answers = list(data.get('answers') or [])
+        answers.append(graded['user_answer'])
+        data['answers'] = answers
+        data['index'] = idx + 1
+        _save_lq(data)
+
+    if data['index'] >= len(problems):
+        score = _lesson_quiz_score(problems, data.get('answers') or [])
+        data['score'] = score
+        _save_lq(data)
+        if current_user.is_authenticated:
+            with get_db() as conn:
+                attempt_id = record_quiz_attempt(
+                    conn,
+                    current_user.id,
+                    level,
+                    subject,
+                    topic,
+                    score,
+                    data.get('total', len(problems)),
+                    data.get('answers') or [],
+                    problems,
+                )
+            _track_quiz_completed(
+                level,
+                subject,
+                topic,
+                score,
+                data.get('total', len(problems)),
+            )
+            return redirect(url_for('view_quiz_attempt', attempt_id=attempt_id))
+        return redirect(url_for('lesson_mcq_results', level=level, subject=subject, topic=topic))
+    return redirect(url_for('lesson_mcq_question', level=level, subject=subject, topic=topic))
 
 
 @app.route('/lesson-quiz/<level>/<subject>/<topic>/submit', methods=['POST'])
@@ -7564,12 +10639,11 @@ def lesson_mcq_submit(level, subject, topic):
         return redirect(url_for('lesson_mcq_quiz', level=level, subject=subject, topic=topic))
 
     answers = []
-    score = 0
     for i, problem in enumerate(data['problems']):
-        letter = (request.form.get(f'answer_{i}', '') or '').strip().upper()[:1]
-        answers.append(letter)
-        if letter and letter == problem.get('correct_answer'):
-            score += 1
+        raw = (request.form.get(f'answer_{i}', '') or '').strip()
+        graded = grade_lesson_quiz_problem(problem, raw)
+        answers.append(graded['user_answer'])
+    score = _lesson_quiz_score(data['problems'], answers)
 
     data['answers'] = answers
     data['score'] = score
@@ -7600,6 +10674,44 @@ def lesson_mcq_submit(level, subject, topic):
     return redirect(url_for('lesson_mcq_results', level=level, subject=subject, topic=topic))
 
 
+@app.route('/lesson-quiz/<level>/<subject>/<topic>/retry-wrong', methods=['POST'])
+def lesson_mcq_retry_wrong(level, subject, topic):
+    if not _lesson_quiz_available(level, subject, topic):
+        return 'Lesson quiz not available for this topic', 404
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash_for('lesson_mcq_results', 'Your session expired. Please try again.', 'error')
+        return redirect(url_for('lesson_mcq_results', level=level, subject=subject, topic=topic))
+
+    data = _load_lq()
+    if not data or data.get('topic') != topic or 'answers' not in data:
+        return redirect(url_for('lesson_mcq_quiz', level=level, subject=subject, topic=topic))
+
+    wrong_problems = []
+    for i, problem in enumerate(data['problems']):
+        user_answer = _lesson_quiz_user_answer(data.get('answers') or [], i)
+        if not grade_lesson_quiz_problem(problem, user_answer)['correct']:
+            wrong_problems.append(problem)
+    if not wrong_problems:
+        return redirect(url_for('lesson_mcq_results', level=level, subject=subject, topic=topic))
+
+    retry_data = {
+        'problems': wrong_problems,
+        'answers': [],
+        'index': 0,
+        'topic_name': data['topic_name'],
+        'level': level,
+        'subject': subject,
+        'topic': topic,
+        'lesson_url': data['lesson_url'],
+        'total': len(wrong_problems),
+        'retry_mode': True,
+    }
+    _save_lq(retry_data)
+    session['lq_resume'] = True
+    session.modified = True
+    return redirect(url_for('lesson_mcq_quiz', level=level, subject=subject, topic=topic))
+
+
 @app.route('/lesson-quiz/<level>/<subject>/<topic>/results')
 def lesson_mcq_results(level, subject, topic):
     if not _lesson_quiz_available(level, subject, topic):
@@ -7610,14 +10722,24 @@ def lesson_mcq_results(level, subject, topic):
         return redirect(url_for('lesson_mcq_quiz', level=level, subject=subject, topic=topic))
 
     enriched = []
+    answers = data.get('answers') or []
     for i, problem in enumerate(data['problems']):
         p = dict(problem)
-        p['user_answer'] = data['answers'][i] if i < len(data['answers']) else ''
+        user_answer = _lesson_quiz_user_answer(answers, i)
+        graded = grade_lesson_quiz_problem(problem, user_answer)
+        p['user_answer'] = user_answer
+        p['answered_correctly'] = graded['correct']
+        p['score'] = graded['score']
+        p['score_total'] = graded['score_total']
         enriched.append(p)
+
+    score = data.get('score')
+    if score is None:
+        score = _lesson_quiz_score(data['problems'], answers)
 
     return _render_quiz_results(
         enriched,
-        data['score'],
+        score,
         data.get('total', len(enriched)),
         data['topic_name'],
         data['lesson_url'],
@@ -7625,6 +10747,7 @@ def lesson_mcq_results(level, subject, topic):
         subject,
         topic,
         show_wrong_explanations_only=False,
+        can_retry_wrong=True,
     )
 
 
@@ -7637,6 +10760,7 @@ def quicktest_results():
     answers = data.get('answers') or []
     total_marks = sum(p['marks'] for p in problems)
     summary = _quicktest_results_summary(problems, answers)
+    wrong_count = _quicktest_wrong_count(problems, answers)
     attempt_id = _finalize_quicktest_session(data)
     return render_template(
         'quicktest_results.html',
@@ -7645,8 +10769,43 @@ def quicktest_results():
         topic_name=data['topic_name'],
         total_marks=total_marks,
         quiz_attempt_id=attempt_id,
+        wrong_count=wrong_count,
+        can_retry_wrong=wrong_count > 0,
         **summary,
     )
+
+
+@app.route('/quicktest/retry-wrong', methods=['POST'])
+def quicktest_retry_wrong():
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash_for('quicktest_results', 'Your session expired. Please try again.', 'error')
+        return redirect(url_for('quicktest_results'))
+    data = _load_qt()
+    if not data or not data.get('answers'):
+        return redirect(url_for('index'))
+
+    wrong_problems = []
+    for problem, answer in zip(data['problems'], data['answers']):
+        if _quicktest_answer_is_wrong(problem, answer):
+            wrong_problems.append(problem)
+    if not wrong_problems:
+        return redirect(url_for('quicktest_results'))
+
+    retry_data = {
+        'problems': wrong_problems,
+        'answers': [],
+        'index': 0,
+        'topic_name': data['topic_name'],
+        'level': data.get('level', 'gcse'),
+        'subject': data.get('subject', 'physics'),
+        'topic': data.get('topic', 'forces'),
+        'difficulty': data.get('difficulty', 'foundational'),
+        'mode': data.get('mode', 'standard'),
+        'owner_user_id': data.get('owner_user_id'),
+        'retry_mode': True,
+    }
+    _save_qt(retry_data)
+    return redirect(url_for('quicktest_question'))
 
 
 # --- Phase E: challenges, study pairs, question of the day ---
@@ -7676,7 +10835,7 @@ def challenge_new():
         else:
             err, _ = _require_rate_limit('challenge_create', CHALLENGE_DAILY_LIMIT, label='challenge')
             if err:
-                flash(err.get_json()['error'], 'error')
+                flash_for('challenge_new', err.get_json()['error'], 'error')
                 return redirect(url_for('challenge_new', handle=opponent_handle))
             opponent_handle = (request.form.get('handle') or '').strip().lstrip('@')
             parsed = _parse_topic_choice(request.form.get('topic_choice'))
@@ -7706,7 +10865,7 @@ def challenge_new():
                             else:
                                 errors['topic'] = 'Quiz not available for that topic.'
                         else:
-                            flash(f'Challenge sent to @{opponent.handle}.', 'success')
+                            flash_for('challenge_detail', f'Challenge sent to @{opponent.handle}.', 'success')
                             return redirect(url_for('challenge_detail', challenge_id=challenge_id))
 
     return render_template(
@@ -7734,7 +10893,7 @@ def challenge_detail(challenge_id):
 
     if request.method == 'POST' and request.form.get('action') == 'submit':
         if not _validate_csrf(request.form.get('csrf_token')):
-            flash('Your session expired. Please try again.', 'error')
+            flash_for('challenge_detail', 'Your session expired. Please try again.', 'error')
             return redirect(url_for('challenge_detail', challenge_id=challenge_id))
         if user_has_submitted(challenge, current_user.id):
             return redirect(url_for('challenge_detail', challenge_id=challenge_id))
@@ -7762,13 +10921,19 @@ def challenge_detail(challenge_id):
                     updated['creator_score'],
                     updated['opponent_score'],
                 )
-        flash(f'Score recorded: {score}/{total}.', 'success')
+        flash_for('challenge_detail', f'Score recorded: {score}/{total}.', 'success')
         return redirect(url_for('challenge_detail', challenge_id=challenge_id))
 
     show_quiz = (
         challenge['status'] != CHALLENGE_DECLINED
         and not user_has_submitted(challenge, current_user.id)
     )
+    show_head_to_head = (
+        challenge['status'] == CHALLENGE_COMPLETE
+        and challenge.get('creator_score') is not None
+        and challenge.get('opponent_score') is not None
+    )
+    comparison = build_head_to_head(challenge) if show_head_to_head else None
     return render_template(
         'challenge_detail.html',
         challenge=challenge,
@@ -7777,6 +10942,9 @@ def challenge_detail(challenge_id):
         problems=problems,
         total=total,
         show_quiz=show_quiz,
+        show_head_to_head=show_head_to_head,
+        comparison=comparison,
+        option_letter=_option_letter,
     )
 
 
@@ -7784,13 +10952,13 @@ def challenge_detail(challenge_id):
 @login_required
 def challenge_decline(challenge_id):
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired.', 'error')
+        flash_for('challenges_list', 'Your session expired.', 'error')
         return redirect(url_for('challenges_list'))
     with get_db() as conn:
         if decline_challenge(conn, challenge_id, current_user.id):
-            flash('Challenge declined.', 'success')
+            flash_for('challenges_list', 'Challenge declined.', 'success')
         else:
-            flash('Could not decline that challenge.', 'error')
+            flash_for('challenges_list', 'Could not decline that challenge.', 'error')
     return redirect(url_for('challenges_list'))
 
 
@@ -7798,16 +10966,16 @@ def challenge_decline(challenge_id):
 @login_required
 def study_pair_invite(handle):
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired.', 'error')
+        flash_for('public_profile', 'Your session expired.', 'error')
         return redirect(url_for('public_profile', handle=handle))
     with get_db() as conn:
         target = get_user_by_handle(conn, handle)
         if not target or not target.is_active:
-            flash('User not found.', 'error')
+            flash_for('public_profile', 'User not found.', 'error')
         elif target.id == current_user.id:
-            flash('You cannot pair with yourself.', 'error')
+            flash_for('public_profile', 'You cannot pair with yourself.', 'error')
         elif is_blocked(conn, current_user.id, target.id):
-            flash('You cannot invite this user.', 'error')
+            flash_for('public_profile', 'You cannot invite this user.', 'error')
         else:
             try:
                 pair_id = invite_study_pair(conn, current_user.id, target.id)
@@ -7818,10 +10986,10 @@ def study_pair_invite(handle):
                     'pending_outgoing': 'You already sent a study buddy invite.',
                     'pending_incoming': 'You have a pending invite to respond to first.',
                 }
-                flash(messages.get(str(exc), 'Could not send invite.'), 'error')
+                flash_for('public_profile', messages.get(str(exc), 'Could not send invite.'), 'error')
             else:
                 _notify_study_pair_invite(conn, target.id, current_user.handle, pair_id)
-                flash(f'Study buddy invite sent to @{target.handle}.', 'success')
+                flash_for('public_profile', f'Study buddy invite sent to @{target.handle}.', 'success')
     return redirect(url_for('public_profile', handle=handle))
 
 
@@ -7829,18 +10997,16 @@ def study_pair_invite(handle):
 @login_required
 def study_pair_accept(pair_id):
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired.', 'error')
+        flash_for('profile', 'Your session expired.', 'error')
         return redirect(url_for('profile'))
     with get_db() as conn:
         try:
             pair = accept_study_pair(conn, pair_id, current_user.id)
-        except ValueError:
-            flash('Could not accept — one of you may already have a buddy.', 'error')
+        except ValueError as exc:
+            flash_for('profile', _study_pair_error_message(exc), 'error')
         else:
-            if pair:
-                flash('Study buddy connected!', 'success')
-            else:
-                flash('Invite not found.', 'error')
+            mark_study_pair_notifications_read(conn, current_user.id, pair_id)
+            flash_for('profile', 'Study buddy connected!', 'success')
     return redirect(url_for('profile'))
 
 
@@ -7848,11 +11014,16 @@ def study_pair_accept(pair_id):
 @login_required
 def study_pair_decline(pair_id):
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired.', 'error')
+        flash_for('profile', 'Your session expired.', 'error')
         return redirect(url_for('profile'))
     with get_db() as conn:
-        if decline_study_pair(conn, pair_id, current_user.id):
-            flash('Invite declined.', 'success')
+        try:
+            decline_study_pair(conn, pair_id, current_user.id)
+        except ValueError as exc:
+            flash_for('profile', _study_pair_error_message(exc), 'error')
+        else:
+            mark_study_pair_notifications_read(conn, current_user.id, pair_id)
+            flash_for('profile', 'Invite declined.', 'success')
     return redirect(url_for('profile'))
 
 
@@ -7860,11 +11031,11 @@ def study_pair_decline(pair_id):
 @login_required
 def study_pair_end():
     if not _validate_csrf(request.form.get('csrf_token')):
-        flash('Your session expired.', 'error')
+        flash_for('profile', 'Your session expired.', 'error')
         return redirect(url_for('profile'))
     with get_db() as conn:
         if end_study_pair(conn, current_user.id):
-            flash('Study buddy link ended.', 'success')
+            flash_for('profile', 'Study buddy link ended.', 'success')
     return redirect(url_for('profile'))
 
 
@@ -7882,7 +11053,7 @@ def qotd_page():
 
     if request.method == 'POST':
         if not _validate_csrf(request.form.get('csrf_token')):
-            flash('Your session expired.', 'error')
+            flash_for('qotd_page', 'Your session expired.', 'error')
             return redirect(url_for('qotd_page'))
         letter = (request.form.get('answer') or '').strip().upper()[:1]
         correct = letter == correct_answer
@@ -7890,16 +11061,23 @@ def qotd_page():
             try:
                 record_qotd_answer(conn, current_user.id, day_key, letter, correct)
             except ValueError:
-                flash('You already answered today.', 'error')
+                flash_for('qotd_page', 'You already answered today.', 'error')
             else:
                 # Streak only — QOTD must not count as practising this topic.
                 _record_study_activity(current_user.id)
-                flash('Correct!' if correct else f'Not quite — answer was {correct_answer}.', 'success' if correct else 'error')
         return redirect(url_for('qotd_page'))
 
     with get_db() as conn:
         attempt = get_user_attempt(conn, current_user.id, day_key)
-        leaderboard = friend_qotd_leaderboard(conn, current_user.id, day_key)
+        board = (request.args.get('board') or 'today').strip().lower()
+        if board not in ('today', 'week'):
+            board = 'today'
+        if board == 'week':
+            leaderboard = friend_qotd_week_leaderboard(conn, current_user.id)
+            week_day_keys = qotd_window_day_keys()
+        else:
+            leaderboard = friend_qotd_leaderboard(conn, current_user.id, day_key)
+            week_day_keys = []
 
     return render_template(
         'qotd.html',
@@ -7907,6 +11085,8 @@ def qotd_page():
         attempt=attempt,
         leaderboard=leaderboard,
         problem=problem,
+        board=board,
+        week_day_keys=week_day_keys,
     )
 
 
@@ -8099,9 +11279,8 @@ def api_v1_study_pair_accept(pair_id):
         try:
             pair = accept_study_pair(conn, pair_id, current_user.id)
         except ValueError as exc:
-            return _api_error(str(exc).replace('_', ' '), 409, str(exc))
-        if not pair:
-            return _api_error('Not found', 404, 'not_found')
+            return _study_pair_api_error(exc)
+        mark_study_pair_notifications_read(conn, current_user.id, pair_id)
     return jsonify({'ok': True, 'study_pair': serialize_study_pair(pair, current_user.id)})
 
 
@@ -8109,8 +11288,11 @@ def api_v1_study_pair_accept(pair_id):
 @login_required
 def api_v1_study_pair_decline(pair_id):
     with get_db() as conn:
-        if not decline_study_pair(conn, pair_id, current_user.id):
-            return _api_error('Cannot decline', 400, 'invalid_state')
+        try:
+            decline_study_pair(conn, pair_id, current_user.id)
+        except ValueError as exc:
+            return _study_pair_api_error(exc)
+        mark_study_pair_notifications_read(conn, current_user.id, pair_id)
     return jsonify({'ok': True})
 
 
@@ -8201,9 +11383,44 @@ def api_v1_qotd_leaderboard():
     return jsonify({'ok': True, 'day_key': day_key, 'leaderboard': board})
 
 
+@app.get('/api/v1/qotd/week/leaderboard')
+@login_required
+def api_v1_qotd_week_leaderboard():
+    try:
+        days = min(max(int(request.args.get('days', 7)), 1), 31)
+    except (TypeError, ValueError):
+        days = 7
+    end_day = (request.args.get('end_day') or '').strip() or None
+    if end_day:
+        try:
+            date.fromisoformat(end_day)
+        except ValueError:
+            return _api_error('end_day must be YYYY-MM-DD', 400, 'invalid_field')
+    day_keys = qotd_window_day_keys(days=days, end_day=end_day)
+    with get_db() as conn:
+        leaderboard = friend_qotd_week_leaderboard(
+            conn,
+            current_user.id,
+            days=days,
+            end_day=end_day,
+        )
+    return jsonify({'ok': True, 'day_keys': day_keys, 'leaderboard': leaderboard})
+
+
 if __name__ == "__main__":
+    # Never run the dev server against the ephemeral smoke DB.
+    os.environ.pop("PB_TESTING", None)
+    os.environ.pop("PB_TEST_DB_PATH", None)
+
     debug = os.environ.get("FLASK_DEBUG", "0").strip() in ("1", "true", "True")
     host = os.environ.get("FLASK_RUN_HOST", "127.0.0.1").strip() or "127.0.0.1"
     port = int(os.environ.get("FLASK_RUN_PORT", "5001"))
-    print(f"Problem Bank running at http://127.0.0.1:{port}  (buddy embed v4 — use this URL, not :5000)")
+    url = f"http://{host}:{port}"
+    print(f"Problem Bank running at {url}  (buddy embed v4 — use this URL, not :5000)")
+    print(f"  Repo: {_ROOT}")
+    print("  Settings > Appearance (theme) is in this tree; restart here after git pull.")
+    if os.environ.get('PB_TESTING') == '1':
+        print('  WARNING: PB_TESTING=1 — using ephemeral DB, not data/quicktest.db')
+    else:
+        print(f"  Database: {_db_path()}")
     app.run(debug=debug, host=host, port=port)

@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% block title %}Pregnancy and Sexual Health – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Pregnancy and Sexual Health</h1>
+    <p class="hero-sub">S1 Integrated Science · Unit 1.4 Puberty · syllabus 1.4.3. Intercourse, pregnancy, fetal development, birth, contraception, STIs, identity and orientation, media, consent and communication. Fictional third-person scenarios only. This lesson never asks for personal sexual, relationship or health disclosure.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S1</span>
+      <span class="pill pill--hero">1.4 Puberty</span>
+      <span class="pill pill--hero">1.4.3</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='pregnancy_sexual_health') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Intercourse
+      <span class="lesson-tag">1.4.3</span>
+      <span class="lesson-tag">S1</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>Sexual intercourse can allow sperm to enter the vagina and swim toward an egg. That is the clinical mechanism. It is not a question about anyone in the room.</p>
+      <p><strong>Worked sequence:</strong> intercourse → sperm may meet an egg → fertilisation if they join → pregnancy if the early embryo implants. Each step can fail; none of them is a prompt for personal stories.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Sexual intercourse can allow sperm to</p>
+          <button class="btn mcq-btn" data-letter="A">turn into bone instantly</button>
+          <button class="btn mcq-btn" data-letter="B">enter the vagina and swim toward an egg</button>
+          <button class="btn mcq-btn" data-letter="C">become nitrogen in air</button>
+          <button class="btn mcq-btn" data-letter="D">measure speed</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Pregnancy
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Pregnancy</strong> is development after fertilisation, usually in the uterus. A <strong>fetus</strong> is the developing offspring after the early embryo stage. Personal pregnancy questions belong with a trusted adult or health professional, not this app.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Pregnancy in this lesson means</p>
+          <button class="btn mcq-btn" data-letter="A">winning a match</button>
+          <button class="btn mcq-btn" data-letter="B">development after fertilisation, usually in the uterus</button>
+          <button class="btn mcq-btn" data-letter="C">a pulse of 80</button>
+          <button class="btn mcq-btn" data-letter="D">a friction force</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Fetal development and birth
+    </summary>
+    <div class="lesson-section-body">
+      <p>The fetus develops in the uterus. <strong>Birth</strong> is usually the baby leaving the uterus, often through the vagina. The description stays clinical and short. There is no sensational imagery on this page.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Birth is usually</p>
+          <button class="btn mcq-btn" data-letter="A">the fetus remaining in the ovary forever</button>
+          <button class="btn mcq-btn" data-letter="B">the baby leaving the uterus, often through the vagina</button>
+          <button class="btn mcq-btn" data-letter="C">a pulse measurement</button>
+          <button class="btn mcq-btn" data-letter="D">unrelated to pregnancy</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Contraception
+    </summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="Methods that reduce the chance of pregnancy">Contraception</dfn> is a set of methods that can reduce the chance of pregnancy.
+      <span class="lesson-gloss-def">Methods that reduce the chance of pregnancy. They can fail: they are not a magic shield. Personal method choice is for qualified advice.</span>
+      A condom is one barrier example; it can also reduce some STI risk. The quiz never asks which method a pupil uses.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Contraception is</p>
+          <button class="btn mcq-btn" data-letter="A">a type of joint</button>
+          <button class="btn mcq-btn" data-letter="B">a set of methods that can reduce the chance of pregnancy</button>
+          <button class="btn mcq-btn" data-letter="C">a requirement to disclose personal use in this quiz</button>
+          <button class="btn mcq-btn" data-letter="D">a banned sports drug by definition</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      STIs
+    </summary>
+    <div class="lesson-section-body">
+      <p>An <dfn class="lesson-gloss" title="Infection that can spread through sexual contact">STI</dfn> is an infection that can spread through sexual contact.
+      <span class="lesson-gloss-def">Sexually transmitted infection. Some can be present with few symptoms, which is why qualified testing matters. This app does not diagnose and does not ask who has been tested.</span></p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>An STI is</p>
+          <button class="btn mcq-btn" data-letter="A">a distance–time slope</button>
+          <button class="btn mcq-btn" data-letter="B">an infection that can spread through sexual contact</button>
+          <button class="btn mcq-btn" data-letter="C">a hormone that is always harmless</button>
+          <button class="btn mcq-btn" data-letter="D">a muscle pair</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Identity, orientation and media
+    </summary>
+    <div class="lesson-section-body">
+      <p>People can be attracted to different sexes; gender identity can also differ between people. Classwork uses general facts. There is no roll-call and no answer box for a pupil’s identity. Media can show unrealistic sex or relationships: compare claims with curriculum facts and consent rules, without harvesting viewing lists.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Sexual orientation in this syllabus is the idea that</p>
+          <button class="btn mcq-btn" data-letter="A">everyone must announce theirs in the quiz</button>
+          <button class="btn mcq-btn" data-letter="B">people can be attracted to different sexes; the lesson does not ask which applies to a pupil</button>
+          <button class="btn mcq-btn" data-letter="C">orientation is a newton</button>
+          <button class="btn mcq-btn" data-letter="D">science forbids the topic</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">7</span>
+      Consent
+    </summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="A clear, voluntary yes that can be withdrawn">Consent</dfn> is a clear, voluntary yes that can be withdrawn. Silence is not consent. Fame does not override a no.
+      <span class="lesson-gloss-def">A clear, voluntary agreement that can be withdrawn. Silence is not consent.</span>
+      In a scenario, if Jordan hears no and continues, that is not consent. Healthy communication includes listening.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Consent means</p>
+          <button class="btn mcq-btn" data-letter="A">silence after someone looks famous</button>
+          <button class="btn mcq-btn" data-letter="B">a clear, voluntary agreement that can be withdrawn</button>
+          <button class="btn mcq-btn" data-letter="C">the other person already started so it is too late</button>
+          <button class="btn mcq-btn" data-letter="D">a teacher collecting relationship lists</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">8</span>
+      Getting help
+    </summary>
+    <div class="lesson-section-body">
+      <p>Personal decisions about sex, contraception, pregnancy, identity or infections belong with a trusted adult or qualified health professional. This page teaches curriculum knowledge. It does not store relationship lists, sexual history or test results. S1 Integrated Science is complete at the end of this unit on the topic path.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref lesson-quick-ref-card" role="region" aria-label="Pregnancy and sexual health quick reference">
+    <h3>Quick reference</h3>
+    <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+      <div>
+        <h4>Biology</h4>
+        <ul>
+          <li>Intercourse can allow fertilisation</li>
+          <li>Pregnancy: develop in the uterus</li>
+          <li>Contraception reduces chance</li>
+          <li>STIs: qualified testing, not this app</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Relationships</h4>
+        <ul>
+          <li>Identity and orientation: facts, no roll-call</li>
+          <li>Consent: clear yes, can withdraw</li>
+          <li>Media: claims need evidence</li>
+          <li>Signpost teacher / health care</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='pregnancy_sexual_health') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

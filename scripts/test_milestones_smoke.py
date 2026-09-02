@@ -183,7 +183,7 @@ def main():
         html = r.data.decode()
         assert 'id="milestones"' in html
         assert 'Daily starter' in html
-        assert '☀️' in html
+        assert 'zorp-pose--wave' in html
         assert 'Practice veteran' in html
         assert 'Top of the class' in html
 

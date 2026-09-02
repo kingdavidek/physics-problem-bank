@@ -74,7 +74,13 @@ def main():
                     topic_label_fn=_topic_label,
                 )
                 counts[status] = counts.get(status, 0) + 1
-                label = f'@{user.handle} <{user.email}>'
+                log_recipients = (
+                    dry_run
+                    or cfg['provider'] == 'console'
+                    or os.environ.get('MAIL_LOG_RECIPIENTS', '').strip().lower()
+                    in ('1', 'true', 'yes', 'on')
+                )
+                label = f'@{user.handle} <{user.email}>' if log_recipients else f'@{user.handle}'
                 if status == DIGEST_STATUS_FAILED:
                     print(f'FAIL {label}: {err}')
                 elif status == 'already_sent':

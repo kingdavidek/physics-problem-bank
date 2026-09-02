@@ -1,0 +1,22 @@
+title = "physics-problem-bank"
+
+[extend]
+useDefault = true
+
+# gitleaks v8.24.3 (CI) still uses [allowlist]; [[allowlists]] arrived in 8.25.
+# detect --source . with fetch-depth: 0 scans git history, so dummy values that
+# used to live in docs/tests must stay allowlisted even after they are rewritten.
+[allowlist]
+description = "Documented placeholders and smoke-test dummy values"
+paths = [
+  '''(^|/)\.venv/''',
+]
+regexes = [
+  '''YOUR_TOKEN''',
+  '''test-secret-key-for-[a-z0-9-]+''',
+  '''pb-testing(-passphrase)?''',
+  '''zap-ci-not-for-prod''',
+  '''zap-local''',
+  '''change-me-to-a-long-random-string''',
+  '''your-long-random-production-secret''',
+]

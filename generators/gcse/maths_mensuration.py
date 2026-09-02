@@ -17,6 +17,7 @@ from generators.shared.variant_utils import (
     run_mcq_variant,
     pick_named_variant,
 )
+from models import svg_kit
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -114,75 +115,39 @@ def _mens_problem_from_output(out, difficulty):
 
 
 def _rect_svg(w, h, label_area=True):
-    """Simple labelled rectangle SVG."""
-    W, H = 140, 80
-    x0, y0 = 30, 20
-    area = w * h
-    return (
-        f'<svg width="200" height="125" viewBox="0 0 200 125" style="max-width:100%;vertical-align:middle;">'
-        f'<rect x="{x0}" y="{y0}" width="{W}" height="{H}" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>'
-        f'<text x="{x0+W//2}" y="{y0-6}" font-size="12" fill="#1a6fa8" text-anchor="middle">{w} cm</text>'
-        f'<text x="{x0-8}" y="{y0+H//2}" font-size="12" fill="#1a6fa8" text-anchor="middle" '
-        f'transform="rotate(-90,{x0-8},{y0+H//2})">{h} cm</text>'
-        f'</svg>'
-    )
+    del label_area
+    return svg_kit.rectangle(f'{w} cm', f'{h} cm')
 
 
 def _triangle_svg(base, height):
-    """Right-triangle SVG labelled with base and height."""
-    return (
-        f'<svg width="200" height="130" viewBox="0 0 200 130" style="max-width:100%;vertical-align:middle;">'
-        f'<polygon points="30,110 170,110 30,20" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>'
-        f'<line x1="30" y1="20" x2="30" y2="110" stroke="#aaa" stroke-width="1" stroke-dasharray="4,3"/>'
-        f'<text x="100" y="124" font-size="12" fill="#1a6fa8" text-anchor="middle">{base} cm</text>'
-        f'<text x="16" y="68" font-size="12" fill="#a13544" text-anchor="middle">{height} cm</text>'
-        f'</svg>'
-    )
+    return svg_kit.right_triangle(f'{base} cm', f'{height} cm')
 
 
 def _circle_svg(r_label):
-    return (
-        f'<svg width="160" height="160" viewBox="0 0 160 160" style="max-width:100%;vertical-align:middle;">'
-        f'<circle cx="80" cy="80" r="60" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>'
-        f'<line x1="80" y1="80" x2="140" y2="80" stroke="#a13544" stroke-width="1.5"/>'
-        f'<text x="110" y="73" font-size="12" fill="#a13544" text-anchor="middle">{r_label}</text>'
-        f'</svg>'
-    )
+    return svg_kit.circle_with_radius(r_label)
 
 
 def _cuboid_svg(l, w, h):
-    """Isometric-ish cuboid SVG."""
-    return (
-        f'<svg width="200" height="160" viewBox="0 0 200 160" style="max-width:100%;vertical-align:middle;">'
-        # front face
-        f'<polygon points="40,50 140,50 140,130 40,130" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="1.5"/>'
-        # top face
-        f'<polygon points="40,50 90,20 190,20 140,50" fill="#c8e4f8" stroke="#1a6fa8" stroke-width="1.5"/>'
-        # right face
-        f'<polygon points="140,50 190,20 190,100 140,130" fill="#b0d4f0" stroke="#1a6fa8" stroke-width="1.5"/>'
-        # labels
-        f'<text x="90" y="145" font-size="12" fill="#1a6fa8" text-anchor="middle">{l} cm</text>'
-        f'<text x="172" y="62" font-size="12" fill="#1a6fa8">{w} cm</text>'
-        f'<text x="23" y="92" font-size="12" fill="#1a6fa8" text-anchor="middle">{h} cm</text>'
-        f'</svg>'
-    )
+    return svg_kit.cuboid(f'{l} cm', f'{w} cm', f'{h} cm')
 
 
 def _sector_svg(r_label, angle):
-    """SVG of a sector with radius r_label and given angle."""
-    theta = math.radians(angle)
-    cx, cy, r = 90, 110, 80
-    ex = cx + r * math.cos(-theta)
-    ey = cy + r * math.sin(-theta)
-    large = 1 if angle > 180 else 0
-    return (
-        f'<svg width="180" height="130" viewBox="0 0 180 130" style="max-width:100%;vertical-align:middle;">'
-        f'<path d="M{cx},{cy} L{cx+r},{cy} A{r},{r},0,{large},0,{ex:.1f},{ey:.1f} Z" '
-        f'fill="#fef4e8" stroke="#8a5300" stroke-width="2"/>'
-        f'<text x="{cx+r//2}" y="{cy-6}" font-size="12" fill="#8a5300" text-anchor="middle">{r_label}</text>'
-        f'<text x="{cx+14}" y="{cy+18}" font-size="12" fill="#a13544">{angle}°</text>'
-        f'</svg>'
-    )
+    return svg_kit.sector(angle, r_label)
+
+
+def _cylinder_svg(r, h):
+    return svg_kit.cylinder(f'{r} cm', f'{h} cm')
+
+
+def _cone_svg(r, h, slant=None):
+    slant_label = None if slant is None else (slant if isinstance(slant, str) else f'{slant} cm')
+    h_label = h if isinstance(h, str) else f'{h} cm'
+    r_label = r if isinstance(r, str) else f'{r} cm'
+    return svg_kit.cone(r_label, h_label, slant_label=slant_label)
+
+
+def _sphere_svg(r):
+    return svg_kit.sphere(f'{r} cm')
 
 
 def _mens_abc_block(*parts):
@@ -300,7 +265,8 @@ def _mens_found_cuboid_surface_area():
     w = random.randint(2, 8)
     h = random.randint(2, 7)
     sa = 2 * (l*w + l*h + w*h)
-    q = (f"Find the surface area of a cuboid with length {l} cm, width {w} cm, and height {h} cm.")
+    svg = _cuboid_svg(l, w, h)
+    q = (f"Find the surface area of a cuboid with length {l} cm, width {w} cm, and height {h} cm.<br>{svg}")
     s = (f"SA = 2(lw + lh + wh)<br>"
          f"= 2({l}×{w} + {l}×{h} + {w}×{h})<br>"
          f"= 2({l*w} + {l*h} + {w*h})<br>"
@@ -422,8 +388,9 @@ def _mens_inter_cylinder_volume():
     r = random.randint(2, 9)
     h = random.randint(4, 20)
     vol = round(math.pi * r * r * h, 2)
+    svg = _cylinder_svg(r, h)
     q = (f"Find the volume of a cylinder with radius {r} cm and height {h} cm. "
-         f"Give your answer to 2 d.p.")
+         f"Give your answer to 2 d.p.<br>{svg}")
     s = (f"V = πr²h<br>"
          f"= π × {r}² × {h}<br>"
          f"= π × {r*r} × {h}<br>"
@@ -435,8 +402,9 @@ def _mens_inter_cylinder_surface_area():
     r = random.randint(2, 8)
     h = random.randint(5, 18)
     sa = round(2 * math.pi * r * (r + h), 2)
+    svg = _cylinder_svg(r, h)
     q = (f"Find the total surface area of a closed cylinder with radius {r} cm "
-         f"and height {h} cm. Give your answer to 2 d.p.")
+         f"and height {h} cm. Give your answer to 2 d.p.<br>{svg}")
     s = (f"SA = 2πr(r + h)<br>"
          f"= 2π × {r} × ({r} + {h})<br>"
          f"= 2π × {r} × {r+h}<br>"
@@ -448,8 +416,9 @@ def _mens_inter_cone_volume():
     r = random.randint(3, 10)
     h = random.randint(5, 18)
     vol = round(math.pi * r * r * h / 3, 2)
+    svg = _cone_svg(r, h)
     q = (f"Find the volume of a cone with base radius {r} cm and perpendicular height {h} cm. "
-         f"Give your answer to 2 d.p.")
+         f"Give your answer to 2 d.p.<br>{svg}")
     s = (f"V = ⅓πr²h<br>"
          f"= ⅓ × π × {r}² × {h}<br>"
          f"= ⅓ × π × {r*r} × {h}<br>"
@@ -460,8 +429,9 @@ def _mens_inter_cone_volume():
 def _mens_inter_sphere_volume():
     r = random.randint(2, 9)
     vol = round(4/3 * math.pi * r**3, 2)
+    svg = _sphere_svg(r)
     q = (f"Find the volume of a sphere with radius {r} cm. "
-         f"Give your answer to 2 d.p.")
+         f"Give your answer to 2 d.p.<br>{svg}")
     s = (f"V = \\(\\frac{{4}}{{3}}\\pi r^3\\)<br>"
          f"= \\(\\frac{{4}}{{3}} \\times \\pi \\times {r}^3\\)<br>"
          f"= \\(\\frac{{4}}{{3}} \\times \\pi \\times {r**3}\\)<br>"
@@ -472,7 +442,8 @@ def _mens_inter_sphere_volume():
 def _mens_inter_sphere_surface_area():
     r = random.randint(2, 9)
     sa = round(4 * math.pi * r * r, 2)
-    q = (f"Find the surface area of a sphere with radius {r} cm. Give your answer to 2 d.p.")
+    svg = _sphere_svg(r)
+    q = (f"Find the surface area of a sphere with radius {r} cm. Give your answer to 2 d.p.<br>{svg}")
     s = (f"SA = 4πr²<br>"
          f"= 4 × π × {r}²<br>"
          f"= 4 × π × {r*r}<br>"
@@ -527,8 +498,9 @@ def _mens_inter_cone_surface_area():
     r = random.randint(3, 10)
     l_slant = random.randint(r + 2, r + 12)
     sa = round(math.pi * r * (r + l_slant), 2)
+    svg = _cone_svg(r, 'h', slant=f'{l_slant} cm')
     q = (f"A cone has base radius {r} cm and slant height {l_slant} cm. "
-         f"Find the total surface area to 2 d.p.")
+         f"Find the total surface area to 2 d.p.<br>{svg}")
     s = (f"SA = πr(r + l)<br>"
          f"= π × {r} × ({r} + {l_slant})<br>"
          f"= π × {r} × {r + l_slant}<br>"
@@ -581,9 +553,10 @@ def _mens_inter_composite_cylinder_hemisphere():
     vol_cyl = round(math.pi * r * r * h, 2)
     vol_hemi = round(2/3 * math.pi * r**3, 2)
     total = round(vol_cyl + vol_hemi, 2)
+    svg = svg_kit.cylinder_hemisphere(f'{r} cm', f'{h} cm')
     q = (f"A composite solid consists of a cylinder with radius {r} cm and height {h} cm, "
          f"with a hemisphere of the same radius placed on top. "
-         f"Find the total volume to 2 d.p.")
+         f"Find the total volume to 2 d.p.<br>{svg}")
     s = (f"Cylinder: V = πr²h = π × {r}² × {h} = {vol_cyl} cm³<br>"
          f"Hemisphere: V = ½ × \\(\\frac{{4}}{{3}}\\)πr³ = \\(\\frac{{2}}{{3}}\\)πr³ "
          f"= \\(\\frac{{2}}{{3}}\\) × π × {r}³ = {vol_hemi} cm³<br>"
@@ -734,8 +707,9 @@ def _mens_diff_exact_pi_answer():
     h = random.randint(5, 15)
     # Cylinder volume in terms of π
     coeff = r * r * h
+    svg = _cylinder_svg(r, h)
     q = (f"Find the exact volume of a cylinder with radius {r} cm and height {h} cm. "
-         f"Give your answer in terms of π.")
+         f"Give your answer in terms of π.<br>{svg}")
     s = (f"V = πr²h<br>"
          f"= π × {r}² × {h}<br>"
          f"= π × {r*r} × {h}<br>"

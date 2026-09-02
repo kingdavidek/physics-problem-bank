@@ -2,22 +2,21 @@
 {% block title %}Circle Theorems – GCSE Mathematics{% endblock %}
 
 {% block content %}
-<div style="max-width:860px;margin:0 auto;padding:12px;">
+<div class="lesson-shell">
 
   <!-- Header -->
-  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
-    <h1 style="margin:0 0 6px;font-size:1.7rem;">Circle Theorems</h1>
-    <p style="margin:0;opacity:.9;font-size:.97rem;">Circles hide neat angle rules. Once you spot which theorem fits, you can find missing angles quickly. We will work through the main GCSE circle theorems step by step.</p>
-    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
-      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
-      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+  <div class="lesson-hero">
+    <h1>Circle Theorems</h1>
+    <p class="hero-sub">Circles hide neat angle rules. Once you spot which theorem fits, you can find missing angles quickly. We will work through the main GCSE circle theorems step by step.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">AQA</span>
+      <span class="pill pill--hero">Edexcel</span>
+      <span class="pill pill--hero">OCR</span>
     </div>
   </div>
   <!-- Quick Test button -->
-  <div style="text-align:right;margin-bottom:14px;">
-    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='circle_theorems') }}"
-       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='circle_theorems') }}">
       ▶ Practice Quiz (10 MCQs)
     </a>
   </div>
@@ -25,19 +24,19 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 1. ANGLE AT THE CENTRE                        -->
   <!-- ══════════════════════════════════════════════ -->
-  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
       CT1 – Angle at the Centre
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 10</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> Point C sits on the circle. The angle at the centre O is <strong>80°</strong>. The angle at the edge (at C) on the same arc is half of that: 80 ÷ 2 = <strong>40°</strong>.</p>
 
       <p><strong>Theorem CT1:</strong> The angle at the <em>centre</em> is <strong>twice</strong> the angle at the <em>circumference</em>, as long as both look at the <strong>same arc</strong> AB.</p>
-      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;font-size:1.05rem;text-align:center;">
+      <p class="lesson-callout lesson-callout--formula">
         Angle at centre = 2 × Angle at circumference &nbsp;(same arc)
       </p>
 
@@ -50,8 +49,8 @@
         Angle-mark at O (between OA and OB via the top): small arc.
         Angle-mark at C (between CA and CB pointing upward): small arc.
       -->
-      <div style="text-align:center;margin:20px 0;">
-        <svg width="100%" viewBox="-24 -24 328 318" style="background:#f9f8f5;border-radius:8px;max-width:328px;display:block;margin:0 auto;overflow:visible;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="100%" viewBox="-24 -24 328 318">
           <!-- circle -->
           <circle cx="140" cy="135" r="95" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
 
@@ -100,20 +99,20 @@
         <li>When AB is a diameter, the centre angle is 180° — that leads to CT2 (angle in a semicircle = 90°).</li>
       </ul>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="B">
-          <p style="margin:0 0 10px;">The angle at the centre on arc AB is <strong>110°</strong>. What is the angle at the circumference on the same arc?</p>
+          <p>The angle at the centre on arc AB is <strong>110°</strong>. What is the angle at the circumference on the same arc?</p>
           <button class="btn mcq-btn" data-letter="A">220°</button>
           <button class="btn mcq-btn" data-letter="B">55°</button>
           <button class="btn mcq-btn" data-letter="C">110°</button>
           <button class="btn mcq-btn" data-letter="D">27.5°</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='circle_theorems') }}?difficulty=foundational&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – CT1</a>
+      <div>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='circle_theorems') }}?difficulty=foundational&amp;mode=practice">Quick Test – CT1</a>
       </div>
     </div>
   </details>
@@ -121,20 +120,20 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 2. ANGLE IN A SEMICIRCLE                      -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
       CT2 – Angle in a Semicircle
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 10</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> AB is a diameter. C is any point on the circle (not A or B). Triangle ABC has a right angle at C, so angle ACB = <strong>90°</strong>. If angle BAC = 35°, then angle ABC = 180° − 90° − 35° = <strong>55°</strong>.</p>
 
       <p><strong>Theorem CT2:</strong> The angle in a semicircle is always <strong>90°</strong>.</p>
       <p>If AB is a diameter and C is on the circle, then angle ACB = 90°.</p>
-      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;font-size:1.05rem;text-align:center;">
+      <p class="lesson-callout lesson-callout--formula">
         Angle in a semicircle = 90° &nbsp;(AB is diameter)
       </p>
 
@@ -144,8 +143,8 @@
         C at math 110° → (140+90cos110°, 120−90sin110°) = (140−30.8, 120−84.6) = (109.2, 35.4) ≈ (109, 35)
         Right-angle mark at C.
       -->
-      <div style="text-align:center;margin:20px 0;">
-        <svg width="100%" viewBox="-24 -24 348 288" style="background:#f9f8f5;border-radius:8px;max-width:348px;display:block;margin:0 auto;overflow:visible;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="100%" viewBox="-24 -24 348 288">
           <circle cx="150" cy="125" r="90" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
 
           <!-- diameter AB (red) -->
@@ -188,20 +187,20 @@
       <p><strong>Why it works:</strong> The angle at the centre on a diameter is 180°. By CT1, 180° = 2 × angle ACB, so angle ACB = 90°. CT2 is just CT1 with a diameter.</p>
       <p><strong>How to use it:</strong> Spot a diameter in the diagram — you instantly get a right angle. Then use “angles in a triangle add to 180°” for the rest.</p>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="C">
-          <p style="margin:0 0 10px;">AB is a diameter and C lies on the circle. What is angle ACB?</p>
+          <p>AB is a diameter and C lies on the circle. What is angle ACB?</p>
           <button class="btn mcq-btn" data-letter="A">45°</button>
           <button class="btn mcq-btn" data-letter="B">60°</button>
           <button class="btn mcq-btn" data-letter="C">90°</button>
           <button class="btn mcq-btn" data-letter="D">180°</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='circle_theorems') }}?difficulty=foundational&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Foundational</a>
+      <div>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='circle_theorems') }}?difficulty=foundational&amp;mode=practice">Quick Test – Foundational</a>
       </div>
     </div>
   </details>
@@ -209,19 +208,19 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 3. ANGLES IN THE SAME SEGMENT                 -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
       CT3 – Angles in the Same Segment
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 10</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> Chord AB fixes two points on the circle. C and D both sit on the <strong>same side</strong> of AB (same bow of the circle). If angle ACB = <strong>52°</strong>, then angle ADB = <strong>52°</strong> as well.</p>
 
       <p><strong>Theorem CT3:</strong> Angles on the circumference that sit on the <strong>same side</strong> of chord AB and look at the same arc are <strong>equal</strong>.</p>
-      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;font-size:1.05rem;text-align:center;">
+      <p class="lesson-callout lesson-callout--formula">
         Angles in the same segment are equal
       </p>
 
@@ -231,8 +230,8 @@
         C at math 70° ≈ (172.5,49), D at math 110° ≈ (107.5,49) — both on major arc (upper side).
         Angle ACB = angle ADB (same segment).
       -->
-      <div style="text-align:center;margin:20px 0;">
-        <svg width="100%" viewBox="-24 -24 338 328" style="background:#f9f8f5;border-radius:8px;max-width:338px;display:block;margin:0 auto;overflow:visible;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="100%" viewBox="-24 -24 338 328">
           <circle cx="145" cy="140" r="95" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
 
           <!-- C's chords (green) -->
@@ -278,15 +277,15 @@
       <p><strong>Why it works:</strong> Both angles use the same arc AB. Each is half the centre angle (CT1), so they match.</p>
       <p><strong>Opposite bow:</strong> If C and D are on <em>opposite</em> sides of chord AB, then angle ACB + angle ADB = 180° (this links to CT4 and cyclic quadrilaterals).</p>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="A">
-          <p style="margin:0 0 10px;">C and D are on the same side of chord AB. Angle ACB = <strong>38°</strong>. What is angle ADB?</p>
+          <p>C and D are on the same side of chord AB. Angle ACB = <strong>38°</strong>. What is angle ADB?</p>
           <button class="btn mcq-btn" data-letter="A">38°</button>
           <button class="btn mcq-btn" data-letter="B">76°</button>
           <button class="btn mcq-btn" data-letter="C">142°</button>
           <button class="btn mcq-btn" data-letter="D">19°</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
     </div>
@@ -295,19 +294,19 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 4. CYCLIC QUADRILATERAL                       -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
       CT4 – Cyclic Quadrilateral
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 10</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> Four points A, B, C, D all lie on a circle. Angle A = <strong>110°</strong> and angle C = <strong>70°</strong>. Check: 110° + 70° = <strong>180°</strong> — opposite angles in a cyclic quadrilateral always add to 180°.</p>
 
       <p><strong>Theorem CT4:</strong> In a <strong>cyclic quadrilateral</strong> (all four corners on one circle), each pair of opposite angles adds up to <strong>180°</strong>.</p>
-      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;font-size:1.05rem;text-align:center;">
+      <p class="lesson-callout lesson-callout--formula">
         Opposite angles of a cyclic quadrilateral sum to 180°
       </p>
 
@@ -321,8 +320,8 @@
         angle A (= angle DAB) + angle C (= angle BCD) = 180°.
         Let angle A = 110°, angle C = 70°.
       -->
-      <div style="text-align:center;margin:20px 0;">
-        <svg width="100%" viewBox="-24 -24 338 308" style="background:#f9f8f5;border-radius:8px;max-width:338px;display:block;margin:0 auto;overflow:visible;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="100%" viewBox="-24 -24 338 308">
           <circle cx="140" cy="130" r="90" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
 
           <!-- quadrilateral ABCD -->
@@ -367,20 +366,20 @@
       <p><strong>Working backwards:</strong> If opposite angles add to 180°, the four points must lie on a circle.</p>
       <p><strong>Exterior angle tip:</strong> An exterior angle of a cyclic quadrilateral equals the interior angle at the opposite corner.</p>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="D">
-          <p style="margin:0 0 10px;">In cyclic quadrilateral ABCD, angle A = <strong>95°</strong>. What is angle C?</p>
+          <p>In cyclic quadrilateral ABCD, angle A = <strong>95°</strong>. What is angle C?</p>
           <button class="btn mcq-btn" data-letter="A">95°</button>
           <button class="btn mcq-btn" data-letter="B">47.5°</button>
           <button class="btn mcq-btn" data-letter="C">190°</button>
           <button class="btn mcq-btn" data-letter="D">85°</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='circle_theorems') }}?difficulty=intermediate&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Intermediate</a>
+      <div>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='circle_theorems') }}?difficulty=intermediate&amp;mode=practice">Quick Test – Intermediate</a>
       </div>
     </div>
   </details>
@@ -388,26 +387,26 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 5. TANGENT AND RADIUS                         -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
       CT5 &amp; CT6 – Tangent Theorems
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 11</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example (CT5):</strong> A tangent touches the circle at T. Radius OT meets the tangent at T. The angle between them is <strong>90°</strong> — they are perpendicular.</p>
 
       <p><strong>Theorem CT5:</strong> A tangent and the radius at the point of contact always meet at <strong>90°</strong>.</p>
-      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;text-align:center;">
+      <p class="lesson-callout lesson-callout--formula">
         Tangent ⊥ Radius at point of contact
       </p>
 
-      <p style="margin-top:12px;"><strong>Example (CT6):</strong> From point P outside the circle you draw two tangents to touch at A and B. If PA = <strong>7 cm</strong>, then PB = <strong>7 cm</strong> as well.</p>
+      <p><strong>Example (CT6):</strong> From point P outside the circle you draw two tangents to touch at A and B. If PA = <strong>7 cm</strong>, then PB = <strong>7 cm</strong> as well.</p>
 
       <p><strong>Theorem CT6:</strong> Tangents from the same <strong>outside point</strong> to a circle are the <strong>same length</strong>.</p>
-      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;text-align:center;">
+      <p class="lesson-callout lesson-callout--formula">
         PA = PB &nbsp;(tangents from external point P)
       </p>
 
@@ -416,8 +415,8 @@
         Left (CT5): Circle cx=85,cy=130,r=70. T at math 0° → (155,130). Tangent vertical at T.
         Right (CT6): Circle cx=210,cy=130,r=55. A at math 50°, B at math −50°. Tangents PA, PB.
       -->
-      <div style="text-align:center;margin:20px 0;">
-        <svg width="100%" viewBox="-24 -24 388 298" style="background:#f9f8f5;border-radius:8px;max-width:388px;display:block;margin:0 auto;overflow:visible;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="100%" viewBox="-24 -24 388 298">
 
           <!-- ── LEFT: CT5 ── -->
           <circle cx="85" cy="125" r="68" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
@@ -487,15 +486,15 @@
         <li>Line PO splits the kite in half and bisects angles APB and AOB</li>
       </ul>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="B">
-          <p style="margin:0 0 10px;">Two tangents are drawn from point P to a circle, touching at A and B. PA = <strong>9 cm</strong>. How long is PB?</p>
+          <p>Two tangents are drawn from point P to a circle, touching at A and B. PA = <strong>9 cm</strong>. How long is PB?</p>
           <button class="btn mcq-btn" data-letter="A">4.5 cm</button>
           <button class="btn mcq-btn" data-letter="B">9 cm</button>
           <button class="btn mcq-btn" data-letter="C">18 cm</button>
           <button class="btn mcq-btn" data-letter="D">81 cm</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
     </div>
@@ -504,20 +503,20 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 6. ALTERNATE SEGMENT THEOREM                  -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
       CT7 – Alternate Segment Theorem
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 11</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> Tangent and chord meet at A on the circle. The angle between them is <strong>30°</strong>. Point C sits in the <strong>other</strong> bow (alternate segment). Then angle ACB = <strong>30°</strong> as well.</p>
 
       <p><strong>Theorem CT7 (Alternate Segment):</strong></p>
       <p>The angle between a <em>tangent</em> and a <em>chord</em> at the point of contact equals the angle in the <strong>alternate segment</strong> — the bow on the other side of the chord.</p>
-      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;text-align:center;">
+      <p class="lesson-callout lesson-callout--formula">
         Angle TAB = Angle ACB &nbsp;(C in alternate segment)
       </p>
 
@@ -561,8 +560,8 @@
         Going from A(270°) counterclockwise to B(330°): span = 60°. This is the minor arc on the right side.
         Inscribed angle from C (in major arc) = 60°/2 = 30°. ✓
       -->
-      <div style="text-align:center;margin:20px 0;">
-        <svg width="300" height="290" viewBox="0 0 300 290" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="300" height="290" viewBox="0 0 300 290">
           <circle cx="150" cy="148" r="92" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
 
           <!-- tangent at A (A is at bottom, math 270°) — horizontal line -->
@@ -616,20 +615,20 @@
       <p><strong>How to remember it:</strong> Chord AB splits the circle into two bows. The tangent angle matches the angle in the <em>other</em> bow from where you stand at A.</p>
       <p><strong>Why it works (short):</strong> Radius OA is perpendicular to the tangent (CT5). Triangle OAB has OA = OB. CT1 links the centre angle to both the tangent–chord angle and angle ACB.</p>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="A">
-          <p style="margin:0 0 10px;">At A, the angle between the tangent and chord AB is <strong>42°</strong>. C is in the alternate segment. What is angle ACB?</p>
+          <p>At A, the angle between the tangent and chord AB is <strong>42°</strong>. C is in the alternate segment. What is angle ACB?</p>
           <button class="btn mcq-btn" data-letter="A">42°</button>
           <button class="btn mcq-btn" data-letter="B">84°</button>
           <button class="btn mcq-btn" data-letter="C">138°</button>
           <button class="btn mcq-btn" data-letter="D">21°</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='circle_theorems') }}?difficulty=intermediate&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Intermediate</a>
+      <div>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='circle_theorems') }}?difficulty=intermediate&amp;mode=practice">Quick Test – Intermediate</a>
       </div>
     </div>
   </details>
@@ -637,19 +636,19 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 7. CHORD BISECTOR                             -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">7</span>
       Chord Bisector &amp; Intersecting Chords
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 11</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> Chord PQ has length <strong>16 cm</strong>. The perpendicular from centre O meets PQ at M. Then PM = MQ = <strong>8 cm</strong> each.</p>
 
       <p><strong>Chord Bisector Theorem:</strong> A line from the centre perpendicular to a chord cuts the chord <strong>in half</strong>. Also, the perpendicular bisector of any chord goes through the centre.</p>
-      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;text-align:center;">
+      <p class="lesson-callout lesson-callout--formula">
         OM ⊥ PQ &nbsp;⟹&nbsp; PM = MQ
       </p>
 
@@ -671,8 +670,8 @@
         Q at math 35°:  (140+85cos35°, 130−85sin35°) =(140+69.6,130−48.7)=(209.6,81.3)≈(210,81)
         M=(140,81) midpoint. OM = vertical line from (140,130) to (140,81).
       -->
-      <div style="text-align:center;margin:20px 0;">
-        <svg width="100%" viewBox="-24 -24 328 288" style="background:#f9f8f5;border-radius:8px;max-width:328px;display:block;margin:0 auto;overflow:visible;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="100%" viewBox="-24 -24 328 288">
           <circle cx="140" cy="130" r="85" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>
 
           <!-- chord PQ -->
@@ -705,15 +704,15 @@
 
       <p><strong>With Pythagoras:</strong> Triangle OMP is right-angled at M. So OP² = OM² + PM². If you know the radius OP and how far O is from the chord (OM), you can find half the chord PM.</p>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="C">
-          <p style="margin:0 0 10px;">OM is perpendicular to chord PQ at M. PQ = <strong>24 cm</strong>. How long is PM?</p>
+          <p>OM is perpendicular to chord PQ at M. PQ = <strong>24 cm</strong>. How long is PM?</p>
           <button class="btn mcq-btn" data-letter="A">24 cm</button>
           <button class="btn mcq-btn" data-letter="B">48 cm</button>
           <button class="btn mcq-btn" data-letter="C">12 cm</button>
           <button class="btn mcq-btn" data-letter="D">6 cm</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
     </div>
@@ -722,61 +721,61 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 8. SUMMARY AND QUICK REFERENCE                -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">8</span>
       Circle Theorems — Quick Reference
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 11</span>
+      <span class="lesson-tag">Revision Card</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p>Use this table and revision card when you practise. Ask yourself: “Which arc am I looking at? Is there a diameter, tangent, or cyclic quad?”</p>
 
-      <table style="border-collapse:collapse;width:100%;font-size:1rem;">
+      <table class="lesson-table">
         <thead>
-          <tr style="background:var(--color-surface-2);">
-            <th style="padding:8px 12px;border:1px solid var(--color-border);text-align:left;">Theorem</th>
-            <th style="padding:8px 12px;border:1px solid var(--color-border);text-align:left;">Statement</th>
-            <th style="padding:8px 12px;border:1px solid var(--color-border);text-align:left;">Key Condition</th>
+          <tr>
+            <th>Theorem</th>
+            <th>Statement</th>
+            <th>Key Condition</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td style="padding:8px 12px;border:1px solid var(--color-border);font-weight:600;color:#1a6fa8;">CT1</td>
-            <td style="padding:8px 12px;border:1px solid var(--color-border);">Angle at centre = 2 × angle at circumference</td>
-            <td style="padding:8px 12px;border:1px solid var(--color-border);">Same arc; C on major arc</td>
-          </tr>
-          <tr style="background:var(--color-surface-2);">
-            <td style="padding:8px 12px;border:1px solid var(--color-border);font-weight:600;color:#1a6fa8;">CT2</td>
-            <td style="padding:8px 12px;border:1px solid var(--color-border);">Angle in a semicircle = 90°</td>
-            <td style="padding:8px 12px;border:1px solid var(--color-border);">AB is a diameter</td>
+            <td>CT1</td>
+            <td>Angle at centre = 2 × angle at circumference</td>
+            <td>Same arc; C on major arc</td>
           </tr>
           <tr>
-            <td style="padding:8px 12px;border:1px solid var(--color-border);font-weight:600;color:#1a6fa8;">CT3</td>
-            <td style="padding:8px 12px;border:1px solid var(--color-border);">Angles in the same segment are equal</td>
-            <td style="padding:8px 12px;border:1px solid var(--color-border);">Same chord, same arc side</td>
-          </tr>
-          <tr style="background:var(--color-surface-2);">
-            <td style="padding:8px 12px;border:1px solid var(--color-border);font-weight:600;color:#1a6fa8;">CT4</td>
-            <td style="padding:8px 12px;border:1px solid var(--color-border);">Opposite angles of cyclic quad = 180°</td>
-            <td style="padding:8px 12px;border:1px solid var(--color-border);">All 4 vertices on circle</td>
+            <td>CT2</td>
+            <td>Angle in a semicircle = 90°</td>
+            <td>AB is a diameter</td>
           </tr>
           <tr>
-            <td style="padding:8px 12px;border:1px solid var(--color-border);font-weight:600;color:#1a6fa8;">CT5</td>
-            <td style="padding:8px 12px;border:1px solid var(--color-border);">Tangent ⊥ radius at contact point</td>
-            <td style="padding:8px 12px;border:1px solid var(--color-border);">Always 90° at T</td>
-          </tr>
-          <tr style="background:var(--color-surface-2);">
-            <td style="padding:8px 12px;border:1px solid var(--color-border);font-weight:600;color:#1a6fa8;">CT6</td>
-            <td style="padding:8px 12px;border:1px solid var(--color-border);">Tangents from external point are equal</td>
-            <td style="padding:8px 12px;border:1px solid var(--color-border);">PA = PB from point P</td>
+            <td>CT3</td>
+            <td>Angles in the same segment are equal</td>
+            <td>Same chord, same arc side</td>
           </tr>
           <tr>
-            <td style="padding:8px 12px;border:1px solid var(--color-border);font-weight:600;color:#1a6fa8;">CT7</td>
-            <td style="padding:8px 12px;border:1px solid var(--color-border);">Tangent–chord angle = angle in alternate segment</td>
-            <td style="padding:8px 12px;border:1px solid var(--color-border);">Angle TAB = angle ACB</td>
+            <td>CT4</td>
+            <td>Opposite angles of cyclic quad = 180°</td>
+            <td>All 4 vertices on circle</td>
+          </tr>
+          <tr>
+            <td>CT5</td>
+            <td>Tangent ⊥ radius at contact point</td>
+            <td>Always 90° at T</td>
+          </tr>
+          <tr>
+            <td>CT6</td>
+            <td>Tangents from external point are equal</td>
+            <td>PA = PB from point P</td>
+          </tr>
+          <tr>
+            <td>CT7</td>
+            <td>Tangent–chord angle = angle in alternate segment</td>
+            <td>Angle TAB = angle ACB</td>
           </tr>
         </tbody>
       </table>
@@ -784,9 +783,9 @@
       <!--
         Dark revision card SVG
       -->
-      <div style="text-align:center;margin:20px 0;">
+      <div class="lesson-figure">
               <div class="revision-card-wrap">
-        <svg class="revision-card-svg lesson-quick-ref" width="100%" viewBox="0 0 760 300" style="max-width:760px;width:100%;height:auto;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:10px;" role="img" aria-label="Circle theorems revision card">
+        <svg class="revision-card-svg lesson-quick-ref lesson-diagram" width="100%" viewBox="0 0 760 300" role="img" aria-label="Circle theorems revision card">
           <text x="380" y="28" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Circle Theorems — Revision Card</text>
           <line x1="20" y1="38" x2="740" y2="38" stroke="#d4e6f1" stroke-width="1"/>
 
@@ -813,31 +812,30 @@
       </div>
       </div>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="B">
-          <p style="margin:0 0 10px;">Which theorem tells you that opposite angles in a quadrilateral on a circle add to 180°?</p>
+          <p>Which theorem tells you that opposite angles in a quadrilateral on a circle add to 180°?</p>
           <button class="btn mcq-btn" data-letter="A">CT2</button>
           <button class="btn mcq-btn" data-letter="B">CT4</button>
           <button class="btn mcq-btn" data-letter="C">CT5</button>
           <button class="btn mcq-btn" data-letter="D">CT7</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='circle_theorems') }}?difficulty=difficult&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Difficult</a>
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='circle_theorems') }}?difficulty=foundational&amp;mode=mcq" style="display:inline-block;padding:8px 16px;background:#059669;color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">MCQ Practice</a>
+      <div class="lesson-cta-row">
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='circle_theorems') }}?difficulty=difficult&amp;mode=practice">Quick Test – Difficult</a>
+        <a class="btn btn-correct btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='circle_theorems') }}?difficulty=foundational&amp;mode=mcq">MCQ Practice</a>
       </div>
     </div>
   </details>
 
 </div>
   <!-- Practice link -->
-  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
-    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
-    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='circle_theorems') }}"
-       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='circle_theorems') }}">
       Start Practice Quiz
     </a>
   </div>

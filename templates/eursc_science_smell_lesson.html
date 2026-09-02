@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Smell – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Smell</h1>
+    <p class="hero-sub">S2 Integrated Science · Unit 2.3 Senses · syllabus 2.3.4. Receptor diversity, categorisation, context and perception. Public examples only. This lesson does not collect private odour lists or rank noses.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S2</span>
+      <span class="pill pill--hero">2.3 Senses</span>
+      <span class="pill pill--hero">2.3.4</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='smell') }}">▶ Practice Quiz (10 questions)</a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Receptor diversity
+      <span class="lesson-tag">2.3.4</span>
+      <span class="lesson-tag">S2</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>Smell receptors detect a range of <strong>airborne chemicals</strong>. This lesson models <strong>many</strong> receptor types, not one receptor for the whole species.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Smell receptors detect</p>
+          <button class="btn mcq-btn" data-letter="A">only a light-year</button>
+          <button class="btn mcq-btn" data-letter="B">a range of airborne chemicals</button>
+          <button class="btn mcq-btn" data-letter="C">a glasses file</button>
+          <button class="btn mcq-btn" data-letter="D">whose nose to rank</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">2</span> Categorisation</summary>
+    <div class="lesson-section-body">
+      <p>Smells can be grouped with <strong>public examples</strong> (a labelled bottle in a textbook photo). The quiz does not harvest private home odours. Sniffing an unknown chemical is not required; follow the teacher's risk rules.</p>
+      <p><strong>Worked example:</strong> A labelled lemon oil in a textbook photo is a public “citrus” example. That is categorisation, not a request for anyone's home smells.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Categorising smells should use</p>
+          <button class="btn mcq-btn" data-letter="A">private home lists stored here</button>
+          <button class="btn mcq-btn" data-letter="B">public examples, not a private odour list</button>
+          <button class="btn mcq-btn" data-letter="C">a toughness rank</button>
+          <button class="btn mcq-btn" data-letter="D">forced unknown chemicals</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">3</span> Context</summary>
+    <div class="lesson-section-body">
+      <p>The same vapour can be called “food” in a kitchen photo and “chemical” in a lab photo. <strong>Context</strong> changes what a smell is taken to mean.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Context can</p>
+          <button class="btn mcq-btn" data-letter="A">never change a smell judgement</button>
+          <button class="btn mcq-btn" data-letter="B">change what a smell is taken to mean</button>
+          <button class="btn mcq-btn" data-letter="C">store a diary</button>
+          <button class="btn mcq-btn" data-letter="D">rank noses</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">4</span> Perception can differ</summary>
+    <div class="lesson-section-body">
+      <p>Two people can judge a smell differently. That can happen without ranking classmates. A claim that a smell “always means danger” still needs evidence.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Two people can judge a smell differently. That</p>
+          <button class="btn mcq-btn" data-letter="A">requires a nose league</button>
+          <button class="btn mcq-btn" data-letter="B">can happen without ranking classmates</button>
+          <button class="btn mcq-btn" data-letter="C">must be stored as a medical file</button>
+          <button class="btn mcq-btn" data-letter="D">proves science is a vote</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Detect</h4>
+        <ul>
+          <li>Airborne chemicals</li>
+          <li>Many receptor types</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Interpret</h4>
+        <ul>
+          <li>Context changes meaning</li>
+          <li>No private odour lists</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='smell') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

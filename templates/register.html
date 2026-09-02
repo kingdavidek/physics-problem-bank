@@ -2,67 +2,90 @@
 {% block title %}Sign up – Problem Bank{% endblock %}
 
 {% block content %}
-<div class="page-shell">
+<div class="page-shell auth-page">
+<div class="auth-card">
+    <div class="auth-card-brand">
+        <div class="auth-card-mark" aria-hidden="true">✨</div>
+        <h1>Create your account</h1>
+        <p class="auth-card-tagline">Free to join — save progress, unlock difficult questions, and track quizzes.</p>
+    </div>
 
-<div class="lesson-hero">
-    <h1>Create your account</h1>
-    <p class="hero-sub">Free to join — save your progress and unlock difficult questions.</p>
-</div>
+    <div class="auth-card-body">
+        {% if errors.form %}
+        <p class="auth-alert auth-alert--error" role="alert">{{ errors.form }}</p>
+        {% endif %}
 
-{% if errors.form %}
-    <p class="error">{{ errors.form }}</p>
-{% endif %}
+        <form method="POST" class="auth-form" id="register-form" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-<div class="form-card">
-    <div class="section-panel-header">Sign up</div>
-    <form method="POST" class="form-inner auth-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-        <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" name="email" id="email" value="{{ form.email }}" autocomplete="email" required>
-            {% if errors.email %}<p class="field-error">{{ errors.email }}</p>{% endif %}
-        </div>
-
-        <div class="form-group">
-            <label for="handle">Handle</label>
-            <div class="handle-input-wrap">
-                <span class="handle-prefix">@</span>
-                <input type="text" name="handle" id="handle" value="{{ form.handle }}" autocomplete="username" pattern="[a-zA-Z0-9_]{3,20}" required>
+            <div class="form-group" data-validate="email">
+                <label for="email">Email</label>
+                <input type="email" name="email" id="email" value="{{ form.email }}" autocomplete="email" required
+                       aria-describedby="email-feedback">
+                <p class="field-feedback" id="email-feedback" role="alert" hidden></p>
+                {% if errors.email %}<p class="field-error" data-server-error>{{ errors.email }}</p>{% endif %}
             </div>
-            <p class="form-hint">3–20 characters: letters, numbers, and underscores. Shown as @handle on your profile.</p>
-            {% if errors.handle %}<p class="field-error">{{ errors.handle }}</p>{% endif %}
-        </div>
 
-        <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" name="password" id="password" autocomplete="new-password" minlength="8" required>
-            {% if errors.password %}<p class="field-error">{{ errors.password }}</p>{% endif %}
-        </div>
+            <div class="form-group" data-validate="handle">
+                <label for="handle">Handle</label>
+                <div class="handle-input-wrap">
+                    <span class="handle-prefix">@</span>
+                    <input type="text" name="handle" id="handle" value="{{ form.handle }}" autocomplete="username"
+                           pattern="[a-z0-9_]{3,20}" autocapitalize="off" autocorrect="off" spellcheck="false" required
+                           aria-describedby="handle-hint handle-feedback">
+                </div>
+                <p class="form-hint" id="handle-hint">3–20 characters: lowercase letters, numbers, and underscores.</p>
+                <p class="field-feedback" id="handle-feedback" role="alert" hidden></p>
+                {% if errors.handle %}<p class="field-error" data-server-error>{{ errors.handle }}</p>{% endif %}
+            </div>
 
-        <div class="form-group">
-            <label for="confirm_password">Confirm password</label>
-            <input type="password" name="confirm_password" id="confirm_password" autocomplete="new-password" minlength="8" required>
-            {% if errors.confirm_password %}<p class="field-error">{{ errors.confirm_password }}</p>{% endif %}
-        </div>
+            <div class="form-group" data-validate="password">
+                <label for="password">Password</label>
+                <input type="password" name="password" id="password" autocomplete="new-password" minlength="8" required
+                       aria-describedby="password-strength-label password-feedback">
+                <div class="password-strength" id="password-strength" hidden>
+                    <div class="password-strength-track" aria-hidden="true">
+                        <div class="password-strength-fill" data-level="0"></div>
+                    </div>
+                    <p class="password-strength-label" id="password-strength-label"></p>
+                </div>
+                <p class="field-feedback" id="password-feedback" role="alert" hidden></p>
+                {% if errors.password %}<p class="field-error" data-server-error>{{ errors.password }}</p>{% endif %}
+            </div>
 
-        <div class="form-group checkbox-group">
-            <label class="checkbox-label">
-                <input type="checkbox" name="age_confirm" value="1" required>
-                <span>I am 13 or older</span>
-            </label>
-            {% if errors.age_confirm %}<p class="field-error">{{ errors.age_confirm }}</p>{% endif %}
-        </div>
+            <div class="form-group" data-validate="confirm_password">
+                <label for="confirm_password">Confirm password</label>
+                <input type="password" name="confirm_password" id="confirm_password" autocomplete="new-password" minlength="8" required
+                       aria-describedby="confirm-password-feedback">
+                <p class="field-feedback" id="confirm-password-feedback" role="alert" hidden></p>
+                {% if errors.confirm_password %}<p class="field-error" data-server-error>{{ errors.confirm_password }}</p>{% endif %}
+            </div>
 
-        <p class="form-hint auth-terms">
-            By creating an account you agree to use Problem Bank for personal study.
-            See the <a href="{{ url_for('about') }}">About</a> page for more information.
-        </p>
+            <div class="form-group checkbox-group" data-validate="age_confirm">
+                <label class="auth-age-row" id="age-confirm-row">
+                    <input type="checkbox" name="age_confirm" id="age_confirm" value="1" required
+                           aria-describedby="age-confirm-feedback">
+                    <span class="auth-age-copy">
+                        <strong>I am 13 or older</strong>
+                        <span>Required to create a Problem Bank account</span>
+                    </span>
+                </label>
+                <p class="field-feedback" id="age-confirm-feedback" role="alert" hidden></p>
+                {% if errors.age_confirm %}<p class="field-error" data-server-error>{{ errors.age_confirm }}</p>{% endif %}
+            </div>
 
-        <button type="submit" class="btn btn-primary">Create account</button>
-        <p class="auth-switch">Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
-    </form>
+            <p class="form-hint auth-terms">
+                By creating an account you agree to the
+                <a href="{{ url_for('legal_terms') }}">Terms</a> and the
+                <a href="{{ url_for('legal_privacy') }}">Privacy notice</a>.
+            </p>
+
+            <div class="auth-form-actions">
+                <button type="submit" class="btn btn-primary btn-lg btn-block" id="register-submit">Create account</button>
+            </div>
+            <p class="auth-switch">Already have an account? <a href="{{ url_for('login') }}">Log in</a></p>
+        </form>
+    </div>
 </div>
-
 </div>
 {% endblock %}

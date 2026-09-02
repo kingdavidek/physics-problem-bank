@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% block title %}The Science Laboratory – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>The Science Laboratory</h1>
+    <p class="hero-sub">S1 Integrated Science · Unit 1.1 Science Lab · syllabus 1.1.3. Instruments, safety, technical drawings, controlled investigations, and reducing error. This page supports classroom practical work; it does not replace it.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S1</span>
+      <span class="pill pill--hero">1.1 Science Lab</span>
+      <span class="pill pill--hero">1.1.3</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='science_lab') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Choosing instruments
+      <span class="lesson-tag">1.1.3</span>
+      <span class="lesson-tag">S1</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>Match the instrument to the quantity: a <strong>balance</strong> for mass, a <strong>measuring cylinder</strong> for liquid volume (read the bottom of the meniscus), a <strong>ruler</strong> or tape for length, a <strong>thermometer</strong> for temperature, a <strong>stopwatch</strong> for time.</p>
+      <p>The instrument must also <strong>resolve</strong> the change you care about. A thermometer marked every 1 °C is a poor choice if you expect a 0.2 °C difference.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>You need the mass of a small metal cube. The best instrument is a</p>
+          <button class="btn mcq-btn" data-letter="A">metre ruler</button>
+          <button class="btn mcq-btn" data-letter="B">laboratory balance</button>
+          <button class="btn mcq-btn" data-letter="C">stopwatch</button>
+          <button class="btn mcq-btn" data-letter="D">measuring cylinder</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Safety
+    </summary>
+    <div class="lesson-section-body">
+      <ul>
+        <li>Wear <strong>eye protection</strong> when heating or using chemicals.</li>
+        <li>Tie back long hair; no running; bags off the floor.</li>
+        <li>Never taste laboratory chemicals. Smell only if your teacher shows a safe waft.</li>
+        <li>Point heating tubes away from people. Wipe spills so nobody slips.</li>
+      </ul>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Long hair near a Bunsen flame should be</p>
+          <button class="btn mcq-btn" data-letter="A">left loose so it can be seen</button>
+          <button class="btn mcq-btn" data-letter="B">tied back</button>
+          <button class="btn mcq-btn" data-letter="C">sprayed with water after it catches</button>
+          <button class="btn mcq-btn" data-letter="D">used to sweep the bench</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Technical drawings
+    </summary>
+    <div class="lesson-section-body">
+      <p>A laboratory drawing is a <strong>simple 2D side view</strong>, not a portrait. Label each piece of apparatus so another group can rebuild the set-up.</p>
+      <figure class="lesson-figure">
+        {{ science_lab_bench }}
+        <figcaption class="lesson-figure-caption">Side view of a simple heating set-up: <strong>A</strong> heat source, <strong>B</strong> beaker of liquid, <strong>C</strong> thermometer. Labels let another group rebuild it.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A useful technical drawing of apparatus should</p>
+          <button class="btn mcq-btn" data-letter="A">be a realistic painting</button>
+          <button class="btn mcq-btn" data-letter="B">show a simple side view with labels</button>
+          <button class="btn mcq-btn" data-letter="C">hide the heat source</button>
+          <button class="btn mcq-btn" data-letter="D">use no labels so it looks cleaner</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Variables
+    </summary>
+    <div class="lesson-section-body">
+      <ul>
+        <li><dfn class="lesson-gloss" title="The factor you change on purpose">Independent</dfn> — the factor you change on purpose.</li>
+        <li><dfn class="lesson-gloss" title="The outcome you measure">Dependent</dfn> — the outcome you measure.</li>
+        <li><dfn class="lesson-gloss" title="Kept the same so the test is fair">Control</dfn> — everything else you keep the same so the test is fair.</li>
+      </ul>
+      <p><strong>Example:</strong> How does water temperature affect dissolving time of sugar? Independent = temperature; dependent = time; controls = mass of sugar, volume of water, stirring.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>In an investigation you change the temperature of water on purpose. Temperature is the</p>
+          <button class="btn mcq-btn" data-letter="A">dependent variable</button>
+          <button class="btn mcq-btn" data-letter="B">independent variable</button>
+          <button class="btn mcq-btn" data-letter="C">control variable</button>
+          <button class="btn mcq-btn" data-letter="D">random error</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Controlled investigations
+    </summary>
+    <div class="lesson-section-body">
+      <p>A <strong>controlled</strong> (fair) investigation changes <strong>one</strong> independent variable at a time. If you change temperature <em>and</em> stirring, you cannot tell which caused the result.</p>
+      <p>Write a method another group could follow: quantities, instruments, repeats, and how you will record the data.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A group changes both temperature and stirring speed. The problem is</p>
+          <button class="btn mcq-btn" data-letter="A">they will finish sooner</button>
+          <button class="btn mcq-btn" data-letter="B">they cannot tell which factor caused the change</button>
+          <button class="btn mcq-btn" data-letter="C">SI units no longer apply</button>
+          <button class="btn mcq-btn" data-letter="D">the table will have too many columns</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Reducing error
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Random</strong> scatter (reaction time, parallax) is reduced by repeats and a mean, and by reading scales from in front. A <strong>systematic</strong> offset (a stopwatch that always reads 0.4 s high) needs calibration or a correction; averaging will not remove it.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Repeating a timing three times and taking the mean mainly helps to</p>
+          <button class="btn mcq-btn" data-letter="A">remove a systematic zero error on a damaged clock</button>
+          <button class="btn mcq-btn" data-letter="B">reduce the effect of random scatter such as reaction time</button>
+          <button class="btn mcq-btn" data-letter="C">change the independent variable</button>
+          <button class="btn mcq-btn" data-letter="D">replace a risk assessment</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">7</span>
+      Recording results
+    </summary>
+    <div class="lesson-section-body">
+      <p>Put <strong>units in the headings</strong>. Keep every raw reading, then calculate the mean. Do not delete an inconvenient value without saying so in the evaluation.</p>
+      <table class="lesson-table">
+        <thead>
+          <tr><th>Trial</th><th>Time / s</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>18</td></tr>
+          <tr><td>2</td><td>20</td></tr>
+          <tr><td>3</td><td>22</td></tr>
+          <tr><td>Mean</td><td>20</td></tr>
+        </tbody>
+      </table>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p>A results table should include</p>
+          <button class="btn mcq-btn" data-letter="A">units in the headings and all raw readings</button>
+          <button class="btn mcq-btn" data-letter="B">only the mean, with the raw readings deleted</button>
+          <button class="btn mcq-btn" data-letter="C">cartoons of the apparatus</button>
+          <button class="btn mcq-btn" data-letter="D">the teacher's favourite colour</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">8</span>
+      Evaluating the method
+    </summary>
+    <div class="lesson-section-body">
+      <p>Say what limited the accuracy (instrument resolution, reaction time, a control that drifted) and how the next trial would improve. “It was fun” is not an evaluation.</p>
+      <p class="lesson-callout">Plan the practical with your teacher using the <a href="{{ url_for('eursc_ibl_page', slug='s1_lab') }}">classroom investigation support</a>. This page cannot replace the laboratory.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref lesson-quick-ref-card" role="region" aria-label="Science laboratory quick reference">
+    <h3>Quick reference</h3>
+    <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+      <div>
+        <h4>Variables</h4>
+        <ul>
+          <li>Independent: you change</li>
+          <li>Dependent: you measure</li>
+          <li>Control: you keep the same</li>
+        </ul>
+        <h4>Safety</h4>
+        <ul>
+          <li>Eyes · hair · no tasting · no running</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Quality</h4>
+        <ul>
+          <li>One independent variable at a time</li>
+          <li>Repeats + mean for random scatter</li>
+          <li>Calibrate systematic offsets</li>
+          <li>Units in table headings</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='science_lab') }}" class="btn btn-primary">
+      Start Practice Quiz
+    </a>
+  </div>
+
+</div>
+{% endblock %}

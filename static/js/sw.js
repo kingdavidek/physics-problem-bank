@@ -1,5 +1,5 @@
 /* Problem Bank service worker — cache static assets; network-first for pages/API. */
-const CACHE_VERSION = 'pb-v25';
+const CACHE_VERSION = 'pb-v84';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline';
 
@@ -8,8 +8,20 @@ const PRECACHE_URLS = [
   '/static/manifest.webmanifest',
   '/static/icons/icon-192.png',
   '/static/icons/icon-512.png',
+  '/static/js/theme.js',
   '/static/js/site.js',
   '/static/js/pwa.js',
+  '/static/css/tokens.css',
+  '/static/css/fonts.css',
+  '/static/css/base.css',
+  '/static/css/components.css',
+  '/static/css/chrome.css',
+  '/static/css/practice.css',
+  '/static/css/pages.css',
+  '/static/css/responsive.css',
+  '/static/css/diagrams.css',
+  '/static/css/lesson-pages.css',
+  '/static/css/lesson-assist.css',
 ];
 
 self.addEventListener('install', (event) => {
@@ -34,8 +46,9 @@ function isStaticAsset(url) {
   return url.pathname.startsWith('/static/');
 }
 
-function isJsAsset(url) {
-  return isStaticAsset(url) && url.pathname.endsWith('.js');
+// JS and CSS carry ?v= cache-busts, so they must not be served cache-first.
+function isVersionedAsset(url) {
+  return isStaticAsset(url) && (url.pathname.endsWith('.js') || url.pathname.endsWith('.css'));
 }
 
 self.addEventListener('fetch', (event) => {
@@ -58,8 +71,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // JS: network-first so ?v= cache-busts are not stuck behind an old service worker entry
-  if (isJsAsset(url)) {
+  // JS/CSS: network-first so ?v= cache-busts are not stuck behind an old service worker entry
+  if (isVersionedAsset(url)) {
     event.respondWith(
       fetch(request)
         .then((response) => {

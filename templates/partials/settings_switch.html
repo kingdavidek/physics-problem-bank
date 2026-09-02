@@ -1,0 +1,7 @@
+{% macro render(name, label, checked=false) %}
+<label class="switch-row">
+    <span class="switch-row-label">{{ label }}</span>
+    <input type="checkbox" class="switch-input" name="{{ name }}" value="1"{% if checked %} checked{% endif %}>
+    <span class="switch" aria-hidden="true"></span>
+</label>
+{% endmacro %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "partials/page_flashes.html" import render as page_flashes %}
+{% block title %}Set work scores – {{ klass.name }} – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+<div class="lesson-hero">
+    <h1>{{ assignment.topic | replace('_', ' ') | title }}</h1>
+    <p class="hero-sub">{{ assignment.question_count }} frozen question{{ 's' if assignment.question_count != 1 else '' }}. Scores are from the stored set — students cannot reroll. Roster only.</p>
+</div>
+
+<p class="profile-page-back"><a href="{{ url_for('teacher_class_assignments', class_id=klass.id) }}">← Back to set work</a></p>
+
+{{ page_flashes('teacher_class_assignment') }}
+
+<section class="section-panel">
+    <div class="section-panel-header">Questions in this set</div>
+    <div class="section-panel-body">
+        <ol class="profile-list">
+            {% for problem in assignment.problems %}
+            <li class="profile-list-item">
+                <div class="quiz-runner-question">{{ (problem.question_html or problem.question or '') | safe }}</div>
+            </li>
+            {% endfor %}
+        </ol>
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">Completion</div>
+    <div class="section-panel-body">
+        {% if assignment.recipients %}
+        <ul class="profile-list profile-list--rows">
+            {% for member in assignment.recipients %}
+            <li class="profile-list-item list-row">
+                <div class="list-row-main">
+                    <strong>@{{ member.handle }}</strong>
+                    <span class="list-row-meta">{{ member.answered_count }} / {{ member.question_count }} answered · score {{ member.score }}{% if member.status == 'complete' %} · Complete{% endif %}</span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty">No recipients on this set.</p>
+        {% endif %}
+    </div>
+</section>
+</div>
+{% endblock %}

@@ -2,6 +2,7 @@
 import os
 import sys
 import uuid
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -10,7 +11,7 @@ sys.path.insert(0, str(ROOT))
 os.environ['PB_TESTING'] = '1'
 os.environ['MAIL_PROVIDER'] = 'console'
 os.environ['SITE_URL'] = 'http://127.0.0.1:5000'
-os.environ.setdefault('SECRET_KEY', 'test-secret-key-for-digest-smoke')
+os.environ.setdefault('SECRET_KEY', 'pb-testing')
 
 from app import app  # noqa: E402
 from models.email_digest import (  # noqa: E402
@@ -48,6 +49,11 @@ def main():
         user_id = body['user']['id']
         auth = bearer(token)
 
+        from app import get_db
+        from models.user import mark_email_verified
+        with get_db() as conn:
+            mark_email_verified(conn, user_id)
+
         # Default off
         r = client.get('/api/v1/me/settings', headers=auth)
         assert r.status_code == 200
@@ -77,6 +83,14 @@ def main():
         # Unsubscribe token round-trip
         unsub = make_unsubscribe_token(user_id, app.secret_key)
         assert verify_unsubscribe_token(unsub, app.secret_key) == user_id
+        assert unsub.count('.') == 2
+        assert verify_unsubscribe_token(f'{user_id}.deadbeef', app.secret_key) is None
+        stale = make_unsubscribe_token(
+            user_id,
+            app.secret_key,
+            now=datetime.now(timezone.utc) - timedelta(days=91),
+        )
+        assert verify_unsubscribe_token(stale, app.secret_key) is None
 
         r = client.get(f'/email/unsubscribe?token={unsub}')
         assert r.status_code == 200

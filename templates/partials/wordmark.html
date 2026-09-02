@@ -1,0 +1,17 @@
+{#
+  Problem Bank wordmark lock-up (Phase U5.7, docs/UI_REDESIGN.md §8.7).
+
+  Geometric P on brand-500, matching static/icons/mark.svg. Keep the path in
+  sync with scripts/render_brand_icons.py when the mark changes.
+#}
+
+{% macro mark(size=28) -%}
+<svg class="site-mark" width="{{ size }}" height="{{ size }}" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+  <rect width="32" height="32" rx="8" fill="var(--brand-500)"/>
+  <path fill="var(--text-on-brand)" fill-rule="evenodd" d="M9 8h14v10H14v6H9V8zm5 3.5h5.5v3.5H14V11.5z"/>
+</svg>
+{%- endmacro %}
+
+{% macro wordmark(size=28) -%}
+{{ mark(size) }}<span class="site-title-text"><span>Problem</span> Bank</span>
+{%- endmacro %}

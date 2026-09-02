@@ -1,5 +1,6 @@
 """Phase M5 smoke test — run: python scripts/test_phase_m5_smoke.py"""
 import os
+import subprocess
 import sys
 import uuid
 from pathlib import Path
@@ -50,6 +51,24 @@ def main():
         # Health
         r = client.get('/api/v1/health', headers=auth)
         assert r.status_code == 200 and r.get_json()['status'] == 'up'
+
+        assert r.headers.get('X-Content-Type-Options') == 'nosniff'
+        assert r.headers.get('Referrer-Policy') == 'strict-origin-when-cross-origin'
+        assert 'geolocation=()' in (r.headers.get('Permissions-Policy') or '')
+        assert r.headers.get('X-Frame-Options') == 'DENY'
+        csp = r.headers.get('Content-Security-Policy') or ''
+        assert "font-src 'self'" in csp
+        assert 'fonts.googleapis.com' not in csp
+        assert 'fonts.gstatic.com' not in csp
+        assert 'cdn.jsdelivr.net' not in csp
+        assert "'unsafe-inline'" not in (csp.split('script-src')[1].split(';')[0])
+
+        https = client.get(
+            '/api/v1/health',
+            headers=auth,
+            base_url='https://localhost',
+        )
+        assert (https.headers.get('Strict-Transport-Security') or '').startswith('max-age=')
 
         # CORS headers on API response
         assert r.headers.get('Access-Control-Allow-Origin') == 'https://app.example.com'
@@ -130,6 +149,21 @@ def main():
         )
         assert r.status_code == 200, r.data
         assert 'rate_limit_remaining' in r.get_json()
+
+    env = os.environ.copy()
+    env['PB_TESTING'] = '1'
+    env['SITE_URL'] = 'https://example.invalid'
+    env['PYTHONPATH'] = str(ROOT) + os.pathsep + env.get('PYTHONPATH', '')
+    guard = subprocess.run(
+        [sys.executable, '-c', 'import app'],
+        cwd=str(ROOT),
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+    assert guard.returncode != 0, guard.stdout + guard.stderr
+    combined = (guard.stdout or '') + (guard.stderr or '')
+    assert 'PB_TESTING' in combined
 
     print('Phase M5 smoke test passed.')
 

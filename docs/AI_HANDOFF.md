@@ -1,6 +1,6 @@
 # Problem Bank — AI agent handoff
 
-**Last updated:** 2026-08-20  
+**Last updated:** 2026-09-02  
 **Repository:** `maths_generator/physics-problem-bank` (GitHub: `kingdavidek/physics-problem-bank`)  
 **Audience:** The next AI agent (or human) continuing product work  
 
@@ -15,17 +15,23 @@ Start here. Read the documents in the order below before changing behaviour that
 | **Auto-correct (Phases A/B)** | Complete (GCSE CS + Maths; Python via client Pyodide) |
 | **Phase G learning (G1–G7)** | Shipped (weak topics → exam revision planner) |
 | **Solid-draft security bar** | Done (2026-08-01). See `docs/SOLID_DRAFT_SECURITY.md` |
-| **Security + UK GDPR compliance** | **Planned, fully specified — `docs/SECURITY_AND_GDPR.md`.** Phase **S0 is a launch blocker**: no privacy notice, no account deletion, no data export, no DPIA, public-by-default profiles for a 13+ audience. Do S0 with (not after) `docs/MOBILE.md` M5 |
+| **Security + UK GDPR compliance** | **S0–S3 shipped (2026-08-26)** — `docs/SECURITY_AND_GDPR.md`. S3 is the keep-it-true calendar: **`docs/CADENCE.md`**. **Operator S0.1** (ICO fee, live contact, prune cron) is written for David in **`docs/OPERATOR_LAUNCH.md`** — do that at public HTTPS / M5, not during product tracks. |
 | **Mobile polish (app-like PWA)** | **Done (M0–M4)** — foundation, practice UX, app chrome, lessons/diagrams, PWA polish + device QA. **M5–M7** HTTPS → TWA → Play Android when a production URL exists — see `docs/MOBILE.md` |
-| **Engagement roadmap (E1–E3)** | **E1–E3 shipped** (assist mock smoke, `@problem_bot` QOTD card, FTS lesson search, emoji/colour avatars, alien buddy, friend quiz-accuracy leaderboard). Visual tokens: `docs/ENGAGEMENT_VISUAL.md` |
-| **G8 teacher / class mode** | Designed, not implemented. See `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2 |
+| **Phase U (UI redesign)** | **U closed.** Dark mode **D0–D3 shipped** (shell, status chips, diagrams, settings toggle). Cache: `pb-v79`. Spec: `docs/UI_REDESIGN.md` §15. **Follow-up:** settings switches may not persist (see §1.1). |
+| **Engagement roadmap (E1–E3)** | **E1–E3 shipped** (assist mock smoke, `@problem_bot` QOTD card, FTS lesson search, emoji/colour avatars, study buddy, friend quiz-accuracy leaderboard). Visual tokens: `docs/ENGAGEMENT_VISUAL.md` |
+| **G8 teacher / class mode** | Designed; decisions locked 2026-08-30. **Phases 0–6 complete** (teacher enable, classes, join, handle invites, roster, teacher-only remove, T0–T2 dashboards, frozen set-work, audit log, CSV, verification). `docs/G8_TEACHER_HANDOFF.md`, `docs/G8_TEACHER_REVIEW_RUBRIC.md`, `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2 |
 | **Real-world question style (E4.1)** | **Planned, fully specified** — `docs/REAL_WORLD_QUESTIONS.md`. Third generator mode (`real_world`) across percentages, ratio, compound measures |
-| **European School Integrated Science S1–S3** | **Planned, fully specified** — `docs/EUROPEAN_SCHOOL_SCIENCE.md`. New `eursc` level, 46 syllabus modules, variable lesson depth, mixed-format quizzes. Product decisions locked; ES0 platform enablement is next |
-| **Engagement E5 (retention polish)** | **E5.2 shipped 2026-08-16** (four extra badges). **E5.1 partial on branch** `cursor/buddy-on-page-coach-embed` (faces, milestone toast, QOTD nudge, on-page coach, MCQ refetch, milestone dismiss — see §9). Rest planned — `docs/ENGAGEMENT_E5.md` |
+| **European School Integrated Science S1–S3** | **ES10 shipped** — full curriculum (46 modules, six IBL tracks, whole-suite QA). **Lesson-improvement track complete (Stages 0–7).** **Practice generator complete (Phases 0–7)** (`docs/EURSC_GENERATOR_HANDOFF.md`, `docs/EURSC_GENERATOR_REVIEW_RUBRIC.md`, canvas `eursc-generator-question-plan.canvas.tsx`). Curriculum: `docs/EUROPEAN_SCHOOL_SCIENCE.md`. **Advanced Practice modes:** operational **pilot signed 2026-09-02 (scope A)**; **S1 wave complete**; **S2 Batch 3.1 (Unit 2.1 Astronomy) enabled**. Not track-complete until remaining S2–S3 waves + whole-matrix audit. Contract: `docs/EURSC_ADVANCED_QUESTIONS.md` |
+| **Guide & celebration (E6 / Phase A)** | **A1–A6 + B shipped** (origin, badge/streak/first-correct/lesson-complete, five tours, `guide_json` persist + Replay intro, CSS streak fire, overlay wink/nod/shake/tap). Spec: `docs/ANIMATION_ONBOARDING.md`. Not the E4.2 mascot farm. |
+| **Engagement E5 (retention polish)** | **E5.1–E5.6 shipped.** Remaining **E5.7** web push — blocked until `docs/MOBILE.md` M5. Spec: `docs/ENGAGEMENT_E5.md` |
 | **Engagement stretch (E4.2–E4.3)** | Long-term — see `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §3.0 (mascot farm, Desmos-class graphs) |
 | **Git tip (post-hardening)** | Harden commit on `main`; history purged of `data/quicktest.db` |
 
 **Do not regress solid-draft security** when shipping engagement or mobile work. Prefer extending existing models (QOTD, social feed, gamification, search) over rebuilding them.
+
+### 1.1 Known issues (later)
+
+**Settings form toggles may not persist after Save.** Reproduced 2026-08-25 on `/profile/settings` (sound switch: turn on → Save → still off). Backend save works when `sound_enabled=1` is in the POST (`update_profile_settings` in `models/social.py`); the failure is the **switch UI** — the hidden checkbox often is not checked when the form submits. A debug pass that restyled the switch (`absolute` / overlay / JS button) made layout worse (giant blue track, missing pills) and was **reverted** to commit `df39094`. Do not retry overlay/absolute switch CSS. Next attempt: keep native checkbox semantics, a 44×26 in-flow hit target, no `position: absolute; inset: 0` on `.switch`, and verify the POST includes `sound_enabled` before changing chrome.
 
 ---
 
@@ -38,13 +44,19 @@ Start here. Read the documents in the order below before changing behaviour that
 | **2b** | `docs/COMPLEX_MECHANISMS.md` | Deep dive: grading, generator queues, Phase G (Flask/JS/CSS roles) |
 | **2c** | `docs/MOBILE.md` | Mobile polish (M0–M4) + Play Android via TWA (M5–M7) |
 | **3** | `docs/SOLID_DRAFT_SECURITY.md` | Critical/high fixes just shipped; **do not regress** |
-| **3b** | `docs/SECURITY_AND_GDPR.md` | Compliance gaps, data inventory, and the phased S0–S3 plan. **Read before touching auth, personal data, defaults, or anything that leaves the server** |
-| **4** | `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | G8 design + engagement E4 + other future ideas |
+| **3b** | `docs/SECURITY_AND_GDPR.md` | S0–S3 plan. **S0–S3 are done** (S3 = calendar, not a feature). Read before touching auth, personal data, defaults, or anything that leaves the server. Calendar: `docs/CADENCE.md`. Drafts: `docs/DPIA.md`, `docs/ROPA.md`, `docs/SUBPROCESSORS.md`. Runbooks: `docs/INCIDENT_RESPONSE.md`, `docs/DATA_RIGHTS.md`, `docs/MODERATION.md`, `docs/ZAP.md` |
+| **4** | `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | G8 design (locked §2.2) + engagement E4 + other future ideas |
 | **5** | `docs/API.md` | REST `/api/v1/*` contracts when touching APIs |
 | **6** | `docs/DEPLOY.md` | Env, HTTPS, backups, smoke, production checklist |
+| *at public launch / M5* | **`docs/OPERATOR_LAUNCH.md`** | **David’s** ICO / privacy-inbox / prune-cron checklist. Surface this when starting production HTTPS; skip it during E4.1, UI, etc. |
 | *before starting E4.1* | `docs/REAL_WORLD_QUESTIONS.md` | Step-by-step plan for the real-world generator mode |
-| *before ES0 (European School platform)* | `docs/ES0_HANDOFF.md` | **Start here** — Phase ES0 only; sync `main` first |
-| *before adding a new level or curriculum* | `docs/EUROPEAN_SCHOOL_SCIENCE.md` | Full curriculum plan (46 modules); read after ES0 handoff |
+| *before European School content* | `docs/EUROPEAN_SCHOOL_SCIENCE.md` | Full curriculum plan (46 modules). **ES10 shipped** — curriculum track closed |
+| *European School lesson-clarity track* | `docs/EURSC_LESSON_IMPROVEMENT_HANDOFF.md`, `docs/EURSC_LESSON_REVIEW_RUBRIC.md` | **Complete** (Stages 0–7) |
+| *European School Practice generator* | `docs/EURSC_GENERATOR_HANDOFF.md`, `docs/EURSC_GENERATOR_REVIEW_RUBRIC.md`, canvas `eursc-generator-question-plan.canvas.tsx` | **Complete** (Phases 0–7) |
+| *European School advanced Practice modes* | `docs/EURSC_ADVANCED_QUESTIONS.md` | **Operational pilot signed 2026-09-02 (scope A).** **S1 wave complete; S2 Batch 3.1 (Astronomy) enabled.** Remaining S2–S3 waves and whole-matrix audit remain. Do not mark this track complete yet. |
+| *before starting G8 teacher / class* | `docs/G8_TEACHER_HANDOFF.md`, `docs/G8_TEACHER_REVIEW_RUBRIC.md`, `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2, `docs/DPIA.md` §9 | **Complete (Phases 0–6).** Do not reopen §2.2. No Leave. No T3 to teachers. |
+| *redoing ES0 only* | `docs/ES0_HANDOFF.md` | Phase ES0 platform enablement; sync `main` first |
+| *before starting E6 / Guide* | `docs/ANIMATION_ONBOARDING.md` | Origin story, section tours, badge/streak celebration; includes the next-agent prompt |
 | *before starting E5* | `docs/ENGAGEMENT_E5.md` | Step-by-step plan for buddy v0.5, badges, QOTD week, streak freeze, avatar unlocks |
 | *as needed* | `docs/EMAIL_SETUP.md` | Weekly digest only |
 | *as needed* | `docs/ENGAGEMENT_VISUAL.md` | Avatar / buddy colour and emoji tokens (after E1) |
@@ -69,6 +81,7 @@ Word (`.docx`) copies exist for key docs. **Markdown is the source of truth** fo
 11. **No analytics, advertising, or third-party tracking.** The site needs no cookie-consent banner precisely because none exists; adding any requires a consent flow and a rewritten privacy notice in the same release.
 12. **Anything that makes a child more visible to others defaults to off.** See `docs/SECURITY_AND_GDPR.md` §S0.3.
 13. **Never store a raw IP address** where a keyed hash serves the same purpose (rate-limit and usage buckets are compared, never read back).
+14. **Before any new feature**, answer the four questions in `docs/SECURITY_AND_GDPR.md` §6.1 (`python scripts/ops_cadence.py feature-gate`). Privacy / ROPA / DPIA / subprocessor edits ship in the same PR if any answer is yes.
 
 ---
 
@@ -103,9 +116,12 @@ WSGI / production entry: `from app import app as application` (see `docs/DEPLOY.
 | Grading | `generators/shared/answer_checkers.py`, `sql_checker.py` |
 | Lesson AI assist | `generators/shared/lesson_assist.py`, `static/js/lesson-assist.js` |
 | System bot / daily QOTD card | `models/bot.py`, feed template + `/api/v1/feed` `qotd_challenge` |
-| Alien buddy | `models/buddy.py`, `static/js/study-buddy.js` (legacy `buddy.js`), `templates/base.html` embed, `GET /api/v1/me/buddy`, `GET /api/v1/build-info` |
+| Alien buddy | `models/buddy.py`, `static/js/study-buddy.js` (legacy `buddy.js`), `templates/partials/buddy.html` SVG mascot, `templates/base.html` embed, `GET /api/v1/me/buddy`, `GET /api/v1/build-info` |
+| Zorp pose kit | `models/zorp_kit.py` + `templates/partials/zorp_kit.html` stills (`zorp_kit.pose`); `/styleguide` gallery; optional `pose` on a few milestones. Not E4.2. |
+| Diagrams | `models/svg_kit.py` (Jinja `svg_kit`), `static/css/diagrams.css`, `/styleguide` |
 | Generators | `generators/gcse/`, `alevel/`, `myp/` |
 | Phase G / social / streaks / QOTD | `models/*.py` (`qotd.py`, `social.py`, `gamification.py`, `weak_topics.py`, …) |
+| G8 teacher / classes (Phases 0–6 complete) | `models/classes.py`, `models/class_progress.py`, `models/class_assignments.py`, `models/class_invites.py`, `models/class_audit.py`, `models/class_csv.py` — enable, join, handle invites, roster, teacher remove, T0–T2, frozen set-work, audit, CSV |
 | Site search | `app.py` (`_unified_search`, `/api/v1/search`), `models/lesson_search.py` (FTS5 over metadata + lesson HTML), `static/js/site-search.js` |
 | Avatars | `models/avatar.py`, `user_profile_settings.avatar_json`, settings picker |
 | Front-end | `templates/`, `static/js/site.js` (+ feature JS) |
@@ -221,7 +237,33 @@ Small extensions of shipped systems, specified in **`docs/ENGAGEMENT_E5.md`**. *
 
 **E5.5 shipped 2026-08-20:** avatar extras 🎓/🎧/⭐ unlocked by `topics_10` / `questions_25` / `streak_7` badges; server-side enforcement + locked settings UI.
 
-Remaining E5: 7-day friends-only QOTD board, weekly streak freeze, revision planner subject dropdown, and web push (blocked on production HTTPS / `docs/MOBILE.md` M5).
+**E5.3 shipped 2026-08-20:** 7-day friends-only QOTD leaderboard on `/qotd?board=week` and `GET /api/v1/qotd/week/leaderboard`.
+
+**E5.4 shipped 2026-08-20:** weekly streak freeze — one skip per ISO week, auto-consumed after a single missed day; profile card + gamification API + softer buddy `streak_risk` copy.
+
+**E5.6 shipped 2026-08-20:** exam revision plan Subject dropdown lists every level/subject pair and filters client-side when Level changes; mismatched POST/PUT is rejected.
+
+Remaining E5: web push (blocked on production HTTPS / `docs/MOBILE.md` M5).
+
+### E6 — Guide & celebration (A1–A6 + B shipped)
+
+Origin story, first-visit section tours, and badge/streak “moments” using the existing alien buddy. **Not** E4.2 farm. Full plan: **`docs/ANIMATION_ONBOARDING.md`**.
+
+**A1 shipped 2026-08-26:** overlay shell (`templates/partials/guide.html`), `static/js/guide.js` + origin catalog, localStorage `pb-guide-v1`. Plays once after login; Skip / Escape / reduced-motion; logged-in only.
+
+**A2 shipped 2026-08-26:** reward modal for badges and streak 7/30/100. `celebrate.js` hooks `pbGuide.reward`; Guide records seen; confetti still fires. Origin still wins if both would show.
+
+**A3 shipped 2026-08-26:** Practice / Profile / Daily first-visit tours. Spotlight + mobile bottom sheet. Settings / legal / auth / quiz never auto-tour. Origin still blocks tours on the same load.
+
+**A3b shipped 2026-08-27:** Learn + Compete first-visit tours. Compete copy is friends-only; Challenges are optional, no DMs.
+
+**A4 shipped 2026-08-27:** first-correct and lesson-complete reward modals, once each (`pb-guide-v1` rewards). Later lessons stay confetti-only. No extra CSS.
+
+**A5 shipped 2026-08-27:** `guide_json` on `user_profile_settings` (boolean flags). Hydrate `#pb-guide-state`; PATCH merge; Settings **Replay intro**. Privacy notice + ROPA updated. localStorage remains a cache.
+
+**A6 shipped 2026-08-27:** CSS streak fire (`pb-streak-fire`) when a 7/30/100 streak reward plays — nav chip, profile ring, medal, Profile tab. Not on tab change. No Lottie / WebM / CDN.
+
+**B shipped 2026-08-27:** overlay CSS gestures (wink, nod, shake, tap) via catalog `gesture`. Same SVG; head/foot/eye groups. Corner buddy unchanged. Preview + styleguide Play buttons.
 
 ---
 
@@ -229,13 +271,15 @@ Remaining E5: 7-day friends-only QOTD board, weekly streak freeze, revision plan
 
 Pick based on product priority; items are independent enough to sequence differently if needed:
 
-**If the site is about to go public, `docs/SECURITY_AND_GDPR.md` Phase S0 comes first** — it is the only item on this list with legal exposure attached. Everything below assumes the site is still development-only.
+Product tracks (E4.1, UI, etc.) can proceed on a local/dev site. **Do not** start `docs/OPERATOR_LAUNCH.md` until he is doing public HTTPS / M5. When that session starts, walk him through that doc first.
 
-1. **Continue E5** per recommended order: **E5.3** (QOTD week board) → **E5.4** (streak freeze) → **E5.6** (planner dropdown).
-2. **E4.1 real-world question style** — highest content value per line of code (`docs/REAL_WORLD_QUESTIONS.md`).
-3. **G8 — Teacher / class mode** per `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2. Note this adds teacher oversight of children's data — DPIA review required first.
-4. **Mobile M5+** only with a real production HTTPS URL — see `docs/MOBILE.md` (M0–M4 done). Pair with compliance S0; unblocks web push (E5.7).
-5. **E4.2 / E4.3 and other stretch** only after metrics or an explicit product call.
+1. **E4.1 real-world question style** — specified, not started (`docs/REAL_WORLD_QUESTIONS.md`). Independent of G8.
+2. **Continue E5:** **E5.7** (web push) only after production HTTPS (`docs/MOBILE.md` M5).
+3. **Mobile M5+ / public launch** — production HTTPS (`docs/MOBILE.md`). **Gate:** `docs/OPERATOR_LAUNCH.md` (David: ICO, privacy inbox, prune cron + `PB_BACKUP_PASSPHRASE`), then `docs/DEPLOY.md`. Unblocks web push (E5.7).
+4. **Compliance calendar** — keep `docs/CADENCE.md` (S3). Not a build phase.
+5. **Settings switch persist** — later; see §1.1. Do not block other work on this.
+6. **European School** lesson-clarity and Practice-generator tracks are **complete**. Do not reopen unless the user reports a regression. **Advanced Practice modes** (`multi_step` / `situational_multi_step`) are a **separate** track: operational pilot signed 2026-09-02 (scope A); **S1 wave complete** and **S2 Batch 3.1 (Astronomy)** in `docs/EURSC_ADVANCED_QUESTIONS.md`. Next is S2 Batch 3.2 (Health). Do **not** mark this track complete until the post-S3 whole-matrix audit.
+7. **G8 teacher / class mode** is **complete** (Phases 0–6). Do not add Leave, T3-to-teachers, or reopen §2.2 unless the user explicitly asks.
 
 ---
 
@@ -248,8 +292,16 @@ Pick based on product priority; items are independent enough to sequence differe
 
 ---
 
-## 9. Active work handoff — E5.3 next (2026-08-20)
+## 9. Active work handoff — G8 complete; EURSC advanced S2 Batch 3.1 (2026-09-02)
 
-**E5.1** and **E5.5** shipped on `main`. Next: **E5.3** QOTD week challenge — see `docs/ENGAGEMENT_E5.md` §E5.3.
+**S0–S3 GDPR/security shipped.** S3 is the calendar in **`docs/CADENCE.md`**. Remaining **human** work at public HTTPS: **`docs/OPERATOR_LAUNCH.md`** — not during a product session unless asked.
+
+**EURSC lesson-clarity and Practice-generator tracks are complete.** Do not reopen without a regression.
+
+**EURSC advanced Practice modes — operational pilot signed 2026-09-02 (scope A); S1 wave complete; S2 Batch 3.1 (Unit 2.1 Astronomy) enabled.** Contract: `docs/EURSC_ADVANCED_QUESTIONS.md`. Astronomy: `solar_system`, `light_telescopes`, `atoms_molecules` full matrix; `life_earth_elsewhere` foundational MS excluded. **This track is not complete** until remaining S2 → S3 waves and the post-S3 whole-matrix audit. Do not fill excluded cells (`reproductive_anatomy` SMS, `smell` MS, `interoception` MS, etc.). Do not change lesson banks, QOTD, or the standard five-slot recipe.
+
+**G8 teacher / class mode is complete** (Phases 0–6). Verification smoke: `scripts/test_g8_phase6_smoke.py`. Full suite **71/71**. Post-track audit 2026-09-01 (join/invite/class-work hardening). No T3 to teachers. No student Leave.
+
+**Product next (if the user does not name a track):** continue EURSC advanced **S2 Batch 3.2 (Health)** after safeguarding review, or **E4.1** real-world question style (`docs/REAL_WORLD_QUESTIONS.md`). Remaining E5 is **E5.7** web push — blocked until `docs/MOBILE.md` M5.
 
 ---

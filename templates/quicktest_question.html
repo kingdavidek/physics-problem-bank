@@ -1,71 +1,65 @@
 {% extends "base.html" %}
 {% block title %}Quick Test – Question {{ current }} of {{ total }}{% endblock %}
 {% block content %}
-<div class="page-shell">
+<div class="quiz-runner" id="quicktest-quiz-runner" data-current="{{ current }}" data-total="{{ total }}">
+  {% set quiz_exit_url = url_for('index') %}
+  {% set quiz_runner_title = 'Quick test — ' ~ topic_name %}
+  {% set quiz_runner_total = total %}
+  {% set quiz_runner_current = current %}
+  {% include 'partials/quiz_runner_bar.html' %}
 
-<div class="lesson-hero" style="padding: 18px 24px;">
-    <h1 style="font-size: 1.35rem;">Quick test</h1>
-    <p class="hero-sub">{{ topic_name }} — question {{ current }} of {{ total }}</p>
-</div>
+  <div class="quiz-runner-body">
+    {% if retry_mode %}
+    <p class="quiz-runner-intro">Retry the questions you missed — {{ total }} question{% if total != 1 %}s{% endif %}.</p>
+    {% endif %}
+    <div class="quiz-runner-card">
+      <div class="problem-meta">
+        <span class="badge badge-{{ problem.difficulty }}">{{ problem.difficulty | title }}</span>
+        <span class="badge badge-marks">{{ problem.marks }} mark{% if problem.marks > 1 %}s{% endif %}</span>
+      </div>
 
-<div class="quicktest-meta">
-    <span>Progress</span>
-    <span>{{ current }} / {{ total }}</span>
-</div>
-<div class="quicktest-progress" role="progressbar" aria-valuenow="{{ current }}" aria-valuemin="1" aria-valuemax="{{ total }}">
-    <div class="quicktest-progress-bar" style="width: {{ ((current - 1) / total * 100) | round(1) }}%;"></div>
-</div>
-
-<div class="problem-card">
-    <div class="section-panel-header">Question {{ current }}</div>
-    <div class="problem-card-inner">
-        <div class="problem-meta">
-            <span class="badge badge-{{ problem.difficulty }}">{{ problem.difficulty | title }}</span>
-            <span class="badge badge-marks">{{ problem.marks }} mark{% if problem.marks > 1 %}s{% endif %}</span>
-        </div>
-
-        <div class="question">
-            {% if problem.options %}
-                <div class="question-content">{{ problem.question | safe }}</div>
-                <div id="mcq-options" class="mcq-options"
-                     data-correct="{{ problem.correct_answer }}"
-                     data-level="{{ qt_level }}"
-                     data-subject="{{ qt_subject }}"
-                     data-topic="{{ qt_topic }}"
-                     data-mode="{{ qt_mode }}"
-                     data-difficulty="{{ qt_difficulty }}">
-                    {% for opt in problem.options %}
-                        <button type="button" class="btn mcq-btn" data-letter="{{ opt[0] }}">{{ opt | safe }}</button>
-                    {% endfor %}
-                </div>
-                <p class="mcq-feedback" id="mcq-feedback" style="margin-top:12px;font-weight:600;"></p>
-            {% else %}
-                {% if not problem.answer_inline_sections %}
-                <div class="question-content">{{ problem.question | format_question_html }}</div>
-                {% endif %}
-                {% set fr_level = qt_level %}
-                {% set fr_subject = qt_subject %}
-                {% set fr_topic = qt_topic %}
-                {% set fr_difficulty = qt_difficulty %}
-                {% include 'partials/free_response_inline.html' %}
-            {% endif %}
-        </div>
+      <div class="question quiz-runner-question">
+        {% if problem.options %}
+          <div class="question-content">{{ problem.question | safe }}</div>
+          <div id="mcq-options" class="mcq-options quiz-runner-options"
+               data-correct="{{ problem.correct_answer }}"
+               data-level="{{ qt_level }}"
+               data-subject="{{ qt_subject }}"
+               data-topic="{{ qt_topic }}"
+               data-mode="{{ qt_mode }}"
+               data-difficulty="{{ qt_difficulty }}">
+            {% for opt in problem.options %}
+              <button type="button" class="btn mcq-btn quiz-runner-option" data-letter="{{ opt[0] }}">{{ opt | safe }}</button>
+            {% endfor %}
+          </div>
+          <p class="mcq-feedback" id="mcq-feedback" style="margin-top:12px;font-weight:600;"></p>
+        {% else %}
+          {% if not problem.answer_inline_sections %}
+          <div class="question-content">{{ problem.question | format_question_html }}</div>
+          {% endif %}
+          {% set fr_level = qt_level %}
+          {% set fr_subject = qt_subject %}
+          {% set fr_topic = qt_topic %}
+          {% set fr_difficulty = qt_difficulty %}
+          {% include 'partials/free_response_inline.html' %}
+        {% endif %}
+      </div>
     </div>
-</div>
 
-<div class="problem-actions" style="border-top: none; justify-content: flex-end;">
-    <form method="POST" action="/quicktest/next" id="quicktest-next-form">
+    <div class="quiz-runner-actions">
+      <form method="POST" action="/quicktest/next" id="quicktest-next-form" class="quiz-runner-next-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="qt_user_answer" id="qt-user-answer" value="">
         <input type="hidden" name="qt_checked" id="qt-checked" value="0">
         <input type="hidden" name="qt_correct" id="qt-correct" value="">
         <input type="hidden" name="qt_score" id="qt-score" value="">
         <input type="hidden" name="qt_score_total" id="qt-score-total" value="">
-        <button type="submit" class="btn btn-primary">
-            {% if current < total %}Next question →{% else %}Finish and show solutions →{% endif %}
+        <button type="button" class="btn btn-primary btn-lg" id="quiz-runner-check" disabled>
+          Check
         </button>
-    </form>
+      </form>
+    </div>
+  </div>
 </div>
-
-</div>
+<script src="{{ url_for('static', filename='js/quiz-runner.js') }}?v=4" defer></script>
 {% endblock %}

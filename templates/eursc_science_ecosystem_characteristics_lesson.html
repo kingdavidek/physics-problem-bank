@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% block title %}Ecosystem Characteristics – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Ecosystem Characteristics</h1>
+    <p class="hero-sub">S3 Integrated Science · Unit 3.2 Living Earth · syllabus 3.2.3. Trophic-model limits, abiotic and biotic factors, classroom measurement, activity and thermoregulation as public animal examples, and surveys another group could repeat. This page does not replace a field visit and does not harvest backyard photos.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S3</span>
+      <span class="pill pill--hero">3.2 Living Earth</span>
+      <span class="pill pill--hero">3.2.3</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='ecosystem_characteristics') }}">▶ Practice Quiz (10 questions)</a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">1</span> Trophic-model critique <span class="lesson-tag">3.2.3</span> <span class="lesson-tag">S3</span></summary>
+    <div class="lesson-section-body">
+      <p>A simple trophic sketch is <strong>incomplete</strong>. Say what it leaves out. It is not the whole ecosystem.</p>
+      <p><strong>Worked example:</strong> A three-box producer–consumer–decomposer sketch leaves out abiotic conditions such as light, and it leaves out most feeding links. Naming those gaps is a model critique, not a class rank.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A simple trophic model is</p>
+          <button class="btn mcq-btn" data-letter="A">the whole ecosystem always</button>
+          <button class="btn mcq-btn" data-letter="B">incomplete, not the whole ecosystem</button>
+          <button class="btn mcq-btn" data-letter="C">a class rank</button>
+          <button class="btn mcq-btn" data-letter="D">a fridge survey</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">2</span> Abiotic factors</summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="Non-living conditions such as light or temperature">Abiotic</dfn> factors are non-living conditions such as light or temperature. <strong>A</strong> abiotic, <strong>B</strong> biotic, <strong>C</strong> a survey step.
+      <span class="lesson-gloss-def">Non-living conditions such as light or temperature. They are not classmates and not a stored diet.</span></p>
+      <figure class="lesson-figure">
+        {{ factor_fig }}
+        <figcaption class="lesson-figure-caption">A abiotic → B biotic → C a survey step. Non-living conditions, living influences, then a repeatable method. Schematic only.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Abiotic factors in this lesson are</p>
+          <button class="btn mcq-btn" data-letter="A">always classmates</button>
+          <button class="btn mcq-btn" data-letter="B">non-living conditions such as light or temperature</button>
+          <button class="btn mcq-btn" data-letter="C">a stored diet</button>
+          <button class="btn mcq-btn" data-letter="D">a shock survey</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">3</span> Biotic factors</summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="Living influences such as feeding or competition">Biotic</dfn> factors are living influences such as feeding or competition. Use public cases.
+      <span class="lesson-gloss-def">Living influences such as feeding or competition. Public pond examples, not a backyard photo harvest.</span></p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Biotic factors in this lesson are</p>
+          <button class="btn mcq-btn" data-letter="A">only rocks</button>
+          <button class="btn mcq-btn" data-letter="B">living influences such as feeding or competition</button>
+          <button class="btn mcq-btn" data-letter="C">a household rank</button>
+          <button class="btn mcq-btn" data-letter="D">a magnet</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">4</span> Measurement</summary>
+    <div class="lesson-section-body">
+      <p>Measuring an abiotic factor in class needs <strong>teacher-approved instruments</strong> and a written method.</p>
+      <p><strong>Worked example:</strong> A group records light with a teacher-approved meter at three marked spots on the school lawn, in lux, and writes the method so another group could repeat it. The app does not harvest backyard photos.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Measuring an abiotic factor in class</p>
+          <button class="btn mcq-btn" data-letter="A">can skip the teacher</button>
+          <button class="btn mcq-btn" data-letter="B">needs teacher-approved instruments and a method</button>
+          <button class="btn mcq-btn" data-letter="C">uploads home gardens</button>
+          <button class="btn mcq-btn" data-letter="D">ranks pupils</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">5</span> Activity and thermoregulation</summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="Keeping body temperature in a useful range, as a public animal example">Thermoregulation</dfn> here is a public animal example, not a classmate league or a pupil tracker.
+      <span class="lesson-gloss-def">Keeping body temperature in a useful range. This lesson uses public animal examples, not a classmate league.</span></p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Thermoregulation here is</p>
+          <button class="btn mcq-btn" data-letter="A">a pupil ranking</button>
+          <button class="btn mcq-btn" data-letter="B">a public animal example, not a classmate league</button>
+          <button class="btn mcq-btn" data-letter="C">a stored clinical file</button>
+          <button class="btn mcq-btn" data-letter="D">a carbon diary</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">6</span> Surveys</summary>
+    <div class="lesson-section-body">
+      <p>A <strong>survey</strong> method should be repeatable so another group could follow it. Do not rank backyards in this app.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A survey method should be</p>
+          <button class="btn mcq-btn" data-letter="A">a secret only one pupil knows</button>
+          <button class="btn mcq-btn" data-letter="B">repeatable so another group could follow it</button>
+          <button class="btn mcq-btn" data-letter="C">a home photo harvest</button>
+          <button class="btn mcq-btn" data-letter="D">a diet file</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">7</span> Limits of this page</summary>
+    <div class="lesson-section-body">
+      <p>This page <strong>does not replace a field visit</strong>. A model critique says what the sketch leaves out. Classification continues next.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>This page</p>
+          <button class="btn mcq-btn" data-letter="A">replaces a field visit</button>
+          <button class="btn mcq-btn" data-letter="B">does not replace a field visit</button>
+          <button class="btn mcq-btn" data-letter="C">stores backyard photos</button>
+          <button class="btn mcq-btn" data-letter="D">ranks habitats</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">8</span> Using this lesson</summary>
+    <div class="lesson-section-body">
+      <p>Keep abiotic, biotic, measurement, surveys and model limits together. The field project still needs the site and the teacher.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Factors</h4>
+        <ul>
+          <li>A abiotic, B biotic, C survey</li>
+          <li>Measure with teacher rules</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Limits</h4>
+        <ul>
+          <li>A trophic sketch is incomplete</li>
+          <li>This page is not the field visit</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='ecosystem_characteristics') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

@@ -2,22 +2,21 @@
 {% block title %}Similarity and Congruence – GCSE Mathematics{% endblock %}
 
 {% block content %}
-<div style="max-width:860px;margin:0 auto;padding:12px;">
+<div class="lesson-shell">
 
   <!-- Header -->
-  <div style="background:linear-gradient(135deg,#1a6fa8,#0e4e7a);color:#fff;border-radius:10px;padding:22px 28px;margin-bottom:20px;">
-    <h1 style="margin:0 0 6px;font-size:1.7rem;">Similarity and Congruence</h1>
-    <p style="margin:0;opacity:.9;font-size:.97rem;"><strong>Congruent</strong> shapes match exactly — same size and shape, like two identical puzzle pieces. <strong>Similar</strong> shapes look the same but one is a scaled-up or scaled-down copy. We use clear rules to prove congruence or similarity in GCSE questions.</p>
-    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">AQA</span>
-      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">Edexcel</span>
-      <span style="background:rgba(255,255,255,.18);border-radius:20px;padding:3px 12px;font-size:.8rem;">OCR</span>
+  <div class="lesson-hero">
+    <h1>Similarity and Congruence</h1>
+    <p class="hero-sub"><strong>Congruent</strong> shapes match exactly — same size and shape, like two identical puzzle pieces. <strong>Similar</strong> shapes look the same but one is a scaled-up or scaled-down copy. We use clear rules to prove congruence or similarity in GCSE questions.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">AQA</span>
+      <span class="pill pill--hero">Edexcel</span>
+      <span class="pill pill--hero">OCR</span>
     </div>
   </div>
   <!-- Quick Test button -->
-  <div style="text-align:right;margin-bottom:14px;">
-    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='similarity_congruence') }}"
-       style="background:#1a6fa8;color:#fff;padding:9px 20px;border-radius:7px;text-decoration:none;font-weight:600;font-size:.93rem;">
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='similarity_congruence') }}">
       ▶ Practice Quiz (10 MCQs)
     </a>
   </div>
@@ -26,24 +25,24 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 1. CONGRUENCE – THE FOUR CONDITIONS           -->
   <!-- ══════════════════════════════════════════════ -->
-  <details open style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">1</span>
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
       Congruence — The Four Conditions
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 10</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> Triangle 1 has sides <strong>5 cm, 7 cm, 9 cm</strong>. Triangle 2 has the same three sides in the same order. The triangles fit exactly — they are <strong>congruent</strong> by <strong>SSS</strong>.</p>
 
       <p>Two triangles are <strong>congruent (≅)</strong> if any one of these four conditions is true:</p>
 
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:20px 0;">
+      <div class="lesson-tile-grid">
 
         <!-- SSS: A(80,22) B(20,100) C(140,100) — one tick per side (all sides equal) -->
-        <div style="background:#e8f4fd;border-radius:8px;padding:12px;text-align:center;">
-          <svg width="160" height="120" viewBox="0 0 160 120" style="max-width:100%;">
+        <div class="lesson-callout lesson-callout--formula">
+          <svg class="lesson-svg-chart" width="160" height="120" viewBox="0 0 160 120">
             <polygon points="20,100 80,22 140,100" fill="#bfdbfe" stroke="#1a6fa8" stroke-width="2"/>
             <!-- tick on AB (mid ≈ 50,61, ⟂ to side) -->
             <line x1="47" y1="58" x2="53" y2="64" stroke="#1a6fa8" stroke-width="2"/>
@@ -55,13 +54,13 @@
             <text x="8"  y="112" font-size="14" fill="#333" font-weight="bold">B</text>
             <text x="148" y="112" font-size="14" fill="#333" text-anchor="end" font-weight="bold">C</text>
           </svg>
-          <p style="margin:4px 0;font-weight:bold;color:#1a6fa8;font-size:1.1rem;">SSS</p>
-          <p style="margin:2px 0;font-size:1rem;">Side-Side-Side<br>All 3 sides equal</p>
+          <p class="lesson-sign-heading">SSS</p>
+          <p>Side-Side-Side<br>All 3 sides equal</p>
         </div>
 
         <!-- SAS: ticks on AB &amp; AC, included angle arc at A -->
-        <div style="background:#fce7f3;border-radius:8px;padding:12px;text-align:center;">
-          <svg width="160" height="120" viewBox="0 0 160 120" style="max-width:100%;">
+        <div class="lesson-sign-tile lesson-sign-tile--neg">
+          <svg class="lesson-svg-chart" width="160" height="120" viewBox="0 0 160 120">
             <polygon points="20,100 80,22 140,100" fill="#fbcfe8" stroke="#a13544" stroke-width="2"/>
             <line x1="47" y1="58" x2="53" y2="64" stroke="#1a6fa8" stroke-width="2"/>
             <line x1="107" y1="64" x2="113" y2="58" stroke="#1a6fa8" stroke-width="2"/>
@@ -71,13 +70,13 @@
             <text x="8"  y="112" font-size="14" fill="#333" font-weight="bold">B</text>
             <text x="148" y="112" font-size="14" fill="#333" text-anchor="end" font-weight="bold">C</text>
           </svg>
-          <p style="margin:4px 0;font-weight:bold;color:#a13544;font-size:1.1rem;">SAS</p>
-          <p style="margin:2px 0;font-size:1rem;">Side-Angle-Side<br>2 sides + included angle</p>
+          <p class="lesson-sign-heading">SAS</p>
+          <p>Side-Angle-Side<br>2 sides + included angle</p>
         </div>
 
         <!-- ASA: included side BC, angle arcs at B and C -->
-        <div style="background:#e0fdf4;border-radius:8px;padding:12px;text-align:center;">
-          <svg width="160" height="120" viewBox="0 0 160 120" style="max-width:100%;">
+        <div class="lesson-sign-tile lesson-sign-tile--pos">
+          <svg class="lesson-svg-chart" width="160" height="120" viewBox="0 0 160 120">
             <polygon points="20,100 80,22 140,100" fill="#a7f3d0" stroke="#059669" stroke-width="2"/>
             <!-- tick on included side BC -->
             <line x1="77" y1="100" x2="83" y2="100" stroke="#1a6fa8" stroke-width="2"/>
@@ -89,13 +88,13 @@
             <text x="8"  y="112" font-size="14" fill="#333" font-weight="bold">B</text>
             <text x="148" y="112" font-size="14" fill="#333" text-anchor="end" font-weight="bold">C</text>
           </svg>
-          <p style="margin:4px 0;font-weight:bold;color:#059669;font-size:1.1rem;">ASA</p>
-          <p style="margin:2px 0;font-size:1rem;">Angle-Side-Angle<br>2 angles + included side</p>
+          <p class="lesson-sign-heading">ASA</p>
+          <p>Angle-Side-Angle<br>2 angles + included side</p>
         </div>
 
         <!-- RHS: right angle at B, A above B, C to the right; tick leg + double tick hyp -->
-        <div style="background:#fef9c3;border-radius:8px;padding:12px;text-align:center;">
-          <svg width="160" height="120" viewBox="0 0 160 120" style="max-width:100%;">
+        <div class="lesson-callout-strip">
+          <svg class="lesson-svg-chart" width="160" height="120" viewBox="0 0 160 120">
             <polygon points="24,100 24,24 136,100" fill="#fef08a" stroke="#b45309" stroke-width="2"/>
             <!-- right-angle mark at B (24,100) -->
             <polyline points="24,90 34,90 34,100" fill="none" stroke="#b45309" stroke-width="1.5"/>
@@ -110,31 +109,31 @@
             <text x="30" y="62" font-size="9" fill="#b45309">leg</text>
             <text x="88" y="48" font-size="9" fill="#1a6fa8">hyp</text>
           </svg>
-          <p style="margin:4px 0;font-weight:bold;color:#b45309;font-size:1.1rem;">RHS</p>
-          <p style="margin:2px 0;font-size:1rem;">Right angle–Hyp–Side<br>Right triangles only</p>
+          <p class="lesson-sign-heading">RHS</p>
+          <p>Right angle–Hyp–Side<br>Right triangles only</p>
         </div>
       </div>
 
-      <p style="background:#fffbeb;padding:10px 14px;border-radius:6px;border-left:4px solid #f59e0b;">
+      <p class="lesson-callout lesson-callout--warning">
         <strong>AAA does NOT prove congruence</strong> — only similarity (same angles, maybe different size).
         <br>
         <strong>SSA is not enough</strong> — two sides plus a non-included angle can make two different triangles.
       </p>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="C">
-          <p style="margin:0 0 10px;">Two triangles have all three pairs of sides equal. Which condition proves they are congruent?</p>
+          <p>Two triangles have all three pairs of sides equal. Which condition proves they are congruent?</p>
           <button class="btn mcq-btn" data-letter="A">AAA</button>
           <button class="btn mcq-btn" data-letter="B">SSA</button>
           <button class="btn mcq-btn" data-letter="C">SSS</button>
           <button class="btn mcq-btn" data-letter="D">AA</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='similarity_congruence') }}?difficulty=foundational&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Congruence</a>
+      <div>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='similarity_congruence') }}?difficulty=foundational&amp;mode=practice">Quick Test – Congruence</a>
       </div>
     </div>
   </details>
@@ -142,14 +141,14 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 2. SIMILAR SHAPES                             -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">2</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
       Similar Shapes — Scale Factor and Ratio
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 10</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> A small triangle has a side of <strong>6 cm</strong>. The matching side on a similar large triangle is <strong>9 cm</strong>. The linear scale factor is 9 ÷ 6 = <strong>1.5</strong> (or 3/2).</p>
 
@@ -161,8 +160,8 @@
         Large (SF=1.5): A'=(185,130), B'=(270,20), C'=(375,130).
         Labels: sides 6, 8, 10 and 9, 12, 15.
       -->
-      <div style="text-align:center;margin:20px 0;">
-        <svg width="430" height="175" viewBox="0 0 430 175" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="430" height="175" viewBox="0 0 430 175">
           <!-- Small triangle ABC: (20,155) (80,20) (150,155) -->
           <polygon points="20,155 80,20 150,155" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2.5"/>
           <text x="80" y="12"  font-size="15" fill="#333" text-anchor="middle" font-weight="bold">A</text>
@@ -201,20 +200,20 @@
         <li>Perimeters scale by the LSF too.</li>
       </ul>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="B">
-          <p style="margin:0 0 10px;">Similar triangles: small side <strong>8 cm</strong>, matching large side <strong>12 cm</strong>. What is the LSF (small → large)?</p>
+          <p>Similar triangles: small side <strong>8 cm</strong>, matching large side <strong>12 cm</strong>. What is the LSF (small → large)?</p>
           <button class="btn mcq-btn" data-letter="A">0.67</button>
           <button class="btn mcq-btn" data-letter="B">1.5</button>
           <button class="btn mcq-btn" data-letter="C">2</button>
           <button class="btn mcq-btn" data-letter="D">96</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='similarity_congruence') }}?difficulty=foundational&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Scale Factor</a>
+      <div>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='similarity_congruence') }}?difficulty=foundational&amp;mode=practice">Quick Test – Scale Factor</a>
       </div>
     </div>
   </details>
@@ -222,14 +221,14 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 3. SIMILAR TRIANGLES — AA CONDITION           -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">3</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
       Similar Triangles — AA Condition
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 10</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> In two triangles, angle A = angle P = <strong>50°</strong> and angle B = angle Q = <strong>70°</strong>. The third angles must both be 180° − 50° − 70° = <strong>60°</strong>. The triangles are <strong>similar (AA)</strong>.</p>
 
@@ -249,8 +248,8 @@
         A=(135,18) B=(28,192) C=(242,192) D=(92,88) E=(178,88).
         AA: ∠A common; ∠ADE = ∠ABC (corresponding).
       -->
-      <div style="text-align:center;margin:20px 0;">
-        <svg width="270" height="210" viewBox="0 0 270 210" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="270" height="210" viewBox="0 0 270 210">
           <polygon points="135,18 28,192 242,192" fill="#e0f2fe" stroke="#1a6fa8" stroke-width="2.5"/>
           <polygon points="135,18 92,88 178,88" fill="#bfdbfe" stroke="#1a6fa8" stroke-width="2"/>
           <line x1="92" y1="88" x2="178" y2="88" stroke="#a13544" stroke-width="2.5"/>
@@ -278,22 +277,22 @@
         </svg>
       </div>
 
-      <p style="background:#e0fdf4;padding:10px 14px;border-radius:6px;border-left:4px solid #059669;">
+      <p class="lesson-callout lesson-callout--exam">
         <strong>Worked example:</strong> In triangle ABC, DE ∥ BC, AD = 4, DB = 8, DE = 5.<br>
         Find BC.<br>
         AB = 4 + 8 = 12. LSF = AB/AD = 12/4 = 3.<br>
         BC = DE × 3 = 5 × 3 = <strong>15</strong>.
       </p>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="A">
-          <p style="margin:0 0 10px;">DE is parallel to BC, so △ADE ~ △ABC. AD = 3, AB = 9, DE = 4. What is BC?</p>
+          <p>DE is parallel to BC, so △ADE ~ △ABC. AD = 3, AB = 9, DE = 4. What is BC?</p>
           <button class="btn mcq-btn" data-letter="A">12</button>
           <button class="btn mcq-btn" data-letter="B">4</button>
           <button class="btn mcq-btn" data-letter="C">27</button>
           <button class="btn mcq-btn" data-letter="D">36</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
@@ -303,14 +302,14 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 4. LINEAR / AREA / VOLUME SCALE FACTORS       -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">4</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
       Linear, Area and Volume Scale Factors
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 10</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> Two similar shapes have LSF <strong>k = 2</strong> (the large one is twice as long). A small area is <strong>15 cm²</strong>. The large area is 15 × 2² = 15 × 4 = <strong>60 cm²</strong>.</p>
 
@@ -319,8 +318,8 @@
       <!--
         Dark info card showing the three relationships.
       -->
-      <div style="text-align:center;margin:16px 0;">
-        <svg width="100%" viewBox="0 0 480 160" style="max-width:760px;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:10px;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="100%" viewBox="0 0 480 160">
           <rect width="480" height="160" rx="10" fill="#1e293b"/>
           <!-- Three boxes -->
           <rect x="10"  y="20" width="140" height="120" rx="6" fill="#1a3a5c" stroke="#3b82f6" stroke-width="1.5"/>
@@ -351,39 +350,39 @@
       </div>
 
       <p><strong>Finding k when you know areas or volumes:</strong></p>
-      <p style="background:#e8f4fd;padding:10px 14px;border-radius:6px;text-align:center;font-size:1.05rem;">
+      <p class="lesson-callout lesson-callout--formula">
         LSF = √(area ratio) &nbsp;&nbsp;&nbsp; LSF = ∛(volume ratio)
       </p>
 
-      <table style="border-collapse:collapse;width:100%;font-size:1rem;margin:16px 0;">
-        <thead><tr style="background:var(--color-surface-2);">
-          <th style="padding:8px 12px;border:1px solid var(--color-border);">LSF (k)</th>
-          <th style="padding:8px 12px;border:1px solid var(--color-border);">Area SF (k²)</th>
-          <th style="padding:8px 12px;border:1px solid var(--color-border);">Volume SF (k³)</th>
+      <table class="lesson-table">
+        <thead><tr>
+          <th>LSF (k)</th>
+          <th>Area SF (k²)</th>
+          <th>Volume SF (k³)</th>
         </tr></thead>
         <tbody>
-          <tr><td style="padding:8px 12px;border:1px solid var(--color-border);">2</td><td style="padding:8px 12px;border:1px solid var(--color-border);">4</td><td style="padding:8px 12px;border:1px solid var(--color-border);">8</td></tr>
-          <tr style="background:var(--color-surface-2);"><td style="padding:8px 12px;border:1px solid var(--color-border);">3</td><td style="padding:8px 12px;border:1px solid var(--color-border);">9</td><td style="padding:8px 12px;border:1px solid var(--color-border);">27</td></tr>
-          <tr><td style="padding:8px 12px;border:1px solid var(--color-border);">4</td><td style="padding:8px 12px;border:1px solid var(--color-border);">16</td><td style="padding:8px 12px;border:1px solid var(--color-border);">64</td></tr>
-          <tr style="background:var(--color-surface-2);"><td style="padding:8px 12px;border:1px solid var(--color-border);">5</td><td style="padding:8px 12px;border:1px solid var(--color-border);">25</td><td style="padding:8px 12px;border:1px solid var(--color-border);">125</td></tr>
-          <tr><td style="padding:8px 12px;border:1px solid var(--color-border);">3/2</td><td style="padding:8px 12px;border:1px solid var(--color-border);">9/4</td><td style="padding:8px 12px;border:1px solid var(--color-border);">27/8</td></tr>
+          <tr><td>2</td><td>4</td><td>8</td></tr>
+          <tr><td>3</td><td>9</td><td>27</td></tr>
+          <tr><td>4</td><td>16</td><td>64</td></tr>
+          <tr><td>5</td><td>25</td><td>125</td></tr>
+          <tr><td>3/2</td><td>9/4</td><td>27/8</td></tr>
         </tbody>
       </table>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="C">
-          <p style="margin:0 0 10px;">Similar solids have linear scale factor <strong>3</strong>. How do their volumes compare?</p>
+          <p>Similar solids have linear scale factor <strong>3</strong>. How do their volumes compare?</p>
           <button class="btn mcq-btn" data-letter="A">× 3</button>
           <button class="btn mcq-btn" data-letter="B">× 6</button>
           <button class="btn mcq-btn" data-letter="C">× 27</button>
           <button class="btn mcq-btn" data-letter="D">× 9</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='similarity_congruence') }}?difficulty=intermediate&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Scale Factors</a>
+      <div>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='similarity_congruence') }}?difficulty=intermediate&amp;mode=practice">Quick Test – Scale Factors</a>
       </div>
     </div>
   </details>
@@ -391,25 +390,25 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 5. PARALLEL LINES & OVERLAPPING TRIANGLES     -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">5</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
       Parallel Lines and Overlapping Similar Triangles
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 11</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> DE is parallel to BC inside triangle ABC. AD = 2 and DB = 4, so AB = 6. The scale factor from small triangle ADE to big triangle ABC is 6 ÷ 2 = <strong>3</strong>.</p>
 
       <p>These two set-ups appear a lot in GCSE papers:</p>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:16px 0;flex-wrap:wrap;">
+      <div class="lesson-tile-grid lesson-tile-grid--2">
 
         <!-- Config 1: DE parallel to BC inside triangle -->
         <div>
-          <p style="font-weight:600;margin-bottom:8px;">Case 1: DE ∥ BC within triangle ABC</p>
-          <svg width="200" height="190" viewBox="0 0 200 190" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+          <p>Case 1: DE ∥ BC within triangle ABC</p>
+          <svg class="lesson-diagram" width="200" height="190" viewBox="0 0 200 190">
             <!-- Triangle ABC -->
             <polygon points="100,12 15,178 185,178" fill="#e0f2fe" stroke="#1a6fa8" stroke-width="2"/>
             <!-- Triangle ADE (ratio ~0.45) -->
@@ -425,7 +424,7 @@
             <text x="100" y="104" font-size="14" fill="#a13544" text-anchor="middle">DE ∥ BC</text>
             <text x="100" y="178" font-size="14" fill="#1a6fa8" text-anchor="middle">△ADE ~ △ABC</text>
           </svg>
-          <p style="font-size:1rem;margin-top:6px;">
+          <p class="lesson-caption-sm">
             Angle A is common; angle ADE = angle ABC (corresponding).<br>
             <strong>SF = AD/AB = AE/AC = DE/BC</strong>
           </p>
@@ -433,8 +432,8 @@
 
         <!-- Config 2: Two triangles sharing a vertex (bowtie / X shape) -->
         <div>
-          <p style="font-weight:600;margin-bottom:8px;">Case 2: AB ∥ DE — "bowtie" configuration</p>
-          <svg width="200" height="190" viewBox="0 0 200 190" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+          <p>Case 2: AB ∥ DE — "bowtie" configuration</p>
+          <svg class="lesson-diagram" width="200" height="190" viewBox="0 0 200 190">
             <!-- Upper triangle △AOB; lower triangle △DOE; transversals cross at O -->
             <polygon points="35,28 165,28 100,95" fill="#dbeafe" stroke="#1a6fa8" stroke-width="2"/>
             <polygon points="35,162 165,162 100,95" fill="#fce7f3" stroke="#a13544" stroke-width="2"/>
@@ -450,7 +449,7 @@
             <text x="100" y="108" font-size="14" fill="#333" text-anchor="middle" font-weight="bold">O</text>
             <text x="100" y="78" font-size="14" fill="#555" text-anchor="middle">AB ∥ DE</text>
           </svg>
-          <p style="font-size:1rem;margin-top:6px;">
+          <p class="lesson-caption-sm">
             Lines AD and BE cross at O. Vertically opposite angles at O are equal; alternate angles because <strong>AB ∥ DE</strong>.<br>
             <strong>△AOB ~ △DOE (by AA)</strong>
           </p>
@@ -458,19 +457,19 @@
       </div>
 
       <p><strong>Basic Proportionality Theorem (BPT):</strong> If DE ∥ BC, then</p>
-      <p style="background:#e8f4fd;padding:10px;border-radius:6px;text-align:center;font-size:1.05rem;">
+      <p class="lesson-callout lesson-callout--formula">
         AD/DB = AE/EC &nbsp;&nbsp;&nbsp; and &nbsp;&nbsp;&nbsp; AD/AB = AE/AC = DE/BC
       </p>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="B">
-          <p style="margin:0 0 10px;">DE ∥ BC. AD = 5, DB = 10. What is AB?</p>
+          <p>DE ∥ BC. AD = 5, DB = 10. What is AB?</p>
           <button class="btn mcq-btn" data-letter="A">5</button>
           <button class="btn mcq-btn" data-letter="B">15</button>
           <button class="btn mcq-btn" data-letter="C">2</button>
           <button class="btn mcq-btn" data-letter="D">50</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
@@ -480,19 +479,19 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 6. PROOFS                                     -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">6</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
       Writing Formal Proofs
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 11</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example:</strong> You spot angle A = angle P and angle B = angle Q. You write both facts with reasons, then finish with “∴ △ABC ~ △PQR (AA similarity).” That is enough for full similarity marks.</p>
 
       <p><strong>Proof template for similarity (AA):</strong></p>
-      <div style="background:#f1f5f9;padding:12px 16px;border-radius:6px;font-family:monospace;font-size:1rem;margin:12px 0;">
+      <div class="lesson-code-box">
         In triangles ABC and PQR:<br>
         1. Angle A = Angle P [reason — e.g. given / corresponding / alternate / vertically opposite]<br>
         2. Angle B = Angle Q [reason]<br>
@@ -500,7 +499,7 @@
       </div>
 
       <p><strong>Proof template for congruence (SSS example):</strong></p>
-      <div style="background:#f1f5f9;padding:12px 16px;border-radius:6px;font-family:monospace;font-size:1rem;margin:12px 0;">
+      <div class="lesson-code-box">
         In triangles ABM and ACM:<br>
         1. AB = AC &ensp;[isosceles triangle]<br>
         2. BM = MC &ensp;[M is midpoint of BC]<br>
@@ -508,24 +507,24 @@
         ∴ Triangle ABM ≅ Triangle ACM &ensp;(SSS)
       </div>
 
-      <p style="background:#fffbeb;padding:10px 14px;border-radius:6px;border-left:4px solid #f59e0b;">
+      <p class="lesson-callout lesson-callout--warning">
         <strong>Exam tip:</strong> Give a <strong>reason</strong> for every line. End with the condition: “SSS congruence” or “AA similarity”. Do not skip the final statement.
       </p>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="D">
-          <p style="margin:0 0 10px;">You have proved two pairs of equal angles in two triangles. What should you write at the end?</p>
+          <p>You have proved two pairs of equal angles in two triangles. What should you write at the end?</p>
           <button class="btn mcq-btn" data-letter="A">SSS congruence</button>
           <button class="btn mcq-btn" data-letter="B">RHS congruence</button>
           <button class="btn mcq-btn" data-letter="C">AAA congruence</button>
           <button class="btn mcq-btn" data-letter="D">AA similarity</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='similarity_congruence') }}?difficulty=difficult&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Quick Test – Proofs</a>
+      <div>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='similarity_congruence') }}?difficulty=difficult&amp;mode=practice">Quick Test – Proofs</a>
       </div>
     </div>
   </details>
@@ -533,14 +532,14 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 7. APPLICATIONS — MAPS, MODELS, SHADOWS      -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">7</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">7</span>
       Real-World Applications
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 10</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 10</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p><strong>Example (shadows):</strong> A <strong>1.8 m</strong> person casts a <strong>2.4 m</strong> shadow. A tree casts a <strong>10 m</strong> shadow. Since the ratio of height and shadow for the tree will be very close to that of the person, we can set up a proportion and solve for the height of the tree: h = 1.8 × 10 ÷ 2.4 = <strong>7.5 m</strong>.</p>
 
@@ -563,8 +562,8 @@
         SVG: Shadow diagram. Sun top-right; shadows cast left (away from sun).
         Rays: sun → top of object → tip of shadow on ground.
       -->
-      <div style="text-align:center;margin:20px 0;">
-        <svg width="380" height="180" viewBox="0 0 380 180" style="background:#f9f8f5;border-radius:8px;max-width:100%;">
+      <div class="lesson-figure">
+        <svg class="lesson-diagram" width="380" height="180" viewBox="0 0 380 180">
           <!-- Sun (top-right) -->
           <circle cx="332" cy="22" r="14" fill="#8a5300" stroke="#f59e0b" stroke-width="1.5"/>
           <text x="332" y="26" font-size="14" fill="#1a6fa8" text-anchor="middle">☀</text>
@@ -603,15 +602,15 @@
 
       <p><strong>Same shadow question again:</strong> 1.8/2.4 = h/10 → h = <strong>7.5 m</strong>. The person-and-shadow triangle is similar to the tree-and-shadow triangle.</p>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="B">
-          <p style="margin:0 0 10px;">A 1.6 m lamp post casts a 2 m shadow. A building casts a 15 m shadow at the same time. How tall is the building?</p>
+          <p>A 1.6 m lamp post casts a 2 m shadow. A building casts a 15 m shadow at the same time. How tall is the building?</p>
           <button class="btn mcq-btn" data-letter="A">9.6 m</button>
           <button class="btn mcq-btn" data-letter="B">12 m</button>
           <button class="btn mcq-btn" data-letter="C">18.75 m</button>
           <button class="btn mcq-btn" data-letter="D">24 m</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
@@ -621,21 +620,21 @@
   <!-- ══════════════════════════════════════════════ -->
   <!-- 8. QUICK REFERENCE                            -->
   <!-- ══════════════════════════════════════════════ -->
-  <details style="border:1px solid #d4e6f1;border-radius:8px;margin-bottom:12px;overflow:hidden;">
-    <summary style="background:#eaf4fb;padding:13px 16px;cursor:pointer;font-size:1.05rem;font-weight:700;color:#1a6fa8;list-style:none;display:flex;align-items:center;gap:10px;">
-      <span style="background:#1a6fa8;color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;">8</span>
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">8</span>
       Similarity &amp; Congruence — Quick Reference
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">All Exam Boards</span>
-      <span style="font-size:0.65rem;margin-left:6px;background:#fef4e8;color:#8a5300;padding:2px 6px;border-radius:10px;">Year 11</span>
-      <span style="font-size:0.65rem;margin-left:8px;background:#e8f4fd;color:#1a6fa8;padding:2px 6px;border-radius:10px;">Revision Card</span>
+      <span class="lesson-tag">All Exam Boards</span>
+      <span class="lesson-tag lesson-tag--warn">Year 11</span>
+      <span class="lesson-tag">Revision Card</span>
     </summary>
-    <div style="padding:18px 20px;background:#fff;">
+    <div class="lesson-section-body">
 
       <p>Use this card before a test. Ask: “Congruent or similar? Which condition fits — SSS, SAS, ASA, RHS, or AA?”</p>
 
-      <div style="text-align:center;margin:16px 0;">
+      <div class="lesson-figure">
               <div class="revision-card-wrap">
-        <svg class="revision-card-svg lesson-quick-ref" width="100%" viewBox="0 0 760 300" style="max-width:760px;width:100%;height:auto;display:block;margin:0 auto;background:#f9f8f5;border:1px solid #d4e6f1;border-radius:10px;" role="img" aria-label="Similarity and congruence revision card">
+        <svg class="revision-card-svg lesson-quick-ref lesson-diagram" width="100%" viewBox="0 0 760 300" role="img" aria-label="Similarity and congruence revision card">
           <text x="380" y="28" font-size="18" fill="#1a6fa8" text-anchor="middle" font-weight="bold">Similarity &amp; Congruence — Revision Card</text>
           <line x1="20" y1="38" x2="740" y2="38" stroke="#d4e6f1" stroke-width="1"/>
 
@@ -665,31 +664,30 @@
       </div>
       </div>
 
-      <div style="background:var(--hint-bg); border-left:3px solid var(--primary); padding:14px 20px; margin:16px 0; border-radius:0 var(--radius) var(--radius) 0;">
-        <p style="margin:0 0 8px; font-weight:600;">Quick Check</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
         <div class="mcq-inline" data-correct="A">
-          <p style="margin:0 0 10px;">Linear scale factor k = 4. By what factor do <strong>areas</strong> multiply?</p>
+          <p>Linear scale factor k = 4. By what factor do <strong>areas</strong> multiply?</p>
           <button class="btn mcq-btn" data-letter="A">16</button>
           <button class="btn mcq-btn" data-letter="B">4</button>
           <button class="btn mcq-btn" data-letter="C">64</button>
           <button class="btn mcq-btn" data-letter="D">8</button>
-          <p class="mcq-feedback" style="margin-top:8px; font-weight:600;"></p>
+          <p class="mcq-feedback"></p>
         </div>
       </div>
 
-      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='similarity_congruence') }}?difficulty=intermediate&amp;mode=practice" style="display:inline-block;padding:8px 16px;background:var(--color-primary);color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">Intermediate Practice</a>
-        <a href="{{ url_for('topic_page', level='gcse', subject='maths', topic='similarity_congruence') }}?difficulty=foundational&amp;mode=mcq" style="display:inline-block;padding:8px 16px;background:#059669;color:#fff;border-radius:var(--radius);text-decoration:none;font-size:1rem;">MCQ Practice</a>
+      <div class="lesson-cta-row">
+        <a class="btn btn-primary btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='similarity_congruence') }}?difficulty=intermediate&amp;mode=practice">Intermediate Practice</a>
+        <a class="btn btn-correct btn-sm" href="{{ url_for('topic_page', level='gcse', subject='maths', topic='similarity_congruence') }}?difficulty=foundational&amp;mode=mcq">MCQ Practice</a>
       </div>
     </div>
   </details>
 
 </div>
   <!-- Practice link -->
-  <div style="text-align:center;margin-top:20px;padding:16px;background:#f0f9ff;border-radius:8px;">
-    <p style="margin:0 0 10px;font-weight:600;color:#1a6fa8;">Ready to practise?</p>
-    <a href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='similarity_congruence') }}"
-       style="background:#1a6fa8;color:#fff;padding:10px 28px;border-radius:8px;text-decoration:none;font-weight:700;">
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='gcse', subject='maths', topic='similarity_congruence') }}">
       Start Practice Quiz
     </a>
   </div>

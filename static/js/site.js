@@ -17,6 +17,29 @@
     return headers;
   }
 
+  function celebrateResult(ok, target, revealTarget) {
+    if (!window.pbCelebrate) return;
+    if (ok) window.pbCelebrate.correct(target);
+    else window.pbCelebrate.wrong(target, revealTarget || null);
+  }
+
+  function celebratePayload(data) {
+    if (window.pbCelebrate && window.pbCelebrate.fromPayload) {
+      window.pbCelebrate.fromPayload(data);
+    }
+  }
+
+  function refetchBuddyFromBlock(block) {
+    if (!block || !block.dataset.level || !block.dataset.topic) return;
+    document.dispatchEvent(new CustomEvent('pb-buddy-refetch', {
+      detail: {
+        level: block.dataset.level,
+        subject: block.dataset.subject || '',
+        topic: block.dataset.topic,
+      },
+    }));
+  }
+
   function setOptionVisibility(selectEl, predicate) {
     let firstVisible = null;
     for (const opt of selectEl.options) {
@@ -57,11 +80,28 @@
     if (first) first.selected = true;
   }
 
-  function initGeneratorForm() {
+    function initGeneratorForm() {
     var levelSel = document.getElementById('level-select');
     var subjectSel = document.getElementById('subject-select');
     var topicSel = document.getElementById('topic-select');
+    var modeRow = document.getElementById('mode-row');
+    var modeSel = document.getElementById('mode-select');
     if (!levelSel || !subjectSel || !topicSel) return;
+    var launchMode = !!document.querySelector('[data-launch-gcse-only="1"]');
+
+    function syncModeOptions() {
+      if (!modeRow || !modeSel) return;
+      var topicOption = topicSel.selectedOptions[0];
+      var supported = ((topicOption && topicOption.dataset.modes) || 'standard')
+        .split(',')
+        .filter(Boolean);
+      var previousMode = modeSel.value;
+      setOptionVisibility(modeSel, function (opt) {
+        return supported.indexOf(opt.value) !== -1;
+      });
+      ensureValidSelection(modeSel, previousMode);
+      modeRow.hidden = false;
+    }
 
     function syncTopicDropdown() {
       var level = levelSel.value;
@@ -69,12 +109,18 @@
       setOptionVisibility(topicSel, topicPredicate(level, subject));
       ensureValidSelection(topicSel, topicSel.dataset.pendingTopic || topicSel.value);
       delete topicSel.dataset.pendingTopic;
+      syncModeOptions();
     }
 
     function syncSubjectDropdown() {
       var level = levelSel.value;
       var prevSubject = subjectSel.value;
-      setOptionVisibility(subjectSel, subjectPredicate(level));
+      setOptionVisibility(subjectSel, function (opt) {
+        if (launchMode && opt.dataset.launchSubject !== '1') {
+          return false;
+        }
+        return opt.dataset.level === level;
+      });
       ensureValidSelection(subjectSel, prevSubject);
       if (subjectSel.value !== prevSubject) {
         topicSel.dataset.pendingTopic = '';
@@ -94,9 +140,32 @@
       syncTopicDropdown();
     }
 
+    function onTopicChange() {
+      syncModeOptions();
+    }
+
     levelSel.addEventListener('change', onLevelChange);
     subjectSel.addEventListener('change', onSubjectChange);
+    topicSel.addEventListener('change', onTopicChange);
 
+    syncSubjectDropdown();
+  }
+
+  function initRevisionPlanForm() {
+    var form = document.querySelector('.revision-plan-form');
+    if (!form) return;
+    var levelSel = form.querySelector('#revision-plan-level') || form.querySelector('select[name="level"]');
+    var subjectSel = form.querySelector('#revision-plan-subject') || form.querySelector('select[name="subject"]');
+    if (!levelSel || !subjectSel) return;
+
+    function syncSubjectDropdown() {
+      var level = levelSel.value;
+      var prevSubject = subjectSel.value;
+      setOptionVisibility(subjectSel, subjectPredicate(level));
+      ensureValidSelection(subjectSel, prevSubject);
+    }
+
+    levelSel.addEventListener('change', syncSubjectDropdown);
     syncSubjectDropdown();
   }
 
@@ -151,6 +220,114 @@
     syncProblemActionHiddenFields();
   }
 
+  function parseJsonAttr(block, name, fallback) {
+    try {
+      var parsed = JSON.parse((block && block.getAttribute(name)) || '');
+      return parsed == null ? (fallback || []) : parsed;
+    } catch (err) {
+      return fallback || [];
+    }
+  }
+
+  function numberFieldTypes(block) {
+    return parseJsonAttr(block, 'data-field-types', []);
+  }
+
+  function numberFieldsSeparator(block) {
+    var correctRaw = (block.getAttribute('data-correct-raw') || '').trim();
+    if (correctRaw.indexOf('\x1e') >= 0) return '\x1e';
+    var types = numberFieldTypes(block);
+    var i;
+    for (i = 0; i < types.length; i += 1) {
+      if (types[i] && types[i] !== 'number') return '\x1e';
+    }
+    return '|';
+  }
+
+  function numberFieldRowType(row, index, types) {
+    return (row && row.getAttribute('data-field-type'))
+      || (types && types[index])
+      || 'number';
+  }
+
+  function readPickOrderFieldIds(row) {
+    var items = row.querySelectorAll('.free-response-proof-selected [data-step-id]');
+    if (items.length) {
+      return Array.prototype.map.call(items, function (el) {
+        return el.getAttribute('data-step-id') || '';
+      }).filter(Boolean);
+    }
+    return Array.prototype.map.call(
+      row.querySelectorAll('.free-response-proof-step.is-selected-toggle'),
+      function (btn) {
+        return btn.getAttribute('data-step-id') || '';
+      }
+    ).filter(Boolean);
+  }
+
+  function readNumberFieldRowValue(row, fieldType) {
+    if (!row) return '';
+    if (fieldType === 'mcq') {
+      var selected = row.querySelector('.mcq-btn.is-selected, .mcq-btn.is-correct');
+      return selected
+        ? (selected.getAttribute('data-letter') || '').trim().charAt(0).toUpperCase()
+        : '';
+    }
+    if (fieldType === 'pick' || fieldType === 'order') {
+      return readPickOrderFieldIds(row).join('|');
+    }
+    var input = row.querySelector('.free-response-input-field');
+    return input ? (input.value || '').trim() : '';
+  }
+
+  function readNumberFieldsUserAnswer(block) {
+    var rows = block.querySelectorAll('.free-response-field-row');
+    var types = numberFieldTypes(block);
+    var sep = numberFieldsSeparator(block);
+    return Array.prototype.map.call(rows, function (row, index) {
+      return readNumberFieldRowValue(row, numberFieldRowType(row, index, types));
+    }).join(sep);
+  }
+
+  function numberFieldRowChecked(row) {
+    if (!row) return false;
+    if (row.dataset.fieldCorrect === '1') return true;
+    if (row.querySelector('.is-correct, .is-wrong, .is-partial')) return true;
+    return false;
+  }
+
+  function numberFieldRowIsCorrect(row) {
+    if (!row) return false;
+    if (row.dataset.fieldCorrect === '1') return true;
+    if (row.querySelector('.is-correct')) return true;
+    return false;
+  }
+
+  function numberFieldsCheckState(block) {
+    var rows = block.querySelectorAll('.free-response-field-row');
+    if (!rows.length) {
+      return { checked: false, correct: null, userAnswer: '', score: null, scoreTotal: null };
+    }
+    var types = numberFieldTypes(block);
+    var values = Array.prototype.map.call(rows, function (row, index) {
+      return readNumberFieldRowValue(row, numberFieldRowType(row, index, types));
+    });
+    var checkedCount = 0;
+    var correctCount = 0;
+    Array.prototype.forEach.call(rows, function (row) {
+      if (numberFieldRowChecked(row)) checkedCount += 1;
+      if (numberFieldRowIsCorrect(row)) correctCount += 1;
+    });
+    var allChecked = checkedCount === rows.length;
+    return {
+      checked: allChecked,
+      correct: allChecked ? correctCount === rows.length : null,
+      userAnswer: values.join(numberFieldsSeparator(block)),
+      score: correctCount,
+      scoreTotal: rows.length,
+    };
+  }
+
   function readFreeResponseUserAnswer(block) {
     if (!block) return '';
     var answerType = resolveFreeResponseAnswerType(block);
@@ -176,12 +353,7 @@
       return (base.value || '').trim() + '|' + (index.value || '').trim();
     }
     if (answerType === 'number_fields') {
-      var fields = block.querySelectorAll('.free-response-input-field');
-      var correctRaw = (block.getAttribute('data-correct-raw') || '').trim();
-      var sep = correctRaw.indexOf('\x1e') >= 0 ? '\x1e' : '|';
-      return Array.prototype.map.call(fields, function (input) {
-        return (input.value || '').trim();
-      }).join(sep);
+      return readNumberFieldsUserAnswer(block);
     }
     if (answerType === 'completed_square') {
       return readCompletedSquareAnswer(block);
@@ -229,21 +401,7 @@
     }
     var answerType = resolveFreeResponseAnswerType(block);
     if (answerType === 'number_fields') {
-      var fields = block.querySelectorAll('.free-response-input-field');
-      if (!fields.length) {
-        return { checked: false, correct: null, userAnswer: '' };
-      }
-      var checked = Array.prototype.some.call(fields, function (input) {
-        return input.classList.contains('is-correct') || input.classList.contains('is-wrong');
-      });
-      var allCorrect = checked && Array.prototype.every.call(fields, function (input) {
-        return input.classList.contains('is-correct');
-      });
-      return {
-        checked: checked,
-        correct: checked ? allCorrect : null,
-        userAnswer: readFreeResponseUserAnswer(block),
-      };
+      return numberFieldsCheckState(block);
     }
     if (answerType === 'completed_square') {
       var csqFields = block.querySelectorAll('.free-response-input-csq');
@@ -373,23 +531,36 @@
     };
   }
 
+  function syncQuickTestFormFields() {
+    var state = collectQuickTestAnswerState();
+    var userEl = document.getElementById('qt-user-answer');
+    var checkedEl = document.getElementById('qt-checked');
+    var correctEl = document.getElementById('qt-correct');
+    var scoreEl = document.getElementById('qt-score');
+    var scoreTotalEl = document.getElementById('qt-score-total');
+    if (userEl) userEl.value = state.userAnswer || '';
+    if (checkedEl) checkedEl.value = state.checked ? '1' : '0';
+    if (correctEl) {
+      correctEl.value = state.correct === true ? '1' : (state.correct === false ? '0' : '');
+    }
+    if (scoreEl) scoreEl.value = state.score != null ? String(state.score) : '';
+    if (scoreTotalEl) scoreTotalEl.value = state.scoreTotal != null ? String(state.scoreTotal) : '';
+    return state;
+  }
+
+  function dispatchQuicktestChecked(detail) {
+    if (!document.getElementById('quicktest-quiz-runner')) return;
+    document.dispatchEvent(new CustomEvent('pb-quicktest-checked', {
+      bubbles: true,
+      detail: detail || collectQuickTestAnswerState(),
+    }));
+  }
+
   function initQuickTestNextForm() {
     var form = document.getElementById('quicktest-next-form');
     if (!form) return;
     form.addEventListener('submit', function () {
-      var state = collectQuickTestAnswerState();
-      var userEl = document.getElementById('qt-user-answer');
-      var checkedEl = document.getElementById('qt-checked');
-      var correctEl = document.getElementById('qt-correct');
-      var scoreEl = document.getElementById('qt-score');
-      var scoreTotalEl = document.getElementById('qt-score-total');
-      if (userEl) userEl.value = state.userAnswer || '';
-      if (checkedEl) checkedEl.value = state.checked ? '1' : '0';
-      if (correctEl) {
-        correctEl.value = state.correct === true ? '1' : (state.correct === false ? '0' : '');
-      }
-      if (scoreEl) scoreEl.value = state.score != null ? String(state.score) : '';
-      if (scoreTotalEl) scoreTotalEl.value = state.scoreTotal != null ? String(state.scoreTotal) : '';
+      syncQuickTestFormFields();
     });
   }
 
@@ -402,6 +573,7 @@
     });
     if (feedback) {
       feedback.textContent = '';
+      feedback.classList.remove('is-correct', 'is-wrong');
       feedback.style.color = '';
     }
     var retryWrap = block.querySelector('.mcq-retry-wrap');
@@ -417,6 +589,54 @@
   function findMcqFeedback(block) {
     return block.querySelector('.mcq-feedback')
       || (block.parentElement && block.parentElement.querySelector('.mcq-feedback'));
+  }
+
+  function enhanceMcqFeedback(feedback) {
+    if (!feedback) return;
+    if (!feedback.getAttribute('aria-live')) {
+      feedback.setAttribute('aria-live', 'polite');
+    }
+    if (!feedback.getAttribute('role')) {
+      feedback.setAttribute('role', 'status');
+    }
+  }
+
+  function enhanceLessonTables(root) {
+    if (!root) return;
+    root.querySelectorAll('table.lesson-table').forEach(function (table) {
+      var parent = table.parentElement;
+      if (parent && !parent.classList.contains('lesson-table-wrap')) {
+        var wrap = document.createElement('div');
+        wrap.className = 'lesson-table-wrap';
+        parent.insertBefore(wrap, table);
+        wrap.appendChild(table);
+      }
+      table.querySelectorAll('thead th').forEach(function (th) {
+        if (!th.getAttribute('scope')) {
+          th.setAttribute('scope', 'col');
+        }
+      });
+    });
+  }
+
+  function enhanceLessonFigures(root) {
+    if (!root) return;
+    root.querySelectorAll('div.lesson-figure').forEach(function (node) {
+      var figure = document.createElement('figure');
+      figure.className = node.className;
+      while (node.firstChild) {
+        figure.appendChild(node.firstChild);
+      }
+      node.parentNode.replaceChild(figure, node);
+    });
+  }
+
+  function initLessonPresentation() {
+    var shell = document.querySelector('.lesson-shell');
+    if (!shell) return;
+    enhanceLessonTables(shell);
+    enhanceLessonFigures(shell);
+    shell.querySelectorAll('.mcq-feedback').forEach(enhanceMcqFeedback);
   }
 
   var REFLECTION_CHIP_OPTIONS = [
@@ -534,7 +754,7 @@
       actions.hidden = true;
       status.hidden = false;
       status.textContent = 'Thanks \u2014 noted.';
-      status.style.color = '#16a34a';
+      status.style.color = 'var(--on-correct)';
       window.setTimeout(dismissPanel, 1400);
     }
 
@@ -674,8 +894,71 @@
       .catch(function () { return { attempt_id: null, cohort: null, correct: isCorrect }; });
   }
 
+  function mcqOptionLetter(btn, index) {
+    var fromData = (btn.getAttribute('data-letter') || '').trim().charAt(0).toUpperCase();
+    if (fromData && 'ABCD'.indexOf(fromData) !== -1) return fromData;
+    var text = (btn.textContent || '').trim();
+    var match = text.match(/^([A-D])(?:\s{2}|[).:]\s*)/i);
+    if (match) return match[1].toUpperCase();
+    return 'ABCD'.charAt(index || 0) || '';
+  }
+
+  function stripMcqLetterPrefix(btn, letter) {
+    if (!btn || !letter) return;
+    var re = new RegExp('^\\s*' + letter + '(?:\\s{2}|[).:]\\s*)', 'i');
+    function walk(node) {
+      if (node.nodeType === 3) {
+        var value = node.nodeValue || '';
+        if (re.test(value)) {
+          node.nodeValue = value.replace(re, '');
+          return true;
+        }
+        return false;
+      }
+      var kids = node.childNodes;
+      for (var i = 0; i < kids.length; i += 1) {
+        if (walk(kids[i])) return true;
+      }
+      return false;
+    }
+    walk(btn);
+  }
+
+  function decorateMcqButton(btn, index) {
+    if (!btn || btn.querySelector('.mcq-letter')) return;
+    var letter = mcqOptionLetter(btn, index);
+    if (!letter) return;
+    btn.setAttribute('data-letter', letter);
+    stripMcqLetterPrefix(btn, letter);
+    var chip = document.createElement('span');
+    chip.className = 'mcq-letter';
+    chip.setAttribute('aria-hidden', 'true');
+    chip.textContent = letter;
+    btn.insertBefore(chip, btn.firstChild);
+  }
+
+  function decorateMcqButtons(root) {
+    var scope = root && root.querySelectorAll ? root : document;
+    var buttons = scope.querySelectorAll('.mcq-btn');
+    buttons.forEach(function (btn, i) { decorateMcqButton(btn, i); });
+  }
+
+  function mcqButtonHtml(letter, bodyHtml) {
+    var prefix = new RegExp('^' + letter + '(?:\\s{2}|[).:]\\s*)');
+    var body = String(bodyHtml || '');
+    if (letter && prefix.test(body)) body = body.replace(prefix, '');
+    return (
+      '<button type="button" class="btn mcq-btn" data-letter="' + letter + '">' +
+      '<span class="mcq-letter" aria-hidden="true">' + letter + '</span>' +
+      body +
+      '</button>'
+    );
+  }
+
   function wireMcqBlock(block) {
-    if (!block || block.dataset.mcqInit === '1') return;
+    if (!block) return;
+    decorateMcqButtons(block);
+    if (block.dataset.mcqInit === '1') return;
 
     var correctRaw = (block.getAttribute('data-correct') || block.dataset.correct || '').trim();
     if (!correctRaw) return;
@@ -683,6 +966,7 @@
     block.dataset.mcqInit = '1';
     var correctLetter = correctRaw.charAt(0);
     var feedback = findMcqFeedback(block);
+    enhanceMcqFeedback(feedback);
     var trackable = Boolean(block.dataset.level);
 
     block.querySelectorAll('.mcq-btn').forEach(function (btn) {
@@ -701,20 +985,28 @@
           btn.classList.add('is-correct');
           if (feedback) {
             feedback.textContent = '\u2713 Correct!';
-            feedback.style.color = '#16a34a';
+            feedback.classList.remove('is-wrong');
+            feedback.classList.add('is-correct');
+            feedback.style.color = '';
           }
+          celebrateResult(true, btn);
           block.dispatchEvent(new CustomEvent('mcq-correct', { bubbles: true }));
         } else {
           btn.classList.add('is-wrong');
+          var correctBtn = null;
           block.querySelectorAll('.mcq-btn').forEach(function (b) {
             var bLetter = (b.dataset.letter || '').trim().charAt(0);
             if (bLetter === correctLetter) {
               b.classList.add('is-correct');
+              correctBtn = b;
             }
           });
+          celebrateResult(false, btn, correctBtn);
           if (feedback) {
             feedback.textContent = '\u2717 Not quite \u2014 the correct answer is highlighted.';
-            feedback.style.color = '#dc2626';
+            feedback.classList.remove('is-correct');
+            feedback.classList.add('is-wrong');
+            feedback.style.color = '';
           }
           showMcqRetry(block);
         }
@@ -727,17 +1019,15 @@
               offerWrongAnswerReflectionMcq(block, result.attempt_id, recordThisAttempt);
             }
             showCohortHint(block, result.cohort);
-            if (block.dataset.level && block.dataset.topic) {
-              document.dispatchEvent(new CustomEvent('pb-buddy-refetch', {
-                detail: {
-                  level: block.dataset.level,
-                  subject: block.dataset.subject || '',
-                  topic: block.dataset.topic,
-                },
-              }));
-            }
+            celebratePayload(result);
+            refetchBuddyFromBlock(block);
           });
         }
+        dispatchQuicktestChecked({
+          userAnswer: letter,
+          checked: true,
+          correct: isCorrect,
+        });
       });
     });
   }
@@ -761,7 +1051,10 @@
   }
 
   function initMcqInline() {
-    document.querySelectorAll('.mcq-inline').forEach(wireMcqBlock);
+    document.querySelectorAll('.mcq-inline').forEach(function (block) {
+      decorateMcqButtons(block);
+      wireMcqBlock(block);
+    });
   }
 
   function normalizeFeedbackText(value) {
@@ -1438,13 +1731,13 @@
       var tx = numberLineXForValue(v, axis, pad, width);
       ticks +=
         '<line x1="' + tx + '" y1="' + (y - 7) + '" x2="' + tx + '" y2="' + (y + 7) +
-        '" stroke="#475569" stroke-width="1.5"/>' +
+        '" stroke="var(--text-muted)" stroke-width="1.5"/>' +
         '<text x="' + tx + '" y="' + (y + 24) +
-        '" text-anchor="middle" fill="#475569" font-size="13">' + v + '</text>';
+        '" text-anchor="middle" fill="var(--text-muted)" font-size="13">' + v + '</text>';
     }
 
-    var leftFill = state.leftClosed ? '#1a6fa8' : '#ffffff';
-    var rightFill = state.rightClosed ? '#1a6fa8' : '#ffffff';
+    var leftFill = state.leftClosed ? 'var(--brand-500)' : 'var(--surface)';
+    var rightFill = state.rightClosed ? 'var(--brand-500)' : 'var(--surface)';
     var leftLabel = state.leftClosed ? 'closed' : 'open';
     var rightLabel = state.rightClosed ? 'closed' : 'open';
 
@@ -1452,20 +1745,20 @@
       '<svg viewBox="0 0 ' + width + ' ' + height +
       '" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
       '<line x1="' + pad + '" y1="' + y + '" x2="' + (width - pad) + '" y2="' + y +
-      '" stroke="#334155" stroke-width="2"/>' +
+      '" stroke="var(--text)" stroke-width="2"/>' +
       '<polygon points="' + (width - pad) + ',' + (y - 5) + ' ' + (width - pad + 12) + ',' + y +
-      ' ' + (width - pad) + ',' + (y + 5) + '" fill="#334155"/>' +
+      ' ' + (width - pad) + ',' + (y + 5) + '" fill="var(--text)"/>' +
       ticks +
       '<line class="nl-segment" x1="' + leftX + '" y1="' + y + '" x2="' + rightX +
-      '" y2="' + y + '" stroke="#1a6fa8" stroke-width="5" stroke-linecap="round"/>' +
+      '" y2="' + y + '" stroke="var(--brand-500)" stroke-width="5" stroke-linecap="round"/>' +
       '<circle class="nl-endpoint nl-left' + (state.leftClosed ? ' nl-closed' : '') +
       '" data-end="left" cx="' + leftX + '" cy="' + y + '" r="9" fill="' + leftFill +
-      '" stroke="#1a6fa8" stroke-width="2.5" tabindex="0" role="button" ' +
+      '" stroke="var(--brand-500)" stroke-width="2.5" tabindex="0" role="button" ' +
       'aria-label="Left endpoint at ' + state.left + ', ' + leftLabel +
       ' circle. Drag to move, click or press Enter to toggle."/>' +
       '<circle class="nl-endpoint nl-right' + (state.rightClosed ? ' nl-closed' : '') +
       '" data-end="right" cx="' + rightX + '" cy="' + y + '" r="9" fill="' + rightFill +
-      '" stroke="#1a6fa8" stroke-width="2.5" tabindex="0" role="button" ' +
+      '" stroke="var(--brand-500)" stroke-width="2.5" tabindex="0" role="button" ' +
       'aria-label="Right endpoint at ' + state.right + ', ' + rightLabel +
       ' circle. Drag to move, click or press Enter to toggle."/>' +
       '</svg>' +
@@ -1957,14 +2250,10 @@
     var letters = 'ABCD';
     var esc = htmlEscape;
     var buttons = (options || []).map(function (opt, i) {
-      return (
-        '<button type="button" class="btn mcq-btn" data-letter="' + letters.charAt(i) + '">' +
-        esc(opt) +
-        '</button>'
-      );
+      return mcqButtonHtml(letters.charAt(i), esc(opt));
     }).join('');
     return (
-      '<div class="free-response-field-row">' +
+      '<div class="free-response-field-row" data-field-type="mcq">' +
       '<span class="free-response-field-label">' + esc(label) + '</span>' +
       '<div class="mcq-inline free-response-field-mcq">' + buttons + '</div>' +
       '<p class="free-response-field-feedback" aria-live="polite"></p>' +
@@ -1981,10 +2270,52 @@
     return fallback == null ? 3 : fallback;
   }
 
-  function numberFieldRowHtml(label, fieldType, fieldOptions, formatHint) {
+  function numberFieldPickOrderRowHtml(label, fieldType, fieldOptions, pickCount) {
+    var esc = htmlEscape;
+    var isPick = fieldType === 'pick';
+    var hint = isPick
+      ? (pickCount
+        ? ('Select ' + pickCount + ' correct option' + (pickCount === 1 ? '' : 's'))
+        : 'Select all correct statements')
+      : 'Put the steps in the correct order';
+    var bankHtml = (fieldOptions || []).map(function (step) {
+      var id = (step && step.id) || '';
+      var text = (step && step.text != null) ? step.text : String(step || '');
+      return (
+        '<button type="button" class="btn btn-secondary free-response-proof-step" data-step-id="' +
+        esc(id) +
+        '">' +
+        String(text) +
+        '</button>'
+      );
+    }).join('');
+    return (
+      '<div class="free-response-field-row free-response-field-row--' + fieldType +
+      '" data-field-type="' + fieldType + '"' +
+      (isPick && pickCount ? (' data-pick-count="' + pickCount + '"') : '') +
+      (fieldType === 'order' ? ' data-order-matters="1"' : '') +
+      '>' +
+      '<span class="free-response-field-label">' + esc(label) + '</span>' +
+      '<p class="free-response-proof-hint">' + esc(hint) + '</p>' +
+      '<div class="free-response-proof-bank" aria-label="Answer options">' + bankHtml + '</div>' +
+      '<div class="free-response-proof-selected-wrap">' +
+      '<p class="free-response-proof-selected-label">' + (isPick ? 'Your selections' : 'Your order') + '</p>' +
+      '<ol class="free-response-proof-selected" aria-live="polite"></ol>' +
+      '<button type="button" class="btn btn-secondary free-response-proof-clear">Clear</button>' +
+      '</div>' +
+      '<button type="button" class="btn free-response-field-check-btn">Check</button>' +
+      '<p class="free-response-field-feedback" aria-live="polite"></p>' +
+      '</div>'
+    );
+  }
+
+  function numberFieldRowHtml(label, fieldType, fieldOptions, formatHint, pickCount) {
     var esc = htmlEscape;
     if (fieldType === 'mcq') {
       return numberFieldMcqRowHtml(label, fieldOptions || []);
+    }
+    if (fieldType === 'pick' || fieldType === 'order') {
+      return numberFieldPickOrderRowHtml(label, fieldType, fieldOptions || [], pickCount);
     }
     var safeLabel = esc(label);
     var ph = esc(freeResponseFieldPlaceholder(
@@ -2014,7 +2345,7 @@
       );
     }
     return (
-      '<div class="' + rowClass + '">' +
+      '<div class="' + rowClass + '" data-field-type="' + esc(fieldType || 'number') + '">' +
       '<label class="' + fieldClass + '">' +
       '<span class="free-response-field-label">' + safeLabel + '</span>' +
       inputHtml +
@@ -2030,6 +2361,7 @@
     var esc = htmlEscape;
     var rowSizes = [];
     var groupLabels = [];
+    var pickCounts = [];
     try {
       rowSizes = JSON.parse(block.getAttribute('data-field-row-sizes') || '[]');
     } catch (errRowSizes) {
@@ -2039,6 +2371,11 @@
       groupLabels = JSON.parse(block.getAttribute('data-field-group-labels') || '[]');
     } catch (errGroupLabels) {
       groupLabels = [];
+    }
+    try {
+      pickCounts = JSON.parse(block.getAttribute('data-field-pick-counts') || '[]');
+    } catch (errPickCounts) {
+      pickCounts = [];
     }
     var stackClass = 'free-response-fields-stack';
     if (rowSizes.length) {
@@ -2056,7 +2393,9 @@
         for (var j = 0; j < size; j += 1) {
           var label = labels[idx] || ('Field ' + (idx + 1));
           var fieldType = fieldTypes[idx] || 'number';
-          html += numberFieldRowHtml(label, fieldType, fieldOptions[idx] || [], formatHint);
+          html += numberFieldRowHtml(
+            label, fieldType, fieldOptions[idx] || [], formatHint, pickCounts[idx]
+          );
           idx += 1;
         }
         html += '</div></div>';
@@ -2064,7 +2403,9 @@
     } else {
       html = labels.map(function (label, index) {
         var fieldType = fieldTypes[index] || 'number';
-        return numberFieldRowHtml(label, fieldType, fieldOptions[index] || [], formatHint);
+        return numberFieldRowHtml(
+          label, fieldType, fieldOptions[index] || [], formatHint, pickCounts[index]
+        );
       }).join('');
     }
     return '<div class="' + stackClass + '">' + html + '</div>';
@@ -2372,11 +2713,12 @@
       if (pickCount) orderMatters = false;
       var proofHint = esc(formatHint || (
         orderMatters
-          ? 'Select the correct proof steps in order'
+          ? 'Put the steps in the correct order'
           : (pickCount
             ? ('Select ' + pickCount + ' correct options')
             : 'Select all correct statements')
       ));
+      var selectedLabel = pickCount ? 'Your selections' : 'Your order';
       var bankHtml = stepBank.map(function (step) {
         return (
           '<button type="button" class="btn btn-secondary free-response-proof-step" data-step-id="' +
@@ -2393,9 +2735,9 @@
         (pickCount ? (' data-pick-count="' + pickCount + '"') : '') +
         '>' +
         '<p class="free-response-proof-hint">' + proofHint + '</p>' +
-        '<div class="free-response-proof-bank" aria-label="Proof step bank">' + bankHtml + '</div>' +
+        '<div class="free-response-proof-bank" aria-label="Answer options">' + bankHtml + '</div>' +
         '<div class="free-response-proof-selected-wrap">' +
-        '<p class="free-response-proof-selected-label">Your proof</p>' +
+        '<p class="free-response-proof-selected-label">' + selectedLabel + '</p>' +
         '<ol class="free-response-proof-selected" aria-live="polite"></ol>' +
         '<button type="button" class="btn btn-secondary free-response-proof-clear">Clear</button>' +
         '</div>' +
@@ -2489,6 +2831,21 @@
 
   function ensureFreeResponseRow(block, answerType) {
     if (answerType === 'number_fields' && block.getAttribute('data-inline-sections') === '1') {
+      return;
+    }
+    if (answerType === 'number_fields') {
+      var nfFeedback = block.querySelector('.free-response-feedback');
+      block.querySelectorAll('.free-response-row--number-fields').forEach(function (row) {
+        row.remove();
+      });
+      var nfWrap = document.createElement('div');
+      nfWrap.innerHTML = freeResponseRowHtml(block, answerType);
+      var nfRow = nfWrap.firstChild;
+      if (nfFeedback) {
+        block.insertBefore(nfRow, nfFeedback);
+      } else {
+        block.appendChild(nfRow);
+      }
       return;
     }
     if (answerType === 'completed_square') {
@@ -2731,10 +3088,11 @@
   }
 
   function wireNumberFieldsFreeResponse(block, correctRaw, trackable) {
+    var collectOnly = block.getAttribute('data-collect-only') === '1';
     var correctParts = splitNumberFieldCorrectParts(correctRaw);
     var fieldRows = block.querySelectorAll('.free-response-field-row');
     var blockFeedback = block.querySelector('.free-response-feedback');
-    var partTotal = correctParts.length;
+    var partTotal = correctParts.length || fieldRows.length;
     if (trackable && !block.dataset.attemptGroupId) {
       block.dataset.attemptGroupId = newAttemptGroupId();
     }
@@ -2748,17 +3106,20 @@
     function allFieldsCorrect() {
       if (!fieldRows.length) return false;
       return Array.prototype.every.call(fieldRows, function (row) {
-        if (row.dataset.fieldCorrect === '1') return true;
-        var input = row.querySelector('.free-response-input-field');
-        return input && input.disabled && input.classList.contains('is-correct');
+        return numberFieldRowIsCorrect(row);
       });
     }
 
+    function emitNumberFieldsProgress() {
+      dispatchQuicktestChecked(numberFieldsCheckState(block));
+    }
+
     function maybePersistAllFields() {
+      emitNumberFieldsProgress();
       if (!allFieldsCorrect()) return;
       if (blockFeedback) {
         blockFeedback.textContent = '\u2713 All parts correct!';
-        blockFeedback.style.color = '#16a34a';
+        blockFeedback.style.color = 'var(--on-correct)';
       }
     }
 
@@ -2810,11 +3171,14 @@
     }
 
     fieldRows.forEach(function (row, index) {
-      var fieldType = fieldTypes[index] || 'number';
+      var fieldType = row.getAttribute('data-field-type') || fieldTypes[index] || 'number';
       var fieldFeedback = row.querySelector('.free-response-field-feedback');
 
       if (fieldType === 'order') {
         var stepCount = proofStepsOrderCount(correctParts[index] || '');
+        if (!stepCount) {
+          stepCount = parseInt(row.getAttribute('data-pick-count') || '0', 10);
+        }
         var selected = [];
         var bank = row.querySelector('.free-response-proof-bank');
         var list = row.querySelector('.free-response-proof-selected');
@@ -2833,6 +3197,7 @@
             var btn = orderStepButton(id);
             var text = btn ? btn.innerHTML : id;
             var li = document.createElement('li');
+            li.setAttribute('data-step-id', id);
             li.innerHTML = text + ' ';
             var remove = document.createElement('button');
             remove.type = 'button';
@@ -2897,13 +3262,13 @@
           });
         }
 
-        if (!checkBtn) return;
+        if (collectOnly || !checkBtn) return;
         checkBtn.addEventListener('click', function () {
           if (row.dataset.fieldCorrect === '1') return;
           if (!selected.length) {
             if (fieldFeedback) {
               fieldFeedback.textContent = 'Put the steps in the correct order.';
-              fieldFeedback.style.color = '#dc2626';
+              fieldFeedback.style.color = 'var(--on-wrong)';
             }
             return;
           }
@@ -2919,7 +3284,6 @@
                 bankEl: bank,
                 clearBtn: clearBtn,
               });
-              maybePersistAllFields();
             } else {
               handleProofStepsCheckResult(data, {
                 feedbackEl: fieldFeedback,
@@ -2930,11 +3294,12 @@
                 clearBtn: clearBtn,
               });
             }
+            maybePersistAllFields();
           }).catch(function (err) {
             checkBtn.disabled = false;
             if (fieldFeedback) {
               fieldFeedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
-              fieldFeedback.style.color = '#dc2626';
+              fieldFeedback.style.color = 'var(--on-wrong)';
             }
           });
         });
@@ -2964,6 +3329,7 @@
             var btn = pickStepButton(id);
             var text = btn ? btn.innerHTML : id;
             var li = document.createElement('li');
+            li.setAttribute('data-step-id', id);
             li.innerHTML = text + ' ';
             var remove = document.createElement('button');
             remove.type = 'button';
@@ -3030,7 +3396,7 @@
           });
         }
 
-        if (!checkBtn) return;
+        if (collectOnly || !checkBtn) return;
         checkBtn.addEventListener('click', function () {
           if (row.dataset.fieldCorrect === '1') return;
           if (!selected.length) {
@@ -3038,7 +3404,7 @@
               fieldFeedback.textContent = pickCount
                 ? ('Select ' + pickCount + ' correct options.')
                 : 'Select your answer.';
-              fieldFeedback.style.color = '#dc2626';
+              fieldFeedback.style.color = 'var(--on-wrong)';
             }
             return;
           }
@@ -3054,7 +3420,6 @@
                 bankEl: bank,
                 clearBtn: clearBtn,
               });
-              maybePersistAllFields();
             } else {
               handleProofStepsCheckResult(data, {
                 feedbackEl: fieldFeedback,
@@ -3065,11 +3430,12 @@
                 clearBtn: clearBtn,
               });
             }
+            maybePersistAllFields();
           }).catch(function (err) {
             checkBtn.disabled = false;
             if (fieldFeedback) {
               fieldFeedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
-              fieldFeedback.style.color = '#dc2626';
+              fieldFeedback.style.color = 'var(--on-wrong)';
             }
           });
         });
@@ -3085,9 +3451,10 @@
             if (row.dataset.fieldCorrect === '1') return;
             var letter = (btn.dataset.letter || '').trim().charAt(0).toUpperCase();
             mcqWrap.querySelectorAll('.mcq-btn').forEach(function (b) {
-              b.disabled = true;
+              if (!collectOnly) b.disabled = true;
               b.classList.toggle('is-selected', b === btn);
             });
+            if (collectOnly) return;
             submitNumberFieldAnswer(index, row, 'mcq', letter, function (data) {
               btn.classList.remove('is-correct', 'is-wrong');
               mcqWrap.querySelectorAll('.mcq-btn').forEach(function (b) {
@@ -3098,28 +3465,33 @@
                 row.dataset.fieldCorrect = '1';
                 if (fieldFeedback) {
                   fieldFeedback.textContent = '\u2713 Correct!';
-                  fieldFeedback.style.color = '#16a34a';
+                  fieldFeedback.style.color = 'var(--on-correct)';
                 }
+                celebrateResult(true, btn);
                 maybePersistAllFields();
               } else {
                 btn.classList.add('is-wrong');
+                var fieldCorrectBtn = null;
                 mcqWrap.querySelectorAll('.mcq-btn').forEach(function (b) {
                   var bLetter = (b.dataset.letter || '').trim().charAt(0).toUpperCase();
                   if (bLetter === correctLetter) {
                     b.classList.add('is-correct');
+                    fieldCorrectBtn = b;
                   }
                 });
+                celebrateResult(false, btn, fieldCorrectBtn);
                 mcqWrap.querySelectorAll('.mcq-btn').forEach(function (b) { b.disabled = false; });
                 if (fieldFeedback) {
                   fieldFeedback.textContent = '\u2717 Not quite \u2014 the correct answer is highlighted.';
-                  fieldFeedback.style.color = '#dc2626';
+                  fieldFeedback.style.color = 'var(--on-wrong)';
                 }
               }
+              maybePersistAllFields();
             }).catch(function (err) {
               mcqWrap.querySelectorAll('.mcq-btn').forEach(function (b) { b.disabled = false; });
               if (fieldFeedback) {
                 fieldFeedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
-                fieldFeedback.style.color = '#dc2626';
+                fieldFeedback.style.color = 'var(--on-wrong)';
               }
             });
           });
@@ -3129,9 +3501,9 @@
 
       var input = row.querySelector('.free-response-input-field');
       var checkBtn = row.querySelector('.free-response-field-check-btn');
-      if (!input || !checkBtn) return;
-
+      if (!input) return;
       wireFieldInsertButtons(row, input);
+      if (collectOnly || !checkBtn) return;
 
       function submitField() {
         if (input.disabled && input.classList.contains('is-correct')) return;
@@ -3140,7 +3512,7 @@
         if (!userValue) {
           if (fieldFeedback) {
             fieldFeedback.textContent = 'Enter an answer.';
-            fieldFeedback.style.color = '#dc2626';
+            fieldFeedback.style.color = 'var(--on-wrong)';
           }
           return;
         }
@@ -3156,16 +3528,16 @@
             checkBtn.disabled = true;
             if (fieldFeedback) {
               fieldFeedback.textContent = '\u2713 ' + freeResponseCorrectFeedback(data, userValue);
-              fieldFeedback.style.color = '#16a34a';
+              fieldFeedback.style.color = 'var(--on-correct)';
             }
-            maybePersistAllFields();
+            celebrateResult(true, checkBtn || row);
           } else if (isTextPartialScore(data)) {
             input.classList.add('is-partial');
             input.disabled = false;
             checkBtn.disabled = false;
             if (fieldFeedback) {
               fieldFeedback.textContent = '\u25D0 ' + freeResponseWrongFeedback(block, data);
-              fieldFeedback.style.color = '#d97706';
+              fieldFeedback.style.color = 'var(--on-streak)';
             }
           } else {
             input.classList.add('is-wrong');
@@ -3173,15 +3545,16 @@
             checkBtn.disabled = false;
             if (fieldFeedback) {
               fieldFeedback.textContent = '\u2717 ' + freeResponseWrongFeedback(block, data);
-              fieldFeedback.style.color = '#dc2626';
+              fieldFeedback.style.color = 'var(--on-wrong)';
             }
           }
+          maybePersistAllFields();
         }).catch(function (err) {
           input.disabled = false;
           checkBtn.disabled = false;
           if (fieldFeedback) {
             fieldFeedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
-            fieldFeedback.style.color = '#dc2626';
+            fieldFeedback.style.color = 'var(--on-wrong)';
           }
         });
       }
@@ -3268,9 +3641,10 @@
     if (data.correct) {
       if (feedback) {
         feedback.textContent = '\u2713 Correct!';
-        feedback.style.color = '#16a34a';
+        feedback.style.color = 'var(--on-correct)';
       }
       if (row) row.classList.add('is-correct');
+      celebrateResult(true, checkBtn || row);
       if (bank) {
         bank.querySelectorAll('.free-response-proof-step').forEach(function (b) {
           b.disabled = true;
@@ -3281,10 +3655,10 @@
       if (feedback) {
         if (isTextPartialScore(data) && !data.step_feedback) {
           feedback.textContent = '\u25D0 ' + (context.partialFeedback || freeResponseWrongFeedback(block, data));
-          feedback.style.color = '#d97706';
+          feedback.style.color = 'var(--on-streak)';
         } else {
           feedback.textContent = '\u2717 ' + (data.feedback || 'Not quite.');
-          feedback.style.color = '#dc2626';
+          feedback.style.color = 'var(--on-wrong)';
         }
       }
       applyProofStepFeedback(list, data.step_feedback);
@@ -3324,7 +3698,7 @@
       if (!code) {
         if (feedback) {
           feedback.textContent = 'Write your Python code first.';
-          feedback.style.color = '#dc2626';
+          feedback.style.color = 'var(--on-wrong)';
         }
         textarea.classList.remove('is-correct', 'is-wrong');
         return;
@@ -3332,7 +3706,7 @@
       if (typeof globalThis.runPythonRunTests !== 'function') {
         if (feedback) {
           feedback.textContent = 'Python runner is still loading — try again in a moment.';
-          feedback.style.color = '#dc2626';
+          feedback.style.color = 'var(--on-wrong)';
         }
         return;
       }
@@ -3345,7 +3719,7 @@
       if (!tests.length) {
         if (feedback) {
           feedback.textContent = 'This question has no test fixtures configured.';
-          feedback.style.color = '#dc2626';
+          feedback.style.color = 'var(--on-wrong)';
         }
         return;
       }
@@ -3405,9 +3779,10 @@
             textarea.disabled = false;
             checkBtn.disabled = false;
           }
+          celebrateResult(ok, checkBtn || textarea);
           if (feedback) {
             feedback.textContent = data.feedback || (ok ? 'Correct!' : 'Not quite.');
-            feedback.style.color = ok ? '#16a34a' : '#dc2626';
+            feedback.style.color = ok ? 'var(--on-correct)' : 'var(--on-wrong)';
           }
           if (ok && trackable) {
             block.dataset.freeResponsePersisted = '1';
@@ -3426,7 +3801,7 @@
         textarea.classList.add('is-wrong');
         if (feedback) {
           feedback.textContent = (err && err.message) || 'Could not run your code — try again.';
-          feedback.style.color = '#dc2626';
+          feedback.style.color = 'var(--on-wrong)';
         }
       });
     });
@@ -3544,12 +3919,15 @@
     checkBtn.addEventListener('click', function () {
       if (!selected.length) {
         if (feedback) {
-          feedback.textContent = orderMatters
-            ? 'Select the correct proof steps in order.'
-            : (pickCount
-              ? ('Select ' + pickCount + ' correct options.')
-              : 'Select all correct statements.');
-          feedback.style.color = '#dc2626';
+          var emptyHint = (block.getAttribute('data-format-hint') || '').trim();
+          feedback.textContent = emptyHint
+            ? (/[.!?]$/.test(emptyHint) ? emptyHint : emptyHint + '.')
+            : (orderMatters
+              ? 'Put the steps in the correct order.'
+              : (pickCount
+                ? ('Select ' + pickCount + ' correct options.')
+                : 'Select all correct statements.'));
+          feedback.style.color = 'var(--on-wrong)';
         }
         return;
       }
@@ -3607,7 +3985,7 @@
           checkBtn.disabled = false;
           if (feedback) {
             feedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
-            feedback.style.color = '#dc2626';
+            feedback.style.color = 'var(--on-wrong)';
           }
         });
     });
@@ -3619,13 +3997,14 @@
     if (!block || block.dataset.freeResponseInit === '1') return;
 
     var correctRaw = (block.getAttribute('data-correct-raw') || block.dataset.correctRaw || '').trim();
-    if (!correctRaw) return;
+    var collectOnly = block.getAttribute('data-collect-only') === '1';
+    if (!correctRaw && !collectOnly) return;
 
     block.dataset.freeResponseInit = '1';
     var answerType = resolveFreeResponseAnswerType(block);
     setFreeResponseInputMode(block, answerType);
 
-    var trackable = Boolean(block.dataset.level);
+    var trackable = Boolean(block.dataset.level) && !collectOnly;
 
     if (answerType === 'number_fields') {
       wireNumberFieldsFreeResponse(block, correctRaw, trackable);
@@ -3792,9 +4171,7 @@
         return (inputs.base.value || '').trim() + '|' + (inputs.index.value || '').trim();
       }
       if (answerType === 'number_fields') {
-        return inputs.fields.map(function (input) {
-          return (input.value || '').trim();
-        }).join('|');
+        return readNumberFieldsUserAnswer(block);
       }
       if (answerType === 'completed_square') {
         return readCompletedSquareAnswer(block);
@@ -3850,8 +4227,10 @@
         return !(inputs.base && (inputs.base.value || '').trim()) || !(inputs.index && (inputs.index.value || '').trim());
       }
       if (answerType === 'number_fields') {
-        return !inputs.fields.length || inputs.fields.some(function (input) {
-          return !(input.value || '').trim();
+        var nfRows = block.querySelectorAll('.free-response-field-row');
+        var nfTypes = numberFieldTypes(block);
+        return !nfRows.length || Array.prototype.some.call(nfRows, function (row, index) {
+          return !readNumberFieldRowValue(row, numberFieldRowType(row, index, nfTypes));
         });
       }
       if (answerType === 'completed_square') {
@@ -3974,7 +4353,7 @@
       if (isEmptyAnswer()) {
         if (feedback) {
           feedback.textContent = emptyMessage();
-          feedback.style.color = '#dc2626';
+          feedback.style.color = 'var(--on-wrong)';
         }
         return;
       }
@@ -4040,13 +4419,14 @@
             setInputState(true);
             if (feedback) {
               feedback.textContent = '\u2713 ' + freeResponseCorrectFeedback(data, userAnswer);
-              feedback.style.color = '#16a34a';
+              feedback.style.color = 'var(--on-correct)';
             }
+            celebrateResult(true, checkBtn || block);
           } else if (isTextPartialScore(data)) {
             setInputStatePartial();
             if (feedback) {
               feedback.textContent = '\u25D0 ' + freeResponseWrongFeedback(block, data);
-              feedback.style.color = '#d97706';
+              feedback.style.color = 'var(--on-streak)';
             }
           } else {
             setInputState(false);
@@ -4056,14 +4436,18 @@
             }
             if (feedback) {
               feedback.textContent = '\u2717 ' + freeResponseWrongFeedback(block, data);
-              feedback.style.color = '#dc2626';
+              feedback.style.color = 'var(--on-wrong)';
             }
+            celebrateResult(false, checkBtn || block);
             offerWrongAnswerReflection(block, 'check', data, recordThisAttempt);
           }
           showCohortHint(block, data.cohort);
+          celebratePayload(data);
+          refetchBuddyFromBlock(block);
           if (trackable && block.dataset.freeResponsePersisted !== '1') {
             block.dataset.freeResponsePersisted = '1';
           }
+          dispatchQuicktestChecked(freeResponseCheckState(block));
         })
         .catch(function (err) {
           if (answerType === 'number_line') {
@@ -4079,7 +4463,10 @@
           });
           if (feedback) {
             feedback.textContent = (err.data && err.data.error) || err.message || 'Could not check answer.';
-            feedback.style.color = '#dc2626';
+            feedback.style.color = 'var(--on-wrong)';
+          }
+          if (document.getElementById('quicktest-quiz-runner')) {
+            document.dispatchEvent(new CustomEvent('pb-quicktest-check-failed', { bubbles: true }));
           }
         });
     }
@@ -4103,29 +4490,106 @@
 
   function showAppToast(message, type, options) {
     var host = document.getElementById('app-toast-host');
-    if (!host) return;
+    if (!host || message == null || message === '') return;
+    options = options || {};
 
-    var toast = document.createElement('div');
-    toast.className = 'app-toast is-' + (type === 'error' ? 'error' : 'success');
+    var kind = type === 'error' ? 'error' : (type === 'info' ? 'info' : 'success');
+    var iconName = kind === 'error' ? 'cross' : (kind === 'info' ? 'info' : 'check');
+    var MAX_TOASTS = 4;
 
-    if (options && options.linkUrl && options.linkLabel) {
-      toast.appendChild(document.createTextNode(message + ' '));
-      var link = document.createElement('a');
-      link.href = options.linkUrl;
-      link.textContent = options.linkLabel;
-      toast.appendChild(link);
-    } else {
-      toast.textContent = message;
+    function spriteIcon(name) {
+      var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'app-toast-glyph');
+      svg.setAttribute('width', '18');
+      svg.setAttribute('height', '18');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      svg.setAttribute('aria-hidden', 'true');
+      svg.setAttribute('focusable', 'false');
+      var use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+      use.setAttribute('href', '#icon-' + name);
+      use.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#icon-' + name);
+      svg.appendChild(use);
+      return svg;
     }
 
-    host.appendChild(toast);
-    window.setTimeout(function () {
-      toast.style.opacity = '0';
-      toast.style.transition = 'opacity 0.2s ease';
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function dismissToast(el) {
+      if (!el || el.classList.contains('is-leaving')) return;
+      el.classList.add('is-leaving');
       window.setTimeout(function () {
-        toast.remove();
-      }, 220);
-    }, 4200);
+        if (el.parentNode) el.remove();
+      }, reduceMotion ? 0 : 180);
+    }
+
+    var existing = host.querySelectorAll('.app-toast:not(.is-leaving)');
+    if (existing.length >= MAX_TOASTS) {
+      dismissToast(existing[0]);
+    }
+
+    var toast = document.createElement('div');
+    toast.className = 'app-toast is-' + kind;
+    toast.setAttribute('role', kind === 'error' ? 'alert' : 'status');
+
+    var iconWrap = document.createElement('span');
+    iconWrap.className = 'app-toast-icon';
+    iconWrap.setAttribute('aria-hidden', 'true');
+    iconWrap.appendChild(spriteIcon(iconName));
+    toast.appendChild(iconWrap);
+
+    var body = document.createElement('div');
+    body.className = 'app-toast-body';
+    var text = document.createElement('p');
+    text.className = 'app-toast-message';
+    text.textContent = String(message);
+    body.appendChild(text);
+    var linkUrl = options.linkUrl;
+    var linkLabel = options.linkLabel;
+    if (linkUrl && linkLabel) {
+      var action = document.createElement('a');
+      action.className = 'app-toast-action';
+      action.href = linkUrl;
+      action.textContent = linkLabel;
+      body.appendChild(action);
+    }
+    toast.appendChild(body);
+
+    var dismiss = document.createElement('button');
+    dismiss.type = 'button';
+    dismiss.className = 'app-toast-dismiss';
+    dismiss.setAttribute('aria-label', 'Dismiss');
+    dismiss.appendChild(spriteIcon('close'));
+    toast.appendChild(dismiss);
+
+    var lifetime = options.duration || (linkUrl ? 5600 : 4200);
+    var timer = null;
+
+    dismiss.addEventListener('click', function () {
+      if (timer) window.clearTimeout(timer);
+      dismissToast(toast);
+    });
+    toast.addEventListener('mouseenter', function () {
+      if (timer) window.clearTimeout(timer);
+    });
+    toast.addEventListener('mouseleave', function () {
+      timer = window.setTimeout(function () { dismissToast(toast); }, 1600);
+    });
+
+    host.appendChild(toast);
+    timer = window.setTimeout(function () { dismissToast(toast); }, lifetime);
+  }
+
+  function hydratePageFlashes() {
+    document.querySelectorAll('script.pb-flash-data').forEach(function (el) {
+      try {
+        var rows = JSON.parse(el.textContent || '[]');
+        rows.forEach(function (row) {
+          if (!row || !row.length) return;
+          var cat = row[0] === 'error' ? 'error' : (row[0] === 'info' ? 'info' : 'success');
+          showAppToast(row[1], cat);
+        });
+      } catch (err) {}
+      el.remove();
+    });
   }
 
   function postJsonForm(form) {
@@ -4248,13 +4712,14 @@
       delete mcq.dataset.mcqInit;
       delete mcq.dataset.mcqPersisted;
       mcq.innerHTML = '';
-      problem.options.forEach(function (opt) {
+      problem.options.forEach(function (opt, i) {
         var btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'btn mcq-btn';
         btn.dataset.letter = (opt.charAt(0) || '').trim();
         btn.innerHTML = opt;
         mcq.appendChild(btn);
+        decorateMcqButton(btn, i);
       });
       var feedback = document.getElementById('saved-mcq-feedback');
       if (feedback) {
@@ -4487,7 +4952,7 @@
   }
 
   function initAnswerRevealMathJax() {
-    document.querySelectorAll('details.answer-reveal').forEach(function (details) {
+    document.querySelectorAll('details.answer-reveal, details.practice-hint-drawer').forEach(function (details) {
       details.addEventListener('toggle', function () {
         if (!details.open || !window.MathJax || !MathJax.typesetPromise) return;
         var targets = [details.querySelector('.answer'), details.querySelector('.hint')];
@@ -4551,14 +5016,303 @@
   }
 
   window.showAppToast = showAppToast;
+  window.pbQuicktest = {
+    collectState: collectQuickTestAnswerState,
+    syncFormFields: syncQuickTestFormFields,
+  };
+
+  var _EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  var _HANDLE_RE = /^[a-z0-9_]{3,20}$/;
+
+  function passwordStrengthScore(value) {
+    var score = 0;
+    if (!value) return 0;
+    if (value.length >= 8) score += 1;
+    if (value.length >= 12) score += 1;
+    if (/[a-z]/.test(value) && /[A-Z]/.test(value)) score += 1;
+    if (/\d/.test(value)) score += 1;
+    if (/[^A-Za-z0-9]/.test(value)) score += 1;
+    if (score <= 1) return 1;
+    if (score === 2) return 2;
+    if (score === 3) return 3;
+    return 4;
+  }
+
+  function passwordStrengthLabel(level) {
+    if (level === 1) return 'Weak — try a longer mix of letters and numbers';
+    if (level === 2) return 'Fair — add uppercase, numbers, or symbols';
+    if (level === 3) return 'Good password';
+    if (level === 4) return 'Strong password';
+    return '';
+  }
+
+  function setFieldFeedback(group, message, ok) {
+    if (!group) return false;
+    var feedback = group.querySelector('.field-feedback');
+    var serverError = group.querySelector('[data-server-error]');
+    if (serverError) {
+      serverError.hidden = true;
+    }
+    if (feedback) {
+      if (message) {
+        feedback.textContent = message;
+        feedback.hidden = false;
+        feedback.classList.toggle('is-error', !ok);
+        feedback.classList.toggle('is-ok', !!ok);
+      } else {
+        feedback.textContent = '';
+        feedback.hidden = true;
+        feedback.classList.remove('is-error', 'is-ok');
+      }
+    }
+    group.classList.toggle('is-invalid', !!message && !ok);
+    group.classList.toggle('is-valid', ok === true);
+    return !message || ok;
+  }
+
+  function validateRegisterEmail(value) {
+    var email = (value || '').trim().toLowerCase();
+    if (!email) return 'Email is required.';
+    if (email.length > 254) return 'Email is too long.';
+    if (!_EMAIL_RE.test(email)) return 'Enter a valid email address.';
+    return null;
+  }
+
+  function validateRegisterHandle(value) {
+    var handle = (value || '').trim().toLowerCase().replace(/^@/, '');
+    if (!handle) return 'Handle is required.';
+    if (!_HANDLE_RE.test(handle)) {
+      return 'Handle must be 3–20 characters: lowercase letters, numbers, and underscores only.';
+    }
+    return null;
+  }
+
+  function validateRegisterPassword(value) {
+    if (!value) return 'Password is required.';
+    if (value.length < 8) return 'Password must be at least 8 characters.';
+    if (value.length > 128) return 'Password is too long.';
+    return null;
+  }
+
+  function initRegisterForm() {
+    var form = document.getElementById('register-form');
+    if (!form) return;
+
+    var emailInput = form.querySelector('#email');
+    var handleInput = form.querySelector('#handle');
+    var passwordInput = form.querySelector('#password');
+    var confirmInput = form.querySelector('#confirm_password');
+    var ageInput = form.querySelector('#age_confirm');
+    var ageRow = document.getElementById('age-confirm-row');
+    var submitBtn = document.getElementById('register-submit');
+    var strengthWrap = document.getElementById('password-strength');
+    var strengthFill = strengthWrap ? strengthWrap.querySelector('.password-strength-fill') : null;
+    var strengthLabel = document.getElementById('password-strength-label');
+    var touched = {
+      email: false,
+      handle: false,
+      password: false,
+      confirm_password: false,
+      age_confirm: false,
+    };
+
+    function groupFor(name) {
+      return form.querySelector('[data-validate="' + name + '"]');
+    }
+
+    function updatePasswordStrength() {
+      if (!strengthWrap || !strengthFill || !strengthLabel) return;
+      var value = passwordInput.value;
+      if (!value) {
+        strengthWrap.hidden = true;
+        strengthFill.setAttribute('data-level', '0');
+        strengthLabel.textContent = '';
+        return;
+      }
+      var level = passwordStrengthScore(value);
+      strengthWrap.hidden = false;
+      strengthFill.setAttribute('data-level', String(level));
+      strengthLabel.textContent = passwordStrengthLabel(level);
+    }
+
+    function validateField(name, showFeedback) {
+      var group = groupFor(name);
+      if (!group) return true;
+      var message = null;
+      var ok = false;
+      if (name === 'email') {
+        message = validateRegisterEmail(emailInput.value);
+        ok = !message;
+      } else if (name === 'handle') {
+        message = validateRegisterHandle(handleInput.value);
+        ok = !message;
+      } else if (name === 'password') {
+        message = validateRegisterPassword(passwordInput.value);
+        ok = !message;
+        updatePasswordStrength();
+      } else if (name === 'confirm_password') {
+        if (!confirmInput.value) {
+          message = 'Please confirm your password.';
+        } else if (confirmInput.value !== passwordInput.value) {
+          message = 'Passwords do not match.';
+        }
+        ok = !message;
+      } else if (name === 'age_confirm') {
+        if (!ageInput.checked) {
+          message = 'You must confirm you are 13 or older to create an account.';
+        }
+        ok = !message;
+        if (ageRow) ageRow.classList.toggle('is-invalid', !!message);
+      }
+      if (showFeedback || touched[name]) {
+        setFieldFeedback(group, message, ok);
+      }
+      return ok;
+    }
+
+    function formIsValid() {
+      return (
+        validateRegisterEmail(emailInput.value) === null &&
+        validateRegisterHandle(handleInput.value) === null &&
+        validateRegisterPassword(passwordInput.value) === null &&
+        confirmInput.value === passwordInput.value &&
+        !!ageInput.checked
+      );
+    }
+
+    function refreshSubmit() {
+      if (submitBtn) submitBtn.disabled = !formIsValid();
+    }
+
+    function bindField(input, name) {
+      if (!input) return;
+      input.addEventListener('input', function () {
+        touched[name] = true;
+        validateField(name, true);
+        if (name === 'password' && (touched.confirm_password || confirmInput.value)) {
+          validateField('confirm_password', true);
+        }
+        refreshSubmit();
+      });
+      input.addEventListener('blur', function () {
+        touched[name] = true;
+        validateField(name, true);
+        refreshSubmit();
+      });
+    }
+
+    bindField(emailInput, 'email');
+    bindField(handleInput, 'handle');
+    bindField(passwordInput, 'password');
+    bindField(confirmInput, 'confirm_password');
+
+    if (handleInput) {
+      handleInput.addEventListener('input', function () {
+        var start = handleInput.selectionStart;
+        var end = handleInput.selectionEnd;
+        var next = handleInput.value.toLowerCase();
+        if (next !== handleInput.value) {
+          handleInput.value = next;
+          if (start != null && end != null) {
+            handleInput.setSelectionRange(start, end);
+          }
+        }
+      });
+    }
+
+    if (ageInput) {
+      ageInput.addEventListener('change', function () {
+        touched.age_confirm = true;
+        validateField('age_confirm', true);
+        refreshSubmit();
+      });
+    }
+
+    form.addEventListener('submit', function (event) {
+      touched.email = true;
+      touched.handle = true;
+      touched.password = true;
+      touched.confirm_password = true;
+      touched.age_confirm = true;
+      var valid = ['email', 'handle', 'password', 'confirm_password', 'age_confirm']
+        .every(function (name) { return validateField(name, true); });
+      if (!valid) {
+        event.preventDefault();
+        refreshSubmit();
+      }
+    });
+
+    ['email', 'handle', 'password', 'confirm_password'].forEach(function (name) {
+      var group = groupFor(name);
+      if (group && group.querySelector('[data-server-error]')) {
+        group.classList.add('is-invalid');
+      }
+    });
+    if (groupFor('age_confirm') && groupFor('age_confirm').querySelector('[data-server-error]')) {
+      if (ageRow) ageRow.classList.add('is-invalid');
+    }
+
+    refreshSubmit();
+  }
+
+  function initSetWorkForm() {
+    var scopeSel = document.getElementById('set-work-scope');
+    var modeSel = document.getElementById('set-work-mode');
+    if (!scopeSel || !modeSel) return;
+
+    function syncModeOptions() {
+      var topicOption = scopeSel.selectedOptions[0];
+      var supported = ((topicOption && topicOption.dataset.modes) || 'standard')
+        .split(',')
+        .filter(Boolean);
+      var previousMode = modeSel.value;
+      setOptionVisibility(modeSel, function (opt) {
+        return supported.indexOf(opt.value) !== -1;
+      });
+      ensureValidSelection(modeSel, previousMode);
+    }
+
+    scopeSel.addEventListener('change', syncModeOptions);
+    syncModeOptions();
+  }
+
+  function initClassWorkAnswerForms() {
+    document.querySelectorAll('form.class-work-answer-form').forEach(function (form) {
+      form.addEventListener('submit', function (event) {
+        var hidden = form.querySelector('input.class-work-user-answer, input[name="user_answer"]');
+        var block = form.querySelector('.free-response-inline');
+        var feedback = form.querySelector('.class-work-fields-feedback');
+        if (!hidden || !block) return;
+        var answer = readFreeResponseUserAnswer(block);
+        hidden.value = answer;
+        var rows = block.querySelectorAll('.free-response-field-row');
+        var types = numberFieldTypes(block);
+        var missing = Array.prototype.some.call(rows, function (row, index) {
+          return !readNumberFieldRowValue(row, numberFieldRowType(row, index, types));
+        });
+        if (missing || !answer) {
+          event.preventDefault();
+          if (feedback) {
+            feedback.textContent = 'Complete every part before checking.';
+            feedback.style.color = 'var(--on-wrong)';
+          }
+        }
+      });
+    });
+  }
 
   document.addEventListener('DOMContentLoaded', function () {
     initGeneratorForm();
+    initSetWorkForm();
+    initClassWorkAnswerForms();
+    initRevisionPlanForm();
     initQuickTestForm();
     initQuickTestNextForm();
     initMcqInline();
+    initLessonPresentation();
     initFreeResponseInline();
     initMcqButtons();
+    decorateMcqButtons(document);
     initSaveProblemForm();
     initRerollSavedForm();
     initScrollToProblem();
@@ -4566,5 +5320,7 @@
     initAnswerRevealMathJax();
     initRevisionQueue();
     initKeyboardInset();
+    initRegisterForm();
+    hydratePageFlashes();
   });
 })();

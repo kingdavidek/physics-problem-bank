@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/icon.html" import icon %}
 {% block title %}Topics – Problem Bank{% endblock %}
 
 {% block content %}
@@ -6,34 +7,93 @@
 
 <div class="lesson-hero">
     <h1>All topics</h1>
-    <p class="hero-sub">Open a lesson-style topic page, then practise with the generator or quick test.</p>
-    <div class="hero-pills">
-        <span class="hero-pill">Revision notes</span>
-        <span class="hero-pill">Formulae &amp; tips</span>
-        <span class="hero-pill">Practice questions</span>
+    <p class="hero-sub">Follow the syllabus path — open a lesson, then practise with the generator or quick test.</p>
+    <div class="pill-row">
+        <span class="pill pill--hero">Revision notes</span>
+        <span class="pill pill--hero">Formulae &amp; tips</span>
+        <span class="pill pill--hero">Practice questions</span>
     </div>
 </div>
 
-<p class="page-intro">
-    Each topic links to explanations and worked examples. Use the
-    <a href="/">practice generator</a> for unlimited questions at your chosen difficulty.
-</p>
+<nav class="topics-level-bar segmented-control" aria-label="Filter by level">
+    <button type="button" data-level-filter="all" class="is-active" aria-selected="true">All</button>
+    <button type="button" data-level-filter="gcse" aria-selected="false">GCSE</button>
+    <button type="button" data-level-filter="alevel" aria-selected="false">A-Level</button>
+    <button type="button" data-level-filter="myp" aria-selected="false">MYP</button>
+    <button type="button" data-level-filter="eursc" aria-selected="false">European School</button>
+</nav>
 
+{% set subject_icons = {'maths': 'maths', 'physics': 'physics', 'cs': 'cs', 'chemistry': 'chemistry', 'science': 'science'} %}
+
+<div id="topics-grid">
 {% for group in topic_groups %}
-<section class="topic-group">
-    <h2 class="topic-group-title">{{ group.title }}</h2>
-    <ul class="topic-grid">
+<section class="topic-group topic-group--{{ group.subject }}" data-level="{{ group.level }}" id="topics-{{ group.level }}-{{ group.subject }}">
+    <div class="topic-group-header">
+        <span class="topic-group-icon" aria-hidden="true">{{ icon(subject_icons.get(group.subject, 'book'), size=22) }}</span>
+        <div class="topic-group-heading">
+            <h2 class="topic-group-title">{{ group.title }}</h2>
+            <p class="topic-group-progress">{{ group.completed_count }} of {{ group.topic_count }} lessons · {{ group.ninja_count }} ninja · {{ group.master_count }} masters</p>
+        </div>
+    </div>
+    <ol class="topic-path">
+        {% set unit_ns = namespace(year='', unit='') %}
         {% for topic in group.topics %}
-        <li>
-            <a class="topic-card" href="{{ topic.url }}">
-                <span class="topic-card-title">{{ topic.name }}</span>
-                <span class="topic-card-meta">Open topic →</span>
+        {% if topic.year or topic.unit_name %}
+        {% if topic.year != unit_ns.year or topic.unit_code != unit_ns.unit %}
+        <li class="topic-path-unit">
+            {% if topic.year_label %}<span class="topic-path-year">{{ topic.year_label }}</span>{% endif %}
+            <span class="topic-path-unit-name">{% if topic.unit_code %}{{ topic.unit_code }} {% endif %}{{ topic.unit_name }}</span>
+        </li>
+        {% set unit_ns.year = topic.year %}
+        {% set unit_ns.unit = topic.unit_code %}
+        {% endif %}
+        {% endif %}
+        <li class="topic-path-node topic-path-node--{{ 'a' if loop.index0 % 2 == 0 else 'b' }}{% if topic.is_master %} is-complete is-master{% elif topic.is_complete %} is-complete{% endif %}{% if topic.is_current %} is-current{% endif %}{% if topic.is_later %} is-later{% endif %}">
+            <span class="topic-path-rail" aria-hidden="true">
+                <span class="topic-path-dot">{% if topic.is_complete %}✓{% else %}{{ topic.order }}{% endif %}</span>
+            </span>
+            <a class="topic-card topic-card--{{ group.subject }}{% if topic.is_ibl %} topic-card--ibl{% endif %}" href="{{ topic.url }}"
+                data-topic-order="{{ topic.order }}"
+                {% if topic.is_current %}aria-current="step"{% endif %}>
+                {% if not topic.is_ibl %}
+                <span class="topic-mastery" aria-label="{{ topic.mastery_pct }}% mastery">
+                    {{ svg_kit.progress_ring(
+                        topic.mastery or 0,
+                        size=32,
+                        r=12,
+                        track_class='topic-mastery-track',
+                        fill_class='topic-mastery-fill',
+                    ) }}
+                </span>
+                {% endif %}
+                <span class="topic-card-title">
+                    {% if topic.is_ibl %}<span class="topic-card-badge topic-card-badge--ibl">IBL</span>{% endif %}
+                    {{ topic.name }}
+                </span>
+                <span class="topic-card-meta">
+                    {% if topic.is_ibl %}
+                    Classroom investigation →
+                    {% elif topic.is_master %}
+                    Topic master
+                    {% elif topic.is_ninja %}
+                    Topic ninja
+                    {% elif topic.is_complete %}
+                    Lesson complete →
+                    {% elif topic.is_current %}
+                    {% if topic.completed_count and topic.step_total and not topic.is_complete %}{{ topic.completed_count }}/{{ topic.step_total }} · Continue →{% elif topic.mastery %}{{ topic.mastery_pct }}% · Continue →{% else %}Start here →{% endif %}
+                    {% elif topic.prereq_hint %}
+                    {% if topic.completed_count and topic.step_total and not topic.is_complete %}{{ topic.completed_count }}/{{ topic.step_total }} · {% elif topic.mastery %}{{ topic.mastery_pct }}% · {% endif %}After {{ topic.prereq_hint }}
+                    {% else %}
+                    {% if topic.completed_count and topic.step_total and not topic.is_complete %}{{ topic.completed_count }}/{{ topic.step_total }} · Continue →{% elif topic.mastery %}{{ topic.mastery_pct }}% · Continue →{% else %}Start →{% endif %}
+                    {% endif %}
+                </span>
             </a>
         </li>
         {% endfor %}
-    </ul>
+    </ol>
 </section>
 {% endfor %}
+</div>
 
 <div class="section-panel cta-panel">
     <div class="section-panel-body cta-panel-body">

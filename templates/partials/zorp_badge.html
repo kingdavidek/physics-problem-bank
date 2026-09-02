@@ -1,0 +1,14 @@
+{# Optional Zorp pose on a badge face; emoji fallback. #}
+
+{% macro zorp_badge_face(item, size=28, variant='medallion') -%}
+{%- if variant == 'shelf' -%}
+  {%- set cls = 'milestone-badge' -%}
+{%- else -%}
+  {%- set cls = 'badge-medallion-face' -%}
+{%- endif -%}
+{%- if item.pose -%}
+  <span class="{{ cls }} {{ cls }}--zorp" aria-hidden="true">{{ zorp_kit.pose(item.pose, size=size) }}</span>
+{%- else -%}
+  <span class="{{ cls }}" aria-hidden="true">{{ item.emoji or '★' }}</span>
+{%- endif -%}
+{%- endmacro %}

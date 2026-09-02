@@ -1,0 +1,24 @@
+# Security CI runs `ruff check .` with no extra flags.
+# Keep this to runtime/syntax errors — a full style rewrite is out of scope.
+target-version = "py312"
+
+exclude = [
+    ".venv",
+    "venv",
+    "data",
+    "scripts/legacy",
+    "*_generator_additions.py",
+    "magnetism_generator_v2.py",
+    "test_batch1.py",
+    "test_batch2.py",
+    "test_gcse_number.py",
+    "test_three_topics.py",
+]
+
+[lint]
+select = [
+    "E9",  # runtime syntax errors
+    "F63", # invalid print/assert
+    "F7",  # syntax errors in statements
+    "F82", # undefined names
+]
