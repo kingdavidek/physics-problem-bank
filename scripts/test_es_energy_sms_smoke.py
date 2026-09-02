@@ -129,6 +129,20 @@ def test_energy_sms_randomization():
     assert len(stems) > 1
 
 
+def test_energy_same_variant_is_pinned():
+    name = "energy_foundational_sms_appliance_useful_public"
+    random.seed(7)
+    first = eursc_science_energy(
+        "foundational", SITUATIONAL_MULTI_STEP_MODE, variant_name=name
+    )
+    random.seed(7)
+    second = eursc_science_energy(
+        "foundational", SITUATIONAL_MULTI_STEP_MODE, variant_name=name
+    )
+    assert first["question"] == second["question"]
+    assert first["correct_answer_raw"] == second["correct_answer_raw"]
+
+
 def test_energy_standard_matrix_unchanged():
     cfg = SCIENCE["energy"]
     vf = cfg["variants_func"]
@@ -174,6 +188,7 @@ def main():
     test_energy_sms_variants_are_grader_ready()
     test_energy_sms_solutions_link_parts()
     test_energy_sms_randomization()
+    test_energy_same_variant_is_pinned()
     test_energy_standard_matrix_unchanged()
     test_energy_sms_api_generate()
     print("Energy situational multi-step pilot checks passed.")

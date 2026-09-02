@@ -14,7 +14,7 @@ from generators.eursc.s1_science_lab import (  # noqa: E402
     eursc_science_measurement,
     eursc_science_measurement_variants,
 )
-from generators.shared.variant_utils import MULTI_STEP_MODE  # noqa: E402
+from generators.shared.variant_utils import MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE  # noqa: E402
 from topic_registry import TOPICS, topic_mode_capabilities  # noqa: E402
 
 SCIENCE = TOPICS["eursc"]["science"]
@@ -49,14 +49,26 @@ def _blob(problem):
 
 def test_measurement_registers_multi_step_mode():
     key = ("eursc", "science", "measurement")
-    assert topic_mode_capabilities(*key) == ("standard", MULTI_STEP_MODE)
+    assert topic_mode_capabilities(*key) == (
+        "standard",
+        MULTI_STEP_MODE,
+        SITUATIONAL_MULTI_STEP_MODE,
+    )
     assert _normalize_generator_mode(*key, MULTI_STEP_MODE) == MULTI_STEP_MODE
+    assert (
+        _normalize_generator_mode(*key, SITUATIONAL_MULTI_STEP_MODE)
+        == SITUATIONAL_MULTI_STEP_MODE
+    )
     row = next(
         item
         for item in _generator_topic_options()
         if (item["level"], item["subject"], item["slug"]) == key
     )
-    assert row["modes"] == ("standard", MULTI_STEP_MODE)
+    assert row["modes"] == (
+        "standard",
+        MULTI_STEP_MODE,
+        SITUATIONAL_MULTI_STEP_MODE,
+    )
 
 
 def test_measurement_multi_step_variants_are_grader_ready():
@@ -118,6 +130,20 @@ def test_measurement_multi_step_randomization():
     assert len(stems) > 1
 
 
+def test_measurement_same_variant_is_pinned():
+    name = "measurement_foundational_ms_kilo_convert_compare"
+    random.seed(7)
+    first = eursc_science_measurement(
+        "foundational", MULTI_STEP_MODE, variant_name=name
+    )
+    random.seed(7)
+    second = eursc_science_measurement(
+        "foundational", MULTI_STEP_MODE, variant_name=name
+    )
+    assert first["question"] == second["question"]
+    assert first["correct_answer_raw"] == second["correct_answer_raw"]
+
+
 def test_measurement_standard_matrix_unchanged():
     cfg = SCIENCE["measurement"]
     vf = cfg["variants_func"]
@@ -132,6 +158,9 @@ def test_measurement_standard_matrix_unchanged():
             fn.__name__
             for fn in vf(difficulty, MULTI_STEP_MODE)
         }
+        advanced_names.update(
+            fn.__name__ for fn in vf(difficulty, SITUATIONAL_MULTI_STEP_MODE)
+        )
         assert practice_names.isdisjoint(advanced_names), difficulty
 
 
@@ -164,6 +193,7 @@ def main():
     test_measurement_multi_step_solutions_link_parts()
     test_measurement_difficult_diagnose_uses_existing_mcq_field()
     test_measurement_multi_step_randomization()
+    test_measurement_same_variant_is_pinned()
     test_measurement_standard_matrix_unchanged()
     test_measurement_multi_step_api_generate()
     print("Measurement multi-step pilot checks passed.")

@@ -1,10 +1,29 @@
 """S1 Unit 1.2 Food — 1.2.1–1.2.8."""
+from generators.eursc.s1_unit12_food_advanced import (
+    COOKING_ACID_MS_POOLS,
+    COOKING_ACID_SMS_POOLS,
+    COOKING_FERMENTATION_MS_POOLS,
+    COOKING_FERMENTATION_SMS_POOLS,
+    COOKING_HEAT_MS_POOLS,
+    COOKING_HEAT_SMS_POOLS,
+    COOKING_SALT_MS_POOLS,
+    COOKING_SALT_SMS_POOLS,
+    FOOD_FORMULAS_MS_POOLS,
+    FOOD_FORMULAS_SMS_POOLS,
+    HEALTHY_MEAL_PROJECT_MS_POOLS,
+    HEALTHY_MEAL_PROJECT_SMS_POOLS,
+    NUTRITION_MS_POOLS,
+    NUTRITION_SMS_POOLS,
+    WATER_SUBSTANCES_MS_POOLS,
+    WATER_SUBSTANCES_SMS_POOLS,
+)
 from generators.eursc.science_shared import bind_eursc_topic, particle_states, ph_scale
 from generators.shared.utils import (
     make_problem,
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
+from generators.shared.variant_utils import MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE
 
 _LEVEL = "eursc"
 _SUBJECT = "science"
@@ -300,7 +319,13 @@ _FF_STANDARD = {
     ),
 }
 eursc_science_food_formulas, eursc_science_food_formulas_variants = bind_eursc_topic(
-    'food_formulas', _FF_POOLS, _FF_STANDARD
+    'food_formulas',
+    _FF_POOLS,
+    _FF_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: FOOD_FORMULAS_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: FOOD_FORMULAS_SMS_POOLS,
+    },
 )
 
 
@@ -369,7 +394,13 @@ _WS_STANDARD = {
     ),
 }
 eursc_science_water_substances, eursc_science_water_substances_variants = bind_eursc_topic(
-    'water_substances', _WS_POOLS, _WS_STANDARD
+    'water_substances',
+    _WS_POOLS,
+    _WS_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: WATER_SUBSTANCES_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: WATER_SUBSTANCES_SMS_POOLS,
+    },
 )
 
 
@@ -444,7 +475,13 @@ _HT_STANDARD = {
     ),
 }
 eursc_science_cooking_heat, eursc_science_cooking_heat_variants = bind_eursc_topic(
-    'cooking_heat', _HT_POOLS, _HT_STANDARD
+    'cooking_heat',
+    _HT_POOLS,
+    _HT_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: COOKING_HEAT_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: COOKING_HEAT_SMS_POOLS,
+    },
 )
 
 
@@ -517,7 +554,13 @@ _AC_STANDARD = {
     ),
 }
 eursc_science_cooking_acid, eursc_science_cooking_acid_variants = bind_eursc_topic(
-    'cooking_acid', _AC_POOLS, _AC_STANDARD
+    'cooking_acid',
+    _AC_POOLS,
+    _AC_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: COOKING_ACID_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: COOKING_ACID_SMS_POOLS,
+    },
 )
 
 
@@ -585,7 +628,13 @@ _SA_STANDARD = {
     ),
 }
 eursc_science_cooking_salt, eursc_science_cooking_salt_variants = bind_eursc_topic(
-    'cooking_salt', _SA_POOLS, _SA_STANDARD
+    'cooking_salt',
+    _SA_POOLS,
+    _SA_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: COOKING_SALT_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: COOKING_SALT_SMS_POOLS,
+    },
 )
 
 
@@ -653,7 +702,13 @@ _FE_STANDARD = {
     ),
 }
 eursc_science_cooking_fermentation, eursc_science_cooking_fermentation_variants = bind_eursc_topic(
-    'cooking_fermentation', _FE_POOLS, _FE_STANDARD
+    'cooking_fermentation',
+    _FE_POOLS,
+    _FE_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: COOKING_FERMENTATION_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: COOKING_FERMENTATION_SMS_POOLS,
+    },
 )
 
 
@@ -728,7 +783,13 @@ _NU_STANDARD = {
     ),
 }
 eursc_science_nutrition, eursc_science_nutrition_variants = bind_eursc_topic(
-    'nutrition', _NU_POOLS, _NU_STANDARD
+    'nutrition',
+    _NU_POOLS,
+    _NU_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: NUTRITION_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: NUTRITION_SMS_POOLS,
+    },
 )
 
 
@@ -801,5 +862,11 @@ _MP_STANDARD = {
     ),
 }
 eursc_science_healthy_meal_project, eursc_science_healthy_meal_project_variants = bind_eursc_topic(
-    'healthy_meal_project', _MP_POOLS, _MP_STANDARD
+    'healthy_meal_project',
+    _MP_POOLS,
+    _MP_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: HEALTHY_MEAL_PROJECT_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: HEALTHY_MEAL_PROJECT_SMS_POOLS,
+    },
 )

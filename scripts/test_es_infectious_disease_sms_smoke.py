@@ -124,6 +124,20 @@ def test_infectious_disease_sms_randomization():
     assert len(stems) > 1
 
 
+def test_infectious_disease_same_variant_is_pinned():
+    name = "infectious_disease_foundational_sms_token_double_safeguard"
+    random.seed(7)
+    first = eursc_science_infectious_disease(
+        "foundational", SITUATIONAL_MULTI_STEP_MODE, variant_name=name
+    )
+    random.seed(7)
+    second = eursc_science_infectious_disease(
+        "foundational", SITUATIONAL_MULTI_STEP_MODE, variant_name=name
+    )
+    assert first["question"] == second["question"]
+    assert first["correct_answer_raw"] == second["correct_answer_raw"]
+
+
 def test_infectious_disease_standard_matrix_unchanged():
     cfg = SCIENCE["infectious_disease"]
     vf = cfg["variants_func"]
@@ -169,6 +183,7 @@ def main():
     test_infectious_disease_sms_variants_are_grader_ready()
     test_infectious_disease_sms_solutions_link_parts()
     test_infectious_disease_sms_randomization()
+    test_infectious_disease_same_variant_is_pinned()
     test_infectious_disease_standard_matrix_unchanged()
     test_infectious_disease_sms_api_generate()
     print("Infectious-disease situational multi-step pilot checks passed.")

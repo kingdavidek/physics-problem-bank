@@ -1,6 +1,6 @@
 # Problem Bank — AI agent handoff
 
-**Last updated:** 2026-08-31  
+**Last updated:** 2026-09-02  
 **Repository:** `maths_generator/physics-problem-bank` (GitHub: `kingdavidek/physics-problem-bank`)  
 **Audience:** The next AI agent (or human) continuing product work  
 
@@ -21,7 +21,7 @@ Start here. Read the documents in the order below before changing behaviour that
 | **Engagement roadmap (E1–E3)** | **E1–E3 shipped** (assist mock smoke, `@problem_bot` QOTD card, FTS lesson search, emoji/colour avatars, study buddy, friend quiz-accuracy leaderboard). Visual tokens: `docs/ENGAGEMENT_VISUAL.md` |
 | **G8 teacher / class mode** | Designed; decisions locked 2026-08-30. **Phases 0–6 complete** (teacher enable, classes, join, handle invites, roster, teacher-only remove, T0–T2 dashboards, frozen set-work, audit log, CSV, verification). `docs/G8_TEACHER_HANDOFF.md`, `docs/G8_TEACHER_REVIEW_RUBRIC.md`, `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2 |
 | **Real-world question style (E4.1)** | **Planned, fully specified** — `docs/REAL_WORLD_QUESTIONS.md`. Third generator mode (`real_world`) across percentages, ratio, compound measures |
-| **European School Integrated Science S1–S3** | **ES10 shipped** — full curriculum (46 modules, six IBL tracks, whole-suite QA). **Lesson-improvement track complete (Stages 0–7).** **Practice generator complete (Phases 0–7)** (`docs/EURSC_GENERATOR_HANDOFF.md`, `docs/EURSC_GENERATOR_REVIEW_RUBRIC.md`, canvas `eursc-generator-question-plan.canvas.tsx`). Curriculum: `docs/EUROPEAN_SCHOOL_SCIENCE.md` |
+| **European School Integrated Science S1–S3** | **ES10 shipped** — full curriculum (46 modules, six IBL tracks, whole-suite QA). **Lesson-improvement track complete (Stages 0–7).** **Practice generator complete (Phases 0–7)** (`docs/EURSC_GENERATOR_HANDOFF.md`, `docs/EURSC_GENERATOR_REVIEW_RUBRIC.md`, canvas `eursc-generator-question-plan.canvas.tsx`). Curriculum: `docs/EUROPEAN_SCHOOL_SCIENCE.md`. **Advanced Practice modes:** operational **pilot signed 2026-09-02 (scope A)**; **S1 wave complete**; **S2 Batch 3.1 (Unit 2.1 Astronomy) enabled**. Not track-complete until remaining S2–S3 waves + whole-matrix audit. Contract: `docs/EURSC_ADVANCED_QUESTIONS.md` |
 | **Guide & celebration (E6 / Phase A)** | **A1–A6 + B shipped** (origin, badge/streak/first-correct/lesson-complete, five tours, `guide_json` persist + Replay intro, CSS streak fire, overlay wink/nod/shake/tap). Spec: `docs/ANIMATION_ONBOARDING.md`. Not the E4.2 mascot farm. |
 | **Engagement E5 (retention polish)** | **E5.1–E5.6 shipped.** Remaining **E5.7** web push — blocked until `docs/MOBILE.md` M5. Spec: `docs/ENGAGEMENT_E5.md` |
 | **Engagement stretch (E4.2–E4.3)** | Long-term — see `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §3.0 (mascot farm, Desmos-class graphs) |
@@ -53,6 +53,7 @@ Start here. Read the documents in the order below before changing behaviour that
 | *before European School content* | `docs/EUROPEAN_SCHOOL_SCIENCE.md` | Full curriculum plan (46 modules). **ES10 shipped** — curriculum track closed |
 | *European School lesson-clarity track* | `docs/EURSC_LESSON_IMPROVEMENT_HANDOFF.md`, `docs/EURSC_LESSON_REVIEW_RUBRIC.md` | **Complete** (Stages 0–7) |
 | *European School Practice generator* | `docs/EURSC_GENERATOR_HANDOFF.md`, `docs/EURSC_GENERATOR_REVIEW_RUBRIC.md`, canvas `eursc-generator-question-plan.canvas.tsx` | **Complete** (Phases 0–7) |
+| *European School advanced Practice modes* | `docs/EURSC_ADVANCED_QUESTIONS.md` | **Operational pilot signed 2026-09-02 (scope A).** **S1 wave complete; S2 Batch 3.1 (Astronomy) enabled.** Remaining S2–S3 waves and whole-matrix audit remain. Do not mark this track complete yet. |
 | *before starting G8 teacher / class* | `docs/G8_TEACHER_HANDOFF.md`, `docs/G8_TEACHER_REVIEW_RUBRIC.md`, `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2, `docs/DPIA.md` §9 | **Complete (Phases 0–6).** Do not reopen §2.2. No Leave. No T3 to teachers. |
 | *redoing ES0 only* | `docs/ES0_HANDOFF.md` | Phase ES0 platform enablement; sync `main` first |
 | *before starting E6 / Guide* | `docs/ANIMATION_ONBOARDING.md` | Origin story, section tours, badge/streak celebration; includes the next-agent prompt |
@@ -277,7 +278,7 @@ Product tracks (E4.1, UI, etc.) can proceed on a local/dev site. **Do not** star
 3. **Mobile M5+ / public launch** — production HTTPS (`docs/MOBILE.md`). **Gate:** `docs/OPERATOR_LAUNCH.md` (David: ICO, privacy inbox, prune cron + `PB_BACKUP_PASSPHRASE`), then `docs/DEPLOY.md`. Unblocks web push (E5.7).
 4. **Compliance calendar** — keep `docs/CADENCE.md` (S3). Not a build phase.
 5. **Settings switch persist** — later; see §1.1. Do not block other work on this.
-6. **European School** lesson-clarity and Practice-generator tracks are **complete**. Do not reopen unless the user reports a regression.
+6. **European School** lesson-clarity and Practice-generator tracks are **complete**. Do not reopen unless the user reports a regression. **Advanced Practice modes** (`multi_step` / `situational_multi_step`) are a **separate** track: operational pilot signed 2026-09-02 (scope A); **S1 wave complete** and **S2 Batch 3.1 (Astronomy)** in `docs/EURSC_ADVANCED_QUESTIONS.md`. Next is S2 Batch 3.2 (Health). Do **not** mark this track complete until the post-S3 whole-matrix audit.
 7. **G8 teacher / class mode** is **complete** (Phases 0–6). Do not add Leave, T3-to-teachers, or reopen §2.2 unless the user explicitly asks.
 
 ---
@@ -291,14 +292,16 @@ Product tracks (E4.1, UI, etc.) can proceed on a local/dev site. **Do not** star
 
 ---
 
-## 9. Active work handoff — G8 complete (2026-08-31)
+## 9. Active work handoff — G8 complete; EURSC advanced S2 Batch 3.1 (2026-09-02)
 
 **S0–S3 GDPR/security shipped.** S3 is the calendar in **`docs/CADENCE.md`**. Remaining **human** work at public HTTPS: **`docs/OPERATOR_LAUNCH.md`** — not during a product session unless asked.
 
 **EURSC lesson-clarity and Practice-generator tracks are complete.** Do not reopen without a regression.
 
+**EURSC advanced Practice modes — operational pilot signed 2026-09-02 (scope A); S1 wave complete; S2 Batch 3.1 (Unit 2.1 Astronomy) enabled.** Contract: `docs/EURSC_ADVANCED_QUESTIONS.md`. Astronomy: `solar_system`, `light_telescopes`, `atoms_molecules` full matrix; `life_earth_elsewhere` foundational MS excluded. **This track is not complete** until remaining S2 → S3 waves and the post-S3 whole-matrix audit. Do not fill excluded cells (`reproductive_anatomy` SMS, `smell` MS, `interoception` MS, etc.). Do not change lesson banks, QOTD, or the standard five-slot recipe.
+
 **G8 teacher / class mode is complete** (Phases 0–6). Verification smoke: `scripts/test_g8_phase6_smoke.py`. Full suite **71/71**. Post-track audit 2026-09-01 (join/invite/class-work hardening). No T3 to teachers. No student Leave.
 
-**Product next:** **E4.1** real-world question style (`docs/REAL_WORLD_QUESTIONS.md`) unless the user names another track. Remaining E5 is **E5.7** web push — blocked until `docs/MOBILE.md` M5.
+**Product next (if the user does not name a track):** continue EURSC advanced **S2 Batch 3.2 (Health)** after safeguarding review, or **E4.1** real-world question style (`docs/REAL_WORLD_QUESTIONS.md`). Remaining E5 is **E5.7** web push — blocked until `docs/MOBILE.md` M5.
 
 ---

@@ -1,6 +1,15 @@
 """S1 Unit 1.3 Sports — 1.3.1–1.3.4."""
 import random
 
+from generators.eursc.s1_unit13_sports_advanced import (
+    BREATHING_MS_POOLS,
+    BREATHING_SMS_POOLS,
+    FORCES_SPORT_MS_POOLS,
+    FORCES_SPORT_SMS_POOLS,
+    MOVEMENT_SMS_POOLS,
+    SPORT_HEALTH_MS_POOLS,
+    SPORT_HEALTH_SMS_POOLS,
+)
 from generators.eursc.science_shared import (
     bind_eursc_topic,
     antagonistic_pair,
@@ -15,7 +24,7 @@ from generators.shared.utils import (
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
-from generators.shared.variant_utils import MULTI_STEP_MODE
+from generators.shared.variant_utils import MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE
 
 _LEVEL = "eursc"
 _SUBJECT = "science"
@@ -675,6 +684,7 @@ _MV_MULTI_STEP_POOLS = {
 
 _MV_ADVANCED_POOLS = {
     MULTI_STEP_MODE: _MV_MULTI_STEP_POOLS,
+    SITUATIONAL_MULTI_STEP_MODE: MOVEMENT_SMS_POOLS,
 }
 
 eursc_science_movement, eursc_science_movement_variants = bind_eursc_topic(
@@ -749,7 +759,13 @@ _FS_STANDARD = {
     ),
 }
 eursc_science_forces_sport, eursc_science_forces_sport_variants = bind_eursc_topic(
-    'forces_sport', _FS_POOLS, _FS_STANDARD
+    "forces_sport",
+    _FS_POOLS,
+    _FS_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: FORCES_SPORT_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: FORCES_SPORT_SMS_POOLS,
+    },
 )
 
 
@@ -816,7 +832,15 @@ _BR_STANDARD = {
         'breathing_difficult_pick_circ_three',
     ),
 }
-eursc_science_breathing, eursc_science_breathing_variants = bind_eursc_topic('breathing', _BR_POOLS, _BR_STANDARD)
+eursc_science_breathing, eursc_science_breathing_variants = bind_eursc_topic(
+    "breathing",
+    _BR_POOLS,
+    _BR_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: BREATHING_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: BREATHING_SMS_POOLS,
+    },
+)
 
 
 _SH_POOLS = {
@@ -888,5 +912,11 @@ _SH_STANDARD = {
     ),
 }
 eursc_science_sport_health, eursc_science_sport_health_variants = bind_eursc_topic(
-    'sport_health', _SH_POOLS, _SH_STANDARD
+    "sport_health",
+    _SH_POOLS,
+    _SH_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: SPORT_HEALTH_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: SPORT_HEALTH_SMS_POOLS,
+    },
 )

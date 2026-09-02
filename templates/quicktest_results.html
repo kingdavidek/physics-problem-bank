@@ -58,7 +58,7 @@
                 {% else %}
                 <span class="badge" style="background:#fee2e2;color:#991b1b;">✗ Your choice: {{ answer.user_answer }}</span>
                 {% endif %}
-            {% elif problem.correct_answer_raw and answer.get('checked') %}
+            {% elif problem.correct_answer_raw and (answer.get('checked') or answer.get('user_answer')) %}
                 {% if answer.get('correct') %}
                 <span class="badge" style="background:#dcfce7;color:#166534;">✓ Checked correct</span>
                 {% elif answer.get('score_total') and (answer.get('score') or 0) > 0 %}
@@ -68,6 +68,9 @@
                 {% endif %}
             {% endif %}
         </div>
+        {% if not problem.options and answer.get('user_answer') %}
+        <p class="list-row-meta">Your answer: {{ answer.user_answer | readable_multipart_answer(problem) }}</p>
+        {% endif %}
         <div class="question" style="margin-bottom: 16px;"><div class="question-content">{{ problem.question | format_question_html }}</div></div>
         <details class="answer-reveal" open>
             <summary>Solution</summary>

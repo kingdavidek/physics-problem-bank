@@ -14,7 +14,10 @@ from generators.eursc.s1_sports import (  # noqa: E402
     eursc_science_movement,
     eursc_science_movement_variants,
 )
-from generators.shared.variant_utils import MULTI_STEP_MODE  # noqa: E402
+from generators.shared.variant_utils import (  # noqa: E402
+    MULTI_STEP_MODE,
+    SITUATIONAL_MULTI_STEP_MODE,
+)
 from topic_registry import TOPICS, topic_mode_capabilities  # noqa: E402
 
 SCIENCE = TOPICS["eursc"]["science"]
@@ -47,16 +50,21 @@ def _blob(problem):
     )
 
 
-def test_movement_registers_multi_step_mode():
+def test_movement_registers_advanced_modes():
     key = ("eursc", "science", "movement")
     assert MULTI_STEP_MODE in topic_mode_capabilities(*key)
+    assert SITUATIONAL_MULTI_STEP_MODE in topic_mode_capabilities(*key)
     assert _normalize_generator_mode(*key, MULTI_STEP_MODE) == MULTI_STEP_MODE
+    assert (
+        _normalize_generator_mode(*key, SITUATIONAL_MULTI_STEP_MODE)
+        == SITUATIONAL_MULTI_STEP_MODE
+    )
     row = next(
         item
         for item in _generator_topic_options()
         if (item["level"], item["subject"], item["slug"]) == key
     )
-    assert row["modes"] == ("standard", MULTI_STEP_MODE)
+    assert row["modes"] == ("standard", MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE)
 
 
 def test_movement_multi_step_variants_are_grader_ready():
@@ -104,6 +112,20 @@ def test_movement_multi_step_randomization():
     assert first != second
 
 
+def test_movement_same_variant_is_pinned():
+    name = "movement_foundational_ms_speed_extrapolate"
+    random.seed(7)
+    first = eursc_science_movement(
+        "foundational", MULTI_STEP_MODE, variant_name=name
+    )
+    random.seed(7)
+    second = eursc_science_movement(
+        "foundational", MULTI_STEP_MODE, variant_name=name
+    )
+    assert first["question"] == second["question"]
+    assert first["correct_answer_raw"] == second["correct_answer_raw"]
+
+
 def test_movement_standard_matrix_unchanged():
     cfg = SCIENCE["movement"]
     vf = cfg["variants_func"]
@@ -140,10 +162,11 @@ def test_movement_multi_step_api_generate():
 
 
 def main():
-    test_movement_registers_multi_step_mode()
+    test_movement_registers_advanced_modes()
     test_movement_multi_step_variants_are_grader_ready()
     test_movement_multi_step_solutions_link_parts()
     test_movement_multi_step_randomization()
+    test_movement_same_variant_is_pinned()
     test_movement_standard_matrix_unchanged()
     test_movement_multi_step_api_generate()
     print("Movement multi-step pilot checks passed.")

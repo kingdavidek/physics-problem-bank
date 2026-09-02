@@ -45,6 +45,7 @@ from generators.eursc.science_shared import (
     accuracy_targets,
     antagonistic_pair,
     atom_molecule_boxes,
+    body_lever,
     canal_boxes,
     carbon_cycle_steps,
     charge_pair,
@@ -56,6 +57,7 @@ from generators.eursc.science_shared import (
     eye_boxes,
     factor_boxes,
     force_pair,
+    force_vectors,
     habit_bars,
     infection_chain,
     key_boxes,
@@ -68,13 +70,16 @@ from generators.eursc.science_shared import (
     outbreak_bars,
     particle_states,
     ph_scale,
+    ramp_tradeoff,
     reflection_rays,
     ruler_scale,
     sankey_bars,
+    simple_machines,
     signal_detect,
     solar_scale,
     trophic_boxes,
     water_cycle_steps,
+    work_fd,
 )
 from generators.shared.lesson_quiz import (
     LESSON_QUIZ_MIX,
@@ -114,6 +119,7 @@ from generators.shared.lesson_assist import (
     validate_payload,
 )
 from generators.shared.variant_utils import (
+    ADVANCED_MODES,
     normalize_mode,
     resolve_variant_callable,
     variant_is_randomizable,
@@ -770,10 +776,61 @@ def _problem_client_payload(problem):
 _BLOCK_HTML_MARKERS = ('<svg', '<div', '<table', '<pre', '<figure')
 
 
+def _field_option_labels(options):
+    labels = {}
+    for item in options or []:
+        if isinstance(item, dict):
+            sid = str(item.get('id') or '').strip()
+            text = str(item.get('text') or '').strip()
+            if sid:
+                labels[sid] = text or sid
+    return labels
+
+
+def format_readable_multipart_answer(value, problem=None):
+    """Turn stored number_fields answers into a student-readable line."""
+    text = str(value or '')
+    if not text:
+        return ''
+    problem = problem or {}
+    types = list(problem.get('answer_field_types') or [])
+    options = list(problem.get('answer_field_options') or [])
+    if not types:
+        return text.replace('\x1e', ' · ')
+
+    if '\x1e' in text:
+        parts = text.split('\x1e')
+    elif any(ft in ('pick', 'order') for ft in types):
+        parts = [text]
+    else:
+        parts = text.split('|')
+
+    rendered = []
+    for i, part in enumerate(parts):
+        ft = types[i] if i < len(types) else 'number'
+        part = str(part or '').strip()
+        field_opts = options[i] if i < len(options) else None
+        if ft in ('pick', 'order'):
+            mapping = _field_option_labels(field_opts)
+            labels = [mapping.get(item, item) for item in part.split('|') if item]
+            rendered.append(', '.join(labels) if labels else part)
+        elif ft == 'mcq':
+            letter = part[:1].upper()
+            if isinstance(field_opts, (list, tuple)) and letter:
+                idx = ord(letter) - ord('A')
+                if 0 <= idx < len(field_opts) and not isinstance(field_opts[idx], dict):
+                    rendered.append(f'{letter}. {field_opts[idx]}')
+                    continue
+            rendered.append(letter or part)
+        else:
+            rendered.append(part)
+    return ' · '.join(item for item in rendered if item)
+
+
 @app.template_filter('readable_multipart_answer')
-def readable_multipart_answer(value):
+def readable_multipart_answer(value, problem=None):
     """Show structured number_fields answers without the RS separator."""
-    return str(value or '').replace('\x1e', ' · ')
+    return format_readable_multipart_answer(value, problem)
 
 
 @app.template_filter('split_question_sections')
@@ -2375,11 +2432,32 @@ def _generator_path_allowed(level, subject):
     return (level, subject) in GENERATOR_LAUNCH_PATHS
 
 
-def _normalize_generator_mode(level, subject, topic, mode):
-    """Normalize a mode and safely clamp it to the topic's capabilities."""
+def _normalize_generator_mode(level, subject, topic, mode, difficulty=None):
+    """Normalize a mode and safely clamp it to the topic's capabilities.
+
+    Pass ``difficulty`` at generate time so an advertised advanced mode that
+    is empty at this tier (for example ``what_is_science`` foundational
+    ``multi_step``) clamps to standard instead of 500ing.
+    """
     mode = normalize_mode(mode)
     supported = topic_mode_capabilities(level, subject, topic)
-    return mode if mode in supported else 'standard'
+    if mode not in supported:
+        return 'standard'
+    if (
+        difficulty in ('foundational', 'intermediate', 'difficult')
+        and mode in ADVANCED_MODES
+    ):
+        try:
+            vf = TOPICS[level][subject][topic].get('variants_func')
+        except KeyError:
+            return mode
+        if callable(vf):
+            try:
+                if not vf(difficulty, mode):
+                    return 'standard'
+            except (TypeError, ValueError):
+                return 'standard'
+    return mode
 
 
 def _generator_launch_restricted():
@@ -2467,7 +2545,9 @@ def _freeze_class_work_problems(level, subject, topic, mode, difficulty, count):
         raise ValueError('invalid_count')
     if count < MIN_ASSIGNMENT_QUESTIONS or count > MAX_ASSIGNMENT_QUESTIONS:
         raise ValueError('invalid_count')
-    mode = _normalize_generator_mode(level, subject, topic, mode)
+    mode = _normalize_generator_mode(
+        level, subject, topic, mode, difficulty=difficulty
+    )
     generator = topic_config['func']
     queue = _build_problem_queue(topic_config, level, subject, topic, mode, difficulty) or []
     problems = []
@@ -2628,6 +2708,13 @@ def index():
     if request.method == 'POST':
         selected_level, selected_subject, selected_topic, selected_mode, selected_diff = (
             _picker_values_from(request.form, fallback)
+        )
+        selected_mode = _normalize_generator_mode(
+            selected_level,
+            selected_subject,
+            selected_topic,
+            selected_mode,
+            difficulty=selected_diff,
         )
         action = request.form.get('action', 'start')
     elif any(request.args.get(key) for key in _GENERATOR_PICKER_KEYS):
@@ -4223,6 +4310,11 @@ def _lesson_render_spec(level, subject, topic):
             extra['signal_fig'] = signal_detect()
         if level == 'eursc' and subject == 'science' and topic == 'force_work_machines':
             extra['lever_fig'] = lever_boxes()
+            extra['force_vectors_fig'] = force_vectors()
+            extra['simple_machines_fig'] = simple_machines()
+            extra['ramp_fig'] = ramp_tradeoff()
+            extra['work_fd_fig'] = work_fd()
+            extra['body_lever_fig'] = body_lever()
         if level == 'eursc' and subject == 'science' and topic == 'energy':
             extra['sankey_fig'] = sankey_bars()
         if level == 'eursc' and subject == 'science' and topic == 'electrostatics':
@@ -4357,6 +4449,26 @@ def _quicktest_answer_from_form(problem, form):
             'correct': None,
             'checked': checked,
         }
+
+    if user_answer and (problem.get('answer_type') or '') == 'number_fields':
+        from generators.shared.answer_checkers import check_number_fields
+
+        try:
+            result = check_number_fields(
+                str(problem.get('correct_answer_raw')),
+                user_answer,
+                field_types=problem.get('answer_field_types'),
+            )
+        except (TypeError, ValueError):
+            result = None
+        if result is not None:
+            return {
+                'user_answer': user_answer,
+                'correct': bool(result.get('correct')),
+                'checked': True,
+                'score': result.get('score'),
+                'score_total': result.get('score_total'),
+            }
 
     correct = None
     if correct_flag == '1':
@@ -8490,9 +8602,6 @@ def api_v1_quicktest_start():
     level = payload.get('level', 'gcse')
     subject = payload.get('subject', 'physics')
     topic = _resolve_topic_slug(level, subject, payload.get('topic', 'forces'))
-    mode = _normalize_generator_mode(
-        level, subject, topic, payload.get('mode', 'standard')
-    )
     difficulty = payload.get('difficulty', 'foundational')
 
     if not _topic_path_valid(level, subject, topic):
@@ -8503,6 +8612,9 @@ def api_v1_quicktest_start():
             400,
             'invalid_difficulty',
         )
+    mode = _normalize_generator_mode(
+        level, subject, topic, payload.get('mode', 'standard'), difficulty=difficulty
+    )
     if not can_access_difficulty(current_user, difficulty):
         return _api_error(
             'Difficult questions require a free account',
@@ -8917,9 +9029,6 @@ def api_v1_generate_problem():
     level = (payload.get('level') or 'gcse').strip()
     subject = (payload.get('subject') or 'maths').strip()
     topic = _resolve_topic_slug(level, subject, (payload.get('topic') or '').strip())
-    mode = _normalize_generator_mode(
-        level, subject, topic, payload.get('mode') or 'standard'
-    )
     difficulty = (payload.get('difficulty') or 'foundational').strip()
     action = (payload.get('action') or 'start').strip().lower()
 
@@ -8931,6 +9040,13 @@ def api_v1_generate_problem():
             400,
             'invalid_difficulty',
         )
+    mode = _normalize_generator_mode(
+        level,
+        subject,
+        topic,
+        payload.get('mode') or 'standard',
+        difficulty=difficulty,
+    )
     if not _topic_path_valid(level, subject, topic):
         return _api_error('Topic not found', 404, 'topic_not_found')
     if not _generator_path_allowed(level, subject):
@@ -10264,10 +10380,14 @@ def quicktest_start():
     level = request.form.get('level', 'gcse')
     subject = request.form.get('subject', 'physics')
     topic = _resolve_topic_slug(level, subject, request.form.get('topic', 'forces'))
-    mode = _normalize_generator_mode(
-        level, subject, topic, request.form.get('mode', 'standard')
-    )
     difficulty = request.form.get('difficulty', 'foundational')
+    mode = _normalize_generator_mode(
+        level,
+        subject,
+        topic,
+        request.form.get('mode', 'standard'),
+        difficulty=difficulty if difficulty in DIFFICULTIES else None,
+    )
 
     try:
         problems, topic_config = build_quicktest_problems(

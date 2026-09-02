@@ -1,6 +1,13 @@
 """S1 Unit 1.1 Science Lab — 1.1.1–1.1.3."""
 import random
 
+from generators.eursc.s1_unit11_advanced import (
+    LAB_MS_POOLS,
+    LAB_SMS_POOLS,
+    MEAS_SMS_POOLS,
+    WIS_MS_POOLS,
+    WIS_SMS_POOLS,
+)
 from generators.eursc.science_shared import bind_eursc_topic, lab_bench, ruler_scale
 from generators.shared.utils import (
     graded_answer_number_fields,
@@ -9,7 +16,7 @@ from generators.shared.utils import (
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
-from generators.shared.variant_utils import MULTI_STEP_MODE
+from generators.shared.variant_utils import MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE
 from models.svg_kit import bar_chart
 
 _LEVEL = "eursc"
@@ -1052,7 +1059,10 @@ eursc_science_measurement, eursc_science_measurement_variants = bind_eursc_topic
     "measurement",
     _POOLS,
     _MEAS_STANDARD,
-    advanced_pools={MULTI_STEP_MODE: _MEAS_MULTI_STEP_POOLS},
+    advanced_pools={
+        MULTI_STEP_MODE: _MEAS_MULTI_STEP_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: MEAS_SMS_POOLS,
+    },
 )
 
 
@@ -1582,7 +1592,13 @@ _WIS_STANDARD = {
     ),
 }
 eursc_science_what_is_science, eursc_science_what_is_science_variants = bind_eursc_topic(
-    "what_is_science", _WIS_POOLS, _WIS_STANDARD
+    "what_is_science",
+    _WIS_POOLS,
+    _WIS_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: WIS_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: WIS_SMS_POOLS,
+    },
 )
 
 
@@ -2020,6 +2036,12 @@ _LAB_STANDARD = {
     ),
 }
 eursc_science_science_lab, eursc_science_science_lab_variants = bind_eursc_topic(
-    "science_lab", _LAB_POOLS, _LAB_STANDARD
+    "science_lab",
+    _LAB_POOLS,
+    _LAB_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: LAB_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: LAB_SMS_POOLS,
+    },
 )
 

@@ -233,6 +233,9 @@ def test_s3_priority_lessons_use_captions_and_sankey():
     key_src = (TEMPLATES / 'eursc_science_classification_biodiversity_lesson.html').read_text(
         encoding='utf-8'
     )
+    force_src = (TEMPLATES / 'eursc_science_force_work_machines_lesson.html').read_text(
+        encoding='utf-8'
+    )
     assert '{{ sankey_fig }}' in energy_src
     assert energy_src.count('class="mcq-inline"') == 8
     assert 'lesson-figure-caption' in energy_src
@@ -255,6 +258,16 @@ def test_s3_priority_lessons_use_captions_and_sankey():
     assert 'wings?' in key_src
     assert 'style="' not in current_src
     assert 'style="' not in eco_src
+    assert '{{ force_vectors_fig }}' in force_src
+    assert '{{ simple_machines_fig }}' in force_src
+    assert '{{ lever_fig }}' in force_src
+    assert '{{ ramp_fig }}' in force_src
+    assert '{{ work_fd_fig }}' in force_src
+    assert '{{ body_lever_fig }}' in force_src
+    assert force_src.count('class="mcq-inline"') == 8
+    assert force_src.count('class="lesson-section"') == 8
+    assert force_src.count('class="lesson-figure"') >= 5
+    assert 'style="' not in force_src
     with app.test_client() as client:
         er = client.get('/topic/eursc/science/energy')
         assert er.status_code == 200, er.data[:400]
@@ -283,6 +296,14 @@ def test_s3_priority_lessons_use_captions_and_sankey():
         khtml = kr.data.decode()
         assert 'wings?' in khtml
         assert 'marker-end=' in khtml
+        fr = client.get('/topic/eursc/science/force_work_machines')
+        assert fr.status_code == 200, fr.data[:400]
+        fhtml = fr.data.decode()
+        assert fhtml.count('class="svg-kit') >= 5
+        assert 'Force as a vector: size and direction' in fhtml
+        assert 'Lever: effort, fulcrum and load' in fhtml
+        assert '15 J' in fhtml
+        assert 'marker-end=' in fhtml
 
 
 def main():

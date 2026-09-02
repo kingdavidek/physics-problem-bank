@@ -13,7 +13,7 @@ os.environ["PB_TESTING"] = "1"
 os.environ["MAIL_PROVIDER"] = "console"
 os.environ.setdefault("SECRET_KEY", "pb-testing")
 
-from app import app, get_db  # noqa: E402
+from app import app, format_readable_multipart_answer, get_db  # noqa: E402
 from generators.eursc.s1_science_lab import eursc_science_measurement  # noqa: E402
 from generators.eursc.s1_sports import eursc_science_movement  # noqa: E402
 from generators.eursc.s2_health import eursc_science_infectious_disease  # noqa: E402
@@ -27,6 +27,7 @@ from generators.shared.variant_utils import (  # noqa: E402
     SITUATIONAL_MULTI_STEP_MODE,
 )
 from models.class_assignments import grade_frozen_answer, strip_problem_keys  # noqa: E402
+from models.quicktest import QUICKTEST_LENGTH, load_quicktest_session  # noqa: E402
 
 
 def bearer(token: str) -> dict:
@@ -367,12 +368,207 @@ def test_whole_payload_check_uses_field_types():
     assert result["score"] == result["score_total"]
 
 
+def _problem_has_pick_and_order(problem):
+    types = problem.get("answer_field_types") or []
+    return "pick" in types and "order" in types
+
+
+def test_readable_multipart_answer_resolves_pick_order_labels():
+    problem = None
+    for _ in range(12):
+        candidate = eursc_science_infectious_disease(
+            "foundational", SITUATIONAL_MULTI_STEP_MODE
+        )
+        if _problem_has_pick_and_order(candidate):
+            problem = candidate
+            break
+    assert problem, "expected a foundational infectious SMS item with pick and order"
+    user = client_user_answer(problem)
+    readable = format_readable_multipart_answer(user, problem)
+    assert "\x1e" not in readable
+    assert "s1|" not in readable
+    labels = readable.lower()
+    assert "source" in labels or "route" in labels or "host" in labels
+    assert "public" in labels or "contact" in labels or "wash" in labels
+
+
+def test_class_work_pick_order_banks_and_answered_display():
+    with app.test_client() as client:
+        suffix = uuid.uuid4().hex[:8]
+        token_t, _uid_t, _h_t = register(
+            client, f"esadvpk_{suffix}@example.com", f"esadvpk_{suffix}"
+        )
+        token_s, uid_s, _h_s = register(
+            client, f"esadvps_{suffix}@example.com", f"esadvps_{suffix}"
+        )
+        headers_t = bearer(token_t)
+        headers_s = bearer(token_s)
+        class_id, code = enable_and_create(client, headers_t, "Pick order class work")
+        join(client, headers_s, code)
+
+        stored = None
+        aid = None
+        for _ in range(16):
+            r = client.post(
+                f"/api/v1/teacher/classes/{class_id}/assignments",
+                json={
+                    "level": "eursc",
+                    "subject": "science",
+                    "topic": "infectious_disease",
+                    "mode": SITUATIONAL_MULTI_STEP_MODE,
+                    "difficulty": "foundational",
+                    "count": 1,
+                    "student_ids": [uid_s],
+                },
+                headers=headers_t,
+            )
+            assert r.status_code == 201, r.data
+            aid = r.get_json()["assignment"]["id"]
+            stored = stored_problems(aid)[0]
+            if _problem_has_pick_and_order(stored):
+                break
+        else:
+            raise AssertionError("could not sample a pick/order class-work item")
+
+        login_web(client, f"esadvps_{suffix}@example.com")
+        unanswered = client.get(f"/class-work/{aid}").data.decode()
+        assert "data-collect-only" in unanswered
+        assert "is-collect-only" in unanswered
+        assert "free-response-field-row--order" in unanswered
+        assert "free-response-field-row--pick" in unanswered
+        assert "free-response-proof-bank" in unanswered
+        assert unanswered.count("data-step-id=") >= 4
+        assert "class-work-fields-feedback" in unanswered
+        assert "Complete every part" not in unanswered
+        assert "correct_answer_raw" not in unanswered or 'data-correct-raw=""' in unanswered
+        order_counts = re.findall(
+            r'free-response-field-row--order"[^>]*data-pick-count="(\d+)"',
+            unanswered,
+        )
+        if not order_counts:
+            order_counts = re.findall(
+                r'data-pick-count="(\d+)"[^>]*free-response-field-row--order',
+                unanswered,
+            )
+        assert order_counts, unanswered[unanswered.find("field-row--order") : unanswered.find("field-row--order") + 400]
+        assert int(order_counts[0]) >= 2
+
+        r = client.post(
+            f"/class-work/{aid}",
+            data={
+                "csrf_token": csrf_from(unanswered),
+                "index": "0",
+                "user_answer": "",
+            },
+            follow_redirects=True,
+        )
+        assert r.status_code == 200, r.data
+        empty_html = r.data.decode()
+        assert "Enter an answer first." in empty_html
+        assert "Correct" not in empty_html or "Your answer:" not in empty_html
+
+        user = client_user_answer(stored)
+        r = client.post(
+            f"/class-work/{aid}",
+            data={
+                "csrf_token": csrf_from(empty_html),
+                "index": "0",
+                "user_answer": user,
+            },
+            follow_redirects=True,
+        )
+        assert r.status_code == 200, r.data
+        answered = r.data.decode()
+        assert "Your answer:" in answered
+        assert "Correct" in answered
+        readable = format_readable_multipart_answer(user, stored)
+        for chunk in readable.split(" · "):
+            snippet = chunk.strip()[:24]
+            if snippet:
+                assert snippet in answered, snippet
+        assert "solution" in answered.lower() or "Source" in answered
+        assert "class-work-answer-form" not in answered
+
+        r = client.get(f"/api/v1/me/class-work/{aid}", headers=headers_s)
+        work = r.get_json()["class_work"]
+        assert work["problems"][0]["answered"] is True
+        assert work["problems"][0]["correct"] is True
+
+
+def test_quicktest_full_run_persists_multipart_scores():
+    with app.test_client() as client:
+        suffix = uuid.uuid4().hex[:8]
+        register(client, f"esadvqt_{suffix}@example.com", f"esadvqt_{suffix}")
+        login_web(client, f"esadvqt_{suffix}@example.com")
+        r = client.post(
+            "/quicktest/start",
+            data={
+                "level": "eursc",
+                "subject": "science",
+                "topic": "infectious_disease",
+                "mode": SITUATIONAL_MULTI_STEP_MODE,
+                "difficulty": "foundational",
+            },
+            follow_redirects=True,
+        )
+        assert r.status_code == 200, r.data
+        body = r.data.decode()
+        assert "free-response-inline" in body
+        assert "quicktest-next-form" in body
+
+        with client.session_transaction() as sess:
+            qt_id = sess.get("qt_id")
+        assert qt_id
+
+        for i in range(QUICKTEST_LENGTH):
+            with get_db() as conn:
+                data = load_quicktest_session(conn, qt_id)
+            assert data, qt_id
+            idx = int(data.get("index") or 0)
+            problems = data.get("problems") or []
+            assert idx == i, (idx, i)
+            assert len(problems) == QUICKTEST_LENGTH
+            problem = problems[idx]
+            assert problem.get("answer_type") == "number_fields"
+            html = body
+            r = client.post(
+                "/quicktest/next",
+                data={
+                    "csrf_token": csrf_from(html),
+                    "qt_user_answer": client_user_answer(problem),
+                    "qt_checked": "1",
+                },
+                follow_redirects=True,
+            )
+            assert r.status_code == 200, r.data
+            body = r.data.decode()
+
+        assert "Solutions" in body
+        assert "Typed answers checked:" in body
+        assert "Your answer:" in body
+        with get_db() as conn:
+            finished = load_quicktest_session(conn, qt_id)
+        answers = finished.get("answers") or []
+        assert len(answers) == QUICKTEST_LENGTH
+        for item in answers:
+            assert item.get("user_answer")
+            assert item.get("checked") is True
+            assert item.get("correct") is True
+            assert int(item.get("score_total") or 0) >= 2
+            assert item.get("score") == item.get("score_total")
+        total_parts = sum(int(item["score_total"]) for item in answers)
+        assert f"{total_parts} / {total_parts}" in body
+
+
 def main():
     test_grade_frozen_mixed_number_fields()
     test_teacher_set_work_lists_advanced_modes()
     test_class_work_grades_structured_parts()
     test_quicktest_and_save_share_render_structured_fields()
     test_whole_payload_check_uses_field_types()
+    test_readable_multipart_answer_resolves_pick_order_labels()
+    test_class_work_pick_order_banks_and_answered_display()
+    test_quicktest_full_run_persists_multipart_scores()
     print("EURSC advanced downstream checks passed.")
 
 

@@ -1879,6 +1879,185 @@ def lever_boxes(*, title=None, max_width=360):
     )
 
 
+def force_vectors(*, title=None, max_width=360):
+    """Crate with A size (longer arrow) and B direction (upward arrow)."""
+    p = PALETTE
+
+    def body(ids):
+        return "".join(
+            [
+                f'<rect x="48" y="72" width="78" height="44" rx="6" fill="{p["brand_soft"]}" '
+                f'stroke="{p["brand"]}" stroke-width="2"/>',
+                shape_label(87, 98, "crate"),
+                science_arrow(ids, 130, 88, 312, 88, stroke=p["measure"]),
+                science_arrow(ids, 87, 70, 87, 18, stroke=p["xp"]),
+                science_cue("circle", 148, 88, fill=p["ink"], size=4),
+                science_cue("square", 87, 40, fill=p["ink"], size=4),
+                shape_label(220, 118, "A"),
+                shape_label(220, 134, "size"),
+                shape_label(118, 28, "B"),
+                shape_label(156, 28, "direction"),
+                science_legend(
+                    (("circle", "longer arrow = larger force"), ("square", "arrow heading = direction")),
+                    x=24,
+                    y=148,
+                ),
+            ]
+        )
+
+    return svg(
+        400,
+        188,
+        title=title or "Force as a vector: size and direction",
+        desc=(
+            "A crate has two arrows. A is a longer rightward arrow (size of the force). "
+            "B is an upward arrow (direction of the force). Schematic, not a measured trolley."
+        ),
+        body=body,
+        max_width=max_width,
+        variant="wide",
+    )
+
+
+def simple_machines(*, title=None, max_width=360):
+    """Three schematic types: A lever, B pulley, C ramp."""
+    p = PALETTE
+
+    def body(ids):
+        return "".join(
+            [
+                f'<line x1="28" y1="64" x2="124" y2="64" stroke="{p["ink"]}" stroke-width="6"/>',
+                f'<polygon points="76,64 62,92 90,92" fill="{p["brand"]}"/>',
+                science_arrow(ids, 40, 28, 40, 48, stroke=p["measure"]),
+                shape_label(76, 118, "A"),
+                shape_label(76, 134, "lever"),
+                f'<circle cx="200" cy="40" r="18" fill="none" stroke="{p["brand"]}" stroke-width="4"/>',
+                f'<line x1="186" y1="52" x2="186" y2="96" stroke="{p["ink"]}" stroke-width="3"/>',
+                f'<line x1="214" y1="52" x2="214" y2="96" stroke="{p["ink"]}" stroke-width="3"/>',
+                f'<rect x="202" y="96" width="24" height="16" fill="{p["xp"]}"/>',
+                shape_label(200, 132, "B"),
+                shape_label(200, 148, "pulley"),
+                f'<polygon points="268,108 372,108 372,40" fill="{p["brand_soft"]}" '
+                f'stroke="{p["brand"]}" stroke-width="2"/>',
+                science_arrow(ids, 284, 100, 356, 52, stroke=p["measure"]),
+                shape_label(320, 132, "C"),
+                shape_label(320, 148, "ramp"),
+            ]
+        )
+
+    return svg(
+        400,
+        168,
+        title=title or "Simple machines: lever, pulley and ramp",
+        desc="A is a lever bar on a fulcrum, B is a pulley with a rope and load, and C is a ramp. Schematic types, not a kit photo.",
+        body=body,
+        max_width=max_width,
+        variant="wide",
+    )
+
+
+def ramp_tradeoff(*, title=None, max_width=360):
+    """A short lift with a large force; B long ramp path with a smaller force."""
+    p = PALETTE
+
+    def body(ids):
+        return "".join(
+            [
+                f'<line x1="24" y1="120" x2="376" y2="120" stroke="{p["ink"]}" stroke-width="3"/>',
+                f'<polygon points="48,120 300,120 300,44" fill="{p["brand_soft"]}" '
+                f'stroke="{p["brand"]}" stroke-width="2"/>',
+                science_arrow(ids, 332, 120, 332, 28, stroke=p["xp"]),
+                science_arrow(ids, 72, 112, 168, 88, stroke=p["measure"]),
+                science_cue("circle", 332, 70, fill=p["ink"], size=4),
+                science_cue("square", 120, 100, fill=p["ink"], size=4),
+                shape_label(332, 148, "A"),
+                shape_label(332, 164, "short lift"),
+                shape_label(120, 148, "B"),
+                shape_label(120, 164, "long ramp"),
+            ]
+        )
+
+    return svg(
+        400,
+        184,
+        title=title or "Force-distance trade-off on a ramp",
+        desc=(
+            "A is a short vertical lift that needs a larger force. "
+            "B is a longer path up the ramp that can use a smaller force. Schematic ramp, not a measured slope."
+        ),
+        body=body,
+        max_width=max_width,
+        variant="wide",
+    )
+
+
+def work_fd(*, title=None, max_width=360):
+    """A force along B distance: classroom 5 N along 3 m."""
+    p = PALETTE
+
+    def body(ids):
+        return "".join(
+            [
+                f'<line x1="40" y1="108" x2="360" y2="108" stroke="{p["ink"]}" stroke-width="3"/>',
+                f'<rect x="56" y="56" width="72" height="44" rx="6" fill="{p["brand_soft"]}" '
+                f'stroke="{p["brand"]}" stroke-width="2"/>',
+                science_arrow(ids, 132, 78, 300, 78, stroke=p["measure"]),
+                f'<line x1="56" y1="128" x2="300" y2="128" stroke="{p["ink"]}" stroke-width="2"/>',
+                f'<line x1="56" y1="122" x2="56" y2="134" stroke="{p["ink"]}" stroke-width="2"/>',
+                f'<line x1="300" y1="122" x2="300" y2="134" stroke="{p["ink"]}" stroke-width="2"/>',
+                science_cue("circle", 210, 78, fill=p["ink"], size=4),
+                science_cue("square", 178, 128, fill=p["ink"], size=4),
+                shape_label(210, 48, "A 5 N"),
+                shape_label(178, 152, "B 3 m"),
+            ]
+        )
+
+    return svg(
+        400,
+        172,
+        title=title or "Work as force along a distance",
+        desc="A is a 5 N pull along the same line as B, a 3 m distance. Work is 15 J. Schematic crate, not a measured floor.",
+        body=body,
+        max_width=max_width,
+        variant="wide",
+    )
+
+
+def body_lever(*, title=None, max_width=360):
+    """Fictional forearm model: A muscle effort, B elbow fulcrum, C bag load."""
+    p = PALETTE
+
+    def body(ids):
+        return "".join(
+            [
+                f'<line x1="48" y1="56" x2="360" y2="56" stroke="{p["ink"]}" stroke-width="6"/>',
+                f'<polygon points="80,56 64,88 96,88" fill="{p["brand"]}"/>',
+                science_arrow(ids, 140, 16, 140, 36, stroke=p["measure"]),
+                f'<circle cx="140" cy="40" r="12" fill="{p["measure"]}"/>',
+                f'<rect x="320" y="28" width="28" height="28" fill="{p["xp"]}"/>',
+                shape_label(140, 118, "A"),
+                shape_label(140, 134, "effort"),
+                shape_label(80, 118, "B"),
+                shape_label(80, 134, "fulcrum"),
+                shape_label(334, 118, "C"),
+                shape_label(334, 134, "load"),
+            ]
+        )
+
+    return svg(
+        400,
+        152,
+        title=title or "Fictional forearm lever: effort, elbow and bag",
+        desc=(
+            "A is the muscle effort close to the elbow, B is the elbow fulcrum, and C is a bag load at the hand. "
+            "Teaching model, not a map of a pupil's joints."
+        ),
+        body=body,
+        max_width=max_width,
+        variant="wide",
+    )
+
+
 def sankey_bars(*, title=None, max_width=360):
     """A input, B useful output, C wasted output."""
     p = PALETTE
@@ -2451,6 +2630,11 @@ SCIENCE_SVG_FIGURES = (
     ("ear_boxes", ear_boxes),
     ("canal_boxes", canal_boxes),
     ("lever_boxes", lever_boxes),
+    ("force_vectors", force_vectors),
+    ("simple_machines", simple_machines),
+    ("ramp_tradeoff", ramp_tradeoff),
+    ("work_fd", work_fd),
+    ("body_lever", body_lever),
     ("sankey_bars", sankey_bars),
     ("charge_pair", charge_pair),
     ("circuit_boxes", circuit_boxes),

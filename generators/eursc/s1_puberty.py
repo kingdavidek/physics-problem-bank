@@ -3,12 +3,20 @@
 Clinical, third-person banks. No prompts that ask a pupil to disclose
 health, sexuality, relationships or experiences.
 """
+from generators.eursc.s1_unit14_puberty_advanced import (
+    PREGNANCY_SEXUAL_HEALTH_MS_POOLS,
+    PREGNANCY_SEXUAL_HEALTH_SMS_POOLS,
+    PUBERTY_MATURITY_MS_POOLS,
+    PUBERTY_MATURITY_SMS_POOLS,
+    REPRODUCTIVE_ANATOMY_MS_POOLS,
+)
 from generators.eursc.science_shared import bind_eursc_topic, organ_labels
 from generators.shared.utils import (
     make_problem,
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
+from generators.shared.variant_utils import MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE
 
 _LEVEL = "eursc"
 _SUBJECT = "science"
@@ -220,7 +228,13 @@ _PM_STANDARD = {
     ),
 }
 eursc_science_puberty_maturity, eursc_science_puberty_maturity_variants = bind_eursc_topic(
-    'puberty_maturity', _PM_POOLS, _PM_STANDARD
+    "puberty_maturity",
+    _PM_POOLS,
+    _PM_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: PUBERTY_MATURITY_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: PUBERTY_MATURITY_SMS_POOLS,
+    },
 )
 
 
@@ -288,7 +302,12 @@ _RA_STANDARD = {
     ),
 }
 eursc_science_reproductive_anatomy, eursc_science_reproductive_anatomy_variants = bind_eursc_topic(
-    'reproductive_anatomy', _RA_POOLS, _RA_STANDARD
+    "reproductive_anatomy",
+    _RA_POOLS,
+    _RA_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: REPRODUCTIVE_ANATOMY_MS_POOLS,
+    },
 )
 
 
@@ -361,5 +380,11 @@ _PS_STANDARD = {
     ),
 }
 eursc_science_pregnancy_sexual_health, eursc_science_pregnancy_sexual_health_variants = bind_eursc_topic(
-    'pregnancy_sexual_health', _PS_POOLS, _PS_STANDARD
+    "pregnancy_sexual_health",
+    _PS_POOLS,
+    _PS_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: PREGNANCY_SEXUAL_HEALTH_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: PREGNANCY_SEXUAL_HEALTH_SMS_POOLS,
+    },
 )

@@ -25,7 +25,7 @@
     <div class="section-panel-body">
         <div class="quiz-runner-question">{{ (problem.question_html or problem.question or '') | safe }}</div>
         {% if problem.answered %}
-        <p class="list-row-meta">Your answer: {{ problem.user_answer | readable_multipart_answer }} · {% if problem.correct %}Correct{% else %}Incorrect{% endif %}</p>
+        <p class="list-row-meta">Your answer: {{ problem.user_answer | readable_multipart_answer(problem) }} · {% if problem.correct %}Correct{% else %}Incorrect{% endif %}</p>
         {% if problem.solution_html %}
         <div class="quiz-runner-question">{{ problem.solution_html | safe }}</div>
         {% endif %}

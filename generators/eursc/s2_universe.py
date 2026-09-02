@@ -1,4 +1,14 @@
 """S2 Unit 2.1 Universe — 2.1.1–2.1.4."""
+from generators.eursc.s2_unit21_universe_advanced import (
+    ATOMS_MOLECULES_MS_POOLS,
+    ATOMS_MOLECULES_SMS_POOLS,
+    LIFE_EARTH_ELSEWHERE_MS_POOLS,
+    LIFE_EARTH_ELSEWHERE_SMS_POOLS,
+    LIGHT_TELESCOPES_MS_POOLS,
+    LIGHT_TELESCOPES_SMS_POOLS,
+    SOLAR_SYSTEM_MS_POOLS,
+    SOLAR_SYSTEM_SMS_POOLS,
+)
 from generators.eursc.science_shared import (
     bind_eursc_topic,
     atom_molecule_boxes,
@@ -10,6 +20,7 @@ from generators.shared.utils import (
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
+from generators.shared.variant_utils import MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE
 
 _LEVEL = "eursc"
 _SUBJECT = "science"
@@ -208,7 +219,13 @@ _SS_STANDARD = {
     ),
 }
 eursc_science_solar_system, eursc_science_solar_system_variants = bind_eursc_topic(
-    'solar_system', _SS_POOLS, _SS_STANDARD
+    "solar_system",
+    _SS_POOLS,
+    _SS_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: SOLAR_SYSTEM_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: SOLAR_SYSTEM_SMS_POOLS,
+    },
 )
 
 _RAY_BANK = (
@@ -299,7 +316,13 @@ _LT_STANDARD = {
     ),
 }
 eursc_science_light_telescopes, eursc_science_light_telescopes_variants = bind_eursc_topic(
-    'light_telescopes', _LT_POOLS, _LT_STANDARD
+    "light_telescopes",
+    _LT_POOLS,
+    _LT_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: LIGHT_TELESCOPES_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: LIGHT_TELESCOPES_SMS_POOLS,
+    },
 )
 
 _NEED_BANK = (
@@ -390,7 +413,13 @@ _LF_STANDARD = {
     ),
 }
 eursc_science_life_earth_elsewhere, eursc_science_life_earth_elsewhere_variants = bind_eursc_topic(
-    'life_earth_elsewhere', _LF_POOLS, _LF_STANDARD
+    "life_earth_elsewhere",
+    _LF_POOLS,
+    _LF_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: LIFE_EARTH_ELSEWHERE_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: LIFE_EARTH_ELSEWHERE_SMS_POOLS,
+    },
 )
 
 _PART_BANK = (
@@ -475,5 +504,11 @@ _AM_STANDARD = {
     ),
 }
 eursc_science_atoms_molecules, eursc_science_atoms_molecules_variants = bind_eursc_topic(
-    'atoms_molecules', _AM_POOLS, _AM_STANDARD
+    "atoms_molecules",
+    _AM_POOLS,
+    _AM_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: ATOMS_MOLECULES_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: ATOMS_MOLECULES_SMS_POOLS,
+    },
 )

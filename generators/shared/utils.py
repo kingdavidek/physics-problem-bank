@@ -562,9 +562,24 @@ def problem_extra_from_graded_answer(raw):
                     extra['answer_field_options'] = [
                         list(opts) if opts else None for opts in field_options
                     ]
-                field_pick_counts = raw.get('field_pick_counts') or ()
-                if field_pick_counts:
-                    extra['answer_field_pick_counts'] = list(field_pick_counts)
+                field_pick_counts = list(raw.get('field_pick_counts') or ())
+                types_list = list(field_types) if field_types else []
+                while len(field_pick_counts) < len(types_list):
+                    field_pick_counts.append(None)
+                for i, ft in enumerate(types_list):
+                    if field_pick_counts[i] is not None:
+                        continue
+                    raw_val = str(values[i] if i < len(values) else '')
+                    if ft == 'order' and raw_val.startswith('1|'):
+                        n = len([p for p in raw_val.split('|')[1:] if p])
+                        if n:
+                            field_pick_counts[i] = n
+                    elif ft == 'pick' and raw_val.startswith('pick|'):
+                        bits = raw_val.split('|')
+                        if len(bits) > 1 and bits[1].isdigit():
+                            field_pick_counts[i] = int(bits[1])
+                if any(c is not None for c in field_pick_counts):
+                    extra['answer_field_pick_counts'] = field_pick_counts
                 if raw.get('inline_sections'):
                     extra['answer_inline_sections'] = True
                     section_keys = raw.get('section_keys') or ()
