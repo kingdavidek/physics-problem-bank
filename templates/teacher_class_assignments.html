@@ -27,7 +27,9 @@
                 <select id="set-work-scope" name="scope" required>
                     {% for item in catalogue %}
                     {% set value = item.level ~ ':' ~ item.subject ~ ':' ~ item.topic %}
-                    <option value="{{ value }}"{% if form and form.level == item.level and form.subject == item.subject and form.topic == item.topic %} selected{% endif %}>{{ item.level | upper }} · {{ item.subject | replace('_', ' ') | title }} · {{ item.label }}</option>
+                    <option value="{{ value }}"
+                            data-modes="{{ (item.modes or ['standard']) | join(',') }}"
+                            {% if form and form.level == item.level and form.subject == item.subject and form.topic == item.topic %} selected{% endif %}>{{ item.level | upper }} · {{ item.subject | replace('_', ' ') | title }} · {{ item.label }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -36,6 +38,8 @@
                 <select id="set-work-mode" name="mode">
                     <option value="standard"{% if not form or form.mode == 'standard' %} selected{% endif %}>Standard</option>
                     <option value="mcq"{% if form and form.mode == 'mcq' %} selected{% endif %}>MCQ</option>
+                    <option value="multi_step"{% if form and form.mode == 'multi_step' %} selected{% endif %}>Multi-step</option>
+                    <option value="situational_multi_step"{% if form and form.mode == 'situational_multi_step' %} selected{% endif %}>Situational</option>
                 </select>
             </div>
             <div class="form-group">

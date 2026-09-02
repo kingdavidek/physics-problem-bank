@@ -1,10 +1,15 @@
 """S1 Unit 1.1 Science Lab — 1.1.1–1.1.3."""
+import random
+
 from generators.eursc.science_shared import bind_eursc_topic, lab_bench, ruler_scale
 from generators.shared.utils import (
+    graded_answer_number_fields,
+    make_graded_problem,
     make_problem,
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
+from generators.shared.variant_utils import MULTI_STEP_MODE
 from models.svg_kit import bar_chart
 
 _LEVEL = "eursc"
@@ -556,8 +561,498 @@ _MEAS_STANDARD = {
         'meas_difficult_pick_three_base',
     ),
 }
+def _meas_ms_variant(difficulty, suffix):
+    def decorator(builder):
+        def _fn():
+            return make_graded_problem(
+                builder(), difficulty, _LEVEL, _SUBJECT, _TOPIC
+            )
+
+        _fn.__name__ = f"measurement_{difficulty}_ms_{suffix}"
+        _fn._kind = "number_fields"
+        _fn._randomizable = True
+        return _fn
+
+    return decorator
+
+
+def _meas_ms_mcq_field(correct, distractors):
+    pool = [correct, *distractors]
+    random.shuffle(pool)
+    letters = "ABCD"[: len(pool)]
+    return pool, letters[pool.index(correct)]
+
+
+_MEAS_MS_FOUND_KILO_COMPARE_PACKS = (
+    {"who": "Alex", "place": "field path", "km": 3, "other_m": 800},
+    {"who": "Sam", "place": "nature trail", "km": 2, "other_m": 500},
+    {"who": "Jordan", "place": "cycle lane", "km": 4, "other_m": 1500},
+)
+
+
+@_meas_ms_variant("foundational", "kilo_convert_compare")
+def _measurement_foundational_ms_kilo_convert_compare():
+    pack = random.choice(_MEAS_MS_FOUND_KILO_COMPARE_PACKS)
+    metres = pack["km"] * 1000
+    extra = metres - pack["other_m"]
+    question = (
+        f"<p>In a fictional outdoor survey, {pack['who']} measures a "
+        f"{pack['place']} as {pack['km']} km.</p>"
+        "<p>(i) Convert that length to metres.</p>"
+        f"<p>(ii) A second path is {pack['other_m']} m. How many metres "
+        f"longer is {pack['who']}'s path?</p>"
+    )
+    solution = (
+        f"(i) {pack['km']} km = {pack['km']} × 1000 = "
+        f"<strong>{metres}</strong> m<br>"
+        f"(ii) {metres} − {pack['other_m']} = <strong>{extra}</strong> m"
+    )
+    hint = (
+        "<strong>Key idea:</strong> kilo means 1000, so convert first, then "
+        "subtract using the metres from (i)."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        2,
+        graded_answer_number_fields(
+            (metres, extra),
+            ("Length (m)", "Difference (m)"),
+            format_hint="Convert kilometres to metres, then subtract.",
+        ),
+    )
+
+
+_MEAS_MS_FOUND_SCALE_MM_PACKS = (
+    {"cm": 4.0},
+    {"cm": 4.7},
+    {"cm": 6.3},
+)
+
+
+@_meas_ms_variant("foundational", "scale_then_mm")
+def _measurement_foundational_ms_scale_then_mm():
+    pack = random.choice(_MEAS_MS_FOUND_SCALE_MM_PACKS)
+    mm = pack["cm"] * 10
+    question = (
+        "<p>A fictional laboratory ruler is used to measure a wooden block.</p>"
+        "<p>Read the pointer on this centimetre scale, then convert.</p>"
+        + str(ruler_scale(pack["cm"], title="Pointer on a centimetre scale"))
+        + "<p>(i) What is the reading in cm?</p>"
+        "<p>(ii) Convert that reading to millimetres.</p>"
+    )
+    solution = (
+        f"(i) The pointer is at <strong>{pack['cm']:g}</strong> cm<br>"
+        f"(ii) {pack['cm']:g} × 10 = <strong>{mm:g}</strong> mm"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Read the scale first, then use that same "
+        "value: 1 cm = 10 mm."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        2,
+        graded_answer_number_fields(
+            (pack["cm"], mm),
+            ("Reading (cm)", "Length (mm)"),
+            format_hint="Read the pointer, then multiply by 10.",
+        ),
+    )
+
+
+_MEAS_MS_FOUND_MILLI_ADD_PACKS = (
+    {"item": "copper rod", "mm": 2500, "add_m": 1.5},
+    {"item": "glass tube", "mm": 4000, "add_m": 0.5},
+    {"item": "wooden strip", "mm": 1500, "add_m": 2.5},
+)
+
+
+@_meas_ms_variant("foundational", "milli_then_add")
+def _measurement_foundational_ms_milli_then_add():
+    pack = random.choice(_MEAS_MS_FOUND_MILLI_ADD_PACKS)
+    metres = pack["mm"] / 1000
+    total = metres + pack["add_m"]
+    question = (
+        "<p>On a fictional laboratory bench, a "
+        f"{pack['item']} is {pack['mm']} mm long.</p>"
+        + str(lab_bench(title="Fictional laboratory bench"))
+        + "<p>(i) Convert that length to metres.</p>"
+        f"<p>(ii) Place it end to end with a {pack['add_m']:g} m piece. "
+        "What is the total length in metres?</p>"
+    )
+    solution = (
+        f"(i) {pack['mm']} mm = {pack['mm']} ÷ 1000 = "
+        f"<strong>{metres:g}</strong> m<br>"
+        f"(ii) {metres:g} + {pack['add_m']:g} = <strong>{total:g}</strong> m"
+    )
+    hint = (
+        "<strong>Key idea:</strong> milli means 0.001, so divide by 1000, "
+        "then add using the metres from (i)."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        2,
+        graded_answer_number_fields(
+            (metres, total),
+            ("Length (m)", "Total length (m)"),
+            format_hint="Convert millimetres to metres, then add.",
+        ),
+    )
+
+
+_MEAS_MS_INTER_CONVERT_COMPARE_PACKS = (
+    {"item_a": "bench rail", "item_b": "clamp arm", "a_cm": 250, "b_cm": 80},
+    {"item_a": "shelf", "item_b": "beaker height", "a_cm": 400, "b_cm": 150},
+    {"item_a": "trolley", "item_b": "block", "a_cm": 320, "b_cm": 120},
+)
+
+
+@_meas_ms_variant("intermediate", "scale_convert_compare")
+def _measurement_intermediate_ms_scale_convert_compare():
+    pack = random.choice(_MEAS_MS_INTER_CONVERT_COMPARE_PACKS)
+    a_m = pack["a_cm"] / 100
+    b_m = pack["b_cm"] / 100
+    diff = a_m - b_m
+    question = (
+        "<p>A fictional laboratory records two lengths in centimetres:</p>"
+        f"<ul><li>{pack['item_a']}: {pack['a_cm']} cm</li>"
+        f"<li>{pack['item_b']}: {pack['b_cm']} cm</li></ul>"
+        f"<p>(i) Convert the {pack['item_a']} length to metres.</p>"
+        f"<p>(ii) Convert the {pack['item_b']} length to metres.</p>"
+        "<p>(iii) How many metres longer is the first object?</p>"
+    )
+    solution = (
+        f"(i) {pack['a_cm']} cm = {pack['a_cm']} ÷ 100 = "
+        f"<strong>{a_m:g}</strong> m<br>"
+        f"(ii) {pack['b_cm']} cm = {pack['b_cm']} ÷ 100 = "
+        f"<strong>{b_m:g}</strong> m<br>"
+        f"(iii) {a_m:g} − {b_m:g} = <strong>{diff:g}</strong> m"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Convert both lengths to metres, then "
+        "subtract using those two results."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        3,
+        graded_answer_number_fields(
+            (a_m, b_m, diff),
+            ("First length (m)", "Second length (m)", "Difference (m)"),
+            format_hint="Divide each centimetre value by 100, then subtract.",
+        ),
+    )
+
+
+_MEAS_MS_INTER_REPEAT_PACKS = (
+    {
+        "item": "wooden block",
+        "readings": (10.2, 10.4, 10.1, 10.3, 10.0),
+    },
+    {
+        "item": "metal bar",
+        "readings": (20.0, 20.2, 19.8, 20.1, 19.9),
+    },
+    {
+        "item": "plastic tile",
+        "readings": (5.0, 5.2, 4.8, 5.1, 4.9),
+    },
+)
+
+
+@_meas_ms_variant("intermediate", "repeat_mean_mm")
+def _measurement_intermediate_ms_repeat_mean_mm():
+    pack = random.choice(_MEAS_MS_INTER_REPEAT_PACKS)
+    readings = pack["readings"]
+    mean_cm = sum(readings) / len(readings)
+    mean_mm = mean_cm * 10
+    labels = [str(i) for i in range(1, len(readings) + 1)]
+    listed = ", ".join(f"{v:g}" for v in readings)
+    question = (
+        f"<p>Five fictional laboratory repeats of a {pack['item']} "
+        f"length, in cm: {listed}.</p>"
+        + str(
+            bar_chart(
+                labels,
+                list(readings),
+                title=f"Five length readings of a {pack['item']} in centimetres",
+                desc=(
+                    f"Bar chart of five length readings in centimetres: {listed}."
+                ),
+            )
+        )
+        + "<p>(i) Find the mean length in cm.</p>"
+        "<p>(ii) Convert that mean to millimetres.</p>"
+    )
+    solution = (
+        f"(i) sum = {sum(readings):g} cm; mean = {sum(readings):g} / "
+        f"{len(readings)} = <strong>{mean_cm:g}</strong> cm<br>"
+        f"(ii) {mean_cm:g} × 10 = <strong>{mean_mm:g}</strong> mm"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Add the repeats and divide by 5, then "
+        "convert that mean: 1 cm = 10 mm."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        2,
+        graded_answer_number_fields(
+            (mean_cm, mean_mm),
+            ("Mean length (cm)", "Mean length (mm)"),
+            format_hint="Find the mean, then multiply by 10.",
+        ),
+    )
+
+
+_MEAS_MS_INTER_PREFIX_CHAIN_PACKS = (
+    {"place": "survey tape", "km": 0.003},
+    {"place": "running lane", "km": 0.005},
+    {"place": "lab corridor", "km": 0.002},
+)
+
+
+@_meas_ms_variant("intermediate", "prefix_chain")
+def _measurement_intermediate_ms_prefix_chain():
+    pack = random.choice(_MEAS_MS_INTER_PREFIX_CHAIN_PACKS)
+    metres = pack["km"] * 1000
+    mm = metres * 1000
+    question = (
+        f"<p>A fictional {pack['place']} is recorded as {pack['km']} km.</p>"
+        "<p>(i) Convert that length to metres.</p>"
+        "<p>(ii) Convert the length in metres from (i) to millimetres.</p>"
+    )
+    solution = (
+        f"(i) {pack['km']} km = {pack['km']} × 1000 = "
+        f"<strong>{metres:g}</strong> m<br>"
+        f"(ii) {metres:g} × 1000 = <strong>{mm:g}</strong> mm"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Convert kilometres to metres first, then "
+        "use that metre value to reach millimetres."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        2,
+        graded_answer_number_fields(
+            (metres, mm),
+            ("Length (m)", "Length (mm)"),
+            format_hint="Multiply by 1000 for km → m, then again for m → mm.",
+        ),
+    )
+
+
+_MEAS_MS_DIFF_KM_MM_PACKS = (
+    {"place": "field transect", "km": 0.003, "extra_mm": 200},
+    {"place": "garden path", "km": 0.004, "extra_mm": 500},
+    {"place": "lab gallery", "km": 0.002, "extra_mm": 250},
+)
+
+
+@_meas_ms_variant("difficult", "km_mm_extra")
+def _measurement_difficult_ms_km_mm_extra():
+    pack = random.choice(_MEAS_MS_DIFF_KM_MM_PACKS)
+    metres = pack["km"] * 1000
+    mm = metres * 1000
+    total = mm + pack["extra_mm"]
+    question = (
+        f"<p>A fictional {pack['place']} is {pack['km']} km long.</p>"
+        "<p>(i) Convert that length to metres.</p>"
+        "<p>(ii) Convert the length from (i) to millimetres.</p>"
+        f"<p>(iii) A joining strip adds {pack['extra_mm']} mm. "
+        "What is the total length in millimetres?</p>"
+    )
+    solution = (
+        f"(i) {pack['km']} km = <strong>{metres:g}</strong> m<br>"
+        f"(ii) {metres:g} × 1000 = <strong>{mm:g}</strong> mm<br>"
+        f"(iii) {mm:g} + {pack['extra_mm']} = <strong>{total:g}</strong> mm"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Go km → m → mm, then add the extra strip "
+        "to the millimetre value from (ii)."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        3,
+        graded_answer_number_fields(
+            (metres, mm, total),
+            ("Length (m)", "Length (mm)", "Total length (mm)"),
+            format_hint="Convert through metres, then add the extra millimetres.",
+        ),
+    )
+
+
+_MEAS_MS_DIFF_ZERO_PACKS = (
+    {"standard_g": 50, "empty": 2, "loaded": 52},
+    {"standard_g": 25, "empty": 3, "loaded": 28},
+    {"standard_g": 100, "empty": 1, "loaded": 101},
+)
+
+
+@_meas_ms_variant("difficult", "zero_error_correct")
+def _measurement_difficult_ms_zero_error_correct():
+    pack = random.choice(_MEAS_MS_DIFF_ZERO_PACKS)
+    corrected = pack["loaded"] - pack["empty"]
+    kg = corrected / 1000
+    correct = "a systematic zero error; the balance needs calibration"
+    distractors = (
+        "a random error from draughts",
+        "evidence that grams are not SI units",
+        "a conversion error from kilometres",
+    )
+    options, letter = _meas_ms_mcq_field(correct, distractors)
+    question = (
+        "<p>A fictional laboratory balance reads "
+        f"{pack['empty']} g when the pan is empty. After a known mass is "
+        f"placed on the pan, the display shows {pack['loaded']} g.</p>"
+        "<p>(i) What is the corrected mass in grams?</p>"
+        "<p>(ii) Convert that corrected mass to kilograms.</p>"
+        "<p>(iii) The empty-pan offset is mainly</p>"
+    )
+    solution = (
+        f"(i) {pack['loaded']} − {pack['empty']} = "
+        f"<strong>{corrected}</strong> g<br>"
+        f"(ii) {corrected} ÷ 1000 = <strong>{kg:g}</strong> kg<br>"
+        f"(iii) <strong>{correct}</strong>"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Subtract the empty reading, convert grams "
+        "to kilograms, then recognise a built-in offset as systematic."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        3,
+        graded_answer_number_fields(
+            (corrected, kg, letter),
+            (
+                "Corrected mass (g)",
+                "Corrected mass (kg)",
+                "Type of error",
+            ),
+            field_types=("number", "number", "mcq"),
+            field_options=(None, None, options),
+            format_hint="Subtract the empty reading, convert to kg, then choose.",
+        ),
+    )
+
+
+_MEAS_MS_DIFF_PRECISION_PACKS = (
+    {
+        "item": "wooden block",
+        "readings": (12.4, 12.6, 12.4, 12.6),
+        "true": 11.0,
+    },
+    {
+        "item": "metal bar",
+        "readings": (8.0, 8.2, 8.0, 8.2),
+        "true": 10.0,
+    },
+    {
+        "item": "plastic tile",
+        "readings": (20.0, 20.2, 20.0, 20.2),
+        "true": 18.0,
+    },
+)
+
+
+@_meas_ms_variant("difficult", "precision_summary")
+def _measurement_difficult_ms_precision_summary():
+    pack = random.choice(_MEAS_MS_DIFF_PRECISION_PACKS)
+    readings = pack["readings"]
+    mean = sum(readings) / len(readings)
+    error = abs(mean - pack["true"])
+    listed = ", ".join(f"{v:g}" for v in readings)
+    labels = [str(i) for i in range(1, len(readings) + 1)]
+    correct = "precise but not accurate"
+    distractors = (
+        "accurate and precise",
+        "accurate but not precise",
+        "neither accurate nor precise",
+    )
+    options, letter = _meas_ms_mcq_field(correct, distractors)
+    question = (
+        f"<p>Four fictional laboratory repeats of a {pack['item']} "
+        f"length, in cm: {listed}. The true length is {pack['true']:g} cm.</p>"
+        + str(
+            bar_chart(
+                labels,
+                list(readings),
+                title=f"Four length readings of a {pack['item']} in centimetres",
+                desc=(
+                    f"Bar chart of four length readings in centimetres: {listed}."
+                ),
+            )
+        )
+        + "<p>(i) Find the mean length in cm.</p>"
+        "<p>(ii) How far is that mean from the true length, in cm?</p>"
+        "<p>(iii) Using the tight cluster and the result from (ii), the set is</p>"
+    )
+    solution = (
+        f"(i) mean = {sum(readings):g} / {len(readings)} = "
+        f"<strong>{mean:g}</strong> cm<br>"
+        f"(ii) |{mean:g} − {pack['true']:g}| = <strong>{error:g}</strong> cm<br>"
+        f"(iii) The repeats sit close together but the mean is {error:g} cm "
+        f"from the true value, so the set is <strong>{correct}</strong>."
+    )
+    hint = (
+        "<strong>Key idea:</strong> Find the mean, compare it with the true "
+        "value, then judge precision (cluster) against accuracy (true value)."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        3,
+        graded_answer_number_fields(
+            (mean, error, letter),
+            (
+                "Mean length (cm)",
+                "Distance from true value (cm)",
+                "Accuracy and precision",
+            ),
+            field_types=("number", "number", "mcq"),
+            field_options=(None, None, options),
+            format_hint="Find the mean, subtract from the true value, then choose.",
+        ),
+    )
+
+
+_MEAS_MULTI_STEP_POOLS = {
+    "foundational": [
+        _measurement_foundational_ms_kilo_convert_compare,
+        _measurement_foundational_ms_scale_then_mm,
+        _measurement_foundational_ms_milli_then_add,
+    ],
+    "intermediate": [
+        _measurement_intermediate_ms_scale_convert_compare,
+        _measurement_intermediate_ms_repeat_mean_mm,
+        _measurement_intermediate_ms_prefix_chain,
+    ],
+    "difficult": [
+        _measurement_difficult_ms_km_mm_extra,
+        _measurement_difficult_ms_zero_error_correct,
+        _measurement_difficult_ms_precision_summary,
+    ],
+}
+
 eursc_science_measurement, eursc_science_measurement_variants = bind_eursc_topic(
-    "measurement", _POOLS, _MEAS_STANDARD
+    "measurement",
+    _POOLS,
+    _MEAS_STANDARD,
+    advanced_pools={MULTI_STEP_MODE: _MEAS_MULTI_STEP_POOLS},
 )
 
 

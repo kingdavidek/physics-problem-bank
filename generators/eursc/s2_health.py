@@ -1,4 +1,6 @@
 """S2 Unit 2.2 Health — 2.2.1–2.2.5."""
+import random
+
 from generators.eursc.science_shared import (
     bind_eursc_topic,
     habit_bars,
@@ -6,10 +8,14 @@ from generators.eursc.science_shared import (
     outbreak_bars,
 )
 from generators.shared.utils import (
+    graded_answer_number_fields,
+    make_graded_problem,
     make_problem,
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
+from generators.shared.variant_utils import SITUATIONAL_MULTI_STEP_MODE
+from models.svg_kit import bar_chart
 
 _LEVEL = "eursc"
 _SUBJECT = "science"
@@ -298,8 +304,684 @@ _ID_STANDARD = {
         'infectious_disease_difficult_pick_path_not',
     ),
 }
+def _id_sms_variant(difficulty, suffix):
+    def decorator(builder):
+        def _fn():
+            return make_graded_problem(
+                builder(), difficulty, _LEVEL, _SUBJECT, "infectious_disease"
+            )
+
+        _fn.__name__ = f"infectious_disease_{difficulty}_sms_{suffix}"
+        _fn._kind = "number_fields"
+        _fn._randomizable = True
+        return _fn
+
+    return decorator
+
+
+def _id_sms_mcq_field(correct, distractors):
+    pool = [correct, *distractors]
+    random.shuffle(pool)
+    letters = "ABCD"[: len(pool)]
+    return pool, letters[pool.index(correct)]
+
+
+def _id_sms_order_field(steps, distractors):
+    step_ids = tuple(f"s{i + 1}" for i in range(len(steps)))
+    bank = [{"id": sid, "text": text} for sid, text in zip(step_ids, steps)]
+    for i, text in enumerate(distractors):
+        bank.append({"id": f"d{i + 1}", "text": text})
+    random.shuffle(bank)
+    raw = f"1|{'|'.join(step_ids)}"
+    return raw, bank
+
+
+def _id_sms_pick_field(correct_texts, distractor_texts, pick_count):
+    correct_ids = tuple(f"c{i + 1}" for i in range(len(correct_texts)))
+    bank = [{"id": cid, "text": text} for cid, text in zip(correct_ids, correct_texts)]
+    for i, text in enumerate(distractor_texts):
+        bank.append({"id": f"d{i + 1}", "text": text})
+    random.shuffle(bank)
+    raw = f"pick|{pick_count}|{'|'.join(correct_ids)}"
+    return raw, bank, pick_count
+
+
+_ID_SMS_FOUND_CHAIN_PACKS = (
+    {
+        "setting": "fictional camp canteen",
+        "source": "unwashed serving tongs holding the pathogen",
+        "route": "contact with the shared tongs",
+        "host": "later diners who use the same tongs",
+        "break_a": "Wash hands and clean the shared tongs to break that contact route",
+        "break_b": "Treat the case counts as a public model, not a named person's file",
+    },
+    {
+        "setting": "fictional sports changing room",
+        "source": "a shared towel holding the pathogen",
+        "route": "contact with the shared towel",
+        "host": "the next athlete who uses the towel",
+        "break_a": "Use clean towels and wash hands to break that contact route",
+        "break_b": "Treat the case counts as a public model, not a named person's file",
+    },
+    {
+        "setting": "fictional clinic waiting area",
+        "source": "an uncleaned door handle holding the pathogen",
+        "route": "contact with the door handle",
+        "host": "the next visitor who uses the same handle",
+        "break_a": "Clean the handle and wash hands to break that contact route",
+        "break_b": "Treat the case counts as a public model, not a named person's file",
+    },
+)
+
+
+@_id_sms_variant("foundational", "canteen_chain_break")
+def _infectious_disease_foundational_sms_canteen_chain_break():
+    pack = random.choice(_ID_SMS_FOUND_CHAIN_PACKS)
+    order_raw, order_bank = _id_sms_order_field(
+        (
+            f"Source: {pack['source']}",
+            f"Route: {pack['route']}",
+            f"New host: {pack['host']}",
+        ),
+        (
+            "Infection jumps with no route because of a rumour",
+            "The quiz should publish who was ill",
+        ),
+    )
+    pick_raw, pick_bank, pick_count = _id_sms_pick_field(
+        (pack["break_a"], pack["break_b"]),
+        (
+            "Publish the names of who used the shared item",
+            "Give antibiotics because every illness is a virus",
+        ),
+        2,
+    )
+    question = (
+        f"<p>Public-health staff model spread in a {pack['setting']}.</p>"
+        f"<p>The model names a source ({pack['source']}), a route "
+        f"({pack['route']}), and a new host ({pack['host']}).</p>"
+        + str(infection_chain(title="Fictional chain of infection"))
+        + "<p>(i) Order source, then route, then new host for this model.</p>"
+        "<p>(ii) Using the route from (i), select the two actions that belong "
+        "in this public-health response.</p>"
+    )
+    solution = (
+        f"(i) <strong>Source → route → new host</strong> in this "
+        f"{pack['setting']}<br>"
+        f"(ii) Break the contact route, and keep counts as public data: "
+        f"<strong>{pack['break_a']}</strong>; <strong>{pack['break_b']}</strong>"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Walk the chain in this scenario, then "
+        "break that route without naming who was ill."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        2,
+        graded_answer_number_fields(
+            (order_raw, pick_raw),
+            ("Chain order", "Public-health actions"),
+            field_types=("order", "pick"),
+            field_options=(order_bank, pick_bank),
+            field_pick_counts=(None, pick_count),
+            format_hint="Order the chain, then select two actions that fit this route.",
+        ),
+    )
+
+
+_ID_SMS_FOUND_TOKEN_PACKS = (
+    {"place": "classroom token model", "start": 2},
+    {"place": "camp sticker model", "start": 3},
+    {"place": "clinic counter model", "start": 4},
+)
+
+
+@_id_sms_variant("foundational", "token_double_safeguard")
+def _infectious_disease_foundational_sms_token_double_safeguard():
+    pack = random.choice(_ID_SMS_FOUND_TOKEN_PACKS)
+    day1 = pack["start"]
+    day2 = day1 * 2
+    day3 = day2 * 2
+    correct = (
+        "a doubling model of public counts, not a named person's medical file"
+    )
+    distractors = (
+        "proof a named pupil is ill",
+        "a list the quiz should store of who coughed",
+        "a ranking of bodies in the class",
+    )
+    options, letter = _id_sms_mcq_field(correct, distractors)
+    question = (
+        f"<p>In a fictional {pack['place']}, tokens stand for cases. Day 1 has "
+        f"{day1} cases, then day 2 has {day2} cases if the count doubles "
+        "each step.</p>"
+        "<p>(i) If doubling continues, how many cases are there on day 3?</p>"
+        "<p>(ii) The day-3 count from (i) is</p>"
+    )
+    solution = (
+        f"(i) {day2} × 2 = <strong>{day3}</strong><br>"
+        f"(ii) <strong>{correct}</strong>"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Double the day-2 count, then remember "
+        "these are model counts, not a medical file."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        2,
+        graded_answer_number_fields(
+            (day3, letter),
+            ("Day-3 cases", "What the count is"),
+            field_types=("number", "mcq"),
+            field_options=(None, options),
+            format_hint="Double the day-2 count, then choose what those numbers are.",
+        ),
+    )
+
+
+_ID_SMS_FOUND_VIRUS_PACKS = (
+    {
+        "setting": "fictional sports-camp poster",
+        "clue": "the pathogen needs a host cell to multiply",
+    },
+    {
+        "setting": "fictional clinic teaching sheet",
+        "clue": "the pathogen is not a living cell and needs a host cell",
+    },
+    {
+        "setting": "fictional science-week display",
+        "clue": "the pathogen multiplies only inside a host cell",
+    },
+)
+
+
+@_id_sms_variant("foundational", "virus_abx_zero")
+def _infectious_disease_foundational_sms_virus_abx_zero():
+    pack = random.choice(_ID_SMS_FOUND_VIRUS_PACKS)
+    correct = "a virus, because it needs a host cell to multiply"
+    distractors = (
+        "a bacterium, because bacteria never need a host",
+        "a food group",
+        "a class attendance list",
+    )
+    options, letter = _id_sms_mcq_field(correct, distractors)
+    question = (
+        f"<p>A {pack['setting']} describes an infectious-disease model: "
+        f"{pack['clue']}.</p>"
+        "<p>(i) In this model the pathogen is</p>"
+        "<p>(ii) Using that classification from (i), how many virus "
+        "infections do antibiotics treat in this lesson's model?</p>"
+    )
+    solution = (
+        f"(i) <strong>{correct}</strong><br>"
+        "(ii) Antibiotics target bacteria, not viruses, so "
+        "<strong>0</strong>"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Name the pathogen from the host-cell "
+        "clue, then count how many virus infections antibiotics treat here."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        2,
+        graded_answer_number_fields(
+            (letter, 0),
+            ("Pathogen type", "Virus infections treated by antibiotics"),
+            field_types=("mcq", "number"),
+            field_options=(options, None),
+            format_hint="Classify the pathogen, then enter how many virus infections antibiotics treat here.",
+        ),
+    )
+
+
+_ID_SMS_INTER_OUTBREAK_PACKS = (
+    {"place": "fictional town clinic", "days": (2, 4, 8)},
+    {"place": "fictional camp medical tent", "days": (3, 6, 12)},
+    {"place": "fictional regional public table", "days": (4, 8, 16)},
+)
+
+
+@_id_sms_variant("intermediate", "outbreak_next_hygiene")
+def _infectious_disease_intermediate_sms_outbreak_next_hygiene():
+    pack = random.choice(_ID_SMS_INTER_OUTBREAK_PACKS)
+    d1, d2, d3 = pack["days"]
+    d4 = d3 * 2
+    labels = ["1", "2", "3"]
+    pick_raw, pick_bank, pick_count = _id_sms_pick_field(
+        (
+            "Hand hygiene and sanitation can cut some routes in this model",
+            "Outbreak numbers are public counts, not a pupil's medical file",
+        ),
+        (
+            "An outbreak graph is for blaming a named classmate",
+            "Sanitation never changes spread",
+        ),
+        2,
+    )
+    chart = outbreak_bars(title="Fictional outbreak model") if pack["days"] == (2, 4, 8) else bar_chart(
+        labels,
+        [d1, d2, d3],
+        title=f"Public case counts at a {pack['place']}",
+        desc=(
+            f"Bar chart of three public case counts: {d1}, {d2} and {d3}."
+        ),
+    )
+    question = (
+        f"<p>A {pack['place']} publishes a three-day model of cases: "
+        f"{d1}, then {d2}, then {d3}. The count doubles each day.</p>"
+        + str(chart)
+        + "<p>(i) How many cases does day 3 show?</p>"
+        "<p>(ii) If doubling continues, how many cases does the model give "
+        "for day 4?</p>"
+        "<p>(iii) Using those public counts, select the two ideas that belong "
+        "in this response.</p>"
+    )
+    solution = (
+        f"(i) Day 3 = <strong>{d3}</strong><br>"
+        f"(ii) {d3} × 2 = <strong>{d4}</strong><br>"
+        "(iii) <strong>Hygiene can cut routes</strong>; "
+        "<strong>counts are public, not a medical file</strong>"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Read day 3, double it for day 4, then "
+        "keep hygiene and public counts — not blame."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        3,
+        graded_answer_number_fields(
+            (d3, d4, pick_raw),
+            ("Day-3 cases", "Day-4 cases", "Response ideas"),
+            field_types=("number", "number", "pick"),
+            field_options=(None, None, pick_bank),
+            field_pick_counts=(None, None, pick_count),
+            format_hint="Read day 3, double it, then select two public-health ideas.",
+        ),
+    )
+
+
+_ID_SMS_INTER_VAX_PACKS = (
+    {"place": "fictional town vaccination campaign"},
+    {"place": "fictional regional immunisation poster"},
+    {"place": "fictional public-health week display"},
+)
+
+
+@_id_sms_variant("intermediate", "vax_campaign_status")
+def _infectious_disease_intermediate_sms_vax_campaign_status():
+    pack = random.choice(_ID_SMS_INTER_VAX_PACKS)
+    order_raw, order_bank = _id_sms_order_field(
+        (
+            "Immunity is the body's defence, innate or learned",
+            "A vaccine trains immunity using a safe exposure",
+        ),
+        (
+            "Antibiotics are a treatment for all viruses",
+            "The app should store whose jabs they have had",
+        ),
+    )
+    correct = "teaches the idea; it does not store vaccination status"
+    distractors = (
+        "stores whose injections they have had",
+        "diagnoses coughs from the campaign poster",
+        "replaces the teacher and the clinic",
+    )
+    options, letter = _id_sms_mcq_field(correct, distractors)
+    question = (
+        f"<p>A {pack['place']} explains immunity and vaccines using public "
+        "teaching material, not a list of who has been vaccinated.</p>"
+        "<p>(i) Order the defence idea, then the vaccine-as-training idea, "
+        "for this campaign.</p>"
+        "<p>(ii) Using that public-health teaching from (i), this app</p>"
+    )
+    solution = (
+        "(i) <strong>Immunity as defence</strong>, then "
+        "<strong>vaccine as training</strong><br>"
+        f"(ii) <strong>{correct}</strong>"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Defence first, then training; the app "
+        "does not store vaccination status."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        2,
+        graded_answer_number_fields(
+            (order_raw, letter),
+            ("Immunity then vaccine", "What this app does"),
+            field_types=("order", "mcq"),
+            field_options=(order_bank, options),
+            format_hint="Order defence then training, then choose what this app stores.",
+        ),
+    )
+
+
+_ID_SMS_INTER_ABX_PACKS = (
+    {
+        "setting": "fictional clinic teaching case",
+        "illness": "a typical virus infection in the model",
+    },
+    {
+        "setting": "fictional camp health briefing",
+        "illness": "a viral infection that needs a host cell",
+    },
+    {
+        "setting": "fictional public leaflet",
+        "illness": "a virus infection, not a bacterial one",
+    },
+)
+
+
+@_id_sms_variant("intermediate", "clinic_abx_resist")
+def _infectious_disease_intermediate_sms_clinic_abx_resist():
+    pack = random.choice(_ID_SMS_INTER_ABX_PACKS)
+    correct = (
+        "antibiotics target bacteria, not viruses, and misuse can feed resistance"
+    )
+    distractors = (
+        "viruses are a food group",
+        "vaccines are bacteria",
+        "the app must record every tablet",
+    )
+    options, letter = _id_sms_mcq_field(correct, distractors)
+    pick_raw, pick_bank, pick_count = _id_sms_pick_field(
+        (
+            "Hand hygiene and sanitation can still cut some routes",
+            "Outbreak and treatment ideas stay public; this app does not store prescriptions",
+        ),
+        (
+            "The quiz should list who was ill last week",
+            "Antibiotics treat all viruses in this model",
+        ),
+        2,
+    )
+    question = (
+        f"<p>A {pack['setting']} discusses {pack['illness']}.</p>"
+        "<p>(i) Giving antibiotics for that typical virus infection is a "
+        "poor fit because</p>"
+        "<p>(ii) Using the wrong-target idea from (i), select the two "
+        "statements that belong in this public-health model.</p>"
+    )
+    solution = (
+        f"(i) <strong>{correct}</strong><br>"
+        "(ii) <strong>Hygiene can still cut routes</strong>; "
+        "<strong>this app does not store prescriptions</strong>"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Antibiotics miss viruses and can feed "
+        "resistance; keep hygiene and public data, not a prescription file."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        2,
+        graded_answer_number_fields(
+            (letter, pick_raw),
+            ("Why antibiotics are a poor fit", "What still belongs"),
+            field_types=("mcq", "pick"),
+            field_options=(options, pick_bank),
+            field_pick_counts=(None, pick_count),
+            format_hint="Choose why antibiotics miss this virus, then select two fitting ideas.",
+        ),
+    )
+
+
+_ID_SMS_DIFF_HOST_PACKS = (
+    {
+        "setting": "fictional canteen chain",
+        "source": "a contaminated serving spoon",
+        "route": "contact with the spoon",
+        "host": "a later diner, who can then act as a further source",
+    },
+    {
+        "setting": "fictional camp cabin model",
+        "source": "a shared water bottle",
+        "route": "contact with the bottle",
+        "host": "the next person who drinks, who can then act as a further source",
+    },
+    {
+        "setting": "fictional clinic door-handle model",
+        "source": "an uncleaned handle",
+        "route": "contact with the handle",
+        "host": "the next visitor, who can then act as a further source",
+    },
+)
+
+
+@_id_sms_variant("difficult", "host_source_break")
+def _infectious_disease_difficult_sms_host_source_break():
+    pack = random.choice(_ID_SMS_DIFF_HOST_PACKS)
+    order_raw, order_bank = _id_sms_order_field(
+        (
+            f"Source: {pack['source']}",
+            f"Route: {pack['route']}",
+            f"New host: {pack['host']}",
+        ),
+        (
+            "Infection jumps with no route because of a rumour",
+            "The quiz should publish names from this model",
+        ),
+    )
+    correct = (
+        "breaking a route (hygiene, distance rules the teacher sets) can slow a chain"
+    )
+    distractors = (
+        "routes never matter once a new host exists",
+        "the quiz should publish names",
+        "bacteria equal viruses",
+    )
+    options, letter = _id_sms_mcq_field(correct, distractors)
+    pick_raw, pick_bank, pick_count = _id_sms_pick_field(
+        (
+            "Bacteria and viruses are different kinds of pathogen",
+            "Outbreak numbers are public counts, not a pupil's medical file",
+        ),
+        (
+            "Bacteria and viruses are the same object",
+            "The quiz should list who was ill last week",
+        ),
+        2,
+    )
+    question = (
+        f"<p>Staff model a {pack['setting']}: {pack['source']}, then "
+        f"{pack['route']}, then {pack['host']}.</p>"
+        + str(infection_chain(title="Fictional chain: new host can become a source"))
+        + "<p>(i) Order source, then route, then new host for this model.</p>"
+        "<p>(ii) Using that chain, a new host can later act as a source. "
+        "That is why</p>"
+        "<p>(iii) Select the two statements that belong with this public model.</p>"
+    )
+    solution = (
+        "(i) <strong>Source → route → new host</strong><br>"
+        f"(ii) <strong>{correct}</strong><br>"
+        "(iii) <strong>Different pathogens</strong>; "
+        "<strong>public counts, not a medical file</strong>"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Walk the chain, break the route because "
+        "a new host can become a source, and keep names out of the quiz."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        3,
+        graded_answer_number_fields(
+            (order_raw, letter, pick_raw),
+            ("Chain order", "Why breaking a route matters", "Statements that belong"),
+            field_types=("order", "mcq", "pick"),
+            field_options=(order_bank, options, pick_bank),
+            field_pick_counts=(None, None, pick_count),
+            format_hint="Order the chain, choose why the route matters, then select two fitting statements.",
+        ),
+    )
+
+
+_ID_SMS_DIFF_TOTAL_PACKS = (
+    {"place": "fictional town clinic table", "days": (2, 4, 8)},
+    {"place": "fictional camp public board", "days": (3, 6, 12)},
+    {"place": "fictional regional model", "days": (5, 10, 20)},
+)
+
+
+@_id_sms_variant("difficult", "outbreak_total_model")
+def _infectious_disease_difficult_sms_outbreak_total_model():
+    pack = random.choice(_ID_SMS_DIFF_TOTAL_PACKS)
+    d1, d2, d3 = pack["days"]
+    total = d1 + d2 + d3
+    labels = ["1", "2", "3"]
+    correct = "counts and patterns that can be checked, not a pupil's file"
+    distractors = (
+        "secret rumours only",
+        "a ranking of bodies",
+        "Moon phases as the only cause",
+    )
+    options, letter = _id_sms_mcq_field(correct, distractors)
+    chart = outbreak_bars(title="Fictional outbreak model") if pack["days"] == (2, 4, 8) else bar_chart(
+        labels,
+        [d1, d2, d3],
+        title=f"Public case counts at a {pack['place']}",
+        desc=(
+            f"Bar chart of three public case counts: {d1}, {d2} and {d3}."
+        ),
+    )
+    question = (
+        f"<p>Epidemiology staff publish a {pack['place']}: {d1} cases, "
+        f"then {d2}, then {d3} on three days of a doubling model.</p>"
+        + str(chart)
+        + "<p>(i) How many cases does day 3 show?</p>"
+        "<p>(ii) Using day 3 from (i) with the first two days, what is the "
+        "total number of cases in the three-day model?</p>"
+        "<p>(iii) Epidemiology in this lesson uses</p>"
+    )
+    solution = (
+        f"(i) Day 3 = <strong>{d3}</strong><br>"
+        f"(ii) {d1} + {d2} + {d3} = <strong>{total}</strong><br>"
+        f"(iii) <strong>{correct}</strong>"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Read day 3, add the three public counts, "
+        "then remember epidemiology uses checkable counts, not a pupil's file."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        3,
+        graded_answer_number_fields(
+            (d3, total, letter),
+            ("Day-3 cases", "Three-day total", "What epidemiology uses"),
+            field_types=("number", "number", "mcq"),
+            field_options=(None, None, options),
+            format_hint="Read day 3, add the three days, then choose what epidemiology uses.",
+        ),
+    )
+
+
+_ID_SMS_DIFF_ABX_PACKS = (
+    {"setting": "fictional clinic case discussion"},
+    {"setting": "fictional camp medical briefing"},
+    {"setting": "fictional public-health leaflet"},
+)
+
+
+@_id_sms_variant("difficult", "wrong_abx_safeguard")
+def _infectious_disease_difficult_sms_wrong_abx_safeguard():
+    pack = random.choice(_ID_SMS_DIFF_ABX_PACKS)
+    correct = (
+        "antibiotics target bacteria, not viruses, and misuse can feed resistance"
+    )
+    distractors = (
+        "viruses are food",
+        "vaccines are bacteria",
+        "the app must record every tablet",
+    )
+    options, letter = _id_sms_mcq_field(correct, distractors)
+    pick_raw, pick_bank, pick_count = _id_sms_pick_field(
+        (
+            "This app teaches the idea; it does not store vaccination or prescription status",
+            "A sticker or counter 'infection' is a model of spread, not a diagnosis",
+        ),
+        (
+            "The quiz should publish names of who was ill",
+            "Stickers in class prove a named pupil is ill",
+        ),
+        2,
+    )
+    question = (
+        f"<p>A {pack['setting']} asks whether antibiotics treat a typical "
+        "virus infection in this S2 model.</p>"
+        "<p>(i) How many virus infections are treated by antibiotics in this "
+        "lesson's model?</p>"
+        "<p>(ii) Using (i), giving antibiotics for a typical virus infection "
+        "is a poor fit because</p>"
+        "<p>(iii) Select the two safeguarding statements that belong with "
+        "this model.</p>"
+    )
+    solution = (
+        "(i) <strong>0</strong><br>"
+        f"(ii) <strong>{correct}</strong><br>"
+        "(iii) <strong>No status file in this app</strong>; "
+        "<strong>classroom tokens are a model, not a diagnosis</strong>"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Antibiotics treat 0 virus infections here; "
+        "misuse feeds resistance; the app does not diagnose or store status."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        3,
+        graded_answer_number_fields(
+            (0, letter, pick_raw),
+            (
+                "Virus infections treated by antibiotics",
+                "Why antibiotics are a poor fit",
+                "Safeguarding statements",
+            ),
+            field_types=("number", "mcq", "pick"),
+            field_options=(None, options, pick_bank),
+            field_pick_counts=(None, None, pick_count),
+            format_hint="Enter 0, choose why antibiotics miss viruses, then select two safeguarding statements.",
+        ),
+    )
+
+
+_ID_SITUATIONAL_POOLS = {
+    "foundational": [
+        _infectious_disease_foundational_sms_canteen_chain_break,
+        _infectious_disease_foundational_sms_token_double_safeguard,
+        _infectious_disease_foundational_sms_virus_abx_zero,
+    ],
+    "intermediate": [
+        _infectious_disease_intermediate_sms_outbreak_next_hygiene,
+        _infectious_disease_intermediate_sms_vax_campaign_status,
+        _infectious_disease_intermediate_sms_clinic_abx_resist,
+    ],
+    "difficult": [
+        _infectious_disease_difficult_sms_host_source_break,
+        _infectious_disease_difficult_sms_outbreak_total_model,
+        _infectious_disease_difficult_sms_wrong_abx_safeguard,
+    ],
+}
+
 eursc_science_infectious_disease, eursc_science_infectious_disease_variants = bind_eursc_topic(
-    'infectious_disease', _ID_POOLS, _ID_STANDARD
+    "infectious_disease",
+    _ID_POOLS,
+    _ID_STANDARD,
+    advanced_pools={SITUATIONAL_MULTI_STEP_MODE: _ID_SITUATIONAL_POOLS},
 )
 
 _CLASS_BANK = (

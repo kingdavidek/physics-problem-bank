@@ -635,6 +635,10 @@
 .free-response-field-row--order .free-response-field-check-btn {
     align-self: flex-start;
 }
+.free-response-inline.is-collect-only .free-response-field-check-btn,
+.free-response-inline.is-collect-only .free-response-check-btn {
+    display: none;
+}
 .free-response-inline .question-intro {
     margin-bottom: 4px;
 }

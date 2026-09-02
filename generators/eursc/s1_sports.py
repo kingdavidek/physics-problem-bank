@@ -1,4 +1,6 @@
 """S1 Unit 1.3 Sports — 1.3.1–1.3.4."""
+import random
+
 from generators.eursc.science_shared import (
     bind_eursc_topic,
     antagonistic_pair,
@@ -7,10 +9,13 @@ from generators.eursc.science_shared import (
     force_pair,
 )
 from generators.shared.utils import (
+    graded_answer_number_fields,
+    make_graded_problem,
     make_problem,
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
+from generators.shared.variant_utils import MULTI_STEP_MODE
 
 _LEVEL = "eursc"
 _SUBJECT = "science"
@@ -228,7 +233,456 @@ _MV_STANDARD = {
         'movement_difficult_pick_graph_false',
     ),
 }
-eursc_science_movement, eursc_science_movement_variants = bind_eursc_topic('movement', _MV_POOLS, _MV_STANDARD)
+
+
+def _mv_ms_variant(difficulty, suffix):
+    def decorator(builder):
+        def _fn():
+            return make_graded_problem(
+                builder(), difficulty, _LEVEL, _SUBJECT, "movement"
+            )
+
+        _fn.__name__ = f"movement_{difficulty}_ms_{suffix}"
+        _fn._kind = "number_fields"
+        _fn._randomizable = True
+        return _fn
+
+    return decorator
+
+
+_MV_MS_FOUND_SPEED_EXTRAPOLATE_PACKS = (
+    {"who": "Alex", "what": "warm-up lap", "d": 10, "t": 2, "t2": 3},
+    {"who": "Sam", "what": "timed drill", "d": 12, "t": 3, "t2": 4},
+    {"who": "Jordan", "what": "relay leg", "d": 20, "t": 4, "t2": 5},
+    {"who": "Casey", "what": "practice sprint", "d": 15, "t": 3, "t2": 2},
+)
+
+
+@_mv_ms_variant("foundational", "speed_extrapolate")
+def _movement_foundational_ms_speed_extrapolate():
+    pack = random.choice(_MV_MS_FOUND_SPEED_EXTRAPOLATE_PACKS)
+    speed = pack["d"] / pack["t"]
+    distance = speed * pack["t2"]
+    question = (
+        f"<p>In a fictional school athletics session, {pack['who']} runs "
+        f"{pack['what']}: {pack['d']} m in {pack['t']} s.</p>"
+        "<p>(i) Find the average speed in m/s.</p>"
+        f"<p>(ii) If {pack['who']} kept that average speed for another "
+        f"{pack['t2']} s, how many metres would that cover?</p>"
+    )
+    solution = (
+        f"(i) v = d/t = {pack['d']}/{pack['t']} = "
+        f"<strong>{speed:g}</strong> m/s<br>"
+        f"(ii) distance = v × t = {speed:g} × {pack['t2']} = "
+        f"<strong>{distance:g}</strong> m"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Work out the speed in (i), then use the "
+        "same value in (ii)."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        2,
+        graded_answer_number_fields(
+            (speed, distance),
+            ("Average speed (m/s)", "Distance (m)"),
+            format_hint="Use v = d/t in (i), then multiply by the extra time.",
+        ),
+    )
+
+
+_MV_MS_FOUND_MINUTES_SECONDS_PACKS = (
+    {"d": 60, "min": 1},
+    {"d": 120, "min": 2},
+    {"d": 180, "min": 3},
+)
+
+
+@_mv_ms_variant("foundational", "minutes_seconds")
+def _movement_foundational_ms_minutes_seconds():
+    pack = random.choice(_MV_MS_FOUND_MINUTES_SECONDS_PACKS)
+    seconds = pack["min"] * 60
+    speed = pack["d"] / seconds
+    question = (
+        f"<p>A fictional runner covers {pack['d']} m in {pack['min']} minute"
+        f"{'s' if pack['min'] != 1 else ''}.</p>"
+        f"<p>(i) Convert the time to seconds.</p>"
+        "<p>(ii) Find the average speed in m/s using metres and seconds.</p>"
+    )
+    solution = (
+        f"(i) {pack['min']} min = {pack['min']} × 60 = "
+        f"<strong>{seconds}</strong> s<br>"
+        f"(ii) v = d/t = {pack['d']}/{seconds} = <strong>{speed:g}</strong> m/s"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Convert minutes to seconds before using "
+        "v = d/t."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        2,
+        graded_answer_number_fields(
+            (seconds, speed),
+            ("Time (s)", "Average speed (m/s)"),
+            format_hint="Multiply minutes by 60, then divide distance by time.",
+        ),
+    )
+
+
+_MV_MS_FOUND_REST_SPEED_PACKS = (
+    {"d": 12, "t": 4},
+    {"d": 18, "t": 6},
+    {"d": 24, "t": 8},
+)
+
+
+@_mv_ms_variant("foundational", "rest_speed")
+def _movement_foundational_ms_rest_speed():
+    pack = random.choice(_MV_MS_FOUND_REST_SPEED_PACKS)
+    question = (
+        "<p>On a distance–time graph, a fictional athlete stays at "
+        f"{pack['d']} m for {pack['t']} s while the clock still runs.</p>"
+        "<p>(i) What is the average speed during that flat section, in m/s?</p>"
+        "<p>(ii) The athlete then runs another 10 m in 2 s. "
+        "What is the average speed for that moving section?</p>"
+    )
+    rest_speed = 0
+    move_speed = 5
+    solution = (
+        f"(i) Distance does not change, so v = 0/{pack['t']} = "
+        f"<strong>{rest_speed}</strong> m/s<br>"
+        "(ii) v = 10/2 = <strong>5</strong> m/s"
+    )
+    hint = (
+        "<strong>Key idea:</strong> A flat d–t section means zero speed; "
+        "use v = d/t on the sloping section."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        2,
+        graded_answer_number_fields(
+            (rest_speed, move_speed),
+            ("Speed during rest (m/s)", "Speed while moving (m/s)"),
+            format_hint="Rest is 0 m/s; divide 10 m by 2 s for the moving part.",
+        ),
+    )
+
+
+_MV_MS_INTER_GRAPH_READ_PACKS = (
+    {"d": 12, "t": 3, "t_total": 5},
+    {"d": 15, "t": 5, "t_total": 8},
+    {"d": 20, "t": 4, "t_total": 6},
+)
+
+
+@_mv_ms_variant("intermediate", "graph_read")
+def _movement_intermediate_ms_graph_read():
+    pack = random.choice(_MV_MS_INTER_GRAPH_READ_PACKS)
+    speed = pack["d"] / pack["t"]
+    distance = speed * pack["t_total"]
+    question = (
+        "<p>A distance–time graph for a fictional cyclist shows a straight "
+        f"slope from 0 m at 0 s to {pack['d']} m at {pack['t']} s.</p>"
+        "<p>(i) Find the average speed in m/s.</p>"
+        f"<p>(ii) If that speed stayed constant from the start, how far would "
+        f"the cyclist be at {pack['t_total']} s?</p>"
+    )
+    solution = (
+        f"(i) v = {pack['d']}/{pack['t']} = <strong>{speed:g}</strong> m/s<br>"
+        f"(ii) distance = {speed:g} × {pack['t_total']} = "
+        f"<strong>{distance:g}</strong> m"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Read distance and time from the slope, "
+        "then reuse the speed from (i)."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        2,
+        graded_answer_number_fields(
+            (speed, distance),
+            ("Average speed (m/s)", "Distance (m)"),
+            format_hint="Divide the graph readings, then multiply by the later time.",
+        ),
+    )
+
+
+_MV_MS_INTER_MINUTE_RUN_PACKS = (
+    {"d": 240, "min": 4, "t2": 10},
+    {"d": 300, "min": 5, "t2": 8},
+    {"d": 360, "min": 6, "t2": 5},
+)
+
+
+@_mv_ms_variant("intermediate", "minute_run")
+def _movement_intermediate_ms_minute_run():
+    pack = random.choice(_MV_MS_INTER_MINUTE_RUN_PACKS)
+    seconds = pack["min"] * 60
+    speed = pack["d"] / seconds
+    distance = speed * pack["t2"]
+    question = (
+        f"<p>A fictional runner covers {pack['d']} m in {pack['min']} minutes.</p>"
+        f"<p>(i) Convert the time to seconds.</p>"
+        "<p>(ii) Find the average speed in m/s.</p>"
+        f"<p>(iii) At that speed, how many metres would be covered in "
+        f"{pack['t2']} s?</p>"
+    )
+    solution = (
+        f"(i) {pack['min']} × 60 = <strong>{seconds}</strong> s<br>"
+        f"(ii) v = {pack['d']}/{seconds} = <strong>{speed:g}</strong> m/s<br>"
+        f"(iii) distance = {speed:g} × {pack['t2']} = "
+        f"<strong>{distance:g}</strong> m"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Convert to seconds, find v, then multiply "
+        "by the shorter time in (iii)."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        3,
+        graded_answer_number_fields(
+            (seconds, speed, distance),
+            ("Time (s)", "Average speed (m/s)", "Distance (m)"),
+            format_hint="Convert, divide, then use the speed from (ii).",
+        ),
+    )
+
+
+_MV_MS_INTER_TWO_LEG_PACKS = (
+    {"d1": 25, "t1": 5, "t2": 3},
+    {"d1": 30, "t1": 6, "t2": 4},
+    {"d1": 40, "t1": 8, "t2": 5},
+)
+
+
+@_mv_ms_variant("intermediate", "two_leg")
+def _movement_intermediate_ms_two_leg():
+    pack = random.choice(_MV_MS_INTER_TWO_LEG_PACKS)
+    speed = pack["d1"] / pack["t1"]
+    distance = speed * pack["t2"]
+    question = (
+        "<p>In a fictional relay practice, one athlete runs "
+        f"{pack['d1']} m in {pack['t1']} s.</p>"
+        "<p>(i) Find the average speed in m/s.</p>"
+        f"<p>(ii) A teammate keeps that speed for {pack['t2']} s. "
+        "How many metres do they cover?</p>"
+    )
+    solution = (
+        f"(i) v = {pack['d1']}/{pack['t1']} = <strong>{speed:g}</strong> m/s<br>"
+        f"(ii) distance = {speed:g} × {pack['t2']} = "
+        f"<strong>{distance:g}</strong> m"
+    )
+    hint = (
+        "<strong>Key idea:</strong> The teammate uses the speed you found "
+        "in (i)."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        2,
+        graded_answer_number_fields(
+            (speed, distance),
+            ("Average speed (m/s)", "Distance (m)"),
+            format_hint="Find v from the first leg, then multiply by the second time.",
+        ),
+    )
+
+
+_MV_MS_DIFF_KM_LAP_PACKS = (
+    {"km": 0.6, "min": 3, "t2": 6},
+    {"km": 0.9, "min": 3, "t2": 10},
+    {"km": 1.2, "min": 4, "t2": 5},
+)
+
+
+@_mv_ms_variant("difficult", "km_lap")
+def _movement_difficult_ms_km_lap():
+    pack = random.choice(_MV_MS_DIFF_KM_LAP_PACKS)
+    metres = int(pack["km"] * 1000)
+    seconds = pack["min"] * 60
+    speed = metres / seconds
+    distance = speed * pack["t2"]
+    question = (
+        f"<p>A fictional swimmer completes {pack['km']} km in {pack['min']} "
+        f"minutes during training.</p>"
+        "<p>(i) Write the distance in metres.</p>"
+        "<p>(ii) Write the time in seconds.</p>"
+        "<p>(iii) Find the average speed in m/s.</p>"
+        f"<p>(iv) At that speed, how many metres would be covered in "
+        f"{pack['t2']} s?</p>"
+    )
+    solution = (
+        f"(i) {pack['km']} km = <strong>{metres}</strong> m<br>"
+        f"(ii) {pack['min']} min = <strong>{seconds}</strong> s<br>"
+        f"(iii) v = {metres}/{seconds} = <strong>{speed:g}</strong> m/s<br>"
+        f"(iv) distance = {speed:g} × {pack['t2']} = "
+        f"<strong>{distance:g}</strong> m"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Convert km and minutes to m and s before "
+        "using v = d/t; reuse that speed in (iv)."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        4,
+        graded_answer_number_fields(
+            (metres, seconds, speed, distance),
+            (
+                "Distance (m)",
+                "Time (s)",
+                "Average speed (m/s)",
+                "Distance (m)",
+            ),
+            format_hint="Convert units, divide, then multiply by the extra time.",
+        ),
+    )
+
+
+_MV_MS_DIFF_JOURNEY_AVERAGE_PACKS = (
+    {"d1": 80, "t1": 10, "d2": 60, "t2": 20},
+    {"d1": 50, "t1": 5, "d2": 70, "t2": 14},
+    {"d1": 90, "t1": 15, "d2": 60, "t2": 12},
+)
+
+
+@_mv_ms_variant("difficult", "journey_average")
+def _movement_difficult_ms_journey_average():
+    pack = random.choice(_MV_MS_DIFF_JOURNEY_AVERAGE_PACKS)
+    speed1 = pack["d1"] / pack["t1"]
+    speed2 = pack["d2"] / pack["t2"]
+    total_d = pack["d1"] + pack["d2"]
+    total_t = pack["t1"] + pack["t2"]
+    avg_speed = total_d / total_t
+    question = (
+        "<p>A fictional athlete runs two sections of a training route.</p>"
+        f"<p>Section A: {pack['d1']} m in {pack['t1']} s.</p>"
+        f"<p>Section B: {pack['d2']} m in {pack['t2']} s.</p>"
+        "<p>(i) Find the average speed for section A in m/s.</p>"
+        "<p>(ii) Find the average speed for section B in m/s.</p>"
+        "<p>(iii) Find the average speed for the whole journey using total "
+        "distance and total time.</p>"
+    )
+    solution = (
+        f"(i) v = {pack['d1']}/{pack['t1']} = <strong>{speed1:g}</strong> m/s<br>"
+        f"(ii) v = {pack['d2']}/{pack['t2']} = <strong>{speed2:g}</strong> m/s<br>"
+        f"(iii) total d = {total_d} m, total t = {total_t} s → "
+        f"v = {total_d}/{total_t} = <strong>{avg_speed:g}</strong> m/s"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Whole-journey average speed uses all the "
+        "distance and all the time, not just the faster section."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        3,
+        graded_answer_number_fields(
+            (speed1, speed2, avg_speed),
+            (
+                "Section A speed (m/s)",
+                "Section B speed (m/s)",
+                "Whole-journey average speed (m/s)",
+            ),
+            format_hint="Divide each section, then use total distance ÷ total time.",
+        ),
+    )
+
+
+_MV_MS_DIFF_GRAPH_REST_PACKS = (
+    {"d1": 20, "t1": 4, "rest": 2, "d2": 15, "t2": 3},
+    {"d1": 16, "t1": 4, "rest": 3, "d2": 12, "t2": 3},
+    {"d1": 24, "t1": 6, "rest": 2, "d2": 10, "t2": 2},
+)
+
+
+@_mv_ms_variant("difficult", "graph_rest")
+def _movement_difficult_ms_graph_rest():
+    pack = random.choice(_MV_MS_DIFF_GRAPH_REST_PACKS)
+    speed1 = pack["d1"] / pack["t1"]
+    speed2 = pack["d2"] / pack["t2"]
+    total_d = pack["d1"] + pack["d2"]
+    total_t = pack["t1"] + pack["rest"] + pack["t2"]
+    avg_speed = total_d / total_t
+    question = (
+        "<p>A distance–time graph for a fictional runner shows:</p>"
+        f"<ul><li>a slope from 0 m to {pack['d1']} m in {pack['t1']} s;</li>"
+        f"<li>a flat section at {pack['d1']} m for {pack['rest']} s;</li>"
+        f"<li>then a slope to {pack['d1'] + pack['d2']} m in a further "
+        f"{pack['t2']} s.</li></ul>"
+        "<p>(i) Find the average speed during the first moving section.</p>"
+        "<p>(ii) Find the average speed during the second moving section.</p>"
+        "<p>(iii) Find the average speed for the whole journey (include the "
+        "rest time in the total time).</p>"
+    )
+    solution = (
+        f"(i) v = {pack['d1']}/{pack['t1']} = <strong>{speed1:g}</strong> m/s<br>"
+        f"(ii) v = {pack['d2']}/{pack['t2']} = <strong>{speed2:g}</strong> m/s<br>"
+        f"(iii) total d = {total_d} m, total t = {total_t} s → "
+        f"v = {total_d}/{total_t} = <strong>{avg_speed:g}</strong> m/s"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Rest time still counts in the total time "
+        "for a whole-journey average, even though speed was zero then."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        3,
+        graded_answer_number_fields(
+            (speed1, speed2, avg_speed),
+            (
+                "First section speed (m/s)",
+                "Second section speed (m/s)",
+                "Whole-journey average speed (m/s)",
+            ),
+            format_hint="Use each slope separately, then total distance ÷ total time.",
+        ),
+    )
+
+
+_MV_MULTI_STEP_POOLS = {
+    "foundational": [
+        _movement_foundational_ms_speed_extrapolate,
+        _movement_foundational_ms_minutes_seconds,
+        _movement_foundational_ms_rest_speed,
+    ],
+    "intermediate": [
+        _movement_intermediate_ms_graph_read,
+        _movement_intermediate_ms_minute_run,
+        _movement_intermediate_ms_two_leg,
+    ],
+    "difficult": [
+        _movement_difficult_ms_km_lap,
+        _movement_difficult_ms_journey_average,
+        _movement_difficult_ms_graph_rest,
+    ],
+}
+
+_MV_ADVANCED_POOLS = {
+    MULTI_STEP_MODE: _MV_MULTI_STEP_POOLS,
+}
+
+eursc_science_movement, eursc_science_movement_variants = bind_eursc_topic(
+    "movement",
+    _MV_POOLS,
+    _MV_STANDARD,
+    advanced_pools=_MV_ADVANCED_POOLS,
+)
 
 
 _FS_POOLS = {

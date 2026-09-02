@@ -1766,13 +1766,146 @@ def check_coordinate_pairs(correct_raw, user_answer):
     }
 
 
+_NUMERIC_NUMBER_FIELD_TYPES = frozenset({
+    '',
+    'number',
+    'number_estimate',
+    'fraction',
+    'ratio',
+    'ratio_exact',
+})
+
+
+def _split_number_field_payload(raw) -> tuple[list[str], str]:
+    s = str(raw or '')
+    sep = '\x1e' if '\x1e' in s else '|'
+    return [part.strip() for part in s.split(sep)], sep
+
+
+def _number_field_types_are_numeric(field_types, n_parts: int) -> bool:
+    if not field_types:
+        return True
+    types = list(field_types)
+    while len(types) < n_parts:
+        types.append('number')
+    return all(
+        str(kind or 'number').strip().lower() in _NUMERIC_NUMBER_FIELD_TYPES
+        for kind in types[:n_parts]
+    )
+
+
+def _checker_name_for_number_field(field_type: str | None, expected_part: str) -> str:
+    ft = str(field_type or '').strip().lower()
+    if ft in ('pick', 'order'):
+        return 'proof_steps'
+    if ft == 'mcq':
+        return 'mcq'
+    if ft and ft in CHECKERS and ft not in ('number_fields', 'number'):
+        return ft
+    if expected_part.startswith('pick|'):
+        return 'proof_steps'
+    if _parse_proof_steps_raw(expected_part) is not None:
+        return 'proof_steps'
+    if len(expected_part) == 1 and expected_part.isalpha():
+        return 'mcq'
+    if _parse_number_field_part(expected_part) is not None:
+        return 'number'
+    return 'keyword'
+
+
+def _check_one_number_field(field_type, expected_part, user_part):
+    ft = str(field_type or '').strip().lower()
+    numeric_expected = _parse_number_field_part(expected_part)
+    if numeric_expected is not None and (
+        not ft or ft in _NUMERIC_NUMBER_FIELD_TYPES
+    ):
+        numeric_user = _parse_number_field_part(user_part)
+        expected_fmt = _format_number_field_part(*numeric_expected)
+        if numeric_user is None:
+            return {
+                'correct': False,
+                'normalized_user': str(user_part or '').strip(),
+                'normalized_correct': expected_fmt,
+                'feedback': 'Enter a valid number, fraction, or ratio (a:b).',
+            }
+        ok = (
+            numeric_expected[0] == numeric_user[0]
+            and numeric_expected[1] == numeric_user[1]
+        )
+        return {
+            'correct': ok,
+            'normalized_user': _format_number_field_part(*numeric_user),
+            'normalized_correct': expected_fmt,
+            'feedback': 'Correct!' if ok else 'Not quite — check this field.',
+        }
+    checker_name = _checker_name_for_number_field(ft, expected_part)
+    try:
+        return check_answer(checker_name, expected_part, user_part)
+    except ValueError:
+        return {
+            'correct': False,
+            'normalized_user': str(user_part or '').strip(),
+            'normalized_correct': str(expected_part or '').strip(),
+            'feedback': 'Could not check this part.',
+        }
+
+
 @register_checker('number_fields')
-def check_number_fields(correct_raw, user_answer):
-    expected = _parse_number_fields(correct_raw)
-    if expected is None:
+def check_number_fields(correct_raw, user_answer, field_types=None):
+    expected_parts, sep = _split_number_field_payload(correct_raw)
+    if not expected_parts or any(not part for part in expected_parts):
         raise ValueError('invalid_correct_answer')
 
-    normalized_correct = _normalize_number_fields(correct_raw)
+    numeric_expected = _parse_number_fields(correct_raw)
+    use_numeric = (
+        numeric_expected is not None
+        and _number_field_types_are_numeric(field_types, len(expected_parts))
+    )
+    if use_numeric:
+        normalized_correct = _normalize_number_fields(correct_raw)
+        n_total = len(numeric_expected)
+        user_s = str(user_answer or '').strip()
+        if not user_s:
+            return {
+                'correct': False,
+                'normalized_user': '',
+                'normalized_correct': normalized_correct,
+                'feedback': 'Complete every answer field.',
+                'score': 0,
+                'score_total': n_total,
+            }
+
+        actual = _parse_number_fields(user_s)
+        if actual is None or len(actual) != len(numeric_expected):
+            return {
+                'correct': False,
+                'normalized_user': user_s,
+                'normalized_correct': normalized_correct,
+                'feedback': (
+                    f'Enter a valid number, fraction, or ratio (a:b) in all {n_total} fields. '
+                    'Use at most one slash per fraction.'
+                ),
+                'score': 0,
+                'score_total': n_total,
+            }
+
+        n_ok = sum(
+            1
+            for (_, exp_val), (_, act_val) in zip(numeric_expected, actual)
+            if exp_val == act_val
+        )
+        correct = n_ok == n_total
+        return {
+            'correct': correct,
+            'normalized_user': _normalize_number_fields(user_s),
+            'normalized_correct': normalized_correct,
+            'feedback': 'Correct!' if correct else 'Not quite — check each field.',
+            'score': n_ok,
+            'score_total': n_total,
+        }
+
+    n_total = len(expected_parts)
+    normalized_correct = sep.join(expected_parts)
     user_s = str(user_answer or '').strip()
     if not user_s:
         return {
@@ -1780,29 +1913,48 @@ def check_number_fields(correct_raw, user_answer):
             'normalized_user': '',
             'normalized_correct': normalized_correct,
             'feedback': 'Complete every answer field.',
+            'score': 0,
+            'score_total': n_total,
         }
 
-    actual = _parse_number_fields(user_s)
-    if actual is None or len(actual) != len(expected):
+    if sep == '\x1e' and sep not in user_s:
+        user_parts = [user_s]
+    else:
+        user_parts = [part.strip() for part in user_s.split(sep)]
+
+    types = list(field_types or [])
+    while len(types) < n_total:
+        types.append(None)
+
+    if len(user_parts) != n_total:
         return {
             'correct': False,
             'normalized_user': user_s,
             'normalized_correct': normalized_correct,
-            'feedback': (
-                f'Enter a valid number, fraction, or ratio (a:b) in all {len(expected)} fields. '
-                'Use at most one slash per fraction.'
-            ),
+            'feedback': f'Complete all {n_total} parts.',
+            'score': 0,
+            'score_total': n_total,
         }
 
-    correct = all(
-        exp_val == act_val
-        for (_, exp_val), (_, act_val) in zip(expected, actual)
-    )
+    part_results = [
+        _check_one_number_field(types[i], expected_parts[i], user_parts[i])
+        for i in range(n_total)
+    ]
+    n_ok = sum(1 for item in part_results if item.get('correct'))
+    all_ok = n_ok == n_total
     return {
-        'correct': correct,
-        'normalized_user': _normalize_number_fields(user_s),
-        'normalized_correct': normalized_correct,
-        'feedback': 'Correct!' if correct else 'Not quite — check each field.',
+        'correct': all_ok,
+        'normalized_user': sep.join(
+            str(item.get('normalized_user') or '') for item in part_results
+        ),
+        'normalized_correct': sep.join(
+            str(item.get('normalized_correct') or expected_parts[i])
+            for i, item in enumerate(part_results)
+        ),
+        'feedback': 'Correct!' if all_ok else 'Not quite — check each field.',
+        'score': n_ok,
+        'score_total': n_total,
+        'part_results': part_results,
     }
 
 

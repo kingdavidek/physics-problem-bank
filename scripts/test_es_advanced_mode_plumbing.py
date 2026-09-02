@@ -71,7 +71,7 @@ def test_bound_advanced_pools_are_isolated():
 
 
 def test_registry_and_app_filtering():
-    key = ("eursc", "science", "measurement")
+    key = ("eursc", "science", "science_lab")
     assert topic_mode_capabilities(*key) == ("standard",)
     assert _normalize_generator_mode(*key, "mcq") == "standard"
     assert _normalize_generator_mode(*key, MULTI_STEP_MODE) == "standard"
@@ -106,7 +106,7 @@ def test_registry_and_app_filtering():
         )
         with app.test_client() as client:
             html = client.get(
-                "/?level=eursc&subject=science&topic=measurement"
+                "/?level=eursc&subject=science&topic=science_lab"
                 "&mode=multi_step"
             ).data.decode()
         assert 'data-modes="standard,multi_step,situational_multi_step"' in html

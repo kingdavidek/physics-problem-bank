@@ -172,6 +172,25 @@
 
     function triggerFreeResponseCheck() {
       if (!fr || checking) return;
+      if ((fr.getAttribute('data-answer-type') || '') === 'number_fields') {
+        var nextBtn = null;
+        fr.querySelectorAll('.free-response-field-row').forEach(function (row) {
+          if (nextBtn) return;
+          if (row.dataset.fieldCorrect === '1') return;
+          nextBtn = row.querySelector('.free-response-field-check-btn');
+        });
+        if (nextBtn) {
+          checking = true;
+          checkBtn.disabled = true;
+          nextBtn.click();
+          return;
+        }
+        var stateFields = collectState();
+        if (stateFields.checked) {
+          setAnswered(stateFields);
+        }
+        return;
+      }
       var hiddenCheck = fr.querySelector('.free-response-check-btn, .free-response-field-check-btn');
       if (!hiddenCheck) return;
       checking = true;
@@ -232,6 +251,13 @@
       fr.querySelectorAll('input, textarea, select').forEach(function (input) {
         input.addEventListener('input', refreshDraftButton);
         input.addEventListener('change', refreshDraftButton);
+      });
+      fr.addEventListener('click', function (event) {
+        var target = event.target;
+        if (!target || !target.closest) return;
+        if (target.closest('.mcq-btn, .free-response-proof-step, .free-response-proof-remove, .free-response-proof-clear')) {
+          window.setTimeout(refreshDraftButton, 0);
+        }
       });
     }
 

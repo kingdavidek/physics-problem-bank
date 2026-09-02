@@ -95,7 +95,11 @@ def _score_count(slots):
 
 def grade_frozen_answer(problem, user_answer):
     """Grade from the stored problem only. Ignore any client-supplied keys."""
-    from generators.shared.answer_checkers import MAX_USER_ANSWER_LEN, check_answer
+    from generators.shared.answer_checkers import (
+        MAX_USER_ANSWER_LEN,
+        check_answer,
+        check_number_fields,
+    )
 
     if user_answer is None or str(user_answer).strip() == '':
         raise ValueError('missing_answer')
@@ -113,7 +117,14 @@ def grade_frozen_answer(problem, user_answer):
     if raw is not None:
         answer_type = problem.get('answer_type') or 'number'
         try:
-            result = check_answer(answer_type, str(raw), text)
+            if answer_type == 'number_fields':
+                result = check_number_fields(
+                    str(raw),
+                    text,
+                    field_types=problem.get('answer_field_types'),
+                )
+            else:
+                result = check_answer(answer_type, str(raw), text)
         except (TypeError, ValueError):
             return text.strip(), False
         return text.strip(), bool(result.get('correct'))

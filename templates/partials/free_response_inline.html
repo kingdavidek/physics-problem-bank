@@ -1,7 +1,7 @@
-{% if problem.correct_answer_raw or fr_shell %}
-<div class="free-response-inline"
+{% if problem.correct_answer_raw or fr_shell or fr_collect_only %}
+<div class="free-response-inline{% if fr_collect_only %} is-collect-only{% endif %}"
      {% if fr_id %}id="{{ fr_id }}"{% endif %}
-     {% if not problem.correct_answer_raw %}hidden{% endif %}
+     {% if fr_collect_only %}data-collect-only="1"{% elif not problem.correct_answer_raw %}hidden{% endif %}
      data-correct-raw="{{ problem.correct_answer_raw or '' }}"
      data-answer-type="{{ problem.answer_type or 'number' }}"
      data-label-a="{{ (problem.answer_labels[0] if problem.answer_labels else '') | e }}"
@@ -9,6 +9,7 @@
      data-answer-labels="{{ (problem.answer_labels or []) | tojson | forceescape }}"
      data-field-types="{{ (problem.answer_field_types or []) | tojson | forceescape }}"
      data-field-options="{{ (problem.answer_field_options or []) | tojson | forceescape }}"
+     data-field-pick-counts="{{ (problem.answer_field_pick_counts or []) | tojson | forceescape }}"
      data-field-row-sizes="{{ (problem.answer_field_row_sizes or []) | tojson | forceescape }}"
      data-field-group-labels="{{ (problem.answer_field_group_labels or []) | tojson | forceescape }}"
      data-step-bank="{{ (problem.answer_step_bank or []) | tojson | forceescape }}"
@@ -230,6 +231,7 @@
         {% set field_ph = 'Number or fraction' %}
     {% endif %}
     <div class="free-response-field-row{% if field_type == 'pick' %} free-response-field-row--pick{% elif field_type == 'order' %} free-response-field-row--order{% elif field_type in ('text', 'keyword', 'sql') %} free-response-field-row--text{% if field_type == 'sql' %} free-response-field-row--sql{% endif %}{% endif %}"
+         data-field-type="{{ field_type }}"
          {% if field_type == 'pick' %}
          {% set pick_n = (problem.answer_field_pick_counts or [])[field_idx] if problem.answer_field_pick_counts and field_idx < (problem.answer_field_pick_counts|length) else none %}
          {% if pick_n is not none %}data-pick-count="{{ pick_n }}"{% endif %}

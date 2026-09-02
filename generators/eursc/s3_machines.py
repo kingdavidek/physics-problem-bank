@@ -1,4 +1,6 @@
 """S3 Unit 3.1 Machines — 3.1.1–3.1.6."""
+import random
+
 from generators.eursc.science_shared import (
     bind_eursc_topic,
     charge_pair,
@@ -8,10 +10,13 @@ from generators.eursc.science_shared import (
     sankey_bars,
 )
 from generators.shared.utils import (
+    graded_answer_number_fields,
+    make_graded_problem,
     make_problem,
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
+from generators.shared.variant_utils import SITUATIONAL_MULTI_STEP_MODE
 
 _LEVEL = "eursc"
 _SUBJECT = "science"
@@ -278,7 +283,604 @@ _EN_STANDARD = {
         'energy_difficult_pick_not_en',
     ),
 }
-eursc_science_energy, eursc_science_energy_variants = bind_eursc_topic('energy', _EN_POOLS, _EN_STANDARD)
+def _en_sms_variant(difficulty, suffix):
+    def decorator(builder):
+        def _fn():
+            return make_graded_problem(
+                builder(), difficulty, _LEVEL, _SUBJECT, "energy"
+            )
+
+        _fn.__name__ = f"energy_{difficulty}_sms_{suffix}"
+        _fn._kind = "number_fields"
+        _fn._randomizable = True
+        return _fn
+
+    return decorator
+
+
+def _en_sms_mcq_field(correct, distractors):
+    pool = [correct, *distractors]
+    random.shuffle(pool)
+    letters = "ABCD"[: len(pool)]
+    return pool, letters[pool.index(correct)]
+
+
+def _en_sms_order_field(steps, distractors):
+    step_ids = tuple(f"s{i + 1}" for i in range(len(steps)))
+    bank = [{"id": sid, "text": text} for sid, text in zip(step_ids, steps)]
+    for i, text in enumerate(distractors):
+        bank.append({"id": f"d{i + 1}", "text": text})
+    random.shuffle(bank)
+    raw = f"1|{'|'.join(step_ids)}"
+    return raw, bank
+
+
+def _en_sms_pick_field(correct_texts, distractor_texts, pick_count):
+    correct_ids = tuple(f"c{i + 1}" for i in range(len(correct_texts)))
+    bank = [{"id": cid, "text": text} for cid, text in zip(correct_ids, correct_texts)]
+    for i, text in enumerate(distractor_texts):
+        bank.append({"id": f"d{i + 1}", "text": text})
+    random.shuffle(bank)
+    raw = f"pick|{pick_count}|{'|'.join(correct_ids)}"
+    return raw, bank, pick_count
+
+
+_EN_SMS_FOUND_USEFUL_PACKS = (
+    {"who": "Alex", "device": "public lamp example", "inp": 100, "waste": 40},
+    {"who": "Sam", "device": "public motor example", "inp": 80, "waste": 30},
+    {"who": "Jordan", "device": "public heater poster", "inp": 50, "waste": 20},
+)
+
+
+@_en_sms_variant("foundational", "appliance_useful_public")
+def _energy_foundational_sms_appliance_useful_public():
+    pack = random.choice(_EN_SMS_FOUND_USEFUL_PACKS)
+    useful = pack["inp"] - pack["waste"]
+    correct = "compare public figures, not a private diary"
+    distractors = (
+        "rank this person's home against the class",
+        "upload a household bill to the quiz",
+        "skip conservation because some energy is wasted",
+    )
+    options, letter = _en_sms_mcq_field(correct, distractors)
+    question = (
+        f"<p>{pack['who']} (fictional) reads a public appliance table for a "
+        f"{pack['device']}: input {pack['inp']} units, wasted {pack['waste']} "
+        "units.</p>"
+        "<p>(i) What is the useful output in the same units?</p>"
+        "<p>(ii) A science use of that useful figure from (i) is</p>"
+    )
+    solution = (
+        f"(i) {pack['inp']} − {pack['waste']} = <strong>{useful}</strong><br>"
+        f"(ii) <strong>{correct}</strong>"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Subtract wasted from input, then treat "
+        "the result as a public figure, not a home diary."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        2,
+        graded_answer_number_fields(
+            (useful, letter),
+            ("Useful output (units)", "How to use the figure"),
+            field_types=("number", "mcq"),
+            field_options=(None, options),
+            format_hint="Subtract wasted from input, then choose how to use the public figure.",
+        ),
+    )
+
+
+_EN_SMS_FOUND_SANKEY_PACKS = (
+    {"place": "classroom poster of a public lamp example"},
+    {"place": "museum display of a public motor example"},
+    {"place": "science-week board of a public heater example"},
+)
+
+
+@_en_sms_variant("foundational", "sankey_useful_letter")
+def _energy_foundational_sms_sankey_useful_letter():
+    pack = random.choice(_EN_SMS_FOUND_SANKEY_PACKS)
+    useful = 40
+    correct = "B"
+    distractors = ("A", "C", "a household bill")
+    options, letter = _en_sms_mcq_field(correct, distractors)
+    question = (
+        f"<p>A fictional {pack['place']} shows this Sankey-style split of a "
+        "public 100-unit input.</p>"
+        + str(sankey_bars(title="Fictional public Sankey-style split"))
+        + "<p>(i) Input bar A is 100 units and wasted bar C is 60 units. "
+        "What is the useful output in the same units?</p>"
+        "<p>(ii) Using the useful amount from (i), which letter on the "
+        "diagram is the useful output?</p>"
+    )
+    solution = (
+        "(i) 100 − 60 = <strong>40</strong><br>"
+        "(ii) The 40-unit useful bar is letter <strong>B</strong>"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Useful = input − wasted; that useful bar "
+        "is the labelled split that matches 40 units."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        2,
+        graded_answer_number_fields(
+            (useful, letter),
+            ("Useful output (units)", "Useful-output letter"),
+            field_types=("number", "mcq"),
+            field_options=(None, options),
+            format_hint="Subtract 60 from 100, then choose the letter of that useful bar.",
+        ),
+    )
+
+
+_EN_SMS_FOUND_COMPARE_PACKS = (
+    {
+        "a": "public kettle figure",
+        "a_use": 70,
+        "b": "public lamp figure",
+        "b_use": 40,
+    },
+    {
+        "a": "public motor figure",
+        "a_use": 55,
+        "b": "public fan figure",
+        "b_use": 25,
+    },
+    {
+        "a": "public cooker figure",
+        "a_use": 80,
+        "b": "public radio figure",
+        "b_use": 20,
+    },
+)
+
+
+@_en_sms_variant("foundational", "compare_nodiary")
+def _energy_foundational_sms_compare_nodiary():
+    pack = random.choice(_EN_SMS_FOUND_COMPARE_PACKS)
+    gap = pack["a_use"] - pack["b_use"]
+    pick_raw, pick_bank, pick_count = _en_sms_pick_field(
+        (
+            "Compare the useful-output gap as public figures",
+            "Do not store a private energy diary from this table",
+        ),
+        (
+            "Rank households from the useful-output gap",
+            "Upload a live meter reading to the quiz",
+        ),
+        2,
+    )
+    question = (
+        "<p>A fictional public appliance table lists useful output as "
+        f"{pack['a_use']} units for a {pack['a']} and {pack['b_use']} units "
+        f"for a {pack['b']}.</p>"
+        "<p>(i) How many more useful units does the first figure show?</p>"
+        "<p>(ii) Using that gap from (i), select the two ideas that belong.</p>"
+    )
+    solution = (
+        f"(i) {pack['a_use']} − {pack['b_use']} = <strong>{gap}</strong><br>"
+        "(ii) Treat the gap as a <strong>public comparison</strong> and "
+        "<strong>do not store a private diary</strong>"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Subtract the two public useful figures, "
+        "then keep named stores — not a diary or a home league."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        2,
+        graded_answer_number_fields(
+            (gap, pick_raw),
+            ("Useful-output gap (units)", "Ideas that belong"),
+            field_types=("number", "pick"),
+            field_options=(None, pick_bank),
+            field_pick_counts=(None, pick_count),
+            format_hint="Subtract the useful figures, then select two ideas that belong.",
+        ),
+    )
+
+
+_EN_SMS_INTER_WASTE_PACKS = (
+    {"who": "Sam", "device": "public motor table", "inp": 80, "useful": 55},
+    {"who": "Alex", "device": "public lamp table", "inp": 100, "useful": 40},
+    {"who": "Casey", "device": "public pump poster", "inp": 60, "useful": 45},
+)
+
+
+@_en_sms_variant("intermediate", "waste_still_there")
+def _energy_intermediate_sms_waste_still_there():
+    pack = random.choice(_EN_SMS_INTER_WASTE_PACKS)
+    waste = pack["inp"] - pack["useful"]
+    correct = "the energy is still there as a less useful form"
+    distractors = (
+        "the wasted bar means energy vanished",
+        "store this person's household bill",
+        "rank this person against the class",
+    )
+    options, letter = _en_sms_mcq_field(correct, distractors)
+    question = (
+        f"<p>{pack['who']} (fictional) reads a {pack['device']}: input "
+        f"{pack['inp']} units, useful output {pack['useful']} units.</p>"
+        "<p>(i) What is the wasted output in the same units?</p>"
+        "<p>(ii) Using the wasted amount from (i), a science reply to the "
+        "claim that this energy vanished is</p>"
+    )
+    solution = (
+        f"(i) {pack['inp']} − {pack['useful']} = <strong>{waste}</strong><br>"
+        f"(ii) <strong>{correct}</strong>"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Wasted = input − useful; that wasted "
+        "amount is still there in a less useful form."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        2,
+        graded_answer_number_fields(
+            (waste, letter),
+            ("Wasted output (units)", "What wasted energy means"),
+            field_types=("number", "mcq"),
+            field_options=(None, options),
+            format_hint="Subtract useful from input, then choose what the wasted bar means.",
+        ),
+    )
+
+
+_EN_SMS_INTER_ORDER_PACKS = (
+    {"device": "public generator poster", "inp": 90, "useful": 60},
+    {"device": "public tram example", "inp": 120, "useful": 80},
+    {"device": "public workshop motor", "inp": 70, "useful": 50},
+)
+
+
+@_en_sms_variant("intermediate", "waste_then_conserve_order")
+def _energy_intermediate_sms_waste_then_conserve_order():
+    pack = random.choice(_EN_SMS_INTER_ORDER_PACKS)
+    waste = pack["inp"] - pack["useful"]
+    order_raw, order_bank = _en_sms_order_field(
+        (
+            "Energy can be transformed from one form to another",
+            "Energy can be transferred from one store or place to another",
+            "Conservation means energy is not created or destroyed in this model",
+        ),
+        (
+            "A machine can create energy from nothing",
+            "The quiz should store a private energy diary",
+        ),
+    )
+    question = (
+        f"<p>A fictional {pack['device']} lists input {pack['inp']} units and "
+        f"useful output {pack['useful']} units on a public table.</p>"
+        "<p>(i) What is the wasted output in the same units?</p>"
+        "<p>(ii) Using that wasted amount from (i) as energy that is still "
+        "there, order transformation, then transfer, then conservation.</p>"
+    )
+    solution = (
+        f"(i) {pack['inp']} − {pack['useful']} = <strong>{waste}</strong><br>"
+        "(ii) <strong>Transform → transfer → conservation</strong> "
+        "(the wasted units are still there; they are not created from nothing)"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Find the wasted units, then walk form "
+        "change, place change, and not-created-or-destroyed."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        2,
+        graded_answer_number_fields(
+            (waste, order_raw),
+            ("Wasted output (units)", "Transform, transfer, conservation"),
+            field_types=("number", "order"),
+            field_options=(None, order_bank),
+            format_hint="Subtract useful from input, then order the three conservation ideas.",
+        ),
+    )
+
+
+_EN_SMS_INTER_SOURCE_PACKS = (
+    {"source": "public wind-farm leaflet", "inp": 100, "waste": 25},
+    {"source": "public hydro-scheme poster", "inp": 80, "waste": 20},
+    {"source": "public solar-array table", "inp": 60, "waste": 15},
+)
+
+
+@_en_sms_variant("intermediate", "source_impact")
+def _energy_intermediate_sms_source_impact():
+    pack = random.choice(_EN_SMS_INTER_SOURCE_PACKS)
+    useful = pack["inp"] - pack["waste"]
+    pick_raw, pick_bank, pick_count = _en_sms_pick_field(
+        (
+            "Energy can be transformed from one form to another",
+            "Conservation means energy is not created or destroyed in this model",
+        ),
+        (
+            "A machine can create energy from nothing",
+            "Homes should be ranked from this source leaflet",
+        ),
+        2,
+    )
+    question = (
+        f"<p>A fictional {pack['source']} gives a public Sankey-style split: "
+        f"input {pack['inp']} units, wasted {pack['waste']} units.</p>"
+        "<p>(i) What is the useful output in the same units?</p>"
+        "<p>(ii) Using that public split from (i), select the two ideas that "
+        "belong when linking this source to impacts.</p>"
+    )
+    solution = (
+        f"(i) {pack['inp']} − {pack['waste']} = <strong>{useful}</strong><br>"
+        "(ii) <strong>Transformation</strong> and <strong>conservation</strong>; "
+        "do not create energy from nothing or rank households"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Useful = input − wasted; impacts stay "
+        "public environmental ideas under conservation."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        2,
+        graded_answer_number_fields(
+            (useful, pick_raw),
+            ("Useful output (units)", "Ideas that belong"),
+            field_types=("number", "pick"),
+            field_options=(None, pick_bank),
+            field_pick_counts=(None, pick_count),
+            format_hint="Subtract wasted from input, then select two ideas that belong.",
+        ),
+    )
+
+
+_EN_SMS_DIFF_INPUT_PACKS = (
+    {"device": "public workshop tool", "useful": 70, "waste": 20},
+    {"device": "public tram motor", "useful": 60, "waste": 30},
+    {"device": "public lamp example", "useful": 40, "waste": 60},
+)
+
+
+@_en_sms_variant("difficult", "reconstruct_input")
+def _energy_difficult_sms_reconstruct_input():
+    pack = random.choice(_EN_SMS_DIFF_INPUT_PACKS)
+    inp = pack["useful"] + pack["waste"]
+    correct = "show how an input splits into useful and wasted parts"
+    distractors = (
+        "rank classmates by home use",
+        "store household bills",
+        "claim energy is created",
+    )
+    options, letter = _en_sms_mcq_field(correct, distractors)
+    pick_raw, pick_bank, pick_count = _en_sms_pick_field(
+        (
+            "Conservation means energy is not created or destroyed in this model",
+            "Energy can be transferred from one store or place to another",
+        ),
+        (
+            "A machine can create energy from nothing",
+            "The quiz should store a private energy diary",
+        ),
+        2,
+    )
+    question = (
+        f"<p>A fictional public table for a {pack['device']} lists useful "
+        f"output {pack['useful']} units and wasted output {pack['waste']} "
+        "units.</p>"
+        "<p>(i) If they add to the input, what is the input in the same units?</p>"
+        "<p>(ii) Using that input from (i), a Sankey-style split is used to</p>"
+        "<p>(iii) Select the two statements that belong with this public split.</p>"
+    )
+    solution = (
+        f"(i) {pack['useful']} + {pack['waste']} = <strong>{inp}</strong><br>"
+        f"(ii) <strong>{correct}</strong><br>"
+        "(iii) <strong>Conservation</strong> and <strong>transfer</strong>; "
+        "no creation from nothing and no private diary"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Input = useful + wasted; the split shows "
+        "that input, still under conservation, not a household diary."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        3,
+        graded_answer_number_fields(
+            (inp, letter, pick_raw),
+            ("Input (units)", "What a Sankey-style split shows", "Statements that belong"),
+            field_types=("number", "mcq", "pick"),
+            field_options=(None, options, pick_bank),
+            field_pick_counts=(None, None, pick_count),
+            format_hint="Add useful and wasted, choose what the split shows, then select two fitting statements.",
+        ),
+    )
+
+
+_EN_SMS_DIFF_GAP_PACKS = (
+    {
+        "a": "public cooker figure",
+        "a_in": 100,
+        "a_w": 20,
+        "b": "public lamp figure",
+        "b_in": 100,
+        "b_w": 60,
+    },
+    {
+        "a": "public motor figure",
+        "a_in": 80,
+        "a_w": 20,
+        "b": "public fan figure",
+        "b_in": 80,
+        "b_w": 50,
+    },
+    {
+        "a": "public pump figure",
+        "a_in": 90,
+        "a_w": 30,
+        "b": "public radio figure",
+        "b_in": 90,
+        "b_w": 70,
+    },
+)
+
+
+@_en_sms_variant("difficult", "two_device_gap")
+def _energy_difficult_sms_two_device_gap():
+    pack = random.choice(_EN_SMS_DIFF_GAP_PACKS)
+    useful_a = pack["a_in"] - pack["a_w"]
+    useful_b = pack["b_in"] - pack["b_w"]
+    gap = useful_a - useful_b
+    correct = "use public data; do not rank households here"
+    distractors = (
+        "publish a league of whose home uses least energy",
+        "upload meters from the class",
+        "skip conservation because the useful amounts differ",
+    )
+    options, letter = _en_sms_mcq_field(correct, distractors)
+    question = (
+        "<p>Jordan (fictional) compares two rows of a public appliance table.</p>"
+        f"<ul><li>{pack['a']}: input {pack['a_in']} units, wasted {pack['a_w']} "
+        "units</li>"
+        f"<li>{pack['b']}: input {pack['b_in']} units, wasted {pack['b_w']} "
+        "units</li></ul>"
+        "<p>(i) What is the useful output of the first row?</p>"
+        "<p>(ii) Using (i), how many more useful units does the first row "
+        "show than the second row?</p>"
+        "<p>(iii) The lesson says to</p>"
+    )
+    solution = (
+        f"(i) {pack['a_in']} − {pack['a_w']} = <strong>{useful_a}</strong><br>"
+        f"(ii) second useful = {pack['b_in']} − {pack['b_w']} = {useful_b}; "
+        f"{useful_a} − {useful_b} = <strong>{gap}</strong><br>"
+        f"(iii) <strong>{correct}</strong>"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Find each useful output from input − wasted, "
+        "subtract, then keep the comparison public — no household league."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        3,
+        graded_answer_number_fields(
+            (useful_a, gap, letter),
+            (
+                "First useful output (units)",
+                "Useful-output gap (units)",
+                "How to use the table",
+            ),
+            field_types=("number", "number", "mcq"),
+            field_options=(None, None, options),
+            format_hint="Find the first useful output, subtract the second, then choose how to use the table.",
+        ),
+    )
+
+
+_EN_SMS_DIFF_THERMAL_PACKS = (
+    {"device": "public lamp example", "inp": 100, "useful": 40},
+    {"device": "public motor example", "inp": 80, "useful": 55},
+    {"device": "public heater poster", "inp": 90, "useful": 70},
+)
+
+
+@_en_sms_variant("difficult", "thermal_limit")
+def _energy_difficult_sms_thermal_limit():
+    pack = random.choice(_EN_SMS_DIFF_THERMAL_PACKS)
+    waste = pack["inp"] - pack["useful"]
+    correct = (
+        "that it does not collect private bills or replace a meter reading at home"
+    )
+    distractors = (
+        "that forms cannot be named",
+        "that Sankey bars are illegal",
+        "that energy is created",
+    )
+    options, letter = _en_sms_mcq_field(correct, distractors)
+    pick_raw, pick_bank, pick_count = _en_sms_pick_field(
+        (
+            "Thermal energy is a less useful form in many wasted-output stories",
+            "Conservation means energy is not created or destroyed in this model",
+        ),
+        (
+            "The quiz should store a private energy diary",
+            "A machine can create energy from nothing",
+        ),
+        2,
+    )
+    question = (
+        f"<p>A fictional public table for a {pack['device']} lists input "
+        f"{pack['inp']} units and useful output {pack['useful']} units.</p>"
+        "<p>(i) What is the wasted output in the same units?</p>"
+        "<p>(ii) A limit of this lesson, when using that wasted figure from "
+        "(i), is</p>"
+        "<p>(iii) Select the two statements that belong with this wasted "
+        "output.</p>"
+    )
+    solution = (
+        f"(i) {pack['inp']} − {pack['useful']} = <strong>{waste}</strong><br>"
+        f"(ii) <strong>{correct}</strong><br>"
+        "(iii) The wasted bar is often <strong>thermal</strong> and still "
+        "counts under <strong>conservation</strong>"
+    )
+    hint = (
+        "<strong>Key idea:</strong> Find the wasted units, keep them as a "
+        "less useful form under conservation, and do not collect private bills."
+    )
+    return (
+        question,
+        solution,
+        hint,
+        3,
+        graded_answer_number_fields(
+            (waste, letter, pick_raw),
+            (
+                "Wasted output (units)",
+                "A limit of this lesson",
+                "Statements that belong",
+            ),
+            field_types=("number", "mcq", "pick"),
+            field_options=(None, options, pick_bank),
+            field_pick_counts=(None, None, pick_count),
+            format_hint="Subtract useful from input, choose a lesson limit, then select two fitting statements.",
+        ),
+    )
+
+
+_EN_SITUATIONAL_POOLS = {
+    "foundational": [
+        _energy_foundational_sms_appliance_useful_public,
+        _energy_foundational_sms_sankey_useful_letter,
+        _energy_foundational_sms_compare_nodiary,
+    ],
+    "intermediate": [
+        _energy_intermediate_sms_waste_still_there,
+        _energy_intermediate_sms_waste_then_conserve_order,
+        _energy_intermediate_sms_source_impact,
+    ],
+    "difficult": [
+        _energy_difficult_sms_reconstruct_input,
+        _energy_difficult_sms_two_device_gap,
+        _energy_difficult_sms_thermal_limit,
+    ],
+}
+
+eursc_science_energy, eursc_science_energy_variants = bind_eursc_topic(
+    "energy",
+    _EN_POOLS,
+    _EN_STANDARD,
+    advanced_pools={SITUATIONAL_MULTI_STEP_MODE: _EN_SITUATIONAL_POOLS},
+)
 
 _CHARGE_BANK = (
     {"id": "friction", "text": "Charging by friction can separate charge in this model"},

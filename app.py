@@ -770,6 +770,12 @@ def _problem_client_payload(problem):
 _BLOCK_HTML_MARKERS = ('<svg', '<div', '<table', '<pre', '<figure')
 
 
+@app.template_filter('readable_multipart_answer')
+def readable_multipart_answer(value):
+    """Show structured number_fields answers without the RS separator."""
+    return str(value or '').replace('\x1e', ' · ')
+
+
 @app.template_filter('split_question_sections')
 def split_question_sections(value, section_keys):
     """Split a multipart question into intro + labelled sections for inline fields."""
@@ -2439,6 +2445,7 @@ def _live_catalogue_topics():
                 'subject': subject,
                 'topic': slug,
                 'label': cfg.get('name', slug.replace('_', ' ').title()),
+                'modes': topic_mode_capabilities(level, subject, slug),
             })
     return out
 
@@ -6893,7 +6900,16 @@ def api_v1_problems_check():
             )
 
     try:
-        result = check_answer(answer_type, correct_answer_raw, user_answer)
+        if not partial_field and answer_type == 'number_fields':
+            from generators.shared.answer_checkers import check_number_fields
+            field_types = problem.get('answer_field_types') if session_bound else None
+            result = check_number_fields(
+                correct_answer_raw,
+                user_answer,
+                field_types=field_types,
+            )
+        else:
+            result = check_answer(answer_type, correct_answer_raw, user_answer)
     except ValueError as exc:
         message = str(exc)
         if message.startswith('unknown_answer_type:'):

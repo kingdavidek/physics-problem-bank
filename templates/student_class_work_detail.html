@@ -18,17 +18,19 @@
 {% endif %}
 
 {% for problem in work.problems %}
+{% set fr_collect_only = false %}
+{% set fr_shell = false %}
 <section class="section-panel">
     <div class="section-panel-header">Question {{ problem.index + 1 }}</div>
     <div class="section-panel-body">
         <div class="quiz-runner-question">{{ (problem.question_html or problem.question or '') | safe }}</div>
         {% if problem.answered %}
-        <p class="list-row-meta">Your answer: {{ problem.user_answer }} · {% if problem.correct %}Correct{% else %}Incorrect{% endif %}</p>
+        <p class="list-row-meta">Your answer: {{ problem.user_answer | readable_multipart_answer }} · {% if problem.correct %}Correct{% else %}Incorrect{% endif %}</p>
         {% if problem.solution_html %}
         <div class="quiz-runner-question">{{ problem.solution_html | safe }}</div>
         {% endif %}
         {% else %}
-        <form method="POST" class="auth-form">
+        <form method="POST" class="auth-form{% if problem.answer_type == 'number_fields' %} class-work-answer-form{% endif %}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="index" value="{{ problem.index }}">
             {% if problem.options %}
@@ -40,6 +42,13 @@
                 </label>
                 {% endfor %}
             </div>
+            {% elif problem.answer_type == 'number_fields' %}
+            <input type="hidden" name="user_answer" class="class-work-user-answer" value="">
+            {% set fr_collect_only = true %}
+            {% set fr_shell = true %}
+            {% set fr_id = 'class-work-fr-' ~ problem.index %}
+            {% include 'partials/free_response_inline.html' %}
+            <p class="class-work-fields-feedback" aria-live="polite"></p>
             {% else %}
             <div class="form-group">
                 <label for="class-work-answer-{{ problem.index }}">Your answer</label>
