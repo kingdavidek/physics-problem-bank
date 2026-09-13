@@ -89,6 +89,14 @@ S2_UNIT21_ENABLED = {
     "atoms_molecules": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
 }
 
+S2_UNIT22_ENABLED = {
+    "healthy_living": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+    "infectious_disease": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+    "noninfectious_disease": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+    "dependence_addiction": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+    "tobacco": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+}
+
 ENABLED_ADVANCED = {
     **PILOT_ENABLED,
     **S1_UNIT11_ENABLED,
@@ -96,6 +104,7 @@ ENABLED_ADVANCED = {
     **S1_UNIT13_ENABLED,
     **S1_UNIT14_ENABLED,
     **S2_UNIT21_ENABLED,
+    **S2_UNIT22_ENABLED,
 }
 
 STANDARD_SNAPSHOT = {
@@ -433,9 +442,9 @@ def test_unavailable_cells_fail_closed():
 
     with app.test_client() as client:
         cases = (
-            ("healthy_living", MULTI_STEP_MODE),
+            ("vision", MULTI_STEP_MODE),
             ("energy", MULTI_STEP_MODE),
-            ("infectious_disease", MULTI_STEP_MODE),
+            ("electric_current", SITUATIONAL_MULTI_STEP_MODE),
             ("smell", MULTI_STEP_MODE),
             ("reproductive_anatomy", SITUATIONAL_MULTI_STEP_MODE),
             ("interoception", MULTI_STEP_MODE),

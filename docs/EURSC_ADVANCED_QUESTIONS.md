@@ -2,7 +2,7 @@
 
 **Scope:** `eursc/science` advanced Practice questions only  
 **Sources:** `docs/EUROPEAN_SCHOOL_SCIENCE.md` and the `SYLLABUS_MODULES` manifest in `generators/eursc/science_shared.py`  
-**Status:** contract + mode plumbing shipped; **operational pilot (scope A) signed 2026-09-02**. **S1 Batch 2.1 (Unit 1.1) enabled 2026-09-02.** Remaining S1 batches, S2–S3 waves, and the whole-matrix audit are not done. This document remains the authoring contract; it does not by itself enable remaining matrix cells.
+**Status:** contract + mode plumbing shipped; **operational pilot (scope A) signed 2026-09-02**. **S1 wave complete (Batches 2.1–2.4, 2026-09-02). S2 Batch 3.1 Astronomy (2026-09-02) and Batch 3.2 Health (2026-09-12) enabled.** Remaining: S2 Batch 3.3 Senses, the S3 wave, and the whole-matrix audit. This document remains the authoring contract; it does not by itself enable remaining matrix cells.
 
 This contract adds two possible advanced question modes without changing the
 curriculum, lesson banks, lesson quizzes, or existing scoring contract:
@@ -223,7 +223,7 @@ unchanged.
 | **Manual / a11y** | Automated HTML checks in the pilot-exit smoke (Practice mode picker, teacher set-work filter, class-work collect-only banks, Quick Test field Check). Remaining visual click-through: restart the local Flask process so `data-modes` matches this tree, then spot-check Practice home (labelled Mode control, viewport-fit). |
 | **QA owner** | Automated gate: the smokes above. Remaining live-server visual pass: **David**. |
 | **Code on branch** | Plumbing `a4cf79d`; pilot content + downstream `0e4d83a` on `cursor/cloud-agent-1787823476595-0do93`. At sign-off, QA hardening and `test_es_advanced_pilot_exit_smoke.py` were still uncommitted — land those before treating the branch as merged to `main`. |
-| **Track status** | Pilot **signed** (scope A). The advanced-question **track** is **not complete** until the post-S3 whole-matrix audit. S1 wave and **S2 Batch 3.1 (Unit 2.1 Astronomy)** are in this tree; later S2 batches wait on safeguarding gates. |
+| **Track status** | Pilot **signed** (scope A). The advanced-question **track** is **not complete** until the post-S3 whole-matrix audit. S1 wave, **S2 Batch 3.1 (Unit 2.1 Astronomy)** and **S2 Batch 3.2 (Unit 2.2 Health)** are in this tree; Batch 3.3 (senses) waits on its safeguarding gate. |
 
 ### S1 wave
 
@@ -289,6 +289,18 @@ tier limits for `smell`, `touch`, `taste`, `proprioception_balance`, and
 | **Gate** | Fictional planetarium/telescope/lab scenarios; public evidence and scale models; no personal disclosure. |
 | **Smokes** | `scripts/test_es_s2_unit21_universe_advanced_smoke.py`, updated `test_es_advanced_pilot_exit_smoke.py`, `test_es_advanced_mode_plumbing.py`, `test_es5_universe_smoke.py` regression. |
 | **Next** | Batch 3.2 Unit 2.2 Health (`healthy_living` … `tobacco`). Dedicated safeguarding gate before authoring. |
+
+#### Batch 3.2 — Unit 2.2 Health (2026-09-12)
+
+| Field | Record |
+|---|---|
+| **Topics** | `healthy_living`, `infectious_disease` MS (completes the pilot slug; its SMS pools stay in `s2_health.py`), `noninfectious_disease`, `dependence_addiction`, `tobacco` |
+| **Enabled cells** | `healthy_living`, `noninfectious_disease`, `dependence_addiction`, `tobacco`: MS (I/D) + SMS (F/I/D). `infectious_disease`: MS (F/I/D). Foundational MS stays **—** for the four I/D-only slugs (matrix). 69 new variant functions in `generators/eursc/s2_unit22_health_advanced.py`, three named blueprints per enabled cell, pack tuples (≥3 entries) where a blueprint randomises a scenario. |
+| **Safeguarding gate** | Written into the module docstring and enforced by the smoke: every stem is a third-person fictional case, textbook/public table, or anonymous aggregate and names itself as fictional; no second-person body, diet, sleep, screen, mood, relationship, substance-use, smoking/vaping or family-health prompts (`DISCLOSE_RE` plus a Unit 2.2 `HEALTH_DISCLOSE_RE`); no classmate ranking; distress and dependence cases signpost a trusted adult or qualified service and the generator never diagnoses; public-health figures are labelled as textbook/poster values. Mortality, prevalence and trial numbers are teaching values, not live statistics. |
+| **Graders** | Existing only: `number_fields` with `number`, `mcq`, `keyword`, `order`, `pick`. Every variant self-grades in the smoke via a client-shaped answer. |
+| **Smokes** | New `scripts/test_es_s2_unit22_health_advanced_smoke.py` (capabilities, foundational-MS fail-closed, grader-ready ×6 renders, same-variant pin, pack-once check, lesson/standard snapshots, API generate). Updated `test_es_advanced_pilot_exit_smoke.py` (`S2_UNIT22_ENABLED`; fail-closed API fixtures moved to `vision` MS / `electric_current` SMS), `test_es_advanced_mode_plumbing.py` (no-advanced fixture moved from `healthy_living` to `electric_current`), `test_es_infectious_disease_sms_smoke.py` (slug now advertises MS too). Regressions green: `test_es6_health_smoke.py`, `test_es10_whole_suite_smoke.py`, `test_es_practice_slots_smoke.py`, `test_es_advanced_downstream_smoke.py`, `test_es_s2_unit21_universe_advanced_smoke.py`. Full runner 81/83 — the two failures (`test_answer_check_smoke.py` ethics `pick_counts`, `test_es_science_svg_smoke.py` force/work `{{ force_vectors_fig }}`) pre-exist on the untouched branch HEAD and are unrelated to this batch. |
+| **Fixture note** | `vision` and `electric_current` are temporary "no advanced modes" fixtures; Batch 3.3 (senses) and the S3 wave must move them again. The permanent fail-closed cells remain `smell` MS, `interoception` MS, `reproductive_anatomy` SMS. |
+| **Next** | Batch 3.3 Unit 2.3 Senses (`vision` … `nonhuman_senses`). Dedicated safeguarding gate: tier limits for `touch`, `taste`, `proprioception_balance`; `smell` MS and `interoception` MS stay **—**; no personal sensory tests. |
 
 ### S3 wave
 

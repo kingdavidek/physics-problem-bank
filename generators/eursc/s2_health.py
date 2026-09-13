@@ -1,6 +1,17 @@
 """S2 Unit 2.2 Health — 2.2.1–2.2.5."""
 import random
 
+from generators.eursc.s2_unit22_health_advanced import (
+    DEPENDENCE_ADDICTION_MS_POOLS,
+    DEPENDENCE_ADDICTION_SMS_POOLS,
+    HEALTHY_LIVING_MS_POOLS,
+    HEALTHY_LIVING_SMS_POOLS,
+    INFECTIOUS_DISEASE_MS_POOLS,
+    NONINFECTIOUS_DISEASE_MS_POOLS,
+    NONINFECTIOUS_DISEASE_SMS_POOLS,
+    TOBACCO_MS_POOLS,
+    TOBACCO_SMS_POOLS,
+)
 from generators.eursc.science_shared import (
     bind_eursc_topic,
     habit_bars,
@@ -14,7 +25,10 @@ from generators.shared.utils import (
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
-from generators.shared.variant_utils import SITUATIONAL_MULTI_STEP_MODE
+from generators.shared.variant_utils import (
+    MULTI_STEP_MODE,
+    SITUATIONAL_MULTI_STEP_MODE,
+)
 from models.svg_kit import bar_chart
 
 _LEVEL = "eursc"
@@ -209,7 +223,13 @@ _HL_STANDARD = {
     ),
 }
 eursc_science_healthy_living, eursc_science_healthy_living_variants = bind_eursc_topic(
-    'healthy_living', _HL_POOLS, _HL_STANDARD
+    'healthy_living',
+    _HL_POOLS,
+    _HL_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: HEALTHY_LIVING_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: HEALTHY_LIVING_SMS_POOLS,
+    },
 )
 
 _PATH_BANK = (
@@ -981,7 +1001,10 @@ eursc_science_infectious_disease, eursc_science_infectious_disease_variants = bi
     "infectious_disease",
     _ID_POOLS,
     _ID_STANDARD,
-    advanced_pools={SITUATIONAL_MULTI_STEP_MODE: _ID_SITUATIONAL_POOLS},
+    advanced_pools={
+        MULTI_STEP_MODE: INFECTIOUS_DISEASE_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: _ID_SITUATIONAL_POOLS,
+    },
 )
 
 _CLASS_BANK = (
@@ -1066,7 +1089,13 @@ _NI_STANDARD = {
     ),
 }
 eursc_science_noninfectious_disease, eursc_science_noninfectious_disease_variants = bind_eursc_topic(
-    'noninfectious_disease', _NI_POOLS, _NI_STANDARD
+    'noninfectious_disease',
+    _NI_POOLS,
+    _NI_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: NONINFECTIOUS_DISEASE_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: NONINFECTIOUS_DISEASE_SMS_POOLS,
+    },
 )
 
 _PLEA_BANK = (
@@ -1151,7 +1180,13 @@ _DA_STANDARD = {
     ),
 }
 eursc_science_dependence_addiction, eursc_science_dependence_addiction_variants = bind_eursc_topic(
-    'dependence_addiction', _DA_POOLS, _DA_STANDARD
+    'dependence_addiction',
+    _DA_POOLS,
+    _DA_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: DEPENDENCE_ADDICTION_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: DEPENDENCE_ADDICTION_SMS_POOLS,
+    },
 )
 
 _TOB_BANK = (
@@ -1235,4 +1270,12 @@ _TB_STANDARD = {
         'tobacco_difficult_pick_prev_not',
     ),
 }
-eursc_science_tobacco, eursc_science_tobacco_variants = bind_eursc_topic('tobacco', _TB_POOLS, _TB_STANDARD)
+eursc_science_tobacco, eursc_science_tobacco_variants = bind_eursc_topic(
+    'tobacco',
+    _TB_POOLS,
+    _TB_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: TOBACCO_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: TOBACCO_SMS_POOLS,
+    },
+)
