@@ -223,7 +223,7 @@ unchanged.
 | **Manual / a11y** | Automated HTML checks in the pilot-exit smoke (Practice mode picker, teacher set-work filter, class-work collect-only banks, Quick Test field Check). Remaining visual click-through: restart the local Flask process so `data-modes` matches this tree, then spot-check Practice home (labelled Mode control, viewport-fit). |
 | **QA owner** | Automated gate: the smokes above. Remaining live-server visual pass: **David**. |
 | **Code on branch** | Plumbing `a4cf79d`; pilot content + downstream `0e4d83a` on `cursor/cloud-agent-1787823476595-0do93`. At sign-off, QA hardening and `test_es_advanced_pilot_exit_smoke.py` were still uncommitted — land those before treating the branch as merged to `main`. |
-| **Track status** | Pilot **signed** (scope A). The advanced-question **track** is **not complete** until the post-S3 whole-matrix audit. S1 wave and the full S2 wave (Batches 3.1–3.3) are in this tree; the S3 wave waits on its no-power / no-\(V=IR\) content tests. |
+| **Track status** | Pilot **signed** (scope A). The advanced-question **track** is **not complete** until the post-S3 whole-matrix audit. All three waves (S1 Batches 2.1–2.4, S2 3.1–3.3, S3 4.1–4.2) and the whole-matrix audit smoke are in this tree. |
 
 ### S1 wave
 
@@ -321,6 +321,45 @@ power calculations in `force_work_machines` and \(V=IR\)/resistance calculations
 in `electric_current`. Confirm project questions grade planning and evidence
 only, and confirm environmental scenarios use supplied public/aggregate data
 rather than household or location-linked disclosure.
+
+#### Batch 4.1 — Unit 3.1 Machines (2026-09-13)
+
+| Field | Record |
+|---|---|
+| **Topics** | `force_work_machines`, `energy` MS (completes the pilot slug; its SMS pools stay in `s3_machines.py`), `electrostatics`, `electric_current`, `magnetism`, `robotics_project` |
+| **Enabled cells** | All per matrix: MS + SMS at F/I/D for `force_work_machines`, `electrostatics`, `electric_current`, `robotics_project`; `energy` MS (F/I/D); `magnetism` MS (I/D) + SMS (F/I/D) — foundational MS stays **—**. 96 new variant functions in `generators/eursc/s3_unit31_machines_advanced.py`, three named blueprints per cell, pack tuples (≥3) wherever a blueprint randomises. |
+| **Content gate** | Enforced over stems, solutions, hints **and every option bank**: `force_work_machines` items use \(W = Fd\) in joules and never mention power, watts or work per unit time (`POWER_RE`); `electric_current` items are qualitative (loop, series/parallel, conductor/insulator, switch, heating/lighting/magnetic effects, ammeter-in-series / voltmeter-across) and never mention \(V = IR\), resistance, resistors or ohms (`VIR_RE`); `robotics_project` items grade requirements, component choice, sense–decide–act logic, test evidence, budgets and iteration only — the physical robot, private code and home-workshop photos are never graded; no household wiring, home-shock, private-bill or build-league prompts (`MACHINES_DISCLOSE_RE`). The lesson banks are untouched: they still name the "force divided by time" and "V = IR" misconceptions inside distractors to reject, which is outside this gate. |
+| **Graders** | Existing only: `number_fields` with `number`, `mcq`, `keyword`, `order`, `pick`. |
+| **Smokes** | New `scripts/test_es_s3_unit31_machines_advanced_smoke.py` (capabilities, `magnetism` foundational MS fail-closed, grader-ready ×6 renders with both content gates, same-variant pin, pack-once check on the crane variant, lesson/standard snapshots, API generate). Updated `test_es_advanced_pilot_exit_smoke.py` (`S3_UNIT31_ENABLED`; fail-closed API fixtures now `food_environment` MS, `magnetism` MS at foundational, `ecology_field_project` SMS), `test_es_advanced_mode_plumbing.py` (the "no advanced modes" case is pinned with `TOPIC_MODE_CAPABILITY_OVERRIDES` because no real slug will lack advanced modes after Batch 4.2), `test_es_energy_sms_smoke.py` (slug now advertises MS). Regressions green: `test_es8_machines_smoke.py`, `test_es10_whole_suite_smoke.py`, `test_es_practice_slots_smoke.py`, `test_es_advanced_downstream_smoke.py`. |
+| **Next** | Batch 4.2 Unit 3.2 (`food_environment` … `ecology_field_project`): supplied public/aggregate environmental data only, no household or location-linked disclosure; project topics grade planning and evidence only. Then the whole-matrix audit. |
+
+#### Batch 4.2 — Unit 3.2 Living Earth (2026-09-13)
+
+| Field | Record |
+|---|---|
+| **Topics** | `food_environment`, `ecosystems_cycles`, `ecosystem_characteristics`, `classification_biodiversity`, `ecology_field_project` |
+| **Enabled cells** | Full matrix: MS + SMS at F/I/D for all five. 90 new variant functions in `generators/eursc/s3_unit32_living_earth_advanced.py`, three named blueprints per cell, pack tuples (≥3) wherever a blueprint randomises. With this batch **every one of the 46 slugs advertises at least one advanced mode**. |
+| **Safeguarding gate** | Enforced over stems, solutions, hints and every option bank (`LIVING_EARTH_DISCLOSE_RE`): supplied public lifecycle / footprint / water / land tables, fictional reserves, farms, canteens and field stations, or aggregate survey data only — never a pupil's household, diet, plate, bin, garden, address, postcode or travel; nothing ranks homes, families or gardens; field-project items grade the question, risk plan, sampling, records, analysis and reflection — never fieldwork completion, a private garden upload or a location-linked sample. Photosynthesis and respiration stay at word-equation level; matter and energy are conserved. Footprint figures are labelled as textbook/public teaching values. |
+| **Graders** | Existing only: `number_fields` with `number`, `mcq`, `keyword`, `order`, `pick`. |
+| **Smokes** | New `scripts/test_es_s3_unit32_living_earth_advanced_smoke.py` (capabilities, grader-ready ×6 renders with the gate, same-variant pin, pack-once check on the woodlice variant, lesson/standard snapshots, API generate incl. permanent-exclusion clamps). Updated `test_es_advanced_pilot_exit_smoke.py` (`S3_UNIT32_ENABLED`; fail-closed API fixtures are now only the permanent exclusions `smell` MS, `interoception` MS, `reproductive_anatomy` SMS plus foundational-tier clamps `magnetism` MS, `touch` SMS, `life_earth_elsewhere` MS). Regressions green: `test_es9_living_earth_smoke.py`, `test_es10_whole_suite_smoke.py`, `test_es_practice_slots_smoke.py`, `test_es_advanced_downstream_smoke.py`, `test_es_advanced_mode_plumbing.py`. |
+| **Next** | **S3 wave complete.** Whole-matrix audit below. |
+
+### Whole-matrix audit (2026-09-13)
+
+`scripts/test_es_advanced_matrix_audit_smoke.py` parses the capability matrix
+tables in **this document** and treats them as the single source of truth. It
+passed on 2026-09-13: **46 slugs each appear exactly once; 243 enabled cells;
+729 variant functions (three per cell), every one rendering `number_fields`
+with only pre-existing field graders (`number`, `mcq`, `keyword`, `order`,
+`pick`) and self-grading correctly; 33 excluded cells empty and fail-closed at
+the variants, generate and app-clamp layers; advertised capabilities equal the
+matrix for every slug; no advanced variant in any lesson pool, standard
+five-slot pool, lesson quiz, or QOTD.** Any future edit to the matrix table or
+to a pool must keep this smoke green.
+
+Remaining work outside this contract: David's live-server visual pass on
+Practice home for a sample of S2/S3 advanced cells, and the per-part
+class-work score UI noted at pilot sign-off (not blocking).
 
 After S3, run a whole-matrix audit: all 46 manifest slugs appear exactly once,
 every enabled cell meets blueprint/pack minimums, every exclusion fails closed,

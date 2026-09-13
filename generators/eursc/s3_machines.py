@@ -1,4 +1,17 @@
 """S3 Unit 3.1 Machines — 3.1.1–3.1.6."""
+from generators.eursc.s3_unit31_machines_advanced import (
+    ELECTRIC_CURRENT_MS_POOLS,
+    ELECTRIC_CURRENT_SMS_POOLS,
+    ELECTROSTATICS_MS_POOLS,
+    ELECTROSTATICS_SMS_POOLS,
+    ENERGY_MS_POOLS,
+    FORCE_WORK_MACHINES_MS_POOLS,
+    FORCE_WORK_MACHINES_SMS_POOLS,
+    MAGNETISM_MS_POOLS,
+    MAGNETISM_SMS_POOLS,
+    ROBOTICS_PROJECT_MS_POOLS,
+    ROBOTICS_PROJECT_SMS_POOLS,
+)
 import random
 
 from generators.eursc.science_shared import (
@@ -16,7 +29,10 @@ from generators.shared.utils import (
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
-from generators.shared.variant_utils import SITUATIONAL_MULTI_STEP_MODE
+from generators.shared.variant_utils import (
+    MULTI_STEP_MODE,
+    SITUATIONAL_MULTI_STEP_MODE,
+)
 
 _LEVEL = "eursc"
 _SUBJECT = "science"
@@ -542,7 +558,13 @@ _FW_STANDARD = {
     ),
 }
 eursc_science_force_work_machines, eursc_science_force_work_machines_variants = bind_eursc_topic(
-    'force_work_machines', _FW_POOLS, _FW_STANDARD
+    'force_work_machines',
+    _FW_POOLS,
+    _FW_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: FORCE_WORK_MACHINES_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: FORCE_WORK_MACHINES_SMS_POOLS,
+    },
 )
 
 _FORM_BANK = (
@@ -1216,7 +1238,10 @@ eursc_science_energy, eursc_science_energy_variants = bind_eursc_topic(
     "energy",
     _EN_POOLS,
     _EN_STANDARD,
-    advanced_pools={SITUATIONAL_MULTI_STEP_MODE: _EN_SITUATIONAL_POOLS},
+    advanced_pools={
+        MULTI_STEP_MODE: ENERGY_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: _EN_SITUATIONAL_POOLS,
+    },
 )
 
 _CHARGE_BANK = (
@@ -1295,7 +1320,13 @@ _ES_STANDARD = {
     ),
 }
 eursc_science_electrostatics, eursc_science_electrostatics_variants = bind_eursc_topic(
-    'electrostatics', _ES_POOLS, _ES_STANDARD
+    'electrostatics',
+    _ES_POOLS,
+    _ES_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: ELECTROSTATICS_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: ELECTROSTATICS_SMS_POOLS,
+    },
 )
 
 _PATH_BANK = (
@@ -1374,7 +1405,13 @@ _EC_STANDARD = {
     ),
 }
 eursc_science_electric_current, eursc_science_electric_current_variants = bind_eursc_topic(
-    'electric_current', _EC_POOLS, _EC_STANDARD
+    'electric_current',
+    _EC_POOLS,
+    _EC_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: ELECTRIC_CURRENT_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: ELECTRIC_CURRENT_SMS_POOLS,
+    },
 )
 
 _POLE_BANK = (
@@ -1452,7 +1489,15 @@ _MG_STANDARD = {
         'magnetism_difficult_pick_not_mg',
     ),
 }
-eursc_science_magnetism, eursc_science_magnetism_variants = bind_eursc_topic('magnetism', _MG_POOLS, _MG_STANDARD)
+eursc_science_magnetism, eursc_science_magnetism_variants = bind_eursc_topic(
+    'magnetism',
+    _MG_POOLS,
+    _MG_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: MAGNETISM_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: MAGNETISM_SMS_POOLS,
+    },
+)
 
 _REQ_BANK = (
     {"id": "require", "text": "Write requirements another group could test"},
@@ -1530,7 +1575,13 @@ _RB_STANDARD = {
     ),
 }
 eursc_science_robotics_project, eursc_science_robotics_project_variants = bind_eursc_topic(
-    'robotics_project', _RB_POOLS, _RB_STANDARD
+    'robotics_project',
+    _RB_POOLS,
+    _RB_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: ROBOTICS_PROJECT_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: ROBOTICS_PROJECT_SMS_POOLS,
+    },
 )
 
 

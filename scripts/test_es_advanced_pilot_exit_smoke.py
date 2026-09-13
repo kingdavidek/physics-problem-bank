@@ -100,6 +100,23 @@ S2_UNIT23_ENABLED = {
     "nonhuman_senses": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
 }
 
+S3_UNIT31_ENABLED = {
+    "force_work_machines": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+    "energy": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+    "electrostatics": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+    "electric_current": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+    "magnetism": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+    "robotics_project": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+}
+
+S3_UNIT32_ENABLED = {
+    "food_environment": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+    "ecosystems_cycles": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+    "ecosystem_characteristics": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+    "classification_biodiversity": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+    "ecology_field_project": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+}
+
 S2_UNIT22_ENABLED = {
     "healthy_living": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
     "infectious_disease": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
@@ -117,6 +134,8 @@ ENABLED_ADVANCED = {
     **S2_UNIT21_ENABLED,
     **S2_UNIT22_ENABLED,
     **S2_UNIT23_ENABLED,
+    **S3_UNIT31_ENABLED,
+    **S3_UNIT32_ENABLED,
 }
 
 STANDARD_SNAPSHOT = {
@@ -454,12 +473,14 @@ def test_unavailable_cells_fail_closed():
 
     with app.test_client() as client:
         cases = (
-            ("magnetism", MULTI_STEP_MODE),
-            ("energy", MULTI_STEP_MODE),
-            ("electric_current", SITUATIONAL_MULTI_STEP_MODE),
+            # Every slug now advertises at least one advanced mode; these are the
+            # permanent matrix exclusions plus foundational-tier clamps.
             ("smell", MULTI_STEP_MODE),
             ("reproductive_anatomy", SITUATIONAL_MULTI_STEP_MODE),
             ("interoception", MULTI_STEP_MODE),
+            ("magnetism", MULTI_STEP_MODE),
+            ("touch", SITUATIONAL_MULTI_STEP_MODE),
+            ("life_earth_elsewhere", MULTI_STEP_MODE),
         )
         for topic, requested in cases:
             response = client.post(

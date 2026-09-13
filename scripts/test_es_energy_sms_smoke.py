@@ -56,21 +56,23 @@ def _blob(problem):
 
 def test_energy_registers_situational_mode():
     key = ("eursc", "science", "energy")
+    # Pilot enabled SMS only; Batch 4.1 (Unit 3.1) completed the slug with MS.
     assert topic_mode_capabilities(*key) == (
         "standard",
+        MULTI_STEP_MODE,
         SITUATIONAL_MULTI_STEP_MODE,
     )
     assert (
         _normalize_generator_mode(*key, SITUATIONAL_MULTI_STEP_MODE)
         == SITUATIONAL_MULTI_STEP_MODE
     )
-    assert _normalize_generator_mode(*key, MULTI_STEP_MODE) == "standard"
+    assert _normalize_generator_mode(*key, MULTI_STEP_MODE) == MULTI_STEP_MODE
     row = next(
         item
         for item in _generator_topic_options()
         if (item["level"], item["subject"], item["slug"]) == key
     )
-    assert row["modes"] == ("standard", SITUATIONAL_MULTI_STEP_MODE)
+    assert row["modes"] == ("standard", MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE)
 
 
 def test_energy_sms_variants_are_grader_ready():
@@ -157,7 +159,9 @@ def test_energy_standard_matrix_unchanged():
             fn.__name__ for fn in vf(difficulty, SITUATIONAL_MULTI_STEP_MODE)
         }
         assert practice_names.isdisjoint(advanced_names), difficulty
-        assert vf(difficulty, MULTI_STEP_MODE) == []
+        ms_names = {fn.__name__ for fn in vf(difficulty, MULTI_STEP_MODE)}
+        assert len(ms_names) >= 3, difficulty  # Batch 4.1 filled MS (F/I/D)
+        assert ms_names.isdisjoint({fn.__name__ for fn in vf(difficulty, "standard")}), difficulty
 
 
 def test_energy_sms_api_generate():

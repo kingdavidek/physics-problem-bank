@@ -1,10 +1,26 @@
 """S3 Unit 3.2 Living Earth — 3.2.1–3.2.5."""
+from generators.eursc.s3_unit32_living_earth_advanced import (
+    CLASSIFICATION_BIODIVERSITY_MS_POOLS,
+    CLASSIFICATION_BIODIVERSITY_SMS_POOLS,
+    ECOLOGY_FIELD_PROJECT_MS_POOLS,
+    ECOLOGY_FIELD_PROJECT_SMS_POOLS,
+    ECOSYSTEM_CHARACTERISTICS_MS_POOLS,
+    ECOSYSTEM_CHARACTERISTICS_SMS_POOLS,
+    ECOSYSTEMS_CYCLES_MS_POOLS,
+    ECOSYSTEMS_CYCLES_SMS_POOLS,
+    FOOD_ENVIRONMENT_MS_POOLS,
+    FOOD_ENVIRONMENT_SMS_POOLS,
+)
 from generators.eursc.science_shared import (
     bind_eursc_topic,
     factor_boxes,
     key_boxes,
     lifecycle_boxes,
     trophic_boxes,
+)
+from generators.shared.variant_utils import (
+    MULTI_STEP_MODE,
+    SITUATIONAL_MULTI_STEP_MODE,
 )
 from generators.shared.utils import (
     make_problem,
@@ -192,7 +208,13 @@ _FE_STANDARD = {
     ),
 }
 eursc_science_food_environment, eursc_science_food_environment_variants = bind_eursc_topic(
-    'food_environment', _FE_POOLS, _FE_STANDARD
+    'food_environment',
+    _FE_POOLS,
+    _FE_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: FOOD_ENVIRONMENT_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: FOOD_ENVIRONMENT_SMS_POOLS,
+    },
 )
 
 _TROPH_BANK = (
@@ -271,7 +293,13 @@ _ECY_STANDARD = {
     ),
 }
 eursc_science_ecosystems_cycles, eursc_science_ecosystems_cycles_variants = bind_eursc_topic(
-    'ecosystems_cycles', _ECY_POOLS, _ECY_STANDARD
+    'ecosystems_cycles',
+    _ECY_POOLS,
+    _ECY_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: ECOSYSTEMS_CYCLES_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: ECOSYSTEMS_CYCLES_SMS_POOLS,
+    },
 )
 
 _FACT_BANK = (
@@ -350,7 +378,13 @@ _CH_STANDARD = {
     ),
 }
 eursc_science_ecosystem_characteristics, eursc_science_ecosystem_characteristics_variants = bind_eursc_topic(
-    'ecosystem_characteristics', _CH_POOLS, _CH_STANDARD
+    'ecosystem_characteristics',
+    _CH_POOLS,
+    _CH_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: ECOSYSTEM_CHARACTERISTICS_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: ECOSYSTEM_CHARACTERISTICS_SMS_POOLS,
+    },
 )
 
 _KEY_BANK = (
@@ -429,7 +463,13 @@ _CL_STANDARD = {
     ),
 }
 eursc_science_classification_biodiversity, eursc_science_classification_biodiversity_variants = bind_eursc_topic(
-    'classification_biodiversity', _CL_POOLS, _CL_STANDARD
+    'classification_biodiversity',
+    _CL_POOLS,
+    _CL_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: CLASSIFICATION_BIODIVERSITY_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: CLASSIFICATION_BIODIVERSITY_SMS_POOLS,
+    },
 )
 
 _FIELD_BANK = (
@@ -508,7 +548,13 @@ _FP_STANDARD = {
     ),
 }
 eursc_science_ecology_field_project, eursc_science_ecology_field_project_variants = bind_eursc_topic(
-    'ecology_field_project', _FP_POOLS, _FP_STANDARD
+    'ecology_field_project',
+    _FP_POOLS,
+    _FP_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: ECOLOGY_FIELD_PROJECT_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: ECOLOGY_FIELD_PROJECT_SMS_POOLS,
+    },
 )
 
 

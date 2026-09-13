@@ -72,9 +72,15 @@ def test_bound_advanced_pools_are_isolated():
 
 def test_registry_and_app_filtering():
     key = ("eursc", "science", "electric_current")
-    assert topic_mode_capabilities(*key) == ("standard",)
-    assert _normalize_generator_mode(*key, "mcq") == "standard"
-    assert _normalize_generator_mode(*key, MULTI_STEP_MODE) == "standard"
+    # Every eursc slug now advertises advanced modes, so the "no advanced
+    # modes" case is pinned with an override rather than a real slug.
+    TOPIC_MODE_CAPABILITY_OVERRIDES[key] = ("standard",)
+    try:
+        assert topic_mode_capabilities(*key) == ("standard",)
+        assert _normalize_generator_mode(*key, "mcq") == "standard"
+        assert _normalize_generator_mode(*key, MULTI_STEP_MODE) == "standard"
+    finally:
+        TOPIC_MODE_CAPABILITY_OVERRIDES.pop(key, None)
     assert _normalize_generator_mode("gcse", "maths", "algebra", "mcq") == "mcq"
     assert (
         _normalize_generator_mode(
