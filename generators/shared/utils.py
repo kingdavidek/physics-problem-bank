@@ -562,6 +562,7 @@ def problem_extra_from_graded_answer(raw):
                     extra['answer_field_options'] = [
                         list(opts) if opts else None for opts in field_options
                     ]
+                explicit_pick_counts = bool(raw.get('field_pick_counts'))
                 field_pick_counts = list(raw.get('field_pick_counts') or ())
                 types_list = list(field_types) if field_types else []
                 while len(field_pick_counts) < len(types_list):
@@ -578,7 +579,10 @@ def problem_extra_from_graded_answer(raw):
                         bits = raw_val.split('|')
                         if len(bits) > 1 and bits[1].isdigit():
                             field_pick_counts[i] = int(bits[1])
-                if any(c is not None for c in field_pick_counts):
+                # Keep an explicitly supplied list (even all-None, e.g. a
+                # select-all pick) so the payload contract predates the
+                # inference above; otherwise only emit inferred counts.
+                if explicit_pick_counts or any(c is not None for c in field_pick_counts):
                     extra['answer_field_pick_counts'] = field_pick_counts
                 if raw.get('inline_sections'):
                     extra['answer_inline_sections'] = True
