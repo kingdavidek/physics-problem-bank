@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}Classification and Biodiversity – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Classification and Biodiversity</h1>
+    <p class="hero-sub">S3 Integrated Science · Unit 3.2 Living Earth · syllabus 3.2.4. Species, grouping features, dichotomous keys, taxonomy including Linnaeus, common descent as a model, named groups, biodiversity loss and sustainability. This quiz does not harvest a private home collection and does not rank relatedness of classmates.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S3</span>
+      <span class="pill pill--hero">3.2 Living Earth</span>
+      <span class="pill pill--hero">3.2.4</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='classification_biodiversity') }}">▶ Practice Quiz (10 questions)</a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">1</span> Species <span class="lesson-tag">3.2.4</span> <span class="lesson-tag">S3</span></summary>
+    <div class="lesson-section-body">
+      <p>A <dfn class="lesson-gloss" title="A grouping idea used in this S3 model">species</dfn> here is a grouping idea used in this S3 model. Keep examples public.
+      <span class="lesson-gloss-def">A grouping idea used in this S3 model. Public named organisms, not a class popularity prize.</span></p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A species in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">a class popularity prize</button>
+          <button class="btn mcq-btn" data-letter="B">a grouping idea used in this S3 model</button>
+          <button class="btn mcq-btn" data-letter="C">a stored diet</button>
+          <button class="btn mcq-btn" data-letter="D">a shock survey</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">2</span> Grouping</summary>
+    <div class="lesson-section-body">
+      <p>Grouping features should be <strong>checkable</strong> so another pupil could use them. Do not harvest a private collection.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Grouping features should be</p>
+          <button class="btn mcq-btn" data-letter="A">a secret only one pupil knows</button>
+          <button class="btn mcq-btn" data-letter="B">checkable so another pupil could use them</button>
+          <button class="btn mcq-btn" data-letter="C">a home collection harvest</button>
+          <button class="btn mcq-btn" data-letter="D">a household rank</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">3</span> Dichotomous keys</summary>
+    <div class="lesson-section-body">
+      <p>A <dfn class="lesson-gloss" title="A key that asks one checkable feature at a time">dichotomous key</dfn> asks one checkable feature at a time. <strong>A</strong> first couplet, <strong>B</strong> second couplet, <strong>C</strong> named group.
+      <span class="lesson-gloss-def">A key that splits on one checkable feature at a time (yes or no). Public classroom cards, not a private home collection.</span></p>
+      <p><strong>Worked example:</strong> Couplet A: “Has wings?” Yes goes toward a named flying insect. No goes to couplet B (“Has a shell?”) and then to named group C (a snail in the class tray). Another pupil could follow the same yes/no steps.</p>
+      <figure class="lesson-figure">
+        {{ key_fig }}
+        <figcaption class="lesson-figure-caption">A first couplet (“wings?”) forks to B a second couplet and C a named group. One checkable feature at a time. Public example, not a private collection.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A dichotomous key</p>
+          <button class="btn mcq-btn" data-letter="A">asks many features at once always</button>
+          <button class="btn mcq-btn" data-letter="B">asks one checkable feature at a time in this model</button>
+          <button class="btn mcq-btn" data-letter="C">must be a home secret</button>
+          <button class="btn mcq-btn" data-letter="D">ranks classmates</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">4</span> Taxonomy and Linnaeus</summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="A historical grouping system, including Linnaeus in this lesson">Taxonomy</dfn> is a historical grouping system, including Linnaeus in this lesson. It is not a class league.
+      <span class="lesson-gloss-def">A historical grouping system for living things. Linnaeus is named here as part of that history, not as a popularity prize.</span></p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Taxonomy in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">a class league</button>
+          <button class="btn mcq-btn" data-letter="B">a historical grouping system, including Linnaeus here</button>
+          <button class="btn mcq-btn" data-letter="C">a stored clinical file</button>
+          <button class="btn mcq-btn" data-letter="D">a carbon diary</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">5</span> Common descent</summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="A scientific model of shared ancestry, not a class ranking">Common descent</dfn> is a scientific model, not a class ranking of who is most related to an ape.
+      <span class="lesson-gloss-def">A scientific model of shared ancestry. It is not a ranking of classmates.</span></p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Common descent here is</p>
+          <button class="btn mcq-btn" data-letter="A">a pupil ranking</button>
+          <button class="btn mcq-btn" data-letter="B">a scientific model, not a class ranking</button>
+          <button class="btn mcq-btn" data-letter="C">a fridge photo</button>
+          <button class="btn mcq-btn" data-letter="D">a shock survey</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">6</span> Groups</summary>
+    <div class="lesson-section-body">
+      <p>Broad <strong>groups</strong> are named sets used to organise living things in this model.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Broad groups in this lesson are</p>
+          <button class="btn mcq-btn" data-letter="A">a diet file</button>
+          <button class="btn mcq-btn" data-letter="B">named sets used to organise living things in this model</button>
+          <button class="btn mcq-btn" data-letter="C">a shock story</button>
+          <button class="btn mcq-btn" data-letter="D">a V = IR claim</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">7</span> Biodiversity loss</summary>
+    <div class="lesson-section-body">
+      <p><strong>Biodiversity loss</strong> is linked to public evidence and sustainability ideas, not a popularity prize.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Biodiversity loss is linked to</p>
+          <button class="btn mcq-btn" data-letter="A">a popularity prize</button>
+          <button class="btn mcq-btn" data-letter="B">public evidence and sustainability ideas</button>
+          <button class="btn mcq-btn" data-letter="C">a joint map</button>
+          <button class="btn mcq-btn" data-letter="D">a robot league</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">8</span> Sustainability</summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="A public idea linked to biodiversity, not a household interrogation">Sustainability</dfn> here is a public idea linked to biodiversity, not a household interrogation.
+      <span class="lesson-gloss-def">A public idea linked to biodiversity and how living things are grouped and protected. Not a private confession and not a household rank.</span></p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Sustainability in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">a private confession</button>
+          <button class="btn mcq-btn" data-letter="B">a public idea linked to biodiversity, not a household interrogation</button>
+          <button class="btn mcq-btn" data-letter="C">a stored diet</button>
+          <button class="btn mcq-btn" data-letter="D">a magnet</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">9</span> Using this lesson</summary>
+    <div class="lesson-section-body">
+      <p>Keep keys, taxonomy and descent as followable science. The field study is next. This quiz does not harvest private collections.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Key</h4>
+        <ul>
+          <li>A couplet, B couplet, C group</li>
+          <li>One checkable feature at a time</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Ideas</h4>
+        <ul>
+          <li>Taxonomy is a grouping system</li>
+          <li>Descent is a model, not a rank</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='classification_biodiversity') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+{% block title %}Electric Current and Circuits – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Electric Current and Circuits</h1>
+    <p class="hero-sub">S3 Integrated Science · Unit 3.1 Machines · syllabus 3.1.4. Complete loops, series and parallel, conventional current and electrons, conductors, effects, qualitative meters, classroom safety. This lesson does not claim V = IR calculations and does not inspect home wiring.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S3</span>
+      <span class="pill pill--hero">3.1 Machines</span>
+      <span class="pill pill--hero">3.1.4</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='electric_current') }}">▶ Practice Quiz (10 questions)</a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">1</span> A complete loop <span class="lesson-tag">3.1.4</span> <span class="lesson-tag">S3</span></summary>
+    <div class="lesson-section-body">
+      <p>A complete <dfn class="lesson-gloss" title="A closed loop that allows current">circuit</dfn> is a loop that allows <dfn class="lesson-gloss" title="A flow of charge around a complete loop">current</dfn>. Opening a switch can break the loop. <strong>A</strong> cell, <strong>B</strong> lamp, <strong>C</strong> switch — schematic boxes, not a home inspection.
+      <span class="lesson-gloss-def">A circuit is a closed loop that allows current. Current is a flow of charge around that loop. A gap at the switch stops the loop.</span></p>
+      <p><strong>Worked example:</strong> In a classroom kit, the cell, lamp and switch sit on one loop. When the switch is closed, the lamp can light. When the switch opens, the loop is broken and the lamp goes out. Nobody inspects a mains socket for this quiz.</p>
+      <figure class="lesson-figure">
+        {{ circuit_fig }}
+        <figcaption class="lesson-figure-caption">A cell → B lamp → C switch, with a return wire closing the loop. One path; schematic boxes, not a home wiring drawing.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A complete circuit in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">a food group</button>
+          <button class="btn mcq-btn" data-letter="B">a loop that allows current</button>
+          <button class="btn mcq-btn" data-letter="C">a stored shock file</button>
+          <button class="btn mcq-btn" data-letter="D">a class rank</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">2</span> Series</summary>
+    <div class="lesson-section-body">
+      <p>A <dfn class="lesson-gloss" title="A circuit with one path">series</dfn> circuit has <strong>one path</strong>. If that path opens, the loop stops.
+      <span class="lesson-gloss-def">One path for current. The cell, lamp and switch in the figure share that single path.</span></p>
+      <p><strong>Worked example:</strong> Two lamps in series share one loop. If either lamp is removed, the path opens and both go out.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A series circuit has</p>
+          <button class="btn mcq-btn" data-letter="A">no path</button>
+          <button class="btn mcq-btn" data-letter="B">one path</button>
+          <button class="btn mcq-btn" data-letter="C">eighty independent paths always</button>
+          <button class="btn mcq-btn" data-letter="D">a diet</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">3</span> Parallel</summary>
+    <div class="lesson-section-body">
+      <p>A <dfn class="lesson-gloss" title="A circuit with more than one path">parallel</dfn> circuit has <strong>more than one path</strong>. A second lamp on its own branch is a teaching example.
+      <span class="lesson-gloss-def">More than one path for current. One branch can open without stopping every other branch.</span></p>
+      <p><strong>Worked example:</strong> Two lamps in parallel each have their own loop back to the cell. If one lamp is removed, the other branch can still be a complete loop, so that lamp can stay on. This is a path idea only; this lesson does not calculate \(V = IR\).</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A parallel circuit has</p>
+          <button class="btn mcq-btn" data-letter="A">zero paths</button>
+          <button class="btn mcq-btn" data-letter="B">more than one path</button>
+          <button class="btn mcq-btn" data-letter="C">only a magnet</button>
+          <button class="btn mcq-btn" data-letter="D">a private diary</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">4</span> Conventional current and electrons</summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="A direction convention for current arrows">Conventional current</dfn> is a direction convention. <dfn class="lesson-gloss" title="The direction negative charges actually drift in a metal">Electron flow</dfn> is distinguished from that arrow in this teaching model. Both describe the same loop.
+      <span class="lesson-gloss-def">Conventional current is the arrow direction used on many diagrams. Electron flow is the opposite direction in a metal. Both name the same closed loop.</span></p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Conventional current in this teaching model is</p>
+          <button class="btn mcq-btn" data-letter="A">a demand for a home photo</button>
+          <button class="btn mcq-btn" data-letter="B">a direction convention, distinct from electron flow</button>
+          <button class="btn mcq-btn" data-letter="C">a joule of mass</button>
+          <button class="btn mcq-btn" data-letter="D">a class league</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">5</span> Conductors</summary>
+    <div class="lesson-section-body">
+      <p>A <dfn class="lesson-gloss" title="A material that lets current pass more easily">conductor</dfn> lets current pass more easily than an insulator. Public examples only (a metal wire in a kit), not a home wiring hunt.
+      <span class="lesson-gloss-def">A material that lets current pass more easily than an insulator. A kit copper wire is a public example.</span></p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A conductor in this model</p>
+          <button class="btn mcq-btn" data-letter="A">never lets current pass</button>
+          <button class="btn mcq-btn" data-letter="B">lets current pass more easily than an insulator</button>
+          <button class="btn mcq-btn" data-letter="C">is a lever</button>
+          <button class="btn mcq-btn" data-letter="D">ranks pupils</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">6</span> Effects of current</summary>
+    <div class="lesson-section-body">
+      <p>This lesson names three effects: <strong>heating</strong>, <strong>lighting</strong> and a <strong>magnetic</strong> effect. Magnetism continues in the next module.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Effects of current named here include</p>
+          <button class="btn mcq-btn" data-letter="A">only a rumour</button>
+          <button class="btn mcq-btn" data-letter="B">heating, lighting and a magnetic effect</button>
+          <button class="btn mcq-btn" data-letter="C">a joint map</button>
+          <button class="btn mcq-btn" data-letter="D">a menu</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">7</span> Meters, qualitative only</summary>
+    <div class="lesson-section-body">
+      <p>Meters are read <strong>qualitatively</strong> here: a needle that moves, or a reading that is larger or smaller. This S3 claim does <strong>not</strong> include \(V = IR\) or resistance calculations.</p>
+      <p><strong>Worked example:</strong> With the switch closed, a classroom ammeter needle moves. With the switch open, it stays at rest. The class names “current on” or “current off”. Nobody is asked to calculate a resistance.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A meter in this lesson is used</p>
+          <button class="btn mcq-btn" data-letter="A">to store whose home it is</button>
+          <button class="btn mcq-btn" data-letter="B">qualitatively; this lesson does not claim V = IR calculations</button>
+          <button class="btn mcq-btn" data-letter="C">to rank sparks</button>
+          <button class="btn mcq-btn" data-letter="D">to skip safety</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">8</span> Classroom safety</summary>
+    <div class="lesson-section-body">
+      <p>Low-voltage kits only if the teacher supplies them. Do not test mains sockets for this quiz. The teacher's risk assessment is the one that counts.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Electrical safety in class is</p>
+          <button class="btn mcq-btn" data-letter="A">optional if the lamp is small</button>
+          <button class="btn mcq-btn" data-letter="B">the teacher's risk assessment, not this app's inspection</button>
+          <button class="btn mcq-btn" data-letter="C">a league</button>
+          <button class="btn mcq-btn" data-letter="D">a Sankey bar</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">9</span> Using this lesson</summary>
+    <div class="lesson-section-body">
+      <p>Keep loop, series, parallel, conventions, conductors, effects, qualitative meters and safety separate. Magnetism continues next. This quiz does not inspect home wiring.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Paths</h4>
+        <ul>
+          <li>Series = one path</li>
+          <li>Parallel = more than one</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Limits</h4>
+        <ul>
+          <li>No V = IR claim</li>
+          <li>Teacher risk assessment</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='electric_current') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

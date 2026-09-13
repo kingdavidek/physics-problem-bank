@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% block title %}Tobacco, Nicotine and Vaping – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Tobacco, Nicotine and Vaping</h1>
+    <p class="hero-sub">S2 Integrated Science · Unit 2.2 Health · syllabus 2.2.5. Disease and mortality evidence, nicotine, industry marketing, vaping uncertainty and prevention. This lesson never asks who smokes or vapes.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S2</span>
+      <span class="pill pill--hero">2.2 Health</span>
+      <span class="pill pill--hero">2.2.5</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='tobacco') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Disease and mortality
+      <span class="lesson-tag">2.2.5</span>
+      <span class="lesson-tag">S2</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>Public evidence links <strong>tobacco</strong> use to disease and earlier death. Textbook tables are public counts, not a survey of the room and not a classmate's private file. Smoke in a shared space can expose others — that is a public-health idea, not a household interrogation.</p>
+      <table class="lesson-table">
+        <thead>
+          <tr><th>Public model (rounded)</th><th>What it is used for</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Tobacco linked to lung disease and earlier death</td><td>Health evidence, not a class roll-call</td></tr>
+          <tr><td>Second-hand smoke can expose others</td><td>Shared-air risk, not a home interrogation</td></tr>
+        </tbody>
+      </table>
+      <figure class="lesson-figure">
+        {{ outbreak_fig }}
+        <figcaption class="lesson-figure-caption">Model bars of counts: A smaller, C larger. Axes are day and cases in the shared figure kit. Not a named person and not a smoking survey.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Public evidence links tobacco use to</p>
+          <button class="btn mcq-btn" data-letter="A">longer life only</button>
+          <button class="btn mcq-btn" data-letter="B">disease and earlier death</button>
+          <button class="btn mcq-btn" data-letter="C">a food group</button>
+          <button class="btn mcq-btn" data-letter="D">a class popularity prize</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Nicotine and initiation
+    </summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="An addictive chemical in tobacco and many vapes">Nicotine</dfn> is addictive. Starting young raises addiction risk in the public model.
+      <span class="lesson-gloss-def">An addictive chemical in tobacco and in many vaping products. The quiz does not collect age of first use and does not ask who uses nicotine.</span></p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Nicotine is</p>
+          <button class="btn mcq-btn" data-letter="A">a vitamin</button>
+          <button class="btn mcq-btn" data-letter="B">addictive</button>
+          <button class="btn mcq-btn" data-letter="C">a light-year</button>
+          <button class="btn mcq-btn" data-letter="D">a reason to collect who uses it</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Industry influence
+    </summary>
+    <div class="lesson-section-body">
+      <p>A stylish advert is <strong>marketing</strong>, not independent scientific evidence. Industry influence can push uptake. Branding that looks sporty is still not a health study. Pupils are not asked to name brands they like.</p>
+      <p><strong>Worked example:</strong> A fictional poster shows a smiling athlete next to a nicotine product. The class asks: was this tested in a controlled study, or is it designed to sell? Fame is not evidence.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A tobacco advert is</p>
+          <button class="btn mcq-btn" data-letter="A">the same as a peer-reviewed study</button>
+          <button class="btn mcq-btn" data-letter="B">marketing, not independent scientific evidence</button>
+          <button class="btn mcq-btn" data-letter="C">a vaccine</button>
+          <button class="btn mcq-btn" data-letter="D">a sleep bar</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Vaping uncertainty
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Vaping</strong> is not the S2 “harmless swap”. Important long-term questions remain. Nicotine in many products can still addict. The quiz does not list devices anyone has tried.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Vaping in this S2 model is</p>
+          <button class="btn mcq-btn" data-letter="A">proven harmless for everyone</button>
+          <button class="btn mcq-btn" data-letter="B">still uncertain in important ways; nicotine can still addict</button>
+          <button class="btn mcq-btn" data-letter="C">a fruit</button>
+          <button class="btn mcq-btn" data-letter="D">a demand to list devices</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Prevention
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Prevention</strong> aims to reduce uptake. It is misused if a quiz becomes a confession. Personal decisions belong with a trusted adult or qualified help. This app does not store smoking or vaping status.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Prevention in this lesson means</p>
+          <button class="btn mcq-btn" data-letter="A">forcing a confession in the quiz</button>
+          <button class="btn mcq-btn" data-letter="B">reducing uptake using public health ideas, not a use survey</button>
+          <button class="btn mcq-btn" data-letter="C">ignoring nicotine</button>
+          <button class="btn mcq-btn" data-letter="D">ranking who looks sporty</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Using this unit
+    </summary>
+    <div class="lesson-section-body">
+      <p>Unit 2.2 Health on the topic path ends here for ES6. Senses (2.3) are a later phase. Keep disease evidence, nicotine, marketing critique, vaping uncertainty and prevention separate. This quiz does not ask who smokes.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Evidence</h4>
+        <ul>
+          <li>Tobacco ↔ disease / earlier death</li>
+          <li>Nicotine is addictive</li>
+          <li>Adverts ≠ studies</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Vaping and prevention</h4>
+        <ul>
+          <li>Not a proven harmless swap</li>
+          <li>Reduce uptake, no confession</li>
+          <li>No status stored here</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='tobacco') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

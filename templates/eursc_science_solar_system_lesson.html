@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% block title %}The Solar System – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>The Solar System</h1>
+    <p class="hero-sub">S2 Integrated Science · Unit 2.1 Universe · syllabus 2.1.1. Rotation and revolution, seasons, the Moon, planets and scale, the age and expansion of the universe, and historical models tested by evidence.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S2</span>
+      <span class="pill pill--hero">2.1 Universe</span>
+      <span class="pill pill--hero">2.1.1</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='solar_system') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Rotation
+      <span class="lesson-tag">2.1.1</span>
+      <span class="lesson-tag">S2</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="A planet spinning on its own axis">Rotation</dfn> is a planet spinning on its own axis. One rotation of Earth takes about one <strong>day</strong>.
+      <span class="lesson-gloss-def">Spinning on an axis. One rotation of Earth is about one day: the side facing the Sun is in daylight.</span>
+      Day and night are the side facing the Sun and the side facing away — not a second Sun switching on.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Rotation of Earth is</p>
+          <button class="btn mcq-btn" data-letter="A">Earth orbiting the Sun</button>
+          <button class="btn mcq-btn" data-letter="B">Earth spinning on its axis</button>
+          <button class="btn mcq-btn" data-letter="C">the Moon becoming a star</button>
+          <button class="btn mcq-btn" data-letter="D">the universe shrinking</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Revolution and the year
+    </summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="A planet's path around the Sun">Revolution</dfn> is the planet's path around the Sun — its <strong>orbit</strong>. One revolution of Earth takes about one <strong>year</strong>.
+      <span class="lesson-gloss-def">Orbiting the Sun. One revolution of Earth is about one year. Rotation (day) and revolution (year) are different motions.</span>
+      Rotation and revolution are different motions; a day is not a year.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Revolution of Earth is</p>
+          <button class="btn mcq-btn" data-letter="A">Earth spinning once in a minute</button>
+          <button class="btn mcq-btn" data-letter="B">Earth orbiting the Sun, taking about a year</button>
+          <button class="btn mcq-btn" data-letter="C">the Sun orbiting a city</button>
+          <button class="btn mcq-btn" data-letter="D">a season caused by the Moon's colour</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Seasons and tilt
+    </summary>
+    <div class="lesson-section-body">
+      <p>Earth's axis is tilted (about <strong>23°</strong> in this course) as Earth orbits the Sun. A hemisphere in <strong>summer</strong> is tilted toward the Sun and receives more direct sunlight. A tiny change in Earth–Sun distance is not the main cause: northern summer is in July even though Earth is then slightly farther from the Sun.</p>
+      <p><strong>Worked example:</strong> In July the northern hemisphere is tilted toward the Sun, so days are longer and sunlight is more direct there. The southern hemisphere is in winter at the same time. Distance to the Sun is not the main switch.</p>
+      <figure class="lesson-figure">
+        {{ earth_sun_moon_fig }}
+        <figcaption class="lesson-figure-caption">A Sun, B Earth with a dashed tilt line, C Moon. The arrow is sunlight. Sizes and distances are not to scale.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Seasons on Earth happen mainly because</p>
+          <button class="btn mcq-btn" data-letter="A">the Moon turns off in winter</button>
+          <button class="btn mcq-btn" data-letter="B">Earth's axis is tilted as Earth orbits the Sun</button>
+          <button class="btn mcq-btn" data-letter="C">the Sun moves to a different galaxy each June</button>
+          <button class="btn mcq-btn" data-letter="D">cities are closer to Mars in July</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      The Moon
+    </summary>
+    <div class="lesson-section-body">
+      <p>The Moon is a natural <strong>satellite</strong> that orbits Earth. We see it by <strong>sunlight reflected</strong> from its surface, not because it is a second star. Phases and eclipses are geometry: they belong with light in the next module.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>We see the Moon because</p>
+          <button class="btn mcq-btn" data-letter="A">it is a second Sun</button>
+          <button class="btn mcq-btn" data-letter="B">it reflects sunlight</button>
+          <button class="btn mcq-btn" data-letter="C">it burns hydrogen in a classroom</button>
+          <button class="btn mcq-btn" data-letter="D">cities vote it alight</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Planets and other bodies
+    </summary>
+    <div class="lesson-section-body">
+      <p>This course counts <strong>eight planets</strong> orbiting the Sun, plus moons, asteroids, comets and dwarf planets. They are not all the same size as the Sun. Order and composition differ; the shared idea is that they orbit the Sun (or orbit a planet, for moons).</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>How many planets are counted in the Solar System in this course?</p>
+          <button class="btn mcq-btn" data-letter="A">two</button>
+          <button class="btn mcq-btn" data-letter="B">eight</button>
+          <button class="btn mcq-btn" data-letter="C">eighty</button>
+          <button class="btn mcq-btn" data-letter="D">one</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Scale and the astronomical unit
+    </summary>
+    <div class="lesson-section-body">
+      <p>An <dfn class="lesson-gloss" title="The Earth–Sun distance as a scale">astronomical unit (AU)</dfn> is the Earth–Sun distance.
+      <span class="lesson-gloss-def">A Solar System distance scale: 1 AU is the Earth–Sun distance. This course uses about \(150\) million km as a rounded figure.</span>
+      On that scale the Earth–Moon distance is much smaller than 1 AU. Diagrams in books are almost never to scale: if the Sun were a large ball, Earth would be a small bead far away.</p>
+      <p><strong>Worked example:</strong> 1 AU ≈ \(1.5 \times 10^8\,\mathrm{km}\). The Moon is about \(4 \times 10^5\,\mathrm{km}\) from Earth, so about \(0.003\,\mathrm{AU}\) — far smaller than the Earth–Sun gap. Jupiter is about 5 AU from the Sun in this teaching model.</p>
+      <figure class="lesson-figure">
+        {{ solar_scale_fig }}
+        <figcaption class="lesson-figure-caption">Sun at 0 AU, Earth at 1 AU, a plus mark for a farther body. The axis is distance in AU. Circle sizes are not to scale.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>An astronomical unit (AU) is a scale for</p>
+          <button class="btn mcq-btn" data-letter="A">the mass of a classroom apple</button>
+          <button class="btn mcq-btn" data-letter="B">distances in the Solar System, based on the Earth–Sun distance</button>
+          <button class="btn mcq-btn" data-letter="C">the temperature of a star in °C only</button>
+          <button class="btn mcq-btn" data-letter="D">the number of moons on Earth</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">7</span>
+      Age and expansion of the universe
+    </summary>
+    <div class="lesson-section-body">
+      <p>The universe in the current scientific model is ancient — of the order of <strong>14 billion years</strong> in this lesson — and <strong>expanding</strong>. Public evidence includes distant galaxies receding. A telescope count does not make the universe a few thousand years old. Models stay open to better evidence.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>The age of the universe in this S2 model is of the order of</p>
+          <button class="btn mcq-btn" data-letter="A">fourteen days</button>
+          <button class="btn mcq-btn" data-letter="B">fourteen billion years</button>
+          <button class="btn mcq-btn" data-letter="C">fourteen minutes</button>
+          <button class="btn mcq-btn" data-letter="D">eight planets</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">8</span>
+      Historical models and evidence
+    </summary>
+    <div class="lesson-section-body">
+      <p>A <dfn class="lesson-gloss" title="Earth at the centre">geocentric</dfn> model puts Earth at the centre. A <dfn class="lesson-gloss" title="Sun at the centre">heliocentric</dfn> model puts the Sun at the centre with planets in orbit.
+      <span class="lesson-gloss-def">Geocentric: Earth-centred. Heliocentric: Sun-centred. The older model was not kept because it was older — new evidence fitted a Sun-centred Solar System better.</span>
+      Authority is not the test; evidence is.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A heliocentric model of the Solar System puts</p>
+          <button class="btn mcq-btn" data-letter="A">Earth at the centre with the Sun orbiting it</button>
+          <button class="btn mcq-btn" data-letter="B">the Sun at the centre with planets orbiting it</button>
+          <button class="btn mcq-btn" data-letter="C">the Moon at the centre of the universe</button>
+          <button class="btn mcq-btn" data-letter="D">authority at the centre instead of evidence</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">9</span>
+      Using this unit
+    </summary>
+    <div class="lesson-section-body">
+      <p>Keep rotation, revolution, tilt, the Moon, scale and models as separate ideas. Light, shadows, phases and telescopes continue in <a href="{{ url_for('topic_page', level='eursc', subject='science', topic='light_telescopes') }}">Light and Telescopes</a>. Classroom ray work uses the <a href="{{ url_for('eursc_ibl_page', slug='s2_light') }}">light investigation support</a>; this page does not replace practical work.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Motions</h4>
+        <ul>
+          <li>Rotation → day</li>
+          <li>Revolution → year / orbit</li>
+          <li>Tilt + orbit → seasons</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Scale and models</h4>
+        <ul>
+          <li>8 planets; 1 AU = Earth–Sun</li>
+          <li>Universe ~14 billion years, expanding</li>
+          <li>Heliocentric: evidence, not authority</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='solar_system') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

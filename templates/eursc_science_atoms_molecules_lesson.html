@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}Atoms and Molecules – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Atoms and Molecules</h1>
+    <p class="hero-sub">S2 Integrated Science · Unit 2.1 Universe · syllabus 2.1.4. Particle model, elements and atoms, chemical symbols, molecules, reactions as rearrangement, word equations, and conservation of atoms.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S2</span>
+      <span class="pill pill--hero">2.1 Universe</span>
+      <span class="pill pill--hero">2.1.4</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='atoms_molecules') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Particle model
+      <span class="lesson-tag">2.1.4</span>
+      <span class="lesson-tag">S2</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>Matter is made of <strong>particles</strong> that are still there when you cannot see them. Melting or boiling rearranges how particles are packed; it does not invent a new kind of magic atom from nothing.</p>
+      <figure class="lesson-figure">
+        {{ atom_molecule_fig }}
+        <figcaption class="lesson-figure-caption">A a single atom, B two atoms joined as a molecule, C a mixed jumble of different particles (not one element).</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>In the particle model, a solid, liquid or gas is</p>
+          <button class="btn mcq-btn" data-letter="A">empty of any particles</button>
+          <button class="btn mcq-btn" data-letter="B">made of particles that are still there even if you cannot see them</button>
+          <button class="btn mcq-btn" data-letter="C">a rumour</button>
+          <button class="btn mcq-btn" data-letter="D">a light-year</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Elements and atoms
+    </summary>
+    <div class="lesson-section-body">
+      <p>An <dfn class="lesson-gloss" title="A substance made of only one type of atom">element</dfn> is a substance made of only <strong>one type of atom</strong>. A jumble of different particles is a <strong>mixture</strong>, not a single element.
+      <span class="lesson-gloss-def">One type of atom throughout. Iron is an element; salt water is a mixture.</span>
+      An <strong>atom</strong> in this S2 model is a single particle of an element.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>An element is</p>
+          <button class="btn mcq-btn" data-letter="A">any mixture of different atoms</button>
+          <button class="btn mcq-btn" data-letter="B">a substance made of only one type of atom</button>
+          <button class="btn mcq-btn" data-letter="C">a molecule of water only</button>
+          <button class="btn mcq-btn" data-letter="D">a unit of time</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Chemical symbols
+    </summary>
+    <div class="lesson-section-body">
+      <p>A chemical <strong>symbol</strong> is a short name for an element, not a weather sentence. In this lesson: <strong>H</strong> hydrogen, <strong>O</strong> oxygen, <strong>C</strong> carbon, <strong>Fe</strong> iron. The letters are labels for atom types.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>The symbol O in this lesson stands for</p>
+          <button class="btn mcq-btn" data-letter="A">orbit</button>
+          <button class="btn mcq-btn" data-letter="B">oxygen</button>
+          <button class="btn mcq-btn" data-letter="C">a light-year</button>
+          <button class="btn mcq-btn" data-letter="D">a season</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Molecules
+    </summary>
+    <div class="lesson-section-body">
+      <p>A <dfn class="lesson-gloss" title="Atoms joined together">molecule</dfn> is atoms <strong>joined</strong> together. Water is modelled as two hydrogen atoms and one oxygen atom joined — <strong>three</strong> atoms in total.
+      <span class="lesson-gloss-def">Atoms joined together. Example: water is two hydrogen atoms and one oxygen atom. Non-example: a mixture of sand and salt is not one molecule type.</span></p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A molecule is</p>
+          <button class="btn mcq-btn" data-letter="A">a planet</button>
+          <button class="btn mcq-btn" data-letter="B">atoms joined together</button>
+          <button class="btn mcq-btn" data-letter="C">a geocentric model</button>
+          <button class="btn mcq-btn" data-letter="D">a telescope</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Reactions as rearrangement
+    </summary>
+    <div class="lesson-section-body">
+      <p>A chemical <strong>reaction</strong> <strong>rearranges</strong> atoms. It does not create a new type of element from nothing and it does not destroy all atoms so that none remain. Burning hydrogen in oxygen to make water is hydrogen and oxygen atoms changing partners.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Burning hydrogen in oxygen to make water is best described as</p>
+          <button class="btn mcq-btn" data-letter="A">destroying hydrogen atoms forever</button>
+          <button class="btn mcq-btn" data-letter="B">rearranging hydrogen and oxygen atoms into water molecules</button>
+          <button class="btn mcq-btn" data-letter="C">creating iron atoms from light</button>
+          <button class="btn mcq-btn" data-letter="D">a season on Earth</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Word equations
+    </summary>
+    <div class="lesson-section-body">
+      <p>A <strong>word equation</strong> names reactants and products. Examples: hydrogen + oxygen → water. Carbon + oxygen → carbon dioxide. The arrow means “react to form”. It is a sentence about substances, not a spell that invents a new atom type.</p>
+      <p><strong>Worked example:</strong> hydrogen + oxygen → water. Count the idea: hydrogen and oxygen atoms are still there, now joined as water molecules. The equation does not create iron.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A word equation for making water from hydrogen and oxygen is</p>
+          <button class="btn mcq-btn" data-letter="A">water → hydrogen + oxygen only as a creation spell</button>
+          <button class="btn mcq-btn" data-letter="B">hydrogen + oxygen → water</button>
+          <button class="btn mcq-btn" data-letter="C">Sun + Moon → water</button>
+          <button class="btn mcq-btn" data-letter="D">rotation + season → water</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">7</span>
+      Conservation: not magic
+    </summary>
+    <div class="lesson-section-body">
+      <p>In a closed reaction story, atom <strong>counts</strong> should match: atoms change partners, they do not leave the universe. If a count does not match, the story is incomplete — not a licence to invent extra atoms from fame.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>In a closed reaction story, atoms</p>
+          <button class="btn mcq-btn" data-letter="A">appear from nowhere as a new element</button>
+          <button class="btn mcq-btn" data-letter="B">are rearranged; the counts should match</button>
+          <button class="btn mcq-btn" data-letter="C">leave the universe</button>
+          <button class="btn mcq-btn" data-letter="D">become light-years</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Particles</h4>
+        <ul>
+          <li>Atom: one particle of an element</li>
+          <li>Element: one type of atom</li>
+          <li>Molecule: atoms joined</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Reactions</h4>
+        <ul>
+          <li>Rearrangement, not creation from nothing</li>
+          <li>Word equation: reactants → products</li>
+          <li>Atom counts conserved</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='atoms_molecules') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

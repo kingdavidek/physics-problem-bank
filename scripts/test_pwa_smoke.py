@@ -22,8 +22,8 @@ def main():
         assert data['scope'] == '/'
         assert data['start_url'] in ('/', '/?source=pwa')
         assert data.get('id') == '/'
-        assert data.get('theme_color') == '#1a6fa8'
-        assert data.get('background_color') == '#f4f6f9'
+        assert data.get('theme_color') == '#1a86d4'
+        assert data.get('background_color') == '#f2f6fa'
         sizes = {icon['sizes'] for icon in data['icons']}
         assert '192x192' in sizes
         assert '512x512' in sizes
@@ -32,11 +32,22 @@ def main():
         assert len(shortcuts) >= 2
         assert any('/topics' in (s.get('url') or '') for s in shortcuts)
 
+        client.set_cookie('pb_theme', 'dark')
+        r = client.get('/manifest.webmanifest')
+        data = r.get_json(silent=True)
+        if data is None:
+            data = json.loads(r.data.decode())
+        assert data.get('background_color') == '#0f1724'
+        assert data.get('theme_color') == '#0f1724'
+
         r = client.get('/sw.js')
         assert r.status_code == 200, r.data
         sw = r.data.decode()
         assert 'STATIC_CACHE' in sw
-        assert 'pb-v25' in sw
+        assert 'pb-v84' in sw
+        # JS and CSS must stay network-first or ?v= cache-busts never land.
+        assert 'isVersionedAsset' in sw
+        assert '/static/css/tokens.css' in sw
         assert r.headers.get('Service-Worker-Allowed') == '/'
 
         r = client.get('/offline')
@@ -48,21 +59,44 @@ def main():
         html = r.data.decode()
         assert 'manifest.webmanifest' in html or 'web_manifest' in html or 'rel="manifest"' in html
         assert 'pwa.js' in html
+        assert 'theme.js' in html
+        assert 'data-theme' in html
         assert 'theme-color' in html
         assert 'pwa-install-banner' in html
         assert 'pwa-ios-hint' in html
         assert 'pwa-offline-bar' in html
-        assert 'pwa-standalone' in html
+        assert 'boot-head.js' in html
+        assert 'app-tab-bar' in html
+        assert 'tab-bar.js' in html
+        assert 'header-primary-nav' in html
         assert 'apple-mobile-web-app-capable' in html
         assert 'black-translucent' in html
+
+        # U0.10 / U8.6 — core sheets on every page; lesson sheets are route-only.
+        stylesheets = [
+            'tokens.css', 'base.css', 'components.css', 'chrome.css',
+            'practice.css', 'pages.css', 'responsive.css', 'diagrams.css',
+        ]
+        positions = [html.index(f'css/{name}') for name in stylesheets]
+        assert positions == sorted(positions), 'stylesheet load order changed'
+        assert 'lesson-assist.css' not in html
+        assert 'lesson-pages.css' not in html
+        assert '<style>' not in html, 'CSS belongs in static/css, not inline'
 
         for path in (
             '/static/icons/icon-192.png',
             '/static/icons/icon-512.png',
             '/static/icons/icon-maskable-512.png',
+            '/static/icons/favicon.svg',
+            '/static/icons/favicon.ico',
+            '/favicon.ico',
             '/static/js/pwa.js',
+            '/static/js/boot-head.js',
             '/static/js/sw.js',
             '/static/manifest.webmanifest',
+            *(f'/static/css/{name}' for name in stylesheets),
+            '/static/css/lesson-pages.css',
+            '/static/css/lesson-assist.css',
         ):
             r = client.get(path)
             assert r.status_code == 200, path
@@ -70,6 +104,9 @@ def main():
         pwa = client.get('/static/js/pwa.js').data.decode()
         assert 'isStandalone' in pwa or 'display-mode: standalone' in pwa
         assert 'pwa_ios_hint_dismissed' in pwa
+        boot = client.get('/static/js/boot-head.js').data.decode()
+        assert 'pwa-standalone' in boot
+        assert 'pb-theme' in boot
 
     print('PWA smoke tests passed.')
 

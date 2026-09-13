@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/page_flashes.html" import render as page_flashes %}
 {% block title %}Saved question – {{ topic_label }}{% endblock %}
 
 {% block content %}
@@ -8,6 +9,8 @@
     <h1>Saved question</h1>
     <p class="hero-sub">{{ topic_label }} · saved {{ saved.created_at[:10] }}</p>
 </div>
+
+{{ page_flashes('view_saved_problem') }}
 
 <div class="problem-card">
     <div class="section-panel-header">Your saved question</div>

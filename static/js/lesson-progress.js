@@ -1,6 +1,7 @@
 /**
  * Lesson progress rail — a subsection counts as complete only after its Quick Check
  * MCQ is answered correctly (mcq-correct event).
+ * U4.3 chrome: mobile progress bar, inline quiz CTA, completion celebration.
  */
 (function () {
   'use strict';
@@ -15,15 +16,236 @@
   var csrfMeta = document.querySelector('meta[name="csrf-token"]');
   var csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
   var storageKey = 'lesson-progress:' + level + ':' + subject + ':' + topic;
+  var celebrateKey = storageKey + ':celebrated';
 
   var contentRoot;
+  var topbarEl;
+  var topbarFillEl;
+  var topbarLabelEl;
+  var topbarToastEl;
+  var topbarToastFillEl;
+  var topbarToastLabelEl;
+  var topbarHideTimer;
+  var quizCtaBar;
+  var celebrated = false;
+  var TOPBAR_SHOW_MS = 2800;
+  var TOPBAR_FADE_MS = 420;
+
+  function isMobileLesson() {
+    return window.matchMedia('(max-width: 960px)').matches;
+  }
+
+  function hideMobileTopbarToast() {
+    if (!topbarToastEl) return;
+    clearTimeout(topbarHideTimer);
+    topbarToastEl.classList.remove('is-showing');
+    topbarHideTimer = setTimeout(function () {
+      topbarToastEl.classList.remove('is-visible');
+    }, TOPBAR_FADE_MS);
+  }
+
+  function showMobileTopbarPulse() {
+    if (!topbarToastEl || !topbarLabelEl || !topbarFillEl || !isMobileLesson()) return;
+    topbarToastLabelEl.textContent = topbarLabelEl.textContent;
+    topbarToastFillEl.style.width = topbarFillEl.style.width;
+    topbarToastEl.setAttribute('aria-valuenow', topbarEl.getAttribute('aria-valuenow') || '0');
+    topbarToastEl.setAttribute('aria-valuemax', topbarEl.getAttribute('aria-valuemax') || '0');
+    clearTimeout(topbarHideTimer);
+    topbarToastEl.classList.add('is-visible');
+    window.requestAnimationFrame(function () {
+      topbarToastEl.classList.add('is-showing');
+    });
+    topbarHideTimer = setTimeout(hideMobileTopbarToast, TOPBAR_SHOW_MS);
+  }
 
   function findLessonContentRoot(root) {
-    var candidates = root.querySelectorAll(
-      '.page-shell, [style*="max-width:860px"], [style*="max-width: 860px"]'
-    );
+    var shell = root.querySelector('.lesson-shell');
+    if (shell) return shell;
+    var candidates = root.querySelectorAll('.page-shell');
     if (candidates.length) return candidates[0];
     return root.firstElementChild || root;
+  }
+
+  function removeInlineQuizCtas(root) {
+    root.querySelectorAll('a[href*="/lesson-quiz/"]').forEach(function (link) {
+      var host = link.parentElement;
+      if (host && host !== root && host.tagName === 'DIV' && host.children.length === 1) {
+        host.remove();
+      } else {
+        link.remove();
+      }
+    });
+  }
+
+  function removeLegacyLessonEndCtas(scope) {
+    scope.querySelectorAll('form[action="/quicktest/start"]').forEach(function (form) {
+      var host = form.closest('div');
+      if (host && host !== scope) host.remove();
+      else form.remove();
+    });
+
+    scope.querySelectorAll('a[href*="/lesson-quiz/"]').forEach(function (link) {
+      var label = (link.textContent || '').replace(/\s+/g, ' ').trim();
+      if (label === 'Start Practice Quiz') {
+        var block = link.closest('div');
+        if (block) block.remove();
+      }
+    });
+
+    scope.querySelectorAll('p').forEach(function (paragraph) {
+      if ((paragraph.textContent || '').replace(/\s+/g, ' ').trim() !== 'Ready to practise?') return;
+      var block = paragraph.closest('div');
+      if (block) block.remove();
+      else paragraph.remove();
+    });
+  }
+
+  function initGeneratorCta(scope) {
+    var practiceUrl = wrapper.dataset.lessonPracticeUrl;
+    if (!practiceUrl) return;
+
+    removeLegacyLessonEndCtas(scope);
+
+    var footer = document.createElement('div');
+    footer.className = 'lesson-generator-cta';
+    footer.innerHTML =
+      '<p>Want more practice questions?</p>' +
+      '<a href="' + practiceUrl + '" class="btn btn-outline btn-lg">' +
+      'Practice this topic with the generator' +
+      '</a>';
+    scope.appendChild(footer);
+  }
+
+  function initQuizCta(root) {
+    if (document.querySelector('[data-quiz-runner]') || document.body.classList.contains('quiz-runner-active')) {
+      return;
+    }
+    var quizUrl = wrapper.dataset.lessonQuizUrl;
+    var quizCount = parseInt(wrapper.dataset.lessonQuizCount || '10', 10);
+    if (!quizUrl) return;
+
+    removeInlineQuizCtas(root);
+
+    quizCtaBar = document.createElement('div');
+    quizCtaBar.className = 'lesson-quiz-cta-bar';
+    quizCtaBar.innerHTML =
+      '<a href="' + quizUrl + '" class="btn btn-primary lesson-quiz-cta-btn">' +
+      'Take the quiz · ' + quizCount + ' questions' +
+      '</a>';
+    root.appendChild(quizCtaBar);
+  }
+
+  function initMobileTopbar(shell) {
+    var topbarMarkup =
+      '<span class="lesson-progress-topbar-label"></span>' +
+      '<div class="lesson-progress-topbar-track">' +
+      '<div class="lesson-progress-topbar-fill"></div>' +
+      '</div>';
+
+    topbarEl = document.createElement('div');
+    topbarEl.className = 'lesson-progress-topbar is-pinned';
+    topbarEl.setAttribute('role', 'progressbar');
+    topbarEl.setAttribute('aria-valuemin', '0');
+    topbarEl.innerHTML = topbarMarkup;
+    shell.insertBefore(topbarEl, contentRoot);
+    topbarLabelEl = topbarEl.querySelector('.lesson-progress-topbar-label');
+    topbarFillEl = topbarEl.querySelector('.lesson-progress-topbar-fill');
+
+    topbarToastEl = document.createElement('div');
+    topbarToastEl.className = 'lesson-progress-topbar lesson-progress-topbar-toast';
+    topbarToastEl.setAttribute('role', 'status');
+    topbarToastEl.setAttribute('aria-live', 'polite');
+    topbarToastEl.innerHTML = topbarMarkup;
+    document.body.appendChild(topbarToastEl);
+    topbarToastLabelEl = topbarToastEl.querySelector('.lesson-progress-topbar-label');
+    topbarToastFillEl = topbarToastEl.querySelector('.lesson-progress-topbar-fill');
+  }
+
+  function enhanceSectionCards(steps) {
+    steps.forEach(function (step) {
+      var subsection = step.subsection;
+      var sectionNum = step.index + 1;
+      subsection.classList.add('lesson-section', 'lesson-section-card');
+      subsection.setAttribute('data-lesson-section', String(sectionNum));
+
+      var summary = subsection.querySelector(':scope > summary');
+      if (!summary) return;
+      summary.classList.add('lesson-section-summary');
+
+      var chip = summary.querySelector('.lesson-section-chip');
+      if (!chip) {
+        var spans = summary.querySelectorAll(':scope > span');
+        var i;
+        for (i = 0; i < spans.length; i += 1) {
+          if (/^\d+$/.test((spans[i].textContent || '').trim())) {
+            chip = spans[i];
+            break;
+          }
+        }
+        if (chip) {
+          chip.classList.add('lesson-section-chip');
+        } else {
+          chip = document.createElement('span');
+          chip.className = 'lesson-section-chip';
+          chip.textContent = String(sectionNum);
+          summary.insertBefore(chip, summary.firstChild);
+        }
+      }
+
+      if (!summary.querySelector('.lesson-section-status')) {
+        var status = document.createElement('span');
+        status.className = 'lesson-section-status';
+        summary.appendChild(status);
+      }
+    });
+  }
+
+  function updateSectionStatus(step) {
+    var summary = step.subsection.querySelector(':scope > summary');
+    if (!summary) return;
+    var status = summary.querySelector('.lesson-section-status');
+    if (!status) return;
+    status.classList.toggle('is-complete', step.completed);
+    status.setAttribute(
+      'aria-label',
+      step.completed ? 'Section complete' : 'Section incomplete'
+    );
+  }
+
+  function updateMobileTopbar(steps, pulse) {
+    if (!topbarFillEl || !topbarLabelEl || !steps.length) return;
+    var completed = steps.filter(function (step) { return step.completed; }).length;
+    var total = steps.length;
+    var pct = total ? Math.round((completed / total) * 100) : 0;
+    topbarFillEl.style.width = pct + '%';
+    topbarLabelEl.textContent =
+      completed + ' of ' + total + ' sections · ' + pct + '%';
+    topbarEl.setAttribute('aria-valuenow', String(completed));
+    topbarEl.setAttribute('aria-valuemax', String(total));
+    topbarEl.setAttribute('aria-valuetext', completed + ' of ' + total + ' sections complete');
+    if (pulse) showMobileTopbarPulse();
+  }
+
+  function maybeCelebrateAllComplete(steps) {
+    if (!steps.length || celebrated) return;
+    var allDone = steps.every(function (step) { return step.completed; });
+    if (!allDone) return;
+    celebrated = true;
+    try {
+      window.localStorage.setItem(celebrateKey, '1');
+    } catch (err) {}
+    if (quizCtaBar) quizCtaBar.classList.add('is-complete');
+    if (window.pbCelebrate && window.pbCelebrate.lessonComplete) {
+      window.pbCelebrate.lessonComplete();
+    }
+  }
+
+  function readCelebratedFlag() {
+    try {
+      return window.localStorage.getItem(celebrateKey) === '1';
+    } catch (err) {
+      return false;
+    }
   }
 
   function subsectionForMcq(mcq) {
@@ -131,31 +353,24 @@
     } catch (err) {}
   }
 
-  function applyCompletedKeys(keys) {
-    var keySet = {};
-    (keys || []).forEach(function (key) {
-      keySet[normalizeStepKey(key)] = true;
-    });
-
-    steps.forEach(function (step) {
-      var done = !!keySet[step.key];
-      step.completed = done;
-      step.subsection.classList.toggle('lesson-subsection-complete', done);
-      step.subsection.dataset.mcqCompleted = done ? '1' : '0';
-    });
-    updateRail();
-  }
-
   contentRoot = findLessonContentRoot(wrapper);
-  contentRoot.classList.add('lesson-progress-content');
+  initGeneratorCta(wrapper);
+  initQuizCta(contentRoot);
+  celebrated = readCelebratedFlag();
+  if (celebrated && quizCtaBar) quizCtaBar.classList.add('is-complete');
 
   var steps = buildSteps(contentRoot);
   if (!steps.length) return;
+
+  enhanceSectionCards(steps);
+  contentRoot.classList.add('lesson-progress-content');
 
   var shell = document.createElement('div');
   shell.className = 'lesson-progress-shell';
   contentRoot.parentNode.insertBefore(shell, contentRoot);
   shell.appendChild(contentRoot);
+
+  initMobileTopbar(shell);
 
   var rail = document.createElement('div');
   rail.className = 'lesson-progress-rail';
@@ -179,13 +394,34 @@
   startNode.setAttribute('aria-hidden', 'true');
   railInner.appendChild(startNode);
 
+  function applyCompletedKeys(keys) {
+    var keySet = {};
+    (keys || []).forEach(function (key) {
+      keySet[normalizeStepKey(key)] = true;
+    });
+
+    steps.forEach(function (step) {
+      var done = !!keySet[step.key];
+      step.completed = done;
+      step.subsection.classList.toggle('lesson-subsection-complete', done);
+      step.subsection.dataset.mcqCompleted = done ? '1' : '0';
+      updateSectionStatus(step);
+    });
+    updateRail();
+    updateMobileTopbar(steps);
+    maybeCelebrateAllComplete(steps);
+  }
+
   function markStepComplete(step) {
     if (step.completed) return;
     step.completed = true;
     step.subsection.classList.add('lesson-subsection-complete');
     step.subsection.dataset.mcqCompleted = '1';
+    updateSectionStatus(step);
     updateRail();
+    updateMobileTopbar(steps, true);
     persistProgress(step);
+    maybeCelebrateAllComplete(steps);
   }
 
   function wireMcqCompletion(step) {
@@ -208,7 +444,8 @@
       window.requestAnimationFrame(function () {
         var target = step.mcq;
         if (target && target.scrollIntoView) {
-          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
         }
         scheduleLayout();
       });
@@ -258,11 +495,34 @@
       node.classList.toggle('is-reached', step.completed);
       node.classList.toggle('is-current', index === highest && step.completed);
     });
+
+    updateMobileTopbar(steps);
   }
 
   function scheduleLayout() {
     clearTimeout(layoutTimer);
     layoutTimer = setTimeout(updateRail, 50);
+  }
+
+  function persistSnapshot(keys) {
+    if (!isLoggedIn || !csrfToken || !steps.length || !keys.length) return;
+    var lastKey = keys[keys.length - 1];
+    var step = steps.filter(function (item) { return item.key === lastKey; })[0] || steps[0];
+    fetch('/api/lesson-progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        csrf_token: csrfToken,
+        level: level,
+        subject: subject,
+        topic: topic,
+        section_key: step.key,
+        section_label: sectionLabel(step.subsection),
+        completed_keys: keys,
+        step_total: steps.length,
+      }),
+      credentials: 'same-origin',
+    }).catch(function () {});
   }
 
   function persistProgress(step) {
@@ -272,20 +532,7 @@
     if (!isLoggedIn || !csrfToken || !step) return;
     clearTimeout(saveTimer);
     saveTimer = setTimeout(function () {
-      fetch('/api/lesson-progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          csrf_token: csrfToken,
-          level: level,
-          subject: subject,
-          topic: topic,
-          section_key: step.key,
-          section_label: sectionLabel(step.subsection),
-          completed_keys: keys,
-        }),
-        credentials: 'same-origin',
-      }).catch(function () {});
+      persistSnapshot(keys);
     }, 400);
   }
 
@@ -301,7 +548,6 @@
   }
 
   applyCompletedKeys(readLocalProgress());
-  updateRail();
 
   if (isLoggedIn && level && subject && topic) {
     fetch(
@@ -323,6 +569,7 @@
         var keys = Object.keys(merged);
         writeLocalProgress(keys);
         applyCompletedKeys(keys);
+        persistSnapshot(keys);
       })
       .catch(function () {});
   }

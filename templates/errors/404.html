@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "partials/spot.html" import spot %}
+{% block title %}Page not found – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell error-page">
+    <div class="empty-state">
+        <div class="empty-state-icon" aria-hidden="true">{{ spot('search') }}</div>
+        <h1>Page not found</h1>
+        <p>That link doesn’t match anything on Problem Bank. It may have moved or been mistyped.</p>
+        <a href="{{ url_for('index') }}" class="btn btn-primary">Go to generator</a>
+        <p style="margin-top: var(--space-4);"><a href="{{ url_for('topics_index') }}">Browse topics</a></p>
+    </div>
+</div>
+{% endblock %}

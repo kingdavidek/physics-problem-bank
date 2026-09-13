@@ -2,6 +2,7 @@ import json
 from datetime import date, timedelta
 
 from models.user import utc_now_iso
+from models.lesson_steps import lesson_step_total
 
 MAX_SAVED_PROBLEMS = 200
 
@@ -93,6 +94,7 @@ def upsert_lesson_progress(
     section_key,
     section_label,
     completed_keys=None,
+    step_total=None,
 ):
     now = utc_now_iso()
     existing = get_lesson_progress(conn, user_id, level, subject, topic)
@@ -106,16 +108,26 @@ def upsert_lesson_progress(
         key=lambda key: int(key.rsplit('-', 1)[-1]) if key.rsplit('-', 1)[-1].isdigit() else 0,
     )
     completed_json = json.dumps(completed_list)
+    existing_total = int((existing or {}).get('step_total') or 0)
+    if step_total is None:
+        stored_total = existing_total
+    else:
+        stored_total = max(existing_total, int(step_total))
+    if stored_total <= 0:
+        canonical = lesson_step_total(level, subject, topic)
+        if canonical > 0:
+            stored_total = canonical
     conn.execute(
         '''
         INSERT INTO lesson_progress (
             user_id, level, subject, topic, section_key, section_label,
-            completed_keys_json, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            completed_keys_json, step_total, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(user_id, level, subject, topic) DO UPDATE SET
             section_key = excluded.section_key,
             section_label = excluded.section_label,
             completed_keys_json = excluded.completed_keys_json,
+            step_total = excluded.step_total,
             updated_at = excluded.updated_at
         ''',
         (
@@ -126,6 +138,7 @@ def upsert_lesson_progress(
             section_key or '',
             section_label or '',
             completed_json,
+            stored_total,
             now,
         ),
     )
@@ -135,7 +148,7 @@ def upsert_lesson_progress(
 def get_lesson_progress(conn, user_id, level, subject, topic):
     row = conn.execute(
         '''
-        SELECT section_key, section_label, completed_keys_json, updated_at
+        SELECT section_key, section_label, completed_keys_json, updated_at, step_total
         FROM lesson_progress
         WHERE user_id = ? AND level = ? AND subject = ? AND topic = ?
         ''',
@@ -152,6 +165,7 @@ def get_lesson_progress(conn, user_id, level, subject, topic):
     if not isinstance(keys, list):
         keys = []
     data['completed_keys'] = [k for k in keys if isinstance(k, str) and k.strip()]
+    data['step_total'] = int(data.get('step_total') or 0)
     if not data['completed_keys'] and data.get('section_key'):
         legacy = data['section_key']
         if legacy.startswith('section-'):

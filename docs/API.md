@@ -28,11 +28,13 @@ Same-origin web and PWA do **not** need CORS.
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
 | POST | `/api/v1/auth/register` | No | Rate limit: 10/day/IP |
-| POST | `/api/v1/auth/login` | No | Rate limit: 30/day/IP |
+| POST | `/api/v1/auth/login` | No | Rate limit: 30/day/IP. Per-account lock: 15 min after 10 failures. Always `Invalid email or password` |
 | POST | `/api/v1/auth/logout` | Bearer | Revokes current token |
 | GET | `/api/v1/auth/me` | Yes | Current user |
 | GET | `/api/v1/auth/tokens` | Yes | List app sessions |
+| DELETE | `/api/v1/auth/tokens/<id>` | Yes | Revoke one session. `404` if it is not yours |
 | POST | `/api/v1/auth/revoke-all` | Yes | Optional `{ "keep_current": true }` |
+| GET | `/api/v1/me/export` | Yes | JSON portable copy. Email must be verified. Rate limit 2/day. Web: `GET /me/export`. No `password_hash`; follows are handles only |
 
 Example: `Authorization: Bearer pb_xxxxxxxx`
 
@@ -48,6 +50,7 @@ Example: `Authorization: Bearer pb_xxxxxxxx`
 | Share question | 50 | `POST /api/v1/shared-questions`, web share form |
 | Suggest question | 50 | `POST /api/v1/suggestions`, web suggest form |
 | Report user | 20 | `POST /api/v1/users/<handle>/report` |
+| Export data | 2 | `GET /api/v1/me/export`, `GET /me/export` |
 
 Limited responses use HTTP **429** with `"code": "rate_limited"` and `"rate_limit_remaining": 0`.
 Successful share/suggest/generate responses may include `"rate_limit_remaining"`.
@@ -175,7 +178,7 @@ Phase 2 adds dedicated `fraction` and SymPy-backed `surd` types; ungraded concep
 
 ## Lesson quiz (M4b)
 
-10-question mixed-difficulty MCQ quiz (same as web `/lesson-quiz/...`). GCSE Maths and GCSE CS topics with MCQ support.
+10-question mixed-difficulty quiz (MCQ and typed formats). GCSE Maths/CS MCQ quizzes plus topics with a mixed lesson bank (`eursc/science` when registered).
 
 | Method | Path |
 |--------|------|
@@ -237,6 +240,7 @@ Optional student notes after a wrong Check or MCQ answer (logged-in only). Refle
 |--------|------|
 | POST | `/api/v1/me/reflections` |
 | GET | `/api/v1/me/reflections` |
+| GET | `/api/v1/me/reflections/<id>` |
 
 **POST** body: `{ "level", "subject", "topic", "source" }` required (`source`: `check` or `mcq`); plus at least one of `prompt_type` or non-empty `reflection_text`. Optional: `difficulty`, `attempt_id` (must belong to the logged-in user).
 
@@ -297,7 +301,7 @@ Exam-date study schedule from weak topics (logged-in only). Spreads scoped weak 
 
 Response `revision_plan`: `exam_date`, `days_remaining`, `study_day_count`, `topics_scheduled`, `weak_topic_count`, `sessions[]` (`plan_date`, `topics[]` with `topic_label`, `topic_url`, `lesson_quiz_url`, `reasons`, weakness metadata).
 
-Profile page: **Exam revision plan** section with date/scope form and day-by-day schedule. Web form: `POST /profile/revision-plan` (CSRF); `action=clear` removes the plan.
+Profile page: **Exam revision plan** section with date/scope form and day-by-day schedule. Web form: `POST /profile/revision-plan` (CSRF); `action=clear` removes the plan. The Subject `<select>` lists every level/subject pair (`data-level`) and is filtered client-side when Level changes (`initRevisionPlanForm` in `site.js`). Invalid pairs are rejected: web form flashes an error and does not save; `PUT` returns `400 invalid_topic`.
 
 ## Quiz history (G2)
 
@@ -328,23 +332,76 @@ See prior phases. Pagination: `?limit=&before_id=` on feed and notifications.
 
 `GET /api/v1/search` also matches **lesson body keywords** (FTS5) as well as topic name/slug/group. The index covers `topics_data.py` metadata and stripped `*_lesson.html` pages. Name/slug hits rank first (`"via": "title"`); other lesson-text hits use `"via": "keywords"`. Topic rows include 1-based `"rank"` (name matches first, then keyword relevance). User rows include `avatar`.
 
-`GET`/`PATCH /api/v1/me/settings` include `avatar: { face, bg, extra }`. PATCH accepts that object, or `avatar_face` / `avatar_bg` / `avatar_extra`. Unknown emoji/colours fall back to the default 🙂 on `#eef6fc`. No image upload. Avatar extras 🎓/🎧/⭐ require milestones `topics_10`, `questions_25`, and `streak_7` respectively (E5.5); locked selections are rejected server-side (existing wearers are grandfathered). Public profiles (`GET /api/v1/users/<handle>/profile`) and `GET /api/v1/me/gamification` friend leaderboard rows also include `avatar`.
+`GET`/`PATCH /api/v1/me/settings` include `avatar: { face, bg, extra }` and `guide: { v, origin, tours, rewards }` (E6 A5). PATCH accepts avatar as that object, or `avatar_face` / `avatar_bg` / `avatar_extra`. Unknown emoji/colours fall back to the default 🙂 on `#eef6fc`. No image upload. Avatar extras 🎓/🎧/⭐ require milestones `topics_10`, `questions_25`, and `streak_7` respectively (E5.5); locked selections are rejected server-side (existing wearers are grandfathered). Public profiles (`GET /api/v1/users/<handle>/profile`) and `GET /api/v1/me/gamification` friend leaderboard rows also include `avatar`. PATCH `guide` is a merge (omit it to leave flags unchanged). `origin` is a boolean; `tours` / `rewards` are objects of boolean flags. Invalid flag names are dropped. Settings **Replay intro** is a web form (`action=replay_guide_intro`), not a separate API. Guide flags are in the settings row of a data export and are erased with the account.
 
 `GET /api/v1/me/buddy` (auth) returns `{ type, message, detail, face, action_url, action_label, actions, topic, milestone_key?, friend_handle? }`. Types: `milestone` (badge earned in last 24 h), `celebrate` (quiz today), `qotd_nudge` (activity today but no QOTD attempt), `streak_risk` (streak would break tomorrow), `weak_topic` (G1), `friend_challenge` (follows ≥1 person, no challenge sent in 7 days — links to followed friend's profile), `nudge`. Priority: milestone > celebrate > qotd_nudge > streak_risk > weak_topic > friend_challenge > nudge. Optional query `level`, `subject`, `topic` is the page the widget is on (the widget also sends `X-PB-Buddy-Path` and the API falls back to the Referer). On that weak topic’s lesson/generator page, `actions` is **Practise MCQ**, **Take a quiz** (when a lesson quiz exists), and a `stay` action **Keep learning {topic}** (hides the card for that topic today; not a global dismiss). `action_url` / `action_label` remain the first link for older clients. Off that page, weak topic still has a single **Practise this** link. Milestone prompts link to `profile#milestones`; **Not now** or **View badges** stores `pb-buddy-milestone-<key>` in localStorage so the same badge is not repeated. After a persisted generator MCQ on the current topic, the client dispatches `pb-buddy-refetch` and the widget updates in place. `GET /api/v1/build-info` returns `{ buddy_embed, study_buddy_js }` version strings for cache debugging. The web widget is non-blocking. Off that page, **Not now** lasts until the next UTC day. On the weak topic’s own lesson page the last button is **Keep learning {topic}** (hides only that on-page card for the UTC day); a previous **Not now** does not hide the on-page coach.
 
-`GET /api/v1/me/gamification` includes `friend_accuracy_leaderboard`: friends-only weekly lesson-quiz + generator-MCQ accuracy (`accuracy_pct`, `earned`/`possible`). `show_accuracy_leaderboard` (settings, default true) hides you from other people’s accuracy boards. Web: `/leaderboard/friends?board=accuracy`. **No global ranking.** `milestones` items are `{key, title, description, emoji, earned_at}`. Catalog includes QOTD badges (`qotd_first`, `qotd_7`), `questions_50`, and friends-only `accuracy_top_friend` (E5.2 — awarded only at rank 1 with ≥2 scored friends and ≥10 answered questions in the week).
+`GET /api/v1/me/gamification` includes `friend_accuracy_leaderboard`: friends-only weekly lesson-quiz + generator-MCQ accuracy (`accuracy_pct`, `earned`/`possible`). `show_accuracy_leaderboard` (settings, default true) hides you from other people’s accuracy boards. Web: `/leaderboard/friends?board=accuracy`. **No global ranking.** `milestones` items are `{key, title, description, emoji, earned_at}`. Catalog includes QOTD badges (`qotd_first`, `qotd_7`), `questions_50`, and friends-only `accuracy_top_friend` (E5.2 — awarded only at rank 1 with ≥2 scored friends and ≥10 answered questions in the week). Also includes `qotd_leaderboard` (today) and `qotd_week_leaderboard` (last 7 UTC days).
 
 `GET /api/v1/qotd/today` is a **difficult** MCQ. Solution HTML and `correct_answer` are omitted until the user has answered. `POST /api/v1/qotd/today/answer` records the attempt for the friend mini-leaderboard and the study streak only — it does **not** write generator MCQ history or topic activity. After a wrong answer the JSON includes `solution_html` (same idea as the generator “Show Answer” panel).
+
+`GET /api/v1/qotd/week/leaderboard` (auth) returns `{ ok, day_keys, leaderboard }` for the last 7 UTC days (override with `?days=` and `?end_day=YYYY-MM-DD`). Rows: `{ rank, user_id, handle, correct_days, answered_days, days_in_window, is_viewer }`, sorted by correct days, then answered days, then earliest answer time, then handle. Respects `show_accuracy_leaderboard` (same opt-out as the accuracy board). Web: `/qotd?board=week`.
+
+`GET /api/v1/me/gamification` includes `study_streak.freeze_available` and `study_streak.freeze_used_dates` (last 7 UTC days). Profile streak card shows "❄️ 1 skip available this week" when a freeze is unused. Buddy `streak_risk` copy is softer when a freeze is available.
 
 ### Planned additions (not implemented)
 
 Document these here when they ship — specs live in `docs/ENGAGEMENT_E5.md`:
 
-- `GET /api/v1/qotd/week/leaderboard` — 7-day friends-only QOTD board (E5.3)
-- `GET /api/v1/me/gamification` gains `qotd_week_leaderboard` and `study_streak.freeze_available` (E5.3 / E5.4)
 - `POST /api/v1/me/push/subscribe`, `DELETE /api/v1/me/push/subscription` — blocked on production HTTPS (E5.7)
 
 The generator endpoints gain a `real_world` value for `mode` when `docs/REAL_WORLD_QUESTIONS.md` is implemented; the request/response shape is otherwise unchanged from `standard`.
+
+### G8 teacher / class mode (Phase 1–6 complete)
+
+Soft teacher flag, classes, join codes, roster, T0–T2 dashboards, frozen set-work, handle invites, audit log, CSV export. **Student Leave is not implemented.** There is **no** `POST /api/v1/me/classes/<id>/leave`. T3 free-text reflections are never in teacher payloads. Set-work uses the **live** generator catalogue (`GENERATOR_LAUNCH_PATHS`); A-Level / Physics / MYP are not added as a side effect. Handle invite still requires the student to accept after disclosure — **no silent add**.
+
+| Method | Path | Auth | Notes |
+|--------|------|------|--------|
+| GET | `/api/v1/me/teacher` | Yes | `{ enabled, enabled_at, class_count, active_member_cap }` |
+| POST | `/api/v1/me/teacher/enable` | Yes | Idempotent. Same login; student app stays |
+| GET | `/api/v1/teacher/classes` | Yes | Teacher only (`403 teacher_required` otherwise). `?include_archived=0` hides archived |
+| POST | `/api/v1/teacher/classes` | Yes | `{ name, level?, subject? }`. `org_id` is rejected. `201` + class |
+| GET | `/api/v1/teacher/classes/<id>` | Yes | Owner only; others `404` |
+| POST | `/api/v1/teacher/classes/<id>/rotate-code` | Yes | Owner, not archived |
+| POST | `/api/v1/teacher/classes/<id>/archive` | Yes | Sets `archived_at`; pending invites are cancelled |
+| GET | `/api/v1/teacher/classes/<id>/roster` | Yes | Owner only; others `404`. Handles, never emails. Includes `aggregates` (T0), per-member `last_active`, `quiz_count_7d`, and `pending_invites` |
+| POST | `/api/v1/teacher/classes/<id>/members/<student_id>/remove` | Yes | Owner only; others `404` |
+| GET | `/api/v1/teacher/classes/<id>/progress` | Yes | T0 class aggregates. Owner only; others `404` |
+| GET | `/api/v1/teacher/classes/<id>/students/<student_id>/progress` | Yes | T1 named progress + T2 skill-gap chips + that student’s set-work n/X. Active member of this class; others `404`. Never `reflection_text` |
+| GET | `/api/v1/teacher/classes/<id>/assignments` | Yes | Owner only; others `404` |
+| POST | `/api/v1/teacher/classes/<id>/assignments` | Yes | Live catalogue `{ level, subject, topic, difficulty, mode, count (1–20) }`. `{ preview: true }` returns stripped stems + `preview_id`. Assign with `{ preview_id, student_ids[] }` or `{ all: true }`, or generate-and-assign in one POST. Graded later from stored JSON. Owner only |
+| GET | `/api/v1/teacher/classes/<id>/assignments/<id>` | Yes | Stems + per-recipient n/X and scores. No answer keys. Owner only |
+| GET | `/api/v1/teacher/classes/<id>/invites` | Yes | Pending handle invites. Owner only |
+| POST | `/api/v1/teacher/classes/<id>/invites` | Yes | `{ handle }`. Creates a pending invite; does **not** add to the roster. `201`. `404 user_not_found` / `403 blocked` / `409 already_member` / `already_invited` / `400 invite_limit`. Re-inviting after decline still counts toward the 40 pending cap. Pending invites older than 14 days cannot be accepted (same window as retention prune) |
+| POST | `/api/v1/teacher/classes/<id>/invites/<invite_id>/cancel` | Yes | Owner only |
+| GET | `/api/v1/teacher/classes/<id>/audit` | Yes | Recent class actions (cap 200). Handles, never emails. Owner only |
+| GET | `/api/v1/teacher/classes/<id>/roster.csv` | Yes | Roster CSV. Handles, never emails. Owner only |
+| GET | `/api/v1/teacher/classes/<id>/assignments.csv` | Yes | Set-work scores CSV. Handles, never emails. Owner only |
+| GET | `/api/v1/me/classes` | Yes | Classes the student has joined plus pending `invites`. Includes join `disclosure`. `can_leave` is always `false` |
+| POST | `/api/v1/me/classes/join` | Yes | `{ code, disclosed: true }`. Missing disclosure → `400 join_disclosure_required`. Archived or blocked codes → `404 invalid_join_code` |
+| GET | `/api/v1/me/class-invites` | Yes | Pending handle invites for the current user, with `disclosure` |
+| POST | `/api/v1/me/class-invites/<id>/accept` | Yes | `{ disclosed: true }`. Missing disclosure → `400 join_disclosure_required`. Recipient only |
+| POST | `/api/v1/me/class-invites/<id>/decline` | Yes | Recipient only |
+| GET | `/api/v1/me/class-work` | Yes | Frozen sets assigned to the current user while they are an **active** member. `can_reroll` / `can_leave` always `false` |
+| GET | `/api/v1/me/class-work/<assignment_id>` | Yes | Frozen items. Strips `correct_answer` / `correct_answer_raw` / solution until that item is server-graded. Active member and recipient only |
+| POST | `/api/v1/me/class-work/<assignment_id>/answer` | Yes | `{ index, user_answer }`. Client `correct_answer` / `correct_answer_raw` are ignored. Grades from stored `problems_json` |
+
+Class JSON: `id`, `name`, `level`, `subject`, `org_id` (always `null`), `join_code` (teacher payloads only), `join_code_rotated_at`, `created_at`, `archived_at`, `active_member_cap` (`40`), `active_member_count`.
+
+Student class JSON: `id`, `name`, `level`, `subject`, `teacher_handle`, `joined_at`, `archived_at`, `can_leave` (`false`). No join code.
+
+Roster member JSON: `student_id`, `handle`, `status`, `joined_at`, `removed_at`, `last_active`, `quiz_count_7d`. Never email.
+
+T0 `aggregates`: `student_count`, `avg_quiz_pct`, `students_with_quizzes`, `quiz_attempts_7d`, `mcq_attempts_7d`, `top_weak_topics[]`, `set_work` (`available` once any assignment exists; `assigned` / `complete` recipient counts). Roster only — not a public ranking.
+
+T1+T2 `progress`: `student_id`, `handle`, `weak_topics`, `recent_quizzes` (score/total/topic/date only), `lessons` (completed step counts), `due_today_count`, `skill_gaps` (chip labels, not free text), `set_work` (n/X and scores for this class).
+
+Web: `/teacher/classes`, `/teacher/classes/<id>/roster` (invite by handle + CSV + activity log), `/teacher/classes/<id>/students/<id>`, `/teacher/classes/<id>/assignments` (preview then assign), `/teacher/classes/<id>/assignments/<id>` (n/X + scores), `/teacher/classes/<id>/audit`, `/teacher/classes/<id>/roster.csv`, `/teacher/classes/<id>/assignments.csv`, `/classes` (join after checkbox, accept/decline invites; no Leave), `/class-work`, `/class-work/<id>`.
+
+Not in this track: student Leave, T3 to teachers.
+
+`GET /api/v1/me/export` includes `teacher: { enabled, enabled_at, classes, assignments_created, invites_sent, class_audit }` (join codes for classes you own; assignment metadata without answer keys or other students’ emails; audit handles only), `classes_joined` (no join codes), `class_work` (your answers and scores, not stored answer keys), and `class_invites_received`. Account deletion cascades `teacher_profiles`, `classes`, `class_memberships`, `class_assignments`, `class_assignment_recipients`, `class_assignment_previews`, and `class_invites`. `class_audit_events.actor_id` is SET NULL; `subject_handle` matching the deleted handle is scrubbed.
 
 ## Error codes
 
@@ -387,6 +444,23 @@ The generator endpoints gain a `real_world` value for `mode` when `docs/REAL_WOR
 | `saved_limit` | 400 | 200 saved problems cap |
 | `inbox_limit` | 400 | Recipient inbox full |
 | `invalid_csrf` | 403 | Legacy lesson-progress CSRF |
+| `teacher_required` | 403 | Teacher endpoints before enable |
+| `class_limit` | 400 | Too many active classes |
+| `class_archived` | 400 | Teacher action on an archived class (rotate, assign, invite) |
+| `join_disclosure_required` | 400 | Join without confirming disclosure |
+| `invalid_join_code` | 404 | Unknown, archived, or unusable join code |
+| `self_join` | 400 | Teacher joining their own class |
+| `already_member` | 409 | Already an active member |
+| `class_full` | 400 | Active member cap (40) reached |
+| `invalid_count` | 400 | Set-work question count not in 1–20 |
+| `no_recipients` | 400 | Assign without students or empty roster |
+| `not_in_class` | 400 | Assign to someone not an active member |
+| `assignment_limit` | 400 | Too many assignments on one class |
+| `already_answered` | 400 | Class-work item already graded |
+| `already_complete` | 400 | Frozen set already finished |
+| `invalid_index` | 400 | Class-work question index out of range |
+| `invite_limit` | 400 | 40 live pending invites on the class |
+| `invite_not_pending` | 409 | Invite already answered or past 14 days |
 
 Success shape: `{ "ok": true, ... }`.
 

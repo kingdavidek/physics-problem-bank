@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Proprioception and Balance – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Proprioception and Balance</h1>
+    <p class="hero-sub">S2 Integrated Science · Unit 2.3 Senses · syllabus 2.3.6. Body position without looking, inner-ear canals, and working with vision. This lesson does not store dizziness logs or rank balance.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S2</span>
+      <span class="pill pill--hero">2.3 Senses</span>
+      <span class="pill pill--hero">2.3.6</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='proprioception_balance') }}">▶ Practice Quiz (10 questions)</a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Position sense
+      <span class="lesson-tag">2.3.6</span>
+      <span class="lesson-tag">S2</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="Sensing body position without looking">Proprioception</dfn> is sensing limb and body position without looking. A fictional closed-eye case can still know an arm is raised.
+      <span class="lesson-gloss-def">Sensing limb and body position without looking. This is not a private body-map upload.</span></p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Proprioception is</p>
+          <button class="btn mcq-btn" data-letter="A">a class vote on posters</button>
+          <button class="btn mcq-btn" data-letter="B">sensing limb and body position without looking</button>
+          <button class="btn mcq-btn" data-letter="C">a stored dizziness log</button>
+          <button class="btn mcq-btn" data-letter="D">a ranking of classmates</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">2</span> Balance</summary>
+    <div class="lesson-section-body">
+      <p><strong>Balance</strong> is keeping the body oriented. It uses inner-ear information together with other senses. Spinning then stopping can leave a mismatch; that is a teaching idea, not a dizziness survey.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Balance in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">a food group</button>
+          <button class="btn mcq-btn" data-letter="B">keeping the body oriented using inner-ear and other cues</button>
+          <button class="btn mcq-btn" data-letter="C">a private medical file</button>
+          <button class="btn mcq-btn" data-letter="D">a toughness league</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">3</span> Semicircular canals</summary>
+    <div class="lesson-section-body">
+      <p>Three loops in different planes detect rotation. <strong>A</strong>, <strong>B</strong> and <strong>C</strong> are schematic canals, not a realistic scan and not a ranking of inner ears.</p>
+      <figure class="lesson-figure">
+        {{ canal_fig }}
+        <figcaption class="lesson-figure-caption">A, B and C are schematic semicircular canals in different planes. They detect rotation of the head. Not a dizziness diary.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>The three loops in this schematic</p>
+          <button class="btn mcq-btn" data-letter="A">are a food pyramid</button>
+          <button class="btn mcq-btn" data-letter="B">detect rotation in different planes</button>
+          <button class="btn mcq-btn" data-letter="C">store a dizziness diary</button>
+          <button class="btn mcq-btn" data-letter="D">rank classmates</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">4</span> Working together</summary>
+    <div class="lesson-section-body">
+      <p>Vision and inner-ear cues work together. Closing the eyes in a fictional case can make standing on one foot harder. That is a model, not a stored clinical test.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Vision and inner-ear cues</p>
+          <button class="btn mcq-btn" data-letter="A">never interact</button>
+          <button class="btn mcq-btn" data-letter="B">work together in this S2 model of balance</button>
+          <button class="btn mcq-btn" data-letter="C">must be uploaded as a file</button>
+          <button class="btn mcq-btn" data-letter="D">replace all other senses</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">5</span> Using this lesson</summary>
+    <div class="lesson-section-body">
+      <p>Keep proprioception, balance, canals and combined cues separate. Interoception continues next. This quiz does not log dizziness.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Sense</h4>
+        <ul>
+          <li>Proprioception = position</li>
+          <li>Balance = orientation</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Inner ear</h4>
+        <ul>
+          <li>Three canals, three planes</li>
+          <li>Works with vision</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='proprioception_balance') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

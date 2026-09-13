@@ -1,0 +1,178 @@
+{#
+  Static Zorp pose kit (still illustrations).
+
+  Not the live corner widget — that stays in partials/buddy.html.
+  Insert via zorp_kit.pose(name, size=64). Unknown names → idle.
+  Original outfits only: no licensed character looks.
+#}
+
+{% macro _standing_body() -%}
+  <path d="M32 24L25 14" fill="none" stroke="var(--brand-700)" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="24" cy="13.2" r="3.1" fill="var(--brand-400)"/>
+  <path d="M48 24L55 14" fill="none" stroke="var(--brand-700)" stroke-width="2.4" stroke-linecap="round"/>
+  <circle cx="56" cy="13.2" r="3.1" fill="var(--brand-400)"/>
+  <ellipse cx="40" cy="44" rx="21" ry="21.5" fill="var(--brand-500)"/>
+  <ellipse cx="30" cy="38" rx="6" ry="8" fill="var(--brand-400)" opacity="0.35"/>
+  <ellipse cx="40" cy="46" rx="15.5" ry="13.5" fill="var(--brand-50)"/>
+{%- endmacro %}
+
+{% macro _nudge_face() -%}
+  <ellipse cx="34.2" cy="43.2" rx="2.6" ry="3.2" fill="var(--ink-800)"/>
+  <circle cx="35" cy="42.2" r="0.8" fill="#fff"/>
+  <ellipse cx="45.8" cy="43.2" rx="2.6" ry="3.2" fill="var(--ink-800)"/>
+  <circle cx="46.6" cy="42.2" r="0.8" fill="#fff"/>
+  <path d="M34.5 51.5q5.5 5 11 0" fill="none" stroke="var(--ink-800)" stroke-width="1.8" stroke-linecap="round"/>
+{%- endmacro %}
+
+{% macro _feet() -%}
+  <ellipse cx="32" cy="66.5" rx="6.5" ry="3.6" fill="var(--brand-700)"/>
+  <ellipse cx="48" cy="66.5" rx="6.5" ry="3.6" fill="var(--brand-700)"/>
+{%- endmacro %}
+
+{% macro pose_idle() -%}
+  {{ _standing_body() }}
+  {{ _nudge_face() }}
+  {{ _feet() }}
+{%- endmacro %}
+
+{% macro pose_run() -%}
+  <g transform="rotate(-18 40 44)">
+    {{ _standing_body() }}
+    {{ _nudge_face() }}
+    <ellipse cx="28" cy="64" rx="6.2" ry="3.4" fill="var(--brand-700)" transform="rotate(18 28 64)"/>
+    <ellipse cx="54" cy="62" rx="6.2" ry="3.4" fill="var(--brand-700)" transform="rotate(-28 54 62)"/>
+  </g>
+  <circle cx="14" cy="68" r="1.6" fill="var(--brand-400)" opacity="0.55"/>
+  <circle cx="10" cy="64" r="1.1" fill="var(--brand-400)" opacity="0.4"/>
+  <circle cx="18" cy="71" r="1.2" fill="var(--brand-300)" opacity="0.45"/>
+{%- endmacro %}
+
+{% macro pose_jump() -%}
+  <g transform="translate(0 -8)">
+    {{ _standing_body() }}
+    {{ _nudge_face() }}
+    <ellipse cx="18" cy="40" rx="3.2" ry="5.5" fill="var(--brand-700)" transform="rotate(-35 18 40)"/>
+    <ellipse cx="62" cy="40" rx="3.2" ry="5.5" fill="var(--brand-700)" transform="rotate(35 62 40)"/>
+    <ellipse cx="30" cy="68" rx="5.4" ry="3.1" fill="var(--brand-700)"/>
+    <ellipse cx="50" cy="68" rx="5.4" ry="3.1" fill="var(--brand-700)"/>
+  </g>
+  <path d="M22 74q4 3 8 0" fill="none" stroke="var(--brand-300)" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+  <path d="M50 74q4 3 8 0" fill="none" stroke="var(--brand-300)" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+{%- endmacro %}
+
+{% macro pose_sing() -%}
+  {{ _standing_body() }}
+  <ellipse cx="34.2" cy="43.2" rx="2.6" ry="3.2" fill="var(--ink-800)"/>
+  <circle cx="35" cy="42.2" r="0.8" fill="#fff"/>
+  <ellipse cx="45.8" cy="43.2" rx="2.6" ry="3.2" fill="var(--ink-800)"/>
+  <circle cx="46.6" cy="42.2" r="0.8" fill="#fff"/>
+  <ellipse cx="40" cy="51.6" rx="4.2" ry="3.4" fill="none" stroke="var(--ink-800)" stroke-width="1.8"/>
+  {{ _feet() }}
+  <g transform="translate(58 48) rotate(28)">
+    <rect x="-1.1" y="0" width="2.2" height="16" rx="1.1" fill="var(--ink-700)"/>
+    <circle cx="0" cy="-4.2" r="5.2" fill="var(--ink-800)"/>
+    <circle cx="0" cy="-4.2" r="3.1" fill="var(--brand-200)"/>
+  </g>
+{%- endmacro %}
+
+{% macro pose_eat() -%}
+  {{ _standing_body() }}
+  {{ _nudge_face() }}
+  {{ _feet() }}
+  <g transform="translate(62 50)">
+    <ellipse cx="0" cy="2" rx="3" ry="6" fill="var(--brand-700)" transform="rotate(40)"/>
+    <circle cx="8" cy="-2" r="6.2" fill="var(--gold-500)"/>
+    <circle cx="10.5" cy="-4" r="2.4" fill="var(--streak-300)"/>
+    <path d="M3.2 -4.8a6.4 6.4 0 0 1 8.4 6.2" fill="var(--brand-50)"/>
+  </g>
+{%- endmacro %}
+
+{% macro pose_wave() -%}
+  {{ _standing_body() }}
+  {{ _nudge_face() }}
+  {{ _feet() }}
+  <ellipse cx="62" cy="28" rx="4.2" ry="7" fill="var(--brand-700)" transform="rotate(18 62 28)"/>
+  <path d="M68 16q4 -6 8 -2" fill="none" stroke="var(--brand-400)" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M70 20q5 -4 8 0" fill="none" stroke="var(--brand-400)" stroke-width="1.6" stroke-linecap="round"/>
+{%- endmacro %}
+
+{% macro pose_think() -%}
+  <g transform="rotate(-8 40 44)">
+    {{ _standing_body() }}
+    <path d="M30.5 37.8h7.2" fill="none" stroke="var(--ink-800)" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M43.2 39.4q3.2-2.6 7.2-.4" fill="none" stroke="var(--ink-800)" stroke-width="1.6" stroke-linecap="round"/>
+    <ellipse cx="34.2" cy="44.4" rx="2.4" ry="2.8" fill="var(--ink-800)"/>
+    <circle cx="34.8" cy="43.6" r="0.7" fill="#fff"/>
+    <ellipse cx="46" cy="44.8" rx="2.4" ry="2.8" fill="var(--ink-800)"/>
+    <circle cx="46.6" cy="44" r="0.7" fill="#fff"/>
+    <path d="M36.5 52.2h7" fill="none" stroke="var(--ink-800)" stroke-width="1.7" stroke-linecap="round"/>
+    {{ _feet() }}
+  </g>
+  <circle cx="62" cy="18" r="1.5" fill="var(--ink-600)"/>
+  <circle cx="67" cy="13" r="2.1" fill="var(--ink-600)"/>
+  <text x="72" y="10" fill="var(--ink-700)" font-size="11" font-weight="700" font-family="Work Sans, system-ui, sans-serif" text-anchor="middle">?</text>
+{%- endmacro %}
+
+{% macro pose_showman() -%}
+  <path d="M18 50q-8 4 -10 16" fill="none" stroke="var(--brand-700)" stroke-width="5" stroke-linecap="round"/>
+  <path d="M16 52q-6 6 -6 16" fill="var(--gold-500)" opacity="0.85"/>
+  {{ _standing_body() }}
+  <path d="M28 18q4 -10 12 -8q2 6 -2 10z" fill="var(--ink-800)"/>
+  <circle cx="28" cy="36" r="1.7" fill="var(--gold-500)"/>
+  <circle cx="52" cy="38" r="1.5" fill="var(--gold-500)"/>
+  <circle cx="40" cy="30" r="1.4" fill="var(--gold-500)"/>
+  <circle cx="33" cy="58" r="1.5" fill="var(--gold-500)"/>
+  <circle cx="47" cy="57" r="1.3" fill="var(--gold-500)"/>
+  {{ _nudge_face() }}
+  {{ _feet() }}
+{%- endmacro %}
+
+{% macro pose_scholar() -%}
+  {{ _standing_body() }}
+  {{ _nudge_face() }}
+  {{ _feet() }}
+  <rect x="26" y="8" width="28" height="5.5" rx="1" fill="var(--ink-800)"/>
+  <polygon points="40,4 54,13 40,22 26,13" fill="var(--ink-800)"/>
+  <line x1="54" y1="13" x2="54" y2="24" stroke="var(--gold-500)" stroke-width="1.6"/>
+  <circle cx="54" cy="26" r="2.1" fill="var(--gold-500)"/>
+{%- endmacro %}
+
+{% macro pose_explorer() -%}
+  {{ _standing_body() }}
+  <ellipse cx="34.2" cy="43.2" rx="4.4" ry="4.8" fill="none" stroke="var(--ink-700)" stroke-width="2"/>
+  <ellipse cx="45.8" cy="43.2" rx="4.4" ry="4.8" fill="none" stroke="var(--ink-700)" stroke-width="2"/>
+  <line x1="38.6" y1="43.2" x2="41.4" y2="43.2" stroke="var(--ink-700)" stroke-width="2"/>
+  <ellipse cx="34.2" cy="43.2" rx="2.2" ry="2.6" fill="var(--ink-800)"/>
+  <ellipse cx="45.8" cy="43.2" rx="2.2" ry="2.6" fill="var(--ink-800)"/>
+  <path d="M34.5 51.5q5.5 5 11 0" fill="none" stroke="var(--ink-800)" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M22 36q18 14 36 0" fill="none" stroke="var(--streak-500)" stroke-width="3.2" stroke-linecap="round"/>
+  <path d="M48 40q10 8 8 18" fill="none" stroke="var(--streak-500)" stroke-width="3" stroke-linecap="round"/>
+  {{ _feet() }}
+{%- endmacro %}
+
+{% macro pose_chef() -%}
+  {{ _standing_body() }}
+  {{ _nudge_face() }}
+  {{ _feet() }}
+  <ellipse cx="40" cy="10" rx="11" ry="7.5" fill="var(--brand-50)" stroke="var(--ink-400)" stroke-width="1.2"/>
+  <rect x="33" y="14" width="14" height="8" fill="var(--brand-50)" stroke="var(--ink-400)" stroke-width="1.2"/>
+  <g transform="translate(62 46) rotate(30)">
+    <rect x="-1" y="0" width="2" height="14" rx="1" fill="var(--ink-600)"/>
+    <ellipse cx="0" cy="-4" rx="4.5" ry="5.2" fill="var(--ink-400)"/>
+  </g>
+{%- endmacro %}
+
+{% macro inner(name) -%}
+{%- if name == 'run' -%}{{ pose_run() }}
+{%- elif name == 'jump' -%}{{ pose_jump() }}
+{%- elif name == 'sing' -%}{{ pose_sing() }}
+{%- elif name == 'eat' -%}{{ pose_eat() }}
+{%- elif name == 'wave' -%}{{ pose_wave() }}
+{%- elif name == 'think' -%}{{ pose_think() }}
+{%- elif name == 'showman' -%}{{ pose_showman() }}
+{%- elif name == 'scholar' -%}{{ pose_scholar() }}
+{%- elif name == 'explorer' -%}{{ pose_explorer() }}
+{%- elif name == 'chef' -%}{{ pose_chef() }}
+{%- else -%}{{ pose_idle() }}
+{%- endif -%}
+{%- endmacro %}

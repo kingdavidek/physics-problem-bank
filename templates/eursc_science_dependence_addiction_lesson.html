@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Pleasure, Dependence and Addiction – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Pleasure, Dependence and Addiction</h1>
+    <p class="hero-sub">S2 Integrated Science · Unit 2.2 Health · syllabus 2.2.4. Ordinary pleasure vs dependence, substance and behavioural patterns, risk, harm and support. Fictional third persons only. This lesson never asks what a pupil uses.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S2</span>
+      <span class="pill pill--hero">2.2 Health</span>
+      <span class="pill pill--hero">2.2.4</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='dependence_addiction') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Pleasure is not automatically dependence
+      <span class="lesson-tag">2.2.4</span>
+      <span class="lesson-tag">S2</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>Ordinary <strong>pleasure</strong> can be part of life without being dependence. <dfn class="lesson-gloss" title="Hard to stop even when harm is clear">Dependence</dfn> (addiction in everyday language) means it is very hard to stop even when <strong>harm</strong> is clear.
+      <span class="lesson-gloss-def">It is very hard to stop even when harm is clear. Enjoyable is not the same as dependence, and enjoyable does not mean “cannot become harmful”.</span></p>
+      <p><strong>Worked example:</strong> Fictional Sam enjoys a weekend game with friends. That is ordinary pleasure. Fictional Lee keeps playing through the night, misses school, and cannot stop even after arguing about the harm. The second case is modelled as dependence, not a login survey.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Dependence means</p>
+          <button class="btn mcq-btn" data-letter="A">a one-off enjoyable event</button>
+          <button class="btn mcq-btn" data-letter="B">it is very hard to stop even when harm is clear</button>
+          <button class="btn mcq-btn" data-letter="C">a food group</button>
+          <button class="btn mcq-btn" data-letter="D">a class popularity score</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Substance dependence
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Substance</strong> dependence involves a drug or similar chemical. Cases in the quiz are fictional (for example Sam). The quiz does not ask what a pupil uses and does not store cabinets or DMs.</p>
+      <p><strong>Worked example:</strong> A public teaching case: nicotine can make stopping tobacco very hard even when lung-disease risk is known. That is a third-person health model, not a question about anyone in the room.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Substance dependence involves</p>
+          <button class="btn mcq-btn" data-letter="A">only a light-year</button>
+          <button class="btn mcq-btn" data-letter="B">a drug or similar chemical, taught with fictional cases, not a use survey</button>
+          <button class="btn mcq-btn" data-letter="C">sleep bars only</button>
+          <button class="btn mcq-btn" data-letter="D">storing who uses what</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Behavioural dependence
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Behavioural</strong> dependence can involve a repeated action that is hard to stop (for example a fictional game pattern that crowds out sleep and learning). That is a model, not a demand for logins.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Behavioural dependence can involve</p>
+          <button class="btn mcq-btn" data-letter="A">only bacteria</button>
+          <button class="btn mcq-btn" data-letter="B">a repeated action that is hard to stop, using third-person examples</button>
+          <button class="btn mcq-btn" data-letter="C">a demand for private logs</button>
+          <button class="btn mcq-btn" data-letter="D">a geocentric model</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Risk and social context
+    </summary>
+    <div class="lesson-section-body">
+      <p>Pressure, availability and marketing can raise <strong>risk</strong>. Teaching that idea does not mean asking who felt pressure or storing friend lists. Shaming a named classmate is not science.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Social context can matter because</p>
+          <button class="btn mcq-btn" data-letter="A">science ignores other people</button>
+          <button class="btn mcq-btn" data-letter="B">pressure, availability and marketing can raise risk, without asking who felt pressure</button>
+          <button class="btn mcq-btn" data-letter="C">the quiz stores friend lists</button>
+          <button class="btn mcq-btn" data-letter="D">context is a bacterium</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Harm and support
+    </summary>
+    <div class="lesson-section-body">
+      <p>Harm can include health, money, learning or relationships in public or fictional cases. <strong>Support</strong> is a trusted adult or a qualified service. This app is not a clinic and does not treat addiction. Personal questions about use belong off this page.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>If a fictional character needs help, the lesson points to</p>
+          <button class="btn mcq-btn" data-letter="A">publishing names in the quiz</button>
+          <button class="btn mcq-btn" data-letter="B">a trusted adult or qualified service; this app does not treat addiction</button>
+          <button class="btn mcq-btn" data-letter="C">ignoring harm</button>
+          <button class="btn mcq-btn" data-letter="D">a class vote</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Using this lesson
+    </summary>
+    <div class="lesson-section-body">
+      <p>Keep pleasure, dependence, substance vs behavioural, risk and support in separate boxes. Tobacco, nicotine and vaping have their own module next. This quiz does not ask what a pupil uses.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Ideas</h4>
+        <ul>
+          <li>Pleasure ≠ dependence</li>
+          <li>Hard to stop + harm</li>
+          <li>Substance or behaviour</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Boundaries</h4>
+        <ul>
+          <li>Fictional cases only</li>
+          <li>No use survey</li>
+          <li>Signpost qualified help</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='dependence_addiction') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

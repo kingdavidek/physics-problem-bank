@@ -2,6 +2,7 @@ import random
 import math
 
 from generators.shared.utils import make_problem, problem_from_choice_output
+from models import svg_kit
 from generators.shared.variant_utils import (
     select_tier_variants,
     mcq_variants_from_bank,
@@ -2147,55 +2148,7 @@ def _prob_fields_answer(values, labels, field_types=None):
 
 
 def _prob_svg_venn(a_only, b_only, both, neither):
-    total = a_only + b_only + both + neither
-    return f"""<div style="text-align:center;margin:10px 0;"><svg width="480" height="260" viewBox="0 0 480 260"
-      style="background:#f9f8f5;border-radius:8px;display:block;margin:0 auto;max-width:100%;">
-      <rect x="10" y="20" width="460" height="225" fill="none" stroke="#777" stroke-width="1.5" rx="6"/>
-      <text x="456" y="38" text-anchor="end" font-size="14" font-style="italic" fill="#555">\u03be</text>
-      <circle cx="185" cy="122" r="85" fill="#1a6fa8" fill-opacity="0.18" stroke="#1a6fa8" stroke-width="2"/>
-      <circle cx="295" cy="122" r="85" fill="#a13544" fill-opacity="0.18" stroke="#a13544" stroke-width="2"/>
-      <text x="147" y="72" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a6fa8">A</text>
-      <text x="333" y="72" text-anchor="middle" font-size="16" font-weight="bold" fill="#a13544">B</text>
-      <text x="138" y="112" text-anchor="middle" font-size="14" font-weight="bold" fill="#1a6fa8">{a_only}</text>
-      <text x="138" y="128" text-anchor="middle" font-size="10" fill="#1a6fa8">A only</text>
-      <text x="240" y="112" text-anchor="middle" font-size="14" font-weight="bold" fill="#555">{both}</text>
-      <text x="240" y="128" text-anchor="middle" font-size="10" fill="#555">A \u2229 B</text>
-      <text x="342" y="112" text-anchor="middle" font-size="14" font-weight="bold" fill="#a13544">{b_only}</text>
-      <text x="342" y="128" text-anchor="middle" font-size="10" fill="#a13544">B only</text>
-      <text x="45" y="228" font-size="11" fill="#555">Neither: {neither}</text>
-      <text x="435" y="228" text-anchor="end" font-size="11" fill="#555">Total = {total}</text>
-    </svg></div>"""
-
-
-_VENN3_R = 78
-_VENN3_AX, _VENN3_AY = 214, 132
-_VENN3_BX, _VENN3_BY = 306, 132
-_VENN3_CX, _VENN3_CY = 260, 188
-_VENN3_POS = {
-    "a_only": (172, 124),
-    "b_only": (348, 124),
-    "c_only": (260, 232),
-    "ab_only": (260, 104),
-    "ac_only": (208, 162),
-    "bc_only": (312, 162),
-    "abc": (260, 140),
-    "neither": (52, 248),
-}
-
-
-def _prob_venn_three_cell(x, y, value, font_size=13):
-    """One region: number or dashed fill-in box."""
-    if value is None:
-        w, h = 34, 18
-        return (
-            f'<rect x="{x - w // 2}" y="{y - h + 4}" width="{w}" height="{h}" rx="3" '
-            f'fill="#fffef5" stroke="#bbb" stroke-width="1.2" stroke-dasharray="3,2"/>'
-            f'<text x="{x}" y="{y}" text-anchor="middle" font-size="11" fill="#bbb">?</text>'
-        )
-    return (
-        f'<text x="{x}" y="{y}" text-anchor="middle" font-size="{font_size}" '
-        f'font-weight="bold" fill="#333">{value}</text>'
-    )
+    return str(svg_kit.venn2(a_only, b_only, both, neither))
 
 
 def _prob_svg_venn_three(
@@ -2203,73 +2156,22 @@ def _prob_svg_venn_three(
     ab_only, ac_only, bc_only, abc, neither,
     label_a="A", label_b="B", label_c="C",
 ):
-    """Three-set Venn diagram with counts in each region."""
-    total = a_only + b_only + c_only + ab_only + ac_only + bc_only + abc + neither
-    regions = {
-        "a_only": a_only, "b_only": b_only, "c_only": c_only,
-        "ab_only": ab_only, "ac_only": ac_only, "bc_only": bc_only,
-        "abc": abc, "neither": neither,
-    }
-    cells = "".join(
-        _prob_venn_three_cell(x, y, regions[key])
-        for key, (x, y) in _VENN3_POS.items()
+    return str(
+        svg_kit.venn3(
+            a_only, b_only, c_only,
+            ab_only, ac_only, bc_only, abc, neither,
+            label_a=label_a, label_b=label_b, label_c=label_c,
+        )
     )
-    return f"""<div style="text-align:center;margin:10px 0;"><svg width="520" height="300" viewBox="0 0 520 300"
-      style="background:#f9f8f5;border-radius:8px;display:block;margin:0 auto;max-width:100%;">
-      <rect x="10" y="16" width="500" height="268" fill="none" stroke="#777" stroke-width="1.5" rx="6"/>
-      <text x="498" y="34" text-anchor="end" font-size="14" font-style="italic" fill="#555">\u03be</text>
-      <circle cx="{_VENN3_AX}" cy="{_VENN3_AY}" r="{_VENN3_R}" fill="#1a6fa8" fill-opacity="0.16" stroke="#1a6fa8" stroke-width="2"/>
-      <circle cx="{_VENN3_BX}" cy="{_VENN3_BY}" r="{_VENN3_R}" fill="#a13544" fill-opacity="0.16" stroke="#a13544" stroke-width="2"/>
-      <circle cx="{_VENN3_CX}" cy="{_VENN3_CY}" r="{_VENN3_R}" fill="#2d7a4a" fill-opacity="0.16" stroke="#2d7a4a" stroke-width="2"/>
-      <text x="168" y="56" text-anchor="middle" font-size="15" font-weight="bold" fill="#1a6fa8">{label_a}</text>
-      <text x="352" y="56" text-anchor="middle" font-size="15" font-weight="bold" fill="#a13544">{label_b}</text>
-      <text x="260" y="272" text-anchor="middle" font-size="15" font-weight="bold" fill="#2d7a4a">{label_c}</text>
-      {cells}
-      <text x="492" y="248" text-anchor="end" font-size="11" fill="#555">Total = {total}</text>
-    </svg></div>"""
 
 
 def _prob_svg_venn_three_blank(label_a="A", label_b="B", label_c="C"):
-    """Empty three-set Venn — students fill every region (and neither)."""
-    cells = "".join(
-        _prob_venn_three_cell(x, y, None)
-        for _key, (x, y) in _VENN3_POS.items()
+    return str(
+        svg_kit.venn3(
+            blank=True,
+            label_a=label_a, label_b=label_b, label_c=label_c,
+        )
     )
-    return f"""<div style="text-align:center;margin:10px 0;"><svg width="520" height="300" viewBox="0 0 520 300"
-      style="background:#f9f8f5;border-radius:8px;display:block;margin:0 auto;max-width:100%;">
-      <rect x="10" y="16" width="500" height="268" fill="none" stroke="#777" stroke-width="1.5" rx="6"/>
-      <text x="498" y="34" text-anchor="end" font-size="14" font-style="italic" fill="#555">\u03be</text>
-      <circle cx="{_VENN3_AX}" cy="{_VENN3_AY}" r="{_VENN3_R}" fill="#1a6fa8" fill-opacity="0.16" stroke="#1a6fa8" stroke-width="2"/>
-      <circle cx="{_VENN3_BX}" cy="{_VENN3_BY}" r="{_VENN3_R}" fill="#a13544" fill-opacity="0.16" stroke="#a13544" stroke-width="2"/>
-      <circle cx="{_VENN3_CX}" cy="{_VENN3_CY}" r="{_VENN3_R}" fill="#2d7a4a" fill-opacity="0.16" stroke="#2d7a4a" stroke-width="2"/>
-      <text x="168" y="56" text-anchor="middle" font-size="15" font-weight="bold" fill="#1a6fa8">{label_a}</text>
-      <text x="352" y="56" text-anchor="middle" font-size="15" font-weight="bold" fill="#a13544">{label_b}</text>
-      <text x="260" y="272" text-anchor="middle" font-size="15" font-weight="bold" fill="#2d7a4a">{label_c}</text>
-      {cells}
-      <text x="28" y="264" font-size="10" fill="#888">Write counts in each region and for neither.</text>
-    </svg></div>"""
-
-
-# Legible display colours for tree branches, keyed by counter name. Tuned for the
-# cream (#f9f8f5) diagram background — e.g. white/yellow are darkened so they read.
-_PROB_TREE_COLOURS = {
-    "red": "#c0392b",
-    "green": "#2e7d32",
-    "blue": "#1a6fa8",
-    "black": "#333333",
-    "white": "#8a8f96",
-    "yellow": "#b8860b",
-    "purple": "#7b3fa0",
-    "orange": "#d35400",
-    "pink": "#c2389a",
-    "brown": "#8a5a2b",
-}
-_PROB_TREE_FALLBACK = ("#1a6fa8", "#a13544")
-
-
-def _prob_tree_colour(name, index):
-    """Map a counter name to a legible branch colour; fall back by position."""
-    return _PROB_TREE_COLOURS.get(str(name).strip().lower(), _PROB_TREE_FALLBACK[index % 2])
 
 
 def _prob_svg_tree(c1, c2, p1n, p1d, p2n, p2d,
@@ -2277,104 +2179,15 @@ def _prob_svg_tree(c1, c2, p1n, p1d, p2n, p2d,
                    p21n, p21d, p22n, p22d,
                    title="Two-stage probability tree",
                    show_probs=True, fill_in=False):
-    """SVG of a two-draw probability tree.
-    show_probs=True  → display all fractions (foundational).
-    show_probs=False, fill_in=True → typeable box on every branch (difficult).
-    show_probs=False, fill_in=False → bare tree structure only (intermediate).
-    """
-    def _fr(n, d):
-        g = math.gcd(abs(n), abs(d))
-        return f"{n // g}/{d // g}"
-
-    o11 = _fr(p1n * p11n, p1d * p11d)
-    o12 = _fr(p1n * p12n, p1d * p12d)
-    o21 = _fr(p2n * p21n, p2d * p21d)
-    o22 = _fr(p2n * p22n, p2d * p22d)
-    b1 = _fr(p1n, p1d); b2 = _fr(p2n, p2d)
-    b11 = _fr(p11n, p11d); b12 = _fr(p12n, p12d)
-    b21 = _fr(p21n, p21d); b22 = _fr(p22n, p22d)
-
-    col1 = _prob_tree_colour(c1, 0)
-    col2 = _prob_tree_colour(c2, 1)
-
-    def _branch_label(x, y, val, color):
-        """Probability on a branch line — value, fill-in box, or omitted."""
-        if show_probs:
-            return (f'<text x="{x}" y="{y}" text-anchor="middle" '
-                    f'font-size="10" fill="{color}">{val}</text>')
-        if not fill_in:
-            return ''
-        rx, ry = x - 22, y - 11
-        return (f'<foreignObject x="{rx}" y="{ry}" width="54" height="22">'
-                f'<input xmlns="http://www.w3.org/1999/xhtml" type="text" '
-                f'class="prob-tree-input" data-ans="{val}" '
-                f'autocomplete="off" spellcheck="false" aria-label="branch probability"/>'
-                f'</foreignObject>')
-
-    def _outcome_row(x, y, lbl, prob):
-        """Outcome row at end of branch — with probability, fill-in box, or label only."""
-        if show_probs:
-            return (f'<text x="{x}" y="{y}" font-size="10" fill="#555">'
-                    f'\u2192 {lbl} = {prob}</text>')
-        if not fill_in:
-            return (f'<text x="{x}" y="{y}" font-size="10" fill="#555">'
-                    f'\u2192 {lbl}</text>')
-        bx = x + 118  # fixed offset — safe for longest colour names
-        return (f'<text x="{x}" y="{y}" font-size="10" fill="#555">'
-                f'\u2192 {lbl} = </text>'
-                f'<foreignObject x="{bx}" y="{y - 11}" width="48" height="22">'
-                f'<input xmlns="http://www.w3.org/1999/xhtml" type="text" '
-                f'class="prob-tree-input" data-ans="{prob}" '
-                f'autocomplete="off" spellcheck="false" aria-label="outcome probability"/>'
-                f'</foreignObject>')
-
-    # Wider canvas only when branch/outcome fill-in boxes are shown
-    w = 640 if fill_in else 600
-    return (
-        f'<div style="text-align:center;margin:10px 0;">'
-        f'<svg width="{w}" height="290" viewBox="0 0 {w} 290" '
-        f'style="background:#f9f8f5;border-radius:8px;display:block;margin:0 auto;max-width:100%;">'
-        f'<text x="{w//2}" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="#333">{title}</text>'
-        # root
-        f'<circle cx="55" cy="148" r="4" fill="#444"/>'
-        # first-draw branch lines (coloured by the counter they lead to)
-        f'<line x1="55" y1="148" x2="228" y2="76" stroke="{col1}" stroke-width="1.5"/>'
-        f'<line x1="55" y1="148" x2="228" y2="220" stroke="{col2}" stroke-width="1.5"/>'
-        # first-draw probability labels
-        + _branch_label(132, 99, b1, col1)
-        + _branch_label(132, 202, b2, col2) +
-        # L1 dots and colour labels
-        f'<circle cx="228" cy="76" r="3" fill="{col1}"/>'
-        f'<text x="236" y="70" font-size="12" font-weight="bold" fill="{col1}">{c1}</text>'
-        f'<circle cx="228" cy="220" r="3" fill="{col2}"/>'
-        f'<text x="236" y="230" font-size="12" font-weight="bold" fill="{col2}">{c2}</text>'
-        # second-draw branch lines (coloured by the counter they lead to)
-        f'<line x1="228" y1="76" x2="390" y2="38" stroke="{col1}" stroke-width="1.5"/>'
-        f'<line x1="228" y1="76" x2="390" y2="114" stroke="{col2}" stroke-width="1.5"/>'
-        f'<line x1="228" y1="220" x2="390" y2="182" stroke="{col1}" stroke-width="1.5"/>'
-        f'<line x1="228" y1="220" x2="390" y2="258" stroke="{col2}" stroke-width="1.5"/>'
-        # second-draw probability labels
-        + _branch_label(309, 49, b11, col1)
-        + _branch_label(309, 103, b12, col2)
-        + _branch_label(309, 194, b21, col1)
-        + _branch_label(309, 255, b22, col2) +
-        # L2 colour labels
-        f'<text x="398" y="34" font-size="11" font-weight="bold" fill="{col1}">{c1}</text>'
-        f'<text x="398" y="110" font-size="11" font-weight="bold" fill="{col2}">{c2}</text>'
-        f'<text x="398" y="178" font-size="11" font-weight="bold" fill="{col1}">{c1}</text>'
-        f'<text x="398" y="254" font-size="11" font-weight="bold" fill="{col2}">{c2}</text>'
-        # outcome + probability column
-        + _outcome_row(440, 34, f'({c1},{c1})', o11)
-        + _outcome_row(440, 110, f'({c1},{c2})', o12)
-        + _outcome_row(440, 178, f'({c2},{c1})', o21)
-        + _outcome_row(440, 254, f'({c2},{c2})', o22) +
-        # column headers
-        f'<text x="228" y="278" text-anchor="middle" font-size="9" fill="#888">1st draw</text>'
-        f'<text x="390" y="278" text-anchor="middle" font-size="9" fill="#888">2nd draw</text>'
-        f'<text x="{w - 90}" y="278" text-anchor="middle" font-size="9" fill="#888">'
-        f'{"outcome" if not show_probs and not fill_in else "outcome \u00b7 P(outcome)"}'
-        f'</text>'
-        f'</svg></div>'
+    return str(
+        svg_kit.prob_tree(
+            c1, c2, p1n, p1d, p2n, p2d,
+            p11n, p11d, p12n, p12d,
+            p21n, p21d, p22n, p22d,
+            title=title,
+            show_probs=show_probs,
+            fill_in=fill_in,
+        )
     )
 
 
@@ -3315,183 +3128,23 @@ def gcse_probability(difficulty, mode, variant_name=None):
 
 
 def _stats_svg_bar_chart(categories, values):
-    W, H = 400, 280
-    PL, PR, PT, PB = 55, 20, 30, 52
-    pw, ph = W - PL - PR, H - PT - PB
-    max_val = max(values)
-    n = len(categories)
-    bar_w = min(55, pw // n - 12)
-    bar_gap = (pw - bar_w * n) // (n + 1)
-
-    bars = ""
-    for i, (cat, val) in enumerate(zip(categories, values)):
-        x = PL + bar_gap + i * (bar_w + bar_gap)
-        bh = (val / max_val) * ph
-        y = PT + ph - bh
-        bars += f'<rect x="{x:.0f}" y="{y:.0f}" width="{bar_w}" height="{bh:.0f}" fill="#01696f" rx="2"/>'
-        bars += f'<text x="{x + bar_w/2:.0f}" y="{y - 5:.0f}" text-anchor="middle" font-size="11" fill="#333">{val}</text>'
-        bars += f'<text x="{x + bar_w/2:.0f}" y="{PT+ph+20:.0f}" text-anchor="middle" font-size="12">{cat}</text>'
-
-    y_ticks = ""
-    for i in range(6):
-        val = round(max_val * i / 5)
-        yp = PT + ph - (val / max_val) * ph
-        y_ticks += f'<line x1="{PL-4}" y1="{yp:.0f}" x2="{PL}" y2="{yp:.0f}" stroke="#555"/>'
-        y_ticks += f'<text x="{PL-7}" y="{yp+4:.0f}" text-anchor="end" font-size="11">{val}</text>'
-
-    return (f'<div style="text-align:center;margin:10px 0;">'
-            f'<svg width="{W}" height="{H}" viewBox="0 0 {W} {H}"'
-            f' style="background:#f9f8f5;border-radius:8px;display:block;margin:0 auto;max-width:100%;">'
-            f'<line x1="{PL}" y1="{PT+ph}" x2="{W-PR}" y2="{PT+ph}" stroke="#555" stroke-width="1.5"/>'
-            f'<line x1="{PL}" y1="{PT}" x2="{PL}" y2="{PT+ph}" stroke="#555" stroke-width="1.5"/>'
-            f'{y_ticks}{bars}'
-            f'</svg></div>')
+    return str(svg_kit.bar_chart(categories, values))
 
 
 def _stats_svg_freq_table(values, freqs):
-    """Draw a simple frequency table with fx column."""
-    w, h = 300, 30 + 25 * len(values)
-    rows = []
-    total_f = sum(freqs)
-    total_fx = sum(v * f for v, f in zip(values, freqs))
-    for i, (v, f) in enumerate(zip(values, freqs)):
-        y = 45 + i * 25
-        rows.append(f'<text x="70" y="{y}" text-anchor="middle" font-size="12">{v}</text>')
-        rows.append(f'<text x="170" y="{y}" text-anchor="middle" font-size="12">{f}</text>')
-        rows.append(f'<text x="240" y="{y}" text-anchor="middle" font-size="12">{v*f}</text>')
-    # totals row
-    y_last = 45 + len(values) * 25
-    rows.append(f'<line x1="40" y1="{y_last-15}" x2="260" y2="{y_last-15}" stroke="#555"/>')
-    rows.append(f'<text x="70" y="{y_last}" text-anchor="middle" font-size="12" font-weight="bold">Σ</text>')
-    rows.append(f'<text x="170" y="{y_last}" text-anchor="middle" font-size="12" font-weight="bold">{total_f}</text>')
-    rows.append(f'<text x="240" y="{y_last}" text-anchor="middle" font-size="12" font-weight="bold">{total_fx}</text>')
-
-    return f"""<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}"
-        style="background:#f9f8f5; border-radius:8px; display:block; margin:10px auto;">
-        <text x="70" y="28" text-anchor="middle" font-size="12" font-weight="bold">x</text>
-        <text x="170" y="28" text-anchor="middle" font-size="12" font-weight="bold">f</text>
-        <text x="240" y="28" text-anchor="middle" font-size="12" font-weight="bold">fx</text>
-        {''.join(rows)}
-    </svg>"""
+    return str(svg_kit.freq_table(values, freqs))
 
 
 def _stats_svg_histogram(intervals, freqs):
-    W, H = 460, 310
-    PL, PR, PT, PB = 65, 22, 32, 52
-    pw, ph = W - PL - PR, H - PT - PB
-    densities = [f / (high - low) for (low, high), f in zip(intervals, freqs)]
-    max_d = max(densities)
-    x_span = intervals[-1][1] - intervals[0][0]
-
-    def sx(v): return PL + (v - intervals[0][0]) / x_span * pw
-
-    bars = ""
-    for (low, high), f, d in zip(intervals, freqs, densities):
-        x = sx(low)
-        bw = sx(high) - x
-        bh = (d / max_d) * ph
-        y = PT + ph - bh
-        bars += f'<rect x="{x:.0f}" y="{y:.0f}" width="{bw:.0f}" height="{bh:.0f}" fill="#01696f" opacity="0.85" stroke="#01696f" stroke-width="0.5"/>'
-        bars += f'<text x="{x:.0f}" y="{PT+ph+18}" text-anchor="middle" font-size="11">{low}</text>'
-    bars += f'<text x="{sx(intervals[-1][1]):.0f}" y="{PT+ph+18}" text-anchor="middle" font-size="11">{intervals[-1][1]}</text>'
-
-    y_step = max(1, int(max_d / 5) + 1)
-    y_ticks = ""
-    for val in range(0, int(max_d) + y_step, y_step):
-        yp = PT + ph - (val / max_d) * ph
-        if PT - 5 <= yp <= PT + ph:
-            y_ticks += f'<line x1="{PL-4}" y1="{yp:.0f}" x2="{PL}" y2="{yp:.0f}" stroke="#555"/>'
-            y_ticks += f'<text x="{PL-7}" y="{yp+4:.0f}" text-anchor="end" font-size="11">{val}</text>'
-
-    cy_lbl = PT + ph // 2
-    return (f'<div style="text-align:center;margin:10px 0;">'
-            f'<svg width="{W}" height="{H}" viewBox="0 0 {W} {H}"'
-            f' style="background:#f9f8f5;border-radius:8px;display:block;margin:0 auto;max-width:100%;">'
-            f'<line x1="{PL}" y1="{PT+ph}" x2="{W-PR}" y2="{PT+ph}" stroke="#555" stroke-width="1.5"/>'
-            f'<line x1="{PL}" y1="{PT}" x2="{PL}" y2="{PT+ph}" stroke="#555" stroke-width="1.5"/>'
-            f'{y_ticks}{bars}'
-            f'<text x="{W//2}" y="{H-8}" text-anchor="middle" font-size="12">Class intervals</text>'
-            f'<text x="14" y="{cy_lbl}" transform="rotate(-90,14,{cy_lbl})" text-anchor="middle" font-size="12">Frequency density</text>'
-            f'</svg></div>')
-
+    return str(svg_kit.histogram(intervals, freqs))
 
 
 def _stats_svg_boxplot(min_val, q1, q2, q3, max_val):
-    W, H = 460, 175
-    PL, PR = 50, 30
-    pw = W - PL - PR
-    by1, by2, wcy = 45, 115, 80  # box top, box bottom, whisker centre
+    return str(svg_kit.box_plot(min_val, q1, q2, q3, max_val))
 
-    scale = pw / max(1, max_val - min_val)
-    def x(val): return PL + (val - min_val) * scale
-
-    lmap = {min_val: 'Min', q1: 'Q\u2081', q2: 'Median', q3: 'Q\u2083', max_val: 'Max'}
-    ticks = ""
-    for val in [min_val, q1, q2, q3, max_val]:
-        xp = x(val)
-        ticks += f'<line x1="{xp:.0f}" y1="{by2}" x2="{xp:.0f}" y2="{by2+5}" stroke="#555"/>'
-        ticks += f'<text x="{xp:.0f}" y="{by2+20}" text-anchor="middle" font-size="12">{val}</text>'
-        ticks += f'<text x="{xp:.0f}" y="{by1-10}" text-anchor="middle" font-size="10" fill="#666">{lmap[val]}</text>'
-
-    return (f'<div style="text-align:center;margin:10px 0;">'
-            f'<svg width="{W}" height="{H}" viewBox="0 0 {W} {H}"'
-            f' style="background:#f9f8f5;border-radius:8px;display:block;margin:0 auto;max-width:100%;">'
-            f'<line x1="{PL}" y1="{by2}" x2="{W-PR}" y2="{by2}" stroke="#555" stroke-width="1.5"/>'
-            f'<line x1="{x(min_val):.0f}" y1="{wcy}" x2="{x(q1):.0f}" y2="{wcy}" stroke="#01696f" stroke-width="2.5"/>'
-            f'<line x1="{x(min_val):.0f}" y1="{by1+6}" x2="{x(min_val):.0f}" y2="{by2-6}" stroke="#01696f" stroke-width="2"/>'
-            f'<rect x="{x(q1):.0f}" y="{by1}" width="{x(q3)-x(q1):.0f}" height="{by2-by1}" fill="#dce8f7" stroke="#01696f" stroke-width="2"/>'
-            f'<line x1="{x(q2):.0f}" y1="{by1}" x2="{x(q2):.0f}" y2="{by2}" stroke="#a13544" stroke-width="2.5"/>'
-            f'<line x1="{x(q3):.0f}" y1="{wcy}" x2="{x(max_val):.0f}" y2="{wcy}" stroke="#01696f" stroke-width="2.5"/>'
-            f'<line x1="{x(max_val):.0f}" y1="{by1+6}" x2="{x(max_val):.0f}" y2="{by2-6}" stroke="#01696f" stroke-width="2"/>'
-            f'{ticks}'
-            f'</svg></div>')
 
 def _stats_svg_cf_curve(upper_bounds, cum_freqs):
-    W, H = 520, 340
-    PL, PR, PT, PB = 62, 22, 35, 52
-    pw, ph = W - PL - PR, H - PT - PB
-    max_cf = cum_freqs[-1]
-    x_min_d, x_max_d = upper_bounds[0], upper_bounds[-1]
-    x_span = x_max_d - x_min_d
-    # start curve at (lower bound of first class, 0)
-    class_w = upper_bounds[1] - upper_bounds[0] if len(upper_bounds) > 1 else x_span
-    lb0 = upper_bounds[0] - class_w
-    all_x = [lb0] + list(upper_bounds)
-    all_cf = [0] + list(cum_freqs)
-    x_lo = lb0
-
-    def sx(v): return PL + (v - x_lo) / (x_max_d - x_lo) * pw
-    def sy(v): return PT + ph - (v / max_cf) * ph
-
-    path = "M" + " L".join(f"{sx(v):.0f},{sy(c):.0f}" for v, c in zip(all_x, all_cf))
-
-    ticks = ""
-    for ub in all_x:
-        xp = sx(ub)
-        ticks += f'<line x1="{xp:.0f}" y1="{PT+ph}" x2="{xp:.0f}" y2="{PT+ph+5}" stroke="#555"/>'
-        ticks += f'<text x="{xp:.0f}" y="{PT+ph+20}" text-anchor="middle" font-size="11">{ub}</text>'
-
-    y_step = max(1, max_cf // 5)
-    for val in range(0, max_cf + 1, y_step):
-        yp = sy(val)
-        if PT - 5 <= yp <= PT + ph:
-            ticks += f'<line x1="{PL-4}" y1="{yp:.0f}" x2="{PL}" y2="{yp:.0f}" stroke="#555"/>'
-            ticks += f'<text x="{PL-7}" y="{yp+4:.0f}" text-anchor="end" font-size="11">{val}</text>'
-
-    circles = "".join(f'<circle cx="{sx(v):.0f}" cy="{sy(c):.0f}" r="4" fill="#a13544"/>'
-                      for v, c in zip(all_x[1:], all_cf[1:]))
-    cy_lbl = PT + ph // 2
-    return (f'<div style="text-align:center;margin:10px 0;">'
-            f'<svg width="{W}" height="{H}" viewBox="0 0 {W} {H}"'
-            f' style="background:#f9f8f5;border-radius:8px;display:block;margin:0 auto;max-width:100%;">'
-            f'<line x1="{PL}" y1="{PT+ph}" x2="{W-PR}" y2="{PT+ph}" stroke="#555" stroke-width="1.5"/>'
-            f'<line x1="{PL}" y1="{PT}" x2="{PL}" y2="{PT+ph}" stroke="#555" stroke-width="1.5"/>'
-            f'{ticks}'
-            f'<path d="{path}" fill="none" stroke="#01696f" stroke-width="2.5"/>'
-            f'{circles}'
-            f'<text x="{W//2}" y="{H-8}" text-anchor="middle" font-size="12">Upper class boundary</text>'
-            f'<text x="14" y="{cy_lbl}" transform="rotate(-90,14,{cy_lbl})" text-anchor="middle" font-size="12">Cumulative frequency</text>'
-            f'</svg></div>')
+    return str(svg_kit.cumulative_frequency_curve(upper_bounds, cum_freqs))
 
 
 
@@ -3667,7 +3320,20 @@ def _stats_pie_angle():
     total = random.choice([60, 80, 100, 120])
     freq = random.randint(10, total - 10)
     angle = 360 * freq / total
-    q = rf"In {scenario}, {freq} out of {total} respondents {label}. Find the sector angle for this category in a pie chart."
+    other = total - freq
+    short_label = label.split(' ', 1)[-1] if label.startswith(('chose ', 'voted ', 'own ')) else label
+    pie = str(
+        svg_kit.pie_chart(
+            [freq, other],
+            labels=[short_label, 'Other'],
+            highlight_index=0,
+            title='Pie chart sector',
+        )
+    )
+    q = (
+        rf"In {scenario}, {freq} out of {total} respondents {label}.\n{pie}\n"
+        f"Find the sector angle for this category in a pie chart."
+    )
     s = f"Sector angle = (frequency ÷ total) × 360 = ({freq} ÷ {total}) × 360 = <strong>{angle:.1f}°</strong>."
     hint = "A full pie chart is 360°."
     return q, s, hint, 2, _number_raw(angle, dp=1)

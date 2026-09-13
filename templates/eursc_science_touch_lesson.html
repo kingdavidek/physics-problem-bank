@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Touch – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Touch</h1>
+    <p class="hero-sub">S2 Integrated Science · Unit 2.3 Senses · syllabus 2.3.3. Receptor types, density, temperature perception, and a consented two-point mapping. This lesson does not store a private body map or rank skin.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S2</span>
+      <span class="pill pill--hero">2.3 Senses</span>
+      <span class="pill pill--hero">2.3.3</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='touch') }}">▶ Practice Quiz (10 questions)</a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Receptor types
+      <span class="lesson-tag">2.3.3</span>
+      <span class="lesson-tag">S2</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>This lesson names three ideas: <strong>pressure</strong> (contact), <strong>temperature</strong> (hot or cold), and <strong>pain</strong> (a warning of possible damage). Pain is not a toughness league.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Pressure receptors in this lesson detect</p>
+          <button class="btn mcq-btn" data-letter="A">a light-year</button>
+          <button class="btn mcq-btn" data-letter="B">contact or pressure</button>
+          <button class="btn mcq-btn" data-letter="C">a vaccination file</button>
+          <button class="btn mcq-btn" data-letter="D">whose skin to rank</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">2</span> Receptor density</summary>
+    <div class="lesson-section-body">
+      <p>Fingertips are modelled as <strong>denser</strong> in receptors than some other regions, so two points are easier to tell apart. Density is a model, not a ranking of whose skin is toughest.</p>
+      <p><strong>Worked example:</strong> In a teacher-approved two-point test on a fingertip, two pins a few millimetres apart can feel like two points. On a less dense region the same gap can feel like one. Consent first; this is not a class skin ranking.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Receptor density is modelled as</p>
+          <button class="btn mcq-btn" data-letter="A">identical on every region always</button>
+          <button class="btn mcq-btn" data-letter="B">higher in some regions such as a fingertip than in some others</button>
+          <button class="btn mcq-btn" data-letter="C">a reason to rank bodies</button>
+          <button class="btn mcq-btn" data-letter="D">a stored private map</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">3</span> Temperature perception</summary>
+    <div class="lesson-section-body">
+      <p>The same lukewarm water can feel different after hot or cold. That is a perception effect. The quiz does not log whose hands they are.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Temperature receptors detect</p>
+          <button class="btn mcq-btn" data-letter="A">a retina only</button>
+          <button class="btn mcq-btn" data-letter="B">hot or cold in this S2 model</button>
+          <button class="btn mcq-btn" data-letter="C">a glasses brand</button>
+          <button class="btn mcq-btn" data-letter="D">a class league</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">4</span> Mapping with consent</summary>
+    <div class="lesson-section-body">
+      <p>A teacher-approved two-point test needs <strong>consent</strong>, a followable method, and controls (same tool, same pressure rule). If a volunteer does not consent, the method stops. This page does not replace classroom practical work and does not store a body map.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A classroom two-point test</p>
+          <button class="btn mcq-btn" data-letter="A">must proceed without consent</button>
+          <button class="btn mcq-btn" data-letter="B">needs teacher rules and consent; it is not a body ranking</button>
+          <button class="btn mcq-btn" data-letter="C">uploads a map to this app</button>
+          <button class="btn mcq-btn" data-letter="D">replaces all other senses</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">5</span> Using this lesson</summary>
+    <div class="lesson-section-body">
+      <p>Keep receptor types, density, temperature perception and consented mapping separate. Smell continues next.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Receptors</h4>
+        <ul>
+          <li>Pressure, temperature, pain</li>
+          <li>Density not uniform</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Method</h4>
+        <ul>
+          <li>Consent required</li>
+          <li>No body-map file here</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='touch') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}Life on Earth and Elsewhere – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Life on Earth and Elsewhere</h1>
+    <p class="hero-sub">S2 Integrated Science · Unit 2.1 Universe · syllabus 2.1.3. Requirements for life as we know it, early Earth and LUCA as models, limits of claims about life elsewhere, and why travel and habitation are tightly constrained.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S2</span>
+      <span class="pill pill--hero">2.1 Universe</span>
+      <span class="pill pill--hero">2.1.3</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='life_earth_elsewhere') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Requirements for life
+      <span class="lesson-tag">2.1.3</span>
+      <span class="lesson-tag">S2</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>A simple S2 list for life as we know it: a source of <strong>energy</strong> (sunlight or chemical energy that can be tested), <strong>liquid water</strong>, and useful <strong>chemicals</strong> (for example carbon compounds). That is three items, not a rumour. Other worlds might surprise us; this course still starts from what we can measure on Earth.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A simple list of needs for life as we know it includes</p>
+          <button class="btn mcq-btn" data-letter="A">only rumours</button>
+          <button class="btn mcq-btn" data-letter="B">energy, liquid water and useful chemicals</button>
+          <button class="btn mcq-btn" data-letter="C">a geocentric vote</button>
+          <button class="btn mcq-btn" data-letter="D">a light-year of time</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Early Earth and LUCA
+    </summary>
+    <div class="lesson-section-body">
+      <p>Conditions on <strong>early Earth</strong> are reconstructed from rocks, chemistry and models that other scientists can criticise. <dfn class="lesson-gloss" title="Last universal common ancestor">LUCA</dfn> (last universal common ancestor) is a scientific model of shared ancestry from common chemistry — not a king in a history book and not a named celebrity.
+      <span class="lesson-gloss-def">A model of a last universal common ancestor based on shared chemistry. It is evidence-based and open to better data, not a celebrity or a rumour.</span>
+      Life did not appear as a modern city in one day.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>LUCA in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">a planet between Earth and Mars</button>
+          <button class="btn mcq-btn" data-letter="B">a model of a last universal common ancestor based on shared chemistry</button>
+          <button class="btn mcq-btn" data-letter="C">proof that aliens visited last week</button>
+          <button class="btn mcq-btn" data-letter="D">a unit of distance</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Life elsewhere and evidence
+    </summary>
+    <div class="lesson-section-body">
+      <p>Whether life exists beyond Earth is an <strong>open scientific question</strong>. There is <strong>no confirmed evidence</strong> of life beyond Earth in this course. A claim must be <strong>testable</strong> with public measurements. A blurry photo of a light in the sky is not, by itself, evidence of microbes on Mars. A secret that cannot be checked is not scientific proof.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A blurry photo of a light in the sky</p>
+          <button class="btn mcq-btn" data-letter="A">proves life on Mars</button>
+          <button class="btn mcq-btn" data-letter="B">is not, by itself, evidence of extraterrestrial life</button>
+          <button class="btn mcq-btn" data-letter="C">is a light-year</button>
+          <button class="btn mcq-btn" data-letter="D">is LUCA</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Travel and habitation
+    </summary>
+    <div class="lesson-section-body">
+      <p>Other stars are so far that even light takes <strong>years</strong> (this lesson uses <strong>4</strong> years to the nearest other star as a rounded figure). Chemical rockets are much slower than light, so a trip of a few light-years is not an afternoon walk. A <strong>habitat</strong> beyond Earth must supply air, water, energy and radiation <strong>shielding</strong> — four engineering constraints. An airless world does not provide oxygen by rumour.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Travel to another star is hard mainly because</p>
+          <button class="btn mcq-btn" data-letter="A">stars are closer than the Moon</button>
+          <button class="btn mcq-btn" data-letter="B">distances are enormous compared with a human lifetime at realistic speeds</button>
+          <button class="btn mcq-btn" data-letter="C">the Sun is 1 AU from the classroom</button>
+          <button class="btn mcq-btn" data-letter="D">seasons stop spacecraft</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Using the evidence standard
+    </summary>
+    <div class="lesson-section-body">
+      <p>Keep needs, Earth history, extraterrestrial claims and travel constraints in separate boxes. Search with methods others can check; do not treat excitement or rumours as results. Particles and chemistry continue in <a href="{{ url_for('topic_page', level='eursc', subject='science', topic='atoms_molecules') }}">Atoms and Molecules</a>.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Life as we know it</h4>
+        <ul>
+          <li>Energy, liquid water, chemicals</li>
+          <li>Early Earth and LUCA are models</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Elsewhere</h4>
+        <ul>
+          <li>No confirmed life beyond Earth here</li>
+          <li>Claims must be testable</li>
+          <li>Distance and habitat constrain travel</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='life_earth_elsewhere') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Delete account – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+<div class="lesson-hero">
+    <h1>Delete your account</h1>
+    <p class="hero-sub">This cannot be undone.</p>
+</div>
+
+{% if error %}
+<p class="error" role="alert">{{ error }}</p>
+{% endif %}
+
+<section class="section-panel">
+    <div class="section-panel-header">What will be removed</div>
+    <div class="section-panel-body">
+        <ul>
+            <li>Your email, handle, and password</li>
+            <li>Practice history, quizzes, saved questions, and lesson progress</li>
+            <li>Streaks, badges, reflections, and revision plans</li>
+            <li>Follows, challenges, and study-buddy links</li>
+            <li>API sessions and notification history</li>
+        </ul>
+        <p>Safeguarding reports about you are kept without your name. Live systems are updated immediately. Encrypted backups drop your data within 14 days.</p>
+        <p>Your handle <strong>@{{ current_user.handle }}</strong> stays reserved for 90 days so nobody can impersonate you.</p>
+    </div>
+</section>
+
+<form method="POST" class="auth-form settings-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-group">
+        <label for="confirm_handle">Type your handle to confirm</label>
+        <input type="text" name="confirm_handle" id="confirm_handle" autocomplete="off" required>
+    </div>
+    <div class="form-group">
+        <label for="password">Current password</label>
+        <input type="password" name="password" id="password" autocomplete="current-password" required>
+    </div>
+    <div class="settings-form-actions">
+        <button type="submit" class="btn btn-primary">Permanently delete my account</button>
+        <a href="{{ url_for('profile_settings') }}" class="btn btn-outline">Cancel</a>
+    </div>
+</form>
+</div>
+{% endblock %}

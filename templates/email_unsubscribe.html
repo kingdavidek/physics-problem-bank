@@ -3,19 +3,21 @@
 
 {% block content %}
 <div class="page-shell">
-<div class="lesson-hero">
-    <h1>Email preferences</h1>
-</div>
-
-<section class="section-panel">
+<section class="section-panel status-page-card">
     <div class="section-panel-body">
-        {% if ok %}
-        <p class="flash-success">{{ message }}</p>
-        <p>You can turn weekly recaps back on anytime in <a href="{{ url_for('profile_settings') }}">Settings</a>.</p>
-        {% else %}
-        <p class="error">{{ message }}</p>
-        {% endif %}
-        <p style="margin-top:16px;"><a href="{{ url_for('index') }}">← Back to home</a></p>
+        <div class="empty-state">
+            {% if ok %}
+            <div class="empty-state-icon" aria-hidden="true">✉️</div>
+            <h1>Preferences updated</h1>
+            <p class="flash-success">{{ message }}</p>
+            <p>You can turn weekly recaps back on anytime in <a href="{{ url_for('profile_settings') }}">Settings</a>.</p>
+            {% else %}
+            <div class="empty-state-icon" aria-hidden="true">⚠️</div>
+            <h1>Could not update preferences</h1>
+            <p class="error">{{ message }}</p>
+            {% endif %}
+            <p><a href="{{ url_for('index') }}" class="btn btn-outline">← Back to home</a></p>
+        </div>
     </div>
 </section>
 </div>

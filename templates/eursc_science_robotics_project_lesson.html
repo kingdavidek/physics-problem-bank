@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Project: Build a Simple Robot – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Project: Build a Simple Robot</h1>
+    <p class="hero-sub">S3 Integrated Science · Unit 3.1 Machines · syllabus 3.1.6. Requirements, machines, teacher-approved electronics, a sense–decide–act program model, then test, iterate and present. The physical robot is judged in class with a rubric; this page does not auto-grade the product and does not store a robot league.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S3</span>
+      <span class="pill pill--hero">3.1 Machines</span>
+      <span class="pill pill--hero">3.1.6</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='robotics_project') }}">▶ Practice Quiz (10 questions)</a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">1</span> Requirements <span class="lesson-tag">3.1.6</span> <span class="lesson-tag">S3</span></summary>
+    <div class="lesson-section-body">
+      <p>Write <dfn class="lesson-gloss" title="Written needs another group could test">requirements</dfn> another group could test, for example “move 20 cm on a table without leaving the mat”. Keep the need public and checkable. Do not upload private home-workshop photos here.
+      <span class="lesson-gloss-def">Written needs another group could test. The physical robot stays in class with a rubric; this page does not auto-grade it.</span></p>
+      <p><strong>Worked example:</strong> A fictional brief: move a kit cart 20 cm on a table mat without leaving the tape. Sense: a bumper switch. Decide: if the bumper is pressed, reverse. Act: the motors. The class rubric judges the robot; this app does not store a robot league.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>The first project phase is to</p>
+          <button class="btn mcq-btn" data-letter="A">hide the method</button>
+          <button class="btn mcq-btn" data-letter="B">write requirements another group could test</button>
+          <button class="btn mcq-btn" data-letter="C">rank robots in a stored league</button>
+          <button class="btn mcq-btn" data-letter="D">skip safety</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">2</span> Machines</summary>
+    <div class="lesson-section-body">
+      <p>Choose simple machines from 3.1.1 that <strong>match the requirements</strong>: a lever, a pulley or a wheel-and-axle idea if the teacher approves the kit.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Simple machines in the project</p>
+          <button class="btn mcq-btn" data-letter="A">must be a secret</button>
+          <button class="btn mcq-btn" data-letter="B">should match the written requirements</button>
+          <button class="btn mcq-btn" data-letter="C">replace the teacher</button>
+          <button class="btn mcq-btn" data-letter="D">inspect homes</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">3</span> Electromagnetism and electronics</summary>
+    <div class="lesson-section-body">
+      <p>Plan motors, switches or electromagnets only with <strong>teacher-approved parts</strong> and a risk assessment. Low-voltage classroom kits; not a home mains hunt.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Electronics or electromagnets in the project</p>
+          <button class="btn mcq-btn" data-letter="A">may be any home mains part</button>
+          <button class="btn mcq-btn" data-letter="B">need teacher-approved parts and a risk assessment</button>
+          <button class="btn mcq-btn" data-letter="C">replace the rubric</button>
+          <button class="btn mcq-btn" data-letter="D">must be photographed at home for the app</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">4</span> Programming as sense–decide–act</summary>
+    <div class="lesson-section-body">
+      <p>A classroom program can be modelled as <strong>sense</strong>, then <strong>decide</strong>, then <strong>act</strong>. Use the tools the teacher supplies. This quiz does not harvest a private code repository.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Sense–decide–act in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">a private code upload</button>
+          <button class="btn mcq-btn" data-letter="B">a classroom model of a simple program</button>
+          <button class="btn mcq-btn" data-letter="C">a joint map</button>
+          <button class="btn mcq-btn" data-letter="D">a household rank</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">5</span> Build, test, iterate, present</summary>
+    <div class="lesson-section-body">
+      <p>Build in class. Record a test. If it misses, <strong>iterate</strong>. Present evidence another group could follow. The physical robot is <strong>not auto-graded</strong> here; the class uses a rubric.</p>
+      <p class="lesson-callout">Plan the practical with your teacher using the <a href="{{ url_for('eursc_ibl_page', slug='s3_robot') }}">classroom investigation support</a>. This page does not replace classroom practical work.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>The physical robot in this app is</p>
+          <button class="btn mcq-btn" data-letter="A">fully auto-graded as a product</button>
+          <button class="btn mcq-btn" data-letter="B">not auto-graded; class uses a rubric</button>
+          <button class="btn mcq-btn" data-letter="C">a diet</button>
+          <button class="btn mcq-btn" data-letter="D">a shock survey</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Phases</h4>
+        <ul>
+          <li>Requirements, then machines</li>
+          <li>Approved parts, then program model</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Judgement</h4>
+        <ul>
+          <li>Test, iterate, present</li>
+          <li>Rubric in class, not a stored league</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='robotics_project') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

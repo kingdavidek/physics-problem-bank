@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% block title %}Infectious Disease and Immunity – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Infectious Disease and Immunity</h1>
+    <p class="hero-sub">S2 Integrated Science · Unit 2.2 Health · syllabus 2.2.2. Bacteria and viruses, transmission, immunity, vaccination, antibiotics, outbreak data and sanitation. Fictional cases only. This lesson never asks who has been ill.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S2</span>
+      <span class="pill pill--hero">2.2 Health</span>
+      <span class="pill pill--hero">2.2.2</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='infectious_disease') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Bacteria and viruses
+      <span class="lesson-tag">2.2.2</span>
+      <span class="lesson-tag">S2</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Bacteria</strong> are living cells; some are <dfn class="lesson-gloss" title="A microbe that can cause disease">pathogens</dfn>. <strong>Viruses</strong> need a host cell to multiply.
+      <span class="lesson-gloss-def">A microbe that can cause disease. Bacteria and viruses can both be pathogens, but they are not the same kind of object.</span>
+      The quiz does not list who was ill last week.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Viruses typically</p>
+          <button class="btn mcq-btn" data-letter="A">are exactly the same as bacteria</button>
+          <button class="btn mcq-btn" data-letter="B">need a host cell to multiply</button>
+          <button class="btn mcq-btn" data-letter="C">are a food group</button>
+          <button class="btn mcq-btn" data-letter="D">are a sleep bar</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Transmission
+    </summary>
+    <div class="lesson-section-body">
+      <p>A pathogen can pass along a <strong>route</strong> (droplets, contact, or another path the teacher names). Teaching routes is not the same as naming who coughed.</p>
+      <p><strong>Worked example:</strong> In a fictional case, Sam has a cold (source). Droplets in shared indoor air are a route. Lee, who shares that air, can become a new host. The class discusses the chain, not who coughed last week.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>An infectious disease can spread because</p>
+          <button class="btn mcq-btn" data-letter="A">it is always inherited only</button>
+          <button class="btn mcq-btn" data-letter="B">a pathogen can pass from a source along a route to a new host</button>
+          <button class="btn mcq-btn" data-letter="C">the Moon votes</button>
+          <button class="btn mcq-btn" data-letter="D">the quiz names who coughed</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Chain of infection
+    </summary>
+    <div class="lesson-section-body">
+      <p>A simple chain: <strong>A</strong> source, <strong>B</strong> route, <strong>C</strong> new host. Breaking a route (hygiene, teacher-set distance rules) can slow the chain. A new host can later become a source.</p>
+      <figure class="lesson-figure">
+        {{ infection_chain_fig }}
+        <figcaption class="lesson-figure-caption">A source → B route → C new host. Breaking the route can slow the chain. Educational boxes, not a diagnosis.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A simple chain of infection in this lesson is</p>
+          <button class="btn mcq-btn" data-letter="A">a ranking of who was ill</button>
+          <button class="btn mcq-btn" data-letter="B">source, then route, then a new host</button>
+          <button class="btn mcq-btn" data-letter="C">the same as a virus always</button>
+          <button class="btn mcq-btn" data-letter="D">a class attendance list</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Immunity
+    </summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="The body's defence against pathogens">Immunity</dfn> is the body's defence: some of it is there already (innate), some is learned after an exposure.
+      <span class="lesson-gloss-def">The body's defence against pathogens. Innate means already there; learned means after an exposure. This app does not store whose immunity has been tested.</span></p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Immunity is</p>
+          <button class="btn mcq-btn" data-letter="A">a brand of soap</button>
+          <button class="btn mcq-btn" data-letter="B">the body's defence, which can be innate or learned</button>
+          <button class="btn mcq-btn" data-letter="C">a light-year</button>
+          <button class="btn mcq-btn" data-letter="D">a private diagnosis the app stores</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Vaccination
+    </summary>
+    <div class="lesson-section-body">
+      <p>A <dfn class="lesson-gloss" title="A safe exposure that trains immunity">vaccine</dfn> trains immunity using a <strong>safe exposure</strong> in the usual teaching model.
+      <span class="lesson-gloss-def">A public-health tool that trains immunity with a safe exposure. This app teaches the idea; it does not store vaccination status.</span>
+      Programmes are public health tools.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A vaccine is modelled as</p>
+          <button class="btn mcq-btn" data-letter="A">a snack vote</button>
+          <button class="btn mcq-btn" data-letter="B">a safe exposure that trains immunity</button>
+          <button class="btn mcq-btn" data-letter="C">an antibiotic for every virus</button>
+          <button class="btn mcq-btn" data-letter="D">a record of who had which injection, stored here</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Antibiotics and resistance
+    </summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="Medicines that can treat some bacterial infections">Antibiotics</dfn> can treat some <strong>bacterial</strong> infections. They do <strong>not</strong> treat viruses. Misuse can help <strong>resistant</strong> bacteria spread.
+      <span class="lesson-gloss-def">Medicines that can treat some bacterial infections. They do not treat viruses. Resistance means some bacteria survive the medicine and can spread.</span>
+      The quiz does not collect home prescriptions.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Antibiotics in this S2 model</p>
+          <button class="btn mcq-btn" data-letter="A">treat all viruses</button>
+          <button class="btn mcq-btn" data-letter="B">can treat some bacterial infections but not viruses, and resistance matters</button>
+          <button class="btn mcq-btn" data-letter="C">are a food group</button>
+          <button class="btn mcq-btn" data-letter="D">must be listed from home cabinets in the quiz</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">7</span>
+      Outbreak data
+    </summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="Using counts to track spread">Epidemiology</dfn> uses counts that can be checked. A classroom model might double: 2, then 4, then 8. That is a token model, not a pupil's medical file and not a graph for blaming a named classmate.
+      <span class="lesson-gloss-def">The study of patterns of illness in a group, using counts that can be checked. Classroom bars are a model, not a real outbreak and not a pupil file.</span></p>
+      <p><strong>Worked example:</strong> Day 1 has 2 cases, day 2 has 4, day 3 has 8. Each step is \(\times 2\). That pattern is a model of spread, not a named classmate.</p>
+      <figure class="lesson-figure">
+        {{ outbreak_fig }}
+        <figcaption class="lesson-figure-caption">Cases against day: A 2 cases, B 4 cases, C 8 cases. Axes named; bars are a classroom doubling model, not a real outbreak.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Epidemiology in this lesson uses</p>
+          <button class="btn mcq-btn" data-letter="A">secret rumours only</button>
+          <button class="btn mcq-btn" data-letter="B">counts and patterns that can be checked, not a pupil's file</button>
+          <button class="btn mcq-btn" data-letter="C">a ranking of bodies</button>
+          <button class="btn mcq-btn" data-letter="D">Moon phases as the only cause</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">8</span>
+      Sanitation and hygiene
+    </summary>
+    <div class="lesson-section-body">
+      <p>Hand <strong>hygiene</strong> and sanitation can cut some routes. They do not replace a teacher's risk assessment. They are not a reason to culture real pathogens in the classroom.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Hand hygiene can help because it may</p>
+          <button class="btn mcq-btn" data-letter="A">create extra pathogens from nothing</button>
+          <button class="btn mcq-btn" data-letter="B">reduce some transmission routes</button>
+          <button class="btn mcq-btn" data-letter="C">replace all vaccines automatically</button>
+          <button class="btn mcq-btn" data-letter="D">require listing illnesses in the quiz</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">9</span>
+      Classroom investigation
+    </summary>
+    <div class="lesson-section-body">
+      <p class="lesson-callout">Plan a <strong>token model</strong> of spread with your teacher using the <a href="{{ url_for('eursc_ibl_page', slug='s2_disease') }}">classroom investigation support</a>. This page does not replace classroom practical work. Do not culture real pathogens. Stickers or counters stand for “infected”; they are not a diagnosis.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Pathogens</h4>
+        <ul>
+          <li>Bacteria: living cells</li>
+          <li>Viruses: need a host cell</li>
+          <li>Chain: source → route → host</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Control</h4>
+        <ul>
+          <li>Vaccine trains immunity</li>
+          <li>Antibiotics: bacteria, not viruses</li>
+          <li>Hygiene can cut routes</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='infectious_disease') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

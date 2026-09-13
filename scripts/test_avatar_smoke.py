@@ -149,8 +149,8 @@ def main():
         settings_html = r.data.decode()
         token = csrf_from(settings_html)
         assert 'avatar_face' in settings_html
-        assert 'Earn <em>Practice regular</em> to unlock' in settings_html
-        assert 'Earn <em>Week warrior</em> to unlock' in settings_html
+        assert 'Earn <em>Practice regular</em>' in settings_html
+        assert 'Earn <em>Week warrior</em>' in settings_html
         assert 'avatar-choice--locked' in settings_html
 
         r = client.patch(
@@ -199,6 +199,12 @@ def main():
         }
 
         r = client.get('/leaderboard/friends')
+        assert r.status_code == 200
+
+        # The leaderboard is empty without friends, so assert avatar markup on a
+        # page that always renders one. (Before U0 this passed against the
+        # `.user-avatar` rule in the inline <style> block rather than markup.)
+        r = client.get('/profile')
         assert r.status_code == 200
         assert 'user-avatar' in r.data.decode()
 

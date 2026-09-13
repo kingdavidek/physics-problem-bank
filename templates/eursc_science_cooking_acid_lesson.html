@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}Basic Cooking: Acid – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Basic Cooking: Acid</h1>
+    <p class="hero-sub">S1 Integrated Science · Unit 1.2 Food · syllabus 1.2.4. Sour taste, pH, indicators, acid cooking and preservation.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S1</span>
+      <span class="pill pill--hero">1.2 Food</span>
+      <span class="pill pill--hero">1.2.4</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='cooking_acid') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Sour taste
+      <span class="lesson-tag">1.2.4</span>
+      <span class="lesson-tag">S1</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>Lemon and vinegar taste <strong>sour</strong> because they are <strong>acidic</strong>. Taste is a clue in food, not a method for unknown laboratory chemicals.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Lemon juice tastes sour mainly because it is</p>
+          <button class="btn mcq-btn" data-letter="A">an alkali with pH 14</button>
+          <button class="btn mcq-btn" data-letter="B">acidic</button>
+          <button class="btn mcq-btn" data-letter="C">pure table salt</button>
+          <button class="btn mcq-btn" data-letter="D">a metal</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      pH and indicators
+    </summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="A number scale for acid and alkali">pH</dfn> below 7 is acid, about 7 is neutral, above 7 is alkali.
+      <span class="lesson-gloss-def">A number scale: below 7 is acid, about 7 is neutral, above 7 is alkali. An indicator changes colour to show which region.</span>
+      An <strong>indicator</strong> changes colour. <strong>A</strong> acid, <strong>B</strong> pH 7, <strong>C</strong> alkali.</p>
+      <figure class="lesson-figure">
+        {{ ph_scale_fig }}
+        <figcaption class="lesson-figure-caption">A acid (below pH 7), B pH 7 (neutral), C alkali (above pH 7). Labels, not colour alone, mark the three regions.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A pH of 3 compared with pH 7 is</p>
+          <button class="btn mcq-btn" data-letter="A">more alkaline</button>
+          <button class="btn mcq-btn" data-letter="B">more acidic</button>
+          <button class="btn mcq-btn" data-letter="C">exactly the same</button>
+          <button class="btn mcq-btn" data-letter="D">not a number</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Acid cooking
+    </summary>
+    <div class="lesson-section-body">
+      <p>Acid can <dfn class="lesson-gloss" title="Change a protein's shape">denature</dfn> proteins without a hot pan, as when citrus firms fish.
+      <span class="lesson-gloss-def">Change a protein's shape. Acid can do this without much heat, as when citrus firms fish (ceviche-style).</span>
+      That is a chemical/structural change, like heat-setting an egg.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Vinegar on fish that firms the flesh is using acid to</p>
+          <button class="btn mcq-btn" data-letter="A">turn the fish into a gas</button>
+          <button class="btn mcq-btn" data-letter="B">denature proteins without much heat</button>
+          <button class="btn mcq-btn" data-letter="C">add a metal coating</button>
+          <button class="btn mcq-btn" data-letter="D">remove all water instantly</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Preservation
+    </summary>
+    <div class="lesson-section-body">
+      <p>A pickle’s low pH slows many spoilage microbes. It does not replace clean jars or a teacher’s risk assessment. Some microbes still tolerate acid.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Acid in a pickle helps preservation because it</p>
+          <button class="btn mcq-btn" data-letter="A">feeds every microbe equally</button>
+          <button class="btn mcq-btn" data-letter="B">makes conditions harder for many spoilage microbes</button>
+          <button class="btn mcq-btn" data-letter="C">removes the need for a lid ever</button>
+          <button class="btn mcq-btn" data-letter="D">is a protein powder</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Handling acids safely
+    </summary>
+    <div class="lesson-section-body">
+      <p>Do not taste unknown laboratory acids. Use indicators and teacher instructions. Kitchen tasting of lemon is not a lab method.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref lesson-quick-ref-card" role="region" aria-label="Cooking acid quick reference">
+    <h3>Quick reference</h3>
+    <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+      <div>
+        <h4>pH</h4>
+        <ul>
+          <li>Below 7 acid · 7 neutral · above 7 alkali</li>
+          <li>Indicators change colour</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Kitchen</h4>
+        <ul>
+          <li>Sour foods are often acids</li>
+          <li>Acid can denature protein and help pickles</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='cooking_acid') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

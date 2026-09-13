@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block title %}Water and Other Substances – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Water and Other Substances</h1>
+    <p class="hero-sub">S1 Integrated Science · Unit 1.2 Food · syllabus 1.2.2. States, phase change, mixtures, separation, and why mixed volumes are not always additive.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S1</span>
+      <span class="pill pill--hero">1.2 Food</span>
+      <span class="pill pill--hero">1.2.2</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='water_substances') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Particle states
+      <span class="lesson-tag">1.2.2</span>
+      <span class="lesson-tag">S1</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>A</strong> solid — packed, fixed pattern. <strong>B</strong> liquid — touching but able to move past. <strong>C</strong> gas — far apart and moving freely.</p>
+      <figure class="lesson-figure">
+        {{ particle_states }}
+        <figcaption class="lesson-figure-caption">A solid (packed, fixed pattern), B liquid (touching but moving past), C gas (far apart). Circles are particles, not colour-only labels.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>In a solid, particles are usually</p>
+          <button class="btn mcq-btn" data-letter="A">far apart and independent</button>
+          <button class="btn mcq-btn" data-letter="B">packed in a fixed pattern</button>
+          <button class="btn mcq-btn" data-letter="C">missing</button>
+          <button class="btn mcq-btn" data-letter="D">only in stars</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Phase change
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Melting</strong> solid→liquid. <strong>Boiling</strong> or <strong>evaporation</strong> liquid→gas. <strong>Condensation</strong> gas→liquid. <strong>Freezing</strong> liquid→solid. Mass stays the same: 50 g of ice melts to 50 g of water.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Ice becoming liquid water is</p>
+          <button class="btn mcq-btn" data-letter="A">burning</button>
+          <button class="btn mcq-btn" data-letter="B">melting</button>
+          <button class="btn mcq-btn" data-letter="C">a nuclear change</button>
+          <button class="btn mcq-btn" data-letter="D">condensation</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Mixtures
+    </summary>
+    <div class="lesson-section-body">
+      <p>A <dfn class="lesson-gloss" title="More than one kind of particle mixed">mixture</dfn> contains more than one kind of particle and can often be separated. A <strong>pure</strong> substance is one kind of particle throughout.
+      <span class="lesson-gloss-def">Two or more substances together that can often be separated. Salt in water is a mixture (a solution), not a new element.</span>
+      Salt in water is a mixture (a solution) that can be separated.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Salt stirred into water is a</p>
+          <button class="btn mcq-btn" data-letter="A">new element</button>
+          <button class="btn mcq-btn" data-letter="B">mixture (a solution)</button>
+          <button class="btn mcq-btn" data-letter="C">pure metal</button>
+          <button class="btn mcq-btn" data-letter="D">gas only</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Separation
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Filtration</strong> for sand in water. <strong>Evaporation</strong> to recover dissolved salt. <strong>Distillation</strong> when boiling points differ. <strong>Chromatography</strong> for dyes. Never taste unknown chemicals to “identify” them.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Sand in water is best separated by</p>
+          <button class="btn mcq-btn" data-letter="A">a magnet only</button>
+          <button class="btn mcq-btn" data-letter="B">filtration</button>
+          <button class="btn mcq-btn" data-letter="C">tasting</button>
+          <button class="btn mcq-btn" data-letter="D">freezing the labels</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Non-additive volume
+    </summary>
+    <div class="lesson-section-body">
+      <p>50 cm³ of water plus 50 cm³ of ethanol often gives <strong>less than 100 cm³</strong>. Particles pack into spaces. Volume is not always additive. Mass is still conserved.</p>
+      <p><strong>Worked example:</strong> A group measures 50 cm³ of water and 50 cm³ of ethanol, mixes them, and reads about 96 cm³. Mass still adds. Volume does not have to.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>50 cm3 of water mixed with 50 cm3 of ethanol often gives less than 100 cm3 because</p>
+          <button class="btn mcq-btn" data-letter="A">mass is destroyed</button>
+          <button class="btn mcq-btn" data-letter="B">particles pack into spaces; volumes are not always additive</button>
+          <button class="btn mcq-btn" data-letter="C">SI units fail</button>
+          <button class="btn mcq-btn" data-letter="D">the liquids turn to gas instantly</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Water as a solvent
+    </summary>
+    <div class="lesson-section-body">
+      <p>Sugar disappearing in tea shows water acting as a <strong>solvent</strong>. That is why soups, brines and many drinks are water-based mixtures.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Sugar disappearing in tea shows water acting as a</p>
+          <button class="btn mcq-btn" data-letter="A">protein</button>
+          <button class="btn mcq-btn" data-letter="B">solvent</button>
+          <button class="btn mcq-btn" data-letter="C">filter paper</button>
+          <button class="btn mcq-btn" data-letter="D">grill</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <div class="lesson-quickref lesson-quick-ref-card" role="region" aria-label="Water and substances quick reference">
+    <h3>Quick reference</h3>
+    <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+      <div>
+        <h4>States</h4>
+        <ul>
+          <li>Solid packed · liquid flowing · gas spread</li>
+          <li>Melt · boil/evaporate · condense · freeze</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Mixtures</h4>
+        <ul>
+          <li>Filter insolubles · evaporate salts</li>
+          <li>Volumes of different liquids may not add</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='water_substances') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

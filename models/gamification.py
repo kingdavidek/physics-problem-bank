@@ -10,6 +10,13 @@ from models.social import (
     ACTIVITY_TOPIC_OPENED,
 )
 from models.user import utc_now_iso
+from models.topic_status import (
+    catalog_extra_entries,
+    evaluate_topic_milestones,
+    topic_badge_meta,
+    topic_status_map as load_topic_status_map,
+)
+from models.zorp_kit import POSE_TOKENS as ZORP_POSE_TOKENS
 
 
 def _utc_today():
@@ -31,53 +38,68 @@ MILESTONE_CATALOG = {
         'title': 'First quiz',
         'description': 'Complete your first lesson quiz',
         'emoji': '📝',
+        'tier': 'bronze',
     },
     MILESTONE_FIRST_LESSON: {
         'title': 'Lesson learner',
         'description': 'Complete a lesson quick check',
         'emoji': '📖',
+        'tier': 'bronze',
+        'pose': 'scholar',
     },
     MILESTONE_TOPICS_10: {
         'title': 'Broad explorer',
         'description': 'Practise 10 different topics',
         'emoji': '🧭',
+        'tier': 'silver',
     },
     MILESTONE_STREAK_7: {
         'title': 'Week warrior',
         'description': 'Reach a 7-day study streak',
         'emoji': '🔥',
+        'tier': 'gold',
+        'pose': 'jump',
     },
     MILESTONE_STREAK_30: {
         'title': 'Dedicated',
         'description': 'Reach a 30-day study streak',
         'emoji': '💪',
+        'tier': 'gold',
     },
     MILESTONE_QUESTIONS_25: {
         'title': 'Practice regular',
         'description': 'Generate 25 practice questions',
         'emoji': '✏️',
+        'tier': 'silver',
     },
     MILESTONE_QOTD_FIRST: {
         'title': 'Daily starter',
         'description': 'Answer the question of the day',
         'emoji': '☀️',
+        'tier': 'bronze',
+        'pose': 'wave',
     },
     MILESTONE_QOTD_7: {
         'title': 'Seven days of questions',
         'description': 'Answer the question of the day on 7 different days',
         'emoji': '📅',
+        'tier': 'silver',
     },
     MILESTONE_QUESTIONS_50: {
         'title': 'Practice veteran',
         'description': 'Generate 50 practice questions',
         'emoji': '🏅',
+        'tier': 'gold',
     },
     MILESTONE_ACCURACY_TOP_FRIEND: {
         'title': 'Top of the class',
         'description': 'Rank first among friends on weekly quiz accuracy',
         'emoji': '🥇',
+        'tier': 'violet',
     },
 }
+
+MILESTONE_CATALOG.update(catalog_extra_entries())
 
 EFFORT_EVENT_TYPES = (
     ACTIVITY_TOPIC_OPENED,
@@ -94,20 +116,111 @@ EFFORT_WEIGHTS = {
 }
 
 
-def ensure_user_streak(conn, user_id):
+def _iso_week_key(day):
+    year, week, _ = day.isocalendar()
+    return f'{year}-W{week:02d}'
+
+
+def _grant_weekly_freeze(conn, user_id, today):
+    week_key = _iso_week_key(today)
+    row = conn.execute(
+        '''
+        SELECT freeze_available, freeze_week_key
+        FROM user_streaks
+        WHERE user_id = ?
+        ''',
+        (user_id,),
+    ).fetchone()
+    if not row:
+        return
+    if row['freeze_week_key'] != week_key:
+        conn.execute(
+            '''
+            UPDATE user_streaks
+            SET freeze_available = 1, freeze_week_key = ?
+            WHERE user_id = ?
+            ''',
+            (week_key, user_id),
+        )
+
+
+def _freeze_covers(conn, user_id, freeze_date):
+    row = conn.execute(
+        '''
+        SELECT 1 FROM user_streak_freezes
+        WHERE user_id = ? AND freeze_date = ?
+        LIMIT 1
+        ''',
+        (user_id, freeze_date),
+    ).fetchone()
+    return row is not None
+
+
+def _consume_freeze(conn, user_id, freeze_date):
     conn.execute(
         '''
-        INSERT OR IGNORE INTO user_streaks (user_id, current_streak, longest_streak, last_active_date)
-        VALUES (?, 0, 0, NULL)
+        INSERT INTO user_streak_freezes (user_id, freeze_date, used_at)
+        VALUES (?, ?, ?)
+        ''',
+        (user_id, freeze_date, utc_now_iso()),
+    )
+    conn.execute(
+        '''
+        UPDATE user_streaks
+        SET freeze_available = 0
+        WHERE user_id = ?
         ''',
         (user_id,),
     )
 
 
+def _freeze_used_dates(conn, user_id, *, as_of=None):
+    today = as_of or _utc_today()
+    since = (today - timedelta(days=6)).isoformat()
+    rows = conn.execute(
+        '''
+        SELECT freeze_date
+        FROM user_streak_freezes
+        WHERE user_id = ? AND freeze_date >= ?
+        ORDER BY freeze_date ASC
+        ''',
+        (user_id, since),
+    ).fetchall()
+    return [row['freeze_date'] for row in rows]
+
+
+def _streak_row(conn, user_id):
+    return conn.execute(
+        '''
+        SELECT current_streak, longest_streak, last_active_date,
+               freeze_available, freeze_week_key
+        FROM user_streaks
+        WHERE user_id = ?
+        ''',
+        (user_id,),
+    ).fetchone()
+
+
+def ensure_user_streak(conn, user_id, on_date=None):
+    conn.execute(
+        '''
+        INSERT OR IGNORE INTO user_streaks (
+            user_id, current_streak, longest_streak, last_active_date,
+            freeze_available, freeze_week_key
+        )
+        VALUES (?, 0, 0, NULL, 1, NULL)
+        ''',
+        (user_id,),
+    )
+    _grant_weekly_freeze(conn, user_id, on_date or _utc_today())
+
+
 def record_study_day(conn, user_id, on_date=None):
     """Mark a calendar day as active and update streak counters."""
-    ensure_user_streak(conn, user_id)
-    day = (on_date or _utc_today()).isoformat()
+    today = on_date or _utc_today()
+    ensure_user_streak(conn, user_id, on_date=today)
+    day = today.isoformat()
+    _grant_weekly_freeze(conn, user_id, today)
     conn.execute(
         '''
         INSERT OR IGNORE INTO user_study_days (user_id, study_date)
@@ -116,26 +229,24 @@ def record_study_day(conn, user_id, on_date=None):
         (user_id, day),
     )
 
-    row = conn.execute(
-        '''
-        SELECT current_streak, longest_streak, last_active_date
-        FROM user_streaks
-        WHERE user_id = ?
-        ''',
-        (user_id,),
-    ).fetchone()
+    row = _streak_row(conn, user_id)
     last_active = row['last_active_date']
     current = row['current_streak'] or 0
     longest = row['longest_streak'] or 0
+    freeze_available = int(row['freeze_available'] or 0)
 
     if last_active == day:
         conn.commit()
-        return get_study_streak(conn, user_id)
+        return get_study_streak(conn, user_id, as_of=today)
 
     if last_active:
         previous = date.fromisoformat(last_active)
-        today = date.fromisoformat(day)
-        if (today - previous).days == 1:
+        gap_days = (today - previous).days
+        if gap_days == 1:
+            current += 1
+        elif gap_days == 2 and freeze_available:
+            missed_day = (previous + timedelta(days=1)).isoformat()
+            _consume_freeze(conn, user_id, missed_day)
             current += 1
         else:
             current = 1
@@ -152,34 +263,44 @@ def record_study_day(conn, user_id, on_date=None):
         (current, longest, day, user_id),
     )
     conn.commit()
-    return get_study_streak(conn, user_id)
+    return get_study_streak(conn, user_id, as_of=today)
 
 
-def get_study_streak(conn, user_id):
-    ensure_user_streak(conn, user_id)
-    row = conn.execute(
-        '''
-        SELECT current_streak, longest_streak, last_active_date
-        FROM user_streaks
-        WHERE user_id = ?
-        ''',
-        (user_id,),
-    ).fetchone()
+def get_study_streak(conn, user_id, as_of=None):
+    today = as_of or _utc_today()
+    ensure_user_streak(conn, user_id, on_date=today)
+    _grant_weekly_freeze(conn, user_id, today)
+    row = _streak_row(conn, user_id)
     if not row:
-        return {'current': 0, 'longest': 0, 'last_active_date': None}
+        return {
+            'current': 0,
+            'longest': 0,
+            'last_active_date': None,
+            'freeze_available': 1,
+            'freeze_used_dates': [],
+        }
 
     current = row['current_streak'] or 0
     last_active = row['last_active_date']
+    freeze_available = int(row['freeze_available'] or 0)
     if last_active:
         last_day = date.fromisoformat(last_active)
-        gap = (_utc_today() - last_day).days
-        if gap > 1:
-            current = 0
+        gap_days = (today - last_day).days
+        if gap_days > 1:
+            missed_days = gap_days - 1
+            if missed_days == 1:
+                missed_day = (last_day + timedelta(days=1)).isoformat()
+                if not _freeze_covers(conn, user_id, missed_day) and not freeze_available:
+                    current = 0
+            else:
+                current = 0
 
     return {
         'current': current,
         'longest': row['longest_streak'] or 0,
         'last_active_date': last_active,
+        'freeze_available': freeze_available,
+        'freeze_used_dates': _freeze_used_dates(conn, user_id, as_of=today),
     }
 
 
@@ -205,6 +326,29 @@ def _award_milestone(conn, user_id, milestone_key):
         (user_id, milestone_key, utc_now_iso()),
     )
     return True
+
+
+def milestone_meta(key):
+    """Catalog or dynamically generated topic-status badge metadata."""
+    meta = MILESTONE_CATALOG.get(key)
+    if meta:
+        return meta
+    return topic_badge_meta(key) or {
+        'title': str(key).replace('_', ' ').replace(':', ' · '),
+        'description': '',
+        'emoji': '★',
+        'tier': 'bronze',
+    }
+
+
+def _pose_from_meta(meta):
+    raw = (meta or {}).get('pose')
+    if not raw:
+        return None
+    token = str(raw).strip().lower().replace('-', '_')
+    if token in ZORP_POSE_TOKENS:
+        return token
+    return None
 
 
 def _distinct_topics_count(conn, user_id):
@@ -318,6 +462,8 @@ def evaluate_milestones(conn, user_id):
     if _maybe_award_accuracy_top_friend(conn, user_id):
         earned.append(MILESTONE_ACCURACY_TOP_FRIEND)
 
+    earned.extend(evaluate_topic_milestones(conn, user_id, _award_milestone))
+
     if earned:
         conn.commit()
     return earned
@@ -336,15 +482,237 @@ def list_user_milestones(conn, user_id):
     out = []
     for row in rows:
         key = row['milestone_key']
-        meta = MILESTONE_CATALOG.get(key, {})
+        meta = milestone_meta(key)
         out.append({
             'key': key,
             'title': meta.get('title', key),
             'description': meta.get('description', ''),
             'emoji': meta.get('emoji', '★'),
+            'tier': meta.get('tier', 'bronze'),
+            'pose': _pose_from_meta(meta),
             'earned_at': row['earned_at'],
         })
     return out
+
+
+def list_milestone_shelf(conn, user_id):
+    """Full catalog for the profile grid: earned badges plus locked silhouettes."""
+    earned = {item['key']: item for item in list_user_milestones(conn, user_id)}
+    shelf = []
+    for key, meta in MILESTONE_CATALOG.items():
+        item = earned.get(key)
+        shelf.append({
+            'key': key,
+            'title': meta.get('title', key),
+            'description': meta.get('description', ''),
+            'emoji': meta.get('emoji', '★'),
+            'tier': meta.get('tier', 'bronze'),
+            'pose': _pose_from_meta(meta),
+            'earned': item is not None,
+            'earned_at': item['earned_at'] if item else None,
+        })
+    for key, item in earned.items():
+        if key in MILESTONE_CATALOG:
+            continue
+        shelf.append({
+            'key': key,
+            'title': item.get('title', key),
+            'description': item.get('description', ''),
+            'emoji': item.get('emoji', '★'),
+            'tier': item.get('tier', 'bronze'),
+            'pose': item.get('pose'),
+            'earned': True,
+            'earned_at': item.get('earned_at'),
+        })
+    shelf.sort(key=lambda row: (not row['earned'], row['title']))
+    return shelf
+
+
+def streak_week_dots(conn, user_id, as_of=None):
+    """Last 7 UTC days for the streak ring: studied, frozen, or missed."""
+    today = as_of or _utc_today()
+    start = today - timedelta(days=6)
+    rows = conn.execute(
+        '''
+        SELECT study_date FROM user_study_days
+        WHERE user_id = ? AND study_date >= ?
+        ''',
+        (user_id, start.isoformat()),
+    ).fetchall()
+    studied = {row['study_date'] for row in rows}
+    frozen = set(_freeze_used_dates(conn, user_id, as_of=today))
+    dots = []
+    for offset in range(6, -1, -1):
+        day = today - timedelta(days=offset)
+        key = day.isoformat()
+        if key in studied:
+            state = 'studied'
+        elif key in frozen:
+            state = 'frozen'
+        else:
+            state = 'missed'
+        dots.append({
+            'date': key,
+            'label': day.strftime('%a')[0],
+            'state': state,
+            'is_today': offset == 0,
+        })
+    return dots
+
+
+def streak_calendar(conn, user_id, weeks=4, as_of=None):
+    """7×N UTC day grid for profile Progress (oldest week first, Mon–Sun columns)."""
+    today = as_of or _utc_today()
+    weeks = max(1, int(weeks))
+    days_total = weeks * 7
+    start = today - timedelta(days=days_total - 1)
+    studied = {
+        row['study_date']
+        for row in conn.execute(
+            '''
+            SELECT study_date FROM user_study_days
+            WHERE user_id = ? AND study_date >= ?
+            ''',
+            (user_id, start.isoformat()),
+        ).fetchall()
+    }
+    frozen = {
+        row['freeze_date']
+        for row in conn.execute(
+            '''
+            SELECT freeze_date FROM user_streak_freezes
+            WHERE user_id = ? AND freeze_date >= ?
+            ''',
+            (user_id, start.isoformat()),
+        ).fetchall()
+    }
+    rows = []
+    for week_index in range(weeks):
+        week_cells = []
+        for col in range(7):
+            day_offset = week_index * 7 + col
+            day = start + timedelta(days=day_offset)
+            key = day.isoformat()
+            if key in studied:
+                state = 'studied'
+            elif key in frozen:
+                state = 'frozen'
+            else:
+                state = 'missed'
+            week_cells.append({
+                'date': key,
+                'label': day.strftime('%a')[0],
+                'state': state,
+                'is_today': day == today,
+            })
+        rows.append(week_cells)
+    return rows
+
+
+def weekly_effort_by_day(conn, user_id, days=7):
+    """Effort points per UTC calendar day for the last ``days`` days (Mon→today order)."""
+    today = _utc_today()
+    days = max(1, int(days))
+    start = today - timedelta(days=days - 1)
+    since_iso = f'{start.isoformat()}T00:00:00'
+    type_ph = ','.join('?' * len(EFFORT_EVENT_TYPES))
+    scores = { (start + timedelta(days=i)).isoformat(): 0 for i in range(days) }
+    rows = conn.execute(
+        f'''
+        SELECT substr(created_at, 1, 10) AS day, event_type, COUNT(*) AS n
+        FROM user_activity_events
+        WHERE user_id = ?
+          AND created_at >= ?
+          AND event_type IN ({type_ph})
+        GROUP BY day, event_type
+        ''',
+        (user_id, since_iso, *EFFORT_EVENT_TYPES),
+    ).fetchall()
+    for row in rows:
+        day = row['day']
+        if day not in scores:
+            continue
+        scores[day] += EFFORT_WEIGHTS.get(row['event_type'], 1) * int(row['n'] or 0)
+    out = []
+    for offset in range(days):
+        day = start + timedelta(days=offset)
+        key = day.isoformat()
+        out.append({
+            'date': key,
+            'label': day.strftime('%a')[0],
+            'score': scores.get(key, 0),
+            'is_today': day == today,
+        })
+    return out
+
+
+def recent_accuracy_trend(conn, user_id, limit=10):
+    """Last ``limit`` quiz + generator-MCQ accuracies, oldest→newest for sparklines."""
+    limit = max(1, int(limit))
+    points = []
+    for row in conn.execute(
+        '''
+        SELECT created_at, score, total
+        FROM quiz_attempts
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+        LIMIT ?
+        ''',
+        (user_id, limit),
+    ).fetchall():
+        total = int(row['total'] or 0)
+        score = int(row['score'] or 0)
+        if total <= 0:
+            continue
+        points.append({
+            'created_at': row['created_at'],
+            'pct': round(100.0 * score / total, 1),
+            'kind': 'quiz',
+        })
+    for row in conn.execute(
+        '''
+        SELECT created_at, score, score_total, correct
+        FROM generator_mcq_attempts
+        WHERE user_id = ?
+        ORDER BY created_at DESC
+        LIMIT ?
+        ''',
+        (user_id, limit),
+    ).fetchall():
+        total = int(row['score_total'] or 0)
+        if total > 0:
+            pct = round(100.0 * int(row['score'] or 0) / total, 1)
+        else:
+            pct = 100.0 if int(row['correct'] or 0) else 0.0
+        points.append({
+            'created_at': row['created_at'],
+            'pct': pct,
+            'kind': 'mcq',
+        })
+    points.sort(key=lambda item: item['created_at'], reverse=True)
+    points = points[:limit]
+    points.sort(key=lambda item: item['created_at'])
+    return points
+
+
+def streak_ring_progress(current):
+    """Progress toward the next streak milestone (7 / 30 / 100)."""
+    days = max(0, int(current or 0))
+    target = 7
+    for candidate in (7, 30, 100):
+        target = candidate
+        if days < candidate:
+            break
+    pct = 1.0 if days >= 100 else min(1.0, days / float(target))
+    return {'current': days, 'target': target, 'pct': pct}
+
+
+def topic_mastery_map(conn, user_id):
+    """(level, subject, topic) → 0–1 mastery from lesson-complete / ninja / master."""
+    return {
+        key: float(status.get('mastery') or 0)
+        for key, status in load_topic_status_map(conn, user_id).items()
+    }
 
 
 def get_weekly_recap(conn, user_id, days=7):
@@ -429,6 +797,62 @@ def get_weekly_recap(conn, user_id, days=7):
 def _effort_score_since(conn, user_id, since_iso):
     scores = _effort_scores_since(conn, [user_id], since_iso)
     return scores.get(user_id, 0)
+
+
+def weekly_effort_xp(conn, user_id, days=7):
+    """Effort points (displayed as XP) for the last N UTC days."""
+    since = (datetime.now(timezone.utc) - timedelta(days=days)).strftime('%Y-%m-%d %H:%M:%S')
+    return _effort_score_since(conn, user_id, since)
+
+
+def lifetime_effort_xp(conn, user_id):
+    """All-time effort points for the level ring."""
+    return _effort_score_since(conn, user_id, '1970-01-01 00:00:00')
+
+
+def xp_level_from_points(xp):
+    """Level curve: L1 below 200 XP, then L = floor(sqrt(xp / 50))."""
+    xp = max(0, int(xp or 0))
+    if xp <= 0:
+        return 1
+    return max(1, int((xp / 50) ** 0.5))
+
+
+def xp_level_progress(xp):
+    """Fill for the level ring: share of XP between this level and the next."""
+    xp = max(0, int(xp or 0))
+    level = xp_level_from_points(xp)
+    if level <= 1:
+        start, nxt = 0, 200
+    else:
+        start = 50 * level * level
+        nxt = 50 * (level + 1) * (level + 1)
+    span = max(1, nxt - start)
+    pct = min(1.0, max(0.0, (xp - start) / span))
+    return {
+        'level': level,
+        'xp': xp,
+        'start': start,
+        'next': nxt,
+        'pct': pct,
+        'remaining': max(0, nxt - xp),
+    }
+
+
+def study_streak_at_risk(conn, user_id, as_of=None):
+    """True when the user has an active streak but has not studied today."""
+    today = as_of or _utc_today()
+    streak = get_study_streak(conn, user_id, as_of=today)
+    if streak.get('current', 0) < 1:
+        return False
+    last_active = streak.get('last_active_date')
+    if not last_active:
+        return False
+    last_day = last_active[:10]
+    if last_day == today.isoformat():
+        return False
+    yesterday = (today - timedelta(days=1)).isoformat()
+    return last_day == yesterday
 
 
 def _effort_scores_since(conn, user_ids, since_iso):
@@ -573,6 +997,20 @@ def _accuracy_stats_since(conn, user_ids, since_iso):
         item['possible'] += int(row['possible'] or 0)
         item['mcq_n'] = int(row['n'] or 0)
     return stats
+
+
+def user_accuracy_pct(conn, user_id, days=None):
+    """Quiz + generator-MCQ accuracy as a 0–100 int, or None if no attempts."""
+    if days:
+        since_day = (_utc_today() - timedelta(days=days - 1)).isoformat()
+        since_iso = f'{since_day}T00:00:00'
+    else:
+        since_iso = '1970-01-01T00:00:00'
+    stats = _accuracy_stats_since(conn, [user_id], since_iso).get(user_id) or {}
+    possible = int(stats.get('possible') or 0)
+    if possible <= 0:
+        return None
+    return int(round(100.0 * int(stats.get('earned') or 0) / possible))
 
 
 def friend_accuracy_leaderboard(conn, viewer_id, days=7):

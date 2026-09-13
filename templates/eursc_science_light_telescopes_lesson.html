@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% block title %}Light and Telescopes – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Light and Telescopes</h1>
+    <p class="hero-sub">S2 Integrated Science · Unit 2.1 Universe · syllabus 2.1.2. Straight-line travel, speed, the light-year as a distance, shadows, Moon phases and eclipses, reflection, refraction, colour, lenses and instruments.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S2</span>
+      <span class="pill pill--hero">2.1 Universe</span>
+      <span class="pill pill--hero">2.1.2</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='light_telescopes') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Light travels
+      <span class="lesson-tag">2.1.2</span>
+      <span class="lesson-tag">S2</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>In a uniform medium such as air, a ray of light is modelled as travelling in a <strong>straight line</strong> until it meets a surface or a new medium. This ray model is enough for shadows, mirrors and simple lenses at S2.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>In air, a ray of light is modelled as travelling</p>
+          <button class="btn mcq-btn" data-letter="A">in random loops only</button>
+          <button class="btn mcq-btn" data-letter="B">in a straight line unless it hits a new surface or medium</button>
+          <button class="btn mcq-btn" data-letter="C">only through metal</button>
+          <button class="btn mcq-btn" data-letter="D">only at night</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Speed and the light-year
+    </summary>
+    <div class="lesson-section-body">
+      <p>Light is very fast. This lesson uses the rounded figure <strong>300000 km/s</strong> in vacuum. A <dfn class="lesson-gloss" title="The distance light travels in one year">light-year</dfn> is the <strong>distance</strong> light travels in one year — not a unit of time like a minute, even though the name contains “year”.
+      <span class="lesson-gloss-def">A distance, not a time. Light in vacuum travels about \(300000\,\mathrm{km}\) each second, so in one year it covers a huge distance called a light-year.</span></p>
+      <p><strong>Worked example:</strong> In \(2\,\mathrm{s}\), light travels \(300000 \times 2 = 600000\,\mathrm{km}\). That is still much less than 1 AU (about \(150\) million km). A light-year is many AU, so it is a scale for stars, not for the Earth–Moon gap.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A light-year is</p>
+          <button class="btn mcq-btn" data-letter="A">a unit of time like a minute</button>
+          <button class="btn mcq-btn" data-letter="B">the distance light travels in one year</button>
+          <button class="btn mcq-btn" data-letter="C">the mass of the Sun</button>
+          <button class="btn mcq-btn" data-letter="D">the tilt of Earth in degrees</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Shadows
+    </summary>
+    <div class="lesson-section-body">
+      <p>An <strong>opaque</strong> object blocks light. Straight-line rays explain a simple shadow on a table or a wall. Darkness is not voted into place; it is where light does not arrive.</p>
+      <p><strong>Worked example:</strong> A lamp, a book and a wall in a line: rays that miss the book reach the wall; rays that hit the book stop. The dark patch on the wall is the book's shadow.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A sharp shadow of a book on a table is explained by</p>
+          <button class="btn mcq-btn" data-letter="A">the book voting for darkness</button>
+          <button class="btn mcq-btn" data-letter="B">the book blocking light that travels in straight lines</button>
+          <button class="btn mcq-btn" data-letter="C">the Moon becoming a star</button>
+          <button class="btn mcq-btn" data-letter="D">sound taking eight minutes</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Phases and eclipses
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Moon phases</strong> are how much of the sunlit half of the Moon we can see from Earth. An <strong>eclipse</strong> needs a special alignment: for a solar eclipse the Moon passes between the Sun and Earth and the Moon's shadow can fall on Earth. Not every New Moon is a solar eclipse for the whole Earth.</p>
+      <p><strong>Worked sequence:</strong> Sun → Moon → Earth in a line (solar eclipse). Sun → Earth → Moon in a line (lunar eclipse). Everyday phases do not need a full eclipse.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A solar eclipse can happen when</p>
+          <button class="btn mcq-btn" data-letter="A">the Moon is a second Sun</button>
+          <button class="btn mcq-btn" data-letter="B">the Moon passes between the Sun and Earth and the shadow hits Earth</button>
+          <button class="btn mcq-btn" data-letter="C">Earth's axis has no tilt</button>
+          <button class="btn mcq-btn" data-letter="D">light travels in loops</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Reflection
+    </summary>
+    <div class="lesson-section-body">
+      <p>At a plane mirror the <strong>angle of incidence equals the angle of reflection</strong> (measured from the normal). In the schematic: <strong>A</strong> incident ray, <strong>B</strong> reflected ray, <strong>C</strong> mirror surface.</p>
+      <figure class="lesson-figure">
+        {{ reflection_fig }}
+        <figcaption class="lesson-figure-caption">A incident ray, B reflected ray, C mirror. The dashed line is the normal. Angles of incidence and reflection are equal (\(i = r\)).</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>At a plane mirror, the angle of reflection</p>
+          <button class="btn mcq-btn" data-letter="A">is always 90° more than incidence</button>
+          <button class="btn mcq-btn" data-letter="B">equals the angle of incidence</button>
+          <button class="btn mcq-btn" data-letter="C">is zero if the room is quiet</button>
+          <button class="btn mcq-btn" data-letter="D">depends on the planet count</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Refraction
+    </summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="Light changing direction in a new medium">Refraction</dfn> is a change of direction when light enters a different medium (for example air to glass or water).
+      <span class="lesson-gloss-def">A change of direction when light goes into a new medium. It is not the same as bouncing from a mirror (reflection).</span>
+      Lenses use refraction in a controlled shape.</p>
+      <p><strong>Worked example:</strong> A stick in a glass of water can look bent at the surface because rays from the underwater part change direction as they enter air. The stick itself is still straight.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Refraction is</p>
+          <button class="btn mcq-btn" data-letter="A">light bouncing with i = r always in glass</button>
+          <button class="btn mcq-btn" data-letter="B">a change of direction when light goes into a different medium</button>
+          <button class="btn mcq-btn" data-letter="C">a lens creating extra photons from fame</button>
+          <button class="btn mcq-btn" data-letter="D">the Moon absorbing the Sun</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">7</span>
+      Colour
+    </summary>
+    <div class="lesson-section-body">
+      <p>White light is a mix of colours. A blue object in white light <strong>reflects</strong> blue and absorbs other colours. A green <strong>filter</strong> <strong>transmits</strong> green and absorbs other colours. Filters and surfaces do not create extra light from nothing.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A blue object in white light looks blue mainly because</p>
+          <button class="btn mcq-btn" data-letter="A">it emits a new kind of darkness</button>
+          <button class="btn mcq-btn" data-letter="B">it reflects blue light and absorbs other colours</button>
+          <button class="btn mcq-btn" data-letter="C">the eye votes for blue</button>
+          <button class="btn mcq-btn" data-letter="D">the Moon filters all red in space</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">8</span>
+      Lenses and instruments
+    </summary>
+    <div class="lesson-section-body">
+      <p>A <strong>lens</strong> gathers light and changes its direction so an image can be formed. A simple telescope uses lenses (or a mirror) to collect more light than the eye alone. <strong>Never look at the Sun</strong> through a telescope, binoculars or a lens — follow the teacher's solar-viewing rules. A lens does not invent extra light from fame.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A convex lens in a simple telescope is used to</p>
+          <button class="btn mcq-btn" data-letter="A">create mass for a planet</button>
+          <button class="btn mcq-btn" data-letter="B">gather light and change its direction so an image can be formed</button>
+          <button class="btn mcq-btn" data-letter="C">replace the need for a classroom investigation</button>
+          <button class="btn mcq-btn" data-letter="D">make a light-year into a minute</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">9</span>
+      Classroom investigation
+    </summary>
+    <div class="lesson-section-body">
+      <p class="lesson-callout">Plan the practical with your teacher using the <a href="{{ url_for('eursc_ibl_page', slug='s2_light') }}">classroom investigation support</a>. This page does not replace classroom practical work. Ray boxes get hot; do not look into lamps; lasers only if the teacher supplies them and has assessed the risk.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Travel and scale</h4>
+        <ul>
+          <li>Straight rays in air</li>
+          <li>≈ 300000 km/s</li>
+          <li>Light-year = a distance</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Optics</h4>
+        <ul>
+          <li>i = r at a plane mirror</li>
+          <li>Refraction: new medium</li>
+          <li>Lens gathers and focuses; never the Sun</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='light_telescopes') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

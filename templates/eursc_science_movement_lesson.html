@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title %}Movement – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Movement</h1>
+    <p class="hero-sub">S1 Integrated Science · Unit 1.3 Sports · syllabus 1.3.1. Distance, time, average speed \(v=d/t\), unit conversion and distance–time graphs.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S1</span>
+      <span class="pill pill--hero">1.3 Sports</span>
+      <span class="pill pill--hero">1.3.1</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='movement') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Measuring distance and time
+      <span class="lesson-tag">1.3.1</span>
+      <span class="lesson-tag">S1</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>To study movement, measure <strong>distance</strong> (how far) and <strong>time</strong> (how long). Use SI units so another group can repeat the method: metres and seconds are the usual pair for classroom speed.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>To find a runner's average speed you need</p>
+          <button class="btn mcq-btn" data-letter="A">only the colour of the vest</button>
+          <button class="btn mcq-btn" data-letter="B">a distance and a time</button>
+          <button class="btn mcq-btn" data-letter="C">only the crowd noise</button>
+          <button class="btn mcq-btn" data-letter="D">a force in newtons only</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Average speed
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Average speed</strong> is total distance divided by total time. It is not the fastest sprint in the middle of a race. If distance does not change, average speed is zero.</p>
+      <p><strong>Worked example:</strong> A runner covers \(100\,\mathrm{m}\) in \(20\,\mathrm{s}\). Average speed \(= 100 \div 20 = 5\,\mathrm{m/s}\). A 2 s burst in the middle is not the average.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Average speed is</p>
+          <button class="btn mcq-btn" data-letter="A">time divided by distance</button>
+          <button class="btn mcq-btn" data-letter="B">distance divided by time</button>
+          <button class="btn mcq-btn" data-letter="C">mass divided by volume</button>
+          <button class="btn mcq-btn" data-letter="D">a feeling</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Using \(v=d/t\)
+    </summary>
+    <div class="lesson-section-body">
+      <p>Write \(v=d/t\). Keep units consistent. Example: \(20\,\mathrm{m}\) in \(4\,\mathrm{s}\) gives \(5\,\mathrm{m/s}\).</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A cyclist travels 20 m in 4 s. Average speed is</p>
+          <button class="btn mcq-btn" data-letter="A">80 m/s</button>
+          <button class="btn mcq-btn" data-letter="B">5 m/s</button>
+          <button class="btn mcq-btn" data-letter="C">16 m/s</button>
+          <button class="btn mcq-btn" data-letter="D">0 m/s</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Unit conversion
+    </summary>
+    <div class="lesson-section-body">
+      <p>Convert before dividing. \(2\) minutes \(= 120\,\mathrm{s}\). \(3\,\mathrm{km} = 3000\,\mathrm{m}\). Writing \(8\,\mathrm{km/h}\) as \(8\,\mathrm{m/s}\) without converting is a unit error: \(8\,\mathrm{m/s}\) is much faster.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>2 minutes is how many seconds?</p>
+          <button class="btn mcq-btn" data-letter="A">2</button>
+          <button class="btn mcq-btn" data-letter="B">120</button>
+          <button class="btn mcq-btn" data-letter="C">60</button>
+          <button class="btn mcq-btn" data-letter="D">200</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Distance–time graphs
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>A</strong> sloping line: moving. <strong>B</strong> flat line: rest. <strong>C</strong> slope again: moving. A steeper slope means greater speed. Line colour and fame are not data.</p>
+      <figure class="lesson-figure">
+        {{ dt_graph }}
+        <figcaption class="lesson-figure-caption">Distance (m) against time (s). A sloping (moving), B flat (rest), C sloping again (moving). A steeper slope means greater speed.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Which labelled part of this distance–time graph shows rest?</p>
+          <button class="btn mcq-btn" data-letter="A">A</button>
+          <button class="btn mcq-btn" data-letter="B">B</button>
+          <button class="btn mcq-btn" data-letter="C">C</button>
+          <button class="btn mcq-btn" data-letter="D">the word time</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>On a distance–time graph, a steeper slope means</p>
+          <button class="btn mcq-btn" data-letter="A">slower movement</button>
+          <button class="btn mcq-btn" data-letter="B">greater speed</button>
+          <button class="btn mcq-btn" data-letter="C">the object has more mass</button>
+          <button class="btn mcq-btn" data-letter="D">time has stopped</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Graphs in sport
+    </summary>
+    <div class="lesson-section-body">
+      <p>Read each part of a graph. Average speed for a whole lap uses total distance and total time, including slow sections. Time in \(v=d/t\) cannot be zero.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>If distance does not change while time passes, average speed is</p>
+          <button class="btn mcq-btn" data-letter="A">infinite</button>
+          <button class="btn mcq-btn" data-letter="B">zero</button>
+          <button class="btn mcq-btn" data-letter="C">the same as mass</button>
+          <button class="btn mcq-btn" data-letter="D">1 newton</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <div class="lesson-quickref lesson-quick-ref-card" role="region" aria-label="Movement quick reference">
+    <h3>Quick reference</h3>
+    <div class="lesson-quick-ref-grid lesson-quick-ref-grid--2col">
+      <div>
+        <h4>Formula</h4>
+        <ul>
+          <li>\(v = d / t\)</li>
+          <li>Same units before dividing</li>
+          <li>Average uses whole journey</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Graphs</h4>
+        <ul>
+          <li>Slope → moving</li>
+          <li>Flat → rest</li>
+          <li>Steeper → faster</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='movement') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

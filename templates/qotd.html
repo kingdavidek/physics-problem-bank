@@ -1,14 +1,33 @@
 {% extends "base.html" %}
+{% from "partials/page_flashes.html" import render as page_flashes %}
+{% from "partials/spot.html" import spot %}
 {% block title %}Question of the day – Problem Bank{% endblock %}
 
 {% block content %}
 <div class="page-shell">
-<div class="lesson-hero">
+<div class="lesson-hero qotd-hero">
     <h1>Question of the day</h1>
     <p class="hero-sub">{{ daily.topic_name }} — one difficult MCQ, same for everyone today</p>
+    <nav class="segmented-control segmented-control--links" aria-label="QOTD board">
+        <a href="{{ url_for('qotd_page', board='today') }}"
+           class="{% if board != 'week' %}is-active{% endif %}">Today</a>
+        <a href="{{ url_for('qotd_page', board='week') }}"
+           class="{% if board == 'week' %}is-active{% endif %}">This week</a>
+    </nav>
 </div>
 
-<section class="section-panel">
+{{ page_flashes('qotd_page') }}
+
+<section class="qotd-daily-card">
+    <div class="qotd-daily-card-header">
+        <div>
+            <strong>{{ daily.day_key }}</strong>
+            <span class="profile-list-meta">Resets at midnight UTC</span>
+        </div>
+        {% if attempt %}
+        <span class="qotd-result-badge" aria-label="{% if attempt.correct %}Correct{% else %}Incorrect{% endif %}">{% if attempt.correct %}✓{% else %}✗{% endif %}</span>
+        {% endif %}
+    </div>
     <div class="section-panel-body">
         <div style="margin-bottom:16px;line-height:1.55;">{{ problem.question | safe }}</div>
         {% if attempt %}
@@ -50,31 +69,66 @@
                 </label>
                 {% endfor %}
             </div>
-            <button type="submit" class="btn btn-primary">Submit answer</button>
+            <button type="submit" class="btn btn-primary btn-lg">Submit answer</button>
         </form>
         {% endif %}
     </div>
 </section>
 
-<section class="section-panel">
-    <div class="section-panel-header">Friends who answered today</div>
+<section class="section-panel" id="qotd-board">
+  {% if board == 'week' %}
+    <div class="section-panel-header">Friends — this week</div>
     <div class="section-panel-body">
         {% if leaderboard %}
         <ol class="leaderboard-list">
             {% for item in leaderboard %}
-            <li class="leaderboard-item{% if item.is_viewer %} is-viewer{% endif %}">
+            <li class="leaderboard-item list-row{% if item.rank == 1 %} leaderboard-item--gold{% elif item.rank == 2 %} leaderboard-item--silver{% elif item.rank == 3 %} leaderboard-item--bronze{% endif %}{% if item.is_viewer %} is-viewer{% endif %}">
                 <span class="leaderboard-rank">#{{ item.rank }}</span>
-                <div class="leaderboard-main">
+                <div class="leaderboard-main list-row-main">
                     <a href="{{ url_for('public_profile', handle=item.handle) }}">@{{ item.handle }}</a>
+                    {% if item.is_viewer %}<span class="profile-list-meta"> (you)</span>{% endif %}
+                    <span class="list-row-meta">
+                        {{ item.answered_days }}/{{ item.days_in_window }} days answered
+                    </span>
                 </div>
-                <span class="leaderboard-score">{% if item.correct %}✓{% else %}✗{% endif %}</span>
             </li>
             {% endfor %}
         </ol>
         {% else %}
-        <p class="profile-empty">No friends have answered yet today. Follow people to see a mini leaderboard here.</p>
+        <div class="empty-state">
+            <div class="empty-state-icon" aria-hidden="true">{{ spot('friends') }}</div>
+            <h3>No friends on the board yet</h3>
+            <p>Follow classmates to compare daily answers.</p>
+            <a href="{{ url_for('site_search') }}" class="btn btn-primary">Find friends</a>
+        </div>
         {% endif %}
     </div>
+  {% else %}
+    <div class="section-panel-header">Friends — today</div>
+    <div class="section-panel-body">
+        {% if leaderboard %}
+        <ol class="leaderboard-list">
+            {% for item in leaderboard %}
+            <li class="leaderboard-item list-row{% if item.rank == 1 %} leaderboard-item--gold{% elif item.rank == 2 %} leaderboard-item--silver{% elif item.rank == 3 %} leaderboard-item--bronze{% endif %}{% if item.is_viewer %} is-viewer{% endif %}">
+                <span class="leaderboard-rank">#{{ item.rank }}</span>
+                <div class="leaderboard-main list-row-main">
+                    <a href="{{ url_for('public_profile', handle=item.handle) }}">@{{ item.handle }}</a>
+                    {% if item.is_viewer %}<span class="profile-list-meta"> (you)</span>{% endif %}
+                    <span class="list-row-meta">{% if item.correct %}✓ Correct today{% else %}✗ Missed today{% endif %}</span>
+                </div>
+            </li>
+            {% endfor %}
+        </ol>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon" aria-hidden="true">{{ spot('caught-up') }}</div>
+            <h3>Be the first to answer</h3>
+            <p>Submit today's question, then invite friends to compete.</p>
+        </div>
+        {% endif %}
+    </div>
+  {% endif %}
 </section>
+
 </div>
 {% endblock %}

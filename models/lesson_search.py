@@ -15,12 +15,14 @@ _LEVEL_LABELS = {
     'gcse': 'GCSE',
     'alevel': 'A-Level',
     'myp': 'MYP',
+    'eursc': 'European School',
 }
 _SUBJECT_LABELS = {
     'maths': 'Maths',
     'physics': 'Physics',
     'cs': 'Computer Science',
     'chemistry': 'Chemistry',
+    'science': 'Integrated Science',
 }
 _TOKEN_RE = re.compile(r'[a-z0-9]{2,}', re.I)
 _JINJA_COMMENT = re.compile(r'\{#.*?#\}', re.S)

@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}@{{ progress.handle }} – {{ klass.name }} – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+<div class="lesson-hero">
+    <h1>@{{ progress.handle }}</h1>
+    <p class="hero-sub">Named progress and skill-gap labels for this class. Private reflection notes are not shown.</p>
+</div>
+
+<p class="profile-page-back"><a href="{{ url_for('teacher_class_roster', class_id=klass.id) }}">← Back to roster</a></p>
+
+<section class="section-panel">
+    <div class="section-panel-header">Due today</div>
+    <div class="section-panel-body">
+        <p class="page-intro">{{ progress.due_today_count }} topic{{ 's' if progress.due_today_count != 1 else '' }} due on their revision queue.</p>
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">Topics to revisit</div>
+    <div class="section-panel-body">
+        {% if progress.weak_topics %}
+        <ul class="profile-list profile-list--rows">
+            {% for item in progress.weak_topics %}
+            <li class="profile-list-item list-row">
+                <div class="list-row-main">
+                    <strong>{{ item.topic_label }}</strong>
+                    <span class="list-row-meta">
+                        {% if item.quiz_average_pct is not none %}Quiz avg {{ item.quiz_average_pct | round(0) }}%{% endif %}
+                        {% if item.mcq_accuracy_pct is not none %} · MCQ {{ item.mcq_accuracy_pct | round(0) }}%{% endif %}
+                        {% if item.last_practised_date %} · Last {{ item.last_practised_date }}{% endif %}
+                    </span>
+                    {% if item.reasons %}
+                    <span class="list-row-meta">{{ item.reasons | join(' · ') }}</span>
+                    {% endif %}
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty">No weak-topic signals yet.</p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">Recent quizzes</div>
+    <div class="section-panel-body">
+        {% if progress.recent_quizzes %}
+        <ul class="profile-list profile-list--rows">
+            {% for item in progress.recent_quizzes %}
+            <li class="profile-list-item list-row">
+                <div class="list-row-main">
+                    <strong>{{ item.topic_label }}</strong>
+                    <span class="list-row-meta">{{ item.score }} / {{ item.total }} · {{ item.created_at[:10] }}</span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty">No quizzes yet.</p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">Lessons</div>
+    <div class="section-panel-body">
+        {% if progress.lessons %}
+        <ul class="profile-list profile-list--rows">
+            {% for item in progress.lessons %}
+            <li class="profile-list-item list-row">
+                <div class="list-row-main">
+                    <strong>{{ item.topic_label }}</strong>
+                    <span class="list-row-meta">{{ item.completed_count }} step{{ 's' if item.completed_count != 1 else '' }} marked done{% if item.updated_at %} · {{ item.updated_at[:10] }}{% endif %}</span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty">No lesson progress yet.</p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">Skill-gap labels</div>
+    <div class="section-panel-body">
+        <p class="profile-section-intro">Chip rollups from reasons they tapped after a wrong answer — not their written notes.</p>
+        {% if progress.skill_gaps %}
+        <ul class="profile-list profile-list--rows">
+            {% for gap in progress.skill_gaps %}
+            <li class="profile-list-item list-row">
+                <div class="list-row-main">
+                    <strong>{{ gap.label }}</strong>
+                    <span class="list-row-meta">
+                        {{ gap.reflection_count }} time{{ 's' if gap.reflection_count != 1 else '' }}
+                        across {{ gap.topic_count }} topic{{ 's' if gap.topic_count != 1 else '' }}
+                    </span>
+                    <span class="list-row-meta">
+                        {% for topic in gap.topics %}
+                        {{ topic.topic_label }}{% if topic.is_weak_topic %} (weak){% endif %}{% if not loop.last %} · {% endif %}
+                        {% endfor %}
+                    </span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty">No recurring skill-gap labels yet.</p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">Set work</div>
+    <div class="section-panel-body">
+        {% if progress.set_work %}
+        <ul class="profile-list profile-list--rows">
+            {% for item in progress.set_work %}
+            <li class="profile-list-item list-row">
+                <div class="list-row-main">
+                    <strong>{{ item.topic | replace('_', ' ') | title }}</strong>
+                    <span class="list-row-meta">{{ item.answered_count }} / {{ item.question_count }} · score {{ item.score }}{% if item.status == 'complete' %} · Complete{% endif %}</span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty">No set work assigned to this student yet.</p>
+        {% endif %}
+    </div>
+</section>
+</div>
+{% endblock %}

@@ -1,50 +1,207 @@
 {% extends "base.html" %}
 {% from "partials/user_avatar.html" import user_avatar %}
+{% from "partials/page_flashes.html" import render as page_flashes %}
+{% from "partials/zorp_badge.html" import zorp_badge_face %}
 {% block title %}Profile – Problem Bank{% endblock %}
 
 {% block content %}
-<div class="page-shell">
+<div class="page-shell profile-dashboard">
 
-<div class="lesson-hero lesson-hero-with-avatar">
-    {{ user_avatar(avatar, 'lg') }}
-    <div>
-    <h1>{{ current_user.display_handle }}</h1>
-    <p class="hero-sub">
-        Your saved questions, lesson progress, and quiz history ·
-        <a href="{{ public_profile_url }}">Public profile</a>
-    </p>
+<header class="profile-dashboard-hero">
+    <div class="profile-dashboard-main">
+        {{ user_avatar(avatar, 'lg') }}
+        <div class="profile-dashboard-copy">
+            <h1>{{ current_user.display_handle }}</h1>
+            <div class="profile-dashboard-chips">
+                {% if viewer_xp is not none %}
+                {% set ring = xp_progress or {'pct': 0, 'remaining': 0, 'next': 200} %}
+                <div class="profile-xp-chip" aria-label="Level {{ viewer_level }}, {{ viewer_xp }} XP this week">
+                    <span class="xp-level-ring" aria-hidden="true">
+                        <svg viewBox="0 0 44 44">
+                            <circle class="xp-level-ring-track" cx="22" cy="22" r="18"></circle>
+                            <circle class="xp-level-ring-fill" cx="22" cy="22" r="18"
+                                stroke-dasharray="113.1"
+                                stroke-dashoffset="{{ (113.1 * (1 - ring.pct)) | round(1) }}"></circle>
+                        </svg>
+                        <span class="profile-xp-level">{{ viewer_level }}</span>
+                    </span>
+                    <span class="profile-xp-points">{{ viewer_xp }} XP this week</span>
+                </div>
+                {% endif %}
+                {% if study_streak.current %}
+                <a class="profile-hero-chip profile-hero-chip--streak" href="#overview">
+                    <span aria-hidden="true">🔥</span> {{ study_streak.current }}-day streak
+                </a>
+                {% endif %}
+                <a class="profile-hero-chip profile-hero-chip--badges" href="#milestones">
+                    {{ badges_earned }} / {{ milestones|length }} badges
+                </a>
+            </div>
+            <p class="profile-dashboard-links">
+                <a href="{{ public_profile_url }}">Public profile</a>
+                · <a href="{{ url_for('profile_settings') }}">Settings</a>
+                · <a href="{{ url_for('teacher_classes') }}">{% if teacher_enabled %}Teacher classes{% else %}Enable teacher tools{% endif %}</a>
+                · <a href="{{ url_for('student_classes') }}">My classes</a>
+                · <a href="{{ url_for('student_class_work') }}">Class work</a>
+            </p>
+        </div>
     </div>
-</div>
+</header>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% for category, message in messages %}
-        <p class="{% if category == 'error' %}error{% else %}flash-success{% endif %}">{{ message }}</p>
-    {% endfor %}
-{% endwith %}
+<nav class="profile-tabs segmented-control" role="tablist" aria-label="Profile sections" aria-orientation="horizontal">
+    <button type="button" role="tab" id="profile-tab-btn-overview" data-tab="overview" aria-controls="profile-tab-overview" aria-selected="true" tabindex="0" class="is-active">Overview</button>
+    <button type="button" role="tab" id="profile-tab-btn-progress" data-tab="progress" aria-controls="profile-tab-progress" aria-selected="false" tabindex="-1">Progress</button>
+    <button type="button" role="tab" id="profile-tab-btn-social" data-tab="social" aria-controls="profile-tab-social" aria-selected="false" tabindex="-1">Social</button>
+    <button type="button" role="tab" id="profile-tab-btn-history" data-tab="history" aria-controls="profile-tab-history" aria-selected="false" tabindex="-1">History</button>
+</nav>
 
-<div class="profile-stats-row">
-    <div class="profile-stat-card">
-        <strong>{{ study_streak.current }}</strong>
-        <span>Day study streak</span>
+{{ page_flashes('profile') }}
+
+<div id="profile-tab-overview" class="profile-tab-stack" role="tabpanel" aria-labelledby="profile-tab-btn-overview" data-profile-tab="overview">
+
+{% if study_pair_invites %}
+<section class="section-panel profile-study-buddy-alert" id="study-buddy-invite">
+    <div class="section-panel-header">Study buddy invite</div>
+    <div class="section-panel-body">
+        <p class="profile-empty profile-section-intro">Someone wants to be your accountability buddy. Respond here or from the notification bell.</p>
+        <ul class="profile-list profile-list--rows">
+            {% for inv in study_pair_invites %}
+            <li class="profile-list-item list-row">
+                <div class="list-row-main">
+                    <strong>@{{ inv.invited_by_handle }}</strong>
+                    <span class="list-row-meta">Wants to be your study buddy</span>
+                </div>
+                <div class="list-row-actions">
+                    <form method="POST" action="{{ url_for('study_pair_accept', pair_id=inv.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-primary btn-sm">Accept</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('study_pair_decline', pair_id=inv.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline btn-sm">Ignore</button>
+                    </form>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+{% endif %}
+
+{% if streak_ring %}
+<section class="streak-panel" aria-label="Study streak">
+    <div class="streak-ring-wrap" data-streak-current="{{ streak_ring.current }}">
+        <svg class="streak-ring" viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="streak-ring-track" cx="60" cy="60" r="52"></circle>
+            <circle class="streak-ring-fill" cx="60" cy="60" r="52"
+                stroke-dasharray="326.7"
+                stroke-dashoffset="{{ (326.7 * (1 - streak_ring.pct)) | round(1) }}"></circle>
+        </svg>
+        <div class="streak-ring-core">
+            <span class="streak-ring-flame" aria-hidden="true">🔥</span>
+            <strong class="streak-ring-count">{{ streak_ring.current }}</strong>
+            <span class="streak-ring-label">{% if streak_ring.current == 1 %}day{% else %}days{% endif %}</span>
+        </div>
+    </div>
+    <div class="streak-ring-meta">
+        <p class="streak-ring-next">
+            {% if streak_ring.current >= 100 %}
+            Century streak — keep the fire going.
+            {% else %}
+            {{ streak_ring.target - streak_ring.current }} day{{ 's' if streak_ring.target - streak_ring.current != 1 else '' }} to a {{ streak_ring.target }}-day milestone
+            {% endif %}
+        </p>
+        {% if study_streak.freeze_available %}
+        <p class="profile-list-meta">❄️ 1 skip available this week</p>
+        {% endif %}
         {% if study_streak.longest > study_streak.current %}
-        <span class="profile-list-meta">Best: {{ study_streak.longest }} days</span>
+        <p class="profile-list-meta">Best: {{ study_streak.longest }} days</p>
+        {% endif %}
+        {% if streak_dots %}
+        <ol class="streak-dots" aria-label="Last 7 days">
+            {% for dot in streak_dots %}
+            <li class="streak-dot is-{{ dot.state }}{% if dot.is_today %} is-today{% endif %}" title="{{ dot.date }} — {{ dot.state }}">
+                <span class="streak-dot-mark" aria-hidden="true">{% if dot.state == 'frozen' %}❄️{% elif dot.state == 'studied' %}●{% else %}○{% endif %}</span>
+                <span class="streak-dot-day">{{ dot.label }}</span>
+            </li>
+            {% endfor %}
+        </ol>
         {% endif %}
     </div>
-    <div class="profile-stat-card">
+</section>
+{% endif %}
+
+<div class="profile-stats-row">
+    <div class="profile-stat-card profile-stat-card--xp">
+        <strong>{{ viewer_xp or 0 }}</strong>
+        <span>XP this week</span>
+    </div>
+    <div class="profile-stat-card profile-stat-card--streak">
         <strong>{{ weekly_recap.active_days }}</strong>
-        <span>Active days this week</span>
+        <span>Active days</span>
     </div>
-    <div class="profile-stat-card">
+    <div class="profile-stat-card profile-stat-card--correct">
         <strong>{{ weekly_recap.topics_practised }}</strong>
-        <span>Topics this week</span>
+        <span>Topics practised</span>
     </div>
+    {% if study_pair %}
+    <div class="profile-stat-card profile-stat-card--social">
+        <strong>@{{ study_pair.buddy_handle }}</strong>
+        <span>Study buddy</span>
+        <a href="#study-buddy" class="profile-list-meta">View details</a>
+    </div>
+    {% endif %}
 </div>
+
+{% if weekly_effort_days %}
+<section class="section-panel progress-viz-panel">
+    <div class="section-panel-header">This week's effort</div>
+    <div class="section-panel-body">
+        <p class="profile-section-intro">Practice points per day (topics, questions, lesson steps, quizzes).</p>
+        {{ svg_kit.weekly_effort_bars(
+            weekly_effort_days | map(attribute='score') | list,
+            labels=weekly_effort_days | map(attribute='label') | list,
+            title='Weekly effort bars',
+            desc='Effort points for each day this week.'
+        ) }}
+    </div>
+</section>
+{% endif %}
+
+{% if study_pair %}
+<section class="section-panel" id="study-buddy">
+    <div class="section-panel-header">Study buddy</div>
+    <div class="section-panel-body">
+        <p>Accountability partner: <strong>@{{ study_pair.buddy_handle }}</strong></p>
+        {% if buddy_recap %}
+        <p class="profile-empty profile-section-note">
+            This week: you {{ buddy_recap.your_active_days }} active days · buddy {{ buddy_recap.buddy_active_days }} ·
+            {{ buddy_recap.shared_topics }} topic(s) in common
+        </p>
+        {% endif %}
+        <p class="profile-section-note">
+            <a href="{{ url_for('public_profile', handle=study_pair.buddy_handle) }}">View @{{ study_pair.buddy_handle }}'s profile</a>
+        </p>
+        <form method="POST" action="{{ url_for('study_pair_end') }}" class="profile-inline-form" onsubmit="return confirm('End study buddy link?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-outline btn-sm">End buddy link</button>
+        </form>
+    </div>
+</section>
+{% elif not study_pair_invites %}
+<section class="section-panel" id="study-buddy">
+    <div class="section-panel-header">Study buddy</div>
+    <div class="section-panel-body">
+        <p class="profile-empty">Invite one friend as an accountability buddy from their public profile.</p>
+    </div>
+</section>
+{% endif %}
 
 <section class="section-panel">
     <div class="section-panel-header">This week</div>
     <div class="section-panel-body">
         {% if weekly_recap.best_quiz %}
-        <p class="profile-empty" style="margin-bottom:8px;">
+        <p class="profile-section-note">
             Best quiz: <strong>{{ weekly_recap.best_quiz.score }}/{{ weekly_recap.best_quiz.total }}</strong>
             on {{ weekly_recap.best_quiz.topic_label }}
         </p>
@@ -60,25 +217,62 @@
 <section class="section-panel" data-revision-queue>
     <div class="section-panel-header">Due today</div>
     <div class="section-panel-body">
-        <p class="profile-empty" style="margin-top:0;margin-bottom:12px;">A few topics worth revisiting today, based on your recent scores.</p>
-        <ul class="profile-list">
+        <p class="profile-section-intro">A few topics worth revisiting today, based on your recent scores.</p>
+        <ul class="profile-list profile-list--rows">
             {% for item in due_today %}
-            <li class="profile-list-item revision-queue-item" data-level="{{ item.level }}" data-subject="{{ item.subject }}" data-topic="{{ item.topic }}">
-                <a href="{{ item.topic_url }}"><strong>{{ item.topic_label }}</strong></a>
-                {% if item.reason %}
-                <span class="profile-list-meta">{{ item.reason }}</span>
-                {% endif %}
-                <span style="display:block;margin-top:6px;">
-                    <a href="{{ item.topic_url }}">Practise now</a>
-                    {% if item.lesson_quiz_url %}
-                    · <a href="{{ item.lesson_quiz_url }}">Take quiz</a>
+            <li class="profile-list-item list-row revision-queue-item" data-level="{{ item.level }}" data-subject="{{ item.subject }}" data-topic="{{ item.topic }}">
+                <div class="list-row-main">
+                    <a href="{{ item.topic_url }}"><strong>{{ item.topic_label }}</strong></a>
+                    {% if item.reason %}
+                    <span class="list-row-meta">{{ item.reason }}</span>
                     {% endif %}
-                    · <button type="button" class="btn-link revision-queue-action" data-action="complete">Done</button>
-                    · <button type="button" class="btn-link revision-queue-action" data-action="dismiss">Not now</button>
-                </span>
+                </div>
+                <div class="list-row-actions list-row-actions--stack">
+                    <a href="{{ item.topic_url }}" class="btn btn-primary btn-sm">Practise</a>
+                    {% if item.lesson_quiz_url %}
+                    <a href="{{ item.lesson_quiz_url }}" class="btn btn-outline btn-sm">Quiz</a>
+                    {% endif %}
+                    <button type="button" class="btn-link revision-queue-action" data-action="complete">Done</button>
+                    <button type="button" class="btn-link revision-queue-action" data-action="dismiss">Not now</button>
+                </div>
             </li>
             {% endfor %}
         </ul>
+    </div>
+</section>
+{% endif %}
+
+</div>
+
+<div id="profile-tab-progress" class="profile-tab-stack" role="tabpanel" aria-labelledby="profile-tab-btn-progress" data-profile-tab="progress" hidden>
+
+{% if streak_calendar_rows or accuracy_trend %}
+<section class="section-panel progress-viz-panel">
+    <div class="section-panel-header">Progress charts</div>
+    <div class="section-panel-body">
+        <div class="progress-viz-row">
+            {% if streak_calendar_rows %}
+            <div class="progress-viz-cell">
+                <h3 class="progress-viz-heading">Study calendar</h3>
+                {{ svg_kit.streak_calendar(streak_calendar_rows, weeks=4, title='Four-week study calendar') }}
+                <p class="progress-viz-legend" aria-hidden="true">
+                    <span class="legend-studied">Studied</span>
+                    <span class="legend-frozen">Freeze used</span>
+                    <span class="legend-missed">No activity</span>
+                </p>
+            </div>
+            {% endif %}
+            {% if accuracy_trend %}
+            <div class="progress-viz-cell">
+                <h3 class="progress-viz-heading">Quiz accuracy</h3>
+                {{ svg_kit.accuracy_sparkline(
+                    accuracy_trend | map(attribute='pct') | list,
+                    title='Recent quiz accuracy trend',
+                    desc='Last ten marked quiz and practice attempts.'
+                ) }}
+            </div>
+            {% endif %}
+        </div>
     </div>
 </section>
 {% endif %}
@@ -87,21 +281,23 @@
 <section class="section-panel">
     <div class="section-panel-header">Topics to revisit</div>
     <div class="section-panel-body">
-        <p class="profile-empty" style="margin-top:0;margin-bottom:12px;">Based on your quiz and practice question history — focus on effort, not ranking.</p>
-        <ul class="profile-list">
+        <p class="profile-section-intro">Based on your quiz and practice history — focus on effort, not ranking.</p>
+        <ul class="profile-list profile-list--rows">
             {% for item in weak_topics %}
-            <li class="profile-list-item">
-                <a href="{{ item.topic_url }}"><strong>{{ item.topic_label }}</strong></a>
-                <span class="profile-list-meta">
-                    {% for reason in item.reasons %}{{ reason }}{% if not loop.last %} · {% endif %}{% endfor %}
-                    {% if item.last_practised_date %} · Last practised {{ item.last_practised_date }}{% endif %}
-                </span>
-                <span style="display:block;margin-top:6px;">
-                    <a href="{{ item.topic_url }}">Open topic</a>
+            <li class="profile-list-item list-row">
+                <div class="list-row-main">
+                    <a href="{{ item.topic_url }}"><strong>{{ item.topic_label }}</strong></a>
+                    <span class="list-row-meta">
+                        {% for reason in item.reasons %}{{ reason }}{% if not loop.last %} · {% endif %}{% endfor %}
+                        {% if item.last_practised_date %} · Last practised {{ item.last_practised_date }}{% endif %}
+                    </span>
+                </div>
+                <div class="list-row-actions">
+                    <a href="{{ item.topic_url }}" class="btn btn-outline btn-sm">Open</a>
                     {% if item.lesson_quiz_url %}
-                    · <a href="{{ item.lesson_quiz_url }}">Retake quiz</a>
+                    <a href="{{ item.lesson_quiz_url }}" class="btn btn-primary btn-sm">Retake quiz</a>
                     {% endif %}
-                </span>
+                </div>
             </li>
             {% endfor %}
         </ul>
@@ -112,10 +308,12 @@
 <section class="section-panel" id="revision-plan">
     <div class="section-panel-header">Exam revision plan</div>
     <div class="section-panel-body">
-        <p class="profile-empty" style="margin-top:0;margin-bottom:12px;">Set an exam date and we'll spread your weak topics across the study days before it.</p>
+        <p class="profile-section-intro">Set an exam date and we'll spread your weak topics across the study days before it.</p>
         <form method="POST" action="{{ url_for('profile_revision_plan_save') }}" class="revision-plan-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="revision-plan-fields">
+                {% set plan_level = revision_plan.level if revision_plan else 'gcse' %}
+                {% set plan_subject = revision_plan.subject if revision_plan else 'maths' %}
                 <label>
                     Exam date
                     <input type="date" name="exam_date" required
@@ -123,8 +321,7 @@
                 </label>
                 <label>
                     Level
-                    <select name="level" required>
-                        {% set plan_level = revision_plan.level if revision_plan else 'gcse' %}
+                    <select name="level" id="revision-plan-level" required>
                         {% for level in revision_plan_levels %}
                         <option value="{{ level }}" {% if level == plan_level %}selected{% endif %}>{{ level | upper }}</option>
                         {% endfor %}
@@ -132,10 +329,10 @@
                 </label>
                 <label>
                     Subject
-                    <select name="subject" required>
-                        {% set plan_subject = revision_plan.subject if revision_plan else 'maths' %}
-                        {% for subject in revision_plan_subjects %}
-                        <option value="{{ subject }}" {% if subject == plan_subject %}selected{% endif %}>{{ subject | replace('_', ' ') | title }}</option>
+                    <select name="subject" id="revision-plan-subject" required>
+                        {% for pair in revision_plan_subjects %}
+                        <option value="{{ pair.subject }}" data-level="{{ pair.level }}"
+                                {% if pair.level == plan_level and pair.subject == plan_subject %}selected{% endif %}>{{ pair.subject | replace('_', ' ') | title }}</option>
                         {% endfor %}
                     </select>
                 </label>
@@ -143,23 +340,25 @@
             </div>
         </form>
         {% if revision_plan %}
-        <p class="profile-empty" style="margin-top:14px;margin-bottom:10px;">
+        <p class="profile-section-note">
             <strong>{{ revision_plan.level_label }} {{ revision_plan.subject_label }}</strong>
             · Exam {{ revision_plan.exam_date }}
             · {{ revision_plan.days_remaining }} day{{ 's' if revision_plan.days_remaining != 1 else '' }} left
             · {{ revision_plan.topics_scheduled }} topic{{ 's' if revision_plan.topics_scheduled != 1 else '' }} scheduled
         </p>
         {% if revision_plan.sessions %}
-        <ul class="profile-list">
+        <ul class="profile-list profile-list--rows">
             {% for session in revision_plan.sessions %}
             {% if session.topics %}
-            <li class="profile-list-item">
-                <strong>{{ session.plan_date }}</strong>
-                <span class="profile-list-meta">
-                    {% for topic in session.topics %}
-                    <a href="{{ topic.topic_url }}">{{ topic.topic_label }}</a>{% if topic.reasons %} ({{ topic.reasons[0] }}){% endif %}{% if not loop.last %} · {% endif %}
-                    {% endfor %}
-                </span>
+            <li class="profile-list-item list-row">
+                <div class="list-row-main">
+                    <strong>{{ session.plan_date }}</strong>
+                    <span class="list-row-meta">
+                        {% for topic in session.topics %}
+                        <a href="{{ topic.topic_url }}">{{ topic.topic_label }}</a>{% if topic.reasons %} ({{ topic.reasons[0] }}){% endif %}{% if not loop.last %} · {% endif %}
+                        {% endfor %}
+                    </span>
+                </div>
             </li>
             {% endif %}
             {% endfor %}
@@ -167,7 +366,7 @@
         {% else %}
         <p class="profile-empty">No weak topics in this subject yet — complete quizzes or practice questions first, then refresh your plan.</p>
         {% endif %}
-        <form method="POST" action="{{ url_for('profile_revision_plan_save') }}" style="margin-top:12px;" onsubmit="return confirm('Clear your exam revision plan?');">
+        <form method="POST" action="{{ url_for('profile_revision_plan_save') }}" class="profile-inline-form" onsubmit="return confirm('Clear your exam revision plan?');">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="action" value="clear">
             <button type="submit" class="btn btn-outline btn-sm">Clear plan</button>
@@ -180,22 +379,24 @@
 <section class="section-panel">
     <div class="section-panel-header">Skill patterns</div>
     <div class="section-panel-body">
-        <p class="profile-empty" style="margin-top:0;margin-bottom:12px;">Recurring reasons you gave after wrong answers — rolled up across topics.</p>
-        <ul class="profile-list">
+        <p class="profile-section-intro">Recurring reasons you gave after wrong answers — rolled up across topics.</p>
+        <ul class="profile-list profile-list--rows">
             {% for gap in skill_gaps %}
-            <li class="profile-list-item">
-                <strong>{{ gap.label }}</strong>
-                <span class="profile-list-meta">
-                    {{ gap.reflection_count }} reflection{{ 's' if gap.reflection_count != 1 else '' }}
-                    across {{ gap.topic_count }} topic{{ 's' if gap.topic_count != 1 else '' }}
-                    {% if gap.last_reflected_date %} · Last {{ gap.last_reflected_date }}{% endif %}
-                    {% if gap.overlaps_weak_topic %} · Also in topics to revisit{% endif %}
-                </span>
-                <span style="display:block;margin-top:6px;">
-                    {% for topic in gap.topics %}
-                    <a href="{{ topic.topic_url }}">{{ topic.topic_label }}</a>{% if topic.is_weak_topic %} (weak){% endif %}{% if not loop.last %} · {% endif %}
-                    {% endfor %}
-                </span>
+            <li class="profile-list-item list-row">
+                <div class="list-row-main">
+                    <strong>{{ gap.label }}</strong>
+                    <span class="list-row-meta">
+                        {{ gap.reflection_count }} reflection{{ 's' if gap.reflection_count != 1 else '' }}
+                        across {{ gap.topic_count }} topic{{ 's' if gap.topic_count != 1 else '' }}
+                        {% if gap.last_reflected_date %} · Last {{ gap.last_reflected_date }}{% endif %}
+                        {% if gap.overlaps_weak_topic %} · Also in topics to revisit{% endif %}
+                    </span>
+                    <span class="list-row-meta">
+                        {% for topic in gap.topics %}
+                        <a href="{{ topic.topic_url }}">{{ topic.topic_label }}</a>{% if topic.is_weak_topic %} (weak){% endif %}{% if not loop.last %} · {% endif %}
+                        {% endfor %}
+                    </span>
+                </div>
             </li>
             {% endfor %}
         </ul>
@@ -203,23 +404,41 @@
 </section>
 {% endif %}
 
+{% if mastery_topics %}
+<section class="section-panel">
+    <div class="section-panel-header">Topic mastery</div>
+    <div class="section-panel-body">
+        <p class="profile-section-intro">Progress from lesson steps and your best quiz scores on each topic.</p>
+        <div class="mastery-grid">
+            {% for item in mastery_topics %}
+            <a href="{{ item.topic_url }}" class="mastery-cell">
+                <div class="mastery-bar" aria-hidden="true"><span style="width: {{ item.mastery_pct }}%;"></span></div>
+                <strong>{{ item.topic_label }}</strong>
+                <span class="mastery-pct">{{ item.mastery_pct }}%</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
 <section class="section-panel" id="reflections">
     <div class="section-panel-header">My reflections</div>
     <div class="section-panel-body">
-        <p class="profile-empty" style="margin-top:0;margin-bottom:12px;">Notes you saved after wrong answers. Filter by mistake type:</p>
-        <div class="profile-reflection-filters">
-            <a href="{{ url_for('profile') }}#reflections" class="profile-reflection-filter{% if not reflection_type_filter %} is-active{% endif %}">All</a>
+        <p class="profile-section-intro">Notes you saved after wrong answers. Filter by mistake type:</p>
+        <div class="profile-reflection-filters pill-row">
+            <a href="{{ url_for('profile') }}#reflections" class="pill pill--surface pill--filter{% if not reflection_type_filter %} is-active{% endif %}">All</a>
             {% for pt, label in reflection_prompt_types %}
-            <a href="{{ url_for('profile', reflection_type=pt) }}#reflections" class="profile-reflection-filter{% if reflection_type_filter == pt %} is-active{% endif %}">{{ label }}</a>
+            <a href="{{ url_for('profile', reflection_type=pt) }}#reflections" class="pill pill--surface pill--filter{% if reflection_type_filter == pt %} is-active{% endif %}">{{ label }}</a>
             {% endfor %}
         </div>
         {% if reflections %}
-        <ul class="profile-list" style="margin-top:14px;">
+        <ul class="profile-list profile-list--rows profile-reflection-list">
             {% for item in reflections %}
-            <li class="profile-list-item">
-                <div class="profile-list-main">
+            <li class="profile-list-item list-row">
+                <div class="list-row-main">
                     <a href="{{ item.topic_url }}"><strong>{{ item.topic_label }}</strong></a>
-                    <span class="profile-list-meta">
+                    <span class="list-row-meta">
                         {% if item.prompt_type_label %}{{ item.prompt_type_label }} · {% endif %}
                         {{ item.created_at[:10] }}
                         {% if item.reflection_text %} · {{ item.reflection_text | truncate(80) }}{% endif %}
@@ -230,72 +449,51 @@
             {% endfor %}
         </ul>
         {% else %}
-        <p class="profile-empty" style="margin-top:14px;">No reflections yet{% if reflection_type_filter %} for this filter{% endif %}. After a wrong Check or MCQ answer, use the optional “What tripped you up?” prompt on the question page.</p>
+        <p class="profile-empty profile-reflection-empty">No reflections yet{% if reflection_type_filter %} for this filter{% endif %}. After a wrong Check or MCQ answer, use the optional “What tripped you up?” prompt on the question page.</p>
         {% endif %}
     </div>
 </section>
 
-{% if milestones %}
-<section class="section-panel" id="milestones">
+<section class="section-panel milestone-shelf" id="milestones">
     <div class="section-panel-header">
         Milestones
         <a href="{{ url_for('profile_settings') }}" class="profile-section-link">Sharing settings</a>
     </div>
     <div class="section-panel-body">
-        <ul class="milestone-list">
+        <ul class="badge-grid">
             {% for item in milestones %}
-            <li class="milestone-item">
-                <span class="milestone-badge" aria-hidden="true">{{ item.emoji or '★' }}</span>
-                <div>
-                    <strong>{{ item.title }}</strong>
-                    <span class="profile-list-meta">{{ item.description }} · {{ item.earned_at[:10] }}</span>
-                </div>
+            <li class="badge-medallion badge-medallion--{{ item.tier }}{% if not item.earned %} is-locked{% endif %}">
+                {{ zorp_badge_face(item, size=36, variant='medallion') }}
+                <strong>{{ item.title }}</strong>
+                <span class="profile-list-meta">
+                    {% if item.earned %}{{ item.earned_at[:10] }}{% else %}{{ item.description }}{% endif %}
+                </span>
             </li>
             {% endfor %}
         </ul>
+    </div>
+</section>
+
+</div>
+
+<div id="profile-tab-social" class="profile-tab-stack" role="tabpanel" aria-labelledby="profile-tab-btn-social" data-profile-tab="social" hidden>
+
+{% if study_pair or study_pair_invites %}
+<section class="section-panel">
+    <div class="section-panel-header">Study buddy</div>
+    <div class="section-panel-body">
+        {% if study_pair %}
+        <p>You're paired with <strong>@{{ study_pair.buddy_handle }}</strong>.</p>
+        <a href="{{ url_for('profile') }}#study-buddy" class="btn btn-outline btn-sm">Manage in Overview</a>
+        {% elif study_pair_invites %}
+        <p class="profile-empty">{{ study_pair_invites|length }} pending invite{{ 's' if study_pair_invites|length != 1 else '' }} — respond in Overview.</p>
+        <a href="{{ url_for('profile') }}#study-buddy-invite" class="btn btn-primary btn-sm">View invites</a>
+        {% else %}
+        <p class="profile-empty">Invite a friend from their public profile.</p>
+        {% endif %}
     </div>
 </section>
 {% endif %}
-
-<section class="section-panel">
-    <div class="section-panel-header">
-        Study buddy
-    </div>
-    <div class="section-panel-body">
-        {% if study_pair %}
-        <p>Accountability partner: <strong>@{{ study_pair.buddy_handle }}</strong></p>
-        {% if buddy_recap %}
-        <p class="profile-empty" style="margin-top:8px;">
-            This week: you {{ buddy_recap.your_active_days }} active days · buddy {{ buddy_recap.buddy_active_days }} ·
-            {{ buddy_recap.shared_topics }} topic(s) in common
-        </p>
-        {% endif %}
-        <form method="POST" action="{{ url_for('study_pair_end') }}" style="margin-top:12px;" onsubmit="return confirm('End study buddy link?');">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-outline">End buddy link</button>
-        </form>
-        {% elif study_pair_invites %}
-        <p class="profile-empty">Pending invites:</p>
-        <ul class="profile-list">
-            {% for inv in study_pair_invites %}
-            <li>
-                @{{ inv.invited_by_handle }}
-                <form method="POST" action="{{ url_for('study_pair_accept', pair_id=inv.id) }}" style="display:inline;">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-primary btn-sm">Accept</button>
-                </form>
-                <form method="POST" action="{{ url_for('study_pair_decline', pair_id=inv.id) }}" style="display:inline;">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-outline btn-sm">Decline</button>
-                </form>
-            </li>
-            {% endfor %}
-        </ul>
-        {% else %}
-        <p class="profile-empty">Invite one friend as an accountability buddy from their public profile.</p>
-        {% endif %}
-    </div>
-</section>
 
 <section class="section-panel">
     <div class="section-panel-header">
@@ -305,7 +503,31 @@
         {% endif %}
     </div>
     <div class="section-panel-body">
-        <p class="profile-empty"><a href="{{ url_for('challenges_list') }}">View challenges</a> · <a href="{{ url_for('qotd_page') }}">Question of the day</a></p>
+        {% if challenges %}
+        <div class="challenge-list challenge-list--compact">
+            {% for item in challenges[:3] %}
+            {% set s = item.summary %}
+            <a href="{{ url_for('challenge_detail', challenge_id=item.id) }}" class="challenge-vs-card challenge-vs-card--compact{% if item.status == 'pending' and not s.viewer_submitted %} is-pending{% endif %}">
+                <div class="challenge-vs-player">
+                    <span>@{{ item.creator_handle }}</span>
+                    {% if s.creator_score is not none %}<span class="list-row-meta">{{ s.creator_score }}/{{ s.total }}</span>{% endif %}
+                </div>
+                <div class="challenge-vs-divider">VS</div>
+                <div class="challenge-vs-player">
+                    <span>@{{ item.opponent_handle }}</span>
+                    {% if s.opponent_score is not none %}<span class="list-row-meta">{{ s.opponent_score }}/{{ s.total }}</span>{% endif %}
+                </div>
+                <span class="challenge-vs-topic">{{ item.topic_label }}</span>
+            </a>
+            {% endfor %}
+        </div>
+        <p class="profile-section-note"><a href="{{ url_for('challenges_list') }}">View all challenges</a> · <a href="{{ url_for('challenge_new') }}">Challenge a friend</a></p>
+        {% else %}
+        <div class="empty-state empty-state--compact">
+            <p>No challenges yet.</p>
+            <a href="{{ url_for('challenge_new') }}" class="btn btn-primary btn-sm">Challenge a friend</a>
+        </div>
+        {% endif %}
     </div>
 </section>
 
@@ -322,6 +544,37 @@
 </section>
 
 <section class="section-panel">
+    <div class="section-panel-header">Friend leaderboard</div>
+    <div class="section-panel-body">
+        {% if friend_leaderboard %}
+        <ol class="leaderboard-list leaderboard-list--compact">
+            {% for item in friend_leaderboard %}
+            <li class="leaderboard-item list-row{% if item.rank == 1 %} leaderboard-item--gold{% elif item.rank == 2 %} leaderboard-item--silver{% elif item.rank == 3 %} leaderboard-item--bronze{% endif %}{% if item.is_viewer %} is-viewer{% endif %}">
+                <span class="leaderboard-rank">#{{ item.rank }}</span>
+                {{ user_avatar(item.avatar, 'sm') }}
+                <div class="leaderboard-main list-row-main">
+                    <a href="{{ item.profile_url }}">@{{ item.handle }}</a>
+                    {% if item.is_viewer %}<span class="profile-list-meta"> (you)</span>{% endif %}
+                    <span class="list-row-meta">{{ item.score }} effort pts</span>
+                </div>
+            </li>
+            {% endfor %}
+        </ol>
+        <a href="{{ url_for('friend_leaderboard_page') }}" class="btn btn-outline btn-sm">Full leaderboard</a>
+        {% else %}
+        <div class="empty-state empty-state--compact">
+            <p>Follow friends to compare effort this week.</p>
+            <a href="{{ url_for('friend_leaderboard_page') }}" class="btn btn-primary btn-sm">Find friends</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+</div>
+
+<div id="profile-tab-history" class="profile-tab-stack" role="tabpanel" aria-labelledby="profile-tab-btn-history" data-profile-tab="history" hidden>
+
+<section class="section-panel" data-collapsible-list="5">
     <div class="section-panel-header">
         Saved questions
         {% if saved_problems %}
@@ -330,37 +583,38 @@
     </div>
     <div class="section-panel-body">
         {% if saved_problems %}
-        <ul class="profile-list">
+        <ul class="profile-list profile-list--rows">
             {% for item in saved_problems %}
-            <li class="profile-list-item">
-                <div class="profile-list-main">
+            <li class="profile-list-item list-row" data-collapsible-item>
+                <div class="list-row-main">
                     <a href="{{ url_for('view_saved_problem', saved_id=item.id) }}">{{ item.topic_label }}</a>
-                    <span class="profile-list-meta">{{ item.difficulty | title }} · {{ item.created_at[:10] }}</span>
+                    <span class="list-row-meta">{{ item.difficulty | title }} · {{ item.created_at[:10] }}</span>
                 </div>
                 <form method="POST" action="{{ url_for('delete_saved_problem_route', saved_id=item.id) }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="next" value="{{ url_for('profile') }}">
+                    <input type="hidden" name="next" value="{{ url_for('profile') }}#history">
                     <button type="submit" class="btn btn-outline btn-sm">Remove</button>
                 </form>
             </li>
             {% endfor %}
         </ul>
+        <button type="button" class="btn btn-ghost btn-sm" data-collapsible-toggle hidden>Show more</button>
         {% else %}
         <p class="profile-empty">No saved questions yet. Generate a question and click <strong>Save question</strong>.</p>
         {% endif %}
     </div>
 </section>
 
-<section class="section-panel">
+<section class="section-panel" data-collapsible-list="5">
     <div class="section-panel-header">Lesson bookmarks</div>
     <div class="section-panel-body">
         {% if lesson_progress %}
-        <ul class="profile-list">
+        <ul class="profile-list profile-list--rows">
             {% for item in lesson_progress %}
-            <li class="profile-list-item">
-                <div class="profile-list-main">
+            <li class="profile-list-item list-row" data-collapsible-item>
+                <div class="list-row-main">
                     <a href="{{ item.lesson_url }}">{{ item.topic_label }}</a>
-                    <span class="profile-list-meta">
+                    <span class="list-row-meta">
                         {% if item.section_label %}{{ item.section_label | truncate(60) }}{% else %}Section {{ item.section_key }}{% endif %}
                         · {{ item.updated_at[:10] }}
                     </span>
@@ -372,72 +626,77 @@
             </li>
             {% endfor %}
         </ul>
+        <button type="button" class="btn btn-ghost btn-sm" data-collapsible-toggle hidden>Show more</button>
         {% else %}
         <p class="profile-empty">Open a lesson while logged in — your place is saved when you expand a section.</p>
         {% endif %}
     </div>
 </section>
 
-<section class="section-panel">
+<section class="section-panel" data-collapsible-list="5">
     <div class="section-panel-header">
         Practice problem history
         {% if practice_streak %}
-        <span class="profile-section-link">{{ practice_streak }}-day Practice streak</span>
+        <span class="profile-section-link">{{ practice_streak }}-day practice streak</span>
         {% endif %}
     </div>
     <div class="section-panel-body">
         {% if mcq_attempts %}
-        <ul class="profile-list">
+        <ul class="profile-list profile-list--rows">
             {% for item in mcq_attempts %}
-            <li class="profile-list-item">
-                <div class="profile-list-main">
+            <li class="profile-list-item list-row" data-collapsible-item>
+                <div class="list-row-main">
                     <span>{{ item.topic_label }}</span>
-                    <span class="profile-list-meta">
+                    <span class="list-row-meta">
                         {% if item.is_multipart or item.score_total %}
-                        <span>{{ item.score }}/{{ item.total }}</span>
+                        {{ item.score }}/{{ item.total }}
                         {% elif item.correct %}
-                        <span style="color: var(--success);">✓ Correct</span>
+                        <span class="text-correct">✓ Correct</span>
                         {% else %}
-                        <span style="color: #dc2626;">✗ Incorrect</span>
+                        <span class="text-wrong">✗ Incorrect</span>
                         {% endif %}
                         · {{ item.difficulty | title }} · {{ item.created_at[:10] }}
                     </span>
                 </div>
-                <a href="{{ url_for('index', level=item.level, subject=item.subject, topic=item.topic, mode=item.mode, difficulty=item.difficulty) }}" class="btn btn-outline btn-sm">Practise again</a>
+                <a href="{{ url_for('index', level=item.level, subject=item.subject, topic=item.topic, mode=item.mode, difficulty=item.difficulty) }}" class="btn btn-outline btn-sm">Again</a>
             </li>
             {% endfor %}
         </ul>
+        <button type="button" class="btn btn-ghost btn-sm" data-collapsible-toggle hidden>Show more</button>
         {% else %}
         <p class="profile-empty">Answer practice questions in the generator, quick test, or saved questions to build your practice streak.</p>
         {% endif %}
     </div>
 </section>
 
-<section class="section-panel">
+<section class="section-panel" data-collapsible-list="5">
     <div class="section-panel-header">Quiz history</div>
     <div class="section-panel-body">
         {% if quiz_attempts %}
-        <ul class="profile-list">
+        <ul class="profile-list profile-list--rows">
             {% for item in quiz_attempts %}
-            <li class="profile-list-item">
-                <div class="profile-list-main">
+            <li class="profile-list-item list-row" data-collapsible-item>
+                <div class="list-row-main">
                     <span>{{ item.topic_label }}</span>
-                    <span class="profile-list-meta">{{ item.score }}/{{ item.total }} · {{ item.created_at[:10] }}</span>
+                    <span class="list-row-meta">{{ item.score }}/{{ item.total }} · {{ item.created_at[:10] }}</span>
                 </div>
-                <div class="profile-list-actions">
+                <div class="list-row-actions">
                     {% if item.has_review %}
-                    <a href="{{ url_for('view_quiz_attempt', attempt_id=item.id) }}" class="btn btn-primary btn-sm">View results</a>
+                    <a href="{{ url_for('view_quiz_attempt', attempt_id=item.id) }}" class="btn btn-primary btn-sm">Results</a>
                     {% endif %}
                     <a href="{{ url_for('lesson_mcq_quiz', level=item.level, subject=item.subject, topic=item.topic) }}" class="btn btn-outline btn-sm">New quiz</a>
                 </div>
             </li>
             {% endfor %}
         </ul>
+        <button type="button" class="btn btn-ghost btn-sm" data-collapsible-toggle hidden>Show more</button>
         {% else %}
         <p class="profile-empty">Complete a lesson quiz or quick test to see scores here.</p>
         {% endif %}
     </div>
 </section>
+
+</div>
 
 <div class="section-panel cta-panel">
     <div class="section-panel-body cta-panel-body">

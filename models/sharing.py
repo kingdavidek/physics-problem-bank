@@ -247,6 +247,25 @@ def dismiss_suggestion(conn, suggestion_id, recipient_id):
     return cursor.rowcount > 0
 
 
+def operator_delete_shared_question(conn, share_id):
+    cursor = conn.execute('DELETE FROM shared_questions WHERE id = ?', (share_id,))
+    conn.commit()
+    return cursor.rowcount > 0
+
+
+def operator_dismiss_suggestion(conn, suggestion_id):
+    cursor = conn.execute(
+        '''
+        UPDATE question_suggestions
+        SET status = ?
+        WHERE id = ?
+        ''',
+        (SUGGESTION_DISMISSED, suggestion_id),
+    )
+    conn.commit()
+    return cursor.rowcount > 0
+
+
 def _shared_row(row):
     if row is None:
         return None
