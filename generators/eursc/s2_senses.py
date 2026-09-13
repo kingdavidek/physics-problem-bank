@@ -1,5 +1,27 @@
 """S2 Unit 2.3 Senses — 2.3.1–2.3.8."""
+from generators.eursc.s2_unit23_senses_advanced import (
+    HEARING_MS_POOLS,
+    HEARING_SMS_POOLS,
+    INTEROCEPTION_MS_POOLS,
+    INTEROCEPTION_SMS_POOLS,
+    NONHUMAN_SENSES_MS_POOLS,
+    NONHUMAN_SENSES_SMS_POOLS,
+    PROPRIOCEPTION_BALANCE_MS_POOLS,
+    PROPRIOCEPTION_BALANCE_SMS_POOLS,
+    SMELL_MS_POOLS,
+    SMELL_SMS_POOLS,
+    TASTE_MS_POOLS,
+    TASTE_SMS_POOLS,
+    TOUCH_MS_POOLS,
+    TOUCH_SMS_POOLS,
+    VISION_MS_POOLS,
+    VISION_SMS_POOLS,
+)
 from generators.eursc.science_shared import bind_eursc_topic, canal_boxes, ear_boxes, eye_boxes
+from generators.shared.variant_utils import (
+    MULTI_STEP_MODE,
+    SITUATIONAL_MULTI_STEP_MODE,
+)
 from generators.shared.utils import (
     make_problem,
     problem_extra_from_graded_answer,
@@ -194,7 +216,15 @@ _VI_STANDARD = {
         'vision_difficult_pick_focus_not',
     ),
 }
-eursc_science_vision, eursc_science_vision_variants = bind_eursc_topic('vision', _VI_POOLS, _VI_STANDARD)
+eursc_science_vision, eursc_science_vision_variants = bind_eursc_topic(
+    'vision',
+    _VI_POOLS,
+    _VI_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: VISION_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: VISION_SMS_POOLS,
+    },
+)
 
 _EAR_BANK = (
     {"id": "outer", "text": "The outer ear collects sound"},
@@ -277,7 +307,15 @@ _HE_STANDARD = {
         'hearing_difficult_pick_aid_not',
     ),
 }
-eursc_science_hearing, eursc_science_hearing_variants = bind_eursc_topic('hearing', _HE_POOLS, _HE_STANDARD)
+eursc_science_hearing, eursc_science_hearing_variants = bind_eursc_topic(
+    'hearing',
+    _HE_POOLS,
+    _HE_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: HEARING_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: HEARING_SMS_POOLS,
+    },
+)
 
 _REC_BANK = (
     {"id": "pressure", "text": "Some receptors detect pressure or contact"},
@@ -354,7 +392,15 @@ _TO_STANDARD = {
         'touch_difficult_pick_dens_not',
     ),
 }
-eursc_science_touch, eursc_science_touch_variants = bind_eursc_topic('touch', _TO_POOLS, _TO_STANDARD)
+eursc_science_touch, eursc_science_touch_variants = bind_eursc_topic(
+    'touch',
+    _TO_POOLS,
+    _TO_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: TOUCH_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: TOUCH_SMS_POOLS,
+    },
+)
 
 _SMELL_BANK = (
     {"id": "receptors", "text": "Smell receptors detect a range of airborne chemicals"},
@@ -431,7 +477,15 @@ _SM_STANDARD = {
         'smell_difficult_pick_cat_not',
     ),
 }
-eursc_science_smell, eursc_science_smell_variants = bind_eursc_topic('smell', _SM_POOLS, _SM_STANDARD)
+eursc_science_smell, eursc_science_smell_variants = bind_eursc_topic(
+    'smell',
+    _SM_POOLS,
+    _SM_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: SMELL_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: SMELL_SMS_POOLS,
+    },
+)
 
 _TASTE_BANK = (
     {"id": "five", "text": "This lesson names five tastes"},
@@ -508,7 +562,15 @@ _TA_STANDARD = {
         'taste_difficult_pick_taste_not',
     ),
 }
-eursc_science_taste, eursc_science_taste_variants = bind_eursc_topic('taste', _TA_POOLS, _TA_STANDARD)
+eursc_science_taste, eursc_science_taste_variants = bind_eursc_topic(
+    'taste',
+    _TA_POOLS,
+    _TA_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: TASTE_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: TASTE_SMS_POOLS,
+    },
+)
 
 _PROP_BANK = (
     {"id": "position", "text": "Proprioception senses body position without looking"},
@@ -586,7 +648,13 @@ _PR_STANDARD = {
     ),
 }
 eursc_science_proprioception_balance, eursc_science_proprioception_balance_variants = bind_eursc_topic(
-    'proprioception_balance', _PR_POOLS, _PR_STANDARD
+    'proprioception_balance',
+    _PR_POOLS,
+    _PR_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: PROPRIOCEPTION_BALANCE_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: PROPRIOCEPTION_BALANCE_SMS_POOLS,
+    },
 )
 
 _INT_BANK = (
@@ -665,7 +733,13 @@ _IN_STANDARD = {
     ),
 }
 eursc_science_interoception, eursc_science_interoception_variants = bind_eursc_topic(
-    'interoception', _IN_POOLS, _IN_STANDARD
+    'interoception',
+    _IN_POOLS,
+    _IN_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: INTEROCEPTION_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: INTEROCEPTION_SMS_POOLS,
+    },
 )
 
 _NH_BANK = (
@@ -745,5 +819,11 @@ _NH_STANDARD = {
     ),
 }
 eursc_science_nonhuman_senses, eursc_science_nonhuman_senses_variants = bind_eursc_topic(
-    'nonhuman_senses', _NH_POOLS, _NH_STANDARD
+    'nonhuman_senses',
+    _NH_POOLS,
+    _NH_STANDARD,
+    advanced_pools={
+        MULTI_STEP_MODE: NONHUMAN_SENSES_MS_POOLS,
+        SITUATIONAL_MULTI_STEP_MODE: NONHUMAN_SENSES_SMS_POOLS,
+    },
 )

@@ -89,6 +89,17 @@ S2_UNIT21_ENABLED = {
     "atoms_molecules": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
 }
 
+S2_UNIT23_ENABLED = {
+    "vision": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+    "hearing": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+    "touch": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+    "smell": (SITUATIONAL_MULTI_STEP_MODE,),
+    "taste": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+    "proprioception_balance": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+    "interoception": (SITUATIONAL_MULTI_STEP_MODE,),
+    "nonhuman_senses": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
+}
+
 S2_UNIT22_ENABLED = {
     "healthy_living": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
     "infectious_disease": (MULTI_STEP_MODE, SITUATIONAL_MULTI_STEP_MODE),
@@ -105,6 +116,7 @@ ENABLED_ADVANCED = {
     **S1_UNIT14_ENABLED,
     **S2_UNIT21_ENABLED,
     **S2_UNIT22_ENABLED,
+    **S2_UNIT23_ENABLED,
 }
 
 STANDARD_SNAPSHOT = {
@@ -442,7 +454,7 @@ def test_unavailable_cells_fail_closed():
 
     with app.test_client() as client:
         cases = (
-            ("vision", MULTI_STEP_MODE),
+            ("magnetism", MULTI_STEP_MODE),
             ("energy", MULTI_STEP_MODE),
             ("electric_current", SITUATIONAL_MULTI_STEP_MODE),
             ("smell", MULTI_STEP_MODE),
