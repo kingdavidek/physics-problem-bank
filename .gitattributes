@@ -16,3 +16,4 @@
 *.zip binary
 *.db binary
 *.pdf binary
+*.bat text eol=crlf
