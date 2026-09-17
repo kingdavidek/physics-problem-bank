@@ -178,8 +178,8 @@ def _solar_system_foundational_ms_planets_then_rotate_mcq():
     correct = "Earth spinning on its own axis"
     distractors = (
         "Earth orbiting the Sun once a year",
-        "the Moon becoming a second Sun",
-        "a celebrity vote on spin direction",
+        "the Moon orbiting Earth once a month",
+        "Earth's axis tilting over once a year",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -259,8 +259,8 @@ def _solar_system_foundational_ms_earth_letter_then_reflect_mcq():
     correct = "sunlight reflected from the Moon's surface"
     distractors = (
         "hydrogen burning inside the Moon like a star",
-        "a classroom vote that switches the Moon on",
-        "sound waves from the fictional observatory",
+        "light that the Moon makes on its own surface",
+        "light from Earth's cities reflected by the Moon",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -302,7 +302,7 @@ _SS_MS_I_TILT_PACKS = (
 def _solar_system_intermediate_ms_tilt_deg_then_day_mcq():
     pack = random.choice(_SS_MS_I_TILT_PACKS)
     correct = "about one day"
-    distractors = ("about one year", "about one light-year", "about eight minutes")
+    distractors = ("about one year", "about one month", "about one hour")
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
         f"<p>A fictional planetarium chart quotes Earth's axial tilt as "
@@ -380,9 +380,9 @@ def _solar_system_intermediate_ms_solar_scale_au_then_near_mcq():
     diagram = str(solar_scale(title="Fictional AU scale"))
     correct = "much smaller than 1 AU"
     distractors = (
-        "also exactly 1 AU from the Sun",
-        "larger than the distance to the nearest other star",
-        "equal to fourteen billion years",
+        "also about 1 AU, the same as Earth–Sun",
+        "about half of 1 AU",
+        "much larger than 1 AU",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -420,8 +420,8 @@ def _solar_system_difficult_ms_age_billion_then_helio_mcq():
     correct = "the Sun at the centre with planets orbiting it"
     distractors = (
         "Earth at the centre with the Sun orbiting it",
-        "the Moon at the centre of the universe",
-        "a fictional celebrity at the centre instead of evidence",
+        "Earth at the centre with the planets orbiting it",
+        "the Sun at the centre with the planets fixed in place",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -502,9 +502,9 @@ def _solar_system_difficult_ms_geo_evidence_chain_then_expand_mcq():
         "distant galaxies receding; the expanding-universe model can be checked"
     )
     distractors = (
-        "a classroom vote with no measurements",
-        "the Moon burning as a second Sun",
-        "seasons happening only in one fictional city",
+        "planets drifting farther from the Sun each year",
+        "the Moon looking larger on some nights than others",
+        "the Sun rising in a different place each season",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -553,9 +553,9 @@ def _solar_system_foundational_sms_dome_spin_then_revolve_mcq():
     pack = random.choice(_SS_SMS_F_DOME_PACKS)
     correct = "Earth orbiting the Sun, taking about a year"
     distractors = (
-        "Earth spinning once in a minute",
-        "the Sun orbiting a fictional city",
-        "a season caused by the Moon's colour",
+        "Earth spinning on its axis, taking about a day",
+        "the Moon orbiting Earth, taking about a month",
+        "the Sun orbiting Earth, taking about a year",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -594,9 +594,9 @@ def _solar_system_foundational_sms_observatory_eight_then_au_mcq():
         "distances in the Solar System, based on the Earth–Sun distance"
     )
     distractors = (
-        "the mass of a fictional classroom apple",
-        "the temperature of a star in °C only",
-        "the number of moons on Earth",
+        "distances between stars, based on how far light travels in a year",
+        "the sizes of planets, based on the diameter of Earth",
+        "the masses of planets, based on the mass of Earth",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -669,8 +669,8 @@ def _solar_system_intermediate_sms_july_far_then_tilt_mcq():
     correct = "the northern hemisphere is tilted toward the Sun then"
     distractors = (
         "distance to the Sun is the only cause of seasons",
-        "the Moon becomes a second Sun",
-        "the universe stops expanding in July",
+        "the Sun gives out more heat in July than in January",
+        "the days are the same length all year in the north",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -874,9 +874,9 @@ def _solar_system_difficult_sms_evidence_chain_then_helio_mcq():
         "new evidence (for example planetary motions) fitted a Sun-centred model better"
     )
     distractors = (
-        "it was newer so it had to stay",
-        "planets voted on the centre",
-        "the Moon asked for a new name",
+        "it was older, so a newer idea automatically replaced it",
+        "scientists took a vote and most preferred a Sun-centred model",
+        "telescopes showed the Sun is bigger, so it had to be at the centre",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -956,9 +956,9 @@ def _light_telescopes_foundational_ms_speed_c_then_ly_mcq():
     speed = 300000
     correct = "the distance light travels in one year"
     distractors = (
-        "a unit of time like a minute",
-        "the mass of the Sun",
-        "the tilt of Earth in degrees",
+        "the time light takes to cross the Solar System",
+        "the distance from Earth to the Sun",
+        "the time Earth takes to orbit the Sun once",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -1037,9 +1037,9 @@ def _light_telescopes_foundational_ms_incident_then_reflect_eq_mcq():
     diagram = str(reflection_rays(title="Fictional incident ray"))
     correct = "equals the angle of incidence"
     distractors = (
-        "is always 90° more than incidence",
-        "is zero if the room is quiet",
-        "depends on the planet count",
+        "is always twice the angle of incidence",
+        "is always smaller than the angle of incidence",
+        "is always 90°, whatever the incidence",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -1084,9 +1084,9 @@ def _light_telescopes_intermediate_ms_two_sec_light_then_phase_mcq():
         "how much of the sunlit half of the Moon we can see from Earth"
     )
     distractors = (
-        "the Moon turning into a planet",
-        "a solar eclipse every night",
-        "the speed of light in km/s",
+        "how much of the Moon is covered by Earth's shadow",
+        "how much of the Moon is lit up by light from Earth",
+        "how far the Moon is from Earth at different times of the month",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -1130,9 +1130,9 @@ def _light_telescopes_intermediate_ms_eclipse_order_then_refract_mcq():
         "a change of direction when light goes into a different medium"
     )
     distractors = (
-        "light bouncing with i = r always in glass",
-        "a lens creating extra photons from fame",
-        "the Moon absorbing the Sun",
+        "light bouncing off a surface with equal angles",
+        "light slowing to a stop when it enters glass or water",
+        "light splitting into colours whenever it hits a mirror",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -1200,9 +1200,9 @@ def _light_telescopes_difficult_ms_angle40_then_colour_mcq():
     angle = 40
     correct = "it reflects blue light and absorbs other colours"
     distractors = (
-        "it emits a new kind of darkness",
-        "the eye votes for blue",
-        "the Moon filters all red in space",
+        "it absorbs blue light and reflects other colours",
+        "it gives out its own blue light",
+        "it reflects all colours but blue is the strongest",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -1285,9 +1285,9 @@ def _light_telescopes_difficult_ms_mirror_line_chain_then_safety_mcq():
         "dangerous; never do it — follow the teacher's solar-viewing rules"
     )
     distractors = (
-        "a safe way to measure 300000 km/s",
-        "the only way to see Moon phases",
-        "required for a light-year definition",
+        "safe if you only look for a few seconds at a time",
+        "safe as long as the Sun is low in the sky",
+        "safe if you wear ordinary sunglasses while looking",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -1338,9 +1338,9 @@ def _light_telescopes_foundational_sms_demo_speed_then_shadow_mcq():
         "the book blocking light that travels in straight lines"
     )
     distractors = (
-        "the book voting for darkness",
-        "the Moon becoming a star",
-        "sound taking eight minutes",
+        "the book absorbing light and giving out darkness",
+        "light bending around the edges of the book",
+        "the book reflecting all the light back to the lamp",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -1419,7 +1419,7 @@ def _light_telescopes_foundational_sms_ray_order_then_incident_mcq():
         ("A lens creates extra light from nothing",),
     )
     correct = "A"
-    distractors = ("B", "C", "the dashed normal only")
+    distractors = ("B", "C", "the dashed normal line")
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
         diagram
@@ -1493,9 +1493,9 @@ def _light_telescopes_intermediate_sms_phase_eclipse_pick_then_refract_mcq():
         "the Moon passes between the Sun and Earth and the shadow hits Earth"
     )
     distractors = (
-        "the Moon is a second Sun",
-        "Earth's axis has no tilt",
-        "light travels in loops",
+        "Earth passes between the Sun and the Moon and its shadow hits the Moon",
+        "the Sun passes between Earth and the Moon and blocks the Moon",
+        "thick clouds block the Sun completely for a few minutes",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -1531,7 +1531,7 @@ def _light_telescopes_intermediate_sms_phase_eclipse_pick_then_refract_mcq():
 def _light_telescopes_intermediate_sms_refract_demo_then_reflected_mcq():
     diagram = str(reflection_rays(title="Fictional reflected demo"))
     correct = "B"
-    distractors = ("A", "C", "the Sun")
+    distractors = ("A", "C", "the dashed normal line")
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
         diagram
@@ -1568,9 +1568,9 @@ def _light_telescopes_difficult_sms_green_filter_chain_then_lens_mcq():
         "gather light and change its direction so an image can be formed"
     )
     distractors = (
-        "create mass for a planet",
-        "replace the need for a classroom investigation",
-        "make a light-year into a minute",
+        "make the light brighter by adding extra light",
+        "make distant objects give out more light",
+        "slow the light down so the eye can catch it",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -1733,9 +1733,9 @@ def _life_earth_elsewhere_intermediate_ms_luca_then_proxima_mcq():
         "a model of a last universal common ancestor based on shared chemistry"
     )
     distractors = (
-        "a planet between Earth and Mars",
-        "proof that aliens visited last week",
-        "a unit of distance like a light-year only",
+        "a fossil of the very first animal to live on land",
+        "a single named organism whose body has been found",
+        "a bacterium alive today that is the oldest living thing",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -1816,9 +1816,9 @@ def _life_earth_elsewhere_intermediate_ms_air_habitat_then_needs_count():
         "supply breathable air by engineering, not by hoping"
     )
     distractors = (
-        "rely on rumours for oxygen",
-        "ignore energy needs",
-        "be a 5-minute walk from Earth",
+        "make its own air from the rocks with no equipment",
+        "let plants outside the habitat make all its air",
+        "get air from space, because space is full of thin air",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -1897,9 +1897,9 @@ def _life_earth_elsewhere_difficult_ms_travel_order_then_rocket_mcq():
         "would take far longer than a few years with current rockets"
     )
     distractors = (
-        "takes an afternoon on foot",
-        "is the same as 1 AU",
-        "proves microbes exist",
+        "would take exactly a few years with current rockets",
+        "would take only a few months with current rockets",
+        "could be done in a few weeks with a bigger fuel tank",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -1940,9 +1940,9 @@ def _life_earth_elsewhere_difficult_ms_open_evidence_pick_then_ufo_mcq():
         "is not, by itself, evidence of extraterrestrial life"
     )
     distractors = (
-        "proves life on Mars",
-        "is a light-year",
-        "is LUCA",
+        "proves that spacecraft from another planet visit Earth",
+        "is strong evidence of life once experts have seen it",
+        "counts as evidence if no one can explain the light",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -1989,9 +1989,9 @@ def _life_earth_elsewhere_foundational_sms_needs_three_then_water_mcq():
     needs = 3
     correct = "many Earth life processes happen in water"
     distractors = (
-        "it is a unit of time",
-        "it proves UFOs",
-        "it is the same as a light-year",
+        "all living things are made only of water",
+        "it is the only substance that contains energy",
+        "it is the only substance that can dissolve oxygen",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -2102,9 +2102,9 @@ def _life_earth_elsewhere_intermediate_sms_luca_poster_then_ufo_reject_mcq():
         "is not, by itself, evidence of extraterrestrial life"
     )
     distractors = (
-        "proves life on Mars",
-        "is a light-year",
-        "is LUCA",
+        "proves that spacecraft from another planet visit Earth",
+        "is strong evidence of life once experts have seen it",
+        "counts as evidence if no one can explain the light",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -2258,9 +2258,9 @@ def _life_earth_elsewhere_difficult_sms_rocket_slow_chain_then_open_mcq():
         "search with testable methods; do not treat rumours as results"
     )
     distractors = (
-        "it is already proved by any bright star",
-        "it is rude to ask for evidence",
-        "telescopes must be pointed at the Sun to find it",
+        "it is already proved by the number of planets around other stars",
+        "it has been ruled out because no alien has ever visited Earth",
+        "assume it exists until someone proves that it does not",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -2377,9 +2377,9 @@ def _atoms_molecules_foundational_ms_water_atoms_then_element_mcq():
     atoms = 3
     correct = "a substance made of only one type of atom"
     distractors = (
-        "any mixture of different atoms",
-        "a molecule of water only",
-        "a unit of time",
+        "any substance made of two types of atom",
+        "any substance that is a pure solid",
+        "any substance that is found naturally on Earth",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -2485,7 +2485,7 @@ def _atoms_molecules_intermediate_ms_h_in_water_then_mol_box_mcq():
     diagram = str(atom_molecule_boxes(title="Fictional molecule box"))
     hydrogen = 2
     correct = "B"
-    distractors = ("A", "C", "the empty page")
+    distractors = ("A", "C", "none of the boxes")
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
         diagram
@@ -2521,9 +2521,9 @@ def _atoms_molecules_intermediate_ms_word_eq_then_conservation_mcq():
     reactants = 2
     correct = "are rearranged; the counts should match"
     distractors = (
-        "appear from nowhere as a new element",
-        "leave the universe",
-        "become light-years",
+        "are used up, so fewer are left at the end",
+        "are created, so more are there at the end",
+        "are destroyed and replaced by energy",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -2634,9 +2634,9 @@ def _atoms_molecules_difficult_ms_mix_box_then_not_element_mcq():
         "an element needs one type of atom, not a jumble"
     )
     distractors = (
-        "elements cannot be drawn",
-        "molecules are forbidden",
-        "symbols must be sentences",
+        "an element needs its atoms joined up in pairs",
+        "an element must be a solid, not loose particles",
+        "an element needs at least two types of atom",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -2797,9 +2797,9 @@ def _atoms_molecules_foundational_sms_particles_order_then_h2o_mcq():
     )
     correct = "hydrogen and oxygen atoms joined"
     distractors = (
-        "one atom of iron",
-        "a mixture of eight planets",
-        "empty space with no particles",
+        "one single atom of water",
+        "hydrogen and oxygen atoms mixed but not joined",
+        "carbon and oxygen atoms joined",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -2867,9 +2867,9 @@ def _atoms_molecules_intermediate_sms_mix_jumble_then_word_eq_mcq():
     diagram = str(atom_molecule_boxes(title="Fictional mixed particles"))
     correct = "hydrogen + oxygen → water"
     distractors = (
-        "water → hydrogen + oxygen only as a creation spell",
-        "Sun + Moon → water",
-        "rotation + season → water",
+        "water → hydrogen + oxygen",
+        "hydrogen + water → oxygen",
+        "oxygen → hydrogen + water",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
@@ -2941,9 +2941,9 @@ def _atoms_molecules_difficult_sms_burn_h2o_chain_then_o_count():
         "rearranging hydrogen and oxygen atoms into water molecules"
     )
     distractors = (
-        "destroying hydrogen atoms forever",
-        "creating iron atoms from light",
-        "a season on Earth",
+        "destroying hydrogen atoms and creating new water atoms",
+        "turning hydrogen atoms into oxygen atoms by heating",
+        "mixing hydrogen and oxygen without joining the atoms",
     )
     options, letter = _u21_mcq_field(correct, distractors)
     question = (

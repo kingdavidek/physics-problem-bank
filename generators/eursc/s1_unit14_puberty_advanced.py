@@ -124,9 +124,9 @@ def _puberty_maturity_intermediate_ms_chart_not_started_then_hormone_mcq():
     not_started = pack["total"] - pack["started"]
     correct = "chemical messengers in the blood that help trigger puberty changes"
     distractors = (
-        "rumours shared on social media",
-        "bones that replace muscles",
-        "a sports ranking system",
+        "nerve signals sent along the spinal cord to trigger growth",
+        "nutrients from food that the body stores until puberty",
+        "types of blood cell that fight infection during puberty",
     )
     options, letter = _u14_mcq_field(correct, distractors)
     question = (
@@ -216,9 +216,9 @@ def _puberty_maturity_intermediate_ms_classmate_age_then_timing_mcq():
         "timing varies; neither fictional classmate should be mocked for looking different"
     )
     distractors = (
-        "the younger classmate has failed science",
-        "the class should vote on who looks older",
-        "hormones are only rumours",
+        "the older classmate must always be further through puberty",
+        "the younger classmate has a problem that needs fixing",
+        f"a {diff}-year age gap means their changes happen exactly {diff} years apart",
     )
     options, letter = _u14_mcq_field(correct, distractors)
     question = (
@@ -308,9 +308,9 @@ def _puberty_maturity_difficult_ms_late_start_age_then_range_mcq():
         "may still be within a normal range; worry belongs with a health professional"
     )
     distractors = (
-        "has failed science permanently",
-        "must publish a timeline to the class",
-        "has no hormones at all",
+        "must have too few hormones to ever catch up with them",
+        "will always end up shorter than those fictional classmates",
+        "should be given hormone tablets by the teacher to catch up",
     )
     options, letter = _u14_mcq_field(correct, distractors)
     question = (
@@ -356,9 +356,9 @@ def _puberty_maturity_difficult_ms_alex_signpost_order_then_mcq():
         "talk to a trusted teacher or health professional; the quiz will not store private stories"
     )
     distractors = (
-        "post the worry on a public leaderboard",
-        "rank Alex against the class",
-        "ignore all adults",
+        "type the worry into the quiz so it can give a diagnosis",
+        "ask classmates to compare their own timing with Alex's",
+        "rely only on social media for the answer to the worry",
     )
     options, letter = _u14_mcq_field(correct, distractors)
     question = (
@@ -443,9 +443,9 @@ def _puberty_maturity_foundational_sms_chart_not_started_then_hormone_pick():
 def _puberty_maturity_foundational_sms_physical_mcq_then_emotional_order():
     correct = "growth and new body hair for many young people"
     distractors = (
-        "the skeleton turning into helium",
-        "mass becoming zero",
-        "air becoming a hormone",
+        "growing shorter as the bones become denser",
+        "the skin becoming thinner and losing all its hair",
+        "the heart shrinking to fit an adult chest",
     )
     options, letter = _u14_mcq_field(correct, distractors)
     order_raw, order_bank = _u14_order_field(
@@ -487,7 +487,11 @@ def _puberty_maturity_foundational_sms_physical_mcq_then_emotional_order():
 @_u14_variant("puberty_maturity", "sms", "foundational", "hormone_mcq_then_change_pick")
 def _puberty_maturity_foundational_sms_hormone_mcq_then_change_pick():
     correct = "chemical messengers that help trigger puberty changes"
-    distractors = ("rumours", "bones", "banned sports drinks only")
+    distractors = (
+        "nerve signals sent along the spinal cord",
+        "nutrients that the body gets only from food",
+        "types of blood cell that fight infection",
+    )
     options, letter = _u14_mcq_field(correct, distractors)
     pick_raw, pick_bank, pick_count = _u14_pick_field(
         *_bank_pick(("physical", "emotional"), _CHANGE_BANK),
@@ -527,9 +531,9 @@ def _puberty_maturity_foundational_sms_hormone_mcq_then_change_pick():
 def _puberty_maturity_intermediate_sms_sam_lee_voice_then_variation_mcq():
     correct = "timing varies; neither person should be mocked"
     distractors = (
-        "Lee has failed",
-        "the class should vote",
-        "hormones are rumours",
+        "Lee has a problem that needs fixing",
+        "Sam is further ahead, so Sam is healthier",
+        "Lee's voice will never change now",
     )
     options, letter = _u14_mcq_field(correct, distractors)
     pick_raw, pick_bank, pick_count = _u14_pick_field(
@@ -570,7 +574,7 @@ def _puberty_maturity_intermediate_sms_sam_lee_voice_then_variation_mcq():
 @_u14_variant("puberty_maturity", "sms", "intermediate", "blood_hormone_mcq_then_messenger_order")
 def _puberty_maturity_intermediate_sms_blood_hormone_mcq_then_messenger_order():
     correct = "the blood"
-    distractors = ("the skeleton only", "a distance–time graph", "a friction pad")
+    distractors = ("the nerves", "the air sacs", "the bones")
     options, letter = _u14_mcq_field(correct, distractors)
     order_raw, order_bank = _u14_order_field(
         (
@@ -650,9 +654,9 @@ def _puberty_maturity_intermediate_sms_five_year_span_then_reject_pick():
 def _puberty_maturity_difficult_sms_media_body_mcq_then_reject_pick():
     correct = "are not a measurement of healthy puberty"
     distractors = (
-        "are controlled scientific samples",
-        "replace hormones",
-        "are SI units",
+        "show the average stage for that age group",
+        "are chosen by doctors as a healthy target",
+        "prove that early puberty is the healthy kind",
     )
     options, letter = _u14_mcq_field(correct, distractors)
     pick_raw, pick_bank, pick_count = _u14_pick_field(
@@ -697,9 +701,9 @@ def _puberty_maturity_difficult_sms_gamete_ready_mcq_then_age_diff():
         "sexual maturity, which arrives at different ages in the fictional textbook"
     )
     distractors = (
-        "a distance–time graph",
-        "friction",
-        "buoyancy",
+        "the growth spurt, which happens at one fixed age in the fictional textbook",
+        "childhood, since the fictional textbook says gametes are made from birth",
+        "adulthood only, starting exactly at age eighteen in the fictional textbook",
     )
     options, letter = _u14_mcq_field(correct, distractors)
     question = (
@@ -752,9 +756,9 @@ def _puberty_maturity_difficult_sms_alex_worry_chain_then_signpost_mcq():
         "talk to a trusted adult or health professional; the quiz will not store that story"
     )
     distractors = (
-        "post it for the class",
-        "rank Alex",
-        "ignore all adults",
+        "type it into the quiz so it can give a diagnosis",
+        "ask classmates to compare their own changes with Alex's",
+        "rely only on social media for the answer",
     )
     options, letter = _u14_mcq_field(correct, distractors)
     question = (
@@ -797,7 +801,7 @@ def _puberty_maturity_difficult_sms_alex_worry_chain_then_signpost_mcq():
 def _reproductive_anatomy_intermediate_ms_uterus_fig_then_gamete_mcq():
     diagram = str(organ_labels(title="Fictional organ schematic"))
     correct = "egg (ovum)"
-    distractors = ("sperm", "femur", "newton")
+    distractors = ("sperm", "ovary", "uterus")
     options, letter = _u14_mcq_field(correct, distractors)
     question = (
         diagram
@@ -843,9 +847,9 @@ def _reproductive_anatomy_intermediate_ms_cycle_order_then_period_mcq():
         "the uterus lining is shed after an egg was not fertilised"
     )
     distractors = (
-        "the person failed a test",
-        "sperm become eggs",
-        "the heart stops",
+        "an egg is released from the ovary",
+        "the uterus lining thickens ready for an egg",
+        "a fertilised egg implants in the uterus lining",
     )
     options, letter = _u14_mcq_field(correct, distractors)
     question = (
@@ -918,7 +922,7 @@ def _reproductive_anatomy_intermediate_ms_gamete_pick_then_count():
 def _reproductive_anatomy_difficult_ms_testis_fig_then_sperm_mcq():
     diagram = str(organ_labels(title="Fictional C testis"))
     correct = "testes"
-    distractors = ("ovaries", "alveoli", "knees")
+    distractors = ("ovaries", "penis", "bladder")
     options, letter = _u14_mcq_field(correct, distractors)
     question = (
         diagram
@@ -955,7 +959,7 @@ def _reproductive_anatomy_difficult_ms_fertilisation_order_then_implant_mcq():
         ("The femur is a gamete-making organ",),
     )
     correct = "the uterus lining"
-    distractors = ("the femur", "an alveolus", "a tendon")
+    distractors = ("the ovary", "the vagina", "the bladder wall")
     options, letter = _u14_mcq_field(correct, distractors)
     question = (
         "<p>A fictional fertilisation timeline uses third-person organ roles only.</p>"
@@ -1037,9 +1041,9 @@ def _pregnancy_sexual_health_intermediate_ms_consent_two_then_no_mcq():
     agree_count = 2
     correct = "not consent"
     distractors = (
-        "fine if Jordan is popular",
-        "a hormone",
-        "a buoyancy effect",
+        "fine if dating",
+        "still consent",
+        "a grey area",
     )
     options, letter = _u14_mcq_field(correct, distractors)
     question = (
@@ -1086,9 +1090,9 @@ def _pregnancy_sexual_health_intermediate_ms_preg_order_then_fetus_mcq():
         "the developing offspring in the uterus after the early embryo stage"
     )
     distractors = (
-        "a type of joint",
-        "exhaled carbon dioxide",
-        "a sports slogan",
+        "the egg cell before it has been fertilised",
+        "the lining of the uterus that is shed each cycle",
+        "the organ that passes food and oxygen to the baby",
     )
     options, letter = _u14_mcq_field(correct, distractors)
     question = (
@@ -1162,9 +1166,9 @@ def _pregnancy_sexual_health_difficult_ms_withdraw_count_then_comm_mcq():
         "listening and respecting a no, in third-person scenarios"
     )
     distractors = (
-        "ignoring a withdrawn yes",
-        "forcing a public confession in class",
-        "collecting partner names in this app",
+        "ignoring a withdrawn yes because it was given once",
+        "assuming that silence means the other person agrees",
+        "expecting a yes from anyone who is in a relationship",
     )
     options, letter = _u14_mcq_field(correct, distractors)
     question = (
@@ -1208,9 +1212,9 @@ def _pregnancy_sexual_health_difficult_ms_sti_order_then_asymptomatic_mcq():
         "qualified testing matters; the lesson does not ask who has been tested"
     )
     distractors = (
-        "testing is never useful",
-        "air is an STI",
-        "joints cause pregnancy",
+        "no symptoms means there is no infection to pass on",
+        "testing is only needed once symptoms have appeared",
+        "a person can always tell from how they feel whether they are infected",
     )
     options, letter = _u14_mcq_field(correct, distractors)
     question = (
@@ -1256,9 +1260,9 @@ def _pregnancy_sexual_health_difficult_ms_pregnancy_help_order_then_signpost_mcq
         "a trusted adult or health professional; do not harvest private stories here"
     )
     distractors = (
-        "diagnose and treat in the quiz",
-        "a sports ranking",
-        "post online for fame",
+        "what happens after waiting a few months",
+        "a home test and advice from friends only",
+        "other opinions by posting the situation online",
     )
     options, letter = _u14_mcq_field(correct, distractors)
     question = (
@@ -1299,9 +1303,9 @@ def _pregnancy_sexual_health_foundational_sms_two_agree_then_consent_mcq():
     agree_count = 2
     correct = "a clear, voluntary agreement that can be withdrawn"
     distractors = (
-        "silence after someone looks famous",
-        "the other person already started so it is too late",
-        "a teacher collecting relationship lists",
+        "saying nothing, which counts as agreeing",
+        "a yes that cannot be taken back once it is given",
+        "agreement that is assumed when two people are dating",
     )
     options, letter = _u14_mcq_field(correct, distractors)
     question = (
@@ -1417,9 +1421,9 @@ def _pregnancy_sexual_health_intermediate_sms_condom_mcq_then_two_agree():
         "a barrier method that can reduce pregnancy chance and some STI risk"
     )
     distractors = (
-        "a way to rank classmates",
-        "proof that consent is optional",
-        "an SI unit",
+        "a hormone method that stops eggs being released",
+        "a method that guarantees no pregnancy and no STI ever",
+        "a method that protects against STIs but not pregnancy",
     )
     options, letter = _u14_mcq_field(correct, distractors)
     agree_count = 2
@@ -1501,9 +1505,9 @@ def _pregnancy_sexual_health_intermediate_sms_birth_mcq_then_consent_pick():
         "the baby leaving the uterus, often through the vagina"
     )
     distractors = (
-        "the fetus remaining in the ovary forever",
-        "a pulse measurement",
-        "unrelated to pregnancy",
+        "the moment when the egg and the sperm join",
+        "the fetus moving from the ovary into the uterus",
+        "the egg being released from the ovary",
     )
     options, letter = _u14_mcq_field(correct, distractors)
     pick_raw, pick_bank, pick_count = _u14_pick_field(
@@ -1547,9 +1551,9 @@ def _pregnancy_sexual_health_difficult_sms_limit_fail_mcq_then_three_pick():
         "belong with qualified advice"
     )
     distractors = (
-        "science never mentions it",
-        "STIs cannot exist",
-        "consent is optional",
+        "no method is worth using, since none of them ever work",
+        "using two methods at once makes pregnancy completely impossible",
+        "only hormone methods can fail; barrier methods never do",
     )
     options, letter = _u14_mcq_field(correct, distractors)
     pick_raw, pick_bank, pick_count = _u14_pick_field(
@@ -1592,9 +1596,9 @@ def _pregnancy_sexual_health_difficult_sms_sti_symptoms_mcq_then_testing_order()
         "few symptoms does not mean there is no infection; qualified testing still matters"
     )
     distractors = (
-        "testing is never useful",
-        "air is an STI",
-        "joints cause pregnancy",
+        "few symptoms means there is no infection; testing is only for symptoms",
+        "few symptoms means the infection cannot be passed on to anyone",
+        "few symptoms means a home check is enough; qualified testing is optional",
     )
     options, letter = _u14_mcq_field(correct, distractors)
     order_raw, order_bank = _u14_order_field(

@@ -98,9 +98,9 @@ def _healthy_living_intermediate_ms_activity_pct_then_evidence_mcq():
     pct = _pct(pack["meets"], pack["pupils"])
     correct = "an aggregate count for a fictional school, not a file on any pupil"
     distractors = (
-        "a ranking of the pupils who moved least",
-        "proof that one named pupil is unhealthy",
-        "a reason to collect each pupil's step count",
+        "a ranking of the pupils at that school who moved least",
+        "proof that one named pupil at the school is unhealthy",
+        "a reason to collect each pupil's own daily step count",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -242,9 +242,9 @@ def _healthy_living_difficult_ms_claim_sample_then_flaws_pick_then_verdict():
     )
     correct = "treat the claim as unproven and look for independent evidence"
     distractors = (
-        "accept the claim because the sample were all happy",
-        "ask classmates which of them tried it",
-        "store the advert as a medical record",
+        "accept the claim because everyone in the sample was happy",
+        "accept the claim because the company tested it themselves",
+        "ask classmates which of them have tried the product",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -292,16 +292,16 @@ def _healthy_living_difficult_ms_sleep_share_then_signpost_mcq_then_word():
     pct = _pct(pack["under"], pack["pupils"])
     correct = "signpost a trusted adult or qualified help; the app does not diagnose"
     distractors = (
-        "publish which pupils sleep least",
-        "ask each pupil to log bedtimes in the quiz",
-        "treat tiredness as always a virus",
+        "let the app diagnose the cause from the survey percentage",
+        "ask each pupil to log bedtimes in the quiz so they can be compared",
+        "assume the tiredness must be an infection and wait for it to pass",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
         f"<p>A fictional public-health leaflet says that in an anonymous survey of "
         f"{pack['pupils']} teenagers, {pack['under']} reported getting less rest than "
-        "the teaching guideline.</p>"
-        "<p>(i) Calculate the percentage below the guideline (whole number).</p>"
+        "the recommended amount.</p>"
+        "<p>(i) Calculate the percentage below the recommended amount (whole number).</p>"
         "<p>(ii) Using the share from (i), if a fictional character in the leaflet "
         "is persistently exhausted, the right next step is to</p>"
         "<p>(iii) Write the one-word health need the leaflet is about.</p>"
@@ -395,9 +395,9 @@ def _healthy_living_foundational_sms_canteen_groups_then_balance_mcq():
     pack = random.choice(_HL_SMS_F_CANTEEN_PACKS)
     correct = "a mix of food groups across the week, not one magic food"
     distractors = (
-        "the same single dish every day",
-        "a ranking of diners by lunch",
-        "a private meal list stored by the app",
+        "the same single dish served on every day of the plan",
+        "only fruit and vegetables, with no fats or sugars at all",
+        "equal amounts of every food group at every single meal",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -576,9 +576,9 @@ def _healthy_living_intermediate_sms_case_screens_then_mechanism_mcq_then_word()
     pack = random.choice(_HL_SMS_I_CASE_PACKS)
     correct = "late screens trade off against sleep time; recovery suffers"
     distractors = (
-        "screens create energy so more is always better",
-        f"{pack['who']} must upload a screen log to the quiz",
-        "tiredness proves an infection",
+        "screens give off energy, so more hours should mean less tiredness",
+        f"{pack['who']} must upload a screen log to the quiz for checking",
+        "tiredness after late screens proves that an infection was caught",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -681,9 +681,9 @@ def _healthy_living_difficult_sms_campaign_change_then_caution_pick_then_verdict
     )
     correct = "the campaign may have helped, but the evidence is not conclusive"
     distractors = (
-        "the campaign is proven beyond doubt",
-        "the campaign harmed activity",
-        "individual respondents should be ranked",
+        "the campaign is proven beyond doubt by the rise in the figure",
+        "the campaign must have harmed activity, whatever the figure shows",
+        "the rise proves that every single person changed their habits",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -786,9 +786,9 @@ def _healthy_living_difficult_sms_app_claim_pick_then_evidence_mcq():
     )
     correct = "an independent study with a comparison group"
     distractors = (
-        "the app company's own advert",
-        "a class ranking of who slept most",
-        "one fictional influencer's post",
+        "the app company's own advert for the product",
+        "a survey of the app's own users with no comparison",
+        "one fictional influencer's post about the app",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -912,9 +912,9 @@ def _infectious_disease_foundational_ms_chain_letter_then_break_mcq():
     diagram = str(infection_chain(title="Fictional chain sketch"))
     correct = "breaking the route, for example by hand hygiene"
     distractors = (
-        "naming the classmate who coughed",
-        "giving antibiotics for every virus",
-        "waiting for the Moon to change phase",
+        "naming the classmate who coughed first",
+        "giving antibiotics for every virus infection",
+        "waiting for the pathogen to die out on its own",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -1003,9 +1003,9 @@ def _infectious_disease_intermediate_ms_coverage_pct_then_vaccine_mcq():
     pct = _pct(pack["vaccinated"], pack["group"])
     correct = "a safe exposure that trains immunity, so fewer hosts are available"
     distractors = (
-        "an antibiotic that kills every virus",
-        "a record of which named pupils were injected",
-        "a snack vote that makes pathogens leave",
+        "an antibiotic that kills every virus, so no host stays infected",
+        "a cure given after the infection has already been caught",
+        "a record of which named pupils were injected, kept by the quiz",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -1154,9 +1154,9 @@ def _infectious_disease_difficult_ms_total_cases_then_host_source_mcq_then_word(
     d1, d2, d3 = pack["days"]
     correct = "each new host can become a further source, so the chain keeps growing"
     distractors = (
-        "the total proves a named pupil started it",
-        "viruses change into bacteria on day 3",
-        "the model needs each pupil's medical file",
+        "the total proves that a single named pupil started the outbreak",
+        "the pathogen gets stronger each day, so it spreads faster on its own",
+        "the same first source infects every new case directly, with no chain",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -1345,9 +1345,9 @@ def _noninfectious_disease_intermediate_ms_table_split_then_class_mcq():
     non = pack["total"] - pack["infectious"]
     correct = "conditions that do not pass from host to host along a route"
     distractors = (
-        "illnesses that are always caught from a classmate",
-        "conditions the quiz should collect from family histories",
-        "diseases that are always caused by a virus",
+        "illnesses that pass between people, but more slowly than a cold",
+        "conditions that are always inherited through genetic information",
+        "diseases that are always caused by a virus hidden in the body",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -1475,9 +1475,9 @@ def _noninfectious_disease_difficult_ms_rate_then_exposure_mcq_then_word():
     rate = pack["rate"]
     correct = "study the exposure with public evidence and workplace controls"
     distractors = (
-        "survey pupils about relatives' jobs",
-        "treat the workers as sources of infection",
-        "ignore it because it is not a virus",
+        "survey pupils about the jobs of their own relatives",
+        "treat the workers as sources of infection for others",
+        "ignore the rate because no pathogen is involved",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -1624,9 +1624,9 @@ def _noninfectious_disease_foundational_sms_clinic_log_then_split_mcq():
     non = pack["seen"] - pack["catching"]
     correct = "they do not pass from host to host, so no chain of infection applies"
     distractors = (
-        "they must be listed by name in the quiz",
-        "they are always caused by a virus",
-        "they are always the person's fault",
+        "they pass between people, but too slowly for a chain to be drawn",
+        "they are always caused by a virus that has not yet been found",
+        "they are always the person's own fault, so no cause needs studying",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -1763,9 +1763,9 @@ def _noninfectious_disease_intermediate_sms_air_zones_then_link_mcq_then_word():
     diff = pack["high"] - pack["low"]
     correct = "the exposure is linked to disease in public evidence, so controls are worth studying"
     distractors = (
-        "everyone in the high zone must be interviewed about relatives",
-        "the difference proves a virus is spreading",
-        "the high zone's residents are to blame",
+        "everyone in the high zone must be interviewed about their relatives",
+        "the difference proves a virus is spreading through the polluted air",
+        "the high zone's residents are to blame, so no controls are needed",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -1873,9 +1873,9 @@ def _noninfectious_disease_intermediate_sms_fortify_drop_then_type_mcq():
     drop = pack["before"] - pack["after"]
     correct = "a deficiency disease, because supplying the nutrient reduced cases"
     distractors = (
-        "an infectious disease, because cases fell",
-        "an inherited condition, because it was in one region",
-        "a mystery that needs each family's diet log",
+        "an infectious disease, because the number of cases fell",
+        "an inherited condition, because it was found in one region",
+        "an infection, because the nutrient worked like an antibiotic",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -1984,9 +1984,9 @@ def _noninfectious_disease_difficult_sms_registry_pct_then_inherited_mcq_then_wo
     pct = _pct(pack["affected"], pack["families"])
     correct = "an inherited pattern, taught with public examples, not a family survey"
     distractors = (
-        "an infection passed between relatives",
-        "a reason to ask pupils about their own families",
-        "a deficiency caused by one region's diet",
+        "an infection passed between relatives who live in the same home",
+        "a deficiency caused by the shared diet of each of those families",
+        "a reason to ask pupils about conditions in their own families",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -2124,9 +2124,9 @@ def _dependence_addiction_intermediate_ms_casebook_split_then_definition_mcq():
     behav = pack["cases"] - pack["substance"]
     correct = "finding it very hard to stop even when harm is clear"
     distractors = (
-        "enjoying something once",
-        "a list of what each pupil uses",
-        "a popularity score for the class",
+        "enjoying something a great deal on one occasion",
+        "using something only when friends are using it too",
+        "choosing to carry on simply because it is enjoyable",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -2254,9 +2254,9 @@ def _dependence_addiction_difficult_ms_referral_pct_then_route_mcq_then_word():
     pct = _pct(pack["referred"], pack["contacts"])
     correct = "a trusted adult or qualified service; this app does not treat dependence"
     distractors = (
-        "a class quiz that records what the character uses",
-        "a public leaderboard of who stopped fastest",
-        "ignoring the harm because the character enjoys it",
+        "a class quiz that records what the character uses and stores it",
+        "the character's own willpower alone, since outside help never works",
+        "ignoring the harm because the character still enjoys the habit",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -2354,9 +2354,9 @@ def _dependence_addiction_difficult_ms_factors_count_then_social_mcq_then_word()
     pack = random.choice(_DA_MS_D_FACTOR_PACKS)
     correct = "risk factors that raise the chance of dependence, taught without asking who felt them"
     distractors = (
-        "proof that any one person will become dependent",
-        "questions the quiz should put to each pupil",
-        "reasons to rank classmates by risk",
+        "proof that any one person exposed to them will certainly become dependent",
+        "questions the quiz should put to each pupil to find out who is at risk",
+        "causes that act alone, so a person with none of them can never be dependent",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     factors = pack["factors"]
@@ -2405,9 +2405,9 @@ def _dependence_addiction_foundational_sms_story_hours_then_kind_mcq():
     pack = random.choice(_DA_SMS_F_STORY_PACKS)
     correct = "behavioural dependence, because it is a repeated action, not a chemical"
     distractors = (
-        "substance dependence, because games are a drug",
-        "ordinary pleasure with no harm",
-        f"a reason to ask {pack['who']}'s classmates about their own gaming",
+        "substance dependence, because games work on the brain like a drug",
+        "ordinary pleasure with no harm, because gaming is only a hobby",
+        f"a reason to ask {pack['who']}'s classmates about their own gaming hours",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -2546,9 +2546,9 @@ def _dependence_addiction_intermediate_sms_survey_pct_then_reading_mcq_then_word
     pct = _pct(pack["reported"], pack["asked"])
     correct = "an anonymous aggregate for planning services, not a file on any person"
     distractors = (
-        "a list of who should be shamed",
-        "proof that every respondent is dependent",
-        "a reason to survey the class about their own use",
+        "proof that every adult who was asked is dependent on gambling",
+        "a list of the named adults who should be contacted and shamed",
+        "a reason to survey the class about their own gambling or gaming",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -2656,9 +2656,9 @@ def _dependence_addiction_intermediate_sms_shops_change_then_risk_mcq():
     change = pack["after"] - pack["before"]
     correct = "availability is a risk factor that can raise uptake in an area"
     distractors = (
-        "the shops prove which residents are dependent",
-        "the count is a reason to survey pupils about visits",
-        "availability has no link to dependence",
+        "the number of shops proves which residents are already dependent",
+        "availability has no link to dependence, so the count is irrelevant",
+        "the count is a reason to survey pupils about their own visits",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -2714,9 +2714,9 @@ def _dependence_addiction_difficult_sms_trial_pct_then_caution_pick_then_verdict
     )
     correct = "the programme is associated with fewer cases, but the evidence is not conclusive"
     distractors = (
-        "the programme is proven to work for every individual",
-        "the programme caused dependence",
-        "the groups should be ranked by who was weakest",
+        "the programme is proven to work for every individual who takes part",
+        "the programme caused dependence, since some participants still had it",
+        "the difference proves the programme alone explains every case avoided",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -2829,9 +2829,9 @@ def _dependence_addiction_difficult_sms_clinic_pick_then_signpost_mcq():
     )
     correct = "signpost the service and let qualified staff decide; the app does not diagnose"
     distractors = (
-        "type the character's use history into the quiz",
-        "compare the character with classmates",
-        "tell the character enjoyment means no harm",
+        "type the character's use history into the quiz so it can be checked",
+        "let the app decide the diagnosis before any service is contacted",
+        "tell the character that enjoying the habit means it cannot be harmful",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -2915,9 +2915,9 @@ def _tobacco_intermediate_ms_start_young_pct_then_risk_mcq():
     pct = _pct(pack["young"], pack["asked"])
     correct = "starting young raises addiction risk, so prevention targets uptake"
     distractors = (
-        "the quiz should record each pupil's age of first use",
-        "nicotine is a vitamin for young people",
-        "the figure ranks which pupils are most at risk",
+        "young people cannot become addicted, so prevention can wait until adulthood",
+        "the quiz should record each pupil's age of first use to check the figure",
+        "starting young is safer, because the body has longer to get used to nicotine",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -3046,9 +3046,9 @@ def _tobacco_difficult_ms_mortality_ratio_then_reading_mcq_then_word():
     ratio = pack["smokers"] // pack["non"]
     correct = "public evidence links tobacco use to disease and earlier death"
     distractors = (
-        "each named smoker will certainly die early",
-        "the table is a reason to ask who smokes at home",
-        "the ratio proves adverts are accurate",
+        "each named smoker in the table will certainly die early",
+        "the table is a reason to ask which pupils have a smoker at home",
+        "the ratio shows non-smokers never get the lung disease at all",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -3148,9 +3148,9 @@ def _tobacco_difficult_ms_policy_count_then_aim_mcq_then_word():
     p = pack["policies"]
     correct = "reduce uptake and exposure across a population without questioning individuals"
     distractors = (
-        "identify which pupils smoke",
-        "prove vaping is harmless",
-        "replace evidence with a slogan",
+        "identify which pupils in each school smoke, so they can be questioned",
+        "treat people who already smoke rather than stop others from starting",
+        "ban nicotine outright, since prevention only works with a total ban",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -3200,8 +3200,8 @@ def _tobacco_foundational_sms_advert_claims_then_source_mcq():
     correct = "marketing, not independent scientific evidence"
     distractors = (
         "the same as a peer-reviewed study",
-        "a reason to ask who has tried the product",
-        "a health warning from a doctor",
+        "reliable, because adverts are checked by law",
+        "a health warning written by doctors",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -3338,9 +3338,9 @@ def _tobacco_intermediate_sms_trend_drop_then_policy_mcq_then_word():
     drop = pack["y1"] - pack["y2"]
     correct = "prevention policies such as price rises, advertising bans and age limits"
     distractors = (
-        "a survey that asked every pupil whether they smoke",
-        "adverts that proved smoking was safe",
-        "ranking towns by how many residents smoke",
+        "a survey that asked every pupil in the country whether they smoke",
+        "tobacco adverts that finally proved smoking was safe for adults",
+        "a new medicine that cured every smoker's addiction in one dose",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -3447,9 +3447,9 @@ def _tobacco_intermediate_sms_smokefree_drop_then_exposure_mcq():
     ratio = pack["before"] // pack["after"]
     correct = "smoke in a shared space exposes others, so smoke-free rules protect them"
     distractors = (
-        "staff should be interviewed about who smokes at home",
-        "the drop proves vaping is harmless",
-        "second-hand smoke is a health food",
+        "staff should be interviewed about which of them smoke at home",
+        "the drop proves that smoke only ever harmed the smokers themselves",
+        "second-hand smoke is harmless, so the rule only changed the smell",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -3506,9 +3506,9 @@ def _tobacco_difficult_sms_quit_ratio_then_caution_pick_then_verdict():
     )
     correct = "support is associated with more quitting, but the design limits how sure we can be"
     distractors = (
-        "support is proven to work for every individual",
-        "nicotine is not addictive after all",
-        "the study should have asked pupils who smokes",
+        "support is proven to work for every individual who uses the service",
+        "the ratio proves that quitting alone is impossible for anyone",
+        "the study should have asked pupils which of them smoke to check it",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (
@@ -3612,9 +3612,9 @@ def _tobacco_difficult_sms_policy_pick_then_uncertainty_mcq():
     )
     correct = "scientists do not yet have the full long-term picture; nicotine can still addict"
     distractors = (
-        "vaping is proven safer than water",
-        "adverts settle the question",
-        "pupils should list devices they have tried",
+        "vaping has been proven completely safe, since no harm has been found yet",
+        "the long-term studies are finished and show no harm at all",
+        "pupils should list the devices they have tried so the rules can be set",
     )
     options, letter = _u22_mcq_field(correct, distractors)
     question = (

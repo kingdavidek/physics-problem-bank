@@ -356,9 +356,9 @@ def _measurement_difficult_sms_field_kit_zero():
     kg = corrected / 1000
     correct = "a systematic zero error; the field balance needs calibration"
     distractors = (
-        "a random error from a single breeze",
-        "evidence that grams are not SI units",
-        "a conversion error from kilometres",
+        "a random error; taking more readings would remove it",
+        "a parallax error from reading the display at an angle",
+        "an error in the sample, not in the field balance",
     )
     options, letter = _u11_mcq_field(correct, distractors)
     question = (
@@ -568,9 +568,9 @@ def _what_is_science_intermediate_ms_count_evidence_then_reproduce():
         "with the same method"
     )
     distractors = (
-        "only a famous person can decide if the count is allowed",
-        "the method should stay secret so rivals cannot copy it",
-        "a longer sentence makes the count more scientific",
+        "the same group gets exactly the same number a second time",
+        f"those {pack['evidence']} evidence items are written neatly in a table",
+        f"the teacher confirms that those {pack['evidence']} evidence items are correct",
     )
     options, letter = _u11_mcq_field(correct, distractors)
     question = (
@@ -670,8 +670,8 @@ def _what_is_science_intermediate_ms_order_enquiry_then_peer():
     )
     distractors = (
         "peer critique ranks who is cleverest in the group",
-        "peer critique replaces measurements with a rumour",
-        "peer critique hides the method so it cannot be copied",
+        "peer critique repeats the measurements without reading the method",
+        "peer critique is only needed when the result looks wrong",
     )
     options, letter = _u11_mcq_field(correct, distractors)
     question = (
@@ -717,9 +717,9 @@ def _what_is_science_difficult_ms_groups_then_hypothesis():
         "groups have tested it"
     )
     distractors = (
-        "a hypothesis is a final law once one group likes it",
-        "a hypothesis must stay secret from other groups",
-        "a hypothesis is true because a celebrity repeated the mean",
+        f"a hypothesis becomes a proven law once these {pack['n']} groups agree",
+        f"a hypothesis is only a guess, so {pack['n']} groups agreeing does not matter",
+        f"a hypothesis is only needed if these {pack['n']} groups disagree",
     )
     options, letter = _u11_mcq_field(correct, distractors)
     question = (
@@ -921,9 +921,9 @@ def _what_is_science_foundational_sms_club_claim_then_test():
     pack = random.choice(_WIS_SMS_F_CLUB_PACKS)
     correct = "test the advert with a public method other groups can repeat"
     distractors = (
-        "believe the celebrity because the poster is colourful",
-        "keep {who}'s method secret so rivals cannot copy it".format(who=pack["who"]),
-        "change the question until the advert looks nicer",
+        "accept the advert, because adverts are checked before they are printed",
+        "keep {who}'s {n} readings private until the advert is proved wrong".format(who=pack["who"], n=pack["n_measure"]),
+        "collect one more reading and then treat the advert as proved",
     )
     options, letter = _u11_mcq_field(correct, distractors)
     question = (
@@ -971,9 +971,9 @@ def _what_is_science_foundational_sms_museum_repeat_groups():
         f"got a similar mean of {pack['mean']:g} s"
     )
     distractors = (
-        "true only because the museum printed it in colour",
-        "final forever because a celebrity visited the exhibit",
-        "secret, so other groups must not try the method",
+        f"proved for ever, because {pack['groups']} groups can never all be wrong",
+        f"repeatable only, because the {pack['groups']} groups used the same method",
+        f"unreliable, because the {pack['groups']} means were similar rather than identical",
     )
     options, letter = _u11_mcq_field(correct, distractors)
     question = (
@@ -1018,9 +1018,9 @@ def _what_is_science_foundational_sms_poster_ad_not_evidence():
     pack = random.choice(_WIS_SMS_F_POSTER_PACKS)
     correct = "ask for a method and data other groups can check"
     distractors = (
-        "accept the poster because a celebrity appears on it",
-        "hide {who}'s notebook so the method stays unique".format(who=pack["who"]),
-        "vote on the claim without any measurements",
+        "trust the poster because it was printed professionally",
+        "copy the poster's claim into {who}'s notebook as a result".format(who=pack["who"]),
+        "ask the class to vote on whether the claim sounds true",
     )
     options, letter = _u11_mcq_field(correct, distractors)
     pick_raw, pick_bank, pick_count = _u11_pick_field(
@@ -1133,9 +1133,9 @@ def _what_is_science_intermediate_sms_two_group_mean_critique():
         f"{pack['who_a']} or {pack['who_b']} as people"
     )
     distractors = (
-        "rank which group is more talented",
-        "hide the slower group's notebook",
-        "replace both means with a celebrity quote",
+        f"decide whether {pack['who_a']} or {pack['who_b']} is the better scientist",
+        f"discard the larger time as {pack['who_b']}'s mistake without checking",
+        "average the two times and report that there is no gap",
     )
     options, letter = _u11_mcq_field(correct, distractors)
     question = (
@@ -1182,9 +1182,9 @@ def _what_is_science_intermediate_sms_book_then_provisional():
         f"{pack['new']} new measurements"
     )
     distractors = (
-        "final forever because it was printed in a book",
-        "true only if a celebrity signed the page",
-        "secret, so the new measurements must not be shared",
+        "final: a printed explanation cannot be changed by later data",
+        f"correct: {pack['new']} new measurements are too few to matter",
+        "wrong for ever: one mismatch destroys any explanation",
     )
     options, letter = _u11_mcq_field(correct, distractors)
     question = (
@@ -1345,9 +1345,9 @@ def _what_is_science_difficult_sms_secret_method_share():
         "other groups cannot reproduce the result if the method stays secret"
     )
     distractors = (
-        "secrecy makes a result more reliable",
-        "a celebrity quote can replace a shared method",
-        "peer critique should rank people, not methods",
+        "a surprising result cannot be trusted whatever the method",
+        "one booth alone can never time anything accurately enough",
+        "a result only counts once a famous scientist has approved it",
     )
     options, letter = _u11_mcq_field(correct, distractors)
     question = (
@@ -1465,7 +1465,7 @@ def _science_lab_foundational_ms_plan_order_then_independent():
     distractors = (
         "the dependent variable: the one you measure as the outcome",
         "the control variable: kept the same so the test is fair",
-        "a guess variable: a number you invent to fill a table",
+        "the repeat variable: the number of times you take each reading",
     )
     options, letter = _u11_mcq_field(correct, distractors)
     question = (
@@ -1555,7 +1555,7 @@ def _science_lab_intermediate_ms_mean_time_then_dependent():
     distractors = (
         "the independent variable: the one you change on purpose",
         "the control variable: kept the same so the test is fair",
-        "a guess variable: a number you invent to fill a table",
+        "the repeat variable: the number of times you take each reading",
     )
     options, letter = _u11_mcq_field(correct, distractors)
     listed = _listed(pack["readings"])
@@ -1655,9 +1655,9 @@ def _science_lab_intermediate_ms_range_then_control():
     spread = max(pack["readings"]) - min(pack["readings"])
     correct = "keep the volume of water the same in every run"
     distractors = (
-        "change the volume and the heat setting together",
-        "invent extra temperatures to shrink the range",
-        "leave units off the table so the range looks smaller",
+        "change the volume of water a little in every run",
+        "record the temperature only once in every run",
+        "use a different thermometer in every run",
     )
     options, letter = _u11_mcq_field(correct, distractors)
     listed = _listed(pack["readings"])
@@ -1788,9 +1788,9 @@ def _science_lab_difficult_ms_control_list_then_safety():
         "same volume of water, same starting temperature, same thermometer"
     )
     distractors = (
-        "change the volume and the heat setting in every run",
-        "invent extra rows so the table looks complete",
-        "leave hair loose and taste the heated water",
+        "same volume of water, same heating time, same final temperature",
+        "different volumes of water each run, so the graph covers a wider range",
+        "same thermometer, but a new beaker size in every run",
     )
     options, letter = _u11_mcq_field(correct, distractors)
     pick_raw, pick_bank, pick_count = _u11_pick_field(
@@ -1872,7 +1872,7 @@ def _science_lab_foundational_sms_heat_water_mean_then_thermo():
     distractors = (
         "A, the heat source",
         "B, the beaker of liquid",
-        "a laboratory balance on another bench",
+        "none of the labelled objects on the bench",
     )
     options, letter = _u11_mcq_field(correct, distractors)
     listed = _listed(pack["readings"])
@@ -1921,7 +1921,7 @@ def _science_lab_foundational_sms_heat_water_plan_then_indep():
     distractors = (
         "the water temperature (the dependent variable)",
         "the volume of water, kept the same (a control)",
-        "a number invented to fill the table",
+        "the type of thermometer, kept the same (a control)",
     )
     options, letter = _u11_mcq_field(correct, distractors)
     question = (
@@ -2014,7 +2014,7 @@ def _science_lab_intermediate_sms_salt_time_mean_then_dep():
     distractors = (
         "the water temperature (the independent variable)",
         "the mass of salt, kept the same (a control)",
-        "a guess written before the stopwatch starts",
+        "the volume of water, kept the same (a control)",
     )
     options, letter = _u11_mcq_field(correct, distractors)
     listed = _listed(pack["readings"])
@@ -2118,9 +2118,9 @@ def _science_lab_intermediate_sms_salt_range_then_control():
     spread = max(pack["readings"]) - min(pack["readings"])
     correct = "keep the mass of salt and the volume of water the same"
     distractors = (
-        "change the mass of salt and the temperature together",
-        "invent extra times to shrink the range",
-        "taste the mixture to decide when it has dissolved",
+        "change the mass of salt a little in every run",
+        "time only the fastest run and ignore the rest",
+        "stop the stopwatch as soon as the water looks warm",
     )
     options, letter = _u11_mcq_field(correct, distractors)
     listed = _listed(pack["readings"])
@@ -2256,9 +2256,9 @@ def _science_lab_difficult_sms_fair_test_control_then_safety():
         "same mass of salt, same volume of water, same stirring method"
     )
     distractors = (
-        "change the mass of salt and the temperature in every run",
-        "invent extra times so the table looks complete",
-        "taste each mixture to decide when it has dissolved",
+        "same mass of salt, same volume of water, same dissolving time",
+        "different masses of salt each run, so the graph covers a wider range",
+        "same stirring method, but a new water volume in every run",
     )
     options, letter = _u11_mcq_field(correct, distractors)
     pick_raw, pick_bank, pick_count = _u11_pick_field(

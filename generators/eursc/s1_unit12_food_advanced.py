@@ -72,9 +72,9 @@ def _food_formulas_intermediate_ms_menu_count_then_groups():
     groups = pack["beans"] + pack["rice"] + pack["oil"]
     correct = "carbohydrate from rice, protein from beans, fat from oil"
     distractors = (
-        "only water molecules with no nutrient groups",
-        "a celebrity slogan with no ingredients",
-        "plastic packaging as the main nutrient",
+        "protein from rice, carbohydrate from beans, fat from oil",
+        "carbohydrate from all three foods and nothing else",
+        "fat from rice, protein from beans, carbohydrate from oil",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -113,9 +113,9 @@ def _food_formulas_intermediate_ms_h2o_atoms_then_solvent():
     hydrogen = 2
     correct = "a solvent that carries dissolved flavours and salts in food"
     distractors = (
+        "a solute that dissolves into the salt and flavourings",
+        "a nutrient that supplies most of the meal's energy",
         "a protein chain for growth and repair only",
-        "a metal element on the periodic table",
-        "a celebrity diet with no listed ingredients",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -210,9 +210,9 @@ def _food_formulas_difficult_ms_label_kcal_then_protein():
     pack = random.choice(_FF_MS_D_LABEL_PACKS)
     correct = "protein from an animal or plant source on the ingredients list"
     distractors = (
-        "pure table salt with no amino acids",
-        "helium gas trapped in the wrapper",
-        "a rumour that all labels are optional",
+        "carbohydrate from a starchy source on the ingredients list",
+        "fat from an oil or butter source on the ingredients list",
+        "vitamins and minerals with no energy value at all",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -254,8 +254,8 @@ def _food_formulas_difficult_ms_plate_groups_then_photo():
     )
     distractors = (
         "animals make carbohydrate directly from sunlight",
-        "oil is a metal on the periodic table",
-        "water is a protein chain",
+        "animals only get carbohydrate by eating other animals",
+        "plant carbohydrate has no energy until it is cooked",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -292,9 +292,9 @@ def _food_formulas_difficult_ms_fatty_count_then_energy():
     fatty_acids = 3
     correct = "a small mass of oil can supply a large amount of energy"
     distractors = (
-        "fats never store energy in food",
-        "bread cannot contain carbohydrate",
-        "water is the most energy-rich nutrient per gram",
+        "a gram of bread supplies more energy than a gram of oil",
+        "fats supply no energy until they are mixed with starch",
+        "a large mass of oil is needed to supply any energy",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -356,9 +356,9 @@ def _food_formulas_foundational_sms_canteen_groups_then_role():
     groups = pack["beans"] + pack["rice"] + pack["oil"]
     correct = "protein from beans, carbohydrate from rice, fat from oil"
     distractors = (
-        "only water with no nutrient groups",
-        "a celebrity slogan with no ingredients",
-        "plastic packaging as the main nutrient",
+        "carbohydrate from beans, protein from rice, fat from oil",
+        "protein from all three foods and nothing else",
+        "fat from beans, protein from rice, carbohydrate from oil",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -397,9 +397,9 @@ def _food_formulas_foundational_sms_poster_h2o_then_solvent():
     hydrogen = 2
     correct = "a solvent that carries dissolved flavours and salts in food"
     distractors = (
+        "a solute that dissolves into the salt and flavourings",
+        "a nutrient that supplies most of the meal's energy",
         "a protein chain for growth only",
-        "a metal element on the periodic table",
-        "a celebrity diet with no listed ingredients",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -495,9 +495,9 @@ def _food_formulas_intermediate_sms_menu_kcal_then_group():
     kj = pack["kcal"] * 4
     correct = "protein from an animal or plant source on the ingredients list"
     distractors = (
-        "pure table salt with no amino acids",
-        "helium gas trapped in the wrapper",
-        "a rumour that all labels are optional",
+        "carbohydrate from a starchy source on the ingredients list",
+        "fat from an oil or butter source on the ingredients list",
+        "vitamins and minerals with no energy value at all",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -536,9 +536,9 @@ def _food_formulas_intermediate_sms_fatty_count_then_dense():
     fatty_acids = 3
     correct = "a small mass of oil can supply a large amount of energy"
     distractors = (
-        "fats never store energy in food",
-        "bread cannot contain carbohydrate",
-        "water is the most energy-rich nutrient per gram",
+        "a gram of bread supplies more energy than a gram of oil",
+        "fats supply no energy until they are mixed with starch",
+        "a large mass of oil is needed to supply any energy",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -584,9 +584,9 @@ def _food_formulas_intermediate_sms_plate_items_then_groups():
     groups = 3
     correct = "carbohydrate for energy"
     distractors = (
-        "only helium gas",
-        "a metal on the periodic table",
-        "plastic packaging as a nutrient",
+        "protein for growth",
+        "fat for energy storage",
+        "vitamin C for repair",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -634,8 +634,8 @@ def _food_formulas_difficult_sms_label_kj_kcal_then_claim():
     )
     distractors = (
         "animals make carbohydrate directly from sunlight",
-        "oil is a metal on the periodic table",
-        "water is a protein chain",
+        "animals only get carbohydrate by eating other animals",
+        "plant carbohydrate has no energy until it is cooked",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -725,9 +725,9 @@ def _food_formulas_difficult_sms_mass_ice_then_groups():
     pack = random.choice(_FF_SMS_D_ICE_PACKS)
     correct = "the state changed but the amount of water substance stayed the same"
     distractors = (
-        "the water molecules were destroyed",
-        "ice is not water at all",
-        "mass always doubles when ice melts",
+        "some of the water substance was used up during melting",
+        "liquid water weighs more than the same amount of ice",
+        "half of the ice turned into water vapour while melting",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -794,9 +794,9 @@ def _water_substances_foundational_ms_melt_mass_then_state():
     pack = random.choice(_WS_MS_F_MELT_PACKS)
     correct = "liquid water with the same mass as the ice"
     distractors = (
-        "no water substance left after melting",
-        "a gas with double the mass",
-        "a solid salt crystal",
+        "liquid water with less mass than the ice",
+        "liquid water with more mass than the ice",
+        "water vapour with the same mass as the ice",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -841,9 +841,9 @@ def _water_substances_foundational_ms_mix_count_then_filter():
     pack = random.choice(_WS_MS_F_MIX_PACKS)
     correct = "filter paper to trap the insoluble solid"
     distractors = (
-        "a magnet to attract dissolved sugar",
-        "a thermometer to change the state",
-        "a celebrity slogan with no method",
+        "evaporation to boil off the insoluble solid",
+        "a magnet to pull the solid out of the water",
+        "distillation to condense the solid separately",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -883,7 +883,7 @@ def _water_substances_foundational_ms_states_boxes_then_gas():
     distractors = (
         "box A, where particles are packed in a fixed pattern",
         "box B, where particles slide past each other",
-        "a celebrity poster with no particle diagram",
+        "none of the boxes, because steam has no particles",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -929,9 +929,9 @@ def _water_substances_intermediate_ms_evap_volume_then_gas():
     lost = pack["start_ml"] - pack["left_ml"]
     correct = "water particles escape as gas from the liquid surface"
     distractors = (
-        "the liquid turns into a solid salt crystal",
         "water molecules are destroyed by heat",
-        "a celebrity claim that volume never changes",
+        "the water soaks into the dish and disappears",
+        "the water shrinks into a smaller volume without leaving",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -977,8 +977,8 @@ def _water_substances_intermediate_ms_dissolve_order_then_solvent():
     correct = "the liquid that dissolves the solute"
     distractors = (
         "the solid that disappears into the liquid",
-        "a metal on the periodic table",
-        "a rumour with no ingredients",
+        "the clear mixture formed at the end",
+        "the substance that is destroyed while stirring",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -1023,7 +1023,7 @@ def _water_substances_intermediate_ms_boil_temp_then_state():
     distractors = (
         "solid ice at 100 °C",
         "liquid water that never boils",
-        "a celebrity poster with no temperature",
+        "oxygen gas from the water",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -1069,9 +1069,9 @@ def _water_substances_difficult_ms_non_additive_then_reason():
     diff = naive - pack["total_ml"]
     correct = "particles of one liquid fit into spaces between particles of the other"
     distractors = (
-        "volume is always exactly additive in every mixture",
         "water molecules are destroyed on mixing",
-        "a celebrity claim that 50 + 50 must equal 100",
+        "some of the ethanol evaporates the moment it is poured",
+        "the two liquids react and some liquid disappears",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -1118,8 +1118,8 @@ def _water_substances_difficult_ms_distill_order_then_pure():
     correct = "distillation separates by boiling point differences"
     distractors = (
         "filtration removes dissolved salt from water",
-        "a magnet attracts dissolved sugar",
-        "a rumour that all mixtures are identical",
+        "the salt boils off first and leaves pure water",
+        "the salt is destroyed when the water is heated",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -1230,9 +1230,9 @@ def _water_substances_foundational_sms_market_melt_then_same():
     pack = random.choice(_WS_SMS_F_ICE_PACKS)
     correct = "liquid water with the same mass as the ice"
     distractors = (
-        "no water substance left after melting",
-        "a gas with double the mass",
-        "a solid salt crystal",
+        "liquid water with less mass than the ice",
+        "liquid water with more mass than the ice",
+        "water vapour with the same mass as the ice",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -1270,9 +1270,9 @@ def _water_substances_foundational_sms_jar_mix_then_filter():
     n = 2
     correct = "filter paper to trap the insoluble solid"
     distractors = (
-        "a magnet to attract dissolved sugar",
-        "a thermometer to change the state",
-        "a celebrity slogan with no method",
+        "evaporation to boil off the insoluble solid",
+        "a magnet to pull the solid out of the water",
+        "distillation to condense the solid separately",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -1310,7 +1310,7 @@ def _water_substances_foundational_sms_museum_states_then_gas():
     distractors = (
         "box A, where particles are packed in a fixed pattern",
         "box B, where particles slide past each other",
-        "a celebrity poster with no particle diagram",
+        "none of the boxes, because steam has no particles",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -1355,9 +1355,9 @@ def _water_substances_intermediate_sms_dish_evap_then_particles():
     lost = pack["start_ml"] - pack["left_ml"]
     correct = "water particles escape as gas from the liquid surface"
     distractors = (
-        "the liquid turns into a solid salt crystal",
         "water molecules are destroyed by heat",
-        "a celebrity claim that volume never changes",
+        "the water soaks into the dish and disappears",
+        "the water shrinks into a smaller volume without leaving",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -1404,8 +1404,8 @@ def _water_substances_intermediate_sms_salt_dissolve_then_solvent():
     correct = "the liquid that dissolves the solute"
     distractors = (
         "the solid that disappears into the liquid",
-        "a metal on the periodic table",
-        "a rumour with no ingredients",
+        "the clear mixture formed at the end",
+        "the substance that is destroyed while stirring",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -1443,7 +1443,7 @@ def _water_substances_intermediate_sms_kettle_boil_then_steam():
     distractors = (
         "solid ice at 100 °C",
         "liquid water that never boils",
-        "a celebrity poster with no temperature",
+        "oxygen gas from the water",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -1489,9 +1489,9 @@ def _water_substances_difficult_sms_ethanol_mix_then_fit():
     naive = pack["a_ml"] + pack["b_ml"]
     correct = "particles of one liquid fit into spaces between particles of the other"
     distractors = (
-        "volume is always exactly additive in every mixture",
         "water molecules are destroyed on mixing",
-        "a celebrity claim that 50 + 50 must equal 100",
+        "some of the ethanol evaporates the moment it is poured",
+        "the two liquids react and some liquid disappears",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -1538,8 +1538,8 @@ def _water_substances_difficult_sms_salty_distill_then_pure():
     correct = "distillation separates by boiling point differences"
     distractors = (
         "filtration removes dissolved salt from water",
-        "a magnet attracts dissolved sugar",
-        "a rumour that all mixtures are identical",
+        "the salt boils off first and leaves pure water",
+        "the salt is destroyed when the water is heated",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -1650,9 +1650,9 @@ def _cooking_heat_foundational_ms_pan_transfer_then_name():
     pack = random.choice(_CH_MS_F_PAN_PACKS)
     correct = pack["transfer"]
     distractors = (
-        "photosynthesis in the saucepan",
-        "a magnet attracting dissolved salt",
-        "a celebrity slogan with no heat source",
+        "convection through the solid metal of the pan",
+        "conduction across the empty gap to the food",
+        "radiation from the kitchen lights above",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -1697,9 +1697,9 @@ def _cooking_heat_foundational_ms_heat_path_order_then_denature():
     )
     correct = "the protein structure changes and the food texture alters"
     distractors = (
-        "water molecules are destroyed forever",
-        "the food becomes a metal element",
-        "a rumour that heat has no effect",
+        "the protein melts and then freezes solid again",
+        "the protein turns into carbohydrate for energy",
+        "all the water is driven out and the protein dries",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -1741,9 +1741,9 @@ def _cooking_heat_foundational_ms_oven_temp_then_brown():
     )
     correct = "browning from the Maillard reaction at high surface temperature"
     distractors = (
-        "ice forming on the hot surface",
-        "photosynthesis in the oven",
-        "a rumour that colour never changes",
+        "the crust drying out with no new substances formed",
+        "sugar in the crust melting without any chemical change",
+        "the crust turning to carbon at any temperature above 50 °C",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -1791,9 +1791,9 @@ def _cooking_heat_intermediate_ms_grill_distance_then_radiation():
         else "radiation is stronger when the food is closer to the grill"
     )
     distractors = (
-        "conduction through empty air with no contact",
-        "photosynthesis on the grill rack",
-        "a rumour that distance has no effect",
+        "conduction through the air carries the heat with no contact",
+        "convection lifts the heat away from the food below",
+        "radiation reaches the food equally at any distance",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -1830,9 +1830,9 @@ def _cooking_heat_intermediate_ms_grill_distance_then_radiation():
 def _cooking_heat_intermediate_ms_stir_soup_then_convection():
     correct = "convection currents spread heat through the liquid"
     distractors = (
-        "radiation through a solid metal spoon only",
-        "photosynthesis in the soup",
-        "a rumour that stirring has no thermal effect",
+        "conduction from the spoon heats the soup on its own",
+        "radiation from the spoon spreads heat through the liquid",
+        "the spoon adds heat energy by friction alone",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     order_raw, order_bank = _u12_order_field(
@@ -1883,9 +1883,9 @@ def _cooking_heat_intermediate_ms_protein_temp_then_texture():
     rise = pack["end_c"] - pack["start_c"]
     correct = "denatured protein gives a firmer, changed texture"
     distractors = (
-        "the egg becomes a metal",
         "heat removes all protein permanently",
-        "a rumour that texture never changes",
+        "the egg white has melted and turns runny again when cooled",
+        "the water in the egg has boiled away leaving only fat",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -1934,9 +1934,9 @@ def _cooking_heat_difficult_ms_three_transfer_pick_then_brown():
     methods = 3
     correct = "high surface heat drives browning while inside cooks by conduction"
     distractors = (
-        "browning happens only below 0 °C",
-        "no heat transfer occurs in cooking",
-        "a celebrity claim that colour is unrelated to temperature",
+        "the inside browns first because conduction is fastest there",
+        "browning happens at the same low temperature as the inside cooking",
+        "radiation cooks the inside while conduction browns the surface",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -1982,9 +1982,9 @@ def _cooking_heat_difficult_ms_chain_order_then_maillard():
     )
     correct = "browning needs sufficient surface temperature, not just any warmth"
     distractors = (
-        "browning happens instantly at 0 °C",
-        "Maillard reaction requires no heat",
-        "a rumour that colour is unrelated to temperature",
+        "browning happens at any temperature if you wait long enough",
+        "browning starts as soon as the bread feels warm",
+        "the Maillard reaction needs moisture rather than heat",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -2100,9 +2100,9 @@ def _cooking_heat_foundational_sms_demo_transfer_then_name():
     }
     correct = transfer_map[pack["method"]]
     distractors = (
-        "photosynthesis in the saucepan",
-        "a magnet attracting dissolved salt",
-        "a celebrity slogan with no heat source",
+        "convection through the solid metal of the pan",
+        "conduction across the empty gap to the food",
+        "radiation from the kitchen lights above",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -2146,9 +2146,9 @@ def _cooking_heat_foundational_sms_egg_poster_order_then_denature():
     )
     correct = "the protein structure changes and the texture alters"
     distractors = (
-        "water molecules are destroyed forever",
-        "the egg becomes a metal element",
-        "a rumour that heat has no effect",
+        "the egg white melts and then freezes solid again",
+        "the egg protein turns into carbohydrate",
+        "all the water is driven out and the egg dries",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -2191,9 +2191,9 @@ def _cooking_heat_foundational_sms_oven_log_then_brown():
     pack = random.choice(_CH_SMS_F_OVEN_PACKS)
     correct = "browning from the Maillard reaction at high surface temperature"
     distractors = (
-        "ice forming on the hot surface",
-        "photosynthesis in the oven",
-        "a rumour that colour never changes",
+        "the crust drying out with no new substances formed",
+        "sugar in the crust melting without any chemical change",
+        "the crust turning to carbon at any temperature above 50 °C",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -2241,9 +2241,9 @@ def _cooking_heat_intermediate_sms_fair_grill_then_radiation():
         else "radiation decreases with distance from the heat source"
     )
     distractors = (
-        "conduction through empty air with no contact",
-        "photosynthesis on the grill rack",
-        "a rumour that distance has no effect",
+        "conduction through the air carries the heat with no contact",
+        "convection lifts the heat away from the food below",
+        "radiation reaches the food equally at any distance",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -2287,9 +2287,9 @@ def _cooking_heat_intermediate_sms_cafe_soup_then_convection():
     )
     correct = "convection currents spread heat through the liquid"
     distractors = (
-        "radiation through a solid spoon only",
-        "photosynthesis in the soup",
-        "a rumour that stirring has no thermal effect",
+        "conduction from the spoon heats the soup on its own",
+        "radiation from the spoon spreads heat through the liquid",
+        "the spoon adds heat energy by friction alone",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -2333,9 +2333,9 @@ def _cooking_heat_intermediate_sms_demo_egg_then_texture():
     rise = pack["end_c"] - pack["start_c"]
     correct = "denatured protein gives a firmer, changed texture"
     distractors = (
-        "the egg becomes a metal",
         "heat removes all protein permanently",
-        "a rumour that texture never changes",
+        "the egg white has melted and turns runny again when cooled",
+        "the water in the egg has boiled away leaving only fat",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -2384,9 +2384,9 @@ def _cooking_heat_difficult_sms_exam_pick_then_brown():
     methods = 3
     correct = "high surface heat drives browning while inside cooks by conduction"
     distractors = (
-        "browning happens only below 0 °C",
-        "no heat transfer occurs in cooking",
-        "a celebrity claim that colour is unrelated to temperature",
+        "the inside browns first because conduction is fastest there",
+        "browning happens at the same low temperature as the inside cooking",
+        "radiation cooks the inside while conduction browns the surface",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -2432,9 +2432,9 @@ def _cooking_heat_difficult_sms_toast_chain_then_maillard():
     )
     correct = "browning needs sufficient surface temperature, not just any warmth"
     distractors = (
-        "browning happens instantly at 0 °C",
-        "Maillard reaction requires no heat",
-        "a rumour that colour is unrelated to temperature",
+        "browning happens at any temperature if you wait long enough",
+        "browning starts as soon as the bread feels warm",
+        "the Maillard reaction needs moisture rather than heat",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -2544,9 +2544,9 @@ def _cooking_acid_intermediate_ms_ph_read_then_acid():
     pack = random.choice(_CA_MS_I_PH_PACKS)
     correct = "acidic, below pH 7 on the scale"
     distractors = (
-        "neutral at exactly pH 14",
-        "alkaline above pH 7",
-        "a celebrity claim with no indicator reading",
+        "alkaline, above pH 7 on the scale",
+        "neutral, exactly pH 7 on the scale",
+        "alkaline, because a low number means less acid",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -2590,9 +2590,9 @@ def _cooking_acid_intermediate_ms_indicator_colour_then_ph():
     )
     correct = "the indicator colour matches an acidic pH below 7"
     distractors = (
-        "the colour proves the food is a metal",
-        "indicators never change colour",
-        "a rumour that pH is unrelated to colour",
+        "the indicator colour matches an alkaline pH above 7",
+        "the indicator colour shows the vinegar is neutral",
+        "the colour change means the vinegar has been neutralised",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -2637,9 +2637,9 @@ def _cooking_acid_intermediate_ms_preserve_order_then_acid():
     )
     correct = "low pH makes the environment less suitable for many bacteria"
     distractors = (
-        "acid destroys all nutrients instantly",
-        "pH has no role in preservation",
-        "a celebrity poster with no data",
+        "low pH kills every microbe instantly on contact",
+        "acid removes all the water that bacteria need",
+        "high pH makes the environment less suitable for bacteria",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -2685,8 +2685,8 @@ def _cooking_acid_difficult_ms_compare_ph_then_stronger():
     correct = f"sample A at pH {pack['ph_a']} is more acidic"
     distractors = (
         "sample B is more acidic because its number is larger",
-        "both samples are alkaline",
-        "a rumour that lower pH means less acid",
+        "both samples are equally acidic because both are below 7",
+        "sample B is more acidic because it is closer to neutral",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -2730,9 +2730,9 @@ def _cooking_acid_difficult_ms_marinade_ph_then_tender():
     )
     correct = "acid can break down surface protein structure over time"
     distractors = (
-        "acid has no effect on protein in food",
-        "marinating always makes food alkaline",
-        "a rumour that pH cannot change texture",
+        "acid cooks the meat by heating it from inside",
+        "acid adds water to the meat so it swells",
+        "acid turns the surface protein into sugar",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -2843,9 +2843,9 @@ def _cooking_acid_foundational_sms_stand_ph_then_acid():
     pack = random.choice(_CA_SMS_F_LEMON_PACKS)
     correct = "acidic, below pH 7 on the scale"
     distractors = (
-        "neutral at exactly pH 14",
-        "alkaline above pH 7",
-        "a celebrity claim with no indicator reading",
+        "alkaline, above pH 7 on the scale",
+        "neutral, exactly pH 7 on the scale",
+        "alkaline, because a low number means less acid",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -2883,9 +2883,9 @@ def _cooking_acid_foundational_sms_vinegar_indicator_then_ph():
     ph = 3
     correct = "the indicator colour matches an acidic pH below 7"
     distractors = (
-        "the colour proves the food is a metal",
-        "indicators never change colour",
-        "a rumour that pH is unrelated to colour",
+        "the indicator colour matches an alkaline pH above 7",
+        "the indicator colour shows the vinegar is neutral",
+        "the colour change means the vinegar has been neutralised",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -2930,9 +2930,9 @@ def _cooking_acid_foundational_sms_pickle_poster_order_then_why():
     )
     correct = "low pH makes the environment less suitable for many bacteria"
     distractors = (
-        "acid destroys all nutrients instantly",
-        "pH has no role in preservation",
-        "a celebrity poster with no data",
+        "low pH kills every microbe instantly on contact",
+        "acid removes all the water that bacteria need",
+        "high pH makes the environment less suitable for bacteria",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -2978,8 +2978,8 @@ def _cooking_acid_intermediate_sms_lab_compare_then_stronger():
     correct = f"sample A at pH {pack['ph_a']} is more acidic"
     distractors = (
         "sample B is more acidic because its number is larger",
-        "both samples are alkaline",
-        "a rumour that lower pH means less acid",
+        "both samples are equally acidic because both are below 7",
+        "sample B is more acidic because it is closer to neutral",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -3024,9 +3024,9 @@ def _cooking_acid_intermediate_sms_marinade_log_then_tender():
     pack = random.choice(_CA_SMS_I_MARINADE_PACKS)
     correct = "acid can break down surface protein structure over time"
     distractors = (
-        "acid has no effect on protein in food",
-        "marinating always makes food alkaline",
-        "a rumour that pH cannot change texture",
+        "acid cooks the meat by heating it from inside",
+        "acid adds water to the meat so it swells",
+        "acid turns the surface protein into sugar",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -3065,8 +3065,8 @@ def _cooking_acid_intermediate_sms_dressing_ph_then_preserve():
     correct = "acidic dressing can slow spoilage when pH stays low enough"
     distractors = (
         "any pH above 7 preserves food best",
-        "pH has no role in food safety",
-        "a rumour that dressings never contain acid",
+        "acid kills every microbe so the jar never needs a lid",
+        "the dressing preserves because oil has no pH",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -3156,8 +3156,8 @@ def _cooking_acid_difficult_sms_ferment_ph_then_lactic():
     correct = "lactic acid from fermentation lowers the pH"
     distractors = (
         "pH rises because bacteria add alkali",
-        "fermentation never changes pH",
-        "a rumour that pH is fixed in all food",
+        "the bacteria use up the acid already in the milk",
+        "the milk cools and cooler liquids have lower pH",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -3203,8 +3203,8 @@ def _cooking_acid_difficult_sms_safety_order_then_acid():
     correct = "low pH alone does not replace proper storage temperature and hygiene"
     distractors = (
         "any acidic food never spoils regardless of storage",
-        "pH measurement is useless in food science",
-        "a rumour that acid replaces all safety rules",
+        "a low pH reading means hygiene checks can be skipped",
+        "storage temperature matters only for foods above pH 7",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -3270,9 +3270,9 @@ def _cooking_salt_foundational_ms_brine_mass_then_concentration():
     pack = random.choice(_CS_MS_F_BRINE_PACKS)
     correct = "a higher salt concentration in the water"
     distractors = (
-        "less salt dissolved in the same water",
-        "salt turns water into a metal",
-        "a rumour that mass does not affect concentration",
+        "a lower salt concentration in the water",
+        "the same concentration because the volume is unchanged",
+        "a larger volume of water with the same strength",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -3317,9 +3317,9 @@ def _cooking_salt_foundational_ms_evap_volume_then_crystals():
     evaporated = pack["start_ml"] - pack["left_ml"]
     correct = "salt crystals form as water evaporates and concentration rises"
     distractors = (
-        "salt disappears when water is heated",
-        "crystals form only in ice",
-        "a rumour that evaporation has no effect",
+        "salt evaporates along with the water when heated",
+        "the salt melts and then freezes into crystals",
+        "crystals form because the water turns into salt",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -3364,9 +3364,9 @@ def _cooking_salt_foundational_ms_preserve_salt_then_osmosis():
     )
     correct = "high salt concentration reduces water available to microbes"
     distractors = (
-        "salt has no effect on bacteria",
-        "osmosis only happens in metals",
-        "a rumour that preservation needs no salt",
+        "salt heats the fish enough to cook the microbes",
+        "salt makes the fish too acidic for microbes",
+        "salt feeds the microbes so they stop growing",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -3412,8 +3412,8 @@ def _cooking_salt_intermediate_ms_pan_evap_then_percent():
     correct = "crystallisation becomes more likely as concentration rises"
     distractors = (
         "salt dissolves more as more water evaporates",
-        "evaporation removes salt crystals first",
-        "a rumour that percent lost has no meaning",
+        "evaporation removes salt crystals before the water",
+        "the remaining brine becomes more dilute as it heats",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -3459,8 +3459,8 @@ def _cooking_salt_intermediate_ms_dissolve_rate_then_temp():
     correct = "warmer solvent particles move faster and dissolve solute quicker"
     distractors = (
         "cold water always dissolves more salt",
-        "temperature has no effect on dissolving",
-        "a rumour that salt cannot dissolve",
+        "hot water melts the salt instead of dissolving it",
+        "hot water has fewer particles so there is more room for salt",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -3505,9 +3505,9 @@ def _cooking_salt_intermediate_ms_saturated_then_crystal():
     undissolved = pack["added_g"] - pack["dissolved_g"]
     correct = "the solution was saturated and excess salt formed crystals"
     distractors = (
-        "salt cannot form crystals in water",
-        "all added salt always dissolves",
-        "a rumour that saturation does not exist",
+        "the solution was too cold for any salt to dissolve",
+        "the salt at the bottom was too heavy to dissolve",
+        "the water was pure so nothing could dissolve in it",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -3604,8 +3604,8 @@ def _cooking_salt_difficult_ms_brine_compare_then_preserve():
     correct = "the stronger brine removes more water from microbial cells"
     distractors = (
         "weak brine always preserves better",
-        "salt concentration has no preservation role",
-        "a rumour that ratios do not matter",
+        "the stronger brine heats the food more",
+        "both brines preserve equally once the salt has dissolved",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -3649,9 +3649,9 @@ def _cooking_salt_difficult_ms_label_sodium_then_critique():
     per_100 = round(100 * pack["sodium_mg"] / pack["portion_g"])
     correct = "compare the per-100 g sodium value to public health guidance"
     distractors = (
-        "ignore sodium because labels are optional",
-        "assume all salt is protein",
-        "a rumour that sodium is unrelated to salt",
+        "compare the per-portion value to guidance for 100 g",
+        "assume sodium and salt are unrelated substances",
+        "treat the sodium value as an energy value",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -3717,9 +3717,9 @@ def _cooking_salt_foundational_sms_kitchen_brine_then_more():
     pack = random.choice(_CS_SMS_F_KITCHEN_PACKS)
     correct = "a higher salt concentration in the water"
     distractors = (
-        "less salt dissolved in the same water",
-        "salt turns water into a metal",
-        "a rumour that mass does not affect concentration",
+        "a lower salt concentration in the water",
+        "the same concentration because the volume is unchanged",
+        "a larger volume of water with the same strength",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -3765,9 +3765,9 @@ def _cooking_salt_foundational_sms_fair_evap_then_crystals():
     evaporated = pack["start_ml"] - pack["left_ml"]
     correct = "salt crystals form as water evaporates and concentration rises"
     distractors = (
-        "salt disappears when water is heated",
-        "crystals form only in ice",
-        "a rumour that evaporation has no effect",
+        "salt evaporates along with the water when heated",
+        "the salt melts and then freezes into crystals",
+        "crystals form because the water turns into salt",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -3812,9 +3812,9 @@ def _cooking_salt_foundational_sms_cure_poster_order_then_why():
     )
     correct = "high salt concentration reduces water available to microbes"
     distractors = (
-        "salt has no effect on bacteria",
-        "osmosis only happens in metals",
-        "a rumour that preservation needs no salt",
+        "salt heats the fish enough to cook the microbes",
+        "salt makes the fish too acidic for microbes",
+        "salt feeds the microbes so they stop growing",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -3860,8 +3860,8 @@ def _cooking_salt_intermediate_sms_cafe_pan_then_percent():
     correct = "crystallisation becomes more likely as concentration rises"
     distractors = (
         "salt dissolves more as more water evaporates",
-        "evaporation removes salt crystals first",
-        "a rumour that percent lost has no meaning",
+        "evaporation removes salt crystals before the water",
+        "the remaining brine becomes more dilute as it heats",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -3907,8 +3907,8 @@ def _cooking_salt_intermediate_sms_demo_dissolve_then_temp():
     correct = "warmer solvent particles move faster and dissolve solute quicker"
     distractors = (
         "cold water always dissolves more salt",
-        "temperature has no effect on dissolving",
-        "a rumour that salt cannot dissolve",
+        "hot water melts the salt instead of dissolving it",
+        "hot water has fewer particles so there is more room for salt",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -3952,9 +3952,9 @@ def _cooking_salt_intermediate_sms_lab_saturated_then_crystal():
     undissolved = pack["added_g"] - pack["dissolved_g"]
     correct = "the solution was saturated and excess salt formed crystals"
     distractors = (
-        "salt cannot form crystals in water",
-        "all added salt always dissolves",
-        "a rumour that saturation does not exist",
+        "the solution was too cold for any salt to dissolve",
+        "the salt at the bottom was too heavy to dissolve",
+        "the water was pure so nothing could dissolve in it",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -4049,8 +4049,8 @@ def _cooking_salt_difficult_sms_trial_brine_then_preserve():
     correct = "the stronger brine removes more water from microbial cells"
     distractors = (
         "weak brine always preserves better",
-        "salt concentration has no preservation role",
-        "a rumour that ratios do not matter",
+        "the stronger brine heats the food more",
+        "both brines preserve equally once the salt has dissolved",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -4095,9 +4095,9 @@ def _cooking_salt_difficult_sms_public_label_then_critique():
     per_100 = round(100 * pack["sodium_mg"] / pack["portion_g"])
     correct = "compare the per-100 g sodium value to public health guidance"
     distractors = (
-        "ignore sodium because labels are optional",
-        "assume all salt is protein",
-        "a rumour that sodium is unrelated to salt",
+        "compare the per-portion value to guidance for 100 g",
+        "assume sodium and salt are unrelated substances",
+        "treat the sodium value as an energy value",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -4163,9 +4163,9 @@ def _cooking_fermentation_foundational_ms_yeast_temp_then_gas():
     pack = random.choice(_CF_MS_F_YEAST_PACKS)
     correct = "carbon dioxide gas makes the dough rise"
     distractors = (
-        "oxygen from photosynthesis inflates the dough",
-        "yeast turns flour into metal",
-        "a rumour that fermentation produces no gas",
+        "oxygen from the yeast inflates the dough",
+        "hot air expanding inside the dough lifts it",
+        "water vapour boiling out of the dough lifts it",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -4209,9 +4209,9 @@ def _cooking_fermentation_foundational_ms_anaerobic_order_then_product():
     )
     correct = "fermentation is anaerobic respiration by yeast"
     distractors = (
-        "fermentation only happens in sunlight",
-        "yeast is a plant that photosynthesises bread",
-        "a rumour that yeast needs no sugar",
+        "fermentation is photosynthesis by yeast",
+        "fermentation is aerobic respiration that needs oxygen",
+        "fermentation is digestion by the bread flour",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -4247,9 +4247,9 @@ def _cooking_fermentation_foundational_ms_lactic_count_then_food():
     foods = 2
     correct = "yoghurt and sauerkraut use lactic acid bacteria"
     distractors = (
-        "only metal ores use lactic fermentation",
-        "lactic acid bacteria need sunlight only",
-        "a rumour that fermentation never makes acid",
+        "yoghurt and sauerkraut use yeast to make alcohol",
+        "yoghurt and sauerkraut are soured with bottled vinegar",
+        "yoghurt and sauerkraut are made by heating alone",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -4294,9 +4294,9 @@ def _cooking_fermentation_intermediate_ms_bubble_rate_then_active():
     rate = round(pack["bubbles"] / pack["minutes"], 2)
     correct = "yeast is actively fermenting and producing carbon dioxide"
     distractors = (
-        "no gas is being produced",
-        "the dough is photosynthesising",
-        "a rumour that bubbles mean the yeast is dead",
+        "the yeast is dying and releasing trapped air",
+        "the dough is boiling and giving off steam",
+        "oxygen from the air is being pulled into the dough",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -4341,9 +4341,9 @@ def _cooking_fermentation_intermediate_ms_temp_compare_then_yeast():
     diff = pack["warm_c"] - pack["cold_c"]
     correct = "warmth closer to optimum speeds yeast metabolism up to a limit"
     distractors = (
-        "yeast never works below 100 °C",
+        "yeast works fastest at boiling point",
         "cold always ferments faster than warmth",
-        "a rumour that temperature has no effect",
+        "warmth melts the flour so gas escapes more easily",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -4388,9 +4388,9 @@ def _cooking_fermentation_intermediate_ms_yoghurt_ph_then_lactic():
     drop = pack["start_ph"] - pack["end_ph"]
     correct = "lactic acid bacteria produce acid that lowers pH"
     distractors = (
-        "pH rises during yoghurt fermentation",
-        "bacteria remove all acid from milk",
-        "a rumour that pH never changes",
+        "the bacteria remove acid from the milk",
+        "the milk cools and cooler liquids have lower pH",
+        "the bacteria add alkali that raises the pH",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -4480,9 +4480,9 @@ def _cooking_fermentation_difficult_ms_sourdough_order_then_flavour():
     )
     correct = "long fermentation allows organic acids to develop flavour"
     distractors = (
-        "flavour comes only from food colouring",
-        "fermentation never changes taste",
-        "a rumour that microbes add no flavour",
+        "the flour turns sour by itself without microbes",
+        "the sour taste comes from salt added at the start",
+        "the sour flavour comes from the bread burning slightly",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -4525,9 +4525,9 @@ def _cooking_fermentation_difficult_ms_safety_temp_then_stop():
     gap = pack["risk_c"] - pack["safe_c"]
     correct = "baking to a safe internal temperature stops active fermentation"
     distractors = (
-        "fermentation continues forever after baking",
-        "heat has no effect on microbes",
-        "a rumour that baking is unrelated to safety",
+        "fermentation continues at the same rate after baking",
+        "baking only browns the crust and does not affect microbes",
+        "the microbes survive baking and are killed by cooling",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -4593,9 +4593,9 @@ def _cooking_fermentation_foundational_sms_bakery_temp_then_gas():
     pack = random.choice(_CF_SMS_F_BAKERY_PACKS)
     correct = "carbon dioxide gas makes the dough rise"
     distractors = (
-        "oxygen from photosynthesis inflates the dough",
-        "yeast turns flour into metal",
-        "a rumour that fermentation produces no gas",
+        "oxygen from the yeast inflates the dough",
+        "hot air expanding inside the dough lifts it",
+        "water vapour boiling out of the dough lifts it",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -4639,9 +4639,9 @@ def _cooking_fermentation_foundational_sms_brew_poster_order_then_name():
     )
     correct = "fermentation is anaerobic respiration by yeast"
     distractors = (
-        "fermentation only happens in sunlight",
-        "yeast is a plant that photosynthesises bread",
-        "a rumour that yeast needs no sugar",
+        "fermentation is photosynthesis by yeast",
+        "fermentation is aerobic respiration that needs oxygen",
+        "fermentation is digestion by the bread flour",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -4677,9 +4677,9 @@ def _cooking_fermentation_foundational_sms_chart_lactic_then_examples():
     foods = 2
     correct = "yoghurt and sauerkraut use lactic acid bacteria"
     distractors = (
-        "only metal ores use lactic fermentation",
-        "lactic acid bacteria need sunlight only",
-        "a rumour that fermentation never makes acid",
+        "yoghurt and sauerkraut use yeast to make alcohol",
+        "yoghurt and sauerkraut are soured with bottled vinegar",
+        "yoghurt and sauerkraut are made by heating alone",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -4724,9 +4724,9 @@ def _cooking_fermentation_intermediate_sms_dough_log_then_active():
     rate = round(pack["bubbles"] / pack["minutes"], 2)
     correct = "yeast is actively fermenting and producing carbon dioxide"
     distractors = (
-        "no gas is being produced",
-        "the dough is photosynthesising",
-        "a rumour that bubbles mean the yeast is dead",
+        "the yeast is dying and releasing trapped air",
+        "the dough is boiling and giving off steam",
+        "oxygen from the air is being pulled into the dough",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -4771,9 +4771,9 @@ def _cooking_fermentation_intermediate_sms_trial_temp_then_yeast():
     diff = pack["warm_c"] - pack["cold_c"]
     correct = "warmth closer to optimum speeds yeast metabolism up to a limit"
     distractors = (
-        "yeast never works below 100 °C",
+        "yeast works fastest at boiling point",
         "cold always ferments faster than warmth",
-        "a rumour that temperature has no effect",
+        "warmth melts the flour so gas escapes more easily",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -4818,9 +4818,9 @@ def _cooking_fermentation_intermediate_sms_yoghurt_demo_ph_then_lactic():
     drop = pack["start_ph"] - pack["end_ph"]
     correct = "lactic acid bacteria produce acid that lowers pH"
     distractors = (
-        "pH rises during yoghurt fermentation",
-        "bacteria remove all acid from milk",
-        "a rumour that pH never changes",
+        "the bacteria remove acid from the milk",
+        "the milk cools and cooler liquids have lower pH",
+        "the bacteria add alkali that raises the pH",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -4908,9 +4908,9 @@ def _cooking_fermentation_difficult_sms_starter_order_then_flavour():
     )
     correct = "long fermentation allows organic acids to develop flavour"
     distractors = (
-        "flavour comes only from food colouring",
-        "fermentation never changes taste",
-        "a rumour that microbes add no flavour",
+        "the flour turns sour by itself without microbes",
+        "the sour taste comes from salt added at the start",
+        "the sour flavour comes from the bread burning slightly",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -4953,9 +4953,9 @@ def _cooking_fermentation_difficult_sms_safety_chart_then_bake():
     gap = pack["risk_c"] - pack["safe_c"]
     correct = "baking to a safe internal temperature stops active fermentation"
     distractors = (
-        "fermentation continues forever after baking",
-        "heat has no effect on microbes",
-        "a rumour that baking is unrelated to safety",
+        "fermentation continues at the same rate after baking",
+        "baking only browns the crust and does not affect microbes",
+        "the microbes survive baking and are killed by cooling",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -5022,9 +5022,9 @@ def _nutrition_foundational_ms_label_kcal_then_kj():
     calc_kj = pack["kcal"] * 4
     correct = "1 kcal is about 4 kJ on public labels"
     distractors = (
-        "1 kcal equals 4000 kJ always",
-        "kJ and kcal are unrelated units",
-        "a rumour that labels never show energy",
+        "1 kJ is about 4 kcal on public labels",
+        "1 kcal equals 4000 kJ on public labels",
+        "kJ and kcal measure different things",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -5061,9 +5061,9 @@ def _nutrition_foundational_ms_group_count_then_role():
     groups = 3
     correct = "carbohydrate mainly supplies energy"
     distractors = (
-        "carbohydrate is only found in metals",
-        "fat never stores energy",
-        "a rumour that nutrient groups do not exist",
+        "protein for growth and repair",
+        "fat as the main energy store",
+        "vitamin C for repairing tissue",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -5150,8 +5150,8 @@ def _nutrition_intermediate_ms_label_macro_then_dense():
     correct = "fat is the most energy-dense macronutrient per gram"
     distractors = (
         "protein always has more kcal per gram than fat",
-        "carbohydrate is never on labels",
-        "a rumour that macros are not measured",
+        "carbohydrate is the most energy-dense macronutrient per gram",
+        "all three macronutrients supply the same energy per gram",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -5197,8 +5197,8 @@ def _nutrition_intermediate_ms_claim_order_then_critique():
     correct = "a 'low fat' claim can still be high in sugar or energy"
     distractors = (
         "all low-fat foods are automatically healthy",
-        "ingredient lists are optional decoration",
-        "a rumour that labels cannot be checked",
+        "a 'low fat' claim means the food is also low in sugar",
+        "the front-of-pack claim is more reliable than the label",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -5243,9 +5243,9 @@ def _nutrition_intermediate_ms_portion_count_then_kcal():
     total = pack["label_kcal"] * pack["eaten"]
     correct = "multiply per-serving kcal by the number of servings eaten"
     distractors = (
-        "divide kcal by the number of servings",
-        "ignore the label and guess",
-        "a rumour that portions do not affect energy",
+        "divide per-serving kcal by the number of servings eaten",
+        "add the number of servings to the per-serving kcal",
+        "use the per-serving kcal however many servings were eaten",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -5292,9 +5292,9 @@ def _nutrition_difficult_ms_label_compare_then_claim():
         "product B is higher in both energy and sugar despite any front-of-pack claim"
     )
     distractors = (
-        "product A is always healthier because its name is shorter",
-        "sugar values on labels are decorative only",
-        "a rumour that kcal cannot be compared",
+        "product A is higher in sugar because it has fewer kcal",
+        "product B is healthier because more energy means more nutrition",
+        "the two products are equal because both are measured per 100 g",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -5341,8 +5341,8 @@ def _nutrition_difficult_ms_deficiency_chain_then_advice():
     correct = "public guidance lists iron-rich foods without diagnosing anyone"
     distractors = (
         "tell a stranger their exact medical condition",
-        "ignore symptoms and trust adverts",
-        "a rumour that deficiencies cannot be discussed",
+        "recommend that everyone takes iron tablets straight away",
+        "rank the class from most to least tired",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -5455,9 +5455,9 @@ def _nutrition_foundational_sms_canteen_kcal_then_kj():
     calc_kj = pack["kcal"] * 4
     correct = "1 kcal is about 4 kJ on public labels"
     distractors = (
-        "1 kcal equals 4000 kJ always",
-        "kJ and kcal are unrelated units",
-        "a rumour that labels never show energy",
+        "1 kJ is about 4 kcal on public labels",
+        "1 kcal equals 4000 kJ on public labels",
+        "kJ and kcal measure different things",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -5494,9 +5494,9 @@ def _nutrition_foundational_sms_poster_groups_then_bread():
     groups = 3
     correct = "carbohydrate mainly supplies energy"
     distractors = (
-        "carbohydrate is only found in metals",
-        "fat never stores energy",
-        "a rumour that nutrient groups do not exist",
+        "protein for growth and repair",
+        "fat as the main energy store",
+        "vitamin C for repairing tissue",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -5583,8 +5583,8 @@ def _nutrition_intermediate_sms_snack_label_then_dense():
     correct = "fat is the most energy-dense macronutrient per gram"
     distractors = (
         "protein always has more kcal per gram than fat",
-        "carbohydrate is never on labels",
-        "a rumour that macros are not measured",
+        "carbohydrate is the most energy-dense macronutrient per gram",
+        "all three macronutrients supply the same energy per gram",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -5629,8 +5629,8 @@ def _nutrition_intermediate_sms_advert_critique_order_then_lowfat():
     correct = "a 'low fat' claim can still be high in sugar or energy"
     distractors = (
         "all low-fat foods are automatically healthy",
-        "ingredient lists are optional decoration",
-        "a rumour that labels cannot be checked",
+        "a 'low fat' claim means the food is also low in sugar",
+        "the front-of-pack claim is more reliable than the label",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -5675,9 +5675,9 @@ def _nutrition_intermediate_sms_log_portions_then_kcal():
     total = pack["label_kcal"] * pack["servings"]
     correct = "multiply per-serving kcal by the number of servings eaten"
     distractors = (
-        "divide kcal by the number of servings",
-        "ignore the label and guess",
-        "a rumour that portions do not affect energy",
+        "divide per-serving kcal by the number of servings eaten",
+        "add the number of servings to the per-serving kcal",
+        "use the per-serving kcal however many servings were eaten",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -5724,9 +5724,9 @@ def _nutrition_difficult_sms_compare_products_then_critique():
         "product B is higher in both energy and sugar despite any front-of-pack claim"
     )
     distractors = (
-        "product A is always healthier because its name is shorter",
-        "sugar values on labels are decorative only",
-        "a rumour that kcal cannot be compared",
+        "product A is higher in sugar because it has fewer kcal",
+        "product B is healthier because more energy means more nutrition",
+        "the two products are equal because both are measured per 100 g",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -5773,8 +5773,8 @@ def _nutrition_difficult_sms_health_case_order_then_advice():
     correct = "public guidance lists iron-rich foods without diagnosing anyone"
     distractors = (
         "tell a stranger their exact medical condition",
-        "ignore symptoms and trust adverts",
-        "a rumour that deficiencies cannot be discussed",
+        "recommend that everyone takes iron tablets straight away",
+        "rank the class from most to least tired",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -5887,9 +5887,9 @@ def _healthy_meal_project_foundational_ms_ready_count_then_missing():
     missing = pack["items"] - pack["checked"]
     correct = "wash hands and tie back long hair before handling food"
     distractors = (
-        "taste raw poultry to check freshness",
-        "skip the written method and improvise",
-        "a rumour that hygiene is optional",
+        "taste raw poultry to check its freshness",
+        "rinse raw chicken under the tap before cooking",
+        "wipe the same cloth over raw and cooked food",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -5933,9 +5933,9 @@ def _healthy_meal_project_foundational_ms_hygiene_order_then_why():
     )
     correct = "cross-contamination spreads bacteria from raw to ready-to-eat food"
     distractors = (
-        "hygiene has no effect on food safety",
-        "raw and cooked foods should always touch",
-        "a rumour that washing hands is decorative",
+        "cooked food making raw food spoil faster",
+        "flavours mixing, which is the only risk",
+        "the raw food warming up next to cooked food",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -5971,9 +5971,9 @@ def _healthy_meal_project_foundational_ms_method_steps_then_repeat():
     steps = 4
     correct = "another group could follow the same written method and get similar results"
     distractors = (
-        "methods should stay secret so results cannot be checked",
-        "repeatability is impossible in cookery",
-        "a rumour that written methods are useless",
+        "the results will be identical every time whatever the group does",
+        "the method only works for the group that wrote it",
+        "the number of steps proves the meal was healthy",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -6017,8 +6017,8 @@ def _healthy_meal_project_intermediate_ms_evidence_table_then_balanced():
     correct = "the meal includes vegetables and a protein source but portion balance still matters"
     distractors = (
         "any meal with one food group is always perfect",
-        "project evidence cannot include tables",
-        "a rumour that balance is not graded",
+        "counting portions is enough and balance needs no further checking",
+        "vegetables alone give every nutrient group needed",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -6107,9 +6107,9 @@ def _healthy_meal_project_intermediate_ms_iterate_order_then_improve():
     )
     correct = "changing one variable makes it clear what caused any improvement"
     distractors = (
+        "changing several variables at once gives faster improvement",
         "iteration means never changing the method",
-        "records are unnecessary in a project",
-        "a rumour that trials cannot be repeated",
+        "the first trial should be recorded only if it worked",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -6153,8 +6153,8 @@ def _healthy_meal_project_difficult_ms_rubric_score_then_reflect():
     correct = "identify which rubric row to improve next using the evidence table"
     distractors = (
         "ignore the rubric because only taste matters",
-        "change every score without evidence",
-        "a rumour that reflection is not part of the project",
+        "raise every score because the meal was eaten",
+        "repeat the same method exactly to keep the score",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -6201,7 +6201,7 @@ def _healthy_meal_project_difficult_ms_evidence_chain_then_claim():
     distractors = (
         "a colourful poster alone proves a healthy meal",
         "peer praise replaces all data",
-        "a rumour that evidence is optional",
+        "the claim is supported if the meal tasted healthy",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -6310,9 +6310,9 @@ def _healthy_meal_project_foundational_sms_class_ready_then_missing():
     missing = pack["items"] - pack["checked"]
     correct = "wash hands and tie back long hair before handling food"
     distractors = (
-        "taste raw poultry to check freshness",
-        "skip the written method and improvise",
-        "a rumour that hygiene is optional",
+        "taste raw poultry to check its freshness",
+        "rinse raw chicken under the tap before cooking",
+        "wipe the same cloth over raw and cooked food",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -6356,9 +6356,9 @@ def _healthy_meal_project_foundational_sms_workshop_hygiene_then_cross():
     )
     correct = "cross-contamination spreads bacteria from raw to ready-to-eat food"
     distractors = (
-        "hygiene has no effect on food safety",
-        "raw and cooked foods should always touch",
-        "a rumour that washing hands is decorative",
+        "cooked food making raw food spoil faster",
+        "flavours mixing, which is the only risk",
+        "the raw food warming up next to cooked food",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -6394,9 +6394,9 @@ def _healthy_meal_project_foundational_sms_club_method_then_repeat():
     steps = 4
     correct = "another group could follow the same written method and get similar results"
     distractors = (
-        "methods should stay secret so results cannot be checked",
-        "repeatability is impossible in cookery",
-        "a rumour that written methods are useless",
+        "the results will be identical every time whatever the group does",
+        "the method only works for the group that wrote it",
+        "the number of steps proves the meal was healthy",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -6442,8 +6442,8 @@ def _healthy_meal_project_intermediate_sms_fair_table_then_balanced():
     correct = "the meal includes vegetables and a protein source but portion balance still matters"
     distractors = (
         "any meal with one food group is always perfect",
-        "project evidence cannot include tables",
-        "a rumour that balance is not graded",
+        "counting portions is enough and balance needs no further checking",
+        "vegetables alone give every nutrient group needed",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -6530,9 +6530,9 @@ def _healthy_meal_project_intermediate_sms_journal_iterate_then_improve():
     )
     correct = "changing one variable makes it clear what caused any improvement"
     distractors = (
+        "changing several variables at once gives faster improvement",
         "iteration means never changing the method",
-        "records are unnecessary in a project",
-        "a rumour that trials cannot be repeated",
+        "the first trial should be recorded only if it worked",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -6578,8 +6578,8 @@ def _healthy_meal_project_difficult_sms_fair_rubric_then_reflect():
     correct = "identify which rubric row to improve next using the evidence table"
     distractors = (
         "ignore the rubric because only taste matters",
-        "change every score without evidence",
-        "a rumour that reflection is not part of the project",
+        "raise every score because the meal was eaten",
+        "repeat the same method exactly to keep the score",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
@@ -6625,7 +6625,7 @@ def _healthy_meal_project_difficult_sms_report_chain_then_claim():
     distractors = (
         "a colourful poster alone proves a healthy meal",
         "peer praise replaces all data",
-        "a rumour that evidence is optional",
+        "the claim is supported if the meal tasted healthy",
     )
     options, letter = _u12_mcq_field(correct, distractors)
     question = (

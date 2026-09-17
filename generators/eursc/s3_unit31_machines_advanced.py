@@ -105,7 +105,7 @@ _FW_MS_F_WORK_PACKS = (
 def _force_work_machines_foundational_ms_work_then_unit_mcq():
     pack = random.choice(_FW_MS_F_WORK_PACKS)
     correct = "joule"
-    distractors = ("newton", "metre", "a class ranking")
+    distractors = ("newton", "metre", "kilogram")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional lab card: a crate is pushed with a force of {pack['force']} N "
@@ -190,7 +190,7 @@ def _force_work_machines_intermediate_ms_ramp_work_then_trade_mcq():
     distractors = (
         "a larger force over a smaller distance",
         "energy created by the ramp",
-        "a ranking of who pushed hardest",
+        "a smaller force and less work overall",
     )
     options, letter = _mcq(correct, distractors)
     question = (
@@ -380,7 +380,7 @@ def _force_work_machines_difficult_ms_table_work_then_pattern_mcq_then_count():
     distractors = (
         "work is proportional to the mass of the pusher",
         "work falls as force rises",
-        "the table ranks who pushed hardest",
+        "work stays the same whatever the force",
     )
     options, letter = _mcq(correct, distractors)
     question = (
@@ -419,9 +419,9 @@ def _force_work_machines_foundational_sms_site_work_then_machine_mcq():
     pack = random.choice(_FW_SMS_F_SITE_PACKS)
     correct = "a ramp, which lets a smaller force act over a longer distance"
     distractors = (
-        "a device that creates energy",
-        "a ranking of the workers",
-        "a stopwatch to measure work",
+        "a pulley, which removes the need for any work",
+        "a shorter path, which lowers the work needed",
+        "a lever, which creates the extra energy needed",
     )
     options, letter = _mcq(correct, distractors)
     question = (
@@ -518,7 +518,7 @@ def _force_work_machines_intermediate_sms_stage_pulley_work_then_mcq_then_word()
     distractors = (
         "less than lifting directly, because the pulley saves energy",
         "zero, because the pulley does the work",
-        "a ranking of the crew's strength",
+        "more than lifting directly, because the rope is longer",
     )
     options, letter = _mcq(correct, distractors)
     question = (
@@ -638,7 +638,7 @@ def _force_work_machines_difficult_sms_crane_two_works_then_pick_then_verdict():
     distractors = (
         "the winch is faulty because the works match",
         "the winch generates energy",
-        "the operator should be ranked",
+        "the winch halves the work because the effort is smaller",
     )
     options, letter = _mcq(correct, distractors)
     question = (
@@ -720,8 +720,8 @@ def _force_work_machines_difficult_sms_advert_pick_then_test_mcq():
     correct = "measure force and distance on both sides and compare the two works"
     distractors = (
         "accept the claim because the video is popular",
-        "rank buyers by strength",
-        "weigh the machine on a balance",
+        "measure only the output force and ignore the distance",
+        "count how many people the lever can lift at once",
     )
     options, letter = _mcq(correct, distractors)
     question = (
@@ -796,7 +796,7 @@ def _energy_foundational_ms_useful_then_wasted_form_mcq():
     pack = random.choice(_EN_MS_F_SPLIT_PACKS)
     useful = pack["input"] - pack["wasted"]
     correct = "thermal energy, a less useful form"
-    distractors = ("energy that has been destroyed", "a private energy diary", "a class ranking")
+    distractors = ("energy that has been destroyed", "kinetic energy, a more useful form", "extra input that the device created")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional textbook Sankey split: input {pack['input']} units, "
@@ -879,7 +879,7 @@ def _energy_intermediate_ms_useful_pct_then_conserve_mcq():
     pack = random.choice(_EN_MS_I_PCT_PACKS)
     pct = _pct(pack["useful"], pack["input"])
     correct = "still exists as a less useful form; energy is not destroyed"
-    distractors = ("has been destroyed", "was never supplied", "is stored in a class ranking")
+    distractors = ("has been destroyed", "was never supplied", "has been turned back into input")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional appliance table: input {pack['input']} units, useful output "
@@ -1044,7 +1044,7 @@ def _energy_difficult_ms_source_order_then_impact_pick():
 def _energy_difficult_ms_sankey_letter_then_mcq_then_count():
     diagram = str(sankey_bars(title="Fictional Sankey split"))
     correct = "thermal energy spread into the surroundings, still counted in the total"
-    distractors = ("energy that no longer exists", "extra input from nowhere", "a stored bill")
+    distractors = ("energy that no longer exists", "extra input from nowhere", "the useful output drawn twice")
     options, letter = _mcq(correct, distractors)
     question = (
         diagram
@@ -1101,7 +1101,7 @@ _ES_MS_F_RUB_PACKS = (
 def _electrostatics_foundational_ms_rub_count_then_kinds_mcq():
     pack = random.choice(_ES_MS_F_RUB_PACKS)
     correct = "two kinds of charge, which attract or repel"
-    distractors = ("one kind of charge only", "eighty kinds of charge", "a ranking of sparks")
+    distractors = ("one kind of charge only", "three kinds of charge", "a different kind of charge for each material")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional demo card: {pack['items'][0]} is rubbed on {pack['items'][1]} "
@@ -1186,7 +1186,7 @@ def _electrostatics_intermediate_ms_materials_count_then_ground_mcq():
     distractors = (
         "an insulator lets charge flow away fastest",
         "grounding creates more charge",
-        "grounding ranks the objects",
+        "grounding makes the object a magnet",
     )
     options, letter = _mcq(correct, distractors)
     question = (
@@ -1300,7 +1300,7 @@ def _electrostatics_difficult_ms_safety_count_then_order_then_word():
 def _electrostatics_difficult_ms_pair_letter_then_mcq_then_pick():
     diagram = str(charge_pair(title="Fictional charge pair"))
     correct = "they repel, because like charges push apart"
-    distractors = ("they attract, because like charges pull together", "nothing happens", "they swap letters")
+    distractors = ("they attract, because like charges pull together", "nothing happens, because like charges cancel out", "they lose their charge as soon as they are close")
     options, letter = _mcq(correct, distractors)
     pick_raw, pick_bank, pick_count = _pick(
         ("An insulator does not let charge flow easily", "Charge can be transferred by contact"),
@@ -1339,7 +1339,7 @@ _ES_MS_D_LIGHTNING_PACKS = (
 def _electrostatics_difficult_ms_myth_mcq_then_order_then_count():
     pack = random.choice(_ES_MS_D_LIGHTNING_PACKS)
     correct = "a misconception; the science is that a conductor gives charge a safe path to ground"
-    distractors = ("correct physics", "a reason to rank buildings", "proof charge is created")
+    distractors = ("correct physics; a conductor pulls the storm's charge towards it", "correct physics; rubber and tyres block all charge from a person", "correct physics; the conductor creates the charge that makes the spark")
     options, letter = _mcq(correct, distractors)
     order_raw, order_bank = _order(
         (
@@ -1382,7 +1382,7 @@ _ES_SMS_F_FAIR_PACKS = (
 def _electrostatics_foundational_sms_fair_balloons_then_why_mcq():
     pack = random.choice(_ES_SMS_F_FAIR_PACKS)
     correct = "rubbing separated charge, and the charged balloon attracts the wall"
-    distractors = ("the balloon is a magnet", "the wall ranks balloons", "glue on the balloon")
+    distractors = ("rubbing made the balloon a magnet, and the magnet pulls the wall", "rubbing warmed the balloon, and the warm rubber sticks to paint", "rubbing created new charge, and the wall soaks it up")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>At a {pack['where']}, {pack['balloons']} balloons are rubbed on hair and "
@@ -1463,7 +1463,7 @@ _ES_SMS_I_TANKER_PACKS = (
 def _electrostatics_intermediate_sms_tanker_cable_then_why_mcq_then_word():
     pack = random.choice(_ES_SMS_I_TANKER_PACKS)
     correct = "fuel flow builds charge by friction, and the cable lets it leave to ground before a spark"
-    distractors = ("the cable makes the fuel flow faster", "the cable ranks the crew", "the cable creates charge")
+    distractors = ("fuel flow builds charge, and the cable stores it safely until later", "the cable creates charge that keeps the fuel flowing smoothly", "the cable makes the fuel flow faster so less charge builds up")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>At a {pack['site']}, {pack['who']} must attach {pack['cable']} before "
@@ -1540,7 +1540,7 @@ def _electrostatics_intermediate_sms_precipitator_ratio_then_mcq():
     pack = random.choice(_ES_SMS_I_DUST_PACKS)
     ratio = pack["before"] // pack["after"]
     correct = "dust particles are charged and then attracted to oppositely charged plates"
-    distractors = ("dust is burned by the plates", "the plates are magnets", "the plates rank the dust")
+    distractors = ("dust particles are charged and then burned up by the hot plates", "dust particles are magnetic and stick to the metal plates", "dust particles are pushed back down the chimney by the plates")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional report on a {pack['plant']}: dust in the chimney gas falls "
@@ -1578,7 +1578,7 @@ def _electrostatics_difficult_sms_incident_drop_then_caution_pick_then_verdict()
         2,
     )
     correct = "grounding gave built-up charge a safe path, so fewer discharges — within the evidence limits"
-    distractors = ("charge was destroyed by the fix", "the fix created charge", "the workers stopped moving")
+    distractors = ("grounding destroyed the charge, so sparks are now impossible", "the fix proves the site is now completely spark-free", "the workers stopped moving, so no charge was separated")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional safety audit of a {pack['site']}: {pack['sparks_before']} "
@@ -1647,7 +1647,7 @@ def _electrostatics_difficult_sms_workshop_pick_then_rule_mcq():
         2,
     )
     correct = "keep the technician and the bench grounded so charge cannot build up"
-    distractors = ("insulate everything so charge stays put", "ask which charge tastes sweeter", "use a magnet")
+    distractors = ("insulate everything so charge stays put", "let charge build up and discharge it with a spark", "hold components by their insulating packaging")
     options, letter = _mcq(correct, distractors)
     question = (
         "<p>A fictional electronics-repair manual explains anti-static precautions.</p>"
@@ -1720,7 +1720,7 @@ def _electric_current_foundational_ms_series_count_then_switch_mcq():
     pack = random.choice(_EC_MS_F_LAMP_PACKS)
     total = pack["lamps"] + pack["cells"]
     correct = "all the lamps go out, because the single loop is broken"
-    distractors = ("only one lamp goes out", "the lamps get brighter", "the cell becomes a magnet")
+    distractors = ("only the lamp next to the switch goes out", "the lamps stay lit but get dimmer", "the lamps get brighter because less is shared")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional circuit card: {pack['cells']} cell(s) and {pack['lamps']} lamp(s) "
@@ -1802,7 +1802,7 @@ _EC_MS_I_PAR_PACKS = (
 def _electric_current_intermediate_ms_parallel_paths_then_fault_mcq():
     pack = random.choice(_EC_MS_I_PAR_PACKS)
     correct = "the other branches keep working, because each has its own path"
-    distractors = ("every lamp goes out", "the cell stops working", "the circuit becomes series")
+    distractors = ("every lamp goes out", "the cell stops working, because its path is broken", "the other lamps get dimmer, because they share the current")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional circuit card: one cell feeding {pack['branches']} parallel "
@@ -1882,7 +1882,7 @@ _EC_MS_D_FAULT_PACKS = (
 def _electric_current_difficult_ms_fault_count_then_diagnose_mcq_then_word():
     pack = random.choice(_EC_MS_D_FAULT_PACKS)
     correct = "a series loop with one break; the whole path is open"
-    distractors = ("a parallel circuit with one broken branch", "a circuit with too many cells", "a magnet in the loop")
+    distractors = ("a parallel circuit with one broken branch", "a circuit with too many lamps; the current was all used up", "a circuit whose cell has run out; the lamps used it up")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional fault report: {pack['lamps']} lamps in one circuit, and "
@@ -1953,7 +1953,7 @@ _EC_MS_D_SAFE_PACKS = (
 def _electric_current_difficult_ms_safety_count_then_mcq_then_word():
     pack = random.choice(_EC_MS_D_SAFE_PACKS)
     correct = "the heating effect of current, which can make a wire dangerously hot"
-    distractors = ("the magnetic effect ranking pupils", "current being stored in the lamp", "the cell being a magnet")
+    distractors = ("the magnetic effect of current, which can pull the leads together", "the lighting effect of current, which can dazzle a pupil", "current being stored in a lamp and released later")
     options, letter = _mcq(correct, distractors)
     question = (
         "<p>A fictional classroom rule sheet lists: " + "; ".join(pack["rules"]) + ".</p>"
@@ -1988,7 +1988,7 @@ _EC_SMS_F_TORCH_PACKS = (
 def _electric_current_foundational_sms_torch_cells_then_loop_mcq():
     pack = random.choice(_EC_SMS_F_TORCH_PACKS)
     correct = "the switch completes the loop so current can flow"
-    distractors = ("the switch creates the cells", "the torch ranks its owners", "the bulb is a magnet")
+    distractors = ("the switch adds extra current to the cells", "the switch stores current until it is needed", "the bulb makes its own current when pressed")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>{pack['who']} (fictional) opens {pack['thing']} and finds {pack['cells']} cell(s), "
@@ -2076,7 +2076,7 @@ _EC_SMS_I_HOUSE_PACKS = (
 def _electric_current_intermediate_sms_model_rooms_then_parallel_mcq_then_word():
     pack = random.choice(_EC_SMS_I_HOUSE_PACKS)
     correct = "each lamp is on its own path, so switching one off leaves the others lit"
-    distractors = ("all lamps share one path", "the lamps are magnets", "the model ranks its builders")
+    distractors = ("all lamps share one path, so one switch controls them all", "the lamps in a row use up the current one after another", "a parallel layout gives each lamp its own cell")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional design-club project wires {pack['where']} so that each of "
@@ -2150,7 +2150,7 @@ def _electric_current_intermediate_sms_device_effects_then_mcq():
     pack = random.choice(_EC_SMS_I_EFFECT_PACKS)
     correct = f"the {pack['effect']} effect of current"
     other = "magnetic" if pack["effect"] == "heating" else "heating"
-    distractors = (f"the {other} effect of current", "a stored-energy ranking", "a cooling effect that freezes the wire")
+    distractors = (f"the {other} effect of current", "a chemical effect of current that changes the metal", "a cooling effect that freezes the wire")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional catalogue lists {pack['n']} effects of current: heating, "
@@ -2186,7 +2186,7 @@ def _electric_current_difficult_sms_rewire_count_then_pick_then_verdict():
         2,
     )
     correct = "rewire in parallel so a single failure no longer darkens the whole set"
-    distractors = ("add more lamps in series", "remove all the switches", "replace the lamps with magnets")
+    distractors = ("add more lamps in series", "remove all the switches", "add a second cell so the current lasts longer")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional {pack['where']} technician logs that all {pack['lamps']} display "
@@ -2256,7 +2256,7 @@ def _electric_current_difficult_sms_safety_pick_then_rule_mcq():
         2,
     )
     correct = "switch off, report it, and let the teacher check the circuit"
-    distractors = ("touch the wire to see how hot it is", "photograph home sockets for the app", "add more cells")
+    distractors = ("touch the wire to see how hot it is", "photograph home sockets for the app", "add more cells to finish the practical faster")
     options, letter = _mcq(correct, distractors)
     question = (
         "<p>A fictional lab-safety video shows a pupil noticing a warm lead during a "
@@ -2329,7 +2329,7 @@ _MG_MS_I_SORT_PACKS = (
 def _magnetism_intermediate_ms_sort_count_then_pole_mcq():
     pack = random.choice(_MG_MS_I_SORT_PACKS)
     correct = "attract, because unlike poles attract"
-    distractors = ("repel, because unlike poles repel", "do nothing", "rank the magnets")
+    distractors = ("repel, because unlike poles repel", "do nothing, because only like poles interact", "repel, then attract once they touch")
     options, letter = _mcq(correct, distractors)
     question = (
         "<p>A fictional lab tray: " + ", ".join(pack["items"]) + ".</p>"
@@ -2410,7 +2410,7 @@ def _magnetism_difficult_ms_turns_pattern_then_mcq_then_word():
     t, c = pack["turns"], pack["clips"]
     ratio = c[-1] // c[0]
     correct = "more turns give a stronger electromagnet, in this simple model"
-    distractors = ("more turns weaken the magnet", "turns have no effect", "the paperclips are magnets")
+    distractors = ("more turns weaken the magnet", "turns have no effect", "the number of clips depends on the core, not the turns")
     options, letter = _mcq(correct, distractors)
     question = (
         "<p>A fictional data table for an electromagnet: "
@@ -2482,7 +2482,7 @@ _MG_MS_D_ANIMAL_PACKS = (
 def _magnetism_difficult_ms_animal_mcq_then_count_then_word():
     pack = random.choice(_MG_MS_D_ANIMAL_PACKS)
     correct = "a public animal example of sensing a magnetic field, not a pupil superpower"
-    distractors = ("proof the animal is a magnet", "a reason to rank pupils", "a spell")
+    distractors = ("proof that the animal's body is a permanent magnet", "proof that the animal is charged by friction as it moves", "a test of which pupil can sense a magnetic field best")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional textbook describes {pack['animal']} using {pack['cue']} to navigate.</p>"
@@ -2517,7 +2517,7 @@ _MG_SMS_F_FRIDGE_PACKS = (
 def _magnetism_foundational_sms_board_magnets_then_why_mcq():
     pack = random.choice(_MG_SMS_F_FRIDGE_PACKS)
     correct = "the board contains a magnetic material such as steel"
-    distractors = ("the board is charged by friction", "the magnets are glued", "the board ranks the notes")
+    distractors = ("the board is charged by friction", "the magnets are glued", "the paper notices are magnetic")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>On {pack['where']}, {pack['magnets']} magnets hold up notices.</p>"
@@ -2599,7 +2599,7 @@ def _magnetism_intermediate_sms_recycle_pct_then_mcq_then_word():
     pack = random.choice(_MG_SMS_I_RECYCLE_PACKS)
     pct = _pct(pack["steel"], pack["items"])
     correct = "steel is magnetic and is pulled out; aluminium is not and passes by"
-    distractors = ("aluminium is more magnetic than steel", "the magnet ranks the cans", "the cans are charged")
+    distractors = ("aluminium is more magnetic than steel", "all metals are magnetic, so the heaviest cans lift", "the steel cans are charged by friction on the belt")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A {pack['plant']} passes {pack['items']} cans under a magnet; "
@@ -2674,7 +2674,7 @@ _MG_SMS_I_SHIP_PACKS = (
 def _magnetism_intermediate_sms_ship_readings_then_reason_mcq():
     pack = random.choice(_MG_SMS_I_SHIP_PACKS)
     correct = "the steel hull and electrical equipment have their own magnetic effects that disturb the needle"
-    distractors = ("the compass is charged by friction", "Earth has no field at sea", "the crew should be ranked")
+    distractors = ("the compass needle is charged by friction as the ship moves", "Earth has no magnetic field out at sea, only on land", "the needle only works when the ship is completely still")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A {pack['crew']} takes {pack['readings']} compass readings and finds "
@@ -2711,7 +2711,7 @@ def _magnetism_difficult_sms_trial_ratio_then_caution_pick_then_verdict():
         2,
     )
     correct = "more turns gave a stronger electromagnet in this trial, within its limits"
-    distractors = ("turns do not matter", "the core should be plastic", "the coil creates energy")
+    distractors = ("turns do not matter; only the core decides the strength", "two trials prove the rule for every electromagnet", "the coil creates energy, so the clips lift by themselves")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A {pack['lab']} log: {pack['turns'][0]} turns lift {pack['clips'][0]} clips; "
@@ -2780,7 +2780,7 @@ def _magnetism_difficult_sms_myth_pick_then_test_mcq():
         2,
     )
     correct = "compare the bracelet with a non-magnetic copy in a blind test"
-    distractors = ("accept the advert", "rank buyers", "ask who feels magnetic")
+    distractors = ("accept the advert because many people bought one", "ask buyers to vote on whether it works", "test it on one person only, with no comparison")
     options, letter = _mcq(correct, distractors)
     question = (
         "<p>A fictional consumer show tests an advert claiming a 'magnetic bracelet' "
@@ -2850,7 +2850,7 @@ _RB_MS_F_REQ_PACKS = (
 def _robotics_project_foundational_ms_requirements_count_then_testable_mcq():
     pack = random.choice(_RB_MS_F_REQ_PACKS)
     correct = "another group could test each one and say pass or fail"
-    distractors = ("they store a league of whose robot is best", "they replace the teacher's risk assessment", "they need a private photo upload")
+    distractors = ("they describe what the robot looks like, not what it does", "they can only be judged by the team that wrote them", "they replace the teacher's risk assessment")
     options, letter = _mcq(correct, distractors)
     question = (
         "<p>A fictional team's plan lists requirements: " + "; ".join(pack["reqs"]) + ".</p>"
@@ -2929,7 +2929,7 @@ _RB_MS_I_MACHINE_PACKS = (
 def _robotics_project_intermediate_ms_match_machine_then_test_mcq():
     pack = random.choice(_RB_MS_I_MACHINE_PACKS)
     correct = pack["machine"]
-    distractors = pack["others"] + ("a stored league table",)
+    distractors = pack["others"] + ("a longer battery lead",)
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional team's requirement: '{pack['need']}'. They consider a lever, "
@@ -3011,7 +3011,7 @@ def _robotics_project_difficult_ms_log_pct_then_next_mcq_then_word():
     pack = random.choice(_RB_MS_D_LOG_PACKS)
     pct = _pct(pack["passes"], pack["trials"])
     correct = "change one part of the design, then repeat the same test"
-    distractors = ("declare the requirement met", "store the robot in a league", "change everything at once")
+    distractors = ("declare the requirement met", "rewrite the requirement so the robot passes", "change everything at once")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional test log: requirement '{pack['req']}' passed {pack['passes']} "
@@ -3081,7 +3081,7 @@ def _robotics_project_difficult_ms_budget_left_then_mcq_then_word():
     pack = random.choice(_RB_MS_D_BUDGET_PACKS)
     left = pack["budget"] - pack["spent"]
     correct = "check each part against a requirement before ordering"
-    distractors = ("buy the most expensive part", "order household mains parts", "spend it on a league trophy")
+    distractors = ("buy the most expensive part", "order household mains parts", "spend all of it so nothing is wasted")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional team has a {pack['budget']} token parts budget and has spent "
@@ -3117,7 +3117,7 @@ _RB_SMS_F_TEAM_PACKS = (
 def _robotics_project_foundational_sms_team_reqs_then_first_mcq():
     pack = random.choice(_RB_SMS_F_TEAM_PACKS)
     correct = "write requirements another group could test"
-    distractors = ("upload private photos to the app", "rank the other teams", "skip the risk assessment")
+    distractors = ("build a prototype before planning anything", "choose the motors and sensors first", "test the robot before it has a task")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>{pack['team']} wants a robot to {pack['goal']}; their plan has "
@@ -3197,7 +3197,7 @@ _RB_SMS_I_FAIL_PACKS = (
 def _robotics_project_intermediate_sms_fail_change_then_mcq_then_word():
     pack = random.choice(_RB_SMS_I_FAIL_PACKS)
     correct = "one change at a time, then the same test again, so the effect can be seen"
-    distractors = ("change everything and hope", "stop testing and declare success", "rank the team")
+    distractors = ("every change at once, so the robot is fixed faster", "no more tests, so the team can declare success", "a different test each time, so more is learned")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>{pack['team']} logs that {pack['fail']}; they plan to {pack['change']}.</p>"
@@ -3271,7 +3271,7 @@ _RB_SMS_I_LOAD_PACKS = (
 def _robotics_project_intermediate_sms_load_machine_then_reason_mcq():
     pack = random.choice(_RB_SMS_I_LOAD_PACKS)
     correct = "it trades a smaller motor force for a larger distance, which the small motor can supply"
-    distractors = ("it creates energy for the motor", "it makes the load lighter", "it ranks the teams")
+    distractors = ("it creates energy for the motor", "it makes the load lighter", "it lets the motor do less work overall")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>{pack['team']} must lift a {pack['load']} g load with a small motor, so "
@@ -3308,7 +3308,7 @@ def _robotics_project_difficult_sms_showcase_pct_then_caution_pick_then_verdict(
         2,
     )
     correct = "the evidence and reflection are strong even though the pass rate is imperfect"
-    distractors = ("the robot must be uploaded to be graded", "the team failed the project", "the rate should be hidden")
+    distractors = ("the pass rate alone decides the grade", "the team failed the project", "the rate should be hidden")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>At a fictional showcase, {pack['team']} presents a log: {pack['passes']} "
@@ -3379,7 +3379,7 @@ def _robotics_project_difficult_sms_judge_pick_then_grading_mcq():
         2,
     )
     correct = "planning, evidence, iteration and reflection; the physical robot is judged in class"
-    distractors = ("only the fastest robot", "the private code upload", "whose parents helped most")
+    distractors = ("only the fastest robot", "the private code upload", "the look of the robot's finished body")
     options, letter = _mcq(correct, distractors)
     question = (
         "<p>A fictional judging guide for a school robotics fair is published for all teams.</p>"

@@ -914,9 +914,9 @@ def _measurement_difficult_ms_zero_error_correct():
     kg = corrected / 1000
     correct = "a systematic zero error; the balance needs calibration"
     distractors = (
-        "a random error from draughts",
-        "evidence that grams are not SI units",
-        "a conversion error from kilometres",
+        "a random error; taking more readings would remove it",
+        "a parallax error from reading the display at an angle",
+        "an error in the known mass, not in the balance",
     )
     options, letter = _meas_ms_mcq_field(correct, distractors)
     question = (
@@ -1772,10 +1772,10 @@ _LAB_POOLS = {
             "volume",
             "The volume of a liquid is best measured with a",
             [
-                "A  ruler",
+                "A  ruler held against the side of the container",
                 "B  measuring cylinder, reading the bottom of the meniscus",
-                "C  thermometer",
-                "D  stopwatch",
+                "C  measuring cylinder, reading the top edge of the curve",
+                "D  balance, because volume and mass are the same thing",
             ],
             "B",
             "Use a measuring cylinder and read the meniscus correctly.",

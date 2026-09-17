@@ -488,8 +488,8 @@ def _forces_sport_foundational_ms_net_zero_then_pair():
     correct = "A and B push each other with equal and opposite forces"
     distractors = (
         "only A can push; B has no force on A",
-        "forces disappear when objects touch",
-        "mass is measured in newtons",
+        "A pushes B harder than B pushes A back",
+        "the two pushes act on the same object",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     diagram = str(force_pair(title="Fictional interaction pair"))
@@ -530,9 +530,9 @@ def _forces_sport_foundational_ms_friction_grip_then_net():
     net = forward - backward
     correct = "friction between shoe and track helps the athlete push forward"
     distractors = (
-        "friction only exists in outer space",
-        "friction is the same as mass in kilograms",
-        "shoes cannot exert forces on the track",
+        "friction between shoe and track only ever slows the athlete down",
+        "friction between shoe and track is zero when the track is dry",
+        "friction between shoe and track is larger on ice than on rubber",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -625,9 +625,9 @@ def _forces_sport_intermediate_ms_balance_net_then_cog():
     net = 0
     correct = "less stable because the line of centre of gravity may fall outside the base"
     distractors = (
-        "more stable because mass doubles automatically",
-        "friction disappears on a narrow base",
-        "weight is not a force in newtons",
+        "more stable because the centre of gravity is higher above the beam",
+        "exactly as stable as a low wide pose, since the net force is zero",
+        "less stable because the gymnast's weight increases in a tall pose",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -666,9 +666,9 @@ def _forces_sport_intermediate_ms_friction_slow_then_weight():
     net = forward - friction
     correct = "the gravitational force on a mass, measured in newtons"
     distractors = (
-        "mass in kilograms only",
-        "a type of friction with no unit",
-        "speed in metres per second",
+        "the amount of matter in an object, measured in kilograms",
+        "the same thing as mass, but measured in newtons",
+        "the friction force that stops an object sliding, in newtons",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -712,9 +712,9 @@ def _forces_sport_intermediate_ms_interaction_order_then_pick():
     )
     correct = "a matching interaction pair on the two boxes"
     distractors = (
-        "unrelated units of time",
-        "masses listed in kilograms only",
-        "a rumour with no objects",
+        "two forces acting on the same box",
+        "a bigger push and a smaller push back",
+        "one push and one pull on the boxes",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -755,9 +755,9 @@ def _forces_sport_difficult_ms_resultant_sum_then_eq():
     resultant = right - left
     correct = "the resultant force is zero (equilibrium)"
     distractors = (
-        "gravity does not exist on Earth",
-        "mass becomes zero newtons",
-        "friction is forbidden in sport",
+        "no forces act on the player at all",
+        "the player's weight has been cancelled",
+        "all the forces act in the same direction",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -797,9 +797,9 @@ def _forces_sport_difficult_ms_blocks_push_then_net():
     net = push - drag
     correct = "the blocks push the sprinter forwards (interaction pair)"
     distractors = (
-        "the blocks do nothing back",
-        "the sprinter's mass disappears",
-        "time stops at the start line",
+        "the blocks push the sprinter backwards as well",
+        "the blocks do nothing back, because they are fixed",
+        "the blocks push back with a much smaller force"
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -892,9 +892,9 @@ def _forces_sport_foundational_sms_shoe_grip_then_cancel():
     net = 0
     correct = "each object pushes the other (interaction pair)"
     distractors = (
-        "only the shoe pushes",
-        "friction is mass in kilograms",
-        "forces need no objects",
+        "push each other, but the shoe pushes harder",
+        "cancel out, so neither one is pushing",
+        "interact only while the shoe is sliding",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -933,7 +933,7 @@ def _forces_sport_foundational_sms_push_pair_then_unit():
     push, back = pack
     net = push - back
     correct = "the newton (N)"
-    distractors = ("the metre (m)", "the second (s)", "the kilogram only")
+    distractors = ("the kilogram (kg)", "the joule (J)", "the watt (W)")
     options, letter = _u13_mcq_field(correct, distractors)
     diagram = str(force_pair())
     question = (
@@ -1016,9 +1016,9 @@ def _forces_sport_intermediate_sms_gymnast_eq_then_cog():
     net = 0
     correct = "the centre of gravity must stay over the base for stability"
     distractors = (
-        "mass becomes infinite on a beam",
-        "friction removes the need for balance",
-        "weight is not measured in newtons",
+        "the centre of gravity must be as high as possible",
+        "the support force must be larger than the weight",
+        "the gymnast's weight must be reduced to stay up",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -1058,9 +1058,9 @@ def _forces_sport_intermediate_sms_puck_fric_then_net():
     net = applied - friction
     correct = "weight is the gravitational force on a mass in newtons"
     distractors = (
-        "weight is mass in kilograms",
-        "friction is speed in m/s",
-        "net force is always zero",
+        "weight is the amount of matter in an object in kilograms",
+        "weight is the same as mass, just measured in newtons",
+        "weight is the friction force that holds an object still",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -1100,9 +1100,9 @@ def _forces_sport_intermediate_sms_weight_mass_order_then_mcq():
     )
     correct = "mass stays the same on the Moon but weight is smaller"
     distractors = (
-        "mass becomes zero on the Moon",
-        "weight is measured in kilograms only",
-        "friction replaces weight on the Moon",
+        "mass is smaller on the Moon but weight stays the same",
+        "mass and weight are both smaller on the Moon",
+        "mass and weight both stay the same on the Moon",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -1141,9 +1141,9 @@ def _forces_sport_difficult_sms_sprinter_blocks_then_resultant():
     resultant = right - left
     correct = "the blocks push the sprinter forwards"
     distractors = (
-        "the blocks exert no force",
-        "mass is measured in seconds",
-        "air drag always helps forward motion",
+        "the blocks exert no force back",
+        "the blocks push the sprinter backwards",
+        "the blocks pull the sprinter downwards",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -1184,9 +1184,9 @@ def _forces_sport_difficult_sms_air_drag_then_sum():
     net = thrust - drag
     correct = "equilibrium — resultant force is zero"
     distractors = (
-        "infinite acceleration",
-        "mass becomes a newton",
-        "friction is forbidden in cycling",
+        "steady acceleration — resultant force is forward",
+        "a state of rest — the cyclist stops moving",
+        "free fall — only weight acts on the cyclist",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -1282,9 +1282,9 @@ def _breathing_intermediate_ms_team_pulse_mean_then_bpm():
     scale = mean  # beats per minute if 10 beats in 10 s → same rate
     correct = "gas exchange at the lungs can happen"
     distractors = (
-        "bones pump air like a bicycle tyre",
-        "mass becomes weight in seconds",
-        "friction removes the need for oxygen",
+        "the heart can be squeezed to pump faster",
+        "oxygen can be made inside the lungs",
+        "the blood can be warmed before it circulates",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -1325,9 +1325,9 @@ def _breathing_intermediate_ms_lung_box_then_gas_mcq():
     lung_letter = "B"
     correct = "oxygen is added to blood at the lungs"
     distractors = (
-        "nitrogen is the only gas in air",
-        "the heart digests food",
-        "carbon dioxide is pure helium",
+        "oxygen is removed from blood at the lungs",
+        "carbon dioxide is added to blood at the lungs",
+        "blood is pumped a second time at the lungs",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -1413,9 +1413,9 @@ def _breathing_difficult_ms_session_pulse_scale_then_beats():
     bpm = pack["beats"] * factor
     correct = "air movement, blood transport and cell chemistry work together"
     distractors = (
-        "they are three names for friction",
-        "the skeleton stores oxygen as a metal bar",
-        "speed is measured in newtons",
+        "they are three names for the same process",
+        "the lungs do all three jobs on their own",
+        "the heart does breathing and respiration too",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -1454,9 +1454,9 @@ def _breathing_difficult_ms_buoyancy_depth_then_mcq():
     depth_count = 3
     correct = "upthrust (buoyancy) is greater in denser salty water"
     distractors = (
-        "mass becomes zero underwater",
-        "pulse stops at the pool edge",
-        "oxygen is a metal",
+        "the swimmer's mass is smaller in salty water",
+        "salt makes the swimmer's body less dense",
+        "denser water pushes down harder on the swimmer",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -1545,9 +1545,9 @@ def _breathing_foundational_sms_club_pulse_table_then_bpm():
     bpm = pack["beats"] * (60 // pack["seconds"])
     correct = "the heart pumps blood around the body"
     distractors = (
-        "the heart digests food",
-        "pulse is measured in newtons",
-        "air has no nitrogen",
+        "the heart makes new blood for the body",
+        "the heart adds oxygen to the blood",
+        "the heart cleans waste out of the blood",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -1660,9 +1660,9 @@ def _breathing_intermediate_sms_team_pulse_range_then_mean():
     )
     correct = "muscles need more oxygen delivered by blood"
     distractors = (
-        "the skeleton wants fame",
-        "time stops during exercise",
-        "air contains no oxygen",
+        "the lungs need to be squeezed by the heart",
+        "the blood becomes thicker during exercise",
+        "muscles stop using oxygen while working hard",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -1706,9 +1706,9 @@ def _breathing_intermediate_sms_lungs_circ_order_then_mcq():
     )
     correct = "less oxygen and more carbon dioxide than inhaled air"
     distractors = (
-        "more oxygen and less carbon dioxide",
-        "pure helium only",
-        "no nitrogen at all",
+        "more oxygen and less carbon dioxide than inhaled air",
+        "no oxygen at all, only carbon dioxide",
+        "more oxygen and more carbon dioxide than inhaled air",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -1787,9 +1787,9 @@ def _breathing_difficult_sms_recovery_pulse_then_scale():
         "the body is still supplying extra oxygen and clearing extra carbon dioxide"
     )
     distractors = (
-        "the race clock is broken",
-        "mass increased during recovery",
-        "friction is respiration",
+        "the lungs are still full of carbon dioxide and must be emptied first",
+        "the muscles keep sprinting for a while after the finish line",
+        "the heart has to slow down before the breathing rate can drop",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -1827,9 +1827,9 @@ def _breathing_difficult_sms_salty_buoy_then_pressure():
     markers = 4
     correct = "pressure on the body increases with depth"
     distractors = (
-        "pressure falls to zero underwater",
-        "buoyancy is mass in kilograms",
-        "pulse replaces upthrust",
+        "pressure on the body decreases with depth",
+        "pressure on the body stays the same at any depth",
+        "pressure on the body disappears below the surface",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -1918,9 +1918,9 @@ def _sport_health_intermediate_ms_antag_sketch_then_pair_count():
     pair_count = 2
     correct = "an antagonistic pair of muscles pulling opposite ways"
     distractors = (
-        "two lungs exchanging gases",
-        "two food groups on a plate",
-        "a banned drug list",
+        "a pair of bones joined at a hinge",
+        "a pair of tendons holding the bone in place",
+        "a pair of muscles pulling the same way",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -1966,9 +1966,9 @@ def _sport_health_intermediate_ms_coach_rest_table_then_training():
     training = pack["days"] - pack["rest"]
     correct = "the skeleton supports the body and protects organs"
     distractors = (
-        "the skeleton pumps blood",
-        "joints are gases in air",
-        "muscles are bones",
+        "the skeleton pumps blood and stores oxygen",
+        "the skeleton produces the energy for the muscles",
+        "the skeleton pulls on the muscles to move them",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -2047,9 +2047,9 @@ def _sport_health_difficult_ms_muscle_pair_then_bone():
     diagram = str(antagonistic_pair(title="Fictional A above, B below"))
     correct = "muscles pull on bones that meet at a joint"
     distractors = (
-        "bones push themselves with no tissue",
-        "air is a muscle",
-        "speed is a bone",
+        "bones move on their own and muscles only cover them",
+        "muscles push the bones apart at the joint",
+        "the joint itself contracts to move the bones",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     parts = 3
@@ -2141,9 +2141,9 @@ def _sport_health_difficult_ms_doping_policy_order_then_mcq():
     )
     correct = "outdoor sessions still follow the school's sun policy"
     distractors = (
-        "pupils must compare skin colour in the quiz",
-        "joints become lungs",
-        "drugs replace shade",
+        "sun protection is only needed during the summer holidays",
+        "outdoor sessions are always moved indoors on cloudy days",
+        "shade and covering are unnecessary on any cloudy day",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -2221,9 +2221,9 @@ def _sport_health_foundational_sms_antag_pair_then_mcq():
     diagram = str(antagonistic_pair())
     correct = "they pull in opposite ways around a bone"
     distractors = (
-        "they always pull the same way",
-        "they are two lungs",
-        "they measure pulse in newtons",
+        "they always pull the same way around a bone",
+        "they push the bone as well as pulling it",
+        "they both shorten at the same time to move a bone",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     pair_n = 2
@@ -2299,9 +2299,9 @@ def _sport_health_intermediate_sms_flex_pair_then_joint_mcq():
     diagram = str(antagonistic_pair(title="Fictional elbow pair"))
     correct = "bends at the elbow; the opposite muscle relaxes"
     distractors = (
-        "lengthens the bones permanently",
-        "becomes a joint made of air",
-        "stops having mass",
+        "bends at the elbow; the opposite muscle also shortens",
+        "straightens at the elbow as the front muscle pushes",
+        "bends at the shoulder while the elbow stays fixed",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     pair_n = 2
@@ -2384,9 +2384,9 @@ def _sport_health_intermediate_sms_rest_days_table_then_train():
     training = pack["days"] - pack["rest"]
     correct = "a joint is where bones meet and movement can happen"
     distractors = (
-        "a joint is a gas in air",
-        "a joint never moves",
-        "bones are muscles",
+        "a joint is a muscle that connects two bones",
+        "a joint is the soft end of a single bone",
+        "a joint is a tendon that joins muscle to bone",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -2430,9 +2430,9 @@ def _sport_health_difficult_sms_overuse_chain_then_mcq():
     )
     correct = "raise injury risk; load and recovery matter"
     distractors = (
-        "only improve slogans",
-        "turn muscle into nitrogen",
-        "ban all water",
+        "only ever make the body stronger",
+        "be safe as long as it is done slowly",
+        "never cause injury in a young athlete",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (
@@ -2515,9 +2515,9 @@ def _sport_health_difficult_sms_fair_sport_order_then_drug_mcq():
     )
     correct = "following anti-doping and medical rules without asking classmates what they take"
     distractors = (
-        "secret banned drugs are encouraged",
-        "ignoring bleeding is fair play",
-        "skipping all water is healthy",
+        "using any substance a doctor has ever prescribed to anyone",
+        "keeping a private list of what each teammate takes",
+        "letting each team decide its own rules about drugs",
     )
     options, letter = _u13_mcq_field(correct, distractors)
     question = (

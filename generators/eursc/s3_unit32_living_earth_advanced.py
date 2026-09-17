@@ -105,7 +105,7 @@ def _food_environment_foundational_ms_table_highest_then_meaning_mcq():
     rows = pack["rows"]
     top = max(rows, key=lambda r: r[1])
     correct = "a public footprint figure for comparing foods, not a private diary"
-    distractors = ("a ranking of households", "a rule about what any pupil must eat", "a food group")
+    distractors = ("the amount of energy stored in a kilogram of that food", "the number of kilograms of that food eaten per person each year", "a figure that counts only the transport of the food to the shop")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional textbook footprint table ({pack['unit']}): "
@@ -183,7 +183,7 @@ def _food_environment_intermediate_ms_compare_ratio_then_choice_mcq():
     (a, av), (b, bv) = pack["a"], pack["b"]
     ratio = av // bv
     correct = f"a public canteen could cut its footprint by serving more {b} dishes"
-    distractors = (f"every pupil must stop eating {a}", "households should be ranked", f"{b} has the larger footprint")
+    distractors = (f"every pupil must stop eating {a} from now on", f"buying {a} locally would give it a smaller footprint than {b}", f"{b} have the larger footprint because plants take longer to grow")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional public footprint table: {a} {av} and {b} {bv} kg CO₂e per kg.</p>"
@@ -273,7 +273,7 @@ def _food_environment_difficult_ms_order_foods_then_mcq_then_word():
         ("a private family diary (no value)",),
     )
     correct = "public lifecycle data collected across farms, transport and processing"
-    distractors = ("a survey of pupils' plates", "a ranking of households", "a guess from an advert")
+    distractors = ("the distance each food travelled from the farm to the shop only", "the price of each food in a typical supermarket", "the energy content of each food printed on its label")
     options, letter = _mcq(correct, distractors)
     question = (
         "<p>A fictional public lifecycle table gives footprints for four foods (values shown in the cards).</p>"
@@ -335,7 +335,7 @@ def _food_environment_difficult_ms_land_ratio_then_pick_then_count():
 @_u32_variant("food_environment", "ms", "difficult", "claim_mcq_then_order_then_word")
 def _food_environment_difficult_ms_claim_mcq_then_order_then_word():
     correct = "check the claim against a public lifecycle table, including transport and packaging"
-    distractors = ("accept it because the label is green", "survey pupils' shopping", "rank shops by their adverts")
+    distractors = ("accept the claim because the label is printed in green", "assume the product is eco-friendly because it costs more", "judge it only by whether the packaging can be recycled")
     options, letter = _mcq(correct, distractors)
     order_raw, order_bank = _order(
         ("Find the public lifecycle data for the product", "Compare each stage: production, transport, packaging, waste", "Judge whether the label's claim matches the evidence"),
@@ -375,7 +375,7 @@ def _food_environment_foundational_sms_canteen_options_then_low_mcq():
     pack = random.choice(_FE_SMS_F_CANTEEN_PACKS)
     correct = pack["low"]
     other = [o for o in pack["options"] if o != pack["low"]][0]
-    distractors = (other, "whichever pupils vote for", "the one with the nicer advert")
+    distractors = (other, "both dishes, equally", "neither dish, the table cannot say")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>{pack['where'].capitalize()} compares {pack['options'][0]} and {pack['options'][1]} "
@@ -458,7 +458,7 @@ def _food_environment_intermediate_sms_menu_drop_then_mcq_then_word():
     pack = random.choice(_FE_SMS_I_MENU_PACKS)
     drop = pack["before"] - pack["after"]
     correct = "a public menu change lowered the total; no individual's meals were tracked"
-    distractors = ("each diner's plate was ranked", "the food lost its weight", "the canteen created energy")
+    distractors = ("each diner's meals were tracked one by one to find the drop", "the food lost mass, so it needed less energy to cook", "the canteen made its own energy and so cut the footprint")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>{pack['canteen'].capitalize()} reports its weekly footprint fell from "
@@ -533,7 +533,7 @@ def _food_environment_intermediate_sms_water_ratio_then_mcq():
     pack = random.choice(_FE_SMS_I_WATER_PACKS)
     ratio = pack["litres"] // pack["alt_l"]
     correct = "water use is one impact; a fair comparison also weighs land and greenhouse gases"
-    distractors = (f"no one should ever eat {pack['crop']}", "households should be ranked by water", "water use is not an environmental impact")
+    distractors = (f"no one should ever eat {pack['crop']}, whatever else the table shows", f"{pack['alt']} must be the better choice on every environmental measure", "water use is not an environmental impact because rain replaces it")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional public water-footprint table: {pack['crop']} {pack['litres']} litres "
@@ -570,7 +570,7 @@ def _food_environment_difficult_sms_trial_gap_then_caution_pick_then_verdict():
         2,
     )
     correct = "the menu change is associated with a larger footprint fall, within the study's limits"
-    distractors = ("the menu change caused a larger footprint", "the control sites wasted more food", "diners should be surveyed on their plates")
+    distractors = ("the menu change definitely caused the whole of the larger fall", "the sites without the change made no cut in footprint at all", "the control sites must have wasted more food than the others")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A {pack['study']}: {pack['schools_with']} sites adding plant-based options cut "
@@ -636,7 +636,7 @@ def _food_environment_difficult_sms_documentary_pick_then_verdict_mcq():
         2,
     )
     correct = "use public lifecycle data to compare options and keep the discussion about systems, not individuals"
-    distractors = ("tell each pupil what to eat", "treat one dramatic claim as settled science", "trust the documentary's most dramatic claim")
+    distractors = ("tell each pupil what they should eat based on the film", "treat the film's most dramatic claim as settled science", "ignore the film completely because documentaries are never reliable")
     options, letter = _mcq(correct, distractors)
     question = (
         "<p>A fictional documentary about food and climate is shown in a lesson.</p>"
@@ -709,7 +709,7 @@ def _ecosystems_cycles_foundational_ms_chain_count_then_producer_mcq():
     pack = random.choice(_EC_MS_F_CHAIN_PACKS)
     chain = pack["chain"]
     correct = f"{chain[0]}, because it makes food using light energy"
-    distractors = tuple(f"{c}, because it eats others" for c in chain[1:3]) + ("the quiz should rank pupils as animals",)
+    distractors = (f"{chain[1]}, because it is the first to eat in the chain", f"{chain[-1]}, because it is at the top of the chain", "none of them, because plants do not count as organisms")
     options, letter = _mcq(correct, distractors)
     question = (
         "<p>A fictional textbook food chain: " + " → ".join(chain) + ".</p>"
@@ -781,7 +781,7 @@ def _ecosystems_cycles_intermediate_ms_energy_pct_then_loss_mcq():
     pack = random.choice(_EC_MS_I_ENERGY_PACKS)
     pct = _pct(pack["primary"], pack["producer"])
     correct = "transferred to the surroundings, mainly as thermal energy through respiration and waste"
-    distractors = ("destroyed", "created by the consumer", "stored in the quiz")
+    distractors = ("destroyed, because energy is used up when an animal moves", "created again by the consumer at the next level", "stored for ever inside the producer's leaves and roots")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional energy-flow table (units per year): producers {pack['producer']}, "
@@ -891,7 +891,7 @@ def _ecosystems_cycles_difficult_ms_carbon_balance_then_mcq_then_pick():
     pack = random.choice(_EC_MS_D_CARBON_PACKS)
     net = pack["in"] - pack["out"]
     correct = "the forest stores a little more carbon than it releases, so it acts as a carbon store"
-    distractors = ("carbon is created in the forest", "the forest destroys carbon", "the numbers rank the trees")
+    distractors = ("the forest makes new carbon atoms, so the store grows each year", "the forest destroys carbon, so the two numbers must be wrong", "the forest releases more carbon than it takes in, so it is a source")
     options, letter = _mcq(correct, distractors)
     pick_raw, pick_bank, pick_count = _pick(
         ("Carbon is conserved: it moves between stores", "Photosynthesis takes in carbon dioxide; respiration and decay release it"),
@@ -922,7 +922,7 @@ def _ecosystems_cycles_difficult_ms_carbon_balance_then_mcq_then_pick():
 @_u32_variant("ecosystems_cycles", "ms", "difficult", "pyramid_mcq_then_count_then_word")
 def _ecosystems_cycles_difficult_ms_pyramid_mcq_then_count_then_word():
     correct = "energy is transferred to the surroundings at each level, so less is available higher up"
-    distractors = ("energy is created at each level", "consumers eat the quiz", "the pyramid ranks pupils")
+    distractors = ("energy is created at each level, so predators need fewer plants", "bigger animals need less energy, so fewer of them are needed", "predators are rarer only because people hunt them")
     options, letter = _mcq(correct, distractors)
     question = (
         "<p>A fictional textbook shows a pyramid of numbers: many plants, fewer herbivores, "
@@ -958,7 +958,7 @@ _EC_SMS_F_POND_PACKS = (
 def _ecosystems_cycles_foundational_sms_pond_producers_then_role_mcq():
     pack = random.choice(_EC_SMS_F_POND_PACKS)
     correct = "a consumer, because it eats the producers"
-    distractors = ("a producer, because it makes food", "a decomposer, because it is small", "a pupil's nickname")
+    distractors = ("a producer, because it lives in the same water as the plants", "a decomposer, because it is small and lives on the bottom", "a predator, because it feeds on living plants")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional class survey of {pack['where']} finds {pack['producers'][0]}, "
@@ -1029,7 +1029,7 @@ def _ecosystems_cycles_intermediate_sms_reserve_rise_then_mcq_then_word():
     pack = random.choice(_EC_SMS_I_RESERVE_PACKS)
     rise = pack["later"] - pack["deer"]
     correct = "without predators, the deer population grew and grazed the plants harder"
-    distractors = ("the deer created matter from nothing", "the reserve ranks its animals", "the plants ate the deer")
+    distractors = ("the young trees died because the deer stopped eating them", "the deer grew in number because the trees were disappearing", "the wolves had been eating the young trees before they were lost")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional report from {pack['reserve']}: after wolves were lost, deer rose "
@@ -1102,7 +1102,7 @@ def _ecosystems_cycles_intermediate_sms_farm_pct_then_mcq():
     pack = random.choice(_EC_SMS_I_FARM_PACKS)
     pct = _pct(pack["returned"], pack["removed"])
     correct = "harvest removes nutrients from the cycle, so the rest must be replaced by compost or fertiliser"
-    distractors = ("the soil creates nutrients from nothing", "the farm ranks its fields", "nutrients are destroyed by harvesting")
+    distractors = ("the soil makes new nutrients from nothing, so the gap fills itself", "nutrients are destroyed by harvesting and can never be returned", "plants make their nutrients from sunlight, so the soil loses nothing")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional soil report for {pack['farm']}: {pack['removed']} units of "
@@ -1180,7 +1180,7 @@ def _ecosystems_cycles_difficult_sms_rewild_ratio_then_caution_pick_then_verdict
         2,
     )
     correct = "reintroducing predators is associated with tree recovery through the food web, within the study's limits"
-    distractors = ("predators create trees", "the trees ate the deer", "the project proves nothing at all")
+    distractors = ("reintroducing predators definitely caused every one of the extra trees", "the predators planted the trees by spreading seeds in their droppings", "the tree numbers prove nothing because trees cannot be counted exactly")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A report from {pack['project']}: {pack['years']} years after predators were "
@@ -1211,7 +1211,7 @@ def _ecosystems_cycles_difficult_sms_documentary_pick_then_model_mcq():
         2,
     )
     correct = "test the prediction against field counts before trusting it"
-    distractors = ("accept it because the animation was impressive", "rank the species", "assume matter is created")
+    distractors = ("accept the prediction because the animation looked realistic", "assume the whole web will collapse whatever species vanishes", "reject the prediction because a model can never be useful")
     options, letter = _mcq(correct, distractors)
     question = (
         "<p>A fictional documentary animates a food web and predicts what happens if one "
@@ -1284,7 +1284,7 @@ _CH_MS_F_FACTOR_PACKS = (
 def _ecosystem_characteristics_foundational_ms_factors_count_then_biotic_mcq():
     pack = random.choice(_CH_MS_F_FACTOR_PACKS)
     correct = "biotic factors: living influences such as feeding or competition"
-    distractors = ("abiotic factors: non-living conditions", "a ranking of habitats", "a class survey of homes")
+    distractors = ("abiotic factors: non-living conditions such as weather", "biotic factors: conditions caused by the weather", "abiotic factors: living influences such as feeding")
     options, letter = _mcq(correct, distractors)
     question = (
         "<p>A fictional field-guide card lists: " + ", ".join(pack["items"]) + ".</p>"
@@ -1356,7 +1356,7 @@ def _ecosystem_characteristics_intermediate_ms_shade_ratio_then_factor_mcq():
     pack = random.choice(_CH_MS_I_SHADE_PACKS)
     ratio = pack["sun"] // pack["shade"]
     correct = "light, an abiotic factor that limits growth in the shade"
-    distractors = ("grazing, a biotic factor", "the pupils' gardens", "the quadrat itself")
+    distractors = ("grazing, a biotic factor that is stronger in the open", "temperature, a biotic factor that is higher in the sun", "soil, a biotic factor that is richer under trees")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>Supplied data from a fictional school field: {pack['sun']} {pack['plant']} per "
@@ -1431,7 +1431,7 @@ def _ecosystem_characteristics_difficult_ms_transect_pattern_then_mcq_then_word(
     r, p = pack["readings"], pack["plants"]
     drop = r[0][1] - r[-1][1]
     correct = "a shade-tolerant plant: more of it where light is lower"
-    distractors = ("a plant that needs full sun", "a random pattern with no link", "a ranking of gardens")
+    distractors = ("a plant that needs full sun: more of it where light is higher", "a plant unaffected by light: a random pattern with no link", "a plant limited by grazing: a biotic pattern, not a light one")
     options, letter = _mcq(correct, distractors)
     question = (
         "<p>Supplied transect data from a fictional woodland edge: "
@@ -1497,7 +1497,7 @@ _CH_MS_D_TEMP_PACKS = (
 def _ecosystem_characteristics_difficult_ms_adaptation_mcq_then_count_then_word():
     pack = random.choice(_CH_MS_D_TEMP_PACKS)
     correct = f"an adaptation to the {pack['biome']}'s temperature, an abiotic factor"
-    distractors = ("a response to grazing, a biotic factor", "proof the animal ranks other animals", "a random feature with no link")
+    distractors = (f"a response to grazing in the {pack['biome']}, a biotic factor", f"an adaptation to the {pack['biome']}'s temperature, a biotic factor", "a feature each animal learns during its own lifetime")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional textbook describes {pack['animal']} with {pack['adaptation']}.</p>"
@@ -1532,7 +1532,7 @@ _CH_SMS_F_TRIP_PACKS = (
 def _ecosystem_characteristics_foundational_sms_trip_readings_then_abiotic_mcq():
     pack = random.choice(_CH_SMS_F_TRIP_PACKS)
     correct = "abiotic factors: non-living conditions"
-    distractors = ("biotic factors: living influences", "a ranking of the pupils' gardens", "the reserve's visitors")
+    distractors = ("biotic factors: living influences", "biotic factors: non-living conditions", "abiotic factors: living influences")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>On a fictional class trip to {pack['where']}, a group takes {pack['readings']} "
@@ -1603,7 +1603,7 @@ def _ecosystem_characteristics_intermediate_sms_river_ratio_then_mcq_then_word()
     pack = random.choice(_CH_SMS_I_RIVER_PACKS)
     ratio = pack["up"] // pack["down"]
     correct = f"an abiotic factor such as {pack['factor']} level differs between the two sites"
-    distractors = ("the downstream pupils counted worse", "mayflies rank the sites", "the river creates insects")
+    distractors = ("mayfly larvae swim upstream to escape the town, so fewer stay downstream", "the river makes new larvae upstream and they die on the way down", "the downstream sample was counted less carefully than the upstream one")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional river-monitoring group counts mayfly larvae in {pack['river']}: "
@@ -1675,7 +1675,7 @@ def _ecosystem_characteristics_intermediate_sms_dune_species_then_mcq():
     pack = random.choice(_CH_SMS_I_DUNE_PACKS)
     diff = pack["back"] - pack["front"]
     correct = "abiotic conditions change along the transect, so more species can survive further back"
-    distractors = ("the back is where the nicest gardens are", "species are created by the transect", "the pupils counted better at the back")
+    distractors = ("species are created along the transect, so more appear further back", "the group counted more carefully at the back of the transect", "the front is more crowded, so species move to the back to find space")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional field-centre transect across {pack['where']} records {pack['front']} "
@@ -1712,7 +1712,7 @@ def _ecosystem_characteristics_difficult_sms_grazing_gap_then_caution_pick_then_
         2,
     )
     correct = "light grazing (a biotic factor) is associated with more plant species here, within the study's limits"
-    distractors = ("grazing always increases biodiversity everywhere", "the ungrazed sites were surveyed wrongly", "the sheep planted the extra species")
+    distractors = ("grazing always increases biodiversity, in every habitat, everywhere", "the ungrazed meadows must have been surveyed wrongly", "grazing is an abiotic factor, so it cannot affect plant species")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>{pack['study'].capitalize()} compares {pack['grazed']} lightly grazed meadows "
@@ -1780,7 +1780,7 @@ def _ecosystem_characteristics_difficult_sms_model_pick_then_limit_mcq():
         2,
     )
     correct = "treat the app's prediction as a hypothesis to test with a real survey, not as fact"
-    distractors = ("accept it because the app is popular", "rank habitats by the app's score", "skip fieldwork entirely")
+    distractors = ("accept the app's prediction because it uses real abiotic readings", "reject the app's prediction because apps cannot model habitats", "use the app's prediction instead of doing any fieldwork")
     options, letter = _mcq(correct, distractors)
     question = (
         "<p>A fictional ecology app predicts which species a habitat 'should' contain from "
@@ -1853,7 +1853,7 @@ _CL_MS_F_KEY_PACKS = (
 def _classification_biodiversity_foundational_ms_key_couplets_then_feature_mcq():
     pack = random.choice(_CL_MS_F_KEY_PACKS)
     correct = "one checkable feature at a time, with a yes/no answer"
-    distractors = ("a guess at the animal's name", "a ranking of pupils' pets", "a private home collection")
+    distractors = ("for the animal's name, which the user must already know", "about the animal's size, which changes as it grows", "several features at once, to reach the answer faster")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional dichotomous key: 1. {pack['q1']} 2. {pack['q2']} → {pack['answer']}.</p>"
@@ -1925,7 +1925,7 @@ def _classification_biodiversity_intermediate_ms_species_loss_then_meaning_mcq()
     pack = random.choice(_CL_MS_I_SPECIES_PACKS)
     loss = pack["before"] - pack["after"]
     correct = "a fall in biodiversity, linked in public evidence to habitat change"
-    distractors = ("species being created elsewhere", "a ranking of the surveyors", "proof the key was wrong")
+    distractors = ("a rise in biodiversity, because fewer species means less competition", "no change in biodiversity, because only the species count fell", "proof that the missing species are now extinct worldwide")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional public survey of {pack['habitat']}: {pack['before']} species "
@@ -1999,7 +1999,7 @@ def _classification_biodiversity_difficult_ms_descent_pct_then_mcq_then_word():
     pack = random.choice(_CL_MS_D_DESCENT_PACKS)
     diff = 100 - pack["shared"]
     correct = "common descent: the two share a more recent ancestor than distant groups do"
-    distractors = ("one species turned into the other last year", "a ranking of which pupil is most related to an ape", "the key was wrong")
+    distractors = ("one species turning into the other within living memory", "coincidence: unrelated species often share most of their genes", "a wrongly drawn key, so they are really the same species")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional textbook says {pack['pair'][0]} and {pack['pair'][1]} share about "
@@ -2064,7 +2064,7 @@ _CL_MS_D_LOSS_PACKS = (
 def _classification_biodiversity_difficult_ms_loss_mcq_then_count_then_word():
     pack = random.choice(_CL_MS_D_LOSS_PACKS)
     correct = "a driver of biodiversity loss supported by public evidence, discussed as a system-level issue"
-    distractors = ("a reason to rank families", "proof species are created elsewhere", "an advert")
+    distractors = ("a natural change that no human decision has ever affected", "proof that new species are created elsewhere to replace those lost", "an opinion from an advert, with no public evidence behind it")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional public report names {pack['cause']} among {pack['n']} main drivers "
@@ -2100,7 +2100,7 @@ _CL_SMS_F_MUSEUM_PACKS = (
 def _classification_biodiversity_foundational_sms_museum_specimens_then_key_mcq():
     pack = random.choice(_CL_SMS_F_MUSEUM_PACKS)
     correct = "a dichotomous key that asks one checkable feature at a time"
-    distractors = ("a guess from the label colour", "a ranking of pupils' pets", "a private collection list")
+    distractors = ("a guess from the colour of each specimen's label", "a key that asks every feature at once to save time", "a list of the specimens' names memorised beforehand")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>On a fictional class visit to {pack['where']}, a guide hands out "
@@ -2171,7 +2171,7 @@ def _classification_biodiversity_intermediate_sms_survey_gain_then_mcq_then_word
     pack = random.choice(_CL_SMS_I_SURVEY_PACKS)
     gain = pack["y2"] - pack["y1"]
     correct = "biodiversity rose after the habitat action, within the limits of a two-year comparison"
-    distractors = ("species were created by the volunteers", "the reserve ranks its visitors", "the key produced extra species")
+    distractors = ("the volunteers created new bird species by planting", "the habitat action certainly caused every extra species", "the first count must have missed most of the birds")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional public survey of {pack['reserve']}: {pack['y1']} bird species before "
@@ -2244,7 +2244,7 @@ def _classification_biodiversity_intermediate_sms_island_ratio_then_mcq():
     pack = random.choice(_CL_SMS_I_ISLAND_PACKS)
     ratio = pack["mainland"] // pack["island_n"]
     correct = "smaller, more isolated areas usually hold fewer species — a public pattern in biodiversity"
-    distractors = ("islands create species from nothing", "the island's surveyors were worse", "the mainland ranks the island")
+    distractors = ("islands create fewer species from nothing than mainlands do", "the island's surveyors were less careful than the mainland's", "islands always hold more species because they are cut off")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional biogeography table: {pack['mainland']} beetle species on the mainland, "
@@ -2281,7 +2281,7 @@ def _classification_biodiversity_difficult_sms_citizen_pct_then_caution_pick_the
         2,
     )
     correct = "the scheme gives useful public biodiversity data once records are verified and coverage is accounted for"
-    distractors = ("the scheme proves biodiversity rose everywhere", "unverified records are as good as verified ones", "the scheme should map each volunteer's address")
+    distractors = ("the scheme proves biodiversity rose everywhere records were sent from", "unverified records are just as good as verified ones for the totals", "the scheme is useless because volunteers are not trained experts")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>{pack['scheme'].capitalize()} received {pack['records']} public records; "
@@ -2346,7 +2346,7 @@ def _classification_biodiversity_difficult_sms_policy_pick_then_choice_mcq():
         2,
     )
     correct = "evaluate the plan with public survey data before and after, at the level of the whole area"
-    distractors = ("rank households by wildlife", "assume the plan works because it sounds green", "count only the prettiest species")
+    distractors = ("judge the plan by the number of trees it promises to plant", "assume the plan works because it sounds green", "count only the prettiest species before and after")
     options, letter = _mcq(correct, distractors)
     question = (
         "<p>A fictional council consults on a biodiversity action plan.</p>"
@@ -2419,7 +2419,7 @@ _FP_MS_F_Q_PACKS = (
 def _ecology_field_project_foundational_ms_question_then_testable_mcq():
     pack = random.choice(_FP_MS_F_Q_PACKS)
     correct = "another group could test it with a count or measurement"
-    distractors = ("it ranks whose garden plot is best", "it needs a private home-garden upload", "it replaces the field visit")
+    distractors = ("it already gives the answer before any counting is done", "it compares several things at once, so more data is gathered", "it can be answered by looking it up instead of going outside")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional team writes the field question: '{pack['q']}'.</p>"
@@ -2490,7 +2490,7 @@ def _ecology_field_project_intermediate_ms_mean_then_conclusion_mcq():
     mean_sun = sum(pack["sun"]) // 3
     mean_shade = sum(pack["shade"]) // 3
     correct = "more plants were counted in the open than in shade in this study; repeats would strengthen it"
-    distractors = ("shade creates plants", "the study proves it for every lawn on Earth", "the counts show the quadrat is broken")
+    distractors = ("shade stops plants growing anywhere, so the result is proved", "the study proves the pattern for every lawn on Earth", "the counts must be wrong because the two means are different")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>Supplied data from a fictional team: open quadrats {', '.join(map(str, pack['sun']))}; "
@@ -2564,7 +2564,7 @@ def _ecology_field_project_difficult_ms_frequency_pct_then_mcq_then_word():
     pack = random.choice(_FP_MS_D_PCT_PACKS)
     pct = _pct(pack["with"], pack["quadrats"])
     correct = "a frequency: the share of quadrats containing the species, which another group could repeat"
-    distractors = ("a ranking of the team's gardens", "proof of the total number of plants on Earth", "a guess")
+    distractors = ("a density: the total number of plants of that species on the site", "a percentage cover: the share of the field covered by that species", "a guess, since random quadrats cannot give a real figure")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>Supplied data from a fictional field study: {pack['species']} was present in {pack['with']} of "
@@ -2629,7 +2629,7 @@ _FP_MS_D_FLAW_PACKS = (
 def _ecology_field_project_difficult_ms_flaw_mcq_then_count_then_word():
     pack = random.choice(_FP_MS_D_FLAW_PACKS)
     correct = "a method flaw to record in the reflection and fix in a repeat"
-    distractors = ("a reason to rank the team", "proof the site is bad", "something to hide in the write-up")
+    distractors = ("a reason to throw away all the data and not present", "proof the site was a bad choice for any study", "something to leave out of the write-up so the marks stay high")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional team's reflection notes that {pack['flaw']}.</p>"
@@ -2664,7 +2664,7 @@ _FP_SMS_F_TEAM_PACKS = (
 def _ecology_field_project_foundational_sms_team_quadrats_then_first_mcq():
     pack = random.choice(_FP_SMS_F_TEAM_PACKS)
     correct = "write a field question another group could test"
-    distractors = ("upload private garden photos", "rank the other teams' plots", "skip the risk assessment")
+    distractors = ("place the quadrats where the most plants grow", "skip the risk assessment because it is school grounds", "start counting first and decide the question later")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>{pack['team']} plans to sample {pack['site']} with {pack['quadrats']} quadrats.</p>"
@@ -2735,7 +2735,7 @@ def _ecology_field_project_intermediate_sms_woodlice_mean_then_mcq_then_word():
     mean_logs = sum(pack["logs"]) // 3
     mean_stones = sum(pack["stones"]) // 3
     correct = "woodlice were more common under logs in this study; a possible link to moisture, a factor to test next"
-    distractors = ("logs create woodlice", "the team's garden is best", "stones repel all animals")
+    distractors = ("logs produce woodlice, so more are always found under them", "the woodlice under stones must have been counted wrongly", "moisture is proved to be the cause by this one comparison")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>{pack['team']} counts woodlice: under logs {', '.join(map(str, pack['logs']))}; "
@@ -2807,7 +2807,7 @@ def _ecology_field_project_intermediate_sms_lichen_diff_then_mcq():
     pack = random.choice(_FP_SMS_I_LICHEN_PACKS)
     diff = pack["quiet"] - pack["busy"]
     correct = "lichen types differ between the sites; air quality (an abiotic factor) is a hypothesis to test"
-    distractors = ("the busy road creates lichens", "the team should rank the streets' residents", "the count proves the cause")
+    distractors = ("the busy road creates new lichen types on its trees", "traffic is a biotic factor, so it cannot affect lichens", "the count proves that road pollution caused the difference")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>{pack['team']} counts lichen types on trees: {pack['busy']} by a busy road, "
@@ -2844,7 +2844,7 @@ def _ecology_field_project_difficult_sms_repeat_gain_then_caution_pick_then_verd
         2,
     )
     correct = "species rose after the wildflower planting in this study; the link needs more repeats and a control area"
-    distractors = ("the planting created species", "the first count was wrong", "the result applies to every school")
+    distractors = ("the planting created the extra species from nothing", "the first count must have been wrong, so the gain is not real", "the result proves the same planting would work at every school")
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>{pack['team']} repeats a school-grounds survey a year after a wildflower "
@@ -2910,7 +2910,7 @@ def _ecology_field_project_difficult_sms_judge_pick_then_grading_mcq():
         2,
     )
     correct = "question, risk plan, sampling, records, analysis and reflection; fieldwork itself is judged in class"
-    distractors = ("only the biggest species count", "a private garden upload", "whose family helped most")
+    distractors = ("only the final species count, with the biggest total winning outright", "the fieldwork day itself, graded automatically from uploaded photos", "the whole project including the site visit, with no class judging at all")
     options, letter = _mcq(correct, distractors)
     question = (
         "<p>A fictional judging guide for a school ecology fair is published for all teams.</p>"

@@ -110,7 +110,7 @@ def _vision_intermediate_ms_errors_count_then_blur_mcq():
     distractors = (
         f"{wrong_blur} are not in focus",
         "the retina stops detecting light",
-        "the quiz must store a prescription",
+        "the lens has stopped changing shape",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -264,7 +264,7 @@ def _vision_difficult_ms_lens_pct_then_reading_mcq_then_word():
     correct = "a public aggregate about focusing errors, not a file on anyone"
     distractors = (
         "a reason to list which pupils wear glasses",
-        "proof that lenses are a fashion vote",
+        "proof that everyone needs corrective lenses",
         "a ranking of whose eyesight is best",
     )
     options, letter = _u23_mcq_field(correct, distractors)
@@ -299,9 +299,9 @@ def _vision_difficult_ms_eye_letter_then_error_mcq_then_count():
     diagram = str(eye_boxes(title="Fictional eye schematic"))
     correct = "near-sight: distant objects blur because focus falls short of the retina"
     distractors = (
-        "far-sight: the lens becomes a semicircular canal",
-        "an illusion caused by a classroom vote",
-        "a stored prescription for a named pupil",
+        "far-sight: near objects blur because focus falls short of the retina",
+        "an illusion: the brain misreads cues from the blurred image",
+        "normal sight: the image lands exactly on the retina",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -343,9 +343,9 @@ def _vision_foundational_sms_exhibit_parts_then_lens_mcq():
     pack = random.choice(_VI_SMS_F_DEMO_PACKS)
     correct = "refracts light to help form an image"
     distractors = (
-        "stores a glasses file",
+        "lets light in through a small hole",
         "detects the image at the back",
-        "ranks visitors by eyesight",
+        "sends the signals to the brain",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -451,8 +451,8 @@ def _vision_intermediate_sms_case_blur_then_error_mcq_then_word():
     correct = "near-sight: distant objects are not in focus"
     distractors = (
         "far-sight: near objects are not in focus",
-        f"{pack['who']} should be ranked against classmates",
-        "an illusion caused by the theatre lights",
+        f"a faulty retina: {pack['who']} cannot detect distant light",
+        f"an illusion caused by the lighting in {pack['where']}",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -577,7 +577,7 @@ def _vision_difficult_sms_screening_pct_then_caution_pick_then_verdict():
     correct = "some children may need a professional eye check; the report itself diagnoses nobody"
     distractors = (
         "the school should rank pupils by eyesight",
-        "corrective lenses are unnecessary",
+        "every referred child needs glasses",
         "the report should store each child's prescription",
     )
     options, letter = _u23_mcq_field(correct, distractors)
@@ -666,7 +666,7 @@ def _vision_difficult_sms_clinic_pick_then_signpost_mcq():
     distractors = (
         "type the character's prescription into the quiz",
         "compare the character with classmates",
-        "tell the character illusions prove broken eyes",
+        "tell the character to cover one eye to fix the blur",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -739,9 +739,9 @@ def _hearing_intermediate_ms_table_loudest_then_medium_mcq():
     loudest_db = max(v for _, v in rows)
     correct = "vibration that needs a medium such as air to travel"
     distractors = (
-        "light that travels best in a vacuum",
-        "a file of who uses a hearing aid",
-        "a ranking of whose hearing is best",
+        "a wave that travels fastest through empty space",
+        "a vibration that gets louder the further it travels",
+        "light of a very low frequency",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -879,9 +879,9 @@ def _hearing_difficult_ms_vacuum_pick_then_ear_letter_then_mcq():
     )
     correct = "the inner ear, where vibration is sensed"
     distractors = (
-        "the outer ear, which stores hearing-aid files",
-        "the lens of the eye",
-        "the semicircular canals of the tongue",
+        "the outer ear, which collects sound",
+        "the middle ear, which passes vibration on",
+        "the eardrum, where sound is interpreted",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -919,8 +919,8 @@ def _hearing_difficult_ms_illusion_mcq_then_order_then_count():
     correct = "the brain interpreting cues in a way that mismatches the sound"
     distractors = (
         "proof that the listeners' ears are damaged",
-        "a reason to rank listeners by hearing",
-        "a food group",
+        "a sound that reaches the ear without any vibration",
+        "a sign the sound was travelling through a vacuum",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     order_raw, order_bank = _u23_order_field(
@@ -965,9 +965,9 @@ def _hearing_foundational_sms_concert_speakers_then_vibration_mcq():
     pack = random.choice(_HE_SMS_F_CONCERT_PACKS)
     correct = "vibration travelling through the air to the listeners' ears"
     distractors = (
-        "light that needs no medium",
-        "a file of who uses a hearing aid",
-        "a ranking of the audience's hearing",
+        "a wave that needs no air to travel",
+        "electricity flowing through the air to the listeners",
+        "light travelling from the speakers to the listeners' eyes",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -1122,7 +1122,7 @@ def _hearing_intermediate_sms_survey_over_limit_then_action_mcq_then_word():
     distractors = (
         "test each pupil's hearing in the quiz",
         "rank people by who complains least",
-        "ignore it because sound needs no medium",
+        "ignore it because loud sound cannot harm hearing",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     chart = bar_chart(
@@ -1166,9 +1166,9 @@ def _hearing_intermediate_sms_locate_ears_then_reason_mcq():
     pack = random.choice(_HE_SMS_I_LOCATE_PACKS)
     correct = "the sound reaches one ear slightly earlier and louder, and the brain compares"
     distractors = (
-        "one ear is enough because sound needs no medium",
-        f"{pack['who']} has a superpower to be ranked",
-        "the cochlea sees the source with light",
+        "one ear is enough because sound has no direction",
+        f"{pack['who']} feels the vibration through the skin",
+        "the outer ear points itself at the source",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -1254,7 +1254,7 @@ def _hearing_difficult_sms_aid_pct_then_caution_pick_then_verdict():
     )
     correct = "hearing aids helped most users in this group, within the limits of the study"
     distractors = (
-        "hearing aids replace the need for a medium",
+        "hearing aids cure hearing loss for every user",
         "users should be ranked by hearing",
         "the study should store each user's test",
     )
@@ -1296,8 +1296,8 @@ def _hearing_difficult_sms_space_pick_then_medium_mcq():
     correct = "inside the cabin, the air carries the vibration to the crew's ears"
     distractors = (
         "inside the cabin there is still no medium",
-        "the cochlea works by light",
-        "the middle ear stores radio files",
+        "sound needs no medium over short distances",
+        "radio waves carry their voices inside the cabin",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -1372,8 +1372,8 @@ def _touch_intermediate_ms_table_smallest_then_density_mcq():
     correct = "the region with the most densely packed touch receptors"
     distractors = (
         "the region with the fewest receptors",
-        "a reason to rank pupils' skin",
-        "a private body map the app stores",
+        "the region with the thickest skin",
+        "the region with the largest surface area",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -1553,8 +1553,8 @@ def _touch_difficult_ms_temp_diff_then_receptor_mcq_then_word():
     correct = "temperature receptors, which detect hot or cold"
     distractors = (
         "pressure receptors, which detect contact",
-        "the retina",
-        "a class league of tough skin",
+        "pain receptors, which warn of damage",
+        "smell receptors, which detect chemicals",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -1594,8 +1594,8 @@ def _touch_intermediate_sms_glove_sensors_then_copy_mcq_then_word():
     correct = f"the {pack['region']} has densely packed touch receptors in the skin model"
     distractors = (
         "fingertips have no receptors at all",
-        "the lab wants to rank users' skin",
-        "receptors only detect light",
+        f"the {pack['region']} has thicker skin than other regions",
+        "receptors in the skin only detect temperature",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -1770,7 +1770,7 @@ def _touch_difficult_sms_trial_pct_then_caution_pick_then_verdict():
     )
     correct = "the pressure-sensing feedback helped most users in this trial, with limits"
     distractors = (
-        "the device proves skin has no receptors",
+        "the device proves skin receptors are unnecessary",
         "users should be ranked by skin toughness",
         "the trial should store each user's body map",
     )
@@ -2146,8 +2146,8 @@ def _taste_intermediate_ms_list_count_then_extra_mcq():
     correct = f"'{pack['extra']}' is a sensation or texture, not one of the five tastes"
     distractors = (
         f"'{pack['extra']}' is the sixth taste",
-        "the list should be ranked by whose tongue is best",
-        "taste needs no receptors",
+        f"'{pack['extra']}' is a mix of sweet and salt",
+        f"'{pack['extra']}' is detected by the nose, not the tongue",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -2245,8 +2245,8 @@ def _taste_difficult_ms_clip_drop_then_reason_mcq_then_word():
     correct = "smell contributes most of what people call flavour, so blocking it removes the cues"
     distractors = (
         "the nose clip damaged the taste receptors",
-        "the panellists should be ranked by tongue",
-        "the five tastes changed into one",
+        "the clip blocked the taste receptors on the tongue",
+        "the five tastes are detected in the nose",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -2322,9 +2322,9 @@ def _taste_difficult_ms_myth_mcq_then_count_then_word():
     pack = random.choice(_TA_MS_D_MAP_PACKS)
     correct = "an oversimplified 'tongue map'; all regions with receptors detect the tastes"
     distractors = (
-        "proven by ranking classmates' tongues",
-        "true because an advert said so",
-        "a reason to upload a private menu",
+        "correct: each taste has its own zone of the tongue",
+        "true because it appears in many textbooks",
+        "correct for sweet and salt but not for bitter",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -2362,8 +2362,8 @@ def _taste_intermediate_sms_cold_case_then_flavour_mcq_then_word():
     correct = "a blocked nose removes the smell part, so flavour seems weaker"
     distractors = (
         "the taste receptors were removed by the cold",
-        f"{pack['who']} should be ranked by tongue",
-        "the five tastes became eight",
+        f"{pack['who']}'s tongue stopped detecting the five tastes",
+        "the food lost its taste chemicals",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -2450,8 +2450,8 @@ def _taste_intermediate_sms_chef_tastes_then_balance_mcq():
     correct = "the dish is balanced across several of the five basic tastes"
     distractors = (
         "the dish has all eight tastes",
-        "diners should be ranked by tongue",
-        "the tastes are detected by the ears",
+        "the dish uses only sweet and salt",
+        "the tastes are detected by the nose alone",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -2648,7 +2648,7 @@ _PR_MS_I_SYS_PACKS = (
 def _proprioception_balance_intermediate_ms_systems_count_then_canal_mcq():
     pack = random.choice(_PR_MS_I_SYS_PACKS)
     correct = "rotation of the head"
-    distractors = ("colour of light", "the five tastes", "who is least dizzy")
+    distractors = ("the position of the limbs", "sound vibrations in the air", "the speed of walking")
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
         "<p>A fictional physiology poster lists the systems that work together for "
@@ -2746,7 +2746,7 @@ def _proprioception_balance_difficult_ms_model_rate_then_lag_mcq_then_word():
     distractors = (
         "the canals switch off after any rotation",
         "vision stops working after a turn",
-        "the model should be spun on a pupil",
+        "the fluid stops instantly, so the canals report nothing",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -2823,9 +2823,9 @@ def _proprioception_balance_difficult_ms_planes_count_then_mcq_then_word():
     pack = random.choice(_PR_MS_D_COUNT_PACKS)
     correct = "three canals at different angles, one for each kind of rotation"
     distractors = (
-        "one canal that detects taste",
-        "a ranking of who is least dizzy",
-        "the retina",
+        "one canal that detects every direction",
+        "three canals all lying in the same plane",
+        "two canals, one for each ear",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -2863,8 +2863,8 @@ def _proprioception_balance_intermediate_sms_athlete_inputs_then_mcq_then_word()
     correct = "canals, vision and proprioception working together"
     distractors = (
         "only the eyes",
-        f"a ranking of {pack['who']} against classmates",
-        "the five tastes",
+        "only the semicircular canals",
+        "touch receptors alone",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -2950,7 +2950,7 @@ def _proprioception_balance_intermediate_sms_robot_sensors_then_match_mcq():
     correct = f"{s[0]} ↔ semicircular canals; {s[1]} ↔ vision; {s[2]} ↔ proprioception"
     distractors = (
         f"{s[0]} ↔ taste; {s[1]} ↔ smell; {s[2]} ↔ hearing",
-        "the robot ranks people by balance",
+        f"{s[0]} ↔ vision; {s[1]} ↔ proprioception; {s[2]} ↔ semicircular canals",
         "the sensors replace the need for a brain",
     )
     options, letter = _u23_mcq_field(correct, distractors)
@@ -2997,7 +2997,7 @@ def _proprioception_balance_difficult_sms_study_drop_then_caution_pick_then_verd
     correct = "vision contributes to balance, alongside canals and proprioception, within the study's limits"
     distractors = (
         "balance needs no vision at all",
-        "volunteers should be ranked by wobble",
+        "vision is the only thing that keeps balance",
         "the canals stop working in darkness",
     )
     options, letter = _u23_mcq_field(correct, distractors)
@@ -3150,7 +3150,7 @@ def _interoception_intermediate_sms_stage_signal_then_interpret_mcq_then_word():
     distractors = (
         "the signal proves an illness the app can diagnose",
         f"{pack['who']} should compare moods with classmates",
-        "internal signals are only a joke",
+        "a fast heartbeat always means fear",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -3280,7 +3280,7 @@ def _interoception_difficult_sms_survey_pct_then_caution_pick_then_verdict():
     distractors = (
         "the app can now diagnose anxiety from a heartbeat story",
         "respondents should be ranked by mood",
-        "internal signals are only a joke",
+        "noticing signals means the person is ill",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -3430,7 +3430,7 @@ def _nonhuman_senses_foundational_ms_list_count_then_signal_mcq():
         "echolocation": "returning sound used to locate objects",
         "infrared": "a heat-related signal humans do not see the same way",
         "ultraviolet": "light humans do not see the same way",
-    }.items() if s != sense) + ("a pupil superpower league",)
+    }.items() if s != sense) + ("light the animal gives out to see in the dark",)
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
         "<p>A fictional zoo sign lists: "
@@ -3526,8 +3526,8 @@ def _nonhuman_senses_intermediate_ms_ultrasound_ratio_then_band_mcq():
     correct = "above the usual human hearing band, so people cannot hear it"
     distractors = (
         "below the human band, so it sounds very low",
-        "a light-family signal",
-        "a pupil superpower to rank",
+        "a form of light, so it is seen not heard",
+        "within the human band, but too quiet to hear",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -3625,7 +3625,7 @@ def _nonhuman_senses_difficult_ms_echo_distance_then_mcq_then_word():
     distractors = (
         "the colour of the object",
         "a magnetic field from the object",
-        "a spell that reveals the object",
+        "the heat given off by the object",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -3703,9 +3703,9 @@ def _nonhuman_senses_difficult_ms_uv_pattern_count_then_mcq_then_word():
     extra = pack["uv"] - pack["human"]
     correct = "bees sense UV that humans do not see the same way, so the flower shows extra markings"
     distractors = (
-        "bees cast a spell on the flower",
+        "bees see the same colours as humans, only more sharply",
         "the camera invents patterns",
-        "humans have better eyes and should be ranked",
+        "the flower changes colour when a bee lands",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -3743,9 +3743,9 @@ def _nonhuman_senses_foundational_sms_tour_count_then_echo_mcq():
     pack = random.choice(_NH_SMS_F_CAVE_PACKS)
     correct = "returning sound to locate objects"
     distractors = (
-        "a private diary",
+        "heat given off by warm objects",
         "light humans do not see the same way",
-        "a pupil superpower ranking",
+        "smell trails to locate objects",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -3850,7 +3850,7 @@ def _nonhuman_senses_intermediate_sms_team_device_then_animal_mcq_then_word():
     distractors = (
         f"the {others[0]}, which senses something else",
         f"the {others[1]}, which senses something else",
-        "a pupil with a superpower",
+        "no animal; only instruments can sense this",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
@@ -3969,7 +3969,7 @@ def _nonhuman_senses_difficult_sms_trial_ratio_then_caution_pick_then_verdict():
     )
     correct = "the bio-inspired sensor found more targets in this trial, within its limits"
     distractors = (
-        "the sensor proves animals cast spells",
+        "the sensor copies the animal's sense perfectly",
         "the trial should rank operators",
         "the sensor detects nothing real",
     )
@@ -4051,8 +4051,8 @@ def _nonhuman_senses_difficult_sms_claim_pick_then_test_mcq():
     correct = "test it: hide the food where no smell, sound or sight cue is possible and see if the dog still finds it"
     distractors = (
         "accept it because the video is popular",
-        "rank the dog against pupils",
-        "declare it a spell",
+        "accept it because dogs have a strong sense of smell",
+        "assume the dog guessed by luck every time",
     )
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
