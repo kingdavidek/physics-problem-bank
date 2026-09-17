@@ -82,6 +82,7 @@ Word (`.docx`) copies exist for key docs. **Markdown is the source of truth** fo
 12. **Anything that makes a child more visible to others defaults to off.** See `docs/SECURITY_AND_GDPR.md` §S0.3.
 13. **Never store a raw IP address** where a keyed hash serves the same purpose (rate-limit and usage buckets are compared, never read back).
 14. **Before any new feature**, answer the four questions in `docs/SECURITY_AND_GDPR.md` §6.1 (`python scripts/ops_cadence.py feature-gate`). Privacy / ROPA / DPIA / subprocessor edits ship in the same PR if any answer is yes.
+15. **EURSC questions are direct.** Never hedge a stem, option or solution with course/model meta-phrases — "in this lesson", "in this S2 model", "in this course", "at S1 level", "of the order of", "the lesson says/names", "teaching set/figure". Pupils aged 11–15 should read one clear answer, not a hint that a more accurate answer exists. `scripts/test_es_direct_wording_smoke.py` enforces this across every EURSC topic and mode; safeguarding wording about "this quiz" / "the app" is allowed.
 
 ---
 

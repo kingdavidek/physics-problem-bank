@@ -117,7 +117,7 @@ def _vision_intermediate_ms_errors_count_then_blur_mcq():
         f"<p>A fictional optics poster lists focusing errors: {pack['errors'][0]} "
         f"and {pack['errors'][1]}.</p>"
         "<p>(i) Enter how many focusing-error kinds the poster names.</p>"
-        f"<p>(ii) Of the kinds counted in (i), {pack['pick']} in this S2 model means</p>"
+        f"<p>(ii) Of the kinds counted in (i), {pack['pick']} means</p>"
     )
     solution = (
         "(i) <strong>2</strong><br>"
@@ -125,7 +125,7 @@ def _vision_intermediate_ms_errors_count_then_blur_mcq():
     )
     hint = (
         "<strong>Key idea:</strong> Two error kinds; each blurs one distance "
-        "range in the model."
+        "range."
     )
     return (
         question, solution, hint, 2,
@@ -309,7 +309,7 @@ def _vision_difficult_ms_eye_letter_then_error_mcq_then_count():
         + "<p>A fictional optics schematic labels A lens, B retina, C path to "
         "the brain.</p>"
         "<p>(i) Enter the letter of the part that refracts light.</p>"
-        "<p>(ii) If the part in (i) focuses light in front of B, the S2 model calls that</p>"
+        "<p>(ii) If the part in (i) focuses light in front of B, that is called</p>"
         "<p>(iii) Enter how many focusing-error kinds the model names in total.</p>"
     )
     solution = (
@@ -448,7 +448,7 @@ _VI_SMS_I_CASE_PACKS = (
 @_u23_variant("vision", "sms", "intermediate", "case_blur_then_error_mcq_then_word")
 def _vision_intermediate_sms_case_blur_then_error_mcq_then_word():
     pack = random.choice(_VI_SMS_I_CASE_PACKS)
-    correct = "near-sight in the S2 model: distant objects are not in focus"
+    correct = "near-sight: distant objects are not in focus"
     distractors = (
         "far-sight: near objects are not in focus",
         f"{pack['who']} should be ranked against classmates",
@@ -673,7 +673,7 @@ def _vision_difficult_sms_clinic_pick_then_signpost_mcq():
         "<p>A fictional documentary follows an eye clinic for a day.</p>"
         "<p>(i) Select the two statements consistent with the documentary.</p>"
         "<p>(ii) Using the first statement from (i), if a fictional character "
-        "in the film reports blurred distance vision, the lesson's response is to</p>"
+        "in the film reports blurred distance vision, the right response is to</p>"
     )
     solution = (
         "(i) Prescriptions stay clinical; lenses adjust focus.<br>"
@@ -1412,7 +1412,7 @@ def _touch_intermediate_ms_receptor_pick_then_count():
     )
     question = (
         "<p>A fictional revision card lists skin receptor types.</p>"
-        "<p>(i) Select the three receptor types the lesson names.</p>"
+        "<p>(i) Select the three receptor types.</p>"
         "<p>(ii) Enter how many types you selected in (i).</p>"
     )
     solution = (
@@ -1524,8 +1524,7 @@ def _touch_difficult_ms_method_pick_then_consent_mcq_then_count():
         "<p>A fictional textbook explains how two-point-threshold tables are made.</p>"
         "<p>(i) Select the two rules the lesson follows.</p>"
         "<p>(ii) Under the rules from (i), a published threshold table is</p>"
-        "<p>(iii) Enter how many receptor types (pressure, temperature, pain) "
-        "the lesson names.</p>"
+        "<p>(iii) Enter how many receptor types (pressure, temperature, pain) that is.</p>"
     )
     solution = (
         "(i) Supplied data; compare regions not people.<br>"
@@ -1623,7 +1622,7 @@ def _touch_intermediate_sms_glove_sensors_then_copy_mcq_then_word():
 _TO_SMS_I_STUDY_PACKS = (
     {"study": "fictional textbook study of 40 volunteers", "fingertip": 2, "back": 40},
     {"study": "fictional university dataset of 60 adults", "fingertip": 3, "back": 42},
-    {"study": "fictional physiology teaching set", "fingertip": 2, "back": 38},
+    {"study": "fictional physiology handout", "fingertip": 2, "back": 38},
 )
 
 
@@ -2146,7 +2145,7 @@ def _taste_intermediate_ms_list_count_then_extra_mcq():
     pack = random.choice(_TA_MS_I_LIST_PACKS)
     correct = f"'{pack['extra']}' is a sensation or texture, not one of the five tastes"
     distractors = (
-        f"'{pack['extra']}' is the sixth taste in this model",
+        f"'{pack['extra']}' is the sixth taste",
         "the list should be ranked by whose tongue is best",
         "taste needs no receptors",
     )
@@ -2155,7 +2154,7 @@ def _taste_intermediate_ms_list_count_then_extra_mcq():
         "<p>A fictional food-science poster lists: "
         + ", ".join(pack["listed"])
         + f" — and someone has pencilled in '{pack['extra']}'.</p>"
-        "<p>(i) Enter how many tastes the S2 teaching model names.</p>"
+        "<p>(i) Enter how many basic tastes there are.</p>"
         f"<p>(ii) Given the count in (i), the pencilled '{pack['extra']}'</p>"
     )
     solution = (
@@ -2217,7 +2216,7 @@ def _taste_intermediate_ms_context_pick_then_count():
         "<p>A fictional restaurant-science article reports a supplied controlled "
         "test: the same drink was judged 'fruitier' when coloured red.</p>"
         "<p>(i) Select the two scientific ideas the test supports.</p>"
-        "<p>(ii) Enter how many senses combine to make flavour in the model.</p>"
+        "<p>(ii) Enter how many senses combine to make flavour.</p>"
     )
     solution = (
         "(i) Colour/context effect; smell + taste.<br>"
@@ -2321,7 +2320,7 @@ _TA_MS_D_MAP_PACKS = (
 @_u23_variant("taste", "ms", "difficult", "myth_mcq_then_count_then_word")
 def _taste_difficult_ms_myth_mcq_then_count_then_word():
     pack = random.choice(_TA_MS_D_MAP_PACKS)
-    correct = "an oversimplified 'tongue map'; in this model all regions with receptors detect the tastes"
+    correct = "an oversimplified 'tongue map'; all regions with receptors detect the tastes"
     distractors = (
         "proven by ranking classmates' tongues",
         "true because an advert said so",
@@ -2330,7 +2329,7 @@ def _taste_difficult_ms_myth_mcq_then_count_then_word():
     options, letter = _u23_mcq_field(correct, distractors)
     question = (
         f"<p>A fictional old textbook claims that {pack['claim']}.</p>"
-        "<p>(i) In the S2 model this claim is</p>"
+        "<p>(i) This claim is</p>"
         "<p>(ii) Enter how many basic tastes the model names.</p>"
         "<p>(iii) Write the one-word sense that must join taste to give full flavour.</p>"
     )
@@ -3038,7 +3037,7 @@ def _proprioception_balance_difficult_sms_conflict_order_then_word_then_count():
         (
             "Canals report movement of the head",
             "Vision reports a still or different scene",
-            "The mismatch is interpreted as motion sickness in the model",
+            "The mismatch is interpreted as motion sickness",
         ),
         ("The character is ranked against others",),
     )
@@ -3047,7 +3046,7 @@ def _proprioception_balance_difficult_sms_conflict_order_then_word_then_count():
         "feels queasy while a fixed cabin looks still.</p>"
         "<p>(i) Order the mismatch model.</p>"
         "<p>(ii) Write the one-word inner-ear structures in step 1 of (i).</p>"
-        "<p>(iii) Enter how many balance inputs disagree in the model.</p>"
+        "<p>(iii) Enter how many balance inputs disagree.</p>"
     )
     solution = (
         "(i) <strong>canals report motion → vision differs → mismatch felt</strong><br>"
@@ -3159,7 +3158,7 @@ def _interoception_intermediate_sms_stage_signal_then_interpret_mcq_then_word():
         f"{pack['event']}.</p>"
         "<p>(i) Enter how many possible meanings (excitement, nerves) the story offers "
         "for the signal.</p>"
-        "<p>(ii) Given the meanings in (i), the lesson's reading is that</p>"
+        "<p>(ii) Given the meanings in (i), the scientific reading is that</p>"
         "<p>(iii) Write the one-word name of the sense that notices internal signals.</p>"
     )
     solution = (
@@ -3329,7 +3328,7 @@ def _interoception_difficult_sms_ambiguous_count_then_order_then_word():
         f"<p>A fictional case study: {pack['who']} notices {pack['signal']}. The "
         f"textbook lists possible explanations: {alts[0]}, {alts[1]}, {alts[2]}.</p>"
         "<p>(i) Enter how many alternative explanations are listed.</p>"
-        "<p>(ii) Given the alternatives in (i), order the lesson's approach.</p>"
+        "<p>(ii) Given the alternatives in (i), order the scientific approach.</p>"
         "<p>(iii) Write the one-word name of the sense that noticed the signal.</p>"
     )
     solution = (

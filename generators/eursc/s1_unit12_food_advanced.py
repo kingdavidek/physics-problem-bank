@@ -81,7 +81,7 @@ def _food_formulas_intermediate_ms_menu_count_then_groups():
         f"<p>A fictional menu card from a {pack['place']} lists "
         f"{pack['beans']} bean dish, {pack['rice']} rice dish and "
         f"{pack['oil']} oil serving.</p>"
-        "<p>(i) How many of the lesson's three nutrient groups "
+        "<p>(i) How many of the three nutrient groups "
         "(protein, fat, carbohydrate) appear on this card?</p>"
         "<p>(ii) Using that count from (i), this meal supplies</p>"
     )
@@ -260,7 +260,7 @@ def _food_formulas_difficult_ms_plate_groups_then_photo():
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
         "<p>A fictional balanced plate has beans, rice, oil and water.</p>"
-        "<p>(i) How many of the lesson's three nutrient groups "
+        "<p>(i) How many of the three nutrient groups "
         "(protein, fat, carbohydrate) are represented by beans, rice and oil?</p>"
         "<p>(ii) Using that count from (i), photosynthesis explains why</p>"
     )
@@ -365,7 +365,7 @@ def _food_formulas_foundational_sms_canteen_groups_then_role():
         f"<p>A fictional menu from a {pack['place']} lists "
         f"{pack['beans']} bean dish, {pack['rice']} rice dish and "
         f"{pack['oil']} oil serving.</p>"
-        "<p>(i) How many of the lesson's three nutrient groups "
+        "<p>(i) How many of the three nutrient groups "
         "(protein, fat, carbohydrate) appear on this card?</p>"
         "<p>(ii) Using that count from (i), this meal supplies</p>"
     )
@@ -591,7 +591,7 @@ def _food_formulas_intermediate_sms_plate_items_then_groups():
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
         f"<p>A fictional balanced plate shows beans, {pack['starch']} and oil.</p>"
-        "<p>(i) How many of the lesson's three nutrient groups "
+        "<p>(i) How many of the three nutrient groups "
         "(protein, fat, carbohydrate) do those three foods cover?</p>"
         "<p>(ii) Using that count from (i), which group does the starchy "
         f"item ({pack['starch']}) mainly supply?</p>"
@@ -684,7 +684,7 @@ def _food_formulas_difficult_sms_vegan_protein_then_pick():
     question = (
         "<p>A fictional vegan kitchen menu lists beans, rice and oil with "
         "no animal foods.</p>"
-        "<p>(i) How many of the lesson's three nutrient groups "
+        "<p>(i) How many of the three nutrient groups "
         "(protein, fat, carbohydrate) can still be supplied?</p>"
         "<p>(ii) Using that count from (i), select the two nutrient roles "
         "those plant foods can still provide.</p>"
@@ -1657,7 +1657,7 @@ def _cooking_heat_foundational_ms_pan_transfer_then_name():
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
         f"<p>A fictional cookery card describes {pack['method']}.</p>"
-        "<p>(i) How many of the lesson's three heat-transfer types "
+        "<p>(i) How many of the three heat-transfer types "
         "(conduction, convection, radiation) could apply in cooking?</p>"
         "<p>(ii) Using that count from (i), the main transfer in this card is</p>"
     )
@@ -2107,7 +2107,7 @@ def _cooking_heat_foundational_sms_demo_transfer_then_name():
     options, letter = _u12_mcq_field(correct, distractors)
     question = (
         f"<p>A fictional {pack['place']} demo uses {pack['method']}.</p>"
-        "<p>(i) How many of the lesson's three heat-transfer types "
+        "<p>(i) How many of the three heat-transfer types "
         "(conduction, convection, radiation) exist in cooking?</p>"
         "<p>(ii) Using that count from (i), the main transfer in this demo is</p>"
     )

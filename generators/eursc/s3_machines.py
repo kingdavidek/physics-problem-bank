@@ -568,7 +568,7 @@ eursc_science_force_work_machines, eursc_science_force_work_machines_variants = 
 )
 
 _FORM_BANK = (
-    {"id": "kinetic", "text": "Kinetic energy is the energy of motion in this model"},
+    {"id": "kinetic", "text": "Kinetic energy is the energy of motion"},
     {"id": "thermal", "text": "Thermal energy is a less useful form in many wasted-output stories"},
     {"id": "chem", "text": "Chemical energy is a store named for food and fuels here"},
     {"id": "diary", "text": "The quiz should store a private energy diary"},
@@ -576,16 +576,16 @@ _FORM_BANK = (
 _CONS_BANK = (
     {"id": "transform", "text": "Energy can be transformed from one form to another"},
     {"id": "transfer", "text": "Energy can be transferred from one store or place to another"},
-    {"id": "conserve", "text": "Conservation means energy is not created or destroyed in this model"},
+    {"id": "conserve", "text": "Conservation means energy is not created or destroyed"},
     {"id": "create", "text": "A machine can create energy from nothing"},
 )
 
 _EN_POOLS = {
     "foundational": [
-        _EN_MCQ("foundational", "forms", "Energy forms named in this S3 model include", _mcq_opts("only a rumour", "kinetic, chemical and thermal examples", "a glasses file", "a class rank"), "B", "Named forms.", "Look for named stores such as motion, food-or-fuel, and a heat-style less-useful form, not a rumour."),
-        _EN_MCQ("foundational", "transform", "An energy transformation in this lesson is", _mcq_opts("deleting energy", "changing energy from one form to another", "a private diary", "a vaccination"), "B", "Form change.", "It can change from one named form into another. It is not deleted."),
+        _EN_MCQ("foundational", "forms", "Energy forms include", _mcq_opts("only a rumour", "kinetic, chemical and thermal examples", "a glasses file", "a class rank"), "B", "Named forms.", "Look for named stores such as motion, food-or-fuel, and a heat-style less-useful form, not a rumour."),
+        _EN_MCQ("foundational", "transform", "An energy transformation is", _mcq_opts("deleting energy", "changing energy from one form to another", "a private diary", "a vaccination"), "B", "Form change.", "It can change from one named form into another. It is not deleted."),
         _EN_MCQ("foundational", "input_letter", "<p>Which letter is the energy input?</p>" + str(sankey_bars(title="Input letter")), _mcq_opts("B", "A", "C", "a handle"), "B", "A is the input.", "On the split diagram, find the incoming bar, not the useful split and not the wasted split."),
-        _EN_MCQ("foundational", "waste", "Wasted energy in this lesson is", _mcq_opts("proof conservation is false", "energy transferred into a less useful form such as thermal", "a stored household bill", "a league"), "B", "Less useful form.", "What goes into a less useful form is still there. It is not proof that it vanished."),
+        _EN_MCQ("foundational", "waste", "Wasted energy is", _mcq_opts("proof conservation is false", "energy transferred into a less useful form such as thermal", "a stored household bill", "a league"), "B", "Less useful form.", "What goes into a less useful form is still there. It is not proof that it vanished."),
         _EN_MCQ("foundational", "alex_en", "Alex (fictional) reads a public appliance table. A science use is", _mcq_opts("rank Alex's home", "compare public figures, not a private diary", "upload a bill", "skip conservation"), "B", "Public data.", "Use a public table of figures. Do not turn it into a diary of someone's home."),
         _EN_MCQ("foundational", "no_diary", "This quiz", _mcq_opts("stores a private energy diary", "does not store a private energy diary", "ranks homes", "claims energy is created"), "B", "No diary.", "This quiz does not collect a private log of how much a household uses."),
         _EN_KEY("foundational", "energy_word", "Write the word for the quantity that can be stored, transferred or transformed here.", "energy", "Energy.", "One short word names the quantity that can be stored, moved, or changed in form here."),
@@ -594,13 +594,13 @@ _EN_POOLS = {
         _EN_PICK("foundational", "form_ok", "Select kinetic and chemical energy.", ["kinetic", "chem"], _FORM_BANK, 2, "Two forms. No diary.", "Choose the motion store and the food-or-fuel store. Skip a private diary."),
     ],
     "intermediate": [
-        _EN_MCQ("intermediate", "transfer", "An energy transfer in this lesson is", _mcq_opts("a class vote", "energy moving from one store or place to another", "creating energy", "a joint map"), "B", "Place or store change.", "It can move from one store or place to another. That is not a class vote."),
+        _EN_MCQ("intermediate", "transfer", "An energy transfer is", _mcq_opts("a class vote", "energy moving from one store or place to another", "creating energy", "a joint map"), "B", "Place or store change.", "It can move from one store or place to another. That is not a class vote."),
         _EN_MCQ("intermediate", "useful_letter", "<p>Which letter is the useful output?</p>" + str(sankey_bars(title="Useful letter")), _mcq_opts("A", "B", "C", "a brand"), "B", "B is useful.", "On the split diagram, find the useful outgoing bar, not the incoming bar and not the wasted part."),
-        _EN_MCQ("intermediate", "conserve", "Conservation of energy in this model means", _mcq_opts("energy can appear from nowhere", "energy is not created or destroyed", "bills must be uploaded", "homes are ranked"), "B", "Not created or destroyed.", "In this model it does not appear from nowhere and does not vanish."),
+        _EN_MCQ("intermediate", "conserve", "Conservation of energy means", _mcq_opts("energy can appear from nowhere", "energy is not created or destroyed", "bills must be uploaded", "homes are ranked"), "B", "Not created or destroyed.", "It does not appear from nowhere and does not vanish."),
         _EN_MCQ("intermediate", "sam_en", "Sam (fictional) says a wasted bar means energy vanished. A science reply is", _mcq_opts("agree", "the energy is still there as a less useful form", "store Sam's bill", "rank Sam"), "B", "Still there.", "A wasted bar is still there, just in a less useful form. It has not disappeared."),
-        _EN_MCQ("intermediate", "source", "An energy source impact in this lesson is", _mcq_opts("a private confession", "a public environmental idea, not a household rank", "a glasses file", "a joke only"), "B", "Public impact idea.", "Impacts of sources are public environmental ideas, not a ranking of homes."),
-        _EN_MCQ("intermediate", "food", "Food energy in this S3 model is", _mcq_opts("a demand to log meals here", "a chemical store example, not a private menu", "a magnet pole", "a circuit"), "B", "Example store.", "Food is an example of a chemical store. This quiz does not ask you to log meals."),
-        _EN_KEY("intermediate", "conserve_word", "Write the word for the idea that energy is not created or destroyed in this model.", "conservation", "Conservation.", "One short word names the idea that it is not made or destroyed in this model."),
+        _EN_MCQ("intermediate", "source", "An energy source impact is", _mcq_opts("a private confession", "a public environmental idea, not a household rank", "a glasses file", "a joke only"), "B", "Public impact idea.", "Impacts of sources are public environmental ideas, not a ranking of homes."),
+        _EN_MCQ("intermediate", "food", "Food energy is", _mcq_opts("a demand to log meals here", "a chemical store example, not a private menu", "a magnet pole", "a circuit"), "B", "Example store.", "Food is an example of a chemical store. This quiz does not ask you to log meals."),
+        _EN_KEY("intermediate", "conserve_word", "Write the word for the idea that energy is not created or destroyed.", "conservation", "Conservation.", "One short word names the idea that it is not made or destroyed."),
         _EN_NUM("intermediate", "waste25", "Input 80 units; useful 55 units. Wasted output in the same units?", 25, "80 − 55 = 25.", "Start with 80 units in. Fifty-five are useful. Subtract to find how many are wasted."),
         _EN_ORD("intermediate", "ttc", "Order transformation, then transfer, then conservation.", ["transform", "transfer", "conserve"], _CONS_BANK, "Change form, move, then conserve.", "First change of form, then moving from place to place, then the not-created-or-destroyed idea."),
         _EN_PICK("intermediate", "cons_ok", "Select transformation and conservation.", ["transform", "conserve"], _CONS_BANK, 2, "Two ideas. Not creation.", "Choose the form-change idea and the not-created-or-destroyed idea. Skip making it from nothing."),
@@ -608,9 +608,9 @@ _EN_POOLS = {
     "difficult": [
         _EN_MCQ("difficult", "waste_letter", "<p>Which letter is the wasted output?</p>" + str(sankey_bars(title="Wasted letter")), _mcq_opts("A", "C", "B", "a handle"), "B", "C is wasted.", "On the split diagram, find the less-useful outgoing bar, not the incoming bar and not the useful split."),
         _EN_MCQ("difficult", "sankey", "A Sankey-style split is used to", _mcq_opts("rank classmates", "show how an input splits into useful and wasted parts", "store bills", "claim energy is created"), "B", "Split of the input.", "The split diagram shows how one input divides into a useful part and a wasted part."),
-        _EN_MCQ("difficult", "jordan_en", "Jordan (fictional) wants a league of whose home uses least energy. The lesson says", _mcq_opts("publish the league", "use public data; do not rank households here", "upload meters", "skip conservation"), "B", "No household rank.", "Public figures are fine. A league of whose home uses least is not this lesson."),
+        _EN_MCQ("difficult", "jordan_en", "Jordan (fictional) wants a league of whose home uses least energy. The right response is", _mcq_opts("publish the league", "use public data; do not rank households here", "upload meters", "skip conservation"), "B", "No household rank.", "Public figures are fine. A league of whose home uses least is not allowed."),
         _EN_MCQ("difficult", "both", "Transformation and transfer both", _mcq_opts("create energy", "keep conservation as the background model", "require a diary", "are magnets"), "B", "Conservation still holds.", "Changing form and moving place still sit under the idea that it is not created or destroyed."),
-        _EN_MCQ("difficult", "limit_en", "A limit of this lesson is", _mcq_opts("that forms cannot be named", "that it does not collect private bills or replace a meter reading at home", "that Sankey bars are illegal", "that energy is created"), "B", "No private bills.", "This lesson does not harvest private bills or replace a meter reading at home."),
+        _EN_MCQ("difficult", "limit_en", "Which of these is true about this quiz?", _mcq_opts("that forms cannot be named", "that it does not collect private bills or replace a meter reading at home", "that Sankey bars are illegal", "that energy is created"), "B", "No private bills.", "This quiz does not harvest private bills or replace a meter reading at home."),
         _EN_MCQ("difficult", "misuse_en", "A misuse of the appliance table is", _mcq_opts("quoting a public figure", "demanding a live household diary in the quiz", "drawing a Sankey split", "naming thermal waste"), "B", "No live diary.", "Quoting a public figure is fine. Demanding a live household diary in the quiz is not."),
         _EN_KEY("difficult", "thermal_word", "Write the word for the less useful form often shown as wasted output here.", "thermal", "Thermal.", "One short word names the less useful form often shown as the wasted bar."),
         _EN_NUM("difficult", "in90", "Useful 70 units and wasted 20 units. Input in the same units if they add to the input?", 90, "70 + 20 = 90.", "Add the 70 useful units to the 20 wasted units. That sum is the input if they add up."),
@@ -910,7 +910,7 @@ def _energy_intermediate_sms_waste_then_conserve_order():
         (
             "Energy can be transformed from one form to another",
             "Energy can be transferred from one store or place to another",
-            "Conservation means energy is not created or destroyed in this model",
+            "Conservation means energy is not created or destroyed",
         ),
         (
             "A machine can create energy from nothing",
@@ -962,7 +962,7 @@ def _energy_intermediate_sms_source_impact():
     pick_raw, pick_bank, pick_count = _en_sms_pick_field(
         (
             "Energy can be transformed from one form to another",
-            "Conservation means energy is not created or destroyed in this model",
+            "Conservation means energy is not created or destroyed",
         ),
         (
             "A machine can create energy from nothing",
@@ -1022,7 +1022,7 @@ def _energy_difficult_sms_reconstruct_input():
     options, letter = _en_sms_mcq_field(correct, distractors)
     pick_raw, pick_bank, pick_count = _en_sms_pick_field(
         (
-            "Conservation means energy is not created or destroyed in this model",
+            "Conservation means energy is not created or destroyed",
             "Energy can be transferred from one store or place to another",
         ),
         (
@@ -1115,7 +1115,7 @@ def _energy_difficult_sms_two_device_gap():
         "<p>(i) What is the useful output of the first row?</p>"
         "<p>(ii) Using (i), how many more useful units does the first row "
         "show than the second row?</p>"
-        "<p>(iii) The lesson says to</p>"
+        "<p>(iii) The right response is to</p>"
     )
     solution = (
         f"(i) {pack['a_in']} − {pack['a_w']} = <strong>{useful_a}</strong><br>"
@@ -1169,7 +1169,7 @@ def _energy_difficult_sms_thermal_limit():
     pick_raw, pick_bank, pick_count = _en_sms_pick_field(
         (
             "Thermal energy is a less useful form in many wasted-output stories",
-            "Conservation means energy is not created or destroyed in this model",
+            "Conservation means energy is not created or destroyed",
         ),
         (
             "The quiz should store a private energy diary",
@@ -1181,8 +1181,8 @@ def _energy_difficult_sms_thermal_limit():
         f"<p>A fictional public table for a {pack['device']} lists input "
         f"{pack['inp']} units and useful output {pack['useful']} units.</p>"
         "<p>(i) What is the wasted output in the same units?</p>"
-        "<p>(ii) A limit of this lesson, when using that wasted figure from "
-        "(i), is</p>"
+        "<p>(ii) Which of these is true about this quiz, when using that wasted figure from "
+        "(i)?</p>"
         "<p>(iii) Select the two statements that belong with this wasted "
         "output.</p>"
     )
@@ -1245,50 +1245,50 @@ eursc_science_energy, eursc_science_energy_variants = bind_eursc_topic(
 )
 
 _CHARGE_BANK = (
-    {"id": "friction", "text": "Charging by friction can separate charge in this model"},
+    {"id": "friction", "text": "Charging by friction can separate charge"},
     {"id": "two", "text": "Two kinds of charge attract or repel"},
     {"id": "ground", "text": "Grounding can provide a path for charge to leave an object"},
     {"id": "shock_ask", "text": "The quiz should ask who has been shocked at home"},
 )
 _INDUCE_BANK = (
     {"id": "transfer", "text": "Charge can be transferred by contact"},
-    {"id": "induce", "text": "Induction can rearrange charge without contact in this model"},
+    {"id": "induce", "text": "Induction can rearrange charge without contact"},
     {"id": "insulator", "text": "An insulator does not let charge flow easily"},
     {"id": "league", "text": "The quiz should rank whose spark is biggest"},
 )
 
 _ES_POOLS = {
     "foundational": [
-        _ES_MCQ("foundational", "friction", "Charging by friction in this lesson is", _mcq_opts("a diet", "rubbing or contact that can separate charge", "a stored shock file", "a class rank"), "B", "Friction or contact.", "Rubbing or contact can separate charge. That is not a diet or a ranking."),
-        _ES_MCQ("foundational", "two", "This S3 model uses how many kinds of charge that attract or repel?", _mcq_opts("one only ever", "two", "eighty", "zero"), "B", "Two kinds.", "This model uses a pair of kinds that attract or repel, not eighty kinds."),
+        _ES_MCQ("foundational", "friction", "Charging by friction is", _mcq_opts("a diet", "rubbing or contact that can separate charge", "a stored shock file", "a class rank"), "B", "Friction or contact.", "Rubbing or contact can separate charge. That is not a diet or a ranking."),
+        _ES_MCQ("foundational", "two", "How many kinds of charge are there?", _mcq_opts("one only ever", "two", "eighty", "zero"), "B", "Two kinds.", "There are two kinds of charge, which attract or repel — not eighty kinds."),
         _ES_MCQ("foundational", "a_letter", "<p>Which letter is charge A?</p>" + str(charge_pair(title="Charge A letter")), _mcq_opts("B", "A", "neither", "a handle"), "B", "A is labelled A.", "On the pair diagram, find the label A, not B."),
-        _ES_MCQ("foundational", "attract", "Opposite charges in this model", _mcq_opts("must be uploaded", "attract", "rank classmates", "are food"), "B", "Attract.", "Kinds that are opposite pull toward each other in this model."),
+        _ES_MCQ("foundational", "attract", "Opposite charges", _mcq_opts("must be uploaded", "attract", "rank classmates", "are food"), "B", "Attract.", "Kinds that are opposite pull toward each other."),
         _ES_MCQ("foundational", "alex_es", "Alex (fictional) rubs a balloon on a jumper in a demo. A science line is", _mcq_opts("ask who has been shocked", "charge can be separated by friction", "store a medical file", "skip safety"), "B", "Friction demo.", "Rubbing a balloon on a jumper is a demo of separating charge. Do not turn it into a shock survey."),
         _ES_MCQ("foundational", "no_shock", "This quiz", _mcq_opts("asks who has been shocked at home", "does not collect a shock story", "ranks sparks", "replaces a risk assessment"), "B", "No shock survey.", "This quiz does not collect stories of who has been shocked at home."),
-        _ES_KEY("foundational", "charge_word", "Write the word for the two kinds that attract or repel in this lesson.", "charge", "Charge.", "One short word names the two kinds that attract or repel here."),
+        _ES_KEY("foundational", "charge_word", "Write the word for the two kinds that attract or repel.", "charge", "Charge.", "One short word names the two kinds that attract or repel here."),
         _ES_NUM("foundational", "two_n", "How many kinds of charge are used in this S3 attract-or-repel model?", 2, "Two.", "Count how many kinds this attract-or-repel model uses. It is a small whole number."),
         _ES_ORD("foundational", "fr_two", "Order charging by friction, then two kinds of charge.", ["friction", "two"], _CHARGE_BANK, "How it starts, then two kinds.", "First how rubbing can start it, then the two kinds that attract or repel."),
         _ES_PICK("foundational", "ch_ok", "Select friction charging and two kinds of charge.", ["friction", "two"], _CHARGE_BANK, 2, "Two ideas. No shock survey.", "Choose rubbing-to-separate and the two-kinds idea. Skip a shock survey."),
     ],
     "intermediate": [
-        _ES_MCQ("intermediate", "induce", "Induction in this lesson is", _mcq_opts("a vaccination", "rearranging charge without needing contact in this model", "a joint map", "a league"), "B", "Rearrange without contact.", "It can be rearranged even without touching, in this model."),
+        _ES_MCQ("intermediate", "induce", "Induction is", _mcq_opts("a vaccination", "rearranging charge without needing contact", "a joint map", "a league"), "B", "Rearrange without contact.", "It can be rearranged even without touching."),
         _ES_MCQ("intermediate", "b_letter", "<p>Which letter is charge B?</p>" + str(charge_pair(title="Charge B letter")), _mcq_opts("A", "B", "a brand", "a menu"), "B", "B is labelled B.", "On the pair diagram, find the label B, not A."),
         _ES_MCQ("intermediate", "ground", "Grounding is", _mcq_opts("a class vote", "a path that can let charge leave an object", "a stored diary", "a food"), "B", "Path off the object.", "Think of a path that can let it leave an object."),
-        _ES_MCQ("intermediate", "insulator", "An insulator", _mcq_opts("lets charge flow easily always", "does not let charge flow easily in this model", "ranks sparks", "is a magnet pole"), "B", "Charge does not flow easily.", "Think of a material that does not let it flow easily."),
+        _ES_MCQ("intermediate", "insulator", "An insulator", _mcq_opts("lets charge flow easily always", "does not let charge flow easily", "ranks sparks", "is a magnet pole"), "B", "Charge does not flow easily.", "Think of a material that does not let it flow easily."),
         _ES_MCQ("intermediate", "sam_es", "Sam (fictional) stands on an insulator mat in a demo. A science point is", _mcq_opts("ask Sam's medical history", "the mat can reduce an unwanted path for charge", "rank Sam", "skip the teacher"), "B", "Insulator path.", "Standing on a mat that it does not cross easily can cut an unwanted path."),
-        _ES_MCQ("intermediate", "atom", "A simple atomic link in this lesson is", _mcq_opts("that nuclei must be uploaded", "that electrons can move", "that charge is a diet", "that sparks are a league"), "B", "Electrons can move.", "A simple link is that tiny negative particles can move. Nuclei are not uploaded."),
-        _ES_KEY("intermediate", "induction_word", "Write the word for rearranging charge without contact in this model.", "induction", "Induction.", "One short word names rearranging it without needing contact."),
+        _ES_MCQ("intermediate", "atom", "A simple atomic link is", _mcq_opts("that nuclei must be uploaded", "that electrons can move", "that charge is a diet", "that sparks are a league"), "B", "Electrons can move.", "A simple link is that tiny negative particles can move. Nuclei are not uploaded."),
+        _ES_KEY("intermediate", "induction_word", "Write the word for rearranging charge without contact.", "induction", "Induction.", "One short word names rearranging it without needing contact."),
         _ES_NUM("intermediate", "zero_shock", "How many live 'who has been shocked' items should this quiz ask? Enter 0.", 0, "Zero.", "This quiz should ask nobody about being shocked at home. Enter that count."),
         _ES_ORD("intermediate", "ti", "Order transfer by contact, then induction.", ["transfer", "induce"], _INDUCE_BANK, "Contact, then without contact.", "First it moving by touching, then rearranging without touching."),
         _ES_PICK("intermediate", "ind_ok", "Select induction and insulator.", ["induce", "insulator"], _INDUCE_BANK, 2, "Two ideas. No spark league.", "Choose rearranging without contact and the material it does not flow through easily."),
     ],
     "difficult": [
-        _ES_MCQ("difficult", "like", "Like charges in this model", _mcq_opts("attract always", "repel", "must be photographed", "rank the class"), "B", "Repel.", "Kinds that are the same push each other apart in this model."),
-        _ES_MCQ("difficult", "lightning", "Lightning in this lesson is", _mcq_opts("a stored clinical file", "a large discharge; follow teacher safety, not a shock survey", "a food", "a magnet only"), "B", "Discharge plus safety.", "Treat it as a large discharge and follow the teacher. It is not a shock survey."),
-        _ES_MCQ("difficult", "jordan_es", "Jordan (fictional) wants a league of whose hair stands up most. The lesson says", _mcq_opts("publish the league", "use a demo; do not rank pupils", "store files", "skip grounding"), "B", "No league.", "A demo is fine. A league of whose hair stands up most is not."),
-        _ES_MCQ("difficult", "both_es", "Transfer and induction both", _mcq_opts("require a shock diary", "are ways charge can be rearranged in this model", "are ramps", "are Sankey bars"), "B", "Rearrange charge.", "Touching and rearranging without touching are both ways it can be moved around."),
+        _ES_MCQ("difficult", "like", "Like charges", _mcq_opts("attract always", "repel", "must be photographed", "rank the class"), "B", "Repel.", "Kinds that are the same push each other apart."),
+        _ES_MCQ("difficult", "lightning", "Lightning is", _mcq_opts("a stored clinical file", "a large discharge; follow teacher safety, not a shock survey", "a food", "a magnet only"), "B", "Discharge plus safety.", "Treat it as a large discharge and follow the teacher. It is not a shock survey."),
+        _ES_MCQ("difficult", "jordan_es", "Jordan (fictional) wants a league of whose hair stands up most. The right response is", _mcq_opts("publish the league", "use a demo; do not rank pupils", "store files", "skip grounding"), "B", "No league.", "A demo is fine. A league of whose hair stands up most is not."),
+        _ES_MCQ("difficult", "both_es", "Transfer and induction both", _mcq_opts("require a shock diary", "are ways charge can be rearranged", "are ramps", "are Sankey bars"), "B", "Rearrange charge.", "Touching and rearranging without touching are both ways it can be moved around."),
         _ES_MCQ("difficult", "safety_es", "Classroom electrostatics safety is", _mcq_opts("the app's stored medical file", "the teacher's risk assessment, not a home interrogation", "a class rank", "optional always"), "B", "Teacher rules.", "Classroom rules come from the teacher's risk assessment, not from this app storing medical files."),
-        _ES_MCQ("difficult", "misuse_es", "A misuse of this lesson is", _mcq_opts("drawing two charges", "asking who has been shocked at home", "naming an insulator", "stating opposite charges attract"), "B", "No shock survey.", "Drawing two kinds is fine. Asking who has been shocked at home is not."),
+        _ES_MCQ("difficult", "misuse_es", "Which of these is not allowed in this quiz?", _mcq_opts("drawing two charges", "asking who has been shocked at home", "naming an insulator", "stating opposite charges attract"), "B", "No shock survey.", "Drawing two kinds is fine. Asking who has been shocked at home is not."),
         _ES_KEY("difficult", "insulator_word", "Write the word for a material that does not let charge flow easily here.", "insulator", "Insulator.", "One short word names a material that does not let it flow easily here."),
         _ES_NUM("difficult", "kinds2", "Attract and repel are modelled with how many kinds of charge?", 2, "Two.", "Attract and repel are modelled with a pair of kinds. How many is that pair?"),
         _ES_ORD("difficult", "gi", "Order grounding, then an insulator idea.", ["ground", "insulator"], _CHARGE_BANK[:3] + _INDUCE_BANK[2:3], "Path off, then material.", "First a path for it to leave, then a material it does not flow through easily."),
@@ -1336,7 +1336,7 @@ _PATH_BANK = (
     {"id": "vir", "text": "This lesson requires V = IR calculations"},
 )
 _SAFE_BANK = (
-    {"id": "electron", "text": "Electrons can move in the teaching model of current"},
+    {"id": "electron", "text": "Electrons can move in a wire to make a current"},
     {"id": "conductor", "text": "A conductor lets current pass more easily than an insulator"},
     {"id": "safety", "text": "Classroom electrical safety follows the teacher's risk assessment"},
     {"id": "home_inspect", "text": "The quiz should inspect whose home wiring it is"},
@@ -1344,24 +1344,24 @@ _SAFE_BANK = (
 
 _EC_POOLS = {
     "foundational": [
-        _EC_MCQ("foundational", "loop", "A complete circuit in this lesson is", _mcq_opts("a food group", "a loop that allows current", "a stored shock file", "a class rank"), "B", "A loop.", "The flow here needs a closed path. Look for a loop, not a food group."),
-        _EC_MCQ("foundational", "series", "A series circuit has", _mcq_opts("no path", "one path", "eighty independent paths always", "a diet"), "B", "One path.", "In this model that circuit type has a single path, not dozens."),
+        _EC_MCQ("foundational", "loop", "A complete circuit is", _mcq_opts("a food group", "a loop that allows current", "a stored shock file", "a class rank"), "B", "A loop.", "The flow here needs a closed path. Look for a loop, not a food group."),
+        _EC_MCQ("foundational", "series", "A series circuit has", _mcq_opts("no path", "one path", "eighty independent paths always", "a diet"), "B", "One path.", "That circuit type has a single path, not dozens."),
         _EC_MCQ("foundational", "cell_letter", "<p>Which letter is the cell?</p>" + str(circuit_boxes(title="Cell letter")), _mcq_opts("B", "A", "C", "a handle"), "B", "A is the cell.", "On the circuit boxes, find the cell, not the lamp and not the switch."),
-        _EC_MCQ("foundational", "no_vir", "V = IR calculations", _mcq_opts("are required in every item", "are not claimed in this lesson", "replace safety", "store home wiring"), "B", "Qualitative only.", "This unit stays with path ideas. It does not claim a calculation homework with that formula."),
+        _EC_MCQ("foundational", "no_vir", "V = IR calculations", _mcq_opts("are required in every item", "are not needed to describe a simple circuit", "replace safety", "store home wiring"), "B", "Qualitative only.", "Simple circuits can be described with path ideas, without that formula."),
         _EC_MCQ("foundational", "alex_ec", "Alex (fictional) opens a switch and a lamp goes out. A science line is", _mcq_opts("rank Alex", "the loop is no longer complete", "inspect Alex's home", "compute V = IR"), "B", "Open switch breaks the loop.", "Opening a switch breaks the closed path, so the lamp goes out."),
-        _EC_MCQ("foundational", "conductor", "A conductor in this model", _mcq_opts("never lets current pass", "lets current pass more easily than an insulator", "is a lever", "ranks pupils"), "B", "Easier path.", "Think of a material that lets the flow pass more easily than an insulator does."),
-        _EC_KEY("foundational", "current_word", "Write the word for the flow in a complete circuit in this lesson.", "current", "Current.", "One short word names the flow in a complete circuit here."),
-        _EC_NUM("foundational", "one_path", "A series circuit in this model has how many paths?", 1, "One.", "A one-path circuit type in this model has a single path. Enter that count."),
+        _EC_MCQ("foundational", "conductor", "A conductor", _mcq_opts("never lets current pass", "lets current pass more easily than an insulator", "is a lever", "ranks pupils"), "B", "Easier path.", "Think of a material that lets the flow pass more easily than an insulator does."),
+        _EC_KEY("foundational", "current_word", "Write the word for the flow in a complete circuit.", "current", "Current.", "One short word names the flow in a complete circuit here."),
+        _EC_NUM("foundational", "one_path", "A series circuit has how many paths?", 1, "One.", "A one-path circuit type has a single path. Enter that count."),
         _EC_ORD("foundational", "loop_ser", "Order a complete loop, then a series path.", ["loop", "series"], _PATH_BANK, "Loop, then one path.", "First a complete loop, then the one-path circuit type."),
         _EC_PICK("foundational", "path_ok", "Select complete loop and series.", ["loop", "series"], _PATH_BANK, 2, "Two ideas. No V = IR claim.", "Choose the complete-loop idea and the one-path circuit type. Skip any calculation-formula claim."),
     ],
     "intermediate": [
         _EC_MCQ("intermediate", "parallel", "A parallel circuit has", _mcq_opts("zero paths", "more than one path", "only a magnet", "a private diary"), "B", "More than one path.", "That circuit type has more than one path, not zero."),
         _EC_MCQ("intermediate", "lamp_letter", "<p>Which letter is the lamp?</p>" + str(circuit_boxes(title="Lamp letter")), _mcq_opts("A", "B", "C", "a brand"), "B", "B is the lamp.", "On the circuit boxes, find the lamp, not the cell and not the switch."),
-        _EC_MCQ("intermediate", "conventional", "Conventional current (the arrow convention) in this teaching model is", _mcq_opts("a demand for a home photo", "a direction convention, distinct from electron flow", "a joule of mass", "a class league"), "B", "Convention vs electrons.", "The arrow convention is a teaching direction. It is not the same label as electron flow."),
+        _EC_MCQ("intermediate", "conventional", "Conventional current (the arrow convention) is", _mcq_opts("a demand for a home photo", "a direction convention, distinct from electron flow", "a joule of mass", "a class league"), "B", "Convention vs electrons.", "The arrow convention is an agreed direction. It is not the same label as electron flow."),
         _EC_MCQ("intermediate", "effects", "Effects of current named here include", _mcq_opts("only a rumour", "heating, lighting and a magnetic effect", "a joint map", "a menu"), "B", "Heat, light, magnetic.", "The flow here can heat, light, and have a magnetic effect. Not a rumour."),
         _EC_MCQ("intermediate", "sam_ec", "Sam (fictional) adds a second lamp on its own branch. That fits", _mcq_opts("a series-only rule always", "a parallel path idea", "V = IR as a required calculation", "a home inspection"), "B", "Parallel.", "A second lamp on its own branch fits the more-than-one-path idea."),
-        _EC_MCQ("intermediate", "meter", "A meter in this lesson is used", _mcq_opts("to store whose home it is", "qualitatively; this lesson does not claim V = IR calculations", "to rank sparks", "to skip safety"), "B", "Qualitative meters.", "Meters here are qualitative. This lesson does not claim that formula as homework."),
+        _EC_MCQ("intermediate", "meter", "A meter is used", _mcq_opts("to store whose home it is", "to compare and describe, without V = IR calculations", "to rank sparks", "to skip safety"), "B", "Qualitative meters.", "Meters are used to compare and describe, without that formula."),
         _EC_KEY("intermediate", "series_word", "Write the word for a circuit with one path.", "series", "Series.", "One short word names a circuit with one path."),
         _EC_NUM("intermediate", "zero_vir", "How many V = IR calculation items does this lesson claim? Enter 0.", 0, "Zero.", "This lesson claims none of those formula-calculation items. Enter that count."),
         _EC_ORD("intermediate", "sp", "Order series, then parallel.", ["series", "parallel"], _PATH_BANK, "One path, then more than one.", "First the one-path type, then the more-than-one-path type."),
@@ -1369,13 +1369,13 @@ _EC_POOLS = {
     ],
     "difficult": [
         _EC_MCQ("difficult", "switch_letter", "<p>Which letter is the switch?</p>" + str(circuit_boxes(title="Switch letter")), _mcq_opts("A", "C", "B", "a handle"), "B", "C is the switch.", "On the circuit boxes, find the switch, not the cell and not the lamp."),
-        _EC_MCQ("difficult", "electrons", "Electron flow in this teaching model", _mcq_opts("is the same label as conventional current always", "is distinguished from the conventional-current arrow", "must be a home confession", "ranks classmates"), "B", "Two descriptions.", "Electron flow and the conventional arrow are two descriptions, not the same label."),
-        _EC_MCQ("difficult", "jordan_ec", "Jordan (fictional) wants to test mains sockets at home for the quiz. The lesson says", _mcq_opts("go ahead and upload photos", "do not inspect home wiring here; follow classroom safety", "compute V = IR first", "rank Jordan"), "B", "No home inspection.", "Do not inspect home wiring for this quiz. Follow classroom safety."),
+        _EC_MCQ("difficult", "electrons", "Electron flow", _mcq_opts("is the same label as conventional current always", "is distinguished from the conventional-current arrow", "must be a home confession", "ranks classmates"), "B", "Two descriptions.", "Electron flow and the conventional arrow are two descriptions, not the same label."),
+        _EC_MCQ("difficult", "jordan_ec", "Jordan (fictional) wants to test mains sockets at home for the quiz. The safe answer is", _mcq_opts("go ahead and upload photos", "do not inspect home wiring here; follow classroom safety", "compute V = IR first", "rank Jordan"), "B", "No home inspection.", "Do not inspect home wiring for this quiz. Follow classroom safety."),
         _EC_MCQ("difficult", "safety_ec", "Electrical safety in class is", _mcq_opts("optional if the lamp is small", "the teacher's risk assessment, not this app's inspection", "a league", "a Sankey bar"), "B", "Teacher rules.", "Electrical safety in class is the teacher's risk assessment, not this app inspecting homes."),
-        _EC_MCQ("difficult", "qual", "Current and voltage in this lesson are", _mcq_opts("always calculated with V = IR", "treated qualitatively; V = IR is not claimed", "a diet", "a joint map"), "B", "Qualitative.", "Current and voltage here are treated as ideas, not as a required formula calculation."),
-        _EC_MCQ("difficult", "misuse_ec", "A misuse of this lesson is", _mcq_opts("drawing a series loop", "requiring V = IR calculations as if they were in the S3 claim", "naming a conductor", "opening a switch in a model"), "B", "No V = IR claim.", "Drawing a one-path loop is fine. Treating that formula as an S3 claim is not."),
+        _EC_MCQ("difficult", "qual", "Current and voltage are", _mcq_opts("always calculated with V = IR", "described in words, without V = IR calculations", "a diet", "a joint map"), "B", "Qualitative.", "Current and voltage are described as ideas, not calculated with a formula."),
+        _EC_MCQ("difficult", "misuse_ec", "Which of these is not allowed in this quiz?", _mcq_opts("drawing a series loop", "requiring V = IR calculations", "naming a conductor", "opening a switch in a model"), "B", "No V = IR claim.", "Drawing a one-path loop is fine. Requiring that formula is not."),
         _EC_KEY("difficult", "parallel_word", "Write the word for a circuit with more than one path.", "parallel", "Parallel.", "One short word names a circuit with more than one path."),
-        _EC_NUM("difficult", "paths2", "A simple parallel model here is described as more than one path. Enter 2 for that teaching count of path-types named (series and parallel).", 2, "Two path-types.", "The lesson names two path-types. Enter that teaching count."),
+        _EC_NUM("difficult", "paths2", "A parallel circuit has more than one path. Series and parallel: enter how many kinds of circuit that is.", 2, "Two kinds.", "Count the two kinds named: series and parallel."),
         _EC_ORD("difficult", "cs", "Order conductor, then classroom safety.", ["conductor", "safety"], _SAFE_BANK, "Material, then safety.", "First the material that lets the flow pass more easily, then classroom safety."),
         _EC_PICK("difficult", "not_ec", "Select the two items that do not belong.", ["vir", "home_inspect"], _PATH_BANK[:1] + _PATH_BANK[3:] + _SAFE_BANK[1:2] + _SAFE_BANK[3:], 2, "No V = IR claim; no home inspection.", "Choose the formula-calculation claim and the home-wiring inspection. Those two do not belong."),
     ],
@@ -1421,7 +1421,7 @@ _POLE_BANK = (
     {"id": "rank_mag", "text": "The quiz should rank whose magnet is strongest"},
 )
 _EARTH_BANK = (
-    {"id": "material", "text": "Some materials are magnetic in this S3 model and some are not"},
+    {"id": "material", "text": "Some materials are magnetic and some are not"},
     {"id": "earth", "text": "Earth can be modelled as having a magnetic field a compass uses"},
     {"id": "taxis", "text": "Magnetotaxis is a public animal example, not a pupil ranking"},
     {"id": "super", "text": "The quiz should rank which pupil has a magnetic superpower"},
@@ -1429,24 +1429,24 @@ _EARTH_BANK = (
 
 _MG_POOLS = {
     "foundational": [
-        _MG_MCQ("foundational", "poles", "Magnetic poles in this lesson", _mcq_opts("are a food", "attract or repel", "must be a home file", "rank classmates"), "B", "Attract or repel.", "Ends of a magnet attract or repel. They are not a food."),
+        _MG_MCQ("foundational", "poles", "Magnetic poles", _mcq_opts("are a food", "attract or repel", "must be a home file", "rank classmates"), "B", "Attract or repel.", "Ends of a magnet attract or repel. They are not a food."),
         _MG_MCQ("foundational", "n_letter", "<p>Which letter is pole A?</p>" + str(magnet_poles(title="Pole A letter")), _mcq_opts("B", "A", "C", "a handle"), "B", "A is pole A.", "On the pole diagram, find pole A, not pole B and not the field region."),
-        _MG_MCQ("foundational", "material", "Materials in this S3 model", _mcq_opts("are all magnets always", "can be magnetic or not", "are diets", "are private scores"), "B", "Classify.", "Some materials are magnetic in this model and some are not. Not all objects are magnets."),
+        _MG_MCQ("foundational", "material", "Materials", _mcq_opts("are all magnets always", "can be magnetic or not", "are diets", "are private scores"), "B", "Classify.", "Some materials are magnetic and some are not. Not all objects are magnets."),
         _MG_MCQ("foundational", "electro", "An electromagnet is", _mcq_opts("a stored ranking", "a current-made magnet that can be switched", "a joule of time", "a shock survey"), "B", "Current-made, switchable.", "Think of a magnet made with current that you can switch on and off."),
-        _MG_MCQ("foundational", "alex_mg", "Alex (fictional) brings a compass on a field trip. A science line is", _mcq_opts("rank Alex", "a compass can line up with Earth's field in this model", "store a superpower", "skip poles"), "B", "Earth and compass.", "A compass can line up with Earth's field in this model. Do not rank Alex."),
+        _MG_MCQ("foundational", "alex_mg", "Alex (fictional) brings a compass on a field trip. A science line is", _mcq_opts("rank Alex", "a compass can line up with Earth's field", "store a superpower", "skip poles"), "B", "Earth and compass.", "A compass can line up with Earth's field. Do not rank Alex."),
         _MG_MCQ("foundational", "no_rank", "This quiz", _mcq_opts("ranks whose magnet is strongest", "does not rank whose magnet is strongest", "inspects home wiring", "claims V = IR"), "B", "No strength league.", "This quiz does not keep a league of whose magnet is strongest."),
         _MG_KEY("foundational", "magnet_word", "Write the word for an object with poles that attract or repel here.", "magnet", "Magnet.", "One short word names an object with ends that attract or repel here."),
-        _MG_NUM("foundational", "two_poles", "How many poles are named on a simple bar magnet in this lesson?", 2, "Two.", "Count the named ends on a simple bar magnet. It is a small whole number."),
+        _MG_NUM("foundational", "two_poles", "How many poles does a simple bar magnet have?", 2, "Two.", "Count the ends of a simple bar magnet. It is a small whole number."),
         _MG_ORD("foundational", "pf", "Order poles, then the field region.", ["poles", "field"], _POLE_BANK, "Poles, then field.", "First the attracting-or-repelling ends, then the region where the effect can be shown."),
         _MG_PICK("foundational", "pole_ok", "Select poles and electromagnet.", ["poles", "electro"], _POLE_BANK, 2, "Two ideas. No strength rank.", "Choose the attracting-or-repelling ends and the current-made switchable magnet."),
     ],
     "intermediate": [
         _MG_MCQ("intermediate", "s_letter", "<p>Which letter is pole B?</p>" + str(magnet_poles(title="Pole B letter")), _mcq_opts("A", "B", "C", "a brand"), "B", "B is pole B.", "On the pole diagram, find pole B, not pole A and not the field region."),
         _MG_MCQ("intermediate", "field", "A magnetic field in this schematic is", _mcq_opts("a menu", "a region where a magnetic effect can be shown", "a private diary", "a vaccination"), "B", "Region of effect.", "Think of a region around a magnet where the effect can be shown, not a menu."),
-        _MG_MCQ("intermediate", "magnetise", "Magnetisation in this lesson is", _mcq_opts("a class vote", "aligning or making a magnet in this model", "a shock file", "a ramp"), "B", "Make or align.", "Think of aligning or making a magnet in this model, not a class vote."),
-        _MG_MCQ("intermediate", "earth", "Earth in this lesson is modelled as", _mcq_opts("having no field", "having a magnetic field a compass can use", "a household rank", "a V = IR claim"), "B", "Earth field.", "Earth is modelled as having a field a compass can use."),
+        _MG_MCQ("intermediate", "magnetise", "Magnetisation is", _mcq_opts("a class vote", "aligning or making a magnet", "a shock file", "a ramp"), "B", "Make or align.", "Think of aligning or making a magnet, not a class vote."),
+        _MG_MCQ("intermediate", "earth", "Earth is modelled as", _mcq_opts("having no field", "having a magnetic field a compass can use", "a household rank", "a V = IR claim"), "B", "Earth field.", "Earth is modelled as having a field a compass can use."),
         _MG_MCQ("intermediate", "sam_mg", "Sam (fictional) switches a coil off and the paperclips drop. That fits", _mcq_opts("a permanent-only rule always", "an electromagnet that can be switched", "a superpower league", "a home inspection"), "B", "Switchable.", "Switching the coil off so paperclips drop fits a magnet you can switch."),
-        _MG_MCQ("intermediate", "taxis", "Magnetotaxis here is", _mcq_opts("a pupil ranking", "a public animal example, not a superpower quiz", "a stored clinical file", "a diet"), "B", "Public example.", "It is a public animal example. It is not a ranking of pupils."),
+        _MG_MCQ("intermediate", "taxis", "Magnetotaxis is", _mcq_opts("a pupil ranking", "a public animal example, not a superpower quiz", "a stored clinical file", "a diet"), "B", "Public example.", "It is a public animal example. It is not a ranking of pupils."),
         _MG_KEY("intermediate", "pole_word", "Write the word for one end of a magnet that attracts or repels here.", "pole", "Pole.", "One short word names one end of a magnet that attracts or repels here."),
         _MG_NUM("intermediate", "zero_rank", "How many 'whose magnet is strongest' ranks should this quiz keep? Enter 0.", 0, "Zero.", "This quiz should keep none of those strength leagues. Enter that count."),
         _MG_ORD("intermediate", "et", "Order Earth's field idea, then magnetotaxis.", ["earth", "taxis"], _EARTH_BANK, "Earth, then the animal example.", "First Earth's field idea, then the public animal example."),
@@ -1454,13 +1454,13 @@ _MG_POOLS = {
     ],
     "difficult": [
         _MG_MCQ("difficult", "c_letter", "<p>Which letter is the field region?</p>" + str(magnet_poles(title="Field letter")), _mcq_opts("A", "C", "B", "a handle"), "B", "C is the field region.", "On the diagram, find the field region, not pole A and not pole B."),
-        _MG_MCQ("difficult", "like_p", "Like poles in this model", _mcq_opts("attract always", "repel", "must be uploaded", "rank the class"), "B", "Repel.", "Ends of the same kind push each other apart in this model."),
-        _MG_MCQ("difficult", "jordan_mg", "Jordan (fictional) wants a league of who is most like a magnetotactic microbe. The lesson says", _mcq_opts("publish the league", "study the public model; do not rank pupils as animals", "store files", "skip fields"), "B", "No ranking.", "Study the public animal model. Do not rank pupils as if they were those organisms."),
-        _MG_MCQ("difficult", "coil", "A coil with current can", _mcq_opts("only be a diet", "act as an electromagnet in this model", "replace classroom safety", "inspect homes"), "B", "Electromagnet.", "A coil with current can act as a switchable magnet in this model."),
-        _MG_MCQ("difficult", "limit_mg", "A limit of this lesson is", _mcq_opts("that poles cannot be named", "that it does not store a magnet-strength league", "that compasses are banned", "that Earth has no model field"), "B", "No league.", "This lesson does not store a league of magnet strengths."),
+        _MG_MCQ("difficult", "like_p", "Like poles", _mcq_opts("attract always", "repel", "must be uploaded", "rank the class"), "B", "Repel.", "Ends of the same kind push each other apart."),
+        _MG_MCQ("difficult", "jordan_mg", "Jordan (fictional) wants a league of who is most like a magnetotactic microbe. The right response is", _mcq_opts("publish the league", "study the public model; do not rank pupils as animals", "store files", "skip fields"), "B", "No ranking.", "Study the public animal model. Do not rank pupils as if they were those organisms."),
+        _MG_MCQ("difficult", "coil", "A coil with current can", _mcq_opts("only be a diet", "act as an electromagnet", "replace classroom safety", "inspect homes"), "B", "Electromagnet.", "A coil with current can act as a switchable magnet."),
+        _MG_MCQ("difficult", "limit_mg", "Which of these is true about this quiz?", _mcq_opts("that poles cannot be named", "that it does not store a magnet-strength league", "that compasses are banned", "that Earth has no model field"), "B", "No league.", "This quiz does not store a league of magnet strengths."),
         _MG_MCQ("difficult", "misuse_mg", "A misuse of magnetotaxis teaching is", _mcq_opts("using a public animal example", "ranking which pupil has a superpower", "drawing a field region", "naming two poles"), "B", "No superpower rank.", "A public animal example is fine. Ranking which pupil has a superpower is not."),
         _MG_KEY("difficult", "electro_word", "Write the word for a current-made magnet that can be switched.", "electromagnet", "Electromagnet.", "One short word names a current-made magnet that can be switched."),
-        _MG_NUM("difficult", "switch1", "An electromagnet can be switched. Enter 1 if that is the lesson model.", 1, "One: it can be switched.", "If the lesson model is that it can be switched, enter 1."),
+        _MG_NUM("difficult", "switch1", "An electromagnet can be switched. Enter 1 if that is true.", 1, "One: it can be switched.", "If an electromagnet can be switched, enter 1."),
         _MG_ORD("difficult", "fe", "Order the field region, then the electromagnet.", ["field", "electro"], _POLE_BANK, "Field, then current-made magnet.", "First the region of effect, then the current-made switchable magnet."),
         _MG_PICK("difficult", "not_mg", "Select the two items that do not belong.", ["rank_mag", "super"], _POLE_BANK[:1] + _POLE_BANK[3:] + _EARTH_BANK[1:2] + _EARTH_BANK[3:], 2, "No strength rank; no superpower rank.", "Choose the magnet-strength league and the superpower ranking. Those two do not belong."),
     ],
@@ -1527,23 +1527,23 @@ _RB_POOLS = {
     ],
     "intermediate": [
         _RB_MCQ("intermediate", "parts", "Electronics or electromagnets in the project", _mcq_opts("may be any home mains part", "need teacher-approved parts and a risk assessment", "replace the rubric", "must be photographed at home for the app"), "B", "Teacher-approved parts.", "Electronics or electromagnets need teacher-approved parts, not any home mains part."),
-        _RB_MCQ("intermediate", "sense", "Sense–decide–act in this lesson is", _mcq_opts("a private code upload", "a classroom model of a simple program", "a joint map", "a household rank"), "B", "Classroom model.", "Think of a classroom model: sense, then decide, then act. Not a private code upload."),
+        _RB_MCQ("intermediate", "sense", "Sense–decide–act is", _mcq_opts("a private code upload", "a simple model of a program", "a joint map", "a household rank"), "B", "Simple model.", "Think of a simple model: sense, then decide, then act. Not a private code upload."),
         _RB_MCQ("intermediate", "iterate", "Iteration means", _mcq_opts("never testing", "changing the design after a test", "storing a league", "skipping safety"), "B", "Test then change.", "After a test, you change the design. That is not 'never testing'."),
         _RB_MCQ("intermediate", "sam_rb", "Sam (fictional) finds the robot misses the line. A project next step is", _mcq_opts("publish a league", "record the miss and iterate the method", "upload home photos", "hide the data"), "B", "Record and iterate.", "Record that the robot missed the line, then change the method. Do not hide the data."),
         _RB_MCQ("intermediate", "present", "Presentation in this project is", _mcq_opts("a stored popularity score", "evidence another group could follow, judged with a class rubric", "a shock survey", "a V = IR test"), "B", "Evidence plus rubric.", "Show evidence another group could follow. A class rubric judges it, not a popularity score."),
         _RB_MCQ("intermediate", "safety_rb", "Build safety is", _mcq_opts("optional", "the teacher's risk assessment; this page does not replace it", "a private medical file", "a magnet league"), "B", "Teacher rules.", "Build safety is the teacher's risk assessment. This page does not replace it."),
         _RB_KEY("intermediate", "iterate_word", "Write the word for changing the design after a test.", "iterate", "Iterate.", "One short word names changing the design after a test."),
-        _RB_NUM("intermediate", "phases5", "This project names how many classroom phases in the lesson?", 5, "Five phases.", "Count the named classroom phases in this project lesson. Enter that whole number."),
+        _RB_NUM("intermediate", "phases5", "This project names how many classroom phases?", 5, "Five phases.", "Count the named classroom phases in this project lesson. Enter that whole number."),
         _RB_ORD("intermediate", "si", "Order the sense–decide–act idea, then presenting evidence.", ["sense", "present"], _BUILD_BANK, "Program model, then present.", "First the sense-then-decide-then-act idea, then presenting evidence."),
         _RB_PICK("intermediate", "build_ok", "Select teacher-approved parts and presenting evidence.", ["electro_plan", "present"], _BUILD_BANK, 2, "Two project ideas. No photo upload.", "Choose teacher-approved parts and presenting evidence. Skip a home-photo upload."),
     ],
     "difficult": [
-        _RB_MCQ("difficult", "jordan_rb", "Jordan (fictional) wants the app to crown a winner. The lesson says", _mcq_opts("store the league", "use a class rubric; do not store a robot ranking here", "upload homes", "skip tests"), "B", "No stored league.", "Use a class rubric. This app should not store a winner league."),
-        _RB_MCQ("difficult", "code", "Classroom programming here is", _mcq_opts("a demand to upload a private repository", "a sense–decide–act model with teacher tools", "a diet", "a shock survey"), "B", "Classroom model.", "Programming here is a classroom sense-decide-act model with teacher tools, not a private repo upload."),
+        _RB_MCQ("difficult", "jordan_rb", "Jordan (fictional) wants the app to crown a winner. The right response is", _mcq_opts("store the league", "use a class rubric; do not store a robot ranking here", "upload homes", "skip tests"), "B", "No stored league.", "Use a class rubric. This app should not store a winner league."),
+        _RB_MCQ("difficult", "code", "Classroom programming is", _mcq_opts("a demand to upload a private repository", "a sense–decide–act model with teacher tools", "a diet", "a shock survey"), "B", "Sense–decide–act.", "Programming is a sense-decide-act model with teacher tools, not a private repo upload."),
         _RB_MCQ("difficult", "fail", "A failed test in the project is", _mcq_opts("proof to hide the method", "evidence for iteration, not a stored ranking", "a medical file", "a reason to skip safety"), "B", "Iterate.", "A missed test is evidence to change the design, not a reason to hide the method."),
         _RB_MCQ("difficult", "limit_rb", "A limit of this page is", _mcq_opts("that requirements cannot be written", "that it does not replace the practical build or auto-grade the robot", "that machines cannot be named", "that teachers have no rubric"), "B", "Support page only.", "This page supports the project. It does not replace the practical build or auto-grade the robot."),
         _RB_MCQ("difficult", "misuse_rb", "A misuse of the project is", _mcq_opts("writing a testable requirement", "forcing private home-workshop photos into this app", "iterating after a miss", "using a class rubric"), "B", "No private photo harvest.", "Writing a testable need is fine. Forcing private home-workshop photos into this app is not."),
-        _RB_MCQ("difficult", "roles", "Collaboration in the build", _mcq_opts("must be a secret", "has shared roles the teacher can see in class, not a hidden league here", "uploads medical files", "replaces the risk assessment"), "B", "Shared roles in class.", "Shared roles the teacher can see in class are fine. A hidden league here is not."),
+        _RB_MCQ("difficult", "roles", "Collaboration in the build", _mcq_opts("must be a secret", "has shared roles the teacher can see in class, not a hidden league here", "uploads medical files", "replaces the risk assessment"), "B", "Shared roles in class.", "Shared roles the teacher can see in class are fine. A hidden league is not."),
         _RB_KEY("difficult", "safety_word", "Write the word for following the teacher's risk rules in the build.", "safety", "Safety.", "One short word names following the teacher's risk rules in the build."),
         _RB_NUM("difficult", "zero_upload", "How many private home-workshop photo uploads does this quiz require? Enter 0.", 0, "Zero.", "This quiz requires none of those private home-workshop photo uploads. Enter that count."),
         _RB_ORD("difficult", "mi", "Order choosing machines, then iteration.", ["machine", "iterate"], _REQ_BANK, "Mechanism, then iterate.", "First choosing machines that match the needs, then changing the design after a test."),

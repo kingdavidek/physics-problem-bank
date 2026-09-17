@@ -303,7 +303,7 @@ def _healthy_living_difficult_ms_sleep_share_then_signpost_mcq_then_word():
         "the teaching guideline.</p>"
         "<p>(i) Calculate the percentage below the guideline (whole number).</p>"
         "<p>(ii) Using the share from (i), if a fictional character in the leaflet "
-        "is persistently exhausted, the lesson's next step is to</p>"
+        "is persistently exhausted, the right next step is to</p>"
         "<p>(iii) Write the one-word health need the leaflet is about.</p>"
     )
     solution = (
@@ -628,7 +628,7 @@ def _healthy_living_intermediate_sms_distress_case_pick_then_signpost_keyword():
     question = (
         "<p>A fictional story in a textbook describes a character who is "
         "persistently low and withdrawn at an imaginary school.</p>"
-        "<p>(i) Select the two statements that describe how the lesson treats "
+        "<p>(i) Select the two statements that describe the right way to treat "
         "this case.</p>"
         "<p>(ii) Using the second statement from (i), write the one-word verb "
         "for pointing someone towards qualified help.</p>"
@@ -648,7 +648,7 @@ def _healthy_living_intermediate_sms_distress_case_pick_then_signpost_keyword():
         2,
         graded_answer_number_fields(
             (pick_raw, "signpost"),
-            ("How the lesson treats the case", "Verb for pointing to help"),
+            ("How to treat the case", "Verb for pointing to help"),
             field_types=("pick", "keyword"),
             field_options=(pick_bank, None),
             field_pick_counts=(pick_count, None),
@@ -1536,8 +1536,8 @@ def _noninfectious_disease_difficult_ms_stigma_order_then_support_pick():
         "<p>A fictional case study describes a character with a long-term "
         "condition that is not catching.</p>"
         "<p>(i) Order how a wrong classification leads to stigma.</p>"
-        "<p>(ii) Using the outcome from (i), select the two statements the "
-        "lesson uses to counter stigma around health conditions.</p>"
+        "<p>(ii) Using the outcome from (i), select the two statements that "
+        "counter stigma around health conditions.</p>"
     )
     solution = (
         "(i) <strong>wrong classification → avoidance → stigma</strong><br>"
@@ -2214,7 +2214,7 @@ def _dependence_addiction_intermediate_ms_harm_pick_then_count():
     )
     question = (
         "<p>A fictional revision card lists possible consequences of dependence.</p>"
-        "<p>(i) Select the three harm categories the lesson names.</p>"
+        "<p>(i) Select the three harm categories.</p>"
         "<p>(ii) Enter how many harm categories you selected in (i).</p>"
     )
     solution = (
@@ -2786,8 +2786,7 @@ def _dependence_addiction_difficult_sms_advert_order_then_factor_pick_then_word(
         f"<p>A fictional media-studies report finds {pack['product']} advertised "
         f"heavily on {pack['channel']} watched mainly by teenagers.</p>"
         "<p>(i) Order the chain the report warns about.</p>"
-        "<p>(ii) Using the first link from (i), select the two social risk factors "
-        "the lesson names.</p>"
+        "<p>(ii) Using the first link from (i), select the two social risk factors.</p>"
         "<p>(iii) Write the one-word term for damage at the end of the chain.</p>"
     )
     solution = (
@@ -2840,7 +2839,7 @@ def _dependence_addiction_difficult_sms_clinic_pick_then_signpost_mcq():
         "both substance and behavioural dependence.</p>"
         "<p>(i) Select the two statements consistent with the documentary.</p>"
         "<p>(ii) Using the first statement from (i), if a fictional character in "
-        "the film wants help, the lesson's response is to</p>"
+        "the film wants help, the right response is to</p>"
     )
     solution = (
         "(i) Records stay clinical; both kinds treatable.<br>"
@@ -3108,7 +3107,7 @@ def _tobacco_difficult_ms_vape_pick_then_uncertainty_order():
     question = (
         "<p>A fictional science-magazine article reviews what is known about "
         "vaping.</p>"
-        "<p>(i) Select the two statements that match the S2 position.</p>"
+        "<p>(i) Select the two correct statements.</p>"
         "<p>(ii) Using the uncertainty from (i), order how a scientist should "
         "handle a 'totally safe' advert.</p>"
     )

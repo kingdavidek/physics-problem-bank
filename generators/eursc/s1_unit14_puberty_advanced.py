@@ -134,7 +134,7 @@ def _puberty_maturity_intermediate_ms_chart_not_started_then_hormone_mcq():
         f"{pack['total']} fictional young people marks {pack['started']} as having "
         "started a typical physical change.</p>"
         f"<p>(i) How many of those {pack['total']} have not yet started on this chart?</p>"
-        "<p>(ii) Using that aggregate chart from (i), hormones in this lesson are</p>"
+        "<p>(ii) Using that aggregate chart from (i), hormones are</p>"
     )
     solution = (
         f"(i) {pack['total']} − {pack['started']} = <strong>{not_started}</strong><br>"
@@ -495,7 +495,7 @@ def _puberty_maturity_foundational_sms_hormone_mcq_then_change_pick():
     )
     question = (
         "<p>A fictional science leaflet introduces puberty in third person.</p>"
-        "<p>(i) Hormones in this lesson are</p>"
+        "<p>(i) Hormones are</p>"
         "<p>(ii) Using that hormone idea from (i), select the two general puberty "
         "ideas that belong in class.</p>"
     )
@@ -541,7 +541,7 @@ def _puberty_maturity_intermediate_sms_sam_lee_voice_then_variation_mcq():
         "deeper voice in the story; Lee does not yet.</p>"
         "<p>(i) Science says about their timing that</p>"
         "<p>(ii) Using that variation idea from (i), select the two actions that "
-        "do not belong in this lesson.</p>"
+        "do not belong in a science class.</p>"
     )
     solution = (
         f"(i) <strong>{correct}</strong><br>"

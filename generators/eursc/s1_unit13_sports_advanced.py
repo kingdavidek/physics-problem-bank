@@ -1554,7 +1554,7 @@ def _breathing_foundational_sms_club_pulse_table_then_bpm():
         "<p>A fictional sports club table shows aggregate demo pulse: "
         f"{pack['beats']} beats in {pack['seconds']} s (steady).</p>"
         "<p>(i) Scale to beats per minute.</p>"
-        "<p>(ii) Using that rate from (i), the heart's job in this unit is to</p>"
+        "<p>(ii) Using that rate from (i), the heart's job is to</p>"
     )
     solution = (
         f"(i) <strong>{bpm}</strong> bpm<br>"

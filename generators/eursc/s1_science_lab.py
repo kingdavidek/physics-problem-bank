@@ -301,7 +301,7 @@ _POOLS = {
         _mcq(
             "intermediate",
             "accuracy",
-            "In this lesson, a measurement is accurate when it is",
+            "A measurement is accurate when it is",
             [
                 "A  close to the true value",
                 "B  the same every time, even if it is wrong",
@@ -315,7 +315,7 @@ _POOLS = {
         _mcq(
             "intermediate",
             "precision",
-            "In this lesson, repeated readings that are very close to each other are",
+            "Repeated readings that are very close to each other are",
             ["A  accurate", "B  precise", "C  calibrated", "D  systematic"],
             "B",
             "Precision is how close repeats are to one another.",

@@ -853,7 +853,7 @@ def _energy_foundational_ms_forms_pick_then_count():
         3,
     )
     question = (
-        "<p>A fictional revision card lists energy forms named in this model.</p>"
+        "<p>A fictional revision card lists energy forms.</p>"
         "<p>(i) Select the three energy forms.</p>"
         "<p>(ii) Enter how many forms you selected in (i).</p>"
     )
@@ -1107,7 +1107,7 @@ def _electrostatics_foundational_ms_rub_count_then_kinds_mcq():
         f"<p>A fictional demo card: {pack['items'][0]} is rubbed on {pack['items'][1]} "
         f"{pack['rubs']} times and then attracts small paper pieces.</p>"
         "<p>(i) Enter the number of rubs on the card.</p>"
-        "<p>(ii) The rubbing in (i) separates charge; this S3 model uses</p>"
+        "<p>(ii) The rubbing in (i) separates charge; there are</p>"
     )
     solution = (
         f"(i) <strong>{pack['rubs']}</strong><br>"
@@ -1218,7 +1218,7 @@ def _electrostatics_intermediate_ms_induction_order_then_word():
     )
     question = (
         "<p>A fictional demo: a charged rod is held near a small neutral foil ball.</p>"
-        "<p>(i) Order what the S3 model says happens.</p>"
+        "<p>(i) Order what happens.</p>"
         "<p>(ii) Write the one-word name for the rearranging in step 2 of (i).</p>"
     )
     solution = (
@@ -1242,7 +1242,7 @@ def _electrostatics_intermediate_ms_transfer_pick_then_count():
     )
     question = (
         "<p>A fictional revision card lists ways an object can become charged.</p>"
-        "<p>(i) Select the three ways named in this model.</p>"
+        "<p>(i) Select the three ways.</p>"
         "<p>(ii) Enter how many ways you selected in (i).</p>"
     )
     solution = "(i) Friction; contact; induction.<br>(ii) <strong>3</strong>"
@@ -1351,7 +1351,7 @@ def _electrostatics_difficult_ms_myth_mcq_then_order_then_count():
     )
     question = (
         f"<p>A fictional myth-busting page tests the claim that {pack['claim']}.</p>"
-        "<p>(i) In the S3 model the claim is</p>"
+        "<p>(i) The claim is</p>"
         "<p>(ii) Using the safe-path idea from (i), order what a lightning conductor does.</p>"
         "<p>(iii) Enter how many steps the chain in (ii) has.</p>"
     )
@@ -1925,7 +1925,7 @@ def _electric_current_difficult_ms_topology_order_then_pick_then_letter():
         diagram
         + "<p>A fictional worksheet (A cell, B lamp, C switch) asks pupils to classify circuits.</p>"
         "<p>(i) Order the method.</p>"
-        "<p>(ii) Select the two true statements about current in this model.</p>"
+        "<p>(ii) Select the two true statements about current.</p>"
         "<p>(iii) Enter the letter of the component that lights.</p>"
     )
     solution = (
@@ -2333,7 +2333,7 @@ def _magnetism_intermediate_ms_sort_count_then_pole_mcq():
     options, letter = _mcq(correct, distractors)
     question = (
         "<p>A fictional lab tray: " + ", ".join(pack["items"]) + ".</p>"
-        "<p>(i) Enter how many of the four are magnetic materials in this S3 model.</p>"
+        "<p>(i) Enter how many of the four are magnetic materials.</p>"
         "<p>(ii) If two bar magnets are placed north to south near the tray from (i), they</p>"
     )
     solution = (
@@ -2486,7 +2486,7 @@ def _magnetism_difficult_ms_animal_mcq_then_count_then_word():
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional textbook describes {pack['animal']} using {pack['cue']} to navigate.</p>"
-        "<p>(i) In this lesson the example is</p>"
+        "<p>(i) The example is</p>"
         "<p>(ii) Enter how many poles Earth's field is modelled with.</p>"
         "<p>(iii) Write the one-word human instrument that uses the same cue.</p>"
     )

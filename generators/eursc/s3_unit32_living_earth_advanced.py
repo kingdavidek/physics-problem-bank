@@ -157,7 +157,7 @@ def _food_environment_foundational_ms_impact_pick_then_count():
     )
     question = (
         "<p>A fictional revision card lists environmental impacts of food systems.</p>"
-        "<p>(i) Select the three impacts the lesson names.</p>"
+        "<p>(i) Select the three impacts.</p>"
         "<p>(ii) Enter how many impacts you selected in (i).</p>"
     )
     solution = "(i) Land; water; greenhouse gases.<br>(ii) <strong>3</strong>"
@@ -316,7 +316,7 @@ def _food_environment_difficult_ms_land_ratio_then_pick_then_count():
         f"per kg of protein; {pack['alt']} about {pack['alt_land']} m².</p>"
         f"<p>(i) How many times more land does {pack['food']} use?</p>"
         "<p>(ii) Using the comparison from (i), select the two fair readings.</p>"
-        "<p>(iii) Enter how many impact types (land, water, greenhouse gases) the lesson names.</p>"
+        "<p>(iii) Enter how many impact types (land, water, greenhouse gases) that is.</p>"
     )
     solution = (
         f"(i) {pack['land']} ÷ {pack['alt_land']} = <strong>{ratio}</strong><br>"
@@ -641,7 +641,7 @@ def _food_environment_difficult_sms_documentary_pick_then_verdict_mcq():
     question = (
         "<p>A fictional documentary about food and climate is shown in a lesson.</p>"
         "<p>(i) Select the two statements a science teacher would add.</p>"
-        "<p>(ii) Using the second statement from (i), the lesson's approach is to</p>"
+        "<p>(ii) Using the second statement from (i), the scientific approach is to</p>"
     )
     solution = (
         "(i) Averages vary; public options not personal judgements.<br>"
@@ -756,7 +756,7 @@ def _ecosystems_cycles_foundational_ms_cycle_pick_then_count():
     )
     question = (
         "<p>A fictional revision card lists cycles in an ecosystem.</p>"
-        "<p>(i) Select the two cycles the lesson names.</p>"
+        "<p>(i) Select the two cycles.</p>"
         "<p>(ii) Enter how many cycles you selected in (i).</p>"
     )
     solution = "(i) Water; carbon.<br>(ii) <strong>2</strong>"
@@ -1217,7 +1217,7 @@ def _ecosystems_cycles_difficult_sms_documentary_pick_then_model_mcq():
         "<p>A fictional documentary animates a food web and predicts what happens if one "
         "species vanishes.</p>"
         "<p>(i) Select the two statements a science teacher would add.</p>"
-        "<p>(ii) Using the second statement from (i), the lesson's approach to the prediction is to</p>"
+        "<p>(ii) Using the second statement from (i), the scientific approach to the prediction is to</p>"
     )
     solution = (
         "(i) Webs are linked chains; models simplify.<br>"
@@ -1502,7 +1502,7 @@ def _ecosystem_characteristics_difficult_ms_adaptation_mcq_then_count_then_word(
     question = (
         f"<p>A fictional textbook describes {pack['animal']} with {pack['adaptation']}.</p>"
         "<p>(i) The feature is best explained as</p>"
-        "<p>(ii) Enter how many abiotic factors (temperature, light, water, soil) the lesson lists as a set.</p>"
+        "<p>(ii) Enter how many abiotic factors (temperature, light, water, soil) that is.</p>"
         "<p>(iii) Write the one-word term for keeping body temperature in range.</p>"
     )
     solution = (
@@ -2003,7 +2003,7 @@ def _classification_biodiversity_difficult_ms_descent_pct_then_mcq_then_word():
     options, letter = _mcq(correct, distractors)
     question = (
         f"<p>A fictional textbook says {pack['pair'][0]} and {pack['pair'][1]} share about "
-        f"{pack['shared']}% of a compared set of genes (public teaching figure).</p>"
+        f"{pack['shared']}% of a compared set of genes (rounded public figure).</p>"
         "<p>(i) Calculate the percentage that differs.</p>"
         "<p>(ii) The high shared figure behind (i) is explained by</p>"
         "<p>(iii) Write the one-word grouping science that places them in related groups.</p>"
@@ -2069,7 +2069,7 @@ def _classification_biodiversity_difficult_ms_loss_mcq_then_count_then_word():
     question = (
         f"<p>A fictional public report names {pack['cause']} among {pack['n']} main drivers "
         "of species loss.</p>"
-        "<p>(i) In this lesson the named cause is</p>"
+        "<p>(i) The named cause is</p>"
         "<p>(ii) Enter how many main drivers the report names.</p>"
         "<p>(iii) Write the one-word term for the variety of living things in an area.</p>"
     )

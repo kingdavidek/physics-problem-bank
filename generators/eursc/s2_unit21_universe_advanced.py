@@ -49,7 +49,7 @@ _MODEL_BANK = (
 )
 _RAY_BANK = (
     {"id": "straight", "text": "Light travels in straight lines in a uniform medium"},
-    {"id": "speed", "text": "Light is very fast: about 300000 km/s in vacuum in this lesson"},
+    {"id": "speed", "text": "Light is very fast: about 300000 km/s in a vacuum"},
     {"id": "sound_same", "text": "Light and sound always take the same time to cross a field"},
     {"id": "year_time", "text": "A light-year is a unit of time like a minute"},
 )
@@ -85,7 +85,7 @@ _EARTH_BANK = (
 )
 _ALIEN_BANK = (
     {"id": "testable", "text": "A claim about life elsewhere must be testable with public evidence"},
-    {"id": "none_yet", "text": "There is no confirmed evidence of life beyond Earth in this course"},
+    {"id": "none_yet", "text": "There is no confirmed evidence of life beyond Earth"},
     {"id": "ufo_proof", "text": "A blurry photo of a light in the sky proves microbes on Mars"},
     {"id": "secret", "text": "A secret that cannot be checked is still scientific proof"},
 )
@@ -102,7 +102,7 @@ _PART_BANK = (
     {"id": "vanish", "text": "Atoms vanish when a solid melts and new magic atoms appear"},
 )
 _MOL_BANK = (
-    {"id": "atom", "text": "An atom is a single particle of an element in this S2 model"},
+    {"id": "atom", "text": "An atom is a single particle of an element"},
     {"id": "molecule", "text": "A molecule is atoms joined together"},
     {"id": "symbol", "text": "A chemical symbol such as O stands for an element"},
     {"id": "symbol_word", "text": "The letters in a symbol are a sentence about the weather"},
@@ -184,7 +184,7 @@ def _solar_system_foundational_ms_planets_then_rotate_mcq():
     options, letter = _u21_mcq_field(correct, distractors)
     question = (
         f"<p>A {pack['place']} display counts {pack['planets']} planets "
-        f"and {pack['moons']} natural satellite on the classroom model.</p>"
+        f"and {pack['moons']} natural satellite.</p>"
         "<p>(i) How many planets are on this fictional display?</p>"
         "<p>(ii) Using that model from (i), rotation of Earth is</p>"
     )
@@ -427,7 +427,7 @@ def _solar_system_difficult_ms_age_billion_then_helio_mcq():
     question = (
         "<p>A fictional cosmology wall chart quotes the universe age in billions "
         "of years and compares Solar System models.</p>"
-        f"<p>(i) Enter the whole number of billions of years used in this lesson.</p>"
+        f"<p>(i) Enter the age of the universe as a whole number of billions of years.</p>"
         "<p>(ii) Using that evidence-based chart from (i), a heliocentric model puts</p>"
     )
     solution = (
@@ -758,7 +758,7 @@ def _solar_system_intermediate_sms_year_chain_then_orbit_keyword():
     question = (
         "<p>A fictional calendar wall at the observatory links spin and yearly motion.</p>"
         "<p>(i) One rotation of Earth is about how many days?</p>"
-        "<p>(ii) One revolution is about how many months in this lesson model?</p>"
+        "<p>(ii) One revolution is about how many months?</p>"
         "<p>(iii) Using that yearly trip from (ii), write the word for the path a "
         "planet follows around the Sun.</p>"
     )
@@ -838,7 +838,7 @@ def _solar_system_difficult_sms_scale_pick_then_season_keyword():
         diagram
         + "<p>A fictional distance poster pairs AU scale with seasonal tilt facts.</p>"
         "<p>(i) Select the two scale ideas: AU and planets at different distances.</p>"
-        "<p>(ii) Earth's axial tilt in this lesson is about 23°. Enter that whole number.</p>"
+        "<p>(ii) Earth's axial tilt is about 23°. Enter that whole number.</p>"
         "<p>(iii) Using that tilt from (ii), write the word for the yearly summer–winter "
         "pattern.</p>"
     )
@@ -998,7 +998,7 @@ def _light_telescopes_foundational_ms_shadow_pick_then_ray_order():
     order_raw, order_bank = _u21_order_field(
         (
             "Light travels in straight lines in a uniform medium",
-            "Light is very fast: about 300000 km/s in vacuum in this lesson",
+            "Light is very fast: about 300000 km/s in a vacuum",
         ),
         ("A light-year is a unit of time like a minute",),
     )
@@ -1381,7 +1381,7 @@ def _light_telescopes_foundational_sms_telescope_straight_then_c_number():
     question = (
         "<p>A fictional telescope club handout lists how rays make shadows.</p>"
         "<p>(i) Select straight-line travel and opaque blocking.</p>"
-        "<p>(ii) Using those ray ideas from (i), enter the lesson's rounded speed "
+        "<p>(ii) Using those ray ideas from (i), enter the rounded speed "
         "of light in km/s.</p>"
     )
     solution = (
@@ -1741,7 +1741,7 @@ def _life_earth_elsewhere_intermediate_ms_luca_then_proxima_mcq():
     question = (
         "<p>A fictional astrobiology poster quotes Proxima distance and defines LUCA.</p>"
         f"<p>(i) Enter the whole number of light-years used for the nearest other star.</p>"
-        "<p>(ii) Using that evidence-based poster from (i), LUCA in this lesson is</p>"
+        "<p>(ii) Using that evidence-based poster from (i), LUCA is</p>"
     )
     solution = (
         f"(i) <strong>{proxima}</strong> light-years<br>"
@@ -2071,8 +2071,8 @@ def _life_earth_elsewhere_foundational_sms_travel_far_then_needs_keyword():
         "<p>A fictional starship poster warns that other stars are enormously far away.</p>"
         "<p>(i) Enter 1 if travel to another star takes far longer than a school year "
         "at realistic speeds (0 if stars are closer than the Moon).</p>"
-        "<p>(ii) Using that distance fact from (i), write the liquid this lesson treats "
-        "as a common need for life as we know it.</p>"
+        "<p>(ii) Using that distance fact from (i), write the liquid that life "
+        "as we know it needs.</p>"
     )
     solution = (
         "(i) <strong>1</strong><br>"
@@ -2308,7 +2308,7 @@ def _life_earth_elsewhere_difficult_sms_chemicals_luca_order_then_energy_keyword
         "<p>(i) Order useful chemicals, then the LUCA model.</p>"
         "<p>(ii) Using that sequence from (i), write the word for a source living things "
         "use to do work (sunlight or chemicals).</p>"
-        "<p>(iii) There is no confirmed evidence of life beyond Earth in this course. "
+        "<p>(iii) There is no confirmed evidence of life beyond Earth. "
         "Enter 1 for that honest claim.</p>"
     )
     solution = (
@@ -2457,7 +2457,7 @@ def _atoms_molecules_foundational_ms_symbol_o_then_atom_keyword():
         "<p>A fictional elements poster shows O for oxygen and H2O for water.</p>"
         "<p>(i) How many hydrogen atoms are in one water molecule?</p>"
         "<p>(ii) Using that H2O count from (i), write the word for a single particle "
-        "of an element in this S2 model.</p>"
+        "of an element.</p>"
     )
     solution = (
         f"(i) <strong>{hydrogen}</strong><br>"
@@ -2558,7 +2558,7 @@ def _atoms_molecules_intermediate_ms_word_eq_then_conservation_mcq():
 def _atoms_molecules_intermediate_ms_mol_order_then_sym_pick():
     order_raw, order_bank = _u21_order_field(
         (
-            "An atom is a single particle of an element in this S2 model",
+            "An atom is a single particle of an element",
             "A molecule is atoms joined together",
         ),
         ("The letters in a symbol are a sentence about the weather",),
@@ -2600,7 +2600,7 @@ def _atoms_molecules_difficult_ms_co2_rearrange_then_fe_keyword():
     oxygen = 1
     question = (
         "<p>A fictional combustion poster shows carbon + oxygen → carbon dioxide.</p>"
-        f"<p>(i) How many oxygen atoms are in one water molecule in this lesson's model?</p>"
+        f"<p>(i) How many oxygen atoms are in one water molecule?</p>"
         "<p>(ii) The same poster notes atoms rearrange, not vanish. Enter 1 for that rule.</p>"
         "<p>(iii) Using that conservation idea from (ii), the symbol Fe stands for which element? "
         "Enter iron as one word.</p>"
@@ -2907,7 +2907,7 @@ def _atoms_molecules_intermediate_sms_h_symbol_chain_then_mol_box():
     hydrogen = 2
     question = (
         "<p>A fictional symbols quiz chains H, O and joined particles.</p>"
-        "<p>(i) The symbol H stands for hydrogen. Enter 1 if that is true in this lesson.</p>"
+        "<p>(i) The symbol H stands for hydrogen. Enter 1 if that is true.</p>"
         f"<p>(ii) How many hydrogen atoms are in one water molecule?</p>"
         + diagram
         + "<p>(iii) Using that H2O count from (ii), which letter is two atoms joined as a molecule?</p>"
