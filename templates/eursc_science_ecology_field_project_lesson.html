@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}Project: An Ecological Field Study – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Project: An Ecological Field Study</h1>
+    <p class="hero-sub">S3 Integrated Science · Unit 3.2 Living Earth · syllabus 3.2.5. Write a testable question, follow the teacher's risk assessment, sample with a teacher-approved idea such as a quadrat, record method and data with units, analyse, then present and reflect. The field product is judged in class with a rubric; this page does not auto-grade it and does not harvest private home-garden photos.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S3</span>
+      <span class="pill pill--hero">3.2 Living Earth</span>
+      <span class="pill pill--hero">3.2.5</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='ecology_field_project') }}">▶ Practice Quiz (10 questions)</a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">1</span> Field question <span class="lesson-tag">3.2.5</span> <span class="lesson-tag">S3</span></summary>
+    <div class="lesson-section-body">
+      <p>Write a <dfn class="lesson-gloss" title="A question another group could test in the field">field question</dfn> another group could test, for example how shade affects daisy counts on the school lawn the teacher approves.
+      <span class="lesson-gloss-def">A question another group could test at a teacher-approved site. This page does not harvest private home-garden photos.</span></p>
+      <p><strong>Worked example:</strong> Fictional plan: on the school lawn the teacher approves, does daisy count per 0.5 m × 0.5 m <dfn class="lesson-gloss" title="A sampling frame the teacher approves">quadrat</dfn> differ in shade versus sun? Ten quadrats in each, counts with units daisies/quadrat. The method is written so another group could follow it.
+      <span class="lesson-gloss-def">A sampling frame the teacher approves. Record the site in the lab book; do not upload a backyard album here.</span></p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p>The first project phase is to</p>
+          <button class="btn mcq-btn" data-letter="A">keep the plan in one pupil's head</button>
+          <button class="btn mcq-btn" data-letter="B">collect data before deciding what to ask</button>
+          <button class="btn mcq-btn" data-letter="C">choose the answer before the survey</button>
+          <button class="btn mcq-btn" data-letter="D">write a field question another group could test</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">2</span> Risk</summary>
+    <div class="lesson-section-body">
+      <p>Plan risk with the <strong>teacher's assessment</strong>. This page does not replace it. Do not harvest home-garden photos into the app.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p>Risk in the field study</p>
+          <button class="btn mcq-btn" data-letter="A">follows the teacher's assessment, not a home-garden harvest</button>
+          <button class="btn mcq-btn" data-letter="B">is low enough to skip the teacher's check</button>
+          <button class="btn mcq-btn" data-letter="C">only matters if the site is far away</button>
+          <button class="btn mcq-btn" data-letter="D">is decided by a class vote</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">3</span> Sampling</summary>
+    <div class="lesson-section-body">
+      <p>Choose a <strong>sampling</strong> idea such as a <strong>quadrat</strong> the teacher approves. Record the site in the lab book.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p>A quadrat in this project is</p>
+          <button class="btn mcq-btn" data-letter="A">a net for catching insects</button>
+          <button class="btn mcq-btn" data-letter="B">a thermometer for soil</button>
+          <button class="btn mcq-btn" data-letter="C">a sampling frame the teacher approves</button>
+          <button class="btn mcq-btn" data-letter="D">a map of the whole site</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">4</span> Method and data</summary>
+    <div class="lesson-section-body">
+      <p>Record a <strong>method</strong> another group could follow, with units in the table headings. Keep every raw value, including a zero.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A useful method is one that</p>
+          <button class="btn mcq-btn" data-letter="A">only the original group can remember</button>
+          <button class="btn mcq-btn" data-letter="B">another group could follow, with units in the table</button>
+          <button class="btn mcq-btn" data-letter="C">records results without units</button>
+          <button class="btn mcq-btn" data-letter="D">changes each time to get neater data</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">5</span> Analysis</summary>
+    <div class="lesson-section-body">
+      <p><strong>Analyse</strong> the pattern with numbers from the table. An unexpected count is evidence for evaluation, not a stored ranking.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p>Analysis in this project</p>
+          <button class="btn mcq-btn" data-letter="A">uses numbers from the table</button>
+          <button class="btn mcq-btn" data-letter="B">is only a feeling</button>
+          <button class="btn mcq-btn" data-letter="C">picks the result the group hoped for</button>
+          <button class="btn mcq-btn" data-letter="D">needs no recorded data</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">6</span> Report, present and reflect</summary>
+    <div class="lesson-section-body">
+      <p>Present evidence another group could follow. The field product is <strong>not auto-graded</strong> here; the class uses a rubric. This quiz does not store a plot league.</p>
+      <p class="lesson-callout">Plan the practical with your teacher using the <a href="{{ url_for('eursc_ibl_page', slug='s3_field') }}">classroom investigation support</a>. This page does not replace classroom practical work.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p>The field product in this app is</p>
+          <button class="btn mcq-btn" data-letter="A">fully auto-graded as a product</button>
+          <button class="btn mcq-btn" data-letter="B">graded by a class vote</button>
+          <button class="btn mcq-btn" data-letter="C">ranked by the app against other groups</button>
+          <button class="btn mcq-btn" data-letter="D">not auto-graded; class uses a rubric</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Phases</h4>
+        <ul>
+          <li>Question, then risk, then sampling</li>
+          <li>Method with units, then numbers</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Judgement</h4>
+        <ul>
+          <li>Present and reflect in class</li>
+          <li>Rubric, not a stored plot league</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='ecology_field_project') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

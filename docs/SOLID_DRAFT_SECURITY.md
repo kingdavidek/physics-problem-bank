@@ -6,7 +6,7 @@
 
 This document records **what was wrong**, **what we changed**, and **what the next agent must preserve**. It complements `docs/ARCHITECTURE.md` (system overview) and `docs/AI_HANDOFF.md` (reading order / next steps).
 
-**Forward-looking companion:** `docs/SECURITY_AND_GDPR.md` covers what is still missing — data subject rights, retention, transparency, the remaining header and CSP work, and the compliance obligations that attach once real users exist. This file is the record of what was fixed; that one is the plan for what comes next.
+**Forward-looking companion:** `docs/SECURITY_AND_GDPR.md` — Phase **S0 is implemented in code**. S1 covers encrypted backups, incident/rights runbooks, and CI scanning. This file is the record of the solid-draft security bar; do not regress it.
 
 ---
 
@@ -101,7 +101,7 @@ Front-end: `static/js/site.js` `apiHeaders` includes CSRF; lesson/quiz/notificat
 - Friend effort leaderboard batched (no N+1 per user)
 - SQL / SymPy input size caps; study activity recorded on MCQ answer path
 
-**Still deferred / gradual:** full CSP nonces (CSP still allows `'unsafe-inline'` / `'unsafe-eval'` for MathJax/Pyodide); password-reset product decision; Low escaping nits. See Phase 3 in the original audit plan.
+**Still deferred / gradual:** `style-src 'unsafe-inline'` (lesson SVG/presentation); `'unsafe-eval'` for MathJax/Pyodide (accepted S2 exception). Low escaping nits. See `docs/SECURITY_AND_GDPR.md`.
 
 ---
 

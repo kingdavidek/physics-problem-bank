@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "partials/page_flashes.html" import render as page_flashes %}
 {% block title %}Shared question – {{ topic_label }}{% endblock %}
 
 {% block content %}
@@ -8,6 +9,8 @@
     <h1>Shared question</h1>
     <p class="hero-sub">From @{{ owner_handle }} · {{ topic_label }} · {{ shared.created_at[:10] }}</p>
 </div>
+
+{{ page_flashes('view_shared_question') }}
 
 {% if shared.note %}
 <p class="page-intro"><strong>Note:</strong> {{ shared.note }}</p>

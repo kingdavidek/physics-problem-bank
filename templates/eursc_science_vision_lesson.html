@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}Vision – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Vision</h1>
+    <p class="hero-sub">S2 Integrated Science · Unit 2.3 Senses · syllabus 2.3.1. Eye schematic, lens, retina, accommodation, near- and far-sight, stereo depth and illusions. This lesson does not store prescriptions or rank eyesight.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S2</span>
+      <span class="pill pill--hero">2.3 Senses</span>
+      <span class="pill pill--hero">2.3.1</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='vision') }}">▶ Practice Quiz (10 questions)</a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Eye schematic
+      <span class="lesson-tag">2.3.1</span>
+      <span class="lesson-tag">S2</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>A</strong> lens (refracts light), <strong>B</strong> retina (detects the image), <strong>C</strong> path of signals toward the brain. Schematic only, not a realistic photograph and not a ranking of classmates.</p>
+      <figure class="lesson-figure">
+        {{ eye_fig }}
+        <figcaption class="lesson-figure-caption">A lens (refracts), B retina (detects the image), C path toward the brain. Educational schematic, not a prescription store.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p>In this schematic the lens mainly</p>
+          <button class="btn mcq-btn" data-letter="A">detects the image and sends it to the brain</button>
+          <button class="btn mcq-btn" data-letter="B">controls how much light enters the eye</button>
+          <button class="btn mcq-btn" data-letter="C">refracts light to help form an image</button>
+          <button class="btn mcq-btn" data-letter="D">protects the front of the eye from dust</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">2</span> Forming an image</summary>
+    <div class="lesson-section-body">
+      <p>The lens helps form an image on the retina. Signals then travel toward the brain, which interprets them. Two people can see the same drawing differently because of cues, not because this quiz ranks brains.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p>The retina</p>
+          <button class="btn mcq-btn" data-letter="A">detects the image at the back of the eye</button>
+          <button class="btn mcq-btn" data-letter="B">is the clear window at the front of the eye</button>
+          <button class="btn mcq-btn" data-letter="C">is the coloured ring that changes the pupil size</button>
+          <button class="btn mcq-btn" data-letter="D">focuses the light by changing its shape</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">3</span> Accommodation</summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="Changing lens shape for near or far">Accommodation</dfn> is changing lens shape so near or far can be in focus.
+      <span class="lesson-gloss-def">The lens changes shape so a near or far object can be in focus. The quiz does not store whose glasses they are.</span></p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p>Accommodation is</p>
+          <button class="btn mcq-btn" data-letter="A">changing pupil size so more or less light gets in</button>
+          <button class="btn mcq-btn" data-letter="B">moving the retina forwards or backwards to focus</button>
+          <button class="btn mcq-btn" data-letter="C">getting used to a dark room over a few minutes</button>
+          <button class="btn mcq-btn" data-letter="D">changing lens shape so near or far can be in focus</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">4</span> Near-sight and far-sight</summary>
+    <div class="lesson-section-body">
+      <p><strong>Near-sight</strong> means distant objects are not in focus. <strong>Far-sight</strong> means near objects are not in focus. Fictional cases only; no prescription harvest.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>Near-sight means</p>
+          <button class="btn mcq-btn" data-letter="A">near objects are not in focus</button>
+          <button class="btn mcq-btn" data-letter="B">distant objects are not in focus</button>
+          <button class="btn mcq-btn" data-letter="C">both eyes point slightly inwards</button>
+          <button class="btn mcq-btn" data-letter="D">colours cannot be told apart</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">5</span> Stereo depth</summary>
+    <div class="lesson-section-body">
+      <p>Two slightly different views from two eyes help judge depth. One identical photo is not the same as stereo vision.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p>Stereo depth uses</p>
+          <button class="btn mcq-btn" data-letter="A">one identical image copied to both eyes</button>
+          <button class="btn mcq-btn" data-letter="B">the size of the pupil in bright and dim light</button>
+          <button class="btn mcq-btn" data-letter="C">two slightly different views from two eyes</button>
+          <button class="btn mcq-btn" data-letter="D">the time light takes to reach each eye</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">6</span> Brain and illusions</summary>
+    <div class="lesson-section-body">
+      <p>An illusion can be the brain interpreting cues in a way that mismatches the object. It is not a stored clinical eye test and not a class league.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p>A visual illusion is often</p>
+          <button class="btn mcq-btn" data-letter="A">the brain interpreting cues in a way that mismatches the object</button>
+          <button class="btn mcq-btn" data-letter="B">a sign that the eye itself is damaged in some way</button>
+          <button class="btn mcq-btn" data-letter="C">light bending in the air between the eye and the object</button>
+          <button class="btn mcq-btn" data-letter="D">a trick that only works on people with poor eyesight</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">7</span> Using this lesson</summary>
+    <div class="lesson-section-body">
+      <p>Keep lens, retina, accommodation, focusing errors, stereo and illusions as separate ideas. Hearing continues next. This quiz does not rank eyesight.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Path</h4>
+        <ul>
+          <li>Lens refracts</li>
+          <li>Retina detects</li>
+          <li>Brain interprets</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Focus</h4>
+        <ul>
+          <li>Accommodation = lens shape</li>
+          <li>Near-sight: distant blur</li>
+          <li>No prescription files here</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='vision') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

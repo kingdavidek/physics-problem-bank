@@ -2,13 +2,13 @@
 {% block title %}Particle Physics &amp; the Standard Model – AQA A‑Level Physics{% endblock %}
 
 {% block content %}
-<div style="max-width:860px; margin:0 auto; padding:0 16px;">
+<div class="lesson-shell">
 
   <h1>Particle Physics &amp; the Standard Model</h1>
-  <p style="color:var(--text-muted);">AQA A‑Level Physics – Particles and Radiation</p>
+  <p class="lesson-muted">AQA A‑Level Physics – Particles and Radiation</p>
 
   <!-- 1. ATOM BASICS -->
-  <div class="problem-card" style="background: var(--color-surface-2);">
+  <div class="problem-card">
     <h2>1. Atom Basics</h2>
     <p>
       An atom consists of a tiny, dense nucleus containing <strong>protons</strong> and <strong>neutrons</strong> (collectively called nucleons), surrounded by <strong>electrons</strong> that orbit in discrete shells. The number of protons defines the element and is called the <strong>proton number</strong> \(Z\). The total number of nucleons is the <strong>nucleon number</strong> \(A\). An atom is represented symbolically as \(^A_Z X\), where \(X\) is the chemical symbol.
@@ -22,7 +22,7 @@
   </div>
 
   <!-- 2. SPECIFIC CHARGE -->
-  <div class="problem-card" style="background: var(--color-surface-2);">
+  <div class="problem-card">
     <h2>2. Specific Charge</h2>
     <p>
       The <strong>specific charge</strong> of a particle is its charge divided by its mass, measured in coulombs per kilogram (C kg⁻¹). It is defined as
@@ -48,7 +48,7 @@
   </div>
 
   <!-- 3. FUNDAMENTAL PARTICLES & THE STANDARD MODEL -->
-  <div class="problem-card" style="background: var(--color-surface-2);">
+  <div class="problem-card">
     <h2>3. Fundamental Particles &amp; the Standard Model</h2>
     <p>
       The Standard Model describes all known fundamental particles and their interactions. Fundamental particles are indivisible; they are not made of smaller constituents. There are 12 fundamental matter particles (fermions) and several force‑carrying particles (bosons). The matter fermions divide into <strong>quarks</strong> and <strong>leptons</strong>.
@@ -63,9 +63,9 @@
       <strong>Generations:</strong> The fermions are arranged in three generations. The first generation (up, down, electron, electron neutrino) makes up all ordinary matter. Higher generations are heavier and unstable, observed only in cosmic rays or particle accelerators.
     </p>
     <details>
-      <summary style="cursor:pointer; color:var(--color-primary); font-weight:bold;">Full particle table</summary>
-      <div style="margin-top:8px; padding:12px; background:var(--color-surface-offset);">
-        <table style="width:100%; border-collapse:collapse;">
+      <summary>Full particle table</summary>
+      <div class="lesson-solution">
+        <table class="lesson-table">
           <thead><tr><th>Generation</th><th>Quarks</th><th>Leptons</th></tr></thead>
           <tbody>
             <tr><td>1st</td><td>u (+⅔), d (−⅓)</td><td>e⁻, νₑ</td></tr>
@@ -81,7 +81,7 @@
   </div>
 
   <!-- 4. HADRONS – BARYONS & MESONS -->
-  <div class="problem-card" style="background: var(--color-surface-2);">
+  <div class="problem-card">
     <h2>4. Hadrons: Baryons &amp; Mesons</h2>
     <p>
       <strong>Hadrons</strong> are particles made of quarks. They are subject to the strong force. There are two families:
@@ -107,10 +107,10 @@
       <strong>Kaons:</strong> Kaons are mesons containing a strange quark (or antiquark). K⁺ = u\(\bar{s}\) (S = +1), K⁻ = s\(\bar{u}\) (S = -1), K⁰ = d\(\bar{s}\), \(\bar{K}^0\) = s\(\bar{d}\). They were historically important in the discovery of strangeness and CP violation.
     </p>
     <!-- Quark composition builder (unchanged) -->
-    <div style="margin-top: 16px; padding: 16px; background: var(--color-surface-offset); border-radius: 8px;">
+    <div class="lesson-solution">
       <p><strong>Quark Composition Builder</strong></p>
       <p>Select a particle to see its quark structure:</p>
-      <select id="particle-select" style="margin-bottom: 12px;">
+      <select class="lesson-mb-md" id="particle-select">
         <option value="proton">Proton (p⁺)</option>
         <option value="neutron">Neutron (n)</option>
         <option value="piplus">π⁺ (pion)</option>
@@ -118,15 +118,15 @@
         <option value="kplus">K⁺ (kaon)</option>
         <option value="kminus">K⁻ (kaon)</option>
       </select>
-      <div id="quark-display" style="display: flex; gap: 12px; font-size: 1.2em; font-weight: bold; align-items: center;">
+      <div class="lesson-flex-row" id="quark-display">
         <!-- filled by JS -->
       </div>
-      <p id="charge-display" style="margin-top: 8px; font-weight: 500;"></p>
+      <p class="lesson-mt-sm" id="charge-display"></p>
     </div>
   </div>
 
   <!-- 5. LEPTONS -->
-  <div class="problem-card" style="background: var(--color-surface-2);">
+  <div class="problem-card">
     <h2>5. Leptons</h2>
     <p>
       Leptons are fundamental fermions that do **not** feel the strong force. The six leptons are: electron (e⁻), muon (μ⁻), tau (τ⁻), and their corresponding neutrinos (νₑ, νμ, ντ). Each has an antilepton partner (e⁺, \(\bar{ν}_e\), etc.).
@@ -143,7 +143,7 @@
   </div>
 
   <!-- 6. FORCES AND BOSONS -->
-  <div class="problem-card" style="background: var(--color-surface-2);">
+  <div class="problem-card">
     <h2>6. The Four Fundamental Forces</h2>
     <p>
       Interactions between particles are described by the exchange of <strong>gauge bosons</strong>, the force‑carrying particles. Each fundamental force has its own boson(s):
@@ -163,60 +163,55 @@
   </div>
 
   <!-- 7. FEYNMAN DIAGRAMS -->
-  <div class="problem-card" style="background: var(--color-surface-2);">
+  <div class="problem-card">
     <h2>7. Feynman Diagrams</h2>
     <p>
       Feynman diagrams are pictorial representations of particle interactions. They are read from <strong>left to right</strong>. Fermions are shown as straight lines; bosons as <strong>squiggly lines</strong>. Each vertex represents a fundamental coupling. The diagrams encode conservation laws at every vertex.
     </p>
 
     <!-- Electromagnetic repulsion -->
-    <div style="margin: 24px 0;">
+    <div>
       <h3>Electromagnetic Repulsion (e⁻ e⁻ → e⁻ e⁻)</h3>
-      <img src="{{ url_for('static', filename='images/electron_repulsion.png') }}"
-           alt="Electromagnetic repulsion Feynman diagram"
-           style="max-width:100%; height:auto; display:block; margin:0 auto;">
-      <p style="font-size:0.9em; text-align:center;">Repulsion via virtual photon exchange.</p>
+      <img class="lesson-img" src="{{ url_for('static', filename='images/electron_repulsion.png') }}"
+           alt="Electromagnetic repulsion Feynman diagram">
+      <p class="lesson-caption-center">Repulsion via virtual photon exchange.</p>
     </div>
 
     <!-- Beta-minus decay -->
-    <div style="margin: 24px 0;">
+    <div>
       <h3>Weak Interaction – Beta‑Minus Decay (n → p + e⁻ + \(\bar{\nu}_e\))</h3>
-      <img src="{{ url_for('static', filename='images/beta_minus_decay.png') }}"
-           alt="Beta-minus decay Feynman diagram showing quark structure"
-           style="max-width:100%; height:auto; display:block; margin:0 auto;">
-      <p style="font-size:0.9em; text-align:center;">Down → up quark transformation, emitting a W⁻ boson that decays to e⁻ + \(\bar{\nu}_e\).</p>
+      <img class="lesson-img" src="{{ url_for('static', filename='images/beta_minus_decay.png') }}"
+           alt="Beta-minus decay Feynman diagram showing quark structure">
+      <p class="lesson-caption-center">Down → up quark transformation, emitting a W⁻ boson that decays to e⁻ + \(\bar{\nu}_e\).</p>
     </div>
 
     <!-- Beta-plus decay -->
-    <div style="margin: 24px 0;">
+    <div>
       <h3>Weak Interaction – Beta‑Plus Decay (p → n + e⁺ + νₑ)</h3>
-      <img src="{{ url_for('static', filename='images/beta_plus_decay.png') }}"
-           alt="Beta-plus decay Feynman diagram"
-           style="max-width:100%; height:auto; display:block; margin:0 auto;">
-      <p style="font-size:0.9em; text-align:center;">Up → down quark transformation, emitting a W⁺ boson that decays to e⁺ + νₑ.</p>
+      <img class="lesson-img" src="{{ url_for('static', filename='images/beta_plus_decay.png') }}"
+           alt="Beta-plus decay Feynman diagram">
+      <p class="lesson-caption-center">Up → down quark transformation, emitting a W⁺ boson that decays to e⁺ + νₑ.</p>
     </div>
 
     <!-- Electron capture -->
-    <div style="margin: 24px 0;">
+    <div>
       <h3>Weak Interaction – Electron Capture (p + e⁻ → n + νₑ)</h3>
-      <img src="{{ url_for('static', filename='images/electron_capture.png') }}"
-           alt="Electron capture Feynman diagram"
-           style="max-width:100%; height:auto; display:block; margin:0 auto;">
-      <p style="font-size:0.9em; text-align:center;">Proton absorbs an electron, emitting a W⁺ boson that produces a neutron and a neutrino.</p>
+      <img class="lesson-img" src="{{ url_for('static', filename='images/electron_capture.png') }}"
+           alt="Electron capture Feynman diagram">
+      <p class="lesson-caption-center">Proton absorbs an electron, emitting a W⁺ boson that produces a neutron and a neutrino.</p>
     </div>
 
     <!-- Strong interaction (gluon exchange between quarks) -->
-    <div style="margin: 24px 0;">
+    <div>
       <h3>Strong Interaction – Gluon Exchange Between Quarks</h3>
-      <img src="{{ url_for('static', filename='images/Nucleon_strong_force.png') }}"
-           alt="Gluon exchange between quarks Feynman diagram"
-           style="max-width:100%; height:auto; display:block; margin:0 auto;">
-      <p style="font-size:0.9em; text-align:center;">Gluons bind quarks inside a nucleon. The squiggly line represents the strong‑force carrier.</p>
+      <img class="lesson-img" src="{{ url_for('static', filename='images/Nucleon_strong_force.png') }}"
+           alt="Gluon exchange between quarks Feynman diagram">
+      <p class="lesson-caption-center">Gluons bind quarks inside a nucleon. The squiggly line represents the strong‑force carrier.</p>
     </div>
   </div>
 
   <!-- 8. DECAY PROCESSES -->
-  <div class="problem-card" style="background: var(--color-surface-2);">
+  <div class="problem-card">
     <h2>8. Decay Processes Summary</h2>
     <p>
       Unstable nuclei (or particles) decay to achieve a more stable configuration. The dominant decay modes are:
@@ -233,7 +228,7 @@
   </div>
 
   <!-- 9. CONSERVATION LAWS -->
-  <div class="problem-card" style="background: var(--color-surface-2);">
+  <div class="problem-card">
     <h2>9. Conservation Laws</h2>
     <p>
       Particle interactions obey strict conservation laws. The following must be conserved in any interaction:
@@ -259,7 +254,7 @@
   </div>
 
   <!-- 10. ANNIHILATION & PAIR PRODUCTION -->
-  <div class="problem-card" style="background: var(--color-surface-2);">
+  <div class="problem-card">
     <h2>10. Annihilation &amp; Pair Production</h2>
     <p>
       <strong>Annihilation:</strong> When a particle meets its antiparticle, they annihilate, converting their rest energy (and kinetic energy) into photons or other particle–antiparticle pairs. For example, electron–positron annihilation: e⁻ + e⁺ → γγ. At least two photons are produced to conserve momentum. This process is the basis of PET scans, where positron‑emitting isotopes are used to image metabolic activity.
@@ -273,7 +268,7 @@
   </div>
 
   <!-- 11. COSMIC RAYS & PARTICLE DETECTION -->
-  <div class="problem-card" style="background: var(--color-surface-2);">
+  <div class="problem-card">
     <h2>11. Cosmic Rays &amp; Particle Detection</h2>
     <p>
       <strong>Cosmic rays:</strong> High‑energy protons (and some heavier nuclei) from space collide with atoms in the upper atmosphere, creating cascades of secondary particles: pions (π), kaons (K), muons (μ), neutrinos, and electromagnetic showers. The pions and kaons are short‑lived and decay into muons and neutrinos. Muons, being relatively long‑lived (2.2 µs), can reach the Earth’s surface. Without relativistic time dilation, they would decay long before reaching the ground.
@@ -287,8 +282,8 @@
   </div>
 
   <!-- Quick Test button -->
-  <div style="text-align:center; margin-top: 24px; margin-bottom: 48px;">
-    <form method="POST" action="/quicktest/start" style="display:inline;">
+  <div class="lesson-page-nav">
+    <form class="lesson-form-inline" method="POST" action="/quicktest/start">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="level" value="alevel">
       <input type="hidden" name="subject" value="physics">
@@ -301,6 +296,6 @@
 
 </div>
 
-<script type='text/javascript' src='https://www.pythonanywhere.com/NBPC2V2jRteFdN86AX0tVqyBaC3JyucXlIpmdJvGZ6G4o5PBUPI4Woafu4FlQakoBpc7X90OEFbWDYst6VZu3XNhIUqQjg99IwzZrQ28vEdGMxeVfg1zYSq3vQXMPjRQw0GBEn4aO4KL21pZQkMZ7brVdiuFflbu97czq0Ydz-4JTjAzJ1qn_q4VLMUp8a_azlg29-XPy2AtPSlwDB75XJECar4LfrTzv7JNR0t6FJFoW8gATcXuVKRz34Kpz3Kum3ciLSat0XsSEnYVdZIzb7mlhT1ot0vjfL1ouELiZnpq4WQFJ9Jszffc0ccKlyqKcCn56OlwGvH52cQLr46BbFtKD9VCkeW-vdus28xTBppHoQHQi52NyIbceBCt4JLEYkxb9XEZWaGMX8Ou08MmDzwKxoyDMqYXwOhXrj_wlwNAKiYqOSt3hetwyEKE2OXX_7O5JBcHhfZu28WUCARiPd3VHZlXqWzGa-9yo-Aq22uD85-O8gu3FS83x6nlXHm6C2sn-EdtlfE0k35hW-UL3z66RzcJ0snQqtt2-FxczQYZqMemd4ccZkvx7sxNpA0MNuJGgwTw8u5FIWWADVgM28ja-QGMXeBoWqXYp8QJ'></script><script src="{{ url_for('static', filename='js/quark-builder.js') }}"></script>
+<script src="{{ url_for('static', filename='js/quark-builder.js') }}"></script>
 
 {% endblock %}

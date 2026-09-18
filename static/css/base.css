@@ -1,0 +1,247 @@
+/* Problem Bank - base.css
+ * Reset, document, page shell, header/nav, typography.
+ *
+ * Extracted verbatim from templates/base.html (U0.1, docs/UI_REDESIGN.md).
+ * LOAD ORDER IS SIGNIFICANT: see the <link> block in templates/base.html.
+ */
+
+/* ---- BASE ---- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html {
+    scroll-behavior: smooth;
+    overflow-x: clip;
+}
+body {
+    font-family: var(--font-body);
+    font-size: 1.025rem;
+    background: linear-gradient(165deg, var(--bg) 0%, var(--bg-accent) 45%, var(--bg) 100%);
+    background-attachment: fixed;
+    color: var(--text);
+    min-height: 100dvh;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    padding-left: var(--safe-left);
+    padding-right: var(--safe-right);
+}
+
+/* ---- LAYOUT ---- */
+.site-wrapper {
+    max-width: var(--shell-max);
+    margin: 0 auto;
+    padding: var(--space-3) var(--space-5) calc(var(--tab-bar-h) + var(--safe-bottom) + var(--space-4));
+    overflow-x: clip;
+}
+.site-wrapper[data-lesson-content] {
+    max-width: var(--shell-max);
+}
+.page-shell {
+    max-width: var(--shell-max);
+    margin: 0 auto;
+}
+@media (prefers-reduced-motion: no-preference) {
+    .page-shell.page-enter {
+        animation: page-enter 280ms var(--ease-out) both;
+    }
+}
+@keyframes page-enter {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ---- HEADER / NAV ---- */
+header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid var(--border-soft);
+    margin-bottom: 24px;
+    padding: calc(8px + var(--safe-top)) 0 8px;
+    background: var(--header-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+.header-inner {
+    max-width: var(--shell-max);
+    margin: 0 auto;
+    padding: 0 var(--space-5);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 12px;
+    min-height: 40px;
+}
+.header-primary-nav {
+    display: none;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
+    justify-content: center;
+    min-width: 0;
+}
+.header-primary-link {
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: var(--radius-pill);
+    white-space: nowrap;
+    transition: color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.header-primary-link:hover,
+.header-primary-link:focus-visible {
+    color: var(--brand-600);
+    background: var(--brand-50);
+}
+.header-primary-link.is-active {
+    color: var(--on-brand);
+    background: var(--brand-100);
+    font-weight: 700;
+}
+@media (min-width: 900px) {
+    .site-wrapper {
+        padding-bottom: calc(60px + var(--safe-bottom));
+    }
+    .header-primary-nav {
+        display: flex;
+    }
+}
+.site-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    font-family: var(--font-body);
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    color: var(--text);
+    text-decoration: none;
+}
+.site-mark {
+    display: block;
+    flex-shrink: 0;
+    border-radius: 7px;
+}
+.site-title-text { white-space: nowrap; }
+.site-title-text span { color: var(--brand-500); }
+nav { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+nav a {
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: var(--radius-pill);
+    transition: color 200ms var(--ease), background 200ms var(--ease);
+}
+nav a:hover,
+nav a:focus-visible {
+    color: var(--primary);
+    background: var(--primary-light);
+}
+nav a.active {
+    color: var(--primary);
+    background: var(--primary-light);
+    font-weight: 600;
+}
+.nav-streak {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 36px;
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    background: var(--streak-100);
+    color: var(--on-streak);
+    font-weight: 800;
+    font-size: var(--text-sm);
+    text-decoration: none;
+    letter-spacing: -0.02em;
+}
+.nav-streak.is-risk {
+    background: var(--wrong-100);
+    color: var(--on-wrong);
+}
+
+/* ---- TYPOGRAPHY (U1) ----
+ * Serif is kept for prose and question content; UI headings are sans and
+ * heavier so a section title clearly outranks the body text under it.
+ */
+h1 {
+    font-family: var(--font-body);
+    font-size: clamp(1.55rem, 4vw, var(--text-2xl));
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: var(--space-2);
+    line-height: 1.15;
+}
+h2 {
+    font-family: var(--font-body);
+    font-size: var(--text-xl);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: var(--space-8) 0 var(--space-3);
+    line-height: 1.25;
+}
+h3 {
+    font-family: var(--font-body);
+    font-size: var(--text-lg);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: var(--space-6) 0 var(--space-2);
+    line-height: 1.3;
+}
+h4 {
+    font-family: var(--font-body);
+    font-size: var(--text-base);
+    font-weight: 700;
+    margin: var(--space-5) 0 var(--space-2);
+}
+p { margin-bottom: var(--space-3); max-width: 70ch; }
+ul, ol { padding-left: var(--space-5); margin-bottom: var(--space-3); }
+li { margin-bottom: var(--space-1); }
+a { color: var(--ink-700); }
+a:hover,
+a:focus-visible { color: var(--brand-600); }
+
+/* U8.2 — keyboard focus is visible on every control, not only branded buttons. */
+:focus { outline: none; }
+:focus-visible {
+    outline: 2px solid var(--brand-600);
+    outline-offset: 2px;
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+    outline: 2px solid var(--brand-600);
+    outline-offset: 2px;
+}
+
+/* ---- MOTION (U7.2) ----
+ * One global gate. Colour and state changes survive; movement does not.
+ */
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    .btn:active,
+    .mcq-btn:active,
+    .topic-card:hover,
+    .topic-card:active { transform: none; }
+}
+

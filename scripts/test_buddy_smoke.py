@@ -113,7 +113,9 @@ def main():
         html = r.data.decode()
         assert 'study-buddy' in html
         assert 'study-buddy.js' in html
-        assert '👾' in html
+        assert 'data-buddy-face' in html
+        assert 'buddy-mascot' in html
+        assert 'data-face=' in html
 
         r = client.get('/api/v1/me/buddy')
         assert r.status_code == 200
@@ -186,7 +188,8 @@ def main():
             conn.execute(
                 '''
                 UPDATE user_streaks
-                SET current_streak = 4, longest_streak = 4, last_active_date = ?
+                SET current_streak = 4, longest_streak = 4, last_active_date = ?,
+                    freeze_available = 0
                 WHERE user_id = ?
                 ''',
                 (yesterday, uid_a),
@@ -281,7 +284,7 @@ def main():
         assert 'data-buddy-level="gcse"' in html_lesson
         assert 'data-buddy-subject="maths"' in html_lesson
         assert 'data-buddy-topic="algebra"' in html_lesson
-        assert 'study-buddy.js?v=7' in html_lesson
+        assert 'study-buddy.js?v=21' in html_lesson
         assert 'Problem Bank build: buddy-embed-v4' in html_lesson
         assert 'pb-buddy-embed-v4' in html_lesson
         assert 'id="pb-buddy-page"' in html_lesson
@@ -315,7 +318,8 @@ def main():
         )
         via_header = r.get_json()['buddy']
         assert any(item.get('kind') == 'stay' for item in via_header['actions'])
-        assert 'pb-buddy-storage' in html_lesson
+        buddy_js = client.get('/static/js/study-buddy.js').data.decode()
+        assert 'pb-buddy-storage' in buddy_js
 
         logout(client)
         register(client, email_b, handle_b)

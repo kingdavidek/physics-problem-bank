@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}Healthy Living – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Healthy Living</h1>
+    <p class="hero-sub">S2 Integrated Science · Unit 2.2 Health · syllabus 2.2.1. Diet, activity, mental health, microbiome, relationships and screen-time. Scenarios use fictional people. This lesson never asks pupils to disclose diet, mood or private habits.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S2</span>
+      <span class="pill pill--hero">2.2 Health</span>
+      <span class="pill pill--hero">2.2.1</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='healthy_living') }}">
+      ▶ Practice Quiz (10 questions)
+    </a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Diet as a mix over time
+      <span class="lesson-tag">2.2.1</span>
+      <span class="lesson-tag">S2</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p>A <strong>balanced diet</strong> is a mix of food groups over time so the body gets water, protein, fat, carbohydrate, vitamins and minerals. It is not a single magic food and not a ranking of classmates. The quiz never collects menus.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p>A balanced diet is</p>
+          <button class="btn mcq-btn" data-letter="A">one magic food that replaces all others</button>
+          <button class="btn mcq-btn" data-letter="B">eating exactly the same meals every day so nothing changes</button>
+          <button class="btn mcq-btn" data-letter="C">cutting out all fat and all sugar from every meal</button>
+          <button class="btn mcq-btn" data-letter="D">a mix of food groups over time so the body gets what it needs</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Physical activity
+    </summary>
+    <div class="lesson-section-body">
+      <p>Regular <strong>physical activity</strong> can support health. That is a public evidence idea, not a contest to post step counts or rank bodies. Rest matters as well as movement.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p>Regular physical activity is modelled as</p>
+          <button class="btn mcq-btn" data-letter="A">something that can support health, using public evidence</button>
+          <button class="btn mcq-btn" data-letter="B">only useful for people who want to become athletes</button>
+          <button class="btn mcq-btn" data-letter="C">a way to make up for missing sleep and skipped meals</button>
+          <button class="btn mcq-btn" data-letter="D">something that helps only if it is done every single day</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Mental health
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Mental health</strong> is part of health. Distress is real. This page does not diagnose and does not compare moods. Personal distress belongs with a trusted adult or a qualified professional — a teacher can signpost, this app cannot treat.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p>Mental health is</p>
+          <button class="btn mcq-btn" data-letter="A">separate from physical health, so it is not part of science</button>
+          <button class="btn mcq-btn" data-letter="B">something a class can sort out by comparing everyone's moods</button>
+          <button class="btn mcq-btn" data-letter="C">part of health; personal distress is signposted to qualified help</button>
+          <button class="btn mcq-btn" data-letter="D">a problem only for adults, not for young people</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Microbiome
+    </summary>
+    <div class="lesson-section-body">
+      <p>The <dfn class="lesson-gloss" title="Living microorganisms that interact with the body">microbiome</dfn> is living microorganisms that interact with the body. Not every microorganism is a pathogen.
+      <span class="lesson-gloss-def">Living microorganisms that interact with the body. This is biology, not a class vote on snacks and not a demand to describe private symptoms.</span></p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>The microbiome is</p>
+          <button class="btn mcq-btn" data-letter="A">the harmful germs that cause every infection</button>
+          <button class="btn mcq-btn" data-letter="B">living microorganisms that interact with the body</button>
+          <button class="btn mcq-btn" data-letter="C">the tiny organs inside a single cell</button>
+          <button class="btn mcq-btn" data-letter="D">a single type of bacterium found only in the gut</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Sleep, screens and relationships
+    </summary>
+    <div class="lesson-section-body">
+      <p>Health advice often gives about <strong>8 hours</strong> of sleep a night as a rounded figure. Unmanaged late <strong>screens</strong> can crowd out sleep. Respectful <strong>relationships</strong> (communication, consent as a health idea) belong here without storing who sits with whom.</p>
+      <figure class="lesson-figure">
+        {{ habit_bars_fig }}
+        <figcaption class="lesson-figure-caption">A sleep (tall), B activity (medium), C screen time (short). Schematic bars for a teaching mix, not a ranking of classmates.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p>Sleep is</p>
+          <button class="btn mcq-btn" data-letter="A">a habit that can be replaced by extra food and exercise</button>
+          <button class="btn mcq-btn" data-letter="B">a waste of time the body could use for growing</button>
+          <button class="btn mcq-btn" data-letter="C">something that only matters for very young children</button>
+          <button class="btn mcq-btn" data-letter="D">a health need that late screens can crowd out</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Using this unit
+    </summary>
+    <div class="lesson-section-body">
+      <p>Keep food mix, activity, mental health, microbiome and time-use as separate ideas. Infectious disease continues in <a href="{{ url_for('topic_page', level='eursc', subject='science', topic='infectious_disease') }}">Infectious Disease and Immunity</a>. Personal health decisions stay with a trusted adult or qualified professional.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Needs</h4>
+        <ul>
+          <li>Diet = mix over time</li>
+          <li>Activity + sleep</li>
+          <li>Mental health is health</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Boundaries</h4>
+        <ul>
+          <li>No body or mood ranking</li>
+          <li>No private lists stored</li>
+          <li>Signpost qualified help</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='healthy_living') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

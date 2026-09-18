@@ -58,6 +58,11 @@ def is_enabled() -> bool:
     flag = os.environ.get("LESSON_ASSIST_ENABLED", "").strip().lower()
     if flag in ("0", "false", "no", "off"):
         return False
+    site = (os.environ.get("SITE_URL") or "").strip().lower()
+    production = site.startswith("https://") or os.environ.get("FLASK_ENV") == "production"
+    # S0.10 Option A: production stays off unless explicitly enabled.
+    if production and flag not in ("1", "true", "yes", "on"):
+        return False
     if is_mock_mode():
         return True
     if flag in ("1", "true", "yes", "on"):
@@ -336,7 +341,23 @@ def wants_answer_only(question: str) -> bool:
     return bool(_ANSWER_SEEKING.search(question))
 
 
+def _payload_has_identity(obj) -> bool:
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            if str(key).lower() in ('email', 'handle', 'user_id', 'userid'):
+                return True
+            if _payload_has_identity(value):
+                return True
+        return False
+    if isinstance(obj, list):
+        return any(_payload_has_identity(item) for item in obj)
+    return False
+
+
 def _post_json(url: str, headers: dict[str, str], payload: dict[str, Any]) -> dict[str, Any]:
+    # Invariant: never send handle, email, or user id to an external AI provider.
+    if _payload_has_identity(payload):
+        raise RuntimeError('Lesson assist payload must not include account identifiers')
     body = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(url, data=body, headers=headers, method="POST")
     try:

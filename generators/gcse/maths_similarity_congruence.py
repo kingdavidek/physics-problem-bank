@@ -28,6 +28,7 @@ from generators.shared.variant_utils import (
     run_mcq_variant,
     pick_named_variant,
 )
+from models import svg_kit
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -115,117 +116,145 @@ def _sc_similar_rectangle_algebra_case():
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _tri(A, B, C, vlabels=("A", "B", "C"), slabels=None,
-         color="#1a6fa8", shade="#dbeafe", w=210, h=175):
+         color=None, shade=None, w=210, h=175):
     """Draw a single labeled triangle."""
-    cx = (A[0]+B[0]+C[0])/3
-    cy = (A[1]+B[1]+C[1])/3
+    p = svg_kit.PALETTE
+    color = color or p['brand']
+    shade = shade or p['brand_soft']
+    cx = (A[0] + B[0] + C[0]) / 3
+    cy = (A[1] + B[1] + C[1]) / 3
 
     def out(px, py, d=20):
         dx, dy = px - cx, py - cy
         n = math.hypot(dx, dy) or 1
-        return px + dx/n*d, py + dy/n*d
+        return px + dx / n * d, py + dy / n * d
 
-    svg = (
-        f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
-        f'style="background:#f9f8f5;border-radius:6px;max-width:100%;'
-        f'display:inline-block;margin:4px;vertical-align:middle;">'
+    parts = [
         f'<polygon points="{A[0]},{A[1]} {B[0]},{B[1]} {C[0]},{C[1]}" '
-        f'fill="{shade}" stroke="{color}" stroke-width="2"/>'
-    )
+        f'fill="{shade}" stroke="{color}" stroke-width="2"/>',
+    ]
+    label_bounds_x, label_bounds_y = [], []
     for pt, lbl in zip([A, B, C], vlabels):
         lx, ly = out(*pt)
-        svg += (f'<text x="{lx:.0f}" y="{ly+5:.0f}" font-size="13" fill="#333" '
-                f'text-anchor="middle" font-weight="bold">{lbl}</text>')
+        label_bounds_x.append(lx)
+        label_bounds_y.append(ly + 5)
+        parts.append(
+            f'<text x="{lx:.0f}" y="{ly + 5:.0f}" font-size="13" fill="{p["ink"]}" '
+            f'text-anchor="middle" font-weight="bold">{lbl}</text>'
+        )
     if slabels:
-        mids = [((B[0]+C[0])/2, (B[1]+C[1])/2),
-                ((A[0]+C[0])/2, (A[1]+C[1])/2),
-                ((A[0]+B[0])/2, (A[1]+B[1])/2)]
+        mids = [
+            ((B[0] + C[0]) / 2, (B[1] + C[1]) / 2),
+            ((A[0] + C[0]) / 2, (A[1] + C[1]) / 2),
+            ((A[0] + B[0]) / 2, (A[1] + B[1]) / 2),
+        ]
         for (mx, my), lbl in zip(mids, slabels):
             if lbl:
-                dx, dy = mx-cx, my-cy
+                dx, dy = mx - cx, my - cy
                 n = math.hypot(dx, dy) or 1
-                ox, oy = mx+dx/n*14, my+dy/n*14
-                svg += (f'<text x="{ox:.0f}" y="{oy+4:.0f}" font-size="12" fill="#555" '
-                        f'text-anchor="middle">{lbl}</text>')
-    svg += '</svg>'
-    return svg
+                ox, oy = mx + dx / n * 14, my + dy / n * 14
+                label_bounds_x.append(ox)
+                label_bounds_y.append(oy + 4)
+                parts.append(
+                    f'<text x="{ox:.0f}" y="{oy + 4:.0f}" font-size="12" fill="{p["ink_muted"]}" '
+                    f'text-anchor="middle">{lbl}</text>'
+                )
+    return str(svg_kit.svg(
+        w, h, title='Triangle', body=''.join(parts), max_width=220, variant='wide',
+    ))
 
 
 def _two_tris(A1, B1, C1, A2, B2, C2,
               vl1=("A", "B", "C"), vl2=("P", "Q", "R"),
               sl1=None, sl2=None,
-              c1="#1a6fa8", c2="#a13544", s1="#dbeafe", s2="#fce7f3",
+              c1=None, c2=None, s1=None, s2=None,
               w=None, h=None, pad=34):
     """Draw two similar triangles side by side with a ~ sign."""
-    cx1 = (A1[0]+B1[0]+C1[0])/3
-    cy1 = (A1[1]+B1[1]+C1[1])/3
-    cx2 = (A2[0]+B2[0]+C2[0])/3
-    cy2 = (A2[1]+B2[1]+C2[1])/3
+    p = svg_kit.PALETTE
+    c1 = c1 or p['brand']
+    c2 = c2 or p['measure']
+    s1 = s1 or p['brand_soft']
+    s2 = s2 or p['brand_pale']
+    cx1 = (A1[0] + B1[0] + C1[0]) / 3
+    cy1 = (A1[1] + B1[1] + C1[1]) / 3
+    cx2 = (A2[0] + B2[0] + C2[0]) / 3
+    cy2 = (A2[1] + B2[1] + C2[1]) / 3
 
     def out1(px, py, d=18):
-        dx, dy = px-cx1, py-cy1
+        dx, dy = px - cx1, py - cy1
         n = math.hypot(dx, dy) or 1
-        return px+dx/n*d, py+dy/n*d
+        return px + dx / n * d, py + dy / n * d
 
     def out2(px, py, d=18):
-        dx, dy = px-cx2, py-cy2
+        dx, dy = px - cx2, py - cy2
         n = math.hypot(dx, dy) or 1
-        return px+dx/n*d, py+dy/n*d
+        return px + dx / n * d, py + dy / n * d
 
     all_pts = (A1, B1, C1, A2, B2, C2)
-    xs = [p[0] for p in all_pts]
-    ys = [p[1] for p in all_pts]
-    min_x = min(xs) - pad
-    max_x = max(xs) + pad
+    xs = [pt[0] for pt in all_pts]
+    ys = [pt[1] for pt in all_pts]
     min_y = min(ys) - pad
     max_y = max(ys) + pad
-    vb_w = max_x - min_x
-    vb_h = max_y - min_y
-    if w is None:
-        w = max(420, int(vb_w))
-    if h is None:
-        h = max(200, int(vb_h))
-
-    svg = (
-        f'<svg width="{w}" height="{h}" viewBox="{min_x:.0f} {min_y:.0f} {vb_w:.0f} {vb_h:.0f}" '
-        f'style="background:#f9f8f5;border-radius:6px;max-width:100%;'
-        f'display:inline-block;margin:4px;vertical-align:middle;">'
+    parts = [
         f'<polygon points="{A1[0]},{A1[1]} {B1[0]},{B1[1]} {C1[0]},{C1[1]}" '
-        f'fill="{s1}" stroke="{c1}" stroke-width="2"/>'
-    )
+        f'fill="{s1}" stroke="{c1}" stroke-width="2"/>',
+    ]
     for pt, lbl in zip([A1, B1, C1], vl1):
         lx, ly = out1(*pt)
-        svg += f'<text x="{lx:.0f}" y="{ly+5:.0f}" font-size="13" fill="#333" text-anchor="middle" font-weight="bold">{lbl}</text>'
+        parts.append(
+            f'<text x="{lx:.0f}" y="{ly + 5:.0f}" font-size="13" fill="{p["ink"]}" '
+            f'text-anchor="middle" font-weight="bold">{lbl}</text>'
+        )
     if sl1:
-        m1 = [((B1[0]+C1[0])/2,(B1[1]+C1[1])/2),
-              ((A1[0]+C1[0])/2,(A1[1]+C1[1])/2),
-              ((A1[0]+B1[0])/2,(A1[1]+B1[1])/2)]
-        for (mx,my),lbl in zip(m1,sl1):
+        m1 = [
+            ((B1[0] + C1[0]) / 2, (B1[1] + C1[1]) / 2),
+            ((A1[0] + C1[0]) / 2, (A1[1] + C1[1]) / 2),
+            ((A1[0] + B1[0]) / 2, (A1[1] + B1[1]) / 2),
+        ]
+        for (mx, my), lbl in zip(m1, sl1):
             if lbl:
-                dx,dy=mx-cx1,my-cy1; n=math.hypot(dx,dy) or 1
-                ox,oy=mx+dx/n*13, my+dy/n*13
-                svg += f'<text x="{ox:.0f}" y="{oy+4:.0f}" font-size="11" fill="#555" text-anchor="middle">{lbl}</text>'
-
-    svg += (f'<polygon points="{A2[0]},{A2[1]} {B2[0]},{B2[1]} {C2[0]},{C2[1]}" '
-            f'fill="{s2}" stroke="{c2}" stroke-width="2"/>')
+                dx, dy = mx - cx1, my - cy1
+                n = math.hypot(dx, dy) or 1
+                ox, oy = mx + dx / n * 13, my + dy / n * 13
+                parts.append(
+                    f'<text x="{ox:.0f}" y="{oy + 4:.0f}" font-size="11" fill="{p["ink_muted"]}" '
+                    f'text-anchor="middle">{lbl}</text>'
+                )
+    parts.append(
+        f'<polygon points="{A2[0]},{A2[1]} {B2[0]},{B2[1]} {C2[0]},{C2[1]}" '
+        f'fill="{s2}" stroke="{c2}" stroke-width="2"/>'
+    )
     for pt, lbl in zip([A2, B2, C2], vl2):
         lx, ly = out2(*pt)
-        svg += f'<text x="{lx:.0f}" y="{ly+5:.0f}" font-size="13" fill="#333" text-anchor="middle" font-weight="bold">{lbl}</text>'
+        parts.append(
+            f'<text x="{lx:.0f}" y="{ly + 5:.0f}" font-size="13" fill="{p["ink"]}" '
+            f'text-anchor="middle" font-weight="bold">{lbl}</text>'
+        )
     if sl2:
-        m2 = [((B2[0]+C2[0])/2,(B2[1]+C2[1])/2),
-              ((A2[0]+C2[0])/2,(A2[1]+C2[1])/2),
-              ((A2[0]+B2[0])/2,(A2[1]+B2[1])/2)]
-        for (mx,my),lbl in zip(m2,sl2):
+        m2 = [
+            ((B2[0] + C2[0]) / 2, (B2[1] + C2[1]) / 2),
+            ((A2[0] + C2[0]) / 2, (A2[1] + C2[1]) / 2),
+            ((A2[0] + B2[0]) / 2, (A2[1] + B2[1]) / 2),
+        ]
+        for (mx, my), lbl in zip(m2, sl2):
             if lbl:
-                dx,dy=mx-cx2,my-cy2; n=math.hypot(dx,dy) or 1
-                ox,oy=mx+dx/n*13, my+dy/n*13
-                svg += f'<text x="{ox:.0f}" y="{oy+4:.0f}" font-size="11" fill="#555" text-anchor="middle">{lbl}</text>'
-
-    # Tilde between the two triangles
+                dx, dy = mx - cx2, my - cy2
+                n = math.hypot(dx, dy) or 1
+                ox, oy = mx + dx / n * 13, my + dy / n * 13
+                parts.append(
+                    f'<text x="{ox:.0f}" y="{oy + 4:.0f}" font-size="11" fill="{p["ink_muted"]}" '
+                    f'text-anchor="middle">{lbl}</text>'
+                )
     gap_x = (min(A2[0], B2[0], C2[0]) + max(A1[0], B1[0], C1[0])) / 2
-    svg += f'<text x="{gap_x:.0f}" y="{(min_y + max_y) / 2 + 5:.0f}" font-size="22" fill="#555" text-anchor="middle">~</text>'
-    svg += '</svg>'
-    return svg
+    parts.append(
+        f'<text x="{gap_x:.0f}" y="{(min_y + max_y) / 2 + 5:.0f}" font-size="22" '
+        f'fill="{p["ink_muted"]}" text-anchor="middle">~</text>'
+    )
+    max_width = w if w else 420
+    return str(svg_kit.fitted_svg(
+        xs, ys, title='Two similar triangles', body=''.join(parts),
+        pad=pad, max_width=max_width, variant='wide',
+    ))
 
 
 def _par_tri(AD_lbl, DB_lbl, DE_lbl, BC_lbl, ratio=0.45, w=210, h=175):
@@ -241,28 +270,27 @@ def _par_tri(AD_lbl, DB_lbl, DE_lbl, BC_lbl, ratio=0.45, w=210, h=175):
     mid_DE = ((D[0]+E[0])/2, (D[1]+E[1])/2)
     mid_BC = ((B[0]+C[0])/2, (B[1]+C[1])/2)
 
-    svg = (
-        f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
-        f'style="background:#f9f8f5;border-radius:6px;max-width:100%;'
-        f'display:inline-block;margin:4px;vertical-align:middle;">'
+    p = svg_kit.PALETTE
+    inner = (
         f'<polygon points="{A[0]},{A[1]} {B[0]},{B[1]} {C[0]},{C[1]}" '
-        f'fill="#e0f2fe" stroke="#1a6fa8" stroke-width="2"/>'
+        f'fill="{p["brand_pale"]}" stroke="{p["brand"]}" stroke-width="2"/>'
         f'<polygon points="{A[0]},{A[1]} {D[0]:.1f},{D[1]:.1f} {E[0]:.1f},{E[1]:.1f}" '
-        f'fill="#bfdbfe" stroke="#1a6fa8" stroke-width="1.5"/>'
+        f'fill="{p["brand_mid"]}" stroke="{p["brand"]}" stroke-width="1.5"/>'
         f'<line x1="{D[0]:.1f}" y1="{D[1]:.1f}" x2="{E[0]:.1f}" y2="{E[1]:.1f}" '
-        f'stroke="#a13544" stroke-width="2.5"/>'
-        f'<text x="{A[0]}" y="10" font-size="13" fill="#333" text-anchor="middle" font-weight="bold">A</text>'
-        f'<text x="{B[0]-12}" y="{B[1]+7}" font-size="13" fill="#333" font-weight="bold">B</text>'
-        f'<text x="{C[0]+12}" y="{C[1]+7}" font-size="13" fill="#333" font-weight="bold">C</text>'
-        f'<text x="{D[0]-15:.0f}" y="{D[1]+4:.0f}" font-size="12" fill="#333">D</text>'
-        f'<text x="{E[0]+15:.0f}" y="{E[1]+4:.0f}" font-size="12" fill="#333">E</text>'
-        f'<text x="{mid_AD[0]-16:.0f}" y="{mid_AD[1]+4:.0f}" font-size="11" fill="#1a6fa8" text-anchor="middle">{AD_lbl}</text>'
-        f'<text x="{mid_DB[0]-16:.0f}" y="{mid_DB[1]+4:.0f}" font-size="11" fill="#1a6fa8" text-anchor="middle">{DB_lbl}</text>'
-        f'<text x="{mid_DE[0]:.0f}" y="{mid_DE[1]-8:.0f}" font-size="11" fill="#a13544" text-anchor="middle">{DE_lbl}</text>'
-        f'<text x="{mid_BC[0]:.0f}" y="{mid_BC[1]+16:.0f}" font-size="11" fill="#1a6fa8" text-anchor="middle">{BC_lbl}</text>'
-        f'</svg>'
+        f'stroke="{p["measure"]}" stroke-width="2.5"/>'
+        f'<text x="{A[0]}" y="10" font-size="13" fill="{p["ink"]}" text-anchor="middle" font-weight="bold">A</text>'
+        f'<text x="{B[0]-12}" y="{B[1]+7}" font-size="13" fill="{p["ink"]}" font-weight="bold">B</text>'
+        f'<text x="{C[0]+12}" y="{C[1]+7}" font-size="13" fill="{p["ink"]}" font-weight="bold">C</text>'
+        f'<text x="{D[0]-15:.0f}" y="{D[1]+4:.0f}" font-size="12" fill="{p["ink"]}">D</text>'
+        f'<text x="{E[0]+15:.0f}" y="{E[1]+4:.0f}" font-size="12" fill="{p["ink"]}">E</text>'
+        f'<text x="{mid_AD[0]-16:.0f}" y="{mid_AD[1]+4:.0f}" font-size="11" fill="{p["brand"]}" text-anchor="middle">{AD_lbl}</text>'
+        f'<text x="{mid_DB[0]-16:.0f}" y="{mid_DB[1]+4:.0f}" font-size="11" fill="{p["brand"]}" text-anchor="middle">{DB_lbl}</text>'
+        f'<text x="{mid_DE[0]:.0f}" y="{mid_DE[1]-8:.0f}" font-size="11" fill="{p["measure"]}" text-anchor="middle">{DE_lbl}</text>'
+        f'<text x="{mid_BC[0]:.0f}" y="{mid_BC[1]+16:.0f}" font-size="11" fill="{p["brand"]}" text-anchor="middle">{BC_lbl}</text>'
     )
-    return svg
+    return str(svg_kit.svg(
+        w, h, title='Triangle with parallel line DE', body=inner, max_width=220, variant='wide',
+    ))
 
 
 def _midpoint_tri_svg(w=210, h=175):
@@ -278,32 +306,32 @@ def _midpoint_tri_svg(w=210, h=175):
         dx, dy = x2 - x1, y2 - y1
         n = math.hypot(dx, dy) or 1
         px, py = -dy / n, dx / n
+        stroke = svg_kit.PALETTE['brand']
         return (
             f'<line x1="{mx - px * length:.1f}" y1="{my - py * length:.1f}" '
             f'x2="{mx + px * length:.1f}" y2="{my + py * length:.1f}" '
-            f'stroke="#1a6fa8" stroke-width="1.5"/>'
+            f'stroke="{stroke}" stroke-width="1.5"/>'
         )
 
-    svg = (
-        f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
-        f'style="background:#f9f8f5;border-radius:6px;max-width:100%;'
-        f'display:inline-block;margin:4px;vertical-align:middle;">'
+    p = svg_kit.PALETTE
+    inner = (
         f'<polygon points="{A[0]},{A[1]} {B[0]},{B[1]} {C[0]},{C[1]}" '
-        f'fill="#e0f2fe" stroke="#1a6fa8" stroke-width="2"/>'
+        f'fill="{p["brand_pale"]}" stroke="{p["brand"]}" stroke-width="2"/>'
         f'<polygon points="{A[0]},{A[1]} {D[0]:.1f},{D[1]:.1f} {E[0]:.1f},{E[1]:.1f}" '
-        f'fill="#bfdbfe" stroke="#1a6fa8" stroke-width="1.5"/>'
+        f'fill="{p["brand_mid"]}" stroke="{p["brand"]}" stroke-width="1.5"/>'
         f'<line x1="{D[0]:.1f}" y1="{D[1]:.1f}" x2="{E[0]:.1f}" y2="{E[1]:.1f}" '
-        f'stroke="#a13544" stroke-width="2.5"/>'
+        f'stroke="{p["measure"]}" stroke-width="2.5"/>'
         f'{tick(A[0], A[1], D[0], D[1])}{tick(D[0], D[1], B[0], B[1])}'
         f'{tick(A[0], A[1], E[0], E[1])}{tick(E[0], E[1], C[0], C[1])}'
-        f'<text x="{A[0]}" y="10" font-size="13" fill="#333" text-anchor="middle" font-weight="bold">A</text>'
-        f'<text x="{B[0]-12}" y="{B[1]+7}" font-size="13" fill="#333" font-weight="bold">B</text>'
-        f'<text x="{C[0]+12}" y="{C[1]+7}" font-size="13" fill="#333" font-weight="bold">C</text>'
-        f'<text x="{D[0]-15:.0f}" y="{D[1]+4:.0f}" font-size="12" fill="#333">D</text>'
-        f'<text x="{E[0]+15:.0f}" y="{E[1]+4:.0f}" font-size="12" fill="#333">E</text>'
-        f'</svg>'
+        f'<text x="{A[0]}" y="10" font-size="13" fill="{p["ink"]}" text-anchor="middle" font-weight="bold">A</text>'
+        f'<text x="{B[0]-12}" y="{B[1]+7}" font-size="13" fill="{p["ink"]}" font-weight="bold">B</text>'
+        f'<text x="{C[0]+12}" y="{C[1]+7}" font-size="13" fill="{p["ink"]}" font-weight="bold">C</text>'
+        f'<text x="{D[0]-15:.0f}" y="{D[1]+4:.0f}" font-size="12" fill="{p["ink"]}">D</text>'
+        f'<text x="{E[0]+15:.0f}" y="{E[1]+4:.0f}" font-size="12" fill="{p["ink"]}">E</text>'
     )
-    return svg
+    return str(svg_kit.svg(
+        w, h, title='Triangle with midpoints D and E', body=inner, max_width=220, variant='wide',
+    ))
 
 
 # ══════════════════════════════════════════════════════════════════════════════

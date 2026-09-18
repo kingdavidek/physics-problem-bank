@@ -15,6 +15,7 @@ from generators.shared.variant_utils import (
     run_mcq_variant,
     pick_named_variant,
 )
+from models import svg_kit
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -122,34 +123,8 @@ def _cm_problem_from_output(out, difficulty):
     )
 
 def _formula_tri(top, bl, br, cover=None):
-    """
-    Classic formula triangle: top quantity alone; bottom row is bl × br.
-    Cover top → multiply bottom pair; cover a bottom letter → top ÷ other bottom.
-    """
-    shade = "#ffd080"
-    normal_top = "#dbeafe"
-    normal_bl = "#e8f4fd"
-    normal_br = "#fef9c3"
-    c_top = shade if cover == "top" else normal_top
-    c_bl = shade if cover == "bl" else normal_bl
-    c_br = shade if cover == "br" else normal_br
-    stroke = "#1a6fa8"
-    return (
-        '<svg width="200" height="160" viewBox="0 0 200 160" '
-        'style="background:#f9f8f5;border-radius:6px;max-width:170px;'
-        'display:inline-block;margin:6px 4px;vertical-align:middle;">'
-        f'<polygon points="100,12 58,78 142,78" fill="{c_top}" stroke="{stroke}" stroke-width="1.5"/>'
-        f'<polygon points="58,78 12,150 100,150 100,78" fill="{c_bl}" stroke="{stroke}" stroke-width="1.5"/>'
-        f'<polygon points="100,78 142,78 188,150 100,150" fill="{c_br}" stroke="{stroke}" stroke-width="1.5"/>'
-        f'<polygon points="100,12 12,150 188,150" fill="none" stroke="{stroke}" stroke-width="2.5"/>'
-        f'<line x1="58" y1="78" x2="142" y2="78" stroke="{stroke}" stroke-width="1.5"/>'
-        f'<line x1="100" y1="78" x2="100" y2="150" stroke="{stroke}" stroke-width="1.5"/>'
-        f'<text x="100" y="52" font-size="18" fill="#333" text-anchor="middle" font-weight="bold">{top}</text>'
-        f'<text x="56" y="128" font-size="16" fill="#333" text-anchor="middle" font-weight="bold">{bl}</text>'
-        f'<text x="144" y="128" font-size="16" fill="#333" text-anchor="middle" font-weight="bold">{br}</text>'
-        '<text x="100" y="128" font-size="14" fill="#555" text-anchor="middle">×</text>'
-        "</svg>"
-    )
+    """Classic formula triangle: top quantity alone; bottom row is bl × br."""
+    return str(svg_kit.formula_triangle(top, bl, br, cover=cover))
 
 
 def _sdt(cover=None): return _formula_tri("D", "S", "T", cover)

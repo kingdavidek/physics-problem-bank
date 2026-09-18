@@ -1,0 +1,23 @@
+---
+description: >-
+  When working on production launch, PythonAnywhere deploy, M5 HTTPS, SITE_URL,
+  or opening the site to real 13+ users — remind David to complete
+  docs/OPERATOR_LAUNCH.md (ICO fee, privacy contact, prune/backup cron).
+  Do not nag during E4.1, UI, or other non-launch tracks.
+alwaysApply: false
+globs:
+  - docs/DEPLOY.md
+  - docs/MOBILE.md
+  - docs/OPERATOR_LAUNCH.md
+  - docs/EMAIL_SETUP.md
+  - docs/SECURITY_AND_GDPR.md
+  - .env.example
+---
+
+# Operator launch checklist (human, not code)
+
+If this session is about **public HTTPS, M5, PythonAnywhere, or real 13+ users**, open `docs/OPERATOR_LAUNCH.md` and walk David through it before treating launch as done.
+
+If this session is product work (real-world questions, UI, engagement, S1 code that is not a live deploy), **do not** interrupt to do ICO/privacy-inbox tasks unless he asks.
+
+Do not invent a calendar ping. The reminder is this rule plus the handoff note in `docs/AI_HANDOFF.md` §7.

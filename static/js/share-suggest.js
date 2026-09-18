@@ -10,15 +10,135 @@
   var savedIdInput = document.getElementById('share-suggest-saved-id');
   var recipientWrap = document.querySelector('.share-suggest-recipient');
   var recipientInput = document.getElementById('share-suggest-recipient');
+  var suggestionsEl = document.getElementById('share-suggest-recipient-list');
   var visibilityWrap = form.querySelector('[name="visibility"]').closest('.form-group');
   var currentAction = 'share';
+  var suggestTimer = null;
+  var activeIndex = -1;
+  var latestUsers = [];
 
   function csrfToken() {
     var meta = document.querySelector('meta[name="csrf-token"]');
     return meta ? meta.getAttribute('content') : '';
   }
 
+  function normalizeQuery(value) {
+    return (value || '').trim().replace(/^@+/, '').toLowerCase();
+  }
+
+  function closeSuggestions() {
+    if (!suggestionsEl) return;
+    suggestionsEl.hidden = true;
+    suggestionsEl.innerHTML = '';
+    activeIndex = -1;
+    latestUsers = [];
+    if (recipientInput) recipientInput.setAttribute('aria-expanded', 'false');
+  }
+
+  function renderSuggestions(users, message) {
+    if (!suggestionsEl) return;
+    suggestionsEl.innerHTML = '';
+    latestUsers = users || [];
+    activeIndex = -1;
+
+    if (!latestUsers.length) {
+      var empty = document.createElement('li');
+      empty.className = 'share-suggest-suggestion-empty';
+      empty.textContent = message || 'No friends match that handle.';
+      suggestionsEl.appendChild(empty);
+      suggestionsEl.hidden = false;
+      if (recipientInput) recipientInput.setAttribute('aria-expanded', 'true');
+      return;
+    }
+
+    latestUsers.forEach(function (user, index) {
+      var item = document.createElement('li');
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'share-suggest-suggestion';
+      btn.setAttribute('role', 'option');
+      btn.dataset.index = String(index);
+      btn.innerHTML = '<span class="share-suggest-suggestion-handle">@' + escapeHtml(user.handle) + '</span>';
+      btn.addEventListener('mousedown', function (event) {
+        event.preventDefault();
+        selectUser(user);
+      });
+      item.appendChild(btn);
+      suggestionsEl.appendChild(item);
+    });
+
+    suggestionsEl.hidden = false;
+    if (recipientInput) recipientInput.setAttribute('aria-expanded', 'true');
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function setActiveSuggestion(index) {
+    if (!suggestionsEl) return;
+    var buttons = suggestionsEl.querySelectorAll('.share-suggest-suggestion');
+    buttons.forEach(function (btn, i) {
+      btn.classList.toggle('is-active', i === index);
+    });
+    activeIndex = index;
+    if (index >= 0 && buttons[index]) {
+      buttons[index].scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  function selectUser(user) {
+    if (!recipientInput || !user) return;
+    recipientInput.value = '@' + user.handle;
+    closeSuggestions();
+    recipientInput.focus();
+  }
+
+  function fetchFollowingSuggestions(query) {
+    if (!query) {
+      closeSuggestions();
+      return;
+    }
+
+    fetch('/api/v1/me/following/search?q=' + encodeURIComponent(query) + '&limit=8', {
+      headers: { Accept: 'application/json' },
+      credentials: 'same-origin',
+    })
+      .then(function (response) {
+        return response.json().then(function (data) {
+          if (!response.ok) throw new Error(data.error || 'Search failed');
+          return data;
+        });
+      })
+      .then(function (data) {
+        if (normalizeQuery(recipientInput.value) !== query) return;
+        renderSuggestions(data.users || []);
+      })
+      .catch(function () {
+        if (normalizeQuery(recipientInput.value) !== query) return;
+        renderSuggestions([], 'Could not load friends. Try again.');
+      });
+  }
+
+  function scheduleSuggestions() {
+    if (!recipientInput || currentAction !== 'suggest') return;
+    var query = normalizeQuery(recipientInput.value);
+    window.clearTimeout(suggestTimer);
+    if (!query) {
+      closeSuggestions();
+      return;
+    }
+    suggestTimer = window.setTimeout(function () {
+      fetchFollowingSuggestions(query);
+    }, 180);
+  }
+
   function closeModal() {
+    closeSuggestions();
     overlay.hidden = true;
     overlay.setAttribute('aria-hidden', 'true');
     document.body.classList.remove('site-search-open');
@@ -29,6 +149,7 @@
     savedIdInput.value = savedId || '';
     recipientInput.value = '';
     form.querySelector('[name="note"]').value = '';
+    closeSuggestions();
 
     if (action === 'suggest') {
       titleEl.textContent = 'Send question to @user';
@@ -52,6 +173,37 @@
     (action === 'suggest' ? recipientInput : form.querySelector('[name="note"]')).focus();
   }
 
+  if (recipientInput) {
+    recipientInput.addEventListener('input', scheduleSuggestions);
+    recipientInput.addEventListener('focus', scheduleSuggestions);
+    recipientInput.addEventListener('blur', function () {
+      window.setTimeout(closeSuggestions, 150);
+    });
+    recipientInput.addEventListener('keydown', function (event) {
+      if (currentAction !== 'suggest' || suggestionsEl.hidden) return;
+
+      var buttons = suggestionsEl.querySelectorAll('.share-suggest-suggestion');
+      if (!buttons.length) return;
+
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        var next = activeIndex + 1;
+        if (next >= buttons.length) next = 0;
+        setActiveSuggestion(next);
+      } else if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        var prev = activeIndex - 1;
+        if (prev < 0) prev = buttons.length - 1;
+        setActiveSuggestion(prev);
+      } else if (event.key === 'Enter' && activeIndex >= 0) {
+        event.preventDefault();
+        selectUser(latestUsers[activeIndex]);
+      } else if (event.key === 'Escape') {
+        closeSuggestions();
+      }
+    });
+  }
+
   document.addEventListener('click', function (event) {
     var btn = event.target.closest('.share-suggest-open');
     if (!btn) return;
@@ -72,6 +224,10 @@
     submitBtn.disabled = true;
     var body = new FormData(form);
     if (!body.get('csrf_token')) body.set('csrf_token', csrfToken());
+    if (currentAction === 'suggest') {
+      var handle = normalizeQuery(body.get('recipient_handle') || '');
+      body.set('recipient_handle', handle);
+    }
 
     fetch(form.action, {
       method: 'POST',

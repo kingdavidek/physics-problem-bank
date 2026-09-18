@@ -21,6 +21,7 @@ from generators.shared.utils import (
     proof_steps_answer,
 )
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
+from models import svg_kit
 from generators.shared.variant_utils import (
     select_tier_variants,
     mcq_variants_from_bank_with_procedural,
@@ -103,26 +104,34 @@ def _cl_scale_area():
 # SVG helpers
 # ─────────────────────────────────────────────────────────────────────────────
 
+
+def _cl_diagram(vw, vh, title, desc, inner, max_width=None, inline=True):
+    """Loci/construction setup diagram via svg_kit."""
+    return str(svg_kit.viewbox_svg(
+        0, 0, vw, vh,
+        title=title,
+        desc=desc,
+        body=inner,
+        max_width=max_width or vw,
+        variant='inline' if inline else 'chart',
+    ))
+
 def _perp_bisect_svg(w=220, h=188):
     """Segment AB — setup for locus / construction questions (no construction shown)."""
-    return (
-        f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
-        f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:inline-block;margin:4px;vertical-align:middle;">'
+    inner = (
         '<line x1="10" y1="94" x2="210" y2="94" stroke="#555" stroke-width="2"/>'
         '<circle cx="25" cy="94" r="4" fill="#1a6fa8"/>'
         '<circle cx="195" cy="94" r="4" fill="#1a6fa8"/>'
         '<text x="8" y="87" font-size="13" fill="#1a6fa8" font-weight="bold">A</text>'
         '<text x="198" y="87" font-size="13" fill="#1a6fa8" font-weight="bold">B</text>'
         '<text x="110" y="130" font-size="10" fill="#555" text-anchor="middle">Points A and B</text>'
-        '</svg>'
     )
+    return _cl_diagram(w, h, 'Segment AB', 'Points A and B on a horizontal segment.', inner)
 
 
 def _angle_bisect_svg(w=220, h=172):
     """Angle at B — setup only (no bisector construction shown)."""
-    return (
-        f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
-        f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:inline-block;margin:4px;vertical-align:middle;">'
+    inner = (
         '<circle cx="28" cy="148" r="4" fill="#333"/>'
         '<text x="5" y="161" font-size="13" fill="#333" font-weight="bold">B</text>'
         '<line x1="28" y1="148" x2="158" y2="15" stroke="#555" stroke-width="2"/>'
@@ -130,56 +139,48 @@ def _angle_bisect_svg(w=220, h=172):
         '<line x1="28" y1="148" x2="215" y2="148" stroke="#555" stroke-width="2"/>'
         '<text x="215" y="161" font-size="13" fill="#333" font-weight="bold">C</text>'
         '<text x="110" y="8" font-size="10" fill="#555" text-anchor="middle">Two lines meeting at B</text>'
-        '</svg>'
     )
+    return _cl_diagram(w, h, 'Angle at B', 'Two lines meeting at point B.', inner)
 
 
 def _circle_svg(r_label="r cm", w=180, h=172):
     """Fixed point P — setup only (locus not drawn)."""
-    return (
-        f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
-        f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:inline-block;margin:4px;vertical-align:middle;">'
+    inner = (
         '<circle cx="90" cy="86" r="4" fill="#1a6fa8"/>'
         '<text x="95" y="82" font-size="13" fill="#1a6fa8" font-weight="bold">P</text>'
         '<text x="90" y="130" font-size="10" fill="#555" text-anchor="middle">Fixed point P</text>'
-        '</svg>'
     )
+    return _cl_diagram(w, h, 'Fixed point P', 'A single fixed point P for a distance locus.', inner)
 
 
 def _stadium_svg(w=265, h=140):
     """Segment AB — setup only (stadium locus not drawn)."""
-    return (
-        f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
-        f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:inline-block;margin:4px;vertical-align:middle;">'
+    inner = (
         '<line x1="62" y1="70" x2="202" y2="70" stroke="#555" stroke-width="2.5"/>'
         '<circle cx="62" cy="70" r="4" fill="#a13544"/>'
         '<circle cx="202" cy="70" r="4" fill="#a13544"/>'
         '<text x="50" y="73" font-size="12" fill="#a13544" font-weight="bold">A</text>'
         '<text x="204" y="73" font-size="12" fill="#a13544" font-weight="bold">B</text>'
         '<text x="132" y="110" font-size="10" fill="#555" text-anchor="middle">Line segment AB</text>'
-        '</svg>'
     )
+    return _cl_diagram(w, h, 'Segment AB', 'Endpoints A and B on a line segment.', inner)
 
 
 def _half_plane_svg(w=230, h=155):
     """Points A and B — setup only (no region shaded)."""
-    return (
-        f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
-        f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:inline-block;margin:4px;vertical-align:middle;">'
+    inner = (
         '<line x1="10" y1="77" x2="220" y2="77" stroke="#555" stroke-width="2"/>'
         '<circle cx="42" cy="77" r="6" fill="#1a6fa8"/>'
         '<circle cx="192" cy="77" r="6" fill="#a13544"/>'
         '<text x="44" y="70" font-size="13" fill="#1a6fa8" font-weight="bold">A</text>'
         '<text x="194" y="70" font-size="13" fill="#a13544" font-weight="bold">B</text>'
         '<text x="117" y="132" font-size="10" fill="#555" text-anchor="middle">Points A and B</text>'
-        '</svg>'
     )
+    return _cl_diagram(w, h, 'Points A and B', 'Two marked points A and B on a line.', inner)
 
 
 def _lens_svg(w=240, h=168):
-    return (
-        f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
-        f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:inline-block;margin:4px;vertical-align:middle;">'
+    inner = (
         '<circle cx="72" cy="84" r="68" fill="none" stroke="#1a6fa8" stroke-width="2" stroke-dasharray="5,3"/>'
         '<circle cx="168" cy="84" r="68" fill="none" stroke="#a13544" stroke-width="2" stroke-dasharray="5,3"/>'
         '<circle cx="72" cy="84" r="4" fill="#1a6fa8"/>'
@@ -187,31 +188,31 @@ def _lens_svg(w=240, h=168):
         '<text x="52" y="81" font-size="13" fill="#1a6fa8" font-weight="bold">A</text>'
         '<text x="172" y="81" font-size="13" fill="#a13544" font-weight="bold">B</text>'
         '<text x="120" y="156" font-size="10" fill="#555" text-anchor="middle">Circles centred at A and B</text>'
-        '</svg>'
     )
+    return _cl_diagram(w, h, 'Lens locus setup', 'Equal-radius circles centred at A and B.', inner)
 
 
 def _garden_loci_svg(w=300, h=215):
     """Rectangular garden PQRS — setup only (no loci drawn; students describe them in parts a–c)."""
-    # P top-left, Q top-right, R bottom-right, S bottom-left; 12 m × 9 m (200×150 px)
     px, py, qw, qh = 50, 48, 200, 150
     qx, qy = px + qw, py
     rx, ry = px + qw, py + qh
     sx, sy = px, py + qh
-    return (
-        f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
-        f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:block;margin:8px auto;" '
-        f'role="img" aria-label="Rectangular garden PQRS, 12 metres by 9 metres">'
+    inner = (
         f'<rect x="{px}" y="{py}" width="{qw}" height="{qh}" fill="#e8f4fd" stroke="#1a6fa8" stroke-width="2"/>'
-        # Corner labels (outside the rectangle)
         f'<text x="{px-14}" y="{py+5}" font-size="13" fill="#1a6fa8" font-weight="bold">P</text>'
         f'<text x="{qx+8}" y="{qy+5}" font-size="13" fill="#1a6fa8" font-weight="bold">Q</text>'
         f'<text x="{rx+8}" y="{ry+5}" font-size="13" fill="#1a6fa8" font-weight="bold">R</text>'
         f'<text x="{sx-14}" y="{sy+5}" font-size="13" fill="#1a6fa8" font-weight="bold">S</text>'
-        # Side lengths on the corresponding edges
         f'<text x="{px+qw//2}" y="{py-10}" font-size="12" fill="#555" text-anchor="middle">PQ = 12 m</text>'
         f'<text x="{qx+22}" y="{py+qh//2+4}" font-size="12" fill="#555" text-anchor="middle">QR = 9 m</text>'
-        '</svg>'
+    )
+    return _cl_diagram(
+        w, h,
+        'Garden PQRS',
+        'Rectangular garden PQRS, 12 metres by 9 metres.',
+        inner,
+        inline=False,
     )
 
 
@@ -219,9 +220,7 @@ def _treasure_loci_svg(d_ab=80, w=260, h=175):
     """Markers A, B and C — setup only (loci not drawn)."""
     ax, bx = 40, 40 + d_ab
     mx = (ax + bx) // 2
-    return (
-        f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
-        f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:block;margin:8px auto;">'
+    inner = (
         f'<line x1="{ax}" y1="120" x2="{bx}" y2="120" stroke="#555" stroke-width="2"/>'
         f'<circle cx="{ax}" cy="120" r="4" fill="#1a6fa8"/>'
         f'<circle cx="{bx}" cy="120" r="4" fill="#1a6fa8"/>'
@@ -230,16 +229,15 @@ def _treasure_loci_svg(d_ab=80, w=260, h=175):
         f'<circle cx="{mx}" cy="75" r="4" fill="#8a5300"/>'
         f'<text x="{mx+6}" y="72" font-size="11" fill="#8a5300" font-weight="bold">C</text>'
         '<text x="130" y="155" font-size="10" fill="#555" text-anchor="middle">Markers A, B and C</text>'
-        '</svg>'
     )
+    return _cl_diagram(w, h, 'Treasure markers', 'Markers A, B and C for combined loci.', inner, inline=False)
 
 
 def _triangle_centres_svg(w=340, h=248, ab_label="8 cm", bc_label="6 cm", ac_label="10 cm"):
     """Right triangle ABC — setup only (centres and loci not drawn)."""
     bx, by, ax, ay, cx, cy = 45, 145, 45, 55, 105, 145
-    return (
-        f'<svg width="{w}" height="{h}" viewBox="0 0 240 175" '
-        f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:block;margin:8px auto;">'
+    vw, vh = 240, 175
+    inner = (
         f'<line x1="{bx}" y1="{by}" x2="{cx}" y2="{cy}" stroke="#1a6fa8" stroke-width="2"/>'
         f'<line x1="{bx}" y1="{by}" x2="{ax}" y2="{ay}" stroke="#059669" stroke-width="2"/>'
         f'<line x1="{ax}" y1="{ay}" x2="{cx}" y2="{cy}" stroke="#a13544" stroke-width="2.5"/>'
@@ -250,22 +248,20 @@ def _triangle_centres_svg(w=340, h=248, ab_label="8 cm", bc_label="6 cm", ac_lab
         f'<text x="{bx-8}" y="158" font-size="11" fill="#333" font-weight="bold">B</text>'
         f'<text x="{ax-14}" y="{ay+4}" font-size="11" fill="#333" font-weight="bold">A</text>'
         f'<text x="{cx+4}" y="{cy+4}" font-size="11" fill="#333" font-weight="bold">C</text>'
-        '</svg>'
     )
+    return _cl_diagram(vw, vh, 'Triangle ABC', 'Right triangle ABC with labelled sides.', inner, max_width=w, inline=False)
 
 
 def _sixty_deg_svg(w=210, h=148):
     """Starting setup for 60° angle construction at A on line AB (no construction shown)."""
-    return (
-        f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
-        f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:inline-block;margin:4px;vertical-align:middle;">'
+    inner = (
         '<line x1="10" y1="115" x2="200" y2="115" stroke="#555" stroke-width="2"/>'
         '<circle cx="22" cy="115" r="4" fill="#1a6fa8"/>'
         '<text x="8" y="108" font-size="13" fill="#1a6fa8" font-weight="bold">A</text>'
         '<text x="188" y="108" font-size="13" fill="#555" font-weight="bold">B</text>'
         '<text x="105" y="138" font-size="10" fill="#555" text-anchor="middle">Line AB — construct a 60° angle at A</text>'
-        '</svg>'
     )
+    return _cl_diagram(w, h, 'Line AB', 'Line AB with point A for a 60° angle construction.', inner)
 
 
 def _ladder_ellipse_svg(L, dist, w=384, h=252):
@@ -289,16 +285,10 @@ def _ladder_ellipse_svg(L, dist, w=384, h=252):
     py = foot_y + t * (top_y - foot_y)
     mid_lx = (foot_x + top_x) / 2
     mid_ly = (foot_y + top_y) / 2
-    # Place the dist label toward P (not the foot) and offset down-right for legibility.
     dist_lx = foot_x + 0.62 * (px - foot_x) + 18
     dist_ly = foot_y + 0.62 * (py - foot_y) + 8
 
-    return (
-        f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" '
-        f'style="background:#f9f8f5;border-radius:6px;max-width:100%;display:block;margin:8px auto;" '
-        f'role="img" aria-label="Ladder of length {L} metres leaning against a wall, with point P '
-        f'{dist} metres from the foot along the ladder">'
-        # Ground and wall
+    inner = (
         f'<line x1="{wall_x}" y1="{ground_y}" x2="{foot_x + 34}" y2="{ground_y}" stroke="#555" stroke-width="3"/>'
         f'<line x1="{wall_x}" y1="{ground_y}" x2="{wall_x}" y2="{top_y - 22}" stroke="#555" stroke-width="3"/>'
         f'<polyline points="{wall_x},{ground_y} {wall_x},{ground_y - 12} {wall_x + 12},{ground_y - 12}" '
@@ -306,19 +296,15 @@ def _ladder_ellipse_svg(L, dist, w=384, h=252):
         f'<text x="{wall_x - 10}" y="{ground_y + 19}" font-size="13" fill="#555" text-anchor="middle">ground</text>'
         f'<text x="{wall_x - 22}" y="{top_y + 10}" font-size="13" fill="#555" text-anchor="middle" '
         f'transform="rotate(-90 {wall_x - 22} {top_y + 10})">wall</text>'
-        # Ladder
         f'<line x1="{foot_x}" y1="{foot_y}" x2="{top_x}" y2="{top_y}" stroke="#8b5a2b" stroke-width="6" '
         f'stroke-linecap="round"/>'
         f'<line x1="{foot_x}" y1="{foot_y}" x2="{top_x}" y2="{top_y}" stroke="#c68642" stroke-width="3" '
         f'stroke-linecap="round"/>'
-        # Foot-to-P highlight
         f'<line x1="{foot_x}" y1="{foot_y}" x2="{px}" y2="{py}" stroke="#a13544" stroke-width="5" '
         f'stroke-linecap="round"/>'
-        # Points
         f'<circle cx="{foot_x}" cy="{foot_y}" r="6" fill="#1a6fa8"/>'
         f'<circle cx="{top_x}" cy="{top_y}" r="6" fill="#1a6fa8"/>'
         f'<circle cx="{px}" cy="{py}" r="6.5" fill="#a13544"/>'
-        # Labels
         f'<text x="{foot_x + 8}" y="{foot_y + 19}" font-size="14" fill="#1a6fa8" font-weight="bold">(a, 0)</text>'
         f'<text x="{top_x - 40}" y="{top_y - 10}" font-size="14" fill="#1a6fa8" font-weight="bold">(0, b)</text>'
         f'<text x="{px + 10}" y="{py - 8}" font-size="16" fill="#a13544" font-weight="bold">P</text>'
@@ -326,7 +312,13 @@ def _ladder_ellipse_svg(L, dist, w=384, h=252):
         f'<text x="{dist_lx}" y="{dist_ly}" font-size="13" fill="#a13544" '
         f'font-weight="bold">{dist} m</text>'
         f'<text x="{wall_x + 10}" y="29" font-size="12" fill="#555">Corner at origin; a² + b² = {L * L}</text>'
-        '</svg>'
+    )
+    return _cl_diagram(
+        w, h,
+        'Sliding ladder',
+        f'Ladder of length {L} metres with point P {dist} metres from the foot along the ladder.',
+        inner,
+        inline=False,
     )
 
 

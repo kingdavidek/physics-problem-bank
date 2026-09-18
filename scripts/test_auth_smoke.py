@@ -59,7 +59,7 @@ def main():
             data={
                 'csrf_token': token,
                 'email': email,
-                'password': 'password123',
+                'password': 'password123\n',
                 'remember': '1',
             },
             follow_redirects=True,
