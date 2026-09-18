@@ -1209,7 +1209,7 @@ def _pregnancy_sexual_health_difficult_ms_sti_order_then_asymptomatic_mcq():
         ("Pressuring someone after they say no is still allowed if they are famous",),
     )
     correct = (
-        "qualified testing matters; the lesson does not ask who has been tested"
+        "qualified testing matters; nobody is asked who has been tested"
     )
     distractors = (
         "no symptoms means there is no infection to pass on",
