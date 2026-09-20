@@ -24,9 +24,9 @@ Zorp stays the one hand-drawn inline SVG we have, but gets a proper rig (separat
 | Reduced motion | 22 files gate on `prefers-reduced-motion`; no in-app toggle | OS-level only |
 | Signup flow | `register()` → `/profile` + Guide origin overlay on first load | No welcome screens, no topic picker |
 | Settings storage | `user_profile_settings` via `models/social.py` (`guide_json` with size cap) | Reusable for onboarding state and a motion preference |
-| Budgets and pins | `test_u8_a11y_smoke.py` (CSS 226 kB total / 199 kB core; today ≈216 kB total), `test_pwa_smoke.py` (`pb-v84`), `test_guide_smoke.py` (bans `lottie`/`jsdelivr`), `test_zorp_kit_smoke.py`, `test_buddy_smoke.py` (`v4`/`v7` markers) | Every phase must keep these green or update them deliberately in the same commit |
+| Budgets and pins | `test_u8_a11y_smoke.py` (CSS 240 kB total / 210 kB core per §2 #11, raised from 226/199; today ≈216 kB total), `test_pwa_smoke.py` (`pb-v84`), `test_guide_smoke.py` (bans `lottie`/`jsdelivr`), `test_zorp_kit_smoke.py`, `test_buddy_smoke.py` (`v4`/`v7` markers) | Every phase must keep these green or update them deliberately in the same commit |
 
-The gaps are therefore precise: no rig, no clip runtime, no mascot channel in `celebrate.js`, no welcome flow, no motion setting, and CSS headroom of only ~10 kB before the budget bites.
+The gaps are therefore precise: no rig, no clip runtime, no mascot channel in `celebrate.js`, no welcome flow, no motion setting, no cosmetics layer, and CSS headroom of ~24 kB against the raised budget (§2 #11) before it bites again.
 
 ---
 
@@ -42,6 +42,9 @@ The gaps are therefore precise: no rig, no clip runtime, no mascot channel in `c
 8. **CSS budget is a hard wall.** New motion CSS goes into a route-agnostic `static/css/motion.css` (≤ 8 kB minified-ish) and the budgets in `test_u8_a11y_smoke.py` are raised by exactly that amount in the same commit, with the reason in the commit message. Nothing else grows.
 9. **No new third-party code, fonts, or assets.** Sparkles/confetti stay procedural (canvas/DOM particles as now). Sounds stay oscillator tones; a phase may add two or three new *tones*, not files.
 10. **Feature gate answered once, in Phase 0.** `python scripts/ops_cadence.py feature-gate`: Q1 (new personal data) no — level and topic are preferences, not profile data; Q2 (child more visible) no; Q3 (new processor) no; Q4 (profile/rank/nudge) yes for the onboarding recommendation and reactions → note the DPIA Children's Code standard-13 review in the Phase 0 commit and keep nudges to "here is a first question" only.
+11. **CSS budget raised once, deliberately (2026-09-20).** David confirmed a bigger CSS budget is fine *because* it buys headroom for planned work, not because bytes make motion smoother — WAAPI is already the fluidity lever, not the budget (see Phase 1). `CSS_BUDGET_BYTES` 226,000→240,000 and `CSS_CORE_BUDGET_BYTES` 199,000→210,000 (+14,000/+11,000) in `scripts/test_u8_a11y_smoke.py`, covering `motion.css`'s existing 8 kB cap (§2 #8) plus a first slice of Zorp cosmetics (#12/#13 below). Record actual bytes used per phase in the constant's comment; do not raise further without a new dated, justified entry here.
+12. **No animation library.** Reconsidered and confirmed out: Lottie, GSAP, Rive and similar stay banned (E6 §2 #3/#10 stand unchanged). WAAPI + hand-authored SVG/CSS is the right architecture for a CSP `'self'`, no-CDN, no-build-pipeline site; a library would cost real CSP/maintenance/weight budget to solve a problem (fluidity) that actually lives in rig quality and runtime easing, not the animation engine.
+13. **No second character — cosmetics instead (2026-09-20).** E6 §2 #1 ("one mascot") stays frozen. Instead of a second character, Zorp gets a small cosmetics/customisation layer on the *same* rig: colour, antenna/feet size, mouth shape (free — CSS variables and `transform: scale()` on rig groups Phase 1 already creates) and, later, hats/hair/shoes (costs new artwork — small SVG overlays positioned relative to `buddy-head`/`buddy-foot`). **First slice is automatic/content-facing, not pupil-facing**: cosmetics change on their own (seasonal, or tied to the existing `MILESTONE_CATALOG['pose']` mechanism in `models/gamification.py`, resolved through `models/zorp_kit.py`'s `resolve_pose`), with no new pupil-facing picker, no new stored personal preference, and no feature-gate re-run needed. A pupil-facing picker (a child choosing Zorp's own look) is real, larger scope — new UI, a new stored preference, a fresh Q1 feature-gate answer, a Children's Code DPIA touch — and is **explicitly deferred**: do not build it until David asks for it as its own phase. This supersedes the smaller "seasonal hats via pose-kit costume tokens" idea in the old §6, which is folded into Phase 1.5/1.6 below.
 
 ---
 
@@ -142,12 +145,26 @@ Each phase is one commit, ends with `python scripts/run_smoke_tests.py` green, b
 Confirm §2 with David. Run the feature gate, record answers in this file. Add `scripts/test_zorp_motion_smoke.py` skeleton that asserts: no `lottie`/`jsdelivr`/`unpkg` anywhere in `static/js` or `static/css`; every `@keyframes` in `motion.css` has a matching rule inside a reduced-motion block; `motion.css` ≤ 8 kB.
 
 ### Phase 1 — Rig + runtime + idle (2–3 h)
-* Add groups/origins to `buddy.html` (faces untouched). Update `test_zorp_kit_smoke.py::test_live_mascot_unchanged` only if it greps for markup that legitimately changed (it checks face names/order and the absence of pose-kit classes — both still hold).
+* Add groups/origins to `buddy.html` per §3.1's rig diagram — this must land named `buddy-antenna--l`/`buddy-antenna--r` and confirm `buddy-foot--l`/`buddy-foot--r` (existing) both get `transform-box: fill-box; transform-origin`, since Phase 1.5's cosmetics scale variants hook onto exactly these groups (faces untouched). Update `test_zorp_kit_smoke.py::test_live_mascot_unchanged` only if it greps for markup that legitimately changed (it checks face names/order and the absence of pose-kit classes — both still hold).
 * `zorp-motion.js` with `bind/play/idle/setFace/motionLevel` and the clips `idle`, `blink`, `cheer`, `wobble`, `think`, `wave`, `point`, `nod/wink/tap/shake`.
 * `motion.css` with shared keyframes + reduced variants + `transform-box` rules.
 * Wire `study-buddy.js` to bind the corner buddy and run idle. Add a *Motion* section to `/styleguide` and to `/guide-preview` with a button per clip (dev only).
 * Smoke: runtime file exposes the API names; corner buddy markup has `buddy-arm--l`, `buddy-pupil`; `test_buddy_smoke.py` version markers bumped (`study_buddy_js == 'v8'`).
 **Done when:** on Practice, Zorp breathes and blinks in the corner; each clip plays from the styleguide; with reduced motion only faces change.
+
+### Phase 1.5 — Cosmetics, free set (1–2 h)
+* Add a mascot-scoped custom property (e.g. `--zorp-accent`, `--zorp-antenna`, `--zorp-foot`) to `.buddy-mascot` in `buddy.html`, defaulting to today's `var(--brand-500)`/`var(--brand-400)`/`var(--brand-700)` values so nothing changes visually until a cosmetic is actually applied. **Do not** repoint the shared `--brand-*` tokens themselves — they're used site-wide (buttons, site title, chrome.css); a mascot cosmetic must not recolour the whole UI.
+* Add 2–4 colour presets, a `scale()`-based size variant for `.buddy-antenna--l/--r` / `.buddy-foot--l/--r` (from Phase 1's rig), and 2–3 alternate mouth `<path>`s behind a `data-mouth` attribute.
+* Wire selection through the existing milestone/seasonal mechanism (`MILESTONE_CATALOG['pose']` in `models/gamification.py`, resolved via `models/zorp_kit.py`'s `resolve_pose`) — automatic, no new pupil-facing UI, no new stored personal preference (§2 #13).
+* This is where the old §6 "seasonal hats via pose-kit costume tokens" idea is absorbed: generalise `zorp_kit.py`'s costume macros from one fixed full-body macro per costume into overlay-only macros (a hat/shoes/etc. `<g>` emitted on its own), so the same mechanism can eventually sit over either a pose-kit still or the live rig. Only relax `test_zorp_kit_smoke.py`'s live-buddy/pose-kit separation assertions if this phase actually shares an overlay macro between the two systems — don't relax them speculatively otherwise.
+* Smoke: new attribute/variable names exist; existing pinned `POSE_TOKENS` (11) and `COSTUME_TOKENS` tuple in `test_zorp_kit_smoke.py` are unchanged unless a genuinely new named token is added, called out explicitly.
+* Raise `CSS_BUDGET_BYTES`/`CSS_CORE_BUDGET_BYTES` per §2 #11 in the same commit as the CSS that uses the new headroom; record the actual bytes used.
+**Done when:** Zorp's colour/antenna-size/mouth can vary automatically (e.g. by milestone) without any pupil-facing control, existing pinned tokens/smokes are untouched or deliberately and visibly updated, and CSS stays under the raised budget.
+
+### Phase 1.6 — Cosmetics, artwork set (later, separately confirmed)
+* Design 2–4 hats/hair/shoes as new, simple, original (not stock-asset) SVG `<g>` overlays positioned relative to `buddy-head`/`buddy-foot`, using the overlay-macro mechanism from Phase 1.5.
+* Only start once Phase 1.5 is confirmed working and its actual CSS cost is known; top up the budget further only if truly needed, with a new dated §2 entry recording the reason and the delta (same discipline as #11).
+**Done when:** at least one hat/hair/shoe overlay renders correctly on the live rig at both corner (64 px) and welcome-hero (160 px) sizes, still automatic/content-facing only.
 
 ### Phase 2 — Answer reactions everywhere (1–2 h)
 * `celebrate.js` mascot channel (§3.3), `react()` cooldowns and variant rotation, `first_correct` handling.
@@ -179,7 +196,8 @@ Confirm §2 with David. Run the feature gate, record answers in this file. Add `
 
 ## 6. Optional later (not in E7)
 
-* Seasonal hats on Zorp via the pose kit's costume tokens (`scholar`, `explorer`…) shown on the corner buddy on milestone days — tiny, but pupils love it. Needs the pose-kit smoke relaxed.
+* ~~Seasonal hats on Zorp via the pose kit's costume tokens~~ — superseded by the cosmetics system, §2 #13 and Phase 1.5/1.6.
+* Pupil-facing cosmetics picker (a child chooses Zorp's own look) — deferred per §2 #13 until David asks for it explicitly as its own phase: new UI, a new stored preference, a fresh Q1 feature-gate answer, a Children's Code DPIA touch.
 * Zorp "reads" the hint: `point` at the hint panel when a pupil gets two wrong in a row on one topic (E5.1 buddy weak-topic already tracks this).
 * A lightweight "mood" that follows the streak (sleepy after 3 idle days, bouncy on a 7-day streak) — only with no guilt copy.
 * Web push (E5.7) stays blocked on M5, unchanged.
