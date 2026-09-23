@@ -48,6 +48,23 @@
             </div>
         </div>
     </section>
+    <section class="section-panel" id="guide-preview-motion-section">
+        <div class="section-panel-header">Motion (E7)</div>
+        <div class="section-panel-body">
+            <p class="profile-empty">Rigged Zorp driven by <code>window.pbZorp</code>. With reduced motion only the face changes. <span data-zorp-motion-level></span></p>
+            <div class="sg-row" style="margin-top: var(--space-4);">
+                <span class="study-buddy-face sg-zorp-gesture" id="guide-preview-motion" data-zorp-demo data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot() }}</span>
+            </div>
+            <div class="sg-row" style="margin-top: var(--space-4);">
+                {% for clip in ['idle', 'blink', 'cheer', 'wobble', 'think', 'wave', 'point', 'nod', 'wink', 'tap', 'shake'] %}
+                <button type="button" class="btn btn-outline" data-zorp-clip="{{ clip }}">{{ clip|capitalize }}</button>
+                {% endfor %}
+                <button type="button" class="btn btn-outline" data-zorp-clip="point" data-zorp-target="left">Point left</button>
+                <button type="button" class="btn btn-outline" data-zorp-clip="point" data-zorp-target="down">Point down</button>
+                <button type="button" class="btn btn-outline" data-zorp-idle-off>Stop idle</button>
+            </div>
+        </div>
+    </section>
     <section class="section-panel">
         <div class="section-panel-header">Section tours (A3)</div>
         <div class="section-panel-body">
@@ -88,5 +105,5 @@
         </div>
     </section>
 </div>
-<script src="{{ url_for('static', filename='js/guide-preview.js') }}?v=6" defer></script>
+<script src="{{ url_for('static', filename='js/guide-preview.js') }}?v=7" defer></script>
 {% endblock %}

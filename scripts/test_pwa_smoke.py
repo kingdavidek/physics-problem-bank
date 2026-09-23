@@ -44,10 +44,11 @@ def main():
         assert r.status_code == 200, r.data
         sw = r.data.decode()
         assert 'STATIC_CACHE' in sw
-        assert 'pb-v84' in sw
+        assert 'pb-v85' in sw
         # JS and CSS must stay network-first or ?v= cache-busts never land.
         assert 'isVersionedAsset' in sw
         assert '/static/css/tokens.css' in sw
+        assert '/static/css/motion.css' in sw
         assert r.headers.get('Service-Worker-Allowed') == '/'
 
         r = client.get('/offline')

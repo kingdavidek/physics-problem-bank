@@ -6,7 +6,28 @@
     else fn();
   }
 
+  function wireZorpDemo(scope) {
+    var z = window.pbZorp;
+    if (!z || !scope) return;
+    var demos = scope.querySelectorAll('[data-zorp-demo]');
+    for (var d = 0; d < demos.length; d += 1) z.bind(demos[d]);
+    var level = scope.querySelector('[data-zorp-motion-level]');
+    if (level) level.textContent = 'motionLevel(): ' + z.motionLevel();
+    var btns = scope.querySelectorAll('[data-zorp-clip]');
+    for (var i = 0; i < btns.length; i += 1) {
+      btns[i].addEventListener('click', function (event) {
+        var btn = event.currentTarget;
+        for (var k = 0; k < demos.length; k += 1) {
+          z.play(btn.getAttribute('data-zorp-clip'), { el: demos[k], target: btn.getAttribute('data-zorp-target') || undefined });
+        }
+      });
+    }
+    var off = scope.querySelector('[data-zorp-idle-off]');
+    if (off) off.addEventListener('click', function () { for (var k = 0; k < demos.length; k += 1) z.idle(false, demos[k]); });
+  }
+
   ready(function () {
+    wireZorpDemo(document.getElementById('guide-preview-motion-section'));
     if (!window.pbGuide) return;
     var playBtn = document.getElementById('guide-preview-play');
     var resetBtn = document.getElementById('guide-preview-reset');

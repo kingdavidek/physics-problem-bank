@@ -1,0 +1,43 @@
+/* E7 Phase 1: Zorp rig pivots + CSS idle loop (docs/MASCOT_MOTION_AND_ONBOARDING.md §3.1-3.2).
+   Clips are WAAPI in static/js/zorp-motion.js. Cap 8,000 bytes (test_zorp_motion_smoke.py).
+   .buddy-head/.buddy-eye pivots stay in chrome.css (E6 gestures). */
+.buddy-mascot { overflow: visible; }
+/* fill-box so rotations pivot on the part on every browser (Safari needs it).
+   Phase 1.5 cosmetics scale .buddy-antenna--l/--r and .buddy-foot--l/--r from these origins. */
+.buddy-root, .buddy-shadow, .buddy-body, .buddy-arm--l, .buddy-arm--r,
+.buddy-antenna--l, .buddy-antenna--r, .buddy-pupil,
+.buddy-foot--l, .buddy-foot--r { transform-box: fill-box; }
+.buddy-root { transform-origin: 50% 90%; }
+.buddy-shadow { transform-origin: 50% 50%; }
+.buddy-body { transform-origin: 50% 100%; }
+.buddy-arm--l { transform-origin: 100% 0%; }
+.buddy-arm--r { transform-origin: 0% 0%; }
+.buddy-antenna--l { transform-origin: 100% 100%; }
+.buddy-antenna--r { transform-origin: 0% 100%; }
+.buddy-pupil { transform-origin: 50% 50%; }
+.buddy-foot--l, .buddy-foot--r { transform-origin: 50% 90%; }
+@media (prefers-reduced-motion: no-preference) {
+    .buddy-mascot.is-zorp-idle .buddy-root { animation: zorp-idle-breathe 3.2s ease-in-out infinite; }
+    .buddy-mascot.is-zorp-idle .buddy-antenna--l { animation: zorp-idle-sway 2.6s ease-in-out infinite; }
+    .buddy-mascot.is-zorp-idle .buddy-antenna--r { animation: zorp-idle-sway 2.6s ease-in-out -1.3s infinite reverse; }
+}
+@keyframes zorp-idle-breathe {
+    0%, 100% { transform: scale(1, 1); }
+    50% { transform: scale(0.99, 1.02); }
+}
+@keyframes zorp-idle-sway {
+    0%, 100% { transform: rotate(-2deg); }
+    50% { transform: rotate(2deg); }
+}
+@keyframes zorp-pulse {
+    0%, 100% { fill: var(--brand-500); }
+    50% { fill: var(--brand-400); }
+}
+@media (prefers-reduced-motion: reduce) {
+    /* Reduced variants (E7 §2 #3): zorp-idle-breathe and zorp-idle-sway do not run (idle = face only);
+       zorp-pulse is the reduced cheer fallback: colour only, no translation, one pulse. */
+    .buddy-mascot.is-zorp-idle .buddy-root,
+    .buddy-mascot.is-zorp-idle .buddy-antenna--l,
+    .buddy-mascot.is-zorp-idle .buddy-antenna--r { animation: none; }
+    .buddy-body.is-zorp-pulse .buddy-body-shape { animation: zorp-pulse 300ms ease-out 1; }
+}

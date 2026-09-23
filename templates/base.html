@@ -28,6 +28,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=24">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=34">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=40">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/motion.css') }}?v=1">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/practice.css') }}?v=26">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=52">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}?v=21">
@@ -53,9 +54,12 @@
     <script src="{{ url_for('static', filename='js/sound.js') }}?v=2" defer></script>
     <script src="{{ url_for('static', filename='js/u4.js') }}?v=12" defer></script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=4" defer></script>
+    {% if current_user.is_authenticated or guide_preview_mode or zorp_motion_demo %}
+    <script src="{{ url_for('static', filename='js/zorp-motion.js') }}?v=1" defer></script>
+    {% endif %}
     {% if current_user.is_authenticated %}
     <script src="{{ url_for('static', filename='js/notifications.js') }}?v=18" defer></script>
-    <script src="{{ url_for('static', filename='js/study-buddy.js') }}?v=21" defer></script>
+    <script src="{{ url_for('static', filename='js/study-buddy.js') }}?v=22" defer></script>
     {% endif %}
     {% if current_user.is_authenticated or guide_preview_mode %}
     <script src="{{ url_for('static', filename='js/guide-catalog.js') }}?v=8" defer></script>

@@ -5233,7 +5233,7 @@ def styleguide():
     """
     if not _guide_preview_enabled():
         abort(404)
-    return render_template('styleguide.html')
+    return render_template('styleguide.html', zorp_motion_demo=True)
 
 
 @app.get('/guide-preview')
@@ -5278,7 +5278,7 @@ def api_v1_build_info():
     return jsonify({
         'ok': True,
         'buddy_embed': 'v4',
-        'study_buddy_js': 'v7',
+        'study_buddy_js': 'v8',
         'theme_settings': True,
         'guide_preview': '/guide-preview',
         'repo_root': str(_ROOT),

@@ -21,6 +21,7 @@
         <a href="#mascot" class="pill pill--hero">Mascot</a>
         <a href="#progress-viz" class="pill pill--hero">Progress</a>
         <a href="#motion" class="pill pill--hero">Motion</a>
+        <a href="#zorp-motion" class="pill pill--hero">Zorp motion</a>
         <a href="#diagrams" class="pill pill--hero">Diagrams</a>
     </div>
 </div>
@@ -149,6 +150,25 @@
                 <figcaption><code>{{ name }}</code></figcaption>
             </figure>
             {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section-panel" id="zorp-motion">
+    <div class="section-panel-header">Zorp motion (E7)</div>
+    <div class="section-panel-body">
+        <p class="profile-empty">Rigged Zorp driven by <code>window.pbZorp</code> (<code>static/js/zorp-motion.js</code> + <code>static/css/motion.css</code>). Dev only. With reduced motion only the face changes. <span data-zorp-motion-level></span></p>
+        <div class="sg-row" style="margin-top: var(--space-4); align-items: flex-end;">
+            <span class="study-buddy-face sg-zorp-gesture" id="sg-zorp-motion" data-zorp-demo data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot() }}</span>
+            <span class="study-buddy-face" id="sg-zorp-motion-small" data-zorp-demo data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot() }}</span>
+        </div>
+        <div class="sg-row" style="margin-top: var(--space-4);">
+            {% for clip in ['idle', 'blink', 'cheer', 'wobble', 'think', 'wave', 'point', 'nod', 'wink', 'tap', 'shake'] %}
+            <button type="button" class="btn btn-outline" data-zorp-clip="{{ clip }}">{{ clip|capitalize }}</button>
+            {% endfor %}
+            <button type="button" class="btn btn-outline" data-zorp-clip="point" data-zorp-target="left">Point left</button>
+            <button type="button" class="btn btn-outline" data-zorp-clip="point" data-zorp-target="down">Point down</button>
+            <button type="button" class="btn btn-outline" data-zorp-idle-off>Stop idle</button>
         </div>
     </div>
 </section>
@@ -511,5 +531,5 @@
         pointer-events: auto;
     }
 </style>
-<script src="{{ url_for('static', filename='js/styleguide.js') }}?v=2" defer></script>
+<script src="{{ url_for('static', filename='js/styleguide.js') }}?v=3" defer></script>
 {% endblock %}

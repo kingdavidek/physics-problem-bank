@@ -1,6 +1,6 @@
 # Zorp motion package, mobile onboarding, and kid-facing UX polish (E7)
 
-**Status:** plan — nothing built. Written 2026-09-18 after reviewing `docs/ANIMATION_ONBOARDING.md` (E6, shipped), `docs/ENGAGEMENT_E5.md`, `docs/ENGAGEMENT_VISUAL.md`, `docs/MOBILE.md`, `docs/UI_REDESIGN.md`, the mascot partials, `celebrate.js`, `guide.js`, `sound.js`, the PWA files and the smokes that pin them.
+**Status:** Phase 0–1 built. Written 2026-09-18 after reviewing `docs/ANIMATION_ONBOARDING.md` (E6, shipped), `docs/ENGAGEMENT_E5.md`, `docs/ENGAGEMENT_VISUAL.md`, `docs/MOBILE.md`, `docs/UI_REDESIGN.md`, the mascot partials, `celebrate.js`, `guide.js`, `sound.js`, the PWA files and the smokes that pin them.
 **Owner of decisions:** David. **Builder:** any agent, one phase per commit, David confirms each phase before the next starts.
 **Read first:** `docs/AI_HANDOFF.md` §3 (hard invariants), `docs/SECURITY_AND_GDPR.md` §S0.3 and §6.1, `docs/ANIMATION_ONBOARDING.md` §2 (E6 decisions — this plan keeps every one of them).
 
@@ -151,6 +151,8 @@ Confirm §2 with David. Run the feature gate, record answers in this file. Add `
 * Wire `study-buddy.js` to bind the corner buddy and run idle. Add a *Motion* section to `/styleguide` and to `/guide-preview` with a button per clip (dev only).
 * Smoke: runtime file exposes the API names; corner buddy markup has `buddy-arm--l`, `buddy-pupil`; `test_buddy_smoke.py` version markers bumped (`study_buddy_js == 'v8'`).
 **Done when:** on Practice, Zorp breathes and blinks in the corner; each clip plays from the styleguide; with reduced motion only faces change.
+
+**Built 2026-09-22 (D5 resolutions kept as shipped):** `g.buddy-body` is nested *inside* `.buddy-head` (a sibling of the antennae), not a sibling of it, so the E6 nod/shake still rotate the whole blob as before; `.buddy-head`'s `transform-origin: 50% 72%` in `chrome.css` was **not** changed (§3.1's 50% 80% was not applied) so the E6 gestures stay pixel-identical; the existing `study-buddy-bob` animation on `<svg>` was left in place alongside the new breathing loop (flagged for David to judge visually, not removed here).
 
 ### Phase 1.5 — Cosmetics, free set (1–2 h)
 * Add a mascot-scoped custom property (e.g. `--zorp-accent`, `--zorp-antenna`, `--zorp-foot`) to `.buddy-mascot` in `buddy.html`, defaulting to today's `var(--brand-500)`/`var(--brand-400)`/`var(--brand-700)` values so nothing changes visually until a cosmetic is actually applied. **Do not** repoint the shared `--brand-*` tokens themselves — they're used site-wide (buttons, site title, chrome.css); a mascot cosmetic must not recolour the whole UI.

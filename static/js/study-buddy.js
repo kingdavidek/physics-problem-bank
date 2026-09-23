@@ -53,7 +53,9 @@
 
   function applyFace(prompt) {
     if (!faceEl) return;
-    faceEl.setAttribute('data-face', resolveFace(prompt));
+    var face = resolveFace(prompt);
+    if (window.pbZorp && window.pbZorp.setFace(face, { el: faceEl })) return;
+    faceEl.setAttribute('data-face', face);
   }
 
   var reactTimer = null;
@@ -352,6 +354,11 @@
     if (!refetchMatchesPage(detail)) return;
     fetchBuddy(true);
   });
+
+  if (faceEl && window.pbZorp) {
+    window.pbZorp.bind(faceEl);
+    window.pbZorp.idle(true, faceEl);   // runtime pauses on visibilitychange / reduced motion
+  }
 
   if (root.getAttribute('data-buddy-server') === '1') {
     return;
