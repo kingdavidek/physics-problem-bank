@@ -24,6 +24,8 @@ LESSON_ONLY = {'lesson-pages.css', 'lesson-assist.css'}
 # of automatic Zorp cosmetics (§2 #12/#13) — colour/scale/mouth variants and, later,
 # hat/hair/shoe overlays. Record actual bytes used per phase here, not the estimate.
 # E7 Phase 1 (2026-09-22): motion.css = 2,288 bytes; tree now 218,686 (core 193,694).
+# E7 Phase 1.5 (2026-09-23): motion.css = 4,028 bytes; tree now 220,426 (core 195,434).
+# Budget NOT raised for this phase — headroom was already reserved by the §2 #11 bump.
 CSS_BUDGET_BYTES = 240_000
 # Core sheets loaded on every page after the U8.6 lesson split.
 # S0 added fonts.css (~1KB) plus legal-footer / email-verify chrome.
@@ -32,6 +34,8 @@ CSS_BUDGET_BYTES = 240_000
 # Stage 1 science hero accent (components) + MCQ live-feedback classes (practice).
 # E7 §2 #11 (2026-09-20): raised by +11,000 alongside CSS_BUDGET_BYTES, same reason.
 # E7 Phase 1 (2026-09-22): motion.css = 2,288 bytes; tree now 218,686 (core 193,694).
+# E7 Phase 1.5 (2026-09-23): motion.css = 4,028 bytes; tree now 220,426 (core 195,434).
+# Budget NOT raised for this phase — headroom was already reserved by the §2 #11 bump.
 CSS_CORE_BUDGET_BYTES = 210_000
 
 

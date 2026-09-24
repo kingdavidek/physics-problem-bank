@@ -351,6 +351,32 @@ def _pose_from_meta(meta):
     return None
 
 
+# E7 Phase 1.5: catalog milestones that carry a Zorp pose (drive the automatic live-buddy look).
+_POSE_MILESTONE_KEYS = tuple(k for k, m in MILESTONE_CATALOG.items() if _pose_from_meta(m))
+
+
+def latest_pose_milestone(conn, user_id):
+    """Pose token of the user's most recently earned catalog milestone that has one, else None.
+
+    Derived from user_milestones only -- no stored cosmetic preference (E7 section 2 #13).
+    """
+    if not _POSE_MILESTONE_KEYS:
+        return None
+    placeholders = ','.join('?' * len(_POSE_MILESTONE_KEYS))
+    row = conn.execute(
+        f'''
+        SELECT milestone_key FROM user_milestones
+        WHERE user_id = ? AND milestone_key IN ({placeholders})
+        ORDER BY earned_at DESC, milestone_key ASC
+        LIMIT 1
+        ''',
+        (user_id, *_POSE_MILESTONE_KEYS),
+    ).fetchone()
+    if not row:
+        return None
+    return _pose_from_meta(MILESTONE_CATALOG.get(row['milestone_key']))
+
+
 def _distinct_topics_count(conn, user_id):
     row = conn.execute(
         '''

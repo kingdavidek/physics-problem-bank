@@ -89,7 +89,7 @@ def main():
     assert 'jsdelivr' not in js_src.lower()
     assert 'data-guide-spot' in partial
     assert 'data-guide-medal' in partial
-    assert 'buddy_mascot()' in partial
+    assert 'buddy_mascot(look=buddy_look)' in partial  # E7 Phase 1.5
     assert 'role="dialog"' in partial
     assert 'aria-modal="true"' in partial
 

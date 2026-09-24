@@ -16,7 +16,10 @@ sys.path.insert(0, str(ROOT))
 from models.zorp_kit import (  # noqa: E402
     ACTION_TOKENS,
     COSTUME_TOKENS,
+    LIVE_LOOKS,
+    LOOK_FIELDS,
     POSE_TOKENS,
+    live_look,
     pose,
     resolve_pose,
 )
@@ -25,6 +28,8 @@ from models.gamification import (  # noqa: E402
     MILESTONE_FIRST_LESSON,
     MILESTONE_QOTD_FIRST,
     MILESTONE_STREAK_7,
+    _pose_from_meta,
+    latest_pose_milestone,
 )
 from app import app  # noqa: E402
 
@@ -102,6 +107,86 @@ def test_proof_badges():
     assert 'pose' not in MILESTONE_CATALOG['first_quiz']
 
 
+def test_live_looks():
+    assert set(LIVE_LOOKS.keys()) <= set(POSE_TOKENS)
+    for name, look in LIVE_LOOKS.items():
+        for field, value in look.items():
+            assert field in LOOK_FIELDS, (name, field)
+            assert value in LOOK_FIELDS[field], (name, field, value)
+    # resolve_pose is case-insensitive / dash-normalising, so live_look is too.
+    assert live_look('JUMP') == live_look('jump')
+    assert live_look('streak') == {}  # sanity: not a pose token, so idle -> {}
+    assert live_look(None) == {}
+    assert live_look('idle') == {}
+    assert live_look('not-a-real-pose') == {}
+    a = live_look('jump')
+    b = live_look('jump')
+    assert a == b
+    assert a is not b
+    assert a is not LIVE_LOOKS['jump']
+    for key, meta in MILESTONE_CATALOG.items():
+        pose_token = _pose_from_meta(meta)
+        if pose_token:
+            assert live_look(pose_token), (key, pose_token)
+
+
+def test_latest_pose_milestone():
+    import sqlite3
+
+    conn = sqlite3.connect(':memory:')
+    conn.row_factory = sqlite3.Row
+    conn.execute(
+        '''
+        CREATE TABLE user_milestones (
+            user_id INTEGER NOT NULL,
+            milestone_key TEXT NOT NULL,
+            earned_at TEXT NOT NULL,
+            PRIMARY KEY (user_id, milestone_key)
+        )
+        '''
+    )
+    rows = [
+        (1, 'first_quiz', '2026-01-01T00:00:00+00:00'),        # no pose
+        (1, MILESTONE_FIRST_LESSON, '2026-01-02T00:00:00+00:00'),  # scholar
+        (1, MILESTONE_STREAK_7, '2026-01-03T00:00:00+00:00'),      # jump, latest for user 1
+        (2, MILESTONE_QOTD_FIRST, '2026-01-01T00:00:00+00:00'),    # wave, only pose milestone for user 2
+        (2, 'first_quiz', '2026-01-05T00:00:00+00:00'),            # no pose, later but irrelevant
+    ]
+    conn.executemany(
+        'INSERT INTO user_milestones (user_id, milestone_key, earned_at) VALUES (?, ?, ?)',
+        rows,
+    )
+    conn.commit()
+    assert latest_pose_milestone(conn, 1) == 'jump'
+    assert latest_pose_milestone(conn, 2) == 'wave'
+    assert latest_pose_milestone(conn, 3) is None
+    conn.close()
+
+
+def test_styleguide_looks():
+    client = app.test_client()
+    response = client.get('/styleguide')
+    assert response.status_code == 200
+    html = response.data.decode()
+    assert 'id="sg-zorp-looks"' in html
+    for name, look in LIVE_LOOKS.items():
+        if look.get('colour'):
+            assert f'data-zorp-colour="{look["colour"]}"' in html, name
+        if look.get('antenna'):
+            assert f'data-zorp-antenna="{look["antenna"]}"' in html, name
+        if look.get('feet'):
+            assert f'data-zorp-feet="{look["feet"]}"' in html, name
+        if look.get('mouth'):
+            assert f'data-mouth="{look["mouth"]}"' in html, name
+
+
+def test_base_passes_look():
+    base = (ROOT / 'templates' / 'base.html').read_text(encoding='utf-8')
+    guide = (ROOT / 'templates' / 'partials' / 'guide.html').read_text(encoding='utf-8')
+    assert 'buddy_mascot(look=buddy_look)' in base
+    assert 'buddy_mascot(look=buddy_look)' in guide
+
+
 def test_styleguide_gallery():
     client = app.test_client()
     response = client.get('/styleguide')
@@ -146,6 +231,10 @@ def main():
     test_no_licensed_names()
     test_live_mascot_unchanged()
     test_proof_badges()
+    test_live_looks()
+    test_latest_pose_milestone()
+    test_styleguide_looks()
+    test_base_passes_look()
     test_styleguide_gallery()
     test_styleguide_localhost_without_env_flag()
     test_templates_use_kit()

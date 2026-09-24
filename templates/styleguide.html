@@ -170,6 +170,15 @@
             <button type="button" class="btn btn-outline" data-zorp-clip="point" data-zorp-target="down">Point down</button>
             <button type="button" class="btn btn-outline" data-zorp-idle-off>Stop idle</button>
         </div>
+        <p class="profile-empty" style="margin-top: var(--space-5);">Phase 1.5 automatic-only cosmetics: colour/antenna/feet/mouth resolved server-side from the latest earned pose milestone (<code>models/zorp_kit.py</code> <code>live_look()</code>). There is no pupil-facing picker.</p>
+        <div class="sg-mascot-grid" id="sg-zorp-looks">
+            {% for name in zorp_kit.LIVE_LOOKS.keys()|sort %}
+            <figure class="sg-mascot-cell">
+                <span class="study-buddy-face" data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot(look=zorp_kit.live_look(name)) }}</span>
+                <figcaption><code>{{ name }}</code></figcaption>
+            </figure>
+            {% endfor %}
+        </div>
     </div>
 </section>
 

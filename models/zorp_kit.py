@@ -49,6 +49,35 @@ def resolve_pose(name):
     return 'idle'
 
 
+# E7 Phase 1.5: automatic-only live-buddy cosmetics, driven by the latest earned pose
+# milestone (models/gamification.py latest_pose_milestone). No pupil-facing picker.
+LOOK_COLOURS = ('violet', 'sunny', 'mint')
+LOOK_ANTENNAE = ('long', 'short')
+LOOK_FEET = ('big',)
+LOOK_MOUTHS = ('grin', 'cat')
+LOOK_FIELDS = {
+    'colour': LOOK_COLOURS,
+    'antenna': LOOK_ANTENNAE,
+    'feet': LOOK_FEET,
+    'mouth': LOOK_MOUTHS,
+}
+LIVE_LOOKS = {
+    'scholar': {'colour': 'violet', 'antenna': 'long'},
+    'jump': {'colour': 'sunny', 'antenna': 'long', 'feet': 'big', 'mouth': 'grin'},
+    'wave': {'colour': 'mint', 'antenna': 'short', 'mouth': 'cat'},
+}
+
+
+def live_look(name):
+    """Return the live-buddy look for a pose token as a fresh dict, or {} (today's Zorp).
+
+    Resolved through resolve_pose, so unknown/None -> 'idle' -> {}. Only allowlisted
+    field values are returned, so the dict is safe to emit as data-* attributes.
+    """
+    look = LIVE_LOOKS.get(resolve_pose(name)) or {}
+    return {k: v for k, v in look.items() if v in LOOK_FIELDS.get(k, ())}
+
+
 def _inner(name):
     tmpl = _jinja_env().get_template(TEMPLATE_NAME)
     return tmpl.module.inner(resolve_pose(name))

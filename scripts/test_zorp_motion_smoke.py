@@ -162,6 +162,76 @@ def test_dev_motion_sections():
         assert 'onclick=' not in html.lower()
 
 
+def test_cosmetic_css():
+    from models.zorp_kit import LOOK_ANTENNAE, LOOK_COLOURS, LOOK_FEET, LOOK_MOUTHS
+
+    css = MOTION_CSS.read_text(encoding='utf-8')
+    for prop in ('--zorp-body', '--zorp-accent', '--zorp-limb'):
+        assert prop in css, f'{prop} missing from motion.css'
+    for colour in LOOK_COLOURS:
+        assert f'data-zorp-colour="{colour}"' in css, colour
+    for antenna in LOOK_ANTENNAE:
+        assert f'data-zorp-antenna="{antenna}"' in css, antenna
+    for feet in LOOK_FEET:
+        assert f'data-zorp-feet="{feet}"' in css, feet
+    for mouth in LOOK_MOUTHS:
+        assert f'data-mouth="{mouth}"' in css, mouth
+    assert not re.search(r'--brand-\d+\s*:', css), (
+        'motion.css must never redefine --brand-*, only read it as a var() fallback'
+    )
+    for attr in ('data-zorp-antenna', 'data-zorp-feet'):
+        m = re.search(re.escape(attr) + r'="[^"]+"\][^{]*\{([^}]*)\}', css)
+        assert m and 'scale:' in m.group(1) and 'transform:' not in m.group(1), (
+            f'{attr} rule must use the `scale` property, not `transform`'
+        )
+    keyframe_m = re.search(r'@keyframes\s+zorp-pulse\s*\{([^}]*\{[^}]*\}[^}]*)\}', css, re.S)
+    assert keyframe_m, 'zorp-pulse keyframe missing'
+    body = keyframe_m.group(1)
+    assert '--zorp-body' in body and '--zorp-accent' in body, (
+        'zorp-pulse must read --zorp-body/--zorp-accent so a recoloured Zorp keeps its colour on the reduced-motion cheer'
+    )
+
+
+def test_cosmetic_markup():
+    buddy = BUDDY_PARTIAL.read_text(encoding='utf-8')
+    for bare in ('var(--brand-400)"', 'var(--brand-500)"', 'var(--brand-700)"'):
+        assert bare not in buddy, f'bare {bare} should be var(--zorp-X, {bare}'
+    for cls in ('buddy-mouth--smile', 'buddy-mouth--grin', 'buddy-mouth--cat'):
+        assert buddy.count(cls) == 1, f'{cls} should appear exactly once'
+    nudge_start = buddy.index('buddy-face--nudge')
+    nudge_end = buddy.index('buddy-face--milestone')
+    for cls in ('buddy-mouth--smile', 'buddy-mouth--grin', 'buddy-mouth--cat'):
+        idx = buddy.index(cls)
+        assert nudge_start < idx < nudge_end, f'{cls} must sit inside buddy-face--nudge'
+    smile_line = buddy[buddy.index('buddy-mouth--smile'):buddy.index('buddy-mouth--smile') + 200]
+    grin_line = buddy[buddy.index('buddy-mouth--grin'):buddy.index('buddy-mouth--grin') + 200]
+    cat_line = buddy[buddy.index('buddy-mouth--cat'):buddy.index('buddy-mouth--cat') + 200]
+    assert 'display="none"' not in smile_line.split('/>')[0]
+    assert 'display="none"' in grin_line.split('/>')[0]
+    assert 'display="none"' in cat_line.split('/>')[0]
+    assert 'data-mouth=' in buddy
+    assert 'buddy_mascot(look=none)' in buddy or 'buddy_mascot(look=None)' in buddy
+
+
+def test_default_render_has_no_look():
+    from app import app  # noqa: E402
+    from models import zorp_kit
+
+    default_svg = '<svg class="buddy-mascot" viewBox="0 0 64 64" aria-hidden="true" focusable="false">'
+    with app.app_context():
+        module = app.jinja_env.get_template('partials/buddy.html').module
+        for look in (None, {}, zorp_kit.live_look('idle'), zorp_kit.live_look('not-a-real-pose')):
+            rendered = str(module.buddy_mascot(look))
+            assert rendered.startswith(default_svg), rendered[:120]
+            assert 'data-zorp-' not in rendered.split('>', 1)[0] + '>'
+            assert 'data-mouth' not in rendered.split('>', 1)[0] + '>'
+        rendered = str(module.buddy_mascot(zorp_kit.live_look('jump')))
+        assert 'data-zorp-colour="sunny"' in rendered
+        assert 'data-zorp-antenna="long"' in rendered
+        assert 'data-zorp-feet="big"' in rendered
+        assert 'data-mouth="grin"' in rendered
+
+
 def main():
     test_no_third_party_animation_library()
     test_motion_css_keyframes_pair_with_reduced_motion()
@@ -170,6 +240,9 @@ def main():
     test_motion_css_rig_pivots()
     test_base_loads_motion_assets()
     test_dev_motion_sections()
+    test_cosmetic_css()
+    test_cosmetic_markup()
+    test_default_render_has_no_look()
     print('Zorp motion Phase 1 smoke passed.')
 
 

@@ -118,9 +118,12 @@ def main():
         assert 'buddy-mascot' in html
         assert 'data-face=' in html
         assert 'zorp-motion.js?v=1' in html
-        assert 'css/motion.css?v=1' in html
+        assert 'css/motion.css?v=2' in html
         assert 'buddy-arm--l' in html
         assert 'buddy-pupil' in html
+        # Fresh user, no milestones earned yet -> default Zorp (E7 Phase 1.5).
+        assert 'data-zorp-colour' not in html
+        assert 'data-mouth=' not in html
 
         r = client.get('/api/v1/me/buddy')
         assert r.status_code == 200
@@ -280,6 +283,14 @@ def main():
                     (uid_a, key, old_milestone_at),
                 )
             conn.commit()
+
+        # qotd_first carries pose 'wave' (E7 Phase 1.5) and is the only pose-bearing
+        # milestone earned here, so it drives the automatic look on /profile.
+        r = client.get('/profile')
+        assert r.status_code == 200
+        profile_with_look = r.data.decode()
+        assert 'data-zorp-colour="mint"' in profile_with_look
+        assert 'data-mouth="cat"' in profile_with_look
 
         r = client.get('/topic/gcse/maths/algebra')
         assert r.status_code == 200

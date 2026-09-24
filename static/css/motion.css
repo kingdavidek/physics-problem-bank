@@ -30,8 +30,8 @@
     50% { transform: rotate(2deg); }
 }
 @keyframes zorp-pulse {
-    0%, 100% { fill: var(--brand-500); }
-    50% { fill: var(--brand-400); }
+    0%, 100% { fill: var(--zorp-body, var(--brand-500)); }
+    50% { fill: var(--zorp-accent, var(--brand-400)); }
 }
 @media (prefers-reduced-motion: reduce) {
     /* Reduced variants (E7 §2 #3): zorp-idle-breathe and zorp-idle-sway do not run (idle = face only);
@@ -41,3 +41,20 @@
     .buddy-mascot.is-zorp-idle .buddy-antenna--r { animation: none; }
     .buddy-body.is-zorp-pulse .buddy-body-shape { animation: zorp-pulse 300ms ease-out 1; }
 }
+
+/* E7 Phase 1.5: automatic-only live-buddy cosmetics (docs/MASCOT_MOTION_AND_ONBOARDING.md, Phase 1.5).
+   Selected server-side by models/zorp_kit.py live_look(); no pupil-facing picker.
+   --zorp-body/--zorp-accent/--zorp-limb never redefine --brand-*; they are read as
+   fallbacks by buddy.html so an unset look renders identically to before Phase 1.5. */
+.buddy-mascot[data-zorp-colour="violet"] { --zorp-body: var(--xp-500); --zorp-accent: var(--xp-400); --zorp-limb: var(--xp-700); }
+.buddy-mascot[data-zorp-colour="sunny"] { --zorp-body: var(--streak-500); --zorp-accent: var(--streak-300); --zorp-limb: var(--streak-700); }
+.buddy-mascot[data-zorp-colour="mint"] { --zorp-body: var(--chem-500); --zorp-accent: var(--chem-300); --zorp-limb: var(--chem-600); }
+/* Size: the CSS `scale` property composes with the `transform` idle-sway/WAAPI clips already
+   running on these parts, instead of clobbering them like `transform: scale()` would. */
+.buddy-mascot[data-zorp-antenna="long"] .buddy-antenna--l, .buddy-mascot[data-zorp-antenna="long"] .buddy-antenna--r { scale: 1.2; }
+.buddy-mascot[data-zorp-antenna="short"] .buddy-antenna--l, .buddy-mascot[data-zorp-antenna="short"] .buddy-antenna--r { scale: 0.8; }
+.buddy-mascot[data-zorp-feet="big"] .buddy-foot--l, .buddy-mascot[data-zorp-feet="big"] .buddy-foot--r { scale: 1.15; }
+/* Mouth swap on the resting face only (D1): exactly one path painted, never overlapping. */
+.buddy-mascot[data-mouth="grin"] .buddy-mouth--smile, .buddy-mascot[data-mouth="cat"] .buddy-mouth--smile { display: none; }
+.buddy-mascot[data-mouth="grin"] .buddy-mouth--grin { display: inline; }
+.buddy-mascot[data-mouth="cat"] .buddy-mouth--cat { display: inline; }

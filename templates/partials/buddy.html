@@ -8,35 +8,41 @@
   E6 B: .buddy-head / .buddy-foot / .buddy-eye groups for overlay gestures.
 
   E7 Phase 1: rig groups (root/shadow/arms/body/antennae/pupils) for static/js/zorp-motion.js; pivots in static/css/motion.css.
+
+  E7 Phase 1.5: optional automatic look (docs/MASCOT_MOTION_AND_ONBOARDING.md, Phase 1.5).
+  `look` is a dict from models/zorp_kit.py live_look() with colour/antenna/feet/mouth keys;
+  present keys become data-zorp-colour/data-zorp-antenna/data-zorp-feet/data-mouth on the
+  <svg>, styled in motion.css. No look (default) renders byte-identical to before Phase 1.5.
 #}
 
-{% macro buddy_mascot() -%}
-<svg class="buddy-mascot" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+{% macro buddy_mascot(look=none) -%}
+{%- set look = look or {} -%}
+<svg class="buddy-mascot" viewBox="0 0 64 64" aria-hidden="true" focusable="false"{% if look.colour %} data-zorp-colour="{{ look.colour }}"{% endif %}{% if look.antenna %} data-zorp-antenna="{{ look.antenna }}"{% endif %}{% if look.feet %} data-zorp-feet="{{ look.feet }}"{% endif %}{% if look.mouth %} data-mouth="{{ look.mouth }}"{% endif %}>
   <g class="buddy-root">
   <g class="buddy-shadow">
     <ellipse cx="32" cy="61.4" rx="14" ry="1.6" fill="var(--ink-800)" opacity="0.12"/>
   </g>
   {# Arms: painted behind the body, tucked by default; pivot at the shoulder (motion.css) #}
   <g class="buddy-arm buddy-arm--l">
-    <path d="M15.6 40q-3 3.8-2.4 8.2" fill="none" stroke="var(--brand-700)" stroke-width="3.4" stroke-linecap="round"/>
+    <path d="M15.6 40q-3 3.8-2.4 8.2" fill="none" stroke="var(--zorp-limb, var(--brand-700))" stroke-width="3.4" stroke-linecap="round"/>
   </g>
   <g class="buddy-arm buddy-arm--r">
-    <path d="M48.4 40q3 3.8 2.4 8.2" fill="none" stroke="var(--brand-700)" stroke-width="3.4" stroke-linecap="round"/>
+    <path d="M48.4 40q3 3.8 2.4 8.2" fill="none" stroke="var(--zorp-limb, var(--brand-700))" stroke-width="3.4" stroke-linecap="round"/>
   </g>
   <g class="buddy-head">
   {# Antennae #}
   <g class="buddy-antenna buddy-antenna--l">
-    <path d="M24 16L17 6" fill="none" stroke="var(--brand-700)" stroke-width="2.4" stroke-linecap="round"/>
-    <circle cx="16" cy="5.2" r="3.1" fill="var(--brand-400)"/>
+    <path d="M24 16L17 6" fill="none" stroke="var(--zorp-limb, var(--brand-700))" stroke-width="2.4" stroke-linecap="round"/>
+    <circle cx="16" cy="5.2" r="3.1" fill="var(--zorp-accent, var(--brand-400))"/>
   </g>
   <g class="buddy-antenna buddy-antenna--r">
-    <path d="M40 16L47 6" fill="none" stroke="var(--brand-700)" stroke-width="2.4" stroke-linecap="round"/>
-    <circle cx="48" cy="5.2" r="3.1" fill="var(--brand-400)"/>
+    <path d="M40 16L47 6" fill="none" stroke="var(--zorp-limb, var(--brand-700))" stroke-width="2.4" stroke-linecap="round"/>
+    <circle cx="48" cy="5.2" r="3.1" fill="var(--zorp-accent, var(--brand-400))"/>
   </g>
   {# Body (inside head so E6 nod/shake still move the whole blob) #}
   <g class="buddy-body">
-    <ellipse class="buddy-body-shape" cx="32" cy="36" rx="21" ry="21.5" fill="var(--brand-500)"/>
-    <ellipse cx="22" cy="30" rx="6" ry="8" fill="var(--brand-400)" opacity="0.35"/>
+    <ellipse class="buddy-body-shape" cx="32" cy="36" rx="21" ry="21.5" fill="var(--zorp-body, var(--brand-500))"/>
+    <ellipse cx="22" cy="30" rx="6" ry="8" fill="var(--zorp-accent, var(--brand-400))" opacity="0.35"/>
   </g>
   {# Face plate #}
   <ellipse cx="32" cy="38" rx="15.5" ry="13.5" fill="var(--brand-50)"/>
@@ -54,7 +60,9 @@
         <circle cx="38.6" cy="34.2" r="0.8" fill="#fff"/>
       </g>
     </g>
-    <path d="M26.5 43.5q5.5 5 11 0" fill="none" stroke="var(--ink-800)" stroke-width="1.8" stroke-linecap="round"/>
+    <path class="buddy-mouth buddy-mouth--smile" d="M26.5 43.5q5.5 5 11 0" fill="none" stroke="var(--ink-800)" stroke-width="1.8" stroke-linecap="round"/>
+    <path class="buddy-mouth buddy-mouth--grin" display="none" d="M25.5 44.2q6.5 5.4 13 0q-1 3.4-6.5 3.4t-6.5-3.4z" fill="var(--ink-800)" stroke="var(--ink-800)" stroke-width="1.2" stroke-linejoin="round"/>
+    <path class="buddy-mouth buddy-mouth--cat" display="none" d="M26 44.6q3-2.6 6-0.4q3-2.2 6 0.4" fill="none" stroke="var(--ink-800)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
   <g class="buddy-face buddy-face--milestone">
     <g class="buddy-eye buddy-eye--l">
@@ -149,10 +157,10 @@
   </g>{# /buddy-head #}
   {# Feet — outside head so nod/shake leave them planted; painted after head to overlap the body #}
   <g class="buddy-foot buddy-foot--l">
-    <ellipse cx="24" cy="56.5" rx="6.5" ry="3.6" fill="var(--brand-700)"/>
+    <ellipse cx="24" cy="56.5" rx="6.5" ry="3.6" fill="var(--zorp-limb, var(--brand-700))"/>
   </g>
   <g class="buddy-foot buddy-foot--r">
-    <ellipse cx="40" cy="56.5" rx="6.5" ry="3.6" fill="var(--brand-700)"/>
+    <ellipse cx="40" cy="56.5" rx="6.5" ry="3.6" fill="var(--zorp-limb, var(--brand-700))"/>
   </g>
   </g>{# /buddy-root #}
 </svg>

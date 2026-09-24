@@ -237,6 +237,7 @@ from models.gamification import (
     friend_effort_leaderboard,
     get_study_streak,
     get_weekly_recap,
+    latest_pose_milestone,
     lifetime_effort_xp,
     list_milestone_shelf,
     list_user_milestones,
@@ -1004,6 +1005,7 @@ def inject_nav():
     nav_streak = 0
     xp_progress = None
     tab_badges = {}
+    buddy_look = {}
     if current_user.is_authenticated:
         with get_db() as conn:
             unread_notifications = count_unread_notifications(conn, current_user.id)
@@ -1041,6 +1043,7 @@ def inject_nav():
                 current_topic=page_topic,
             )
             buddy_prompt = _serialize_buddy_prompt(raw_prompt)
+            buddy_look = zorp_kit.live_look(latest_pose_milestone(conn, current_user.id))
     return {
         'nav_endpoint': request.endpoint,
         'lesson_meta': lesson_meta,
@@ -1050,6 +1053,7 @@ def inject_nav():
         'unread_notifications': unread_notifications,
         'buddy_page': buddy_page,
         'buddy_prompt': buddy_prompt,
+        'buddy_look': buddy_look,
         'viewer_xp': viewer_xp,
         'viewer_level': viewer_level,
         'xp_progress': xp_progress,
