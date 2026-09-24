@@ -32,6 +32,12 @@ COSTUME_TOKENS = (
 POSE_TOKENS = ACTION_TOKENS + COSTUME_TOKENS
 _POSE_SET = frozenset(POSE_TOKENS)
 
+# E7 Phase 1.6: shared overlay gear (templates/partials/zorp_overlays.html).
+# The full art catalogue is larger than what's approved for the live rig —
+# LOOK_HATS/LOOK_SHOES below are the subset actually wired into LIVE_LOOKS.
+OVERLAY_HATS = ('mortarboard', 'beanie', 'toque', 'quiff')
+OVERLAY_SHOES = ('sneakers',)
+
 
 @lru_cache(maxsize=1)
 def _jinja_env():
@@ -55,16 +61,22 @@ LOOK_COLOURS = ('violet', 'sunny', 'mint')
 LOOK_ANTENNAE = ('long', 'short')
 LOOK_FEET = ('big',)
 LOOK_MOUTHS = ('grin', 'cat')
+# E7 Phase 1.6: subset of OVERLAY_HATS/OVERLAY_SHOES approved for the live rig.
+# toque and quiff stay kit-only (pose-kit stills), not yet approved here.
+LOOK_HATS = ('mortarboard', 'beanie')
+LOOK_SHOES = ('sneakers',)
 LOOK_FIELDS = {
     'colour': LOOK_COLOURS,
     'antenna': LOOK_ANTENNAE,
     'feet': LOOK_FEET,
     'mouth': LOOK_MOUTHS,
+    'hat': LOOK_HATS,
+    'shoes': LOOK_SHOES,
 }
 LIVE_LOOKS = {
-    'scholar': {'colour': 'violet', 'antenna': 'long'},
-    'jump': {'colour': 'sunny', 'antenna': 'long', 'feet': 'big', 'mouth': 'grin'},
-    'wave': {'colour': 'mint', 'antenna': 'short', 'mouth': 'cat'},
+    'scholar': {'colour': 'violet', 'antenna': 'long', 'hat': 'mortarboard'},
+    'jump': {'colour': 'sunny', 'antenna': 'long', 'feet': 'big', 'mouth': 'grin', 'shoes': 'sneakers'},
+    'wave': {'colour': 'mint', 'antenna': 'short', 'mouth': 'cat', 'hat': 'beanie'},
 }
 
 

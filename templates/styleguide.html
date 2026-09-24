@@ -179,6 +179,19 @@
             </figure>
             {% endfor %}
         </div>
+        <p class="profile-empty" style="margin-top: var(--space-5);">Phase 1.6 hat/shoe overlays — dev only. There is no <code>/welcome</code> route yet (Phase 3); this is just a styleguide demo at the normal corner size and a 160px hero size. The art is shared, unmodified, with the pose-kit costume stills above via <code>partials/zorp_overlays.html</code>.</p>
+        <div class="sg-mascot-grid" id="sg-zorp-overlays">
+            {% for name in zorp_kit.LIVE_LOOKS.keys()|sort %}
+            {% set look = zorp_kit.live_look(name) %}
+            {% if look.hat or look.shoes %}
+            <figure class="sg-mascot-cell">
+                <span class="study-buddy-face" data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot(look=look) }}</span>
+                <span class="study-buddy-face sg-zorp-hero" data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot(look=look) }}</span>
+                <figcaption><code>{{ name }}</code></figcaption>
+            </figure>
+            {% endif %}
+            {% endfor %}
+        </div>
     </div>
 </section>
 

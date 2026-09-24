@@ -13,7 +13,14 @@
   `look` is a dict from models/zorp_kit.py live_look() with colour/antenna/feet/mouth keys;
   present keys become data-zorp-colour/data-zorp-antenna/data-zorp-feet/data-mouth on the
   <svg>, styled in motion.css. No look (default) renders byte-identical to before Phase 1.5.
+
+  E7 Phase 1.6: optional hat/shoes keys on `look`, drawn by the shared overlay
+  macros in partials/zorp_overlays.html (also used by the pose-kit stills).
+  Purely conditional Jinja, so a look without hat/shoes still renders
+  byte-identical to before this phase.
 #}
+
+{% from 'partials/zorp_overlays.html' import zorp_hat, zorp_shoe %}
 
 {% macro buddy_mascot(look=none) -%}
 {%- set look = look or {} -%}
@@ -153,14 +160,14 @@
       </g>
     </g>
     <path d="M26 43q6 5.4 12.2 0" fill="none" stroke="var(--ink-800)" stroke-width="1.9" stroke-linecap="round"/>
-  </g>
+  </g>{% if look.hat %}{{ zorp_hat(look.hat, 32, 14.5) }}{% endif %}
   </g>{# /buddy-head #}
   {# Feet — outside head so nod/shake leave them planted; painted after head to overlap the body #}
   <g class="buddy-foot buddy-foot--l">
-    <ellipse cx="24" cy="56.5" rx="6.5" ry="3.6" fill="var(--zorp-limb, var(--brand-700))"/>
+    <ellipse cx="24" cy="56.5" rx="6.5" ry="3.6" fill="var(--zorp-limb, var(--brand-700))"/>{% if look.shoes %}{{ zorp_shoe(look.shoes, 24, 56.5) }}{% endif %}
   </g>
   <g class="buddy-foot buddy-foot--r">
-    <ellipse cx="40" cy="56.5" rx="6.5" ry="3.6" fill="var(--zorp-limb, var(--brand-700))"/>
+    <ellipse cx="40" cy="56.5" rx="6.5" ry="3.6" fill="var(--zorp-limb, var(--brand-700))"/>{% if look.shoes %}{{ zorp_shoe(look.shoes, 40, 56.5) }}{% endif %}
   </g>
   </g>{# /buddy-root #}
 </svg>

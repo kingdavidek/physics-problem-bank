@@ -2076,6 +2076,11 @@ body.quiz-runner-active .app-tab-bar {
     width: 128px;
     height: 128px;
 }
+.sg-zorp-hero,
+.sg-zorp-hero .buddy-mascot {
+    width: 160px;
+    height: 160px;
+}
 .sg-mascot-cell figcaption {
     margin-top: var(--space-2);
     color: var(--text-muted);

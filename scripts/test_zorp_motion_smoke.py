@@ -225,11 +225,40 @@ def test_default_render_has_no_look():
             assert rendered.startswith(default_svg), rendered[:120]
             assert 'data-zorp-' not in rendered.split('>', 1)[0] + '>'
             assert 'data-mouth' not in rendered.split('>', 1)[0] + '>'
+            assert 'zorp-hat' not in rendered
+            assert 'zorp-shoe' not in rendered
         rendered = str(module.buddy_mascot(zorp_kit.live_look('jump')))
         assert 'data-zorp-colour="sunny"' in rendered
         assert 'data-zorp-antenna="long"' in rendered
         assert 'data-zorp-feet="big"' in rendered
         assert 'data-mouth="grin"' in rendered
+        # E7 Phase 1.6
+        assert rendered.count('zorp-shoe--sneakers') == 2
+        rendered = str(module.buddy_mascot(zorp_kit.live_look('scholar')))
+        assert 'zorp-hat--mortarboard' in rendered
+
+
+def test_overlay_rig_wiring():
+    # E7 Phase 1.6: hat is the last thing inside the head group; shoes are
+    # painted after the head closes, one per foot, left-then-right.
+    buddy = BUDDY_PARTIAL.read_text(encoding='utf-8')
+    last_face_idx = buddy.rindex('buddy-face--friend-challenge')
+    hat_call_idx = buddy.index('zorp_hat(look.hat')
+    head_close_idx = buddy.index('{# /buddy-head #}')
+    assert last_face_idx < hat_call_idx < head_close_idx
+
+    foot_l_idx = buddy.index('buddy-foot--l')
+    foot_r_idx = buddy.index('buddy-foot--r')
+    shoe_l_idx = buddy.index('zorp_shoe(look.shoes, 24')
+    shoe_r_idx = buddy.index('zorp_shoe(look.shoes, 40')
+    assert head_close_idx < foot_l_idx < shoe_l_idx < foot_r_idx < shoe_r_idx
+
+    assert '{% if look.hat %}' in buddy
+    assert '{% if look.shoes %}' in buddy
+
+    motion_css = MOTION_CSS.read_text(encoding='utf-8')
+    assert 'zorp-hat' not in motion_css
+    assert 'zorp-shoe' not in motion_css
 
 
 def main():
@@ -243,6 +272,7 @@ def main():
     test_cosmetic_css()
     test_cosmetic_markup()
     test_default_render_has_no_look()
+    test_overlay_rig_wiring()
     print('Zorp motion Phase 1 smoke passed.')
 
 

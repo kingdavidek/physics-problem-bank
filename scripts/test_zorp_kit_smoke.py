@@ -18,6 +18,10 @@ from models.zorp_kit import (  # noqa: E402
     COSTUME_TOKENS,
     LIVE_LOOKS,
     LOOK_FIELDS,
+    LOOK_HATS,
+    LOOK_SHOES,
+    OVERLAY_HATS,
+    OVERLAY_SHOES,
     POSE_TOKENS,
     live_look,
     pose,
@@ -41,6 +45,7 @@ def _kit_sources():
     paths = [
         ROOT / 'models' / 'zorp_kit.py',
         ROOT / 'templates' / 'partials' / 'zorp_kit.html',
+        ROOT / 'templates' / 'partials' / 'zorp_overlays.html',
         ROOT / 'templates' / 'partials' / 'zorp_badge.html',
         ROOT / 'templates' / 'styleguide.html',
         ROOT / 'docs' / 'ENGAGEMENT_VISUAL.md',
@@ -98,6 +103,18 @@ def test_live_mascot_unchanged():
     ]
     assert 'pose_run' not in buddy
     assert 'zorp-pose' not in buddy
+    # E7 Phase 1.6: the live rig shares overlay art with the pose kit via
+    # zorp_overlays.html, but never imports the pose-kit template itself,
+    # and the shared overlay file never leaks either character's own
+    # drawing code — it stays genuinely overlay-only.
+    assert 'partials/zorp_kit.html' not in buddy
+    assert "import zorp_hat, zorp_shoe" in buddy or (
+        'import zorp_hat' in buddy and 'import zorp_shoe' in buddy
+    )
+    assert 'partials/zorp_overlays.html' in buddy
+    overlays = (ROOT / 'templates' / 'partials' / 'zorp_overlays.html').read_text(encoding='utf-8')
+    for leaked in ('buddy-', 'zorp-pose', '_standing_body', '_nudge_face', 'pose_'):
+        assert leaked not in overlays, leaked
 
 
 def test_proof_badges():
@@ -128,6 +145,122 @@ def test_live_looks():
         pose_token = _pose_from_meta(meta)
         if pose_token:
             assert live_look(pose_token), (key, pose_token)
+    # E7 Phase 1.6: hat/shoes overlays, deliberately a subset of the full
+    # overlay art catalogue (toque/quiff stay kit-only).
+    assert LOOK_FIELDS['hat'] == LOOK_HATS
+    assert LOOK_FIELDS['shoes'] == LOOK_SHOES
+    assert set(LOOK_HATS) <= set(OVERLAY_HATS)
+    assert set(LOOK_SHOES) <= set(OVERLAY_SHOES)
+    # E7 Phase 1.6: toque/quiff are kit-only, not yet approved for the live rig -- pin
+    # that LOOK_HATS/LOOK_SHOES stay a strict subset of OVERLAY_HATS/OVERLAY_SHOES,
+    # not silently widened to include them.
+    assert 'toque' not in LOOK_HATS and 'quiff' not in LOOK_HATS
+    assert set(LOOK_HATS) < set(OVERLAY_HATS)
+    assert live_look('scholar')['hat'] == 'mortarboard'
+    assert live_look('wave')['hat'] == 'beanie'
+    assert live_look('jump')['shoes'] == 'sneakers'
+
+
+def test_overlay_macros():
+    with app.app_context():
+        module = app.jinja_env.get_template('partials/zorp_overlays.html').module
+        for name in OVERLAY_HATS:
+            rendered = str(module.zorp_hat(name, 5, 7))
+            assert rendered.startswith(f'<g class="zorp-hat zorp-hat--{name}" transform="translate(5 7)">'), rendered
+            assert rendered.count('<g') == 1
+            assert rendered.endswith('</g>')
+        for name in OVERLAY_SHOES:
+            rendered = str(module.zorp_shoe(name, 5, 7))
+            assert rendered.startswith(f'<g class="zorp-shoe zorp-shoe--{name}" transform="translate(5 7)">'), rendered
+            assert rendered.count('<g') == 1
+            assert rendered.endswith('</g>')
+        for bad in (None, '', 'not-a-hat', 'mickey'):
+            assert str(module.zorp_hat(bad, 5, 7)) == ''
+            assert str(module.zorp_shoe(bad, 5, 7)) == ''
+
+
+def test_kit_headwear_regression():
+    # Pre-Phase-1.6 inline headwear markup for showman/scholar/chef, translated
+    # by the shared anchor (40, 22.5) into the local frame the overlay macros
+    # now use. Captured from the working tree before this phase's edits.
+    expected = {
+        'showman': '<g class="zorp-hat zorp-hat--quiff" transform="translate(40 22.5)">'
+                    '<path d="M-12 -4.5q4 -10 12 -8q2 6 -2 10z" fill="var(--ink-800)"/></g>',
+        'scholar': '<g class="zorp-hat zorp-hat--mortarboard" transform="translate(40 22.5)">'
+                   '<rect x="-14" y="-14.5" width="28" height="5.5" rx="1" fill="var(--ink-800)"/>\n'
+                   '<polygon points="0,-18.5 14,-9.5 0,-0.5 -14,-9.5" fill="var(--ink-800)"/>\n'
+                   '<line x1="14" y1="-9.5" x2="14" y2="1.5" stroke="var(--gold-500)" stroke-width="1.6"/>\n'
+                   '<circle cx="14" cy="3.5" r="2.1" fill="var(--gold-500)"/></g>',
+        'chef': '<g class="zorp-hat zorp-hat--toque" transform="translate(40 22.5)">'
+                '<ellipse cx="0" cy="-12.5" rx="11" ry="7.5" fill="var(--brand-50)" stroke="var(--ink-400)" stroke-width="1.2"/>\n'
+                '<rect x="-7" y="-8.5" width="14" height="8" fill="var(--brand-50)" stroke="var(--ink-400)" stroke-width="1.2"/></g>',
+    }
+    for name, hat_markup in expected.items():
+        markup = str(pose(name, size=80))
+        assert hat_markup in markup, name
+        # Paint order preserved, matching each pose's original order exactly.
+        hat_idx = markup.index(hat_markup)
+        body_idx = markup.index('<ellipse cx="40" cy="46"')  # face plate, part of _standing_body()
+        assert body_idx < hat_idx
+        if name == 'showman':
+            # Original order: body, quiff, sparkles, face, feet — hat renders
+            # before the sparkles and before the feet.
+            sparkle_idx = markup.index('<circle cx="28" cy="36"')
+            feet_idx = markup.rindex('var(--brand-700)"/>')
+            assert hat_idx < sparkle_idx < feet_idx
+        elif name == 'scholar':
+            # Original order: body, face, feet, mortarboard — hat renders
+            # after the feet (last thing in the pose).
+            feet_idx = markup.rindex('var(--brand-700)"/>', 0, hat_idx)
+            assert feet_idx < hat_idx
+            assert hat_idx == markup.rindex(hat_markup)
+        elif name == 'chef':
+            # Original order: body, face, feet, toque, spoon — hat renders
+            # after the feet, before the spoon prop.
+            feet_idx = markup.rindex('var(--brand-700)"/>', 0, hat_idx)
+            spoon_idx = markup.index('<g transform="translate(62 46) rotate(30)">')
+            assert feet_idx < hat_idx < spoon_idx
+    # explorer and all 7 action tokens carry no overlay gear at all.
+    for name in ('explorer',) + ACTION_TOKENS:
+        markup = str(pose(name, size=80))
+        assert 'zorp-hat' not in markup, name
+        assert 'zorp-shoe' not in markup, name
+
+
+def test_live_overlay_matches_kit():
+    from models import zorp_kit
+
+    with app.app_context():
+        buddy_module = app.jinja_env.get_template('partials/buddy.html').module
+        rendered = str(buddy_module.buddy_mascot(zorp_kit.live_look('scholar')))
+        last_face_idx = rendered.rindex('buddy-face--friend-challenge')
+        hat_idx = rendered.index('zorp-hat--mortarboard')
+        foot_idx = rendered.index('buddy-foot--l')  # feet are painted after the head closes
+        assert last_face_idx < hat_idx < foot_idx
+        assert 'translate(32 14.5)' in rendered
+
+        jump_rendered = str(buddy_module.buddy_mascot(zorp_kit.live_look('jump')))
+        assert jump_rendered.count('zorp-shoe--sneakers') == 2
+        assert 'zorp-hat' not in jump_rendered
+        left_foot_idx = jump_rendered.index('buddy-foot--l')
+        right_foot_idx = jump_rendered.index('buddy-foot--r')
+        left_shoe_idx = jump_rendered.index('translate(24 56.5)')
+        right_shoe_idx = jump_rendered.index('translate(40 56.5)')
+        assert left_foot_idx < left_shoe_idx < right_foot_idx < right_shoe_idx
+
+        wave_rendered = str(buddy_module.buddy_mascot(zorp_kit.live_look('wave')))
+        assert 'zorp-hat--beanie' in wave_rendered
+        assert 'zorp-shoe' not in wave_rendered
+
+        # Same shared macro, same art: the mortarboard's inner content (minus
+        # the wrapping <g>'s own translate anchor) must match between the
+        # live rig and the pose-kit scholar still exactly.
+        kit_markup = str(pose('scholar', size=80))
+        live_inner = rendered[rendered.index('zorp-hat--mortarboard'):]
+        live_inner = live_inner[live_inner.index('>') + 1:live_inner.index('</g>')]
+        kit_inner = kit_markup[kit_markup.index('zorp-hat--mortarboard'):]
+        kit_inner = kit_inner[kit_inner.index('>') + 1:kit_inner.index('</g>')]
+        assert live_inner == kit_inner
 
 
 def test_latest_pose_milestone():
@@ -178,6 +311,12 @@ def test_styleguide_looks():
             assert f'data-zorp-feet="{look["feet"]}"' in html, name
         if look.get('mouth'):
             assert f'data-mouth="{look["mouth"]}"' in html, name
+        if look.get('hat'):
+            assert f'zorp-hat--{look["hat"]}' in html, name
+        if look.get('shoes'):
+            assert f'zorp-shoe--{look["shoes"]}' in html, name
+    assert html.count('id="sg-zorp-overlays"') >= 1
+    assert html.count('sg-zorp-hero') >= 2
 
 
 def test_base_passes_look():
@@ -232,6 +371,9 @@ def main():
     test_live_mascot_unchanged()
     test_proof_badges()
     test_live_looks()
+    test_overlay_macros()
+    test_kit_headwear_regression()
+    test_live_overlay_matches_kit()
     test_latest_pose_milestone()
     test_styleguide_looks()
     test_base_passes_look()
