@@ -73,9 +73,9 @@ def extra_unlock_title(extra):
     milestone_key = AVATAR_EXTRA_REQUIREMENTS.get(extra)
     if not milestone_key:
         return None
-    from models.gamification import MILESTONE_CATALOG
+    from models.gamification import milestone_meta
 
-    return MILESTONE_CATALOG.get(milestone_key, {}).get(
+    return milestone_meta(milestone_key).get(
         'title',
         milestone_key.replace('_', ' ').title(),
     )

@@ -1,6 +1,18 @@
 (function () {
   'use strict';
 
+  try {
+    if (window.localStorage.getItem('pb-buddy-storage') !== 'v2') {
+      var buddyKeys = [];
+      for (var i = 0; i < window.localStorage.length; i += 1) {
+        var key = window.localStorage.key(i);
+        if (key && key.indexOf('pb-buddy-dismissed-') === 0) buddyKeys.push(key);
+      }
+      buddyKeys.forEach(function (item) { window.localStorage.removeItem(item); });
+      window.localStorage.setItem('pb-buddy-storage', 'v2');
+    }
+  } catch (e) {}
+
   var root = document.querySelector('[data-buddy-root]');
   if (!root) return;
 
@@ -11,6 +23,58 @@
   var dismissEl = root.querySelector('[data-buddy-dismiss]');
   var faceEl = root.querySelector('[data-buddy-face]');
   if (!messageEl || !actionEl || !dismissEl) return;
+
+  var FACE_OK = {
+    milestone: 1,
+    celebrate: 1,
+    qotd_nudge: 1,
+    streak_risk: 1,
+    weak_topic: 1,
+    friend_challenge: 1,
+    nudge: 1,
+  };
+  var FACE_FROM_EMOJI = {
+    '🎉': 'milestone',
+    '😄': 'celebrate',
+    '❓': 'qotd_nudge',
+    '🔥': 'streak_risk',
+    '🤔': 'weak_topic',
+    '🤝': 'friend_challenge',
+    '👾': 'nudge',
+  };
+
+  function resolveFace(prompt) {
+    var type = prompt && prompt.type;
+    if (type && FACE_OK[type]) return type;
+    var emoji = prompt && prompt.face;
+    if (emoji && FACE_FROM_EMOJI[emoji]) return FACE_FROM_EMOJI[emoji];
+    return 'nudge';
+  }
+
+  function applyFace(prompt) {
+    if (!faceEl) return;
+    var face = resolveFace(prompt);
+    if (window.pbZorp && window.pbZorp.setFace(face, { el: faceEl })) return;
+    faceEl.setAttribute('data-face', face);
+  }
+
+  var reactTimer = null;
+  function reactBuddy() {
+    if (!faceEl) return;
+    if (window.pbZorp && typeof window.pbZorp.play === 'function') {
+      window.pbZorp.play('nod', { el: faceEl, ifIdle: true });
+      return;
+    }
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    faceEl.classList.remove('is-reacting');
+    void faceEl.offsetWidth;
+    faceEl.classList.add('is-reacting');
+    if (reactTimer) window.clearTimeout(reactTimer);
+    reactTimer = window.setTimeout(function () {
+      faceEl.classList.remove('is-reacting');
+      reactTimer = null;
+    }, 560);
+  }
 
   function milestoneStorageKey(key) {
     return 'pb-buddy-milestone-' + (key || '');
@@ -133,7 +197,7 @@
     if (!prompt || !prompt.message) return;
     messageEl.textContent = escapeText(prompt.message);
     if (detailEl) detailEl.textContent = escapeText(prompt.detail || 'Buddy');
-    if (faceEl) faceEl.textContent = escapeText(prompt.face || '👾');
+    applyFace(prompt);
     clearExtraActions();
 
     var actions = Array.isArray(prompt.actions) && prompt.actions.length
@@ -174,6 +238,9 @@
       root.removeAttribute('data-buddy-milestone-key');
     }
     root.hidden = false;
+    if (window.pbCelebrate && window.pbCelebrate.fromBuddy) {
+      window.pbCelebrate.fromBuddy(prompt);
+    }
   }
 
   function maybeShow(prompt, source) {
@@ -243,7 +310,7 @@
     } catch (err) {}
   });
 
-  function fetchBuddy() {
+  function fetchBuddy(fromRefetch) {
     var ctx = currentContext();
     var query = '';
     if (ctx.level && ctx.topic) {
@@ -267,7 +334,8 @@
       })
       .then(function (data) {
         if (!(data && data.ok && data.buddy)) return;
-        maybeShow(data.buddy, 'fetch');
+        maybeShow(data.buddy, fromRefetch ? 'refetch' : 'fetch');
+        if (fromRefetch && !root.hidden) reactBuddy();
       })
       .catch(function () {});
   }
@@ -288,8 +356,13 @@
   document.addEventListener('pb-buddy-refetch', function (event) {
     var detail = (event && event.detail) || {};
     if (!refetchMatchesPage(detail)) return;
-    fetchBuddy();
+    fetchBuddy(true);
   });
+
+  if (faceEl && window.pbZorp) {
+    window.pbZorp.bind(faceEl);
+    window.pbZorp.idle(true, faceEl);   // runtime pauses on visibilitychange / reduced motion
+  }
 
   if (root.getAttribute('data-buddy-server') === '1') {
     return;

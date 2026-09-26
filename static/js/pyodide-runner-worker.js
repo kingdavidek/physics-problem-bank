@@ -11,8 +11,9 @@ function loadPyodideRuntime() {
   if (!pyodideLoading) {
     pyodideLoading = new Promise((resolve, reject) => {
       try {
-        importScripts('https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js');
-        loadPyodide()
+        const indexURL = new URL('../vendor/pyodide/', self.location.href).href;
+        importScripts(indexURL + 'pyodide.js');
+        loadPyodide({ indexURL: indexURL })
           .then((instance) => {
             pyodide = instance;
             resolve(instance);

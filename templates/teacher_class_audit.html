@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "partials/page_flashes.html" import render as page_flashes %}
+{% block title %}{{ klass.name }} activity – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+<div class="lesson-hero">
+    <h1>Class activity</h1>
+    <p class="hero-sub">Recent actions for this class. Handles only — emails and private notes are never stored here.</p>
+</div>
+
+<p class="profile-page-back"><a href="{{ url_for('teacher_class_roster', class_id=klass.id) }}">← Back to roster</a></p>
+
+{{ page_flashes('teacher_class_audit') }}
+
+<section class="section-panel">
+    <div class="section-panel-header">{{ klass.name }}</div>
+    <div class="section-panel-body">
+        {% if events %}
+        <ul class="profile-list profile-list--rows">
+            {% for event in events %}
+            <li class="profile-list-item list-row">
+                <div class="list-row-main">
+                    <strong>{{ event.action | replace('_', ' ') }}</strong>
+                    <span class="list-row-meta">
+                        @{{ event.actor_handle }}
+                        {% if event.subject_handle %} · {{ event.subject_handle }}{% endif %}
+                        {% if event.created_at %} · {{ event.created_at }}{% endif %}
+                    </span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty">No class activity recorded yet.</p>
+        {% endif %}
+    </div>
+</section>
+</div>
+{% endblock %}

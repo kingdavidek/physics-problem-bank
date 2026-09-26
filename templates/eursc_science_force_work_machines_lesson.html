@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% block title %}Force, Work and Simple Machines – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Force, Work and Simple Machines</h1>
+    <p class="hero-sub">S3 Integrated Science · Unit 3.1 Machines · syllabus 3.1.1. Force as a vector, levers, pulleys and ramps, the force–distance trade-off, and work as \(W = Fd\). This lesson does not claim power calculations and does not store a private joint map.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S3</span>
+      <span class="pill pill--hero">3.1 Machines</span>
+      <span class="pill pill--hero">3.1.1</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='force_work_machines') }}">▶ Practice Quiz (10 questions)</a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">1</span> Force as a vector <span class="lesson-tag">3.1.1</span> <span class="lesson-tag">S3</span></summary>
+    <div class="lesson-section-body">
+      <p>A <dfn class="lesson-gloss" title="A push or pull">force</dfn> is a push or pull between objects. Opening a classroom door, sliding a crate across the floor, or lowering a box on a pulley are all force stories. A force is drawn as a <dfn class="lesson-gloss" title="A quantity with size and direction">vector</dfn>: it has <strong>size</strong> and <strong>direction</strong>.
+      <span class="lesson-gloss-def">A force is a push or pull. A vector has size and direction. Forces are interactions, not a ranking of classmates.</span></p>
+      <p>Size is how strong the push or pull is. The unit used here is the <dfn class="lesson-gloss" title="The unit of force">newton</dfn> (N). Direction is which way the force points: right, up, or along a ramp. On a sketch, a <strong>longer arrow</strong> means a larger force; the <strong>arrow heading</strong> is the direction.</p>
+      <p><strong>Worked example:</strong> A trolley in the corridor is pulled to the right with 8 N. That force is not “8” on its own: it is 8 N to the right. A 4 N pull the same way is a shorter arrow. A 4 N lift is the same size but a different direction, so it is a different vector.</p>
+      <p class="lesson-callout">Forces are interactions. This page never ranks how strong classmates are, and it does not store a map of anyone’s joints.</p>
+      <figure class="lesson-figure">
+        {{ force_vectors_fig }}
+        <figcaption class="lesson-figure-caption">A is size: the longer rightward arrow is the larger force. B is direction: the upward arrow points a different way. Schematic crate, not a measured trolley.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p>A force is</p>
+          <button class="btn mcq-btn" data-letter="A">a size with no direction</button>
+          <button class="btn mcq-btn" data-letter="B">a stored energy measured in joules</button>
+          <button class="btn mcq-btn" data-letter="C">a push or pull that can be drawn as a vector</button>
+          <button class="btn mcq-btn" data-letter="D">the speed an object moves at</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">2</span> Simple machines</summary>
+    <div class="lesson-section-body">
+      <p>A <dfn class="lesson-gloss" title="A device that can change the size or direction of a force">simple machine</dfn> can change the size or direction of a force so a job is easier to set up. It does <strong>not</strong> create energy. There are three simple types: a <strong>lever</strong>, a <strong>pulley</strong> and a <strong>ramp</strong>.
+      <span class="lesson-gloss-def">A device that can change the size or direction of a force. It trades force and distance; it does not create energy.</span></p>
+      <p>Public examples, not a kit you have to own:</p>
+      <ul>
+        <li><strong>Lever:</strong> a door handle, a bottle opener, or a playground see-saw. A long handle can turn a smaller push into a useful turn about a pivot.</li>
+        <li><strong>Pulley:</strong> a flagpole rope or a classroom blind. The wheel can change the direction of the pull so you haul down to lift up.</li>
+        <li><strong>Ramp:</strong> a loading slope into a van, or a wheelchair access ramp. A longer path can mean a smaller effort force.</li>
+      </ul>
+      <figure class="lesson-figure">
+        {{ simple_machines_fig }}
+        <figcaption class="lesson-figure-caption">A lever on a fulcrum, B pulley with a rope and load, C ramp. Three schematic types.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p>Simple machines named here include</p>
+          <button class="btn mcq-btn" data-letter="A">a lever, a pulley and a ramp</button>
+          <button class="btn mcq-btn" data-letter="B">only electric motors</button>
+          <button class="btn mcq-btn" data-letter="C">only devices with a computer inside</button>
+          <button class="btn mcq-btn" data-letter="D">devices that create energy from nothing</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">3</span> Lever parts</summary>
+    <div class="lesson-section-body">
+      <p>A lever is a bar that turns about a pivot. Label three parts every time:</p>
+      <ul>
+        <li><strong>A</strong> <dfn class="lesson-gloss" title="The input force">effort</dfn> — the input force you apply.</li>
+        <li><strong>B</strong> <dfn class="lesson-gloss" title="The pivot the bar turns about">fulcrum</dfn> — the pivot the bar turns about.</li>
+        <li><strong>C</strong> <dfn class="lesson-gloss" title="What is moved">load</dfn> — what is being moved.</li>
+      </ul>
+      <span class="lesson-gloss-def">Effort is the input force, the fulcrum is the pivot, and the load is what is moved. Labels, not a private joint map.</span>
+      <p>Where those parts sit changes the story. On a door, the hinge is the fulcrum. A push far from the hinge (a long effort arm) opens the door with a smaller force than a push next to the hinge. A wheelbarrow puts the load between the wheel (fulcrum) and the handles (effort), so a smaller lift at the handles can raise a heavier load.</p>
+      <p><strong>Worked example:</strong> A metre stick rests on a triangular block. A 2 N push at A, 40 cm from the fulcrum, balances a load at C. The sketch is a labelled bar, not a realistic machine and not a map of anyone’s joints.</p>
+      <figure class="lesson-figure">
+        {{ lever_fig }}
+        <figcaption class="lesson-figure-caption">A effort (input force), B fulcrum (pivot), C load. The arrow marks the effort. Schematic bar, not a realistic machine.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p>The fulcrum of a lever is</p>
+          <button class="btn mcq-btn" data-letter="A">the input force</button>
+          <button class="btn mcq-btn" data-letter="B">the object being lifted</button>
+          <button class="btn mcq-btn" data-letter="C">the distance the load moves</button>
+          <button class="btn mcq-btn" data-letter="D">the pivot the bar turns about</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">4</span> Force–distance trade-off</summary>
+    <div class="lesson-section-body">
+      <p>A simple machine can trade a <strong>smaller force</strong> for a <strong>larger distance</strong> (or the reverse). You do not get something for nothing: if the effort force is smaller, that effort usually has to move further.</p>
+      <p>A ramp is the public example. Lifting a crate straight up is a short path, but the force is large. Pushing the same crate up a long slope uses a smaller force over a longer path. A single pulley that only changes direction does not shrink the force; a longer ramp, or a lever with a longer effort arm, does.</p>
+      <p><strong>Worked example:</strong> A loading ramp into a van is 4 m long and 1 m high. The crate still has to gain that 1 m of height, but the push can act along 4 m. The class compares “short lift, large force” with “long ramp, smaller force”. Nobody is asked for power in watts.</p>
+      <figure class="lesson-figure">
+        {{ ramp_fig }}
+        <figcaption class="lesson-figure-caption">A is a short vertical lift (larger force). B is a longer path up the ramp (smaller force). Schematic slope, not a measured pavement.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A force–distance trade-off means</p>
+          <button class="btn mcq-btn" data-letter="A">force and distance must both shrink</button>
+          <button class="btn mcq-btn" data-letter="B">a smaller force can act over a larger distance</button>
+          <button class="btn mcq-btn" data-letter="C">the machine creates extra joules</button>
+          <button class="btn mcq-btn" data-letter="D">the same force acts over a shorter distance</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">5</span> Work as W = Fd</summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="Force times distance along the same line">Work</dfn> is force times distance along the <strong>same line</strong>. The unit is the <dfn class="lesson-gloss" title="The unit of work">joule</dfn> (J). If the force and the motion are not along the same line, this S3 formula does not apply as written.
+      <span class="lesson-gloss-def">Work is force times distance along the same line. The unit is the joule. Power (work per time) is not claimed in this module.</span></p>
+      <p>Holding a bag still is tiring, but the distance moved along the force is zero, so \(W = 0\). Sliding the same bag 3 m across a table with a steady 5 N pull along the table <em>does</em> count as work.</p>
+      <p><strong>Worked example:</strong> \(W = Fd\). A classroom pull of 5 N along 3 m on the same line is \(W = 5 \times 3 = 15\) J. Check the units: newton times metre is a joule. Nobody is asked for power in watts, and the time taken is not used.</p>
+      <figure class="lesson-figure">
+        {{ work_fd_fig }}
+        <figcaption class="lesson-figure-caption">A is a 5 N pull along the same line as B, a 3 m distance. Work is 15 J. Schematic crate, not a measured floor.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p>Work is</p>
+          <button class="btn mcq-btn" data-letter="A">force divided by time</button>
+          <button class="btn mcq-btn" data-letter="B">force times time</button>
+          <button class="btn mcq-btn" data-letter="C">force times distance along the same line</button>
+          <button class="btn mcq-btn" data-letter="D">any force, even if the object does not move</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">6</span> Body levers</summary>
+    <div class="lesson-section-body">
+      <p>Bones and joints can be modelled as levers. Use a <strong>fictional case</strong> only. This page does not store a map of a pupil’s joints, and it does not ask anyone to measure their own arm.</p>
+      <p>A common example is a forearm raising a bag. The elbow is the fulcrum. The bag at the hand is the load. The muscle effort acts closer to the elbow than the bag, so the effort force is <strong>larger</strong> than the load. That is the force–distance trade-off the other way: a large force over a small muscle distance can still move the load through a larger arc.</p>
+      <p><strong>Worked example:</strong> In a labelled sketch, a 4 N bag is the load at C. The elbow is fulcrum B. The effort A is the muscle pull closer to the fulcrum. The class labels effort, fulcrum and load. That is a sketch, not a named pupil’s arm.</p>
+      <figure class="lesson-figure">
+        {{ body_lever_fig }}
+        <figcaption class="lesson-figure-caption">Fictional forearm: A muscle effort close to the elbow, B elbow fulcrum, C bag at the hand. A sketch, not a map of a pupil’s joints.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p>A body lever is</p>
+          <button class="btn mcq-btn" data-letter="A">a simple model using a fictional case, not a private map</button>
+          <button class="btn mcq-btn" data-letter="B">a demand to map a pupil's joints live</button>
+          <button class="btn mcq-btn" data-letter="C">proof that muscle effort is always smaller than the load</button>
+          <button class="btn mcq-btn" data-letter="D">a record of each pupil's arm measurements</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">7</span> Limits: no power claim</summary>
+    <div class="lesson-section-body">
+      <p>Power (work per time) is <strong>not claimed</strong> in this S3 module. Keep work as \(W = Fd\) in joules. A faster lift and a slower lift of the same crate through the same distance can have the same work; which one was more powerful is a separate question.</p>
+      <p>A machine still does not create energy. It trades force and distance. The next lesson (Energy) takes up forms, transfers and conservation. The robot project later in 3.1 can use a lever, a pulley or a ramp from this page — still without a power calculation.</p>
+      <p class="lesson-callout">If a question mentions watts, \(P = W/t\), or “how fast the work is done”, it is outside this syllabus cell. Stay with newtons, metres and joules along the same line.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p>Power calculations in watts</p>
+          <button class="btn mcq-btn" data-letter="A">are required in every item</button>
+          <button class="btn mcq-btn" data-letter="B">replace the idea of work</button>
+          <button class="btn mcq-btn" data-letter="C">must be done before any lever can be used</button>
+          <button class="btn mcq-btn" data-letter="D">are not needed to describe the work a machine does</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">8</span> Using this lesson</summary>
+    <div class="lesson-section-body">
+      <p>Keep the ideas separate, then chain them on a labelled sketch:</p>
+      <ol>
+        <li>Draw each force as a vector (size and direction).</li>
+        <li>Name the machine type (lever, pulley or ramp).</li>
+        <li>On a lever, label effort, fulcrum and load.</li>
+        <li>State the force–distance trade-off in words.</li>
+        <li>If force and distance are along the same line, calculate \(W = Fd\) in joules.</li>
+        <li>Do not calculate power, and do not turn a body example into a private joint map.</li>
+      </ol>
+      <p>Energy continues next. A later robot build can choose a machine that matches the job; this lesson only supplies the force and work language.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A machine</p>
+          <button class="btn mcq-btn" data-letter="A">creates energy from nothing</button>
+          <button class="btn mcq-btn" data-letter="B">can trade force and distance; it does not create energy</button>
+          <button class="btn mcq-btn" data-letter="C">always makes the force and the distance both smaller</button>
+          <button class="btn mcq-btn" data-letter="D">does more work out than the work put in</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Force and machines</h4>
+        <ul>
+          <li>Force is a vector: size (N) and direction</li>
+          <li>Lever, pulley, ramp — they do not create energy</li>
+          <li>Lever labels: A effort, B fulcrum, C load</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Trade-off and work</h4>
+        <ul>
+          <li>Smaller force \(\leftrightarrow\) larger distance</li>
+          <li>\(W = Fd\) along the same line; unit joule</li>
+          <li>No power claim; fictional body levers only</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='force_work_machines') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

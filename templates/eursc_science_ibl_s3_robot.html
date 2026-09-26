@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Classroom investigation – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>{{ ibl.title }}</h1>
+    <p class="hero-sub">S3 Integrated Science · Unit 3.1 Machines. Planning support for a classroom practical. This page does not replace classroom practical work.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S3</span>
+      <span class="pill pill--hero">3.1 Machines</span>
+      <span class="pill pill--hero">IBL</span>
+    </div>
+  </div>
+
+  <p class="lesson-callout">Use this sheet with your teacher. An online page cannot stand in for the practical: you still need the class, teacher-approved parts, a risk assessment and time to build and test. Related lessons: <a href="{{ url_for('topic_page', level='eursc', subject='science', topic='force_work_machines') }}">Force, Work and Simple Machines</a>, <a href="{{ url_for('topic_page', level='eursc', subject='science', topic='electric_current') }}">Electric Current and Circuits</a>, <a href="{{ url_for('topic_page', level='eursc', subject='science', topic='magnetism') }}">Magnetism and Electromagnetism</a>, <a href="{{ url_for('topic_page', level='eursc', subject='science', topic='robotics_project') }}">Project: Build a Simple Robot</a>.</p>
+
+  <p>To print the brief and rubric, use your browser’s Print command (Ctrl+P or Cmd+P). Buttons are hidden in the print view. Rubrics stay on this page; there is no teacher grading database.</p>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Brief and learning objectives
+      <span class="lesson-tag">IBL</span>
+      <span class="lesson-tag">S3</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Investigation:</strong> How does one chosen independent variable (for example motor on-time, or the number of turns on an electromagnet coil) affect a testable robot requirement (for example distance moved in centimetres, or paperclips held)?</p>
+      <p>The physical robot is a classroom product judged with a rubric. This page does not auto-grade the build and does not store a league of whose robot is best.</p>
+      <p>By the end of the practical you should be able to:</p>
+      <ul>
+        <li>write a testable requirement and name independent, dependent and control variables;</li>
+        <li>use only teacher-approved parts and a followable method;</li>
+        <li>record repeats with units in the table headings;</li>
+        <li>say whether the requirement was met and what you would iterate.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Planning and variables
+    </summary>
+    <div class="lesson-section-body">
+      <ul>
+        <li><strong>Independent:</strong> one quantity the teacher approves (for example on-time in seconds, or coil turns).</li>
+        <li><strong>Dependent:</strong> the requirement measure (for example distance in cm, or number of paperclips).</li>
+        <li><strong>Controls:</strong> same surface, same starting position, same battery if used, same way of starting the run.</li>
+      </ul>
+      <p>Change <strong>one</strong> independent variable at a time. Draft the question in the lab book: “How does _____ affect _____ when _____ is kept the same?”</p>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Safety and risk
+    </summary>
+    <div class="lesson-section-body">
+      <ul>
+        <li>Use only the kit the teacher supplies. No mains sockets. No home wiring tests for this sheet.</li>
+        <li>Moving parts can pinch. Hair and sleeves tied back if the teacher asks. Bags off the floor. No running.</li>
+        <li>Electromagnets and motors can get warm; follow the on-time the teacher sets.</li>
+        <li>Do not harvest private home-workshop photos into the app. Evidence stays in the lab book.</li>
+        <li>Your teacher’s risk assessment is the one that counts.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Data table and graph
+    </summary>
+    <div class="lesson-section-body">
+      <p>Put units in the headings. Keep every raw value, then calculate the mean if you repeat the run. Do not delete an inconvenient value without saying so in the evaluation.</p>
+      <table class="lesson-table">
+        <thead>
+          <tr>
+            <th>Independent variable (unit)</th>
+            <th>Dependent, run 1</th>
+            <th>Run 2</th>
+            <th>Run 3</th>
+            <th>Mean</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+      <p>A simple graph: independent variable on the horizontal axis, mean dependent value on the vertical axis. Label both axes with quantity and unit.</p>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Analysis and evaluation
+    </summary>
+    <div class="lesson-section-body">
+      <p>Did the mean meet the written requirement? Quote numbers from the table. If a run missed, that is evidence for <strong>iteration</strong>, not a stored ranking.</p>
+      <p>Evaluation prompts:</p>
+      <ul>
+        <li>Was the independent variable the only thing that changed?</li>
+        <li>Would more repeats reduce random scatter?</li>
+        <li>What would you change so another group could trust the evidence?</li>
+        <li>How is a class rubric different from a popularity league in an app?</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Teacher rubric
+    </summary>
+    <div class="lesson-section-body">
+      <p>Local classroom judgement only. Circle one column per row. This is not stored in the app.</p>
+      <table class="lesson-table">
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            <th>Developing</th>
+            <th>Secure</th>
+            <th>Strong</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Method</td>
+            <td>Steps missing or two variables change at once</td>
+            <td>Followable method; one independent variable</td>
+            <td>Quantities, kit rules and repeats are explicit</td>
+          </tr>
+          <tr>
+            <td>Evidence</td>
+            <td>Incomplete table or missing units</td>
+            <td>Raw values and a mean with units</td>
+            <td>Repeats, mean and a graph that matches the table</td>
+          </tr>
+          <tr>
+            <td>Collaboration</td>
+            <td>Roles unclear; the build is used to tease</td>
+            <td>Shared roles; kit stays classroom-safe</td>
+            <td>Peers check the requirement and the count</td>
+          </tr>
+          <tr>
+            <td>Communication</td>
+            <td>Conclusion is a feeling with no numbers</td>
+            <td>Requirement met or missed, with units from the table</td>
+            <td>Pattern, scatter and the next iteration are all said clearly</td>
+          </tr>
+          <tr>
+            <td>Reflection</td>
+            <td>No comment on error or next steps</td>
+            <td>Names one limit and one improvement</td>
+            <td>Separates the class rubric from a stored popularity league</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+</div>
+{% endblock %}

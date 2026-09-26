@@ -1,0 +1,278 @@
+(function () {
+  'use strict';
+
+  var correctStreak = 0;
+  var lastBurstAt = 0;
+  var STREAK_ROUNDS = { 7: 1, 30: 1, 100: 1 };
+  var LS_MILESTONE = 'pb-u74-ms-';
+  var LS_STREAK = 'pb-u74-streak-';
+  var CHECK_MARK_SVG =
+    '<circle class="answer-check-mark-ring" cx="12" cy="12" r="10"/>' +
+    '<path class="answer-check-mark-tick" d="M7 12.5l3.2 3.2L17 8.8"/>';
+
+  function prefersReducedMotion() {
+    return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  // E7 Phase 2: schedule a mascot reaction on the next frame, never blocking grading feedback.
+  // The only references to the global motion runtime in this file live inside this function.
+  function reactMascot(kind, opts) {
+    if (!window.pbZorp || typeof window.pbZorp.react !== 'function') return;
+    var fire = function () {
+      try {
+        window.pbZorp.react(kind, opts || {});
+      } catch (err) { /* a mascot glitch must never break grading */ }
+    };
+    if (typeof window.requestAnimationFrame === 'function') {
+      window.requestAnimationFrame(fire);
+    } else {
+      window.setTimeout(fire, 0);
+    }
+  }
+
+  function toastHost() {
+    return document.getElementById('app-toast-host');
+  }
+
+  function celebrateAnchor(target) {
+    if (!target || !target.closest) return null;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') {
+      return target.closest('.free-response-inline, .free-response-row, .problem-card, .mcq-inline')
+        || target.parentElement;
+    }
+    return target;
+  }
+
+  function showXpFloat(anchor, points) {
+    var label = '+' + points + ' XP';
+    if (anchor && anchor.appendChild) {
+      var prev = anchor.querySelector('.answer-xp-float');
+      if (prev) prev.remove();
+      anchor.classList.add('is-celebrate-host');
+      var floatEl = document.createElement('span');
+      floatEl.className = 'answer-xp-float';
+      floatEl.setAttribute('aria-hidden', 'true');
+      floatEl.textContent = label;
+      anchor.appendChild(floatEl);
+      if (!prefersReducedMotion()) burstSparkle(anchor);
+      window.setTimeout(function () { floatEl.remove(); }, prefersReducedMotion() ? 900 : 1300);
+      return;
+    }
+    var host = toastHost();
+    if (!host) return;
+    var el = document.createElement('div');
+    el.className = 'xp-toast';
+    el.textContent = label;
+    host.appendChild(el);
+    window.setTimeout(function () {
+      el.classList.add('is-gone');
+      window.setTimeout(function () { el.remove(); }, 280);
+    }, 1400);
+  }
+
+  // E7 Phase 4: a small 3-5 particle sparkle burst next to the XP float, reusing the
+  // confetti append/animate mechanism at a smaller scale and shorter duration.
+  function burstSparkle(anchor) {
+    if (!anchor || !anchor.appendChild) return;
+    var n = 3 + Math.floor(Math.random() * 3);
+    for (var i = 0; i < n; i += 1) {
+      var bit = document.createElement('span');
+      bit.className = 'sparkle-bit sparkle-bit--' + (i % 3);
+      bit.style.setProperty('--sx', (Math.random() * 36 - 18) + 'px');
+      bit.style.setProperty('--sy', (-10 - Math.random() * 22) + 'px');
+      bit.style.animationDelay = (Math.random() * 80) + 'ms';
+      anchor.appendChild(bit);
+      (function (el) {
+        window.setTimeout(function () { el.remove(); }, 650);
+      }(bit));
+    }
+  }
+
+  function drawCheckmark(anchor) {
+    if (!anchor || !anchor.appendChild) return;
+    if (anchor.querySelector('.answer-check-mark')) return;
+    anchor.classList.add('has-drawn-check');
+    var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'answer-check-mark');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('focusable', 'false');
+    svg.innerHTML = CHECK_MARK_SVG;
+    anchor.appendChild(svg);
+  }
+
+  function claimed(storageKey) {
+    try {
+      if (window.localStorage.getItem(storageKey) === '1') return true;
+      window.localStorage.setItem(storageKey, '1');
+      return false;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function burstConfetti(opts) {
+    if (prefersReducedMotion()) return;
+    var silent = !!(opts && opts.silent);
+    if (!silent && window.pbSound && window.pbSound.celebrate) window.pbSound.celebrate();
+    var now = Date.now();
+    if (now - lastBurstAt < 1600) return;
+    lastBurstAt = now;
+    var root = document.createElement('div');
+    root.className = 'confetti-burst';
+    root.setAttribute('aria-hidden', 'true');
+    var palettes = 5;
+    for (var i = 0; i < 40; i += 1) {
+      var bit = document.createElement('span');
+      var shape = (i % 2 === 0) ? 'dot' : 'star';
+      bit.className = 'confetti-bit confetti-bit--' + (i % palettes) + ' confetti-bit--' + shape;
+      bit.style.left = (8 + Math.random() * 84) + 'vw';
+      bit.style.top = (8 + Math.random() * 28) + 'vh';
+      bit.style.width = (6 + Math.random() * 6) + 'px';
+      bit.style.height = (8 + Math.random() * 10) + 'px';
+      bit.style.animationDelay = (Math.random() * 180) + 'ms';
+      bit.style.animationDuration = (700 + Math.random() * 500) + 'ms';
+      bit.style.setProperty('--drift', (Math.random() * 220 - 110) + 'px');
+      bit.style.setProperty('--spin', (160 + Math.random() * 200) + 'deg');
+      root.appendChild(bit);
+    }
+    document.body.appendChild(root);
+    window.setTimeout(function () { root.remove(); }, 1400);
+  }
+
+  function celebrateCorrect(target, points) {
+    correctStreak += 1;
+    var anchor = celebrateAnchor(target);
+    var xp = typeof points === 'number' ? points : 10;
+    if (window.pbSound && window.pbSound.correct) window.pbSound.correct();
+    if (anchor && !prefersReducedMotion()) {
+      anchor.classList.add('is-pop');
+      window.setTimeout(function () { anchor.classList.remove('is-pop'); }, 420);
+    }
+    drawCheckmark(anchor);
+    // points === 0 means "no per-step XP" (lesson-quiz steps); skip the float, not the rest.
+    if (points !== 0) showXpFloat(anchor, xp);
+    var openedFirst = false;
+    if (window.pbGuide && typeof window.pbGuide.reward === 'function') {
+      openedFirst = window.pbGuide.reward({ type: 'first_correct' });
+      if (openedFirst) burstConfetti();
+    }
+    var isStreak = correctStreak >= 3;
+    if (isStreak) {
+      if (window.pbSound && window.pbSound.ding) {
+        burstConfetti({ silent: true });
+        window.pbSound.ding();
+      } else {
+        burstConfetti();
+      }
+      correctStreak = 0;
+    }
+    reactMascot(openedFirst ? 'first_correct' : (isStreak ? 'streak' : 'correct'));
+  }
+
+  function celebrateWrong(target, correctTarget) {
+    correctStreak = 0;
+    if (window.pbSound && window.pbSound.soft) window.pbSound.soft();
+    else if (window.pbSound && window.pbSound.wrong) window.pbSound.wrong();
+    reactMascot('wrong');
+    if (prefersReducedMotion()) return;
+    if (target) {
+      target.classList.add('is-shake');
+      window.setTimeout(function () { target.classList.remove('is-shake'); }, 380);
+    }
+    if (correctTarget) {
+      correctTarget.classList.add('is-reveal');
+      window.setTimeout(function () { correctTarget.classList.remove('is-reveal'); }, 700);
+    }
+  }
+
+  function celebrateMilestone(key) {
+    var token = String(key || 'badge').replace(/\s+/g, '_');
+    if (window.pbGuide && typeof window.pbGuide.reward === 'function') {
+      var opened = window.pbGuide.reward({ type: 'milestone', key: token });
+      if (opened !== false) {
+        burstConfetti();
+        reactMascot('milestone');
+        try { window.localStorage.setItem(LS_MILESTONE + token, '1'); } catch (err) {}
+      }
+      return opened !== false;
+    }
+    if (claimed(LS_MILESTONE + token)) return false;
+    burstConfetti();
+    reactMascot('milestone');
+    return true;
+  }
+
+  function celebrateStreakRound(days) {
+    var n = parseInt(days, 10);
+    if (!STREAK_ROUNDS[n]) return false;
+    if (window.pbGuide && typeof window.pbGuide.reward === 'function') {
+      var opened = window.pbGuide.reward({ type: 'streak', days: n });
+      if (opened !== false) {
+        burstConfetti();
+        reactMascot('streak');
+        try { window.localStorage.setItem(LS_STREAK + n, '1'); } catch (err) {}
+      }
+      return opened !== false;
+    }
+    if (claimed(LS_STREAK + n)) return false;
+    burstConfetti();
+    reactMascot('streak');
+    return true;
+  }
+
+  function fromPayload(data) {
+    if (!data) return;
+    var keys = data.new_milestones || data.awarded_milestones;
+    if (Array.isArray(keys)) {
+      keys.forEach(function (key) { celebrateMilestone(key); });
+    }
+    if (data.milestone_key) celebrateMilestone(data.milestone_key);
+    var streak = data.study_streak;
+    if (streak && typeof streak === 'object') {
+      celebrateStreakRound(streak.current);
+    } else if (data.study_streak_current != null) {
+      celebrateStreakRound(data.study_streak_current);
+    }
+  }
+
+  function fromBuddyPrompt(prompt) {
+    if (!prompt || prompt.type !== 'milestone') return;
+    celebrateMilestone(prompt.milestone_key);
+  }
+
+  function scanPageTriggers() {
+    var promptEl = document.getElementById('pb-buddy-prompt');
+    var buddyRoot = document.querySelector('[data-buddy-root]');
+    if (promptEl && buddyRoot && !buddyRoot.hidden) {
+      try {
+        fromBuddyPrompt(JSON.parse(promptEl.textContent || 'null'));
+      } catch (err) {}
+    }
+    var ring = document.querySelector('[data-streak-current]');
+    if (ring) celebrateStreakRound(ring.getAttribute('data-streak-current'));
+    var nav = document.querySelector('.nav-streak[data-streak]');
+    if (nav) celebrateStreakRound(nav.getAttribute('data-streak'));
+  }
+
+  window.pbCelebrate = {
+    correct: celebrateCorrect,
+    wrong: celebrateWrong,
+    confetti: burstConfetti,
+    milestone: celebrateMilestone,
+    streakRound: celebrateStreakRound,
+    fromPayload: fromPayload,
+    fromBuddy: fromBuddyPrompt,
+    lessonComplete: function () {
+      showXpFloat(null, 25);
+      burstConfetti();
+      correctStreak = 0;
+      if (window.pbGuide && typeof window.pbGuide.reward === 'function') {
+        window.pbGuide.reward({ type: 'lesson_complete' });
+      }
+      reactMascot('lesson_complete');
+    },
+  };
+
+  scanPageTriggers();
+})();

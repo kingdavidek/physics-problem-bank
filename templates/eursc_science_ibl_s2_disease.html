@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Classroom investigation – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>{{ ibl.title }}</h1>
+    <p class="hero-sub">S2 Integrated Science · Unit 2.2 Health. Planning support for a classroom practical. This page does not replace classroom practical work.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S2</span>
+      <span class="pill pill--hero">2.2 Health</span>
+      <span class="pill pill--hero">IBL</span>
+    </div>
+  </div>
+
+  <p class="lesson-callout">Use this sheet with your teacher. An online page cannot stand in for the practical: you still need the class, tokens or stickers, a risk assessment and the agreement that this is a <strong>model</strong>, not a real infection. Related lessons: <a href="{{ url_for('topic_page', level='eursc', subject='science', topic='healthy_living') }}">Healthy Living</a>, <a href="{{ url_for('topic_page', level='eursc', subject='science', topic='infectious_disease') }}">Infectious Disease and Immunity</a>.</p>
+
+  <p>To print the brief and rubric, use your browser’s Print command (Ctrl+P or Cmd+P). Buttons are hidden in the print view. Rubrics stay on this page; there is no teacher grading database.</p>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">1</span>
+      Brief and learning objectives
+      <span class="lesson-tag">IBL</span>
+      <span class="lesson-tag">S2</span>
+    </summary>
+    <div class="lesson-section-body">
+      <p><strong>Investigation:</strong> In a token model, how does the number of contacts per round affect how many people are tagged after three rounds?</p>
+      <p>A sticker, counter or card stands for “tagged”. It is <strong>not</strong> a diagnosis and not a real pathogen. Do not culture microbes for this IBL.</p>
+      <p>By the end of the practical you should be able to:</p>
+      <ul>
+        <li>write a testable question and name independent, dependent and control variables;</li>
+        <li>run repeats of a contact rule the teacher approves;</li>
+        <li>record counts with units (people tagged / round) in the table headings;</li>
+        <li>say how the pattern links to source → route → new host, and what limited the model.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">2</span>
+      Planning and variables
+    </summary>
+    <div class="lesson-section-body">
+      <ul>
+        <li><strong>Independent:</strong> contacts per tagged person per round (for example 1, 2 or 3 — values your teacher approves).</li>
+        <li><strong>Dependent:</strong> number of people tagged after 3 rounds.</li>
+        <li><strong>Controls:</strong> same class size, same number of rounds, same starting number tagged (for example 1), same way of choosing contacts (teacher rule).</li>
+      </ul>
+      <p>Change <strong>one</strong> independent variable at a time. A second trial might add a “hygiene” rule (skip every other contact) as a comparison, still with tokens only.</p>
+      <p>Draft the question in the lab book: “How does _____ affect _____ when _____ is kept the same?”</p>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">3</span>
+      Safety and risk
+    </summary>
+    <div class="lesson-section-body">
+      <ul>
+        <li>No real pathogens. No swabbing classmates. No sharing drinks as a “live” infection demo unless the teacher has a separate, assessed plan — this sheet is tokens only.</li>
+        <li>Stickers go on a badge or card, not on skin if that could irritate. Follow the teacher’s materials list.</li>
+        <li>Do not use the model to name, tease or exclude anyone as “infected” outside the token rules.</li>
+        <li>Wash hands at the end if the teacher asks. Bags off the floor. No running.</li>
+        <li>Your teacher’s risk assessment is the one that counts.</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">4</span>
+      Data table and graph
+    </summary>
+    <div class="lesson-section-body">
+      <p>Put units in the headings. Keep every raw count, then calculate the mean if you repeat the whole run. Do not delete an inconvenient value without saying so in the evaluation.</p>
+      <table class="lesson-table">
+        <thead>
+          <tr>
+            <th>Contacts per round</th>
+            <th>Tagged after 3 rounds, run 1</th>
+            <th>Run 2</th>
+            <th>Run 3</th>
+            <th>Mean tagged</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+          <tr><td></td><td></td><td></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+      <p>A simple graph: independent variable on the horizontal axis (contacts per round), mean tagged on the vertical axis. Label both axes with quantity and unit.</p>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">5</span>
+      Analysis and evaluation
+    </summary>
+    <div class="lesson-section-body">
+      <p>Look at the pattern: as contacts per round increase, does the mean number tagged rise? Quote numbers from the table, not only a feeling. Link the pattern to a chain: more routes per round can mean more new hosts.</p>
+      <p>Was the result reproducible? A large scatter may mean the contact rule drifted or the starting tagged person was chosen differently.</p>
+      <p>Evaluation prompts:</p>
+      <ul>
+        <li>What made this a model, not a real outbreak (class size, no immunity, no sanitation in the first trial)?</li>
+        <li>Would more repeats reduce random scatter?</li>
+        <li>What would you change so another group could trust the evidence?</li>
+        <li>How is this different from blaming a named person for being ill?</li>
+      </ul>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary">
+      <span class="lesson-section-chip">6</span>
+      Teacher rubric
+    </summary>
+    <div class="lesson-section-body">
+      <p>Local classroom judgement only. Circle one column per row. This is not stored in the app.</p>
+      <table class="lesson-table">
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            <th>Developing</th>
+            <th>Secure</th>
+            <th>Strong</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Method</td>
+            <td>Steps missing or two variables change at once</td>
+            <td>Followable method; one independent variable</td>
+            <td>Quantities, token rules and repeats are explicit</td>
+          </tr>
+          <tr>
+            <td>Evidence</td>
+            <td>Incomplete table or missing units</td>
+            <td>Raw counts and a mean with units</td>
+            <td>Repeats, mean and a graph that matches the table</td>
+          </tr>
+          <tr>
+            <td>Collaboration</td>
+            <td>Roles unclear; the model is used to tease</td>
+            <td>Shared roles; tokens stay a model</td>
+            <td>Peers check the contact rule and the count</td>
+          </tr>
+          <tr>
+            <td>Communication</td>
+            <td>Conclusion is a feeling with no numbers</td>
+            <td>Pattern stated with units from the table</td>
+            <td>Pattern, scatter and limits of the model are all said clearly</td>
+          </tr>
+          <tr>
+            <td>Reflection</td>
+            <td>No comment on error or next steps</td>
+            <td>Names one limit and one improvement</td>
+            <td>Separates the token model from a real outbreak and from blame</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+</div>
+{% endblock %}

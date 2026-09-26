@@ -1,7 +1,7 @@
 (function (global) {
   'use strict';
 
-  var PYODIDE_INDEX = 'https://cdn.jsdelivr.net/pyodide/v0.25.0/full/';
+  var PYODIDE_INDEX = '/static/vendor/pyodide/';
   var loadPromise = null;
   var runnerReady = false;
 

@@ -1,0 +1,19 @@
+# Normalise line endings: text files are stored and checked out as LF on every
+# platform, so a Windows checkout and a Linux checkout never disagree in git.
+* text=auto eol=lf
+
+# Binary assets — never touch line endings.
+*.docx binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.wasm binary
+*.zip binary
+*.db binary
+*.pdf binary
+*.bat text eol=crlf

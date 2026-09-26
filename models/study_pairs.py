@@ -84,12 +84,22 @@ def get_study_pair_row(conn, pair_id):
 
 
 def accept_study_pair(conn, pair_id, user_id):
+    user_id = int(user_id)
+    pair_id = int(pair_id)
     row = get_study_pair_row(conn, pair_id)
-    if not row or row['status'] != PAIR_PENDING or row['to_user_id'] != user_id:
-        return None
+    if not row:
+        raise ValueError('pair_not_found')
+    if row['status'] != PAIR_PENDING:
+        raise ValueError('invite_not_pending')
+    if int(row['to_user_id']) != user_id:
+        raise ValueError('not_recipient')
     if get_active_study_pair(conn, user_id):
         raise ValueError('already_paired')
-    other_id = row['user_low_id'] if row['user_high_id'] == user_id else row['user_high_id']
+    other_id = (
+        row['user_high_id']
+        if int(row['user_low_id']) == user_id
+        else row['user_low_id']
+    )
     if get_active_study_pair(conn, other_id):
         raise ValueError('target_paired')
     now = utc_now_iso()
@@ -106,9 +116,15 @@ def accept_study_pair(conn, pair_id, user_id):
 
 
 def decline_study_pair(conn, pair_id, user_id):
+    user_id = int(user_id)
+    pair_id = int(pair_id)
     row = get_study_pair_row(conn, pair_id)
-    if not row or row['status'] != PAIR_PENDING or row['to_user_id'] != user_id:
-        return False
+    if not row:
+        raise ValueError('pair_not_found')
+    if row['status'] != PAIR_PENDING:
+        raise ValueError('invite_not_pending')
+    if int(row['to_user_id']) != user_id:
+        raise ValueError('not_recipient')
     conn.execute(
         'UPDATE study_pairs SET status = ? WHERE id = ?',
         (PAIR_DECLINED, pair_id),

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}My class work – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+<div class="lesson-hero">
+    <h1>My class work</h1>
+    <p class="hero-sub">Frozen questions from your teachers. You cannot reroll them. There is no Leave button for the class.</p>
+</div>
+
+<p class="profile-page-back"><a href="{{ url_for('student_classes') }}">← Back to my classes</a></p>
+
+<section class="section-panel">
+    <div class="section-panel-header">Assigned sets</div>
+    <div class="section-panel-body">
+        {% if items %}
+        <ul class="profile-list profile-list--rows">
+            {% for item in items %}
+            <li class="profile-list-item list-row">
+                <div class="list-row-main">
+                    <strong>{{ item.topic | replace('_', ' ') | title }}</strong>
+                    <span class="list-row-meta">{{ item.class_name }} · {{ item.answered_count }} / {{ item.question_count }}{% if item.status == 'complete' %} · Score {{ item.score }}{% endif %}</span>
+                </div>
+                <div class="list-row-actions">
+                    <a href="{{ url_for('student_class_work_detail', assignment_id=item.id) }}" class="btn btn-outline btn-sm">{% if item.status == 'complete' %}Review{% else %}Open{% endif %}</a>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty">No class work yet.</p>
+        {% endif %}
+    </div>
+</section>
+</div>
+{% endblock %}

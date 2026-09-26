@@ -1,12 +1,12 @@
 # Problem Bank — Architecture & Product Overview
 
-**Last updated:** 2026-08-17  
+**Last updated:** 2026-08-26  
 **Repository:** `maths_generator/physics-problem-bank`  
 **Audience:** Developers, AI agents, and technical stakeholders  
 
 This document describes **what Problem Bank is today**: product goals, system architecture, major features, data model, and how the pieces fit together.
 
-**AI agents:** start with `docs/AI_HANDOFF.md`, then this file, then `docs/SOLID_DRAFT_SECURITY.md` before changing auth/grading/sessions. API: `docs/API.md`. Deploy: `docs/DEPLOY.md`. Planned work (incl. G8): `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md`.
+**AI agents:** start with `docs/AI_HANDOFF.md`, then this file, then `docs/SOLID_DRAFT_SECURITY.md` before changing auth/grading/sessions. API: `docs/API.md`. Deploy: `docs/DEPLOY.md`. Planned work (incl. G8): `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` and `docs/G8_TEACHER_HANDOFF.md`. Phase U graphics: `models/svg_kit.py` and `docs/UI_REDESIGN.md` §8.
 
 ---
 
@@ -52,7 +52,8 @@ Problem Bank is a **free curriculum problem bank** for secondary and early post-
 | **Auth** | Flask-Login + Werkzeug password hashing | Session cookies + Bearer API tokens (default 90-day expiry) |
 | **Database** | SQLite | Local `data/quicktest.db` (**gitignored**); schema init inline in `app.py`; WAL |
 | **Math / grading** | SymPy (pinned) | Safe allowlisted parsing only — never bare `sympify` on untrusted input |
-| **Templates** | Jinja2 | ~79 HTML templates under `templates/` |
+| **Templates** | Jinja2 | HTML under `templates/` (lessons are `*_lesson.html`; generator snippets live in `scripts/legacy/`) |
+| **Frontend CSS** | Token-first sheets in `static/css/` | `tokens.css` first; `lesson-pages.css` and lesson-assist CSS are lesson-only (U8.6) |
 | **Frontend JS** | Vanilla JavaScript | `static/js/site.js` and feature modules |
 | **Math rendering** | MathJax | `static/js/mathjax-config.js` |
 | **CS Python grading** | Pyodide (in-browser) | `python-run-grader.js`, worker for write-code questions |
@@ -124,11 +125,11 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | **`app.py`** | Main application: routes, DB schema, serializers, API v1, web UI |
 | **`topic_registry.py`** | Topic catalog → generator functions |
 | **`topics_data.py`** | Lesson/revision metadata per topic |
-| **`models/`** | Business logic and persistence helpers |
+| **`models/`** | Business logic and persistence helpers. Diagrams: `models/svg_kit.py` (Phase U5) |
 | **`generators/`** | Problem generators by curriculum level |
 | **`generators/shared/`** | Answer checkers, lesson quiz builder, variant utils, lesson assist |
 | **`templates/`** | Jinja2 pages (lessons, generator, profile, social) |
-| **`static/`** | JavaScript, PWA manifest, icons, service worker |
+| **`static/`** | CSS (`static/css/tokens.css` first; `lesson-pages.css` / lesson-assist CSS are lesson-only), JavaScript, PWA, icons, SW. Contrast/ARIA smokes: `scripts/test_contrast_smoke.py`, `scripts/test_u8_a11y_smoke.py` |
 | **`scripts/`** | Smoke tests, maintenance, email digest |
 | **`docs/`** | API, deploy, architecture, future ideas |
 | **`data/quicktest.db`** | SQLite database (local/dev only; **not in git**; backup in production) |
@@ -142,6 +143,9 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | Feature | Entry points | Key modules |
 |---------|--------------|-------------|
 | **Topic browser** | `/topics`, `/topic/<l>/<s>/<t>` | `topics_data.py`, lesson templates |
+| **Diagrams (`svg_kit`)** | lessons, generator questions, `/styleguide`, profile progress | `models/svg_kit.py` (Phase U5) |
+| **Zorp pose kit** | badges, `/styleguide`, optional inserts | `models/zorp_kit.py` + `templates/partials/zorp_kit.html` |
+| **Motion / celebration** | MCQ + generator check, profile streak ring, `/styleguide#motion` | `static/js/celebrate.js`, motion tokens in `tokens.css` (Phase U7) |
 | **Question generator** | `/`, `POST /api/v1/problems/generate` | `topic_registry.py`, `generators/` |
 | **Quick Test** | `/quicktest/*`, API v1 quicktest | `models/quicktest.py` |
 | **Lesson quizzes** | `/lesson-quiz/*`, API v1 lesson-quiz | `generators/shared/lesson_quiz.py`, `models/lesson_quiz.py` |
@@ -187,16 +191,17 @@ Static lesson copy (titles, summaries, formulae, tips) lives in **`topics_data.p
 | **Suggest question** | `models/sharing.py` | Inbox cap 100 |
 | **Friend challenges** | `models/challenges.py` | Same MCQ set, compare scores |
 | **Study pairs** | `models/study_pairs.py` | One active buddy; weekly recap |
-| **Question of the Day** | `models/qotd.py`, `models/bot.py` | One **difficult** MCQ per UTC day + friend leaderboard; `@problem_bot` feed card (E1). Counts for study streak only — not topic / MCQ history. Wrong answers show the worked solution. |
+| **Question of the Day** | `models/qotd.py`, `models/bot.py` | One **difficult** MCQ per UTC day + today and 7-day friend leaderboards (E5.3); `@problem_bot` feed card (E1). Counts for study streak only — not topic / MCQ history. Wrong answers show the worked solution. |
 | **Lesson keyword search** | `models/lesson_search.py` | SQLite FTS5 over `topics_data.py` plus stripped `*_lesson.html` pages (E2) |
 | **Avatars** | `models/avatar.py` | Emoji + colour JSON on `user_profile_settings.avatar_json` (E2). Extras 🎓/🎧/⭐ gated on milestones (E5.5) |
 | **Alien buddy** | `models/buddy.py` | Corner widget (E3 + E5.1): types `milestone`, `celebrate`, `qotd_nudge`, `streak_risk`, `weak_topic`, `friend_challenge`, `nudge`; per-type face emoji. Server HTML embed + `study-buddy.js`. On weak topic’s lesson page: **Practise MCQ** / **Take a quiz** / **Keep learning**; refetches after generator MCQ. Milestone dismiss: `pb-buddy-milestone-<key>` via **Not now** or **View badges**. `friend_challenge` links to a followed friend's profile. Off-page **Not now** = UTC day; on-page **Keep learning** = per-topic per day |
+| **Guide overlay (E6 A1–A6 + B)** | `static/js/guide.js`, `guide-catalog.js`, `celebrate.js` | Logged-in origin story once (`pb-guide-v1` + `guide_json`). Badge/streak/first-correct/lesson-complete once; celebrate still confetti. CSS streak fire on streak reward only. Overlay wink/nod/shake/tap from catalog `gesture`. First-visit Practice / Profile / Daily / Learn / Compete tours. Replay intro in Settings. Same mascot as the corner buddy. Skip / Escape / reduced-motion. |
 | **Streaks & milestones** | `models/gamification.py` | UTC study-day streak; ten-badge `MILESTONE_CATALOG` (incl. QOTD and friends-only accuracy) shown on the profile with catalog emoji. Awarded via `evaluate_milestones` on any study activity |
 | **Friend leaderboard** | `models/gamification.py` | Effort points and weekly quiz+MCQ accuracy (friends only) |
 | **Notifications** | `models/notifications.py` | In-app events |
 | **Block / report** | `models/moderation.py` | User safety |
 
-Social features are **peer-to-peer**. There is no teacher role or class roster today.
+Social features are **peer-to-peer**, plus optional **G8 teacher/class** (Phases 0–6 complete: enable, classes, join, handle invites, roster, teacher-only remove, T0–T2 dashboards, frozen set-work, audit log, CSV). Design: `docs/G8_TEACHER_HANDOFF.md`.
 
 ### 5.5 Phase G — Learning depth (G1–G7)
 
@@ -249,7 +254,7 @@ Schema is created in `app.py` on startup. Major table groups:
 
 ### 6.3 Social
 
-- `follows`, `user_profile_settings` (including `avatar_json`, `show_accuracy_leaderboard`), `activity_events`
+- `follows`, `user_profile_settings` (including `avatar_json`, `show_accuracy_leaderboard`, `guide_json`), `activity_events`
 - `shared_questions`, `question_suggestions`
 - `quiz_challenges`, `study_pairs`, `qotd_attempts`
 - `user_blocks`, notifications tables
@@ -261,6 +266,19 @@ Schema is created in `app.py` on startup. Major table groups:
 - `problem_cohort_stats` — G5 anonymous aggregates
 - `user_revision_plans` — G7
 - Revision queue state (G3) — see `models/revision_queue.py`
+
+### 6.5 G8 teacher / class (Phases 0–6 complete)
+
+- `teacher_profiles` — soft teacher enable (`user_id`, `enabled_at`)
+- `classes` — name, optional level/subject, nullable `org_id` (always null in this track), unique `join_code`, `archived_at`
+- `class_memberships` — `(class_id, student_id)` PK; `status` active|removed; teacher-only remove
+- `class_assignments` — frozen generator payloads (`problems_json`), live catalogue only
+- `class_assignment_recipients` — per-student answers and scores; unique `(assignment_id, student_id)`
+- `class_assignment_previews` — short-lived preview before assign
+- `class_invites` — handle invites; pending until the student accepts after disclosure (no silent add)
+- `class_audit_events` — teacher-visible class actions; handles only; cap 200 per class; `actor_id` SET NULL on delete
+
+Join is opt-in by code or handle invite after disclosure. Cap 40 active members. No student Leave endpoint. T0–T2 progress is read from existing G1–G7 tables behind membership authz (`models/class_progress.py`). T3 free-text is never shown to teachers. Set-work is graded from stored JSON (`models/class_assignments.py`); student GET strips keys until after server grade. CSV export is handles only (`models/class_csv.py`). Design: `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` §2. Routes: `docs/API.md`.
 
 Weak topics (G1) are computed at read time from attempt tables, not stored separately.
 
@@ -299,7 +317,7 @@ Lesson quizzes (`generators/shared/lesson_quiz.py`): 10 questions — 3 foundati
 | **SECRET_KEY** | Required non-default outside testing; `PB_ALLOW_DEV_SECRET=1` local-only |
 | **SymPy grading** | Allowlisted safe parser; check API session-bound for SymPy types |
 | **CSRF** | Web forms + cookie-session `/api/*` mutations; Bearer / `PB_TESTING` exempt |
-| **CSP** | Content-Security-Policy on responses; MathJax/Pyodide still need unsafe-eval/wasm; CDN SRI where applied |
+| **CSP** | Content-Security-Policy on responses; `script-src` has no `unsafe-inline` (per-request nonce). MathJax/Pyodide still need `unsafe-eval` / `wasm-unsafe-eval`. Self-hosted under `static/vendor/`. |
 | **Rate limits** | Daily UTC buckets per user or IP (`models/rate_limit.py`); web auth included |
 | **Cookies** | HttpOnly, SameSite=Lax; Secure when HTTPS / `SESSION_COOKIE_SECURE` |
 | **CORS** | Optional `CORS_ORIGINS` for separate frontends |
@@ -318,6 +336,9 @@ Lesson quizzes (`generators/shared/lesson_quiz.py`): 10 questions — 3 foundati
 | Lesson quiz | Topic page → lesson quiz → results |
 | Wrong answer reflection | Check/MCQ wrong → optional “What tripped you up?” |
 | Profile analytics | `/profile` — weak topics, due today, skill patterns, exam plan |
+| Teacher classes | `/teacher/classes`, `/teacher/classes/<id>/roster`, `/teacher/classes/<id>/students/<id>`, `/teacher/classes/<id>/assignments`, `/teacher/classes/<id>/audit` |
+| Join a class | `/classes` (disclosure + code or handle invite; no Leave) |
+| Class work | `/class-work`, `/class-work/<id>` |
 | Social | `/feed`, `/u/<handle>`, challenges, QOTD |
 
 ---
@@ -330,15 +351,22 @@ Lesson quizzes (`generators/shared/lesson_quiz.py`): 10 questions — 3 foundati
 | `docs/COMPLEX_MECHANISMS.md` | How the three hardest subsystems work (grading, queues, Phase G) |
 | `docs/MOBILE.md` | Mobile polish (M0–M4) + Play Android via TWA (M5–M7) |
 | `docs/SOLID_DRAFT_SECURITY.md` | Solid-draft audit fixes — do not regress |
-| `docs/SECURITY_AND_GDPR.md` | **Planned** — data inventory, compliance gaps, phased S0–S3 plan (S0 blocks public launch) |
+| `docs/SECURITY_AND_GDPR.md` | S0–S3 **shipped**; S3 calendar is `docs/CADENCE.md`. DPIA/ROPA/subprocessors drafts alongside |
+| `docs/INCIDENT_RESPONSE.md` | Breach runbook (72-hour ICO clock) |
+| `docs/DATA_RIGHTS.md` | How to answer an access/erasure email |
+| `docs/MODERATION.md` | Report triage CLI and takedown timescales |
+| `docs/ZAP.md` | OWASP ZAP baseline + accepted findings |
+| `docs/CADENCE.md` | S3 weekly / monthly / quarterly operator calendar |
 | `docs/API.md` | REST API v1 contract |
-| `docs/DEPLOY.md` | Production deployment checklist |
+| `docs/DEPLOY.md` | Production deployment checklist (encrypted backups, CI scanning) |
+| `docs/OPERATOR_LAUNCH.md` | **Operator (David)** — ICO fee, privacy inbox, prune/backup cron; do at public HTTPS / M5 |
 | `docs/EMAIL_SETUP.md` | Weekly digest configuration |
-| `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | G8, engagement E4, other future ideas |
+| `docs/POTENTIAL_FUTURE_FUNCTIONALITY.md` | G8 (locked §2.2), engagement E4, other future ideas. Delivery: `docs/G8_TEACHER_HANDOFF.md` |
 | `docs/ENGAGEMENT_VISUAL.md` | Avatar / buddy visual tokens for E2–E3 |
 | `docs/REAL_WORLD_QUESTIONS.md` | **Planned** — real-world question style (E4.1) implementation plan |
-| `docs/EUROPEAN_SCHOOL_SCIENCE.md` | **Planned** — European School Integrated Science S1–S3 lesson suite (new `eursc` level) |
-| `docs/ENGAGEMENT_E5.md` | **In progress** — E5.1–E5.2 shipped; QOTD week, streak freeze, avatar unlocks planned |
+| `docs/EUROPEAN_SCHOOL_SCIENCE.md` | **ES10 shipped** — full S1–S3 curriculum (46 modules, six IBL tracks, whole-suite QA) |
+| `docs/ANIMATION_ONBOARDING.md` | **A1–A6 + B shipped** — Guide overlay, five tours, reward beats, `guide_json` persist + Replay intro, CSS streak fire, overlay gestures (no Lottie) |
+| `docs/ENGAGEMENT_E5.md` | **E5.1–E5.6 shipped**; web push (E5.7) blocked on HTTPS |
 
 ---
 

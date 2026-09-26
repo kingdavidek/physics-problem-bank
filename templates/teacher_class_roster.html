@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% from "partials/page_flashes.html" import render as page_flashes %}
+{% block title %}{{ klass.name }} roster – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+<div class="lesson-hero">
+    <h1>{{ klass.name }}</h1>
+    <p class="hero-sub">{{ roster | length }} / {{ active_member_cap }} active students. Handles only — emails and private notes are never shown. Only you can remove someone.</p>
+</div>
+
+<p class="profile-page-back"><a href="{{ url_for('teacher_classes') }}">← Back to teacher classes</a></p>
+
+{{ page_flashes('teacher_class_roster') }}
+
+<section class="section-panel">
+    <div class="section-panel-header">Class snapshot</div>
+    <div class="section-panel-body">
+        <p class="page-intro">
+            {% if aggregates.avg_quiz_pct is not none %}
+            Quiz average {{ aggregates.avg_quiz_pct }}% ({{ aggregates.students_with_quizzes }} student{{ 's' if aggregates.students_with_quizzes != 1 else '' }} with quizzes).
+            {% else %}
+            No class quizzes yet.
+            {% endif %}
+            Last 7 days: {{ aggregates.quiz_attempts_7d }} quiz{{ 'es' if aggregates.quiz_attempts_7d != 1 else '' }}, {{ aggregates.mcq_attempts_7d }} practice MCQ{{ 's' if aggregates.mcq_attempts_7d != 1 else '' }}.
+        </p>
+        {% if aggregates.top_weak_topics %}
+        <p class="list-row-meta">Topics several students should revisit:
+            {% for item in aggregates.top_weak_topics %}
+            {{ item.topic_label }} ({{ item.student_count }}){% if not loop.last %} · {% endif %}
+            {% endfor %}
+        </p>
+        {% endif %}
+        {% if aggregates.set_work.available %}
+        <p class="page-intro">Set work: {{ aggregates.set_work.complete }} of {{ aggregates.set_work.assigned }} complete. Roster only — not a public ranking. Private reflection notes stay with the student.</p>
+        {% else %}
+        <p class="profile-empty settings-note">No set work yet. Assign frozen questions from Set work. Private reflection notes stay with the student.</p>
+        {% endif %}
+        <p class="list-row-actions">
+            <a href="{{ url_for('teacher_class_assignments', class_id=klass.id) }}" class="btn btn-outline btn-sm">Set work</a>
+            <a href="{{ url_for('teacher_class_audit', class_id=klass.id) }}" class="btn btn-outline btn-sm">Activity log</a>
+            <a href="{{ url_for('teacher_class_roster_csv', class_id=klass.id) }}" class="btn btn-outline btn-sm">Roster CSV</a>
+            <a href="{{ url_for('teacher_class_assignments_csv', class_id=klass.id) }}" class="btn btn-outline btn-sm">Set-work CSV</a>
+        </p>
+        <p class="list-row-meta">CSV files use handles only — never emails.</p>
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">Invite by handle</div>
+    <div class="section-panel-body">
+        <p class="page-intro">Send an invite to a username. They are <strong>not</strong> added until they accept after reading what you can see. There is no silent add.</p>
+        <form method="POST" action="{{ url_for('teacher_class_invite', class_id=klass.id) }}" class="auth-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="invite-handle">Student handle</label>
+                <input type="text" id="invite-handle" name="handle" maxlength="32" required autocomplete="off" spellcheck="false">
+            </div>
+            <button type="submit" class="btn btn-primary">Send invite</button>
+        </form>
+        {% if pending_invites %}
+        <ul class="profile-list profile-list--rows">
+            {% for invite in pending_invites %}
+            <li class="profile-list-item list-row">
+                <div class="list-row-main">
+                    <strong>@{{ invite.student_handle }}</strong>
+                    <span class="list-row-meta">Pending · sent {{ invite.created_at }}</span>
+                </div>
+                <div class="list-row-actions">
+                    <form method="POST" action="{{ url_for('teacher_class_cancel_invite', class_id=klass.id, invite_id=invite.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline btn-sm">Cancel</button>
+                    </form>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">Roster</div>
+    <div class="section-panel-body">
+        {% if roster %}
+        <ul class="profile-list profile-list--rows">
+            {% for member in roster %}
+            <li class="profile-list-item list-row">
+                <div class="list-row-main">
+                    <strong>@{{ member.handle }}</strong>
+                    <span class="list-row-meta">
+                        Joined {{ member.joined_at }}
+                        · {{ member.quiz_count_7d or 0 }} quiz{{ 'es' if member.quiz_count_7d != 1 else '' }} in 7 days
+                        {% if member.last_active %} · Last active {{ member.last_active[:10] }}{% endif %}
+                    </span>
+                </div>
+                <div class="list-row-actions">
+                    <a href="{{ url_for('teacher_student_progress', class_id=klass.id, student_id=member.student_id) }}" class="btn btn-outline btn-sm">Progress</a>
+                    <form method="POST" action="{{ url_for('teacher_class_remove_member', class_id=klass.id, student_id=member.student_id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline btn-sm">Remove</button>
+                    </form>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty">No students have joined yet. Share the join code from your classes list.</p>
+        {% endif %}
+    </div>
+</section>
+</div>
+{% endblock %}

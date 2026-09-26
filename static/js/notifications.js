@@ -38,28 +38,53 @@
     return iso.slice(0, 10);
   }
 
-  function renderList(notifications) {
-    if (!notifications.length) {
-      listEl.innerHTML = '<p class="nav-notif-empty">No notifications yet.</p>';
-      return;
-    }
-    listEl.innerHTML = notifications.map(function (item) {
-      var cls = 'nav-notif-item' + (item.read ? '' : ' is-unread');
-      return (
-        '<a href="' + item.url + '" class="' + cls + '" data-notif-id="' + item.id + '">' +
-        '<span class="nav-notif-item-text">' + escapeHtml(item.message) + '</span>' +
-        '<span class="nav-notif-item-time">' + escapeHtml(timeAgo(item.created_at)) + '</span>' +
-        '</a>'
-      );
-    }).join('');
-  }
-
   function escapeHtml(value) {
     return String(value)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  function renderNotificationItem(item) {
+    var cls = 'nav-notif-item' + (item.read ? '' : ' is-unread');
+    var text = '<span class="nav-notif-item-text">' + escapeHtml(item.message) + '</span>';
+    var time = '<span class="nav-notif-item-time">' + escapeHtml(timeAgo(item.created_at)) + '</span>';
+    var actions = item.actions || [];
+    if (
+      item.type === 'study_pair_invite'
+      && item.pair_id
+      && actions.indexOf('accept') !== -1
+      && actions.indexOf('ignore') !== -1
+    ) {
+      return (
+        '<div class="' + cls + ' nav-notif-item-actionable" data-notif-id="' + item.id + '" data-pair-id="' + item.pair_id + '">' +
+        text + time +
+        '<div class="nav-notif-item-actions">' +
+        '<button type="button" class="btn btn-primary btn-sm nav-notif-accept" data-action="accept">Accept</button>' +
+        '<button type="button" class="btn btn-outline btn-sm nav-notif-ignore" data-action="ignore">Ignore</button>' +
+        '</div></div>'
+      );
+    }
+    var href = item.url || '#';
+    return (
+      '<a href="' + escapeHtml(href) + '" class="' + cls + '" data-notif-id="' + item.id + '">' +
+      text + time +
+      '</a>'
+    );
+  }
+
+  function skeletonHtml() {
+    if (window.pbSkeletonMarkup) return window.pbSkeletonMarkup('notif', 4);
+    return '<p class="nav-notif-empty">Loading</p>';
+  }
+
+  function renderList(notifications) {
+    if (!notifications.length) {
+      listEl.innerHTML = '<p class="nav-notif-empty">No notifications yet.</p>';
+      return;
+    }
+    listEl.innerHTML = notifications.map(renderNotificationItem).join('');
   }
 
   function fetchNotifications() {
@@ -91,7 +116,7 @@
       document.body.classList.add('nav-notif-open');
       if (backdrop) backdrop.hidden = false;
     }
-    listEl.innerHTML = '<p class="nav-notif-empty">Loading…</p>';
+    listEl.innerHTML = skeletonHtml();
     fetchNotifications()
       .then(function (data) {
         formatBadge(data.unread_count || 0);
@@ -155,6 +180,78 @@
     });
   }
 
+  function respondStudyPair(pairId, action) {
+    var path = action === 'accept'
+      ? '/api/v1/study-pairs/' + pairId + '/accept'
+      : '/api/v1/study-pairs/' + pairId + '/decline';
+    return fetch(path, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'X-CSRF-Token': csrfToken(),
+      },
+      credentials: 'same-origin',
+    }).then(function (response) {
+      return response.json().then(function (data) {
+        if (!response.ok) {
+          var err = new Error(data.error || 'Request failed');
+          err.code = data.code;
+          throw err;
+        }
+        return data;
+      });
+    });
+  }
+
+  function showToast(message, type, options) {
+    if (typeof window.showAppToast === 'function') {
+      window.showAppToast(message, type || 'success', options);
+    }
+  }
+
+  function handleStudyPairAction(itemEl, action) {
+    var pairId = parseInt(itemEl.getAttribute('data-pair-id'), 10);
+    var notifId = parseInt(itemEl.getAttribute('data-notif-id'), 10);
+    if (!pairId) return;
+
+    var buttons = itemEl.querySelectorAll('button');
+    buttons.forEach(function (btn) { btn.disabled = true; });
+
+    respondStudyPair(pairId, action)
+      .then(function () {
+        if (notifId) return markRead(notifId);
+      })
+      .then(function () {
+        if (action === 'accept') {
+          showToast('Study buddy connected!', 'success', {
+            linkUrl: '/profile#study-buddy',
+            linkLabel: 'View buddy',
+          });
+        } else {
+          showToast('Invite ignored.', 'success');
+        }
+        return fetchNotifications();
+      })
+      .then(function (data) {
+        if (data) {
+          formatBadge(data.unread_count || 0);
+          renderList(data.notifications || []);
+        }
+      })
+      .catch(function (err) {
+        buttons.forEach(function (btn) { btn.disabled = false; });
+        showToast(err.message || 'Could not update study buddy invite.', 'error');
+        if (err.code === 'invite_not_pending' || err.code === 'pair_not_found') {
+          fetchNotifications()
+            .then(function (data) {
+              formatBadge(data.unread_count || 0);
+              renderList(data.notifications || []);
+            })
+            .catch(function () {});
+        }
+      });
+  }
+
   openBtn.addEventListener('click', function (event) {
     event.stopPropagation();
     if (isOpen) closePanel();
@@ -181,7 +278,17 @@
   }
 
   listEl.addEventListener('click', function (event) {
-    var link = event.target.closest('.nav-notif-item');
+    var actionBtn = event.target.closest('[data-action]');
+    if (actionBtn) {
+      event.preventDefault();
+      event.stopPropagation();
+      var itemEl = actionBtn.closest('.nav-notif-item-actionable');
+      if (!itemEl || actionBtn.disabled) return;
+      handleStudyPairAction(itemEl, actionBtn.getAttribute('data-action'));
+      return;
+    }
+
+    var link = event.target.closest('a.nav-notif-item');
     if (!link) return;
     var id = link.getAttribute('data-notif-id');
     if (id && link.classList.contains('is-unread')) {

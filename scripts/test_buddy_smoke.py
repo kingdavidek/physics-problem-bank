@@ -94,13 +94,14 @@ def main():
         r = client.get('/api/v1/build-info')
         assert r.status_code == 200
         assert r.get_json()['buddy_embed'] == 'v4'
-        assert r.get_json()['study_buddy_js'] == 'v7'
+        assert r.get_json()['study_buddy_js'] == 'v9'
 
         r = client.get('/')
         assert r.status_code == 200
         assert b'data-buddy-root' not in r.data
         assert b'buddy.js' not in r.data
         assert b'study-buddy.js' not in r.data
+        assert b'zorp-motion.js' not in r.data
 
         r = client.get('/api/v1/me/buddy')
         assert r.status_code in (401, 403)
@@ -113,7 +114,16 @@ def main():
         html = r.data.decode()
         assert 'study-buddy' in html
         assert 'study-buddy.js' in html
-        assert '👾' in html
+        assert 'data-buddy-face' in html
+        assert 'buddy-mascot' in html
+        assert 'data-face=' in html
+        assert 'zorp-motion.js?v=3' in html
+        assert 'css/motion.css?v=2' in html
+        assert 'buddy-arm--l' in html
+        assert 'buddy-pupil' in html
+        # Fresh user, no milestones earned yet -> default Zorp (E7 Phase 1.5).
+        assert 'data-zorp-colour' not in html
+        assert 'data-mouth=' not in html
 
         r = client.get('/api/v1/me/buddy')
         assert r.status_code == 200
@@ -186,7 +196,8 @@ def main():
             conn.execute(
                 '''
                 UPDATE user_streaks
-                SET current_streak = 4, longest_streak = 4, last_active_date = ?
+                SET current_streak = 4, longest_streak = 4, last_active_date = ?,
+                    freeze_available = 0
                 WHERE user_id = ?
                 ''',
                 (yesterday, uid_a),
@@ -273,6 +284,14 @@ def main():
                 )
             conn.commit()
 
+        # qotd_first carries pose 'wave' (E7 Phase 1.5) and is the only pose-bearing
+        # milestone earned here, so it drives the automatic look on /profile.
+        r = client.get('/profile')
+        assert r.status_code == 200
+        profile_with_look = r.data.decode()
+        assert 'data-zorp-colour="mint"' in profile_with_look
+        assert 'data-mouth="cat"' in profile_with_look
+
         r = client.get('/topic/gcse/maths/algebra')
         assert r.status_code == 200
         assert b'data-buddy-actions' in r.data
@@ -281,7 +300,7 @@ def main():
         assert 'data-buddy-level="gcse"' in html_lesson
         assert 'data-buddy-subject="maths"' in html_lesson
         assert 'data-buddy-topic="algebra"' in html_lesson
-        assert 'study-buddy.js?v=7' in html_lesson
+        assert 'study-buddy.js?v=23' in html_lesson
         assert 'Problem Bank build: buddy-embed-v4' in html_lesson
         assert 'pb-buddy-embed-v4' in html_lesson
         assert 'id="pb-buddy-page"' in html_lesson
@@ -315,7 +334,8 @@ def main():
         )
         via_header = r.get_json()['buddy']
         assert any(item.get('kind') == 'stay' for item in via_header['actions'])
-        assert 'pb-buddy-storage' in html_lesson
+        buddy_js = client.get('/static/js/study-buddy.js').data.decode()
+        assert 'pb-buddy-storage' in buddy_js
 
         logout(client)
         register(client, email_b, handle_b)

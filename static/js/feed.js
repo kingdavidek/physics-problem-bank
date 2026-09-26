@@ -117,7 +117,12 @@
     });
   }
 
-  function refreshFeed() {
+  function refreshFeed(showSkeleton) {
+    if (showSkeleton) {
+      listEl.innerHTML = window.pbSkeletonMarkup
+        ? window.pbSkeletonMarkup('feed', 5)
+        : '';
+    }
     return fetchFeed()
       .then(function (data) {
         if (data.filter) currentFilter = data.filter;
@@ -126,10 +131,25 @@
       .catch(function () {});
   }
 
-  document.querySelectorAll('.feed-filter-pill').forEach(function (pill) {
-    pill.addEventListener('click', function () {
-      currentFilter = pill.getAttribute('data-feed-filter') || 'all';
+  document.querySelectorAll('.feed-filters a[data-feed-filter]').forEach(function (link) {
+    link.addEventListener('click', function (event) {
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      var next = link.getAttribute('data-feed-filter') || 'all';
+      if (next === currentFilter) return;
+      currentFilter = next;
       listEl.setAttribute('data-feed-filter', currentFilter);
+      document.querySelectorAll('.feed-filters a[data-feed-filter]').forEach(function (item) {
+        var on = item.getAttribute('data-feed-filter') === currentFilter;
+        item.classList.toggle('is-active', on);
+        if (on) item.setAttribute('aria-current', 'page');
+        else item.removeAttribute('aria-current');
+      });
+      var href = link.getAttribute('href');
+      if (href && window.history && window.history.pushState) {
+        window.history.pushState({ feedFilter: currentFilter }, '', href);
+      }
+      refreshFeed(true);
     });
   });
 
@@ -139,6 +159,20 @@
   });
 
   pollTimer = window.setInterval(refreshFeed, 60000);
+  window.addEventListener('popstate', function () {
+    var params = new URLSearchParams(window.location.search || '');
+    var next = params.get('filter') || 'all';
+    if (next === currentFilter) return;
+    currentFilter = next;
+    listEl.setAttribute('data-feed-filter', currentFilter);
+    document.querySelectorAll('.feed-filters a[data-feed-filter]').forEach(function (item) {
+      var on = item.getAttribute('data-feed-filter') === currentFilter;
+      item.classList.toggle('is-active', on);
+      if (on) item.setAttribute('aria-current', 'page');
+      else item.removeAttribute('aria-current');
+    });
+    refreshFeed(true);
+  });
   window.addEventListener('beforeunload', function () {
     if (pollTimer) window.clearInterval(pollTimer);
   });

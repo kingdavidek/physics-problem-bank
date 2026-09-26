@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% from "partials/page_flashes.html" import render as page_flashes %}
+{% block title %}My classes – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+<div class="lesson-hero">
+    <h1>My classes</h1>
+    <p class="hero-sub">Join with a code after you read what the teacher can see. There is no Leave button — ask the teacher if you need to be taken off a class.</p>
+</div>
+
+<p class="profile-page-back"><a href="{{ url_for('profile') }}">← Back to profile</a></p>
+
+{{ page_flashes('student_classes') }}
+
+{% if pending_invites %}
+<section class="section-panel" id="class-invites">
+    <div class="section-panel-header">Class invites</div>
+    <div class="section-panel-body">
+        <p class="page-intro">{{ join_disclosure }}</p>
+        <ul class="profile-list profile-list--rows">
+            {% for invite in pending_invites %}
+            <li class="profile-list-item list-row">
+                <div class="list-row-main">
+                    <strong>{{ invite.class_name }}</strong>
+                    <span class="list-row-meta">From @{{ invite.teacher_handle }}</span>
+                </div>
+                <div class="list-row-actions">
+                    <form method="POST" action="{{ url_for('student_class_invite_accept', invite_id=invite.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" name="disclosed" value="1" required>
+                                I have read this and still want to join. I understand only the teacher can take me off the class.
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm">Accept invite</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('student_class_invite_decline', invite_id=invite.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-outline btn-sm">Decline</button>
+                    </form>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</section>
+{% endif %}
+
+<section class="section-panel">
+    <div class="section-panel-header">Join a class</div>
+    <div class="section-panel-body">
+        <p class="page-intro">{{ join_disclosure }}</p>
+        <form method="POST" class="auth-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="join-code">Join code</label>
+                <input type="text" id="join-code" name="code" maxlength="16" required autocomplete="off" autocapitalize="characters" spellcheck="false">
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="disclosed" value="1" required>
+                    I have read this and still want to join. I understand only the teacher can take me off the class.
+                </label>
+            </div>
+            <button type="submit" class="btn btn-primary">Join class</button>
+        </form>
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">Classes you are in</div>
+    <div class="section-panel-body">
+        {% if classes %}
+        <ul class="profile-list profile-list--rows">
+            {% for item in classes %}
+            <li class="profile-list-item list-row">
+                <div class="list-row-main">
+                    <strong>{{ item.name }}</strong>
+                    <span class="list-row-meta">
+                        Teacher @{{ item.teacher_handle }}
+                        {% if item.level and item.subject %} · {{ item.level | upper }} · {{ item.subject | replace('_', ' ') | title }}{% endif %}
+                        {% if item.archived_at %} · Archived{% endif %}
+                    </span>
+                    <span class="list-row-meta">You cannot leave this class yourself. Ask the teacher if you need to be removed.</span>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="profile-empty">You have not joined a class yet.</p>
+        {% endif %}
+    </div>
+</section>
+
+<section class="section-panel">
+    <div class="section-panel-header">My class work</div>
+    <div class="section-panel-body">
+        <p class="page-intro"><a href="{{ url_for('student_class_work') }}">Open class work</a> — frozen questions you cannot reroll.</p>
+        {% if class_work %}
+        <ul class="profile-list profile-list--rows">
+            {% for item in class_work %}
+            <li class="profile-list-item list-row">
+                <div class="list-row-main">
+                    <strong>{{ item.topic | replace('_', ' ') | title }}</strong>
+                    <span class="list-row-meta">{{ item.class_name }} · {{ item.answered_count }} / {{ item.question_count }}</span>
+                </div>
+                <div class="list-row-actions">
+                    <a href="{{ url_for('student_class_work_detail', assignment_id=item.id) }}" class="btn btn-outline btn-sm">Open</a>
+                </div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </div>
+</section>
+</div>
+{% endblock %}

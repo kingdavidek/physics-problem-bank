@@ -7,7 +7,7 @@ import smtplib
 import ssl
 import urllib.error
 import urllib.request
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -49,23 +49,35 @@ def current_week_key(today=None):
     return monday.isoformat()
 
 
-def make_unsubscribe_token(user_id, secret):
+def make_unsubscribe_token(user_id, secret, *, now=None):
     uid = str(int(user_id))
-    sig = hmac.new(secret.encode('utf-8'), uid.encode('utf-8'), hashlib.sha256).hexdigest()[:32]
-    return f'{uid}.{sig}'
+    issued = int((now or datetime.now(timezone.utc)).timestamp())
+    payload = f'{uid}.{issued}'.encode('utf-8')
+    sig = hmac.new(secret.encode('utf-8'), payload, hashlib.sha256).hexdigest()[:32]
+    return f'{uid}.{issued}.{sig}'
 
 
-def verify_unsubscribe_token(token, secret):
+UNSUBSCRIBE_MAX_AGE_DAYS = 90
+
+
+def verify_unsubscribe_token(token, secret, *, now=None):
     if not token or not secret:
         return None
-    parts = token.split('.', 1)
-    if len(parts) != 2:
+    parts = token.split('.')
+    if len(parts) != 3:
         return None
-    uid, sig = parts
-    if not uid.isdigit():
+    uid, issued_raw, sig = parts
+    if not uid.isdigit() or not issued_raw.isdigit():
         return None
-    expected = hmac.new(secret.encode('utf-8'), uid.encode('utf-8'), hashlib.sha256).hexdigest()[:32]
+    payload = f'{uid}.{issued_raw}'.encode('utf-8')
+    expected = hmac.new(secret.encode('utf-8'), payload, hashlib.sha256).hexdigest()[:32]
     if not hmac.compare_digest(sig, expected):
+        return None
+    issued = int(issued_raw)
+    now_ts = int((now or datetime.now(timezone.utc)).timestamp())
+    if now_ts - issued > UNSUBSCRIBE_MAX_AGE_DAYS * 24 * 60 * 60:
+        return None
+    if issued > now_ts + 300:
         return None
     return int(uid)
 
@@ -194,6 +206,7 @@ def list_digest_subscribers(conn):
         FROM users u
         JOIN user_profile_settings s ON s.user_id = u.id
         WHERE u.is_active = 1
+          AND u.email_verified_at IS NOT NULL
           AND s.email_weekly_digest = 1
         ORDER BY u.id
         '''
@@ -241,6 +254,17 @@ def send_email_message(to_email, subject, html_body, text_body):
         print(text_body)
         print('--- end ---')
         return True, ''
+
+    debug_recipients = os.environ.get('MAIL_LOG_RECIPIENTS', '').strip().lower() in (
+        '1',
+        'true',
+        'yes',
+        'on',
+    )
+    if debug_recipients:
+        print(f'Mail send ({provider}): To: {to_email} Subject: {subject}')
+    else:
+        print(f'Mail send ({provider}): subject={subject!r}')
 
     if not cfg['enabled']:
         return False, 'MAIL_ENABLED is not set'
@@ -362,6 +386,10 @@ def send_weekly_digest_to_user(conn, user, *, dry_run=False, topic_label_fn=None
     if digest_already_sent(conn, user.id, week_key):
         return 'already_sent', ''
 
+    if not getattr(user, 'email_verified', False) and not getattr(user, 'email_verified_at', None):
+        log_digest_send(conn, user.id, week_key, DIGEST_STATUS_SKIPPED)
+        return DIGEST_STATUS_SKIPPED, 'email_unverified'
+
     if cfg['skip_inactive'] and payload['recap'].get('active_days', 0) == 0:
         log_digest_send(conn, user.id, week_key, DIGEST_STATUS_SKIPPED)
         return DIGEST_STATUS_SKIPPED, ''
@@ -385,6 +413,8 @@ def send_weekly_digest_to_user(conn, user, *, dry_run=False, topic_label_fn=None
 
 def send_test_weekly_digest(conn, user, *, topic_label_fn=None):
     """Send one preview digest to the user (no dedup, no log). Returns (ok, error_message)."""
+    if not getattr(user, 'email_verified', False):
+        return False, 'Confirm your email before receiving recap messages.'
     payload = build_weekly_digest_payload(conn, user, topic_label_fn=topic_label_fn)
     subject = f'[Test] {render_digest_subject(payload)}'
     html_body = render_digest_html(payload)

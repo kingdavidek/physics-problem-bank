@@ -1,6 +1,7 @@
 import random
 import math
 from generators.shared.utils import make_problem
+from models import svg_kit
 
 
 # ================================================================
@@ -174,21 +175,7 @@ def _forces_inter_vt_graph_accel():
     a = round((v - u) / t, 2)
     m = random.randint(2, 20)
     f = round(m * a, 1)
-    # Scale for SVG: map velocity 0-40 to y 130-20, time 0-15 to x 40-220
-    def vy(vel): return int(130 - (vel / 40) * 110)
-    def tx(time): return int(40 + (time / 15) * 180)
-    svg = rf"""
-    <svg width="260" height="180" viewBox="0 0 260 180" style="margin:12px 0;border:1px solid #ddd;border-radius:6px;background:#fafafa;max-width:100%;height:auto;">
-        <line x1="40" y1="20" x2="40" y2="150" stroke="#333" stroke-width="2"/>
-        <line x1="40" y1="150" x2="240" y2="150" stroke="#333" stroke-width="2"/>
-        <text x="140" y="172" text-anchor="middle" font-size="11" fill="#555">Time (s)</text>
-        <text x="12" y="88" text-anchor="middle" font-size="11" fill="#555" transform="rotate(-90,12,88)">v (m/s)</text>
-        <line x1="{tx(0)}" y1="{vy(u)}" x2="{tx(t)}" y2="{vy(v)}" stroke="#01696f" stroke-width="2.5"/>
-        <text x="35" y="{vy(u)+4}" text-anchor="end" font-size="11" fill="#333">{u}</text>
-        <text x="35" y="{vy(v)+4}" text-anchor="end" font-size="11" fill="#333">{v}</text>
-        <text x="{tx(t)}" y="163" text-anchor="middle" font-size="11" fill="#333">{t}</text>
-        <text x="40" y="163" text-anchor="middle" font-size="11" fill="#333">0</text>
-    </svg>"""
+    svg = str(svg_kit.velocity_time_graph(u, v, t))
     q = rf"""The velocity-time graph below shows the motion of a \( {m} \, \text{{kg}} \) object.<br>
     {svg}<br>
     (a) Calculate the acceleration of the object.<br>
@@ -371,22 +358,7 @@ def _forces_diff_vt_area():
     m = random.randint(5, 30)
     f = round(m * a, 1)
     dist = round(0.5 * (u + v) * t, 1)
-    def vy(vel): return int(130 - (vel / 40) * 110)
-    def tx(time): return int(40 + (time / 15) * 180)
-    svg = rf"""
-    <svg width="260" height="180" viewBox="0 0 260 180" style="margin:12px 0;border:1px solid #ddd;border-radius:6px;background:#fafafa;max-width:100%;height:auto;">
-        <line x1="40" y1="20" x2="40" y2="150" stroke="#333" stroke-width="2"/>
-        <line x1="40" y1="150" x2="240" y2="150" stroke="#333" stroke-width="2"/>
-        <text x="140" y="172" text-anchor="middle" font-size="11" fill="#555">Time (s)</text>
-        <text x="12" y="88" font-size="11" fill="#555" transform="rotate(-90,12,88)" text-anchor="middle">v (m/s)</text>
-        <polygon points="{tx(0)},{vy(u)} {tx(t)},{vy(v)} {tx(t)},{vy(0)} {tx(0)},{vy(0)}"
-                 fill="#01696f" fill-opacity="0.12" stroke="none"/>
-        <line x1="{tx(0)}" y1="{vy(u)}" x2="{tx(t)}" y2="{vy(v)}" stroke="#01696f" stroke-width="2.5"/>
-        <text x="35" y="{vy(u)+4}" text-anchor="end" font-size="11" fill="#333">{u}</text>
-        <text x="35" y="{vy(v)+4}" text-anchor="end" font-size="11" fill="#333">{v}</text>
-        <text x="{tx(t)}" y="163" text-anchor="middle" font-size="11" fill="#333">{t}</text>
-        <text x="40" y="163" text-anchor="middle" font-size="11" fill="#333">0</text>
-    </svg>"""
+    svg = str(svg_kit.velocity_time_graph(u, v, t, shaded=True))
     q = rf"""The velocity-time graph shows the motion of a \( {m} \, \text{{kg}} \) object (shaded area = distance).<br>
     {svg}<br>
     (a) Calculate the acceleration.<br>

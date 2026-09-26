@@ -129,7 +129,7 @@ def main():
 
         r = client.get('/profile')
         assert b'8/10' not in r.data
-        assert b'View results' in r.data
+        assert b'Results' in r.data
 
     print('Phase 2 smoke tests passed.')
 

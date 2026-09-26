@@ -1,0 +1,58 @@
+{#
+  Shared overlay gear: hats and shoes (E7 Phase 1.6).
+
+  Overlay-only. Each macro draws one piece of gear alone, in an
+  anchor-local coordinate frame (the gear's own centre sits at local
+  (0,0)) — it never redraws either character's body. The caller supplies
+  the anchor via translate(x y) on the wrapping <g>, so the same art is
+  shared, unmodified, between the static pose-kit stills
+  (partials/zorp_kit.html, anchor (40, 22.5)) and the live corner rig
+  (partials/buddy.html, hat anchor (32, 14.5), shoe anchors (24, 56.5) /
+  (40, 56.5)). Unknown or empty names render as empty output.
+#}
+
+{% macro _hat_mortarboard() -%}
+<rect x="-14" y="-14.5" width="28" height="5.5" rx="1" fill="var(--ink-800)"/>
+<polygon points="0,-18.5 14,-9.5 0,-0.5 -14,-9.5" fill="var(--ink-800)"/>
+<line x1="14" y1="-9.5" x2="14" y2="1.5" stroke="var(--gold-500)" stroke-width="1.6"/>
+<circle cx="14" cy="3.5" r="2.1" fill="var(--gold-500)"/>
+{%- endmacro %}
+
+{% macro _hat_quiff() -%}
+<path d="M-12 -4.5q4 -10 12 -8q2 6 -2 10z" fill="var(--ink-800)"/>
+{%- endmacro %}
+
+{% macro _hat_toque() -%}
+<ellipse cx="0" cy="-12.5" rx="11" ry="7.5" fill="var(--brand-50)" stroke="var(--ink-400)" stroke-width="1.2"/>
+<rect x="-7" y="-8.5" width="14" height="8" fill="var(--brand-50)" stroke="var(--ink-400)" stroke-width="1.2"/>
+{%- endmacro %}
+
+{% macro _hat_beanie() -%}
+<path d="M-13 2a13 11 0 0 1 26 0z" fill="var(--zorp-limb, var(--brand-700))"/>
+<rect x="-13" y="0" width="26" height="4" rx="2" fill="var(--ink-800)"/>
+<circle cx="0" cy="-13" r="2.4" fill="var(--gold-500)"/>
+{%- endmacro %}
+
+{% macro zorp_hat(name, x, y) -%}
+{%- if name == 'mortarboard' -%}
+<g class="zorp-hat zorp-hat--mortarboard" transform="translate({{ x }} {{ y }})">{{ _hat_mortarboard() }}</g>
+{%- elif name == 'quiff' -%}
+<g class="zorp-hat zorp-hat--quiff" transform="translate({{ x }} {{ y }})">{{ _hat_quiff() }}</g>
+{%- elif name == 'toque' -%}
+<g class="zorp-hat zorp-hat--toque" transform="translate({{ x }} {{ y }})">{{ _hat_toque() }}</g>
+{%- elif name == 'beanie' -%}
+<g class="zorp-hat zorp-hat--beanie" transform="translate({{ x }} {{ y }})">{{ _hat_beanie() }}</g>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro _shoe_sneakers() -%}
+<ellipse cx="0" cy="0" rx="7.2" ry="3.9" fill="var(--brand-50)" stroke="var(--ink-700)" stroke-width="1"/>
+<rect x="-7.2" y="-1.5" width="14.4" height="1.8" fill="var(--ink-700)"/>
+<circle cx="-3" cy="-2.6" r="0.9" fill="var(--gold-500)"/>
+{%- endmacro %}
+
+{% macro zorp_shoe(name, x, y) -%}
+{%- if name == 'sneakers' -%}
+<g class="zorp-shoe zorp-shoe--sneakers" transform="translate({{ x }} {{ y }})">{{ _shoe_sneakers() }}</g>
+{%- endif -%}
+{%- endmacro %}

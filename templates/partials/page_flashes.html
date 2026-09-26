@@ -1,0 +1,11 @@
+{% macro render(page) %}
+{% set messages = pop_flashes_for(page) %}
+{% if messages %}
+<script type="application/json" class="pb-flash-data">{{ messages|tojson }}</script>
+<noscript>
+  {% for category, message in messages %}
+  <p class="{% if category == 'error' %}error{% else %}flash-success{% endif %}">{{ message }}</p>
+  {% endfor %}
+</noscript>
+{% endif %}
+{% endmacro %}

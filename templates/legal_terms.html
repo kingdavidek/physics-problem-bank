@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Terms – Problem Bank{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+<div class="lesson-hero">
+    <h1>Terms of use</h1>
+    <p class="hero-sub">Using Problem Bank for personal study.</p>
+</div>
+
+<section class="section-panel">
+    <div class="section-panel-body">
+        <p>You must be <strong>13 or older</strong>. The service is for personal study, not for impersonating others or harassing anyone.</p>
+        <p>Do not try to break the site, scrape it aggressively, or share answers as a cheating service.</p>
+        <p>We may hide or remove content and block accounts that break these rules. You can block and report other users.</p>
+        <p>Practice questions are generated for learning. We do not guarantee exam grades. The service is provided as-is.</p>
+        <p>Questions about privacy: see the <a href="{{ url_for('legal_privacy') }}">Privacy notice</a> or email {{ privacy_contact_email }}.</p>
+        <p>Controller: {{ controller_name }}.</p>
+    </div>
+</section>
+</div>
+{% endblock %}

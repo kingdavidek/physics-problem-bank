@@ -11,12 +11,34 @@ CHALLENGE_DECLINED = 'declined'
 MAX_OPEN_CHALLENGES_PER_USER = 20
 
 
+def _letter(value):
+    return (value or '').strip().upper()[:1]
+
+
+def _normalize_answer_list(answers, total):
+    out = []
+    for i in range(total):
+        raw = answers[i] if i < len(answers) else ''
+        out.append(_letter(raw))
+    return out
+
+
+def _parse_answers_json(raw):
+    try:
+        parsed = json.loads(raw or '[]')
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return []
+    if not isinstance(parsed, list):
+        return []
+    return [_letter(item) for item in parsed]
+
+
 def _score_answers(problems, answers):
     score = 0
     for i, problem in enumerate(problems):
         letter = answers[i] if i < len(answers) else ''
-        letter = (letter or '').strip().upper()[:1]
-        if letter and letter == (problem.get('correct_answer') or '').strip().upper()[:1]:
+        letter = _letter(letter)
+        if letter and letter == _letter(problem.get('correct_answer')):
             score += 1
     return score
 
@@ -29,6 +51,8 @@ def _challenge_row(row):
         data['problems'] = json.loads(data.pop('problems_json') or '[]')
     except (TypeError, ValueError, json.JSONDecodeError):
         data['problems'] = []
+    data['creator_answers'] = _parse_answers_json(data.pop('creator_answers_json', None))
+    data['opponent_answers'] = _parse_answers_json(data.pop('opponent_answers_json', None))
     return data
 
 
@@ -119,6 +143,26 @@ def user_has_submitted(challenge, user_id):
     return False
 
 
+def count_actionable_challenges(conn, user_id):
+    """Pending challenges where the user still needs to play."""
+    rows = conn.execute(
+        '''
+        SELECT creator_id, opponent_id, creator_score, opponent_score
+        FROM quiz_challenges
+        WHERE status = ? AND (creator_id = ? OR opponent_id = ?)
+        ''',
+        (CHALLENGE_PENDING, user_id, user_id),
+    ).fetchall()
+    count = 0
+    for row in rows:
+        if row['creator_id'] == user_id:
+            if row['creator_score'] is None:
+                count += 1
+        elif row['opponent_score'] is None:
+            count += 1
+    return count
+
+
 def submit_challenge_attempt(conn, challenge_id, user_id, answers):
     challenge = get_challenge(conn, challenge_id)
     if not challenge:
@@ -132,25 +176,27 @@ def submit_challenge_attempt(conn, challenge_id, user_id, answers):
         raise ValueError('already_submitted')
 
     problems = challenge['problems']
-    score = _score_answers(problems, answers)
+    normalized = _normalize_answer_list(answers, len(problems))
+    score = _score_answers(problems, normalized)
+    answers_json = json.dumps(normalized)
     now = utc_now_iso()
     if role == 'creator':
         conn.execute(
             '''
             UPDATE quiz_challenges
-            SET creator_score = ?, creator_completed_at = ?
+            SET creator_score = ?, creator_completed_at = ?, creator_answers_json = ?
             WHERE id = ?
             ''',
-            (score, now, challenge_id),
+            (score, now, answers_json, challenge_id),
         )
     else:
         conn.execute(
             '''
             UPDATE quiz_challenges
-            SET opponent_score = ?, opponent_completed_at = ?
+            SET opponent_score = ?, opponent_completed_at = ?, opponent_answers_json = ?
             WHERE id = ?
             ''',
-            (score, now, challenge_id),
+            (score, now, answers_json, challenge_id),
         )
 
     updated = get_challenge(conn, challenge_id)
@@ -206,4 +252,41 @@ def serialize_challenge(challenge, viewer_id):
         'created_at': challenge.get('created_at'),
         'creator_completed_at': challenge.get('creator_completed_at'),
         'opponent_completed_at': challenge.get('opponent_completed_at'),
+    }
+
+
+def build_head_to_head(challenge):
+    """Per-question comparison once both players have submitted."""
+    problems = challenge.get('problems') or []
+    creator_answers = challenge.get('creator_answers') or []
+    opponent_answers = challenge.get('opponent_answers') or []
+    questions = []
+    for i, problem in enumerate(problems):
+        correct = _letter(problem.get('correct_answer'))
+        creator_answer = creator_answers[i] if i < len(creator_answers) else ''
+        opponent_answer = opponent_answers[i] if i < len(opponent_answers) else ''
+        questions.append({
+            'index': i,
+            'question': problem.get('question') or '',
+            'options': problem.get('options') or [],
+            'correct': correct,
+            'creator_answer': creator_answer,
+            'opponent_answer': opponent_answer,
+            'creator_correct': bool(creator_answer and creator_answer == correct),
+            'opponent_correct': bool(opponent_answer and opponent_answer == correct),
+        })
+    creator_score = challenge.get('creator_score')
+    opponent_score = challenge.get('opponent_score')
+    winner = None
+    if creator_score is not None and opponent_score is not None:
+        if creator_score > opponent_score:
+            winner = 'creator'
+        elif opponent_score > creator_score:
+            winner = 'opponent'
+        else:
+            winner = 'draw'
+    return {
+        'questions': questions,
+        'winner': winner,
+        'has_answers': any(creator_answers) or any(opponent_answers),
     }

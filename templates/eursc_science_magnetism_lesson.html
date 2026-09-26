@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block title %}Magnetism and Electromagnetism – European School Integrated Science{% endblock %}
+
+{% block content %}
+<div class="lesson-shell">
+
+  <div class="lesson-hero">
+    <h1>Magnetism and Electromagnetism</h1>
+    <p class="hero-sub">S3 Integrated Science · Unit 3.1 Machines · syllabus 3.1.5. Poles, materials, magnetisation, fields, electromagnets, Earth and compass, magnetotaxis as a public example. This lesson does not rank whose magnet is strongest.</p>
+    <div class="pill-row">
+      <span class="pill pill--hero">S3</span>
+      <span class="pill pill--hero">3.1 Machines</span>
+      <span class="pill pill--hero">3.1.5</span>
+    </div>
+  </div>
+
+  <div class="lesson-quiz-cta">
+    <a class="btn btn-primary" href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='magnetism') }}">▶ Practice Quiz (10 questions)</a>
+  </div>
+
+  <details class="lesson-section" open>
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">1</span> Poles <span class="lesson-tag">3.1.5</span> <span class="lesson-tag">S3</span></summary>
+    <div class="lesson-section-body">
+      <p>A magnet has <dfn class="lesson-gloss" title="The north or south end of a magnet">poles</dfn> that attract or repel. Like poles repel; unlike poles attract. Name them <strong>N</strong> and <strong>S</strong>, not by colour alone. This is not a strength league.
+      <span class="lesson-gloss-def">The north (N) or south (S) end of a magnet. Like poles repel; unlike poles attract. Colour on a bar is not enough on its own.</span></p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p>Magnetic poles</p>
+          <button class="btn mcq-btn" data-letter="A">always attract</button>
+          <button class="btn mcq-btn" data-letter="B">only repel</button>
+          <button class="btn mcq-btn" data-letter="C">attract or repel</button>
+          <button class="btn mcq-btn" data-letter="D">have no effect on each other</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">2</span> Materials</summary>
+    <div class="lesson-section-body">
+      <p>Some materials are magnetic and some are not. Classify kit objects; do not rank pupils.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p>Materials</p>
+          <button class="btn mcq-btn" data-letter="A">can be magnetic or not</button>
+          <button class="btn mcq-btn" data-letter="B">are all magnets always</button>
+          <button class="btn mcq-btn" data-letter="C">are magnetic only if made of plastic</button>
+          <button class="btn mcq-btn" data-letter="D">are magnetic only when hot</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">3</span> Magnetisation</summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="Aligning or making a magnet">Magnetisation</dfn> is aligning or making a magnet. Stroking with another magnet is a classroom story, not a stored ranking.
+      <span class="lesson-gloss-def">Aligning or making a magnet. A stroke demo is a public story, not a pupil league.</span></p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p>Magnetisation is</p>
+          <button class="btn mcq-btn" data-letter="A">rubbing a magnet until it loses its poles</button>
+          <button class="btn mcq-btn" data-letter="B">heating iron so it repels</button>
+          <button class="btn mcq-btn" data-letter="C">cutting a magnet into two halves</button>
+          <button class="btn mcq-btn" data-letter="D">aligning or making a magnet</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">4</span> Fields</summary>
+    <div class="lesson-section-body">
+      <p>A <dfn class="lesson-gloss" title="A region where a magnetic effect can be shown">magnetic field</dfn> is a region where a magnetic effect can be shown. <strong>A</strong> north pole (N), <strong>B</strong> south pole (S), <strong>C</strong> the field region between them. Schematic only; N and S are labelled, not colour-only.
+      <span class="lesson-gloss-def">A region where a magnetic effect can be shown, for example with a compass or iron filings in a teacher demo.</span></p>
+      <figure class="lesson-figure">
+        {{ magnet_fig }}
+        <figcaption class="lesson-figure-caption">A north (N) and B south (S) with C the field region between them. Arrows and N/S labels, not colour alone. Schematic only.</figcaption>
+      </figure>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="B">
+          <p>A magnetic field in this schematic is</p>
+          <button class="btn mcq-btn" data-letter="A">a wire carrying current</button>
+          <button class="btn mcq-btn" data-letter="B">a region where a magnetic effect can be shown</button>
+          <button class="btn mcq-btn" data-letter="C">a solid line drawn only on paper</button>
+          <button class="btn mcq-btn" data-letter="D">a region with no force at all</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">5</span> Electromagnets</summary>
+    <div class="lesson-section-body">
+      <p>An <dfn class="lesson-gloss" title="A current-made magnet that can be switched">electromagnet</dfn> is a current-made magnet that can be <strong>switched</strong>. A coil that drops paperclips when the current stops is a public demo.
+      <span class="lesson-gloss-def">A magnet made by current in a coil. Closing the switch turns it on; opening the switch turns it off.</span></p>
+      <p><strong>Worked example:</strong> A classroom coil is wound on a nail and connected to a low-voltage cell through a switch the teacher supplies. Switch closed: the nail picks up paperclips. Switch open: the clips drop. The electromagnet is on or off with the current; this is not a strength league and not a \(V = IR\) calculation.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="D">
+          <p>An electromagnet is</p>
+          <button class="btn mcq-btn" data-letter="A">a permanent magnet made of steel</button>
+          <button class="btn mcq-btn" data-letter="B">a magnet that makes its own current</button>
+          <button class="btn mcq-btn" data-letter="C">a compass with a coil</button>
+          <button class="btn mcq-btn" data-letter="D">a current-made magnet that can be switched</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">6</span> Earth and compass</summary>
+    <div class="lesson-section-body">
+      <p>Earth can be modelled as having a magnetic field a <strong>compass</strong> uses. That is a public model, not a household rank.</p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="A">
+          <p>Earth is modelled as</p>
+          <button class="btn mcq-btn" data-letter="A">having a magnetic field a compass can use</button>
+          <button class="btn mcq-btn" data-letter="B">having no field</button>
+          <button class="btn mcq-btn" data-letter="C">having a field only at the equator</button>
+          <button class="btn mcq-btn" data-letter="D">having poles that switch every day</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">7</span> Magnetotaxis</summary>
+    <div class="lesson-section-body">
+      <p><dfn class="lesson-gloss" title="A public animal example of lining up with a magnetic field">Magnetotaxis</dfn> is a public animal example of lining up with a field. It is not a pupil superpower ranking.
+      <span class="lesson-gloss-def">A public animal example of lining up with a magnetic field. The class discusses the idea, not whose magnet is strongest.</span></p>
+      <div class="lesson-quickcheck">
+        <p class="lesson-quickcheck-title">Quick Check</p>
+        <div class="mcq-inline" data-correct="C">
+          <p>Magnetotaxis here is</p>
+          <button class="btn mcq-btn" data-letter="A">a test of which pupil senses north best</button>
+          <button class="btn mcq-btn" data-letter="B">a private record of each pupil's sense of direction</button>
+          <button class="btn mcq-btn" data-letter="C">a public animal example, not a superpower quiz</button>
+          <button class="btn mcq-btn" data-letter="D">proof that people can feel magnetic fields</button>
+          <p class="mcq-feedback"></p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details class="lesson-section">
+    <summary class="lesson-section-summary"><span class="lesson-section-chip">8</span> Using this lesson</summary>
+    <div class="lesson-section-body">
+      <p>Keep poles, materials, magnetisation, fields, electromagnets, Earth and magnetotaxis separate. The robot project continues next. This quiz does not rank magnets.</p>
+    </div>
+  </details>
+
+  <div class="lesson-quickref">
+    <h3>Quick reference</h3>
+    <div class="quickref-grid">
+      <div>
+        <h4>Poles</h4>
+        <ul>
+          <li>Attract or repel; label N and S</li>
+          <li>A north, B south, C field</li>
+        </ul>
+      </div>
+      <div>
+        <h4>Current</h4>
+        <ul>
+          <li>Electromagnet can be switched on or off</li>
+          <li>No strength league</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="lesson-practice-cta">
+    <p>Ready to practise?</p>
+    <a href="{{ url_for('lesson_mcq_quiz', level='eursc', subject='science', topic='magnetism') }}" class="btn btn-primary">Start Practice Quiz</a>
+  </div>
+
+</div>
+{% endblock %}

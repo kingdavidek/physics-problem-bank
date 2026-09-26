@@ -1,4 +1,6 @@
 """User blocks and content reports."""
+import json
+
 from models.user import utc_now_iso
 
 REPORT_TYPES = frozenset({
@@ -89,7 +91,6 @@ def create_report(
     if report_type not in REPORT_TYPES:
         report_type = 'other'
     note = (note or '').strip()[:MAX_REPORT_NOTE]
-    import json
     now = utc_now_iso()
     cursor = conn.execute(
         '''
@@ -108,3 +109,44 @@ def create_report(
     )
     conn.commit()
     return cursor.lastrowid
+
+
+def list_open_reports(conn, limit=100):
+    rows = conn.execute(
+        '''
+        SELECT r.id, r.reporter_id, r.reported_user_id, r.report_type, r.note,
+               r.context_json, r.created_at, r.resolved_at,
+               reporter.handle AS reporter_handle,
+               reported.handle AS reported_handle
+        FROM user_reports r
+        JOIN users reporter ON reporter.id = r.reporter_id
+        LEFT JOIN users reported ON reported.id = r.reported_user_id
+        WHERE r.resolved_at IS NULL
+        ORDER BY r.created_at ASC
+        LIMIT ?
+        ''',
+        (limit,),
+    ).fetchall()
+    out = []
+    for row in rows:
+        item = dict(row)
+        try:
+            item['context'] = json.loads(item.pop('context_json') or '{}')
+        except json.JSONDecodeError:
+            item['context'] = {}
+        out.append(item)
+    return out
+
+
+def resolve_report(conn, report_id):
+    cursor = conn.execute(
+        '''
+        UPDATE user_reports
+        SET resolved_at = ?
+        WHERE id = ? AND resolved_at IS NULL
+        ''',
+        (utc_now_iso(), report_id),
+    )
+    conn.commit()
+    return cursor.rowcount > 0
+

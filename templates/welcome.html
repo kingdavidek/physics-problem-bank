@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% from "partials/page_flashes.html" import render as page_flashes %}
+{% from "partials/icon.html" import icon %}
+{% from "partials/buddy.html" import buddy_mascot %}
+{% block title %}Welcome – Problem Bank{% endblock %}
+
+{% block content %}
+{% set steps = ['hello', 'level', 'topic', 'ready'] %}
+{% set step_index = steps.index(step) + 1 %}
+
+<section class="welcome page-shell" id="welcome" data-step="{{ step }}">
+
+    <div class="welcome-top">
+        <ol class="welcome-dots" aria-label="Welcome progress">
+            {% for s in steps %}
+            <li class="welcome-dot{% if s == step %} is-current{% endif %}{% if loop.index < step_index %} is-done{% endif %}"{% if s == step %} aria-current="step"{% endif %}></li>
+            {% endfor %}
+        </ol>
+        <p class="welcome-step-label">Step {{ step_index }} of {{ steps|length }}</p>
+        <p class="welcome-signed-in">Signed in as {{ current_user.display_handle }}</p>
+    </div>
+
+    {{ page_flashes('welcome') }}
+
+    <span class="study-buddy-face welcome-hero" data-welcome-hero data-face="nudge" aria-hidden="true">{{ buddy_mascot(look=buddy_look) }}</span>
+
+    {% if step == 'hello' %}
+    <div class="welcome-screen" id="welcome-screen-hello">
+        <h1 class="welcome-title">Hi, I’m Zorp.</h1>
+        <p class="welcome-copy">I live in Problem Bank and I’ll cheer you on.</p>
+    </div>
+    <form method="POST" action="{{ url_for('welcome_step') }}" id="welcome-hello-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="step" value="hello">
+    </form>
+    <form method="POST" action="{{ url_for('welcome_step') }}" id="welcome-skip-form-hello">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="step" value="skip">
+        <button type="submit" class="btn btn-outline welcome-skip" id="welcome-skip">Skip for now</button>
+    </form>
+    {% endif %}
+
+    {% if step == 'level' %}
+    <div class="welcome-screen" id="welcome-screen-level">
+        <h1 class="welcome-title">What do you want to practise?</h1>
+        <form method="POST" action="{{ url_for('welcome_step') }}" class="welcome-card-grid">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="step" value="level">
+            {% for t in tracks %}
+            <button type="submit" name="level" value="{{ t.key }}" class="welcome-card">
+                <span class="welcome-card-icon" aria-hidden="true">{{ icon(t.icon, size=28) }}</span>
+                <span class="welcome-card-label">{{ t.label }}</span>
+            </button>
+            {% endfor %}
+        </form>
+    </div>
+    <form method="POST" action="{{ url_for('welcome_step') }}" id="welcome-skip-form-level">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="step" value="skip">
+        <button type="submit" class="btn btn-outline welcome-skip" id="welcome-skip">Skip for now</button>
+    </form>
+    {% endif %}
+
+    {% if step == 'topic' %}
+    <div class="welcome-screen" id="welcome-screen-topic">
+        <h1 class="welcome-title">Pick a first topic</h1>
+        {% if track %}<p class="welcome-copy">{{ track.label }}</p>{% endif %}
+        <form method="POST" action="{{ url_for('welcome_step') }}" class="welcome-card-grid" id="welcome-topic-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="step" value="topic">
+            {% for t in topics %}
+            <button type="submit" name="topic" value="{{ t.slug }}" class="welcome-card">
+                <span class="welcome-card-icon" aria-hidden="true">{{ icon(track.icon, size=28) }}</span>
+                <span class="welcome-card-label">{{ t.name }}</span>
+                {% if t.blurb %}<span class="welcome-card-blurb">{{ t.blurb }}</span>{% endif %}
+            </button>
+            {% endfor %}
+            <button type="submit" name="topic" value="{{ welcome_surprise }}" class="welcome-card welcome-card--surprise">
+                <span class="welcome-card-icon" aria-hidden="true">{{ icon('target', size=28) }}</span>
+                <span class="welcome-card-label">Surprise me</span>
+            </button>
+        </form>
+    </div>
+    <form method="POST" action="{{ url_for('welcome_step') }}" id="welcome-skip-form-topic">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="step" value="skip">
+        <button type="submit" class="btn btn-outline welcome-skip" id="welcome-skip">Skip for now</button>
+    </form>
+    {% endif %}
+
+    {% if step == 'ready' %}
+    <div class="welcome-screen" id="welcome-screen-ready">
+        <h1 class="welcome-title">{% if chosen_topic %}{{ chosen_topic_label }}{% else %}You’re ready{% endif %}</h1>
+        {% if track %}<p class="welcome-copy">{{ track.label }}</p>{% endif %}
+        <p class="welcome-copy">When you get one right, I’ll do a little dance.</p>
+    </div>
+    <form method="POST" action="{{ url_for('index') }}" id="welcome-ready-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="level" value="{{ track.level if track else '' }}">
+        <input type="hidden" name="subject" value="{{ track.subject if track else '' }}">
+        <input type="hidden" name="topic" value="{{ chosen_topic or '' }}">
+        <input type="hidden" name="mode" value="standard">
+        <input type="hidden" name="difficulty" value="foundational">
+        <input type="hidden" name="action" value="start">
+    </form>
+    <form method="POST" action="{{ url_for('welcome_step') }}" id="welcome-skip-form-ready">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="step" value="skip">
+        <button type="submit" class="btn btn-outline welcome-skip" id="welcome-skip">Skip for now</button>
+    </form>
+    {% endif %}
+
+</section>
+
+<script src="{{ url_for('static', filename='js/welcome.js') }}?v=2" defer></script>
+{% endblock %}
+
+{% block sticky_footer %}
+{% if step == 'hello' %}
+<div class="welcome-sticky-bar">
+    <button type="submit" form="welcome-hello-form" class="btn btn-primary btn-lg welcome-primary-btn" id="welcome-hello-btn">Let’s go</button>
+</div>
+{% elif step == 'ready' %}
+<div class="welcome-sticky-bar">
+    <button type="submit" form="welcome-ready-form" class="btn btn-primary btn-lg welcome-primary-btn" id="welcome-ready-btn">Start</button>
+</div>
+{% endif %}
+{% endblock %}
