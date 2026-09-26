@@ -26,6 +26,7 @@
     quicktest_results: 1,
     view_quiz_attempt: 1,
     challenge_detail: 1,
+    welcome: 1,
   };
 
   // E7 Phase 2: gestures. LEGACY_GESTURES are the four E6 CSS-keyframe names, used as the

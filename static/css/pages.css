@@ -733,7 +733,8 @@ a.list-row {
     flex: 1 1 12rem;
     min-width: min(100%, 12rem);
 }
-.practice-new-question-bar {
+.practice-new-question-bar,
+.welcome-sticky-bar {
     position: fixed;
     left: 0;
     right: 0;
@@ -745,12 +746,14 @@ a.list-row {
     border-top: 1px solid var(--border-soft);
     box-shadow: var(--elev-2);
 }
-.practice-new-question-btn {
+.practice-new-question-btn,
+.welcome-primary-btn {
     width: 100%;
     min-height: var(--tap-min);
 }
 @media (min-width: 900px) {
-    .practice-new-question-bar {
+    .practice-new-question-bar,
+    .welcome-sticky-bar {
         bottom: var(--space-4);
         left: 50%;
         right: auto;
@@ -2077,7 +2080,9 @@ body.quiz-runner-active .app-tab-bar {
     height: 128px;
 }
 .sg-zorp-hero,
-.sg-zorp-hero .buddy-mascot {
+.sg-zorp-hero .buddy-mascot,
+.welcome-hero,
+.welcome-hero .buddy-mascot {
     width: 160px;
     height: 160px;
 }
@@ -2147,4 +2152,86 @@ body.quiz-runner-active .app-tab-bar {
 .progress-ring-fill {
     stroke: var(--xp-500);
     stroke-linecap: round;
+}
+
+/* E7 Phase 3 — mobile welcome flow (docs/MASCOT_MOTION_AND_ONBOARDING.md §3.4).
+   Bottom bar / primary button / hero sizing reuse the rules above. */
+.welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--space-4);
+    padding-bottom: calc(var(--tab-bar-h) + var(--safe-bottom) + var(--space-6));
+}
+.welcome-top {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+}
+.welcome-dots {
+    display: flex;
+    gap: var(--space-2);
+    list-style: none;
+}
+.welcome-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ink-200);
+}
+.welcome-dot.is-current,
+.welcome-dot.is-done { background: var(--brand-500); }
+.welcome-step-label,
+.welcome-signed-in {
+    margin: 0;
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+.welcome-title { margin: 0; }
+.welcome-copy {
+    margin: 0;
+    color: var(--text-muted);
+    max-width: 32rem;
+}
+.welcome-card-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+    width: 100%;
+}
+.welcome-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    min-height: var(--tap-min);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    text-align: center;
+    cursor: pointer;
+}
+.welcome-card:focus-visible {
+    outline: 2px solid var(--brand-500);
+    outline-offset: 2px;
+}
+.welcome-card-blurb {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+@media (min-width: 900px) {
+    .welcome-card-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (prefers-reduced-motion: no-preference) {
+    .welcome-screen {
+        animation: welcome-screen-in 180ms var(--ease-out) both;
+    }
+}
+@keyframes welcome-screen-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
 }

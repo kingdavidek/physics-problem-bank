@@ -1,4 +1,5 @@
 import os
+import random
 import secrets
 from datetime import date, timedelta
 import urllib.error
@@ -80,6 +81,7 @@ from generators.eursc.science_shared import (
     trophic_boxes,
     water_cycle_steps,
     work_fd,
+    SYLLABUS_MODULES,
 )
 from generators.shared.lesson_quiz import (
     LESSON_QUIZ_MIX,
@@ -176,6 +178,7 @@ from models.social import (
     record_topic_opened,
     search_users_by_handle,
     search_following_by_handle,
+    set_welcome_state,
     unfollow_user,
     update_profile_settings,
     validate_guide_patch,
@@ -1074,6 +1077,7 @@ def inject_nav():
         else True,
         'privacy_contact_email': privacy_contact_email(),
         'csp_nonce': getattr(g, 'csp_nonce', ''),
+        'hide_study_buddy': False,
     }
 
 
@@ -2696,6 +2700,217 @@ def _recent_topics_for_generator(conn, user_id, *, selected_diff='foundational')
         if len(out) >= 8:
             break
     return out
+
+
+# --- E7 Phase 3: mobile welcome flow (docs/MASCOT_MOTION_AND_ONBOARDING.md §3.4) ---
+# Real tracks only (David's decision #1): EURSC + GCSE, no A-level/G8/MYP — which
+# LEVELS are welcome-eligible is a deliberate, hardcoded product decision (a new
+# level needs its own icon/label/copy review before it belongs in onboarding).
+# Which SUBJECTS appear under an eligible level is *not* hardcoded: it's the live
+# intersection with GENERATOR_LAUNCH_PATHS, via _welcome_level_subjects() below, so
+# a newly-launched subject under an already-eligible level (e.g. a future GCSE
+# Physics) is offered automatically with no parallel hand-edit needed here.
+_WELCOME_LEVEL_ORDER = ('eursc', 'gcse')
+# Preferred display order for known subjects within a level. A launch path whose
+# subject isn't listed here still appears (sorted alphabetically, after the
+# preferred ones) rather than being silently dropped.
+_WELCOME_SUBJECT_DISPLAY_ORDER = {'eursc': ('science',), 'gcse': ('maths', 'cs')}
+WELCOME_SURPRISE = 'surprise'
+# Safety invariant relied on by welcome_step(): no real registry topic slug may ever
+# equal WELCOME_SURPRISE, or the "surprise me" card would collide with a real topic.
+assert not any(
+    slug == WELCOME_SURPRISE
+    for subjects in TOPICS.values()
+    for topics in subjects.values()
+    for slug in topics
+), 'a registry topic slug collides with WELCOME_SURPRISE'
+
+
+def _welcome_level_subjects(level):
+    """Live subjects for a welcome-eligible level: the actual GENERATOR_LAUNCH_PATHS
+    entries under this level, preferred ones first, any others appended (sorted) —
+    so a newly-launched subject is never silently missing from /welcome."""
+    live = {subject for lvl, subject in GENERATOR_LAUNCH_PATHS if lvl == level}
+    preferred = [s for s in _WELCOME_SUBJECT_DISPLAY_ORDER.get(level, ()) if s in live]
+    extra = sorted(live - set(preferred))
+    return preferred + extra
+
+
+def _welcome_tracks():
+    """Real, live tracks for the welcome level picker (never A-level/MYP/G8)."""
+    tracks = []
+    for level in _WELCOME_LEVEL_ORDER:
+        for subject in _welcome_level_subjects(level):
+            topics = (TOPICS.get(level) or {}).get(subject) or {}
+            years = sorted({
+                cfg.get('year') for _slug, cfg in topics.items() if cfg.get('year')
+            })
+            if years:
+                for year in years:
+                    tracks.append({
+                        'key': f'{level}_{year}',
+                        'label': f"{LEVEL_LABELS.get(level, level.title())} {YEAR_LABELS.get(year, year.upper())}",
+                        'level': level,
+                        'subject': subject,
+                        'year': year,
+                        'icon': subject,
+                    })
+            else:
+                tracks.append({
+                    'key': f'{level}_{subject}',
+                    'label': f"{LEVEL_LABELS.get(level, level.title())} {SUBJECT_LABELS.get(subject, subject.title())}",
+                    'level': level,
+                    'subject': subject,
+                    'year': None,
+                    'icon': subject,
+                })
+    return tracks
+
+
+def _welcome_track(key):
+    if not key:
+        return None
+    for track in _welcome_tracks():
+        if track['key'] == key:
+            return track
+    return None
+
+
+def _welcome_science_blurbs():
+    """slug -> one-line blurb, EURSC science only (SYLLABUS_MODULES objectives[0])."""
+    return {
+        meta['slug']: meta['objectives'][0]
+        for meta in SYLLABUS_MODULES.values()
+        if meta.get('slug') and meta.get('objectives')
+    }
+
+
+def _welcome_topics(track):
+    """Real topics for a track (excludes the PB_TESTING-only fixture topic)."""
+    if not track:
+        return []
+    topics = (TOPICS.get(track['level']) or {}).get(track['subject']) or {}
+    blurbs = _welcome_science_blurbs() if track['subject'] == 'science' else {}
+    out = []
+    for slug, cfg in iter_topics(topics):
+        if slug == 'es0_fixture':
+            continue
+        if track.get('year') and cfg.get('year') != track['year']:
+            continue
+        out.append({
+            'slug': slug,
+            'name': cfg.get('name') or slug.replace('_', ' ').title(),
+            'blurb': blurbs.get(slug),
+        })
+    return out
+
+
+def _welcome_topic_slugs(track):
+    return {t['slug'] for t in _welcome_topics(track)}
+
+
+@app.get('/welcome')
+@login_required
+def welcome():
+    step = request.args.get('step', 'hello')
+    if step not in ('hello', 'level', 'topic', 'ready'):
+        step = 'hello'
+
+    with get_db() as conn:
+        settings = get_profile_settings(conn, current_user.id)
+    welcome_info = settings['welcome']
+
+    track = _welcome_track(welcome_info['level'])
+    topic_slugs = _welcome_topic_slugs(track) if track else set()
+    chosen_topic = welcome_info['topic'] if welcome_info['topic'] in topic_slugs else None
+
+    if welcome_info['done']:
+        if step == 'ready' and track and chosen_topic:
+            pass  # harmless to show their own Start card again
+        else:
+            return redirect(url_for('index'))
+    else:
+        if step == 'topic' and not track:
+            return redirect(url_for('welcome', step='level'))
+        if step == 'ready' and not chosen_topic:
+            if not track:
+                return redirect(url_for('welcome', step='level'))
+            return redirect(url_for('welcome', step='topic'))
+
+    all_topics = _welcome_topics(track) if track else []
+    topics = all_topics[:7]
+    chosen_topic_label = next(
+        (t['name'] for t in all_topics if t['slug'] == chosen_topic),
+        chosen_topic,
+    )
+
+    return render_template(
+        'welcome.html',
+        step=step,
+        tracks=_welcome_tracks(),
+        track=track,
+        topics=topics,
+        chosen_topic=chosen_topic,
+        chosen_topic_label=chosen_topic_label,
+        welcome_surprise=WELCOME_SURPRISE,
+        hide_study_buddy=True,
+    )
+
+
+@app.post('/welcome/step')
+@login_required
+def welcome_step():
+    if not _validate_csrf(request.form.get('csrf_token')):
+        flash_for('welcome', 'Your session expired. Please try again.', 'error')
+        return redirect(url_for('welcome'))
+
+    step = request.form.get('step')
+
+    if step == 'skip':
+        with get_db() as conn:
+            set_welcome_state(conn, current_user.id, done=True)
+        return redirect(url_for('index'))
+
+    if step == 'hello':
+        return redirect(url_for('welcome', step='level'))
+
+    if step == 'level':
+        level_key = request.form.get('level')
+        track = _welcome_track(level_key)
+        if not track:
+            flash_for('welcome', "Pick one of the tracks below.", 'error')
+            return redirect(url_for('welcome', step='level'))
+        with get_db() as conn:
+            settings = get_profile_settings(conn, current_user.id)
+            existing_topic = settings['welcome']['topic']
+            new_topic = existing_topic if existing_topic in _welcome_topic_slugs(track) else None
+            set_welcome_state(conn, current_user.id, level=track['key'], topic=new_topic)
+        return redirect(url_for('welcome', step='topic'))
+
+    if step == 'topic':
+        with get_db() as conn:
+            settings = get_profile_settings(conn, current_user.id)
+        track = _welcome_track(settings['welcome']['level'])
+        if not track:
+            return redirect(url_for('welcome', step='level'))
+        topic_slugs = _welcome_topic_slugs(track)
+        posted_topic = request.form.get('topic')
+        if posted_topic == WELCOME_SURPRISE:
+            choices = sorted(topic_slugs)
+            if not choices:
+                flash_for('welcome', 'No topics available for that track yet.', 'error')
+                return redirect(url_for('welcome', step='topic'))
+            chosen = random.choice(choices)
+        elif posted_topic in topic_slugs:
+            chosen = posted_topic
+        else:
+            flash_for('welcome', 'Pick one of the topics below.', 'error')
+            return redirect(url_for('welcome', step='topic'))
+        with get_db() as conn:
+            set_welcome_state(conn, current_user.id, topic=chosen, done=True)
+        return redirect(url_for('welcome', step='ready'))
+
+    return redirect(url_for('welcome'))
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -5396,6 +5611,16 @@ def register():
                         _send_verify_email(user, raw)
                         login_user(user, remember=True)
                         user.touch_login(conn)
+                        # E7 Phase 3: flash into whichever page this redirect actually
+                        # lands on, so a new pupil sees the confirm-your-email notice
+                        # right away instead of on their next, unrelated /profile visit.
+                        if not get_profile_settings(conn, user.id)['welcome']['done']:
+                            flash_for(
+                                'welcome',
+                                'Welcome to Problem Bank! Check your email to confirm your address.',
+                                'success',
+                            )
+                            return redirect(url_for('welcome'))
                         flash_for(
                             'profile',
                             'Welcome to Problem Bank! Check your email to confirm your address.',
@@ -6460,6 +6685,10 @@ def profile_settings():
                 update_profile_settings(conn, current_user.id, updated)
             flash_for('index', 'Intro will play on Practice.', 'success')
             return redirect(url_for('index'))
+        elif request.form.get('action') == 'replay_welcome':
+            with get_db() as conn:
+                set_welcome_state(conn, current_user.id, done=False)
+            return redirect(url_for('welcome'))
         else:
             updated = {
                 'profile_visibility': request.form.get('profile_visibility', VISIBILITY_FOLLOWERS),

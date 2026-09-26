@@ -105,6 +105,7 @@ Proceed to public launch **only after**:
 | 2026-08-31 | G8 **Phase 4:** frozen set-work from the live catalogue; preview then assign; student class-work cannot reroll; teacher n/X + scores; graded from stored JSON; student GET strips keys until after grade. No Leave. No T3. | Draft still pending qualified review. Set-work completion is roster-only (std 13). |
 | 2026-08-31 | G8 **Phase 5:** handle invites (accept + disclosure; no silent add); teacher audit log; roster/set-work CSV (handles only); erase leftovers for `class_invites` / audit `actor_id`; export invites + teacher audit without keys or other people’s emails. Pending invites pruned after 14 days. No Leave. No T3. | Draft still pending qualified review. |
 | 2026-08-31 | G8 **Phase 6:** verification. Full smoke **71/71**; sample teacher/student flows; no Leave route in `url_map`; no T3 in teacher JSON/HTML; invites still require disclosure; CSV/audit handles only. Track complete. | Draft still pending qualified review. Qualified legal review still required before public HTTPS. |
+| 2026-09-26 | E7 Phase 3 `/welcome`: `guide_json` gains `welcome_done`, `level` (course), `topic` (preferences, not profile data; §2 #10 gate: Q1–Q3 no, Q4 yes → only nudge is "here is a first question"). Skip on every screen; nothing visible to others; no analytics. Privacy notice + ROPA updated. | Draft still pending qualified review. Residual: none new; Replay is user-initiated. |
 
 ---
 

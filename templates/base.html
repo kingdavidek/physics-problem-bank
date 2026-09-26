@@ -27,10 +27,10 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}?v=25">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=24">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=34">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=40">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=41">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/motion.css') }}?v=2">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/practice.css') }}?v=27">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=53">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=54">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}?v=21">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/diagrams.css') }}?v=26">
     {% if lesson_meta or ibl is defined %}
@@ -62,8 +62,8 @@
     <script src="{{ url_for('static', filename='js/study-buddy.js') }}?v=23" defer></script>
     {% endif %}
     {% if current_user.is_authenticated or guide_preview_mode %}
-    <script src="{{ url_for('static', filename='js/guide-catalog.js') }}?v=9" defer></script>
-    <script src="{{ url_for('static', filename='js/guide.js') }}?v=12" defer></script>
+    <script src="{{ url_for('static', filename='js/guide-catalog.js') }}?v=10" defer></script>
+    <script src="{{ url_for('static', filename='js/guide.js') }}?v=13" defer></script>
     {% endif %}
     <script src="{{ url_for('static', filename='js/celebrate.js') }}?v=8" defer></script>
     {% if lesson_assist_enabled and lesson_meta and not lesson_meta.get('quizReview') %}
@@ -275,7 +275,7 @@
 {% if current_user.is_authenticated or guide_preview_mode %}
 <script type="application/json" id="pb-milestone-catalog">{{ guide_milestones|tojson }}</script>
 {% endif %}
-{% if current_user.is_authenticated %}
+{% if current_user.is_authenticated and not hide_study_buddy %}
 <!-- pb-buddy-embed-v4 -->
 {% if buddy_page %}<script type="application/json" id="pb-buddy-page">{{ buddy_page|tojson }}</script>{% endif %}
 {% if buddy_prompt %}<script type="application/json" id="pb-buddy-prompt">{{ buddy_prompt|tojson }}</script>{% endif %}

@@ -9,7 +9,7 @@
         mode: 'story',
         face: 'nudge',
         lines: [
-          'I’m Zorp — from Novara, out past the maths belt.',
+          'A bit about me: I’m Zorp, from Novara, out past the maths belt.',
           'Novara sent helpers to Earth to make maths (and a bit of science) less scary.',
         ],
         highlight: null,

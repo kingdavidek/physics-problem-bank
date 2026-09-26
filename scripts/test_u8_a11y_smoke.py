@@ -31,6 +31,11 @@ LESSON_ONLY = {'lesson-pages.css', 'lesson-assist.css'}
 # E7 Phase 2 (2026-09-24): motion.css untouched (still 4,028 bytes, no react() code lives there —
 # thought bubble is JS-created); practice.css grew ~659 bytes (quiz-runner-option animation
 # selectors + checkmark position/colour fix). Tree now 221,169 (core 196,177). Budget NOT raised.
+# E7 Phase 3 (2026-09-26): motion.css untouched (still 4,028 bytes) — welcome layout/dots/cards/
+# transition CSS lives in pages.css instead (~2,126 bytes added, per §2 #8's "not motion.css" note
+# for anything that isn't a shared rig/idle/reaction keyframe). Post-review fix added a small
+# `.sr-only-submit` rule to chrome.css (~150 bytes, the Enter-key-submits-the-wrong-button fix).
+# Tree now 223,496 (core 198,504). Budget NOT raised — plenty of headroom remained from the §2 #11 bump.
 CSS_BUDGET_BYTES = 240_000
 # Core sheets loaded on every page after the U8.6 lesson split.
 # S0 added fonts.css (~1KB) plus legal-footer / email-verify chrome.
@@ -45,6 +50,9 @@ CSS_BUDGET_BYTES = 240_000
 # Budget NOT raised — only pages.css grew (~84 bytes) for the dev-only styleguide hero demo.
 # E7 Phase 2 (2026-09-24): practice.css grew ~659 bytes (see CSS_BUDGET_BYTES note above).
 # Tree now 221,169 (core 196,177). Budget NOT raised.
+# E7 Phase 3 (2026-09-26): pages.css grew ~2,126 bytes for the /welcome layout, chrome.css grew
+# ~150 bytes in post-review fixes (see CSS_BUDGET_BYTES note above). Tree now 223,496 (core
+# 198,504). Budget NOT raised.
 CSS_CORE_BUDGET_BYTES = 210_000
 
 

@@ -22,6 +22,12 @@ GUIDE_JSON_MAX = 4096
 _GUIDE_TOUR_KEY = re.compile(r'^[a-z][a-z0-9_]{0,31}$')
 _GUIDE_REWARD_KEY = re.compile(r'^[a-z0-9_:]{1,64}$')
 _GUIDE_FLAG_LIMIT = 40
+_GUIDE_OWN_KEYS = ('v', 'origin', 'tours', 'rewards')
+
+# E7 Phase 3: welcome state lives in the same guide_json blob (§2 of
+# docs/MASCOT_MOTION_AND_ONBOARDING.md) but is a distinct namespace from the
+# Guide's own v/origin/tours/rewards keys.
+_WELCOME_TOKEN_RE = re.compile(r'^[a-z0-9_]{1,40}$')
 
 
 def empty_guide_state():
@@ -29,8 +35,91 @@ def empty_guide_state():
 
 
 def guide_json_is_stored(raw):
+    """True only when the stored JSON actually holds Guide state (not just welcome keys).
+
+    A brand-new user whose only guide_json content is E7 welcome keys must not flip
+    ``data-guide-persisted`` to true — that flag tells guide.js the server is
+    authoritative, which would make it drop local-only Guide flags.
+    """
     text = (raw or '').strip()
-    return bool(text) and text not in ('{}', 'null')
+    if not text or text in ('{}', 'null'):
+        return False
+    try:
+        data = json.loads(text)
+    except (TypeError, ValueError):
+        return False
+    if not isinstance(data, dict):
+        return False
+    return any(key in data for key in _GUIDE_OWN_KEYS)
+
+
+def welcome_state(raw_or_dict):
+    """Shape-validated welcome onboarding state parsed the same way as public_guide_state."""
+    if isinstance(raw_or_dict, dict):
+        data = raw_or_dict
+    else:
+        try:
+            data = json.loads(raw_or_dict or '{}')
+        except (TypeError, ValueError):
+            data = {}
+    if not isinstance(data, dict):
+        data = {}
+    level = data.get('level')
+    if not isinstance(level, str) or not _WELCOME_TOKEN_RE.match(level):
+        level = None
+    topic = data.get('topic')
+    if not isinstance(topic, str) or not _WELCOME_TOKEN_RE.match(topic):
+        topic = None
+    return {
+        'done': data.get('welcome_done') is True,
+        'level': level,
+        'topic': topic,
+    }
+
+
+_UNSET = object()
+
+
+def set_welcome_state(conn, user_id, *, done=_UNSET, level=_UNSET, topic=_UNSET):
+    """Targeted update of only the welcome_done/level/topic keys in guide_json.
+
+    Never touches the Guide's own v/origin/tours/rewards keys, and never rewrites
+    the rest of user_profile_settings (unlike update_profile_settings).
+    """
+    ensure_user_profile(conn, user_id)
+    row = conn.execute(
+        'SELECT guide_json FROM user_profile_settings WHERE user_id = ?',
+        (user_id,),
+    ).fetchone()
+    try:
+        base = json.loads((row['guide_json'] if row else '') or '{}')
+    except (TypeError, ValueError):
+        base = {}
+    if not isinstance(base, dict):
+        base = {}
+
+    if done is not _UNSET:
+        base['welcome_done'] = bool(done)
+    if level is not _UNSET:
+        if level is None:
+            base.pop('level', None)
+        else:
+            base['level'] = level
+    if topic is not _UNSET:
+        if topic is None:
+            base.pop('topic', None)
+        else:
+            base['topic'] = topic
+
+    dumped = json.dumps(base, separators=(',', ':'))
+    if len(dumped) > GUIDE_JSON_MAX:
+        raise ValueError('guide_json too large')
+
+    conn.execute(
+        'UPDATE user_profile_settings SET guide_json = ? WHERE user_id = ?',
+        (dumped, user_id),
+    )
+    conn.commit()
 
 
 def _guide_bool_flags(src, key_re):
@@ -198,6 +287,7 @@ def get_profile_settings(conn, user_id):
     data['avatar'] = parse_avatar(data.get('avatar_json'))
     data['guide'] = public_guide_state(data.get('guide_json'))
     data['guide_json_persisted'] = guide_json_is_stored(data.get('guide_json'))
+    data['welcome'] = welcome_state(data.get('guide_json'))
     return data
 
 

@@ -22,6 +22,11 @@
 
 <form method="POST" class="auth-form settings-form">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <!-- E7 Phase 3: a hidden, unnamed, first submit control so pressing Enter anywhere
+         in this form (e.g. inside a checkbox) submits Save, not the Replay intro /
+         Replay welcome buttons further down — those are named submits and only act
+         when actually clicked. -->
+    <button type="submit" class="sr-only-submit" aria-hidden="true" tabindex="-1"></button>
 
     <section class="section-panel settings-section">
         <div class="section-panel-header">Account</div>
@@ -176,11 +181,9 @@
         <div class="section-panel-header">Guide</div>
         <div class="section-panel-body">
             <p class="page-intro settings-intro">Zorp’s origin story plays once. Replay it if you want to see it again — tours you have already skipped stay skipped.</p>
-            <form method="POST">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <input type="hidden" name="action" value="replay_guide_intro">
-                <button type="submit" class="btn btn-outline" id="guide-replay-intro">Replay intro</button>
-            </form>
+            <button type="submit" name="action" value="replay_guide_intro" class="btn btn-outline" id="guide-replay-intro">Replay intro</button>
+            <p class="page-intro settings-intro">Replay welcome shows the first-day screens again.</p>
+            <button type="submit" name="action" value="replay_welcome" class="btn btn-outline" id="guide-replay-welcome">Replay welcome</button>
         </div>
     </section>
 

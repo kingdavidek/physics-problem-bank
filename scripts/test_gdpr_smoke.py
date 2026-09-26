@@ -121,6 +121,21 @@ def main():
         register(client, email_a, handle_a)
         uid_a = user_id_for(handle_a)
 
+        # E7 Phase 3: walk partway through the welcome flow (level + topic) so
+        # the export below can confirm guide_json carries these preferences.
+        r = client.get('/welcome?step=level')
+        token = csrf_from(r.data.decode())
+        client.post(
+            '/welcome/step',
+            data={'csrf_token': token, 'step': 'level', 'level': 'eursc_s1'},
+        )
+        r = client.get('/welcome?step=topic')
+        token = csrf_from(r.data.decode())
+        client.post(
+            '/welcome/step',
+            data={'csrf_token': token, 'step': 'topic', 'topic': 'measurement'},
+        )
+
         r = client.post(
             '/',
             data={
@@ -191,6 +206,12 @@ def main():
             assert payload['account']['email'] == email_a
             assert 'password_hash' not in dump
             assert email_b not in dump
+            # E7 Phase 3: welcome level/topic/welcome_done live in guide_json,
+            # exported wholesale as part of the settings row.
+            exported_guide_json = json.loads(payload['settings']['guide_json'])
+            assert exported_guide_json.get('level') == 'eursc_s1'
+            assert exported_guide_json.get('topic') == 'measurement'
+            assert exported_guide_json.get('welcome_done') is True
             practice = payload['practice']
             assert practice['saved_problems']
             assert practice['quiz_attempts']
