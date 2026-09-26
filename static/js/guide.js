@@ -28,6 +28,12 @@
     challenge_detail: 1,
   };
 
+  // E7 Phase 2: gestures. LEGACY_GESTURES are the four E6 CSS-keyframe names, used as the
+  // fallback path when pbZorp is unavailable. ZORP_GESTURES is the superset now playable
+  // through pbZorp.play (those four plus the new WAAPI clips).
+  var LEGACY_GESTURES = { wink: 1, nod: 1, shake: 1, tap: 1 };
+  var ZORP_GESTURES = { wink: 1, nod: 1, shake: 1, tap: 1, cheer: 1, wave: 1, think: 1, hop: 1 };
+
   var storageBroken = false;
   var skipTourThisLoad = false;
   var overlay = document.querySelector('[data-guide-root]');
@@ -317,7 +323,9 @@
       weak_topic: 1,
       friend_challenge: 1,
     };
-    faceEl.setAttribute('data-face', ok[name] ? name : 'nudge');
+    var face = ok[name] ? name : 'nudge';
+    if (window.pbZorp && window.pbZorp.setFace(face, { el: faceEl })) return;
+    faceEl.setAttribute('data-face', face);
   }
 
   function setMedal(glyph) {
@@ -359,11 +367,21 @@
   }
 
   function playGesture(name, target) {
-    if (prefersReducedMotion()) return false;
-    var ok = { wink: 1, nod: 1, shake: 1, tap: 1 };
-    if (!ok[name]) return false;
     var el = target || faceEl;
     if (!el) return false;
+    if (window.pbZorp && ZORP_GESTURES[name]) {
+      if (gestureTimer) {
+        window.clearTimeout(gestureTimer);
+        gestureTimer = 0;
+      }
+      if (gestureEl && gestureEl !== el) gestureEl.removeAttribute('data-gesture');
+      gestureEl = null;
+      window.pbZorp.bind(el);
+      window.pbZorp.play(name, { el: el });
+      return true;
+    }
+    if (prefersReducedMotion()) return false;
+    if (!LEGACY_GESTURES[name]) return false;
     if (gestureTimer) {
       window.clearTimeout(gestureTimer);
       gestureTimer = 0;
@@ -473,6 +491,7 @@
         lines: template.lines || ['You earned this.'],
         primary: template.primary || 'Close',
         skipLabel: null,
+        gesture: template.gesture || null,
         rewardType: 'milestone',
         rewardKey: spec.key,
       };
@@ -488,6 +507,7 @@
         lines: template.lines || [n + '-day streak. Nice work keeping it going.'],
         primary: template.primary || 'Close',
         skipLabel: null,
+        gesture: template.gesture || null,
         rewardType: 'streak',
         rewardKey: String(n),
       };
@@ -502,6 +522,7 @@
         lines: template.lines || ['Well done.'],
         primary: template.primary || 'Close',
         skipLabel: null,
+        gesture: template.gesture || null,
         rewardType: spec.type,
         rewardKey: spec.type,
       };

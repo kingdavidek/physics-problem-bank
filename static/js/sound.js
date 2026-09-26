@@ -87,6 +87,21 @@
     }));
   }
 
+  // E7 Phase 2: streak-of-3 "ding" — brighter/higher than playCorrect, not louder.
+  function playDing() {
+    playSequence([
+      { freq: 987.77, dur: 90, type: 'sine', gain: 0.11, delay: 0 },
+      { freq: 1318.51, dur: 130, type: 'sine', gain: 0.1, delay: 80 },
+    ]);
+  }
+
+  // E7 Phase 2: gentler wrong-answer tone. Peak gain (0.08) is strictly below playWrong's (0.14).
+  function playSoft() {
+    playSequence([
+      { freq: 261.63, dur: 140, type: 'sine', gain: 0.08, delay: 0 },
+    ]);
+  }
+
   function setEnabled(value) {
     var on = !!value;
     if (document.body) {
@@ -103,6 +118,8 @@
     correct: playCorrect,
     wrong: playWrong,
     celebrate: playCelebrate,
+    ding: playDing,
+    soft: playSoft,
     preview: playCorrect,
   };
 })();

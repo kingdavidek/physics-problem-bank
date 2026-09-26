@@ -14,6 +14,22 @@
     return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
 
+  // E7 Phase 2: schedule a mascot reaction on the next frame, never blocking grading feedback.
+  // The only references to the global motion runtime in this file live inside this function.
+  function reactMascot(kind, opts) {
+    if (!window.pbZorp || typeof window.pbZorp.react !== 'function') return;
+    var fire = function () {
+      try {
+        window.pbZorp.react(kind, opts || {});
+      } catch (err) { /* a mascot glitch must never break grading */ }
+    };
+    if (typeof window.requestAnimationFrame === 'function') {
+      window.requestAnimationFrame(fire);
+    } else {
+      window.setTimeout(fire, 0);
+    }
+  }
+
   function toastHost() {
     return document.getElementById('app-toast-host');
   }
@@ -76,9 +92,10 @@
     }
   }
 
-  function burstConfetti() {
+  function burstConfetti(opts) {
     if (prefersReducedMotion()) return;
-    if (window.pbSound && window.pbSound.celebrate) window.pbSound.celebrate();
+    var silent = !!(opts && opts.silent);
+    if (!silent && window.pbSound && window.pbSound.celebrate) window.pbSound.celebrate();
     var now = Date.now();
     if (now - lastBurstAt < 1600) return;
     lastBurstAt = now;
@@ -113,20 +130,31 @@
       window.setTimeout(function () { anchor.classList.remove('is-pop'); }, 420);
     }
     drawCheckmark(anchor);
-    showXpFloat(anchor, xp);
+    // points === 0 means "no per-step XP" (lesson-quiz steps); skip the float, not the rest.
+    if (points !== 0) showXpFloat(anchor, xp);
+    var openedFirst = false;
     if (window.pbGuide && typeof window.pbGuide.reward === 'function') {
-      var openedFirst = window.pbGuide.reward({ type: 'first_correct' });
+      openedFirst = window.pbGuide.reward({ type: 'first_correct' });
       if (openedFirst) burstConfetti();
     }
-    if (correctStreak >= 3) {
-      burstConfetti();
+    var isStreak = correctStreak >= 3;
+    if (isStreak) {
+      if (window.pbSound && window.pbSound.ding) {
+        burstConfetti({ silent: true });
+        window.pbSound.ding();
+      } else {
+        burstConfetti();
+      }
       correctStreak = 0;
     }
+    reactMascot(openedFirst ? 'first_correct' : (isStreak ? 'streak' : 'correct'));
   }
 
   function celebrateWrong(target, correctTarget) {
     correctStreak = 0;
-    if (window.pbSound && window.pbSound.wrong) window.pbSound.wrong();
+    if (window.pbSound && window.pbSound.soft) window.pbSound.soft();
+    else if (window.pbSound && window.pbSound.wrong) window.pbSound.wrong();
+    reactMascot('wrong');
     if (prefersReducedMotion()) return;
     if (target) {
       target.classList.add('is-shake');
@@ -144,12 +172,14 @@
       var opened = window.pbGuide.reward({ type: 'milestone', key: token });
       if (opened !== false) {
         burstConfetti();
+        reactMascot('milestone');
         try { window.localStorage.setItem(LS_MILESTONE + token, '1'); } catch (err) {}
       }
       return opened !== false;
     }
     if (claimed(LS_MILESTONE + token)) return false;
     burstConfetti();
+    reactMascot('milestone');
     return true;
   }
 
@@ -160,12 +190,14 @@
       var opened = window.pbGuide.reward({ type: 'streak', days: n });
       if (opened !== false) {
         burstConfetti();
+        reactMascot('streak');
         try { window.localStorage.setItem(LS_STREAK + n, '1'); } catch (err) {}
       }
       return opened !== false;
     }
     if (claimed(LS_STREAK + n)) return false;
     burstConfetti();
+    reactMascot('streak');
     return true;
   }
 
@@ -218,6 +250,7 @@
       if (window.pbGuide && typeof window.pbGuide.reward === 'function') {
         window.pbGuide.reward({ type: 'lesson_complete' });
       }
+      reactMascot('lesson_complete');
     },
   };
 

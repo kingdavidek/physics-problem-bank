@@ -49,6 +49,22 @@
       else seg.classList.add('is-done');
     }
 
+    function celebrateStep(step, letter, correct, isCorrect) {
+      if (!window.pbCelebrate) return;
+      var chosenBtn = null;
+      var correctBtn = null;
+      step.querySelectorAll('.quiz-runner-option').forEach(function (btn) {
+        var opt = (btn.dataset.letter || '').trim().charAt(0).toUpperCase();
+        if (opt === letter) chosenBtn = btn;
+        if (opt === correct) correctBtn = btn;
+      });
+      if (isCorrect) {
+        window.pbCelebrate.correct(chosenBtn, 0);
+      } else {
+        window.pbCelebrate.wrong(chosenBtn, correctBtn);
+      }
+    }
+
     function revealStep(step, letter) {
       var correct = (step.dataset.correct || '').trim().charAt(0).toUpperCase();
       var isCorrect = letter === correct;
@@ -65,6 +81,7 @@
         checkBtn.disabled = false;
         checkBtn.textContent = afterCheckLabel();
       }
+      celebrateStep(step, letter, correct, isCorrect);
       return isCorrect;
     }
 

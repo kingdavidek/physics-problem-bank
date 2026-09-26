@@ -28,6 +28,9 @@ LESSON_ONLY = {'lesson-pages.css', 'lesson-assist.css'}
 # Budget NOT raised for this phase — headroom was already reserved by the §2 #11 bump.
 # E7 Phase 1.6 (2026-09-24): motion.css unchanged at 4,028 bytes; tree now 220,510 (core 195,518).
 # Budget NOT raised — only pages.css grew (~84 bytes) for the dev-only styleguide hero demo.
+# E7 Phase 2 (2026-09-24): motion.css untouched (still 4,028 bytes, no react() code lives there —
+# thought bubble is JS-created); practice.css grew ~659 bytes (quiz-runner-option animation
+# selectors + checkmark position/colour fix). Tree now 221,169 (core 196,177). Budget NOT raised.
 CSS_BUDGET_BYTES = 240_000
 # Core sheets loaded on every page after the U8.6 lesson split.
 # S0 added fonts.css (~1KB) plus legal-footer / email-verify chrome.
@@ -40,6 +43,8 @@ CSS_BUDGET_BYTES = 240_000
 # Budget NOT raised for this phase — headroom was already reserved by the §2 #11 bump.
 # E7 Phase 1.6 (2026-09-24): motion.css unchanged at 4,028 bytes; tree now 220,510 (core 195,518).
 # Budget NOT raised — only pages.css grew (~84 bytes) for the dev-only styleguide hero demo.
+# E7 Phase 2 (2026-09-24): practice.css grew ~659 bytes (see CSS_BUDGET_BYTES note above).
+# Tree now 221,169 (core 196,177). Budget NOT raised.
 CSS_CORE_BUDGET_BYTES = 210_000
 
 

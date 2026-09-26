@@ -157,10 +157,28 @@
 @media (prefers-reduced-motion: no-preference) {
     .mcq-btn.is-pop,
     .btn.is-pop,
+    .quiz-runner-option.is-pop,
     .is-celebrate-host.is-pop { animation: mcq-pop 380ms var(--ease-spring); }
     .mcq-btn.is-shake,
-    .btn.is-shake { animation: mcq-shake 360ms var(--ease); }
-    .mcq-btn.is-reveal { animation: mcq-reveal 500ms var(--ease-out); }
+    .btn.is-shake,
+    .quiz-runner-option.is-shake { animation: mcq-shake 360ms var(--ease); }
+    .mcq-btn.is-reveal,
+    .quiz-runner-option.is-reveal { animation: mcq-reveal 500ms var(--ease-out); }
+}
+/* E7 Phase 2: .quiz-runner-option has no .mcq-btn layout, so the JS-drawn checkmark
+   (identical markup/JS regardless of button class) needs its own position/colour fix here. */
+.quiz-runner-option:not(.mcq-btn) {
+    position: relative;
+}
+.quiz-runner-option:not(.mcq-btn) .answer-check-mark {
+    position: absolute;
+    top: 50%;
+    right: var(--space-3);
+    transform: translateY(-50%);
+}
+.quiz-runner-option.is-correct:not(.mcq-btn) .answer-check-mark-ring,
+.quiz-runner-option.is-correct:not(.mcq-btn) .answer-check-mark-tick {
+    stroke: #fff;
 }
 @keyframes mcq-pop {
     0% { transform: scale(1); }

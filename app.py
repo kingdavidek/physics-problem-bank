@@ -5282,7 +5282,7 @@ def api_v1_build_info():
     return jsonify({
         'ok': True,
         'buddy_embed': 'v4',
-        'study_buddy_js': 'v8',
+        'study_buddy_js': 'v9',
         'theme_settings': True,
         'guide_preview': '/guide-preview',
         'repo_root': str(_ROOT),

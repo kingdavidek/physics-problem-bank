@@ -61,6 +61,10 @@
   var reactTimer = null;
   function reactBuddy() {
     if (!faceEl) return;
+    if (window.pbZorp && typeof window.pbZorp.play === 'function') {
+      window.pbZorp.play('nod', { el: faceEl, ifIdle: true });
+      return;
+    }
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     faceEl.classList.remove('is-reacting');
     void faceEl.offsetWidth;

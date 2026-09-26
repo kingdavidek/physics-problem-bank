@@ -4,10 +4,34 @@
   'use strict';
   if (window.pbZorp) return;
 
-  var CLIP_NAMES = ['idle', 'blink', 'cheer', 'wobble', 'think', 'wave', 'point', 'nod', 'wink', 'tap', 'shake'];
+  var CLIP_NAMES = ['idle', 'blink', 'cheer', 'wobble', 'think', 'wave', 'point', 'nod', 'wink', 'tap', 'shake', 'hop'];
   var FACES = { nudge: 1, milestone: 1, celebrate: 1, qotd_nudge: 1, streak_risk: 1, weak_topic: 1, friend_challenge: 1 };
   var GESTURES = { nod: 1, wink: 1, tap: 1, shake: 1 };   // E6 CSS keyframes via data-gesture
   var GESTURE_MS = 1200;                                    // same as guide.js playGesture
+
+  // E7 Phase 2: react() gating + clip mapping (docs/MASCOT_MOTION_AND_ONBOARDING.md Phase 2).
+  var REACT_GAP_MS = 900;                                     // global cooldown for correct/wrong/streak
+  var CORRECT_VARIANTS = ['cheer', 'wave', 'hop'];            // never repeats lastVariant
+  var REACT_CLIP = {
+    wrong: 'wobble',
+    streak: 'cheer',
+    milestone: 'wave',
+    lesson_complete: 'cheer',
+    first_correct: 'cheer'
+  };
+  var REACT_RARE = { milestone: 1, lesson_complete: 1, first_correct: 1 };   // bypass the 900ms gate
+  var REACT_FACE = { wrong: 'weak_topic' };                   // wrong overrides wobble's resting face
+  var lastReactAt = 0;
+  var lastVariant = '';
+  var rareProtectUntil = 0;   // a rare reaction, once started, can't be cut short by a gated one
+
+  // Thought bubble (wrong reaction, full-motion only; JS-created, never added to buddy.html markup).
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  var THOUGHT_MS = 1200;
+  // Three small dots trailing up-right from the head, clear of the body ellipse
+  // (cx 32 cy 36 rx 21 ry 21.5) and the right antenna (path to 47,6 / bulb at 48,5.2 r3.1).
+  var THOUGHT_DOTS = [[50, 20, 2], [55, 13, 2.6], [59.5, 6.5, 3.2]];
+
   var mq = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
   var canAnimate = typeof Element !== 'undefined' && typeof Element.prototype.animate === 'function' &&
     typeof Animation !== 'undefined' && 'finished' in Animation.prototype;
@@ -59,7 +83,8 @@
       faceSwap: null,
       gestureTimer: 0,
       gestureResolve: null,
-      pulseTimer: 0
+      pulseTimer: 0,
+      thought: null
     };
     instances.push(inst);
     return svg;
@@ -122,7 +147,60 @@
     if (inst.pulseTimer) { clearTimeout(inst.pulseTimer); inst.pulseTimer = 0; }
     if (inst.parts.body) inst.parts.body.classList.remove('is-zorp-pulse');
     if (inst.faceSwap) restoreFace(inst);
+    clearThought(inst);
     inst.busy = false;
+  }
+
+  function clearThought(inst) {
+    if (!inst.thought) return;
+    var node = inst.thought.node;
+    var anim = inst.thought.anim;
+    inst.thought = null;
+    if (anim) {
+      try { anim.cancel(); } catch (e) { /* ignore */ }
+    }
+    if (node && node.parentNode) {
+      try { node.parentNode.removeChild(node); } catch (e) { /* ignore */ }
+    }
+  }
+
+  function showThought(inst) {
+    clearThought(inst);
+    if (!inst.svg || typeof inst.svg.appendChild !== 'function') return;
+    var g = document.createElementNS(SVG_NS, 'g');
+    g.setAttribute('class', 'buddy-thought');
+    g.setAttribute('aria-hidden', 'true');
+    g.style.opacity = '0';
+    var i;
+    for (i = 0; i < THOUGHT_DOTS.length; i += 1) {
+      var dot = THOUGHT_DOTS[i];
+      var circle = document.createElementNS(SVG_NS, 'circle');
+      circle.setAttribute('cx', String(dot[0]));
+      circle.setAttribute('cy', String(dot[1]));
+      circle.setAttribute('r', String(dot[2]));
+      circle.setAttribute('fill', 'var(--zorp-accent, var(--brand-400))');
+      circle.setAttribute('stroke', 'var(--zorp-limb, var(--brand-700))');
+      circle.setAttribute('stroke-width', '1');
+      g.appendChild(circle);
+    }
+    inst.svg.appendChild(g);
+    var entry = { node: g, anim: null };
+    inst.thought = entry;
+    if (!canAnimate) return;
+    try {
+      var anim = g.animate(kf([
+        { opacity: 0, transform: 'translate(0, 4px)' },
+        { offset: 0.2, opacity: 1, transform: 'translate(0, 0)' },
+        { offset: 0.75, opacity: 1, transform: 'translate(0, 0)' },
+        { opacity: 0, transform: 'translate(0, -3px)' }
+      ]), { duration: THOUGHT_MS, easing: 'ease-in-out', fill: 'none' });
+      entry.anim = anim;
+      anim.finished.then(function () {
+        if (inst.thought === entry) clearThought(inst);
+      }).catch(function () { /* cancelled — clearThought already handled cleanup */ });
+    } catch (e) {
+      clearThought(inst);
+    }
   }
 
   function kf(frames) {
@@ -382,17 +460,42 @@
           ]]
         ];
       }
+    },
+    hop: {
+      dur: 450,
+      face: 'celebrate',
+      reducedFace: 'celebrate',
+      tracks: function (parts) {
+        return [
+          [parts.root, [
+            { transform: 'translate(0,0) scale(1,1)' },
+            { offset: 0.25, transform: 'translate(0,2px) scale(1.08,0.9)' },
+            { offset: 0.6, transform: 'translate(0,-9px) scale(0.94,1.08)' },
+            { offset: 0.85, transform: 'translate(0,0) scale(1.05,0.94)' },
+            { transform: 'translate(0,0) scale(1,1)' }
+          ]],
+          [parts.shadow, [
+            { transform: 'scale(1,1)', opacity: 1 },
+            { offset: 0.6, transform: 'scale(0.75,1)', opacity: 0.55 },
+            { offset: 0.85, transform: 'scale(1.05,1)', opacity: 1 },
+            { transform: 'scale(1,1)', opacity: 1 }
+          ]]
+        ];
+      }
     }
   };
 
   function play(name, opts) {
+    opts = opts || {};
     var inst = getInst(opts);
     if (!inst) return Promise.resolve(false);
+    if (opts.ifIdle && (inst.busy || inst.thought)) return Promise.resolve(false);
     if (name === 'idle') { idle(true, inst.svg); return Promise.resolve(true); }
     if (CLIP_NAMES.indexOf(name) === -1) return Promise.resolve(false);
     stop(inst);
     inst.busy = true;
     var reduced = motionLevel() !== 'full';
+    var faceOverride = FACES[opts.face] ? opts.face : null;
 
     if (GESTURES[name]) {
       if (reduced) { inst.busy = false; return Promise.resolve(false); }
@@ -418,8 +521,10 @@
     if (!c) { inst.busy = false; return Promise.resolve(false); }
 
     if (reduced) {
+      // Thought bubble is a full-motion-only effect — never created here.
       var did = false;
-      if (c.reducedFace) { tempFace(inst, c.reducedFace, c.dur); did = true; }
+      var reducedFace = faceOverride || c.reducedFace;
+      if (reducedFace) { tempFace(inst, reducedFace, c.dur); did = true; }
       if (c.pulse && inst.parts.body) {
         inst.parts.body.classList.add('is-zorp-pulse');
         did = true;
@@ -432,8 +537,11 @@
     }
 
     try {
-      if (c.face) tempFace(inst, c.face, c.dur);
-      return run(inst, c.tracks(inst.parts, visiblePupils(inst), opts || {}), c.dur);
+      var fullFace = faceOverride || c.face;
+      if (fullFace) tempFace(inst, fullFace, c.dur);
+      var promise = run(inst, c.tracks(inst.parts, visiblePupils(inst), opts), c.dur);
+      if (opts.thought) showThought(inst);
+      return promise;
     } catch (e) {
       stop(inst);
       return Promise.resolve(false);
@@ -449,6 +557,67 @@
 
   function rendered(inst) {
     return inst.svg.getClientRects().length > 0;
+  }
+
+  function inGuide(inst) {
+    return !!(inst.svg.closest && inst.svg.closest('[data-guide-root]'));
+  }
+
+  function nextCorrectVariant(prev) {
+    var pool = CORRECT_VARIANTS.filter(function (name) { return name !== prev; });
+    if (!pool.length) pool = CORRECT_VARIANTS.slice();
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  function reactTarget() {
+    var i;
+    for (i = 0; i < instances.length; i += 1) {
+      var inst = instances[i];
+      if (!inGuide(inst) && rendered(inst)) return inst;
+    }
+    return null;
+  }
+
+  function react(kind, opts) {
+    opts = opts || {};
+    if (motionLevel() === 'off') return Promise.resolve(false);
+    if (document.body && document.body.classList.contains('guide-open')) return Promise.resolve(false);
+    var known = kind === 'correct' || Object.prototype.hasOwnProperty.call(REACT_CLIP, kind);
+    if (!known) return Promise.resolve(false);
+
+    var inst;
+    if (opts.el) {
+      var svg = bind(opts.el);
+      inst = svg ? findInstanceBySvg(svg) : null;
+      if (inst && inGuide(inst)) inst = null;
+    } else {
+      inst = reactTarget();
+    }
+    if (!inst) return Promise.resolve(false);
+
+    var rare = !!REACT_RARE[kind];
+    var now = Date.now();
+    if (!rare) {
+      if (now - lastReactAt < REACT_GAP_MS) return Promise.resolve(false);
+      // A rare reaction that is still playing takes priority — an ordinary correct/wrong/
+      // streak reaction arriving right after it must wait rather than cancelling its clip.
+      if (now < rareProtectUntil) return Promise.resolve(false);
+      lastReactAt = now;
+    }
+
+    var clip = kind === 'correct' ? nextCorrectVariant(lastVariant) : REACT_CLIP[kind];
+    if (CORRECT_VARIANTS.indexOf(clip) !== -1) lastVariant = clip;
+
+    if (rare) {
+      var clipDur = (CLIPS[clip] && CLIPS[clip].dur) || REACT_GAP_MS;
+      rareProtectUntil = now + clipDur;
+    }
+
+    return play(clip, {
+      el: inst.svg,
+      face: REACT_FACE[kind],
+      thought: kind === 'wrong'
+    });
   }
 
   function refreshIdle() {
@@ -500,6 +669,7 @@
     idle: idle,
     setFace: setFace,
     motionLevel: motionLevel,
+    react: react,
     clips: CLIP_NAMES.slice()
   };
 }());

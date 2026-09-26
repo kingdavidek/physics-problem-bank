@@ -163,12 +163,18 @@
             <span class="study-buddy-face" id="sg-zorp-motion-small" data-zorp-demo data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot() }}</span>
         </div>
         <div class="sg-row" style="margin-top: var(--space-4);">
-            {% for clip in ['idle', 'blink', 'cheer', 'wobble', 'think', 'wave', 'point', 'nod', 'wink', 'tap', 'shake'] %}
+            {% for clip in ['idle', 'blink', 'cheer', 'wobble', 'think', 'wave', 'point', 'nod', 'wink', 'tap', 'shake', 'hop'] %}
             <button type="button" class="btn btn-outline" data-zorp-clip="{{ clip }}">{{ clip|capitalize }}</button>
             {% endfor %}
             <button type="button" class="btn btn-outline" data-zorp-clip="point" data-zorp-target="left">Point left</button>
             <button type="button" class="btn btn-outline" data-zorp-clip="point" data-zorp-target="down">Point down</button>
             <button type="button" class="btn btn-outline" data-zorp-idle-off>Stop idle</button>
+        </div>
+        <p class="profile-empty" style="margin-top: var(--space-5);">Phase 2 answer reactions (dev only) — <code>window.pbZorp.react(kind)</code>.</p>
+        <div class="sg-row" style="margin-top: var(--space-3);">
+            {% for kind in ['correct', 'wrong', 'streak', 'milestone', 'lesson_complete', 'first_correct'] %}
+            <button type="button" class="btn btn-outline" data-zorp-react="{{ kind }}">{{ kind|capitalize }}</button>
+            {% endfor %}
         </div>
         <p class="profile-empty" style="margin-top: var(--space-5);">Phase 1.5 automatic-only cosmetics: colour/antenna/feet/mouth resolved server-side from the latest earned pose milestone (<code>models/zorp_kit.py</code> <code>live_look()</code>). There is no pupil-facing picker.</p>
         <div class="sg-mascot-grid" id="sg-zorp-looks">
@@ -553,5 +559,5 @@
         pointer-events: auto;
     }
 </style>
-<script src="{{ url_for('static', filename='js/styleguide.js') }}?v=3" defer></script>
+<script src="{{ url_for('static', filename='js/styleguide.js') }}?v=4" defer></script>
 {% endblock %}

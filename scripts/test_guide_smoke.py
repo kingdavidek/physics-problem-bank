@@ -139,6 +139,27 @@ def main():
         assert 'pagehide' in guide_js
         assert 'data-guide-persisted' in guide_js
 
+        # E7 Phase 2: legacy E6 gesture set + the pbZorp-playable superset.
+        assert 'LEGACY_GESTURES' in guide_js
+        assert 'ZORP_GESTURES' in guide_js
+        legacy_m = re.search(r'LEGACY_GESTURES\s*=\s*\{([^}]*)\}', guide_js)
+        zorp_m = re.search(r'ZORP_GESTURES\s*=\s*\{([^}]*)\}', guide_js)
+        assert legacy_m and zorp_m
+        legacy_names = set(re.findall(r"(\w+)\s*:\s*1", legacy_m.group(1)))
+        zorp_names = set(re.findall(r"(\w+)\s*:\s*1", zorp_m.group(1)))
+        assert legacy_names == {'wink', 'nod', 'shake', 'tap'}, legacy_names
+        assert legacy_names <= zorp_names, (legacy_names, zorp_names)
+        assert {'cheer', 'wave', 'think', 'hop'} <= zorp_names, zorp_names
+
+        # buildRewardStep threads a gesture field through every reward-step object literal.
+        build_m = re.search(r'function buildRewardStep[\s\S]*?\n  \}\n', guide_js)
+        assert build_m, 'buildRewardStep not found'
+        build_body = build_m.group(0)
+        reward_literals = re.findall(r'return\s*\{[^;]*?\};', build_body)
+        assert len(reward_literals) >= 3, reward_literals
+        for literal in reward_literals:
+            assert 'gesture:' in literal, literal
+
         r = client.get('/static/js/celebrate.js')
         assert r.status_code == 200
         celebrate_js = r.data.decode()
@@ -188,6 +209,22 @@ def main():
         assert '#leaderboard-board-tabs' in catalog
         assert 'friends only' in catalog.lower()
         assert 'No DMs.' in catalog
+
+        # E7 Phase 2: new gesture fields, and a cross-file consistency check against
+        # guide.js's ZORP_GESTURES set and zorp-motion.js's CLIP_NAMES list.
+        assert "gesture: 'cheer'" in catalog
+        assert "gesture: 'wave'" in catalog
+        assert "gesture: 'think'" in catalog
+        catalog_gestures = set(re.findall(r"gesture:\s*'(\w+)'", catalog))
+        zorp_gestures_names = set(re.findall(r"(\w+)\s*:\s*1", zorp_m.group(1)))
+        assert catalog_gestures, 'no gesture: values found in guide-catalog.js'
+        assert catalog_gestures <= zorp_gestures_names, (catalog_gestures, zorp_gestures_names)
+        zorp_motion_js = (ROOT / 'static' / 'js' / 'zorp-motion.js').read_text(encoding='utf-8')
+        clip_names_m = re.search(r'CLIP_NAMES\s*=\s*\[([^\]]*)\]', zorp_motion_js)
+        assert clip_names_m
+        clip_names = set(re.findall(r"'(\w+)'", clip_names_m.group(1)))
+        for name in catalog_gestures:
+            assert name in clip_names, (name, clip_names)
 
         suffix = uuid.uuid4().hex[:8]
         handle = f'gda1_{suffix}'

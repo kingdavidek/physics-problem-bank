@@ -37,8 +37,13 @@ BANNED_STRINGS = ('lottie', 'jsdelivr', 'unpkg')
 RUNTIME_JS = JS_DIR / 'zorp-motion.js'
 BUDDY_PARTIAL = ROOT / 'templates' / 'partials' / 'buddy.html'
 BASE_HTML = ROOT / 'templates' / 'base.html'
-API_NAMES = ('bind', 'play', 'idle', 'setFace', 'motionLevel')
+API_NAMES = ('bind', 'play', 'idle', 'setFace', 'motionLevel', 'react')
 PHASE1_CLIPS = ('idle', 'blink', 'cheer', 'wobble', 'think', 'wave', 'point', 'nod', 'wink', 'tap', 'shake')
+PHASE2_CLIPS = PHASE1_CLIPS + ('hop',)
+CELEBRATE_JS = JS_DIR / 'celebrate.js'
+SOUND_JS = JS_DIR / 'sound.js'
+QUIZ_RUNNER_JS = JS_DIR / 'quiz-runner.js'
+PRACTICE_CSS = CSS_DIR / 'practice.css'
 RIG_CLASSES = ('buddy-root', 'buddy-shadow', 'buddy-arm--l', 'buddy-arm--r', 'buddy-body',
                'buddy-head', 'buddy-antenna--l', 'buddy-antenna--r', 'buddy-pupil',
                'buddy-foot--l', 'buddy-foot--r')
@@ -102,7 +107,7 @@ def test_runtime_exposes_api():
     assert 'window.pbZorp' in js
     for name in API_NAMES:
         assert re.search(r'\b' + name + r'\s*:', js), f'pbZorp.{name} missing'
-    for clip in PHASE1_CLIPS:
+    for clip in PHASE2_CLIPS:
         assert f"'{clip}'" in js, f'clip {clip} missing from CLIP_NAMES'
     assert '.animate(' in js                          # WAAPI (§2 #2)
     assert 'prefers-reduced-motion' in js             # §2 #3
@@ -157,9 +162,13 @@ def test_dev_motion_sections():
         assert 'zorp-motion.js' in html
         assert 'css/motion.css' in html
         assert 'buddy-arm--l' in html and 'buddy-pupil' in html
-        for clip in PHASE1_CLIPS:
+        for clip in PHASE2_CLIPS:
             assert f'data-zorp-clip="{clip}"' in html, (path, clip)
         assert 'onclick=' not in html.lower()
+    r = client.get('/styleguide')
+    styleguide_html = r.data.decode()
+    for kind in ('correct', 'wrong', 'streak', 'milestone', 'lesson_complete', 'first_correct'):
+        assert f'data-zorp-react="{kind}"' in styleguide_html, kind
 
 
 def test_cosmetic_css():
@@ -261,6 +270,188 @@ def test_overlay_rig_wiring():
     assert 'zorp-shoe' not in motion_css
 
 
+def _extract_function_span(js, fn_name):
+    """Return (start, end) character offsets covering `function fn_name(...) { ... }`
+    in `js`, matched by brace depth rather than assuming it is the last function."""
+    m = re.search(r'function\s+' + re.escape(fn_name) + r'\s*\([^)]*\)\s*\{', js)
+    assert m, f'function {fn_name} not found'
+    start = m.start()
+    depth = 1
+    i = m.end()
+    while i < len(js) and depth:
+        if js[i] == '{':
+            depth += 1
+        elif js[i] == '}':
+            depth -= 1
+        i += 1
+    return start, i
+
+
+def test_react_api_gating_and_hop_clip():
+    js = RUNTIME_JS.read_text(encoding='utf-8')
+    assert 'REACT_GAP_MS = 900' in js or 'REACT_GAP_MS=900' in js
+    m = re.search(r"CORRECT_VARIANTS\s*=\s*\[([^\]]*)\]", js)
+    assert m, 'CORRECT_VARIANTS missing'
+    variants = [v.strip().strip("'\"") for v in m.group(1).split(',')]
+    assert variants == ['cheer', 'wave', 'hop'], variants
+    m = re.search(r"REACT_CLIP\s*=\s*\{([^}]*)\}", js, re.S)
+    assert m, 'REACT_CLIP missing'
+    assert re.search(r"wrong\s*:\s*'wobble'", m.group(1)), 'wrong must map to wobble, never shake'
+
+    # 'shake' must never appear anywhere in the react-gating machinery: REACT_CLIP,
+    # REACT_FACE, CORRECT_VARIANTS, or the body of react() itself.
+    react_start, react_end = _extract_function_span(js, 'react')
+    react_clip_start = re.search(r'REACT_CLIP\s*=\s*\{', js).start()
+    react_clip_end = js.index('};', react_clip_start) + 2
+    react_face_start = re.search(r'REACT_FACE\s*=\s*\{', js).start()
+    react_face_end = js.index('};', react_face_start) + 2
+    variants_start = re.search(r'CORRECT_VARIANTS\s*=\s*\[', js).start()
+    variants_end = js.index('];', variants_start) + 2
+    for start, end, label in (
+        (react_clip_start, react_clip_end, 'REACT_CLIP'),
+        (react_face_start, react_face_end, 'REACT_FACE'),
+        (variants_start, variants_end, 'CORRECT_VARIANTS'),
+        (react_start, react_end, 'react()'),
+    ):
+        assert 'shake' not in js[start:end], (
+            f'{label} must never reference shake — wrong answers must never head-shake the mascot'
+        )
+
+    assert "data-guide-root" in js[react_start:react_end] or 'inGuide' in js[react_start:react_end]
+    assert 'guide-open' in js[react_start:react_end]
+    assert "motionLevel() === 'off'" in js
+
+    # A rare reaction (milestone/lesson_complete/first_correct) must not be cancellable by an
+    # ordinary correct/wrong/streak reaction landing immediately after it starts.
+    assert 'rareProtectUntil' in js[react_start:react_end], (
+        'react() must protect an in-flight rare reaction from being cut short by a gated one'
+    )
+    assert 'hop' in js
+    assert re.search(r"hop\s*:\s*\{", js), 'hop clip missing from CLIPS table'
+
+    # ifIdle handled in play()
+    play_start, play_end = _extract_function_span(js, 'play')
+    assert 'ifIdle' in js[play_start:play_end]
+
+    # REACT_RARE is only for genuinely rare events — correct/wrong/streak must always
+    # respect the 900ms gate, never bypass it.
+    react_rare_start = re.search(r'REACT_RARE\s*=\s*\{', js).start()
+    react_rare_end = js.index('};', react_rare_start) + 2
+    react_rare_body = js[react_rare_start:react_rare_end]
+    for gated_kind in ('correct', 'wrong', 'streak'):
+        assert re.search(r"\b" + gated_kind + r"\s*:", react_rare_body) is None, (
+            f'{gated_kind} must stay gated by REACT_GAP_MS — it must not appear in REACT_RARE'
+        )
+
+    # The wrong-answer thought bubble is JS-created only — it must never be baked into
+    # buddy.html's static markup or motion.css's stylesheet (both stay untouched this phase).
+    buddy_html = BUDDY_PARTIAL.read_text(encoding='utf-8')
+    motion_css = MOTION_CSS.read_text(encoding='utf-8')
+    assert 'buddy-thought' not in buddy_html, (
+        'buddy.html must not gain a thought-bubble element — it is created purely at runtime'
+    )
+    assert 'buddy-thought' not in motion_css, (
+        'motion.css must not gain thought-bubble rules — it is styled inline via WAAPI/attrs'
+    )
+
+    # Thought-bubble creation/cleanup wired into stop(); reduced-motion branch never touches it.
+    assert 'function showThought' in js
+    assert 'function clearThought' in js
+    stop_start, stop_end = _extract_function_span(js, 'stop')
+    assert 'clearThought' in js[stop_start:stop_end]
+    clips_lookup = js.index('var c = CLIPS[name];', play_start)
+    reduced_marker = js.index('if (reduced) {', clips_lookup)
+    reduced_end = js.index('return delay(inst, c.dur)', reduced_marker)
+    assert 'showThought' not in js[reduced_marker:reduced_end], (
+        'reduced-motion branch of play() must never create a thought bubble'
+    )
+    full_marker = js.index('try {', reduced_end)
+    assert 'showThought' in js[full_marker:play_end], (
+        'full-motion branch of play() must be able to show the thought bubble'
+    )
+
+
+def test_celebrate_pbzorp_isolation():
+    js = CELEBRATE_JS.read_text(encoding='utf-8')
+    start, end = _extract_function_span(js, 'reactMascot')
+    body = js[start:end]
+    assert 'pbZorp' in body, 'reactMascot must reference window.pbZorp'
+    outside = js[:start] + js[end:]
+    assert 'pbZorp' not in outside, (
+        'every pbZorp reference in celebrate.js must live inside reactMascot() — '
+        'this is what proves celebrate.js degrades gracefully with zorp-motion.js absent'
+    )
+    assert "reactMascot('wrong')" in js
+    assert "reactMascot('milestone')" in js
+    assert "reactMascot('streak')" in js
+    assert "reactMascot('lesson_complete')" in js
+    assert "reactMascot(openedFirst ? 'first_correct' : (isStreak ? 'streak' : 'correct'));" in js, (
+        'celebrateCorrect must route first_correct/streak/correct through a single reactMascot call '
+        'that actually branches on openedFirst/isStreak — not just mention the strings separately'
+    )
+    assert "reactMascot('shake'" not in js
+    assert "target.classList.add('is-shake')" in js
+    assert 'pbSound.ding' in js or 'pbSound && window.pbSound.ding' in js
+    assert 'pbSound.soft' in js or 'pbSound && window.pbSound.soft' in js
+    assert 'points !== 0' in js
+
+
+def test_sound_ding_and_soft():
+    js = SOUND_JS.read_text(encoding='utf-8')
+    assert 'ding: playDing' in js
+    assert 'soft: playSoft' in js
+    assert 'function playDing' in js
+    assert 'function playSoft' in js
+    # Both route through playSequence, the same helper every other tone uses.
+    ding_start, ding_end = _extract_function_span(js, 'playDing')
+    soft_start, soft_end = _extract_function_span(js, 'playSoft')
+    assert 'playSequence(' in js[ding_start:ding_end]
+    assert 'playSequence(' in js[soft_start:soft_end]
+    wrong_start, wrong_end = _extract_function_span(js, 'playWrong')
+    wrong_gain = max(float(g) for g in re.findall(r'gain:\s*([\d.]+)', js[wrong_start:wrong_end]))
+    soft_gain = max(float(g) for g in re.findall(r'gain:\s*([\d.]+)', js[soft_start:soft_end]))
+    assert soft_gain < wrong_gain, (soft_gain, wrong_gain)
+    for ext in ('.mp3', '.wav', '.ogg'):
+        assert ext not in js
+    assert 'new Audio(' not in js
+
+
+def test_quiz_runner_scope():
+    js = QUIZ_RUNNER_JS.read_text(encoding='utf-8')
+    lesson_start, lesson_end = _extract_function_span(js, 'initLessonQuizRunner')
+    quick_start, quick_end = _extract_function_span(js, 'initQuicktestRunner')
+    assert 'pbCelebrate' in js[lesson_start:lesson_end]
+    assert 'pbCelebrate' not in js[quick_start:quick_end], (
+        'the quick-test runner must never reference pbCelebrate — it already gets '
+        'celebration via site.js, and adding it here would double-fire ticks/tones'
+    )
+
+
+def _extract_media_block(css, media_query):
+    marker = re.search(re.escape(media_query) + r'\s*\{', css)
+    assert marker, f'{media_query} block missing'
+    start = marker.end()
+    depth = 1
+    i = start
+    while i < len(css) and depth:
+        if css[i] == '{':
+            depth += 1
+        elif css[i] == '}':
+            depth -= 1
+        i += 1
+    return css[start:i - 1]
+
+
+def test_practice_css_quiz_runner_option_animations():
+    css = PRACTICE_CSS.read_text(encoding='utf-8')
+    block = _extract_media_block(css, '@media (prefers-reduced-motion: no-preference)')
+    assert '.quiz-runner-option.is-pop' in block
+    assert '.quiz-runner-option.is-shake' in block
+    assert '.quiz-runner-option.is-reveal' in block
+    assert '.mcq-btn.is-pop' in block and '.btn.is-pop' in block   # unchanged
+    assert '.mcq-btn.is-shake' in block and '.btn.is-shake' in block
+
+
 def main():
     test_no_third_party_animation_library()
     test_motion_css_keyframes_pair_with_reduced_motion()
@@ -273,7 +464,12 @@ def main():
     test_cosmetic_markup()
     test_default_render_has_no_look()
     test_overlay_rig_wiring()
-    print('Zorp motion Phase 1 smoke passed.')
+    test_react_api_gating_and_hop_clip()
+    test_celebrate_pbzorp_isolation()
+    test_sound_ding_and_soft()
+    test_quiz_runner_scope()
+    test_practice_css_quiz_runner_option_animations()
+    print('Zorp motion Phase 1-2 smoke passed.')
 
 
 if __name__ == '__main__':

@@ -56,7 +56,7 @@
                 <span class="study-buddy-face sg-zorp-gesture" id="guide-preview-motion" data-zorp-demo data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot() }}</span>
             </div>
             <div class="sg-row" style="margin-top: var(--space-4);">
-                {% for clip in ['idle', 'blink', 'cheer', 'wobble', 'think', 'wave', 'point', 'nod', 'wink', 'tap', 'shake'] %}
+                {% for clip in ['idle', 'blink', 'cheer', 'wobble', 'think', 'wave', 'point', 'nod', 'wink', 'tap', 'shake', 'hop'] %}
                 <button type="button" class="btn btn-outline" data-zorp-clip="{{ clip }}">{{ clip|capitalize }}</button>
                 {% endfor %}
                 <button type="button" class="btn btn-outline" data-zorp-clip="point" data-zorp-target="left">Point left</button>

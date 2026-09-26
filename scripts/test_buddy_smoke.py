@@ -94,7 +94,7 @@ def main():
         r = client.get('/api/v1/build-info')
         assert r.status_code == 200
         assert r.get_json()['buddy_embed'] == 'v4'
-        assert r.get_json()['study_buddy_js'] == 'v8'
+        assert r.get_json()['study_buddy_js'] == 'v9'
 
         r = client.get('/')
         assert r.status_code == 200
@@ -117,7 +117,7 @@ def main():
         assert 'data-buddy-face' in html
         assert 'buddy-mascot' in html
         assert 'data-face=' in html
-        assert 'zorp-motion.js?v=1' in html
+        assert 'zorp-motion.js?v=2' in html
         assert 'css/motion.css?v=2' in html
         assert 'buddy-arm--l' in html
         assert 'buddy-pupil' in html
@@ -300,7 +300,7 @@ def main():
         assert 'data-buddy-level="gcse"' in html_lesson
         assert 'data-buddy-subject="maths"' in html_lesson
         assert 'data-buddy-topic="algebra"' in html_lesson
-        assert 'study-buddy.js?v=22' in html_lesson
+        assert 'study-buddy.js?v=23' in html_lesson
         assert 'Problem Bank build: buddy-embed-v4' in html_lesson
         assert 'pb-buddy-embed-v4' in html_lesson
         assert 'id="pb-buddy-page"' in html_lesson

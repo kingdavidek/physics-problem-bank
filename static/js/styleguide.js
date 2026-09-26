@@ -87,5 +87,13 @@
     }
     var off = scope.querySelector('[data-zorp-idle-off]');
     if (off) off.addEventListener('click', function () { for (var k = 0; k < demos.length; k += 1) z.idle(false, demos[k]); });
+    var reactBtns = scope.querySelectorAll('[data-zorp-react]');
+    for (var r = 0; r < reactBtns.length; r += 1) {
+      reactBtns[r].addEventListener('click', function (event) {
+        if (!z.react) return;
+        var kind = event.currentTarget.getAttribute('data-zorp-react');
+        for (var k = 0; k < demos.length; k += 1) z.react(kind, { el: demos[k] });
+      });
+    }
   }
 })();
