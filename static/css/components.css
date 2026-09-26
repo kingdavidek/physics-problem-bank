@@ -423,6 +423,7 @@ a.hero-pill.is-active,
     box-shadow: var(--shadow);
 }
 .pwa-install-banner[hidden] { display: none; }
+.pwa-install-banner .pb-zorp-small { flex-shrink: 0; }
 .pwa-install-copy {
     flex: 1;
     min-width: 160px;

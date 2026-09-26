@@ -2,6 +2,7 @@
 {% from "partials/user_avatar.html" import user_avatar %}
 {% from "partials/page_flashes.html" import render as page_flashes %}
 {% from "partials/zorp_badge.html" import zorp_badge_face %}
+{% from "partials/buddy.html" import buddy_mascot %}
 {% block title %}Profile – Problem Bank{% endblock %}
 
 {% block content %}
@@ -102,6 +103,7 @@
             <strong class="streak-ring-count">{{ streak_ring.current }}</strong>
             <span class="streak-ring-label">{% if streak_ring.current == 1 %}day{% else %}days{% endif %}</span>
         </div>
+        <span class="study-buddy-face pb-zorp-small streak-ring-peek" id="streak-ring-peek" data-buddy-face data-face="nudge" data-zorp-autoplay="peek" data-zorp-autoplay-once-key="pb-zorp-peek" data-zorp-autoplay-delay="900" aria-hidden="true">{{ buddy_mascot() }}</span>
     </div>
     <div class="streak-ring-meta">
         <p class="streak-ring-next">

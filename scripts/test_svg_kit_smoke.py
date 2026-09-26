@@ -207,7 +207,16 @@ def test_u57_brand_assets():
 
         offline = client.get('/offline')
         assert offline.status_code == 200
-        assert 'empty-spot--offline' in offline.data.decode()
+        # E7 Phase 4: the offline page swapped its `spot('offline')` illustration for a
+        # sleeping Zorp (David's decision, docs/MASCOT_MOTION_AND_ONBOARDING.md Phase 4).
+        # Rendered with data-face="sleep" directly in markup (not via zorp-motion.js's
+        # play('sleep', ...)), since this page must work for anonymous/offline sessions where
+        # zorp-motion.js isn't loaded at all — pin the actual working implementation, not a
+        # JS call that would never run here. `id="offline-zorp"` disambiguates from the
+        # install-banner mascot base.html now renders on every page.
+        offline_html = offline.data.decode()
+        assert 'id="offline-zorp"' in offline_html
+        assert 'data-face="sleep"' in offline_html
 
         missing = client.get('/this-route-does-not-exist-u57')
         assert missing.status_code == 404

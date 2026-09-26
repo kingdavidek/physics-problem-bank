@@ -40,6 +40,7 @@ BASE_HTML = ROOT / 'templates' / 'base.html'
 API_NAMES = ('bind', 'play', 'idle', 'setFace', 'motionLevel', 'react')
 PHASE1_CLIPS = ('idle', 'blink', 'cheer', 'wobble', 'think', 'wave', 'point', 'nod', 'wink', 'tap', 'shake')
 PHASE2_CLIPS = PHASE1_CLIPS + ('hop',)
+PHASE4_CLIPS = PHASE2_CLIPS + ('peek', 'sleep')
 CELEBRATE_JS = JS_DIR / 'celebrate.js'
 SOUND_JS = JS_DIR / 'sound.js'
 QUIZ_RUNNER_JS = JS_DIR / 'quiz-runner.js'
@@ -442,6 +443,46 @@ def _extract_media_block(css, media_query):
     return css[start:i - 1]
 
 
+def test_phase4_new_clips():
+    # E7 Phase 4: 'peek' and 'sleep' were speculated in the Phase 1 clip table but never
+    # implemented until now. Additive only — CLIP_NAMES/CLIPS both gain entries, nothing
+    # existing is touched.
+    js = RUNTIME_JS.read_text(encoding='utf-8')
+    for clip in ('peek', 'sleep'):
+        assert f"'{clip}'" in js, f'clip {clip} missing from CLIP_NAMES'
+        assert re.search(re.escape(clip) + r"\s*:\s*\{", js), f'{clip} clip missing from CLIPS table'
+    for clip in PHASE4_CLIPS:
+        assert f"'{clip}'" in js, f'clip {clip} missing from CLIP_NAMES'
+    # 'peek' has no reducedFace — the existing play() reduced-motion branch already resolves
+    # `false` for any clip lacking one, so it must never gain a special-cased reduced check.
+    m = re.search(r"peek\s*:\s*\{", js)
+    assert m, 'peek clip missing from CLIPS table'
+    depth = 1
+    i = m.end()
+    while i < len(js) and depth:
+        if js[i] == '{':
+            depth += 1
+        elif js[i] == '}':
+            depth -= 1
+        i += 1
+    assert 'reducedFace' not in js[m.end():i]
+
+
+def test_phase4_react_target_skips_decorative_mascots():
+    # E7 Phase 4 post-review fix: zorp-triggers.js's data-zorp-autoplay mascots (empty states,
+    # streak-ring peek) bind into `instances` before study-buddy.js binds/unhides the corner
+    # buddy (base.html script order), so reactTarget()'s "first rendered instance" scan must
+    # explicitly skip any instance whose host is one of these one-off decorative mascots —
+    # otherwise a milestone/streak/correct celebration on /profile or an empty-state page could
+    # animate the small decorative mascot instead of the intended buddy.
+    js = RUNTIME_JS.read_text(encoding='utf-8')
+    assert 'data-zorp-autoplay' in js, 'reactTarget() must know about the autoplay marker attribute'
+    react_target_start, react_target_end = _extract_function_span(js, 'reactTarget')
+    assert 'isDecorative' in js[react_target_start:react_target_end], (
+        'reactTarget() must exclude decorative (data-zorp-autoplay) mascots from its scan'
+    )
+
+
 def test_practice_css_quiz_runner_option_animations():
     css = PRACTICE_CSS.read_text(encoding='utf-8')
     block = _extract_media_block(css, '@media (prefers-reduced-motion: no-preference)')
@@ -469,6 +510,8 @@ def main():
     test_sound_ding_and_soft()
     test_quiz_runner_scope()
     test_practice_css_quiz_runner_option_animations()
+    test_phase4_new_clips()
+    test_phase4_react_target_skips_decorative_mascots()
     print('Zorp motion Phase 1-2 smoke passed.')
 
 

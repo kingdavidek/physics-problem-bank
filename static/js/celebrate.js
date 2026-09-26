@@ -54,6 +54,7 @@
       floatEl.setAttribute('aria-hidden', 'true');
       floatEl.textContent = label;
       anchor.appendChild(floatEl);
+      if (!prefersReducedMotion()) burstSparkle(anchor);
       window.setTimeout(function () { floatEl.remove(); }, prefersReducedMotion() ? 900 : 1300);
       return;
     }
@@ -67,6 +68,24 @@
       el.classList.add('is-gone');
       window.setTimeout(function () { el.remove(); }, 280);
     }, 1400);
+  }
+
+  // E7 Phase 4: a small 3-5 particle sparkle burst next to the XP float, reusing the
+  // confetti append/animate mechanism at a smaller scale and shorter duration.
+  function burstSparkle(anchor) {
+    if (!anchor || !anchor.appendChild) return;
+    var n = 3 + Math.floor(Math.random() * 3);
+    for (var i = 0; i < n; i += 1) {
+      var bit = document.createElement('span');
+      bit.className = 'sparkle-bit sparkle-bit--' + (i % 3);
+      bit.style.setProperty('--sx', (Math.random() * 36 - 18) + 'px');
+      bit.style.setProperty('--sy', (-10 - Math.random() * 22) + 'px');
+      bit.style.animationDelay = (Math.random() * 80) + 'ms';
+      anchor.appendChild(bit);
+      (function (el) {
+        window.setTimeout(function () { el.remove(); }, 650);
+      }(bit));
+    }
   }
 
   function drawCheckmark(anchor) {
@@ -105,7 +124,8 @@
     var palettes = 5;
     for (var i = 0; i < 40; i += 1) {
       var bit = document.createElement('span');
-      bit.className = 'confetti-bit confetti-bit--' + (i % palettes);
+      var shape = (i % 2 === 0) ? 'dot' : 'star';
+      bit.className = 'confetti-bit confetti-bit--' + (i % palettes) + ' confetti-bit--' + shape;
       bit.style.left = (8 + Math.random() * 84) + 'vw';
       bit.style.top = (8 + Math.random() * 28) + 'vh';
       bit.style.width = (6 + Math.random() * 6) + 'px';

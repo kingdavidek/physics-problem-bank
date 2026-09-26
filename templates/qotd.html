@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% from "partials/page_flashes.html" import render as page_flashes %}
 {% from "partials/spot.html" import spot %}
+{% from "partials/buddy.html" import buddy_mascot %}
 {% block title %}Question of the day – Problem Bank{% endblock %}
 
 {% block content %}
@@ -96,7 +97,7 @@
         </ol>
         {% else %}
         <div class="empty-state">
-            <div class="empty-state-icon" aria-hidden="true">{{ spot('friends') }}</div>
+            <span class="study-buddy-face pb-zorp-small" id="qotd-empty-zorp" data-buddy-face data-face="nudge" data-zorp-autoplay="think" aria-hidden="true">{{ buddy_mascot() }}</span>
             <h3>No friends on the board yet</h3>
             <p>Follow classmates to compare daily answers.</p>
             <a href="{{ url_for('site_search') }}" class="btn btn-primary">Find friends</a>

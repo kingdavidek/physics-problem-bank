@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "partials/spot.html" import spot %}
+{% from "partials/buddy.html" import buddy_mascot %}
 {% block title %}Offline – Problem Bank{% endblock %}
 
 {% block content %}
@@ -7,9 +7,14 @@
   <section class="section-panel status-page-card">
     <div class="section-panel-body">
       <div class="empty-state">
-        <div class="empty-state-icon" aria-hidden="true">{{ spot('offline') }}</div>
-        <h1>You’re offline</h1>
-        <p>Problem Bank needs a connection to generate questions and load lessons. Cached pages may still open if you’ve visited them recently.</p>
+        <!-- E7 Phase 4: rendered with data-face="sleep" directly (not via zorp-motion.js's
+             `play('sleep', ...)`), since this page is precached for offline/anonymous use and
+             zorp-motion.js only loads for authenticated/preview sessions (templates/base.html).
+             data-face="sleep" matches none of chrome.css's .study-buddy-face[data-face="…"]
+             selectors, so every .buddy-face group (display:none by default) stays hidden —
+             a blank, eyes-closed-look face, with zero JS dependency. -->
+        <span class="study-buddy-face pb-zorp-small" id="offline-zorp" data-buddy-face data-face="sleep" aria-hidden="true">{{ buddy_mascot() }}</span>
+        <h1>No signal here — your saved lessons still work.</h1>
         <a href="/" class="btn btn-primary" id="offline-retry">Try again</a>
       </div>
     </div>

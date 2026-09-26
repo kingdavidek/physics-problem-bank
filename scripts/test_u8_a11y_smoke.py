@@ -36,6 +36,14 @@ LESSON_ONLY = {'lesson-pages.css', 'lesson-assist.css'}
 # for anything that isn't a shared rig/idle/reaction keyframe). Post-review fix added a small
 # `.sr-only-submit` rule to chrome.css (~150 bytes, the Enter-key-submits-the-wrong-button fix).
 # Tree now 223,496 (core 198,504). Budget NOT raised — plenty of headroom remained from the §2 #11 bump.
+# E7 Phase 4 (2026-09-26): page-transition/View Transitions CSS in base.css, the combined
+# btn-press keyframes + reduced-motion flash in practice.css, confetti shape/sparkle CSS in
+# chrome.css, the shared `.pb-zorp-small` mascot class + streak-ring-peek positioning in
+# pages.css, and one `flex-shrink` line in components.css together add ~4,123 bytes (no new
+# file — motion.css untouched, still 4,028 bytes; figure includes post-review fixes: the
+# reduced-motion @view-transition disable block and comment expansions in base.css/zorp-motion.js
+# don't add CSS bytes beyond what's counted here). Tree now 227,619 bytes (core 202,627).
+# Budget NOT raised — plenty of headroom remained from the §2 #11 bump.
 CSS_BUDGET_BYTES = 240_000
 # Core sheets loaded on every page after the U8.6 lesson split.
 # S0 added fonts.css (~1KB) plus legal-footer / email-verify chrome.
@@ -53,6 +61,9 @@ CSS_BUDGET_BYTES = 240_000
 # E7 Phase 3 (2026-09-26): pages.css grew ~2,126 bytes for the /welcome layout, chrome.css grew
 # ~150 bytes in post-review fixes (see CSS_BUDGET_BYTES note above). Tree now 223,496 (core
 # 198,504). Budget NOT raised.
+# E7 Phase 4 (2026-09-26): see CSS_BUDGET_BYTES note above — ~4,123 bytes added across
+# base.css/practice.css/chrome.css/pages.css/components.css, no lesson-only sheet touched
+# (total and core grew by the same amount). Tree now 227,619 (core 202,627). Budget NOT raised.
 CSS_CORE_BUDGET_BYTES = 210_000
 
 

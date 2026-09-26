@@ -2086,6 +2086,19 @@ body.quiz-runner-active .app-tab-bar {
     width: 160px;
     height: 160px;
 }
+/* E7 Phase 4: shared small inline mascot size — streak-ring peek, offline page, PWA
+   install banner, and the empty-state spots all reuse this one class. */
+.pb-zorp-small,
+.pb-zorp-small .buddy-mascot {
+    width: 56px;
+    height: 56px;
+}
+.streak-ring-peek {
+    position: absolute;
+    right: -14px;
+    bottom: -6px;
+    pointer-events: none;
+}
 .sg-mascot-cell figcaption {
     margin-top: var(--space-2);
     color: var(--text-muted);

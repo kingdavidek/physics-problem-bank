@@ -4,7 +4,7 @@
   'use strict';
   if (window.pbZorp) return;
 
-  var CLIP_NAMES = ['idle', 'blink', 'cheer', 'wobble', 'think', 'wave', 'point', 'nod', 'wink', 'tap', 'shake', 'hop'];
+  var CLIP_NAMES = ['idle', 'blink', 'cheer', 'wobble', 'think', 'wave', 'point', 'nod', 'wink', 'tap', 'shake', 'hop', 'peek', 'sleep'];
   var FACES = { nudge: 1, milestone: 1, celebrate: 1, qotd_nudge: 1, streak_risk: 1, weak_topic: 1, friend_challenge: 1 };
   var GESTURES = { nod: 1, wink: 1, tap: 1, shake: 1 };   // E6 CSS keyframes via data-gesture
   var GESTURE_MS = 1200;                                    // same as guide.js playGesture
@@ -482,6 +482,52 @@
           ]]
         ];
       }
+    },
+    // E7 Phase 4: streak-ring peek — root slides in from off-screen with a head tilt, then
+    // settles. No `face`/`reducedFace` (reduced motion skips this clip entirely, per the
+    // existing play() branch that resolves `false` for any clip lacking `reducedFace`).
+    peek: {
+      dur: 500,
+      tracks: function (parts) {
+        return [
+          [parts.root, [
+            { transform: 'translateX(-32px)' },
+            { offset: 0.55, transform: 'translateX(2px)' },
+            { offset: 0.8, transform: 'translateX(-2px)' },
+            { transform: 'translateX(0)' }
+          ]],
+          [parts.head, [
+            { transform: 'rotate(0deg)' },
+            { offset: 0.4, transform: 'rotate(-10deg)' },
+            { offset: 0.8, transform: 'rotate(-10deg)' },
+            { transform: 'rotate(0deg)' }
+          ]]
+        ];
+      }
+    },
+    // E7 Phase 4: "sleep" — head droop, held via a `sleep` data-face that matches none of
+    // chrome.css's `.study-buddy-face[data-face="…"]` rules, so every `.buddy-face` group
+    // (which default to `display: none`) stays hidden for the clip's duration — no eyes, no
+    // mouth, a blank/eyes-closed look — without touching buddy.html or motion.css. Note:
+    // templates/offline.html sets `data-face="sleep"` directly in markup instead of calling
+    // this clip, since zorp-motion.js isn't loaded for anonymous/offline sessions (gated in
+    // base.html); this clip stays available for any authenticated context that wants an
+    // animated one-off droop. Same face for reduced motion: a data-face swap is a discrete
+    // expression change, not the animated motion reduced-motion strips out.
+    sleep: {
+      dur: 1400,
+      face: 'sleep',
+      reducedFace: 'sleep',
+      tracks: function (parts) {
+        return [
+          [parts.head, [
+            { transform: 'rotate(0deg)' },
+            { offset: 0.35, transform: 'rotate(12deg)' },
+            { offset: 0.85, transform: 'rotate(12deg)' },
+            { transform: 'rotate(0deg)' }
+          ]]
+        ];
+      }
     }
   };
 
@@ -563,6 +609,16 @@
     return !!(inst.svg.closest && inst.svg.closest('[data-guide-root]'));
   }
 
+  // E7 Phase 4: one-off decorative mascots (empty states, streak-ring peek — anything driven
+  // by zorp-triggers.js's data-zorp-autoplay) must never be picked as the ambient react()
+  // target for correct/wrong/streak/milestone answers. zorp-triggers.js runs (and binds these
+  // via play()) before study-buddy.js binds and unhides the corner buddy, so without this
+  // check reactTarget()'s "first rendered instance" scan could pick a visible decorative
+  // mascot on a page like /profile or the empty-state pages instead of the intended buddy.
+  function isDecorative(inst) {
+    return !!(inst.host && inst.host.hasAttribute && inst.host.hasAttribute('data-zorp-autoplay'));
+  }
+
   function nextCorrectVariant(prev) {
     var pool = CORRECT_VARIANTS.filter(function (name) { return name !== prev; });
     if (!pool.length) pool = CORRECT_VARIANTS.slice();
@@ -573,7 +629,7 @@
     var i;
     for (i = 0; i < instances.length; i += 1) {
       var inst = instances[i];
-      if (!inGuide(inst) && rendered(inst)) return inst;
+      if (!inGuide(inst) && !isDecorative(inst) && rendered(inst)) return inst;
     }
     return null;
   }

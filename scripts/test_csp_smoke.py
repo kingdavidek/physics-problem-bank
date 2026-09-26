@@ -33,6 +33,17 @@ def main():
         assert 'onchange=' not in src.lower(), path.name
         assert 'pythonanywhere.com' not in src, path.name
         assert 'cdn.jsdelivr.net' not in src, path.name
+        # E7 Phase 4 lesson: a src-less <script> block with no nonce is silently blocked by
+        # this app's CSP (script-src has no 'unsafe-inline') and, even when the CSP would
+        # allow it, may run before deferred scripts like zorp-motion.js have defined their
+        # globals. Scan every template source directly (not just two rendered routes) so a
+        # future template can't reintroduce a dead/blocked inline script undetected. A JSON
+        # data island (type="application/json", no execution) is the only exception.
+        for tag in INLINE_SCRIPT.findall(src):
+            assert 'application/json' in tag.lower(), (
+                f'{path.name}: src-less <script> with no nonce — CSP will block it '
+                f'(attrs: {tag!r})'
+            )
 
     with app.test_client() as client:
         r = client.get('/')

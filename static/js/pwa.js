@@ -84,6 +84,12 @@
     if (!banner || chromeDismissed() || isStandalone()) return;
     if (iosHint) iosHint.hidden = true;
     banner.hidden = false;
+    // E7 Phase 4: a small Zorp wave next to the banner copy — no .focus() call, the banner
+    // already avoids stealing focus and this must not change that.
+    if (window.pbZorp && typeof window.pbZorp.play === 'function') {
+      var zorpEl = document.getElementById('pwa-install-zorp');
+      if (zorpEl) window.pbZorp.play('wave', { el: zorpEl });
+    }
   }
 
   function hideBanner() {

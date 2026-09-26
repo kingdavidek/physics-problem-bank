@@ -33,6 +33,12 @@
     transform: translateY(4px);
     box-shadow: 0 0 0 var(--btn-edge);
 }
+@keyframes btn-press-4 {
+    0% { transform: translateY(0) scale(1); }
+    40% { transform: translateY(4px) scale(0.97); }
+    70% { transform: translateY(4px) scale(1.02); }
+    100% { transform: translateY(4px) scale(1); }
+}
 .btn:disabled,
 .btn[aria-disabled="true"] {
     opacity: 0.5;
@@ -97,6 +103,12 @@
                 transform var(--dur-fast) var(--ease);
 }
 .mcq-btn:active { transform: translateY(3px); }
+@keyframes btn-press-3 {
+    0% { transform: translateY(0) scale(1); }
+    40% { transform: translateY(3px) scale(0.97); }
+    70% { transform: translateY(3px) scale(1.02); }
+    100% { transform: translateY(3px) scale(1); }
+}
 .mcq-btn:hover:not(:disabled) {
     background: var(--ink-100);
     border-color: var(--ink-300);
@@ -164,6 +176,10 @@
     .quiz-runner-option.is-shake { animation: mcq-shake 360ms var(--ease); }
     .mcq-btn.is-reveal,
     .quiz-runner-option.is-reveal { animation: mcq-reveal 500ms var(--ease-out); }
+    /* E7 Phase 4: edge-compression press combined with an --ease-spring scale bounce, in one
+       composed transform per keyframe timeline rather than two competing rules. */
+    .btn:active { animation: btn-press-4 140ms var(--ease-spring) both; }
+    .mcq-btn:active { animation: btn-press-3 140ms var(--ease-spring) both; }
 }
 /* E7 Phase 2: .quiz-runner-option has no .mcq-btn layout, so the JS-drawn checkmark
    (identical markup/JS regardless of button class) needs its own position/colour fix here. */
@@ -1167,5 +1183,9 @@
     .answer-xp-float { animation: none; }
     .answer-check-mark-ring,
     .answer-check-mark-tick { animation: none; stroke-dashoffset: 0; }
+    /* E7 Phase 4: reduced motion keeps the edge-compression translateY (a discrete position
+       change, not the animated bounce) but drops the scale spring for a colour-only flash. */
+    .btn:active,
+    .mcq-btn:active { filter: brightness(0.92); }
 }
 

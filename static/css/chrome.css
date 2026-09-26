@@ -297,15 +297,41 @@ textarea:focus {
 .confetti-bit--2 { background: var(--correct-500); }
 .confetti-bit--3 { background: var(--gold-500); }
 .confetti-bit--4 { background: var(--brand-400); }
+/* E7 Phase 4: a shape dimension independent of the colour dimension above. */
+.confetti-bit--dot { border-radius: 50%; }
+.confetti-bit--star {
+    border-radius: 0;
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
 @keyframes confetti-fall {
     to {
         transform: translate(var(--drift, 0), 42vh) rotate(var(--spin, 220deg));
         opacity: 0;
     }
 }
+/* E7 Phase 4: small sparkle burst beside the local +XP float (celebrate.js burstSparkle()). */
+.sparkle-bit {
+    position: absolute;
+    right: var(--space-2);
+    top: -0.35rem;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 3;
+    animation: sparkle-pop 550ms var(--ease-out) forwards;
+}
+.sparkle-bit--0 { background: var(--gold-500); }
+.sparkle-bit--1 { background: var(--xp-500); }
+.sparkle-bit--2 { background: var(--brand-400); }
+@keyframes sparkle-pop {
+    from { opacity: 1; transform: translate(0, 0) scale(1); }
+    to { opacity: 0; transform: translate(var(--sx, 0), var(--sy, -14px)) scale(0.4); }
+}
 @media (prefers-reduced-motion: reduce) {
     .xp-toast { animation: none; }
     .confetti-burst { display: none; }
+    .sparkle-bit { display: none; }
 }
 .auth-form { max-width: 420px; }
 .auth-form .form-group { margin-bottom: 16px; }
