@@ -9,6 +9,7 @@ from models.social import (
     ACTIVITY_QUIZ_COMPLETED,
     ACTIVITY_TOPIC_OPENED,
 )
+from models.notifications import NOTIFICATION_MILESTONE, create_notification
 from models.user import utc_now_iso
 from models.topic_status import (
     catalog_extra_entries,
@@ -489,6 +490,17 @@ def evaluate_milestones(conn, user_id):
         earned.append(MILESTONE_ACCURACY_TOP_FRIEND)
 
     earned.extend(evaluate_topic_milestones(conn, user_id, _award_milestone))
+
+    # _award_milestone's PK on (user_id, milestone_key) means it returns True only
+    # once per badge, so `earned` already has no duplicates -- one notification per key.
+    for key in earned:
+        create_notification(
+            conn,
+            user_id,
+            NOTIFICATION_MILESTONE,
+            {'milestone_key': key},
+            commit=False,
+        )
 
     if earned:
         conn.commit()

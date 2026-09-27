@@ -15,13 +15,12 @@ from app import app, get_db  # noqa: E402
 from models.buddy import (  # noqa: E402
     BUDDY_CELEBRATE,
     BUDDY_FRIEND_CHALLENGE,
-    BUDDY_MILESTONE,
-    BUDDY_NUDGE,
-    BUDDY_QOTD_NUDGE,
     BUDDY_STREAK_RISK,
     BUDDY_WEAK_TOPIC,
+    buddy_task_mark,
 )
 from models.gamification import ensure_user_streak  # noqa: E402
+from models.notifications import NOTIFICATION_MILESTONE  # noqa: E402
 from models.social import follow_user  # noqa: E402
 from models.user import User  # noqa: E402
 
@@ -93,8 +92,8 @@ def main():
 
         r = client.get('/api/v1/build-info')
         assert r.status_code == 200
-        assert r.get_json()['buddy_embed'] == 'v4'
-        assert r.get_json()['study_buddy_js'] == 'v9'
+        assert r.get_json()['buddy_embed'] == 'v6'
+        assert r.get_json()['study_buddy_js'] == 'v11'
 
         r = client.get('/')
         assert r.status_code == 200
@@ -125,15 +124,29 @@ def main():
         assert 'data-zorp-colour' not in html
         assert 'data-mouth=' not in html
 
+        # Fresh user: nothing applies -> the buddy is None, not a permanent nudge.
         r = client.get('/api/v1/me/buddy')
         assert r.status_code == 200
         data = r.get_json()
         assert data['ok'] is True
-        assert data['buddy']['type'] == BUDDY_NUDGE
-        assert data['buddy']['face'] == '👾'
-        assert data['buddy']['message']
-        assert data['buddy']['action_url']
-        assert data['buddy']['action_label']
+        assert data['buddy'] is None
+
+        # A fresh user renders no bubble server-side, but the aside is still present as
+        # a face-only corner Zorp (so answer reactions/idle motion keep working) -- the
+        # root carries no `hidden` attribute, the card starts hidden, and the JSON
+        # island is always rendered (as `null` here) so the client skips its initial
+        # fetch rather than firing one right away.
+        assert 'data-buddy-root' in html
+        assert 'id="pb-buddy-prompt"' in html
+        assert 'id="pb-buddy-prompt">null</script>' in html
+        m = re.search(r'<aside id="study-buddy"[^>]*>', html)
+        assert m, 'expected the study-buddy aside on the profile page'
+        aside_tag = m.group(0)
+        assert ' hidden' not in aside_tag, aside_tag
+        assert 'data-buddy-state="face"' in aside_tag
+        card_m = re.search(r'<div class="study-buddy-card"[^>]*>', html)
+        assert card_m, 'expected the study-buddy-card div'
+        assert 'hidden' in card_m.group(0)
 
         insert_quiz(uid_a, 8, 10)
         r = client.get('/api/v1/me/buddy')
@@ -141,28 +154,96 @@ def main():
         assert celebrate['type'] == BUDDY_CELEBRATE
         assert celebrate['face'] == '😄'
         assert '8/10' in celebrate['message']
+        assert celebrate['task_mark']
 
-        now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        # task_mark is stable across two calls with no new activity...
+        mark_1 = celebrate['task_mark']
+        r = client.get('/api/v1/me/buddy')
+        assert r.get_json()['buddy']['task_mark'] == mark_1
         with get_db() as conn:
-            conn.execute(
-                '''
-                INSERT INTO user_milestones (user_id, milestone_key, earned_at)
-                VALUES (?, 'first_quiz', ?)
-                ''',
-                (uid_a, now),
-            )
+            mark_direct = buddy_task_mark(conn, uid_a, datetime.now(timezone.utc))
+        assert mark_direct == mark_1
+        assert datetime.now(timezone.utc).date().isoformat() in mark_1
+        # ...changes after another quiz attempt row is inserted...
+        insert_quiz(uid_a, 5, 10, topic='functions')
+        r = client.get('/api/v1/me/buddy')
+        mark_2 = r.get_json()['buddy']['task_mark']
+        assert mark_2 != mark_1
+        # ...and changes after 5 MCQ attempts (a fresh "task" every 5 answers).
+        now_iso = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+        with get_db() as conn:
+            for _ in range(5):
+                conn.execute(
+                    '''
+                    INSERT INTO generator_mcq_attempts (
+                        user_id, level, subject, topic, mode, difficulty,
+                        user_answer, correct_answer, correct, created_at
+                    ) VALUES (?, 'gcse', 'maths', 'algebra', 'mcq', 'foundational', 'A', 'B', 0, ?)
+                    ''',
+                    (uid_a, now_iso),
+                )
             conn.commit()
         r = client.get('/api/v1/me/buddy')
-        milestone = r.get_json()['buddy']
-        assert milestone['type'] == BUDDY_MILESTONE
-        assert milestone['face'] == '🎉'
-        assert milestone['milestone_key'] == 'first_quiz'
-        assert 'First quiz' in milestone['message']
-        assert '#milestones' in milestone['action_url']
+        mark_3 = r.get_json()['buddy']['task_mark']
+        assert mark_3 != mark_2
+
+        # Milestones no longer surface as a buddy bubble -- they generate a
+        # 'milestone_earned' notification and a #pb-new-milestone JSON island
+        # instead. evaluate_milestones() is the single place that awards them.
+        with get_db() as conn:
+            conn.execute('DELETE FROM user_milestones WHERE user_id = ?', (uid_a,))
+            conn.execute('DELETE FROM user_notifications WHERE user_id = ?', (uid_a,))
+            conn.commit()
+        from models.gamification import evaluate_milestones  # noqa: E402
+        with get_db() as conn:
+            earned = evaluate_milestones(conn, uid_a)
+            assert 'first_quiz' in earned
+            rows = conn.execute(
+                'SELECT notification_type, payload_json FROM user_notifications WHERE user_id = ?',
+                (uid_a,),
+            ).fetchall()
+            milestone_rows = [row for row in rows if row['notification_type'] == NOTIFICATION_MILESTONE]
+            assert len(milestone_rows) == 1
+            assert 'first_quiz' in milestone_rows[0]['payload_json']
+            # Re-running adds no duplicate notification for an already-earned badge.
+            again = evaluate_milestones(conn, uid_a)
+            assert 'first_quiz' not in again
+            rows_after = conn.execute(
+                'SELECT COUNT(*) AS n FROM user_notifications WHERE user_id = ? AND notification_type = ?',
+                (uid_a, NOTIFICATION_MILESTONE),
+            ).fetchone()
+            assert rows_after['n'] == 1
+
+        r = client.get('/api/v1/me/notifications')
+        assert r.status_code == 200
+        notif = r.get_json()
+        milestone_items = [n for n in notif['notifications'] if n['type'] == NOTIFICATION_MILESTONE]
+        assert len(milestone_items) == 1
+        assert 'New badge' in milestone_items[0]['message']
+        assert '#milestones' in milestone_items[0]['url']
+
         r = client.get('/profile')
         assert r.status_code == 200
         profile_html = r.data.decode()
-        assert 'data-buddy-milestone-key="first_quiz"' in profile_html
+        # No more milestone bubble/attribute on the corner buddy.
+        assert 'data-buddy-milestone-key' not in profile_html
+        # But the badge celebration island fires once via #pb-new-milestone.
+        assert 'id="pb-new-milestone"' in profile_html
+        assert 'first_quiz' in profile_html
+
+        # The recent-milestone celebration island clears once earned_at falls
+        # outside the 24h window (studied via direct DB manipulation, since the
+        # smoke suite can't wait a day).
+        with get_db() as conn:
+            old_at = (datetime.now(timezone.utc) - timedelta(hours=25)).replace(microsecond=0).isoformat()
+            conn.execute(
+                'UPDATE user_milestones SET earned_at = ? WHERE user_id = ?',
+                (old_at, uid_a),
+            )
+            conn.commit()
+        r = client.get('/profile')
+        assert 'id="pb-new-milestone"' not in r.data.decode()
+
         with get_db() as conn:
             conn.execute('DELETE FROM user_milestones WHERE user_id = ?', (uid_a,))
             conn.commit()
@@ -170,6 +251,7 @@ def main():
         today_iso = datetime.now(timezone.utc).date().isoformat()
         with get_db() as conn:
             conn.execute('DELETE FROM quiz_attempts WHERE user_id = ?', (uid_a,))
+            conn.execute('DELETE FROM generator_mcq_attempts WHERE user_id = ?', (uid_a,))
             conn.execute(
                 'UPDATE user_streaks SET current_streak = 0, last_active_date = NULL WHERE user_id = ?',
                 (uid_a,),
@@ -180,11 +262,10 @@ def main():
             )
             conn.execute('DELETE FROM qotd_attempts WHERE user_id = ?', (uid_a,))
             conn.commit()
+        # qotd_nudge and the bare 'nudge' fallback are gone -- with none of the
+        # remaining triggers true, the buddy is None.
         r = client.get('/api/v1/me/buddy')
-        qotd = r.get_json()['buddy']
-        assert qotd['type'] == BUDDY_QOTD_NUDGE
-        assert qotd['face'] == '❓'
-        assert '/qotd' in qotd['action_url']
+        assert r.get_json()['buddy'] is None
 
         yesterday = (datetime.now(timezone.utc).date() - timedelta(days=1)).isoformat()
         old = (datetime.now(timezone.utc) - timedelta(days=3)).replace(microsecond=0).isoformat()
@@ -203,11 +284,13 @@ def main():
                 (yesterday, uid_a),
             )
             conn.commit()
+        # streak_risk still shows a bubble -- David explicitly chose to keep it.
         r = client.get('/api/v1/me/buddy')
         streak = r.get_json()['buddy']
         assert streak['type'] == BUDDY_STREAK_RISK
         assert streak['face'] == '🔥'
         assert 'streak' in streak['message'].lower()
+        assert streak['task_mark']
 
         with get_db() as conn:
             conn.execute(
@@ -291,6 +374,8 @@ def main():
         profile_with_look = r.data.decode()
         assert 'data-zorp-colour="mint"' in profile_with_look
         assert 'data-mouth="cat"' in profile_with_look
+        # Earned > 24h ago -> no celebration island this load.
+        assert 'id="pb-new-milestone"' not in profile_with_look
 
         r = client.get('/topic/gcse/maths/algebra')
         assert r.status_code == 200
@@ -300,9 +385,9 @@ def main():
         assert 'data-buddy-level="gcse"' in html_lesson
         assert 'data-buddy-subject="maths"' in html_lesson
         assert 'data-buddy-topic="algebra"' in html_lesson
-        assert 'study-buddy.js?v=23' in html_lesson
-        assert 'Problem Bank build: buddy-embed-v4' in html_lesson
-        assert 'pb-buddy-embed-v4' in html_lesson
+        assert 'study-buddy.js?v=25' in html_lesson
+        assert 'Problem Bank build: buddy-embed-v6' in html_lesson
+        assert 'pb-buddy-embed-v6' in html_lesson
         assert 'id="pb-buddy-page"' in html_lesson
         assert 'id="pb-buddy-prompt"' in html_lesson
         assert 'Practise MCQ' in html_lesson
@@ -336,6 +421,18 @@ def main():
         assert any(item.get('kind') == 'stay' for item in via_header['actions'])
         buddy_js = client.get('/static/js/study-buddy.js').data.decode()
         assert 'pb-buddy-storage' in buddy_js
+        assert 'pb-buddy-quiet' in buddy_js
+        # The old bypass that showed a server-rendered "stay" bubble unconditionally
+        # (before every suppression key) is gone -- everything now goes through the
+        # single maybeShow()/shouldShow() gate.
+        assert "data-buddy-server" not in buddy_js
+        assert 'shouldShow' in buddy_js
+
+        # quiz_runner_mode pages must omit the aside entirely, not just hide it.
+        r = client.get('/lesson-quiz/gcse/maths/algebra')
+        assert r.status_code == 200
+        quiz_html = r.data.decode()
+        assert 'data-buddy-root' not in quiz_html
 
         logout(client)
         register(client, email_b, handle_b)
@@ -393,8 +490,9 @@ def main():
                 (uid_a, uid_b, recent_challenge_at),
             )
             conn.commit()
+        # Nothing left to trigger -> None, not a nudge fallback.
         r = client.get('/api/v1/me/buddy')
-        assert r.get_json()['buddy']['type'] == BUDDY_NUDGE
+        assert r.get_json()['buddy'] is None
 
         with get_db() as conn:
             conn.execute('DELETE FROM quiz_challenges WHERE creator_id = ?', (uid_a,))
@@ -414,8 +512,12 @@ def main():
                 (uid_a, milestone_at),
             )
             conn.commit()
+        # A milestone earned in the last 24h no longer becomes a buddy bubble at
+        # all (it's a notification instead), so the next-highest-priority trigger
+        # shows through -- here, friend_challenge (uid_a follows uid_b, no recent
+        # challenge sent).
         r = client.get('/api/v1/me/buddy')
-        assert r.get_json()['buddy']['type'] == BUDDY_MILESTONE
+        assert r.get_json()['buddy']['type'] == BUDDY_FRIEND_CHALLENGE
 
         logout(client)
         r = client.get('/login')

@@ -51,6 +51,13 @@ LESSON_ONLY = {'lesson-pages.css', 'lesson-assist.css'}
 # ~3,151 bytes across base.css/motion.css/chrome.css/practice.css, no lesson-only sheet
 # touched. Tree now 230,770 bytes (core 205,778). Budget NOT raised — plenty of headroom
 # remained from the §2 #11 bump.
+# Buddy quiet fix (2026-09-27): chrome.css gained the face-only-Zorp rules (a defensive
+# `.study-buddy-card[hidden]` rule, hiding the corner buddy while the PWA install banner
+# is showing so the two mascots never stack, and lifting the corner buddy above the
+# practice "new question" sticky bar, safe-area aware; click-through face) — ~1,731
+# bytes after review fixes, no lesson-only sheet touched. Tree now 232,501 bytes (core
+# 207,509). Budget NOT raised, but core headroom is now only ~2.5 KB — the next CSS
+# addition should look for savings or raise the budget deliberately.
 CSS_BUDGET_BYTES = 240_000
 # Core sheets loaded on every page after the U8.6 lesson split.
 # S0 added fonts.css (~1KB) plus legal-footer / email-verify chrome.
@@ -74,6 +81,9 @@ CSS_BUDGET_BYTES = 240_000
 # E7 Phase 5 (2026-09-26): see CSS_BUDGET_BYTES note above — ~3,151 bytes added, no
 # lesson-only sheet touched (total and core grew by the same amount). Tree now 230,770
 # (core 205,778). Budget NOT raised.
+# Buddy quiet fix (2026-09-27): see CSS_BUDGET_BYTES note above — ~1,731 bytes added to
+# chrome.css only, no lesson-only sheet touched (total and core grew by the same
+# amount). Tree now 232,501 (core 207,509). Budget NOT raised.
 CSS_CORE_BUDGET_BYTES = 210_000
 
 

@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}?v=25">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=26">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=35">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=43">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=44">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/motion.css') }}?v=3">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/practice.css') }}?v=29">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=55">
@@ -41,7 +41,7 @@
     {% endif %}
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <!-- Problem Bank build: buddy-embed-v4 -->
+    <!-- Problem Bank build: buddy-embed-v6 -->
     <script src="{{ url_for('static', filename='js/mathjax-config.js') }}"></script>
     <script src="{{ url_for('static', filename='vendor/mathjax/tex-svg.js') }}"></script>
     <!-- External site logic (dropdowns, MCQs, etc.) -->
@@ -60,13 +60,13 @@
     {% endif %}
     {% if current_user.is_authenticated %}
     <script src="{{ url_for('static', filename='js/notifications.js') }}?v=18" defer></script>
-    <script src="{{ url_for('static', filename='js/study-buddy.js') }}?v=23" defer></script>
+    <script src="{{ url_for('static', filename='js/study-buddy.js') }}?v=25" defer></script>
     {% endif %}
     {% if current_user.is_authenticated or guide_preview_mode %}
     <script src="{{ url_for('static', filename='js/guide-catalog.js') }}?v=10" defer></script>
-    <script src="{{ url_for('static', filename='js/guide.js') }}?v=13" defer></script>
+    <script src="{{ url_for('static', filename='js/guide.js') }}?v=14" defer></script>
     {% endif %}
-    <script src="{{ url_for('static', filename='js/celebrate.js') }}?v=9" defer></script>
+    <script src="{{ url_for('static', filename='js/celebrate.js') }}?v=10" defer></script>
     {% if lesson_assist_enabled and lesson_meta and not lesson_meta.get('quizReview') %}
     <script src="{{ url_for('static', filename='js/lesson-assist.js') }}?v=17" defer></script>
     {% endif %}
@@ -277,15 +277,17 @@
 {% if current_user.is_authenticated or guide_preview_mode %}
 <script type="application/json" id="pb-milestone-catalog">{{ guide_milestones|tojson }}</script>
 {% endif %}
-{% if current_user.is_authenticated and not hide_study_buddy %}
-<!-- pb-buddy-embed-v4 -->
+{% if new_milestone_key %}
+<script type="application/json" id="pb-new-milestone">{{ new_milestone_key|tojson }}</script>
+{% endif %}
+{% if current_user.is_authenticated and not hide_study_buddy and not quiz_runner_mode %}
+<!-- pb-buddy-embed-v6 -->
 {% if buddy_page %}<script type="application/json" id="pb-buddy-page">{{ buddy_page|tojson }}</script>{% endif %}
-{% if buddy_prompt %}<script type="application/json" id="pb-buddy-prompt">{{ buddy_prompt|tojson }}</script>{% endif %}
-<aside id="study-buddy" class="study-buddy" hidden data-buddy-root data-pb-buddy-build="v4"
-       {% if buddy_page %}data-buddy-level="{{ buddy_page.level }}" data-buddy-subject="{{ buddy_page.subject }}" data-buddy-topic="{{ buddy_page.topic }}"{% endif %}
-       {% if buddy_prompt and buddy_prompt.type == 'milestone' and buddy_prompt.milestone_key %}data-buddy-milestone-key="{{ buddy_prompt.milestone_key }}"{% endif %}>
+<script type="application/json" id="pb-buddy-prompt">{{ buddy_prompt|tojson }}</script>
+<aside id="study-buddy" class="study-buddy" aria-label="Study buddy" data-buddy-root data-buddy-state="face" data-pb-buddy-build="v6"
+       {% if buddy_page %}data-buddy-level="{{ buddy_page.level }}" data-buddy-subject="{{ buddy_page.subject }}" data-buddy-topic="{{ buddy_page.topic }}"{% endif %}>
     <span class="study-buddy-face" data-buddy-face data-face="{{ buddy_prompt.type if buddy_prompt and buddy_prompt.type else 'nudge' }}" aria-hidden="true">{{ buddy_mascot(look=buddy_look) }}</span>
-    <div class="study-buddy-card">
+    <div class="study-buddy-card" data-buddy-card hidden>
         <span class="study-buddy-detail" data-buddy-detail>{% if buddy_prompt %}{{ buddy_prompt.detail }}{% endif %}</span>
         <p class="study-buddy-message" data-buddy-message>{% if buddy_prompt %}{{ buddy_prompt.message }}{% endif %}</p>
         <div class="study-buddy-actions" data-buddy-actions>

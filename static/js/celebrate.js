@@ -242,11 +242,14 @@
   }
 
   function scanPageTriggers() {
-    var promptEl = document.getElementById('pb-buddy-prompt');
-    var buddyRoot = document.querySelector('[data-buddy-root]');
-    if (promptEl && buddyRoot && !buddyRoot.hidden) {
+    // Milestones now surface via the notifications bell + this JSON island rather
+    // than the corner buddy bubble, so this no longer depends on the buddy root
+    // being visible (it can be hidden entirely, e.g. during a quiz).
+    var milestoneEl = document.getElementById('pb-new-milestone');
+    if (milestoneEl) {
       try {
-        fromBuddyPrompt(JSON.parse(promptEl.textContent || 'null'));
+        var key = JSON.parse(milestoneEl.textContent || 'null');
+        if (key) celebrateMilestone(key);
       } catch (err) {}
     }
     var ring = document.querySelector('[data-streak-current]');

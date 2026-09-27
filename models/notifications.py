@@ -8,9 +8,12 @@ NOTIFICATION_CHALLENGE = 'challenge_received'
 NOTIFICATION_CHALLENGE_COMPLETE = 'challenge_complete'
 NOTIFICATION_STUDY_PAIR = 'study_pair_invite'
 NOTIFICATION_CLASS_INVITE = 'class_invite'
+NOTIFICATION_MILESTONE = 'milestone_earned'
 
 
-def create_notification(conn, user_id, notification_type, payload):
+def create_notification(conn, user_id, notification_type, payload, commit=True):
+    """Insert a notification row. Pass commit=False when the caller is already
+    inside a transaction it will commit itself (e.g. evaluate_milestones)."""
     now = utc_now_iso()
     cursor = conn.execute(
         '''
@@ -20,7 +23,8 @@ def create_notification(conn, user_id, notification_type, payload):
         ''',
         (user_id, notification_type, json.dumps(payload or {}), now),
     )
-    conn.commit()
+    if commit:
+        conn.commit()
     return cursor.lastrowid
 
 

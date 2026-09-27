@@ -123,7 +123,9 @@ def main():
         assert "type === 'streak'" in guide_js
         assert "type === 'first_correct'" in guide_js
         assert "type === 'lesson_complete'" in guide_js
-        assert 'pb-buddy-milestone-' in guide_js
+        # Buddy quiet fix (2026-09-27): milestone dedup moved server-side (recent_milestone(),
+        # the notification bell); guide.js no longer writes a pb-buddy-milestone-* key.
+        assert 'pb-buddy-milestone-' not in guide_js
         assert 'ENDPOINT_TOUR' in guide_js
         assert 'topics_index' in guide_js
         assert 'friend_leaderboard_page' in guide_js

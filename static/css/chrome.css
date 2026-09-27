@@ -726,6 +726,17 @@ body.site-search-open { overflow: hidden; }
     pointer-events: none;
 }
 .study-buddy[hidden] { display: none !important; }
+.study-buddy-card[hidden] { display: none !important; }
+/* Buddy quiet fix (2026-09-27): the face persists (data-buddy-state="face") so answer
+   reactions (pbZorp.react()/reactTarget()) and the idle loop keep working; only the
+   speech card (data-buddy-state="card") follows the quiet-period gate. Nothing here
+   needs to key off [data-buddy-state] directly -- the card's own [hidden] attribute
+   already controls visibility; the attribute is just a JS-readable state hook. */
+/* Two Zorps must never visibly stack: the PWA install banner (z-index 120) spans the
+   same bottom-left footprint and carries its own small mascot (#pwa-install-zorp), so
+   hide the corner face+card while that banner is showing rather than paint one over
+   the other. */
+body:has(#pwa-install-banner:not([hidden])) .study-buddy { display: none !important; }
 .study-buddy-face {
     width: 56px;
     height: 56px;
@@ -736,7 +747,9 @@ body.site-search-open { overflow: hidden; }
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    pointer-events: auto;
+    /* Click-through: nothing listens on the face, and the persistent corner face must
+       never swallow taps on content underneath it (links, lesson text). */
+    pointer-events: none;
     overflow: visible;
 }
 .buddy-mascot {
@@ -838,6 +851,18 @@ html.pwa-standalone .study-buddy {
     }
     html.pwa-standalone .study-buddy {
         bottom: calc(16px + var(--safe-bottom) + var(--kb-inset));
+    }
+}
+/* The practice "new question" sticky bar sits above the corner buddy (z-index 115 > 90)
+   and would otherwise cover the persistent face; lift the buddy above it while it is on
+   screen. The bar's own bottom padding grows with the home-indicator inset, so the lift
+   does too. Placed after the pwa-standalone rules so it wins there (same specificity). */
+body:has(.practice-new-question-bar) .study-buddy {
+    bottom: calc(var(--tab-bar-h) + var(--safe-bottom) + var(--space-3) + var(--kb-inset) + 72px + max(0px, var(--safe-bottom) - var(--space-3)));
+}
+@media (min-width: 900px) {
+    body:has(.practice-new-question-bar) .study-buddy {
+        bottom: calc(16px + var(--safe-bottom) + var(--kb-inset) + 72px);
     }
 }
 .share-suggest-header {

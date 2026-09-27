@@ -205,6 +205,7 @@ from models.notifications import (
     NOTIFICATION_CHALLENGE_COMPLETE,
     NOTIFICATION_CLASS_INVITE,
     NOTIFICATION_FOLLOW,
+    NOTIFICATION_MILESTONE,
     NOTIFICATION_STUDY_PAIR,
     NOTIFICATION_SUGGESTION,
     count_unread_notifications,
@@ -247,6 +248,7 @@ from models.gamification import (
     lifetime_effort_xp,
     list_milestone_shelf,
     list_user_milestones,
+    milestone_meta,
     record_study_day,
     streak_ring_progress,
     streak_week_dots,
@@ -259,7 +261,7 @@ from models.gamification import (
     xp_level_progress,
 )
 from models.topic_status import topic_status_map
-from models.buddy import BUDDY_FACES, build_buddy_prompt
+from models.buddy import BUDDY_FACES, build_buddy_prompt, recent_milestone
 from models.problem_queue import (
     clear_problem_queue as clear_db_problem_queue,
     get_problem_queue as get_db_problem_queue,
@@ -1013,6 +1015,7 @@ def inject_nav():
     xp_progress = None
     tab_badges = {}
     buddy_look = {}
+    new_milestone_key = None
     if current_user.is_authenticated:
         with get_db() as conn:
             unread_notifications = count_unread_notifications(conn, current_user.id)
@@ -1044,16 +1047,32 @@ def inject_nav():
                 page_level = buddy_page['level']
                 page_subject = buddy_page['subject']
                 page_topic = buddy_page['topic']
-            raw_prompt = build_buddy_prompt(
-                conn,
-                current_user.id,
-                topic_label_fn=_topic_label,
-                current_level=page_level,
-                current_subject=page_subject,
-                current_topic=page_topic,
-            )
-            buddy_prompt = _serialize_buddy_prompt(raw_prompt)
+            quiz_runner_mode_now = request.endpoint in _QUIZ_RUNNER_ENDPOINTS
+            # /welcome is the only other place that renders with hide_study_buddy=True
+            # (set as a render_template kwarg by the welcome() view itself, so it isn't
+            # known here) -- the aside doesn't render on either page, so skip building
+            # the prompt/task_mark there too. Milestone lookup is only skipped for the
+            # quiz runner: the reward popup is confirmed suppressed there (guide.js
+            # isQuizRunner()) but not on /welcome, so new_milestone_key must still be
+            # computed for /welcome.
+            skip_buddy_prompt = quiz_runner_mode_now or request.endpoint == 'welcome'
+            if skip_buddy_prompt:
+                buddy_prompt = None
+            else:
+                raw_prompt = build_buddy_prompt(
+                    conn,
+                    current_user.id,
+                    topic_label_fn=_topic_label,
+                    current_level=page_level,
+                    current_subject=page_subject,
+                    current_topic=page_topic,
+                )
+                buddy_prompt = _serialize_buddy_prompt(raw_prompt)
             buddy_look = zorp_kit.live_look(latest_pose_milestone(conn, current_user.id))
+            if not quiz_runner_mode_now:
+                from datetime import datetime, timezone
+                milestone_row = recent_milestone(conn, current_user.id, datetime.now(timezone.utc))
+                new_milestone_key = milestone_row['key'] if milestone_row else None
     return {
         'nav_endpoint': request.endpoint,
         'lesson_meta': lesson_meta,
@@ -1064,6 +1083,7 @@ def inject_nav():
         'buddy_page': buddy_page,
         'buddy_prompt': buddy_prompt,
         'buddy_look': buddy_look,
+        'new_milestone_key': new_milestone_key,
         'viewer_xp': viewer_xp,
         'viewer_level': viewer_level,
         'xp_progress': xp_progress,
@@ -3998,6 +4018,13 @@ def _serialize_notification_item(item, *, conn=None, viewer_id=None):
         class_name = payload.get('class_name') or 'a class'
         message = f'@{handle} invited you to join {class_name}'
         url = url_for('student_classes')
+    elif ntype == NOTIFICATION_MILESTONE:
+        key = payload.get('milestone_key') or ''
+        meta = milestone_meta(key) if key else {}
+        title = meta.get('title') or str(key).replace('_', ' ').title()
+        emoji = meta.get('emoji', '🏅')
+        message = f'New badge: {title} {emoji}'
+        url = url_for('profile') + '#milestones'
     else:
         message = 'New notification'
         url = url_for('profile')
@@ -5508,8 +5535,8 @@ def legal_terms():
 def api_v1_build_info():
     return jsonify({
         'ok': True,
-        'buddy_embed': 'v4',
-        'study_buddy_js': 'v9',
+        'buddy_embed': 'v6',
+        'study_buddy_js': 'v11',
         'theme_settings': True,
         'guide_preview': '/guide-preview',
         'repo_root': str(_ROOT),
@@ -8293,6 +8320,7 @@ def _serialize_buddy_prompt(prompt):
         'topic': prompt.get('topic'),
         'milestone_key': prompt.get('milestone_key'),
         'friend_handle': prompt.get('friend_handle'),
+        'task_mark': prompt.get('task_mark'),
     }
 
 

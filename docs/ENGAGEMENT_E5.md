@@ -29,6 +29,16 @@ Recommended sequence: **E5.2 (done) → E5.1 (done) → E5.5 → E5.3 → E5.4 �
 
 ## E5.1 — Buddy v0.5
 
+> **Superseded (2026-09-27).** This section describes the buddy widget as originally
+> spec'd: `milestone`/`qotd_nudge`/`nudge` message types, per-type localStorage
+> suppression keys (`pb-buddy-hide-*`, `pb-buddy-stay-*`, `pb-buddy-milestone-*`), and
+> server-side inline show markup. None of that matches the current implementation —
+> `milestone` moved to the notification bell, `qotd_nudge`/`nudge` were removed, and
+> every localStorage key below was replaced by a single `pb-buddy-quiet` gate, with the
+> corner face now persistent and only the card gated. Read `docs/AI_HANDOFF.md`'s
+> 2026-09-27 buddy entries (both the bubble fix and the face-only follow-up) for what
+> actually ships; this section is kept for history only.
+
 ### Why
 
 `models/buddy.py` picks one of four messages (`celebrate`, `streak_risk`, `weak_topic`, `nudge`) and the widget always shows the same 👾. Three more message types and a matching face make the corner widget feel responsive to what the user just did.
@@ -52,6 +62,12 @@ Recommended sequence: **E5.2 (done) → E5.1 (done) → E5.5 → E5.3 → E5.4 �
 | `friend_challenge` | User follows ≥ 1 person and has sent no challenge in 7 days | "Challenge @handle to today's topic?" | Challenge flow / friend profile |
 
 Priority: `milestone` > `celebrate` > `qotd_nudge` > `streak_risk` > `weak_topic` > `friend_challenge` > `nudge`.
+
+**Superseded 2026-09-27** (see `docs/AI_HANDOFF.md`): `milestone` moved to the
+notification bell, `qotd_nudge` and the `nudge` fallback were removed, and
+`build_buddy_prompt` now returns `None` when nothing applies. Current
+priority: `celebrate` > `streak_risk` > `weak_topic` > `friend_challenge` >
+`None`.
 
 **Faces** — return a `face` per type so the widget can change expression:
 

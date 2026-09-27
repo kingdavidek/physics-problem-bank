@@ -20,6 +20,7 @@ from models.gamification import (  # noqa: E402
     evaluate_milestones,
     list_user_milestones,
 )
+from models.notifications import NOTIFICATION_MILESTONE  # noqa: E402
 from models.social import ACTIVITY_QUESTION_GENERATED, follow_user  # noqa: E402
 from models.user import utc_now_iso  # noqa: E402
 
@@ -46,6 +47,14 @@ def register(client, suffix):
 
 def milestone_keys(conn, user_id):
     return [item['key'] for item in list_user_milestones(conn, user_id)]
+
+
+def milestone_notification_count(conn, user_id):
+    row = conn.execute(
+        'SELECT COUNT(*) AS n FROM user_notifications WHERE user_id = ? AND notification_type = ?',
+        (user_id, NOTIFICATION_MILESTONE),
+    ).fetchone()
+    return row['n'] if row else 0
 
 
 def insert_qotd_days(conn, user_id, n):
@@ -165,6 +174,15 @@ def main():
             c_earned = evaluate_milestones(conn, uid_c)
             assert MILESTONE_ACCURACY_TOP_FRIEND not in c_earned
             assert MILESTONE_ACCURACY_TOP_FRIEND not in milestone_keys(conn, uid_c)
+
+            # Exactly one 'milestone_earned' notification per earned badge, and
+            # re-running evaluate_milestones() (already asserted to add no new
+            # keys above) adds no new notifications either.
+            assert milestone_notification_count(conn, uid_a) == len(milestone_keys(conn, uid_a))
+            assert milestone_notification_count(conn, uid_b) == len(milestone_keys(conn, uid_b))
+            before_a = milestone_notification_count(conn, uid_a)
+            assert evaluate_milestones(conn, uid_a) == []
+            assert milestone_notification_count(conn, uid_a) == before_a
 
         r = client.get('/api/v1/me/gamification', headers=bearer(token_a))
         assert r.status_code == 200, r.data

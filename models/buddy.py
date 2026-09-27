@@ -1,4 +1,4 @@
-"""Alien buddy prompt (engagement E3.1 / E5.1). Message types plus a fallback nudge."""
+"""Alien buddy prompt (engagement E3.1 / E5.1). Returns None when nothing applies."""
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
@@ -50,7 +50,7 @@ def _finish(prompt):
     return prompt
 
 
-def _recent_milestone(conn, user_id, now):
+def recent_milestone(conn, user_id, now):
     cutoff = (now - timedelta(hours=24)).replace(microsecond=0).isoformat()
     row = conn.execute(
         '''
@@ -74,32 +74,34 @@ def _recent_milestone(conn, user_id, now):
     }
 
 
-def _has_qotd_today(conn, user_id, day_key):
-    row = conn.execute(
-        'SELECT 1 FROM qotd_attempts WHERE user_id = ? AND day_key = ? LIMIT 1',
-        (user_id, day_key),
-    ).fetchone()
-    return row is not None
+# Back-compat alias: kept in case anything still imports the private name.
+_recent_milestone = recent_milestone
 
 
-def _has_activity_today(conn, user_id, today_iso):
-    row = conn.execute(
-        'SELECT 1 FROM user_study_days WHERE user_id = ? AND study_date = ? LIMIT 1',
-        (user_id, today_iso),
+def buddy_task_mark(conn, user_id, now):
+    """Opaque string that changes whenever the user completes a new task, or a new
+    UTC day starts. Used by the client to gate re-showing a bubble after a quiet
+    period: if this mark is unchanged, nothing new happened, so keep it quiet.
+    """
+    today_iso = now.date().isoformat()
+    quiz_n = conn.execute(
+        'SELECT COUNT(*) AS n FROM quiz_attempts WHERE user_id = ?',
+        (user_id,),
+    ).fetchone()['n']
+    qotd_n = conn.execute(
+        'SELECT COUNT(*) AS n FROM qotd_attempts WHERE user_id = ?',
+        (user_id,),
+    ).fetchone()['n']
+    lesson_row = conn.execute(
+        'SELECT MAX(updated_at) AS m FROM lesson_progress WHERE user_id = ?',
+        (user_id,),
     ).fetchone()
-    if row:
-        return True
-    if _latest_quiz_today(conn, user_id, today_iso):
-        return True
-    row = conn.execute(
-        '''
-        SELECT 1 FROM generator_mcq_attempts
-        WHERE user_id = ? AND created_at >= ?
-        LIMIT 1
-        ''',
-        (user_id, f'{today_iso}T00:00:00'),
-    ).fetchone()
-    return row is not None
+    lesson_max = (lesson_row['m'] if lesson_row else None) or ''
+    mcq_n = conn.execute(
+        'SELECT COUNT(*) AS n FROM generator_mcq_attempts WHERE user_id = ?',
+        (user_id,),
+    ).fetchone()['n']
+    return f'{today_iso}.q{quiz_n}.d{qotd_n}.l{lesson_max}.m{mcq_n // 5}'
 
 
 def _latest_quiz_today(conn, user_id, today_iso):
@@ -291,25 +293,46 @@ def build_buddy_prompt(
     current_subject=None,
     current_topic=None,
 ):
-    """Pick one short encouragement for the corner widget. Never raises."""
+    """Pick one short encouragement for the corner widget. Never raises.
+
+    Returns None when nothing applies -- the bubble is not permanently on.
+    Priority: celebrate -> streak_risk -> weak_topic -> friend_challenge -> None.
+    (`milestone` moved to the notification bell; `qotd_nudge` and the `nudge`
+    fallback were removed -- see docs/AI_HANDOFF.md 2026-09-27.)
+    """
     now = now or _utc_now()
     today = now.date()
     today_iso = today.isoformat()
     label_fn = topic_label_fn or (lambda _level, _subject, topic: str(topic).replace('_', ' '))
 
-    milestone = _recent_milestone(conn, user_id, now)
-    if milestone:
-        title = milestone['title']
-        emoji = milestone['emoji']
-        return _finish({
-            'type': BUDDY_MILESTONE,
-            'message': f'New badge: {title} {emoji}',
-            'detail': 'New badge',
-            'action_kind': 'milestone',
-            'action_label': 'View badges',
-            'milestone_key': milestone['key'],
-        })
+    prompt = _pick_prompt(
+        conn,
+        user_id,
+        now=now,
+        today=today,
+        today_iso=today_iso,
+        label_fn=label_fn,
+        current_level=current_level,
+        current_subject=current_subject,
+        current_topic=current_topic,
+    )
+    if prompt:
+        prompt['task_mark'] = buddy_task_mark(conn, user_id, now)
+    return prompt
 
+
+def _pick_prompt(
+    conn,
+    user_id,
+    *,
+    now,
+    today,
+    today_iso,
+    label_fn,
+    current_level,
+    current_subject,
+    current_topic,
+):
     quiz = _latest_quiz_today(conn, user_id, today_iso)
     if quiz and (quiz['total'] or 0) > 0:
         topic_label = label_fn(quiz['level'], quiz['subject'], quiz['topic'])
@@ -329,18 +352,6 @@ def build_buddy_prompt(
             'subject': quiz['subject'],
             'topic': quiz['topic'],
             'action_label': 'Practise again',
-        })
-
-    if (
-        not _has_qotd_today(conn, user_id, today_iso)
-        and _has_activity_today(conn, user_id, today_iso)
-    ):
-        return _finish({
-            'type': BUDDY_QOTD_NUDGE,
-            'message': 'Today’s question is still open.',
-            'detail': 'Daily question',
-            'action_kind': 'qotd',
-            'action_label': 'Today’s question',
         })
 
     streak = get_study_streak(conn, user_id)
@@ -397,10 +408,4 @@ def build_buddy_prompt(
     if friend_challenge:
         return friend_challenge
 
-    return _finish({
-        'type': BUDDY_NUDGE,
-        'message': 'Ready when you are. Try today’s question or pick a topic.',
-        'detail': 'Practice nudge',
-        'action_kind': 'qotd',
-        'action_label': 'Today’s question',
-    })
+    return None

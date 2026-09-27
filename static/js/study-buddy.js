@@ -2,27 +2,44 @@
   'use strict';
 
   try {
-    if (window.localStorage.getItem('pb-buddy-storage') !== 'v2') {
+    if (window.localStorage.getItem('pb-buddy-storage') !== 'v3') {
       var buddyKeys = [];
+      var deadPrefixes = [
+        'pb-buddy-dismissed-',
+        'pb-buddy-hide-',
+        'pb-buddy-stay-',
+        'pb-buddy-milestone-',
+      ];
       for (var i = 0; i < window.localStorage.length; i += 1) {
         var key = window.localStorage.key(i);
-        if (key && key.indexOf('pb-buddy-dismissed-') === 0) buddyKeys.push(key);
+        if (!key) continue;
+        for (var p = 0; p < deadPrefixes.length; p += 1) {
+          if (key.indexOf(deadPrefixes[p]) === 0) {
+            buddyKeys.push(key);
+            break;
+          }
+        }
       }
       buddyKeys.forEach(function (item) { window.localStorage.removeItem(item); });
-      window.localStorage.setItem('pb-buddy-storage', 'v2');
+      window.localStorage.setItem('pb-buddy-storage', 'v3');
     }
   } catch (e) {}
 
   var root = document.querySelector('[data-buddy-root]');
   if (!root) return;
 
+  var cardEl = root.querySelector('[data-buddy-card]');
   var messageEl = root.querySelector('[data-buddy-message]');
   var detailEl = root.querySelector('[data-buddy-detail]');
   var actionsEl = root.querySelector('[data-buddy-actions]');
   var actionEl = root.querySelector('[data-buddy-action]');
   var dismissEl = root.querySelector('[data-buddy-dismiss]');
   var faceEl = root.querySelector('[data-buddy-face]');
-  if (!messageEl || !actionEl || !dismissEl) return;
+  if (!cardEl || !messageEl || !actionEl || !dismissEl) return;
+
+  var QUIET_KEY = 'pb-buddy-quiet';
+  var QUIET_MS_ACTED = 10 * 60 * 1000;
+  var QUIET_MS_DISMISSED = 30 * 60 * 1000;
 
   var FACE_OK = {
     milestone: 1,
@@ -74,22 +91,6 @@
       faceEl.classList.remove('is-reacting');
       reactTimer = null;
     }, 560);
-  }
-
-  function milestoneStorageKey(key) {
-    return 'pb-buddy-milestone-' + (key || '');
-  }
-
-  function utcDayKey() {
-    return new Date().toISOString().slice(0, 10);
-  }
-
-  function storageKey() {
-    return 'pb-buddy-hide-' + utcDayKey();
-  }
-
-  function stayStorageKey(topic) {
-    return 'pb-buddy-stay-weak_topic-' + (topic || '') + '-' + utcDayKey();
   }
 
   function escapeText(value) {
@@ -151,38 +152,50 @@
     return {};
   }
 
+  // --- Quiet-period gate ------------------------------------------------
+  // One localStorage key tracks the last time the user acted on (or dismissed)
+  // a bubble. `mark` is the server's opaque `task_mark`: while it is unchanged,
+  // nothing new has happened, so a re-fetch during the quiet window still
+  // shouldn't show anything even once the window itself has expired.
+
+  function readQuiet() {
+    try {
+      var raw = window.localStorage.getItem(QUIET_KEY);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && typeof parsed.until === 'number') {
+        return parsed;
+      }
+      return null;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function writeQuiet(untilMs, mark) {
+    try {
+      window.localStorage.setItem(QUIET_KEY, JSON.stringify({ until: untilMs, mark: mark || '' }));
+    } catch (err) {}
+  }
+
+  function shouldShow(prompt) {
+    var state = readQuiet();
+    if (!state) return true;
+    var quietOver = Date.now() >= state.until;
+    if (!prompt.task_mark) {
+      // No task_mark to compare against: only showable once the quiet window
+      // itself has lapsed.
+      return quietOver;
+    }
+    return quietOver && prompt.task_mark !== state.mark;
+  }
+
   function hasStayAction(prompt) {
     var actions = (prompt && prompt.actions) || [];
     for (var i = 0; i < actions.length; i += 1) {
       if (actions[i] && actions[i].kind === 'stay') return true;
     }
     return false;
-  }
-
-  function globallyDismissed() {
-    try {
-      return window.localStorage.getItem(storageKey()) === '1';
-    } catch (err) {
-      return false;
-    }
-  }
-
-  function stayDismissed(topic) {
-    if (!topic) return false;
-    try {
-      return window.localStorage.getItem(stayStorageKey(topic)) === '1';
-    } catch (err) {
-      return false;
-    }
-  }
-
-  function milestoneDismissed(key) {
-    if (!key) return false;
-    try {
-      return window.localStorage.getItem(milestoneStorageKey(key)) === '1';
-    } catch (err) {
-      return false;
-    }
   }
 
   function clearExtraActions() {
@@ -193,8 +206,11 @@
     });
   }
 
+  var currentPrompt = null;
+
   function show(prompt) {
     if (!prompt || !prompt.message) return;
+    currentPrompt = prompt;
     messageEl.textContent = escapeText(prompt.message);
     if (detailEl) detailEl.textContent = escapeText(prompt.detail || 'Buddy');
     applyFace(prompt);
@@ -206,9 +222,9 @@
     var links = actions.filter(function (item) {
       return item && item.kind !== 'stay' && item.url;
     });
-    var stay = actions.filter(function (item) {
+    var stay = hasStayAction(prompt) ? actions.filter(function (item) {
       return item && item.kind === 'stay';
-    })[0];
+    })[0] : null;
 
     var primary = links[0] || {
       label: prompt.action_label || 'Open',
@@ -232,82 +248,43 @@
 
     dismissEl.textContent = stay ? escapeText(stay.label) : 'Not now';
     dismissEl.setAttribute('data-buddy-stay', stay ? '1' : '0');
-    if (prompt.type === 'milestone' && prompt.milestone_key) {
-      root.setAttribute('data-buddy-milestone-key', prompt.milestone_key);
-    } else {
-      root.removeAttribute('data-buddy-milestone-key');
-    }
-    root.hidden = false;
+    cardEl.hidden = false;
+    root.setAttribute('data-buddy-state', 'card');
     if (window.pbCelebrate && window.pbCelebrate.fromBuddy) {
       window.pbCelebrate.fromBuddy(prompt);
     }
   }
 
-  function maybeShow(prompt, source) {
+  function maybeShow(prompt) {
     if (!prompt || !prompt.message) return false;
     if (prompt.topic) {
       root.setAttribute('data-buddy-topic', prompt.topic);
     }
-    if (prompt.type === 'milestone' && prompt.milestone_key) {
-      if (milestoneDismissed(prompt.milestone_key)) return true;
-      show(prompt);
-      return true;
-    }
-    if (hasStayAction(prompt)) {
-      if (stayDismissed(prompt.topic)) return true;
-      show(prompt);
-      return true;
-    }
-    if (globallyDismissed()) return true;
+    if (!shouldShow(prompt)) return false;
     show(prompt);
     return true;
   }
 
-  function acknowledgeMilestone(key) {
-    if (!key) return;
-    try {
-      window.localStorage.setItem(milestoneStorageKey(key), '1');
-    } catch (err) {}
+  // Primary action click, or any secondary [data-buddy-extra] link click: act
+  // now, quiet for 10 minutes (a shorter window than an explicit dismiss,
+  // since the user just engaged with the bubble rather than brushing it off).
+  if (actionsEl) {
+    actionsEl.addEventListener('click', function (event) {
+      var target = event.target;
+      if (!target) return;
+      var isPrimary = target === actionEl;
+      var isExtra = !!(target.hasAttribute && target.hasAttribute('data-buddy-extra'));
+      if (!isPrimary && !isExtra) return;
+      cardEl.hidden = true;
+      root.setAttribute('data-buddy-state', 'face');
+      writeQuiet(Date.now() + QUIET_MS_ACTED, currentPrompt && currentPrompt.task_mark);
+    });
   }
-
-  function readEmbeddedMilestoneKey() {
-    try {
-      var jsonEl = document.getElementById('pb-buddy-prompt');
-      if (!jsonEl) return '';
-      var parsed = JSON.parse(jsonEl.textContent || 'null');
-      if (parsed && parsed.type === 'milestone' && parsed.milestone_key) {
-        return String(parsed.milestone_key);
-      }
-    } catch (err) {}
-    return '';
-  }
-
-  actionEl.addEventListener('click', function () {
-    var key = (root.getAttribute('data-buddy-milestone-key') || '').trim();
-    if (!key) return;
-    acknowledgeMilestone(key);
-    root.hidden = true;
-  });
 
   dismissEl.addEventListener('click', function () {
-    root.hidden = true;
-    var isStay = dismissEl.getAttribute('data-buddy-stay') === '1';
-    try {
-      if (isStay) {
-        var topic = (root.getAttribute('data-buddy-topic') || '').trim();
-        window.localStorage.setItem(stayStorageKey(topic), '1');
-      } else {
-        var milestoneKey = (root.getAttribute('data-buddy-milestone-key') || '').trim();
-        if (!milestoneKey) {
-          milestoneKey = readEmbeddedMilestoneKey();
-        }
-        if (milestoneKey) {
-          acknowledgeMilestone(milestoneKey);
-        } else {
-          window.localStorage.setItem(storageKey(), '1');
-        }
-      }
-    } catch (err) {}
+    cardEl.hidden = true;
+    root.setAttribute('data-buddy-state', 'face');
+    writeQuiet(Date.now() + QUIET_MS_DISMISSED, currentPrompt && currentPrompt.task_mark);
   });
 
   function fetchBuddy(fromRefetch) {
@@ -334,8 +311,8 @@
       })
       .then(function (data) {
         if (!(data && data.ok && data.buddy)) return;
-        maybeShow(data.buddy, fromRefetch ? 'refetch' : 'fetch');
-        if (fromRefetch && !root.hidden) reactBuddy();
+        var shown = maybeShow(data.buddy);
+        if (fromRefetch && shown) reactBuddy();
       })
       .catch(function () {});
   }
@@ -364,20 +341,12 @@
     window.pbZorp.idle(true, faceEl);   // runtime pauses on visibilitychange / reduced motion
   }
 
-  if (root.getAttribute('data-buddy-server') === '1') {
-    return;
-  }
-  if (dismissEl.getAttribute('data-buddy-stay') === '1' && messageEl.textContent) {
-    root.removeAttribute('hidden');
-    root.setAttribute('data-buddy-server', '1');
-    return;
-  }
-
+  // The island is always rendered when the aside renders (as `null` when there is
+  // nothing to show), so its mere presence means the server already answered this
+  // question for the initial load -- only fetch when there is no island at all
+  // (e.g. a page that doesn't wire one up).
+  var hasIsland = !!document.getElementById('pb-buddy-prompt');
   var embedded = readEmbeddedPrompt();
-  if (embedded && maybeShow(embedded, 'embedded')) {
-    root.setAttribute('data-buddy-server', '1');
-    return;
-  }
-
-  fetchBuddy();
+  if (embedded) maybeShow(embedded);
+  if (!hasIsland) fetchBuddy();
 })();

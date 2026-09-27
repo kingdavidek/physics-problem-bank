@@ -152,6 +152,48 @@ def test_base_loads_motion_assets():
     assert base.index('js/zorp-motion.js') < base.index('js/study-buddy.js')
 
 
+def test_buddy_face_persists_without_hidden_root():
+    # Buddy quiet fix (2026-09-27): the corner Zorp face must stay visible (and thus
+    # reactTarget()-eligible) even when there is nothing for the bubble to say, so a
+    # logged-in user with no prompt still gets a rendered, non-hidden aside -- only the
+    # card starts hidden.
+    from app import app  # noqa: E402
+    from models.user import User  # noqa: E402
+
+    with app.test_client() as client:
+        r = client.get('/register')
+        m = re.search(r'name="csrf_token" value="([^"]+)"', r.data.decode())
+        assert m
+        suffix = os.urandom(4).hex()
+        client.post(
+            '/register',
+            data={
+                'csrf_token': m.group(1),
+                'email': f'zmp_face_{suffix}@example.com',
+                'handle': f'zmpface_{suffix}',
+                'password': 'password123',
+                'confirm_password': 'password123',
+                'age_confirm': '1',
+            },
+            follow_redirects=True,
+        )
+        r = client.get('/profile')
+        assert r.status_code == 200
+        html = r.data.decode()
+        aside_m = re.search(r'<aside id="study-buddy"[^>]*>', html)
+        assert aside_m, 'expected the study-buddy aside on the profile page'
+        aside_tag = aside_m.group(0)
+        assert ' hidden' not in aside_tag, aside_tag
+        assert 'data-buddy-state="face"' in aside_tag
+        card_m = re.search(r'<div class="study-buddy-card"[^>]*>', html)
+        assert card_m and 'hidden' in card_m.group(0)
+        # The face element sits outside the card, so it stays rendered (and thus
+        # findable by reactTarget()'s getClientRects() check) regardless of the
+        # card's hidden state.
+        face_m = re.search(r'<span class="study-buddy-face"[^>]*>', html)
+        assert face_m and not re.search(r'(?<!aria-)\bhidden\b', face_m.group(0))
+
+
 def test_dev_motion_sections():
     from app import app  # noqa: E402
     client = app.test_client()
@@ -650,6 +692,7 @@ def main():
     test_rig_markup()
     test_motion_css_rig_pivots()
     test_base_loads_motion_assets()
+    test_buddy_face_persists_without_hidden_root()
     test_dev_motion_sections()
     test_cosmetic_css()
     test_cosmetic_markup()

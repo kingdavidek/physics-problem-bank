@@ -254,13 +254,6 @@
     saveState(state);
   }
 
-  function hideBuddyMilestone(key) {
-    if (!key || isPreview()) return;
-    try {
-      window.localStorage.setItem('pb-buddy-milestone-' + key, '1');
-    } catch (err) {}
-  }
-
   function stepLines(step) {
     if (!step || !Array.isArray(step.lines)) return [];
     var out = [];
@@ -617,7 +610,6 @@
     if (finishedId === 'origin') markOriginSeen();
     else if (finishedId === 'reward' && step && step.id) {
       markRewardSeen(step.id);
-      if (step.rewardType === 'milestone') hideBuddyMilestone(step.rewardKey);
     } else if (finishedId && finishedId !== 'reward') {
       markTourSeen(finishedId);
     }
@@ -690,7 +682,6 @@
       if (!id || rewardSeen(id)) continue;
       var step = buildRewardStep(spec);
       if (!step) continue;
-      if (spec.type === 'milestone') hideBuddyMilestone(spec.key);
       startQueue([step], 'reward');
       return;
     }
