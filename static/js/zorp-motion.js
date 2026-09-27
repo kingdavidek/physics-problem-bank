@@ -39,7 +39,11 @@
   var blinkTimer = 0;
 
   function motionLevel() {
-    // 'off' arrives in Phase 5 with data-motion.
+    // E7 Phase 5: data-motion (set from the user's motion_preference setting) takes
+    // priority over the OS-level prefers-reduced-motion media query below.
+    var pref = (document.documentElement.getAttribute('data-motion') || 'system');
+    if (pref === 'off') return 'off';
+    if (pref === 'reduced') return 'reduced';
     if ((mq && mq.matches) || !canAnimate) return 'reduced';
     return 'full';
   }

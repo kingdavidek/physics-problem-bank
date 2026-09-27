@@ -169,6 +169,9 @@ from models.social import (
     THEME_CHOICES,
     THEME_SYSTEM,
     normalize_theme_preference,
+    MOTION_CHOICES,
+    MOTION_SYSTEM,
+    normalize_motion_preference,
     public_guide_state,
     quiz_stats_summary,
     record_activity_event,
@@ -1003,6 +1006,7 @@ def inject_nav():
     nav_avatar = None
     sound_enabled = False
     theme_preference = THEME_SYSTEM
+    motion_preference = MOTION_SYSTEM
     guide_state = {'v': 1, 'origin': False, 'tours': {}, 'rewards': {}}
     guide_json_persisted = False
     nav_streak = 0
@@ -1021,6 +1025,9 @@ def inject_nav():
             sound_enabled = bool(profile_settings.get('sound_enabled', False))
             theme_preference = normalize_theme_preference(
                 profile_settings.get('theme_preference', THEME_SYSTEM)
+            )
+            motion_preference = normalize_motion_preference(
+                profile_settings.get('motion_preference', MOTION_SYSTEM)
             )
             guide_state = profile_settings.get('guide') or guide_state
             guide_json_persisted = bool(profile_settings.get('guide_json_persisted'))
@@ -1064,6 +1071,7 @@ def inject_nav():
         'nav_avatar': nav_avatar,
         'sound_enabled': sound_enabled,
         'theme_preference': theme_preference,
+        'motion_preference': motion_preference,
         'guide_state': guide_state,
         'guide_json_persisted': guide_json_persisted,
         'nav_streak': nav_streak,
@@ -1496,6 +1504,7 @@ with get_db() as conn:
         ('show_accuracy_leaderboard', 'INTEGER NOT NULL DEFAULT 1'),
         ('sound_enabled', 'INTEGER NOT NULL DEFAULT 0'),
         ('theme_preference', "TEXT NOT NULL DEFAULT 'system'"),
+        ('motion_preference', "TEXT NOT NULL DEFAULT 'system'"),
         ('guide_json', "TEXT NOT NULL DEFAULT '{}'"),
     ):
         if col not in profile_cols:
@@ -4127,6 +4136,9 @@ def _settings_to_json(settings):
         'theme_preference': normalize_theme_preference(
             settings.get('theme_preference', THEME_SYSTEM)
         ),
+        'motion_preference': normalize_motion_preference(
+            settings.get('motion_preference', MOTION_SYSTEM)
+        ),
         'avatar': parse_avatar(settings.get('avatar')),
         'guide': public_guide_state(
             settings.get('guide') if isinstance(settings.get('guide'), dict)
@@ -6710,6 +6722,7 @@ def profile_settings():
                 'show_accuracy_leaderboard': request.form.get('show_accuracy_leaderboard') == '1',
                 'sound_enabled': request.form.get('sound_enabled') == '1',
                 'theme_preference': request.form.get('theme_preference', THEME_SYSTEM),
+                'motion_preference': request.form.get('motion_preference', MOTION_SYSTEM),
             }
             with get_db() as conn:
                 if (
@@ -7414,6 +7427,7 @@ def api_v1_patch_settings():
         'show_accuracy_leaderboard',
         'sound_enabled',
         'theme_preference',
+        'motion_preference',
         'avatar',
         'avatar_face',
         'avatar_bg',
@@ -7453,6 +7467,15 @@ def api_v1_patch_settings():
                 f'theme_preference must be one of: {", ".join(THEME_CHOICES)}',
                 400,
                 'invalid_theme',
+            )
+
+    if 'motion_preference' in payload:
+        motion = payload['motion_preference']
+        if motion not in MOTION_CHOICES:
+            return _api_error(
+                f'motion_preference must be one of: {", ".join(MOTION_CHOICES)}',
+                400,
+                'invalid_motion',
             )
 
     bool_fields = (

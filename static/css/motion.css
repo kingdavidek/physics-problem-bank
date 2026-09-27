@@ -41,6 +41,16 @@
     .buddy-mascot.is-zorp-idle .buddy-antenna--r { animation: none; }
     .buddy-body.is-zorp-pulse .buddy-body-shape { animation: zorp-pulse 300ms ease-out 1; }
 }
+/* E7 Phase 5: mirror of the media-query block above for motion_preference (duration-zeroing
+   alone doesn't stop an infinite animation, so idle-breathe/sway need an explicit none here). */
+html[data-motion="reduced"] .buddy-mascot.is-zorp-idle .buddy-root,
+html[data-motion="reduced"] .buddy-mascot.is-zorp-idle .buddy-antenna--l,
+html[data-motion="reduced"] .buddy-mascot.is-zorp-idle .buddy-antenna--r,
+html[data-motion="off"] .buddy-mascot.is-zorp-idle .buddy-root,
+html[data-motion="off"] .buddy-mascot.is-zorp-idle .buddy-antenna--l,
+html[data-motion="off"] .buddy-mascot.is-zorp-idle .buddy-antenna--r { animation: none; }
+html[data-motion="reduced"] .buddy-body.is-zorp-pulse .buddy-body-shape,
+html[data-motion="off"] .buddy-body.is-zorp-pulse .buddy-body-shape { animation: zorp-pulse 300ms ease-out 1; }
 
 /* E7 Phase 1.5: automatic-only live-buddy cosmetics (docs/MASCOT_MOTION_AND_ONBOARDING.md, Phase 1.5).
    Selected server-side by models/zorp_kit.py live_look(); no pupil-facing picker.

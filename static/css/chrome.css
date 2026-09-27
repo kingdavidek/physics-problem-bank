@@ -333,6 +333,13 @@ textarea:focus {
     .confetti-burst { display: none; }
     .sparkle-bit { display: none; }
 }
+/* E7 Phase 5: mirror of the media-query block above for motion_preference. */
+html[data-motion="reduced"] .xp-toast,
+html[data-motion="off"] .xp-toast { animation: none; }
+html[data-motion="reduced"] .confetti-burst,
+html[data-motion="off"] .confetti-burst { display: none; }
+html[data-motion="reduced"] .sparkle-bit,
+html[data-motion="off"] .sparkle-bit { display: none; }
 .auth-form { max-width: 420px; }
 .auth-form .form-group { margin-bottom: 16px; }
 .auth-switch {

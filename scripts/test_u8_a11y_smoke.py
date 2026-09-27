@@ -44,6 +44,13 @@ LESSON_ONLY = {'lesson-pages.css', 'lesson-assist.css'}
 # reduced-motion @view-transition disable block and comment expansions in base.css/zorp-motion.js
 # don't add CSS bytes beyond what's counted here). Tree now 227,619 bytes (core 202,627).
 # Budget NOT raised — plenty of headroom remained from the §2 #11 bump.
+# E7 Phase 5 (2026-09-26): motion_preference mirror rules — the universal data-motion
+# catch-all plus small mirrors of the existing prefers-reduced-motion blocks in motion.css
+# (idle-breathe/sway + zorp-pulse), chrome.css (.confetti-burst/.sparkle-bit), base.css
+# (view-transition pseudo-elements), and practice.css (button colour-only flash) — add
+# ~3,151 bytes across base.css/motion.css/chrome.css/practice.css, no lesson-only sheet
+# touched. Tree now 230,770 bytes (core 205,778). Budget NOT raised — plenty of headroom
+# remained from the §2 #11 bump.
 CSS_BUDGET_BYTES = 240_000
 # Core sheets loaded on every page after the U8.6 lesson split.
 # S0 added fonts.css (~1KB) plus legal-footer / email-verify chrome.
@@ -64,6 +71,9 @@ CSS_BUDGET_BYTES = 240_000
 # E7 Phase 4 (2026-09-26): see CSS_BUDGET_BYTES note above — ~4,123 bytes added across
 # base.css/practice.css/chrome.css/pages.css/components.css, no lesson-only sheet touched
 # (total and core grew by the same amount). Tree now 227,619 (core 202,627). Budget NOT raised.
+# E7 Phase 5 (2026-09-26): see CSS_BUDGET_BYTES note above — ~3,151 bytes added, no
+# lesson-only sheet touched (total and core grew by the same amount). Tree now 230,770
+# (core 205,778). Budget NOT raised.
 CSS_CORE_BUDGET_BYTES = 210_000
 
 

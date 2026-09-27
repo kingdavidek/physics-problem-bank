@@ -1188,4 +1188,15 @@
     .btn:active,
     .mcq-btn:active { filter: brightness(0.92); }
 }
+/* E7 Phase 5: mirror of the media-query block above for motion_preference. */
+html[data-motion="reduced"] .answer-xp-float,
+html[data-motion="off"] .answer-xp-float { animation: none; }
+html[data-motion="reduced"] .answer-check-mark-ring,
+html[data-motion="reduced"] .answer-check-mark-tick,
+html[data-motion="off"] .answer-check-mark-ring,
+html[data-motion="off"] .answer-check-mark-tick { animation: none; stroke-dashoffset: 0; }
+html[data-motion="reduced"] .btn:active,
+html[data-motion="reduced"] .mcq-btn:active,
+html[data-motion="off"] .btn:active,
+html[data-motion="off"] .mcq-btn:active { filter: brightness(0.92); }
 

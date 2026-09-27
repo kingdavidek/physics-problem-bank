@@ -85,6 +85,17 @@ body {
         animation: none !important;
     }
 }
+/* E7 Phase 5: mirror of the media-query block above for motion_preference. */
+html[data-motion="reduced"] ::view-transition-group(*),
+html[data-motion="reduced"] ::view-transition-image-pair(*),
+html[data-motion="reduced"] ::view-transition-old(*),
+html[data-motion="reduced"] ::view-transition-new(*),
+html[data-motion="off"] ::view-transition-group(*),
+html[data-motion="off"] ::view-transition-image-pair(*),
+html[data-motion="off"] ::view-transition-old(*),
+html[data-motion="off"] ::view-transition-new(*) {
+    animation: none !important;
+}
 
 /* ---- HEADER / NAV ---- */
 header {
@@ -282,4 +293,17 @@ summary:focus-visible {
     .topic-card:hover,
     .topic-card:active { transform: none; }
 }
+
+/* E7 Phase 5: motion_preference override — mirrors the prefers-reduced-motion
+ * catch-all above so a user can request less motion even when their OS-level
+ * setting doesn't ask for it (and vice versa: 'off' behaves at least as
+ * conservatively as 'reduced' everywhere). Never replaces the media-query
+ * version above; it lets data-motion win on top of it. */
+html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-motion="reduced"] *::after,
+html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="off"] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+}
+html[data-motion="reduced"], html[data-motion="off"] { scroll-behavior: auto; }
 

@@ -493,6 +493,156 @@ def test_practice_css_quiz_runner_option_animations():
     assert '.mcq-btn.is-shake' in block and '.btn.is-shake' in block
 
 
+def test_phase5_motionlevel_reads_data_motion():
+    js = RUNTIME_JS.read_text(encoding='utf-8')
+    level_start, level_end = _extract_function_span(js, 'motionLevel')
+    body = js[level_start:level_end]
+    assert 'document.documentElement.getAttribute' in body and "'data-motion'" in body, (
+        'motionLevel() must read data-motion from document.documentElement'
+    )
+    assert "'off'" in body and "'reduced'" in body
+
+
+def test_phase5_css_motion_preference_mirrors():
+    base_css = (CSS_DIR / 'base.css').read_text(encoding='utf-8')
+    motion_css = MOTION_CSS.read_text(encoding='utf-8')
+    chrome_css = (CSS_DIR / 'chrome.css').read_text(encoding='utf-8')
+    practice_css = PRACTICE_CSS.read_text(encoding='utf-8')
+    assert 'html[data-motion="reduced"]' in base_css and 'html[data-motion="off"]' in base_css
+    assert 'html[data-motion="reduced"]' in motion_css and 'html[data-motion="off"]' in motion_css
+    assert 'html[data-motion="reduced"]' in chrome_css and 'html[data-motion="off"]' in chrome_css
+    assert 'html[data-motion="reduced"]' in practice_css and 'html[data-motion="off"]' in practice_css
+    # The universal data-motion catch-all is what actually delivers "less motion"
+    # site-wide; the mirror blocks alone (e.g. the view-transition one) also contain
+    # these selector strings, so pin the catch-all's declaration too, not just the
+    # selector text, so deleting the catch-all itself would fail this test.
+    catchall_idx = base_css.index(
+        'html[data-motion="reduced"] *, html[data-motion="reduced"] *::before'
+    )
+    catchall_tail = base_css[catchall_idx:catchall_idx + 400]
+    assert 'animation-duration: 0.01ms !important' in catchall_tail
+    assert 'transition-duration: 0.01ms !important' in catchall_tail
+
+
+def test_phase5_motion_preference_persists():
+    # Mirrors the settings-persistence pattern in scripts/test_social_smoke.py.
+    import uuid
+
+    from app import app  # noqa: E402
+
+    def csrf_from(html):
+        m = re.search(r'name="csrf_token" value="([^"]+)"', html)
+        assert m, 'csrf token not found'
+        return m.group(1)
+
+    with app.test_client() as client:
+        suffix = uuid.uuid4().hex[:8]
+        r = client.get('/register')
+        r = client.post(
+            '/register',
+            data={
+                'csrf_token': csrf_from(r.data.decode()),
+                'email': f'zorp_motion_{suffix}@example.com',
+                'handle': f'zmp_{suffix}',
+                'password': 'password123',
+                'confirm_password': 'password123',
+                'age_confirm': '1',
+            },
+            follow_redirects=True,
+        )
+        assert r.status_code == 200
+
+        r = client.get('/profile/settings')
+        assert r.status_code == 200
+        html = r.data.decode()
+        assert 'name="motion_preference"' in html
+        for value in ('system', 'reduced', 'off'):
+            assert f'value="{value}"' in html
+
+        # Cycle through non-default values before returning to the default, so the
+        # first save is never a no-op that would pass even if persistence were broken.
+        for value in ('reduced', 'off', 'system'):
+            r = client.get('/profile/settings')
+            token = csrf_from(r.data.decode())
+            r = client.post(
+                '/profile/settings',
+                data={
+                    'csrf_token': token,
+                    'profile_visibility': 'followers_only',
+                    'default_share_visibility': 'followers_only',
+                    'motion_preference': value,
+                },
+                follow_redirects=True,
+            )
+            assert r.status_code == 200
+            assert b'Settings saved' in r.data
+
+            r = client.get('/profile/settings')
+            assert r.status_code == 200
+            html = r.data.decode()
+            checked_input = re.search(
+                r'<input type="radio" name="motion_preference" value="([a-z]+)"\s*\n?\s*checked>',
+                html,
+            )
+            assert checked_input, 'no motion_preference radio marked checked'
+            assert checked_input.group(1) == value, (
+                f'expected motion_preference={value} to persist, got {checked_input.group(1)}'
+            )
+
+            # The rendered <html> tag itself must carry the new value.
+            home = client.get('/')
+            assert home.status_code == 200
+            home_html = home.data.decode()
+            assert re.search(r'<html[^>]*data-motion="%s"' % value, home_html), (
+                f'<html> did not render data-motion="{value}" after saving it'
+            )
+
+
+def test_phase5_patch_motion_preference():
+    import json
+    import uuid
+
+    from app import app  # noqa: E402
+
+    with app.test_client() as client:
+        suffix = uuid.uuid4().hex[:8]
+        r = client.get('/register')
+        m = re.search(r'name="csrf_token" value="([^"]+)"', r.data.decode())
+        assert m, 'csrf token not found'
+        r = client.post(
+            '/register',
+            data={
+                'csrf_token': m.group(1),
+                'email': f'zorp_motion_patch_{suffix}@example.com',
+                'handle': f'zmpp_{suffix}',
+                'password': 'password123',
+                'confirm_password': 'password123',
+                'age_confirm': '1',
+            },
+            follow_redirects=True,
+        )
+        assert r.status_code == 200
+
+        r = client.patch(
+            '/api/v1/me/settings',
+            data=json.dumps({'motion_preference': 'bogus'}),
+            content_type='application/json',
+        )
+        assert r.status_code == 400, f'expected 400 for an invalid motion_preference, got {r.status_code}'
+
+        r = client.patch(
+            '/api/v1/me/settings',
+            data=json.dumps({'motion_preference': 'off'}),
+            content_type='application/json',
+        )
+        assert r.status_code == 200, f'expected 200 for a valid motion_preference, got {r.status_code}'
+        body = json.loads(r.data.decode())
+        settings = body.get('settings', body)
+        assert settings.get('motion_preference') == 'off', (
+            f'PATCH did not persist motion_preference=off, got {settings!r}'
+        )
+
+
 def main():
     test_no_third_party_animation_library()
     test_motion_css_keyframes_pair_with_reduced_motion()
@@ -512,7 +662,11 @@ def main():
     test_practice_css_quiz_runner_option_animations()
     test_phase4_new_clips()
     test_phase4_react_target_skips_decorative_mascots()
-    print('Zorp motion Phase 1-2 smoke passed.')
+    test_phase5_motionlevel_reads_data_motion()
+    test_phase5_css_motion_preference_mirrors()
+    test_phase5_motion_preference_persists()
+    test_phase5_patch_motion_preference()
+    print('Zorp motion smoke passed.')
 
 
 if __name__ == '__main__':

@@ -169,6 +169,30 @@
     </section>
 
     <section class="section-panel settings-section">
+        <div class="section-panel-header">Motion</div>
+        <div class="section-panel-body">
+            <p class="page-intro settings-intro">Less motion — calmer animations. Applies across practice, lessons, and the installed app.</p>
+            <div class="form-group">
+                <label class="privacy-radio">
+                    <input type="radio" name="motion_preference" value="system"
+                           {% if settings.motion_preference|default('system') == 'system' %}checked{% endif %}>
+                    <span><strong>Match my device</strong> — follow your device's reduce-motion setting</span>
+                </label>
+                <label class="privacy-radio">
+                    <input type="radio" name="motion_preference" value="reduced"
+                           {% if settings.motion_preference == 'reduced' %}checked{% endif %}>
+                    <span><strong>Less motion</strong> — calmer, minimal animations</span>
+                </label>
+                <label class="privacy-radio">
+                    <input type="radio" name="motion_preference" value="off"
+                           {% if settings.motion_preference == 'off' %}checked{% endif %}>
+                    <span><strong>Off</strong> — no animations</span>
+                </label>
+            </div>
+        </div>
+    </section>
+
+    <section class="section-panel settings-section">
         <div class="section-panel-header">Sound &amp; feedback</div>
         <div class="section-panel-body settings-switch-group">
             <p class="page-intro settings-intro">Short correct/incorrect sounds when you check answers. Off by default — useful in class when muted.</p>

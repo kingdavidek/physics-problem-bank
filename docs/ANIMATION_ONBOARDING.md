@@ -453,6 +453,11 @@ Do **not** change grading, generators, or `normalize_mode`.
 
 Do not start E4.1, M5, or E5.7 in the same session unless asked.
 
+E7 (Zorp mascot motion) is now fully phased (Phase 1 through Phase 5). For
+anything mascot-motion-related — the rig, idle loop, clips, `motion_preference`,
+`data-motion`, or the runtime `window.pbZorp` API — read
+`docs/MASCOT_MOTION_AND_ONBOARDING.md` instead of this file.
+
 ---
 
 ## 12. Prompt for the next AI agent

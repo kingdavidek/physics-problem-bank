@@ -18,6 +18,11 @@ THEME_LIGHT = 'light'
 THEME_DARK = 'dark'
 THEME_CHOICES = (THEME_SYSTEM, THEME_LIGHT, THEME_DARK)
 
+MOTION_SYSTEM = 'system'
+MOTION_REDUCED = 'reduced'
+MOTION_OFF = 'off'
+MOTION_CHOICES = (MOTION_SYSTEM, MOTION_REDUCED, MOTION_OFF)
+
 GUIDE_JSON_MAX = 4096
 _GUIDE_TOUR_KEY = re.compile(r'^[a-z][a-z0-9_]{0,31}$')
 _GUIDE_REWARD_KEY = re.compile(r'^[a-z0-9_:]{1,64}$')
@@ -199,6 +204,12 @@ def normalize_theme_preference(value):
         return value
     return THEME_SYSTEM
 
+
+def normalize_motion_preference(value):
+    if value in MOTION_CHOICES:
+        return value
+    return MOTION_SYSTEM
+
 ACTIVITY_TOPIC_OPENED = 'topic_opened'
 ACTIVITY_QUESTION_GENERATED = 'question_generated'
 ACTIVITY_MCQ_ANSWERED = 'mcq_answered'
@@ -277,7 +288,7 @@ def get_profile_settings(conn, user_id):
                show_shared_questions, auto_share_quiz, auto_share_lesson,
                default_share_visibility, show_study_streak, show_milestones,
                email_weekly_digest, avatar_json, show_accuracy_leaderboard,
-               sound_enabled, theme_preference, guide_json
+               sound_enabled, theme_preference, motion_preference, guide_json
         FROM user_profile_settings
         WHERE user_id = ?
         ''',
@@ -301,6 +312,7 @@ def update_profile_settings(conn, user_id, settings):
     if share_visibility not in VISIBILITY_CHOICES:
         share_visibility = VISIBILITY_FOLLOWERS
     theme_preference = normalize_theme_preference(settings.get('theme_preference', THEME_SYSTEM))
+    motion_preference = normalize_motion_preference(settings.get('motion_preference', MOTION_SYSTEM))
     existing = conn.execute(
         'SELECT avatar_json, guide_json FROM user_profile_settings WHERE user_id = ?',
         (user_id,),
@@ -338,6 +350,7 @@ def update_profile_settings(conn, user_id, settings):
             show_accuracy_leaderboard = ?,
             sound_enabled = ?,
             theme_preference = ?,
+            motion_preference = ?,
             guide_json = ?
         WHERE user_id = ?
         ''',
@@ -359,6 +372,7 @@ def update_profile_settings(conn, user_id, settings):
             _bool_int(settings.get('show_accuracy_leaderboard', True)),
             _bool_int(settings.get('sound_enabled', False)),
             theme_preference,
+            motion_preference,
             guide_json,
             user_id,
         ),
