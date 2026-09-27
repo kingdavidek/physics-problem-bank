@@ -2290,7 +2290,9 @@ def _prob_random_die_target():
         f"greater than {k}",
         f"less than {k + 1}",
         f"at least {k}",
-        f"at most {k + 2}",
+        # Capped at 5: "at most 6/7" on a d6 is a certain event (P = 1), which
+        # isn't a fraction answer and made _prob_found_01 randomly non-fraction.
+        f"at most {min(k + 2, 5)}",
         f"factor of {random.choice([4, 6, 8, 12])}",
         "prime number",
         "multiple of 3",
