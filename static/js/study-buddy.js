@@ -41,14 +41,16 @@
   var QUIET_MS_ACTED = 10 * 60 * 1000;
   var QUIET_MS_DISMISSED = 30 * 60 * 1000;
 
+  // No-runtime fallback table: name -> valence. A prompt face is never negative (E8 section 5),
+  // so a negative entry here would still be refused by faceKnown().
   var FACE_OK = {
-    milestone: 1,
-    celebrate: 1,
-    qotd_nudge: 1,
-    streak_risk: 1,
-    weak_topic: 1,
-    friend_challenge: 1,
-    nudge: 1,
+    milestone: 'positive',
+    celebrate: 'positive',
+    qotd_nudge: 'neutral',
+    streak_risk: 'positive',
+    weak_topic: 'neutral',
+    friend_challenge: 'positive',
+    nudge: 'neutral',
   };
   var FACE_FROM_EMOJI = {
     '🎉': 'milestone',
@@ -61,9 +63,14 @@
   };
 
   // E8: pbZorp.hasExpression knows every preset; FACE_OK is only the no-runtime fallback.
+  // Phase 2: presets whose valence is negative are never drawn for a prompt type.
   function faceKnown(name) {
-    if (window.pbZorp && typeof window.pbZorp.hasExpression === 'function') return window.pbZorp.hasExpression(name);
-    return !!FACE_OK[name];
+    var z = window.pbZorp;
+    if (z && typeof z.hasExpression === 'function') {
+      if (!z.hasExpression(name)) return false;
+      return typeof z.valenceOf !== 'function' || z.valenceOf(name) !== 'negative';
+    }
+    return Object.prototype.hasOwnProperty.call(FACE_OK, name) && FACE_OK[name] !== 'negative';
   }
 
   function resolveFace(prompt) {

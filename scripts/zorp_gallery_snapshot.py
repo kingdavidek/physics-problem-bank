@@ -8,6 +8,9 @@ Renders `/styleguide#zorp-gallery` in headless Chromium and writes review images
 * `expressions.png` (Phase 1+): every preset in the gallery, same rows, in blocks of seven;
 * `faces-parity.png` (with `--compare`): the compared snapshot on top, this one below, for the
   legacy faces at 128 px in light and dark;
+* `matrix.png` / `matrix-dark.png` (Phase 2+): the eyes x mouths channel matrix from the styleguide;
+* `fx-filmstrips.png` (Phase 2+): one row per preset whose fx animate in full motion, five frames
+  (0/25/50/75/100% of the animation) then the reduced-motion still, side by side;
 * `cells/<scheme>-<motion>-<size>-<face>.png`: every gallery cell on its own;
 * `manifest.json`: label, time, URL, viewport, versions, files, per-cell visible face
   groups and console errors.
@@ -26,8 +29,10 @@ needs Playwright and Pillow. Both are optional dev dependencies that are never a
 requirements.txt: without them, or without a Chromium build, the tool prints a message
 and exits 0.
 
-Pixel comparisons (`--compare`, best alignment within a few device pixels) are only meaningful on the same machine and Chromium
-build. Filmstrips and look sheets are built from Phase 1 (`--clips`, `--looks`).
+Pixel comparisons (`--compare`) look at the mascot box only (found in each cell image from the
+non-background pixels beside the `svg.buddy-mascot` box the manifest records), then align the two
+crops on that bounding box and allow a 3 px shift. They report changed pixel counts per cell.
+Only meaningful on the same machine and Chromium build. Look sheets are still to come (`--looks`).
 """
 import argparse
 import json
@@ -58,7 +63,8 @@ DEVICE_SCALE_FACTOR = 2
 # data/zorp_gallery or data/ itself, and the tool deletes the output dir it writes to.
 LABEL_RE = re.compile(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$')
 DIFF_THRESHOLD = 16  # largest per-channel difference that counts as a changed pixel
-OVER_PCT = 0.5
+OVER_PCT = 0.15  # legacy faces must be ~0 changed pixels inside the mascot box (Phase 2, was 0.5 on the whole cell)
+FRAMES = (0.0, 0.25, 0.5, 0.75, 1.0)  # fx filmstrip sample points
 
 
 def serve():
@@ -194,37 +200,74 @@ def _build_parity(label, other):
     return out
 
 
-def _best_shift_pct(ia, ib, reach_x=3, reach_y=8):
-    """Smallest changed-pixel percentage over small integer shifts of `ib` against `ia`.
-
-    Gallery cells are stretched by their flex row, so a whole cell can sit a few device pixels
-    higher or lower when the number of cells changes. That is layout, not art, so the art is
-    compared at its best alignment (the shift is at most reach_x / reach_y device pixels)."""
+def _changed(ca, cb):
+    """Number of pixels whose largest channel difference exceeds DIFF_THRESHOLD."""
     from PIL import ImageChops
 
-    best = 100.0
-    w, h = ia.size
-    for dy in range(-reach_y, reach_y + 1):
-        for dx in range(-reach_x, reach_x + 1):
-            box_a = (max(dx, 0), max(dy, 0), w + min(dx, 0), h + min(dy, 0))
-            box_b = (max(-dx, 0), max(-dy, 0), w + min(-dx, 0), h + min(-dy, 0))
-            ca, cb = ia.crop(box_a), ib.crop(box_b)
-            r, g, b, a = ImageChops.difference(ca, cb).split()
-            worst = ImageChops.lighter(ImageChops.lighter(r, g), ImageChops.lighter(b, a))
-            changed = worst.point(lambda v: 255 if v > DIFF_THRESHOLD else 0).histogram()[255]
-            best = min(best, 100.0 * changed / (ca.width * ca.height))
+    r, g, b, a = ImageChops.difference(ca, cb).split()
+    worst = ImageChops.lighter(ImageChops.lighter(r, g), ImageChops.lighter(b, a))
+    return worst.point(lambda v: 255 if v > DIFF_THRESHOLD else 0).histogram()[255]
+
+
+def _mascot_bbox(img, y0, y1):
+    """Bounding box (device px) of the non-background pixels in rows y0..y1 of a cell image.
+
+    The gallery cell's background is the pixel at (2, 2); the rows are the ones the manifest says
+    the svg occupies (padded a little), so the caption below never counts."""
+    from PIL import Image, ImageChops
+
+    y0, y1 = max(0, y0), min(img.height, y1)
+    band = img.crop((0, y0, img.width, y1))
+    bg = Image.new('RGBA', band.size, img.getpixel((2, 2)))
+    r, g, b, a = ImageChops.difference(band, bg).split()
+    worst = ImageChops.lighter(ImageChops.lighter(r, g), ImageChops.lighter(b, a))
+    box = worst.point(lambda v: 255 if v > DIFF_THRESHOLD else 0).getbbox()
+    if not box:
+        return None
+    return (box[0], box[1] + y0, box[2], box[3] + y0)
+
+
+def _mascot_pct(ia, ib, box_a, reach=3):
+    """(changed pixels, area) inside the mascot box after aligning both crops on their own
+    non-background bounding boxes (best of a small +-reach px shift)."""
+    from PIL import Image
+
+    pad = 6  # device px of context around the drawn mascot
+    y0, y1 = box_a
+    ba = _mascot_bbox(ia, y0, y1)
+    bb = _mascot_bbox(ib, y0 - 24, y1 + 4)
+    if not ba or not bb:
+        return None
+    # The crop covers the larger of the two boxes, so a part that went missing (or appeared) at
+    # the mascot's right or bottom edge is still inside the compared area (review 2026-09-29).
+    w = max(ba[2] - ba[0], bb[2] - bb[0]) + 2 * pad
+    h = max(ba[3] - ba[1], bb[3] - bb[1]) + 2 * pad
+    crop_a = ia.crop((ba[0] - pad, ba[1] - pad, ba[0] - pad + w, ba[1] - pad + h))
+    best = None
+    for dy in range(-reach, reach + 1):
+        for dx in range(-reach, reach + 1):
+            x, y = bb[0] - pad + dx, bb[1] - pad + dy
+            crop_b = ib.crop((x, y, x + w, y + h))
+            changed = _changed(crop_a, crop_b)
+            if best is None or changed < best[0]:
+                best = (changed, w * h, (bb[2] - bb[0]) - (ba[2] - ba[0]), (bb[3] - bb[1]) - (ba[3] - ba[1]))
     return best
 
 
 def compare(label, other):
-    """Determinism / regression check between two snapshot directories. Always exit 0."""
-    from PIL import Image, ImageChops
+    """Regression check between two snapshot directories, mascot box only. Always exit 0."""
+    from PIL import Image
 
     a_dir, b_dir = _out_dir(label) / 'cells', _out_dir(other) / 'cells'
     if not a_dir.is_dir() or not b_dir.is_dir():
         print(f'compare: missing cells directory ({a_dir} or {b_dir}); nothing to compare.')
         return
-    lines = []
+    try:
+        boxes = {c['file']: c for c in json.loads((_out_dir(label) / 'manifest.json').read_text('utf-8'))['cells']}
+    except (OSError, ValueError, KeyError):
+        boxes = {}
+    scale = DEVICE_SCALE_FACTOR
+    lines = ['cell  changed_px/mascot_px  pct  (bbox size delta w,h in device px)']
     for name in sorted(p.name for p in b_dir.glob('*.png') if not (a_dir / p.name).is_file()):
         lines.append(f'{name}  MISSING in {label}  OVER')
     for path in sorted(a_dir.glob('*.png')):
@@ -232,32 +275,92 @@ def compare(label, other):
         if not twin.is_file():
             lines.append(f'{path.name}  NEW in {label} (no {other} cell)')
             continue
+        meta = boxes.get(f'cells/{path.name}')
+        if not meta or 'box' not in meta:
+            lines.append(f'{path.name}  no mascot box in the {label} manifest  OVER')
+            continue
+        _, by, _, bh = meta['box']
         ia, ib = Image.open(path).convert('RGBA'), Image.open(twin).convert('RGBA')
-        if ia.size != ib.size:
-            # Cells stretch with their flex/grid row, so sizes can differ by a few pixels.
-            if abs(ia.width - ib.width) > 8 or abs(ia.height - ib.height) > 8:
-                pct = 100.0
-            else:
-                cw, chh = min(ia.width, ib.width), min(ia.height, ib.height)
-                pct = _best_shift_pct(ia.crop((0, 0, cw, chh)), ib.crop((0, 0, cw, chh)))
-        else:
-            diff = ImageChops.difference(ia, ib)
-            r, g, b, a = diff.split()
-            worst = ImageChops.lighter(ImageChops.lighter(r, g), ImageChops.lighter(b, a))
-            changed = worst.point(lambda v: 255 if v > DIFF_THRESHOLD else 0).histogram()[255]
-            pct = 100.0 * changed / (ia.width * ia.height)
-            if pct > OVER_PCT:
-                pct = min(pct, _best_shift_pct(ia, ib))
+        res = _mascot_pct(ia, ib, (int(by * scale) - 8, int((by + bh) * scale) + 8))
         face = path.stem.split('-', 3)[-1]
+        if res is None:
+            lines.append(f'{path.name}  mascot not found  OVER')
+            continue
+        changed, area, dw, dh = res
+        pct = 100.0 * changed / area
+        text = f'{path.name}  {changed}/{area}  {pct:.2f}%  (bbox {dw:+d},{dh:+d})'
         if face in PARITY_EXEMPT:
-            lines.append(f'{path.name}  {pct:.2f}%  EXEMPT ({PARITY_EXEMPT[face]})')
+            lines.append(f'{text}  EXEMPT ({PARITY_EXEMPT[face]})')
+        elif face in GALLERY_FACES:
+            lines.append(text + ('  OVER' if pct > OVER_PCT else ''))
         else:
-            lines.append(f'{path.name}  {pct:.2f}%' + ('  OVER' if pct > OVER_PCT else ''))
-    report = '\n'.join(lines) or 'no common cells'
+            lines.append(f'{text}  (new preset, informational)')
+    report = '\n'.join(lines)
     print(report)
     (_out_dir(label) / f'compare-{other}.txt').write_text(report + '\n', encoding='utf-8')
-    over = sum(1 for line in lines if line.endswith('OVER'))
-    print(f'compare: {len(lines)} cells, {over} over {OVER_PCT}%.')
+    legacy = [ln for ln in lines[1:] if ln.split('  ')[0].split('-', 3)[-1][:-4] in GALLERY_FACES]
+    over = sum(1 for line in legacy if line.endswith('OVER'))
+    print(f'compare: {len(legacy)} legacy cells compared inside the mascot box, {over} over {OVER_PCT}%.')
+
+
+def _build_filmstrips(out, label, strips):
+    """fx-filmstrips.png. strips: {face: ([full frame paths], reduced path)}."""
+    from PIL import Image, ImageDraw
+
+    if not strips:
+        return None
+    font, small = _font(22), _font(28)
+    names = list(strips)
+    first = Image.open(strips[names[0]][0][0])
+    fw, fh = first.width, first.height
+    pad, label_w, gap = 16, 190, 40
+    cols = len(FRAMES) + 1
+    width = label_w + cols * (fw + pad) + gap + pad
+    head_h = 96
+    sheet = Image.new('RGB', (width, head_h + len(names) * (fh + pad) + pad), (255, 255, 255))
+    draw = ImageDraw.Draw(sheet)
+    draw.text((pad, 14), f'Zorp fx filmstrips · {label} · 128 px · full motion frames vs reduced motion (static)',
+              fill=(20, 20, 20), font=small)
+    for i, f in enumerate(FRAMES):
+        x = label_w + i * (fw + pad)
+        draw.text((x + 8, head_h - 36), f'{int(f * 100)}%', fill=(60, 60, 60), font=font)
+    draw.text((label_w + len(FRAMES) * (fw + pad) + gap, head_h - 36), 'reduced', fill=(60, 60, 60), font=font)
+    for r, face in enumerate(names):
+        y = head_h + r * (fh + pad)
+        draw.text((pad, y + fh // 2 - 10), face, fill=(20, 20, 20), font=font)
+        frames, reduced = strips[face]
+        for i, path in enumerate(frames):
+            sheet.paste(Image.open(path).convert('RGB'), (label_w + i * (fw + pad), y))
+        sheet.paste(Image.open(reduced).convert('RGB'), (label_w + len(FRAMES) * (fw + pad) + gap, y))
+    sheet.save(out / 'fx-filmstrips.png')
+    return 'fx-filmstrips.png'
+
+
+def _film(cell, out, motion, face, strips):
+    """Filmstrip frames for one 128 px light cell. Full motion: restart the fx animations by
+    re-inserting the fx nodes, pause them, and step every animation to 0/25/50/75/100% of its
+    iteration. Reduced motion: one still of the same mascot (nothing animates)."""
+    host = cell.locator('[data-buddy-face]')
+    if motion == 'reduced':
+        if face in strips:
+            path = out / 'fx' / f'{face}-reduced.png'
+            host.screenshot(path=str(path), animations='allow', caret='hide')
+            strips[face] = (strips[face][0], path)
+        return
+    n = cell.evaluate(
+        "el => { el.querySelectorAll('[class*=\"zorp-slot--fx\"]').forEach(s => s.replaceChildren(...s.childNodes));"
+        " const a = el.getAnimations({subtree: true}); a.forEach(x => x.pause()); return a.length; }")
+    if not n:
+        return
+    frames = []
+    for i, f in enumerate(FRAMES):
+        cell.evaluate(
+            "(el, f) => el.getAnimations({subtree: true}).forEach(a => { const t = a.effect.getComputedTiming();"
+            " a.currentTime = (t.delay || 0) + f * 0.999 * t.duration; })", f)
+        path = out / 'fx' / f'{face}-{i}.png'
+        host.screenshot(path=str(path), animations='allow', caret='hide')
+        frames.append(path)
+    strips[face] = (frames, None)
 
 
 def snapshot(label, server_python):
@@ -311,6 +414,8 @@ def snapshot(label, server_python):
         console = {}
         files = []
         records = {m: {} for m in ('full', 'reduced')}
+        (out / 'fx').mkdir()
+        strips = {}
         with sync_playwright() as p:
             try:
                 browser = p.chromium.launch()
@@ -338,10 +443,23 @@ def snapshot(label, server_python):
                     rel = f'cells/{scheme}-{motion}-{size}-{face}.png'
                     cell.screenshot(path=str(out / rel), animations='disabled', caret='hide')
                     visible = cell.evaluate("el => el.querySelectorAll('.zorp-face').length")
+                    box = cell.evaluate(
+                        "el => { const s = el.querySelector('svg.buddy-mascot'); const c = el.getBoundingClientRect();"
+                        " const r = s.getBoundingClientRect(); return [r.left - c.left, r.top - c.top, r.width, r.height]; }")
                     files.append(rel)
                     records[motion][(scheme, size, face)] = out / rel
                     manifest_cells.append({'scheme': scheme, 'motion': motion, 'size': size,
-                                           'face': face, 'file': rel, 'zorp_faces': visible})
+                                           'face': face, 'file': rel, 'zorp_faces': visible, 'box': box})
+                    if scheme == 'light' and size == 128:
+                        _film(cell, out, motion, face, strips)
+                if motion == 'full':
+                    matrix = page.locator('#sg-zorp-matrix')
+                    if matrix.count():
+                        name = 'matrix.png' if scheme == 'light' else 'matrix-dark.png'
+                        page.wait_for_selector('#sg-zorp-matrix td')
+                        matrix.scroll_into_view_if_needed()
+                        matrix.screenshot(path=str(out / name), animations='disabled', caret='hide')
+                        files.append(name)
                 console[f'{scheme}-{motion}'] = errors
                 ctx.close()
             version = browser.version
@@ -356,6 +474,9 @@ def snapshot(label, server_python):
             files.append(_build_sheet(out, label, motion, legacy))
         files.append(_build_sheet(out, label, 'full', records['full'], faces=tuple(seen),
                                   name='expressions.png', block=BLOCK))
+        strip_sheet = _build_filmstrips(out, label, {f: v for f, v in strips.items() if len(v[0]) == len(FRAMES) and v[1]})
+        if strip_sheet:
+            files.append(strip_sheet)
         try:
             from importlib.metadata import version as pkg_version
             pw_version = pkg_version('playwright')
@@ -378,7 +499,7 @@ def snapshot(label, server_python):
             shutil.rmtree(final_out)
         out.rename(final_out)
         print(f'Wrote {final_out}')
-        print(f'  sheets: {final_out / "faces.png"}, {final_out / "faces-reduced.png"}, {final_out / "expressions.png"}')
+        print(f'  sheets: {final_out / "faces.png"}, {final_out / "faces-reduced.png"}, {final_out / "expressions.png"}, matrix.png, fx-filmstrips.png')
         print(f'  cells:  {len(manifest_cells)} PNGs in {final_out / "cells"}')
         print(f'  manifest: {final_out / "manifest.json"}')
         return 0

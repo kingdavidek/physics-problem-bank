@@ -67,7 +67,69 @@
       });
     }
     wireZorpDemo(document.getElementById('zorp-motion'));
+    buildMatrix(document.getElementById('sg-zorp-matrix'));
   });
+
+  // E8 Phase 2: eyes x mouths review grid, cloned from the inert parts library (no pbZorp needed).
+  function buildMatrix(table) {
+    var tpl = document.getElementById('pb-zorp-parts');
+    if (!table || !tpl || !tpl.content) return;
+    var NS = 'http://www.w3.org/2000/svg';
+    var eyes = (table.getAttribute('data-eyes') || '').split(' ');
+    var mouths = (table.getAttribute('data-mouths') || '').split(' ');
+    function part(channel, id) { return tpl.content.querySelector('[data-part="' + channel + ':' + id + '"]'); }
+    function put(parent, node) {
+      if (!node) return;
+      for (var i = 0; i < node.childNodes.length; i += 1) parent.appendChild(node.childNodes[i].cloneNode(true));
+    }
+    function el(name, attrs) {
+      var n = document.createElementNS(NS, name);
+      for (var k in attrs) if (Object.prototype.hasOwnProperty.call(attrs, k)) n.setAttribute(k, attrs[k]);
+      return n;
+    }
+    function face(eye, mouth) {
+      var svg = el('svg', { viewBox: '14 22 36 32', 'aria-hidden': 'true', 'class': 'buddy-mascot' });
+      svg.appendChild(el('ellipse', { cx: 32, cy: 36, rx: 21, ry: 21.5, fill: 'var(--brand-500)' }));
+      svg.appendChild(el('ellipse', { cx: 32, cy: 38, rx: 15.5, ry: 13.5, fill: 'var(--brand-50)' }));
+      var l = el('g', { transform: 'translate(26.2 35.2)' });
+      var r = el('g', { transform: 'translate(37.8 35.2)' });
+      put(l, part('eyes', eye));
+      put(r, part('eyes', part('eyes', eye + '-r') ? eye + '-r' : eye));
+      svg.appendChild(l);
+      svg.appendChild(r);
+      var m = el('g', {});
+      put(m, part('mouth', mouth));
+      svg.appendChild(m);
+      return svg;
+    }
+    var head = document.createElement('tr');
+    head.appendChild(document.createElement('th'));
+    mouths.forEach(function (mouth) {
+      var th = document.createElement('th');
+      th.setAttribute('scope', 'col');
+      th.textContent = mouth;
+      head.appendChild(th);
+    });
+    var thead = document.createElement('thead');
+    thead.appendChild(head);
+    table.appendChild(thead);
+    var body = document.createElement('tbody');
+    eyes.forEach(function (eye) {
+      var tr = document.createElement('tr');
+      var th = document.createElement('th');
+      th.setAttribute('scope', 'row');
+      th.textContent = eye;
+      tr.appendChild(th);
+      mouths.forEach(function (mouth) {
+        var td = document.createElement('td');
+        td.setAttribute('data-matrix-cell', eye + ':' + mouth);
+        td.appendChild(face(eye, mouth));
+        tr.appendChild(td);
+      });
+      body.appendChild(tr);
+    });
+    table.appendChild(body);
+  }
 
   // E8 Phase 1 picker: preset chips, channel dropdowns, motion-level simulator (sets
   // html[data-motion] on this dev page only) and the 0.25x slow-motion toggle.

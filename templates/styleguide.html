@@ -223,7 +223,7 @@
     </div>
 </section>
 
-<section class="section-panel" id="zorp-gallery" data-zorp-gallery data-gallery-phase="1">
+<section class="section-panel" id="zorp-gallery" data-zorp-gallery data-gallery-phase="2">
     <div class="section-panel-header">Zorp gallery (E8)</div>
     <div class="section-panel-body">
         <p class="profile-empty">E8 review sheet (<code>docs/ZORP_EXPRESSIVENESS.md</code>). Every preset from <code>models/zorp_rig.py</code>, drawn server-side and not bound to <code>pbZorp</code>, at 56 px and 128 px. <code>streak_risk</code> and <code>heads-up</code> now share the upbeat art (D4). Snapshot: <code>python scripts/zorp_gallery_snapshot.py --label NAME</code>. The picker with channel menus is under <a href="#zorp-motion">Zorp motion</a>.</p>
@@ -243,6 +243,10 @@
                 <figcaption><code>{{ name|replace('_', '_<wbr>')|safe }}</code></figcaption>
             </figure>
             {% endfor %}
+        </div>
+        <p class="profile-empty" style="margin-top: var(--space-5);">Channel matrix (Phase 2): every main eye (rows) against every mouth (columns), no brows or cheeks, built in the browser from the parts library. Review tool only: pairings such as <code>frown-soft</code> are not app faces; app faces are the presets above, checked against <code>CONTEXT_MAP</code>.</p>
+        <div class="sg-zorp-matrix-scroll">
+            <table id="sg-zorp-matrix" class="sg-zorp-matrix" data-zorp-matrix data-eyes="{{ zorp_rig.MATRIX_EYES|join(' ') }}" data-mouths="{{ zorp_rig.MATRIX_MOUTHS|join(' ') }}"></table>
         </div>
     </div>
 </section>
@@ -540,6 +544,13 @@
 <style>
     /* E8 gallery: long token names (friend_challenge) must not clip in the 56 px cells. */
     #zorp-gallery figcaption code { font-size: var(--text-xs); overflow-wrap: anywhere; }
+    .sg-zorp-matrix-scroll { overflow-x: auto; }
+    .sg-zorp-matrix { border-collapse: collapse; }
+    .sg-zorp-matrix th { font: 600 10px/1.1 var(--font-mono, monospace); color: var(--ink-500); padding: 2px; white-space: nowrap; }
+    .sg-zorp-matrix thead th { writing-mode: vertical-rl; transform: rotate(180deg); vertical-align: bottom; height: 100px; }
+    .sg-zorp-matrix tbody th { text-align: right; padding-right: 6px; }
+    .sg-zorp-matrix td { padding: 1px; }
+    .sg-zorp-matrix svg { display: block; width: 44px; height: 40px; }
     .sg-row {
         display: flex;
         flex-wrap: wrap;
@@ -607,5 +618,5 @@
         pointer-events: auto;
     }
 </style>
-<script src="{{ url_for('static', filename='js/styleguide.js') }}?v=5" defer></script>
+<script src="{{ url_for('static', filename='js/styleguide.js') }}?v=6" defer></script>
 {% endblock %}

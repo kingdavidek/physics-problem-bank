@@ -40,8 +40,8 @@
     .buddy-mascot.is-zorp-idle .buddy-antenna--l,
     .buddy-mascot.is-zorp-idle .buddy-antenna--r { animation: none; }
     .buddy-body.is-zorp-pulse .buddy-body-shape { animation: zorp-pulse 300ms ease-out 1; }
-    /* E8 fx: zorp-twinkle (sparkles) and zorp-zzz (sleep) do not run; the marks stay static. */
-    .buddy-mascot .zorp-sp, .buddy-mascot .zorp-z { animation: none; }
+    /* E8 fx: no fx keyframe runs; the marks stay static. */
+    .buddy-mascot [class*="zorp-slot--fx"] * { animation: none; }
 }
 /* E7 Phase 5: mirror of the media-query block above for motion_preference (duration-zeroing
    alone doesn't stop an infinite animation, so idle-breathe/sway need an explicit none here). */
@@ -53,8 +53,8 @@ html[data-motion="off"] .buddy-mascot.is-zorp-idle .buddy-antenna--l,
 html[data-motion="off"] .buddy-mascot.is-zorp-idle .buddy-antenna--r { animation: none; }
 html[data-motion="reduced"] .buddy-body.is-zorp-pulse .buddy-body-shape,
 html[data-motion="off"] .buddy-body.is-zorp-pulse .buddy-body-shape { animation: zorp-pulse 300ms ease-out 1; }
-html[data-motion="reduced"] .buddy-mascot .zorp-sp, html[data-motion="reduced"] .buddy-mascot .zorp-z,
-html[data-motion="off"] .buddy-mascot .zorp-sp, html[data-motion="off"] .buddy-mascot .zorp-z { animation: none; }
+html[data-motion="reduced"] .buddy-mascot [class*="zorp-slot--fx"] *,
+html[data-motion="off"] .buddy-mascot [class*="zorp-slot--fx"] * { animation: none; }
 
 /* E7 Phase 1.5: automatic-only live-buddy cosmetics (docs/MASCOT_MOTION_AND_ONBOARDING.md, Phase 1.5).
    Selected server-side by models/zorp_kit.py live_look(); no pupil-facing picker.
@@ -73,10 +73,13 @@ html[data-motion="off"] .buddy-mascot .zorp-sp, html[data-motion="off"] .buddy-m
    fall back to existing tokens, never redefine --brand-*, and never use the --wrong-*/--correct-*
    grading colours. .zk/.zf are the ink stroke and fill shared by every part in
    templates/partials/zorp_parts.html. */
-.buddy-mascot { --zorp-rouge: var(--streak-300); --zorp-blush: var(--streak-400); --zorp-drop: var(--brand-400); }
+.buddy-mascot { --zorp-rouge: var(--streak-300); --zorp-blush: var(--streak-400); --zorp-drop: var(--brand-400); --zorp-heart: #f472b6; }
+/* E8 Phase 2: slots that swap with a short WAAPI squeeze/pop/fade (zorp-motion.js) pivot on their own centre. */
+.zorp-slot--cheeks, .zorp-slot--brows, .zorp-slot--mouth, .buddy-eye, .zorp-sp, .zorp-z, .zorp-h, .zorp-gl, .zorp-dr, .zorp-pp { transform-box: fill-box; transform-origin: 50% 50%; }
+.zorp-pp { transform-origin: 50% 100%; }
+.zorp-orb { transform-box: view-box; transform-origin: 32px 10px; }
 .zk { fill: none; stroke: var(--ink-800); stroke-linecap: round; }
 .zf { fill: var(--ink-800); }
-.zorp-sp, .zorp-z { transform-box: fill-box; transform-origin: 50% 50%; }
 @media (prefers-reduced-motion: no-preference) {
     /* twinkle 1.8s (about 1.1 Hz, under the 3 Hz WCAG 2.3.1 limit); zzz drifts 2.4s */
     .buddy-mascot .zorp-sp { animation: zorp-twinkle 1.8s ease-in-out infinite; }
@@ -85,11 +88,21 @@ html[data-motion="off"] .buddy-mascot .zorp-sp, html[data-motion="off"] .buddy-m
     .buddy-mascot .zorp-z { animation: zorp-zzz 2.4s ease-in-out infinite; }
     .buddy-mascot .zorp-z:nth-child(2) { animation-delay: -0.8s; }
     .buddy-mascot .zorp-z:nth-child(3) { animation-delay: -1.6s; }
+    /* Phase 2 fx: hearts float on the zzz curve; tear-shine twinkles once; sweat slides once;
+       ?/! pop once; dizzy stars circle. Every opacity keyframe stays at >= 333 ms per toggle. */
+    .buddy-mascot .zorp-h { animation: zorp-zzz 2.4s ease-in-out infinite; }
+    .buddy-mascot .zorp-gl { animation: zorp-twinkle 1.2s ease-in-out 1; }
+    .buddy-mascot .zorp-dr { animation: zorp-drop 0.5s ease-out 1; }
+    .buddy-mascot .zorp-pp { animation: zorp-pop 0.3s ease-out 1; }
+    .buddy-mascot .zorp-orb { animation: zorp-orbit 2.4s linear infinite; }
 }
 @keyframes zorp-twinkle {
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: 0.4; transform: scale(0.75); }
 }
+@keyframes zorp-drop { from { transform: translateY(-2px); } }
+@keyframes zorp-pop { from { transform: scale(0.6); } 60% { transform: scale(1.12); } }
+@keyframes zorp-orbit { to { transform: rotate(360deg); } }
 @keyframes zorp-zzz {
     0%, 100% { opacity: 0.55; transform: translate(0, 1px); }
     50% { opacity: 1; transform: translate(0, -1px); }

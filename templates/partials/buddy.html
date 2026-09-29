@@ -24,6 +24,10 @@
   face; other faces add data-expr="<preset>". A look's mouth (grin/cat) replaces the
   resting mouth of the nudge face only. Fx (stars, flame, zzz, sparkles) sit in the
   ambient slot at the end of buddy-root.
+
+  E8 Phase 2: fx listed in zorp_rig.FX_FACE (sweat, tear-shine, blush-steam) are drawn in
+  g.zorp-slot--fx-face inside the face group, so they move with the head; every other fx stays
+  in the ambient slot.
 #}
 
 {% from 'partials/zorp_overlays.html' import zorp_hat, zorp_shoe %}
@@ -68,6 +72,7 @@
     <g transform="translate(37.8 35.2)"><g class="buddy-eye buddy-eye--r zorp-slot--eyeR">{{ eye(p.eyeR) }}</g></g>
     <g class="zorp-slot--brows">{{ brows(p.brows) }}</g>
     <g class="zorp-slot--mouth">{{ mouth(p.mouth) }}</g>
+    <g class="zorp-slot--fx-face">{% if p.fx in zorp_rig.FX_FACE %}{{ fx(p.fx) }}{% endif %}</g>
   </g>{% if look.hat %}{{ zorp_hat(look.hat, 32, 14.5) }}{% endif %}
   </g>{# /buddy-head #}
   {# Feet — outside head so nod/shake leave them planted; painted after head to overlap the body #}
@@ -77,7 +82,7 @@
   <g class="buddy-foot buddy-foot--r">
     <ellipse cx="40" cy="56.5" rx="6.5" ry="3.6" fill="var(--zorp-limb, var(--brand-700))"/>{% if look.shoes %}{{ zorp_shoe(look.shoes, 40, 56.5) }}{% endif %}
   </g>
-  <g class="zorp-slot--fx">{{ fx(p.fx) }}</g>
+  <g class="zorp-slot--fx">{% if p.fx not in zorp_rig.FX_FACE %}{{ fx(p.fx) }}{% endif %}</g>
   </g>{# /buddy-root #}
 </svg>
 {%- endmacro %}

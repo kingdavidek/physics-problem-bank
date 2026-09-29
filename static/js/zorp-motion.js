@@ -45,12 +45,13 @@
   var lastVariant = '';
   var rareProtectUntil = 0;   // a rare reaction, once started, can't be cut short by a gated one
 
-  // Thought bubble (wrong reaction, full-motion only; JS-created, never added to buddy.html markup).
-  var SVG_NS = 'http://www.w3.org/2000/svg';
+  // Thought bubble (wrong reaction, full-motion only): the `thought` fx part, drawn into the
+  // ambient fx slot for THOUGHT_MS and animated with WAAPI (never styled in motion.css).
   var THOUGHT_MS = 1200;
-  // Three small dots trailing up-right from the head, clear of the body ellipse
-  // (cx 32 cy 36 rx 21 ry 21.5) and the right antenna (path to 47,6 / bulb at 48,5.2 r3.1).
-  var THOUGHT_DOTS = [[50, 20, 2], [55, 13, 2.6], [59.5, 6.5, 3.2]];
+  var VAL_WORD = { '+': 'positive', '0': 'neutral', '-': 'negative' };
+  var FALLBACK_GUIDE = ['nudge', 'milestone', 'celebrate', 'qotd_nudge', 'streak_risk', 'weak_topic', 'friend_challenge', 'sleep'];
+  var rigCtx = null;   // island "c": context -> allowed preset names
+  var rigFxFace = [];  // island "ff": fx ids drawn in the face-attached slot
 
   var mq = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
   var canAnimate = typeof Element !== 'undefined' && typeof Element.prototype.animate === 'function' &&
@@ -74,7 +75,11 @@
     try {
       var el = document.getElementById('pb-zorp-rig');
       var data = el ? JSON.parse(el.textContent || 'null') : null;
-      if (data && data.p && typeof data.p === 'object') table = data.p;
+      if (data && data.p && typeof data.p === 'object') {
+        table = data.p;
+        rigCtx = data.c && typeof data.c === 'object' ? data.c : null;
+        rigFxFace = Array.isArray(data.ff) ? data.ff : [];
+      }
     } catch (e) { table = null; }
     if (table || document.readyState !== 'loading') presetTable = table || LEGACY_PRESETS;
     return table || LEGACY_PRESETS;
@@ -82,6 +87,21 @@
 
   function hasExpression(name) {
     return typeof name === 'string' && Object.prototype.hasOwnProperty.call(presets(), name);
+  }
+
+  // 'positive' | 'neutral' | 'negative', or null for an unknown name. Consumers that draw a face
+  // for a prompt refuse 'negative' (docs/ZORP_EXPRESSIVENESS.md section 5).
+  function valenceOf(name) {
+    return hasExpression(name) ? (VAL_WORD[presets()[name][6]] || null) : null;
+  }
+
+  // Is this preset in the named allowlist ('guide', 'guide.lore') from the island?
+  function allowedIn(context, name) {
+    if (!hasExpression(name)) return false;
+    presets();
+    var list = rigCtx && rigCtx[context];
+    if (list) return list.indexOf(name) !== -1;
+    return FALLBACK_GUIDE.indexOf(name) !== -1;
   }
 
   function partNode(channel, id) {
@@ -112,23 +132,89 @@
     return out;
   }
 
+  function isFaceFx(id) {
+    presets();
+    return rigFxFace.indexOf(id) !== -1;
+  }
+
+  function fillSlot(slot, node) {
+    while (slot.firstChild) slot.removeChild(slot.firstChild);
+    if (!node) return;
+    var kids = node.childNodes;
+    var n;
+    for (n = 0; n < kids.length; n += 1) slot.appendChild(kids[n].cloneNode(true));
+  }
+
+  // fx live in one of two slots: face-attached (moves with the head) or ambient (never mirrored).
+  function paintFx(inst, id) {
+    var ambient = inst.slots.fx;
+    var face = inst.slots.fxFace || ambient;
+    var node = partNode('fx', id);
+    if (!node || !ambient) return false;
+    fillSlot(ambient, null);
+    if (face !== ambient) fillSlot(face, null);
+    fillSlot(isFaceFx(id) ? face : ambient, node);
+    return true;
+  }
+
+  // Short WAAPI swaps (full motion only; the caller has already checked): the new part settles
+  // in, an eye from a squeeze (80 ms), a mouth with a pop (90 ms), cheeks with a fade (120 ms).
+  function swapAnim(slot, key, id) {
+    var frames;
+    var dur;
+    if (key === 'eyeL' || key === 'eyeR') { frames = [{ transform: 'scale(1,0.2)' }, { transform: 'scale(1,1)' }]; dur = 80; }
+    else if (key === 'mouth') { frames = [{ transform: 'scale(0.9)' }, { transform: 'scale(1)' }]; dur = 90; }
+    else if (key === 'cheeks' && id !== 'none') { frames = [{ opacity: 0 }, { opacity: 1 }]; dur = 120; }
+    else return;
+    try { slot.animate(frames, { duration: dur, easing: 'ease-out', fill: 'none' }); } catch (e) { /* ignore */ }
+  }
+
+  function sameChannels(a, b) {
+    var i;
+    if (!a || !b) return false;
+    for (i = 0; i < SLOT_KEYS.length; i += 1) {
+      if (a[SLOT_KEYS[i]] !== b[SLOT_KEYS[i]]) return false;
+    }
+    return true;
+  }
+
+  // data-expr names what is drawn: `hint` when the channels match that preset, else the first
+  // matching preset, else 'custom' (channels set one by one).
+  function markExpr(inst, hint) {
+    if (!inst.cur) return;
+    var name = 'custom';
+    if (hint && hasExpression(hint) && sameChannels(inst.cur, channelsFor(inst, hint))) name = hint;
+    else {
+      var names = Object.keys(presets());
+      var i;
+      for (i = 0; i < names.length; i += 1) {
+        if (sameChannels(inst.cur, channelsFor(inst, names[i]))) { name = names[i]; break; }
+      }
+    }
+    inst.svg.setAttribute('data-expr', name);
+  }
+
   // Swap only the slots whose variant changed; a missing part leaves that slot as it was.
-  function drawChannels(inst, ch) {
+  function drawChannels(inst, ch, hint) {
     var next = inst.cur ? copyChannels(inst.cur) : {};
+    var animate = canAnimate && motionLevel() === 'full' && rendered(inst);
     var i;
     for (i = 0; i < SLOT_KEYS.length; i += 1) {
       var key = SLOT_KEYS[i];
       var slot = inst.slots[key];
       if (!slot || !ch[key] || (inst.cur && inst.cur[key] === ch[key])) continue;
-      var node = partNode(SLOT_CHANNEL[key], ch[key]);
-      if (!node) continue;
-      while (slot.firstChild) slot.removeChild(slot.firstChild);
-      var kids = node.childNodes;
-      var n;
-      for (n = 0; n < kids.length; n += 1) slot.appendChild(kids[n].cloneNode(true));
+      if (key === 'fx') {
+        if (!paintFx(inst, ch.fx)) continue;
+      } else {
+        var node = partNode(SLOT_CHANNEL[key], ch[key]);
+        if (!node) continue;
+        fillSlot(slot, node);
+        if (animate) swapAnim(slot, key, ch[key]);
+      }
       next[key] = ch[key];
     }
     inst.cur = next;
+    markExpr(inst, hint);
   }
 
   function findParts(svg) {
@@ -148,6 +234,7 @@
     var slots = {};
     var i;
     for (i = 0; i < SLOT_KEYS.length; i += 1) slots[SLOT_KEYS[i]] = svg.querySelector('.zorp-slot--' + SLOT_KEYS[i]);
+    slots.fxFace = svg.querySelector('.zorp-slot--fx-face');
     return slots;
   }
 
@@ -238,11 +325,8 @@
     }
     if (!ch) return false;
     clearFaceSwap(inst);
-    drawChannels(inst, ch);
-    if (name) {
-      inst.host.setAttribute('data-face', name);
-      inst.svg.setAttribute('data-expr', name);
-    }
+    drawChannels(inst, ch, name);
+    if (name) inst.host.setAttribute('data-face', name);
     return true;
   }
 
@@ -259,7 +343,7 @@
       prevCh: inst.cur ? copyChannels(inst.cur) : null
     };
     inst.host.setAttribute('data-face', face);
-    drawChannels(inst, ch);
+    drawChannels(inst, ch, face);
     if (inst.faceTimer) clearTimeout(inst.faceTimer);
     inst.faceTimer = setTimeout(function () { restoreFace(inst); }, ms);
   }
@@ -270,7 +354,7 @@
       if (swap.prev) inst.host.setAttribute('data-face', swap.prev);
       else inst.host.removeAttribute('data-face');
       var back = swap.prevCh || channelsFor(inst, swap.prev || 'nudge');
-      if (back) drawChannels(inst, back);
+      if (back) drawChannels(inst, back, swap.prev || 'nudge');
     }
     inst.faceSwap = null;
     if (inst.faceTimer) { clearTimeout(inst.faceTimer); inst.faceTimer = 0; }
@@ -305,31 +389,21 @@
     if (anim) {
       try { anim.cancel(); } catch (e) { /* ignore */ }
     }
-    if (node && node.parentNode) {
-      try { node.parentNode.removeChild(node); } catch (e) { /* ignore */ }
+    // Put the current expression's fx back if the bubble is still what the slot shows.
+    if (node && node.parentNode === inst.slots.fx) {
+      if (!(inst.cur && inst.cur.fx && paintFx(inst, inst.cur.fx))) fillSlot(inst.slots.fx, null);
     }
   }
 
   function showThought(inst) {
     clearThought(inst);
-    if (!inst.svg || typeof inst.svg.appendChild !== 'function') return;
-    var g = document.createElementNS(SVG_NS, 'g');
-    g.setAttribute('class', 'buddy-thought');
-    g.setAttribute('aria-hidden', 'true');
+    var slot = inst.slots.fx;
+    var part = partNode('fx', 'thought');
+    if (!slot || !part) return;
+    fillSlot(slot, part);
+    var g = slot.firstElementChild;
+    if (!g) return;
     g.style.opacity = '0';
-    var i;
-    for (i = 0; i < THOUGHT_DOTS.length; i += 1) {
-      var dot = THOUGHT_DOTS[i];
-      var circle = document.createElementNS(SVG_NS, 'circle');
-      circle.setAttribute('cx', String(dot[0]));
-      circle.setAttribute('cy', String(dot[1]));
-      circle.setAttribute('r', String(dot[2]));
-      circle.setAttribute('fill', 'var(--zorp-accent, var(--brand-400))');
-      circle.setAttribute('stroke', 'var(--zorp-limb, var(--brand-700))');
-      circle.setAttribute('stroke-width', '1');
-      g.appendChild(circle);
-    }
-    inst.svg.appendChild(g);
     var entry = { node: g, anim: null };
     inst.thought = entry;
     if (!canAnimate) return;
@@ -868,6 +942,8 @@
     setFace: setFace,
     setExpression: setExpression,
     hasExpression: hasExpression,
+    valenceOf: valenceOf,
+    allowedIn: allowedIn,
     channelsOf: function (name) { return channelsFor(null, name); },
     motionLevel: motionLevel,
     react: react,

@@ -47,11 +47,25 @@
 {%- elif n == 'laugh-r' -%}
 <path class="zk" d="M2.6-2.8l-4.6 2.8l4.6 2.8" stroke-width="2" stroke-linejoin="round"/>
 {%- elif n == 'wide' -%}
-<g class="buddy-pupil"><ellipse rx="3.7" ry="4.3" fill="#fff" stroke="var(--ink-800)" stroke-width="1.3"/><ellipse rx="2" ry="2.6" class="zf"/><circle cx=".7" cy="-.9" r=".7" fill="#fff"/></g>
+<g class="buddy-pupil"><ellipse rx="3.7" ry="4.3" fill="var(--brand-50)" stroke="var(--ink-800)" stroke-width="1.3"/><ellipse rx="2" ry="2.6" class="zf"/><circle cx=".7" cy="-.9" r=".7" fill="#fff"/></g>
 {%- elif n == 'goo' -%}
 <g class="buddy-pupil"><ellipse rx="3.3" ry="3.8" class="zf"/><circle cx="1.2" cy="-1.4" r="1.2" fill="#fff"/><circle cx="-1.2" cy="1.5" r=".6" fill="#fff"/></g>
 {%- elif n == 'half' -%}
 <g class="buddy-pupil"><path class="zf" d="M-2.7-.4a2.7 3 0 0 0 5.4 0z"/><circle cx=".8" cy=".9" r=".6" fill="#fff"/></g><path class="zk" d="M-3.6-.4h7.2" stroke-width="1.5"/>
+{%- elif n == 'goo-shine' -%}
+<g class="buddy-pupil"><ellipse rx="3.3" ry="3.8" class="zf"/><circle cx="1.2" cy="-1.4" r="1.2" fill="#fff"/><circle cx="-1.2" cy="1.5" r=".6" fill="#fff"/><path d="M-2.6 3.9q2.6 1.5 5.2 0" fill="none" stroke="var(--zorp-drop, var(--brand-400))" stroke-width="1.2" stroke-linecap="round"/></g>
+{%- elif n == 'squint' -%}
+<g class="buddy-pupil"><ellipse cy=".5" rx="2.8" ry="2.7" class="zf"/><circle cx=".9" cy="-.3" r=".7" fill="#fff"/></g><path class="zk" d="M-3.4-2.4q3.4-.8 6.8 0" stroke-width="1.3"/>
+{%- elif n == 'sparkle' -%}
+<g class="buddy-pupil"><ellipse rx="3.1" ry="3.6" class="zf"/><path d="M1.1-3.5q.3 1.7 2 1.9q-1.7.3-2 2q-.3-1.7-2-2q1.7-.2 2-1.9z" fill="#fff"/></g>
+{%- elif n == 'heart' -%}
+<g class="buddy-pupil"><path class="zf" d="M0 3.4c-5-3.3-4-7-1.7-7c1 0 1.7.6 1.7 1.6c0-1 .7-1.6 1.7-1.6c2.3 0 3.3 3.7-1.7 7z"/><circle cx="-1.5" cy="-1.5" r=".7" fill="#fff"/></g>
+{%- elif n == 'spiral' -%}
+<path class="zk" d="M0 0.3a.8.8 0 0 1 1.2-1a1.7 1.7 0 0 1-.4 2.9a2.8 2.8 0 0 1-3.5-1.7a3.6 3.6 0 0 1 2.6-4.4a4.4 4.4 0 0 1 5.4 3" stroke-width="1.3"/>
+{%- elif n == 'look-up' -%}
+<g class="buddy-pupil"><ellipse cy="-1.5" rx="2.6" ry="3.2" class="zf"/><circle cx=".8" cy="-2.6" r=".8" fill="#fff"/></g>
+{%- elif n == 'look-side' -%}
+<g class="buddy-pupil"><ellipse cx="1.5" cy=".2" rx="2.6" ry="3.2" class="zf"/><circle cx="2.3" cy="-.9" r=".8" fill="#fff"/></g>
 {%- elif n == 'closed' -%}
 <path class="zk" d="M-3-.4q3 3.4 6 0M-3-.4l-1.4 1.1" stroke-width="1.8"/>
 {%- elif n == 'closed-r' -%}
@@ -69,7 +83,9 @@
 {%- elif n == 'worried' -%}
 <path class="zk" d="M22.8 31.6q3.2-.4 6.2-2.8M41.2 31.6q-3.2-.4-6.2-2.8" stroke-width="1.6"/>
 {%- elif n == 'determined' -%}
-<path class="zk" d="M22.8 29.8q3.4-.2 6.4 1.4M41.2 29.8q-3.4-.2-6.4 1.4" stroke-width="1.6"/>
+<path class="zk" d="M23 30.4q3.2-1.9 6.2.5M41 30.4q-3.2-1.9-6.2.5" stroke-width="1.6"/>
+{%- elif n == 'knit' -%}
+<path class="zk" d="M23.4 30.4q2.9-1.3 5.8.5M40.6 30.4q-2.9-1.3-5.8.5" stroke-width="1.6"/>
 {%- elif n == 'skeptical' -%}
 <path class="zk" d="M22.5 29.8h7.2M35.2 31.4q3.2-2.6 7.2-.4" stroke-width="1.6"/>
 {%- endif -%}
@@ -106,6 +122,10 @@
 <path class="zk" d="M26.4 44.4q1.4-2 2.8 0t2.8 0t2.8 0t2.8 0" stroke-width="1.6"/>
 {%- elif n == 'wobble-smile' -%}
 <path class="zk" d="M26.6 43.4q1.6 3.8 5.4 2.4q3.8 1.4 5.4-2.4" stroke-width="1.8"/>
+{%- elif n == 'blep' -%}
+<path class="zk" d="M26.5 43.5q5.5 5 11 0" stroke-width="1.8"/><path d="M32.4 46.4q0 3.2 2 3.2t1.9-3.2q-2-.9-3.9 0z" fill="var(--zorp-rouge, var(--streak-300))" stroke="var(--ink-800)" stroke-width="1"/>
+{%- elif n == 'frown-soft' -%}
+<path class="zk" d="M27.2 46.6q4.8-4.2 9.6 0" stroke-width="1.8"/>
 {%- elif n == 'sleepy' -%}
 <path class="zk" d="M30.4 44.2q1.6-1.6 3.2 0q.4 3-1.6 3t-1.6-3z" stroke-width="1.5"/>
 {%- endif -%}
@@ -114,6 +134,8 @@
 {% macro cheeks(n) -%}
 {%- if n == 'rosy' -%}
 <circle cx="21.5" cy="41" r="2.1" fill="var(--zorp-rouge, var(--streak-300))"/><circle cx="42.5" cy="41" r="2.1" fill="var(--zorp-rouge, var(--streak-300))"/>
+{%- elif n == 'glow' -%}
+<ellipse cx="21" cy="41.2" rx="3.4" ry="2.4" fill="var(--zorp-rouge, var(--streak-300))" opacity=".5"/><ellipse cx="43" cy="41.2" rx="3.4" ry="2.4" fill="var(--zorp-rouge, var(--streak-300))" opacity=".5"/>
 {%- elif n == 'blush' -%}
 <path d="M19.4 42.8l1.5-3M21.5 43l1.5-3M23.6 42.8l1.5-3M40.4 42.8l1.5-3M42.5 43l1.5-3M44.6 42.8l1.5-3" fill="none" stroke="var(--zorp-blush, var(--streak-400))" stroke-width="1.3" stroke-linecap="round"/>
 {%- endif -%}
@@ -123,7 +145,7 @@
 <path class="zorp-sp" d="M{{ x }} {{ y - 3 }}q.5 2.5 3 3q-2.5.5-3 3q-.5-2.5-3-3q2.5-.5 3-3z" fill="var(--gold-500)"/>
 {%- endmacro %}
 
-{% macro fx(n) -%}
+{% macro fx1(n) -%}
 {%- if n == 'stars' -%}
 <path d="M14 24l1.1 2.4 2.4.2-1.9 1.6.6 2.4-2.2-1.4-2.2 1.4.6-2.4-1.9-1.6 2.4-.2z" fill="var(--gold-500)"/><path d="M50 22l.9 2 2 .15-1.6 1.3.5 2-1.8-1.2-1.8 1.2.5-2-1.6-1.3 2-.15z" fill="var(--gold-500)"/>
 {%- elif n == 'flame' -%}
@@ -134,6 +156,36 @@
 <g class="zorp-sparkles">{{ _spark(7, 21) }}{{ _spark(57, 15) }}{{ _spark(58, 33) }}</g>
 {%- endif -%}
 {%- endmacro %}
+
+{% macro _heart(x, y, k) -%}
+<g transform="translate({{ x }} {{ y }}) scale({{ k }})"><path class="zorp-h" d="M0 3c-4-2.7-3.2-5.6-1.4-5.6c.8 0 1.4.5 1.4 1.3c0-.8.6-1.3 1.4-1.3c1.8 0 2.6 2.9-1.4 5.6z" fill="var(--zorp-heart, #f472b6)"/></g>
+{%- endmacro %}
+
+{% macro fx2(n) -%}
+{%- if n == 'sweat' -%}
+<path class="zorp-dr" d="M47 26q2.6 3.4 2.6 5.2a2.6 2.6 0 0 1-5.2 0q0-1.8 2.6-5.2z" fill="#fff" stroke="var(--zorp-drop, var(--brand-400))" stroke-width="1"/>
+{%- elif n == 'tear-shine' -%}
+<g class="zorp-gl"><path d="M25.4 40.6q1.5 1.9 1.5 3a1.5 1.5 0 0 1-3 0q0-1.1 1.5-3z" fill="var(--zorp-drop, var(--brand-400))"/><circle cx="24.9" cy="43.2" r=".45" fill="#fff"/><path d="M38.6 40.6q1.5 1.9 1.5 3a1.5 1.5 0 0 1-3 0q0-1.1 1.5-3z" fill="var(--zorp-drop, var(--brand-400))"/><circle cx="38.1" cy="43.2" r=".45" fill="#fff"/></g>
+{%- elif n == 'blush-steam' -%}
+<g class="zorp-z"><circle cx="45.4" cy="25.4" r="1.2" fill="none" stroke="#fff" stroke-width=".9"/></g><g class="zorp-z"><circle cx="48" cy="21.8" r="1.5" fill="none" stroke="#fff" stroke-width=".9"/></g><g class="zorp-z"><circle cx="45.6" cy="17.8" r="1.1" fill="none" stroke="#fff" stroke-width=".9"/></g>
+{%- elif n == 'hearts' -%}
+<g>{{ _heart(55, 14, 1.3) }}{{ _heart(9, 22, 1) }}</g>
+{%- elif n == 'exclaim' -%}
+<g class="zorp-pp"><path class="zk" d="M54 5.6v9" stroke-width="2.8"/><circle cx="54" cy="20" r="1.6" class="zf"/></g>
+{%- elif n == 'question' -%}
+<g class="zorp-pp"><path class="zk" d="M50.8 10q0-4.4 3.8-4.4t3.8 3.6q0 2.4-3.8 4v2" stroke-width="2.2"/><circle cx="54.6" cy="19.8" r="1.4" class="zf"/></g>
+{%- elif n == 'dizzy-orbit' -%}
+<g class="zorp-orb">{{ _spark(32, 4) }}{{ _spark(39.8, 14.5) }}{{ _spark(24.2, 14.5) }}</g>
+{%- elif n == 'notes' -%}
+<g class="zorp-z"><path class="zk" d="M53 20v-9l5-1.4v8.4" stroke-width="1.4"/><ellipse cx="51.4" cy="20.4" rx="2" ry="1.5" class="zf"/><ellipse cx="56.4" cy="19" rx="2" ry="1.5" class="zf"/></g>
+{%- elif n == 'bulb' -%}
+<g class="zorp-sp"><circle cx="54" cy="12" r="4" fill="var(--streak-300)" stroke="var(--streak-500)" stroke-width="1.2"/><path class="zk" d="M52.4 17.8h3.2" stroke-width="1.6"/><path d="M54 3.4v1.6M60.4 5.4l-1.2 1.2M62 12h-1.6M47.6 5.4l1.2 1.2" fill="none" stroke="var(--streak-500)" stroke-width="1.3" stroke-linecap="round"/></g>
+{%- elif n == 'thought' -%}
+<g class="zorp-th"><circle cx="50" cy="20" r="2" fill="var(--zorp-accent, var(--brand-400))" stroke="var(--zorp-limb, var(--brand-700))" stroke-width="1"/><circle cx="55" cy="13" r="2.6" fill="var(--zorp-accent, var(--brand-400))" stroke="var(--zorp-limb, var(--brand-700))" stroke-width="1"/><circle cx="59.5" cy="6.5" r="3.2" fill="var(--zorp-accent, var(--brand-400))" stroke="var(--zorp-limb, var(--brand-700))" stroke-width="1"/></g>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro fx(n) %}{{ fx1(n) }}{{ fx2(n) }}{% endmacro %}
 
 {% macro part(channel, n) -%}
 {%- if channel == 'eyes' -%}{{ eye(n) }}

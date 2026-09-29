@@ -90,6 +90,8 @@ CSS_BUDGET_BYTES = 246_000
 # amount). Tree now 232,501 (core 207,509). Budget NOT raised.
 # E8 Phase 1 (2026-09-29): raised 210,000 -> 216,000 alongside CSS_BUDGET_BYTES (see the note
 # above; motion.css +1,601 bytes, chrome.css about -600 bytes). Tree now 233,523 (core 208,531).
+# E8 Phase 2 (2026-09-29): motion.css 6,445 -> 7,466 bytes (fx keyframes drop/pop/orbit, fx slot
+# pivots, wildcard reduced/data-motion mirrors). Budgets NOT raised. Tree now 234,544 (core 209,552).
 CSS_CORE_BUDGET_BYTES = 216_000
 
 

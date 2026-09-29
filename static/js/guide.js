@@ -306,21 +306,23 @@
     return list;
   }
 
-  function setFace(name) {
+  // E8 Phase 2: a preset is accepted only inside the guide allowlist (models/zorp_rig.py
+  // CONTEXT_MAP['guide'] via pbZorp.allowedIn). Lore steps (step.lore, allowlisted ids) may also
+  // open on a negative preset, but show step.resolve (a positive one) on their last line.
+  var GUIDE_FALLBACK = { nudge: 1, milestone: 1, celebrate: 1, qotd_nudge: 1, streak_risk: 1, weak_topic: 1, friend_challenge: 1 };
+  function guideFace(step, lastLine) {
+    var name = step.face;
+    if (step.lore && lastLine && step.resolve) name = step.resolve;
+    return name;
+  }
+  function setFace(name, lore) {
     if (!faceEl) return;
-    var ok = {
-      nudge: 1,
-      milestone: 1,
-      celebrate: 1,
-      qotd_nudge: 1,
-      streak_risk: 1,
-      weak_topic: 1,
-      friend_challenge: 1,
-    };
-    // E8: any preset the runtime knows (pbZorp.hasExpression); `ok` is the no-runtime fallback.
-    var known = window.pbZorp && typeof window.pbZorp.hasExpression === 'function' ? window.pbZorp.hasExpression(name) : ok[name];
+    var z = window.pbZorp;
+    var known = z && typeof z.allowedIn === 'function'
+      ? z.allowedIn(lore ? 'guide.lore' : 'guide', name)
+      : GUIDE_FALLBACK[name] === 1;
     var face = known ? name : 'nudge';
-    if (window.pbZorp && window.pbZorp.setFace(face, { el: faceEl })) return;
+    if (z && z.setFace(face, { el: faceEl })) return;
     faceEl.setAttribute('data-face', face);
   }
 
@@ -541,7 +543,9 @@
     else if (lineIndex < 1) lineIndex = 1;
     if (lineIndex > lines.length) lineIndex = lines.length;
 
-    setFace(step.face);
+    // The last line of a lore step is checked against the plain guide list, so a negative
+    // face can never stay on screen at the end of a step (missing or negative step.resolve).
+    setFace(guideFace(step, lineIndex === lines.length), !!step.lore && lineIndex < lines.length);
     setMedal(step.mode === 'reward' ? (step.medal || '') : '');
     var heading = step.heading || (step.mode === 'reward' ? 'Well done' : 'Zorp');
     if (step.mode === 'tour' && isNarrow() && step.spotLabel) heading = step.spotLabel;

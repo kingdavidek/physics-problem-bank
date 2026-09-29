@@ -330,11 +330,13 @@ scenario('a throwing localStorage does not crash the page load', () => {
   assert.doesNotThrow(() => clickDismiss(page));
 });
 
-function zorpStub(known) {
+// `negative` lists preset names the stub reports as negative valence (like the rig island does).
+function zorpStub(known, negative) {
   const calls = [];
   return {
     calls,
     hasExpression: (name) => known.indexOf(name) !== -1,
+    valenceOf: (name) => (known.indexOf(name) === -1 ? null : ((negative || []).indexOf(name) !== -1 ? 'negative' : 'positive')),
     setFace: (name) => { calls.push(name); return true; },
     bind: () => null,
     idle: () => true,
@@ -355,6 +357,26 @@ scenario('E8: with pbZorp, an unknown prompt type falls back to the emoji map, t
   const zorp2 = zorpStub(['nudge']);
   loadPage({ prompt: Object.assign({}, PROMPT_A, { type: 'not-a-face', face: '?' }), zorp: zorp2 });
   assert.deepStrictEqual(zorp2.calls, ['nudge']);
+});
+
+scenario('E8 Phase 2: a negative-valence prompt type is never drawn (falls back to emoji, then nudge)', () => {
+  const zorp = zorpStub(['nudge', 'streak_risk', 'sad', 'oops', 'dizzy'], ['sad', 'dizzy']);
+  loadPage({ prompt: Object.assign({}, PROMPT_A, { type: 'sad', face: '\u{1F525}' }), zorp });
+  assert.deepStrictEqual(zorp.calls, ['streak_risk'], 'sad must be refused for a prompt type');
+  const zorp2 = zorpStub(['nudge', 'dizzy'], ['dizzy']);
+  loadPage({ prompt: Object.assign({}, PROMPT_A, { type: 'dizzy', face: '?' }), zorp: zorp2 });
+  assert.deepStrictEqual(zorp2.calls, ['nudge']);
+  // a neutral or positive preset the runtime knows still passes
+  const zorp3 = zorpStub(['nudge', 'oops', 'sad'], ['sad']);
+  loadPage({ prompt: Object.assign({}, PROMPT_A, { type: 'oops' }), zorp: zorp3 });
+  assert.deepStrictEqual(zorp3.calls, ['oops']);
+});
+
+scenario('E8 Phase 2: a runtime without valenceOf still refuses nothing it knows (old runtime)', () => {
+  const zorp = zorpStub(['nudge', 'happy']);
+  delete zorp.valenceOf;
+  loadPage({ prompt: Object.assign({}, PROMPT_A, { type: 'happy' }), zorp });
+  assert.deepStrictEqual(zorp.calls, ['happy']);
 });
 
 scenario('E8: without pbZorp the local legacy allowlist still applies', () => {

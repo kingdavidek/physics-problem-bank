@@ -37,7 +37,7 @@ BANNED_STRINGS = ('lottie', 'jsdelivr', 'unpkg')
 RUNTIME_JS = JS_DIR / 'zorp-motion.js'
 BUDDY_PARTIAL = ROOT / 'templates' / 'partials' / 'buddy.html'
 BASE_HTML = ROOT / 'templates' / 'base.html'
-API_NAMES = ('bind', 'play', 'idle', 'setFace', 'setExpression', 'hasExpression', 'motionLevel', 'react')
+API_NAMES = ('bind', 'play', 'idle', 'setFace', 'setExpression', 'hasExpression', 'valenceOf', 'allowedIn', 'motionLevel', 'react')
 PHASE1_CLIPS = ('idle', 'blink', 'cheer', 'wobble', 'think', 'wave', 'point', 'nod', 'wink', 'tap', 'shake')
 PHASE2_CLIPS = PHASE1_CLIPS + ('hop',)
 PHASE4_CLIPS = PHASE2_CLIPS + ('peek', 'sleep')
@@ -63,41 +63,47 @@ def test_no_third_party_animation_library():
                 )
 
 
-def _extract_reduced_motion_block(css):
-    """Return the text inside `@media (prefers-reduced-motion: reduce) { ... }`,
-    matching braces properly rather than assuming the block is last in the file
-    (motion.css is also expected to hold transform-box rules per E7 §3.1, which
-    may come after the reduced-motion block)."""
-    marker = re.search(r'@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{', css)
-    if not marker:
-        return ''
-    start = marker.end()
-    depth = 1
-    i = start
-    while i < len(css) and depth:
-        if css[i] == '{':
-            depth += 1
-        elif css[i] == '}':
-            depth -= 1
-        i += 1
-    return css[start:i - 1]
+def _strip_css_comments(css):
+    return re.sub(r'/\*.*?\*/', '', css, flags=re.S)
+
+
+def _media_block_text(css, query):
+    """Text inside every `@media (<query>) { ... }` block (braces matched), joined."""
+    out = []
+    for marker in re.finditer(r'@media\s*\(' + re.escape(query) + r'\)\s*\{', css):
+        depth, i = 1, marker.end()
+        while i < len(css) and depth:
+            depth += {'{': 1, '}': -1}.get(css[i], 0)
+            i += 1
+        out.append(css[marker.end():i - 1])
+    return '\n'.join(out)
 
 
 def test_motion_css_keyframes_pair_with_reduced_motion():
     # Phase 1 created motion.css, so this is no longer a skeleton check that can
     # be skipped-but-reported: a missing file here is a real regression.
     assert MOTION_CSS.exists(), 'motion.css missing (Phase 1)'
-    css = MOTION_CSS.read_text(encoding='utf-8')
-    size = len(css.encode('utf-8'))
+    raw = MOTION_CSS.read_text(encoding='utf-8')
+    size = len(raw.encode('utf-8'))
     assert size <= MOTION_CSS_BUDGET_BYTES, (
         f'motion.css is {size} bytes, exceeds the {MOTION_CSS_BUDGET_BYTES} byte cap '
         '(E7 §2 #8/§2 #11, E8 §2 #7 — raise deliberately, in the same commit, with a recorded reason)'
     )
+    # E8 Phase 2 review fix: comments never count. A keyframe that is only *mentioned* in a
+    # comment inside the reduced block used to pass this test.
+    css = _strip_css_comments(raw)
     keyframe_names = re.findall(r'@keyframes\s+([\w-]+)', css)
     assert keyframe_names, 'motion.css exists but defines no @keyframes'
-    reduced_block = _extract_reduced_motion_block(css)
+    reduced_block = _media_block_text(css, 'prefers-reduced-motion: reduce')
+    enabled_block = _media_block_text(css, 'prefers-reduced-motion: no-preference')
     for name in keyframe_names:
-        assert name in reduced_block or f'{name}-reduced' in css, (
+        uses = re.findall(r'[^{}]*\{[^{}]*animation:\s*' + re.escape(name) + r'\b[^{}]*\}', css)
+        assert uses, f'@keyframes {name} is never used by an animation: declaration'
+        in_reduced = name in reduced_block  # e.g. zorp-pulse: the reduced fallback itself
+        # otherwise every use must be switched on only under no-preference (so reduced motion
+        # never runs it) and must be switched off by an `animation: none` rule in the reduced block
+        gated = all(use.strip() in enabled_block or use.strip() in reduced_block for use in uses)
+        assert in_reduced or (gated and 'animation: none' in reduced_block), (
             f'@keyframes {name} in motion.css has no matching reduced-motion variant '
             '(E7 §2 #3 — every clip needs a reduced-motion fallback)'
         )
