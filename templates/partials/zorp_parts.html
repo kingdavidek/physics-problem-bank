@@ -1,0 +1,145 @@
+{#
+  Zorp face parts (E8 Phase 1, docs/ZORP_EXPRESSIVENESS.md §3.2-3.6, §4.1-4.2).
+
+  One macro per channel (eye, brows, mouth, cheeks, fx), each drawing the inner art of one
+  variant. Variant ids are listed in models/zorp_rig.py CHANNELS (zorp_rig.validate() checks
+  that every id has art here). The live rig (partials/buddy.html) draws the current parts
+  into its slots; partials/zorp_library.html draws every variant once, inside an inert
+  <template>, so static/js/zorp-motion.js can clone a part into a slot.
+
+  Coordinates:
+  * eyes are drawn centred on (0,0); the rig places them at L (26.2, 35.2) / R (37.8, 35.2).
+    Eyes that have pupils keep the class buddy-pupil (blink and glance clips animate it).
+    Variants named *-r are the right-eye siblings.
+  * brows, mouths, cheeks and fx are drawn in the 64 x 64 frame (mouth anchor (32, 44)).
+  * .zk (ink stroke, round caps, no fill) and .zf (ink fill) are defined in static/css/motion.css.
+  Legacy variants (open, open-lift, curious, low, open-off, wink-line, happy-arc, smile,
+  smile-w, smile-wide, smile-big, grin, cat, o, flat, raised-l, skeptical, rosy, stars, flame)
+  reproduce the pre-E8 seven face drawings, offsets included.
+  Unknown or empty names render as empty output.
+#}
+
+{% macro eye(n) -%}
+{%- if n == 'open' -%}
+<g class="buddy-pupil"><ellipse rx="2.6" ry="3.2" class="zf"/><circle cx=".8" cy="-1" r=".8" fill="#fff"/></g>
+{%- elif n == 'open-lift' -%}
+<g class="buddy-pupil"><ellipse cy="-.2" rx="2.7" ry="3.3" class="zf"/><circle cx=".9" cy="-1.3" r=".85" fill="#fff"/></g>
+{%- elif n == 'open-big' -%}
+<g class="buddy-pupil"><ellipse rx="3.1" ry="3.6" class="zf"/><circle cx="1" cy="-1.2" r=".9" fill="#fff"/></g>
+{%- elif n == 'open-off' -%}
+<g class="buddy-pupil"><ellipse cx=".2" rx="2.6" ry="3.2" class="zf"/><circle cx="1" cy="-1" r=".8" fill="#fff"/></g>
+{%- elif n == 'curious' -%}
+<g class="buddy-pupil"><ellipse cy="1" rx="2.8" ry="3.4" class="zf"/><circle cx=".8" r=".85" fill="#fff"/></g>
+{%- elif n == 'curious-r' -%}
+<g class="buddy-pupil"><ellipse cx=".2" cy="1.4" rx="2.5" ry="3.1" class="zf"/><circle cx=".9" cy=".4" r=".75" fill="#fff"/></g>
+{%- elif n == 'low' -%}
+<g class="buddy-pupil"><ellipse cy="1.2" rx="2.4" ry="2.8" class="zf"/><circle cx=".6" cy=".4" r=".7" fill="#fff"/></g>
+{%- elif n == 'low-r' -%}
+<g class="buddy-pupil"><ellipse cx=".2" cy="1.6" rx="2.4" ry="2.8" class="zf"/><circle cx=".8" cy=".8" r=".7" fill="#fff"/></g>
+{%- elif n == 'wink-line' -%}
+<path class="zk" d="M-2.6 .4q2.6-3.6 5.4 0" stroke-width="2"/>
+{%- elif n == 'happy-arc' -%}
+<path class="zk" d="M-2.8 1q2.8-4.2 5.6 0" stroke-width="2"/>
+{%- elif n == 'smile-arc' -%}
+<path class="zk" d="M-2.9-.6q2.9 3.8 5.8 0" stroke-width="2"/>
+{%- elif n == 'laugh' -%}
+<path class="zk" d="M-2.6-2.8l4.6 2.8l-4.6 2.8" stroke-width="2" stroke-linejoin="round"/>
+{%- elif n == 'laugh-r' -%}
+<path class="zk" d="M2.6-2.8l-4.6 2.8l4.6 2.8" stroke-width="2" stroke-linejoin="round"/>
+{%- elif n == 'wide' -%}
+<g class="buddy-pupil"><ellipse rx="3.7" ry="4.3" fill="#fff" stroke="var(--ink-800)" stroke-width="1.3"/><ellipse rx="2" ry="2.6" class="zf"/><circle cx=".7" cy="-.9" r=".7" fill="#fff"/></g>
+{%- elif n == 'goo' -%}
+<g class="buddy-pupil"><ellipse rx="3.3" ry="3.8" class="zf"/><circle cx="1.2" cy="-1.4" r="1.2" fill="#fff"/><circle cx="-1.2" cy="1.5" r=".6" fill="#fff"/></g>
+{%- elif n == 'half' -%}
+<g class="buddy-pupil"><path class="zf" d="M-2.7-.4a2.7 3 0 0 0 5.4 0z"/><circle cx=".8" cy=".9" r=".6" fill="#fff"/></g><path class="zk" d="M-3.6-.4h7.2" stroke-width="1.5"/>
+{%- elif n == 'closed' -%}
+<path class="zk" d="M-3-.4q3 3.4 6 0M-3-.4l-1.4 1.1" stroke-width="1.8"/>
+{%- elif n == 'closed-r' -%}
+<path class="zk" d="M-3-.4q3 3.4 6 0M3-.4l1.4 1.1" stroke-width="1.8"/>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro brows(n) -%}
+{%- if n == 'soft' -%}
+<path class="zk" d="M23.2 30.6q3-1.6 6 0M34.8 30.6q3-1.6 6 0" stroke-width="1.6"/>
+{%- elif n == 'raised' -%}
+<path class="zk" d="M22.8 30.2q3.4-2.2 6.4.2M41.2 30.2q-3.4-2.2-6.4.2" stroke-width="1.6"/>
+{%- elif n == 'raised-l' -%}
+<path class="zk" d="M22.8 30.2q3.4-2.2 6.4.2" stroke-width="1.6"/>
+{%- elif n == 'worried' -%}
+<path class="zk" d="M22.8 31.6q3.2-.4 6.2-2.8M41.2 31.6q-3.2-.4-6.2-2.8" stroke-width="1.6"/>
+{%- elif n == 'determined' -%}
+<path class="zk" d="M22.8 29.8q3.4-.2 6.4 1.4M41.2 29.8q-3.4-.2-6.4 1.4" stroke-width="1.6"/>
+{%- elif n == 'skeptical' -%}
+<path class="zk" d="M22.5 29.8h7.2M35.2 31.4q3.2-2.6 7.2-.4" stroke-width="1.6"/>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro mouth(n) -%}
+{%- if n == 'smile' -%}
+<path class="zk" d="M26.5 43.5q5.5 5 11 0" stroke-width="1.8"/>
+{%- elif n == 'smile-w' -%}
+<path class="zk" d="M26 43q6 5.4 12.2 0" stroke-width="1.9"/>
+{%- elif n == 'smile-wide' -%}
+<path class="zk" d="M25.5 42.2q6.5 7.2 13 0" stroke-width="2"/>
+{%- elif n == 'smile-big' -%}
+<path class="zk" d="M25.2 42.4q6.8 6.8 13.6 0" stroke-width="2.1"/>
+{%- elif n == 'grin' -%}
+<path class="zf" d="M25.5 44.2q6.5 5.4 13 0q-1 3.4-6.5 3.4t-6.5-3.4z" stroke="var(--ink-800)" stroke-width="1.2" stroke-linejoin="round"/>
+{%- elif n == 'grin-tongue' -%}
+<path class="zf" d="M25.5 44.2q6.5 5.4 13 0q-1 3.4-6.5 3.4t-6.5-3.4z" stroke="var(--ink-800)" stroke-width="1.2" stroke-linejoin="round"/><path d="M29.4 46.8q2.6-2.6 5.2 0q-1.2 1-2.6 1t-2.6-1z" fill="var(--zorp-rouge, var(--streak-300))"/>
+{%- elif n == 'laugh' -%}
+<path class="zf" d="M24.4 42.6q7.6 1.6 15.2 0q-.2 7.4-7.6 7.4t-7.6-7.4z" stroke="var(--ink-800)" stroke-width="1.2" stroke-linejoin="round"/><path d="M28.6 47.6q3.4-3 6.8 0q-.6 1.9-3.4 1.9t-3.4-1.9z" fill="var(--zorp-rouge, var(--streak-300))"/>
+{%- elif n == 'cat' -%}
+<path class="zk" d="M26 44.6q3-2.6 6-.4q3-2.2 6 .4" stroke-width="1.8" stroke-linejoin="round"/>
+{%- elif n == 'smirk' -%}
+<path class="zk" d="M27 44q4.6 3.6 10.8-2.4" stroke-width="1.8"/>
+{%- elif n == 'tiny' -%}
+<path class="zk" d="M29.2 44q2.8 2.4 5.6 0" stroke-width="1.7"/>
+{%- elif n == 'o' -%}
+<circle cx="32" cy="44.2" r="2.15" class="zk" stroke-width="1.7"/>
+{%- elif n == 'wow' -%}
+<ellipse cx="32" cy="45.2" rx="2.7" ry="3.5" class="zf"/>
+{%- elif n == 'flat' -%}
+<path class="zk" d="M28.5 44.2h7" stroke-width="1.7"/>
+{%- elif n == 'wavy' -%}
+<path class="zk" d="M26.4 44.4q1.4-2 2.8 0t2.8 0t2.8 0t2.8 0" stroke-width="1.6"/>
+{%- elif n == 'wobble-smile' -%}
+<path class="zk" d="M26.6 43.4q1.6 3.8 5.4 2.4q3.8 1.4 5.4-2.4" stroke-width="1.8"/>
+{%- elif n == 'sleepy' -%}
+<path class="zk" d="M30.4 44.2q1.6-1.6 3.2 0q.4 3-1.6 3t-1.6-3z" stroke-width="1.5"/>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro cheeks(n) -%}
+{%- if n == 'rosy' -%}
+<circle cx="21.5" cy="41" r="2.1" fill="var(--zorp-rouge, var(--streak-300))"/><circle cx="42.5" cy="41" r="2.1" fill="var(--zorp-rouge, var(--streak-300))"/>
+{%- elif n == 'blush' -%}
+<path d="M19.4 42.8l1.5-3M21.5 43l1.5-3M23.6 42.8l1.5-3M40.4 42.8l1.5-3M42.5 43l1.5-3M44.6 42.8l1.5-3" fill="none" stroke="var(--zorp-blush, var(--streak-400))" stroke-width="1.3" stroke-linecap="round"/>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro _spark(x, y) -%}
+<path class="zorp-sp" d="M{{ x }} {{ y - 3 }}q.5 2.5 3 3q-2.5.5-3 3q-.5-2.5-3-3q2.5-.5 3-3z" fill="var(--gold-500)"/>
+{%- endmacro %}
+
+{% macro fx(n) -%}
+{%- if n == 'stars' -%}
+<path d="M14 24l1.1 2.4 2.4.2-1.9 1.6.6 2.4-2.2-1.4-2.2 1.4.6-2.4-1.9-1.6 2.4-.2z" fill="var(--gold-500)"/><path d="M50 22l.9 2 2 .15-1.6 1.3.5 2-1.8-1.2-1.8 1.2.5-2-1.6-1.3 2-.15z" fill="var(--gold-500)"/>
+{%- elif n == 'flame' -%}
+<path d="M46.5 20q2.2 6 .4 9.5" fill="none" stroke="var(--streak-500)" stroke-width="2" stroke-linecap="round"/><circle cx="46.2" cy="30.4" r="2.1" fill="var(--streak-400)"/>
+{%- elif n == 'zzz' -%}
+<g class="zorp-zzz"><path class="zk zorp-z" d="M49.6 23h3.2l-3.2 3.6h3.2" stroke-width="1.5"/><path class="zk zorp-z" d="M54 15.6h4l-4 4.4h4" stroke-width="1.5"/><path class="zk zorp-z" d="M58 7.6h4.8l-4.8 5.2h4.8" stroke-width="1.5"/></g>
+{%- elif n == 'sparkles' -%}
+<g class="zorp-sparkles">{{ _spark(7, 21) }}{{ _spark(57, 15) }}{{ _spark(58, 33) }}</g>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro part(channel, n) -%}
+{%- if channel == 'eyes' -%}{{ eye(n) }}
+{%- elif channel == 'brows' -%}{{ brows(n) }}
+{%- elif channel == 'mouth' -%}{{ mouth(n) }}
+{%- elif channel == 'cheeks' -%}{{ cheeks(n) }}
+{%- elif channel == 'fx' -%}{{ fx(n) }}
+{%- endif -%}
+{%- endmacro %}

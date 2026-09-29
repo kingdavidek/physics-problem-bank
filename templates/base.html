@@ -27,8 +27,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tokens.css') }}?v=25">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=26">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=35">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=44">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/motion.css') }}?v=3">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=45">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/motion.css') }}?v=4">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/practice.css') }}?v=29">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=55">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}?v=21">
@@ -55,16 +55,16 @@
     <script src="{{ url_for('static', filename='js/u4.js') }}?v=12" defer></script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=5" defer></script>
     {% if current_user.is_authenticated or guide_preview_mode or zorp_motion_demo %}
-    <script src="{{ url_for('static', filename='js/zorp-motion.js') }}?v=4" defer></script>
+    <script src="{{ url_for('static', filename='js/zorp-motion.js') }}?v=5" defer></script>
     <script src="{{ url_for('static', filename='js/zorp-triggers.js') }}?v=1" defer></script>
     {% endif %}
     {% if current_user.is_authenticated %}
     <script src="{{ url_for('static', filename='js/notifications.js') }}?v=18" defer></script>
-    <script src="{{ url_for('static', filename='js/study-buddy.js') }}?v=25" defer></script>
+    <script src="{{ url_for('static', filename='js/study-buddy.js') }}?v=26" defer></script>
     {% endif %}
     {% if current_user.is_authenticated or guide_preview_mode %}
     <script src="{{ url_for('static', filename='js/guide-catalog.js') }}?v=10" defer></script>
-    <script src="{{ url_for('static', filename='js/guide.js') }}?v=14" defer></script>
+    <script src="{{ url_for('static', filename='js/guide.js') }}?v=15" defer></script>
     {% endif %}
     <script src="{{ url_for('static', filename='js/celebrate.js') }}?v=10" defer></script>
     {% if lesson_assist_enabled and lesson_meta and not lesson_meta.get('quizReview') %}
@@ -274,6 +274,10 @@
     </div>
 </div>
 
+{% if current_user.is_authenticated or guide_preview_mode or zorp_motion_demo %}
+{# E8 Phase 1: parts library + rig data, same guard as zorp-motion.js (head) #}
+{% include 'partials/zorp_library.html' %}
+{% endif %}
 {% if current_user.is_authenticated or guide_preview_mode %}
 <script type="application/json" id="pb-milestone-catalog">{{ guide_milestones|tojson }}</script>
 {% endif %}
@@ -286,7 +290,8 @@
 <script type="application/json" id="pb-buddy-prompt">{{ buddy_prompt|tojson }}</script>
 <aside id="study-buddy" class="study-buddy" aria-label="Study buddy" data-buddy-root data-buddy-state="face" data-pb-buddy-build="v6"
        {% if buddy_page %}data-buddy-level="{{ buddy_page.level }}" data-buddy-subject="{{ buddy_page.subject }}" data-buddy-topic="{{ buddy_page.topic }}"{% endif %}>
-    <span class="study-buddy-face" data-buddy-face data-face="{{ buddy_prompt.type if buddy_prompt and buddy_prompt.type else 'nudge' }}" aria-hidden="true">{{ buddy_mascot(look=buddy_look) }}</span>
+    {% set buddy_face = zorp_rig.face_for_prompt(buddy_prompt.type if buddy_prompt and buddy_prompt.type else none) %}
+    <span class="study-buddy-face" data-buddy-face data-face="{{ buddy_face }}" aria-hidden="true">{{ buddy_mascot(look=buddy_look, face=buddy_face) }}</span>
     <div class="study-buddy-card" data-buddy-card hidden>
         <span class="study-buddy-detail" data-buddy-detail>{% if buddy_prompt %}{{ buddy_prompt.detail }}{% endif %}</span>
         <p class="study-buddy-message" data-buddy-message>{% if buddy_prompt %}{{ buddy_prompt.message }}{% endif %}</p>

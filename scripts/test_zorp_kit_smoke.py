@@ -91,16 +91,20 @@ def test_no_licensed_names():
 
 def test_live_mascot_unchanged():
     buddy = (ROOT / 'templates' / 'partials' / 'buddy.html').read_text(encoding='utf-8')
-    faces = re.findall(r'buddy-face--([a-z0-9-]+)', buddy)
-    assert faces == [
+    # E8 Phase 1: one zorp-face drawn from parts; the legacy face names live in zorp_rig.
+    from models import zorp_rig
+    assert zorp_rig.LEGACY_FACES == (
         'nudge',
         'milestone',
         'celebrate',
-        'qotd-nudge',
-        'streak-risk',
-        'weak-topic',
-        'friend-challenge',
-    ]
+        'qotd_nudge',
+        'streak_risk',
+        'weak_topic',
+        'friend_challenge',
+        'sleep',
+    )
+    assert 'buddy-face--' not in buddy
+    assert buddy.count('class="zorp-face"') == 1
     assert 'pose_run' not in buddy
     assert 'zorp-pose' not in buddy
     # E7 Phase 1.6: the live rig shares overlay art with the pose kit via
@@ -233,7 +237,7 @@ def test_live_overlay_matches_kit():
     with app.app_context():
         buddy_module = app.jinja_env.get_template('partials/buddy.html').module
         rendered = str(buddy_module.buddy_mascot(zorp_kit.live_look('scholar')))
-        last_face_idx = rendered.rindex('buddy-face--friend-challenge')
+        last_face_idx = rendered.index('class="zorp-face"')
         hat_idx = rendered.index('zorp-hat--mortarboard')
         foot_idx = rendered.index('buddy-foot--l')  # feet are painted after the head closes
         assert last_face_idx < hat_idx < foot_idx
@@ -322,7 +326,7 @@ def test_styleguide_looks():
 def test_base_passes_look():
     base = (ROOT / 'templates' / 'base.html').read_text(encoding='utf-8')
     guide = (ROOT / 'templates' / 'partials' / 'guide.html').read_text(encoding='utf-8')
-    assert 'buddy_mascot(look=buddy_look)' in base
+    assert 'buddy_mascot(look=buddy_look, face=buddy_face)' in base   # E8 Phase 1: face from zorp_rig.face_for_prompt
     assert 'buddy_mascot(look=buddy_look)' in guide
 
 
@@ -336,7 +340,7 @@ def test_styleguide_gallery():
     for token in POSE_TOKENS:
         assert f'zorp-pose--{token}' in html
         assert f'<code>{token}</code>' in html
-    assert html.count('buddy-face--nudge') >= 1
+    assert html.count('class="zorp-face"') >= 1   # E8 Phase 1
     assert 'data-buddy-face' in html
 
 

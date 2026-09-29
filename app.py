@@ -372,6 +372,7 @@ from models.bot import (
 )
 from models import svg_kit
 from models import zorp_kit
+from models import zorp_rig
 from models.avatar import (
     AVATAR_BACKGROUNDS,
     AVATAR_EXTRAS,
@@ -538,6 +539,7 @@ app.config['REMEMBER_COOKIE_SAMESITE'] = 'Lax'
 app.config['REMEMBER_COOKIE_SECURE'] = _secure_cookies
 app.jinja_env.globals['svg_kit'] = svg_kit
 app.jinja_env.globals['zorp_kit'] = zorp_kit
+app.jinja_env.globals['zorp_rig'] = zorp_rig
 
 login_manager = LoginManager()
 

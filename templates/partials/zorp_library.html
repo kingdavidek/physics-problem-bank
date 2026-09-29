@@ -1,0 +1,20 @@
+{#
+  Zorp parts library + rig data island (E8 Phase 1, docs/ZORP_EXPRESSIVENESS.md §4.2-4.3).
+
+  Included once per page by base.html, under the SAME guard as static/js/zorp-motion.js
+  (anonymous pages have no runtime, so they get server-drawn faces only).
+
+  * <template id="pb-zorp-parts"> is inert: nothing in it paints or runs. Each variant of every
+    channel is a <g data-part="channel:id"> that zorp-motion.js clones into a face slot.
+  * <script type="application/json" id="pb-zorp-rig"> holds models/zorp_rig.py rig_json():
+    the presets (channel ids plus valence). It is data, not script, so CSP is unaffected.
+#}
+{% from 'partials/zorp_parts.html' import part %}
+<template id="pb-zorp-parts"><svg xmlns="http://www.w3.org/2000/svg">
+{%- for channel, ids in zorp_rig.CHANNELS.items() -%}
+{%- for vid in ids -%}
+<g data-part="{{ channel }}:{{ vid }}">{{ part(channel, vid) }}</g>
+{%- endfor -%}
+{%- endfor -%}
+</svg></template>
+<script type="application/json" id="pb-zorp-rig">{{ zorp_rig.rig_json()|safe }}</script>

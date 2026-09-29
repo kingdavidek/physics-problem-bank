@@ -4,7 +4,10 @@ Renders `/styleguide#zorp-gallery` in headless Chromium and writes review images
 `data/zorp_gallery/<label>/` (gitignored):
 
 * `faces.png` (full motion) and `faces-reduced.png` (prefers-reduced-motion): one
-  contact sheet each, rows light-56 / light-128 / dark-56 / dark-128, one column per face;
+  contact sheet each, rows light-56 / light-128 / dark-56 / dark-128, one column per legacy face;
+* `expressions.png` (Phase 1+): every preset in the gallery, same rows, in blocks of seven;
+* `faces-parity.png` (with `--compare`): the compared snapshot on top, this one below, for the
+  legacy faces at 128 px in light and dark;
 * `cells/<scheme>-<motion>-<size>-<face>.png`: every gallery cell on its own;
 * `manifest.json`: label, time, URL, viewport, versions, files, per-cell visible face
   groups and console errors.
@@ -23,7 +26,7 @@ needs Playwright and Pillow. Both are optional dev dependencies that are never a
 requirements.txt: without them, or without a Chromium build, the tool prints a message
 and exits 0.
 
-Pixel comparisons (`--compare`) are only meaningful on the same machine and Chromium
+Pixel comparisons (`--compare`, best alignment within a few device pixels) are only meaningful on the same machine and Chromium
 build. Filmstrips and look sheets are built from Phase 1 (`--clips`, `--looks`).
 """
 import argparse
@@ -42,7 +45,11 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT_ROOT = ROOT / 'data' / 'zorp_gallery'
 
 GALLERY_FACES = ('nudge', 'milestone', 'celebrate', 'qotd_nudge', 'streak_risk',
-                 'weak_topic', 'friend_challenge', 'sleep')
+                 'weak_topic', 'friend_challenge', 'sleep')  # the legacy names, in baseline order
+# E8 Phase 1: faces whose art changed on purpose are reported but never counted as failures.
+PARITY_EXEMPT = {'streak_risk': 'D4: frown replaced by the upbeat heads-up look',
+                 'sleep': 'baseline drew a blank face; now drawn'}
+BLOCK = 7  # faces per block on the expressions sheet
 SIZES = (56, 128)
 VARIANTS = (('light', 'full'), ('dark', 'full'), ('light', 'reduced'), ('dark', 'reduced'))
 VIEWPORT = {'width': 1024, 'height': 900}
@@ -94,8 +101,11 @@ def _font(size):
         return ImageFont.load_default()
 
 
-def _build_sheet(out, label, motion, records):
-    """records: {(scheme, size, face): Path}. Write faces.png / faces-reduced.png."""
+def _build_sheet(out, label, motion, records, faces=GALLERY_FACES, name=None, block=None):
+    """records: {(scheme, size, face): Path}. Write faces.png / faces-reduced.png (or `name`).
+
+    `faces` are the columns; with `block` set they are split into stacked blocks of that many
+    columns, each with its own header and the four light/dark rows."""
     from PIL import Image, ImageDraw
 
     rows = [(scheme, size) for scheme in ('light', 'dark') for size in SIZES]
@@ -105,35 +115,105 @@ def _build_sheet(out, label, motion, records):
         images[key] = Image.open(path).convert('RGBA')
     pad, header_h, title_h = 24, 64, 64
     label_w = 190
+    blocks = [faces[i:i + block] for i in range(0, len(faces), block)] if block else [faces]
     col_w = max(max(im.width for im in images.values()), 120) + pad
-    row_heights = []
-    for scheme, size in rows:
-        row_heights.append(max(images[(scheme, size, f)].height for f in GALLERY_FACES) + pad)
-    width = label_w + col_w * len(GALLERY_FACES) + pad
-    height = title_h + header_h + sum(row_heights) + pad
+    ncols = max(len(b) for b in blocks)
+    layouts = []
+    for chunk in blocks:
+        heights = [max(images[(scheme, size, f)].height for f in chunk) + pad for scheme, size in rows]
+        layouts.append((chunk, heights))
+    width = label_w + col_w * ncols + pad
+    height = title_h + sum(header_h + sum(h) for _, h in layouts) + pad
     sheet = Image.new('RGBA', (width, height), (255, 255, 255, 255))
     draw = ImageDraw.Draw(sheet)
-    draw.text((pad, 16), f'Zorp gallery · {label} · faces ({motion})', fill=(20, 20, 20, 255), font=title_font)
-    for ci, face in enumerate(GALLERY_FACES):
-        tw = draw.textlength(face, font=label_font)
-        draw.text((label_w + ci * col_w + (col_w - tw) / 2, title_h + 14), face,
-                  fill=(60, 60, 60, 255), font=label_font)
-    y = title_h + header_h
-    for (scheme, size), row_h in zip(rows, row_heights):
-        # Give the dark rows a dark backing strip so the row reads as a dark-theme row.
-        sample = images[(scheme, size, GALLERY_FACES[0])]
-        bg = sample.getpixel((2, 2))
-        draw.rectangle([0, y - pad // 2, width, y - pad // 2 + row_h], fill=bg)
-        text_fill = (245, 245, 245, 255) if scheme == 'dark' else (20, 20, 20, 255)
-        draw.text((pad, y + 8), f'{scheme} {size}px', fill=text_fill, font=label_font)
-        for ci, face in enumerate(GALLERY_FACES):
-            im = images[(scheme, size, face)]
-            x = label_w + ci * col_w + (col_w - im.width) // 2
-            sheet.alpha_composite(im, (x, y + (row_h - pad - im.height) // 2))
-        y += row_h
-    name = 'faces.png' if motion == 'full' else 'faces-reduced.png'
+    kind = 'faces' if name is None else name.replace('.png', '')
+    draw.text((pad, 16), f'Zorp gallery · {label} · {kind} ({motion})', fill=(20, 20, 20, 255), font=title_font)
+    y = title_h
+    for chunk, row_heights in layouts:
+        for ci, face in enumerate(chunk):
+            tw = draw.textlength(face, font=label_font)
+            draw.text((label_w + ci * col_w + (col_w - tw) / 2, y + 14), face,
+                      fill=(60, 60, 60, 255), font=label_font)
+        y += header_h
+        for (scheme, size), row_h in zip(rows, row_heights):
+            # Give the dark rows a dark backing strip so the row reads as a dark-theme row.
+            sample = images[(scheme, size, chunk[0])]
+            bg = sample.getpixel((2, 2))
+            draw.rectangle([0, y - pad // 2, width, y - pad // 2 + row_h], fill=bg)
+            text_fill = (245, 245, 245, 255) if scheme == 'dark' else (20, 20, 20, 255)
+            draw.text((pad, y + 8), f'{scheme} {size}px', fill=text_fill, font=label_font)
+            for ci, face in enumerate(chunk):
+                im = images[(scheme, size, face)]
+                x = label_w + ci * col_w + (col_w - im.width) // 2
+                sheet.alpha_composite(im, (x, y + (row_h - pad - im.height) // 2))
+            y += row_h
+    name = name or ('faces.png' if motion == 'full' else 'faces-reduced.png')
     sheet.convert('RGB').save(out / name)
     return name
+
+
+def _build_parity(label, other):
+    """faces-parity.png: `other` (before) above `label` (after), legacy faces, 128 px, light and dark."""
+    from PIL import Image, ImageDraw
+
+    a_dir, b_dir = _out_dir(label) / 'cells', _out_dir(other) / 'cells'
+    font, small = _font(22), _font(28)
+    cells = {}
+    for tag, d in ((other, b_dir), (label, a_dir)):
+        for scheme in ('light', 'dark'):
+            for face in GALLERY_FACES:
+                path = d / f'{scheme}-full-128-{face}.png'
+                if path.is_file():
+                    cells[(tag, scheme, face)] = Image.open(path).convert('RGBA')
+    if not cells:
+        return None
+    pad, label_w = 24, 190
+    cw = max(im.width for im in cells.values()) + pad
+    ch = max(im.height for im in cells.values()) + pad
+    rows = [(scheme, tag) for scheme in ('light', 'dark') for tag in (other, label)]
+    sheet = Image.new('RGBA', (label_w + cw * len(GALLERY_FACES) + pad, 64 + 40 + ch * len(rows) + pad),
+                      (255, 255, 255, 255))
+    draw = ImageDraw.Draw(sheet)
+    draw.text((pad, 16), f'Zorp parity · {other} (top) vs {label} (bottom) · 128 px', fill=(20, 20, 20, 255), font=small)
+    for ci, face in enumerate(GALLERY_FACES):
+        tw = draw.textlength(face, font=font)
+        draw.text((label_w + ci * cw + (cw - tw) / 2, 64 + 6), face, fill=(60, 60, 60, 255), font=font)
+    for ri, (scheme, tag) in enumerate(rows):
+        y = 64 + 40 + ri * ch
+        sample = next((cells[(tag, scheme, f)] for f in GALLERY_FACES if (tag, scheme, f) in cells), None)
+        if sample is not None:
+            draw.rectangle([0, y - pad // 2, sheet.width, y - pad // 2 + ch], fill=sample.getpixel((2, 2)))
+        fill = (245, 245, 245, 255) if scheme == 'dark' else (20, 20, 20, 255)
+        draw.text((pad, y + 8), f'{scheme} {tag}', fill=fill, font=font)
+        for ci, face in enumerate(GALLERY_FACES):
+            im = cells.get((tag, scheme, face))
+            if im is not None:
+                sheet.alpha_composite(im, (label_w + ci * cw + (cw - im.width) // 2, y))
+    out = _out_dir(label) / 'faces-parity.png'
+    sheet.convert('RGB').save(out)
+    return out
+
+
+def _best_shift_pct(ia, ib, reach_x=3, reach_y=8):
+    """Smallest changed-pixel percentage over small integer shifts of `ib` against `ia`.
+
+    Gallery cells are stretched by their flex row, so a whole cell can sit a few device pixels
+    higher or lower when the number of cells changes. That is layout, not art, so the art is
+    compared at its best alignment (the shift is at most reach_x / reach_y device pixels)."""
+    from PIL import ImageChops
+
+    best = 100.0
+    w, h = ia.size
+    for dy in range(-reach_y, reach_y + 1):
+        for dx in range(-reach_x, reach_x + 1):
+            box_a = (max(dx, 0), max(dy, 0), w + min(dx, 0), h + min(dy, 0))
+            box_b = (max(-dx, 0), max(-dy, 0), w + min(-dx, 0), h + min(-dy, 0))
+            ca, cb = ia.crop(box_a), ib.crop(box_b)
+            r, g, b, a = ImageChops.difference(ca, cb).split()
+            worst = ImageChops.lighter(ImageChops.lighter(r, g), ImageChops.lighter(b, a))
+            changed = worst.point(lambda v: 255 if v > DIFF_THRESHOLD else 0).histogram()[255]
+            best = min(best, 100.0 * changed / (ca.width * ca.height))
+    return best
 
 
 def compare(label, other):
@@ -150,18 +230,29 @@ def compare(label, other):
     for path in sorted(a_dir.glob('*.png')):
         twin = b_dir / path.name
         if not twin.is_file():
-            lines.append(f'{path.name}  MISSING in {other}  OVER')
+            lines.append(f'{path.name}  NEW in {label} (no {other} cell)')
             continue
         ia, ib = Image.open(path).convert('RGBA'), Image.open(twin).convert('RGBA')
         if ia.size != ib.size:
-            pct = 100.0
+            # Cells stretch with their flex/grid row, so sizes can differ by a few pixels.
+            if abs(ia.width - ib.width) > 8 or abs(ia.height - ib.height) > 8:
+                pct = 100.0
+            else:
+                cw, chh = min(ia.width, ib.width), min(ia.height, ib.height)
+                pct = _best_shift_pct(ia.crop((0, 0, cw, chh)), ib.crop((0, 0, cw, chh)))
         else:
             diff = ImageChops.difference(ia, ib)
             r, g, b, a = diff.split()
             worst = ImageChops.lighter(ImageChops.lighter(r, g), ImageChops.lighter(b, a))
             changed = worst.point(lambda v: 255 if v > DIFF_THRESHOLD else 0).histogram()[255]
             pct = 100.0 * changed / (ia.width * ia.height)
-        lines.append(f'{path.name}  {pct:.2f}%' + ('  OVER' if pct > OVER_PCT else ''))
+            if pct > OVER_PCT:
+                pct = min(pct, _best_shift_pct(ia, ib))
+        face = path.stem.split('-', 3)[-1]
+        if face in PARITY_EXEMPT:
+            lines.append(f'{path.name}  {pct:.2f}%  EXEMPT ({PARITY_EXEMPT[face]})')
+        else:
+            lines.append(f'{path.name}  {pct:.2f}%' + ('  OVER' if pct > OVER_PCT else ''))
     report = '\n'.join(lines) or 'no common cells'
     print(report)
     (_out_dir(label) / f'compare-{other}.txt').write_text(report + '\n', encoding='utf-8')
@@ -246,20 +337,25 @@ def snapshot(label, server_python):
                     size = int(cell.get_attribute('data-gallery-size'))
                     rel = f'cells/{scheme}-{motion}-{size}-{face}.png'
                     cell.screenshot(path=str(out / rel), animations='disabled', caret='hide')
-                    visible = cell.evaluate(
-                        "el => [...el.querySelectorAll('.buddy-face')]"
-                        ".filter(g => getComputedStyle(g).display !== 'none').length")
+                    visible = cell.evaluate("el => el.querySelectorAll('.zorp-face').length")
                     files.append(rel)
                     records[motion][(scheme, size, face)] = out / rel
                     manifest_cells.append({'scheme': scheme, 'motion': motion, 'size': size,
-                                           'face': face, 'file': rel, 'visible_groups': visible})
+                                           'face': face, 'file': rel, 'zorp_faces': visible})
                 console[f'{scheme}-{motion}'] = errors
                 ctx.close()
             version = browser.version
             browser.close()
 
+        seen = []
+        for _key in records['full']:
+            if _key[2] not in seen:
+                seen.append(_key[2])
         for motion in ('full', 'reduced'):
-            files.append(_build_sheet(out, label, motion, records[motion]))
+            legacy = {k: v for k, v in records[motion].items() if k[2] in GALLERY_FACES}
+            files.append(_build_sheet(out, label, motion, legacy))
+        files.append(_build_sheet(out, label, 'full', records['full'], faces=tuple(seen),
+                                  name='expressions.png', block=BLOCK))
         try:
             from importlib.metadata import version as pkg_version
             pw_version = pkg_version('playwright')
@@ -282,7 +378,7 @@ def snapshot(label, server_python):
             shutil.rmtree(final_out)
         out.rename(final_out)
         print(f'Wrote {final_out}')
-        print(f'  sheets: {final_out / "faces.png"}, {final_out / "faces-reduced.png"}')
+        print(f'  sheets: {final_out / "faces.png"}, {final_out / "faces-reduced.png"}, {final_out / "expressions.png"}')
         print(f'  cells:  {len(manifest_cells)} PNGs in {final_out / "cells"}')
         print(f'  manifest: {final_out / "manifest.json"}')
         return 0
@@ -319,6 +415,9 @@ def main(argv=None):
     if rc == 0 and args.compare:
         try:
             compare(args.label, args.compare)
+            parity = _build_parity(args.label, args.compare)
+            if parity:
+                print(f'  parity sheet: {parity}')
         except ImportError:
             pass
     return rc

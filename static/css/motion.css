@@ -1,12 +1,12 @@
 /* E7 Phase 1: Zorp rig pivots + CSS idle loop (docs/MASCOT_MOTION_AND_ONBOARDING.md §3.1-3.2).
-   Clips are WAAPI in static/js/zorp-motion.js. Cap 8,000 bytes (test_zorp_motion_smoke.py).
+   Clips are WAAPI in static/js/zorp-motion.js. Cap 12,000 bytes since E8 Phase 1 (test_zorp_motion_smoke.py).
    .buddy-head/.buddy-eye pivots stay in chrome.css (E6 gestures). */
 .buddy-mascot { overflow: visible; }
 /* fill-box so rotations pivot on the part on every browser (Safari needs it).
    Phase 1.5 cosmetics scale .buddy-antenna--l/--r and .buddy-foot--l/--r from these origins. */
 .buddy-root, .buddy-shadow, .buddy-body, .buddy-arm--l, .buddy-arm--r,
 .buddy-antenna--l, .buddy-antenna--r, .buddy-pupil,
-.buddy-foot--l, .buddy-foot--r { transform-box: fill-box; }
+.buddy-foot--l, .buddy-foot--r, .zorp-face { transform-box: fill-box; }
 .buddy-root { transform-origin: 50% 90%; }
 .buddy-shadow { transform-origin: 50% 50%; }
 .buddy-body { transform-origin: 50% 100%; }
@@ -14,7 +14,7 @@
 .buddy-arm--r { transform-origin: 0% 0%; }
 .buddy-antenna--l { transform-origin: 100% 100%; }
 .buddy-antenna--r { transform-origin: 0% 100%; }
-.buddy-pupil { transform-origin: 50% 50%; }
+.buddy-pupil, .zorp-face { transform-origin: 50% 50%; }
 .buddy-foot--l, .buddy-foot--r { transform-origin: 50% 90%; }
 @media (prefers-reduced-motion: no-preference) {
     .buddy-mascot.is-zorp-idle .buddy-root { animation: zorp-idle-breathe 3.2s ease-in-out infinite; }
@@ -40,6 +40,8 @@
     .buddy-mascot.is-zorp-idle .buddy-antenna--l,
     .buddy-mascot.is-zorp-idle .buddy-antenna--r { animation: none; }
     .buddy-body.is-zorp-pulse .buddy-body-shape { animation: zorp-pulse 300ms ease-out 1; }
+    /* E8 fx: zorp-twinkle (sparkles) and zorp-zzz (sleep) do not run; the marks stay static. */
+    .buddy-mascot .zorp-sp, .buddy-mascot .zorp-z { animation: none; }
 }
 /* E7 Phase 5: mirror of the media-query block above for motion_preference (duration-zeroing
    alone doesn't stop an infinite animation, so idle-breathe/sway need an explicit none here). */
@@ -51,6 +53,8 @@ html[data-motion="off"] .buddy-mascot.is-zorp-idle .buddy-antenna--l,
 html[data-motion="off"] .buddy-mascot.is-zorp-idle .buddy-antenna--r { animation: none; }
 html[data-motion="reduced"] .buddy-body.is-zorp-pulse .buddy-body-shape,
 html[data-motion="off"] .buddy-body.is-zorp-pulse .buddy-body-shape { animation: zorp-pulse 300ms ease-out 1; }
+html[data-motion="reduced"] .buddy-mascot .zorp-sp, html[data-motion="reduced"] .buddy-mascot .zorp-z,
+html[data-motion="off"] .buddy-mascot .zorp-sp, html[data-motion="off"] .buddy-mascot .zorp-z { animation: none; }
 
 /* E7 Phase 1.5: automatic-only live-buddy cosmetics (docs/MASCOT_MOTION_AND_ONBOARDING.md, Phase 1.5).
    Selected server-side by models/zorp_kit.py live_look(); no pupil-facing picker.
@@ -64,7 +68,29 @@ html[data-motion="off"] .buddy-body.is-zorp-pulse .buddy-body-shape { animation:
 .buddy-mascot[data-zorp-antenna="long"] .buddy-antenna--l, .buddy-mascot[data-zorp-antenna="long"] .buddy-antenna--r { scale: 1.2; }
 .buddy-mascot[data-zorp-antenna="short"] .buddy-antenna--l, .buddy-mascot[data-zorp-antenna="short"] .buddy-antenna--r { scale: 0.8; }
 .buddy-mascot[data-zorp-feet="big"] .buddy-foot--l, .buddy-mascot[data-zorp-feet="big"] .buddy-foot--r { scale: 1.15; }
-/* Mouth swap on the resting face only (D1): exactly one path painted, never overlapping. */
-.buddy-mascot[data-mouth="grin"] .buddy-mouth--smile, .buddy-mascot[data-mouth="cat"] .buddy-mouth--smile { display: none; }
-.buddy-mascot[data-mouth="grin"] .buddy-mouth--grin { display: inline; }
-.buddy-mascot[data-mouth="cat"] .buddy-mouth--cat { display: inline; }
+/* E8 Phase 1: face parts (docs/ZORP_EXPRESSIVENESS.md 3.1, 3.6). The mouth swap that lived here
+   is now the `mouth` variant chosen server-side (models/zorp_rig.py parts_for). Colour props
+   fall back to existing tokens, never redefine --brand-*, and never use the --wrong-*/--correct-*
+   grading colours. .zk/.zf are the ink stroke and fill shared by every part in
+   templates/partials/zorp_parts.html. */
+.buddy-mascot { --zorp-rouge: var(--streak-300); --zorp-blush: var(--streak-400); --zorp-drop: var(--brand-400); }
+.zk { fill: none; stroke: var(--ink-800); stroke-linecap: round; }
+.zf { fill: var(--ink-800); }
+.zorp-sp, .zorp-z { transform-box: fill-box; transform-origin: 50% 50%; }
+@media (prefers-reduced-motion: no-preference) {
+    /* twinkle 1.8s (about 1.1 Hz, under the 3 Hz WCAG 2.3.1 limit); zzz drifts 2.4s */
+    .buddy-mascot .zorp-sp { animation: zorp-twinkle 1.8s ease-in-out infinite; }
+    .buddy-mascot .zorp-sp:nth-child(2) { animation-delay: -0.6s; }
+    .buddy-mascot .zorp-sp:nth-child(3) { animation-delay: -1.2s; }
+    .buddy-mascot .zorp-z { animation: zorp-zzz 2.4s ease-in-out infinite; }
+    .buddy-mascot .zorp-z:nth-child(2) { animation-delay: -0.8s; }
+    .buddy-mascot .zorp-z:nth-child(3) { animation-delay: -1.6s; }
+}
+@keyframes zorp-twinkle {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.75); }
+}
+@keyframes zorp-zzz {
+    0%, 100% { opacity: 0.55; transform: translate(0, 1px); }
+    50% { opacity: 1; transform: translate(0, -1px); }
+}

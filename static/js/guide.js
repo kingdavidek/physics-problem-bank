@@ -317,7 +317,9 @@
       weak_topic: 1,
       friend_challenge: 1,
     };
-    var face = ok[name] ? name : 'nudge';
+    // E8: any preset the runtime knows (pbZorp.hasExpression); `ok` is the no-runtime fallback.
+    var known = window.pbZorp && typeof window.pbZorp.hasExpression === 'function' ? window.pbZorp.hasExpression(name) : ok[name];
+    var face = known ? name : 'nudge';
     if (window.pbZorp && window.pbZorp.setFace(face, { el: faceEl })) return;
     faceEl.setAttribute('data-face', face);
   }

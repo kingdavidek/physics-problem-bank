@@ -60,9 +60,15 @@
     '👾': 'nudge',
   };
 
+  // E8: pbZorp.hasExpression knows every preset; FACE_OK is only the no-runtime fallback.
+  function faceKnown(name) {
+    if (window.pbZorp && typeof window.pbZorp.hasExpression === 'function') return window.pbZorp.hasExpression(name);
+    return !!FACE_OK[name];
+  }
+
   function resolveFace(prompt) {
     var type = prompt && prompt.type;
-    if (type && FACE_OK[type]) return type;
+    if (type && faceKnown(type)) return type;
     var emoji = prompt && prompt.face;
     if (emoji && FACE_FROM_EMOJI[emoji]) return FACE_FROM_EMOJI[emoji];
     return 'nudge';

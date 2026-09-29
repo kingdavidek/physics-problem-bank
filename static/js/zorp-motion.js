@@ -1,11 +1,31 @@
 /* E7 Phase 1: Zorp motion runtime (docs/MASCOT_MOTION_AND_ONBOARDING.md §3.2).
-   WAAPI clips on rig groups; CSS idle loop in static/css/motion.css. No libraries. */
+   WAAPI clips on rig groups; CSS idle loop in static/css/motion.css. No libraries.
+   E8 Phase 1 (docs/ZORP_EXPRESSIVENESS.md §4.2-4.4): faces are presets of channels (eyes, brows,
+   mouth, cheeks, fx) whose parts are cloned from the inert #pb-zorp-parts template into the
+   face slots; presets come from the #pb-zorp-rig data island. */
 (function () {
   'use strict';
   if (window.pbZorp) return;
 
   var CLIP_NAMES = ['idle', 'blink', 'cheer', 'wobble', 'think', 'wave', 'point', 'nod', 'wink', 'tap', 'shake', 'hop', 'peek', 'sleep'];
-  var FACES = { nudge: 1, milestone: 1, celebrate: 1, qotd_nudge: 1, streak_risk: 1, weak_topic: 1, friend_challenge: 1 };
+  // E8 Phase 1: preset rows are [eyeL, eyeR, brows, mouth, cheeks, fx, valence]. The island
+  // (models/zorp_rig.py rig_json) is read once, lazily; this built-in table keeps the eight
+  // legacy faces working if a page has the runtime but not the island.
+  var SLOT_KEYS = ['eyeL', 'eyeR', 'brows', 'mouth', 'cheeks', 'fx'];
+  var SLOT_CHANNEL = { eyeL: 'eyes', eyeR: 'eyes', brows: 'brows', mouth: 'mouth', cheeks: 'cheeks', fx: 'fx' };
+  var LEGACY_PRESETS = {
+    nudge: ['open', 'open', 'none', 'smile', 'none', 'none', '0'],
+    milestone: ['open-lift', 'open-lift', 'none', 'smile-wide', 'none', 'stars', '+'],
+    celebrate: ['happy-arc', 'happy-arc', 'none', 'smile-big', 'rosy', 'none', '+'],
+    qotd_nudge: ['curious', 'curious-r', 'raised-l', 'o', 'none', 'none', '0'],
+    streak_risk: ['open-big', 'open-big', 'raised', 'smile', 'none', 'flame', '+'],
+    weak_topic: ['low', 'low-r', 'skeptical', 'flat', 'none', 'none', '0'],
+    friend_challenge: ['wink-line', 'open-off', 'none', 'smile-w', 'none', 'none', '+'],
+    sleep: ['closed', 'closed-r', 'none', 'sleepy', 'none', 'zzz', '0']
+  };
+  var ID_RE = /^[a-z0-9-]+$/;
+  var presetTable = null;
+  var partsTpl;   // undefined until looked up; null when the page has no library
   var GESTURES = { nod: 1, wink: 1, tap: 1, shake: 1 };   // E6 CSS keyframes via data-gesture
   var GESTURE_MS = 1200;                                    // same as guide.js playGesture
 
@@ -48,6 +68,69 @@
     return 'full';
   }
 
+  function presets() {
+    if (presetTable) return presetTable;
+    var table = null;
+    try {
+      var el = document.getElementById('pb-zorp-rig');
+      var data = el ? JSON.parse(el.textContent || 'null') : null;
+      if (data && data.p && typeof data.p === 'object') table = data.p;
+    } catch (e) { table = null; }
+    if (table || document.readyState !== 'loading') presetTable = table || LEGACY_PRESETS;
+    return table || LEGACY_PRESETS;
+  }
+
+  function hasExpression(name) {
+    return typeof name === 'string' && Object.prototype.hasOwnProperty.call(presets(), name);
+  }
+
+  function partNode(channel, id) {
+    if (partsTpl === undefined) {
+      var tpl = document.getElementById('pb-zorp-parts');
+      partsTpl = (tpl && tpl.content) || null;
+    }
+    if (!partsTpl || !ID_RE.test(id)) return null;
+    return partsTpl.querySelector('[data-part="' + channel + ':' + id + '"]');
+  }
+
+  // Channel ids for a preset. The live look's mouth (data-mouth) replaces the nudge mouth only.
+  function channelsFor(inst, name) {
+    var row = hasExpression(name) ? presets()[name] : null;
+    if (!row) return null;
+    var ch = {};
+    var i;
+    for (i = 0; i < SLOT_KEYS.length; i += 1) ch[SLOT_KEYS[i]] = row[i];
+    var look = name === 'nudge' && inst ? inst.svg.getAttribute('data-mouth') : null;
+    if (look && ID_RE.test(look)) ch.mouth = look;
+    return ch;
+  }
+
+  function copyChannels(ch) {
+    var out = {};
+    var i;
+    for (i = 0; i < SLOT_KEYS.length; i += 1) out[SLOT_KEYS[i]] = ch[SLOT_KEYS[i]];
+    return out;
+  }
+
+  // Swap only the slots whose variant changed; a missing part leaves that slot as it was.
+  function drawChannels(inst, ch) {
+    var next = inst.cur ? copyChannels(inst.cur) : {};
+    var i;
+    for (i = 0; i < SLOT_KEYS.length; i += 1) {
+      var key = SLOT_KEYS[i];
+      var slot = inst.slots[key];
+      if (!slot || !ch[key] || (inst.cur && inst.cur[key] === ch[key])) continue;
+      var node = partNode(SLOT_CHANNEL[key], ch[key]);
+      if (!node) continue;
+      while (slot.firstChild) slot.removeChild(slot.firstChild);
+      var kids = node.childNodes;
+      var n;
+      for (n = 0; n < kids.length; n += 1) slot.appendChild(kids[n].cloneNode(true));
+      next[key] = ch[key];
+    }
+    inst.cur = next;
+  }
+
   function findParts(svg) {
     return {
       root: svg.querySelector('.buddy-root'),
@@ -59,6 +142,13 @@
       antL: svg.querySelector('.buddy-antenna--l'),
       antR: svg.querySelector('.buddy-antenna--r')
     };
+  }
+
+  function findSlots(svg) {
+    var slots = {};
+    var i;
+    for (i = 0; i < SLOT_KEYS.length; i += 1) slots[SLOT_KEYS[i]] = svg.querySelector('.zorp-slot--' + SLOT_KEYS[i]);
+    return slots;
   }
 
   function findInstanceBySvg(svg) {
@@ -79,6 +169,8 @@
       svg: svg,
       host: host,
       parts: findParts(svg),
+      slots: findSlots(svg),
+      cur: null,
       anims: [],
       seq: 0,
       busy: false,
@@ -90,6 +182,8 @@
       pulseTimer: 0,
       thought: null
     };
+    // What the server drew (data-expr, else the resting face) is the starting point for diffs.
+    inst.cur = channelsFor(inst, svg.getAttribute('data-expr') || 'nudge');
     instances.push(inst);
     return svg;
   }
@@ -104,31 +198,79 @@
   }
 
   function visiblePupils(inst) {
-    var face = inst.host.getAttribute('data-face') || 'nudge';
-    return inst.svg.querySelectorAll('.buddy-face--' + face.replace(/_/g, '-') + ' .buddy-pupil');
+    return inst.svg.querySelectorAll('.zorp-face .buddy-pupil');
   }
 
-  function setFace(name, opts) {
-    var inst = getInst(opts);
-    if (!inst || !FACES[name]) return false;
+  function clearFaceSwap(inst) {
     if (inst.faceTimer) { clearTimeout(inst.faceTimer); inst.faceTimer = 0; }
     inst.faceSwap = null;
-    inst.host.setAttribute('data-face', name);
+  }
+
+  // setExpression('happy') or setExpression({ mouth: 'grin', cheeks: 'rosy' }): a preset name,
+  // or channel ids merged onto the current face. Returns false for anything unknown.
+  function setExpression(input, opts) {
+    var inst = getInst(opts);
+    if (!inst) return false;
+    var ch = null;
+    var name = null;
+    var i;
+    if (typeof input === 'string') {
+      name = input;
+      ch = channelsFor(inst, name);
+    } else if (input && typeof input === 'object') {
+      // All-or-nothing: every channel given must name an existing part, else nothing changes.
+      ch = inst.cur ? copyChannels(inst.cur) : channelsFor(inst, 'nudge');
+      var given = 0;
+      if (ch && input.eyes !== undefined) {
+        if (typeof input.eyes !== 'string' || !partNode('eyes', input.eyes)) return false;
+        ch.eyeL = input.eyes;
+        ch.eyeR = partNode('eyes', input.eyes + '-r') ? input.eyes + '-r' : input.eyes;
+        given += 1;
+      }
+      for (i = 0; ch && i < SLOT_KEYS.length; i += 1) {
+        var v = input[SLOT_KEYS[i]];
+        if (v === undefined) continue;
+        if (typeof v !== 'string' || !partNode(SLOT_CHANNEL[SLOT_KEYS[i]], v)) return false;
+        ch[SLOT_KEYS[i]] = v;
+        given += 1;
+      }
+      if (!given) return false;
+    }
+    if (!ch) return false;
+    clearFaceSwap(inst);
+    drawChannels(inst, ch);
+    if (name) {
+      inst.host.setAttribute('data-face', name);
+      inst.svg.setAttribute('data-expr', name);
+    }
     return true;
   }
 
+  function setFace(name, opts) {
+    return typeof name === 'string' ? setExpression(name, opts) : false;
+  }
+
   function tempFace(inst, face, ms) {
-    var prev = inst.host.getAttribute('data-face');
+    var ch = channelsFor(inst, face);
+    if (!ch) return;
+    inst.faceSwap = {
+      prev: inst.host.getAttribute('data-face'),
+      face: face,
+      prevCh: inst.cur ? copyChannels(inst.cur) : null
+    };
     inst.host.setAttribute('data-face', face);
-    inst.faceSwap = { prev: prev, face: face };
+    drawChannels(inst, ch);
     if (inst.faceTimer) clearTimeout(inst.faceTimer);
     inst.faceTimer = setTimeout(function () { restoreFace(inst); }, ms);
   }
 
   function restoreFace(inst) {
-    if (inst.faceSwap && inst.host.getAttribute('data-face') === inst.faceSwap.face) {
-      if (inst.faceSwap.prev) inst.host.setAttribute('data-face', inst.faceSwap.prev);
+    var swap = inst.faceSwap;
+    if (swap && inst.host.getAttribute('data-face') === swap.face) {
+      if (swap.prev) inst.host.setAttribute('data-face', swap.prev);
       else inst.host.removeAttribute('data-face');
+      var back = swap.prevCh || channelsFor(inst, swap.prev || 'nudge');
+      if (back) drawChannels(inst, back);
     }
     inst.faceSwap = null;
     if (inst.faceTimer) { clearTimeout(inst.faceTimer); inst.faceTimer = 0; }
@@ -509,15 +651,10 @@
         ];
       }
     },
-    // E7 Phase 4: "sleep" — head droop, held via a `sleep` data-face that matches none of
-    // chrome.css's `.study-buddy-face[data-face="…"]` rules, so every `.buddy-face` group
-    // (which default to `display: none`) stays hidden for the clip's duration — no eyes, no
-    // mouth, a blank/eyes-closed look — without touching buddy.html or motion.css. Note:
-    // templates/offline.html sets `data-face="sleep"` directly in markup instead of calling
-    // this clip, since zorp-motion.js isn't loaded for anonymous/offline sessions (gated in
-    // base.html); this clip stays available for any authenticated context that wants an
-    // animated one-off droop. Same face for reduced motion: a data-face swap is a discrete
-    // expression change, not the animated motion reduced-motion strips out.
+    // E7 Phase 4: "sleep" — head droop, held with the real `sleep` preset since E8 Phase 1
+    // (closed eyes, sleepy mouth, zzz). templates/offline.html draws the same preset
+    // server-side, because zorp-motion.js isn't loaded for anonymous/offline sessions (gated in
+    // base.html). Same face for reduced motion: a face swap is content, not motion.
     sleep: {
       dur: 1400,
       face: 'sleep',
@@ -545,7 +682,8 @@
     stop(inst);
     inst.busy = true;
     var reduced = motionLevel() !== 'full';
-    var faceOverride = FACES[opts.face] ? opts.face : null;
+    var faceOverride = hasExpression(opts.face) ? opts.face : null;
+    var spd = opts.speed > 0 && opts.speed < 1 ? opts.speed : 1;   // dev slow-motion (styleguide 0.25x)
 
     if (GESTURES[name]) {
       if (reduced) { inst.busy = false; return Promise.resolve(false); }
@@ -574,7 +712,7 @@
       // Thought bubble is a full-motion-only effect — never created here.
       var did = false;
       var reducedFace = faceOverride || c.reducedFace;
-      if (reducedFace) { tempFace(inst, reducedFace, c.dur); did = true; }
+      if (reducedFace && channelsFor(inst, reducedFace)) { tempFace(inst, reducedFace, c.dur / spd); did = true; }
       if (c.pulse && inst.parts.body) {
         inst.parts.body.classList.add('is-zorp-pulse');
         did = true;
@@ -583,13 +721,13 @@
           if (inst.parts.body) inst.parts.body.classList.remove('is-zorp-pulse');
         }, 350);
       }
-      return delay(inst, c.dur).then(function () { return did; });
+      return delay(inst, c.dur / spd).then(function () { return did; });
     }
 
     try {
       var fullFace = faceOverride || c.face;
-      if (fullFace) tempFace(inst, fullFace, c.dur);
-      var promise = run(inst, c.tracks(inst.parts, visiblePupils(inst), opts), c.dur);
+      if (fullFace) tempFace(inst, fullFace, c.dur / spd);
+      var promise = run(inst, c.tracks(inst.parts, visiblePupils(inst), opts), c.dur / spd);
       if (opts.thought) showThought(inst);
       return promise;
     } catch (e) {
@@ -728,8 +866,16 @@
     play: play,
     idle: idle,
     setFace: setFace,
+    setExpression: setExpression,
+    hasExpression: hasExpression,
+    channelsOf: function (name) { return channelsFor(null, name); },
     motionLevel: motionLevel,
     react: react,
     clips: CLIP_NAMES.slice()
   };
+  // Preset names, read lazily so they include the island's new presets.
+  Object.defineProperty(window.pbZorp, 'expressions', {
+    enumerable: true,
+    get: function () { return Object.keys(presets()); }
+  });
 }());

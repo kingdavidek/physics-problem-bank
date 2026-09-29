@@ -7,13 +7,10 @@
   <section class="section-panel status-page-card">
     <div class="section-panel-body">
       <div class="empty-state">
-        <!-- E7 Phase 4: rendered with data-face="sleep" directly (not via zorp-motion.js's
-             `play('sleep', ...)`), since this page is precached for offline/anonymous use and
-             zorp-motion.js only loads for authenticated/preview sessions (templates/base.html).
-             data-face="sleep" matches none of chrome.css's .study-buddy-face[data-face="…"]
-             selectors, so every .buddy-face group (display:none by default) stays hidden —
-             a blank, eyes-closed-look face, with zero JS dependency. -->
-        <span class="study-buddy-face pb-zorp-small" id="offline-zorp" data-buddy-face data-face="sleep" aria-hidden="true">{{ buddy_mascot() }}</span>
+        <!-- E8 Phase 1: the sleep preset is drawn server-side (closed eyes, sleepy mouth, zzz),
+             with data-face="sleep" on the host. No JS dependency: zorp-motion.js only loads for
+             authenticated/preview sessions, and this page is precached for offline use. -->
+        <span class="study-buddy-face pb-zorp-small" id="offline-zorp" data-buddy-face data-face="sleep" aria-hidden="true">{{ buddy_mascot(face='sleep') }}</span>
         <h1>No signal here — your saved lessons still work.</h1>
         <a href="/" class="btn btn-primary" id="offline-retry">Try again</a>
       </div>

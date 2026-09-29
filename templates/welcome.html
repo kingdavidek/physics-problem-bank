@@ -22,7 +22,7 @@
 
     {{ page_flashes('welcome') }}
 
-    <span class="study-buddy-face welcome-hero" data-welcome-hero data-face="nudge" aria-hidden="true">{{ buddy_mascot(look=buddy_look) }}</span>
+    <span class="study-buddy-face welcome-hero" data-welcome-hero data-face="nudge" aria-hidden="true">{{ buddy_mascot(look=buddy_look, face='nudge') }}</span>
 
     {% if step == 'hello' %}
     <div class="welcome-screen" id="welcome-screen-hello">

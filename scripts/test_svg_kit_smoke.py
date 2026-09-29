@@ -251,7 +251,8 @@ def test_u58_mascot():
         assert 'data-face="streak_risk"' in sg
         assert 'data-face="weak_topic"' in sg
         assert 'data-face="friend_challenge"' in sg
-        assert 'buddy-face--nudge' in sg
+        assert 'class="zorp-face"' in sg   # E8 Phase 1: one face group, drawn from the preset
+        assert 'data-expr="friend_challenge"' in sg
         assert 'buddy-head' in sg
         assert 'buddy-foot' in sg
         assert 'buddy-eye--r' in sg

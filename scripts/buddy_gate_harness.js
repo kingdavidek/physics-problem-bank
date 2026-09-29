@@ -128,7 +128,7 @@ function makeStorage(opts) {
 // Builds one fresh "page load": a document containing the study-buddy aside
 // markup (mirroring templates/base.html) plus the pb-buddy-prompt JSON island,
 // runs study-buddy.js in its own vm context, and returns handles to poke at.
-function loadPage({ prompt, storageSeed, storageBroken }) {
+function loadPage({ prompt, storageSeed, storageBroken, zorp }) {
   const root = makeEl('aside', { 'data-buddy-root': '', 'data-buddy-state': 'face' });
   const faceEl = makeEl('span', { 'data-buddy-face': '', 'data-face': 'nudge' });
   const card = makeEl('div', { 'data-buddy-card': '', hidden: '' });
@@ -170,6 +170,8 @@ function loadPage({ prompt, storageSeed, storageBroken }) {
     setTimeout: () => 0,
     clearTimeout: () => {},
   };
+  // E8 Phase 1: optional pbZorp stub (real study-buddy.js asks pbZorp.hasExpression for face names).
+  if (zorp) windowStub.pbZorp = zorp;
 
   const sandbox = { window: windowStub, document: documentStub, console };
   vm.createContext(sandbox);
@@ -326,6 +328,40 @@ scenario('a throwing localStorage does not crash the page load', () => {
   assert.strictEqual(page.card.hidden, false);
   assert.doesNotThrow(() => clickPrimary(page));
   assert.doesNotThrow(() => clickDismiss(page));
+});
+
+function zorpStub(known) {
+  const calls = [];
+  return {
+    calls,
+    hasExpression: (name) => known.indexOf(name) !== -1,
+    setFace: (name) => { calls.push(name); return true; },
+    bind: () => null,
+    idle: () => true,
+    play: () => Promise.resolve(true),
+  };
+}
+
+scenario('E8: with pbZorp, a prompt type the runtime knows is applied through setFace', () => {
+  const zorp = zorpStub(['nudge', 'streak_risk', 'happy']);
+  loadPage({ prompt: Object.assign({}, PROMPT_A, { type: 'happy' }), zorp });
+  assert.deepStrictEqual(zorp.calls, ['happy']);
+});
+
+scenario('E8: with pbZorp, an unknown prompt type falls back to the emoji map, then nudge', () => {
+  const zorp = zorpStub(['nudge', 'streak_risk']);
+  loadPage({ prompt: Object.assign({}, PROMPT_A, { type: 'not-a-face', face: '\u{1F525}' }), zorp });
+  assert.deepStrictEqual(zorp.calls, ['streak_risk']);
+  const zorp2 = zorpStub(['nudge']);
+  loadPage({ prompt: Object.assign({}, PROMPT_A, { type: 'not-a-face', face: '?' }), zorp: zorp2 });
+  assert.deepStrictEqual(zorp2.calls, ['nudge']);
+});
+
+scenario('E8: without pbZorp the local legacy allowlist still applies', () => {
+  const page = loadPage({ prompt: Object.assign({}, PROMPT_A, { type: 'happy' }) });
+  assert.strictEqual(page.faceEl.getAttribute('data-face'), 'nudge');
+  const page2 = loadPage({ prompt: PROMPT_A });
+  assert.strictEqual(page2.faceEl.getAttribute('data-face'), 'streak_risk');
 });
 
 const failed = results.filter((r) => !r[1]);

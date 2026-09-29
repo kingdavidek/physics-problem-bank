@@ -1,6 +1,6 @@
 # Zorp expressions, poses and turning (E8)
 
-**Status:** Phase 0 in progress (2026-09-29). Decisions D1–D5 confirmed by David 2026-09-29 (§7.1); §2 is frozen. Written 2026-09-29 against `main` at 4db62e2. Sources read: `templates/partials/buddy.html`, `partials/zorp_overlays.html`, `partials/zorp_kit.html`, `models/zorp_kit.py`, `static/js/zorp-motion.js`, `zorp-triggers.js`, `celebrate.js`, `study-buddy.js`, `guide.js`, `guide-catalog.js`, `welcome.js`, `styleguide.js`, `static/css/motion.css`, `chrome.css`, `static/js/sw.js`, `docs/MASCOT_MOTION_AND_ONBOARDING.md` (E7), `docs/ANIMATION_ONBOARDING.md` (E6), `docs/SECURITY_AND_GDPR.md`, `docs/DPIA.md`, `docs/AI_HANDOFF.md`, and every smoke test that pins the mascot.
+**Status:** Phase 0 built and committed (17b8b38); Phase 1 built 2026-09-29, awaiting David's review. Decisions D1–D5 confirmed by David 2026-09-29 (§7.1); §2 is frozen. Written 2026-09-29 against `main` at 4db62e2. Sources read: `templates/partials/buddy.html`, `partials/zorp_overlays.html`, `partials/zorp_kit.html`, `models/zorp_kit.py`, `static/js/zorp-motion.js`, `zorp-triggers.js`, `celebrate.js`, `study-buddy.js`, `guide.js`, `guide-catalog.js`, `welcome.js`, `styleguide.js`, `static/css/motion.css`, `chrome.css`, `static/js/sw.js`, `docs/MASCOT_MOTION_AND_ONBOARDING.md` (E7), `docs/ANIMATION_ONBOARDING.md` (E6), `docs/SECURITY_AND_GDPR.md`, `docs/DPIA.md`, `docs/AI_HANDOFF.md`, and every smoke test that pins the mascot.
 **Owner of decisions:** David. **Builder:** any agent. One phase per commit. David confirms each phase before the next one starts. Commit and push only when David explicitly asks.
 **Read first:** `docs/AI_HANDOFF.md` §3 rule 17 (`AI_HANDOFF.md:88`), `docs/MASCOT_MOTION_AND_ONBOARDING.md` §2 (E7 decisions; all still stand), `docs/SECURITY_AND_GDPR.md` §6.1 (`:346-351`), the DPIA nudge row (`docs/DPIA.md:48`, `:70`).
 **Epic id:** E8. Checked: no `E8` exists anywhere in `docs/`, `app.py`, `static/js/` or `scripts/`. The ids in use are E1–E7 plus the G8/ES tracks, which use different prefixes.
@@ -94,16 +94,16 @@ Measured by rendering `buddy_mascot()` through Jinja in memory, the same way as 
 
 ### 2.1 Budget ledger (the implementer fills in "actual" per phase)
 
-| Budget | Baseline | Cap from Phase 1 | Where it is pinned | Measured (Phase 0, 2026-09-29) |
-|---|---|---|---|---|
-| Default instance render | 7,249 B / 98 el. | **≤ 4,500 B, ≤ 70 elements** | `test_zorp_expression_smoke.py` `INSTANCE_DEFAULT_MAX_BYTES`, `INSTANCE_MAX_ELEMENTS` | `7,249 B / 98 el. (1,277 gzip)` |
-| Fullest-look instance | 8,344 B | ≤ 5,800 B | `INSTANCE_LOOK_MAX_BYTES` | `8,344 B / 111 el. (1,551 gzip)` |
-| Parts library `<template>` (once per JS page) | n/a | ≤ 16,000 B | `PARTS_LIBRARY_MAX_BYTES` | `n/a` |
-| Rig JSON island (once per JS page) | n/a | ≤ 6,000 B | `RIG_JSON_MAX_BYTES` | `n/a` |
-| Mascot bytes on an authenticated page (3 instances + library + island) | 21,747 B | ≤ 36,000 B uncompressed, ≤ 6,000 B gzip | `PAGE_MASCOT_MAX_BYTES`, `PAGE_MASCOT_MAX_GZIP` (render `/` as a logged-in test user) | `21,747 B / 1,425 gzip (3 instances: PWA banner, Guide overlay, corner)` |
-| `zorp-motion.js` | 26,602 B | ≤ 48,000 B | `RUNTIME_JS_MAX_BYTES` (new) | `26,602 B` |
-| `motion.css` | 4,844 B | 8,000 → **12,000** | `test_zorp_motion_smoke.py:33` | `4,844 B` |
-| CSS total / core | 232,501 / 207,509 | 240,000 → **246,000** / 210,000 → **216,000** | `test_u8_a11y_smoke.py:61`, `:87` (dated comment, same format as the E7 entries at `:26-60`) | `232,501 / 207,509` |
+| Budget | Baseline | Cap from Phase 1 | Where it is pinned | Measured (Phase 0, 2026-09-29) | Measured (Phase 1, 2026-09-29) |
+|---|---|---|---|---|---|
+| Default instance render | 7,249 B / 98 el. | **≤ 4,500 B, ≤ 70 elements** | `test_zorp_expression_smoke.py` `INSTANCE_DEFAULT_MAX_BYTES`, `INSTANCE_MAX_ELEMENTS` | `7,249 B / 98 el. (1,277 gzip)` | `2,454 B / 39 el. (671 gzip)`; heaviest preset (joy) 3,134 B |
+| Fullest-look instance | 8,344 B | ≤ 5,800 B | `INSTANCE_LOOK_MAX_BYTES` | `8,344 B / 111 el. (1,551 gzip)` | `3,624 B / 52 el. (960 gzip)` |
+| Parts library `<template>` (once per JS page) | n/a | ≤ 16,000 B | `PARTS_LIBRARY_MAX_BYTES` | `n/a` | `6,959 B` (49 parts) |
+| Rig JSON island (once per JS page) | n/a | ≤ 6,000 B | `RIG_JSON_MAX_BYTES` | `n/a` | `1,359 B` with tags (19 presets) |
+| Mascot bytes on an authenticated page (3 instances + library + island) | 21,747 B | ≤ 36,000 B uncompressed, ≤ 6,000 B gzip | `PAGE_MASCOT_MAX_BYTES`, `PAGE_MASCOT_MAX_GZIP` (render `/` as a logged-in test user) | `21,747 B / 1,425 gzip (3 instances: PWA banner, Guide overlay, corner)` | `15,680 B / 2,525 gzip` |
+| `zorp-motion.js` | 26,602 B | ≤ 48,000 B | `RUNTIME_JS_MAX_BYTES` (new) | `26,602 B` | `32,353 B` |
+| `motion.css` | 4,844 B | 8,000 → **12,000** | `test_zorp_motion_smoke.py:33` | `4,844 B` | `6,445 B` |
+| CSS total / core | 232,501 / 207,509 | 240,000 → **246,000** / 210,000 → **216,000** | `test_u8_a11y_smoke.py:61`, `:87` (dated comment, same format as the E7 entries at `:26-60`) | `232,501 / 207,509` | `233,523 / 208,531` |
 
 Phase 1 partly offsets its CSS: deleting the 8 face show-rules at `chrome.css:767-777` saves about 600 B.
 
@@ -557,6 +557,21 @@ The `?v=` numbers below assume nothing else lands in between. Always bump from w
 - On the phone: the PNGs, or the LAN option in §6.9.
 
 **Done when:** legacy faces match the baseline, 10+ new expressions render at 56 px, `/offline` shows a real sleeping face, and the budget constants are measured and green.
+
+**Phase 1 build notes (2026-09-29): deviations and choices, for the reviewer.**
+- **Ambient fx only.** All Phase 1 fx (`stars`, `flame`, `zzz`, `sparkles`) sit in one ambient slot (`g.zorp-slot--fx`, last child of `buddy-root`, after the feet). The face-attached fx slot arrives with the Phase 2 fx that need it. The legacy stars and flame used to sit inside the head group, so they no longer tilt with a nod or shake; they are still moved by the root.
+- **`data-expr` only off the default.** The macro writes `data-expr="<preset>"` for every face except `nudge`, because the default `<svg>` open tag must stay byte-identical (`test_default_render_has_no_look`). The runtime reads it as "what the server drew" when it binds and keeps it in step afterwards.
+- **Look mouth.** The automatic look's `grin`/`cat` mouth replaces the mouth of the `nudge` face only, chosen server-side (`zorp_rig.parts_for`). The old `data-mouth` CSS rules are deleted; `data-mouth` stays on the `<svg>` and the runtime applies it whenever it draws `nudge`.
+- **Extra part variants for exact parity.** Offsets from the seven drawings became dedicated variants: eyes `open-lift`, `open-off`, `curious`/`curious-r`, `low`/`low-r`; mouths `smile-w` (friend challenge) and `smile-big` (celebrate); brows `raised-l` (qotd). The plan's `smile-wide` for celebrate became `smile-big` for parity; `happy` uses `smile-wide`. `half` (eyes) was pulled forward from Phase 2 because `smug` needs it.
+- **Presets pulled forward.** `heads-up` exists now, with the same art as `streak_risk` (D4). `wow`, `aww` and `bashful` ship without their Phase 2 fx and cheeks (`exclaim`, `glow`, `blush-steam`); `aww` uses `rosy` cheeks and `determined` uses `open` eyes (the `squint` part is Phase 2).
+- **Right-eye siblings.** A variant named `x-r` is the right-eye twin of `x` (for `laugh`, `closed` and the asymmetric legacy eyes). Presets give one eye id and the right eye is derived.
+- **Ink classes.** `.zk` (ink stroke, round caps) and `.zf` (ink fill) live in `motion.css` so the library stays small (6.9 KB against a 16 KB cap). The white highlights and the gold/streak fx keep explicit attributes.
+- **Instant swaps.** Phase 1 swaps parts instantly; the 80 ms squeeze is Phase 2 (§6). `pivots` for `.zorp-face` are in `motion.css` ready for it.
+- **`opts.speed`.** `play()` accepts a dev-only `speed` below 1 (the styleguide 0.25x toggle). Nothing in the app passes it.
+- **`channelsOf(name)`.** Small extra API used by the styleguide picker to sync its menus.
+- **Parity numbers.** The snapshot tool's `--compare` now searches small pixel shifts, because gallery cells move by a few pixels when the row has more cells. At 128 px all six non-exempt legacy faces differ by 0.00%. At 56 px five are 0.00% and `friend_challenge` is 1.96% (caption wrapping only; the mascot area is identical).
+- **Preview files.** `data/zorp_gallery/phase1/`: `faces-parity.png`, `expressions.png`, `faces.png`, `faces-reduced.png`.
+- **Review fixes (2026-09-29).** `setExpression({…})` is now all-or-nothing: any given channel whose id has no part (or no channel given at all) returns `false` and changes nothing. The `blush` cheek part no longer carries `.zk`, whose CSS stroke was overriding its blush colour (it painted ink); the smoke now rejects colour attributes on `.zk`/`.zf` elements. The styleguide `#sg-buddy-react` demo passes `face='celebrate'` to match its host. Ledger numbers above re-measured after these fixes.
 
 ### Phase 2: Full expression vocabulary, FX layer, eye life (≈3–4 h)
 

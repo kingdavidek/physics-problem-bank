@@ -69,6 +69,56 @@
     wireZorpDemo(document.getElementById('zorp-motion'));
   });
 
+  // E8 Phase 1 picker: preset chips, channel dropdowns, motion-level simulator (sets
+  // html[data-motion] on this dev page only) and the 0.25x slow-motion toggle.
+  function wireExpressionPicker(scope, z, demos, getSlow, setSlow) {
+    var selects = scope.querySelectorAll('[data-zorp-channel]');
+    var i;
+    function apply(input) {
+      for (var k = 0; k < demos.length; k += 1) z.setExpression(input, { el: demos[k] });
+    }
+    function sync(name) {
+      var ch = z.channelsOf ? z.channelsOf(name) : null;
+      if (!ch) return;
+      for (var n = 0; n < selects.length; n += 1) {
+        var key = selects[n].getAttribute('data-zorp-channel');
+        if (ch[key]) selects[n].value = ch[key];
+      }
+    }
+    var chips = scope.querySelectorAll('[data-zorp-expr]');
+    for (i = 0; i < chips.length; i += 1) {
+      chips[i].addEventListener('click', function (event) {
+        var name = event.currentTarget.getAttribute('data-zorp-expr');
+        apply(name);
+        sync(name);
+      });
+    }
+    for (i = 0; i < selects.length; i += 1) {
+      selects[i].addEventListener('change', function () {
+        var input = {};
+        for (var n = 0; n < selects.length; n += 1) input[selects[n].getAttribute('data-zorp-channel')] = selects[n].value;
+        apply(input);
+      });
+    }
+    var label = scope.querySelector('[data-zorp-motion-level]');
+    var levels = scope.querySelectorAll('[data-zorp-set-motion]');
+    for (i = 0; i < levels.length; i += 1) {
+      levels[i].addEventListener('click', function (event) {
+        document.documentElement.setAttribute('data-motion', event.currentTarget.getAttribute('data-zorp-set-motion'));
+        if (label) label.textContent = 'motionLevel(): ' + z.motionLevel();
+      });
+    }
+    var slowBtn = scope.querySelector('[data-zorp-slow]');
+    if (slowBtn) {
+      slowBtn.addEventListener('click', function () {
+        setSlow(!getSlow());
+        slowBtn.setAttribute('aria-pressed', getSlow() ? 'true' : 'false');
+        slowBtn.textContent = 'Slow 0.25x: ' + (getSlow() ? 'on' : 'off');
+      });
+    }
+    sync('nudge');
+  }
+
   function wireZorpDemo(scope) {
     var z = window.pbZorp;
     if (!z || !scope) return;
@@ -76,15 +126,21 @@
     for (var d = 0; d < demos.length; d += 1) z.bind(demos[d]);
     var level = scope.querySelector('[data-zorp-motion-level]');
     if (level) level.textContent = 'motionLevel(): ' + z.motionLevel();
+    var slow = false;   // E8: dev-only 0.25x slow motion for clips
     var btns = scope.querySelectorAll('[data-zorp-clip]');
     for (var i = 0; i < btns.length; i += 1) {
       btns[i].addEventListener('click', function (event) {
         var btn = event.currentTarget;
         for (var k = 0; k < demos.length; k += 1) {
-          z.play(btn.getAttribute('data-zorp-clip'), { el: demos[k], target: btn.getAttribute('data-zorp-target') || undefined });
+          z.play(btn.getAttribute('data-zorp-clip'), {
+            el: demos[k],
+            target: btn.getAttribute('data-zorp-target') || undefined,
+            speed: slow ? 0.25 : undefined
+          });
         }
       });
     }
+    wireExpressionPicker(scope, z, demos, function () { return slow; }, function (on) { slow = on; });
     var off = scope.querySelector('[data-zorp-idle-off]');
     if (off) off.addEventListener('click', function () { for (var k = 0; k < demos.length; k += 1) z.idle(false, demos[k]); });
     var reactBtns = scope.querySelectorAll('[data-zorp-react]');

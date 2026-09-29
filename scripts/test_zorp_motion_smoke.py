@@ -30,14 +30,14 @@ sys.path.insert(0, str(ROOT))
 JS_DIR = ROOT / 'static' / 'js'
 CSS_DIR = ROOT / 'static' / 'css'
 MOTION_CSS = CSS_DIR / 'motion.css'
-MOTION_CSS_BUDGET_BYTES = 8_000
+MOTION_CSS_BUDGET_BYTES = 12_000  # E8 Phase 1: raised from 8_000 (docs/ZORP_EXPRESSIVENESS.md 2.1); measured 6_445
 
 BANNED_STRINGS = ('lottie', 'jsdelivr', 'unpkg')
 
 RUNTIME_JS = JS_DIR / 'zorp-motion.js'
 BUDDY_PARTIAL = ROOT / 'templates' / 'partials' / 'buddy.html'
 BASE_HTML = ROOT / 'templates' / 'base.html'
-API_NAMES = ('bind', 'play', 'idle', 'setFace', 'motionLevel', 'react')
+API_NAMES = ('bind', 'play', 'idle', 'setFace', 'setExpression', 'hasExpression', 'motionLevel', 'react')
 PHASE1_CLIPS = ('idle', 'blink', 'cheer', 'wobble', 'think', 'wave', 'point', 'nod', 'wink', 'tap', 'shake')
 PHASE2_CLIPS = PHASE1_CLIPS + ('hop',)
 PHASE4_CLIPS = PHASE2_CLIPS + ('peek', 'sleep')
@@ -46,8 +46,8 @@ SOUND_JS = JS_DIR / 'sound.js'
 QUIZ_RUNNER_JS = JS_DIR / 'quiz-runner.js'
 PRACTICE_CSS = CSS_DIR / 'practice.css'
 RIG_CLASSES = ('buddy-root', 'buddy-shadow', 'buddy-arm--l', 'buddy-arm--r', 'buddy-body',
-               'buddy-head', 'buddy-antenna--l', 'buddy-antenna--r', 'buddy-pupil',
-               'buddy-foot--l', 'buddy-foot--r')
+               'buddy-head', 'buddy-antenna--l', 'buddy-antenna--r',
+               'buddy-foot--l', 'buddy-foot--r')   # buddy-pupil now lives in partials/zorp_parts.html (E8)
 
 
 def test_no_third_party_animation_library():
@@ -91,7 +91,7 @@ def test_motion_css_keyframes_pair_with_reduced_motion():
     size = len(css.encode('utf-8'))
     assert size <= MOTION_CSS_BUDGET_BYTES, (
         f'motion.css is {size} bytes, exceeds the {MOTION_CSS_BUDGET_BYTES} byte cap '
-        '(E7 §2 #8/§2 #11 — raise deliberately, in the same commit, with a recorded reason)'
+        '(E7 §2 #8/§2 #11, E8 §2 #7 — raise deliberately, in the same commit, with a recorded reason)'
     )
     keyframe_names = re.findall(r'@keyframes\s+([\w-]+)', css)
     assert keyframe_names, 'motion.css exists but defines no @keyframes'
@@ -120,7 +120,16 @@ def test_rig_markup():
     buddy = BUDDY_PARTIAL.read_text(encoding='utf-8')
     for cls in RIG_CLASSES:
         assert cls in buddy, cls
-    assert buddy.count('class="buddy-pupil"') == 11
+    # E8 Phase 1: the seven hard-coded faces (11 pupil groups) are gone; pupils come from the
+    # eye parts, so the default render has exactly two and buddy.html itself has none.
+    assert 'class="buddy-pupil"' not in buddy
+    parts = (ROOT / 'templates' / 'partials' / 'zorp_parts.html').read_text(encoding='utf-8')
+    assert 'class="buddy-pupil"' in parts
+    from app import app  # noqa: E402
+    with app.app_context():
+        default_svg = str(app.jinja_env.get_template('partials/buddy.html').module.buddy_mascot())
+    assert default_svg.count('class="buddy-pupil"') == 2
+    assert 'class="zorp-face"' in buddy and 'zorp-slot--mouth' in buddy
     root = buddy.index('class="buddy-root"')
     arm = buddy.index('buddy-arm--l')
     head = buddy.index('<g class="buddy-head">')
@@ -226,8 +235,11 @@ def test_cosmetic_css():
         assert f'data-zorp-antenna="{antenna}"' in css, antenna
     for feet in LOOK_FEET:
         assert f'data-zorp-feet="{feet}"' in css, feet
+    # E8 Phase 1: the look's mouth is chosen server-side (zorp_rig.parts_for), not by CSS.
+    from models import zorp_rig
     for mouth in LOOK_MOUTHS:
-        assert f'data-mouth="{mouth}"' in css, mouth
+        assert mouth in zorp_rig.CHANNELS['mouth'], mouth
+    assert 'buddy-mouth' not in css
     assert not re.search(r'--brand-\d+\s*:', css), (
         'motion.css must never redefine --brand-*, only read it as a var() fallback'
     )
@@ -248,21 +260,23 @@ def test_cosmetic_markup():
     buddy = BUDDY_PARTIAL.read_text(encoding='utf-8')
     for bare in ('var(--brand-400)"', 'var(--brand-500)"', 'var(--brand-700)"'):
         assert bare not in buddy, f'bare {bare} should be var(--zorp-X, {bare}'
-    for cls in ('buddy-mouth--smile', 'buddy-mouth--grin', 'buddy-mouth--cat'):
-        assert buddy.count(cls) == 1, f'{cls} should appear exactly once'
-    nudge_start = buddy.index('buddy-face--nudge')
-    nudge_end = buddy.index('buddy-face--milestone')
-    for cls in ('buddy-mouth--smile', 'buddy-mouth--grin', 'buddy-mouth--cat'):
-        idx = buddy.index(cls)
-        assert nudge_start < idx < nudge_end, f'{cls} must sit inside buddy-face--nudge'
-    smile_line = buddy[buddy.index('buddy-mouth--smile'):buddy.index('buddy-mouth--smile') + 200]
-    grin_line = buddy[buddy.index('buddy-mouth--grin'):buddy.index('buddy-mouth--grin') + 200]
-    cat_line = buddy[buddy.index('buddy-mouth--cat'):buddy.index('buddy-mouth--cat') + 200]
-    assert 'display="none"' not in smile_line.split('/>')[0]
-    assert 'display="none"' in grin_line.split('/>')[0]
-    assert 'display="none"' in cat_line.split('/>')[0]
+    # E8 Phase 1: the smile/grin/cat swap is a mouth variant drawn by zorp_parts.html.
     assert 'data-mouth=' in buddy
-    assert 'buddy_mascot(look=none)' in buddy or 'buddy_mascot(look=None)' in buddy
+    assert "buddy_mascot(look=none, face='nudge')" in buddy
+    parts = (ROOT / 'templates' / 'partials' / 'zorp_parts.html').read_text(encoding='utf-8')
+    for name in ('smile', 'grin', 'cat'):
+        assert f"n == '{name}'" in parts, name
+    from app import app  # noqa: E402
+    from models import zorp_kit
+    with app.app_context():
+        module = app.jinja_env.get_template('partials/buddy.html').module
+        plain = str(module.buddy_mascot())
+        grin = str(module.buddy_mascot(zorp_kit.live_look('jump')))
+        cat = str(module.buddy_mascot(zorp_kit.live_look('wave')))
+        sleepy = str(module.buddy_mascot(zorp_kit.live_look('jump'), face='sleep'))
+    assert 'q6.5 5.4 13 0' in grin and 'q6.5 5.4 13 0' not in plain
+    assert 'M26 44.6q3-2.6 6-.4' in cat
+    assert 'q6.5 5.4 13 0' not in sleepy, 'a look mouth replaces the resting (nudge) mouth only'
 
 
 def test_default_render_has_no_look():
@@ -294,7 +308,7 @@ def test_overlay_rig_wiring():
     # E7 Phase 1.6: hat is the last thing inside the head group; shoes are
     # painted after the head closes, one per foot, left-then-right.
     buddy = BUDDY_PARTIAL.read_text(encoding='utf-8')
-    last_face_idx = buddy.rindex('buddy-face--friend-challenge')
+    last_face_idx = buddy.index('class="zorp-face"')
     hat_call_idx = buddy.index('zorp_hat(look.hat')
     head_close_idx = buddy.index('{# /buddy-head #}')
     assert last_face_idx < hat_call_idx < head_close_idx
@@ -404,7 +418,7 @@ def test_react_api_gating_and_hop_clip():
     assert 'clearThought' in js[stop_start:stop_end]
     clips_lookup = js.index('var c = CLIPS[name];', play_start)
     reduced_marker = js.index('if (reduced) {', clips_lookup)
-    reduced_end = js.index('return delay(inst, c.dur)', reduced_marker)
+    reduced_end = js.index('return delay(inst, c.dur', reduced_marker)   # E8: `c.dur / spd` (dev slow-motion)
     assert 'showThought' not in js[reduced_marker:reduced_end], (
         'reduced-motion branch of play() must never create a thought bubble'
     )

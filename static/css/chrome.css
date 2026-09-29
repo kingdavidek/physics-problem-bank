@@ -764,17 +764,6 @@ body:has(#pwa-install-banner:not([hidden])) .study-buddy { display: none !import
 .buddy-head { transform-origin: 50% 72%; }
 .buddy-foot { transform-origin: 50% 90%; }
 .buddy-eye { transform-origin: 50% 50%; }
-.buddy-face { display: none; }
-.study-buddy-face[data-face="nudge"] .buddy-face--nudge,
-.study-buddy-face:not([data-face]) .buddy-face--nudge,
-.study-buddy-face[data-face="milestone"] .buddy-face--milestone,
-.study-buddy-face[data-face="celebrate"] .buddy-face--celebrate,
-.study-buddy-face[data-face="qotd_nudge"] .buddy-face--qotd-nudge,
-.study-buddy-face[data-face="streak_risk"] .buddy-face--streak-risk,
-.study-buddy-face[data-face="weak_topic"] .buddy-face--weak-topic,
-.study-buddy-face[data-face="friend_challenge"] .buddy-face--friend-challenge {
-    display: inline;
-}
 .study-buddy-card {
     background: var(--surface);
     border: 1px solid var(--border);

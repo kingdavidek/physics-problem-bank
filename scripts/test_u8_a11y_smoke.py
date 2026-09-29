@@ -58,7 +58,11 @@ LESSON_ONLY = {'lesson-pages.css', 'lesson-assist.css'}
 # bytes after review fixes, no lesson-only sheet touched. Tree now 232,501 bytes (core
 # 207,509). Budget NOT raised, but core headroom is now only ~2.5 KB — the next CSS
 # addition should look for savings or raise the budget deliberately.
-CSS_BUDGET_BYTES = 240_000
+# E8 Phase 1 (2026-09-29): raised 240,000 -> 246,000 (docs/ZORP_EXPRESSIVENESS.md 2.1). motion.css
+# 4,844 -> 6,445 bytes (face colour props, .zk/.zf ink classes, .zorp-face pivots, twinkle and zzz
+# keyframes with reduced/data-motion mirrors, minus the old data-mouth rules); chrome.css lost the
+# eight face show-rules (about 600 bytes). Tree now 233,523 (core 208,531).
+CSS_BUDGET_BYTES = 246_000
 # Core sheets loaded on every page after the U8.6 lesson split.
 # S0 added fonts.css (~1KB) plus legal-footer / email-verify chrome.
 # E6 A1–A6 overlay/spotlight/streak-fire and B wink/nod/shake/tap live in chrome.css.
@@ -84,7 +88,9 @@ CSS_BUDGET_BYTES = 240_000
 # Buddy quiet fix (2026-09-27): see CSS_BUDGET_BYTES note above — ~1,731 bytes added to
 # chrome.css only, no lesson-only sheet touched (total and core grew by the same
 # amount). Tree now 232,501 (core 207,509). Budget NOT raised.
-CSS_CORE_BUDGET_BYTES = 210_000
+# E8 Phase 1 (2026-09-29): raised 210,000 -> 216,000 alongside CSS_BUDGET_BYTES (see the note
+# above; motion.css +1,601 bytes, chrome.css about -600 bytes). Tree now 233,523 (core 208,531).
+CSS_CORE_BUDGET_BYTES = 216_000
 
 
 def test_tab_bar_aria_current():

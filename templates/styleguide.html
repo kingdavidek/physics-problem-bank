@@ -116,11 +116,11 @@
 <section class="section-panel" id="mascot">
     <div class="section-panel-header">Mascot (U5.8)</div>
     <div class="section-panel-body">
-        <p class="profile-empty">Custom SVG buddy. One sprite, seven faces swapped via <code>data-buddy-face</code> / <code>data-face</code>. API <code>face</code> stays an emoji. Emoji remain on avatars and badges.</p>
+        <p class="profile-empty">Custom SVG buddy. One rig, one face drawn from parts (<code>models/zorp_rig.py</code> presets, <code>partials/zorp_parts.html</code> art); the host keeps <code>data-buddy-face</code> / <code>data-face</code>. API <code>face</code> stays an emoji. Emoji remain on avatars and badges.</p>
         <div class="sg-mascot-grid">
             {% for name in ['nudge', 'milestone', 'celebrate', 'qotd_nudge', 'streak_risk', 'weak_topic', 'friend_challenge'] %}
             <figure class="sg-mascot-cell">
-                <span class="study-buddy-face" data-buddy-face data-face="{{ name }}" aria-hidden="true">{{ buddy_mascot() }}</span>
+                <span class="study-buddy-face" data-buddy-face data-face="{{ name }}" aria-hidden="true">{{ buddy_mascot(face=name) }}</span>
                 <figcaption><code>{{ name }}</code></figcaption>
             </figure>
             {% endfor %}
@@ -171,6 +171,27 @@
             <button type="button" class="btn btn-outline" data-zorp-clip="point" data-zorp-target="down">Point down</button>
             <button type="button" class="btn btn-outline" data-zorp-idle-off>Stop idle</button>
         </div>
+        <p class="profile-empty" style="margin-top: var(--space-5);">E8 expression picker (dev only): tap a preset, or set channels one by one. Drives the two demo Zorps above through <code>pbZorp.setExpression</code>. Motion level and speed buttons only change this dev page.</p>
+        <div class="sg-row" id="sg-zorp-expr-chips" style="margin-top: var(--space-3);">
+            {% for name in zorp_rig.PRESETS %}
+            <button type="button" class="btn btn-outline btn-sm" data-zorp-expr="{{ name }}">{{ name }}</button>
+            {% endfor %}
+        </div>
+        <div class="sg-row" id="sg-zorp-expr-channels" style="margin-top: var(--space-3);">
+            {% for slot, channel in [('eyeL', 'eyes'), ('eyeR', 'eyes'), ('brows', 'brows'), ('mouth', 'mouth'), ('cheeks', 'cheeks'), ('fx', 'fx')] %}
+            <label class="profile-empty">{{ slot }}
+                <select data-zorp-channel="{{ slot }}">
+                    {% for vid in zorp_rig.CHANNELS[channel] %}<option value="{{ vid }}">{{ vid }}</option>{% endfor %}
+                </select>
+            </label>
+            {% endfor %}
+        </div>
+        <div class="sg-row" id="sg-zorp-level-buttons" style="margin-top: var(--space-3);">
+            {% for level in ['system', 'reduced', 'off'] %}
+            <button type="button" class="btn btn-outline btn-sm" data-zorp-set-motion="{{ level }}">Motion: {{ level }}</button>
+            {% endfor %}
+            <button type="button" class="btn btn-outline btn-sm" data-zorp-slow aria-pressed="false">Slow 0.25x: off</button>
+        </div>
         <p class="profile-empty" style="margin-top: var(--space-5);">Phase 2 answer reactions (dev only) — <code>window.pbZorp.react(kind)</code>.</p>
         <div class="sg-row" style="margin-top: var(--space-3);">
             {% for kind in ['correct', 'wrong', 'streak', 'milestone', 'lesson_complete', 'first_correct'] %}
@@ -202,15 +223,15 @@
     </div>
 </section>
 
-<section class="section-panel" id="zorp-gallery" data-zorp-gallery data-gallery-phase="0">
+<section class="section-panel" id="zorp-gallery" data-zorp-gallery data-gallery-phase="1">
     <div class="section-panel-header">Zorp gallery (E8)</div>
     <div class="section-panel-body">
-        <p class="profile-empty">E8 review sheet (<code>docs/ZORP_EXPRESSIVENESS.md</code>). Static faces, not bound to <code>pbZorp</code>, at 56 px and 128 px. <code>sleep</code> is blank today. Snapshot: <code>python scripts/zorp_gallery_snapshot.py --label NAME</code>.</p>
-        {% set gallery_faces = ['nudge', 'milestone', 'celebrate', 'qotd_nudge', 'streak_risk', 'weak_topic', 'friend_challenge', 'sleep'] %}
+        <p class="profile-empty">E8 review sheet (<code>docs/ZORP_EXPRESSIVENESS.md</code>). Every preset from <code>models/zorp_rig.py</code>, drawn server-side and not bound to <code>pbZorp</code>, at 56 px and 128 px. <code>streak_risk</code> and <code>heads-up</code> now share the upbeat art (D4). Snapshot: <code>python scripts/zorp_gallery_snapshot.py --label NAME</code>. The picker with channel menus is under <a href="#zorp-motion">Zorp motion</a>.</p>
+        {% set gallery_faces = zorp_rig.PRESETS.keys()|list %}
         <div class="sg-mascot-grid" id="sg-zorp-gallery-56">
             {% for name in gallery_faces %}
             <figure class="sg-mascot-cell" data-zorp-gallery-cell data-gallery-face="{{ name }}" data-gallery-size="56">
-                <span class="study-buddy-face" data-buddy-face data-face="{{ name }}" aria-hidden="true">{{ buddy_mascot() }}</span>
+                <span class="study-buddy-face" data-buddy-face data-face="{{ name }}" aria-hidden="true">{{ buddy_mascot(face=name) }}</span>
                 <figcaption><code>{{ name|replace('_', '_<wbr>')|safe }}</code></figcaption>
             </figure>
             {% endfor %}
@@ -218,7 +239,7 @@
         <div class="sg-row" id="sg-zorp-gallery-128" style="margin-top: var(--space-4); align-items: flex-start;">
             {% for name in gallery_faces %}
             <figure class="sg-mascot-cell" data-zorp-gallery-cell data-gallery-face="{{ name }}" data-gallery-size="128">
-                <span class="study-buddy-face sg-zorp-gesture" data-buddy-face data-face="{{ name }}" aria-hidden="true">{{ buddy_mascot() }}</span>
+                <span class="study-buddy-face sg-zorp-gesture" data-buddy-face data-face="{{ name }}" aria-hidden="true">{{ buddy_mascot(face=name) }}</span>
                 <figcaption><code>{{ name|replace('_', '_<wbr>')|safe }}</code></figcaption>
             </figure>
             {% endfor %}
@@ -323,7 +344,7 @@
         <p class="profile-empty" style="margin-top:var(--space-4);">Buddy idle bob on the corner widget; a short hop when the prompt refetches after you answer. Gated on <code>prefers-reduced-motion</code>.</p>
         <div class="sg-row" style="margin-top:var(--space-3); align-items:flex-end;">
             <div class="study-buddy sg-buddy-demo">
-                <span class="study-buddy-face" id="sg-buddy-react" data-buddy-face data-face="celebrate" aria-hidden="true">{{ buddy_mascot() }}</span>
+                <span class="study-buddy-face" id="sg-buddy-react" data-buddy-face data-face="celebrate" aria-hidden="true">{{ buddy_mascot(face='celebrate') }}</span>
             </div>
             <button type="button" class="btn btn-outline" id="sg-buddy-react-btn">Buddy react</button>
         </div>
@@ -586,5 +607,5 @@
         pointer-events: auto;
     }
 </style>
-<script src="{{ url_for('static', filename='js/styleguide.js') }}?v=4" defer></script>
+<script src="{{ url_for('static', filename='js/styleguide.js') }}?v=5" defer></script>
 {% endblock %}

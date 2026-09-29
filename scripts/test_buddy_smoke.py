@@ -116,8 +116,8 @@ def main():
         assert 'data-buddy-face' in html
         assert 'buddy-mascot' in html
         assert 'data-face=' in html
-        assert 'zorp-motion.js?v=4' in html
-        assert 'css/motion.css?v=3' in html
+        assert 'zorp-motion.js?v=5' in html
+        assert 'css/motion.css?v=4' in html
         assert 'buddy-arm--l' in html
         assert 'buddy-pupil' in html
         # Fresh user, no milestones earned yet -> default Zorp (E7 Phase 1.5).
@@ -385,7 +385,7 @@ def main():
         assert 'data-buddy-level="gcse"' in html_lesson
         assert 'data-buddy-subject="maths"' in html_lesson
         assert 'data-buddy-topic="algebra"' in html_lesson
-        assert 'study-buddy.js?v=25' in html_lesson
+        assert 'study-buddy.js?v=26' in html_lesson
         assert 'Problem Bank build: buddy-embed-v6' in html_lesson
         assert 'pb-buddy-embed-v6' in html_lesson
         assert 'id="pb-buddy-page"' in html_lesson
