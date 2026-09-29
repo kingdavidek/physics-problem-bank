@@ -22,6 +22,7 @@
         <a href="#progress-viz" class="pill pill--hero">Progress</a>
         <a href="#motion" class="pill pill--hero">Motion</a>
         <a href="#zorp-motion" class="pill pill--hero">Zorp motion</a>
+        <a href="#zorp-gallery" class="pill pill--hero">Zorp gallery</a>
         <a href="#diagrams" class="pill pill--hero">Diagrams</a>
     </div>
 </div>
@@ -196,6 +197,30 @@
                 <figcaption><code>{{ name }}</code></figcaption>
             </figure>
             {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section-panel" id="zorp-gallery" data-zorp-gallery data-gallery-phase="0">
+    <div class="section-panel-header">Zorp gallery (E8)</div>
+    <div class="section-panel-body">
+        <p class="profile-empty">E8 review sheet (<code>docs/ZORP_EXPRESSIVENESS.md</code>). Static faces, not bound to <code>pbZorp</code>, at 56 px and 128 px. <code>sleep</code> is blank today. Snapshot: <code>python scripts/zorp_gallery_snapshot.py --label NAME</code>.</p>
+        {% set gallery_faces = ['nudge', 'milestone', 'celebrate', 'qotd_nudge', 'streak_risk', 'weak_topic', 'friend_challenge', 'sleep'] %}
+        <div class="sg-mascot-grid" id="sg-zorp-gallery-56">
+            {% for name in gallery_faces %}
+            <figure class="sg-mascot-cell" data-zorp-gallery-cell data-gallery-face="{{ name }}" data-gallery-size="56">
+                <span class="study-buddy-face" data-buddy-face data-face="{{ name }}" aria-hidden="true">{{ buddy_mascot() }}</span>
+                <figcaption><code>{{ name|replace('_', '_<wbr>')|safe }}</code></figcaption>
+            </figure>
+            {% endfor %}
+        </div>
+        <div class="sg-row" id="sg-zorp-gallery-128" style="margin-top: var(--space-4); align-items: flex-start;">
+            {% for name in gallery_faces %}
+            <figure class="sg-mascot-cell" data-zorp-gallery-cell data-gallery-face="{{ name }}" data-gallery-size="128">
+                <span class="study-buddy-face sg-zorp-gesture" data-buddy-face data-face="{{ name }}" aria-hidden="true">{{ buddy_mascot() }}</span>
+                <figcaption><code>{{ name|replace('_', '_<wbr>')|safe }}</code></figcaption>
+            </figure>
             {% endfor %}
         </div>
     </div>
@@ -492,6 +517,8 @@
 </div>
 
 <style>
+    /* E8 gallery: long token names (friend_challenge) must not clip in the 56 px cells. */
+    #zorp-gallery figcaption code { font-size: var(--text-xs); overflow-wrap: anywhere; }
     .sg-row {
         display: flex;
         flex-wrap: wrap;

@@ -14,4 +14,4 @@ data/restore-scratch.db-*
 *.bak
 _audit_*.py
 _*.probe.py
-
+data/zorp_gallery/
