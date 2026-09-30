@@ -7,6 +7,8 @@ expression engine (models/zorp_rig.py, templates/partials/zorp_parts.html and
 zorp_library.html, the slot-based buddy.html) and flips every ledger constant to its cap; the
 measured value is in each constant's comment. Phase 2 (2026-09-29) adds the full vocabulary,
 the fx layer, animated swaps and the safeguarding tests (valence, CONTEXT_MAP, guide catalog).
+Phase 3 (2026-09-29) adds the views (side, three-quarter, back, back-glance), the flip wrapper and the
+pinch-turn; the constants below carry the Phase 3 measurements.
 """
 import os
 
@@ -36,15 +38,15 @@ DOC = ROOT / 'docs' / 'ZORP_EXPRESSIVENESS.md'
 SNAPSHOT_TOOL = ROOT / 'scripts' / 'zorp_gallery_snapshot.py'
 
 # §2.1 ledger caps (Phase 1, measured 2026-09-29; Phase 2 re-measured, see docs ledger).
-INSTANCE_DEFAULT_MAX_BYTES = 4_500  # measured 2,454 B Phase 1, 2,493 B Phase 2 (baseline 7,249)
-INSTANCE_MAX_ELEMENTS = 70  # measured 39 Phase 1, 40 Phase 2 (baseline 98)
-INSTANCE_LOOK_MAX_BYTES = 5_800  # measured 3,624 B Phase 1, 3,663 B Phase 2 (baseline 8,344)
+INSTANCE_DEFAULT_MAX_BYTES = 4_500  # measured 2,454 B Phase 1, 2,493 B Phase 2, 3,036 B Phase 3 (baseline 7,249)
+INSTANCE_MAX_ELEMENTS = 70  # measured 39 Phase 1, 40 Phase 2, 50 Phase 3 (baseline 98)
+INSTANCE_LOOK_MAX_BYTES = 5_800  # measured 3,624 B Phase 1, 3,663 B Phase 2, 4,206 B Phase 3 (baseline 8,344)
 PAGE_MASCOT_MAX_BYTES = 36_000  # 3 instances + library + island; see test_page_mascot_budget output
 PAGE_MASCOT_MAX_GZIP = 6_000
 RUNTIME_JS_MAX_BYTES = 48_000  # baseline 26_602; Phase 1 measured in test_runtime_js_budget output
-PARTS_LIBRARY_MAX_BYTES = 16_000  # <template> only; measured 6,959 B Phase 1, 12,169 B Phase 2
-RIG_JSON_MAX_BYTES = 6_000  # island; measured 1,359 B Phase 1, 2,802 B Phase 2 (with tags)
-MOTION_CSS_MAX_BYTES = 12_000  # mirrors test_zorp_motion_smoke.py; baseline 4_844, Phase 1 6_445, Phase 2 7_466
+PARTS_LIBRARY_MAX_BYTES = 16_000  # <template> only; measured 6,959 B Phase 1, 12,169 B Phase 2, 13,432 B Phase 3
+RIG_JSON_MAX_BYTES = 6_000  # island; measured 1,359 B Phase 1, 2,802 B Phase 2, 4,503 B Phase 3 (with tags)
+MOTION_CSS_MAX_BYTES = 12_000  # mirrors test_zorp_motion_smoke.py; baseline 4_844, Phase 1 6_445, Phase 2 7_466, Phase 3 7_895
 
 NEGATIVE_NAMES = ('sad', 'aww-teary', 'embarrassed', 'dizzy')  # reserved preset names (the 'worried' brow variant is not a preset)
 GALLERY_FACES = ('nudge', 'milestone', 'celebrate', 'qotd_nudge', 'streak_risk',
@@ -502,7 +504,7 @@ def test_picker_and_gallery_markup():
         assert f'data-zorp-channel="{slot}"' in html, slot
     for level in ('system', 'reduced', 'off'):
         assert f'data-zorp-set-motion="{level}"' in html, level
-    assert 'data-zorp-slow' in html and 'id="pb-zorp-parts"' in html and 'styleguide.js?v=6' in html
+    assert 'data-zorp-slow' in html and 'id="pb-zorp-parts"' in html and 'styleguide.js?v=7' in html
     assert 'id="sg-zorp-matrix"' in html and 'data-eyes="open open-big' in html
 
 
@@ -592,6 +594,81 @@ def test_twinkle_rate():
             assert ms / toggles >= 333, f'{name}: {ms} ms / {toggles} toggles = {ms / toggles:.0f} ms (< 333)'
             checked += 1
     assert checked >= 3, 'expected the twinkle/zzz uses to be checked'
+
+
+def test_views_complete():
+    """E8 Phase 3: every view names every part (front-hidden arms aside), the hidden parts are explicit,
+    the side variants exist as art and in the island, and each view renders within the element budget."""
+    from app import app  # noqa: E402
+    from models import zorp_rig
+
+    zorp_rig.validate()
+    assert zorp_rig.VIEW_NAMES == ('front', 'three-quarter', 'side', 'back', 'back-glance')
+    assert set(zorp_rig.VIEWS) == set(zorp_rig.VIEW_NAMES)
+    for name in zorp_rig.VIEW_NAMES:
+        row = zorp_rig.VIEWS[name]
+        assert set(row) == set(zorp_rig.VIEW_PARTS), (name, set(zorp_rig.VIEW_PARTS) ^ set(row))
+        for part, entry in row.items():
+            assert entry is None or len(entry) == 4, (name, part)
+    for part in zorp_rig.FRONT_HIDDEN:
+        assert zorp_rig.VIEWS['front'][part] is None, part
+    # side: one eye, the far arm hidden, the front-layer arm shown; back: no face at all
+    side = zorp_rig.VIEWS['side']
+    assert side['eyeL'] is None and side['eyeR'] is not None and side['armRf'] is not None and side['armLf'] is None
+    for part in ('eyeL', 'eyeR', 'mouth', 'brows', 'cheeks', 'plate'):
+        assert zorp_rig.VIEWS['back'][part] is None, part
+    assert zorp_rig.VIEWS['back']['hl'] is not None
+    # side variants are real art, real channel values, and in the island
+    parts = (TEMPLATES / 'partials' / 'zorp_parts.html').read_text(encoding='utf-8')
+    for channel, variants in (('eyes', ('side',)), ('mouth', ('side-smile', 'side-o')), ('brows', ('side',)), ('cheeks', ('side-rosy',))):
+        for variant in variants:
+            assert variant in zorp_rig.CHANNELS[channel], (channel, variant)
+            assert f"'{variant}'" in parts, f'no art for {channel} {variant}'
+    data = json.loads(zorp_rig.rig_json())
+    assert 'w' in data and 'm' in data
+    module = None
+    with app.app_context():
+        module = app.jinja_env.get_template('partials/buddy.html').module
+        for view in zorp_rig.VIEW_NAMES:
+            for facing in ('r', 'l'):
+                for face in ('nudge', 'joy', 'thinking'):
+                    svg = str(module.buddy_mascot(face=face, view=view, facing=facing))
+                    assert _elements(svg) <= INSTANCE_MAX_ELEMENTS, (view, facing, face)
+                    assert len(svg.encode('utf-8')) <= INSTANCE_DEFAULT_MAX_BYTES + 1_500, (view, facing, face)
+                    assert svg.count('class="zorp-flip"') == 1
+                    assert ('data-view=' in svg) == (view != 'front'), view
+        # the default render is unchanged: no view attributes, no inline styles
+        default = str(module.buddy_mascot())
+        assert default.startswith(DEFAULT_SVG_START) and 'style="' not in default and 'data-view' not in default
+        # unknown view or facing fails closed to the front view
+        assert str(module.buddy_mascot(view='nope', facing='x')) == default
+
+
+def test_guide_slapstick_lore_only():
+    """Phase 2 review item: confused and bashful are slapstick/lore faces (plan section 5), so they may be
+    used by guide.lore and guide.thanks style contexts, never the plain guide list."""
+    from models import zorp_rig
+
+    for face in zorp_rig.SLAPSTICK_LORE_ONLY:
+        assert face not in zorp_rig.CONTEXT_MAP['guide'], face
+        assert face in zorp_rig.CONTEXT_MAP['guide.lore'], face
+    assert set(zorp_rig.SLAPSTICK_LORE_ONLY) == {'confused', 'bashful'}
+    for step_id, face, lore, resolve in _catalog_steps():
+        if face in zorp_rig.SLAPSTICK_LORE_ONLY:
+            assert lore or step_id in zorp_rig.GUIDE_LORE_STEPS or face in zorp_rig.CONTEXT_MAP.get('guide.thanks', ()), (
+                f'{step_id}: {face} outside a slapstick/lore step'
+            )
+
+
+def test_react_wrong_and_autoplay_empty_contexts():
+    """Phase 2 review items: react.wrong never ends on oops (the oops beat is its own first-beat context),
+    and autoplay.empty no longer offers sleepy."""
+    from models import zorp_rig
+
+    assert 'oops' not in zorp_rig.CONTEXT_MAP['react.wrong']
+    assert zorp_rig.CONTEXT_MAP['react.wrong.first'] == ('oops',)
+    assert 'sleepy' not in zorp_rig.CONTEXT_MAP['autoplay.empty']
+    assert zorp_rig.valence('oops') != 'negative'
 
 
 def test_runtime_js_budget():
@@ -705,12 +782,15 @@ def main():
     test_fx_keyframes_have_reduced_mirrors()
     test_twinkle_rate()
     test_runtime_js_budget()
+    test_views_complete()
+    test_guide_slapstick_lore_only()
+    test_react_wrong_and_autoplay_empty_contexts()
     test_gallery_section()
     test_snapshot_tool_is_dev_only()
     test_snapshot_label_guard()
     test_snapshot_compare_is_mascot_box_only()
     test_decisions_recorded()
-    print('Zorp expression smoke (E8 Phase 2) passed.')
+    print('Zorp expression smoke (E8 Phase 3) passed.')
 
 
 if __name__ == '__main__':

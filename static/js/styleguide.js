@@ -67,6 +67,7 @@
       });
     }
     wireZorpDemo(document.getElementById('zorp-motion'));
+    wireZorpDemo(document.getElementById('zorp-views'));
     buildMatrix(document.getElementById('sg-zorp-matrix'));
   });
 
@@ -203,6 +204,37 @@
       });
     }
     wireExpressionPicker(scope, z, demos, function () { return slow; }, function (on) { slow = on; });
+    // E8 Phase 3: turn buttons, the front-side-front cycle and the facing toggle (views section).
+    var facing = 'r';
+    var turnBtns = scope.querySelectorAll('[data-zorp-turn]');
+    var t;
+    for (t = 0; t < turnBtns.length; t += 1) {
+      turnBtns[t].addEventListener('click', function (event) {
+        var view = event.currentTarget.getAttribute('data-zorp-turn');
+        for (var k = 0; k < demos.length; k += 1) z.turn(view, facing, { el: demos[k], speed: slow ? 0.25 : undefined, required: true });
+      });
+    }
+    var cycle = scope.querySelector('[data-zorp-turn-cycle]');
+    if (cycle) {
+      cycle.addEventListener('click', function () {
+        for (var k = 0; k < demos.length; k += 1) {
+          (function (el) {
+            var o = { el: el, speed: slow ? 0.25 : undefined, required: true };
+            var p = z.turn('side', facing, o);
+            var back = function () { z.turn('front', facing, o); };
+            if (p && p.then) p.then(back, back); else back();
+          })(demos[k]);
+        }
+      });
+    }
+    var facingBtns = scope.querySelectorAll('[data-zorp-facing]');
+    for (t = 0; t < facingBtns.length; t += 1) {
+      facingBtns[t].addEventListener('click', function (event) {
+        facing = event.currentTarget.getAttribute('data-zorp-facing');
+        for (var n = 0; n < facingBtns.length; n += 1) facingBtns[n].setAttribute('aria-pressed', facingBtns[n] === event.currentTarget ? 'true' : 'false');
+        for (var k = 0; k < demos.length; k += 1) z.turn((z.viewOf(demos[k]) || { view: 'front' }).view, facing, { el: demos[k], required: true });
+      });
+    }
     var off = scope.querySelector('[data-zorp-idle-off]');
     if (off) off.addEventListener('click', function () { for (var k = 0; k < demos.length; k += 1) z.idle(false, demos[k]); });
     var reactBtns = scope.querySelectorAll('[data-zorp-react]');

@@ -30,14 +30,14 @@ sys.path.insert(0, str(ROOT))
 JS_DIR = ROOT / 'static' / 'js'
 CSS_DIR = ROOT / 'static' / 'css'
 MOTION_CSS = CSS_DIR / 'motion.css'
-MOTION_CSS_BUDGET_BYTES = 12_000  # E8 Phase 1: raised from 8_000 (docs/ZORP_EXPRESSIVENESS.md 2.1); measured 6_445
+MOTION_CSS_BUDGET_BYTES = 12_000  # E8 Phase 1: raised from 8_000 (docs/ZORP_EXPRESSIVENESS.md 2.1); measured 7_895 after Phase 3
 
 BANNED_STRINGS = ('lottie', 'jsdelivr', 'unpkg')
 
 RUNTIME_JS = JS_DIR / 'zorp-motion.js'
 BUDDY_PARTIAL = ROOT / 'templates' / 'partials' / 'buddy.html'
 BASE_HTML = ROOT / 'templates' / 'base.html'
-API_NAMES = ('bind', 'play', 'idle', 'setFace', 'setExpression', 'hasExpression', 'valenceOf', 'allowedIn', 'motionLevel', 'react')
+API_NAMES = ('bind', 'play', 'idle', 'setFace', 'setExpression', 'hasExpression', 'valenceOf', 'allowedIn', 'motionLevel', 'react', 'turn')
 PHASE1_CLIPS = ('idle', 'blink', 'cheer', 'wobble', 'think', 'wave', 'point', 'nod', 'wink', 'tap', 'shake')
 PHASE2_CLIPS = PHASE1_CLIPS + ('hop',)
 PHASE4_CLIPS = PHASE2_CLIPS + ('peek', 'sleep')
@@ -154,11 +154,77 @@ def test_motion_css_rig_pivots():
     css = MOTION_CSS.read_text(encoding='utf-8')
     m = re.search(r'([^{}]+)\{\s*transform-box:\s*fill-box;\s*\}', css)
     assert m, 'motion.css needs a transform-box: fill-box rule'
+    # E8 Phase 3: the arms left the fill-box list on purpose. They are pivot groups now: the shoulder
+    # is the group origin (transform-box: view-box; transform-origin: 0 0), so the clip angles stay
+    # exactly as they were. .zorp-plate joined (the plate is scaled by the views).
     for sel in ('.buddy-antenna--l', '.buddy-antenna--r', '.buddy-foot--l', '.buddy-foot--r',
-                '.buddy-arm--l', '.buddy-arm--r', '.buddy-pupil', '.buddy-root'):
+                '.zorp-plate', '.buddy-pupil', '.buddy-root'):
         assert sel in m.group(1), f'{sel} lacks transform-box: fill-box (Phase 1.5 depends on it)'
+    assert '.buddy-arm--l' not in m.group(1) and '.buddy-arm--r' not in m.group(1)
+    arm = re.search(r'\.buddy-arm\s*\{([^}]*)\}', css)
+    assert arm and 'transform-box:view-box' in arm.group(1).replace(' ', '') and 'transform-origin:0 0' in arm.group(1).replace(': ', ':'), \
+        'arm pivot groups need transform-box: view-box; transform-origin: 0 0'
+    flip = re.search(r'\.zorp-flip\s*\{([^}]*)\}', css)
+    assert flip and 'view-box' in flip.group(1) and '32px 0' in flip.group(1), 'the flip wrapper pivots at x = 32'
+    assert re.search(r'\.buddy-arm--l-front,\s*\.buddy-arm--r-front\s*\{\s*display:\s*none', css), 'front-layer arms are hidden in the front view'
     for name in ('pb-zorp-wink', 'pb-zorp-nod', 'pb-zorp-shake', 'pb-zorp-tap'):
         assert name not in css   # E6 keyframes stay in chrome.css only
+
+
+def test_arm_pivot_groups():
+    # E8 Phase 3: each arm is <g transform="translate(shoulder)"><g class="buddy-arm ..."><path d="M0 0..."/></g></g>
+    # (twice: back layer and front layer), so the clip rotates about the shoulder with no fill-box maths.
+    from app import app  # noqa: E402
+    with app.app_context():
+        svg = str(app.jinja_env.get_template('partials/buddy.html').module.buddy_mascot())
+    for cls, x in (('buddy-arm--l', '15.6'), ('buddy-arm--r', '48.4'), ('buddy-arm--l-front', '15.6'), ('buddy-arm--r-front', '48.4')):
+        m = re.search(r'<g transform="translate\(' + re.escape(x) + r' 40\)"><g class="buddy-arm ' + cls + r'"[^>]*><path d="(M[^"]*)"', svg)
+        assert m, f'{cls}: no pivot group at translate({x} 40)'
+        assert m.group(1).startswith('M0 0'), f'{cls}: arm path must be re-based to M0 0'
+    # the front layer is painted after the feet, the back layer before the head
+    assert svg.index('buddy-arm--l"') < svg.index('buddy-head') < svg.index('buddy-foot--r') < svg.index('buddy-arm--l-front')
+
+
+def test_ambient_fx_outside_flip():
+    # E8 Phase 3: the mirror wrapper never contains the ambient slot (? ! zzz and the thought bubble never mirror).
+    from app import app  # noqa: E402
+    with app.app_context():
+        module = app.jinja_env.get_template('partials/buddy.html').module
+        for kwargs in ({}, {'view': 'side', 'facing': 'l'}, {'view': 'back', 'facing': 'l'}, {'view': 'three-quarter', 'facing': 'l'}):
+            svg = str(module.buddy_mascot(face='thinking', **kwargs))
+            flip_open = svg.index('class="zorp-flip"')
+            fx = svg.index('zorp-slot--fx"')
+            assert svg.count('class="zorp-flip"') == 1
+            assert flip_open < svg.index('buddy-head') < svg.index('buddy-foot--r') < fx, kwargs
+            # nothing after the flip wrapper's own closing tag but the ambient slot and the root closes
+            tail = svg[fx:]
+            assert tail.count('<g') >= 1 and 'zorp-flip' not in tail and 'buddy-foot' not in tail
+    # flip depth: walk the tags and check the ambient slot is at the depth of the flip, not inside it
+    with app.app_context():
+        svg = str(app.jinja_env.get_template('partials/buddy.html').module.buddy_mascot(face='thinking', view='side', facing='l'))
+    depth, stack = 0, []
+    for tag in re.finditer(r'<(/?)g\b[^>]*>', svg):
+        if tag.group(1):
+            stack.pop()
+        else:
+            stack.append(tag.group(0))
+            if 'zorp-slot--fx"' in tag.group(0):
+                assert not any('zorp-flip' in t for t in stack[:-1]), 'ambient fx is inside the flip'
+                assert any('buddy-root' in t for t in stack[:-1])
+
+
+def test_existing_arm_clips_unchanged():
+    # E8 Phase 3 structural guard: the arm pivots moved, the clip angles did not. Every rotate() literal of the
+    # Phase 2 runtime is still present, the same number of times (measured from the committed 06e72f1 runtime).
+    js = RUNTIME_JS.read_text(encoding='utf-8')
+    expected = {
+        '-1.5': 1, '-100': 1, '-105': 1, '-10': 2, '-115': 1, '-14': 1, '-25': 2, '-35': 2, '-4': 2, '-5': 1,
+        '-6': 2, '-80': 4, '-8': 2, '-95': 2, '0': 38, '100': 1, '115': 1, '12': 2, '14': 1, '3': 3, '4': 2,
+        '6': 5, '80': 2,
+    }
+    for deg, count in expected.items():
+        found = js.count(f"rotate({deg}deg)")
+        assert found >= count, f'rotate({deg}deg): {found} < {count} (an existing clip angle changed)'
 
 
 def test_base_loads_motion_assets():
@@ -268,7 +334,7 @@ def test_cosmetic_markup():
         assert bare not in buddy, f'bare {bare} should be var(--zorp-X, {bare}'
     # E8 Phase 1: the smile/grin/cat swap is a mouth variant drawn by zorp_parts.html.
     assert 'data-mouth=' in buddy
-    assert "buddy_mascot(look=none, face='nudge')" in buddy
+    assert "buddy_mascot(look=none, face='nudge', view='front', facing='r')" in buddy   # E8 Phase 3 signature
     parts = (ROOT / 'templates' / 'partials' / 'zorp_parts.html').read_text(encoding='utf-8')
     for name in ('smile', 'grin', 'cat'):
         assert f"n == '{name}'" in parts, name
@@ -424,7 +490,7 @@ def test_react_api_gating_and_hop_clip():
     assert 'clearThought' in js[stop_start:stop_end]
     clips_lookup = js.index('var c = CLIPS[name];', play_start)
     reduced_marker = js.index('if (reduced) {', clips_lookup)
-    reduced_end = js.index('return delay(inst, c.dur', reduced_marker)   # E8: `c.dur / spd` (dev slow-motion)
+    reduced_end = js.index('return delay(inst, hold)', reduced_marker)   # E8 Phase 3: the hold is reducedMs || dur, / spd
     assert 'showThought' not in js[reduced_marker:reduced_end], (
         'reduced-motion branch of play() must never create a thought bubble'
     )
@@ -711,6 +777,9 @@ def main():
     test_runtime_exposes_api()
     test_rig_markup()
     test_motion_css_rig_pivots()
+    test_arm_pivot_groups()
+    test_ambient_fx_outside_flip()
+    test_existing_arm_clips_unchanged()
     test_base_loads_motion_assets()
     test_buddy_face_persists_without_hidden_root()
     test_dev_motion_sections()

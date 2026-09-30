@@ -4,17 +4,22 @@
 .buddy-mascot { overflow: visible; }
 /* fill-box so rotations pivot on the part on every browser (Safari needs it).
    Phase 1.5 cosmetics scale .buddy-antenna--l/--r and .buddy-foot--l/--r from these origins. */
-.buddy-root, .buddy-shadow, .buddy-body, .buddy-arm--l, .buddy-arm--r,
+.buddy-root, .buddy-shadow, .buddy-body,
 .buddy-antenna--l, .buddy-antenna--r, .buddy-pupil,
-.buddy-foot--l, .buddy-foot--r, .zorp-face { transform-box: fill-box; }
+.buddy-foot--l, .buddy-foot--r, .zorp-face, .zorp-plate { transform-box: fill-box; }
 .buddy-root { transform-origin: 50% 90%; }
 .buddy-shadow { transform-origin: 50% 50%; }
 .buddy-body { transform-origin: 50% 100%; }
-.buddy-arm--l { transform-origin: 100% 0%; }
-.buddy-arm--r { transform-origin: 0% 0%; }
+/* E8 Phase 3: an arm pivots on its own local origin, the shoulder (buddy.html wraps each arm in a
+   translate group and draws the path from 0 0), so a new arm shape never moves its pivot. The
+   mirror wrapper flips around x = 32. The front-layer arms are hidden in the front view; a view
+   shows them with an inline display. */
+.buddy-arm { transform-box: view-box; transform-origin: 0 0; }
+.buddy-arm--l-front, .buddy-arm--r-front { display: none; }
+.zorp-flip { transform-box: view-box; transform-origin: 32px 0; }
 .buddy-antenna--l { transform-origin: 100% 100%; }
 .buddy-antenna--r { transform-origin: 0% 100%; }
-.buddy-pupil, .zorp-face { transform-origin: 50% 50%; }
+.buddy-pupil, .zorp-face, .zorp-plate { transform-origin: 50% 50%; }
 .buddy-foot--l, .buddy-foot--r { transform-origin: 50% 90%; }
 @media (prefers-reduced-motion: no-preference) {
     .buddy-mascot.is-zorp-idle .buddy-root { animation: zorp-idle-breathe 3.2s ease-in-out infinite; }

@@ -92,6 +92,8 @@ CSS_BUDGET_BYTES = 246_000
 # above; motion.css +1,601 bytes, chrome.css about -600 bytes). Tree now 233,523 (core 208,531).
 # E8 Phase 2 (2026-09-29): motion.css 6,445 -> 7,466 bytes (fx keyframes drop/pop/orbit, fx slot
 # pivots, wildcard reduced/data-motion mirrors). Budgets NOT raised. Tree now 234,544 (core 209,552).
+# E8 Phase 3 (2026-09-29): motion.css 7,466 -> 7,895 bytes (arm pivot switch to view-box, flip wrapper,
+# front-layer arm rule, plate pivot). Budgets NOT raised. Tree now 234,973 (core 209,981).
 CSS_CORE_BUDGET_BYTES = 216_000
 
 

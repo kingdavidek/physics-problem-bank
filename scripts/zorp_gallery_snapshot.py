@@ -11,6 +11,10 @@ Renders `/styleguide#zorp-gallery` in headless Chromium and writes review images
 * `matrix.png` / `matrix-dark.png` (Phase 2+): the eyes x mouths channel matrix from the styleguide;
 * `fx-filmstrips.png` (Phase 2+): one row per preset whose fx animate in full motion, five frames
   (0/25/50/75/100% of the animation) then the reduced-motion still, side by side;
+* `views.png` (Phase 3+): the styleguide views grid (5 views x 2 facings at 56 and 160 px), light and dark;
+* `turn-filmstrip.png` (Phase 3+): ten frames of the pinch-turn front -> side -> front, taken from
+  the bound demo by pausing every animation and stepping currentTime (full motion, light), then a
+  reduced-motion row of stills (turn not required stays front, required swaps instantly, side-point);
 * `cells/<scheme>-<motion>-<size>-<face>.png`: every gallery cell on its own;
 * `manifest.json`: label, time, URL, viewport, versions, files, per-cell visible face
   groups and console errors.
@@ -65,6 +69,8 @@ LABEL_RE = re.compile(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,39}$')
 DIFF_THRESHOLD = 16  # largest per-channel difference that counts as a changed pixel
 OVER_PCT = 0.15  # legacy faces must be ~0 changed pixels inside the mascot box (Phase 2, was 0.5 on the whole cell)
 FRAMES = (0.0, 0.25, 0.5, 0.75, 1.0)  # fx filmstrip sample points
+TURN_FRAMES = (0.1, 0.3, 0.5, 0.7, 0.9)  # per leg of the turn filmstrip (front->side, then side->front)
+VIEW_SIZES = (56, 160)
 
 
 def serve():
@@ -363,6 +369,113 @@ def _film(cell, out, motion, face, strips):
     strips[face] = (frames, None)
 
 
+def _build_views(out, label, shots):
+    """views.png. shots: [(scheme, size, facing, Path)] row screenshots of the styleguide views grid."""
+    from PIL import Image, ImageDraw
+
+    if not shots:
+        return None
+    font, small = _font(22), _font(28)
+    images = [(scheme, size, facing, Image.open(path).convert('RGB')) for scheme, size, facing, path in shots]
+    pad, label_w = 16, 190
+    width = label_w + max(im.width for *_, im in images) + pad
+    height = 64 + sum(im.height + pad for *_, im in images)
+    sheet = Image.new('RGB', (width, height), (255, 255, 255))
+    draw = ImageDraw.Draw(sheet)
+    draw.text((pad, 16), f'Zorp views · {label} · front, three-quarter, side, back, back-glance', fill=(20, 20, 20), font=small)
+    y = 64
+    for scheme, size, facing, im in images:
+        draw.rectangle([0, y - pad // 2, width, y - pad // 2 + im.height + pad], fill=im.getpixel((2, 2)))
+        draw.text((pad, y + 8), f'{scheme} {size}px', fill=(245, 245, 245) if scheme == 'dark' else (20, 20, 20), font=font)
+        draw.text((pad, y + 36), 'facing left' if facing == 'l' else 'facing right', fill=(140, 140, 140), font=font)
+        sheet.paste(im, (label_w, y))
+        y += im.height + pad
+    sheet.save(out / 'views.png')
+    return 'views.png'
+
+
+_TURN_STEP = """async ([f]) => { const el = document.getElementById('sg-zorp-views-demo');
+  const an = el.getAnimations({subtree: true}); an.forEach(a => a.pause());
+  const total = Math.max(...an.map(a => { const t = a.effect.getComputedTiming(); return (t.delay || 0) + t.duration; }));
+  for (const a of an) { const t = a.effect.getComputedTiming(); const end = (t.delay || 0) + t.duration;
+    if (f * total >= end) a.finish(); else a.currentTime = f * total; }
+  await new Promise(r => setTimeout(r, 30)); return an.length; }"""
+
+
+def _turn_filmstrip(page):
+    """Ten full-motion frames, front -> side (five), side -> front (five), from the bound demo."""
+    import io
+    from PIL import Image
+
+    el = page.locator('#sg-zorp-views-demo')
+    if not el.count():
+        return None
+    el.scroll_into_view_if_needed()
+    frames = []
+    for view in ('side', 'front'):
+        page.evaluate("([v]) => { const el = document.getElementById('sg-zorp-views-demo'); window.pbZorp.bind(el);"
+                      " window.pbZorp.idle(false, el); window.__turn = window.pbZorp.turn(v, 'r', {el}); }", [view])
+        for f in TURN_FRAMES:
+            page.evaluate(_TURN_STEP, [f])
+            frames.append(Image.open(io.BytesIO(el.screenshot(animations='allow', caret='hide'))).convert('RGB'))
+        page.evaluate("async () => { document.getElementById('sg-zorp-views-demo').getAnimations({subtree: true})"
+                      ".forEach(a => a.finish()); await window.__turn; }")
+    return frames
+
+
+# Reduced motion (plan 2 #5): turn() without `required` stays front, with it the view swaps instantly,
+# side-point holds the side view; each state is a still.
+_REDUCED_TURN_STEPS = (
+    ('start', "() => true"),
+    ('turn side', "(el) => window.pbZorp.turn('side', 'r', {el})"),
+    ('turn side, required', "(el) => window.pbZorp.turn('side', 'r', {el, required: true})"),
+    ('turn front', "(el) => window.pbZorp.turn('front', 'r', {el})"),
+    ('side-point (hold)', "(el) => { window.pbZorp.play('side-point', {el}); return true; }"),
+)
+
+
+def _reduced_turn_frames(page):
+    import io
+    from PIL import Image
+
+    el = page.locator('#sg-zorp-views-demo')
+    if not el.count():
+        return None
+    el.scroll_into_view_if_needed()
+    page.evaluate("() => { const el = document.getElementById('sg-zorp-views-demo'); window.pbZorp.bind(el);"
+                  " window.pbZorp.idle(false, el); }")
+    frames = []
+    for _name, js in _REDUCED_TURN_STEPS:
+        page.evaluate(f"async () => {{ const el = document.getElementById('sg-zorp-views-demo'); await ({js})(el); }}")
+        frames.append(Image.open(io.BytesIO(el.screenshot(animations='disabled', caret='hide'))).convert('RGB'))
+    return frames
+
+
+def _build_turn_filmstrip(out, label, frames, reduced):
+    """turn-filmstrip.png: full-motion frames (two rows) and, when captured, a reduced-motion row."""
+    from PIL import Image, ImageDraw
+
+    if not frames:
+        return None
+    fw, fh = frames[0].size
+    head, gap = 64, 48
+    rows = 2 + (1 if reduced else 0)
+    sheet = Image.new('RGB', (fw * 5, head + fh * rows + (gap if reduced else 0)), (255, 255, 255))
+    draw = ImageDraw.Draw(sheet)
+    draw.text((16, 16), f'Zorp turn · {label} · front -> side (top), side -> front (middle), frames at 10/30/50/70/90%',
+              fill=(20, 20, 20), font=_font(28))
+    for i, im in enumerate(frames):
+        sheet.paste(im, ((i % 5) * fw, head + (i // 5) * fh))
+    if reduced:
+        y = head + fh * 2
+        draw.text((16, y + 8), 'reduced motion: ' + ' | '.join(n for n, _ in _REDUCED_TURN_STEPS),
+                  fill=(20, 20, 20), font=_font(24))
+        for i, im in enumerate(reduced[:5]):
+            sheet.paste(im.resize((fw, fh)) if im.size != (fw, fh) else im, (i * fw, y + gap))
+    sheet.save(out / 'turn-filmstrip.png')
+    return 'turn-filmstrip.png'
+
+
 def snapshot(label, server_python):
     try:
         from playwright.sync_api import Error as PlaywrightError
@@ -416,6 +529,8 @@ def snapshot(label, server_python):
         records = {m: {} for m in ('full', 'reduced')}
         (out / 'fx').mkdir()
         strips = {}
+        view_shots = []
+        turn_frames = turn_reduced = None
         with sync_playwright() as p:
             try:
                 browser = p.chromium.launch()
@@ -460,10 +575,26 @@ def snapshot(label, server_python):
                         matrix.scroll_into_view_if_needed()
                         matrix.screenshot(path=str(out / name), animations='disabled', caret='hide')
                         files.append(name)
+                if motion == 'full':
+                    for size in VIEW_SIZES:
+                        for facing in ('r', 'l'):
+                            row = page.locator(f'#sg-zorp-views-{size}-{facing}')
+                            if row.count():
+                                row.scroll_into_view_if_needed()
+                                path = out / 'cells' / f'views-{scheme}-{size}-{facing}.png'
+                                row.screenshot(path=str(path), animations='disabled', caret='hide')
+                                view_shots.append((scheme, size, facing, path))
+                    if scheme == 'light':
+                        turn_frames = _turn_filmstrip(page)
+                if motion == 'reduced' and scheme == 'light':
+                    turn_reduced = _reduced_turn_frames(page)
                 console[f'{scheme}-{motion}'] = errors
                 ctx.close()
             version = browser.version
             browser.close()
+        turn_sheet = _build_turn_filmstrip(out, label, turn_frames, turn_reduced)
+        if turn_sheet:
+            files.append(turn_sheet)
 
         seen = []
         for _key in records['full']:
@@ -474,6 +605,9 @@ def snapshot(label, server_python):
             files.append(_build_sheet(out, label, motion, legacy))
         files.append(_build_sheet(out, label, 'full', records['full'], faces=tuple(seen),
                                   name='expressions.png', block=BLOCK))
+        views_sheet = _build_views(out, label, view_shots)
+        if views_sheet:
+            files.append(views_sheet)
         strip_sheet = _build_filmstrips(out, label, {f: v for f, v in strips.items() if len(v[0]) == len(FRAMES) and v[1]})
         if strip_sheet:
             files.append(strip_sheet)
@@ -499,7 +633,7 @@ def snapshot(label, server_python):
             shutil.rmtree(final_out)
         out.rename(final_out)
         print(f'Wrote {final_out}')
-        print(f'  sheets: {final_out / "faces.png"}, {final_out / "faces-reduced.png"}, {final_out / "expressions.png"}, matrix.png, fx-filmstrips.png')
+        print(f'  sheets: {final_out / "faces.png"}, {final_out / "faces-reduced.png"}, {final_out / "expressions.png"}, matrix.png, fx-filmstrips.png, views.png, turn-filmstrip.png')
         print(f'  cells:  {len(manifest_cells)} PNGs in {final_out / "cells"}')
         print(f'  manifest: {final_out / "manifest.json"}')
         return 0
