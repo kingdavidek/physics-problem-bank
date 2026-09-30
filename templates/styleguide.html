@@ -24,6 +24,7 @@
         <a href="#zorp-motion" class="pill pill--hero">Zorp motion</a>
         <a href="#zorp-gallery" class="pill pill--hero">Zorp gallery</a>
         <a href="#zorp-views" class="pill pill--hero">Zorp views</a>
+        <a href="#zorp-poselib" class="pill pill--hero">Zorp poses</a>
         <a href="#diagrams" class="pill pill--hero">Diagrams</a>
     </div>
 </div>
@@ -289,6 +290,52 @@
             {% endfor %}
         </div>
         {% endfor %}
+        {% endfor %}
+    </div>
+</section>
+
+<section class="section-panel" id="zorp-poselib" data-zorp-poselib data-poses-phase="4">
+    <div class="section-panel-header">Zorp poses and clips (E8 Phase 4)</div>
+    <div class="section-panel-body">
+        <p class="profile-empty">Pose library, arm shapes and the beat-engine clips (<code>docs/ZORP_EXPRESSIVENESS.md</code> sections 3.9 to 3.11). The live pair is driven by <code>pbZorp.pose(name)</code> and <code>pbZorp.play(clip)</code>; the grid below is drawn server-side (<code>buddy_mascot(pose=)</code>) and never bound, at 56 px and 160 px, front and, for the poses that have one, their default view. The motion buttons and the 0.25x toggle only change this dev page. Reduced motion shows only each clip's preset; off does a face swap only. <span data-zorp-motion-level></span></p>
+        <div class="sg-row" style="margin-top: var(--space-4); align-items: flex-end;">
+            <span class="study-buddy-face sg-zorp-hero" id="sg-zorp-poselib-demo" data-zorp-demo data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot() }}</span>
+            <span class="study-buddy-face" id="sg-zorp-poselib-demo-small" data-zorp-demo data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot() }}</span>
+        </div>
+        <div class="sg-row" id="sg-zorp-pose-clips" style="margin-top: var(--space-4);">
+            {% for clip in ['fist-pump', 'victory', 'flex', 'shrug', 'bow', 'think-chin', 'dance', 'float', 'oops-encourage', 'turn'] %}
+            <button type="button" class="btn btn-outline btn-sm" data-zorp-clip="{{ clip }}">{{ clip }}</button>
+            {% endfor %}
+            <button type="button" class="btn btn-outline btn-sm" data-zorp-clip="dance" data-zorp-trip="1">dance (trip)</button>
+            <button type="button" class="btn btn-outline btn-sm" data-zorp-clip="side-point">side-point</button>
+        </div>
+        <div class="sg-row" id="sg-zorp-pose-buttons" style="margin-top: var(--space-3);">
+            {% for name in zorp_rig.POSE_NAMES %}
+            <button type="button" class="btn btn-outline btn-sm" data-zorp-pose="{{ name }}">pose: {{ name }}</button>
+            {% endfor %}
+        </div>
+        <div class="sg-row" style="margin-top: var(--space-3);">
+            {% for facing, label in [('r', 'Facing right'), ('l', 'Facing left')] %}
+            <button type="button" class="btn btn-outline btn-sm" data-zorp-facing="{{ facing }}" aria-pressed="{{ 'true' if facing == 'r' else 'false' }}">{{ label }}</button>
+            {% endfor %}
+            {% for level in ['system', 'reduced', 'off'] %}
+            <button type="button" class="btn btn-outline btn-sm" data-zorp-set-motion="{{ level }}">Motion: {{ level }}</button>
+            {% endfor %}
+            <button type="button" class="btn btn-outline btn-sm" data-zorp-slow aria-pressed="false">Slow 0.25x: off</button>
+            <button type="button" class="btn btn-outline btn-sm" data-zorp-silhouette aria-pressed="false">Silhouette: off</button>
+        </div>
+        {% for size, cls in [(56, ''), (160, ' sg-zorp-hero')] %}
+        <div class="sg-row" id="sg-zorp-poses-{{ size }}" style="margin-top: var(--space-4); align-items: flex-start; flex-wrap: wrap;">
+            {% for name in zorp_rig.POSE_NAMES %}
+            {% set pview = zorp_rig.pose_view(name) %}
+            {% for view in ([none] + (['front'] if pview and pview != 'front' else [])) %}
+            <figure class="sg-mascot-cell" data-zorp-pose-cell data-pose-name="{{ name }}" data-pose-view="{{ view or pview or 'front' }}" data-pose-size="{{ size }}" style="min-width: {{ 100 if size == 56 else 200 }}px;">
+                <span class="study-buddy-face{{ cls }}" data-buddy-face data-face="{{ zorp_rig.POSES[name].expr or 'nudge' }}" aria-hidden="true">{{ buddy_mascot(face=zorp_rig.POSES[name].expr or 'nudge', pose=name, view=view) }}</span>
+                <figcaption><code>{{ name }}{% if view or pview %} ({{ view or pview }}){% endif %}</code></figcaption>
+            </figure>
+            {% endfor %}
+            {% endfor %}
+        </div>
         {% endfor %}
     </div>
 </section>
@@ -660,5 +707,5 @@
         pointer-events: auto;
     }
 </style>
-<script src="{{ url_for('static', filename='js/styleguide.js') }}?v=7" defer></script>
+<script src="{{ url_for('static', filename='js/styleguide.js') }}?v=8" defer></script>
 {% endblock %}

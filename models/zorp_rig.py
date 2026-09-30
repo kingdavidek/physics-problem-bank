@@ -26,14 +26,14 @@ CHANNELS = {
         'open', 'open-lift', 'open-big', 'open-off', 'curious', 'curious-r', 'low', 'low-r',
         'wink-line', 'happy-arc', 'smile-arc', 'laugh', 'laugh-r', 'wide', 'goo', 'half',
         'closed', 'closed-r', 'goo-shine', 'squint', 'sparkle', 'heart', 'spiral', 'look-up',
-        'look-side', 'side',
+        'look-side', 'side', 'side-up', 'side-fwd',
     ),
     'brows': ('none', 'soft', 'raised', 'raised-l', 'worried', 'determined', 'skeptical', 'knit',
               'side', 'side-up', 'side-w'),
     'mouth': (
         'smile', 'smile-w', 'smile-wide', 'smile-big', 'grin', 'grin-tongue', 'laugh', 'cat',
         'smirk', 'tiny', 'o', 'wow', 'flat', 'wavy', 'wobble-smile', 'sleepy', 'blep', 'frown-soft',
-        'side-smile', 'side-grin', 'side-o',
+        'side-smile', 'side-grin', 'side-o', 'side-flat', 'side-wavy', 'side-frown',
     ),
     'cheeks': ('none', 'rosy', 'blush', 'glow', 'side-rosy', 'side-glow', 'side-blush'),
     'fx': (
@@ -202,27 +202,35 @@ VIEWS = {
         mouth=(3.5, 0, .85, 1), cheeks=(3.5, 0, .85, 1), fxFace=(3.5, 0, 1, 1),
         antL=(4, 0, 1, 1), hl=(-2, 0, 1, 1), footL=(3, -.5, 1, 1), armL=(2, 0, 1, 1),
     ),
+    # Side (E8 Phase 4 revision, 2026-09-30): a wide profile plate (about two thirds of the front plate,
+    # its outer edge just inside the silhouette), the near eye and mouth forward on it, cheeks behind the
+    # mouth, ONE arm (armRf, the near arm, front layer: the side-rest paddle) hanging from just behind the plate and
+    # pointing a little forward, the far arm hidden, the feet overlapping with the near one forward, the antennae
+    # drawn together and back. Face fx are placed by motion.css ([data-view="side"]), not by a row.
     'side': _view(
-        plate=(8, 0, .5, 1), eyeL=_HIDE, eyeR=(6.5, 0, 1, 1), brows=(6.5, 0, 1, 1), mouth=(10, 0, 1, 1),
-        cheeks=(0, 0, 1, 1), fxFace=(7, 0, 1, 1), antL=(7, 0, 1, 1), antR=(3, 0, 1, 1), hl=(2, 0, 1, 1),
-        footL=(4, 0, 1, 1), footR=(-2, 0, 1, 1), armL=_HIDE, armR=_HIDE, armRf=(-20, 2, 1, 1), armLf=_HIDE,
+        plate=(7.6, 0, .66, 1), eyeL=_HIDE, eyeR=(6.5, 0, 1, 1), brows=(6.5, 0, 1, 1), mouth=(11, 0, 1, 1),
+        cheeks=(-4, 0, 1, 1), antL=(3.5, 0, 1, 1), antR=(-4, 0, 1, 1), hl=(2, 0, 1, 1),
+        footL=(6, 0, 1, 1), footR=(-1, 0, 1, 1), armL=_HIDE, armR=_HIDE, armRf=(-19.4, 2, 1, 1), armLf=_HIDE,
     ),
     'back': _view(plate=_HIDE, eyeL=_HIDE, eyeR=_HIDE, brows=_HIDE, mouth=_HIDE, cheeks=_HIDE, fxFace=_HIDE,
                   hl=(20, 0, 1, 1)),
+    # Over-the-shoulder look (2026-09-30): a rounded partial plate, inset 3.5 px from the silhouette, holding the
+    # mirrored profile eye and a hint of smile near its outer edge.
     'back-glance': _view(
-        plate=(-11, 0, .4, 1), eyeL=(-8, 0, -1, 1), eyeR=_HIDE, brows=_HIDE, mouth=_HIDE, cheeks=_HIDE,
-        fxFace=_HIDE, hl=(20, 0, 1, 1),
+        plate=(-9.8, 0, .56, 1), eyeL=(-6.5, 0, -1, 1), eyeR=_HIDE, brows=_HIDE, mouth=(-12.5, 0, -1, 1),
+        cheeks=_HIDE, fxFace=_HIDE, hl=(20, 0, 1, 1),
     ),
 }
 # Parts a side view draws with dedicated art instead of the front variant (channel -> {id: id}).
 # Unlisted ids keep their front art, moved by the row's translate. Ids listed here must exist.
-_SIDE_EYES = dict.fromkeys(('open', 'open-lift', 'open-big', 'open-off', 'curious', 'curious-r', 'low', 'low-r',
-                            'look-up', 'look-side'), 'side')
+_SIDE_EYES = dict.fromkeys(('open', 'open-lift', 'open-big', 'open-off', 'curious', 'curious-r', 'low', 'low-r'), 'side')
+_SIDE_EYES.update({'look-up': 'side-up', 'look-side': 'side-fwd'})
 _SIDE_MOUTH = {
     'smile': 'side-smile', 'smile-w': 'side-smile', 'smile-wide': 'side-smile', 'smile-big': 'side-smile',
     'smirk': 'side-smile', 'tiny': 'side-smile', 'cat': 'side-smile', 'wobble-smile': 'side-smile',
     'grin': 'side-grin', 'grin-tongue': 'side-grin', 'laugh': 'side-grin', 'blep': 'side-grin',
     'o': 'side-o', 'wow': 'side-o', 'sleepy': 'side-o',
+    'flat': 'side-flat', 'wavy': 'side-wavy', 'frown-soft': 'side-frown',
 }
 _SIDE_BROWS = {
     'soft': 'side', 'determined': 'side', 'knit': 'side', 'raised': 'side-up', 'skeptical': 'side-up',
@@ -232,8 +240,8 @@ _SIDE_CHEEKS = {'rosy': 'side-rosy', 'glow': 'side-glow', 'blush': 'side-blush'}
 _SIDE_MAP = {'eyes': _SIDE_EYES, 'mouth': _SIDE_MOUTH, 'brows': _SIDE_BROWS, 'cheeks': _SIDE_CHEEKS}
 VIEW_VARIANTS = {
     'side': _SIDE_MAP,
-    # over-the-shoulder look: one edge eye only (the mouth, brows and cheeks are hidden)
-    'back-glance': {'eyes': _SIDE_EYES},
+    # over-the-shoulder look: the profile eye and mouth (brows and cheeks are hidden)
+    'back-glance': {'eyes': _SIDE_EYES, 'mouth': _SIDE_MOUTH},
 }
 DEFAULT_VIEW, DEFAULT_FACING = 'front', 'r'
 
@@ -264,9 +272,10 @@ def rest_css(entry):
     return ';'.join(out)
 
 
-def view_styles(view, facing=None):
-    """Inline style text per VIEW_PARTS key, plus 'flip', for a static render of `view`.
-    Empty for the default (front, right) so the default markup carries no style attributes."""
+def view_styles(view, facing=None, pose=None):
+    """Inline style text per VIEW_PARTS key, plus 'flip' and the pose keys root, head and shadow, for a
+    static render of `view` (and of `pose` when given). Empty for the default (front, right, no
+    pose) so the default markup carries no style attributes."""
     view, facing = resolve_view(view, facing)
     row = VIEWS[view]
     styles = {}
@@ -279,12 +288,182 @@ def view_styles(view, facing=None):
         else:
             styles[key] = rest_css(entry)
     styles['flip'] = 'scale:-1 1' if facing == 'l' else ''
+    styles.update(root='', head='', shadow='')
+    if pose is not None:
+        _add_pose(styles, row, resolve_pose(pose), facing, view)
     return styles
+
+
+def _add_pose(styles, view_row, pose, facing, view):
+    """Merge a pose's inline styles into a view's (see view_styles)."""
+    ps = pose_styles(pose, facing, view)
+    for key in ('root', 'head', 'shadow'):
+        styles[key] = ps[key]
+    for key in ('footL', 'footR'):
+        styles[key] = ';'.join(filter(None, [styles[key], ps[key]]))
+    for side in 'LR':
+        back, front = f'arm{side}', f'arm{side}f'
+        if POSES[pose][back][2] and view_row[back] is not None:
+            # front-layer arm: the twin in front of the body is drawn, the one behind it is not
+            styles[back] = 'display:none'
+            styles[front] = ';'.join(filter(None, ['display:inline', ps[front]]))
+        else:
+            styles[back] = ';'.join(filter(None, [styles[back], ps[back]]))
+            styles[front] = ';'.join(filter(None, [styles[front], ps[front]]))
 
 
 def map_variant(view, channel, vid):
     """The variant id a view draws for a channel variant (front art unless the view remaps it)."""
     return VIEW_VARIANTS.get(view, {}).get(channel, {}).get(vid, vid)
+
+# ---------------------------------------------------------------------------------------------
+# Poses (E8 Phase 4, docs/ZORP_EXPRESSIVENESS.md sections 3.9 and 3.10). A pose is a resting
+# transform per rig part plus an arm shape per arm, an optional default view and a preset hint.
+# Rows are written in degrees and pixels for a Zorp facing RIGHT; the root sits outside the mirror
+# wrapper, so a static render or the runtime flips its dx and rotation for facing LEFT. The pose
+# table ships to the browser inside static/js/zorp-poses.js (poses_json() is the source of that
+# embedded copy; scripts/test_zorp_poses_smoke.py fails when the two differ). Only `transform` is
+# used for poses; views use the individual `translate`/`scale` properties, so the two compose.
+#   root   (dx, dy, rot, sx, sy)   pivot: feet (transform-origin 50% 90%)
+#   head   (dx, dy, rot)           armL / armR (shape, rot, front)   front = 1: draw the front-layer twin
+#   footL / footR (dx, dy, rot)    shadow (sx, opacity)
+# ---------------------------------------------------------------------------------------------
+ARM_SHAPES = ('rest', 'straight', 'fist', 'bent', 'bent-fist')
+SIDE_ARM = 'side-rest'   # the profile paddle: drawn instead of 'rest' in the side view, put back on any other view
+# Shapes the side view draws with other art: the paddle for a resting arm, a profile 'bent' whose hand comes forward
+# to the chin (think-chin) instead of reaching back behind the body, and the flex as a raised fist (a bent arm seen
+# from the side would fold across the face).
+SIDE_ARMS = {'rest': SIDE_ARM, 'bent': 'side-bent', 'bent-fist': 'fist'}
+LIBRARY_ARM_SHAPES = ARM_SHAPES + (SIDE_ARM, 'side-bent')
+POSE_PARTS = ('root', 'head', 'armL', 'armR', 'footL', 'footR', 'shadow')
+STRETCH_MAX = .12  # squash and stretch: no axis deforms more than 12% (docs 3.10)
+_R0, _H0, _F0, _S0, _A0 = (0, 0, 0, 1, 1), (0, 0, 0), (0, 0, 0), (1, 1), ('rest', 0, 0)
+
+
+def _pose(root=_R0, head=_H0, armL=_A0, armR=_A0, footL=_F0, footR=_F0, shadow=_S0, view='', expr=''):
+    return {'root': root, 'head': head, 'armL': armL, 'armR': armR, 'footL': footL, 'footR': footR,
+            'shadow': shadow, 'view': view, 'expr': expr}
+
+
+POSES = {
+    'stand': _pose(view='front', expr='nudge'),
+    'wave': _pose(head=(0, 0, 3), armR=('straight', -100, 0), expr='milestone'),
+    'point-l': _pose(head=(0, 0, -4), armL=('straight', 82, 0), expr='qotd_nudge'),
+    'point-r': _pose(head=(0, 0, 4), armR=('straight', -82, 0), expr='qotd_nudge'),
+    'point-down': _pose(head=(0, 0, 6), armR=('straight', -35, 0), expr='qotd_nudge'),
+    'fist-up': _pose(root=(0, 0, 4, 1, 1), armR=('fist', -165, 1), expr='grin'),
+    'victory': _pose(root=(0, 0, 0, 1, 1.02), armL=('fist', 160, 1), armR=('fist', -160, 1), expr='joy'),
+    'flex': _pose(root=(0, 0, 0, 1, 1.03), armR=('bent-fist', -90, 1), expr='proud'),
+    'think-chin': _pose(head=(0, 0, -6), armR=('bent', 0, 1), expr='thinking'),
+    'shrug': _pose(root=(0, 0, 0, 1, .96), head=(0, 0, 5), armL=('straight', 62, 0), armR=('straight', -62, 0), expr='soft-smile'),
+    'bow': _pose(root=(0, 0, 18, 1, 1), view='side', expr='bashful'),
+    'peek': _pose(root=(-8, 0, 0, 1, 1), head=(0, 0, -10), expr='nudge'),
+    'crouch': _pose(root=(0, 3, 0, 1.11, .89), armL=('rest', 14, 0), armR=('rest', -14, 0), expr='determined'),
+    'dance-a': _pose(root=(0, 0, 6, 1, 1), armL=('straight', 130, 0), footR=(0, -3, 0), expr='laugh'),
+    'dance-b': _pose(root=(0, 0, -6, 1, 1), armR=('straight', -130, 0), footL=(0, -3, 0), expr='laugh'),
+    'sit': _pose(root=(0, 3, 0, 1, .95), footL=(3, -1, 0), footR=(3, -1, 0), view='side', expr='happy'),
+    'float': _pose(root=(0, -8, 0, 1, 1), footL=(0, 0, -8), footR=(0, 0, 8), shadow=(.7, .6), expr='happy'),
+    'sleep': _pose(root=(0, 1.5, 0, 1, .98), head=(0, 0, 12), expr='sleep'),
+}
+POSE_NAMES = tuple(POSES)
+
+
+def resolve_pose(name):
+    """A known pose name, or 'stand' (fail closed)."""
+    return name if isinstance(name, str) and name in POSES else 'stand'
+
+
+def pose_view(name):
+    """The pose's default view ('' = leave the view alone)."""
+    return POSES[resolve_pose(name)]['view']
+
+
+def static_view(view, pose):
+    """The view a static render draws: an explicit `view` wins (front included); with none given a
+    pose draws its own default view (bow and sit: side), and anything else the front."""
+    if isinstance(view, str) and view in VIEWS:
+        return view
+    return (pose_view(pose) or DEFAULT_VIEW) if pose else DEFAULT_VIEW
+
+
+def pose_arms(name, view=DEFAULT_VIEW):
+    """(left shape, right shape) drawn for a pose in a view: the side view draws SIDE_ARMS art where it has some."""
+    row = POSES[resolve_pose(name)]
+    shapes = row['armL'][0], row['armR'][0]
+    return tuple(SIDE_ARMS.get(s, s) if view == 'side' else s for s in shapes)
+
+
+def side_rot(rot, shape='rest'):
+    """The arm angle the side view draws for a pose or clip angle written for the front view (the same rule as
+    sideRot in zorp-motion.js). The near arm hangs from behind the profile plate, so a raise that goes out to the
+    side in the front view would sweep across the face in profile. Low angles (up to 40 deg) are kept, 40 to 70
+    deg is held at 40 (down and forward, under the mouth), and a raise of 70 deg or more becomes an arm lifted
+    over the top, 135 deg (up and forward, clear of the eye and brows) at 70 up to 179 deg at 180. It is written
+    as the backward angle (360 - lift) so a tween from the hanging arm swings back and over the head, never
+    through the face. A long fist arm (fist, and bent-fist, which the side view draws as a fist) is held within
+    10 deg of vertical so it clears the brows. The profile bent arm (side-bent) is drawn reaching the chin and is
+    not turned. The left arm mirrors the right."""
+    if shape == 'bent':
+        return 0
+    a = min(abs(rot), 180)
+    if a < 70:
+        return rot if a <= 40 else (-40 if rot < 0 else 40)
+    out = round(225 - (a - 70) * .4, 2)
+    if shape in ('fist', 'bent-fist'):
+        out = min(out, 190)
+    return out if rot < 0 else -out
+
+
+def _t(*vals):
+    return ','.join(_n(v) for v in vals)
+
+
+def pose_transform(part, row, facing='r', view=DEFAULT_VIEW):
+    """The canonical CSS `transform` text for one part of a pose row; '' when it is the identity.
+    The runtime builds the very same strings (zorp-poses.js). Arm angles go through side_rot() in the side view."""
+    if part == 'root':
+        dx, dy, rot, sx, sy = row
+        if facing == 'l':
+            dx, rot = -dx, -rot
+        out = f'translate({_n(dx)}px,{_n(dy)}px) rotate({_n(rot)}deg) scale({_t(sx, sy)})'
+        return '' if (dx, dy, rot, sx, sy) == _R0 else out
+    if part in ('head', 'footL', 'footR'):
+        dx, dy, rot = row
+        return '' if (dx, dy, rot) == _H0 else f'translate({_n(dx)}px,{_n(dy)}px) rotate({_n(rot)}deg)'
+    if part in ('armL', 'armR'):
+        rot = side_rot(row[1], row[0]) if view == 'side' else row[1]
+        return '' if rot == 0 else f'rotate({_n(rot)}deg)'
+    sx, _, dy = row   # shadow (sx, opacity, dy): dy counters the root's lift so the shadow stays on the ground
+    return '' if (sx, dy) == (1, 0) else f'translate(0,{_n(dy)}px) scale({_n(sx)},1)'
+
+
+def pose_styles(name, facing='r', view=DEFAULT_VIEW):
+    """Inline style text per rig key for a static render of a pose: root, head, footL, footR,
+    shadow, armL, armR (armLf/armRf, the front-layer twins, carry the same arm transform)."""
+    row = POSES[resolve_pose(name)]
+    styles = {}
+    for part in POSE_PARTS:
+        css = pose_transform(part, tuple(row[part]) + ((-row['root'][1],) if part == 'shadow' else ()), facing, view)
+        css = f'transform:{css}' if css else ''
+        if part == 'shadow' and row[part][1] != 1:
+            css = ';'.join(filter(None, [css, f'opacity:{_n(row[part][1])}']))
+        styles[part] = css
+    for side in 'LR':
+        styles[f'arm{side}f'] = styles[f'arm{side}']
+    return styles
+
+
+def poses_json():
+    """Compact JSON of the pose table, embedded in static/js/zorp-poses.js between its markers."""
+    data = {}
+    for name, row in POSES.items():
+        data[name] = {
+            'r': list(row['root']), 'h': list(row['head']), 'L': list(row['armL']), 'R': list(row['armR']),
+            'fl': list(row['footL']), 'fr': list(row['footR']), 's': list(row['shadow']),
+            'v': row['view'], 'e': row['expr'],
+        }
+    return json.dumps(data, separators=(',', ':'), ensure_ascii=True)
+
 
 # Mouth swaps chosen by the automatic live look (models/zorp_kit.py LOOK_MOUTHS) replace the
 # resting mouth of the 'nudge' face only.
@@ -348,6 +527,26 @@ def rig_json():
     return json.dumps(data, separators=(',', ':'), ensure_ascii=True).replace('<', '\\u003c')
 
 
+def validate_poses():
+    """Every pose defines every part with sane values (docs 3.9, 3.10)."""
+    assert POSE_NAMES[0] == 'stand' and POSES['stand'] == _pose(view='front', expr='nudge')
+    lens = {'root': 5, 'head': 3, 'footL': 3, 'footR': 3, 'shadow': 2, 'armL': 3, 'armR': 3}
+    for name, row in POSES.items():
+        assert set(row) == set(POSE_PARTS) | {'view', 'expr'}, f'pose {name}: keys {sorted(row)}'
+        for part, size in lens.items():
+            assert len(row[part]) == size, f'pose {name}.{part}'
+        for side in ('armL', 'armR'):
+            shape, rot, front = row[side]
+            assert shape in ARM_SHAPES and front in (0, 1) and -190 <= rot <= 190, f'pose {name}.{side}'
+        dx, dy, rot, sx, sy = row['root']
+        assert abs(dx) <= 14 and abs(dy) <= 14 and abs(rot) <= 30, f'pose {name}.root'
+        assert abs(sx - 1) <= STRETCH_MAX and abs(sy - 1) <= STRETCH_MAX, f'pose {name}: stretch beyond {STRETCH_MAX}'
+        assert row['view'] in ('',) + VIEW_NAMES, f'pose {name}.view'
+        assert row['expr'] == '' or (row['expr'] in PRESETS and VALENCE[row['expr']] != NEGATIVE), f'pose {name}.expr'
+        assert 0 < row['shadow'][0] <= 1.2 and 0 <= row['shadow'][1] <= 1
+    return True
+
+
 def validate():
     """Consistency checks used by the smoke suite. Raises AssertionError on the first problem."""
     assert set(PRESETS) == set(VALENCE), 'every preset needs exactly one valence'
@@ -385,7 +584,14 @@ def validate():
         for channel, mapping in chans.items():
             for src, dst in mapping.items():
                 assert src in CHANNELS[channel] and dst in CHANNELS[channel], (view, channel, src, dst)
+    # Every mouth has profile art, so the side view always draws one (a front mouth moved by the row's
+    # translate could run off the narrow profile plate).
+    side_mouths = {map_variant('side', 'mouth', m) for m in CHANNELS['mouth']}
+    assert all(m.startswith('side-') for m in side_mouths), sorted(side_mouths)
+    validate_poses()
     text = PARTS_TEMPLATE.read_text(encoding='utf-8')
+    for shape in LIBRARY_ARM_SHAPES[1:]:  # 'rest' is the macro's default branch
+        assert f"'{shape}'" in text, f'zorp_parts.html has no arm:{shape}'
     for channel, ids in CHANNELS.items():
         assert len(set(ids)) == len(ids), f'duplicate variant in {channel}'
         for vid in ids:

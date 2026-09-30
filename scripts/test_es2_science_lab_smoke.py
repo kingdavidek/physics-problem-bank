@@ -187,6 +187,15 @@ def test_bank_size_and_formats():
         assert any(p.get('options') for p in built)
         assert any(p.get('answer_type') for p in built)
 
+    # Regression: seeds 13 and 20 drew an MCQ-only science_lab quiz before lesson_quiz._ensure_typed
+    # (the flake behind test_mixed_quiz_api's "any(k != 'mcq')" under random.seed(200) or (275)).
+    cfg = TOPICS['eursc']['science']['science_lab']
+    for seed in (13, 20):
+        built = build_lesson_quiz('eursc', 'science', 'science_lab', cfg, seed=seed)
+        assert len(built) == 10
+        assert any(p.get('options') for p in built), seed
+        assert any(not p.get('options') and p.get('answer_type') for p in built), seed
+
 
 def test_practice_and_qotd_stay_closed():
     assert ('eursc', 'science') in GENERATOR_LAUNCH_PATHS

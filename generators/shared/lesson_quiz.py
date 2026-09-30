@@ -167,6 +167,37 @@ def _fill_quiz_slot(
         added += 1
 
 
+def _is_mcq(problem):
+    return bool(problem.get("options") and problem.get("correct_answer"))
+
+
+def _ensure_typed(generator, variants_func, problems, seen_keys, rng):
+    """A mixed lesson bank must give a mixed quiz (docs/EUROPEAN_SCHOOL_SCIENCE.md "Mixed quiz design").
+
+    The MCQ-first rule in _fill_quiz_slot stops a typed-only draw; this is its mirror. Before it, about
+    1 seeded draw in 100 was MCQ-only for most eursc/science banks (science_lab: seeds 13 and 20;
+    test_es2_science_lab_smoke.py failed with random.seed(200) or (275)). Swaps the last MCQ of one band
+    for a typed problem of the same band; leaves the quiz as it is if the bank has no typed variant.
+    """
+    if not problems or not all(_is_mcq(p) for p in problems):
+        return
+    for difficulty in ("intermediate", "difficult", "foundational"):
+        idx = [i for i, p in enumerate(problems) if p.get("difficulty") == difficulty]
+        if not idx:
+            continue
+        for _ in range(40):
+            problem = _generate_quiz_problem(
+                generator, variants_func, difficulty, seen_keys, rng, mode="lesson"
+            )
+            if not problem:
+                break
+            if not _is_mcq(problem):
+                seen_keys.discard(_question_key(problems[idx[-1]]))
+                problems[idx[-1]] = problem
+                return
+            seen_keys.discard(_question_key(problem))
+
+
 def build_single_mcq(level, subject, topic, topic_config, *, difficulty='difficult', rng=None):
     """One MCQ at ``difficulty``, or None if the topic cannot produce one."""
     rng = rng or random
@@ -237,6 +268,8 @@ def build_lesson_quiz(level, subject, topic, topic_config, *, seed=None):
     if not problems:
         raise ValueError(f"No lesson-quiz problems available for {level}/{subject}/{topic}")
 
+    if mode == "lesson":
+        _ensure_typed(generator, variants_func, problems, seen_keys, rng)
     rng.shuffle(problems)
     return problems[:10]
 

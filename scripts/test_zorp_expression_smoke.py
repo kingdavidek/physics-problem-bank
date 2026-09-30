@@ -33,6 +33,7 @@ JS_DIR = ROOT / 'static' / 'js'
 CSS_DIR = ROOT / 'static' / 'css'
 MOTION_CSS = CSS_DIR / 'motion.css'
 RUNTIME_JS = JS_DIR / 'zorp-motion.js'
+POSES_JS = JS_DIR / 'zorp-poses.js'
 TEMPLATES = ROOT / 'templates'
 DOC = ROOT / 'docs' / 'ZORP_EXPRESSIVENESS.md'
 SNAPSHOT_TOOL = ROOT / 'scripts' / 'zorp_gallery_snapshot.py'
@@ -43,7 +44,8 @@ INSTANCE_MAX_ELEMENTS = 70  # measured 39 Phase 1, 40 Phase 2, 50 Phase 3 (basel
 INSTANCE_LOOK_MAX_BYTES = 5_800  # measured 3,624 B Phase 1, 3,663 B Phase 2, 4,206 B Phase 3 (baseline 8,344)
 PAGE_MASCOT_MAX_BYTES = 36_000  # 3 instances + library + island; see test_page_mascot_budget output
 PAGE_MASCOT_MAX_GZIP = 6_000
-RUNTIME_JS_MAX_BYTES = 48_000  # baseline 26_602; Phase 1 measured in test_runtime_js_budget output
+RUNTIME_JS_MAX_BYTES = 48_000  # baseline 26_602; 47_868 after Phase 3; Phase 4 first trimmed it to 43_084, then added the register hook (45_370; 45_509 after the review fixes)
+POSES_JS_MAX_BYTES = 24_000  # E8 Phase 4 (new file, 2026-09-30): poses table, beat engine and the new clips; measured in test_poses_js_budget output
 PARTS_LIBRARY_MAX_BYTES = 16_000  # <template> only; measured 6,959 B Phase 1, 12,169 B Phase 2, 13,432 B Phase 3
 RIG_JSON_MAX_BYTES = 6_000  # island; measured 1,359 B Phase 1, 2,802 B Phase 2, 4,503 B Phase 3 (with tags)
 MOTION_CSS_MAX_BYTES = 12_000  # mirrors test_zorp_motion_smoke.py; baseline 4_844, Phase 1 6_445, Phase 2 7_466, Phase 3 7_895
@@ -504,7 +506,7 @@ def test_picker_and_gallery_markup():
         assert f'data-zorp-channel="{slot}"' in html, slot
     for level in ('system', 'reduced', 'off'):
         assert f'data-zorp-set-motion="{level}"' in html, level
-    assert 'data-zorp-slow' in html and 'id="pb-zorp-parts"' in html and 'styleguide.js?v=7' in html
+    assert 'data-zorp-slow' in html and 'id="pb-zorp-parts"' in html and 'styleguide.js?v=8' in html
     assert 'id="sg-zorp-matrix"' in html and 'data-eyes="open open-big' in html
 
 
@@ -596,6 +598,98 @@ def test_twinkle_rate():
     assert checked >= 3, 'expected the twinkle/zzz uses to be checked'
 
 
+
+def test_side_arms_clear_the_face():
+    """Side view (2026-09-30): the near arm hangs from behind the profile plate, so a front-view raise would sweep
+    across the face. side_rot() lifts it over the top instead. For EVERY front angle and every arm shape the drawn
+    arm (a segment from the shoulder to the hand, plus its stroke) stays clear of the profile eye, brow and mouth, a
+    raise ends up in the upper half, and the tween from the hanging arm swings backwards (positive angle for the
+    right arm), never forward through the face. The JS copy (sideRot) is compared in zorp_poses_harness.js."""
+    import math
+
+    from models import zorp_rig
+
+    side = zorp_rig.VIEWS['side']
+    sx, sy = 48.4 + side['armRf'][0], 40 + side['armRf'][1]          # the near shoulder in profile
+    eye = (37.8 + side['eyeR'][0], 35.2 + side['eyeR'][1], 3.6)      # centre and largest eye radius
+    mouth = (32 + side['mouth'][0], 44 + side['mouth'][1], 3.4)       # anchor and half width of the side mouths
+    brow = (37.8 + side['brows'][0], 30, 3.2)                         # the side brows (x 35-40.6, y about 30)
+    # hand point and hand radius per drawn art, in the arm's own frame (hanging down); see zorp_parts.html arm()
+    reach = {'straight': ((0, 13.2), 2), 'fist': ((0, 29.6), 4.6), 'side-rest': ((1.4, 9.6), 2.6), 'side-bent': ((9.5, 8), 2.6)}
+
+    def clear(rot, art):
+        (hx, hy), hr = reach[art]
+        t = math.radians(rot)
+        px, py = sx + hx * math.cos(t) - hy * math.sin(t), sy + hx * math.sin(t) + hy * math.cos(t)
+        for cx, cy, r in (eye, brow, mouth):
+            ux, uy = px - sx, py - sy
+            k = max(0, min(1, ((cx - sx) * ux + (cy - sy) * uy) / (ux * ux + uy * uy)))
+            d = math.hypot(sx + k * ux - cx, sy + k * uy - cy)
+            if d < r + (hr if k == 1 else 1.7):
+                return False
+        return True
+
+    assert zorp_rig.pose_arms('think-chin', 'side') == ('side-rest', 'side-bent')
+    assert zorp_rig.pose_arms('flex', 'side') == ('side-rest', 'fist') and zorp_rig.pose_arms('flex') == ('rest', 'bent-fist')
+    for shape in zorp_rig.ARM_SHAPES:
+        art = zorp_rig.SIDE_ARMS.get(shape, shape)
+        if art == 'bent':
+            continue  # never drawn in profile
+        for front in range(-180, 181):
+            rot = zorp_rig.side_rot(front, shape)
+            assert rot == -zorp_rig.side_rot(-front, shape), 'the left arm mirrors the right'
+            assert clear(rot, art), f'{shape} at {front} deg draws at {rot} deg across the profile face'
+            if abs(front) >= 70 and art != 'side-bent':
+                assert 180 <= abs(rot) <= 225 and (rot > 0) == (front < 0), f'{front}: a raise lifts over the top, backwards'
+    # the poses keep their front-view angles; the side view remaps them (static render and runtime alike)
+    for name, row in zorp_rig.POSES.items():
+        assert zorp_rig.pose_transform('armR', row['armR'], 'r', 'side') == (
+            f"rotate({zorp_rig._n(zorp_rig.side_rot(row['armR'][1], row['armR'][0]))}deg)" if row['armR'][1] else '')
+        if row['armR'][1]:
+            assert zorp_rig.pose_transform('armR', row['armR']) == f"rotate({zorp_rig._n(row['armR'][1])}deg)", 'front view unchanged'
+
+
+def _check_side_profile(zorp_rig, parts):
+    """Side view redesign (2026-09-30): every preset draws profile art for the eye and a mouth that sits on the
+    wide profile plate, in both facings; one near arm only; the look-up and look-side eyes keep their direction."""
+    from app import app
+
+    side = zorp_rig.VIEWS['side']
+    assert side['armL'] is None and side['armR'] is None and side['armLf'] is None and side['armRf'] is not None
+    dx, _, sx, _ = side['plate']
+    assert .6 <= sx <= .72, 'the profile plate is a wide shape, not a sliver'
+    left, right = 32 + dx - 15.5 * sx, 32 + dx + 15.5 * sx
+    assert right <= 32 + 21, 'the plate stays inside the body silhouette'
+    assert zorp_rig.map_variant('side', 'eyes', 'look-up') == 'side-up'
+    assert zorp_rig.map_variant('side', 'eyes', 'look-side') == 'side-fwd'
+    for mouth in zorp_rig.CHANNELS['mouth']:
+        variant = zorp_rig.map_variant('side', 'mouth', mouth)
+        assert variant.startswith('side-'), f'{mouth} has no profile mouth'
+        match = re.search(r"n == '%s' -%%\}\s*<[a-z]+[^>]*?(?:d=\"M([\d.]+)|cx=\"([\d.]+)\")" % re.escape(variant), parts)
+        assert match, variant
+        x0 = float(match.group(1) or match.group(2)) + side['mouth'][0]
+        assert left + 4 <= x0 <= right - 2, f'{variant} starts at x {x0}, off the profile plate {left}-{right}'
+    with app.app_context():
+        module = app.jinja_env.get_template('partials/buddy.html').module
+        assert zorp_rig.pose_arms('bow', 'side') == (zorp_rig.SIDE_ARM, zorp_rig.SIDE_ARM) and zorp_rig.pose_arms('bow') == ('rest', 'rest')
+        assert zorp_rig.pose_arms('wave', 'side') == (zorp_rig.SIDE_ARM, 'straight')
+        for face in zorp_rig.PRESETS:
+            drawn = {}
+            for facing in ('r', 'l'):
+                svg = str(module.buddy_mascot(face=face, view='side', facing=facing))
+                slot = re.search(r'class="zorp-slot--mouth"[^>]*>(.*?)</g>', svg, re.S).group(1).strip()
+                assert slot and ('class="zk"' in slot or 'class="zf"' in slot), f'{face} facing {facing}: no mouth drawn in side view'
+                assert ('scale:-1 1' in svg) == (facing == 'l')
+                assert svg.count('class="buddy-arm buddy-arm--r-front" style="display:inline') == 1 and svg.count('display:inline') == 1, 'exactly one arm is drawn in side view'
+                drawn[facing] = re.sub(r' style="scale:-1 1"', '', svg)
+                assert 'data-facing="l"' in svg or facing == 'r'
+                assert svg.count('class="zn zsa"') == 4, 'the profile paddle arm is drawn in side view (both arms, both layers)'
+                assert zorp_rig.map_variant('back-glance', 'mouth', 'smile') == 'side-smile'
+                glance = str(module.buddy_mascot(face=face, view='back-glance', facing=facing))
+                assert re.search(r'class="zorp-slot--mouth"[^>]*>\s*<[a-z]', glance), f'{face}: back-glance draws a hint of smile'
+                assert 'zsa' not in glance and 'zsa' not in str(module.buddy_mascot(face=face)), 'rest arms elsewhere'
+            assert drawn['l'].replace(' data-facing="l"', '') == drawn['r'], f'{face}: facing left is the same art as facing right'
+
 def test_views_complete():
     """E8 Phase 3: every view names every part (front-hidden arms aside), the hidden parts are explicit,
     the side variants exist as art and in the island, and each view renders within the element budget."""
@@ -620,12 +714,15 @@ def test_views_complete():
     assert zorp_rig.VIEWS['back']['hl'] is not None
     # side variants are real art, real channel values, and in the island
     parts = (TEMPLATES / 'partials' / 'zorp_parts.html').read_text(encoding='utf-8')
-    for channel, variants in (('eyes', ('side',)), ('mouth', ('side-smile', 'side-o')), ('brows', ('side',)), ('cheeks', ('side-rosy',))):
+    for channel, variants in (('eyes', ('side', 'side-up', 'side-fwd')),
+                              ('mouth', ('side-smile', 'side-o', 'side-flat', 'side-wavy', 'side-frown')),
+                              ('brows', ('side',)), ('cheeks', ('side-rosy',))):
         for variant in variants:
             assert variant in zorp_rig.CHANNELS[channel], (channel, variant)
             assert f"'{variant}'" in parts, f'no art for {channel} {variant}'
     data = json.loads(zorp_rig.rig_json())
     assert 'w' in data and 'm' in data
+    _check_side_profile(zorp_rig, parts)
     module = None
     with app.app_context():
         module = app.jinja_env.get_template('partials/buddy.html').module
@@ -759,6 +856,196 @@ def test_decisions_recorded():
     assert 'Proposed' not in lines[2], 'status line still says Proposed'
 
 
+POSE_NAMES_REQUIRED = ('stand', 'wave', 'point-l', 'point-r', 'point-down', 'fist-up', 'victory', 'flex', 'think-chin',
+                       'shrug', 'bow', 'peek', 'crouch', 'dance-a', 'dance-b', 'sit', 'float', 'sleep')
+NEW_CLIPS = ('fist-pump', 'victory', 'flex', 'shrug', 'bow', 'think-chin', 'dance', 'float', 'oops-encourage', 'turn')
+OLD_CLIPS = ('idle', 'blink', 'cheer', 'wobble', 'think', 'wave', 'point', 'nod', 'wink', 'tap', 'shake', 'hop', 'peek',
+             'sleep', 'side-point')
+
+
+def test_poses_complete():
+    """E8 Phase 4: every pose defines every part, arm shapes exist as art and in the library, and a static
+    pose= render stays inside the instance budget while the default render carries no pose markup."""
+    from app import app  # noqa: E402
+    from models import zorp_rig
+
+    zorp_rig.validate()
+    assert set(POSE_NAMES_REQUIRED) <= set(zorp_rig.POSES), set(POSE_NAMES_REQUIRED) - set(zorp_rig.POSES)
+    assert zorp_rig.ARM_SHAPES == ('rest', 'straight', 'fist', 'bent', 'bent-fist')
+    for name, row in zorp_rig.POSES.items():
+        assert set(row) == set(zorp_rig.POSE_PARTS) | {'view', 'expr'}, name
+    parts = (TEMPLATES / 'partials' / 'zorp_parts.html').read_text(encoding='utf-8')
+    tpl, _island = _split_library(_library_html())
+    for shape in zorp_rig.ARM_SHAPES:
+        for side in ('l', 'r'):
+            assert f'data-part="arm:{shape}-{side}"' in tpl, (shape, side)
+    assert 'macro arm(' in parts
+    # arm shapes are tiny: every one under 200 B in the library
+    for m in re.finditer(r'<g data-part="arm:[a-z-]+">(.*?)</g>', tpl):
+        assert len(m.group(1).encode()) <= 200, m.group(0)
+    with app.app_context():
+        module = app.jinja_env.get_template('partials/buddy.html').module
+        default = str(module.buddy_mascot())
+        assert 'data-pose' not in default and 'style="' not in default
+        assert str(module.buddy_mascot(pose='stand')) == default.replace('<svg class="buddy-mascot"', '<svg class="buddy-mascot"', 1), 'stand is the default'
+        assert str(module.buddy_mascot(pose='nope')) == str(module.buddy_mascot(pose='stand'))
+        for name in zorp_rig.POSE_NAMES:
+            svg = str(module.buddy_mascot(face=zorp_rig.POSES[name]['expr'] or 'nudge', pose=name))
+            assert _elements(svg) <= INSTANCE_MAX_ELEMENTS, name
+            assert len(svg.encode('utf-8')) <= INSTANCE_DEFAULT_MAX_BYTES, (name, len(svg.encode()))
+            assert ('data-pose=' in svg) == (name != 'stand'), name
+            for shape in set(zorp_rig.pose_arms(name)):
+                if shape != 'rest':
+                    assert 'class="zl"' in svg, (name, shape)
+        # think-chin shows the front-layer twin over the body and hides the one behind it
+        chin = str(module.buddy_mascot(pose='think-chin'))
+        assert re.search(r'buddy-arm--r" style="display:none"', chin) and re.search(r'buddy-arm--r-front" style="display:inline"', chin)
+        # raised arms (W4) are drawn in the front layer so the fist shows above the body, at every size
+        for name, sides in (('fist-up', 'r'), ('victory', 'lr'), ('flex', 'r')):
+            svg = str(module.buddy_mascot(pose=name))
+            for side in sides:
+                assert re.search(rf'buddy-arm--{side}" style="display:none"', svg), (name, side)
+                assert re.search(rf'buddy-arm--{side}-front" style="display:inline;transform:rotate\(-?1?\d+deg\)"', svg), (name, side)
+        # the shadow stays on the ground: float and crouch counter-translate the root's dy
+        assert 'translate(0,8px) scale(.7,1)' in str(module.buddy_mascot(pose='float')), 'float shadow'
+        assert 'translate(0,-3px) scale(1,1)' in str(module.buddy_mascot(pose='crouch')), 'crouch shadow'
+        # a pose with a default view draws it unless a view is given; facing left mirrors the root
+        assert 'data-view="side"' in str(module.buddy_mascot(pose='bow'))
+        assert 'data-view' not in str(module.buddy_mascot(pose='bow', view='front'))
+        assert 'rotate(18deg)' in str(module.buddy_mascot(pose='bow', facing='r'))
+        assert 'rotate(-18deg)' in str(module.buddy_mascot(pose='bow', facing='l'))
+        # the shadow keeps its own opacity
+        assert 'opacity:.6' in str(module.buddy_mascot(pose='float'))
+
+
+def test_poses_js_budget():
+    js = POSES_JS.stat().st_size
+    core = RUNTIME_JS.stat().st_size
+    print(f'  zorp-motion.js: {core} B; zorp-poses.js: {js} B')
+    assert js <= POSES_JS_MAX_BYTES, js
+    assert core <= RUNTIME_JS_MAX_BYTES, core
+    text = POSES_JS.read_text(encoding='utf-8')
+    for name in ('pb.register(', 'compileBeats', 'clipInfo', "'fist-pump'", 'pb.pose = pose'):
+        assert name in text, name
+    assert 'innerHTML' not in text
+    # the core exposes the hook and reports the new names as absent when the file does not load
+    core_text = RUNTIME_JS.read_text(encoding='utf-8')
+    for name in ('register: function', 'hasClip:', 'hasPose:', 'pose: function'):
+        assert name in core_text, name
+    # W6: hop and cheer keep the shadow on the ground (it counters the root's lift)
+    assert "translate(0,9px) scale(0.75,1)" in core_text and "translate(0,8px) scale(0.7,1)" in core_text
+    base = (TEMPLATES / 'base.html').read_text(encoding='utf-8')
+    assert base.index('js/zorp-motion.js') < base.index('js/zorp-poses.js') < base.index('js/zorp-triggers.js')
+    assert 'zorp-poses.js\') }}?v=1' in base
+    sw = (JS_DIR / 'sw.js').read_text(encoding='utf-8')
+    assert '/static/js/zorp-poses.js' in sw and '/static/js/zorp-motion.js' in sw
+
+
+def _poses_js_beats():
+    text = POSES_JS.read_text(encoding='utf-8')
+    return text[text.index('var CL = rt.clips;'):]
+
+
+def test_beats_reference_known_names():
+    from models import zorp_rig
+
+    text = _poses_js_beats()
+    poses = set(re.findall(r"\bpose:\s*'([a-z-]+)'", text))
+    exprs = set(re.findall(r"\bexpr:\s*'([a-z_-]+)'", text))
+    fxs = set(re.findall(r"\bfx:\s*'([a-z-]+)'", text))
+    views = set(re.findall(r"\bview:\s*'([a-z-]+)'", text))
+    reduced = set(re.findall(r"\breduced:\s*'([a-z_-]+)'", text))
+    assert poses and exprs and fxs
+    assert poses <= set(zorp_rig.POSES), poses - set(zorp_rig.POSES)
+    assert exprs <= set(zorp_rig.PRESETS), exprs - set(zorp_rig.PRESETS)
+    assert reduced <= set(zorp_rig.PRESETS), reduced
+    assert fxs <= set(zorp_rig.CHANNELS['fx']), fxs - set(zorp_rig.CHANNELS['fx'])
+    assert views <= set(zorp_rig.VIEW_NAMES), views
+    assert 'thought' in fxs and 'sparkles' in {zorp_rig.PRESETS['joy']['fx']}
+    easings = set(re.findall(r"\b(?:ease|aease):\s*'([a-z]+)'", text))
+    assert easings <= {'out', 'in', 'overshoot', 'io'}, easings
+    # the named easing table carries the docs 3.10 curves
+    table = re.search(r"var EASE = \{(.*?)\};", POSES_JS.read_text(encoding='utf-8')).group(1)
+    for curve in ('cubic-bezier(.2,.8,.2,1)', 'cubic-bezier(.6,0,.9,.4)', 'cubic-bezier(.34,1.56,.64,1)'):
+        assert curve in table, curve
+
+
+def test_stretch_within_limits():
+    """docs 3.10: squash and stretch stays within STRETCH_MAX per axis and roughly keeps volume."""
+    from models import zorp_rig
+
+    text = _poses_js_beats()
+    pairs = [(float(a), float(b)) for a, b in re.findall(r"\bs:\s*\[([\d.]+),\s*([\d.]+)\]", text)]
+    assert len(pairs) >= 5, pairs
+    for sx, sy in pairs:
+        assert abs(sx - 1) <= zorp_rig.STRETCH_MAX + 1e-9 and abs(sy - 1) <= zorp_rig.STRETCH_MAX + 1e-9, (sx, sy)
+        assert abs(sx * sy - 1) <= 0.12, (sx, sy)
+    for name, row in zorp_rig.POSES.items():
+        sx, sy = row['root'][3], row['root'][4]
+        assert abs(sx - 1) <= zorp_rig.STRETCH_MAX and abs(sy - 1) <= zorp_rig.STRETCH_MAX and abs(sx * sy - 1) <= 0.12, name
+
+
+def test_every_new_clip_has_reduced_and_names_are_kept():
+    text = _poses_js_beats()
+    adds = re.findall(r"add\('([a-z-]+)', beatClip\(\{ reduced: '([a-z_-]+)'", text)
+    assert {n for n, _ in adds} == set(NEW_CLIPS) - {'turn'}, adds
+    assert "add('turn'," in text   # instant or nothing: pbZorp.turn's reduced rule
+    core = RUNTIME_JS.read_text(encoding='utf-8')
+    m = re.search(r"CLIP_NAMES = \[([^\]]+)\]", core)
+    have = {c.strip().strip("'") for c in m.group(1).split(',')}
+    assert set(OLD_CLIPS) <= have, set(OLD_CLIPS) - have
+    from models import zorp_rig
+    for _name, face in adds:
+        assert zorp_rig.VALENCE[face] != zorp_rig.NEGATIVE, face
+
+
+def test_clips_end_non_negative():
+    """Data level: the last expression of every clip is a positive preset (the node harness checks the compiled
+    beats and the 1.2 s rule; this reads the source literals)."""
+    from models import zorp_rig
+
+    text = _poses_js_beats()
+    for name, body in re.findall(r"add\('([a-z-]+)', beatClip\((.*?)\)\);\n", text, re.S):
+        exprs = re.findall(r"\bexpr:\s*'([a-z_-]+)'", body)
+        if 'trip:' in body:
+            main_part = body.split('trip:')[0]
+            trip_part = body.split('trip:')[1]
+            assert zorp_rig.VALENCE[re.findall(r"\bexpr:\s*'([a-z_-]+)'", main_part)[-1]] == zorp_rig.POSITIVE, name
+            assert zorp_rig.VALENCE[re.findall(r"\bexpr:\s*'([a-z_-]+)'", trip_part)[-1]] == zorp_rig.POSITIVE, name
+            for e in re.findall(r"\bexpr:\s*'([a-z_-]+)'", main_part):
+                assert zorp_rig.VALENCE[e] != zorp_rig.NEGATIVE, (name, e)
+            trip_neg = {e for e in re.findall(r"\bexpr:\s*'([a-z_-]+)'", trip_part) if zorp_rig.VALENCE[e] == zorp_rig.NEGATIVE}
+            assert trip_neg == {'embarrassed'}, (name, trip_neg)   # the trip's only negative face is Zorp's own
+            assert 'embarrassed' in zorp_rig.CONTEXT_MAP['clip.dance.trip']
+            continue
+        assert exprs, name
+        assert zorp_rig.VALENCE[exprs[-1]] == zorp_rig.POSITIVE, f'{name} ends on {exprs[-1]}'
+        for e in exprs:
+            assert zorp_rig.VALENCE[e] != zorp_rig.NEGATIVE, (name, e)
+
+
+def test_pose_gallery_markup():
+    from app import app  # noqa: E402
+    from models import zorp_rig
+
+    html = app.test_client().get('/styleguide').data.decode()
+    start = html.index('id="zorp-poselib"')
+    section = html[start:html.index('</section>', start)]
+    assert 'href="#zorp-poselib"' in html and 'data-poses-phase="4"' in html
+    for name in zorp_rig.POSE_NAMES:
+        for size in (56, 160):
+            assert section.count(f'data-pose-name="{name}" data-pose-view=') >= 2, name
+            assert f'data-pose-size="{size}"' in section
+        assert f'data-zorp-pose="{name}"' in section, name
+    for clip in NEW_CLIPS:
+        assert f'data-zorp-clip="{clip}"' in section, clip
+    for name in ('bow', 'sit'):   # poses with a default view also show the front
+        assert f'data-pose-name="{name}" data-pose-view="front"' in section and f'data-pose-name="{name}" data-pose-view="side"' in section
+    # server-drawn, not bound: only the live pair is data-zorp-demo
+    assert section.count('data-zorp-demo') == 2
+    assert 'zorp-poses.js' in html and 'styleguide.js?v=8' in html
+
+
 def main():
     test_no_animation_libraries()
     test_presets_complete()
@@ -783,14 +1070,22 @@ def main():
     test_twinkle_rate()
     test_runtime_js_budget()
     test_views_complete()
+    test_side_arms_clear_the_face()
     test_guide_slapstick_lore_only()
     test_react_wrong_and_autoplay_empty_contexts()
     test_gallery_section()
     test_snapshot_tool_is_dev_only()
     test_snapshot_label_guard()
     test_snapshot_compare_is_mascot_box_only()
+    test_poses_complete()
+    test_poses_js_budget()
+    test_beats_reference_known_names()
+    test_stretch_within_limits()
+    test_every_new_clip_has_reduced_and_names_are_kept()
+    test_clips_end_non_negative()
+    test_pose_gallery_markup()
     test_decisions_recorded()
-    print('Zorp expression smoke (E8 Phase 3) passed.')
+    print('Zorp expression smoke (E8 Phase 4) passed.')
 
 
 if __name__ == '__main__':

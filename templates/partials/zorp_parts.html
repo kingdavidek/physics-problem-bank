@@ -68,6 +68,10 @@
 <g class="buddy-pupil"><ellipse cx="1.5" cy=".2" rx="2.6" ry="3.2" class="zf"/><circle cx="2.3" cy="-.9" r=".8" fill="#fff"/></g>
 {%- elif n == 'side' -%}
 <g class="buddy-pupil"><ellipse cx=".4" rx="2.2" ry="3.2" class="zf"/><circle cx="1.2" cy="-1" r=".8" fill="#fff"/></g>
+{%- elif n == 'side-up' -%}
+<g class="buddy-pupil"><ellipse cx=".4" cy="-1.5" rx="2.2" ry="3.2" class="zf"/><circle cx="1.2" cy="-2.6" r=".8" fill="#fff"/></g>
+{%- elif n == 'side-fwd' -%}
+<g class="buddy-pupil"><ellipse cx="1.1" cy=".2" rx="2.2" ry="3.2" class="zf"/><circle cx="1.9" cy="-.9" r=".8" fill="#fff"/></g>
 {%- elif n == 'closed' -%}
 <path class="zk" d="M-3-.4q3 3.4 6 0M-3-.4l-1.4 1.1" stroke-width="1.8"/>
 {%- elif n == 'closed-r' -%}
@@ -138,6 +142,12 @@
 <path class="zf" d="M29.2 44q3.2 4.6 6.2 0q-.6 3.4-3.1 3.4t-3.1-3.4z" stroke="var(--ink-800)" stroke-width="1.2" stroke-linejoin="round"/>
 {%- elif n == 'side-o' -%}
 <ellipse cx="32.4" cy="44.6" rx="1.5" ry="2" class="zk" stroke-width="1.6"/>
+{%- elif n == 'side-flat' -%}
+<path class="zk" d="M30.4 44.2h5" stroke-width="1.7"/>
+{%- elif n == 'side-wavy' -%}
+<path class="zk" d="M29.4 44.4q1.2-2 2.4 0t2.4 0t2.4 0" stroke-width="1.6"/>
+{%- elif n == 'side-frown' -%}
+<path class="zk" d="M29.6 46.4q2.8-3.6 5.6 0" stroke-width="1.8"/>
 {%- elif n == 'frown-soft' -%}
 <path class="zk" d="M27.2 46.6q4.8-4.2 9.6 0" stroke-width="1.8"/>
 {%- elif n == 'sleepy' -%}
@@ -185,7 +195,7 @@
 {%- if n == 'sweat' -%}
 <path class="zorp-dr" d="M47 26q2.6 3.4 2.6 5.2a2.6 2.6 0 0 1-5.2 0q0-1.8 2.6-5.2z" fill="#fff" stroke="var(--zorp-drop, var(--brand-400))" stroke-width="1"/>
 {%- elif n == 'tear-shine' -%}
-<g class="zorp-gl"><path d="M25.4 40.6q1.5 1.9 1.5 3a1.5 1.5 0 0 1-3 0q0-1.1 1.5-3z" fill="var(--zorp-drop, var(--brand-400))"/><circle cx="24.9" cy="43.2" r=".45" fill="#fff"/><path d="M38.6 40.6q1.5 1.9 1.5 3a1.5 1.5 0 0 1-3 0q0-1.1 1.5-3z" fill="var(--zorp-drop, var(--brand-400))"/><circle cx="38.1" cy="43.2" r=".45" fill="#fff"/></g>
+<g class="zorp-gl"><g class="zorp-far"><path d="M25.4 40.6q1.5 1.9 1.5 3a1.5 1.5 0 0 1-3 0q0-1.1 1.5-3z" fill="var(--zorp-drop, var(--brand-400))"/><circle cx="24.9" cy="43.2" r=".45" fill="#fff"/></g><path d="M38.6 40.6q1.5 1.9 1.5 3a1.5 1.5 0 0 1-3 0q0-1.1 1.5-3z" fill="var(--zorp-drop, var(--brand-400))"/><circle cx="38.1" cy="43.2" r=".45" fill="#fff"/></g>
 {%- elif n == 'blush-steam' -%}
 <g class="zorp-z"><circle cx="45.4" cy="25.4" r="1.2" fill="none" stroke="#fff" stroke-width=".9"/></g><g class="zorp-z"><circle cx="48" cy="21.8" r="1.5" fill="none" stroke="#fff" stroke-width=".9"/></g><g class="zorp-z"><circle cx="45.6" cy="17.8" r="1.1" fill="none" stroke="#fff" stroke-width=".9"/></g>
 {%- elif n == 'hearts' -%}
@@ -213,5 +223,28 @@
 {%- elif channel == 'mouth' -%}{{ mouth(n) }}
 {%- elif channel == 'cheeks' -%}{{ cheeks(n) }}
 {%- elif channel == 'fx' -%}{{ fx(n) }}
+{%- endif -%}
+{%- endmacro %}
+
+{# Arm shapes (E8 Phase 4, docs 3.9): drawn from the shoulder at (0,0) hanging down, so a shape swap never moves
+   the pivot. `s` is the side sign: 1 = right arm, -1 = left arm (mirrored). Limb stroke and hand nub take their
+   colour from --zorp-limb through .zl/.zn (motion.css). `rest` keeps the original attributes byte for byte.
+   Side view only: `side-rest` (the profile paddle) and `side-bent` (elbow back, hand forward to the chin). #}
+{% macro arm(n, side) -%}
+{%- set s = -1 if side == 'l' else 1 -%}
+{%- if n == 'straight' -%}
+<path class="zl" d="M0 0v12.4"/><circle cy="13.2" r="2" class="zn"/>
+{%- elif n == 'fist' -%}
+<path class="zl" d="M0 0v26.6"/><circle cy="29.6" r="4.6" class="zn"/>
+{%- elif n == 'bent' -%}
+<path class="zl" d="M0 0l{{ 7 * s }} 6.5l{{ -19 * s }} 4.5"/><circle cx="{{ -12 * s }}" cy="11" r="2.6" class="zn"/>
+{%- elif n == 'side-bent' -%}
+<path class="zl" d="M0 0l-4 7.5l13.5.5"/><circle cx="9.5" cy="8" r="2.6" class="zn"/>
+{%- elif n == 'side-rest' -%}
+<path class="zn zsa" d="M-1.9 0a1.9 1.9 0 0 1 3.8 0c.3 1.8 1.3 4 2.5 6c1.8 2.8 0 5.6-3 4.2c-3-1.9-3.7-6-3.3-10.2z"/>
+{%- elif n == 'bent-fist' -%}
+<path class="zl" d="M0 0v10h{{ 6.4 * s }}"/><circle cx="{{ 7.6 * s }}" cy="10" r="3.6" class="zn"/>
+{%- else -%}
+<path d="{{ 'M0 0q-3 3.8-2.4 8.2' if s < 0 else 'M0 0q3 3.8 2.4 8.2' }}" fill="none" stroke="var(--zorp-limb, var(--brand-700))" stroke-width="3.4" stroke-linecap="round"/>
 {%- endif -%}
 {%- endmacro %}

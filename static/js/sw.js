@@ -1,5 +1,5 @@
 /* Problem Bank service worker — cache static assets; network-first for pages/API. */
-const CACHE_VERSION = 'pb-v96';
+const CACHE_VERSION = 'pb-v97';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline';
 
@@ -11,6 +11,8 @@ const PRECACHE_URLS = [
   '/static/js/theme.js',
   '/static/js/site.js',
   '/static/js/pwa.js',
+  '/static/js/zorp-motion.js',
+  '/static/js/zorp-poses.js',
   '/static/css/tokens.css',
   '/static/css/fonts.css',
   '/static/css/base.css',

@@ -34,35 +34,41 @@
   pivot group (the shoulder as the group origin, the arm path starting at 0 0) and exists twice: a
   back layer behind the body and a front layer painted after the feet, hidden in the front view.
 
+  E8 Phase 4: `pose=` (models/zorp_rig.py POSES) draws a resting pose statically: inline `transform` styles on
+  the root, head, arms, feet and shadow, and the pose's arm shapes (zorp_parts.html arm). A pose with a default
+  view (bow, sit) draws it unless `view` is given (view='front' forces the front). The default render carries no pose markup at all.
+
   E8 Phase 2: fx listed in zorp_rig.FX_FACE (sweat, tear-shine, blush-steam) are drawn in
   g.zorp-slot--fx-face inside the face group, so they move with the head; every other fx stays
   in the ambient slot.
 #}
 
 {% from 'partials/zorp_overlays.html' import zorp_hat, zorp_shoe %}
-{% from 'partials/zorp_parts.html' import eye, brows, mouth, cheeks, fx %}
+{% from 'partials/zorp_parts.html' import eye, brows, mouth, cheeks, fx, arm %}
 
 {% macro _st(vs, key) %}{% if vs[key] %} style="{{ vs[key] }}"{% endif %}{% endmacro %}
-{% macro _arm(vs, cls, key, x, d) -%}
-<g transform="translate({{ x }} 40)"><g class="buddy-arm {{ cls }}"{{ _st(vs, key) }}><path d="{{ d }}" fill="none" stroke="var(--zorp-limb, var(--brand-700))" stroke-width="3.4" stroke-linecap="round"/></g></g>
+{% macro _arm(vs, cls, key, x, side, shape) -%}
+<g transform="translate({{ x }} 40)"><g class="buddy-arm {{ cls }}"{{ _st(vs, key) }}>{{ arm(shape, side) }}</g></g>
 {%- endmacro %}
 
-{% macro buddy_mascot(look=none, face='nudge', view='front', facing='r') -%}
+{% macro buddy_mascot(look=none, face='nudge', view=none, facing='r', pose=none) -%}
 {%- set look = look or {} -%}
 {%- set face = zorp_rig.resolve_preset(face) -%}
-{%- set vf = zorp_rig.resolve_view(view, facing) -%}
-{%- set vs = zorp_rig.view_styles(vf[0], vf[1]) -%}
+{%- set pose = zorp_rig.resolve_pose(pose) if pose else none -%}
+{%- set vf = zorp_rig.resolve_view(zorp_rig.static_view(view, pose), facing) -%}
+{%- set vs = zorp_rig.view_styles(vf[0], vf[1], pose) -%}
+{%- set pa = zorp_rig.pose_arms(pose or 'stand', vf[0]) -%}
 {%- set p = zorp_rig.parts_for(face, look.mouth, vf[0]) -%}
-<svg class="buddy-mascot" viewBox="0 0 64 64" aria-hidden="true" focusable="false"{% if look.colour %} data-zorp-colour="{{ look.colour }}"{% endif %}{% if look.antenna %} data-zorp-antenna="{{ look.antenna }}"{% endif %}{% if look.feet %} data-zorp-feet="{{ look.feet }}"{% endif %}{% if look.mouth %} data-mouth="{{ look.mouth }}"{% endif %}{% if face != 'nudge' %} data-expr="{{ face }}"{% endif %}{% if vf[0] != 'front' %} data-view="{{ vf[0] }}"{% if vf[1] == 'l' %} data-facing="l"{% endif %}{% endif %}>
-  <g class="buddy-root">
-  <g class="buddy-shadow">
+<svg class="buddy-mascot" viewBox="0 0 64 64" aria-hidden="true" focusable="false"{% if look.colour %} data-zorp-colour="{{ look.colour }}"{% endif %}{% if look.antenna %} data-zorp-antenna="{{ look.antenna }}"{% endif %}{% if look.feet %} data-zorp-feet="{{ look.feet }}"{% endif %}{% if look.mouth %} data-mouth="{{ look.mouth }}"{% endif %}{% if face != 'nudge' %} data-expr="{{ face }}"{% endif %}{% if vf[0] != 'front' %} data-view="{{ vf[0] }}"{% if vf[1] == 'l' %} data-facing="l"{% endif %}{% endif %}{% if pose and pose != 'stand' %} data-pose="{{ pose }}"{% endif %}>
+  <g class="buddy-root"{{ _st(vs, 'root') }}>
+  <g class="buddy-shadow"{{ _st(vs, 'shadow') }}>
     <ellipse cx="32" cy="61.4" rx="14" ry="1.6" fill="var(--ink-800)" opacity="0.12"/>
   </g>
   <g class="zorp-flip"{{ _st(vs, 'flip') }}>
   {# Arms: back layer, painted behind the body, tucked by default; pivot at the shoulder (motion.css) #}
-  {{ _arm(vs, 'buddy-arm--l', 'armL', '15.6', 'M0 0q-3 3.8-2.4 8.2') }}
-  {{ _arm(vs, 'buddy-arm--r', 'armR', '48.4', 'M0 0q3 3.8 2.4 8.2') }}
-  <g class="buddy-head">
+  {{ _arm(vs, 'buddy-arm--l', 'armL', '15.6', 'l', pa[0]) }}
+  {{ _arm(vs, 'buddy-arm--r', 'armR', '48.4', 'r', pa[1]) }}
+  <g class="buddy-head"{{ _st(vs, 'head') }}>
   {# Antennae #}
   <g class="buddy-antenna buddy-antenna--l"{{ _st(vs, 'antL') }}>
     <path d="M24 16L17 6" fill="none" stroke="var(--zorp-limb, var(--brand-700))" stroke-width="2.4" stroke-linecap="round"/>
@@ -96,8 +102,8 @@
     <ellipse cx="40" cy="56.5" rx="6.5" ry="3.6" fill="var(--zorp-limb, var(--brand-700))"/>{% if look.shoes %}{{ zorp_shoe(look.shoes, 40, 56.5) }}{% endif %}
   </g>
   {# Front-layer arms: painted after the feet, hidden in the front view (motion.css); clips move each with its back twin #}
-  {{ _arm(vs, 'buddy-arm--l-front', 'armLf', '15.6', 'M0 0q-3 3.8-2.4 8.2') }}
-  {{ _arm(vs, 'buddy-arm--r-front', 'armRf', '48.4', 'M0 0q3 3.8 2.4 8.2') }}
+  {{ _arm(vs, 'buddy-arm--l-front', 'armLf', '15.6', 'l', pa[0]) }}
+  {{ _arm(vs, 'buddy-arm--r-front', 'armRf', '48.4', 'r', pa[1]) }}
   </g>{# /zorp-flip #}
   <g class="zorp-slot--fx">{% if p.fx not in zorp_rig.FX_FACE %}{{ fx(p.fx) }}{% endif %}</g>
   </g>{# /buddy-root #}

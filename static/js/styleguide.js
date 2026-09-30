@@ -68,6 +68,7 @@
     }
     wireZorpDemo(document.getElementById('zorp-motion'));
     wireZorpDemo(document.getElementById('zorp-views'));
+    wireZorpDemo(document.getElementById('zorp-poselib'));
     buildMatrix(document.getElementById('sg-zorp-matrix'));
   });
 
@@ -190,6 +191,7 @@
     var level = scope.querySelector('[data-zorp-motion-level]');
     if (level) level.textContent = 'motionLevel(): ' + z.motionLevel();
     var slow = false;   // E8: dev-only 0.25x slow motion for clips
+    var facing = 'r';
     var btns = scope.querySelectorAll('[data-zorp-clip]');
     for (var i = 0; i < btns.length; i += 1) {
       btns[i].addEventListener('click', function (event) {
@@ -198,6 +200,8 @@
           z.play(btn.getAttribute('data-zorp-clip'), {
             el: demos[k],
             target: btn.getAttribute('data-zorp-target') || undefined,
+            trip: btn.hasAttribute('data-zorp-trip') ? true : undefined,
+            facing: facing,
             speed: slow ? 0.25 : undefined
           });
         }
@@ -205,7 +209,6 @@
     }
     wireExpressionPicker(scope, z, demos, function () { return slow; }, function (on) { slow = on; });
     // E8 Phase 3: turn buttons, the front-side-front cycle and the facing toggle (views section).
-    var facing = 'r';
     var turnBtns = scope.querySelectorAll('[data-zorp-turn]');
     var t;
     for (t = 0; t < turnBtns.length; t += 1) {
@@ -233,6 +236,33 @@
         facing = event.currentTarget.getAttribute('data-zorp-facing');
         for (var n = 0; n < facingBtns.length; n += 1) facingBtns[n].setAttribute('aria-pressed', facingBtns[n] === event.currentTarget ? 'true' : 'false');
         for (var k = 0; k < demos.length; k += 1) z.turn((z.viewOf(demos[k]) || { view: 'front' }).view, facing, { el: demos[k], required: true });
+      });
+    }
+    // E8 Phase 4: resting poses (pbZorp.pose); the pose's own preset is drawn too.
+    var poseBtns = scope.querySelectorAll('[data-zorp-pose]');
+    for (t = 0; t < poseBtns.length; t += 1) {
+      poseBtns[t].addEventListener('click', function (event) {
+        if (!z.pose) return;
+        for (var k = 0; k < demos.length; k += 1) z.pose(event.currentTarget.getAttribute('data-zorp-pose'), { el: demos[k], expr: true, facing: facing, speed: slow ? 0.25 : undefined });
+      });
+    }
+    // E8 Phase 4 (docs 3.10): gallery-only silhouette check. One CSS filter on each mascot flattens it to a single
+    // colour (ink on light, white on dark), so a pose has to read from its outline alone. No per-pose rules.
+    var silBtn = scope.querySelector('[data-zorp-silhouette]');
+    if (silBtn) {
+      silBtn.addEventListener('click', function () {
+        var on = silBtn.getAttribute('aria-pressed') !== 'true';
+        var bg = scope.querySelector('svg.buddy-mascot');
+        var rgb = [255, 255, 255];
+        for (; bg; bg = bg.parentElement) {   // the first opaque background behind the mascots
+          var c = window.getComputedStyle(bg).backgroundColor.match(/[\d.]+/g);
+          if (c && (c.length < 4 || +c[3] > 0.5)) { rgb = c.slice(0, 3).map(Number); break; }
+        }
+        var dark = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000 < 128;
+        var marks = scope.querySelectorAll('svg.buddy-mascot');
+        for (var m = 0; m < marks.length; m += 1) marks[m].style.filter = on ? (dark ? 'brightness(0) invert(1)' : 'brightness(0)') : '';
+        silBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        silBtn.textContent = 'Silhouette: ' + (on ? 'on' : 'off');
       });
     }
     var off = scope.querySelector('[data-zorp-idle-off]');

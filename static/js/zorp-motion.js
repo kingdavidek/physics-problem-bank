@@ -1,11 +1,7 @@
-/* E7 Phase 1: Zorp motion runtime (docs/MASCOT_MOTION_AND_ONBOARDING.md §3.2).
-   WAAPI clips on rig groups; CSS idle loop in static/css/motion.css. No libraries.
-   E8 Phase 1 (docs/ZORP_EXPRESSIVENESS.md §4.2-4.4): faces are presets of channels (eyes, brows,
-   mouth, cheeks, fx) whose parts are cloned from the inert #pb-zorp-parts template into the
-   face slots; presets come from the #pb-zorp-rig data island.
-   E8 Phase 3 (docs 3.8): views and the pinch-turn. A view is a resting `translate`/`scale` per part
-   (CSS individual transform properties, so clips and E6 gestures animate `transform` on top of it
-   without replacing it), plus visibility and side-view part variants, all from the island. */
+/* Zorp motion runtime: WAAPI clips on rig groups (E7); CSS idle loop in static/css/motion.css. No libraries.
+   E8 (docs/ZORP_EXPRESSIVENESS.md 4.2-4.4): faces are presets of channels cloned from the inert #pb-zorp-parts
+   template into the face slots (presets from the #pb-zorp-rig island); views and the pinch-turn (3.8) are resting
+   `translate`/`scale` per part, so clips animate `transform` on top of them. */
 (function () {
   'use strict';
   if (window.pbZorp) return;
@@ -81,8 +77,7 @@
   var blinkTimer = 0;
 
   function motionLevel() {
-    // E7 Phase 5: data-motion (set from the user's motion_preference setting) takes
-    // priority over the OS-level prefers-reduced-motion media query below.
+    // data-motion (the motion_preference setting) outranks the OS prefers-reduced-motion query.
     var pref = (document.documentElement.getAttribute('data-motion') || 'system');
     if (pref === 'off') return 'off';
     if (pref === 'reduced') return 'reduced';
@@ -303,7 +298,9 @@
       armL: found(svg, '.buddy-arm--l', '.buddy-arm--l-front'),
       armR: found(svg, '.buddy-arm--r', '.buddy-arm--r-front'),
       antL: svg.querySelector('.buddy-antenna--l'),
-      antR: svg.querySelector('.buddy-antenna--r')
+      antR: svg.querySelector('.buddy-antenna--r'),
+      footL: svg.querySelector('.buddy-foot--l'),
+      footR: svg.querySelector('.buddy-foot--r')
     };
   }
 
@@ -350,7 +347,11 @@
       gestureTimer: 0,
       gestureResolve: null,
       pulseTimer: 0,
-      thought: null
+      thought: null,
+      tm: [],
+      undo: [],
+      pose: svg.getAttribute('data-pose'),
+      post: null
     };
     // What the server drew (data-view, data-facing, data-expr) is the starting point.
     inst.view = viewRow(svg.getAttribute('data-view')) ? svg.getAttribute('data-view') : 'front';
@@ -428,13 +429,17 @@
     return typeof name === 'string' ? setExpression(name, opts) : false;
   }
 
-  function tempFace(inst, face, ms) {
+  // A temporary face (optionally with another fx). A second call before the restore keeps the first call's
+  // "before" face, so a clip can change expression at beat boundaries and still restore the original.
+  function tempFace(inst, face, ms, fx) {
     var ch = channelsFor(inst, face);
     if (!ch) return;
+    if (fx) ch.fx = fx;
+    var keep = inst.faceSwap;
     inst.faceSwap = {
-      prev: inst.host.getAttribute('data-face'),
+      prev: keep ? keep.prev : inst.host.getAttribute('data-face'),
       face: face,
-      prevCh: inst.cur ? copyChannels(inst.cur) : null
+      prevCh: keep ? keep.prevCh : (inst.cur ? copyChannels(inst.cur) : null)
     };
     inst.host.setAttribute('data-face', face);
     drawChannels(inst, ch, face);
@@ -464,6 +469,43 @@
     el.style.scale = v.s;
   }
 
+  // Side view: a plain rest arm is drawn as the profile paddle (arm:side-rest); any other view puts the rest arm back.
+  function sideArms(inst) {
+    ['L', 'R'].forEach(function (S) {
+      (inst.parts['arm' + S] || []).forEach(function (el) {
+        var k = el.firstElementChild;
+        var cls = k ? (k.getAttribute('class') || '') : 'x';
+        var to = inst.view === 'side' ? (cls === '' ? 'side-rest' : '') : (cls === 'zn zsa' ? 'rest' : '');
+        var node = to && partNode('arm', to + '-' + S.toLowerCase());
+        if (node) fillSlot(el, node);
+      });
+    });
+  }
+
+  // Side-view arm angle for a front-view one: zorp_rig.side_rot (the rule is documented there), same numbers.
+  function sideRot(d, shape) {
+    if (shape === 'bent') return 0;
+    var a = Math.min(Math.abs(d), 180);
+    if (a < 70) return a <= 40 ? d : (d < 0 ? -40 : 40);
+    var o = +(225 - (a - 70) * 0.4).toFixed(2);
+    if (shape === 'fist' || shape === 'bent-fist') o = Math.min(o, 190);
+    return d < 0 ? o : -o;
+  }
+
+  // A clip's arm tracks as the side view draws them.
+  function sideTracks(inst, tracks) {
+    if (inst.view !== 'side') return tracks;
+    return tracks.map(function (t) {
+      if (t[0] !== inst.parts.armL && t[0] !== inst.parts.armR) return t;
+      return [t[0], t[1].map(function (f) {
+        var o = {};
+        for (var k in f) if (own(f, k)) o[k] = f[k];
+        o.transform = String(f.transform).replace(/rotate\((-?[\d.]+)deg\)/, function (m, d) { return 'rotate(' + sideRot(+d) + 'deg)'; });
+        return o;
+      })];
+    });
+  }
+
   // Write the whole resting view as inline styles. Idempotent: used by stop(), instant view
   // changes and as the fallback when commitStyles() is missing.
   function applyRest(inst) {
@@ -474,6 +516,8 @@
     else inst.svg.setAttribute('data-view', inst.view);
     if (inst.facing === 'l') inst.svg.setAttribute('data-facing', 'l');
     else inst.svg.removeAttribute('data-facing');
+    sideArms(inst);
+    if (inst.post) inst.post(inst);   // zorp-poses.js: re-apply the resting pose over the view
   }
 
   // Draw the variants the current view uses for the current expression (no animation).
@@ -498,9 +542,8 @@
     applyRest(inst);
   }
 
-  // Pinch-turn: root dip, mirror pinched to 0.15 by 45%, new view committed at 50%, overshoot, settle.
-  // Moving parts tween translate/scale and end with commitStyles() (applyRest() if unavailable).
-  // Resolves true on arrival, false if stop() or a newer clip cut it short.
+  // Pinch-turn: root dip, flip pinched to 0.15 by 45%, view committed at 50%, overshoot, settle. Moving parts tween
+  // translate/scale and end with commitStyles() (applyRest() if missing). Resolves false if stop() cut it short.
   function turnRun(inst, view, facing, spd) {
     var seq = inst.seq;
     var dur = TURN_MS / spd;
@@ -531,7 +574,6 @@
         return { offset: f[0], translate: f[1].t, scale: f[1].s };
       }), {}, true);
     }
-    // flip: [offset, scaleX, easing]; root dip: [offset, transform]; antennae lag by ANT_LAG_MS
     add(inst.vp.flip, [[0, s0, 'ease-in'], [0.15, s0, 'ease-in'], [0.45, s0 * 0.15, 'linear'], [0.55, s1 * 0.15, 'ease-out'],
       [0.8, s1 * 1.04, 'ease-in-out'], [1, s1]].map(function (f) {
       return { offset: f[0], scale: f[1] + ' 1', easing: f[2] };
@@ -544,8 +586,7 @@
         return { offset: i / 2, transform: 'rotate(' + deg + 'deg)' };
       }), { delay: ANT_LAG_MS / spd, duration: dur - ANT_LAG_MS / spd }, false);
     });
-    // The 50% commit rides on a half-length animation, so it stays in step with the document
-    // timeline (pausing or slowing the animations moves it too).
+    // The 50% commit rides on a half-length animation, so pausing or slowing the timeline moves it too.
     var clock = inst.vp.flip.animate([{ opacity: 1 }, { opacity: 1 }], { duration: dur / 2 });
     made.push(clock);
     clock.finished.then(function () {
@@ -598,7 +639,10 @@
       if (!ok || inst.seq !== seq) return false;
       inst.busy = inst.dirty = true;   // stop() mid-clip must still restore home
       if (face) tempFace(inst, face, c.dur / spd);
-      return run(inst, c.tracks(inst.parts, visiblePupils(inst), { target: 'right' }), c.dur / spd);
+      var o = { target: 'right', trip: opts.trip, facing: opts.facing, view: 'side' };
+      var done = run(inst, c.beats ? c.tracks(inst.parts, visiblePupils(inst), o) : sideTracks(inst, c.tracks(inst.parts, visiblePupils(inst), o)), c.dur / spd);
+      if (c.start) c.start(inst, spd, o);
+      return done;
     }).then(function (ok) {
       if (!ok || inst.seq !== seq) return false;
       inst.busy = true;
@@ -616,9 +660,11 @@
       try { inst.anims[i].cancel(); } catch (e) { /* ignore */ }
     }
     inst.anims = [];
+    inst.tm.forEach(clearTimeout);
+    inst.tm = [];
+    while (inst.undo.length) inst.undo.pop()();   // beat-clip changes (arm shapes) put back
     if (inst.dirty) {
-      // A turn or side-view excursion was cut short: settle on the view it left (excursion) or the
-      // one the turn had committed, so nothing stays half-mirrored.
+      // Cut-short turn or side excursion: settle on the view it left (excursion) or had committed, never half-mirrored.
       if (inst.home) { inst.view = inst.home.view; inst.facing = inst.home.facing; inst.home = null; redrawView(inst); }
       applyRest(inst);
       inst.dirty = false;
@@ -664,12 +710,9 @@
     inst.thought = entry;
     if (!canAnimate) return;
     try {
-      var anim = g.animate(kf([
-        { opacity: 0, transform: 'translate(0, 4px)' },
-        { offset: 0.2, opacity: 1, transform: 'translate(0, 0)' },
-        { offset: 0.75, opacity: 1, transform: 'translate(0, 0)' },
-        { opacity: 0, transform: 'translate(0, -3px)' }
-      ]), { duration: THOUGHT_MS, easing: 'ease-in-out', fill: 'none' });
+      var anim = g.animate(kf([{ opacity: 0, transform: 'translate(0, 4px)' }, { offset: 0.2, opacity: 1, transform: 'translate(0, 0)' },
+        { offset: 0.75, opacity: 1, transform: 'translate(0, 0)' }, { opacity: 0, transform: 'translate(0, -3px)' }]),
+      { duration: THOUGHT_MS, easing: 'ease-in-out', fill: 'none' });
       entry.anim = anim;
       anim.finished.then(function () {
         if (inst.thought === entry) clearThought(inst);
@@ -680,25 +723,19 @@
   }
 
   function kf(frames) {
-    var out = [];
-    var i;
-    for (i = 0; i < frames.length; i += 1) {
-      var frame = {};
-      var key;
-      for (key in frames[i]) {
-        if (Object.prototype.hasOwnProperty.call(frames[i], key)) frame[key] = frames[i][key];
-      }
-      if (!frame.easing) frame.easing = 'ease-in-out';
-      out.push(frame);
-    }
-    return out;
+    return frames.map(function (f) {
+      var o = {};
+      for (var key in f) if (own(f, key)) o[key] = f[key];
+      if (!o.easing) o.easing = 'ease-in-out';
+      return o;
+    });
   }
 
   function run(inst, tracks, dur) {
     var anims = [];
     var t;
     // Away from the front view, layer the clip on the resting view.
-    var add = HAS_COMPOSITE && inst.view !== 'front';
+    var add = HAS_COMPOSITE && (inst.view !== 'front' || (inst.pose && inst.pose !== 'stand'));
     function go(node, frames) {
       var o = { duration: dur, easing: 'linear', fill: 'none' };
       if (add) o.composite = 'add';
@@ -723,6 +760,12 @@
     });
   }
 
+  // A timer guarded by inst.seq and cleared by stop(): beat-boundary changes (zorp-poses.js).
+  function after(inst, ms, fn) {
+    var seq = inst.seq;
+    inst.tm.push(setTimeout(function () { if (inst.seq === seq) fn(); }, ms));
+  }
+
   function delay(inst, ms) {
     var seq = inst.seq;
     return new Promise(function (resolve) {
@@ -733,18 +776,12 @@
     });
   }
 
+  // Frame helpers for the clip tables (kf() adds the default easing).
+  function F(transform, offset) { return offset === undefined ? { transform: transform } : { offset: offset, transform: transform }; }
+  var BLINK = [F('scale(1,1)'), F('scale(1,0.1)', 0.45), F('scale(1,0.1)', 0.55), F('scale(1,1)')];
+
   var CLIPS = {
-    blink: {
-      dur: 160,
-      tracks: function (parts, pupils) {
-        return [[pupils, [
-          { transform: 'scale(1,1)' },
-          { offset: 0.45, transform: 'scale(1,0.1)' },
-          { offset: 0.55, transform: 'scale(1,0.1)' },
-          { transform: 'scale(1,1)' }
-        ]]];
-      }
-    },
+    blink: { dur: 160, tracks: function (parts, pupils) { return [[pupils, BLINK]]; } },
     cheer: {
       dur: 700,
       face: 'celebrate',
@@ -752,43 +789,15 @@
       pulse: true,
       tracks: function (parts) {
         return [
-          [parts.root, [
-            { transform: 'translate(0,0) scale(1,1)' },
-            { offset: 0.15, transform: 'translate(0,1px) scale(1.04,0.94)' },
-            { offset: 0.45, transform: 'translate(0,-8px) scale(0.97,1.05)' },
-            { offset: 0.75, transform: 'translate(0,0) scale(1.06,0.92)' },
-            { transform: 'translate(0,0) scale(1,1)' }
-          ]],
-          [parts.shadow, [
-            { transform: 'scale(1,1)', opacity: 1 },
-            { offset: 0.45, transform: 'scale(0.7,1)', opacity: 0.5 },
-            { offset: 0.75, transform: 'scale(1.1,1)', opacity: 1 },
-            { transform: 'scale(1,1)', opacity: 1 }
-          ]],
-          [parts.armL, [
-            { transform: 'rotate(0deg)' },
-            { offset: 0.35, transform: 'rotate(115deg)' },
-            { offset: 0.75, transform: 'rotate(100deg)' },
-            { transform: 'rotate(0deg)' }
-          ]],
-          [parts.armR, [
-            { transform: 'rotate(0deg)' },
-            { offset: 0.35, transform: 'rotate(-115deg)' },
-            { offset: 0.75, transform: 'rotate(-100deg)' },
-            { transform: 'rotate(0deg)' }
-          ]],
-          [parts.antL, [
-            { transform: 'rotate(0deg)' },
-            { offset: 0.45, transform: 'rotate(-14deg)' },
-            { offset: 0.8, transform: 'rotate(6deg)' },
-            { transform: 'rotate(0deg)' }
-          ]],
-          [parts.antR, [
-            { transform: 'rotate(0deg)' },
-            { offset: 0.45, transform: 'rotate(14deg)' },
-            { offset: 0.8, transform: 'rotate(-6deg)' },
-            { transform: 'rotate(0deg)' }
-          ]]
+          [parts.root, [F('translate(0,0) scale(1,1)'), F('translate(0,1px) scale(1.04,0.94)', 0.15), F('translate(0,-8px) scale(0.97,1.05)', 0.45),
+            F('translate(0,0) scale(1.06,0.92)', 0.75), F('translate(0,0) scale(1,1)')]],
+          [parts.shadow, [{ transform: 'translate(0,0) scale(1,1)', opacity: 1 }, { offset: 0.15, transform: 'translate(0,-1px) scale(1,1)', opacity: 1 },
+            { offset: 0.45, transform: 'translate(0,8px) scale(0.7,1)', opacity: 0.5 }, { offset: 0.75, transform: 'translate(0,0) scale(1.1,1)', opacity: 1 },
+            { transform: 'translate(0,0) scale(1,1)', opacity: 1 }]],
+          [parts.armL, [F('rotate(0deg)'), F('rotate(115deg)', 0.35), F('rotate(100deg)', 0.75), F('rotate(0deg)')]],
+          [parts.armR, [F('rotate(0deg)'), F('rotate(-115deg)', 0.35), F('rotate(-100deg)', 0.75), F('rotate(0deg)')]],
+          [parts.antL, [F('rotate(0deg)'), F('rotate(-14deg)', 0.45), F('rotate(6deg)', 0.8), F('rotate(0deg)')]],
+          [parts.antR, [F('rotate(0deg)'), F('rotate(14deg)', 0.45), F('rotate(-6deg)', 0.8), F('rotate(0deg)')]]
         ];
       }
     },
@@ -798,20 +807,8 @@
       reducedFace: 'nudge',
       tracks: function (parts) {
         return [
-          [parts.root, [
-            { transform: 'rotate(0deg)' },
-            { offset: 0.2, transform: 'rotate(6deg)' },
-            { offset: 0.45, transform: 'rotate(-5deg)' },
-            { offset: 0.65, transform: 'rotate(3deg)' },
-            { offset: 0.85, transform: 'rotate(-1.5deg)' },
-            { transform: 'rotate(0deg)' }
-          ]],
-          [parts.armR, [
-            { transform: 'rotate(0deg)' },
-            { offset: 0.3, transform: 'rotate(-25deg)' },
-            { offset: 0.7, transform: 'rotate(-25deg)' },
-            { transform: 'rotate(0deg)' }
-          ]]
+          [parts.root, [F('rotate(0deg)'), F('rotate(6deg)', 0.2), F('rotate(-5deg)', 0.45), F('rotate(3deg)', 0.65), F('rotate(-1.5deg)', 0.85), F('rotate(0deg)')]],
+          [parts.armR, [F('rotate(0deg)'), F('rotate(-25deg)', 0.3), F('rotate(-25deg)', 0.7), F('rotate(0deg)')]]
         ];
       }
     },
@@ -821,28 +818,10 @@
       reducedFace: 'weak_topic',
       tracks: function (parts, pupils) {
         return [
-          [parts.head, [
-            { transform: 'rotate(0deg)' },
-            { offset: 0.3, transform: 'rotate(-8deg)' },
-            { offset: 0.8, transform: 'rotate(-8deg)' },
-            { transform: 'rotate(0deg)' }
-          ]],
-          [pupils, [
-            { transform: 'translate(0,0)' },
-            { offset: 0.25, transform: 'translate(1px,-1.2px)' },
-            { offset: 0.85, transform: 'translate(1px,-1.2px)' },
-            { transform: 'translate(0,0)' }
-          ]],
-          [parts.antL, [
-            { transform: 'rotate(0deg)' },
-            { offset: 0.5, transform: 'rotate(6deg)' },
-            { transform: 'rotate(0deg)' }
-          ]],
-          [parts.antR, [
-            { transform: 'rotate(0deg)' },
-            { offset: 0.5, transform: 'rotate(-6deg)' },
-            { transform: 'rotate(0deg)' }
-          ]]
+          [parts.head, [F('rotate(0deg)'), F('rotate(-8deg)', 0.3), F('rotate(-8deg)', 0.8), F('rotate(0deg)')]],
+          [pupils, [F('translate(0,0)'), F('translate(1px,-1.2px)', 0.25), F('translate(1px,-1.2px)', 0.85), F('translate(0,0)')]],
+          [parts.antL, [F('rotate(0deg)'), F('rotate(6deg)', 0.5), F('rotate(0deg)')]],
+          [parts.antR, [F('rotate(0deg)'), F('rotate(-6deg)', 0.5), F('rotate(0deg)')]]
         ];
       }
     },
@@ -852,21 +831,9 @@
       reducedFace: 'milestone',
       tracks: function (parts) {
         return [
-          [parts.armR, [
-            { transform: 'rotate(0deg)' },
-            { offset: 0.2, transform: 'rotate(-95deg)' },
-            { offset: 0.35, transform: 'rotate(-80deg)' },
-            { offset: 0.5, transform: 'rotate(-105deg)' },
-            { offset: 0.65, transform: 'rotate(-80deg)' },
-            { offset: 0.8, transform: 'rotate(-95deg)' },
-            { transform: 'rotate(0deg)' }
-          ]],
-          [parts.head, [
-            { transform: 'rotate(0deg)' },
-            { offset: 0.3, transform: 'rotate(3deg)' },
-            { offset: 0.8, transform: 'rotate(3deg)' },
-            { transform: 'rotate(0deg)' }
-          ]]
+          [parts.armR, [F('rotate(0deg)'), F('rotate(-95deg)', 0.2), F('rotate(-80deg)', 0.35), F('rotate(-105deg)', 0.5), F('rotate(-80deg)', 0.65),
+            F('rotate(-95deg)', 0.8), F('rotate(0deg)')]],
+          [parts.head, [F('rotate(0deg)'), F('rotate(3deg)', 0.3), F('rotate(3deg)', 0.8), F('rotate(0deg)')]]
         ];
       }
     },
@@ -878,67 +845,23 @@
         var side = { left: 1, right: 1, down: 1 }[opts.target] ? opts.target : 'right';
         if (side === 'left') {
           return [
-            [parts.armL, [
-              { transform: 'rotate(0deg)' },
-              { offset: 0.25, transform: 'rotate(80deg)' },
-              { offset: 0.8, transform: 'rotate(80deg)' },
-              { transform: 'rotate(0deg)' }
-            ]],
-            [parts.head, [
-              { transform: 'rotate(0deg)' },
-              { offset: 0.25, transform: 'rotate(-4deg)' },
-              { offset: 0.8, transform: 'rotate(-4deg)' },
-              { transform: 'rotate(0deg)' }
-            ]],
-            [pupils, [
-              { transform: 'translate(0,0)' },
-              { offset: 0.25, transform: 'translate(-1px,0)' },
-              { offset: 0.8, transform: 'translate(-1px,0)' },
-              { transform: 'translate(0,0)' }
-            ]]
+            [parts.armL, [F('rotate(0deg)'), F('rotate(80deg)', 0.25), F('rotate(80deg)', 0.8), F('rotate(0deg)')]],
+            [parts.head, [F('rotate(0deg)'), F('rotate(-4deg)', 0.25), F('rotate(-4deg)', 0.8), F('rotate(0deg)')]],
+            [pupils, [F('translate(0,0)'), F('translate(-1px,0)', 0.25), F('translate(-1px,0)', 0.8), F('translate(0,0)')]]
           ];
         }
         if (side === 'down') {
           return [
-            [parts.armR, [
-              { transform: 'rotate(0deg)' },
-              { offset: 0.25, transform: 'rotate(-35deg)' },
-              { offset: 0.8, transform: 'rotate(-35deg)' },
-              { transform: 'rotate(0deg)' }
-            ]],
-            [parts.head, [
-              { transform: 'rotate(0deg)' },
-              { offset: 0.25, transform: 'rotate(6deg)' },
-              { offset: 0.8, transform: 'rotate(6deg)' },
-              { transform: 'rotate(0deg)' }
-            ]],
-            [pupils, [
-              { transform: 'translate(0,0)' },
-              { offset: 0.25, transform: 'translate(0,1px)' },
-              { offset: 0.8, transform: 'translate(0,1px)' },
-              { transform: 'translate(0,0)' }
-            ]]
+            [parts.armR, [F('rotate(0deg)'), F('rotate(-35deg)', 0.25), F('rotate(-35deg)', 0.8), F('rotate(0deg)')]],
+            [parts.head, [F('rotate(0deg)'), F('rotate(6deg)', 0.25), F('rotate(6deg)', 0.8), F('rotate(0deg)')]],
+            [pupils, [F('translate(0,0)'), F('translate(0,1px)', 0.25), F('translate(0,1px)', 0.8), F('translate(0,0)')]]
           ];
         }
         return [
-          [parts.armR, [
-            { transform: 'rotate(0deg)' },
-            { offset: 0.25, transform: 'rotate(-80deg)' },
-            { offset: 0.8, transform: 'rotate(-80deg)' },
-            { transform: 'rotate(0deg)' }
-          ]],
-          [parts.head, [
-            { transform: 'rotate(0deg)' },
-            { offset: 0.25, transform: 'rotate(4deg)' },
-            { offset: 0.8, transform: 'rotate(4deg)' },
-            { transform: 'rotate(0deg)' }
-          ]],
-          [pupils, [
-            { transform: 'translate(0,0)' },
-            { offset: 0.25, transform: 'translate(1px,0)' },
-            { offset: 0.8, transform: 'translate(1px,0)' },
-            { transform: 'translate(0,0)' }
-          ]]
+          // in profile sideTracks() lifts the arm over the top, never across the face
+          [parts.armR, [F('rotate(0deg)'), F('rotate(-80deg)', 0.25), F('rotate(-80deg)', 0.8), F('rotate(0deg)')]],
+          [parts.head, [F('rotate(0deg)'), F('rotate(4deg)', 0.25), F('rotate(4deg)', 0.8), F('rotate(0deg)')]],
+          [pupils, [F('translate(0,0)'), F('translate(1px,0)', 0.25), F('translate(1px,0)', 0.8), F('translate(0,0)')]]
         ];
       }
     },
@@ -948,70 +871,45 @@
       reducedFace: 'celebrate',
       tracks: function (parts) {
         return [
-          [parts.root, [
-            { transform: 'translate(0,0) scale(1,1)' },
-            { offset: 0.25, transform: 'translate(0,2px) scale(1.08,0.9)' },
-            { offset: 0.6, transform: 'translate(0,-9px) scale(0.94,1.08)' },
-            { offset: 0.85, transform: 'translate(0,0) scale(1.05,0.94)' },
-            { transform: 'translate(0,0) scale(1,1)' }
-          ]],
-          [parts.shadow, [
-            { transform: 'scale(1,1)', opacity: 1 },
-            { offset: 0.6, transform: 'scale(0.75,1)', opacity: 0.55 },
-            { offset: 0.85, transform: 'scale(1.05,1)', opacity: 1 },
-            { transform: 'scale(1,1)', opacity: 1 }
-          ]]
+          [parts.root, [F('translate(0,0) scale(1,1)'), F('translate(0,2px) scale(1.08,0.9)', 0.25), F('translate(0,-9px) scale(0.94,1.08)', 0.6),
+            F('translate(0,0) scale(1.05,0.94)', 0.85), F('translate(0,0) scale(1,1)')]],
+          [parts.shadow, [{ transform: 'translate(0,0) scale(1,1)', opacity: 1 }, { offset: 0.25, transform: 'translate(0,-2px) scale(1,1)', opacity: 1 },
+            { offset: 0.6, transform: 'translate(0,9px) scale(0.75,1)', opacity: 0.55 }, { offset: 0.85, transform: 'translate(0,0) scale(1.05,1)', opacity: 1 },
+            { transform: 'translate(0,0) scale(1,1)', opacity: 1 }]]
         ];
       }
     },
-    // E7 Phase 4: streak-ring peek: slides in from off-screen, head tilt. No face/reducedFace, so
-    // reduced motion skips it (play() resolves false for a clip without one).
+    // Streak-ring peek: slides in from off-screen. No face/reducedFace, so reduced motion skips it (play() resolves false).
     peek: {
       dur: 500,
       tracks: function (parts) {
         return [
-          [parts.root, [
-            { transform: 'translateX(-32px)' },
-            { offset: 0.55, transform: 'translateX(2px)' },
-            { offset: 0.8, transform: 'translateX(-2px)' },
-            { transform: 'translateX(0)' }
-          ]],
-          [parts.head, [
-            { transform: 'rotate(0deg)' },
-            { offset: 0.4, transform: 'rotate(-10deg)' },
-            { offset: 0.8, transform: 'rotate(-10deg)' },
-            { transform: 'rotate(0deg)' }
-          ]]
+          [parts.root, [F('translateX(-32px)'), F('translateX(2px)', 0.55), F('translateX(-2px)', 0.8), F('translateX(0)')]],
+          [parts.head, [F('rotate(0deg)'), F('rotate(-10deg)', 0.4), F('rotate(-10deg)', 0.8), F('rotate(0deg)')]]
         ];
       }
     },
-    // E7 Phase 4: head droop with the real `sleep` preset (offline.html draws it server-side).
-    // Same face in reduced motion: a face swap is content, not motion.
+    // Head droop with the real `sleep` preset (offline.html draws it server-side); a face swap is content, so reduced keeps it.
     sleep: {
       dur: 1400,
       face: 'sleep',
       reducedFace: 'sleep',
       tracks: function (parts) {
-        return [
-          [parts.head, [
-            { transform: 'rotate(0deg)' },
-            { offset: 0.35, transform: 'rotate(12deg)' },
-            { offset: 0.85, transform: 'rotate(12deg)' },
-            { transform: 'rotate(0deg)' }
-          ]]
-        ];
+        return [[parts.head, [F('rotate(0deg)'), F('rotate(12deg)', 0.35), F('rotate(12deg)', 0.85), F('rotate(0deg)')]]];
       }
     }
   };
 
-  // side-point: turn to the side, point forward, turn back (about 1.1 s). Reduced motion swaps the
-  // view instantly (this clip's meaning needs it, docs 2 #5); off stays front.
+  // side-point: turn to the side, point, turn back (about 1.1 s). Reduced motion swaps the view
+  // instantly (this clip's meaning needs it, docs 2 #5); off stays front.
   CLIPS['side-point'] = {
     dur: 500,
     reducedMs: 1100,
+    view: 'side',
+    needView: 1,
     face: 'curious',
     reducedFace: 'curious',
-    tracks: function (parts, pupils) { return CLIPS.point.tracks(parts, pupils, { target: 'right' }); }
+    tracks: function (parts, pupils) { return CLIPS.point.tracks(parts, pupils, { target: 'right', view: 'side' }); }
   };
 
   function play(name, opts) {
@@ -1049,8 +947,9 @@
 
     var c = CLIPS[name];
     if (!c) { inst.busy = false; return Promise.resolve(false); }
+    if (c.custom) return c.custom(inst, opts, spd);
 
-    var viewed = (name === 'side-point' || (name === 'point' && opts.view === 'side')) && HAS_PROPS && !!viewRow('side');
+    var viewed = (c.view === 'side' || (name === 'point' && opts.view === 'side')) && HAS_PROPS && !!viewRow('side');
 
     if (reduced) {
       // Thought bubble is a full-motion-only effect — never created here.
@@ -1058,7 +957,7 @@
       var hold = (c.reducedMs || c.dur) / spd;
       var rseq = inst.seq;
       var reducedFace = faceOverride || c.reducedFace;
-      if (name === 'side-point' && viewed && motionLevel() === 'reduced') {
+      if (c.needView && viewed && motionLevel() === 'reduced') {
         inst.home = { view: inst.view, facing: inst.facing };
         inst.dirty = true;
         setView(inst, 'side', opts.facing === 'l' ? 'l' : 'r');
@@ -1079,10 +978,14 @@
     }
 
     try {
+      if (c.pre) c.pre(inst, opts);   // zorp-poses.js: a beat clip starts from the standing pose
       var fullFace = faceOverride || c.face;
       if (viewed && inst.vp.flip && rendered(inst)) return viewClip(inst, c, opts, spd, fullFace);
       if (fullFace) tempFace(inst, fullFace, c.dur / spd);
-      var promise = run(inst, c.tracks(inst.parts, visiblePupils(inst), opts), c.dur / spd);
+      // beat clips mirror the root (outside the flip) by the facing Zorp already has
+      var promise = run(inst, c.beats ? c.tracks(inst.parts, visiblePupils(inst), { trip: opts.trip, facing: inst.facing, view: inst.view })
+        : sideTracks(inst, c.tracks(inst.parts, visiblePupils(inst), opts)), c.dur / spd);
+      if (c.start) c.start(inst, spd, opts);
       if (opts.thought) showThought(inst);
       return promise;
     } catch (e) {
@@ -1106,8 +1009,7 @@
     return !!(inst.svg.closest && inst.svg.closest('[data-guide-root]'));
   }
 
-  // E7 Phase 4: decorative mascots (data-zorp-autoplay: empty states, streak-ring peek) bind before
-  // the corner buddy, so reactTarget() must skip them or answers would animate the wrong mascot.
+  // Decorative mascots (data-zorp-autoplay) bind before the corner buddy: reactTarget() must skip them.
   function isDecorative(inst) {
     return !!(inst.host && inst.host.hasAttribute && inst.host.hasAttribute('data-zorp-autoplay'));
   }
@@ -1148,8 +1050,7 @@
     var now = Date.now();
     if (!rare) {
       if (now - lastReactAt < REACT_GAP_MS) return Promise.resolve(false);
-      // A rare reaction that is still playing takes priority — an ordinary correct/wrong/
-      // streak reaction arriving right after it must wait rather than cancelling its clip.
+      // A rare reaction still playing takes priority: a gated one right after it must wait.
       if (now < rareProtectUntil) return Promise.resolve(false);
       lastReactAt = now;
     }
@@ -1190,14 +1091,7 @@
           if (pupils.length) {
             var n;
             for (n = 0; n < pupils.length; n += 1) {
-              try {
-                pupils[n].animate(kf([
-                  { transform: 'scale(1,1)' },
-                  { offset: 0.45, transform: 'scale(1,0.1)' },
-                  { offset: 0.55, transform: 'scale(1,0.1)' },
-                  { transform: 'scale(1,1)' }
-                ]), { duration: 160, easing: 'linear', fill: 'none' });
-              } catch (e) { /* ignore */ }
+              try { pupils[n].animate(kf(BLINK), { duration: 160, easing: 'linear', fill: 'none' }); } catch (e) { /* ignore */ }
             }
           }
         }
@@ -1229,8 +1123,20 @@
     channelsOf: function (name) { return channelsFor(null, name); },
     motionLevel: motionLevel,
     react: react,
-    clips: CLIP_NAMES.slice()
+    hasClip: function (name) { return CLIP_NAMES.indexOf(name) !== -1; },
+    // Without zorp-poses.js there are no poses: pose() resolves false and hasPose() is false.
+    pose: function () { return Promise.resolve(false); },
+    hasPose: function () { return false; },
+    poses: [],
+    // Extension hook: zorp-poses.js calls register(fn); fn receives the runtime internals it may use.
+    register: function (fn) {
+      fn({ clips: CLIPS, names: CLIP_NAMES, api: window.pbZorp, level: motionLevel, inst: getInst, stop: stop, kf: kf, F: F, own: own,
+        tempFace: tempFace, after: after, thought: showThought, node: partNode, fill: fillSlot, turn: turn, rendered: rendered,
+        setExpression: setExpression, canAnimate: canAnimate, rest: applyRest, side: sideArms, sideRot: sideRot });
+    }
   };
+  // Clip names, read at call time so registered clips are included.
+  Object.defineProperty(window.pbZorp, 'clips', { enumerable: true, get: function () { return CLIP_NAMES.slice(); } });
   // View names (front first), read lazily from the island.
   Object.defineProperty(window.pbZorp, 'views', {
     enumerable: true,

@@ -9,12 +9,15 @@
   * <script type="application/json" id="pb-zorp-rig"> holds models/zorp_rig.py rig_json():
     the presets (channel ids plus valence). It is data, not script, so CSP is unaffected.
 #}
-{% from 'partials/zorp_parts.html' import part %}
+{% from 'partials/zorp_parts.html' import part, arm %}
 <template id="pb-zorp-parts"><svg xmlns="http://www.w3.org/2000/svg">
 {%- for channel, ids in zorp_rig.CHANNELS.items() -%}
 {%- for vid in ids -%}
 <g data-part="{{ channel }}:{{ vid }}">{{ part(channel, vid) }}</g>
 {%- endfor -%}
 {%- endfor -%}
+{%- for shape in zorp_rig.LIBRARY_ARM_SHAPES -%}{%- for side in ('l', 'r') -%}
+<g data-part="arm:{{ shape }}-{{ side }}">{{ arm(shape, side) }}</g>
+{%- endfor -%}{%- endfor -%}
 </svg></template>
 <script type="application/json" id="pb-zorp-rig">{{ zorp_rig.rig_json()|safe }}</script>

@@ -37,7 +37,7 @@ BANNED_STRINGS = ('lottie', 'jsdelivr', 'unpkg')
 RUNTIME_JS = JS_DIR / 'zorp-motion.js'
 BUDDY_PARTIAL = ROOT / 'templates' / 'partials' / 'buddy.html'
 BASE_HTML = ROOT / 'templates' / 'base.html'
-API_NAMES = ('bind', 'play', 'idle', 'setFace', 'setExpression', 'hasExpression', 'valenceOf', 'allowedIn', 'motionLevel', 'react', 'turn')
+API_NAMES = ('bind', 'play', 'idle', 'setFace', 'setExpression', 'hasExpression', 'valenceOf', 'allowedIn', 'motionLevel', 'react', 'turn', 'hasClip', 'hasPose', 'pose', 'register')
 PHASE1_CLIPS = ('idle', 'blink', 'cheer', 'wobble', 'think', 'wave', 'point', 'nod', 'wink', 'tap', 'shake')
 PHASE2_CLIPS = PHASE1_CLIPS + ('hop',)
 PHASE4_CLIPS = PHASE2_CLIPS + ('peek', 'sleep')
@@ -138,7 +138,7 @@ def test_rig_markup():
     assert 'class="zorp-face"' in buddy and 'zorp-slot--mouth' in buddy
     root = buddy.index('class="buddy-root"')
     arm = buddy.index('buddy-arm--l')
-    head = buddy.index('<g class="buddy-head">')
+    head = buddy.index('<g class="buddy-head"')   # E8 Phase 4: the tag also carries the pose style hook
     foot = buddy.index('buddy-foot--l')
     assert root < arm < head < foot   # arms behind body, feet painted over it
     assert 'aria-hidden="true"' in buddy
@@ -334,7 +334,7 @@ def test_cosmetic_markup():
         assert bare not in buddy, f'bare {bare} should be var(--zorp-X, {bare}'
     # E8 Phase 1: the smile/grin/cat swap is a mouth variant drawn by zorp_parts.html.
     assert 'data-mouth=' in buddy
-    assert "buddy_mascot(look=none, face='nudge', view='front', facing='r')" in buddy   # E8 Phase 3 signature
+    assert "buddy_mascot(look=none, face='nudge', view=none, facing='r', pose=none)" in buddy   # E8 Phase 4 signature (view=none: a pose may pick its own)
     parts = (ROOT / 'templates' / 'partials' / 'zorp_parts.html').read_text(encoding='utf-8')
     for name in ('smile', 'grin', 'cat'):
         assert f"n == '{name}'" in parts, name

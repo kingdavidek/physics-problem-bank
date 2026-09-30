@@ -85,6 +85,11 @@ html[data-motion="off"] .buddy-mascot [class*="zorp-slot--fx"] * { animation: no
 .zorp-orb { transform-box: view-box; transform-origin: 32px 10px; }
 .zk { fill: none; stroke: var(--ink-800); stroke-linecap: round; }
 .zf { fill: var(--ink-800); }
+/* E8 Phase 4: arm shapes (limb stroke) and hand nubs; drawn from the shoulder, see partials/zorp_parts.html arm. */
+.zl { fill: none; stroke: var(--zorp-limb, var(--brand-700)); stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; }
+.zn { fill: var(--zorp-limb, var(--brand-700)); }
+/* the profile paddle arm (side view): a body-colour rim keeps it apart from the face plate it overlaps */
+.zsa { stroke: var(--zorp-body, var(--brand-500)); stroke-width: 1.1; paint-order: stroke; }
 @media (prefers-reduced-motion: no-preference) {
     /* twinkle 1.8s (about 1.1 Hz, under the 3 Hz WCAG 2.3.1 limit); zzz drifts 2.4s */
     .buddy-mascot .zorp-sp { animation: zorp-twinkle 1.8s ease-in-out infinite; }
@@ -112,3 +117,7 @@ html[data-motion="off"] .buddy-mascot [class*="zorp-slot--fx"] * { animation: no
     0%, 100% { opacity: 0.55; transform: translate(0, 1px); }
     50% { opacity: 1; transform: translate(0, -1px); }
 }
+/* E8 side view (2026-09-30): face fx sit on the profile plate; the far tear is not drawn in profile. */
+.buddy-mascot[data-view="side"] .zorp-far { display: none; }
+.buddy-mascot[data-view="side"] .zorp-gl { translate: 5.7px 0; }
+.buddy-mascot[data-view="side"] .zorp-slot--fx-face .zorp-dr, .buddy-mascot[data-view="side"] .zorp-slot--fx-face .zorp-z { translate: -8px 0; }

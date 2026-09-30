@@ -200,7 +200,7 @@ const restOf = (m) => {
   out.flip = (m.part('.zorp-flip').style.scale || '').replace(/^1( 1)?$/, '');
   return out;
 };
-const sideR = { plate: '8px 0px | 0.5 1', eyeL: 'hidden', eyeR: '6.5px 0px | ', armL: 'hidden', armR: 'hidden', armRf: '-20px 2px | ', armLf: 'hidden' };
+const sideR = { plate: '7.6px 0px | 0.66 1', eyeL: 'hidden', eyeR: '6.5px 0px | ', armL: 'hidden', armR: 'hidden', armRf: '-19.4px 2px | ', armLf: 'hidden' };
 
 let finished = false;
 setTimeout(() => { console.error('harness timed out (a scenario is waiting for an animation nobody finishes)'); process.exit(1); }, 30000).unref();

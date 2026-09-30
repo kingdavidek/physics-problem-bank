@@ -100,7 +100,7 @@ def main():
         assert b'data-buddy-root' not in r.data
         assert b'buddy.js' not in r.data
         assert b'study-buddy.js' not in r.data
-        assert b'zorp-motion.js' not in r.data
+        assert b'zorp-motion.js' not in r.data and b'zorp-poses.js' not in r.data
 
         r = client.get('/api/v1/me/buddy')
         assert r.status_code in (401, 403)
@@ -116,8 +116,9 @@ def main():
         assert 'data-buddy-face' in html
         assert 'buddy-mascot' in html
         assert 'data-face=' in html
-        assert 'zorp-motion.js?v=7' in html
-        assert 'css/motion.css?v=6' in html
+        assert 'zorp-motion.js?v=8' in html
+        assert 'zorp-poses.js?v=1' in html and html.index('zorp-motion.js') < html.index('zorp-poses.js')
+        assert 'css/motion.css?v=7' in html
         assert 'buddy-arm--l' in html
         assert 'buddy-pupil' in html
         # Fresh user, no milestones earned yet -> default Zorp (E7 Phase 1.5).

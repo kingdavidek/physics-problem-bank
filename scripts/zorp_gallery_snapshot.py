@@ -15,6 +15,11 @@ Renders `/styleguide#zorp-gallery` in headless Chromium and writes review images
 * `turn-filmstrip.png` (Phase 3+): ten frames of the pinch-turn front -> side -> front, taken from
   the bound demo by pausing every animation and stepping currentTime (full motion, light), then a
   reduced-motion row of stills (turn not required stays front, required swaps instantly, side-point);
+* `poses.png` (Phase 4+): the styleguide pose library (every pose at 56 and 160 px, front and, where a pose has a
+  default view, that view), light and dark;
+* `poses-silhouette.png` (Phase 4+): the same grid with the gallery's silhouette toggle on (one flat colour);
+* `clip-filmstrips.png` (Phase 4+): ten frames of fist-pump and each Phase 4 clip (160 px, with the 56 px mascot under each frame), taken in real time at a tenth of
+  the speed, full motion on the left and the reduced-motion end state on the right;
 * `cells/<scheme>-<motion>-<size>-<face>.png`: every gallery cell on its own;
 * `manifest.json`: label, time, URL, viewport, versions, files, per-cell visible face
   groups and console errors.
@@ -476,6 +481,143 @@ def _build_turn_filmstrip(out, label, frames, reduced):
     return 'turn-filmstrip.png'
 
 
+POSE_CLIPS = ('fist-pump', 'victory', 'flex', 'shrug', 'bow', 'think-chin', 'dance', 'float', 'oops-encourage', 'turn')
+CLIP_FRAMES = 10
+CLIP_SPEED = 0.1
+_CLIP_DEMO = "document.getElementById('sg-zorp-poselib-demo')"
+
+
+def _pose_clip_frames(page, out, motion):
+    """Real-time frames of each Phase 4 clip on the pose-library demo. Pausing WAAPI would leave the
+    expression timers running, so the clips are played at a tenth of the speed and shot as they go.
+    Full motion: CLIP_FRAMES frames per clip. Reduced: the single settled frame. -> {clip: [paths]}"""
+    demo = page.locator('#sg-zorp-poselib-demo svg.buddy-mascot')
+    small = page.locator('#sg-zorp-poselib-demo-small svg.buddy-mascot')
+    demo.scroll_into_view_if_needed()
+    page.evaluate("window.scrollBy({top: -320, behavior: 'instant'})")   # room above the mascot for the jump
+    page.wait_for_timeout(300)
+
+    def box_of(loc):
+        box = loc.bounding_box()
+        pad = box['width'] * 0.15
+        top = box['width'] * 0.6   # room for the jump
+        return {'x': max(0, box['x'] - pad), 'y': max(0, box['y'] - top), 'width': box['width'] + 2 * pad, 'height': box['height'] + top + pad * 0.3}
+
+    clip_box, small_box = box_of(demo), box_of(small)
+    (out / 'clips').mkdir(exist_ok=True)
+    result = {}
+    for name in POSE_CLIPS:
+        page.evaluate(f"() => {{ for (const id of ['sg-zorp-poselib-demo', 'sg-zorp-poselib-demo-small']) {{ const el = document.getElementById(id); window.pbZorp.bind(el); window.pbZorp.idle(false, el); }} }}")
+        info = page.evaluate("(c) => window.pbZorp.clipInfo(c)", name) or {}
+        dur = info.get('dur') or 1200
+        paths = []
+        if motion == 'full':
+            page.evaluate("([c, s]) => { window.__t0 = performance.now(); for (const id of ['sg-zorp-poselib-demo', 'sg-zorp-poselib-demo-small'])"
+                          " window.pbZorp.play(c, {el: document.getElementById(id), speed: s}); }", [name, CLIP_SPEED])
+            for i in range(CLIP_FRAMES):
+                target = i / (CLIP_FRAMES - 1) * 0.97 * dur / CLIP_SPEED
+                page.evaluate("(t) => new Promise(r => { const w = () => performance.now() - window.__t0 >= t ? r() : setTimeout(w, 4); w(); })", target)
+                path = out / 'clips' / f'{name}-{i}.png'
+                path.write_bytes(page.screenshot(clip=clip_box, animations='allow'))
+                paths.append(path)
+                spath = out / 'clips' / f'{name}-{i}-s.png'
+                spath.write_bytes(page.screenshot(clip=small_box, animations='allow'))
+            page.wait_for_timeout(int(dur / CLIP_SPEED * 0.1) + 300)
+        else:
+            page.evaluate(f"(c) => window.pbZorp.play(c, {{el: {_CLIP_DEMO}}})", name)
+            page.wait_for_timeout(int(dur) + 700)
+            path = out / 'clips' / f'{name}-reduced.png'
+            path.write_bytes(page.screenshot(clip=clip_box, animations='allow'))
+            paths.append(path)
+        result[name] = paths
+    return result
+
+
+def _build_clip_filmstrips(out, label, full, reduced):
+    """clip-filmstrips.png: one row per clip, CLIP_FRAMES full-motion frames, then the reduced frame."""
+    from PIL import Image, ImageDraw
+
+    rows = [(n, full[n], reduced[n][0]) for n in POSE_CLIPS if len(full.get(n, ())) == CLIP_FRAMES and reduced.get(n)]
+    if not rows:
+        return None
+    ims = {n: [Image.open(f).convert('RGB') for f in fr] for n, fr, _ in rows}
+    smalls = {n: [Image.open(f.with_name(f.stem + '-s.png')).convert('RGB') for f in fr] for n, fr, _ in rows}
+    fw, fh = ims[rows[0][0]][0].size
+    scale = 0.5
+    tw, th0 = int(fw * scale), int(fh * scale)
+    sh = int(smalls[rows[0][0]][0].height * scale)
+    th = th0 + sh
+    font, small = _font(22), _font(28)
+    pad, label_w, gap = 8, 190, 40
+    width = label_w + CLIP_FRAMES * (tw + pad) + gap + tw + pad
+    head_h = 64
+    sheet = Image.new('RGB', (width, head_h + len(rows) * (th + pad)), (255, 255, 255))
+    draw = ImageDraw.Draw(sheet)
+    draw.text((pad, 14), f'Zorp clips · {label} · frames 0-100% of each clip (left, full motion) vs reduced motion (right)',
+              fill=(20, 20, 20), font=small)
+    for r, (name, _, red) in enumerate(rows):
+        y = head_h + r * (th + pad)
+        draw.text((pad, y + th // 2 - 12), name, fill=(20, 20, 20), font=font)
+        for i, im in enumerate(ims[name]):
+            sheet.paste(im.resize((tw, th0), Image.LANCZOS), (label_w + i * (tw + pad), y))
+            sm = smalls[name][i]
+            sheet.paste(sm.resize((int(sm.width * scale), sh), Image.LANCZOS), (label_w + i * (tw + pad), y + th0))
+        sheet.paste(Image.open(red).convert('RGB').resize((tw, th0), Image.LANCZOS), (label_w + CLIP_FRAMES * (tw + pad) + gap, y))
+    sheet.save(out / 'clip-filmstrips.png')
+    return 'clip-filmstrips.png'
+
+
+def _pose_cells(page, out, scheme, tag):
+    """Screenshot each pose cell of the styleguide grid on its own (no row compositing). -> {size: [Path]}"""
+    got = {}
+    for size in (56, 160):
+        got[size] = []
+        cells = page.locator(f'#sg-zorp-poses-{size} [data-zorp-pose-cell]')
+        for i in range(cells.count()):
+            cell = cells.nth(i)
+            cell.scroll_into_view_if_needed()
+            path = out / 'cells' / f'{tag}-{scheme}-{size}-{i:02d}.png'
+            cell.screenshot(path=str(path), animations='disabled', caret='hide')
+            got[size].append(path)
+    return got
+
+
+def _build_poses(out, label, shots, name='poses.png', kind='every pose, front and default view, 56 and 160 px'):
+    """poses.png. shots: {scheme: {size: [Path]}} cell screenshots, laid out in a grid per scheme and size."""
+    from PIL import Image, ImageDraw
+
+    if not shots:
+        return None
+    font, small = _font(22), _font(28)
+    per_row = {56: 9, 160: 6}
+    pad, label_w, head = 12, 190, 64
+    blocks = []
+    for scheme, by_size in shots.items():
+        for size, paths in by_size.items():
+            ims = [Image.open(p).convert('RGB') for p in paths]
+            if not ims:
+                continue
+            cw, ch = max(i.width for i in ims), max(i.height for i in ims)
+            n = per_row[size]
+            rows = -(-len(ims) // n)
+            blocks.append((scheme, size, ims, cw, ch, n, rows))
+    width = label_w + max(b[3] * b[5] for b in blocks) + pad
+    height = head + sum(b[4] * b[6] + pad * 2 for b in blocks)
+    sheet = Image.new('RGB', (width, height), (255, 255, 255))
+    draw = ImageDraw.Draw(sheet)
+    draw.text((pad, 16), f'Zorp poses · {label} · {kind}', fill=(20, 20, 20), font=small)
+    y = head
+    for scheme, size, ims, cw, ch, n, rows in blocks:
+        band = ims[0].getpixel((1, 1)) if scheme == 'dark' else (255, 255, 255)
+        draw.rectangle([0, y - pad, width, y + ch * rows + pad], fill=band)
+        draw.text((pad, y + 8), f'{scheme} {size}px', fill=(245, 245, 245) if scheme == 'dark' else (20, 20, 20), font=font)
+        for i, im in enumerate(ims):
+            sheet.paste(im, (label_w + (i % n) * cw, y + (i // n) * ch))
+        y += ch * rows + pad * 2
+    sheet.save(out / name)
+    return name
+
+
 def snapshot(label, server_python):
     try:
         from playwright.sync_api import Error as PlaywrightError
@@ -531,6 +673,9 @@ def snapshot(label, server_python):
         strips = {}
         view_shots = []
         turn_frames = turn_reduced = None
+        pose_shots = {}
+        sil_shots = {}
+        clip_full = clip_reduced = None
         with sync_playwright() as p:
             try:
                 browser = p.chromium.launch()
@@ -588,6 +733,21 @@ def snapshot(label, server_python):
                         turn_frames = _turn_filmstrip(page)
                 if motion == 'reduced' and scheme == 'light':
                     turn_reduced = _reduced_turn_frames(page)
+                if motion == 'full':
+                    # the sticky site header would paint over cell screenshots taken mid-page
+                    page.add_style_tag(content='header, .site-header, .site-nav { position: static !important; }')
+                    pose_shots[scheme] = _pose_cells(page, out, scheme, 'poses')
+                    silhouette = page.locator('[data-zorp-silhouette]')
+                    if silhouette.count():
+                        silhouette.click()
+                        sil_shots[scheme] = _pose_cells(page, out, scheme, 'poses-silhouette')
+                        silhouette.click()
+                if scheme == 'light' and page.locator('#sg-zorp-poselib-demo').count():
+                    got = _pose_clip_frames(page, out, motion)
+                    if motion == 'full':
+                        clip_full = got
+                    else:
+                        clip_reduced = got
                 console[f'{scheme}-{motion}'] = errors
                 ctx.close()
             version = browser.version
@@ -605,6 +765,12 @@ def snapshot(label, server_python):
             files.append(_build_sheet(out, label, motion, legacy))
         files.append(_build_sheet(out, label, 'full', records['full'], faces=tuple(seen),
                                   name='expressions.png', block=BLOCK))
+        for sheet_name in (_build_poses(out, label, pose_shots),
+                           _build_poses(out, label, sil_shots, 'poses-silhouette.png',
+                                        'silhouettes (one flat colour: the outline alone has to read)'),
+                           _build_clip_filmstrips(out, label, clip_full or {}, clip_reduced or {})):
+            if sheet_name:
+                files.append(sheet_name)
         views_sheet = _build_views(out, label, view_shots)
         if views_sheet:
             files.append(views_sheet)
@@ -633,7 +799,7 @@ def snapshot(label, server_python):
             shutil.rmtree(final_out)
         out.rename(final_out)
         print(f'Wrote {final_out}')
-        print(f'  sheets: {final_out / "faces.png"}, {final_out / "faces-reduced.png"}, {final_out / "expressions.png"}, matrix.png, fx-filmstrips.png, views.png, turn-filmstrip.png')
+        print(f'  sheets: {final_out / "faces.png"}, {final_out / "faces-reduced.png"}, {final_out / "expressions.png"}, matrix.png, fx-filmstrips.png, views.png, turn-filmstrip.png, poses.png, poses-silhouette.png, clip-filmstrips.png')
         print(f'  cells:  {len(manifest_cells)} PNGs in {final_out / "cells"}')
         print(f'  manifest: {final_out / "manifest.json"}')
         return 0
