@@ -28,6 +28,8 @@ sys.path.insert(0, str(ROOT))
 HARNESS = ROOT / 'scripts' / 'zorp_poses_harness.js'
 RUNTIME = ROOT / 'static' / 'js' / 'zorp-motion.js'
 POSES_JS = ROOT / 'static' / 'js' / 'zorp-poses.js'
+WELCOME_JS = ROOT / 'static' / 'js' / 'welcome.js'
+TRIGGERS_JS = ROOT / 'static' / 'js' / 'zorp-triggers.js'
 
 
 def _embedded_poses():
@@ -45,6 +47,57 @@ def test_embedded_pose_table_matches_rig():
         'the POSES table in static/js/zorp-poses.js differs from models/zorp_rig.POSES; regenerate it with '
         "python -c \"from models import zorp_rig; print(zorp_rig.poses_json())\" and paste it between the markers"
     )
+
+
+def _embedded_react():
+    text = POSES_JS.read_text(encoding='utf-8')
+    m = re.search(r'/\*REACT-BEGIN\*/\s*var REACT = (\{.*?\});\s*/\*REACT-END\*/', text, re.S)
+    assert m, 'zorp-poses.js lost its REACT-BEGIN/REACT-END markers'
+    return json.loads(m.group(1))
+
+
+def test_react_plan_matches_runtime():
+    """E8 Phase 5: the react() clip table in zorp-poses.js is models/zorp_rig.py REACT_CLIPS, and the big
+    clips (fist-pump and friends) are only ever produced for the rarer moments, never for a correct answer."""
+    from models import zorp_rig
+
+    embedded = _embedded_react()
+    assert embedded['clips'] == {k: list(v) for k, v in zorp_rig.REACT_CLIPS.items()}, 'REACT clips differ from zorp_rig.REACT_CLIPS'
+    assert embedded['big'] == list(zorp_rig.BIG_CLIPS) and embedded['gap'] == zorp_rig.BIG_GAP_MS
+    assert embedded['face'] == zorp_rig.REACT_FACES
+    assert zorp_rig.BIG_GAP_MS >= 5000, 'big moments need a real minimum gap'
+    # only the rarer kinds may use a big clip; correct and wrong never do
+    for kind, clips in zorp_rig.REACT_CLIPS.items():
+        big = [c for c in clips if c in zorp_rig.BIG_CLIPS]
+        if kind in ('correct', 'wrong'):
+            assert not big, f'{kind} must not use a big clip: {big}'
+    assert 'fist-pump' in zorp_rig.REACT_CLIPS['streak'] and 'victory' in zorp_rig.REACT_CLIPS['first_correct']
+    # every kind celebrate.js can ask for has a plan
+    celebrate = (ROOT / 'static' / 'js' / 'celebrate.js').read_text(encoding='utf-8')
+    kinds = set(re.findall(r"reactMascot\('(\w+)'", celebrate)) | {'correct'}
+    assert kinds <= set(zorp_rig.REACT_CLIPS), kinds - set(zorp_rig.REACT_CLIPS)
+    # every clip named exists in the runtime (core list or registered by zorp-poses.js)
+    core = set(re.findall(r"'([\w-]+)'", re.search(r'CLIP_NAMES\s*=\s*\[([^\]]*)\]', RUNTIME.read_text(encoding='utf-8')).group(1)))
+    added = set(re.findall(r"\badd\('([\w-]+)'", POSES_JS.read_text(encoding='utf-8')))
+    for clips in zorp_rig.REACT_CLIPS.values():
+        for clip in clips:
+            assert clip in core | added, clip
+
+
+def test_autoplay_allowlist_matches_runtime():
+    from models import zorp_rig
+
+    js = (ROOT / 'static' / 'js' / 'zorp-triggers.js').read_text(encoding='utf-8')
+    m = re.search(r'AUTOPLAY_OK\s*=\s*\[([^\]]*)\]', js)
+    assert m, 'AUTOPLAY_OK missing from zorp-triggers.js'
+    assert re.findall(r"'([\w-]+)'", m.group(1)) == list(zorp_rig.AUTOPLAY_CLIPS)
+    for banned in ('wobble', 'oops-encourage', 'sleep', 'dance', 'shake', 'turn'):
+        assert banned not in zorp_rig.AUTOPLAY_CLIPS, banned
+    assert "AUTOPLAY_OK.indexOf(clip) === -1" in js
+    # every data-zorp-autoplay value in the templates is on the list
+    for path in sorted((ROOT / 'templates').rglob('*.html')):
+        for value in re.findall(r'data-zorp-autoplay="([^"{]+)"', path.read_text(encoding='utf-8')):
+            assert value in zorp_rig.AUTOPLAY_CLIPS, f'{path.name}: data-zorp-autoplay="{value}" is not allowlisted'
 
 
 def test_poses_file_registers_through_the_hook_only():
@@ -66,6 +119,7 @@ def _fixture():
         library = app.jinja_env.get_template('partials/zorp_library.html').render()
         svgs = {
             'front': str(buddy.buddy_mascot()),
+            'sideR': str(buddy.buddy_mascot(view='side')),
             'sideL': str(buddy.buddy_mascot(view='side', facing='l')),
             'posed': str(buddy.buddy_mascot(face='grin', pose='fist-up')),
         }
@@ -84,7 +138,7 @@ def test_node_behaviour():
     with tempfile.TemporaryDirectory() as tmp:
         fixture = Path(tmp) / 'fixture.json'
         fixture.write_text(json.dumps(_fixture()), encoding='utf-8')
-        result = subprocess.run([node, str(HARNESS), str(RUNTIME), str(POSES_JS), str(fixture)], cwd=str(ROOT),
+        result = subprocess.run([node, str(HARNESS), str(RUNTIME), str(POSES_JS), str(fixture), str(WELCOME_JS), str(TRIGGERS_JS)], cwd=str(ROOT),
                                 check=False, capture_output=True, text=True)
     print(result.stdout)
     if result.stderr:
@@ -94,6 +148,8 @@ def test_node_behaviour():
 
 def main():
     test_embedded_pose_table_matches_rig()
+    test_react_plan_matches_runtime()
+    test_autoplay_allowlist_matches_runtime()
     test_poses_file_registers_through_the_hook_only()
     test_node_behaviour()
     print('Zorp poses smoke OK')

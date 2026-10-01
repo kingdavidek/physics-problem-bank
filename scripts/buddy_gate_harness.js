@@ -386,6 +386,34 @@ scenario('E8: without pbZorp the local legacy allowlist still applies', () => {
   assert.strictEqual(page2.faceEl.getAttribute('data-face'), 'streak_risk');
 });
 
+scenario('E8 Phase 5: every prompt type draws its upbeat preset (streak_risk is heads-up, never a frown)', () => {
+  const ALL = ['nudge', 'proud', 'happy', 'wink', 'heads-up', 'determined', 'smug', 'streak_risk', 'milestone', 'celebrate', 'sad', 'aww-teary'];
+  const want = {
+    nudge: 'nudge', milestone: 'proud', celebrate: 'happy', qotd_nudge: 'wink',
+    streak_risk: 'heads-up', weak_topic: 'determined', friend_challenge: 'wink',
+  };
+  Object.keys(want).forEach((type) => {
+    const zorp = zorpStub(ALL.concat(['qotd_nudge', 'weak_topic', 'friend_challenge']), ['sad', 'aww-teary']);
+    loadPage({ prompt: Object.assign({}, PROMPT_A, { type }), zorp });
+    assert.deepStrictEqual(zorp.calls, [want[type]], type);
+  });
+});
+
+scenario('E8 Phase 5: the emoji fallback maps through the same table (fire -> heads-up); an old runtime keeps the legacy name', () => {
+  const zorp = zorpStub(['nudge', 'streak_risk', 'heads-up']);
+  loadPage({ prompt: Object.assign({}, PROMPT_A, { type: 'not-a-face', face: '\u{1F525}' }), zorp });
+  assert.deepStrictEqual(zorp.calls, ['heads-up']);
+  const old = zorpStub(['nudge', 'streak_risk']);
+  loadPage({ prompt: PROMPT_A, zorp: old });
+  assert.deepStrictEqual(old.calls, ['streak_risk'], 'a runtime without heads-up still gets the (now upbeat) legacy preset');
+});
+
+scenario('E8 Phase 5: a prompt never draws a negative face even if the table were asked for one (valence guard stays)', () => {
+  const zorp = zorpStub(['nudge', 'heads-up'], ['heads-up']);
+  loadPage({ prompt: PROMPT_A, zorp });
+  assert.deepStrictEqual(zorp.calls, ['nudge'], 'negative valence is refused, the resting face is used');
+});
+
 const failed = results.filter((r) => !r[1]);
 if (failed.length) {
   console.error(`\n${failed.length}/${results.length} buddy gate scenarios FAILED`);

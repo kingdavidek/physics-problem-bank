@@ -33,7 +33,8 @@
   // fallback path when pbZorp is unavailable. ZORP_GESTURES is the superset now playable
   // through pbZorp.play (those four plus the new WAAPI clips).
   var LEGACY_GESTURES = { wink: 1, nod: 1, shake: 1, tap: 1 };
-  var ZORP_GESTURES = { wink: 1, nod: 1, shake: 1, tap: 1, cheer: 1, wave: 1, think: 1, hop: 1 };
+  // E8 Phase 5 adds the beat clips; play() ignores a name the runtime does not have (no zorp-poses.js).
+  var ZORP_GESTURES = { wink: 1, nod: 1, shake: 1, tap: 1, cheer: 1, wave: 1, think: 1, hop: 1, 'side-point': 1, 'fist-pump': 1, victory: 1, flex: 1, shrug: 1, 'think-chin': 1, bow: 1, dance: 1, float: 1 };
 
   var storageBroken = false;
   var skipTourThisLoad = false;
@@ -308,18 +309,19 @@
 
   // E8 Phase 2: a preset is accepted only inside the guide allowlist (models/zorp_rig.py
   // CONTEXT_MAP['guide'] via pbZorp.allowedIn). Lore steps (step.lore, allowlisted ids) may also
-  // open on a negative preset, but show step.resolve (a positive one) on their last line.
+  // open on a negative preset, and the one big reward (step.big, the 100-day streak: happy tears,
+  // 'guide.reward.big') on aww-teary; both show step.resolve (a positive one) on their last line.
   var GUIDE_FALLBACK = { nudge: 1, milestone: 1, celebrate: 1, qotd_nudge: 1, streak_risk: 1, weak_topic: 1, friend_challenge: 1 };
   function guideFace(step, lastLine) {
     var name = step.face;
-    if (step.lore && lastLine && step.resolve) name = step.resolve;
+    if ((step.lore || step.big) && lastLine && step.resolve) name = step.resolve;
     return name;
   }
-  function setFace(name, lore) {
+  function setFace(name, context) {
     if (!faceEl) return;
     var z = window.pbZorp;
     var known = z && typeof z.allowedIn === 'function'
-      ? z.allowedIn(lore ? 'guide.lore' : 'guide', name)
+      ? z.allowedIn(context || 'guide', name)
       : GUIDE_FALLBACK[name] === 1;
     var face = known ? name : 'nudge';
     if (z && z.setFace(face, { el: faceEl })) return;
@@ -506,6 +508,8 @@
         primary: template.primary || 'Close',
         skipLabel: null,
         gesture: template.gesture || null,
+        big: !!template.big,
+        resolve: template.resolve || null,
         rewardType: 'streak',
         rewardKey: String(n),
       };
@@ -545,7 +549,8 @@
 
     // The last line of a lore step is checked against the plain guide list, so a negative
     // face can never stay on screen at the end of a step (missing or negative step.resolve).
-    setFace(guideFace(step, lineIndex === lines.length), !!step.lore && lineIndex < lines.length);
+    setFace(guideFace(step, lineIndex === lines.length),
+      lineIndex < lines.length ? (step.big ? 'guide.reward.big' : (step.lore ? 'guide.lore' : 'guide')) : 'guide');
     setMedal(step.mode === 'reward' ? (step.medal || '') : '');
     var heading = step.heading || (step.mode === 'reward' ? 'Well done' : 'Zorp');
     if (step.mode === 'tour' && isNarrow() && step.spotLabel) heading = step.spotLabel;

@@ -362,11 +362,10 @@ def _pick_prompt(
         if last_day == yesterday:
             days = int(streak['current'])
             if streak.get('freeze_available'):
-                message = (
-                    'You have one skip left this week — but a question now keeps the run honest.'
-                )
+                message = 'You have a skip in hand this week, and one quick question still keeps your streak going.'
             else:
-                message = f'Your {days}-day streak is at risk. Open a topic today to keep it.'
+                # E8 Phase 5 (Children's Code std 13): upbeat, no loss framing, no "at risk".
+                message = f'Keep your {days}-day streak going with one quick question.'
             return _finish({
                 'type': BUDDY_STREAK_RISK,
                 'message': message,

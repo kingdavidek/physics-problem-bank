@@ -42,8 +42,9 @@
   var lastReactAt = 0;
   var lastVariant = '';
   var rareProtectUntil = 0;   // a rare reaction, once started, can't be cut short by a gated one
+  var reactHook = null;       // zorp-poses.js: (kind, now) -> { clip, face, thought, map, big, dur } | false
 
-  // Thought bubble (wrong reaction, full motion): the `thought` fx part, WAAPI-animated, never in motion.css.
+  // Thought bubble: the `thought` fx part, full motion only.
   var THOUGHT_MS = 1200;
   var VAL_WORD = { '+': 'positive', '0': 'neutral', '-': 'negative' };
   var FALLBACK_GUIDE = ['nudge', 'milestone', 'celebrate', 'qotd_nudge', 'streak_risk', 'weak_topic', 'friend_challenge', 'sleep'];
@@ -621,7 +622,7 @@
     if (view !== 'front' && (level === 'off' || (level === 'reduced' && !opts.required))) return Promise.resolve(false);
     stop(inst);
     if (inst.view === view && inst.facing === face) return Promise.resolve(true);
-    if (level !== 'full' || !rendered(inst)) {
+    if (level !== 'full' || opts.instant || !rendered(inst)) {
       setView(inst, view, face);
       return Promise.resolve(true);
     }
@@ -639,7 +640,7 @@
       if (!ok || inst.seq !== seq) return false;
       inst.busy = inst.dirty = true;   // stop() mid-clip must still restore home
       if (face) tempFace(inst, face, c.dur / spd);
-      var o = { target: 'right', trip: opts.trip, facing: opts.facing, view: 'side' };
+      var o = { target: opts.target || 'right', trip: opts.trip, facing: opts.facing, view: 'side' };
       var done = run(inst, c.beats ? c.tracks(inst.parts, visiblePupils(inst), o) : sideTracks(inst, c.tracks(inst.parts, visiblePupils(inst), o)), c.dur / spd);
       if (c.start) c.start(inst, spd, o);
       return done;
@@ -664,7 +665,7 @@
     inst.tm = [];
     while (inst.undo.length) inst.undo.pop()();   // beat-clip changes (arm shapes) put back
     if (inst.dirty) {
-      // Cut-short turn or side excursion: settle on the view it left (excursion) or had committed, never half-mirrored.
+      // Cut-short turn or side excursion: settle on a whole view, never half-mirrored.
       if (inst.home) { inst.view = inst.home.view; inst.facing = inst.home.facing; inst.home = null; redrawView(inst); }
       applyRest(inst);
       inst.dirty = false;
@@ -879,7 +880,7 @@
         ];
       }
     },
-    // Streak-ring peek: slides in from off-screen. No face/reducedFace, so reduced motion skips it (play() resolves false).
+    // Streak-ring peek: no face/reducedFace, so reduced motion skips it.
     peek: {
       dur: 500,
       tracks: function (parts) {
@@ -909,7 +910,7 @@
     needView: 1,
     face: 'curious',
     reducedFace: 'curious',
-    tracks: function (parts, pupils) { return CLIPS.point.tracks(parts, pupils, { target: 'right', view: 'side' }); }
+    tracks: function (parts, pupils, opts) { return CLIPS.point.tracks(parts, pupils, { target: (opts || {}).target, view: 'side' }); }
   };
 
   function play(name, opts) {
@@ -1009,7 +1010,7 @@
     return !!(inst.svg.closest && inst.svg.closest('[data-guide-root]'));
   }
 
-  // Decorative mascots (data-zorp-autoplay) bind before the corner buddy: reactTarget() must skip them.
+  // data-zorp-autoplay mascots bind first: reactTarget() skips them.
   function isDecorative(inst) {
     return !!(inst.host && inst.host.hasAttribute && inst.host.hasAttribute('data-zorp-autoplay'));
   }
@@ -1055,18 +1056,21 @@
       lastReactAt = now;
     }
 
-    var clip = kind === 'correct' ? nextCorrectVariant(lastVariant) : REACT_CLIP[kind];
+    var plan = reactHook ? reactHook(kind, now) : null;
+    if (plan === false) return Promise.resolve(false);
+    var clip = plan ? plan.clip : kind === 'correct' ? nextCorrectVariant(lastVariant) : REACT_CLIP[kind];
     if (CORRECT_VARIANTS.indexOf(clip) !== -1) lastVariant = clip;
 
-    if (rare) {
-      var clipDur = (CLIPS[clip] && CLIPS[clip].dur) || REACT_GAP_MS;
+    if (rare || (plan && plan.big)) {
+      var clipDur = (plan && plan.dur) || (CLIPS[clip] && CLIPS[clip].dur) || REACT_GAP_MS;
       rareProtectUntil = now + clipDur;
     }
 
     return play(clip, {
       el: inst.svg,
-      face: REACT_FACE[kind],
-      thought: kind === 'wrong'
+      face: plan ? plan.face : REACT_FACE[kind],
+      thought: plan ? !!plan.thought : kind === 'wrong',
+      map: plan && plan.map
     });
   }
 
@@ -1100,7 +1104,7 @@
     }, 3000 + Math.random() * 3000);
   }
 
-  document.addEventListener('visibilitychange', refreshIdle);
+  document.addEventListener('visibilitychange', function () { if (document.hidden) instances.forEach(stop); refreshIdle(); });
   if (mq) {
     if (mq.addEventListener) mq.addEventListener('change', refreshIdle);
     else if (mq.addListener) mq.addListener(refreshIdle);
@@ -1124,15 +1128,16 @@
     motionLevel: motionLevel,
     react: react,
     hasClip: function (name) { return CLIP_NAMES.indexOf(name) !== -1; },
-    // Without zorp-poses.js there are no poses: pose() resolves false and hasPose() is false.
+    // Stubs until zorp-poses.js replaces them.
     pose: function () { return Promise.resolve(false); },
     hasPose: function () { return false; },
     poses: [],
-    // Extension hook: zorp-poses.js calls register(fn); fn receives the runtime internals it may use.
+    // zorp-poses.js calls register(fn) with the runtime internals.
     register: function (fn) {
       fn({ clips: CLIPS, names: CLIP_NAMES, api: window.pbZorp, level: motionLevel, inst: getInst, stop: stop, kf: kf, F: F, own: own,
         tempFace: tempFace, after: after, thought: showThought, node: partNode, fill: fillSlot, turn: turn, rendered: rendered,
-        setExpression: setExpression, canAnimate: canAnimate, rest: applyRest, side: sideArms, sideRot: sideRot });
+        setExpression: setExpression, canAnimate: canAnimate, rest: applyRest, side: sideArms, sideRot: sideRot,
+        react: function (fn) { reactHook = fn; } });
     }
   };
   // Clip names, read at call time so registered clips are included.

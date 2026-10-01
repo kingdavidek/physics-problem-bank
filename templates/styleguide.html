@@ -225,7 +225,7 @@
     </div>
 </section>
 
-<section class="section-panel" id="zorp-gallery" data-zorp-gallery data-gallery-phase="2">
+<section class="section-panel" id="zorp-gallery" data-zorp-gallery data-gallery-phase="5">
     <div class="section-panel-header">Zorp gallery (E8)</div>
     <div class="section-panel-body">
         <p class="profile-empty">E8 review sheet (<code>docs/ZORP_EXPRESSIVENESS.md</code>). Every preset from <code>models/zorp_rig.py</code>, drawn server-side and not bound to <code>pbZorp</code>, at 56 px and 128 px. <code>streak_risk</code> and <code>heads-up</code> now share the upbeat art (D4). Snapshot: <code>python scripts/zorp_gallery_snapshot.py --label NAME</code>. The picker with channel menus is under <a href="#zorp-motion">Zorp motion</a>.</p>
@@ -249,6 +249,23 @@
         <p class="profile-empty" style="margin-top: var(--space-5);">Channel matrix (Phase 2): every main eye (rows) against every mouth (columns), no brows or cheeks, built in the browser from the parts library. Review tool only: pairings such as <code>frown-soft</code> are not app faces; app faces are the presets above, checked against <code>CONTEXT_MAP</code>.</p>
         <div class="sg-zorp-matrix-scroll">
             <table id="sg-zorp-matrix" class="sg-zorp-matrix" data-zorp-matrix data-eyes="{{ zorp_rig.MATRIX_EYES|join(' ') }}" data-mouths="{{ zorp_rig.MATRIX_MOUTHS|join(' ') }}"></table>
+        </div>
+        <p class="profile-empty" style="margin-top: var(--space-5);" id="zorp-context-map">Context map (Phase 5), rendered from <code>zorp_rig.CONTEXT_MAP</code>: where each preset may appear, with its valence (+ positive, 0 neutral, - negative). Negative presets are allowed only in the contexts marked <em>restricted</em>; the answer reactions and prompts never use one.</p>
+        <div class="sg-zorp-matrix-scroll">
+            <table class="sg-zorp-context-map" data-zorp-context-map>
+                <thead><tr><th scope="col">Moment (context)</th><th scope="col">Clips</th><th scope="col">Presets (valence)</th><th scope="col">Rule</th></tr></thead>
+                <tbody>
+                {% for context, faces in zorp_rig.CONTEXT_MAP.items() if context != 'styleguide' %}
+                {% set kind = context[6:] if context.startswith('react.') else '' %}
+                <tr data-context="{{ context }}">
+                    <th scope="row"><code>{{ context }}</code></th>
+                    <td>{% if kind in zorp_rig.REACT_CLIPS %}{% for clip in zorp_rig.REACT_CLIPS[kind] %}<code>{{ clip }}</code>{% if clip in zorp_rig.BIG_CLIPS %} (big){% endif %}{% if not loop.last %}, {% endif %}{% endfor %}{% else %}n/a{% endif %}</td>
+                    <td>{% for face in faces %}<code>{{ face }}</code> ({{ {'positive': '+', 'neutral': '0', 'negative': '-'}[zorp_rig.VALENCE[face]] }}){% if not loop.last %}, {% endif %}{% endfor %}</td>
+                    <td>{% if context.startswith(zorp_rig.NEGATIVE_ALLOWED) %}restricted: may include negative presets{% elif context.startswith(zorp_rig.BANNED_CONTEXTS_FOR_NEGATIVE) %}never negative{% else %}no negative presets{% endif %}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </section>
@@ -634,6 +651,8 @@
     /* E8 gallery: long token names (friend_challenge) must not clip in the 56 px cells. */
     #zorp-gallery figcaption code { font-size: var(--text-xs); overflow-wrap: anywhere; }
     .sg-zorp-matrix-scroll { overflow-x: auto; }
+    .sg-zorp-context-map { border-collapse: collapse; font-size: var(--text-xs); }
+    .sg-zorp-context-map th, .sg-zorp-context-map td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--border-soft); vertical-align: top; }
     .sg-zorp-matrix { border-collapse: collapse; }
     .sg-zorp-matrix th { font: 600 10px/1.1 var(--font-mono, monospace); color: var(--ink-500); padding: 2px; white-space: nowrap; }
     .sg-zorp-matrix thead th { writing-mode: vertical-rl; transform: rotate(180deg); vertical-align: bottom; height: 100px; }

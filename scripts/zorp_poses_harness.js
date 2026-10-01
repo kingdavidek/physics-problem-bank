@@ -3,13 +3,15 @@
    clips), run by test_zorp_poses_smoke.py. Same fake DOM as zorp_rig_harness.js, built from the REAL rendered markup,
    parts library and island, with a virtual clock for setTimeout so beat boundaries are deterministic; every
    animation is a fake that finishes only when a scenario says so.
-   Usage: node zorp_poses_harness.js <zorp-motion.js> <zorp-poses.js> <fixture.json>
-   fixture: { island, library, svgs: { front, sideL, posed }, poses: [names], valence: { preset: '+'|'0'|'-' } } */
+   Usage: node zorp_poses_harness.js <zorp-motion.js> <zorp-poses.js> <fixture.json> [<welcome.js> <zorp-triggers.js>]
+   fixture: { island, library, svgs: { front, sideL, sideR, posed }, poses: [names], valence: { preset: '+'|'0'|'-' } }
+   E8 Phase 5 adds the react() plan scenarios, and (with the two optional paths) the /welcome and data-zorp-autoplay
+   wiring run against the real runtime. */
 const assert = require('assert');
 const fs = require('fs');
 const vm = require('vm');
 
-const [, , scriptPath, posesPath, fixturePath] = process.argv;
+const [, , scriptPath, posesPath, fixturePath, welcomePath, triggersPath] = process.argv;
 if (!scriptPath || !posesPath || !fixturePath) {
   console.error('usage: node zorp_poses_harness.js <zorp-motion.js> <zorp-poses.js> <fixture.json>');
   process.exit(2);
@@ -82,6 +84,12 @@ class El {
     });
   }
   querySelector(sel) { return this.querySelectorAll(sel)[0] || null; }
+  addEventListener(type, fn) { (this._ls = this._ls || []).push([type, fn]); }
+  click() {
+    const evt = { type: 'click', currentTarget: this, prevented: false, preventDefault() { this.prevented = true; } };
+    (this._ls || []).filter((l) => l[0] === 'click').forEach((l) => l[1](evt));
+    return evt;
+  }
   getClientRects() { return [1]; }
   getBoundingClientRect() { return { width: 1, height: 1 }; }
   animate(frames, opts) { return makeAnim(this, frames, opts); }
@@ -150,6 +158,7 @@ function mascot(which, face) {
 
 // virtual clock: setTimeout never really waits; advance(ms) fires due timers in order
 let now = 0;
+const clock = { t: 1e6 };   // Date.now() for react(): scenarios move it by hand
 let timers = [];
 let tid = 0;
 const fakeST = (fn, ms) => { tid += 1; timers.push({ id: tid, fn, at: now + (ms || 0) }); return tid; };
@@ -179,24 +188,28 @@ function load(motion, env) {
   tpl.content = parse(fx.library).childNodes[0];
   const htmlEl = new El('html');
   if (motion !== 'system') htmlEl.setAttribute('data-motion', motion);
-  const byId = { 'pb-zorp-rig': island, 'pb-zorp-parts': tpl };
+  const byId = Object.assign({ 'pb-zorp-rig': island, 'pb-zorp-parts': tpl }, (env && env.byId) || {});
   class KE { }
   if (!env || env.composite !== false) KE.prototype.composite = 'replace';
   const sandbox = {
     document: {
       readyState: 'complete', hidden: false, body: new El('body'), documentElement: htmlEl,
-      getElementById: (id) => byId[id] || null, addEventListener() {},
+      getElementById: (id) => byId[id] || null,
+      addEventListener(t, fn) { (sandbox.docListeners = sandbox.docListeners || []).push([t, fn]); },
+      querySelector: (sel) => (env && env.query && env.query[sel] && env.query[sel][0]) || null,
+      querySelectorAll: (sel) => (env && env.query && env.query[sel]) || [],
     },
+    addEventListener() {},
     Element: El, Animation: class { get finished() { return null; } },
     KeyframeEffect: KE,
     CSS: { supports: () => !env || env.props !== false },
-    setTimeout: fakeST, clearTimeout: fakeCT, Promise, Object, Date, Math, JSON, console, Array, String,
+    setTimeout: fakeST, clearTimeout: fakeCT, Promise, Object, Date: { now: () => clock.t }, Math, JSON, console, Array, String,
   };
   sandbox.window = sandbox;
   sandbox.matchMedia = () => ({ matches: false, addEventListener() {} });
   vm.runInNewContext(fs.readFileSync(scriptPath, 'utf8'), sandbox);
   if (!env || env.poses !== false) vm.runInContext(fs.readFileSync(posesPath, 'utf8'), sandbox);
-  return { z: sandbox.pbZorp, html: htmlEl };
+  return { z: sandbox.pbZorp, html: htmlEl, sandbox };
 }
 
 
@@ -665,6 +678,328 @@ async function scenario(name, fn) {
     assert.strictEqual(await p, true);
     eq(z.viewOf(m.host), { view: 'three-quarter', facing: 'r' });
   });
+
+  // ---- E8 Phase 5: react() plan ----
+  const SMALL_CORRECT = ['cheer', 'hop', 'wave'];
+  const BIG_KINDS = ['streak', 'first_correct', 'milestone', 'lesson_complete'];
+  const tick = (ms) => { clock.t += ms; return clock.t; };
+
+  await scenario('react plan: correct rotates the small clips and positive faces, never repeats either, never a big clip', () => {
+    const { z } = load('system');
+    let prev = { clip: '', face: '' };
+    const faces = new Set();
+    const clips = new Set();
+    for (let i = 0; i < 80; i += 1) {
+      const p = z.reactPlan('correct', tick(1000));
+      assert.ok(SMALL_CORRECT.indexOf(p.clip) !== -1, 'small clip only: ' + p.clip);
+      assert.strictEqual(p.big, false);
+      assert.ok(z.allowedIn('react.correct', p.face) && val(z, p.face) === 'positive', 'face from CONTEXT_MAP react.correct: ' + p.face);
+      assert.notStrictEqual(p.clip, prev.clip, 'clip repeats');
+      assert.notStrictEqual(p.face, prev.face, 'face repeats');
+      prev = p; faces.add(p.face); clips.add(p.clip);
+    }
+    assert.ok(faces.size >= 4 && clips.size === 3, 'the whole rotation is used: ' + [...faces] + ' / ' + [...clips]);
+    ['grin', 'joy', 'happy', 'smug'].forEach((f) => assert.ok(faces.has(f), f));
+  });
+
+  await scenario('react plan: wrong is oops-encourage (oops first beat <= 300 ms, resolves positive), no face override, no blush', () => {
+    const { z } = load('system');
+    for (let i = 0; i < 5; i += 1) {
+      const p = z.reactPlan('wrong', tick(1000));
+      assert.strictEqual(p.clip, 'oops-encourage');
+      assert.strictEqual(p.big, false);
+      assert.strictEqual(p.face, undefined);
+    }
+    const info = z.clipInfo('oops-encourage');
+    const exprs = info.beats.filter((b) => b.expr).map((b) => b.expr);
+    eq(exprs, ['oops', 'determined', 'soft-smile']);
+    assert.ok(info.beats[0].ms + info.beats[0].hold <= 300, 'oops is the first beat only, 300 ms at most');
+    exprs.slice(1).forEach((e) => { assert.notStrictEqual(e, 'oops'); assert.ok(z.allowedIn('react.wrong', e), e); });
+    assert.strictEqual(val(z, exprs[exprs.length - 1]), 'positive');
+    exprs.forEach((e) => { ['sad', 'aww-teary', 'embarrassed', 'dizzy', 'bashful', 'confused'].forEach((n) => assert.notStrictEqual(e, n)); });
+    assert.ok(info.beats.some((b) => b.fx === 'thought'), 'the thought bubble is one of its beats (no separate opts.thought)');
+  });
+
+  await scenario('react plan: a big clip only for the rarer kinds, with a minimum gap between them and no stacking', () => {
+    const { z } = load('system');
+    const table = { streak: 'fist-pump', first_correct: 'victory', lesson_complete: 'dance' };
+    Object.keys(table).forEach((kind) => {
+      const { z: zz } = load('system');
+      const p = zz.reactPlan(kind, tick(60000));
+      assert.strictEqual(p.clip, table[kind], kind);
+      assert.strictEqual(p.big, true, kind);
+      assert.ok(p.dur >= 700 && p.dur <= 1500, kind + ' dur ' + p.dur);
+    });
+    const a = z.reactPlan('streak', tick(60000));
+    assert.strictEqual(a.clip, 'fist-pump');
+    assert.strictEqual(z.reactPlan('milestone', tick(400)), false, 'a big clip still playing is never cut short by another reaction');
+    const soon = z.reactPlan('streak', tick(a.dur + 500));
+    assert.strictEqual(soon.clip, 'cheer', 'inside the minimum gap a second big moment becomes a small cheer');
+    assert.strictEqual(soon.big, false);
+    assert.ok(z.allowedIn('react.streak', soon.face) && val(z, soon.face) === 'positive');
+    const later = z.reactPlan('streak', tick(8000));
+    assert.strictEqual(later.clip, 'fist-pump', 'after the gap it is allowed again');
+    // correct answers are never big, however many and however spaced
+    const { z: z2 } = load('system');
+    for (let i = 0; i < 200; i += 1) assert.strictEqual(z2.reactPlan('correct', tick(20000)).big, false);
+  });
+
+  await scenario('react plan: milestone alternates flex (proud) and a wave with a positive face; lesson_complete dances with love, never tripping', () => {
+    const { z } = load('system');
+    const seen = new Set();
+    for (let i = 0; i < 12; i += 1) {
+      const p = z.reactPlan('milestone', tick(60000));
+      seen.add(p.clip);
+      assert.ok(['flex', 'wave'].indexOf(p.clip) !== -1, p.clip);
+      if (p.clip === 'wave') assert.ok(z.allowedIn('react.milestone', p.face) && val(z, p.face) === 'positive', 'wave face ' + p.face);
+      else assert.strictEqual(p.big, true);
+    }
+    assert.strictEqual(seen.size, 2, 'both milestone clips are used');
+    const d = z.reactPlan('lesson_complete', tick(60000));
+    assert.strictEqual(d.clip, 'dance');
+    assert.strictEqual(d.face, 'love');
+    eq(d.map, { laugh: 'love' });
+    assert.ok(z.allowedIn('react.lesson_complete', d.face));
+    assert.strictEqual(d.trip, undefined, 'a reaction never asks for the trip');
+    assert.strictEqual(z.reactPlan('nonsense', tick(1)), null);
+  });
+
+  await scenario('react plan: every clip and face any kind can produce exists and is allowed for that kind', () => {
+    const { z } = load('system');
+    ['correct', 'wrong', 'streak', 'first_correct', 'milestone', 'lesson_complete'].forEach((kind) => {
+      for (let i = 0; i < 30; i += 1) {
+        const p = z.reactPlan(kind, tick(60000));
+        assert.ok(z.hasClip(p.clip), p.clip);
+        if (p.face) assert.ok(z.allowedIn('react.' + kind, p.face) && val(z, p.face) !== 'negative', kind + ' ' + p.face);
+        const info = z.clipInfo(p.clip);
+        if (info.beats) {
+          const exprs = info.beats.filter((b) => b.expr).map((b) => (p.map && p.map[b.expr]) || b.expr);
+          exprs.forEach((e) => assert.ok(z.allowedIn('react.' + kind, e) || (kind === 'wrong' && e === 'oops'), kind + ' beat ' + e));
+          assert.strictEqual(val(z, exprs[exprs.length - 1]), 'positive', p.clip + ' ends positive');
+        }
+      }
+    });
+  });
+
+  await scenario('react(): wrong at full motion is oops, then determined, then soft-smile; nothing left running', async () => {
+    const { z } = load('system');
+    const m = mascot('front');
+    z.bind(m.host);
+    z.idle(false, m.host);
+    const r = z.react('wrong', { el: m.host });
+    assert.ok(animations.length > 0, 'animates at full motion');
+    assert.strictEqual(m.svg.getAttribute('data-expr'), 'oops');
+    await advance(300);
+    assert.strictEqual(m.svg.getAttribute('data-expr'), 'determined');
+    await advance(400);
+    assert.strictEqual(m.svg.getAttribute('data-expr'), 'soft-smile');
+    await finishAll();
+    await advance(400);
+    assert.strictEqual(await r, true);
+    assert.strictEqual(m.svg.getAttribute('data-expr'), 'nudge', 'back on the resting nudge face');
+    assert.strictEqual(live().length, 0);
+  });
+
+  await scenario('react(): reduced shows only the preset and pulse (no animate calls), off does nothing at all', async () => {
+    ['reduced', 'off'].forEach((level) => {
+      ['wrong', 'correct', 'streak', 'milestone', 'lesson_complete', 'first_correct'].forEach((kind) => {
+        const { z } = load(level);
+        const m = mascot('front');
+        z.bind(m.host);
+        tick(60000);
+        const p = z.react(kind, { el: m.host });
+        assert.strictEqual(animations.length, 0, level + ' ' + kind + ' made animate calls');
+        if (level === 'off') p.then((v) => assert.strictEqual(v, false));
+        else assert.ok(m.svg.getAttribute('data-expr') && val(z, m.svg.getAttribute('data-expr')) !== 'negative', level + ' ' + kind + ' face');
+        assert.strictEqual(m.part('.buddy-root').style.transform || '', '');
+      });
+    });
+    const { z } = load('reduced');
+    const m = mascot('front');
+    z.bind(m.host);
+    z.react('wrong', { el: m.host });
+    assert.strictEqual(m.svg.getAttribute('data-expr'), 'determined', 'reduced wrong shows determined, never oops');
+    await advance(3000);
+  });
+
+  await scenario('react(): a big reaction is not cut short by the next correct answer (min-gap and protect window)', async () => {
+    const { z } = load('system');
+    const m = mascot('front');
+    z.bind(m.host);
+    z.idle(false, m.host);
+    tick(60000);
+    z.react('streak', { el: m.host });
+    const n = animations.length;
+    assert.ok(n > 4);
+    tick(1000);
+    assert.strictEqual(await z.react('correct', { el: m.host }), false, 'the fist-pump (about 1.2 s) outlasts the 900 ms reaction gap');
+    assert.strictEqual(animations.length, n);
+    assert.ok(animations.every((a) => !a.canceled));
+    tick(1200);
+    z.react('correct', { el: m.host });
+    assert.ok(animations.length > n, 'once it is over, reactions play again');
+  });
+
+  await scenario('visibilitychange: hiding the page stops the clip and face timers, so a transient oops is never on screen on return', async () => {
+    const { z, sandbox } = load('system');
+    const m = mascot('front');
+    z.bind(m.host);
+    z.idle(false, m.host);
+    const from = animations.length;
+    z.react('wrong', { el: m.host });
+    assert.strictEqual(m.svg.getAttribute('data-expr'), 'oops');
+    sandbox.document.hidden = true;
+    sandbox.docListeners.filter((l) => l[0] === 'visibilitychange').forEach((l) => l[1]());
+    assert.strictEqual(m.svg.getAttribute('data-expr'), 'nudge', 'back on the resting face at once');
+    assert.strictEqual(animations.slice(from).filter((a) => !a.canceled && a.state !== 'finished' && a.opts.duration > 200).length, 0, 'no clip animation left running (only the 80-90 ms face swap back to rest)');
+    sandbox.document.hidden = false;
+    await advance(2000);
+    assert.strictEqual(m.svg.getAttribute('data-expr'), 'nudge', 'no stale timer repaints a reaction face');
+  });
+
+  await scenario('react(): without zorp-poses.js the E7 table still answers (wobble, cheer, weak_topic face)', async () => {
+    const { z } = load('system', { poses: false });
+    const m = mascot('front');
+    z.bind(m.host);
+    z.idle(false, m.host);
+    tick(60000);
+    z.react('wrong', { el: m.host });
+    assert.ok(animations.length > 0);
+    assert.strictEqual(typeof z.reactPlan, 'undefined');
+  });
+
+  // ---- E8 Phase 5: /welcome wiring against the real runtime ----
+  if (welcomePath) {
+    const welcomeSrc = fs.readFileSync(welcomePath, 'utf8');
+    const boot = (step, motion, svgKind) => {
+      const m = mascot(svgKind || 'front');
+      const section = new El('section', { id: 'welcome', 'data-step': step });
+      const byId = { welcome: section };
+      const env = { byId, query: { '[data-welcome-hero]': [m.host] } };
+      let form = null;
+      let cards = [];
+      if (step === 'topic') {
+        form = new El('form', { id: 'welcome-topic-form' });
+        cards = [new El('button', { name: 'topic', value: 'a' }), new El('button', { name: 'topic', value: 'b' })];
+        cards.forEach((c) => form.appendChild(c));
+        form.requestSubmit = (btn) => { form.submitted = btn; };
+        byId['welcome-topic-form'] = form;
+      }
+      const rt = load(motion, env);
+      rt.sandbox.window.localStorage = undefined;
+      vm.runInContext(welcomeSrc, rt.sandbox);
+      return { z: rt.z, m, form, cards };
+    };
+
+    await scenario('welcome hello (full): hero (server-drawn front) drops to profile at once, turns in after a beat, then waves; ends on the front view', async () => {
+      const { z, m } = boot('hello', 'system');
+      eq(z.viewOf(m.host), { view: 'side', facing: 'r' });
+      assert.strictEqual(animations.length, 0, 'nothing moves before the beat');
+      await advance(360);
+      assert.ok(animations.length > 0, 'the pinch-turn starts');
+      for (let i = 0; i < 8; i += 1) { await finishAll(); await advance(200); }
+      eq(z.viewOf(m.host), { view: 'front', facing: 'r' });
+      assert.ok(animations.some((a) => a.frames.some((f) => /rotate\(-105deg\)/.test(f.transform || ''))), 'the wave raised an arm');
+    });
+
+    for (const level of ['reduced', 'off']) {
+      await scenario('welcome hello (' + level + '): turned to the front at once, no animate calls, never left sideways', async () => {
+        const { z, m } = boot('hello', level);
+        await flush();
+        eq(z.viewOf(m.host), { view: 'front', facing: 'r' });
+        await advance(2000);
+        assert.strictEqual(animations.length, 0, level + ' must not animate');
+        eq(z.viewOf(m.host), { view: 'front', facing: 'r' });
+      });
+    }
+
+    await scenario('welcome level (full): side-point down, then back to the front; off: no animation and front', async () => {
+      const { z, m } = boot('level', 'system');
+      assert.ok(animations.length > 0, 'turns to the side');
+      for (let i = 0; i < 10; i += 1) { await finishAll(); await advance(200); }
+      eq(z.viewOf(m.host), { view: 'front', facing: 'r' });
+      const off = boot('level', 'off');
+      await advance(2000);
+      assert.strictEqual(animations.length, 0);
+      eq(off.z.viewOf(off.m.host), { view: 'front', facing: 'r' });
+    });
+
+    await scenario('welcome topic: think-chin after 400 ms; a card tap plays the fist-pump and submits inside the 450 ms race', async () => {
+      const { z, m, form, cards } = boot('topic', 'system');
+      assert.strictEqual(animations.length, 0);
+      await advance(410);
+      assert.ok(animations.length > 0, 'think-chin animates');
+      assert.strictEqual(m.svg.getAttribute('data-expr'), 'thinking');
+      await finishAll();
+      await advance(400);
+      animations = [];
+      const evt = cards[0].click();
+      assert.strictEqual(evt.prevented, true, 'the tap is held for the jump');
+      assert.ok(animations.length > 4, 'fist-pump animations');
+      const root = animations.find((a) => a.el === m.part('.buddy-root'));
+      assert.ok(root && root.frames.some((f) => /translate\([-\d.]+px,-1[0-9](\.\d+)?px\)/.test(f.transform)), 'it jumps');
+      assert.strictEqual(form.submitted, undefined, 'not yet');
+      await advance(460);
+      assert.strictEqual(form.submitted, cards[0], 'submitted after the race');
+      cards[1].click();
+      assert.strictEqual(form.submitted, cards[0], 'a second tap is ignored while submitting');
+    });
+
+    await scenario('welcome topic (reduced/off): the tap submits plainly, no jump, no think-chin animation', async () => {
+      for (const level of ['reduced', 'off']) {
+        const { form, cards } = boot('topic', level);
+        await advance(500);
+        assert.strictEqual(animations.length, 0, level);
+        const evt = cards[0].click();
+        assert.strictEqual(evt.prevented, false, level + ' leaves the plain submit alone');
+        assert.strictEqual(animations.length, 0, level);
+        assert.strictEqual(form.submitted, undefined);
+      }
+    });
+
+    await scenario('welcome: without zorp-poses.js each step falls back to its E7 clip (point, think, cheer)', async () => {
+      const m = mascot('front');
+      const section = new El('section', { id: 'welcome', 'data-step': 'topic' });
+      const form = new El('form', { id: 'welcome-topic-form' });
+      const card = new El('button', { name: 'topic', value: 'a' });
+      form.appendChild(card);
+      form.requestSubmit = (b) => { form.submitted = b; };
+      const rt = load('system', { poses: false, byId: { welcome: section, 'welcome-topic-form': form }, query: { '[data-welcome-hero]': [m.host] } });
+      vm.runInContext(welcomeSrc, rt.sandbox);
+      await advance(410);
+      assert.ok(animations.length > 0, 'think still plays');
+      await finishAll();
+      animations = [];
+      card.click();
+      assert.ok(animations.length > 0, 'cheer still plays');
+      await advance(460);
+      assert.strictEqual(form.submitted, card);
+    });
+  }
+
+  // ---- E8 Phase 5: data-zorp-autoplay allowlist ----
+  if (triggersPath) {
+    const trigSrc = fs.readFileSync(triggersPath, 'utf8');
+    const run = (clips) => {
+      const played = [];
+      const els = clips.map((c) => new El('span', { 'data-zorp-autoplay': c }));
+      const sb = {
+        document: { readyState: 'complete', addEventListener() {}, querySelectorAll: () => els },
+        setTimeout: fakeST, Date,
+        console,
+      };
+      sb.window = sb;
+      sb.pbZorp = { play: (name) => { played.push(name); return Promise.resolve(true); } };
+      vm.runInNewContext(trigSrc, sb);
+      return played;
+    };
+    await scenario('autoplay allowlist: only positive or neutral clips start from markup; everything else is ignored', () => {
+      const ok = ['think', 'think-chin', 'shrug', 'peek', 'wave', 'nod', 'wink', 'float', 'hop', 'cheer', 'flex', 'side-point'];
+      eq(run(ok), ok);
+      const bad = ['wobble', 'oops-encourage', 'sleep', 'dance', 'shake', 'turn', 'bow', 'fist-pump', 'victory', '__proto__', 'constructor', 'toString', 'nonsense'];
+      eq(run(bad), []);
+    });
+  }
 
   finished = true;
   const failed = results.filter((r) => !r[1]);

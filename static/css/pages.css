@@ -2204,6 +2204,8 @@ body.quiz-runner-active .app-tab-bar {
     color: var(--text-muted);
 }
 .welcome-title { margin: 0; }
+/* E8 Phase 5: room above the hero for the fist-pump jump (apex about 42px above the hero box) so it clears the "Signed in as" line. */
+.welcome .welcome-hero { margin-top: var(--space-8); }
 .welcome-copy {
     margin: 0;
     color: var(--text-muted);

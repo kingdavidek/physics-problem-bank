@@ -116,8 +116,8 @@ def main():
         assert 'data-buddy-face' in html
         assert 'buddy-mascot' in html
         assert 'data-face=' in html
-        assert 'zorp-motion.js?v=8' in html
-        assert 'zorp-poses.js?v=1' in html and html.index('zorp-motion.js') < html.index('zorp-poses.js')
+        assert 'zorp-motion.js?v=9' in html
+        assert 'zorp-poses.js?v=2' in html and html.index('zorp-motion.js') < html.index('zorp-poses.js')
         assert 'css/motion.css?v=7' in html
         assert 'buddy-arm--l' in html
         assert 'buddy-pupil' in html
@@ -292,6 +292,22 @@ def main():
         assert streak['face'] == '🔥'
         assert 'streak' in streak['message'].lower()
         assert streak['task_mark']
+        # E8 Phase 5 (Children's Code std 13): upbeat copy, no loss framing
+        assert streak['message'] == 'Keep your 4-day streak going with one quick question.', streak['message']
+        assert 'risk' not in streak['message'].lower() and 'lose' not in streak['message'].lower()
+        # the corner buddy's first paint is the upbeat heads-up look, never a frown
+        page = client.get('/').data.decode()
+        assert 'data-face="heads-up"' in page, 'streak_risk prompt must draw the heads-up preset'
+        assert 'frown' not in page.split('id="study-buddy"', 1)[1].split('data-buddy-card', 1)[0]
+        with get_db() as conn:
+            conn.execute('UPDATE user_streaks SET freeze_available = 1 WHERE user_id = ?', (uid_a,))
+            conn.commit()
+        freeze_msg = client.get('/api/v1/me/buddy').get_json()['buddy']['message']
+        assert 'honest' not in freeze_msg and 'risk' not in freeze_msg.lower()
+        assert freeze_msg == 'You have a skip in hand this week, and one quick question still keeps your streak going.'
+        with get_db() as conn:
+            conn.execute('UPDATE user_streaks SET freeze_available = 0 WHERE user_id = ?', (uid_a,))
+            conn.commit()
 
         with get_db() as conn:
             conn.execute(
@@ -386,7 +402,7 @@ def main():
         assert 'data-buddy-level="gcse"' in html_lesson
         assert 'data-buddy-subject="maths"' in html_lesson
         assert 'data-buddy-topic="algebra"' in html_lesson
-        assert 'study-buddy.js?v=27' in html_lesson
+        assert 'study-buddy.js?v=28' in html_lesson
         assert 'Problem Bank build: buddy-embed-v6' in html_lesson
         assert 'pb-buddy-embed-v6' in html_lesson
         assert 'id="pb-buddy-page"' in html_lesson

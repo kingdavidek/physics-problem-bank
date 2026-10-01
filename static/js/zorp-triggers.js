@@ -23,9 +23,15 @@
      flags.
    - data-zorp-autoplay-delay="<ms>": wait this long before playing (e.g. so it doesn't
      collide with another animation already running on the same element, like the streak
-     ring's own 800ms draw-on). */
+     ring's own 800ms draw-on).
+
+   E8 Phase 5: only the clips in AUTOPLAY_OK may start from markup (positive or neutral, never a wrong-answer
+   clip, a dance trip or a sleep); any other value is ignored, so a template can never make Zorp look sad or
+   tired at a pupil who did nothing. models/zorp_rig.py AUTOPLAY_CLIPS is the source; a test pins the two. */
 (function () {
   'use strict';
+
+  var AUTOPLAY_OK = ['think', 'think-chin', 'shrug', 'peek', 'wave', 'nod', 'wink', 'float', 'hop', 'cheer', 'flex', 'side-point'];
 
   function utcDayKey(prefix) {
     return prefix + '-' + new Date().toISOString().slice(0, 10);
@@ -33,7 +39,7 @@
 
   function trigger(el) {
     var clip = el.getAttribute('data-zorp-autoplay');
-    if (!clip) return;
+    if (!clip || AUTOPLAY_OK.indexOf(clip) === -1) return;
     var onceKey = el.getAttribute('data-zorp-autoplay-once-key');
     if (onceKey) {
       try {

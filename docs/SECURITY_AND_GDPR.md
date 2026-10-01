@@ -73,7 +73,7 @@ Severity is about **risk to users and to you**, not difficulty. "Effort" is a ro
 | G2 | No account deletion — nothing in the code deletes a `users` row | GDPR (Art 17) | **Critical** | 1 |
 | G3 | No data export / access request mechanism | GDPR (Art 15/20) | **Critical** | 1 |
 | G4 | No DPIA and no ROPA, for a children's service that profiles users | GDPR (Art 35/30) | **Critical** | 1 |
-| G5 | Default `profile_visibility` is `'public'` and several activity toggles default on (`app.py:885`, `models/social.py`) | Children's Code std 6 | **High** | 0.5 |
+| G5 | Default `profile_visibility` is `'public'` and several activity toggles default on (`app.py:885`, `models/social.py`) | Children's Code std 7 | **High** | 0.5 |
 | G6 | IP addresses stored in `rate_limit_buckets` / `lesson_assist_usage` with no retention limit or pruning | GDPR (Art 5(1)(e)) | **High** | 0.5 |
 | G7 | No password reset and no email verification — you cannot recover an account or verify a rights request | Security + Art 12(6) | **High** | 1.5 |
 | G8 | Lesson assist can send lesson text plus a child's typed question to OpenAI / Anthropic / **DeepSeek** with no notice, no DPA check, and no transfer assessment | GDPR Ch. V | **High** | 1 |
@@ -128,7 +128,7 @@ Add a footer block in `templates/base.html` linking all three, and a line above 
 
 #### S0.3 High-privacy defaults for children
 
-**Why:** Children's Code standard 6 says settings must default to high privacy. Today `profile_visibility` defaults to `'public'` (`app.py:885`) and the "show last topic", "show last activity", "show lesson progress", and "show quiz stats" toggles default on — so a new 13-year-old's recent study activity is visible to anonymous visitors by default.
+**Why:** Children's Code standard 7 (default settings) says settings must default to high privacy. Today `profile_visibility` defaults to `'public'` (`app.py:885`) and the "show last topic", "show last activity", "show lesson progress", and "show quiz stats" toggles default on — so a new 13-year-old's recent study activity is visible to anonymous visitors by default.
 
 **Do:**
 1. Change the column default to `'followers_only'` and flip the four activity toggles to default off. Because the schema uses `CREATE TABLE IF NOT EXISTS`, changing the DDL only affects fresh databases — also add a one-time migration that updates existing rows that have never been touched, or (simpler, and honest while the user base is tiny) reset all existing rows to the new defaults and say so.

@@ -58,6 +58,7 @@ LESSON_ONLY = {'lesson-pages.css', 'lesson-assist.css'}
 # bytes after review fixes, no lesson-only sheet touched. Tree now 232,501 bytes (core
 # 207,509). Budget NOT raised, but core headroom is now only ~2.5 KB — the next CSS
 # addition should look for savings or raise the budget deliberately.
+# E8 Phase 5 (2026-09-30): pages.css +about 200 bytes (welcome hero margin). Tree 236,037 (core 211,045); caps unchanged.
 # E8 Phase 1 (2026-09-29): raised 240,000 -> 246,000 (docs/ZORP_EXPRESSIVENESS.md 2.1). motion.css
 # 4,844 -> 6,445 bytes (face colour props, .zk/.zf ink classes, .zorp-face pivots, twinkle and zzz
 # keyframes with reduced/data-motion mirrors, minus the old data-mouth rules); chrome.css lost the

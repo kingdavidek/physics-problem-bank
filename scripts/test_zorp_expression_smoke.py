@@ -45,7 +45,7 @@ INSTANCE_LOOK_MAX_BYTES = 5_800  # measured 3,624 B Phase 1, 3,663 B Phase 2, 4,
 PAGE_MASCOT_MAX_BYTES = 36_000  # 3 instances + library + island; see test_page_mascot_budget output
 PAGE_MASCOT_MAX_GZIP = 6_000
 RUNTIME_JS_MAX_BYTES = 48_000  # baseline 26_602; 47_868 after Phase 3; Phase 4 first trimmed it to 43_084, then added the register hook (45_370; 45_509 after the review fixes)
-POSES_JS_MAX_BYTES = 24_000  # E8 Phase 4 (new file, 2026-09-30): poses table, beat engine and the new clips; measured in test_poses_js_budget output
+POSES_JS_MAX_BYTES = 26_000  # E8 Phase 4 (new file, 2026-09-30): poses table, beat engine and the new clips, 24,000 B at first; raised to 26,000 B in Phase 5 (2026-09-30, ledger note) for the react() plan; measured in test_poses_js_budget output
 PARTS_LIBRARY_MAX_BYTES = 16_000  # <template> only; measured 6,959 B Phase 1, 12,169 B Phase 2, 13,432 B Phase 3
 RIG_JSON_MAX_BYTES = 6_000  # island; measured 1,359 B Phase 1, 2,802 B Phase 2, 4,503 B Phase 3 (with tags)
 MOTION_CSS_MAX_BYTES = 12_000  # mirrors test_zorp_motion_smoke.py; baseline 4_844, Phase 1 6_445, Phase 2 7_466, Phase 3 7_895
@@ -272,9 +272,12 @@ def test_unknown_face_fails_closed():
     for bad in ('bogus', '', None, 5, ['nudge'], 'NUDGE', 'nudge ', '__proto__', 'streak-risk'):
         assert zorp_rig.resolve_preset(bad) == 'nudge', bad
         assert zorp_rig.face_for_prompt(bad) == 'nudge', bad
-    assert zorp_rig.face_for_prompt('streak_risk') == 'streak_risk'  # Phase 5 switches this to heads-up
-    for kind in ('milestone', 'celebrate', 'qotd_nudge', 'weak_topic', 'friend_challenge', 'nudge'):
-        assert zorp_rig.face_for_prompt(kind) == kind
+    # E8 Phase 5 (D4): the prompt types map to upbeat presets; streak_risk is the heads-up look
+    assert zorp_rig.face_for_prompt('streak_risk') == 'heads-up'
+    want = {'milestone': 'proud', 'celebrate': 'happy', 'qotd_nudge': 'wink', 'weak_topic': 'determined',
+            'friend_challenge': 'wink', 'nudge': 'nudge'}
+    for kind, face in want.items():
+        assert zorp_rig.face_for_prompt(kind) == face, kind
     plain = _render(lambda m: str(m.buddy_mascot()))
     assert _render(lambda m: str(m.buddy_mascot(face='bogus'))) == plain
     assert _render(lambda m: str(m.buddy_mascot(face='<script>'))) == plain
@@ -353,7 +356,7 @@ def test_blush_never_on_react():
 
 
 def _catalog_steps():
-    """(step id, face, lore, resolve) for every object with a face: in guide-catalog.js."""
+    """(step id, face, lore, resolve, big) for every object with a face: in guide-catalog.js."""
     text = (JS_DIR / 'guide-catalog.js').read_text(encoding='utf-8')
     steps = []
     for m in re.finditer(r"face:\s*'([\w-]+)'", text):
@@ -374,7 +377,8 @@ def _catalog_steps():
         ident = re.search(r"\bid:\s*'([^']+)'", obj)
         resolve = re.search(r"\bresolve:\s*'([\w-]+)'", obj)
         steps.append((ident.group(1) if ident else None, m.group(1),
-                      bool(re.search(r'\blore:\s*true', obj)), resolve.group(1) if resolve else None))
+                      bool(re.search(r'\blore:\s*true', obj)), resolve.group(1) if resolve else None,
+                      bool(re.search(r'\bbig:\s*true', obj))))
     return steps
 
 
@@ -408,9 +412,13 @@ def test_negative_presets_restricted():
     # guide catalog
     steps = _catalog_steps()
     assert len(steps) >= 20, len(steps)
-    for step_id, face, lore, resolve in steps:
+    for step_id, face, lore, resolve, big in steps:
         assert face in zorp_rig.PRESETS, (step_id, face)
-        if zorp_rig.VALENCE[face] == 'negative':
+        if zorp_rig.VALENCE[face] == 'negative' and big:
+            # Phase 5: the one big reward (100-day streak, happy tears) may open on aww-teary, and resolves positively
+            assert face in zorp_rig.CONTEXT_MAP['guide.reward.big'], (step_id, face)
+            assert resolve in zorp_rig.CONTEXT_MAP['guide'] and zorp_rig.VALENCE[resolve] == 'positive', 'a big reward must resolve positively'
+        elif zorp_rig.VALENCE[face] == 'negative':
             assert lore and step_id in zorp_rig.GUIDE_LORE_STEPS, f'{step_id}: negative {face} outside an allowlisted lore step'
             assert face in zorp_rig.CONTEXT_MAP['guide.lore']
             assert resolve and zorp_rig.VALENCE[resolve] == 'positive', f'{step_id}: lore step must resolve positively'
@@ -436,7 +444,7 @@ def test_consumers_filter_by_valence():
     assert 'allowedIn' in guide and "'guide.lore'" in guide and 'step.resolve' in guide
     # the last line of a lore step is checked against the plain guide list (no negative face can
     # stay on screen even when step.resolve is missing or negative; review 2026-09-29)
-    assert '!!step.lore && lineIndex < lines.length' in guide
+    assert "step.big ? 'guide.reward.big' : (step.lore ? 'guide.lore' : 'guide')" in guide and "lineIndex < lines.length ?" in guide
     assert 'hasExpression' not in guide.split('function setFace', 1)[1].split('function setMedal', 1)[0], (
         'guide.js must ask allowedIn (the allowlist), not just hasExpression'
     )
@@ -750,7 +758,7 @@ def test_guide_slapstick_lore_only():
         assert face not in zorp_rig.CONTEXT_MAP['guide'], face
         assert face in zorp_rig.CONTEXT_MAP['guide.lore'], face
     assert set(zorp_rig.SLAPSTICK_LORE_ONLY) == {'confused', 'bashful'}
-    for step_id, face, lore, resolve in _catalog_steps():
+    for step_id, face, lore, resolve, big in _catalog_steps():
         if face in zorp_rig.SLAPSTICK_LORE_ONLY:
             assert lore or step_id in zorp_rig.GUIDE_LORE_STEPS or face in zorp_rig.CONTEXT_MAP.get('guide.thanks', ()), (
                 f'{step_id}: {face} outside a slapstick/lore step'
@@ -766,6 +774,162 @@ def test_react_wrong_and_autoplay_empty_contexts():
     assert zorp_rig.CONTEXT_MAP['react.wrong.first'] == ('oops',)
     assert 'sleepy' not in zorp_rig.CONTEXT_MAP['autoplay.empty']
     assert zorp_rig.valence('oops') != 'negative'
+
+
+def test_prompt_faces_positive_and_match_client():
+    """Phase 5: every prompt type draws an upbeat preset (the resting 'nudge' default aside), streak_risk is
+    heads-up with no frown, and study-buddy.js keeps the identical table for its client-side render."""
+    from models import buddy, zorp_rig
+
+    assert set(zorp_rig.PROMPT_FACES) == set(buddy.BUDDY_TYPES), 'every buddy prompt type has a face'
+    for kind, face in zorp_rig.PROMPT_FACES.items():
+        if kind == 'nudge':
+            assert zorp_rig.VALENCE[face] == 'neutral'  # the resting default: no prompt of this type is ever shown
+        else:
+            assert zorp_rig.VALENCE[face] == 'positive', (kind, face)
+        assert f'prompt.{kind}' in zorp_rig.CONTEXT_MAP and zorp_rig.CONTEXT_MAP[f'prompt.{kind}'] == (face,)
+    assert zorp_rig.PROMPT_FACES['streak_risk'] == 'heads-up'
+    heads_up = zorp_rig.preset('heads-up')
+    assert heads_up['mouth'] == 'smile' and heads_up['brows'] == 'raised' and heads_up['fx'] == 'flame'
+    assert zorp_rig.preset('streak_risk') == heads_up
+    sb = (JS_DIR / 'study-buddy.js').read_text(encoding='utf-8')
+    m = re.search(r'var PROMPT_FACE = \{(.*?)\};', sb, re.S)
+    assert m, 'study-buddy.js lost its PROMPT_FACE table'
+    client = dict(re.findall(r"(\w+):\s*'([\w-]+)'", m.group(1)))
+    assert client == zorp_rig.PROMPT_FACES, 'study-buddy.js PROMPT_FACE differs from zorp_rig.PROMPT_FACES'
+    # the server renders the same face on the corner buddy's first paint
+    base = (TEMPLATES / 'base.html').read_text(encoding='utf-8')
+    assert 'zorp_rig.face_for_prompt(' in base
+
+
+def test_streak_copy_is_upbeat_and_not_shaming():
+    """Phase 5 (Children's Code std 13): no streak-loss framing in the buddy copy (the live prompt is asserted
+    in test_buddy_smoke.py)."""
+    src = (ROOT / 'models' / 'buddy.py').read_text(encoding='utf-8')
+    messages = re.findall(r"message = (?:f)?'([^']*)'", src)
+    assert any(m == 'Keep your {days}-day streak going with one quick question.' for m in messages), messages
+    for line in messages:
+        for banned in ('lose', 'lost', 'risk', 'break', 'broke', 'miss out', 'disappoint', "don't let", 'honest', 'guilt'):
+            assert banned not in line.lower(), (banned, line)
+
+
+def test_react_contexts_phase5():
+    """Phase 5: a wrong answer is oops (the first beat only) then determined or soft-smile, and every react
+    list is positive or neutral, without blush, sweat or sad eyes."""
+    from models import zorp_rig
+
+    assert zorp_rig.CONTEXT_MAP['react.wrong'] == ('determined', 'soft-smile')
+    assert zorp_rig.CONTEXT_MAP['react.wrong.first'] == ('oops',)
+    assert [c for c, faces in zorp_rig.CONTEXT_MAP.items() if c.startswith(('react.', 'prompt.', 'dismiss')) and 'oops' in faces] == ['react.wrong.first']
+    banned = set(NEGATIVE_NAMES) | {'bashful', 'confused', 'embarrassed'}
+    for context, faces in zorp_rig.CONTEXT_MAP.items():
+        if context.startswith('react.'):
+            assert not banned & set(faces), (context, banned & set(faces))
+            for face in faces:
+                ch = zorp_rig.PRESETS[face]
+                assert ch['cheeks'] != 'blush' and ch['fx'] not in ('sweat', 'blush-steam', 'tear-shine'), (context, face)
+    # the reaction runtime reads these lists from the island, so they must ship
+    island = json.loads(zorp_rig.rig_json())['c']
+    for context in ('react.correct', 'react.wrong', 'react.streak', 'react.milestone', 'react.lesson_complete',
+                    'react.first_correct', 'guide.reward.big'):
+        assert island[context] == list(zorp_rig.CONTEXT_MAP[context]), context
+    assert set(zorp_rig.REACT_CLIPS) == {'correct', 'wrong', 'streak', 'first_correct', 'milestone', 'lesson_complete'}
+
+
+def test_react_mapping_uses_context_map():
+    """zorp-motion.js does not hard-code reaction faces any more: the plan in zorp-poses.js asks
+    pbZorp.allowedIn('react.<kind>', preset) (CONTEXT_MAP via the island) and filters on positive valence."""
+    poses = POSES_JS.read_text(encoding='utf-8')
+    assert "pb.allowedIn('react.' + kind, n)" in poses and "pb.valenceOf(n) === 'positive'" in poses
+    motion = RUNTIME_JS.read_text(encoding='utf-8')
+    assert 'reactHook' in motion and 'plan.big' in motion
+    # the wrong-answer oops is a beat of oops-encourage, at most 300 ms, and the clip resolves on soft-smile
+    m = re.search(r"add\('oops-encourage'.*?\]\s*\}\)\);", poses, re.S)
+    assert m
+    beats = re.findall(r"\{ pose: '(\w+)'(?:, expr: '([\w-]+)')?[^}]*?ms: (\d+)(?:, hold: (\d+))?", m.group(0))
+    assert beats[0][1] == 'oops' and int(beats[0][2]) + int(beats[0][3] or 0) <= 300, beats[0]
+    assert [b[1] for b in beats if b[1]][-1] == 'soft-smile'
+    assert [b[1] for b in beats].count('oops') == 1, 'oops only ever as the first beat'
+
+
+def test_guide_lore_and_big_reward_phase5():
+    """Phase 5: origin.home is the one sad lore step (resolves to aww on its last line), the 100-day streak
+    is the one big reward (aww-teary to proud), nothing else in the catalog is negative."""
+    from models import zorp_rig
+
+    text = (JS_DIR / 'guide-catalog.js').read_text(encoding='utf-8')
+    steps = _catalog_steps()
+    negative = [(i, f, lore, r, big) for i, f, lore, r, big in steps if zorp_rig.VALENCE[f] == 'negative']
+    assert sorted((f, r) for _, f, _, r, _ in negative) == [('aww-teary', 'proud'), ('sad', 'aww')], negative
+    assert zorp_rig.GUIDE_LORE_STEPS == ('origin.home',)
+    home = [s for s in steps if s[0] == 'origin.home'][0]
+    assert home[1] == 'sad' and home[2] and home[3] == 'aww'
+    assert 'origin.home' in text.split("id: 'origin.nudge'")[0], 'the lore step sits before origin.nudge'
+    # the lore copy is two lines: sad first, resolved on the last
+    block = text[text.index("id: 'origin.home'"):text.index("id: 'origin.nudge'")]
+    assert len(re.findall(r"^\s{10}'.*',$", block, re.M)) == 2
+    assert 'lonely' not in text.lower() and 'miss you' not in text.lower() and 'come back' not in text.lower()
+    # only steps with an id in GUIDE_LORE_STEPS may be lore; a lore step never resolves to a negative preset
+    for step_id, face, lore, resolve, big in steps:
+        if lore:
+            assert step_id in zorp_rig.GUIDE_LORE_STEPS, step_id
+            assert resolve and zorp_rig.VALENCE[resolve] == 'positive'
+    guide = (JS_DIR / 'guide.js').read_text(encoding='utf-8')
+    assert "big: !!template.big" in guide and "resolve: template.resolve || null" in guide
+    assert "(step.lore || step.big) && lastLine && step.resolve" in guide
+    # a multi-line big reward: the tap that follows line one reads 'Continue', not 'Close'
+    big_block = text[text.index("'streak:100'"):text.index('first_correct: {')]
+    assert "primary: 'Continue'" in big_block and big_block.count("'") >= 6 and "lines: ['100-day streak. Extraordinary.'," in big_block
+    # every preset the catalog names exists
+    for step_id, face, lore, resolve, big in steps:
+        assert face in zorp_rig.PRESETS and (not resolve or resolve in zorp_rig.PRESETS)
+
+
+def test_guide_gestures_phase5():
+    """guide.js plays the new clips; the catalog uses only names the runtime has (core list or zorp-poses.js)."""
+    guide = (JS_DIR / 'guide.js').read_text(encoding='utf-8')
+    m = re.search(r'ZORP_GESTURES\s*=\s*\{([^}]*)\}', guide)
+    names = set(re.findall(r"'?([\w-]+)'?\s*:\s*1", m.group(1)))
+    assert {'side-point', 'fist-pump', 'victory', 'flex', 'shrug', 'think-chin', 'bow', 'dance', 'float'} <= names
+    core = set(re.findall(r"'([\w-]+)'", re.search(r'CLIP_NAMES\s*=\s*\[([^\]]*)\]', RUNTIME_JS.read_text(encoding='utf-8')).group(1)))
+    added = set(re.findall(r"\badd\('([\w-]+)'", POSES_JS.read_text(encoding='utf-8')))
+    catalog = set(re.findall(r"gesture:\s*'([\w-]+)'", (JS_DIR / 'guide-catalog.js').read_text(encoding='utf-8')))
+    assert catalog <= names and catalog <= core | added, catalog - (core | added)
+    assert {'side-point', 'fist-pump', 'victory', 'flex', 'dance'} <= catalog, 'the Phase 5 refresh uses the new clips'
+
+
+def test_welcome_and_empty_states_phase5():
+    from models import zorp_rig
+
+    welcome = (JS_DIR / 'welcome.js').read_text(encoding='utf-8')
+    for needle in ("zorp.turn('front', 'r', { el: hero, required: true })", "zorp.play('wave'", "clipOr('side-point', 'point')",
+                   "target: 'down'", "clipOr('think-chin', 'think')", "clipOr('fist-pump', 'cheer')", 'Promise.race', 'setTimeout(resolve, 450)'):
+        assert needle in welcome, needle
+    assert "play('cheer'" not in welcome.replace("clipOr('fist-pump', 'cheer')", '')
+    tpl = (TEMPLATES / 'welcome.html').read_text(encoding='utf-8')
+    assert "view='side'" not in tpl  # server draws the hero front-facing
+    assert "zorp.turn('side', 'r', { el: hero, instant: true })" in welcome
+    # empty states use the new calm clips, all allowlisted
+    for name, clip in (('saved_problems.html', 'think-chin'), ('qotd.html', 'think-chin'), ('leaderboard_friends.html', 'think-chin'), ('follow_list.html', 'shrug')):
+        assert f'data-zorp-autoplay="{clip}"' in (TEMPLATES / name).read_text(encoding='utf-8'), name
+        assert clip in zorp_rig.AUTOPLAY_CLIPS
+    # offline stays a static sleep; the PWA banner is a static soft smile (server drawn, no runtime needed)
+    base = (TEMPLATES / 'base.html').read_text(encoding='utf-8')
+    assert "buddy_mascot(face='soft-smile')" in base
+    assert "buddy_mascot(face='sleep')" in (TEMPLATES / 'offline.html').read_text(encoding='utf-8')
+
+
+def test_welcome_hello_hero_is_front_on_the_server():
+    from app import app  # noqa: E402
+
+    text = (TEMPLATES / 'welcome.html').read_text(encoding='utf-8')
+    hero = re.search(r'<span class="study-buddy-face welcome-hero".*?</span>', text, re.S).group(0)
+    assert 'view=' not in hero  # no-JS or a failed runtime shows him facing the pupil
+    # the macro draws a profile only when asked: the default hero stays the front view
+    with app.app_context():
+        buddy = app.jinja_env.get_template('partials/buddy.html').module
+        assert 'data-view="side"' in str(buddy.buddy_mascot(view='side'))
+        assert 'data-view' not in str(buddy.buddy_mascot(view=None))
 
 
 def test_runtime_js_budget():
@@ -793,7 +957,7 @@ def test_gallery_section():
     assert pill_motion < pill_gallery < pill_diagrams, 'gallery pill must sit between Zorp motion and Diagrams'
     for face in GALLERY_FACES:
         assert html.count(f'data-gallery-face="{face}"') == 2, face
-    assert 'data-gallery-phase="2"' in html
+    assert 'data-gallery-phase="5"' in html
     start = html.index('id="zorp-gallery"')
     section = html[start:html.index('</section>', start)]
     assert 'data-zorp-demo' not in section, 'gallery faces must stay unbound to pbZorp'
@@ -936,7 +1100,7 @@ def test_poses_js_budget():
     assert "translate(0,9px) scale(0.75,1)" in core_text and "translate(0,8px) scale(0.7,1)" in core_text
     base = (TEMPLATES / 'base.html').read_text(encoding='utf-8')
     assert base.index('js/zorp-motion.js') < base.index('js/zorp-poses.js') < base.index('js/zorp-triggers.js')
-    assert 'zorp-poses.js\') }}?v=1' in base
+    assert 'zorp-poses.js\') }}?v=2' in base
     sw = (JS_DIR / 'sw.js').read_text(encoding='utf-8')
     assert '/static/js/zorp-poses.js' in sw and '/static/js/zorp-motion.js' in sw
 
@@ -1073,6 +1237,14 @@ def main():
     test_side_arms_clear_the_face()
     test_guide_slapstick_lore_only()
     test_react_wrong_and_autoplay_empty_contexts()
+    test_prompt_faces_positive_and_match_client()
+    test_streak_copy_is_upbeat_and_not_shaming()
+    test_react_contexts_phase5()
+    test_react_mapping_uses_context_map()
+    test_guide_lore_and_big_reward_phase5()
+    test_guide_gestures_phase5()
+    test_welcome_and_empty_states_phase5()
+    test_welcome_hello_hero_is_front_on_the_server()
     test_gallery_section()
     test_snapshot_tool_is_dev_only()
     test_snapshot_label_guard()
@@ -1085,7 +1257,7 @@ def main():
     test_clips_end_non_negative()
     test_pose_gallery_markup()
     test_decisions_recorded()
-    print('Zorp expression smoke (E8 Phase 4) passed.')
+    print('Zorp expression smoke (E8 Phase 5) passed.')
 
 
 if __name__ == '__main__':

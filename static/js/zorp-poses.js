@@ -19,6 +19,11 @@
   var POSES = {"stand":{"r":[0,0,0,1,1],"h":[0,0,0],"L":["rest",0,0],"R":["rest",0,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"front","e":"nudge"},"wave":{"r":[0,0,0,1,1],"h":[0,0,3],"L":["rest",0,0],"R":["straight",-100,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"milestone"},"point-l":{"r":[0,0,0,1,1],"h":[0,0,-4],"L":["straight",82,0],"R":["rest",0,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"qotd_nudge"},"point-r":{"r":[0,0,0,1,1],"h":[0,0,4],"L":["rest",0,0],"R":["straight",-82,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"qotd_nudge"},"point-down":{"r":[0,0,0,1,1],"h":[0,0,6],"L":["rest",0,0],"R":["straight",-35,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"qotd_nudge"},"fist-up":{"r":[0,0,4,1,1],"h":[0,0,0],"L":["rest",0,0],"R":["fist",-165,1],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"grin"},"victory":{"r":[0,0,0,1,1.02],"h":[0,0,0],"L":["fist",160,1],"R":["fist",-160,1],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"joy"},"flex":{"r":[0,0,0,1,1.03],"h":[0,0,0],"L":["rest",0,0],"R":["bent-fist",-90,1],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"proud"},"think-chin":{"r":[0,0,0,1,1],"h":[0,0,-6],"L":["rest",0,0],"R":["bent",0,1],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"thinking"},"shrug":{"r":[0,0,0,1,0.96],"h":[0,0,5],"L":["straight",62,0],"R":["straight",-62,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"soft-smile"},"bow":{"r":[0,0,18,1,1],"h":[0,0,0],"L":["rest",0,0],"R":["rest",0,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"side","e":"bashful"},"peek":{"r":[-8,0,0,1,1],"h":[0,0,-10],"L":["rest",0,0],"R":["rest",0,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"nudge"},"crouch":{"r":[0,3,0,1.11,0.89],"h":[0,0,0],"L":["rest",14,0],"R":["rest",-14,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"determined"},"dance-a":{"r":[0,0,6,1,1],"h":[0,0,0],"L":["straight",130,0],"R":["rest",0,0],"fl":[0,0,0],"fr":[0,-3,0],"s":[1,1],"v":"","e":"laugh"},"dance-b":{"r":[0,0,-6,1,1],"h":[0,0,0],"L":["rest",0,0],"R":["straight",-130,0],"fl":[0,-3,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"laugh"},"sit":{"r":[0,3,0,1,0.95],"h":[0,0,0],"L":["rest",0,0],"R":["rest",0,0],"fl":[3,-1,0],"fr":[3,-1,0],"s":[1,1],"v":"side","e":"happy"},"float":{"r":[0,-8,0,1,1],"h":[0,0,0],"L":["rest",0,0],"R":["rest",0,0],"fl":[0,0,-8],"fr":[0,0,8],"s":[0.7,0.6],"v":"","e":"happy"},"sleep":{"r":[0,1.5,0,1,0.98],"h":[0,0,12],"L":["rest",0,0],"R":["rest",0,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"sleep"}};
   /*POSES-END*/
 
+  // E8 Phase 5: which clips answer react(kind), from models/zorp_rig.py react_json() (test_react_plan_matches_runtime).
+  /*REACT-BEGIN*/
+  var REACT = {"clips":{"correct":["cheer","hop","wave"],"wrong":["oops-encourage"],"streak":["fist-pump"],"first_correct":["victory"],"milestone":["flex","wave"],"lesson_complete":["dance"]},"big":["fist-pump","victory","flex","dance"],"gap":7000,"face":{"lesson_complete":"love"}};
+  /*REACT-END*/
+
   var EASE = { out: 'cubic-bezier(.2,.8,.2,1)', 'in': 'cubic-bezier(.6,0,.9,.4)', overshoot: 'cubic-bezier(.34,1.56,.64,1)', io: 'ease-in-out' };
   var LAG = { head: 40, armL: 30, armR: 30 };   // follow-through: these parts trail the root by this many ms
   var ANT_LAG = 80;                             // antennae trail by 80 ms and overshoot
@@ -277,6 +282,7 @@
     // arm shapes return with stop() (rt undo list).
     function start(inst, spd, opts, c) {
       var list = listFor(c, opts);
+      var map = opts && opts.map || {};   // react(): { laugh: 'love' } shows the lesson-complete dance with love, never a trip
       var total = (span(list) + TAIL) / spd;
       var t = 0;
       var expr = '';
@@ -300,7 +306,7 @@
           if (at + when <= 0) apply(); else rt.after(inst, at + when, apply);
         };
         var go = function () {
-          if (b.expr) { expr = b.expr; fx = ''; }
+          if (b.expr) { expr = rt.own(map, b.expr) ? map[b.expr] : b.expr; fx = ''; }
           if (b.fx !== undefined) fx = b.fx === 'thought' ? '' : b.fx;
           if (expr && (b.expr || b.fx !== undefined)) rt.tempFace(inst, expr, Math.max(1, total - at), fx);
           if (b.fx === 'thought') rt.thought(inst);
@@ -377,6 +383,40 @@
       inst.busy = false;
       return rt.turn(opts.view || 'side', opts.facing, { el: inst.svg, speed: spd, required: opts.required });
     } });
+
+    // ---- react(kind) plan (E8 Phase 5) ----
+    // correct rotates the small clips with a positive preset from CONTEXT_MAP['react.correct'], never repeating;
+    // the rarer big moments get a big clip (fist-pump, victory, flex, dance). Big clips never stack: one still
+    // playing skips every reaction, and a second inside REACT.gap becomes a small cheer. wrong is oops-encourage
+    // (oops for the first 250 ms, then determined, then soft-smile; the thought bubble is one of its beats).
+    var lastPick = {};
+    var lastBig = 0;
+    var bigUntil = 0;
+    function pickFrom(list, key) {
+      var pool = list.length > 1 ? list.filter(function (n) { return n !== lastPick[key]; }) : list;
+      lastPick[key] = pool[Math.floor(Math.random() * pool.length)];
+      return lastPick[key];
+    }
+    function reactFaces(kind) {
+      return pb.expressions.filter(function (n) { return pb.allowedIn('react.' + kind, n) && pb.valenceOf(n) === 'positive'; });
+    }
+    function plan(kind, now) {
+      var list = rt.own(REACT.clips, kind) ? REACT.clips[kind] : null;
+      if (!list) return null;
+      if (now < bigUntil) return false;   // a big moment is still playing: nothing cuts it short
+      var clip = pickFrom(list, kind);
+      var big = REACT.big.indexOf(clip) !== -1;
+      if (big && now - lastBig < REACT.gap) { clip = 'cheer'; big = false; }
+      if (!rt.own(CL, clip)) return null;
+      var p = { clip: clip, big: big, dur: CL[clip].dur };
+      var love = rt.own(REACT.face, kind) ? REACT.face[kind] : '';
+      if (big) { lastBig = now; bigUntil = now + p.dur; }
+      if (clip === 'dance' && love) { p.face = love; p.map = { laugh: love }; }
+      else if (!big && kind !== 'wrong') p.face = pickFrom(reactFaces(kind), 'f' + kind);
+      return p;
+    }
+    rt.react(plan);
+    pb.reactPlan = plan;   // read-only use in tests: the plan react(kind) would play, and its side effects on the gap guard
 
     pb.pose = pose;
     pb.hasPose = function (name) { return !!poseRow(name); };

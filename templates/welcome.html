@@ -22,6 +22,7 @@
 
     {{ page_flashes('welcome') }}
 
+    {# E8 Phase 5: the hero is drawn front-facing; at full motion welcome.js drops to profile at once on the hello step, then turns in and waves. #}
     <span class="study-buddy-face welcome-hero" data-welcome-hero data-face="nudge" aria-hidden="true">{{ buddy_mascot(look=buddy_look, face='nudge') }}</span>
 
     {% if step == 'hello' %}
@@ -112,7 +113,7 @@
 
 </section>
 
-<script src="{{ url_for('static', filename='js/welcome.js') }}?v=2" defer></script>
+<script src="{{ url_for('static', filename='js/welcome.js') }}?v=3" defer></script>
 {% endblock %}
 
 {% block sticky_footer %}

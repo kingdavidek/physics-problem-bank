@@ -41,8 +41,19 @@
   var QUIET_MS_ACTED = 10 * 60 * 1000;
   var QUIET_MS_DISMISSED = 30 * 60 * 1000;
 
-  // No-runtime fallback table: name -> valence. A prompt face is never negative (E8 section 5),
-  // so a negative entry here would still be refused by faceKnown().
+  // E8 Phase 5: prompt type -> preset, the same table as models/zorp_rig.py PROMPT_FACES (every face upbeat:
+  // streak_risk is the heads-up look, never a frown; test_prompt_faces_match_client pins the two).
+  var PROMPT_FACE = {
+    nudge: 'nudge',
+    milestone: 'proud',
+    celebrate: 'happy',
+    qotd_nudge: 'wink',
+    streak_risk: 'heads-up',
+    weak_topic: 'determined',
+    friend_challenge: 'wink',
+  };
+  // No-runtime fallback table (legacy names only): name -> valence. A prompt face is never negative
+  // (E8 section 5), so a negative entry here would still be refused by faceKnown().
   var FACE_OK = {
     milestone: 'positive',
     celebrate: 'positive',
@@ -52,7 +63,7 @@
     friend_challenge: 'positive',
     nudge: 'neutral',
   };
-  var FACE_FROM_EMOJI = {
+  var TYPE_FROM_EMOJI = {
     '🎉': 'milestone',
     '😄': 'celebrate',
     '❓': 'qotd_nudge',
@@ -73,11 +84,20 @@
     return Object.prototype.hasOwnProperty.call(FACE_OK, name) && FACE_OK[name] !== 'negative';
   }
 
+  // A known prompt type draws its PROMPT_FACE preset; a runtime that lacks it still knows the legacy type name.
+  function faceForType(type) {
+    if (!type || !Object.prototype.hasOwnProperty.call(PROMPT_FACE, type)) return '';
+    if (faceKnown(PROMPT_FACE[type])) return PROMPT_FACE[type];
+    return faceKnown(type) ? type : '';
+  }
+
   function resolveFace(prompt) {
     var type = prompt && prompt.type;
+    var face = faceForType(type);
+    if (face) return face;
     if (type && faceKnown(type)) return type;
     var emoji = prompt && prompt.face;
-    if (emoji && FACE_FROM_EMOJI[emoji]) return FACE_FROM_EMOJI[emoji];
+    if (emoji && TYPE_FROM_EMOJI[emoji]) return faceForType(TYPE_FROM_EMOJI[emoji]) || 'nudge';
     return 'nudge';
   }
 

@@ -178,7 +178,7 @@ Answer `python scripts/ops_cadence.py feature-gate` before coding:
 | New personal data? | **A5:** `guide_json` (boolean flags). ROPA + privacy notice updated in the same change. A1–A4 localStorage is strictly necessary functional storage (like buddy dismiss). |
 | Child more visible? | No. |
 | New third party? | No. A6 is CSS-only; do not load Lottie/CDN. |
-| Profile / rank / nudge? | **Yes.** Tours and celebrations are nudges. Revisit DPIA Children’s Code **standard 12/13**. Copy: no streak-loss shaming; Skip always; no night-time push (E5.7 still blocked). |
+| Profile / rank / nudge? | **Yes.** Tours and celebrations are nudges. Revisit DPIA Children’s Code **standard 13** (nudge techniques). Copy: no streak-loss shaming; Skip always; no night-time push (E5.7 still blocked). |
 
 Implementation rules:
 

@@ -122,16 +122,18 @@ VALENCE = {
     'sad': NEGATIVE, 'dizzy': NEGATIVE, 'sleepy': NEUTRAL, 'wink': POSITIVE,
 }
 
-# models/buddy.py prompt types -> preset. D4 (streak_risk -> heads-up) switches in Phase 5, so
-# the legacy streak_risk name still maps to itself here.
+# models/buddy.py prompt types -> preset (E8 Phase 5). Every prompt face is upbeat: D4 moves streak_risk to
+# the heads-up look (raised brows, soft smile, flame), and no prompt ever draws a negative preset. 'nudge' is
+# the neutral resting default (the buddy shows nothing when no real trigger applies). study-buddy.js keeps a
+# copy of this table (PROMPT_FACE) for the client-side render; test_prompt_faces_match_client pins the two.
 PROMPT_FACES = {
     'nudge': 'nudge',
-    'milestone': 'milestone',
-    'celebrate': 'celebrate',
-    'qotd_nudge': 'qotd_nudge',
-    'streak_risk': 'streak_risk',
-    'weak_topic': 'weak_topic',
-    'friend_challenge': 'friend_challenge',
+    'milestone': 'proud',
+    'celebrate': 'happy',
+    'qotd_nudge': 'wink',
+    'streak_risk': 'heads-up',
+    'weak_topic': 'determined',
+    'friend_challenge': 'wink',   # review 2026-09-30: not smug (half lids + skeptical brow read as taunting a friend)
 }
 CONTEXT_MAP = {'prompt.' + kind: (face,) for kind, face in PROMPT_FACES.items()}
 # Where each preset may appear (docs/ZORP_EXPRESSIVENESS.md §3.7, §4.3). react.* rotates
@@ -142,10 +144,11 @@ CONTEXT_MAP.update({
     # and has its own context below, so no react.wrong resolution can stop on it (review 2026-09-29).
     'react.wrong': ('determined', 'soft-smile'),
     'react.wrong.first': ('oops',),
-    'react.streak': ('joy', 'proud', 'heads-up'),
-    'react.milestone': ('proud', 'wow', 'aww'),
+    # Phase 5: each list covers every preset the kind's clips draw (test_react_clips_use_context_map).
+    'react.streak': ('determined', 'joy', 'grin', 'proud'),
+    'react.milestone': ('proud', 'aww', 'happy', 'wow'),
     'react.lesson_complete': ('love', 'happy'),
-    'react.first_correct': ('wow', 'joy'),
+    'react.first_correct': ('determined', 'wow', 'joy', 'happy'),
     'dismiss': ('soft-smile', 'nudge'),
     'autoplay.empty': ('thinking', 'curious', 'nudge'),
     'clip.dance.trip': ('embarrassed', 'laugh'),
@@ -162,10 +165,29 @@ CONTEXT_MAP['guide'] = tuple(n for n in PRESETS if VALENCE[n] != NEGATIVE and n 
 CONTEXT_MAP['guide.lore'] = CONTEXT_MAP['guide'] + SLAPSTICK_LORE_ONLY + ('sad',)
 CONTEXT_MAP['guide.thanks'] = ('bashful', 'happy', 'aww')
 CONTEXT_MAP['styleguide'] = tuple(PRESETS)
-GUIDE_LORE_STEPS = ()  # step ids in static/js/guide-catalog.js that may use a negative face (Phase 5 copy)
+GUIDE_LORE_STEPS = ('origin.home',)  # step ids in static/js/guide-catalog.js that may use a negative face (Phase 5 copy, for David's review)
 # Contexts where a negative preset is never allowed (docs/ZORP_EXPRESSIVENESS.md §5).
 BANNED_CONTEXTS_FOR_NEGATIVE = ('prompt.', 'react.', 'dismiss', 'idle', 'autoplay.', 'notification')
 NEGATIVE_ALLOWED = ('guide.lore', 'guide.reward.big', 'clip.dance.trip', 'clip.dizzy', 'styleguide')
+
+# Phase 5: which clips answer each react() kind (the runtime table in zorp-poses.js is pinned to this by
+# test_react_plan_matches_runtime; faces come from CONTEXT_MAP['react.<kind>']). Correct answers rotate the
+# small clips; only the rarer big moments get a big clip, and BIG_CLIPS never start within BIG_GAP_MS of each
+# other (a second one inside the window becomes a small 'cheer'). 'wrong' is the sympathetic oops-encourage.
+REACT_CLIPS = {
+    'correct': ('cheer', 'hop', 'wave'),
+    'wrong': ('oops-encourage',),
+    'streak': ('fist-pump',),
+    'first_correct': ('victory',),
+    'milestone': ('flex', 'wave'),
+    'lesson_complete': ('dance',),
+}
+BIG_CLIPS = ('fist-pump', 'victory', 'flex', 'dance')
+BIG_GAP_MS = 7000
+REACT_FACES = {'lesson_complete': 'love'}   # the dance shows love (hearts) where its beats say laugh; never a trip
+# Positive or neutral clips a server-rendered element may start with data-zorp-autoplay (zorp-triggers.js
+# keeps the same list; test_autoplay_allowlist_matches_runtime). No wobble, no oops, no dance trip, no sleep.
+AUTOPLAY_CLIPS = ('think', 'think-chin', 'shrug', 'peek', 'wave', 'nod', 'wink', 'float', 'hop', 'cheer', 'flex', 'side-point')
 
 
 # ---------------------------------------------------------------------------------------------
@@ -514,7 +536,9 @@ def rig_json():
         'v': 1,
         'p': presets,
         # 'c': the guide allowlists guide.js and pbZorp.allowedIn() read; 'ff': face-attached fx.
-        'c': {'guide': list(CONTEXT_MAP['guide']), 'guide.lore': list(CONTEXT_MAP['guide.lore'])},
+        # Phase 5 adds the react.* lists (pbZorp.allowedIn for the reaction faces) and the big-reward list.
+        'c': {k: list(v) for k, v in CONTEXT_MAP.items()
+              if k in ('guide', 'guide.lore', 'guide.reward.big') or k.startswith('react.')},
         'ff': list(FX_FACE),
         # Phase 3: 'w' per-view rows, sparse (a part that is visible and unchanged is left out;
         # 0 = hidden, [dx, dy, sx, sy] = resting translate and scale), 'm' the side variant maps.

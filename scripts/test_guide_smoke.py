@@ -148,7 +148,7 @@ def main():
         zorp_m = re.search(r'ZORP_GESTURES\s*=\s*\{([^}]*)\}', guide_js)
         assert legacy_m and zorp_m
         legacy_names = set(re.findall(r"(\w+)\s*:\s*1", legacy_m.group(1)))
-        zorp_names = set(re.findall(r"(\w+)\s*:\s*1", zorp_m.group(1)))
+        zorp_names = set(re.findall(r"'?([\w-]+)'?\s*:\s*1", zorp_m.group(1)))
         assert legacy_names == {'wink', 'nod', 'shake', 'tap'}, legacy_names
         assert legacy_names <= zorp_names, (legacy_names, zorp_names)
         assert {'cheer', 'wave', 'think', 'hop'} <= zorp_names, zorp_names
@@ -217,14 +217,17 @@ def main():
         assert "gesture: 'cheer'" in catalog
         assert "gesture: 'wave'" in catalog
         assert "gesture: 'think'" in catalog
-        catalog_gestures = set(re.findall(r"gesture:\s*'(\w+)'", catalog))
-        zorp_gestures_names = set(re.findall(r"(\w+)\s*:\s*1", zorp_m.group(1)))
+        catalog_gestures = set(re.findall(r"gesture:\s*'([\w-]+)'", catalog))
+        zorp_gestures_names = set(re.findall(r"'?([\w-]+)'?\s*:\s*1", zorp_m.group(1)))
         assert catalog_gestures, 'no gesture: values found in guide-catalog.js'
         assert catalog_gestures <= zorp_gestures_names, (catalog_gestures, zorp_gestures_names)
         zorp_motion_js = (ROOT / 'static' / 'js' / 'zorp-motion.js').read_text(encoding='utf-8')
         clip_names_m = re.search(r'CLIP_NAMES\s*=\s*\[([^\]]*)\]', zorp_motion_js)
         assert clip_names_m
-        clip_names = set(re.findall(r"'(\w+)'", clip_names_m.group(1)))
+        clip_names = set(re.findall(r"'([\w-]+)'", clip_names_m.group(1)))
+        # E8 Phase 5: the beat clips (fist-pump, victory, ...) are registered by zorp-poses.js, same guard
+        poses_js = (ROOT / 'static' / 'js' / 'zorp-poses.js').read_text(encoding='utf-8')
+        clip_names |= set(re.findall(r"\badd\('([\w-]+)'", poses_js))
         for name in catalog_gestures:
             assert name in clip_names, (name, clip_names)
 

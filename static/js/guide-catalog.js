@@ -1,4 +1,7 @@
-/* Guide beats — copy lives here, not in the runtime. UK English. */
+/* Guide beats — copy lives here, not in the runtime. UK English.
+   E8 Phase 5: faces are presets from models/zorp_rig.py CONTEXT_MAP['guide']. origin.home is the one lore step
+   (GUIDE_LORE_STEPS): it opens on the sad goo-goo eyes and its last line resolves to aww, so a step never
+   ends sad. The 100-day streak reward (big) opens on happy tears and resolves to proud. */
 (function () {
   'use strict';
 
@@ -7,7 +10,7 @@
       {
         id: 'origin.planet',
         mode: 'story',
-        face: 'nudge',
+        face: 'soft-smile',
         lines: [
           'A bit about me: I’m Zorp, from Novara, out past the maths belt.',
           'Novara sent helpers to Earth to make maths (and a bit of science) less scary.',
@@ -20,7 +23,7 @@
       {
         id: 'origin.crew',
         mode: 'story',
-        face: 'nudge',
+        face: 'happy',
         lines: [
           'Those little aliens you’ll see? That’s my crew.',
           'I’m the one in the corner — a bot, not a person.',
@@ -31,9 +34,23 @@
         skipLabel: 'Skip intro',
       },
       {
+        id: 'origin.home',
+        mode: 'story',
+        lore: true,
+        face: 'sad',
+        resolve: 'aww',
+        lines: [
+          'Novara is a long way from here. I do think about home now and then.',
+          'But Earth has plenty of good problems to work on, and I’m glad to be here.',
+        ],
+        highlight: null,
+        primary: 'Continue',
+        skipLabel: 'Skip intro',
+      },
+      {
         id: 'origin.nudge',
         mode: 'story',
-        face: 'nudge',
+        face: 'soft-smile',
         lines: [
           'I’ll cheer when you earn a badge, and nudge you if a topic needs another look.',
           'You can always tap Not now.',
@@ -46,7 +63,8 @@
       {
         id: 'origin.tabs',
         mode: 'story',
-        face: 'nudge',
+        face: 'soft-smile',
+        gesture: 'nod',
         lines: [
           'This site is for practising.',
           'Bottom tabs: Practice, Learn, Daily, Compete, Profile.',
@@ -58,8 +76,8 @@
       {
         id: 'origin.ready',
         mode: 'story',
-        face: 'celebrate',
-        gesture: 'nod',
+        face: 'happy',
+        gesture: 'fist-pump',
         lines: [
           'Ready when you are. Skip this any time — you won’t see it again.',
         ],
@@ -73,7 +91,8 @@
         {
           id: 'practice.picker',
           mode: 'tour',
-          face: 'nudge',
+          face: 'soft-smile',
+          gesture: 'side-point',
           highlight: '#main-form, .practice-picker-card',
           spotLabel: 'The topic picker',
           lines: ['Pick a subject and topic, then Start practising.'],
@@ -83,7 +102,7 @@
         {
           id: 'practice.mode',
           mode: 'tour',
-          face: 'nudge',
+          face: 'soft-smile',
           highlight: '#mode-row:not([hidden]) #mode-select, #difficulty-row',
           spotLabel: 'Difficulty',
           lines: ['Choose how hard the question is. For GCSE you can also pick Standard or Multiple Choice.'],
@@ -93,7 +112,8 @@
         {
           id: 'practice.check',
           mode: 'tour',
-          face: 'nudge',
+          face: 'grin',
+          gesture: 'side-point',
           highlight: '#mcq-options, .free-response-check-btn',
           spotLabel: 'Check your answer',
           lines: ['Check your answer here. I’ll pop when you get a streak of correct ones.'],
@@ -103,7 +123,7 @@
         {
           id: 'practice.tabs',
           mode: 'tour',
-          face: 'nudge',
+          face: 'soft-smile',
           gesture: 'tap',
           highlight: '#app-tab-bar a.app-tab[href="/"]',
           spotLabel: 'The Practice tab at the bottom',
@@ -116,7 +136,7 @@
         {
           id: 'profile.streak',
           mode: 'tour',
-          face: 'nudge',
+          face: 'soft-smile',
           highlight: '.profile-dashboard-chips, .profile-xp-chip',
           spotLabel: 'Streak and XP',
           lines: ['Your streak and XP. Missing a day can use a freeze if you have one.'],
@@ -126,7 +146,7 @@
         {
           id: 'profile.badges',
           mode: 'tour',
-          face: 'milestone',
+          face: 'proud',
           highlight: '#milestones',
           spotLabel: 'Badges',
           lines: ['Badges you earn. New ones get a little celebration.'],
@@ -136,7 +156,7 @@
         {
           id: 'profile.saved',
           mode: 'tour',
-          face: 'nudge',
+          face: 'soft-smile',
           highlight: '#revision-plan',
           spotLabel: 'Revision and saved',
           lines: ['Saved questions and your revision plan live here.'],
@@ -148,7 +168,8 @@
         {
           id: 'daily.today',
           mode: 'tour',
-          face: 'qotd_nudge',
+          face: 'curious',
+          gesture: 'side-point',
           highlight: '.qotd-daily-card',
           spotLabel: 'Today’s question',
           lines: ['One question a day. That’s the Daily habit.'],
@@ -158,7 +179,7 @@
         {
           id: 'daily.board',
           mode: 'tour',
-          face: 'nudge',
+          face: 'soft-smile',
           highlight: '#qotd-board',
           spotLabel: 'The friends board',
           lines: ['Friends can see the week board. There is no public worldwide ranking.'],
@@ -170,7 +191,7 @@
         {
           id: 'learn.grid',
           mode: 'tour',
-          face: 'nudge',
+          face: 'soft-smile',
           gesture: 'think',
           highlight: '#topics-grid, .topic-path',
           spotLabel: 'The topic list',
@@ -181,7 +202,7 @@
         {
           id: 'learn.filters',
           mode: 'tour',
-          face: 'nudge',
+          face: 'soft-smile',
           highlight: '.topics-level-bar',
           spotLabel: 'Level filters',
           lines: ['Filter by GCSE, A-Level, or MYP if you want a shorter list.'],
@@ -193,7 +214,7 @@
         {
           id: 'compete.board',
           mode: 'tour',
-          face: 'nudge',
+          face: 'soft-smile',
           highlight: '#leaderboard-board-tabs',
           spotLabel: 'Effort and accuracy',
           lines: ['This is friends only. Accuracy and effort among people you follow.'],
@@ -203,7 +224,7 @@
         {
           id: 'compete.challenges',
           mode: 'tour',
-          face: 'friend_challenge',
+          face: 'wink',
           gesture: 'shake',
           highlight: '#compete-challenges',
           spotLabel: 'Challenges',
@@ -216,35 +237,37 @@
     rewards: {
       milestone: {
         mode: 'reward',
-        face: 'milestone',
+        face: 'proud',
         lines: ['You earned this.'],
         primary: 'Close',
-        gesture: 'wave',
+        gesture: 'flex',
       },
       'streak:7': {
         mode: 'reward',
-        face: 'celebrate',
+        face: 'joy',
         lines: ['7-day streak. Nice work keeping it going.'],
         primary: 'Close',
         gesture: 'cheer',
       },
       'streak:30': {
         mode: 'reward',
-        face: 'celebrate',
+        face: 'proud',
         lines: ['30-day streak. That’s a solid habit.'],
         primary: 'Close',
-        gesture: 'cheer',
+        gesture: 'fist-pump',
       },
       'streak:100': {
         mode: 'reward',
-        face: 'celebrate',
-        lines: ['100-day streak. Extraordinary.'],
-        primary: 'Close',
-        gesture: 'cheer',
+        big: true,
+        face: 'aww-teary',
+        resolve: 'proud',
+        lines: ['100-day streak. Extraordinary.', 'I’m a little teary, in the happiest way. Well done.'],
+        primary: 'Continue',
+        gesture: 'victory',
       },
       first_correct: {
         mode: 'reward',
-        face: 'celebrate',
+        face: 'wow',
         medal: '✓',
         heading: 'First correct',
         lines: ['Nice. I’ll celebrate this first one, then stay quieter.'],
@@ -253,12 +276,12 @@
       },
       lesson_complete: {
         mode: 'reward',
-        face: 'celebrate',
+        face: 'love',
         medal: '★',
         heading: 'Lesson complete',
         lines: ['Well done. Practise or quiz when you’re ready.'],
         primary: 'Close',
-        gesture: 'cheer',
+        gesture: 'dance',
       },
     },
   };

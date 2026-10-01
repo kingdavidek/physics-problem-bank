@@ -1,7 +1,11 @@
 /* E7 Phase 3: /welcome mobile onboarding — Zorp clips on the hero mascot,
-   cheer-then-submit on topic cards. CSP forbids inline scripts, so this file
+   celebrate-then-submit on topic cards. CSP forbids inline scripts, so this file
    is the only place any of this logic lives. Plain forms still work with no
-   JS: every screen is a real <form> POST. */
+   JS: every screen is a real <form> POST.
+   E8 Phase 5: hello = turn in from the side, then wave (the server draws the hello hero in profile and this
+   turns it to face the pupil; reduced and off turn instantly, never leaving it sideways); level = point
+   down from the side; topic = think with a hand on the chin; a card tap = the fist-pump jump. Each clip
+   falls back to its E7 twin when zorp-poses.js is missing. */
 (function () {
   'use strict';
 
@@ -35,20 +39,28 @@
     if (!svg) return;
 
     var step = section.getAttribute('data-step');
+    var zorp = window.pbZorp;
+    var settle = function () { zorp.idle(true, hero); };
+    var clipOr = function (name, fallback) {
+      return typeof zorp.hasClip === 'function' && zorp.hasClip(name) ? name : fallback;
+    };
 
     if (step === 'hello') {
-      window.pbZorp.play('wave', { el: hero }).then(function () {
-        window.pbZorp.idle(true, hero);
-      });
+      var greet = function () {
+        zorp.turn('front', 'r', { el: hero, required: true }).then(function () {
+          return zorp.play('wave', { el: hero });
+        }).then(settle, settle);
+      };
+      if (zorp.motionLevel() === 'full') {
+        // The server draws the hero front-facing (no-JS safe); drop to profile at once, then turn in.
+        zorp.turn('side', 'r', { el: hero, instant: true });
+        setTimeout(greet, 350);
+      } else greet();
     } else if (step === 'level') {
-      window.pbZorp.play('point', { el: hero, target: 'down' }).then(function () {
-        window.pbZorp.idle(true, hero);
-      });
+      zorp.play(clipOr('side-point', 'point'), { el: hero, target: 'down' }).then(settle);
     } else if (step === 'topic') {
       setTimeout(function () {
-        window.pbZorp.play('think', { el: hero }).then(function () {
-          window.pbZorp.idle(true, hero);
-        });
+        zorp.play(clipOr('think-chin', 'think'), { el: hero }).then(settle);
       }, 400);
     } else if (step === 'ready') {
       window.pbZorp.idle(true, hero);
@@ -74,7 +86,7 @@
             submitting = true;
             var btn = evt.currentTarget;
             try {
-              var cheerDone = window.pbZorp.play('cheer', { el: hero });
+              var cheerDone = window.pbZorp.play(clipOr('fist-pump', 'cheer'), { el: hero });
               var timeoutDone = new Promise(function (resolve) {
                 setTimeout(resolve, 450);
               });
