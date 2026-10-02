@@ -217,7 +217,8 @@ const libPart = (channel, id) => parse(fx.library).querySelector('[data-part="' 
 const NEW_CLIPS = ['fist-pump', 'victory', 'flex', 'shrug', 'bow', 'think-chin', 'dance', 'float', 'oops-encourage', 'turn'];
 const BEAT_CLIPS = NEW_CLIPS.filter((c) => c !== 'turn');
 // Plan 3.11 durations (ms) with headroom; bow and side-point add two 300 ms turns to the clip's own length.
-const MAX_MS = { 'fist-pump': 1300, victory: 1250, flex: 950, shrug: 850, bow: 1350, 'think-chin': 1100, dance: 1500, float: 1400, 'oops-encourage': 1000, turn: 350 };
+// Clip readability pass (2026-10-02): flex 950 -> 1200, shrug 850 -> 1200 and dance 1500 -> 2000 (David asked for a proper dance of 1.6 to 2 s).
+const MAX_MS = { wave: 1200, 'fist-pump': 1300, victory: 1250, flex: 1200, shrug: 1200, bow: 1350, 'think-chin': 1100, dance: 2000, float: 1400, 'oops-encourage': 1000, turn: 350 };
 const parts = (m) => ({
   root: m.part('.buddy-root'), shadow: m.part('.buddy-shadow'), head: m.part('.buddy-head'), body: m.part('.buddy-body'),
   armL: [m.part('.buddy-arm--l'), m.part('.buddy-arm--l-front')], armR: [m.part('.buddy-arm--r'), m.part('.buddy-arm--r-front')],
@@ -295,6 +296,171 @@ async function scenario(name, fn) {
     assert.strictEqual(sum(dance.trip), sum(dance.beats), 'trip variant has the same length');
     const oops = z.clipInfo('oops-encourage');
     assert.ok(oops.beats[0].expr === 'oops' && (oops.beats[0].ms + oops.beats[0].hold) <= 300, 'oops is the first beat, at most 300 ms');
+  });
+
+  // Clip readability pass (2026-10-02): David saw dance, flex and shrug as "just a smile". The movement existed but was tiny
+  // (a 12-unit stub arm behind the body, a 6 degree sway). These floors are in the 64-unit viewBox, where 1 unit is
+  // 2.5 px at 160 px and 0.875 px at 56 px, so each floor is still a few pixels at the small size.
+  await scenario('readability: dance, flex, shrug, victory and fist-pump move enough to read at 160 and 56 px, with the animated arms in the visible layer', () => {
+    const { z } = load('system');
+    const m = mascot('front');
+    const P = parts(m);
+    const nums = (str, re) => { const r = re.exec(str); return r ? r.slice(1).map(Number) : null; };
+    const track = (name, target) => {
+      const t = z.compileBeats(z.clipInfo(name).beats, P, { facing: 'r' }).find((x) => x[0] === target);
+      return t ? t[1].map((f) => f.transform) : [];
+    };
+    const rot = (list) => list.map((tf) => (nums(tf, /rotate\((-?[\d.]+)deg\)/) || [0])[0]);
+    const lift = (list) => list.map((tf) => -(nums(tf, /translate\((-?[\d.]+)px,(-?[\d.]+)px\)/) || [0, 0])[1]);
+    const scaleX = (list) => list.map((tf) => (nums(tf, /scale\((-?[\d.]+),(-?[\d.]+)\)/) || [1, 1])[0]);
+    const scaleY = (list) => list.map((tf) => (nums(tf, /scale\((-?[\d.]+),(-?[\d.]+)\)/) || [1, 1])[1]);
+    const peak = (a) => Math.max(...a.map(Math.abs));
+    const flips = (a) => { let n = 0; let last = 0; a.forEach((v) => { const sg = Math.abs(v) < 1 ? 0 : Math.sign(v); if (sg && last && sg !== last) n += 1; if (sg) last = sg; }); return n; };
+    const pulses = (a, level) => { let n = 0; let up = false; a.forEach((v) => { if (v >= level && !up) { n += 1; up = true; } if (v < level - 0.015) up = false; }); return n; };
+    // dance: a sway of at least 8 degrees that changes side at least five times, a hop of at least 14 px, both arms
+    // lifted to 140 degrees or more, and the feet taking turns
+    const dRoot = track('dance', P.root);
+    assert.ok(peak(rot(dRoot)) >= 8, 'dance sways at least 8 degrees: ' + peak(rot(dRoot)));
+    assert.ok(flips(rot(dRoot)) >= 5, 'dance changes side at least 5 times: ' + flips(rot(dRoot)));
+    assert.ok(Math.max(...lift(dRoot)) >= 14, 'dance hops at least 14 px: ' + Math.max(...lift(dRoot)));
+    assert.ok(peak(rot(track('dance', P.armL))) >= 140 && peak(rot(track('dance', P.armR))) >= 140, 'dance lifts both arms to 140 degrees or more');
+    assert.ok(Math.max(...lift(track('dance', P.footL))) >= 3 && Math.max(...lift(track('dance', P.footR))) >= 3, 'dance lifts each foot');
+    // flex: the bent arm rises to about 90 degrees and the chest puffs twice (a double pump)
+    const fRoot = track('flex', P.root);
+    assert.ok(peak(rot(track('flex', P.armR))) >= 88, 'flex raises the arm');
+    assert.ok(pulses(scaleY(fRoot), 1.05) >= 2, 'flex pumps the chest twice (root scaleY)');
+    // shrug: both palms out and up (at least 28 degrees), the head tilts at least 6 degrees, and the lift happens twice
+    assert.ok(peak(rot(track('shrug', P.armL))) >= 28 && peak(rot(track('shrug', P.armR))) >= 28, 'shrug lifts both arms');
+    assert.ok(peak(rot(track('shrug', P.head))) >= 6, 'shrug tilts the head');
+    assert.ok(pulses(rot(track('shrug', P.armR)).map(Math.abs), 29) >= 2, 'shrug lifts twice');
+    // wave: the long arm (front layer) swings between -120 and -176 degrees at least five times, with a lean and a head tilt
+    const wArm = rot(track('wave', P.armR));
+    assert.ok(Math.max(...wArm.map(Math.abs)) >= 170 && Math.min(...wArm.filter((d) => d !== 0).map(Math.abs)) >= 120, 'wave raises the arm up beside the head');
+    let turns = 0; let prevDir = 0;
+    wArm.forEach((v, i) => { if (i && Math.abs(v - wArm[i - 1]) >= 30) { const d = Math.sign(v - wArm[i - 1]); if (prevDir && d !== prevDir) turns += 1; prevDir = d; } });
+    assert.ok(turns >= 5, 'wave swings side to side at least 3 times (direction changes: ' + turns + ')');
+    assert.ok(peak(rot(track('wave', P.root))) >= 2 && peak(rot(track('wave', P.head))) >= 3, 'wave leans and tilts the head');
+    assert.ok(z.clipInfo('wave').dur >= 1000 && z.clipInfo('wave').dur <= 1200, 'wave lasts about 1.1 s');
+    // victory and fist-pump: the arm goes up past 150 degrees and the body leaves the ground by 12 px or more
+    ['victory', 'fist-pump'].forEach((name) => {
+      assert.ok(Math.max(peak(rot(track(name, P.armL))), peak(rot(track(name, P.armR)))) >= 150, name + ' raises an arm');
+      assert.ok(Math.max(...lift(track(name, P.root))) >= 12, name + ' jumps at least 12 px');
+    });
+    // visibility: an arm lifted 20 degrees or more is drawn in the front layer (its back twin is hidden behind the body),
+    // and the clip moves both twins together
+    ['dance', 'flex', 'shrug', 'victory', 'fist-pump', 'wave'].forEach((name) => {
+      z.clipInfo(name).beats.forEach((b) => {
+        const row = fx.poseTable[b.pose];
+        ['L', 'R'].forEach((S) => {
+          const [shape, deg, front] = row[S];
+          if (shape !== 'rest' && Math.abs(deg) >= 20) assert.strictEqual(front, 1, name + ' beat ' + b.pose + ' arm ' + S + ' (' + shape + ', ' + deg + ') must be in the front layer');
+        });
+      });
+      const tr = z.compileBeats(z.clipInfo(name).beats, P, { facing: 'r' });
+      ['armL', 'armR'].forEach((k) => {
+        const mover = tr.filter((t) => t[0] === P[k]);
+        assert.ok(mover.length <= 1 && (!mover.length || (Array.isArray(mover[0][0]) && mover[0][0].length === 2)), name + ' ' + k + ': one track drives the back and front twins together');
+      });
+    });
+    // flex shows both bent arms (the reach arm's length is pinned by the parts-library reach test in test_zorp_expression_smoke.py)
+    assert.ok(fx.poseTable.flex.R[0] === 'bent-fist' && fx.poseTable.flex.L[0] === 'bent-fist', 'flex shows both bent arms');
+  });
+
+  // The styleguide's dev-only full-motion preview: only the exact value "full" on html[data-motion-preview] lifts reduced and off.
+  await scenario('styleguide full-motion preview: data-motion-preview="full" shows the real dance under reduced and off; anything else changes nothing', async () => {
+    for (const level of ['reduced', 'off']) {
+      const { z, html } = load(level);
+      const m = mascot('front');
+      z.bind(m.host);
+      z.idle(false, m.host);
+      assert.strictEqual(z.motionLevel(), level);
+      animations = [];
+      z.play('dance', { el: m.host });
+      assert.strictEqual(animations.length, 0, level + ': no movement without the preview');
+      html.setAttribute('data-motion-preview', 'yes');
+      assert.strictEqual(z.motionLevel(), level, 'only the exact value full counts');
+      html.setAttribute('data-motion-preview', 'full');
+      assert.strictEqual(z.motionLevel(), 'full');
+      animations = [];
+      z.play('dance', { el: m.host });
+      assert.ok(animations.length >= 6, level + ': the dance animates with the preview on (' + animations.length + ' animations)');
+      html.setAttribute('data-motion-preview', '');
+      assert.strictEqual(z.motionLevel(), level, 'removing the preview restores ' + level);
+    }
+  });
+
+  await scenario('side-point reads: the near arm is the long reach arm while it points (800 ms clip), the resting arm is back at the end', async () => {
+    const { z } = load('system');
+    const m = mascot('front');
+    z.bind(m.host);
+    z.idle(false, m.host);
+    const done = z.play('side-point', { el: m.host });
+    for (let i = 0; i < 4; i += 1) await finishAll();
+    await advance(300);
+    assert.strictEqual(z.clipInfo('side-point').dur, 800, 'the point holds about 440 ms');
+    assert.ok(armIs(m, '.buddy-arm--r-front', 'reach', 'r'), 'the long arm points up beside the head, not the 10-unit paddle');
+    for (let i = 0; i < 8; i += 1) { await finishAll(); await advance(100); }
+    assert.strictEqual(await done, true);
+    eq(z.viewOf(m.host), { view: 'front', facing: 'r' });
+    assert.ok(armIs(m, '.buddy-arm--r-front', 'rest', 'r'), 'the resting arm is back in the front view');
+  });
+
+  // 2026-10-02: the arm-shape swap back to the short arm used to run 12% into the lowering beat, by which time an eased arm was
+  // already sideways, so a long fist stuck out horizontally near the end of fist-pump. No long arm may be shown while its angle is
+  // in the sideways band (40 to 150 degrees) and falling.
+  await scenario('no long arm (fist, reach, bent-fist) is shown sideways while it lowers, in every beat clip', async () => {
+    const bez = (x1, y1, x2, y2) => (x) => {
+      let lo = 0; let hi = 1; let t = x;
+      for (let i = 0; i < 30; i += 1) { t = (lo + hi) / 2; const cx = 3 * (1 - t) * (1 - t) * t * x1 + 3 * (1 - t) * t * t * x2 + t * t * t; if (cx < x) lo = t; else hi = t; }
+      return 3 * (1 - t) * (1 - t) * t * y1 + 3 * (1 - t) * t * t * y2 + t * t * t;
+    };
+    const ease = (e) => {
+      const m = /cubic-bezier\(([^)]+)\)/.exec(e || '');
+      if (m) { const v = m[1].split(',').map(Number); return bez(v[0], v[1], v[2], v[3]); }
+      if (e === 'ease-in-out') return bez(0.42, 0, 0.58, 1);
+      return (x) => x;
+    };
+    const angleAt = (frames, u) => {
+      let i = 0;
+      while (i < frames.length - 2 && frames[i + 1].offset <= u) i += 1;
+      const a = frames[i]; const b = frames[i + 1];
+      const va = parseFloat(/rotate\((-?[\d.]+)deg\)/.exec(a.transform)[1]); const vb = parseFloat(/rotate\((-?[\d.]+)deg\)/.exec(b.transform)[1]);
+      const span = b.offset - a.offset;
+      const x = span > 0 ? Math.min(1, Math.max(0, (u - a.offset) / span)) : 1;
+      return va + (vb - va) * ease(a.easing)(x);
+    };
+    for (const name of ['fist-pump', 'victory', 'flex', 'shrug', 'dance', 'wave']) {
+      for (const trip of name === 'dance' ? [false, true] : [false]) {
+        const { z } = load('system');
+        const m = mascot('front');
+        z.bind(m.host);
+        z.idle(false, m.host);
+        const info = z.clipInfo(name);
+        const beats = trip ? info.trip : info.beats;
+        const tracks = z.compileBeats(beats, parts(m), { facing: 'r' });
+        const longs = ['fist', 'reach', 'bent-fist'];
+        const sides = [['L', 'armL', '.buddy-arm--l'], ['R', 'armR', '.buddy-arm--r']];
+        animations = [];
+        z.play(name, { el: m.host, trip });
+        const prev = { L: 0, R: 0 };
+        for (let t = 0; t <= info.dur; t += 5) {
+          await advance(t === 0 ? 0 : 5);
+          for (const [S, key, sel] of sides) {
+            const tr = tracks.find((x) => x[0] === parts(m)[key] || (Array.isArray(x[0]) && x[0][0] === m.part(sel)));
+            if (!tr) continue;
+            const ang = Math.abs(angleAt(tr[1], Math.min(1, t / info.dur)));
+            // lowering = the beat running now has the short resting arm as its target and the angle is falling
+            let acc = 0; let cur = beats[beats.length - 1];
+            for (const b of beats) { acc += (b.ms || 0) + (b.hold || 0); if (t < acc) { cur = b; break; } }
+            const falling = ang < prev[S] - 0.01 && fx.poseTable[cur.pose][S][0] === 'rest';
+            prev[S] = ang;
+            const isLong = longs.some((shape) => armIs(m, sel, shape, S.toLowerCase()));
+            assert.ok(!(isLong && falling && ang > 40 && ang < 150), name + (trip ? ' (trip)' : '') + ': a long arm is shown sideways while lowering (arm ' + S + ' at ' + ang.toFixed(0) + ' degrees, t=' + t + ' ms)');
+          }
+        }
+        await finishAll();
+      }
+    }
   });
 
   await scenario('compileBeats: exactly one keyframe list per moving part, offsets monotone, easing valid, stretch within limits', () => {
@@ -428,7 +594,7 @@ async function scenario(name, fn) {
     await advance(600);
     assert.strictEqual(m.host.getAttribute('data-face'), 'laugh', 'still laughing mid-dance (fx carried over)');
     assert.ok(m.slot('fx').childNodes.length > 0, 'notes carried across beats');
-    await advance(800);
+    await advance(1400);
     assert.strictEqual(m.host.getAttribute('data-face'), 'nudge', 'the original face comes back at the end');
     // trip: embarrassed for one beat, then laughs it off and ends happy
     const t = load('system');
@@ -436,11 +602,11 @@ async function scenario(name, fn) {
     t.z.bind(n.host);
     t.z.idle(false, n.host);
     t.z.play('dance', { el: n.host, trip: true });
-    await advance(510);
+    await advance(790);
     assert.strictEqual(n.host.getAttribute('data-face'), 'embarrassed');
     await advance(260);
     assert.strictEqual(n.host.getAttribute('data-face'), 'laugh');
-    await advance(300);
+    await advance(450);
     assert.strictEqual(n.host.getAttribute('data-face'), 'happy');
     // a newer clip in the middle of a boundary wait: the stale timer must not repaint the face
     const s = load('system');
@@ -534,7 +700,8 @@ async function scenario(name, fn) {
     animations = [];
     z.play('wave', { el: m.host });
     const armFrames = animations.filter((a) => a.el === m.part('.buddy-arm--r-front')).map((a) => a.frames.map((k) => k.transform).join(' '));
-    assert.ok(armFrames.length === 1 && armFrames[0].indexOf('rotate(215deg)') !== -1 && armFrames[0].indexOf('-95') === -1, armFrames.join(' / '));
+    // wave is a beat clip since 2026-10-02 (reach arm, -120 and -176 in front): in profile it swings between 190 and 182.6, never the front angles
+    assert.ok(armFrames.length === 1 && armFrames[0].indexOf('rotate(190deg)') !== -1 && armFrames[0].indexOf('rotate(182.6deg)') !== -1 && !/-1(20|76)/.test(armFrames[0]), armFrames.join(' / '));
     // a beat clip in the side view compiles profile angles (fist-pump: the fist held near vertical)
     animations = [];
     z.play('fist-pump', { el: m.host });
@@ -562,7 +729,7 @@ async function scenario(name, fn) {
     assert.strictEqual(await p, true);
     // a legacy clip on a posed Zorp layers on top of the pose (composite add) instead of snapping
     animations = [];
-    z.play('wave', { el: m.host });
+    z.play('cheer', { el: m.host });   // a legacy clip (wave became a beat clip, which starts from stand)
     assert.ok(animations.filter((a) => a.opts.composite === 'add').length >= 2, 'clips add to the resting pose');
     z.play('blink', { el: m.host });
     assert.strictEqual(m.part('.buddy-arm--r').style.transform, 'rotate(-165deg)', 'the pose survives stop()');
@@ -633,7 +800,7 @@ async function scenario(name, fn) {
     z.play('shrug', { el: m.host });
     assert.strictEqual(m.part('.buddy-arm--r').style.transform || '', '', 'the static pose was cleared for the beat clip');
     await advance(120);
-    assert.ok(armIs(m, '.buddy-arm--r', 'straight', 'r'), 'the fist gave way to the shrug arms');
+    assert.ok(armIs(m, '.buddy-arm--r', 'palm', 'r'), 'the fist gave way to the shrug arms (open palms)');
     assert.strictEqual(m.svg.getAttribute('data-pose'), null, 'the clip starts from stand: no data-pose');
     assert.ok(animations.filter((a) => a.opts.composite).length === 0);
   });
@@ -739,7 +906,8 @@ async function scenario(name, fn) {
       const p = zz.reactPlan(kind, tick(60000), true);
       assert.strictEqual(p.clip, table[kind], kind);
       assert.strictEqual(p.big, true, kind);
-      assert.ok(p.dur >= 700 && p.dur <= 1500, kind + ' dur ' + p.dur);
+      // the dance (lesson_complete only) was lengthened to about 1.8 s in the readability pass; the other big clips keep the 1.5 s ceiling
+      assert.ok(p.dur >= 700 && p.dur <= (kind === 'lesson_complete' ? 2000 : 1500), kind + ' dur ' + p.dur);
     });
     const a = z.reactPlan('streak', tick(60000), true);
     assert.strictEqual(a.clip, 'fist-pump');
@@ -910,7 +1078,7 @@ async function scenario(name, fn) {
       assert.ok(animations.length > 0, 'the pinch-turn starts');
       for (let i = 0; i < 8; i += 1) { await finishAll(); await advance(200); }
       eq(z.viewOf(m.host), { view: 'front', facing: 'r' });
-      assert.ok(animations.some((a) => a.frames.some((f) => /rotate\(-105deg\)/.test(f.transform || ''))), 'the wave raised an arm');
+      assert.ok(animations.some((a) => a.frames.some((f) => /rotate\(-176deg\)/.test(f.transform || ''))), 'the wave raised an arm');
     });
 
     for (const level of ['reduced', 'off']) {

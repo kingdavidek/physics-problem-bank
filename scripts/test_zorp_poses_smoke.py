@@ -127,7 +127,7 @@ def _fixture():
     side_rot = {shape: [zorp_rig.side_rot(a, shape) for a in range(-180, 181)] for shape in zorp_rig.ARM_SHAPES}
     side_arms = {'wave': zorp_rig.pose_styles('wave', 'r', 'side')['armRf'].split('transform:')[1]}
     return {'island': zorp_rig.rig_json(), 'library': tpl, 'svgs': svgs, 'poses': list(zorp_rig.POSE_NAMES),
-            'sideRot': side_rot, 'sideArms': side_arms}
+            'sideRot': side_rot, 'sideArms': side_arms, 'poseTable': json.loads(zorp_rig.poses_json())}
 
 
 def test_node_behaviour():

@@ -2079,6 +2079,10 @@ body.quiz-runner-active .app-tab-bar {
     width: 128px;
     height: 128px;
 }
+/* E8 readability pass: the motion-level banner above the Zorp clip demos (styleguide only). */
+.sg-motion-banner { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-top: var(--space-4); padding: var(--space-3) var(--space-4); border: 2px solid var(--brand-500); border-radius: var(--radius-sm); background: var(--surface-sunken); }
+.sg-motion-banner.is-limited { border-color: var(--streak-500); }
+.sg-motion-banner p { flex: 1 1 280px; margin: 0; }
 .sg-zorp-hero,
 .sg-zorp-hero .buddy-mascot,
 .welcome-hero,

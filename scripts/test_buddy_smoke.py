@@ -116,8 +116,8 @@ def main():
         assert 'data-buddy-face' in html
         assert 'buddy-mascot' in html
         assert 'data-face=' in html
-        assert 'zorp-motion.js?v=10' in html
-        assert 'zorp-poses.js?v=3' in html and html.index('zorp-motion.js') < html.index('zorp-poses.js')
+        assert 'zorp-motion.js?v=11' in html
+        assert 'zorp-poses.js?v=4' in html and html.index('zorp-motion.js') < html.index('zorp-poses.js')
         assert 'css/motion.css?v=8' in html
         assert 'buddy-arm--l' in html
         assert 'buddy-pupil' in html

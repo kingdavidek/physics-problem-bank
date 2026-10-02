@@ -157,10 +157,17 @@
     </div>
 </section>
 
+{% macro motion_banner() %}
+        <div class="sg-motion-banner" data-zorp-motion-banner role="status" aria-live="polite">
+            <p data-zorp-motion-text>Checking the motion level...</p>
+            <button type="button" class="btn btn-primary btn-sm" data-zorp-preview-full aria-pressed="false">Preview at full motion</button>
+        </div>
+{% endmacro %}
 <section class="section-panel" id="zorp-motion">
     <div class="section-panel-header">Zorp motion (E7)</div>
     <div class="section-panel-body">
         <p class="profile-empty">Rigged Zorp driven by <code>window.pbZorp</code> (<code>static/js/zorp-motion.js</code> + <code>static/css/motion.css</code>). Dev only. With reduced motion only the face changes. <span data-zorp-motion-level></span></p>
+        {{ motion_banner() }}
         <div class="sg-row" style="margin-top: var(--space-4); align-items: flex-end;">
             <span class="study-buddy-face sg-zorp-gesture" id="sg-zorp-motion" data-zorp-demo data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot() }}</span>
             <span class="study-buddy-face" id="sg-zorp-motion-small" data-zorp-demo data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot() }}</span>
@@ -274,6 +281,7 @@
     <div class="section-panel-header">Zorp views (E8 Phase 3)</div>
     <div class="section-panel-body">
         <p class="profile-empty">Views and the pinch-turn (<code>docs/ZORP_EXPRESSIVENESS.md</code> section 3.8). The live pair is driven by <code>pbZorp.turn(view, facing)</code>; the grid below is drawn server-side (<code>buddy_mascot(view=, facing=)</code>) and never bound. The motion buttons and the 0.25x toggle only change this dev page: reduced motion turns instantly only when a clip needs the side view, and off never leaves the front view. <span data-zorp-motion-level></span></p>
+        {{ motion_banner() }}
         <div class="sg-row" style="margin-top: var(--space-4); align-items: flex-end;">
             <span class="study-buddy-face sg-zorp-hero" id="sg-zorp-views-demo" data-zorp-demo data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot() }}</span>
             <span class="study-buddy-face" id="sg-zorp-views-demo-small" data-zorp-demo data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot() }}</span>
@@ -315,6 +323,7 @@
     <div class="section-panel-header">Zorp poses and clips (E8 Phase 4)</div>
     <div class="section-panel-body">
         <p class="profile-empty">Pose library, arm shapes and the beat-engine clips (<code>docs/ZORP_EXPRESSIVENESS.md</code> sections 3.9 to 3.11). The live pair is driven by <code>pbZorp.pose(name)</code> and <code>pbZorp.play(clip)</code>; the grid below is drawn server-side (<code>buddy_mascot(pose=)</code>) and never bound, at 56 px and 160 px, front and, for the poses that have one, their default view. The motion buttons and the 0.25x toggle only change this dev page. Reduced motion shows only each clip's preset; off does a face swap only. <span data-zorp-motion-level></span></p>
+        {{ motion_banner() }}
         <div class="sg-row" style="margin-top: var(--space-4); align-items: flex-end;">
             <span class="study-buddy-face sg-zorp-hero" id="sg-zorp-poselib-demo" data-zorp-demo data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot() }}</span>
             <span class="study-buddy-face" id="sg-zorp-poselib-demo-small" data-zorp-demo data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot() }}</span>
@@ -726,5 +735,5 @@
         pointer-events: auto;
     }
 </style>
-<script src="{{ url_for('static', filename='js/styleguide.js') }}?v=8" defer></script>
+<script src="{{ url_for('static', filename='js/styleguide.js') }}?v=9" defer></script>
 {% endblock %}

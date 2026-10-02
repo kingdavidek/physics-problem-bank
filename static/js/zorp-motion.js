@@ -80,6 +80,9 @@
   function motionLevel() {
     // data-motion (the motion_preference setting) outranks the OS prefers-reduced-motion query.
     var pref = (document.documentElement.getAttribute('data-motion') || 'system');
+    // Dev only: static/js/styleguide.js sets data-motion-preview="full" on /styleguide so the clips can be seen with
+    // reduced motion on. Nothing else ever sets it.
+    if (canAnimate && document.documentElement.getAttribute('data-motion-preview') === 'full') return 'full';
     if (pref === 'off') return 'off';
     if (pref === 'reduced') return 'reduced';
     if ((mq && mq.matches) || !canAnimate) return 'reduced';
@@ -494,7 +497,7 @@
     var a = Math.min(Math.abs(d), 180);
     if (a < 70) return a <= 40 ? d : (d < 0 ? -40 : 40);
     var o = +(225 - (a - 70) * 0.4).toFixed(2);
-    if (shape === 'fist' || shape === 'bent-fist') o = Math.min(o, 190);
+    if (shape === 'fist' || shape === 'bent-fist' || shape === 'reach') o = Math.min(o, 190);
     return d < 0 ? o : -o;
   }
 
@@ -1218,7 +1221,7 @@
     document.addEventListener(type, function () { lastInput = Date.now(); }, { capture: true, passive: true });
   });
   if (typeof MutationObserver !== 'undefined') {
-    new MutationObserver(refreshIdle).observe(document.documentElement, { attributes: true, attributeFilter: ['data-motion'] });
+    new MutationObserver(refreshIdle).observe(document.documentElement, { attributes: true, attributeFilter: ['data-motion', 'data-motion-preview'] });
   }
 
   document.addEventListener('visibilitychange', function () { if (document.hidden) instances.forEach(stop); refreshIdle(); });

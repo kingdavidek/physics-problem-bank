@@ -45,8 +45,8 @@ INSTANCE_LOOK_MAX_BYTES = 5_800  # measured 3,624 B Phase 1, 3,663 B Phase 2, 4,
 PAGE_MASCOT_MAX_BYTES = 36_000  # 3 instances + library + island; see test_page_mascot_budget output
 PAGE_MASCOT_MAX_GZIP = 6_000
 RUNTIME_JS_MAX_BYTES = 56_000  # baseline 26_602; 47_868 after Phase 3; Phase 4 first trimmed it to 43_084, then added the register hook (45_370; 45_509 after the review fixes); 47_962 after Phase 5; RAISED 48_000 -> 56_000 on 2026-10-01 (E8 Phase 7, David: "raise the cap by however much you need"): idle life (blink, glance, antenna twitch, look-around clip, IntersectionObserver and typing pauses) measured at 53_081 B, see docs/ZORP_EXPRESSIVENESS.md 2.1 and test_runtime_js_budget output
-POSES_JS_MAX_BYTES = 26_000  # Phase 7 (2026-10-01): measured 25_662 B, no raise needed; E8 Phase 4 (new file, 2026-09-30): poses table, beat engine and the new clips, 24,000 B at first; raised to 26,000 B in Phase 5 (2026-09-30, ledger note) for the react() plan; measured in test_poses_js_budget output
-PARTS_LIBRARY_MAX_BYTES = 16_000  # <template> only; measured 6,959 B Phase 1, 12,169 B Phase 2, 13,432 B Phase 3
+POSES_JS_MAX_BYTES = 33_200  # RAISED again 30_400 -> 33_200 on 2026-10-02 (wave rebuilt as a beat clip, side-point lengthened; measured 30_185 B, need + ~10%); first RAISED 26_000 -> 30_400 the same day (clip readability pass, David authorised raising caps when needed): measured 27_637 (30_185 after wave and side-point) B (new poses flex-pump, shrug-hi and dance-up, longer dance, reworked flex and shrug), cap = need + ~10%, ledger in docs/ZORP_EXPRESSIVENESS.md 2.1; Phase 7 (2026-10-01): measured 25_662 B, no raise needed; E8 Phase 4 (new file, 2026-09-30): poses table, beat engine and the new clips, 24,000 B at first; raised to 26,000 B in Phase 5 (2026-09-30, ledger note) for the react() plan; measured in test_poses_js_budget output
+PARTS_LIBRARY_MAX_BYTES = 18_200  # RAISED 16_000 -> 18_200 on 2026-10-02 (clip readability pass: arm shapes reach and palm, bigger bent-fist): measured 16_562 B, cap = need + ~10%; <template> only; measured 6,959 B Phase 1, 12,169 B Phase 2, 13,432 B Phase 3
 RIG_JSON_MAX_BYTES = 6_000  # island; measured 1,359 B Phase 1, 2,802 B Phase 2, 4,503 B Phase 3 (with tags)
 MOTION_CSS_MAX_BYTES = 12_000  # mirrors test_zorp_motion_smoke.py; baseline 4_844, Phase 1 6_445, Phase 2 7_466, Phase 3 7_895
 
@@ -514,7 +514,7 @@ def test_picker_and_gallery_markup():
         assert f'data-zorp-channel="{slot}"' in html, slot
     for level in ('system', 'reduced', 'off'):
         assert f'data-zorp-set-motion="{level}"' in html, level
-    assert 'data-zorp-slow' in html and 'id="pb-zorp-parts"' in html and 'styleguide.js?v=8' in html
+    assert 'data-zorp-slow' in html and 'id="pb-zorp-parts"' in html and 'styleguide.js?v=9' in html
     assert 'id="sg-zorp-matrix"' in html and 'data-eyes="open open-big' in html
 
 
@@ -623,7 +623,7 @@ def test_side_arms_clear_the_face():
     mouth = (32 + side['mouth'][0], 44 + side['mouth'][1], 3.4)       # anchor and half width of the side mouths
     brow = (37.8 + side['brows'][0], 30, 3.2)                         # the side brows (x 35-40.6, y about 30)
     # hand point and hand radius per drawn art, in the arm's own frame (hanging down); see zorp_parts.html arm()
-    reach = {'straight': ((0, 13.2), 2), 'fist': ((0, 29.6), 4.6), 'side-rest': ((1.4, 9.6), 2.6), 'side-bent': ((9.5, 8), 2.6)}
+    reach = {'straight': ((0, 13.2), 2), 'reach': ((0, 19.4), 3.1), 'fist': ((0, 29.6), 4.6), 'side-rest': ((1.4, 9.6), 2.6), 'side-bent': ((9.5, 8), 2.6)}
 
     def clear(rot, art):
         (hx, hy), hr = reach[art]
@@ -638,7 +638,7 @@ def test_side_arms_clear_the_face():
         return True
 
     assert zorp_rig.pose_arms('think-chin', 'side') == ('side-rest', 'side-bent')
-    assert zorp_rig.pose_arms('flex', 'side') == ('side-rest', 'fist') and zorp_rig.pose_arms('flex') == ('rest', 'bent-fist')
+    assert zorp_rig.pose_arms('flex', 'side') == ('fist', 'fist') and zorp_rig.pose_arms('flex') == ('bent-fist', 'bent-fist')
     for shape in zorp_rig.ARM_SHAPES:
         art = zorp_rig.SIDE_ARMS.get(shape, shape)
         if art == 'bent':
@@ -1035,7 +1035,7 @@ def test_poses_complete():
 
     zorp_rig.validate()
     assert set(POSE_NAMES_REQUIRED) <= set(zorp_rig.POSES), set(POSE_NAMES_REQUIRED) - set(zorp_rig.POSES)
-    assert zorp_rig.ARM_SHAPES == ('rest', 'straight', 'fist', 'bent', 'bent-fist')
+    assert zorp_rig.ARM_SHAPES == ('rest', 'straight', 'fist', 'bent', 'bent-fist', 'reach', 'palm')  # reach and palm: readability pass 2026-10-02
     for name, row in zorp_rig.POSES.items():
         assert set(row) == set(zorp_rig.POSE_PARTS) | {'view', 'expr'}, name
     parts = (TEMPLATES / 'partials' / 'zorp_parts.html').read_text(encoding='utf-8')
@@ -1044,9 +1044,9 @@ def test_poses_complete():
         for side in ('l', 'r'):
             assert f'data-part="arm:{shape}-{side}"' in tpl, (shape, side)
     assert 'macro arm(' in parts
-    # arm shapes are tiny: every one under 200 B in the library
+    # arm shapes are tiny: every one under 330 B in the library (palm, with its fingers, is the largest)
     for m in re.finditer(r'<g data-part="arm:[a-z-]+">(.*?)</g>', tpl):
-        assert len(m.group(1).encode()) <= 200, m.group(0)
+        assert len(m.group(1).encode()) <= 330, m.group(0)
     with app.app_context():
         module = app.jinja_env.get_template('partials/buddy.html').module
         default = str(module.buddy_mascot())
@@ -1065,13 +1065,13 @@ def test_poses_complete():
         chin = str(module.buddy_mascot(pose='think-chin'))
         assert re.search(r'buddy-arm--r" style="display:none"', chin) and re.search(r'buddy-arm--r-front" style="display:inline"', chin)
         # raised arms (W4) are drawn in the front layer so the fist shows above the body, at every size
-        for name, sides in (('fist-up', 'r'), ('victory', 'lr'), ('flex', 'r')):
+        for name, sides in (('fist-up', 'r'), ('victory', 'lr'), ('flex', 'lr')):
             svg = str(module.buddy_mascot(pose=name))
             for side in sides:
                 assert re.search(rf'buddy-arm--{side}" style="display:none"', svg), (name, side)
                 assert re.search(rf'buddy-arm--{side}-front" style="display:inline;transform:rotate\(-?1?\d+deg\)"', svg), (name, side)
         # the shadow stays on the ground: float and crouch counter-translate the root's dy
-        assert 'translate(0,8px) scale(.7,1)' in str(module.buddy_mascot(pose='float')), 'float shadow'
+        assert 'translate(0,10px) scale(.7,1)' in str(module.buddy_mascot(pose='float')), 'float shadow'
         assert 'translate(0,-3px) scale(1,1)' in str(module.buddy_mascot(pose='crouch')), 'crouch shadow'
         # a pose with a default view draws it unless a view is given; facing left mirrors the root
         assert 'data-view="side"' in str(module.buddy_mascot(pose='bow'))
@@ -1100,7 +1100,7 @@ def test_poses_js_budget():
     assert "translate(0,9px) scale(0.75,1)" in core_text and "translate(0,8px) scale(0.7,1)" in core_text
     base = (TEMPLATES / 'base.html').read_text(encoding='utf-8')
     assert base.index('js/zorp-motion.js') < base.index('js/zorp-poses.js') < base.index('js/zorp-triggers.js')
-    assert 'zorp-poses.js\') }}?v=3' in base
+    assert 'zorp-poses.js\') }}?v=4' in base
     sw = (JS_DIR / 'sw.js').read_text(encoding='utf-8')
     assert '/static/js/zorp-poses.js' in sw and '/static/js/zorp-motion.js' in sw
 
@@ -1152,7 +1152,7 @@ def test_stretch_within_limits():
 def test_every_new_clip_has_reduced_and_names_are_kept():
     text = _poses_js_beats()
     adds = re.findall(r"add\('([a-z-]+)', beatClip\(\{ reduced: '([a-z_-]+)'", text)
-    assert {n for n, _ in adds} == set(NEW_CLIPS) - {'turn'}, adds
+    assert {n for n, _ in adds} == (set(NEW_CLIPS) - {'turn'}) | {'wave'}, adds   # wave became a beat clip 2026-10-02
     assert "add('turn'," in text   # instant or nothing: pbZorp.turn's reduced rule
     core = RUNTIME_JS.read_text(encoding='utf-8')
     m = re.search(r"CLIP_NAMES = \[([^\]]+)\]", core)
@@ -1188,6 +1188,34 @@ def test_clips_end_non_negative():
             assert zorp_rig.VALENCE[e] != zorp_rig.NEGATIVE, (name, e)
 
 
+def test_styleguide_motion_banner_and_preview_switch():
+    """Clip readability pass (2026-10-02): David clicked dance with Windows animation effects off (reduced motion) and saw
+    only the face. Every clip demo section now shows the effective motion level and a dev-only full-motion preview
+    switch; the switch is an html attribute that only static/js/styleguide.js sets and only zorp-motion.js reads."""
+    from app import app  # noqa: E402
+
+    html = app.test_client().get('/styleguide').data.decode()
+    for section in ('zorp-motion', 'zorp-views', 'zorp-poselib'):
+        start = html.index(f'id="{section}"')
+        body = html[start:html.index('</section>', start)]
+        assert 'data-zorp-motion-banner' in body and 'data-zorp-preview-full' in body and 'data-zorp-motion-text' in body, section
+        assert body.index('data-zorp-motion-banner') < body.index('data-zorp-clip='), f'{section}: the banner comes before the clip buttons'
+    sg = (ROOT / 'static' / 'js' / 'styleguide.js').read_text(encoding='utf-8')
+    for needle in ('data-motion-preview', 'Reduced motion is ON', 'Animation effects', 'face only', 'Preview at full motion'):
+        assert needle in sg, needle
+    core = RUNTIME_JS.read_text(encoding='utf-8')
+    assert core.count('data-motion-preview') >= 2, 'the runtime reads the preview in motionLevel() and watches it for idle'
+    assert "getAttribute('data-motion-preview') === 'full'" in core
+    # every script, template and server module, in any subfolder, under either spelling (attribute or dataset property)
+    scanned = list((ROOT / 'static' / 'js').rglob('*.js')) + list(TEMPLATES.rglob('*.html')) + [ROOT / 'app.py'] + list((ROOT / 'models').rglob('*.py'))
+    assert len(scanned) > 20
+    for path in scanned:
+        if path.name in ('styleguide.js', 'zorp-motion.js'):
+            continue
+        text = path.read_text(encoding='utf-8')
+        assert 'data-motion-preview' not in text and 'motionPreview' not in text, f'{path.name} must not touch the dev-only preview switch'
+
+
 def test_pose_gallery_markup():
     from app import app  # noqa: E402
     from models import zorp_rig
@@ -1207,7 +1235,7 @@ def test_pose_gallery_markup():
         assert f'data-pose-name="{name}" data-pose-view="front"' in section and f'data-pose-name="{name}" data-pose-view="side"' in section
     # server-drawn, not bound: only the live pair is data-zorp-demo
     assert section.count('data-zorp-demo') == 2
-    assert 'zorp-poses.js' in html and 'styleguide.js?v=8' in html
+    assert 'zorp-poses.js' in html and 'styleguide.js?v=9' in html
 
 
 def _idle_block():
@@ -1257,7 +1285,7 @@ def test_phase7_polish():
     base = (TEMPLATES / 'base.html').read_text(encoding='utf-8')
     assert 'Study streak at risk' not in base and 'keeps your streak going' in base
     sw = (JS_DIR / 'sw.js').read_text(encoding='utf-8')
-    assert "pb-v99" in sw and 'ignoreSearch: true' in sw
+    assert "pb-v100" in sw and 'ignoreSearch: true' in sw
 
 
 def test_phase7_runtime_fixes_static():
@@ -1317,6 +1345,7 @@ def main():
     test_stretch_within_limits()
     test_every_new_clip_has_reduced_and_names_are_kept()
     test_clips_end_non_negative()
+    test_styleguide_motion_banner_and_preview_switch()
     test_pose_gallery_markup()
     test_idle_life_rules()
     test_phase7_polish()

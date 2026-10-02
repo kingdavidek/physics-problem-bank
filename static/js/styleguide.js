@@ -70,7 +70,58 @@
     wireZorpDemo(document.getElementById('zorp-views'));
     wireZorpDemo(document.getElementById('zorp-poselib'));
     buildMatrix(document.getElementById('sg-zorp-matrix'));
+    wireMotionBanners();
   });
+
+  // E8 readability pass (2026-10-02): the clip demos make the effective motion level obvious. Reduced motion (the
+  // OS asks for it, e.g. Windows "Animation effects" off, or the app's motion setting) only swaps the face, so every
+  // demo section carries a banner saying so, plus a dev-only "preview at full motion" switch. The switch sets
+  // html[data-motion-preview="full"], which zorp-motion.js honours; only this script ever sets it, so no real page
+  // is affected.
+  var lastClip = '';
+  function motionBanners() {
+    var z = window.pbZorp;
+    var root = document.documentElement;
+    var level = z && z.motionLevel ? z.motionLevel() : 'unknown';
+    var attr = root.getAttribute('data-motion') || 'system';
+    var preview = root.getAttribute('data-motion-preview') === 'full';
+    var text;
+    if (preview) text = 'Full-motion preview is ON for this page only. Your real setting (' + attr + ') is unchanged.';
+    else if (level === 'full') text = 'Motion level: full. Clips animate normally.';
+    else if (attr === 'off') text = 'Motion is OFF (app setting or the simulator below), so clips only swap the face. Use the full-motion preview button to see the movement.';
+    else if (attr === 'reduced') text = 'Reduced motion is ON (app setting or the simulator below), so clips show the face only (bow and side-point also switch to the side view at once), with no body or arm movement. Use the full-motion preview button to see the movement.';
+    else text = 'Reduced motion is ON (from your system: on Windows, Settings > Accessibility > Visual effects > Animation effects is off), so clips show the face only (bow and side-point also switch to the side view at once), with no body or arm movement. Use the full-motion preview button to see the movement.';
+    var limited = level !== 'full';
+    if (limited && lastClip) text += ' Last clip you pressed: ' + lastClip + ' (no movement).';
+    var boxes = document.querySelectorAll('[data-zorp-motion-banner]');
+    for (var i = 0; i < boxes.length; i += 1) {
+      var msg = boxes[i].querySelector('[data-zorp-motion-text]');
+      var btn = boxes[i].querySelector('[data-zorp-preview-full]');
+      if (msg) msg.textContent = text;
+      boxes[i].classList.toggle('is-limited', limited);
+      if (btn) {
+        btn.setAttribute('aria-pressed', preview ? 'true' : 'false');
+        btn.textContent = preview ? 'Stop full-motion preview' : 'Preview at full motion';
+      }
+    }
+    var labels = document.querySelectorAll('[data-zorp-motion-level]');
+    for (var k = 0; k < labels.length; k += 1) labels[k].textContent = 'motionLevel(): ' + level;
+  }
+  function wireMotionBanners() {
+    var root = document.documentElement;
+    var btns = document.querySelectorAll('[data-zorp-preview-full]');
+    for (var i = 0; i < btns.length; i += 1) {
+      btns[i].addEventListener('click', function () {
+        if (root.getAttribute('data-motion-preview') === 'full') root.removeAttribute('data-motion-preview');
+        else root.setAttribute('data-motion-preview', 'full');
+        motionBanners();
+      });
+    }
+    if (window.MutationObserver) new MutationObserver(motionBanners).observe(root, { attributes: true, attributeFilter: ['data-motion', 'data-motion-preview'] });
+    var mq = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+    if (mq && mq.addEventListener) mq.addEventListener('change', motionBanners);
+    motionBanners();
+  }
 
   // E8 Phase 2: eyes x mouths review grid, cloned from the inert parts library (no pbZorp needed).
   function buildMatrix(table) {
@@ -168,6 +219,7 @@
     var levels = scope.querySelectorAll('[data-zorp-set-motion]');
     for (i = 0; i < levels.length; i += 1) {
       levels[i].addEventListener('click', function (event) {
+        document.documentElement.removeAttribute('data-motion-preview');
         document.documentElement.setAttribute('data-motion', event.currentTarget.getAttribute('data-zorp-set-motion'));
         if (label) label.textContent = 'motionLevel(): ' + z.motionLevel();
       });
@@ -196,6 +248,8 @@
     for (var i = 0; i < btns.length; i += 1) {
       btns[i].addEventListener('click', function (event) {
         var btn = event.currentTarget;
+        lastClip = btn.getAttribute('data-zorp-clip') + (btn.hasAttribute('data-zorp-trip') ? ' (trip)' : '');
+        motionBanners();
         for (var k = 0; k < demos.length; k += 1) {
           z.play(btn.getAttribute('data-zorp-clip'), {
             el: demos[k],

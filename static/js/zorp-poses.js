@@ -16,7 +16,7 @@
   // Pose rows, from models/zorp_rig.py poses_json(); scripts/test_zorp_poses_smoke.py fails when they differ.
   // r root [dx dy rot sx sy], h head [dx dy rot], L/R arm [shape rot front], fl/fr feet [dx dy rot], s shadow [sx opacity].
   /*POSES-BEGIN*/
-  var POSES = {"stand":{"r":[0,0,0,1,1],"h":[0,0,0],"L":["rest",0,0],"R":["rest",0,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"front","e":"nudge"},"wave":{"r":[0,0,0,1,1],"h":[0,0,3],"L":["rest",0,0],"R":["straight",-100,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"milestone"},"point-l":{"r":[0,0,0,1,1],"h":[0,0,-4],"L":["straight",82,0],"R":["rest",0,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"qotd_nudge"},"point-r":{"r":[0,0,0,1,1],"h":[0,0,4],"L":["rest",0,0],"R":["straight",-82,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"qotd_nudge"},"point-down":{"r":[0,0,0,1,1],"h":[0,0,6],"L":["rest",0,0],"R":["straight",-35,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"qotd_nudge"},"fist-up":{"r":[0,0,4,1,1],"h":[0,0,0],"L":["rest",0,0],"R":["fist",-165,1],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"grin"},"victory":{"r":[0,0,0,1,1.02],"h":[0,0,0],"L":["fist",160,1],"R":["fist",-160,1],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"joy"},"flex":{"r":[0,0,0,1,1.03],"h":[0,0,0],"L":["rest",0,0],"R":["bent-fist",-90,1],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"proud"},"think-chin":{"r":[0,0,0,1,1],"h":[0,0,-6],"L":["rest",0,0],"R":["bent",0,1],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"thinking"},"shrug":{"r":[0,0,0,1,0.96],"h":[0,0,5],"L":["straight",62,0],"R":["straight",-62,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"soft-smile"},"bow":{"r":[0,0,18,1,1],"h":[0,0,0],"L":["rest",0,0],"R":["rest",0,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"side","e":"bashful"},"peek":{"r":[-8,0,0,1,1],"h":[0,0,-10],"L":["rest",0,0],"R":["rest",0,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"nudge"},"crouch":{"r":[0,3,0,1.11,0.89],"h":[0,0,0],"L":["rest",14,0],"R":["rest",-14,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"determined"},"dance-a":{"r":[0,0,6,1,1],"h":[0,0,0],"L":["straight",130,0],"R":["rest",0,0],"fl":[0,0,0],"fr":[0,-3,0],"s":[1,1],"v":"","e":"laugh"},"dance-b":{"r":[0,0,-6,1,1],"h":[0,0,0],"L":["rest",0,0],"R":["straight",-130,0],"fl":[0,-3,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"laugh"},"sit":{"r":[0,3,0,1,0.95],"h":[0,0,0],"L":["rest",0,0],"R":["rest",0,0],"fl":[3,-1,0],"fr":[3,-1,0],"s":[1,1],"v":"side","e":"happy"},"float":{"r":[0,-8,0,1,1],"h":[0,0,0],"L":["rest",0,0],"R":["rest",0,0],"fl":[0,0,-8],"fr":[0,0,8],"s":[0.7,0.6],"v":"","e":"happy"},"sleep":{"r":[0,1.5,0,1,0.98],"h":[0,0,12],"L":["rest",0,0],"R":["rest",0,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"sleep"}};
+  var POSES = {"stand":{"r":[0,0,0,1,1],"h":[0,0,0],"L":["rest",0,0],"R":["rest",0,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"front","e":"nudge"},"wave":{"r":[0,0,0,1,1],"h":[0,0,3],"L":["rest",0,0],"R":["straight",-100,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"milestone"},"wave-lo":{"r":[0,0,3,1,1],"h":[0,0,4],"L":["rest",0,0],"R":["reach",-120,1],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"milestone"},"wave-hi":{"r":[0,0,3,1,1],"h":[0,0,4],"L":["rest",0,0],"R":["reach",-176,1],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"milestone"},"point-l":{"r":[0,0,0,1,1],"h":[0,0,-4],"L":["straight",82,0],"R":["rest",0,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"qotd_nudge"},"point-r":{"r":[0,0,0,1,1],"h":[0,0,4],"L":["rest",0,0],"R":["straight",-82,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"qotd_nudge"},"point-down":{"r":[0,0,0,1,1],"h":[0,0,6],"L":["rest",0,0],"R":["straight",-35,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"qotd_nudge"},"fist-up":{"r":[0,0,4,1,1],"h":[0,0,0],"L":["rest",0,0],"R":["fist",-165,1],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"grin"},"victory":{"r":[0,0,0,1,1.02],"h":[0,0,0],"L":["fist",160,1],"R":["fist",-160,1],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"joy"},"flex":{"r":[0,0,0,1,1.03],"h":[0,0,0],"L":["bent-fist",90,1],"R":["bent-fist",-90,1],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"proud"},"flex-pump":{"r":[0,0,-2,1,1.03],"h":[0,0,-3],"L":["bent-fist",112,1],"R":["bent-fist",-112,1],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"proud"},"think-chin":{"r":[0,0,0,1,1],"h":[0,0,-6],"L":["rest",0,0],"R":["bent",0,1],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"thinking"},"shrug":{"r":[0,0,0,1.03,0.97],"h":[0,1.5,6],"L":["palm",14,1],"R":["palm",-14,1],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"soft-smile"},"shrug-hi":{"r":[0,-1,0,1.03,0.97],"h":[0,2.5,8],"L":["palm",30,1],"R":["palm",-30,1],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"soft-smile"},"bow":{"r":[0,0,18,1,1],"h":[0,0,0],"L":["rest",0,0],"R":["rest",0,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"side","e":"bashful"},"peek":{"r":[-8,0,0,1,1],"h":[0,0,-10],"L":["rest",0,0],"R":["rest",0,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"nudge"},"crouch":{"r":[0,3,0,1.11,0.89],"h":[0,0,0],"L":["rest",14,0],"R":["rest",-14,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"determined"},"dance-a":{"r":[0,0,9,1,1],"h":[0,0,-3],"L":["reach",148,1],"R":["rest",-16,0],"fl":[0,0,0],"fr":[0,-4,0],"s":[1,1],"v":"","e":"laugh"},"dance-b":{"r":[0,0,-9,1,1],"h":[0,0,3],"L":["rest",16,0],"R":["reach",-148,1],"fl":[0,-4,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"laugh"},"dance-up":{"r":[0,0,0,1,1],"h":[0,0,0],"L":["reach",160,1],"R":["reach",-160,1],"fl":[0,-3,0],"fr":[0,-3,0],"s":[1,1],"v":"","e":"laugh"},"sit":{"r":[0,3,0,1,0.95],"h":[0,0,0],"L":["rest",0,0],"R":["rest",0,0],"fl":[3,-1,0],"fr":[3,-1,0],"s":[1,1],"v":"side","e":"happy"},"float":{"r":[0,-10,0,1,1],"h":[0,0,0],"L":["rest",26,0],"R":["rest",-26,0],"fl":[0,0,-8],"fr":[0,0,8],"s":[0.7,0.6],"v":"","e":"happy"},"sleep":{"r":[0,1.5,0,1,0.98],"h":[0,0,12],"L":["rest",0,0],"R":["rest",0,0],"fl":[0,0,0],"fr":[0,0,0],"s":[1,1],"v":"","e":"sleep"}};
   /*POSES-END*/
 
   // E8 Phase 5: which clips answer react(kind), from models/zorp_rig.py react_json() (test_react_plan_matches_runtime).
@@ -66,7 +66,7 @@
 
     // ---- arm shapes ----
     // The art a shape draws in the current view (zorp_rig SIDE_ARMS; the rest paddle is swapped by rt.side).
-    var SIDE_ART = { bent: 'side-bent', 'bent-fist': 'fist' };
+    var SIDE_ART = { bent: 'side-bent', 'bent-fist': 'fist', palm: 'straight' };
     function artOf(inst, shape) { return inst.view === 'side' && rt.own(SIDE_ART, shape) ? SIDE_ART[shape] : shape; }
 
     function setShape(inst, side, shape, force) {
@@ -292,10 +292,11 @@
         var at = t / spd;
         var row = POSES[b.pose] || POSES.stand;
         // The arms trail the root by LAG, so a new shape swaps in once the arm is on its way: a long fist appears
-        // when the arm has swung up (30% of the beat), and the short arm returns at once (12%) while the arm is still up, so a long arm never hangs down at foot level.
+        // when the arm has swung up (30% of the beat), and the short arm returns at the very start of the beat (2026-10-02: it was
+        // 12% in, by which time an 'out' eased arm was already sideways, so a long fist stuck out horizontally while lowering).
         var swap = function (S) {
           var raise = row[S][0] !== 'rest';
-          var when = (LAG.armL + (b.ms || 0) * (raise ? 0.3 : 0.12)) / spd;
+          var when = raise ? (LAG.armL + (b.ms || 0) * 0.3) / spd : 0;
           var apply = function () { setShape(inst, S, row[S][0]); layer(inst, S, !!row[S][2]); };
           if (at + when <= 0) apply(); else rt.after(inst, at + when, apply);
         };
@@ -335,48 +336,93 @@
       { pose: 'victory', expr: 'joy', y: 1, s: [1.1, 0.9], ms: 140, ease: 'in' },
       { pose: 'victory', ms: 110, hold: 260, ease: 'overshoot' },
       { pose: 'stand', expr: 'happy', ms: 220, ease: 'out' }] }));
+    // flex (readability pass 2026-10-02): the bent arm rises, then a double bicep pump with a chest puff (root scale), grin.
     add('flex', beatClip({ reduced: 'proud', beats: [
-      { pose: 'flex', expr: 'proud', ms: 220, hold: 350, ease: 'overshoot' },
-      { pose: 'stand', expr: 'happy', ms: 200, ease: 'out' }] }));
+      { pose: 'flex', expr: 'proud', y: -2, r: 2, ms: 200, hold: 40, ease: 'overshoot', aease: 'overshoot' },
+      { pose: 'flex-pump', s: [1.05, 1.06], y: -1, ms: 90, ease: 'out' },
+      { pose: 'flex', y: 0, ms: 90, ease: 'io' },
+      { pose: 'flex-pump', expr: 'grin', s: [1.05, 1.06], y: -2, hr: -5, ms: 100, hold: 280, ease: 'out' },
+      { pose: 'stand', expr: 'happy', ms: 240, ease: 'out' }] }));
+    // shrug: both palms lift out and up, the head sinks between the shoulders, drops, lifts again, then a soft smile.
     add('shrug', beatClip({ reduced: 'soft-smile', beats: [
-      { pose: 'shrug', expr: 'soft-smile', ms: 200, hold: 300, ease: 'overshoot' },
-      { pose: 'stand', ms: 200, ease: 'out' }] }));
+      { pose: 'shrug-hi', expr: 'curious', y: -2, ms: 190, ease: 'overshoot', aease: 'overshoot' },
+      { pose: 'shrug', y: 0, hr: -2, ms: 130, ease: 'io' },
+      { pose: 'shrug-hi', y: -2.5, hr: 3, ms: 150, hold: 260, ease: 'overshoot', aease: 'overshoot' },
+      { pose: 'stand', expr: 'soft-smile', ms: 240, ease: 'out' }] }));
+    // wave (readability pass 2026-10-02, about 1.1 s): replaces the legacy stub-arm wave (still in zorp-motion.js as the fallback
+    // when this file is missing): the long arm rises beside the head in the front layer and swings between two angles three
+    // times, a slight lean and head tilt, happy face, back to stand.
+    function swing(pose) { return { pose: pose, ms: 105, ease: 'io' }; }
+    add('wave', beatClip({ reduced: 'milestone', beats: [
+      { pose: 'wave-lo', expr: 'happy', y: -1, ms: 170, ease: 'out', aease: 'overshoot' },
+      swing('wave-hi'), swing('wave-lo'), swing('wave-hi'), swing('wave-lo'), swing('wave-hi'), swing('wave-lo'),
+      { pose: 'stand', ms: 220, ease: 'out' }] }));
     add('bow', beatClip({ reduced: 'bashful', view: 'side', beats: [
       { pose: 'bow', expr: 'bashful', ms: 200, hold: 200, ease: 'out' },
       { pose: 'stand', ms: 180, ease: 'io' }] }));
     add('think-chin', beatClip({ reduced: 'thinking', beats: [
       { pose: 'think-chin', expr: 'thinking', ms: 250, hold: 450, ease: 'out' },
       { pose: 'stand', expr: 'soft-smile', fx: 'bulb', ms: 250, ease: 'out' }] }));
+    // One dance step is two beats: up on the toes (bounce) and back down. Tempo: 190 ms per step.
+    function step(pose, face) {
+      var up = { pose: pose, y: -5, ms: 100, ease: 'out' };
+      if (face) { up.expr = 'laugh'; up.fx = 'notes'; }
+      return [up, { pose: pose, ms: 90, ease: 'in' }];
+    }
+    var HOP = [
+      { pose: 'dance-up', y: -15, s: [0.95, 1.06], ms: 190, hold: 40, ease: 'out', aease: 'overshoot' },
+      { pose: 'dance-up', y: 1, s: [1.08, 0.93], ms: 110, ease: 'in' }];
+    // dance (readability pass 2026-10-02, about 1.8 s): alternating steps with a bounce and a 9 degree sway, one arm raised in the
+    // front layer on every step, a big two-arm hop in the middle, two more steps, a happy finish.
     add('dance', beatClip({ reduced: 'laugh',
-      beats: [
-        { pose: 'dance-a', expr: 'laugh', fx: 'notes', ms: 130, hold: 120, ease: 'io' },
-        { pose: 'dance-b', ms: 130, hold: 120, ease: 'io' },
-        { pose: 'dance-a', ms: 130, hold: 120, ease: 'io' },
-        { pose: 'dance-b', ms: 130, hold: 120, ease: 'io' },
-        { pose: 'stand', expr: 'happy', ms: 260, ease: 'out' }],
+      beats: [].concat(step('dance-a', 1), step('dance-b'), step('dance-a'), step('dance-b'), HOP, step('dance-a'), step('dance-b'), [{ pose: 'stand', expr: 'happy', ms: 260, ease: 'out' }]),
       // opts.trip === true: Zorp's own stumble (embarrassed for 250 ms), then laughs it off. Never used by reactions.
-      trip: [
-        { pose: 'dance-a', expr: 'laugh', fx: 'notes', ms: 130, hold: 120, ease: 'io' },
-        { pose: 'dance-b', ms: 130, hold: 120, ease: 'io' },
+      trip: [].concat(step('dance-a', 1), step('dance-b'), step('dance-a'), step('dance-b'), [
         { pose: 'dance-a', expr: 'embarrassed', r: 12, dx: 1.5, ms: 130, hold: 120, ease: 'overshoot' },
-        { pose: 'stand', expr: 'laugh', ms: 130, hold: 120, ease: 'out' },
-        { pose: 'stand', expr: 'happy', ms: 260, ease: 'out' }] }));
+        { pose: 'stand', expr: 'laugh', ms: 130, hold: 150, ease: 'out' }], step('dance-a'), [{ pose: 'stand', expr: 'happy', ms: 260, ease: 'out' }]) }));
     add('float', beatClip({ reduced: 'happy', beats: [
       { pose: 'float', expr: 'happy', ms: 260, ease: 'out' },
-      { pose: 'float', y: -2.5, ms: 220, ease: 'io' },
-      { pose: 'float', y: 1.5, ms: 220, ease: 'io' },
-      { pose: 'float', y: -2.5, ms: 220, ease: 'io' },
+      { pose: 'float', y: -4, hr: 3, ms: 240, ease: 'io' },
+      { pose: 'float', y: 3, hr: -3, ms: 240, ease: 'io' },
+      { pose: 'float', y: -4, hr: 3, ms: 240, ease: 'io' },
       { pose: 'stand', ms: 280, ease: 'out' }] }));
     add('oops-encourage', beatClip({ reduced: 'determined', beats: [
-      { pose: 'stand', expr: 'oops', r: -3, ms: 60, hold: 190, ease: 'out' },
-      { pose: 'stand', expr: 'determined', fx: 'thought', y: -4, dx: -1.5, s: [0.97, 1.04], ms: 170, ease: 'out' },
-      { pose: 'stand', s: [1.05, 0.95], ms: 120, ease: 'in' },
+      { pose: 'stand', expr: 'oops', r: -5, y: 1, hr: -5, s: [1.04, 0.96], ms: 70, hold: 180, ease: 'out' },
+      { pose: 'stand', expr: 'determined', fx: 'thought', y: -6, dx: -2, r: 2, hr: 4, s: [0.96, 1.05], ms: 170, ease: 'out' },
+      { pose: 'stand', s: [1.06, 0.94], ms: 120, ease: 'in' },
       { pose: 'stand', expr: 'soft-smile', ms: 110, hold: 190, ease: 'out' }] }));
     // turn: the pinch-turn as a clip (leaves the view turned, like pbZorp.turn); reduced turns only with opts.required.
     add('turn', { dur: 300, custom: function (inst, opts, spd) {
       inst.busy = false;
       return rt.turn(opts.view || 'side', opts.facing, { el: inst.svg, speed: spd, required: opts.required });
     } });
+
+    // side-point (readability pass 2026-10-02): the legacy clip raised the short profile paddle for about 275 ms, which did not read as a
+    // point. It now lasts 800 ms and the near arm becomes the long arm (reach, held within 10 degrees of vertical so it clears the face; straight for a point down) while it points, then the paddle
+    // returns as the arm comes down. Same turns, face, reduced rule and target handling as before (zorp-motion.js).
+    var legacySide = CL['side-point'];
+    if (legacySide) {
+      var sidePoint = {};
+      Object.keys(legacySide).forEach(function (k) { sidePoint[k] = legacySide[k]; });
+      sidePoint.dur = 800;
+      // the clip runs in profile, where sideTracks() maps -157.5 to 190 degrees: the long arm straight up beside the head, clear of the face
+      sidePoint.tracks = function (parts, pupils, opts) {
+        var t = legacySide.tracks(parts, pupils, opts);
+        if (opts && (opts.target === 'down' || opts.target === 'left')) return t;
+        t.forEach(function (x) { if (x[0] === parts.armR) x[1].forEach(function (f) { f.transform = f.transform.replace('rotate(-80deg)', 'rotate(-157.5deg)'); }); });
+        return t;
+      };
+      sidePoint.start = function (inst, spd, o) {
+        if (legacySide.start) legacySide.start(inst, spd, o);
+        if (o && o.target === 'left') return;
+        init(inst);
+        var near = function (shape) { return function () { setShape(inst, 'R', shape, 1); }; };
+        inst.undo.push(near('rest'));
+        rt.after(inst, 50 / spd, near(o && o.target === 'down' ? 'straight' : 'reach'));
+        rt.after(inst, sidePoint.dur * 0.8 / spd, near('rest'));
+      };
+      CL['side-point'] = sidePoint;
+    }
 
     // ---- react(kind) plan (E8 Phase 5) ----
     // correct rotates the small clips with a positive preset from CONTEXT_MAP['react.correct'], never repeating;

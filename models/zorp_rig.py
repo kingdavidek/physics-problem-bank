@@ -146,7 +146,7 @@ CONTEXT_MAP.update({
     'react.wrong.first': ('oops',),
     # Phase 5: each list covers every preset the kind's clips draw (test_react_clips_use_context_map).
     'react.streak': ('determined', 'joy', 'grin', 'proud'),
-    'react.milestone': ('proud', 'aww', 'happy', 'wow'),
+    'react.milestone': ('proud', 'aww', 'happy', 'wow', 'grin'),
     'react.lesson_complete': ('love', 'happy'),
     'react.first_correct': ('determined', 'wow', 'joy', 'happy'),
     'dismiss': ('soft-smile', 'nudge'),
@@ -350,12 +350,12 @@ def map_variant(view, channel, vid):
 #   head   (dx, dy, rot)           armL / armR (shape, rot, front)   front = 1: draw the front-layer twin
 #   footL / footR (dx, dy, rot)    shadow (sx, opacity)
 # ---------------------------------------------------------------------------------------------
-ARM_SHAPES = ('rest', 'straight', 'fist', 'bent', 'bent-fist')
+ARM_SHAPES = ('rest', 'straight', 'fist', 'bent', 'bent-fist', 'reach', 'palm')
 SIDE_ARM = 'side-rest'   # the profile paddle: drawn instead of 'rest' in the side view, put back on any other view
 # Shapes the side view draws with other art: the paddle for a resting arm, a profile 'bent' whose hand comes forward
 # to the chin (think-chin) instead of reaching back behind the body, and the flex as a raised fist (a bent arm seen
 # from the side would fold across the face).
-SIDE_ARMS = {'rest': SIDE_ARM, 'bent': 'side-bent', 'bent-fist': 'fist'}
+SIDE_ARMS = {'rest': SIDE_ARM, 'bent': 'side-bent', 'bent-fist': 'fist', 'palm': 'straight'}   # palm (the open shrug hand) has no profile art: a straight arm
 LIBRARY_ARM_SHAPES = ARM_SHAPES + (SIDE_ARM, 'side-bent')
 POSE_PARTS = ('root', 'head', 'armL', 'armR', 'footL', 'footR', 'shadow')
 STRETCH_MAX = .12  # squash and stretch: no axis deforms more than 12% (docs 3.10)
@@ -370,21 +370,27 @@ def _pose(root=_R0, head=_H0, armL=_A0, armR=_A0, footL=_F0, footR=_F0, shadow=_
 POSES = {
     'stand': _pose(view='front', expr='nudge'),
     'wave': _pose(head=(0, 0, 3), armR=('straight', -100, 0), expr='milestone'),
+    # wave clip (readability pass 2026-10-02): the long arm raised beside the head, swinging between these two angles
+    'wave-lo': _pose(root=(0, 0, 3, 1, 1), head=(0, 0, 4), armR=('reach', -120, 1), expr='milestone'),
+    'wave-hi': _pose(root=(0, 0, 3, 1, 1), head=(0, 0, 4), armR=('reach', -176, 1), expr='milestone'),
     'point-l': _pose(head=(0, 0, -4), armL=('straight', 82, 0), expr='qotd_nudge'),
     'point-r': _pose(head=(0, 0, 4), armR=('straight', -82, 0), expr='qotd_nudge'),
     'point-down': _pose(head=(0, 0, 6), armR=('straight', -35, 0), expr='qotd_nudge'),
     'fist-up': _pose(root=(0, 0, 4, 1, 1), armR=('fist', -165, 1), expr='grin'),
     'victory': _pose(root=(0, 0, 0, 1, 1.02), armL=('fist', 160, 1), armR=('fist', -160, 1), expr='joy'),
-    'flex': _pose(root=(0, 0, 0, 1, 1.03), armR=('bent-fist', -90, 1), expr='proud'),
+    'flex': _pose(root=(0, 0, 0, 1, 1.03), armR=('bent-fist', -90, 1), armL=('bent-fist', 90, 1), expr='proud'),
+    'flex-pump': _pose(root=(0, 0, -2, 1, 1.03), head=(0, 0, -3), armR=('bent-fist', -112, 1), armL=('bent-fist', 112, 1), expr='proud'),
     'think-chin': _pose(head=(0, 0, -6), armR=('bent', 0, 1), expr='thinking'),
-    'shrug': _pose(root=(0, 0, 0, 1, .96), head=(0, 0, 5), armL=('straight', 62, 0), armR=('straight', -62, 0), expr='soft-smile'),
+    'shrug': _pose(root=(0, 0, 0, 1.03, .97), head=(0, 1.5, 6), armL=('palm', 14, 1), armR=('palm', -14, 1), expr='soft-smile'),
+    'shrug-hi': _pose(root=(0, -1, 0, 1.03, .97), head=(0, 2.5, 8), armL=('palm', 30, 1), armR=('palm', -30, 1), expr='soft-smile'),
     'bow': _pose(root=(0, 0, 18, 1, 1), view='side', expr='bashful'),
     'peek': _pose(root=(-8, 0, 0, 1, 1), head=(0, 0, -10), expr='nudge'),
     'crouch': _pose(root=(0, 3, 0, 1.11, .89), armL=('rest', 14, 0), armR=('rest', -14, 0), expr='determined'),
-    'dance-a': _pose(root=(0, 0, 6, 1, 1), armL=('straight', 130, 0), footR=(0, -3, 0), expr='laugh'),
-    'dance-b': _pose(root=(0, 0, -6, 1, 1), armR=('straight', -130, 0), footL=(0, -3, 0), expr='laugh'),
+    'dance-a': _pose(root=(0, 0, 9, 1, 1), head=(0, 0, -3), armL=('reach', 148, 1), armR=('rest', -16, 0), footR=(0, -4, 0), expr='laugh'),
+    'dance-b': _pose(root=(0, 0, -9, 1, 1), head=(0, 0, 3), armL=('rest', 16, 0), armR=('reach', -148, 1), footL=(0, -4, 0), expr='laugh'),
+    'dance-up': _pose(root=(0, 0, 0, 1, 1), armL=('reach', 160, 1), armR=('reach', -160, 1), footL=(0, -3, 0), footR=(0, -3, 0), expr='laugh'),
     'sit': _pose(root=(0, 3, 0, 1, .95), footL=(3, -1, 0), footR=(3, -1, 0), view='side', expr='happy'),
-    'float': _pose(root=(0, -8, 0, 1, 1), footL=(0, 0, -8), footR=(0, 0, 8), shadow=(.7, .6), expr='happy'),
+    'float': _pose(root=(0, -10, 0, 1, 1), armL=('rest', 26, 0), armR=('rest', -26, 0), footL=(0, 0, -8), footR=(0, 0, 8), shadow=(.7, .6), expr='happy'),
     'sleep': _pose(root=(0, 1.5, 0, 1, .98), head=(0, 0, 12), expr='sleep'),
 }
 POSE_NAMES = tuple(POSES)
@@ -422,7 +428,7 @@ def side_rot(rot, shape='rest'):
     deg is held at 40 (down and forward, under the mouth), and a raise of 70 deg or more becomes an arm lifted
     over the top, 135 deg (up and forward, clear of the eye and brows) at 70 up to 179 deg at 180. It is written
     as the backward angle (360 - lift) so a tween from the hanging arm swings back and over the head, never
-    through the face. A long fist arm (fist, and bent-fist, which the side view draws as a fist) is held within
+    through the face. A long arm (fist, reach, and bent-fist, which the side view draws as a fist) is held within
     10 deg of vertical so it clears the brows. The profile bent arm (side-bent) is drawn reaching the chin and is
     not turned. The left arm mirrors the right."""
     if shape == 'bent':
@@ -431,7 +437,7 @@ def side_rot(rot, shape='rest'):
     if a < 70:
         return rot if a <= 40 else (-40 if rot < 0 else 40)
     out = round(225 - (a - 70) * .4, 2)
-    if shape in ('fist', 'bent-fist'):
+    if shape in ('fist', 'bent-fist', 'reach'):
         out = min(out, 190)
     return out if rot < 0 else -out
 
