@@ -1,5 +1,5 @@
 /* Problem Bank service worker — cache static assets; network-first for pages/API. */
-const CACHE_VERSION = 'pb-v98';
+const CACHE_VERSION = 'pb-v99';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline';
 
@@ -85,7 +85,8 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(() => caches.match(request))
+        // offline: the precache holds unversioned URLs, so match without ?v=
+        .catch(() => caches.match(request).then((hit) => hit || caches.match(request, { ignoreSearch: true })))
     );
     return;
   }

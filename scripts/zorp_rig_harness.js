@@ -313,6 +313,21 @@ const compositeKeys = () => animations.filter((a) => a.opts.composite).length;
     assert.strictEqual(rest.flip, '');
   });
 
+  await scenario('turning back to front leaves no identity translate/scale inline (commitStyles residue is tidied)', async () => {
+    const { z } = load('system');
+    const m = mascot('front');
+    z.bind(m.host);
+    let done = z.turn('side', 'r', { el: m.host });
+    await flush(); await finishAll();
+    assert.strictEqual(await done, true);
+    done = z.turn('front', 'r', { el: m.host });
+    await flush(); await finishAll();
+    assert.strictEqual(await done, true);
+    ['.zorp-flip', '.zorp-plate', '.zorp-slot--mouth', '.buddy-antenna--l', '.zorp-highlight'].forEach((sel) => {
+      assert.ok(!m.part(sel).style.translate && !m.part(sel).style.scale, sel + ' carries "' + m.part(sel).style.translate + '" "' + m.part(sel).style.scale + '"');
+    });
+  });
+
   for (const mode of ['throws', 'missing']) {
     await scenario('commitStyles ' + mode + ': the same resting state is written by the fallback', async () => {
       const { z } = load('system', { commit: mode });

@@ -116,9 +116,9 @@ def main():
         assert 'data-buddy-face' in html
         assert 'buddy-mascot' in html
         assert 'data-face=' in html
-        assert 'zorp-motion.js?v=9' in html
-        assert 'zorp-poses.js?v=2' in html and html.index('zorp-motion.js') < html.index('zorp-poses.js')
-        assert 'css/motion.css?v=7' in html
+        assert 'zorp-motion.js?v=10' in html
+        assert 'zorp-poses.js?v=3' in html and html.index('zorp-motion.js') < html.index('zorp-poses.js')
+        assert 'css/motion.css?v=8' in html
         assert 'buddy-arm--l' in html
         assert 'buddy-pupil' in html
         # Fresh user, no milestones earned yet -> default Zorp (E7 Phase 1.5).

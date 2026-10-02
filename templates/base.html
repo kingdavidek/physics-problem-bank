@@ -28,7 +28,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v=26">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=35">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/chrome.css') }}?v=45">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/motion.css') }}?v=7">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/motion.css') }}?v=8">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/practice.css') }}?v=29">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=56">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}?v=21">
@@ -55,8 +55,8 @@
     <script src="{{ url_for('static', filename='js/u4.js') }}?v=12" defer></script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=5" defer></script>
     {% if current_user.is_authenticated or guide_preview_mode or zorp_motion_demo %}
-    <script src="{{ url_for('static', filename='js/zorp-motion.js') }}?v=9" defer></script>
-    <script src="{{ url_for('static', filename='js/zorp-poses.js') }}?v=2" defer></script>
+    <script src="{{ url_for('static', filename='js/zorp-motion.js') }}?v=10" defer></script>
+    <script src="{{ url_for('static', filename='js/zorp-poses.js') }}?v=3" defer></script>
     <script src="{{ url_for('static', filename='js/zorp-triggers.js') }}?v=2" defer></script>
     {% endif %}
     {% if current_user.is_authenticated %}
@@ -349,7 +349,7 @@
             {{ (nav_avatar or {'face': '🙂'}).face }}
         </span>
         <span class="app-tab-label">Profile</span>
-        {% if tab_badges.get('streak_at_risk') %}<span class="app-tab-badge app-tab-badge--flame" aria-label="Study streak at risk">{{ icon('flame', size=12) }}</span>{% endif %}
+        {% if tab_badges.get('streak_at_risk') %}<span class="app-tab-badge app-tab-badge--flame" aria-label="A quick question keeps your streak going">{{ icon('flame', size=12) }}</span>{% endif %}
     </a>
     {% else %}
     <a href="/" class="app-tab{% if nav_tab == 'practice' %} is-active{% endif %}"{% if nav_tab == 'practice' %} aria-current="page"{% endif %}>

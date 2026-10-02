@@ -4,6 +4,7 @@
 **Status:** A1–A6 + B shipped — origin overlay, badge/streak/first-correct/lesson-complete rewards, five section tours, `guide_json` persist + Replay intro, CSS streak-fire, overlay wink/nod/shake/tap. No Lottie.  
 **Audience:** The next AI agent implementing this (and David, for copy/tone)  
 **Parent:** new engagement track. Distinct from **E4.2 mascot farm** (economy / collectibles — still deferred).  
+**Superseded in part (2026-10-01):** the mascot's faces, poses, turning and idle life are now specified in `docs/ZORP_EXPRESSIVENESS.md` (E8); the "seven faces" and "seven hand-drawn face groups" below describe the E6 state. The Guide gestures here are unchanged.  
 **Companions:** `docs/ENGAGEMENT_VISUAL.md`, `docs/ENGAGEMENT_E5.md`, `docs/UI_REDESIGN.md` §10 (U7 motion), `docs/SECURITY_AND_GDPR.md` §6.1, `docs/DPIA.md`
 
 This is the canonical implementation plan. Do not invent a parallel onboarding system. Do not start E4.2 (farm / collectibles) from this doc.

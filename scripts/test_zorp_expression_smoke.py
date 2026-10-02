@@ -44,8 +44,8 @@ INSTANCE_MAX_ELEMENTS = 70  # measured 39 Phase 1, 40 Phase 2, 50 Phase 3 (basel
 INSTANCE_LOOK_MAX_BYTES = 5_800  # measured 3,624 B Phase 1, 3,663 B Phase 2, 4,206 B Phase 3 (baseline 8,344)
 PAGE_MASCOT_MAX_BYTES = 36_000  # 3 instances + library + island; see test_page_mascot_budget output
 PAGE_MASCOT_MAX_GZIP = 6_000
-RUNTIME_JS_MAX_BYTES = 48_000  # baseline 26_602; 47_868 after Phase 3; Phase 4 first trimmed it to 43_084, then added the register hook (45_370; 45_509 after the review fixes)
-POSES_JS_MAX_BYTES = 26_000  # E8 Phase 4 (new file, 2026-09-30): poses table, beat engine and the new clips, 24,000 B at first; raised to 26,000 B in Phase 5 (2026-09-30, ledger note) for the react() plan; measured in test_poses_js_budget output
+RUNTIME_JS_MAX_BYTES = 56_000  # baseline 26_602; 47_868 after Phase 3; Phase 4 first trimmed it to 43_084, then added the register hook (45_370; 45_509 after the review fixes); 47_962 after Phase 5; RAISED 48_000 -> 56_000 on 2026-10-01 (E8 Phase 7, David: "raise the cap by however much you need"): idle life (blink, glance, antenna twitch, look-around clip, IntersectionObserver and typing pauses) measured at 53_081 B, see docs/ZORP_EXPRESSIVENESS.md 2.1 and test_runtime_js_budget output
+POSES_JS_MAX_BYTES = 26_000  # Phase 7 (2026-10-01): measured 25_662 B, no raise needed; E8 Phase 4 (new file, 2026-09-30): poses table, beat engine and the new clips, 24,000 B at first; raised to 26,000 B in Phase 5 (2026-09-30, ledger note) for the react() plan; measured in test_poses_js_budget output
 PARTS_LIBRARY_MAX_BYTES = 16_000  # <template> only; measured 6,959 B Phase 1, 12,169 B Phase 2, 13,432 B Phase 3
 RIG_JSON_MAX_BYTES = 6_000  # island; measured 1,359 B Phase 1, 2,802 B Phase 2, 4,503 B Phase 3 (with tags)
 MOTION_CSS_MAX_BYTES = 12_000  # mirrors test_zorp_motion_smoke.py; baseline 4_844, Phase 1 6_445, Phase 2 7_466, Phase 3 7_895
@@ -1100,7 +1100,7 @@ def test_poses_js_budget():
     assert "translate(0,9px) scale(0.75,1)" in core_text and "translate(0,8px) scale(0.7,1)" in core_text
     base = (TEMPLATES / 'base.html').read_text(encoding='utf-8')
     assert base.index('js/zorp-motion.js') < base.index('js/zorp-poses.js') < base.index('js/zorp-triggers.js')
-    assert 'zorp-poses.js\') }}?v=2' in base
+    assert 'zorp-poses.js\') }}?v=3' in base
     sw = (JS_DIR / 'sw.js').read_text(encoding='utf-8')
     assert '/static/js/zorp-poses.js' in sw and '/static/js/zorp-motion.js' in sw
 
@@ -1210,6 +1210,68 @@ def test_pose_gallery_markup():
     assert 'zorp-poses.js' in html and 'styleguide.js?v=8' in html
 
 
+def _idle_block():
+    text = RUNTIME_JS.read_text(encoding='utf-8')
+    start = text.index('// ---- Idle life (E8 Phase 7')
+    end = text.index("document.addEventListener('visibilitychange'")
+    return text[start:end]
+
+
+def test_idle_life_rules():
+    """Phase 7: idle life is WAAPI one-shots on timers, never a frame loop, and only under the section 5 conditions."""
+    block = _idle_block()
+    for name in ('requestAnimationFrame', 'setInterval', 'cancelAnimationFrame'):
+        assert name not in RUNTIME_JS.read_text(encoding='utf-8'), f'zorp-motion.js must not use {name}'
+        assert name not in POSES_JS.read_text(encoding='utf-8'), f'zorp-poses.js must not use {name}'
+    # the gates: full motion, visible tab, on screen, quiet (typing / just pressed), nothing running, front view
+    for needle in ("motionLevel() === 'full'", '!document.hidden', 'inst.vis', 'IntersectionObserver', 'typing()', 'lastInput',
+                   '!inst.busy', "inst.view === 'front'", 'guide-open', 'data-motion', 'LOOK_GAP_MS = 45000', "lifeLoop(inst, 'a', 6000, 14000, act)"):
+        assert needle in block, needle
+    text = RUNTIME_JS.read_text(encoding='utf-8')
+    assert "visibilitychange" in text and 'refreshIdle' in text
+    # idle never touches the expression
+    assert 'setExpression' not in block and 'tempFace' not in block and 'setFace' not in block
+    # the look-around is a clip with no face and no reducedFace (reduced motion skips it)
+    clip = text[text.index("CLIPS['look-around']"):text.index('function play(')]
+    assert "view: 'three-quarter'" in clip and 'face:' not in clip.replace('reducedFace', '')
+    assert "'look-around'" in text[:text.index('var SLOT_KEYS')]
+    # decorative autoplay never starts it (not in zorp-triggers' allowlist) and the Guide never calls idle
+    assert 'look-around' not in (JS_DIR / 'zorp-triggers.js').read_text(encoding='utf-8')
+    assert 'pbZorp.idle' not in (JS_DIR / 'guide.js').read_text(encoding='utf-8')
+
+
+def test_phase7_polish():
+    parts = (TEMPLATES / 'partials' / 'zorp_parts.html').read_text(encoding='utf-8')
+    css = MOTION_CSS.read_text(encoding='utf-8')
+    # glow cheeks: dark themes get a rose glow instead of olive gold at half opacity
+    assert parts.count('--zorp-glow') >= 3
+    assert css.count('--zorp-glow:') == 2 and 'prefers-color-scheme: dark' in css and ':root[data-theme="dark"] .buddy-mascot' in css
+    # the sparkle eye's star is large enough to read at 56 px (arms of about 2.5 units either way, plus a second catch-light)
+    sparkle = re.search(r"n == 'sparkle' -%}\n(.*?)\n\{%- elif", parts, re.S).group(1)
+    assert 'q.4 2.3 2.3 2.6' in sparkle and 'r=".55"' in sparkle
+    # the thinking brows are soft arcs with inner ends level, not lowered towards each other
+    knit = re.search(r"n == 'knit' -%}\n(.*?)\n\{%- elif", parts, re.S).group(1)
+    assert 'M23.4 29.4q2.9-1.5 5.8 0' in knit
+    # sweat in profile sits on the temple behind the eye
+    assert '.zorp-dr { translate: -15px -1px; }' in css
+    base = (TEMPLATES / 'base.html').read_text(encoding='utf-8')
+    assert 'Study streak at risk' not in base and 'keeps your streak going' in base
+    sw = (JS_DIR / 'sw.js').read_text(encoding='utf-8')
+    assert "pb-v99" in sw and 'ignoreSearch: true' in sw
+
+
+def test_phase7_runtime_fixes_static():
+    text = RUNTIME_JS.read_text(encoding='utf-8')
+    assert 'return !missing;' in text and 'return drawn;' in text      # setFace is false without the parts library
+    assert 'function tidy(inst)' in text and 'tidy(inst);' in text      # no translate/scale residue after turning back
+    assert "fxFace.style.display = 'none'" in text                      # a thought never shares the spot with sweat
+    assert 'once(inst, slot, frames' in text                            # part-swap squeezes are tracked by stop()
+    poses = POSES_JS.read_text(encoding='utf-8')
+    assert 'shapeOf' not in poses and 'function (kind, now, keep)' in poses
+    for dead in ('api: window.pbZorp', 'canAnimate: canAnimate', 'kf: kf'):
+        assert dead not in text, dead
+
+
 def main():
     test_no_animation_libraries()
     test_presets_complete()
@@ -1256,8 +1318,11 @@ def main():
     test_every_new_clip_has_reduced_and_names_are_kept()
     test_clips_end_non_negative()
     test_pose_gallery_markup()
+    test_idle_life_rules()
+    test_phase7_polish()
+    test_phase7_runtime_fixes_static()
     test_decisions_recorded()
-    print('Zorp expression smoke (E8 Phase 5) passed.')
+    print('Zorp expression smoke (E8 Phase 7) passed.')
 
 
 if __name__ == '__main__':

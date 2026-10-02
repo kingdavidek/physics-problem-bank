@@ -62,15 +62,9 @@
 
     function poseRow(name) { return rt.own(POSES, name) ? POSES[name] : null; }
 
-    function elsOf(inst, key) {
-      if (key === 'armL' || key === 'armR') return inst.parts[key];
-      if (key === 'footL' || key === 'footR') return [inst.parts[key]];
-      return [inst.parts[key]];
-    }
+    function elsOf(inst, key) { return key === 'armL' || key === 'armR' ? inst.parts[key] : [inst.parts[key]]; }
 
     // ---- arm shapes ----
-    function shapeOf(inst, side) { return inst.shape[side]; }
-
     // The art a shape draws in the current view (zorp_rig SIDE_ARMS; the rest paddle is swapped by rt.side).
     var SIDE_ART = { bent: 'side-bent', 'bent-fist': 'fist' };
     function artOf(inst, shape) { return inst.view === 'side' && rt.own(SIDE_ART, shape) ? SIDE_ART[shape] : shape; }
@@ -416,7 +410,16 @@
       return p;
     }
     rt.react(plan);
-    pb.reactPlan = plan;   // read-only use in tests: the plan react(kind) would play, and its side effects on the gap guard
+    // Test hook: the plan react(kind) would make. Unless `keep` is true it leaves the gap guard and the last picks as
+    // they were, so calling it can never delay or reorder a real reaction.
+    pb.reactPlan = function (kind, now, keep) {
+      var saved = [lastBig, bigUntil, lastPick];
+      lastPick = {};
+      Object.keys(saved[2]).forEach(function (k) { lastPick[k] = saved[2][k]; });
+      var p = plan(kind, now);
+      if (!keep) { lastBig = saved[0]; bigUntil = saved[1]; lastPick = saved[2]; }
+      return p;
+    };
 
     pb.pose = pose;
     pb.hasPose = function (name) { return !!poseRow(name); };

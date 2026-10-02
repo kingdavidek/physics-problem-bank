@@ -690,7 +690,7 @@ async function scenario(name, fn) {
     const faces = new Set();
     const clips = new Set();
     for (let i = 0; i < 80; i += 1) {
-      const p = z.reactPlan('correct', tick(1000));
+      const p = z.reactPlan('correct', tick(1000), true);
       assert.ok(SMALL_CORRECT.indexOf(p.clip) !== -1, 'small clip only: ' + p.clip);
       assert.strictEqual(p.big, false);
       assert.ok(z.allowedIn('react.correct', p.face) && val(z, p.face) === 'positive', 'face from CONTEXT_MAP react.correct: ' + p.face);
@@ -702,10 +702,21 @@ async function scenario(name, fn) {
     ['grin', 'joy', 'happy', 'smug'].forEach((f) => assert.ok(faces.has(f), f));
   });
 
+  await scenario('react plan: the public reactPlan hook is read-only unless asked to keep (a probe never delays a real reaction)', () => {
+    const { z } = load('system');
+    const a = z.reactPlan('streak', tick(60000));
+    assert.strictEqual(a.clip, 'fist-pump');
+    const b = z.reactPlan('streak', tick(500));
+    assert.strictEqual(b.clip, 'fist-pump', 'the probe armed no gap guard and no big-clip window');
+    const c = z.reactPlan('streak', tick(500), true);
+    assert.strictEqual(c.clip, 'fist-pump');
+    assert.strictEqual(z.reactPlan('streak', tick(500)), false, 'a kept plan does arm the big-clip window');
+  });
+
   await scenario('react plan: wrong is oops-encourage (oops first beat <= 300 ms, resolves positive), no face override, no blush', () => {
     const { z } = load('system');
     for (let i = 0; i < 5; i += 1) {
-      const p = z.reactPlan('wrong', tick(1000));
+      const p = z.reactPlan('wrong', tick(1000), true);
       assert.strictEqual(p.clip, 'oops-encourage');
       assert.strictEqual(p.big, false);
       assert.strictEqual(p.face, undefined);
@@ -725,50 +736,50 @@ async function scenario(name, fn) {
     const table = { streak: 'fist-pump', first_correct: 'victory', lesson_complete: 'dance' };
     Object.keys(table).forEach((kind) => {
       const { z: zz } = load('system');
-      const p = zz.reactPlan(kind, tick(60000));
+      const p = zz.reactPlan(kind, tick(60000), true);
       assert.strictEqual(p.clip, table[kind], kind);
       assert.strictEqual(p.big, true, kind);
       assert.ok(p.dur >= 700 && p.dur <= 1500, kind + ' dur ' + p.dur);
     });
-    const a = z.reactPlan('streak', tick(60000));
+    const a = z.reactPlan('streak', tick(60000), true);
     assert.strictEqual(a.clip, 'fist-pump');
-    assert.strictEqual(z.reactPlan('milestone', tick(400)), false, 'a big clip still playing is never cut short by another reaction');
-    const soon = z.reactPlan('streak', tick(a.dur + 500));
+    assert.strictEqual(z.reactPlan('milestone', tick(400), true), false, 'a big clip still playing is never cut short by another reaction');
+    const soon = z.reactPlan('streak', tick(a.dur + 500), true);
     assert.strictEqual(soon.clip, 'cheer', 'inside the minimum gap a second big moment becomes a small cheer');
     assert.strictEqual(soon.big, false);
     assert.ok(z.allowedIn('react.streak', soon.face) && val(z, soon.face) === 'positive');
-    const later = z.reactPlan('streak', tick(8000));
+    const later = z.reactPlan('streak', tick(8000), true);
     assert.strictEqual(later.clip, 'fist-pump', 'after the gap it is allowed again');
     // correct answers are never big, however many and however spaced
     const { z: z2 } = load('system');
-    for (let i = 0; i < 200; i += 1) assert.strictEqual(z2.reactPlan('correct', tick(20000)).big, false);
+    for (let i = 0; i < 200; i += 1) assert.strictEqual(z2.reactPlan('correct', tick(20000), true).big, false);
   });
 
   await scenario('react plan: milestone alternates flex (proud) and a wave with a positive face; lesson_complete dances with love, never tripping', () => {
     const { z } = load('system');
     const seen = new Set();
     for (let i = 0; i < 12; i += 1) {
-      const p = z.reactPlan('milestone', tick(60000));
+      const p = z.reactPlan('milestone', tick(60000), true);
       seen.add(p.clip);
       assert.ok(['flex', 'wave'].indexOf(p.clip) !== -1, p.clip);
       if (p.clip === 'wave') assert.ok(z.allowedIn('react.milestone', p.face) && val(z, p.face) === 'positive', 'wave face ' + p.face);
       else assert.strictEqual(p.big, true);
     }
     assert.strictEqual(seen.size, 2, 'both milestone clips are used');
-    const d = z.reactPlan('lesson_complete', tick(60000));
+    const d = z.reactPlan('lesson_complete', tick(60000), true);
     assert.strictEqual(d.clip, 'dance');
     assert.strictEqual(d.face, 'love');
     eq(d.map, { laugh: 'love' });
     assert.ok(z.allowedIn('react.lesson_complete', d.face));
     assert.strictEqual(d.trip, undefined, 'a reaction never asks for the trip');
-    assert.strictEqual(z.reactPlan('nonsense', tick(1)), null);
+    assert.strictEqual(z.reactPlan('nonsense', tick(1), true), null);
   });
 
   await scenario('react plan: every clip and face any kind can produce exists and is allowed for that kind', () => {
     const { z } = load('system');
     ['correct', 'wrong', 'streak', 'first_correct', 'milestone', 'lesson_complete'].forEach((kind) => {
       for (let i = 0; i < 30; i += 1) {
-        const p = z.reactPlan(kind, tick(60000));
+        const p = z.reactPlan(kind, tick(60000), true);
         assert.ok(z.hasClip(p.clip), p.clip);
         if (p.face) assert.ok(z.allowedIn('react.' + kind, p.face) && val(z, p.face) !== 'negative', kind + ' ' + p.face);
         const info = z.clipInfo(p.clip);

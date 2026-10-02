@@ -79,6 +79,9 @@ html[data-motion="off"] .buddy-mascot [class*="zorp-slot--fx"] * { animation: no
    grading colours. .zk/.zf are the ink stroke and fill shared by every part in
    templates/partials/zorp_parts.html. */
 .buddy-mascot { --zorp-rouge: var(--streak-300); --zorp-blush: var(--streak-400); --zorp-drop: var(--brand-400); --zorp-heart: #f472b6; }
+/* glow cheeks: the gold rouge at half opacity turns olive on the dark face plate, so dark themes glow rose instead */
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .buddy-mascot { --zorp-glow: #f9a8d4; } }
+:root[data-theme="dark"] .buddy-mascot { --zorp-glow: #f9a8d4; }
 /* E8 Phase 2: slots that swap with a short WAAPI squeeze/pop/fade (zorp-motion.js) pivot on their own centre. */
 .zorp-slot--cheeks, .zorp-slot--brows, .zorp-slot--mouth, .buddy-eye, .zorp-sp, .zorp-z, .zorp-h, .zorp-gl, .zorp-dr, .zorp-pp { transform-box: fill-box; transform-origin: 50% 50%; }
 .zorp-pp { transform-origin: 50% 100%; }
@@ -120,4 +123,6 @@ html[data-motion="off"] .buddy-mascot [class*="zorp-slot--fx"] * { animation: no
 /* E8 side view (2026-09-30): face fx sit on the profile plate; the far tear is not drawn in profile. */
 .buddy-mascot[data-view="side"] .zorp-far { display: none; }
 .buddy-mascot[data-view="side"] .zorp-gl { translate: 5.7px 0; }
-.buddy-mascot[data-view="side"] .zorp-slot--fx-face .zorp-dr, .buddy-mascot[data-view="side"] .zorp-slot--fx-face .zorp-z { translate: -8px 0; }
+.buddy-mascot[data-view="side"] .zorp-slot--fx-face .zorp-z { translate: -8px 0; }
+/* the sweat drop sits on the temple behind the profile eye, not on the brow */
+.buddy-mascot[data-view="side"] .zorp-slot--fx-face .zorp-dr { translate: -15px -1px; }

@@ -1,12 +1,13 @@
 /* Zorp motion runtime: WAAPI clips on rig groups (E7); CSS idle loop in static/css/motion.css. No libraries.
    E8 (docs/ZORP_EXPRESSIVENESS.md 4.2-4.4): faces are presets of channels cloned from the inert #pb-zorp-parts
    template into the face slots (presets from the #pb-zorp-rig island); views and the pinch-turn (3.8) are resting
-   `translate`/`scale` per part, so clips animate `transform` on top of them. */
+   `translate`/`scale` per part, so clips animate `transform` on top of them.
+   E8 Phase 7: idle life (blink, glance, antenna twitch, rare three-quarter look-around), see "Idle life" below. */
 (function () {
   'use strict';
   if (window.pbZorp) return;
 
-  var CLIP_NAMES = ['idle', 'blink', 'cheer', 'wobble', 'think', 'wave', 'point', 'nod', 'wink', 'tap', 'shake', 'hop', 'peek', 'sleep', 'side-point'];
+  var CLIP_NAMES = ['idle', 'blink', 'cheer', 'wobble', 'think', 'wave', 'point', 'nod', 'wink', 'tap', 'shake', 'hop', 'peek', 'sleep', 'side-point', 'look-around'];
   // E8: preset rows are [eyeL, eyeR, brows, mouth, cheeks, fx, valence], from the island
   // (zorp_rig.rig_json) read lazily; this table keeps the legacy faces working without it.
   var SLOT_KEYS = ['eyeL', 'eyeR', 'brows', 'mouth', 'cheeks', 'fx'];
@@ -75,7 +76,6 @@
   var canAnimate = typeof Element !== 'undefined' && typeof Element.prototype.animate === 'function' &&
     typeof Animation !== 'undefined' && 'finished' in Animation.prototype;
   var instances = [];
-  var blinkTimer = 0;
 
   function motionLevel() {
     // data-motion (the motion_preference setting) outranks the OS prefers-reduced-motion query.
@@ -217,14 +217,14 @@
   }
 
   // Full-motion swaps: eye squeeze 80 ms, mouth pop 90 ms, cheeks fade 120 ms.
-  function swapAnim(slot, key, id) {
+  function swapAnim(inst, slot, key, id) {
     var frames;
     var dur;
     if (key === 'eyeL' || key === 'eyeR') { frames = [{ transform: 'scale(1,0.2)' }, { transform: 'scale(1,1)' }]; dur = 80; }
     else if (key === 'mouth') { frames = [{ transform: 'scale(0.9)' }, { transform: 'scale(1)' }]; dur = 90; }
     else if (key === 'cheeks' && id !== 'none') { frames = [{ opacity: 0 }, { opacity: 1 }]; dur = 120; }
     else return;
-    try { slot.animate(frames, { duration: dur, easing: 'ease-out', fill: 'none' }); } catch (e) { /* ignore */ }
+    once(inst, slot, frames, { duration: dur, easing: 'ease-out' });
   }
 
   function sameChannels(a, b) {
@@ -256,6 +256,7 @@
   function drawChannels(inst, ch, hint) {
     var next = inst.cur ? copyChannels(inst.cur) : {};
     var animate = canAnimate && motionLevel() === 'full' && rendered(inst);
+    var missing = false;
     var i;
     for (i = 0; i < SLOT_KEYS.length; i += 1) {
       var key = SLOT_KEYS[i];
@@ -264,18 +265,19 @@
       var id = key === 'fx' ? ch[key] : mapId(inst.view, key, ch[key]);
       if (inst.drawn && inst.drawn[key] === id) { next[key] = ch[key]; continue; }
       if (key === 'fx') {
-        if (!paintFx(inst, ch.fx)) continue;
+        if (!paintFx(inst, ch.fx)) { missing = true; continue; }
       } else {
         var node = partNode(SLOT_CHANNEL[key], id);
-        if (!node) continue;
+        if (!node) { missing = true; continue; }
         fillSlot(slot, node);
-        if (animate && entryOf(inst.view, key) !== 0) swapAnim(slot, key, id);
+        if (animate && entryOf(inst.view, key) !== 0) swapAnim(inst, slot, key, id);
       }
       next[key] = ch[key];
       if (inst.drawn) inst.drawn[key] = id;
     }
     inst.cur = next;
     markExpr(inst, hint);
+    return !missing;   // false when a part has no art (a page without the parts library)
   }
 
   function found(svg, a, b) {
@@ -343,6 +345,9 @@
       seq: 0,
       busy: false,
       idle: false,
+      vis: true,
+      lt: { b: 0, a: 0 },
+      look: Date.now(),
       faceTimer: 0,
       faceSwap: null,
       gestureTimer: 0,
@@ -421,9 +426,9 @@
     }
     if (!ch) return false;
     clearFaceSwap(inst);
-    drawChannels(inst, ch, name);
-    if (name) inst.host.setAttribute('data-face', name);
-    return true;
+    var drawn = drawChannels(inst, ch, name);
+    if (name && drawn) inst.host.setAttribute('data-face', name);
+    return drawn;
   }
 
   function setFace(name, opts) {
@@ -543,6 +548,17 @@
     applyRest(inst);
   }
 
+  // commitStyles() writes identity values ("translate: 0px; scale: 1"); drop them so a Zorp turned back to front
+  // carries no inline residue.
+  function tidy(inst) {
+    VIEW_KEYS.concat('flip').forEach(function (k) {
+      var st = inst.vp[k] && inst.vp[k].style;
+      if (!st) return;
+      if (/^(0(px)?\s?){1,2}$/.test(String(st.translate))) st.translate = '';
+      if (/^1(\s1)?$/.test(String(st.scale))) st.scale = '';
+    });
+  }
+
   // Pinch-turn: root dip, flip pinched to 0.15 by 45%, view committed at 50%, overshoot, settle. Moving parts tween
   // translate/scale and end with commitStyles() (applyRest() if missing). Resolves false if stop() cut it short.
   function turnRun(inst, view, facing, spd) {
@@ -602,6 +618,7 @@
         try { a.cancel(); } catch (e2) { /* ignore */ }
       });
       if (!committed) applyRest(inst);
+      tidy(inst);
       inst.anims = [];
       inst.dirty = false;
       inst.busy = false;
@@ -630,17 +647,18 @@
     return turnRun(inst, view, face, opts.speed > 0 && opts.speed < 1 ? opts.speed : 1);
   }
 
-  // A clip in the side view (side-point; point with view:'side'): turn in, clip, turn back.
+  // A clip in a turned view (side-point and bow: side; point with view:'side'; look-around: three-quarter): turn in, clip, turn back.
   // inst.home is the view stop() restores if it is cut short.
   function viewClip(inst, c, opts, spd, face) {
     var seq = inst.seq;
     var home = { view: inst.view, facing: inst.facing };
     inst.home = home;
-    return turnRun(inst, 'side', opts.facing === 'l' ? 'l' : 'r', spd).then(function (ok) {
+    var vw = c.view || 'side';
+    return turnRun(inst, vw, opts.facing === 'l' ? 'l' : 'r', spd).then(function (ok) {
       if (!ok || inst.seq !== seq) return false;
       inst.busy = inst.dirty = true;   // stop() mid-clip must still restore home
       if (face) tempFace(inst, face, c.dur / spd);
-      var o = { target: opts.target || 'right', trip: opts.trip, facing: opts.facing, view: 'side' };
+      var o = { target: opts.target || 'right', trip: opts.trip, facing: opts.facing, view: vw };
       var done = run(inst, c.beats ? c.tracks(inst.parts, visiblePupils(inst), o) : sideTracks(inst, c.tracks(inst.parts, visiblePupils(inst), o)), c.dur / spd);
       if (c.start) c.start(inst, spd, o);
       return done;
@@ -689,6 +707,7 @@
     var node = inst.thought.node;
     var anim = inst.thought.anim;
     inst.thought = null;
+    if (inst.slots.fxFace) inst.slots.fxFace.style.display = '';
     if (anim) {
       try { anim.cancel(); } catch (e) { /* ignore */ }
     }
@@ -709,6 +728,7 @@
     g.style.opacity = '0';
     var entry = { node: g, anim: null };
     inst.thought = entry;
+    if (inst.slots.fxFace) inst.slots.fxFace.style.display = 'none';   // a sweat drop or tear never shares the spot
     if (!canAnimate) return;
     try {
       var anim = g.animate(kf([{ opacity: 0, transform: 'translate(0, 4px)' }, { offset: 0.2, opacity: 1, transform: 'translate(0, 0)' },
@@ -913,6 +933,16 @@
     tracks: function (parts, pupils, opts) { return CLIPS.point.tracks(parts, pupils, { target: (opts || {}).target, view: 'side' }); }
   };
 
+  // look-around: the idle life's rare glance over the shoulder. It keeps the expression, and reduced motion skips it.
+  CLIPS['look-around'] = {
+    dur: 1000,
+    view: 'three-quarter',
+    tracks: function (parts, pupils) {
+      return [[pupils, [F('translate(0,0)'), F('translate(1.2px,-.3px)', 0.25), F('translate(1.2px,-.3px)', 0.8), F('translate(0,0)')]],
+        [parts.head, [F('rotate(0deg)'), F('rotate(3deg)', 0.25), F('rotate(3deg)', 0.8), F('rotate(0deg)')]]];
+    }
+  };
+
   function play(name, opts) {
     opts = opts || {};
     var inst = getInst(opts);
@@ -950,7 +980,7 @@
     if (!c) { inst.busy = false; return Promise.resolve(false); }
     if (c.custom) return c.custom(inst, opts, spd);
 
-    var viewed = (c.view === 'side' || (name === 'point' && opts.view === 'side')) && HAS_PROPS && !!viewRow('side');
+    var viewed = !!(c.view || (name === 'point' && opts.view === 'side')) && HAS_PROPS && !!viewRow(c.view || 'side');
 
     if (reduced) {
       // Thought bubble is a full-motion-only effect — never created here.
@@ -997,7 +1027,7 @@
 
   function idle(on, el) {
     var list = el ? [getInst({ el: el })].filter(Boolean) : instances;
-    list.forEach(function (inst) { inst.idle = !!on; });
+    list.forEach(function (inst) { inst.idle = !!on; watch(inst, !!on); });
     refreshIdle();
     return !!on;
   }
@@ -1074,34 +1104,121 @@
     });
   }
 
-  function refreshIdle() {
-    var active = !document.hidden && motionLevel() === 'full';
-    var any = false;
-    instances.forEach(function (inst) {
-      var onNow = inst.idle && active;
-      inst.svg.classList.toggle('is-zorp-idle', onNow);
-      if (onNow) any = true;
-    });
-    if (any && !blinkTimer) scheduleBlink();
-    else if (!any && blinkTimer) { clearTimeout(blinkTimer); blinkTimer = 0; }
+  // ---- Idle life (E8 Phase 7, docs 4.4) ----
+  // Only at full motion, visible, on screen, with nothing running, and never while someone is typing or has just
+  // pressed a key or tapped. Per Zorp: a blink every 3-6 s; every 6-14 s one of a pupil glance, an antenna twitch or
+  // (at least 45 s apart, rarely) a three-quarter look-around. One timer per stream, random delays, so mascots never
+  // move in step. WAAPI one-shots, no frame loop. The expression never changes here.
+  var io = null;
+  var lastInput = 0;
+  var QUIET_MS = 2500;
+  var LOOK_GAP_MS = 45000;
+
+  function rnd(lo, hi) { return lo + Math.random() * (hi - lo); }
+
+  // A short tracked animation: stop() cancels it, and it leaves inst.anims when it ends.
+  function once(inst, el, frames, o) {
+    try {
+      o.fill = 'none';
+      var a = el.animate(frames, o);
+      var drop = function () { var i = inst.anims.indexOf(a); if (i !== -1) inst.anims.splice(i, 1); };
+      inst.anims.push(a);
+      a.finished.then(drop, drop);
+    } catch (e) { /* ignore */ }
   }
 
-  function scheduleBlink() {
-    blinkTimer = setTimeout(function () {
-      blinkTimer = 0;
-      instances.forEach(function (inst) {
-        if (inst.idle && !inst.busy && rendered(inst)) {
-          var pupils = visiblePupils(inst);
-          if (pupils.length) {
-            var n;
-            for (n = 0; n < pupils.length; n += 1) {
-              try { pupils[n].animate(kf(BLINK), { duration: 160, easing: 'linear', fill: 'none' }); } catch (e) { /* ignore */ }
-            }
-          }
-        }
+  function typing() {
+    var el = document.activeElement;
+    return !!el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable === true);
+  }
+
+  function mayLive(inst) {
+    return inst.idle && inst.vis && !document.hidden && motionLevel() === 'full';
+  }
+
+  function lively(inst) {
+    var body = document.body;
+    return mayLive(inst) && rendered(inst) && !inst.busy && !inst.dirty && !inst.thought && !inst.faceSwap && !inst.anims.length &&
+      inst.view === 'front' && (!inst.pose || inst.pose === 'stand') && !typing() && Date.now() - lastInput > QUIET_MS &&
+      !(body && body.classList.contains('guide-open'));
+  }
+
+  function blink(inst) {
+    visiblePupils(inst).forEach(function (el) { once(inst, el, kf(BLINK), { duration: 160, easing: 'linear' }); });
+  }
+
+  function glance(inst) {
+    var v = 'translate(' + (Math.random() < 0.5 ? -1 : 1) * rnd(0.9, 1.3).toFixed(1) + 'px,' + rnd(-1, 0.4).toFixed(1) + 'px)';
+    visiblePupils(inst).forEach(function (el) {
+      once(inst, el, kf([F('translate(0,0)'), F(v, 0.2), F(v, 0.7), F('translate(0,0)')]), { duration: rnd(900, 1500), easing: 'linear' });
+    });
+  }
+
+  // One antenna flicks; composite:'add' keeps it on top of the CSS sway.
+  function twitch(inst) {
+    var left = Math.random() < 0.5;
+    var s = left ? -1 : 1;
+    var o = { duration: 520, easing: 'linear' };
+    if (HAS_COMPOSITE) o.composite = 'add';
+    if (inst.parts[left ? 'antL' : 'antR']) {
+      once(inst, inst.parts[left ? 'antL' : 'antR'], kf([F('rotate(0deg)'), F('rotate(' + 9 * s + 'deg)', 0.25), F('rotate(' + -4 * s + 'deg)', 0.5),
+        F('rotate(' + 5 * s + 'deg)', 0.75), F('rotate(0deg)')]), o);
+    }
+  }
+
+  function act(inst) {
+    var r = Math.random();
+    var now = Date.now();
+    if (r < 0.12 && now - inst.look > LOOK_GAP_MS) {
+      inst.look = now;
+      play('look-around', { el: inst.svg, ifIdle: true, facing: Math.random() < 0.5 ? 'l' : 'r' });
+    } else if (r < 0.35) twitch(inst);
+    else glance(inst);
+  }
+
+  function lifeLoop(inst, key, lo, hi, fn) {
+    inst.lt[key] = setTimeout(function () {
+      inst.lt[key] = 0;
+      if (!mayLive(inst)) return;   // refreshIdle() starts it again when Zorp may live again
+      if (lively(inst)) fn(inst);
+      lifeLoop(inst, key, lo, hi, fn);
+    }, rnd(lo, hi));
+  }
+
+  function refreshIdle() {
+    instances.forEach(function (inst) {
+      var on = mayLive(inst);
+      inst.svg.classList.toggle('is-zorp-idle', on);
+      if (!on) {
+        ['b', 'a'].forEach(function (k) { if (inst.lt[k]) { clearTimeout(inst.lt[k]); inst.lt[k] = 0; } });
+        return;
+      }
+      if (!inst.lt.b) lifeLoop(inst, 'b', 3000, 6000, blink);
+      if (!inst.lt.a) lifeLoop(inst, 'a', 6000, 14000, act);
+    });
+  }
+
+  // Off-screen mascots neither animate nor keep timers.
+  function watch(inst, on) {
+    if (typeof IntersectionObserver === 'undefined') return;
+    if (!io) {
+      io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          var i = findInstanceBySvg(e.target);
+          if (i) i.vis = e.isIntersecting;
+        });
+        refreshIdle();
       });
-      refreshIdle();
-    }, 3000 + Math.random() * 3000);
+    }
+    if (on) io.observe(inst.svg);
+    else { io.unobserve(inst.svg); inst.vis = true; }
+  }
+
+  ['keydown', 'pointerdown'].forEach(function (type) {
+    document.addEventListener(type, function () { lastInput = Date.now(); }, { capture: true, passive: true });
+  });
+  if (typeof MutationObserver !== 'undefined') {
+    new MutationObserver(refreshIdle).observe(document.documentElement, { attributes: true, attributeFilter: ['data-motion'] });
   }
 
   document.addEventListener('visibilitychange', function () { if (document.hidden) instances.forEach(stop); refreshIdle(); });
@@ -1134,9 +1251,9 @@
     poses: [],
     // zorp-poses.js calls register(fn) with the runtime internals.
     register: function (fn) {
-      fn({ clips: CLIPS, names: CLIP_NAMES, api: window.pbZorp, level: motionLevel, inst: getInst, stop: stop, kf: kf, F: F, own: own,
+      fn({ clips: CLIPS, names: CLIP_NAMES, level: motionLevel, inst: getInst, stop: stop, own: own,
         tempFace: tempFace, after: after, thought: showThought, node: partNode, fill: fillSlot, turn: turn, rendered: rendered,
-        setExpression: setExpression, canAnimate: canAnimate, rest: applyRest, side: sideArms, sideRot: sideRot,
+        setExpression: setExpression, rest: applyRest, side: sideArms, sideRot: sideRot,
         react: function (fn) { reactHook = fn; } });
     }
   };
