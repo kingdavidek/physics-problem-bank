@@ -7,7 +7,9 @@
    into ONE keyframe list per moving part, so each part still gets exactly one el.animate() and stop() works
    as for every other clip. Expression, fx and arm-shape changes at beat boundaries are timers guarded by
    inst.seq (rt.after) that stop() clears and undoes. Only `transform` and `opacity` animate; views use the
-   `translate`/`scale` properties, so poses and views compose. */
+   `translate`/`scale` properties, so poses and views compose.
+   E9 Phase 2 (docs/ZORP_CHARM.md 3.2): compileBeats() also drives the soft body (transform only): body squash, riders, jelly,
+   cheeks, antenna whip. html[data-zorp-soft="off"] (styleguide only) drops all of it. */
 (function () {
   'use strict';
   var pb = window.pbZorp;
@@ -30,6 +32,17 @@
   var TAIL = 80;                                // every beat clip ends with this settle so the lagging parts arrive
   var POSE_MS = 240;                            // pbZorp.pose() transition
   var KEYS = ['root', 'shadow', 'head', 'armL', 'armR', 'footL', 'footR'];
+  // Soft body (E9 Phase 2, 3.2): the body takes SOFT of each beat's root squash about its bottom (y 57.5); a rider RIDE units above it
+  // shifts RIDE * (1 - sy); JELLY [ms, x, y shares of the landing's w], CHEEK [ms, units], WHIP [ms after the beat end, share of the
+  // target]; UP and DOWN [x, y] are the body-only stretch and squash of a 3 unit move with no squash of its own.
+  var SOFT = 0.4;
+  var RIDE = { face: 19.5, ride: 41.5, hatRide: 43 };
+  var JELLY_MS = 210;
+  var JELLY = [[70, -0.6, 0.6], [140, 0.3, -0.3], [210, 0, 0]];
+  var CHEEK = [[60, 0.8], [130, -0.3], [200, 0]];
+  var WHIP = [[170, -0.4], [250, 0.15], [330, 0]];
+  var UP = [-0.025, 0.045];
+  var DOWN = [0.045, -0.045];
   var HAS_PROPS = (function () { try { return !!(window.CSS && CSS.supports && CSS.supports('translate', '1px')); } catch (e) { return false; } }());
 
   pb.register(function (rt) {
@@ -53,12 +66,17 @@
       if (key === 'root') return 'translate(' + num(v[0]) + 'px,' + num(v[1]) + 'px) rotate(' + num(v[2]) + 'deg) scale(' + num(v[3]) + ',' + num(v[4]) + ')';
       if (key === 'armL' || key === 'armR' || key === 'antL' || key === 'antR') return 'rotate(' + num(v) + 'deg)';
       if (key === 'shadow') return 'translate(0,' + num(v[2]) + 'px) scale(' + num(v[0]) + ',1)';
+      if (key === 'body') return 'scale(' + +v[0].toFixed(3) + ',' + +v[1].toFixed(3) + ')';   // 3 places: the riders are derived from these values
+      if (RIDE[key]) return 'translate(0,' + num(v) + 'px)';
+      if (key === 'cheeks') return 'translate(0,' + num(v) + 'px)';
       return 'translate(' + num(v[0]) + 'px,' + num(v[1]) + 'px) rotate(' + num(v[2]) + 'deg)';
     }
 
     var STAND = stateOf(POSES.stand, null, 'r');
     var IDENT = {};
     KEYS.forEach(function (k) { IDENT[k] = tf(k, STAND[k]); });
+    IDENT.body = tf('body', [1, 1]);
+    IDENT.cheeks = IDENT.face = IDENT.ride = IDENT.hatRide = tf('face', 0);
 
     function poseRow(name) { return rt.own(POSES, name) ? POSES[name] : null; }
 
@@ -218,18 +236,53 @@
     function span(list) { return list.reduce(function (s, b) { return s + (b.ms || 0) + (b.hold || 0); }, 0); }
     function clamp(v, m) { return Math.max(-m, Math.min(m, v)); }
 
-    // beats -> [[element(s), keyframes]]: one keyframe list per part that moves. Offsets are fractions of
-    // span + TAIL and never decrease. Head and arms trail the root (LAG); antennae follow root motion with overshoot.
+    // body top at the antenna bases (8 units off centre) above the feet, so the antennae stay on it when the body also narrows
+    function top(v) { return 21.5 * v[1] * (1 + Math.sqrt(1 - Math.pow(8 / 21 / v[0], 2))); }
+
+    function soft() { return document.documentElement.getAttribute('data-zorp-soft') !== 'off'; }
+
+    function bodyOf(b, s, prev) {
+      var x = 1 + SOFT * (s.root[3] - 1);
+      var y = 1 + SOFT * (s.root[4] - 1);
+      var dy = s.root[1] - prev.root[1];
+      if (!b.s && Math.abs(s.root[3] - 1) < 0.035 && Math.abs(s.root[4] - 1) < 0.035 && Math.abs(dy) >= 3) {
+        var d = dy < 0 ? UP : (s.root[1] >= 0 ? DOWN : [0, 0]);
+        x += d[0];
+        y += d[1];
+      }
+      return [x, y];
+    }
+
+    // Landing wobble about the next beat's target N, cut off by a shorter next beat (win); w is the drawn squash (review 2026-10-04).
+    function jelly(bl, L) {
+      var at = bl.length - 1;
+      while (at > 0 && bl[at].t > L.t) at -= 1;
+      var N = (bl[at + 1] || bl[at]).v;
+      var kept = bl.filter(function (p) { return p.t <= L.t || p.t >= L.t + L.win; });
+      kept.forEach(function (p) { if (p.t === L.t) p.e = EASE.io; });
+      JELLY.forEach(function (j) {
+        if (j[0] < L.win || (j[0] === L.win && !kept.some(function (p) { return p.t === L.t + j[0]; }))) {
+          kept.push({ t: L.t + j[0], v: [1 + clamp(N[0] + j[1] * L.w - 1, 0.075), 1 + clamp(N[1] + j[2] * L.w - 1, 0.075)], e: EASE.io });
+        }
+      });
+      return kept.sort(function (p, q) { return p.t - q.t; });
+    }
+
+    // beats -> [[element(s), keyframes]]: one list per part that moves; offsets are fractions of span + TAIL. Head and arms trail
+    // the root (LAG), antennae whip; the soft body and its riders share the root's timing and easing (no lag).
     function compileBeats(beats, parts, opts) {
       var facing = opts && opts.facing === 'l' ? 'l' : 'r';
       var side = !!opts && opts.view === 'side';
+      var on = soft();
       var D = span(beats) + TAIL;
       var fr = {};
       var prev = STAND;
       var t = 0;
+      var bl = [{ t: 0, v: [1, 1], e: 'linear' }];
+      var evs = [];
+      var lands = [];
       KEYS.forEach(function (k) { fr[k] = [{ t: 0, v: STAND[k], e: 'linear' }]; });
-      fr.antL = [{ t: 0, v: 0, e: EASE.io }];
-      beats.forEach(function (b) {
+      beats.forEach(function (b, i) {
         var s = stateOf(POSES[b.pose] || POSES.stand, b, facing, side ? 'side' : '');
         var e = EASE[b.ease] || EASE.io;
         var ae = EASE[b.aease] || e;
@@ -242,13 +295,30 @@
           if (b.hold) list.push({ t: end + b.hold, v: s[k], e: 'linear' });
         });
         var dy = s.root[1] - prev.root[1];
-        fr.antL.push({ t: end + ANT_LAG, v: Math.abs(dy) > 0.5 ? clamp(dy * 1.5, 16) : 0, e: EASE.io });
+        evs.push({ t: end + ANT_LAG, v: Math.abs(dy) > 0.5 ? clamp(dy * 1.5, 16) : 0 });
+        if (on) {
+          var v = bodyOf(b, s, prev);
+          bl[bl.length - 1].e = e;
+          bl.push({ t: end, v: v, e: 'linear' });
+          if (b.hold) bl.push({ t: end + b.hold, v: v, e: 'linear' });
+          if (prev.root[1] < 0 && s.root[1] >= 0 && s.root[4] < 1 && v[0] > 1.005) {
+            var nx = beats[i + 1];
+            lands.push({ t: end + (b.hold || 0), w: Math.min(0.12, s.root[3] * v[0] - 1), win: Math.min(JELLY_MS, nx ? (nx.ms || 0) + (nx.hold || 0) : TAIL) });
+          }
+        }
         prev = s;
         t = end + (b.hold || 0);
       });
-      fr.antL.push({ t: D, v: 0, e: EASE.io });
+      var ant = [{ t: 0, v: 0, e: EASE.io }];
+      evs.forEach(function (ev, i) {
+        ant.push({ t: ev.t, v: ev.v, e: EASE.io });
+        var next = evs[i + 1] ? evs[i + 1].t : D;
+        if (on && ev.v) WHIP.forEach(function (w) { if (ev.t - ANT_LAG + w[0] < next) ant.push({ t: ev.t - ANT_LAG + w[0], v: ev.v * w[1], e: EASE.io }); });
+      });
+      ant.push({ t: D, v: 0, e: EASE.io });
       var out = [];
       function emit(key, list, target, lag, val) {
+        if (!target) return;
         var pts = list.map(function (p) { return { t: p.t + (lag || 0), v: p.v, e: p.e }; });
         if (lag) pts.unshift({ t: 0, v: list[0].v, e: 'linear' });
         pts.push({ t: D, v: pts[pts.length - 1].v, e: 'linear' });
@@ -261,8 +331,21 @@
         })]);
       }
       KEYS.forEach(function (k) { emit(k, fr[k], parts[k], LAG[k], function (v) { return tf(k, v); }); });
-      emit('antL', fr.antL, parts.antL, 0, function (v) { return tf('antL', v); });
-      emit('antR', fr.antL.map(function (p) { return { t: p.t, v: -p.v, e: p.e }; }), parts.antR, 0, function (v) { return tf('antR', v); });
+      emit('antL', ant, parts.antL, 0, function (v) { return tf('antL', v); });
+      emit('antR', ant.map(function (p) { return { t: p.t, v: -p.v, e: p.e }; }), parts.antR, 0, function (v) { return tf('antR', v); });
+      if (!on) return out;
+      lands.forEach(function (L) { bl = jelly(bl, L); });
+      emit('body', bl, parts.body, 0, function (v) { return tf('body', v); });
+      Object.keys(RIDE).forEach(function (k) {
+        emit(k, bl.map(function (p) { return { t: p.t, v: k === 'ride' ? top([1, 1]) - top(p.v) : RIDE[k] * (1 - p.v[1]), e: p.e }; }), parts[k], 0, function (v) { return tf(k, v); });
+      });
+      if (lands.length) {
+        var ck = [{ t: 0, v: 0, e: EASE.io }];
+        lands.forEach(function (L) {   // cut off with the jelly window, ending at rest
+          [[0, 0]].concat(CHEEK.filter(function (c) { return c[0] < L.win; }), [[L.win, 0]]).forEach(function (c) { if (L.t + c[0] >= ck[ck.length - 1].t) ck.push({ t: L.t + c[0], v: c[1], e: EASE.io }); });
+        });
+        emit('cheeks', ck, parts.cheeks, 0, function (v) { return tf('cheeks', v); });
+      }
       return out;
     }
 
@@ -308,13 +391,15 @@
         };
         swap('L');
         swap('R');
+        // E9 Phase 4: opts.cue sounds a beat's cue (land at the beat's end), gated by pbSound.zorp
+        if (opts && opts.cue && b.cue) rt.after(inst, at + (b.cue === 'land' ? (b.ms || 0) / spd : 0), function () { if (window.pbSound) window.pbSound.zorp(b.cue); });
         if (at <= 0) go(); else rt.after(inst, at, go);
         t += (b.ms || 0) + (b.hold || 0);
       });
     }
 
     function beatClip(o) {
-      var c = { dur: span(o.beats) + TAIL, beats: o.beats, trip: o.trip, view: o.view, reducedFace: o.reduced, pulse: !!o.pulse };
+      var c = { dur: span(o.beats) + TAIL, beats: o.beats, trip: o.trip, view: o.view, face: o.face, reducedFace: o.reduced, pulse: !!o.pulse };
       c.pre = pre;
       c.tracks = function (parts, pupils, opts) { return compileBeats(listFor(c, opts), parts, opts); };
       c.start = function (inst, spd, opts) { start(inst, spd, opts, c); };
@@ -324,21 +409,34 @@
     var CL = rt.clips;
     var add = function (name, c) { CL[name] = c; if (rt.names.indexOf(name) === -1) rt.names.push(name); };
 
+    // cheer and hop (E9 D5): beat clips so they get the soft body; the legacy clips in zorp-motion.js are the fallback. Same preset
+    // (c.face, which react()'s positive face replaces), reduced face and cheer pulse; 760 and 540 ms (legacy 700 and 450).
+    add('cheer', beatClip({ face: 'celebrate', reduced: 'celebrate', pulse: 1, beats: [
+      { pose: 'crouch', ms: 90, ease: 'out' },
+      { pose: 'dance-up', cue: 'jump', y: -8, s: [0.96, 1.05], ms: 130, hold: 50, ease: 'out', aease: 'overshoot' },
+      { pose: 'dance-up', cue: 'land', y: 1, s: [1.07, 0.93], ms: 100, ease: 'in' },
+      { pose: 'dance-up', ms: 120, hold: 90, ease: 'overshoot' },
+      { pose: 'stand', ms: 100, ease: 'out' }] }));
+    add('hop', beatClip({ face: 'celebrate', reduced: 'celebrate', beats: [
+      { pose: 'crouch', ms: 80, ease: 'out' },
+      { pose: 'stand', y: -9, s: [0.94, 1.08], ms: 110, ease: 'out' },
+      { pose: 'stand', y: 1, s: [1.08, 0.93], ms: 80, ease: 'in' },
+      { pose: 'stand', ms: 190, ease: 'overshoot' }] }));
     add('fist-pump', beatClip({ reduced: 'joy', pulse: 1, beats: [
       { pose: 'crouch', expr: 'determined', ms: 110, ease: 'out' },
-      { pose: 'fist-up', expr: 'joy', y: -12, dx: 1, s: [0.94, 1.08], ms: 200, hold: 180, ease: 'out', aease: 'overshoot' },
-      { pose: 'fist-up', y: 1, s: [1.1, 0.9], ms: 130, ease: 'in' },
+      { pose: 'fist-up', cue: 'jump', expr: 'joy', y: -12, dx: 1, s: [0.94, 1.08], ms: 200, hold: 180, ease: 'out', aease: 'overshoot' },
+      { pose: 'fist-up', cue: 'land', y: 1, s: [1.1, 0.9], ms: 130, ease: 'in' },
       { pose: 'fist-up', ms: 110, hold: 200, ease: 'overshoot', hr: -7 },
       { pose: 'stand', expr: 'grin', ms: 200, ease: 'out' }] }));
     add('victory', beatClip({ reduced: 'joy', pulse: 1, beats: [
       { pose: 'crouch', expr: 'determined', ms: 110, ease: 'out' },
-      { pose: 'victory', expr: 'wow', fx: 'stars', y: -14, s: [0.94, 1.08], ms: 200, hold: 60, ease: 'out', aease: 'overshoot' },
-      { pose: 'victory', expr: 'joy', y: 1, s: [1.1, 0.9], ms: 140, ease: 'in' },
+      { pose: 'victory', cue: 'jump', expr: 'wow', fx: 'stars', y: -14, s: [0.94, 1.08], ms: 200, hold: 60, ease: 'out', aease: 'overshoot' },
+      { pose: 'victory', cue: 'land', expr: 'joy', y: 1, s: [1.1, 0.9], ms: 140, ease: 'in' },
       { pose: 'victory', ms: 110, hold: 260, ease: 'overshoot' },
       { pose: 'stand', expr: 'happy', ms: 220, ease: 'out' }] }));
     // flex (readability pass 2026-10-02): the bent arm rises, then a double bicep pump with a chest puff (root scale), grin.
     add('flex', beatClip({ reduced: 'proud', beats: [
-      { pose: 'flex', expr: 'proud', y: -2, r: 2, ms: 200, hold: 40, ease: 'overshoot', aease: 'overshoot' },
+      { pose: 'flex', cue: 'tada', expr: 'proud', y: -2, r: 2, ms: 200, hold: 40, ease: 'overshoot', aease: 'overshoot' },
       { pose: 'flex-pump', s: [1.05, 1.06], y: -1, ms: 90, ease: 'out' },
       { pose: 'flex', y: 0, ms: 90, ease: 'io' },
       { pose: 'flex-pump', expr: 'grin', s: [1.05, 1.06], y: -2, hr: -5, ms: 100, hold: 280, ease: 'out' },
@@ -354,11 +452,11 @@
     // times, a slight lean and head tilt, happy face, back to stand.
     function swing(pose) { return { pose: pose, ms: 105, ease: 'io' }; }
     add('wave', beatClip({ reduced: 'milestone', beats: [
-      { pose: 'wave-lo', expr: 'happy', y: -1, ms: 170, ease: 'out', aease: 'overshoot' },
+      { pose: 'wave-lo', cue: 'tada', expr: 'happy', y: -1, ms: 170, ease: 'out', aease: 'overshoot' },
       swing('wave-hi'), swing('wave-lo'), swing('wave-hi'), swing('wave-lo'), swing('wave-hi'), swing('wave-lo'),
       { pose: 'stand', ms: 220, ease: 'out' }] }));
     add('bow', beatClip({ reduced: 'bashful', view: 'side', beats: [
-      { pose: 'bow', expr: 'bashful', ms: 200, hold: 200, ease: 'out' },
+      { pose: 'bow', cue: 'tada', expr: 'bashful', ms: 200, hold: 200, ease: 'out' },
       { pose: 'stand', ms: 180, ease: 'io' }] }));
     add('think-chin', beatClip({ reduced: 'thinking', beats: [
       { pose: 'think-chin', expr: 'thinking', ms: 250, hold: 450, ease: 'out' },
@@ -370,8 +468,8 @@
       return [up, { pose: pose, ms: 90, ease: 'in' }];
     }
     var HOP = [
-      { pose: 'dance-up', y: -15, s: [0.95, 1.06], ms: 190, hold: 40, ease: 'out', aease: 'overshoot' },
-      { pose: 'dance-up', y: 1, s: [1.08, 0.93], ms: 110, ease: 'in' }];
+      { pose: 'dance-up', cue: 'jump', y: -15, s: [0.95, 1.06], ms: 190, hold: 40, ease: 'out', aease: 'overshoot' },
+      { pose: 'dance-up', cue: 'land', y: 1, s: [1.08, 0.93], ms: 110, ease: 'in' }];
     // dance (readability pass 2026-10-02, about 1.8 s): alternating steps with a bounce and a 9 degree sway, one arm raised in the
     // front layer on every step, a big two-arm hop in the middle, two more steps, a happy finish.
     add('dance', beatClip({ reduced: 'laugh',
@@ -429,6 +527,7 @@
     // the rarer big moments get a big clip (fist-pump, victory, flex, dance). Big clips never stack: one still
     // playing skips every reaction, and a second inside REACT.gap becomes a small cheer. wrong is oops-encourage
     // (oops for the first 250 ms, then determined, then soft-smile; the thought bubble is one of its beats).
+    var CUED = { first_correct: 1, milestone: 1, lesson_complete: 1 };   // reactions that sound their cues
     var lastPick = {};
     var lastBig = 0;
     var bigUntil = 0;
@@ -448,7 +547,7 @@
       var big = REACT.big.indexOf(clip) !== -1;
       if (big && now - lastBig < REACT.gap) { clip = 'cheer'; big = false; }
       if (!rt.own(CL, clip)) return null;
-      var p = { clip: clip, big: big, dur: CL[clip].dur };
+      var p = { clip: clip, big: big, dur: CL[clip].dur, cue: !!CUED[kind] };
       var love = rt.own(REACT.face, kind) ? REACT.face[kind] : '';
       if (big) { lastBig = now; bigUntil = now + p.dur; }
       if (clip === 'dance' && love) { p.face = love; p.map = { laugh: love }; }
@@ -472,7 +571,7 @@
     pb.compileBeats = compileBeats;
     pb.clipInfo = function (name) {
       var c = rt.own(CL, name) ? CL[name] : null;
-      return c ? { dur: c.dur, beats: c.beats || null, trip: c.trip || null, view: c.view || '', reducedFace: c.reducedFace || '', tail: TAIL } : null;
+      return c ? { dur: c.dur, beats: c.beats || null, trip: c.trip || null, view: c.view || '', face: c.face || '', reducedFace: c.reducedFace || '', tail: TAIL } : null;
     };
     Object.defineProperty(pb, 'poses', { enumerable: true, get: function () { return Object.keys(POSES); } });
   });

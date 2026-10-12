@@ -25,6 +25,7 @@
         <a href="#zorp-gallery" class="pill pill--hero">Zorp gallery</a>
         <a href="#zorp-views" class="pill pill--hero">Zorp views</a>
         <a href="#zorp-poselib" class="pill pill--hero">Zorp poses</a>
+        <a href="#zorp-charm" class="pill pill--hero">Zorp charm</a>
         <a href="#diagrams" class="pill pill--hero">Diagrams</a>
     </div>
 </div>
@@ -363,6 +364,95 @@
             {% endfor %}
         </div>
         {% endfor %}
+    </div>
+</section>
+
+<section class="section-panel" id="zorp-charm" data-zorp-charm data-charm-phase="5">
+    <div class="section-panel-header">Zorp charm: the talking mouth, the soft body, sound and the showreel (E9 Phases 1, 2, 4 and 5)</div>
+    <div class="section-panel-body">
+        <p class="profile-empty">The talk mouth (<code>docs/ZORP_CHARM.md</code> section 3.1). <code>pbZorp.say(target, text, {el, max})</code> writes the text first, then the mouth flaps loosely along with it (at most 9 flaps a second, pauses at punctuation, stops within the cap). Only at full motion: reduced and off never flap, and the text is always there at once. The live Zorps below are bound; the 56, 72 and 128 px rows show front and side. The motion buttons and the full-motion preview only change this dev page. <span data-zorp-motion-level></span></p>
+        {{ motion_banner() }}
+        <div class="sg-row" id="sg-zorp-talk-demos" style="margin-top: var(--space-4); align-items: flex-end; flex-wrap: wrap;">
+            {% for view in ('front', 'side') %}
+            {% for size in (56, 72, 128) %}
+            <figure class="sg-mascot-cell" style="min-width: {{ 96 if size == 56 else 120 if size == 72 else 170 }}px;">
+                <span class="study-buddy-face sg-talk-{{ size }}" data-zorp-demo data-talk-size="{{ size }}" data-talk-view="{{ view }}" data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot(view=view) }}</span>
+                <figcaption><code>{{ view }} {{ size }} px</code></figcaption>
+            </figure>
+            {% endfor %}
+            {% endfor %}
+        </div>
+        <div class="sg-showreel" id="sg-zorp-showreel" data-zorp-showreel style="margin-top: var(--space-4);">
+            <p class="profile-empty"><strong>Showreel (E9 Phase 5, <code>docs/ZORP_EVALUATION.md</code>).</strong> Six buttons, in the order for the projector in the class session. Press <em>Preview at full motion</em> in the banner first (without it, or at reduced or off motion, the text appears and nothing moves, by design). They use the two Zorps in the stage below the buttons (large for the Guide, small for the corner bubble). Sound steps need headphones or a low volume, and run the cue preview, not a pupil setting.</p>
+            <div class="sg-row" style="margin-top: var(--space-2); flex-wrap: wrap;">
+                <button type="button" class="btn btn-primary btn-sm" data-showreel="origin">1. Origin line, talking</button>
+                <button type="button" class="btn btn-primary btn-sm" data-showreel="reward">2. Reward: soft fist-pump</button>
+                <button type="button" class="btn btn-outline btn-sm" data-showreel="reward-flat">3. Same reward, soft body off (A/B)</button>
+                <button type="button" class="btn btn-primary btn-sm" data-showreel="bubble">4. Corner bubble, talking</button>
+                <button type="button" class="btn btn-outline btn-sm" data-showreel="sound-on">5. Sound on (preview cues)</button>
+                <button type="button" class="btn btn-outline btn-sm" data-showreel="sound-off">6. Sound off (silent)</button>
+            </div>
+            <div class="sg-row" style="margin-top: var(--space-3); align-items: center; gap: var(--space-5); flex-wrap: wrap;">
+                <figure class="sg-mascot-cell" style="min-width: 150px;">
+                    <span class="study-buddy-face sg-talk-128" data-showreel-stage="big" data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot() }}</span>
+                    <figcaption>Guide Zorp</figcaption>
+                </figure>
+                <p class="profile-empty" style="flex: 1 1 14rem; min-width: 12rem; margin: 0;"><strong>Zorp says:</strong> <span data-showreel-line>Press 1.</span></p>
+                <div style="display: flex; align-items: center; gap: var(--space-3); flex: 1 1 16rem; min-width: 14rem; border: 1px solid var(--border-soft); border-radius: var(--radius-lg, 12px); padding: var(--space-3);">
+                    <span class="study-buddy-face" data-showreel-stage="small" data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot() }}</span>
+                    <p class="profile-empty" style="margin: 0;"><strong>Corner bubble:</strong> <span data-showreel-bubble>Press 4.</span></p>
+                </div>
+            </div>
+            <p class="profile-empty" data-showreel-status aria-live="polite">Press a step.</p>
+        </div>
+        <p class="profile-empty" style="margin-top: var(--space-4);"><strong>Soft body (E9 Phase 2, <code>docs/ZORP_CHARM.md</code> section 3.2).</strong> The clips below squash and stretch the body a little more than the whole rig, with the face, antennae and hat riding along, a jelly wobble on landing and whipping antennae. Press <em>Soft body</em> to switch the layer off for the A/B look (this page only, <code>html[data-zorp-soft="off"]</code>); the clip starts after the switch, so press the clip again. Use the slow button for 0.25x.</p>
+        <div class="sg-row" style="margin-top: var(--space-2); flex-wrap: wrap;">
+            <button type="button" class="btn btn-primary btn-sm" data-zorp-soft-toggle aria-pressed="true">Soft body: on</button>
+            {% for clip in ('hop', 'cheer', 'fist-pump', 'victory', 'dance', 'flex') %}
+            <button type="button" class="btn btn-outline btn-sm" data-zorp-clip="{{ clip }}">{{ clip }}</button>
+            {% endfor %}
+        </div>
+        <p class="profile-empty" style="margin-top: var(--space-4);"><strong>Line spoken:</strong> <span id="sg-zorp-talk-line" data-zorp-talk-line>Press Talk.</span></p>
+        <div class="sg-row" style="margin-top: var(--space-3); align-items: flex-end; flex-wrap: wrap;">
+            <label class="profile-empty" for="sg-zorp-talk-text">Text<br>
+                <input type="text" id="sg-zorp-talk-text" data-zorp-talk-text maxlength="160" size="46" value="Hi, I'm Zorp, and I love a good problem.">
+            </label>
+            <label class="profile-empty" for="sg-zorp-talk-cap">Cap<br>
+                <select id="sg-zorp-talk-cap" data-zorp-talk-cap>
+                    <option value="1200">1,200 ms (tour, bubble)</option>
+                    <option value="1400">1,400 ms (welcome)</option>
+                    <option value="1600">1,600 ms (story, reward)</option>
+                    <option value="2000">2,000 ms (ceiling)</option>
+                </select>
+            </label>
+            <button type="button" class="btn btn-primary btn-sm" data-zorp-talk>Talk</button>
+            <button type="button" class="btn btn-outline btn-sm" data-zorp-hush>Hush</button>
+            <button type="button" class="btn btn-outline btn-sm" data-zorp-talk-clip="cheer">Talk and cheer</button>
+            <button type="button" class="btn btn-outline btn-sm" data-zorp-talk-clip="fist-pump">Talk and fist-pump</button>
+        </div>
+        <pre class="profile-empty" id="sg-zorp-talk-plan" data-zorp-talk-plan style="white-space: pre-wrap;">plan: (press Talk)</pre>
+        <div class="sg-row" style="margin-top: var(--space-3); flex-wrap: wrap;">
+            {% for name in ('nudge', 'soft-smile', 'happy', 'grin', 'joy', 'laugh', 'wow', 'proud', 'determined', 'curious', 'thinking', 'confused', 'sleep') %}
+            <button type="button" class="btn btn-outline btn-sm" data-zorp-expr="{{ name }}">{{ name }}</button>
+            {% endfor %}
+        </div>
+        <div class="sg-row" style="margin-top: var(--space-3);">
+            {% for level in ['system', 'reduced', 'off'] %}
+            <button type="button" class="btn btn-outline btn-sm" data-zorp-set-motion="{{ level }}">Motion: {{ level }}</button>
+            {% endfor %}
+            <button type="button" class="btn btn-outline btn-sm" data-zorp-slow aria-pressed="false">Slow 0.25x: off</button>
+        </div>
+        <p class="profile-empty" style="margin-top: var(--space-4);"><strong>Sound (E9 Phase 4, <code>docs/ZORP_CHARM.md</code> section 3.4).</strong> Zorp's cues are synthesised in the browser (no audio files), off by default, and a pupil only hears them with <em>Zorp's sounds: Celebrations</em> in Settings, after a tap, at full motion and outside a quiz. These buttons are the preview: they pass <code>force</code>, which skips only the setting and the one-sequence-per-7-seconds limit, so a tap is still needed and a second button pressed within 400 ms of the first stays silent. The blips (D7) are built but are not offered to pupils. Peak gains: cues 0.06, blips 0.03, all quieter than the answer tones (0.08 to 0.14). Use headphones or a low volume.</p>
+        <div class="sg-row" style="margin-top: var(--space-2); flex-wrap: wrap;">
+            {% for cue, label in (('jump', 'jump: glide 330 to 660 Hz, 160 ms'), ('land', 'land: 180 to 120 Hz, 90 ms'), ('tada', 'tada: 523, 659, 784 Hz, 300 ms'), ('sequence', 'jump then land')) %}
+            <button type="button" class="btn btn-outline btn-sm" data-zorp-cue="{{ cue }}">{{ label }}</button>
+            {% endfor %}
+            <button type="button" class="btn btn-outline btn-sm" data-zorp-blips>Talk with blips</button>
+            <button type="button" class="btn btn-outline btn-sm" data-zorp-sound-stop>Stop sound</button>
+        </div>
+        <p class="profile-empty" data-zorp-sound-out aria-live="polite">Press a cue.</p>
+        <p class="profile-empty" style="margin-top: var(--space-4);">Every Guide line (from <code>guide-catalog.js</code>), as chips. Press one to speak it.</p>
+        <div class="sg-row" id="sg-zorp-talk-chips" data-zorp-talk-chips style="flex-wrap: wrap; gap: var(--space-2);"></div>
     </div>
 </section>
 
@@ -727,6 +817,8 @@
         text-align: center;
         line-height: 1.35;
     }
+    .sg-talk-72, .sg-talk-72 .buddy-mascot { width: 72px; height: 72px; }
+    .sg-talk-128, .sg-talk-128 .buddy-mascot { width: 128px; height: 128px; }
     .sg-buddy-demo.study-buddy {
         position: static;
         left: auto;
@@ -735,5 +827,7 @@
         pointer-events: auto;
     }
 </style>
-<script src="{{ url_for('static', filename='js/styleguide.js') }}?v=9" defer></script>
+{% if not current_user.is_authenticated %}<script src="{{ url_for('static', filename='js/guide-catalog.js') }}?v=12" defer></script>
+{% endif %}
+<script src="{{ url_for('static', filename='js/styleguide.js') }}?v=13" defer></script>
 {% endblock %}

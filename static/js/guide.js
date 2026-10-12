@@ -77,6 +77,38 @@
     return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   }
 
+  // E9 Phase 1 (docs/ZORP_CHARM.md 3.1.5): the line reveal follows the runtime's motion level, which honours data-motion
+  // (the motion_preference setting) as well as the OS query. Without the runtime it is the media query, as before.
+  function reducedLines() {
+    var z = window.pbZorp;
+    if (z && typeof z.motionLevel === 'function') return z.motionLevel() !== 'full';
+    return prefersReducedMotion();
+  }
+
+  // The talk mouth caps in ms (3.0): story and reward lines 1,600; tours 1,200. A gesture that turns Zorp side-on
+  // (side-point, bow) plays on the last line, and the talk mouth is placed for one view, so that line is not talked.
+  var TALK_MAX = { story: 1600, reward: 1600, tour: 1200 };
+  var VIEW_GESTURES = { 'side-point': 1, bow: 1 };
+
+  // The text goes in first, synchronously (the live region reads it once); the mouth then follows.
+  function showLine(text, step, last, reduced) {
+    var z = window.pbZorp;
+    if (z && typeof z.say === 'function' && faceEl) {
+      z.say(bubbleEl, text, {
+        el: faceEl,
+        max: TALK_MAX[step.mode] || TALK_MAX.story,
+        talk: !reduced && !(last && VIEW_GESTURES[step.gesture]),
+      });
+      return;
+    }
+    bubbleEl.textContent = text;
+  }
+
+  function hushFace() {
+    var z = window.pbZorp;
+    if (faceEl && z && typeof z.hush === 'function') z.hush(faceEl);
+  }
+
   function isNarrow() {
     return window.innerWidth <= NARROW_PX;
   }
@@ -366,7 +398,7 @@
     }
   }
 
-  function playGesture(name, target) {
+  function playGesture(name, target, cue) {
     var el = target || faceEl;
     if (!el) return false;
     if (window.pbZorp && ZORP_GESTURES[name]) {
@@ -377,7 +409,7 @@
       if (gestureEl && gestureEl !== el) gestureEl.removeAttribute('data-gesture');
       gestureEl = null;
       window.pbZorp.bind(el);
-      window.pbZorp.play(name, { el: el });
+      window.pbZorp.play(name, { el: el, cue: !!cue });   // E9 Phase 4: a reward's clip may sound its cues (pbSound gates them)
       return true;
     }
     if (prefersReducedMotion()) return false;
@@ -543,7 +575,8 @@
       advanceStep();
       return;
     }
-    if (prefersReducedMotion()) lineIndex = lines.length;
+    var reduced = reducedLines();
+    if (reduced) lineIndex = lines.length;
     else if (lineIndex < 1) lineIndex = 1;
     if (lineIndex > lines.length) lineIndex = lines.length;
 
@@ -556,9 +589,7 @@
     if (step.mode === 'tour' && isNarrow() && step.spotLabel) heading = step.spotLabel;
     if (headingEl) headingEl.textContent = heading;
     if (bubbleEl) {
-      bubbleEl.textContent = prefersReducedMotion()
-        ? lines.join('\n')
-        : lines[lineIndex - 1];
+      showLine(reduced ? lines.join('\n') : lines[lineIndex - 1], step, lineIndex === lines.length, reduced);
     }
     if (primaryBtn) primaryBtn.textContent = step.primary || 'Continue';
     if (skipBtn) {
@@ -573,7 +604,7 @@
     if (step.mode === 'tour') document.body.classList.add('guide-tour-open');
     else document.body.classList.remove('guide-tour-open');
     highlightTarget(step);
-    if (prefersReducedMotion() || lineIndex === lines.length) playGesture(step.gesture);
+    if (reduced || lineIndex === lines.length) playGesture(step.gesture, null, step.mode === 'reward');
     if (step.rewardType === 'streak') playStreakFlame();
   }
 
@@ -591,6 +622,7 @@
 
   function closeOverlay() {
     if (!overlay || !isOpen) return;
+    hushFace();
     overlay.hidden = true;
     overlay.setAttribute('aria-hidden', 'true');
     overlay.removeAttribute('data-guide-mode');
@@ -629,6 +661,7 @@
   }
 
   function advanceStep() {
+    hushFace();
     stepIndex += 1;
     lineIndex = 0;
     if (stepIndex >= queue.length) {

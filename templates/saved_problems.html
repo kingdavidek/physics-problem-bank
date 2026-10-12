@@ -35,9 +35,9 @@
         {% else %}
         <div class="empty-state">
             <span class="study-buddy-face pb-zorp-small" id="saved-empty-zorp" data-buddy-face data-face="nudge" data-zorp-autoplay="think-chin" aria-hidden="true">{{ buddy_mascot() }}</span>
-            <h3>No saved questions yet</h3>
-            <p>Save a question from the generator to practise it again later.</p>
-            <a href="{{ url_for('index') }}" class="btn btn-primary">Go to generator</a>
+            <h3 data-zorp-voice="system:system_empty_state">No saved questions yet</h3>
+            <p data-zorp-voice="system:system_empty_state">Save a question from the generator to practise it again later.</p>
+            <a href="{{ url_for('index') }}" class="btn btn-primary" data-zorp-voice="system:button_label">Go to generator</a>
         </div>
         {% endif %}
     </div>

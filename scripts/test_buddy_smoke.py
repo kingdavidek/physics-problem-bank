@@ -93,7 +93,10 @@ def main():
         r = client.get('/api/v1/build-info')
         assert r.status_code == 200
         assert r.get_json()['buddy_embed'] == 'v6'
-        assert r.get_json()['study_buddy_js'] == 'v11'
+        # Final audit O2: build-info reports the pin base.html really loads (it said v11 while the page loaded v29)
+        base_html = (ROOT / 'templates' / 'base.html').read_text(encoding='utf-8')
+        pin = re.search(r"js/study-buddy\.js'\) }}\?v=(\d+)", base_html).group(1)
+        assert r.get_json()['study_buddy_js'] == f'v{pin}' and int(pin) > 11, r.get_json()['study_buddy_js']
 
         r = client.get('/')
         assert r.status_code == 200
@@ -116,9 +119,9 @@ def main():
         assert 'data-buddy-face' in html
         assert 'buddy-mascot' in html
         assert 'data-face=' in html
-        assert 'zorp-motion.js?v=11' in html
-        assert 'zorp-poses.js?v=4' in html and html.index('zorp-motion.js') < html.index('zorp-poses.js')
-        assert 'css/motion.css?v=8' in html
+        assert 'zorp-motion.js?v=14' in html
+        assert 'zorp-poses.js?v=6' in html and html.index('zorp-motion.js') < html.index('zorp-poses.js')
+        assert 'css/motion.css?v=9' in html
         assert 'buddy-arm--l' in html
         assert 'buddy-pupil' in html
         # Fresh user, no milestones earned yet -> default Zorp (E7 Phase 1.5).
@@ -293,7 +296,7 @@ def main():
         assert 'streak' in streak['message'].lower()
         assert streak['task_mark']
         # E8 Phase 5 (Children's Code std 13): upbeat copy, no loss framing
-        assert streak['message'] == 'Keep your 4-day streak going with one quick question.', streak['message']
+        assert streak['message'] == 'You’re on a 4-day streak. One quick question counts, if you like.', streak['message']
         assert 'risk' not in streak['message'].lower() and 'lose' not in streak['message'].lower()
         # the corner buddy's first paint is the upbeat heads-up look, never a frown
         page = client.get('/').data.decode()
@@ -304,7 +307,7 @@ def main():
             conn.commit()
         freeze_msg = client.get('/api/v1/me/buddy').get_json()['buddy']['message']
         assert 'honest' not in freeze_msg and 'risk' not in freeze_msg.lower()
-        assert freeze_msg == 'You have a skip in hand this week, and one quick question still keeps your streak going.'
+        assert freeze_msg == 'You have a streak skip this week, so no rush. One quick question also counts.'
         with get_db() as conn:
             conn.execute('UPDATE user_streaks SET freeze_available = 0 WHERE user_id = ?', (uid_a,))
             conn.commit()
@@ -402,7 +405,7 @@ def main():
         assert 'data-buddy-level="gcse"' in html_lesson
         assert 'data-buddy-subject="maths"' in html_lesson
         assert 'data-buddy-topic="algebra"' in html_lesson
-        assert 'study-buddy.js?v=28' in html_lesson
+        assert 'study-buddy.js?v=29' in html_lesson
         assert 'Problem Bank build: buddy-embed-v6' in html_lesson
         assert 'pb-buddy-embed-v6' in html_lesson
         assert 'id="pb-buddy-page"' in html_lesson

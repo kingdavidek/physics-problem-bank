@@ -23,6 +23,15 @@ MOTION_REDUCED = 'reduced'
 MOTION_OFF = 'off'
 MOTION_CHOICES = (MOTION_SYSTEM, MOTION_REDUCED, MOTION_OFF)
 
+# E9 Phase 4 (D6 = B, docs/ZORP_CHARM.md 6): Zorp's celebration sounds, a display preference like the two above.
+# `chatter` (voice blips, D7) is defined so the page and the sound code know the name, but it is never accepted from a
+# pupil until D7 is revisited after the evaluation: ZORP_SOUND_CHOICES is what the form, the PATCH validator and storage accept.
+ZORP_SOUND_OFF = 'off'
+ZORP_SOUND_CELEBRATIONS = 'celebrations'
+ZORP_SOUND_CHATTER = 'chatter'
+ZORP_SOUND_CHOICES = (ZORP_SOUND_OFF, ZORP_SOUND_CELEBRATIONS)
+ZORP_SOUND_DEFINED = ZORP_SOUND_CHOICES + (ZORP_SOUND_CHATTER,)
+
 GUIDE_JSON_MAX = 4096
 _GUIDE_TOUR_KEY = re.compile(r'^[a-z][a-z0-9_]{0,31}$')
 _GUIDE_REWARD_KEY = re.compile(r'^[a-z0-9_:]{1,64}$')
@@ -210,6 +219,13 @@ def normalize_motion_preference(value):
         return value
     return MOTION_SYSTEM
 
+
+def normalize_zorp_sound(value):
+    # Anything else, including the not-yet-offered `chatter`, is stored and rendered as off.
+    if value in ZORP_SOUND_CHOICES:
+        return value
+    return ZORP_SOUND_OFF
+
 ACTIVITY_TOPIC_OPENED = 'topic_opened'
 ACTIVITY_QUESTION_GENERATED = 'question_generated'
 ACTIVITY_MCQ_ANSWERED = 'mcq_answered'
@@ -288,7 +304,8 @@ def get_profile_settings(conn, user_id):
                show_shared_questions, auto_share_quiz, auto_share_lesson,
                default_share_visibility, show_study_streak, show_milestones,
                email_weekly_digest, avatar_json, show_accuracy_leaderboard,
-               sound_enabled, theme_preference, motion_preference, guide_json
+               sound_enabled, theme_preference, motion_preference, zorp_sound,
+               guide_json
         FROM user_profile_settings
         WHERE user_id = ?
         ''',
@@ -313,6 +330,7 @@ def update_profile_settings(conn, user_id, settings):
         share_visibility = VISIBILITY_FOLLOWERS
     theme_preference = normalize_theme_preference(settings.get('theme_preference', THEME_SYSTEM))
     motion_preference = normalize_motion_preference(settings.get('motion_preference', MOTION_SYSTEM))
+    zorp_sound = normalize_zorp_sound(settings.get('zorp_sound', ZORP_SOUND_OFF))
     existing = conn.execute(
         'SELECT avatar_json, guide_json FROM user_profile_settings WHERE user_id = ?',
         (user_id,),
@@ -351,6 +369,7 @@ def update_profile_settings(conn, user_id, settings):
             sound_enabled = ?,
             theme_preference = ?,
             motion_preference = ?,
+            zorp_sound = ?,
             guide_json = ?
         WHERE user_id = ?
         ''',
@@ -373,6 +392,7 @@ def update_profile_settings(conn, user_id, settings):
             _bool_int(settings.get('sound_enabled', False)),
             theme_preference,
             motion_preference,
+            zorp_sound,
             guide_json,
             user_id,
         ),

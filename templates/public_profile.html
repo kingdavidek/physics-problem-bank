@@ -12,7 +12,7 @@
         {{ user_avatar(avatar, 'lg') }}
         <div class="profile-dashboard-copy">
             <h1>{{ profile_user.display_handle }}</h1>
-            <p class="hero-sub">{% if is_system_bot %}A Problem Bank bot — not a person.{% elif is_own_profile %}Your public profile{% else %}Public profile{% endif %}</p>
+            <p class="hero-sub">{% if is_system_bot %}<span data-zorp-voice="system:bot_note">A Problem Bank bot, not a person.</span>{% elif is_own_profile %}Your public profile{% else %}Public profile{% endif %}</p>
             <div class="profile-dashboard-chips">
                 <a class="profile-hero-chip" href="{{ url_for('public_profile_followers', handle=profile_user.handle) }}">
                     <strong>{{ followers_count }}</strong> follower{% if followers_count != 1 %}s{% endif %}

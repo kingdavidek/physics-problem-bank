@@ -48,7 +48,7 @@ Verified against the code on 2026-08-15. Schema is created in `app.py` lines ~75
 | Category | Where | Notes |
 |---|---|---|
 | Identity | `users` (`app.py:766`) — email, handle, password hash, created/last login | Werkzeug scrypt hash (`models/user.py:82`) |
-| Preferences and privacy settings | `user_profile_settings` (`app.py`) — visibility toggles, avatar, digest opt-in, `guide_json` (onboarding/tour/reward seen flags) | Defaults discussed in §3.1 |
+| Preferences and privacy settings | `user_profile_settings` (`app.py`) — visibility toggles, avatar, digest opt-in, display preferences (`theme_preference`, `motion_preference`, `zorp_sound`), `guide_json` (onboarding/tour/reward seen flags) | Defaults discussed in §3.1 |
 | Behavioural / educational record | `saved_problems`, `quiz_attempts`, `generator_mcq_attempts`, `lesson_progress`, `user_activity_events`, `user_activity_summary`, `user_streaks`, `user_study_days`, `user_milestones`, `qotd_attempts`, `user_revision_queue`, `user_revision_plans` | The richest and most sensitive set — it profiles a child's academic weaknesses |
 | Free text written by users | `user_wrong_answer_reflections.reflection_text` (≤500), `shared_questions.note` (≤200), `question_suggestions`, `user_reports.note` (≤500) | Users can type anything, including personal details |
 | Social graph | `follows`, `study_pairs`, `quiz_challenges`, `user_blocks`, `user_reports` | |

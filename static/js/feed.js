@@ -66,7 +66,7 @@
       escapeHtml((challenge.detail || '') + ' · @' + (challenge.actor_handle || 'problem_bot')) +
       '</span>' +
       '<span class="feed-card-bot-note">' +
-      escapeHtml(challenge.bot_note || 'A Problem Bank bot — not a person.') +
+      escapeHtml(challenge.bot_note || 'A Problem Bank bot, not a person.') +
       '</span>' +
       '</div></li></ul>'
     );

@@ -69,6 +69,11 @@
     wireZorpDemo(document.getElementById('zorp-motion'));
     wireZorpDemo(document.getElementById('zorp-views'));
     wireZorpDemo(document.getElementById('zorp-poselib'));
+    wireZorpDemo(document.getElementById('zorp-charm'));
+    wireTalk(document.getElementById('zorp-charm'));
+    wireSoft(document.getElementById('zorp-charm'));
+    wireSound(document.getElementById('zorp-charm'));
+    wireShowreel(document.getElementById('zorp-charm'));
     buildMatrix(document.getElementById('sg-zorp-matrix'));
     wireMotionBanners();
   });
@@ -233,6 +238,211 @@
       });
     }
     sync('nudge');
+  }
+
+  // E9 Phase 2 (docs/ZORP_CHARM.md 3.2.6): the dev A/B switch for the soft body. html[data-zorp-soft="off"] makes zorp-poses.js leave the
+  // soft layer out of the clips that start afterwards; only this script ever sets it, so no real page is affected.
+  function wireSoft(scope) {
+    var btn = scope && scope.querySelector('[data-zorp-soft-toggle]');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var root = document.documentElement;
+      var off = root.getAttribute('data-zorp-soft') === 'off';
+      if (off) root.removeAttribute('data-zorp-soft'); else root.setAttribute('data-zorp-soft', 'off');
+      btn.setAttribute('aria-pressed', off ? 'true' : 'false');
+      btn.textContent = 'Soft body: ' + (off ? 'on' : 'off');
+    });
+  }
+
+  // E9 Phase 5 (docs/ZORP_EVALUATION.md): the showreel for the projector, in the order of the class session. It only presses what the
+  // buttons above already press (say, play, the soft toggle, the forced cue preview), at the real caps (1,600 ms story and reward,
+  // 1,200 ms bubble). The sound steps run the preview cues (force), timed to the fist-pump's take-off (110 ms) and landing (620 ms),
+  // and only at full motion, as a pupil with Zorp's sounds on Celebrations would hear them.
+  function wireShowreel(scope) {
+    var box = scope && scope.querySelector('[data-zorp-showreel]');
+    var z = window.pbZorp;
+    if (!box || !z || typeof z.say !== 'function') return;
+    var big = box.querySelector('[data-showreel-stage="big"]');
+    var small = box.querySelector('[data-showreel-stage="small"]');
+    if (!big || !small) return;
+    z.bind(big);
+    z.bind(small);
+    var line = box.querySelector('[data-showreel-line]');
+    var bubble = box.querySelector('[data-showreel-bubble]');
+    var status = box.querySelector('[data-showreel-status]');
+    var soft = scope.querySelector('[data-zorp-soft-toggle]');
+    var timers = [];
+    function setSoft(on) {
+      if (soft && (document.documentElement.getAttribute('data-zorp-soft') !== 'off') !== on) soft.click();
+    }
+    function later(fn, ms) { timers.push(window.setTimeout(fn, ms)); }
+    function report(name) {
+      var level = z.motionLevel();
+      status.textContent = name + (level === 'full' ? '' : ' (motion level ' + level + ': the text is shown and nothing moves or sounds. Press Preview at full motion in the banner.)');
+    }
+    function originLine() {
+      var cat = window.pbGuideCatalog;
+      var first = cat && cat.origin && cat.origin[0] && cat.origin[0].lines && cat.origin[0].lines[0];
+      return first || 'A bit about me: I\u2019m Zorp, from Novara, out past the maths belt.';
+    }
+    function reward(name, withSoft) {
+      setSoft(withSoft);
+      z.say(line, 'You earned this.', { el: big, max: 1600 });
+      z.play('fist-pump', { el: big });
+      report(name);
+    }
+    var steps = {
+      origin: function () {
+        z.say(line, originLine(), { el: big, max: 1600 });
+        z.play('wave', { el: big });
+        report('1. Origin line: the mouth follows the text, at most 1.6 s');
+      },
+      reward: function () { reward('2. Reward: fist-pump with the soft body on', true); },
+      'reward-flat': function () {
+        reward('3. The same reward with the soft body off (the E8 look)', false);
+        later(function () { setSoft(true); }, 2400);
+      },
+      bubble: function () {
+        z.say(bubble, 'Nice work: 7/10 on Forces.', { el: small, max: 1200 });
+        report('4. Corner bubble: the mouth talks once, at most 1.2 s, no body clip');
+      },
+      'sound-on': function () {
+        var s = window.pbSound;
+        if (z.motionLevel() === 'full' && s && typeof s.zorp === 'function') {
+          later(function () { s.zorp('jump', { force: true }); }, 110);
+          later(function () { s.zorp('land', { force: true }); }, 620);
+        }
+        reward('5. Sound on: a quiet jump cue and a land cue with the fist-pump (pupils get these only with Zorp\u2019s sounds on Celebrations in Settings)', true);
+      },
+      'sound-off': function () {
+        if (window.pbSound && typeof window.pbSound.stopAll === 'function') window.pbSound.stopAll();
+        reward('6. Sound off: the same reward in silence, which is the default for every pupil', true);
+      }
+    };
+    var btns = box.querySelectorAll('[data-showreel]');
+    for (var i = 0; i < btns.length; i += 1) {
+      btns[i].addEventListener('click', function (event) {
+        var step = steps[event.currentTarget.getAttribute('data-showreel')];
+        if (!step) return;
+        timers.forEach(window.clearTimeout);
+        timers = [];
+        setSoft(true);   // every step starts soft, so a quick press after the A/B never leaves it off
+        z.hush(big);
+        z.hush(small);
+        step();
+      });
+    }
+  }
+
+  // E9 Phase 4 (docs/ZORP_CHARM.md 3.4.7): the audio preview. Only this script passes force (it skips the zorp_sound setting and the
+  // one-sequence-per-7-s limit, nothing else) or turns the D7 blips on; pbSound.arm() makes the page record taps without the setting.
+  function wireSound(scope) {
+    var s = window.pbSound;
+    var z = window.pbZorp;
+    if (!scope || !s || typeof s.zorp !== 'function') return;
+    s.arm();
+    var out = scope.querySelector('[data-zorp-sound-out]');
+    function say(text) { if (out) out.textContent = text; }
+    var cues = scope.querySelectorAll('[data-zorp-cue]');
+    for (var i = 0; i < cues.length; i += 1) {
+      cues[i].addEventListener('click', function (event) {
+        var cue = event.currentTarget.getAttribute('data-zorp-cue');
+        var ok = s.zorp(cue === 'sequence' ? 'jump' : cue, { force: true });
+        if (ok && cue === 'sequence') window.setTimeout(function () { s.zorp('land', { force: true }); }, 280);
+        say(cue + (ok ? ': playing' : ': skipped (it needs a tap in the last 5 seconds, a visible page, and 400 ms since the last sound)'));
+      });
+    }
+    var stop = scope.querySelector('[data-zorp-sound-stop]');
+    if (stop) stop.addEventListener('click', function () { s.stopAll(); say('stopped'); });
+    var blips = scope.querySelector('[data-zorp-blips]');
+    var demo = scope.querySelector('[data-zorp-demo]');
+    var box = scope.querySelector('[data-zorp-talk-text]');
+    var cap = scope.querySelector('[data-zorp-talk-cap]');
+    if (blips && z && demo && box && typeof z.talk === 'function') {
+      blips.addEventListener('click', function () {
+        z.talk({ el: demo, text: box.value, max: +cap.value || 1200, blips: true, force: true }).then(function (done) {
+          say('blips: ' + (done ? 'finished' : 'cut short or not played (full motion needed: use the preview button above)'));
+        });
+      });
+    }
+  }
+
+  // E9 Phase 1 (docs/ZORP_CHARM.md 3.1): the talk demo. The first Zorp's text line is written by pbZorp.say (text first),
+  // the others then talk the same text in turn; the readout prints the plan (pbZorp.talkPlan), including at reduced and off, where
+  // nothing flaps. Every Guide line from the catalog becomes a chip.
+  function wireTalk(scope) {
+    var z = window.pbZorp;
+    if (!z || !scope || typeof z.say !== 'function') return;
+    var demos = scope.querySelectorAll('[data-zorp-demo]');
+    var box = scope.querySelector('[data-zorp-talk-text]');
+    var cap = scope.querySelector('[data-zorp-talk-cap]');
+    var line = scope.querySelector('[data-zorp-talk-line]');
+    var out = scope.querySelector('[data-zorp-talk-plan]');
+    var chips = scope.querySelector('[data-zorp-talk-chips]');
+    function speak(text, clip) {
+      var max = +cap.value || 1200;
+      var plan = z.talkPlan(text, { max: max });
+      var opens = 0;
+      var minOpen = 1e9;
+      for (var f = 1; f < plan.frames.length; f += 1) {
+        if (plan.frames[f][1] > 0) {
+          opens += 1;
+          if (plan.frames[f + 1]) minOpen = Math.min(minOpen, plan.frames[f + 1][0] - plan.frames[f][0]);
+        }
+      }
+      var level = z.motionLevel();
+      out.textContent = 'plan: ' + plan.ms + ' ms of ' + max + ' cap, ' + plan.words.length + ' words, ' + opens + ' open frames, shortest open frame ' +
+        (opens ? minOpen + ' ms' : 'none') + ', peak rate ' + (opens ? (1000 / Math.max(111, plan.ms / Math.max(1, opens))).toFixed(1) : '0') +
+        ' Hz at most.\nmotionLevel(): ' + level + (level === 'full' ? '' : ' (no flapping; the text is still shown at once)');
+      // One talker at a time (a runtime rule), so the six Zorps take turns; Hush or a new Talk ends the round.
+      var run = ++round;
+      var chain = z.say(line, text, { el: demos[0], max: max });
+      for (var k = 0; k < demos.length; k += 1) {
+        if (clip) z.play(clip, { el: demos[k] });
+        if (k) chain = chain.then(turnOf(demos[k], text, max, run));
+      }
+    }
+    var round = 0;
+    function turnOf(el, text, max, run) {
+      return function () { return run === round ? z.talk({ el: el, text: text, max: max }) : false; };
+    }
+    var go = scope.querySelector('[data-zorp-talk]');
+    if (go) go.addEventListener('click', function () { speak(box.value); });
+    var hush = scope.querySelector('[data-zorp-hush]');
+    if (hush) {
+      hush.addEventListener('click', function () {
+        round += 1;
+        for (var k = 0; k < demos.length; k += 1) z.hush(demos[k]);
+      });
+    }
+    var clipBtns = scope.querySelectorAll('[data-zorp-talk-clip]');
+    for (var c = 0; c < clipBtns.length; c += 1) {
+      clipBtns[c].addEventListener('click', function (event) { speak(box.value, event.currentTarget.getAttribute('data-zorp-talk-clip')); });
+    }
+    function collect(node, found) {
+      if (Array.isArray(node)) {
+        for (var i = 0; i < node.length; i += 1) {
+          if (typeof node[i] === 'string') found.push(node[i]); else collect(node[i], found);
+        }
+      } else if (node && typeof node === 'object') {
+        if (Array.isArray(node.lines)) collect(node.lines, found);
+        for (var key in node) {
+          if (Object.prototype.hasOwnProperty.call(node, key) && key !== 'lines' && typeof node[key] === 'object') collect(node[key], found);
+        }
+      }
+      return found;
+    }
+    var lines = collect(window.pbGuideCatalog || {}, []);
+    if (chips && lines.length) {
+      lines.forEach(function (text) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn btn-outline btn-sm';
+        b.textContent = text;
+        b.addEventListener('click', function () { box.value = text; speak(text); });
+        chips.appendChild(b);
+      });
+    }
   }
 
   function wireZorpDemo(scope) {

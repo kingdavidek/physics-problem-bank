@@ -101,6 +101,13 @@ class El {
 let animations = [];
 let commitMode = 'ok';   // ok | throws | missing
 function makeAnim(el, frames, opts) {
+  // like WAAPI: offsets within [0, 1] and never decreasing, else a TypeError (E9 Phase 2: a cheek keyframe past the clip end once passed this harness and threw in Chromium)
+  let lastOffset = 0;
+  frames.forEach((f) => {
+    if (f.offset === undefined) return;
+    if (f.offset < 0 || f.offset > 1 || f.offset < lastOffset) throw new TypeError('Offsets must be monotonically non-decreasing and within 0 to 1: ' + JSON.stringify(frames.map((x) => x.offset)));
+    lastOffset = f.offset;
+  });
   const a = { el, frames, opts: opts || {}, state: 'running', canceled: false, commits: 0, _p: null };
   Object.defineProperty(a, 'finished', {
     get() {
@@ -216,14 +223,18 @@ function load(motion, env) {
 const libPart = (channel, id) => parse(fx.library).querySelector('[data-part="' + channel + ':' + id + '"]');
 const NEW_CLIPS = ['fist-pump', 'victory', 'flex', 'shrug', 'bow', 'think-chin', 'dance', 'float', 'oops-encourage', 'turn'];
 const BEAT_CLIPS = NEW_CLIPS.filter((c) => c !== 'turn');
+// E9 Phase 2 (D5): cheer and hop are beat clips too; the soft body covers all of these (the legacy twins are the fallback in zorp-motion.js)
+const SOFT_CLIPS = BEAT_CLIPS.concat(['cheer', 'hop']);
 // Plan 3.11 durations (ms) with headroom; bow and side-point add two 300 ms turns to the clip's own length.
 // Clip readability pass (2026-10-02): flex 950 -> 1200, shrug 850 -> 1200 and dance 1500 -> 2000 (David asked for a proper dance of 1.6 to 2 s).
-const MAX_MS = { wave: 1200, 'fist-pump': 1300, victory: 1250, flex: 1200, shrug: 1200, bow: 1350, 'think-chin': 1100, dance: 2000, float: 1400, 'oops-encourage': 1000, turn: 350 };
+const MAX_MS = { wave: 1200, 'fist-pump': 1300, victory: 1250, flex: 1200, shrug: 1200, bow: 1350, 'think-chin': 1100, dance: 2000, float: 1400, 'oops-encourage': 1000, turn: 350, cheer: 800, hop: 550 };
 const parts = (m) => ({
   root: m.part('.buddy-root'), shadow: m.part('.buddy-shadow'), head: m.part('.buddy-head'), body: m.part('.buddy-body'),
   armL: [m.part('.buddy-arm--l'), m.part('.buddy-arm--l-front')], armR: [m.part('.buddy-arm--r'), m.part('.buddy-arm--r-front')],
   antL: m.part('.buddy-antenna--l'), antR: m.part('.buddy-antenna--r'), footL: m.part('.buddy-foot--l'), footR: m.part('.buddy-foot--r'),
 });
+// the soft body's targets too (E9 Phase 2): what findParts() returns
+const softParts = (m) => Object.assign(parts(m), { face: m.part('.zorp-face'), ride: m.part('.zorp-ride'), hatRide: m.part('.zorp-hatride'), cheeks: m.part('.zorp-slot--cheeks') });
 const armIs = (m, sel, shape, side) => {
   const want = libPart('arm', shape + '-' + side).childNodes.map((c) => c.sig()).join('|');
   return m.part(sel).childNodes.map((c) => c.sig()).join('|') === want;
@@ -429,7 +440,7 @@ async function scenario(name, fn) {
       const x = span > 0 ? Math.min(1, Math.max(0, (u - a.offset) / span)) : 1;
       return va + (vb - va) * ease(a.easing)(x);
     };
-    for (const name of ['fist-pump', 'victory', 'flex', 'shrug', 'dance', 'wave']) {
+    for (const name of ['fist-pump', 'victory', 'flex', 'shrug', 'dance', 'wave', 'cheer']) {
       for (const trip of name === 'dance' ? [false, true] : [false]) {
         const { z } = load('system');
         const m = mascot('front');
@@ -466,8 +477,8 @@ async function scenario(name, fn) {
   await scenario('compileBeats: exactly one keyframe list per moving part, offsets monotone, easing valid, stretch within limits', () => {
     const { z } = load('system');
     const m = mascot('front');
-    const P = parts(m);
-    BEAT_CLIPS.forEach((name) => {
+    const P = softParts(m);
+    SOFT_CLIPS.forEach((name) => {
       const info = z.clipInfo(name);
       [info.beats].concat(info.trip ? [info.trip] : []).forEach((beats) => {
         const tracks = z.compileBeats(beats, P, {});
@@ -510,8 +521,286 @@ async function scenario(name, fn) {
     assert.ok(/rotate\(18deg\)/.test(r[2].transform) && /rotate\(-18deg\)/.test(l[2].transform), 'bow leans the other way facing left');
   });
 
+  // ---- E9 Phase 2: the soft body (docs/ZORP_CHARM.md 3.2) ----
+  // Geometry of the drawn rig in the 64-unit viewBox: the body ellipse, its bottom (the squash anchor), the face plate and the shoulders.
+  const BODY = { cx: 32, cy: 36, rx: 21, ry: 21.5, bottom: 57.5 };
+  const PLATE = { cx: 32, cy: 38, rx: 15.5, ry: 13.5 };
+  const SHOULDERS = [[15.6, 40], [48.4, 40]];
+  const nums2 = (tf) => { const r = /scale\(([-\d.]+),([-\d.]+)\)/.exec(tf); return r ? [+r[1], +r[2]] : [1, 1]; };
+  const dyOf = (tf) => { const r = /translate\(0,([-\d.]+)px\)/.exec(tf); return r ? +r[1] : 0; };
+  // body ellipse as drawn when the body layer scales by (bx, by) about its bottom
+  const bodyAt = (bx, by) => ({ cx: 32, cy: BODY.bottom - (BODY.bottom - BODY.cy) * by, rx: BODY.rx * bx, ry: BODY.ry * by });
+  const inside = (e, x, y, shrink) => (((x - e.cx) / (e.rx - shrink)) ** 2 + ((y - e.cy) / (e.ry - shrink)) ** 2) <= 1;
+  const trackOf = (tracks, target) => { const t = tracks.find((x) => x[0] === target); return t ? t[1] : null; };
+  const SOFT_ALL = ['fist-pump', 'victory', 'flex', 'shrug', 'bow', 'think-chin', 'dance', 'float', 'oops-encourage', 'wave', 'cheer', 'hop'];
+
+  await scenario('soft body volume: the body layer stays within 0.08 per axis, as drawn within 0.16, and a squash or stretch keeps its volume', () => {
+    const { z } = load('system');
+    const m = mascot('front');
+    const P = softParts(m);
+    let seen = 0;
+    SOFT_ALL.forEach((name) => {
+      const info = z.clipInfo(name);
+      [info.beats].concat(info.trip ? [info.trip] : []).forEach((beats) => {
+        const tr = z.compileBeats(beats, P, { facing: 'r' });
+        const body = trackOf(tr, P.body);
+        const root = trackOf(tr, P.root);
+        if (!body) return;
+        seen += 1;
+        const rootAt = (u) => {   // the root's scale at offset u, linear between its keyframes (the body shares them, easing aside)
+          let i = 0;
+          while (i < root.length - 2 && root[i + 1].offset <= u) i += 1;
+          const a = nums2(root[i].transform); const b = nums2(root[i + 1].transform);
+          const span = root[i + 1].offset - root[i].offset;
+          const x = span > 0 ? Math.min(1, Math.max(0, (u - root[i].offset) / span)) : 1;
+          return [a[0] + (b[0] - a[0]) * x, a[1] + (b[1] - a[1]) * x];
+        };
+        assert.strictEqual(body[0].offset, 0);
+        assert.strictEqual(body[body.length - 1].offset, 1);
+        body.forEach((f) => {
+          const [bx, by] = nums2(f.transform);
+          assert.ok(Math.abs(bx - 1) <= 0.08 + 1e-9 && Math.abs(by - 1) <= 0.08 + 1e-9, name + ': body layer ' + bx + ',' + by + ' beyond 0.08');
+          const [rx, ry] = rootAt(f.offset);
+          const dx = rx * bx; const dy = ry * by;
+          assert.ok(Math.abs(dx - 1) <= 0.16 + 1e-9 && Math.abs(dy - 1) <= 0.16 + 1e-9, name + ': drawn ' + dx.toFixed(3) + ',' + dy.toFixed(3) + ' beyond 0.16');
+          // squash and stretch beats keep volume (the flex chest puff is the only deliberate gain, and its root already says so; 0.002 is the victory pose's own 1.02 stretch with the body's 0.8 percent on top)
+          if (Math.abs(rx * ry - 1) <= 0.03) assert.ok(dx * dy >= 0.97 - 0.002 && dx * dy <= 1.03 + 0.002, name + ': drawn volume ' + (dx * dy).toFixed(3));
+        });
+      });
+    });
+    assert.ok(seen >= 10, 'most clips have a body track (' + seen + ')');
+  });
+
+  await scenario('face stays seated: the plate is inside the body at every keyframe, with the face riding the body by translateY only', () => {
+    const { z } = load('system');
+    const m = mascot('front');
+    const P = softParts(m);
+    SOFT_ALL.forEach((name) => {
+      const tr = z.compileBeats(z.clipInfo(name).beats, P, { facing: 'r' });
+      const body = trackOf(tr, P.body);
+      const face = trackOf(tr, P.face);
+      if (!body) return;
+      assert.ok(face && face.length === body.length, name + ': the face rides on the body\'s own keyframes');
+      body.forEach((f, i) => {
+        assert.strictEqual(face[i].offset, f.offset, name + ': same timing, no lag');
+        assert.strictEqual(face[i].easing, f.easing, name + ': same easing');
+        assert.ok(/^translate\(0,-?[\d.]+px\)$/.test(face[i].transform), name + ': the face only translates (it never stretches): ' + face[i].transform);
+        const [bx, by] = nums2(f.transform);
+        const dy = dyOf(face[i].transform);
+        assert.ok(Math.abs(dy - 19.5 * (1 - by)) <= 0.02, name + ': face dy ' + dy + ' for body sy ' + by);
+        const e = bodyAt(bx, by);
+        for (let k = 0; k < 360; k += 1) {
+          const a = k * Math.PI / 180;
+          const x = PLATE.cx + PLATE.rx * Math.cos(a); const y = PLATE.cy + dy + PLATE.ry * Math.sin(a);
+          assert.ok(inside(e, x, y, 1.0), name + ': the plate leaves the body (margin 1 unit) at offset ' + f.offset.toFixed(3) + ' angle ' + k);
+        }
+      });
+    });
+  });
+
+  await scenario('antenna ride: the wrapper follows the body top (within 0.3 units), the antennae keep their own rotation, and the hat has its own wrapper', () => {
+    const { z } = load('system');
+    const m = mascot('front');
+    const h = mascot('hat');
+    const P = softParts(m);
+    const H = softParts(h);
+    assert.ok(P.ride && !P.hatRide, 'the default Zorp has the antenna wrapper and no hat wrapper');
+    assert.ok(H.ride && H.hatRide, 'a Zorp with a hat has both');
+    let worstAnt = 0;
+    assert.strictEqual(P.ride.childNodes.length, 2, 'the wrapper holds exactly the two antennae');
+    assert.ok(P.ride.childNodes.every((c) => /buddy-antenna/.test(c.attrs.class)));
+    SOFT_ALL.forEach((name) => {
+      const tr = z.compileBeats(z.clipInfo(name).beats, H, { facing: 'r' });
+      const body = trackOf(tr, H.body);
+      if (!body) return;
+      const ride = trackOf(tr, H.ride);
+      const hat = trackOf(tr, H.hatRide);
+      assert.ok(ride && hat && ride.length === body.length && hat.length === body.length, name + ': both riders on the body keyframes');
+      body.forEach((f, i) => {
+        const [bx, by] = nums2(f.transform);
+        const e = bodyAt(bx, by);
+        [[24, 16], [40, 16]].forEach(([x, y0]) => {
+          const base = y0 + dyOf(ride[i].transform);
+          const top = e.cy - e.ry * Math.sqrt(1 - (((x - 32) / e.rx) ** 2));
+          worstAnt = Math.max(worstAnt, Math.abs(base - top));
+        });
+        assert.ok(Math.abs(dyOf(hat[i].transform) - 43 * (1 - by)) <= 0.03, name + ': the hat sits on the body top');
+      });
+      // the antennae's own tracks are still pure rotations (the ride is a separate wrapper)
+      [H.antL, H.antR].forEach((a) => (trackOf(tr, a) || []).forEach((f) => assert.ok(/^rotate\(-?[\d.]+deg\)$/.test(f.transform), name + ': antenna ' + f.transform)));
+    });
+    // the plan's 0.3 units (review 2026-10-04: the ride follows the body top at the antenna's x, width included, so the gap is the 0.12 at rest plus a little; it was 0.322 with a pure sy ride)
+    console.log('antenna base to body top, widest gap over every clip and keyframe: ' + worstAnt.toFixed(3) + ' units');
+    assert.ok(worstAnt <= 0.3, 'the antenna base stays within 0.3 units of the body top: ' + worstAnt);
+  });
+
+  await scenario('arms clear without riding: the shoulders stay inside the body at every keyframe and no arm track translates', () => {
+    const { z } = load('system');
+    const m = mascot('front');
+    const P = softParts(m);
+    let min = 9;
+    SOFT_ALL.forEach((name) => {
+      const tr = z.compileBeats(z.clipInfo(name).beats, P, { facing: 'r' });
+      const body = trackOf(tr, P.body);
+      [P.armL, P.armR].forEach((arm) => (trackOf(tr, arm) || []).forEach((f) => assert.ok(/^rotate\(/.test(f.transform) && f.transform.indexOf('translate') === -1, name + ': an arm track is only a rotation')));
+      if (!body) return;
+      body.forEach((f) => {
+        const [bx, by] = nums2(f.transform);
+        const e = bodyAt(bx, by);
+        SHOULDERS.forEach(([x, y]) => {
+          assert.ok(inside(e, x, y, 2.0), name + ': a shoulder is within 2 units of the body edge at ' + f.offset.toFixed(3));
+          for (let g = 0; g <= 40; g += 1) { const d = g / 10; if (!inside(e, x, y, d)) { min = Math.min(min, d); break; } }
+        });
+      });
+    });
+    assert.ok(min >= 2.0, 'the nearest a shoulder gets to the edge (units): ' + min);
+  });
+
+  await scenario('durations unchanged: every Phase 0 beat clip keeps its length, and cheer and hop stay within 100 ms of the legacy clips with the same reduced face', () => {
+    const { z } = load('system');
+    // measured at the Phase 0 tree (43e387e plus E9 Phases 0 and 1): dur = the beats' span plus the 80 ms tail
+    const PHASE0 = { 'fist-pump': 1210, victory: 1180, flex: 1120, shrug: 1050, bow: 660, 'think-chin': 1030, dance: 1820, float: 1340, 'oops-encourage': 920, wave: 1100 };
+    Object.keys(PHASE0).forEach((name) => assert.strictEqual(z.clipInfo(name).dur, PHASE0[name], name + ' length changed'));
+    const legacy = load('system', { poses: false }).z;
+    ['cheer', 'hop'].forEach((name) => {
+      const info = z.clipInfo(name);
+      assert.ok(info.beats && info.beats.length >= 4, name + ' is a beat clip now');
+      const old = { cheer: 700, hop: 450 }[name];
+      assert.ok(Math.abs(info.dur - old) <= 100, name + ' is ' + info.dur + ' ms against the legacy ' + old);
+      assert.strictEqual(info.reducedFace, 'celebrate', name + ' keeps its reduced preset');
+      assert.strictEqual(info.face, 'celebrate', name + ' keeps its resting clip preset (react() may still replace it)');
+      assert.strictEqual(val(z, info.face), 'positive');
+      assert.strictEqual(legacy.hasClip(name), true, 'the legacy ' + name + ' is still the fallback without zorp-poses.js');
+      assert.strictEqual(legacy.clipInfo ? legacy.clipInfo(name) : null, null);
+    });
+    assert.strictEqual(z.clipInfo('cheer').beats.some((b) => b.expr), false, 'react() passes its own positive face, so the beats set none');
+    // the colour pulse for reduced motion: cheer has it, hop never did
+    const { z: r } = load('reduced');
+    const m = mascot('front');
+    r.bind(m.host);
+    r.play('cheer', { el: m.host });
+    assert.ok(m.part('.buddy-body')._cls.indexOf('is-zorp-pulse') !== -1, 'cheer still pulses at reduced motion');
+    r.play('hop', { el: m.host });
+    assert.ok(m.part('.buddy-body')._cls.indexOf('is-zorp-pulse') === -1, 'hop never pulsed');
+  });
+
+  await scenario('jelly truncates in short beats: a landing wobbles for 70, 140 and 210 ms, cut off by a shorter next beat, and the clip length never changes', () => {
+    const { z } = load('system');
+    const m = mascot('front');
+    const P = softParts(m);
+    const mk = (nextMs, hold) => [
+      { pose: 'crouch', ms: 100, ease: 'out' },
+      { pose: 'stand', y: -9, s: [0.94, 1.08], ms: 140, ease: 'out' },
+      { pose: 'stand', y: 1, s: [1.08, 0.93], ms: 80, ease: 'in' },
+      { pose: 'stand', ms: nextMs, hold: hold || 0, ease: 'overshoot' }];
+    const D = (beats) => beats.reduce((a, b) => a + b.ms + (b.hold || 0), 0) + z.clipInfo('hop').tail;
+    const landing = 320;
+    [[300, 0], [100, 0], [40, 0], [60, 200]].forEach(([next, hold]) => {
+      const beats = mk(next, hold);
+      const tr = z.compileBeats(beats, P, { facing: 'r' });
+      const body = trackOf(tr, P.body);
+      const offs = body.map((f) => Math.round(f.offset * D(beats)));
+      const win = Math.min(210, next + hold);
+      const inWin = offs.filter((t) => t > landing && t < landing + win);
+      const want = [70, 140, 210].filter((j) => j < win || (j === win && !offs.includes(landing + j))).map((j) => landing + j);
+      assert.deepStrictEqual(inWin.filter((t) => want.includes(t)).length >= want.filter((t) => t < landing + win).length, true, 'next ' + next + '+' + hold + ': the wobble keyframes are present up to the cut');
+      offs.forEach((t, i) => assert.ok(i === 0 || t >= offs[i - 1], 'offsets never decrease'));
+      assert.ok(offs[offs.length - 1] === D(beats), 'the body ends at the clip end');
+      assert.ok(offs.every((t) => t <= D(beats)), 'nothing after the clip end');
+      // nothing of the wobble lies past the window
+      assert.ok(inWin.every((t) => t - landing <= 210), 'the wobble never outlasts 210 ms');
+      if (next + hold < 70) assert.ok(!offs.some((t) => t === landing + 70), 'a next beat shorter than 70 ms leaves no jelly keyframe at +70');
+      if (next + hold >= 210) assert.ok(offs.includes(landing + 210), 'a full window ends at rest at +210');
+      // the cheeks bounce with the jelly and are back to rest at the window end
+      const ck = trackOf(tr, P.cheeks);
+      if (next + hold <= 60) assert.ok(!ck, 'a window of 60 ms or less has no cheek bounce');
+      else assert.ok(ck && ck.every((f) => f.offset >= 0 && f.offset <= 1) && dyOf(ck[ck.length - 1].transform) === 0 && ck.some((f) => dyOf(f.transform) === 0.8), 'cheeks bounce to +0.8 and end at rest');
+    });
+    // the first jelly keyframe swings the other way (stretch after the squash), by 0.6 of the landing deviation
+    const tr = z.compileBeats(mk(300), P, { facing: 'r' });
+    const body = trackOf(tr, P.body);
+    const D0 = D(mk(300));
+    const land = body.find((f) => Math.round(f.offset * D0) === landing);
+    const j1 = body.find((f) => Math.round(f.offset * D0) === landing + 70);
+    // w is the landing's drawn squash, root times body (review 2026-10-04: the body layer's own share wobbled under a pixel at 56 px)
+    const rootLand = trackOf(tr, P.root).find((f) => Math.round(f.offset * D0) === landing);
+    const w = nums2(rootLand.transform)[0] * nums2(land.transform)[0] - 1;
+    assert.ok(w > 0.1 && nums2(j1.transform)[0] < 1 && nums2(j1.transform)[1] > 1, 'a stretch follows the landing squash');
+    assert.ok(Math.abs((1 - nums2(j1.transform)[0]) - 0.6 * w) < 0.002 && Math.abs((nums2(j1.transform)[1] - 1) - 0.6 * w) < 0.002, 'by 0.6 w on both axes: ' + j1.transform + ' w ' + w.toFixed(3));
+    // a bigger landing is capped so the body layer stays within 0.075 of 1
+    const big = trackOf(z.compileBeats([{ pose: 'stand', y: -12, s: [0.9, 1.11], ms: 140, ease: 'out' }, { pose: 'stand', y: 1, s: [1.12, 0.88], ms: 80, ease: 'in' }, { pose: 'stand', ms: 300, ease: 'overshoot' }], P, { facing: 'r' }), P.body);
+    assert.ok(big.some((f) => Math.abs(nums2(f.transform)[0] - 1) >= 0.07), 'w is capped at 0.12, so the wobble peaks at 0.072');
+    big.forEach((f) => nums2(f.transform).forEach((a) => assert.ok(Math.abs(a - 1) <= 0.075 + 1e-9, 'jelly capped: ' + f.transform)));
+  });
+
+  await scenario('antenna whip: a damped swing after the first target, capped at 16 degrees', () => {
+    const { z } = load('system');
+    const m = mascot('front');
+    const P = softParts(m);
+    const rot = (f) => +/rotate\((-?[\d.]+)deg\)/.exec(f.transform)[1];
+    const tr = z.compileBeats(z.clipInfo('hop').beats, P, { facing: 'r' });
+    const a = trackOf(tr, P.antL);
+    const D = z.clipInfo('hop').dur;
+    a.forEach((f) => assert.ok(Math.abs(rot(f)) <= 16 + 1e-9, 'capped at 16 degrees'));
+    // an isolated beat: target v 80 ms after its end, then -0.4 v and +0.15 v, then rest, before the next beat's own target
+    const beats = [{ pose: 'stand', y: -6, ms: 100, ease: 'out' }, { pose: 'stand', ms: 500, ease: 'io' }];
+    const f = trackOf(z.compileBeats(beats, P, { facing: 'r' }), P.antL);
+    const D2 = 100 + 500 + z.clipInfo('hop').tail;
+    const at = (t) => f.find((x) => Math.abs(x.offset * D2 - t) < 1.5);
+    const v = rot(at(180));
+    assert.ok(Math.abs(v - -9) < 0.01, 'the target is 1.5 x dy, at +80 ms');
+    assert.ok(Math.abs(rot(at(270)) - 0.4 * 9) < 0.06 && Math.abs(rot(at(350)) - 0.15 * -9) < 0.06 && Math.abs(rot(at(430))) < 0.06, 'then -0.4 v, +0.15 v, rest');
+    const r = trackOf(z.compileBeats(beats, P, { facing: 'r' }), P.antR);
+    assert.strictEqual(rot(r[1]), -rot(f[1]), 'the right antenna mirrors it');
+  });
+
+  await scenario('soft off switch: html[data-zorp-soft="off"] drops the whole layer (E8 clips again), anything else leaves it on', async () => {
+    const { z, html } = load('system');
+    const m = mascot('front');
+    const P = softParts(m);
+    const kinds = (tr) => tr.map((t) => t[0]);
+    const beats = z.clipInfo('fist-pump').beats;
+    const on = z.compileBeats(beats, P, { facing: 'r' });
+    ['body', 'face', 'ride', 'cheeks'].forEach((k) => assert.ok(kinds(on).includes(P[k]), k + ' is driven'));
+    html.setAttribute('data-zorp-soft', 'off');
+    const off = z.compileBeats(beats, P, { facing: 'r' });
+    ['body', 'face', 'ride', 'cheeks', 'hatRide'].forEach((k) => assert.ok(!kinds(off).includes(P[k]), k + ' is left alone when the switch is off'));
+    // the antenna is the single E8 overshoot again: one target per beat plus the first and last frames
+    assert.strictEqual(trackOf(off, P.antL).length, beats.length + 3, 'no whip tail (first frame, one target per beat, the closing frame and the engine\'s end frame)');
+    html.setAttribute('data-zorp-soft', 'on');
+    assert.ok(kinds(z.compileBeats(beats, P, { facing: 'r' })).includes(P.body), 'only the exact value off switches it');
+    html.removeAttribute('data-zorp-soft');
+    assert.ok(kinds(z.compileBeats(beats, P, { facing: 'r' })).includes(P.body));
+    // played for real, the switch leaves one animation per part and nothing on the body
+    html.setAttribute('data-zorp-soft', 'off');
+    z.bind(m.host);
+    z.idle(false, m.host);
+    animations = [];
+    z.play('fist-pump', { el: m.host });
+    assert.ok(!animations.some((a) => a.el === P.body || a.el === P.face || a.el === P.ride), 'no soft animation runs with the switch off');
+    html.removeAttribute('data-zorp-soft');
+    z.play('fist-pump', { el: m.host });
+    assert.ok(animations.some((a) => a.el === P.body) && animations.some((a) => a.el === P.face) && animations.some((a) => a.el === P.ride), 'and all of them run with it on');
+    z.play('blink', { el: m.host });
+    assert.strictEqual(P.body.style.transform || '', '', 'stop() leaves the body at rest');
+    assert.strictEqual(m.part('.zorp-face').style.transform || '', '');
+  });
+
+  await scenario('soft body under reduced and off: no soft animation and nothing left on the body or face', async () => {
+    for (const level of ['reduced', 'off']) {
+      const { z } = load(level);
+      const m = mascot('front');
+      z.bind(m.host);
+      animations = [];
+      for (const name of SOFT_CLIPS) { z.play(name, { el: m.host }); await advance(50); }
+      assert.strictEqual(animations.length, 0, level + ': no animate call at all');
+      ['.buddy-body', '.zorp-face', '.zorp-ride', '.zorp-slot--cheeks'].forEach((sel) => assert.strictEqual(m.part(sel).style.transform || '', '', level + ' ' + sel));
+      await advance(2000);
+    }
+  });
+
   await scenario('play(): one animate() per part, at the clip length, and stop()/a newer clip cancels everything and restores the rest', async () => {
-    for (const name of BEAT_CLIPS.filter((c) => c !== 'bow')) {
+    for (const name of SOFT_CLIPS.filter((c) => c !== 'bow')) {
       const { z } = load('system');
       const m = mascot('front');
       z.bind(m.host);
@@ -634,7 +923,7 @@ async function scenario(name, fn) {
       const { z } = load(level);
       const m = mascot('front');
       z.bind(m.host);
-      for (const name of BEAT_CLIPS) {
+      for (const name of SOFT_CLIPS) {
         const info = z.clipInfo(name);
         const p = z.play(name, { el: m.host });
         assert.strictEqual(m.host.getAttribute('data-face'), info.reducedFace, name + ' shows its reduced preset');
@@ -729,7 +1018,7 @@ async function scenario(name, fn) {
     assert.strictEqual(await p, true);
     // a legacy clip on a posed Zorp layers on top of the pose (composite add) instead of snapping
     animations = [];
-    z.play('cheer', { el: m.host });   // a legacy clip (wave became a beat clip, which starts from stand)
+    z.play('wobble', { el: m.host });   // a legacy clip (wave, cheer and hop became beat clips, which start from stand)
     assert.ok(animations.filter((a) => a.opts.composite === 'add').length >= 2, 'clips add to the resting pose');
     z.play('blink', { el: m.host });
     assert.strictEqual(m.part('.buddy-arm--r').style.transform, 'rotate(-165deg)', 'the pose survives stop()');
@@ -954,7 +1243,8 @@ async function scenario(name, fn) {
         if (info.beats) {
           const exprs = info.beats.filter((b) => b.expr).map((b) => (p.map && p.map[b.expr]) || b.expr);
           exprs.forEach((e) => assert.ok(z.allowedIn('react.' + kind, e) || (kind === 'wrong' && e === 'oops'), kind + ' beat ' + e));
-          assert.strictEqual(val(z, exprs[exprs.length - 1]), 'positive', p.clip + ' ends positive');
+          // E9 Phase 2: cheer and hop carry their face as the clip's own preset (react() may replace it with a positive one), not in a beat
+          assert.strictEqual(val(z, exprs.length ? exprs[exprs.length - 1] : info.face), 'positive', p.clip + ' ends positive');
         }
       }
     });
@@ -1179,6 +1469,152 @@ async function scenario(name, fn) {
       eq(run(bad), []);
     });
   }
+
+  // ---- E9 Phase 4: cue beats (docs/ZORP_CHARM.md 3.4.2). The sound itself and its gate are tested in zorp_sound_harness.js ----
+  const CUED = {
+    cheer: [['jump', 'start', 1], ['land', 'end', 2]], 'fist-pump': [['jump', 'start', 1], ['land', 'end', 2]],
+    victory: [['jump', 'start', 1], ['land', 'end', 2]], dance: [['jump', 'start'], ['land', 'end']],
+    flex: [['tada', 'start', 0]], wave: [['tada', 'start', 0]],
+  };
+  const spyOn = (sandbox) => { const calls = []; sandbox.pbSound = { zorp: (c) => { calls.push([c, now]); return true; } }; return calls; };
+  const expected = (z, name) => {
+    let t = 0;
+    const out = [];
+    z.clipInfo(name).beats.forEach((b) => {
+      if (b.cue) out.push([b.cue, t + (b.cue === 'land' ? (b.ms || 0) : 0)]);
+      t += (b.ms || 0) + (b.hold || 0);
+    });
+    return out;
+  };
+
+  await scenario('cue beats: with cue:true a jump or tada sounds at its beat start and a land at its beat end; none without cue', async () => {
+    for (const name of Object.keys(CUED)) {
+      const { z, sandbox } = load('system');
+      const calls = spyOn(sandbox);
+      const m = mascot('front');
+      z.bind(m.host);
+      z.idle(false, m.host);
+      const want = expected(z, name);
+      eq(want.map((w) => w[0]), CUED[name].map((w) => w[0]), name + ' cue names');
+      z.play(name, { el: m.host, cue: true });
+      await advance(z.clipInfo(name).dur + 100);
+      eq(calls, want, name + ' cue times');
+      if (name !== 'wave' && name !== 'flex') assert.ok(want[1][1] > want[0][1] + 200, name + ': the land comes after the take-off');
+      // the same clip without cue:true is silent, and so is a clip played by anything else
+      const quiet = load('system');
+      const q = spyOn(quiet.sandbox);
+      const m2 = mascot('front');
+      quiet.z.bind(m2.host);
+      quiet.z.idle(false, m2.host);
+      quiet.z.play(name, { el: m2.host });
+      await advance(quiet.z.clipInfo(name).dur + 100);
+      eq(q, [], name + ' without cue');
+    }
+  });
+
+  await scenario('cue beats: only the named beats carry a cue, and nothing else can ask for one', () => {
+    const { z } = load('system');
+    ['hop', 'shrug', 'think-chin', 'float', 'oops-encourage'].forEach((name) => {
+      z.clipInfo(name).beats.forEach((b) => assert.strictEqual(b.cue, undefined, name + ' is silent'));
+    });
+    const bow = z.clipInfo('bow').beats.filter((b) => b.cue);
+    eq(bow.map((b) => b.cue), ['tada']);
+    const names = new Set();
+    SOFT_CLIPS.forEach((name) => z.clipInfo(name).beats.forEach((b) => { if (b.cue) names.add(b.cue); }));
+    eq([...names].sort(), ['jump', 'land', 'tada']);
+    ['cheer', 'fist-pump', 'victory', 'dance'].forEach((name) => {
+      const list = z.clipInfo(name).beats;
+      const j = list.findIndex((b) => b.cue === 'jump');
+      assert.ok(j !== -1 && list[j + 1] && list[j + 1].cue === 'land', name + ': a land is the beat right after its jump');
+      assert.ok(list[j].y < 0 && list[j + 1].y > 0, name + ': the jump leaves the ground and the land touches it');
+    });
+  });
+
+  await scenario('cue beats: none at reduced or off motion, none after a stop() mid-clip, none without the sound module', async () => {
+    for (const level of ['reduced', 'off']) {
+      const { z, sandbox } = load(level);
+      const calls = spyOn(sandbox);
+      const m = mascot('front');
+      z.bind(m.host);
+      z.idle(false, m.host);
+      ['fist-pump', 'victory', 'flex', 'cheer', 'dance'].forEach((name) => z.play(name, { el: m.host, cue: true }));
+      await advance(3000);
+      eq(calls, [], level + ': the beat engine never starts, so no cue is scheduled');
+    }
+    const { z, sandbox } = load('system');
+    const calls = spyOn(sandbox);
+    const m = mascot('front');
+    z.bind(m.host);
+    z.idle(false, m.host);
+    z.play('fist-pump', { el: m.host, cue: true });
+    await advance(250);
+    eq(calls.map((c) => c[0]), ['jump']);
+    z.play('blink', { el: m.host });
+    await advance(2000);
+    eq(calls.map((c) => c[0]), ['jump'], 'stop() clears the pending land');
+    const bare = load('system');   // no pbSound at all: a cue beat must not throw
+    const b = mascot('front');
+    bare.z.bind(b.host);
+    bare.z.idle(false, b.host);
+    bare.z.play('victory', { el: b.host, cue: true });
+    await advance(2000);
+  });
+
+  await scenario('cue beats: bow (a side-view clip) passes cue through viewClip and sounds a tada once the turn is done', async () => {
+    const { z, sandbox } = load('system');
+    const calls = spyOn(sandbox);
+    const m = mascot('front');
+    z.bind(m.host);
+    z.idle(false, m.host);
+    const done = z.play('bow', { el: m.host, cue: true });
+    await flush();
+    for (let i = 0; i < 5; i += 1) { await finishAll(); await advance(1); }
+    eq(calls.map((c) => c[0]), ['tada']);
+    z.play('blink', { el: m.host });
+    await flush();
+    await done;
+    const plain = load('system');
+    const q = spyOn(plain.sandbox);
+    const m2 = mascot('front');
+    plain.z.bind(m2.host);
+    plain.z.idle(false, m2.host);
+    plain.z.play('bow', { el: m2.host });
+    await flush();
+    for (let i = 0; i < 5; i += 1) { await finishAll(); await advance(1); }
+    eq(q, [], 'bow without cue:true is silent');
+  });
+
+  await scenario('react plan: only first_correct, milestone and lesson_complete ask for cues, and react() hands them to the clip', async () => {
+    const { z, sandbox } = load('system');
+    ['correct', 'wrong', 'streak'].forEach((kind) => {
+      for (let i = 0; i < 10; i += 1) assert.strictEqual(z.reactPlan(kind, tick(60000), true).cue, false, kind);
+    });
+    ['first_correct', 'milestone', 'lesson_complete'].forEach((kind) => assert.strictEqual(z.reactPlan(kind, tick(60000), true).cue, true, kind));
+    const calls = spyOn(sandbox);
+    const m = mascot('front');
+    z.bind(m.host);
+    z.idle(false, m.host);
+    tick(60000);
+    z.react('lesson_complete', { el: m.host });
+    await advance(2300);
+    eq(calls.map((c) => c[0]), ['jump', 'land'], 'the corner dance sounds its hop');
+    const s2 = load('system');
+    const c2 = spyOn(s2.sandbox);
+    const m2 = mascot('front');
+    s2.z.bind(m2.host);
+    s2.z.idle(false, m2.host);
+    tick(60000);
+    s2.z.react('streak', { el: m2.host });
+    await advance(2300);
+    eq(c2, [], 'a streak fist-pump never sounds a cue (the answer tones speak)');
+    for (let i = 0; i < 6; i += 1) {
+      tick(60000);
+      s2.z.react('correct', { el: m2.host });
+      await advance(1200);
+      await finishAll();
+    }
+    eq(c2, [], 'correct answers (cheer, hop, wave) never sound a cue');
+  });
 
   finished = true;
   const failed = results.filter((r) => !r[1]);

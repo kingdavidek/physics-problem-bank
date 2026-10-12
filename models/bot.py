@@ -8,7 +8,7 @@ from models.user import User
 
 BOT_HANDLE = 'problem_bot'
 BOT_EMAIL = 'problem_bot@internal.problembank'
-BOT_PROMPT = 'The Problem Bank bot challenges you!'
+BOT_PROMPT = 'The Problem Bank bot has a challenge for you.'
 BOT_PROMPT_DONE = "You took today's Problem Bank bot challenge."
 
 
@@ -72,6 +72,6 @@ def qotd_challenge_card(conn, viewer_id, *, day_key=None):
         'answered': answered,
         'day_key': day_key,
         'topic_label': topic_name,
-        'bot_note': 'A Problem Bank bot — not a person.',
+        'bot_note': 'A Problem Bank bot, not a person.',
         'avatar': dict(BOT_AVATAR),
     }

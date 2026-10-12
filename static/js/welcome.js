@@ -5,7 +5,8 @@
    E8 Phase 5: hello = turn in from the side, then wave (the server draws the hello hero in profile and this
    turns it to face the pupil; reduced and off turn instantly, never leaving it sideways); level = point
    down from the side; topic = think with a hand on the chin; a card tap = the fist-pump jump. Each clip
-   falls back to its E7 twin when zorp-poses.js is missing. */
+   falls back to its E7 twin when zorp-poses.js is missing.
+   E9 Phase 1: hello (after the wave) and ready (after 400 ms) talk the copy line once; see talkCopy. */
 (function () {
   'use strict';
 
@@ -41,6 +42,13 @@
     var step = section.getAttribute('data-step');
     var zorp = window.pbZorp;
     var settle = function () { zorp.idle(true, hero); };
+    // E9 Phase 1: on hello and ready the mouth says the start of the page's last copy line, once (cap 1.4 s). The text is
+    // already on the page; without zorp-talk.js (no talk) nothing changes.
+    var copyEls = document.querySelectorAll('.welcome-copy');
+    var copyEl = copyEls[copyEls.length - 1];
+    var talkCopy = function () {
+      if (typeof zorp.talk === 'function' && copyEl) zorp.talk({ el: hero, text: copyEl.textContent, max: 1400 });
+    };
     var clipOr = function (name, fallback) {
       return typeof zorp.hasClip === 'function' && zorp.hasClip(name) ? name : fallback;
     };
@@ -49,7 +57,7 @@
       var greet = function () {
         zorp.turn('front', 'r', { el: hero, required: true }).then(function () {
           return zorp.play('wave', { el: hero });
-        }).then(settle, settle);
+        }).then(settle, settle).then(talkCopy);
       };
       if (zorp.motionLevel() === 'full') {
         // The server draws the hero front-facing (no-JS safe); drop to profile at once, then turn in.
@@ -64,6 +72,7 @@
       }, 400);
     } else if (step === 'ready') {
       window.pbZorp.idle(true, hero);
+      setTimeout(talkCopy, 400);
     }
 
     if (step === 'topic') {
@@ -86,9 +95,11 @@
             submitting = true;
             var btn = evt.currentTarget;
             try {
-              var cheerDone = window.pbZorp.play(clipOr('fist-pump', 'cheer'), { el: hero });
+              var cheerDone = window.pbZorp.play(clipOr('fist-pump', 'cheer'), { el: hero, cue: true });
+              // 650 ms lets the Zorp land cue (about 620 ms) finish; 450 ms when no cue is playing
+              var holdMs = window.pbSound && typeof window.pbSound.cuesActive === 'function' && window.pbSound.cuesActive() ? 650 : 450;
               var timeoutDone = new Promise(function (resolve) {
-                setTimeout(resolve, 450);
+                setTimeout(resolve, holdMs);
               });
               Promise.race([cheerDone, timeoutDone]).then(function () {
                 submitViaButton(form, btn);

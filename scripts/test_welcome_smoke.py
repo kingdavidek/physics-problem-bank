@@ -140,6 +140,17 @@ def test_files_exist_and_clean():
     assert form_tag_max_depth(PROFILE_SETTINGS_HTML.read_text(encoding='utf-8')) <= 1
 
 
+def test_card_tap_waits_for_the_land_cue():
+    # Final audit A4: the card tap holds 650 ms (the land cue is about 620 ms) only while Zorp's cues are active, else 450 ms.
+    js = WELCOME_JS.read_text(encoding='utf-8')
+    m = re.search(r"var holdMs = ([^;]+);", js)
+    assert m, 'welcome.js has no holdMs'
+    expr = m.group(1)
+    assert 'pbSound' in expr and 'cuesActive()' in expr and re.search(r"\?\s*650\s*:\s*450\s*$", expr.strip()), expr
+    assert re.search(r"setTimeout\(resolve,\s*holdMs\)", js), 'the race timeout must use holdMs'
+    assert not re.search(r"setTimeout\(resolve,\s*\d+\)", js), 'no bare numeric race timeout'
+
+
 def test_sw_precache_excludes_welcome():
     sw = SW_JS.read_text(encoding='utf-8')
     m = re.search(r'PRECACHE_URLS\s*=\s*\[(.*?)\]', sw, re.S)
@@ -193,6 +204,7 @@ def test_registry_tracks_match_live_catalogue():
 
 def main():
     test_files_exist_and_clean()
+    test_card_tap_waits_for_the_land_cue()
     test_sw_precache_excludes_welcome()
     test_guide_never_tour_includes_welcome()
     test_registry_tracks_match_live_catalogue()
@@ -289,7 +301,7 @@ def main():
         assert r.status_code == 200
         html = r.data.decode()
         assert 'data-step="ready"' in html
-        assert 'When you get one right, I’ll do a little dance.' in html
+        assert 'Get one right and I’ll cheer. Finish a lesson and I’ll dance.' in html
         assert not BANNED_NUDGE_RE.search(html)
 
         # ready form has the fields that actually start a question at / (13, 15)

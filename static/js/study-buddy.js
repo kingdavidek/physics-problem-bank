@@ -241,6 +241,18 @@
 
   var currentPrompt = null;
 
+  // E9 Phase 1: the mouth talks once when the card appears (cap 1.2 s, docs/ZORP_CHARM.md 3.0); the message is already in
+  // place. pbZorp.talk exists only when zorp-talk.js loaded; every exit hushes it.
+  function talkMessage() {
+    var z = window.pbZorp;
+    if (faceEl && z && typeof z.talk === 'function') z.talk({ el: faceEl, text: messageEl.textContent, max: 1200 });
+  }
+
+  function hushFace() {
+    var z = window.pbZorp;
+    if (faceEl && z && typeof z.hush === 'function') z.hush(faceEl);
+  }
+
   function show(prompt) {
     if (!prompt || !prompt.message) return;
     currentPrompt = prompt;
@@ -283,6 +295,8 @@
     dismissEl.setAttribute('data-buddy-stay', stay ? '1' : '0');
     cardEl.hidden = false;
     root.setAttribute('data-buddy-state', 'card');
+    // charm never reacts to absence (DPIA, ZORP_CHARM 5): the streak reminder is shown, never spoken
+    if (prompt.type !== 'streak_risk') talkMessage();
     if (window.pbCelebrate && window.pbCelebrate.fromBuddy) {
       window.pbCelebrate.fromBuddy(prompt);
     }
@@ -309,6 +323,7 @@
       var isExtra = !!(target.hasAttribute && target.hasAttribute('data-buddy-extra'));
       if (!isPrimary && !isExtra) return;
       cardEl.hidden = true;
+      hushFace();
       root.setAttribute('data-buddy-state', 'face');
       writeQuiet(Date.now() + QUIET_MS_ACTED, currentPrompt && currentPrompt.task_mark);
     });
@@ -316,6 +331,7 @@
 
   dismissEl.addEventListener('click', function () {
     cardEl.hidden = true;
+    hushFace();
     root.setAttribute('data-buddy-state', 'face');
     writeQuiet(Date.now() + QUIET_MS_DISMISSED, currentPrompt && currentPrompt.task_mark);
   });

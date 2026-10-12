@@ -274,6 +274,7 @@
         if (!node) { missing = true; continue; }
         fillSlot(slot, node);
         if (animate && entryOf(inst.view, key) !== 0) swapAnim(inst, slot, key, id);
+        if (key === 'mouth' && inst.talk) inst.talk.swap(id);   // E9: zorp-talk.js keeps the closed frame closed
       }
       next[key] = ch[key];
       if (inst.drawn) inst.drawn[key] = id;
@@ -300,6 +301,11 @@
       shadow: svg.querySelector('.buddy-shadow'),
       head: svg.querySelector('.buddy-head'),
       body: svg.querySelector('.buddy-body'),
+      // E9 Phase 2 (soft body riders; zorp-poses.js): the face group, the antenna and hat wrappers, the cheeks slot
+      face: svg.querySelector('.zorp-face'),
+      ride: svg.querySelector('.zorp-ride'),
+      hatRide: svg.querySelector('.zorp-hatride'),
+      cheeks: svg.querySelector('.zorp-slot--cheeks'),
       // back-layer arm + front-layer twin: clips move both
       armL: found(svg, '.buddy-arm--l', '.buddy-arm--l-front'),
       armR: found(svg, '.buddy-arm--r', '.buddy-arm--r-front'),
@@ -545,6 +551,7 @@
   }
 
   function setView(inst, view, facing) {
+    if (inst.talk) inst.talk.stop();   // E9: the talk mouth is placed for one view
     inst.view = view;
     inst.facing = facing;
     redrawView(inst);
@@ -566,6 +573,7 @@
   // translate/scale and end with commitStyles() (applyRest() if missing). Resolves false if stop() cut it short.
   function turnRun(inst, view, facing, spd) {
     var seq = inst.seq;
+    if (inst.talk) inst.talk.stop();
     var dur = TURN_MS / spd;
     var s0 = inst.facing === 'l' ? -1 : 1;
     var s1 = facing === 'l' ? -1 : 1;
@@ -661,7 +669,7 @@
       if (!ok || inst.seq !== seq) return false;
       inst.busy = inst.dirty = true;   // stop() mid-clip must still restore home
       if (face) tempFace(inst, face, c.dur / spd);
-      var o = { target: opts.target || 'right', trip: opts.trip, facing: opts.facing, view: vw };
+      var o = { target: opts.target || 'right', trip: opts.trip, facing: opts.facing, view: vw, cue: opts.cue };
       var done = run(inst, c.beats ? c.tracks(inst.parts, visiblePupils(inst), o) : sideTracks(inst, c.tracks(inst.parts, visiblePupils(inst), o)), c.dur / spd);
       if (c.start) c.start(inst, spd, o);
       return done;
@@ -687,6 +695,7 @@
     while (inst.undo.length) inst.undo.pop()();   // beat-clip changes (arm shapes) put back
     if (inst.dirty) {
       // Cut-short turn or side excursion: settle on a whole view, never half-mirrored.
+      if (inst.talk) inst.talk.stop();   // the talk mouth was placed for the excursion's view
       if (inst.home) { inst.view = inst.home.view; inst.facing = inst.home.facing; inst.home = null; redrawView(inst); }
       applyRest(inst);
       inst.dirty = false;
@@ -1103,7 +1112,8 @@
       el: inst.svg,
       face: plan ? plan.face : REACT_FACE[kind],
       thought: plan ? !!plan.thought : kind === 'wrong',
-      map: plan && plan.map
+      map: plan && plan.map,
+      cue: !!(plan && plan.cue)
     });
   }
 
@@ -1141,7 +1151,7 @@
 
   function lively(inst) {
     var body = document.body;
-    return mayLive(inst) && rendered(inst) && !inst.busy && !inst.dirty && !inst.thought && !inst.faceSwap && !inst.anims.length &&
+    return mayLive(inst) && rendered(inst) && !inst.busy && !inst.dirty && !inst.thought && !inst.faceSwap && !inst.anims.length && !inst.talking &&
       inst.view === 'front' && (!inst.pose || inst.pose === 'stand') && !typing() && Date.now() - lastInput > QUIET_MS &&
       !(body && body.classList.contains('guide-open'));
   }

@@ -374,15 +374,21 @@ def _problem_has_pick_and_order(problem):
 
 
 def test_readable_multipart_answer_resolves_pick_order_labels():
+    # Final audit O1: seeded per try so the search is reproducible (12 unseeded tries failed about one run in three).
+    # The generator is random, so a generous fixed seed range finds one every run; the assertion is unchanged.
+    import random
+
     problem = None
-    for _ in range(12):
+    for seed in range(200):
+        random.seed(seed)
         candidate = eursc_science_infectious_disease(
             "foundational", SITUATIONAL_MULTI_STEP_MODE
         )
         if _problem_has_pick_and_order(candidate):
             problem = candidate
             break
-    assert problem, "expected a foundational infectious SMS item with pick and order"
+    random.seed()   # back to OS entropy for the tests that follow
+    assert problem, "expected a foundational infectious SMS item with pick and order in 200 seeded tries"
     user = client_user_answer(problem)
     readable = format_readable_multipart_answer(user, problem)
     assert "\x1e" not in readable

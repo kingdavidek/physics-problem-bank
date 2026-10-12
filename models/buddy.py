@@ -208,8 +208,8 @@ def _weak_topic_prompt(item, topic_label, *, on_topic, practised_mcq_today):
     if not on_topic:
         return _finish({
             'type': BUDDY_WEAK_TOPIC,
-            'message': f'{topic_label} looks shaky. A short practice set will help.',
-            'detail': 'Weak topic',
+            'message': f'{topic_label} could use another look. A few questions will help it stick.',
+            'detail': 'Worth another look',
             'action_kind': 'topic',
             'level': level,
             'subject': subject,
@@ -229,7 +229,7 @@ def _weak_topic_prompt(item, topic_label, *, on_topic, practised_mcq_today):
 
     if practised_mcq_today:
         message = (
-            f'Nice — want a quiz on {topic_label} to check it sticks?'
+            f'Nice work. Want a quiz on {topic_label} to check it sticks?'
             if quiz_ok
             else f'Nice work on {topic_label}. A few more questions will help it stick.'
         )
@@ -266,14 +266,14 @@ def _weak_topic_prompt(item, topic_label, *, on_topic, practised_mcq_today):
             actions.append(quiz_action)
     actions.append({
         'kind': 'stay',
-        'label': f'Keep learning {topic_label}',
+        'label': 'Keep learning',
     })
 
     primary = next((action for action in actions if action.get('kind') == 'link'), actions[0])
     return _finish({
         'type': BUDDY_WEAK_TOPIC,
         'message': message,
-        'detail': 'Weak topic',
+        'detail': 'Worth another look',
         'action_kind': primary.get('action_kind', 'topic'),
         'level': level,
         'subject': subject,
@@ -340,9 +340,9 @@ def _pick_prompt(
         total = int(quiz['total'] or 0)
         pct = (100.0 * score / total) if total else 0.0
         if pct >= 70:
-            message = f'Nice work — {score}/{total} on {topic_label}.'
+            message = f'Nice work: {score}/{total} on {topic_label}.'
         else:
-            message = f'Quiz logged on {topic_label} ({score}/{total}). Another go?'
+            message = f'Quiz done on {topic_label}: {score}/{total}. Fancy another go?'
         return _finish({
             'type': BUDDY_CELEBRATE,
             'message': message,
@@ -362,10 +362,10 @@ def _pick_prompt(
         if last_day == yesterday:
             days = int(streak['current'])
             if streak.get('freeze_available'):
-                message = 'You have a skip in hand this week, and one quick question still keeps your streak going.'
+                message = 'You have a streak skip this week, so no rush. One quick question also counts.'
             else:
                 # E8 Phase 5 (Children's Code std 13): upbeat, no loss framing, no "at risk".
-                message = f'Keep your {days}-day streak going with one quick question.'
+                message = f'You’re on a {days}-day streak. One quick question counts, if you like.'
             return _finish({
                 'type': BUDDY_STREAK_RISK,
                 'message': message,

@@ -1261,6 +1261,7 @@ body.guide-open .study-buddy { visibility: hidden; }
     line-height: 1.45;
     color: var(--text);
     white-space: pre-wrap;
+    text-wrap: pretty;
     min-height: 2.9em;
 }
 .guide-bot-note {

@@ -122,6 +122,7 @@ def _fixture():
             'sideR': str(buddy.buddy_mascot(view='side')),
             'sideL': str(buddy.buddy_mascot(view='side', facing='l')),
             'posed': str(buddy.buddy_mascot(face='grin', pose='fist-up')),
+            'hat': str(buddy.buddy_mascot(look={'hat': 'beanie'})),   # E9 Phase 2: the hat rider wrapper
         }
     tpl = library[library.index('<template'):library.index('</template>') + len('</template>')]
     side_rot = {shape: [zorp_rig.side_rot(a, shape) for a in range(-180, 181)] for shape in zorp_rig.ARM_SHAPES}

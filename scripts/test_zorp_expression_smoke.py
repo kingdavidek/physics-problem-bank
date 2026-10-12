@@ -45,7 +45,7 @@ INSTANCE_LOOK_MAX_BYTES = 5_800  # measured 3,624 B Phase 1, 3,663 B Phase 2, 4,
 PAGE_MASCOT_MAX_BYTES = 36_000  # 3 instances + library + island; see test_page_mascot_budget output
 PAGE_MASCOT_MAX_GZIP = 6_000
 RUNTIME_JS_MAX_BYTES = 56_000  # baseline 26_602; 47_868 after Phase 3; Phase 4 first trimmed it to 43_084, then added the register hook (45_370; 45_509 after the review fixes); 47_962 after Phase 5; RAISED 48_000 -> 56_000 on 2026-10-01 (E8 Phase 7, David: "raise the cap by however much you need"): idle life (blink, glance, antenna twitch, look-around clip, IntersectionObserver and typing pauses) measured at 53_081 B, see docs/ZORP_EXPRESSIVENESS.md 2.1 and test_runtime_js_budget output
-POSES_JS_MAX_BYTES = 33_200  # RAISED again 30_400 -> 33_200 on 2026-10-02 (wave rebuilt as a beat clip, side-point lengthened; measured 30_185 B, need + ~10%); first RAISED 26_000 -> 30_400 the same day (clip readability pass, David authorised raising caps when needed): measured 27_637 (30_185 after wave and side-point) B (new poses flex-pump, shrug-hi and dance-up, longer dance, reworked flex and shrug), cap = need + ~10%, ledger in docs/ZORP_EXPRESSIVENESS.md 2.1; Phase 7 (2026-10-01): measured 25_662 B, no raise needed; E8 Phase 4 (new file, 2026-09-30): poses table, beat engine and the new clips, 24,000 B at first; raised to 26,000 B in Phase 5 (2026-09-30, ledger note) for the react() plan; measured in test_poses_js_budget output
+POSES_JS_MAX_BYTES = 36_500  # RAISED 33_200 -> 36_500 on 2026-10-04 (E9 Phase 2 soft body, cheer and hop beat clips; measured 35_531 B, 35_909 B after the review, ledger in docs/ZORP_CHARM.md 2.1); RAISED again 30_400 -> 33_200 on 2026-10-02 (wave rebuilt as a beat clip, side-point lengthened; measured 30_185 B, need + ~10%); first RAISED 26_000 -> 30_400 the same day (clip readability pass, David authorised raising caps when needed): measured 27_637 (30_185 after wave and side-point) B (new poses flex-pump, shrug-hi and dance-up, longer dance, reworked flex and shrug), cap = need + ~10%, ledger in docs/ZORP_EXPRESSIVENESS.md 2.1; Phase 7 (2026-10-01): measured 25_662 B, no raise needed; E8 Phase 4 (new file, 2026-09-30): poses table, beat engine and the new clips, 24,000 B at first; raised to 26,000 B in Phase 5 (2026-09-30, ledger note) for the react() plan; measured in test_poses_js_budget output
 PARTS_LIBRARY_MAX_BYTES = 18_200  # RAISED 16_000 -> 18_200 on 2026-10-02 (clip readability pass: arm shapes reach and palm, bigger bent-fist): measured 16_562 B, cap = need + ~10%; <template> only; measured 6,959 B Phase 1, 12,169 B Phase 2, 13,432 B Phase 3
 RIG_JSON_MAX_BYTES = 6_000  # island; measured 1,359 B Phase 1, 2,802 B Phase 2, 4,503 B Phase 3 (with tags)
 MOTION_CSS_MAX_BYTES = 12_000  # mirrors test_zorp_motion_smoke.py; baseline 4_844, Phase 1 6_445, Phase 2 7_466, Phase 3 7_895
@@ -514,7 +514,7 @@ def test_picker_and_gallery_markup():
         assert f'data-zorp-channel="{slot}"' in html, slot
     for level in ('system', 'reduced', 'off'):
         assert f'data-zorp-set-motion="{level}"' in html, level
-    assert 'data-zorp-slow' in html and 'id="pb-zorp-parts"' in html and 'styleguide.js?v=9' in html
+    assert 'data-zorp-slow' in html and 'id="pb-zorp-parts"' in html and 'styleguide.js?v=13' in html
     assert 'id="sg-zorp-matrix"' in html and 'data-eyes="open open-big' in html
 
 
@@ -807,7 +807,7 @@ def test_streak_copy_is_upbeat_and_not_shaming():
     in test_buddy_smoke.py)."""
     src = (ROOT / 'models' / 'buddy.py').read_text(encoding='utf-8')
     messages = re.findall(r"message = (?:f)?'([^']*)'", src)
-    assert any(m == 'Keep your {days}-day streak going with one quick question.' for m in messages), messages
+    assert any(m == 'You’re on a {days}-day streak. One quick question counts, if you like.' for m in messages), messages
     for line in messages:
         for banned in ('lose', 'lost', 'risk', 'break', 'broke', 'miss out', 'disappoint', "don't let", 'honest', 'guilt'):
             assert banned not in line.lower(), (banned, line)
@@ -879,7 +879,7 @@ def test_guide_lore_and_big_reward_phase5():
     assert "(step.lore || step.big) && lastLine && step.resolve" in guide
     # a multi-line big reward: the tap that follows line one reads 'Continue', not 'Close'
     big_block = text[text.index("'streak:100'"):text.index('first_correct: {')]
-    assert "primary: 'Continue'" in big_block and big_block.count("'") >= 6 and "lines: ['100-day streak. Extraordinary.'," in big_block
+    assert "primary: 'Continue'" in big_block and big_block.count("'") >= 6 and "lines: ['100-day streak. Amazing.'," in big_block
     # every preset the catalog names exists
     for step_id, face, lore, resolve, big in steps:
         assert face in zorp_rig.PRESETS and (not resolve or resolve in zorp_rig.PRESETS)
@@ -903,7 +903,7 @@ def test_welcome_and_empty_states_phase5():
 
     welcome = (JS_DIR / 'welcome.js').read_text(encoding='utf-8')
     for needle in ("zorp.turn('front', 'r', { el: hero, required: true })", "zorp.play('wave'", "clipOr('side-point', 'point')",
-                   "target: 'down'", "clipOr('think-chin', 'think')", "clipOr('fist-pump', 'cheer')", 'Promise.race', 'setTimeout(resolve, 450)'):
+                   "target: 'down'", "clipOr('think-chin', 'think')", "clipOr('fist-pump', 'cheer')", 'Promise.race', '? 650 : 450', 'setTimeout(resolve, holdMs)'):   # 650 ms only while cues are active (final audit A4)
         assert needle in welcome, needle
     assert "play('cheer'" not in welcome.replace("clipOr('fist-pump', 'cheer')", '')
     tpl = (TEMPLATES / 'welcome.html').read_text(encoding='utf-8')
@@ -1100,7 +1100,7 @@ def test_poses_js_budget():
     assert "translate(0,9px) scale(0.75,1)" in core_text and "translate(0,8px) scale(0.7,1)" in core_text
     base = (TEMPLATES / 'base.html').read_text(encoding='utf-8')
     assert base.index('js/zorp-motion.js') < base.index('js/zorp-poses.js') < base.index('js/zorp-triggers.js')
-    assert 'zorp-poses.js\') }}?v=4' in base
+    assert 'zorp-poses.js\') }}?v=6' in base  # v4 to v5 in E9 Phase 2, v6 in Phase 4
     sw = (JS_DIR / 'sw.js').read_text(encoding='utf-8')
     assert '/static/js/zorp-poses.js' in sw and '/static/js/zorp-motion.js' in sw
 
@@ -1182,6 +1182,8 @@ def test_clips_end_non_negative():
             assert trip_neg == {'embarrassed'}, (name, trip_neg)   # the trip's only negative face is Zorp's own
             assert 'embarrassed' in zorp_rig.CONTEXT_MAP['clip.dance.trip']
             continue
+        if not exprs:  # E9 Phase 2: cheer and hop carry only a clip face ('celebrate'), no per-beat expressions
+            exprs = re.findall(r"\bface:\s*'([a-z_-]+)'", body)
         assert exprs, name
         assert zorp_rig.VALENCE[exprs[-1]] == zorp_rig.POSITIVE, f'{name} ends on {exprs[-1]}'
         for e in exprs:
@@ -1213,6 +1215,10 @@ def test_styleguide_motion_banner_and_preview_switch():
         if path.name in ('styleguide.js', 'zorp-motion.js'):
             continue
         text = path.read_text(encoding='utf-8')
+        if path.name == 'zorp-talk.js':
+            # final audit A3: the talk hushes when the motion level drops, so it watches the same two attributes the runtime reads (never sets them)
+            assert 'data-motion-preview' in text and "setAttribute('data-motion-preview'" not in text and 'motionPreview' not in text
+            continue
         assert 'data-motion-preview' not in text and 'motionPreview' not in text, f'{path.name} must not touch the dev-only preview switch'
 
 
@@ -1235,7 +1241,7 @@ def test_pose_gallery_markup():
         assert f'data-pose-name="{name}" data-pose-view="front"' in section and f'data-pose-name="{name}" data-pose-view="side"' in section
     # server-drawn, not bound: only the live pair is data-zorp-demo
     assert section.count('data-zorp-demo') == 2
-    assert 'zorp-poses.js' in html and 'styleguide.js?v=9' in html
+    assert 'zorp-poses.js' in html and 'styleguide.js?v=13' in html
 
 
 def _idle_block():
@@ -1285,7 +1291,7 @@ def test_phase7_polish():
     base = (TEMPLATES / 'base.html').read_text(encoding='utf-8')
     assert 'Study streak at risk' not in base and 'keeps your streak going' in base
     sw = (JS_DIR / 'sw.js').read_text(encoding='utf-8')
-    assert "pb-v100" in sw and 'ignoreSearch: true' in sw
+    assert "pb-v105" in sw and 'ignoreSearch: true' in sw
 
 
 def test_phase7_runtime_fixes_static():

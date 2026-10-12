@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zorp evaluation kit</title>
+<style>
+  @page { size: A4; margin: 12mm 14mm; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; background: #ffffff; color: #1d2433; font: 10pt/1.35 "Segoe UI", "Helvetica Neue", Arial, sans-serif; }
+  .page { width: 182mm; height: 272mm; margin: 0 auto; padding: 0; page-break-after: always; break-after: page; overflow: visible; position: relative; }
+  .page:last-child { page-break-after: auto; break-after: auto; }
+  h1 { font-size: 20pt; line-height: 1.1; margin: 0 0 2mm; color: #4b2fb3; }
+  h2 { font-size: 11.5pt; margin: 3.5mm 0 1.5mm; color: #4b2fb3; }
+  p { margin: 0 0 2mm; }
+  .lead { font-size: 11.5pt; margin-bottom: 3mm; }
+  .tag { display: inline-block; font-size: 8pt; letter-spacing: .06em; text-transform: uppercase; color: #5b6478; margin-bottom: 1.5mm; }
+  .box { border: 0.4mm solid #4b2fb3; border-radius: 3mm; padding: 3mm 4mm; background: #f4f1ff; margin-bottom: 3mm; }
+  .box p:last-child { margin-bottom: 0; }
+
+  /* pupil sheet */
+  .prompts { display: grid; grid-template-columns: 1fr 1fr; gap: 3.5mm; margin-top: 3mm; }
+  .card { border: 0.5mm dashed #8b7bd8; border-radius: 3mm; padding: 3.5mm 4mm; margin-right: 0.5mm; min-height: 56mm; background: #fffdf2; }
+  .card b { display: block; font-size: 8.5pt; color: #8a6d00; letter-spacing: .08em; margin-bottom: 1.5mm; }
+  .card p { font-size: 12.5pt; line-height: 1.3; font-weight: 600; }
+  .card small { display: block; margin-top: 2mm; font-size: 8.5pt; font-weight: 400; color: #5b6478; }
+  .rules { display: flex; gap: 3mm; margin-top: 3.5mm; }
+  .rules div { flex: 1; border-radius: 3mm; padding: 2.5mm 3mm; background: #eef7f1; font-size: 9.5pt; }
+  .foot { position: absolute; left: 0; right: 0; bottom: 0; font-size: 8pt; color: #5b6478; }
+
+  /* teacher sheet */
+  .teacher { font-size: 9.2pt; line-height: 1.3; }
+  .teacher h1 { font-size: 15pt; }
+  .teacher h2 { font-size: 10pt; margin: 2.6mm 0 1mm; }
+  .teacher p { margin-bottom: 1mm; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 0.3mm solid #b8bfd0; padding: 0.7mm 1.5mm; text-align: left; vertical-align: top; }
+  th { background: #ece9fb; font-weight: 700; }
+  .check { list-style: none; margin: 0; padding: 0; }
+  .check li { display: flex; gap: 2mm; margin: 0 0 0.9mm; }
+  .check li::before { content: ""; flex: 0 0 3.2mm; height: 3.2mm; margin-top: 0.4mm; border: 0.35mm solid #1d2433; border-radius: 0.6mm; }
+  .tally td { height: 9mm; }
+  .tally td:first-child { width: 28mm; }
+  ul.tight { margin: 0 0 1mm; padding-left: 4mm; }
+  ul.tight li { margin: 0 0 0.5mm; }
+  .warn { border-left: 1.2mm solid #b3261e; padding: 1mm 2.5mm; background: #fdf0ef; margin: 1.5mm 0; }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1: PUPIL PROMPT SHEET -->
+<section class="page" aria-label="Pupil prompt sheet">
+  <span class="tag">Zorp and you</span>
+  <h1>What do you think of Zorp?</h1>
+  <p class="lead">Zorp is the little alien in our practice app. You have just seen him talk, cheer and jump. Now we would love your ideas.</p>
+  <div class="box">
+    <p><b>This is just for fun.</b> It is not a test. Nothing is marked. There are no right answers.</p>
+    <p>Pick <b>one or two</b> prompts. Write or draw <b>one idea</b> on a sticky note. <b>Do not put your name</b> on it. Skip any prompt you like.</p>
+  </div>
+
+  <div class="prompts">
+    <div class="card"><b>PROMPT 1</b><p>What did you think when Zorp cheered?</p><small>Any answer is fine: a word, a sentence or a doodle.</small></div>
+    <div class="card"><b>PROMPT 2</b><p>Was there a moment Zorp got in the way? Tell us about it.</p><small>It is useful to hear this. Honest is best.</small></div>
+    <div class="card"><b>PROMPT 3</b><p>When Zorp talked, what did you look at?</p><small>Tell us what you noticed.</small></div>
+    <div class="card"><b>PROMPT 4</b><p>If Zorp could say one sentence when a question goes wrong, what would be kind and helpful?</p><small>Write the sentence as he would say it.</small></div>
+    <div class="card"><b>PROMPT 5</b><p>If Zorp could do one new thing, what would it be?</p><small>A new move, a new job, anything.</small></div>
+    <div class="card"><b>PROMPT 6</b><p>If Zorp made a sound in our classroom, when would that be fun, and when would it be too much?</p><small>Think about how the room would feel.</small></div>
+  </div>
+
+  <div class="rules">
+    <div><b>No names.</b> Not even initials.</div>
+    <div><b>No marks.</b> Nobody is judging you.</div>
+    <div><b>Notes are thrown away</b> once your teacher has read them.</div>
+  </div>
+  <p class="foot">Your notes are not typed into any app and are not kept. Thank you for helping.</p>
+</section>
+
+<!-- PAGE 2: TEACHER SHEET -->
+<section class="page teacher" aria-label="Teacher sheet">
+  <span class="tag">Teacher sheet (keep this one)</span>
+  <h1>Zorp evaluation: 15 to 20 minutes</h1>
+  <p><b>Teacher-led, offline, anonymous.</b> Nothing is typed into the app. Full plan: <code>docs/ZORP_EVALUATION.md</code>. Results: blank until a session has been run.</p>
+
+  <div class="cols">
+    <div>
+      <h2>Session</h2>
+      <table>
+        <tr><th style="width:15mm">Min</th><th>What</th></tr>
+        <tr><td>0 to 2</td><td>Frame it: fun, not a test, no names, skip anything.</td></tr>
+        <tr><td>2 to 9</td><td>Showreel, 6 steps (below).</td></tr>
+        <tr><td>9 to 10</td><td>Quiet moment to think.</td></tr>
+        <tr><td>10 to 16</td><td>Sticky notes: one or two prompts, one idea per note.</td></tr>
+        <tr><td>16 to 18</td><td>Notes folded into a pile or box, face down; no one watching who wrote which.</td></tr>
+        <tr><td>18 to 20</td><td>Optional chat: read two or three notes aloud.</td></tr>
+      </table>
+      <p style="margin-top:1mm"><b>S1 and S2 (under 13): projector only</b>, no pupil accounts. Older classes may try their own accounts, optional, sounds left off.</p>
+
+      <h2>Showreel: <code>/styleguide#zorp-charm</code></h2>
+      <p>First press <b>Preview at full motion</b>. Zoom in (Ctrl and +) for the back row. Volume low. Warn before sound.</p>
+      <ol class="tight">
+        <li>Origin line, talking</li>
+        <li>Reward: soft fist-pump</li>
+        <li>Same reward, soft body off (A/B)</li>
+        <li>Corner bubble, talking</li>
+        <li>Sound on (quiet preview cues)</li>
+        <li>Sound off (silent; the default)</li>
+      </ol>
+    </div>
+
+    <div>
+      <h2>Observe while it runs (tick any you see)</h2>
+      <ul class="check">
+        <li>Eyes go to Zorp, then back to the lesson or question within a few seconds</li>
+        <li>Own accounts only: time to press Continue (roughly how many seconds)</li>
+        <li>Smiles and laughter</li>
+        <li>Irritation or eye-rolling on the 2nd or 3rd repeat</li>
+        <li>Anyone asks to turn it off or skip</li>
+        <li>Sound acceptable in the room (no covered ears, no noise wave after)</li>
+        <li>Reading lines aloud, or waiting for the mouth before reading</li>
+        <li>Confusion about bot versus person</li>
+        <li>Upset at the "home" line in the origin story</li>
+        <li>Distraction when you go back to the work (still chatting a minute later)</li>
+      </ul>
+      <p>Reduced motion: if anyone uses it, check quietly that the still version worked for them.</p>
+    </div>
+  </div>
+
+  <h2>Sort the sticky notes (after the session): one main theme per note</h2>
+  <table class="tally">
+    <tr><th>Code</th><th>Theme</th><th>Reads like</th><th style="width:30mm">Tally</th></tr>
+    <tr><td><b>E</b> Encouraging</td><td>Made me smile, want to carry on</td><td>Judge by what it did to the pupil, not whether they liked Zorp</td><td></td></tr>
+    <tr><td><b>D</b> Distracting</td><td>Too long, too much, took eyes off the work</td><td>"I love him but could not read the question" is D</td><td></td></tr>
+    <tr><td><b>N</b> Neutral</td><td>Did not notice, "it was fine"</td><td></td><td></td></tr>
+    <tr><td><b>C</b> Concern</td><td>Sad, upset, confused, "is he real?"</td><td>Read twice. Handle first.</td><td></td></tr>
+    <tr><td><b>I</b> Idea</td><td>New move, new sentence</td><td>Mostly prompts 4 and 5</td><td></td></tr>
+    <tr><td><b>S</b> Sound</td><td>Anything about noise (also count as above)</td><td>"Only with headphones" is S</td><td></td></tr>
+  </table>
+
+  <div class="cols">
+    <div>
+      <h2>Success looks like</h2>
+      <ul class="tight">
+        <li>E is at least two thirds of E plus D (at least 10 notes with a lean, 2 classes)</li>
+        <li>No unresolved C note, no upset flag</li>
+        <li>Sound judged fine only when opt-in; otherwise it stays off by default</li>
+      </ul>
+      <p><b>Tune constants only</b> (talk caps, flap rates, soft body share, sound gain). The list and ranges are in <code>ZORP_EVALUATION.md</code> section 10. The voice-blip option (D7, hidden "chatter") stays hidden unless all section 10.4 conditions hold.</p>
+    </div>
+    <div>
+      <h2>Privacy and safeguarding</h2>
+      <ul class="tight">
+        <li>No names, no photos (not of faces, not of notes), no recording</li>
+        <li>Notes destroyed the same day, once the table is filled in. Keep counts and paraphrased themes only</li>
+        <li>Everything optional; stop the sound whenever anyone asks</li>
+        <li>Anything that worries you about a pupil: your school's safeguarding route, not this sheet</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

@@ -1,5 +1,6 @@
 import os
 import random
+import re
 import secrets
 from datetime import date, timedelta
 import urllib.error
@@ -172,6 +173,9 @@ from models.social import (
     MOTION_CHOICES,
     MOTION_SYSTEM,
     normalize_motion_preference,
+    ZORP_SOUND_CHOICES,
+    ZORP_SOUND_OFF,
+    normalize_zorp_sound,
     public_guide_state,
     quiz_stats_summary,
     record_activity_event,
@@ -1011,6 +1015,7 @@ def inject_nav():
     sound_enabled = False
     theme_preference = THEME_SYSTEM
     motion_preference = MOTION_SYSTEM
+    zorp_sound = ZORP_SOUND_OFF
     guide_state = {'v': 1, 'origin': False, 'tours': {}, 'rewards': {}}
     guide_json_persisted = False
     nav_streak = 0
@@ -1033,6 +1038,9 @@ def inject_nav():
             )
             motion_preference = normalize_motion_preference(
                 profile_settings.get('motion_preference', MOTION_SYSTEM)
+            )
+            zorp_sound = normalize_zorp_sound(
+                profile_settings.get('zorp_sound', ZORP_SOUND_OFF)
             )
             guide_state = profile_settings.get('guide') or guide_state
             guide_json_persisted = bool(profile_settings.get('guide_json_persisted'))
@@ -1094,6 +1102,7 @@ def inject_nav():
         'sound_enabled': sound_enabled,
         'theme_preference': theme_preference,
         'motion_preference': motion_preference,
+        'zorp_sound': zorp_sound,
         'guide_state': guide_state,
         'guide_json_persisted': guide_json_persisted,
         'nav_streak': nav_streak,
@@ -1527,6 +1536,7 @@ with get_db() as conn:
         ('sound_enabled', 'INTEGER NOT NULL DEFAULT 0'),
         ('theme_preference', "TEXT NOT NULL DEFAULT 'system'"),
         ('motion_preference', "TEXT NOT NULL DEFAULT 'system'"),
+        ('zorp_sound', "TEXT NOT NULL DEFAULT 'off'"),
         ('guide_json', "TEXT NOT NULL DEFAULT '{}'"),
     ):
         if col not in profile_cols:
@@ -4168,6 +4178,7 @@ def _settings_to_json(settings):
         'motion_preference': normalize_motion_preference(
             settings.get('motion_preference', MOTION_SYSTEM)
         ),
+        'zorp_sound': normalize_zorp_sound(settings.get('zorp_sound', ZORP_SOUND_OFF)),
         'avatar': parse_avatar(settings.get('avatar')),
         'guide': public_guide_state(
             settings.get('guide') if isinstance(settings.get('guide'), dict)
@@ -5533,12 +5544,22 @@ def legal_terms():
     return render_template('legal_terms.html', **_legal_context())
 
 
+def _static_pin(template, script):
+    """The ?v= pin a template puts on a static script, as 'v<N>' ('' when it cannot be read)."""
+    try:
+        text = (Path(app.root_path) / 'templates' / template).read_text(encoding='utf-8')
+    except OSError:
+        return ''
+    m = re.search(r'filename=[\'\"]js/' + re.escape(script) + r'[\'\"]\s*\)\s*\}\}\?v=(\d+)', text)
+    return f'v{m.group(1)}' if m else ''
+
+
 @app.get('/api/v1/build-info')
 def api_v1_build_info():
     return jsonify({
         'ok': True,
         'buddy_embed': 'v6',
-        'study_buddy_js': 'v11',
+        'study_buddy_js': _static_pin('base.html', 'study-buddy.js'),   # read from base.html: it cannot go stale
         'theme_settings': True,
         'guide_preview': '/guide-preview',
         'repo_root': str(_ROOT),
@@ -6752,6 +6773,7 @@ def profile_settings():
                 'sound_enabled': request.form.get('sound_enabled') == '1',
                 'theme_preference': request.form.get('theme_preference', THEME_SYSTEM),
                 'motion_preference': request.form.get('motion_preference', MOTION_SYSTEM),
+                'zorp_sound': request.form.get('zorp_sound', ZORP_SOUND_OFF),
             }
             with get_db() as conn:
                 if (
@@ -7457,6 +7479,7 @@ def api_v1_patch_settings():
         'sound_enabled',
         'theme_preference',
         'motion_preference',
+        'zorp_sound',
         'avatar',
         'avatar_face',
         'avatar_bg',
@@ -7505,6 +7528,15 @@ def api_v1_patch_settings():
                 f'motion_preference must be one of: {", ".join(MOTION_CHOICES)}',
                 400,
                 'invalid_motion',
+            )
+
+    if 'zorp_sound' in payload:
+        # `chatter` exists in code (E9 D7) but is not offered: rejected here like any junk value.
+        if payload['zorp_sound'] not in ZORP_SOUND_CHOICES:
+            return _api_error(
+                f'zorp_sound must be one of: {", ".join(ZORP_SOUND_CHOICES)}',
+                400,
+                'invalid_zorp_sound',
             )
 
     bool_fields = (

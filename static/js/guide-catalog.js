@@ -1,4 +1,5 @@
-/* Guide beats — copy lives here, not in the runtime. UK English.
+/* Guide beats — copy lives here, not in the runtime. UK English. Every line follows the voice guide in
+   docs/ZORP_CHARM.md section 3.3 (3.3.6 is the short version); scripts/test_zorp_voice_smoke.py enforces it.
    E8 Phase 5: faces are presets from models/zorp_rig.py CONTEXT_MAP['guide']. origin.home is the one lore step
    (GUIDE_LORE_STEPS): it opens on the sad goo-goo eyes and its last line resolves to aww, so a step never
    ends sad. The 100-day streak reward (big) opens on happy tears and resolves to proud. */
@@ -13,7 +14,7 @@
         face: 'soft-smile',
         lines: [
           'A bit about me: I’m Zorp, from Novara, out past the maths belt.',
-          'Novara sent helpers to Earth to make maths (and a bit of science) less scary.',
+          'Novara sent helpers to Earth to make maths and physics feel less scary.',
         ],
         highlight: null,
         gesture: 'wave',
@@ -26,7 +27,7 @@
         face: 'happy',
         lines: [
           'Those little aliens you’ll see? That’s my crew.',
-          'I’m the one in the corner — a bot, not a person.',
+          'I’m the one in the corner. I’m a bot, not a person.',
         ],
         highlight: null,
         gesture: 'wink',
@@ -79,7 +80,7 @@
         face: 'happy',
         gesture: 'fist-pump',
         lines: [
-          'Ready when you are. Skip this any time — you won’t see it again.',
+          'Ready when you are. You can skip this any time, and it won’t show again.',
         ],
         highlight: null,
         primary: 'Let’s go',
@@ -116,7 +117,7 @@
           gesture: 'side-point',
           highlight: '#mcq-options, .free-response-check-btn',
           spotLabel: 'Check your answer',
-          lines: ['Check your answer here. I’ll pop when you get a streak of correct ones.'],
+          lines: ['Check your answer here. I’ll cheer when you get one right.'],
           primary: 'Next',
           skipLabel: 'Not now',
         },
@@ -139,7 +140,7 @@
           face: 'soft-smile',
           highlight: '.profile-dashboard-chips, .profile-xp-chip',
           spotLabel: 'Streak and XP',
-          lines: ['Your streak and XP. Missing a day can use a freeze if you have one.'],
+          lines: ['Your streak and XP. If you miss a day, a streak skip can cover it.'],
           primary: 'Next',
           skipLabel: 'Not now',
         },
@@ -149,7 +150,7 @@
           face: 'proud',
           highlight: '#milestones',
           spotLabel: 'Badges',
-          lines: ['Badges you earn. New ones get a little celebration.'],
+          lines: ['Badges you earn. New ones get a little cheer.'],
           primary: 'Next',
           skipLabel: 'Not now',
         },
@@ -172,7 +173,7 @@
           gesture: 'side-point',
           highlight: '.qotd-daily-card',
           spotLabel: 'Today’s question',
-          lines: ['One question a day. That’s the Daily habit.'],
+          lines: ['A new question every day, whenever suits you.'],
           primary: 'Next',
           skipLabel: 'Not now',
         },
@@ -228,7 +229,7 @@
           gesture: 'shake',
           highlight: '#compete-challenges',
           spotLabel: 'Challenges',
-          lines: ['Challenges are optional. No DMs.'],
+          lines: ['Challenges are optional. There is no chat.'],
           primary: 'Got it',
           skipLabel: 'Not now',
         },
@@ -252,7 +253,7 @@
       'streak:30': {
         mode: 'reward',
         face: 'proud',
-        lines: ['30-day streak. That’s a solid habit.'],
+        lines: ['30-day streak. That’s a great run of practice.'],
         primary: 'Close',
         gesture: 'fist-pump',
       },
@@ -261,7 +262,7 @@
         big: true,
         face: 'aww-teary',
         resolve: 'proud',
-        lines: ['100-day streak. Extraordinary.', 'I’m a little teary, in the happiest way. Well done.'],
+        lines: ['100-day streak. Amazing.', 'I’m a little teary, in the happiest way. Well done.'],
         primary: 'Continue',
         gesture: 'victory',
       },

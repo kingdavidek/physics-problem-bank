@@ -210,7 +210,7 @@ def main():
         assert '#topics-grid' in catalog
         assert '#leaderboard-board-tabs' in catalog
         assert 'friends only' in catalog.lower()
-        assert 'No DMs.' in catalog
+        assert 'There is no chat.' in catalog
 
         # E7 Phase 2: new gesture fields, and a cross-file consistency check against
         # guide.js's ZORP_GESTURES set and zorp-motion.js's CLIP_NAMES list.
@@ -356,7 +356,7 @@ def main():
         assert 'data-guide-endpoint="friend_leaderboard_page"' in compete
         assert 'id="leaderboard-board-tabs"' in compete
         assert 'id="compete-challenges"' in compete
-        assert 'No DMs' in compete
+        assert 'are optional. There is no chat.' in compete
 
         r = client.get('/profile/settings')
         assert r.status_code == 200

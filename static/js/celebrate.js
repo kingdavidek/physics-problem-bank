@@ -113,8 +113,16 @@
 
   function burstConfetti(opts) {
     if (prefersReducedMotion()) return;
-    var silent = !!(opts && opts.silent);
-    if (!silent && window.pbSound && window.pbSound.celebrate) window.pbSound.celebrate();
+    // E9 Phase 4 (3.4.4): one sound per moment. A cue that actually starts replaces the arpeggio. With cues on, wait 1 s (the
+    // clip's first cue starts about 0.8 s after react) and play the arpeggio only if none started (no Guide, stale tap, 7 s window).
+    var ps = window.pbSound;
+    if (!(opts && opts.silent) && ps && ps.celebrate) {
+      if (ps.cuesActive && ps.cuesActive() && ps.cued) {
+        window.setTimeout(function () { if (!ps.cued(1500)) ps.celebrate(); }, 1000);
+      } else {
+        ps.celebrate();
+      }
+    }
     var now = Date.now();
     if (now - lastBurstAt < 1600) return;
     lastBurstAt = now;

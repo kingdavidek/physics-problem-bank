@@ -179,6 +179,9 @@ def main():
                 source='check', prompt_type='guessed',
                 reflection_text='I guessed the order of operations.',
             )
+            # E9 Phase 4: zorp_sound is a stored display preference, so the export carries it and the erase takes it with the row.
+            conn.execute("UPDATE user_profile_settings SET zorp_sound = 'celebrations' WHERE user_id = ?", (uid_a,))
+            conn.commit()
             enable_teacher(conn, uid_a)
             create_class(conn, uid_a, 'Smoke class', 'gcse', 'maths')
             follow_user(conn, uid_b, uid_a)
@@ -212,6 +215,7 @@ def main():
             assert exported_guide_json.get('level') == 'eursc_s1'
             assert exported_guide_json.get('topic') == 'measurement'
             assert exported_guide_json.get('welcome_done') is True
+            assert payload['settings']['zorp_sound'] == 'celebrations', 'E9 Phase 4: the export includes zorp_sound'
             practice = payload['practice']
             assert practice['saved_problems']
             assert practice['quiz_attempts']
@@ -227,6 +231,7 @@ def main():
         exported = json.loads(r.data.decode())
         assert exported['account']['handle'] == handle_a
         assert 'password_hash' not in json.dumps(exported)
+        assert exported['settings']['zorp_sound'] == 'celebrations', 'GET /me/export carries zorp_sound'
         assert exported['teacher']['enabled'] is True
         assert exported['teacher']['classes'][0]['name'] == 'Smoke class'
         assert exported['teacher']['classes'][0]['join_code']
@@ -243,6 +248,9 @@ def main():
             leftover = remaining_user_rows(conn, uid_a)
             nonzero = {table: n for table, n in leftover.items() if n}
             assert not nonzero, nonzero
+            assert conn.execute(
+                'SELECT COUNT(*) FROM user_profile_settings WHERE user_id = ?', (uid_a,)
+            ).fetchone()[0] == 0, 'E9 Phase 4: erase removes the settings row, zorp_sound with it'
             assert handle_is_reserved(conn, handle_a)
             assert validate_handle(handle_a, conn)
             note = conn.execute(

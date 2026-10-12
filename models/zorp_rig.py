@@ -34,6 +34,7 @@ CHANNELS = {
         'smile', 'smile-w', 'smile-wide', 'smile-big', 'grin', 'grin-tongue', 'laugh', 'cat',
         'smirk', 'tiny', 'o', 'wow', 'flat', 'wavy', 'wobble-smile', 'sleepy', 'blep', 'frown-soft',
         'side-smile', 'side-grin', 'side-o', 'side-flat', 'side-wavy', 'side-frown',
+        'talk-1', 'talk-2', 'side-talk-1', 'side-talk-2',
     ),
     'cheeks': ('none', 'rosy', 'blush', 'glow', 'side-rosy', 'side-glow', 'side-blush'),
     'fx': (
@@ -41,6 +42,10 @@ CHANNELS = {
         'exclaim', 'question', 'dizzy-orbit', 'notes', 'bulb', 'thought',
     ),
 }
+# E9 Phase 1 (docs/ZORP_CHARM.md 3.1.1): the two talk-mouth frames (half open, open) and their profile twins.
+# zorp-talk.js clones them into a temporary slot and steps their opacity; no preset may use them, they are
+# neutral shapes with no valence of their own (the base mouth of the expression is the closed frame).
+TALK_MOUTHS = ('talk-1', 'talk-2', 'side-talk-1', 'side-talk-2')
 # Channel-matrix review view (styleguide): the main eye and mouth variants; asymmetric legacy
 # eye offsets (open-lift, open-off, curious, low) are left out.
 MATRIX_EYES = ('open', 'open-big', 'goo', 'goo-shine', 'happy-arc', 'smile-arc', 'laugh', 'wink-line',
@@ -253,6 +258,7 @@ _SIDE_MOUTH = {
     'grin': 'side-grin', 'grin-tongue': 'side-grin', 'laugh': 'side-grin', 'blep': 'side-grin',
     'o': 'side-o', 'wow': 'side-o', 'sleepy': 'side-o',
     'flat': 'side-flat', 'wavy': 'side-wavy', 'frown-soft': 'side-frown',
+    'talk-1': 'side-talk-1', 'talk-2': 'side-talk-2',
 }
 _SIDE_BROWS = {
     'soft': 'side', 'determined': 'side', 'knit': 'side', 'raised': 'side-up', 'skeptical': 'side-up',
@@ -618,6 +624,10 @@ def validate():
     # translate could run off the narrow profile plate).
     side_mouths = {map_variant('side', 'mouth', m) for m in CHANNELS['mouth']}
     assert all(m.startswith('side-') for m in side_mouths), sorted(side_mouths)
+    # E9 Phase 1: talk mouths are neutral frames, never part of an expression.
+    assert all(m in CHANNELS['mouth'] for m in TALK_MOUTHS), 'TALK_MOUTHS must be mouth variants'
+    assert not any(ch['mouth'] in TALK_MOUTHS for ch in PRESETS.values()), 'no preset may use a talk mouth'
+    assert all(map_variant('side', 'mouth', m).startswith('side-talk-') for m in ('talk-1', 'talk-2'))
     validate_poses()
     text = PARTS_TEMPLATE.read_text(encoding='utf-8')
     for shape in LIBRARY_ARM_SHAPES[1:]:  # 'rest' is the macro's default branch

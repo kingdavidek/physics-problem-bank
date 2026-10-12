@@ -198,7 +198,7 @@ When A1 ships, add a DPIA residual note: optional onboarding overlay, dismissibl
 
 ## 5. Content catalog
 
-Draft copy — David can tighten. Keep each line ≤ ~90 characters where possible. UK English.
+Draft copy — David can tighten. Keep each line ≤ ~90 characters where possible. UK English. (E9 Phase 3, 2026-10-05: the shipped lines live in `static/js/guide-catalog.js` and follow the voice guide in `docs/ZORP_CHARM.md` section 3.3; the tour lines below were updated to match, the origin lines are the original draft.)
 
 ### 5.1 Origin story (`story`, id `origin`)
 
@@ -242,18 +242,18 @@ Primary last step: **Let’s go**. Skip intro on every origin step.
 
 #### Daily (`qotd_page`)
 
-1. Today’s question card — “One question a day. That’s the Daily habit.”
+1. Today’s question card — “A new question every day, whenever suits you.”
 2. Streak / week board if visible — “Friends can see the week board. There is no public worldwide ranking.”
 
 #### Compete (`friend_leaderboard_page`)
 
 1. Board tabs — “This is friends only. Accuracy and effort among people you follow.”
-2. Challenges link if in chrome — “Challenges are optional. No DMs.”
+2. Challenges link if in chrome — “Challenges are optional. There is no chat.”
 
 #### Profile (`profile`)
 
-1. Streak / XP ring — “Your streak and XP. Missing a day can use a freeze if you have one.”
-2. `#milestones` — “Badges you earn. New ones get a little celebration.”
+1. Streak / XP ring — “Your streak and XP. If you miss a day, a streak skip can cover it.”
+2. `#milestones` — “Badges you earn. New ones get a little cheer.”
 3. Saved / revision if present — “Saved questions and your revision plan live here.”
 
 ### 5.3 Reward beats

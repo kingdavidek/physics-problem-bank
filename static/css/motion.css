@@ -82,8 +82,9 @@ html[data-motion="off"] .buddy-mascot [class*="zorp-slot--fx"] * { animation: no
 /* glow cheeks: the gold rouge at half opacity turns olive on the dark face plate, so dark themes glow rose instead */
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .buddy-mascot { --zorp-glow: #f9a8d4; } }
 :root[data-theme="dark"] .buddy-mascot { --zorp-glow: #f9a8d4; }
-/* E8 Phase 2: slots that swap with a short WAAPI squeeze/pop/fade (zorp-motion.js) pivot on their own centre. */
-.zorp-slot--cheeks, .zorp-slot--brows, .zorp-slot--mouth, .buddy-eye, .zorp-sp, .zorp-z, .zorp-h, .zorp-gl, .zorp-dr, .zorp-pp { transform-box: fill-box; transform-origin: 50% 50%; }
+/* E8 Phase 2: slots that swap with a short WAAPI squeeze/pop/fade (zorp-motion.js) pivot on their own centre.
+   E9 Phase 1: so does the temporary talk-mouth group (zorp-talk.js), which copies the mouth slot's view placement. */
+.zorp-slot--cheeks, .zorp-slot--brows, .zorp-slot--mouth, .zorp-slot--talk, .buddy-eye, .zorp-sp, .zorp-z, .zorp-h, .zorp-gl, .zorp-dr, .zorp-pp { transform-box: fill-box; transform-origin: 50% 50%; }
 .zorp-pp { transform-origin: 50% 100%; }
 .zorp-orb { transform-box: view-box; transform-origin: 32px 10px; }
 .zk { fill: none; stroke: var(--ink-800); stroke-linecap: round; }

@@ -31,13 +31,13 @@
         {% else %}
         <div class="empty-state">
             <span class="study-buddy-face pb-zorp-small" id="follow-empty-zorp" data-buddy-face data-face="nudge" data-zorp-autoplay="shrug" aria-hidden="true">{{ buddy_mascot() }}</span>
-            <h3>No users to show yet</h3>
+            <h3 data-zorp-voice="system:system_empty_state">No users to show yet</h3>
             {% if list_title == 'Followers' %}
-            <p>When someone follows {{ profile_user.display_handle }}, they will appear here.</p>
+            <p data-zorp-voice="system:system_empty_state">When someone follows {{ profile_user.display_handle }}, they will appear here.</p>
             {% else %}
-            <p>Find other learners and follow them to see their activity in your feed.</p>
+            <p data-zorp-voice="system:system_empty_state">Find other learners and follow them to see their activity in your feed.</p>
             {% endif %}
-            <a href="{{ url_for('site_search') }}" class="btn btn-primary">Find people</a>
+            <a href="{{ url_for('site_search') }}" class="btn btn-primary" data-zorp-voice="system:button_label">Find people</a>
         </div>
         {% endif %}
     </div>

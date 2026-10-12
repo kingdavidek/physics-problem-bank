@@ -27,8 +27,8 @@
 
     {% if step == 'hello' %}
     <div class="welcome-screen" id="welcome-screen-hello">
-        <h1 class="welcome-title">Hi, I’m Zorp.</h1>
-        <p class="welcome-copy">I live in Problem Bank and I’ll cheer you on.</p>
+        <h1 class="welcome-title" data-zorp-voice="zorp:welcome_line">Hi, I’m Zorp.</h1>
+        <p class="welcome-copy" data-zorp-voice="zorp:welcome_line">I live in Problem Bank and I’ll cheer you on.</p>
     </div>
     <form method="POST" action="{{ url_for('welcome_step') }}" id="welcome-hello-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -37,13 +37,13 @@
     <form method="POST" action="{{ url_for('welcome_step') }}" id="welcome-skip-form-hello">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="step" value="skip">
-        <button type="submit" class="btn btn-outline welcome-skip" id="welcome-skip">Skip for now</button>
+        <button type="submit" class="btn btn-outline welcome-skip" id="welcome-skip" data-zorp-voice="zorp:button_label:dismiss">Skip for now</button>
     </form>
     {% endif %}
 
     {% if step == 'level' %}
     <div class="welcome-screen" id="welcome-screen-level">
-        <h1 class="welcome-title">What do you want to practise?</h1>
+        <h1 class="welcome-title" data-zorp-voice="zorp:welcome_line">What do you want to practise?</h1>
         <form method="POST" action="{{ url_for('welcome_step') }}" class="welcome-card-grid">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="step" value="level">
@@ -58,13 +58,13 @@
     <form method="POST" action="{{ url_for('welcome_step') }}" id="welcome-skip-form-level">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="step" value="skip">
-        <button type="submit" class="btn btn-outline welcome-skip" id="welcome-skip">Skip for now</button>
+        <button type="submit" class="btn btn-outline welcome-skip" id="welcome-skip" data-zorp-voice="zorp:button_label:dismiss">Skip for now</button>
     </form>
     {% endif %}
 
     {% if step == 'topic' %}
     <div class="welcome-screen" id="welcome-screen-topic">
-        <h1 class="welcome-title">Pick a first topic</h1>
+        <h1 class="welcome-title" data-zorp-voice="zorp:welcome_line">Pick a first topic</h1>
         {% if track %}<p class="welcome-copy">{{ track.label }}</p>{% endif %}
         <form method="POST" action="{{ url_for('welcome_step') }}" class="welcome-card-grid" id="welcome-topic-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -78,22 +78,22 @@
             {% endfor %}
             <button type="submit" name="topic" value="{{ welcome_surprise }}" class="welcome-card welcome-card--surprise">
                 <span class="welcome-card-icon" aria-hidden="true">{{ icon('target', size=28) }}</span>
-                <span class="welcome-card-label">Surprise me</span>
+                <span class="welcome-card-label" data-zorp-voice="zorp:button_label">Surprise me</span>
             </button>
         </form>
     </div>
     <form method="POST" action="{{ url_for('welcome_step') }}" id="welcome-skip-form-topic">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="step" value="skip">
-        <button type="submit" class="btn btn-outline welcome-skip" id="welcome-skip">Skip for now</button>
+        <button type="submit" class="btn btn-outline welcome-skip" id="welcome-skip" data-zorp-voice="zorp:button_label:dismiss">Skip for now</button>
     </form>
     {% endif %}
 
     {% if step == 'ready' %}
     <div class="welcome-screen" id="welcome-screen-ready">
-        <h1 class="welcome-title">{% if chosen_topic %}{{ chosen_topic_label }}{% else %}You’re ready{% endif %}</h1>
+        <h1 class="welcome-title" data-zorp-voice="zorp:welcome_line">{% if chosen_topic %}{{ chosen_topic_label }}{% else %}You’re ready{% endif %}</h1>
         {% if track %}<p class="welcome-copy">{{ track.label }}</p>{% endif %}
-        <p class="welcome-copy">When you get one right, I’ll do a little dance.</p>
+        <p class="welcome-copy" data-zorp-voice="zorp:welcome_line">Get one right and I’ll cheer. Finish a lesson and I’ll dance.</p>
     </div>
     <form method="POST" action="{{ url_for('index') }}" id="welcome-ready-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -107,13 +107,13 @@
     <form method="POST" action="{{ url_for('welcome_step') }}" id="welcome-skip-form-ready">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="step" value="skip">
-        <button type="submit" class="btn btn-outline welcome-skip" id="welcome-skip">Skip for now</button>
+        <button type="submit" class="btn btn-outline welcome-skip" id="welcome-skip" data-zorp-voice="zorp:button_label:dismiss">Skip for now</button>
     </form>
     {% endif %}
 
 </section>
 
-<script src="{{ url_for('static', filename='js/welcome.js') }}?v=3" defer></script>
+<script src="{{ url_for('static', filename='js/welcome.js') }}?v=5" defer></script>
 {% endblock %}
 
 {% block sticky_footer %}

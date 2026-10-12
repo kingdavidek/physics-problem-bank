@@ -214,6 +214,7 @@ const PROMPT_A = {
   action_label: 'Browse topics',
   task_mark: '2026-09-27.q1.d0.l.m0',
 };
+const PROMPT_N = Object.assign({}, PROMPT_A, { type: 'nudge', message: 'One quick question?', detail: 'Buddy' });
 const PROMPT_B = Object.assign({}, PROMPT_A, { task_mark: '2026-09-27.q2.d0.l.m0' });
 
 scenario('prompt shows the card on initial load', () => {
@@ -341,6 +342,11 @@ function zorpStub(known, negative) {
     bind: () => null,
     idle: () => true,
     play: () => Promise.resolve(true),
+    // E9 Phase 1: the talk mouth (zorp-talk.js); a runtime without these keeps working (see the scenario below).
+    talkCalls: [],
+    hushCalls: [],
+    talk(o) { this.talkCalls.push(o); return Promise.resolve(true); },
+    hush(el) { this.hushCalls.push(el); },
   };
 }
 
@@ -412,6 +418,48 @@ scenario('E8 Phase 5: a prompt never draws a negative face even if the table wer
   const zorp = zorpStub(['nudge', 'heads-up'], ['heads-up']);
   loadPage({ prompt: PROMPT_A, zorp });
   assert.deepStrictEqual(zorp.calls, ['nudge'], 'negative valence is refused, the resting face is used');
+});
+
+scenario('E9 Phase 1: the card talks once when it appears (cap 1200 ms) and every exit hushes', () => {
+  const zorp = zorpStub(['nudge', 'streak_risk']);
+  const page = loadPage({ prompt: PROMPT_N, zorp });
+  assert.strictEqual(page.card.hidden, false);
+  assert.strictEqual(zorp.talkCalls.length, 1, 'once per show');
+  assert.strictEqual(zorp.talkCalls[0].max, 1200);
+  assert.strictEqual(zorp.talkCalls[0].text, PROMPT_N.message);
+  assert.strictEqual(zorp.talkCalls[0].el, page.faceEl);
+  assert.strictEqual(zorp.hushCalls.length, 0);
+  clickDismiss(page);
+  assert.strictEqual(zorp.hushCalls.length, 1, 'dismiss hushes');
+  const zorp2 = zorpStub(['nudge', 'streak_risk']);
+  const page2 = loadPage({ prompt: PROMPT_N, zorp: zorp2 });
+  clickPrimary(page2);
+  assert.strictEqual(zorp2.hushCalls.length, 1, 'the action hushes');
+});
+
+scenario('Final audit B1: the streak reminder (streak_risk) is shown but never spoken; other types still talk', () => {
+  const zorp = zorpStub(['nudge', 'streak_risk']);
+  const page = loadPage({ prompt: PROMPT_A, zorp });
+  assert.strictEqual(page.card.hidden, false, 'the bubble itself still shows');
+  assert.strictEqual(page.root.getAttribute('data-buddy-state'), 'card');
+  assert.strictEqual(zorp.talkCalls.length, 0, 'charm never reacts to absence: no talk for streak_risk');
+  assert.doesNotThrow(() => clickDismiss(page));
+  const zorp2 = zorpStub(['nudge', 'streak_risk']);
+  loadPage({ prompt: PROMPT_N, zorp: zorp2 });
+  assert.strictEqual(zorp2.talkCalls.length, 1, 'a nudge still talks');
+});
+
+scenario('E9 Phase 1: a runtime without talk/hush still shows, dismisses and acts', () => {
+  const zorp = zorpStub(['nudge', 'streak_risk']);
+  delete zorp.talk;
+  delete zorp.hush;
+  const page = loadPage({ prompt: PROMPT_A, zorp });
+  assert.strictEqual(page.card.hidden, false);
+  assert.doesNotThrow(() => clickDismiss(page));
+  const page2 = loadPage({ prompt: PROMPT_A, zorp: Object.assign(zorpStub(['nudge']), { talk: undefined, hush: undefined }) });
+  assert.doesNotThrow(() => clickPrimary(page2));
+  // no pbZorp at all: nothing to call
+  assert.doesNotThrow(() => clickDismiss(loadPage({ prompt: PROMPT_A })));
 });
 
 const failed = results.filter((r) => !r[1]);

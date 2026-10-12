@@ -171,22 +171,22 @@
     <section class="section-panel settings-section">
         <div class="section-panel-header">Motion</div>
         <div class="section-panel-body">
-            <p class="page-intro settings-intro">Less motion — calmer animations. Applies across practice, lessons, and the installed app.</p>
+            <p class="page-intro settings-intro" data-zorp-voice="system:system_settings">Less motion — calmer animations. Applies across practice, lessons, and the installed app.</p>
             <div class="form-group">
                 <label class="privacy-radio">
                     <input type="radio" name="motion_preference" value="system"
                            {% if settings.motion_preference|default('system') == 'system' %}checked{% endif %}>
-                    <span><strong>Match my device</strong> — follow your device's reduce-motion setting</span>
+                    <span data-zorp-voice="system:system_settings"><strong>Match your device</strong> — follow your device's reduce-motion setting</span>
                 </label>
                 <label class="privacy-radio">
                     <input type="radio" name="motion_preference" value="reduced"
                            {% if settings.motion_preference == 'reduced' %}checked{% endif %}>
-                    <span><strong>Less motion</strong> — calmer, minimal animations</span>
+                    <span data-zorp-voice="system:system_settings"><strong>Less motion</strong> — calmer, minimal animations</span>
                 </label>
                 <label class="privacy-radio">
                     <input type="radio" name="motion_preference" value="off"
                            {% if settings.motion_preference == 'off' %}checked{% endif %}>
-                    <span><strong>Off</strong> — no animations</span>
+                    <span data-zorp-voice="system:system_settings"><strong>Off</strong> — no animations</span>
                 </label>
             </div>
         </div>
@@ -195,18 +195,37 @@
     <section class="section-panel settings-section">
         <div class="section-panel-header">Sound &amp; feedback</div>
         <div class="section-panel-body settings-switch-group">
-            <p class="page-intro settings-intro">Short correct/incorrect sounds when you check answers. Off by default — useful in class when muted.</p>
+            <p class="page-intro settings-intro" data-zorp-voice="system:system_settings">Short correct/incorrect sounds when you check answers. Off by default — useful in class when muted.</p>
             {{ settings_switch('sound_enabled', 'Play sound effects for correct and incorrect answers', settings.sound_enabled) }}
-            <p class="profile-empty settings-note">Toggle on, then tap Check on a practice question to hear feedback. A short preview plays when you turn this on.</p>
+            <p class="profile-empty settings-note" data-zorp-voice="system:system_settings">Toggle on, then tap Check on a practice question to hear feedback. A short preview plays when you turn this on.</p>
+        </div>
+    </section>
+
+    <section class="section-panel settings-section">
+        <div class="section-panel-header" id="zorp-sound-label">Zorp’s sounds</div>
+        <div class="section-panel-body">
+            <p class="page-intro settings-intro" data-zorp-voice="system:system_settings">Short, quiet sounds when Zorp celebrates. Best with headphones. They play only with full motion.</p>
+            <div class="form-group" id="zorp-sound-group" role="radiogroup" aria-labelledby="zorp-sound-label">
+                <label class="privacy-radio">
+                    <input type="radio" name="zorp_sound" value="off"
+                           {% if settings.zorp_sound != 'celebrations' %}checked{% endif %}>
+                    <span data-zorp-voice="system:system_settings"><strong>Off</strong>: Zorp is silent</span>
+                </label>
+                <label class="privacy-radio">
+                    <input type="radio" name="zorp_sound" value="celebrations"
+                           {% if settings.zorp_sound == 'celebrations' %}checked{% endif %}>
+                    <span data-zorp-voice="system:system_settings"><strong>Celebrations</strong>: a short sound when Zorp celebrates</span>
+                </label>
+            </div>
         </div>
     </section>
 
     <section class="section-panel settings-section">
         <div class="section-panel-header">Guide</div>
         <div class="section-panel-body">
-            <p class="page-intro settings-intro">Zorp’s origin story plays once. Replay it if you want to see it again — tours you have already skipped stay skipped.</p>
+            <p class="page-intro settings-intro" data-zorp-voice="system:system_settings">Zorp’s origin story plays once. Replay it if you want to see it again — tours you have already skipped stay skipped.</p>
             <button type="submit" name="action" value="replay_guide_intro" class="btn btn-outline" id="guide-replay-intro">Replay intro</button>
-            <p class="page-intro settings-intro">Replay welcome shows the first-day screens again.</p>
+            <p class="page-intro settings-intro" data-zorp-voice="system:system_settings">Replay welcome shows the first-day screens again.</p>
             <button type="submit" name="action" value="replay_welcome" class="btn btn-outline" id="guide-replay-welcome">Replay welcome</button>
         </div>
     </section>

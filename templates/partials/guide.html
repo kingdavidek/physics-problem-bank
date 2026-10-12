@@ -6,13 +6,13 @@
         <span class="guide-face study-buddy-face" data-guide-face data-buddy-face data-face="nudge" aria-hidden="true">{{ buddy_mascot(look=buddy_look) }}</span>
         <span class="guide-medal" data-guide-medal aria-hidden="true"></span>
         <div class="guide-speech">
-            <h2 id="guide-heading" class="guide-heading">Zorp</h2>
+            <h2 id="guide-heading" class="guide-heading" data-zorp-voice="zorp:heading">Zorp</h2>
             <p id="guide-bubble" class="guide-bubble" data-guide-bubble aria-live="polite"></p>
-            <p class="guide-bot-note">A Problem Bank bot — not a person.</p>
+            <p class="guide-bot-note" data-zorp-voice="zorp:bot_note">A Problem Bank bot, not a person.</p>
         </div>
         <div class="guide-actions">
-            <button type="button" class="btn btn-primary" data-guide-primary>Continue</button>
-            <button type="button" class="btn btn-outline" data-guide-skip>Skip intro</button>
+            <button type="button" class="btn btn-primary" data-guide-primary data-zorp-voice="zorp:button_label">Continue</button>
+            <button type="button" class="btn btn-outline" data-guide-skip data-zorp-voice="zorp:button_label:dismiss">Skip intro</button>
         </div>
     </div>
 </div>

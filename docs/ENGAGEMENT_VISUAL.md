@@ -13,7 +13,7 @@ Avatar v1 emoji/colours below are the live picker list. Buddy uses the custom SV
 Encouraging tutor, not childish and not corporate.
 
 - Short, UK English. One hook line, then a clear action.
-- E1 copy already shipped: “The Problem Bank bot challenges you!”
+- E1 copy already shipped: “The Problem Bank bot challenges you!” (E9 Phase 3: now “The Problem Bank bot has a challenge for you.”, in the system voice)
 - Always label automated accounts as **bots / not a person**. No DMs. No extra PII.
 
 ## 2. Colour
@@ -83,7 +83,7 @@ Unknown tokens → `idle`. Gallery: `/styleguide` Poses / Costumes grids. **Not*
 ## 5. Safeguarding (already in E1)
 
 - `@problem_bot` is reserved; cannot register or log in as the bot
-- Profile copy: “A Problem Bank bot — not a person.”
+- Profile copy: “A Problem Bank bot, not a person.” (E9 Phase 3: no dash; the same words in the Guide, the feed card and `models/bot.py`)
 - Friend-only leaderboards remain the E3 competition default (no global ranking of minors)
 
 ---

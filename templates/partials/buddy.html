@@ -38,6 +38,10 @@
   the root, head, arms, feet and shadow, and the pose's arm shapes (zorp_parts.html arm). A pose with a default
   view (bow, sit) draws it unless `view` is given (view='front' forces the front). The default render carries no pose markup at all.
 
+  E9 Phase 2: the soft body (docs/ZORP_CHARM.md 3.2). g.zorp-ride wraps both antennae and g.zorp-hatride wraps the hat (only
+  drawn when the look has one), so the beat engine can shift them with the body when it squashes and stretches. Plain
+  groups with no attributes beyond the class: the pixels of every still are unchanged.
+
   E8 Phase 2: fx listed in zorp_rig.FX_FACE (sweat, tear-shine, blush-steam) are drawn in
   g.zorp-slot--fx-face inside the face group, so they move with the head; every other fx stays
   in the ambient slot.
@@ -69,7 +73,8 @@
   {{ _arm(vs, 'buddy-arm--l', 'armL', '15.6', 'l', pa[0]) }}
   {{ _arm(vs, 'buddy-arm--r', 'armR', '48.4', 'r', pa[1]) }}
   <g class="buddy-head"{{ _st(vs, 'head') }}>
-  {# Antennae #}
+  {# Antennae (E9 Phase 2: g.zorp-ride carries the soft body's shift; the antennae keep their own lagged rotation) #}
+  <g class="zorp-ride">
   <g class="buddy-antenna buddy-antenna--l"{{ _st(vs, 'antL') }}>
     <path d="M24 16L17 6" fill="none" stroke="var(--zorp-limb, var(--brand-700))" stroke-width="2.4" stroke-linecap="round"/>
     <circle cx="16" cy="5.2" r="3.1" fill="var(--zorp-accent, var(--brand-400))"/>
@@ -77,6 +82,7 @@
   <g class="buddy-antenna buddy-antenna--r"{{ _st(vs, 'antR') }}>
     <path d="M40 16L47 6" fill="none" stroke="var(--zorp-limb, var(--brand-700))" stroke-width="2.4" stroke-linecap="round"/>
     <circle cx="48" cy="5.2" r="3.1" fill="var(--zorp-accent, var(--brand-400))"/>
+  </g>
   </g>
   {# Body (inside head so E6 nod/shake still move the whole blob) #}
   <g class="buddy-body">
@@ -92,7 +98,7 @@
     <g class="zorp-slot--brows"{{ _st(vs, 'brows') }}>{{ brows(p.brows) }}</g>
     <g class="zorp-slot--mouth"{{ _st(vs, 'mouth') }}>{{ mouth(p.mouth) }}</g>
     <g class="zorp-slot--fx-face"{{ _st(vs, 'fxFace') }}>{% if p.fx in zorp_rig.FX_FACE %}{{ fx(p.fx) }}{% endif %}</g>
-  </g>{% if look.hat %}{{ zorp_hat(look.hat, 32, 14.5) }}{% endif %}
+  </g>{% if look.hat %}<g class="zorp-hatride">{{ zorp_hat(look.hat, 32, 14.5) }}</g>{% endif %}
   </g>{# /buddy-head #}
   {# Feet — outside head so nod/shake leave them planted; painted after head to overlap the body #}
   <g class="buddy-foot buddy-foot--l"{{ _st(vs, 'footL') }}>
