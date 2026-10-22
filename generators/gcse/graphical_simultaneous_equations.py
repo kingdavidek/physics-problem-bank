@@ -4,6 +4,7 @@ GCSE Maths – Graphical Simultaneous Equations
 Graded practice variants return (question, solution, hint, marks, raw)
 or an MCQ 6-tuple (question, solution, hint, marks, options, correct_letter).
 """
+from generators.shared.rounding import round_half_up as round
 import math
 import random
 from generators.shared.utils import make_problem

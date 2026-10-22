@@ -1,7 +1,9 @@
+from generators.shared.rounding import round_half_up as round, fmt_dp
 import random
 import math
+from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 
-from generators.shared.utils import make_problem, problem_from_choice_output
+from generators.shared.utils import make_problem, problem_from_choice_output, signed_term, bracket_neg
 from models import svg_kit
 from generators.shared.variant_utils import (
     select_tier_variants,
@@ -19,12 +21,66 @@ from generators.shared.variant_utils import (
 # ------------------------------------------------------------
 
 
-def _number_fmt(x, dp=2):
-    """Format a decimal without unnecessary trailing zeros."""
+def _round_half_up(x, dp=2):
+    """School rounding: halves round up (5.625 -> 5.63), never to even.
+
+    Works on the shortest decimal representation of ``x`` so that values such as
+    2.675 round the way a pupil expects rather than via binary noise.
+    """
+    try:
+        d = Decimal(repr(float(x))) if not isinstance(x, Decimal) else x
+    except (InvalidOperation, ValueError, TypeError):
+        return x
+    q = Decimal(1).scaleb(-dp)
+    return d.quantize(q, rounding=ROUND_HALF_UP)
+
+
+def _number_fmt(x, dp=None):
+    """Format a decimal without unnecessary trailing zeros (school half-up rounding).
+
+    ``dp=None`` keeps a short terminating decimal exactly (-0.25, 3.275, 0.04682)
+    and otherwise rounds half up to 2 d.p.; an explicit ``dp`` always rounds to
+    that many places, which is what a question with a stated accuracy must pass.
+    """
     if isinstance(x, int):
         return str(x)
-    s = f"{x:.{dp}f}"
-    return s.rstrip('0').rstrip('.')
+    if dp is None:
+        exact = _terminating_decimal(x)
+        if exact is not None:
+            s = format(exact, 'f')
+            return '0' if s in ('-0', '') else s
+        dp = 2
+    r = _round_half_up(x, dp)
+    if not isinstance(r, Decimal):
+        return str(r)
+    s = format(r, 'f')
+    if '.' in s:
+        s = s.rstrip('0').rstrip('.')
+    if s in ('-0', ''):
+        s = '0'
+    return s
+
+
+def _dp_note(value, dp=2):
+    """Question suffix for an answer that has to be rounded (non-terminating decimals only)."""
+    if isinstance(value, int) or _terminating_decimal(value) is not None:
+        return ""
+    return f" Give your answer correct to {dp} decimal places."
+
+
+def _terminating_decimal(value, max_dp=6):
+    """Return ``value`` as an exact Decimal when it is a short terminating decimal, else None."""
+    try:
+        d = Decimal(repr(round(float(value), 10)))
+    except (InvalidOperation, ValueError, TypeError, OverflowError):
+        return None
+    d = d.normalize()
+    exp = d.as_tuple().exponent
+    if isinstance(exp, int) and -max_dp <= exp <= 0:
+        # Reject recurring decimals that only look short after rounding to 10 places.
+        if abs(float(d) - float(value)) <= 1e-9 * max(1.0, abs(float(value))):
+            return d
+    return None
 
 
 def _number_sf_value(n, sf):
@@ -363,7 +419,7 @@ def _number_inter_percentage_increase():
     pct = random.randint(3, 38)
     ans = amount * (1 + pct / 100)
     q = rf"Increase {amount} by {pct}%."
-    s = rf"The multiplier for an increase of {pct}% is {1 + pct/100}. So {amount} × {1 + pct/100} = <strong>{_number_fmt(ans)}</strong>."
+    s = rf"The multiplier for an increase of {pct}% is {_number_fmt(round(1 + pct/100, 6))}. So {amount} × {_number_fmt(round(1 + pct/100, 6))} = <strong>{_number_fmt(ans)}</strong>."
     hint = "Use the multiplier 1 + percentage/100."
     return q, s, hint, 2, ans
 def _number_inter_percentage_decrease():
@@ -371,7 +427,7 @@ def _number_inter_percentage_decrease():
     pct = random.randint(3, 38)
     ans = amount * (1 - pct / 100)
     q = rf"Decrease {amount} by {pct}%."
-    s = rf"The multiplier for a decrease of {pct}% is {1 - pct/100}. So {amount} × {1 - pct/100} = <strong>{_number_fmt(ans)}</strong>."
+    s = rf"The multiplier for a decrease of {pct}% is {_number_fmt(round(1 - pct/100, 6))}. So {amount} × {_number_fmt(round(1 - pct/100, 6))} = <strong>{_number_fmt(ans)}</strong>."
     hint = "Use the multiplier 1 - percentage/100."
     return q, s, hint, 2, ans
 def _number_inter_reverse_percentage_increase():
@@ -379,7 +435,7 @@ def _number_inter_reverse_percentage_increase():
     original = random.randint(15, 400) * 10
     final = round(original * (1 + pct / 100), 2)
     q = rf"A price after a {pct}% increase is £{_number_fmt(final)}. Find the original price."
-    s = rf"After a {pct}% increase, the multiplier is {1 + pct/100}. Original = {_number_fmt(final)} ÷ {1 + pct/100} = <strong>£{_number_fmt(original)}</strong>."
+    s = rf"After a {pct}% increase, the multiplier is {_number_fmt(round(1 + pct/100, 6))}. Original = {_number_fmt(final)} ÷ {_number_fmt(round(1 + pct/100, 6))} = <strong>£{_number_fmt(original)}</strong>."
     hint = "For reverse percentages, divide by the multiplier."
     return q, s, hint, 3, original
 def _number_inter_reverse_percentage_decrease():
@@ -387,16 +443,16 @@ def _number_inter_reverse_percentage_decrease():
     original = random.randint(20, 350) * 10
     final = round(original * (1 - pct / 100), 2)
     q = rf"A price after a {pct}% decrease is £{_number_fmt(final)}. Find the original price."
-    s = rf"After a {pct}% decrease, the multiplier is {1 - pct/100}. Original = {_number_fmt(final)} ÷ {1 - pct/100} = <strong>£{_number_fmt(original)}</strong>."
+    s = rf"After a {pct}% decrease, the multiplier is {_number_fmt(round(1 - pct/100, 6))}. Original = {_number_fmt(final)} ÷ {_number_fmt(round(1 - pct/100, 6))} = <strong>£{_number_fmt(original)}</strong>."
     hint = "The final amount is less than 100% of the original. Divide by the decimal multiplier."
     return q, s, hint, 3, original
 def _number_inter_repeated_percentage_change():
     amount = random.randint(15, 150) * 10
     pct1 = random.randint(5, 25)
     pct2 = random.randint(4, 30)
-    ans = amount * (1 + pct1/100) * (1 - pct2/100)
-    q = rf"An amount of £{amount} is increased by {pct1}% and then decreased by {pct2}%. Find the final amount."
-    s = rf"Use successive multipliers: {amount} × {1+pct1/100} × {1-pct2/100} = <strong>£{_number_fmt(ans)}</strong>."
+    ans = round(amount * (1 + pct1/100) * (1 - pct2/100), 2)
+    q = rf"An amount of £{amount} is increased by {pct1}% and then decreased by {pct2}%. Find the final amount, to the nearest penny."
+    s = rf"Use successive multipliers: {amount} × {_number_fmt(1+pct1/100, 4)} × {_number_fmt(1-pct2/100, 4)} = <strong>£{fmt_dp(ans, 2)}</strong>."
     hint = "Apply the first multiplier, then apply the second multiplier to the new amount."
     return q, s, hint, 3, ans
 def _number_inter_error_interval_whole():
@@ -527,7 +583,7 @@ def _number_inter_calculate_to_sf():
     ans = _number_sf_value(raw, sf)
     q = rf"Work out {a} × {b}. Give your answer to {sf} significant figures."
     s = (
-        rf"{a} × {b} = {raw:.4f}<br>"
+        rf"{a} × {b} = {fmt_dp(raw, 4)}<br>"
         rf"Rounded to {sf} significant figures: <strong>{ans}</strong>"
     )
     hint = "Do the calculation first, then round — not the other way round."
@@ -558,7 +614,7 @@ def _number_diff_compound_interest():
     years = random.randint(2, 8)
     ans = principal * ((1 + rate/100) ** years)
     q = rf"£{principal} is invested at {rate}% compound interest per year for {years} years. Find the final amount to the nearest penny."
-    s = rf"Use compound interest: {principal} × \((1 + {rate}/100)^{years}\) = {principal} × {1+rate/100}^{years} = <strong>£{ans:.2f}</strong>."
+    s = rf"Use compound interest: {principal} × \((1 + {rate}/100)^{years}\) = {principal} × {_number_fmt(round(1+rate/100, 6))}^{years} = <strong>£{fmt_dp(ans, 2)}</strong>."
     hint = "Use the percentage multiplier repeatedly, or raise it to the power of the number of years."
     return q, s, hint, 3, round(ans, 2)
 def _number_diff_depreciation():
@@ -567,7 +623,7 @@ def _number_diff_depreciation():
     years = random.randint(2, 6)
     ans = value * ((1 - rate/100) ** years)
     q = rf"A car worth £{value} depreciates by {rate}% each year for {years} years. Find its value after {years} years to the nearest pound."
-    s = rf"Depreciation uses the multiplier {1-rate/100}. So value = {value} × {1-rate/100}^{years} = <strong>£{round(ans)}</strong>."
+    s = rf"Depreciation uses the multiplier {_number_fmt(round(1-rate/100, 6))}. So value = {value} × {_number_fmt(round(1-rate/100, 6))}^{years} = <strong>£{round(ans)}</strong>."
     hint = "A percentage decrease uses a multiplier below 1. Apply it once for each year."
     return q, s, hint, 3, round(ans)
 def _number_diff_reverse_compound():
@@ -575,20 +631,21 @@ def _number_diff_reverse_compound():
     rate = random.randint(3, 15)
     years = random.randint(2, 6)
     final = round(original * ((1 + rate/100) ** years), 2)
-    q = rf"After {years} years of compound growth at {rate}% per year, an investment is worth £{final:.2f}. Find the original investment to the nearest penny."
-    s = rf"Reverse the compound multiplier: original = {final:.2f} ÷ \({1+rate/100}^{years}\) = <strong>£{original:.2f}</strong>."
+    q = rf"After {years} years of compound growth at {rate}% per year, an investment is worth £{fmt_dp(final, 2)}. Find the original investment to the nearest penny."
+    s = rf"Reverse the compound multiplier: original = {fmt_dp(final, 2)} ÷ \({_number_fmt(round(1+rate/100, 6))}^{years}\) = <strong>£{fmt_dp(original, 2)}</strong>."
     hint = "Divide by the compound multiplier instead of multiplying."
     return q, s, hint, 4, original
 def _number_diff_standard_form_context():
     pop = round(random.uniform(2.0, 8.9), 1)
     count = random.randint(2, 9)
-    total_coeff = pop * count
+    total_coeff = round(pop * count, 1)
+    full_total = total_coeff
     power = 6
     if total_coeff >= 10:
-        total_coeff /= 10
+        total_coeff = round(total_coeff / 10, 2)
         power += 1
     q = rf"One city has a population of \({pop} \times 10^6\). Another {count} identical cities have the same population. Write the total population of the {count} cities in standard form."
-    s = rf"Total = {count} × {pop} × 10^6 = {pop*count} × 10^6 = <strong>{_number_fmt(total_coeff)} × 10^{power}</strong>."
+    s = rf"Total = {count} × {pop} × 10^6 = {_number_fmt(full_total)} × 10^6 = <strong>{_number_fmt(total_coeff)} × 10^{power}</strong>."
     hint = "Multiply the ordinary front numbers first, then adjust to standard form if the front number is 10 or more."
     return q, s, hint, 3, _number_standard_form_answer(total_coeff, power)
 
@@ -631,8 +688,8 @@ def _number_diff_bounds_density():
     volume = random.randint(8, 30)
     max_density = (mass + 0.5) / (volume - 0.5)
     min_density = (mass - 0.5) / (volume + 0.5)
-    q = rf"Mass is {mass} g and volume is {volume} cm³, both to the nearest whole unit. Find the lower and upper bounds for density in g/cm³."
-    s = rf"Density = mass ÷ volume. Minimum density uses lowest mass and highest volume: ({mass-0.5}) ÷ ({volume+0.5}) = <strong>{min_density:.3f}</strong>. Maximum density uses highest mass and lowest volume: ({mass+0.5}) ÷ ({volume-0.5}) = <strong>{max_density:.3f}</strong>."
+    q = rf"Mass is {mass} g and volume is {volume} cm³, both to the nearest whole unit. Find the lower and upper bounds for density in g/cm³, correct to 3 decimal places."
+    s = rf"Density = mass ÷ volume. Minimum density uses lowest mass and highest volume: ({mass-0.5}) ÷ ({volume+0.5}) = <strong>{fmt_dp(min_density, 3)}</strong>. Maximum density uses highest mass and lowest volume: ({mass+0.5}) ÷ ({volume-0.5}) = <strong>{fmt_dp(max_density, 3)}</strong>."
     hint = "For a fraction, the maximum uses a large numerator and small denominator."
     return q, s, hint, 4, _number_pair_answer(round(min_density, 3), round(max_density, 3), 'Minimum density', 'Maximum density', 'to')
 
@@ -704,7 +761,7 @@ def _number_diff_percentage_error():
     error = abs(estimate - actual)
     pct_error = error / actual * 100
     q = rf"An estimate is {estimate}, but the actual value is {actual}. Find the percentage error to 1 decimal place."
-    s = rf"Percentage error = \(\frac{{\text{{error}}}}{{\text{{actual}}}} \times 100\). Error = |{estimate} − {actual}| = {error}. So percentage error = {error} ÷ {actual} × 100 = <strong>{pct_error:.1f}%</strong>."
+    s = rf"Percentage error = \(\frac{{\text{{error}}}}{{\text{{actual}}}} \times 100\). Error = |{estimate} − {actual}| = {error}. So percentage error = {error} ÷ {actual} × 100 = <strong>{fmt_dp(pct_error, 1)}%</strong>."
     hint = "Use absolute error divided by actual value, then multiply by 100."
     return q, s, hint, 3, round(pct_error, 1)
 def _number_diff_best_value():
@@ -716,11 +773,11 @@ def _number_diff_best_value():
     unit1 = price1 / items1
     unit2 = price2 / items2
     best = 'Pack A' if unit1 < unit2 else 'Pack B'
-    label_a = f'Pack A ({items1} items for £{price1:.2f})'
-    label_b = f'Pack B ({items2} items for £{price2:.2f})'
+    label_a = f'Pack A ({items1} items for £{fmt_dp(price1, 2)})'
+    label_b = f'Pack B ({items2} items for £{fmt_dp(price2, 2)})'
     correct = 'A' if best == 'Pack A' else 'B'
-    q = rf"Pack A contains {items1} items for £{price1:.2f}. Pack B contains {items2} items for £{price2:.2f}. Which pack is better value?"
-    s = rf"Compare unit prices. Pack A: £{price1:.2f} ÷ {items1} = £{unit1:.2f} per item. Pack B: £{price2:.2f} ÷ {items2} = £{unit2:.2f} per item. The better value is <strong>{best}</strong>."
+    q = rf"Pack A contains {items1} items for £{fmt_dp(price1, 2)}. Pack B contains {items2} items for £{fmt_dp(price2, 2)}. Which pack is better value?"
+    s = rf"Compare unit prices. Pack A: £{fmt_dp(price1, 2)} ÷ {items1} = £{fmt_dp(unit1, 2)} per item. Pack B: £{fmt_dp(price2, 2)} ÷ {items2} = £{fmt_dp(unit2, 2)} per item. The better value is <strong>{best}</strong>."
     hint = "Find the cost per one item for each pack."
     return q, s, hint, 3, compare_choice_payload(label_a, label_b, correct)
 
@@ -732,9 +789,9 @@ def _number_diff_iterative_bounds():
     q = rf"Find the two consecutive tenths that \(\sqrt{{{n}}}\) lies between."
     s = (
         rf"Square consecutive tenths near \(\sqrt{{{n}}}\): "
-        rf"\({lower:.1f}^2 = {lower**2:.2f}\) and \({upper:.1f}^2 = {upper**2:.2f}\). "
-        rf"Since \({lower**2:.2f} &lt; {n} &lt; {upper**2:.2f}\), "
-        rf"\(\sqrt{{{n}}}\) lies between <strong>{lower:.1f} and {upper:.1f}</strong>."
+        rf"\({fmt_dp(lower, 1)}^2 = {fmt_dp(lower**2, 2)}\) and \({fmt_dp(upper, 1)}^2 = {fmt_dp(upper**2, 2)}\). "
+        rf"Since \({fmt_dp(lower**2, 2)} &lt; {n} &lt; {fmt_dp(upper**2, 2)}\), "
+        rf"\(\sqrt{{{n}}}\) lies between <strong>{fmt_dp(lower, 1)} and {fmt_dp(upper, 1)}</strong>."
     )
     hint = "Square nearby decimal values until the original number is between them."
     return q, s, hint, 3, _number_pair_answer(lower, upper, 'Lower bound', 'Upper bound', 'to')
@@ -750,13 +807,13 @@ def _number_diff_bounds_speed():
     min_speed = (dist - 0.5) / (hours + 0.05)
     q = (
         rf"A journey of {dist} km (nearest km) takes {hours} hours (nearest 0.1 h). "
-        rf"Find the maximum and minimum possible average speed in km/h."
+        rf"Find the maximum and minimum possible average speed in km/h, correct to 2 decimal places."
     )
     s = (
         rf"Maximum speed uses upper bound distance and lower bound time:<br>"
-        rf"({dist + 0.5}) ÷ ({hours - 0.05:.1f}) = <strong>{max_speed:.2f} km/h</strong><br>"
+        rf"({dist + 0.5}) ÷ ({fmt_dp(hours - 0.05, 2)}) = <strong>{fmt_dp(max_speed, 2)} km/h</strong><br>"
         rf"Minimum speed uses lower bound distance and upper bound time:<br>"
-        rf"({dist - 0.5}) ÷ ({hours + 0.05:.1f}) = <strong>{min_speed:.2f} km/h</strong>"
+        rf"({dist - 0.5}) ÷ ({fmt_dp(hours + 0.05, 2)}) = <strong>{fmt_dp(min_speed, 2)} km/h</strong>"
     )
     hint = "Speed = distance ÷ time. Fastest speed uses the largest distance and shortest time."
     return q, s, hint, 4, _number_pair_answer(round(min_speed, 2), round(max_speed, 2), 'Minimum speed', 'Maximum speed', 'to')
@@ -787,8 +844,8 @@ def _number_diff_salary_percentage_chain():
         rf"from the new salary. Find the amount received after tax, to the nearest pound."
     )
     s = (
-        rf"After rise: {salary} × {1 + rise/100} = £{_number_fmt(after_rise)}<br>"
-        rf"After tax: £{_number_fmt(after_rise)} × {1 - tax/100} = <strong>£{round(after_tax)}</strong>"
+        rf"After rise: {salary} × {_number_fmt(round(1 + rise/100, 6))} = £{_number_fmt(after_rise)}<br>"
+        rf"After tax: £{_number_fmt(after_rise)} × {_number_fmt(round(1 - tax/100, 6))} = <strong>£{round(after_tax)}</strong>"
     )
     hint = "Apply each percentage change with its own multiplier, in the order given."
     return q, s, hint, 4, round(after_tax)
@@ -814,7 +871,7 @@ def _number_diff_sf_population_difference():
         rf"\({c2} \times 10^{{{p2}}}\). Find the difference (A − B) in standard form."
     )
     s = (
-        rf"Convert or subtract: {c1}×10^{p1} − {c2}×10^{p2} = {diff:.0f}<br>"
+        rf"Convert or subtract: {c1}×10^{p1} − {c2}×10^{p2} = {fmt_dp(diff, 0)}<br>"
         rf"In standard form: <strong>{_number_fmt(coeff)} × 10^{power}</strong>"
     )
     hint = "Subtract the ordinary numbers (or align powers of 10), then write the result in standard form."
@@ -933,7 +990,7 @@ def number_mcq(mcq_type=None):
 
     elif mcq_type == 13:
         base = random.choice([4, 9, 16, 25, 36, 49, 64, 81])
-        correct = int(math.sqrt(base))
+        correct = math.isqrt(base)
         q = rf"Evaluate \({base}^{{1/2}}\)."
         options, correct_letter = _number_mcq_options(
             correct,
@@ -957,9 +1014,9 @@ def number_mcq(mcq_type=None):
         estimate = random.choice([48, 96, 125, 240])
         actual = estimate + random.choice([6, 8, 12])
         error = abs(estimate - actual)
-        correct = f"{(error/actual*100):.1f}%"
+        correct = f"{fmt_dp((error/actual*100), 1)}%"
         q = rf"An estimate is {estimate} and the actual value is {actual}. What is the percentage error to 1 decimal place?"
-        options, correct_letter = _number_mcq_options(correct, [f"{(error/estimate*100):.1f}%", f"{error}%", f"{(actual/estimate*100):.1f}%"])
+        options, correct_letter = _number_mcq_options(correct, [f"{fmt_dp((error/estimate*100), 1)}%", f"{error}%", f"{fmt_dp((actual/estimate*100), 1)}%"])
         hint = "Percentage error = absolute error ÷ actual value × 100."
 
     elif mcq_type == 16:
@@ -1004,8 +1061,14 @@ def number_mcq(mcq_type=None):
 
 
 
-def _number_raw(value, dp=2):
-    """Canonical numeric string for typed answer checking."""
+def _number_raw(value, dp=None):
+    """Canonical numeric string for typed answer checking.
+
+    ``dp=None`` keeps a value exactly when it is a short terminating decimal
+    (46.82 / 1000 -> 0.04682, 10.125 stays 10.125) and otherwise rounds half up to
+    2 d.p. An explicit ``dp`` always rounds half up to that many places, so a
+    question that says "to 1 decimal place" passes ``dp=1``.
+    """
     if isinstance(value, int):
         return str(value)
     if isinstance(value, float):
@@ -1288,10 +1351,11 @@ def gcse_number(difficulty, mode, variant_name=None):
 # ------------------------------------------------------------
 
 
-def _fmt_num(x, dp=2):
+def _fmt_num(x, dp=None):
+    """Display a number: whole numbers plain, short exact decimals exact, others half-up 2 d.p."""
     if isinstance(x, int) or abs(x - int(x)) < 1e-10:
         return str(int(x))
-    return f"{x:.{dp}f}".rstrip('0').rstrip('.')
+    return _number_fmt(x, dp)
 
 
 def _simp_frac(a, b):
@@ -1472,8 +1536,8 @@ def _ratio_unitary_cost():
     new_items = random.randint(5, 20)
     total = items * cost_each
     ans = new_items * cost_each
-    q = rf"{items} notebooks cost £{total:.2f}. How much do {new_items} notebooks cost?"
-    s = rf"One notebook costs £{total:.2f} ÷ {items} = £{cost_each:.2f}. Therefore {new_items} notebooks cost {new_items}×£{cost_each:.2f} = <strong>£{ans:.2f}</strong>."
+    q = rf"{items} notebooks cost £{fmt_dp(total, 2)}. How much do {new_items} notebooks cost?"
+    s = rf"One notebook costs £{fmt_dp(total, 2)} ÷ {items} = £{fmt_dp(cost_each, 2)}. Therefore {new_items} notebooks cost {new_items}×£{fmt_dp(cost_each, 2)} = <strong>£{fmt_dp(ans, 2)}</strong>."
     return q, s, "Find the cost of one item first.", 2, _number_raw(ans)
 
 
@@ -1482,7 +1546,7 @@ def _ratio_recipe_scale():
     people2 = random.randint(people1 + 2, people1 + 12)
     ingredient = random.choice([80, 100, 120, 150, 180, 200, 240, 250, 300, 360])
     ans = ingredient * people2 / people1
-    q = rf"A recipe uses {ingredient} g of flour for {people1} people. How much flour is needed for {people2} people?"
+    q = rf"A recipe uses {ingredient} g of flour for {people1} people. How much flour is needed for {people2} people?{_dp_note(ans)}"
     s = rf"Scale factor = {people2} ÷ {people1} = {_fmt_num(people2/people1)}. Flour needed = {ingredient} × {_fmt_num(people2/people1)} = <strong>{_fmt_num(ans)} g</strong>."
     return q, s, "Multiply by the same scale factor as the number of people.", 2, _number_raw(ans)
 
@@ -1492,8 +1556,8 @@ def _ratio_best_buy():
     a_price, b_price = round(random.uniform(1.5, 6.5), 2), round(random.uniform(2.0, 8.0), 2)
     a_unit, b_unit = a_price/a_items, b_price/b_items
     best = "A" if a_unit < b_unit else "B"
-    q = rf"Pack A has {a_items} items for £{a_price:.2f}. Pack B has {b_items} items for £{b_price:.2f}. Which is better value?"
-    s = rf"Pack A: £{a_price:.2f} ÷ {a_items} = £{a_unit:.2f} per item. Pack B: £{b_price:.2f} ÷ {b_items} = £{b_unit:.2f} per item. Better value: <strong>Pack {best}</strong>."
+    q = rf"Pack A has {a_items} items for £{fmt_dp(a_price, 2)}. Pack B has {b_items} items for £{fmt_dp(b_price, 2)}. Which is better value?"
+    s = rf"Pack A: £{fmt_dp(a_price, 2)} ÷ {a_items} = £{fmt_dp(a_unit, 2)} per item. Pack B: £{fmt_dp(b_price, 2)} ÷ {b_items} = £{fmt_dp(b_unit, 2)} per item. Better value: <strong>Pack {best}</strong>."
     from generators.shared.utils import compare_choice_payload
     return q, s, "Compare the price for one item.", 3, compare_choice_payload('Pack A', 'Pack B', best)
 
@@ -1513,7 +1577,7 @@ def _ratio_inverse_workers():
     workers2 = random.randint(2, 10)
     work = workers1 * hours1
     ans = work / workers2
-    q = rf"{workers1} workers complete a job in {hours1} hours. Assuming the same rate, how long would {workers2} workers take?"
+    q = rf"{workers1} workers complete a job in {hours1} hours. Assuming the same rate, how long would {workers2} workers take?{_dp_note(ans)}"
     s = rf"Total work = {workers1}×{hours1} = {work} worker-hours. Time for {workers2} workers = {work} ÷ {workers2} = <strong>{_fmt_num(ans)} hours</strong>."
     return q, s, "For inverse proportion, workers × time stays constant.", 3, _number_raw(ans)
 
@@ -1527,12 +1591,12 @@ def _ratio_direct_formula():
 
 
 def _ratio_inverse_formula():
-    k = random.randint(24, 120)
     x1 = random.choice([3, 4, 5, 6, 8])
-    y1 = k / x1
+    y1 = random.randint(24 // x1 + 1, 120 // x1)
+    k = x1 * y1
     x2 = random.choice([2, 3, 4, 5, 6, 8, 10])
-    q = rf"y is inversely proportional to x. When x = {x1}, y = {_fmt_num(y1)}. Find y when x = {x2}."
-    s = rf"For inverse proportion, y = k/x. k = xy = {x1}×{_fmt_num(y1)} = {k}. When x = {x2}, y = {k} ÷ {x2} = <strong>{_fmt_num(k/x2)}</strong>."
+    q = rf"y is inversely proportional to x. When x = {x1}, y = {y1}. Find y when x = {x2}.{_dp_note(k / x2)}"
+    s = rf"For inverse proportion, y = k/x. k = xy = {x1}×{y1} = {k}. When x = {x2}, y = {k} ÷ {x2} = <strong>{_fmt_num(k/x2)}</strong>."
     return q, s, "For inverse proportion, multiply x and y to find k.", 3, _number_raw(k / x2)
 
 
@@ -1549,7 +1613,7 @@ def _ratio_convert_units():
 def _ratio_density_style():
     mass = random.randint(40, 200)
     volume = random.randint(5, 40)
-    q = rf"A substance has mass {mass} g and volume {volume} cm³. Find its density."
+    q = rf"A substance has mass {mass} g and volume {volume} cm³. Find its density.{_dp_note(mass / volume)}"
     s = rf"Density = mass ÷ volume = {mass} ÷ {volume} = <strong>{_fmt_num(mass/volume)} g/cm³</strong>."
     return q, s, "Density is mass divided by volume.", 2, _number_raw(mass / volume)
 
@@ -1668,7 +1732,7 @@ def _ratio_inter_map_hike():
     s = (
         intro + "<br><br>"
         rf"<strong>a)</strong> {cm1} cm × {scale} = {cm1*scale} cm = <strong>{_fmt_num(m1)} m</strong><br><br>"
-        rf"<strong>b)</strong> {cm2} cm × {scale} = {cm2*scale:.0f} cm = <strong>{_fmt_num(m2)} m</strong><br><br>"
+        rf"<strong>b)</strong> {cm2} cm × {scale} = {fmt_dp(cm2*scale, 0)} cm = <strong>{_fmt_num(m2)} m</strong><br><br>"
         rf"<strong>c)</strong> Total = {_fmt_num(m1)} + {_fmt_num(m2)} = {_fmt_num(m1+m2)} m = "
         rf"<strong>{_fmt_num(km_total)} km</strong>"
     )
@@ -1777,7 +1841,7 @@ def _ratio_diff_holiday_budget():
         rf"Activities = {r_act} parts = <strong>£{_fmt_num(activities)}</strong><br><br>"
         rf"<strong>b)</strong> Souvenirs = {r_souv} parts = <strong>£{_fmt_num(souvenirs)}</strong><br><br>"
         rf"<strong>c)</strong> Meals = £{_fmt_num(meals)}. In euros: {_fmt_num(meals)} × {rate} = "
-        rf"<strong>€{meals_eur:.2f}</strong>"
+        rf"<strong>€{fmt_dp(meals_eur, 2)}</strong>"
     )
     hint = "Share the budget by ratio first; multiply by the exchange rate only for the part asked."
     return q, s, hint, 5, _ratio_fields_answer(
@@ -1805,7 +1869,7 @@ def _ratio_diff_plumbers_job():
     )
     q = intro + _ratio_abc_block(
         "How many plumber-hours of work does the job need?",
-        f"How long would {w2} plumbers take?",
+        f"How long would {w2} plumbers take?{_dp_note(h2)}",
         f"How many plumbers are needed to finish in {h3} hours?",
     )
     s = (
@@ -1950,9 +2014,9 @@ def ratio_proportion_mcq(mcq_type=None):
         new_items = random.randint(5,12)
         total = items*price
         ans = new_items*price
-        correct = f"£{ans:.2f}"
-        q = rf"{items} pens cost £{total:.2f}. What do {new_items} pens cost?"
-        distractors = [f"£{total:.2f}", f"£{price:.2f}", f"£{total+ans:.2f}"]
+        correct = f"£{fmt_dp(ans, 2)}"
+        q = rf"{items} pens cost £{fmt_dp(total, 2)}. What do {new_items} pens cost?"
+        distractors = [f"£{fmt_dp(total, 2)}", f"£{fmt_dp(price, 2)}", f"£{fmt_dp(total+ans, 2)}"]
         options, correct_letter = _mcq_options(correct, distractors)
         hint = "Find the price of one pen first."
 
@@ -1973,7 +2037,7 @@ def ratio_proportion_mcq(mcq_type=None):
         unit_b = b_price/b_items
         best_letter = 'A' if unit_a < unit_b else 'B'
         correct = f"Pack {best_letter}"
-        q = rf"Pack A: {a_items} for £{a_price:.2f}. Pack B: {b_items} for £{b_price:.2f}. Which is better value?"
+        q = rf"Pack A: {a_items} for £{fmt_dp(a_price, 2)}. Pack B: {b_items} for £{fmt_dp(b_price, 2)}. Which is better value?"
         distractors = [f"Pack {'B' if best_letter=='A' else 'A'}", "Both equal", "Cannot tell"]
         options, correct_letter = _mcq_options(correct, distractors)
         hint = "Compare price per item."
@@ -1984,7 +2048,7 @@ def ratio_proportion_mcq(mcq_type=None):
         ans = original * (1+increase/100)
         correct = f"£{_fmt_num(ans)}"
         q = rf"A price of £{original} is increased by {increase}%. What is the new price?"
-        distractors = [f"£{original+increase}", f"£{original*(increase/100):.0f}", f"£{original*increase/100:.0f}"]
+        distractors = [f"£{original+increase}", f"£{fmt_dp(original*(increase/100), 0)}", f"£{fmt_dp(original*increase/100, 0)}"]
         options, correct_letter = _mcq_options(correct, distractors)
         hint = "Use the multiplier 1 + percentage/100."
 
@@ -2362,9 +2426,9 @@ def _prob_complement():
     ])
     q = f"The probability that {transport} is {event_word} is {p}. Find P({transport} is {not_word})."
     s = (f"All probabilities sum to 1, so we use the complement rule:<br>"
-         f"P({not_word}) = 1 \u2212 P({event_word}) = 1 \u2212 {p} = <strong>{1 - p:.2f}</strong>.")
+         f"P({not_word}) = 1 \u2212 P({event_word}) = 1 \u2212 {p} = <strong>{fmt_dp(1 - p, 2)}</strong>.")
     hint = "P(not A) = 1 \u2212 P(A). An event and its complement always add up to 1."
-    return q, s, hint, 1, f"{1 - p:.2f}"
+    return q, s, hint, 1, f"{fmt_dp(1 - p, 2)}"
 
 
 def _prob_expected_frequency():
@@ -2390,10 +2454,10 @@ def _prob_relative_frequency():
     rf = success / trials
     q = f"{event.capitalize()} in {success} out of {trials} {units}. Find the relative frequency."
     s = (f"Relative frequency = number of successes \u00f7 total trials<br>"
-         f"= {success} \u00f7 {trials} = <strong>{rf:.3f}</strong> (3 d.p.)<br>"
+         f"= {success} \u00f7 {trials} = <strong>{fmt_dp(rf, 3)}</strong> (3 d.p.)<br>"
          f"This experimental value estimates the true probability from real data.")
     hint = "Relative frequency = successes / total trials. It gets closer to the true probability as the number of trials increases."
-    return q, s, hint, 2, f"{rf:.3f}"
+    return q, s, hint, 2, f"{fmt_dp(rf, 3)}"
 
 
 def _prob_mutually_exclusive():
@@ -2504,17 +2568,17 @@ def _prob_at_least_one():
         f"{attempts} independent attempts are made. Find P(at least one success)."
     )
     if attempts == 2:
-        fail_calc = f"{p_not} \u00d7 {p_not} = {p_fail_all:.4f}"
+        fail_calc = f"{p_not} \u00d7 {p_not} = {_number_fmt(round(p_fail_all, 6))}"
     else:
-        fail_calc = f"{p_not} \u00d7 {p_not} \u00d7 {p_not} = {p_fail_all:.4f}"
+        fail_calc = f"{p_not} \u00d7 {p_not} \u00d7 {p_not} = {_number_fmt(round(p_fail_all, 6))}"
     s = (
         f"Use the complement rule: P(at least one success) = 1 \u2212 P(no successes at all).<br>"
         f"P(fail once) = {p_not}. The {attempts} attempts are independent, so:<br>"
         f"P(fail every time) = {fail_calc}<br>"
-        f"P(at least one success) = 1 \u2212 {p_fail_all:.4f} = <strong>{ans:.4f}</strong>."
+        f"P(at least one success) = 1 \u2212 {_number_fmt(round(p_fail_all, 6))} = <strong>{_number_fmt(round(ans, 6))}</strong>."
     )
     hint = "P(at least one) = 1 \u2212 P(none at all). Multiply the failure probabilities for independent events."
-    return q, s, hint, 3, f"{ans:.4f}"
+    return q, s, hint, 3, f"{_number_fmt(round(ans, 6))}"
 
 
 def _prob_conditional_simple():
@@ -2679,7 +2743,7 @@ def _prob_diff_venn_three_fill_in():
     bc_total = bc_only + abc
     a_total = a_only + ab_only + ac_only + abc
     b_total = b_only + ab_only + bc_only + abc
-    c_total = c_only + ab_only + ac_only + abc
+    c_total = c_only + ac_only + bc_only + abc
     total = a_only + b_only + c_only + ab_only + ac_only + bc_only + abc + neither
     exactly_two = ab_only + ac_only + bc_only
 
@@ -3208,11 +3272,11 @@ def _stats_freq_mean():
     s = (
         f"Σfx = {terms} = {total_fx}<br>"
         f"Σf = {total_f}<br>"
-        f"Mean = {total_fx} ÷ {total_f} = <strong>{mean_val:.2f}</strong><br>"
-        f"The mean number of {noun} is <strong>{mean_val:.2f}</strong>."
+        f"Mean = {total_fx} ÷ {total_f} = <strong>{fmt_dp(mean_val, 2)}</strong><br>"
+        f"The mean number of {noun} is <strong>{fmt_dp(mean_val, 2)}</strong>."
     )
     hint = "Use mean = Σfx ÷ Σf."
-    return q, s, hint, 3, _number_raw(mean_val)
+    return q, s, hint, 3, _number_raw(mean_val, dp=2)
 
 
 def _stats_estimated_mean_grouped():
@@ -3227,14 +3291,14 @@ def _stats_estimated_mean_grouped():
     mids = [(a + b) / 2 for a, b in intervals]
     total_fx = sum(m * f for m, f in zip(mids, freqs))
     est_mean = total_fx / total_f
-    mid_terms = ' + '.join(f'{m:.0f} × {f}' for m, f in zip(mids, freqs))
-    q = f"{scenario}\n{svg}\nEstimate the mean (in {unit})."
+    mid_terms = ' + '.join(f'{_number_fmt(m)} × {f}' for m, f in zip(mids, freqs))
+    q = f"{scenario}\n{svg}\nEstimate the mean (in {unit}).{_dp_note(est_mean)}"
     s = (
-        f"Midpoints: {', '.join(f'{m:.0f}' for m in mids)}<br>"
-        f"Σfx = {mid_terms} = {total_fx:.0f}<br>"
+        f"Midpoints: {', '.join(_number_fmt(m) for m in mids)}<br>"
+        f"Σfx = {mid_terms} = {_number_fmt(total_fx)}<br>"
         f"Σf = {total_f}<br>"
-        f"Estimated mean = {total_fx:.0f} ÷ {total_f} = <strong>{est_mean:.2f}</strong><br>"
-        f"The estimated mean is <strong>{est_mean:.2f}</strong> {unit}."
+        f"Estimated mean = {_number_fmt(total_fx)} ÷ {total_f} = <strong>{_number_fmt(est_mean)}</strong><br>"
+        f"The estimated mean is <strong>{_number_fmt(est_mean)}</strong> {unit}."
     )
     hint = "Use class midpoints."
     return q, s, hint, 4, _number_raw(est_mean)
@@ -3246,7 +3310,7 @@ def _stats_grouped_midpoint():
     high = low + width
     var = random.choice(['x', 't', 'h', 'm', 'w'])
     mid = (low + high) / 2
-    mid_str = f"{mid:.0f}" if mid == int(mid) else f"{mid:.1f}"
+    mid_str = f"{fmt_dp(mid, 0)}" if mid == int(mid) else f"{fmt_dp(mid, 1)}"
     q = rf"Find the midpoint of the class interval {low} &lt; {var} ≤ {high}."
     s = rf"Midpoint = ({low}+{high}) ÷ 2 = <strong>{mid_str}</strong>."
     return q, s, "Add the class boundaries and divide by 2.", 1, _number_raw(mid)
@@ -3305,8 +3369,8 @@ def _stats_mean_list():
     ])
     vals = [random.randint(2, 20) for _ in range(5)]
     mean = sum(vals) / len(vals)
-    q = f"The {scenario} are: {', '.join(map(str, vals))}. Find the mean."
-    s = f"Sum = {'+'.join(map(str, vals))} = {sum(vals)}. Count = {len(vals)}. Mean = {sum(vals)} ÷ {len(vals)} = <strong>{mean:.2f}</strong>."
+    q = f"The {scenario} are: {', '.join(map(str, vals))}. Find the mean.{_dp_note(mean)}"
+    s = f"Sum = {'+'.join(map(str, vals))} = {sum(vals)}. Count = {len(vals)}. Mean = {sum(vals)} ÷ {len(vals)} = <strong>{_number_fmt(mean)}</strong>."
     hint = "Add them all, then divide by how many there are."
     return q, s, hint, 2, _number_raw(mean)
 
@@ -3336,7 +3400,7 @@ def _stats_pie_angle():
         rf"In {scenario}, {freq} out of {total} respondents {label}.\n{pie}\n"
         f"Find the sector angle for this category in a pie chart."
     )
-    s = f"Sector angle = (frequency ÷ total) × 360 = ({freq} ÷ {total}) × 360 = <strong>{angle:.1f}°</strong>."
+    s = f"Sector angle = (frequency ÷ total) × 360 = ({freq} ÷ {total}) × 360 = <strong>{fmt_dp(angle, 1)}°</strong>."
     hint = "A full pie chart is 360°."
     return q, s, hint, 2, _number_raw(angle, dp=1)
 
@@ -3414,7 +3478,7 @@ def _stats_line_best_fit():
     q = (f"The scatter graph shows {y_lab} against {x_lab} for {n} data points.\n{svg}\n"
          f"The line of best fit passes through ({x1},\u2009{y1}) and ({x2},\u2009{y2}). "
          f"Estimate {y_lab} when {x_lab}\u2009=\u2009{xq}.")
-    s = (f"Gradient = ({y2}\u2212{y1})\u00f7({x2}\u2212{x1}) = {gradient}.<br>"
+    s = (f"Gradient = ({y2}\u2212{bracket_neg(y1)})\u00f7({x2}\u2212{bracket_neg(x1)}) = {gradient}.<br>"
          f"When x = {xq}: y \u2248 {y1} + {gradient}\u00d7({xq}\u2212{x1}) = <strong>{y_disp}</strong> "
          f"(accept estimates within \u00b1{y_tol}).")
     hint = "Use the line of best fit to interpolate within the data range."
@@ -3442,9 +3506,9 @@ def _stats_cumulative_frequency():
             prev_ub = upper_bounds[cum_freqs.index(cf) - 1] if cum_freqs.index(cf) > 0 else 0
             median_approx = prev_ub + (half - prev_cf) / (cf - prev_cf) * (ub - prev_ub)
             break
-    s = (f"Total frequency = {cum_freqs[-1]}. Half = {half:.1f}.<br>"
-         f"Read across from {half:.1f} on the y‑axis to the curve, then down to the x‑axis.<br>"
-         f"The median is approximately <strong>{median_approx:.0f}</strong> "
+    s = (f"Total frequency = {cum_freqs[-1]}. Half = {fmt_dp(half, 1)}.<br>"
+         f"Read across from {fmt_dp(half, 1)} on the y‑axis to the curve, then down to the x‑axis.<br>"
+         f"The median is approximately <strong>{fmt_dp(median_approx, 0)}</strong> "
          f"(accept estimates within \u00b1{max(2, width // 2)}).")
     hint = "Find half the total frequency, then read from the curve."
     return q, s, hint, 3, _gr_number_estimate_answer(
@@ -3606,7 +3670,8 @@ def _stats_diff_cf_multipart():
     median = _stats_cf_interp(upper_bounds, cum_freqs, 0.5)
     q1 = _stats_cf_interp(upper_bounds, cum_freqs, 0.25)
     q3 = _stats_cf_interp(upper_bounds, cum_freqs, 0.75)
-    iqr = q3 - q1
+    median, q1, q3 = round(median, 1), round(q1, 1), round(q3, 1)
+    iqr = round(q3 - q1, 1)
     threshold = random.choice(upper_bounds[1:-1])
     below_threshold = round(_stats_cf_count_below(upper_bounds, cum_freqs, threshold))
 
@@ -3614,8 +3679,8 @@ def _stats_diff_cf_multipart():
     intro = f"{scenario}<br>{svg}"
     q = (
         intro + _ratio_abc_block(
-            f"Estimate the median (give your answer in {unit}).",
-            "Estimate the interquartile range.",
+            f"Estimate the median (give your answer in {unit}, correct to 1 decimal place).",
+            "Estimate the interquartile range, correct to 1 decimal place.",
             f"How many items have a value of {threshold} {unit} or less?",
         )
     )
@@ -3623,10 +3688,10 @@ def _stats_diff_cf_multipart():
         intro + "<br><br>"
         f"<strong>a)</strong> Total frequency = {total}. Median position = {total // 2}.<br>"
         f"Read across from {total // 2} on the cumulative frequency axis to the curve, then down.<br>"
-        f"Median \u2248 <strong>{median:.1f} {unit}</strong>.<br><br>"
-        f"<strong>b)</strong> Q\u2081 is at {total // 4} (\u2248{q1:.1f} {unit}) and "
-        f"Q\u2083 is at {3 * total // 4} (\u2248{q3:.1f} {unit}).<br>"
-        f"IQR = Q\u2083 \u2212 Q\u2081 \u2248 {q3:.1f} \u2212 {q1:.1f} = <strong>{iqr:.1f} {unit}</strong>.<br><br>"
+        f"Median \u2248 <strong>{fmt_dp(median, 1)} {unit}</strong>.<br><br>"
+        f"<strong>b)</strong> Q\u2081 is at {total // 4} (\u2248{fmt_dp(q1, 1)} {unit}) and "
+        f"Q\u2083 is at {3 * total // 4} (\u2248{fmt_dp(q3, 1)} {unit}).<br>"
+        f"IQR = Q\u2083 \u2212 Q\u2081 \u2248 {fmt_dp(q3, 1)} \u2212 {fmt_dp(q1, 1)} = <strong>{fmt_dp(iqr, 1)} {unit}</strong>.<br><br>"
         f"<strong>c)</strong> Read up from {threshold} {unit} to the curve, then across to the axis.<br>"
         f"Cumulative frequency up to {threshold} \u2248 {below_threshold}.<br>"
         f"So <strong>{below_threshold}</strong> items are {threshold} {unit} or less."
@@ -3678,21 +3743,21 @@ def _stats_diff_histogram_multipart():
     intro = f"{scenario}<br>{svg}"
     q = (
         intro + _ratio_abc_block(
-            f"Estimate the mean (in {unit}).",
+            f"Estimate the mean (in {unit}).{_dp_note(est_mean)}",
             f"Find the frequency density for the class interval {t_low}–{t_high} {unit}.",
             f"What fraction of the data lie in the class interval {t_low}–{t_high} {unit}?",
         )
     )
     mid_terms = " + ".join(
-        f"{m:.0f}\\times{f}" if class_w == 10 else f"{m:.1f}\\times{f}" for m, f in zip(mids, freqs)
+        f"{_number_fmt(m)}\\times{f}" for m, f in zip(mids, freqs)
     )
     s = (
         intro + "<br><br>"
-        f"<strong>a)</strong> Midpoints: {', '.join(f'{m:.0f}' for m in mids)} {unit}.<br>"
-        rf"\(\sum fx = {mid_terms} = {total_fx:.0f}\), \(\sum f = {total}\).<br>"
-        rf"Estimated mean = \(\frac{{{total_fx:.0f}}}{{{total}}}\) = <strong>{est_mean:.2f} {unit}</strong>.<br><br>"
+        f"<strong>a)</strong> Midpoints: {', '.join(_number_fmt(m) for m in mids)} {unit}.<br>"
+        rf"\(\sum fx = {mid_terms} = {_number_fmt(total_fx)}\), \(\sum f = {total}\).<br>"
+        rf"Estimated mean = \(\frac{{{_number_fmt(total_fx)}}}{{{total}}}\) = <strong>{_number_fmt(est_mean)} {unit}</strong>.<br><br>"
         f"<strong>b)</strong> Class width = {class_w} {unit}, frequency = {t_freq}.<br>"
-        f"Frequency density = {t_freq} \u00f7 {class_w} = <strong>{t_fd:.2f}</strong> "
+        f"Frequency density = {t_freq} \u00f7 {class_w} = <strong>{fmt_dp(t_fd, 2)}</strong> "
         f"(per {unit}).<br><br>"
         f"<strong>c)</strong> Frequency in {t_low}–{t_high} = {t_freq} out of {total}.<br>"
         f"Fraction = {t_freq}/{total} = <strong>{t_pct}</strong>."
@@ -4073,26 +4138,26 @@ def _gr_svg_cartesian_frame(PL, PR, PT, PB, W, H, x_lo, x_hi, y_lo, y_hi):
         xp = sx(v)
         if PL <= xp <= W - PR:
             grid += (
-                f'<line x1="{xp:.0f}" y1="{PT}" x2="{xp:.0f}" y2="{PT + ph}" '
+                f'<line x1="{fmt_dp(xp, 0)}" y1="{PT}" x2="{fmt_dp(xp, 0)}" y2="{PT + ph}" '
                 f'stroke="#e8e4de" stroke-width="0.8"/>'
             )
     for v in range(y_tick_start, int(y_hi) + y_step, y_step):
         yp = sy(v)
         if PT <= yp <= PT + ph:
             grid += (
-                f'<line x1="{PL}" y1="{yp:.0f}" x2="{W - PR}" y2="{yp:.0f}" '
+                f'<line x1="{PL}" y1="{fmt_dp(yp, 0)}" x2="{W - PR}" y2="{fmt_dp(yp, 0)}" '
                 f'stroke="#e8e4de" stroke-width="0.8"/>'
             )
 
     axes = ""
     if x0 is not None:
         axes += (
-            f'<line x1="{x0:.0f}" y1="{PT}" x2="{x0:.0f}" y2="{PT + ph}" '
+            f'<line x1="{fmt_dp(x0, 0)}" y1="{PT}" x2="{fmt_dp(x0, 0)}" y2="{PT + ph}" '
             f'stroke="#555" stroke-width="1.5"/>'
         )
     if y0 is not None:
         axes += (
-            f'<line x1="{PL}" y1="{y0:.0f}" x2="{W - PR}" y2="{y0:.0f}" '
+            f'<line x1="{PL}" y1="{fmt_dp(y0, 0)}" x2="{W - PR}" y2="{fmt_dp(y0, 0)}" '
             f'stroke="#555" stroke-width="1.5"/>'
         )
 
@@ -4103,10 +4168,10 @@ def _gr_svg_cartesian_frame(PL, PR, PT, PB, W, H, x_lo, x_hi, y_lo, y_hi):
         xp = sx(v)
         if PL <= xp <= W - PR:
             ticks += (
-                f'<line x1="{xp:.0f}" y1="{x_tick_base:.0f}" x2="{xp:.0f}" '
-                f'y2="{x_tick_base + 4:.0f}" stroke="#555"/>'
+                f'<line x1="{fmt_dp(xp, 0)}" y1="{fmt_dp(x_tick_base, 0)}" x2="{fmt_dp(xp, 0)}" '
+                f'y2="{fmt_dp(x_tick_base + 4, 0)}" stroke="#555"/>'
             )
-            ticks += f'<text x="{xp:.0f}" y="{x_label_y:.0f}" text-anchor="middle" font-size="11">{v}</text>'
+            ticks += f'<text x="{fmt_dp(xp, 0)}" y="{fmt_dp(x_label_y, 0)}" text-anchor="middle" font-size="11">{v}</text>'
 
     y_tick_x = (x0 - 10) if x0 is not None else PL - 7
     for v in range(y_tick_start, int(y_hi) + y_step, y_step):
@@ -4114,10 +4179,10 @@ def _gr_svg_cartesian_frame(PL, PR, PT, PB, W, H, x_lo, x_hi, y_lo, y_hi):
         if PT <= yp <= PT + ph:
             tick_x = x0 if x0 is not None else PL
             ticks += (
-                f'<line x1="{tick_x - 4:.0f}" y1="{yp:.0f}" x2="{tick_x:.0f}" '
-                f'y2="{yp:.0f}" stroke="#555"/>'
+                f'<line x1="{fmt_dp(tick_x - 4, 0)}" y1="{fmt_dp(yp, 0)}" x2="{fmt_dp(tick_x, 0)}" '
+                f'y2="{fmt_dp(yp, 0)}" stroke="#555"/>'
             )
-            ticks += f'<text x="{y_tick_x:.0f}" y="{yp + 4:.0f}" text-anchor="end" font-size="11">{v}</text>'
+            ticks += f'<text x="{fmt_dp(y_tick_x, 0)}" y="{fmt_dp(yp + 4, 0)}" text-anchor="end" font-size="11">{v}</text>'
 
     return grid, axes, ticks, sx, sy, x0, y0
 
@@ -4129,8 +4194,8 @@ def _gr_axis_labels(W, H, PT, ph, x0, y0, x_lbl="x", y_lbl="y"):
     axis_lbl_y_y = (y0 if y0 is not None else PT + ph // 2)
     return (
         f'<text x="{axis_lbl_x}" y="{H - 6}" text-anchor="middle" font-size="12">{x_lbl}</text>'
-        f'<text x="{axis_lbl_y_x:.0f}" y="{axis_lbl_y_y:.0f}" '
-        f'transform="rotate(-90,{axis_lbl_y_x:.0f},{axis_lbl_y_y:.0f})" '
+        f'<text x="{fmt_dp(axis_lbl_y_x, 0)}" y="{fmt_dp(axis_lbl_y_y, 0)}" '
+        f'transform="rotate(-90,{fmt_dp(axis_lbl_y_x, 0)},{fmt_dp(axis_lbl_y_y, 0)})" '
         f'text-anchor="middle" font-size="12">{y_lbl}</text>'
     )
 
@@ -4154,7 +4219,7 @@ def _gr_svg_scatter(points, title="", xlabel="", ylabel="", lof=None):
     )
 
     pts_svg = "".join(
-        f'<circle cx="{sx(x):.0f}" cy="{sy(y):.0f}" r="5" fill="#01696f"/>'
+        f'<circle cx="{fmt_dp(sx(x), 0)}" cy="{fmt_dp(sy(y), 0)}" r="5" fill="#01696f"/>'
         for x, y in points
     )
 
@@ -4173,7 +4238,7 @@ def _gr_svg_scatter(points, title="", xlabel="", ylabel="", lof=None):
             elif ly2 > y_hi:
                 lx2, ly2 = (y_hi - c) / m, y_hi
         line_svg = (
-            f'<line x1="{sx(lx1):.0f}" y1="{sy(ly1):.0f}" x2="{sx(lx2):.0f}" y2="{sy(ly2):.0f}" '
+            f'<line x1="{fmt_dp(sx(lx1), 0)}" y1="{fmt_dp(sy(ly1), 0)}" x2="{fmt_dp(sx(lx2), 0)}" y2="{fmt_dp(sy(ly2), 0)}" '
             f'stroke="#a13544" stroke-width="2" stroke-dasharray="6,4"/>'
         )
 
@@ -4211,7 +4276,7 @@ def _gr_svg_line(m, c, title="", show_y_intercept_marker=False):
 
     yint_dot = ""
     if show_y_intercept_marker and y_lo <= c <= y_hi and x_lo <= 0 <= x_hi and x0 is not None:
-        yint_dot = f'<circle cx="{x0:.0f}" cy="{sy(c):.0f}" r="5" fill="#a13544"/>'
+        yint_dot = f'<circle cx="{fmt_dp(x0, 0)}" cy="{fmt_dp(sy(c), 0)}" r="5" fill="#a13544"/>'
 
     title_block = (
         f'<text x="{W // 2}" y="24" text-anchor="middle" font-size="13" font-weight="bold">{title}</text>'
@@ -4224,8 +4289,8 @@ def _gr_svg_line(m, c, title="", show_y_intercept_marker=False):
         f'<svg width="{W}" height="{H}" viewBox="0 0 {W} {H}" '
         f'style="background:#f9f8f5;border-radius:8px;display:block;margin:0 auto;max-width:100%;">'
         f'{grid}{axes}{ticks}'
-        f'<line x1="{sx(x_min):.0f}" y1="{sy(m * x_min + c):.0f}" '
-        f'x2="{sx(x_max):.0f}" y2="{sy(m * x_max + c):.0f}" stroke="#01696f" stroke-width="2.5"/>'
+        f'<line x1="{fmt_dp(sx(x_min), 0)}" y1="{fmt_dp(sy(m * x_min + c), 0)}" '
+        f'x2="{fmt_dp(sx(x_max), 0)}" y2="{fmt_dp(sy(m * x_max + c), 0)}" stroke="#01696f" stroke-width="2.5"/>'
         f'{yint_dot}{title_block}{axis_lbl}'
         f'</svg></div>'
     )
@@ -4280,9 +4345,9 @@ def _gr_svg_two_point_line(x1, y1, x2, y2, label_points=False):
     labels = ""
     if label_points:
         labels = (
-            f'<text x="{sx(x1) + 8:.0f}" y="{sy(y1) - 8:.0f}" font-size="11" fill="#01696f">'
+            f'<text x="{fmt_dp(sx(x1) + 8, 0)}" y="{fmt_dp(sy(y1) - 8, 0)}" font-size="11" fill="#01696f">'
             f'({x1},{y1})</text>'
-            f'<text x="{sx(x2) + 8:.0f}" y="{sy(y2) - 8:.0f}" font-size="11" fill="#01696f">'
+            f'<text x="{fmt_dp(sx(x2) + 8, 0)}" y="{fmt_dp(sy(y2) - 8, 0)}" font-size="11" fill="#01696f">'
             f'({x2},{y2})</text>'
         )
 
@@ -4293,7 +4358,7 @@ def _gr_svg_two_point_line(x1, y1, x2, y2, label_points=False):
         f'<svg width="{W}" height="{H}" viewBox="0 0 {W} {H}" '
         f'style="background:#f9f8f5;border-radius:8px;display:block;margin:0 auto;max-width:100%;">'
         f'{grid}{axes}{ticks}'
-        f'<line x1="{sx(x1):.0f}" y1="{sy(y1):.0f}" x2="{sx(x2):.0f}" y2="{sy(y2):.0f}" '
+        f'<line x1="{fmt_dp(sx(x1), 0)}" y1="{fmt_dp(sy(y1), 0)}" x2="{fmt_dp(sx(x2), 0)}" y2="{fmt_dp(sy(y2), 0)}" '
         f'stroke="#01696f" stroke-width="2.5"/>'
         f'{labels}{axis_lbl}'
         f'</svg></div>'
@@ -4341,7 +4406,7 @@ def _gr_svg_quadratic(a, b, c, line=None):
     )
 
     quad_pts = " ".join(
-        f"{sx(x):.0f},{sy(_gr_quad_y(x, a, b, c)):.0f}" for x in sample_x
+        f"{fmt_dp(sx(x), 0)},{fmt_dp(sy(_gr_quad_y(x, a, b, c)), 0)}" for x in sample_x
     )
     curve = (
         f'<polyline points="{quad_pts}" fill="none" stroke="#1a6fa8" '
@@ -4363,8 +4428,8 @@ def _gr_svg_quadratic(a, b, c, line=None):
             elif ly2 > y_hi:
                 lx2, ly2 = (y_hi - d) / m, y_hi
         line_svg = (
-            f'<line x1="{sx(lx1):.0f}" y1="{sy(ly1):.0f}" x2="{sx(lx2):.0f}" '
-            f'y2="{sy(ly2):.0f}" stroke="#a13544" stroke-width="2.5"/>'
+            f'<line x1="{fmt_dp(sx(lx1), 0)}" y1="{fmt_dp(sy(ly1), 0)}" x2="{fmt_dp(sx(lx2), 0)}" '
+            f'y2="{fmt_dp(sy(ly2), 0)}" stroke="#a13544" stroke-width="2.5"/>'
         )
 
     axis_lbl = _gr_axis_labels(W, H, PT, H - PT - PB, x0, y0)
@@ -4398,7 +4463,7 @@ def _gr_svg_distance_time(distance, time_hr):
         f'<svg width="{W}" height="{H}" viewBox="0 0 {W} {H}" '
         f'style="background:#f9f8f5;border-radius:8px;display:block;margin:0 auto;max-width:100%;">'
         f'{grid}{axes}{ticks}'
-        f'<line x1="{sx(0):.0f}" y1="{sy(0):.0f}" x2="{sx(time_hr):.0f}" y2="{sy(distance):.0f}" '
+        f'<line x1="{fmt_dp(sx(0), 0)}" y1="{fmt_dp(sy(0), 0)}" x2="{fmt_dp(sx(time_hr), 0)}" y2="{fmt_dp(sy(distance), 0)}" '
         f'stroke="#01696f" stroke-width="2.5"/>'
         f'{axis_lbl}'
         f'</svg></div>'
@@ -4482,7 +4547,7 @@ def _gra_gradient_two_points():
     y2 = y1 + m * (x2 - x1)
     svg = _gr_svg_two_point_line(x1, y1, x2, y2)
     q = f"Find the gradient of the line through ({x1},\u2009{y1}) and ({x2},\u2009{y2}).\n{svg}"
-    s = f"Gradient = ({y2}\u2212{y1})\u00f7({x2}\u2212{x1}) = <strong>{m}</strong>."
+    s = f"Gradient = ({y2}\u2212{bracket_neg(y1)})\u00f7({x2}\u2212{bracket_neg(x1)}) = <strong>{m}</strong>."
     hint = "Gradient = rise \u00f7 run = change in y \u00f7 change in x."
     return q, s, hint, 2, m
 
@@ -4528,13 +4593,14 @@ def _gra_parallel_gradient():
 
 
 def _gra_distance_time_speed():
-    distance, time = random.randint(20, 120), random.choice([2, 3, 4, 5, 6])
+    time = random.choice([2, 3, 4, 5, 6])
+    distance = time * random.randint(20 // time + 1, 120 // time)
     mover = random.choice(["a car", "a cyclist", "a train", "a hiker", "a delivery van", "a runner"])
     svg = _gr_svg_distance_time(distance, time)
     q = (f"The distance‑time graph below shows {mover} travelling {distance}\u2009km in {time}\u2009hours "
          f"at a constant speed. Find its speed.\n{svg}")
     s = (f"Speed = gradient of line = distance \u00f7 time<br>"
-         f"= {distance} \u00f7 {time} = <strong>{distance/time:.1f}\u2009km/h</strong>.")
+         f"= {distance} \u00f7 {time} = <strong>{_number_fmt(distance/time)}\u2009km/h</strong>.")
     hint = "The gradient of a distance\u2013time graph equals the speed."
     return q, s, hint, 2, _number_raw(distance / time)
 
@@ -4558,7 +4624,7 @@ def _gra_quadratic_substitute():
         else:
             rhs += f" − {abs(c)}"
     q = f"For y = {rhs}, find y when x = {x}."
-    s = f"When x = {x}: ({x})² + ({b})×({x}) + ({c}) = {x*x} + {b*x} + {c} = {y}."
+    s = f"When x = {x}: ({x})² + ({b})×({x}) + ({c}) = {x*x} {signed_term(b*x)} {signed_term(c)} = {y}."
     hint = "Substitute carefully."
     return q, s, hint, 2, y
 
@@ -4578,7 +4644,7 @@ def _gra_midpoint():
     x1,y1,x2,y2 = random.randint(-5,5), random.randint(-5,5), random.randint(-5,5), random.randint(-5,5)
     mx, my = (x1+x2)/2, (y1+y2)/2
     q = f"Find the midpoint of ({x1}, {y1}) and ({x2}, {y2})."
-    s = f"Midpoint = (({x1}+{x2})/2, ({y1}+{y2})/2) = ({mx:.1f}, {my:.1f})."
+    s = f"Midpoint = (({x1}+{bracket_neg(x2)})/2, ({y1}+{bracket_neg(y2)})/2) = ({fmt_dp(mx, 1)}, {fmt_dp(my, 1)})."
     hint = "Average the coordinates."
     return q, s, hint, 2, _number_pair_answer(mx, my, 'x-coordinate', 'y-coordinate', sep=',')
 
@@ -4586,8 +4652,10 @@ def _gra_midpoint():
 def _gra_line_intersection_simple():
     m1,c1,m2,c2 = 2, random.randint(-4,4), -1, random.randint(2,8)
     x = (c2-c1)/(m1-m2); y = m1*x + c1
-    q = f"Find the intersection of y = {m1}x + {c1} and y = {m2}x + {c2}."
-    s = f"Set equal → {m1}x + {c1} = {m2}x + {c2} → x = {x:.2f}, y = {y:.2f}."
+    note = _dp_note(x) or _dp_note(y)
+    c1_txt = f"- {abs(c1)}" if c1 < 0 else f"+ {c1}"
+    q = f"Find the intersection of y = {m1}x {c1_txt} and y = {m2}x + {c2}.{note}"
+    s = f"Set equal → {m1}x {c1_txt} = {m2}x + {c2} → x = {_number_fmt(x)}, y = {_number_fmt(y)}."
     hint = "At intersection, both equations give same x and y."
     return q, s, hint, 3, _number_pair_answer(round(x, 2), round(y, 2), 'x', 'y', sep=',')
 
@@ -4595,7 +4663,7 @@ def _gra_line_intersection_simple():
 def _gra_reciprocal_value():
     k, x = random.choice([6,8,10,12,15,20]), random.choice([2,3,4,5])
     q = f"For y = {k}/x, find y when x = {x}."
-    s = f"y = {k}/{x} = {k/x:.2f}."
+    s = f"y = {k}/{x} = {fmt_dp(k/x, 2)}."
     hint = "Substitute into the reciprocal equation."
     return q, s, hint, 1, _number_raw(k / x)
 
@@ -4613,7 +4681,7 @@ def _gra_cubic_substitute():
     q = f"For y = {terms}, find y when x = {x}."
     ax_str = f" + {a}\u00d7({x})" if a >= 0 else f" \u2212 {abs(a)}\u00d7({x})"
     b_str = f" + {b}" if b >= 0 else f" \u2212 {abs(b)}"
-    s = f"({x})\u00b3{ax_str}{b_str} = {x**3} + {a*x} + {b} = <strong>{y}</strong>."
+    s = f"({x})\u00b3{ax_str}{b_str} = {x**3} {signed_term(a*x)} {signed_term(b)} = <strong>{y}</strong>."
     hint = "Cube first, then add the remaining terms."
     return q, s, hint, 2, y
 
@@ -4692,7 +4760,7 @@ def _gra_diff_line_equation_multipart():
     )
     s = (
         f"{intro}<br><br>"
-        f"<strong>a)</strong> Gradient = ({y2}\u2212{y1})\u00f7({x2}\u2212{x1}) "
+        f"<strong>a)</strong> Gradient = ({y2}\u2212{bracket_neg(y1)})\u00f7({x2}\u2212{bracket_neg(x1)}) "
         f"= {y2 - y1}\u00f7{x2 - x1} = <strong>{m}</strong>.<br><br>"
         f"<strong>b)</strong> Using y = mx + c with ({x1}, {y1}):<br>"
         f"{y1} = {m}\u00d7{x1} + c \u21d2 c = <strong>{c}</strong>.<br><br>"
@@ -4712,8 +4780,8 @@ def _gra_diff_line_equation_multipart():
 
 def _gra_diff_journey_multipart():
     """Distance\u2013time graph: speed, further distance, and time for a longer journey."""
-    distance = random.randint(40, 120)
     time_hr = random.choice([2, 3, 4, 5, 6])
+    distance = time_hr * random.randint(40 // time_hr + 1, 120 // time_hr)
     speed = distance / time_hr
     extra_hr = random.randint(1, 3)
     extra_dist = speed * extra_hr
@@ -4846,15 +4914,15 @@ def _gra_diff_quadratic_features_multipart():
         f"(the curve crosses the y-axis at (0, {c})).<br><br>"
         f"<strong>b)</strong> Set y = 0: {fac} = 0 "
         f"(or solve {eq.replace('y = ', '')} = 0) \u21d2 <strong>{roots_txt}</strong>.<br><br>"
-        f"<strong>c)</strong> Minimum at x = \u2212b\u00f7(2a) = {b}\u00f72 = {tp_x:.1f}.<br>"
-        f"y = ({tp_x:.1f})\u00b2 + ({b})({tp_x:.1f}) + ({c}) = <strong>({tp_x:.1f}, {tp_y:.1f})</strong>."
+        f"<strong>c)</strong> Minimum at x = \u2212b\u00f7(2a) = \u2212({b})\u00f72 = {_number_fmt(tp_x)}.<br>"
+        f"y = ({_number_fmt(tp_x)})\u00b2 + ({b})({_number_fmt(tp_x)}) + ({c}) = <strong>({_number_fmt(tp_x)}, {_number_fmt(tp_y)})</strong>."
     )
     hint = (
         "Read the y-intercept at x = 0; roots are where the curve crosses the x-axis; "
         "the minimum of a positive x² graph is at x = \u2212b/(2a)."
     )
     return q, s, hint, 5, _ratio_fields_answer(
-        (c, r1, r2, _number_raw(tp_x, dp=1), _number_raw(tp_y, dp=1)),
+        (c, r1, r2, _number_raw(tp_x), _number_raw(tp_y)),
         (
             'Part (a): y-intercept',
             'Part (b): first root',

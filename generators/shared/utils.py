@@ -237,6 +237,16 @@ def proof_steps_answer(required_ids, bank, *, order_matters=True, format_hint=No
     return payload
 
 
+def bracket_neg(value):
+    """Wrap a negative number in brackets for substitution: 5 - (-3), not 5 - -3."""
+    return f"({value})" if value < 0 else f"{value}"
+
+
+def signed_term(value):
+    """Format a constant for use after a term: 4 -> '+ 4', -8 -> '- 8' (never '+ -8')."""
+    return f"- {abs(value)}" if value < 0 else f"+ {value}"
+
+
 def _graded_format_num(val):
     if isinstance(val, float) and val == int(val):
         return str(int(val))

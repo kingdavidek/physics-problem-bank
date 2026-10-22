@@ -4,6 +4,7 @@ GCSE Maths – Completing the Square
 Graded practice variants return (question, solution, hint, marks, raw).
 Completed-form / show-that variants stay as 4-tuples.
 """
+from generators.shared.rounding import round_half_up as round, fmt_dp
 import math
 import random
 from generators.shared.utils import make_problem, quadratic_roots_format_hint, quadratic_roots_ui_labels
@@ -363,8 +364,8 @@ def _cts_d_decimal_roots():
     x2 = -p - math.sqrt(total)
     s = (
         rf"\((x + {p})^2 = {total}\)<br>"
-        rf"\(x + {p} = \pm\sqrt{{{total}}} \approx \pm {math.sqrt(total):.3f}\)<br>"
-        rf"<strong>\(x \approx {x1:.2f}\) or \(x \approx {x2:.2f}\)</strong>"
+        rf"\(x + {p} = \pm\sqrt{{{total}}} \approx \pm {fmt_dp(math.sqrt(total), 3)}\)<br>"
+        rf"<strong>\(x \approx {fmt_dp(x1, 2)}\) or \(x \approx {fmt_dp(x2, 2)}\)</strong>"
     )
     return q, s, "Use a calculator for the square root if needed.", 4, _cts_quadratic_roots_answer(round(x1, 2), round(x2, 2))
 

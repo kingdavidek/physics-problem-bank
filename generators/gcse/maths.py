@@ -1,11 +1,14 @@
+from generators.shared.rounding import round_half_up as round, fmt_dp
 import inspect
 import random
 import math
 from fractions import Fraction
+from decimal import Decimal, ROUND_HALF_UP
 import sympy as sp
 
 from generators.shared.utils import (
     make_problem,
+    bracket_neg,
     problem_from_choice_output,
     proof_steps_answer,
     proof_steps_problem_extra,
@@ -14,6 +17,7 @@ from generators.shared.utils import (
     graded_answer_keyword,
     graded_answer_number_pair,
     problem_extra_from_graded_answer,
+    signed_term,
 )
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from models import svg_kit
@@ -218,7 +222,7 @@ def _fdp_recurring_algebra_working(num, den):
         lhs_int = (num * mult_b) // den
         multiply_line = (
             f"Multiply both sides by {mult_b} so the repeating block moves to the left:<br>"
-            f"&nbsp;&nbsp;{mult_b}x = {lhs_int}.{''.join(digits[rep_start:rep_start + rep_len] * 3)}…"
+            f"&nbsp;&nbsp;{mult_b}x = {lhs_int}.{''.join(digits[rep_start:rep_start + rep_len] * 2)}…"
         )
         subtract_line = f"Subtract the original equation: {mult_b}x − x = {rhs}  →  {coeff}x = {rhs}"
     else:
@@ -496,9 +500,9 @@ def _fdp_best_value_case():
     price_a = round(unit_price_a * qty_a, 2)
     price_b = round(unit_price_b * qty_b, 2)
     if unit_price_a < unit_price_b:
-        best, label_a, label_b = "Pack A", f"Pack A: {qty_a} for £{price_a:.2f}", f"Pack B: {qty_b} for £{price_b:.2f}"
+        best, label_a, label_b = "Pack A", f"Pack A: {qty_a} for £{fmt_dp(price_a, 2)}", f"Pack B: {qty_b} for £{fmt_dp(price_b, 2)}"
     else:
-        best, label_a, label_b = "Pack B", f"Pack A: {qty_a} for £{price_a:.2f}", f"Pack B: {qty_b} for £{price_b:.2f}"
+        best, label_a, label_b = "Pack B", f"Pack A: {qty_a} for £{fmt_dp(price_a, 2)}", f"Pack B: {qty_b} for £{fmt_dp(price_b, 2)}"
     return label_a, label_b, best, unit_price_a, unit_price_b
 
 
@@ -930,8 +934,8 @@ def gcse_fdp_best_value_comparison():
     q = rf"Which pack is better value?<br><strong>{label_a}</strong><br><strong>{label_b}</strong>"
     s = (
         rf"Compare cost per item by dividing.<br>"
-        rf"{label_a}: £{unit_a:.2f} per item<br>"
-        rf"{label_b}: £{unit_b:.2f} per item<br>"
+        rf"{label_a}: £{fmt_dp(unit_a, 2)} per item<br>"
+        rf"{label_b}: £{fmt_dp(unit_b, 2)} per item<br>"
         rf"<strong>{best}</strong> is better value (lower cost per item)."
     )
     hint = (
@@ -1042,7 +1046,7 @@ def _mf_is_prime(n):
 
 def _mf_all_factors(n):
     factors = []
-    for i in range(1, int(math.sqrt(n)) + 1):
+    for i in range(1, math.isqrt(n) + 1):
         if n % i == 0:
             factors.append(i)
             if i != n // i:
@@ -1052,7 +1056,7 @@ def _mf_all_factors(n):
 
 def _mf_factor_pairs_str(n):
     pairs = []
-    for i in range(1, int(math.sqrt(n)) + 1):
+    for i in range(1, math.isqrt(n) + 1):
         if n % i == 0:
             j = n // i
             pairs.append(f"{i}×{j}")
@@ -1294,7 +1298,7 @@ def gcse_mf_find_factor():
 def gcse_mf_factor_pairs():
     n = _mf_random_composite(18, 120)
     pairs = []
-    for i in range(1, int(math.sqrt(n)) + 1):
+    for i in range(1, math.isqrt(n) + 1):
         if n % i == 0:
             j = n // i
             pairs.append(f"{i} × {j}")
@@ -1586,20 +1590,29 @@ def gcse_maths_multiples_factors(difficulty, mode, variant_name=None):
 #  GCSE MATHS — DECIMALS
 # ─────────────────────────────────────────────────────────────
 
+def _dec_half_up(value, dp=2):
+    """School rounding (5.625 -> 5.63): halves always round up. Returns a float."""
+    d = Decimal(str(value)) if not isinstance(value, Decimal) else value
+    return float(d.quantize(Decimal(1).scaleb(-dp), rounding=ROUND_HALF_UP))
+
+
 def _dec_random_mixed_ops():
+    """(a ± b) ÷ c with an exact, terminating answer (e.g. 8.1 ÷ 0.8 = 10.125)."""
     while True:
         a = round(random.uniform(2.0, 9.0), 1)
         b = round(random.uniform(0.5, 5.0), 1)
         c = random.choice([0.2, 0.25, 0.4, 0.5, 0.8])
         op = random.choice(["+", "-"])
-        inner_val = round(a + b if op == "+" else a - b, 2)
-        if inner_val <= 0:
+        da, db, dc = Decimal(str(a)), Decimal(str(b)), Decimal(str(c))
+        inner_d = da + db if op == "+" else da - db
+        if inner_d <= 0:
             continue
-        ans = round(inner_val / c, 2)
-        if abs(ans * c - inner_val) < 0.01:
-            op_sym = "+" if op == "+" else "−"
-            inner_expr = f"{a} {op_sym} {b}"
-            return inner_expr, inner_val, c, ans
+        ans_d = inner_d / dc
+        if ans_d != ans_d.quantize(Decimal("0.0001")):
+            continue
+        op_sym = "+" if op == "+" else "−"
+        inner_expr = f"{a} {op_sym} {b}"
+        return inner_expr, float(inner_d), c, float(ans_d)
 
 
 def _dec_random_unit_price():
@@ -1655,7 +1668,7 @@ def gcse_dec_ordering():
     q = rf"Write these decimals in order from smallest to largest:<br><br><strong>{', '.join(str(d) for d in decimals)}</strong>"
     compare_lines = []
     for d in decimals:
-        padded = f"{d:.3f}"
+        padded = f"{fmt_dp(d, 3)}"
         compare_lines.append(f"{d} = {padded}")
     s = (
         rf"Write each value to 3 decimal places so place values line up:<br>"
@@ -1773,7 +1786,7 @@ def gcse_dec_round():
     n = round(random.uniform(0.001, 999.999), 4)
     dp = random.choice([1, 2, 3])
     result = round(n, dp)
-    n_str = f"{n:.4f}"
+    n_str = f"{fmt_dp(n, 4)}"
     parts = n_str.split('.')
     decide_digit = parts[1][dp] if len(parts) > 1 and len(parts[1]) > dp else '0'
     ordinals = ['', '1st', '2nd', '3rd', '4th']
@@ -1989,12 +2002,12 @@ def gcse_dec_practice_word_unit_price():
     """Find unit price or amount from a total."""
     mass, total, per_kg = _dec_random_unit_price()
     q = (
-        rf"{mass} kg of fruit costs £{total:.2f}. "
+        rf"{mass} kg of fruit costs £{fmt_dp(total, 2)}. "
         rf"Find the cost per kilogram."
     )
     s = (
         rf"Cost per kg = total cost ÷ mass<br>"
-        rf"£{total:.2f} ÷ {mass} kg = <strong>£{per_kg:.2f} per kg</strong><br>"
+        rf"£{fmt_dp(total, 2)} ÷ {mass} kg = <strong>£{fmt_dp(per_kg, 2)} per kg</strong><br>"
         rf"(Divide as usual; you can scale both numbers to clear the decimal in {mass} if needed.)"
     )
     hint = (
@@ -2070,10 +2083,10 @@ def gcse_dec_proc_money_change():
     while paid < price:
         paid = round(paid + 1.0, 2)
     change = round(paid - price, 2)
-    q = rf"An item costs £{price:.2f}. How much change from £{paid:.2f}?"
+    q = rf"An item costs £{fmt_dp(price, 2)}. How much change from £{fmt_dp(paid, 2)}?"
     s = (
         rf"Change = amount paid − price<br>"
-        rf"£{paid:.2f} − £{price:.2f} = <strong>£{change:.2f}</strong><br>"
+        rf"£{fmt_dp(paid, 2)} − £{fmt_dp(price, 2)} = <strong>£{fmt_dp(change, 2)}</strong><br>"
         rf"(Subtract the pence column first, then the pounds.)"
     )
     hint = (
@@ -2086,12 +2099,20 @@ def gcse_dec_proc_money_change():
 def gcse_dec_proc_mean():
     """Intermediate: mean of four decimals."""
     vals = [round(random.uniform(1.0, 9.0), 1) for _ in range(4)]
-    total = round(sum(vals), 2)
-    mean = round(total / 4, 2)
-    q = rf"Find the mean of {', '.join(str(v) for v in vals)}."
+    total_d = sum(Decimal(str(v)) for v in vals)
+    total = float(total_d)
+    mean = _dec_half_up(total_d / 4, 2)
+    exact_mean = total_d / 4
+    needs_rounding = exact_mean != exact_mean.quantize(Decimal("0.01"))
+    q = (
+        rf"Find the mean of {', '.join(str(v) for v in vals)}."
+        + (" Give your answer correct to 2 decimal places." if needs_rounding else "")
+    )
     s = (
         rf"Step 1 — add all values: {' + '.join(str(v) for v in vals)} = {total}<br>"
-        rf"Step 2 — divide by how many values (4): {total} ÷ 4 = <strong>{mean}</strong>"
+        rf"Step 2 — divide by how many values (4): {total} ÷ 4 = "
+        + (rf"{exact_mean} ≈ " if needs_rounding else "")
+        + rf"<strong>{mean}</strong>"
     )
     hint = (
         r"Mean = total ÷ count. Add every value first, then divide the sum by how many numbers there are."
@@ -2135,11 +2156,11 @@ def gcse_dec_proc_multi_step_shop():
     )
     s = (
         rf"Step 1 — full price before discount:<br>"
-        rf"£{unit} × {qty} = £{subtotal:.2f}<br>"
-        rf"Step 2 — discount ({discount_pct}% of £{subtotal:.2f}):<br>"
-        rf"{discount_pct}% × £{subtotal:.2f} = £{discount:.2f}<br>"
+        rf"£{unit} × {qty} = £{fmt_dp(subtotal, 2)}<br>"
+        rf"Step 2 — discount ({discount_pct}% of £{fmt_dp(subtotal, 2)}):<br>"
+        rf"{discount_pct}% × £{fmt_dp(subtotal, 2)} = £{fmt_dp(discount, 2)}<br>"
         rf"Step 3 — subtract discount:<br>"
-        rf"£{subtotal:.2f} − £{discount:.2f} = <strong>£{total:.2f}</strong>"
+        rf"£{fmt_dp(subtotal, 2)} − £{fmt_dp(discount, 2)} = <strong>£{fmt_dp(total, 2)}</strong>"
     )
     hint = (
         r"Work in order: find the cost of all items, calculate the percentage off that subtotal "
@@ -2294,7 +2315,7 @@ def gcse_bidmas_mixed():
     result = outer * (inner ** p) + extra
     q = rf"Calculate {outer} × ( {inner_a} − {inner_b} )^{p} + {extra}"
     s = (rf"Step 1 — Brackets: {inner_a} − {inner_b} = {inner}<br>"
-         rf"Step 2 — Indices: {inner}^{p} = {inner**p}<br>"
+         rf"Step 2 — Indices: {_bracket_neg(inner)}^{p} = {inner**p}<br>"
          rf"Step 3 — Multiply: {outer} × {inner**p} = {outer * inner**p}<br>"
          rf"Step 4 — Add: {outer * inner**p} + {extra} = <strong>{result}</strong>")
     hint = r"Follow B → I → D/M → A/S strictly. Work out each step before moving to the next."
@@ -2511,7 +2532,7 @@ def gcse_bidmas_proc_power_then_multiply():
     result = product + extra
     q = rf"Calculate {mult} × {inner}^{p} + {extra}"
     s = (
-        rf"Indices: {inner}^{p} = {powered}<br>"
+        rf"Indices: {_bracket_neg(inner)}^{p} = {powered}<br>"
         rf"Multiply: {mult} × {powered} = {product}<br>"
         rf"Add: {product} + {extra} = <strong>{result}</strong>"
     )
@@ -2552,7 +2573,7 @@ def gcse_bidmas_proc_square_bracket_divide():
     q = rf"Calculate {mult} × ( {a} − {b} )² ÷ {divisor} + {extra}"
     s = (
         rf"Brackets: {a} − {b} = {inner}<br>"
-        rf"Indices: {inner}² = {squared}<br>"
+        rf"Indices: {_bracket_neg(inner)}² = {squared}<br>"
         rf"Multiply: {mult} × {squared} = {product}<br>"
         rf"Divide: {product} ÷ {divisor} = {divided}<br>"
         rf"Add: {divided} + {extra} = <strong>{result}</strong>"
@@ -2589,7 +2610,7 @@ def gcse_bidmas_proc_negative_coefficient():
     q = rf"Calculate −{coeff} × ( {b} − {c} )² + {extra}"
     s = (
         rf"Brackets: {b} − {c} = {inner}<br>"
-        rf"Indices: {inner}² = {squared}<br>"
+        rf"Indices: {_bracket_neg(inner)}² = {squared}<br>"
         rf"Multiply: −{coeff} × {squared} = {product}<br>"
         rf"Add: {product} + {extra} = <strong>{result}</strong>"
     )
@@ -2765,7 +2786,7 @@ def _algebra_factorise_problem(r1_range, r2_range):
         r2 = random.randint(*r2_range)
     expr = sp.expand((x - r1) * (x - r2))
     q = rf"Solve: \( {sp.latex(expr)} = 0 \)"
-    s = rf"Factorise: \( (x - {r1})(x - {r2}) = 0 \)<br>\( x = \boxed{{{r1}}} \) or \( x = \boxed{{{r2}}} \)"
+    s = rf"Factorise: \( (x {signed_term(-r1)})(x {signed_term(-r2)}) = 0 \)<br>\( x = \boxed{{{r1}}} \) or \( x = \boxed{{{r2}}} \)"
     hint = r"Factorise, then set each bracket equal to zero."
     return q, s, hint, 3, _algebra_quadratic_roots_answer(r1, r2)
 
@@ -2880,6 +2901,21 @@ def algebra_practice_quadratic_2():
     return algebra_practice_consecutive_integers()
 
 
+def _bracket_neg(n):
+    """Wrap a negative base in brackets so (-2)² is never written as -2²."""
+    return f"({n})" if n < 0 else str(n)
+
+
+def _lin_str(a, b, var='x'):
+    """'3x + 4', 'x - 3', '-2x + 5' (no 0x, no '+ -')."""
+    lead = '' if a == 1 else '-' if a == -1 else str(a)
+    if a == 0:
+        return str(b)
+    if b == 0:
+        return f"{lead}{var}"
+    return f"{lead}{var} {signed_term(b)}"
+
+
 def algebra_practice_quadratic_3():
     return algebra_practice_expand_mixed()
 
@@ -2890,10 +2926,11 @@ def algebra_practice_expand_binomial():
     """Expand two linear brackets."""
     x = sp.Symbol('x')
     a, b = random.randint(1, 4), random.randint(1, 4)
-    c, d = random.randint(-3, 5), random.randint(-3, 5)
+    c = random.choice([-3, -2, -1, 1, 2, 3, 4, 5])
+    d = random.choice([-3, -2, -1, 1, 2, 3, 4, 5])
     expr = sp.expand((a * x + b) * (c * x + d))
-    q = rf"Expand and simplify: \( ({a}x + {b})({c}x + {d}) \)"
-    s = rf"\( ({a}x + {b})({c}x + {d}) = \boxed{{{sp.latex(expr)}}} \)"
+    q = rf"Expand and simplify: \( ({_lin_str(a, b)})({_lin_str(c, d)}) \)"
+    s = rf"\( ({_lin_str(a, b)})({_lin_str(c, d)}) = \boxed{{{sp.latex(expr)}}} \)"
     hint = r"Multiply each term in the first bracket by each term in the second, then collect like terms."
     return q, s, hint, 2, _algebra_algebraic_answer(
         _algebra_expr_str(expr),
@@ -2910,9 +2947,9 @@ def algebra_practice_linear_both_sides():
         c = random.randint(1, 5)
     b = random.randint(1, 10)
     rhs = (a - c) * x_val + b
-    q = rf"Solve: \( {a}x + {b} = {c}x + {rhs} \)"
+    q = rf"Solve: \( {a}x {signed_term(b)} = {c}x {signed_term(rhs)} \)"
     s = (
-        rf"Subtract \( {c}x \): \( {a - c}x + {b} = {rhs} \)<br>"
+        rf"Subtract \( {c}x \): \( {a - c}x {signed_term(b)} = {rhs} \)<br>"
         rf"Subtract \( {b} \): \( {a - c}x = {rhs - b} \)<br>"
         rf"\( x = \boxed{{{x_val}}} \)"
     )
@@ -2929,10 +2966,10 @@ def algebra_practice_substitution():
     b = random.randint(-6, 6)
     c = random.randint(-3, 8)
     result = a * x_val ** 2 + b * x_val + c
-    q = rf"If \( x = {x_val} \), find the value of \( {a}x^2 + {b}x + {c} \)."
+    q = rf"If \( x = {x_val} \), find the value of \( {a}x^2 {signed_term(b)}x {signed_term(c)} \)."
     s = (
         rf"Substitute \( x = {x_val} \):<br>"
-        rf"\( {a}({x_val})^2 + {b}({x_val}) + {c} = {a * x_val**2} + {b * x_val} + {c} = "
+        rf"\( {a}({x_val})^2 {signed_term(b)}({x_val}) {signed_term(c)} = {a * x_val**2} {signed_term(b * x_val)} {signed_term(c)} = "
         rf"\boxed{{{result}}} \)"
     )
     hint = r"Replace every \(x\) with the given number, respecting powers and negative signs."
@@ -2981,10 +3018,10 @@ def algebra_practice_expand_mixed():
     x = sp.Symbol('x')
     a = random.randint(2, 4)
     b = random.randint(1, 5)
-    c = random.randint(-4, 4)
+    c = random.choice([-4, -3, -2, -1, 1, 2, 3, 4])
     expr = sp.expand((a * x + b) * (x + c))
-    q = rf"Expand and simplify: \( ({a}x + {b})(x + {c}) \)"
-    s = rf"\( ({a}x + {b})(x + {c}) = \boxed{{{sp.latex(expr)}}} \)"
+    q = rf"Expand and simplify: \( ({_lin_str(a, b)})({_lin_str(1, c)}) \)"
+    s = rf"\( ({_lin_str(a, b)})({_lin_str(1, c)}) = \boxed{{{sp.latex(expr)}}} \)"
     hint = r"Multiply term by term, then collect \(x^2\), \(x\) and constant terms."
     return q, s, hint, 3, _algebra_algebraic_answer(
         _algebra_expr_str(expr),
@@ -3000,9 +3037,9 @@ def algebra_practice_brackets_both_sides():
     c = random.randint(2, 4)
     d = random.randint(1, 5)
     extra = a * (x_val + b) - c * (x_val + d)
-    q = rf"Solve: \( {a}(x + {b}) = {c}(x + {d}) + {extra} \)"
+    q = rf"Solve: \( {a}(x + {b}) = {c}(x + {d}) {signed_term(extra)} \)"
     s = (
-        rf"Expand: \( {a}x + {a*b} = {c}x + {c*d} + {extra} \)<br>"
+        rf"Expand: \( {a}x + {a*b} = {c}x + {c*d} {signed_term(extra)} \)<br>"
         rf"Collect \(x\): \( {a - c}x = {c*d + extra - a*b} \)<br>"
         rf"\( x = \boxed{{{x_val}}} \)"
     )
@@ -3082,7 +3119,7 @@ def _surd_largest_square_factor(n):
     for s in _SURD_SQUARES:
         if n % s == 0:
             largest_sq = s
-    k = int(math.sqrt(largest_sq))
+    k = math.isqrt(largest_sq)
     return largest_sq, k, n // largest_sq
 
 
@@ -3424,7 +3461,7 @@ def _surd_random_mixed():
     terms = []
     for _ in range(n_terms):
         sq = random.choice([1, 4, 9, 16, 25, 36])
-        k = int(math.sqrt(sq))
+        k = math.isqrt(sq)
         terms.append((sq * p, k))
 
     total_k = terms[0][1]
@@ -3480,7 +3517,7 @@ def _surd_random_between_integers():
 def gcse_surds_simplify():
     """Foundational: simplify a single surd √n"""
     n, square, prime = _surd_random_radicand()
-    k = int(math.sqrt(square))
+    k = math.isqrt(square)
     q = (rf"Write √{n} in its simplest surd form.")
     s = (rf"Find the largest square factor of {n}: that is {square} (since {square} × {prime} = {n}).<br>"
          rf"√{n} = √({square} × {prime}) = √{square} × √{prime} = <strong>{k}√{prime}</strong>")
@@ -3491,7 +3528,7 @@ def gcse_surds_simplify_multiple():
     """Foundational: write p√n in the form k√r"""
     n, square, prime = _surd_random_radicand()
     p = random.randint(2, 7)
-    k_inner = int(math.sqrt(square))
+    k_inner = math.isqrt(square)
     k_total = p * k_inner
     q = (rf"Write {p}√{n} in the form k√{prime}, where k is an integer.")
     s = (rf"First simplify √{n}: √{n} = √({square} × {prime}) = {k_inner}√{prime}<br>"
@@ -3504,11 +3541,14 @@ def gcse_surds_add_subtract():
     prime = random.choice([2, 3, 5, 7])
     a_sq = random.choice(_SURD_SQUARES)
     b_sq = random.choice(_SURD_SQUARES)
-    a_coef = int(math.sqrt(a_sq))
-    b_coef = int(math.sqrt(b_sq))
+    op = random.choice(["+", "+", "-"])
+    while op == "-" and a_sq == b_sq:
+        # Equal terms would cancel to 0, which is not a k√p answer.
+        b_sq = random.choice(_SURD_SQUARES)
+    a_coef = math.isqrt(a_sq)
+    b_coef = math.isqrt(b_sq)
     n1 = a_sq * prime
     n2 = b_sq * prime
-    op = random.choice(["+", "+", "-"])
     if op == "+":
         total = a_coef + b_coef
     else:
@@ -3536,7 +3576,7 @@ def gcse_surds_multiply():
         if product % s == 0:
             largest_sq = s
     if largest_sq > 1:
-        k = int(math.sqrt(largest_sq))
+        k = math.isqrt(largest_sq)
         rem = product // largest_sq
         ans = f"{k}√{rem}" if rem > 1 else str(k)
         sol = (rf"√{a} × √{b} = √({a} × {b}) = √{product}<br>"
@@ -3739,7 +3779,7 @@ def gcse_surds_exact_area():
     for s_val in [4, 9, 16, 25, 36]:
         if product_surd % s_val == 0:
             largest_sq = s_val
-    k_inner = int(math.sqrt(largest_sq))
+    k_inner = math.isqrt(largest_sq)
     rem = product_surd // largest_sq
     total_k = p * q_coef * k_inner
     if rem == 1:
@@ -4416,7 +4456,7 @@ def _vectors_pythagorean_components():
         else:
             x, y = leg2, leg1
         if 3 <= x <= 36 and 3 <= y <= 36:
-            return x, y, int(math.sqrt(x * x + y * y))
+            return x, y, math.isqrt(x * x + y * y)
 
 
 def _vectors_collinear_points():
@@ -4499,12 +4539,12 @@ def _vectors_unit_vector_steps(x, y):
     ux, uy = x / mag, y / mag
     steps = [
         "<strong>Step 1</strong> — find the magnitude of the given vector:",
-        rf"|v| = √({x}² + {y}²) = √({x * x} + {y * y}) = √{sq_sum} ≈ {mag:.3f}",
+        rf"|v| = √({x}² + {y}²) = √({x * x} + {y * y}) = √{sq_sum} ≈ {fmt_dp(mag, 3)}",
         "<strong>Step 2</strong> — a unit vector has length 1 but points the same way. "
         "Divide <em>each</em> component by the magnitude:",
-        rf"Top component: {x} ÷ {mag:.3f} ≈ {ux:.3f}",
-        rf"Bottom component: {y} ÷ {mag:.3f} ≈ {uy:.3f}",
-        rf"<strong>Answer:</strong> \(\begin{{pmatrix}} {ux:.3f} \\ {uy:.3f} \end{{pmatrix}}\)",
+        rf"Top component: {x} ÷ {fmt_dp(mag, 3)} ≈ {fmt_dp(ux, 3)}",
+        rf"Bottom component: {y} ÷ {fmt_dp(mag, 3)} ≈ {fmt_dp(uy, 3)}",
+        rf"<strong>Answer:</strong> \(\begin{{pmatrix}} {fmt_dp(ux, 3)} \\ {fmt_dp(uy, 3)} \end{{pmatrix}}\)",
     ]
     hint = (
         "A unit vector is parallel to the original but has magnitude exactly 1. "
@@ -4753,8 +4793,8 @@ def _vectors_found_add_simple():
     c = (a[0]+b[0], a[1]+b[1])
     q = rf"\(\mathbf{{a}} = \begin{{pmatrix}} {a[0]} \\ {a[1]} \end{{pmatrix}}\) and \(\mathbf{{b}} = \begin{{pmatrix}} {b[0]} \\ {b[1]} \end{{pmatrix}}\). Find \(\mathbf{{a}} + \mathbf{{b}}\)."
     s = (
-        rf"<strong>Step 1</strong> — add the top components: {a[0]} + {b[0]} = {c[0]}<br>"
-        rf"<strong>Step 2</strong> — add the bottom components: {a[1]} + {b[1]} = {c[1]}<br>"
+        rf"<strong>Step 1</strong> — add the top components: {a[0]} + {bracket_neg(b[0])} = {c[0]}<br>"
+        rf"<strong>Step 2</strong> — add the bottom components: {a[1]} + {bracket_neg(b[1])} = {c[1]}<br>"
         rf"<strong>Answer:</strong> \(\mathbf{{a}} + \mathbf{{b}} = \begin{{pmatrix}} {c[0]} \\ {c[1]} \end{{pmatrix}}\)"
     )
     hint = (
@@ -4769,8 +4809,8 @@ def _vectors_found_subtract_simple():
     c = (a[0]-b[0], a[1]-b[1])
     q = rf"\(\mathbf{{a}} = \begin{{pmatrix}} {a[0]} \\ {a[1]} \end{{pmatrix}}\) and \(\mathbf{{b}} = \begin{{pmatrix}} {b[0]} \\ {b[1]} \end{{pmatrix}}\). Find \(\mathbf{{a}} - \mathbf{{b}}\)."
     s = (
-        rf"<strong>Step 1</strong> — subtract top components: {a[0]} − {b[0]} = {c[0]}<br>"
-        rf"<strong>Step 2</strong> — subtract bottom components: {a[1]} − {b[1]} = {c[1]}<br>"
+        rf"<strong>Step 1</strong> — subtract top components: {a[0]} − {bracket_neg(b[0])} = {c[0]}<br>"
+        rf"<strong>Step 2</strong> — subtract bottom components: {a[1]} − {bracket_neg(b[1])} = {c[1]}<br>"
         rf"<strong>Answer:</strong> \(\mathbf{{a}} - \mathbf{{b}} = \begin{{pmatrix}} {c[0]} \\ {c[1]} \end{{pmatrix}}\)"
     )
     hint = (
@@ -4963,7 +5003,7 @@ def _vectors_inter_path_addition():
          rf"If \(\overrightarrow{{AB}} = \begin{{pmatrix}} {ab[0]} \\ {ab[1]} \end{{pmatrix}}\) and \(\overrightarrow{{BC}} = \begin{{pmatrix}} {bc[0]} \\ {bc[1]} \end{{pmatrix}}\), find \(\overrightarrow{{AC}}\).")
     s = (
         rf"<strong>Step 1</strong> — follow the path: AC = AB + BC<br>"
-        rf"<strong>Step 2</strong> — add components: ({ab[0]}+{bc[0]}, {ab[1]}+{bc[1]})<br>"
+        rf"<strong>Step 2</strong> — add components: ({ab[0]} + {bracket_neg(bc[0])}, {ab[1]} + {bracket_neg(bc[1])})<br>"
         rf"<strong>Answer:</strong> \(\begin{{pmatrix}} {ac[0]} \\ {ac[1]} \end{{pmatrix}}\)"
     )
     hint = (
@@ -4984,12 +5024,12 @@ def _vectors_inter_magnitude_distance():
     elif sq_sum in (2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20):
         dist_str = f"√{sq_sum}"
     else:
-        dist_str = f"{dist:.3f}"
+        dist_str = f"{fmt_dp(dist, 3)}"
     s = (
         rf"<strong>Step 1</strong> — form the displacement vector PQ (Q − P):<br>"
-        rf"\(\overrightarrow{{PQ}} = \begin{{pmatrix}} {qp[0]} - {p[0]} \\ {qp[1]} - {p[1]} \end{{pmatrix}} = \begin{{pmatrix}} {vec[0]} \\ {vec[1]} \end{{pmatrix}}\)<br>"
+        rf"\(\overrightarrow{{PQ}} = \begin{{pmatrix}} {qp[0]} - {bracket_neg(p[0])} \\ {qp[1]} - {bracket_neg(p[1])} \end{{pmatrix}} = \begin{{pmatrix}} {vec[0]} \\ {vec[1]} \end{{pmatrix}}\)<br>"
         rf"<strong>Step 2</strong> — distance = magnitude:<br>"
-        rf"√({vec[0]}² + {vec[1]}²) = √({vec[0]**2} + {vec[1]**2}) = √{sq_sum} = <strong>{dist_str}</strong>"
+        rf"√({bracket_neg(vec[0])}² + {bracket_neg(vec[1])}²) = √({vec[0]**2} + {vec[1]**2}) = √{sq_sum} = <strong>{dist_str}</strong>"
     )
     hint = (
         "Distance between two points equals the length of the vector from one to the other. "
@@ -5042,11 +5082,11 @@ def _vectors_inter_magnitude_comparison():
     else: bigger = "equal"
     q = rf"Which vector has greater magnitude: \(\mathbf{{a}} = \begin{{pmatrix}} {v1[0]} \\ {v1[1]} \end{{pmatrix}}\) or \(\mathbf{{b}} = \begin{{pmatrix}} {v2[0]} \\ {v2[1]} \end{{pmatrix}}\)?"
     s = (
-        rf"<strong>Step 1</strong> — |a| = √({v1[0]}² + {v1[1]}²) = √{v1[0]**2 + v1[1]**2} ≈ {mag1:.2f}<br>"
-        rf"<strong>Step 2</strong> — |b| = √({v2[0]}² + {v2[1]}²) = √{v2[0]**2 + v2[1]**2} ≈ {mag2:.2f}<br>"
-        + (f"<strong>Answer:</strong> a is longer ({mag1:.2f} > {mag2:.2f})" if bigger == "a"
-           else f"<strong>Answer:</strong> b is longer ({mag2:.2f} > {mag1:.2f})" if bigger == "b"
-           else f"<strong>Answer:</strong> they have equal magnitude ({mag1:.2f})")
+        rf"<strong>Step 1</strong> — |a| = √({v1[0]}² + {v1[1]}²) = √{v1[0]**2 + v1[1]**2} ≈ {fmt_dp(mag1, 2)}<br>"
+        rf"<strong>Step 2</strong> — |b| = √({v2[0]}² + {v2[1]}²) = √{v2[0]**2 + v2[1]**2} ≈ {fmt_dp(mag2, 2)}<br>"
+        + (f"<strong>Answer:</strong> a is longer ({fmt_dp(mag1, 2)} > {fmt_dp(mag2, 2)})" if bigger == "a"
+           else f"<strong>Answer:</strong> b is longer ({fmt_dp(mag2, 2)} > {fmt_dp(mag1, 2)})" if bigger == "b"
+           else f"<strong>Answer:</strong> they have equal magnitude ({fmt_dp(mag1, 2)})")
     )
     hint = (
         "Calculate the magnitude of each vector separately using Pythagoras, then compare the two lengths."
@@ -5111,8 +5151,8 @@ def _vectors_inter_translation():
     q = rf"Point P({point[0]},{point[1]}) is translated by vector \(\begin{{pmatrix}} {vec[0]} \\ {vec[1]} \end{{pmatrix}}\). Find the coordinates of the image P'."
     s = (
         rf"<strong>Step 1</strong> — add the translation to each coordinate:<br>"
-        rf"x: {point[0]} + {vec[0]} = {image[0]}<br>"
-        rf"y: {point[1]} + {vec[1]} = {image[1]}<br>"
+        rf"x: {point[0]} + {bracket_neg(vec[0])} = {image[0]}<br>"
+        rf"y: {point[1]} + {bracket_neg(vec[1])} = {image[1]}<br>"
         rf"<strong>Answer:</strong> P' = ({image[0]}, {image[1]})"
     )
     hint = (
@@ -5365,15 +5405,17 @@ def _vectors_diff_ratio_collinear():
     a = (random.randint(1, 6), random.randint(1, 6))
     b = (random.randint(7, 12), random.randint(7, 12))
     ratio = random.randint(2, 5)
-    px = (a[0] + ratio * b[0]) / (1 + ratio)
-    py = (a[1] + ratio * b[1]) / (1 + ratio)
+    # AP:PB = 1:ratio, so P = (ratio·A + 1·B) / (1 + ratio) (P is nearer A).
+    px = (ratio * a[0] + b[0]) / (1 + ratio)
+    py = (ratio * a[1] + b[1]) / (1 + ratio)
     svg = _svg_section_line(1, ratio)
     q = (f"{svg}"
          rf"Points A({a[0]},{a[1]}) and B({b[0]},{b[1]}) are given. "
-         rf"Point P lies on AB such that AP:PB = 1:{ratio}. Find the coordinates of P.")
+         rf"Point P lies on AB such that AP:PB = 1:{ratio}. Find the coordinates of P. "
+         rf"Give each coordinate correct to 1 decimal place where necessary.")
     s = (rf"Section formula (AP:PB = 1:{ratio}): "
          rf"\(\overrightarrow{{OP}} = \frac{{{ratio}\mathbf{{a}}+1\cdot\mathbf{{b}}}}{{{1+ratio}}}\). "
-         rf"P = \(\left(\frac{{{ratio}\times{a[0]}+{b[0]}}}{{{1+ratio}}},\ \frac{{{ratio}\times{a[1]}+{b[1]}}}{{{1+ratio}}}\right) = ({px:.1f},\ {py:.1f})\)")
+         rf"P = \(\left(\frac{{{ratio}\times{a[0]}+{b[0]}}}{{{1+ratio}}},\ \frac{{{ratio}\times{a[1]}+{b[1]}}}{{{1+ratio}}}\right) = ({fmt_dp(px, 1)},\ {fmt_dp(py, 1)})\)")
     hint = "Section formula for AP:PB = m:n: P = (n·A + m·B) / (m+n)."
     return q, s, hint, 3, _vec_number_pair_answer(round(px, 1), round(py, 1), "x", "y")
 
@@ -5389,10 +5431,9 @@ def _vectors_diff_parallel_unit():
     return q, s, hint, 3, _vec_answer(round(v[0] / math.sqrt(v[0]**2 + v[1]**2), 3), round(v[1] / math.sqrt(v[0]**2 + v[1]**2), 3))
 
 def _vectors_diff_geometric_ratio():
-    m = random.randint(2, 4)
-    n = random.randint(1, 3)
-    p = random.randint(1, 3)
-    q_ratio = random.randint(2, 4)
+    # Coprime, unequal parts so the ratios are in simplest form and never 3:3.
+    m, n = random.choice([(2, 1), (3, 1), (3, 2), (4, 1), (4, 3), (1, 2), (1, 3), (2, 3)])
+    p, q_ratio = random.choice([(1, 2), (1, 3), (2, 3), (1, 4), (3, 4), (2, 1), (3, 1), (3, 2)])
     t_d = m / (m + n)
     t_e = p / (p + q_ratio)
     svg = _svg_triangle_de(t_d, t_e, "D", "E")
@@ -5623,7 +5664,7 @@ def _trig_svg(w, h, inner, pad=_TRIG_SVG_PAD):
 
 
 def _trig_svg_bounded(vx, vy, vw, vh, inner):
-    return _trig_diagram_shell(f"{vx:.1f} {vy:.1f} {vw:.1f} {vh:.1f}", inner)
+    return _trig_diagram_shell(f"{fmt_dp(vx, 1)} {fmt_dp(vy, 1)} {fmt_dp(vw, 1)} {fmt_dp(vh, 1)}", inner)
 
 
 def _trig_svg_right_tri(adj, opp,
@@ -5645,7 +5686,7 @@ def _trig_svg_right_tri(adj, opp,
 
     # Right-angle square at B
     sq = 10
-    ra = (f'<polyline points="{Bx:.0f},{By-sq:.0f} {Bx-sq:.0f},{By-sq:.0f} {Bx-sq:.0f},{By:.0f}"'
+    ra = (f'<polyline points="{fmt_dp(Bx, 0)},{fmt_dp(By-sq, 0)} {fmt_dp(Bx-sq, 0)},{fmt_dp(By-sq, 0)} {fmt_dp(Bx-sq, 0)},{fmt_dp(By, 0)}"'
           f' fill="none" stroke="#555" stroke-width="1.5"/>')
 
     # Angle arc at A
@@ -5653,28 +5694,28 @@ def _trig_svg_right_tri(adj, opp,
     r = 28
     ex = Ax + r * math.cos(hyp_ang)
     ey = Ay - r * math.sin(hyp_ang)
-    arc = (f'<path d="M {Ax+r:.0f},{Ay:.0f} A {r},{r} 0 0,0 {ex:.0f},{ey:.0f}"'
+    arc = (f'<path d="M {fmt_dp(Ax+r, 0)},{fmt_dp(Ay, 0)} A {r},{r} 0 0,0 {fmt_dp(ex, 0)},{fmt_dp(ey, 0)}"'
            f' fill="none" stroke="#a13544" stroke-width="1.5"/>')
 
     mid = hyp_ang / 2
     lx = Ax + (r + 16) * math.cos(mid)
     ly = Ay - (r + 16) * math.sin(mid)
     ang_text = angle_label if angle_val is None else f"{angle_label} = {angle_val}\u00b0"
-    ang_lbl = (f'<text x="{lx:.0f}" y="{ly:.0f}" text-anchor="middle"'
+    ang_lbl = (f'<text x="{fmt_dp(lx, 0)}" y="{fmt_dp(ly, 0)}" text-anchor="middle"'
                f' font-size="13" font-style="italic" fill="#a13544">{ang_text}</text>')
 
     # Side labels
-    adj_lbl = (f'<text x="{(Ax+Bx)/2:.0f}" y="{Ay+18:.0f}" text-anchor="middle"'
+    adj_lbl = (f'<text x="{fmt_dp((Ax+Bx)/2, 0)}" y="{fmt_dp(Ay+18, 0)}" text-anchor="middle"'
                f' font-size="12" fill="#333">{label_adj}</text>')
-    opp_lbl = (f'<text x="{Bx+16:.0f}" y="{(By+Cy)/2:.0f}" text-anchor="start"'
+    opp_lbl = (f'<text x="{fmt_dp(Bx+16, 0)}" y="{fmt_dp((By+Cy)/2, 0)}" text-anchor="start"'
                f' font-size="12" fill="#333">{label_opp}</text>')
     hmx = (Ax + Cx) / 2 - 16 * math.sin(hyp_ang)
     hmy = (Ay + Cy) / 2 - 10
-    hyp_lbl = (f'<text x="{hmx:.0f}" y="{hmy:.0f}" text-anchor="middle"'
+    hyp_lbl = (f'<text x="{fmt_dp(hmx, 0)}" y="{fmt_dp(hmy, 0)}" text-anchor="middle"'
                f' font-size="12" fill="#333">{label_hyp}</text>')
 
     return _trig_svg(W, H,
-            f'<polygon points="{Ax:.0f},{Ay:.0f} {Bx:.0f},{By:.0f} {Cx:.0f},{Cy:.0f}"'
+            f'<polygon points="{fmt_dp(Ax, 0)},{fmt_dp(Ay, 0)} {fmt_dp(Bx, 0)},{fmt_dp(By, 0)} {fmt_dp(Cx, 0)},{fmt_dp(Cy, 0)}"'
             f' fill="#e8f4f4" stroke="#01696f" stroke-width="2"/>'
             f'{ra}{arc}{ang_lbl}{adj_lbl}{opp_lbl}{hyp_lbl}'
             )
@@ -5695,7 +5736,7 @@ def _trig_svg_isosceles(equal, base,
     (Ax, Ay), (Bx, By), (Cx, Cy) = _trig_fit_triangle_to_canvas(
         pts, _TRIG_DIAGRAM_W, _TRIG_DIAGRAM_H, margin=40, label_pad=32)
 
-    tri = (f'<polygon points="{Ax:.0f},{Ay:.0f} {Bx:.0f},{By:.0f} {Cx:.0f},{Cy:.0f}"'
+    tri = (f'<polygon points="{fmt_dp(Ax, 0)},{fmt_dp(Ay, 0)} {fmt_dp(Bx, 0)},{fmt_dp(By, 0)} {fmt_dp(Cx, 0)},{fmt_dp(Cy, 0)}"'
            f' fill="#e8f4f4" stroke="#01696f" stroke-width="2"/>')
 
     ang_a = math.atan2(Ay - Cy, Ax - Cx)
@@ -5706,13 +5747,13 @@ def _trig_svg_isosceles(equal, base,
     x2 = Cx + r * math.cos(ang_b)
     y2 = Cy + r * math.sin(ang_b)
     sweep = 1 if (ang_b - ang_a) % (2 * math.pi) < math.pi else 0
-    arc = (f'<path d="M {x1:.0f},{y1:.0f} A {r},{r} 0 0,{sweep} {x2:.0f},{y2:.0f}"'
+    arc = (f'<path d="M {fmt_dp(x1, 0)},{fmt_dp(y1, 0)} A {r},{r} 0 0,{sweep} {fmt_dp(x2, 0)},{fmt_dp(y2, 0)}"'
            f' fill="none" stroke="#a13544" stroke-width="1.5"/>')
 
     mid = ang_a + ((ang_b - ang_a + math.pi) % (2 * math.pi) - math.pi) / 2
     lx = Cx + (r + 16) * math.cos(mid)
     ly = Cy + (r + 16) * math.sin(mid)
-    ang_lbl = (f'<text x="{lx:.0f}" y="{ly:.0f}" text-anchor="middle"'
+    ang_lbl = (f'<text x="{fmt_dp(lx, 0)}" y="{fmt_dp(ly, 0)}" text-anchor="middle"'
                f' font-size="13" font-style="italic" fill="#a13544">{angle_label} = ?</text>')
 
     def _side_lbl(p1, p2, opp, text):
@@ -5724,7 +5765,7 @@ def _trig_svg_isosceles(equal, base,
         if (opp[0] - mx) * nx + (opp[1] - my) * ny > 0:
             nx, ny = -nx, -ny
         tx, ty = mx + nx * 18, my + ny * 18 + 4
-        return (f'<text x="{tx:.0f}" y="{ty:.0f}" text-anchor="middle"'
+        return (f'<text x="{fmt_dp(tx, 0)}" y="{fmt_dp(ty, 0)}" text-anchor="middle"'
                 f' font-size="12" fill="#333">{text}</text>'), tx, ty
 
     leq_a, ax1, ay1 = _side_lbl((Ax, Ay), (Cx, Cy), (Bx, By), label_equal)
@@ -5831,7 +5872,7 @@ def _trig_outward_side_label(p1, p2, opp, text, dist=18, fill="#333", size=13):
         nx, ny = -nx, -ny
     lx = mx + nx * dist
     ly = my + ny * dist + 4
-    svg = (f'<text x="{lx:.0f}" y="{ly:.0f}" text-anchor="middle"'
+    svg = (f'<text x="{fmt_dp(lx, 0)}" y="{fmt_dp(ly, 0)}" text-anchor="middle"'
            f' font-size="{size}" font-style="italic" fill="{fill}">{text}</text>')
     half_w = 3 * len(str(text)) + 6
     return svg, [lx - half_w, lx + half_w], [ly - size, ly + 4]
@@ -5843,7 +5884,7 @@ def _trig_outward_vertex_label(vx, vy, gx, gy, text, dist=16, fill="#01696f", si
     n = math.hypot(dx, dy) or 1.0
     lx = vx + dx / n * dist
     ly = vy + dy / n * dist + 4
-    svg = (f'<text x="{lx:.0f}" y="{ly:.0f}" text-anchor="middle"'
+    svg = (f'<text x="{fmt_dp(lx, 0)}" y="{fmt_dp(ly, 0)}" text-anchor="middle"'
            f' font-size="{size}" font-weight="bold" fill="{fill}">{text}</text>')
     half_w = 4 * len(str(text)) + 6
     return svg, [lx - half_w, lx + half_w], [ly - size, ly + 4]
@@ -5857,7 +5898,7 @@ def _trig_svg_bearing_triangle(d1, d2, bearing1_deg, turn_angle_deg,
     (Ax, Ay), (Bx, By), (Cx, Cy) = _trig_fit_triangle_to_canvas(
         pts, _TRIG_DIAGRAM_W, _TRIG_DIAGRAM_H, margin=32, label_pad=28)
 
-    tri = (f'<polygon points="{Ax:.0f},{Ay:.0f} {Bx:.0f},{By:.0f} {Cx:.0f},{Cy:.0f}"'
+    tri = (f'<polygon points="{fmt_dp(Ax, 0)},{fmt_dp(Ay, 0)} {fmt_dp(Bx, 0)},{fmt_dp(By, 0)} {fmt_dp(Cx, 0)},{fmt_dp(Cy, 0)}"'
            f' fill="#e8f4f4" stroke="#01696f" stroke-width="2"/>')
 
     Gx, Gy = (Ax + Bx + Cx) / 3, (Ay + By + Cy) / 3
@@ -5893,7 +5934,7 @@ def _trig_svg_general_tri(A_deg, B_deg,
     (Ax, Ay), (Bx, By), (Cx, Cy) = _trig_fit_triangle_to_canvas(
         pts, _TRIG_DIAGRAM_W, _TRIG_DIAGRAM_H, margin=32, label_pad=28)
 
-    tri = (f'<polygon points="{Ax:.0f},{Ay:.0f} {Bx:.0f},{By:.0f} {Cx:.0f},{Cy:.0f}"'
+    tri = (f'<polygon points="{fmt_dp(Ax, 0)},{fmt_dp(Ay, 0)} {fmt_dp(Bx, 0)},{fmt_dp(By, 0)} {fmt_dp(Cx, 0)},{fmt_dp(Cy, 0)}"'
            f' fill="#e8f4f4" stroke="#01696f" stroke-width="2"/>')
 
     Gx, Gy = (Ax + Bx + Cx) / 3, (Ay + By + Cy) / 3
@@ -5944,7 +5985,7 @@ def _trig_svg_ladder(length, angle_deg, height):
     r = min(28, max(16, min(adj_px, opp_px) * 0.28))
     ex = foot_x + r * cos_a
     ey = foot_y - r * sin_a
-    arc = (f'<path d="M {foot_x+r:.1f},{foot_y} A {r},{r} 0 0,0 {ex:.1f},{ey:.1f}"'
+    arc = (f'<path d="M {fmt_dp(foot_x+r, 1)},{foot_y} A {r},{r} 0 0,0 {fmt_dp(ex, 1)},{fmt_dp(ey, 1)}"'
            f' fill="none" stroke="#a13544" stroke-width="1.5"/>')
 
     lx = foot_x + (r + 14) * math.cos(ang_r / 2)
@@ -5955,11 +5996,11 @@ def _trig_svg_ladder(length, angle_deg, height):
     return _trig_svg(W, H, (
             f'<line x1="{gx1}" y1="{gy}" x2="{wall_x}" y2="{gy}" stroke="#555" stroke-width="2"/>'
             f'<line x1="{wall_x}" y1="{wy1}" x2="{wall_x}" y2="{gy}" stroke="#555" stroke-width="2"/>'
-            f'<line x1="{foot_x:.1f}" y1="{foot_y}" x2="{wall_x}" y2="{wall_y:.1f}"'
+            f'<line x1="{fmt_dp(foot_x, 1)}" y1="{foot_y}" x2="{wall_x}" y2="{fmt_dp(wall_y, 1)}"'
             f' stroke="#01696f" stroke-width="3"/>'
             f'{ra}{arc}'
-            f'<text x="{lx:.0f}" y="{ly:.0f}" text-anchor="middle" font-size="12" fill="#a13544">{angle_deg}\u00b0</text>'
-            f'<text x="{mid_x:.0f}" y="{mid_y:.0f}" text-anchor="middle" font-size="12" fill="#333">{length} m</text>'
+            f'<text x="{fmt_dp(lx, 0)}" y="{fmt_dp(ly, 0)}" text-anchor="middle" font-size="12" fill="#a13544">{angle_deg}\u00b0</text>'
+            f'<text x="{fmt_dp(mid_x, 0)}" y="{fmt_dp(mid_y, 0)}" text-anchor="middle" font-size="12" fill="#333">{length} m</text>'
             f'<text x="{wall_x+12}" y="{(wall_y+foot_y)//2}" text-anchor="start" font-size="12" fill="#333">? m</text>'
             f'<text x="{gx1}" y="{gy+18}" font-size="11" fill="#888">ground</text>'
             f'<text x="{wall_x-4}" y="{wy1-4}" font-size="11" fill="#888" text-anchor="end">wall</text>'
@@ -5986,13 +6027,13 @@ def _trig_svg_elevation(height, dist, angle_deg=None):
     r = 32
     ex = obs_x + r * math.cos(ang_r)
     ey = obs_y - r * math.sin(ang_r)
-    arc = (f'<path d="M {obs_x+r},{obs_y} A {r},{r} 0 0,0 {ex:.0f},{ey:.0f}"'
+    arc = (f'<path d="M {obs_x+r},{obs_y} A {r},{r} 0 0,0 {fmt_dp(ex, 0)},{fmt_dp(ey, 0)}"'
            f' fill="none" stroke="#a13544" stroke-width="1.5"/>')
     lx = obs_x + (r + 18) * math.cos(ang_r / 2)
     ly = obs_y - (r + 18) * math.sin(ang_r / 2)
-    ang_lbl = (f'<text x="{lx:.0f}" y="{ly:.0f}" text-anchor="middle" font-size="12" fill="#a13544">'
+    ang_lbl = (f'<text x="{fmt_dp(lx, 0)}" y="{fmt_dp(ly, 0)}" text-anchor="middle" font-size="12" fill="#a13544">'
                f'{angle_deg}\u00b0</text>' if angle_deg is not None else
-               f'<text x="{lx:.0f}" y="{ly:.0f}" text-anchor="middle" font-size="12" font-style="italic" fill="#a13544">\u03b8?</text>')
+               f'<text x="{fmt_dp(lx, 0)}" y="{fmt_dp(ly, 0)}" text-anchor="middle" font-size="12" font-style="italic" fill="#a13544">\u03b8?</text>')
 
     return _trig_svg(W, H, (
             f'<line x1="{obs_x}" y1="{obs_y}" x2="{base_x}" y2="{base_y}" stroke="#555" stroke-width="2"/>'
@@ -6018,13 +6059,13 @@ def _trig_svg_depression(height, dist, angle_deg=None):
     r = 30
     ex = obs_x + r * math.cos(-ang_r)
     ey = obs_y - r * math.sin(-ang_r)
-    arc = (f'<path d="M {obs_x+r},{obs_y} A {r},{r} 0 0,1 {ex:.0f},{ey:.0f}"'
+    arc = (f'<path d="M {obs_x+r},{obs_y} A {r},{r} 0 0,1 {fmt_dp(ex, 0)},{fmt_dp(ey, 0)}"'
            f' fill="none" stroke="#a13544" stroke-width="1.5"/>')
     lx = obs_x + (r + 18) * math.cos(-ang_r / 2)
     ly = obs_y - (r + 18) * math.sin(-ang_r / 2)
-    ang_lbl = (f'<text x="{lx:.0f}" y="{ly:.0f}" text-anchor="middle" font-size="12" fill="#a13544">'
+    ang_lbl = (f'<text x="{fmt_dp(lx, 0)}" y="{fmt_dp(ly, 0)}" text-anchor="middle" font-size="12" fill="#a13544">'
                f'{angle_deg}\u00b0</text>' if angle_deg is not None else
-               f'<text x="{lx:.0f}" y="{ly:.0f}" text-anchor="middle" font-size="12" font-style="italic" fill="#a13544">\u03b8?</text>')
+               f'<text x="{fmt_dp(lx, 0)}" y="{fmt_dp(ly, 0)}" text-anchor="middle" font-size="12" font-style="italic" fill="#a13544">\u03b8?</text>')
 
     return _trig_svg(W, H, (
             f'<line x1="{obs_x}" y1="{obs_y}" x2="{obs_x}" y2="{base_y}" stroke="#aaa" stroke-width="1" stroke-dasharray="4,4"/>'
@@ -6216,7 +6257,7 @@ def _trig_found_sin_side():
          f"In a right-angled triangle, the hypotenuse is {hyp} cm and one acute angle is {angle}\u00b0. "
          f"Use sin to find the length of the side <strong>opposite</strong> this angle. Give your answer to 2 d.p.")
     s = (rf"\(\sin {angle}° = \dfrac{{\text{{opp}}}}{{{hyp}}}\)"
-         f"<br>opp = {hyp} \u00d7 sin {angle}\u00b0 = {hyp} \u00d7 {math.sin(math.radians(angle)):.4f}"
+         f"<br>opp = {hyp} \u00d7 sin {angle}\u00b0 = {hyp} \u00d7 {fmt_dp(math.sin(math.radians(angle)), 4)}"
          f"<br>= <strong>{opp} cm</strong>")
     hint = "SOH: sin\u202f=\u202fopposite \u00f7 hypotenuse. Rearrange to opp = hyp \u00d7 sin\u202f\u03b8."
     return q, s, hint, 2, opp
@@ -6234,7 +6275,7 @@ def _trig_found_cos_side():
          f"In a right-angled triangle, the hypotenuse is {hyp} m and one acute angle is {angle}\u00b0. "
          f"Use cos to find the length of the <strong>adjacent</strong> side. Give your answer to 2 d.p.")
     s = (rf"\(\cos {angle}° = \dfrac{{\text{{adj}}}}{{{hyp}}}\)"
-         f"<br>adj = {hyp} \u00d7 cos {angle}\u00b0 = {hyp} \u00d7 {math.cos(math.radians(angle)):.4f}"
+         f"<br>adj = {hyp} \u00d7 cos {angle}\u00b0 = {hyp} \u00d7 {fmt_dp(math.cos(math.radians(angle)), 4)}"
          f"<br>= <strong>{adj} m</strong>")
     hint = "CAH: cos\u202f=\u202fadjacent \u00f7 hypotenuse. Rearrange to adj = hyp \u00d7 cos\u202f\u03b8."
     return q, s, hint, 2, adj
@@ -6285,7 +6326,7 @@ def _trig_found_ladder():
          f"How high up the wall does the ladder reach? Give your answer to 2 d.p.")
     s = (f"The ladder is the hypotenuse; the height is opposite the angle.<br>"
          rf"\(\sin {angle}° = \dfrac{{\text{{height}}}}{{{length}}}\)"
-         f"<br>height = {length} \u00d7 sin {angle}\u00b0 = {length} \u00d7 {math.sin(math.radians(angle)):.4f}"
+         f"<br>height = {length} \u00d7 sin {angle}\u00b0 = {length} \u00d7 {fmt_dp(math.sin(math.radians(angle)), 4)}"
          f"<br>= <strong>{height} m</strong>")
     hint = "Draw the triangle: ladder = hyp, height = opp, ground = adj. Use SOH: sin = opp/hyp."
     return q, s, hint, 2, height
@@ -6304,7 +6345,7 @@ def _trig_found_find_hyp_from_opp():
          f"In a right-angled triangle, the side opposite a {angle}\u00b0 angle is {opp} cm. "
          f"Find the hypotenuse. Give your answer to 2 d.p.")
     s = (rf"\(\sin {angle}° = \dfrac{{{opp}}}{{\text{{hyp}}}}\)"
-         f"<br>hyp = {opp} \u00f7 sin {angle}\u00b0 = {opp} \u00f7 {math.sin(math.radians(angle)):.4f}"
+         f"<br>hyp = {opp} \u00f7 sin {angle}\u00b0 = {opp} \u00f7 {fmt_dp(math.sin(math.radians(angle)), 4)}"
          f"<br>= <strong>{hyp} cm</strong>")
     hint = "SOH: sin = opp/hyp. Rearrange: hyp = opp \u00f7 sin\u202f\u03b8."
     return q, s, hint, 2, hyp
@@ -6322,7 +6363,7 @@ def _trig_found_find_adj_from_tan():
          f"In a right-angled triangle, the angle is {angle}\u00b0 and the opposite side is {opp} m. "
          f"Find the adjacent side. Give your answer to 2 d.p.")
     s = (rf"\(\tan {angle}° = \dfrac{{{opp}}}{{\text{{adj}}}}\)"
-         f"<br>adj = {opp} \u00f7 tan {angle}\u00b0 = {opp} \u00f7 {math.tan(math.radians(angle)):.4f}"
+         f"<br>adj = {opp} \u00f7 tan {angle}\u00b0 = {opp} \u00f7 {fmt_dp(math.tan(math.radians(angle)), 4)}"
          f"<br>= <strong>{adj} m</strong>")
     hint = "TOA: tan = opp/adj. Rearrange: adj = opp \u00f7 tan\u202f\u03b8."
     return q, s, hint, 2, adj
@@ -6517,8 +6558,8 @@ def _trig_inter_cosine_find_angle():
          f"In triangle ABC, a = {a} cm, b = {b} cm, c = {c} cm. "
          f"Use the cosine rule to find angle A. Give your answer to 1 d.p.")
     s = (rf"\(\cos A = \dfrac{{b^2 + c^2 - a^2}}{{2bc}} = \dfrac{{{b}^2 + {c}^2 - {a}^2}}{{2 \times {b} \times {c}}}"
-         rf" = \dfrac{{{b**2}+{c**2}-{a**2}}}{{{2*b*c}}} = {cosA:.4f}\)"
-         f"<br>A = cos\u207b\u00b9\u202f({cosA:.4f})"
+         rf" = \dfrac{{{b**2}+{c**2}-{a**2}}}{{{2*b*c}}} = {fmt_dp(cosA, 4)}\)"
+         f"<br>A = cos\u207b\u00b9\u202f({fmt_dp(cosA, 4)})"
          f"<br>= <strong>{A}\u00b0</strong>")
     hint = "Rearranged cosine rule: cos A = (b\u00b2 + c\u00b2 \u2212 a\u00b2) / (2bc)."
     return q, s, hint, 4, A
@@ -6558,7 +6599,7 @@ def _trig_inter_compound():
     s = (f"Let total height = h. The right triangle has:<br>"
          f"  opposite = h, adjacent = {base} m, angle = {angle2}\u00b0<br>"
          rf"\(\tan {angle2}° = \dfrac{{h}}{{{base}}}\)"
-         f"<br>h = {base} \u00d7 tan {angle2}\u00b0 = {base} \u00d7 {math.tan(math.radians(angle2)):.4f}"
+         f"<br>h = {base} \u00d7 tan {angle2}\u00b0 = {base} \u00d7 {fmt_dp(math.tan(math.radians(angle2)), 4)}"
          f"<br>= <strong>{h2} m</strong><br>"
          f"(The wall height of {h1} m is used in setting up the scenario but the direct calculation gives total h.)")
     hint = "Set up the right triangle from the observation point to the top. Use tan."
@@ -6579,7 +6620,7 @@ def _trig_inter_sine_find_side():
          f"Use the sine rule to find side a (opposite A). Give your answer to 2 d.p.")
     s = (rf"\(\dfrac{{a}}{{\sin A}} = \dfrac{{c}}{{\sin C}}\)"
          rf"<br>\(a = \dfrac{{{c} \times \sin {A}°}}{{\sin {C}°}}"
-         rf" = \dfrac{{{c} \times {math.sin(math.radians(A)):.4f}}}{{{math.sin(math.radians(C)):.4f}}}\)"
+         rf" = \dfrac{{{c} \times {fmt_dp(math.sin(math.radians(A)), 4)}}}{{{fmt_dp(math.sin(math.radians(C)), 4)}}}\)"
          f"<br>= <strong>{a} cm</strong>")
     hint = "Sine rule: a/sin A = c/sin C. Multiply both sides by sin A to isolate a."
     return q, s, hint, 3, a
@@ -6608,8 +6649,8 @@ def _trig_diff_sine_rule_side():
         rf"<strong>Step 2</strong> — substitute \(a = {a}\,\text{{cm}}\), \(A = {A}^\circ\), \(B = {B}^\circ\):<br>"
         rf"\(b = \dfrac{{{a} \times \sin {B}^\circ}}{{\sin {A}^\circ}}\)<br><br>"
         rf"<strong>Step 3</strong> — evaluate:<br>"
-        rf"\(b = \dfrac{{{a} \times {sin_b:.4f}}}{{{sin_a:.4f}}} = {b:.2f}\)<br><br>"
-        rf"<strong>Answer:</strong> \(b = {b:.2f}\,\text{{cm}}\)"
+        rf"\(b = \dfrac{{{a} \times {fmt_dp(sin_b, 4)}}}{{{fmt_dp(sin_a, 4)}}} = {fmt_dp(b, 2)}\)<br><br>"
+        rf"<strong>Answer:</strong> \(b = {fmt_dp(b, 2)}\,\text{{cm}}\)"
     )
     hint = "Use the pair you know (a and A) together with the unknown pair (b and B)."
     return q, s, hint, 3, b
@@ -6631,9 +6672,9 @@ def _trig_diff_cosine_rule_side():
          f"Use the cosine rule to find side a. Give your answer to 2 d.p.")
     s = (rf"\(a^2 = b^2 + c^2 - 2bc\cos A\)"
          rf"<br>\(= {b}^2 + {c}^2 - 2 \times {b} \times {c} \times \cos {A}°\)"
-         rf"<br>\(= {b**2} + {c**2} - {2*b*c} \times {math.cos(math.radians(A)):.4f}\)"
-         rf"<br>\(= {b**2+c**2} - {round(2*b*c*math.cos(math.radians(A)),4)} = {round(a**2,4)}\)"
-         f"<br>a = <strong>{a} cm</strong>")
+         rf"<br>\(= {b**2} + {c**2} - {2*b*c} \times {fmt_dp(math.cos(math.radians(A)), 4)}\)"
+         rf"<br>\(= {b**2+c**2} - {fmt_dp(2*b*c*math.cos(math.radians(A)),4)} = {fmt_dp(b**2+c**2-float(fmt_dp(2*b*c*math.cos(math.radians(A)),4)),4)}\)"
+         f"<br>a = <strong>{fmt_dp(a, 2)} cm</strong>")
     hint = "Cosine rule: a\u00b2 = b\u00b2 + c\u00b2 \u2212 2bc\u202fcos\u202fA. Use when you have SAS."
     return q, s, hint, 3, a
 
@@ -6653,7 +6694,7 @@ def _trig_diff_area_sine():
          f"Calculate the area of the triangle. Give your answer to 2 d.p.")
     s = (rf"Area \(= \dfrac{{1}}{{2}}\,ab\sin C\)"
          rf"<br>\(= \dfrac{{1}}{{2}} \times {a} \times {b} \times \sin {C}°\)"
-         rf"<br>\(= \dfrac{{1}}{{2}} \times {a} \times {b} \times {math.sin(math.radians(C)):.4f}\)"
+         rf"<br>\(= \dfrac{{1}}{{2}} \times {a} \times {b} \times {fmt_dp(math.sin(math.radians(C)), 4)}\)"
          f"<br>= <strong>{area} cm\u00b2</strong>")
     hint = "Area = \u00bd\u202fa\u202fb\u202fsin\u202fC. This formula works for any triangle when you know two sides and the included angle."
     return q, s, hint, 2, area
@@ -6678,21 +6719,21 @@ def _trig_diff_3d():
     p = [pt(x,y,z) for z in [0,1] for y in [0,1] for x in [0,1]]
     def line(a, b, dash=""):
         ds = f' stroke-dasharray="{dash}"' if dash else ""
-        return f'<line x1="{p[a][0]:.0f}" y1="{p[a][1]:.0f}" x2="{p[b][0]:.0f}" y2="{p[b][1]:.0f}" stroke="#888" stroke-width="1.2"{ds}/>'
+        return f'<line x1="{fmt_dp(p[a][0], 0)}" y1="{fmt_dp(p[a][1], 0)}" x2="{fmt_dp(p[b][0], 0)}" y2="{fmt_dp(p[b][1], 0)}" stroke="#888" stroke-width="1.2"{ds}/>'
     edges = (line(0,1)+line(0,2)+line(0,4)+line(1,3)+line(1,5)+line(2,3)+
              line(2,6,"")+line(4,5)+line(4,6)+line(3,7)+line(5,7)+line(6,7))
     # Space diagonal: from p[0] to p[7]
-    diag_line = (f'<line x1="{p[0][0]:.0f}" y1="{p[0][1]:.0f}" x2="{p[7][0]:.0f}" y2="{p[7][1]:.0f}"'
+    diag_line = (f'<line x1="{fmt_dp(p[0][0], 0)}" y1="{fmt_dp(p[0][1], 0)}" x2="{fmt_dp(p[7][0], 0)}" y2="{fmt_dp(p[7][1], 0)}"'
                  f' stroke="#a13544" stroke-width="2" stroke-dasharray="5,3"/>')
     # Base diagonal: from p[0] to p[3]
-    base_line = (f'<line x1="{p[0][0]:.0f}" y1="{p[0][1]:.0f}" x2="{p[3][0]:.0f}" y2="{p[3][1]:.0f}"'
+    base_line = (f'<line x1="{fmt_dp(p[0][0], 0)}" y1="{fmt_dp(p[0][1], 0)}" x2="{fmt_dp(p[3][0], 0)}" y2="{fmt_dp(p[3][1], 0)}"'
                  f' stroke="#01696f" stroke-width="2" stroke-dasharray="5,3"/>')
     svg = _trig_svg(W, H, (
            f'{edges}{diag_line}{base_line}'
-           f'<text x="{p[0][0]-8:.0f}" y="{p[0][1]+12:.0f}" font-size="11" fill="#333">A</text>'
-           f'<text x="{p[7][0]+4:.0f}" y="{p[7][1]-4:.0f}" font-size="11" fill="#333">G</text>'
-           f'<text x="{p[3][0]+4:.0f}" y="{p[3][1]+4:.0f}" font-size="11" fill="#333">C</text>'
-           f'<text x="{p[0][0]+5:.0f}" y="{p[0][1]+18:.0f}" font-size="10" fill="#888">{l}cm\xd7{w}cm\xd7{h}cm</text>'
+           f'<text x="{fmt_dp(p[0][0]-8, 0)}" y="{fmt_dp(p[0][1]+12, 0)}" font-size="11" fill="#333">A</text>'
+           f'<text x="{fmt_dp(p[7][0]+4, 0)}" y="{fmt_dp(p[7][1]-4, 0)}" font-size="11" fill="#333">G</text>'
+           f'<text x="{fmt_dp(p[3][0]+4, 0)}" y="{fmt_dp(p[3][1]+4, 0)}" font-size="11" fill="#333">C</text>'
+           f'<text x="{fmt_dp(p[0][0]+5, 0)}" y="{fmt_dp(p[0][1]+18, 0)}" font-size="10" fill="#888">{l}cm\xd7{w}cm\xd7{h}cm</text>'
            ))
     q = (f"{svg}"
          f"A cuboid has length {l} cm, width {w} cm, and height {h} cm. "
@@ -6744,8 +6785,8 @@ def _trig_diff_sine_rule_angle():
          f"Use the sine rule to find the acute angle A. Give your answer to 1 d.p.")
     s = (rf"\(\dfrac{{\sin A}}{{a}} = \dfrac{{\sin B}}{{b}}\)"
          rf"<br>\(\sin A = \dfrac{{{a} \times \sin {B}°}}{{{b}}}"
-         rf" = \dfrac{{{a} \times {math.sin(math.radians(B)):.4f}}}{{{b}}} = {sinA:.4f}\)"
-         f"<br>A = sin\u207b\u00b9\u202f({sinA:.4f})"
+         rf" = \dfrac{{{a} \times {fmt_dp(math.sin(math.radians(B)), 4)}}}{{{b}}} = {fmt_dp(sinA, 4)}\)"
+         f"<br>A = sin\u207b\u00b9\u202f({fmt_dp(sinA, 4)})"
          f"<br>= <strong>{A}\u00b0</strong>")
     hint = "Rearrange the sine rule: sin A = a\u202f\u00d7\u202fsin B / b, then use inverse sin."
     return q, s, hint, 4, A
@@ -6769,8 +6810,8 @@ def _trig_diff_cosine_rule_angle():
     q = (f"{svg}"
          f"In triangle ABC, a = {a} cm, b = {b} cm, c = {c} cm. "
          f"Use the cosine rule to find angle A. Give your answer to 1 d.p.")
-    s = (rf"\(\cos A = \dfrac{{b^2+c^2-a^2}}{{2bc}} = \dfrac{{{b**2}+{c**2}-{a**2}}}{{{2*b*c}}} = {cosA:.4f}\)"
-         f"<br>A = cos\u207b\u00b9\u202f({cosA:.4f})"
+    s = (rf"\(\cos A = \dfrac{{b^2+c^2-a^2}}{{2bc}} = \dfrac{{{b**2}+{c**2}-{a**2}}}{{{2*b*c}}} = {fmt_dp(cosA, 4)}\)"
+         f"<br>A = cos\u207b\u00b9\u202f({fmt_dp(cosA, 4)})"
          f"<br>= <strong>{A}\u00b0</strong>")
     hint = "Rearranged cosine rule: cos A = (b\u00b2+c\u00b2\u2212a\u00b2)/(2bc). Use when all 3 sides are known."
     return q, s, hint, 3, A
@@ -6792,8 +6833,8 @@ def _trig_diff_area_find_side():
          f"Find side b. Give your answer to 2 d.p.")
     s = (rf"Area \(= \dfrac{{1}}{{2}}\,ab\sin C\)"
          rf"<br>\({area} = \dfrac{{1}}{{2}} \times {a} \times b \times \sin {C}°\)"
-         rf"<br>\({area} = {a/2} \times b \times {math.sin(math.radians(C)):.4f}\)"
-         f"<br>b = {area} \u00f7 ({a / 2} \u00d7 {math.sin(math.radians(C)):.4f})"
+         rf"<br>\({area} = {a/2} \times b \times {fmt_dp(math.sin(math.radians(C)), 4)}\)"
+         f"<br>b = {area} \u00f7 ({a / 2} \u00d7 {fmt_dp(math.sin(math.radians(C)), 4)})"
          f"<br>= <strong>{b} cm</strong>")
     hint = "Rearrange Area = \u00bd\u202fa\u202fb\u202fsin\u202fC to make b the subject."
     return q, s, hint, 3, b
@@ -6817,7 +6858,7 @@ def _trig_diff_bearing_nonright():
          f"Find the direct distance back to the starting point. Give your answer to 2 d.p.")
     s = (f"The included angle at the turning point is {turn_angle}\u00b0.<br>"
          rf"\(d^2 = {d1}^2 + {d2}^2 - 2\times{d1}\times{d2}\times\cos {turn_angle}°\)"
-         rf"<br>\(= {d1**2} + {d2**2} - {2*d1*d2} \times {math.cos(math.radians(turn_angle)):.4f}\)"
+         rf"<br>\(= {d1**2} + {d2**2} - {2*d1*d2} \times {fmt_dp(math.cos(math.radians(turn_angle)), 4)}\)"
          rf"<br>\(= {d1**2+d2**2} - ({round(2*d1*d2*math.cos(math.radians(turn_angle)),3)})\)"
          f"<br>\u21d2 d = <strong>{dist} km</strong>")
     hint = "Apply the cosine rule with the included angle between the two legs."

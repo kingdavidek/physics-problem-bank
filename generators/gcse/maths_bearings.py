@@ -4,9 +4,10 @@ GCSE Maths – Bearings
 Graded practice variants return (question, solution, hint, marks, raw).
 Proof-only variants stay as 4-tuples (no auto-grade).
 """
+from generators.shared.rounding import round_half_up as round, fmt_dp
 import random
 import math
-from generators.shared.utils import make_problem
+from generators.shared.utils import make_problem, signed_term, bracket_neg
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from generators.shared.variant_utils import (
     select_tier_variants,
@@ -145,6 +146,16 @@ def _N_comp(dist, bearing):
     return dist * math.cos(math.radians(bearing))
 
 
+class _BrgAngle(float):
+    """Unrounded bearing that prints to 1 d.p. (half-up) but rounds once, from the exact value."""
+
+    def __format__(self, spec):
+        return fmt_dp(float(self), 1) if not spec else float.__format__(self, spec)
+
+    def __str__(self):
+        return fmt_dp(float(self), 1)
+
+
 def _bearing_from_EN(east, north):
     """Compute bearing from displacement components."""
     return math.degrees(math.atan2(east, north)) % 360
@@ -232,9 +243,9 @@ def _bearing_arc(cx, cy, bearing, arc_r=26, font_size=13, label_gap=18):
     lx = cx + (arc_r + label_gap) * math.sin(mid)
     ly = cy - (arc_r + label_gap) * math.cos(mid)
     return (
-        f'<path d="M{sx},{sy} A{arc_r},{arc_r},0,{large},1,{ex:.1f},{ey:.1f}" '
+        f'<path d="M{sx},{sy} A{arc_r},{arc_r},0,{large},1,{fmt_dp(ex, 1)},{fmt_dp(ey, 1)}" '
         f'fill="none" stroke="#1a6fa8" stroke-width="1.5"/>',
-        f'<text x="{lx:.1f}" y="{ly:.1f}" font-size="{font_size}" fill="#1a6fa8" '
+        f'<text x="{fmt_dp(lx, 1)}" y="{fmt_dp(ly, 1)}" font-size="{font_size}" fill="#1a6fa8" '
         f'text-anchor="middle" font-weight="bold">{_brg(bearing)}</text>',
     )
 
@@ -258,12 +269,12 @@ def _single_brg_svg(bearing, pt="A", dest="B",
     arc_path, arc_label = _bearing_arc(cx, cy, bearing, arc_r)
     return _std_svg(0, 0, w, h,
         _north_elements(cx, cy, n_len)
-        + f'<line x1="{cx}" y1="{cy}" x2="{rx:.1f}" y2="{ry:.1f}" '
+        + f'<line x1="{cx}" y1="{cy}" x2="{fmt_dp(rx, 1)}" y2="{fmt_dp(ry, 1)}" '
           f'stroke="#a13544" stroke-width="2"/>'
         + arc_path + arc_label
         + f'<circle cx="{cx}" cy="{cy}" r="3.5" fill="#333"/>'
         + f'<text x="{cx-11}" y="{cy+5}" font-size="12" fill="#333" font-weight="bold">{pt}</text>'
-        + f'<text x="{dlx:.1f}" y="{dly:.1f}" font-size="12" fill="#a13544" font-weight="bold">{dest}</text>'
+        + f'<text x="{fmt_dp(dlx, 1)}" y="{fmt_dp(dly, 1)}" font-size="12" fill="#a13544" font-weight="bold">{dest}</text>'
     )
 
 
@@ -305,16 +316,16 @@ def _two_pt_svg(bearing, dist_px=70, ax=90, ay=135,
     )
     if show_back:
         svg += (
-            f'<path d="M{bsx:.1f},{bsy:.1f} A{arc_r},{arc_r},0,{large_b},1,{bex:.1f},{bey:.1f}" '
+            f'<path d="M{fmt_dp(bsx, 1)},{fmt_dp(bsy, 1)} A{arc_r},{arc_r},0,{large_b},1,{fmt_dp(bex, 1)},{fmt_dp(bey, 1)}" '
             f'fill="none" stroke="#a13544" stroke-width="1.5"/>'
-            + f'<text x="{qlx:.1f}" y="{qly:.1f}" font-size="13" fill="#a13544" '
+            + f'<text x="{fmt_dp(qlx, 1)}" y="{fmt_dp(qly, 1)}" font-size="13" fill="#a13544" '
               f'text-anchor="middle" font-weight="bold">?</text>'
         )
     svg += (
         f'<circle cx="{ax}" cy="{ay}" r="3.5" fill="#333"/>'
         f'<text x="{ax-11}" y="{ay+5}" font-size="12" fill="#333" font-weight="bold">{label_a}</text>'
         f'<circle cx="{bx}" cy="{by}" r="3.5" fill="#a13544"/>'
-        f'<text x="{bx+8:.1f}" y="{by+5:.1f}" font-size="12" fill="#a13544" font-weight="bold">{label_b}</text>'
+        f'<text x="{fmt_dp(bx+8, 1)}" y="{fmt_dp(by+5, 1)}" font-size="12" fill="#a13544" font-weight="bold">{label_b}</text>'
     )
     return _std_svg(0, 0, w, h, svg)
 
@@ -389,7 +400,7 @@ def _port_two_rays_svg(b1, b2, ray1=_BRG_RAY_LEN, ray2=_BRG_RAY_LEN - 2,
         ly = py - 7 * math.cos(θ)
         svg += (
             f'<circle cx="{px}" cy="{py}" r="{_BRG_DOT_R}" fill="#a13544"/>'
-            f'<text x="{lx:.1f}" y="{ly:.1f}" font-size="{_BRG_LBL_FONT}" fill="#a13544" font-weight="bold">{lbl}</text>'
+            f'<text x="{fmt_dp(lx, 1)}" y="{fmt_dp(ly, 1)}" font-size="{_BRG_LBL_FONT}" fill="#a13544" font-weight="bold">{lbl}</text>'
         )
     svg += (
         f'<circle cx="{cx}" cy="{cy}" r="{_BRG_DOT_R}" fill="#333"/>'
@@ -453,7 +464,7 @@ def _journey_legs_svg(legs, labels=None, max_span=_BRG_JOURNEY_SPAN, cx=54, cy=1
         ly = py + (6 if lbl != labels[0] else 5)
         svg += (
             f'<circle cx="{px}" cy="{py}" r="{_BRG_DOT_R}" fill="{fill}"/>'
-            f'<text x="{lx:.1f}" y="{ly:.1f}" font-size="{_BRG_LBL_FONT}" fill="{fill}" font-weight="bold">{lbl}</text>'
+            f'<text x="{fmt_dp(lx, 1)}" y="{fmt_dp(ly, 1)}" font-size="{_BRG_LBL_FONT}" fill="{fill}" font-weight="bold">{lbl}</text>'
         )
     return _brg_svg_fitted(bounds_x, bounds_y, svg)
 
@@ -716,7 +727,7 @@ def _brg_inter_distance_pythagoras():
     q = (f"A boat travels {d_north} km due North, then {d_east} km due East. "
          f"Find the straight-line distance from the starting point to 2 d.p.")
     s = (f"Using Pythagoras: distance = √(North² + East²)<br>"
-         f"= √({d_north}² + {d_east}²)<br>"
+         f"= √({bracket_neg(d_north)}² + {bracket_neg(d_east)}²)<br>"
          f"= √({d_north**2} + {d_east**2})<br>"
          f"= √{d_north**2 + d_east**2}<br>"
          f"<strong>= {dist} km</strong>")
@@ -726,9 +737,9 @@ def _brg_inter_distance_pythagoras():
 def _brg_inter_bearing_from_components():
     east = random.randint(10, 60)
     north = random.randint(10, 60)
-    b = round(_bearing_from_EN(east, north), 1)
+    b = _BrgAngle(_bearing_from_EN(east, north))
     q = (f"A ship is {north} km North and {east} km East of port. "
-         f"Find the bearing of the ship from the port to 1 d.p.")
+         f"Find the bearing of the ship from the port to the nearest degree.")
     s = (f"bearing = arctan(East / North)<br>"
          f"= arctan({east} / {north})<br>"
          f"= arctan({round(east/north, 4)})<br>"
@@ -753,7 +764,7 @@ def _brg_inter_two_legs_distance():
          f"Leg 2: East = {d2} × sin{b2}° = {round(_E(d2,b2),2)} km, "
          f"North = {d2} × cos{b2}° = {round(_N_comp(d2,b2),2)} km<br>"
          f"Total East = {e_total} km, Total North = {n_total} km<br>"
-         f"Distance = √({e_total}² + {n_total}²) = √{round(e_total**2 + n_total**2,2)}<br>"
+         f"Distance = √({bracket_neg(e_total)}² + {bracket_neg(n_total)}²) = √{round(e_total**2 + n_total**2,2)}<br>"
          f"<strong>= {dist} km</strong>")
     return q, s, "Find East and North components of each leg, add, then use Pythagoras.", 4, dist
 
@@ -765,11 +776,11 @@ def _brg_inter_two_legs_bearing():
     d2 = random.randint(30, 70)
     e_total = _E(d1, b1) + _E(d2, b2)
     n_total = _N_comp(d1, b1) + _N_comp(d2, b2)
-    brg = round(_bearing_from_EN(e_total, n_total), 1)
+    brg = _BrgAngle(_bearing_from_EN(e_total, n_total))
     q = (f"A ship sails {d1} km on bearing {_brg(b1)}, then {d2} km on bearing {_brg(b2)}. "
-         f"Find the bearing of the ship from the starting point, to 1 d.p.")
-    s = (f"Total East = {d1}sin{b1}° + {d2}sin{b2}° = {round(_E(d1,b1),2)} + {round(_E(d2,b2),2)} = {round(e_total,2)} km<br>"
-         f"Total North = {d1}cos{b1}° + {d2}cos{b2}° = {round(_N_comp(d1,b1),2)} + {round(_N_comp(d2,b2),2)} = {round(n_total,2)} km<br>"
+         f"Find the bearing of the ship from the starting point, to the nearest degree.")
+    s = (f"Total East = {d1}sin{b1}° + {d2}sin{b2}° = {round(_E(d1,b1),2)} {signed_term(round(_E(d2,b2),2))} = {round(e_total,2)} km<br>"
+         f"Total North = {d1}cos{b1}° + {d2}cos{b2}° = {round(_N_comp(d1,b1),2)} {signed_term(round(_N_comp(d2,b2),2))} = {round(n_total,2)} km<br>"
          f"Bearing = arctan({round(e_total,2)} / {round(n_total,2)})<br>"
          f"Since East &gt; 0 and North {'&gt; 0 → NE quadrant' if n_total > 0 else '&lt; 0 → SE quadrant'}<br>"
          f"<strong>Bearing ≈ {_brg(brg)}</strong>")
@@ -793,10 +804,10 @@ def _brg_inter_find_distance_from_bearing_angle():
     east = random.randint(12, 50)
     south = random.randint(12, 50)
     dist = round(math.sqrt(east**2 + south**2), 2)
-    b = round(_bearing_from_EN(east, -south), 1)
+    b = _BrgAngle(_bearing_from_EN(east, -south))
     q = (f"A ship ends up {east} km East and {south} km South of port. "
-         f"Find the bearing of the ship from port (to 1 d.p.) and its distance from port (to 2 d.p.).")
-    s = (f"Distance = √({east}² + {south}²) = √{east**2 + south**2} = {dist} km<br>"
+         f"Find the bearing of the ship from port (to the nearest degree) and its distance from port (to 2 d.p.).")
+    s = (f"Distance = √({bracket_neg(east)}² + {bracket_neg(south)}²) = √{east**2 + south**2} = {dist} km<br>"
          f"Bearing: East > 0, North = −{south} (southward) → SE quadrant<br>"
          f"Angle from South = arctan({east}/{south}) = {round(math.degrees(math.atan(east/south)),1)}°<br>"
          f"Bearing = 180° − {round(math.degrees(math.atan(east/south)),1)}° = {b}°<br>"
@@ -838,9 +849,9 @@ def _brg_inter_bearing_from_south():
     south = random.randint(20, 60)
     east = random.randint(20, 60)
     dist = round(math.sqrt(east**2 + south**2), 2)
-    b = round(_bearing_from_EN(east, -south), 1)
+    b = _BrgAngle(_bearing_from_EN(east, -south))
     q = (f"A ship travels {south} km South then {east} km East. "
-         f"Find the bearing of the ship from its starting point, to 1 d.p.")
+         f"Find the bearing of the ship from its starting point, to the nearest degree.")
     s = (f"Net displacement: {east} km East, {south} km South (= −{south} km North)<br>"
          f"SE quadrant: angle from South = arctan(East/South) = arctan({east}/{south}) = {round(math.degrees(math.atan(east/south)),1)}°<br>"
          f"Bearing = 180° − {round(math.degrees(math.atan(east/south)),1)}° = {b}°<br>"
@@ -904,13 +915,13 @@ def _brg_inter_single_leg_multipart():
     d = random.randint(25, 70)
     east = round(_E(d, b), 2)
     north = round(_N_comp(d, b), 2)
-    brg_check = round(_bearing_from_EN(east, north), 1)
+    brg_check = _BrgAngle(_bearing_from_EN(east, north))
     svg = _right_triangle_svg(b, d)
     intro = f"A ship sails from port O on a bearing of {_brg(b)} for {d} km."
     q = intro + "<br>" + svg + _brg_abc_block(
         "Find how far East of O the ship is. Give your answer to 2 d.p.",
         "Find how far North of O the ship is. Give your answer to 2 d.p.",
-        "Using your answers to (a) and (b), find the bearing of the ship from O to 1 d.p.",
+        "Using your answers to (a) and (b), find the bearing of the ship from O to the nearest degree.",
     )
     s = (
         rf"{intro}<br>"
@@ -935,7 +946,7 @@ def _brg_inter_two_ships_port_multipart():
     Bx, By = _E(d2, b2), _N_comp(d2, b2)
     e_AB = round(Ax - Bx, 2)
     n_AB = round(Ay - By, 2)
-    brg_AB = round(_bearing_from_EN(e_AB, n_AB), 1)
+    brg_AB = _BrgAngle(_bearing_from_EN(e_AB, n_AB))
     svg = _port_two_rays_svg(b1, b2)
     intro = (
         f"Two ships leave port O at the same time. Ship A sails {d1} km on bearing {_brg(b1)} "
@@ -944,7 +955,7 @@ def _brg_inter_two_ships_port_multipart():
     q = intro + "<br>" + svg + _brg_abc_block(
         "Find the angle between the two paths at O.",
         "Find the distance AB to 2 d.p.",
-        "Find the bearing of A from B to 1 d.p.",
+        "Find the bearing of A from B to the nearest degree.",
     )
     s = (
         rf"{intro}<br>"
@@ -979,9 +990,9 @@ def _brg_inter_two_leg_voyage_multipart():
     )
     s = (
         rf"{intro}<br>"
-        rf"<strong>a)</strong> East = {round(_E(d1,b1),2)} + {round(_E(d2,b2),2)} = <strong>{e_total} km</strong><br>"
-        rf"<strong>b)</strong> North = {round(_N_comp(d1,b1),2)} + {round(_N_comp(d2,b2),2)} = <strong>{n_total} km</strong><br>"
-        rf"<strong>c)</strong> OC = √({e_total}² + {n_total}²) = <strong>{dist} km</strong>"
+        rf"<strong>a)</strong> East = {round(_E(d1,b1),2)} {signed_term(round(_E(d2,b2),2))} = <strong>{e_total} km</strong><br>"
+        rf"<strong>b)</strong> North = {round(_N_comp(d1,b1),2)} {signed_term(round(_N_comp(d2,b2),2))} = <strong>{n_total} km</strong><br>"
+        rf"<strong>c)</strong> OC = √({bracket_neg(e_total)}² + {bracket_neg(n_total)}²) = <strong>{dist} km</strong>"
     )
     return q, s, "Resolve each leg into East and North; add; then Pythagoras for OC.", 5, _brg_fields_answer((e_total, n_total, dist), ("East (km)", "North (km)", "Distance OC (km)"))
 
@@ -1006,8 +1017,8 @@ def _brg_diff_cosine_rule_distance():
     s = (f"Angle at O between OA and OB = {b2}° − {b1}° = {angle}°<br>"
          f"Cosine rule: AB² = OA² + OB² − 2·OA·OB·cos(angle at O)<br>"
          f"= {d1}² + {d2}² − 2×{d1}×{d2}×cos({angle}°)<br>"
-         f"= {d1**2} + {d2**2} − {2*d1*d2}×{round(math.cos(math.radians(angle)),4)}<br>"
-         f"= {round(d1**2+d2**2,2)} − {round(2*d1*d2*math.cos(math.radians(angle)),2)}<br>"
+         f"= {d1**2} + {d2**2} − {2*d1*d2}×{bracket_neg(round(math.cos(math.radians(angle)),4))}<br>"
+         f"= {round(d1**2+d2**2,2)} − {bracket_neg(round(2*d1*d2*math.cos(math.radians(angle)),2))}<br>"
          f"= {round(AB2,2)}<br>"
          f"AB = √{round(AB2,2)}<br>"
          f"<strong>= {AB} km</strong>")
@@ -1029,7 +1040,7 @@ def _brg_diff_sine_rule_bearing():
     # Find angle B: sin(B)/d_AC = ... this gets complex. Use component method instead.
     e_total = _E(d_AB, b_AB)
     n_total = _N_comp(d_AB, b_AB)
-    brg_final = round(_bearing_from_EN(e_total, n_total), 1)
+    brg_final = _BrgAngle(_bearing_from_EN(e_total, n_total))
     q = (f"A ship sails from A on bearing {_brg(b_AB)} for {d_AB} km to reach B. "
          f"Find the bearing of B from A and the distance AB.")
     # This is trivially b_AB and d_AB — change to a more interesting problem
@@ -1039,16 +1050,16 @@ def _brg_diff_sine_rule_bearing():
     e_total2 = _E(d_AB, b_AB) + _E(d2, b2)
     n_total2 = _N_comp(d_AB, b_AB) + _N_comp(d2, b2)
     dist_AC = round(math.sqrt(e_total2**2 + n_total2**2), 2)
-    brg_C = round(_bearing_from_EN(e_total2, n_total2), 1)
+    brg_C = _BrgAngle(_bearing_from_EN(e_total2, n_total2))
     q = (f"A ship leaves A and sails {d_AB} km on bearing {_brg(b_AB)} to B, "
          f"then {d2} km on bearing {_brg(b2)} to C. "
-         f"Find the bearing of C from A and the distance AC. Give answers to 1 d.p.")
+         f"Find the bearing of C from A (to the nearest degree) and the distance AC (to 1 d.p.).")
     s = (f"East of B from A = {d_AB}sin{b_AB}° = {round(_E(d_AB,b_AB),2)} km<br>"
          f"North of B from A = {d_AB}cos{b_AB}° = {round(_N_comp(d_AB,b_AB),2)} km<br>"
          f"East of C from B = {d2}sin{b2}° = {round(_E(d2,b2),2)} km<br>"
          f"North of C from B = {d2}cos{b2}° = {round(_N_comp(d2,b2),2)} km<br>"
          f"Total East = {round(e_total2,2)} km, Total North = {round(n_total2,2)} km<br>"
-         f"AC = √({round(e_total2,2)}² + {round(n_total2,2)}²) = <strong>{dist_AC} km</strong><br>"
+         f"AC = √({bracket_neg(round(e_total2,2))}² + {bracket_neg(round(n_total2,2))}²) = <strong>{dist_AC} km</strong><br>"
          f"Bearing = arctan({round(e_total2,2)}/{round(n_total2,2)}) → quadrant check<br>"
          f"<strong>Bearing of C from A = {_brg(brg_C)}</strong>")
     return q, s, "Resolve each leg into East/North. Add components. Use arctan for bearing, Pythagoras for distance.", 5, _brg_fields_answer((dist_AC, int(round(brg_C))), ("Distance AC (km)", "Bearing of C from A"))
@@ -1063,13 +1074,13 @@ def _brg_diff_return_to_start():
     n_net = _N_comp(d1, b1) + _N_comp(d2, b2)
     # Return to start: reverse direction
     d_home = round(math.sqrt(e_net**2 + n_net**2), 2)
-    brg_home_from_end = round(_bearing_from_EN(-e_net, -n_net), 1)
+    brg_home_from_end = _BrgAngle(_bearing_from_EN(-e_net, -n_net))
     q = (f"A yacht sails {d1} km on bearing {_brg(b1)}, then {d2} km on bearing {_brg(b2)}. "
-         f"Find the distance and bearing to sail directly back to the start. Give answers to 2 d.p.")
-    s = (f"Net East = {round(_E(d1,b1),2)} + {round(_E(d2,b2),2)} = {round(e_net,2)} km<br>"
-         f"Net North = {round(_N_comp(d1,b1),2)} + {round(_N_comp(d2,b2),2)} = {round(n_net,2)} km<br>"
-         f"To return, displace −{round(e_net,2)} km East and −{round(n_net,2)} km North.<br>"
-         f"Return distance = √({round(e_net,2)}² + {round(n_net,2)}²) = <strong>{d_home} km</strong><br>"
+         f"Find the distance and bearing to sail directly back to the start. Give the distance to 2 d.p. and the bearing to the nearest degree.")
+    s = (f"Net East = {round(_E(d1,b1),2)} {signed_term(round(_E(d2,b2),2))} = {round(e_net,2)} km<br>"
+         f"Net North = {round(_N_comp(d1,b1),2)} {signed_term(round(_N_comp(d2,b2),2))} = {round(n_net,2)} km<br>"
+         f"To return, displace {round(-e_net,2)} km East and {round(-n_net,2)} km North.<br>"
+         f"Return distance = √({bracket_neg(round(e_net,2))}² + {bracket_neg(round(n_net,2))}²) = <strong>{d_home} km</strong><br>"
          f"Return bearing: E={round(-e_net,2)}, N={round(-n_net,2)} → "
          f"<strong>{_brg(brg_home_from_end)}</strong>")
     return q, s, "Find net E/N displacement. To return: negate both. Distance = Pythagoras, bearing = arctan.", 5, _brg_fields_answer((d_home, int(round(brg_home_from_end))), ("Return distance (km)", "Return bearing"))
@@ -1088,7 +1099,7 @@ def _brg_diff_cosine_find_angle():
          f"Find the distance AB to 2 d.p. and the angle AOB.")
     s = (f"Angle AOB = {b2}° − {b1}° = {angle_O}°<br>"
          f"Cosine rule: AB² = {d_OA}² + {d_OB}² − 2×{d_OA}×{d_OB}×cos({angle_O}°)<br>"
-         f"= {d_OA**2+d_OB**2} − {round(2*d_OA*d_OB*math.cos(math.radians(angle_O)),2)}<br>"
+         f"= {d_OA**2+d_OB**2} − {bracket_neg(round(2*d_OA*d_OB*math.cos(math.radians(angle_O)),2))}<br>"
          f"= {round(d_OA**2+d_OB**2-2*d_OA*d_OB*math.cos(math.radians(angle_O)),2)}<br>"
          f"<strong>AB = {d_AB} km, angle AOB = {angle_O}°</strong>")
     return q, s, "Angle at O = difference in bearings. Then cosine rule: c² = a² + b² - 2ab·cos(C).", 5, _brg_fields_answer((d_AB, angle_O), ("Distance AB (km)", "Angle AOB (°)"))
@@ -1107,15 +1118,15 @@ def _brg_diff_find_bearing_of_third_point():
     By = _N_comp(d_OB, b_OB)
     e_AB = round(Ax - Bx, 2)
     n_AB = round(Ay - By, 2)
-    brg_AB = round(_bearing_from_EN(e_AB, n_AB), 1)
+    brg_AB = _BrgAngle(_bearing_from_EN(e_AB, n_AB))
     dist_AB = round(math.sqrt(e_AB**2 + n_AB**2), 2)
     q = (f"From port O, ship A sails on bearing {_brg(b_OA)} for {d_OA} km "
          f"and ship B sails on bearing {_brg(b_OB)} for {d_OB} km. "
-         f"Find the bearing of A from B and the distance AB. Give answers to 1 d.p.")
+         f"Find the bearing of A from B (to the nearest degree) and the distance AB (to 1 d.p.).")
     s = (f"Position of A: East = {round(Ax,2)} km, North = {round(Ay,2)} km<br>"
          f"Position of B: East = {round(Bx,2)} km, North = {round(By,2)} km<br>"
          f"Displacement A − B: East = {e_AB} km, North = {n_AB} km<br>"
-         f"AB = √({e_AB}² + {n_AB}²) = <strong>{dist_AB} km</strong><br>"
+         f"AB = √({bracket_neg(e_AB)}² + {bracket_neg(n_AB)}²) = <strong>{dist_AB} km</strong><br>"
          f"Bearing of A from B = arctan({e_AB}/{n_AB}), quadrant check → <strong>{_brg(brg_AB)}</strong>")
     return q, s, "Find coordinates of A and B. Compute A−B displacement. arctan for bearing, Pythagoras for distance.", 6, _brg_fields_answer((dist_AB, int(round(brg_AB))), ("Distance AB (km)", "Bearing of A from B"))
 
@@ -1142,13 +1153,13 @@ def _brg_diff_three_legs():
     e = _E(d1,b1)+_E(d2,b2)+_E(d3,b3)
     n = _N_comp(d1,b1)+_N_comp(d2,b2)+_N_comp(d3,b3)
     dist = round(math.sqrt(e**2+n**2), 2)
-    brg  = round(_bearing_from_EN(e, n), 1)
+    brg  = _BrgAngle(_bearing_from_EN(e, n))
     q = (f"A ship leaves port O and sails: {d1} km on bearing {_brg(b1)}, "
          f"then {d2} km on bearing {_brg(b2)}, then {d3} km on bearing {_brg(b3)}. "
-         f"Find the bearing and distance from O to the final position. Give answers to 1 d.p.")
-    s = (f"E = {round(_E(d1,b1),2)} + {round(_E(d2,b2),2)} + {round(_E(d3,b3),2)} = {round(e,2)} km<br>"
-         f"N = {round(_N_comp(d1,b1),2)} + {round(_N_comp(d2,b2),2)} + {round(_N_comp(d3,b3),2)} = {round(n,2)} km<br>"
-         f"Distance = √({round(e,2)}² + {round(n,2)}²) = <strong>{dist} km</strong><br>"
+         f"Find the bearing (to the nearest degree) and distance (to 1 d.p.) from O to the final position.")
+    s = (f"E = {round(_E(d1,b1),2)} {signed_term(round(_E(d2,b2),2))} {signed_term(round(_E(d3,b3),2))} = {round(e,2)} km<br>"
+         f"N = {round(_N_comp(d1,b1),2)} {signed_term(round(_N_comp(d2,b2),2))} {signed_term(round(_N_comp(d3,b3),2))} = {round(n,2)} km<br>"
+         f"Distance = √({bracket_neg(round(e,2))}² + {bracket_neg(round(n,2))}²) = <strong>{dist} km</strong><br>"
          f"<strong>Bearing ≈ {_brg(brg)}</strong>")
     return q, s, "Resolve all three legs into East and North. Sum each. Then Pythagoras + arctan.", 6, _brg_fields_answer((dist, int(round(brg))), ("Distance (km)", "Bearing"))
 
@@ -1193,14 +1204,14 @@ def _brg_diff_position_from_two_bearings():
     # Simpler: place ship at known position, compute bearings
     N_ship = random.randint(40, 90)
     E_ship_from_A = round(N_ship * ta, 1)
-    b_from_B_actual = round(_bearing_from_EN(E_ship_from_A - sep, N_ship), 1)
+    b_from_B_actual = _BrgAngle(_bearing_from_EN(E_ship_from_A - sep, N_ship))
     q = (f"Observer A and observer B are {sep} km apart, with B due East of A. "
          f"They observe a ship: A sees it on bearing {_brg(b_from_A)} and B sees it on bearing {_brg(b_from_B_actual)}. "
          f"Find the distance from A to the ship, to 1 d.p.")
     dist_AS = round(math.sqrt(E_ship_from_A**2 + N_ship**2), 1)
     s = (f"From A: East = N·tan({b_from_A}°). From B: East − {sep} = N·tan({_brg(b_from_B_actual)} adjusted).<br>"
          f"Ship is {N_ship} km North and {E_ship_from_A} km East of A.<br>"
-         f"Distance AS = √({E_ship_from_A}² + {N_ship}²) = √{round(E_ship_from_A**2+N_ship**2,1)}<br>"
+         f"Distance AS = √({bracket_neg(E_ship_from_A)}² + {bracket_neg(N_ship)}²) = √{round(E_ship_from_A**2+N_ship**2,1)}<br>"
          f"<strong>= {dist_AS} km</strong>")
     return q, s, "Resolve each bearing ray into E/N; set E components equal to find N, then compute distance.", 6, dist_AS
 
@@ -1221,8 +1232,8 @@ def _brg_diff_cosine_reverse():
          f"Find the angle AOB at the port, to 1 d.p.")
     s = (f"Cosine rule (to find angle O): cos(O) = (OA² + OB² − AB²) / (2·OA·OB)<br>"
          f"= ({d1}² + {d2}² − {d_AB}²) / (2×{d1}×{d2})<br>"
-         f"= ({d1**2} + {d2**2} − {d_AB**2}) / {2*d1*d2}<br>"
-         f"= {round(d1**2+d2**2-d_AB**2,2)} / {2*d1*d2}<br>"
+         f"= ({d1**2} + {d2**2} − {fmt_dp(d_AB**2, 4)}) / {2*d1*d2}<br>"
+         f"= {fmt_dp(d1**2+d2**2-d_AB**2, 4)} / {2*d1*d2}<br>"
          f"= {cos_O}<br>"
          f"angle O = arccos({cos_O})<br>"
          f"<strong>= {angle_O_check}°</strong>")
@@ -1283,16 +1294,16 @@ def _brg_diff_complex_polygon_journey():
     e_net = sum(_E(d, b) for d, b in legs)
     n_net = sum(_N_comp(d, b) for d, b in legs)
     d_return = round(math.sqrt(e_net**2 + n_net**2), 2)
-    brg_return = round(_bearing_from_EN(-e_net, -n_net), 1)
+    brg_return = _BrgAngle(_bearing_from_EN(-e_net, -n_net))
     journey_str = ", ".join(f"{d} km on {_brg(b)}" for d, b in legs)
     q = (f"A ship makes four successive journeys: {journey_str}. "
-         f"Find the bearing and distance to return directly to the start, to 2 d.p.")
+         f"Find the distance to return directly to the start (to 2 d.p.) and the bearing (to the nearest degree).")
     e_str = " + ".join(f"{round(_E(d,b),2)}" for d, b in legs)
     n_str = " + ".join(f"{round(_N_comp(d,b),2)}" for d, b in legs)
     s = (f"Total East = {e_str} = {round(e_net,2)} km<br>"
          f"Total North = {n_str} = {round(n_net,2)} km<br>"
          f"Return: East = {round(-e_net,2)} km, North = {round(-n_net,2)} km<br>"
-         f"Distance = √({round(e_net,2)}² + {round(n_net,2)}²) = <strong>{d_return} km</strong><br>"
+         f"Distance = √({bracket_neg(round(e_net,2))}² + {bracket_neg(round(n_net,2))}²) = <strong>{d_return} km</strong><br>"
          f"<strong>Bearing = {_brg(brg_return)}</strong>")
     return q, s, "Sum all East and North components. Negate to get return displacement. Pythagoras + arctan.", 6, _brg_fields_answer((d_return, int(round(brg_return))), ("Return distance (km)", "Return bearing"))
 
@@ -1353,7 +1364,7 @@ def _brg_diff_cosine_port_multipart():
     Bx, By = _E(d2, b2), _N_comp(d2, b2)
     e_BA = round(Bx - Ax, 2)
     n_BA = round(By - Ay, 2)
-    brg_BA = round(_bearing_from_EN(e_BA, n_BA), 1)
+    brg_BA = _BrgAngle(_bearing_from_EN(e_BA, n_BA))
     svg = _port_two_rays_svg(b1, b2)
     intro = (
         f"From port O, ship A is {d1} km away on bearing {_brg(b1)} "
@@ -1362,12 +1373,12 @@ def _brg_diff_cosine_port_multipart():
     q = intro + "<br>" + svg + _brg_abc_block(
         "Find the angle AOB between the two lines of sight from O.",
         "Find the distance AB to 2 d.p.",
-        "Find the bearing of B from A to 1 d.p.",
+        "Find the bearing of B from A to the nearest degree.",
     )
     s = (
         rf"{intro}<br>"
         rf"<strong>a)</strong> Angle AOB = <strong>{angle}°</strong><br>"
-        rf"<strong>b)</strong> AB = √({d1}² + {d2}² − 2×{d1}×{d2}×cos {angle}°) = <strong>{AB} km</strong><br>"
+        rf"<strong>b)</strong> AB = √({bracket_neg(d1)}² + {bracket_neg(d2)}² − 2×{d1}×{d2}×cos {angle}°) = <strong>{AB} km</strong><br>"
         rf"<strong>c)</strong> B − A: East = {e_BA} km, North = {n_BA} km → "
         rf"<strong>{_brg(brg_BA)}</strong>"
     )
@@ -1383,7 +1394,7 @@ def _brg_diff_return_voyage_multipart():
     e_net = round(_E(d1, b1) + _E(d2, b2), 2)
     n_net = round(_N_comp(d1, b1) + _N_comp(d2, b2), 2)
     d_home = round(math.sqrt(e_net**2 + n_net**2), 2)
-    brg_home = round(_bearing_from_EN(-e_net, -n_net), 1)
+    brg_home = _BrgAngle(_bearing_from_EN(-e_net, -n_net))
     svg = _journey_legs_svg([(b1, d1), (b2, d2)])
     intro = (
         f"A yacht sails {d1} km on bearing {_brg(b1)}, then {d2} km on bearing {_brg(b2)}."
@@ -1391,7 +1402,7 @@ def _brg_diff_return_voyage_multipart():
     q = intro + "<br>" + svg + _brg_abc_block(
         "Find the net East displacement from the start to 2 d.p.",
         "Find the net North displacement from the start to 2 d.p.",
-        "The yacht returns directly to the start. Find the return distance and bearing to 2 d.p. and 1 d.p. respectively.",
+        "The yacht returns directly to the start. Find the return distance (to 2 d.p.) and bearing (to the nearest degree).",
     )
     s = (
         rf"{intro}<br>"
@@ -1414,7 +1425,7 @@ def _brg_diff_three_leg_multipart():
     e = round(_E(d1, b1) + _E(d2, b2) + _E(d3, b3), 2)
     n = round(_N_comp(d1, b1) + _N_comp(d2, b2) + _N_comp(d3, b3), 2)
     dist = round(math.sqrt(e**2 + n**2), 2)
-    brg = round(_bearing_from_EN(e, n), 1)
+    brg = _BrgAngle(_bearing_from_EN(e, n))
     svg = _journey_legs_svg([(b1, d1), (b2, d2), (b3, d3)], labels=["O", "P", "Q", "R"])
     intro = (
         f"A ship leaves O and sails: {d1} km on {_brg(b1)}, "
@@ -1423,13 +1434,13 @@ def _brg_diff_three_leg_multipart():
     q = intro + "<br>" + svg + _brg_abc_block(
         "Find the total East displacement from O to R to 2 d.p.",
         "Find the total North displacement from O to R to 2 d.p.",
-        "Find the bearing of R from O and the distance OR. Give bearing to 1 d.p. and distance to 2 d.p.",
+        "Find the bearing of R from O and the distance OR. Give the bearing to the nearest degree and the distance to 2 d.p.",
     )
     s = (
         rf"{intro}<br>"
         rf"<strong>a)</strong> Total East = <strong>{e} km</strong><br>"
         rf"<strong>b)</strong> Total North = <strong>{n} km</strong><br>"
-        rf"<strong>c)</strong> OR = √({e}² + {n}²) = <strong>{dist} km</strong>, "
+        rf"<strong>c)</strong> OR = √({bracket_neg(e)}² + {bracket_neg(n)}²) = <strong>{dist} km</strong>, "
         rf"bearing = <strong>{_brg(brg)}</strong>"
     )
     return q, s, "Resolve all three legs; sum East and North; Pythagoras and arctan for OR.", 6, _brg_fields_answer((e, n, dist, int(round(brg))), ("East (km)", "North (km)", "Distance OR (km)", "Bearing of R from O"))

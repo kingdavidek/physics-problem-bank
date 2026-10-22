@@ -2,6 +2,7 @@
 GCSE Maths – Algebraic Fractions
 5 foundational · 5 intermediate · 5 difficult · 8 MCQ (randomised each time)
 """
+from generators.shared.rounding import round_half_up as round, fmt_dp
 import random
 from math import gcd
 from generators.shared.utils import make_problem
@@ -61,7 +62,7 @@ def _af_raw(value):
         val = round(value, 4)
         if val == int(val):
             return str(int(val))
-        return f'{val:.4f}'.rstrip('0').rstrip('.')
+        return f'{fmt_dp(val, 4)}'.rstrip('0').rstrip('.')
     return str(value)
 
 

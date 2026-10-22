@@ -6,8 +6,10 @@ Exact-surd variants use answer_type surd (Phase 2.8); explain-error variants
 use practice-mode choice buttons so answers can be recorded.
 Final answers wrapped in <strong> tags.
 """
+from generators.shared.rounding import fmt_dp
 import random
 import math
+from decimal import Decimal, ROUND_HALF_UP
 from generators.shared.utils import make_problem
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from generators.shared.variant_utils import (
@@ -28,8 +30,45 @@ def _fmt(v):
     if isinstance(v, float) and v == int(v):
         return str(int(v))
     if isinstance(v, float):
-        return f"{v:.2f}".rstrip("0").rstrip(".")
+        return f"{fmt_dp(v, 2)}".rstrip("0").rstrip(".")
     return str(v)
+
+
+def _sqrt_answer(n, dp=2):
+    """Square root of the positive integer n as (value, is_exact).
+
+    Perfect squares give an int. Anything else is rounded to ``dp`` decimal
+    places with school (half-up) rounding, never truncated.
+    """
+    n = int(n)
+    r = math.isqrt(n)
+    if r * r == n:
+        return r, True
+    exact = Decimal(n).sqrt()
+    return float(exact.quantize(Decimal(1).scaleb(-dp), rounding=ROUND_HALF_UP)), False
+
+
+def _int_root(n):
+    """Exact integer square root; only for values that must be perfect squares."""
+    r = math.isqrt(int(n))
+    assert r * r == int(n), f"{n} is not a perfect square"
+    return r
+
+
+def _dp_note(exact, dp=2):
+    """Question wording that makes the stated accuracy agree with the answer."""
+    if exact:
+        return ""
+    return f" Give your answer correct to {dp} decimal places."
+
+
+def _dp_tag(exact, dp=2):
+    return "" if exact else f" (to {dp} d.p.)"
+
+
+def _root_line(n, value, exact, dp=2):
+    """'√288 = 16.97' style fragment for a worked solution."""
+    return f"√{n} = {_fmt(value)}" + ("" if exact else f" (to {dp} d.p.)")
 
 
 def _pick_triple():
@@ -388,8 +427,8 @@ def _py_f3_is_right_yes():
 
 
 def _py_f4_is_right_no():
-    a, b, _ = _pick_triple()
-    c_wrong = random.choice([a + b - 2, a + b, int(math.sqrt(a * a + b * b)) + random.choice([2, 3, 4])])
+    a, b, c = _pick_triple()
+    c_wrong = random.choice([a + b - 2, a + b, c + random.choice([2, 3, 4])])
     while c_wrong <= max(a, b) or a * a + b * b == c_wrong * c_wrong:
         c_wrong += 1
     q = (f"A triangle has sides {a} cm, {b} cm and {c_wrong} cm. Is it right-angled?")
@@ -417,7 +456,7 @@ def _py_f5_ladder_wall():
 
 def _py_f6_rectangle_diagonal():
     w, h = random.choice([(6, 8), (9, 12), (5, 12), (8, 15), (7, 24)])
-    d = int(math.sqrt(w * w + h * h))
+    d = _int_root(w * w + h * h)
     svg = _rect_diag_svg(w, h, d, find="d")
     q = (f"A rectangle is {w} cm by {h} cm. Find the length of its diagonal.<br>{svg}")
     s = (f"Diagonal is the hypotenuse of a right triangle with legs {w} cm and {h} cm:<br>"
@@ -428,7 +467,7 @@ def _py_f6_rectangle_diagonal():
 
 def _py_f7_distance_on_grid():
     dx, dy = random.choice([(3, 4), (6, 8), (5, 12), (9, 12), (8, 15)])
-    d = int(math.sqrt(dx * dx + dy * dy))
+    d = _int_root(dx * dx + dy * dy)
     q = (f"Point A is at (0, 0) and point B is at ({dx}, {dy}) on a square grid "
          f"(1 unit = 1 cm). Find the straight-line distance AB.")
     s = (f"Horizontal change = {dx} cm, vertical change = {dy} cm.<br>"
@@ -440,12 +479,12 @@ def _py_f7_distance_on_grid():
 def _py_f8_square_diagonal():
     s = random.choice([4, 6, 8, 10, 12])
     d2 = 2 * s * s
-    d = int(math.sqrt(d2))
+    d, exact = _sqrt_answer(d2)
     q = (f"A square has side length {s} cm. Find the length of its diagonal."
-         f"<br>{_rect_diag_svg(s, s, d, find='d')}")
+         f"{_dp_note(exact)}<br>{_rect_diag_svg(s, s, d, find='d')}")
     sol = (f"Diagonal splits the square into two right isosceles triangles with legs {s} cm:<br>"
            f"{s}² + {s}² = d² → {d2} = d²<br>"
-           f"d = √{d2} = <strong>{d} cm</strong>")
+           f"d = √{d2} = <strong>{_fmt(d)} cm</strong>{_dp_tag(exact)}")
     return q, sol, "In a square, the diagonal is the hypotenuse of a right triangle with two equal legs.", 2, d
 
 
@@ -489,25 +528,28 @@ def _py_i3_isosceles_height():
 
 
 def _py_i4_3d_space_diagonal():
-    l, w, h = random.choice([(3, 4, 5), (6, 8, 10), (4, 4, 4)])
-    d = int(math.sqrt(l * l + w * w + h * h))
+    l, w, h = random.choice([(3, 4, 5), (6, 8, 10), (4, 4, 4), (2, 3, 6), (2, 4, 4), (4, 4, 7)])
+    d, exact = _sqrt_answer(l * l + w * w + h * h)
     svg = _cuboid_svg(l, w, h, d, find="d")
-    q = (f"A cuboid is {l} cm by {w} cm by {h} cm. Find the length of its space diagonal.<br>{svg}")
+    q = (f"A cuboid is {l} cm by {w} cm by {h} cm. Find the length of its space diagonal."
+         f"{_dp_note(exact)}<br>{svg}")
     s = (f"Space diagonal AG satisfies AG² = AB² + BC² + CG²<br>"
          f"AG² = {l}² + {w}² + {h}² = {l*l + w*w + h*h}<br>"
-         f"AG = <strong>{d} cm</strong>")
+         f"AG = √{l*l + w*w + h*h} = <strong>{_fmt(d)} cm</strong>{_dp_tag(exact)}")
     return q, s, "3D Pythagoras: square all three edges, add, then square root.", 3, d
 
 
 def _py_i5_3d_two_step():
     l, w, h = 6, 8, 10
-    face = int(math.sqrt(l * l + w * w))
-    space = int(math.sqrt(l * l + w * w + h * h))
+    face, face_exact = _sqrt_answer(l * l + w * w)
+    space, space_exact = _sqrt_answer(l * l + w * w + h * h)
     svg = _cuboid_svg(l, w, h, space, find="d")
     q = (f"A cuboid is {l} cm × {w} cm × {h} cm. "
-         f"(i) Find the diagonal of the base. (ii) Find the space diagonal.<br>{svg}")
-    s = (f"(i) Base diagonal = √({l}² + {w}²) = √{l*l + w*w} = <strong>{face} cm</strong><br>"
-         f"(ii) Space diagonal = √({face}² + {h}²) = √{face*face + h*h} = <strong>{space} cm</strong>")
+         f"(i) Find the diagonal of the base. (ii) Find the space diagonal."
+         f"{'' if space_exact and face_exact else ' Give any answer that is not exact correct to 2 decimal places.'}"
+         f"<br>{svg}")
+    s = (f"(i) Base diagonal = √({l}² + {w}²) = √{l*l + w*w} = <strong>{_fmt(face)} cm</strong>{_dp_tag(face_exact)}<br>"
+         f"(ii) Space diagonal = √({l}² + {w}² + {h}²) = √{l*l + w*w + h*h} = <strong>{_fmt(space)} cm</strong>{_dp_tag(space_exact)}")
     return q, s, "Find a face diagonal first, then use it with the height as the two legs.", 4, _pyth_fields_answer(
         (face, space),
         ('Base diagonal (cm)', 'Space diagonal (cm)'),
@@ -518,32 +560,33 @@ def _py_i6_coordinate_distance():
     x1, y1 = 1, 2
     x2, y2 = random.choice([(4, 6), (7, 11), (10, 14), (13, 5)])
     dx, dy = abs(x2 - x1), abs(y2 - y1)
-    d = int(math.sqrt(dx * dx + dy * dy))
-    q = (f"Find the distance between A({x1}, {y1}) and B({x2}, {y2}).")
+    d, exact = _sqrt_answer(dx * dx + dy * dy)
+    q = f"Find the distance between A({x1}, {y1}) and B({x2}, {y2}).{_dp_note(exact)}"
     s = (f"Δx = {dx}, Δy = {dy}<br>"
          f"AB² = {dx}² + {dy}² = {dx*dx + dy*dy}<br>"
-         f"AB = <strong>{d}</strong>")
+         f"AB = √{dx*dx + dy*dy} = <strong>{_fmt(d)}</strong>{_dp_tag(exact)}")
     return q, s, "Difference in x and difference in y are the legs of a right triangle.", 3, d
 
 
 def _py_i7_ladder_slips():
     lad, base = random.choice([(10, 6), (13, 5), (15, 9), (17, 8)])
-    h = int(math.sqrt(lad * lad - base * base))
+    h = _int_root(lad * lad - base * base)
     new_base = base + random.choice([2, 3, 4])
     if new_base >= lad:
         new_base = base + 2
-    new_h = int(math.sqrt(lad * lad - new_base * new_base))
+    new_h, exact = _sqrt_answer(lad * lad - new_base * new_base)
     q = (f"A {lad} m ladder leans against a wall with its foot {base} m away. "
-         f"The foot is slid {new_base - base} m further from the wall. How high does the ladder reach now?")
+         f"The foot is slid {new_base - base} m further from the wall. How high does the ladder reach now?"
+         f"{_dp_note(exact)}")
     s = (f"Original height = √({lad}² − {base}²) = {h} m (check).<br>"
          f"New distance from wall = {new_base} m. Height = √({lad}² − {new_base}²)<br>"
-         f"= √{lad*lad - new_base*new_base} = <strong>{new_h} m</strong>")
+         f"= √{lad*lad - new_base*new_base} = <strong>{_fmt(new_h)} m</strong>{_dp_tag(exact)}")
     return q, s, "Ladder length stays fixed — only the horizontal distance changes.", 4, new_h
 
 
 def _py_i8_cone_slant():
     r, h = random.choice([(3, 4), (5, 12), (6, 8), (8, 15)])
-    s = int(math.sqrt(r * r + h * h))
+    s = _int_root(r * r + h * h)
     q = (f"A cone has base radius {r} cm and perpendicular height {h} cm. Find the slant height.")
     s_txt = (f"Radius and height are perpendicular:<br>"
              f"s² = {r}² + {h}² = {r*r + h*h}<br>"
@@ -556,16 +599,24 @@ def _py_i8_cone_slant():
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _py_d1_composite_area():
-    a, b, c = 6, 8, 10
+    """Rectangle with a right-angled triangular corner cut off (one cut edge needs Pythagoras)."""
+    a, b, c = _pick_triple()
+    if random.random() < 0.5:
+        a, b = b, a
+    # a = given cut edge, b = missing cut edge (found with Pythagoras), c = sloping edge.
+    width = a + random.randint(2, 6)
+    length = b + random.randint(3, 8)
     tri_area = a * b // 2
-    rect_area = a * c
-    total = tri_area + rect_area
-    q = (f"A shape is made from a rectangle {a} cm by {c} cm with a right-angled triangle "
-         f"(legs {a} cm and {b} cm) removed from one corner. Find the area of the shape.")
-    s = (f"Rectangle area = {a} × {c} = {rect_area} cm²<br>"
+    rect_area = width * length
+    total = rect_area - tri_area
+    q = (f"A shape is made from a rectangle {length} cm by {width} cm by cutting a right-angled triangle "
+         f"off one corner. The sloping edge of the cut is {c} cm long and one of the two straight cut "
+         f"edges, along a side of the rectangle, is {a} cm. Find the area of the shape that is left.")
+    s = (f"Missing cut edge: b² = {c}² − {a}² = {c*c} − {a*a} = {b*b}, so b = {b} cm.<br>"
+         f"Rectangle area = {length} × {width} = {rect_area} cm²<br>"
          f"Triangle removed = ½ × {a} × {b} = {tri_area} cm²<br>"
-         f"Shaded area = {rect_area} − {tri_area} = <strong>{total} cm²</strong>")
-    return q, s, "Subtract the right triangle area from the rectangle area.", 4, total
+         f"Remaining area = {rect_area} − {tri_area} = <strong>{total} cm²</strong>")
+    return q, s, "Use Pythagoras for the missing cut edge, then subtract the triangle's area from the rectangle's.", 5, total
 
 
 def _py_d2_distance_formula():
@@ -574,7 +625,7 @@ def _py_d2_distance_formula():
     dy = random.choice([4, 5, 7, 8, 12, 15])
     x2, y2 = x1 + dx, y1 + dy
     sum_sq = dx * dx + dy * dy
-    d = int(math.sqrt(sum_sq))
+    d = math.isqrt(sum_sq)
     q = (f"Find the exact distance between P({x1}, {y1}) and Q({x2}, {y2}). "
          f"Give your answer in surd form if needed.")
     s = (f"Δx = {x2} − ({x1}) = {dx}, Δy = {y2} − ({y1}) = {dy}<br>"
@@ -588,7 +639,7 @@ def _py_d2_distance_formula():
 def _py_d3_3d_diagonal_exact():
     edge = random.choice([2, 4, 5, 6])
     sum_sq = 3 * edge * edge
-    dec = round(math.sqrt(sum_sq), 1)
+    dec = _sqrt_answer(sum_sq, 1)[0]
     q = (f"A cube has edge length {edge} cm.<br>"
          f"(a) Find the exact length of its space diagonal in surd form.<br>"
          f"(b) Give the decimal length correct to 1 d.p.")
@@ -757,7 +808,7 @@ def _py_d7_coordinate_journey_multi():
          f"Find OB.<br>"
          f"(c) The ship could also sail 6 km east and 8 km north in two straight legs (14 km total). "
          f"How much shorter is the direct route OL?")
-    ob = int(math.sqrt(8 * 8 + 6 * 6))
+    ob = _int_root(8 * 8 + 6 * 6)
     saving = 6 + 8 - dist
     s = (f"(a) OL² = 6² + 8² = 36 + 64 = 100 → OL = <strong>{dist} km</strong>.<br>"
          f"(b) OB² = 8² + 6² = 64 + 36 = 100 → OB = <strong>{ob} km</strong>.<br>"

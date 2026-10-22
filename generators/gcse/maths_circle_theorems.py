@@ -20,6 +20,7 @@ Seven theorems covered:
   CT6 – Tangents from an external point are equal in length
   CT7 – Alternate segment theorem
 """
+from generators.shared.rounding import round_half_up as round, fmt_dp
 import random
 import math
 from models import svg_kit
@@ -1431,8 +1432,8 @@ def _ct_d14_chord_and_tangent_lengths():
          f"(ii) Find the perpendicular distance from O to PQ.")
     s = (f"Draw OM perpendicular to PQ (M is midpoint of PQ, chord bisector theorem).<br>"
          f"Angle POM = {angle_arc}° ÷ 2 = {angle_arc//2}°<br>"
-         f"(i) PM = r × sin({angle_arc//2}°) = {r} × {round(math.sin(math.radians(angle_arc//2)),4)} = {chord/2} cm<br>"
-         f"PQ = 2 × PM = <strong>{chord} cm</strong><br>"
+         f"(i) PM = r × sin({angle_arc//2}°) = {r} × {round(math.sin(math.radians(angle_arc//2)),4)} = {fmt_dp(r * math.sin(math.radians(angle_arc // 2)), 4)} cm<br>"
+         f"PQ = 2 × PM = {fmt_dp(2 * r * math.sin(math.radians(angle_arc // 2)), 4)} ≈ <strong>{chord} cm</strong> (2 d.p.)<br>"
          f"(ii) OM = r × cos({angle_arc//2}°) = {r} × {round(math.cos(math.radians(angle_arc//2)),4)} = <strong>{perp} cm</strong>")
     return q, s, "Perpendicular from centre bisects chord. Use trig in the right triangle.", 5, graded_answer_number_fields(
         (chord, perp), ('PQ (cm)', 'Perpendicular distance OM (cm)'),

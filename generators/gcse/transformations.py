@@ -4,8 +4,10 @@ GCSE Maths – Transformations
 Each variant returns (question, solution, hint, marks).
 Final answers are wrapped in <strong> tags.
 """
+import math
 import random
 from generators.shared.utils import (
+    bracket_neg,
     make_problem,
     make_graded_problem,
     graded_answer_number,
@@ -38,7 +40,18 @@ def _fmt_tri(pts, primed=False):
 
 def _trans_describe_mcq(q, s, hint, marks, correct, distractors):
     """Return a 6-tuple MCQ for 'describe fully' transformation questions."""
-    choices = [correct] + list(distractors[:3])
+    # Distinct, never equal to the key (two options with the same text are unfair).
+    wrong = []
+    for cand in list(distractors) + [
+        "Reflection in the y-axis",
+        "Rotation 180° about the origin (0,0)",
+        "Enlargement, scale factor 2, centre the origin (0,0)",
+    ]:
+        if cand != correct and cand not in wrong:
+            wrong.append(cand)
+        if len(wrong) == 3:
+            break
+    choices = [correct] + wrong
     random.shuffle(choices)
     letters = 'ABCD'
     correct_letter = letters[choices.index(correct)]
@@ -815,7 +828,7 @@ def _trans_inter_describe_rotation_full():
     mx = (tri[0][0] + img[0][0]) // 2
     my = (tri[0][1] + img[0][1]) // 2
     s = (rf"The shape is congruent → rotation.<br>"
-         rf"Midpoint of PP': \(\left(\dfrac{{{tri[0][0]}+{img[0][0]}}}{2},\dfrac{{{tri[0][1]}+{img[0][1]}}}{2}\right) = ({mx},{my})\).<br>"
+         rf"Midpoint of PP': \(\left(\dfrac{{{tri[0][0]}+{bracket_neg(img[0][0])}}}{2},\dfrac{{{tri[0][1]}+{bracket_neg(img[0][1])}}}{2}\right) = ({mx},{my})\).<br>"
          rf"Testing centre ({cx},{cy}): applying 90° {dir_desc} about ({cx},{cy}) to P({tri[0][0]},{tri[0][1]}) gives "
          rf"P'({img[0][0]},{img[0][1]}) ✓<br>"
          rf"<strong>Rotation 90° {dir_desc}, centre ({cx},{cy})</strong>")
@@ -986,8 +999,8 @@ def _trans_diff_find_centre_rotation():
          rf"PQR: {_fmt_tri(tri)};  P'Q'R': {_fmt_tri(img, primed=True)}.<br>"
          rf"By finding the perpendicular bisector of PP', determine the centre of rotation.")
     mid = ((tri[0][0] + img[0][0]) / 2, (tri[0][1] + img[0][1]) / 2)
-    s = (rf"Midpoint of PP': \(M = \left(\dfrac{{{tri[0][0]}+{img[0][0]}}}{2},\; "
-         rf"\dfrac{{{tri[0][1]}+{img[0][1]}}}{2}\right) = ({mid[0]},{mid[1]})\)<br>"
+    s = (rf"Midpoint of PP': \(M = \left(\dfrac{{{tri[0][0]}+{bracket_neg(img[0][0])}}}{2},\; "
+         rf"\dfrac{{{tri[0][1]}+{bracket_neg(img[0][1])}}}{2}\right) = ({mid[0]},{mid[1]})\)<br>"
          rf"The direction PP' is ({img[0][0]-tri[0][0]},{img[0][1]-tri[0][1]}); "
          rf"the perpendicular bisector through M is perpendicular to this.<br>"
          rf"Testing ({cx},{cy}): applying 90° {direction} about ({cx},{cy}) gives "
@@ -1074,7 +1087,7 @@ def _trans_diff_algebraic_coords():
 def _trans_diff_area_scale_factor():
     # Given areas, find linear scale factor
     k2 = random.choice([4, 9, 25, 16])
-    k = int(k2 ** 0.5)
+    k = math.isqrt(k2)
     area_small = random.randint(3, 12)
     area_large = area_small * k2
     q = (rf"A shape has area {area_small} cm².<br>"

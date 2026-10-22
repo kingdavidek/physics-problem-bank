@@ -2,8 +2,23 @@
 Procedural difficult-tier MCQ generators for GCSE maths topics that use fixed MCQ banks.
 Each topic has two randomised generators, included only when difficulty == 'difficult'.
 """
+from generators.shared.rounding import round_half_up as round, fmt_dp
+from generators.shared.utils import bracket_neg
 import random
 import math
+import re
+from decimal import Decimal, ROUND_HALF_UP
+
+
+_TRIPLES = [(3, 4, 5), (6, 8, 10), (5, 12, 13), (8, 15, 17), (9, 12, 15), (7, 24, 25),
+            (12, 16, 20), (20, 21, 29), (9, 40, 41), (15, 20, 25)]
+
+
+def _sqrt_exact(n):
+    """Exact integer root; the caller guarantees n is a perfect square."""
+    r = math.isqrt(int(n))
+    assert r * r == int(n), f"{n} is not a perfect square"
+    return r
 
 
 def _letter_opts(correct, wrong_candidates, fmt=str):
@@ -43,7 +58,9 @@ def _string_opts(correct, candidates):
     offset = 1
     while len(wrong) < 3:
         for cand in candidates:
-            alt = f"{cand}?" if offset == 1 else f"{cand} ({offset})"
+            # Nudge the first number in the candidate (√130 -> √131) so the
+            # filler option still looks like a real answer.
+            alt = re.sub(r'\d+', lambda m: str(int(m.group()) + offset), cand, count=1)
             if alt != correct and alt not in wrong:
                 wrong.append(alt)
             if len(wrong) == 3:
@@ -287,13 +304,15 @@ def _mf_proc_factor_of():
 
 def _dec_proc_bounds():
     n = round(random.uniform(2.5, 8.5), 1)
-    lower = math.floor(n * 10) / 10
-    upper = lower + 0.1
+    dn = Decimal(str(n))
+    half, tenth = Decimal("0.05"), Decimal("0.1")
+    lower, upper = dn - half, dn + half
     correct = f"{lower} ≤ x < {upper}"
     opts, letter = _string_opts(correct, [
-        f"{lower} < x ≤ {upper}",
-        f"{lower - 0.1} ≤ x < {lower}",
-        f"{upper} ≤ x < {upper + 0.1}",
+        f"{dn} ≤ x < {dn + tenth}",          # truncating instead of using half a unit
+        f"{lower} < x ≤ {upper}",            # strict/non-strict the wrong way round
+        f"{dn - tenth} ≤ x < {dn}",
+        f"{upper} ≤ x < {upper + tenth}",
     ])
     q = rf"\(x\) is rounded to 1 d.p. as <strong>{n}</strong>. Write the error interval."
     sol = (
@@ -313,11 +332,11 @@ def _dec_proc_divide():
     a_int = int(round(a * mult))
     b_int = int(round(b * mult))
     correct = round(a / b, 1)
-    opts, letter = _letter_opts(correct, [round(a * b, 1), round(a + b, 1), round(a / (b * 10), 1)], fmt=lambda x: f"{x:.1f}")
+    opts, letter = _letter_opts(correct, [round(a * b, 1), round(a + b, 1), round(a / (b * 10), 1)], fmt=lambda x: f"{fmt_dp(x, 1)}")
     q = rf"Work out <strong>{a} ÷ {b}</strong>."
     sol = (
         rf"×{mult} both: {a}×{mult} = {a_int}, {b}×{mult} = {b_int}<br>"
-        rf"{a_int} ÷ {b_int} = <strong>{correct:.1f}</strong>. Answer: <strong>{letter}</strong>"
+        rf"{a_int} ÷ {b_int} = <strong>{fmt_dp(correct, 1)}</strong>. Answer: <strong>{letter}</strong>"
     )
     return q, sol, (
         "Multiply dividend and divisor by 10 so the divisor is a whole number, then divide as usual."
@@ -330,11 +349,11 @@ def _dec_proc_multiply():
     correct = round(a * b, 2)
     a_int = int(a * 10)
     b_int = int(b * 10)
-    opts, letter = _letter_opts(correct, [round(a + b, 2), round(a / b, 2), round(a * b * 10, 2)], fmt=lambda x: f"{x:.2f}")
+    opts, letter = _letter_opts(correct, [round(a + b, 2), round(a / b, 2), round(a * b * 10, 2)], fmt=lambda x: f"{fmt_dp(x, 2)}")
     q = rf"Work out <strong>{a} × {b}</strong>."
     sol = (
         rf"{a_int} × {b_int} = {a_int * b_int}; 1 d.p. + 1 d.p. = 2 d.p.<br>"
-        rf"<strong>{correct:.2f}</strong>. Answer: <strong>{letter}</strong>"
+        rf"<strong>{fmt_dp(correct, 2)}</strong>. Answer: <strong>{letter}</strong>"
     )
     return q, sol, (
         "Multiply as integers (ignore the decimal points), then count decimal places in both factors "
@@ -346,7 +365,7 @@ def _dec_proc_round():
     n = round(random.uniform(1.0, 99.9), 3)
     dp = random.choice([1, 2])
     correct = round(n, dp)
-    n_str = f"{n:.4f}"
+    n_str = f"{fmt_dp(n, 4)}"
     decide = n_str.split(".")[1][dp] if "." in n_str and len(n_str.split(".")[1]) > dp else "0"
     opts, letter = _letter_opts(correct, [round(n, dp + 1), round(n + 0.1, dp), round(n - 0.1, dp)], fmt=lambda x: f"{x:.{dp}f}")
     q = rf"Round <strong>{n}</strong> to {dp} decimal place{'s' if dp > 1 else ''}."
@@ -426,7 +445,7 @@ def _surd_proc_multiply():
         if product % s == 0:
             largest_sq = s
     if largest_sq > 1:
-        k = int(math.sqrt(largest_sq))
+        k = _sqrt_exact(largest_sq)
         rem = product // largest_sq
         correct = str(k) if rem == 1 else f"{k}√{rem}"
     else:
@@ -494,9 +513,10 @@ def _seq_proc_quadratic_diff():
 
 def _geom_proc_parallel():
     x = random.randint(40, 70)
-    y = 180 - 2 * x
+    y = 180 - x
     correct = y
-    opts, letter = _letter_opts(correct, [x, 180 - x, x + 20])
+    # Misconceptions: treat as alternate/corresponding (x), use 360 or 90 instead of 180.
+    opts, letter = _letter_opts(correct, [x, 360 - x, 90 - x, x + 20])
     q = (
         rf"Parallel lines cut by a transversal. One angle is <strong>{x}°</strong>. "
         rf"Co-interior angles sum to 180°. The other co-interior angle is:"
@@ -555,9 +575,9 @@ def _trans_proc_reflection():
 def _mens_proc_circle():
     r = random.randint(3, 9)
     correct = round(math.pi * r * r, 1)
-    opts, letter = _letter_opts(correct, [round(2 * math.pi * r, 1), round(math.pi * r, 1), round(r * r, 1)], fmt=lambda x: f"{x:.1f}")
+    opts, letter = _letter_opts(correct, [round(2 * math.pi * r, 1), round(math.pi * r, 1), round(r * r, 1)], fmt=lambda x: f"{fmt_dp(x, 1)}")
     q = rf"A circle has radius <strong>{r} cm</strong>. Its area is (π ≈ 3.14):"
-    sol = rf"\(A = \pi r^2 = \pi \times {r}^2\) ≈ <strong>{correct:.1f} cm²</strong>. Answer: <strong>{letter}</strong>"
+    sol = rf"\(A = \pi r^2 = \pi \times {r}^2\) ≈ <strong>{fmt_dp(correct, 1)} cm²</strong>. Answer: <strong>{letter}</strong>"
     return q, sol, "Use A = πr².", 3, opts, letter
 
 
@@ -700,8 +720,9 @@ def _cl_proc_angle_bisector():
 # ══════════════════════════════════════════════════════════════════════════════
 
 def _py_proc_hypotenuse():
-    a, b = random.choice([3, 6, 8]), random.choice([4, 8, 15])
-    c = int(math.sqrt(a * a + b * b))
+    a, b, c = random.choice(_TRIPLES)
+    if random.random() < 0.5:
+        a, b = b, a
     correct = c
     opts, letter = _letter_opts(correct, [a + b, abs(a - b), c + 1])
     q = rf"A right triangle has shorter sides <strong>{a}</strong> and <strong>{b}</strong>. The hypotenuse is:"
@@ -710,8 +731,9 @@ def _py_proc_hypotenuse():
 
 
 def _py_proc_short_side():
-    c, a = random.choice([13, 17, 25]), random.choice([5, 8, 12])
-    b = int(math.sqrt(c * c - a * a))
+    a, b, c = random.choice(_TRIPLES)
+    if random.random() < 0.5:
+        a, b = b, a
     correct = b
     opts, letter = _letter_opts(correct, [c - a, c + a, c // a if c >= a else a])
     q = rf"Hypotenuse <strong>{c}</strong>, one side <strong>{a}</strong>. The other shorter side is:"
@@ -735,20 +757,23 @@ def _vec_proc_add():
     ])
     q = rf"\(\mathbf{{a}} = \begin{{pmatrix}} {ax} \\ {ay} \end{{pmatrix}}\), \(\mathbf{{b}} = \begin{{pmatrix}} {bx} \\ {by} \end{{pmatrix}}\). Find \(\mathbf{{a}} + \mathbf{{b}}\)."
     sol = (
-        rf"Add tops: {ax}+{bx}={ax+bx}. Add bottoms: {ay}+{by}={ay+by}. "
+        rf"Add tops: {ax} + {bracket_neg(bx)} = {ax+bx}. Add bottoms: {ay} + {bracket_neg(by)} = {ay+by}. "
         rf"<strong>{correct}</strong>. Answer: <strong>{letter}</strong>"
     )
     return q, sol, "Add x-components together, then y-components — do not mix them.", 2, opts, letter
 
 
 def _vec_proc_magnitude():
-    x, y = random.choice([3, 6, 8]), random.choice([4, 8, 15])
-    mag = int(math.sqrt(x * x + y * y))
+    x, y, mag = random.choice(_TRIPLES)
+    if random.random() < 0.5:
+        x, y = y, x
+    if random.random() < 0.3:
+        x, y = -x, y
     correct = mag
-    opts, letter = _letter_opts(correct, [x + y, x * y, mag + 1])
+    opts, letter = _letter_opts(correct, [abs(x) + abs(y), abs(x * y), mag + 1])
     q = rf"Find the magnitude of \(\begin{{pmatrix}} {x} \\ {y} \end{{pmatrix}}\)."
     sol = (
-        rf"√({x}²+{y}²) = √({x*x}+{y*y}) = √{x*x+y*y} = <strong>{mag}</strong>. "
+        rf"√(({x})²+({y})²) = √({x*x}+{y*y}) = √{x*x+y*y} = <strong>{mag}</strong>. "
         rf"Answer: <strong>{letter}</strong>"
     )
     return q, sol, "Square each component, add, then square-root (Pythagoras).", 3, opts, letter
@@ -768,7 +793,7 @@ def _trig_proc_find_side():
     else:
         opp = round(adj * math.tan(math.radians(60)), 1)
     correct = opp
-    opts, letter = _letter_opts(correct, [adj, adj / 2, opp + 2], fmt=lambda x: f"{x:.1f}" if isinstance(x, float) else str(x))
+    opts, letter = _letter_opts(correct, [adj, adj / 2, opp + 2], fmt=lambda x: f"{fmt_dp(x, 1)}" if isinstance(x, float) else str(x))
     q = rf"In a right triangle, angle <strong>{angle}°</strong>, adjacent <strong>{adj}</strong>. Opposite = (tan {angle}°):"
     sol = rf"tan = opp/adj → <strong>{opp}</strong>. Answer: <strong>{letter}</strong>"
     return q, sol, "Choose the correct ratio (SOHCAHTOA).", 3, opts, letter

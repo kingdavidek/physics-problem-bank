@@ -5,7 +5,7 @@ Graded practice variants return (question, solution, hint, marks, raw)
 or an MCQ 6-tuple (question, solution, hint, marks, options, correct_letter).
 """
 import random
-from generators.shared.utils import make_problem
+from generators.shared.utils import make_problem, signed_term
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from generators.shared.variant_utils import (
     select_tier_variants,
@@ -232,7 +232,7 @@ def _sim_f_substitution_y_equals():
         + _sim_step(
             rf"<strong>Step 2</strong> — expand and collect \(x\) terms:"
             f'<div style="margin:8px 0 0 16px;">'
-            rf"\({c2}x + {d2 * a1}x + {d2 * b1} = {e2}\)<br>"
+            rf"\({c2}x {signed_term(d2 * a1)}x {signed_term(d2 * b1)} = {e2}\)<br>"
             rf"\({sub_lhs}x = {sub_rhs}\) → <strong>\(x = {x_ans}\)</strong></div>"
         )
         + _sim_step(

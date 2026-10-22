@@ -5,6 +5,7 @@ Graded practice variants return (question, solution, hint, marks, raw).
 Geometry proof variants use Plan B scaffolds (number_fields checkpoints).
 Final answers are wrapped in <strong> tags.
 """
+from generators.shared.rounding import round_half_up as round
 import random
 import math
 from generators.shared.utils import make_problem

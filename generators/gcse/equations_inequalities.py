@@ -4,9 +4,10 @@ GCSE Maths – Equations and Inequalities
 Graded practice variants return (question, solution, hint, marks, raw).
 Algebraic rearrangement, proof, and some multipart variants stay 4-tuples.
 """
+from generators.shared.rounding import round_half_up as round, fmt_dp
 import random
 import math
-from generators.shared.utils import make_problem, quadratic_roots_format_hint, quadratic_roots_ui_labels
+from generators.shared.utils import make_problem, quadratic_roots_format_hint, quadratic_roots_ui_labels, signed_term
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from generators.shared.variant_utils import (
     select_tier_variants,
@@ -861,11 +862,11 @@ def _eq_inter_angle_equation():
         b, d = b - 5, d - 5
     total_coeff = a + c + e
     total_const = b + d + f_val
-    q = (rf"The angles in a triangle are \({a}x + {b}\)°, \({c}x + {d}\)°, "
-         rf"and \({e}x + {f_val}\)°.<br>Form an equation and find \(x\).")
+    q = (rf"The angles in a triangle are \({a}x {signed_term(b)}\)°, \({c}x {signed_term(d)}\)°, "
+         rf"and \({e}x {signed_term(f_val)}\)°.<br>Form an equation and find \(x\).")
     s = (rf"Angles in a triangle sum to 180°:<br>"
-         rf"\(({a}x + {b}) + ({c}x + {d}) + ({e}x + {f_val}) = 180\)<br>"
-         rf"\({total_coeff}x + {total_const} = 180\)<br>"
+         rf"\(({a}x {signed_term(b)}) + ({c}x {signed_term(d)}) + ({e}x {signed_term(f_val)}) = 180\)<br>"
+         rf"\({total_coeff}x {signed_term(total_const)} = 180\)<br>"
          rf"\({total_coeff}x = {180 - total_const}\)<br>"
          rf"<strong>\(x = {x_ans}\)</strong>")
     hint = "Sum the three angles and set equal to 180°."
@@ -1043,6 +1044,14 @@ def _eq_diff_quadratic_factorise():
     return q, s, hint, 3, _eq_quadratic_roots_answer(r1, r2)
 
 
+def _rtxt(r):
+    if abs(r - round(r)) < 1e-9:
+        return str(int(round(r)))
+    if abs(r * 3 - round(r * 3)) < 1e-9:
+        return rf"\dfrac{{{int(round(r * 3))}}}{{3}}"
+    return str(r)
+
+
 def _eq_diff_quadratic_formula():
     # Choose a, b, c with real roots and discriminant a perfect square for clean answers
     pairs = [
@@ -1056,10 +1065,10 @@ def _eq_diff_quadratic_formula():
     sqrt_disc = int(math.isqrt(disc))
     q = rf"Use the quadratic formula to solve \({a_str}x^2{poly} = 0\) Give exact answers."
     s = (rf"Using \(x = \dfrac{{-b \pm \sqrt{{b^2 - 4ac}}}}{{2a}}\) with \(a={a_v}, b={b_v}, c={c_v}\):<br>"
-         rf"\(\Delta = ({b_v})^2 - 4({a_v})({c_v}) = {b_v*b_v} - {4*a_v*c_v} = {disc}\)<br>"
+         rf"\(\Delta = ({b_v})^2 - 4({a_v})({c_v}) = {b_v*b_v} {signed_term(-4*a_v*c_v)} = {disc}\)<br>"
          rf"\(\sqrt{{\Delta}} = {sqrt_disc}\)<br>"
          rf"\(x = \dfrac{{{-b_v} \pm {sqrt_disc}}}{{{2*a_v}}}\)<br>"
-         rf"<strong>\(x = {r1}\) or \(x = {r2}\)</strong>")
+         rf"<strong>\(x = {_rtxt(r1)}\) or \(x = {_rtxt(r2)}\)</strong>")
     hint = "Identify a, b, c then substitute into the formula. Simplify the discriminant first."
     return q, s, hint, 4, _eq_quadratic_roots_answer(r1, r2)
 
@@ -1071,9 +1080,9 @@ def _eq_diff_complete_square():
     k = q_val - p * p
     k_str = f"- {-k}" if k < 0 else f"+ {k}"
     q_str_k = f"- {-k}" if k < 0 else f"+ {k}"
-    q = rf"Complete the square for \(x^2 + {2*p}x + {q_val}\)."
-    s = (rf"Write as \((x + {p})^2 - {p}^2 + {q_val}\)<br>"
-         rf"\(= (x + {p})^2 - {p*p} + {q_val}\)<br>"
+    q = rf"Complete the square for \(x^2 + {2*p}x {signed_term(q_val)}\)."
+    s = (rf"Write as \((x + {p})^2 - {p}^2 {signed_term(q_val)}\)<br>"
+         rf"\(= (x + {p})^2 - {p*p} {signed_term(q_val)}\)<br>"
          rf"<strong>\(= (x + {p})^2 {q_str_k}\)</strong>")
     hint = f"Half the x-coefficient is {p}. Write (x + {p})² and then adjust the constant."
     return q, s, hint, 3, _eq_completed_square_answer('plus', p, k)
@@ -1210,16 +1219,17 @@ def _eq_diff_simult_one_quadratic():
     if a == 1:
         linear = rf"\(y = x {b_str}\)"
     else:
-        linear = rf"\(y = {a}x {b_str}\)"
+        linear = rf"\(y = {'-x' if a == -1 else str(a) + 'x'} {b_str}\)"
     y1, y2 = r1 * r1, r2 * r2
     q = (rf"Solve the simultaneous equations:<br>"
          rf"\(y = x^2\)<br>"
          rf"{linear}")
     factors = _eq_fmt_factor_bracket(r1) + _eq_fmt_factor_bracket(r2)
-    x_term = "x" if a == 1 else f"{a}x"
+    x_term = "x" if a == 1 else "-x" if a == -1 else f"{a}x"
+    flip = f"{'-' if a > 0 else '+'} {'' if abs(a) == 1 else abs(a)}x"
     s = (rf"Substitute the linear equation into \(y = x^2\):<br>"
          rf"\(x^2 = {x_term} {b_str}\)<br>"
-         rf"Rearrange: \(x^2 - {x_term} {c_rearr} = 0\)<br>"
+         rf"Rearrange: \(x^2 {flip} {c_rearr} = 0\)<br>"
          rf"Factorise: \({factors} = 0\)<br>"
          rf"\(x = {r1}\) or \(x = {r2}\)<br>"
          rf"When \(x = {r1}\): \(y = {y1}\). When \(x = {r2}\): \(y = {y2}\)<br>"
@@ -1278,8 +1288,8 @@ def _eq_diff_complete_square_solve():
     s = (rf"Rearrange: \(x^2 + {2*p}x = {k}\)<br>"
          rf"Complete the square: \((x + {p})^2 = {k} + {p}^2 = {rhs}\)<br>"
          rf"\(x + {p} = \pm\sqrt{{{rhs}}}\)<br>"
-         rf"<strong>\(x = {-p} + \sqrt{{{rhs}}} \approx {-p + math.sqrt(rhs):.2f}\) "
-         rf"or \(x = {-p} - \sqrt{{{rhs}}} \approx {-p - math.sqrt(rhs):.2f}\)</strong>")
+         rf"<strong>\(x = {-p} + \sqrt{{{rhs}}} \approx {fmt_dp(-p + math.sqrt(rhs), 2)}\) "
+         rf"or \(x = {-p} - \sqrt{{{rhs}}} \approx {fmt_dp(-p - math.sqrt(rhs), 2)}\)</strong>")
     hint = f"Add {p}² = {p*p} to both sides after moving the constant."
     return q, s, hint, 4, _eq_quadratic_roots_answer(round(-p + math.sqrt(rhs), 2), round(-p - math.sqrt(rhs), 2))
 
@@ -1358,7 +1368,7 @@ def _eq_diff_quadratic_formula_generated():
     s = (rf"Here \(a = 1\), \(b = {b}\), \(c = {c}\).<br>"
          rf"\(\Delta = b^2 - 4ac = ({b})^2 - 4(1)({c}) = {disc}\)<br>"
          rf"\(\sqrt{{\Delta}} = {sqrt_disc}\)<br>"
-         rf"\(x = \dfrac{{-{b} \pm {sqrt_disc}}}{{2}}\)<br>"
+         rf"\(x = \dfrac{{{-b} \pm {sqrt_disc}}}{{2}}\)<br>"
          rf"<strong>\(x = {r2}\) or \(x = {r1}\)</strong>")
     hint = "Identify a, b, c from the equation, evaluate the discriminant, then substitute."
     return q, s, hint, 4, _eq_quadratic_roots_answer(r1, r2)

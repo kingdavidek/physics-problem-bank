@@ -10,6 +10,7 @@ Covers:
   Advanced loci (sliding ladder, chord midpoint, Apollonius circle)
   Formal locus proofs using coordinates
 """
+from generators.shared.rounding import round_half_up as round, fmt_dp
 import random
 import math
 from generators.shared.utils import (
@@ -66,7 +67,7 @@ def _cl_random_chord():
         d_sq = R ** 2 - hc ** 2
         if d_sq <= 0:
             continue
-        d = int(d_sq ** 0.5)
+        d = math.isqrt(d_sq)
         if d > 0:
             return R, 2 * hc, d if d * d == d_sq else round(d_sq ** 0.5, 1)
     return 5, 8, 3
@@ -78,12 +79,12 @@ def _cl_scale_length():
         scale = random.choice([100, 200, 250, 500, 1000, 2000, 5000])
         map_d = round(random.uniform(1.5, 8.0), 1)
         actual_cm = map_d * scale
-        actual_final = round(actual_cm / 100, 1)
+        actual_final = round(actual_cm / 100, 4)   # exact (at most 2 d.p.); the question states no rounding
     else:
         scale = random.choice([10000, 25000, 50000, 100000, 200000])
         map_d = round(random.uniform(1.2, 6.0), 1)
         actual_cm = map_d * scale
-        actual_final = round(actual_cm / 100000, 2)
+        actual_final = round(actual_cm / 100000, 4)   # exact (at most 3 d.p.)
     return scale, map_d, actual_cm, actual_final, 'cm', unit_out
 
 
@@ -966,9 +967,9 @@ def _cl_i10_scale_bearing():
          f"(i) How long should the line be on the scale drawing? "
          f"(ii) Describe how to draw the line at the correct bearing.")
     s = (f"(i) Length on drawing = {dist_km} km × 1000 m/km × 100 cm/m ÷ {scale:,}<br>"
-         f"= {dist_km * 100000:,} ÷ {scale:,} = <strong>{map_cm:.1f} cm</strong><br>"
+         f"= {dist_km * 100000:,} ÷ {scale:,} = <strong>{fmt_dp(map_cm, 1)} cm</strong><br>"
          f"(ii) Draw a north arrow at the starting point. Use a protractor to measure {bearing:03d}° clockwise "
-         f"from north, then draw the line <strong>{map_cm:.1f} cm</strong> in that direction.")
+         f"from north, then draw the line <strong>{fmt_dp(map_cm, 1)} cm</strong> in that direction.")
     return q, s, "Convert real distance to cm, divide by scale. Bearings are measured clockwise from north.", 4, graded_answer_number(round(map_cm, 1))
 
 
@@ -1083,10 +1084,10 @@ def _cl_i15_scale_area():
     if unit == "km²":
         conv = actual_cm2 / 1e10
         q = (f"A map has scale 1 : {scale:,}. A field appears as {map_cm2} cm² on the map. "
-             f"Find the actual area of the field in {unit}.")
+             f"Find the actual area of the field in {unit}, correct to 3 decimal places.")
         s = (f"Area scale factor = {scale:,}² = {area_scale:,}<br>"
              f"Actual area = {map_cm2} × {area_scale:,} cm² = {actual_cm2:,.0f} cm²<br>"
-             f"= {actual_cm2:,.0f} ÷ 10,000,000,000 = <strong>{actual_final} {unit}</strong>")
+             f"= {actual_cm2:,.0f} ÷ 10,000,000,000 = {actual_cm2 / 1e10:.6f} ≈ <strong>{fmt_dp(actual_final, 3)} {unit}</strong> (3 d.p.)")
     else:
         q = (f"A scale model uses scale 1 : {scale}. A floor appears as {map_cm2} cm² on the model. "
              f"Find the actual floor area in {unit}.")
@@ -1207,6 +1208,8 @@ def _cl_d3_chord_midpoint():
 def _cl_d4_constant_area_locus():
     AB = random.randint(4, 14)
     h = random.randint(2, 10)
+    while (AB * h) % 2:
+        h = random.randint(2, 10)
     area = AB * h // 2
     q = (f"Fixed line segment AB has length {AB} cm. Point P moves so that the area of triangle PAB "
          f"is always {area} cm². Describe the locus of P.")
@@ -1244,7 +1247,8 @@ def _cl_d5_apollonius_circle():
     # Complete square: coeff*(x² + 2*rn2*d/coeff*x) + coeff*y² = rn2*d²
     # x² + 2*cx*x + cx² + y² = rn2*d²/coeff + cx²
     r_sq = rn2 * d_AB ** 2 / coeff + cx ** 2
-    r = int(r_sq ** 0.5) if r_sq == int(r_sq ** 0.5) else round(r_sq ** 0.5, 1)
+    r_root = math.sqrt(r_sq)
+    r = int(r_root) if r_root == int(r_root) else round(r_root, 1)
     cx_int = int(cx) if cx == int(cx) else round(cx, 1)
     s = (f"Let A = (0, 0) and B = ({d_AB}, 0). Let P = (x, y).<br>"
          f"PA² = x² + y²;&nbsp; PB² = (x − {d_AB})² + y²<br>"
@@ -1308,8 +1312,10 @@ def _cl_d8_circumcentre_coords():
     else:
         Oy = Cy / 2
     O = (Ox, Oy)
+    ox = round(Ox, 2) if Ox != int(Ox) else int(Ox)
+    oy = round(Oy, 2) if Oy != int(Oy) else int(Oy)
     q = (f"Triangle ABC has A = {A}, B = {B}, C = {C}. "
-         f"Find the circumcentre by constructing the perpendicular bisectors of AB and AC algebraically.")
+         f"Find the circumcentre by constructing the perpendicular bisectors of AB and AC algebraically. Give coordinates to 2 decimal places where needed.")
     # Compute perp bisector of AB: midpoint=(B[0]/2, B[1]/2), slope AB = (B[1]-A[1])/(B[0]-A[0])
     mid_AB = ((A[0]+B[0])/2, (A[1]+B[1])/2)
     mid_AC = ((A[0]+C[0])/2, (A[1]+C[1])/2)
@@ -1317,9 +1323,7 @@ def _cl_d8_circumcentre_coords():
          f"Midpoint of AC = {mid_AC}. Slope of AC = ({C[1]}−{A[1]})/({C[0]}−{A[0]}) = {(C[1]-A[1])}/{(C[0]-A[0])}.<br>"
          f"Perp slope = −{C[0]-A[0]}/{C[1]-A[1]}.<br>"
          f"Perp bisector of AC: y − {mid_AC[1]} = −{(C[0]-A[0])}/{(C[1]-A[1])} × (x − {mid_AC[0]}).<br>"
-         f"At x = {mid_AB[0]}: solve for y to find circumcentre = <strong>{O}</strong>.")
-    ox = round(Ox, 2) if Oy != int(Oy) else int(Ox)
-    oy = round(Oy, 2) if Oy != int(Oy) else int(Oy)
+         f"At x = {mid_AB[0]}: solve for y to find circumcentre = <strong>({ox}, {oy})</strong> (y to 2 d.p. where needed).")
     return q, s, "Perp bisector of horizontal segment → vertical line. Substitute into second bisector equation.", 6, graded_answer_number_pair(ox, oy, 'Circumcentre x', 'Circumcentre y')
 
 
@@ -1391,9 +1395,9 @@ def _cl_d12_two_radio_towers():
          f"(ii) Verify that the two coverage zones overlap, given that {r1} + {r2} = {r1+r2} > {d}.")
     area1 = round(math.pi * r1**2, 2)
     area2 = round(math.pi * r2**2, 2)
-    q_str = (f"(i) If you assume no overlap: approximate total = π×{r1}² + π×{r2}² ≈ {area1} + {area2} = {area1+area2:.2f} km².<br>"
+    q_str = (f"(i) If you assume no overlap: approximate total = π×{r1}² + π×{r2}² ≈ {area1} + {area2} = {fmt_dp(area1+area2, 2)} km².<br>"
              f"(ii) Since {r1} + {r2} = {r1+r2} > {d} (distance between towers), the circles DO overlap. "
-             f"The actual total coverage area (with overlap removed) is less than {area1+area2:.2f} km².<br>"
+             f"The actual total coverage area (with overlap removed) is less than {fmt_dp(area1+area2, 2)} km².<br>"
              f"The overlap region is a <strong>lens (intersection of two circles)</strong>, "
              f"confirming that the circles overlap. No single formula at GCSE — describe the region geometrically.")
     s = q_str

@@ -285,57 +285,36 @@
           To show this more simply: use color-coded arcs with labels "θ" at both locations.
       -->
       <div class="lesson-figure">
-        <svg class="lesson-diagram" width="540" height="360" viewBox="0 0 380 255">
-
-          <!-- North at A (80,165) -->
-          <line x1="80" y1="165" x2="80" y2="108" stroke="#666" stroke-width="1.5" stroke-dasharray="5,4"/>
-          <polygon points="80,108 76,117 84,117" fill="#666"/>
-          <text x="80" y="103" font-size="14" fill="#555" text-anchor="middle">N</text>
-
-          <!-- North at B (220,95) -->
-          <line x1="220" y1="95" x2="220" y2="38" stroke="#666" stroke-width="1.5" stroke-dasharray="5,4"/>
-          <polygon points="220,38 216,47 224,47" fill="#666"/>
-          <text x="220" y="33" font-size="14" fill="#555" text-anchor="middle">N</text>
-
-          <!-- Line AB -->
-          <line x1="80" y1="165" x2="220" y2="95" stroke="#444" stroke-width="2"/>
-
-          <!--
-            Bearing of B from A: direction vector (140, -70) in SVG.
-            In bearing convention: East = 140, North = 70 (since y decreases = northward).
-            bearing = atan2(140, 70) = 63.4°.
-            Arc at A from North (80,139) to (80+26·sin63.4°, 165-26·cos63.4°)
-                   = (80+23.2, 165-11.6) = (103.2, 153.4). sweep=1, large=0.
-          -->
-          <path d="M80,139 A26,26,0,0,1,103.2,153.4" fill="none" stroke="#1a6fa8" stroke-width="2"/>
-          <text x="112" y="147" font-size="14" fill="#1a6fa8" font-weight="bold">θ</text>
-          <text x="88" y="215" font-size="14" fill="#1a6fa8" text-anchor="middle">Bearing of B from A</text>
-
-          <!--
-            Alternate angle at B:
-            Back bearing = 63.4° + 180° = 243.4°.
-            At B, the alternate angle between BA and the South direction at B.
-            South direction at B: (220, 95+26)=(220, 121).
-            BA direction at arc_r=26: (220+26·sin243.4°, 95-26·cos243.4°)
-              sin(243.4°)=sin(180°+63.4°)=-sin(63.4°)=-0.894, cos(243.4°)=-cos(63.4°)=-0.447
-              = (220-23.2, 95+11.6) = (196.8, 106.6).
-            Going from South (220,121) clockwise to (196.8, 106.6):
-            This is 360°-243.4°=116.6° CW from North, and South is 180° from North.
-            The arc from South to back-bearing is 243.4°-180° = 63.4° CW beyond South.
-            Arc: from (220,121) sweep=1 to (196.8, 106.6). span = 63.4°. large=0.
-          -->
-          <path d="M220,121 A26,26,0,0,1,196.8,106.6" fill="none" stroke="#a13544" stroke-width="2"/>
-          <text x="188" y="128" font-size="14" fill="#a13544" font-weight="bold">θ</text>
-          <text x="268" y="215" font-size="14" fill="#a13544" text-anchor="middle">Alternate angle = θ</text>
-
-          <!-- Points -->
-          <circle cx="80"  cy="165" r="4" fill="#333"/>
-          <text x="65"  y="170" font-size="15" fill="#333" font-weight="bold">A</text>
-          <circle cx="220" cy="95"  r="4" fill="#a13544"/>
-          <text x="230" y="100" font-size="15" fill="#a13544" font-weight="bold">B</text>
-
-          <!-- Caption -->
-          <text x="190" y="240" font-size="14" fill="#555" text-anchor="middle">Alternate angles → back bearing = θ + 180°</text>
+        <svg class="lesson-diagram lesson-svg-chart--520" width="520" viewBox="0 0 380 306" role="img">
+          <title>Back bearing from alternate angles</title>
+          <desc>Point B is on a bearing of theta from point A, measured clockwise from the North line at A. The North lines at A and B are parallel. At B, extend the North line downwards to get the South line. The angle between the South line and BA is the alternate angle, equal to theta. The back bearing of A from B is measured clockwise from North at B and equals theta plus 180 degrees.</desc>
+          <!-- North lines (parallel) at A and B, and the South continuation at B -->
+          <line x1="70" y1="222" x2="70" y2="132" stroke="#666" stroke-width="1.5" stroke-dasharray="5,4"/>
+          <polygon points="70,130 66,139 74,139" fill="#666"/>
+          <text x="70" y="122" font-size="13" fill="#555" text-anchor="middle">N</text>
+          <line x1="203.7" y1="153.9" x2="203.7" y2="63.9" stroke="#666" stroke-width="1.5" stroke-dasharray="5,4"/>
+          <polygon points="203.7,61.9 199.7,70.9 207.7,70.9" fill="#666"/>
+          <text x="203.7" y="53.9" font-size="13" fill="#555" text-anchor="middle">N</text>
+          <line x1="203.7" y1="153.9" x2="203.7" y2="231.9" stroke="#666" stroke-width="1.5" stroke-dasharray="5,4"/>
+          <text x="203.7" y="249.9" font-size="13" fill="#555" text-anchor="middle">S</text>
+          <!-- path AB -->
+          <line x1="70" y1="222" x2="203.7" y2="153.9" stroke="#444" stroke-width="2"/>
+          <!-- bearing of B from A: theta clockwise from North at A -->
+          <path d="M70,192 A30,30 0 0 1 96.7,208.4" fill="none" stroke="#1a6fa8" stroke-width="2"/>
+          <text x="96.1" y="184.4" font-size="15" fill="#1a6fa8" text-anchor="middle" font-weight="bold">θ</text>
+          <!-- alternate angle at B: between the South line and BA -->
+          <path d="M203.7,179.9 A26,26 0 0 1 180.5,165.7" fill="none" stroke="#a13544" stroke-width="2"/>
+          <text x="181.2" y="195.6" font-size="15" fill="#a13544" text-anchor="middle" font-weight="bold">θ</text>
+          <!-- back bearing at B: 180° + θ clockwise from North (faint) -->
+          <path d="M203.7,95.9 A58,58 0 1 1 152,180.2" fill="none" stroke="#a13544" stroke-width="1.5" stroke-dasharray="3,3" stroke-opacity="0.55"/>
+          <text x="269.7" y="158.9" font-size="13" fill="#a13544" text-anchor="start">θ + 180°</text>
+          <circle cx="70" cy="222" r="4" fill="#333"/>
+          <text x="60" y="238" font-size="15" fill="#333" text-anchor="end" font-weight="bold">A</text>
+          <circle cx="203.7" cy="153.9" r="4" fill="#a13544"/>
+          <text x="193.7" y="145.9" font-size="15" fill="#a13544" text-anchor="end" font-weight="bold">B</text>
+          <text x="95" y="272" font-size="13" fill="#1a6fa8" text-anchor="middle">Bearing of B from A = θ</text>
+          <text x="285" y="272" font-size="13" fill="#a13544" text-anchor="middle">Alternate angle at B = θ</text>
+          <text x="190" y="294" font-size="13" fill="#555" text-anchor="middle">Alternate angles → back bearing = θ + 180°</text>
         </svg>
       </div>
 

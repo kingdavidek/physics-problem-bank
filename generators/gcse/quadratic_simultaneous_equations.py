@@ -387,13 +387,20 @@ def _qsim_i_check_pair():
     wrong_on_parabola = (wrong_x, wrong_x * wrong_x)
     wrong_on_line = (1, a + b)
     neither = (0, 1)
-    coords = [
-        f"({wrong_on_parabola[0]}, {wrong_on_parabola[1]})",
-        f"({correct}, {correct * correct})",
-        f"({wrong_on_line[0]}, {wrong_on_line[1]})",
-        f"({neither[0]}, {neither[1]})",
-    ]
     correct_coord = f"({correct}, {correct * correct})"
+    coords = [correct_coord]
+    for pt in (wrong_on_parabola, wrong_on_line, neither, (correct + 2, a * (correct + 2) + b)):
+        text = f"({pt[0]}, {pt[1]})"
+        # The line point at x = 1 can coincide with the real solution: never repeat it.
+        if text not in coords and pt not in ((r1, r1 * r1), (r2, r2 * r2)):
+            coords.append(text)
+    extra = 3
+    while len(coords) < 4:
+        text = f"({correct + extra}, {(correct + extra) ** 2})"
+        if text not in coords and correct + extra not in (r1, r2):
+            coords.append(text)
+        extra += 1
+    coords = coords[:4]
     random.shuffle(coords)
     letters = "ABCD"
     correct_letter = letters[coords.index(correct_coord)]

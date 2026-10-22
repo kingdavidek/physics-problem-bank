@@ -12,6 +12,7 @@ Covers:
   Similar triangles from parallel lines (Basic Proportionality Theorem)
   Real-world applications: maps, scale models, shadow problems
 """
+from generators.shared.rounding import round_half_up as round, fmt_dp
 import random
 import math
 from generators.shared.utils import (
@@ -139,7 +140,7 @@ def _tri(A, B, C, vlabels=("A", "B", "C"), slabels=None,
         label_bounds_x.append(lx)
         label_bounds_y.append(ly + 5)
         parts.append(
-            f'<text x="{lx:.0f}" y="{ly + 5:.0f}" font-size="13" fill="{p["ink"]}" '
+            f'<text x="{fmt_dp(lx, 0)}" y="{fmt_dp(ly + 5, 0)}" font-size="13" fill="{p["ink"]}" '
             f'text-anchor="middle" font-weight="bold">{lbl}</text>'
         )
     if slabels:
@@ -156,7 +157,7 @@ def _tri(A, B, C, vlabels=("A", "B", "C"), slabels=None,
                 label_bounds_x.append(ox)
                 label_bounds_y.append(oy + 4)
                 parts.append(
-                    f'<text x="{ox:.0f}" y="{oy + 4:.0f}" font-size="12" fill="{p["ink_muted"]}" '
+                    f'<text x="{fmt_dp(ox, 0)}" y="{fmt_dp(oy + 4, 0)}" font-size="12" fill="{p["ink_muted"]}" '
                     f'text-anchor="middle">{lbl}</text>'
                 )
     return str(svg_kit.svg(
@@ -202,7 +203,7 @@ def _two_tris(A1, B1, C1, A2, B2, C2,
     for pt, lbl in zip([A1, B1, C1], vl1):
         lx, ly = out1(*pt)
         parts.append(
-            f'<text x="{lx:.0f}" y="{ly + 5:.0f}" font-size="13" fill="{p["ink"]}" '
+            f'<text x="{fmt_dp(lx, 0)}" y="{fmt_dp(ly + 5, 0)}" font-size="13" fill="{p["ink"]}" '
             f'text-anchor="middle" font-weight="bold">{lbl}</text>'
         )
     if sl1:
@@ -217,7 +218,7 @@ def _two_tris(A1, B1, C1, A2, B2, C2,
                 n = math.hypot(dx, dy) or 1
                 ox, oy = mx + dx / n * 13, my + dy / n * 13
                 parts.append(
-                    f'<text x="{ox:.0f}" y="{oy + 4:.0f}" font-size="11" fill="{p["ink_muted"]}" '
+                    f'<text x="{fmt_dp(ox, 0)}" y="{fmt_dp(oy + 4, 0)}" font-size="11" fill="{p["ink_muted"]}" '
                     f'text-anchor="middle">{lbl}</text>'
                 )
     parts.append(
@@ -227,7 +228,7 @@ def _two_tris(A1, B1, C1, A2, B2, C2,
     for pt, lbl in zip([A2, B2, C2], vl2):
         lx, ly = out2(*pt)
         parts.append(
-            f'<text x="{lx:.0f}" y="{ly + 5:.0f}" font-size="13" fill="{p["ink"]}" '
+            f'<text x="{fmt_dp(lx, 0)}" y="{fmt_dp(ly + 5, 0)}" font-size="13" fill="{p["ink"]}" '
             f'text-anchor="middle" font-weight="bold">{lbl}</text>'
         )
     if sl2:
@@ -242,12 +243,12 @@ def _two_tris(A1, B1, C1, A2, B2, C2,
                 n = math.hypot(dx, dy) or 1
                 ox, oy = mx + dx / n * 13, my + dy / n * 13
                 parts.append(
-                    f'<text x="{ox:.0f}" y="{oy + 4:.0f}" font-size="11" fill="{p["ink_muted"]}" '
+                    f'<text x="{fmt_dp(ox, 0)}" y="{fmt_dp(oy + 4, 0)}" font-size="11" fill="{p["ink_muted"]}" '
                     f'text-anchor="middle">{lbl}</text>'
                 )
     gap_x = (min(A2[0], B2[0], C2[0]) + max(A1[0], B1[0], C1[0])) / 2
     parts.append(
-        f'<text x="{gap_x:.0f}" y="{(min_y + max_y) / 2 + 5:.0f}" font-size="22" '
+        f'<text x="{fmt_dp(gap_x, 0)}" y="{fmt_dp((min_y + max_y) / 2 + 5, 0)}" font-size="22" '
         f'fill="{p["ink_muted"]}" text-anchor="middle">~</text>'
     )
     max_width = w if w else 420
@@ -274,19 +275,19 @@ def _par_tri(AD_lbl, DB_lbl, DE_lbl, BC_lbl, ratio=0.45, w=210, h=175):
     inner = (
         f'<polygon points="{A[0]},{A[1]} {B[0]},{B[1]} {C[0]},{C[1]}" '
         f'fill="{p["brand_pale"]}" stroke="{p["brand"]}" stroke-width="2"/>'
-        f'<polygon points="{A[0]},{A[1]} {D[0]:.1f},{D[1]:.1f} {E[0]:.1f},{E[1]:.1f}" '
+        f'<polygon points="{A[0]},{A[1]} {fmt_dp(D[0], 1)},{fmt_dp(D[1], 1)} {fmt_dp(E[0], 1)},{fmt_dp(E[1], 1)}" '
         f'fill="{p["brand_mid"]}" stroke="{p["brand"]}" stroke-width="1.5"/>'
-        f'<line x1="{D[0]:.1f}" y1="{D[1]:.1f}" x2="{E[0]:.1f}" y2="{E[1]:.1f}" '
+        f'<line x1="{fmt_dp(D[0], 1)}" y1="{fmt_dp(D[1], 1)}" x2="{fmt_dp(E[0], 1)}" y2="{fmt_dp(E[1], 1)}" '
         f'stroke="{p["measure"]}" stroke-width="2.5"/>'
         f'<text x="{A[0]}" y="10" font-size="13" fill="{p["ink"]}" text-anchor="middle" font-weight="bold">A</text>'
         f'<text x="{B[0]-12}" y="{B[1]+7}" font-size="13" fill="{p["ink"]}" font-weight="bold">B</text>'
         f'<text x="{C[0]+12}" y="{C[1]+7}" font-size="13" fill="{p["ink"]}" font-weight="bold">C</text>'
-        f'<text x="{D[0]-15:.0f}" y="{D[1]+4:.0f}" font-size="12" fill="{p["ink"]}">D</text>'
-        f'<text x="{E[0]+15:.0f}" y="{E[1]+4:.0f}" font-size="12" fill="{p["ink"]}">E</text>'
-        f'<text x="{mid_AD[0]-16:.0f}" y="{mid_AD[1]+4:.0f}" font-size="11" fill="{p["brand"]}" text-anchor="middle">{AD_lbl}</text>'
-        f'<text x="{mid_DB[0]-16:.0f}" y="{mid_DB[1]+4:.0f}" font-size="11" fill="{p["brand"]}" text-anchor="middle">{DB_lbl}</text>'
-        f'<text x="{mid_DE[0]:.0f}" y="{mid_DE[1]-8:.0f}" font-size="11" fill="{p["measure"]}" text-anchor="middle">{DE_lbl}</text>'
-        f'<text x="{mid_BC[0]:.0f}" y="{mid_BC[1]+16:.0f}" font-size="11" fill="{p["brand"]}" text-anchor="middle">{BC_lbl}</text>'
+        f'<text x="{fmt_dp(D[0]-15, 0)}" y="{fmt_dp(D[1]+4, 0)}" font-size="12" fill="{p["ink"]}">D</text>'
+        f'<text x="{fmt_dp(E[0]+15, 0)}" y="{fmt_dp(E[1]+4, 0)}" font-size="12" fill="{p["ink"]}">E</text>'
+        f'<text x="{fmt_dp(mid_AD[0]-16, 0)}" y="{fmt_dp(mid_AD[1]+4, 0)}" font-size="11" fill="{p["brand"]}" text-anchor="middle">{AD_lbl}</text>'
+        f'<text x="{fmt_dp(mid_DB[0]-16, 0)}" y="{fmt_dp(mid_DB[1]+4, 0)}" font-size="11" fill="{p["brand"]}" text-anchor="middle">{DB_lbl}</text>'
+        f'<text x="{fmt_dp(mid_DE[0], 0)}" y="{fmt_dp(mid_DE[1]-8, 0)}" font-size="11" fill="{p["measure"]}" text-anchor="middle">{DE_lbl}</text>'
+        f'<text x="{fmt_dp(mid_BC[0], 0)}" y="{fmt_dp(mid_BC[1]+16, 0)}" font-size="11" fill="{p["brand"]}" text-anchor="middle">{BC_lbl}</text>'
     )
     return str(svg_kit.svg(
         w, h, title='Triangle with parallel line DE', body=inner, max_width=220, variant='wide',
@@ -308,8 +309,8 @@ def _midpoint_tri_svg(w=210, h=175):
         px, py = -dy / n, dx / n
         stroke = svg_kit.PALETTE['brand']
         return (
-            f'<line x1="{mx - px * length:.1f}" y1="{my - py * length:.1f}" '
-            f'x2="{mx + px * length:.1f}" y2="{my + py * length:.1f}" '
+            f'<line x1="{fmt_dp(mx - px * length, 1)}" y1="{fmt_dp(my - py * length, 1)}" '
+            f'x2="{fmt_dp(mx + px * length, 1)}" y2="{fmt_dp(my + py * length, 1)}" '
             f'stroke="{stroke}" stroke-width="1.5"/>'
         )
 
@@ -317,17 +318,17 @@ def _midpoint_tri_svg(w=210, h=175):
     inner = (
         f'<polygon points="{A[0]},{A[1]} {B[0]},{B[1]} {C[0]},{C[1]}" '
         f'fill="{p["brand_pale"]}" stroke="{p["brand"]}" stroke-width="2"/>'
-        f'<polygon points="{A[0]},{A[1]} {D[0]:.1f},{D[1]:.1f} {E[0]:.1f},{E[1]:.1f}" '
+        f'<polygon points="{A[0]},{A[1]} {fmt_dp(D[0], 1)},{fmt_dp(D[1], 1)} {fmt_dp(E[0], 1)},{fmt_dp(E[1], 1)}" '
         f'fill="{p["brand_mid"]}" stroke="{p["brand"]}" stroke-width="1.5"/>'
-        f'<line x1="{D[0]:.1f}" y1="{D[1]:.1f}" x2="{E[0]:.1f}" y2="{E[1]:.1f}" '
+        f'<line x1="{fmt_dp(D[0], 1)}" y1="{fmt_dp(D[1], 1)}" x2="{fmt_dp(E[0], 1)}" y2="{fmt_dp(E[1], 1)}" '
         f'stroke="{p["measure"]}" stroke-width="2.5"/>'
         f'{tick(A[0], A[1], D[0], D[1])}{tick(D[0], D[1], B[0], B[1])}'
         f'{tick(A[0], A[1], E[0], E[1])}{tick(E[0], E[1], C[0], C[1])}'
         f'<text x="{A[0]}" y="10" font-size="13" fill="{p["ink"]}" text-anchor="middle" font-weight="bold">A</text>'
         f'<text x="{B[0]-12}" y="{B[1]+7}" font-size="13" fill="{p["ink"]}" font-weight="bold">B</text>'
         f'<text x="{C[0]+12}" y="{C[1]+7}" font-size="13" fill="{p["ink"]}" font-weight="bold">C</text>'
-        f'<text x="{D[0]-15:.0f}" y="{D[1]+4:.0f}" font-size="12" fill="{p["ink"]}">D</text>'
-        f'<text x="{E[0]+15:.0f}" y="{E[1]+4:.0f}" font-size="12" fill="{p["ink"]}">E</text>'
+        f'<text x="{fmt_dp(D[0]-15, 0)}" y="{fmt_dp(D[1]+4, 0)}" font-size="12" fill="{p["ink"]}">D</text>'
+        f'<text x="{fmt_dp(E[0]+15, 0)}" y="{fmt_dp(E[1]+4, 0)}" font-size="12" fill="{p["ink"]}">E</text>'
     )
     return str(svg_kit.svg(
         w, h, title='Triangle with midpoints D and E', body=inner, max_width=220, variant='wide',
@@ -508,8 +509,10 @@ def _sc_f10_lsf_from_area():
     lsf = _m.sqrt(a1/a2)
     q = (f"Two similar shapes have areas {a1} cm² and {a2} cm². "
          f"Find the linear scale factor from the smaller to the larger shape.")
-    s = (f"Area scale factor = {a2}/{a1} = {a2//a1 if a2 % a1 == 0 else a2/a1}<br>"
-         f"Linear scale factor = √(area ratio) = √({a1}/{a2}) = √{a1}/√{a2}<br>"
+    r1, r2 = math.isqrt(a1), math.isqrt(a2)
+    assert r1 * r1 == a1 and r2 * r2 == a2
+    s = (f"Area ratio = {a1} : {a2}<br>"
+         f"Linear ratio = √{a1} : √{a2} = {r1} : {r2}<br>"
          f"= <strong>{ratio_str}</strong>")
     return q, s, "LSF = √(area scale factor). Take the square root of the ratio of areas.", 3, graded_answer_number_fields(
         (ratio_str,), ('Scale factor (smaller:larger)',), field_types=('ratio',),
@@ -661,24 +664,30 @@ def _sc_i4_volume_from_lsf():
 def _sc_i5_lsf_from_area_ratio():
     combos = [(36, 81, "2:3"), (25, 100, "1:2"), (16, 25, "4:5"), (9, 49, "3:7")]
     a_s, a_l, lsf_str = random.choice(combos)
-    from math import isqrt
-    sq_s, sq_l = int(math.sqrt(a_s)), int(math.sqrt(a_l))
+    sq_s, sq_l = math.isqrt(a_s), math.isqrt(a_l)
+    assert sq_s * sq_s == a_s and sq_l * sq_l == a_l
     q = (f"Two similar shapes have areas {a_s} cm² and {a_l} cm². "
-         f"Find the linear scale factor from the smaller to the larger.")
-    s = (f"Area ratio = {a_l} : {a_s}<br>"
-         f"LSF = √(larger area ÷ smaller area) = √({a_l}/{a_s}) = √{a_l}/√{a_s}<br>"
-         f"= {sq_l}/{sq_s} = <strong>{lsf_str}</strong>")
+         f"Find the linear scale factor from the smaller to the larger, as a ratio.")
+    s = (f"Area ratio = {a_s} : {a_l}<br>"
+         f"Linear ratio = √{a_s} : √{a_l}<br>"
+         f"= {sq_s} : {sq_l} = <strong>{lsf_str}</strong>")
     return q, s, "LSF = √(area ratio). Take the square root of each area then form the ratio.", 3, graded_answer_number_fields(
         (lsf_str,), ('Scale factor (smaller:larger)',), field_types=('ratio',),
     )
+
+
+def _frac_txt(n, d):
+    from fractions import Fraction as _F
+    f = _F(n, d)
+    return str(f.numerator) if f.denominator == 1 else f"{f.numerator}/{f.denominator}"
 
 
 def _sc_i6_dimension_from_volume():
     combos = [(8, 27, 2, 3, "radius", "cm"), (8, 125, 4, 10, "height", "cm"),
               (27, 64, 6, 8, "side length", "cm"), (1, 8, 3, 6, "radius", "cm")]
     v_s, v_l, d_s, d_l, dim, unit = random.choice(combos)
-    vsf = v_l / v_s
-    lsf = round(vsf ** (1/3), 4)
+    vsf = _frac_txt(v_l, v_s)
+    lsf = _frac_txt(d_l, d_s)
     q = (f"Two similar solids have volumes {v_s} cm³ and {v_l} cm³. "
          f"The smaller solid has {dim} {d_s} {unit}. "
          f"Find the {dim} of the larger solid.")
@@ -750,15 +759,17 @@ def _sc_i9_proof_aa_parallel():
 
 def _sc_i10_overlapping_similar():
     combos = [
-        (6, 4, 9, 6, "ABC", "ADE", 1.5),
-        (8, 6, 12, 9, "PQR", "PST", 1.5),
+        (6, 4, 9, 6, "ABC", "ADE", "3/2"),
+        (8, 6, 12, 9, "PQR", "PST", "4/3"),
+        (10, 8, 15, 12, "ABC", "ADE", "5/4"),
     ]
     AB, AD, AC, AE, T1, T2, sf = random.choice(combos)
     DB, EC = AB - AD, AC - AE
     q = (f"In triangle {T1}, D is on {T1[0]}{T1[1]} and E is on {T1[0]}{T1[2]} "
          f"such that DE ∥ {T1[1]}{T1[2]}. "
          f"{T1[0]}{T1[1]} = {AB} cm, {T1[0]}D = {AD} cm, {T1[0]}{T1[2]} = {AC} cm, {T1[0]}E = {AE} cm. "
-         f"Find D{T1[1]} and E{T1[2]}, and state the scale factor of the similar triangles.")
+         f"Find D{T1[1]} and E{T1[2]}, and state the scale factor of enlargement from triangle "
+         f"{T1[0]}DE to triangle {T1}.")
     s = (f"D{T1[1]} = {AB} − {AD} = <strong>{DB} cm</strong><br>"
          f"E{T1[2]} = {AC} − {AE} = <strong>{EC} cm</strong><br>"
          f"Scale factor = {T1[0]}{T1[1]} ÷ {T1[0]}D = {AB} ÷ {AD} = <strong>{sf}</strong>")
@@ -770,14 +781,13 @@ def _sc_i10_overlapping_similar():
 def _sc_i11_area_ratio_find_perimeter():
     combos = [(48, 75, "4:5"), (27, 48, "3:4"), (12, 75, "2:5")]
     a_s, a_l, lsf_str = random.choice(combos)
-    sq_s = int(math.sqrt(a_s / 3)) if int(math.sqrt(a_s/3))**2 == a_s//3 else int(math.sqrt(a_s))
-    sq_l = int(math.sqrt(a_l))
-    # Use simpler version
+    # Every area here is 3 × a perfect square, so each root is a multiple of √3.
     s_num, s_den = [int(x) for x in lsf_str.split(":")]
+    assert 3 * s_num * s_num == a_s and 3 * s_den * s_den == a_l
     q = (f"Two similar trapezoids have areas {a_s} cm² and {a_l} cm². "
          f"Find the linear scale factor and the ratio of their perimeters.")
-    s = (f"Area ratio = {a_l} : {a_s}<br>"
-         f"Linear scale factor = √({a_l}) : √({a_s}) = <strong>{lsf_str}</strong><br>"
+    s = (f"Area ratio = {a_s} : {a_l}<br>"
+         f"Linear scale factor (smaller : larger) = √{a_s} : √{a_l} = {s_num}√3 : {s_den}√3 = <strong>{lsf_str}</strong><br>"
          f"Perimeter ratio = linear scale factor = <strong>{lsf_str}</strong>")
     return q, s, "LSF = √(area ratio). Perimeter ratio equals the LSF.", 4, graded_answer_number_fields(
         (lsf_str, lsf_str), ('Linear scale factor', 'Perimeter ratio'), field_types=('ratio', 'ratio'),
@@ -842,15 +852,15 @@ def _sc_i15_chain_scale_factor():
         (1, 2, 2, 3, 5, 15, "1:2", "2:3"),
     ]
     r1, r2, r3, r4, side_a, side_c, desc1, desc2 = random.choice(combos)
-    sf1 = r2 / r1
-    sf2 = r4 / r3
-    sf_total = sf1 * sf2
+    sf1 = _frac_txt(r2, r1)
+    sf2 = _frac_txt(r4, r3)
+    sf_total = _frac_txt(r2 * r4, r1 * r3)
     q = (f"Triangle A is similar to triangle B with scale factor {desc1}. "
          f"Triangle B is similar to triangle C with scale factor {desc2}. "
          f"A side of triangle A is {side_a} cm. "
          f"Find the corresponding side of triangle C.")
-    s = (f"Scale factor A to B = {r2}/{r1} = {sf1}<br>"
-         f"Scale factor B to C = {r4}/{r3} = {sf2}<br>"
+    s = (f"Scale factor A to B = {r2}/{r1}" + (f" = {sf1}" if sf1 != f"{r2}/{r1}" else "") + "<br>"
+         f"Scale factor B to C = {r4}/{r3}" + (f" = {sf2}" if sf2 != f"{r4}/{r3}" else "") + "<br>"
          f"Scale factor A to C = {sf1} × {sf2} = {sf_total}<br>"
          f"Corresponding side of C = {side_a} × {sf_total} = <strong>{side_c} cm</strong>")
     return q, s, "Multiply the individual scale factors to get the overall scale factor.", 4, _sc_num(

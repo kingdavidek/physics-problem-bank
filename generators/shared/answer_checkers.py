@@ -111,6 +111,18 @@ def _parse_number(value) -> Decimal | None:
         return None
 
 
+def _parse_mixed_number(s: str) -> Decimal | None:
+    """Parse "13 3/4" (whole part, then a proper fraction) to an exact Decimal."""
+    m = re.fullmatch(r'(-?)(\d+)\s+(\d+)\s*/\s*(\d+)', s.strip())
+    if not m:
+        return None
+    sign, whole, num, den = m.group(1), Decimal(m.group(2)), Decimal(m.group(3)), Decimal(m.group(4))
+    if den == 0 or num >= den:
+        return None
+    value = (whole * den + num) / den
+    return -value if sign else value
+
+
 def _parse_fraction_or_number(value) -> Decimal | None:
     """Parse a plain number or a fraction with exactly one slash."""
     s = _normalize_numeric_string(value)
@@ -383,6 +395,10 @@ def check_number(correct_raw, user_answer):
         }
 
     actual = _parse_fraction_or_number(user_answer)
+    mixed = False
+    if actual is None:
+        actual = _parse_mixed_number(normalized_user)
+        mixed = actual is not None
     if actual is None:
         return {
             'correct': False,
@@ -394,7 +410,7 @@ def check_number(correct_raw, user_answer):
     correct = actual == expected
     normalized_user_out = (
         normalized_user
-        if _looks_like_fraction(user_answer)
+        if _looks_like_fraction(user_answer) or mixed
         else _format_number(actual)
     )
     return {
@@ -413,6 +429,37 @@ def _strip_pi_suffix(value) -> str:
         s = s[1:].strip()
     s = re.sub(r'(?i)\s*[*×x]?\s*(π|pi)\s*$', '', s).strip()
     return s
+
+
+def _pi_multiple_value(raw: str) -> Decimal | None:
+    """Coefficient k when the student typed a whole expression such as 10π/3 or 10pi/3.
+
+    Uses the allowlisted SymPy parser only (no eval). Returns None when the text
+    does not contain π, is not a rational multiple of π, or cannot be parsed, so
+    the plain "type the coefficient" path still handles everything else.
+    """
+    text = str(raw or '').strip().lower().replace('π', 'pi').replace('\u2212', '-').replace('−', '-')
+    if 'pi' not in text or len(text) > MAX_SYMPY_EXPR_LEN or '^' in text or '**' in text:
+        return None
+    text = re.sub(r'\s+', '', text).replace(',', '').replace('×', '*').replace('÷', '/')
+    # Numbers, π and + - * / ( ) only: other symbols let a short input such as
+    # pi*(a+b+...+h)(a+b+...+h)... make simplify() run for close to a minute.
+    if not re.fullmatch(r'(?:pi|[0-9.+\-*/()])+', text):
+        return None
+    text = re.sub(r'(\d)(pi)', r'\1*\2', text)
+    text = re.sub(r'(pi)(\d)', r'\1*\2', text)
+    text = re.sub(r'(\))(pi|\()', r'\1*\2', text)
+    text = re.sub(r'(pi)(\()', r'\1*\2', text)
+    expr = _safe_sympify(text)
+    if expr is None:
+        return None
+    try:
+        ratio = simplify(expr / pi)
+        if ratio.free_symbols or not ratio.is_Rational:
+            return None
+        return Decimal(int(ratio.p)) / Decimal(int(ratio.q))
+    except (TypeError, ValueError, ZeroDivisionError, AttributeError):
+        return None
 
 
 @register_checker('pi_multiple')
@@ -435,6 +482,16 @@ def check_pi_multiple(correct_raw, user_answer):
             'normalized_user': '',
             'normalized_correct': normalized_correct,
             'feedback': 'Enter the coefficient of π.',
+        }
+
+    spelled = _pi_multiple_value(raw_user)
+    if spelled is not None:
+        correct = spelled == expected
+        return {
+            'correct': correct,
+            'normalized_user': raw_user,
+            'normalized_correct': normalized_correct,
+            'feedback': 'Correct!' if correct else 'Not quite — check your working.',
         }
 
     stripped = _strip_pi_suffix(raw_user)
@@ -566,18 +623,33 @@ def _format_surd(coeff: Decimal, radicand: Decimal) -> str:
 
 
 def _split_top_level_division(s: str) -> tuple[str, str] | None:
-    """Return (numerator, denominator) when s is a single top-level division."""
+    """Return (numerator, denominator) when s is *only* one top-level division.
+
+    A top-level + or - (other than a leading sign) or a second top-level / means
+    the string is a sum or a chain, not "numerator over denominator", so it is
+    left alone (C-7/7 is C - 1, not (C-7)/7).
+    """
     depth = 0
+    split_at = None
     for i, ch in enumerate(s):
         if ch == '(':
             depth += 1
         elif ch == ')':
             depth = max(0, depth - 1)
-        elif ch == '/' and depth == 0:
-            num, den = s[:i], s[i + 1:]
-            if num and den:
-                return num, den
+        elif depth == 0 and ch in '+-' and i > 0 and s[i - 1] not in '^*/(=':
             return None
+        elif depth == 0 and ch in '*×' and split_at is not None:
+            # C/2*π is (C/2)×π, not C/(2π).
+            return None
+        elif ch == '/' and depth == 0:
+            if split_at is not None:
+                return None
+            split_at = i
+    if split_at is None:
+        return None
+    num, den = s[:split_at], s[split_at + 1:]
+    if num and den:
+        return num, den
     return None
 
 
@@ -2063,7 +2135,45 @@ def _parse_linear_equation(value) -> tuple[Decimal, Decimal] | None:
     c_only = _parse_number(s)
     if c_only is not None:
         return Decimal(0), c_only
-    return None
+    return _parse_linear_equation_terms(s)
+
+
+def _parse_linear_equation_terms(s: str) -> tuple[Decimal, Decimal] | None:
+    """Parse k, x, kx terms in any order (-3+2x, 2x-3); anything fancier is rejected."""
+    s = s.replace('\u2212', '-').replace('−', '-')
+    if not s or not re.fullmatch(r'[+\-0-9.x]+', s):
+        return None
+    terms = re.findall(r'[+-]?[^+-]+', s)
+    if ''.join(terms) != s.lstrip('+') and ''.join(terms) != s:
+        return None
+    m_val = Decimal(0)
+    c_val = Decimal(0)
+    seen_x = seen_c = False
+    for term in terms:
+        body = term.lstrip('+')
+        if body.endswith('x'):
+            if seen_x:
+                return None
+            seen_x = True
+            coef = body[:-1]
+            if coef in ('', '+'):
+                m_val += Decimal(1)
+            elif coef == '-':
+                m_val += Decimal(-1)
+            else:
+                v = _parse_number(coef)
+                if v is None:
+                    return None
+                m_val += v
+        else:
+            if seen_c:
+                return None
+            seen_c = True
+            v = _parse_number(body)
+            if v is None:
+                return None
+            c_val += v
+    return m_val, c_val
 
 
 def _format_linear_equation(m: Decimal, c: Decimal) -> str:
@@ -2354,7 +2464,16 @@ def _parse_linear_inequality_raw(raw) -> tuple[str, str, Decimal] | None:
     s = re.sub(r'\s+', '', s.lower())
     m = re.fullmatch(r'([a-z])(<=|>=|<|>|=)(-?\d+(?:\.\d+)?(?:/\d+)?)', s)
     if not m:
-        return None
+        # Reversed form: 3 > x means x < 3.
+        rev = re.fullmatch(r'(-?\d+(?:\.\d+)?(?:/\d+)?)(<=|>=|<|>|=)([a-z])', s)
+        if not rev:
+            return None
+        flipped = {'<': '>', '>': '<', '<=': '>=', '>=': '<=', '=': '='}[rev.group(2)]
+        sign = _normalize_inequality_sign(flipped)
+        val = _parse_fraction_or_number(rev.group(1))
+        if sign is None or val is None:
+            return None
+        return rev.group(3), sign, val
     sign = _normalize_inequality_sign(m.group(2))
     val = _parse_fraction_or_number(m.group(3))
     if sign is None or val is None:

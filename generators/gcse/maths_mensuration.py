@@ -5,6 +5,7 @@ Graded practice variants return (question, solution, hint, marks, raw).
 Exact-π answers use answer_type pi_multiple (coefficient + π UI).
 Final answers are wrapped in <strong> tags.
 """
+from generators.shared.rounding import round_half_up as round, fmt_dp
 import random
 import math
 from fractions import Fraction
@@ -662,7 +663,7 @@ def _mens_inter_cone_container_multipart():
         rf"<strong>= {vol} cm³</strong><br>"
         rf"<strong>b)</strong> Slant height \(l = \sqrt{{{r}^2 + {h}^2}} = {_dp(slant, 2)}\) cm<br>"
         rf"Curved area = \(\pi r l = \pi \times {r} \times {_dp(slant, 2)}\) = <strong>{curved} cm²</strong><br>"
-        rf"<strong>c)</strong> {curved} cm² = {curved_m2:.4f} m²; cost = <strong>£{paint_cost}</strong>"
+        rf"<strong>c)</strong> {curved} cm² = {fmt_dp(curved_m2, 4)} m²; cost = <strong>£{paint_cost}</strong>"
     )
     hint = "Use V = ⅓πr²h; find l = √(r² + h²) then curved area = πrl; convert cm² to m² for the cost."
     return q, s, hint, 5, _mens_fields_answer(
@@ -696,7 +697,7 @@ def _mens_diff_sphere_radius_from_volume():
     q = (f"A sphere has volume {vol} cm³. Find its radius to 2 d.p.")
     s = (f"V = \\(\\frac{{4}}{{3}}\\pi r^3\\)<br>"
          f"\\(r^3 = \\dfrac{{3V}}{{4\\pi}} = \\dfrac{{3 \\times {vol}}}{{4\\pi}} = "
-         f"\\dfrac{{{3*vol}}}{{4\\pi}} ≈ {_dp(3*vol/(4*math.pi), 2)}\\)<br>"
+         f"\\dfrac{{{_dp(3*vol, 2)}}}{{4\\pi}} ≈ {_dp(3*vol/(4*math.pi), 2)}\\)<br>"
          f"\\(r = \\sqrt[3]{{{_dp(3*vol/(4*math.pi),2)}}} \\)<br>"
          f"<strong>≈ {r_true} cm</strong>")
     return q, s, "Rearrange V = (4/3)πr³ → r³ = 3V/(4π), then cube root", 4, r_true
@@ -1017,7 +1018,7 @@ def _mens_diff_frustum_tank_multipart():
         rf"= \(\dfrac{{\pi \times {h}}}{{3}}({R}^2 + {R}\times{r} + {r}^2)\)<br>"
         rf"<strong>b)</strong> \(= \dfrac{{\pi \times {h}}}{{3}} \times {R*R + R*r + r*r} = {vol_full}\) cm³<br>"
         rf"<strong>Full volume = {vol_full} cm³</strong><br>"
-        rf"<strong>c)</strong> {fill_pct}% of {vol_full} = {vol_part} cm³ = {vol_part/1000:.4f} litres<br>"
+        rf"<strong>c)</strong> {fill_pct}% of {vol_full} = {vol_part} cm³ = {fmt_dp(vol_part/1000, 4)} litres<br>"
         rf"<strong>= {litres} litres</strong>"
     )
     hint = "Use V = (πh/3)(R² + Rr + r²); for part (c) find the percentage of the volume then convert cm³ to litres."

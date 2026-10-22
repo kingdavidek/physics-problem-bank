@@ -4,6 +4,7 @@ GCSE Maths – Sequences
 Graded practice variants return (question, solution, hint, marks, raw).
 Pure theorem proofs use Plan C proof_steps banks; nth-term rules use MCQ or algebraic grading.
 """
+from generators.shared.rounding import round_half_up as round, fmt_dp
 import random
 import math
 from fractions import Fraction
@@ -11,6 +12,8 @@ from generators.shared.utils import (
     make_problem,
     problem_extra_from_graded_answer,
     proof_steps_answer,
+    signed_term,
+    bracket_neg,
 )
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from generators.shared.variant_utils import (
@@ -400,7 +403,7 @@ def _seq_inter_find_nth_term():
     s = (rf"Common difference \(d = {terms[1]} - {terms[0]} = {d}\).<br>"
          rf"First term \(a = {terms[0]}\).<br>"
          rf"nth term \(= a + (n-1)d = {terms[0]} + (n-1) \times {d}\)<br>"
-         rf"\(= {terms[0]} + {d}n - {d} = {d}n + {b}\)<br>"
+         rf"\(= {terms[0]} + {d}n - {d} = {d}n {signed_term(b)}\)<br>"
          rf"<strong>nth term \(= {s_expr}\)</strong>")
     hint = "Use nth term = a + (n-1)d, then simplify."
     return q, s, hint, 3, _seq_algebraic_answer(s_expr)
@@ -416,7 +419,7 @@ def _seq_inter_nth_term_negative_d():
     q = rf"Find the nth term of the arithmetic sequence: {seq_str}"
     s = (rf"Common difference \(d = {terms[1]} - {terms[0]} = {d}\) (decreasing).<br>"
          rf"nth term \(= {terms[0]} + (n-1)({d})\)<br>"
-         rf"\(= {terms[0]} + {d}n - ({d}) = {d}n + {b}\)<br>"
+         rf"\(= {terms[0]} {signed_term(d)}n - ({d}) = {d}n {signed_term(b)}\)<br>"
          rf"<strong>nth term \(= {s_expr}\)</strong>")
     hint = "The common difference is negative. Use the same formula: nth term = a + (n−1)d."
     return q, s, hint, 3, _seq_algebraic_answer(s_expr)
@@ -467,7 +470,7 @@ def _seq_inter_first_term_over():
     q = rf"The nth term of a sequence is \({s_expr}\)<br>Find the first term in the sequence that is greater than {target}."
     s = (rf"Solve \({s_expr} > {target}\):<br>"
          rf"\({d}n > {target - b}\)<br>"
-         rf"\(n > {(target - b)/d:.4f}...\)<br>"
+         rf"\(n > {fmt_dp((target - b)/d, 4)}...\)<br>"
          rf"The first integer value is \(n = {n_ans}\).<br>"
          rf"<strong>First term greater than {target} is \({val}\) (the {n_ans}th term).</strong>")
     hint = f"Solve {s_expr} > {target} for n, then round up to the nearest whole number."
@@ -610,7 +613,7 @@ def _seq_inter_common_terms():
     q = (rf"Sequence A: {a1}, {a1+d1}, {a1+2*d1}, ...<br>"
          rf"Sequence B: {a2}, {a2+d2}, {a2+2*d2}, ...<br>"
          rf"Find the first number that appears in both sequences.")
-    s = (rf"Sequence A has nth term \({d1}n + {a1-d1}\); Sequence B has nth term \({d2}n + {a2-d2}\).<br>"
+    s = (rf"Sequence A has nth term \({d1}n {signed_term(a1-d1)}\); Sequence B has nth term \({d2}n {signed_term(a2-d2)}\).<br>"
          rf"Common terms share a difference of \(\text{{lcm}}({d1},{d2}) = {lcm}\).<br>"
          rf"Checking terms of A: {', '.join(str(a1+k*d1) for k in range(15))}...<br>"
          rf"<strong>First common term is {first_common}.</strong>")
@@ -673,7 +676,7 @@ def _seq_diff_quadratic_nth_term():
          rf"Second differences: {', '.join(str(x) for x in d2)} (constant = {d2[0]})<br>"
          rf"Leading coefficient: \(\dfrac{{{d2[0]}}}{{2}} = {a_coef}\), so \(n^2\) term is \({a_coef}n^2\).<br>"
          rf"Subtract \({a_coef}n^2\) from each term: \({', '.join(str(terms[i]-a_coef*(i+1)**2) for i in range(4))}\) — a linear sequence.<br>"
-         rf"Linear part: \({b_coef}n + {c_coef}\).<br>"
+         rf"Linear part: \({b_coef}n {signed_term(c_coef)}\).<br>"
          rf"<strong>nth term \(= {nth}\)</strong>")
     hint = "Find second differences ÷ 2 for the n² coefficient, then subtract and find the linear part."
     return q, s, hint, 5, _seq_algebraic_answer(nth)
@@ -695,9 +698,9 @@ def _seq_diff_quadratic_verify():
     d1 = [terms[i+1]-terms[i] for i in range(4)]
     d2 = [d1[i+1]-d1[i] for i in range(3)]
     s = (rf"(a) Second differences = {d2[0]}, so leading term is \(\dfrac{{{d2[0]}}}{{2}}n^2 = {a_coef}n^2\).<br>"
-         rf"Subtracting \({a_coef}n^2\): gives {', '.join(str(terms[i]-a_coef*(i+1)**2) for i in range(4))}, a linear sequence with \(d={b_coef}\), giving \({b_coef}n + {c_coef}\).<br>"
+         rf"Subtracting \({a_coef}n^2\): gives {', '.join(str(terms[i]-a_coef*(i+1)**2) for i in range(4))}, a linear sequence with \(d={b_coef}\), giving \({b_coef}n {signed_term(c_coef)}\).<br>"
          rf"Hence nth term \(= {nth}\). ✓<br>"
-         rf"(b) \(n = {n_val}\): \({a_coef}({n_val})^2 + {b_coef}({n_val}) + ({c_coef}) = {a_coef*n_val**2} + {b_coef*n_val} - {-c_coef}\)<br>"
+         rf"(b) \(n = {n_val}\): \({a_coef}({n_val})^2 + {b_coef}({n_val}) {signed_term(c_coef)} = {a_coef*n_val**2} + {b_coef*n_val} {signed_term(c_coef)}\)<br>"
          rf"<strong>\(= {ans}\)</strong>")
     hint = "Use second differences to find the n² coefficient, then subtract to find the linear part."
     return q, s, hint, 5, ans
@@ -729,11 +732,11 @@ def _seq_diff_quadratic_is_term():
     q = (rf"The nth term of a sequence is \({nth}\)<br>"
          rf"Show algebraically whether {val} is a term in this sequence.")
     s = (rf"Set \({nth} = {val}\):<br>"
-         rf"\(n^2 + {b_coef}n + {c_coef} - {val} = 0\)<br>"
-         rf"\(n^2 + {b_coef}n + {c_coef - val} = 0\)<br>"
+         rf"\(n^2 + {b_coef}n {signed_term(c_coef)} - {val} = 0\)<br>"
+         rf"\(n^2 + {b_coef}n {signed_term(c_coef - val)} = 0\)<br>"
          rf"Using the quadratic formula: \(n = \dfrac{{-{b_coef} \pm \sqrt{{{b_coef}^2 - 4({c_coef-val})}}}}"
          rf"{{2}}\)<br>"
-         rf"\(= \dfrac{{-{b_coef} \pm \sqrt{{{b_coef**2 - 4*(c_coef-val)}}}}}{{2}} = \dfrac{{-{b_coef} \pm {int(math.sqrt(b_coef**2 - 4*(c_coef-val)))}}}"
+         rf"\(= \dfrac{{-{b_coef} \pm \sqrt{{{b_coef**2 - 4*(c_coef-val)}}}}}{{2}} = \dfrac{{-{b_coef} \pm {math.isqrt(b_coef**2 - 4*(c_coef-val))}}}"
          rf"{{2}}\)<br>"
          rf"\(n = {k}\) or \(n = {-k - b_coef}\) (rejected, not positive).<br>"
          rf"<strong>{val} is the {k}th term.</strong>")
@@ -885,10 +888,10 @@ def _seq_diff_quadratic_seq_prove():
     q = (rf"The nth term of a sequence is \(u_n = {nth}\)<br>"
          rf"(a) Find \(u_{{{val_k}}}\)<br>"
          rf"(b) Show that the second difference is constant and state its value.")
-    s = (rf"(a) \(u_{{{val_k}}} = {a_coef}({val_k})^2 + {b_coef}({val_k}) + {c_coef}"
-         rf" = {a_coef*val_k**2} + {b_coef*val_k} + {c_coef}\)<br>"
+    s = (rf"(a) \(u_{{{val_k}}} = {a_coef}({val_k})^2 + {b_coef}({val_k}) {signed_term(c_coef)}"
+         rf" = {a_coef*val_k**2} + {b_coef*val_k} {signed_term(c_coef)}\)<br>"
          rf"<strong>\(u_{{{val_k}}} = {term_k}\)</strong><br>"
-         rf"(b) \(u_{{n+1}} - u_n = {a_coef}(n+1)^2 + {b_coef}(n+1) + {c_coef} - ({nth})\)<br>"
+         rf"(b) \(u_{{n+1}} - u_n = {a_coef}(n+1)^2 + {b_coef}(n+1) {signed_term(c_coef)} - ({nth})\)<br>"
          rf"\(= {a_coef}(2n+1) + {b_coef} = {2*a_coef}n + {a_coef + b_coef}\) (first difference)<br>"
          rf"Second difference: \(({2*a_coef}(n+1) + {a_coef+b_coef}) - ({2*a_coef}n + {a_coef+b_coef}) = {2*a_coef}\)<br>"
          rf"<strong>Constant second difference = {2*a_coef}.</strong>")

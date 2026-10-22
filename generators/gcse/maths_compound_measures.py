@@ -4,8 +4,11 @@ GCSE Maths – Compound Measures
 Graded practice variants return (question, solution, hint, marks, raw).
 Show-that and express-in-terms variants use Plan A checkpoints (number / algebraic).
 """
+from generators.shared.rounding import round_half_up as round, fmt_dp
 import random
 import math
+from decimal import Decimal, ROUND_HALF_UP
+from fractions import Fraction
 from generators.shared.utils import make_problem
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from generators.shared.variant_utils import (
@@ -26,7 +29,45 @@ def _dp(v, places=2):
     """Format a number neatly — strip trailing zeros from decimals."""
     if isinstance(v, int) or (isinstance(v, float) and v == int(v)):
         return str(int(v))
-    return f"{v:.{places}f}".rstrip('0').rstrip('.')
+    return fmt_dp(v, places).rstrip('0').rstrip('.')
+
+
+def _r_dp(value, places=2):
+    """School rounding (half up) to ``places`` decimal places, returned as a float."""
+    q = Decimal(1).scaleb(-places)
+    return float(Decimal(str(value)).quantize(q, rounding=ROUND_HALF_UP))
+
+
+def _r_sf(value, sf=3):
+    """School rounding (half up) to ``sf`` significant figures, returned as a float."""
+    d = Decimal(str(value))
+    if d == 0:
+        return 0.0
+    exp = d.adjusted() - sf + 1
+    return float(d.quantize(Decimal(1).scaleb(exp), rounding=ROUND_HALF_UP))
+
+
+def _is_terminating(value, places=2):
+    """True when value is exact to ``places`` decimal places (no rounding needed)."""
+    return abs(_r_dp(value, places) - value) < 1e-9
+
+
+def _dp_note(value, places=2):
+    """Question suffix stating the accuracy only when the answer is not exact."""
+    if _is_terminating(value, places):
+        return ""
+    return f" Give your answer correct to {places} decimal places."
+
+
+def _hours_txt(minutes):
+    """Minutes as hours: a short decimal when exact, otherwise a fraction (20 min -> 1/3)."""
+    fr = Fraction(int(minutes), 60)
+    if fr.denominator == 1:
+        return str(fr.numerator)
+    dec = float(fr)
+    if abs(round(dec, 4) - dec) < 1e-12:
+        return _dp(dec, 4)
+    return f"{fr.numerator}/{fr.denominator}"
 
 
 def _cm_raw(value, places=2):
@@ -192,7 +233,7 @@ def _cm_f5_dmv_find_mass():
 
 
 def _cm_f6_dmv_find_volume():
-    combos = [(540,2.7,200),(390,7.8,50),(891,8.9,100),(108,2.7,40),(452,11.3,40)]
+    combos = [(540,2.7,200),(390,7.8,50),(890,8.9,100),(108,2.7,40),(452,11.3,40)]
     m, d, v = random.choice(combos)
     q = (f"An object has a mass of {m} g and is made of a material with "
          f"density {d} g/cm³. Find its volume.<br>{_dmv('br')}")
@@ -318,7 +359,7 @@ def _cm_i1_average_speed_two_legs():
     s1, t1, s2, t2, d1, d2, total_d, total_t = random.choice(combos)
     avg = total_d / total_t
     q = (f"A driver travels {d1} km at {s1} km/h, then {d2} km at {s2} km/h. "
-         f"Find the average speed for the whole journey.")
+         f"Find the average speed for the whole journey.{_dp_note(avg)}")
     sol = (f"Time for first leg  = {d1} ÷ {s1} = {t1} h<br>"
            f"Time for second leg = {d2} ÷ {s2} = {t2} h<br>"
            f"Total distance = {d1} + {d2} = {total_d} km<br>"
@@ -328,13 +369,15 @@ def _cm_i1_average_speed_two_legs():
 
 
 def _cm_i2_time_hours_minutes():
-    combos = [(60,1,30,90),(80,2,15,175),(90,1,20,120),(120,1,15,150),(100,1,30,250)]
-    s, h, m, d = random.choice(combos)
-    t_h = h + m / 60
+    combos = [(60, 1, 30), (80, 2, 15), (90, 1, 20), (120, 1, 15), (100, 1, 30), (48, 2, 30), (72, 1, 40)]
+    s, h, m = random.choice(combos)
+    total_min = h * 60 + m
+    d = _r_dp(s * total_min / 60, 2)
+    hrs = _hours_txt(total_min)
     q = (f"A train travels at {s} km/h for {h} hour{'s' if h > 1 else ''} and {m} minutes. "
-         f"How far does it travel?")
-    sol = (f"Convert time: {h} h {m} min = {h} + {m}/60 = {_dp(t_h)} h<br>"
-           f"Distance = {s} × {_dp(t_h)} = <strong>{d} km</strong>")
+         f"How far does it travel?{_dp_note(s * total_min / 60)}")
+    sol = (f"Convert time: {h} h {m} min = {h} + {m}/60 = {hrs} h<br>"
+           f"Distance = {s} × {hrs} = <strong>{_dp(d)} km</strong>")
     return q, sol, "Convert minutes to hours (÷60) before using D = S × T.", 3, d
 
 
@@ -343,10 +386,10 @@ def _cm_i3_alloy_density_by_vol():
     d1, d2, v1, v2 = random.choice(combos)
     m1, m2 = d1 * v1, d2 * v2
     total_m, total_v = m1 + m2, v1 + v2
-    d_mix = round(total_m / total_v, 3)
+    d_mix = _r_dp(total_m / total_v, 2)
     q = (f"An alloy is made by mixing {v1} cm³ of Metal A (density {d1} g/cm³) "
          f"with {v2} cm³ of Metal B (density {d2} g/cm³). "
-         f"Find the density of the alloy.")
+         f"Find the density of the alloy.{_dp_note(total_m / total_v)}")
     sol = (f"Mass A = {d1} × {v1} = {m1} g<br>"
            f"Mass B = {d2} × {v2} = {m2} g<br>"
            f"Total mass = {total_m} g;  Total volume = {total_v} cm³<br>"
@@ -355,25 +398,31 @@ def _cm_i3_alloy_density_by_vol():
 
 
 def _cm_i4_pfa_box_weight():
-    combos = [(10,1,1,100,100),(20,2,1,200,100),(30,1.5,2,300,100),(50,2,2.5,500,100),(40,2,2,400,100)]
-    mass_kg, L, W, force, pressure = random.choice(combos)
-    area = round(L * W, 2)
+    combos = [(10,1,1),(20,2,1),(30,1.5,2),(50,2,2.5),(40,2,2),(60,2,1.5),(24,1.2,1)]
+    mass_kg, L, W = random.choice(combos)
+    area = _r_dp(L * W, 2)
+    force = mass_kg * 10
+    pressure = _r_dp(force / area, 2)
     q = (f"A box of mass {mass_kg} kg rests on a floor. "
          f"Its base measures {L} m × {W} m. "
-         f"Find the pressure the box exerts on the floor. (g = 10 N/kg)")
+         f"Find the pressure the box exerts on the floor. (g = 10 N/kg)"
+         f"{_dp_note(force / area)}")
     sol = (f"Weight = mass × g = {mass_kg} × 10 = {force} N<br>"
-           f"Area = {L} × {W} = {area} m²<br>"
-           f"Pressure = {force} ÷ {area} = <strong>{_dp(pressure)} Pa</strong>")
+           f"Area = {L} × {W} = {_dp(area)} m²<br>"
+           f"Pressure = {force} ÷ {_dp(area)} = <strong>{_dp(pressure)} Pa</strong>")
     return q, sol, "Weight (force) = mass × g. Pressure = force ÷ area.", 4, pressure
 
 
 def _cm_i5_sdt_time_in_minutes():
-    combos = [(60,15,0.25,15),(80,30,0.5,40),(90,20,1/3,30),(120,15,0.25,30),(100,30,0.5,50)]
-    s, t_min, t_h, d = random.choice(combos)
+    combos = [(60, 15), (80, 30), (90, 20), (120, 15), (100, 30), (45, 40), (72, 25)]
+    s, t_min = random.choice(combos)
+    hrs = _hours_txt(t_min)
+    d = _r_dp(s * t_min / 60, 2)
     q = (f"A car travels at {s} km/h for {t_min} minutes. "
-         f"How far does it travel? Give your answer in km.")
-    sol = (f"Convert time: {t_min} min = {t_min}/60 = {_dp(t_h)} hours<br>"
-           f"Distance = {s} × {_dp(t_h)} = <strong>{_dp(d)} km</strong>")
+         f"How far does it travel? Give your answer in km."
+         f"{'' if _is_terminating(s * t_min / 60) else ' Round to 2 decimal places.'}")
+    sol = (f"Convert time: {t_min} min = {t_min}/60 = {hrs} hours<br>"
+           f"Distance = {s} × {hrs} = <strong>{_dp(d)} km</strong>")
     return q, sol, "Convert minutes to hours (÷60) before using Distance = Speed × Time.", 3, d
 
 
@@ -392,13 +441,14 @@ def _cm_i6_flow_rate_fill_tank():
 def _cm_i7_density_sphere():
     combos = [(3, 2.7), (4, 7.8), (5, 8.9), (2, 11.3)]
     r_cm, density = random.choice(combos)
-    vol = round((4 / 3) * math.pi * r_cm ** 3, 1)
-    mass = round(density * vol, 1)
+    vol_exact = (4 / 3) * math.pi * r_cm ** 3
+    mass = _r_dp(density * vol_exact, 1)
     q = (f"A solid sphere has radius {r_cm} cm. It is made from a material with "
          f"density {density} g/cm³. "
-         f"Find the mass of the sphere. (V = 4πr³/3)")
-    sol = (f"Volume = (4/3) × π × {r_cm}³ = (4/3) × π × {r_cm**3} = {vol} cm³<br>"
-           f"Mass = Density × Volume = {density} × {vol} = <strong>{mass} g</strong>")
+         f"Find the mass of the sphere. (V = 4πr³/3) Give your answer correct to 1 decimal place.")
+    sol = (f"Volume = (4/3) × π × {r_cm}³ = (4/3) × π × {r_cm**3} = {_r_dp(vol_exact, 3)} cm³ "
+           f"(keep the full calculator value)<br>"
+           f"Mass = Density × Volume = {density} × {_r_dp(vol_exact, 3)} = <strong>{mass} g</strong> (1 d.p.)")
     return q, sol, "V = 4πr³/3. Then mass = density × volume.", 4, mass
 
 
@@ -414,12 +464,13 @@ def _cm_i8_density_unit_conversion():
 
 def _cm_i9_average_speed_equal_distances():
     """Classic trap: equal distances at two different speeds."""
-    combos = [(40,60,48),(30,60,40),(50,100,200/3),(60,90,72),(40,80,160/3)]
-    s1, s2, avg = random.choice(combos)
-    avg_val = 2 * s1 * s2 / (s1 + s2)
+    combos = [(40,60),(30,60),(50,100),(60,90),(40,80),(45,90),(20,30)]
+    s1, s2 = random.choice(combos)
+    avg_exact = 2 * s1 * s2 / (s1 + s2)
+    avg_val = _r_dp(avg_exact, 2)
     wrong = (s1 + s2) / 2
     q = (f"A car travels from A to B at {s1} km/h, then returns from B to A at {s2} km/h. "
-         f"Find the average speed for the whole journey.")
+         f"Find the average speed for the whole journey.{_dp_note(avg_exact)}")
     sol = (f"Let distance A→B = d km.<br>"
            f"Time A→B = d/{s1}; Time B→A = d/{s2}<br>"
            f"Total distance = 2d; Total time = d/{s1} + d/{s2} = d({s1}+{s2})/({s1}×{s2})<br>"
@@ -476,7 +527,8 @@ def _cm_i13_floating_sinking():
     q = (f"An object has mass {mass_g} g and volume {vol_cm3} cm³. "
          f"The density of water is 1 g/cm³. "
          f"Will the object float or sink? Show your working.")
-    sol = (f"Density = {mass_g} ÷ {vol_cm3} = {density} g/cm³<br>"
+    eq = '=' if _is_terminating(mass_g / vol_cm3, 4) else '≈'
+    sol = (f"Density = {mass_g} ÷ {vol_cm3} {eq} {density} g/cm³<br>"
            f"Compare to water (1 g/cm³):<br>"
            f"{density} {'<' if floats else '>'} 1  →  the object will "
            f"<strong>{'float' if floats else 'sink'}</strong>.")
@@ -486,14 +538,19 @@ def _cm_i13_floating_sinking():
 
 
 def _cm_i14_speed_convert_then_distance():
-    combos = [(10,54,10,1/6,9),(15,54,20,1/3,18),(20,72,15,1/4,18),(25,90,20,1/3,30)]
-    speed_ms, speed_kmh, time_min, time_h, dist_km = random.choice(combos)
+    combos = [(10, 10), (15, 20), (20, 15), (25, 20), (20, 30), (30, 40)]
+    speed_ms, time_min = random.choice(combos)
+    speed_kmh = _r_dp(speed_ms * 3.6, 2)
+    exact_km = speed_ms * 3.6 * time_min / 60
+    dist_km = _r_dp(exact_km, 2)
+    hrs = _hours_txt(time_min)
     q = (f"A runner's speed is {speed_ms} m/s. "
          f"(i) Convert this to km/h. "
-         f"(ii) How far does the runner travel in {time_min} minutes? Give your answer in km.")
+         f"(ii) How far does the runner travel in {time_min} minutes? Give your answer in km"
+         f"{'' if _is_terminating(exact_km) else ', correct to 2 decimal places'}.")
     sol = (f"(i) {speed_ms} m/s × 3.6 = <strong>{_dp(speed_kmh)} km/h</strong><br>"
-           f"(ii) Time = {time_min} min = {time_min}/60 = {_dp(time_h)} hours<br>"
-           f"Distance = {_dp(speed_kmh)} × {_dp(time_h)} = <strong>{_dp(dist_km)} km</strong>")
+           f"(ii) Time = {time_min} min = {time_min}/60 = {hrs} hours<br>"
+           f"Distance = {_dp(speed_kmh)} × {hrs} = <strong>{_dp(dist_km)} km</strong>")
     return q, sol, "(i) Multiply m/s by 3.6. (ii) Convert minutes to hours before D = S × T.", 4, _cm_fields_answer(
         (speed_kmh, dist_km), ("Speed (km/h)", "Distance (km)")
     )
@@ -502,14 +559,15 @@ def _cm_i14_speed_convert_then_distance():
 def _cm_i15_hollow_cylinder_mass():
     combos = [(5,2,10,2.7),(6,3,12,7.8),(8,4,15,2.7),(10,5,20,8.9)]
     R, r, h, density = random.choice(combos)
-    vol = round(math.pi * (R ** 2 - r ** 2) * h, 1)
-    mass = round(density * vol, 0)
+    vol_exact = math.pi * (R ** 2 - r ** 2) * h
+    mass = int(_r_dp(density * vol_exact, 0))
     q = (f"A hollow cylinder (pipe) has outer radius {R} cm, inner radius {r} cm, "
          f"and height {h} cm. It is made of a material with density {density} g/cm³. "
-         f"Find the mass of the cylinder.")
-    sol = (f"Volume = π(R² − r²)h = π({R}² − {r}²) × {h} = π × {R**2-r**2} × {h} = {vol} cm³<br>"
-           f"Mass = {density} × {vol} = <strong>{_dp(int(mass))} g</strong>")
-    return q, sol, "Hollow volume = π(R²−r²)h. Then mass = density × volume.", 5, int(mass)
+         f"Find the mass of the cylinder. Give your answer to the nearest gram.")
+    sol = (f"Volume = π(R² − r²)h = π({R}² − {r}²) × {h} = π × {R**2-r**2} × {h} = {_r_dp(vol_exact, 1)} cm³ "
+           f"(keep the full calculator value)<br>"
+           f"Mass = {density} × {_r_dp(vol_exact, 1)} ≈ <strong>{mass} g</strong> (nearest gram)")
+    return q, sol, "Hollow volume = π(R²−r²)h. Then mass = density × volume.", 5, mass
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -532,15 +590,23 @@ def _cm_d1_meeting_problem():
 
 
 def _cm_d2_overtaking():
-    combos = [(60,90,20,10,20),(70,100,30,7,14),(80,110,30,8,16),(60,100,30,9,18)]
-    s_slow, s_fast, head_start_min, head_km, time_min = random.choice(combos)
+    combos = [(60,90,20),(70,100,30),(80,110,30),(60,100,30),(60,80,40),(50,70,24)]
+    s_slow, s_fast, head_start_min = random.choice(combos)
     rel = s_fast - s_slow
+    head_km = s_slow * head_start_min / 60
+    time_min_exact = head_km / rel * 60
+    time_min = _r_dp(time_min_exact, 0)
+    time_min = int(time_min) if time_min == int(time_min) else time_min
+    exact = abs(time_min_exact - round(time_min_exact)) < 1e-9
     q = (f"Vehicle A travels at {s_slow} km/h. "
          f"Vehicle B leaves the same point {head_start_min} minutes later at {s_fast} km/h. "
-         f"How long after B departs does B overtake A?")
-    sol = (f"Head-start distance = {s_slow} × ({head_start_min}/60) = {head_km} km<br>"
+         f"How long after B departs does B overtake A? Give your answer in minutes"
+         f"{'' if exact else ', to the nearest minute'}.")
+    sol = (f"Head-start distance = {s_slow} × ({head_start_min}/60) = {_dp(head_km)} km<br>"
            f"Closing speed = {s_fast} − {s_slow} = {rel} km/h<br>"
-           f"Time = {head_km} ÷ {rel} = {_dp(head_km/rel)} h = <strong>{time_min} minutes</strong>")
+           f"Time = {_dp(head_km)} ÷ {rel} × 60 = "
+           + (f"<strong>{time_min} minutes</strong>" if exact
+              else f"{_dp(time_min_exact)} ≈ <strong>{time_min} minutes</strong>"))
     return q, sol, "Head-start distance = slow speed × head-start time. Then time = gap ÷ closing speed.", 5, time_min
 
 
@@ -549,16 +615,16 @@ def _cm_d3_alloy_percentage_density():
     p_A, p_B, d_A, d_B = random.choice(combos)
     v_A = p_A / d_A
     v_B = p_B / d_B
-    total_v = round(v_A + v_B, 6)
-    density = round(100 / total_v, 3)
+    total_v = v_A + v_B
+    density = _r_sf(100 / total_v, 3)
     q = (f"An alloy is {p_A}% metal A (density {d_A} g/cm³) and {p_B}% metal B "
          f"(density {d_B} g/cm³) by mass. "
          f"Find the density of the alloy to 3 significant figures.")
     sol = (f"Take 100 g of alloy as reference.<br>"
            f"Mass A = {p_A} g → Volume A = {p_A}/{d_A} = {round(v_A,4)} cm³<br>"
            f"Mass B = {p_B} g → Volume B = {p_B}/{d_B} = {round(v_B,4)} cm³<br>"
-           f"Total volume = {round(v_A,4)} + {round(v_B,4)} = {total_v} cm³<br>"
-           f"Density = 100 ÷ {total_v} = <strong>{density} g/cm³</strong>")
+           f"Total volume = {round(v_A,4)} + {round(v_B,4)} = {round(total_v,4)} cm³<br>"
+           f"Density = 100 ÷ {round(total_v,4)} = <strong>{_dp(density, 3)} g/cm³</strong> (3 s.f.)")
     return q, sol, "Use 100 g as the reference. Find volumes via density, sum them, divide 100 g by total volume.", 6, density
 
 
@@ -615,21 +681,25 @@ def _cm_d5_algebraic_sdt():
 
 
 def _cm_d6_two_pipes():
-    combos = [(8,3,5,60,12),(10,4,6,60,10),(12,2,10,80,8),(6,2,4,80,20),(10,2,8,100,12)]
-    r_fill, r_drain, net, vol, time_min = random.choice(combos)
+    combos = [(8,3,60),(10,4,60),(12,2,80),(6,2,80),(10,2,100),(9,4,60)]
+    r_fill, r_drain, vol = random.choice(combos)
+    net = r_fill - r_drain
+    time_min = vol / net
+    time_out = int(time_min) if time_min == int(time_min) else _r_dp(time_min, 2)
     q = (f"A tank of {vol} litres has a fill pipe running at {r_fill} L/min "
          f"and a drain pipe at {r_drain} L/min, both open at the same time. "
-         f"How long does it take to fill the empty tank?")
+         f"How long does it take to fill the empty tank?{_dp_note(time_min)}")
     sol = (f"Net fill rate = {r_fill} − {r_drain} = {net} L/min<br>"
-           f"Time = {vol} ÷ {net} = <strong>{time_min} minutes</strong>")
-    return q, sol, "Net rate = fill rate − drain rate. Time = volume ÷ net rate.", 4, time_min
+           f"Time = {vol} ÷ {net} = <strong>{_dp(time_out)} minutes</strong>")
+    return q, sol, "Net rate = fill rate − drain rate. Time = volume ÷ net rate.", 4, time_out
 
 
 def _cm_d7_harmonic_mean_prove():
-    combos = [(30,60,40),(40,60,48),(50,100,200/3),(60,90,72)]
-    s1, s2, avg = random.choice(combos)
+    combos = [(30,60),(40,60),(60,90),(45,90),(20,30),(40,120)]
+    s1, s2 = random.choice(combos)
     avg_val = 2 * s1 * s2 / (s1 + s2)
-    avg_out = avg_val if avg_val != int(avg_val) else int(avg_val)
+    assert avg_val == int(avg_val)
+    avg_out = int(avg_val)
     q = (
         f"A car travels from X to Y at {s1} km/h and returns at {s2} km/h. "
         f"Let the distance XY be d km. Complete the steps to find the average speed "
@@ -706,24 +776,22 @@ def _cm_d9_concentration():
 
 
 def _cm_d10_relative_speed():
-    combos = [(90,60,30,True,60,2),(100,70,30,True,45,1.5),(80,50,30,False,110,3),
-              (90,50,40,False,130,2)]
-    s1, s2, dist_km, same_dir, rel, t_min = random.choice(combos)
-    if same_dir:
-        rel = s1 - s2
-        t_h = dist_km / rel
-        t_min = round(t_h * 60)
-    else:
-        rel = s1 + s2
-        t_h = dist_km / rel
-        t_min = round(t_h * 60)
+    combos = [(90,60,30,True),(100,70,30,True),(80,50,30,False),(90,50,40,False),(100,60,40,False),(90,60,45,True)]
+    s1, s2, dist_km, same_dir = random.choice(combos)
+    rel = s1 - s2 if same_dir else s1 + s2
+    t_exact = dist_km / rel * 60
+    t_min = int(_r_dp(t_exact, 0))
+    exact = abs(t_exact - t_min) < 1e-9
     direction_txt = "same" if same_dir else "opposite"
     action_txt = "catches" if same_dir else "meet"
     q = (f"Train A travels at {s1} km/h. Train B travels at {s2} km/h. "
          f"They start {dist_km} km apart, moving in the {direction_txt} direction. "
-         f"How long before A {action_txt} B? Give your answer in minutes.")
+         f"How long before A {action_txt} B? Give your answer in minutes"
+         f"{'' if exact else ', to the nearest minute'}.")
     sol = (f"Relative speed = {s1} {'−' if same_dir else '+'} {s2} = {rel} km/h<br>"
-           f"Time = {dist_km} ÷ {rel} = {_dp(dist_km/rel)} h = <strong>{t_min} minutes</strong>")
+           f"Time = {dist_km} ÷ {rel} × 60 = "
+           + (f"<strong>{t_min} minutes</strong>" if exact
+              else f"{_dp(t_exact)} ≈ <strong>{t_min} minutes</strong>"))
     return q, sol, "Same direction: relative speed = difference. Opposite: relative speed = sum.", 5, t_min
 
 
@@ -731,16 +799,17 @@ def _cm_d11_composite_density_ratio():
     combos = [(2,1,8.9,2.7),(3,1,7.8,0.9),(1,2,11.3,1.0),(2,3,8.9,0.9)]
     r1, r2, d1, d2 = random.choice(combos)
     v1, v2 = r1, r2
-    m1, m2 = d1 * v1, d2 * v2
-    total_m, total_v = m1 + m2, v1 + v2
-    density_mix = round(total_m / total_v, 3)
+    m1, m2 = _r_dp(d1 * v1, 4), _r_dp(d2 * v2, 4)
+    total_m, total_v = _r_dp(m1 + m2, 4), v1 + v2
+    density_mix = _r_dp(total_m / total_v, 2)
     q = (f"A composite material is made from two substances in the volume ratio {r1}:{r2}. "
          f"Substance A has density {d1} g/cm³; Substance B has density {d2} g/cm³. "
-         f"Find the density of the composite material.")
+         f"Find the density of the composite material."
+         f"{_dp_note(total_m / total_v)}")
     sol = (f"Let volumes be {v1} cm³ and {v2} cm³ (using the ratio directly).<br>"
-           f"Mass A = {d1} × {v1} = {m1} g;  Mass B = {d2} × {v2} = {m2} g<br>"
-           f"Total mass = {m1+m2} g;  Total volume = {total_v} cm³<br>"
-           f"Density = {total_m} ÷ {total_v} = <strong>{density_mix} g/cm³</strong>")
+           f"Mass A = {d1} × {v1} = {_dp(m1)} g;  Mass B = {d2} × {v2} = {_dp(m2)} g<br>"
+           f"Total mass = {_dp(total_m)} g;  Total volume = {total_v} cm³<br>"
+           f"Density = {_dp(total_m)} ÷ {total_v} = <strong>{_dp(density_mix)} g/cm³</strong>")
     return q, sol, "Use the ratio directly as volumes. Mass = density × volume for each. Then total M ÷ total V.", 5, density_mix
 
 
@@ -761,15 +830,16 @@ def _cm_d12_hydraulic_press():
 
 
 def _cm_d13_three_leg_average():
-    combos = [(60,90,45,1,2,2,300,5,60),(80,60,40,2,1,3,400,6,400/6),
-              (50,100,75,3,1,2,450,6,75),(60,80,40,1,2,3,380,6,380/6)]
-    s1,s2,s3,t1,t2,t3,total_d,total_t,avg = random.choice(combos)
-    avg_val = total_d / total_t
+    combos = [(60,90,45,1,2,2),(80,60,40,2,1,3),(50,100,75,3,1,2),(60,80,40,1,2,3),(60,80,50,2,2,2)]
+    s1,s2,s3,t1,t2,t3 = random.choice(combos)
     d1, d2, d3 = s1*t1, s2*t2, s3*t3
+    total_d, total_t = d1 + d2 + d3, t1 + t2 + t3
+    avg_exact = total_d / total_t
+    avg_val = _r_dp(avg_exact, 2)
     q = (f"A car travels {t1} hour{'s' if t1>1 else ''} at {s1} km/h, "
          f"then {t2} hour{'s' if t2>1 else ''} at {s2} km/h, "
          f"then {t3} hours at {s3} km/h. "
-         f"Find the average speed for the whole journey.")
+         f"Find the average speed for the whole journey.{_dp_note(avg_exact)}")
     sol = (f"Distances: {s1}×{t1}={d1}, {s2}×{t2}={d2}, {s3}×{t3}={d3} km<br>"
            f"Total distance = {d1}+{d2}+{d3} = {total_d} km<br>"
            f"Total time = {t1}+{t2}+{t3} = {total_t} h<br>"
@@ -795,21 +865,23 @@ def _cm_d14_pressure_minimum_area():
 
 
 def _cm_d15_mass_flow_rate():
-    combos = [(3,2,1.0,18.85,1885.0),(4,1,0.9,50.27,45.24),(2,3,1.2,37.70,45.24)]
-    r_cm, speed_ms, density_gcm3, area_cm2, mass_rate_gs = random.choice(combos)
-    area = round(math.pi * r_cm ** 2, 2)
+    combos = [(3,2,1.0),(4,1,0.9),(2,3,1.2)]
+    r_cm, speed_ms, density_gcm3 = random.choice(combos)
+    area_exact = math.pi * r_cm ** 2
     speed_cm_s = speed_ms * 100
-    vol_rate = round(area * speed_cm_s, 2)
-    mass_rate = round(density_gcm3 * vol_rate, 2)
+    vol_exact = area_exact * speed_cm_s
+    mass_exact = density_gcm3 * vol_exact
+    area, vol_rate, mass_rate = _r_dp(area_exact, 2), _r_dp(vol_exact, 2), _r_dp(mass_exact, 2)
     q = (f"A fluid (density {density_gcm3} g/cm³) flows through a circular pipe of "
          f"radius {r_cm} cm at {speed_ms} m/s. "
          f"Find: (i) the cross-sectional area (cm²), "
          f"(ii) the volume flow rate (cm³/s), "
-         f"(iii) the mass flow rate (g/s).")
+         f"(iii) the mass flow rate (g/s). "
+         f"Give each answer correct to 2 decimal places (use unrounded values in later parts).")
     sol = (f"(i) Area = π × {r_cm}² = <strong>{area} cm²</strong><br>"
            f"(ii) Convert speed: {speed_ms} m/s = {speed_cm_s} cm/s<br>"
-           f"Volume flow rate = {area} × {speed_cm_s} = <strong>{vol_rate} cm³/s</strong><br>"
-           f"(iii) Mass flow rate = {density_gcm3} × {vol_rate} = <strong>{mass_rate} g/s</strong>")
+           f"Volume flow rate = π × {r_cm}² × {speed_cm_s} = <strong>{vol_rate} cm³/s</strong><br>"
+           f"(iii) Mass flow rate = {density_gcm3} × {vol_rate} ≈ <strong>{mass_rate} g/s</strong>")
     return q, sol, "Volume flow = area × speed. Mass flow = density × volume flow.", 6, _cm_fields_answer(
         (area, vol_rate, mass_rate),
         ("Area (cm²)", "Volume flow rate (cm³/s)", "Mass flow rate (g/s)"),
@@ -879,7 +951,7 @@ _CM_MCQ_BANK = [
      "opts": ["A  Yes — density < 1 g/cm³", "B  No — density > 1 g/cm³",
               "C  Exactly on the surface", "D  Cannot be determined"],
      "ans": "A", "marks": 2,
-     "sol": "Density = 80/120 = 0.667 g/cm³ < 1 → <strong>floats</strong>. Answer: A",
+     "sol": "Density = 80/120 ≈ 0.667 g/cm³ < 1 → <strong>floats</strong>. Answer: A",
      "hint": "Object floats if density < density of liquid."},
 
     {"q": "A town has 24,000 people in 40 km². Find the population density.",
