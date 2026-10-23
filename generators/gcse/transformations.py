@@ -6,6 +6,7 @@ Final answers are wrapped in <strong> tags.
 """
 import math
 import random
+import re
 from generators.shared.utils import (
     bracket_neg,
     make_problem,
@@ -17,6 +18,7 @@ from generators.shared.utils import (
     graded_answer_tri_coords,
 )
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
+from generators.shared.verify_hook import record
 from generators.shared.variant_utils import (
     select_tier_variants,
     mcq_variants_from_bank_with_procedural,
@@ -303,6 +305,7 @@ def _trans_found_translate():
     s = _sol_steps(tri, img,
                    rf"Translation {_v(dx, dy)}: add {dx} to each x-coordinate and {dy} to each y-coordinate.")
     hint = "Add the vector to each vertex separately."
+    record('trans_apply', kind='translate', pts=tri, dx=dx, dy=dy)
     return q, s, hint, 2, graded_answer_tri_coords(img)
 
 
@@ -314,6 +317,7 @@ def _trans_found_reflect_xaxis():
          rf"Write down the coordinates of P'Q'R'.")
     s = _sol_steps(tri, img, r"Reflection in the x-axis: \((x, y) \to (x, -y)\) — negate the y-coordinate.")
     hint = "Reflection in the x-axis: keep x, change the sign of y."
+    record('trans_apply', kind='reflect', pts=tri, line_word='x-axis')
     return q, s, hint, 2, graded_answer_tri_coords(img)
 
 
@@ -325,6 +329,7 @@ def _trans_found_reflect_yaxis():
          rf"Write down the coordinates of P'Q'R'.")
     s = _sol_steps(tri, img, r"Reflection in the y-axis: \((x, y) \to (-x, y)\) — negate the x-coordinate.")
     hint = "Reflection in the y-axis: change the sign of x, keep y."
+    record('trans_apply', kind='reflect', pts=tri, line_word='y-axis')
     return q, s, hint, 2, graded_answer_tri_coords(img)
 
 
@@ -336,6 +341,7 @@ def _trans_found_reflect_yx():
          rf"Write down the coordinates of P'Q'R'.")
     s = _sol_steps(tri, img, r"Reflection in \(y = x\): \((x, y) \to (y, x)\) — swap x and y.")
     hint = r"Reflection in y = x: swap the two coordinates."
+    record('trans_apply', kind='reflect', pts=tri, line_word='y = x')
     return q, s, hint, 2, graded_answer_tri_coords(img)
 
 
@@ -347,6 +353,7 @@ def _trans_found_rotate_90cw():
          rf"Write down the coordinates of P'Q'R'.")
     s = _sol_steps(tri, img, r"Rotation 90° CW about origin: \((x, y) \to (y, -x)\).")
     hint = "90° clockwise about the origin: (x, y) → (y, −x)."
+    record('trans_apply', kind='rotate', pts=tri, turn_word='90° clockwise')
     return q, s, hint, 2, graded_answer_tri_coords(img)
 
 
@@ -358,6 +365,7 @@ def _trans_found_rotate_180():
          rf"Write down the coordinates of P'Q'R'.")
     s = _sol_steps(tri, img, r"Rotation 180° about origin: \((x, y) \to (-x, -y)\) — negate both coordinates.")
     hint = "180° rotation about origin: negate both x and y."
+    record('trans_apply', kind='rotate', pts=tri, turn_word='180°')
     return q, s, hint, 2, graded_answer_tri_coords(img)
 
 
@@ -371,6 +379,7 @@ def _trans_found_enlarge_origin():
     s = _sol_steps(tri, img,
                    rf"Enlargement SF {k} about origin: multiply each coordinate by {k}: \((x,y) \to ({k}x, {k}y)\).")
     hint = f"Multiply each coordinate by the scale factor {k}."
+    record('trans_apply', kind='enlarge', pts=tri, k=k)
     return q, s, hint, 2, graded_answer_tri_coords(img)
 
 
@@ -395,6 +404,7 @@ def _trans_found_describe_translation():
         "Reflection in the x-axis",
         "Rotation 90° clockwise, centre the origin (0,0)",
     ]
+    record('trans_describe', pts=tri, img=img)
     return _trans_describe_mcq(q, s, hint, 2, correct, distractors)
 
 
@@ -421,6 +431,7 @@ def _trans_found_describe_reflection_axis():
         "Rotation 90° clockwise, centre the origin (0,0)",
         f"Translation by the vector {_v(1, 1)}",
     ]
+    record('trans_describe', pts=tri, img=img)
     return _trans_describe_mcq(q, s, hint, 2, correct, distractors)
 
 
@@ -450,6 +461,7 @@ def _trans_found_describe_rotation_90():
         "Reflection in the x-axis",
         "Reflection in the y-axis",
     ]
+    record('trans_describe', pts=tri, img=img)
     return _trans_describe_mcq(q, s, hint, 3, correct, distractors)
 
 
@@ -470,6 +482,7 @@ def _trans_found_describe_rotation_180():
         "Rotation 90° clockwise, centre the origin (0,0)",
         f"Translation by the vector {_v(-2, -2)}",
     ]
+    record('trans_describe', pts=tri, img=img)
     return _trans_describe_mcq(q, s, hint, 3, correct, distractors)
 
 
@@ -483,6 +496,7 @@ def _trans_found_reflect_xk():
     s = _sol_steps(tri, img,
                    rf"Reflection in \(x = {k}\): \((x, y) \to (2 \times {k} - x,\; y) = ({2*k} - x,\; y)\).")
     hint = f"Reflection in x = {k}: new x-coord = {2*k} − old x, y stays the same."
+    record('trans_apply', kind='reflect', pts=tri, line_word=f'x = {k}')
     return q, s, hint, 2, graded_answer_tri_coords(img)
 
 
@@ -496,6 +510,7 @@ def _trans_found_reflect_yk():
     s = _sol_steps(tri, img,
                    rf"Reflection in \(y = {k}\): \((x, y) \to (x,\; 2 \times {k} - y) = (x,\; {2*k} - y)\).")
     hint = f"Reflection in y = {k}: x stays the same, new y-coord = {2*k} − old y."
+    record('trans_apply', kind='reflect', pts=tri, line_word=f'y = {k}')
     return q, s, hint, 2, graded_answer_tri_coords(img)
 
 
@@ -507,6 +522,7 @@ def _trans_found_rotate_90acw():
          rf"Write down the coordinates of P'Q'R'.")
     s = _sol_steps(tri, img, r"Rotation 90° ACW about origin: \((x, y) \to (-y, x)\).")
     hint = "90° anticlockwise: (x, y) → (−y, x)."
+    record('trans_apply', kind='rotate', pts=tri, turn_word='90° anticlockwise')
     return q, s, hint, 2, graded_answer_tri_coords(img)
 
 
@@ -538,6 +554,7 @@ def _trans_found_identify_type():
         reason = "Every length is scaled by a constant factor from a fixed centre."
     s = rf"{reason}<br><strong>{name}</strong>"
     hint = "Translation → same vector. Reflection → flip. Rotation → turn. Enlargement → size change."
+    record('trans_identify', desc_word=desc)
     return q, s, hint, 1, graded_answer_keyword(name.lower())
 
 
@@ -553,6 +570,7 @@ def _trans_inter_reflect_y_neg_x():
          rf"Write down the coordinates of P'Q'R'.")
     s = _sol_steps(tri, img, r"Reflection in \(y = -x\): \((x, y) \to (-y, -x)\).")
     hint = r"Reflection in y = −x: negate both coordinates and swap them."
+    record('trans_apply', kind='reflect', pts=tri, line_word='y = -x')
     return q, s, hint, 2, graded_answer_tri_coords(img)
 
 
@@ -583,6 +601,7 @@ def _trans_inter_enlarge_not_origin():
     lines.append(rf"<strong>{_fmt_tri(img, primed=True)}</strong>")
     s = "".join(lines)
     hint = f"For each point: new coord = centre + {k} × (old coord − centre)."
+    record('trans_apply', kind='enlarge', pts=base, k=k, cx=cx, cy=cy)
     return q, s, hint, 3, graded_answer_tri_coords(img)
 
 
@@ -609,6 +628,7 @@ def _trans_inter_rotate_not_origin():
     lines.append(rf"<strong>{_fmt_tri(img, primed=True)}</strong>")
     s = "".join(lines)
     hint = f"Translate so that ({cx},{cy}) is the origin, rotate, then translate back."
+    record('trans_apply', kind='rotate', pts=tri, turn_word=f'90° {direction}', cx=cx, cy=cy)
     return q, s, hint, 3, graded_answer_tri_coords(img)
 
 
@@ -641,6 +661,7 @@ def _trans_inter_enlarge_frac_sf():
     lines.append(rf"<strong>{_fmt_tri(img, primed=True)}</strong>")
     s = "".join(lines)
     hint = "A scale factor between 0 and 1 produces a smaller image."
+    record('trans_apply', kind='enlarge', pts=base, k_num=k_num, k_den=k_den)
     return q, s, hint, 3, graded_answer_tri_coords(img)
 
 
@@ -666,6 +687,7 @@ def _trans_inter_describe_enlargement_full():
         f"Translation by the vector {_v(k, k)}",
         "Rotation 90° clockwise, centre the origin (0,0)",
     ]
+    record('trans_describe', pts=base, img=img)
     return _trans_describe_mcq(q, s, hint, 3, correct, distractors)
 
 
@@ -688,6 +710,7 @@ def _trans_inter_find_centre_enlargement():
          rf"→ passes through ({cx},{cy}).<br>"
          rf"<strong>Centre of enlargement = ({cx}, {cy})</strong>")
     hint = "Draw straight lines through each vertex and its image — they all meet at the centre."
+    record('trans_enlarge_centre', pts=base, img=img)
     return q, s, hint, 4, graded_answer_number_fields(
         (sf, cx, cy),
         ('Scale factor', 'Centre x', 'Centre y'),
@@ -711,6 +734,7 @@ def _trans_inter_enlarge_neg_sf():
     lines.append(rf"<strong>{_fmt_tri(img, primed=True)}</strong>")
     s = "".join(lines)
     hint = "A negative scale factor means the image is on the opposite side of the centre."
+    record('trans_apply', kind='enlarge', pts=base, k=k, cx=cx, cy=cy)
     return q, s, hint, 3, graded_answer_tri_coords(img)
 
 
@@ -727,6 +751,7 @@ def _trans_inter_reflect_oblique():
          + "".join(rf"{'PQR'[i]}({tri[i][0]},{tri[i][1]}) → {'PQR'[i]}'({img[i][0]},{img[i][1]})<br>" for i in range(3))
          + rf"<strong>{_fmt_tri(img, primed=True)}</strong>")
     hint = rf"For reflection in y = x + c: new point is (y − c, x + c)."
+    record('trans_apply', kind='reflect', pts=tri, line_word=f'y = x {c_str}')
     return q, s, hint, 3, graded_answer_tri_coords(img)
 
 
@@ -745,7 +770,7 @@ def _trans_inter_invariant_reflection():
         deduce_distractors = [r"\(a = 0\)", r"\(b = a\)", r"\(a = -b\)"]
         ex = random.randint(2, 7)
         example_correct = f"({ex}, 0)"
-        example_distractors = [f"(0, {ex})", f"({ex}, {ex})", "(0, 0)"]
+        example_distractors = [f"(0, {ex})", f"({ex}, {ex})", f"(-{ex}, {ex})"]
     else:
         q = (r"Under a reflection in the y-axis, a point P(a, b) maps to itself (P is an invariant point).<br>"
              r"What can you deduce about a? Give an example of an invariant point.")
@@ -759,7 +784,8 @@ def _trans_inter_invariant_reflection():
         deduce_distractors = [r"\(b = 0\)", r"\(a = b\)", r"\(a = -b\)"]
         ex = random.randint(2, 7)
         example_correct = f"(0, {ex})"
-        example_distractors = [f"({ex}, 0)", f"(0, -{ex})", "(0, 0)"]
+        example_distractors = [f"({ex}, 0)", f"({ex}, {ex})", f"({ex}, -{ex})"]
+    record('trans_invariant_refl', axis_word=f'{axis}-axis')
     deduce_opts, deduce_ans = _trans_mcq_field(deduce_correct, deduce_distractors)
     example_opts, example_ans = _trans_mcq_field(example_correct, example_distractors)
     return q, s, hint, 3, graded_answer_number_fields(
@@ -784,6 +810,7 @@ def _trans_inter_area_after_enlargement():
          rf"Area of image = {area} × k² = {area} × {k*k} = {new_area} cm²<br>"
          rf"<strong>{new_area} cm²</strong>")
     hint = f"Area scale factor = (linear scale factor)² = {k}² = {k*k}."
+    record('sim_area_k', k=k, area=area)
     return q, s, hint, 3, graded_answer_number(new_area)
 
 
@@ -800,6 +827,7 @@ def _trans_inter_combination_reflect_reflect():
          rf"(c) Comparing T and T'': P({tri[0][0]},{tri[0][1]}) → P''({step2[0][0]},{step2[0][1]}), i.e. \((x,y)\to(-x,-y)\).<br>"
          rf"<strong>Single transformation: rotation 180° about the origin (0,0)</strong>")
     hint = "Two reflections in perpendicular lines through the origin give a 180° rotation."
+    record('trans_double', pts=tri, first_word='x-axis', second_word='y-axis')
     return q, s, hint, 4, _trans_double_reflect_graded(
         step1, step2,
         correct_c="Rotation 180°, centre the origin (0,0)",
@@ -841,6 +869,7 @@ def _trans_inter_describe_rotation_full():
         f"Rotation 180°, centre ({cx},{cy})",
         "Reflection in the x-axis",
     ]
+    record('trans_describe', pts=tri, img=img)
     return _trans_describe_mcq(q, s, hint, 4, correct, distractors)
 
 
@@ -856,6 +885,7 @@ def _trans_inter_reverse_transformation():
          + "".join(rf"{'PQR'[i]}'({img[i][0]},{img[i][1]}) → {'PQR'[i]}({orig[i][0]},{orig[i][1]})<br>" for i in range(3))
          + rf"<strong>{_fmt_tri(orig)}</strong>")
     hint = "The inverse of a translation by (a,b) is a translation by (−a, −b)."
+    record('trans_reverse', pts=img, dx=dx, dy=dy)
     return q, s, hint, 2, graded_answer_tri_coords(orig, vertex_labels=('P', 'Q', 'R'))
 
 
@@ -870,6 +900,7 @@ def _trans_inter_rotation_270():
          + "".join(rf"{'PQR'[i]}({tri[i][0]},{tri[i][1]}) → {'PQR'[i]}'({img[i][0]},{img[i][1]})<br>" for i in range(3))
          + rf"<strong>{_fmt_tri(img, primed=True)}</strong>")
     hint = "270° clockwise = 90° anticlockwise: (x, y) → (−y, x)."
+    record('trans_apply', kind='rotate', pts=tri, turn_word='270° clockwise')
     return q, s, hint, 2, graded_answer_tri_coords(img)
 
 
@@ -890,7 +921,7 @@ def _trans_diff_negative_enlarge_describe():
     s = (rf"The image is larger (not congruent) so it is an enlargement.<br>"
          rf"Scale factor: \(\dfrac{{P'Q'}}{{PQ}} = \dfrac{{{abs(img[1][0]-img[0][0])}}}{{{abs(base[1][0]-base[0][0])}}} = {abs(k)}\)<br>"
          rf"The image is on the opposite side of ({cx},{cy}) from the original → negative scale factor.<br>"
-         rf"Checking: \(({cx}+(-2)({base[0][0]}-{cx}),\; {cy}+(-2)({base[0][1]}-{cy}))\) = ({img[0][0]},{img[0][1]}) ✓<br>"
+         rf"Checking: \(({cx}+({k})({base[0][0]}-{cx}),\; {cy}+({k})({base[0][1]}-{cy}))\) = ({img[0][0]},{img[0][1]}) ✓<br>"
          rf"<strong>Enlargement, scale factor −{abs(k)}, centre ({cx},{cy})</strong>")
     hint = "If the image is on the opposite side of the centre, the scale factor is negative."
     correct = f"Enlargement, scale factor −{abs(k)}, centre ({cx},{cy})"
@@ -900,6 +931,7 @@ def _trans_diff_negative_enlarge_describe():
         f"Enlargement, scale factor −{abs(k)}, centre ({cx + 1},{cy})",
         "Reflection in the x-axis",
     ]
+    record('trans_describe', pts=base, img=img)
     return _trans_describe_mcq(q, s, hint, 4, correct, distractors)
 
 
@@ -951,6 +983,7 @@ def _trans_diff_two_reflections_parallel():
          rf"<strong>Single transformation: translation by {trans_str}</strong><br>"
          rf"General rule: two reflections in parallel lines, distance \(d\) apart, give a translation of \(2d\) perpendicular to the lines.")
     hint = "Two reflections in parallel lines produce a translation; the distance is twice the gap between the lines."
+    record('trans_double', pts=tri, first_word=f'{axis} = {a}', second_word=f'{axis} = {b}')
     return q, s, hint, 5, _trans_double_reflect_graded(
         step1, step2,
         correct_c=f"Translation by the vector {trans_str}",
@@ -974,6 +1007,7 @@ def _trans_diff_two_reflections_intersecting():
          rf"<strong>Rotation 180° about the origin (0,0)</strong><br>"
          rf"General rule: two reflections in lines intersecting at angle \(\alpha\) give a rotation of \(2\alpha\) about the intersection. Here \(\alpha=90°\), so rotation = 180°.")
     hint = "Two reflections in intersecting lines give a rotation; the angle is twice the angle between the lines."
+    record('trans_double', pts=tri, first_word='x-axis', second_word='y-axis')
     return q, s, hint, 5, _trans_double_reflect_graded(
         step1, step2,
         correct_c="Rotation 180°, centre the origin (0,0)",
@@ -1007,6 +1041,7 @@ def _trans_diff_find_centre_rotation():
          rf"P({tri[0][0]},{tri[0][1]}) → ({img[0][0]},{img[0][1]}) ✓<br>"
          rf"<strong>Centre of rotation: ({cx},{cy})</strong>")
     hint = "The centre of rotation lies on the perpendicular bisector of every segment joining a point to its image."
+    record('trans_rot_centre', pts=tri, img=img, turn_word=f'90° {direction}')
     return q, s, hint, 5, graded_answer_number_pair(cx, cy, 'Centre x', 'Centre y')
 
 
@@ -1019,6 +1054,9 @@ def _trans_diff_algebraic_coords():
     var = random.choice(['n', 'm', 'k', 't'])
     q_type = random.choice(['rot90cw', 'rot90acw', 'rot180', 'ref_xaxis', 'ref_yaxis', 'ref_yx', 'trans'])
     ans_x = ans_y = None
+    bq = 'q' if b == 1 else f'{b}q'                  # 'q' and 'n', never '1q' or '1n'
+    bv = var if b == 1 else f'{b}{var}'
+    cv = var if c == 1 else f'{c}{var}'
     if q_type == 'rot90cw':
         q = (rf"A point has coordinates (p, q). It is rotated 90° clockwise about the origin.<br>"
              r"Write down the image coordinates in terms of p and q.")
@@ -1026,6 +1064,7 @@ def _trans_diff_algebraic_coords():
              r"Applying to (p, q): <strong>(q, −p)</strong>")
         hint = "Apply the rule (x, y) → (y, −x) with x=p and y=q."
         ans_x, ans_y = 'q', '-p'
+        record('trans_alg', kind='rot90cw')
     elif q_type == 'rot90acw':
         q = (r"A point has coordinates (p, q). It is rotated 90° anticlockwise about the origin.<br>"
              r"Write down the image coordinates in terms of p and q.")
@@ -1033,20 +1072,23 @@ def _trans_diff_algebraic_coords():
              r"Applying to (p, q): <strong>(−q, p)</strong>")
         hint = "Apply the rule (x, y) → (−y, x) with x=p and y=q."
         ans_x, ans_y = '-q', 'p'
+        record('trans_alg', kind='rot90acw')
     elif q_type == 'rot180':
-        q = (rf"A point has coordinates ({a}p, {b}q). It is rotated 180° about the origin.<br>"
+        q = (rf"A point has coordinates ({a}p, {bq}). It is rotated 180° about the origin.<br>"
              r"Write down the image coordinates in terms of p and q.")
         s = (rf"Rotation 180°: \((x, y) \to (-x, -y)\).<br>"
-             rf"Applying to ({a}p, {b}q): <strong>(−{a}p, −{b}q)</strong>")
+             rf"Applying to ({a}p, {bq}): <strong>(−{a}p, −{bq})</strong>")
         hint = "Negate both coordinates."
-        ans_x, ans_y = f'-{a}p', f'-{b}q'
+        ans_x, ans_y = f'-{a}p', f'-{bq}'
+        record('trans_alg', kind='rot180', a=a, b=b)
     elif q_type == 'ref_xaxis':
-        q = (rf"A point has coordinates ({a}{var}, {b}{var}+{c}). It is reflected in the x-axis.<br>"
+        q = (rf"A point has coordinates ({a}{var}, {bv}+{c}). It is reflected in the x-axis.<br>"
              rf"Write down the image coordinates in terms of {var}.")
         s = (r"Reflection in x-axis: \((x, y) \to (x, -y)\).<br>"
-             rf"Applying to ({a}{var}, {b}{var}+{c}): <strong>({a}{var}, −{b}{var}−{c})</strong>")
+             rf"Applying to ({a}{var}, {bv}+{c}): <strong>({a}{var}, −{bv}−{c})</strong>")
         hint = "Keep x, negate y."
-        ans_x, ans_y = f'{a}{var}', f'-{b}{var}-{c}'
+        ans_x, ans_y = f'{a}{var}', f'-{bv}-{c}'
+        record('trans_alg', kind='ref_xaxis', var=var, a=a, b=b, c=c)
     elif q_type == 'ref_yaxis':
         q = (rf"A point has coordinates ({a}{var}, {var}+{c}). It is reflected in the y-axis.<br>"
              rf"Write down the image coordinates in terms of {var}.")
@@ -1054,13 +1096,15 @@ def _trans_diff_algebraic_coords():
              rf"Applying to ({a}{var}, {var}+{c}): <strong>(−{a}{var}, {var}+{c})</strong>")
         hint = "Negate the x-coordinate; leave y unchanged."
         ans_x, ans_y = f'-{a}{var}', f'{var}+{c}'
+        record('trans_alg', kind='ref_yaxis', var=var, a=a, c=c)
     elif q_type == 'ref_yx':
-        q = (rf"A point has coordinates ({a}{var}+{b}, {c}{var}). It is reflected in the line y = x.<br>"
+        q = (rf"A point has coordinates ({a}{var}+{b}, {cv}). It is reflected in the line y = x.<br>"
              rf"Write down the image coordinates in terms of {var}.")
         s = (r"Reflection in y = x: \((x, y) \to (y, x)\) — swap the coordinates.<br>"
-             rf"Applying to ({a}{var}+{b}, {c}{var}): <strong>({c}{var}, {a}{var}+{b})</strong>")
+             rf"Applying to ({a}{var}+{b}, {cv}): <strong>({cv}, {a}{var}+{b})</strong>")
         hint = "Reflection in y = x: swap the two coordinate expressions."
-        ans_x, ans_y = f'{c}{var}', f'{a}{var}+{b}'
+        ans_x, ans_y = f'{cv}', f'{a}{var}+{b}'
+        record('trans_alg', kind='ref_yx', var=var, a=a, b=b, c=c)
     else:
         q = (rf"A point has coordinates ({var}+{b}, {a}{var}−{c}). It is translated by "
              + _v(dx, dy) + r".<br>"
@@ -1068,12 +1112,14 @@ def _trans_diff_algebraic_coords():
         xi = f"{var}+{b+dx}" if b + dx > 0 else f"{var}{b+dx}"
         yi_a = f"{a}{var}"
         yi_c = -c + dy
-        yi = f"{yi_a}+{yi_c}" if yi_c > 0 else f"{yi_a}{yi_c}"
+        # a zero constant must not print as '3n0'
+        yi = yi_a if yi_c == 0 else (f"{yi_a}+{yi_c}" if yi_c > 0 else f"{yi_a}{yi_c}")
         s = (rf"Translation: add {dx} to x, add {dy} to y.<br>"
              rf"({var}+{b}+{dx}, {a}{var}−{c}+({dy})) = ({xi}, {yi})<br>"
              rf"<strong>Image = ({xi}, {yi})</strong>")
         hint = "Add the vector components to each coordinate expression."
         ans_x, ans_y = xi, yi
+        record('trans_alg', kind='trans', var=var, a=a, b=b, c=c, dx=dx, dy=dy)
     return q, s, hint, 3, graded_answer_number_fields(
         (ans_x, ans_y),
         ('x', 'y'),
@@ -1097,6 +1143,7 @@ def _trans_diff_area_scale_factor():
          rf"Linear scale factor \(= \sqrt{{{k2}}} = {k}\)<br>"
          rf"<strong>Scale factor \(= {k}\)</strong>")
     hint = "Area scale factor = (linear scale factor)². Take the square root of the area ratio."
+    record('sim_k_from_area', small=area_small, large=area_large)
     return q, s, hint, 3, graded_answer_number(k)
 
 
@@ -1119,6 +1166,7 @@ def _trans_diff_three_transformations():
          rf"After T₃ (90° {rot3_dir}): {_fmt_tri(t3, primed=True)}<br>"
          rf"<strong>Final image P'''Q'''R''': {_fmt_tri(t3)}</strong>")
     hint = "Apply each transformation in order, using the image of the previous step as the new input."
+    record('trans_chain', pts=tri, dx=dx, dy=dy, ref_word=ref2, turn_word=f'90° {rot3_dir}')
     return q, s, hint, 5, graded_answer_tri_coords(t3)
 
 
@@ -1151,6 +1199,7 @@ def _trans_diff_combination_single_equiv():
         "Reflection in the x-axis",
     ]
     opts_b, ans_b = _trans_mcq_field(correct_b, distractors_b)
+    record('trans_refl_chain', px=px, py=py, k=k)
     return q, s, hint, 5, graded_answer_number_fields(
         (cx_final, cy_final, ans_b),
         ('Vertex x', 'Vertex y', 'Single transformation'),
@@ -1180,6 +1229,7 @@ def _trans_diff_invariant_rotation():
             "Every point on the shape",
         ],
     )
+    record('trans_invariant_rot', topic='rotation 180')
     return q, s, hint, 4, graded_answer_number_fields(
         ('(-a,-b)', 'origin', ans_c),
         (
@@ -1230,6 +1280,7 @@ def _trans_diff_self_inverse():
             "Enlargement with scale factor 2",
         ],
     )
+    record('trans_self_inverse', topic='self-inverse')
     return q, s, hint, 4, graded_answer_number_fields(
         (ans_a, ans_b, ans_c),
         (
@@ -1249,10 +1300,14 @@ def _trans_diff_fractional_neg_sf():
     k_num, k_den = random.choice([(-1, 2), (-1, 3), (-2, 3)])
     cx, cy = random.choice([(2, 2), (2, 4), (4, 2), (3, 3), (4, 4)])
     mult = k_den
+    a1, a2 = random.choice([1, 2]), random.choice([2, 3])
+    a3, a4 = random.choice([1, 2]), random.choice([1, 2])
+    if a2 == a1:
+        a2 = 3          # P and Q must be different points or there is no triangle
     base = [
-        (cx + random.choice([1, 2]) * mult, cy),
-        (cx + random.choice([2, 3]) * mult, cy),
-        (cx + random.choice([1, 2]) * mult, cy + random.choice([1, 2]) * mult),
+        (cx + a1 * mult, cy),
+        (cx + a2 * mult, cy),
+        (cx + a3 * mult, cy + a4 * mult),
     ]
     k = k_num / k_den
     img = [_enlarge_pt(x, y, k, cx, cy) for x, y in base]
@@ -1269,6 +1324,7 @@ def _trans_diff_fractional_neg_sf():
          rf"Write down the coordinates of P'Q'R'.")
     s = "".join(lines)
     hint = "A negative scale factor means the image appears on the opposite side of the centre."
+    record('trans_apply', kind='enlarge', pts=base, k_num=k_num, k_den=k_den, cx=cx, cy=cy)
     return q, s, hint, 4, graded_answer_tri_coords(img)
 
 
@@ -1290,6 +1346,7 @@ def _trans_diff_prove_isometry():
          rf"\(PR = \sqrt{{0^2+4^2}} = 4\); \(P'R' = \sqrt{{0^2+4^2}} = 4\). Equal ✓<br>"
          rf"<strong>Reflection preserves all lengths — it is an isometry (congruence transformation).</strong>")
     hint = "Calculate lengths using the distance formula √[(x₂−x₁)²+(y₂−y₁)²] for both original and image."
+    record('trans_apply', kind='reflect', pts=tri, line_word='y-axis')
     return q, s, hint, 4, graded_answer_tri_coords(img)
 
 _trans_diff_prove_isometry._fixed_stem = True
@@ -1318,6 +1375,12 @@ def _trans_diff_congruent_similar():
         field_options.append(opts)
     q = ''.join(q_lines)
     s = '<br>'.join(s_lines)
+    cs = {}
+    for i, (desc, _cat, _why) in enumerate(items, 1):
+        scale = re.search(r'scale factor\s*([\u2212-]?\d+)', desc)
+        cs[f't{i}_word'] = re.match(r'[A-Za-z]+', desc).group(0)
+        cs[f'k{i}'] = int(scale.group(1).replace('\u2212', '-')) if scale else 0
+    record('trans_cs', **cs)
     hint = (
         "Isometries (rotation, reflection, translation) give congruent images. "
         "Enlargements with |k|≠1 give similar images."
@@ -1360,7 +1423,7 @@ _TRANS_MCQ_BANK = [
     {
         "q": r"Which transformation maps (4, 2) to (−4, 2)?",
         "opts": ["A  Reflection in the y-axis", "B  Reflection in the x-axis",
-                 "C  Rotation 90° CW", "D  Translation by (−8, 0)"],
+                 "C  Rotation 90° CW", "D  Translation by (−4, 0)"],
         "ans": "A",
         "sol": r"Reflection in y-axis negates the x-coordinate: \((4,2)\to(-4,2)\).",
     },

@@ -1,4 +1,5 @@
 """Answer check smoke test — run: python scripts/test_answer_check_smoke.py"""
+import json
 import re
 import sys
 import uuid
@@ -272,7 +273,7 @@ def _post_problems_check(client, json_body, *, problem=None, headers=None):
     """POST /api/v1/problems/check, binding session for SymPy-backed types."""
     body = dict(json_body)
     answer_type = (body.get('answer_type') or 'number').strip()
-    if answer_type in ('algebraic', 'quadratic_roots'):
+    if answer_type in ('algebraic', 'quadratic_roots', 'formula_fraction'):
         _bind_check_session(
             client,
             level=body.get('level') or 'gcse',
@@ -292,7 +293,7 @@ def _post_problems_check(client, json_body, *, problem=None, headers=None):
         kwargs['headers'] = headers
     response = client.post('/api/v1/problems/check', **kwargs)
     # Drop bound keys so follow-up direct client.post checks are not poisoned.
-    if answer_type in ('algebraic', 'quadratic_roots'):
+    if answer_type in ('algebraic', 'quadratic_roots', 'formula_fraction'):
         with client.session_transaction() as sess:
             sess.pop('last_problem_payload', None)
     return response
@@ -672,6 +673,12 @@ def test_checker_linear_equation_and_keyword_unit():
 
     eq_colon = check_linear_equation('2:3', 'y=2x-3')
     assert eq_colon['correct'] is False
+
+    # explicit multiplication and a Unicode minus are accepted; the values still have to match
+    for user in ('y=-2*x-7', 'y = -2×x - 7', 'y=−2x−7', '-7-2*x'):
+        assert check_linear_equation('-2|-7', user)['correct'] is True, user
+    for user in ('y=2*x-7', 'y=-2*3x', 'y=-2*x+7'):
+        assert check_linear_equation('-2|-7', user)['correct'] is False, user
 
     pos = check_keyword('positive', 'positive correlation')
     assert pos['correct'] is True
@@ -1662,6 +1669,13 @@ def test_check_algebraic_surd_binomial():
         assert result['correct'] is True, user
     assert check_algebraic('25|6|2|-', '25-6√2')['correct'] is True
     assert check_algebraic('25|6|2|-', '25+6√2')['correct'] is False
+    # the surd term may come first, with its own sign; the value must still match (9 - 4√5)
+    for user in ('9-4√5', '-4√5+9', '−4√5 + 9', '9-4sqrt(5)', '-4√(5)+9'):
+        assert check_algebraic('9|4|5|-', user)['correct'] is True, user
+    for user in ('4√5-9', '√5-9', '9+4√5', '-9+4√5', '4√5+9'):
+        assert check_algebraic('9|4|5|-', user)['correct'] is False, user
+    assert check_algebraic('-3|1|2|+', '√2-3')['correct'] is True
+    assert check_algebraic('-3|1|2|+', '-√2+3')['correct'] is False
 
 
 def test_surds_algebraic_check_api():
@@ -5004,7 +5018,8 @@ def test_check_number_line():
 def test_check_formula_fraction():
     assert check_formula_fraction('d-b|a-c', 'd-b|a-c')['correct'] is True
     assert check_formula_fraction('d-b|a-c', 'd - b|a - c')['correct'] is True
-    assert check_formula_fraction('d-b|a-c', 'b-d|c-a')['correct'] is False
+    assert check_formula_fraction('d-b|a-c', 'b-d|c-a')['correct'] is True      # equivalent (2026-10-23 decision)
+    assert check_formula_fraction('d-b|a-c', 'd-b|c-a')['correct'] is False
     assert check_formula_fraction('d-b|a-c', 'd-b|a-c|extra')['correct'] is False
 
 
@@ -5149,9 +5164,9 @@ def test_equations_formula_fraction_check_api():
     correct = problem['correct_answer_raw']
 
     with app.test_client() as client:
-        r = client.post(
-            '/api/v1/problems/check',
-            json={
+        r = _post_problems_check(
+            client,
+            {
                 'level': 'gcse',
                 'subject': 'maths',
                 'topic': 'equations_inequalities',
@@ -5160,6 +5175,7 @@ def test_equations_formula_fraction_check_api():
                 'answer_type': 'formula_fraction',
                 'user_answer': 'd - b|a - c',
             },
+            problem=problem,
         )
         assert r.status_code == 200
         assert r.get_json()['correct'] is True
@@ -9385,6 +9401,993 @@ def test_suggestion_view_renders_trackable_free_response():
         assert 'free-response-check-btn' in body
 
 
+# ---------------------------------------------------------------------------
+# Checker decisions (2026-10-23): written forms, formula equivalence, linear letter, surd form, graph bands
+# ---------------------------------------------------------------------------
+
+def _assert_pupil_copy(text):
+    """Pupil-facing feedback: British spelling, no em or en dashes, no emoji, no shouting."""
+    assert text and '—' not in text and '–' not in text, text
+    assert not re.search('[\U0001F000-\U0001FAFF☀-➿]', text), text
+    assert not re.search(r'(?i)\b(wrong|incorrect|stupid|silly|factorize|factorized|color)\b', text), text
+    assert '!' not in text, text
+
+
+def test_check_algebraic_expand_form():
+    key = '2*x**2 + 9*x + 4'
+    for typed in ('2x^2+9x+4', '9x+2x^2+4', '4 + 9x + 2x^2', '2*x**2+9*x+4'):
+        assert check_answer('algebraic', key, typed, form='expanded')['correct'] is True, typed
+    # equal value, brackets left in: the form message, not a plain wrong
+    for typed in ('(2x+1)(x+4)', '(x+4)(2x+1)', '2x(x+4)+x+4', '-(-2x^2-9x-4)', 'x(2x+9)+4'):
+        r = check_answer('algebraic', key, typed, form='expanded')
+        assert r['correct'] is False, typed
+        assert r['feedback'] == "That's equal, but the question asks you to expand it.", (typed, r)
+        assert r['wrong_form'] == 'unexpanded'
+    # expanded but like terms not collected
+    for typed in ('2x^2+8x+x+4', '2x^2+9x+3+1', '2x^2+9x+4+0'):
+        r = check_answer('algebraic', key, typed, form='expanded')
+        assert r['correct'] is False and r['wrong_form'] == 'uncollected', (typed, r)
+        assert 'collect the like terms' in r['feedback']
+    # a different value is an ordinary wrong, with the ordinary message
+    r = check_answer('algebraic', key, '(2x+1)(x+5)', form='expanded')
+    assert r['correct'] is False and 'wrong_form' not in r
+    assert r['feedback'] == 'Not quite — check your simplified expression.'
+    # no form requested: the old value check, unchanged
+    assert check_answer('algebraic', key, '(2x+1)(x+4)')['correct'] is True
+    assert check_answer('algebraic', key, '(2x+1)(x+4)', form=None)['correct'] is True
+    # the same key via the checker with other surfaces
+    assert check_answer('algebraic', 'k**2 + 7*k + 10', 'k^2 + 7k + 10', form='expanded')['correct'] is True
+    assert check_answer('algebraic', 'k**2 + 7*k + 10', '(k+2)(k+5)', form='expanded')['correct'] is False
+
+
+def test_check_algebraic_factorise_form():
+    key = '6(4x + 3)'
+    for typed in ('6(4x+3)', '6(3+4x)', '6*(4x+3)', '(4x+3)6', '2*3*(4x+3)'):
+        assert check_answer('algebraic', key, typed, form='factorised')['correct'] is True, typed
+    for typed in ('24x+18', '18+24x', '(24x+18)', '6*4x+6*3'):
+        r = check_answer('algebraic', key, typed, form='factorised')
+        assert r['correct'] is False, typed
+        assert r['feedback'] == "That's equal, but the question asks you to factorise it fully.", (typed, r)
+        assert r['wrong_form'] == 'unfactorised'
+    for typed in ('2(12x+9)', '3(8x+6)', '(12x+9)2', '3*(8x+6)'):
+        r = check_answer('algebraic', key, typed, form='factorised')
+        assert r['correct'] is False and r['wrong_form'] == 'partly_factorised', (typed, r)
+        assert 'factorise it further' in r['feedback']
+    # monomial factors and powers of a bracket
+    assert check_answer('algebraic', 'x(x + 1)', 'x(x+1)', form='factorised')['correct'] is True
+    assert check_answer('algebraic', 'x(x + 1)', 'x^2+x', form='factorised')['correct'] is False
+    assert check_answer('algebraic', 'x(2x + 4)', 'x(2x+4)', form='factorised')['correct'] is False
+    assert check_answer('algebraic', '2x(x + 2)', '2x(x+2)', form='factorised')['correct'] is True
+    assert check_answer('algebraic', '(x + 3)^2', '(x+3)^2', form='factorised')['correct'] is True
+    assert check_answer('algebraic', '(x + 3)(x - 2)', '(x-2)(x+3)', form='factorised')['correct'] is True
+    assert check_answer('algebraic', '(x + 3)(x - 2)', 'x^2+x-6', form='factorised')['correct'] is False
+    # a different value is an ordinary wrong
+    r = check_answer('algebraic', key, '6(4x+5)', form='factorised')
+    assert r['correct'] is False and 'wrong_form' not in r
+    # no form requested: value check only
+    assert check_answer('algebraic', key, '24x+18')['correct'] is True
+
+
+def test_answer_form_validation_and_copy():
+    from generators.shared.answer_checkers import (
+        ANSWER_FORMS,
+        FORM_AWARE_ANSWER_TYPES,
+        _WRONG_FORM_FEEDBACK,
+    )
+
+    try:
+        check_answer('algebraic', 'x+1', 'x+1', form='nonsense')
+    except ValueError as exc:
+        assert str(exc) == 'invalid_answer_form'
+    else:
+        raise AssertionError('an unknown form must be refused')
+    # a form on a type that does not use one is ignored
+    assert check_answer('number', '4', '4', form='expanded')['correct'] is True
+    assert ANSWER_FORMS == {'expanded', 'factorised', 'simplest_surd', 'simplified', 'probability'}
+    assert {'algebraic', 'surd', 'algebraic_fraction', 'fraction', 'number'} == set(FORM_AWARE_ANSWER_TYPES)
+    for key, text in _WRONG_FORM_FEEDBACK.items():
+        _assert_pupil_copy(text)
+        assert text.startswith("That's equal"), key
+    letter_copy = [
+        check_answer('linear', 'x=2', 'y=2')['feedback'],
+        check_answer('formula_fraction', 'a|b', 'y=a|b', subject='x')['feedback'],
+        check_answer('formula_fraction', 'a|b', 'a?|b', subject='x')['feedback'],
+    ]
+    for text in letter_copy:
+        _assert_pupil_copy(text)
+    # the new copy also meets the Zorp line rules (length, reading level, long words, no "just", no dashes)
+    from models import zorp_voice
+
+    items = [zorp_voice.Item('answer_checkers', 0, 'zorp', 'guide_line', 'line', t)
+             for t in [*_WRONG_FORM_FEEDBACK.values(), *letter_copy,
+                       check_answer('fraction', '1/3', '0.333', form='probability')['feedback']]]
+    assert zorp_voice.lint(items) == [], zorp_voice.lint(items)
+
+
+def test_expand_factorise_generators_carry_form():
+    import sympy as sp
+    from generators.gcse.algebraic_proof import gcse_algebraic_proof
+    import generators.gcse.maths as m
+
+    # every typed expand / factorise variant in GCSE maths (the verification smoke finds them by task too)
+    expanded = (
+        ('algebra', 'algebra_practice_expand_binomial'),
+        ('algebra', 'algebra_practice_expand_mixed'),
+        ('algebra', 'algebra_practice_quadratic_3'),
+        ('algebraic_proof', '_ap_f_expand_consecutive'),
+        ('algebraic_proof', '_ap_i_identity_expand'),
+        ('surds', 'gcse_surds_identity'),
+    )
+    for topic, name in expanded:
+        for _ in range(4):
+            if topic == 'algebra':
+                problem = gcse_maths_algebra('intermediate', 'practice', variant_name=name)
+            elif topic == 'surds':
+                problem = gcse_maths_surds('intermediate', 'practice', variant_name=name)
+            else:
+                problem = gcse_algebraic_proof('intermediate', 'practice', variant_name=name)
+            assert problem.get('answer_type') == 'algebraic', name
+            assert problem.get('answer_form') == 'expanded', name
+            key = problem['correct_answer_raw']
+            assert check_answer('algebraic', key, key, form='expanded')['correct'] is True, (name, key)
+    for _ in range(6):
+        problem = gcse_maths_algebra('intermediate', 'practice', variant_name='algebra_practice_factorise_hcf')
+        assert problem['answer_type'] == 'algebraic' and problem['answer_form'] == 'factorised'
+        key = problem['correct_answer_raw']
+        assert check_answer('algebraic', key, key, form='factorised')['correct'] is True, key
+        # the keyed answer's expansion is equal but not factorised
+        from sympy.parsing.sympy_parser import (
+            implicit_multiplication_application, parse_expr, standard_transformations,
+        )
+        flat = str(sp.expand(parse_expr(
+            key, transformations=standard_transformations + (implicit_multiplication_application,)
+        ))).replace('**', '^')
+        r = check_answer('algebraic', key, flat, form='factorised')
+        assert r['correct'] is False and r['wrong_form'] == 'unfactorised', (key, flat, r)
+    # an answer that asks for no form carries none
+    assert 'answer_form' not in gcse_maths_algebra(
+        'intermediate', 'practice', variant_name='algebra_practice_change_subject')
+
+
+def test_answer_form_check_api_is_session_bound():
+    problem = gcse_maths_algebra(
+        'intermediate', 'practice', variant_name='algebra_practice_expand_binomial'
+    )
+    assert problem['answer_form'] == 'expanded'
+    key = problem['correct_answer_raw']
+    # the pupil-visible product, typed back as the unexpanded answer
+    m_ = re.search(r'\(([^()]+)\)\s*\(([^()]+)\)', problem['question'])
+    assert m_, problem['question']
+    unexpanded = f'({m_.group(1)})({m_.group(2)})'.replace(' ', '')
+    with app.test_client() as client:
+        r = _post_problems_check(
+            client,
+            {'user_answer': unexpanded, 'correct_answer_raw': key, 'answer_type': 'algebraic'},
+            problem=problem,
+        )
+        assert r.status_code == 200, r.data
+        data = r.get_json()
+        assert data['correct'] is False
+        assert data['feedback'] == "That's equal, but the question asks you to expand it."
+        r = _post_problems_check(
+            client,
+            {'user_answer': key.replace('**', '^'), 'correct_answer_raw': key, 'answer_type': 'algebraic'},
+            problem=problem,
+        )
+        assert r.get_json()['correct'] is True
+        # the form is never taken from the request
+        for body_form in (None, '', 'factorised', 'simplest_surd'):
+            body = {'user_answer': unexpanded, 'correct_answer_raw': key, 'answer_type': 'algebraic',
+                    'answer_form': body_form, 'form': body_form}
+            r = _post_problems_check(client, body, problem=problem)
+            assert r.get_json()['correct'] is False, body_form
+        # the same problem stored without a form keeps the old value-only check
+        bare = {k: v for k, v in problem.items() if k != 'answer_form'}
+        r = _post_problems_check(
+            client,
+            {'user_answer': unexpanded, 'correct_answer_raw': key, 'answer_type': 'algebraic'},
+            problem=bare,
+        )
+        assert r.get_json()['correct'] is True
+        # the form does not travel to the client
+        from app import _problem_client_payload
+        assert 'answer_form' not in _problem_client_payload(problem)
+
+
+def test_formula_fraction_equivalence():
+    ok = [
+        ('d-b|a-c', 'd-b|a-c'), ('d-b|a-c', 'b-d|c-a'), ('d-b|a-c', '-(b-d)|a-c'),
+        ('d-b|a-c', '(d-b)/2|(a-c)/2'), ('d-b|a-c', 'd - b|a - c'), ('d-b|a-c', 'x=d-b|a-c'),
+        ('p-1|6', '2p-2|12'), ('p-1|6', '(p-1)/2|3'), ('p-1|6', '1-p|-6'), ('p-1|6', 'p/6-1/6|1'),
+        ('s|7', 's|7'), ('s|7', '2s|14'), ('y-3|2', 'y-3|2'), ('y-3|2', '-y+3|-2'),
+    ]
+    for key, typed in ok:
+        r = check_answer('formula_fraction', key, typed, subject='x')
+        assert r['correct'] is True, (key, typed, r)
+    bad = [
+        ('d-b|a-c', 'd-b|c-a'), ('d-b|a-c', 'a-c|d-b'), ('d-b|a-c', 'd+b|a-c'), ('d-b|a-c', 'd-b|0'),
+        ('p-1|6', 'p-1|3'), ('p-1|6', 'p+1|6'), ('p-1|6', '6|p-1'), ('s|7', '7|s'), ('s|7', 's|0'),
+    ]
+    for key, typed in bad:
+        r = check_answer('formula_fraction', key, typed, subject='x')
+        assert r['correct'] is False, (key, typed, r)
+        assert 'wrong_letter' not in r
+    # the subject letter: x = ... is fine for subject x, y = ... is not; with no known subject any "=" is refused
+    assert check_answer('formula_fraction', 'd-b|a-c', 'x=d-b|a-c', subject='x')['correct'] is True
+    r = check_answer('formula_fraction', 'd-b|a-c', 'y=d-b|a-c', subject='x')
+    assert r['correct'] is False and r['wrong_letter'] is True
+    assert check_answer('formula_fraction', 'd-b|a-c', 'x=d-b|a-c')['correct'] is False
+    # the usual structural messages are kept
+    assert check_answer('formula_fraction', 'd-b|a-c', '')['feedback'] == 'Enter the numerator and denominator.'
+    assert check_answer('formula_fraction', 'd-b|a-c', 'd-b')['feedback'] == 'Enter both the numerator and denominator.'
+    assert check_answer('formula_fraction', 'd-b|a-c', 'd-b|a-c|extra')['correct'] is False
+
+
+def test_sympy_inputs_are_capped_and_fast():
+    import time
+
+    bombs = [
+        '9**9**9**9', '(x+1)**99999', '((9**10)**10)**10', '9^9^9^9', 'x**x', 'x**(1/0)',
+        '(a+b+c+d+e+f)**12*(a+b+c+d+e+f)**12', '((a+b+c+d+e+f)**2+(a+b)**2)**4',
+        '(' * 150 + 'x' + ')' * 150, '+'.join(['x'] * 120), 'a+b+c+d+e+f+g', '99999999999999999999',
+        '__import__("os").system("true")', 'x' * 500, '(x+1)**2**2**2', '1' + '0' * 60 + '*x',
+        # a short product of many brackets: within the degree caps but about 12 s to expand before the term cap
+        ''.join(f'(a{s1}b{s2}c{s3}d+e+f)' for s1 in '+-' for s2 in '+-' for s3 in '+-') + '(a+b+c-d-e+f)'
+        '(a-b+c-d-e+f)(a+b-c-d-e+f)',
+        '(a+b+c+d+e+f)^4(a-b+c-d+e-f)^4', '(a+b+c+d+e+f)^8',
+        # one-letter SymPy names (N runs while the text is parsed), tuples
+        'N(pi,99999999)', 'N(pi, 9999999)', 'S(9)**S(9)', '(1,2)', 'x,y',
+    ]
+    start = time.time()
+    for bomb in bombs:
+        for kind, key in (('algebraic', 'x+1'), ('formula_fraction', 'x+1|2'), ('quadratic_roots', '1,2')):
+            typed = bomb if kind != 'formula_fraction' else f'{bomb}|{bomb}'
+            for form in (None, 'expanded', 'factorised'):
+                if kind != 'algebraic' and form:
+                    continue
+                t0 = time.time()
+                try:
+                    r = check_answer(kind, key, typed, form=form)
+                    assert r['correct'] is False, (kind, bomb[:40], form, r)
+                except ValueError:
+                    pass
+                assert time.time() - t0 < 2, (kind, bomb[:40], form)
+    assert time.time() - start < 20
+    # each part of a formula fraction can pass the caps alone; together they must not reach cancel()
+    t0 = time.time()
+    r = check_answer('formula_fraction', 'x+1|2', '(a+b+c+d+e+f)^8|(a-b+c-d+e-f)^8', subject='x')
+    assert r['correct'] is False and time.time() - t0 < 2
+    from generators.shared.answer_checkers import _safe_sympify
+    t0 = time.time()
+    assert _safe_sympify('N(pi,99999999)') is None and _safe_sympify('(1,2)') is None
+    assert time.time() - t0 < 1
+    # a capital letter is a plain letter, not a SymPy object (E, I, N, O, Q, S)
+    assert str(_safe_sympify('N+E')) in ('E + N', 'N + E') and _safe_sympify('I**2') is not None
+    # ordinary pupil algebra stays inside the caps
+    for typed in ('(x+3)^2', '(2x+1)^3', '(x+1)^4-(x-1)^4', '(a+b)^2', 'x^8', '3x^2y^2+5xy', 'sqrt(2)x+1'):
+        assert check_answer('algebraic', typed.replace('^', '**'), typed)['correct'] is True, typed
+    assert check_answer('formula_fraction', 'a^2+b^2|2', 'a^2+b^2|2')['correct'] is True
+
+
+def test_formula_fraction_check_api_is_session_bound():
+    problem = gcse_equations_inequalities(
+        'difficult', 'practice', variant_name='_eq_diff_subject_appears_twice'
+    )
+    assert problem['answer_type'] == 'formula_fraction' and problem['answer_subject'] == 'x'
+    correct = problem['correct_answer_raw']
+    assert correct == 'd-b|a-c'
+    body = {
+        'level': 'gcse', 'subject': 'maths', 'topic': 'equations_inequalities', 'difficulty': 'difficult',
+        'correct_answer_raw': correct, 'answer_type': 'formula_fraction',
+    }
+    assert 'formula_fraction' in __import__(
+        'generators.shared.answer_checkers', fromlist=['x']
+    ).SYMPY_ANSWER_TYPES
+    with app.test_client() as client:
+        # no session: the client may not supply the key or the type for this answer type
+        with client.session_transaction() as sess:
+            sess.pop('last_problem_payload', None)
+        r = client.post('/api/v1/problems/check', json={**body, 'user_answer': 'd - b|a - c'})
+        assert r.status_code == 400 and r.get_json()['code'] == 'session_required', r.data
+        # session bound: equivalent rearrangements are accepted, wrong ones are not
+        for typed, expected in (
+            ('d - b|a - c', True), ('b-d|c-a', True), ('2d-2b|2a-2c', True),
+            ('d-b|c-a', False), ('a-c|d-b', False), ('x=d-b|a-c', True), ('y=d-b|a-c', False),
+        ):
+            r = _post_problems_check(client, {**body, 'user_answer': typed}, problem=problem)
+            assert r.status_code == 200, (typed, r.data)
+            assert r.get_json()['correct'] is expected, typed
+        # a client cannot swap the key for another once the session holds the real one
+        r = _post_problems_check(
+            client, {**body, 'correct_answer_raw': 'z|1', 'user_answer': 'z|1'}, problem=problem
+        )
+        assert r.status_code == 403 and r.get_json()['code'] == 'session_mismatch'
+        # nothing about the key travels to the client beyond what it already did
+        from app import _problem_client_payload
+        client_payload = _problem_client_payload(problem)
+        assert client_payload['correct_answer_raw'] == correct
+        assert 'answer_form' not in client_payload
+
+
+def test_checker_linear_letter():
+    # the key names x, the pupil names y
+    for typed in ('y=2', 'y = 2', 'n=2', 'w = 2'):
+        r = check_linear('x=2', typed)
+        assert r['correct'] is False and r['wrong_letter'] is True, typed
+        assert r['feedback'] == 'Check the letter. This question asks you to find x.'
+        _assert_pupil_copy(r['feedback'])
+    for typed in ('x=2', 'x = 2', 'X=2', '2', ' 2 ', '2.0'):
+        assert check_linear('x=2', typed)['correct'] is True, typed
+    # right letter, wrong value: the ordinary message
+    r = check_linear('x=2', 'x=3')
+    assert r['correct'] is False and 'wrong_letter' not in r and r['feedback'] == 'Not quite — check your value.'
+    assert check_linear('t=-1.5', 't=-3/2')['correct'] is True
+    assert check_linear('t=-1.5', 'x=-1.5')['correct'] is False
+    # a key with no letter behaves as before: any letter, or none
+    for typed in ('2', 'x=2', 'y=2', 'n = 2'):
+        assert check_linear('2', typed)['correct'] is True, typed
+    assert check_answer('linear', 'w=12', 'y=12')['correct'] is False
+    assert check_answer('linear', 'w=12', '12')['correct'] is True
+
+
+def test_linear_generators_name_a_letter_the_question_uses():
+    import generators.gcse.maths as m
+    import re as _re
+
+    for name in ('algebra_practice_linear_1', 'algebra_practice_linear_both_sides',
+                 'algebra_practice_brackets_both_sides'):
+        problem = _algebra_problem_from_output(getattr(m, name)(), 'foundational')
+        key = problem['correct_answer_raw']
+        letter = (_re.match(r'\s*([A-Za-z])\s*=', key) or [None, None])[1]
+        text = _re.sub(r'<[^>]+>', ' ', problem['question'])
+        if letter:
+            assert _re.search(rf'(?<![A-Za-z]){letter}(?![A-Za-z])', text), (name, key, text)
+        # whatever the key says, the letter the question uses is accepted with the value
+        value = key.split('=')[-1]
+        assert check_answer('linear', key, f'x = {value}')['correct'] is (letter in (None, 'x')), (name, key)
+
+
+def test_check_surd_simplest_form():
+    key = '18|10'                         # 18 root 10
+    for typed in ('18√10', '18*sqrt(10)', '18 √10', '18√(10)', '√10×18', '√10*18', '√10·18', 'sqrt(10)*18'):
+        assert check_answer('surd', key, typed, form='simplest_surd')['correct'] is True, typed
+    for typed in ('√(3240)', '√90×6'):
+        assert check_answer('surd', key, typed, form='simplest_surd').get('wrong_form') == 'surd_not_simplest'
+    for typed in ('√3240', 'sqrt(3240)', '6√90', '3√360', '2√810'):
+        r = check_answer('surd', key, typed, form='simplest_surd')
+        assert r['correct'] is False and r['wrong_form'] == 'surd_not_simplest', (typed, r)
+        assert r['feedback'].startswith("That's equal, but the surd can be simpler.")
+    # without the flag the old value check still accepts them
+    for typed in ('√3240', '6√90'):
+        assert check_answer('surd', key, typed)['correct'] is True, typed
+    # different values are ordinary wrongs
+    r = check_answer('surd', key, '17√10', form='simplest_surd')
+    assert r['correct'] is False and 'wrong_form' not in r
+    assert check_answer('surd', '5', '√5', form='simplest_surd')['correct'] is True
+    assert check_answer('surd', '1|5', '√20', form='simplest_surd')['correct'] is False
+    # rationalised fractions: k root r over n in lowest terms with a square-free radicand
+    for typed in ('√6|3', '1√6|3', '√6/3', 'sqrt(6)/3', '√(6)/3', '√(6)|3'):
+        assert check_answer('algebraic_fraction', '1|6|3', typed, form='simplest_surd')['correct'] is True, typed
+    for typed in ('2√6|6', '√24|6', '6√6|18', '2√6/6'):
+        r = check_answer('algebraic_fraction', '1|6|3', typed, form='simplest_surd')
+        assert r['correct'] is False and r['wrong_form'] == 'fraction_not_simplest', (typed, r)
+        _assert_pupil_copy(r['feedback'])
+        assert check_answer('algebraic_fraction', '1|6|3', typed)['correct'] is True, typed
+    assert check_answer('algebraic_fraction', '1|6|3', '√6|2', form='simplest_surd')['correct'] is False
+
+
+def test_check_algebraic_simplified_form():
+    key = 'x+4'
+    for typed in ('x+4', '4+x', 'x + 4', '(x+4)', '(2x+8)/2'):
+        assert check_answer('algebraic', key, typed, form='simplified')['correct'] is True, typed
+    # the question's own fraction, or a factorised fraction not yet cancelled: equal, so the kind message
+    for typed in ('(x^2-16)/(x-4)', '(x-4)(x+4)/(x-4)', '(x+4)(x-4)/(x-4)', '(x^2-16)(x-4)^-1'):
+        r = check_answer('algebraic', key, typed, form='simplified')
+        assert r['correct'] is False and r['wrong_form'] == 'not_simplified', (typed, r)
+        assert r['feedback'].startswith("That's equal, but it can be simpler. Factorise")
+        _assert_pupil_copy(r['feedback'])
+        assert check_answer('algebraic', key, typed)['correct'] is True, typed     # value check unchanged
+    r = check_answer('algebraic', key, 'x+5', form='simplified')
+    assert r['correct'] is False and 'wrong_form' not in r
+    # a key that is itself a fraction never insists on a whole answer
+    assert check_answer('algebraic', '1/(x+1)', '2/(2x+2)', form='simplified')['correct'] is True
+
+
+def test_algebraic_fraction_simplify_generators_carry_form():
+    from generators.gcse.algebraic_fractions import gcse_algebraic_fractions
+
+    for name in ('_af_i_difference_of_squares', '_af_i_quadratic_cancel'):
+        for _ in range(6):
+            problem = gcse_algebraic_fractions('intermediate', 'practice', variant_name=name)
+            assert problem['answer_type'] == 'algebraic' and problem['answer_form'] == 'simplified', name
+            key = problem['correct_answer_raw']
+            assert check_answer('algebraic', key, key, form='simplified')['correct'] is True, (name, key)
+            m_ = re.search(r'\\dfrac\{([^{}]+)\}\{([^{}]+)\}', problem['question'])
+            assert m_, problem['question']
+            own = f'({m_.group(1)})/({m_.group(2)})'.replace(' ', '')
+            r = check_answer('algebraic', key, own, form='simplified')
+            assert r['correct'] is False and r['wrong_form'] == 'not_simplified', (name, own, r)
+    # through the API the form comes from the stored problem only
+    problem = gcse_algebraic_fractions('intermediate', 'practice', variant_name='_af_i_difference_of_squares')
+    m_ = re.search(r'\\dfrac\{([^{}]+)\}\{([^{}]+)\}', problem['question'])
+    own = f'({m_.group(1)})/({m_.group(2)})'.replace(' ', '')
+    with app.test_client() as client:
+        r = _post_problems_check(
+            client,
+            {'user_answer': own, 'correct_answer_raw': problem['correct_answer_raw'], 'answer_type': 'algebraic'},
+            problem=problem,
+        )
+        assert r.status_code == 200, r.data
+        data = r.get_json()
+        assert data['correct'] is False and 'Factorise the top' in data['feedback'], data
+        # the response says only which kind of form was missing, never the stored form itself
+        assert data.get('wrong_form') == 'not_simplified' and 'answer_form' not in data, data
+        stored = dict(problem)
+        stored.pop('answer_form')
+        r = _post_problems_check(
+            client,
+            {'user_answer': own, 'correct_answer_raw': problem['correct_answer_raw'], 'answer_type': 'algebraic',
+             'answer_form': 'simplified', 'form': 'simplified'},
+            problem=stored,
+        )
+        assert r.get_json()['correct'] is True     # a form sent by the client is ignored
+
+
+def test_surd_simplify_generators_carry_form():
+    import generators.gcse.maths as m
+    import re as _re
+
+    flagged = (
+        m.gcse_surds_simplify, m.gcse_surds_simplify_multiple, m.gcse_surds_add_subtract,
+        m.gcse_surds_exact_area, m.gcse_surds_expand_diff_subtract,
+        m.gcse_surds_practice_mixed_simplify, m.gcse_surds_practice_divide,
+    )
+    for fn in flagged:
+        got = 0
+        for _ in range(80):            # divide / multiply return a plain number most of the time
+            problem = _surd_problem_from_output(fn(), 'intermediate')
+            if problem.get('answer_type') == 'surd':
+                got += 1
+                assert problem.get('answer_form') == 'simplest_surd', fn.__name__
+                key = problem['correct_answer_raw']
+                assert check_answer('surd', key, key.replace('|', '√') if '|' in key else '√' + key,
+                                    form='simplest_surd')['correct'] is True, (fn.__name__, key)
+        assert got, fn.__name__
+    # multiply returns a plain number when the product is a perfect square, a surd otherwise
+    flagged_multiply = [
+        _surd_problem_from_output(m.gcse_surds_multiply(), 'foundational') for _ in range(12)
+    ]
+    assert all(
+        p.get('answer_form') == 'simplest_surd' for p in flagged_multiply if p['answer_type'] == 'surd'
+    )
+    for _ in range(12):
+        problem = _surd_problem_from_output(m.gcse_surds_rationalise_simple(), 'intermediate')
+        assert problem.get('answer_form') == 'simplest_surd', problem['answer_type']
+    # "exact answer" questions that never say simplify are left alone
+    perimeter = _surd_problem_from_output(m.gcse_surds_practice_perimeter_exact(), 'intermediate')
+    assert 'answer_form' not in perimeter
+
+
+def test_surd_form_check_api_is_session_bound():
+    problem = _surd_problem_from_output(
+        __import__('generators.gcse.maths', fromlist=['x']).gcse_surds_simplify(), 'foundational'
+    )
+    assert problem['answer_form'] == 'simplest_surd'
+    key = problem['correct_answer_raw']
+    coeff, rad = key.split('|') if '|' in key else ('1', key)
+    unsimplified = f'√{int(coeff) ** 2 * int(rad)}'
+    with app.test_client() as client:
+        with client.session_transaction() as sess:
+            sess['last_problem_payload'] = {
+                'level': 'gcse', 'subject': 'maths', 'topic': 'surds', 'mode': 'practice',
+                'difficulty': 'foundational', 'problem': problem,
+            }
+        body = {'user_answer': unsimplified, 'correct_answer_raw': key, 'answer_type': 'surd'}
+        r = client.post('/api/v1/problems/check', json=body)
+        data = r.get_json()
+        assert r.status_code == 200 and data['correct'] is False, data
+        assert data['feedback'].startswith("That's equal, but the surd can be simpler.")
+        right = f'{coeff}√{rad}' if coeff != '1' else f'√{rad}'
+        r = client.post('/api/v1/problems/check', json={**body, 'user_answer': right})
+        assert r.get_json()['correct'] is True
+
+
+def test_grid_estimate_tolerance_rule():
+    from generators.shared.utils import grid_estimate_tolerance, problem_extra_from_graded_answer
+
+    assert grid_estimate_tolerance(1) == 0.5
+    assert grid_estimate_tolerance(2) == 1
+    assert grid_estimate_tolerance(5) == 2.5
+    assert grid_estimate_tolerance(6) == 3
+    assert grid_estimate_tolerance(10) == 5
+    assert grid_estimate_tolerance(0.5) == 0.25
+    assert grid_estimate_tolerance(20) == 10
+    for bad in (0, -3):
+        try:
+            grid_estimate_tolerance(bad)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('a non-positive spacing must be refused')
+    # a generator passing the grid spacing gets half a square; without one the explicit band is the fallback
+    spaced = problem_extra_from_graded_answer(
+        {'type': 'number_estimate', 'value': 33, 'grid_spacing': 6, 'tolerance': 9}
+    )
+    assert spaced['correct_answer_raw'] == '33~3'
+    fallback = problem_extra_from_graded_answer({'type': 'number_estimate', 'value': 33, 'tolerance': 4})
+    assert fallback['correct_answer_raw'] == '33~4'
+    # the checker reads fractional bands
+    assert check_number_estimate('33~2.5', '35.5')['correct'] is True
+    assert check_number_estimate('33~2.5', '35.6')['correct'] is False
+    assert check_number_estimate('33~0.5', '33.5')['correct'] is True
+
+
+def test_probability_form_takes_percentages():
+    # leading-dot decimals read everywhere
+    assert check_answer('fraction', '3/8', '.375')['correct'] is True
+    assert check_answer('number', '0.51', '.51')['correct'] is True
+    assert check_answer('number', '-0.5', '-.5')['correct'] is True
+    # without the form a percentage is still refused, with it fraction, decimal and percentage all work
+    assert check_answer('fraction', '3/8', '37.5%')['correct'] is False
+    assert check_answer('number', '0.51', '51%')['correct'] is False
+    for typed in ('3/8', '6/16', '0.375', '.375', '37.5%', '37.5 %', ' 37.5% '):
+        assert check_answer('fraction', '3/8', typed, form='probability')['correct'] is True, typed
+    for typed in ('0.51', '.51', '51%', '51 %', '51/100'):
+        assert check_answer('number', '0.51', typed, form='probability')['correct'] is True, typed
+    # wrong values and odd input are still wrong
+    for typed in ('37%', '38.5%', '3.75%', '%', '37.5%%', '1e2%', '-37.5%', '37.5 percent', '3/8%'):
+        assert check_answer('fraction', '3/8', typed, form='probability')['correct'] is False, typed
+    for typed in ('50%', '5.1%', '510%', '0.51%'):
+        assert check_answer('number', '0.51', typed, form='probability')['correct'] is False, typed
+    assert check_answer('fraction', '1', '100%', form='probability')['correct'] is True
+    assert check_answer('fraction', '1/4', '25%')['correct'] is False
+    # a rounded recurring decimal is refused kindly, never accepted
+    r = check_answer('fraction', '1/3', '0.333', form='probability')
+    assert r['correct'] is False and r['feedback'].startswith('Close.'), r
+    _assert_pupil_copy(r['feedback'])
+    assert check_answer('fraction', '1/3', '0.5', form='probability')['feedback'].startswith('Not quite')
+    assert check_answer('fraction', '1/3', '1/3', form='probability')['correct'] is True
+    # long and odd percentage input stays cheap
+    assert check_answer('fraction', '3/8', '9' * 5000 + '%', form='probability')['correct'] is False
+    # the app passes the stored form to both types, and an unknown form is still an error
+    from generators.shared.answer_checkers import FORM_AWARE_ANSWER_TYPES
+    assert {'fraction', 'number'} <= FORM_AWARE_ANSWER_TYPES
+
+
+def test_probability_generators_carry_the_form():
+    import generators.gcse.maths_num_stats_prob_rat as g
+    carried = 0
+    for diff in ('foundational', 'intermediate', 'difficult'):
+        for _ in range(3):
+            for fn in g.gcse_probability_variants(diff, 'practice'):
+                p = g._prob_problem_from_output(fn(), diff)
+                text = re.sub(r'<[^>]+>', ' ', p['question'])
+                asks = re.search(r'\bP\(|probability', text, re.I) and p.get('answer_type') in ('fraction', 'number')
+                value = p.get('correct_answer_raw')
+                try:
+                    from fractions import Fraction
+                    is_prob = 0 <= Fraction(str(value)) <= 1
+                except (ValueError, ZeroDivisionError):
+                    is_prob = False
+                if asks and is_prob:
+                    assert p.get('answer_form') == 'probability', (fn.__name__, text[-80:])
+                    carried += 1
+                else:
+                    assert p.get('answer_form') in (None, 'probability'), fn.__name__
+                    if p.get('answer_form'):
+                        assert re.search(r'\bP\(|probability', text, re.I), (fn.__name__, text[-80:])
+    assert carried > 20
+
+
+def test_keyword_single_letter_and_transformation_words():
+    # a one-letter key is the letter, not any word that happens to contain it
+    for typed in ('a', 'A', 'vector a', 'a is longer', 'a is larger than b', 'Vector A has the greater magnitude'):
+        assert check_answer('keyword', 'a', typed)['correct'] is True, typed
+    for typed in ('b', 'b is larger', 'b is greater', 'vector b', 'both', 'ab', 'neither', 'banana'):
+        assert check_answer('keyword', 'a', typed)['correct'] is False, typed
+    for typed in ('b', 'b is bigger than a', 'b has a greater magnitude'):
+        assert check_answer('keyword', 'b', typed)['correct'] is True, typed
+    for typed in ('a', 'a is bigger', 'vector a', 'ab'):
+        assert check_answer('keyword', 'b', typed)['correct'] is False, typed
+    # transformation names: the noun or the verb
+    for key, ok in (('reflection', ('reflection', 'a reflection', 'reflect', 'reflected in the line y = x')),
+                    ('rotation', ('rotation', 'rotate', 'rotated 90 degrees')),
+                    ('translation', ('translation', 'translate', 'translated')),
+                    ('enlargement', ('enlargement', 'enlarge', 'enlarged'))):
+        for typed in ok:
+            assert check_answer('keyword', key, typed)['correct'] is True, (key, typed)
+        others = {'reflection', 'rotation', 'translation', 'enlargement'} - {key}
+        for other in others:
+            assert check_answer('keyword', key, other)['correct'] is False, (key, other)
+
+
+def test_vector_column_typed_forms():
+    key = '3|-4'
+    for typed in ('(3, -4)', '3,-4', '( 3 , \u22124 )', '[3,-4]', '3 -4', '(3 -4)', '3 , -4', '3, -4.0',
+                  '\\begin{pmatrix}3\\\\-4\\end{pmatrix}', 'column (3,-4)'):
+        assert check_answer('vector', key, typed)['correct'] is True, typed
+    for typed in ('(-4, 3)', '(3, 4)', '3', '3 4 5', '(3,-4,1)', '', 'three, minus four'):
+        assert check_answer('vector', key, typed)['correct'] is False, typed
+    assert check_answer('vector', '1/2|3', '(0.5, 3)')['correct'] is True
+    assert check_answer('vector', '1/2|3', '1/2 3')['correct'] is True
+
+
+def test_phase3_review_typed_forms():
+    """Pupil spellings closed in the Phase 3 review: single-character fractions, x = 3, y = -4 for a column
+    vector, a coefficient typed with its vector name (1/2AB), and a lone y or n for a yes/no question."""
+    import time
+    from generators.shared.answer_checkers import check_number_fields
+    # ½ and friends, alone, as a mixed number and inside algebra
+    for kind, key, typed in (
+        ('fraction', '1/2', '½'), ('fraction', '5/2', '2½'), ('fraction', '5/2', '2 ½'), ('fraction', '-5/2', '\u22122½'),
+        ('fraction', '3/4', '¾'), ('fraction', '1/3', '⅓'), ('fraction', '1/2', '1\u20442'), ('number', '0.5', '½'),
+        ('number', '2.25', '2¼'), ('algebraic', 'x/2', '½x'), ('algebraic', '7x/2', '3½x'), ('algebraic', 'x+7/2', 'x+3½'),
+        ('vector', '1/2|3', '(½, 3)'), ('vector_combo', '-4/5|1/5', '-⅘|⅕'),
+    ):
+        assert check_answer(kind, key, typed)['correct'] is True, (kind, key, typed)
+    assert check_answer('fraction', '1/4', '25%', form=None)['correct'] is False
+    assert check_answer('fraction', '1/2', '½', form='probability')['correct'] is True
+    assert check_number_fields('1/2|3', '½|3')['correct'] is True
+    # a digit never runs into the fraction: 3½ is three and a half, never 31/2
+    for kind, key, typed in (('algebraic', 'x+31/2', 'x+3½'), ('fraction', '31/2', '3½'), ('number', '1.5', '½'),
+                             ('fraction', '1/2', '½½'), ('fraction', '1/2', '½/'), ('algebraic', 'x+1', '½x+1')):
+        assert check_answer(kind, key, typed)['correct'] is False, (kind, key, typed)
+    # long or repeated input stays cheap and is refused
+    t0 = time.time()
+    for kind, key in (('fraction', '1/2'), ('number', '0.5'), ('algebraic', 'x+1'), ('vector', '1|2'),
+                      ('vector_combo', '1|2'), ('surd', '2|3'), ('formula_fraction', 'x+1|2')):
+        for typed in ('½' * 399, '½' * 5000, '9' * 300 + '½', '(½' * 150 + ')' * 150, '½**½**½**½**½'):
+            try:
+                r = check_answer(kind, key, typed)
+                assert r['correct'] is False, (kind, typed[:20])
+            except ValueError:
+                pass
+    assert time.time() - t0 < 5
+    # column vectors written with x = and y =
+    for typed in ('x=3, y=-4', 'x = 3, y = \u22124', 'y = -4, x = 3', 'x=3 y=-4', 'X=3; Y=-4', 'x = 3 and y = -4'):
+        assert check_answer('vector', '3|-4', typed)['correct'] is True, typed
+    for typed in ('x=-4, y=3', 'x=3, x=-4', 'y=3, y=-4', 'x=3', 'x=3, y=4', 'x=3, y=-4, z=1'):
+        assert check_answer('vector', '3|-4', typed)['correct'] is False, typed
+    # a coefficient with its vector name, read only when the name is that box's label (stored labels)
+    for labels, key, typed in ((['AB'], '1/2', '1/2AB'), (['AB'], '1/2', '½AB'), (['AB'], '1/2', 'AB/2'),
+                               (['AB'], '-1/2', '-1/2 AB'), (['b', 'c'], '-4/5|1/5', '-4/5b|1/5c'),
+                               (['b', 'c'], '-1|1', '-b|c'), (['b', 'c'], '-4/5|1/5', '-4/5|1/5c')):
+        assert check_answer('vector_combo', key, typed, labels=labels)['correct'] is True, (labels, typed)
+    for labels, key, typed in ((['AB'], '1/2', '1/2b'), (['b', 'c'], '-4/5|1/5', '-4/5c|1/5b'),
+                               (['b', 'c'], '-1|1', '-b|b'), (['b', 'c'], '-4/5|1/5', '4/5b|1/5c'),
+                               (None, '1/2', '1/2AB'), (['AB'], '1/2', '1/2ABAB'), (['AB'], '1/2', 'AB/0')):
+        assert check_answer('vector_combo', key, typed, labels=labels)['correct'] is False, (labels, typed)
+    # a lone y or n answers a yes/no key, and only that
+    for key, typed, ok in (('yes', 'y', True), ('yes', 'Y', True), ('no', 'n', True), ('no', 'N', True),
+                           ('yes', 'n', False), ('no', 'y', False), ('a', 'y', False), ('none', 'n', False),
+                           ('yes', 'they are not parallel', False)):
+        assert check_answer('keyword', key, typed)['correct'] is ok, (key, typed)
+    # the app reads the labels from the stored problem only
+    problem = gcse_vectors('difficult', 'practice', variant_name='_vectors_diff_trapezium_ratio')
+    assert problem['answer_type'] == 'vector_combo' and problem['answer_labels'] == ['AB']
+    body = {'level': 'gcse', 'subject': 'maths', 'topic': 'vectors', 'difficulty': 'difficult',
+            'correct_answer_raw': problem['correct_answer_raw'], 'answer_type': 'vector_combo'}
+    with app.test_client() as client:
+        _bind_check_session(client, level='gcse', subject='maths', topic='vectors', difficulty='difficult',
+                            correct_answer_raw=problem['correct_answer_raw'], answer_type='vector_combo',
+                            problem=problem)
+        r = client.post('/api/v1/problems/check', json={**body, 'user_answer': '1/2AB'})
+        assert r.status_code == 200 and r.get_json()['correct'] is True, r.data
+        r = client.post('/api/v1/problems/check', json={**body, 'user_answer': '1/2DC'})
+        assert r.status_code == 200 and r.get_json()['correct'] is False, r.data
+        # labels sent in the body are ignored
+        r = client.post('/api/v1/problems/check', json={**body, 'user_answer': '1/2DC', 'answer_labels': ['DC']})
+        assert r.get_json()['correct'] is False, r.data
+
+
+def test_ordered_proof_accepts_any_valid_order():
+    """An ordered proof carries which steps need which (answer_step_prereqs, server side). Any order that puts
+    every step after the steps it needs is correct; swapping dependent steps, or using a wrong, missing or
+    repeated step, is not. The listed key stays the one canonical order."""
+    import itertools
+    import time
+    from generators.shared.answer_checkers import check_proof_steps, problem_answer_prereqs
+
+    raw = '1|s1|s2|s3|s4'
+    prereqs = {'s1': [], 's2': ['s1'], 's3': [], 's4': ['s2', 's3']}
+    valid = {('s1', 's2', 's3', 's4'), ('s3', 's1', 's2', 's4'), ('s1', 's3', 's2', 's4')}
+    for perm in itertools.permutations(['s1', 's2', 's3', 's4']):
+        got = check_proof_steps(raw, '|'.join(perm), prereqs=prereqs)['correct']
+        assert got is (perm in valid), perm
+        via_router = check_answer('proof_steps', raw, '|'.join(perm), prereqs=prereqs)['correct']
+        assert via_router is (perm in valid), perm
+    # no spec: only the canonical order, as before
+    for perm in valid - {('s1', 's2', 's3', 's4')}:
+        assert check_proof_steps(raw, '|'.join(perm))['correct'] is False, perm
+        assert check_answer('proof_steps', raw, '|'.join(perm))['correct'] is False, perm
+    # wrong, missing, repeated or extra steps never pass, even in a valid-looking order
+    for bad in ('s1|s2|s3', 's1|s2|s3|d1', 's1|s2|s3|s3', 's1|s1|s2|s3|s4', 's1|s2|d1|s4', '', 's3|s1|s2|s4|s4'):
+        assert check_proof_steps(raw, bad, prereqs=prereqs)['correct'] is False, bad
+    # the normalised key reported back is still the canonical order
+    assert check_proof_steps(raw, 's3|s1|s2|s4', prereqs=prereqs)['normalized_correct'] == 's1|s2|s3|s4'
+    assert check_proof_steps(raw, 's3|s1|s2|s4', prereqs=prereqs)['feedback'] == 'Correct!'
+    # per-step hints for a wrong order follow the prerequisites, not the canonical positions
+    wrong = check_proof_steps(raw, 's2|s3|s1|s4', prereqs=prereqs)
+    assert wrong['correct'] is False
+    status = {s['id']: s['status'] for s in wrong['step_feedback']}
+    assert status == {'s2': 'wrong_order', 's3': 'correct', 's1': 'correct', 's4': 'correct'}, status
+    for s in wrong['step_feedback']:
+        assert 'position' not in s['hint'], s
+    # a bad spec is ignored (strict canonical order), never trusted
+    malformed = [
+        {'s1': [], 's2': ['s1'], 's3': [], 's4': ['s2', 's3'], 's5': []},    # extra step
+        {'s1': [], 's2': ['s1'], 's3': []},                                   # missing step
+        {'s1': [], 's2': ['s2'], 's3': [], 's4': []},                         # self reference
+        {'s1': [], 's2': ['zz'], 's3': [], 's4': []},                         # unknown id
+        {'s1': [], 's2': 's1', 's3': [], 's4': []},                           # not a list
+        {'s1': [], 's2': [], 's3': [], 's4': []},                             # nothing needed
+        {'s1': ['s4'], 's2': ['s1'], 's3': [], 's4': ['s2', 's3']},           # a cycle
+        {'s1': ['s3'], 's2': [], 's3': [], 's4': []},                         # the canonical order breaks it
+        {'s1': [], 's2': [['s1']], 's3': [], 's4': []},                       # unhashable entry
+        {'s1': [], 's2': [1], 's3': [], 's4': []},                            # not a step id
+        {'s1': [], 's2': ('s1',) * 50, 's3': [], 's4': []},                   # longer than the proof
+        ['s1', 's2'], 'x', 7, {}, None,
+    ]
+    for bad_spec in malformed:
+        if bad_spec == {'s1': [], 's2': [], 's3': [], 's4': []}:
+            continue                                                          # well formed: any order passes
+        assert check_proof_steps(raw, 's3|s1|s2|s4', prereqs=bad_spec)['correct'] is False, bad_spec
+        assert check_proof_steps(raw, 's1|s2|s3|s4', prereqs=bad_spec)['correct'] is True, bad_spec
+    # a key with a repeated step id can not take a spec
+    assert check_proof_steps('1|s1|s2|s1', 's2|s1|s1', prereqs={'s1': [], 's2': []})['correct'] is False
+    # other proof_steps modes ignore the spec
+    assert check_proof_steps('0|c1|c2|c3', 'c3|c1|c2', prereqs=prereqs)['correct'] is True
+    assert check_proof_steps('pick|2|c1|c2|c3', 'c1|c3', prereqs=prereqs)['correct'] is True
+    assert check_proof_steps('pick|2|c1|c2|c3', 'c1|d1', prereqs=prereqs)['correct'] is False
+    # the stored problem is the only source of the spec
+    assert problem_answer_prereqs({'answer_step_prereqs': prereqs}) == prereqs
+    assert problem_answer_prereqs({'answer_step_prereqs': {}}) is None
+    assert problem_answer_prereqs({'answer_step_prereqs': 'x'}) is None
+    assert problem_answer_prereqs({}) is None and problem_answer_prereqs(None) is None
+    # the new hints meet the pupil copy rules and the Zorp line rules
+    from models import zorp_voice
+
+    hints = {s['hint'] for s in wrong['step_feedback']}
+    dup = check_proof_steps(raw, 's1|s1|s2|s3', prereqs=prereqs)
+    hints |= {s['hint'] for s in dup['step_feedback']}
+    foreign = check_proof_steps(raw, 's1|d1', prereqs=prereqs)
+    hints |= {s['hint'] for s in foreign['step_feedback']}
+    assert len(hints) >= 4, hints
+    for text in hints:
+        _assert_pupil_copy(text)
+    items = [zorp_voice.Item('answer_checkers', 0, 'zorp', 'guide_line', 'line', t) for t in sorted(hints)]
+    assert zorp_voice.lint(items) == [], zorp_voice.lint(items)
+    # long and bomb inputs: bounded work, answered fast (the app caps answers at MAX_USER_ANSWER_LEN)
+    from generators.shared.answer_checkers import MAX_USER_ANSWER_LEN
+    n = MAX_USER_ANSWER_LEN
+    ids = [f's{i}' for i in range(1, 400)]
+    big_spec = {s: ([ids[i - 1]] if i else []) for i, s in enumerate(ids)}
+    big_raw = '1|' + '|'.join(ids)
+    bombs = [
+        '|'.join(ids)[:n // 2], '|'.join(reversed(ids))[:n], 's1|' * (n // 3), 's2|s1|' * (n // 6),
+        '|' * n, ' |' * (n // 2), 's1' + ' ' * (n - 4) + 's2', 'x|' * (n // 2), '||s1' * (n // 4),
+        '|'.join(f'z{i}' for i in range(n // 4))[:n],
+    ]
+    t0 = time.time()
+    for text in bombs:
+        for spec in (None, prereqs, big_spec):
+            assert check_proof_steps(raw, text, prereqs=spec)['correct'] is False
+            assert check_answer('proof_steps', raw, text, prereqs=spec)['correct'] is False
+        assert check_proof_steps(big_raw, text, prereqs=big_spec)['correct'] is False
+    # a long chain answered in full, in order and reversed
+    assert check_proof_steps(big_raw, '|'.join(ids), prereqs=big_spec)['correct'] is True
+    assert check_proof_steps(big_raw, '|'.join(reversed(ids)), prereqs=big_spec)['correct'] is False
+    assert time.time() - t0 < 2, time.time() - t0
+
+
+def test_ordered_proof_generators_carry_alternative_orders():
+    """The similarity/congruence proofs named in the review accept the swapped steps; the spec stays on the
+    server (not in the client payload) and the request can not supply it."""
+    import generators.gcse.maths_similarity_congruence as sc_mod
+    from app import _problem_client_payload
+    from generators.shared.answer_checkers import problem_answer_prereqs
+
+    seen = set()
+    for name in ('_sc_i9_proof_aa_parallel', '_sc_d7_congruence_proof', '_sc_d1_midpoint_theorem_proof'):
+        for _ in range(8):
+            problem = make_graded_problem(getattr(sc_mod, name)(), 'difficult', 'gcse', 'maths', 'similarity_congruence')
+            raw = problem['correct_answer_raw']
+            ids = raw.split('|')[1:]
+            spec = problem_answer_prereqs(problem)
+            assert spec and set(spec) == set(ids), name
+            # the key shown to pupils is one canonical order, and that order is accepted
+            assert check_answer('proof_steps', raw, '|'.join(ids), prereqs=spec)['correct'] is True, name
+            # nothing about the spec reaches the client
+            client = _problem_client_payload(problem)
+            assert 'answer_step_prereqs' not in client and 'step_prereqs' not in str(client), name
+            assert client['correct_answer_raw'] == raw, name
+            if name == '_sc_d7_congruence_proof':
+                swapped = [ids[1], ids[0], ids[2], ids[3]]
+                assert check_answer('proof_steps', raw, '|'.join(swapped), prereqs=spec)['correct'] is True
+                assert check_answer('proof_steps', raw, '|'.join(swapped))['correct'] is False
+                # the conclusion can not come before the facts it rests on
+                early = [ids[3], ids[0], ids[1], ids[2]]
+                assert check_answer('proof_steps', raw, '|'.join(early), prereqs=spec)['correct'] is False
+            if name == '_sc_i9_proof_aa_parallel':
+                # "Angle A is common" (step 3) is independent of the parallel-lines steps (1, 2) ...
+                for order in ([ids[2], ids[0], ids[1], ids[3]], [ids[0], ids[2], ids[1], ids[3]]):
+                    assert check_answer('proof_steps', raw, '|'.join(order), prereqs=spec)['correct'] is True
+                # ... but the corresponding angles need the parallel lines first
+                dependent = [ids[1], ids[0], ids[2], ids[3]]
+                assert check_answer('proof_steps', raw, '|'.join(dependent), prereqs=spec)['correct'] is False
+            seen.add(name)
+    assert len(seen) == 3
+    # the strict chains (a step that restates the one before) keep one order
+    import generators.gcse.maths_circle_theorems as ct_mod
+    problem = make_graded_problem(ct_mod._ct_d4_alternate_segment_proof(), 'difficult', 'gcse', 'maths', 'circle_theorems')
+    assert problem_answer_prereqs(problem) is None
+
+
+def test_ordered_proof_check_api_uses_the_stored_orders():
+    """/api/v1/problems/check: the accepted orders come from the session-stored problem. A request that sends
+    its own spec, a looser key or a different type gets nothing extra, and a problem stored without a spec is
+    checked against the canonical order only."""
+    import generators.gcse.maths_similarity_congruence as sc_mod
+
+    problem = make_graded_problem(sc_mod._sc_i9_proof_aa_parallel(), 'difficult', 'gcse', 'maths', 'similarity_congruence')
+    raw = problem['correct_answer_raw']
+    ids = raw.split('|')[1:]
+    swapped = '|'.join([ids[0], ids[2], ids[1], ids[3]])
+    canonical = '|'.join(ids)
+    dependent = '|'.join([ids[1], ids[0], ids[2], ids[3]])
+
+    def post(client, answer, stored, **extra):
+        _bind_check_session(client, level='gcse', subject='maths', topic='similarity_congruence',
+                            difficulty='difficult', correct_answer_raw=raw, answer_type='proof_steps', problem=stored)
+        body = {'user_answer': answer, 'correct_answer_raw': raw, 'answer_type': 'proof_steps', **extra}
+        r = client.post('/api/v1/problems/check', json=body)
+        assert r.status_code == 200, r.data
+        return r.get_json()
+
+    with app.test_client() as client:
+        assert post(client, canonical, problem)['correct'] is True
+        assert post(client, swapped, problem)['correct'] is True
+        assert post(client, dependent, problem)['correct'] is False
+        # the request can not widen the accepted orders
+        for extra in ({'answer_step_prereqs': {s: [] for s in ids}}, {'prereqs': {s: [] for s in ids}},
+                      {'step_prereqs': {s: [] for s in ids}}):
+            assert post(client, dependent, problem, **extra)['correct'] is False, extra
+        # a problem stored without a spec accepts the canonical order only
+        bare = {k: v for k, v in problem.items() if k != 'answer_step_prereqs'}
+        assert post(client, canonical, bare)['correct'] is True
+        assert post(client, swapped, bare)['correct'] is False
+        assert post(client, swapped, bare, answer_step_prereqs={s: [] for s in ids})['correct'] is False
+        # a changed key is still a session mismatch
+        _bind_check_session(client, level='gcse', subject='maths', topic='similarity_congruence',
+                            difficulty='difficult', correct_answer_raw=raw, answer_type='proof_steps', problem=problem)
+        r = client.post('/api/v1/problems/check', json={
+            'user_answer': swapped, 'correct_answer_raw': '1|' + '|'.join(reversed(ids)), 'answer_type': 'proof_steps'})
+        assert r.status_code == 403, r.data
+    # lesson quizzes and set work grade from the stored problem too
+    from generators.shared.lesson_quiz import grade_lesson_quiz_problem as grade_quiz_answer
+    from models.class_assignments import grade_frozen_answer, strip_problem_keys
+    assert grade_frozen_answer(problem, swapped)[1] is True
+    assert grade_frozen_answer(problem, dependent)[1] is False
+    assert grade_frozen_answer(bare, swapped)[1] is False
+    assert 'answer_step_prereqs' not in strip_problem_keys(problem, reveal=False)
+    assert grade_quiz_answer(problem, swapped)['correct'] is True
+    assert grade_quiz_answer(problem, dependent)['correct'] is False
+
+
+def test_set_work_keeps_server_side_checker_fields():
+    """Set work is frozen from the client payload, which leaves out the server-side checker data (the written
+    form and the proof-step prerequisites). _freeze_problem_payload keeps them, so a frozen problem is graded
+    exactly like practice, and strip_problem_keys removes them on every way out, answered or not."""
+    import generators.gcse.maths_similarity_congruence as sc_mod
+    from app import _freeze_problem_payload, _problem_client_payload
+    from models.class_assignments import (
+        SERVER_ONLY_KEYS,
+        grade_frozen_answer,
+        serialize_preview,
+        serialize_student_work,
+        serialize_teacher_assignment,
+        strip_problem_keys,
+    )
+
+    assert set(SERVER_ONLY_KEYS) == {'answer_form', 'answer_step_prereqs'}
+    expand = gcse_maths_algebra('intermediate', 'practice', variant_name='algebra_practice_expand_binomial')
+    assert expand['answer_form'] == 'expanded'
+    m_ = re.search(r'\(([^()]+)\)\s*\(([^()]+)\)', expand['question'])
+    assert m_, expand['question']
+    unexpanded = f'({m_.group(1)})({m_.group(2)})'.replace(' ', '')
+    key = expand['correct_answer_raw'].replace('**', '^')
+    proof = make_graded_problem(sc_mod._sc_i9_proof_aa_parallel(), 'difficult', 'gcse', 'maths',
+                                'similarity_congruence')
+    ids = proof['correct_answer_raw'].split('|')[1:]
+    swapped = '|'.join([ids[0], ids[2], ids[1], ids[3]])
+    frozen_expand = _freeze_problem_payload(expand)
+    frozen_proof = _freeze_problem_payload(proof)
+    # the frozen copy keeps the checker data the client payload leaves out
+    assert 'answer_form' not in _problem_client_payload(expand)
+    assert frozen_expand['answer_form'] == 'expanded'
+    assert frozen_proof['answer_step_prereqs'] == proof['answer_step_prereqs']
+    assert 'answer_form' not in _freeze_problem_payload({k: v for k, v in expand.items() if k != 'answer_form'})
+    # graded like practice: the unexpanded product is refused, the expanded key and a valid swap pass
+    assert grade_frozen_answer(frozen_expand, unexpanded)[1] is False
+    assert grade_frozen_answer(frozen_expand, key)[1] is True
+    assert grade_frozen_answer(frozen_proof, swapped)[1] is True
+    assert grade_frozen_answer(frozen_proof, '|'.join([ids[1], ids[0], ids[2], ids[3]]))[1] is False
+    # never sent to the pupil or the teacher, before or after answering
+    for frozen in (frozen_expand, frozen_proof):
+        for reveal in (False, True):
+            out = strip_problem_keys(frozen, reveal=reveal)
+            assert not set(SERVER_ONLY_KEYS) & set(out), (reveal, sorted(out))
+        assert strip_problem_keys(frozen, reveal=True).get('correct_answer_raw') == frozen['correct_answer_raw']
+    base = {'id': 1, 'class_id': 1, 'preview_id': 1, 'level': 'gcse', 'subject': 'maths', 'topic': 'algebra', 'mode': 'practice',
+            'difficulty': 'intermediate', 'question_count': 2, 'problems': [frozen_expand, frozen_proof]}
+    student = serialize_student_work({**base, 'status': 'assigned', 'answers': [
+        {'user_answer': unexpanded, 'correct': False}, None]})
+    teacher = serialize_teacher_assignment({**base, 'recipients': []})
+    preview = serialize_preview({**base, 'problems': [frozen_expand, frozen_proof]})
+    for blob in (student, teacher, preview):
+        text = json.dumps(blob, default=str)
+        assert '"answer_form"' not in text and 'answer_step_prereqs' not in text, text[:300]
+
+
+def test_vector_and_pi_inputs_are_capped_and_fast():
+    """Long runs of spaces made the column-vector bracket pattern and the pi-suffix pattern backtrack for
+    36 s and 46 s on a 2,000-character answer (the app's limit); both now refuse long text first."""
+    import time
+    from generators.shared.answer_checkers import MAX_USER_ANSWER_LEN
+    n = MAX_USER_ANSWER_LEN - 10
+    t0 = time.time()
+    for typed in ('(' + ' ' * n + '1 2)', '(' + ' ' * n, '4' + ' ' * n + 'pi', '[' + ' ' * n + '3,-4]'):
+        assert check_answer('vector', '3|-4', typed)['correct'] is False
+        assert check_answer('pi_multiple', '4', typed)['correct'] is False
+    assert time.time() - t0 < 2, time.time() - t0
+    # ordinary answers still read
+    for typed in ('(3, -4)', '3 -4', 'x = 3, y = -4', '(' + ' ' * 40 + '3, -4)'):
+        assert check_answer('vector', '3|-4', typed)['correct'] is True, typed
+    for typed in ('4', '4π', '4 pi', '4*pi', '8π/2'):
+        assert check_answer('pi_multiple', '4', typed)['correct'] is True, typed
+    # a ½ in code, words or a choice is text: it is only read as 1/2 in maths answers
+    from generators.shared.answer_checkers import _VERBATIM_ANSWER_TYPES
+    assert {'python_run', 'sql', 'text', 'keyword', 'mcq'} <= _VERBATIM_ANSWER_TYPES
+    assert check_answer('keyword', 'half (½)', 'half (½)')['correct'] is True
+
+
+def test_graph_reading_bands_follow_the_grid():
+    import re as _re
+    import generators.gcse.maths_num_stats_prob_rat as g
+    seen = 0
+    for name in ('_gra_scatter_line_of_best_fit', '_stats_line_best_fit'):
+        fn = getattr(g, name)
+        for _ in range(6):
+            q, sol, hint, marks, raw = fn()
+            assert raw['type'] == 'number_estimate'
+            svg = q
+            pts = _re.findall(r'<circle cx="([\d.]+)" cy="([\d.]+)" r="5"', svg)
+            assert pts, name
+            # the drawn gridlines are the labelled ticks: recover the y gap from the svg itself
+            ys = sorted({float(y) for y in _re.findall(r'<line x1="68" y1="([\d.]+)" x2="418" y2="\1" stroke="#e8e4de"', svg)})
+            assert len(ys) >= 3, name
+            labels = [int(v) for v in _re.findall(r'text-anchor="end"[^>]*>(-?\d+)</text>', svg)]
+            assert labels, name
+            step = abs(sorted(set(labels))[1] - sorted(set(labels))[0])
+            assert raw['tolerance'] == step / 2, (name, raw['tolerance'], step)
+            assert raw['tolerance'] == g.grid_estimate_tolerance(step)
+            assert f'±{raw["tolerance"]}' in sol
+            seen += 1
+    assert seen >= 12
+    # cumulative frequency: the x ticks are one class width apart, so the band is half a class width
+    for _ in range(8):
+        q, sol, hint, marks, raw = g._stats_cumulative_frequency()
+        ticks = [int(v) for y, v in _re.findall(r'<text[^>]*y="(\d+)"[^>]*>(\d+)</text>', q) if y == '308']
+        width = ticks[1] - ticks[0]            # the x-axis labels sit on one baseline, a class width apart
+        assert width in (5, 10, 20) and ticks == [ticks[0] + i * width for i in range(len(ticks))], ticks
+        assert raw['tolerance'] == g.grid_estimate_tolerance(width) == width / 2
+        assert f'±{raw["tolerance"]}' in sol
+    # the key a pupil's check uses carries that band
+    problem = gcse_graphs('intermediate', 'practice', variant_name='_gra_scatter_line_of_best_fit')
+    value, tol = problem['correct_answer_raw'].split('~')
+    assert float(tol) in (0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 9, 10)
+
+
 def main():
     test_checker_unit()
     test_checker_standard_form_unit()
@@ -9764,6 +10767,33 @@ def main():
     test_saved_problem_check_saves_practice_history()
     test_shared_question_renders_trackable_free_response()
     test_suggestion_view_renders_trackable_free_response()
+    test_check_algebraic_expand_form()
+    test_check_algebraic_factorise_form()
+    test_answer_form_validation_and_copy()
+    test_expand_factorise_generators_carry_form()
+    test_answer_form_check_api_is_session_bound()
+    test_formula_fraction_equivalence()
+    test_sympy_inputs_are_capped_and_fast()
+    test_formula_fraction_check_api_is_session_bound()
+    test_checker_linear_letter()
+    test_linear_generators_name_a_letter_the_question_uses()
+    test_check_surd_simplest_form()
+    test_check_algebraic_simplified_form()
+    test_algebraic_fraction_simplify_generators_carry_form()
+    test_surd_simplify_generators_carry_form()
+    test_surd_form_check_api_is_session_bound()
+    test_grid_estimate_tolerance_rule()
+    test_graph_reading_bands_follow_the_grid()
+    test_probability_form_takes_percentages()
+    test_probability_generators_carry_the_form()
+    test_keyword_single_letter_and_transformation_words()
+    test_vector_column_typed_forms()
+    test_phase3_review_typed_forms()
+    test_vector_and_pi_inputs_are_capped_and_fast()
+    test_ordered_proof_accepts_any_valid_order()
+    test_ordered_proof_generators_carry_alternative_orders()
+    test_ordered_proof_check_api_uses_the_stored_orders()
+    test_set_work_keeps_server_side_checker_fields()
     print('test_answer_check_smoke: all checks passed')
 
 

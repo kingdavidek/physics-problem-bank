@@ -8,8 +8,10 @@ import math
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from fractions import Fraction
 
-from sympy import nsimplify, simplify, sqrt, pi
+import sympy
+from sympy import Add, Integer, Mul, Pow, expand, factor_list, nsimplify, simplify, sqrt, pi
 from sympy.core.sympify import SympifyError
+from sympy.polys.polyerrors import PolynomialError
 from sympy.parsing.sympy_parser import (
     convert_xor,
     implicit_multiplication_application,
@@ -28,10 +30,18 @@ from generators.shared.text_keywords import text_keyword_aliases, text_keyword_l
 CHECKERS: dict[str, callable] = {}
 
 # Answer types that use SymPy expression parsing — require session-bound keys on the API.
-SYMPY_ANSWER_TYPES = frozenset({'algebraic', 'quadratic_roots'})
+SYMPY_ANSWER_TYPES = frozenset({'algebraic', 'quadratic_roots', 'formula_fraction'})
 
 MAX_USER_ANSWER_LEN = 2000
 MAX_SYMPY_EXPR_LEN = 200
+# Size caps applied to every parsed pupil expression (see _within_sympy_caps).
+MAX_SYMPY_NODES = 160
+MAX_SYMPY_EXPONENT = 12           # |exponent| of any single power
+MAX_SYMPY_NESTED_EXPONENT = 100   # product of the exponents of nested powers, ((x^9)^9)^9 -> 729
+MAX_SYMPY_INT_DIGITS = 12
+MAX_SYMPY_TOTAL_POWER = 8         # sum of the exponents of every power that has a letter in its base
+MAX_SYMPY_SYMBOLS = 6
+MAX_SYMPY_EXPANDED_TERMS = 400    # bound on the terms once multiplied out (see _expanded_terms_bound)
 
 _SAFE_SYMPY_TRANSFORMATIONS = standard_transformations + (
     implicit_multiplication_application,
@@ -42,7 +52,11 @@ _SAFE_SYMPY_LOCALS = {
     'pi': pi,
 }
 _SAFE_SYMPY_IDENTIFIERS = frozenset({'sqrt', 'pi'})
-_UNSAFE_SYMPY_CHARS = frozenset('\'"[]{};@`$\\!?=%<>|&~#')
+_UNSAFE_SYMPY_CHARS = frozenset('\'"[]{};@`$\\!?=%<>|&~#,')
+# parse_expr's default namespace is `from sympy import *`, which binds the one-letter names E, I, N, O, Q
+# and S; N(pi, 99999999) then runs while the text is being parsed. Without them a capital letter is a plain
+# symbol like any other.
+_SAFE_SYMPY_GLOBALS = {name: getattr(sympy, name) for name in sympy.__all__ if len(name) > 1}
 
 
 def register_checker(name: str):
@@ -74,20 +88,105 @@ def _is_safe_math_expr(expr: str) -> bool:
     return True
 
 
+def _literal_exponent(exp):
+    """The numeric value of an exponent written as a plain number or a plain fraction, else None."""
+    if exp.is_Number:
+        return exp
+    if isinstance(exp, Mul):
+        value = Integer(1)
+        for arg in exp.args:
+            if arg.is_Number:
+                value = value * arg
+            elif isinstance(arg, Pow) and arg.args[0].is_Number and arg.args[1] == -1:
+                value = value / arg.args[0]
+            else:
+                return None
+        return value
+    return None
+
+
+def _within_sympy_caps(expr) -> bool:
+    """Reject expressions big enough to hang SymPy: huge or symbolic powers, huge numbers, huge trees.
+
+    Runs on the unevaluated tree, before anything is simplified or expanded, so a pupil typing
+    9**9**9**9 or (x+1)**99999 is refused instead of being computed.
+    """
+    nodes = 0
+    total_power = 0
+    if len(expr.free_symbols) > MAX_SYMPY_SYMBOLS:
+        return False
+    stack = [(expr, 1)]
+    while stack:
+        node, nested = stack.pop()
+        nodes += 1
+        if nodes > MAX_SYMPY_NODES:
+            return False
+        if isinstance(node, Integer) and len(str(abs(node.p))) > MAX_SYMPY_INT_DIGITS:
+            return False
+        if isinstance(node, Pow):
+            base, exponent = node.args
+            value = _literal_exponent(exponent)
+            if value is None or abs(value) > MAX_SYMPY_EXPONENT:
+                return False
+            nested *= max(1, abs(value))
+            if nested > MAX_SYMPY_NESTED_EXPONENT:
+                return False
+            if base.free_symbols:
+                total_power += nested        # effective degree of this power once outer powers are applied
+                if total_power > MAX_SYMPY_TOTAL_POWER:
+                    return False
+            stack.append((base, nested))
+            continue
+        for arg in node.args:
+            stack.append((arg, nested))
+    return _expanded_terms_bound(expr) <= MAX_SYMPY_EXPANDED_TERMS
+
+
+def _expanded_terms_bound(node) -> int:
+    """Upper bound on the number of terms once ``node`` is multiplied out.
+
+    The degree caps alone let a short product such as (a+b+c+d+e+f)(a-b+c+d+e+f)... (11 brackets,
+    143 characters) through, and expanding it took about 12 s. Sums add, products multiply, and a
+    whole-number power n of a t-term sum gives at most C(t+n-1, n) terms. Stops early once over the cap.
+    """
+    cap = MAX_SYMPY_EXPANDED_TERMS + 1
+    if isinstance(node, Add):
+        return min(cap, sum(_expanded_terms_bound(a) for a in node.args))
+    if isinstance(node, Mul):
+        total = 1
+        for a in node.args:
+            total = min(cap, total * _expanded_terms_bound(a))
+        return total
+    if isinstance(node, Pow):
+        base_terms = _expanded_terms_bound(node.args[0])
+        value = _literal_exponent(node.args[1])
+        if value is not None and value.is_Integer and abs(value) > 1:
+            n = int(abs(value))
+            return min(cap, math.comb(base_terms + n - 1, n))
+        return base_terms
+    if node.args:
+        return min(cap, sum(_expanded_terms_bound(a) for a in node.args))
+    return 1
+
+
 def _safe_sympify(expr):
     """Parse a math expression without evaluating arbitrary Python (no bare sympify)."""
     s = str(expr or '').strip()
     if not _is_safe_math_expr(s):
         return None
     try:
-        return parse_expr(
+        parsed = parse_expr(
             s,
             local_dict=dict(_SAFE_SYMPY_LOCALS),
+            global_dict=dict(_SAFE_SYMPY_GLOBALS),
             transformations=_SAFE_SYMPY_TRANSFORMATIONS,
             evaluate=False,
         )
     except (SympifyError, SyntaxError, TypeError, ValueError, AttributeError, NameError, Exception):
         return None
+    if not isinstance(parsed, sympy.Expr) or not _within_sympy_caps(parsed):
+        return None
+    return parsed
 
 
 def _normalize_numeric_string(value) -> str:
@@ -99,11 +198,51 @@ def _normalize_numeric_string(value) -> str:
     return s
 
 
+_VULGAR_FRACTIONS = {
+    '½': (1, 2), '⅓': (1, 3), '⅔': (2, 3), '¼': (1, 4), '¾': (3, 4), '⅕': (1, 5), '⅖': (2, 5), '⅗': (3, 5),
+    '⅘': (4, 5), '⅙': (1, 6), '⅚': (5, 6), '⅐': (1, 7), '⅛': (1, 8), '⅜': (3, 8), '⅝': (5, 8), '⅞': (7, 8),
+    '⅑': (1, 9), '⅒': (1, 10),
+}
+_VULGAR_CLASS = '[' + ''.join(_VULGAR_FRACTIONS) + ']'
+_VULGAR_RE = re.compile(_VULGAR_CLASS)
+_VULGAR_ALONE_RE = re.compile(rf'(\s*\(?\s*)([+\-\u2212]?)\s*(\d*)\s*({_VULGAR_CLASS})(\s*\)?\s*)')
+_VULGAR_MIXED_RE = re.compile(rf'(\d+)\s*({_VULGAR_CLASS})')
+MAX_VULGAR_INPUT_LEN = 400
+
+
+def _expand_vulgar_fractions(value):
+    """Pupil text typed with the single-character fractions (½, 2½, ½x, 1⁄2) as plain ASCII.
+
+    A piece that is only a number (pieces are split at | , ; and the field separator) becomes 1/2 or the
+    mixed number 2 1/2, which every numeric parser reads; inside an expression the characters become (1/2) and
+    (2+1/2), so no digit can run into another (3½ is never read as 31/2). Long inputs are left alone, so the
+    usual length caps still refuse them.
+    """
+    if not isinstance(value, str) or len(value) > MAX_VULGAR_INPUT_LEN:
+        return value
+    if not _VULGAR_RE.search(value) and '\u2044' not in value:
+        return value
+    value = value.replace('\u2044', '/')
+    out = []
+    for piece in re.split(r'([|,;\x1e])', value):
+        m = _VULGAR_ALONE_RE.fullmatch(piece)
+        if m:
+            num, den = _VULGAR_FRACTIONS[m.group(4)]
+            core = f'{m.group(3)} {num}/{den}' if m.group(3) else f'{num}/{den}'
+            out.append(f'{m.group(1)}{m.group(2)}{core}{m.group(5)}')
+            continue
+        piece = _VULGAR_MIXED_RE.sub(
+            lambda mm: '({}+{}/{})'.format(mm.group(1), *_VULGAR_FRACTIONS[mm.group(2)]), piece)
+        piece = _VULGAR_RE.sub(lambda mm: '({}/{})'.format(*_VULGAR_FRACTIONS[mm.group(0)]), piece)
+        out.append(piece)
+    return ''.join(out)
+
+
 def _parse_number(value) -> Decimal | None:
     s = _normalize_numeric_string(value)
     if not s:
         return None
-    if not re.fullmatch(r'-?\d+(?:\.\d+)?', s):
+    if not re.fullmatch(r'-?(?:\d+(?:\.\d+)?|\.\d+)', s):      # 0.375 and .375
         return None
     try:
         return Decimal(s)
@@ -221,8 +360,34 @@ def _format_fraction_user_display(user_answer, fr: Fraction) -> str:
     return _format_fraction(fr)
 
 
+_PERCENT_RE = re.compile(r'(\d+(?:\.\d+)?|\.\d+)\s*%')
+
+
+def _percentage_value(value) -> Decimal | None:
+    """37.5% -> Decimal('0.375'). Only a whole answer that is a number and a percent sign counts."""
+    s = _normalize_numeric_string(value)
+    m = _PERCENT_RE.fullmatch(s)
+    if not m or len(s) > 24:
+        return None
+    try:
+        return Decimal(m.group(1)) / 100
+    except InvalidOperation:
+        return None
+
+
+def _terminates(fr: Fraction) -> bool:
+    d = fr.denominator
+    for p in (2, 5):
+        while d % p == 0:
+            d //= p
+    return d == 1
+
+
+_RECURRING_FEEDBACK = 'Close. A decimal cannot show this exactly, so give it as a fraction.'
+
+
 @register_checker('fraction')
-def check_fraction(correct_raw, user_answer):
+def check_fraction(correct_raw, user_answer, form=None):
     expected = _parse_fraction_raw(correct_raw)
     if expected is None:
         raise ValueError('invalid_correct_answer')
@@ -239,6 +404,11 @@ def check_fraction(correct_raw, user_answer):
         }
 
     actual = _parse_fraction_value(user_answer)
+    as_percent = False
+    if actual is None and form == FORM_PROBABILITY:
+        pct = _percentage_value(user_answer)
+        if pct is not None:
+            actual, as_percent = Fraction(pct), True
     if actual is None:
         return {
             'correct': False,
@@ -251,11 +421,18 @@ def check_fraction(correct_raw, user_answer):
         }
 
     correct = actual == expected
+    feedback = 'Correct!' if correct else 'Not quite — check your fraction.'
+    if (not correct and form == FORM_PROBABILITY and not as_percent and '/' not in str(user_answer)
+            and not _terminates(expected) and abs(actual - expected) < Fraction(1, 100)):
+        feedback = _RECURRING_FEEDBACK
     return {
         'correct': correct,
-        'normalized_user': _format_fraction_user_display(user_answer, actual),
+        'normalized_user': (
+            _normalize_numeric_string(user_answer) if as_percent
+            else _format_fraction_user_display(user_answer, actual)
+        ),
         'normalized_correct': normalized_correct,
-        'feedback': 'Correct!' if correct else 'Not quite — check your fraction.',
+        'feedback': feedback,
     }
 
 
@@ -374,7 +551,7 @@ def check_bearing(correct_raw, user_answer):
 
 
 @register_checker('number')
-def check_number(correct_raw, user_answer):
+def check_number(correct_raw, user_answer, form=None):
     expected = _parse_fraction_or_number(correct_raw)
     if expected is None:
         raise ValueError('invalid_correct_answer')
@@ -399,6 +576,15 @@ def check_number(correct_raw, user_answer):
     if actual is None:
         actual = _parse_mixed_number(normalized_user)
         mixed = actual is not None
+    if actual is None and form == FORM_PROBABILITY:
+        actual = _percentage_value(user_answer)
+        if actual is not None:
+            return {
+                'correct': actual == expected,
+                'normalized_user': normalized_user,
+                'normalized_correct': normalized_correct,
+                'feedback': 'Correct!' if actual == expected else 'Not quite — check your working.',
+            }
     if actual is None:
         return {
             'correct': False,
@@ -494,7 +680,9 @@ def check_pi_multiple(correct_raw, user_answer):
             'feedback': 'Correct!' if correct else 'Not quite — check your working.',
         }
 
-    stripped = _strip_pi_suffix(raw_user)
+    # A coefficient is short; the π-suffix pattern backtracks badly on long runs of spaces (2,000 characters
+    # took 46 s), so longer text is refused before it runs.
+    stripped = _strip_pi_suffix(raw_user) if len(raw_user) <= MAX_SYMPY_EXPR_LEN else ''
     if not stripped:
         return {
             'correct': False,
@@ -569,10 +757,18 @@ def _parse_surd_pair(raw) -> tuple[Decimal, Decimal] | None:
     return _simplify_surd_pair(Decimal('1'), rad)
 
 
-def _parse_surd_expression(value) -> tuple[Decimal, Decimal] | None:
+def _parse_surd_expression(value, simplify=True) -> tuple[Decimal, Decimal] | None:
+    """Read k√r; ``simplify=False`` keeps the radicand exactly as the pupil wrote it."""
+    simplify_pair = _simplify_surd_pair if simplify else (lambda c, r: (c, r) if r > 0 else None)
     s = _normalize_surd_string(value)
     if not s:
         return None
+    # √(3) is √3; a middle dot is a times sign; the coefficient may come after the root (√3×2, sqrt(3)*2).
+    s = re.sub(r'√\((\d+(?:\.\d+)?)\)', r'√\1', s).replace('·', '*').replace('⋅', '*')
+    m = (re.fullmatch(r'√(\d+(?:\.\d+)?)[*×](\d+(?:\.\d+)?)', s)
+         or re.fullmatch(r'(?i)sqrt\((\d+(?:\.\d+)?)\)[*×](\d+(?:\.\d+)?)', s))
+    if m:
+        s = f'{m.group(2)}√{m.group(1)}'
 
     m = re.fullmatch(r'(-?\d+(?:\.\d+)?)[*×x]?√(\d+(?:\.\d+)?)', s)
     if m:
@@ -580,14 +776,14 @@ def _parse_surd_expression(value) -> tuple[Decimal, Decimal] | None:
         rad = _parse_number(m.group(2))
         if coeff is None or rad is None:
             return None
-        return _simplify_surd_pair(coeff, rad)
+        return simplify_pair(coeff, rad)
 
     m = re.fullmatch(r'√(\d+(?:\.\d+)?)', s)
     if m:
         rad = _parse_number(m.group(1))
         if rad is None:
             return None
-        return _simplify_surd_pair(Decimal('1'), rad)
+        return simplify_pair(Decimal('1'), rad)
 
     m = re.fullmatch(r'(?i)(-?\d+(?:\.\d+)?)\*?sqrt\((\d+(?:\.\d+)?)\)', s)
     if m:
@@ -595,19 +791,19 @@ def _parse_surd_expression(value) -> tuple[Decimal, Decimal] | None:
         rad = _parse_number(m.group(2))
         if coeff is None or rad is None:
             return None
-        return _simplify_surd_pair(coeff, rad)
+        return simplify_pair(coeff, rad)
 
     m = re.fullmatch(r'(?i)sqrt\((\d+(?:\.\d+)?)\)', s)
     if m:
         rad = _parse_number(m.group(1))
         if rad is None:
             return None
-        return _simplify_surd_pair(Decimal('1'), rad)
+        return simplify_pair(Decimal('1'), rad)
 
     if '√' not in s and 'sqrt' not in s.lower():
         val = _parse_fraction_or_number(s)
         if val is not None:
-            return _simplify_surd_pair(val, Decimal('1'))
+            return simplify_pair(val, Decimal('1'))
 
     return None
 
@@ -741,6 +937,7 @@ def _algebraic_prepare_for_sympy(value, *, context_raw=None) -> str:
     # Implicit multiplication for SymPy (5t, 3t**2, (s-1)t).
     s = re.sub(r'(\d)([a-z(])', r'\1*\2', s)
     s = re.sub(r'(\))([a-z(])', r'\1*\2', s)
+    s = re.sub(r'(?<![a-z])([a-z])\(', r'\1*(', s)     # x(x+1) is x*(x+1); sqrt( and pi are untouched
     if context_raw is not None:
         s = _algebraic_expand_vector_labels(s, context_raw)
     return s
@@ -755,8 +952,17 @@ def _algebraic_sympy_equivalent(correct_raw, user_raw) -> bool:
         )
         if correct_expr is None or user_expr is None:
             return False
-        return bool(simplify(correct_expr - user_expr) == 0)
-    except (TypeError, ValueError, SyntaxError, AttributeError, ZeroDivisionError):
+        diff = correct_expr - user_expr
+        # Cheap exact tests first (expand for polynomials, cancel for rational functions); the open-ended
+        # simplify() search is kept only for roots and pi, where those tests cannot see equality.
+        if expand(diff) == 0 or sympy.cancel(sympy.together(diff)) == 0:
+            return True
+        if diff.has(sympy.pi) or any(
+            isinstance(n, Pow) and not n.args[1].is_Integer for n in sympy.preorder_traversal(diff)
+        ):
+            return bool(simplify(diff) == 0)
+        return False
+    except (TypeError, ValueError, SyntaxError, AttributeError, ZeroDivisionError, PolynomialError, RecursionError):
         return False
 
 
@@ -857,9 +1063,11 @@ def _parse_algebraic_surd_binomial(value) -> tuple[int, int, int, str] | None:
     if not s:
         return None
 
+    # Returns (const, coef, rad, sign) meaning const + coef√rad when sign is '+' and const - coef√rad when '-'.
+    s = re.sub(r'√\((\d+)\)', r'√\1', s)
     patterns = (
-        r'^(-?\d+)([+-])(?:(\d+)[×x*]?)?√(\d+)$',
-        r'^(?:(\d+)[×x*]?)?√(\d+)([+-])(-?\d+)$',
+        r'^([+-]?\d+)([+-])(?:(\d+)[×x*]?)?√(\d+)$',          # 9 - 4√5
+        r'^([+-]?)(?:(\d+)[×x*]?)?√(\d+)([+-]\d+)$',          # -4√5 + 9 (surd term first)
     )
     m = re.fullmatch(patterns[0], s)
     if m:
@@ -871,9 +1079,9 @@ def _parse_algebraic_surd_binomial(value) -> tuple[int, int, int, str] | None:
 
     m = re.fullmatch(patterns[1], s)
     if m:
-        coef = int(m.group(1) or '1')
-        rad = int(m.group(2))
-        sign = m.group(3)
+        sign = '-' if m.group(1) == '-' else '+'
+        coef = int(m.group(2) or '1')
+        rad = int(m.group(3))
         const = int(m.group(4))
         return const, coef, rad, sign
 
@@ -1086,15 +1294,18 @@ def _split_algebraic_fraction_user(value) -> tuple[str, int] | None:
     return m.group(1), int(denom)
 
 
-def _parse_algebraic_fraction_surd_user(value) -> tuple[int, int, int] | None:
+def _parse_algebraic_fraction_surd_user(value, simplify=True) -> tuple[int, int, int] | None:
+    """Read k√r over a whole number; ``simplify=False`` keeps the radicand and the fraction as written."""
     split = _split_algebraic_fraction_user(value)
     if split is None:
         return None
     num_text, denom = split
-    surd = _parse_surd_expression(num_text)
+    surd = _parse_surd_expression(num_text, simplify=simplify)
     if surd is None:
         return None
     coef, rad = int(surd[0]), int(surd[1])
+    if not simplify:
+        return coef, rad, denom
     return _simplify_algebraic_fraction_surd(coef, rad, denom)
 
 
@@ -1288,7 +1499,7 @@ def _check_algebraic_fraction_expanded_binomial(correct_raw, user_answer) -> dic
     }
 
 
-def _check_algebraic_fraction_surd(correct_raw, user_answer) -> dict:
+def _check_algebraic_fraction_surd(correct_raw, user_answer, form=None) -> dict:
     expected = _parse_algebraic_fraction_surd_raw(correct_raw)
     if expected is None:
         raise ValueError('invalid_correct_answer')
@@ -1325,6 +1536,14 @@ def _check_algebraic_fraction_surd(correct_raw, user_answer) -> dict:
         and act_rad == exp_rad
         and act_denom == exp_denom
     )
+    if correct and form == FORM_SIMPLEST_SURD:
+        written = _parse_algebraic_fraction_surd_user(raw_user, simplify=False)
+        if written is not None and written != actual:
+            return _wrong_form_result(
+                _format_algebraic_fraction_surd(*written),
+                normalized_correct,
+                'fraction_not_simplest',
+            )
     return {
         'correct': correct,
         'normalized_user': _format_algebraic_fraction_surd(
@@ -1429,7 +1648,7 @@ def _check_algebraic_fraction_two_surds(correct_raw, user_answer) -> dict:
 
 
 @register_checker('algebraic_fraction')
-def check_algebraic_fraction(correct_raw, user_answer):
+def check_algebraic_fraction(correct_raw, user_answer, form=None):
     s = str(correct_raw or '').strip()
     if s.startswith('b|'):
         return _check_algebraic_fraction_binomial(correct_raw, user_answer)
@@ -1440,7 +1659,7 @@ def check_algebraic_fraction(correct_raw, user_answer):
     # General algebraic/numeric fraction: numerator|denominator (stacked UI).
     if len(s.split('|')) == 2:
         return _check_general_algebraic_fraction(correct_raw, user_answer)
-    return _check_algebraic_fraction_surd(correct_raw, user_answer)
+    return _check_algebraic_fraction_surd(correct_raw, user_answer, form=form)
 
 
 def _check_general_algebraic_fraction(correct_raw, user_answer):
@@ -1512,8 +1731,154 @@ def _check_general_algebraic_fraction(correct_raw, user_answer):
     }
 
 
+# Form requirements. A generator sets problem['answer_form']; app.py reads it from the session-stored
+# problem (never from the request) and passes it to check_answer.
+FORM_EXPANDED = 'expanded'
+FORM_FACTORISED = 'factorised'
+FORM_SIMPLEST_SURD = 'simplest_surd'
+FORM_SIMPLIFIED = 'simplified'     # "Simplify" an algebraic fraction whose answer has no letter left underneath
+FORM_PROBABILITY = 'probability'   # "Find P(...)": a percentage is accepted as well as a fraction or decimal
+ANSWER_FORMS = frozenset({FORM_EXPANDED, FORM_FACTORISED, FORM_SIMPLEST_SURD, FORM_SIMPLIFIED, FORM_PROBABILITY})
+
+_WRONG_FORM_FEEDBACK = {
+    'unexpanded': "That's equal, but the question asks you to expand it.",
+    'uncollected': "That's equal, and nearly there. Now collect the like terms to finish.",
+    'unfactorised': "That's equal, but the question asks you to factorise it fully.",
+    'partly_factorised': (
+        "That's equal, but you can factorise it further. "
+        "Is there a bigger common factor to take out?"
+    ),
+    'surd_not_simplest': (
+        "That's equal, but the surd can be simpler. "
+        "Take a square factor out from under the root."
+    ),
+    'not_simplified': (
+        "That's equal, but it can be simpler. "
+        "Factorise the top if needed, then cancel the matching bracket."
+    ),
+    'fraction_not_simplest': (
+        "That's equal, but it can be simpler. "
+        "Check the surd, then see if the fraction cancels."
+    ),
+}
+
+
+def _wrong_form_result(normalized_user, normalized_correct, kind):
+    return {
+        'correct': False,
+        'normalized_user': normalized_user,
+        'normalized_correct': normalized_correct,
+        'feedback': _WRONG_FORM_FEEDBACK[kind],
+        'wrong_form': kind,
+    }
+
+
+def _algebraic_user_tree(user_raw, correct_raw):
+    """The pupil's expression as an unevaluated SymPy tree, so its written structure survives."""
+    prepared = _algebraic_prepare_for_sympy(user_raw, context_raw=correct_raw)
+    # SymPy distributes a unary minus over a bracket even unevaluated; write -(x+1) as -1*(x+1) to keep it.
+    prepared = re.sub(r'(?<![\w)])-\(', '-1*(', prepared)
+    return _safe_sympify(prepared)
+
+
+def _as_product_factors(node):
+    """Flatten a product into its factors; a power of a sum (x+1)^3 stays one factor."""
+    out = []
+    stack = [node]
+    while stack:
+        n = stack.pop()
+        if isinstance(n, Mul):
+            stack.extend(n.args)
+        else:
+            out.append(n)
+    return out
+
+
+def _has_nested_sum(node, parent_is_add=False) -> bool:
+    if isinstance(node, Add) and parent_is_add:
+        return True
+    return any(_has_nested_sum(a, isinstance(node, Add)) for a in node.args)
+
+
+def _has_product_of_sum(node) -> bool:
+    """True when some sum is still multiplied by something or raised to a power (a bracket left in)."""
+    if isinstance(node, Mul) and any(isinstance(a, Add) for a in node.args):
+        return True
+    if isinstance(node, Pow):
+        base, exponent = node.args
+        value = _literal_exponent(exponent)
+        if isinstance(base, Add) and value is not None and value > 0:
+            return True
+    return any(_has_product_of_sum(a) for a in node.args)
+
+
+def _expanded_form_problem(tree):
+    """None when ``tree`` is a fully expanded and collected polynomial, else 'unexpanded' or 'uncollected'."""
+    if _has_product_of_sum(tree):
+        return 'unexpanded'
+    written_terms = len(Add.make_args(tree))
+    if _has_nested_sum(tree) or written_terms != len(Add.make_args(expand(tree.doit()))):
+        return 'uncollected'
+    return None
+
+
+def _irreducible_primitive(factor) -> bool:
+    """A sum factor that cannot be factorised further over the integers (no common number or factor left)."""
+    content, parts = factor_list(expand(factor))
+    return content in (1, -1) and len(parts) == 1 and parts[0][1] == 1
+
+
+def _factorised_form_problem(tree):
+    """None when ``tree`` is a product of irreducible factors, else 'unfactorised' or 'partly_factorised'."""
+    if isinstance(tree, Add):
+        return 'unfactorised'
+    factors = _as_product_factors(tree)
+    if len(factors) == 1 and not (isinstance(tree, Pow) and isinstance(tree.args[0], Add)):
+        return 'unfactorised'
+    for f in factors:
+        base = f.args[0] if isinstance(f, Pow) else f
+        if isinstance(base, Add) and not _irreducible_primitive(base):
+            return 'partly_factorised'
+    return None
+
+
+def _has_letter_denominator(node) -> bool:
+    """True when the tree still divides by something with a letter in it, as in (x^2-9)/(x-3)."""
+    for n in sympy.preorder_traversal(node):
+        if isinstance(n, Pow) and n.args[0].free_symbols:
+            value = _literal_exponent(n.args[1])
+            if value is not None and value < 0:
+                return True
+    return False
+
+
+def _simplified_form_problem(tree, correct_raw):
+    """None unless the key has no letter underneath and the pupil's answer still has one ('not_simplified')."""
+    key_tree = _safe_sympify(_algebraic_prepare_for_sympy(correct_raw))
+    if key_tree is None or _has_letter_denominator(key_tree):
+        return None          # the expected answer is itself a fraction: nothing to insist on
+    return 'not_simplified' if _has_letter_denominator(tree) else None
+
+
+def _algebraic_form_problem(form, user_raw, correct_raw):
+    """The wrong-form kind for the pupil's (value-correct) answer, or None when it is in the asked form."""
+    tree = _algebraic_user_tree(user_raw, correct_raw)
+    if tree is None:
+        return None          # cannot read the written structure: the value check already accepted it
+    try:
+        if form == FORM_EXPANDED:
+            return _expanded_form_problem(tree)
+        if form == FORM_FACTORISED:
+            return _factorised_form_problem(tree)
+        if form == FORM_SIMPLIFIED:
+            return _simplified_form_problem(tree, correct_raw)
+    except (TypeError, ValueError, ArithmeticError, AttributeError, PolynomialError):
+        return None
+    return None
+
+
 @register_checker('algebraic')
-def check_algebraic(correct_raw, user_answer):
+def check_algebraic(correct_raw, user_answer, form=None):
     binomial = _parse_algebraic_surd_binomial_raw(correct_raw)
     if binomial is not None:
         exp_const, exp_coef, exp_rad, exp_sign = binomial
@@ -1570,6 +1935,10 @@ def check_algebraic(correct_raw, user_answer):
 
     normalized_user = _format_algebraic_text(raw_user)
     correct = _algebraic_answers_equivalent(correct_raw, raw_user)
+    if correct and form in (FORM_EXPANDED, FORM_FACTORISED, FORM_SIMPLIFIED):
+        kind = _algebraic_form_problem(form, raw_user, correct_raw)
+        if kind:
+            return _wrong_form_result(normalized_user, normalized_correct, kind)
     return {
         'correct': correct,
         'normalized_user': normalized_user,
@@ -1579,7 +1948,7 @@ def check_algebraic(correct_raw, user_answer):
 
 
 @register_checker('surd')
-def check_surd(correct_raw, user_answer):
+def check_surd(correct_raw, user_answer, form=None):
     expected = _parse_surd_pair(correct_raw)
     if expected is None:
         raise ValueError('invalid_correct_answer')
@@ -1607,6 +1976,12 @@ def check_surd(correct_raw, user_answer):
 
     act_coeff, act_rad = actual
     correct = act_coeff == exp_coeff and act_rad == exp_rad
+    if correct and form == FORM_SIMPLEST_SURD:
+        written = _parse_surd_expression(raw_user, simplify=False)
+        if written is not None and written != (act_coeff, act_rad):
+            return _wrong_form_result(
+                _format_surd(*written), normalized_correct, 'surd_not_simplest'
+            )
     return {
         'correct': correct,
         'normalized_user': _format_surd(act_coeff, act_rad),
@@ -1676,11 +2051,59 @@ def check_number_estimate(correct_raw, user_answer):
     }
 
 
-def check_answer(answer_type: str, correct_raw, user_answer) -> dict:
+# Answer types whose checker enforces a written form (problem['answer_form']).
+FORM_AWARE_ANSWER_TYPES = frozenset({'algebraic', 'surd', 'algebraic_fraction', 'fraction', 'number'})
+
+
+# Answers that are code, words or a choice: a ½ typed there is text, never turned into 1/2.
+_VERBATIM_ANSWER_TYPES = frozenset({'sql', 'python_run', 'text', 'keyword', 'mcq', 'proof_steps', 'hex', 'binary'})
+
+
+def check_answer(answer_type: str, correct_raw, user_answer, form=None, subject=None, labels=None,
+                 prereqs=None) -> dict:
+    """Run the checker for ``answer_type``.
+
+    ``form`` is the stored problem's required written form (expanded, factorised or simplest surd), taken
+    from server-side problem data only. An unknown form is an error; a form the type does not use is ignored.
+    ``labels`` (the stored problem's answer_labels) lets vector_combo read a coefficient typed with its vector
+    name (1/2AB in the AB box). Single-character fractions such as ½ are read as 1/2 for every maths type;
+    code, words and choices (``_VERBATIM_ANSWER_TYPES``) are checked exactly as typed.
+    ``prereqs`` (the stored problem's answer_step_prereqs, from ``problem_answer_prereqs``) lets an ordered
+    proof_steps answer come in any order that puts every step after the steps it needs; other types ignore it.
+    """
     checker = CHECKERS.get(answer_type)
     if not checker:
         raise ValueError(f'unknown_answer_type:{answer_type}')
+    if answer_type not in _VERBATIM_ANSWER_TYPES:
+        user_answer = _expand_vulgar_fractions(user_answer)
+    if answer_type == 'vector_combo':
+        return checker(correct_raw, user_answer, labels=labels)
+    if answer_type == 'proof_steps':
+        return checker(correct_raw, user_answer, prereqs=prereqs)
+    if form:
+        if form not in ANSWER_FORMS:
+            raise ValueError('invalid_answer_form')
+        if answer_type in FORM_AWARE_ANSWER_TYPES:
+            return checker(correct_raw, user_answer, form=form)
+    if answer_type == 'formula_fraction':
+        return checker(correct_raw, user_answer, subject=subject)
     return checker(correct_raw, user_answer)
+
+
+def problem_answer_form(problem):
+    """The written form a stored problem requires (None when it asks for none)."""
+    form = problem.get('answer_form') if isinstance(problem, dict) else None
+    return form if form in ANSWER_FORMS else None
+
+
+def problem_answer_prereqs(problem):
+    """The step prerequisites a stored ordered-proof problem carries (None when it has none).
+
+    Server-side data set by the generator (``proof_steps_answer(after=...)``); it is never part of the
+    client payload and a request can not supply it.
+    """
+    prereqs = problem.get('answer_step_prereqs') if isinstance(problem, dict) else None
+    return prereqs if isinstance(prereqs, dict) and prereqs else None
 
 
 def _parse_delimited_numbers(raw, delimiter=',') -> list[Decimal] | None:
@@ -1924,6 +2347,7 @@ def _check_one_number_field(field_type, expected_part, user_part):
 
 @register_checker('number_fields')
 def check_number_fields(correct_raw, user_answer, field_types=None):
+    user_answer = _expand_vulgar_fractions(user_answer)
     expected_parts, sep = _split_number_field_payload(correct_raw)
     if not expected_parts or any(not part for part in expected_parts):
         raise ValueError('invalid_correct_answer')
@@ -2114,6 +2538,8 @@ def check_ratio_exact(correct_raw, user_answer):
 def _parse_linear_equation(value) -> tuple[Decimal, Decimal] | None:
     """Parse y = mx + c (or variants without spaces / y =)."""
     s = str(value or '').strip().lower().replace(' ', '')
+    s = s.replace('\u2212', '-').replace('\u2013', '-')
+    s = re.sub(r'(?<=\d)[*×·](?=x)', '', s)          # 2*x or 2×x typed for 2x
     s = re.sub(r'^y=', '', s)
     if not s:
         return None
@@ -2601,12 +3027,47 @@ def check_compound_inequality(correct_raw, user_answer):
     }
 
 
+def _formula_part_expr(text, subject=None):
+    """(expression, problem) for one typed numerator or denominator.
+
+    ``problem`` is None, or 'letter' when the pupil wrote "<letter> = ..." with the wrong letter on the left.
+    """
+    raw = str(text or '').strip()
+    if '=' in raw:
+        left = re.sub(r'\s+', '', raw.split('=', 1)[0]).lower()
+        if not (subject and left == str(subject).strip().lower()):
+            return None, 'letter'
+    return _safe_sympify(_algebraic_prepare_for_sympy(raw)), None
+
+
+def _formulas_equal(exp_num, exp_den, act_num, act_den) -> bool:
+    """num/den against num/den as rational functions. cancel() only, so no unbounded simplify search."""
+    try:
+        diff = Add(exp_num / exp_den, -(act_num / act_den))
+        if diff.has(sympy.zoo, sympy.nan, sympy.oo):
+            return False
+        return sympy.cancel(sympy.together(diff)) == 0
+    except (TypeError, ValueError, ArithmeticError, AttributeError, PolynomialError, RecursionError):
+        return False
+
+
 @register_checker('formula_fraction')
-def check_formula_fraction(correct_raw, user_answer):
-    """Check symbolic formula fractions such as x = (d-b)/(a-c)."""
+def check_formula_fraction(correct_raw, user_answer, subject=None):
+    """Check a formula written as numerator|denominator, e.g. x = (d-b)/(a-c).
+
+    Any algebraically equivalent formula in the same letters is accepted ((b-d)/(c-a), (2p-2)/12 for
+    (p-1)/6). Both sides go through _safe_sympify (character whitelist, 200 characters, size and exponent
+    caps) and are compared with cancel(). ``subject`` (the stored problem's answer_subject) is the letter
+    allowed on the left of an "=" the pupil may type.
+    """
     s = str(correct_raw or '').strip()
     parts = [part.strip() for part in s.split('|')]
     if len(parts) != 2 or not all(parts):
+        raise ValueError('invalid_correct_answer')
+
+    exp_num_expr = _safe_sympify(_algebraic_prepare_for_sympy(parts[0]))
+    exp_den_expr = _safe_sympify(_algebraic_prepare_for_sympy(parts[1]))
+    if exp_num_expr is None or exp_den_expr is None:
         raise ValueError('invalid_correct_answer')
 
     exp_num = _format_algebraic_text(parts[0])
@@ -2633,10 +3094,39 @@ def check_formula_fraction(correct_raw, user_answer):
 
     act_num = _format_algebraic_text(user_parts[0])
     act_den = _format_algebraic_text(user_parts[1])
-    correct = act_num == exp_num and act_den == exp_den
+    normalized_user = f'{act_num}/{act_den}'
+
+    num_expr, num_problem = _formula_part_expr(user_parts[0], subject)
+    den_expr, den_problem = _formula_part_expr(user_parts[1], subject)
+    if 'letter' in (num_problem, den_problem):
+        return {
+            'correct': False,
+            'normalized_user': normalized_user,
+            'normalized_correct': normalized_correct,
+            'feedback': (
+                'Check the letter before the equals sign, '
+                'or type only the top and bottom of the fraction.'
+            ),
+            'wrong_letter': True,
+        }
+
+    if act_num == exp_num and act_den == exp_den:
+        correct = True
+    elif num_expr is None or den_expr is None:
+        return {
+            'correct': False,
+            'normalized_user': normalized_user,
+            'normalized_correct': normalized_correct,
+            'feedback': 'Use only letters, numbers, brackets and maths signs on the top and bottom.',
+        }
+    elif not _within_sympy_caps(Mul(num_expr, Pow(den_expr, -1, evaluate=False), evaluate=False)):
+        # Each part can pass the caps alone; cancel() on two large parts together is the slow case.
+        correct = False
+    else:
+        correct = _formulas_equal(exp_num_expr, exp_den_expr, num_expr, den_expr)
     return {
         'correct': correct,
-        'normalized_user': f'{act_num}/{act_den}',
+        'normalized_user': normalized_user,
         'normalized_correct': normalized_correct,
         'feedback': (
             'Correct!'
@@ -2686,6 +3176,17 @@ def check_linear(correct_raw, user_answer):
             'normalized_user': str(user_answer or '').strip(),
             'normalized_correct': normalized_correct,
             'feedback': 'Enter the value (e.g. x = 3 or just 3).',
+        }
+
+    key_letter, _ = _parse_linear_solution(correct_raw)
+    if key_letter and user_var and user_var != key_letter:
+        # The key names its letter (w = 12) and the pupil named a different one (y = 12).
+        return {
+            'correct': False,
+            'normalized_user': _format_linear_solution(user_var, user_val),
+            'normalized_correct': normalized_correct,
+            'feedback': f'Check the letter. This question asks you to find {key_letter}.',
+            'wrong_letter': True,
         }
 
     display_var = user_var or exp_var
@@ -2957,10 +3458,19 @@ def _vector_component_matches(
     return _round_decimal(expected, dp) == actual
 
 
+_VECTOR_NAMED_COMPONENTS_RE = re.compile(
+    r'\s*([xy])\s*=\s*([^,;=xy]+?)\s*(?:[,;]|\band\b)?\s*([xy])\s*=\s*([^,;=xy]+?)\s*', re.I)
+
+
+# A column vector is never long; the bracket pattern below backtracks badly on long runs of spaces
+# ('(' + 2,000 spaces took 36 s), so longer text is refused before any pattern runs.
+MAX_VECTOR_INPUT_LEN = 200
+
+
 def _parse_vector_pair(raw) -> tuple[Decimal, Decimal] | None:
     """Parse column-vector components (top, bottom) from raw or user text."""
     s, _ = _split_vector_correct_raw(raw)
-    if not s:
+    if not s or len(s) > MAX_VECTOR_INPUT_LEN:
         return None
 
     m = _VECTOR_PMATRIX_RE.search(s)
@@ -2984,6 +3494,14 @@ def _parse_vector_pair(raw) -> tuple[Decimal, Decimal] | None:
         if top is not None and bottom is not None:
             return top, bottom
 
+    named = _VECTOR_NAMED_COMPONENTS_RE.fullmatch(s)          # x = 3, y = -4 (either order)
+    if named and named.group(1).lower() != named.group(3).lower():
+        values = {named.group(1).lower(): named.group(2), named.group(3).lower(): named.group(4)}
+        top = _parse_fraction_or_number(values['x'].strip())
+        bottom = _parse_fraction_or_number(values['y'].strip())
+        if top is not None and bottom is not None:
+            return top, bottom
+
     for sep in (',', ';'):
         if sep in s:
             parts = [part.strip() for part in s.split(sep)]
@@ -2992,6 +3510,14 @@ def _parse_vector_pair(raw) -> tuple[Decimal, Decimal] | None:
                 bottom = _parse_fraction_or_number(parts[1])
                 if top is not None and bottom is not None:
                     return top, bottom
+
+    spaced = re.search(r'[\[(]\s*(\S+)\s+(\S+)\s*[\])]', s)    # (3 -4)
+    parts = list(spaced.groups()) if spaced else s.split()      # or just 3 -4
+    if len(parts) == 2:
+        top = _parse_fraction_or_number(parts[0])
+        bottom = _parse_fraction_or_number(parts[1])
+        if top is not None and bottom is not None:
+            return top, bottom
 
     return None
 
@@ -3170,6 +3696,10 @@ _KEYWORD_ALIASES = {
     '2': ('2', 'triangle 2', 'two', 'second'),
     'float': ('float', 'floats'),
     'sink': ('sink', 'sinks'),
+    'reflection': ('reflection', 'reflect', 'reflected', 'reflecting'),
+    'rotation': ('rotation', 'rotate', 'rotated', 'rotating'),
+    'translation': ('translation', 'translate', 'translated', 'translating'),
+    'enlargement': ('enlargement', 'enlarge', 'enlarged', 'enlarging'),
     'object b': ('object b', 'b'),
     'material y': ('material y', 'y'),
     'stone b': ('stone b', 'b'),
@@ -3581,6 +4111,22 @@ def check_mcq(correct_raw, user_answer):
     }
 
 
+_LETTER_FILLER = frozenset({
+    'vector', 'the', 'is', 'are', 'has', 'have', 'it', 'its', 'length', 'magnitude', 'longer', 'larger', 'bigger',
+    'greater', 'option', 'answer', 'i', 'think', 'because', 'size', 'bigger', 'higher', 'more',
+})
+
+
+def _single_letter_answer(key: str, user: str) -> bool:
+    """A key that is one letter (vector a, vector b) must not be matched inside other words: 'b is larger' is not
+    an answer of 'a'. The letter must be the only letter named, ignoring filler such as 'vector' and 'is longer'."""
+    text = re.sub(r'[^a-z0-9 ]', ' ', user.lower())
+    text = text.split(' than ')[0]                                  # 'b is larger than a' is about b
+    text = re.sub(r'\ba (?=(?:greater|larger|longer|bigger|higher|bigger)\b)', '', text)
+    tokens = [t for t in text.split() if t not in _LETTER_FILLER]
+    return {t for t in tokens if len(t) == 1 and t.isalpha()} == {key}
+
+
 @register_checker('keyword')
 def check_keyword(correct_raw, user_answer):
     correct_key = _normalize_keyword(correct_raw)
@@ -3594,7 +4140,12 @@ def check_keyword(correct_raw, user_answer):
             'normalized_correct': correct_key,
             'feedback': 'Enter an answer.',
         }
-    ok = any(alias in user or user == alias for alias in aliases)
+    if len(correct_key) == 1 and correct_key.isalpha():
+        ok = _single_letter_answer(correct_key, user)
+    elif correct_key in ('yes', 'no') and user in ('y', 'n'):
+        ok = user == correct_key[0]         # a lone y or n answers a yes/no question; never matched inside words
+    else:
+        ok = any(alias in user or user == alias for alias in aliases)
     return {
         'correct': ok,
         'normalized_user': user,
@@ -3776,8 +4327,39 @@ def _format_vector_combo(coefficients: list[Fraction]) -> str:
     return '|'.join(_format_vector_combo_coef(coef) for coef in coefficients)
 
 
+def _parse_vector_combo_named(user_s, labels) -> list[Fraction] | None:
+    """Coefficients typed with the box's own vector name: 1/2AB, -AB, b/5 or 2b in the box labelled AB or b.
+    The name must be the label of that box (case and spaces ignored); anything else is not read."""
+    parts = [part.strip() for part in str(user_s).split('|')]
+    if len(parts) != len(labels) or len(user_s) > 200:
+        return None
+    out = []
+    for part, label in zip(parts, labels):
+        name = re.sub(r'[\s\u2192\u20d7]', '', str(label)).lower()
+        text = re.sub(r'[\s\u2192\u20d7]', '', part).replace('\u2212', '-').lower()
+        if not name or not name.isalpha():
+            return None
+        coef = None
+        if text.endswith(name):
+            head = text[: -len(name)].rstrip('*×')
+            bracketed = re.fullmatch(r'([+-]?)\(([^()]*)\)', head)       # (1/2)AB, as ½AB is read
+            if bracketed:
+                head = bracketed.group(1) + bracketed.group(2)
+            coef = Fraction(1) if head in ('', '+') else Fraction(-1) if head == '-' else _parse_fraction_value(head)
+        else:
+            m = re.fullmatch(rf'([+-]?){re.escape(name)}/(\d+)', text)
+            if m and int(m.group(2)) != 0:
+                coef = Fraction(-1 if m.group(1) == '-' else 1, int(m.group(2)))
+            elif re.fullmatch(r'[-+0-9./]+', text):
+                coef = _parse_fraction_value(text)
+        if coef is None:
+            return None
+        out.append(coef)
+    return out
+
+
 @register_checker('vector_combo')
-def check_vector_combo(correct_raw, user_answer):
+def check_vector_combo(correct_raw, user_answer, labels=None):
     expected = _parse_vector_combo_raw(correct_raw)
     if expected is None:
         raise ValueError('invalid_correct_answer')
@@ -3793,6 +4375,8 @@ def check_vector_combo(correct_raw, user_answer):
         }
 
     actual = _parse_vector_combo_raw(user_s)
+    if actual is None and labels and len(labels) == len(expected):
+        actual = _parse_vector_combo_named(user_s, [str(label) for label in labels])
     if actual is None:
         return {
             'correct': False,
@@ -3891,13 +4475,78 @@ def _parse_proof_steps_raw(raw):
     return {'mode': 'all', 'expected_ids': ids}
 
 
-def _proof_steps_step_feedback(mode, expected_ids, user_ids):
+def _clean_proof_prereqs(expected_ids, prereqs):
+    """``prereqs`` as {id: set of ids} when it is a well-formed spec for exactly these steps, else None.
+
+    Anything malformed (wrong keys, unknown, non-text or self references, or a spec the canonical order itself
+    breaks, which covers every cycle) is ignored, which leaves the strict canonical order in force: a bad spec
+    can never make an answer easier to get right by accident.
+    """
+    if not isinstance(prereqs, dict) or len(prereqs) != len(expected_ids):
+        return None
+    expected_set = set(expected_ids)
+    if len(expected_set) != len(expected_ids):
+        return None
+    clean = {}
+    for key, needs in prereqs.items():
+        if key not in expected_set or not isinstance(needs, (list, tuple)) or len(needs) > len(expected_ids):
+            return None
+        if not all(isinstance(n, str) for n in needs):
+            return None
+        needs = set(needs)
+        if key in needs or not needs <= expected_set:
+            return None
+        clean[key] = needs
+    # The canonical key is always a valid order, so a spec it breaks (a cycle, say) is not the generator's.
+    canonical_pos = {step: i for i, step in enumerate(expected_ids)}
+    if any(canonical_pos[n] > canonical_pos[key] for key, needs in clean.items() for n in needs):
+        return None
+    return clean
+
+
+def _proof_order_is_valid(expected_ids, clean, user_ids):
+    """True when ``user_ids`` uses every step exactly once and puts each step after the steps it needs."""
+    if clean is None or len(user_ids) != len(expected_ids):
+        return False
+    position = {}
+    for i, uid in enumerate(user_ids):
+        if uid not in clean or uid in position:
+            return False
+        position[uid] = i
+    return all(position[n] < position[uid] for uid, needs in clean.items() for n in needs)
+
+
+def _proof_steps_step_feedback(mode, expected_ids, user_ids, clean_prereqs=None):
     """Per-step status hints when a proof-steps answer is not fully correct."""
     if not user_ids:
         return []
     expected_set = set(expected_ids)
     feedback = []
-    if mode == 'ordered':
+    if mode == 'ordered' and clean_prereqs is not None:
+        seen = set()
+        for uid in user_ids:
+            if uid not in expected_set:
+                feedback.append({
+                    'id': uid,
+                    'status': 'wrong',
+                    'hint': 'This step does not belong in the proof.',
+                })
+            elif uid in seen:
+                feedback.append({'id': uid, 'status': 'wrong', 'hint': 'This step is used more than once.'})
+            elif clean_prereqs[uid] <= seen:
+                feedback.append({
+                    'id': uid,
+                    'status': 'correct',
+                    'hint': 'This step works in this place.',
+                })
+            else:
+                feedback.append({
+                    'id': uid,
+                    'status': 'wrong_order',
+                    'hint': 'This step needs an earlier step to come before it.',
+                })
+            seen.add(uid)
+    elif mode == 'ordered':
         for i, uid in enumerate(user_ids):
             if uid not in expected_set:
                 feedback.append({
@@ -3985,8 +4634,13 @@ def _proof_steps_wrong_feedback(mode, step_feedback):
 
 
 @register_checker('proof_steps')
-def check_proof_steps(correct_raw, user_answer):
-    """Plan C: selected step ids from a bank (order optional)."""
+def check_proof_steps(correct_raw, user_answer, prereqs=None):
+    """Plan C: selected step ids from a bank (order optional).
+
+    An ordered key is the canonical order shown to pupils. With ``prereqs`` ({step id: ids it needs first},
+    from the stored problem) any order that puts every step after its prerequisites is also correct, so a
+    pupil who swaps two independent steps is marked right; swapping dependent steps is still wrong.
+    """
     parsed = _parse_proof_steps_raw(correct_raw)
     if parsed is None:
         raise ValueError('invalid_correct_answer')
@@ -4023,8 +4677,10 @@ def check_proof_steps(correct_raw, user_answer):
 
     step_feedback = None
 
+    clean_prereqs = None
     if mode == 'ordered':
-        correct = user_ids == expected_ids
+        clean_prereqs = _clean_proof_prereqs(expected_ids, prereqs)
+        correct = user_ids == expected_ids or _proof_order_is_valid(expected_ids, clean_prereqs, user_ids)
         feedback = 'Correct!' if correct else None
     elif mode == 'pick':
         pick_count = parsed['pick_count']
@@ -4069,7 +4725,7 @@ def check_proof_steps(correct_raw, user_answer):
         feedback = 'Correct!' if correct else None
 
     if not correct:
-        step_feedback = _proof_steps_step_feedback(mode, expected_ids, user_ids)
+        step_feedback = _proof_steps_step_feedback(mode, expected_ids, user_ids, clean_prereqs)
         feedback = _proof_steps_wrong_feedback(mode, step_feedback)
 
     result = {

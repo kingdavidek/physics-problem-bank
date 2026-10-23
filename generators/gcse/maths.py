@@ -1,4 +1,5 @@
 from generators.shared.rounding import round_half_up as round, fmt_dp
+from generators.shared.verify_hook import record, verifies
 import inspect
 import random
 import math
@@ -18,8 +19,10 @@ from generators.shared.utils import (
     graded_answer_number_pair,
     problem_extra_from_graded_answer,
     signed_term,
+    coef,
 )
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
+from generators.shared.answer_checkers import FORM_EXPANDED, FORM_FACTORISED, FORM_SIMPLEST_SURD
 from models import svg_kit
 from generators.shared.variant_utils import (
     select_tier_variants,
@@ -153,7 +156,11 @@ def _fdp_random_recurring_fraction():
         den = random.choice(_FDP_RECURRING_DENS)
         num = random.randint(1, den - 1)
         num, den = _fdp_simplify_fraction(num, den)
-        if den > 1:
+        rest = den
+        for prime in (2, 5):
+            while rest % prime == 0:
+                rest //= prime
+        if rest > 1:                       # 3/15 simplifies to 1/5, which terminates
             return num, den
 
 
@@ -182,10 +189,11 @@ def _fdp_recurring_decimal_display(num, den):
         pos += 1
     if remainder in seen:
         rep_start = seen[remainder]
-        body = "".join(digits[:rep_start]) + "".join(digits[rep_start:])
-        if rep_start == 0:
-            return f"0.{body}…"
-        return f"0.{''.join(digits[:rep_start])}{''.join(digits[rep_start:])}…"
+        # Show the repeating block more than once so the recurrence is unambiguous
+        # (0.666… rather than 0.6…): three times for short blocks, twice for longer ones.
+        block = "".join(digits[rep_start:])
+        times = 3 if len(block) <= 2 else 2
+        return f"0.{''.join(digits[:rep_start])}{block * times}…"
     dec = num / den
     return _fdp_format_decimal(dec)
 
@@ -499,6 +507,7 @@ def _fdp_best_value_case():
         unit_price_b = round(random.uniform(0.30, 2.40), 2)
     price_a = round(unit_price_a * qty_a, 2)
     price_b = round(unit_price_b * qty_b, 2)
+    record('num_best_value', items1=qty_a, price1=price_a, items2=qty_b, price2=price_b)
     if unit_price_a < unit_price_b:
         best, label_a, label_b = "Pack A", f"Pack A: {qty_a} for £{fmt_dp(price_a, 2)}", f"Pack B: {qty_b} for £{fmt_dp(price_b, 2)}"
     else:
@@ -595,7 +604,7 @@ def _fdp_problem(variant_fn, difficulty):
 def gcse_fdp_decimal_to_percentage():
     num, den = _fdp_random_terminating_fraction()
     x = num / den
-    ans = x * 100
+    ans = float(f"{x * 100:.10g}")  # strip float noise (0.56 * 100 = 56.00000000000001)
     ans_str = _fdp_format_decimal(ans) if ans != int(ans) else str(int(ans))
     x_str = _fdp_format_decimal(x)
     q = rf"Write {x_str} as a percentage."
@@ -604,6 +613,7 @@ def gcse_fdp_decimal_to_percentage():
         "<strong>Key idea:</strong> percent means “out of 100”, so move the decimal point two places right.<br>"
         f"Example: 0.25 → 25 (because 0.25 = 25/100). Multiply by 100: {x_str} × 100."
     )
+    record('fdp_decimal_to_pct', x=x_str)
     return q, s, hint, 1, ans if ans == int(ans) else ans
 
 def gcse_fdp_percentage_to_decimal():
@@ -616,6 +626,7 @@ def gcse_fdp_percentage_to_decimal():
         "<strong>Key idea:</strong> divide by 100, or move the decimal point two places left.<br>"
         f"Example: 50% = 50 ÷ 100 = 0.5. Here: {x} ÷ 100 = {ans_str}."
     )
+    record('fdp_pct_to_decimal', pct=x)
     return q, s, hint, 1, ans
 
 def gcse_fdp_decimal_to_fraction():
@@ -631,6 +642,7 @@ def gcse_fdp_decimal_to_fraction():
         f"Example: 0.75 = 75/100 = 3/4. For {dec_str}, identify the last digit's place value, "
         "write the fraction, then simplify."
     )
+    record('fdp_decimal_to_fraction', dec=dec_str)
     return q, s, hint, 1, _fdp_fraction_answer(frac)
 
 def gcse_fdp_fraction_to_decimal():
@@ -643,6 +655,7 @@ def gcse_fdp_fraction_to_decimal():
         "<strong>Key idea:</strong> a fraction is a division, so divide the top number by the bottom.<br>"
         f"Example: 3/4 = 3 ÷ 4 = 0.75. Here: {a} ÷ {b}."
     )
+    record('quotient', a=a, b=b)
     return q, s, hint, 1, a / b
 
 def gcse_fdp_percentage_to_fraction():
@@ -654,12 +667,13 @@ def gcse_fdp_percentage_to_fraction():
         "<strong>Key idea:</strong> “percent” means per hundred, so write the number over 100 first.<br>"
         f"Example: 20% = 20/100 = 1/5. Here: {pct}% = {pct}/100, then simplify to {ans}."
     )
+    record('fdp_pct_to_fraction', pct=pct)
     return q, s, hint, 1, _fdp_fraction_answer(ans)
 
 def gcse_fdp_fraction_to_percentage():
     a, b = _fdp_random_terminating_fraction()
     frac = _fdp_fraction_str(a, b)
-    ans = (a / b) * 100
+    ans = float(f"{(a / b) * 100:.10g}")  # strip float noise
     ans_str = _fdp_format_decimal(ans) if ans != int(ans) else str(int(ans))
     q = rf"Write {frac} as a percentage."
     s = rf"Convert the fraction to a decimal, then multiply by 100.<br><strong>{frac} = {ans_str}%</strong>"
@@ -667,6 +681,7 @@ def gcse_fdp_fraction_to_percentage():
         "<strong>Key idea:</strong> turn the fraction into a decimal first, then multiply by 100 for %.<br>"
         f"Example: 1/4 = 0.25 → 25%. Here: {frac} → decimal → × 100 → {ans_str}%."
     )
+    record('fdp_fraction_to_pct', a=a, b=b)
     return q, s, hint, 1, ans if ans == int(ans) else ans
 
 def gcse_fdp_multi_step():
@@ -683,6 +698,7 @@ def gcse_fdp_multi_step():
         f"2. Multiply by 100: {dec} × 100 = {pct.replace('%', '')}%"
     )
     pct_answer = pct_val if pct_val != int(pct_val) else int(pct_val)
+    record('fdp_dec_and_pct', a=a, b=b)
     return q, s, hint, 2, _fdp_fields_answer(
         [a / b, pct_answer],
         ('Decimal', 'Percentage (no % sign)'),
@@ -695,6 +711,7 @@ def gcse_fdp_recurring():
     frac = _fdp_fraction_str(simp_num, simp_den)
     q = rf"Write {dec} as a fraction."
     s, hint = _fdp_recurring_algebra_working(num, den)
+    record('num_recurring_text', dec=dec)
     return q, s, hint, 3, _fdp_fraction_answer(frac)
 
 
@@ -714,6 +731,7 @@ def gcse_fdp_fraction_of_amount():
         f"Method 1: divide by {den} to find one part, then × {num}.<br>"
         f"Method 2: multiply directly — {num}/{den} × {total}."
     )
+    record('num_frac_of', num=num, den=den, amount=total)
     return q, s, hint, 2, ans
 
 
@@ -735,6 +753,7 @@ def gcse_fdp_percentage_increase():
         f"2. Add to the original: {amount} + {increase}<br>"
         f"Or use the multiplier 1.{pct if pct < 10 else pct} in one step: {amount} × {1 + pct/100}."
     )
+    record('num_pct_change', amount=amount, pct=pct, sign='up')
     return q, s, hint, 2, new_amount
 
 
@@ -756,6 +775,7 @@ def gcse_fdp_percentage_decrease():
         f"2. Sale price = £{amount} − £{decrease}<br>"
         f"Or use multiplier {1 - pct/100}: £{amount} × {1 - pct/100}."
     )
+    record('num_pct_change', amount=amount, pct=pct, sign='down')
     return q, s, hint, 2, new_amount
 
 
@@ -781,6 +801,7 @@ def gcse_fdp_percentage_change():
         f"2. Percentage change = (change ÷ original) × 100 = ({change} ÷ {original}) × 100<br>"
         "Always divide by the starting value, not the new value."
     )
+    record('fdp_pct_change', original=original, new=new)
     return q, s, hint, 3, pct
 
 
@@ -801,6 +822,7 @@ def gcse_fdp_reverse_percentage():
         f"A {pct}% reduction means the final price is {multiplier} of the original.<br>"
         f"So original × {multiplier} = {final} → original = {final} ÷ {multiplier}."
     )
+    record('num_reverse_pct', final=final, pct=pct, sign='down')
     return q, s, hint, 3, original
 
 
@@ -823,6 +845,7 @@ def gcse_fdp_order_mixed_values():
         "<strong>Key idea:</strong> you cannot compare fractions, decimals and percentages directly — "
         "convert them all to decimals first, then order from smallest to largest."
     )
+    record('order_values', labels=labels)
     return q, s, hint, 2, _maths_order_from_bank(
         tuple(ordered_labels),
         format_hint='Put the values in order from smallest to largest',
@@ -837,10 +860,13 @@ def gcse_fdp_compound_percentage():
     pct1 = random.choice([5, 8, 10, 12, 15, 20])
     pct2 = random.choice([5, 8, 10, 12, 15, 20, 25])
     after_first = round(amount * (1 + pct1 / 100), 2)
-    final = round(after_first * (1 - pct2 / 100), 2)
+    exact_pence = Fraction(amount * (100 + pct1) * (100 - pct2), 100)   # pence, may carry a fraction
+    final = int(exact_pence + Fraction(1, 2)) / 100                     # half-up to the nearest penny
+    needs_rounding = exact_pence.denominator != 1
     q = (
         rf"£{amount} is increased by {pct1}% and then decreased by {pct2}%. "
-        rf"Find the final amount."
+        rf"Find the final amount"
+        + (", to the nearest penny." if needs_rounding else ".")
     )
     s = (
         rf"After {pct1}% increase: £{amount} × {1 + pct1/100} = £{after_first}<br>"
@@ -854,6 +880,7 @@ def gcse_fdp_compound_percentage():
         f"2. Then {pct2}% decrease: multiply by {1 - pct2/100}<br>"
         "Each change applies to the <em>current</em> amount, not the original."
     )
+    record('num_two_pct_changes', amount=amount, pct1=pct1, pct2=pct2)
     return q, s, hint, 3, final
 
 
@@ -866,7 +893,7 @@ def gcse_fdp_reverse_percentage_two_step():
     final = round(mid * (1 - pct_down / 100), 2)
     q = (
         rf"After a {pct_up}% increase followed by a {pct_down}% decrease, "
-        rf"the price is £{final}. Find the original price."
+        rf"the price is £{final}. Find the original price, to the nearest pound."
     )
     s = (
         rf"Combined multiplier = {1 + pct_up/100} × {1 - pct_down/100} = "
@@ -882,6 +909,7 @@ def gcse_fdp_reverse_percentage_two_step():
         f"→ combined multiplier = {combined}.<br>"
         f"Original × {combined} = {final}, so original = {final} ÷ {combined}."
     )
+    record('fdp_reverse_two_step', final=final, pct_up=pct_up, pct_down=pct_down)
     return q, s, hint, 4, original
 
 
@@ -900,6 +928,7 @@ def gcse_fdp_share_in_ratio():
         f"2. One part = £{total} ÷ {a + b}<br>"
         f"3. First share = {a} parts, second share = {b} parts."
     )
+    record('ratio_share', total=total, parts=(a, b))
     return q, s, hint, 3, _fdp_fields_answer(
         (part_a, part_b), (f'{a} parts', f'{b} parts')
     )
@@ -913,7 +942,7 @@ def gcse_fdp_profit_loss_percentage():
     pct = round(markup / cost * 100, 1)
     q = (
         rf"An item costs £{cost} and is sold for £{selling}. "
-        rf"Calculate the percentage profit."
+        rf"Calculate the percentage profit, correct to 1 decimal place."
     )
     s = (
         rf"Profit = £{selling} − £{cost} = £{markup}<br>"
@@ -925,6 +954,7 @@ def gcse_fdp_profit_loss_percentage():
         f"1. Profit = selling price − cost = £{selling} − £{cost} = £{markup}<br>"
         f"2. Percentage profit = (profit ÷ cost) × 100 = ({markup} ÷ {cost}) × 100."
     )
+    record('fdp_profit_pct', cost=cost, selling=selling)
     return q, s, hint, 3, pct
 
 
@@ -973,6 +1003,7 @@ def gcse_fdp_fraction_word_problem():
         f"1. Find how many walk: {num}/{den} × {total} = {taken}<br>"
         f"2. Subtract from the total: {total} − {taken} = pupils who do not walk."
     )
+    record('fdp_fraction_not', num=num, den=den, total=total)
     return q, s, hint, 3, left
 
 
@@ -1218,6 +1249,7 @@ def _mf_divisibility_case():
         digits = ", ".join(str(d) for d in options)
         display = _mf_missing_digit_number(str(d1), str(d3))
         reason = f"Digit sum {d1} + the missing digit + {d3} must be a multiple of 3."
+        record('mf_divisibility', rule=rule, before=str(d1), after=str(d3))
         return rule, display, digits, reason, options
     elif rule == 5:
         d1 = random.randint(1, 9)
@@ -1225,6 +1257,7 @@ def _mf_divisibility_case():
         display = _mf_missing_digit_number(str(d1), '5' if ends_five else '0')
         digits = "any digit (0–9)" if ends_five else "0 only for 10; 0 or 5 for 5"
         reason = "Numbers divisible by 5 end in 0 or 5."
+        record('mf_divisibility', rule=rule, before=str(d1), after='5' if ends_five else '0')
         return rule, display, digits, reason, None
     elif rule == 6:
         d1 = random.randint(1, 9)
@@ -1232,6 +1265,7 @@ def _mf_divisibility_case():
         digits = ", ".join(str(d) for d in options)
         display = _mf_missing_digit_number(str(d1), '4')
         reason = "Must be even (ends in 4) and the digit sum must be divisible by 3."
+        record('mf_divisibility', rule=rule, before=str(d1), after='4')
         return rule, display, digits, reason, options
     else:
         d1, d2 = random.randint(1, 9), random.randint(0, 9)
@@ -1239,6 +1273,7 @@ def _mf_divisibility_case():
         digits = ", ".join(str(d) for d in options)
         display = f'{d1}{d2}<strong>□</strong>'
         reason = f"Digit sum {d1} + {d2} + the missing digit must be a multiple of 9."
+        record('mf_divisibility', rule=rule, before=f'{d1}{d2}', after='')
         return rule, display, digits, reason, options
 
 
@@ -1275,6 +1310,7 @@ def gcse_mf_find_multiple():
     q = rf"Write down the {k}th multiple of {n}."
     s = rf"The {k}th multiple of {n} is {n} × {k} = <strong>{ans}</strong>"
     hint = "Multiply the number by the position in the list."
+    record('mf_multiple', n=n, k=k)
     return q, s, hint, 1, ans
 
 
@@ -1292,6 +1328,7 @@ def gcse_mf_find_factor():
     q = rf"Which of these is a factor of {n}?"
     s = rf"One factor of {n} is <strong>{ans}</strong> because it divides exactly into {n}."
     hint = "A factor divides exactly with no remainder."
+    record('mf_factor_of', n=n)
     return q, s, hint, 1, _maths_mcq_payload(str(ans), tuple(distractors))
 
 
@@ -1313,6 +1350,7 @@ def gcse_mf_factor_pairs():
     q = rf"Select all the factor pairs of {n}."
     s = rf"The factor pairs of {n} are <strong>{pairs_str}</strong>."
     hint = "Start with 1 and the number itself, then test 2, 3, 4 and so on."
+    record('mf_factor_pairs', n=n)
     return q, s, hint, 2, _maths_pick_from_bank(
         tuple(pairs),
         tuple(distractors),
@@ -1330,6 +1368,7 @@ def gcse_mf_prime():
         div = _mf_small_divisor(n)
         s = rf"No. <strong>{n}</strong> is not prime because it is divisible by {div}."
     hint = "A prime number has exactly two factors: 1 and itself."
+    record('mf_is_prime', n=n)
     return q, s, hint, 1, graded_answer_keyword('yes' if is_prime else 'no')
 
 
@@ -1339,6 +1378,7 @@ def gcse_mf_hcf():
     q = rf"Find the highest common factor of {a} and {b}."
     s = rf"The highest common factor is the largest number that divides both exactly.<br><strong>HCF = {ans}</strong>"
     hint = "List the factors of both numbers, then choose the greatest common one."
+    record('num_hcf', a=a, b=b)
     return q, s, hint, 2, ans
 
 
@@ -1348,6 +1388,7 @@ def gcse_mf_lcm():
     q = rf"Find the lowest common multiple of {a} and {b}."
     s = rf"The lowest common multiple is the smallest number in both times tables.<br><strong>LCM = {ans}</strong>"
     hint = "List multiples of both numbers until you find the first common one."
+    record('num_lcm', a=a, b=b)
     return q, s, hint, 2, ans
 
 
@@ -1363,6 +1404,7 @@ def gcse_mf_prime_factors():
     q = rf"Which is the correct product of prime factors for {n}?"
     s = rf"The product of prime factors of {n} is <strong>{ans}</strong>."
     hint = "Use a factor tree and keep splitting until all branches are prime."
+    record('num_prime_factors', n=n)
     return q, s, hint, 3, _maths_mcq_payload(ans, tuple(_mf_pf_mcq_distractors(n, ans)))
 
 
@@ -1381,6 +1423,7 @@ def gcse_mf_lcm_buses_word():
         rf"Next together: {start} + {lcm} minutes = <strong>{ans_time}</strong>"
     )
     hint = "The next time they coincide is the lowest common multiple of the two intervals."
+    record('mf_buses', a=a, b=b, start=start)
     return q, s, hint, 3, graded_answer_keyword(ans_time)
 
 
@@ -1398,6 +1441,7 @@ def gcse_mf_hcf_tiles_word():
         rf"HCF({length}, {width}) = <strong>{tile_str}</strong>"
     )
     hint = "The largest square tile is the highest common factor of the length and width."
+    record('num_hcf', a=length, b=width)
     return q, s, hint, 3, tile
 
 
@@ -1414,6 +1458,7 @@ def gcse_mf_common_factors_count():
         rf"There are <strong>{count}</strong> common factors."
     )
     hint = "List all factors of each number, then count how many appear in both lists."
+    record('mf_common_factor_count', a=a, b=b)
     return q, s, hint, 2, count
 
 
@@ -1429,6 +1474,7 @@ def gcse_mf_hcf_using_primes():
         rf"HCF = <strong>{hcf}</strong>"
     )
     hint = "Write both numbers as products of primes, then multiply the lowest index of each shared prime."
+    record('num_hcf', a=a, b=b)
     return q, s, hint, 3, hcf
 
 
@@ -1468,6 +1514,7 @@ def gcse_mf_hcf_three_numbers():
         rf"HCF({_mf_hcf(a, b)}, {c}) = <strong>{ans}</strong>"
     )
     hint = "Find the HCF of two numbers first, then find the HCF of that result with the third."
+    record('mf_hcf3', a=a, b=b, c=c)
     return q, s, hint, 3, ans
 
 
@@ -1482,6 +1529,7 @@ def gcse_mf_lcm_three_numbers():
         rf"LCM({_mf_lcm(a, b)}, {c}) = <strong>{ans}</strong>"
     )
     hint = "Find the LCM of two numbers first, then the LCM of that result with the third."
+    record('mf_lcm3', a=a, b=b, c=c)
     return q, s, hint, 3, ans
 
 
@@ -1501,6 +1549,7 @@ def gcse_mf_hcf_lcm_product_rule():
         rf"So HCF × LCM = product of the numbers ✓"
     )
     hint = "This relationship is always true for two positive integers."
+    record('num_hcf_lcm', a=a, b=b)
     return q, s, hint, 3, graded_answer_number_pair(hcf, lcm, 'HCF', 'LCM')
 
 
@@ -1517,6 +1566,7 @@ def gcse_mf_number_from_hcf_lcm():
         rf"Other number = {hcf * lcm} ÷ {known} = <strong>{unknown}</strong>"
     )
     hint = "Multiply HCF by LCM, then divide by the number you know."
+    record('mf_other_number', hcf=hcf, lcm=lcm, known=known)
     return q, s, hint, 4, unknown
 
 
@@ -1532,6 +1582,7 @@ def gcse_mf_lcm_from_prime_forms():
         rf"LCM = {pf_lcm} = <strong>{lcm}</strong>"
     )
     hint = "For LCM, use the highest index of each prime in either factorisation."
+    record('num_lcm', a=a, b=b)
     return q, s, hint, 3, lcm
 
 
@@ -1544,6 +1595,7 @@ def gcse_mf_primes_in_range():
     q = rf"List all the prime numbers between {lo} and {hi}."
     s = rf"Using a sieve or systematic testing: <strong>{listed}</strong>"
     hint = "Test each number for factors; only 1 and itself means prime."
+    record('mf_primes_between', lo=lo, hi=hi)
     return q, s, hint, 3, _mf_number_list_answer(primes)
 
 
@@ -1680,6 +1732,7 @@ def gcse_dec_ordering():
         r"Pad every number to the same number of decimal places (e.g. write 0.4 as 0.400). "
         r"Then compare from left to right — the first place where digits differ tells you which is larger."
     )
+    record('num_order', values=decimals)
     return q, s, hint, 1, _dec_number_list_answer(ordered)
 
 def gcse_dec_add_subtract():
@@ -1702,6 +1755,7 @@ def gcse_dec_add_subtract():
         r"Add zeros on the right if needed so both numbers have the same number of decimal places, "
         r"then work from right to left like whole-number column addition or subtraction."
     )
+    record('num_directed', a=a, op=op, b=b)
     return q, s, hint, 1, result
 
 def gcse_dec_multiply_power10():
@@ -1732,6 +1786,7 @@ def gcse_dec_multiply_power10():
         rf"(each jump ×10). ÷ {power}: shift {places} place(s) to the left. "
         rf"Add placeholder zeros if a digit would move past the end of the number."
     )
+    record('num_scale_pow10', n=base, op='multiply' if op == '×' else 'divide', p=power)
     return q, s, hint, 1, result_str
 
 def gcse_dec_multiply():
@@ -1754,6 +1809,7 @@ def gcse_dec_multiply():
         r"Treat the numbers as integers (e.g. 2.4 → 24), multiply, then count how many decimal "
         r"places were in both factors combined and insert the point that many places from the right."
     )
+    record('product', a=a, b=b)
     return q, s, hint, 2, result
 
 def gcse_dec_divide():
@@ -1778,6 +1834,7 @@ def gcse_dec_divide():
         rf"Scale both dividend and divisor by the same power of 10 until {b} has no decimal point. "
         rf"The quotient is unchanged, but the division becomes a standard whole-number calculation."
     )
+    record('quotient', a=a, b=b)
     return q, s, hint, 2, result
 
 def gcse_dec_round():
@@ -1800,6 +1857,7 @@ def gcse_dec_round():
         rf"Find the digit one place beyond where you are rounding. "
         rf"If it is 5 or above, increase the last kept digit by 1; otherwise leave it as it is."
     )
+    record('num_round_dp', n=n, dp=dp)
     return q, s, hint, 1, result
 
 def gcse_dec_fraction_to_decimal():
@@ -1820,6 +1878,7 @@ def gcse_dec_fraction_to_decimal():
             r"After the whole-number part, add a decimal point and keep dividing; "
             r"each remainder is multiplied by 10 for the next digit."
         )
+        record('quotient', a=num, b=den)
         raw = dec_str
     else:
         num, den = _fdp_random_recurring_fraction()
@@ -1831,6 +1890,7 @@ def gcse_dec_fraction_to_decimal():
             rf"<strong>{dec_str}</strong><br>"
             rf"(When the same remainder appears again, the digit pattern from that point repeats forever.)"
         )
+        record('dec_recurring_display', num=num, den=den, dec=dec_str)
         hint = (
             r"Carry out long or short division. Track remainders — when a remainder repeats, "
             r"the digits from that point onward form the recurring block (write … or a dot over the repeat)."
@@ -1859,6 +1919,7 @@ def gcse_dec_practice_word_total():
         r"Multiply the price of one item by how many you buy. "
         r"Line up decimal points or treat pence as whole numbers (e.g. £1.25 → 125p × quantity)."
     )
+    record('product', a=unit, b=qty)
     return q, s, hint, 2, total
 
 
@@ -1884,6 +1945,7 @@ def gcse_dec_practice_decimal_to_fraction():
         r"Then divide numerator and denominator by their highest common factor until no number "
         r"other than 1 divides both."
     )
+    record('fdp_decimal_to_fraction', dec=dec_str)
     return q, s, hint, 2, _dec_fraction_answer(f'{num}/{den}')
 
 
@@ -1908,6 +1970,7 @@ def gcse_dec_practice_estimate_product():
         r"Round each decimal to the nearest whole number (0.5 and above rounds up). "
         r"Multiply those rounded values — this gives a quick, sensible approximation of the true product."
     )
+    record('num_estimate_product_whole', a=a, b=b)
     return q, s, hint, 2, est
 
 
@@ -1932,6 +1995,7 @@ def gcse_dec_practice_order_mixed():
         r"Put all values in the same form — usually decimals — to compare, "
         r"then order the original values from smallest to largest."
     )
+    record('order_values', labels=[lab for lab, _ in items])
     return q, s, hint, 2, _maths_order_from_bank(
         tuple(ordered_labels),
         format_hint='Put the values in order from smallest to largest',
@@ -1946,6 +2010,7 @@ def gcse_dec_recurring():
     dec = _fdp_recurring_decimal_display(num, den)
     s, hint = _fdp_recurring_algebra_steps(num, den)
     q = rf"Write {dec} as a fraction in its simplest form. Show your working."
+    record('num_recurring_text', dec=dec)
     return q, s, hint, 3, _dec_fraction_answer(f'{num}/{den}')
 
 
@@ -1969,6 +2034,7 @@ def gcse_dec_practice_mixed_ops():
         r"If the divisor is a decimal, multiply both numbers by 10 (or 100) "
         r"to make the divisor a whole number, then divide."
     )
+    record('arith', expr=f"({inner}) ÷ {c}")
     return q, s, hint, 3, ans
 
 
@@ -1995,6 +2061,7 @@ def gcse_dec_practice_bounds():
         r"(e.g. 1 d.p. → ±0.05). Add half to get the upper bound and subtract half for the lower bound. "
         r"The upper value is not included in the interval."
     )
+    record('num_error_interval', derived=('unit',), value=value, unit=10 ** -dp)
     return q, s, hint, 3, graded_answer_number_pair(lower, upper, 'Lower bound', 'Upper bound', sep='to')
 
 
@@ -2003,8 +2070,9 @@ def gcse_dec_practice_word_unit_price():
     mass, total, per_kg = _dec_random_unit_price()
     q = (
         rf"{mass} kg of fruit costs £{fmt_dp(total, 2)}. "
-        rf"Find the cost per kilogram."
+        rf"Find the cost per kilogram, to the nearest penny."
     )
+    per_kg = round(total / mass, 2)
     s = (
         rf"Cost per kg = total cost ÷ mass<br>"
         rf"£{fmt_dp(total, 2)} ÷ {mass} kg = <strong>£{fmt_dp(per_kg, 2)} per kg</strong><br>"
@@ -2014,6 +2082,7 @@ def gcse_dec_practice_word_unit_price():
         r"Unit price means 'cost for 1 kg'. Divide the total bill by the number of kilograms. "
         r"If the mass is a decimal, multiply top and bottom by 10 to make division easier."
     )
+    record('quotient', a=total, b=mass)
     return q, s, hint, 3, per_kg
 
 
@@ -2035,6 +2104,7 @@ def gcse_dec_proc_three_add():
         r"Write all numbers to the same number of decimal places, stack them with points aligned, "
         r"then add from right to left — carry into the next column when a column sums to 10 or more."
     )
+    record('arith', expr=expr)
     return q, s, hint, 1, result
 
 
@@ -2055,6 +2125,7 @@ def gcse_dec_proc_divide_power10():
         rf"÷ {power} moves the decimal point {places} place(s) left. "
         rf"Add a leading zero if the point moves past the start of the number (e.g. 4.5 ÷ 10 = 0.45)."
     )
+    record('num_scale_pow10', n=base, op='divide', p=power)
     return q, s, hint, 1, result_str
 
 
@@ -2073,6 +2144,7 @@ def gcse_dec_proc_difference():
         r"'Difference' means subtract the smaller number from the larger. "
         r"Align decimal points, add trailing zeros if needed, then subtract."
     )
+    record('num_directed', a=hi, op='-', b=lo)
     return q, s, hint, 1, diff
 
 
@@ -2093,6 +2165,7 @@ def gcse_dec_proc_money_change():
         r"Subtract the price from the amount handed over. "
         r"Line up the pounds and pence columns, or convert both to pence (× 100) and subtract."
     )
+    record('num_directed', a=paid, op='-', b=price)
     return q, s, hint, 2, change
 
 
@@ -2117,6 +2190,7 @@ def gcse_dec_proc_mean():
     hint = (
         r"Mean = total ÷ count. Add every value first, then divide the sum by how many numbers there are."
     )
+    record('dec_mean', values=vals)
     return q, s, hint, 2, mean
 
 
@@ -2127,7 +2201,8 @@ def gcse_dec_proc_map_scale():
     real_km = round(map_cm / cm_per_km, 2)
     q = (
         rf"On a map, {cm_per_km} cm represents 1 km. "
-        rf"Two towns are {map_cm} cm apart on the map. How far apart are they in km?"
+        rf"Two towns are {map_cm} cm apart on the map. How far apart are they in km? "
+        rf"Give your answer to 2 decimal places."
     )
     s = (
         rf"Scale: {cm_per_km} cm on the map = 1 km in real life<br>"
@@ -2138,6 +2213,7 @@ def gcse_dec_proc_map_scale():
         rf"Each {cm_per_km} cm on the map stands for 1 km. "
         rf"Divide the map measurement by {cm_per_km} to find how many kilometres it represents."
     )
+    record('quotient', a=map_cm, b=cm_per_km)
     return q, s, hint, 2, real_km
 
 
@@ -2145,8 +2221,10 @@ def gcse_dec_proc_multi_step_shop():
     """Difficult: total cost with multiple items and a discount."""
     unit = round(random.choice([1.25, 1.80, 2.40, 3.15, 4.50]), 2)
     qty = random.randint(3, 8)
-    subtotal = round(unit * qty, 2)
     discount_pct = random.choice([10, 20])
+    if discount_pct == 10 and round(unit * qty * 100) % 10 == 5:
+        qty += 1  # avoid a half-penny discount, which has no single correct total
+    subtotal = round(unit * qty, 2)
     discount = round(subtotal * discount_pct / 100, 2)
     total = round(subtotal - discount, 2)
     q = (
@@ -2166,6 +2244,7 @@ def gcse_dec_proc_multi_step_shop():
         r"Work in order: find the cost of all items, calculate the percentage off that subtotal "
         r"(divide by 100, then multiply by the percentage), then subtract the discount from the subtotal."
     )
+    record('fdp_shop_discount', unit=unit, qty=qty, discount_pct=discount_pct)
     return q, s, hint, 3, total
 
 
@@ -2195,6 +2274,7 @@ def gcse_dec_proc_bounds_dynamic():
         r"The true value lies within half a unit of the last decimal place above and below the recorded value. "
         r"Write as lower ≤ true value < upper — the upper limit is never included."
     )
+    record('num_error_interval', derived=('unit',), value=value, unit=10 ** -dp)
     return q, s, hint, 3, graded_answer_number_pair(lower, upper, 'Lower bound', 'Upper bound', sep='to')
 
 
@@ -2216,6 +2296,7 @@ def gcse_dec_proc_density():
         r"Use the formula density = mass ÷ volume. Substitute the given values and divide; "
         r"scale numerator and denominator by the same power of 10 if the volume is a decimal."
     )
+    record('quotient', a=mass, b=volume)
     return q, s, hint, 3, density
 
 
@@ -2273,6 +2354,7 @@ def gcse_bidmas_simple():
          rf"{b} × {c} = {b*c}<br>"
          rf"{a} + {b*c} = <strong>{result}</strong>")
     hint = r"Multiply first, then add. Don't work left to right without applying BIDMAS."
+    record('arith', expr=f"{a} + {b} × {c}")
     return q, s, hint, 1, result
 
 def gcse_bidmas_brackets():
@@ -2287,6 +2369,7 @@ def gcse_bidmas_brackets():
          rf"({a} + {b}) = {a+b}<br>"
          rf"{a+b} × {c} = <strong>{result}</strong>")
     hint = r"Always evaluate what's inside the brackets before doing anything else."
+    record('arith', expr=f"({a} + {b}) × {c}")
     return q, s, hint, 1, result
 
 def gcse_bidmas_power():
@@ -2301,6 +2384,7 @@ def gcse_bidmas_power():
          rf"{b}^{c} = {b**c}<br>"
          rf"{a} × {b**c} = <strong>{result}</strong>")
     hint = r"Indices (powers) come before multiplication in BIDMAS."
+    record('arith', expr=f"{a} × {b}^{c}")
     return q, s, hint, 1, result
 
 def gcse_bidmas_mixed():
@@ -2319,6 +2403,7 @@ def gcse_bidmas_mixed():
          rf"Step 3 — Multiply: {outer} × {inner**p} = {outer * inner**p}<br>"
          rf"Step 4 — Add: {outer * inner**p} + {extra} = <strong>{result}</strong>")
     hint = r"Follow B → I → D/M → A/S strictly. Work out each step before moving to the next."
+    record('arith', expr=f"{outer} × ({inner_a} − {inner_b})^{p} + {extra}")
     return q, s, hint, 2, result
 
 def gcse_neg_add_subtract():
@@ -2390,6 +2475,7 @@ def gcse_neg_powers():
             rf"\( \left(-{n}\right)^{{{p}}} = {expand_a} = <strong>{with_bracket}</strong> \)<br>"
             rf"The negative is <strong>inside</strong> the brackets, so it is raised to the power."
         )
+        record('arith', expr=f"(-{n})^{p}")
         hint = (
             rf"Bracket the whole \(-{n}\) before applying the power: "
             rf"\( \left(-{n}\right)^{{{p}}} \neq -\left({n}\right)^{{{p}}} \)."
@@ -2401,6 +2487,7 @@ def gcse_neg_powers():
             rf"\( -\left({n}\right)^{{{p}}} = -\left({n**p}\right) = <strong>{without_bracket}</strong> \)<br>"
             rf"Only <strong>{n}</strong> is {power_phrase}; the minus sign stays <strong>outside</strong> the brackets."
         )
+        record('arith', expr=f"-({n})^{p}")
         hint = (
             rf"The power applies to {n} only; the leading minus is not inside the brackets. "
             rf"Compare with \( \left(-{n}\right)^{{{p}}} = {with_bracket} \)."
@@ -2428,6 +2515,7 @@ def gcse_bidmas_with_negatives():
         rf"Square the bracketed value first: \( \left({inner}\right)^{{2}} = {inner**2} \). "
         rf"Then multiply by \( -{a} \)."
     )
+    record('arith', expr=f"-{a} × ({b} − {c})^2 + {d}")
     return q, s, hint, 2, result
 
 def gcse_bidmas_hard():
@@ -2438,9 +2526,11 @@ def gcse_bidmas_hard():
     c = random.randint(2, 4)
     d = random.randint(1, 4)
     e = random.randint(1, 3)
-    # (a² − b) / (c − d) + e  where (c - d) is small non-zero
-    while c - d == 0:
+    # (a² − b) / (c − d) + e  where (c - d) is non-zero and the quotient is a whole number or a short
+    # terminating decimal (the question gives no rounding instruction, so it must not recur)
+    while c - d == 0 or Fraction(a**2 - b, c - d).denominator not in (1, 2, 4, 5):
         c = random.randint(2, 6)
+        d = random.randint(1, 4)
     top = a**2 - b
     bottom = c - d
     result = top / bottom + e
@@ -2451,6 +2541,7 @@ def gcse_bidmas_hard():
          rf"Divide: {top} ÷ {bottom} = {top/bottom:.4g}<br>"
          rf"Add: {top/bottom:.4g} + {e} = <strong>{raw}</strong>")
     hint = r"Evaluate all brackets first (including the indices inside), divide, then add."
+    record('arith', expr=f"({a}² − {b}) ÷ ({c} − {d}) + {e}")
     return q, s, hint, 3, raw
 
 
@@ -2469,6 +2560,7 @@ def gcse_bidmas_proc_subtract_multiply():
         rf"Then subtract: {a} − {product} = <strong>{result}</strong>"
     )
     hint = r"× comes before − in BIDMAS. Do not subtract before multiplying."
+    record('arith', expr=f"{a} − {b} × {c}")
     return q, s, hint, 1, result
 
 
@@ -2485,6 +2577,7 @@ def gcse_bidmas_proc_divide_add():
         rf"Then add: {a} + {quotient} = <strong>{result}</strong>"
     )
     hint = r"÷ comes before + in BIDMAS."
+    record('arith', expr=f"{a} + {b} ÷ {c}")
     return q, s, hint, 1, result
 
 
@@ -2500,6 +2593,7 @@ def gcse_bidmas_proc_two_products():
         rf"{p1} + {p2} = <strong>{result}</strong>"
     )
     hint = r"Work out each multiplication, then add the results."
+    record('arith', expr=f"{a} × {b} + {c} × {d}")
     return q, s, hint, 1, result
 
 
@@ -2518,6 +2612,7 @@ def gcse_bidmas_proc_nested_brackets():
         rf"{left} × {right} = <strong>{result}</strong>"
     )
     hint = r"Evaluate both brackets before multiplying."
+    record('arith', expr=f"({a} + {b}) × ({c} − {d})")
     return q, s, hint, 2, result
 
 
@@ -2537,6 +2632,7 @@ def gcse_bidmas_proc_power_then_multiply():
         rf"Add: {product} + {extra} = <strong>{result}</strong>"
     )
     hint = r"Order: indices → multiply → add."
+    record('arith', expr=f"{mult} × {inner}^{p} + {extra}")
     return q, s, hint, 2, result
 
 
@@ -2556,6 +2652,7 @@ def gcse_bidmas_proc_bracket_over_divisor():
         rf"Add: {quotient} + {extra} = <strong>{result}</strong>"
     )
     hint = r"Brackets first, then division, then addition."
+    record('arith', expr=f"({a} + {b}) ÷ {c} + {extra}")
     return q, s, hint, 2, result
 
 
@@ -2579,6 +2676,7 @@ def gcse_bidmas_proc_square_bracket_divide():
         rf"Add: {divided} + {extra} = <strong>{result}</strong>"
     )
     hint = r"B → I → M/D → A/S. The bracket may give a negative value before squaring."
+    record('arith', expr=f"{mult} × ({a} − {b})² ÷ {divisor} + {extra}")
     return q, s, hint, 3, result
 
 
@@ -2595,6 +2693,7 @@ def gcse_bidmas_proc_nested_inner_bracket():
         rf"Subtract: {inner} − {d} = <strong>{result}</strong>"
     )
     hint = r"Work out the bracket first, then multiply, then subtract."
+    record('arith', expr=f"{b} × ({c} + {a}) − {d}")
     return q, s, hint, 3, result
 
 
@@ -2615,6 +2714,7 @@ def gcse_bidmas_proc_negative_coefficient():
         rf"Add: {product} + {extra} = <strong>{result}</strong>"
     )
     hint = r"Squaring removes the sign of the bracketed value; then apply the negative multiplier."
+    record('arith', expr=f"−{coeff} × ({b} − {c})² + {extra}")
     return q, s, hint, 3, result
 
 
@@ -2665,8 +2765,10 @@ def _algebra_number_pair_answer(val_a, val_b, label_a='x', label_b='y', sep=',')
     }
 
 
-def _algebra_algebraic_answer(expr, format_hint=None, subject=None):
+def _algebra_algebraic_answer(expr, format_hint=None, subject=None, form=None):
     payload = {'type': 'algebraic', 'value': str(expr)}
+    if form:
+        payload['form'] = form
     if format_hint:
         payload['format_hint'] = format_hint
     if subject:
@@ -2735,6 +2837,8 @@ def _algebra_problem_from_output(out, difficulty):
                     extra['answer_subject'] = raw['subject']
                 elif '=' in text:
                     extra['answer_subject'] = text.split('=', 1)[0]
+                if raw.get('form'):
+                    extra['answer_form'] = raw['form']
         elif isinstance(raw, (int, float, sp.Rational)):
             extra = {
                 'correct_answer_raw': _algebra_raw(raw),
@@ -2766,14 +2870,17 @@ def _algebra_linear_equation(a_lo, a_hi, b_lo, b_hi, c_lo, c_hi):
     return q, s, hint, 2, _algebra_linear_answer(ans)
 
 
+@verifies('alg', task='solve_linear')
 def algebra_practice_linear_1():
     return _algebra_linear_equation(2, 9, 1, 15, 10, 50)
 
 
+@verifies('alg', task='solve_linear')
 def algebra_practice_linear_2():
     return _algebra_linear_equation(2, 12, 1, 20, 15, 80)
 
 
+@verifies('alg', task='solve_linear')
 def algebra_practice_linear_3():
     return _algebra_linear_equation(3, 15, 2, 25, 20, 100)
 
@@ -2791,14 +2898,17 @@ def _algebra_factorise_problem(r1_range, r2_range):
     return q, s, hint, 3, _algebra_quadratic_roots_answer(r1, r2)
 
 
+@verifies('alg', task='solve_poly')
 def algebra_practice_factorise_1():
     return _algebra_factorise_problem((-6, 6), (-6, 6))
 
 
+@verifies('alg', task='solve_poly')
 def algebra_practice_factorise_2():
     return _algebra_factorise_problem((-8, 8), (-8, 8))
 
 
+@verifies('alg', task='solve_poly')
 def algebra_practice_factorise_3():
     return _algebra_factorise_problem((-10, 10), (-10, 10))
 
@@ -2832,6 +2942,8 @@ def _algebra_hcf_factorise_problem():
     hcf = random.randint(2, 9)
     inner_x = random.randint(2, 9)
     inner_c = random.randint(2, 9)
+    while math.gcd(inner_x, inner_c) != 1:      # otherwise hcf is not the highest common factor
+        inner_c = random.randint(2, 9)
     coeff_x = hcf * inner_x
     const = hcf * inner_c
     factored = f"{hcf}({inner_x}x + {inner_c})"
@@ -2839,7 +2951,7 @@ def _algebra_hcf_factorise_problem():
     s = rf"HCF is {hcf}: \( {coeff_x}x + {const} = \boxed{{{factored}}} \)"
     hint = r"Find the largest number that divides both terms, and factor it out."
     return q, s, hint, 2, _algebra_algebraic_answer(
-        factored, format_hint='e.g. 3(2x + 5)',
+        factored, format_hint='e.g. 3(2x + 5)', form=FORM_FACTORISED,
     )
 
 
@@ -2884,7 +2996,7 @@ def _algebra_simultaneous_problem():
             break
     c1 = a1 * x_val + b1 * y_val
     c2 = a2 * x_val + b2 * y_val
-    q = rf"Solve simultaneously:<br>\( {a1}x + {b1}y = {c1} \)<br>\( {a2}x + {b2}y = {c2} \)"
+    q = rf"Solve simultaneously:<br>\( {coef(a1, 'x')} + {coef(b1, 'y')} = {c1} \)<br>\( {coef(a2, 'x')} + {coef(b2, 'y')} = {c2} \)"
     s = (
         rf"Eliminating one variable gives \( x = \boxed{{{x_val}}} \), \( y = \boxed{{{y_val}}} \).<br>"
         rf"Check in both equations."
@@ -2893,6 +3005,7 @@ def _algebra_simultaneous_problem():
     return q, s, hint, 4, _algebra_number_pair_answer(x_val, y_val)
 
 
+@verifies('alg', task='solve_poly')
 def algebra_practice_quadratic_1():
     return _algebra_quadratic_formula_problem()
 
@@ -2922,6 +3035,7 @@ def algebra_practice_quadratic_3():
 
 # ── Algebra: intermediate (varied formats beyond factorise-and-solve) ─────────
 
+@verifies('alg', task='expand')
 def algebra_practice_expand_binomial():
     """Expand two linear brackets."""
     x = sp.Symbol('x')
@@ -2935,9 +3049,11 @@ def algebra_practice_expand_binomial():
     return q, s, hint, 2, _algebra_algebraic_answer(
         _algebra_expr_str(expr),
         format_hint='Enter the expanded expression, e.g. 2x^2 + 5x + 3',
+        form=FORM_EXPANDED,
     )
 
 
+@verifies('alg', task='solve_linear')
 def algebra_practice_linear_both_sides():
     """Linear equation with unknown on both sides."""
     x_val = random.randint(2, 8)
@@ -2947,16 +3063,17 @@ def algebra_practice_linear_both_sides():
         c = random.randint(1, 5)
     b = random.randint(1, 10)
     rhs = (a - c) * x_val + b
-    q = rf"Solve: \( {a}x {signed_term(b)} = {c}x {signed_term(rhs)} \)"
+    q = rf"Solve: \( {a}x {signed_term(b)} = {coef(c, 'x')} {signed_term(rhs)} \)"
     s = (
-        rf"Subtract \( {c}x \): \( {a - c}x {signed_term(b)} = {rhs} \)<br>"
-        rf"Subtract \( {b} \): \( {a - c}x = {rhs - b} \)<br>"
+        rf"Subtract \( {coef(c, 'x')} \): \( {coef(a - c, 'x')} {signed_term(b)} = {rhs} \)<br>"
+        rf"Subtract \( {b} \): \( {coef(a - c, 'x')} = {rhs - b} \)<br>"
         rf"\( x = \boxed{{{x_val}}} \)"
     )
     hint = r"Collect \(x\) terms on one side and numbers on the other, then divide."
     return q, s, hint, 3, _algebra_linear_answer(x_val)
 
 
+@verifies('alg', task='substitute')
 def algebra_practice_substitution():
     """Substitute a value into an expression."""
     x_val = random.randint(-5, 8)
@@ -2965,8 +3082,13 @@ def algebra_practice_substitution():
     a = random.randint(2, 4)
     b = random.randint(-6, 6)
     c = random.randint(-3, 8)
+    if b == 0:                      # no "+ 0x" term
+        b = random.choice([-2, -1, 1, 2, 3])
+    if c == 0:                      # no "+ 0" term
+        c = random.choice([-2, -1, 1, 2, 3])
     result = a * x_val ** 2 + b * x_val + c
-    q = rf"If \( x = {x_val} \), find the value of \( {a}x^2 {signed_term(b)}x {signed_term(c)} \)."
+    bx = f"{'+' if b > 0 else '-'} {coef(abs(b), 'x')}"
+    q = rf"If \( x = {x_val} \), find the value of \( {a}x^2 {bx} {signed_term(c)} \)."
     s = (
         rf"Substitute \( x = {x_val} \):<br>"
         rf"\( {a}({x_val})^2 {signed_term(b)}({x_val}) {signed_term(c)} = {a * x_val**2} {signed_term(b * x_val)} {signed_term(c)} = "
@@ -2976,11 +3098,13 @@ def algebra_practice_substitution():
     return q, s, hint, 2, result
 
 
+@verifies('alg', task='factorise')
 def algebra_practice_factorise_hcf():
     """Factorise by taking out a common factor."""
     return _algebra_hcf_factorise_problem()
 
 
+@verifies('alg', task='rearrange')
 def algebra_practice_change_subject():
     """Rearrange a formula to change the subject."""
     return _algebra_change_subject_problem()
@@ -2994,6 +3118,7 @@ def algebra_practice_word_linear():
     per = random.randint(2, 12)
     miles = random.randint(3, 15)
     total = base + per * miles
+    record('linear_fixed_rate', fixed=base, rate=per, total=total)
     q = (
         rf"A taxi charges a £{base} fixed fare plus £{per} per mile. "
         rf"The total fare is £{total}. How many miles were travelled?"
@@ -3008,11 +3133,13 @@ def algebra_practice_word_linear():
     return q, s, hint, 3, miles
 
 
+@verifies('alg', task='solve_system')
 def algebra_practice_simultaneous():
     """Solve a pair of simultaneous linear equations."""
     return _algebra_simultaneous_problem()
 
 
+@verifies('alg', task='expand')
 def algebra_practice_expand_mixed():
     """Expand brackets with a coefficient on x."""
     x = sp.Symbol('x')
@@ -3026,21 +3153,26 @@ def algebra_practice_expand_mixed():
     return q, s, hint, 3, _algebra_algebraic_answer(
         _algebra_expr_str(expr),
         format_hint='Enter the expanded expression, e.g. 2x^2 + 5x + 3',
+        form=FORM_EXPANDED,
     )
 
 
+@verifies('alg', task='solve_linear')
 def algebra_practice_brackets_both_sides():
     """Equation with brackets on both sides."""
     x_val = random.randint(2, 6)
     a = random.randint(2, 4)
     b = random.randint(2, 6)
     c = random.randint(2, 4)
+    while c == a:       # equal coefficients would cancel the x terms and leave no single solution
+        c = random.randint(2, 4)
     d = random.randint(1, 5)
     extra = a * (x_val + b) - c * (x_val + d)
-    q = rf"Solve: \( {a}(x + {b}) = {c}(x + {d}) {signed_term(extra)} \)"
+    tail = signed_term(extra) if extra else ''          # never '+ 0'
+    q = rf"Solve: \( {a}(x + {b}) = {c}(x + {d}) {tail} \)"
     s = (
-        rf"Expand: \( {a}x + {a*b} = {c}x + {c*d} {signed_term(extra)} \)<br>"
-        rf"Collect \(x\): \( {a - c}x = {c*d + extra - a*b} \)<br>"
+        rf"Expand: \( {a}x + {a*b} = {c}x + {c*d} {tail} \)<br>"
+        rf"Collect \(x\): \( {coef(a - c, 'x')} = {c*d + extra - a*b} \)<br>"
         rf"\( x = \boxed{{{x_val}}} \)"
     )
     hint = r"Expand brackets first, then collect \(x\) terms and solve."
@@ -3052,6 +3184,7 @@ def algebra_practice_consecutive_integers():
     n = random.randint(3, 8)
     start = random.randint(10, 20)
     total = sum(range(start, start + n))
+    record('consecutive_sum', n=n, total=total)
     q = (
         rf"The sum of {n} consecutive integers starting from \( x \) is {total}. "
         rf"Find \( x \)."
@@ -3115,12 +3248,11 @@ _SURD_PRIMES = [2, 3, 5, 6, 7, 10, 11, 13, 14, 15]
 
 
 def _surd_largest_square_factor(n):
-    largest_sq = 1
-    for s in _SURD_SQUARES:
-        if n % s == 0:
-            largest_sq = s
-    k = math.isqrt(largest_sq)
-    return largest_sq, k, n // largest_sq
+    """(largest square factor, its root, remaining radicand) for any positive integer n."""
+    for k in range(math.isqrt(n), 0, -1):
+        if n % (k * k) == 0:
+            return k * k, k, n // (k * k)
+    return 1, 1, n
 
 
 def _surd_decompose(n):
@@ -3134,13 +3266,20 @@ def _surd_fmt(k, r):
     return f"{k}√{r}"
 
 
-def _surd_answer(coeff, radicand):
-    """Surd answer k√r. Stored as 'coeff|radicand' when coeff != 1."""
+def _surd_answer(coeff, radicand, simplest=False):
+    """Surd answer k√r. Stored as 'coeff|radicand' when coeff != 1.
+
+    ``simplest=True`` marks a question that asks for the simplest surd form: the checker then also
+    requires a square-free radicand (an equal but unsimplified value gets a kind form message).
+    """
     c = int(coeff)
     r = int(radicand)
-    if c == 1:
-        return {'type': 'surd', 'radicand': r}
-    return {'type': 'surd', 'coeff': c, 'radicand': r}
+    payload = {'type': 'surd', 'radicand': r}
+    if c != 1:
+        payload['coeff'] = c
+    if simplest:
+        payload['form'] = FORM_SIMPLEST_SURD
+    return payload
 
 
 def _surd_fields_answer(values, labels):
@@ -3151,8 +3290,10 @@ def _surd_fields_answer(values, labels):
     }
 
 
-def _algebraic_answer(text, format_hint=None):
+def _algebraic_answer(text, format_hint=None, form=None):
     payload = {'type': 'algebraic', 'value': str(text)}
+    if form:
+        payload['form'] = form
     if format_hint:
         payload['format_hint'] = format_hint
     return payload
@@ -3173,7 +3314,7 @@ def _algebraic_surd_binomial(const, coef, radicand, surd_sign='+', format_hint=N
     return payload
 
 
-def _algebraic_fraction_surd(coef, radicand, denom, format_hint=None):
+def _algebraic_fraction_surd(coef, radicand, denom, format_hint=None, simplest=False):
     payload = {
         'type': 'algebraic_fraction',
         'kind': 'surd_over_int',
@@ -3181,6 +3322,8 @@ def _algebraic_fraction_surd(coef, radicand, denom, format_hint=None):
         'radicand': int(radicand),
         'denom': int(denom),
     }
+    if simplest:
+        payload['form'] = FORM_SIMPLEST_SURD
     if format_hint:
         payload['format_hint'] = format_hint
     return payload
@@ -3404,6 +3547,8 @@ def _surd_problem_from_output(out, difficulty):
                 'answer_type': 'number',
                 'answer_format_hint': 'Enter a number',
             }
+    if extra and isinstance(raw, dict) and raw.get('form'):
+        extra['answer_form'] = raw['form']
     return make_problem(q, s, hint, difficulty, marks, 'gcse', 'maths', 'surds', **extra)
 
 
@@ -3437,7 +3582,7 @@ def _surd_random_divide():
         rf"\( \dfrac{{\sqrt{{{a}}}}}{{\sqrt{{{b}}}}} = \sqrt{{\dfrac{{{a}}}{{{b}}}}} "
         rf"= \sqrt{{{k * k * r}}} = {k}\sqrt{{{r}}} = {ans}"
     )
-    return a, b, ans, working, _surd_answer(k, r)
+    return a, b, ans, working, _surd_answer(k, r, simplest=True)
 
 
 def _surd_random_compare():
@@ -3484,7 +3629,7 @@ def _surd_random_mixed():
     expr = "".join(expr_parts)
     ans = _surd_fmt(total_k, p)
     working = "<br>".join(working_parts) + f"<br>Combine: <strong>{ans}</strong>"
-    return expr, ans, working, _surd_answer(total_k, p)
+    return expr, ans, working, _surd_answer(total_k, p, simplest=True)
 
 
 def _surd_random_equation():
@@ -3514,6 +3659,7 @@ def _surd_random_between_integers():
     return n, lo, hi
 
 
+@verifies('alg', task='surd', mode='simplify')
 def gcse_surds_simplify():
     """Foundational: simplify a single surd √n"""
     n, square, prime = _surd_random_radicand()
@@ -3522,8 +3668,9 @@ def gcse_surds_simplify():
     s = (rf"Find the largest square factor of {n}: that is {square} (since {square} × {prime} = {n}).<br>"
          rf"√{n} = √({square} × {prime}) = √{square} × √{prime} = <strong>{k}√{prime}</strong>")
     hint = r"Look for the largest square number that divides exactly into the number under the root."
-    return q, s, hint, 2, _surd_answer(k, prime)
+    return q, s, hint, 2, _surd_answer(k, prime, simplest=True)
 
+@verifies('alg', task='surd', mode='form_k')
 def gcse_surds_simplify_multiple():
     """Foundational: write p√n in the form k√r"""
     n, square, prime = _surd_random_radicand()
@@ -3534,8 +3681,9 @@ def gcse_surds_simplify_multiple():
     s = (rf"First simplify √{n}: √{n} = √({square} × {prime}) = {k_inner}√{prime}<br>"
          rf"Then multiply: {p} × {k_inner}√{prime} = <strong>{k_total}√{prime}</strong>")
     hint = rf"Simplify √{n} first by finding its square factor, then multiply by {p}."
-    return q, s, hint, 2, _surd_answer(k_total, prime)
+    return q, s, hint, 2, _surd_answer(k_total, prime, simplest=True)
 
+@verifies('alg', task='surd', mode='form_k')
 def gcse_surds_add_subtract():
     """Foundational: add or subtract surds after simplifying"""
     prime = random.choice([2, 3, 5, 7])
@@ -3563,34 +3711,31 @@ def gcse_surds_add_subtract():
          rf"√{n2} = √({b_sq} × {prime}) = {b_coef}√{prime}<br>"
          rf"{a_coef}√{prime}{op_word}{b_coef}√{prime} = <strong>{_surd_fmt(total, prime)}</strong>")
     hint = rf"Simplify each surd separately first, then combine the coefficients in front of √{prime}."
-    return q, s, hint, 2, _surd_answer(total, prime)
+    return q, s, hint, 2, _surd_answer(total, prime, simplest=True)
 
+@verifies('alg', task='surd', mode='multiply')
 def gcse_surds_multiply():
     """Foundational: multiply two simple surds"""
     a = random.choice(_SURD_PRIMES)
     b = random.choice(_SURD_PRIMES)
     product = a * b
-    # check if product has a square factor for a nicer answer
-    largest_sq = 1
-    for s in [4, 9, 16, 25]:
-        if product % s == 0:
-            largest_sq = s
+    largest_sq, k, rem = _surd_largest_square_factor(product)
     if largest_sq > 1:
-        k = math.isqrt(largest_sq)
-        rem = product // largest_sq
         ans = f"{k}√{rem}" if rem > 1 else str(k)
         sol = (rf"√{a} × √{b} = √({a} × {b}) = √{product}<br>"
                rf"Simplify √{product}: largest square factor is {largest_sq}<br>"
-               rf"√{product} = {k}√{rem} → <strong>{ans}</strong>")
-        raw = k if rem == 1 else _surd_answer(k, rem)
+               rf"√{product} = {k}√{rem} → <strong>{ans}</strong>" if rem > 1 else
+               rf"√{a} × √{b} = √({a} × {b}) = √{product} = <strong>{k}</strong>")
+        raw = k if rem == 1 else _surd_answer(k, rem, simplest=True)
     else:
         ans = f"√{product}"
         sol = rf"√{a} × √{b} = √({a} × {b}) = <strong>√{product}</strong>"
-        raw = _surd_answer(1, product)
+        raw = _surd_answer(1, product, simplest=True)
     q = rf"Simplify √{a} × √{b}."
     hint = r"Use the rule √a × √b = √(ab), then check if the result can be simplified further."
     return q, sol, hint, 2, raw
 
+@verifies('alg', task='surd', mode='expand_num')
 def gcse_surds_expand_simple():
     """Intermediate: expand (a + √b)(a − √b) — difference of two squares"""
     a = random.randint(2, 9)
@@ -3602,6 +3747,7 @@ def gcse_surds_expand_simple():
     hint = r"(a + √b)(a − √b) = a² − b. The surd terms cancel out."
     return q, s, hint, 2, result
 
+@verifies('alg', task='surd', mode='expand_num')
 def gcse_surds_expand_double():
     """Intermediate: expand (a + √b)(c + √b) — general double bracket"""
     a = random.randint(1, 6)
@@ -3620,6 +3766,7 @@ def gcse_surds_expand_double():
     hint = r"Use FOIL. Remember √b × √b = b (the surd disappears)."
     return q, s, hint, 2, _algebraic_surd_binomial(const, coef, b, '+')
 
+@verifies('alg', task='surd', mode='expand_form')
 def gcse_surds_square_bracket():
     """Intermediate: expand (a + √b)² — write in form p + q√b"""
     a = random.randint(2, 9)
@@ -3635,6 +3782,7 @@ def gcse_surds_square_bracket():
     hint = rf"(a + √b)² = a² + 2a√b + b. Don't forget the middle term 2a√b."
     return q, s, hint, 2, _algebraic_surd_binomial(const, coef, b, '+')
 
+@verifies('alg', task='surd', mode='expand_form')
 def gcse_surds_square_bracket_minus():
     """Intermediate: expand (a − √b)² — write in form p + q√b"""
     a = random.randint(2, 9)
@@ -3649,6 +3797,7 @@ def gcse_surds_square_bracket_minus():
     hint = rf"(a − √b)² = a² − 2a√b + b. Note: (−√b)² = +b."
     return q, s, hint, 2, _algebraic_surd_binomial(const, coef, b, '-')
 
+@verifies('alg', task='surd', mode='rationalise')
 def gcse_surds_rationalise_simple():
     """Intermediate: rationalise 1/√a or k/√a"""
     a = random.choice(_SURD_PRIMES[:8])
@@ -3659,10 +3808,10 @@ def gcse_surds_rationalise_simple():
     d_s = a // g
     if d_s == 1:
         ans = _surd_fmt(n_s, a)
-        raw = _surd_answer(n_s, a)
+        raw = _surd_answer(n_s, a, simplest=True)
     else:
         ans = f"{_surd_fmt(n_s, a)} / {d_s}"
-        raw = _algebraic_fraction_surd(n_s, a, d_s)
+        raw = _algebraic_fraction_surd(n_s, a, d_s, simplest=True)
     q = rf"Rationalise the denominator of {num} / √{a}. Write your answer in its simplest form."
     s = (rf"Multiply numerator and denominator by √{a}:<br>"
          rf"({num} × √{a}) / (√{a} × √{a}) = {num}√{a} / {a}<br>"
@@ -3670,6 +3819,7 @@ def gcse_surds_rationalise_simple():
     hint = rf"Multiply top and bottom by √{a} to clear the surd from the denominator."
     return q, s, hint, 2, raw
 
+@verifies('alg', task='surd', mode='rationalise')
 def gcse_surds_rationalise_compound():
     """Intermediate: rationalise k/(a + √b) using conjugate"""
     while True:
@@ -3709,6 +3859,7 @@ def gcse_surds_rationalise_compound():
     hint = rf"The conjugate of ({a} + √{b}) is ({a} − √{b}). Multiplying gives a² − b, removing the surd from the denominator."
     return q, s, hint, 3, raw
 
+@verifies('alg', task='surd', mode='rationalise')
 def gcse_surds_show_that_rationalise():
     """Exam: 'show that' rationalise with a compound denominator"""
     while True:
@@ -3750,6 +3901,7 @@ def gcse_surds_show_that_rationalise():
         raw = _algebraic_fraction_expanded_binomial(nc, nk, r, abs(nd))
     return q_text, s, hint, 3, raw
 
+@verifies('alg', task='surd', mode='identity')
 def gcse_surds_identity():
     """Exam: (√a + √b)(√a − √b) = a − b as an algebraic result"""
     q_text = r"Simplify fully ( √a + √b )( √a − √b )."
@@ -3757,12 +3909,13 @@ def gcse_surds_identity():
          r"Here p = √a and q = √b:<br>"
          r"(√a)² − (√b)² = <strong>a − b</strong>")
     hint = r"(√a + √b)(√a − √b) is a difference of two squares pattern."
-    return q_text, s, hint, 2, _algebraic_answer('a-b', 'e.g. a - b')
+    return q_text, s, hint, 2, _algebraic_answer('a-b', 'e.g. a - b', form=FORM_EXPANDED)
 
 
 gcse_surds_identity._fixed_stem = True
 
 
+@verifies('alg', task='surd', mode='area')
 def gcse_surds_exact_area():
     """Exam: find area of a rectangle with surd side lengths"""
     a = random.choice([2, 3, 5, 6, 7])
@@ -3771,14 +3924,10 @@ def gcse_surds_exact_area():
     q_coef = random.randint(2, 6)
     # Rectangle: side1 = p√a, side2 = q_coef
     area_coef = p * q_coef
-    q_text = (rf"A rectangle has sides of length {p}√{a} cm and {q_coef}√{b} cm. "
+    q_text = (rf"A rectangle has sides of length {_surd_fmt(p, a)} cm and {_surd_fmt(q_coef, b)} cm. "
               rf"Find the exact area of the rectangle. Simplify your answer.")
     product_surd = a * b
-    # find largest square factor
-    largest_sq = 1
-    for s_val in [4, 9, 16, 25, 36]:
-        if product_surd % s_val == 0:
-            largest_sq = s_val
+    largest_sq = _surd_largest_square_factor(product_surd)[0]
     k_inner = math.isqrt(largest_sq)
     rem = product_surd // largest_sq
     total_k = p * q_coef * k_inner
@@ -3793,13 +3942,14 @@ def gcse_surds_exact_area():
         sol_step = (rf"√{a} × √{b} = √{product_surd}<br>"
                     rf"Simplify √{product_surd}: largest square factor = {largest_sq}, so √{product_surd} = {k_inner}√{rem}<br>"
                     rf"Area = {p} × {q_coef} × {k_inner}√{rem} = <strong>{ans}</strong>")
-        raw = _surd_answer(total_k, rem)
+        raw = _surd_answer(total_k, rem, simplest=True)
     s = (rf"Area = length × width = {p}√{a} × {q_coef}√{b}<br>"
          rf"= ({p} × {q_coef}) × (√{a} × √{b})<br>"
          + sol_step)
     hint = r"Multiply the integer parts together and the surd parts together, then simplify the resulting surd."
     return q_text, s, hint, 3, raw
 
+@verifies('alg', task='surd', mode='expand_num')
 def gcse_surds_expand_diff_subtract():
     """Exam: expand (p + √q)² − (p − √q)², show it simplifies to k√q"""
     p = random.randint(2, 8)
@@ -3816,11 +3966,12 @@ def gcse_surds_expand_diff_subtract():
          rf"Subtract: ( {p**2} + {2*p}√{q} + {q} ) − ( {p**2} − {2*p}√{q} + {q} )<br>"
          rf"= {2*p}√{q} + {2*p}√{q} = <strong>{k}√{q}</strong>")
     hint = r"Expand each bracket separately using (a ± √b)² = a² ± 2a√b + b, then subtract — most terms cancel."
-    return q_text, s, hint, 3, _surd_answer(k, q)
+    return q_text, s, hint, 3, _surd_answer(k, q, simplest=True)
 
 
 # ── Surds: intermediate (extra formats) ───────────────────────────────────────
 
+@verifies('alg', task='surd', mode='divide')
 def gcse_surds_practice_divide():
     """Divide one surd by another and simplify."""
     a, b, ans, working, raw = _surd_random_divide()
@@ -3830,6 +3981,7 @@ def gcse_surds_practice_divide():
     return q, s, hint, 2, raw
 
 
+@verifies('alg', task='surd', mode='compare')
 def gcse_surds_practice_compare():
     """Compare the size of two surd expressions."""
     c1, r1, c2, r2, _s1, _s2, _winner, v1, v2 = _surd_random_compare()
@@ -3849,6 +4001,7 @@ def gcse_surds_practice_compare():
     return q, s, hint, 2, compare_choice_payload(expr1, expr2, correct)
 
 
+@verifies('alg', task='surd', mode='mixed')
 def gcse_surds_practice_mixed_simplify():
     """Simplify a multi-term surd expression."""
     expr, ans, working, raw = _surd_random_mixed()
@@ -3858,6 +4011,7 @@ def gcse_surds_practice_mixed_simplify():
     return q, s, hint, 3, raw
 
 
+@verifies('alg', task='surd', mode='expand_num')
 def gcse_surds_practice_double_bracket():
     """Expand general surd double bracket (not difference of squares)."""
     return gcse_surds_expand_double()
@@ -3865,6 +4019,7 @@ def gcse_surds_practice_double_bracket():
 
 # ── Surds: difficult (extra formats) ──────────────────────────────────────────
 
+@verifies('alg', task='surd', mode='equation')
 def gcse_surds_practice_surd_equation():
     """Solve a simple equation involving a square root."""
     rhs, offset, x_val = _surd_random_equation()
@@ -3877,6 +4032,7 @@ def gcse_surds_practice_surd_equation():
     return q, s, hint, 3, x_val
 
 
+@verifies('alg', task='surd', mode='rationalise')
 def gcse_surds_rationalise_binomial_diff():
     """Rationalise 1/(√a − √b) using conjugate √a + √b in the numerator."""
     a, b, denom, ans = _surd_random_binomial_diff()
@@ -3893,12 +4049,14 @@ def gcse_surds_rationalise_binomial_diff():
     return q, s, hint, 3, _algebraic_fraction_two_surds(a, b, denom)
 
 
+@verifies('alg', task='surd', mode='rationalise')
 def gcse_surds_practice_rationalise_binomial_diff():
     """Difficult pool: rationalise 1/(√a − √b)."""
     q, s, hint, _, raw = gcse_surds_rationalise_binomial_diff()
     return q, s, hint, 4, raw
 
 
+@verifies('alg', task='surd', mode='between')
 def gcse_surds_practice_between_which_integers():
     """State between which consecutive integers a surd lies."""
     n, lo, hi = _surd_random_between_integers()
@@ -3912,6 +4070,7 @@ def gcse_surds_practice_between_which_integers():
     return q, s, hint, 2, _surd_fields_answer((lo, hi), ('Lower bound', 'Upper bound'))
 
 
+@verifies('alg', task='surd', mode='perimeter')
 def gcse_surds_practice_perimeter_exact():
     """Perimeter of a shape with surd side lengths."""
     shape = random.choice(["triangle", "square"])
@@ -4072,77 +4231,6 @@ def gcse_cs_binary(difficulty, mode):
 
 
 
-def vectors_mcq():
-    import random
-    questions = [
-        {
-            "q": "Which of these is a vector quantity?",
-            "opts": ["A  Speed", "B  Distance", "C  Velocity", "D  Time"],
-            "ans": "C",
-            "hint": "Velocity has both speed and direction."
-        },
-        {
-            "q": r"What does \(\begin{pmatrix} 2 \\ -3 \end{pmatrix}\) represent?",
-            "opts": ["A  2 left, 3 up", "B  2 right, 3 down", "C  2 right, 3 up", "D  2 left, 3 down"],
-            "ans": "B",
-            "hint": "Top = horizontal (positive = right), bottom = vertical (negative = down)."
-        },
-        {
-            "q": r"Vector \(\mathbf{a} = \begin{pmatrix} 1 \\ 2 \end{pmatrix}\) and \(\mathbf{b} = \begin{pmatrix} 3 \\ -1 \end{pmatrix}\). Find \(\mathbf{a} + \mathbf{b}\).",
-            "opts": ["A  (4, 1)", "B  (4, 3)", "C  (4, 1)", "D  (2, 1)"],
-            "ans": "A",
-            "hint": "Add the x's separately, then the y's: 1+3=4, 2+(-1)=1."
-        },
-        {
-            "q": r"If \(\mathbf{a} = \begin{pmatrix} 2 \\ 5 \end{pmatrix}\), what is \(-2\mathbf{a}\)?",
-            "opts": ["A  (-4, -10)", "B  (-4, 10)", "C  (4, -10)", "D  (-2, -5)"],
-            "ans": "A",
-            "hint": "Multiply each component by -2."
-        },
-        {
-            "q": r"The magnitude of \(\begin{pmatrix} 6 \\ 8 \end{pmatrix}\) is:",
-            "opts": ["A  10", "B  14", "C  100", "D  0"],
-            "ans": "A",
-            "hint": r"\(\sqrt{6^2+8^2} = \sqrt{36+64} = 10\)."
-        },
-        {
-            "q": r"Which vector is parallel to \(\begin{pmatrix} 2 \\ 4 \end{pmatrix}\)?",
-            "opts": ["A  (1,2)", "B  (2,1)", "C  (4,2)", "D  (4,4)"],
-            "ans": "A",
-            "hint": "Parallel vectors are scalar multiples: (1,2) = 0.5 × (2,4)."
-        },
-        {
-            "q": r"The vector \(\overrightarrow{AB} = \begin{pmatrix} -3 \\ 1 \end{pmatrix}\) means:",
-            "opts": ["A  move 3 left, 1 up", "B  move 3 right, 1 down", "C  move 1 left, 3 up", "D  move 3 left, 1 down"],
-            "ans": "A",
-            "hint": "Negative x = left, positive y = up."
-        },
-        {
-            "q": r"If \(\mathbf{a} = \begin{pmatrix} 4 \\ -2 \end{pmatrix}\) and \(\mathbf{b} = \begin{pmatrix} 1 \\ 3 \end{pmatrix}\), then \(\mathbf{a} - \mathbf{b}\) =",
-            "opts": ["A  (3, -5)", "B  (5, 1)", "C  (3, -5)", "D  (5, -1)"],
-            "ans": "A",
-            "hint": "Subtract components: 4-1=3, -2-3=-5."
-        },
-        {
-            "q": r"The length of the vector \(\begin{pmatrix} 0 \\ 5 \end{pmatrix}\) is:",
-            "opts": ["A  5", "B  0", "C  25", "D  1"],
-            "ans": "A",
-            "hint": r"\(\sqrt{0^2+5^2} = 5\)."
-        },
-        {
-            "q": "Which of these columns is a unit vector?",
-            "opts": ["A  (1,0)", "B  (2,2)", "C  (0,0)", "D  (1,1)"],
-            "ans": "A",
-            "hint": "A unit vector has magnitude 1. (1,0) has length 1."
-        },
-    ]
-    chosen = random.choice(questions)
-    q = chosen["q"]
-    options = chosen["opts"]
-    correct = chosen["ans"]
-    s = f"Answer: {correct}\n\n{chosen['hint']}"
-    hint = chosen["hint"]
-    return q, s, hint, 1, options, correct
 
 # ------------------------------------------------------------
 # GCSE Maths – Vectors (full set: 10 / 10 / 10)
@@ -4338,6 +4426,15 @@ def _svg_triangle_path_addition(ab=(3, 2), bc=(-1, 4), scale=28):
     Ax, Ay = 100, 195
     Bx, By = Ax + ab[0] * scale, Ay - ab[1] * scale
     Cx, Cy = Bx + bc[0] * scale, By - bc[1] * scale
+    if not all(12 <= px <= 298 for px in (Ax, Bx, Cx)) or not all(18 <= py <= 213 for py in (Ay, By, Cy)):
+        # the arrows would leave the frame: shrink the scale and centre the figure
+        xs, ys = (0, ab[0], ab[0] + bc[0]), (0, ab[1], ab[1] + bc[1])
+        x_span, y_span = max(xs) - min(xs), max(ys) - min(ys)
+        scale = min(scale, 230 / x_span if x_span else scale, 165 / y_span if y_span else scale)
+        Ax = int(40 + (230 - x_span * scale) / 2 - min(xs) * scale)
+        Ay = int(30 + (165 - y_span * scale) / 2 + max(ys) * scale)
+        Bx, By = int(Ax + ab[0] * scale), int(Ay - ab[1] * scale)
+        Cx, Cy = int(Bx + bc[0] * scale), int(By - bc[1] * scale)
     inner = (
         '<defs>'
         '<marker id="arr-pa1" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#1a6fa8"/></marker>'
@@ -4405,58 +4502,33 @@ def _svg_trapezium_parallel():
 
 
 def _svg_parallelogram_three_pts(a=(1, 2), b=(4, 6), c=(9, 8), d=(6, 4)):
-    """Grid with three parallelogram vertices marked; D shown as a dashed question-mark point."""
-    def sv(x, y): return int(20 + x * 28), int(225 - y * 22)
+    """Grid with three parallelogram vertices marked and sides AB and BC drawn. D is not drawn (finding it is the
+    question); ``d`` only widens the grid so there is room to plot it."""
+    ncx = max(10, max(p[0] for p in (a, b, c, d)))      # grid cells across and up (10 unless a point is further out)
+    ncy = max(10, max(p[1] for p in (a, b, c, d)))
+    cell_x, cell_y = 280 / ncx, 220 / ncy
+    def sv(x, y): return int(20 + x * cell_x), int(225 - y * cell_y)
     Ax, Ay = sv(*a)
     Bx, By = sv(*b)
     Cx, Cy = sv(*c)
-    Dx, Dy = sv(*d)
-    gh = "".join(f'<line x1="20" y1="{225 - j * 22}" x2="295" y2="{225 - j * 22}" stroke="#e0ddd6" stroke-width="1"/>' for j in range(11))
-    gv = "".join(f'<line x1="{20 + i * 28}" y1="5" x2="{20 + i * 28}" y2="230" stroke="#e0ddd6" stroke-width="1"/>' for i in range(11))
-    xt = "".join(f'<text x="{20 + i * 28}" y="244" font-size="10" text-anchor="middle" fill="#888">{i}</text>' for i in range(11))
-    yt = "".join(f'<text x="8" y="{228 - j * 22}" font-size="10" text-anchor="middle" fill="#888">{j}</text>' for j in range(11))
+    gh = "".join(f'<line x1="20" y1="{int(225 - j * cell_y)}" x2="{int(15 + ncx * cell_x)}" y2="{int(225 - j * cell_y)}" stroke="#e0ddd6" stroke-width="1"/>' for j in range(ncy + 1))
+    gv = "".join(f'<line x1="{int(20 + i * cell_x)}" y1="5" x2="{int(20 + i * cell_x)}" y2="230" stroke="#e0ddd6" stroke-width="1"/>' for i in range(ncx + 1))
+    xt = "".join(f'<text x="{int(20 + i * cell_x)}" y="244" font-size="10" text-anchor="middle" fill="#888">{i}</text>' for i in range(ncx + 1))
+    yt = "".join(f'<text x="8" y="{int(228 - j * cell_y)}" font-size="10" text-anchor="middle" fill="#888">{j}</text>' for j in range(ncy + 1))
     inner = (
         f'{gh}{gv}'
-        '<line x1="20" y1="225" x2="300" y2="225" stroke="#aaa" stroke-width="1.5"/>'
+        f'<line x1="20" y1="225" x2="{int(20 + ncx * cell_x)}" y2="225" stroke="#aaa" stroke-width="1.5"/>'
         '<line x1="20" y1="5" x2="20" y2="230" stroke="#aaa" stroke-width="1.5"/>'
         f'{xt}{yt}'
-        f'<polygon points="{Ax},{Ay} {Bx},{By} {Cx},{Cy} {Dx},{Dy}" fill="none" stroke="#1a6fa8" '
-        f'stroke-width="1.5" stroke-dasharray="5,3"/>'
+        f'<polyline points="{Ax},{Ay} {Bx},{By} {Cx},{Cy}" fill="none" stroke="#1a6fa8" stroke-width="1.5"/>'
         f'<circle cx="{Ax}" cy="{Ay}" r="5" fill="#1a6fa8"/>'
         f'<circle cx="{Bx}" cy="{By}" r="5" fill="#1a6fa8"/>'
         f'<circle cx="{Cx}" cy="{Cy}" r="5" fill="#1a6fa8"/>'
-        f'<circle cx="{Dx}" cy="{Dy}" r="6" fill="none" stroke="#a13544" stroke-width="2.5" stroke-dasharray="3,2"/>'
         f'<text x="{Ax - 18}" y="{Ay + 5}" font-size="13" font-weight="bold" fill="#1a6fa8">A</text>'
         f'<text x="{Bx - 16}" y="{By - 8}" font-size="13" font-weight="bold" fill="#1a6fa8">B</text>'
         f'<text x="{Cx + 7}" y="{Cy + 5}" font-size="13" font-weight="bold" fill="#1a6fa8">C</text>'
-        f'<text x="{Dx + 8}" y="{Dy + 5}" font-size="13" font-weight="bold" fill="#a13544">D?</text>'
     )
     return _vectors_diagram_svg(330, 255, inner)
-
-
-def _vectors_pythagorean_components():
-    """Return (x, y, magnitude) for a Pythagorean triple suitable for GCSE."""
-    if random.random() < 0.65:
-        base_triples = [
-            (3, 4, 5), (5, 12, 13), (8, 15, 17), (7, 24, 25),
-            (9, 12, 15), (6, 8, 10), (11, 60, 61), (20, 21, 29),
-        ]
-        x, y, mag = random.choice(base_triples)
-        k = random.randint(1, 4)
-        if random.random() < 0.5:
-            x, y = y, x
-        return x * k, y * k, mag * k
-    while True:
-        m = random.randint(2, 8)
-        n = random.randint(1, m - 1)
-        leg1 = m * m - n * n
-        leg2 = 2 * m * n
-        if random.random() < 0.5:
-            x, y = leg1, leg2
-        else:
-            x, y = leg2, leg1
-        if 3 <= x <= 36 and 3 <= y <= 36:
-            return x, y, math.isqrt(x * x + y * y)
 
 
 def _vectors_collinear_points():
@@ -4502,6 +4574,8 @@ def _vectors_random_parallelogram_vertices():
 
 
 def _vectors_direction_words(x, y):
+    if x == 0:        # no sideways movement to describe (never "0 units left")
+        return f"{abs(y)} unit{'s' if abs(y) != 1 else ''} {'up' if y > 0 else 'down'}"
     horiz = f"{abs(x)} unit{'s' if abs(x) != 1 else ''} {'right' if x > 0 else 'left'}"
     if y == 0:
         return horiz
@@ -4516,14 +4590,12 @@ def _vectors_magnitude_steps(x, y, decimal_places=3):
     steps = [
         "<strong>Step 1</strong> — the magnitude is the length of the vector (distance from the origin). "
         "Use Pythagoras on the right-angled triangle formed by the components:",
-        rf"|v| = √(x² + y²) = √({x}² + {y}²) = √({x * x} + {y * y}) = √{sq_sum}",
+        rf"|v| = √(x² + y²) = √({bracket_neg(x)}² + {bracket_neg(y)}²) = √({x * x} + {y * y}) = √{sq_sum}",
     ]
     if mag == int(mag):
         steps.append(f"<strong>Answer:</strong> <strong>{int(mag)}</strong>")
-    elif sq_sum in (2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20):
-        steps.append(f"<strong>Answer:</strong> <strong>√{sq_sum}</strong> (exact surd)")
     else:
-        steps.append(f"<strong>Answer:</strong> <strong>{mag:.{decimal_places}f}</strong>")
+        steps.append(f"<strong>Answer:</strong> <strong>√{sq_sum}</strong> (exact surd)")
     hint = (
         "Treat the x- and y-components as the two shorter sides of a right-angled triangle. "
         "Square each component, add, then square-root. Leave as a surd (e.g. √13) if it is not "
@@ -4624,9 +4696,7 @@ def _vec_magnitude_answer(x, y):
     mag = math.sqrt(sq_sum)
     if mag == int(mag):
         return int(mag)
-    if sq_sum in _VEC_SURD_MAGNITUDES:
-        return {'type': 'surd', 'coeff': 1, 'radicand': sq_sum}
-    return round(mag, 3)
+    return {'type': 'surd', 'coeff': 1, 'radicand': sq_sum}
 
 
 def _vec_vector_raw(raw):
@@ -4767,6 +4837,7 @@ def _vectors_found_column_meaning():
         {'id': 'd4', 'text': 'This vector gives the magnitude only, not a direction.'},
     ]
     random.shuffle(bank)
+    record('vec_meaning', x=x, y=y)
     return q, s, hint, 1, proof_steps_answer(
         ('c1', 'c2', 'c3'),
         bank,
@@ -4776,15 +4847,24 @@ def _vectors_found_column_meaning():
 
 
 def _vectors_found_magnitude_3_4():
-    x, y, mag = _vectors_pythagorean_components()
+    """Multiples of the 3-4-5 triangle, with a negative component half the time."""
+    k = random.randint(1, 6)
+    x, y = random.choice([(3 * k, 4 * k), (4 * k, 3 * k)])
+    if random.random() < 0.5:
+        x, y = random.choice([(-x, y), (x, -y)])
     q = rf"Find the magnitude of the vector \(\begin{{pmatrix}} {x} \\ {y} \end{{pmatrix}}\)."
     s, hint = _vectors_magnitude_steps(x, y)
+    record('vec_magnitude', x=x, y=y)
     return q, s, hint, 2, _vec_magnitude_answer(x, y)
 
 def _vectors_found_magnitude_6_8():
-    x, y, mag = _vectors_pythagorean_components()
+    """The other Pythagorean triples (5-12-13, 8-15-17, 7-24-25, 20-21-29), so this differs from the 3-4-5 variant."""
+    a, b = random.choice([(5, 12), (8, 15), (7, 24), (20, 21), (12, 5), (15, 8), (24, 7), (21, 20)])
+    k = random.randint(1, 2)
+    x, y = a * k, b * k
     q = rf"Find the magnitude of the vector \(\begin{{pmatrix}} {x} \\ {y} \end{{pmatrix}}\)."
     s, hint = _vectors_magnitude_steps(x, y)
+    record('vec_magnitude', x=x, y=y)
     return q, s, hint, 2, _vec_magnitude_answer(x, y)
 
 def _vectors_found_add_simple():
@@ -4801,6 +4881,7 @@ def _vectors_found_add_simple():
         "Column vectors add component by component — the top numbers together, "
         "then the bottom numbers together. Do not add across the diagonal."
     )
+    record('vec_add', a0=a[0], a1=a[1], b0=b[0], b1=b[1])
     return q, s, hint, 2, _vec_answer(c[0], c[1])
 
 def _vectors_found_subtract_simple():
@@ -4817,6 +4898,7 @@ def _vectors_found_subtract_simple():
         "Subtract each component separately: top minus top, bottom minus bottom. "
         "Watch the signs when subtracting negative numbers."
     )
+    record('vec_sub', a0=a[0], a1=a[1], b0=b[0], b1=b[1])
     return q, s, hint, 2, _vec_answer(c[0], c[1])
 
 def _vectors_found_scalar_multiply():
@@ -4833,6 +4915,7 @@ def _vectors_found_scalar_multiply():
         "Scalar multiplication scales the vector — multiply <em>each</em> component by the number outside. "
         "A negative scalar reverses the direction as well as changing the length."
     )
+    record('vec_scale', k=k, v0=v[0], v1=v[1])
     return q, s, hint, 2, _vec_answer(res[0], res[1])
 
 def _vectors_found_parallel_check():
@@ -4849,6 +4932,7 @@ def _vectors_found_parallel_check():
     q = rf"Is \(\begin{{pmatrix}} {a[0]} \\ {a[1]} \end{{pmatrix}}\) parallel to \(\begin{{pmatrix}} {b[0]} \\ {b[1]} \end{{pmatrix}}\)? Give a reason."
     s = reason
     hint = "Check if you can multiply one vector by a single number to get the other."
+    record('vec_parallel_yn', a0=a[0], a1=a[1], b0=b[0], b1=b[1])
     return q, s, hint, 1, _vec_keyword_answer("yes" if is_para else "no")
 
 def _vectors_found_zero_vector():
@@ -4858,12 +4942,14 @@ def _vectors_found_zero_vector():
     q = rf"What is the result of \(\begin{{pmatrix}} {v[0]} \\ {v[1]} \end{{pmatrix}} - \begin{{pmatrix}} {v[0]} \\ {v[1]} \end{{pmatrix}}\)?"
     s = r"\(\begin{pmatrix} 0 \\ 0 \end{pmatrix}\) – the zero vector."
     hint = "Subtracting a vector from itself gives the zero vector."
+    record('vec_sub', a0=v[0], a1=v[1], b0=v[0], b1=v[1])
     return q, s, hint, 1, _vec_answer(0, 0)
 
 def _vectors_found_magnitude_zero():
     q = r"What is the magnitude of the vector \(\begin{pmatrix} 0 \\ 0 \end{pmatrix}\)?"
     s = "0"
     hint = "Distance from the origin to (0,0) is zero."
+    record('vec_magnitude', x=0, y=0)
     return q, s, hint, 1, 0
 
 def _vectors_found_negative_vector():
@@ -4877,6 +4963,7 @@ def _vectors_found_negative_vector():
         "Opposite direction means multiply the whole vector by −1 — flip the sign of both the top "
         "and bottom numbers. The length stays the same."
     )
+    record('vec_scale', derived=('k',), k=-1, v0=v[0], v1=v[1])
     return q, s, hint, 1, _vec_answer(-v[0], -v[1])
 
 
@@ -4885,6 +4972,7 @@ def _vectors_found_position_vector():
     q = rf"Write the position vector of point A({a[0]}, {a[1]})."
     s = rf"\(\overrightarrow{{OA}} = \begin{{pmatrix}} {a[0]} \\ {a[1]} \end{{pmatrix}}\)"
     hint = "A position vector starts at the origin O."
+    record('vec_position', x=a[0], y=a[1])
     return q, s, hint, 1, _vec_answer(a[0], a[1])
 
 def _vectors_found_displacement():
@@ -4902,6 +4990,7 @@ def _vectors_found_displacement():
         "The displacement vector tells you how to get from A to B. "
         "Subtract A's coordinates from B's — x from x, y from y."
     )
+    record('vec_displacement', a0=a[0], a1=a[1], b0=b[0], b1=b[1])
     return q, s, hint, 1, _vec_answer(ab[0], ab[1])
 
 def _vectors_found_equal_vectors():
@@ -4911,6 +5000,7 @@ def _vectors_found_equal_vectors():
     q = rf"Are \(\begin{{pmatrix}} {a[0]} \\ {a[1]} \end{{pmatrix}}\) and \(\begin{{pmatrix}} {b[0]} \\ {b[1]} \end{{pmatrix}}\) equal?"
     s = f"{eq}. " + ("They have the same components." if eq=="Yes" else "The components differ.")
     hint = "Vectors are equal if both components are equal."
+    record('vec_equal_yn', a0=a[0], a1=a[1], b0=b[0], b1=b[1])
     return q, s, hint, 1, _vec_keyword_answer("yes" if b == a else "no")
 
 def _vectors_found_inverse():
@@ -4919,6 +5009,7 @@ def _vectors_found_inverse():
     q = rf"Find the vector that must be added to \(\begin{{pmatrix}} {v[0]} \\ {v[1]} \end{{pmatrix}}\) to give the zero vector."
     s = rf"The additive inverse is \(\begin{{pmatrix}} {inv[0]} \\ {inv[1]} \end{{pmatrix}}\)."
     hint = "Add the negative of each component."
+    record('vec_scale', derived=('k',), k=-1, v0=v[0], v1=v[1])
     return q, s, hint, 1, _vec_answer(inv[0], inv[1])
 
 # ---------- INTERMEDIATE (14) ----------
@@ -4926,6 +5017,9 @@ def _vectors_inter_magnitude_advanced():
     x = random.randint(4,9)
     y = random.randint(4,9)
     sq_sum = x * x + y * y
+    while math.isqrt(sq_sum) ** 2 == sq_sum:      # (6, 8) has magnitude 10, which is not a surd
+        y = random.randint(4,9)
+        sq_sum = x * x + y * y
     q = rf"Find the exact magnitude of \(\begin{{pmatrix}} {x} \\ {y} \end{{pmatrix}}\)."
     s = (
         rf"<strong>Step 1</strong> — apply Pythagoras:<br>"
@@ -4936,6 +5030,7 @@ def _vectors_inter_magnitude_advanced():
         "Square each component, add, then square-root. At GCSE, if the result is not a whole number, "
         "write it as a surd such as √41 rather than rounding."
     )
+    record('vec_magnitude', x=x, y=y)
     return q, s, hint, 2, {"type": "surd", "coeff": 1, "radicand": sq_sum}
 
 def _vectors_inter_parallel_k():
@@ -4952,6 +5047,7 @@ def _vectors_inter_parallel_k():
         "If b = k a, then each component of b equals k times the matching component of a. "
         "Divide one pair of components to find k, then verify with the other pair."
     )
+    record('vec_parallel_k', a0=a[0], a1=a[1], b0=b[0], b1=b[1])
     return q, s, hint, 2, k
 
 def _vectors_inter_collinear_points():
@@ -4983,6 +5079,7 @@ def _vectors_inter_collinear_points():
         "Find vectors AB and BC. If BC = k·AB for some scalar k, they are parallel — "
         "and as they share a common point, the three points are collinear."
     )
+    record('vec_collinear', ax=a[0], ay=a[1], bx=b[0], by=b[1], cx=c[0], cy=c[1])
     return q, s, hint, 3, _vec_number_fields_answer(
         (f'{ab[0]}|{ab[1]}', f'{bc[0]}|{bc[1]}', k_raw),
         (
@@ -5010,21 +5107,23 @@ def _vectors_inter_path_addition():
         "Walking from A to C via B means the overall displacement is AB followed by BC. "
         "Add the vectors component by component."
     )
+    record('vec_path_add', a0=ab[0], a1=ab[1], b0=bc[0], b1=bc[1])
     return q, s, hint, 2, _vec_answer(ac[0], ac[1])
 
 def _vectors_inter_magnitude_distance():
     p = (random.randint(1,6), random.randint(1,6))
     qp = (random.randint(1,6), random.randint(1,6))
+    while qp == p:
+        qp = (random.randint(1,6), random.randint(1,6))
     vec = (qp[0]-p[0], qp[1]-p[1])
     sq_sum = vec[0]**2 + vec[1]**2
     dist = math.sqrt(sq_sum)
-    q = rf"Find the distance between point P({p[0]},{p[1]}) and Q({qp[0]},{qp[1]})."
+    q = (rf"Find the distance between point P({p[0]},{p[1]}) and Q({qp[0]},{qp[1]}). "
+         rf"Give your answer as a whole number or as a surd.")
     if dist == int(dist):
         dist_str = str(int(dist))
-    elif sq_sum in (2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 17, 18, 19, 20):
-        dist_str = f"√{sq_sum}"
     else:
-        dist_str = f"{fmt_dp(dist, 3)}"
+        dist_str = f"√{sq_sum}"
     s = (
         rf"<strong>Step 1</strong> — form the displacement vector PQ (Q − P):<br>"
         rf"\(\overrightarrow{{PQ}} = \begin{{pmatrix}} {qp[0]} - {bracket_neg(p[0])} \\ {qp[1]} - {bracket_neg(p[1])} \end{{pmatrix}} = \begin{{pmatrix}} {vec[0]} \\ {vec[1]} \end{{pmatrix}}\)<br>"
@@ -5035,12 +5134,14 @@ def _vectors_inter_magnitude_distance():
         "Distance between two points equals the length of the vector from one to the other. "
         "Subtract coordinates to get the vector, then use Pythagoras on its components."
     )
+    record('vec_distance', p0=p[0], p1=p[1], q0=qp[0], q1=qp[1])
     return q, s, hint, 2, _vec_magnitude_answer(vec[0], vec[1])
 
 def _vectors_inter_ratio_point():
     a = (random.randint(1, 6), random.randint(1, 6))
     ab = (random.randint(2, 8), random.randint(2, 8))
     ratio = random.randint(2, 5)
+    ab = tuple(-(-c // (ratio + 1)) * (ratio + 1) for c in ab)      # so that P has whole-number coordinates
     b = (a[0] + ab[0], a[1] + ab[1])
     p = (a[0] + ab[0] * ratio / (ratio + 1), a[1] + ab[1] * ratio / (ratio + 1))
     if ab[0] * ratio % (ratio + 1) == 0 and ab[1] * ratio % (ratio + 1) == 0:
@@ -5054,6 +5155,7 @@ def _vectors_inter_ratio_point():
     s = (rf"\(\overrightarrow{{AP}} = \frac{{{ratio}}}{{{ratio + 1}}}\overrightarrow{{AB}} = \frac{{{ratio}}}{{{ratio + 1}}}\begin{{pmatrix}} {ab[0]} \\ {ab[1]} \end{{pmatrix}} = \begin{{pmatrix}} {ap_x:g} \\ {ap_y:g} \end{{pmatrix}}\)."
          rf" P = A + AP = \(({a[0]} + {ap_x:g},\ {a[1]} + {ap_y:g}) = ({p[0]:g},{p[1]:g})\)")
     hint = f"AP = ratio/(ratio+1) × AB. Multiply each component of AB by {ratio}/{ratio+1}."
+    record('vec_section', ax=a[0], ay=a[1], bx=b[0], by=b[1], m=ratio, n=1)
     return q, s, hint, 3, _vec_number_pair_answer(p[0], p[1], "x", "y")
 
 def _vectors_inter_parallel_unknown():
@@ -5070,11 +5172,14 @@ def _vectors_inter_parallel_unknown():
         "Parallel column vectors are scalar multiples, so the ratio of tops equals the ratio of bottoms. "
         "Set up the proportion and solve for the unknown."
     )
+    record('vec_parallel_t', a0=a[0], a1=a[1], b0=b[0])
     return q, s, hint, 2, t
 
 def _vectors_inter_magnitude_comparison():
     v1 = (random.randint(3,6), random.randint(4,8))
     v2 = (random.randint(3,6), random.randint(4,8))
+    while v1[0]**2 + v1[1]**2 == v2[0]**2 + v2[1]**2:
+        v2 = (random.randint(3,6), random.randint(4,8))
     mag1 = math.sqrt(v1[0]**2+v1[1]**2)
     mag2 = math.sqrt(v2[0]**2+v2[1]**2)
     if mag1>mag2: bigger = "a"
@@ -5091,6 +5196,7 @@ def _vectors_inter_magnitude_comparison():
     hint = (
         "Calculate the magnitude of each vector separately using Pythagoras, then compare the two lengths."
     )
+    record('vec_compare', a0=v1[0], a1=v1[1], b0=v2[0], b1=v2[1])
     return q, s, hint, 2, _vec_keyword_answer(bigger)
 
 def _vectors_inter_vector_equation():
@@ -5109,6 +5215,7 @@ def _vectors_inter_vector_equation():
         "Treat this like a normal equation: subtract the fixed vector first, then divide "
         "each component by 2 to undo the scalar multiplication."
     )
+    record('vec_equation', b0=b[0], b1=b[1], c0=c[0], c1=c[1])
     return q, s, hint, 2, _vec_answer(x[0], x[1])
 
 def _vectors_inter_position_geometry():
@@ -5126,6 +5233,7 @@ def _vectors_inter_position_geometry():
         "A position vector starts at the origin. To go from A to B, subtract A's position vector "
         "from B's — component by component."
     )
+    record('vec_displacement', a0=a[0], a1=a[1], b0=b[0], b1=b[1])
     return q, s, hint, 2, _vec_answer(ab[0], ab[1])
 
 def _vectors_inter_midpoint_vector():
@@ -5142,6 +5250,7 @@ def _vectors_inter_midpoint_vector():
         "The midpoint is exactly halfway between the two points — add corresponding coordinates "
         "and divide each by 2."
     )
+    record('vec_midpoint', a0=a[0], a1=a[1], b0=b[0], b1=b[1])
     return q, s, hint, 2, _vec_number_pair_answer(mid[0], mid[1], "x", "y")
 
 def _vectors_inter_translation():
@@ -5159,6 +5268,7 @@ def _vectors_inter_translation():
         "A translation shifts every point by the same vector — add the vector's components "
         "to the point's x- and y-coordinates."
     )
+    record('vec_translate', p0=point[0], p1=point[1], v0=vec[0], v1=vec[1])
     return q, s, hint, 2, _vec_number_pair_answer(image[0], image[1], "x", "y")
 
 def _vectors_inter_vector_path():
@@ -5177,6 +5287,7 @@ def _vectors_inter_vector_path():
         "The vector from A to C equals AB plus BC. Rearrange to BC = AC − AB, "
         "then subtract matching components."
     )
+    record('vec_sub', a0=ac[0], a1=ac[1], b0=ab[0], b1=ab[1])
     return q, s, hint, 3, _vec_answer(bc[0], bc[1])
 
 # ---------- DIFFICULT (10) ----------
@@ -5197,6 +5308,7 @@ def _vectors_diff_geometry_proof():
         r"so the diagonals bisect each other. ✓"
     )
     hint = "Express each diagonal in terms of a and b, find both midpoints, and show they are equal."
+    record('vec_diag_proof')
     return q, s, hint, 4, _vec_number_fields_answer(
         ('(a + b)/2', '(a + b)/2', 'yes'),
         (
@@ -5213,6 +5325,8 @@ def _vectors_diff_ratio_theorem():
     b = (random.randint(7, 12), random.randint(7, 12))
     ratio1 = random.randint(2, 4)
     ratio2 = random.randint(2, 5)
+    # make B - A a multiple of (ratio1 + ratio2) so that P has whole-number coordinates (nothing is stated about rounding)
+    b = tuple(a[i] - (-(b[i] - a[i]) // (ratio1 + ratio2)) * (ratio1 + ratio2) for i in (0, 1))
     op = ((ratio2 * a[0] + ratio1 * b[0]) / (ratio1 + ratio2),
           (ratio2 * a[1] + ratio1 * b[1]) / (ratio1 + ratio2))
     svg = _svg_section_line(ratio1, ratio2)
@@ -5223,13 +5337,15 @@ def _vectors_diff_ratio_theorem():
          rf"= \begin{{pmatrix}} \frac{{{ratio2}\times{a[0]}+{ratio1}\times{b[0]}}}{{{ratio1+ratio2}}} \\ \frac{{{ratio2}\times{a[1]}+{ratio1}\times{b[1]}}}{{{ratio1+ratio2}}} \end{{pmatrix}} "
          rf"= \begin{{pmatrix}} {op[0]:g} \\ {op[1]:g} \end{{pmatrix}}\)")
     hint = "Section formula for AP:PB = m:n: OP = (n·a + m·b) / (m+n)."
+    record('vec_section', ax=a[0], ay=a[1], bx=b[0], by=b[1], m=ratio1, n=ratio2)
     return q, s, hint, 3, _vec_answer(op[0], op[1])
 
 def _vectors_diff_collinear_proof():
     p, q_pt, r, direction = _vectors_collinear_points()
     pq = (q_pt[0] - p[0], q_pt[1] - p[1])
     pr = (r[0] - p[0], r[1] - p[1])
-    k = pr[0] // pq[0] if pq[0] else pr[1] // pq[1]
+    k = Fraction(pr[0], pq[0]) if pq[0] else Fraction(pr[1], pq[1])
+    k = str(k.numerator) if k.denominator == 1 else f"{k.numerator}/{k.denominator}"
     q = f"Points P{p}, Q{q_pt}, R{r} are given. Determine whether they are collinear."
     s = (
         rf"<strong>Step 1</strong> — find vectors along the line segments:<br>"
@@ -5242,6 +5358,7 @@ def _vectors_diff_collinear_proof():
         "Three points are collinear if the vectors between them are parallel (one is a multiple of the other) "
         "and they share a common point."
     )
+    record('vec_collinear_yn', px=p[0], py=p[1], qx=q_pt[0], qy=q_pt[1], rx=r[0], ry=r[1])
     return q, s, hint, 3, _vec_keyword_answer("yes")
 
 def _vectors_diff_triangle_midpoint():
@@ -5262,6 +5379,7 @@ def _vectors_diff_triangle_midpoint():
         r"Hence DE ∥ BC and DE = ½ BC. ✓"
     )
     hint = "Express D and E using the section formula (midpoint), then find DE = AE − AD."
+    record('vec_tri_midpoint')
     return q, s, hint, 4, _vec_number_fields_answer(
         ('b/2', 'c/2', '(c - b)/2'),
         (
@@ -5281,6 +5399,7 @@ def _vectors_diff_trapezium_ratio():
     )
     s = r"Since AB \(\parallel\) DC and AB = 2 DC, the vectors point in the same direction but DC is half the length. Therefore \(\overrightarrow{DC} = \frac{1}{2}\overrightarrow{AB}\)."
     hint = "Parallel vectors with the same sense are positive scalar multiples. If AB = 2 DC, then DC = ½ AB."
+    record('vec_trapezium', ratio=2)
     return q, s, hint, 2, _vec_vector_combo_answer(Fraction(1, 2), labels=('AB',))
 
 def _vectors_diff_vector_inequality():
@@ -5329,17 +5448,22 @@ def _vectors_diff_vector_inequality():
         },
     ]
     random.shuffle(bank)
+    record('vec_triangle_ineq')
     return q, s, hint, 2, proof_steps_answer(
         ('s1', 's2', 's3'),
         bank,
         order_matters=True,
         format_hint='Select the correct proof steps in order',
+        # The tip-to-tail triangle and the general triangle fact are independent; the conclusion needs both.
+        after={2: (), 3: (1, 2)},
     )
 
 
 def _vectors_diff_parallelogram_area():
     a=(random.randint(2,5), random.randint(1,4))
     b=(random.randint(1,4), random.randint(2,5))
+    while a[0]*b[1] == a[1]*b[0]:                  # parallel vectors would give a flat parallelogram
+        b = (random.randint(1,4), random.randint(2,5))
     cross = a[0]*b[1] - a[1]*b[0]
     q = rf"Vectors \(\mathbf{{a}} = \begin{{pmatrix}} {a[0]} \\ {a[1]} \end{{pmatrix}}\) and \(\mathbf{{b}} = \begin{{pmatrix}} {b[0]} \\ {b[1]} \end{{pmatrix}}\) form a parallelogram. Calculate its area."
     s = (
@@ -5351,6 +5475,7 @@ def _vectors_diff_parallelogram_area():
         "The area equals the magnitude of the '2D cross product': multiply the top of a by the bottom of b, "
         "subtract the bottom of a times the top of b, then take the absolute value."
     )
+    record('vec_cross_area', a0=a[0], a1=a[1], b0=b[0], b1=b[1])
     return q, s, hint, 3, abs(cross)
 
 def _vectors_diff_unknown_parallel():
@@ -5365,6 +5490,7 @@ def _vectors_diff_unknown_parallel():
     hint = (
         "Set the ratio of tops equal to the ratio of bottoms, then solve for the unknown component."
     )
+    record('vec_parallel_t', a0=p[0], a1=p[1], b0=qv[0])
     return q, s, hint, 2, t
 
 def _vectors_diff_geometry_parallelogram():
@@ -5378,6 +5504,7 @@ def _vectors_diff_geometry_parallelogram():
          rf" Since DC = AB, D = C \(-\) AB = \(({c[0]}-{ab[0]},\ {c[1]}-{ab[1]}) = ({d[0]},{d[1]})\)."
          rf"<br>Alternatively: D = A + C \(-\) B = ({a[0]}+{c[0]}\(-\){b[0]},\ {a[1]}+{c[1]}\(-\){b[1]}) = ({d[0]},{d[1]})\).")
     hint = "Use D = A + C − B (the diagonal property: midpoints of AC and BD must coincide)."
+    record('vec_parallelogram', ax=a[0], ay=a[1], bx=b[0], by=b[1], cx=c[0], cy=c[1])
     return q, s, hint, 3, _vec_number_pair_answer(d[0], d[1], "x", "y")
 
 def _vectors_diff_vector_method_simultaneous():
@@ -5399,6 +5526,7 @@ def _vectors_diff_vector_method_simultaneous():
         "Add the two vector equations to cancel y and find x, then substitute back to find y. "
         "Work on the top and bottom components together."
     )
+    record('vec_sim', s0=sum_v[0], s1=sum_v[1], d0=diff_v[0], d1=diff_v[1])
     return q, s, hint, 3, _vec_two_vectors_answer(x, y)
 
 def _vectors_diff_ratio_collinear():
@@ -5417,6 +5545,7 @@ def _vectors_diff_ratio_collinear():
          rf"\(\overrightarrow{{OP}} = \frac{{{ratio}\mathbf{{a}}+1\cdot\mathbf{{b}}}}{{{1+ratio}}}\). "
          rf"P = \(\left(\frac{{{ratio}\times{a[0]}+{b[0]}}}{{{1+ratio}}},\ \frac{{{ratio}\times{a[1]}+{b[1]}}}{{{1+ratio}}}\right) = ({fmt_dp(px, 1)},\ {fmt_dp(py, 1)})\)")
     hint = "Section formula for AP:PB = m:n: P = (n·A + m·B) / (m+n)."
+    record('vec_section', ax=a[0], ay=a[1], bx=b[0], by=b[1], m=1, n=ratio)
     return q, s, hint, 3, _vec_number_pair_answer(round(px, 1), round(py, 1), "x", "y")
 
 def _vectors_diff_vector_proof_sim():
@@ -5426,8 +5555,10 @@ def _vectors_diff_vector_proof_sim():
 
 def _vectors_diff_parallel_unit():
     v = (random.randint(3,6), random.randint(4,9))
-    q = rf"Find a unit vector parallel to \(\begin{{pmatrix}} {v[0]} \\ {v[1]} \end{{pmatrix}}\)."
+    q = (rf"Find the unit vector in the same direction as \(\begin{{pmatrix}} {v[0]} \\ {v[1]} \end{{pmatrix}}\). "
+         rf"Give each component to 3 decimal places where necessary.")
     s, hint = _vectors_unit_vector_steps(v[0], v[1])
+    record('vec_unit', x=v[0], y=v[1])
     return q, s, hint, 3, _vec_answer(round(v[0] / math.sqrt(v[0]**2 + v[1]**2), 3), round(v[1] / math.sqrt(v[0]**2 + v[1]**2), 3))
 
 def _vectors_diff_geometric_ratio():
@@ -5446,11 +5577,12 @@ def _vectors_diff_geometric_ratio():
     hint = "Use the section formula for each point (fraction of the way from A), then DE = AE − AD."
     coef_b = -Fraction(m, m + n)
     coef_c = Fraction(p, p + q_ratio)
+    record('vec_geometric_ratio', m=m, n=n, p=p, q=q_ratio)
     return q, s, hint, 4, _vec_vector_combo_answer(coef_b, coef_c, labels=('b', 'c'))
 
 
 _VECTORS_HELPER_NAMES = {
-    '_vectors_pythagorean_components', '_vectors_collinear_points', '_vectors_non_parallel_b',
+    '_vectors_collinear_points', '_vectors_non_parallel_b',
     '_vectors_parallel_unknown_pair', '_vectors_random_parallelogram_vertices', '_vectors_direction_words',
 }
 
@@ -6260,6 +6392,7 @@ def _trig_found_sin_side():
          f"<br>opp = {hyp} \u00d7 sin {angle}\u00b0 = {hyp} \u00d7 {fmt_dp(math.sin(math.radians(angle)), 4)}"
          f"<br>= <strong>{opp} cm</strong>")
     hint = "SOH: sin\u202f=\u202fopposite \u00f7 hypotenuse. Rearrange to opp = hyp \u00d7 sin\u202f\u03b8."
+    record('trig_side', angle=angle, known=hyp, known_kind='hyp', find_kind='opp')
     return q, s, hint, 2, opp
 
 
@@ -6278,6 +6411,7 @@ def _trig_found_cos_side():
          f"<br>adj = {hyp} \u00d7 cos {angle}\u00b0 = {hyp} \u00d7 {fmt_dp(math.cos(math.radians(angle)), 4)}"
          f"<br>= <strong>{adj} m</strong>")
     hint = "CAH: cos\u202f=\u202fadjacent \u00f7 hypotenuse. Rearrange to adj = hyp \u00d7 cos\u202f\u03b8."
+    record('trig_side', angle=angle, known=hyp, known_kind='hyp', find_kind='adj')
     return q, s, hint, 2, adj
 
 
@@ -6296,6 +6430,7 @@ def _trig_found_tan_angle():
          f"<br>\u03b8 = tan\u207b\u00b9\u202f({opp}/{adj})"
          f"<br>= <strong>{angle}\u00b0</strong>")
     hint = "TOA: tan\u202f=\u202fopposite \u00f7 adjacent. Use inverse tan (\u03b8 = tan\u207b\u00b9) to find the angle."
+    record('trig_angle', opp=opp, adj=adj)
     return q, s, hint, 2, angle
 
 
@@ -6313,6 +6448,7 @@ def _trig_found_pythagoras():
     s = (rf"\(c = \sqrt{{{a}^2 + {b}^2}} = \sqrt{{{a**2} + {b**2}}} = \sqrt{{{a**2 + b**2}}}\)"
          f"<br>= <strong>{c} cm</strong>")
     hint = "Pythagoras: c\u00b2 = a\u00b2 + b\u00b2. Square both legs, add, then take the square root."
+    record('pyth_hyp', a=a, b=b)
     return q, s, hint, 2, c
 
 
@@ -6329,6 +6465,7 @@ def _trig_found_ladder():
          f"<br>height = {length} \u00d7 sin {angle}\u00b0 = {length} \u00d7 {fmt_dp(math.sin(math.radians(angle)), 4)}"
          f"<br>= <strong>{height} m</strong>")
     hint = "Draw the triangle: ladder = hyp, height = opp, ground = adj. Use SOH: sin = opp/hyp."
+    record('trig_side', angle=angle, known=length, known_kind='hyp', find_kind='opp')
     return q, s, hint, 2, height
 
 
@@ -6348,6 +6485,7 @@ def _trig_found_find_hyp_from_opp():
          f"<br>hyp = {opp} \u00f7 sin {angle}\u00b0 = {opp} \u00f7 {fmt_dp(math.sin(math.radians(angle)), 4)}"
          f"<br>= <strong>{hyp} cm</strong>")
     hint = "SOH: sin = opp/hyp. Rearrange: hyp = opp \u00f7 sin\u202f\u03b8."
+    record('trig_side', angle=angle, known=opp, known_kind='opp', find_kind='hyp')
     return q, s, hint, 2, hyp
 
 
@@ -6366,6 +6504,7 @@ def _trig_found_find_adj_from_tan():
          f"<br>adj = {opp} \u00f7 tan {angle}\u00b0 = {opp} \u00f7 {fmt_dp(math.tan(math.radians(angle)), 4)}"
          f"<br>= <strong>{adj} m</strong>")
     hint = "TOA: tan = opp/adj. Rearrange: adj = opp \u00f7 tan\u202f\u03b8."
+    record('trig_side', angle=angle, known=opp, known_kind='opp', find_kind='adj')
     return q, s, hint, 2, adj
 
 
@@ -6383,6 +6522,7 @@ def _trig_found_pythagoras_leg():
     s = (rf"\(b = \sqrt{{c^2 - a^2}} = \sqrt{{{c}^2 - {a}^2}} = \sqrt{{{c**2 - a**2}}}\)"
          f"<br>= <strong>{b} cm</strong>")
     hint = "Rearrange Pythagoras: b\u00b2 = c\u00b2 \u2212 a\u00b2."
+    record('pyth_leg', c=c, a=a)
     return q, s, hint, 2, b
 
 
@@ -6402,6 +6542,7 @@ def _trig_found_cos_angle():
          f"<br>\u03b8 = cos\u207b\u00b9\u202f({adj}/{hyp})"
          f"<br>= <strong>{angle}\u00b0</strong>")
     hint = "CAH: cos = adj/hyp. Use inverse cos to find the angle."
+    record('trig_angle', adj=adj, hyp=hyp)
     return q, s, hint, 2, angle
 
 
@@ -6421,6 +6562,7 @@ def _trig_found_exact_values():
     q = rf"Write down the <strong>exact</strong> value of \(\{fn} {ang}°\)."
     s = rf"\(\{fn} {ang}° = {latex_ans}\) &nbsp; (exact value: <strong>{text_ans}</strong>)"
     hint = "Learn the exact values for 30\u00b0, 45\u00b0, 60\u00b0 from the special triangles."
+    record('trig_exact', fn=fn, angle=ang)
     return q, s, hint, 1, _trig_exact_from_text(text_ans)
 
 
@@ -6444,6 +6586,7 @@ def _trig_inter_two_step():
          rf"\(\tan \theta = \dfrac{{{short}}}{{{max(a,b)}}}\) \(\Rightarrow\) "
          rf"\(\theta = \tan^{{-1}}\!\left(\dfrac{{{short}}}{{{max(a,b)}}}\right) = \) <strong>{angle}\u00b0</strong>")
     hint = "The smallest angle is opposite the shortest side. Use tan with the two legs."
+    record('trig_angle', opp=short, adj=max(a, b))
     return q, s, hint, 3, angle
 
 
@@ -6459,6 +6602,7 @@ def _trig_inter_bearing():
          rf"\(d = \sqrt{{{leg1}^2 + {leg2}^2}} = \sqrt{{{leg1**2} + {leg2**2}}} = \sqrt{{{leg1**2+leg2**2}}}\)"
          f"<br>= <strong>{dist} km</strong>")
     hint = "The two legs (N and E) form a right angle. The direct distance is the hypotenuse."
+    record('pyth_hyp', a=leg1, b=leg2)
     return q, s, hint, 3, dist
 
 
@@ -6475,6 +6619,7 @@ def _trig_inter_elevation():
          f"<br>\u03b8 = tan\u207b\u00b9\u202f({height}/{shadow})"
          f"<br>= <strong>{angle}\u00b0</strong>")
     hint = "Angle of elevation: measure upward from horizontal. Use tan = opp/adj."
+    record('trig_angle', opp=height, adj=shadow)
     return q, s, hint, 3, angle
 
 
@@ -6483,7 +6628,7 @@ def _trig_inter_isosceles():
     base = random.randint(4, min(2 * equal - 2, 14))
     half_base = base / 2
     angle_half = round(math.degrees(math.asin(half_base / equal)), 1)
-    apex = round(2 * angle_half, 1)
+    apex = round(2 * math.degrees(math.asin(half_base / equal)), 1)  # from the unrounded half-angle
     svg = _trig_svg_isosceles(equal, base)
     q = (f"{svg}"
          f"An isosceles triangle has equal sides of {equal} cm and a base of {base} cm. "
@@ -6492,8 +6637,9 @@ def _trig_inter_isosceles():
          f"This creates a right triangle with hypotenuse {equal} cm and opposite side {half_base} cm.<br>"
          rf"\(\sin(\theta/2) = \dfrac{{{half_base}}}{{{equal}}}\)"
          f"<br>\u03b8/2 = sin\u207b\u00b9\u202f({half_base}/{equal}) = {angle_half}\u00b0"
-         f"<br>apex angle = 2 \u00d7 {angle_half}\u00b0 = <strong>{apex}\u00b0</strong>")
+         f"<br>apex angle = 2 \u00d7 \u03b8/2 = <strong>{apex}\u00b0</strong> (using the unrounded value of \u03b8/2)")
     hint = "Halve the base and use sin to find half the apex angle, then double it."
+    record('trig_isosceles_apex', equal=equal, base=base)
     return q, s, hint, 4, apex
 
 
@@ -6510,6 +6656,7 @@ def _trig_inter_exact_expression():
         r"<strong>Step 3</strong> — \(\dfrac{1}{4} + \dfrac{3}{4} = \dfrac{4}{4} = 1\) ✓"
     )
     hint = "Substitute the exact values and simplify each squared term."
+    record('trig_sin2_cos2_30')
     return q, s, hint, 2, _trig_number_fields_answer(
         ('1/4', '3/4', 1),
         (
@@ -6534,6 +6681,7 @@ def _trig_inter_depression():
          f"<br>\u03b8 = tan\u207b\u00b9\u202f({height}/{dist})"
          f"<br>= <strong>{angle}\u00b0</strong>")
     hint = "Angle of depression: measure downward from horizontal. tan = opp/adj."
+    record('trig_angle', opp=height, adj=dist)
     return q, s, hint, 3, angle
 
 
@@ -6562,6 +6710,7 @@ def _trig_inter_cosine_find_angle():
          f"<br>A = cos\u207b\u00b9\u202f({fmt_dp(cosA, 4)})"
          f"<br>= <strong>{A}\u00b0</strong>")
     hint = "Rearranged cosine rule: cos A = (b\u00b2 + c\u00b2 \u2212 a\u00b2) / (2bc)."
+    record('trig_cosine_angle', a=a, b=b, c=c)
     return q, s, hint, 4, A
 
 
@@ -6584,6 +6733,7 @@ def _trig_inter_converse_pyth():
              f"{c}\u00b2 = {c**2}<br>"
              f"Since {a**2+b**2} \u2260 {c**2}, the triangle is <strong>not right-angled</strong>. \u2717")
     hint = "Converse of Pythagoras: if a\u00b2 + b\u00b2 = c\u00b2, the triangle is right-angled."
+    record('pyth_is_right', a=a, b=b, c=c)
     return q, s, hint, 2, _trig_keyword('yes' if is_right else 'no')
 
 
@@ -6603,6 +6753,7 @@ def _trig_inter_compound():
          f"<br>= <strong>{h2} m</strong><br>"
          f"(The wall height of {h1} m is used in setting up the scenario but the direct calculation gives total h.)")
     hint = "Set up the right triangle from the observation point to the top. Use tan."
+    record('trig_side', angle=angle2, known=base, known_kind='adj', find_kind='opp')
     return q, s, hint, 3, h2
 
 
@@ -6623,6 +6774,7 @@ def _trig_inter_sine_find_side():
          rf" = \dfrac{{{c} \times {fmt_dp(math.sin(math.radians(A)), 4)}}}{{{fmt_dp(math.sin(math.radians(C)), 4)}}}\)"
          f"<br>= <strong>{a} cm</strong>")
     hint = "Sine rule: a/sin A = c/sin C. Multiply both sides by sin A to isolate a."
+    record('trig_sine_side', known_angle=C, known_side=c, target_angle=A)
     return q, s, hint, 3, a
 
 
@@ -6653,6 +6805,7 @@ def _trig_diff_sine_rule_side():
         rf"<strong>Answer:</strong> \(b = {fmt_dp(b, 2)}\,\text{{cm}}\)"
     )
     hint = "Use the pair you know (a and A) together with the unknown pair (b and B)."
+    record('trig_sine_side', known_angle=A, known_side=a, target_angle=B)
     return q, s, hint, 3, b
 
 
@@ -6676,6 +6829,7 @@ def _trig_diff_cosine_rule_side():
          rf"<br>\(= {b**2+c**2} - {fmt_dp(2*b*c*math.cos(math.radians(A)),4)} = {fmt_dp(b**2+c**2-float(fmt_dp(2*b*c*math.cos(math.radians(A)),4)),4)}\)"
          f"<br>a = <strong>{fmt_dp(a, 2)} cm</strong>")
     hint = "Cosine rule: a\u00b2 = b\u00b2 + c\u00b2 \u2212 2bc\u202fcos\u202fA. Use when you have SAS."
+    record('trig_cosine_side', b=b, c=c, angle=A)
     return q, s, hint, 3, a
 
 
@@ -6697,6 +6851,7 @@ def _trig_diff_area_sine():
          rf"<br>\(= \dfrac{{1}}{{2}} \times {a} \times {b} \times {fmt_dp(math.sin(math.radians(C)), 4)}\)"
          f"<br>= <strong>{area} cm\u00b2</strong>")
     hint = "Area = \u00bd\u202fa\u202fb\u202fsin\u202fC. This formula works for any triangle when you know two sides and the included angle."
+    record('trig_area', a=a, b=b, angle=C)
     return q, s, hint, 2, area
 
 
@@ -6706,7 +6861,7 @@ def _trig_diff_3d():
     h = random.randint(8, 15)
     diag_base = round(math.sqrt(l ** 2 + w ** 2), 2)
     space_diag = round(math.sqrt(l ** 2 + w ** 2 + h ** 2), 2)
-    angle = round(math.degrees(math.atan(h / diag_base)), 1)
+    angle = round(math.degrees(math.atan(h / math.sqrt(l ** 2 + w ** 2))), 1)  # unrounded base diagonal
     # 3D cuboid SVG (isometric-style)
     W, H = _TRIG_DIAGRAM_W, _TRIG_DIAGRAM_H
     ox, oy = 58, H - 48
@@ -6746,6 +6901,7 @@ def _trig_diff_3d():
          f"<br>\u03b8 = tan\u207b\u00b9\u202f({h}/{diag_base})"
          f"<br>= <strong>{angle}\u00b0</strong>")
     hint = "Find the base diagonal with Pythagoras first, then use tan with the height."
+    record('trig_3d_angle', l=l, w=w, h=h)
     return q, s, hint, 4, angle
 
 
@@ -6789,6 +6945,7 @@ def _trig_diff_sine_rule_angle():
          f"<br>A = sin\u207b\u00b9\u202f({fmt_dp(sinA, 4)})"
          f"<br>= <strong>{A}\u00b0</strong>")
     hint = "Rearrange the sine rule: sin A = a\u202f\u00d7\u202fsin B / b, then use inverse sin."
+    record('trig_sine_angle', a=a, b=b, angle_b=B)
     return q, s, hint, 4, A
 
 
@@ -6814,6 +6971,7 @@ def _trig_diff_cosine_rule_angle():
          f"<br>A = cos\u207b\u00b9\u202f({fmt_dp(cosA, 4)})"
          f"<br>= <strong>{A}\u00b0</strong>")
     hint = "Rearranged cosine rule: cos A = (b\u00b2+c\u00b2\u2212a\u00b2)/(2bc). Use when all 3 sides are known."
+    record('trig_cosine_angle', a=a, b=b, c=c)
     return q, s, hint, 3, A
 
 
@@ -6837,6 +6995,7 @@ def _trig_diff_area_find_side():
          f"<br>b = {area} \u00f7 ({a / 2} \u00d7 {fmt_dp(math.sin(math.radians(C)), 4)})"
          f"<br>= <strong>{b} cm</strong>")
     hint = "Rearrange Area = \u00bd\u202fa\u202fb\u202fsin\u202fC to make b the subject."
+    record('trig_area_side', a=a, angle=C, area=area)
     return q, s, hint, 3, b
 
 
@@ -6862,6 +7021,7 @@ def _trig_diff_bearing_nonright():
          rf"<br>\(= {d1**2+d2**2} - ({round(2*d1*d2*math.cos(math.radians(turn_angle)),3)})\)"
          f"<br>\u21d2 d = <strong>{dist} km</strong>")
     hint = "Apply the cosine rule with the included angle between the two legs."
+    record('trig_cosine_side', b=d1, c=d2, angle=turn_angle)
     return q, s, hint, 4, dist
 
 
@@ -6889,6 +7049,7 @@ def _trig_diff_exact_compound():
     s = (rf"\({expr} = {working}\)"
          f"<br>= <strong>{ans}</strong>&ensp;({note})")
     hint = "Substitute the exact values for each trig function, then simplify."
+    record('trig_exact_expr', expr=expr)
     return q, s, hint, 3, _trig_exact_compound_answer(ans)
 
 
@@ -6926,7 +7087,7 @@ _TRIG_MCQ_RAW = [
             "hint": "Area = \u00bd\u202fab\u202fsin\u202fC."
         },
         {
-            "q": r"In a right-angled triangle, \(\tan\theta = \tfrac{3}{4}\). What is the hypotenuse?",
+            "q": r"A right-angled triangle has opposite side 3 and adjacent side 4, so \(\tan\theta = \tfrac{3}{4}\). What is the hypotenuse?",
             "opts": ["A  5", "B  7", "C  1", "D  12"],
             "ans": "A",
             "hint": "Opposite = 3, adjacent = 4. Hypotenuse = \u221a(3\u00b2+4\u00b2) = 5."

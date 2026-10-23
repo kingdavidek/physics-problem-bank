@@ -3,6 +3,7 @@ Procedural difficult-tier MCQ generators for GCSE maths topics that use fixed MC
 Each topic has two randomised generators, included only when difficulty == 'difficult'.
 """
 from generators.shared.rounding import round_half_up as round, fmt_dp
+from generators.shared.verify_hook import record, verifies
 from generators.shared.utils import bracket_neg
 import random
 import math
@@ -81,6 +82,7 @@ def procedural_mcq_for(topic_slug):
 # SIMULTANEOUS EQUATIONS
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='solve_system')
 def _sim_proc_elimination():
     x, y = random.randint(2, 6), random.randint(2, 6)
     a1, b1 = random.randint(2, 4), 1
@@ -101,6 +103,7 @@ def _sim_proc_elimination():
     return q, sol, "Subtract when the y-terms match.", 3, opts, letter
 
 
+@verifies('alg', task='solve_system')
 def _sim_proc_substitution():
     m, c = random.randint(2, 5), random.randint(1, 6)
     x = random.randint(2, 7)
@@ -128,6 +131,7 @@ def _sim_proc_substitution():
 # EQUATIONS & INEQUALITIES
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='eq_larger_root')
 def _eq_proc_quadratic_roots():
     r1, r2 = random.randint(2, 5), random.randint(2, 5)
     while r2 == r1:
@@ -143,16 +147,19 @@ def _eq_proc_quadratic_roots():
     return q, sol, "Factorise or use the formula.", 3, opts, letter
 
 
+@verifies('alg', task='solve_ineq')
 def _eq_proc_inequality_flip():
     a = random.randint(3, 7)
-    b = random.randint(8, 20)
-    correct = f"x < {b // a}"
+    k = random.randint(2, 6)
+    b = a * k                       # -ax < b gives x > -k exactly
+    correct = f"x > -{k}"
     opts, letter = _string_opts(correct, [
-        f"x > {b // a}", f"x < {-(b // a)}", f"x > {-(b // a)}",
+        f"x < -{k}", f"x > {k}", f"x < {k}",
     ])
     q = rf"Solve \(-{a}x < {b}\)."
     sol = (
-        rf"Divide by \(-{a}\) and flip: \(x < {b // a}\). Answer: <strong>{letter}</strong>"
+        rf"Divide both sides by \(-{a}\) and reverse the inequality sign: \(x > -{k}\). "
+        rf"Answer: <strong>{letter}</strong>"
     )
     return q, sol, "Flip the inequality sign when dividing by a negative.", 3, opts, letter
 
@@ -167,6 +174,7 @@ def _bidmas_proc_nested():
     opts, letter = _letter_opts(correct, [(a + b) * c, a * b + c, a + b + c])
     q = rf"Work out \( {a} + {b} \times {c} \)."
     sol = rf"× first: \({b} \times {c} = {b*c}\), then \(+{a}\) → <strong>{correct}</strong>. Answer: <strong>{letter}</strong>"
+    record('arith', expr=f'{a} + {b} × {c}')
     return q, sol, "Multiply before adding.", 2, opts, letter
 
 
@@ -177,6 +185,7 @@ def _bidmas_proc_brackets_power():
     opts, letter = _letter_opts(correct, [a ** p + b, a + b ** p, a * b * p])
     q = rf"Evaluate \(({a} + {b})^{p}\)."
     sol = rf"Bracket first: \({a+b}\), then power → <strong>{correct}</strong>. Answer: <strong>{letter}</strong>"
+    record('arith', expr=f'({a} + {b})^{p}')
     return q, sol, "Brackets before powers.", 3, opts, letter
 
 
@@ -186,15 +195,17 @@ def _bidmas_proc_brackets_power():
 
 def _fdp_proc_reverse_percent():
     pct = random.choice([10, 20, 25])
-    final = random.choice([90, 120, 150, 200])
-    original = int(final * 100 / (100 - pct))
+    # Finals that give a whole-pound original (e.g. 20% off 90 would be £112.50).
+    final = random.choice({10: [90, 135, 180, 270], 20: [80, 120, 200, 240], 25: [90, 120, 150, 180]}[pct])
+    original = final * 100 // (100 - pct)
     correct = original
     opts, letter = _letter_opts(correct, [final - pct, final + pct, int(final * 100 / (100 + pct))])
     q = rf"After a <strong>{pct}% reduction</strong>, a price is <strong>£{final}</strong>. What was the original price?"
     sol = (
-        rf"Original × \({100-pct})/100 = {final}\) → original = <strong>£{original}</strong>. "
+        rf"Original × \(\dfrac{{{100-pct}}}{{100}} = {final}\) → original = <strong>£{original}</strong>. "
         rf"Answer: <strong>{letter}</strong>"
     )
+    record('num_reverse_pct', final=final, pct=pct, sign='down')
     return q, sol, "Divide by the percentage multiplier.", 3, opts, letter
 
 
@@ -208,13 +219,15 @@ def _fdp_proc_fraction_of():
     opts, letter = _letter_opts(correct, [total - correct, correct + den, total // den])
     q = rf"What is <strong>\(\dfrac{{{num}}}{{{den}}}\)</strong> of <strong>{total}</strong>?"
     sol = rf"\({total} \times {num}/{den} = {correct}\). Answer: <strong>{letter}</strong>"
+    record('num_frac_of', num=num, den=den, amount=total)
     return q, sol, "Multiply by the fraction.", 2, opts, letter
 
 
 def _fdp_proc_percent_change():
     original = random.randint(40, 200)
     pct = random.choice([10, 15, 20, 25])
-    new = round(original * (1 + pct / 100))
+    original -= original % {10: 10, 15: 20, 20: 5, 25: 4}[pct]  # keeps the new value a whole number
+    new = original * (100 + pct) // 100
     correct = f"{pct}% increase"
     opts, letter = _string_opts(correct, [
         f"{pct}% decrease",
@@ -223,6 +236,7 @@ def _fdp_proc_percent_change():
     ])
     q = rf"A value changes from <strong>{original}</strong> to <strong>{new}</strong>. What is the percentage change?"
     sol = rf"Change = {new - original}; ({new - original}/{original})×100 = <strong>{correct}</strong>. Answer: <strong>{letter}</strong>"
+    record('fdp_pct_change_text', original=original, new=new)
     return q, sol, "Divide change by original, then ×100.", 3, opts, letter
 
 
@@ -234,6 +248,7 @@ def _fdp_proc_decimal_to_percent():
     opts, letter = _string_opts(correct, [f"{dec:g}", f"{pct/10:g}%", f"{pct*10:g}%"])
     q = rf"Write <strong>{dec:g}</strong> as a percentage."
     sol = rf"{dec:g} × 100 = <strong>{correct}</strong>. Answer: <strong>{letter}</strong>"
+    record('fdp_decimal_to_pct', x=dec)
     return q, sol, "Multiply by 100.", 2, opts, letter
 
 
@@ -248,6 +263,7 @@ def _mf_proc_hcf():
     opts, letter = _letter_opts(correct, [a // 2, b // 2, a + b, max(a, b)])
     q = rf"What is the HCF of <strong>{a}</strong> and <strong>{b}</strong>?"
     sol = rf"HCF = <strong>{g}</strong>. Answer: <strong>{letter}</strong>"
+    record('num_hcf', a=a, b=b)
     return q, sol, "Highest common factor.", 2, opts, letter
 
 
@@ -258,6 +274,7 @@ def _mf_proc_lcm():
     opts, letter = _letter_opts(correct, [a * b, a + b, l + a, l - a])
     q = rf"What is the LCM of <strong>{a}</strong> and <strong>{b}</strong>?"
     sol = rf"LCM = <strong>{l}</strong>. Answer: <strong>{letter}</strong>"
+    record('num_lcm', a=a, b=b)
     return q, sol, "Lowest number in both times tables.", 3, opts, letter
 
 
@@ -284,6 +301,7 @@ def _mf_proc_prime_factors():
     ])
     q = rf"Write <strong>{n}</strong> as a product of prime factors."
     sol = rf"<strong>{correct}</strong>. Answer: <strong>{letter}</strong>"
+    record('num_prime_factors', n=n)
     return q, sol, "Use a factor tree.", 3, opts, letter
 
 
@@ -292,9 +310,12 @@ def _mf_proc_factor_of():
     factors = [i for i in range(1, int(n ** 0.5) + 1) if n % i == 0]
     all_f = sorted({f for i in factors for f in (i, n // i)})
     correct = random.choice([f for f in all_f if f not in (1, n)] or all_f)
-    opts, letter = _letter_opts(correct, [n + 1, n - 1 if n > 2 else n + 2, correct + 1])
+    # Distractors must not themselves be factors of n.
+    wrong = [x for x in (n + 1, n - 1, correct + 1, correct + 2, correct - 1, n + 2, n + 3) if x > 0 and n % x]
+    opts, letter = _letter_opts(correct, wrong)
     q = rf"Which is a factor of <strong>{n}</strong>?"
     sol = rf"<strong>{correct}</strong> divides {n}. Answer: <strong>{letter}</strong>"
+    record('mf_factor_of', n=n)
     return q, sol, "A factor divides exactly.", 2, opts, letter
 
 
@@ -320,6 +341,7 @@ def _dec_proc_bounds():
         rf"Lower: {n} − 0.05 = {lower}, upper: {n} + 0.05 = {upper}<br>"
         rf"Error interval: <strong>{correct}</strong>. Answer: <strong>{letter}</strong>"
     )
+    record('num_error_interval_text', derived=('unit',), value=n, unit=0.1)
     return q, sol, (
         "Add and subtract 0.05 (half of 0.1). Write lower ≤ x < upper — the upper bound is excluded."
     ), 3, opts, letter
@@ -328,6 +350,8 @@ def _dec_proc_bounds():
 def _dec_proc_divide():
     a = round(random.uniform(1.2, 4.8), 1)
     b = random.choice([0.2, 0.4, 0.5])
+    if b == 0.4 and int(round(a * 10)) % 2:
+        a = round(a + 0.1, 1)  # an odd number of tenths over 0.4 would not be a 1 d.p. answer
     mult = 10
     a_int = int(round(a * mult))
     b_int = int(round(b * mult))
@@ -338,6 +362,7 @@ def _dec_proc_divide():
         rf"×{mult} both: {a}×{mult} = {a_int}, {b}×{mult} = {b_int}<br>"
         rf"{a_int} ÷ {b_int} = <strong>{fmt_dp(correct, 1)}</strong>. Answer: <strong>{letter}</strong>"
     )
+    record('quotient', a=a, b=b)
     return q, sol, (
         "Multiply dividend and divisor by 10 so the divisor is a whole number, then divide as usual."
     ), 3, opts, letter
@@ -355,6 +380,7 @@ def _dec_proc_multiply():
         rf"{a_int} × {b_int} = {a_int * b_int}; 1 d.p. + 1 d.p. = 2 d.p.<br>"
         rf"<strong>{fmt_dp(correct, 2)}</strong>. Answer: <strong>{letter}</strong>"
     )
+    record('product', a=a, b=b)
     return q, sol, (
         "Multiply as integers (ignore the decimal points), then count decimal places in both factors "
         "and insert the point that many places from the right."
@@ -374,6 +400,7 @@ def _dec_proc_round():
         f"{' → round up' if int(decide) >= 5 else ' → round down'}<br>"
         rf"<strong>{correct:.{dp}f}</strong>. Answer: <strong>{letter}</strong>"
     )
+    record('num_round_dp', n=n, dp=dp)
     return q, sol, (
         "Find the digit one place beyond where you round. 5 or above → increase the last kept digit by 1."
     ), 2, opts, letter
@@ -383,6 +410,7 @@ def _dec_proc_round():
 # ALGEBRA
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='expand')
 def _alg_proc_expand():
     a, b = random.randint(2, 4), random.randint(1, 5)
     c, d = random.randint(2, 4), random.randint(1, 5)
@@ -398,6 +426,7 @@ def _alg_proc_expand():
     return q, sol, "Multiply each term in the first bracket by each in the second.", 3, opts, letter
 
 
+@verifies('alg', task='factorise')
 def _alg_proc_factorise_quad():
     r1, r2 = random.randint(2, 4), random.randint(2, 5)
     while r2 == r1:
@@ -416,6 +445,7 @@ def _alg_proc_factorise_quad():
 # SURDS
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='surd', mode='simplify')
 def _surd_proc_simplify():
     k = random.choice([2, 3, 4])
     m = random.choice([2, 3, 5])
@@ -427,18 +457,22 @@ def _surd_proc_simplify():
     return q, sol, "Find the largest square factor.", 3, opts, letter
 
 
+@verifies('alg', task='surd', mode='rationalise')
 def _surd_proc_rationalise():
     d = random.choice([2, 3, 5])
     correct = f"√{d}/{d}"
-    opts, letter = _string_opts(correct, [f"1/√{d}", f"√{d}", f"{d}/√{d}"])
+    opts, letter = _string_opts(correct, [f"1/√{d}", f"√{d}", f"{d}√{d}"])
     q = rf"Rationalise <strong>\(\dfrac{{1}}{{\sqrt{{{d}}}}}\)</strong>."
     sol = rf"Multiply top and bottom by √{d}: <strong>{correct}</strong>. Answer: <strong>{letter}</strong>"
     return q, sol, "Multiply by √d/√d.", 3, opts, letter
 
 
+@verifies('alg', task='surd', mode='multiply')
 def _surd_proc_multiply():
     a = random.choice([2, 3, 5, 6, 7])
     b = random.choice([2, 3, 5, 6, 12])
+    while a == b:                   # sqrt(2) * sqrt(2) would make the distractor sqrt(a + b) = sqrt(4) a second right answer
+        b = random.choice([2, 3, 5, 6, 12])
     product = a * b
     largest_sq = 1
     for s in (4, 9, 16, 25, 36):
@@ -456,6 +490,7 @@ def _surd_proc_multiply():
     return q, sol, "√a × √b = √(ab), then simplify.", 2, opts, letter
 
 
+@verifies('alg', task='surd', mode='simplify')
 def _surd_proc_add_like():
     p = random.choice([2, 3, 5])
     c1 = random.choice([2, 3, 4, 5])
@@ -463,12 +498,13 @@ def _surd_proc_add_like():
     n1, n2 = c1 * c1 * p, c2 * c2 * p
     total = c1 + c2
     correct = f"{total}√{p}"
-    opts, letter = _string_opts(correct, [f"√{n1 + n2}", f"{c1 + c2}√{n1}", f"{total}√{n1}"])
+    opts, letter = _string_opts(correct, [f"√{n1 + n2}", f"{total}√{n1}", f"{total}√{n2}"])
     q = rf"Simplify <strong>\(\sqrt{{{n1}}} + \sqrt{{{n2}}}\)</strong>."
     sol = rf"{c1}√{p} + {c2}√{p} = <strong>{correct}</strong>. Answer: <strong>{letter}</strong>"
     return q, sol, "Simplify each surd, then add coefficients.", 2, opts, letter
 
 
+@verifies('alg', task='surd', mode='between_mcq')
 def _surd_proc_between_integers():
     lo = random.randint(5, 12)
     hi = lo + 1
@@ -486,16 +522,19 @@ def _surd_proc_between_integers():
 # SEQUENCES
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='seq_nth_value')
 def _seq_proc_nth_linear():
     a, b = random.randint(2, 6), random.randint(-3, 8)
     n = random.randint(5, 12)
     correct = a * n + b
     opts, letter = _letter_opts(correct, [a * n, a + b * n, correct + a])
-    q = rf"The \(n\)th term is <strong>\({a}n + {b}\)</strong>. Find term <strong>{n}</strong>."
+    nth = f"{a}n" + (f" + {b}" if b > 0 else f" - {-b}" if b < 0 else "")
+    q = rf"The \(n\)th term is <strong>\({nth}\)</strong>. Find term <strong>{n}</strong>."
     sol = rf"Substitute \(n={n}\): <strong>{correct}</strong>. Answer: <strong>{letter}</strong>"
     return q, sol, "Replace n in the nth-term formula.", 2, opts, letter
 
 
+@verifies('alg', task='seq_nth_value')
 def _seq_proc_quadratic_diff():
     # constant second difference 2 -> n^2 sequence offset
     c = random.randint(1, 5)
@@ -522,6 +561,7 @@ def _geom_proc_parallel():
         rf"Co-interior angles sum to 180°. The other co-interior angle is:"
     )
     sol = rf"\(180 - {x} = {y}°\). Answer: <strong>{letter}</strong>"
+    record('ang_parallel', kind_word='co-interior', angle=x)
     return q, sol, "Co-interior angles add to 180°.", 2, opts, letter
 
 
@@ -532,6 +572,7 @@ def _geom_proc_polygon():
     opts, letter = _letter_opts(correct, [180 - exterior, 360 // (n - 1), exterior + 10])
     q = rf"Each exterior angle of a regular <strong>{n}-gon</strong> is:"
     sol = rf"\(360 ÷ {n} = {exterior}°\). Answer: <strong>{letter}</strong>"
+    record('poly_exterior_n', n=n)
     return q, sol, "Exterior angles sum to 360°.", 3, opts, letter
 
 
@@ -554,6 +595,7 @@ def _trans_proc_translation():
     vec = f"({dx}, {dy})" if dy >= 0 else f"({dx}, {dy})"
     q = rf"Point <strong>({px}, {py})</strong> is translated by <strong>{vec}</strong>. The image is:"
     sol = rf"Add the vector: <strong>{correct}</strong>. Answer: <strong>{letter}</strong>"
+    record('trans_translate_point', px=px, py=py, dx=dx, dy=dy)
     return q, sol, "Add dx to x and dy to y.", 2, opts, letter
 
 
@@ -565,6 +607,7 @@ def _trans_proc_reflection():
     ])
     q = rf"Reflect <strong>({px}, 3)</strong> in the <strong>y-axis</strong>. The image is:"
     sol = rf"x becomes \(-x\): <strong>{correct}</strong>. Answer: <strong>{letter}</strong>"
+    record('trans_reflect_point', px=px, py=3, axis_word='y-axis')
     return q, sol, "Reflection in y-axis: (x,y)→(-x,y).", 2, opts, letter
 
 
@@ -574,19 +617,23 @@ def _trans_proc_reflection():
 
 def _mens_proc_circle():
     r = random.randint(3, 9)
-    correct = round(math.pi * r * r, 1)
-    opts, letter = _letter_opts(correct, [round(2 * math.pi * r, 1), round(math.pi * r, 1), round(r * r, 1)], fmt=lambda x: f"{fmt_dp(x, 1)}")
-    q = rf"A circle has radius <strong>{r} cm</strong>. Its area is (π ≈ 3.14):"
-    sol = rf"\(A = \pi r^2 = \pi \times {r}^2\) ≈ <strong>{fmt_dp(correct, 1)} cm²</strong>. Answer: <strong>{letter}</strong>"
+    correct = round(3.14 * r * r, 1)   # the question says pi is approximately 3.14
+    opts, letter = _letter_opts(correct, [round(2 * 3.14 * r, 1), round(3.14 * r, 1), round(r * r, 1)], fmt=lambda x: f"{fmt_dp(x, 1)}")
+    q = rf"A circle has radius <strong>{r} cm</strong>. Using π ≈ 3.14, its area to 1 d.p. is:"
+    sol = rf"\(A = \pi r^2 = 3.14 \times {r}^2\) ≈ <strong>{fmt_dp(correct, 1)} cm²</strong>. Answer: <strong>{letter}</strong>"
+    record('mens_circle_area_314', r=r)
     return q, sol, "Use A = πr².", 3, opts, letter
 
 
 def _mens_proc_trapezium():
     a, b, h = random.randint(4, 8), random.randint(6, 12), random.randint(3, 7)
+    if (a + b) * h % 2:
+        h += 1  # keep the area a whole number of cm²
     correct = (a + b) * h // 2
     opts, letter = _letter_opts(correct, [a * h, b * h, (a + b) * h])
     q = rf"A trapezium has parallel sides <strong>{a} cm</strong> and <strong>{b} cm</strong>, height <strong>{h} cm</strong>. Area ="
     sol = rf"\(\frac{{{a}+{b}}}{{2}} \times {h} = {correct}\) cm². Answer: <strong>{letter}</strong>"
+    record('mens_trapezium', a=a, b=b, h=h)
     return q, sol, "Average of parallel sides × height.", 3, opts, letter
 
 
@@ -607,6 +654,7 @@ def _brg_proc_back_bearing():
     ])
     q = rf"The bearing of B from A is <strong>{b:03d}°</strong>. The back bearing of A from B is:"
     sol = rf"Add 180°: <strong>{correct}</strong>. Answer: <strong>{letter}</strong>"
+    record('brg_back_text', b=b)
     return q, sol, "Back bearing = forward bearing ± 180°.", 2, opts, letter
 
 
@@ -618,6 +666,7 @@ def _brg_proc_three_figure():
     ])
     q = rf"Which is the correct three-figure bearing for <strong>{b}°</strong> clockwise from North?"
     sol = rf"<strong>{correct}</strong>. Answer: <strong>{letter}</strong>"
+    record('brg_three_figure', b=b)
     return q, sol, "Always use three digits.", 1, opts, letter
 
 
@@ -630,6 +679,7 @@ def _ct_proc_semicircle():
     opts, letter = _string_opts(correct, ["45°", "180°", "60°"])
     q = r"Angle in a <strong>semicircle</strong> is:"
     sol = rf"Angle in a semicircle = <strong>90°</strong>. Answer: <strong>{letter}</strong>"
+    record('fact_pick', fact_word='semicircle')
     return q, sol, "Thales' theorem.", 1, opts, letter
 
 
@@ -638,6 +688,7 @@ def _ct_proc_tangent_radius():
     opts, letter = _string_opts(correct, ["180°", "45°", "They are equal"])
     q = r"A tangent and radius at the point of contact meet at:"
     sol = rf"Tangent ⊥ radius → <strong>90°</strong>. Answer: <strong>{letter}</strong>"
+    record('fact_pick', fact_word='tangent')
     return q, sol, "Tangent meets radius at right angles.", 2, opts, letter
 
 
@@ -647,19 +698,24 @@ def _ct_proc_tangent_radius():
 
 def _cm_proc_speed():
     d, t = random.choice([60, 90, 120]), random.choice([2, 3, 4])
+    if d % t:
+        t = 3  # 90 km in 4 hours is not a whole-number speed
     correct = d // t
     opts, letter = _letter_opts(correct, [d * t, d + t, d - t])
     q = rf"Distance <strong>{d} km</strong> in <strong>{t} hours</strong>. Average speed ="
     sol = rf"Speed = distance ÷ time = <strong>{correct} km/h</strong>. Answer: <strong>{letter}</strong>"
+    record('quotient', a=d, b=t)
     return q, sol, "Speed = distance / time.", 2, opts, letter
 
 
 def _cm_proc_density():
     m, v = random.randint(20, 80), random.randint(4, 10)
-    correct = m // v if m % v == 0 else round(m / v, 1)
-    opts, letter = _letter_opts(correct, [m * v, v / m, m - v], fmt=str)
+    m = max(v, m - m % v)  # whole-number density: the question states no rounding
+    correct = m // v
+    opts, letter = _letter_opts(correct, [m * v, m - v, correct * 2], fmt=str)
     q = rf"Mass <strong>{m} g</strong>, volume <strong>{v} cm³</strong>. Density ="
     sol = rf"\(\rho = m/V\) = <strong>{correct} g/cm³</strong>. Answer: <strong>{letter}</strong>"
+    record('quotient', a=m, b=v)
     return q, sol, "Density = mass ÷ volume.", 3, opts, letter
 
 
@@ -674,6 +730,7 @@ def _sc_proc_scale_factor():
     opts, letter = _letter_opts(correct, [side + k, side * k * k, side // k if side >= k else side])
     q = rf"Two shapes are similar with scale factor <strong>{k}</strong>. A side of length <strong>{side} cm</strong> maps to:"
     sol = rf"Multiply by {k}: <strong>{correct} cm</strong>. Answer: <strong>{letter}</strong>"
+    record('sim_scale_length', k=k, length=side)
     return q, sol, "Corresponding lengths scale by k.", 2, opts, letter
 
 
@@ -684,6 +741,7 @@ def _sc_proc_area_factor():
     opts, letter = _letter_opts(correct, [area * k, area + k * k, area * 2])
     q = rf"Linear scale factor <strong>{k}</strong>. A small shape has area <strong>{area} cm²</strong>. The large area is:"
     sol = rf"Area factor = \(k^2 = {k*k}\): <strong>{correct} cm²</strong>. Answer: <strong>{letter}</strong>"
+    record('sim_area_k', k=k, area=area)
     return q, sol, "Areas scale by k².", 3, opts, letter
 
 
@@ -700,6 +758,7 @@ def _cl_proc_perp_bisector():
     ])
     q = r"The perpendicular bisector of AB is the locus of:"
     sol = rf"Equidistant from A and B. Answer: <strong>{letter}</strong>"
+    record('fact_pick', fact_word='perpendicular bisector')
     return q, sol, "Perp bisector = equal distance from endpoints.", 2, opts, letter
 
 
@@ -712,6 +771,7 @@ def _cl_proc_angle_bisector():
     ])
     q = r"An angle bisector construction gives the locus of:"
     sol = rf"Equal perpendicular distance from both arms. Answer: <strong>{letter}</strong>"
+    record('fact_pick', fact_word='angle bisector')
     return q, sol, "Angle bisector = equidistant from both sides.", 2, opts, letter
 
 
@@ -727,6 +787,7 @@ def _py_proc_hypotenuse():
     opts, letter = _letter_opts(correct, [a + b, abs(a - b), c + 1])
     q = rf"A right triangle has shorter sides <strong>{a}</strong> and <strong>{b}</strong>. The hypotenuse is:"
     sol = rf"\(\sqrt{{{a}^2+{b}^2}} = {c}\). Answer: <strong>{letter}</strong>"
+    record('pyth_hyp', a=a, b=b)
     return q, sol, "c² = a² + b².", 2, opts, letter
 
 
@@ -738,6 +799,7 @@ def _py_proc_short_side():
     opts, letter = _letter_opts(correct, [c - a, c + a, c // a if c >= a else a])
     q = rf"Hypotenuse <strong>{c}</strong>, one side <strong>{a}</strong>. The other shorter side is:"
     sol = rf"\(\sqrt{{{c}^2-{a}^2}} = {b}\). Answer: <strong>{letter}</strong>"
+    record('pyth_leg', c=c, a=a)
     return q, sol, "Rearrange a² = c² − b².", 3, opts, letter
 
 
@@ -760,6 +822,7 @@ def _vec_proc_add():
         rf"Add tops: {ax} + {bracket_neg(bx)} = {ax+bx}. Add bottoms: {ay} + {bracket_neg(by)} = {ay+by}. "
         rf"<strong>{correct}</strong>. Answer: <strong>{letter}</strong>"
     )
+    record('vec_add_options', ax=ax, ay=ay, bx=bx, by=by)
     return q, sol, "Add x-components together, then y-components — do not mix them.", 2, opts, letter
 
 
@@ -776,6 +839,7 @@ def _vec_proc_magnitude():
         rf"√(({x})²+({y})²) = √({x*x}+{y*y}) = √{x*x+y*y} = <strong>{mag}</strong>. "
         rf"Answer: <strong>{letter}</strong>"
     )
+    record('vec_magnitude', x=x, y=y)
     return q, sol, "Square each component, add, then square-root (Pythagoras).", 3, opts, letter
 
 
@@ -794,8 +858,9 @@ def _trig_proc_find_side():
         opp = round(adj * math.tan(math.radians(60)), 1)
     correct = opp
     opts, letter = _letter_opts(correct, [adj, adj / 2, opp + 2], fmt=lambda x: f"{fmt_dp(x, 1)}" if isinstance(x, float) else str(x))
-    q = rf"In a right triangle, angle <strong>{angle}°</strong>, adjacent <strong>{adj}</strong>. Opposite = (tan {angle}°):"
+    q = rf"In a right triangle, angle <strong>{angle}°</strong>, adjacent <strong>{adj}</strong>. Opposite = (tan {angle}°), to 1 d.p.:"
     sol = rf"tan = opp/adj → <strong>{opp}</strong>. Answer: <strong>{letter}</strong>"
+    record('trig_side', angle=angle, known=adj, known_kind='adj', find_kind='opp')
     return q, sol, "Choose the correct ratio (SOHCAHTOA).", 3, opts, letter
 
 
@@ -804,13 +869,14 @@ def _trig_proc_exact():
     exact = {30: "1/2", 45: "√2/2", 60: "√3/2"}[angle]
     correct = f"sin {angle}° = {exact}"
     opts, letter = _string_opts(correct, [
-        f"cos {angle}° = {exact}",
+        f"cos {angle}° = {exact}" if angle != 45 else "cos 45° = 1/2",   # cos 45° really is √2/2
         f"sin {angle}° = {angle}/180",
         f"sin {angle}° = √3",
         f"tan {angle}° = {exact}",
     ])
     q = rf"Which exact value is correct?"
     sol = rf"<strong>{correct}</strong>. Answer: <strong>{letter}</strong>"
+    record('trig_exact_statement', derived=('angle',), angle=angle)
     return q, sol, "Learn the exact trig table.", 2, opts, letter
 
 

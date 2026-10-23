@@ -5,7 +5,9 @@ GCSE Maths – Algebraic Fractions
 from generators.shared.rounding import round_half_up as round, fmt_dp
 import random
 from math import gcd
+from generators.shared.answer_checkers import FORM_SIMPLIFIED
 from generators.shared.utils import make_problem
+from generators.shared.verify_hook import verifies
 from generators.shared.variant_utils import (
     select_tier_variants,
     mcq_variants_from_pool,
@@ -88,10 +90,12 @@ def _af_alg_fraction_answer(numerator, denominator, format_hint=None):
     return payload
 
 
-def _af_algebraic_answer(expr, format_hint=None):
+def _af_algebraic_answer(expr, format_hint=None, form=None):
     payload = {'type': 'algebraic', 'value': str(expr).strip()}
     if format_hint:
         payload['format_hint'] = format_hint
+    if form:
+        payload['form'] = form       # the written form the checker insists on (answer_checkers.ANSWER_FORMS)
     return payload
 
 
@@ -138,6 +142,8 @@ def _af_problem_from_output(out, difficulty):
                         'Enter the simplified expression',
                     ),
                 }
+                if raw.get('form'):
+                    extra['answer_form'] = raw['form']
             elif raw_type == 'linear':
                 var = raw.get('var') or 'x'
                 val = raw.get('value')
@@ -290,6 +296,7 @@ def _af_random_denominator():
 # FOUNDATIONAL (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='simplify', form=None)
 def _af_f_cancel_numeric():
     a = random.randint(2, 12)
     b = random.randint(2, 12)
@@ -303,6 +310,7 @@ def _af_f_cancel_numeric():
     return q, s, "Cancel common factors in numerator and denominator only.", 2, _af_fraction_answer(num, den)
 
 
+@verifies('alg', task='simplify', form=None)
 def _af_f_same_denominator_add():
     p = random.randint(2, 12)
     q_val = random.randint(2, 12)
@@ -315,6 +323,7 @@ def _af_f_same_denominator_add():
     )
 
 
+@verifies('alg', task='simplify', form=None)
 def _af_f_multiply():
     a = random.randint(2, 9)
     b = random.randint(2, 9)
@@ -330,6 +339,7 @@ def _af_f_multiply():
     return q, s, "Multiply tops and bottoms, then cancel common factors.", 2, raw
 
 
+@verifies('alg', task='simplify', form=None)
 def _af_f_divide():
     m = random.randint(2, 8)
     n = random.randint(2, 9)
@@ -343,6 +353,7 @@ def _af_f_divide():
         'x^2', m * n,
     )
 
+@verifies('alg', task='simplify', form=None)
 def _af_f_factor_cancel():
     """(kx + kd)/(x + d) = k"""
     k = random.randint(2, 5)
@@ -363,6 +374,7 @@ def _af_f_factor_cancel():
 # INTERMEDIATE (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='simplify', form=None)
 def _af_i_diff_denominator_add():
     """p/x + q/(kx) with procedural numerators."""
     p = random.randint(1, 6)
@@ -373,6 +385,7 @@ def _af_i_diff_denominator_add():
     return q, s, hint, 3, _af_alg_fraction_answer(top, lcd)
 
 
+@verifies('alg', task='simplify', form=None)
 def _af_i_difference_of_squares():
     r = random.randint(2, 15)
     q = rf"Simplify <strong>{_math(_frac(f'x^2 - {r * r}', 'x - ' + str(r)))}</strong>."
@@ -383,10 +396,11 @@ def _af_i_difference_of_squares():
         )
     )
     return q, s, "Difference of squares on the numerator.", 3, _af_algebraic_answer(
-        f'x+{r}', format_hint='e.g. x + 3',
+        f'x+{r}', format_hint='e.g. x + 3', form=FORM_SIMPLIFIED,
     )
 
 
+@verifies('alg', task='simplify', form=None)
 def _af_i_single_fraction_add():
     a = random.randint(1, 4)
     b = random.randint(1, 5)
@@ -396,6 +410,7 @@ def _af_i_single_fraction_add():
     return q, s, hint, 4, _af_alg_fraction_answer(num, den)
 
 
+@verifies('alg', task='simplify', form=None)
 def _af_i_multiply_two():
     p = random.randint(1, 8)
     q_val = random.randint(1, 8)
@@ -427,6 +442,7 @@ def _af_i_multiply_two():
     return q, s, hint, 3, _af_alg_fraction_answer(f'x+{p}', f'x+{q_val}')
 
 
+@verifies('alg', task='simplify', form=None)
 def _af_i_quadratic_cancel():
     lo = random.randint(2, 9)
     hi = random.randint(2, 9)
@@ -442,13 +458,14 @@ def _af_i_quadratic_cancel():
         )
     )
     return q, s, "Factorise the quadratic numerator first.", 4, _af_algebraic_answer(
-        f'x-{hi}', format_hint='e.g. x - 3',
+        f'x-{hi}', format_hint='e.g. x - 3', form=FORM_SIMPLIFIED,
     )
 
 # ══════════════════════════════════════════════════════════════════════════════
 # DIFFICULT (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='solve_linear')
 def _af_d_solve_simple():
     """a/x = p/q style with integer solution."""
     a = random.randint(2, 12)
@@ -483,6 +500,7 @@ def _af_d_solve_simple():
     return q, s, hint, 4, _af_linear_answer(x_ans)
 
 
+@verifies('alg', task='simplify', form=None)
 def _af_d_add_reciprocal_style():
     n1 = random.randint(2, 7)
     n2 = random.randint(2, 7)
@@ -492,6 +510,7 @@ def _af_d_add_reciprocal_style():
     return q, s, hint, 4, _af_alg_fraction_answer(num, den)
 
 
+@verifies('alg', task='simplify', form=None)
 def _af_d_simplify_nested():
     k = random.randint(2, 7)
     d = random.randint(3, 12)
@@ -503,6 +522,7 @@ def _af_d_simplify_nested():
     return q, s, "Recognise difference of squares in both parts.", 4, k
 
 
+@verifies('alg', task='simplify', form=None)
 def _af_d_subtract_fractions():
     p = random.randint(4, 14)
     q_val = random.randint(2, 10)
@@ -515,6 +535,7 @@ def _af_d_subtract_fractions():
         ans, d,
     )
 
+@verifies('alg', task='solve_linear')
 def _af_d_equation_with_linear_den():
     """(x + c)/x = r style with integer solution."""
     c = random.randint(2, 12)
@@ -551,6 +572,7 @@ def _af_d_equation_with_linear_den():
 # MCQ (8 — randomised)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='simplify', form=None)
 def _af_mcq_cancel():
     k = random.randint(2, 5)
     d = random.randint(2, 7)
@@ -574,6 +596,7 @@ def _af_mcq_cancel():
     return q, sol, "Factorise and cancel the common bracket.", 2, opts, correct_letter
 
 
+@verifies('alg', task='simplify', form=None)
 def _af_mcq_add_same():
     p = random.randint(2, 6)
     q_val = random.randint(2, 6)
@@ -596,6 +619,7 @@ def _af_mcq_add_same():
     return q, sol, "Add numerators.", 2, opts, correct_letter
 
 
+@verifies('alg', task='simplify', form=None)
 def _af_mcq_diff_squares():
     r = random.randint(3, 6)
     correct = rf"\(x + {r}\)"
@@ -610,6 +634,7 @@ def _af_mcq_diff_squares():
     return q, sol, "Factorise x² − r².", 2, opts, correct_letter
 
 
+@verifies('alg', task='solve_linear')
 def _af_mcq_solve():
     c = random.randint(3, 6)
     correct = rf"\(x = {c}\)"
@@ -628,6 +653,7 @@ def _af_mcq_solve():
     return q, sol, "Multiply both sides by x, then collect x terms on one side.", 3, opts, correct_letter
 
 
+@verifies('alg', task='simplify', form=None)
 def _af_mcq_multiply():
     a = random.randint(2, 5)
     b = random.randint(2, 6)
@@ -651,6 +677,7 @@ def _af_mcq_multiply():
     return q, sol, "Multiply tops and bottoms, then cancel x.", 2, opts, correct_letter
 
 
+@verifies('alg', task='simplify', form=None)
 def _af_mcq_divide():
     m = random.randint(2, 4)
     n = random.randint(2, 5)
@@ -676,6 +703,7 @@ def _af_mcq_divide():
     return q, sol, "Dividing by a fraction = multiply by its reciprocal.", 3, opts, correct_letter
 
 
+@verifies('alg', task='simplify', form=None)
 def _af_mcq_subtract_same():
     p = random.randint(5, 9)
     q_val = random.randint(2, 4)
@@ -696,6 +724,7 @@ def _af_mcq_subtract_same():
     return q, sol, "Subtract the numerators; keep the denominator.", 2, opts, correct_letter
 
 
+@verifies('alg', task='simplify', form=None)
 def _af_mcq_factor_cancel():
     r1 = random.randint(2, 5)
     r2 = random.randint(2, 5)

@@ -8,6 +8,7 @@ Conceptual practice variants return MCQ 6-tuples (options + correct letter).
 """
 import random
 from generators.shared.utils import make_problem, quadratic_roots_format_hint, quadratic_roots_ui_labels
+from generators.shared.verify_hook import verifies
 from generators.shared.variant_utils import (
     select_tier_variants,
     mcq_variants_from_pool,
@@ -142,7 +143,10 @@ def _qsim_problem_from_output(out, difficulty):
                         'correct_answer_raw': '|'.join(str(v) for v in values),
                         'answer_type': 'number_fields',
                         'answer_labels': list(labels),
-                        'answer_format_hint': 'Enter a number in every field',
+                        'answer_format_hint': (
+                            'Enter a number in every field, with the smaller x first'
+                            if len(values) == 4 else 'Enter a number in every field'
+                        ),
                     }
             elif raw_type == 'linear':
                 extra = {
@@ -182,6 +186,7 @@ def _roots_from_line(r1=None, r2=None, *, require_a_nonzero=True, require_a_not_
             if require_a_not_one and a == 1:
                 continue
             break
+    r1, r2 = sorted((r1, r2))      # the answer boxes ask for the smaller x first
     a = r1 + r2
     b = -r1 * r2
     return r1, r2, a, b
@@ -194,6 +199,7 @@ def _roots_positive_pair():
         r2 = random.randint(2, 15)
         if r1 != r2:
             break
+    r1, r2 = sorted((r1, r2))
     a = r1 + r2
     b = -r1 * r2
     return r1, r2, a, b
@@ -204,7 +210,7 @@ def _roots_with_negative():
     while True:
         r1 = random.randint(-8, -1)
         r2 = random.randint(1, 8)
-        if r1 != r2:
+        if r1 != r2 and r1 + r2 != 0:      # a = 0 would leave the line as the constant "0x + c"
             break
     a = r1 + r2
     b = -r1 * r2
@@ -215,6 +221,7 @@ def _roots_with_negative():
 # FOUNDATIONAL (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='keyed_text', text='a pair (x, y) that satisfies both equations at the same time')
 def _qsim_f_what_is_intersection():
     correct = "A pair (x, y) that satisfies both equations at the same time"
     distractors = [
@@ -242,6 +249,7 @@ def _qsim_f_what_is_intersection():
 _qsim_f_what_is_intersection._fixed_stem = True
 
 
+@verifies('alg', task='substituted_equation')
 def _qsim_f_substitute_step():
     m = random.randint(1, 8)
     c = random.randint(1, 12)
@@ -269,6 +277,7 @@ def _qsim_f_substitute_step():
     return q, s, "Set x² equal to the expression for y from the line.", 2, opts, correct_letter
 
 
+@verifies('alg', task='qsim_solve')
 def _qsim_f_simple_integer():
     r1, r2, a, b = _roots_from_line()
     y1, y2 = r1 * r1, r2 * r2
@@ -282,6 +291,7 @@ def _qsim_f_simple_integer():
     return q, s, "Substitute, rearrange to zero, factorise, find y from either equation.", 3, _qsim_solution_fields(r1, y1, r2, y2)
 
 
+@verifies('alg', task='qsim_find_y')
 def _qsim_f_find_y_given_x():
     r1, r2, a, b = _roots_from_line()
     x_val = random.choice([r1, r2])
@@ -292,11 +302,12 @@ def _qsim_f_find_y_given_x():
     )
     s = (
         rf"Substitute \(x = {x_val}\): "
-        rf"<strong>\(y = {x_val}^2 = {y_val}\)</strong> (matches the line too)."
+        rf"<strong>\(y = {x_val if x_val >= 0 else f'({x_val})'}^2 = {y_val}\)</strong> (matches the line too)."
     )
     return q, s, "Both equations give the same y when x is a true solution.", 2, _qsim_linear_answer(y_val, 'y')
 
 
+@verifies('alg', task='substituted_equation')
 def _qsim_f_rearrange_only():
     m = random.randint(2, 9)
     c = random.randint(1, 15)
@@ -326,6 +337,7 @@ def _qsim_f_rearrange_only():
 # INTERMEDIATE (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='qsim_solve')
 def _qsim_i_full_solve():
     r1, r2, a, b = _roots_from_line()
     y1, y2 = r1 * r1, r2 * r2
@@ -343,6 +355,7 @@ def _qsim_i_full_solve():
     return q, s, "Substitute the line into the parabola, factorise, then find both y-values.", 4, _qsim_solution_fields(r1, y1, r2, y2)
 
 
+@verifies('alg', task='qsim_x_values')
 def _qsim_i_find_x_only():
     r1, r2, a, b = _roots_from_line()
     q = (
@@ -353,6 +366,7 @@ def _qsim_i_find_x_only():
     return q, s, "Solve the quadratic in x first; y comes afterwards.", 3, _qsim_quadratic_roots_answer(r1, r2)
 
 
+@verifies('alg', task='qsim_count')
 def _qsim_i_graph_meaning():
     from generators.gcse.graphical_simultaneous_equations import (
         _svg_parabola_line,
@@ -368,6 +382,7 @@ def _qsim_i_graph_meaning():
     return q, s, "Each intersection is one (x, y) solution pair.", 1, 2
 
 
+@verifies('alg', task='qsim_solve')
 def _qsim_i_steeper_line():
     r1, r2, a, b = _roots_from_line(require_a_not_one=True)
     y1, y2 = r1 * r1, r2 * r2
@@ -380,6 +395,7 @@ def _qsim_i_steeper_line():
     return q, s, "Same method when the line has gradient ≠ 1.", 4, _qsim_solution_fields(r1, y1, r2, y2)
 
 
+@verifies('alg', task='point_on_both')
 def _qsim_i_check_pair():
     r1, r2, a, b = _roots_from_line()
     correct = random.choice([r1, r2])
@@ -419,6 +435,7 @@ def _qsim_i_check_pair():
 # DIFFICULT (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='qsim_solve')
 def _qsim_d_non_monic_line():
     r1, r2, a, b = _roots_from_line(require_a_not_one=True)
     y1, y2 = r1 * r1, r2 * r2
@@ -431,6 +448,7 @@ def _qsim_d_non_monic_line():
     return q, s, "Works the same when the line has coefficient ≠ 1.", 4, _qsim_solution_fields(r1, y1, r2, y2)
 
 
+@verifies('alg', task='qsim_solve')
 def _qsim_d_exam_multipart():
     r1, r2, a, b = _roots_from_line()
     y1, y2 = r1 * r1, r2 * r2
@@ -450,6 +468,7 @@ def _qsim_d_exam_multipart():
     return q, s, "Part (a) is method marks for correct substitution and rearrangement.", 5, _qsim_solution_fields(r1, y1, r2, y2)
 
 
+@verifies('alg', task='qsim_count')
 def _qsim_d_discriminant():
     """How many intersections from discriminant of x² - ax - b = 0 (0, 1 or 2)."""
     case = random.choice(["two", "one", "none"])
@@ -485,6 +504,7 @@ def _qsim_d_discriminant():
     return q, s, hint, 3, n
 
 
+@verifies('alg', task='qsim_x_values')
 def _qsim_d_word_problem():
     r1, r2, a, b = _roots_positive_pair()
     q = (
@@ -494,12 +514,13 @@ def _qsim_d_word_problem():
     )
     f1, f2 = _factor_pair(r1, r2)
     s = (
-        rf"Set \(t^2 = {a}t {_fmt_b(b)}\) → \({f1}{f2} = 0\)<br>"
+        rf"Set \(t^2 = {a}t {_fmt_b(b)}\) → \({f1.replace('x', 't')}{f2.replace('x', 't')} = 0\)<br>"
         rf"<strong>\(t = {r1}\) s or \(t = {r2}\) s</strong>"
     )
     return q, s, "Same structure: quadratic meets linear.", 4, _qsim_quadratic_roots_answer(r1, r2)
 
 
+@verifies('alg', task='qsim_solve')
 def _qsim_d_negative_root():
     r1, r2, a, b = _roots_with_negative()
     y1, y2 = r1 * r1, r2 * r2
@@ -516,6 +537,7 @@ def _qsim_d_negative_root():
 # MCQ (4 procedural — randomised)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='substituted_equation')
 def _qsim_mcq_substitution_equation():
     c = random.randint(1, 7)
     wrong = [
@@ -534,15 +556,20 @@ def _qsim_mcq_substitution_equation():
     return q, sol, "Rearrange so one side is zero.", 2, opts, correct_letter
 
 
+@verifies('alg', task='point_on_both')
 def _qsim_mcq_correct_pair():
     r1, r2, a, b = _roots_from_line()
     y1, y2 = r1 * r1, r2 * r2
     correct = f"({r1}, {y1})"
-    wrong = [
-        f"({r2}, {y1})",
-        f"({r1}, {r2})",
-        f"({r1 + r2}, {(r1 + r2) ** 2})",
-    ]
+    solutions = {(r1, y1), (r2, y2)}
+    candidates = [(r2, y1), (r1, r2), (r1 + r2, (r1 + r2) ** 2), (r1, -y1), (-r1, y2), (r1 + 1, y1)]
+    wrong = []
+    for pt in candidates:
+        text = f"({pt[0]}, {pt[1]})"
+        # never a second right answer, never a repeated option
+        if pt not in solutions and text not in wrong:
+            wrong.append(text)
+    wrong = wrong[:3]
     pairs = wrong + [correct]
     random.shuffle(pairs)
     letters = "ABCD"
@@ -553,9 +580,12 @@ def _qsim_mcq_correct_pair():
     return q, sol, "y must equal x² and also ax + b.", 2, opts, correct_letter
 
 
+@verifies('alg', task='qsim_count')
 def _qsim_mcq_number_of_solutions():
     # random line: two intersections if discriminant > 0
     r1, r2 = random.randint(-3, -1), random.randint(3, 7)
+    while r1 + r2 == 0:                    # a = 0 would leave the line as the constant "0x + c"
+        r1, r2 = random.randint(-3, -1), random.randint(3, 7)
     a, b = r1 + r2, -r1 * r2
     disc = a * a + 4 * b
     n = 2 if disc > 0 else 1
@@ -571,11 +601,13 @@ def _qsim_mcq_number_of_solutions():
     return q, sol, "Two distinct x-values → two (x, y) solutions.", 2, opts, correct_letter
 
 
+@verifies('alg', task='x_root_of_system')
 def _qsim_mcq_find_x():
     r1, r2, a, b = _roots_from_line()
     correct_x = random.choice([r1, r2])
-    wrong = [r1 + r2, r1 - r2, -correct_x, correct_x + 1]
-    wrong = list(dict.fromkeys(w for w in wrong if w != correct_x))[:3]
+    wrong = [r1 + r2, r1 - r2, -correct_x, correct_x + 1, correct_x - 1, correct_x + 2]
+    # a distractor equal to the other root would be a second right answer
+    wrong = list(dict.fromkeys(w for w in wrong if w not in (r1, r2)))[:3]
     vals = wrong + [correct_x]
     random.shuffle(vals)
     letters = "ABCD"

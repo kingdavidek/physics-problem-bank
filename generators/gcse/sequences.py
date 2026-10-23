@@ -25,6 +25,7 @@ from generators.shared.variant_utils import (
 )
 
 
+from generators.shared.verify_hook import verifies
 def _linear_nth(d, b):
     """Return a clean string for the nth term dn + b."""
     if b == 0:
@@ -153,6 +154,7 @@ def _seq_problem_from_output(out, difficulty):
 # FOUNDATIONAL (15 variants)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='seq_next', kind='arith')
 def _seq_found_next_term_arithmetic():
     a = random.randint(2, 20)
     d = random.randint(2, 8)
@@ -168,6 +170,7 @@ def _seq_found_next_term_arithmetic():
     return q, s, hint, 1, next_t
 
 
+@verifies('alg', task='seq_next', kind='arith')
 def _seq_found_next_term_subtract():
     a = random.randint(40, 80)
     d = random.randint(3, 9)
@@ -183,6 +186,7 @@ def _seq_found_next_term_subtract():
     return q, s, hint, 1, next_t
 
 
+@verifies('alg', task='seq_rule')
 def _seq_found_identify_rule():
     a = random.randint(3, 15)
     d = random.randint(3, 7)
@@ -203,6 +207,7 @@ def _seq_found_identify_rule():
     )
 
 
+@verifies('alg', task='seq_first_terms')
 def _seq_found_nth_term_find_terms():
     a = random.randint(2, 6)
     d = random.randint(3, 7)
@@ -221,6 +226,7 @@ def _seq_found_nth_term_find_terms():
     return q, s, hint, 2, _seq_number_list_answer(terms[:4])
 
 
+@verifies('alg', task='seq_nth_value')
 def _seq_found_nth_term_find_value():
     a = random.randint(3, 8)
     d = random.randint(2, 6)
@@ -236,6 +242,7 @@ def _seq_found_nth_term_find_value():
     return q, s, hint, 1, ans
 
 
+@verifies('alg', task='seq_is_term')
 def _seq_found_is_term_in_seq():
     d = random.randint(3, 7)
     a = random.randint(2, d)
@@ -253,6 +260,7 @@ def _seq_found_is_term_in_seq():
     return q, s, hint, 3, _seq_keyword_answer('yes')
 
 
+@verifies('alg', task='seq_rule')
 def _seq_found_term_to_term_rule():
     start = random.randint(5, 20)
     mult = random.choice([2, 3])
@@ -273,6 +281,7 @@ def _seq_found_term_to_term_rule():
     )
 
 
+@verifies('alg', task='seq_next', kind='geom')
 def _seq_found_geometric_next():
     a = random.randint(2, 5)
     r = random.choice([2, 3, 4])
@@ -287,6 +296,7 @@ def _seq_found_geometric_next():
     return q, s, hint, 2, next_t
 
 
+@verifies('alg', task='seq_special')
 def _seq_found_square_numbers():
     n_val = random.randint(8, 14)
     ans = n_val ** 2
@@ -298,6 +308,7 @@ def _seq_found_square_numbers():
     return q, s, hint, 1, ans
 
 
+@verifies('alg', task='seq_special')
 def _seq_found_triangle_numbers():
     n_val = random.randint(6, 12)
     ans = n_val * (n_val + 1) // 2
@@ -311,6 +322,7 @@ def _seq_found_triangle_numbers():
     return q, s, hint, 2, ans
 
 
+@verifies('alg', task='seq_special')
 def _seq_found_odd_even_seq():
     choice = random.choice(['odd', 'even'])
     if choice == 'odd':
@@ -329,6 +341,7 @@ def _seq_found_odd_even_seq():
     return q, s, hint, 1, ans
 
 
+@verifies('alg', task='seq_next', kind='fib')
 def _seq_found_fibonacci_next():
     a, b = random.choice([(1, 1), (2, 3), (3, 5)])
     terms = [a, b]
@@ -344,6 +357,7 @@ def _seq_found_fibonacci_next():
     return q, s, hint, 1, next_t
 
 
+@verifies('alg', task='seq_next')
 def _seq_found_missing_term():
     a = random.randint(5, 20)
     d = random.randint(3, 8)
@@ -358,6 +372,7 @@ def _seq_found_missing_term():
     return q, s, hint, 1, terms[gap_idx]
 
 
+@verifies('alg', task='seq_next')
 def _seq_found_continue_pattern():
     patterns = [
         ([1, 4, 9, 16], r"Square numbers: \(n^2\)", 25),
@@ -366,13 +381,14 @@ def _seq_found_continue_pattern():
     ]
     terms, rule, next_t = random.choice(patterns)
     seq_str = ", ".join(str(t) for t in terms)
-    q = rf"Write down the next term in the sequence: {seq_str}, ___<br>Explain the pattern and find the next term in the sequence."
+    q = rf"Write down the next term in the sequence: {seq_str}, ___<br>Use the pattern to find the next term."
     s = (rf"Pattern: {rule}.<br>"
          rf"<strong>Next term = {next_t}</strong>")
     hint = "Look at differences or ratios to identify the pattern."
     return q, s, hint, 2, next_t
 
 
+@verifies('alg', task='seq_pattern_dots')
 def _seq_found_count_patterns():
     pattern_n = random.randint(4, 7)
     dots_per = random.randint(3, 5)
@@ -392,6 +408,7 @@ def _seq_found_count_patterns():
 # INTERMEDIATE (15 variants)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='seq_find_nth')
 def _seq_inter_find_nth_term():
     d = random.randint(3, 8)
     a = random.randint(2, d + 3)
@@ -409,6 +426,7 @@ def _seq_inter_find_nth_term():
     return q, s, hint, 3, _seq_algebraic_answer(s_expr)
 
 
+@verifies('alg', task='seq_find_nth')
 def _seq_inter_nth_term_negative_d():
     d = -random.randint(3, 7)
     a = random.randint(30, 60)
@@ -425,6 +443,7 @@ def _seq_inter_nth_term_negative_d():
     return q, s, hint, 3, _seq_algebraic_answer(s_expr)
 
 
+@verifies('alg', task='seq_which_term')
 def _seq_inter_which_term():
     d = random.randint(3, 7)
     a = random.randint(2, d)
@@ -441,6 +460,7 @@ def _seq_inter_which_term():
     return q, s, hint, 3, k
 
 
+@verifies('alg', task='seq_is_term')
 def _seq_inter_not_in_seq():
     d = random.randint(3, 7)
     a = random.randint(2, d)
@@ -458,13 +478,14 @@ def _seq_inter_not_in_seq():
     return q, s, hint, 3, _seq_keyword_answer('no')
 
 
+@verifies('alg', task='seq_first_over')
 def _seq_inter_first_term_over():
     d = random.randint(3, 8)
     a = random.randint(2, d)
     b = a - d
     target = random.randint(100, 200)
     # dn + b > target → n > (target - b)/d
-    n_ans = math.ceil((target - b) / d)
+    n_ans = (target - b) // d + 1       # strictly greater than the target
     val = d * n_ans + b
     s_expr = _linear_nth(d, b)
     q = rf"The nth term of a sequence is \({s_expr}\)<br>Find the first term in the sequence that is greater than {target}."
@@ -477,6 +498,7 @@ def _seq_inter_first_term_over():
     return q, s, hint, 3, val
 
 
+@verifies('alg', task='seq_geometric', kind='nth')
 def _seq_inter_geometric_nth_term():
     a = random.randint(2, 5)
     r = random.choice([2, 3])
@@ -491,39 +513,31 @@ def _seq_inter_geometric_nth_term():
     return q, s, hint, 3, ans
 
 
+@verifies('alg', task='seq_two_same')
 def _seq_inter_two_sequences_same():
+    # The sequences meet at a positive whole-number position n_val (n = 0 or a fraction is not a term).
     d1, d2 = random.randint(3, 6), random.randint(2, 5)
     while d1 == d2:
         d2 = random.randint(2, 5)
-    a1 = random.randint(2, d1)
-    a2 = random.randint(2, d2)
-    b1, b2 = a1 - d1, a2 - d2
-    # Find n where d1*n + b1 = d2*n + b2 → (d1-d2)*n = b2-b1
-    diff = d1 - d2
-    rhs = b2 - b1
-    if diff != 0 and rhs % diff == 0:
-        n_val = rhs // diff
-    else:
-        # adjust to guarantee integer solution
-        b2 = b1 + 3 * diff
-        rhs = b2 - b1
-        n_val = rhs // diff
-        a2 = d2 + b2
-    e1 = f"{d1}n" + (f" + {b1}" if b1 >= 0 else f" - {-b1}")
-    e2 = f"{d2}n" + (f" + {b2}" if b2 >= 0 else f" - {-b2}")
+    n_val = random.randint(2, 9)
+    b1 = random.randint(2, d1) - d1
+    b2 = b1 + (d1 - d2) * n_val
+    e1 = _linear_nth(d1, b1)
+    e2 = _linear_nth(d2, b2)
     ans = d1 * n_val + b1
     q = (rf"Sequence A has nth term \({e1}\). Sequence B has nth term \({e2}\).<br>"
          rf"Find the value that appears in both sequences at the same position.")
     s = (rf"Set the two expressions equal:<br>"
          rf"\({e1} = {e2}\)<br>"
-         rf"\({d1-d2}n = {b2-b1}\)<br>"
+         rf"\({'' if d1 - d2 == 1 else d1 - d2}n = {b2-b1}\)<br>"
          rf"\(n = {n_val}\)<br>"
-         rf"Both sequences give the value \({e1.replace('n', str(n_val))} = {ans}\).<br>"
+         rf"Both sequences give the value \({d1} \times {n_val}{'' if b1 == 0 else (' + ' if b1 > 0 else ' - ') + str(abs(b1))} = {ans}\).<br>"
          rf"<strong>The shared value is {ans} (at position n = {n_val}).</strong>")
     hint = f"Set {e1} = {e2} and solve for n."
     return q, s, hint, 4, ans
 
 
+@verifies('alg', task='seq_sum_arith')
 def _seq_inter_sum_arithmetic():
     n = random.randint(10, 20)
     a = random.randint(2, 10)
@@ -538,6 +552,7 @@ def _seq_inter_sum_arithmetic():
     return q, s, hint, 3, ans
 
 
+@verifies('alg', task='seq_find_nth')
 def _seq_inter_quadratic_identify():
     # sequence: n² + c
     c = random.randint(1, 6)
@@ -552,6 +567,7 @@ def _seq_inter_quadratic_identify():
     return q, s, hint, 4, _seq_algebraic_answer(f"n^2 + {c}")
 
 
+@verifies('alg', task='seq_rows')
 def _seq_inter_arithmetic_word():
     seats_row1 = random.randint(20, 30)
     extra = random.randint(3, 6)
@@ -568,6 +584,7 @@ def _seq_inter_arithmetic_word():
     return q, s, hint, 4, total
 
 
+@verifies('alg', task='seq_nth_value')
 def _seq_inter_sequences_nth_term_large():
     d = random.randint(5, 12)
     a = random.randint(2, d)
@@ -583,13 +600,15 @@ def _seq_inter_sequences_nth_term_large():
     return q, s, hint, 1, ans
 
 
+@verifies('alg', task='seq_context')
 def _seq_inter_nth_term_from_context():
     wage = random.randint(200, 400)
     rise = random.randint(20, 50)
     year = random.randint(5, 10)
     ans = wage + (year - 1) * rise
     q = (rf"A worker earns £{wage} in year 1. Each year their salary increases by £{rise}.<br>"
-         rf"Write a formula for the salary in year \(n\), and find the salary in year {year}.")
+         rf"Write a formula for the salary in year \(n\), then use it to find the salary in year {year}. "
+         rf"Enter the salary in year {year}.")
     s = (rf"Salary in year \(n\): \(S_n = {wage} + (n-1) \times {rise} = {rise}n + {wage-rise}\)<br>"
          rf"Year {year}: \({rise} \times {year} + {wage - rise}\)<br>"
          rf"<strong>£{ans}</strong>")
@@ -597,6 +616,7 @@ def _seq_inter_nth_term_from_context():
     return q, s, hint, 4, ans
 
 
+@verifies('alg', task='seq_common_terms')
 def _seq_inter_common_terms():
     """Find the first term common to two arithmetic sequences."""
     d1, d2 = 3, 5
@@ -621,6 +641,7 @@ def _seq_inter_common_terms():
     return q, s, hint, 3, first_common
 
 
+@verifies('alg', task='seq_pattern_dots')
 def _seq_inter_pattern_dots():
     # Pattern: each shape has an² + bn + c dots, n starting at 1
     # Simple: a=1, b=1 → shape n has n²+n = n(n+1) dots
@@ -635,6 +656,7 @@ def _seq_inter_pattern_dots():
     return q, s, hint, 2, ans
 
 
+@verifies('alg', task='seq_lq_compare')
 def _seq_inter_linear_quadratic_compare():
     d = random.randint(4, 8)
     a = random.randint(d + 2, d + 10)
@@ -661,6 +683,7 @@ def _seq_inter_linear_quadratic_compare():
 # DIFFICULT (15 variants)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='seq_find_nth')
 def _seq_diff_quadratic_nth_term():
     """Find nth term of quadratic sequence: an²+bn+c."""
     a_coef = random.randint(1, 3)
@@ -682,30 +705,34 @@ def _seq_diff_quadratic_nth_term():
     return q, s, hint, 5, _seq_algebraic_answer(nth)
 
 
+@verifies('alg', task='seq_quadratic_verify')
 def _seq_diff_quadratic_verify():
     a_coef = random.randint(1, 2)
     b_coef = random.randint(1, 4)
     c_coef = random.randint(-5, -1)
     terms = [a_coef*n**2 + b_coef*n + c_coef for n in range(1, 7)]
-    nth = (f"{a_coef}n^2 + {b_coef}n"
+    nth = (f"{'' if a_coef == 1 else a_coef}n^2 + {'' if b_coef == 1 else b_coef}n"
            + (f" - {-c_coef}" if c_coef < 0 else f" + {c_coef}"))
     seq_str = ", ".join(str(t) for t in terms[:5])
     n_val = random.randint(10, 20)
     ans = a_coef*n_val**2 + b_coef*n_val + c_coef
     q = (rf"A quadratic sequence starts {seq_str}.<br>"
          rf"(a) Show that the nth term is \({nth}\)<br>"
-         rf"(b) Find the {n_val}th term.")
+         rf"(b) Find the {n_val}th term.<br>"
+         rf"Enter your answer to part (b).")
     d1 = [terms[i+1]-terms[i] for i in range(4)]
     d2 = [d1[i+1]-d1[i] for i in range(3)]
-    s = (rf"(a) Second differences = {d2[0]}, so leading term is \(\dfrac{{{d2[0]}}}{{2}}n^2 = {a_coef}n^2\).<br>"
-         rf"Subtracting \({a_coef}n^2\): gives {', '.join(str(terms[i]-a_coef*(i+1)**2) for i in range(4))}, a linear sequence with \(d={b_coef}\), giving \({b_coef}n {signed_term(c_coef)}\).<br>"
+    an2, bn = f"{'' if a_coef == 1 else a_coef}n^2", f"{'' if b_coef == 1 else b_coef}n"
+    s = (rf"(a) Second differences = {d2[0]}, so leading term is \(\dfrac{{{d2[0]}}}{{2}}n^2 = {an2}\).<br>"
+         rf"Subtracting \({an2}\): gives {', '.join(str(terms[i]-a_coef*(i+1)**2) for i in range(4))}, a linear sequence with \(d={b_coef}\), giving \({bn} {signed_term(c_coef)}\).<br>"
          rf"Hence nth term \(= {nth}\). ✓<br>"
-         rf"(b) \(n = {n_val}\): \({a_coef}({n_val})^2 + {b_coef}({n_val}) {signed_term(c_coef)} = {a_coef*n_val**2} + {b_coef*n_val} {signed_term(c_coef)}\)<br>"
+         rf"(b) \(n = {n_val}\): \({'' if a_coef == 1 else a_coef}({n_val})^2 + {'' if b_coef == 1 else b_coef}({n_val}) {signed_term(c_coef)} = {a_coef*n_val**2} + {b_coef*n_val} {signed_term(c_coef)}\)<br>"
          rf"<strong>\(= {ans}\)</strong>")
     hint = "Use second differences to find the n² coefficient, then subtract to find the linear part."
     return q, s, hint, 5, ans
 
 
+@verifies('alg', task='seq_geometric', kind='sum')
 def _seq_diff_geometric_sum():
     a = random.randint(1, 3)
     r = random.choice([2, 3])
@@ -720,6 +747,7 @@ def _seq_diff_geometric_sum():
     return q, s, hint, 4, ans
 
 
+@verifies('alg', task='seq_is_term')
 def _seq_diff_quadratic_is_term():
     a_coef = 1
     b_coef = random.randint(2, 5)
@@ -744,6 +772,7 @@ def _seq_diff_quadratic_is_term():
     return q, s, hint, 5, _seq_keyword_answer('yes')
 
 
+@verifies('alg', task='seq_proof', kind='recurring')
 def _seq_diff_recurring_decimal_proof():
     a_rec = random.randint(1, 8)
     digits = random.randint(1, 3)
@@ -839,6 +868,7 @@ def _seq_diff_recurring_decimal_proof():
     )
 
 
+@verifies('alg', task='seq_sum_last')
 def _seq_diff_sum_formula_derive():
     n = random.randint(15, 25)
     a = random.randint(3, 10)
@@ -847,7 +877,8 @@ def _seq_diff_sum_formula_derive():
     ans = n*(a+l)//2
     q = (rf"An arithmetic series has first term {a}, last term {l}, and {n} terms.<br>"
          rf"(a) Derive the formula \(S_n = \dfrac{{n(a+l)}}{{2}}\) by pairing terms.<br>"
-         rf"(b) Use the formula to find \(S_{{{n}}}\)")
+         rf"(b) Use the formula to find \(S_{{{n}}}\)<br>"
+         rf"Enter your answer to part (b).")
     s = (rf"(a) Write the sum forwards and backwards:<br>"
          rf"\(S = a + (a+d) + \ldots + l\)<br>"
          rf"\(S = l + (l-d) + \ldots + a\)<br>"
@@ -858,6 +889,7 @@ def _seq_diff_sum_formula_derive():
     return q, s, hint, 5, ans
 
 
+@verifies('alg', task='seq_geometric_infinite')
 def _seq_diff_geometric_infinite_sum():
     a = random.randint(2, 8)
     r_num = random.choice([1, 1, 2, 3])
@@ -876,18 +908,20 @@ def _seq_diff_geometric_infinite_sum():
     return q, s, hint, 4, ans
 
 
+@verifies('alg', task='seq_u_n')
 def _seq_diff_quadratic_seq_prove():
     a_coef = random.randint(1, 2)
     b_coef = random.randint(1, 3)
     c_coef = random.randint(-5, 5)
-    nth = (f"{a_coef}n^2"
-           + (f" + {b_coef}n" if b_coef > 0 else "")
+    nth = (f"{'' if a_coef == 1 else a_coef}n^2"
+           + (f" + {'' if b_coef == 1 else b_coef}n" if b_coef > 0 else "")
            + (f" + {c_coef}" if c_coef > 0 else (f" - {-c_coef}" if c_coef < 0 else "")))
     val_k = random.randint(10, 20)
     term_k = a_coef*val_k**2 + b_coef*val_k + c_coef
     q = (rf"The nth term of a sequence is \(u_n = {nth}\)<br>"
          rf"(a) Find \(u_{{{val_k}}}\)<br>"
-         rf"(b) Show that the second difference is constant and state its value.")
+         rf"(b) Show that the second difference is constant and state its value.<br>"
+         rf"Enter your answer to part (a).")
     s = (rf"(a) \(u_{{{val_k}}} = {a_coef}({val_k})^2 + {b_coef}({val_k}) {signed_term(c_coef)}"
          rf" = {a_coef*val_k**2} + {b_coef*val_k} {signed_term(c_coef)}\)<br>"
          rf"<strong>\(u_{{{val_k}}} = {term_k}\)</strong><br>"
@@ -899,6 +933,7 @@ def _seq_diff_quadratic_seq_prove():
     return q, s, hint, 5, term_k
 
 
+@verifies('alg', task='seq_mean')
 def _seq_diff_arithmetic_mean():
     a = random.randint(5, 15)
     d = random.randint(3, 7)
@@ -918,6 +953,7 @@ def _seq_diff_arithmetic_mean():
     return q, s, hint, 4, Fraction(a + l, 2)
 
 
+@verifies('alg', task='seq_proof', kind='divisible')
 def _seq_diff_show_divisible():
     q = (
         r"Prove that every term of the sequence with nth term \(n(n+1)\) is divisible by 2 "
@@ -963,9 +999,12 @@ def _seq_diff_show_divisible():
         bank,
         order_matters=True,
         format_hint='Select the correct proof steps in order',
+        # The parity fact and the product rule are independent; the conclusion needs both.
+        after={2: (), 3: (1, 2)},
     )
 
 
+@verifies('alg', task='seq_a_and_d')
 def _seq_diff_find_a_and_d():
     a = random.randint(5, 20)
     d = random.randint(3, 8)
@@ -983,6 +1022,7 @@ def _seq_diff_find_a_and_d():
     return q, s, hint, 4, _seq_fields_answer((a, d), ("First term a", "Common difference d"))
 
 
+@verifies('alg', task='seq_sum_squares')
 def _seq_diff_sum_of_squares():
     n = random.randint(8, 15)
     ans = n*(n+1)*(2*n+1)//6
@@ -995,6 +1035,7 @@ def _seq_diff_sum_of_squares():
     return q, s, hint, 2, ans
 
 
+@verifies('alg', task='seq_fraction_nth')
 def _seq_diff_nth_term_with_fractions():
     """Sequences with fractional nth terms, e.g. n/(n+1) or (2n-1)/(2n+1)."""
     variant = random.choice(['type_a', 'type_b'])
@@ -1008,7 +1049,8 @@ def _seq_diff_nth_term_with_fractions():
         ans_num, ans_den = n_val, n_val + 1
         q = (rf"A sequence starts: {terms_display}<br>"
              rf"(a) Write down the nth term.<br>"
-             rf"(b) Find the {n_val}th term.")
+             rf"(b) Find the {n_val}th term.<br>"
+             rf"Enter your answer to part (b).")
         s = (rf"(a) Numerators: 1, 2, 3, 4, ... \(= n\). Denominators: 2, 3, 4, 5, ... \(= n+1\).<br>"
              rf"<strong>nth term \(= \dfrac{{n}}{{n+1}}\)</strong><br>"
              rf"(b) \(n = {n_val}\): \(\dfrac{{{n_val}}}{{{n_val+1}}}\)<br>"
@@ -1022,7 +1064,8 @@ def _seq_diff_nth_term_with_fractions():
         ans_num, ans_den = 2*n_val - 1, 2*n_val + 1
         q = (rf"A sequence starts: {terms_display}, ...<br>"
              rf"(a) Write down the nth term.<br>"
-             rf"(b) Find the {n_val}th term.")
+             rf"(b) Find the {n_val}th term.<br>"
+             rf"Enter your answer to part (b).")
         s = (rf"(a) Numerators: 1, 3, 5, 7, ... \(= 2n-1\). Denominators: 3, 5, 7, 9, ... \(= 2n+1\).<br>"
              rf"<strong>nth term \(= \dfrac{{2n-1}}{{2n+1}}\)</strong><br>"
              rf"(b) \(n = {n_val}\): \(\dfrac{{2({n_val})-1}}{{2({n_val})+1}} = \dfrac{{{ans_num}}}{{{ans_den}}}\)<br>"
@@ -1031,26 +1074,21 @@ def _seq_diff_nth_term_with_fractions():
     return q, s, hint, 3, f"{ans_num}/{ans_den}"
 
 
+@verifies('alg', task='seq_convergence')
 def _seq_diff_convergence_check():
     a = random.randint(3, 10)
-    r_num = random.choice([1, 2, 3])
-    r_den = random.choice([3, 4, 5])
-    while r_num >= r_den:
-        r_num = 1
+    r_num, r_den = random.choice([(1, 3), (2, 3), (1, 4), (3, 4), (1, 5), (2, 5), (3, 5), (4, 5)])
     r = Fraction(r_num, r_den)
     s_inf = Fraction(a, 1 - r)
-    n_finite = random.randint(5, 8)
+    target = int(Fraction(99, 100) * s_inf)
     q = (rf"A geometric series has first term {a} and common ratio \(\dfrac{{{r_num}}}{{{r_den}}}\)<br>"
          rf"(a) Explain why the series converges.<br>"
          rf"(b) Find \(S_\infty\)<br>"
-         rf"(c) Find the smallest value of n such that \(S_n > {int(0.99 * s_inf)}\)")
-    target = int(0.99 * s_inf)
-    # S_n = a(1-r^n)/(1-r) > target
-    # 1-r^n > target*(1-r)/a
-    lhs_coef = float(s_inf)
-    import math
-    ratio = float(r)
-    n_ans = math.ceil(math.log(1 - target / lhs_coef) / math.log(ratio)) if ratio > 0 else n_finite
+         rf"(c) Find the smallest value of n such that \(S_n > {target}\)<br>"
+         rf"Enter your answers to parts (b) and (c).")
+    n_ans = 1
+    while a * (1 - r ** n_ans) / (1 - r) <= target:
+        n_ans += 1
     s = (rf"(a) \(|r| = \dfrac{{{r_num}}}{{{r_den}}} < 1\) so the series converges.<br>"
          rf"(b) \(S_\infty = \dfrac{{{a}}}{{1 - \frac{{{r_num}}}{{{r_den}}}}} = \dfrac{{{a}}}{{\frac{{{r_den-r_num}}}{{{r_den}}}}} = {a} \times \dfrac{{{r_den}}}{{{r_den-r_num}}} = {s_inf}\)<br>"
          rf"<strong>\(S_\infty = {s_inf}\)</strong><br>"
@@ -1060,6 +1098,7 @@ def _seq_diff_convergence_check():
     return q, s, hint, 5, _seq_fields_answer((s_inf, int(n_ans)), ("Sum to infinity", "Smallest n"))
 
 
+@verifies('alg', task='seq_proof', kind='odd_sum')
 def _seq_diff_arithmetic_proof():
     q = (
         r"Prove that the sum of the first \(n\) odd numbers equals \(n^2\) "
@@ -1104,6 +1143,8 @@ def _seq_diff_arithmetic_proof():
         bank,
         order_matters=True,
         format_hint='Select the correct proof steps in order',
+        # Recognising the AP and quoting the sum formula are independent; the substitution needs both.
+        after={2: (), 3: (1, 2)},
     )
 
 

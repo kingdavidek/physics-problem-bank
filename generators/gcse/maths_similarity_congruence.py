@@ -13,6 +13,7 @@ Covers:
   Real-world applications: maps, scale models, shadow problems
 """
 from generators.shared.rounding import round_half_up as round, fmt_dp
+from generators.shared.verify_hook import record
 import random
 import math
 from generators.shared.utils import (
@@ -59,7 +60,7 @@ def _sc_num(value, label):
     return graded_answer_number_fields((value,), (label,))
 
 
-def _sc_proof_steps_answer(steps, distractors, *, format_hint='Put the proof steps in the correct order'):
+def _sc_proof_steps_answer(steps, distractors, *, format_hint='Put the proof steps in the correct order', after=None):
     bank = [{'id': f's{i + 1}', 'text': text} for i, text in enumerate(steps)]
     for j, text in enumerate(distractors):
         bank.append({'id': f'd{j + 1}', 'text': text})
@@ -70,6 +71,7 @@ def _sc_proof_steps_answer(steps, distractors, *, format_hint='Put the proof ste
         bank,
         order_matters=True,
         format_hint=format_hint,
+        after=after,
     )
 
 
@@ -252,6 +254,11 @@ def _two_tris(A1, B1, C1, A2, B2, C2,
         f'fill="{p["ink_muted"]}" text-anchor="middle">~</text>'
     )
     max_width = w if w else 420
+    # the two triangles are a fixed sketch whatever the lengths in the question, so say so (exam convention)
+    note_y = max(ys) + pad + 2
+    parts.append(f'<text x="{fmt_dp(max(xs) + pad - 4, 0)}" y="{fmt_dp(note_y, 0)}" font-size="11" '
+                 f'fill="{p["ink_muted"]}" text-anchor="end">Not drawn accurately</text>')
+    ys = ys + [note_y + 4]
     return str(svg_kit.fitted_svg(
         xs, ys, title='Two similar triangles', body=''.join(parts),
         pad=pad, max_width=max_width, variant='wide',
@@ -355,6 +362,7 @@ def _sc_f1_congruence_sss():
          f"{T1[0]}{T1[2]} = {T2[0]}{T2[2]} = {c} cm.<br>"
          f"The triangles are congruent by <strong>SSS (Side-Side-Side)</strong>.")
     opts, ans = _sc_mcq_field('SSS', ['SAS', 'ASA', 'RHS'])
+    record('sim_congruence')
     return q, s, "If all three corresponding sides are equal, the condition is SSS.", 2, graded_answer_number_fields(
         (ans,), ('Congruence condition',), field_types=('mcq',), field_options=(opts,),
     )
@@ -374,6 +382,7 @@ def _sc_f2_congruence_sas():
          f"{T1[0]}{T1[1]} = {T2[0]}{T2[1]}, angle {T1[0]} = angle {T2[0]}, {T1[0]}{T1[2]} = {T2[0]}{T2[2]}.<br>"
          f"The triangles are congruent by <strong>SAS (Side-Angle-Side)</strong>.")
     opts, ans = _sc_mcq_field('SAS', ['SSS', 'ASA', 'RHS'])
+    record('sim_congruence')
     return q, s, "The angle must be the included angle — between the two given sides.", 2, graded_answer_number_fields(
         (ans,), ('Congruence condition',), field_types=('mcq',), field_options=(opts,),
     )
@@ -393,6 +402,7 @@ def _sc_f3_congruence_asa():
          f"angle {T1[0]} = angle {T2[0]}, {T1[0]}{T1[1]} = {T2[0]}{T2[1]}, angle {T1[1]} = angle {T2[1]}.<br>"
          f"The triangles are congruent by <strong>ASA (Angle-Side-Angle)</strong>.")
     opts, ans = _sc_mcq_field('ASA', ['SSS', 'SAS', 'RHS'])
+    record('sim_congruence')
     return q, s, "The side must be the included side — between the two given angles.", 2, graded_answer_number_fields(
         (ans,), ('Congruence condition',), field_types=('mcq',), field_options=(opts,),
     )
@@ -413,6 +423,7 @@ def _sc_f4_congruence_rhs():
          f"with equal hypotenuses and an equal side.<br>"
          f"The triangles are congruent by <strong>RHS (Right angle – Hypotenuse – Side)</strong>.")
     opts, ans = _sc_mcq_field('RHS', ['SSS', 'SAS', 'ASA'])
+    record('sim_congruence')
     return q, s, "RHS only applies to right-angled triangles: equal hypotenuse + one other equal side.", 2, graded_answer_number_fields(
         (ans,), ('Congruence condition',), field_types=('mcq',), field_options=(opts,),
     )
@@ -427,6 +438,7 @@ def _sc_f5_scale_factor():
     s = (f"Scale factor = larger ÷ smaller<br>"
          f"= {large} ÷ {small}<br>"
          f"= <strong>{sf_str}</strong> (= {sf_dec})")
+    record('sim_sf', small=small, large=large)
     return q, s, "Scale factor = corresponding side of larger ÷ corresponding side of smaller.", 2, _sc_num(
         sf_str, 'Scale factor'
     )
@@ -441,6 +453,7 @@ def _sc_f6_missing_side_from_sf():
     s = (f"Corresponding side = {small_side} × scale factor<br>"
          f"= {small_side} × {sf}<br>"
          f"= <strong>{large_side} cm</strong>")
+    record('sim_scale_length', k=sf, length=small_side)
     return q, s, "Multiply the known side by the scale factor.", 2, _sc_num(large_side, 'Length (cm)')
 
 
@@ -464,6 +477,7 @@ def _sc_f7_similar_triangles_sides():
     s = (f"Scale factor = {T2[0]}{T2[1]} ÷ {T1[0]}{T1[1]} = {PQ} ÷ {AB} = {sf}<br>"
          f"{T2[1]}{T2[2]} = {sf} × {BC} = <strong>{QR} cm</strong><br>"
          f"{T2[0]}{T2[2]} = {sf} × {CA} = <strong>{RP} cm</strong>")
+    record('sim_sides', known_new=PQ, known_old=AB, others=[BC, CA])
     return q, s, "Find the scale factor first using the given corresponding pair, then multiply each side.", 3, graded_answer_number_fields(
         (QR, RP), (f'{T2[1]}{T2[2]} (cm)', f'{T2[0]}{T2[2]} (cm)'),
     )
@@ -481,6 +495,7 @@ def _sc_f8_angles_similar():
          f"Angle P = Angle A = <strong>{ang1}°</strong><br>"
          f"Angle Q = Angle B = <strong>{ang2}°</strong><br>"
          f"Angle R = Angle C = <strong>{ang3}°</strong>")
+    record('sim_tri_angles', a=ang1, b=ang2)
     return q, s, "Corresponding angles in similar triangles are always equal.", 3, graded_answer_number_fields(
         (ang3, ang1, ang2, ang3), ('Angle C', 'Angle P', 'Angle Q', 'Angle R'),
     )
@@ -496,6 +511,7 @@ def _sc_f9_area_ratio_from_lsf():
          f"Find the area of the larger shape.")
     s = (f"Area scale factor = LSF² = {sf}² = {asf}<br>"
          f"Larger area = {area_s} × {asf} = <strong>{area_l} cm²</strong>")
+    record('sim_area_k', k=sf, area=area_s)
     return q, s, "Area scale factor = (linear scale factor)². Multiply the known area by ASF.", 3, _sc_num(
         area_l, 'Area (cm²)'
     )
@@ -514,6 +530,7 @@ def _sc_f10_lsf_from_area():
     s = (f"Area ratio = {a1} : {a2}<br>"
          f"Linear ratio = √{a1} : √{a2} = {r1} : {r2}<br>"
          f"= <strong>{ratio_str}</strong>")
+    record('sim_lsf_from_area', a_small=a1, a_large=a2)
     return q, s, "LSF = √(area scale factor). Take the square root of the ratio of areas.", 3, graded_answer_number_fields(
         (ratio_str,), ('Scale factor (smaller:larger)',), field_types=('ratio',),
     )
@@ -529,6 +546,7 @@ def _sc_f11_volume_ratio_from_lsf():
          f"Find the volume of the larger solid.")
     s = (f"Volume scale factor = LSF³ = {sf}³ = {vsf}<br>"
          f"Larger volume = {vol_s} × {vsf} = <strong>{vol_l} cm³</strong>")
+    record('sim_vol_k', k=sf, vol=vol_s)
     return q, s, "Volume scale factor = (linear scale factor)³. Multiply the known volume by VSF.", 3, _sc_num(
         vol_l, 'Volume (cm³)'
     )
@@ -543,6 +561,7 @@ def _sc_f12_similar_rectangles():
          f"Find QR.")
     s = (f"Scale factor = PQ ÷ AB = {PQ} ÷ {AB} = {sf}<br>"
          f"QR = BC × {sf} = {BC} × {sf} = <strong>{QR} cm</strong>")
+    record('sim_sides', known_new=PQ, known_old=AB, others=[BC])
     return q, s, "Find the scale factor from the given corresponding pair, then apply to BC.", 3, _sc_num(
         QR, 'QR (cm)'
     )
@@ -556,6 +575,7 @@ def _sc_f13_perimeter_ratio():
          f"Find the perimeter of the larger shape.")
     s = (f"Perimeter scales with the linear scale factor.<br>"
          f"Larger perimeter = {p_small} × {sf} = <strong>{p_large} cm</strong>")
+    record('sim_scale_length', k=sf, length=p_small)
     return q, s, "Perimeters (and all lengths) scale with the linear scale factor — NOT its square.", 2, _sc_num(
         p_large, 'Perimeter (cm)'
     )
@@ -576,6 +596,7 @@ def _sc_f14_map_scale():
          f"= {actual_cm:,} cm<br>"
          f"= {actual_cm:,} ÷ 100 000 km<br>"
          f"= <strong>{actual_km} km</strong>")
+    record('sim_map_length', scale=scale, map_cm=map_cm, unit_word=unit)
     return q, s, "Multiply map distance by scale factor. Then convert cm to km (÷ 100 000).", 3, _sc_num(
         actual_km, f'Distance ({unit})'
     )
@@ -589,6 +610,7 @@ def _sc_f15_area_of_smaller():
          f"Find the area of the smaller shape.")
     s = (f"Area scale factor = {sf}² = {asf}<br>"
          f"Smaller area = {area_large} ÷ {asf} = <strong>{area_small} cm²</strong>")
+    record('sim_area_down', k=sf, area=area_large)
     return q, s, "Divide the known area by the area scale factor (LSF²) to find the smaller area.", 3, _sc_num(
         area_small, 'Area (cm²)'
     )
@@ -614,6 +636,7 @@ def _sc_i1_aa_similarity_find_side():
          f"triangle {T1} ~ triangle {T2} by AA.<br>"
          f"Scale factor = {T2[0]}{T2[1]} ÷ {T1[0]}{T1[1]} = {PQ} ÷ {AB} = {sf}<br>"
          f"{T2[1]}{T2[2]} = {sf} × {BC} = <strong>{QR} cm</strong>")
+    record('sim_sides', known_new=PQ, known_old=AB, others=[BC])
     return q, s, "State AA similarity first, then find the scale factor and multiply.", 4, _sc_num(
         QR, f'{T2[1]}{T2[2]} (cm)'
     )
@@ -636,6 +659,7 @@ def _sc_i2_parallel_lines_find_bc():
          f"AB = AD + DB = {AD} + {DB} = {AD+DB} cm<br>"
          f"Scale factor (small to large) = AB ÷ AD = {AD+DB} ÷ {AD} = {sf}<br>"
          f"BC = DE × {sf} = {DE} × {sf} = <strong>{BC} cm</strong>")
+    record('sim_parallel', ad=AD, db=DB, de=DE)
     return q, s, "Use the AA similarity: SF = AB/AD. Then BC = DE × SF.", 4, _sc_num(BC, 'BC (cm)')
 
 
@@ -647,6 +671,7 @@ def _sc_i3_area_from_lsf():
          f"Find the area of the larger shape.")
     s = (f"Area scale factor = {sf}² = {asf}<br>"
          f"Larger area = {area_s} × {asf} = <strong>{area_l} cm²</strong>")
+    record('sim_area_k', k=sf, area=area_s)
     return q, s, "ASF = LSF². Larger area = smaller area × ASF.", 3, _sc_num(area_l, 'Area (cm²)')
 
 
@@ -658,6 +683,7 @@ def _sc_i4_volume_from_lsf():
          f"Find the volume of the larger cone.")
     s = (f"Volume scale factor = {sf}³ = {vsf}<br>"
          f"Larger volume = {vol_s} × {vsf} = <strong>{vol_l} cm³</strong>")
+    record('sim_vol_k', k=sf, vol=vol_s)
     return q, s, "VSF = LSF³. Larger volume = smaller volume × VSF.", 3, _sc_num(vol_l, 'Volume (cm³)')
 
 
@@ -671,6 +697,7 @@ def _sc_i5_lsf_from_area_ratio():
     s = (f"Area ratio = {a_s} : {a_l}<br>"
          f"Linear ratio = √{a_s} : √{a_l}<br>"
          f"= {sq_s} : {sq_l} = <strong>{lsf_str}</strong>")
+    record('sim_lsf_from_area', a_small=a_s, a_large=a_l)
     return q, s, "LSF = √(area ratio). Take the square root of each area then form the ratio.", 3, graded_answer_number_fields(
         (lsf_str,), ('Scale factor (smaller:larger)',), field_types=('ratio',),
     )
@@ -694,6 +721,7 @@ def _sc_i6_dimension_from_volume():
     s = (f"Volume scale factor = {v_l} ÷ {v_s} = {vsf}<br>"
          f"Linear scale factor = ∛({vsf}) = {lsf}<br>"
          f"Larger {dim} = {d_s} × {lsf} = <strong>{d_l} {unit}</strong>")
+    record('sim_dim_from_vol', v_small=v_s, v_large=v_l, dim_small=d_s)
     return q, s, "LSF = ∛(volume scale factor). Then multiply the known dimension by the LSF.", 4, _sc_num(
         d_l, f'{dim.capitalize()} ({unit})'
     )
@@ -715,6 +743,7 @@ def _sc_i7_algebraic_similar_sides():
          f"3x + 6 = 4x − 2<br>"
          f"x = <strong>8</strong><br>"
          f"Check: AB = 10, PQ = 15. BC = 6, QR = 9. Scale factor = 15/10 = 3/2 ✓")
+    record('sim_alg_prop', a1=1, b1=2, a2=2, b2=-1, top=6, bottom=9)
     return q, s, "Set up the proportion AB/PQ = BC/QR and cross-multiply.", 4, _sc_num(8, 'x')
 
 
@@ -727,6 +756,7 @@ def _sc_i8_surface_area_similar_solids():
     s = (f"Surface area scale factor = {r2}² : {r1}² = {r2**2} : {r1**2}<br>"
          f"Ratio = {sa_ratio_d}/{sa_ratio_n}<br>"
          f"Surface area of larger = {sa_s} × {sa_ratio_d}/{sa_ratio_n} = <strong>{sa_l} cm²</strong>")
+    record('sim_area_ratio', r_from=r1, r_to=r2, area=sa_s)
     return q, s, "Surface area scales as LSF². Multiply by (larger/smaller)².", 4, _sc_num(sa_l, 'Surface area (cm²)')
 
 
@@ -750,10 +780,12 @@ def _sc_i9_proof_aa_parallel():
         "Only one pair of equal angles is needed, so triangle ADE ~ triangle ABC by SAS.",
         "Angle ADE = angle BAC because DE and BC are alternate interior angles.",
     )
+    # "Angle A is common" does not depend on the parallel lines, so it can come anywhere before the conclusion.
     return q, s, "Identify two pairs of equal angles: one from parallel lines, one shared.", 4, _sc_proof_steps_answer(
         steps,
         distractors,
         format_hint='Put the proof steps in the correct order',
+        after={2: (1,), 3: (), 4: (2, 3)},
     )
 
 
@@ -773,6 +805,7 @@ def _sc_i10_overlapping_similar():
     s = (f"D{T1[1]} = {AB} − {AD} = <strong>{DB} cm</strong><br>"
          f"E{T1[2]} = {AC} − {AE} = <strong>{EC} cm</strong><br>"
          f"Scale factor = {T1[0]}{T1[1]} ÷ {T1[0]}D = {AB} ÷ {AD} = <strong>{sf}</strong>")
+    record('sim_overlap', ab=AB, ad=AD, ac=AC, ae=AE)
     return q, s, "DE ∥ BC creates similar triangles. Subtract to find remaining segment lengths.", 4, graded_answer_number_fields(
         (DB, EC, sf), (f'D{T1[1]} (cm)', f'E{T1[2]} (cm)', 'Scale factor'),
     )
@@ -789,6 +822,7 @@ def _sc_i11_area_ratio_find_perimeter():
     s = (f"Area ratio = {a_s} : {a_l}<br>"
          f"Linear scale factor (smaller : larger) = √{a_s} : √{a_l} = {s_num}√3 : {s_den}√3 = <strong>{lsf_str}</strong><br>"
          f"Perimeter ratio = linear scale factor = <strong>{lsf_str}</strong>")
+    record('sim_lsf_two', a_small=a_s, a_large=a_l)
     return q, s, "LSF = √(area ratio). Perimeter ratio equals the LSF.", 4, graded_answer_number_fields(
         (lsf_str, lsf_str), ('Linear scale factor', 'Perimeter ratio'), field_types=('ratio', 'ratio'),
     )
@@ -800,7 +834,8 @@ def _sc_i12_map_area():
         (50000, 4, 1000000, 1.0),
         (10000, 12, 120000, 0.12),
     ]
-    scale, map_cm2, actual_cm2, actual_km2 = random.choice(combos)
+    scale, map_cm2, _wrong_cm2, actual_km2 = random.choice(combos)
+    actual_cm2 = map_cm2 * scale ** 2          # the old table held 500 000 here, which is not 8 x 25 000 squared
     q = (f"A map has scale 1 : {scale:,}. "
          f"A park covers {map_cm2} cm² on the map. "
          f"Find the actual area of the park in km².")
@@ -809,6 +844,7 @@ def _sc_i12_map_area():
          f"= {actual_cm2:,} cm²<br>"
          f"= {actual_cm2:,} ÷ (100 000)² km² (since 1 km = 100 000 cm)<br>"
          f"= <strong>{actual_km2} km²</strong>")
+    record('sim_map_area', scale=scale, map_cm2=map_cm2)
     return q, s, "Area scale factor = (linear scale)². Then convert cm² → km² (÷10¹⁰).", 5, _sc_num(
         actual_km2, 'Area (km²)'
     )
@@ -825,6 +861,7 @@ def _sc_i13_similar_cones_volume():
     s = (f"Linear scale factor = {h_l} ÷ {h_s} = {sf}<br>"
          f"Volume scale factor = {sf}³ = {vsf}<br>"
          f"Volume of larger = {vol_s}π × {vsf} = <strong>{vol_l}π cm³</strong>")
+    record('sim_vol_from_lengths', l_small=h_s, l_large=h_l, vol=vol_s)
     return q, s, "VSF = (height ratio)³. Multiply the smaller volume by the VSF.", 4, _sc_num(
         vol_l, 'Coefficient of π (volume = ?π cm³)'
     )
@@ -840,6 +877,7 @@ def _sc_i14_quadrilateral_angles():
     s = (f"Angle D = 360° − {a}° − {b}° − {c}° = <strong>{d}°</strong><br>"
          f"Corresponding angles in similar shapes are equal:<br>"
          f"Angle P = {a}°, angle Q = {b}°, angle R = {c}°, angle S = <strong>{d}°</strong>")
+    record('sim_quad_angles', a=a, b=b, c=c)
     return q, s, "Angles in a quadrilateral sum to 360°. Corresponding angles in similar shapes are equal.", 3, graded_answer_number_fields(
         (d, a, b, c, d), ('Angle D', 'Angle P', 'Angle Q', 'Angle R', 'Angle S'),
     )
@@ -863,6 +901,7 @@ def _sc_i15_chain_scale_factor():
          f"Scale factor B to C = {r4}/{r3}" + (f" = {sf2}" if sf2 != f"{r4}/{r3}" else "") + "<br>"
          f"Scale factor A to C = {sf1} × {sf2} = {sf_total}<br>"
          f"Corresponding side of C = {side_a} × {sf_total} = <strong>{side_c} cm</strong>")
+    record('sim_chain', r1=r1, r2=r2, r3=r3, r4=r4, side=side_a)
     return q, s, "Multiply the individual scale factors to get the overall scale factor.", 4, _sc_num(
         side_c, 'Side of triangle C (cm)'
     )
@@ -906,6 +945,8 @@ def _sc_d1_midpoint_theorem_proof():
         steps,
         distractors,
         format_hint='Put the proof steps in the correct order',
+        # The common angle is independent of the midpoint facts; the two results after SAS are independent.
+        after={3: (), 4: (2, 3), 5: (4,), 6: (4,)},
     )
 
 
@@ -919,17 +960,20 @@ def _sc_d2_frustum_volume():
     vol_large = round(math.pi * R**2 * H / 3, 4)
     vol_small = round(math.pi * r_cut**2 * h_cut / 3, 4)
     vol_frust = round(vol_large - vol_small, 2)
+    big = R ** 2 * H // 3            # exact coefficients of pi (324 and 12), not floats divided by pi
+    small = r_cut ** 2 * h_cut // 3
     q = (f"A cone has height {H} cm and base radius {R} cm. "
          f"A smaller similar cone of height {h_cut} cm is removed from the apex. "
          f"Find the volume of the remaining frustum, leaving your answer in terms of π.")
     s = (f"The small cone is similar to the large cone with LSF = {h_cut}/{H} = 1/3.<br>"
          f"Radius of small cone = {R} × (1/3) = {r_cut} cm.<br>"
-         f"Volume of large cone = (1/3)π × {R}² × {H} = {int(vol_large//math.pi)}π cm³<br>"
-         f"Volume of small cone = (1/3)π × {r_cut}² × {h_cut} = {int(vol_small//math.pi)}π cm³<br>"
-         f"Volume of frustum = {int(vol_large//math.pi)}π − {int(vol_small//math.pi)}π "
-         f"= <strong>{int(vol_large//math.pi) - int(vol_small//math.pi)}π cm³</strong>")
+         f"Volume of large cone = (1/3)π × {R}² × {H} = {big}π cm³<br>"
+         f"Volume of small cone = (1/3)π × {r_cut}² × {h_cut} = {small}π cm³<br>"
+         f"Volume of frustum = {big}π − {small}π "
+         f"= <strong>{big - small}π cm³</strong>")
+    record('sim_frustum', height=H, radius=R, cut=h_cut)
     return q, s, "Find the radius of the small cone using the LSF. Then subtract volumes.", 6, _sc_num(
-        int(vol_large // math.pi) - int(vol_small // math.pi), 'Coefficient of π (volume = ?π cm³)'
+        big - small, 'Coefficient of π (volume = ?π cm³)'
     )
 
 
@@ -969,6 +1013,7 @@ def _sc_d3_altitude_in_right_triangle():
         ),
         1,
     )
+    record('sim_altitude')
     return q, s, "Show AA similarity for △ACD and △ACB, then use △ACD ~ △CBD for the product rule.", 5, graded_answer_number_fields(
         (sim_ans, proof_raw, CD),
         ('Similarity reason', 'Proof of CD² = AD × DB', 'CD (cm)'),
@@ -984,7 +1029,7 @@ def _sc_d3_altitude_in_right_triangle():
 def _sc_d4_quadratic_from_similarity():
     q = ("Triangles PQR and XYZ are similar (P↔X, Q↔Y, R↔Z). "
          "PQ = x cm, QR = (x + 6) cm, XY = 4 cm, YZ = (x + 2) cm. "
-         "Find x and state the scale factor of the similarity.")
+         "Find x and state the scale factor from triangle XYZ to triangle PQR.")
     s = ("Since the triangles are similar: PQ/XY = QR/YZ<br>"
          "x/4 = (x + 6)/(x + 2)<br>"
          "x(x + 2) = 4(x + 6)<br>"
@@ -993,6 +1038,7 @@ def _sc_d4_quadratic_from_similarity():
          "(x − 6)(x + 4) = 0<br>"
          "x = <strong>6</strong> (taking the positive value)<br>"
          "Scale factor = PQ/XY = 6/4 = <strong>3/2</strong>")
+    record('sim_quad_prop', xy=4, add_qr=6, add_yz=2)
     return q, s, "Set up the proportion, cross-multiply, and solve the quadratic equation.", 5, graded_answer_number_fields(
         (6, '3/2'), ('x', 'Scale factor'),
     )
@@ -1007,6 +1053,7 @@ def _sc_d5_area_with_given_ratio():
     s = (f"Area scale factor = ({r1}/{r2})² = {r1**2}/{r2**2}<br>"
          f"Area of smaller = {area_l} × {r1**2}/{r2**2} = {area_l*r1**2//r2**2}<br>"
          f"= <strong>{area_s} cm²</strong>")
+    record('sim_area_ratio', r_from=r2, r_to=r1, area=area_l)
     return q, s, "ASF = (LSF)². Smaller area = larger area × (smaller/larger)².", 4, _sc_num(area_s, 'Area (cm²)')
 
 
@@ -1022,6 +1069,7 @@ def _sc_d6_basic_proportionality():
          f"AE = AC × (AD/AB) = {AC} × ({AD}/{AD+DB}) = {AC*AD//(AD+DB)}<br>"
          f"AE = <strong>{AE} cm</strong><br>"
          f"EC = {AC} − {AE} = <strong>{EC} cm</strong>")
+    record('sim_bpt', ad=AD, db=DB, ac=AC)
     return q, s, "BPT: AD/AB = AE/AC. Find AE then EC = AC − AE.", 5, graded_answer_number_fields(
         (AE, EC), ('AE (cm)', 'EC (cm)'),
     )
@@ -1074,11 +1122,14 @@ def _sc_d7_congruence_proof():
         steps,
         distractors,
         format_hint='Put the proof steps in the correct order',
+        # The three pairs of equal sides are independent facts; the conclusion needs all three.
+        after={2: (), 3: (), 4: (1, 2, 3)},
     )
 
 
 def _sc_d8_both_sa_and_vol_similar():
-    combos = [(3, 6, 2, 24, 192, 15, 60), (2, 4, 2, 30, 120, 20, 80)]
+    # Real cones: radius 3, height 4, slant 5 (V = 12pi, A = 24pi) and radius 6, height 8, slant 10 (V = 96pi, A = 96pi)
+    combos = [(3, 6, 2, 12, 96, 24, 96), (6, 12, 2, 96, 768, 96, 384)]
     r_s, r_l, sf, vol_s, vol_l, sa_s, sa_l = random.choice(combos)
     q = (f"Two similar cones have radii {r_s} cm and {r_l} cm. "
          f"The smaller has volume {vol_s}π cm³ and surface area {sa_s}π cm². "
@@ -1088,6 +1139,7 @@ def _sc_d8_both_sa_and_vol_similar():
          f"Volume of larger = {vol_s}π × {sf**3} = <strong>{vol_l}π cm³</strong><br>"
          f"Surface area scale factor = {sf}² = {sf**2}<br>"
          f"SA of larger = {sa_s}π × {sf**2} = <strong>{sa_l}π cm²</strong>")
+    record('sim_cone_scale', r_small=r_s, r_large=r_l, vol=vol_s, sa=sa_s)
     return q, s, "VSF = LSF³. SA scales as LSF². Apply each to the corresponding smaller value.", 5, graded_answer_number_fields(
         (vol_l, sa_l), ('Coefficient of π (volume)', 'Coefficient of π (surface area)'),
     )
@@ -1108,6 +1160,7 @@ def _sc_d9_shadow_height():
          f"height/{obj1} ÷ shadow/{obj1} = height/{obj2} ÷ shadow/{obj2}<br>"
          f"{h1}/{s1} = h/{s2}<br>"
          f"h = {h1} × {s2} / {s1} = <strong>{h2} m</strong>")
+    record('sim_shadow', h1=h1, s1=s1, s2=s2)
     return q, s, "Set up the ratio: height/shadow = height/shadow. Corresponding sides of similar triangles.", 4, _sc_num(
         h2, f'Height of {obj2} (m)'
     )
@@ -1123,6 +1176,7 @@ def _sc_d10_angle_bisector_theorem():
          f"BD + DC = BC = {BC} cm<br>"
          f"BD = BC × AB/(AB + AC) = {BC} × {AB}/{AB+AC} = <strong>{BD} cm</strong><br>"
          f"DC = {BC} − {BD} = <strong>{DC} cm</strong>")
+    record('sim_bisector', ab=AB, ac=AC, bc=BC)
     return q, s, "Angle bisector theorem: BD/DC = AB/AC. Use BD + DC = BC to find both.", 5, graded_answer_number_fields(
         (BD, DC), ('BD (cm)', 'DC (cm)'),
     )
@@ -1136,6 +1190,7 @@ def _sc_d11_similar_trapezium():
          f"AB = {AB} cm, CD = {CD} cm, PQ = {PQ} cm. Find RS.")
     s = (f"Scale factor = PQ ÷ AB = {PQ} ÷ {AB} = {sf}<br>"
          f"RS = CD × {sf} = {CD} × {sf} = <strong>{RS} cm</strong>")
+    record('sim_sides', known_new=PQ, known_old=AB, others=[CD])
     return q, s, "Find LSF from the parallel sides AB and PQ. Apply to CD to find RS.", 4, _sc_num(RS, 'RS (cm)')
 
 
@@ -1173,6 +1228,7 @@ def _sc_d12_similar_rectangle_algebra():
         f"Rectangle 2: ({c}×{x}+{d}) by {w2} = <strong>{L2} cm × {w2} cm</strong><br>"
         f"Check: {L1}/{L2} = {w1}/{w2} ✓"
     )
+    record('sim_rect_alg', derived=('c',), a=a, b=b, c=c, d=d, w1=w1, w2=w2)
     return q_text, s, "Set up ratio of corresponding sides equal. Cross-multiply and solve for x.", 5, graded_answer_number_fields(
         (x, L1, w1, L2, w2),
         ('x', 'Rectangle 1 length (cm)', 'Rectangle 1 width (cm)', 'Rectangle 2 length (cm)', 'Rectangle 2 width (cm)'),
@@ -1187,6 +1243,7 @@ def _sc_d13_series_similar_triangles():
          "Area scale factors: 1, 1/4, 1/16 (squaring each linear scale factor).<br>"
          "Total area = A₁ + A₁/4 + A₁/16 = A₁(1 + 4 + 1)/16 = A₁ × 21/16<br>"
          "Ratio = (21/16) : 1 = <strong>21 : 16</strong>")
+    record('sim_series', sides=[8, 4, 2])
     return q, s, "Each area scales as (side ratio)². Sum the three areas and find the ratio to the largest.", 5, graded_answer_number_fields(
         ('21:16',), ('Ratio (total : largest)',), field_types=('ratio',),
     )
@@ -1211,6 +1268,7 @@ def _sc_d14_scale_model_multi():
          f"Area scale = {scale}² = {area_scale:,}<br>"
          f"(ii) Actual floor area = {flr_cm2} × {area_scale:,} = {int(actual_flr_cm2):,} cm²<br>"
          f"= {int(actual_flr_cm2):,} ÷ 10,000 = <strong>{int(actual_flr_m2)} m²</strong>")
+    record('sim_model', scale=scale, vol_cm3=vol_cm3, flr_cm2=flr_cm2)
     return q, s, "Volume scale = LSF³; area scale = LSF². Convert cm³→m³ (÷10⁶) and cm²→m² (÷10⁴).", 6, graded_answer_number_fields(
         (int(actual_vol_m3), int(actual_flr_m2)), ('Actual volume (m³)', 'Actual floor area (m²)'),
     )
@@ -1231,6 +1289,7 @@ def _sc_d15_lsf_from_vol_and_sa():
          f"(ii) Volume scale factor = 1.5³ = {vsf_val}<br>"
          f"Volume of larger = 40 × {vsf_val} = <strong>{vol_l} cm³</strong>")
     graded = graded_answer_number_fields((1.5, vol_l), ('Linear scale factor', 'Volume of larger (cm³)'))
+    record('sim_vol_sa', sa_small=80, sa_large=180, vol=40)
     return q, s, "(i) LSF = √(SA ratio). (ii) VSF = LSF³. Multiply smaller volume by VSF.", 6, graded
 
 
@@ -1258,10 +1317,10 @@ _SC_MCQ_BANK = [
      "sol": "SF = 9/6 = 1.5. QR = 8 × 1.5 = <strong>12 cm</strong>. Answer: A",
      "hint": "Find SF = PQ/AB, then QR = BC × SF."},
 
-    {"q": "Two similar shapes have areas 36 cm² and 81 cm². What is the linear scale factor?",
-     "opts": ["A  3:2 (smaller to larger)", "B  9:4", "C  2:3", "D  4:9"],
+    {"q": "Two similar shapes have areas 36 cm² and 81 cm². What is the ratio of their corresponding lengths, smaller : larger?",
+     "opts": ["A  2 : 3", "B  9 : 4", "C  3 : 2", "D  4 : 9"],
      "ans": "A", "marks": 2,
-     "sol": "LSF = √(81/36) = 9/6 = <strong>3/2</strong> (larger:smaller), or 2:3 smaller:larger. Answer: A",
+     "sol": "Length ratio = √36 : √81 = 6 : 9 = <strong>2 : 3</strong> (smaller : larger). Answer: A",
      "hint": "LSF = √(area ratio). Take square roots of both areas."},
 
     {"q": "Two similar cones have linear scale factor 4. What is the volume scale factor?",
@@ -1282,13 +1341,14 @@ _SC_MCQ_BANK = [
      "sol": "SF = AD/AB = 4/10 = 2/5. DE = BC × 2/5 = 15 × 2/5 = <strong>6 cm</strong>. Answer: A",
      "hint": "SF = AD/AB (smaller/larger). DE = BC × SF."},
 
-    {"q": "Two similar shapes have perimeters 12 cm and 20 cm. What is the area scale factor?",
-     "opts": ["A  25:9", "B  5:3", "C  10:6", "D  100:36"],
+    {"q": "Two similar shapes have perimeters 12 cm and 20 cm. What is the area scale factor from the smaller "
+          "shape to the larger?",
+     "opts": ["A  25/9", "B  5/3", "C  125/27", "D  9/25"],
      "ans": "A", "marks": 2,
-     "sol": "LSF = 20:12 = 5:3. ASF = (5/3)² = <strong>25:9</strong>. Answer: A",
+     "sol": "LSF = 20 ÷ 12 = 5/3. ASF = (5/3)² = <strong>25/9</strong>. Answer: A",
      "hint": "LSF = perimeter ratio. ASF = LSF²."},
 
-    {"q": "Two similar cylinders have volumes 27 cm³ and 64 cm³. What is the radius scale factor?",
+    {"q": "Two similar cylinders have volumes 27 cm³ and 64 cm³. What is the ratio of their radii, smaller : larger?",
      "opts": ["A  3:4", "B  9:16", "C  27:64", "D  4:3"],
      "ans": "A", "marks": 3,
      "sol": "VSF = 64/27. LSF = ∛(64/27) = 4/3. Radius scale (smaller:larger) = <strong>3:4</strong>. Answer: A",
@@ -1307,7 +1367,7 @@ _SC_MCQ_BANK = [
      "hint": "ASF = LSF². Larger area = smaller × ASF."},
 
     {"q": "Two similar solids have volume ratio 125 : 8. Find the linear scale factor.",
-     "opts": ["A  5:2", "B  25:4", "C  125:8", "D  10:4"],
+     "opts": ["A  5:2", "B  25:4", "C  125:8", "D  5:8"],
      "ans": "A", "marks": 2,
      "sol": "LSF = ∛(125/8) = 5/2. Scale factor = <strong>5:2</strong>. Answer: A",
      "hint": "LSF = ∛(volume ratio)."},
@@ -1325,7 +1385,7 @@ _SC_MCQ_BANK = [
      "hint": "SA ratio = LSF². So LSF = √(SA ratio). VSF = LSF³."},
 
     {"q": "DE ∥ BC. AD = 3 cm, DB = 5 cm, AE = 4 cm. Find EC.",
-     "opts": ["A  6⅔ cm", "B  5 cm", "C  20/3 cm", "D  8 cm"],
+     "opts": ["A  6⅔ cm", "B  5 cm", "C  2.4 cm", "D  8 cm"],
      "ans": "A", "marks": 3,
      "sol": "BPT: AD/DB = AE/EC → 3/5 = 4/EC → EC = 4×5/3 = 20/3 = <strong>6⅔ cm</strong>. Answer: A",
      "hint": "Basic Proportionality Theorem: AD/DB = AE/EC. Cross-multiply."},

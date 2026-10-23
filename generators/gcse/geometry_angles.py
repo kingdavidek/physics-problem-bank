@@ -6,6 +6,7 @@ Geometry proof variants use Plan B scaffolds (number_fields checkpoints).
 Final answers are wrapped in <strong> tags.
 """
 from generators.shared.rounding import round_half_up as round
+from generators.shared.verify_hook import record
 import random
 import math
 from generators.shared.utils import make_problem
@@ -102,7 +103,13 @@ def _geom_problem_from_output(out, difficulty):
 
 
 
-def _geom_svg(w, h, inner, max_w=300):
+def _geom_svg(w, h, inner, max_w=300, accurate=False):
+    """Diagram wrapper. Most layouts are fixed sketches whatever the numbers in the question, so they carry the
+    exam note "Not drawn accurately" (pupils must not measure them); ``accurate=True`` is for diagrams drawn
+    to the given angles."""
+    if not accurate:
+        inner += _g_txt(w - 6, h + 12, "Not drawn accurately", "#666", 10, "end")
+        h += 18
     return str(svg_kit.svg(
         w, h,
         title='Geometry diagram',
@@ -190,6 +197,7 @@ def _g_tick(p, q, color="#a13544"):
 
 def _geom_svg_straight_line(known_deg, known_label=None, unknown_label="x"):
     k = max(25, min(155, int(known_deg)))
+    accurate = k == known_deg and known_label is None      # an algebraic label is drawn at a sketch angle
     known_label = known_label if known_label is not None else f"{known_deg}°"
     # Ray above the line; left wedge = known
     rx = round(140 + 80 * math.cos(math.radians(180 - k)), 1)
@@ -202,7 +210,7 @@ def _geom_svg_straight_line(known_deg, known_label=None, unknown_label="x"):
         + _g_arc_label(140, 80, 28, 180, ray_deg, known_label, "#a13544")
         + _g_arc_label(140, 80, 28, ray_deg, 0, unknown_label, "#059669")
     )
-    return _geom_svg(280, 130, inner)
+    return _geom_svg(280, 130, inner, accurate=accurate)
 
 
 def _geom_svg_around_point(a, b):
@@ -220,7 +228,7 @@ def _geom_svg_around_point(a, b):
     parts.append(_g_arc_label(cx, cy, 30, 0, a, f"{a}°", "#a13544"))
     parts.append(_g_arc_label(cx, cy, 30, a, a + b, f"{b}°", "#1a6fa8"))
     parts.append(_g_arc_label(cx, cy, 30, a + b, 360, "x", "#059669"))
-    return _geom_svg(260, 220, "".join(parts))
+    return _geom_svg(260, 220, "".join(parts), accurate=True)
 
 
 def _geom_svg_crossing(known_deg, label_regions=False):
@@ -356,7 +364,7 @@ def _geom_svg_regular_polygon(n, corner_label=None, caption=None):
         inner += _g_txt((p0[0] + ext[0]) / 2 + 10, (p0[1] + ext[1]) / 2, corner_label, "#a13544", 11)
     if caption:
         inner += _g_txt(cx, cy + 4, caption, "#777", 11)
-    return _geom_svg(260, 230, inner)
+    return _geom_svg(260, 230, inner, accurate=True)
 
 
 def _geom_svg_complementary(known_deg):
@@ -374,7 +382,7 @@ def _geom_svg_complementary(known_deg):
         + _g_arc_label(50, 160, 34, 0, ray_deg, f"{known_deg}°", "#a13544")
         + _g_arc_label(50, 160, 26, ray_deg, 270, "x", "#059669")
     )
-    return _geom_svg(230, 195, inner)
+    return _geom_svg(230, 195, inner, accurate=(k == known_deg))
 
 
 def _geom_svg_equilateral():
@@ -387,7 +395,7 @@ def _geom_svg_equilateral():
         + _g_txt(70, 145, "?", "#059669", 13, bold=True)
         + _g_txt(200, 145, "?", "#059669", 13, bold=True)
     )
-    return _geom_svg(280, 195, inner)
+    return _geom_svg(280, 195, inner, accurate=True)
 
 
 def _geom_svg_parallel_triangle(p_lbl, q_lbl):
@@ -545,7 +553,7 @@ def _geom_svg_bearing(deg):
         + _g_txt(qx + 12, qy, "Q", "#333", 12, bold=True)
         + _g_arc_label(cx, cy, 32, 270, 270 + deg, f"{deg}°", "#a13544")
     )
-    return _geom_svg(240, 230, inner)
+    return _geom_svg(240, 230, inner, accurate=True)
 
 
 def _geom_svg_similar_triangles(ab, bc, pq, ang_b):
@@ -790,7 +798,7 @@ def _geom_svg_bearing_path(b1, turn):
     def sh(x, y):
         return x - minx, y - miny
     # rebuild shifted — simpler: use generous canvas
-    return _geom_svg(300, 260, inner, max_w=320)
+    return _geom_svg(300, 260, inner, max_w=320, accurate=True)
 
 
 def _geom_svg_pentagon():
@@ -812,6 +820,7 @@ def _geom_found_straight_line():
          rf"\(x = 180° - {a}°\)<br>"
          rf"<strong>\(x = {b}°\)</strong>")
     hint = "Angles on a straight line sum to 180°."
+    record('ang_rule', rule_word='straight line', given=[a])
     return q, s, hint, 1, b
 
 
@@ -830,6 +839,7 @@ def _geom_found_around_point():
          rf"\(x = 360° - {a + b}°\)<br>"
          rf"<strong>\(x = {c}°\)</strong>")
     hint = "Angles around a point sum to 360°."
+    record('ang_rule', rule_word='point', given=[a, b])
     return q, s, hint, 1, c
 
 
@@ -845,6 +855,7 @@ def _geom_found_vertically_opposite():
          rf"(b) Angles on a straight line: \({a}° + x = 180°\) → \(x = {b}°\)<br>"
          rf"The other two angles are both <strong>{b}°</strong> (vertically opposite to each other).")
     hint = "Vertically opposite angles are equal; adjacent angles on a straight line sum to 180°."
+    record('ang_vertical', angle=a)
     return q, s, hint, 2, _geom_fields_answer(
         (a, b),
         ('(a) Vertically opposite angle (°)', '(b) Adjacent angles (°)'),
@@ -864,6 +875,7 @@ def _geom_found_triangle_sum():
          rf"\(x = 180° - {a + b}°\)<br>"
          rf"<strong>\(x = {c}°\)</strong>")
     hint = "Angles in a triangle sum to 180°."
+    record('ang_rule', rule_word='triangle', given=[a, b])
     return q, s, hint, 1, c
 
 
@@ -881,6 +893,7 @@ def _geom_found_isosceles():
          rf"Apex angle \(= 180° - {2 * base}°\)<br>"
          rf"<strong>Apex angle \(= {apex}°\)</strong>")
     hint = "The two base angles are equal in an isosceles triangle."
+    record('ang_isos_apex', base=base)
     return q, s, hint, 2, apex
 
 
@@ -897,6 +910,7 @@ def _geom_found_exterior_angle():
          rf"Exterior angle \(= {a}° + {b}°\)<br>"
          rf"<strong>\(= {ext}°\)</strong>")
     hint = "Exterior angle = sum of the two opposite interior angles."
+    record('ang_exterior', a=a, b=b)
     return q, s, hint, 2, ext
 
 
@@ -916,6 +930,7 @@ def _geom_found_quadrilateral():
          rf"\(x = 360° - {a + b + c}°\)<br>"
          rf"<strong>\(x = {d}°\)</strong>")
     hint = "Angles in a quadrilateral sum to 360°."
+    record('ang_rule', rule_word='quadrilateral', given=[a, b, c])
     return q, s, hint, 1, d
 
 
@@ -928,6 +943,7 @@ def _geom_found_corresponding():
     s = (rf"Corresponding angles are equal when lines are parallel (F-shape).<br>"
          rf"<strong>Corresponding angle \(= {a}°\)</strong>")
     hint = "Corresponding angles (F-shape) are equal on parallel lines."
+    record('ang_parallel', kind_word='corresponding', angle=a)
     return q, s, hint, 1, a
 
 
@@ -940,6 +956,7 @@ def _geom_found_alternate():
     s = (rf"Alternate interior angles are equal when lines are parallel (Z-shape).<br>"
          rf"<strong>Alternate angle \(= {a}°\)</strong>")
     hint = "Alternate angles (Z-shape) are equal on parallel lines."
+    record('ang_parallel', kind_word='alternate', angle=a)
     return q, s, hint, 1, a
 
 
@@ -954,6 +971,7 @@ def _geom_found_cointerior():
          rf"\({a}° + x = 180°\)<br>"
          rf"<strong>\(x = {b}°\)</strong>")
     hint = "Co-interior angles (C-shape) sum to 180° on parallel lines."
+    record('ang_parallel', kind_word='co-interior', angle=a)
     return q, s, hint, 1, b
 
 
@@ -968,6 +986,7 @@ def _geom_found_polygon_sum():
          rf"\(= {n - 2} \times 180°\)<br>"
          rf"<strong>\(= {total}°\)</strong>")
     hint = "Use the formula (n − 2) × 180°."
+    record('poly_sum', n=n)
     return q, s, hint, 2, total
 
 
@@ -980,6 +999,7 @@ def _geom_found_regular_exterior():
          rf"\(= \dfrac{{360°}}{{{n}}}\)<br>"
          rf"<strong>\(= {ext}°\)</strong>")
     hint = "Exterior angle of a regular n-gon = 360° ÷ n."
+    record('poly_exterior', shape_word=_polygon_name(n))
     return q, s, hint, 2, ext
 
 
@@ -993,6 +1013,7 @@ def _geom_found_complementary():
          rf"\({a}° + x = 90°\)<br>"
          rf"<strong>\(x = {b}°\)</strong>")
     hint = "Complementary angles sum to 90°."
+    record('ang_rule', rule_word='complementary', given=[a])
     return q, s, hint, 1, b
 
 
@@ -1005,6 +1026,7 @@ def _geom_found_equilateral():
          r"Each angle \(= 180° \div 3\)<br>"
          r"<strong>Each angle \(= 60°\)</strong>")
     hint = "All angles are equal in an equilateral triangle, and they must sum to 180°."
+    record('ang_equilateral', shape_word='equilateral')
     return q, s, hint, 2, 60
 
 
@@ -1021,6 +1043,7 @@ def _geom_found_multistep_lines():
          rf"D \(= {b}°\)  (vertically opposite to B).<br>"
          rf"<strong>The four angles are {a}°, {b}°, {a}°, {b}°.</strong>")
     hint = "Use: angles on a straight line = 180°, and vertically opposite angles are equal."
+    record('ang_cross', angle=a)
     return q, s, hint, 3, _geom_fields_answer(
         (a, b, a, b),
         ('Angle A (°)', 'Angle B (°)', 'Angle C (°)', 'Angle D (°)'),
@@ -1030,6 +1053,11 @@ def _geom_found_multistep_lines():
 # ══════════════════════════════════════════════════════════════════════════════
 # INTERMEDIATE (15 variants)
 # ══════════════════════════════════════════════════════════════════════════════
+
+def _xt(coef):
+    """The x term of an angle expression: 'x' for a coefficient of 1, never '1x'."""
+    return 'x' if coef == 1 else f'{coef}x'
+
 
 def _geom_inter_algebraic_straight():
     # (ax + b) + (cx + d) = 180
@@ -1046,18 +1074,19 @@ def _geom_inter_algebraic_straight():
     ang1 = a * x_val + b
     ang2 = c * x_val + d
     svg = _geom_svg_straight_line(
-        90, known_label=f"({a}x+{b})°", unknown_label=f"({c}x+{d})°"
+        90, known_label=f"({_xt(a)}+{b})°", unknown_label=f"({_xt(c)}+{d})°"
     )
-    q = (rf"Two angles on a straight line are \(({a}x + {b})°\) and \(({c}x + {d})°\).<br>{svg}"
+    q = (rf"Two angles on a straight line are \(({_xt(a)} + {b})°\) and \(({_xt(c)} + {d})°\).<br>{svg}"
          rf"Find the value of \(x\) and the size of each angle.")
     s = (rf"Angles on a straight line sum to 180°:<br>"
-         rf"\(({a}x + {b}) + ({c}x + {d}) = 180\)<br>"
+         rf"\(({_xt(a)} + {b}) + ({_xt(c)} + {d}) = 180\)<br>"
          rf"\({a + c}x + {b + d} = 180\)<br>"
          rf"\({a + c}x = {180 - b - d}\)<br>"
          rf"\(x = {x_val}\)<br>"
-         rf"Angles: \({a}({x_val})+{b} = {ang1}°\) and \({c}({x_val})+{d} = {ang2}°\)<br>"
+         rf"Angles: \({a}({x_val})+{b} = {ang1}°\) and \({'' if c == 1 else c}({x_val})+{d} = {ang2}°\)<br>"
          rf"<strong>\(x = {x_val}\); angles are {ang1}° and {ang2}°</strong>")
     hint = f"Set the two expressions equal to 180 and solve for x."
+    record('ang_alg', rule_word='straight line', terms=[a, b, c, d])
     return q, s, hint, 3, _geom_fields_answer(
         (x_val, ang1, ang2),
         ('x', 'First angle (°)', 'Second angle (°)'),
@@ -1077,8 +1106,8 @@ def _geom_inter_algebraic_triangle():
         if 5 <= f <= 50 and (a * x_val + b) >= 20 and (c * x_val + d) >= 15 and (e * x_val + f) >= 15:
             break
     ang1, ang2, ang3 = a * x_val + b, c * x_val + d, e * x_val + f
-    svg = _geom_svg_triangle_angles(rf"({a}x+{b})°", rf"({c}x+{d})°", rf"({e}x+{f})°")
-    q = (rf"The angles of a triangle are \(({a}x + {b})°\), \(({c}x + {d})°\), and \(({e}x + {f})°\).<br>{svg}"
+    svg = _geom_svg_triangle_angles(rf"({_xt(a)}+{b})°", rf"({_xt(c)}+{d})°", rf"({_xt(e)}+{f})°")
+    q = (rf"The angles of a triangle are \(({_xt(a)} + {b})°\), \(({_xt(c)} + {d})°\), and \(({_xt(e)} + {f})°\).<br>{svg}"
          rf"Find \(x\) and the size of each angle.")
     s = (rf"Angles in a triangle sum to 180°:<br>"
          rf"\({a + c + e}x + {b + d + f} = 180\)<br>"
@@ -1087,6 +1116,7 @@ def _geom_inter_algebraic_triangle():
          rf"Angles: \({ang1}°\), \({ang2}°\), \({ang3}°\)<br>"
          rf"<strong>\(x = {x_val}\); angles are {ang1}°, {ang2}°, {ang3}°</strong>")
     hint = "Set the sum of the three expressions equal to 180."
+    record('ang_alg', rule_word='triangle', terms=[a, b, c, d, e, f])
     return q, s, hint, 3, _geom_fields_answer(
         (x_val, ang1, ang2, ang3),
         ('x', 'Angle 1 (°)', 'Angle 2 (°)', 'Angle 3 (°)'),
@@ -1106,6 +1136,7 @@ def _geom_inter_regular_polygon_n():
          rf"Number of sides \(= \dfrac{{360°}}{{{180 - interior}°}} = {n}\)<br>"
          rf"<strong>\(n = {n}\) sides</strong>")
     hint = "Find the exterior angle first (= 180° − interior angle), then n = 360° ÷ exterior angle."
+    record('poly_n_from_interior', interior=interior)
     return q, s, hint, 3, n
 
 
@@ -1128,6 +1159,7 @@ def _geom_inter_complex_parallel():
          rf"In triangle ABC: angle BAC \(= 180° - {p}° - {q_ang}°\)<br>"
          rf"<strong>Angle BAC \(= {ang_bac}°\)</strong>")
     hint = "Use alternate angles to find angle ABC first, then use the triangle angle sum."
+    record('ang_rule', rule='triangle', given=[p, q_ang])
     return q, s, hint, 3, ang_bac
 
 
@@ -1141,6 +1173,7 @@ def _geom_inter_angle_at_centre():
          rf"Angle AOB \(= 2 \times {circ}°\)<br>"
          rf"<strong>Angle AOB \(= {centre}°\)</strong>")
     hint = "Angle at centre = 2 × angle at circumference (same arc)."
+    record('circ_centre', angle=circ)
     return q, s, hint, 2, centre
 
 
@@ -1154,6 +1187,7 @@ def _geom_inter_angle_semicircle():
          rf"In triangle ACB: angle BAC \(= 180° - 90° - {b_ang}°\)<br>"
          rf"<strong>Angle BAC \(= {a_ang}°\);  angle ACB \(= 90°\)</strong>")
     hint = "The angle subtended by a diameter at the circumference is always 90°."
+    record('circ_semicircle', angle=b_ang)
     return q, s, hint, 3, _geom_fields_answer(
         (a_ang, 90),
         ('Angle BAC (°)', 'Angle ACB (°)'),
@@ -1169,6 +1203,7 @@ def _geom_inter_same_segment():
     s = (rf"Angles in the same segment are equal — both PRQ and PSQ are subtended by arc PQ from the same side.<br>"
          rf"<strong>Angle PSQ \(= {ang}°\)</strong>")
     hint = "Angles in the same segment (subtended by the same chord from the same side) are equal."
+    record('circ_same_segment', angle=ang)
     return q, s, hint, 2, ang
 
 
@@ -1185,6 +1220,7 @@ def _geom_inter_cyclic_quad():
          rf"Angle CDA \(= 180° - {b}° = {d}°\)<br>"
          rf"<strong>Angle BCD \(= {c}°\);  angle CDA \(= {d}°\)</strong>")
     hint = "Opposite angles in a cyclic quadrilateral add up to 180°."
+    record('circ_cyclic2', a=a, b=b)
     return q, s, hint, 3, _geom_fields_answer(
         (c, d),
         ('Angle BCD (°)', 'Angle CDA (°)'),
@@ -1205,6 +1241,7 @@ def _geom_inter_tangent_radius():
          rf"\(AT = \sqrt{{{ot**2 - r**2}}}\)<br>"
          rf"<strong>AT \(= {t_len}\) cm</strong>")
     hint = "The tangent is perpendicular to the radius at the point of contact. Use Pythagoras."
+    record('circ_tangent_length', r=r, ot=ot)
     return q, s, hint, 3, t_len
 
 
@@ -1218,6 +1255,7 @@ def _geom_inter_bearing():
          rf"Bearing of P from Q \(= {b1}° + 180°\)<br>"
          rf"<strong>\(= {back:03d}°\)</strong>")
     hint = "Add 180° to the forward bearing to get the back-bearing (if the result ≤ 360°)."
+    record('brg_back', b=b1)
     return q, s, hint, 2, back
 
 
@@ -1243,6 +1281,7 @@ def _geom_inter_similar_triangles():
          rf"(b) Corresponding angles in similar triangles are equal.<br>"
          rf"<strong>Angle PQR \(= {ang_b}°\)</strong>")
     hint = "Find the scale factor = PQ ÷ AB, then multiply BC. Corresponding angles are equal."
+    record('sim_fields', ab=ab, bc=bc, pq=pq, ang_b=ang_b)
     return q, s, hint, 4, _geom_fields_answer(
         (qr, ang_b),
         ('(a) QR (cm)', '(b) Angle PQR (°)'),
@@ -1264,6 +1303,7 @@ def _geom_inter_polygon_algebra():
          rf"Number of sides \(= \dfrac{{360°}}{{{ext}°}} = {n}\)<br>"
          rf"<strong>\(n = {n}\) sides</strong>")
     hint = "Interior + exterior = 180°. Set up an equation with the given ratio."
+    record('poly_interior_ratio', k=k)
     return q, s, hint, 4, n
 
 
@@ -1282,6 +1322,7 @@ def _geom_inter_isosceles_parallel():
          rf"(b) Since DE ∥ BC, angle ADE = angle ABC = {base_ang}° (corresponding angles).<br>"
          rf"<strong>Angle ADE \(= {base_ang}°\)</strong>")
     hint = "Find angle BAC using isosceles triangle, then use corresponding/alternate angles for DE ∥ BC."
+    record('ang_isos_parallel', base=base_ang)
     return q, s, hint, 4, _geom_fields_answer(
         (apex, base_ang),
         ('(a) Angle BAC (°)', '(b) Angle ADE (°)'),
@@ -1303,6 +1344,7 @@ def _geom_inter_interior_exterior():
          rf"<strong>Exterior angle \(= {exterior}°\)</strong><br>"
          rf"(c) \({interior}° + {exterior}° = {interior + exterior}° = 180°\) ✓")
     hint = "Interior angle = (n−2)×180°/n; exterior angle = 360°/n. They must sum to 180°."
+    record('poly_int_ext', n=n)
     return q, s, hint, 3, _geom_fields_answer(
         (interior, exterior),
         ('(a) Interior angle (°)', '(b) Exterior angle (°)'),
@@ -1314,7 +1356,7 @@ def _geom_inter_kite_angles():
     ang_b = random.randint(50, 80)
     ang_d = ang_b  # kite: angles between unequal sides are equal
     ang_c = 360 - ang_a - 2 * ang_b
-    while ang_c <= 10 or ang_c >= 350:
+    while ang_c <= 10 or ang_c >= 180:
         ang_a = random.randint(60, 100)
         ang_b = random.randint(50, 80)
         ang_d = ang_b
@@ -1330,6 +1372,7 @@ def _geom_inter_kite_angles():
          rf"Angle C \(= 360° - {ang_a + ang_b + ang_d}° = {ang_c}°\)<br>"
          rf"<strong>Angle C \(= {ang_c}°\);  angle D \(= {ang_d}°\)</strong>")
     hint = "In a kite, the two angles between the unequal sides are equal."
+    record('ang_kite', a=ang_a, b=ang_b)
     return q, s, hint, 3, _geom_fields_answer(
         (ang_c, ang_d),
         ('Angle C (°)', 'Angle D (°)'),
@@ -1355,6 +1398,7 @@ def _geom_diff_alternate_segment():
          rf"Angle TOA \(= 2 \times {alpha}°\)<br>"
          rf"<strong>Angle TOA \(= {centre}°\)</strong>")
     hint = "Use the alternate segment theorem, then angle at centre = 2 × angle at circumference."
+    record('circ_alt_segment', alpha=alpha)
     return q, s, hint, 5, _geom_fields_answer(
         (alpha, centre),
         ('(a) Angle TBA (°)', '(b) Angle TOA (°)'),
@@ -1374,6 +1418,7 @@ def _geom_diff_two_tangents():
          rf"Angle AOB \(= 360° - {angle_p + 180}° = {360 - angle_p - 180}°\)<br>"
          rf"<strong>Angle AOB \(= {angle_aob}°\)</strong>")
     hint = "Each tangent is perpendicular to the radius at the point of contact. Use quadrilateral angle sum."
+    record('circ_two_tangents', p=angle_p)
     return q, s, hint, 4, angle_aob
 
 
@@ -1397,6 +1442,7 @@ def _geom_diff_multi_circle():
          rf"<strong>Angle ABC \(= {circ_minor}°\)</strong><br>"
          rf"Check: {circ_major}° + {circ_minor}° = {circ_major + circ_minor}° (opposite angles in cyclic quad → should sum to 180° ✓)")
     hint = "For the major-arc angle use the direct centre angle; for the minor-arc angle use the reflex centre angle."
+    record('circ_arcs', centre=centre_ang)
     return q, s, hint, 5, _geom_fields_answer(
         (circ_major, circ_minor),
         ('(a) Angle ADC (°)', '(b) Angle ABC (°)'),
@@ -1410,7 +1456,7 @@ def _geom_diff_similar_area():
     area_small = p * p * random.randint(3, 8)
     area_large = area_small * q_rat * q_rat // (p * p)
     svg = _geom_svg_similar_triangles(p, p, q_rat, 60)
-    q_str = (rf"Two similar triangles have corresponding sides in the ratio \({p}:{q_rat}\)<br>"
+    q_str = (rf"Two similar triangles have corresponding sides in the ratio \({p}:{q_rat}\).<br>"
              rf"The area of the smaller triangle is {area_small} cm².<br>"
              rf"Find the area of the larger triangle.<br>{svg}")
     s = (rf"For similar shapes, area ratio \(= (\text{{length ratio}})^2\).<br>"
@@ -1418,6 +1464,7 @@ def _geom_diff_similar_area():
          rf"Area of larger triangle \(= {area_small} \times \dfrac{{{q_rat**2}}}{{{p**2}}} = \dfrac{{{area_small * q_rat**2}}}{{{p**2}}}\)<br>"
          rf"<strong>\(= {area_small * q_rat**2 // p**2}\) cm²</strong>")
     hint = "Area ratio = (length ratio)². Square the ratio of corresponding sides."
+    record('sim_area_scale', p=p, q=q_rat, area=area_small)
     return q_str, s, hint, 4, area_large
 
 
@@ -1441,6 +1488,7 @@ def _geom_diff_prove_triangle_sum():
         r"<strong>Therefore the angles in a triangle sum to 180°. ✓</strong>"
     )
     hint = "Draw a line through one vertex parallel to the opposite side, then use alternate angles."
+    record('proof_triangle_sum')
     return q, s, hint, 4, _geom_fields_answer(
         (180, 180, 180),
         (
@@ -1454,35 +1502,36 @@ def _geom_diff_prove_triangle_sum():
 
 def _geom_diff_algebraic_circle():
     # angle at centre = 2 × angle at circumference, both expressed algebraically
-    x_val = random.randint(15, 30)
-    a_coef = random.randint(2, 4)
-    b_off = random.randint(5, 20)
-    c_coef = random.randint(1, 2)
-    d_off = random.randint(5, 20)
-    # Centre = 2 × circumference: a*x + b = 2*(c*x + d)
-    # (a - 2c)*x = 2d - b
-    diff = a_coef - 2 * c_coef
-    rhs = 2 * d_off - b_off
-    if diff == 0 or rhs % diff != 0:
-        a_coef, c_coef, x_val = 4, 1, 20
-        b_off, d_off = 10, 20
-        diff = 4 - 2
-        rhs = 40 - 10
-    x_val = rhs // diff
+    # Centre = 2 × circumference: a*x + b = 2*(c*x + d)  =>  (a - 2c)*x = 2d - b.
+    # Keep drawing until x is a sensible whole number and both angles are real angles (a circumference
+    # angle under 90 degrees, so the centre angle is under 180).
+    while True:
+        a_coef = random.randint(2, 4)
+        b_off = random.randint(5, 20)
+        c_coef = random.randint(1, 2)
+        d_off = random.randint(5, 20)
+        diff = a_coef - 2 * c_coef
+        rhs = 2 * d_off - b_off
+        if diff == 0 or rhs % diff != 0:
+            continue
+        x_val = rhs // diff
+        if x_val >= 5 and 20 <= c_coef * x_val + d_off <= 85:
+            break
     centre_ang = a_coef * x_val + b_off
     circ_ang = c_coef * x_val + d_off
-    svg = _geom_svg_circle_centre(rf"({c_coef}x+{d_off})°", rf"({a_coef}x+{b_off})°")
+    svg = _geom_svg_circle_centre(rf"({_xt(c_coef)}+{d_off})°", rf"({_xt(a_coef)}+{b_off})°")
     q = (rf"O is the centre of a circle. A, B, C are points on the circle.<br>"
-         rf"Angle AOB \(= ({a_coef}x + {b_off})°\) and angle ACB \(= ({c_coef}x + {d_off})°\)<br>"
+         rf"Angle AOB \(= ({a_coef}x + {b_off})°\) and angle ACB \(= ({_xt(c_coef)} + {d_off})°\).<br>"
          rf"Find x and the size of each angle.<br>{svg}")
     s = (rf"Angle at centre = 2 × angle at circumference (same arc AB):<br>"
-         rf"\({a_coef}x + {b_off} = 2({c_coef}x + {d_off})\)<br>"
+         rf"\({a_coef}x + {b_off} = 2({_xt(c_coef)} + {d_off})\)<br>"
          rf"\({a_coef}x + {b_off} = {2*c_coef}x + {2*d_off}\)<br>"
-         rf"\({diff}x = {rhs}\)<br>"
-         rf"\(x = {x_val}\)<br>"
+         + (rf"\({_xt(diff) if diff != -1 else '-x'} = {rhs}\)<br>" if diff != 1 else "")   # never 'x = 15' twice
+         + rf"\(x = {x_val}\)<br>"
          rf"Angle AOB \(= {centre_ang}°\),  angle ACB \(= {circ_ang}°\)<br>"
          rf"<strong>\(x = {x_val}\);  angle AOB \(= {centre_ang}°\),  angle ACB \(= {circ_ang}°\)</strong>")
     hint = "Use: angle at centre = 2 × angle at circumference, then solve for x."
+    record('circ_alg', a=a_coef, b=b_off, c=c_coef, d=d_off)
     return q, s, hint, 5, _geom_fields_answer(
         (x_val, centre_ang, circ_ang),
         ('x', 'Angle AOB (°)', 'Angle ACB (°)'),
@@ -1505,6 +1554,7 @@ def _geom_diff_chord_distance():
          rf"\(r = \sqrt{{{d**2 + h**2}}}\)<br>"
          rf"<strong>Radius \(= {r}\) cm</strong>")
     hint = "The perpendicular from the centre bisects the chord. Use Pythagoras with half the chord length."
+    record('circ_chord_radius', chord=chord, d=d)
     return q, s, hint, 4, r
 
 
@@ -1528,6 +1578,7 @@ def _geom_diff_cyclic_quad_proof():
         r"<strong>Opposite angles in a cyclic quadrilateral sum to 180°. ✓</strong>"
     )
     hint = "Use the angle at centre theorem for both arcs, noting that the two arcs together form the full 360°."
+    record('proof_cyclic_quad')
     return q, s, hint, 5, _geom_fields_answer(
         (2, '180 - a', 180),
         (
@@ -1562,6 +1613,7 @@ def _geom_diff_regular_polygon_proof():
         rf"Exterior sum \(= 180n° - (n-2)\times 180° = 360°\). ✓"
     )
     hint = "For (a) divide into triangles. For (b) use interior + exterior = 180° at each vertex."
+    record('poly_proof', shape_word=_polygon_name(n), interior=interior)
     return q, s, hint, 5, _geom_fields_answer(
         (triangles, interior, 360),
         (
@@ -1586,7 +1638,7 @@ def _geom_diff_polygon_algebra():
     ang1, ang2, ang3, ang4 = x_val+a, x_val+b, x_val+c, x_val+d
     angles_list = ", ".join(rf"(x + {o})^\circ" for o in (a, b, c, d))
     svg = _geom_svg_pentagon()
-    q = (rf"A pentagon has angles \({angles_list}, \text{{and }} {fixed}^\circ\)<br>"
+    q = (rf"A pentagon has angles \({angles_list}, \text{{and }} {fixed}^\circ\).<br>"
          rf"Find x and all five angles.<br>{svg}")
     s = (rf"Sum of interior angles of a pentagon \(= (5-2) \times 180° = 540°\).<br>"
          rf"\((x+{a}) + (x+{b}) + (x+{c}) + (x+{d}) + {fixed} = 540\)<br>"
@@ -1596,6 +1648,7 @@ def _geom_diff_polygon_algebra():
          rf"Angles: \({ang1}^\circ, {ang2}^\circ, {ang3}^\circ, {ang4}^\circ, {fixed}^\circ\)<br>"
          rf"<strong>\(x = {x_val}\); angles are {ang1}°, {ang2}°, {ang3}°, {ang4}°, {fixed}°</strong>")
     hint = "Sum of pentagon angles = 540°. Collect the x terms and constants, then solve."
+    record('poly_alg', offsets=[a, b, c, d], fixed=fixed, sides=5, derived=('sides',))
     return q, s, hint, 4, _geom_fields_answer(
         (x_val, ang1, ang2, ang3, ang4, fixed),
         ('x', 'Angle 1 (°)', 'Angle 2 (°)', 'Angle 3 (°)', 'Angle 4 (°)', 'Angle 5 (°)'),
@@ -1614,6 +1667,7 @@ def _geom_diff_reflex_centre():
          rf"Reflex angle AOB \(= 360° - {2*arc_ang}°\)<br>"
          rf"<strong>Reflex angle AOB \(= {reflex}°\)</strong>")
     hint = "Find the non-reflex angle at centre first (= 2 × angle at circumference), then subtract from 360°."
+    record('circ_reflex', arc=arc_ang)
     return q, s, hint, 3, reflex
 
 
@@ -1639,6 +1693,7 @@ def _geom_diff_tangent_chord():
          rf"Angle BTP \(= 180° - {alpha}° - {beta}°\)<br>"
          rf"<strong>Angle BTP \(= {180 - alpha - beta}°\)</strong>")
     hint = "Apply the alternate segment theorem to find angle TBP, then use triangle angle sum."
+    record('circ_tangent_chord', alpha=alpha, beta=beta)
     return q, s, hint, 5, _geom_fields_answer(
         (alpha, 180 - alpha - beta),
         ('(a) Angle TBP (°)', '(b) Angle BTP (°)'),
@@ -1670,6 +1725,7 @@ def _geom_diff_bearing_complex():
          rf"Interior angle ABC \(= 180° - {turn}°\)<br>"
          rf"<strong>Angle ABC \(= {angle_abc}°\)</strong>")
     hint = "The clockwise turn gives the change in bearing. Interior angle = 180° − exterior turn angle."
+    record('ang_bearing_turn', b1=b1, turn=turn)
     return q_str, s, hint, 4, _geom_fields_answer(
         (b2_result, angle_abc),
         ('(a) Bearing B to C (°)', '(b) Angle ABC (°)'),
@@ -1693,13 +1749,13 @@ def _geom_diff_inscribed_angles():
          rf"<strong>Angle BCD \(= {opp_ang1}°\)</strong><br>"
          rf"(b) Angle CDA \(= 180° - {ang2}° = {opp_ang2}°\) (opposite angles in cyclic quad).<br>"
          rf"<strong>Angle CDA \(= {opp_ang2}°\)</strong><br>"
-         rf"(c) Angle BOD = 2 × angle BCD? No — angle BOD is subtended by arc BAD.<br>"
-         rf"Arc BAD subtends angle BCD = {opp_ang1}° at circumference.<br>"
-         rf"Angle BOD \(= 2 \times {opp_ang1}° = {2*opp_ang1}°\) (but check if reflex is needed).<br>"
-         rf"Since {2*opp_ang1}° {'< 360°' if 2*opp_ang1 < 360 else '≥ 360°'}:<br>"
-         rf"<strong>Angle BOD \(= {min(2*opp_ang1, 360-2*opp_ang1)}°\)</strong> (non-reflex)")
+         rf"(c) Angle DAB = {ang1}° is the angle at the circumference standing on chord BD.<br>"
+         rf"The angle at the centre is twice the angle at the circumference:<br>"
+         rf"Angle BOD \(= 2 \times {ang1}° = {2 * ang1}°\)<br>"
+         rf"<strong>Angle BOD \(= {2 * ang1}°\)</strong>")
     hint = "Use cyclic quadrilateral for (a) and (b), then angle at centre = 2 × angle at circumference for (c)."
     bod = min(2 * opp_ang1, 360 - 2 * opp_ang1)
+    record('circ_cyclic3', a1=ang1, a2=ang2)
     return q, s, hint, 5, _geom_fields_answer(
         (opp_ang1, opp_ang2, bod),
         ('(a) Angle BCD (°)', '(b) Angle CDA (°)', '(c) Angle BOD (°)'),

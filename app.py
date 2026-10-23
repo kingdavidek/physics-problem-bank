@@ -426,6 +426,7 @@ from models.class_progress import (
 from models.class_assignments import (
     MAX_ASSIGNMENT_QUESTIONS,
     MIN_ASSIGNMENT_QUESTIONS,
+    SERVER_ONLY_KEYS,
     consume_preview,
     create_assignment,
     get_assignment_for_teacher,
@@ -2555,6 +2556,12 @@ def _problem_is_gradable(problem):
 
 def _freeze_problem_payload(problem):
     payload = _problem_client_payload(problem)
+    # Server-side checker data (the required written form, which proof steps may swap) that practice grades
+    # with but the client payload never carries. Kept in the frozen copy so set work is graded the same way;
+    # models.class_assignments.strip_problem_keys removes it again on every way out, answered or not.
+    for key in SERVER_ONLY_KEYS:
+        if problem.get(key):
+            payload[key] = problem[key]
     if not payload.get('question'):
         payload['question'] = problem.get('question') or ''
     return json.loads(json.dumps(payload, default=str))
@@ -7220,6 +7227,8 @@ def api_v1_problems_check():
         MAX_USER_ANSWER_LEN,
         SYMPY_ANSWER_TYPES,
         check_answer,
+        problem_answer_form,
+        problem_answer_prereqs,
     )
 
     payload = request.get_json(silent=True)
@@ -7318,7 +7327,17 @@ def api_v1_problems_check():
                 field_types=field_types,
             )
         else:
-            result = check_answer(answer_type, correct_answer_raw, user_answer)
+            # The required written form and the subject letter come from the stored problem only.
+            result = check_answer(
+                answer_type,
+                correct_answer_raw,
+                user_answer,
+                form=problem_answer_form(problem) if session_bound and not partial_field else None,
+                subject=problem.get('answer_subject') if session_bound and not partial_field else None,
+                labels=problem.get('answer_labels') if session_bound and not partial_field else None,
+                # Accepted orders for an ordered proof come from the stored problem only, never the request.
+                prereqs=problem_answer_prereqs(problem) if session_bound and not partial_field else None,
+            )
     except ValueError as exc:
         message = str(exc)
         if message.startswith('unknown_answer_type:'):

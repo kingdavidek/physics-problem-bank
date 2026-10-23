@@ -7,7 +7,8 @@ Algebraic rearrangement, proof, and some multipart variants stay 4-tuples.
 from generators.shared.rounding import round_half_up as round, fmt_dp
 import random
 import math
-from generators.shared.utils import make_problem, quadratic_roots_format_hint, quadratic_roots_ui_labels, signed_term
+from fractions import Fraction
+from generators.shared.utils import make_problem, quadratic_roots_format_hint, quadratic_roots_ui_labels, signed_term, coef
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from generators.shared.variant_utils import (
     select_tier_variants,
@@ -18,6 +19,7 @@ from generators.shared.variant_utils import (
 )
 
 
+from generators.shared.verify_hook import record, verifies
 def _eq_abc_block(*parts):
     """Format sub-questions or solution steps as a), b), c)."""
     return "".join(
@@ -393,6 +395,7 @@ def _eq_problem_from_output(out, difficulty):
 # FOUNDATIONAL (17 variants)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='solve_linear')
 def _eq_found_one_step_add():
     b = random.randint(2, 15)
     ans = random.randint(2, 12)
@@ -405,6 +408,7 @@ def _eq_found_one_step_add():
     return q, s, hint, 1, _eq_linear_answer(ans)
 
 
+@verifies('alg', task='solve_linear')
 def _eq_found_one_step_multiply():
     a = random.randint(2, 9)
     ans = random.randint(2, 10)
@@ -417,6 +421,7 @@ def _eq_found_one_step_multiply():
     return q, s, hint, 1, _eq_linear_answer(ans)
 
 
+@verifies('alg', task='solve_linear')
 def _eq_found_two_step():
     a = random.randint(2, 6)
     b = random.randint(1, 10)
@@ -430,6 +435,7 @@ def _eq_found_two_step():
     return q, s, hint, 2, _eq_linear_answer(ans)
 
 
+@verifies('alg', task='substitute')
 def _eq_found_substitute_formula():
     v = random.randint(10, 30)
     u = random.randint(2, v - 1)
@@ -446,6 +452,7 @@ def _eq_found_substitute_formula():
     return q, s, hint, 2, _eq_linear_answer(t_ans, "t")
 
 
+@verifies('alg', task='solve_ineq')
 def _eq_found_simple_inequality():
     b = random.randint(1, 8)
     ans = random.randint(2, 10)
@@ -459,6 +466,7 @@ def _eq_found_simple_inequality():
     return q, s, hint, 1, _eq_linear_inequality_answer(ans, sign)
 
 
+@verifies('alg', task='integers_in_ineq')
 def _eq_found_double_inequality():
     lo = random.randint(1, 4)
     hi = lo + random.randint(3, 6)
@@ -473,6 +481,7 @@ def _eq_found_double_inequality():
     return rf"{q} {q_part2}", s, hint, 2, _eq_number_list_answer(ints)
 
 
+@verifies('alg', task='solve_ineq')
 def _eq_found_ineq_solve_two_step():
     a = random.randint(2, 5)
     b = random.randint(1, 8)
@@ -488,6 +497,7 @@ def _eq_found_ineq_solve_two_step():
     return q, s, hint, 2, _eq_linear_inequality_answer(ans, sign)
 
 
+@verifies('alg', task='verify_solution')
 def _eq_found_verify_solution():
     a = random.randint(2, 5)
     b = random.randint(1, 9)
@@ -515,6 +525,7 @@ def _eq_found_form_and_solve_words():
     add = random.randint(2, 8)
     ans = random.randint(2, 6)
     result = n * ans + add
+    record('think_number', mult=n, add=add, result=result)
     q = (rf"I think of a number. I multiply it by {n} and add {add}. "
          rf"The result is {result}. What is the number?")
     s = (rf"Let the number be \(x\).<br>"
@@ -526,6 +537,7 @@ def _eq_found_form_and_solve_words():
     return q, s, hint, 3, _eq_linear_answer(ans)
 
 
+@verifies('alg', task='solve_linear')
 def _eq_found_brackets_simple():
     a = random.randint(2, 4)
     b = random.randint(1, 6)
@@ -543,6 +555,7 @@ def _eq_found_brackets_simple():
     return q, s, hint, 2, _eq_linear_answer(ans)
 
 
+@verifies('alg', task='rearrange')
 def _eq_found_rearrange_one_step():
     # Make v the subject: v = u + at  (one step: subtract u)
     q = r"Make \(u\) the subject of the formula \(v = u + at\)."
@@ -556,6 +569,7 @@ def _eq_found_rearrange_one_step():
     )
 
 
+@verifies('alg', task='solve_linear')
 def _eq_found_fraction_eq():
     ans = random.randint(2, 9)
     a = random.randint(2, 5)
@@ -567,6 +581,7 @@ def _eq_found_fraction_eq():
     return q, s, hint, 1, _eq_linear_answer(b)
 
 
+@verifies('alg', task='solve_linear')
 def _eq_found_negative_answer():
     a = random.randint(2, 5)
     ans = -random.randint(1, 5)
@@ -580,6 +595,7 @@ def _eq_found_negative_answer():
     return q, s, hint, 2, _eq_linear_answer(ans)
 
 
+@verifies('alg', task='integers_in_ineq')
 def _eq_found_ineq_integer_list():
     lo = random.randint(-3, 0)
     hi = lo + random.randint(4, 7)
@@ -592,6 +608,7 @@ def _eq_found_ineq_integer_list():
     return q, s, hint, 2, _eq_number_list_answer(ints)
 
 
+@verifies('alg', task='ineq_from_words')
 def _eq_found_write_ineq_from_words():
     n = random.randint(10, 25)
     q = (rf"A bag can hold at most {n} kg. Write an inequality for the weight \(w\) "
@@ -602,6 +619,7 @@ def _eq_found_write_ineq_from_words():
     return q, s, hint, 1, _eq_linear_inequality_answer(n, '<=', 'w')
 
 
+@verifies('alg', task='rearrange')
 def _eq_found_rearrange_numeric_var():
     """Rearrange a linear formula with random numerical coefficients."""
     choice = random.choice(["y_mx_c", "s_kt", "p_aw_b"])
@@ -630,6 +648,7 @@ def _eq_found_rearrange_numeric_var():
     return q, s, hint, 2, _eq_formula_fraction_answer(f'p-{b}', str(a), 'w')
 
 
+@verifies('alg', task='substitute')
 def _eq_found_substitute_formula_var():
     """Substitute random values into a familiar formula."""
     choice = random.choice(["F_ma", "v_uat", "s_vt"])
@@ -667,6 +686,7 @@ def _eq_found_substitute_formula_var():
 # INTERMEDIATE (18 variants)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='solve_linear')
 def _eq_inter_both_sides():
     # ax + b = cx + d with a > c, integer answer
     c = random.randint(1, 3)
@@ -677,15 +697,16 @@ def _eq_inter_both_sides():
     # ax + b = cx + d → (a-c)x = d - b → x = (d-b)/(a-c)
     b = random.randint(1, 6)
     d = (a - c) * ans + b
-    q = rf"Solve \({a}x + {b} = {c}x + {d}\)."
-    s = (rf"Collect \(x\)-terms on the left: \({a}x - {c}x = {d} - {b}\)<br>"
-         rf"\({a-c}x = {d-b}\)<br>"
+    q = rf"Solve \({a}x + {b} = {coef(c, 'x')} + {d}\)."
+    s = (rf"Collect \(x\)-terms on the left: \({a}x - {coef(c, 'x')} = {d} - {b}\)<br>"
+         rf"\({coef(a-c, 'x')} = {d-b}\)<br>"
          rf"Divide by {a-c}: "
          rf"<strong>\(x = {ans}\)</strong>")
-    hint = f"Subtract {c}x from both sides to collect x-terms."
+    hint = f"Subtract {coef(c, 'x')} from both sides to collect x-terms."
     return q, s, hint, 3, _eq_linear_answer(ans)
 
 
+@verifies('alg', task='solve_linear')
 def _eq_inter_expand_both_sides():
     a = random.randint(2, 4)
     b = random.randint(1, 5)
@@ -717,6 +738,7 @@ def _eq_inter_expand_both_sides():
     return q, s, hint, 3, _eq_linear_answer(ans)
 
 
+@verifies('alg', task='solve_system')
 def _eq_inter_simult_elim():
     x_ans = random.randint(1, 6)
     y_ans = random.randint(1, 6)
@@ -727,37 +749,44 @@ def _eq_inter_simult_elim():
     c1 = a1 * x_ans + b1 * y_ans
     c2 = a2 * x_ans + b2 * y_ans
     q = (rf"Solve the simultaneous equations:<br>"
-         rf"\({a1}x + {b1}y = {c1}\) &nbsp;&nbsp;(1)<br>"
-         rf"\({a2}x + {b2}y = {c2}\) &nbsp;&nbsp;(2)")
+         rf"\({coef(a1, 'x')} + {coef(b1, 'y')} = {c1}\) &nbsp;&nbsp;(1)<br>"
+         rf"\({coef(a2, 'x')} + {coef(b2, 'y')} = {c2}\) &nbsp;&nbsp;(2)")
     s = (rf"Since the \(y\)-coefficients are equal, subtract (1) from (2):<br>"
          rf"\(({a2}-{a1})x = {c2}-{c1}\)<br>"
-         rf"\({a2-a1}x = {c2-c1}\)<br>"
-         rf"\(x = {x_ans}\)<br>"
-         rf"Substitute into (1): \({a1}\times{x_ans} + {b1}y = {c1}\)<br>"
-         rf"\({b1}y = {c1 - a1*x_ans}\)<br>"
+         + (rf"\({coef(a2-a1, 'x')} = {c2-c1}\)<br>" if a2 - a1 != 1 else "")
+         + rf"\(x = {x_ans}\)<br>"
+         rf"Substitute into (1): \({a1}\times{x_ans} + {coef(b1, 'y')} = {c1}\)<br>"
+         rf"\({coef(b1, 'y')} = {c1 - a1*x_ans}\)<br>"
          rf"<strong>\(x = {x_ans},\; y = {y_ans}\)</strong>")
     hint = "Subtract the equations to eliminate y (they have the same y coefficient)."
     return q, s, hint, 4, _eq_number_pair_answer(x_ans, y_ans, "x", "y", sep=",")
 
 
+@verifies('alg', task='solve_system')
 def _eq_inter_simult_sub():
     x_ans = random.randint(1, 5)
     y_ans = random.randint(1, 5)
     # eq1: y = ax + b; eq2: cx + dy = e
     a1 = random.randint(1, 3)
     b1 = y_ans - a1 * x_ans
+    while b1 == 0:                  # "y = 3x + 0" would be written clumsily; choose another gradient
+        a1 = random.randint(1, 3)
+        b1 = y_ans - a1 * x_ans
+        if b1 == 0:
+            x_ans, y_ans = random.randint(1, 5), random.randint(1, 5)
+            b1 = y_ans - a1 * x_ans
     c2, d2 = random.randint(1, 4), random.randint(1, 3)
     e2 = c2 * x_ans + d2 * y_ans
     b1_str = f"+ {b1}" if b1 >= 0 else f"- {-b1}"
     q = (rf"Solve the simultaneous equations:<br>"
-         rf"\(y = {a1}x {b1_str}\) &nbsp;&nbsp;(1)<br>"
-         rf"\({c2}x + {d2}y = {e2}\) &nbsp;&nbsp;(2)")
+         rf"\(y = {coef(a1, 'x')} {b1_str}\) &nbsp;&nbsp;(1)<br>"
+         rf"\({coef(c2, 'x')} + {coef(d2, 'y')} = {e2}\) &nbsp;&nbsp;(2)")
     sub_result = c2 * x_ans + d2 * (a1 * x_ans + b1)
     coeff_x = c2 + d2 * a1
     const_term = d2 * b1
     const_str = f"+ {const_term}" if const_term >= 0 else f"- {-const_term}"
     s = (rf"Substitute (1) into (2):<br>"
-         rf"\({c2}x + {d2}({a1}x {b1_str}) = {e2}\)<br>"
+         rf"\({coef(c2, 'x')} + {'' if d2 == 1 else d2}({coef(a1, 'x')} {b1_str}) = {e2}\)<br>"
          rf"\({coeff_x}x {const_str} = {e2}\)<br>"
          rf"\({coeff_x}x = {e2 - const_term}\)<br>"
          rf"\(x = {x_ans}\)<br>"
@@ -767,6 +796,7 @@ def _eq_inter_simult_sub():
     return q, s, hint, 4, _eq_number_pair_answer(x_ans, y_ans, "x", "y", sep=",")
 
 
+@verifies('alg', task='rearrange')
 def _eq_inter_rearrange_two_step():
     q = r"Make \(t\) the subject of \(s = \dfrac{1}{2}at^2\)."
     s = (r"Multiply both sides by 2: \(2s = at^2\)<br>"
@@ -788,6 +818,7 @@ def _eq_inter_word_perimeter():
     l = 2 * ans + k
     w = ans
     P = 2 * (l + w)
+    record('rect_perimeter_linear', k=k, perimeter=P)
     q = (rf"A rectangle has length \({2}\text{{w}} + {k}\) and width \(\text{{w}}\). "
          rf"Its perimeter is {P} cm. Find \(w\).")
     s = (rf"Perimeter = \(2(\text{{length}} + \text{{width}})\):<br>"
@@ -800,6 +831,7 @@ def _eq_inter_word_perimeter():
     return q, s, hint, 4, _eq_linear_answer(ans, "w")
 
 
+@verifies('alg', task='solve_ineq')
 def _eq_inter_compound_ineq():
     lo_ans = random.randint(-2, 2)
     hi_ans = lo_ans + random.randint(3, 6)
@@ -817,6 +849,7 @@ def _eq_inter_compound_ineq():
     return q, s, hint, 3, _eq_compound_inequality_answer('x', '<', lo_ans, '<=', hi_ans)
 
 
+@verifies('alg', task='solve_ineq')
 def _eq_inter_neg_ineq_flip():
     ans = random.randint(-5, -1)
     a = random.randint(2, 4)
@@ -834,6 +867,7 @@ def _eq_inter_neg_ineq_flip():
     return q, s, hint, 3, _eq_linear_inequality_answer(ans, sign)
 
 
+@verifies('alg', task='solve_linear')
 def _eq_inter_frac_eq():
     ans = random.randint(2, 8)
     a = random.randint(2, 5)
@@ -850,6 +884,7 @@ def _eq_inter_frac_eq():
     return q, s, hint, 2, _eq_linear_answer(lhs_num)
 
 
+@verifies('alg', task='angle_sum')
 def _eq_inter_angle_equation():
     # Angles in a triangle: ax + b + cx + d + ex + f = 180
     x_ans = random.randint(5, 20)
@@ -857,15 +892,18 @@ def _eq_inter_angle_equation():
     b = random.randint(5, 30)
     d = random.randint(5, 30)
     f_val = 180 - (a + c + e) * x_ans - b - d
-    if f_val < 5:
-        f_val += 10
-        b, d = b - 5, d - 5
+    while f_val < 5:  # keep every constant at least 5, so no angle reads "+ 0"
+        x_ans = random.randint(5, 20)
+        a, c, e = random.randint(1, 4), random.randint(1, 4), random.randint(1, 4)
+        b = random.randint(5, 30)
+        d = random.randint(5, 30)
+        f_val = 180 - (a + c + e) * x_ans - b - d
     total_coeff = a + c + e
     total_const = b + d + f_val
-    q = (rf"The angles in a triangle are \({a}x {signed_term(b)}\)°, \({c}x {signed_term(d)}\)°, "
-         rf"and \({e}x {signed_term(f_val)}\)°.<br>Form an equation and find \(x\).")
+    q = (rf"The angles in a triangle are \({coef(a, 'x')} {signed_term(b)}\)°, \({coef(c, 'x')} {signed_term(d)}\)°, "
+         rf"and \({coef(e, 'x')} {signed_term(f_val)}\)°.<br>Form an equation and find \(x\).")
     s = (rf"Angles in a triangle sum to 180°:<br>"
-         rf"\(({a}x {signed_term(b)}) + ({c}x {signed_term(d)}) + ({e}x {signed_term(f_val)}) = 180\)<br>"
+         rf"\(({coef(a, 'x')} {signed_term(b)}) + ({coef(c, 'x')} {signed_term(d)}) + ({coef(e, 'x')} {signed_term(f_val)}) = 180\)<br>"
          rf"\({total_coeff}x {signed_term(total_const)} = 180\)<br>"
          rf"\({total_coeff}x = {180 - total_const}\)<br>"
          rf"<strong>\(x = {x_ans}\)</strong>")
@@ -877,6 +915,7 @@ def _eq_inter_consec_integers():
     n = random.randint(5, 15)
     # n + (n+1) + (n+2) = 3n + 3 = sum
     total = 3 * n + 3
+    record('consecutive_list', derived=('count',), count=3, total=total)
     q = rf"The sum of three consecutive integers is {total}. Find the integers."
     s = (rf"Let the smallest integer be \(n\).<br>"
          rf"\(n + (n+1) + (n+2) = {total}\)<br>"
@@ -894,6 +933,7 @@ def _eq_inter_ratio_equation():
     b = random.randint(1, 4)
     k = random.randint(3, 8)
     total = (a + b) * k
+    record('ratio_pair_sum', a=a, b=b, total=total)
     q = (rf"Two numbers are in the ratio \({a}:{b}\). Their sum is {total}. "
          rf"Find both numbers.")
     s = (rf"Let the two numbers be \({a}k\) and \({b}k\).<br>"
@@ -902,9 +942,10 @@ def _eq_inter_ratio_equation():
          rf"\(k = {k}\)<br>"
          rf"<strong>The numbers are \({a*k}\) and \({b*k}\).</strong>")
     hint = f"Let the parts be {a}k and {b}k, then their sum = {total}."
-    return q, s, hint, 3, _eq_number_pair_answer(a * k, b * k, "First number", "Second number")
+    return q, s, hint, 3, _eq_number_pair_answer(a * k, b * k, f"First number ({a} parts)", f"Second number ({b} parts)")
 
 
+@verifies('alg', task='rearrange')
 def _eq_inter_rearrange_sqrt():
     q = r"Make \(r\) the subject of \(A = \pi r^2\)."
     s = (r"Divide both sides by \(\pi\): \(r^2 = \dfrac{A}{\pi}\)<br>"
@@ -918,13 +959,18 @@ def _eq_inter_rearrange_sqrt():
     )
 
 
+@verifies('alg', task='equal_exprs')
 def _eq_inter_word_both_sides():
     # "Two friends: Alice has 3x+5 sweets, Bob has 5x-3. They have the same."
     ans = random.randint(3, 8)
     a_coeff = random.randint(2, 5)
     a_const = random.randint(2, 10)
     b_coeff = a_coeff + random.randint(1, 3)
-    b_const = b_coeff * ans - a_coeff * ans + a_const
+    # The two counts agree at x = ans when a*ans + a_const = b*ans - b_const.
+    b_const = (b_coeff - a_coeff) * ans - a_const
+    while b_const < 1:
+        a_const = random.randint(2, 10)
+        b_const = (b_coeff - a_coeff) * ans - a_const
     q = (rf"Alice has \({a_coeff}x + {a_const}\) stickers and Bob has "
          rf"\({b_coeff}x - {b_const}\) stickers. They have the same number. "
          rf"Find \(x\) and the number of stickers each person has.")
@@ -940,6 +986,7 @@ def _eq_inter_word_both_sides():
     return q, s, hint, 4, _eq_number_pair_answer(ans, n_stickers, "x", "Number of stickers", sep=",")
 
 
+@verifies('alg', task='number_line')
 def _eq_inter_ineq_on_number_line():
     lo = random.randint(-3, 1)
     hi = lo + random.randint(3, 5)
@@ -960,25 +1007,40 @@ def _eq_inter_ineq_on_number_line():
     )
 
 
+@verifies('alg', task='rearrange')
 def _eq_inter_rearrange_two_step_numeric_var():
-    """Make t the subject of s = (num/den)at² with random coefficients."""
+    """Make t the subject of s = (n/d)t^2 with random coefficients (the coefficient is shown already combined)."""
     num = random.randint(1, 3)
     den = random.choice([2, 4])
     a = random.randint(2, 6)
-    q = rf"Make \(t\) the subject of \(s = \dfrac{{{num}}}{{{den}}}{a}t^2\)."
-    s = (rf"Multiply both sides by {den}: \(s \times {den} = {num}{a}t^2\)<br>"
-         rf"Divide both sides by {num * a}: "
-         rf"\(t^2 = \dfrac{{{den}s}}{{{num * a}}}\)<br>"
-         rf"Square root: "
-         rf"<strong>\(t = \sqrt{{\dfrac{{{den}s}}{{{num * a}}}}}\)</strong>")
-    hint = "Clear the fraction, isolate t², then square root."
+    c = Fraction(num * a, den)
+    cn, cd = c.numerator, c.denominator
+    if cd == 1:
+        coeff_tex = str(cn) if cn != 1 else ""
+        q = rf"Make \(t\) the subject of \(s = {coeff_tex}t^2\)."
+        s = (rf"Divide both sides by {cn}: "
+             rf"\(t^2 = \dfrac{{s}}{{{cn}}}\)<br>"
+             rf"Square root: "
+             rf"<strong>\(t = \sqrt{{\dfrac{{s}}{{{cn}}}}}\)</strong>")
+        hint = "Isolate t², then square root."
+        inner = f's/{cn}'
+    else:
+        q = rf"Make \(t\) the subject of \(s = \dfrac{{{cn}}}{{{cd}}}t^2\)."
+        s = (rf"Multiply both sides by {cd}: \({cd}s = {cn}t^2\)<br>"
+             rf"Divide both sides by {cn}: "
+             rf"\(t^2 = \dfrac{{{cd}s}}{{{cn}}}\)<br>"
+             rf"Square root: "
+             rf"<strong>\(t = \sqrt{{\dfrac{{{cd}s}}{{{cn}}}}}\)</strong>")
+        hint = "Clear the fraction, isolate t², then square root."
+        inner = f'{cd}s/{cn}'
     return q, s, hint, 3, _eq_algebraic_answer(
-        _eq_subj_formula('t', _eq_subj_sqrt(f'{den}s/{num * a}')),
+        _eq_subj_formula('t', _eq_subj_sqrt(inner)),
         subject='t',
-        format_hint=f'Enter the expression after t =, e.g. √({den}s/{num * a})',
+        format_hint=f'Enter the expression after t =, e.g. √({inner})',
     )
 
 
+@verifies('alg', task='solve_system')
 def _eq_inter_simult_elimination_general_var():
     """Simultaneous equations with random coefficients (elimination required)."""
     x_ans = random.randint(2, 6)
@@ -1011,6 +1073,7 @@ def _eq_inter_savings_inequality_var():
     already = random.randint(10, 60)
     target = already + weekly * random.randint(4, 10)
     weeks_needed = (target - already + weekly - 1) // weekly
+    record('alg', task='ineq_linear_rec', have=already, per=weekly, target=target, var='w')
     q = (rf"Mia has saved £{already}. She saves £{weekly} each week. "
          rf"Write and solve an inequality to find how many more weeks \(w\) she needs "
          rf"to have at least £{target}.")
@@ -1027,6 +1090,7 @@ def _eq_inter_savings_inequality_var():
 # DIFFICULT (20 variants)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='solve_poly')
 def _eq_diff_quadratic_factorise():
     r1 = random.randint(-6, -1)
     r2 = random.randint(1, 6)
@@ -1052,6 +1116,7 @@ def _rtxt(r):
     return str(r)
 
 
+@verifies('alg', task='solve_poly')
 def _eq_diff_quadratic_formula():
     # Choose a, b, c with real roots and discriminant a perfect square for clean answers
     pairs = [
@@ -1070,9 +1135,10 @@ def _eq_diff_quadratic_formula():
          rf"\(x = \dfrac{{{-b_v} \pm {sqrt_disc}}}{{{2*a_v}}}\)<br>"
          rf"<strong>\(x = {_rtxt(r1)}\) or \(x = {_rtxt(r2)}\)</strong>")
     hint = "Identify a, b, c then substitute into the formula. Simplify the discriminant first."
-    return q, s, hint, 4, _eq_quadratic_roots_answer(r1, r2)
+    return q, s, hint, 4, _eq_quadratic_roots_answer(r1, '1/3' if abs(r2 - 1 / 3) < 1e-9 else r2)
 
 
+@verifies('alg', task='complete_square')
 def _eq_diff_complete_square():
     p = random.randint(1, 5)
     q_val = random.choice([-9, -8, -7, -5, -4, -3, 7, 8, 11])
@@ -1088,6 +1154,7 @@ def _eq_diff_complete_square():
     return q, s, hint, 3, _eq_completed_square_answer('plus', p, k)
 
 
+@verifies('alg', task='solve_system')
 def _eq_diff_simult_non_integer():
     # ax + by = c; dx + ey = f — multiply to eliminate, fractional answer OK
     x_ans_n, x_ans_d = random.choice([(3, 2), (5, 2), (7, 3), (4, 3)])
@@ -1117,6 +1184,7 @@ def _eq_diff_quadratic_from_geometry():
     b = random.randint(1, 4)
     x_ans = random.randint(2, 6)
     area = (x_ans + a) * (x_ans + b)
+    record('rect_area_quadratic', a=a, b=b, area=area)
     b_coef = a + b
     c_coef = a * b - area
     c_part = _eq_fmt_quad_poly(0, c_coef)  # constant term only
@@ -1132,6 +1200,7 @@ def _eq_diff_quadratic_from_geometry():
     return q, s, hint, 5, _eq_linear_answer(x_ans)
 
 
+@verifies('alg', task='rearrange')
 def _eq_diff_rearrange_complex():
     q = r"Make \(v\) the subject of \(E = \dfrac{1}{2}mv^2\)."
     s = (r"Multiply both sides by 2: \(2E = mv^2\)<br>"
@@ -1146,6 +1215,7 @@ def _eq_diff_rearrange_complex():
     )
 
 
+@verifies('alg', task='solve_ineq')
 def _eq_diff_quadratic_ineq():
     r1, r2 = sorted(random.sample(range(-3, 5), 2))
     # (x - r1)(x - r2) < 0 → r1 < x < r2
@@ -1162,6 +1232,7 @@ def _eq_diff_quadratic_ineq():
     return q, s, hint, 4, _eq_compound_inequality_answer('x', '<', r1, '<', r2)
 
 
+@verifies('alg', task='solve_linear')
 def _eq_diff_fractional_eq():
     ans = random.randint(2, 6)
     a = random.randint(1, 4)
@@ -1186,6 +1257,7 @@ def _eq_diff_fractional_eq():
     return q, s, hint, 4, _eq_linear_answer(ans * a * b // (a + b))
 
 
+@verifies('alg', task='solve_poly')
 def _eq_diff_disguised_quadratic():
     """Biquadratic x⁴ + bx² + c = 0 with random perfect-square roots."""
     s1, s2 = sorted(random.sample(range(1, 7), 2))
@@ -1206,6 +1278,7 @@ def _eq_diff_disguised_quadratic():
     )
 
 
+@verifies('alg', task='solve_system_nonlinear')
 def _eq_diff_simult_one_quadratic():
     """Simultaneous y = x² and y = ax + b with random integer intersection points."""
     r1 = random.randint(-4, -1)
@@ -1238,6 +1311,7 @@ def _eq_diff_simult_one_quadratic():
     return q, s, hint, 5, _eq_coord_pairs_answer(r1, y1, r2, y2)
 
 
+@verifies('alg', task='rearrange')
 def _eq_diff_subject_appears_twice():
     q = r"Make \(x\) the subject of \(ax + b = cx + d\)."
     s = (r"Collect \(x\)-terms on one side:<br>"
@@ -1249,6 +1323,7 @@ def _eq_diff_subject_appears_twice():
     return q, s, hint, 4, _eq_formula_fraction_answer('d-b', 'a-c', 'x')
 
 
+@verifies('alg', task='identity_steps')
 def _eq_diff_prove_identity():
     q = (
         r"Show that \((x + 3)^2 - (x - 3)^2 \equiv 12x\) by completing the proof steps below."
@@ -1279,6 +1354,7 @@ def _eq_diff_prove_identity():
     )
 
 
+@verifies('alg', task='solve_poly')
 def _eq_diff_complete_square_solve():
     p = random.randint(1, 4)
     k = random.choice([7, 11, 12, 20, 23])
@@ -1294,6 +1370,7 @@ def _eq_diff_complete_square_solve():
     return q, s, hint, 4, _eq_quadratic_roots_answer(round(-p + math.sqrt(rhs), 2), round(-p - math.sqrt(rhs), 2))
 
 
+@verifies('alg', task='solve_linear')
 def _eq_diff_rearrange_fraction():
     """Make x the subject of (x + p)/(x − q) = k with random numerical coefficients."""
     p = random.randint(1, 6)
@@ -1326,7 +1403,8 @@ def _eq_diff_quadratic_from_consecutive():
     # n(n+2) = k → n² + 2n - k = 0
     n = random.randint(4, 10)
     k = n * (n + 2)
-    q = (rf"The product of two consecutive even integers is {k}. "
+    record('consecutive_product', derived=('step',), k=k, step=2)
+    q = (rf"The product of two positive consecutive even integers is {k}. "
          rf"Form a quadratic equation and find the integers.")
     s = (rf"Let the integers be \(n\) and \(n+2\).<br>"
          rf"\(n(n+2) = {k}\)<br>"
@@ -1335,9 +1413,10 @@ def _eq_diff_quadratic_from_consecutive():
          rf"\(n = {n}\) (taking the positive value)<br>"
          rf"<strong>The integers are {n} and {n+2}.</strong>")
     hint = "Let the integers be n and n+2, multiply, rearrange to 0, then factorise."
-    return q, s, hint, 4, _eq_number_pair_answer(n, n + 2, "First integer", "Second integer")
+    return q, s, hint, 4, _eq_number_pair_answer(n, n + 2, "Smaller integer", "Larger integer")
 
 
+@verifies('alg', task='rearrange')
 def _eq_diff_rearrange_kinetic_var():
     """Rearrange kinetic energy with a random mass value."""
     m = random.randint(2, 12)
@@ -1355,6 +1434,7 @@ def _eq_diff_rearrange_kinetic_var():
     )
 
 
+@verifies('alg', task='solve_poly')
 def _eq_diff_quadratic_formula_generated():
     """Quadratic formula with coefficients built from random integer roots."""
     r1 = random.randint(-6, -1)
@@ -1374,6 +1454,7 @@ def _eq_diff_quadratic_formula_generated():
     return q, s, hint, 4, _eq_quadratic_roots_answer(r1, r2)
 
 
+@verifies('alg', task='solve_system')
 def _eq_diff_simult_linear_pair_var():
     """Two linear simultaneous equations with fully random integer solutions."""
     x_ans = random.randint(2, 7)
@@ -1411,6 +1492,8 @@ def _eq_diff_cafe_prices_multipart():
     n_c2, n_t2 = random.randint(4, 9), random.randint(12, 18)
     total1 = n_c1 * coffee_p + n_t1 * tea_p
     total2 = n_c2 * coffee_p + n_t2 * tea_p
+    record('alg', task='two_equations_multipart', v1='c', v2='t', a1=n_c1, b1=n_t1, c1=total1,
+           a2=n_c2, b2=n_t2, c2=total2)
     coeff_c = n_c1 * n_t2 - n_c2 * n_t1
     rhs_c = total1 * n_t2 - total2 * n_t1
     intro = (
@@ -1461,7 +1544,11 @@ def _eq_diff_phone_plans_multipart():
     rate_a = random.randint(6, 12)
     fixed_b = fixed_a + random.randint(8, 18)
     rate_b = random.randint(3, rate_a - 1)
+    while ((fixed_b - fixed_a) * 100) % (rate_a - rate_b):      # the plans must cost the same at a whole number of minutes
+        fixed_b = fixed_a + random.randint(8, 18)
+        rate_b = random.randint(3, rate_a - 1)
     m_equal = (fixed_b - fixed_a) * 100 // (rate_a - rate_b)
+    record('alg', task='phone_plans', fixed_a=fixed_a, rate_a=rate_a, fixed_b=fixed_b, rate_b=rate_b)
     intro = (
         f"Two mobile plans charge a fixed monthly fee plus a cost per minute of calls.<br>"
         f"<strong>Plan A:</strong> £{fixed_a} per month plus {rate_a}p per minute.<br>"

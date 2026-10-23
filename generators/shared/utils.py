@@ -1,6 +1,7 @@
 import json
 import random
 import re
+from fractions import Fraction
 
 from generators.shared.text_keywords import text_keyword_labels
 from generators.shared.sql_checker import normalize_sql_query
@@ -197,14 +198,39 @@ def make_problem(question, solution, hint, difficulty, marks, level, subject, to
     return data
 
 
+def proof_steps_prereqs(required, after):
+    """Direct prerequisites for an ordered proof: ``{step id: [ids that must come before it]}``.
+
+    ``required`` is the canonical order (the key shown to pupils). ``after`` maps a 1-based position in that
+    order to the positions it needs first; a position not listed needs the position just before it (the
+    first needs nothing), so a proof with no ``after`` is a strict chain. Prerequisites must point at
+    earlier positions, which keeps the canonical order valid. The server checks a pupil's order against
+    this, so two logically independent steps may come either way round.
+    """
+    after = dict(after or {})
+    n = len(required)
+    for pos, needs in after.items():
+        if not isinstance(pos, int) or not 1 <= pos <= n:
+            raise ValueError('proof_steps after: position out of range')
+        if any((not isinstance(p, int)) or not 1 <= p < pos for p in needs):
+            raise ValueError('proof_steps after: a step may only need earlier steps')
+    out = {}
+    for pos in range(1, n + 1):
+        needs = after.get(pos, (pos - 1,) if pos > 1 else ())
+        out[required[pos - 1]] = [required[p - 1] for p in sorted(set(needs))]
+    return out
+
+
 def proof_steps_answer(required_ids, bank, *, order_matters=True, format_hint=None,
-                       pick_count=None):
+                       pick_count=None, after=None):
     """Plan C payload: select correct proof steps from a shuffled bank.
 
     bank items are dicts ``{id, text}``. ``required_ids`` lists the correct step
     ids (in order when ``order_matters`` is True). When ``pick_count`` is set,
     ``required_ids`` lists every correct option id and the student must choose
     exactly that many (any correct combination; distractors in the bank fail).
+    ``after`` (ordered proofs only, see ``proof_steps_prereqs``) names the steps that are logically
+    independent of each other; the listed order stays the one canonical key.
     """
     required = tuple(str(i) for i in required_ids)
     steps = []
@@ -234,6 +260,10 @@ def proof_steps_answer(required_ids, bank, *, order_matters=True, format_hint=No
         payload['pick_count'] = pick_count
     if format_hint:
         payload['format_hint'] = format_hint
+    if after is not None:
+        if not order_matters:
+            raise ValueError('proof_steps after needs an ordered proof')
+        payload['step_prereqs'] = proof_steps_prereqs(required, after)
     return payload
 
 
@@ -247,6 +277,15 @@ def signed_term(value):
     return f"- {abs(value)}" if value < 0 else f"+ {value}"
 
 
+def coef(value, var=''):
+    """A coefficient written the way a pupil expects: 1 -> 'x', -1 -> '-x', 3 -> '3x' (never '1x')."""
+    if value == 1 and var:
+        return var
+    if value == -1 and var:
+        return f"-{var}"
+    return f"{value}{var}"
+
+
 def _graded_format_num(val):
     if isinstance(val, float) and val == int(val):
         return str(int(val))
@@ -255,8 +294,27 @@ def _graded_format_num(val):
     return str(val)
 
 
-def graded_answer_number(val):
-    return {'type': 'number', 'value': val}
+def graded_answer_number(val, form=None):
+    out = {'type': 'number', 'value': val}
+    if form:
+        out['form'] = form
+    return out
+
+
+def grid_estimate_tolerance(grid_spacing):
+    """Tolerance for a value read off a graph: half a grid square on the axis being read.
+
+    ``grid_spacing`` is the distance, in the units of that axis, between neighbouring gridlines (or labelled
+    ticks where the graph has no gridlines). Half a square is what a careful pupil can read from a printed
+    graph, and it scales with the graph, so a 1-unit grid is marked much more tightly than a 10-unit grid.
+    Returns an int when the half is whole, otherwise a number to at most 2 decimal places.
+    """
+    half = Fraction(str(grid_spacing)) / 2
+    if half <= 0:
+        raise ValueError('grid_spacing must be positive')
+    if half.denominator == 1:
+        return int(half)
+    return float(round(half, 2))
 
 
 def graded_answer_keyword(val):
@@ -388,9 +446,14 @@ def problem_extra_from_graded_answer(raw):
                 'answer_type': 'number',
                 'answer_format_hint': 'Enter a number',
             }
+            if raw.get('form'):
+                extra['answer_form'] = raw['form']
         elif raw_type == 'number_estimate':
             value = raw.get('value')
             tolerance = raw.get('tolerance')
+            if raw.get('grid_spacing') is not None:
+                # the graph's own grid sets the band; an explicit tolerance is only the fallback
+                tolerance = grid_estimate_tolerance(raw['grid_spacing'])
             if value is not None and tolerance is not None:
                 extra = {
                     'correct_answer_raw': (
@@ -524,6 +587,8 @@ def problem_extra_from_graded_answer(raw):
                         'Enter a fraction (e.g. 3/4)',
                     ),
                 }
+                if raw.get('form'):
+                    extra['answer_form'] = raw['form']
         elif raw_type == 'algebraic':
             text = str(raw.get('value') or '')
             if text.strip():
@@ -539,6 +604,8 @@ def problem_extra_from_graded_answer(raw):
                     extra['answer_subject'] = raw['subject']
                 if raw.get('wrong_hint'):
                     extra['answer_wrong_hint'] = raw['wrong_hint']
+                if raw.get('form'):
+                    extra['answer_form'] = raw['form']
         elif raw_type == 'number_fields':
             values = raw.get('values') or ()
             labels = raw.get('labels') or ()
@@ -661,4 +728,8 @@ def proof_steps_problem_extra(raw):
     }
     if pick_count is not None:
         extra['answer_pick_count'] = pick_count
+    prereqs = raw.get('step_prereqs')
+    if prereqs and order_matters and pick_count is None:
+        # Server-side grading data only: never put in the client payload (app._problem_client_payload).
+        extra['answer_step_prereqs'] = {str(k): [str(i) for i in v] for k, v in prereqs.items()}
     return extra

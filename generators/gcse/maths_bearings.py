@@ -5,6 +5,7 @@ Graded practice variants return (question, solution, hint, marks, raw).
 Proof-only variants stay as 4-tuples (no auto-grade).
 """
 from generators.shared.rounding import round_half_up as round, fmt_dp
+from generators.shared.verify_hook import record
 import random
 import math
 from generators.shared.utils import make_problem, signed_term, bracket_neg
@@ -493,6 +494,7 @@ def _brg_found_cardinal():
     q = f"Write down the 3-figure bearing of {name}.<br>{svg}"
     s = (f"Bearings are measured <em>clockwise from North</em>.<br>"
          f"<strong>{_brg(b)}</strong>")
+    record('brg_compass_name', name=name)
     return q, s, "N=000°, E=090°, S=180°, W=270°", 1, _brg_answer(b)
 
 
@@ -505,6 +507,7 @@ def _brg_found_back_lt_180():
     s = (f"The bearing of B from A = {_brg(b)} &lt; 180°, so add 180°:<br>"
          f"{b} + 180 = {back}<br>"
          f"<strong>{_brg(back)}</strong>")
+    record('brg_back', b=b)
     return q, s, "If bearing < 180°, add 180°. If bearing ≥ 180°, subtract 180°.", 2, _brg_answer(back)
 
 
@@ -517,6 +520,7 @@ def _brg_found_back_gt_180():
     s = (f"The bearing of B from A = {_brg(b)} &gt; 180°, so subtract 180°:<br>"
          f"{b} − 180 = {back}<br>"
          f"<strong>{_brg(back)}</strong>")
+    record('brg_back', b=b)
     return q, s, "If bearing ≥ 180°, subtract 180°. If bearing < 180°, add 180°.", 2, _brg_answer(back)
 
 
@@ -526,6 +530,7 @@ def _brg_found_compass_NE():
     q = f"A compass direction is given as N{x}°E. Write this as a 3-figure bearing."
     s = (f"N{x}°E means {x}° clockwise from North toward East.<br>"
          f"<strong>{_brg(b)}</strong>")
+    record('brg_compass', ns='N', x=x, ew='E')
     return q, s, "N[x]°E means x° from North toward East = bearing x°", 1, _brg_answer(b)
 
 
@@ -536,6 +541,7 @@ def _brg_found_compass_SW():
     s = (f"S{x}°W means {x}° from South toward West.<br>"
          f"South = 180°, then add {x}°:<br>"
          f"<strong>{_brg(b)}</strong>")
+    record('brg_compass', ns='S', x=x, ew='W')
     return q, s, "S[x]°W: start at South (180°) and add x°.", 1, _brg_answer(b)
 
 
@@ -546,6 +552,7 @@ def _brg_found_compass_NW():
     s = (f"N{x}°W means {x}° from North toward West.<br>"
          f"North = 360°(=000°), going clockwise {360-x}° gives the same direction as going {x}° anticlockwise from North.<br>"
          f"<strong>{_brg(b)}</strong>")
+    record('brg_compass', ns='N', x=x, ew='W')
     return q, s, "N[x]°W: bearing = 360° − x°", 1, _brg_answer(b)
 
 
@@ -556,6 +563,7 @@ def _brg_found_compass_SE():
     s = (f"S{x}°E means {x}° from South toward East.<br>"
          f"South = 180°. Going {x}° toward East (counterclockwise) = 180° − {x}° = {b}°.<br>"
          f"<strong>{_brg(b)}</strong>")
+    record('brg_compass', ns='S', x=x, ew='E')
     return q, s, "S[x]°E: bearing = 180° − x°", 1, _brg_answer(b)
 
 
@@ -580,6 +588,7 @@ def _brg_found_quadrant():
          f"{b}° lies between "
          f"{'000° and 090°' if 0 < b < 90 else '090° and 180°' if 90 < b < 180 else '180° and 270°' if 180 < b < 270 else '270° and 360°'}.<br>"
          f"<strong>{quad}</strong>")
+    record('brg_quadrant', b=b)
     return q, s, "N=000°, E=090°, S=180°, W=270°", 1, _brg_keyword_answer(quad_key)
 
 
@@ -591,6 +600,7 @@ def _brg_found_angle_between():
     s = (f"Angle between = larger − smaller<br>"
          f"= {b2}° − {b1}°<br>"
          f"<strong>= {diff}°</strong>")
+    record('brg_angle_between', b1=b1, b2=b2)
     return q, s, "Subtract the smaller bearing from the larger.", 1, diff
 
 
@@ -604,6 +614,7 @@ def _brg_found_alternate_angles():
          f"(alternate angles between parallel North lines).<br>"
          f"Bearing of A from B = 180° + {b}° = {back}°<br>"
          f"<strong>{_brg(back)}</strong>")
+    record('brg_back', b=b)
     return q, s, "Alternate angles between parallel lines are equal. Then add 180° to the South direction.", 3, _brg_answer(back)
 
 
@@ -618,8 +629,9 @@ def _brg_found_cointerior():
          f"Find x, and hence find the bearing of A from B.")
     s = (f"Co-interior angles (same side of transversal, between parallel lines) sum to 180°.<br>"
          f"x = 180° − {b}° = {coint}°<br>"
-         f"The bearing of A from B = 360° − {coint}° + 180°? No — easier: back bearing = {b}° + 180° = {back}°<br>"
+         f"The bearing of A from B = back bearing = {b}° + 180° = {back}°<br>"
          f"<strong>x = {coint}°; bearing of A from B = {_brg(back)}</strong>")
+    record('brg_cointerior', b=b)
     return q, s, "Co-interior angles sum to 180°. Back bearing = original ± 180°.", 3, _brg_fields_answer((coint, back), ("Co-interior angle x (°)", "Bearing of A from B"))
 
 
@@ -637,6 +649,7 @@ def _brg_found_straight_line():
     s = (f"The East direction has bearing 090°.<br>"
          f"Angle between bearing {_brg(b)} and East (090°) = |90° − {b}°| = {angle_from_E}°<br>"
          f"<strong>{angle_from_E}°</strong>")
+    record('brg_angle_from_east', b=b)
     return q, s, "The East direction has bearing 090°. Find the difference.", 2, angle_from_E
 
 
@@ -646,6 +659,7 @@ def _brg_found_reading():
     q = (f"The diagram shows the bearing of B from A.<br>{svg}<br>"
          f"Write down the bearing of B from A as a 3-figure bearing.")
     s = f"Reading from the diagram (clockwise from North):<br><strong>{_brg(b)}</strong>"
+    record('brg_identity', b=b)
     return q, s, "Count degrees clockwise from the North arrow.", 1, _brg_answer(b)
 
 
@@ -661,6 +675,7 @@ def _brg_found_east_of_south():
     s = (f"South = 180°. Moving {x}° toward West (clockwise from South) adds {x}°.<br>"
          f"Bearing = 180° + {x}° = {b2}°<br>"
          f"<strong>{_brg(b2)}</strong>")
+    record('brg_compass', ns='S', x=x, ew='W')
     return q, s, "South = 180°. West of South → add the angle beyond 180°.", 1, _brg_answer(b2)
 
 
@@ -674,6 +689,7 @@ def _brg_found_back_context():
          f"What bearing should the pilot fly?")
     s = (f"The return bearing = {b}° + 180° = {back}°<br>"
          f"<strong>{_brg(back)}</strong>")
+    record('brg_back', b=b)
     return q, s, "Return bearing = original bearing ± 180°.", 2, _brg_answer(back)
 
 
@@ -685,6 +701,7 @@ def _brg_found_three_cities():
          f"Find the angle QPR between the directions PQ and PR.")
     s = (f"Angle QPR = {b2}° − {b1}° = {diff}°<br>"
          f"<strong>{diff}°</strong>")
+    record('brg_angle_between', b1=b1, b2=b2)
     return q, s, "Subtract the two bearings to find the angle between the directions.", 1, diff
 
 
@@ -703,6 +720,7 @@ def _brg_inter_east_component():
          f"= {d} × sin({b}°)<br>"
          f"= {d} × {round(math.sin(math.radians(b)), 4)}<br>"
          f"<strong>= {east} km East</strong>")
+    record('brg_legs', legs=[(d, b)], want=('east',))
     return q, s, "East component = d × sin(bearing)", 3, east
 
 
@@ -716,6 +734,7 @@ def _brg_inter_north_component():
          f"= {d} × cos({b}°)<br>"
          f"= {d} × {round(math.cos(math.radians(b)), 4)}<br>"
          f"<strong>= {north} km North</strong>")
+    record('brg_legs', legs=[(d, b)], want=('north',))
     return q, s, "North component = d × cos(bearing)", 3, north
 
 
@@ -731,6 +750,7 @@ def _brg_inter_distance_pythagoras():
          f"= √({d_north**2} + {d_east**2})<br>"
          f"= √{d_north**2 + d_east**2}<br>"
          f"<strong>= {dist} km</strong>")
+    record('pyth_hyp', a=d_north, b=d_east)
     return q, s, "Use Pythagoras: d = √(North² + East²)", 3, dist
 
 
@@ -746,6 +766,7 @@ def _brg_inter_bearing_from_components():
          f"= {round(math.degrees(math.atan(east/north)), 1)}°<br>"
          f"Since East > 0 and North > 0 (NE quadrant), the bearing is in the correct range.<br>"
          f"<strong>{_brg(b)}</strong>")
+    record('brg_en', east=east, north=north, want=('bearing',))
     return q, s, "bearing = arctan(East ÷ North); check the quadrant.", 3, _brg_answer(b)
 
 
@@ -756,7 +777,7 @@ def _brg_inter_two_legs_distance():
     d2 = random.randint(20, 60)
     e_total = round(_E(d1, b1) + _E(d2, b2), 2)
     n_total = round(_N_comp(d1, b1) + _N_comp(d2, b2), 2)
-    dist = round(math.sqrt(e_total**2 + n_total**2), 2)
+    dist = round(math.hypot(_E(d1, b1) + _E(d2, b2), _N_comp(d1, b1) + _N_comp(d2, b2)), 2)  # unrounded totals
     q = (f"A ship travels {d1} km on bearing {_brg(b1)}, then {d2} km on bearing {_brg(b2)}. "
          f"Find the straight-line distance from the starting point to 2 d.p.")
     s = (f"Leg 1: East = {d1} × sin{b1}° = {round(_E(d1,b1),2)} km, "
@@ -764,8 +785,9 @@ def _brg_inter_two_legs_distance():
          f"Leg 2: East = {d2} × sin{b2}° = {round(_E(d2,b2),2)} km, "
          f"North = {d2} × cos{b2}° = {round(_N_comp(d2,b2),2)} km<br>"
          f"Total East = {e_total} km, Total North = {n_total} km<br>"
-         f"Distance = √({bracket_neg(e_total)}² + {bracket_neg(n_total)}²) = √{round(e_total**2 + n_total**2,2)}<br>"
+         f"Distance = √({bracket_neg(e_total)}² + {bracket_neg(n_total)}²) = √{round(e_total**2 + n_total**2,2)} (working with unrounded values)<br>"
          f"<strong>= {dist} km</strong>")
+    record('brg_legs', legs=[(d1, b1), (d2, b2)], want=('dist',))
     return q, s, "Find East and North components of each leg, add, then use Pythagoras.", 4, dist
 
 
@@ -784,6 +806,7 @@ def _brg_inter_two_legs_bearing():
          f"Bearing = arctan({round(e_total,2)} / {round(n_total,2)})<br>"
          f"Since East &gt; 0 and North {'&gt; 0 → NE quadrant' if n_total > 0 else '&lt; 0 → SE quadrant'}<br>"
          f"<strong>Bearing ≈ {_brg(brg)}</strong>")
+    record('brg_legs', legs=[(d1, b1), (d2, b2)], want=('bearing',))
     return q, s, "Total East and North components, then bearing = arctan(E/N) checking quadrant.", 4, _brg_answer(brg)
 
 
@@ -793,9 +816,10 @@ def _brg_inter_find_angle_in_triangle():
     b = random.choice([30, 45, 60])
     east = round(_E(d, b), 1)
     q = (f"A ship leaves port on a bearing of {_brg(b)} and travels {d} km. "
-         f"How far East of the port is the ship? Give exact answer to 1 d.p.")
+         f"How far East of the port is the ship? Give your answer to 1 d.p.")
     s = (f"East = {d} × sin({b}°) = {d} × {round(math.sin(math.radians(b)),4)}<br>"
          f"<strong>= {east} km</strong>")
+    record('brg_legs', legs=[(d, b)], want=('east',))
     return q, s, f"East = d × sin(bearing)", 2, east
 
 
@@ -812,6 +836,7 @@ def _brg_inter_find_distance_from_bearing_angle():
          f"Angle from South = arctan({east}/{south}) = {round(math.degrees(math.atan(east/south)),1)}°<br>"
          f"Bearing = 180° − {round(math.degrees(math.atan(east/south)),1)}° = {b}°<br>"
          f"<strong>Distance = {dist} km, Bearing = {_brg(b)}</strong>")
+    record('brg_en', east=east, north=-south, want=('dist', 'bearing'))
     return q, s, "Distance uses Pythagoras. Bearing: identify quadrant from E/N signs.", 4, _brg_fields_answer((dist, int(round(b))), ("Distance (km)", "Bearing"))
 
 
@@ -822,13 +847,15 @@ def _brg_inter_scale_map():
     b = random.randint(20, 340)
     while abs(b - 180) < 20 or abs(b) < 20:
         b = random.randint(20, 340)
+    note = "" if (round(map_cm * 10) * scale) % 10000 == 0 else " Give your answer to 2 d.p."
     q = (f"On a map with scale 1 : {scale:,}, two towns are {map_cm} cm apart. "
          f"Town B is on a bearing of {_brg(b)} from Town A. "
-         f"What is the real distance between the towns in km?")
+         f"What is the real distance between the towns in km?{note}")
     s = (f"Real distance = map distance × scale ÷ 100 000<br>"
          f"= {map_cm} × {scale:,} ÷ 100 000<br>"
          f"= {map_cm * scale:,.0f} cm ÷ 100 000<br>"
          f"<strong>= {real_km} km</strong>")
+    record('ratio_map_scale', scale=scale, cm=map_cm, to='km')
     return q, s, "Real distance = map distance × scale. Convert cm to km (÷ 100 000).", 3, real_km
 
 
@@ -841,6 +868,7 @@ def _brg_inter_return_bearing_context():
          f"What bearing must the pilot fly on the return journey?")
     s = (f"Return bearing = {b}° + 180° = {back}°<br>"
          f"<strong>{_brg(back)}</strong>")
+    record('brg_back', b=b)
     return q, s, "Return bearing = original bearing + 180° (if < 180°).", 2, _brg_answer(back)
 
 
@@ -851,11 +879,13 @@ def _brg_inter_bearing_from_south():
     dist = round(math.sqrt(east**2 + south**2), 2)
     b = _BrgAngle(_bearing_from_EN(east, -south))
     q = (f"A ship travels {south} km South then {east} km East. "
-         f"Find the bearing of the ship from its starting point, to the nearest degree.")
+         f"Find the bearing of the ship from its starting point (to the nearest degree) "
+         f"and its distance from the starting point (to 2 d.p.).")
     s = (f"Net displacement: {east} km East, {south} km South (= −{south} km North)<br>"
          f"SE quadrant: angle from South = arctan(East/South) = arctan({east}/{south}) = {round(math.degrees(math.atan(east/south)),1)}°<br>"
          f"Bearing = 180° − {round(math.degrees(math.atan(east/south)),1)}° = {b}°<br>"
          f"<strong>Bearing = {_brg(b)}, Distance = {dist} km</strong>")
+    record('brg_en', east=east, north=-south, want=('bearing', 'dist'))
     return q, s, "Find angle from South using arctan(East/South); bearing = 180° - that angle (SE quadrant).", 4, _brg_fields_answer((int(round(b)), dist), ("Bearing", "Distance (km)"))
 
 
@@ -872,6 +902,7 @@ def _brg_inter_speed_time():
     s = (f"Distance = speed × time = {speed} × {time_h} = {d} km<br>"
          f"North = {d} × cos({b}°) = <strong>{north} km</strong><br>"
          f"East  = {d} × sin({b}°) = <strong>{east} km</strong>")
+    record('brg_speed_time', speed=speed, time=time_h, b=b, want=('north', 'east'))
     return q, s, "Distance = speed × time, then split into North and East components.", 3, _brg_fields_answer((north, east), ("North (km)", "East (km)"))
 
 
@@ -888,6 +919,7 @@ def _brg_inter_angle_from_north_line():
          f"This angle is measured from North clockwise to BA... but in the {('NE' if b < 90 else 'SE' if b < 180 else 'SW' if b < 270 else 'NW')} case, "
          f"bearing of A from B = {b}° + 180° = {back}°<br>"
          f"<strong>{_brg(back)}</strong>")
+    record('brg_back', b=b)
     return q, s, "Use alternate angles: angle at B = bearing of B from A. Then add 180°.", 3, _brg_answer(back)
 
 
@@ -904,6 +936,7 @@ def _brg_inter_area_from_bearing():
          f"= ½ × {d1} × {d2} × sin({b}°)<br>"
          f"= ½ × {d1} × {d2} × {round(math.sin(math.radians(b)),4)}<br>"
          f"<strong>= {area} km²</strong>")
+    record('trig_area', a=d1, b=d2, angle=b)
     return q, s, "Area of triangle = ½ × a × b × sin(C), where C is the included angle.", 4, area
 
 
@@ -930,6 +963,7 @@ def _brg_inter_single_leg_multipart():
         rf"<strong>c)</strong> Bearing = arctan({east} ÷ {north}) = {round(math.degrees(math.atan(east/north)), 1)}° "
         rf"(check quadrant) → <strong>{_brg(brg_check)}</strong>"
     )
+    record('brg_legs', legs=[(d, b)], want=('east', 'north', 'bearing'))
     return q, s, "East = d sin θ, North = d cos θ; then bearing = arctan(East ÷ North) with quadrant check.", 5, _brg_fields_answer((east, north, int(round(brg_check))), ("East (km)", "North (km)", "Bearing"))
 
 
@@ -946,7 +980,7 @@ def _brg_inter_two_ships_port_multipart():
     Bx, By = _E(d2, b2), _N_comp(d2, b2)
     e_AB = round(Ax - Bx, 2)
     n_AB = round(Ay - By, 2)
-    brg_AB = _BrgAngle(_bearing_from_EN(e_AB, n_AB))
+    brg_AB = _BrgAngle(_bearing_from_EN(Ax - Bx, Ay - By))  # unrounded displacement
     svg = _port_two_rays_svg(b1, b2)
     intro = (
         f"Two ships leave port O at the same time. Ship A sails {d1} km on bearing {_brg(b1)} "
@@ -966,6 +1000,7 @@ def _brg_inter_two_ships_port_multipart():
         rf"Displacement A − B: East = {e_AB} km, North = {n_AB} km<br>"
         rf"Bearing of A from B = <strong>{_brg(brg_AB)}</strong>"
     )
+    record('brg_two_ships', b1=b1, d1=d1, b2=b2, d2=d2, want=('angle', 'ab', 'bearing_a_from_b'))
     return q, s, "Angle = difference in bearings; cosine rule for AB; bearing from relative East/North.", 5, _brg_fields_answer((angle, AB, int(round(brg_AB))), ("Angle at O (°)", "Distance AB (km)", "Bearing of A from B"))
 
 
@@ -977,7 +1012,7 @@ def _brg_inter_two_leg_voyage_multipart():
     d2 = random.randint(30, 65)
     e_total = round(_E(d1, b1) + _E(d2, b2), 2)
     n_total = round(_N_comp(d1, b1) + _N_comp(d2, b2), 2)
-    dist = round(math.sqrt(e_total**2 + n_total**2), 2)
+    dist = round(math.hypot(_E(d1, b1) + _E(d2, b2), _N_comp(d1, b1) + _N_comp(d2, b2)), 2)  # unrounded totals
     svg = _journey_legs_svg([(b1, d1), (b2, d2)], labels=["O", "B", "C"])
     intro = (
         f"A ship leaves O and sails {d1} km on bearing {_brg(b1)}, "
@@ -994,6 +1029,7 @@ def _brg_inter_two_leg_voyage_multipart():
         rf"<strong>b)</strong> North = {round(_N_comp(d1,b1),2)} {signed_term(round(_N_comp(d2,b2),2))} = <strong>{n_total} km</strong><br>"
         rf"<strong>c)</strong> OC = √({bracket_neg(e_total)}² + {bracket_neg(n_total)}²) = <strong>{dist} km</strong>"
     )
+    record('brg_legs', legs=[(d1, b1), (d2, b2)], want=('east', 'north', 'dist'))
     return q, s, "Resolve each leg into East and North; add; then Pythagoras for OC.", 5, _brg_fields_answer((e_total, n_total, dist), ("East (km)", "North (km)", "Distance OC (km)"))
 
 
@@ -1022,6 +1058,7 @@ def _brg_diff_cosine_rule_distance():
          f"= {round(AB2,2)}<br>"
          f"AB = √{round(AB2,2)}<br>"
          f"<strong>= {AB} km</strong>")
+    record('brg_two_ships', b1=b1, d1=d1, b2=b2, d2=d2, want=('ab',))
     return q, s, "Find the angle at O between the two paths, then apply the cosine rule.", 5, AB
 
 
@@ -1049,7 +1086,7 @@ def _brg_diff_sine_rule_bearing():
     d2 = random.randint(30, 70)
     e_total2 = _E(d_AB, b_AB) + _E(d2, b2)
     n_total2 = _N_comp(d_AB, b_AB) + _N_comp(d2, b2)
-    dist_AC = round(math.sqrt(e_total2**2 + n_total2**2), 2)
+    dist_AC = round(math.sqrt(e_total2**2 + n_total2**2), 1)
     brg_C = _BrgAngle(_bearing_from_EN(e_total2, n_total2))
     q = (f"A ship leaves A and sails {d_AB} km on bearing {_brg(b_AB)} to B, "
          f"then {d2} km on bearing {_brg(b2)} to C. "
@@ -1059,9 +1096,10 @@ def _brg_diff_sine_rule_bearing():
          f"East of C from B = {d2}sin{b2}° = {round(_E(d2,b2),2)} km<br>"
          f"North of C from B = {d2}cos{b2}° = {round(_N_comp(d2,b2),2)} km<br>"
          f"Total East = {round(e_total2,2)} km, Total North = {round(n_total2,2)} km<br>"
-         f"AC = √({bracket_neg(round(e_total2,2))}² + {bracket_neg(round(n_total2,2))}²) = <strong>{dist_AC} km</strong><br>"
+         f"AC = √({bracket_neg(round(e_total2,2))}² + {bracket_neg(round(n_total2,2))}²) = <strong>{dist_AC} km</strong> (1 d.p.)<br>"
          f"Bearing = arctan({round(e_total2,2)}/{round(n_total2,2)}) → quadrant check<br>"
          f"<strong>Bearing of C from A = {_brg(brg_C)}</strong>")
+    record('brg_legs', legs=[(d_AB, b_AB), (d2, b2)], want=('dist', 'bearing'))
     return q, s, "Resolve each leg into East/North. Add components. Use arctan for bearing, Pythagoras for distance.", 5, _brg_fields_answer((dist_AC, int(round(brg_C))), ("Distance AC (km)", "Bearing of C from A"))
 
 
@@ -1083,6 +1121,7 @@ def _brg_diff_return_to_start():
          f"Return distance = √({bracket_neg(round(e_net,2))}² + {bracket_neg(round(n_net,2))}²) = <strong>{d_home} km</strong><br>"
          f"Return bearing: E={round(-e_net,2)}, N={round(-n_net,2)} → "
          f"<strong>{_brg(brg_home_from_end)}</strong>")
+    record('brg_legs', legs=[(d1, b1), (d2, b2)], want=('dist', 'return_bearing'))
     return q, s, "Find net E/N displacement. To return: negate both. Distance = Pythagoras, bearing = arctan.", 5, _brg_fields_answer((d_home, int(round(brg_home_from_end))), ("Return distance (km)", "Return bearing"))
 
 
@@ -1102,6 +1141,7 @@ def _brg_diff_cosine_find_angle():
          f"= {d_OA**2+d_OB**2} − {bracket_neg(round(2*d_OA*d_OB*math.cos(math.radians(angle_O)),2))}<br>"
          f"= {round(d_OA**2+d_OB**2-2*d_OA*d_OB*math.cos(math.radians(angle_O)),2)}<br>"
          f"<strong>AB = {d_AB} km, angle AOB = {angle_O}°</strong>")
+    record('brg_two_ships', b1=b1, d1=d_OA, b2=b2, d2=d_OB, want=('ab', 'angle'))
     return q, s, "Angle at O = difference in bearings. Then cosine rule: c² = a² + b² - 2ab·cos(C).", 5, _brg_fields_answer((d_AB, angle_O), ("Distance AB (km)", "Angle AOB (°)"))
 
 
@@ -1118,8 +1158,8 @@ def _brg_diff_find_bearing_of_third_point():
     By = _N_comp(d_OB, b_OB)
     e_AB = round(Ax - Bx, 2)
     n_AB = round(Ay - By, 2)
-    brg_AB = _BrgAngle(_bearing_from_EN(e_AB, n_AB))
-    dist_AB = round(math.sqrt(e_AB**2 + n_AB**2), 2)
+    brg_AB = _BrgAngle(_bearing_from_EN(Ax - Bx, Ay - By))  # unrounded displacement
+    dist_AB = round(math.hypot(Ax - Bx, Ay - By), 1)
     q = (f"From port O, ship A sails on bearing {_brg(b_OA)} for {d_OA} km "
          f"and ship B sails on bearing {_brg(b_OB)} for {d_OB} km. "
          f"Find the bearing of A from B (to the nearest degree) and the distance AB (to 1 d.p.).")
@@ -1128,6 +1168,7 @@ def _brg_diff_find_bearing_of_third_point():
          f"Displacement A − B: East = {e_AB} km, North = {n_AB} km<br>"
          f"AB = √({bracket_neg(e_AB)}² + {bracket_neg(n_AB)}²) = <strong>{dist_AB} km</strong><br>"
          f"Bearing of A from B = arctan({e_AB}/{n_AB}), quadrant check → <strong>{_brg(brg_AB)}</strong>")
+    record('brg_two_ships', b1=b_OA, d1=d_OA, b2=b_OB, d2=d_OB, want=('ab', 'bearing_a_from_b'))
     return q, s, "Find coordinates of A and B. Compute A−B displacement. arctan for bearing, Pythagoras for distance.", 6, _brg_fields_answer((dist_AB, int(round(brg_AB))), ("Distance AB (km)", "Bearing of A from B"))
 
 
@@ -1143,6 +1184,7 @@ def _brg_diff_elevation_and_bearing():
          f"= {horiz} × tan({angle_elev}°)<br>"
          f"= {horiz} × {round(math.tan(math.radians(angle_elev)),4)}<br>"
          f"<strong>= {height} m</strong>")
+    record('trig_side', angle=angle_elev, known=horiz, known_kind='adj', find_kind='opp')
     return q, s, "height = horizontal distance × tan(angle of elevation). The bearing is not needed here.", 3, height
 
 
@@ -1152,7 +1194,7 @@ def _brg_diff_three_legs():
     b3, d3 = b2+random.randint(40,90), random.randint(30,70)
     e = _E(d1,b1)+_E(d2,b2)+_E(d3,b3)
     n = _N_comp(d1,b1)+_N_comp(d2,b2)+_N_comp(d3,b3)
-    dist = round(math.sqrt(e**2+n**2), 2)
+    dist = round(math.sqrt(e**2+n**2), 1)
     brg  = _BrgAngle(_bearing_from_EN(e, n))
     q = (f"A ship leaves port O and sails: {d1} km on bearing {_brg(b1)}, "
          f"then {d2} km on bearing {_brg(b2)}, then {d3} km on bearing {_brg(b3)}. "
@@ -1161,6 +1203,7 @@ def _brg_diff_three_legs():
          f"N = {round(_N_comp(d1,b1),2)} {signed_term(round(_N_comp(d2,b2),2))} {signed_term(round(_N_comp(d3,b3),2))} = {round(n,2)} km<br>"
          f"Distance = √({bracket_neg(round(e,2))}² + {bracket_neg(round(n,2))}²) = <strong>{dist} km</strong><br>"
          f"<strong>Bearing ≈ {_brg(brg)}</strong>")
+    record('brg_legs', legs=[(d1, b1), (d2, b2), (d3, b3)], want=('dist', 'bearing'))
     return q, s, "Resolve all three legs into East and North. Sum each. Then Pythagoras + arctan.", 6, _brg_fields_answer((dist, int(round(brg))), ("Distance (km)", "Bearing"))
 
 
@@ -1176,7 +1219,7 @@ def _brg_diff_sine_rule_find_distance():
         angle_C = 180 - angle_A - angle_B
     # BC/sin(A) = AB/sin(C)
     AB = d1
-    BC = round(AB * math.sin(math.radians(angle_A)) / math.sin(math.radians(angle_C)), 2)
+    BC = round(AB * math.sin(math.radians(angle_A)) / math.sin(math.radians(angle_B)), 2)  # OB / sin(OAB) = OA / sin(OBA)
     q = (f"In a triangle OAB, OA = {d1} km, angle OAB = {angle_A}°, angle OBA = {angle_B}°. "
          f"Find the length OB to 2 d.p. using the sine rule.")
     s = (f"Angle at O = 180° − {angle_A}° − {angle_B}° = {angle_C}°<br>"
@@ -1184,36 +1227,32 @@ def _brg_diff_sine_rule_find_distance():
          f"OB = OA × sin({angle_A}°) / sin({angle_B}°)<br>"
          f"= {d1} × {round(math.sin(math.radians(angle_A)),4)} / {round(math.sin(math.radians(angle_B)),4)}<br>"
          f"<strong>= {round(d1*math.sin(math.radians(angle_A))/math.sin(math.radians(angle_B)),2)} km</strong>")
+    record('trig_sine_side', known_angle=angle_B, known_side=d1, target_angle=angle_A)
     return q, s, "Sine rule: a/sin(A) = b/sin(B). Identify the correct angle opposite each side.", 5, BC
 
 
 def _brg_diff_position_from_two_bearings():
-    """Two observers with known bearings to a ship — find the ship's position."""
-    sep = random.randint(60, 120)   # separation of observers (East)
+    """Two observers with known bearings to a ship: find the distance from A to the ship."""
+    sep = random.randint(60, 120)           # B is due East of A
     b_from_A = random.randint(30, 70)
-    b_from_B = random.randint(100, 150)  # B is due East of A
-    # Ship position (intersection of two rays):
-    # From A(0,0): tan(b_from_A) = E/N  → E = N·tan(b_from_A)
-    # From B(sep,0): direction to ship is b_from_B
-    #   E - sep = N·tan(b_from_B - 90°) ... complex
-    # Use: E = N·tan(b_A) and (E-sep) / N = tan(bearing_from_B adjusted)
+    b_from_B_actual = random.randint(290, 345)
+    # East = N tan(bearing from A) and East - sep = N tan(bearing from B), N = distance north of AB.
     ta = math.tan(math.radians(b_from_A))
-    tb = math.tan(math.radians(b_from_B))
-    # Ship at (E_s, N_s) from A, so E_s = N_s*ta
-    # From B(sep,0): (E_s - sep)/N_s = sin(b_from_B)/cos(b_from_B)... only works if bearing is in right range
-    # Simpler: place ship at known position, compute bearings
-    N_ship = random.randint(40, 90)
-    E_ship_from_A = round(N_ship * ta, 1)
-    b_from_B_actual = _BrgAngle(_bearing_from_EN(E_ship_from_A - sep, N_ship))
+    tb = math.tan(math.radians(b_from_B_actual))
+    N_ship = sep / (ta - tb)
+    E_ship_from_A = N_ship * ta
     q = (f"Observer A and observer B are {sep} km apart, with B due East of A. "
          f"They observe a ship: A sees it on bearing {_brg(b_from_A)} and B sees it on bearing {_brg(b_from_B_actual)}. "
          f"Find the distance from A to the ship, to 1 d.p.")
-    dist_AS = round(math.sqrt(E_ship_from_A**2 + N_ship**2), 1)
-    s = (f"From A: East = N·tan({b_from_A}°). From B: East − {sep} = N·tan({_brg(b_from_B_actual)} adjusted).<br>"
-         f"Ship is {N_ship} km North and {E_ship_from_A} km East of A.<br>"
-         f"Distance AS = √({bracket_neg(E_ship_from_A)}² + {bracket_neg(N_ship)}²) = √{round(E_ship_from_A**2+N_ship**2,1)}<br>"
+    dist_AS = round(math.hypot(E_ship_from_A, N_ship), 1)
+    s = (f"Let N be the distance of the ship north of the line AB.<br>"
+         f"From A: East = N·tan({b_from_A}°). From B: East − {sep} = N·tan({b_from_B_actual}°).<br>"
+         f"Subtracting: {sep} = N(tan {b_from_A}° − tan {b_from_B_actual}°), so N = {fmt_dp(N_ship, 2)} km "
+         f"and East = {fmt_dp(E_ship_from_A, 2)} km.<br>"
+         f"Distance AS = √({fmt_dp(E_ship_from_A, 2)}² + {fmt_dp(N_ship, 2)}²) (unrounded values used)<br>"
          f"<strong>= {dist_AS} km</strong>")
-    return q, s, "Resolve each bearing ray into E/N; set E components equal to find N, then compute distance.", 6, dist_AS
+    record('brg_triangulate', sep=sep, bearing_a=b_from_A, bearing_b=b_from_B_actual)
+    return q, s, "Resolve each bearing ray into East and North; the East offsets differ by the separation, which gives N.", 6, dist_AS
 
 
 def _brg_diff_cosine_reverse():
@@ -1226,7 +1265,7 @@ def _brg_diff_cosine_reverse():
     d_AB = round(math.sqrt(d1**2 + d2**2 - 2*d1*d2*math.cos(math.radians(angle_O))), 2)
     # Now reverse: given d1, d2, d_AB, find angle_O
     cos_O = round((d1**2 + d2**2 - d_AB**2) / (2 * d1 * d2), 4)
-    angle_O_check = round(math.degrees(math.acos(cos_O)), 1)
+    angle_O_check = round(math.degrees(math.acos((d1**2 + d2**2 - d_AB**2) / (2 * d1 * d2))), 1)  # unrounded cosine
     q = (f"Two ships leave port O. Ship A sails on bearing {_brg(b1)} and is now {d1} km from O. "
          f"Ship B is {d_AB} km from A and {d2} km from O. "
          f"Find the angle AOB at the port, to 1 d.p.")
@@ -1237,6 +1276,7 @@ def _brg_diff_cosine_reverse():
          f"= {cos_O}<br>"
          f"angle O = arccos({cos_O})<br>"
          f"<strong>= {angle_O_check}°</strong>")
+    record('trig_cosine_angle', a=d_AB, b=d1, c=d2)
     return q, s, "Cosine rule: cos(C) = (a²+b²-c²)/(2ab). Identify which angle is opposite which side.", 5, angle_O_check
 
 
@@ -1256,6 +1296,7 @@ def _brg_diff_bearing_algebraic():
          f"<strong>{_brg(back)}</strong><br><br>"
          f"(ii) Bearing of C from A = {b}° + {extra}° = {angle_C}°<br>"
          f"<strong>{_brg(angle_C)}</strong>")
+    record('brg_algebraic', a=a, extra=extra)
     return q, s, "Back bearing = bearing ± 180°. Express each bearing numerically.", 3, _brg_fields_answer((back, angle_C), ("Bearing of A from B", "Bearing of C from A"))
 
 
@@ -1276,6 +1317,7 @@ def _brg_diff_prove_bearing():
         f"(Since {b2}° &gt; 180°, subtract 180°.)<br>"
         f"<strong>{_brg(back_b2)} ✓</strong>"
     )
+    record('brg_back_pair', b=b2)
     return (
         q, s, "Back bearing = bearing ± 180°. Use the A→B leg, then reverse it.", 3,
         _brg_fields_answer(
@@ -1305,6 +1347,7 @@ def _brg_diff_complex_polygon_journey():
          f"Return: East = {round(-e_net,2)} km, North = {round(-n_net,2)} km<br>"
          f"Distance = √({bracket_neg(round(e_net,2))}² + {bracket_neg(round(n_net,2))}²) = <strong>{d_return} km</strong><br>"
          f"<strong>Bearing = {_brg(brg_return)}</strong>")
+    record('brg_legs', legs=legs, want=('dist', 'return_bearing'))
     return q, s, "Sum all East and North components. Negate to get return displacement. Pythagoras + arctan.", 6, _brg_fields_answer((d_return, int(round(brg_return))), ("Return distance (km)", "Return bearing"))
 
 
@@ -1323,6 +1366,7 @@ def _brg_diff_lighthouse():
          f"North = {dist}×cos({b_from_ship}°) = {n_L} km.<br>"
          f"As the ship travels due North, the East offset from the path stays constant.<br>"
          f"Shortest distance = East component = <strong>{closest} km</strong>")
+    record('brg_legs', legs=[(dist, b_from_ship)], want=('east',))
     return q, s, "The shortest distance from the ship's northward track to the lighthouse = the East displacement.", 4, closest
 
 
@@ -1346,6 +1390,7 @@ def _brg_diff_speed_meeting():
          f"Combined speed = {v1} + {v2} = {v1+v2} km/h<br>"
          f"Time = distance ÷ combined speed = {sep2} ÷ {v1+v2}<br>"
          f"<strong>= {time_h} hours</strong>")
+    record('brg_meeting', sep=sep2, v1=v1, v2=v2)
     return q, s, "Combined speed = sum of speeds (moving toward each other). Time = distance ÷ speed.", 4, time_h
 
 
@@ -1364,7 +1409,7 @@ def _brg_diff_cosine_port_multipart():
     Bx, By = _E(d2, b2), _N_comp(d2, b2)
     e_BA = round(Bx - Ax, 2)
     n_BA = round(By - Ay, 2)
-    brg_BA = _BrgAngle(_bearing_from_EN(e_BA, n_BA))
+    brg_BA = _BrgAngle(_bearing_from_EN(Bx - Ax, By - Ay))  # unrounded displacement
     svg = _port_two_rays_svg(b1, b2)
     intro = (
         f"From port O, ship A is {d1} km away on bearing {_brg(b1)} "
@@ -1382,6 +1427,7 @@ def _brg_diff_cosine_port_multipart():
         rf"<strong>c)</strong> B − A: East = {e_BA} km, North = {n_BA} km → "
         rf"<strong>{_brg(brg_BA)}</strong>"
     )
+    record('brg_two_ships', b1=b1, d1=d1, b2=b2, d2=d2, want=('angle', 'ab', 'bearing_b_from_a'))
     return q, s, "Angle at O from bearings; cosine rule; displacement B−A then arctan with quadrant.", 6, _brg_fields_answer((angle, AB, int(round(brg_BA))), ("Angle AOB (°)", "Distance AB (km)", "Bearing of B from A"))
 
 
@@ -1391,10 +1437,12 @@ def _brg_diff_return_voyage_multipart():
     d1 = random.randint(40, 80)
     b2 = b1 + random.randint(55, 115)
     d2 = random.randint(40, 80)
-    e_net = round(_E(d1, b1) + _E(d2, b2), 2)
-    n_net = round(_N_comp(d1, b1) + _N_comp(d2, b2), 2)
-    d_home = round(math.sqrt(e_net**2 + n_net**2), 2)
-    brg_home = _BrgAngle(_bearing_from_EN(-e_net, -n_net))
+    e_exact = _E(d1, b1) + _E(d2, b2)
+    n_exact = _N_comp(d1, b1) + _N_comp(d2, b2)
+    e_net = round(e_exact, 2)
+    n_net = round(n_exact, 2)
+    d_home = round(math.hypot(e_exact, n_exact), 2)  # from the unrounded components
+    brg_home = _BrgAngle(_bearing_from_EN(-e_exact, -n_exact))
     svg = _journey_legs_svg([(b1, d1), (b2, d2)])
     intro = (
         f"A yacht sails {d1} km on bearing {_brg(b1)}, then {d2} km on bearing {_brg(b2)}."
@@ -1411,6 +1459,7 @@ def _brg_diff_return_voyage_multipart():
         rf"<strong>c)</strong> Return: East = {round(-e_net,2)} km, North = {round(-n_net,2)} km<br>"
         rf"Distance = <strong>{d_home} km</strong>, bearing = <strong>{_brg(brg_home)}</strong>"
     )
+    record('brg_legs', legs=[(d1, b1), (d2, b2)], want=('east', 'north', 'dist', 'return_bearing'))
     return q, s, "Sum components for the outbound journey; negate for the return; Pythagoras and arctan.", 6, _brg_fields_answer((e_net, n_net, d_home, int(round(brg_home))), ("Net East (km)", "Net North (km)", "Return distance (km)", "Return bearing"))
 
 
@@ -1422,10 +1471,12 @@ def _brg_diff_three_leg_multipart():
     d2 = random.randint(25, 55)
     b3 = b2 + random.randint(40, 75)
     d3 = random.randint(25, 55)
-    e = round(_E(d1, b1) + _E(d2, b2) + _E(d3, b3), 2)
-    n = round(_N_comp(d1, b1) + _N_comp(d2, b2) + _N_comp(d3, b3), 2)
-    dist = round(math.sqrt(e**2 + n**2), 2)
-    brg = _BrgAngle(_bearing_from_EN(e, n))
+    e_exact = _E(d1, b1) + _E(d2, b2) + _E(d3, b3)
+    n_exact = _N_comp(d1, b1) + _N_comp(d2, b2) + _N_comp(d3, b3)
+    e = round(e_exact, 2)
+    n = round(n_exact, 2)
+    dist = round(math.hypot(e_exact, n_exact), 2)  # from the unrounded components
+    brg = _BrgAngle(_bearing_from_EN(e_exact, n_exact))
     svg = _journey_legs_svg([(b1, d1), (b2, d2), (b3, d3)], labels=["O", "P", "Q", "R"])
     intro = (
         f"A ship leaves O and sails: {d1} km on {_brg(b1)}, "
@@ -1443,6 +1494,7 @@ def _brg_diff_three_leg_multipart():
         rf"<strong>c)</strong> OR = √({bracket_neg(e)}² + {bracket_neg(n)}²) = <strong>{dist} km</strong>, "
         rf"bearing = <strong>{_brg(brg)}</strong>"
     )
+    record('brg_legs', legs=[(d1, b1), (d2, b2), (d3, b3)], want=('east', 'north', 'dist', 'bearing'))
     return q, s, "Resolve all three legs; sum East and North; Pythagoras and arctan for OR.", 6, _brg_fields_answer((e, n, dist, int(round(brg))), ("East (km)", "North (km)", "Distance OR (km)", "Bearing of R from O"))
 
 
@@ -1580,11 +1632,11 @@ _BRG_MCQ_BANK = [
     },
     {
         "q": "From port O, ship A is 70 km away on bearing 025° and ship B is 90 km away on bearing 095°. Find AB using the cosine rule (to 2 d.p.).",
-        "opts": ["A  98.62 km", "B  160.00 km", "C  72.11 km", "D  110.45 km"],
+        "opts": ["A  93.22 km", "B  160.00 km", "C  72.11 km", "D  110.45 km"],
         "ans": "A", "marks": 3, "difficulty": "difficult",
         "sol": ("Angle AOB = 095° − 025° = 70°.<br>"
-                "AB² = 70² + 90² − 2×70×90×cos(70°) ≈ 4900 + 8100 − 3275 = 9725.<br>"
-                "AB = √9725 ≈ <strong>98.62 km</strong>. Answer: A"),
+                "AB² = 70² + 90² − 2×70×90×cos(70°) ≈ 4900 + 8100 − 4309.5 = 8690.5.<br>"
+                "AB = √8690.5 ≈ <strong>93.22 km</strong>. Answer: A"),
         "hint": "Angle at O = difference in bearings; then AB² = OA² + OB² − 2·OA·OB·cos(angle).",
     },
 ]

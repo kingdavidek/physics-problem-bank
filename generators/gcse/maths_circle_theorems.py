@@ -21,6 +21,7 @@ Seven theorems covered:
   CT7 – Alternate segment theorem
 """
 from generators.shared.rounding import round_half_up as round, fmt_dp
+from generators.shared.verify_hook import record
 import random
 import math
 from models import svg_kit
@@ -44,7 +45,7 @@ def _ct_num(value, label):
     return graded_answer_number_fields((value,), (label,))
 
 
-def _ct_proof_steps_answer(steps, distractors, *, format_hint='Put the proof steps in the correct order'):
+def _ct_proof_steps_answer(steps, distractors, *, format_hint='Put the proof steps in the correct order', after=None):
     bank = [{'id': f's{i + 1}', 'text': text} for i, text in enumerate(steps)]
     for j, text in enumerate(distractors):
         bank.append({'id': f'd{j + 1}', 'text': text})
@@ -55,6 +56,7 @@ def _ct_proof_steps_answer(steps, distractors, *, format_hint='Put the proof ste
         bank,
         order_matters=True,
         format_hint=format_hint,
+        after=after,
     )
 
 
@@ -193,13 +195,21 @@ def _svg_bounds_points(points, margin=14):
     return min(xs) - margin, min(ys) - margin, max(xs) + margin, max(ys) + margin
 
 
-def _svg_wrap(x0, y0, x1, y1, inner, pad=_SVG_PAD, title='Circle theorem diagram'):
-    """Accessible circle-theorem diagram; geometry is scaled then wrapped."""
+def _svg_wrap(x0, y0, x1, y1, inner, pad=_SVG_PAD, title='Circle theorem diagram', accurate=False):
+    """Accessible circle-theorem diagram; geometry is scaled then wrapped.
+
+    Most layouts are fixed sketches whatever the angles in the question, so they carry the exam note
+    "Not drawn accurately" (pupils must not measure them). ``accurate=True`` is for diagrams drawn to the
+    given angle."""
     vb_x = x0 * _SVG_SCALE - pad
     vb_y = y0 * _SVG_SCALE - pad
     vb_w = (x1 - x0) * _SVG_SCALE + 2 * pad
     vb_h = (y1 - y0) * _SVG_SCALE + 2 * pad
     body = f'<g transform="scale({_SVG_SCALE})">{inner}</g>'
+    if not accurate:
+        body += (f'<text x="{vb_x + vb_w - 6:.0f}" y="{vb_y + vb_h + 12:.0f}" font-size="13" fill="#666" '
+                 f'text-anchor="end">Not drawn accurately</text>')
+        vb_h += 20
     return str(svg_kit.viewbox_svg(
         vb_x, vb_y, vb_w, vb_h,
         title=title,
@@ -317,7 +327,8 @@ def _svg_ct1(angle_centre, angle_circ=None, show_centre=True):
         + _dot(*O, "#a13544") + _txt(cx + 8, cy + 5, "O", "#a13544", 11, "start", True)
         + _dot(*A, "#1a6fa8") + _txt(A[0] - 10, A[1] - 6, "A", "#1a6fa8", 12, "middle", True)
         + _dot(*B, "#1a6fa8") + _txt(B[0] + 10, B[1] - 6, "B", "#1a6fa8", 12, "middle", True)
-        + _dot(*C, "#059669") + _txt(C[0], C[1] + 14, "C", "#059669", 12, "middle", True)
+        + _dot(*C, "#059669") + _txt(C[0], C[1] + 14, "C", "#059669", 12, "middle", True),
+        accurate=True,          # drawn to the angle at the centre (the verification test measures it)
     )
 
 
@@ -540,7 +551,8 @@ def _svg_ct7(angle, known_at="A"):
         + _dot(*B) + _txt(B[0] + 12, B[1] + 5, "B", "#333", 12, "middle", True)
         + _dot(*C) + _txt(C[0], C[1] - 10, "C", "#059669", 12, "middle", True)
         + _txt(T1[0] - 5, T1[1] + 14, "T", "#a13544", 11, "middle")
-        + _txt(cx, cy + r + 22, "Alternate segment theorem", "#555", 10, "middle")
+        + _txt(cx, cy + r + 22, "Alternate segment theorem", "#555", 10, "middle"),
+        accurate=True,          # the layout is chosen so the drawn angles match the question
     )
 
 
@@ -600,6 +612,7 @@ def _ct_f1_centre_to_circum():
     s = (f"Angle at the centre = 2 × angle at the circumference (same arc, CT1).<br>"
          f"Angle ACB = ½ × angle AOB = ½ × {a_c}°<br>"
          f"<strong>= {a_i}°</strong>")
+    record('circ_half', angle=a_c)
     return q, s, "The angle at the circumference is half the angle at the centre (same arc).", 2, _ct_num(
         a_i, 'Angle ACB (°)'
     )
@@ -614,6 +627,7 @@ def _ct_f2_circum_to_centre():
          f"Find angle AOB.<br>{svg}")
     s = (f"Angle at the centre = 2 × angle at the circumference (CT1).<br>"
          f"Angle AOB = 2 × {a_i}° = <strong>{a_c}°</strong>")
+    record('circ_double', angle=a_i)
     return q, s, "Centre angle = 2 × inscribed angle (same arc).", 2, _ct_num(a_c, 'Angle AOB (°)')
 
 
@@ -627,6 +641,7 @@ def _ct_f3_semicircle_direct():
          f"By CT1: angle ACB = ½ × 180° = 90°.<br>"
          f"This is known as CT2: the angle in a semicircle is always 90°.<br>"
          f"<strong>Angle ACB = 90°</strong>")
+    record('circ_semicircle_90')
     return q, s, "The angle in a semicircle (subtended by the diameter) is always 90°.", 2, _ct_num(
         90, 'Angle ACB (°)'
     )
@@ -642,6 +657,7 @@ def _ct_f4_semicircle_third_angle():
     s = (f"Since AB is a diameter, angle ACB = 90° (CT2).<br>"
          f"Angles in triangle ACB sum to 180°:<br>"
          f"Angle ABC = 180° − 90° − {bac}° = <strong>{abc}°</strong>")
+    record('circ_semi_third', angle=bac)
     return q, s, "Angle in semicircle = 90°. Then use angle sum of triangle = 180°.", 3, _ct_num(
         abc, 'Angle ABC (°)'
     )
@@ -656,6 +672,7 @@ def _ct_f5_same_segment_equal():
     s = (f"Angles in the same segment are equal (CT3).<br>"
          f"C and D subtend the same chord AB from the same arc.<br>"
          f"Angle ADB = angle ACB = <strong>{a}°</strong>")
+    record('circ_same_segment', angle=a)
     return q, s, "Angles subtended by the same chord in the same segment are equal.", 2, _ct_num(
         a, 'Angle ADB (°)'
     )
@@ -669,6 +686,7 @@ def _ct_f6_same_segment_context():
     s = (f"Angles in the same segment (CT3): angle PSQ = angle PRQ "
          f"since P, Q, R, S all lie on the circle and R, S are on the same arc.<br>"
          f"<strong>Angle PSQ = {a}°</strong>")
+    record('circ_same_segment', angle=a)
     return q, s, "Angles subtended by the same chord from the same arc are equal.", 2, _ct_num(
         a, 'Angle PSQ (°)'
     )
@@ -683,6 +701,7 @@ def _ct_f7_cyclic_quad_opposite():
          f"Find angle BCD.<br>{svg}")
     s = (f"Opposite angles of a cyclic quadrilateral sum to 180° (CT4).<br>"
          f"Angle BCD = 180° − {a}° = <strong>{c}°</strong>")
+    record('circ_opposite', angle=a)
     return q, s, "Opposite angles of a cyclic quadrilateral add up to 180°.", 2, _ct_num(c, 'Angle BCD (°)')
 
 
@@ -697,6 +716,7 @@ def _ct_f8_cyclic_quad_two_unknowns():
     s = (f"Opposite angles in a cyclic quadrilateral sum to 180° (CT4).<br>"
          f"Angle ADC = 180° − {b}° = <strong>{d}°</strong><br>"
          f"Angle BCD = 180° − {a}° = <strong>{c}°</strong>")
+    record('circ_cyclic2', a=b, b=a)
     return q, s, "Both pairs of opposite angles in a cyclic quad each sum to 180°.", 3, graded_answer_number_fields(
         (d, c), ('Angle ADC (°)', 'Angle BCD (°)'),
     )
@@ -713,6 +733,7 @@ def _ct_f9_tangent_right_angle():
          f"Angle OTP = 90°<br>"
          f"Angles in triangle OTP: angle TPO = 180° − 90° − {top}° = <strong>{otp}°</strong><br>"
          f"Angle OTP = <strong>90°</strong>")
+    record('circ_tangent_triangle', angle=top)
     return q, s, "Tangent ⊥ radius → angle OTP = 90°. Then use triangle angle sum.", 3, graded_answer_number_fields(
         (90, otp), ('Angle OTP (°)', 'Angle TPO (°)'),
     )
@@ -726,6 +747,7 @@ def _ct_f10_tangent_isosceles():
          f"Angle OAT = {oat}°. Find angle AOT.")
     s = (f"OA = OT (radii) → triangle OAT is isosceles → angle OAT = angle OTA = {oat}°.<br>"
          f"Angle AOT = 180° − {oat}° − {oat}° = <strong>{aot}°</strong>")
+    record('ang_isos_apex', base=oat)
     return q, s, "Radii are equal → isosceles triangle. Angle sum of triangle = 180°.", 3, _ct_num(
         aot, 'Angle AOT (°)'
     )
@@ -740,6 +762,7 @@ def _ct_f11_two_tangents_equal():
          f"Angle APB = {apb}°. Find angle PAB.<br>{svg}")
     s = (f"PA = PB (tangents from same external point, CT6) → triangle PAB is isosceles.<br>"
          f"Angle PAB = angle PBA = (180° − {apb}°) ÷ 2 = {180 - apb}° ÷ 2 = <strong>{pab}°</strong>")
+    record('circ_tangent_base', apex=apb)
     return q, s, "Tangent lengths from an external point are equal → isosceles triangle.", 3, _ct_num(
         pab, 'Angle PAB (°)'
     )
@@ -755,6 +778,7 @@ def _ct_f12_two_tangents_angle_at_centre():
          f"Angle sum = 360°: angle AOB + angle APB + 90° + 90° = 360°.<br>"
          f"Angle AOB = 360° − {apb}° − 180° = {180 - apb}° (non-reflex).<br>"
          f"Reflex angle AOB = 360° − {aob}° = <strong>{360 - aob}°</strong>")
+    record('circ_tangents_reflex', angle=apb)
     return q, s, "Quadrilateral OAPB: angles at A and B are 90°, so angle O + angle P = 180°.", 3, _ct_num(
         360 - aob, 'Reflex angle AOB (°)'
     )
@@ -770,6 +794,7 @@ def _ct_f13_alternate_segment_basic():
     s = (f"By the alternate segment theorem (CT7): the angle between a tangent and a chord "
          f"equals the inscribed angle in the alternate segment.<br>"
          f"Angle ACB = {tab}° → <strong>{tab}°</strong>")
+    record('circ_same_segment', angle=tab)
     return q, s, "Alternate segment theorem: tangent–chord angle = angle in alternate segment.", 2, _ct_num(
         tab, 'Angle ACB (°)'
     )
@@ -786,6 +811,7 @@ def _ct_f14_alternate_segment_straight_line():
          f"(ii) Find the angle between the tangent and AB on the other side.")
     s = (f"(i) Alternate segment theorem (CT7): angle ACB = angle TAB = <strong>{acb}°</strong><br>"
          f"(ii) Angles on a straight line (tangent): other angle = 180° − {tab}° = <strong>{other_tab}°</strong>")
+    record('circ_alt_straight', angle=tab)
     return q, s, "CT7 for (i). Then angles on a straight line sum to 180° for (ii).", 3, graded_answer_number_fields(
         (acb, other_tab), ('Angle ACB (°)', 'Other tangent angle (°)'),
     )
@@ -802,6 +828,7 @@ def _ct_f15_radii_isosceles_ct1():
     s = (f"(i) Triangle OAB is isosceles (OA = OB = radius).<br>"
          f"Angle OAB = angle OBA = (180° − {a_c}°) ÷ 2 = <strong>{base_angle}°</strong><br><br>"
          f"(ii) Angle ACB = ½ × angle AOB (CT1) = ½ × {a_c}° = <strong>{a_i}°</strong>")
+    record('circ_centre_both', centre=a_c)
     return q, s, "OA=OB=radius → isosceles triangle. Then CT1 for the inscribed angle.", 4, graded_answer_number_fields(
         (base_angle, a_i), ('Angle OAB (°)', 'Angle ACB (°)'),
     )
@@ -824,6 +851,7 @@ def _ct_i1_centre_isosceles_multistep():
     s = (f"(i) OA = OB (radii): angle OAB = (180 − {a_c}) ÷ 2 = <strong>{oab}°</strong><br><br>"
          f"(ii) D is on the minor arc. The arc subtended at the centre on the MAJOR arc side = {d_c}°.<br>"
          f"Angle ADB = {d_c}° ÷ 2 = <strong>{d_c // 2}°</strong> (CT1, reflex angle at centre for minor arc)")
+    record('circ_centre_minor', centre=a_c)
     return q, s, "For D on the minor arc: use the reflex centre angle (360°−AOB), then CT1.", 5, graded_answer_number_fields(
         (oab, d_c // 2), ('Angle OAB (°)', 'Angle ADB (°)'),
     )
@@ -843,6 +871,7 @@ def _ct_i2_alternate_segment_plus_parallel():
          f"(ii) BC ∥ tangent at A: angle ABC = angle TAB = {tab}° "
          f"(alternate angles, since BC ∥ tangent and AB is the transversal).<br>"
          f"<strong>Angle ABC = {abc}°</strong>")
+    record('circ_alt_parallel', angle=tab)
     return q, s, "CT7 for (i). For (ii) use alternate angles (parallel lines, transversal AB).", 5, graded_answer_number_fields(
         (acb, abc), ('Angle ACB (°)', 'Angle ABC (°)'),
     )
@@ -859,7 +888,8 @@ def _ct_i3_cyclic_quad_algebra():
     a1, b1, a2, b2, x, angle_a, angle_c = random.choice(combos)
 
     def _term(coef, b):
-        return f"{coef}x" if b == 0 else f"({coef}x + {b})"
+        xs = "x" if coef == 1 else f"{coef}x"          # 'x', never '1x'
+        return xs if b == 0 else f"({xs} + {b})"
 
     q = (f"ABCD is a cyclic quadrilateral. Angle DAB = {_term(a1, b1)}° and angle BCD = {_term(a2, b2)}°. "
          f"These angles are opposite. Find x, and hence find both angles.")
@@ -869,7 +899,8 @@ def _ct_i3_cyclic_quad_algebra():
          f"{a1+a2}x = {180-(b1+b2)}<br>"
          f"x = <strong>{x}</strong><br>"
          f"Angle DAB = {a1}({x}) + {b1} = <strong>{angle_a}°</strong><br>"
-         f"Angle BCD = {a2}({x}) + {b2} = <strong>{angle_c}°</strong>")
+         f"Angle BCD = {'' if a2 == 1 else a2}({x}) + {b2} = <strong>{angle_c}°</strong>")
+    record('circ_cyclic_alg', a1=a1, b1=b1, a2=a2, b2=b2)
     return q, s, "Set opposite angles to sum to 180°, form an equation, and solve for x.", 5, graded_answer_number_fields(
         (x, angle_a, angle_c), ('x', 'Angle DAB (°)', 'Angle BCD (°)'),
     )
@@ -886,6 +917,7 @@ def _ct_i4_tangent_chord_kite():
          f"Quadrilateral OAPB: angles sum to 360°.<br>"
          f"Angle APB = 360° − {aob}° − 90° − 90° = <strong>{apb}°</strong><br>"
          f"Quadrilateral OAPB: {aob}°, 90°, {apb}°, 90° — all sum to 360° ✓")
+    record('circ_two_tangents', p=aob)
     return q, s, "Angle sum in quadrilateral OAPB = 360°. Angles at A and B are both 90°.", 4, _ct_num(
         apb, 'Angle APB (°)'
     )
@@ -895,17 +927,17 @@ def _ct_i5_chord_bisect_pythagoras():
     """Perpendicular from centre bisects chord → Pythagoras."""
     r = random.choice([10, 13, 15, 17, 20, 25])
     d = random.randint(4, r - 2)
-    half_chord = round(math.sqrt(r * r - d * d), 2)
-    chord = round(2 * half_chord, 2)
+    chord = round(2 * math.sqrt(r * r - d * d), 2)
     q = (f"O is the centre of a circle with radius {r} cm. "
          f"The perpendicular from O to chord PQ meets PQ at M. "
-         f"OM = {d} cm. Find the length of chord PQ.")
+         f"OM = {d} cm. Find the length of chord PQ. Give your answer to 2 decimal places.")
     s = (f"The perpendicular from the centre bisects the chord (standard chord theorem).<br>"
          f"Triangle OMP is right-angled at M: OP² = OM² + PM²<br>"
          f"{r}² = {d}² + PM²<br>"
          f"PM² = {r*r} − {d*d} = {r*r - d*d}<br>"
-         f"PM = √{r*r - d*d} = {half_chord} cm<br>"
-         f"PQ = 2 × PM = 2 × {half_chord} = <strong>{chord} cm</strong>")
+         f"PM = √{r*r - d*d}<br>"
+         f"PQ = 2 × PM = 2 × √{r*r - d*d} = <strong>{chord} cm</strong> (2 d.p.)")
+    record('circ_chord_length', r=r, d=d)
     return q, s, "Perpendicular from centre bisects chord. Use Pythagoras in the right triangle.", 4, _ct_num(
         chord, 'PQ (cm)'
     )
@@ -914,6 +946,7 @@ def _ct_i5_chord_bisect_pythagoras():
 def _ct_i6_same_segment_with_isosceles():
     """CT3 + isosceles triangle on the circle."""
     a = random.randint(30, 65)
+    a += a % 2          # keep the apex angle even so the base angles are whole degrees
     # AB is a chord; angle ACB = a. Triangle ACB where CA=CB (isosceles)
     # Then angle CAB = angle CBA = (180-a)/2
     cab = (180 - a) // 2
@@ -923,6 +956,7 @@ def _ct_i6_same_segment_with_isosceles():
          f"(ii) D is on the same arc as C. Find angle ADB.")
     s = (f"(i) CA = CB → triangle CAB isosceles → angle CAB = angle CBA = (180 − {a}°) ÷ 2 = <strong>{cab}°</strong><br>"
          f"(ii) CT3: angles in same segment equal → angle ADB = angle ACB = <strong>{a}°</strong>")
+    record('circ_isos_same_seg', angle=a)
     return q, s, "Isosceles triangle for (i). CT3 for (ii).", 4, graded_answer_number_fields(
         (cab, a), ('Angle CAB (°)', 'Angle ADB (°)'),
     )
@@ -938,6 +972,7 @@ def _ct_i7_ct1_and_ct3_combined():
          f"(ii) Find angle ADB.")
     s = (f"(i) CT1: angle ACB = ½ × {a_c}° = <strong>{a_i}°</strong><br>"
          f"(ii) CT3: C and D are on the same arc (major arc AB), so angle ADB = angle ACB = <strong>{a_i}°</strong>")
+    record('circ_half_twice', centre=a_c)
     return q, s, "CT1 for (i). CT3 for (ii): same segment → same inscribed angle.", 4, graded_answer_number_fields(
         (a_i, a2), ('Angle ACB (°)', 'Angle ADB (°)'),
     )
@@ -960,6 +995,7 @@ def _ct_i8_cyclic_quad_parallel_lines():
          f"AD ∥ BC: angles DAB and ABC are co-interior (same-side interior) → angle ABC = 180° − {a}° = {c}°<br>"
          f"<strong>Angle BCD = {c}°, angle ABC = {c}°</strong><br>"
          f"(The quadrilateral is an isosceles trapezium.)")
+    record('circ_cyclic_parallel', angle=a)
     return q, s, "CT4 for angle BCD. Co-interior angles (AD ∥ BC) for angle ABC.", 5, graded_answer_number_fields(
         (c, b), ('Angle BCD (°)', 'Angle ABC (°)'),
     )
@@ -977,6 +1013,7 @@ def _ct_i9_alternate_segment_and_cyclic():
     s = (f"(i) CT7 (alternate segment theorem): angle ACB = angle TAB = <strong>{acb}°</strong><br>"
          f"(ii) Since angle DAB = angle ACB = {acb}° and DAB, BCD are opposite angles of the cyclic "
          f"quadrilateral ABCD, CT4 gives angle BCD = 180° − {acb}° = <strong>{bcd}°</strong>")
+    record('circ_alt_straight', angle=tab)
     return q, s, "CT7 for the inscribed angle. CT4 for the opposite angle in the cyclic quad.", 5, graded_answer_number_fields(
         (acb, bcd), ('Angle ACB (°)', 'Angle BCD (°)'),
     )
@@ -994,6 +1031,7 @@ def _ct_i10_reflex_centre_angle():
          f"CT1 still applies: the inscribed angle = ½ × (the central angle subtending the same arc).<br>"
          f"The arc on C's side subtends {a_c_reflex}° at the centre (reflex).<br>"
          f"Angle ACB = ½ × {a_c_reflex}° = <strong>{a_i}°</strong> (which is obtuse, as expected for a minor-arc inscribed angle)")
+    record('circ_reflex_half', reflex=a_c_reflex)
     return q, s, "CT1 applies even for reflex angles: inscribed angle = ½ × central angle (same arc).", 4, _ct_num(
         a_i, 'Angle ACB (°)'
     )
@@ -1012,6 +1050,7 @@ def _ct_i11_tangent_from_external_distance():
          f"{d}² = {r}² + PT²<br>"
          f"PT² = {d*d} − {r*r} = {d*d - r*r}<br>"
          f"PT = √{d*d - r*r} = <strong>{tan_len} cm</strong>")
+    record('circ_tangent_length', r=r, ot=d)
     return q, s, "Tangent ⊥ radius (CT5) → right angle at T. Use Pythagoras.", 4, _ct_num(tan_len, 'PT (cm)')
 
 
@@ -1027,6 +1066,7 @@ def _ct_i12_ct1_twice():
          f"CT1 for D (minor arc): the arc on D's side = reflex angle = {360-a_c}°.<br>"
          f"Angle ADB = ½ × {360-a_c}° = <strong>{a_minor}°</strong><br>"
          f"Note: angle ACB + angle ADB = {a_major} + {a_minor} = 180° ✓ (ABCD is a cyclic quad)")
+    record('circ_both_arcs', centre=a_c)
     return q, s, "CT1 for each point. Points on opposite arcs → their inscribed angles sum to 180°.", 5, graded_answer_number_fields(
         (a_major, a_minor), ('Angle ACB (°)', 'Angle ADB (°)'),
     )
@@ -1036,33 +1076,33 @@ def _ct_i13_ct3_in_triangle():
     """CT3: Same segment applied to two different chords."""
     a = random.randint(30, 60)
     b_extra = random.randint(10, 30)
-    q = (f"A, B, C, D lie on a circle. Angle CAD = {a}° and angle CBD = {b_extra}°. "
-         f"(i) Find angle CBD using angles in the same segment for chord CD. "
-         f"(ii) Find angle ABD using angles in the same segment for chord AD.")
-    s = (f"(i) CT3: angle CAD and angle CBD both subtend chord CD from the same arc.<br>"
+    q = (f"A, B, C, D lie on a circle in that order. Angle CAD = {a}° and angle ACB = {b_extra}°. "
+         f"(i) Find angle CBD, using angles in the same segment for chord CD. "
+         f"(ii) Find angle ADB, using angles in the same segment for chord AB.")
+    s = (f"(i) CT3: angle CAD and angle CBD both stand on chord CD from the same arc.<br>"
          f"Angle CBD = angle CAD = <strong>{a}°</strong><br>"
-         f"(ii) CT3: angle ABD = angle ACD (same segment, chord AD)... or as given: {b_extra}° → <strong>{b_extra}°</strong>")
+         f"(ii) CT3: angle ACB and angle ADB both stand on chord AB from the same arc.<br>"
+         f"Angle ADB = angle ACB = <strong>{b_extra}°</strong>")
+    record('circ_same_seg2', a=a, b=b_extra)
     return q, s, "CT3: angles in the same segment are equal for the same chord.", 4, graded_answer_number_fields(
-        (a, b_extra), ('Angle CBD (°)', 'Angle ABD (°)'),
+        (a, b_extra), ('Angle CBD (°)', 'Angle ADB (°)'),
     )
 
 
 def _ct_i14_semicircle_tangent():
-    """CT2 + CT5: angle in semicircle gives 90°, combined with tangent."""
-    bac = random.choice([25, 30, 35, 40, 45, 50])
-    abc = 90 - bac
+    """CT2 + CT7: angle in a semicircle, and the tangent-chord angle at the end of the diameter."""
+    t = random.choice([25, 30, 35, 40, 45, 50])
     q = (f"AB is a diameter of the circle. C is on the circle. "
-         f"A tangent at B makes angle TBC = {abc}° with BC. "
-         f"Find angle BAC and the angle ACT where T is on the tangent.")
-    # angle ACB = 90 (semicircle), angle BAC = bac
-    # angle TBC = abc = angle BAC (alternate segment theorem at B: tangent TB, chord BC, angle TBC = angle BAC)
-    s = (f"CT2: angle ACB = 90° (AB is diameter).<br>"
-         f"In triangle ACB: angle BAC = 180° − 90° − {abc}° = <strong>{bac}°</strong><br>"
-         f"CT7 (alternate segment at B): angle TBC = angle BAC → angle TBC = {bac}° ✓<br>"
-         f"Angle ACT: line AC meets tangent... beyond this question scope.<br>"
-         f"Answer: angle BAC = <strong>{bac}°</strong>")
-    return q, s, "CT2 for angle ACB = 90°. Then triangle angle sum for angle BAC.", 4, _ct_num(
-        bac, 'Angle BAC (°)'
+         f"A tangent at B makes angle TBC = {t}° with BC, where T is on the same side of AB as C. "
+         f"Find (i) angle BAC and (ii) angle ABC.")
+    s = (f"(i) CT7 (alternate segment theorem at B): angle BAC = angle TBC = <strong>{t}°</strong><br>"
+         f"(ii) CT2: angle ACB = 90° (AB is a diameter).<br>"
+         f"In triangle ABC: angle ABC = 180° − 90° − {t}° = <strong>{90 - t}°</strong><br>"
+         f"Check: the tangent at B is perpendicular to AB, so angle TBC + angle ABC = 90°: "
+         f"{t}° + {90 - t}° = 90° ✓")
+    record('circ_alt_semicircle', angle=t)
+    return q, s, "CT7 for angle BAC. CT2 gives a right angle at C, then use the angle sum of a triangle.", 4, graded_answer_number_fields(
+        (t, 90 - t), ('Angle BAC (°)', 'Angle ABC (°)'),
     )
 
 
@@ -1081,6 +1121,7 @@ def _ct_i15_cyclic_quad_exterior_angle():
          f"(ii) Angles BCD and DCE are on a straight line:<br>"
          f"Angle DCE = 180° − {c}° = <strong>{a}°</strong><br>"
          f"Note: the exterior angle of a cyclic quad equals the opposite interior angle.")
+    record('circ_cyclic_ext', angle=a)
     return q, s, "CT4 for (i). Supplementary angles on straight line for (ii). Exterior = opposite interior.", 4, graded_answer_number_fields(
         (c, ext_c), ('Angle BCD (°)', 'Angle DCE (°)'),
     )
@@ -1101,7 +1142,7 @@ def _ct_d1_three_theorems():
         (
             'angle ADB = angle OAB',
             'angle ADB = 180° − angle OAB',
-            'angle ADB = 2 × angle OAB',
+            'angle ADB = 3 × angle OAB',
             'angle ADB = 90° + angle OAB',
         ),
         1,
@@ -1123,6 +1164,7 @@ def _ct_d1_three_theorems():
          f"Adding: angle OAB + angle ADB = (180° − angle AOB)/2 + angle AOB/2 = 90°.<br>"
          f"So <strong>angle ADB = 90° − angle OAB</strong>.<br>"
          f"Check: 90° − {oab}° = {adb}° ✓")
+    record('circ_three', centre=a_c)
     return q, s, "Use isosceles for OAB, CT1 for ACB, CT3 for ADB. Then add the two expressions for OAB and ADB.", 6, graded_answer_number_fields(
         (oab, a_i, adb, rel_raw),
         ('Angle OAB (°)', 'Angle ACB (°)', 'Angle ADB (°)', 'Select the relationship'),
@@ -1171,6 +1213,8 @@ def _ct_d2_prove_angle():
         steps,
         distractors,
         format_hint='Put the proof steps in the correct order',
+        # The two isosceles triangles are independent; both need the radii, and the sum needs both.
+        after={3: (1,), 4: (2, 3)},
     )
 
 
@@ -1185,6 +1229,7 @@ def _ct_d3_complex_cyclic_poly():
     s = (f"CT4 (opposite angles sum to 180°):<br>"
          f"(i) Angle BCD = 180° − {a}° = <strong>{c}°</strong><br>"
          f"(ii) Angle CDA = 180° − {b}° = <strong>{d}°</strong>")
+    record('circ_cyclic2', a=a, b=b)
     return q, s, "Each pair of opposite angles in a cyclic quad sums to 180°.", 4, graded_answer_number_fields(
         (c, d), ('Angle BCD (°)', 'Angle CDA (°)'),
     )
@@ -1250,6 +1295,7 @@ def _ct_d5_find_radius_from_tangent():
          f"sin(angle APO) = OA / PO<br>"
          f"r = PO × sin({angle_apo}°) = {d} × {round(math.sin(math.radians(angle_apo)),4)}<br>"
          f"<strong>r = {r} cm</strong>")
+    record('circ_radius_from_angle', apb=angle_apb, po=d)
     return q, s, "PO bisects angle APB. Right triangle OAP: sin(angle APO) = r/PO.", 5, _ct_num(r, 'Radius (cm)')
 
 
@@ -1264,9 +1310,10 @@ def _ct_d6_three_circle_angles():
     q = (f"O is the centre. Angle AOB = {a_c}°. C is on the major arc. "
          f"A tangent at B makes angle TBC = {abt}° with chord BC. "
          f"(i) Find angle ACB. "
-         f"(ii) ABCD is a cyclic quad with angle ACB as angle DAB. Find angle BCD.")
+         f"(ii) ABCD is a cyclic quadrilateral in which angle DAB is equal to angle ACB. Find angle BCD.")
     s = (f"(i) CT1: angle ACB = ½ × {a_c}° = <strong>{a_i}°</strong><br>"
          f"(ii) CT4: angle BCD = 180° − angle DAB = 180° − {a_i}° = <strong>{bcd}°</strong>")
+    record('circ_centre_cyclic', centre=a_c)
     return q, s, "CT1 for (i). CT4 for (ii).", 5, graded_answer_number_fields(
         (a_i, bcd), ('Angle ACB (°)', 'Angle BCD (°)'),
     )
@@ -1289,6 +1336,7 @@ def _ct_d7_angle_in_cyclic_quad_algebra():
          f"{a1+a2}n + {b1+b2} = 180 → {a1+a2}n = {180-(b1+b2)} → <strong>n = {n}</strong><br>"
          f"Angle DAB = {a1}({n})+{b1} = <strong>{angle_a}°</strong>; "
          f"angle BCD = {a2}({n})+{b2} = <strong>{angle_c}°</strong>")
+    record('circ_cyclic_alg', a1=a1, b1=b1, a2=a2, b2=b2)
     return q, s, "Set opposite angles to sum to 180°. Solve the linear equation for n.", 5, graded_answer_number_fields(
         (n, angle_a, angle_c), ('n', 'Angle DAB (°)', 'Angle BCD (°)'),
     )
@@ -1305,6 +1353,7 @@ def _ct_d8_two_chords_intersect():
     s = (f"When two chords intersect inside a circle, the angle = half the sum of the intercepted arcs.<br>"
          f"Angle PTR = ½(arc PR + arc QS) = ½({a1}° + {a2}°) = ½ × {a1+a2}°<br>"
          f"<strong>= {angle_at_cross}°</strong>")
+    record('circ_chords_angle', arc1=a1, arc2=a2)
     return q, s, "Intersecting chords angle = ½(sum of two intercepted arcs).", 4, _ct_num(
         angle_at_cross, 'Angle PTR (°)'
     )
@@ -1321,6 +1370,7 @@ def _ct_d9_secant_external():
     s = (f"External secant angle = ½(far arc − near arc).<br>"
          f"Angle P = ½({far_arc}° − {near_arc}°) = ½ × {far_arc-near_arc}°<br>"
          f"<strong>= {angle_P}°</strong>")
+    record('circ_secants', far=far_arc, near=near_arc)
     return q, s, "External angle (two secants) = ½(far arc − near arc).", 4, _ct_num(angle_P, 'Angle P (°)')
 
 
@@ -1359,6 +1409,8 @@ def _ct_d10_prove_cyclic():
         steps,
         distractors,
         format_hint='Put the proof steps in the correct order',
+        # Two given facts and the theorem being applied are independent; the conclusion needs all three.
+        after={2: (), 3: (), 4: (1, 2, 3)},
     )
 
 
@@ -1375,6 +1427,7 @@ def _ct_d11_multi_step_tangent_chord():
          f"(ii) Find angle ABC.")
     s = (f"(i) CT7: angle ACB = angle TAB = <strong>{acb}°</strong><br>"
          f"(ii) In triangle ABC: angle ABC = 180° − {acb}° − {bac}° = <strong>{abc_tri}°</strong>")
+    record('circ_alt_triangle', angle=tab, bac=bac)
     return q, s, "CT7 for (i). Triangle angle sum for (ii).", 4, graded_answer_number_fields(
         (acb, abc_tri), ('Angle ACB (°)', 'Angle ABC (°)'),
     )
@@ -1394,6 +1447,7 @@ def _ct_d12_tangent_chord_parallel():
          f"(ii) Find angle ADB (D on arc AC, same segment as C for chord AB).")
     s = (f"(i) CT7: angle ACB = {tab}° → <strong>{tab}°</strong><br>"
          f"(ii) CT3: angle ADB = angle ACB = <strong>{tab}°</strong>")
+    record('circ_alt_parallel', angle=tab)
     return q, s, "CT7 for (i). CT3 for (ii) — same arc, same inscribed angle.", 4, graded_answer_number_fields(
         (tab, adb), ('Angle ACB (°)', 'Angle ADB (°)'),
     )
@@ -1406,7 +1460,7 @@ def _ct_d13_ct1_ct4_ct5_combined():
     d_minor = (360 - a_c) // 2
     q = (f"O is the centre. Angle AOB = {a_c}°. "
          f"C is on the major arc, so angle ACB = {a_i}°. "
-         f"ABCD is cyclic with angle ACB (at C) opposite angle ADB. "
+         f"D is another point on the circle. "
          f"Find: (i) angle ADB when D is on the same major arc, "
          f"(ii) angle ADB when D is on the minor arc, "
          f"(iii) the sum angle ACB + angle ADB when D is on the minor arc.")
@@ -1414,6 +1468,7 @@ def _ct_d13_ct1_ct4_ct5_combined():
          f"(ii) CT1: D on minor arc → angle ADB = ½ × (360 − {a_c})° = ½ × {360-a_c}° = "
          f"<strong>{d_minor}°</strong><br>"
          f"(iii) Sum = {a_i}° + {d_minor}° = <strong>180°</strong> ✓ (they are supplementary — CT4)")
+    record('circ_both_arcs_sum', centre=a_c)
     return q, s, "CT3 when same arc; CT1 with reflex angle when on minor arc; sum = 180° (CT4).", 6, graded_answer_number_fields(
         (a_i, d_minor, 180), ('Angle ADB (same arc) (°)', 'Angle ADB (minor arc) (°)', 'Sum (°)'),
     )
@@ -1429,12 +1484,13 @@ def _ct_d14_chord_and_tangent_lengths():
     perp = round(r * math.cos(math.radians(angle_arc / 2)), 2)
     q = (f"A circle has radius {r} cm. A chord PQ subtends an angle of {angle_arc}° at the centre O. "
          f"(i) Find the length of chord PQ. "
-         f"(ii) Find the perpendicular distance from O to PQ.")
+         f"(ii) Find the perpendicular distance from O to PQ. Give your answers to 2 decimal places.")
     s = (f"Draw OM perpendicular to PQ (M is midpoint of PQ, chord bisector theorem).<br>"
          f"Angle POM = {angle_arc}° ÷ 2 = {angle_arc//2}°<br>"
          f"(i) PM = r × sin({angle_arc//2}°) = {r} × {round(math.sin(math.radians(angle_arc//2)),4)} = {fmt_dp(r * math.sin(math.radians(angle_arc // 2)), 4)} cm<br>"
          f"PQ = 2 × PM = {fmt_dp(2 * r * math.sin(math.radians(angle_arc // 2)), 4)} ≈ <strong>{chord} cm</strong> (2 d.p.)<br>"
          f"(ii) OM = r × cos({angle_arc//2}°) = {r} × {round(math.cos(math.radians(angle_arc//2)),4)} = <strong>{perp} cm</strong>")
+    record('circ_chord_perp', r=r, angle=angle_arc)
     return q, s, "Perpendicular from centre bisects chord. Use trig in the right triangle.", 5, graded_answer_number_fields(
         (chord, perp), ('PQ (cm)', 'Perpendicular distance OM (cm)'),
     )
@@ -1454,6 +1510,7 @@ def _ct_d15_algebraic_full():
          f"(ii) CT1 (D on minor arc): angle ADB = ½ × (360° − {a_c}°) = ½ × {360-a_c}° = <strong>{adb}°</strong><br>"
          f"(iii) angle ACB + angle ADB = {a_i}° + {adb}° = <strong>180°</strong> ✓<br>"
          f"This is because ACBD forms a cyclic quadrilateral (CT4).")
+    record('circ_both_arcs', centre=a_c)
     return q, s, "CT1 twice (different arcs). Sum = 180° is a consequence of CT4.", 6, graded_answer_number_fields(
         (a_i, adb), ('Angle ACB (°)', 'Angle ADB (°)'),
     )

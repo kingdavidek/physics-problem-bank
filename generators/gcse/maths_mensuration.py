@@ -6,6 +6,7 @@ Exact-π answers use answer_type pi_multiple (coefficient + π UI).
 Final answers are wrapped in <strong> tags.
 """
 from generators.shared.rounding import round_half_up as round, fmt_dp
+from generators.shared.verify_hook import record
 import random
 import math
 from fractions import Fraction
@@ -172,6 +173,7 @@ def _mens_found_rect_area():
     s = (f"Area of a rectangle = length × width<br>"
          f"\\(= {l} \\times {w}\\)<br>"
          f"<strong>\\(= {area}\\text{{ cm}}^2\\)</strong>")
+    record('product', a=l, b=w)
     return q, s, "Area = l × w", 1, area
 
 
@@ -182,6 +184,7 @@ def _mens_found_rect_perimeter():
     q = f"Find the perimeter of a rectangle with length {l} cm and width {w} cm."
     s = (f"Perimeter = 2(l + w) = 2({l} + {w}) = 2 × {l+w}<br>"
          f"<strong>= {P} cm</strong>")
+    record('mens_rect_perimeter', l=l, w=w)
     return q, s, "Perimeter = 2(l + w)", 1, P
 
 
@@ -194,6 +197,7 @@ def _mens_found_triangle_area():
     s = (f"Area = ½ × base × height<br>"
          f"= ½ × {b} × {h}<br>"
          f"<strong>= {area} cm²</strong>")
+    record('mens_tri_area', b=b, h=h)
     return q, s, "Area = ½ × b × h", 1, area
 
 
@@ -206,6 +210,7 @@ def _mens_found_parallelogram_area():
     s = (f"Area of a parallelogram = base × perpendicular height<br>"
          f"= {b} × {h}<br>"
          f"<strong>= {area} cm²</strong>")
+    record('product', a=b, b=h)
     return q, s, "Area = base × perpendicular height (not the slant)", 2, area
 
 
@@ -220,6 +225,7 @@ def _mens_found_trapezium_area():
          f"= ½ × ({a} + {b}) × {h}<br>"
          f"= ½ × {a+b} × {h}<br>"
          f"<strong>= {area} cm²</strong>")
+    record('mens_trapezium', a=a, b=b, h=h)
     return q, s, "Area = ½(a + b)h", 2, area
 
 
@@ -232,6 +238,7 @@ def _mens_found_circle_circumference():
          f"Give your answer to 2 decimal places.<br>{svg}")
     s = (f"C = πd = π × {d}<br>"
          f"<strong>= {circ} cm</strong>")
+    record('mens_circumference', r=r)
     return q, s, "C = πd = 2πr", 2, circ
 
 
@@ -245,6 +252,7 @@ def _mens_found_circle_area():
          f"= π × {r}²<br>"
          f"= π × {r*r}<br>"
          f"<strong>= {area} cm²</strong>")
+    record('mens_circle_area', r=r)
     return q, s, "A = πr²", 2, area
 
 
@@ -258,6 +266,7 @@ def _mens_found_cuboid_volume():
     s = (f"V = l × w × h<br>"
          f"= {l} × {w} × {h}<br>"
          f"<strong>= {vol} cm³</strong>")
+    record('mens_cuboid_vol', l=l, w=w, h=h)
     return q, s, "V = l × w × h", 2, vol
 
 
@@ -273,6 +282,7 @@ def _mens_found_cuboid_surface_area():
          f"= 2({l*w} + {l*h} + {w*h})<br>"
          f"= 2 × {l*w + l*h + w*h}<br>"
          f"<strong>= {sa} cm²</strong>")
+    record('mens_cuboid_sa', l=l, w=w, h=h)
     return q, s, "SA = 2(lw + lh + wh)", 3, sa
 
 
@@ -288,6 +298,7 @@ def _mens_found_triangular_prism_vol():
          f"Volume = cross-sectional area × length<br>"
          f"= {area_cross} × {length}<br>"
          f"<strong>= {vol} cm³</strong>")
+    record('mens_tri_prism_vol', b=b, h=h, length=length)
     return q, s, "V = area of cross-section × length", 3, vol
 
 
@@ -304,6 +315,7 @@ def _mens_found_compound_area_L():
          f"= ({a} × {c}) − ({b} × {d_val})<br>"
          f"= {a*c} − {b*d_val}<br>"
          f"<strong>= {area} cm²</strong>")
+    record('mens_l_shape', a=a, c=c, b=b, d=d_val)
     return q, s, "Split into simpler rectangles or subtract", 3, area
 
 
@@ -311,10 +323,12 @@ def _mens_found_area_to_length():
     w = random.randint(3, 10)
     area = random.randint(w * 4, w * 14)
     l = area / w
-    q = (f"A rectangle has area {area} cm² and width {w} cm. Find its length.")
+    note = "" if (area * 100) % w == 0 else " Give your answer to 2 decimal places."
+    q = (f"A rectangle has area {area} cm² and width {w} cm. Find its length.{note}")
     s = (f"Area = length × width<br>"
          f"\\(l = \\dfrac{{\\text{{Area}}}}{{w}} = \\dfrac{{{area}}}{{{w}}}\\)<br>"
          f"<strong>= {_dp(l)} cm</strong>")
+    record('quotient', a=area, b=w)
     return q, s, "Rearrange: length = area ÷ width", 2, l
 
 
@@ -329,6 +343,7 @@ def _mens_found_unit_conversion_area():
          f"1 m² = 10 000 cm²<br>"
          f"Area = {area_cm2} ÷ 10 000<br>"
          f"<strong>= {_dp(area_m2, 4)} m²</strong>")
+    record('mens_cm2_to_m2', l=l_cm, w=w_cm)
     return q, s, "1 m = 100 cm, so 1 m² = 100² = 10 000 cm²", 2, _dp(area_m2, 4)
 
 
@@ -341,6 +356,7 @@ def _mens_found_density():
     s = (f"Mass = density × volume<br>"
          f"= {density} × {vol}<br>"
          f"<strong>= {mass} g</strong>")
+    record('product', a=density, b=vol)
     return q, s, "Mass = density × volume", 2, mass
 
 
@@ -351,6 +367,7 @@ def _mens_found_diameter_from_circumference():
     s = (f"C = πd<br>"
          f"\\(d = \\dfrac{{C}}{{\\pi}} = \\dfrac{{{C}}}{{\\pi}}\\)<br>"
          f"<strong>= {d} cm</strong>")
+    record('mens_diameter', circ=C)
     return q, s, "Rearrange C = πd to find d = C ÷ π", 2, d
 
 
@@ -368,6 +385,7 @@ def _mens_inter_arc_length():
     s = (f"Arc length = \\(\\dfrac{{\\theta}}{{360}} \\times 2\\pi r\\)<br>"
          f"= \\(\\dfrac{{{angle}}}{{360}} \\times 2\\pi \\times {r}\\)<br>"
          f"<strong>= {arc} cm</strong>")
+    record('mens_arc', r=r, angle=angle)
     return q, s, "Arc length = (θ/360) × 2πr", 2, arc
 
 
@@ -382,6 +400,7 @@ def _mens_inter_sector_area():
          f"= \\(\\dfrac{{{angle}}}{{360}} \\times \\pi \\times {r}^2\\)<br>"
          f"= \\(\\dfrac{{{angle}}}{{360}} \\times \\pi \\times {r*r}\\)<br>"
          f"<strong>= {area} cm²</strong>")
+    record('mens_sector_area', r=r, angle=angle)
     return q, s, "Sector area = (θ/360) × πr²", 3, area
 
 
@@ -396,6 +415,7 @@ def _mens_inter_cylinder_volume():
          f"= π × {r}² × {h}<br>"
          f"= π × {r*r} × {h}<br>"
          f"<strong>= {vol} cm³</strong>")
+    record('mens_cyl_vol', r=r, h=h)
     return q, s, "V = πr²h", 3, vol
 
 
@@ -410,6 +430,7 @@ def _mens_inter_cylinder_surface_area():
          f"= 2π × {r} × ({r} + {h})<br>"
          f"= 2π × {r} × {r+h}<br>"
          f"<strong>= {sa} cm²</strong>")
+    record('mens_cyl_sa', r=r, h=h)
     return q, s, "SA = 2πrh (curved) + 2πr² (two ends)", 3, sa
 
 
@@ -424,6 +445,7 @@ def _mens_inter_cone_volume():
          f"= ⅓ × π × {r}² × {h}<br>"
          f"= ⅓ × π × {r*r} × {h}<br>"
          f"<strong>= {vol} cm³</strong>")
+    record('mens_cone_vol', r=r, h=h)
     return q, s, "V = ⅓πr²h", 3, vol
 
 
@@ -437,6 +459,7 @@ def _mens_inter_sphere_volume():
          f"= \\(\\frac{{4}}{{3}} \\times \\pi \\times {r}^3\\)<br>"
          f"= \\(\\frac{{4}}{{3}} \\times \\pi \\times {r**3}\\)<br>"
          f"<strong>= {vol} cm³</strong>")
+    record('mens_sphere_vol', r=r)
     return q, s, "V = (4/3)πr³", 3, vol
 
 
@@ -449,6 +472,7 @@ def _mens_inter_sphere_surface_area():
          f"= 4 × π × {r}²<br>"
          f"= 4 × π × {r*r}<br>"
          f"<strong>= {sa} cm²</strong>")
+    record('mens_sphere_sa', r=r)
     return q, s, "SA = 4πr²", 2, sa
 
 
@@ -458,12 +482,14 @@ def _mens_inter_pyramid_volume():
     h = random.randint(5, 15)
     base_area = l * w
     vol = round(base_area * h / 3, 2)
-    q = (f"A square-based pyramid has a rectangular base {l} cm × {w} cm and "
-         f"perpendicular height {h} cm. Find its volume.")
+    note = "" if (base_area * h) % 3 == 0 else " Give your answer to 2 d.p."
+    q = (f"A pyramid has a rectangular base {l} cm × {w} cm and "
+         f"perpendicular height {h} cm. Find its volume.{note}")
     s = (f"V = ⅓ × base area × height<br>"
          f"= ⅓ × ({l} × {w}) × {h}<br>"
          f"= ⅓ × {base_area} × {h}<br>"
          f"<strong>= {vol} cm³</strong>")
+    record('mens_pyramid_vol', l=l, w=w, h=h)
     return q, s, "V = ⅓ × base area × height", 3, vol
 
 
@@ -478,6 +504,7 @@ def _mens_inter_annulus_area():
          f"= π({R*R} − {r*r})<br>"
          f"= π × {R*R - r*r}<br>"
          f"<strong>= {area} cm²</strong>")
+    record('mens_annulus', R=R, r=r)
     return q, s, "Subtract inner circle area from outer: π(R²−r²)", 3, area
 
 
@@ -492,6 +519,7 @@ def _mens_inter_perimeter_sector():
          f"Arc = \\(\\frac{{{angle}}}{{360}} \\times 2\\pi \\times {r} = {arc}\\) cm<br>"
          f"Perimeter = {arc} + 2 × {r} = {arc} + {2*r}<br>"
          f"<strong>= {perimeter} cm</strong>")
+    record('mens_sector_perimeter', r=r, angle=angle)
     return q, s, "Perimeter of sector = arc + 2r", 3, perimeter
 
 
@@ -506,6 +534,7 @@ def _mens_inter_cone_surface_area():
          f"= π × {r} × ({r} + {l_slant})<br>"
          f"= π × {r} × {r + l_slant}<br>"
          f"<strong>= {sa} cm²</strong>")
+    record('mens_cone_sa_slant', r=r, slant=l_slant)
     return q, s, "SA = πrl (curved) + πr² (base) = πr(r + l)", 3, sa
 
 
@@ -516,6 +545,7 @@ def _mens_inter_find_radius_from_area():
     s = (f"A = πr²<br>"
          f"\\(r = \\sqrt{{\\dfrac{{A}}{{\\pi}}}} = \\sqrt{{\\dfrac{{{area}}}{{\\pi}}}}\\)<br>"
          f"<strong>= {_dp(r, 2)} cm</strong> (using \\(r^2 = {area}/\\pi ≈ {_dp(area/math.pi,2)}\\))")
+    record('mens_radius_from_area', area=area)
     return q, s, "Rearrange A = πr² to get r = √(A/π)", 3, r
 
 
@@ -524,7 +554,7 @@ def _mens_inter_rate_fill():
     h = random.randint(8, 25)
     vol_L = round(math.pi * r * r * h / 1000, 2)  # 1 L = 1000 cm³
     rate = random.randint(2, 8)
-    time_min = round(vol_L / rate, 2)
+    time_min = round(math.pi * r * r * h / 1000 / rate, 2)  # from the unrounded volume
     q = (f"Water flows into a cylindrical tank at {rate} litres per minute. "
          f"The tank has radius {r} cm and height {h} cm. "
          f"How long does it take to fill the tank? Give your answer to 2 d.p. (1 litre = 1000 cm³)")
@@ -532,6 +562,7 @@ def _mens_inter_rate_fill():
          f"In litres: {round(math.pi*r*r*h,2)} ÷ 1000 = {vol_L} litres<br>"
          f"Time = volume ÷ rate = {vol_L} ÷ {rate}<br>"
          f"<strong>= {time_min} minutes</strong>")
+    record('mens_fill_time', r=r, h=h, rate=rate)
     return q, s, "Volume in litres ÷ flow rate = time", 4, time_min
 
 
@@ -545,6 +576,7 @@ def _mens_inter_similar_area():
          f"Area ratio = 1² : {k}² = 1 : {k*k}<br>"
          f"Area of larger = {area1} × {k*k}<br>"
          f"<strong>= {area2} cm²</strong>")
+    record('mens_similar', derived=('power',), k=k, value=area1, power=2)
     return q, s, "Area scale factor = (length scale factor)²", 3, area2
 
 
@@ -553,7 +585,7 @@ def _mens_inter_composite_cylinder_hemisphere():
     h = random.randint(6, 18)
     vol_cyl = round(math.pi * r * r * h, 2)
     vol_hemi = round(2/3 * math.pi * r**3, 2)
-    total = round(vol_cyl + vol_hemi, 2)
+    total = round(math.pi * r * r * h + 2/3 * math.pi * r**3, 2)  # from unrounded parts
     svg = svg_kit.cylinder_hemisphere(f'{r} cm', f'{h} cm')
     q = (f"A composite solid consists of a cylinder with radius {r} cm and height {h} cm, "
          f"with a hemisphere of the same radius placed on top. "
@@ -561,8 +593,9 @@ def _mens_inter_composite_cylinder_hemisphere():
     s = (f"Cylinder: V = πr²h = π × {r}² × {h} = {vol_cyl} cm³<br>"
          f"Hemisphere: V = ½ × \\(\\frac{{4}}{{3}}\\)πr³ = \\(\\frac{{2}}{{3}}\\)πr³ "
          f"= \\(\\frac{{2}}{{3}}\\) × π × {r}³ = {vol_hemi} cm³<br>"
-         f"Total = {vol_cyl} + {vol_hemi}<br>"
+         f"Total = {vol_cyl} + {vol_hemi} (working with unrounded values)<br>"
          f"<strong>= {total} cm³</strong>")
+    record('mens_cyl_hemisphere', r=r, h=h)
     return q, s, "Total volume = cylinder + hemisphere = πr²h + (2/3)πr³", 4, total
 
 
@@ -576,7 +609,7 @@ def _mens_inter_cylinder_tank_multipart():
     vol_cm3 = math.pi * r * r * h
     vol_L = round(vol_cm3 / 1000, 2)
     sa = round(2 * math.pi * r * (r + h), 2)
-    time_min = round(vol_L / rate, 2)
+    time_min = round(vol_cm3 / 1000 / rate, 2)  # from the unrounded volume
     intro = (
         f"A closed cylindrical water tank has radius {r} cm and height {h} cm. "
         f"Water flows in at {rate} litres per minute (1 litre = 1000 cm³)."
@@ -595,6 +628,7 @@ def _mens_inter_cylinder_tank_multipart():
         rf"<strong>c)</strong> Time = {vol_L} ÷ {rate} = <strong>{time_min} minutes</strong>"
     )
     hint = "Use V = πr²h then convert to litres; SA = 2πr(r + h); time = volume ÷ rate."
+    record('mens_tank', r=r, h=h, rate=rate)
     return q, s, hint, 5, _mens_fields_answer(
         (vol_L, sa, time_min),
         ('(a) Volume (litres)', '(b) Surface area (cm²)', '(c) Fill time (minutes)'),
@@ -608,10 +642,10 @@ def _mens_inter_garden_plot_multipart():
     cost_per_m2 = random.randint(5, 12)
     rect_area = length * width
     semi_area = round(math.pi * width * width / 8, 2)
-    total_area = round(rect_area + semi_area, 2)
+    total_area = round(rect_area + math.pi * width * width / 8, 2)
     arc = round(math.pi * width / 2, 2)
-    perimeter = round(2 * length + width + arc, 2)
-    total_cost = round(total_area * cost_per_m2, 2)
+    perimeter = round(2 * length + width + math.pi * width / 2, 2)
+    total_cost = round((rect_area + math.pi * width * width / 8) * cost_per_m2, 2)  # unrounded area
     intro = (
         f"A garden plot is a rectangle {length} m by {width} m with a semicircle of "
         f"diameter {width} m on one of the shorter sides. Turf costs £{cost_per_m2} per m²."
@@ -632,6 +666,7 @@ def _mens_inter_garden_plot_multipart():
         rf"<strong>c)</strong> Cost = {total_area} × {cost_per_m2} = <strong>£{total_cost}</strong>"
     )
     hint = "Perimeter uses the curved arc instead of one width; area = rectangle + half circle; then multiply by the cost per m²."
+    record('mens_garden', length=length, width=width, cost=cost_per_m2)
     return q, s, hint, 5, _mens_fields_answer(
         (perimeter, total_area, total_cost),
         ('(a) Perimeter (m)', '(b) Area (m²)', '(c) Turf cost (£)'),
@@ -666,6 +701,7 @@ def _mens_inter_cone_container_multipart():
         rf"<strong>c)</strong> {curved} cm² = {fmt_dp(curved_m2, 4)} m²; cost = <strong>£{paint_cost}</strong>"
     )
     hint = "Use V = ⅓πr²h; find l = √(r² + h²) then curved area = πrl; convert cm² to m² for the cost."
+    record('mens_cone_container', r=r, h=h, cost=cost_per_m2)
     return q, s, hint, 5, _mens_fields_answer(
         (vol, curved, paint_cost),
         ('(a) Volume (cm³)', '(b) Curved surface area (cm²)', '(c) Paint cost (£)'),
@@ -680,7 +716,7 @@ def _mens_diff_cone_slant_from_height():
     r = random.randint(3, 10)
     h = random.randint(4, 16)
     slant = round(math.sqrt(r*r + h*h), 4)
-    sa = round(math.pi * r * (r + slant), 2)
+    sa = round(math.pi * r * (r + math.sqrt(r*r + h*h)), 2)  # unrounded slant height
     q = (f"A cone has base radius {r} cm and perpendicular height {h} cm. "
          f"Find the total surface area to 2 d.p.")
     s = (f"First find slant height: \\(l = \\sqrt{{r^2 + h^2}} = \\sqrt{{{r}^2 + {h}^2}} = "
@@ -688,6 +724,7 @@ def _mens_diff_cone_slant_from_height():
          f"SA = πr(r + l) = π × {r} × ({r} + {round(slant,2)})<br>"
          f"= π × {r} × {round(r + slant, 2)}<br>"
          f"<strong>= {sa} cm²</strong>")
+    record('mens_cone_sa_height', r=r, h=h)
     return q, s, "Find slant height using Pythagoras: l = √(r² + h²), then SA = πr(r + l)", 4, sa
 
 
@@ -700,6 +737,7 @@ def _mens_diff_sphere_radius_from_volume():
          f"\\dfrac{{{_dp(3*vol, 2)}}}{{4\\pi}} ≈ {_dp(3*vol/(4*math.pi), 2)}\\)<br>"
          f"\\(r = \\sqrt[3]{{{_dp(3*vol/(4*math.pi),2)}}} \\)<br>"
          f"<strong>≈ {r_true} cm</strong>")
+    record('mens_sphere_radius_from_volume', vol=vol)
     return q, s, "Rearrange V = (4/3)πr³ → r³ = 3V/(4π), then cube root", 4, r_true
 
 
@@ -715,6 +753,7 @@ def _mens_diff_exact_pi_answer():
          f"= π × {r}² × {h}<br>"
          f"= π × {r*r} × {h}<br>"
          f"<strong>= {coeff}π cm³</strong>")
+    record('mens_exact_pi_cyl', r=r, h=h)
     return q, s, "Leave answer as a multiple of π — do not use 3.14…", 2, _mens_pi_answer(coeff)
 
 
@@ -731,6 +770,7 @@ def _mens_diff_frustum_volume():
          f"= \\(\\dfrac{{\\pi \\times {h}}}{{3}}({R*R} + {R*r} + {r*r})\\)<br>"
          f"= \\(\\dfrac{{\\pi \\times {h}}}{{3}} \\times {R*R + R*r + r*r}\\)<br>"
          f"<strong>= {vol} cm³</strong>")
+    record('mens_frustum', R=R, r=r, h=h)
     return q, s, "Frustum volume = (πh/3)(R² + Rr + r²)", 5, vol
 
 
@@ -740,23 +780,24 @@ def _mens_diff_hemisphere_cone_surface_area():
     slant = round(math.sqrt(r*r + h*h), 4)
     sa_hemi_curved = round(2 * math.pi * r * r, 2)
     sa_cone_curved = round(math.pi * r * slant, 2)
-    total = round(sa_hemi_curved + sa_cone_curved, 2)
+    total = round(2 * math.pi * r * r + math.pi * r * math.sqrt(r*r + h*h), 2)  # unrounded parts
     q = (f"A solid is made by joining a hemisphere of radius {r} cm to the flat base of a cone "
          f"with the same base radius and perpendicular height {h} cm. "
          f"Find the total surface area to 2 d.p. (Do not include the circular join.)")
     s = (f"Cone slant height: l = √({r}² + {h}²) = √{r*r + h*h} ≈ {round(slant,2)} cm<br>"
          f"Curved surface of hemisphere = 2πr² = 2π × {r}² = {sa_hemi_curved} cm²<br>"
          f"Curved surface of cone = πrl = π × {r} × {round(slant,2)} = {sa_cone_curved} cm²<br>"
-         f"Total SA = {sa_hemi_curved} + {sa_cone_curved}<br>"
+         f"Total SA = {sa_hemi_curved} + {sa_cone_curved} (working with unrounded values)<br>"
          f"<strong>= {total} cm²</strong>")
+    record('mens_hemi_cone_sa', r=r, h=h)
     return q, s, "SA = curved hemisphere (2πr²) + curved cone (πrl); no flat circles needed", 5, total
 
 
 def _mens_diff_sector_minus_triangle():
     r = random.randint(6, 14)
     angle = 60  # equilateral triangle inside sector
-    sector_area = round(60/360 * math.pi * r*r, 4)
-    triangle_area = round(0.5 * r * r * math.sin(math.radians(60)), 4)
+    sector_area = 60/360 * math.pi * r*r
+    triangle_area = 0.5 * r * r * math.sin(math.radians(60))
     segment = round(sector_area - triangle_area, 2)
     q = (f"A sector has radius {r} cm and angle 60°. Find the area of the minor segment "
          f"(the region between the chord and the arc). Give your answer to 2 d.p.")
@@ -766,6 +807,7 @@ def _mens_diff_sector_minus_triangle():
          f"\\frac{{1}}{{2}} \\times {r*r} \\times \\sin 60° ≈ {round(triangle_area,2)}\\) cm²<br>"
          f"Segment area = sector − triangle = {round(sector_area,2)} − {round(triangle_area,2)}<br>"
          f"<strong>= {segment} cm²</strong>")
+    record('mens_segment_60', r=r)
     return q, s, "Segment area = sector area − triangle area; triangle area = ½r²sinθ", 4, segment
 
 
@@ -779,6 +821,7 @@ def _mens_diff_similar_volume():
          f"Volume ratio = 1³ : {k}³ = 1 : {k**3}<br>"
          f"Volume of larger = {vol1} × {k**3}<br>"
          f"<strong>= {vol2} cm³</strong>")
+    record('mens_similar', derived=('power',), k=k, value=vol1, power=3)
     return q, s, "Volume scale factor = (length scale factor)³", 3, vol2
 
 
@@ -786,20 +829,21 @@ def _mens_diff_density_3d():
     density = round(random.uniform(2.0, 9.0), 1)
     r = random.randint(3, 8)
     h = random.randint(6, 18)
-    vol = round(math.pi * r * r * h, 4)
+    vol = math.pi * r * r * h
     mass = round(density * vol, 2)
     q = (f"A solid cylinder has radius {r} cm, height {h} cm, and is made from a material "
          f"with density {density} g/cm³. Find the mass of the cylinder to 2 d.p.")
     s = (f"V = πr²h = π × {r}² × {h} = {round(vol,2)} cm³<br>"
          f"Mass = density × volume = {density} × {round(vol,2)}<br>"
          f"<strong>= {mass} g</strong>")
+    record('mens_cyl_mass', density=density, r=r, h=h)
     return q, s, "Mass = density × volume; find volume first using V = πr²h", 4, mass
 
 
 def _mens_diff_sphere_submerged():
     sphere_r = random.randint(2, 5)
     cyl_r = sphere_r + random.randint(2, 5)
-    vol_sphere = round(4/3 * math.pi * sphere_r**3, 4)
+    vol_sphere = 4/3 * math.pi * sphere_r**3
     rise = round(vol_sphere / (math.pi * cyl_r**2), 2)
     q = (f"A sphere of radius {sphere_r} cm is fully submerged in a cylinder of radius "
          f"{cyl_r} cm. By how much does the water level rise? Give your answer to 2 d.p.")
@@ -809,6 +853,7 @@ def _mens_diff_sphere_submerged():
          f"\\dfrac{{{round(vol_sphere,2)}}}{{\\pi \\times {cyl_r}^2}} = "
          f"\\dfrac{{{round(vol_sphere,2)}}}{{{round(math.pi*cyl_r**2,2)}}}\\)<br>"
          f"<strong>≈ {rise} cm</strong>")
+    record('mens_submerged_rise', sphere_r=sphere_r, cyl_r=cyl_r)
     return q, s, "Rise = sphere volume ÷ (π × cylinder radius²)", 4, rise
 
 
@@ -829,6 +874,7 @@ def _mens_diff_prism_composite_cross_section():
          f"= {cross_section} cm²<br>"
          f"Volume = {cross_section} × {length}<br>"
          f"<strong>= {vol} cm³</strong>")
+    record('mens_prism_compound', a=a, h=h, b=b, length=length)
     return q, s, "Find cross-section area first (rectangle + triangle), then multiply by length", 5, vol
 
 
@@ -842,6 +888,7 @@ def _mens_diff_find_height_from_volume():
          f"\\(h = \\dfrac{{V}}{{\\pi r^2}} = \\dfrac{{{vol}}}{{\\pi \\times {r}^2}} = "
          f"\\dfrac{{{vol}}}{{{round(math.pi*r*r,4)}}}\\)<br>"
          f"<strong>= {h} cm</strong>")
+    record('mens_cyl_height', vol=vol, r=r)
     return q, s, "Rearrange V = πr²h → h = V/(πr²)", 3, h
 
 
@@ -856,6 +903,7 @@ def _mens_diff_arc_exact():
     s = (f"Arc = \\(\\dfrac{{{angle}}}{{360}} \\times 2\\pi \\times {r}\\)<br>"
          f"= \\({frac} \\times {2*r}\\pi\\)<br>"
          f"<strong>= {coeff}π cm</strong>")
+    record('mens_arc_exact', r=r, angle=angle)
     return (
         q, s, "Simplify the fraction (θ/360) before multiplying", 3,
         _mens_pi_answer(coeff),
@@ -866,13 +914,14 @@ def _mens_diff_cone_height_from_slant():
     r = random.randint(3, 9)
     slant = random.randint(r + 2, r + 12)
     h = round(math.sqrt(slant**2 - r**2), 2)
-    vol = round(math.pi * r**2 * h / 3, 2)
+    vol = round(math.pi * r**2 * math.sqrt(slant**2 - r**2) / 3, 2)  # unrounded height
     q = (f"A cone has base radius {r} cm and slant height {slant} cm. "
          f"Find the volume of the cone to 2 d.p.")
     s = (f"Height: h = \\(\\sqrt{{l^2 - r^2}} = \\sqrt{{{slant}^2 - {r}^2}} = "
          f"\\sqrt{{{slant**2} - {r**2}}} = \\sqrt{{{slant**2 - r**2}}} ≈ {h}\\) cm<br>"
-         f"V = ⅓πr²h = ⅓ × π × {r}² × {h} = ⅓ × π × {r*r} × {h}<br>"
+         f"V = ⅓πr²h = ⅓ × π × {r}² × {h} = ⅓ × π × {r*r} × {h} (using the unrounded height)<br>"
          f"<strong>= {vol} cm³</strong>")
+    record('mens_cone_vol_from_slant', r=r, slant=slant)
     return q, s, "Use Pythagoras to find h = √(l²−r²), then V = ⅓πr²h", 4, vol
 
 
@@ -883,8 +932,8 @@ def _mens_diff_surface_area_prism():
     length = random.randint(8, 18)
     # Right-triangle cross section: sides a, b, c
     tri_area = Fraction(a * b, 2)
-    perimeter = a + b + c
-    sa = round(2 * tri_area + perimeter * length, 2)
+    perimeter = a + b + math.sqrt(a*a + b*b)  # unrounded hypotenuse
+    sa = round(float(2 * tri_area) + (a + b + math.sqrt(a*a + b*b)) * length, 2)  # unrounded hypotenuse
     q = (f"A triangular prism has a right-angle triangular cross-section with legs "
          f"{a} cm and {b} cm. The length of the prism is {length} cm. "
          f"Find the total surface area. Give your answer to 2 d.p.")
@@ -892,9 +941,10 @@ def _mens_diff_surface_area_prism():
          f"Triangle area = ½ × {a} × {b} = {tri_area} cm²<br>"
          f"Two triangular ends = 2 × {tri_area} = {2*tri_area} cm²<br>"
          f"Three rectangular faces: perimeter × length = ({a} + {b} + {c}) × {length} "
-         f"= {round(perimeter,2)} × {length} = {round(perimeter*length,2)} cm²<br>"
+         f"= {round(perimeter*length,2)} cm² (using the unrounded hypotenuse)<br>"
          f"SA = {2*tri_area} + {round(perimeter*length,2)}<br>"
          f"<strong>= {sa} cm²</strong>")
+    record('mens_tri_prism_sa', a=a, b=b, length=length)
     return q, s, "SA = 2 × (triangle area) + (perimeter of triangle) × length", 5, sa
 
 
@@ -904,7 +954,7 @@ def _mens_diff_optimize_box():
     # For simplicity, give x and find h from SA constraint
     x = random.randint(5, 12)
     h = round((total - x*x) / (4 * x), 2)
-    vol = round(x * x * h, 2)
+    vol = round(x * (total - x*x) / 4, 2)  # from the unrounded height
     q = (f"An open-topped box has a square base of side {x} cm. The total surface area "
          f"of the box (base + four sides) is {total} cm². Find the height and volume of the box. "
          f"Give your answers to 2 d.p.")
@@ -913,8 +963,9 @@ def _mens_diff_optimize_box():
          f"{total} = {x*x} + {4*x}h<br>"
          f"{4*x}h = {total - x*x}<br>"
          f"h = {total - x*x} ÷ {4*x} = <strong>{h} cm</strong><br>"
-         f"Volume = x²h = {x}² × {h} = {x*x} × {h}<br>"
+         f"Volume = x²h = {x}² × {h} = {x*x} × {h} (using the unrounded height)<br>"
          f"<strong>Volume = {vol} cm³</strong>")
+    record('mens_open_box', x=x, total=total)
     return q, s, "Write SA = x² + 4xh, substitute values, solve for h, then find volume", 5, _mens_fields_answer(
         (h, vol),
         ('Height (cm)', 'Volume (cm³)'),
@@ -932,7 +983,7 @@ def _mens_diff_silo_multipart():
     vol_hemi = 2 / 3 * math.pi * r ** 3
     vol_total = round(vol_cyl + vol_hemi, 2)
     sa = round(2 * math.pi * r * h + 2 * math.pi * r * r, 2)
-    mass = round(density * vol_total, 2)
+    mass = round(density * (vol_cyl + vol_hemi), 2)  # from the unrounded volume
     intro = (
         f"A grain silo is modelled as a cylinder of radius {r} m and height {h} m "
         f"with a hemisphere of the same radius on top. The grain has density {density} tonnes/m³ "
@@ -953,6 +1004,7 @@ def _mens_diff_silo_multipart():
         rf"<strong>c)</strong> Mass = {density} × {vol_total} = <strong>{mass} tonnes</strong>"
     )
     hint = "Add cylinder and hemisphere volumes; outer SA = curved cylinder + curved hemisphere; mass = density × volume."
+    record('mens_silo', r=r, h=h, density=density)
     return q, s, hint, 5, _mens_fields_answer(
         (vol_total, sa, mass),
         ('(a) Volume (m³)', '(b) Outer surface area (m²)', '(c) Mass (tonnes)'),
@@ -987,6 +1039,7 @@ def _mens_diff_similar_prisms_multipart():
         rf"Larger volume = {vol1} × {k**3} = <strong>{vol2} cm³</strong>"
     )
     hint = "Lengths scale by k; areas by k²; volumes by k³."
+    record('mens_similar_cuboids', k=k, l=l1, w=w1, h=h1)
     return q, s, hint, 5, _mens_fields_answer(
         (k, sa2, vol2),
         ('(a) Length scale factor', '(b) Larger surface area (cm²)', '(c) Larger volume (cm³)'),
@@ -999,10 +1052,10 @@ def _mens_diff_frustum_tank_multipart():
     r = random.randint(3, R - 2)
     h = random.randint(8, 16)
     fill_pct = random.choice([60, 75, 80])
-    vol_full = math.pi * h / 3 * (R * R + R * r + r * r)
-    vol_full = round(vol_full, 2)
-    vol_part = round(vol_full * fill_pct / 100, 2)
-    litres = round(vol_part / 1000, 2)
+    vol_exact = math.pi * h / 3 * (R * R + R * r + r * r)
+    vol_full = round(vol_exact, 2)
+    vol_part = round(vol_exact * fill_pct / 100, 2)
+    litres = round(vol_exact * fill_pct / 100 / 1000, 2)  # from the unrounded volume
     intro = (
         f"A bucket is modelled as a frustum with top radius {R} cm, bottom radius {r} cm, "
         f"and perpendicular height {h} cm."
@@ -1023,6 +1076,7 @@ def _mens_diff_frustum_tank_multipart():
     )
     hint = "Use V = (πh/3)(R² + Rr + r²); for part (c) find the percentage of the volume then convert cm³ to litres."
     # Part (a) is formula setup — grade numeric (b) and (c) only.
+    record('mens_frustum_tank', R=R, r=r, h=h, pct=fill_pct)
     return q, s, hint, 5, _mens_fields_answer(
         (vol_full, litres),
         ('(b) Full volume (cm³)', '(c) Water volume (litres)'),
@@ -1148,19 +1202,19 @@ _MENS_MCQ_BANK = [
     },
     {   # 15 – frustum volume
         "q": r"A frustum has large radius 6 cm, small radius 2 cm, and height 9 cm. Find its volume to 2 d.p.",
-        "opts": ["A  488.69 cm³", "B  678.58 cm³", "C  244.35 cm³", "D  339.29 cm³"],
+        "opts": ["A  490.09 cm³", "B  678.58 cm³", "C  244.35 cm³", "D  339.29 cm³"],
         "ans": "A",
-        "sol": r"V = (π×9/3)(36+12+4) = 3π×52 ≈ <strong>488.69 cm³</strong>. Answer: A",
+        "sol": r"V = (π×9/3)(36+12+4) = 3π×52 = 156π ≈ <strong>490.09 cm³</strong>. Answer: A",
         "hint": "V = (πh/3)(R²+Rr+r²)",
         "marks": 3,
     },
     {
         "q": r"A silo is a cylinder of radius 4 m and height 10 m with a hemisphere of radius 4 m on top (no base). Find the total volume to 2 d.p.",
-        "opts": ["A  636.61 m³", "B  502.65 m³", "C  804.25 m³", "D  335.10 m³"],
+        "opts": ["A  636.70 m³", "B  502.65 m³", "C  804.25 m³", "D  335.10 m³"],
         "ans": "A",
         "sol": (r"Cylinder: \(\pi r^2 h = \pi \times 16 \times 10 = 160\pi\) m³.<br>"
                 r"Hemisphere: \(\frac{2}{3}\pi r^3 = \frac{128\pi}{3}\) m³.<br>"
-                r"Total = \(160\pi + \frac{128\pi}{3} = \frac{608\pi}{3} \approx\) <strong>636.61 m³</strong>. Answer: A"),
+                r"Total = \(160\pi + \frac{128\pi}{3} = \frac{608\pi}{3} \approx\) <strong>636.70 m³</strong>. Answer: A"),
         "hint": "Add cylinder volume and hemisphere volume (⅔πr³).",
         "marks": 3,
         "difficulty": "difficult",

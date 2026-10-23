@@ -8,6 +8,7 @@ from generators.shared.rounding import round_half_up as round, fmt_dp
 import math
 import random
 from generators.shared.utils import make_problem, quadratic_roots_format_hint, quadratic_roots_ui_labels
+from generators.shared.verify_hook import verifies
 from generators.shared.variant_utils import (
     select_tier_variants,
     mcq_variants_from_pool,
@@ -180,6 +181,7 @@ def _cts_problem_from_output(out, difficulty):
 # FOUNDATIONAL (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='cts_half')
 def _cts_f_half_coefficient():
     p = random.randint(2, 8)
     b = 2 * p
@@ -193,6 +195,7 @@ def _cts_f_half_coefficient():
     return q, s, "For x² + bx + …, take half of b (the number in front of x).", 1, p
 
 
+@verifies('alg', task='cts_square_the_half')
 def _cts_f_square_the_half():
     p = random.randint(2, 7)
     b = 2 * p
@@ -202,6 +205,7 @@ def _cts_f_square_the_half():
     return q, s, "You subtract p² when rewriting the constant part.", 1, sq
 
 
+@verifies('alg', task='complete_square')
 def _cts_f_write_completed_form():
     p = random.randint(1, 6)
     k = random.randint(-10, 8)
@@ -219,6 +223,7 @@ def _cts_f_write_completed_form():
     return q, s, f"Half of {b} is {p}; subtract {p}² = {p*p} from the constant.", 2, _cts_completed_square_answer('plus', p, k)
 
 
+@verifies('alg', task='complete_square')
 def _cts_f_expand_check():
     p = random.randint(2, 5)
     k = random.randint(-6, 6)
@@ -231,6 +236,7 @@ def _cts_f_expand_check():
     return q, s, "Expand the square first, then add the constant.", 2, _cts_completed_square_answer('expand', b, expanded_c)
 
 
+@verifies('alg', task='cts_missing_constant')
 def _cts_f_missing_constant():
     p = random.randint(3, 7)
     target = p * p
@@ -244,6 +250,7 @@ def _cts_f_missing_constant():
 # INTERMEDIATE (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='complete_square')
 def _cts_i_complete_expression():
     p = random.randint(1, 7)
     q_val = random.randint(-15, 10)
@@ -261,6 +268,7 @@ def _cts_i_complete_expression():
     return q, s, f"Use p = {p}, then adjust the constant by −{p*p}.", 3, _cts_completed_square_answer('plus', p, k)
 
 
+@verifies('alg', task='solve_poly')
 def _cts_i_solve_integer_roots():
     p = random.randint(2, 5)
     d = random.randint(1, 4)
@@ -278,8 +286,9 @@ def _cts_i_solve_integer_roots():
     return q, sol, "Move the constant, complete the square, then square-root both sides.", 4, _cts_quadratic_roots_answer(r1, r2)
 
 
+@verifies('alg', task='min_point')
 def _cts_i_turning_point():
-    p = random.randint(-4, 4)
+    p = random.choice([-4, -3, -2, -1, 1, 2, 3, 4])
     k = random.randint(-8, 10)
     k_str = _fmt_const(k)
     inner = f"(x + {p})" if p >= 0 else f"(x - {abs(p)})"
@@ -291,6 +300,7 @@ def _cts_i_turning_point():
     return q, s, "For (x + p)² + k with positive square, turning point is (−p, k).", 3, _cts_pair_answer(-p, k, 'x', 'y')
 
 
+@verifies('alg', task='solve_poly')
 def _cts_i_solve_rearrange_first():
     p = random.randint(2, 5)
     root = p + random.randint(1, 5)
@@ -307,6 +317,7 @@ def _cts_i_solve_rearrange_first():
     return q, s, f"Add {p}² to both sides after isolating the x terms.", 3, _cts_quadratic_roots_answer(x1, x2)
 
 
+@verifies('alg', task='complete_square')
 def _cts_i_negative_x_coeff():
     p = random.randint(2, 6)
     b = -2 * p
@@ -327,6 +338,7 @@ def _cts_i_negative_x_coeff():
 # DIFFICULT (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='solve_poly')
 def _cts_d_solve_surd():
     while True:
         p = random.randint(2, 5)
@@ -354,6 +366,7 @@ def _is_perfect_square(n):
     return r * r == n
 
 
+@verifies('alg', task='solve_poly')
 def _cts_d_decimal_roots():
     p = random.randint(3, 6)
     rhs = random.choice([11, 13, 17, 19, 23])
@@ -370,6 +383,7 @@ def _cts_d_decimal_roots():
     return q, s, "Use a calculator for the square root if needed.", 4, _cts_quadratic_roots_answer(round(x1, 2), round(x2, 2))
 
 
+@verifies('alg', task='complete_square')
 def _cts_d_factor_a_out():
     a = random.choice([2, 3])
     p = random.randint(2, 4)
@@ -391,17 +405,19 @@ def _cts_d_factor_a_out():
     return q, s, f"Factor {a} out, complete the square inside the bracket, then multiply back.", 5, _cts_completed_square_answer('scaled', a, p, k, subject='y')
 
 
+@verifies('alg', task='extremum_value')
 def _cts_d_minimum_value_word():
     h = random.randint(2, 6)
     max_p = random.randint(80, 200)
     q = (
         rf"Profit is \(P = -2(x - {h})^2 + {max_p}\) (£ thousands). "
-        rf"What is the <strong>maximum</strong> profit?"
+        rf"What is the <strong>maximum</strong> profit? Give your answer in thousands of pounds."
     )
     s = rf"Completed-square form: peak when \(x = {h}\). <strong>Maximum profit = £{max_p}000</strong>."
     return q, s, "The +k term in (x − h)² + max is the maximum (when the squared part is 0).", 3, max_p
 
 
+@verifies('alg', task='show_that_square')
 def _cts_d_exam_show_that():
     p = random.randint(2, 5)
     k = random.randint(-9, 5)
@@ -439,6 +455,7 @@ def _cts_d_exam_show_that():
 # MCQ (8 procedural — randomised each call)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='cts_half')
 def _cts_mcq_half_b():
     p = random.randint(2, 9)
     b = 2 * p
@@ -454,6 +471,7 @@ def _cts_mcq_half_b():
     return q, sol, "p = half of the coefficient of x.", 1, opts, correct
 
 
+@verifies('alg', task='complete_square')
 def _cts_mcq_completed_form():
     p = random.randint(2, 6)
     k = random.randint(-8, 6)
@@ -476,6 +494,7 @@ def _cts_mcq_completed_form():
     return q, sol, f"Use p = {p}, constant adjustment {k}.", 2, opts, correct
 
 
+@verifies('alg', task='one_root_mcq')
 def _cts_mcq_solve_roots():
     p = random.randint(2, 5)
     d = random.randint(1, 4)
@@ -500,8 +519,9 @@ def _cts_mcq_solve_roots():
     return q, sol, "Complete the square, then ± square root.", 2, opts, correct
 
 
+@verifies('alg', task='extremum_value')
 def _cts_mcq_minimum_y():
-    p = random.randint(-5, 5)
+    p = random.choice([v for v in range(-5, 6) if v != 0])
     k = random.randint(-6, 12)
     inner = f"(x + {p})" if p >= 0 else f"(x - {abs(p)})"
     k_str = _fmt_const(k)
@@ -522,6 +542,7 @@ def _cts_mcq_minimum_y():
     return q, sol, "The constant k is the minimum y-value.", 1, opts, correct
 
 
+@verifies('alg', task='cts_square_the_half')
 def _cts_mcq_square_constant():
     p = random.randint(2, 7)
     b = 2 * p
@@ -543,6 +564,7 @@ def _cts_mcq_square_constant():
     return q, sol, "Subtract p², where p is half the x-coefficient.", 1, opts, correct_letter
 
 
+@verifies('alg', task='min_point')
 def _cts_mcq_turning_point():
     p = random.randint(-5, 5)
     while p == 0:
@@ -562,6 +584,7 @@ def _cts_mcq_turning_point():
     return q, sol, "For (x − h)² + k the turning point is (h, k).", 2, opts, correct_letter
 
 
+@verifies('alg', task='min_x')
 def _cts_mcq_min_x():
     p = random.randint(2, 6)
     b = random.choice([1, -1]) * 2 * p
@@ -584,6 +607,7 @@ def _cts_mcq_min_x():
     return q, sol, "The minimum is at x = −b/2 (half the x-coefficient, sign flipped).", 2, opts, correct_letter
 
 
+@verifies('alg', task='expand_const')
 def _cts_mcq_expand_c():
     p = random.randint(2, 6)
     k = random.randint(-6, 6)

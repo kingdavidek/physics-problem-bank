@@ -7,6 +7,7 @@ use practice-mode choice buttons so answers can be recorded.
 Final answers wrapped in <strong> tags.
 """
 from generators.shared.rounding import fmt_dp
+from generators.shared.verify_hook import record
 import random
 import math
 from decimal import Decimal, ROUND_HALF_UP
@@ -396,6 +397,7 @@ def _py_f1_find_hypotenuse():
     s = (f"a² + b² = c²<br>"
          f"{a}² + {b}² = c² → {a*a} + {b*b} = c² → c² = {c*c}<br>"
          f"c = √{c*c} = <strong>{c} cm</strong>")
+    record('pyth_hyp', a=a, b=b)
     return q, s, "Hypotenuse c is the longest side, opposite the right angle. Use c² = a² + b².", 2, c
 
 
@@ -412,6 +414,7 @@ def _py_f2_find_shorter_side():
     s = (f"a² + b² = c²<br>"
          f"{missing}² + {known}² = {c}² → {missing}² = {c*c} − {known*known} = {c*c - known*known}<br>"
          f"{missing} = √{c*c - known*known} = <strong>{missing} cm</strong>")
+    record('pyth_leg', c=c, a=known)
     return q, s, "Rearrange: (shorter side)² = c² − (other shorter side)².", 3, missing
 
 
@@ -423,6 +426,7 @@ def _py_f3_is_right_yes():
          f"{a}² + {b}² = {a*a} + {b*b} = {a*a + b*b}<br>"
          f"{c}² = {c*c}<br>"
          f"Since {a*a + b*b} = {c*c}, the triangle <strong>is right-angled</strong>.")
+    record('pyth_is_right', a=a, b=b, c=c)
     return q, s, "Square the longest side and compare with the sum of squares of the other two.", 2, _pyth_keyword_answer('yes')
 
 
@@ -437,6 +441,7 @@ def _py_f4_is_right_no():
     s = (f"Longest side is {c_wrong} cm. Check a² + b² = c²:<br>"
          f"{a}² + {b}² = {lhs}, but {c_wrong}² = {rhs}<br>"
          f"{lhs} ≠ {rhs}, so the triangle is <strong>not right-angled</strong>.")
+    record('pyth_is_right', a=a, b=b, c=c_wrong)
     return q, s, "If a² + b² ≠ (longest side)², the triangle is not right-angled.", 2, _pyth_keyword_answer('no')
 
 
@@ -451,6 +456,7 @@ def _py_f5_ladder_wall():
     s = (f"Ladder is the hypotenuse:<br>"
          f"{base}² + {h}² = L² → {base*base + h*h} = L²<br>"
          f"L = <strong>{lad} m</strong>")
+    record('pyth_hyp', a=base, b=h)
     return q, s, "Wall and ground are perpendicular — ladder is the hypotenuse.", 2, lad
 
 
@@ -462,6 +468,7 @@ def _py_f6_rectangle_diagonal():
     s = (f"Diagonal is the hypotenuse of a right triangle with legs {w} cm and {h} cm:<br>"
          f"{w}² + {h}² = d² → {w*w + h*h} = d²<br>"
          f"d = <strong>{d} cm</strong>")
+    record('pyth_hyp', a=w, b=h)
     return q, s, "Split the rectangle into two right-angled triangles using the diagonal.", 2, d
 
 
@@ -473,6 +480,7 @@ def _py_f7_distance_on_grid():
     s = (f"Horizontal change = {dx} cm, vertical change = {dy} cm.<br>"
          f"AB² = {dx}² + {dy}² = {dx*dx + dy*dy}<br>"
          f"AB = <strong>{d} cm</strong>")
+    record('pyth_hyp', a=dx, b=dy)
     return q, s, "Count horizontal and vertical steps — they are the two shorter sides.", 2, d
 
 
@@ -485,6 +493,7 @@ def _py_f8_square_diagonal():
     sol = (f"Diagonal splits the square into two right isosceles triangles with legs {s} cm:<br>"
            f"{s}² + {s}² = d² → {d2} = d²<br>"
            f"d = √{d2} = <strong>{_fmt(d)} cm</strong>{_dp_tag(exact)}")
+    record('pyth_hyp', a=s, b=s)
     return q, sol, "In a square, the diagonal is the hypotenuse of a right triangle with two equal legs.", 2, d
 
 
@@ -500,6 +509,7 @@ def _py_i1_perimeter():
          f"Find its perimeter.<br>{svg}")
     s = (f"First find hypotenuse: c² = {a}² + {b}² = {c*c}, so c = {c} cm.<br>"
          f"Perimeter = {a} + {b} + {c} = <strong>{p} cm</strong>")
+    record('pyth_perimeter', a=a, b=b)
     return q, s, "Find the missing hypotenuse, then add all three sides.", 3, p
 
 
@@ -510,6 +520,7 @@ def _py_i2_area_then_side():
          f"Find the other shorter side and the hypotenuse.")
     s = (f"Area = ½ × a × b → {area} = ½ × {a} × b → b = <strong>{b} cm</strong><br>"
          f"c² = {a}² + {b}² = {c*c} → c = <strong>{c} cm</strong>")
+    record('pyth_area_to_sides', area=area, a=a)
     return q, s, "Use Area = ½ab for a right triangle, then Pythagoras for the hypotenuse.", 4, _pyth_fields_answer(
         (b, c),
         ('Other shorter side (cm)', 'Hypotenuse (cm)'),
@@ -524,6 +535,7 @@ def _py_i3_isosceles_height():
     s = (f"Height splits the base into two {half} cm segments, forming a right triangle:<br>"
          f"{half}² + h² = {slant}² → h² = {slant*slant} − {half*half} = {slant*slant - half*half}<br>"
          f"h = <strong>{h} cm</strong>")
+    record('pyth_isosceles_height', base=base, side=slant)
     return q, s, "The height bisects the base in an isosceles triangle — use Pythagoras on half the triangle.", 3, h
 
 
@@ -536,6 +548,7 @@ def _py_i4_3d_space_diagonal():
     s = (f"Space diagonal AG satisfies AG² = AB² + BC² + CG²<br>"
          f"AG² = {l}² + {w}² + {h}² = {l*l + w*w + h*h}<br>"
          f"AG = √{l*l + w*w + h*h} = <strong>{_fmt(d)} cm</strong>{_dp_tag(exact)}")
+    record('pyth_space_diag', l=l, w=w, h=h)
     return q, s, "3D Pythagoras: square all three edges, add, then square root.", 3, d
 
 
@@ -550,6 +563,7 @@ def _py_i5_3d_two_step():
          f"<br>{svg}")
     s = (f"(i) Base diagonal = √({l}² + {w}²) = √{l*l + w*w} = <strong>{_fmt(face)} cm</strong>{_dp_tag(face_exact)}<br>"
          f"(ii) Space diagonal = √({l}² + {w}² + {h}²) = √{l*l + w*w + h*h} = <strong>{_fmt(space)} cm</strong>{_dp_tag(space_exact)}")
+    record('pyth_space_diag_two', l=l, w=w, h=h)
     return q, s, "Find a face diagonal first, then use it with the height as the two legs.", 4, _pyth_fields_answer(
         (face, space),
         ('Base diagonal (cm)', 'Space diagonal (cm)'),
@@ -565,6 +579,7 @@ def _py_i6_coordinate_distance():
     s = (f"Δx = {dx}, Δy = {dy}<br>"
          f"AB² = {dx}² + {dy}² = {dx*dx + dy*dy}<br>"
          f"AB = √{dx*dx + dy*dy} = <strong>{_fmt(d)}</strong>{_dp_tag(exact)}")
+    record('pyth_dist', x1=x1, y1=y1, x2=x2, y2=y2)
     return q, s, "Difference in x and difference in y are the legs of a right triangle.", 3, d
 
 
@@ -581,6 +596,7 @@ def _py_i7_ladder_slips():
     s = (f"Original height = √({lad}² − {base}²) = {h} m (check).<br>"
          f"New distance from wall = {new_base} m. Height = √({lad}² − {new_base}²)<br>"
          f"= √{lad*lad - new_base*new_base} = <strong>{_fmt(new_h)} m</strong>{_dp_tag(exact)}")
+    record('pyth_ladder_slide', ladder=lad, base=base, slide=new_base - base)
     return q, s, "Ladder length stays fixed — only the horizontal distance changes.", 4, new_h
 
 
@@ -591,6 +607,7 @@ def _py_i8_cone_slant():
     s_txt = (f"Radius and height are perpendicular:<br>"
              f"s² = {r}² + {h}² = {r*r + h*h}<br>"
              f"Slant height = <strong>{s} cm</strong>")
+    record('pyth_hyp', a=r, b=h)
     return q, s_txt, "Slant height is the hypotenuse of the triangle formed by radius and height.", 3, s
 
 
@@ -616,6 +633,7 @@ def _py_d1_composite_area():
          f"Rectangle area = {length} × {width} = {rect_area} cm²<br>"
          f"Triangle removed = ½ × {a} × {b} = {tri_area} cm²<br>"
          f"Remaining area = {rect_area} − {tri_area} = <strong>{total} cm²</strong>")
+    record('pyth_cut_corner', length=length, width=width, slope=c, cut=a)
     return q, s, "Use Pythagoras for the missing cut edge, then subtract the triangle's area from the rectangle's.", 5, total
 
 
@@ -633,6 +651,7 @@ def _py_d2_distance_formula():
          + (f" = <strong>{d}</strong>" if sum_sq == d * d else
             f" = <strong>√{sum_sq}</strong>"))
     hint = "Use PQ² = (Δx)² + (Δy)² — the coordinate form of Pythagoras."
+    record('pyth_dist_surd', x1=x1, y1=y1, x2=x2, y2=y2)
     return q, s, hint, 4, _pyth_surd_answer(sum_sq)
 
 
@@ -647,6 +666,7 @@ def _py_d3_3d_diagonal_exact():
          f"(a) AG = √{sum_sq} = <strong>{edge}√3 cm</strong><br>"
          f"(b) ≈ <strong>{dec} cm</strong> (1 d.p.)")
     hint = "In a cube all three edges are equal — add three squares of the edge, then simplify the surd."
+    record('pyth_cube_diag', edge=edge)
     return q, s, hint, 5, _pyth_fields_answer(
         (_pyth_surd_answer(3, edge), dec),
         ('(a) Exact space diagonal', '(b) Decimal length (1 d.p.)'),
@@ -697,6 +717,7 @@ def _py_d4_pythagoras_proof_check():
         f"{verdict}<br>"
         f"Answer: <strong>{correct_letter}</strong>"
     )
+    record('pyth_student_check', a=a, b=b, c=c)
     return (
         q, s, "Always compare squares of sides, never just the lengths.", 3,
         _pyth_choice_answer(options, correct_letter),
@@ -774,6 +795,7 @@ def _py_d5_two_triangles():
         f"<strong>{perim} cm</strong> "
         f"(triangle 1 perimeter = {p1} cm, triangle 2 perimeter = {p2} cm)."
     )
+    record('pyth_two_triangles', a=a, b=b, c=c, x=x, y=y, z=z, ask='tri2' if scenario == '2' else 'tri1')
     return q, s, "Test a² + b² = c² for each triangle using the longest side as c.", 4, _pyth_fields_answer(
         (_pyth_keyword_answer(scenario), perim),
         ('Which triangle? (1, 2, both, or neither)', perim_label),
@@ -793,6 +815,7 @@ def _py_d6_roof_truss_multi():
          f"Rafter² = {half}² + {rise}² = {half*half + rise*rise} → rafter = <strong>{rafter} m</strong>.<br>"
          f"(b) The perpendicular height is given as <strong>{rise} m</strong> (the dashed line at the centre).<br>"
          f"(c) Total = 2 × {rafter} + 12 = <strong>{2*rafter + 12} m</strong>.")
+    record('pyth_roof_truss', span=2 * half, rise=rise)
     return q, s, "Use Pythagoras on half the truss; the height is one leg, half the span is the other.", 6, _pyth_fields_answer(
         (rafter, rise, 2 * rafter + 12),
         ('(a) Rafter length (m)', '(b) Height (m)', '(c) Total timber (m)'),
@@ -814,6 +837,7 @@ def _py_d7_coordinate_journey_multi():
          f"(b) OB² = 8² + 6² = 64 + 36 = 100 → OB = <strong>{ob} km</strong>.<br>"
          f"(c) Two-leg distance = 6 + 8 = 14 km. Direct route = {dist} km.<br>"
          f"Saving = 14 − {dist} = <strong>{saving} km</strong> (the direct line is shorter).")
+    record('pyth_journey', east=dx, north=dy, east2=dy, north2=dx)
     return q, s, "East/north legs are perpendicular; use Pythagoras for the hypotenuse OL.", 6, _pyth_fields_answer(
         (dist, ob, saving),
         ('(a) Direct distance OL (km)', '(b) Distance OB (km)', '(c) Saving (km)'),
@@ -842,6 +866,7 @@ def _py_d8_ladder_slip_multi():
     s = (f"(a) h² = {lad}² − {base1}² = {lad*lad - base1*base1} → h = <strong>{h1} m</strong>.<br>"
          f"(b) New height = √({lad}² − {base2}²) = √{lad*lad - base2*base2} = <strong>{h2} m</strong>.<br>"
          f"(c) Drop = {h1} − {h2} = <strong>{drop} m</strong>.")
+    record('pyth_ladder_two', ladder=lad, base1=base1, base2=base2)
     return q, s, "The ladder is the hypotenuse; wall height and ground distance are the legs.", 6, _pyth_fields_answer(
         (h1, h2, drop),
         ('(a) First height (m)', '(b) New height (m)', '(c) Drop (m)'),
@@ -893,7 +918,7 @@ _PY_MCQ_BANK = [
      "hint": "Diagonal of a rectangle — use Pythagoras on width and height."},
 
     {"q": "A cuboid is 3 cm × 4 cm × 5 cm. What is the space diagonal?",
-     "opts": ["A  12 cm", "B  √50 cm only", "C  7 cm", "D  √50 cm ≈ 7.07 cm"],
+     "opts": ["A  12 cm", "B  5 cm", "C  7 cm", "D  √50 cm ≈ 7.07 cm"],
      "ans": "D", "marks": 2,
      "sol": "AG² = 3²+4²+5² = 50 → AG = √50 = 5√2 ≈ <strong>7.07 cm</strong>. Answer: D",
      "hint": "Space diagonal: √(l² + w² + h²)."},

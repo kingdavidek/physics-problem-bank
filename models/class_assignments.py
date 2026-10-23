@@ -21,6 +21,14 @@ MAX_ASSIGNMENTS_PER_CLASS = 40
 PREVIEW_TTL_HOURS = 2
 MAX_PREVIEWS_PER_TEACHER = 8
 
+# Server-side checker data a frozen problem keeps so set work is graded exactly like practice, but which is
+# never sent to a pupil, not even once the question is answered (practice never sends it either: it is not
+# in app._problem_client_payload). app._freeze_problem_payload copies these from the generated problem.
+SERVER_ONLY_KEYS = (
+    'answer_form',          # the written form the checker insists on (expanded, factorised, simplified, ...)
+    'answer_step_prereqs',  # which proof steps may swap places
+)
+
 _STRIP_KEYS = (
     'correct_answer',
     'correct_answer_raw',
@@ -29,7 +37,7 @@ _STRIP_KEYS = (
     'hint',
     'hint_html',
     'answer_tests',
-)
+) + SERVER_ONLY_KEYS
 
 
 def _table_exists(conn, name):
@@ -58,9 +66,7 @@ def strip_problem_keys(problem, *, reveal=False):
     if not isinstance(problem, dict):
         return {}
     out = dict(problem)
-    if reveal:
-        return out
-    for key in _STRIP_KEYS:
+    for key in SERVER_ONLY_KEYS if reveal else _STRIP_KEYS:
         out.pop(key, None)
     return out
 
@@ -99,6 +105,8 @@ def grade_frozen_answer(problem, user_answer):
         MAX_USER_ANSWER_LEN,
         check_answer,
         check_number_fields,
+        problem_answer_form,
+        problem_answer_prereqs,
     )
 
     if user_answer is None or str(user_answer).strip() == '':
@@ -124,7 +132,15 @@ def grade_frozen_answer(problem, user_answer):
                     field_types=problem.get('answer_field_types'),
                 )
             else:
-                result = check_answer(answer_type, str(raw), text)
+                result = check_answer(
+                    answer_type,
+                    str(raw),
+                    text,
+                    form=problem_answer_form(problem),
+                    subject=problem.get('answer_subject'),
+                    labels=problem.get('answer_labels'),
+                    prereqs=problem_answer_prereqs(problem),
+                )
         except (TypeError, ValueError):
             return text.strip(), False
         return text.strip(), bool(result.get('correct'))

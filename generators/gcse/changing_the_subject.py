@@ -4,8 +4,9 @@ GCSE Maths – Changing the Subject
 Graded practice variants return (question, solution, hint, marks, raw)
 or an MCQ 6-tuple (question, solution, hint, marks, options, correct_letter).
 """
+import math
 import random
-from generators.shared.utils import make_problem
+from generators.shared.utils import make_problem, coef
 from generators.shared.variant_utils import (
     select_tier_variants,
     mcq_variants_from_pool,
@@ -14,6 +15,7 @@ from generators.shared.variant_utils import (
 )
 
 
+from generators.shared.verify_hook import verifies
 def _q_make(subject, formula):
     return rf"Make <strong>\({subject}\)</strong> the subject of the formula \({formula}\)."
 
@@ -22,6 +24,20 @@ def _frac(n, d):
     if d == 1:
         return str(n)
     return rf"\dfrac{{{n}}}{{{d}}}"
+
+
+def _lowest_terms(n, d):
+    """Integer fraction n/d in lowest terms with a positive denominator (3/-2 -> -3/2, -13/-2 -> 13/2)."""
+    g = math.gcd(n, d) or 1
+    n, d = n // g, d // g
+    return (-n, -d) if d < 0 else (n, d)
+
+
+def _half_coeff_tex(a):
+    """TeX for (a/2) written as one coefficient: 3 -> '\\dfrac{3}{2}', 4 -> '2' (never '\\dfrac{1}{2}4')."""
+    if a % 2 == 0:
+        return '' if a == 2 else str(a // 2)
+    return rf"\dfrac{{{a}}}{{2}}"
 
 
 def _sqrt_tex(expr):
@@ -83,6 +99,7 @@ def _subj_problem_from_output(out, difficulty):
 # FOUNDATIONAL (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='rearrange')
 def _cts_f_one_step_add():
     a = random.randint(2, 9)
     if random.choice([True, False]):
@@ -104,6 +121,7 @@ def _cts_f_one_step_add():
     return q, s, hint, 2, ans
 
 
+@verifies('alg', task='rearrange')
 def _cts_f_one_step_divide():
     k = random.randint(2, 12)
     letter = random.choice(["t", "x", "n"])
@@ -115,6 +133,7 @@ def _cts_f_one_step_divide():
     )
 
 
+@verifies('alg', task='rearrange')
 def _cts_f_two_step_y_mx_c():
     m = random.randint(2, 9)
     c = random.randint(1, 15)
@@ -128,6 +147,7 @@ def _cts_f_two_step_y_mx_c():
     )
 
 
+@verifies('alg', task='rearrange')
 def _cts_f_perimeter():
     if random.choice([True, False]):
         q = _q_make("w", r"P = 2l + 2w")
@@ -146,6 +166,7 @@ def _cts_f_perimeter():
     return q, s, "Treat P = 2l + 2w like a normal equation.", 2, ans
 
 
+@verifies('alg', task='rearrange')
 def _cts_f_ax_plus_by():
     a = random.randint(2, 6)
     b = random.randint(2, 5)
@@ -160,6 +181,7 @@ def _cts_f_ax_plus_by():
     )
 
 
+@verifies('alg', task='rearrange')
 def _cts_f_speed_time():
     if random.choice([True, False]):
         q = _q_make("t", r"v = \dfrac{s}{t}")
@@ -179,6 +201,7 @@ def _cts_f_speed_time():
     return q, s, hint, 2, ans
 
 
+@verifies('alg', task='rearrange')
 def _cts_f_work_formula():
     if random.choice([True, False]):
         q = _q_make("F", r"W = Fd")
@@ -193,6 +216,7 @@ def _cts_f_work_formula():
     return q, s, hint, 2, ans
 
 
+@verifies('alg', task='first_step')
 def _cts_f_first_step():
     m = random.randint(2, 7)
     c = random.randint(1, 12)
@@ -222,6 +246,7 @@ def _cts_f_first_step():
 # INTERMEDIATE (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='rearrange')
 def _cts_i_vuat():
     a = random.randint(2, 8)
     q = _q_make("t", rf"v = u + {a}t")
@@ -234,6 +259,7 @@ def _cts_i_vuat():
     )
 
 
+@verifies('alg', task='rearrange')
 def _cts_i_sqrt_area():
     q = _q_make("r", r"A = \pi r^2")
     s = (
@@ -245,37 +271,48 @@ def _cts_i_sqrt_area():
     )
 
 
+@verifies('alg', task='rearrange')
 def _cts_i_half_at_squared():
     a = random.randint(2, 6)
-    num, den = 1, 2
-    q = _q_make("t", rf"s = \dfrac{{{num}}}{{{den}}}{a}t^2")
-    inner = _frac(f"{den}s", a)
-    s = (
-        rf"Multiply by \({den}\): \({den}s = {a}t^2\)<br>"
-        rf"Divide by \({a}\): \({inner} = t^2\)<br>"
-        rf"<strong>\(t = {_sqrt_tex(inner)}\)</strong>"
-    )
-    inner = _subj_frac(f'{den}s', a)
+    q = _q_make("t", rf"s = {_half_coeff_tex(a)}t^2")
+    if a % 2 == 0:
+        k = a // 2
+        inner = _frac("s", k)
+        s = (
+            (rf"Divide by \({k}\): \({inner} = t^2\)<br>" if k != 1 else rf"\({inner} = t^2\)<br>")
+            + rf"<strong>\(t = {_sqrt_tex(inner)}\)</strong>"
+        )
+        inner = _subj_frac('s', k)
+    else:
+        inner = _frac("2s", a)
+        s = (
+            rf"Multiply by \(2\): \(2s = {a}t^2\)<br>"
+            rf"Divide by \({a}\): \({inner} = t^2\)<br>"
+            rf"<strong>\(t = {_sqrt_tex(inner)}\)</strong>"
+        )
+        inner = _subj_frac('2s', a)
     return q, s, "Clear the fraction, isolate t², then take the square root.", 4, _subj_algebraic_answer(
         _subj_formula('t', _subj_sqrt(inner))
     )
 
 
+@verifies('alg', task='rearrange')
 def _cts_i_linear_fraction():
     a = random.randint(2, 5)
     b = random.randint(1, 9)
     c = random.randint(2, 6)
     q = _q_make("x", rf"y = \dfrac{{{a}x + {b}}}{{{c}}}")
     s = (
-        rf"Multiply by \({c}\): \(cy = {a}x + {b}\)<br>"
-        rf"Subtract \({b}\): \(cy - {b} = {a}x\)<br>"
-        rf"<strong>\(x = \dfrac{{cy - {b}}}{{{a}}}\)</strong>"
+        rf"Multiply by \({c}\): \({c}y = {a}x + {b}\)<br>"
+        rf"Subtract \({b}\): \({c}y - {b} = {a}x\)<br>"
+        rf"<strong>\(x = \dfrac{{{c}y - {b}}}{{{a}}}\)</strong>"
     )
     return q, s, "Remove the fraction first (multiply by the denominator).", 3, _subj_algebraic_answer(
-        _subj_formula('x', _subj_frac(f'c*y-{b}', a))
+        _subj_formula('x', _subj_frac(f'{c}*y-{b}', a))
     )
 
 
+@verifies('alg', task='rearrange')
 def _cts_i_distance_speed():
     k = random.randint(3, 9)
     q = _q_make("t", rf"D = {k}t")
@@ -285,6 +322,7 @@ def _cts_i_distance_speed():
     )
 
 
+@verifies('alg', task='rearrange')
 def _cts_i_F_ma():
     a = random.randint(2, 9)
     if random.choice([True, False]):
@@ -293,13 +331,14 @@ def _cts_i_F_ma():
         hint = "F = ma with a numerical coefficient — divide by a."
         ans = _subj_algebraic_answer(_subj_formula('m', _subj_frac('f', a)))
     else:
-        q = _q_make("a", rf"F = {a}m")
+        q = _q_make("a", r"F = ma")
         s = rf"Divide both sides by \(m\): <strong>\(a = \dfrac{{F}}{{m}}\)</strong>"
         hint = "Divide by m to make a the subject."
         ans = _subj_algebraic_answer(_subj_formula('a', _subj_frac('f', 'm')))
     return q, s, hint, 3, ans
 
 
+@verifies('alg', task='rearrange')
 def _cts_i_circumference():
     q = _q_make("r", r"C = 2\pi r")
     s = r"Divide both sides by \(2\pi\): <strong>\(r = \dfrac{C}{2\pi}\)</strong>"
@@ -308,6 +347,7 @@ def _cts_i_circumference():
     )
 
 
+@verifies('alg', task='rearrange')
 def _cts_i_triangle_area():
     q = _q_make("h", r"A = \dfrac{1}{2}bh")
     s = (
@@ -319,6 +359,7 @@ def _cts_i_triangle_area():
     )
 
 
+@verifies('alg', task='rearrange')
 def _cts_i_y_ax_squared():
     a = random.randint(2, 7)
     inner = _frac("y", a)
@@ -332,14 +373,16 @@ def _cts_i_y_ax_squared():
     )
 
 
+@verifies('alg', task='rearrange')
 def _cts_i_suvat_make_u():
     a = random.randint(2, 5)
-    q = _q_make("u", rf"s = ut + \dfrac{{1}}{{2}}{a}t^2")
+    half = _half_coeff_tex(a)
+    q = _q_make("u", rf"s = ut + {half}t^2")
     s = (
-        rf"Subtract \(\dfrac{{1}}{{2}}{a}t^2\): \(s - \dfrac{{1}}{{2}}{a}t^2 = ut\)<br>"
-        rf"Divide by \(t\): <strong>\(u = \dfrac{{s - \dfrac{{1}}{{2}}{a}t^2}}{{t}}\)</strong>"
+        rf"Subtract \({half}t^2\): \(s - {half}t^2 = ut\)<br>"
+        rf"Divide by \(t\): <strong>\(u = \dfrac{{s - {half}t^2}}{{t}}\)</strong>"
     )
-    return q, s, "Remove the ½at² term, then divide by t.", 4, _subj_algebraic_answer(
+    return q, s, "Remove the t² term, then divide by t.", 4, _subj_algebraic_answer(
         _subj_formula('u', _subj_frac(f's-{a}*t^2/2', 't'))
     )
 
@@ -348,6 +391,7 @@ def _cts_i_suvat_make_u():
 # DIFFICULT (9)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='rearrange')
 def _cts_d_kinetic():
     if random.choice([True, False]):
         q = _q_make("v", r"E = \dfrac{1}{2}mv^2")
@@ -369,6 +413,7 @@ def _cts_d_kinetic():
     return q, s, hint, 4, ans
 
 
+@verifies('alg', task='rearrange')
 def _cts_d_v_squared_u():
     a = random.randint(2, 6)
     inner = f"v^2 - {a}s"
@@ -382,6 +427,7 @@ def _cts_d_v_squared_u():
     )
 
 
+@verifies('alg', task='rearrange')
 def _cts_d_density():
     q = _q_make("V", r"\rho = \dfrac{m}{V}")
     s = (
@@ -393,6 +439,7 @@ def _cts_d_density():
     )
 
 
+@verifies('alg', task='rearrange')
 def _cts_d_inverse_proportion():
     k = random.randint(3, 18)
     q = _q_make("x", rf"y = \dfrac{{{k}}}{{x}}")
@@ -405,6 +452,7 @@ def _cts_d_inverse_proportion():
     )
 
 
+@verifies('alg', task='rearrange')
 def _cts_d_P_VI():
     if random.choice([True, False]):
         q = _q_make("I", r"P = VI")
@@ -419,6 +467,7 @@ def _cts_d_P_VI():
     return q, s, hint, 3, ans
 
 
+@verifies('alg', task='rearrange')
 def _cts_d_V_lwh():
     q = _q_make("h", r"V = lwh")
     s = (
@@ -429,6 +478,7 @@ def _cts_d_V_lwh():
     )
 
 
+@verifies('alg', task='rearrange')
 def _cts_d_y_ax2_plus_c():
     a = random.randint(2, 5)
     c = random.randint(1, 12)
@@ -444,38 +494,55 @@ def _cts_d_y_ax2_plus_c():
     )
 
 
+@verifies('alg', task='rearrange')
 def _cts_d_suvat_u_zero():
     a = random.randint(2, 5)
-    q = _q_make("t", rf"s = \dfrac{{1}}{{2}}{a}t^2")
-    inner = _frac("2s", a)
-    s = (
-        rf"Multiply by 2: \(2s = {a}t^2\)<br>"
-        rf"Divide by \({a}\): \(t^2 = {inner}\)<br>"
-        rf"<strong>\(t = {_sqrt_tex(inner)}\)</strong>"
-    )
-    inner = _subj_frac('2s', a)
+    q = _q_make("t", rf"s = {_half_coeff_tex(a)}t^2")
+    if a % 2 == 0:
+        k = a // 2
+        inner = _frac("s", k)
+        s = (
+            (rf"Divide by \({k}\): \(t^2 = {inner}\)<br>" if k != 1 else rf"\(t^2 = {inner}\)<br>")
+            + rf"<strong>\(t = {_sqrt_tex(inner)}\)</strong>"
+        )
+        inner = _subj_frac('s', k)
+    else:
+        inner = _frac("2s", a)
+        s = (
+            rf"Multiply by 2: \(2s = {a}t^2\)<br>"
+            rf"Divide by \({a}\): \(t^2 = {inner}\)<br>"
+            rf"<strong>\(t = {_sqrt_tex(inner)}\)</strong>"
+        )
+        inner = _subj_frac('2s', a)
     return q, s, "When u = 0, suvat reduces to s = ½at².", 4, _subj_algebraic_answer(
         _subj_formula('t', _subj_sqrt(inner))
     )
 
 
+@verifies('alg', task='rearrange')
 def _cts_d_subject_on_both_sides():
     a = random.randint(2, 4)
     b = random.randint(1, 8)
     c = random.randint(1, 5)
+    while c == a:          # equal coefficients would cancel the x terms (division by zero)
+        c = random.randint(1, 5)
     d = random.randint(3, 12)
-    q = _q_make("x", rf"{a}x + {b} = {c}x + {d}")
+    while d == b:          # x = 0 would be keyed as 0/-1, a form the checker reads loosely
+        d = random.randint(3, 12)
+    q = _q_make("x", rf"{a}x + {b} = {coef(c, 'x')} + {d}")
     coeff = a - c
     const = d - b
+    n_x, d_x = _lowest_terms(const, coeff)
     s = (
-        rf"Subtract \({c}x\) and \({b}\): \({coeff}x = {const}\)<br>"
-        rf"<strong>\(x = {_frac(const, coeff)}\)</strong>"
+        rf"Subtract \({coef(c, 'x')}\) and \({b}\): \({coef(coeff, 'x')} = {const}\)<br>"
+        rf"<strong>\(x = {_frac(n_x, d_x)}\)</strong>"
     )
     return q, s, "Collect x terms on one side, numbers on the other.", 4, _subj_algebraic_answer(
-        _subj_formula('x', _subj_frac(const, coeff))
+        _subj_formula('x', _subj_frac(n_x, d_x))
     )
 
 
+@verifies('alg', task='rearrange')
 def _cts_d_rational_x():
     p = random.randint(1, 5)
     q_val = random.randint(2, 6)
@@ -485,10 +552,9 @@ def _cts_d_rational_x():
         rf"Multiply by \(x - {q_val}\): \(x + {p} = {k}(x - {q_val})\)<br>"
         rf"Expand: \(x + {p} = {k}x - {k * q_val}\)<br>"
         rf"Collect \(x\): \(x - {k}x = -{k * q_val} - {p}\)<br>"
-        rf"<strong>\(x = {_frac(-k * q_val - p, 1 - k)}\)</strong>"
+        rf"<strong>\(x = {_frac(*_lowest_terms(-k * q_val - p, 1 - k))}\)</strong>"
     )
-    num = -k * q_val - p
-    den = 1 - k
+    num, den = _lowest_terms(-k * q_val - p, 1 - k)
     return q, s, "Multiply by the denominator, then collect like terms.", 5, _subj_algebraic_answer(
         _subj_formula('x', _subj_frac(num, den))
     )
@@ -498,6 +564,7 @@ def _cts_d_rational_x():
 # MCQ (12 — randomised)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='rearrange')
 def _cts_mcq_y_mx_c():
     m = random.randint(2, 8)
     c = random.randint(1, 14)
@@ -517,6 +584,7 @@ def _cts_mcq_y_mx_c():
     return q, sol, "Subtract c, then divide by m.", 2, opts, correct_letter
 
 
+@verifies('alg', task='rearrange')
 def _cts_mcq_vuat():
     a = random.randint(2, 9)
     correct = rf"\(t = \dfrac{{v - u}}{{{a}}}\)"
@@ -535,6 +603,7 @@ def _cts_mcq_vuat():
     return q, sol, "Subtract u, then divide by a.", 2, opts, correct_letter
 
 
+@verifies('alg', task='rearrange')
 def _cts_mcq_sqrt_r():
     correct = r"\(r = \sqrt{\dfrac{A}{\pi}}\)"
     wrong = [
@@ -552,6 +621,7 @@ def _cts_mcq_sqrt_r():
     return q, sol, "Divide by π, then square root.", 2, opts, correct_letter
 
 
+@verifies('alg', task='rearrange')
 def _cts_mcq_kinetic():
     if random.choice([True, False]):
         correct = r"\(v = \sqrt{\dfrac{2E}{m}}\)"
@@ -580,6 +650,7 @@ def _cts_mcq_kinetic():
     return q, sol, hint, 3, opts, correct_letter
 
 
+@verifies('alg', task='rearrange')
 def _cts_mcq_triangle_h():
     correct = r"\(h = \dfrac{2A}{b}\)"
     wrong = [
@@ -597,6 +668,7 @@ def _cts_mcq_triangle_h():
     return q, sol, "Multiply by 2, then divide by b.", 2, opts, correct_letter
 
 
+@verifies('alg', task='rearrange')
 def _cts_mcq_circumference():
     correct = r"\(r = \dfrac{C}{2\pi}\)"
     wrong = [
@@ -614,6 +686,7 @@ def _cts_mcq_circumference():
     return q, sol, "Divide both sides by 2π.", 2, opts, correct_letter
 
 
+@verifies('alg', task='rearrange')
 def _cts_mcq_inverse():
     k = random.randint(4, 15)
     correct = rf"\(x = {_frac(k, 'y')}\)"
@@ -632,6 +705,7 @@ def _cts_mcq_inverse():
     return q, sol, "Multiply by x, then divide by y.", 2, opts, correct_letter
 
 
+@verifies('alg', task='rearrange')
 def _cts_mcq_density():
     correct = r"\(V = \dfrac{m}{\rho}\)"
     wrong = [
@@ -649,6 +723,7 @@ def _cts_mcq_density():
     return q, sol, "Multiply by V, then divide by ρ.", 3, opts, correct_letter
 
 
+@verifies('alg', task='rearrange')
 def _cts_mcq_two_step():
     a = random.randint(2, 6)
     b = random.randint(2, 6)
@@ -668,6 +743,7 @@ def _cts_mcq_two_step():
     return q, sol, "Add the constant, then divide by the coefficient.", 2, opts, correct_letter
 
 
+@verifies('alg', task='rearrange')
 def _cts_mcq_pythagoras():
     correct = r"\(a = \sqrt{c^2 - b^2}\)"
     wrong = [
@@ -685,6 +761,7 @@ def _cts_mcq_pythagoras():
     return q, sol, "Isolate a², then take the square root.", 3, opts, correct_letter
 
 
+@verifies('alg', task='rearrange')
 def _cts_mcq_speed():
     correct = r"\(t = \dfrac{d}{v}\)"
     wrong = [
@@ -702,6 +779,7 @@ def _cts_mcq_speed():
     return q, sol, "Multiply both sides by t first.", 2, opts, correct_letter
 
 
+@verifies('alg', task='rearrange')
 def _cts_mcq_force():
     correct = r"\(a = \dfrac{F}{m}\)"
     wrong = [

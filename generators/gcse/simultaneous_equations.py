@@ -5,7 +5,8 @@ Graded practice variants return (question, solution, hint, marks, raw)
 or an MCQ 6-tuple (question, solution, hint, marks, options, correct_letter).
 """
 import random
-from generators.shared.utils import make_problem, signed_term
+from generators.shared.utils import make_problem, signed_term, coef
+from generators.shared.verify_hook import record, verifies
 from generators.gcse.maths_bank_procedural_mcq import procedural_mcq_for
 from generators.shared.variant_utils import (
     select_tier_variants,
@@ -141,6 +142,7 @@ def _build_pair(x_ans, y_ans, a1, b1, a2, b2):
 # FOUNDATIONAL (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='solve_system')
 def _sim_f_add_to_eliminate():
     """x + y and x - y style — add equations."""
     x_ans = random.randint(3, 8)
@@ -171,6 +173,7 @@ def _sim_f_add_to_eliminate():
     return q, sol, hint, 2, _sim_pair_answer(x_ans, y_ans)
 
 
+@verifies('alg', task='solve_system')
 def _sim_f_elim_same_coefficient():
     """Subtract when one variable has the same coefficient."""
     x_ans = random.randint(2, 6)
@@ -206,6 +209,7 @@ def _sim_f_elim_same_coefficient():
     return q, sol, hint, 3, _sim_pair_answer(x_ans, y_ans)
 
 
+@verifies('alg', task='solve_system')
 def _sim_f_substitution_y_equals():
     """y = ax + b substituted into second equation."""
     x_ans = random.randint(1, 5)
@@ -214,11 +218,11 @@ def _sim_f_substitution_y_equals():
     b1 = y_ans - a1 * x_ans
     c2, d2 = random.randint(2, 4), random.randint(1, 3)
     e2 = c2 * x_ans + d2 * y_ans
-    b1_str = f"+ {b1}" if b1 >= 0 else f"- {abs(b1)}"
+    b1_str = "" if b1 == 0 else (f" + {b1}" if b1 > 0 else f" - {abs(b1)}")
     q = (
         rf"Solve the simultaneous equations:<br>"
-        rf"\(y = {a1}x {b1_str}\) &nbsp;&nbsp;(1)<br>"
-        rf"\({c2}x + {d2}y = {e2}\) &nbsp;&nbsp;(2)"
+        rf"\(y = {coef(a1, 'x')}{b1_str}\) &nbsp;&nbsp;(1)<br>"
+        rf"\({coef(c2, 'x')} + {coef(d2, 'y')} = {e2}\) &nbsp;&nbsp;(2)"
     )
     sub_lhs = c2 + d2 * a1
     sub_rhs = e2 - d2 * b1
@@ -227,18 +231,18 @@ def _sim_f_substitution_y_equals():
             rf"<strong>Step 1</strong> — equation (1) gives \(y\) in terms of \(x\). "
             rf"Substitute into equation (2):"
             f'<div style="margin:8px 0 0 16px;">'
-            rf"\({c2}x + {d2}({a1}x {b1_str}) = {e2}\)</div>"
+            rf"\({c2}x + {'' if d2 == 1 else d2}({coef(a1, 'x')}{b1_str}) = {e2}\)</div>"
         )
         + _sim_step(
             rf"<strong>Step 2</strong> — expand and collect \(x\) terms:"
             f'<div style="margin:8px 0 0 16px;">'
-            rf"\({c2}x {signed_term(d2 * a1)}x {signed_term(d2 * b1)} = {e2}\)<br>"
+            rf"\({c2}x {signed_term(d2 * a1)}x{'' if b1 == 0 else ' ' + signed_term(d2 * b1)} = {e2}\)<br>"
             rf"\({sub_lhs}x = {sub_rhs}\) → <strong>\(x = {x_ans}\)</strong></div>"
         )
         + _sim_step(
             rf"<strong>Step 3</strong> — substitute \(x = {x_ans}\) into equation (1):"
             f'<div style="margin:8px 0 0 16px;">'
-            rf"\(y = {a1}({x_ans}) {b1_str} = <strong>{y_ans}</strong></div>"
+            rf"\(y = {a1}({x_ans}){b1_str} = {y_ans}\), so <strong>\(y = {y_ans}\)</strong></div>"
         )
         + _sim_answer(x_ans, y_ans)
     )
@@ -249,6 +253,7 @@ def _sim_f_substitution_y_equals():
     return q, sol, hint, 3, _sim_pair_answer(x_ans, y_ans)
 
 
+@verifies('alg', task='solve_system')
 def _sim_f_simple_pair():
     """Two equations, different coefficients, integer solution."""
     x_ans = random.randint(2, 5)
@@ -284,6 +289,7 @@ def _sim_f_simple_pair():
     return q, sol, hint, 2, _sim_pair_answer(x_ans, y_ans)
 
 
+@verifies('alg', task='solve_system')
 def _sim_f_classic_pair():
     """3x + 2y and x + 2y — subtract to eliminate y."""
     x_ans, y_ans = 3, 2
@@ -317,6 +323,7 @@ def _sim_f_classic_pair():
 # INTERMEDIATE (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='solve_system')
 def _sim_i_elimination_multiply():
     """Multiply one equation to match coefficients."""
     x_ans = random.randint(2, 6)
@@ -367,6 +374,7 @@ def _sim_i_elimination_multiply():
     return q, sol, hint, 4, _sim_pair_answer(x_ans, y_ans)
 
 
+@verifies('alg', task='solve_system')
 def _sim_i_substitution_rearrange():
     """Rearrange one equation then substitute."""
     x_ans = random.randint(2, 5)
@@ -376,7 +384,7 @@ def _sim_i_substitution_rearrange():
     q = (
         rf"Solve the simultaneous equations:<br>"
         rf"\({a}x + {b}y = {c}\) &nbsp;&nbsp;(1)<br>"
-        rf"\({d}x + {e}y = {f}\) &nbsp;&nbsp;(2)"
+        rf"\({d}x + y = {f}\) &nbsp;&nbsp;(2)"
     )
     x_coeff = a - b * d
     x_rhs = c - b * f
@@ -415,8 +423,11 @@ def _sim_i_word_tickets():
         child_p = random.randint(4, 7)
     n1a, n1c = random.randint(15, 25), random.randint(20, 35)
     n2a, n2c = random.randint(10, 18), random.randint(25, 40)
+    while n1a * n2c == n1c * n2a:  # proportional days would not fix both prices
+        n2a, n2c = random.randint(10, 18), random.randint(25, 40)
     total1 = adult_p * n1a + child_p * n1c
     total2 = adult_p * n2a + child_p * n2c
+    record('linear_system_2', a1=n1a, b1=n1c, c1=total1, a2=n2a, b2=n2c, c2=total2)
     q = (
         rf"Adult tickets cost \(a\) pounds and child tickets cost \(c\) pounds.<br>"
         rf"Day 1: {n1a} adult and {n1c} child tickets sold for <strong>£{total1}</strong>.<br>"
@@ -466,6 +477,7 @@ def _sim_i_word_tickets():
     return q, sol, hint, 4, _sim_pair_answer(adult_p, child_p, "Adult price (£)", "Child price (£)")
 
 
+@verifies('alg', task='solve_system')
 def _sim_i_find_y_only():
     """Solve and state y only (exam-style)."""
     x_ans, y_ans = 4, 1
@@ -495,6 +507,7 @@ def _sim_i_find_y_only():
     return q, sol, hint, 2, _sim_linear_answer(y_ans, "y")
 
 
+@verifies('alg', task='keyed_text', text='the solution to the simultaneous equations')
 def _sim_i_graph_interpret():
     """Link to intersection of two lines — MCQ."""
     m1 = random.randint(1, 3)
@@ -502,7 +515,7 @@ def _sim_i_graph_interpret():
     m2 = -random.randint(1, 3)
     c2 = random.randint(4, 10)
     q = (
-        rf"The lines \(y = {m1}x + {c1}\) and \(y = {m2}x + {c2}\) are drawn on the same axes. "
+        rf"The lines \(y = {coef(m1, 'x')} + {c1}\) and \(y = {coef(m2, 'x')} + {c2}\) are drawn on the same axes. "
         r"What do the coordinates of their point of intersection represent?"
     )
     correct = "The solution to the simultaneous equations"
@@ -529,6 +542,7 @@ def _sim_i_graph_interpret():
 # DIFFICULT (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='solve_system')
 def _sim_d_general_elimination():
     """Fully random integer coefficients (non-parallel)."""
     x_ans = random.randint(2, 7)
@@ -561,8 +575,11 @@ def _sim_d_cafe_prices():
         tea = random.randint(2, 5)
     n1c, n1t = random.randint(8, 14), random.randint(6, 12)
     n2c, n2t = random.randint(4, 9), random.randint(10, 16)
+    while n1c * n2t == n1t * n2c:  # proportional days would not fix both prices
+        n2c, n2t = random.randint(4, 9), random.randint(10, 16)
     total1 = n1c * coffee + n1t * tea
     total2 = n2c * coffee + n2t * tea
+    record('linear_system_2', a1=n1c, b1=n1t, c1=total1, a2=n2c, b2=n2t, c2=total2)
     q = (
         rf"On Monday a café sells {n1c} coffees and {n1t} teas for <strong>£{total1}</strong>. "
         rf"On Tuesday it sells {n2c} coffees and {n2t} teas for <strong>£{total2}</strong>. "
@@ -577,6 +594,7 @@ def _sim_d_cafe_prices():
     return q, sol, "One equation per day; two unknowns need two independent equations.", 5, _sim_pair_answer(coffee, tea, "Coffee (£)", "Tea (£)")
 
 
+@verifies('alg', task='solve_system')
 def _sim_d_matching_x_terms():
     """Subtract when x-coefficients match."""
     x_ans, y_ans = 2, 1
@@ -599,8 +617,11 @@ def _sim_d_apples_oranges():
     orange = random.randint(20, 40)
     n1a, n1o = random.randint(4, 8), random.randint(5, 10)
     n2a, n2o = random.randint(6, 12), random.randint(2, 6)
+    while n1a * n2o == n1o * n2a:  # proportional baskets cannot be solved uniquely
+        n2a, n2o = random.randint(6, 12), random.randint(2, 6)
     t1 = apple * n1a + orange * n1o
     t2 = apple * n2a + orange * n2o
+    record('linear_system_2', a1=n1a, b1=n1o, c1=t1, a2=n2a, b2=n2o, c2=t2)
     q = (
         rf"A shop sells apples at \(a\) p each and oranges at \(o\) p each.<br>"
         rf"Customer 1 buys {n1a} apples and {n1o} oranges and pays <strong>{t1}p</strong>.<br>"
@@ -626,6 +647,7 @@ def _sim_d_exam_multipart():
     total2 = n_x2 * x_ans + n_y * y_ans
     diff_x = n_x2 - n_x1
     diff_rhs = total2 - total1
+    record('linear_system_2', a1=n_x1, b1=n_y, c1=total1, a2=n_x2, b2=n_y, c2=total2)
     eq1, eq2 = _build_pair(x_ans, y_ans, n_x1, n_y, n_x2, n_y)
     q = (
         rf"At a shop, each item of type X costs \(x\) pounds and each item of type Y costs \(y\) pounds.<br>"
@@ -709,12 +731,12 @@ _SIM_MCQ_BANK = [
     },
     {
         "difficulty": "difficult",
-        "q": r"\(2x + 3y = 12\) and \(5x - y = 9\). After eliminating \(x\), you get:",
-        "opts": [r"A  \(y = 1\)", r"B  \(3y = 3\)", r"C  \(y = 3\)", r"D  \(5y = 15\)"],
+        "q": r"\(2x + 3y = 12\) and \(2x + y = 8\). After eliminating \(x\), you get:",
+        "opts": [r"A  \(2y = 20\)", r"B  \(2y = 4\)", r"C  \(4y = 20\)", r"D  \(4y = 4\)"],
         "ans": "B",
         "marks": 2,
-        "sol": r"Subtract (2) from (1): \(3y = 3\). Answer: <strong>B</strong>",
-        "hint": "Subtract the equations when the x-terms match (5x and 5x).",
+        "sol": r"Subtract (2) from (1): \(3y - y = 12 - 8\), so \(2y = 4\). Answer: <strong>B</strong>",
+        "hint": "Subtract the equations when the x-terms match (2x and 2x).",
     },
     {
         "difficulty": "difficult",

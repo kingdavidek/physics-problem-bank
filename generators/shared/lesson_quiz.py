@@ -5,7 +5,12 @@ from a topic's lesson bank (mixed formats) or MCQ mode.
 import random
 import re
 
-from generators.shared.answer_checkers import MAX_USER_ANSWER_LEN, check_answer
+from generators.shared.answer_checkers import (
+    MAX_USER_ANSWER_LEN,
+    check_answer,
+    problem_answer_form,
+    problem_answer_prereqs,
+)
 
 LESSON_QUIZ_MIX = (
     ("foundational", 3),
@@ -322,7 +327,15 @@ def grade_lesson_quiz_problem(problem, user_answer):
         }
 
     try:
-        result = check_answer(answer_type, raw, user)
+        result = check_answer(
+            answer_type,
+            raw,
+            user,
+            form=problem_answer_form(problem),
+            subject=problem.get("answer_subject"),
+            labels=problem.get("answer_labels"),
+            prereqs=problem_answer_prereqs(problem),
+        )
     except ValueError:
         return {
             "user_answer": user,

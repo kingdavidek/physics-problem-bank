@@ -11,6 +11,8 @@ from generators.shared.utils import (
     problem_extra_from_graded_answer,
     proof_steps_answer,
 )
+from generators.shared.answer_checkers import FORM_EXPANDED
+from generators.shared.verify_hook import verifies
 from generators.shared.variant_utils import (
     select_tier_variants,
     mcq_variants_from_pool,
@@ -37,25 +39,25 @@ def _ap_counterexample_case():
     cases = [
         (
             r"n^2 > n",
-            random.choice([0, 1]),
+            1,
             None,
             r"One value where the inequality fails is enough.",
         ),
         (
             r"n^2 + 1 \text{ is prime}",
-            random.choice([3, 5, 7, 8, 9]),
+            3,
             None,
             r"Find one \(n\) where the expression is composite.",
         ),
         (
             r"n^2 \text{ is even}",
-            random.choice([1, 3, 5]),
+            1,
             None,
             r"Squares of odd integers are odd.",
         ),
         (
             r"2n + 1 \text{ is even}",
-            random.randint(1, 6),
+            1,
             None,
             r"Odd numbers are one more than a multiple of 2.",
         ),
@@ -114,8 +116,10 @@ def _ap_expand_quadratic(v, a, b):
     return ' '.join(parts)
 
 
-def _ap_algebraic_answer(expr, format_hint=None):
+def _ap_algebraic_answer(expr, format_hint=None, form=None):
     payload = {'type': 'algebraic', 'value': str(expr)}
+    if form:
+        payload['form'] = form
     if format_hint:
         payload['format_hint'] = format_hint
     return payload
@@ -130,7 +134,7 @@ def _ap_fields_answer(values, labels, field_types):
     }
 
 
-def _ap_proof_steps_answer(steps, distractors, *, format_hint='Put the proof steps in the correct order'):
+def _ap_proof_steps_answer(steps, distractors, *, format_hint='Put the proof steps in the correct order', after=None):
     bank = [{'id': f's{i + 1}', 'text': text} for i, text in enumerate(steps)]
     for j, text in enumerate(distractors):
         bank.append({'id': f'd{j + 1}', 'text': text})
@@ -141,6 +145,7 @@ def _ap_proof_steps_answer(steps, distractors, *, format_hint='Put the proof ste
         bank,
         order_matters=True,
         format_hint=format_hint,
+        after=after,
     )
 
 
@@ -165,6 +170,7 @@ def _ap_problem_from_output(out, difficulty):
 # FOUNDATIONAL (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='ap_proof')
 def _ap_f_even_form():
     v = _ap_var()
     coef = random.choice([2, 4, 6, 8, 10])
@@ -191,9 +197,12 @@ def _ap_f_even_form():
             f"{expr} = {v} + {coef}, so it has the same parity as {v}.",
             f"{expr} is always odd because {coef} is even.",
         ),
+        # The definition and the rewriting are separate facts; the bracket remark needs the rewriting.
+        after={2: (), 3: (2,), 4: (1, 2, 3)},
     )
 
 
+@verifies('alg', task='ap_proof')
 def _ap_f_odd_form():
     v = _ap_var()
     offset = random.choice([1, 3, 5, 7, 9])
@@ -218,9 +227,12 @@ def _ap_f_odd_form():
             f"Because {expr} contains 2{v}, it is always even.",
             f"Odd numbers must end in 1, 3, 5, 7, or 9 in the ones column only.",
         ),
+        # "2v is even" and "even + odd is odd" are separate facts; the conclusion needs both.
+        after={2: (), 3: (1, 2)},
     )
 
 
+@verifies('alg', task='expand')
 def _ap_f_expand_consecutive():
     v = _ap_var()
     a = random.randint(1, 5)
@@ -237,9 +249,11 @@ def _ap_f_expand_consecutive():
     return q, s, "Multiply out — each term in the first bracket × each in the second.", 2, _ap_algebraic_answer(
         expanded,
         format_hint='Enter the simplified expression, e.g. n^2 + 5n + 6',
+        form=FORM_EXPANDED,
     )
 
 
+@verifies('alg', task='ap_parity_fields')
 def _ap_f_sum_consecutive():
     v = _ap_var()
     gap = random.randint(1, 4)
@@ -247,7 +261,7 @@ def _ap_f_sum_consecutive():
         rf"Write <strong>\({v} + ({v} + {gap})\)</strong> as a single expression, then "
         rf"state whether the result is always <strong>even</strong> or always <strong>odd</strong>."
     )
-    parity = "even" if gap % 2 == 1 else "odd"
+    parity = "odd" if gap % 2 == 1 else "even"      # 2v + gap has the parity of gap
     s = (
         rf"\({v} + ({v} + {gap}) = 2{v} + {gap}\), which is always <strong>{parity}</strong>."
     )
@@ -258,12 +272,13 @@ def _ap_f_sum_consecutive():
     )
 
 
+@verifies('alg', task='counterexample')
 def _ap_f_counterexample():
     stmt, n_val, expl, hint_extra = _ap_counterexample_case()
     q = (
         rf"Show that the statement “<strong>\({stmt}\)</strong> for every integer "
         rf"<strong>\(n\)</strong>” is <strong>false</strong> by giving a counterexample.<br>"
-        rf"Enter one integer value of <strong>\(n\)</strong> that disproves the statement."
+        rf"Enter the <strong>smallest positive integer</strong> value of <strong>\(n\)</strong> that disproves the statement."
     )
     s = rf"{expl} One counterexample disproves “always”."
     return q, s, hint_extra, 2, graded_answer_number(n_val)
@@ -273,6 +288,7 @@ def _ap_f_counterexample():
 # INTERMEDIATE (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='ap_proof')
 def _ap_i_square_difference():
     v = _ap_var()
     a = random.randint(1, 6)
@@ -301,6 +317,7 @@ def _ap_i_square_difference():
     )
 
 
+@verifies('alg', task='ap_proof')
 def _ap_i_product_consecutive():
     v = _ap_var()
     gap = random.choice([1, 3, 5])
@@ -310,16 +327,16 @@ def _ap_i_product_consecutive():
     )
     s = (
         rf"\({v}\) and \({v} + {gap}\) differ by {gap} (odd), so one is even and one is odd.<br>"
-        rf"Either \({v} = 2k\) and the product is \(2k({v}+{gap})\), "
-        rf"or \({v}+{gap} = 2k\) and the product is \({v} \times 2k\) — "
+        rf"Either \({v} = 2j\) and the product is \(2j({v}+{gap})\), "
+        rf"or \({v}+{gap} = 2j\) and the product is \({v} \times 2j\) — "
         rf"always a multiple of <strong>2</strong>."
     )
     return q, s, "Consecutive (or near-consecutive) integers include one even number.", 3, _ap_proof_steps_answer(
         (
             rf"{v} and ({v} + {gap}) differ by {gap} (an odd number).",
             "So one of the two integers is even and the other is odd.",
-            rf"If {v} is even, write {v} = 2k; then the product is 2k({v} + {gap}).",
-            rf"If ({v} + {gap}) is even, the product is {v} × 2k for some integer k.",
+            rf"If {v} is even, write {v} = 2j; then the product is 2j({v} + {gap}).",
+            rf"If ({v} + {gap}) is even, the product is {v} × 2j for some integer j.",
             "In either case the product has factor 2, so it is always even.",
         ),
         (
@@ -328,9 +345,12 @@ def _ap_i_product_consecutive():
             rf"Expand to {v}² + {gap}{v}; this is always a multiple of 4, not 2.",
             rf"Because {gap} is odd, both integers must be even.",
         ),
+        # The two cases (v even, v + gap even) are independent; each needs the odd/even step, and the end needs both.
+        after={4: (2,), 5: (3, 4)},
     )
 
 
+@verifies('alg', task='ap_proof')
 def _ap_i_multiple_of_three():
     v = _ap_var()
     m = random.choice([3, 4, 5, 6])
@@ -360,6 +380,7 @@ def _ap_i_multiple_of_three():
     )
 
 
+@verifies('alg', task='ap_proof')
 def _ap_i_sum_three_consecutive():
     v = _ap_var()
     k = random.choice([3, 5])
@@ -389,6 +410,7 @@ def _ap_i_sum_three_consecutive():
     )
 
 
+@verifies('alg', task='expand')
 def _ap_i_identity_expand():
     v = _ap_var()
     a = random.randint(2, 7)
@@ -405,6 +427,7 @@ def _ap_i_identity_expand():
     return q, s, "FOIL / grid method — collect n², n, and constant terms.", 3, _ap_algebraic_answer(
         expanded,
         format_hint='Enter the simplified expression, e.g. m^2 + 7m + 12',
+        form=FORM_EXPANDED,
     )
 
 
@@ -412,6 +435,7 @@ def _ap_i_identity_expand():
 # DIFFICULT (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='ap_proof')
 def _ap_d_n_squared_plus_n():
     v = _ap_var()
     gap = random.choice([1, 3, 5])
@@ -427,8 +451,8 @@ def _ap_d_n_squared_plus_n():
         (
             rf"{v} and ({v} + {gap}) differ by {gap} (an odd number).",
             "So one of the two integers is even and the other is odd.",
-            rf"If {v} is even, write {v} = 2k; then the product is 2k({v} + {gap}).",
-            rf"If ({v} + {gap}) is even, the product is {v} × 2k for some integer k.",
+            rf"If {v} is even, write {v} = 2j; then the product is 2j({v} + {gap}).",
+            rf"If ({v} + {gap}) is even, the product is {v} × 2j for some integer j.",
             "In either case the product has factor 2, so it is always even.",
         ),
         (
@@ -437,9 +461,12 @@ def _ap_d_n_squared_plus_n():
             rf"Because {gap} is even, both integers must be even.",
             rf"Factorise to {gap}({v} + 1), which is always a multiple of {gap} only.",
         ),
+        # The two cases (v even, v + gap even) are independent; each needs the odd/even step, and the end needs both.
+        after={4: (2,), 5: (3, 4)},
     )
 
 
+@verifies('alg', task='ap_proof')
 def _ap_d_odd_square():
     v = _ap_var()
     offset = random.choice([1, 3, 5])
@@ -470,6 +497,7 @@ def _ap_d_odd_square():
     )
 
 
+@verifies('alg', task='ap_proof')
 def _ap_d_even_sum_squares():
     v = _ap_var()
     step = random.choice([2, 4, 6])
@@ -503,6 +531,7 @@ def _ap_d_even_sum_squares():
     )
 
 
+@verifies('alg', task='counterexample')
 def _ap_d_disprove_always_prime():
     cases = [
         (r"n^2 + 1 \text{ is prime}", lambda n: n * n + 1),
@@ -510,33 +539,19 @@ def _ap_d_disprove_always_prime():
         (r"n^2 - 1 \text{ is prime for } n > 1", lambda n: n * n - 1),
     ]
     stmt, expr_fn = random.choice(cases)
-    candidates = [3, 5, 7, 8, 9, 10, 11]
-    random.shuffle(candidates)
-    n_val = None
-    val = None
-    for cand in candidates:
-        if stmt.startswith(r"n^2 - 1") and cand <= 1:
-            continue
-        trial = expr_fn(cand)
-        if trial < 2:
-            continue
-        if trial % 2 == 0 or any(trial % p == 0 for p in (3, 5, 7, 11) if trial > p):
-            n_val, val = cand, trial
+    # The answer box takes one number, so the question asks for the smallest counterexample (unique).
+    n_val = 2 if stmt.startswith(r"n^2 - 1") else 1
+    while True:
+        val = expr_fn(n_val)
+        if val >= 4 and any(val % p == 0 for p in range(2, int(val ** 0.5) + 1)):
             break
-    if n_val is None:
-        n_val, val = 8, expr_fn(8)
-    if val % 2 == 0:
-        factor_tex = rf"2 \times {val // 2}"
-    elif val % 5 == 0:
-        factor_tex = rf"5 \times {val // 5}"
-    elif val % 3 == 0:
-        factor_tex = rf"3 \times {val // 3}"
-    else:
-        factor_tex = rf"7 \times {val // 7}"
+        n_val += 1
+    p_small = next(p for p in range(2, val + 1) if val % p == 0)
+    factor_tex = rf"{p_small} \times {val // p_small}"
     q = (
         rf"The statement “<strong>\({stmt}\)</strong> for every positive integer "
         rf"<strong>\(n\)</strong>” is false. Give a <strong>counterexample</strong>: "
-        rf"enter one value of <strong>\(n\)</strong> that disproves it."
+        rf"enter the <strong>smallest</strong> value of <strong>\(n\)</strong> that disproves it."
     )
     s = (
         rf"Try <strong>\(n = {n_val}\)</strong>: value = {val} = {_ap_math(factor_tex)}, not prime. "
@@ -545,6 +560,7 @@ def _ap_d_disprove_always_prime():
     return q, s, "Find one n where the expression is composite.", 3, graded_answer_number(n_val)
 
 
+@verifies('alg', task='ap_proof')
 def _ap_d_four_consecutive():
     v = _ap_var()
     k = random.choice([4, 8])
@@ -577,27 +593,26 @@ def _ap_d_four_consecutive():
 # MCQ (9 — randomised)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='ap_always')
 def _ap_mcq_even_odd():
-    forms = [
-        ("Always even", "2n"),
-        ("Always odd", "2n + 1"),
-        ("Always even", "2n + 2"),
-        ("Always odd", "2n - 1"),
-    ]
-    pick = random.choice(forms)
-    correct_label, correct_expr = pick
-    wrong = [f for f in forms if f != pick]
-    random.shuffle(wrong)
+    """Which expression is always even (or odd)? Exactly one option has the stated parity."""
+    evens = ["2n", "2n + 2", "4n", "6n", "2n - 4"]
+    odds = ["2n + 1", "2n - 1", "2n + 3", "4n + 1", "6n - 3"]
+    want_even = random.choice([True, False])
+    right_pool, wrong_pool = (evens, odds) if want_even else (odds, evens)
+    correct_expr = random.choice(right_pool)
+    exprs = random.sample(wrong_pool, 3) + [correct_expr]
+    random.shuffle(exprs)
     letters = "ABCD"
-    opts_list = [pick] + wrong[:3]
-    random.shuffle(opts_list)
-    correct_letter = letters[opts_list.index(pick)]
-    opts = [f"{letters[i]}  {opts_list[i][1]} is {opts_list[i][0]}" for i in range(4)]
-    q = rf"For any integer \(n\), which expression is <strong>{correct_label.lower()}</strong>?"
-    sol = rf"<strong>{correct_expr}</strong> — {correct_label.lower()}. Answer: <strong>{correct_letter}</strong>"
+    correct_letter = letters[exprs.index(correct_expr)]
+    opts = [f"{letters[i]}  {exprs[i]}" for i in range(4)]
+    word = "even" if want_even else "odd"
+    q = rf"For any integer \(n\), which expression is always <strong>{word}</strong>?"
+    sol = rf"<strong>{correct_expr}</strong> is always {word}. Answer: <strong>{correct_letter}</strong>"
     return q, sol, "Even = 2n; odd = 2n+1.", 2, opts, correct_letter
 
 
+@verifies('alg', task='simplify', form=None)
 def _ap_mcq_square_diff():
     correct = r"\(2n + 1\)"
     wrong = [r"\(2n\)", r"\(n + 1\)", r"\(n^2 + 1\)"]
@@ -611,12 +626,13 @@ def _ap_mcq_square_diff():
     return q, sol, "Expand (n+1)² and subtract n².", 2, opts, correct_letter
 
 
+@verifies('alg', task='ap_prop')
 def _ap_mcq_consecutive_product():
     correct = "It is always even"
     wrong = [
         "It is always odd",
         "It is always a multiple of 3",
-        "It can be prime only",
+        "It is always prime",
     ]
     vals = wrong + [correct]
     random.shuffle(vals)
@@ -628,6 +644,7 @@ def _ap_mcq_consecutive_product():
     return q, sol, "Consecutive integers — one is even.", 2, opts, correct_letter
 
 
+@verifies('alg', task='ap_counter_mcq')
 def _ap_mcq_counterexample():
     correct = r"\(n = 3\) gives \(n^2 + 1 = 10\) (not prime)"
     wrong = [
@@ -645,6 +662,7 @@ def _ap_mcq_counterexample():
     return q, sol, "One failing example is enough.", 2, opts, correct_letter
 
 
+@verifies('alg', task='simplify', form=None)
 def _ap_mcq_sum_consecutive():
     correct = r"\(2n + 1\)"
     wrong = [r"\(2n\)", r"\(n^2 + 1\)", r"\(2n + 2\)"]
@@ -661,6 +679,7 @@ def _ap_mcq_sum_consecutive():
     return q, sol, "Add the two consecutive terms.", 2, opts, correct_letter
 
 
+@verifies('alg', task='simplify', form=None)
 def _ap_mcq_three_consecutive():
     correct = r"\(3n\)"
     wrong = [r"\(3n + 1\)", r"\(n^3\)", r"\(3n^2\)"]
@@ -677,6 +696,7 @@ def _ap_mcq_three_consecutive():
     return q, sol, "Three consecutive integers always sum to 3n.", 2, opts, correct_letter
 
 
+@verifies('alg', task='factorise')
 def _ap_mcq_factorise_even():
     correct = r"\(n(n + 1)\)"
     wrong = [r"\(n^2 + 1\)", r"\((n + 1)^2\)", r"\(2n\)"]
@@ -693,6 +713,7 @@ def _ap_mcq_factorise_even():
     return q, sol, "Factorise first, then explain using consecutive integers.", 2, opts, correct_letter
 
 
+@verifies('alg', task='ap_prop')
 def _ap_mcq_odd_square():
     correct = "Always odd"
     wrong = ["Always even", "Always a multiple of 4", "Sometimes prime only"]
@@ -709,6 +730,7 @@ def _ap_mcq_odd_square():
     return q, sol, "Square of an odd number is always odd.", 2, opts, correct_letter
 
 
+@verifies('alg', task='keyed_text', text='let n be any integer and show the algebra works for all n')
 def _ap_mcq_proof_valid():
     correct = r"Let \(n\) be any integer and show the algebra works for all \(n\)"
     wrong = [

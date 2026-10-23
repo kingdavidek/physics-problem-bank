@@ -11,6 +11,7 @@ Covers:
   Formal locus proofs using coordinates
 """
 from generators.shared.rounding import round_half_up as round, fmt_dp
+from generators.shared.verify_hook import record
 import random
 import math
 from generators.shared.utils import (
@@ -193,7 +194,7 @@ def _lens_svg(w=240, h=168):
     return _cl_diagram(w, h, 'Lens locus setup', 'Equal-radius circles centred at A and B.', inner)
 
 
-def _garden_loci_svg(w=300, h=215):
+def _garden_loci_svg(length=12, width=9, w=300, h=215):
     """Rectangular garden PQRS — setup only (no loci drawn; students describe them in parts a–c)."""
     px, py, qw, qh = 50, 48, 200, 150
     qx, qy = px + qw, py
@@ -205,13 +206,15 @@ def _garden_loci_svg(w=300, h=215):
         f'<text x="{qx+8}" y="{qy+5}" font-size="13" fill="#1a6fa8" font-weight="bold">Q</text>'
         f'<text x="{rx+8}" y="{ry+5}" font-size="13" fill="#1a6fa8" font-weight="bold">R</text>'
         f'<text x="{sx-14}" y="{sy+5}" font-size="13" fill="#1a6fa8" font-weight="bold">S</text>'
-        f'<text x="{px+qw//2}" y="{py-10}" font-size="12" fill="#555" text-anchor="middle">PQ = 12 m</text>'
-        f'<text x="{qx+22}" y="{py+qh//2+4}" font-size="12" fill="#555" text-anchor="middle">QR = 9 m</text>'
+        f'<text x="{px+qw//2}" y="{py-10}" font-size="12" fill="#555" text-anchor="middle">PQ = {length} m</text>'
+        f'<text x="{qx+22}" y="{py+qh//2+4}" font-size="12" fill="#555" text-anchor="middle">QR = {width} m</text>'
+        # the rectangle is the same shape whatever the lengths, so it carries the exam note
+        f'<text x="{w - 6}" y="{h + 12}" font-size="10" fill="#666" text-anchor="end">Not drawn accurately</text>'
     )
     return _cl_diagram(
-        w, h,
+        w, h + 18,
         'Garden PQRS',
-        'Rectangular garden PQRS, 12 metres by 9 metres.',
+        f'Rectangular garden PQRS, {length} metres by {width} metres.',
         inner,
         inline=False,
     )
@@ -249,8 +252,11 @@ def _triangle_centres_svg(w=340, h=248, ab_label="8 cm", bc_label="6 cm", ac_lab
         f'<text x="{bx-8}" y="158" font-size="11" fill="#333" font-weight="bold">B</text>'
         f'<text x="{ax-14}" y="{ay+4}" font-size="11" fill="#333" font-weight="bold">A</text>'
         f'<text x="{cx+4}" y="{cy+4}" font-size="11" fill="#333" font-weight="bold">C</text>'
+        # a fixed sketch whatever the side lengths, so it carries the exam note
+        f'<text x="{vw - 6}" y="{vh + 12}" font-size="10" fill="#666" text-anchor="end">Not drawn accurately</text>'
     )
-    return _cl_diagram(vw, vh, 'Triangle ABC', 'Right triangle ABC with labelled sides.', inner, max_width=w, inline=False)
+    return _cl_diagram(vw, vh + 18, 'Triangle ABC', 'Right triangle ABC with labelled sides.', inner, max_width=w,
+                       inline=False)
 
 
 def _sixty_deg_svg(w=210, h=148):
@@ -337,7 +343,7 @@ def _cl_mcq_return(q, s, hint, marks, correct, distractors):
     return q, s, hint, marks, opts, correct_letter
 
 
-def _cl_steps_answer(steps, distractors, *, format_hint='Put the construction steps in the correct order'):
+def _cl_steps_answer(steps, distractors, *, format_hint='Put the construction steps in the correct order', after=None):
     bank = [{'id': f's{i + 1}', 'text': text} for i, text in enumerate(steps)]
     for j, text in enumerate(distractors):
         bank.append({'id': f'd{j + 1}', 'text': text})
@@ -348,6 +354,7 @@ def _cl_steps_answer(steps, distractors, *, format_hint='Put the construction st
         bank,
         order_matters=True,
         format_hint=format_hint,
+        after=after,
     )
 
 
@@ -396,6 +403,7 @@ def _cl_f1_equidistant_two_points():
          "that passes through the midpoint of AB at right angles (90°) to AB. "
          "Every point on this line is exactly equal in distance from A and B.")
     hint = "The locus equidistant from two fixed points is the perpendicular bisector of the line joining them."
+    record('loci', kind='perp_bisector', cond_word='equidistant from A and B')
     return _cl_mcq_return(
         q, s, hint, 2,
         "The perpendicular bisector of AB",
@@ -414,6 +422,7 @@ def _cl_f2_fixed_distance_point():
     s = (f"The locus is a <strong>circle with centre P and radius {r} cm</strong>. "
          "Every point on this circle is exactly the given distance from P.")
     hint = "A fixed distance from a fixed point → circle."
+    record('loci', kind='circle', cond_word='fixed point P', r=r)
     return _cl_mcq_return(
         q, s, hint, 2,
         f"A circle with centre P and radius {r} cm",
@@ -434,6 +443,7 @@ def _cl_f3_equidistant_two_lines():
          f"One bisector passes through the {angle}° angle and the other through the supplementary angle. "
          "Every point on an angle bisector is equidistant from the two lines.")
     hint = "Equidistant from two intersecting lines → the angle bisector(s)."
+    record('loci', kind='angle_bisectors', cond_word='equidistant from both lines')
     return _cl_mcq_return(
         q, s, hint, 2,
         "The two angle bisectors of the angles at B",
@@ -464,13 +474,14 @@ def _cl_f4_fixed_distance_segment():
         f"Two parallel lines only, each {d} cm from AB (no curves at the ends)",
         f"A rectangle {seg} cm by {2 * d} cm",
     ]
+    record('loci', kind='stadium', cond_word='nearest point on AB', d=d)
     return _cl_mcq_return(q, s, hint, 2, correct, distractors)
 
 
 def _cl_f5_perp_bisector_property():
     pts = random.choice([
         ("P", "Q", "R"), ("X", "Y", "Z"), ("M", "N", "L"),
-        ("A", "B", "C"), ("D", "E", "F"), ("G", "H", "J"),
+        ("C", "D", "E"), ("D", "E", "F"), ("G", "H", "J"),      # never A or B: those name the segment
         ("K", "L", "M"), ("S", "T", "U"), ("V", "W", "X"),
     ])
     dist = random.randint(3, 12)
@@ -488,6 +499,7 @@ def _cl_f5_perp_bisector_property():
         f"{P}A ≠ {P}B and {R}A = {R}B",
         "Every point is equidistant from A and B",
     ]
+    record('loci_points', p_word=P, q_word=Q, r_word=R)
     return _cl_mcq_return(q, s, hint, 2, correct, distractors)
 
 
@@ -499,6 +511,7 @@ def _cl_f6_angle_bisector_property():
     s = ("Any point on the angle bisector is equidistant from the two arms of the angle. "
          f"Therefore, P's perpendicular distance from AB <strong>equals</strong> P's perpendicular distance from AC.")
     hint = "Any point on an angle bisector is equidistant from the two lines forming the angle."
+    record('loci', kind='angle_bisector_distance', cond_word='angle bisector of angle BAC')
     return _cl_mcq_return(
         q, s, hint, 2,
         "The perpendicular distance from AB equals the perpendicular distance from AC",
@@ -518,6 +531,7 @@ def _cl_f7_rolling_wheel():
     s = (f"The centre of the wheel stays exactly {r} cm above the {road} at all times. "
          f"The locus is a <strong>straight line parallel to the {road}, at height {r} cm</strong>.")
     hint = "The centre of a rolling circle stays at a fixed height = radius above the surface."
+    record('loci', kind='rolling_wheel', cond_word='centre of the wheel', r=r, surface_word=road)
     return _cl_mcq_return(
         q, s, hint, 2,
         f"A straight line parallel to the {road}, at height {r} cm",
@@ -538,6 +552,7 @@ def _cl_f8_closer_to_A():
          "The boundary is the perpendicular bisector itself (where PA = PB). "
          "The region is an infinite half-plane.")
     hint = "Closer to A → on A's side of the perpendicular bisector of AB."
+    record('loci', kind='closer', cond_word='closer to A than to B')
     return _cl_mcq_return(
         q, s, hint, 2,
         "All points on A's side of the perpendicular bisector of AB",
@@ -556,6 +571,7 @@ def _cl_f9_construct_perp_bisector_steps():
          "<strong>Step 3:</strong> Without changing the radius, place the point on B and draw arcs above and below AB, crossing the first arcs.<br>"
          "<strong>Step 4:</strong> Join the two intersection points with a straight line. This line is the perpendicular bisector of AB.")
     hint = "Keep the same compass radius for both arcs. The arcs must cross on both sides of AB."
+    record('loci_steps', kind='perp_bisector')
     return q, s, hint, 3, _cl_steps_answer(
         (
             "Open the compasses to more than half the length of AB.",
@@ -622,6 +638,7 @@ def _cl_f10_construct_angle_bisector_steps():
         },
     ]
     random.shuffle(bank)
+    record('loci_steps', kind='angle_bisector')
     return q, s, hint, 3, proof_steps_answer(
         ('s1', 's2', 's3', 's4', 's5'),
         bank,
@@ -640,6 +657,7 @@ def _cl_f11_triangle_tools():
          "Use compasses to draw arcs of the correct radii from two ends of the base; "
          "the third vertex is where the arcs intersect.")
     hint = "SSS construction uses only ruler + compasses. Arcs from two vertices give the third."
+    record('loci', kind='tools', cond_word='What tools do you need')
     return _cl_mcq_return(
         q, s, hint, 2,
         "A ruler and a pair of compasses",
@@ -661,6 +679,7 @@ def _cl_f12_locus_around_rectangle():
          f"rectangle (displaced outward by {d} cm), joined at each corner by a quarter-circle of radius {d} cm. "
          f"The total dimensions are {w_r + 2*d} cm × {h_r + 2*d} cm with rounded corners.")
     hint = "The locus hugs the rectangle's outline at a fixed distance, with circular arcs at the corners."
+    record('loci', kind='rounded_rectangle', cond_word='nearest point on a', d=d)
     return _cl_mcq_return(
         q, s, hint, 3,
         f"A rounded rectangle: sides parallel to the rectangle, {d} cm out, with quarter-circle corners of radius {d} cm",
@@ -679,6 +698,7 @@ def _cl_f13_bisector_right_angle():
          "P lies on the <strong>angle bisector of angle DAB</strong>, "
          "which is a line at 45° to both AB and AD, passing through vertex A.")
     hint = "Equidistant from two sides of an angle → on the angle bisector."
+    record('loci', kind='angle_bisector_corner', cond_word='equidistant from sides AB and AD')
     return _cl_mcq_return(
         q, s, hint, 2,
         "The angle bisector of angle DAB (a 45° line through A)",
@@ -694,6 +714,9 @@ def _cl_f14_two_circle_region():
     d_AB = random.randint(6, 14)
     r1 = random.randint(3, 8)
     r2 = random.randint(3, 8)
+    while r1 + r2 <= d_AB:       # the circles must overlap or there is no region to shade
+        r1 = random.randint(3, 8)
+        r2 = random.randint(3, 8)
     svg = _lens_svg()
     q = (f"Points A and B are {d_AB} cm apart. "
          f"Shade the region of all points that are within {r1} cm of A AND within {r2} cm of B.<br>{svg}")
@@ -702,6 +725,7 @@ def _cl_f14_two_circle_region():
          f"the lens-shaped (vesica) region where the two circles overlap. "
          f"{'The circles do overlap since ' + str(r1) + ' + ' + str(r2) + ' = ' + str(r1+r2) + ' > ' + str(d_AB) + '.' if r1+r2 > d_AB else 'Check whether the circles actually intersect.'}")
     hint = "Draw both circles and shade the overlapping region."
+    record('loci_lens', d=d_AB, r1=r1, r2=r2)
     return _cl_mcq_return(
         q, s, hint, 3,
         "The intersection (lens-shaped overlap) of the two circles",
@@ -721,6 +745,7 @@ def _cl_f15_scale_drawing_length():
          f"Find the actual length of the wall in {unit_out}.")
     s = (f"Actual length = {map_d} × {scale:,} = {actual_cm:,.0f} {unit_in}<br>"
          f"Convert to {unit_out}: {actual_cm:,.0f} ÷ {divisor:,} = <strong>{actual_final} {unit_out}</strong>")
+    record('sim_map_length', scale=scale, map_cm=map_d, unit_word=unit_out)
     return q, s, f"Multiply map distance by scale factor, then convert units.", 2, graded_answer_number(actual_final)
 
 
@@ -731,6 +756,8 @@ def _cl_f15_scale_drawing_length():
 def _cl_i1_combined_loci():
     d_AB = random.randint(6, 14)
     r = random.randint(4, 10)
+    if 2 * r <= d_AB:        # the circle must reach the perpendicular bisector, or there is no region at all
+        r = d_AB // 2 + 1
     svg = _lens_svg()
     q = (f"Points A and B are {d_AB} cm apart. Describe and sketch the region satisfying BOTH:<br>"
          f"(i) Closer to B than to A, AND<br>"
@@ -740,6 +767,7 @@ def _cl_i1_combined_loci():
          f"The required region is <strong>the part of the circle (centre A, radius {r} cm) "
          f"that lies on B's side of the perpendicular bisector of AB</strong>.")
     hint = "Draw both loci. The answer is their intersection (AND means the overlap)."
+    record('loci', kind='combined', cond_word='Closer to B than to A', r=r)
     return _cl_mcq_return(
         q, s, hint, 4,
         f"The part of the circle (centre A, radius {r} cm) on B's side of the perpendicular bisector of AB",
@@ -763,6 +791,7 @@ def _cl_i2_equilateral_triangle():
          f"<strong>Step 6:</strong> Join A to C and B to C.<br>"
          f"Triangle ABC is equilateral with all sides <strong>{side} cm</strong>.")
     hint = "Keep compass set to the side length. Both arcs from A and B with the same radius give C."
+    record('loci_steps', kind='equilateral', n=side)
     return q, s, hint, 4, _cl_steps_answer(
         (
             f"Draw a line segment AB = {side} cm.",
@@ -778,6 +807,8 @@ def _cl_i2_equilateral_triangle():
             "Draw one arc from A only, then join A to any point on the arc.",
             "Measure three equal sides with a ruler without using compasses.",
         ),
+        # Drawing AB and setting the compasses to the side length are independent; the first arc needs both.
+        after={2: (), 3: (1, 2)},
     )
 
 
@@ -793,6 +824,7 @@ def _cl_i3_ladder_midpoint():
          f"(where the wall meets the floor), sweeping from the floor to the wall.")
     hint = "Set up coordinates with the corner at origin. The midpoint's coordinates satisfy a circle equation."
     half_display = int(half_L) if half_L == int(half_L) else half_L
+    record('loci', kind='ladder', cond_word='midpoint M of the ladder', ladder=L)
     return _cl_mcq_return(
         q, s, hint, 4,
         f"A quarter-circle of radius {half_display} m centred at the corner (where wall meets floor)",
@@ -812,6 +844,7 @@ def _cl_i4_semicircle_locus():
          "Therefore the locus of P is <strong>the full circle with diameter AB</strong> "
          "(excluding points A and B themselves, where the angle is undefined).")
     hint = "Angle in semicircle theorem: if angle APB = 90°, P lies on the circle with diameter AB."
+    record('loci', kind='semicircle', cond_word='angle APB = 90°')
     return _cl_mcq_return(
         q, s, hint, 3,
         "The full circle with diameter AB (excluding A and B)",
@@ -846,6 +879,7 @@ def _cl_i5_treasure_hunt():
          f"{r_C} cm above C and {r_C} cm below C — giving "
          f"<strong>{n_locations} possible locations</strong> for the treasure.")
     reason_raw, reason_bank, reason_pick = _cl_treasure_reasoning_pick(r_C)
+    record('loci_treasure', r_c=r_C, unit_word='cm')
     return q, s, "Each condition gives a locus; count how many times they intersect.", 4, graded_answer_number_fields(
         (n_locations, reason_raw),
         ('Number of locations', 'Reasoning'),
@@ -868,6 +902,7 @@ def _cl_i6_perp_from_external_point():
          "<strong>Step 5:</strong> Draw the line PQ. The foot of the perpendicular is where PQ meets l.<br>"
          "<strong>PQ is perpendicular to l.</strong>")
     hint = "The two arcs from X and Y (equal radii) locate Q on the far side of l from P."
+    record('loci_steps', kind='perp_from_point')
     return q, s, hint, 4, _cl_steps_answer(
         (
             "Place the compass point on P and draw an arc that crosses line l at two points; label them X and Y.",
@@ -894,6 +929,7 @@ def _cl_i7_triangle_sss_steps():
          f"<strong>Step 4:</strong> Join P to R and Q to R.<br>"
          f"Triangle PQR has sides <strong>PQ = {PQ} cm, QR = {QR} cm, PR = {PR} cm</strong>.")
     hint = "Draw the base, then use compasses to locate the third vertex where two arcs intersect."
+    record('loci_steps', kind='sss', pq=PQ, qr=QR, pr=PR)
     return q, s, hint, 4, _cl_steps_answer(
         (
             f"Draw PQ = {PQ} cm with a ruler.",
@@ -919,6 +955,7 @@ def _cl_i8_construct_60():
          "<strong>Step 3:</strong> Draw the ray AY.<br>"
          "Angle YAX = <strong>60°</strong> (since AX = AY = XY = r, so triangle AXY is equilateral).")
     hint = "Both arcs have the same radius r. Triangle AXY is equilateral → angles are all 60°."
+    record('loci_steps', kind='sixty')
     return q, s, hint, 4, _cl_steps_answer(
         (
             "Set the compass to any radius r. Place the point on A and draw an arc crossing AB; label the crossing X.",
@@ -941,6 +978,7 @@ def _cl_i9_perp_at_point_on_line():
          "<strong>Step 3:</strong> Draw arcs from X and Y above the line, crossing each other at Q.<br>"
          "<strong>Step 4:</strong> Draw the line PQ. <strong>PQ ⊥ AB</strong>.")
     hint = "X and Y are equidistant from P; Q is equidistant from X and Y → PQ is the perp. bisector of XY, hence ⊥ AB."
+    record('loci_steps', kind='perp_at_point')
     return q, s, hint, 4, _cl_steps_answer(
         (
             "Place the compass on P and draw two equal arcs along AB, crossing it at X and Y (equidistant from P).",
@@ -964,12 +1002,13 @@ def _cl_i10_scale_bearing():
     map_cm = dist_km * 100000 / scale
     q = (f"A scale drawing uses scale 1 : {scale:,}. "
          f"A ship sails {dist_km} km on a bearing of {bearing:03d}°. "
-         f"(i) How long should the line be on the scale drawing? "
+         f"(i) How long should the line be on the scale drawing, in cm? "
          f"(ii) Describe how to draw the line at the correct bearing.")
     s = (f"(i) Length on drawing = {dist_km} km × 1000 m/km × 100 cm/m ÷ {scale:,}<br>"
          f"= {dist_km * 100000:,} ÷ {scale:,} = <strong>{fmt_dp(map_cm, 1)} cm</strong><br>"
          f"(ii) Draw a north arrow at the starting point. Use a protractor to measure {bearing:03d}° clockwise "
          f"from north, then draw the line <strong>{fmt_dp(map_cm, 1)} cm</strong> in that direction.")
+    record('loci_scale_down', scale=scale, dist_km=dist_km)
     return q, s, "Convert real distance to cm, divide by scale. Bearings are measured clockwise from north.", 4, graded_answer_number(round(map_cm, 1))
 
 
@@ -982,6 +1021,7 @@ def _cl_i11_circumcircle():
          "<strong>Step 4:</strong> Set the compass to OA (= OB = OC) and draw the circle centred at O.<br>"
          "The circumcircle <strong>passes through all three vertices</strong>.")
     hint = "The circumcentre is equidistant from all three vertices → on all three perpendicular bisectors."
+    record('loci_steps', kind='circumcircle')
     return q, s, hint, 4, _cl_steps_answer(
         (
             "Construct the perpendicular bisector of side AB.",
@@ -995,6 +1035,7 @@ def _cl_i11_circumcircle():
             "Find the midpoint of BC and draw a circle centred there.",
             "Use a protractor to measure angles at each vertex.",
         ),
+        after={2: (), 3: (1, 2)},     # the two perpendicular bisectors can be drawn in either order
     )
 
 
@@ -1007,6 +1048,7 @@ def _cl_i12_incircle():
          "<strong>Step 5:</strong> Draw the circle centred at I with radius r.<br>"
          "The incircle <strong>touches (is tangent to) all three sides</strong>.")
     hint = "The incentre is equidistant from all three sides → on all three angle bisectors."
+    record('loci_steps', kind='incircle')
     return q, s, hint, 4, _cl_steps_answer(
         (
             "Construct the angle bisector of angle A.",
@@ -1021,6 +1063,8 @@ def _cl_i12_incircle():
             "Use the centroid as the centre of the incircle.",
             "Measure each side with a protractor.",
         ),
+        # The two angle bisectors can be drawn in either order.
+        after={2: (), 3: (1, 2)},
     )
 
 
@@ -1028,6 +1072,7 @@ def _cl_i13_garden_sprinkler():
     length = random.randint(6, 16)
     width = random.randint(5, 12)
     range_m = random.randint(4, 9)
+    range_m = min(range_m, width, length)      # so the whole quarter-circle lies inside the garden
     q = (f"A rectangular garden ABCD is {length} m × {width} m. "
          f"A sprinkler at corner A can reach any point within {range_m} m. "
          f"Describe the region of the garden watered by the sprinkler.")
@@ -1035,8 +1080,9 @@ def _cl_i13_garden_sprinkler():
     s = (f"The sprinkler waters the region within {range_m} m of A. "
          f"This is a quarter-circle of radius {range_m} m centred at A (since the garden is a rectangle). "
          f"The area watered ≈ ¼ × π × {range_m}² = <strong>{area} m²</strong> "
-         f"(assuming the full quarter-circle fits inside the garden).")
+         f"(the whole quarter-circle lies inside the garden).")
     hint = "Region within range of corner = quarter-circle of that radius at that corner."
+    record('loci', kind='quarter_circle', cond_word='sprinkler at corner A', r=range_m)
     return _cl_mcq_return(
         q, s, hint, 4,
         f"A quarter-circle of radius {range_m} m centred at corner A",
@@ -1074,6 +1120,7 @@ def _cl_i14_count_loci_intersections():
     s = (f"Circle A has radius {r1} cm; circle B has radius {r2} cm, centres {d_AB} cm apart.<br>"
          f"Sum of radii = {r1+r2}; difference = {abs(r1-r2)}.<br>"
          f"Since {desc}, there are <strong>{n} point{'s' if n != 1 else ''}</strong> satisfying both conditions.")
+    record('loci_circle_count', d=d_AB, r1=r1, r2=r2)
     return q, s, "Two circles intersect in 0, 1, or 2 points depending on how the radii and distance compare.", 4, graded_answer_number(n)
 
 
@@ -1093,6 +1140,7 @@ def _cl_i15_scale_area():
              f"Find the actual floor area in {unit}.")
         s = (f"Area scale factor = {scale}² = {area_scale:,}<br>"
              f"Actual area = {map_cm2} × {area_scale:,} = <strong>{actual_cm2:,.0f} {unit}</strong>")
+    record('loci_scale_area', scale=scale, map_cm2=map_cm2, unit_word=unit)
     return q, s, "Area scales as (linear scale)². Multiply map area by scale².", 4, graded_answer_number(actual_final)
 
 
@@ -1125,7 +1173,7 @@ def _cl_d1_locus_proof():
             ),
             "By SAS congruence, △PAM ≅ △PBM, so PA = PB.",
             (
-                "Conversely, if PA = PB, let P′ be the foot of the perpendicular "
+                "Suppose PA = PB, and let P′ be the foot of the perpendicular "
                 "from P to AB."
             ),
             "By RHS, △PAP′ ≅ △PBP′, so AP′ = BP′.",
@@ -1142,6 +1190,8 @@ def _cl_d1_locus_proof():
             "P′ is the midpoint of AB, so P lies on line AB.",
         ),
         format_hint='Put the proof steps in the correct order',
+        # The two directions of the proof are independent; the last step also uses the midpoint M.
+        after={5: (), 7: (1, 6)},
     )
 
 _cl_d1_locus_proof._fixed_stem = True
@@ -1150,6 +1200,8 @@ _cl_d1_locus_proof._fixed_stem = True
 def _cl_d2_ladder_ellipse():
     L = random.randint(4, 12)
     dist = random.randint(1, L - 1)
+    if 2 * dist == L:      # equal semi-axes would make the locus a circle, not an ellipse
+        dist += 1
     L_sq = L ** 2
     # P is dist m from foot: P = (a*(L-dist)/L, b*dist/L)
     semi_x = L - dist
@@ -1164,6 +1216,7 @@ def _cl_d2_ladder_ellipse():
          f"<strong>x²/{semi_x**2} + y²/{dist**2} = 1</strong><br>"
          f"This is an ellipse with semi-axes {semi_x} m (horizontal) and {dist} m (vertical).")
     hint = "Express P's coordinates in terms of a and b, substitute into a²+b²=L², simplify to get ellipse form."
+    record('loci_ellipse', ladder=L, dist=dist)
     return q, s, hint, 6, _cl_steps_answer(
         (
             f"The ladder goes from (a, 0) to (0, b). The unit vector along the ladder is (−a/{L}, b/{L}).",
@@ -1196,12 +1249,14 @@ def _cl_d3_chord_midpoint():
     R, chord, d = _cl_random_chord()
     hc = chord // 2
     q = (f"A circle has centre O and radius {R} cm. A chord of length {chord} cm slides around inside "
-         f"the circle (always remaining a chord). Find the locus of the midpoint M of the chord.")
+         f"the circle (always remaining a chord). The midpoint M of the chord traces out a circle centred at O. "
+         f"Find the radius of this circle in cm, correct to 1 decimal place if it is not exact.")
     s = (f"The line from centre O to midpoint M is perpendicular to the chord (by the perpendicular bisector theorem for circles).<br>"
          f"In right triangle OMX (where X is an endpoint of the chord): OM² + {hc}² = {R}²<br>"
          f"OM² = {R**2} − {hc**2} = {R**2 - hc**2}<br>"
          f"OM = {d} cm (constant, independent of the chord's position).<br>"
          f"The locus is a <strong>circle of radius {d} cm, centred at O</strong>.")
+    record('loci_chord_midpoint', radius=R, chord=chord)
     return q, s, "OM ⊥ chord; use Pythagoras OM² + (half-chord)² = R². OM is constant → circle.", 5, graded_answer_number(d)
 
 
@@ -1219,6 +1274,7 @@ def _cl_d4_constant_area_locus():
          f"The locus consists of <strong>two straight lines parallel to AB, each {h} cm away</strong> "
          f"(one on each side of AB).")
     hint = "Area = ½ × base × height; solve for h. P must be at constant height → lines parallel to AB."
+    record('loci', kind='constant_area', cond_word='area of triangle PAB', ab=AB, area=area)
     return _cl_mcq_return(
         q, s, hint, 5,
         f"Two straight lines parallel to AB, each {h} cm from AB (one on each side)",
@@ -1234,7 +1290,8 @@ def _cl_d5_apollonius_circle():
     d_AB = random.randint(8, 16)
     ratio_num, ratio_den = random.choice([(1, 2), (1, 3), (2, 3)])
     q = (f"Points A and B are {d_AB} cm apart. Point P moves such that PA : PB = {ratio_num} : {ratio_den}. "
-         f"Show algebraically that the locus of P is a circle, and state its centre and radius.")
+         f"Show algebraically that the locus of P is a circle, and state its centre and radius "
+         f"(to 1 decimal place if they are not whole numbers).")
     # PA/PB = ratio_num/ratio_den => ratio_den² PA² = ratio_num² PB²
     rn2, rd2 = ratio_num ** 2, ratio_den ** 2
     # 4(x²+y²) = (x-d)²+y² for 1:2 case generalised:
@@ -1256,6 +1313,7 @@ def _cl_d5_apollonius_circle():
          f"{rd2}(x² + y²) = {rn2}((x − {d_AB})² + y²)<br>"
          f"Expanding and simplifying gives a circle equation.<br>"
          f"The locus is a <strong>circle with centre ({cx_int}, 0) and radius {r} cm</strong>.")
+    record('loci_apollonius', d=d_AB, n=ratio_num, m=ratio_den)
     return q, s, "Set PA/PB = ratio, square both sides, expand and simplify to complete-the-square form.", 6
 
 
@@ -1265,7 +1323,8 @@ def _cl_d6_difference_squares():
     k = 2 * d * x_ans - d ** 2
     x_calc = (k + d ** 2) / (2 * d)
     q = (f"Points A and B are {d} cm apart. A point P satisfies PA² − PB² = {k}. "
-         f"Find the locus of P.")
+         f"The locus of P is a straight line perpendicular to AB. "
+         f"Find the distance of this line from A, measured along AB, in cm.")
     s = (f"Place A at (0, 0) and B at ({d}, 0). Let P = (x, y).<br>"
          f"PA² − PB² = {k}<br>"
          f"(x² + y²) − ((x − {d})² + y²) = {k}<br>"
@@ -1273,6 +1332,7 @@ def _cl_d6_difference_squares():
          f"{2*d}x = {k + d**2}<br>"
          f"x = {x_calc}<br>"
          f"The locus is the <strong>vertical line x = {x_calc} cm from A</strong>, perpendicular to AB.")
+    record('loci_diff_squares', d=d, k=k)
     return q, s, "Expand PA² and PB², subtract. The y² terms cancel, giving a simple linear equation.", 5, graded_answer_number(x_calc)
 
 
@@ -1288,6 +1348,7 @@ def _cl_d7_three_loci():
          "This unique point is the <strong>circumcentre</strong> of triangle ABC. "
          "It is equidistant from A, B, and C, and is the centre of the circumscribed circle.")
     hint = "Equidistant from two points → perp bisector. All three → circumcentre (all perp bisectors meet)."
+    record('loci', kind='circumcentre', cond_word='equidistant from all three villages')
     return _cl_mcq_return(
         q, s, hint, 5,
         "The circumcentre — where the perpendicular bisectors of the sides meet",
@@ -1308,7 +1369,7 @@ def _cl_d8_circumcentre_coords():
     mid_AC = (Cx / 2, Cy / 2)
     slope_ac = Cy / Cx if Cx else 0
     if Cy:
-        Oy = mid_AC[1] + (Cx / Cy) * (Ox - mid_AC[0])
+        Oy = mid_AC[1] - (Cx / Cy) * (Ox - mid_AC[0])
     else:
         Oy = Cy / 2
     O = (Ox, Oy)
@@ -1324,6 +1385,7 @@ def _cl_d8_circumcentre_coords():
          f"Perp slope = −{C[0]-A[0]}/{C[1]-A[1]}.<br>"
          f"Perp bisector of AC: y − {mid_AC[1]} = −{(C[0]-A[0])}/{(C[1]-A[1])} × (x − {mid_AC[0]}).<br>"
          f"At x = {mid_AB[0]}: solve for y to find circumcentre = <strong>({ox}, {oy})</strong> (y to 2 d.p. where needed).")
+    record('loci_circumcentre', bx=Bx, cx=Cx, cy=Cy)
     return q, s, "Perp bisector of horizontal segment → vertical line. Substitute into second bisector equation.", 6, graded_answer_number_pair(ox, oy, 'Circumcentre x', 'Circumcentre y')
 
 
@@ -1337,6 +1399,7 @@ def _cl_d9_regular_hexagon():
          f"<strong>Step 4:</strong> Join consecutive points with straight lines.<br>"
          f"The result is a regular hexagon with all sides <strong>{side} cm</strong> and all interior angles 120°.")
     hint = "A regular hexagon fits exactly 6 equilateral triangles; the radius equals the side length."
+    record('loci_steps', kind='hexagon', n=side)
     return q, s, hint, 5, _cl_steps_answer(
         (
             f"Draw a circle of radius {side} cm.",
@@ -1366,6 +1429,7 @@ def _cl_d10_incircle_radius():
          f"Area = ½ × {a} × {b} = <strong>{area} cm²</strong><br>"
          f"(ii) Semi-perimeter s = ({a} + {b} + {c}) / 2 = {s_val}<br>"
          f"Inradius r = Area / s = {area} / {s_val} = <strong>{r_display} cm</strong>")
+    record('loci_incircle', a=a, b=b, c=c)
     return q, s, "For a right triangle, area = ½ × legs. Inradius = area ÷ semi-perimeter.", 5, graded_answer_number_fields(
         (area, r_display),
         ('Area (cm²)', 'Inradius (cm)'),
@@ -1379,38 +1443,68 @@ def _cl_d11_sector_area_sprinkler():
     area = round(angle_deg / 360 * math.pi * R**2, 2)
     q = (f"A garden has a straight hedge of length {length} m along one side. "
          f"A sprinkler at corner A has range {R} m and rotates through {angle_deg}°. "
-         f"Find the area watered by the sprinkler.")
+         f"Find the area watered by the sprinkler, correct to 2 decimal places.")
     s = (f"The watered region is a sector of radius {R} m and angle {angle_deg}°.<br>"
          f"Area = ({angle_deg}/360) × π × {R}² = <strong>{area} m²</strong> (to 2 d.p.)")
+    record('loci_sector', angle=angle_deg, radius=R)
     return q, s, "Area of sector = (angle/360) × π × r².", 4, graded_answer_number(area)
 
 
+# Radio towers: the ranges are whole kilometres and the sum of the ranges always differs from the distance by at
+# least this much, so "do the zones overlap?" has a clear answer (never two zones that just touch).
+_CL_TOWER_MARGIN = 2
+
+
+def _cl_tower_cases(overlap):
+    """Every (distance, range A, range B) with a clear yes (overlap) or a clear no (a gap between the zones)."""
+    out = []
+    for d in (8, 10, 12):
+        for r1 in range(2, 8):
+            for r2 in range(2, 8):
+                gap = d - (r1 + r2)
+                if overlap and gap <= -_CL_TOWER_MARGIN or not overlap and gap >= _CL_TOWER_MARGIN:
+                    out.append((d, r1, r2))
+    return out
+
+
 def _cl_d12_two_radio_towers():
-    d = random.choice([8, 10, 12])
-    r1 = random.choice([5, 6, 7])
-    r2 = random.choice([5, 6, 7])
+    overlap = random.choice((True, False))          # about half the questions have each answer
+    d, r1, r2 = random.choice(_cl_tower_cases(overlap))
     q = (f"Two radio towers A and B are {d} km apart. "
          f"Tower A has range {r1} km. Tower B has range {r2} km. "
-         f"(i) Find the total area covered by at least one tower (treat each coverage zone as a full circle). "
-         f"(ii) Verify that the two coverage zones overlap, given that {r1} + {r2} = {r1+r2} > {d}.")
+         f"Treat each coverage zone as a full circle. "
+         f"Do the two coverage zones overlap? Choose the statement that is correct and gives the right reason.")
     area1 = round(math.pi * r1**2, 2)
     area2 = round(math.pi * r2**2, 2)
-    q_str = (f"(i) If you assume no overlap: approximate total = π×{r1}² + π×{r2}² ≈ {area1} + {area2} = {fmt_dp(area1+area2, 2)} km².<br>"
-             f"(ii) Since {r1} + {r2} = {r1+r2} > {d} (distance between towers), the circles DO overlap. "
-             f"The actual total coverage area (with overlap removed) is less than {fmt_dp(area1+area2, 2)} km².<br>"
+    yes_lens = ("Yes, the circles overlap in a lens-shaped region because the sum of the radii "
+                "exceeds the distance between the towers")
+    no_gap = ("No, the circles do not overlap because the sum of the radii "
+              "is less than the distance between the towers")
+    if overlap:
+        s = (f"Since {r1} + {r2} = {r1+r2} > {d} (distance between towers), the circles DO overlap. "
+             f"So the total area covered is less than the sum of the two circle areas, {fmt_dp(area1+area2, 2)} km², because the overlap would be counted twice.<br>"
              f"The overlap region is a <strong>lens (intersection of two circles)</strong>, "
-             f"confirming that the circles overlap. No single formula at GCSE — describe the region geometrically.")
-    s = q_str
-    hint = "Sum of radii > distance → circles overlap. Total ≠ sum of areas (overlap counted twice)."
-    return _cl_mcq_return(
-        q, s, hint, 5,
-        "Yes — the circles overlap in a lens-shaped region because the sum of the radii exceeds the distance between the towers",
-        [
-            "No — the circles do not overlap because each tower covers less than half the distance between them",
-            "Yes — they overlap along the perpendicular bisector of AB only (a straight line)",
-            "No — the circles touch at exactly one point but do not overlap",
-        ],
-    )
+             f"confirming that the circles overlap. There is no single formula at GCSE, so describe the region geometrically.")
+        correct = yes_lens
+        distractors = [
+            "No, the circles do not overlap because each tower covers less than half the distance between them",
+            "Yes, they overlap along the perpendicular bisector of AB only (a straight line)",
+            "No, the circles touch at exactly one point but do not overlap",
+        ]
+    else:
+        s = (f"Since {r1} + {r2} = {r1+r2} < {d} (distance between towers), the circles do NOT overlap. "
+             f"Along AB there is a gap of {d - r1 - r2} km between the edge of one zone and the edge of the other.<br>"
+             f"The two zones are separate, so nothing is counted twice: the total area covered is the sum of the two "
+             f"circle areas, {fmt_dp(area1+area2, 2)} km².")
+        correct = no_gap
+        distractors = [
+            yes_lens,
+            "Yes, they overlap along the perpendicular bisector of AB only (a straight line)",
+            "No, the circles touch at exactly one point, so there is no overlap",
+        ]
+    hint = "Compare the sum of the two ranges with the distance between the towers."
+    record('loci_overlap', d=d, r1=r1, r2=r2)
+    return _cl_mcq_return(q, s, hint, 5, correct, distractors)
 
 
 def _cl_d13_construct_45():
@@ -1420,6 +1514,7 @@ def _cl_d13_construct_45():
          "<strong>Step 2:</strong> Bisect the 90° angle using the angle bisector construction.<br>"
          "The bisector of a 90° angle gives a <strong>45° angle</strong>.")
     hint = "45° = half of 90°. First construct 90°, then bisect it."
+    record('loci_steps', kind='45')
     return q, s, hint, 4, _cl_steps_answer(
         (
             "Construct a 90° angle at point A on a line using the perpendicular-at-a-point method.",
@@ -1441,6 +1536,7 @@ def _cl_d14_construct_30():
          "<strong>Step 2:</strong> Bisect the 60° angle using the angle bisector construction.<br>"
          "The bisector of a 60° angle gives a <strong>30° angle</strong>.")
     hint = "30° = half of 60°. Construct 60° first (equilateral triangle), then bisect."
+    record('loci_steps', kind='30')
     return q, s, hint, 4, _cl_steps_answer(
         (
             "Construct a 60° angle using the equilateral triangle method.",
@@ -1463,22 +1559,23 @@ def _cl_d15_multi_locus_garden():
     q = (f"A rectangular garden PQRS has PQ = {length} m and QR = {width} m. A tree is to be planted such that:<br>"
          f"(i) it is more than {boundary_dist} m from the boundary PQ,<br>"
          f"(ii) it is closer to P than to R,<br>"
-         f"(iii) it is at most {max_dist} m from Q.<br>"
+         f"(iii) it is at most {max_dist} m from S.<br>"
          f"Which of the following best describes the feasible region?")
     s = (f"(i) More than {boundary_dist} m from PQ → above the line parallel to PQ at height {boundary_dist} m.<br>"
          f"(ii) Closer to P than R → on P's side of the perpendicular bisector of PR "
          f"(diagonal of garden: midpoint M of PR).<br>"
-         f"(iii) Within {max_dist} m of Q → inside a circle centred at Q, radius {max_dist} m.<br>"
+         f"(iii) Within {max_dist} m of S → inside a circle centred at S, radius {max_dist} m.<br>"
          f"The feasible region is the <strong>intersection of these three regions</strong>: "
          f"above the {boundary_dist} m line, on P's half of the garden (P-side of the diagonal bisector), "
-         f"and inside the {max_dist} m circle from Q.")
+         f"and inside the {max_dist} m circle from S.")
     hint = "Describe each constraint as a region, then find their intersection."
+    record('loci', kind='three_regions', cond_word='closer to P than to R', boundary=boundary_dist, max_dist=max_dist, length=length, width=width)
     return _cl_mcq_return(
         q, s, hint, 6,
-        f"The intersection of all three regions: above the line {boundary_dist} m from PQ, on P's side of the perpendicular bisector of PR, and inside the circle of radius {max_dist} m centred at Q",
+        f"The intersection of all three regions: above the line {boundary_dist} m from PQ, on P's side of the perpendicular bisector of PR, and inside the circle of radius {max_dist} m centred at S",
         [
             "The union of all three regions (any one condition is enough)",
-            f"Only the region inside the circle of radius {max_dist} m centred at Q",
+            f"Only the region inside the circle of radius {max_dist} m centred at S",
             f"Only the region more than {boundary_dist} m from PQ",
         ],
     )
@@ -1489,26 +1586,27 @@ def _cl_d16_garden_sprinkler_multi():
     width = random.randint(7, 12)
     boundary_dist = random.randint(3, 6)
     max_dist = random.randint(5, 9)
-    svg = _garden_loci_svg()
+    svg = _garden_loci_svg(length, width)
     q = (f"A rectangular garden PQRS has PQ = {length} m and QR = {width} m (P top-left, Q top-right, "
          f"R bottom-right, S bottom-left). A tree is planted at T such that:<br>"
          f"(a) T is more than {boundary_dist} m from the side PQ,<br>"
          f"(b) T is closer to P than to R,<br>"
-         f"(c) T is at most {max_dist} m from Q.<br>"
+         f"(c) T is at most {max_dist} m from S.<br>"
          f"Which of the following best describes the feasible region?<br>{svg}")
     s = (f"(a) More than {boundary_dist} m from PQ → the region <strong>above the line parallel to PQ, "
          f"{boundary_dist} m inside the garden</strong> (not including the boundary line).<br>"
          f"(b) Closer to P than R → on <strong>P's side of the perpendicular bisector of diagonal PR</strong> "
          f"(the line through the midpoint of PR at right angles to it).<br>"
-         f"(c) At most {max_dist} m from Q → <strong>inside or on a circle of radius {max_dist} m centred at Q</strong>.<br>"
+         f"(c) At most {max_dist} m from S → <strong>inside or on a circle of radius {max_dist} m centred at S</strong>.<br>"
          f"The feasible region is the <strong>intersection</strong> of these three regions.")
     hint = "Translate each bullet into one locus; the answer is where all three overlap."
+    record('loci_garden', length=length, width=width, boundary=boundary_dist, max_dist=max_dist)
     return _cl_mcq_return(
         q, s, hint, 6,
-        f"The intersection of all three regions: above the line {boundary_dist} m from PQ, on P's side of the perpendicular bisector of PR, and inside the circle of radius {max_dist} m centred at Q",
+        f"The intersection of all three regions: above the line {boundary_dist} m from PQ, on P's side of the perpendicular bisector of PR, and inside the circle of radius {max_dist} m centred at S",
         [
             "The union of all three regions (any one condition is enough)",
-            f"Only the region inside the circle of radius {max_dist} m centred at Q",
+            f"Only the region inside the circle of radius {max_dist} m centred at S",
             f"Only the region on P's side of the perpendicular bisector of PR",
         ],
     )
@@ -1531,6 +1629,7 @@ def _cl_d17_treasure_hunt_multi():
          f"(a) There are <strong>2 possible positions</strong> — the two intersection points of the circle "
          f"and the perpendicular bisector ({d_mc} ± {r_c} m along the bisector from C).")
     reason_raw, reason_bank, reason_pick = _cl_treasure_reasoning_pick(r_c, unit='m')
+    record('loci_treasure', r_c=r_c, unit_word='m')
     return q, s, "Each condition is a locus; count intersections of the line and circle.", 6, graded_answer_number_fields(
         (2, reason_raw),
         ('Number of positions', 'Justification'),
@@ -1562,6 +1661,7 @@ def _cl_d18_triangle_centres_multi():
          f"(c) Equidistant from the two legs meeting at B → on the <strong>angle bisector of angle ABC</strong> "
          f"(the line at 45° to both legs through B).")
     r_in_display = int(r_in) if r_in == int(r_in) else round(r_in, 2)
+    record('loci_tri_centres', a=a, b=b, c=c)
     return q, s, "Right triangle: circumcentre = midpoint of hypotenuse; incentre uses r = Area/s.", 6, graded_answer_number_fields(
         (r_circ, r_in_display),
         ('Circumradius (cm)', 'Inradius (cm)'),

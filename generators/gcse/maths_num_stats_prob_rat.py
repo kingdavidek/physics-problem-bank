@@ -1,9 +1,14 @@
 from generators.shared.rounding import round_half_up as round, fmt_dp
+from generators.shared.verify_hook import record, verifies
 import random
+import re
+from fractions import Fraction
 import math
 from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
 
-from generators.shared.utils import make_problem, problem_from_choice_output, signed_term, bracket_neg
+from generators.shared.utils import (
+    make_problem, problem_from_choice_output, signed_term, bracket_neg, grid_estimate_tolerance,
+)
 from models import svg_kit
 from generators.shared.variant_utils import (
     select_tier_variants,
@@ -216,6 +221,7 @@ def _number_found_place_value_digit():
     q = rf"In the number {number}, what is the value of the digit {digit}?"
     s = rf"The digit {digit} is in the {digit_name} column, so its value is <strong>{value}</strong>."
     hint = "Use the place value columns: thousands, hundreds, tens, ones."
+    record('num_place_value_digit', number=number, digit=digit)
     return q, s, hint, 1, value
 def _number_found_decimal_place_value():
     a = random.randint(1, 9)
@@ -231,6 +237,7 @@ def _number_found_decimal_place_value():
     q = rf"In the number {number}, which digit is in the {position} column?"
     s = rf"The {position} column contains the digit <strong>{digit}</strong>. Its value is {value}."
     hint = "After the decimal point the columns are tenths, hundredths, thousandths."
+    record('num_decimal_place', number=number, position=position)
     return q, s, hint, 1, digit
 def _number_found_compare_decimals():
     a = round(random.randint(30, 95) / 100, 2)
@@ -244,6 +251,7 @@ def _number_found_compare_decimals():
     hint = "Write both decimals with the same number of decimal places, then compare digits."
     from generators.shared.utils import compare_choice_payload
     correct = 'A' if symbol == '>' else 'B'
+    record('num_compare', a=a, b=b)
     return q, s, hint, 1, compare_choice_payload('&gt;', '&lt;', correct)
 
 
@@ -256,6 +264,7 @@ def _number_found_order_decimals():
     q = rf"Put these decimals in ascending order: {', '.join(str(x) for x in mixed)}"
     s = rf"Ascending means smallest to largest. The correct order is <strong>{', '.join(str(x) for x in nums)}</strong>."
     hint = "Ascending order means start with the smallest number."
+    record('num_order', values=mixed)
     return q, s, hint, 2, _number_list_answer(nums)
 
 
@@ -266,6 +275,7 @@ def _number_found_round_nearest_10_100():
     q = rf"Round {n} to the nearest {unit}."
     s = rf"To round to the nearest {unit}, look at the next place value column. <strong>{n} rounds to {ans}</strong>."
     hint = "Look one place value column to the right of the column you are rounding to."
+    record('num_round_unit', n=n, unit=unit)
     return q, s, hint, 1, ans
 def _number_found_round_decimal_places():
     n = round(random.uniform(2, 40), 3)
@@ -274,6 +284,7 @@ def _number_found_round_decimal_places():
     q = rf"Round {n} to {dp} decimal place{'s' if dp != 1 else ''}."
     s = rf"Keep {dp} digit{'s' if dp != 1 else ''} after the decimal point and check the next digit. The answer is <strong>{ans}</strong>."
     hint = "If the next digit is 5 or more, round up."
+    record('num_round_dp', n=n, dp=dp)
     return q, s, hint, 1, ans
 def _number_found_significant_figures_simple():
     n = random.randint(1200, 98700)
@@ -282,6 +293,7 @@ def _number_found_significant_figures_simple():
     q = rf"Round {n} to {sf} significant figure{'s' if sf != 1 else ''}."
     s = rf"Start counting significant figures from the first non-zero digit. Rounded to {sf} significant figure{'s' if sf != 1 else ''}, the answer is <strong>{ans}</strong>."
     hint = "The first significant figure is the first non-zero digit."
+    record('num_round_sf', n=n, sf=sf)
     return q, s, hint, 1, ans
 def _number_found_negative_add_subtract():
     a = random.randint(-12, 12)
@@ -294,6 +306,7 @@ def _number_found_negative_add_subtract():
     q = rf"Calculate {a} {op} ({b})."
     s = rf"Using directed number rules, {a} {op} ({b}) = <strong>{ans}</strong>."
     hint = "A subtraction of a negative becomes addition. Use a number line if needed."
+    record('num_directed', a=a, op=op, b=b)
     return q, s, hint, 1, ans
 def _number_found_multiply_by_power_10():
     n = round(random.uniform(1.2, 98.7), 2)
@@ -304,6 +317,7 @@ def _number_found_multiply_by_power_10():
     q = rf"Calculate {n} {symbol} {p}."
     s = rf"When you {op} by {p}, the digits move {len(str(p))-1} place{'s' if p != 10 else ''}. The answer is <strong>{_number_fmt(ans, 5)}</strong>."
     hint = "Multiplying by powers of 10 moves digits left; dividing moves them right."
+    record('num_scale_pow10', n=n, op=op, p=p)
     return q, s, hint, 1, ans
 def _number_found_square_cube():
     n = random.randint(2, 12)
@@ -312,6 +326,7 @@ def _number_found_square_cube():
     q = rf"Calculate \({n}^{power}\)."
     s = rf"\({n}^{power}\) means multiply {n} by itself {power} times. Therefore \({n}^{power} = \)<strong>{ans}</strong>."
     hint = "A power means repeated multiplication."
+    record('num_power', base=n, exp=power)
     return q, s, hint, 1, ans
 def _number_found_percentage_of_amount():
     pct = random.choice([5, 10, 12, 15, 18, 20, 25, 30, 40, 50, 75])
@@ -320,6 +335,7 @@ def _number_found_percentage_of_amount():
     q = rf"Find {pct}% of {amount}."
     s = rf"{pct}% means {pct} out of 100, so {pct}% of {amount} = {amount} × {pct}/100 = <strong>{_number_fmt(ans)}</strong>."
     hint = "Convert the percentage to a fraction over 100, then multiply."
+    record('num_pct_of', pct=pct, amount=amount)
     return q, s, hint, 1, ans
 def _number_found_fraction_of_amount():
     denom = random.choice([3, 4, 5, 8, 10])
@@ -329,16 +345,18 @@ def _number_found_fraction_of_amount():
     q = rf"Find \(\frac{{{num}}}{{{denom}}}\) of {amount}."
     s = rf"First divide by {denom}: {amount} ÷ {denom} = {amount // denom}. Then multiply by {num}: {amount // denom} × {num} = <strong>{ans}</strong>."
     hint = "Divide by the denominator, then multiply by the numerator."
+    record('num_frac_of', num=num, den=denom, amount=amount)
     return q, s, hint, 2, ans
 def _number_found_estimate_simple():
     a = round(random.uniform(12, 99), 1)
     b = round(random.uniform(2, 12), 1)
-    rounded_a = round(a / 10) * 10
-    rounded_b = round(b)
+    rounded_a = _number_sf_value(a, 1)
+    rounded_b = _number_sf_value(b, 1)
     ans = rounded_a * rounded_b
     q = rf"Estimate {a} × {b} by rounding each number to 1 significant figure."
     s = rf"{a} ≈ {rounded_a} and {b} ≈ {rounded_b}. So {a} × {b} ≈ {rounded_a} × {rounded_b} = <strong>{ans}</strong>."
     hint = "Round to easy numbers first, then multiply mentally."
+    record('num_estimate_product_1sf', a=a, b=b)
     return q, s, hint, 2, ans
 def _number_found_standard_form_large():
     a = random.randint(11, 99)
@@ -349,6 +367,7 @@ def _number_found_standard_form_large():
     q = rf"Write {n} in standard form."
     s = rf"Move the decimal point until the first number is between 1 and 10: {n} = <strong>{coefficient} × 10^{power}</strong>."
     hint = "Standard form is A × 10^n where 1 ≤ A < 10."
+    record('num_to_standard_form', n=n)
     return q, s, hint, 2, _number_standard_form_answer(coefficient, power)
 
 
@@ -360,6 +379,7 @@ def _number_found_indices_multiply():
     q = rf"Simplify \({base}^{a} \times {base}^{b}\)."
     s = rf"When multiplying powers with the same base, add the indices: \({base}^{a} \times {base}^{b} = {base}^{{{a}+{b}}} = \)<strong>\({base}^{{{ans_power}}}\)</strong>."
     hint = "Same base and multiplication means add the powers."
+    record('num_index_mult', base=base, a=a, b=b)
     return q, s, hint, 1, _number_power_answer(base, ans_power)
 
 
@@ -372,6 +392,7 @@ def _number_inter_standard_form_small():
     q = rf"Write {_number_fmt(ordinary, 7)} in standard form."
     s = rf"Move the decimal point {power} places right to make a number between 1 and 10. Therefore {_number_fmt(ordinary, 7)} = <strong>{coeff} × 10^{{-{power}}}</strong>."
     hint = "Very small numbers have negative powers in standard form."
+    record('num_to_standard_form', n=_number_fmt(ordinary, 7))
     return q, s, hint, 2, _number_standard_form_answer(coeff, -power)
 
 
@@ -382,6 +403,7 @@ def _number_inter_standard_form_to_ordinary():
     q = rf"Write \({coeff} \times 10^{{{power}}}\) as an ordinary number."
     s = rf"Multiplying by \(10^{{{power}}}\) moves the decimal point {'right' if power > 0 else 'left'} {abs(power)} places. The answer is <strong>{_number_fmt(ans, 8)}</strong>."
     hint = "Positive powers make large numbers; negative powers make small decimals."
+    record('num_from_standard_form', coef=coeff, power=power)
     return q, s, hint, 2, ans
 def _number_inter_standard_form_multiply():
     a = random.randint(2, 8)
@@ -398,6 +420,7 @@ def _number_inter_standard_form_multiply():
     q = rf"Calculate \(({a} \times 10^{p})({b} \times 10^{qpow})\), giving your answer in standard form."
     s = rf"Multiply the front numbers and add the powers: {a} × {b} = {product}, and {p} + {qpow} = {p + qpow}. In standard form this is <strong>{_number_fmt(coeff)} × 10^{power}</strong>."
     hint = "For multiplication in standard form, multiply coefficients and add powers."
+    record('num_sf_product', a=a, p=p, b=b, q=qpow)
     return q, s, hint, 2, _number_standard_form_answer(coeff, power)
 
 
@@ -411,6 +434,7 @@ def _number_inter_standard_form_divide():
     q = rf"Calculate \(({a} \times 10^{p}) \div ({b} \times 10^{qpow})\), giving your answer in standard form."
     s = rf"Divide the front numbers and subtract the powers: {a} ÷ {b} = {coeff_ans}, and {p} − {qpow} = {power}. Answer: <strong>{coeff_ans} × 10^{power}</strong>."
     hint = "For division in standard form, divide coefficients and subtract powers."
+    record('num_sf_quotient', a=a, p=p, b=b, q=qpow)
     return q, s, hint, 2, _number_standard_form_answer(coeff_ans, power)
 
 
@@ -421,6 +445,7 @@ def _number_inter_percentage_increase():
     q = rf"Increase {amount} by {pct}%."
     s = rf"The multiplier for an increase of {pct}% is {_number_fmt(round(1 + pct/100, 6))}. So {amount} × {_number_fmt(round(1 + pct/100, 6))} = <strong>{_number_fmt(ans)}</strong>."
     hint = "Use the multiplier 1 + percentage/100."
+    record('num_pct_change', amount=amount, pct=pct, sign='up')
     return q, s, hint, 2, ans
 def _number_inter_percentage_decrease():
     amount = random.randint(8, 120) * 10
@@ -429,6 +454,7 @@ def _number_inter_percentage_decrease():
     q = rf"Decrease {amount} by {pct}%."
     s = rf"The multiplier for a decrease of {pct}% is {_number_fmt(round(1 - pct/100, 6))}. So {amount} × {_number_fmt(round(1 - pct/100, 6))} = <strong>{_number_fmt(ans)}</strong>."
     hint = "Use the multiplier 1 - percentage/100."
+    record('num_pct_change', amount=amount, pct=pct, sign='down')
     return q, s, hint, 2, ans
 def _number_inter_reverse_percentage_increase():
     pct = random.randint(5, 35)
@@ -437,6 +463,7 @@ def _number_inter_reverse_percentage_increase():
     q = rf"A price after a {pct}% increase is £{_number_fmt(final)}. Find the original price."
     s = rf"After a {pct}% increase, the multiplier is {_number_fmt(round(1 + pct/100, 6))}. Original = {_number_fmt(final)} ÷ {_number_fmt(round(1 + pct/100, 6))} = <strong>£{_number_fmt(original)}</strong>."
     hint = "For reverse percentages, divide by the multiplier."
+    record('num_reverse_pct', final=final, pct=pct, sign='up')
     return q, s, hint, 3, original
 def _number_inter_reverse_percentage_decrease():
     pct = random.randint(5, 40)
@@ -445,15 +472,18 @@ def _number_inter_reverse_percentage_decrease():
     q = rf"A price after a {pct}% decrease is £{_number_fmt(final)}. Find the original price."
     s = rf"After a {pct}% decrease, the multiplier is {_number_fmt(round(1 - pct/100, 6))}. Original = {_number_fmt(final)} ÷ {_number_fmt(round(1 - pct/100, 6))} = <strong>£{_number_fmt(original)}</strong>."
     hint = "The final amount is less than 100% of the original. Divide by the decimal multiplier."
+    record('num_reverse_pct', final=final, pct=pct, sign='down')
     return q, s, hint, 3, original
 def _number_inter_repeated_percentage_change():
     amount = random.randint(15, 150) * 10
     pct1 = random.randint(5, 25)
     pct2 = random.randint(4, 30)
-    ans = round(amount * (1 + pct1/100) * (1 - pct2/100), 2)
+    pence = Fraction(amount * (100 + pct1) * (100 - pct2), 100)         # exact, so a half penny is not lost to float error
+    ans = int(pence + Fraction(1, 2)) / 100                             # half-up to the nearest penny
     q = rf"An amount of £{amount} is increased by {pct1}% and then decreased by {pct2}%. Find the final amount, to the nearest penny."
     s = rf"Use successive multipliers: {amount} × {_number_fmt(1+pct1/100, 4)} × {_number_fmt(1-pct2/100, 4)} = <strong>£{fmt_dp(ans, 2)}</strong>."
     hint = "Apply the first multiplier, then apply the second multiplier to the new amount."
+    record('num_two_pct_changes', amount=amount, pct1=pct1, pct2=pct2)
     return q, s, hint, 3, ans
 def _number_inter_error_interval_whole():
     n = random.randint(12, 180)
@@ -462,6 +492,7 @@ def _number_inter_error_interval_whole():
     q = rf"A length is given as {n} cm to the nearest centimetre. Write the error interval for the actual length x."
     s = rf"The actual value is within 0.5 cm of {n}. Therefore <strong>{lower} ≤ x &lt; {upper}</strong>."
     hint = "For nearest whole number, subtract and add 0.5."
+    record('num_error_interval', derived=('unit',), value=n, unit=1)
     return q, s, hint, 2, _number_pair_answer(lower, upper, 'Lower bound', 'Upper bound', 'to')
 
 
@@ -472,6 +503,7 @@ def _number_inter_error_interval_tenth():
     q = rf"A mass is given as {n} kg to the nearest 0.1 kg. Write the error interval for the actual mass m."
     s = rf"Half of 0.1 is 0.05, so <strong>{lower} ≤ m &lt; {upper}</strong>."
     hint = "The bounds are half the rounding unit below and above the rounded value."
+    record('num_error_interval', value=n, unit=0.1)
     return q, s, hint, 2, _number_pair_answer(lower, upper, 'Lower bound', 'Upper bound', 'to')
 
 
@@ -483,6 +515,7 @@ def _number_inter_bounds_area():
     q = rf"A rectangle has length {length} cm and width {width} cm, each measured to the nearest centimetre. Find the minimum and maximum possible area."
     s = rf"Lower bounds: {length-0.5} and {width-0.5}, so minimum area = {length-0.5} × {width-0.5} = <strong>{_number_fmt(min_area)} cm²</strong>.<br>Upper bounds: {length+0.5} and {width+0.5}, so maximum area = {length+0.5} × {width+0.5} = <strong>{_number_fmt(max_area)} cm²</strong>."
     hint = "Use lower bounds for the minimum area and upper bounds for the maximum area."
+    record('num_bounds_area', derived=('unit',), length=length, width=width, unit=1)
     return q, s, hint, 4, _number_pair_answer(min_area, max_area, 'Minimum area', 'Maximum area', 'to')
 
 
@@ -494,6 +527,7 @@ def _number_inter_index_division():
     q = rf"Simplify \({base}^{a} \div {base}^{b}\)."
     s = rf"When dividing powers with the same base, subtract the indices: \({base}^{a} \div {base}^{b} = {base}^{{{a}-{b}}} = \)<strong>\({base}^{{{ans}}}\)</strong>."
     hint = "Same base and division means subtract the powers."
+    record('num_index_div', base=base, a=a, b=b)
     return q, s, hint, 1, _number_power_answer(base, ans)
 
 
@@ -505,6 +539,7 @@ def _number_inter_index_power_of_power():
     q = rf"Simplify \(({base}^{a})^{b}\)."
     s = rf"For a power of a power, multiply the indices: \(({base}^{a})^{b} = {base}^{{{a}×{b}}} = \)<strong>\({base}^{{{ans}}}\)</strong>."
     hint = "A power raised to another power means multiply the powers."
+    record('num_index_pow', base=base, a=a, b=b)
     return q, s, hint, 1, _number_power_answer(base, ans)
 
 
@@ -517,20 +552,24 @@ def _number_inter_prime_factor_product():
     s = rf"Use a factor tree and split until every factor is prime. The product of prime factors is <strong>{ans}</strong>."
     hint = "Keep dividing by prime numbers such as 2, 3, 5 and 7."
     options, correct_letter = _number_mcq_options(ans, _mf_pf_mcq_distractors(n, ans))
+    record('num_prime_factors', n=n)
     return q, s, hint, 3, options, correct_letter
 
 
 def _number_inter_calculator_estimate_fraction():
     a = round(random.uniform(15, 99), 1)
     b = round(random.uniform(2, 12), 1)
-    c = round(random.uniform(0.35, 2.5), 2)
-    ar = round(a / 10) * 10
-    br = round(b)
-    cr = 0.5 if c < 1 else round(c)
+    # c is chosen so that its 1 s.f. value (0.4, 0.5, 0.8, 1 or 2) divides exactly into the estimate.
+    c_lo, c_hi = random.choice([(0.36, 0.44), (0.46, 0.54), (0.76, 0.84), (0.96, 1.44), (1.55, 2.44)])
+    c = round(random.uniform(c_lo, c_hi), 2)
+    ar = _number_sf_value(a, 1)
+    br = _number_sf_value(b, 1)
+    cr = _number_sf_value(c, 1)
     ans = ar * br / cr
     q = rf"Estimate \(\frac{{{a} \times {b}}}{{{c}}}\) by rounding each number to 1 significant figure."
     s = rf"{a} ≈ {ar}, {b} ≈ {br}, and {c} ≈ {cr}. So the estimate is \(({ar} × {br}) ÷ {cr} = \)<strong>{_number_fmt(ans)}</strong>."
     hint = "Round each value to one significant figure, then calculate."
+    record('num_estimate_fraction_1sf', a=a, b=b, c=c)
     return q, s, hint, 3, ans
 
 # ---------- INTERMEDIATE (extra formats) ----------
@@ -556,6 +595,7 @@ def _number_inter_sf_which_larger():
         rf'<strong>{winner}</strong> is larger.'
     )
     hint = 'A larger positive power of 10 means a larger value (for positive numbers).'
+    record('num_compare_sf', c1=c1, p1=p1, c2=c2, p2=p2)
     return q, s, hint, 2, compare_choice_payload(expr1, expr2, correct)
 
 
@@ -573,13 +613,14 @@ def _number_inter_vat_word_problem():
         rf"£{price} × 1.2 = <strong>£{total}</strong>"
     )
     hint = "Including VAT means multiply by 1 + VAT rate as a decimal."
+    record('num_vat_inclusive', price=price, vat=vat)
     return q, s, hint, 2, total
 def _number_inter_calculate_to_sf():
     """Evaluate a product/quotient and give the answer in significant figures."""
     a = round(random.uniform(2.5, 9.5), 1)
     b = round(random.uniform(0.2, 0.8), 2)
     sf = random.choice([2, 3])
-    raw = a * b
+    raw = float(Decimal(str(a)) * Decimal(str(b)))     # exact product: 4.1 × 0.35 is 1.435, not 1.4349999...
     ans = _number_sf_value(raw, sf)
     q = rf"Work out {a} × {b}. Give your answer to {sf} significant figures."
     s = (
@@ -587,6 +628,7 @@ def _number_inter_calculate_to_sf():
         rf"Rounded to {sf} significant figures: <strong>{ans}</strong>"
     )
     hint = "Do the calculation first, then round — not the other way round."
+    record('num_product_sf', a=a, b=b)
     return q, s, hint, 3, ans
 def _number_inter_share_ratio():
     """Divide an amount in a given ratio."""
@@ -603,6 +645,7 @@ def _number_inter_share_ratio():
         rf"Shares: <strong>£{_number_fmt(ans1)}</strong> and <strong>£{_number_fmt(ans2)}</strong>"
     )
     hint = "Add the ratio parts, divide the total by that sum, then multiply by each part of the ratio."
+    record('num_share_ratio', total=total, r1=r1, r2=r2)
     return q, s, hint, 3, _number_pair_answer(ans1, ans2, 'First share (£)', 'Second share (£)')
 
 
@@ -612,19 +655,21 @@ def _number_diff_compound_interest():
     principal = random.randint(20, 500) * 10
     rate = random.randint(2, 8)
     years = random.randint(2, 8)
-    ans = principal * ((1 + rate/100) ** years)
+    ans = Decimal(principal) * ((Decimal(100 + rate) / 100) ** years)      # exact: float powers lose half-penny ties
     q = rf"£{principal} is invested at {rate}% compound interest per year for {years} years. Find the final amount to the nearest penny."
     s = rf"Use compound interest: {principal} × \((1 + {rate}/100)^{years}\) = {principal} × {_number_fmt(round(1+rate/100, 6))}^{years} = <strong>£{fmt_dp(ans, 2)}</strong>."
     hint = "Use the percentage multiplier repeatedly, or raise it to the power of the number of years."
+    record('num_compound', principal=principal, rate=rate, years=years, sign='up')
     return q, s, hint, 3, round(ans, 2)
 def _number_diff_depreciation():
     value = random.randint(40, 250) * 100
     rate = random.randint(8, 28)
     years = random.randint(2, 6)
-    ans = value * ((1 - rate/100) ** years)
+    ans = Decimal(value) * ((Decimal(100 - rate) / 100) ** years)          # exact: float powers lose half-pound ties
     q = rf"A car worth £{value} depreciates by {rate}% each year for {years} years. Find its value after {years} years to the nearest pound."
     s = rf"Depreciation uses the multiplier {_number_fmt(round(1-rate/100, 6))}. So value = {value} × {_number_fmt(round(1-rate/100, 6))}^{years} = <strong>£{round(ans)}</strong>."
     hint = "A percentage decrease uses a multiplier below 1. Apply it once for each year."
+    record('num_compound', principal=value, rate=rate, years=years, sign='down')
     return q, s, hint, 3, round(ans)
 def _number_diff_reverse_compound():
     original = round(random.uniform(150, 8000), 2)
@@ -634,6 +679,7 @@ def _number_diff_reverse_compound():
     q = rf"After {years} years of compound growth at {rate}% per year, an investment is worth £{fmt_dp(final, 2)}. Find the original investment to the nearest penny."
     s = rf"Reverse the compound multiplier: original = {fmt_dp(final, 2)} ÷ \({_number_fmt(round(1+rate/100, 6))}^{years}\) = <strong>£{fmt_dp(original, 2)}</strong>."
     hint = "Divide by the compound multiplier instead of multiplying."
+    record('num_reverse_compound', final=final, rate=rate, years=years)
     return q, s, hint, 4, original
 def _number_diff_standard_form_context():
     pop = round(random.uniform(2.0, 8.9), 1)
@@ -647,6 +693,7 @@ def _number_diff_standard_form_context():
     q = rf"One city has a population of \({pop} \times 10^6\). Another {count} identical cities have the same population. Write the total population of the {count} cities in standard form."
     s = rf"Total = {count} × {pop} × 10^6 = {_number_fmt(full_total)} × 10^6 = <strong>{_number_fmt(total_coeff)} × 10^{power}</strong>."
     hint = "Multiply the ordinary front numbers first, then adjust to standard form if the front number is 10 or more."
+    record('num_sf_total', pop=pop, count=count)
     return q, s, hint, 3, _number_standard_form_answer(total_coeff, power)
 
 
@@ -669,6 +716,7 @@ def _number_diff_standard_form_mixed_operations():
     q = rf"Simplify \(\frac{{({a} \times 10^{p})({b} \times 10^{qpow})}}{{{c} \times 10^{r}}}\), giving your answer in standard form."
     s = rf"Coefficients: ({a} × {b}) ÷ {c} = {coeff_raw}. Powers: {p} + {qpow} − {r} = {p+qpow-r}. Therefore the answer is <strong>{_number_fmt(coeff)} × 10^{power}</strong>."
     hint = "Deal with coefficients and powers of 10 separately, then adjust the coefficient to be between 1 and 10."
+    record('num_sf_mixed', a=a, p=p, b=b, q=qpow, c=c, r=r)
     return q, s, hint, 4, _number_standard_form_answer(coeff, power)
 
 
@@ -680,6 +728,7 @@ def _number_diff_error_interval_product():
     q = rf"Two measurements are {a} cm and {b} cm, each rounded to the nearest centimetre. Find the minimum and maximum possible product of the measurements."
     s = rf"Use lower bounds for the minimum and upper bounds for the maximum. Minimum = {a-0.5} × {b-0.5} = <strong>{_number_fmt(min_prod)} cm²</strong>. Maximum = {a+0.5} × {b+0.5} = <strong>{_number_fmt(max_prod)} cm²</strong>."
     hint = "For a product of positive measurements, minimum uses both lower bounds and maximum uses both upper bounds."
+    record('num_bounds_product', derived=('unit',), a=a, b=b, unit=1)
     return q, s, hint, 4, _number_pair_answer(min_prod, max_prod, 'Minimum', 'Maximum', 'to')
 
 
@@ -691,6 +740,7 @@ def _number_diff_bounds_density():
     q = rf"Mass is {mass} g and volume is {volume} cm³, both to the nearest whole unit. Find the lower and upper bounds for density in g/cm³, correct to 3 decimal places."
     s = rf"Density = mass ÷ volume. Minimum density uses lowest mass and highest volume: ({mass-0.5}) ÷ ({volume+0.5}) = <strong>{fmt_dp(min_density, 3)}</strong>. Maximum density uses highest mass and lowest volume: ({mass+0.5}) ÷ ({volume-0.5}) = <strong>{fmt_dp(max_density, 3)}</strong>."
     hint = "For a fraction, the maximum uses a large numerator and small denominator."
+    record('num_bounds_density', derived=('unit',), mass=mass, volume=volume, unit=1)
     return q, s, hint, 4, _number_pair_answer(round(min_density, 3), round(max_density, 3), 'Minimum density', 'Maximum density', 'to')
 
 
@@ -700,6 +750,7 @@ def _number_diff_fractional_indices():
     q = rf"Evaluate \({base}^{{1/2}}\)."
     s = rf"A power of \(1/2\) means square root. Therefore \({base}^{{1/2}} = \sqrt{{{base}}} = \)<strong>{root}</strong>."
     hint = "The index 1/2 means square root."
+    record('num_frac_index', base=base, num=1, den=2)
     return q, s, hint, 1, root
 def _number_diff_negative_indices():
     base = random.randint(2, 9)
@@ -708,6 +759,7 @@ def _number_diff_negative_indices():
     q = rf"Evaluate \({base}^{{-{power}}}\)."
     s = rf"A negative index means reciprocal: \({base}^{{-{power}}} = \frac{{1}}{{{base}^{power}}} = \)<strong>\(\frac{{1}}{{{denom}}}\)</strong>."
     hint = "Move the power to the denominator to make the index positive."
+    record('num_neg_index', base=base, power=power)
     return q, s, hint, 2, f"1/{denom}"
 
 
@@ -719,6 +771,7 @@ def _number_diff_zero_negative_combined():
     q = rf"Simplify \({a}^0 \times {b}^{{-2}}\)."
     s = rf"\({a}^0 = 1\), and \({b}^{{-2}} = \frac{{1}}{{{b}^2}} = \frac{{1}}{{{ans_den}}}\). So the answer is <strong>\(\frac{{1}}{{{ans_den}}}\)</strong>."
     hint = "Any non-zero number to the power 0 is 1; a negative index creates a reciprocal."
+    record('num_zero_neg_index', a=a, b=b)
     return q, s, hint, 2, f"1/{ans_den}"
 
 
@@ -727,6 +780,7 @@ def _number_diff_recurring_decimal_fraction():
     q = rf"Write {dec} as a fraction in its simplest form."
     s = rf"This is a recurring decimal. Using the standard recurring-decimal method gives <strong>{frac}</strong>."
     hint = "Let x equal the recurring decimal, multiply to line up the repeating part, then subtract."
+    record('num_recurring_text', dec=dec)
     return q, s, hint, 3, {
         'type': 'fraction',
         'value': frac,
@@ -744,6 +798,7 @@ def _number_diff_surds_estimate():
         rf"\(\sqrt{{{n}}}\) lies between <strong>{lower} and {upper}</strong>."
     )
     hint = "Compare the number with nearby square numbers."
+    record('num_between_sqrt', n=n)
     return q, s, hint, 2, _number_pair_answer(lower, upper, 'Lower integer', 'Upper integer', 'to')
 
 
@@ -752,6 +807,7 @@ def _number_diff_hcf_lcm_prime_factors():
     q = rf"Find the HCF and LCM of {a} and {b}."
     s = rf"Using prime factors or systematic listing, the highest common factor is <strong>{hcf}</strong> and the lowest common multiple is <strong>{lcm}</strong>. Check: HCF × LCM = {hcf*lcm}, and {a} × {b} = {a*b}."
     hint = "Prime factor form is the most reliable method for larger numbers."
+    record('num_hcf_lcm', a=a, b=b)
     return q, s, hint, 4, _number_pair_answer(hcf, lcm, 'HCF', 'LCM')
 
 
@@ -763,6 +819,7 @@ def _number_diff_percentage_error():
     q = rf"An estimate is {estimate}, but the actual value is {actual}. Find the percentage error to 1 decimal place."
     s = rf"Percentage error = \(\frac{{\text{{error}}}}{{\text{{actual}}}} \times 100\). Error = |{estimate} − {actual}| = {error}. So percentage error = {error} ÷ {actual} × 100 = <strong>{fmt_dp(pct_error, 1)}%</strong>."
     hint = "Use absolute error divided by actual value, then multiply by 100."
+    record('num_pct_error', estimate=estimate, actual=actual)
     return q, s, hint, 3, round(pct_error, 1)
 def _number_diff_best_value():
     from generators.shared.utils import compare_choice_payload
@@ -770,15 +827,18 @@ def _number_diff_best_value():
     price1 = round(random.uniform(1.5, 6.0), 2)
     items2 = random.randint(4, 10)
     price2 = round(random.uniform(2.0, 8.0), 2)
+    if round(price1 * 100) * items2 == round(price2 * 100) * items1:
+        price2 = round(price2 + 0.05, 2)                   # equal unit prices have no better value
     unit1 = price1 / items1
     unit2 = price2 / items2
-    best = 'Pack A' if unit1 < unit2 else 'Pack B'
+    best = 'Pack A' if round(price1 * 100) * items2 < round(price2 * 100) * items1 else 'Pack B'
     label_a = f'Pack A ({items1} items for £{fmt_dp(price1, 2)})'
     label_b = f'Pack B ({items2} items for £{fmt_dp(price2, 2)})'
     correct = 'A' if best == 'Pack A' else 'B'
     q = rf"Pack A contains {items1} items for £{fmt_dp(price1, 2)}. Pack B contains {items2} items for £{fmt_dp(price2, 2)}. Which pack is better value?"
     s = rf"Compare unit prices. Pack A: £{fmt_dp(price1, 2)} ÷ {items1} = £{fmt_dp(unit1, 2)} per item. Pack B: £{fmt_dp(price2, 2)} ÷ {items2} = £{fmt_dp(unit2, 2)} per item. The better value is <strong>{best}</strong>."
     hint = "Find the cost per one item for each pack."
+    record('num_best_value', items1=items1, price1=price1, items2=items2, price2=price2)
     return q, s, hint, 3, compare_choice_payload(label_a, label_b, correct)
 
 
@@ -794,6 +854,7 @@ def _number_diff_iterative_bounds():
         rf"\(\sqrt{{{n}}}\) lies between <strong>{fmt_dp(lower, 1)} and {fmt_dp(upper, 1)}</strong>."
     )
     hint = "Square nearby decimal values until the original number is between them."
+    record('num_sqrt_tenths', n=n)
     return q, s, hint, 3, _number_pair_answer(lower, upper, 'Lower bound', 'Upper bound', 'to')
 
 
@@ -816,6 +877,7 @@ def _number_diff_bounds_speed():
         rf"({dist - 0.5}) ÷ ({fmt_dp(hours + 0.05, 2)}) = <strong>{fmt_dp(min_speed, 2)} km/h</strong>"
     )
     hint = "Speed = distance ÷ time. Fastest speed uses the largest distance and shortest time."
+    record('num_bounds_speed', derived=('dist_unit',), dist=dist, hours=hours, dist_unit=1, time_unit=0.1)
     return q, s, hint, 4, _number_pair_answer(round(min_speed, 2), round(max_speed, 2), 'Minimum speed', 'Maximum speed', 'to')
 
 
@@ -831,6 +893,7 @@ def _number_diff_find_index_n():
         rf"So <strong>n = {n}</strong>"
     )
     hint = "Write out powers of the base until you reach the value on the right-hand side."
+    record('num_find_index', base=base, value=value)
     return q, s, hint, 2, n
 def _number_diff_salary_percentage_chain():
     """Two-step percentage change in context (not just repeated generic)."""
@@ -848,6 +911,7 @@ def _number_diff_salary_percentage_chain():
         rf"After tax: £{_number_fmt(after_rise)} × {_number_fmt(round(1 - tax/100, 6))} = <strong>£{round(after_tax)}</strong>"
     )
     hint = "Apply each percentage change with its own multiplier, in the order given."
+    record('num_two_pct_changes', amount=salary, pct1=rise, pct2=tax)
     return q, s, hint, 4, round(after_tax)
 def _number_diff_sf_population_difference():
     """Subtract two populations given in standard form."""
@@ -875,6 +939,7 @@ def _number_diff_sf_population_difference():
         rf"In standard form: <strong>{_number_fmt(coeff)} × 10^{power}</strong>"
     )
     hint = "Subtract the ordinary numbers (or align powers of 10), then write the result in standard form."
+    record('num_sf_difference', c1=c1, p1=p1, c2=c2, p2=p2)
     return q, s, hint, 4, _number_standard_form_answer(coeff, power)
 
 
@@ -890,13 +955,17 @@ def number_mcq(mcq_type=None):
         correct = hundreds * 100
         q = rf"What is the value of the hundreds digit in {n}?"
         options, correct_letter = _number_mcq_options(correct, [hundreds, hundreds * 10, hundreds * 1000])
+        record('num_digit_value', derived=('column',), n=n, column=100)
         hint = "The hundreds digit is worth digit × 100."
 
     elif mcq_type == 2:
         n = round(random.uniform(4, 30), 3)
         correct = round(n, 1)
         q = rf"Round {n} to 1 decimal place."
-        options, correct_letter = _number_mcq_options(correct, [round(n, 2), int(n), round(n + 0.1, 1)])
+        # int(n) is the "dropped the decimals" distractor; it equals the key when the key is a whole number (7.0).
+        dropped = int(n) if int(n) != correct else round(n - 0.1, 1)
+        options, correct_letter = _number_mcq_options(correct, [round(n, 2), dropped, round(n + 0.1, 1)])
+        record('num_round_dp', n=n, dp=1)
         hint = "Keep one digit after the decimal point and look at the next digit."
 
     elif mcq_type == 3:
@@ -904,6 +973,7 @@ def number_mcq(mcq_type=None):
         correct = _number_sf_value(n, 2)
         q = rf"Round {n} to 2 significant figures."
         options, correct_letter = _number_mcq_options(correct, [round(n, -1), round(n, -3), int(str(n)[:2])])
+        record('num_round_sf', n=n, sf=2)
         hint = "Start counting at the first non-zero digit."
 
     elif mcq_type == 4:
@@ -912,6 +982,7 @@ def number_mcq(mcq_type=None):
         correct = _number_fmt(amount * pct / 100)
         q = rf"What is {pct}% of {amount}?"
         options, correct_letter = _number_mcq_options(correct, [_number_fmt(amount + pct), _number_fmt(amount - pct), _number_fmt(pct / amount * 100)])
+        record('num_pct_of', pct=pct, amount=amount)
         hint = "Percentage means out of 100."
 
     elif mcq_type == 5:
@@ -920,6 +991,7 @@ def number_mcq(mcq_type=None):
         correct = _number_fmt(amount * (1 + pct/100))
         q = rf"Increase {amount} by {pct}%."
         options, correct_letter = _number_mcq_options(correct, [_number_fmt(amount * pct/100), _number_fmt(amount * (1 - pct/100)), _number_fmt(amount + pct)])
+        record('num_pct_change', amount=amount, pct=pct, sign='up')
         hint = "Use the multiplier 1 + percentage/100."
 
     elif mcq_type == 6:
@@ -928,6 +1000,7 @@ def number_mcq(mcq_type=None):
         correct = _number_fmt(amount * (1 - pct/100))
         q = rf"Decrease {amount} by {pct}%."
         options, correct_letter = _number_mcq_options(correct, [_number_fmt(amount * pct/100), _number_fmt(amount * (1 + pct/100)), _number_fmt(amount - pct)])
+        record('num_pct_change', amount=amount, pct=pct, sign='down')
         hint = "Use the multiplier 1 - percentage/100."
 
     elif mcq_type == 7:
@@ -937,6 +1010,7 @@ def number_mcq(mcq_type=None):
         q = rf"Write {ordinary} in standard form."
         correct = rf"{coeff} × 10^{power}"
         options, correct_letter = _number_mcq_options(correct, [rf"{coeff} × 10^{power-1}", rf"{coeff*10} × 10^{power-1}", rf"0.{coeff} × 10^{power+1}"])
+        record('num_to_standard_form', n=_number_fmt(ordinary, 7))
         hint = "Standard form has a front number from 1 up to but not including 10."
 
     elif mcq_type == 8:
@@ -945,6 +1019,7 @@ def number_mcq(mcq_type=None):
         correct = _number_fmt(coeff * (10 ** -power), 7)
         q = rf"Write \({coeff} \times 10^{{-{power}}}\) as an ordinary number."
         options, correct_letter = _number_mcq_options(correct, [_number_fmt(coeff * 10**power), _number_fmt(coeff * 10**-(power-1), 7), _number_fmt(coeff / power, 4)])
+        record('num_from_standard_form', coef=coeff, power=-power)
         hint = "A negative power moves the decimal point left."
 
     elif mcq_type == 9:
@@ -954,6 +1029,7 @@ def number_mcq(mcq_type=None):
         correct = rf"{base}^{a+b}"
         q = rf"Simplify \({base}^{a} \times {base}^{b}\)."
         options, correct_letter = _number_mcq_options(correct, [rf"{base}^{a*b}", rf"{base}^{a-b}", rf"{base*base}^{a+b}"])
+        record('num_index_mult', base=base, a=a, b=b)
         hint = "When multiplying powers with the same base, add indices."
 
     elif mcq_type == 10:
@@ -963,6 +1039,7 @@ def number_mcq(mcq_type=None):
         correct = rf"{base}^{a-b}"
         q = rf"Simplify \({base}^{a} \div {base}^{b}\)."
         options, correct_letter = _number_mcq_options(correct, [rf"{base}^{a+b}", rf"{base}^{a*b}", rf"{base-base}^{a-b}"])
+        record('num_index_div', base=base, a=a, b=b)
         hint = "When dividing powers with the same base, subtract indices."
 
     elif mcq_type == 11:
@@ -970,6 +1047,7 @@ def number_mcq(mcq_type=None):
         correct = f"{n-0.5} ≤ x < {n+0.5}"
         q = rf"A number x is rounded to {n} to the nearest whole number. What is the error interval?"
         options, correct_letter = _number_mcq_options(correct, [f"{n-1} ≤ x < {n+1}", f"{n} ≤ x < {n+1}", f"{n-0.05} ≤ x < {n+0.05}"])
+        record('num_error_interval_text', derived=('unit',), value=n, unit=1)
         hint = "Nearest whole number means half a unit below and above."
 
     elif mcq_type == 12:
@@ -986,6 +1064,7 @@ def number_mcq(mcq_type=None):
         correct = rf"{_number_fmt(coeff)} × 10^{power}"
         q = rf"Calculate \(({a} \times 10^{p})({b} \times 10^{qpow})\) in standard form."
         options, correct_letter = _number_mcq_options(correct, [rf"{raw} × 10^{p+qpow}", rf"{_number_fmt(coeff)} × 10^{p*qpow}", rf"{_number_fmt(coeff)} × 10^{power-1}"])
+        record('num_sf_product', a=a, p=p, b=b, q=qpow)
         hint = "Multiply coefficients and add powers, then adjust to standard form."
 
     elif mcq_type == 13:
@@ -1000,6 +1079,7 @@ def number_mcq(mcq_type=None):
                 (correct + 1) ** 2,
             ],
         )
+        record('num_frac_index', base=base, num=1, den=2)
         hint = "A power of 1/2 means square root."
 
     elif mcq_type == 14:
@@ -1008,6 +1088,7 @@ def number_mcq(mcq_type=None):
         correct = rf"1/{base**power}"
         q = rf"Evaluate \({base}^{{-{power}}}\)."
         options, correct_letter = _number_mcq_options(correct, [base**power, -base**power, rf"1/{base*power}"])
+        record('num_neg_index', base=base, power=power)
         hint = "A negative index means reciprocal."
 
     elif mcq_type == 15:
@@ -1017,6 +1098,7 @@ def number_mcq(mcq_type=None):
         correct = f"{fmt_dp((error/actual*100), 1)}%"
         q = rf"An estimate is {estimate} and the actual value is {actual}. What is the percentage error to 1 decimal place?"
         options, correct_letter = _number_mcq_options(correct, [f"{fmt_dp((error/estimate*100), 1)}%", f"{error}%", f"{fmt_dp((actual/estimate*100), 1)}%"])
+        record('num_pct_error', estimate=estimate, actual=actual)
         hint = "Percentage error = absolute error ÷ actual value × 100."
 
     elif mcq_type == 16:
@@ -1024,6 +1106,7 @@ def number_mcq(mcq_type=None):
         correct = hcf
         q = rf"What is the HCF of {a} and {b}?"
         options, correct_letter = _number_mcq_options(correct, [a // hcf, hcf * 2, a * b // hcf])
+        record('num_hcf', a=a, b=b)
         hint = "HCF is the largest number that divides both numbers exactly."
 
     elif mcq_type == 17:
@@ -1034,6 +1117,7 @@ def number_mcq(mcq_type=None):
             correct,
             [rf"{coeff} × 10^{power + 1}", rf"{coeff * 10} × 10^{power - 1}", rf"{coeff / 10} × 10^{power + 1}"],
         )
+        record('num_to_standard_form', n=n)
         hint = "Move the decimal point until the front number is between 1 and 10."
 
     else:
@@ -1053,6 +1137,7 @@ def number_mcq(mcq_type=None):
                 _number_fmt(principal * ((1 + rate / 100) ** (years + 1)), 2),
             ],
         )
+        record('num_compound', principal=principal, rate=rate, years=years, sign='up')
         hint = "Compound interest multiplies by (1 + r/100) once per year, not just once in total."
 
     s = f"The correct option is <strong>{correct_letter}</strong> ({correct}).\n\n{hint}"
@@ -1394,6 +1479,30 @@ def _mcq_numeric_correct(out):
     return ''
 
 
+def _mcq_distinct_distractors(correct, distractors, fillers):
+    """Distractors that differ in value from the answer and from each other, topped up from ``fillers`` so the
+    option list never has to be padded with a value equal to one already there (14/14 beside 1)."""
+    def lead(text):
+        m_ = re.match(r'\s*(-?\d+(?:\.\d+)?)(?:\s*/\s*(\d+))?', str(text))
+        if not m_:
+            return str(text)
+        if m_.group(2):
+            return Fraction(m_.group(1)) / int(m_.group(2)) if int(m_.group(2)) else str(text)
+        return Fraction(m_.group(1))
+
+    used = {lead(correct)}
+    out = []
+    for d in list(distractors) + list(fillers):
+        key = lead(d)
+        if key in used:
+            continue
+        used.add(key)
+        out.append(d)
+        if len(out) == 3:
+            break
+    return out
+
+
 def _mcq_options(correct, distractors):
     correct = str(correct)
     choices = [correct]
@@ -1428,6 +1537,13 @@ def _ratio_random_three_parts(lo=2, hi=8):
             return a, b, c
 
 
+def _ratio_larger_first(a, b):
+    """(a, b) reordered so that a > b, for questions that ask how much MORE of a than b."""
+    if a == b:
+        a += 1
+    return (a, b) if a > b else (b, a)
+
+
 def _ratio_random_two_part(lo=2, hi=9):
     a, b = random.randint(lo, hi), random.randint(lo, hi)
     while a == b and random.random() < 0.4:
@@ -1450,6 +1566,7 @@ def _ratio_simplify():
     g = math.gcd(x, y)
     q = rf"Simplify the ratio {x}:{y}."
     s = rf"Divide both parts by the highest common factor, {g}: {x} ÷ {g} = {x//g} and {y} ÷ {g} = {y//g}. Answer: <strong>{x//g}:{y//g}</strong>."
+    record('ratio_simplify', a=x, b=y)
     return q, s, "Divide every part by the same highest common factor.", 1, _ratio_answer(x // g, y // g)
 
 
@@ -1457,6 +1574,7 @@ def _ratio_equivalent():
     a, b, k = random.randint(2, 8), random.randint(2, 9), random.randint(2, 7)
     q = rf"Write an equivalent ratio to {a}:{b} by multiplying each part by {k}."
     s = rf"Multiply both parts by {k}: {a}×{k} = {a*k} and {b}×{k} = {b*k}. Answer: <strong>{a*k}:{b*k}</strong>."
+    record('ratio_equivalent', a=a, b=b, k=k)
     return q, s, "Equivalent ratios are made by multiplying each part by the same number.", 1, _ratio_answer(a * k, b * k, exact=True)
 
 
@@ -1467,6 +1585,7 @@ def _ratio_share_two():
     q = rf"Share £{total} in the ratio {a}:{b}."
     s = rf"Total parts = {a}+{b} = {a+b}. One part = {total} ÷ {a+b} = {unit}. Shares are {a}×{unit} = <strong>£{a*unit}</strong> and {b}×{unit} = <strong>£{b*unit}</strong>."
     hint = "Add the parts first, then find one part."
+    record('ratio_share', total=total, parts=(a, b))
     return q, s, hint, 3, _number_pair_answer(a * unit, b * unit, 'First share (£)', 'Second share (£)')
 
 
@@ -1477,6 +1596,7 @@ def _ratio_share_three():
     q = rf"Share {total} sweets in the ratio {a}:{b}:{c}."
     s = rf"Total parts = {a+b+c}. One part = {total} ÷ {a+b+c} = {unit}. The shares are <strong>{a*unit}, {b*unit}, {c*unit}</strong>."
     hint = "For a three-part ratio, add all three parts before dividing."
+    record('ratio_share', total=total, parts=(a, b, c))
     return q, s, hint, 3, _ratio_fields_answer(
         (a * unit, b * unit, c * unit),
         ('First share', 'Second share', 'Third share'),
@@ -1497,6 +1617,7 @@ def _ratio_fraction_of_total():
         rf"Boys are {a} out of {total_parts} parts: "
         rf"<strong>{a // g}/{total_parts // g}</strong>."
     )
+    record('ratio_part_fraction', derived=('which',), parts=(a, b), which=0)
     return q, s, "Write one part as a fraction of the total parts, then simplify.", 2, frac
 
 
@@ -1517,6 +1638,7 @@ def _ratio_three_part_as_fraction():
         rf"Total parts = {total_parts}. The {part} share is {num} out of {total_parts}: "
         rf"<strong>{num // g}/{total_parts // g}</strong>."
     )
+    record('ratio_part_fraction', derived=('which',), parts=(a, b, c), which=idx)
     return q, s, "Add all ratio parts for the denominator, then simplify.", 2, _ratio_fraction_answer(num, total_parts)
 
 
@@ -1527,6 +1649,7 @@ def _ratio_find_missing_part():
     missing = b * multiplier
     q = rf"The ratio A:B is {a}:{b}. If A = {known}, find B."
     s = rf"A has been multiplied by {multiplier}, because {a}×{multiplier} = {known}. Therefore B = {b}×{multiplier} = <strong>{missing}</strong>."
+    record('ratio_find_missing', a=a, b=b, known=known)
     return q, s, "Find the scale factor from the known part, then apply it to the other part.", 2, missing
 
 
@@ -1538,6 +1661,7 @@ def _ratio_unitary_cost():
     ans = new_items * cost_each
     q = rf"{items} notebooks cost £{fmt_dp(total, 2)}. How much do {new_items} notebooks cost?"
     s = rf"One notebook costs £{fmt_dp(total, 2)} ÷ {items} = £{fmt_dp(cost_each, 2)}. Therefore {new_items} notebooks cost {new_items}×£{fmt_dp(cost_each, 2)} = <strong>£{fmt_dp(ans, 2)}</strong>."
+    record('ratio_unitary', n1=items, total=round(total, 2), n2=new_items)
     return q, s, "Find the cost of one item first.", 2, _number_raw(ans)
 
 
@@ -1548,17 +1672,21 @@ def _ratio_recipe_scale():
     ans = ingredient * people2 / people1
     q = rf"A recipe uses {ingredient} g of flour for {people1} people. How much flour is needed for {people2} people?{_dp_note(ans)}"
     s = rf"Scale factor = {people2} ÷ {people1} = {_fmt_num(people2/people1)}. Flour needed = {ingredient} × {_fmt_num(people2/people1)} = <strong>{_fmt_num(ans)} g</strong>."
+    record('prop_scale', q1=ingredient, n1=people1, n2=people2)
     return q, s, "Multiply by the same scale factor as the number of people.", 2, _number_raw(ans)
 
 
 def _ratio_best_buy():
     a_items, b_items = random.randint(3, 8), random.randint(4, 10)
     a_price, b_price = round(random.uniform(1.5, 6.5), 2), round(random.uniform(2.0, 8.0), 2)
+    if round(a_price * 100) * b_items == round(b_price * 100) * a_items:
+        b_price = round(b_price + 0.05, 2)                 # equal unit prices have no better value
     a_unit, b_unit = a_price/a_items, b_price/b_items
-    best = "A" if a_unit < b_unit else "B"
+    best = "A" if round(a_price * 100) * b_items < round(b_price * 100) * a_items else "B"
     q = rf"Pack A has {a_items} items for £{fmt_dp(a_price, 2)}. Pack B has {b_items} items for £{fmt_dp(b_price, 2)}. Which is better value?"
     s = rf"Pack A: £{fmt_dp(a_price, 2)} ÷ {a_items} = £{fmt_dp(a_unit, 2)} per item. Pack B: £{fmt_dp(b_price, 2)} ÷ {b_items} = £{fmt_dp(b_unit, 2)} per item. Better value: <strong>Pack {best}</strong>."
     from generators.shared.utils import compare_choice_payload
+    record('num_best_value', items1=a_items, price1=a_price, items2=b_items, price2=b_price)
     return q, s, "Compare the price for one item.", 3, compare_choice_payload('Pack A', 'Pack B', best)
 
 
@@ -1568,6 +1696,7 @@ def _ratio_scale_map():
     real_m = cm * scale / 100
     q = rf"A map has scale 1:{scale}. A distance on the map is {cm} cm. Find the real distance in metres."
     s = rf"1 cm represents {scale} cm. Real distance = {cm}×{scale} = {cm*scale} cm = <strong>{_fmt_num(real_m)} m</strong>."
+    record('ratio_map_scale', scale=scale, cm=cm, to='m')
     return q, s, "Use the scale, then convert centimetres to metres.", 3, _number_raw(real_m)
 
 
@@ -1579,6 +1708,7 @@ def _ratio_inverse_workers():
     ans = work / workers2
     q = rf"{workers1} workers complete a job in {hours1} hours. Assuming the same rate, how long would {workers2} workers take?{_dp_note(ans)}"
     s = rf"Total work = {workers1}×{hours1} = {work} worker-hours. Time for {workers2} workers = {work} ÷ {workers2} = <strong>{_fmt_num(ans)} hours</strong>."
+    record('prop_inverse', a=workers1, b=hours1, c=workers2)
     return q, s, "For inverse proportion, workers × time stays constant.", 3, _number_raw(ans)
 
 
@@ -1587,6 +1717,7 @@ def _ratio_direct_formula():
     x = random.randint(3, 12)
     q = rf"y is directly proportional to x. When x = {x}, y = {k*x}. Find y when x = {x+5}."
     s = rf"Since y = kx, k = {k*x} ÷ {x} = {k}. When x = {x+5}, y = {k}×{x+5} = <strong>{k*(x+5)}</strong>."
+    record('prop_direct', x1=x, y1=k * x, x2=x + 5)
     return q, s, "Find the constant of proportionality first.", 3, k * (x + 5)
 
 
@@ -1597,6 +1728,7 @@ def _ratio_inverse_formula():
     x2 = random.choice([2, 3, 4, 5, 6, 8, 10])
     q = rf"y is inversely proportional to x. When x = {x1}, y = {y1}. Find y when x = {x2}.{_dp_note(k / x2)}"
     s = rf"For inverse proportion, y = k/x. k = xy = {x1}×{y1} = {k}. When x = {x2}, y = {k} ÷ {x2} = <strong>{_fmt_num(k/x2)}</strong>."
+    record('prop_inverse', a=x1, b=y1, c=x2)
     return q, s, "For inverse proportion, multiply x and y to find k.", 3, _number_raw(k / x2)
 
 
@@ -1607,6 +1739,7 @@ def _ratio_convert_units():
     left_cm = a * 100
     g = math.gcd(left_cm, b)
     s = rf"Convert to the same units: {a} m = {left_cm} cm. Ratio = {left_cm}:{b}. Divide by {g}: <strong>{left_cm//g}:{b//g}</strong>."
+    record('ratio_units', a_m=a, b_cm=b)
     return q, s, "Convert both quantities to the same unit before simplifying.", 2, _ratio_answer(left_cm // g, b // g)
 
 
@@ -1615,6 +1748,7 @@ def _ratio_density_style():
     volume = random.randint(5, 40)
     q = rf"A substance has mass {mass} g and volume {volume} cm³. Find its density.{_dp_note(mass / volume)}"
     s = rf"Density = mass ÷ volume = {mass} ÷ {volume} = <strong>{_fmt_num(mass/volume)} g/cm³</strong>."
+    record('quotient', a=mass, b=volume)
     return q, s, "Density is mass divided by volume.", 2, _number_raw(mass / volume)
 
 
@@ -1656,6 +1790,7 @@ def _ratio_fields_answer(values, labels, field_types=None):
 def _ratio_inter_cafe_ingredients():
     """Mixing drink ingredients in a given ratio."""
     r_m, r_s, r_e = _ratio_random_three_parts(2, 7)
+    r_m, r_s = _ratio_larger_first(r_m, r_s)   # part (c) asks how much MORE milk than syrup
     total_parts = r_m + r_s + r_e
     total_ml = total_parts * random.randint(15, 35)
     unit = total_ml // total_parts
@@ -1677,6 +1812,7 @@ def _ratio_inter_cafe_ingredients():
         rf"<strong>c)</strong> Difference = {milk} − {syrup} = <strong>{milk - syrup} ml</strong>"
     )
     hint = "Add the ratio parts, find one part, then multiply each ingredient part."
+    record('ratio_share_diff', total=total_ml, parts=(r_m, r_s, r_e))
     return q, s, hint, 4, _ratio_fields_answer(
         (milk, syrup, milk - syrup),
         ('Part (a): milk (ml)', 'Part (b): syrup (ml)', 'Part (c): difference (ml)'),
@@ -1685,7 +1821,7 @@ def _ratio_inter_cafe_ingredients():
 
 def _ratio_inter_school_house_prize():
     """Share a prize fund between houses in a three-way ratio."""
-    r1, r2, r3 = _ratio_random_three_parts(2, 8)
+    r1, r2, r3 = sorted(_ratio_random_three_parts(2, 8), reverse=True)   # 1st place gets the largest share
     unit = random.randint(35, 95)
     total = (r1 + r2 + r3) * unit
     first, second, third = r1 * unit, r2 * unit, r3 * unit
@@ -1707,6 +1843,7 @@ def _ratio_inter_school_house_prize():
         rf"Difference = {first} − {third} = <strong>£{first - third}</strong>"
     )
     hint = "Treat the ratio as parts of the whole fund."
+    record('ratio_prize', total=total, parts=(r1, r2, r3))
     return q, s, hint, 4, _ratio_fields_answer(
         (unit, first, first - third),
         ('Part (a): one part (£)', 'Part (b): 1st place (£)', 'Part (c): difference (£)'),
@@ -1737,6 +1874,7 @@ def _ratio_inter_map_hike():
         rf"<strong>{_fmt_num(km_total)} km</strong>"
     )
     hint = "Multiply each map length by the scale, then convert cm to m and km."
+    record('ratio_hike', scale=scale, cm1=cm1, cm2=cm2)
     return q, s, hint, 4, _ratio_fields_answer(
         (_number_raw(m1), _number_raw(m2), _number_raw(km_total)),
         ('Part (a): first leg (m)', 'Part (b): second leg (m)', 'Part (c): total (km)'),
@@ -1746,6 +1884,7 @@ def _ratio_inter_map_hike():
 def _ratio_inter_garden_compost():
     """Mix soil, compost and sand for a landscaping job."""
     r_soil, r_comp, r_sand = _ratio_random_three_parts(2, 7)
+    r_soil, r_sand = _ratio_larger_first(r_soil, r_sand)   # part (c) asks how much MORE soil than sand
     total_parts = r_soil + r_comp + r_sand
     unit = random.randint(20, 55)
     total_kg = total_parts * unit
@@ -1764,11 +1903,12 @@ def _ratio_inter_garden_compost():
         rf"<strong>a)</strong> One part = {total_kg} ÷ {total_parts} = {unit} kg. "
         rf"Compost = {r_comp} × {unit} = <strong>{compost} kg</strong><br><br>"
         rf"<strong>b)</strong> Sand = {r_sand} × {unit} = <strong>{sand} kg</strong><br><br>"
-        rf"<strong>c)</strong> Soil = {soil} kg. Difference = {total_kg} − {sand} - {compost} = <strong>{total_kg - sand - compost} kg</strong>"
+        rf"<strong>c)</strong> Soil = {soil} kg. Difference = {soil} − {sand} = <strong>{soil - sand} kg</strong>"
     )
     hint = "Add ratio parts to find one share of the total mass."
+    record('ratio_garden', total=total_kg, parts=(r_soil, r_comp, r_sand))
     return q, s, hint, 4, _ratio_fields_answer(
-        (compost, sand, total_kg - compost - sand),
+        (compost, sand, soil - sand),
         ('Part (a): compost (kg)', 'Part (b): sand (kg)', 'Part (c): difference (kg)'),
     )
 
@@ -1806,6 +1946,7 @@ def _ratio_diff_merge_classes():
         rf"Ratio = <strong>{total_boys//g}:{total_girls//g}</strong>"
     )
     hint = "Find each count from its class ratio, then add and simplify the overall ratio."
+    record('ratio_merge', students_a=students_a, a_parts=(a_b, a_g), students_b=students_b, b_parts=(b_b, b_g))
     return q, s, hint, 5, _ratio_fields_answer(
         (girls_a, boys_b, f"{total_boys // g}:{total_girls // g}"),
         (
@@ -1844,6 +1985,7 @@ def _ratio_diff_holiday_budget():
         rf"<strong>€{fmt_dp(meals_eur, 2)}</strong>"
     )
     hint = "Share the budget by ratio first; multiply by the exchange rate only for the part asked."
+    record('ratio_holiday', budget=budget, parts=(r_meals, r_act, r_souv), rate=rate)
     return q, s, hint, 5, _ratio_fields_answer(
         (_number_raw(activities), _number_raw(souvenirs), _number_raw(meals_eur)),
         ('Part (a): activities (£)', 'Part (b): souvenirs (£)', 'Part (c): meals (€)'),
@@ -1879,6 +2021,7 @@ def _ratio_diff_plumbers_job():
         rf"<strong>c)</strong> Plumbers = {work} ÷ {h3} = <strong>{_fmt_num(w3)} plumbers</strong>"
     )
     hint = "Workers × time is constant for inverse proportion."
+    record('prop_plumbers', w1=w1, h1=h1, w2=w2, h3=h3)
     return q, s, hint, 5, _ratio_fields_answer(
         (work, _number_raw(h2), _number_raw(w3)),
         (
@@ -1917,6 +2060,7 @@ def _ratio_diff_concert_tickets():
         rf"<strong>£{revenue}</strong>"
     )
     hint = "Use the ratio for counts, then multiply each type by its price."
+    record('ratio_concert', total=total_tickets, parts=(ra, rc), adult_price=adult_price, child_price=child_price)
     return q, s, hint, 5, _ratio_fields_answer(
         (adult_tix, child_tix, revenue),
         ('Part (a): adult tickets', 'Part (b): child tickets', 'Part (c): revenue (£)'),
@@ -1991,21 +2135,26 @@ def ratio_proportion_mcq(mcq_type=None):
 
     if mcq_type == 1:
         a, b, k = random.randint(2,6), random.randint(2,6), random.randint(2,5)
-        correct = f"{a*k}:{b*k}"
+        g = math.gcd(a, b)
+        a, b = a // g, b // g          # a:b is now the simplest form of (a*k):(b*k)
+        correct = f"{a}:{b}"
         q = rf"Simplify the ratio {a*k}:{b*k}."
-        distractors = [f"{a*k}:{b}", f"{a}:{b*k}", f"{a}:{b}"]
+        distractors = [f"{a*k}:{b*k}", f"{a*k}:{b}", f"{a}:{b*k}"]
         options, correct_letter = _mcq_options(correct, distractors)
+        record('ratio_simplify', a=a * k, b=b * k)
         hint = "Divide both numbers by their highest common factor."
 
     elif mcq_type == 2:
         a, b = random.randint(2,7), random.randint(2,7)
+        if a == b:
+            b = a + 1 if a < 7 else a - 1      # equal parts have no larger share
         unit = random.randint(5,20)
         total = (a+b)*unit
-        share_a = a*unit
-        correct = f"£{share_a}"
+        correct = f"£{max(a, b)*unit}"
         q = rf"Share £{total} in the ratio {a}:{b}. How much is the larger share?"
-        distractors = [f"£{b*unit}", f"£{unit}", f"£{total//2}"]
+        distractors = [f"£{min(a, b)*unit}", f"£{unit}", f"£{total//2}"]
         options, correct_letter = _mcq_options(correct, distractors)
+        record('ratio_larger_share', total=total, parts=(a, b))
         hint = "Find one part first, then multiply."
 
     elif mcq_type == 3:
@@ -2018,6 +2167,7 @@ def ratio_proportion_mcq(mcq_type=None):
         q = rf"{items} pens cost £{fmt_dp(total, 2)}. What do {new_items} pens cost?"
         distractors = [f"£{fmt_dp(total, 2)}", f"£{fmt_dp(price, 2)}", f"£{fmt_dp(total+ans, 2)}"]
         options, correct_letter = _mcq_options(correct, distractors)
+        record('ratio_unitary', n1=items, total=round(total, 2), n2=new_items)
         hint = "Find the price of one pen first."
 
     elif mcq_type == 4:
@@ -2028,18 +2178,22 @@ def ratio_proportion_mcq(mcq_type=None):
         q = rf"A map scale is 1:{scale}. A road is {cm} cm on the map. What is the real distance?"
         distractors = [f"{_fmt_num(cm*scale/100)} m", f"{_fmt_num(cm*scale/1000)} km", f"{cm} km"]
         options, correct_letter = _mcq_options(correct, distractors)
+        record('ratio_map_scale', scale=scale, cm=cm, to='km')
         hint = "Convert to real units: multiply by scale, then convert to km."
 
     elif mcq_type == 5:
         a_items, b_items = random.randint(3,6), random.randint(4,8)
         a_price, b_price = round(random.uniform(1.5,5),2), round(random.uniform(2,6),2)
+        if round(a_price * 100) * b_items == round(b_price * 100) * a_items:
+            b_price = round(b_price + 0.05, 2)             # equal unit prices have no better value
         unit_a = a_price/a_items
         unit_b = b_price/b_items
-        best_letter = 'A' if unit_a < unit_b else 'B'
+        best_letter = 'A' if round(a_price * 100) * b_items < round(b_price * 100) * a_items else 'B'
         correct = f"Pack {best_letter}"
         q = rf"Pack A: {a_items} for £{fmt_dp(a_price, 2)}. Pack B: {b_items} for £{fmt_dp(b_price, 2)}. Which is better value?"
         distractors = [f"Pack {'B' if best_letter=='A' else 'A'}", "Both equal", "Cannot tell"]
         options, correct_letter = _mcq_options(correct, distractors)
+        record('num_best_value', items1=a_items, price1=a_price, items2=b_items, price2=b_price)
         hint = "Compare price per item."
 
     elif mcq_type == 6:
@@ -2050,6 +2204,7 @@ def ratio_proportion_mcq(mcq_type=None):
         q = rf"A price of £{original} is increased by {increase}%. What is the new price?"
         distractors = [f"£{original+increase}", f"£{fmt_dp(original*(increase/100), 0)}", f"£{fmt_dp(original*increase/100, 0)}"]
         options, correct_letter = _mcq_options(correct, distractors)
+        record('num_pct_change', amount=original, pct=increase, sign='up')
         hint = "Use the multiplier 1 + percentage/100."
 
     elif mcq_type == 7:
@@ -2060,7 +2215,7 @@ def ratio_proportion_mcq(mcq_type=None):
         correct = f"{_fmt_num(work / w2)} hours"
         q = (
             rf"A job takes {w1} workers {h1} hours. Assuming the same rate of work, "
-            rf"how long would {w2} workers take?"
+            rf"how long would {w2} workers take?{_dp_note(work / w2)}"
         )
         distractors = [
             f"{_fmt_num(h1 * w2 / w1)} hours",
@@ -2068,6 +2223,7 @@ def ratio_proportion_mcq(mcq_type=None):
             f"{_fmt_num(h1 * w1 / w2)} hours",
         ]
         options, correct_letter = _mcq_options(correct, distractors)
+        record('prop_inverse', a=w1, b=h1, c=w2)
         hint = "Find worker-hours first, then divide by the new number of workers."
 
     elif mcq_type == 8:
@@ -2082,6 +2238,7 @@ def ratio_proportion_mcq(mcq_type=None):
         )
         distractors = [str(a * unit), str(c * unit), str(unit)]
         options, correct_letter = _mcq_options(correct, distractors)
+        record('ratio_share_one', derived=('which',), total=total, parts=(a, b, c), which=1)
         hint = "Add the ratio parts, find one part, then multiply by B's share."
 
     else:
@@ -2095,6 +2252,7 @@ def ratio_proportion_mcq(mcq_type=None):
         )
         distractors = [str(total * a // (a + b)), str(total // 2), str(b)]
         options, correct_letter = _mcq_options(correct, distractors)
+        record('ratio_share_one', derived=('which',), total=total, parts=(a, b), which=1)
         hint = "Football players are b parts out of (a + b) of the total."
 
     s = f"Answer: {correct_letter}\n\n{hint}"
@@ -2127,7 +2285,9 @@ def _ratio_problem_from_output(out, difficulty):
             elif raw_type in ('ratio', 'ratio_exact'):
                 return make_problem(
                     q, s, hint, difficulty, marks, 'gcse', 'maths', 'ratio_proportion',
-                    correct_answer_raw=_ratio_raw(raw['a'], raw['b']),
+                    # ratio_exact must be typed exactly as shown (a*k:b*k), so its key is not simplified
+                    correct_answer_raw=(f"{raw['a']}|{raw['b']}" if raw_type == 'ratio_exact'
+                                        else _ratio_raw(raw['a'], raw['b'])),
                     answer_type=raw_type,
                     answer_format_hint='Enter ratio as a:b (e.g. 3:5)',
                 )
@@ -2197,7 +2357,11 @@ def _prob_frac(a, b):
 
 
 def _prob_fraction_answer(a, b):
-    return _ratio_fraction_answer(a, b)
+    """A probability keyed as a fraction; the form lets a pupil type a percentage as well."""
+    out = _ratio_fraction_answer(a, b)
+    if isinstance(out, dict):
+        return dict(out, form='probability')
+    return {'type': 'number', 'value': out, 'form': 'probability'}      # P = 1 (or 0) has no fraction to show
 
 
 def _prob_fields_answer(values, labels, field_types=None):
@@ -2309,11 +2473,11 @@ TWO_COUNTER_NO_REPLACE = [
     "A bag has {red} {c1} and {blue} {c2} counters. Two counters are chosen without replacement.",
     "A box contains {red} {c1} and {blue} {c2} tokens. Two tokens are drawn without replacement.",
 ]
-INDEPENDENT_SCENARIO = [
-    ("P(A) = {a}/{b} and P(B) = {c}/{d}",),
-    ("The probabilities of two independent events are {a}/{b} and {c}/{d}",),
+INDEPENDENT_SCENARIO = [      # each names A and B and says they are independent (the question asks for P(A and B))
+    ("A and B are independent events with P(A) = {a}/{b} and P(B) = {c}/{d}",),
+    ("Two independent events A and B have probabilities {a}/{b} and {c}/{d}",),
     ("Event A has probability {a}/{b} and independent event B has probability {c}/{d}",),
-    ("For two independent events, the first has probability {a}/{b} and the second has probability {c}/{d}",),
+    ("For two independent events A and B, A has probability {a}/{b} and B has probability {c}/{d}",),
 ]
 
 # ---------- Helper functions ----------
@@ -2398,6 +2562,7 @@ def _prob_single_die():
     s = (f"Favourable outcomes ({target}): {fav_list} — {fav} out of 6 equally likely outcomes.<br>"
          f"P({target}) = {fav}/6 = <strong>{prob}</strong>.")
     hint = "List which numbers on the die satisfy the condition, count them, then divide by 6."
+    record('prob_die', event_word=target)
     return q, s, hint, 1, _prob_fraction_answer(fav, 6)
 
 
@@ -2412,6 +2577,7 @@ def _prob_single_bag():
     s = (f"There are {count} {colour} counters out of {total} in total.<br>"
          f"P({colour}) = {count}/{total} = <strong>{prob}</strong>.")
     hint = "Count how many items match the colour asked for, then divide by the total number of items."
+    record('prob_bag', n_first=red, first_word=c1, n_second=blue, second_word=c2, colour_word=colour)
     return q, s, hint, 1, _prob_fraction_answer(count, total)
 
 
@@ -2428,7 +2594,8 @@ def _prob_complement():
     s = (f"All probabilities sum to 1, so we use the complement rule:<br>"
          f"P({not_word}) = 1 \u2212 P({event_word}) = 1 \u2212 {p} = <strong>{fmt_dp(1 - p, 2)}</strong>.")
     hint = "P(not A) = 1 \u2212 P(A). An event and its complement always add up to 1."
-    return q, s, hint, 1, f"{fmt_dp(1 - p, 2)}"
+    record('prob_complement', p=p)
+    return q, s, hint, 1, {'type': 'number', 'value': f"{fmt_dp(1 - p, 2)}", 'form': 'probability'}
 
 
 def _prob_expected_frequency():
@@ -2444,6 +2611,7 @@ def _prob_expected_frequency():
     s = (f"Expected frequency = probability \u00d7 number of trials<br>"
          f"= {a}/{b} \u00d7 {n} = <strong>{ans}</strong>.")
     hint = "Multiply the probability by the number of trials to predict how many successes to expect."
+    record('prob_expected', a=a, b=b, n=n)
     return q, s, hint, 2, ans
 
 
@@ -2452,11 +2620,13 @@ def _prob_relative_frequency():
     success = random.randint(10, trials - 10)
     event, units, adjective = random.choice(TRIAL_EVENT)
     rf = success / trials
-    q = f"{event.capitalize()} in {success} out of {trials} {units}. Find the relative frequency."
+    q = (f"{event.capitalize()} in {success} out of {trials} {units}. Find the relative frequency, "
+         f"correct to 3 decimal places.")
     s = (f"Relative frequency = number of successes \u00f7 total trials<br>"
          f"= {success} \u00f7 {trials} = <strong>{fmt_dp(rf, 3)}</strong> (3 d.p.)<br>"
          f"This experimental value estimates the true probability from real data.")
     hint = "Relative frequency = successes / total trials. It gets closer to the true probability as the number of trials increases."
+    record('prob_relative', success=success, trials=trials)
     return q, s, hint, 2, f"{fmt_dp(rf, 3)}"
 
 
@@ -2468,6 +2638,7 @@ def _prob_mutually_exclusive():
          f"P({a}) = 1/6 &nbsp;&nbsp; P({b}) = 1/6<br>"
          f"P({a} or {b}) = 1/6 + 1/6 = 2/6 = <strong>{prob}</strong>.")
     hint = "Mutually exclusive events cannot happen at the same time — add their individual probabilities."
+    record('prob_die_or', a=a, b=b)
     return q, s, hint, 2, _prob_fraction_answer(2, 6)
 
 
@@ -2501,6 +2672,7 @@ def _prob_two_coins():
         f"P({qtype}) = {fav}/{total} = <strong>{prob}</strong>."
     )
     hint = "Count equally likely outcomes in the sample space, or use combinations when order does not matter."
+    record('prob_coins', n=n, style_word=style, **({} if style == "same" else {'r': r}))
     return q, s, hint, 2, _prob_fraction_answer(fav, total)
 
 
@@ -2527,6 +2699,7 @@ def _prob_tree_replacement(blank=False, structure_only=False):
          f"P({c1} on 1st draw) = {red}/{total} &nbsp;&nbsp; P({c1} on 2nd draw) = {red}/{total} (same bag).<br>"
          f"P(both {c1}) = {red}/{total} \u00d7 {red}/{total} = <strong>{prob}</strong>.")
     hint = "With replacement: the same probabilities apply on every draw. Multiply along the branch."
+    record('prob_tree', n_first=red, first_word=c1, n_second=blue, second_word=c2, replace=True, ask='both')
     return q, s, hint, 4 if blank else 3, _prob_fraction_answer(red * red, total * total)
 
 
@@ -2554,6 +2727,7 @@ def _prob_tree_no_replacement(blank=False, structure_only=False):
          f"{total - 1} counters — P({c1}) = {red - 1}/{total - 1}.<br>"
          f"P(both {c1}) = {red}/{total} \u00d7 {red - 1}/{total - 1} = <strong>{prob}</strong>.")
     hint = "Without replacement: after 1st draw both the numerator (one fewer of that colour) and denominator (one fewer counter) decrease by 1."
+    record('prob_tree', n_first=red, first_word=c1, n_second=blue, second_word=c2, replace=False, ask='both')
     return q, s, hint, 4 if blank else 3, _prob_fraction_answer(red * (red - 1), total * (total - 1))
 
 
@@ -2578,7 +2752,8 @@ def _prob_at_least_one():
         f"P(at least one success) = 1 \u2212 {_number_fmt(round(p_fail_all, 6))} = <strong>{_number_fmt(round(ans, 6))}</strong>."
     )
     hint = "P(at least one) = 1 \u2212 P(none at all). Multiply the failure probabilities for independent events."
-    return q, s, hint, 3, f"{_number_fmt(round(ans, 6))}"
+    record('prob_at_least_one', p_fail=p_not, attempts=attempts)
+    return q, s, hint, 3, {'type': 'number', 'value': f"{_number_fmt(round(ans, 6))}", 'form': 'probability'}
 
 
 def _prob_conditional_simple():
@@ -2607,6 +2782,7 @@ def _prob_conditional_simple():
 
     hint = (f"P(B|A) = P(A \u2229 B) \u00f7 P(A). "
             f"To divide by a fraction, flip it and multiply (reciprocal).")
+    record('prob_conditional', pa_n=pa_n, pa_d=pa_d, pab_n=pab_n, pab_d=pab_d)
 
     return q, s, hint, 3, _prob_fraction_answer(cond_n, cond_d)
 
@@ -2644,6 +2820,7 @@ def _prob_venn_total():
         f"{ask} = {num}/{total} = <strong>{prob}</strong>."
     )
     hint = "Add the relevant regions from the diagram, then divide by the total in the universal set."
+    record('prob_venn2', a_only=a_only, b_only=b_only, both=both, neither=neither, ask_word=ask)
     return q, s, hint, 2, _prob_fraction_answer(num, total)
 
 
@@ -2651,7 +2828,7 @@ def _prob_diff_venn_three_clubs():
     """Three-set Venn diagram with multi-step probability parts a–c."""
     act_a, act_b, act_c = random.choice([
         ("tennis", "football", "drama"),
-        ("chess", "coding club", "choir"),
+        ("chess", "debating", "orchestra"),     # initials must differ: they label the circles
         ("Netflix", "YouTube", "Spotify"),
         ("cycling", "swimming", "running"),
     ])
@@ -2707,6 +2884,8 @@ def _prob_diff_venn_three_clubs():
         "Read each region from the Venn diagram. For part (c), include A and B regions "
         "but exclude anyone in C only or the centre triple overlap."
     )
+    record('prob_venn3_parts', a_only=a_only, b_only=b_only, c_only=c_only, ab_only=ab_only, ac_only=ac_only,
+           bc_only=bc_only, abc=abc, neither=neither, a_word=act_a, b_word=act_b, c_word=act_c)
     raw = _prob_fields_answer(
         (p_exact, p_at_least, p_or_not_c),
         (
@@ -2815,6 +2994,8 @@ def _prob_diff_venn_three_fill_in():
         "from the given pair total to get the ‘only’ region. Then subtract from each "
         "single-drink total to find the ‘only’ parts on the outside."
     )
+    record('prob_venn3_clues', abc=abc, ab_total=ab_total, ac_total=ac_total, bc_total=bc_total, a_total=a_total,
+           b_total=b_total, c_total=c_total, total=total, neither=neither, c_word=drink_c)
     raw = _prob_fields_answer(
         (
             a_only, b_only, c_only, ab_only, ac_only, bc_only, abc, neither,
@@ -2846,6 +3027,7 @@ def _prob_or_not_exclusive():
     b = random.randint(15, 30)
     both = random.randint(5, min(a, b) - 1)
     act1, act2, act_both = random.choice(TENNIS_FOOTBALL)
+    total = max(total, a + b - both + 3)      # the group has to be big enough to hold everyone counted
     num = a + b - both
     prob = _prob_frac(num, total)
     q = f"In a group of {total}, {a} {act1}, {b} {act2}, and {both} {act_both}. Find P({act1} or {act2})."
@@ -2854,6 +3036,7 @@ def _prob_or_not_exclusive():
          f"= {a}/{total} + {b}/{total} \u2212 {both}/{total}<br>"
          f"= ({a} + {b} \u2212 {both}) / {total} = {num}/{total} = <strong>{prob}</strong>.")
     hint = "The inclusion-exclusion formula subtracts the overlap once to avoid counting those in both groups twice."
+    record('prob_union', total=total, a=a, b=b, both=both)
     return q, s, hint, 3, _prob_fraction_answer(num, total)
 
 
@@ -2865,10 +3048,11 @@ def _prob_independent_product():
             break
     template = random.choice(INDEPENDENT_SCENARIO)[0]
     prob = _prob_frac(a*c, b*d)
-    q = template.format(a=a, b=b, c=c, d=d) + " Find P(A and B)."
+    q = template.format(a=a, b=b, c=c, d=d) + ". Find P(A and B)."
     s = (f"The events are independent (one does not affect the other), so their probabilities multiply:<br>"
          f"P(A and B) = P(A) \u00d7 P(B) = {a}/{b} \u00d7 {c}/{d} = <strong>{prob}</strong>.")
     hint = "Independent events: P(A and B) = P(A) \u00d7 P(B). One event has no effect on the other."
+    record('prob_independent', a=a, b=b, c=c, d=d)
     return q, s, hint, 2, _prob_fraction_answer(a * c, b * d)
 
 
@@ -2897,6 +3081,7 @@ def _prob_tree_simple(blank=False):
          f"P({c1}) = {red}/{total} on both draws.<br>"
          f"Follow the ({c1},{c1}) branch: {red}/{total} \u00d7 {red}/{total} = <strong>{prob}</strong>.")
     hint = "With replacement: the same fractions apply on both draws. Multiply the probabilities along the branch."
+    record('prob_tree', n_first=red, first_word=c1, n_second=blue, second_word=c2, replace=True, ask='both')
     return q, s, hint, 3 if blank else 2, _prob_fraction_answer(red * red, total * total)
 
 
@@ -2946,6 +3131,7 @@ def _prob_tree_different(blank=False):
     hint = ("Fill in 1st-draw fractions first (total = {t}), then 2nd-draw fractions "
             "(total drops to {t1} because one counter is gone). "
             "Add the two mixed-colour branches for part (b).").format(t=total, t1=total-1)
+    record('prob_tree', n_first=red, first_word=c1, n_second=blue, second_word=c2, replace=False, ask='different')
     return q, s, hint, 4, _prob_fraction_answer(num, den)
 
 
@@ -2990,6 +3176,7 @@ def _prob_tree_at_least_one_colour(blank=False):
          f"P(at least one {c1}) = 1 \u2212 {p_none} = <strong>{prob}</strong>.")
     hint = (f"Fill in all six branch probabilities first. Then use complement: "
             f"P(at least one {c1}) = 1 \u2212 P({c2},{c2}).")
+    record('prob_tree', n_first=red, first_word=c1, n_second=blue, second_word=c2, replace=False, ask='at_least_first')
     return q, s, hint, 4, _prob_fraction_answer(p_none_d - p_none_n, p_none_d)
 
 
@@ -3102,7 +3289,18 @@ def probability_mcq(slot_index=None):
     else:
         distractors = ['1/2', '1/3', '2/3', '1/4']
 
-    clean_distractors = [d for d in distractors if d != correct]
+    def _lead(text):
+        # the leading value, read whole (so 1/6 and 1/2 differ, while 0.5, 0.50 and 1/2 or 10 and 10 km/h clash)
+        m_ = re.match(r'\s*(-?\d+(?:\.\d+)?)(?:\s*/\s*(\d+))?', str(text))
+        if not m_:
+            return None
+        if m_.group(2):
+            return Fraction(m_.group(1)) / int(m_.group(2)) if int(m_.group(2)) else None
+        return Fraction(m_.group(1))
+
+    clean_distractors = [d for d in distractors if d != correct and not (
+        _lead(d) is not None and _lead(d) == _lead(correct) and str(d)[:1] != '(')]
+    clean_distractors = _mcq_distinct_distractors(correct, clean_distractors, ['1/4', '1/3', '2/3', '3/4', '1/5', '2/5'])
     options, letter = _mcq_options(correct, clean_distractors)
     return q, full_s, hint_text, 1, options, letter
 
@@ -3136,6 +3334,12 @@ def gcse_probability_variants(difficulty, mode):
     return select_tier_variants(pool)
 
 
+def _prob_number_hint(q):
+    if 'prob-tree-input' in q and '(b)' in q:
+        return 'Part (b): enter a fraction'
+    return 'Enter a number or fraction'
+
+
 def _prob_problem_from_output(out, difficulty):
     q, s, hint, marks = out[:4]
     extra = {}
@@ -3164,14 +3368,21 @@ def _prob_problem_from_output(out, difficulty):
                         'answer_type': 'fraction',
                         'answer_format_hint': 'Enter a fraction (e.g. 3/8)',
                     }
+                    if raw.get('form'):
+                        extra['answer_form'] = raw['form']
+            elif raw_type == 'number' and raw.get('value') is not None:
+                extra = {
+                    'correct_answer_raw': str(raw['value']),
+                    'answer_type': 'number',
+                    'answer_format_hint': _prob_number_hint(q),
+                }
+                if raw.get('form'):
+                    extra['answer_form'] = raw['form']
         elif isinstance(raw, (str, int, float)):
-            format_hint = 'Enter a number or fraction'
-            if 'prob-tree-input' in q and '(b)' in q:
-                format_hint = 'Part (b): enter a fraction'
             extra = {
                 'correct_answer_raw': str(raw),
                 'answer_type': 'number',
-                'answer_format_hint': format_hint,
+                'answer_format_hint': _prob_number_hint(q),
             }
     return make_problem(
         q, s, hint, difficulty, marks, 'gcse', 'maths', 'probability', **extra
@@ -3276,6 +3487,7 @@ def _stats_freq_mean():
         f"The mean number of {noun} is <strong>{fmt_dp(mean_val, 2)}</strong>."
     )
     hint = "Use mean = Σfx ÷ Σf."
+    record('stats_freq_mean', values=values, freqs=freqs)
     return q, s, hint, 3, _number_raw(mean_val, dp=2)
 
 
@@ -3284,7 +3496,8 @@ def _stats_estimated_mean_grouped():
     start = width * random.randint(0, 3)
     n_classes = random.randint(3, 4)
     intervals = [(start + width * i, start + width * (i + 1)) for i in range(n_classes)]
-    freqs = [random.randint(2, 12) for _ in intervals]
+    # whole-number frequency densities, so every bar height can be read off the vertical scale
+    freqs = [width * random.randint(1, 4) for _ in intervals]
     total_f = sum(freqs)
     scenario, unit = _stats_random_context(total_f)
     svg = _stats_svg_histogram(intervals, freqs)
@@ -3301,6 +3514,7 @@ def _stats_estimated_mean_grouped():
         f"The estimated mean is <strong>{_number_fmt(est_mean)}</strong> {unit}."
     )
     hint = "Use class midpoints."
+    record('stats_hist_mean', intervals=intervals, freqs=freqs, n=total_f, derived=('freqs',))
     return q, s, hint, 4, _number_raw(est_mean)
 
 
@@ -3313,6 +3527,7 @@ def _stats_grouped_midpoint():
     mid_str = f"{fmt_dp(mid, 0)}" if mid == int(mid) else f"{fmt_dp(mid, 1)}"
     q = rf"Find the midpoint of the class interval {low} &lt; {var} ≤ {high}."
     s = rf"Midpoint = ({low}+{high}) ÷ 2 = <strong>{mid_str}</strong>."
+    record('stats_midpoint', low=low, high=high)
     return q, s, "Add the class boundaries and divide by 2.", 1, _number_raw(mid)
 
 
@@ -3326,6 +3541,7 @@ def _stats_range_list():
     q = f"The {scenario} are: {', '.join(map(str, vals))}. Find the range."
     s = f"Range = highest − lowest = {max(vals)} − {min(vals)} = <strong>{max(vals) - min(vals)}</strong>."
     hint = "Range = max − min."
+    record('stats_list', stat_word='range', values=vals)
     return q, s, hint, 1, max(vals) - min(vals)
 
 
@@ -3341,6 +3557,7 @@ def _stats_median_list():
     q = f"The {scenario} are: {', '.join(map(str, vals))}. Find the median."
     s = f"Values in order: {', '.join(map(str, ordered))}. The middle value is <strong>{med}</strong>."
     hint = "Put in order first."
+    record('stats_list', stat_word='median', values=vals)
     return q, s, hint, 2, med
 
 
@@ -3358,6 +3575,7 @@ def _stats_mode_list():
     q = f"The {scenario} are: {', '.join(map(str, vals))}. Find the mode."
     s = f"The mode is the most common value. <strong>{mode}</strong> occurs most often."
     hint = "The mode is the value with the highest frequency."
+    record('stats_list', stat_word='mode', values=vals)
     return q, s, hint, 1, mode
 
 
@@ -3372,6 +3590,7 @@ def _stats_mean_list():
     q = f"The {scenario} are: {', '.join(map(str, vals))}. Find the mean.{_dp_note(mean)}"
     s = f"Sum = {'+'.join(map(str, vals))} = {sum(vals)}. Count = {len(vals)}. Mean = {sum(vals)} ÷ {len(vals)} = <strong>{_number_fmt(mean)}</strong>."
     hint = "Add them all, then divide by how many there are."
+    record('stats_list', stat_word='mean', values=vals)
     return q, s, hint, 2, _number_raw(mean)
 
 
@@ -3397,12 +3616,24 @@ def _stats_pie_angle():
         )
     )
     q = (
-        rf"In {scenario}, {freq} out of {total} respondents {label}.\n{pie}\n"
+        f"In {scenario}, {freq} out of {total} respondents {label}.\n{pie}\n"
         f"Find the sector angle for this category in a pie chart."
     )
     s = f"Sector angle = (frequency ÷ total) × 360 = ({freq} ÷ {total}) × 360 = <strong>{fmt_dp(angle, 1)}°</strong>."
     hint = "A full pie chart is 360°."
+    record('stats_pie', freq=freq, total=total)
     return q, s, hint, 2, _number_raw(angle, dp=1)
+
+
+def _stats_pearson(points):
+    """Product-moment correlation of (x, y) pairs (used to keep a 'no correlation' cloud honest)."""
+    n = len(points)
+    mx = sum(p[0] for p in points) / n
+    my = sum(p[1] for p in points) / n
+    sxy = sum((p[0] - mx) * (p[1] - my) for p in points)
+    sxx = sum((p[0] - mx) ** 2 for p in points)
+    syy = sum((p[1] - my) ** 2 for p in points)
+    return sxy / math.sqrt(sxx * syy)
 
 
 def _stats_scatter_correlation():
@@ -3427,7 +3658,10 @@ def _stats_scatter_correlation():
         points = [(i + random.uniform(-0.5, 0.5), -2*i + 2*n + random.uniform(-1.5, 1.5)) for i in range(1, n + 1)]
         lof = (-2, 2 * n)
     else:
-        points = [(random.uniform(1, n), random.uniform(1, n)) for _ in range(n)]
+        while True:
+            points = [(random.uniform(1, n), random.uniform(1, n)) for _ in range(n)]
+            if abs(_stats_pearson(points)) < 0.2:       # chance alone can make a cloud look like a trend
+                break
         lof = None
     svg = _gr_svg_scatter(points, f"{scenario[0]} vs {scenario[1]}", scenario[0], scenario[1], lof)
     q = (f"A scatter graph was plotted for {n} data pairs of "
@@ -3446,6 +3680,7 @@ def _stats_scatter_correlation():
         'options': corr_options,
         'correct': corr_letters[corr],
     }
+    record('stats_scatter', n=n)
     return q, s, hint, 1, raw
 
 
@@ -3469,8 +3704,11 @@ def _stats_line_best_fit():
     # Build scatter points near the line y = gradient*x + c
     c_lof = y1 - gradient * x1
     n = random.randint(9, 13)
-    x_vals = [random.uniform(1, 11) for _ in range(n)]
-    points = [(x, gradient * x + c_lof + random.uniform(-2, 2)) for x in x_vals]
+    while True:
+        x_vals = [random.uniform(1, 11) for _ in range(n)]
+        points = [(x, gradient * x + c_lof + random.uniform(-2, 2)) for x in x_vals]
+        if _fits_line(points, gradient, c_lof):
+            break
     svg = _gr_svg_scatter(points, f"{x_lab} vs {y_lab}", x_lab, y_lab, (gradient, c_lof))
     _, y_step = _gr_scatter_axis_steps(points)
     y_tol = _gr_estimate_tolerance(y_step)
@@ -3482,7 +3720,8 @@ def _stats_line_best_fit():
          f"When x = {xq}: y \u2248 {y1} + {gradient}\u00d7({xq}\u2212{x1}) = <strong>{y_disp}</strong> "
          f"(accept estimates within \u00b1{y_tol}).")
     hint = "Use the line of best fit to interpolate within the data range."
-    return q, s, hint, 3, _gr_number_estimate_answer(y_val, y_tol)
+    record('stats_lobf', x1=x1, y1=y1, x2=x2, y2=y2, xq=xq)
+    return q, s, hint, 3, _gr_number_estimate_answer(y_val, y_tol, grid_spacing=y_step)
 
 
 def _stats_cumulative_frequency():
@@ -3506,13 +3745,15 @@ def _stats_cumulative_frequency():
             prev_ub = upper_bounds[cum_freqs.index(cf) - 1] if cum_freqs.index(cf) > 0 else 0
             median_approx = prev_ub + (half - prev_cf) / (cf - prev_cf) * (ub - prev_ub)
             break
+    cf_tol = _gr_estimate_tolerance(width)      # the x-axis ticks are one class width apart
     s = (f"Total frequency = {cum_freqs[-1]}. Half = {fmt_dp(half, 1)}.<br>"
          f"Read across from {fmt_dp(half, 1)} on the y‑axis to the curve, then down to the x‑axis.<br>"
          f"The median is approximately <strong>{fmt_dp(median_approx, 0)}</strong> "
-         f"(accept estimates within \u00b1{max(2, width // 2)}).")
+         f"(accept estimates within \u00b1{cf_tol}).")
     hint = "Find half the total frequency, then read from the curve."
+    record('stats_cf', upper_bounds=upper_bounds, cum_freqs=cum_freqs, derived=('cum_freqs',))
     return q, s, hint, 3, _gr_number_estimate_answer(
-        median_approx, max(2, width // 2)
+        median_approx, cf_tol, grid_spacing=width
     )
 
 def _stats_box_iqr():
@@ -3526,6 +3767,7 @@ def _stats_box_iqr():
     q = f"{scenario}\nThe data are summarised in the box plot below.\n{svg}\nFind the interquartile range (in {unit})."
     s = f"IQR = Q₃ − Q₁ = {q3} − {q1} = <strong>{q3 - q1}</strong> {unit}."
     hint = "IQR = upper quartile − lower quartile."
+    record('stats_box', min_val=min_val, q1=q1, q2=q2, q3=q3, max_val=max_val)
     return q, s, hint, 2, q3 - q1
 
 def _stats_bar_read():
@@ -3536,6 +3778,7 @@ def _stats_bar_read():
     q = f"A bar chart shows category A = {a}, B = {b}, C = {c}.\n{svg}\nHow many items are there altogether?"
     s = f"Add the frequencies: {a} + {b} + {c} = <strong>{a+b+c}</strong>."
     hint = "Total frequency = sum of the bar heights."
+    record('stats_bar', a=a, b=b, c=c)
     return q, s, hint, 1, a + b + c
 
 
@@ -3570,6 +3813,7 @@ def _stats_hist_density():
         f"<strong>{density_q}</strong>."
     )
     hint = "Use frequency density = frequency ÷ class width (frequency per unit along the horizontal axis)."
+    record('stats_fd', freq=freq_q, width=width_q)
     return q, s, hint, 2, density_q
 
 
@@ -3600,6 +3844,7 @@ def _stats_compare_distributions():
     ]
     options, letter = _mcq_options(correct, [d for d in distractors if d != correct])
     raw = {'type': 'choice', 'options': options, 'correct': letter}
+    record('stats_compare', med1=med1, iqr1=iqr1, med2=med2, iqr2=iqr2)
     return q, s, hint, 2, raw
 
 
@@ -3616,7 +3861,8 @@ def _stats_cf_interp(upper_bounds, cum_freqs, fraction):
             c0, c1 = cfs[i - 1], cfs[i]
             if c1 == c0:
                 return x1
-            return x0 + (target - c0) / (c1 - c0) * (x1 - x0)
+            # exact, then one rounding to a float: float noise (11.249999...) must not break a half-up tie
+            return float(x0 + (Fraction(target) - c0) / (c1 - c0) * (x1 - x0))
     return bounds[-1]
 
 
@@ -3658,14 +3904,22 @@ def _stats_diff_cf_multipart():
     while True:
         freqs = [random.randint(3, 12) for _ in range(n_classes)]
         total = sum(freqs)
-        if total % 4 == 0:
+        if total % 4 != 0:
+            continue
+        cum_freqs = []
+        running = 0
+        for f in freqs:
+            running += f
+            cum_freqs.append(running)
+        q1_exact = _stats_cf_interp(upper_bounds, cum_freqs, 0.25)
+        q3_exact = _stats_cf_interp(upper_bounds, cum_freqs, 0.75)
+        # the IQR to 1 d.p. must equal the difference of the quartiles as the solution shows them
+        # compared exactly: float subtraction made a true tie (11.25) look like 11.2
+        exact_gap = Fraction(q3_exact).limit_denominator(10 ** 6) - Fraction(q1_exact).limit_denominator(10 ** 6)
+        gap_1dp = float(int(exact_gap * 10 + Fraction(1, 2)) / Fraction(10))
+        if round(round(q3_exact, 1) - round(q1_exact, 1), 1) == gap_1dp:
             break
     scenario = f"The cumulative frequency graph summarises {ctx_noun} (sample size {total})."
-    cum_freqs = []
-    running = 0
-    for f in freqs:
-        running += f
-        cum_freqs.append(running)
 
     median = _stats_cf_interp(upper_bounds, cum_freqs, 0.5)
     q1 = _stats_cf_interp(upper_bounds, cum_freqs, 0.25)
@@ -3700,6 +3954,8 @@ def _stats_diff_cf_multipart():
         "Use half the total for the median, the lower and upper quartile positions for the IQR, "
         "and read cumulative frequency directly from the graph for part (c)."
     )
+    record('stats_cf_multi', upper_bounds=upper_bounds, cum_freqs=cum_freqs, threshold=threshold,
+           derived=('cum_freqs',))
     raw = _prob_fields_answer(
         (_number_raw(median, dp=1), _number_raw(iqr, dp=1), below_threshold),
         ('Part (a): median', 'Part (b): IQR', 'Part (c): count'),
@@ -3726,7 +3982,7 @@ def _stats_diff_histogram_multipart():
     )
     n_classes = 4
     intervals = [(low + class_w * i, low + class_w * (i + 1)) for i in range(n_classes)]
-    freqs = [random.randint(4, 18) for _ in range(n_classes)]
+    freqs = [class_w * random.randint(1, 4) for _ in range(n_classes)]      # whole-number densities, readable
     total = sum(freqs)
     scenario = f"The histogram summarises {ctx_noun} (sample size {total})."
     mids = [(a + b) / 2 for a, b in intervals]
@@ -3766,11 +4022,13 @@ def _stats_diff_histogram_multipart():
         "Use midpoints for the mean, frequency \u00f7 class width for density, "
         "and frequency \u00f7 total for the fraction in one class."
     )
+    record('stats_hist_multi', intervals=intervals, freqs=freqs, n=total, t_low=t_low, t_high=t_high,
+           derived=('freqs',))
     raw = _prob_fields_answer(
         (_number_raw(est_mean), _number_raw(t_fd), t_pct),
         (
             f'Part (a): estimated mean ({unit})',
-            f'Part (b): frequency density ({unit})',
+            f'Part (b): frequency density (per {unit})',
             'Part (c): fraction',
         ),
     )
@@ -3922,7 +4180,18 @@ def statistics_mcq(slot_index=None, difficulty='foundational'):
         except:
             distractors = ['10', '20', '30', '40']
 
-    clean_distractors = [d for d in distractors if d != correct]
+    def _lead(text):
+        # the leading value, read whole (so 1/6 and 1/2 differ, while 0.5, 0.50 and 1/2 or 10 and 10 km/h clash)
+        m_ = re.match(r'\s*(-?\d+(?:\.\d+)?)(?:\s*/\s*(\d+))?', str(text))
+        if not m_:
+            return None
+        if m_.group(2):
+            return Fraction(m_.group(1)) / int(m_.group(2)) if int(m_.group(2)) else None
+        return Fraction(m_.group(1))
+
+    clean_distractors = [d for d in distractors if d != correct and not (
+        _lead(d) is not None and _lead(d) == _lead(correct) and str(d)[:1] != '(')]
+    clean_distractors = _mcq_distinct_distractors(correct, clean_distractors, ['10', '20', '30', '40', '50', '60'])
     options, letter = _mcq_options(correct, clean_distractors)
 
     # Return the FULL step‑by‑step solution, not just the hint
@@ -3951,7 +4220,7 @@ def _stats_problem_from_output(out, difficulty):
                         'answer_format_hint': 'Enter a number or fraction in every field',
                     }
             elif raw_type == 'number_estimate':
-                tol = int(raw['tolerance'])
+                tol = raw['tolerance']
                 dp = raw.get('dp', 0)
                 extra = {
                     'correct_answer_raw': _gr_estimate_raw(raw['value'], tol, dp=dp),
@@ -4020,12 +4289,16 @@ def _gr_fmt_linear(m, c):
         mx = f"−{abs(m)}x"
     else:
         mx = f"{m}x"
-    if c >= 0:
+    if c == 0:
+        return f"y = {mx}"
+    if c > 0:
         return f"y = {mx} + {c}"
     return f"y = {mx} − {abs(c)}"
 
 def _gr_fmt_bracket(r):
     """Return '(x - r)' or '(x + |r|)' with proper sign."""
+    if r == 0:
+        return "x"
     if r >= 0:
         return f"(x − {r})"
     else:
@@ -4092,16 +4365,22 @@ def _gr_scatter_axis_steps(points):
 
 
 def _gr_estimate_tolerance(axis_step):
-    """Allow roughly half a grid square when reading from a graph."""
-    return max(2, round(axis_step * 0.5))
+    """Half a grid square on the axis being read (see utils.grid_estimate_tolerance)."""
+    return grid_estimate_tolerance(axis_step)
 
 
 def _gr_estimate_raw(value, tolerance, dp=0):
     val = _number_raw(value, dp) if dp else str(int(round(value)))
-    return f"{val}~{int(tolerance)}"
+    return f"{val}~{tolerance:g}"
 
 
-def _gr_number_estimate_answer(value, tolerance, dp=0):
+def _gr_number_estimate_answer(value, tolerance=None, dp=0, grid_spacing=None):
+    """A graph-reading estimate. ``grid_spacing`` (gridline gap on the axis read) sets the band;
+    an explicit ``tolerance`` is the fallback for a graph that cannot say."""
+    if grid_spacing is not None:
+        tolerance = _gr_estimate_tolerance(grid_spacing)
+    if tolerance is None:
+        raise ValueError('number estimate needs grid_spacing or tolerance')
     return {
         'type': 'number_estimate',
         'value': value,
@@ -4201,6 +4480,8 @@ def _gr_axis_labels(W, H, PT, ph, x0, y0, x_lbl="x", y_lbl="y"):
 
 
 def _gr_svg_scatter(points, title="", xlabel="", ylabel="", lof=None):
+    record('gr_drawn', kind='scatter', points=[(round(px, 6), round(py, 6)) for px, py in points],
+           fit=tuple(lof) if lof else None)
     W, H = 440, 360
     PL, PR, PT, PB = 68, 22, 42, 55
 
@@ -4262,6 +4543,7 @@ def _gr_svg_scatter(points, title="", xlabel="", ylabel="", lof=None):
 
 def _gr_svg_line(m, c, title="", show_y_intercept_marker=False):
     """Line graph for y = mx + c; axes at x = 0 and y = 0."""
+    record('gr_drawn', kind='line', m=m, c=c)
     W, H = 340, 310
     PL, PR, PT, PB = 60, 20, 38, 52
     x_min, x_max = -5, 5
@@ -4298,6 +4580,7 @@ def _gr_svg_line(m, c, title="", show_y_intercept_marker=False):
 
 def _gr_svg_coord_grid(x_pt, y_pt):
     """Coordinate grid (−6 to 6) with one plotted point highlighted."""
+    record('gr_drawn', kind='point', x=x_pt, y=y_pt)
     W, H = 310, 310
     CX, CY, SC = 155, 155, 22
 
@@ -4329,6 +4612,7 @@ def _gr_svg_coord_grid(x_pt, y_pt):
 
 def _gr_svg_two_point_line(x1, y1, x2, y2, label_points=False):
     """Two points on a line segment; GCSE axes at x = 0 and y = 0."""
+    record('gr_drawn', kind='segment', x1=x1, y1=y1, x2=x2, y2=y2)
     W, H = 320, 290
     PL, PR, PT, PB = 55, 22, 32, 50
     pad = 1
@@ -4367,6 +4651,7 @@ def _gr_svg_two_point_line(x1, y1, x2, y2, label_points=False):
 
 def _gr_svg_quadratic(a, b, c, line=None):
     """Parabola y = ax² + bx + c on GCSE axes; optional line y = mx + d as (m, d)."""
+    record('gr_drawn', kind='quadratic', a=a, b=b, c=c, line=tuple(line) if line else None)
     W, H = 360, 310
     PL, PR, PT, PB = 58, 22, 38, 52
 
@@ -4445,6 +4730,7 @@ def _gr_svg_quadratic(a, b, c, line=None):
 
 def _gr_svg_distance_time(distance, time_hr):
     """Distance-time graph from (0, 0); axes at x = 0 and y = 0."""
+    record('gr_drawn', kind='distance_time', distance=distance, time=time_hr)
     W, H = 340, 280
     PL, PR, PT, PB = 60, 22, 32, 52
     x_lo, x_hi, y_lo, y_hi = _gr_bounds_with_origin(
@@ -4514,6 +4800,7 @@ def _gr_correlation_choice(kind):
     }
 
 
+@verifies('alg', task='gr_quadrant')
 def _gra_coordinate_quadrant():
     x, y = random.choice([-5,-4,-3,3,4,5]), random.choice([-5,-4,-3,3,4,5])
     if x > 0 and y > 0: qd = 'I'
@@ -4527,6 +4814,7 @@ def _gra_coordinate_quadrant():
     return q, s, hint, 1, _gr_quadrant_choice(qd)
 
 
+@verifies('alg', task='gr_subst')
 def _gra_substitute_linear():
     m, c, x = random.randint(2, 6), random.randint(-5, 8), random.randint(-3, 7)
     eq = _gr_fmt_linear(m, c)
@@ -4540,6 +4828,7 @@ def _gra_substitute_linear():
     return q, s, hint, 1, y
 
 
+@verifies('alg', task='gr_gradient2')
 def _gra_gradient_two_points():
     x1, y1 = random.randint(-3, 3), random.randint(-4, 4)
     m = random.randint(1, 5)
@@ -4552,6 +4841,7 @@ def _gra_gradient_two_points():
     return q, s, hint, 2, m
 
 
+@verifies('alg', task='gr_yint')
 def _gra_y_intercept():
     m, c = random.randint(-5, 5), random.randint(-8, 8)
     if m == 0:
@@ -4570,6 +4860,7 @@ def _gra_y_intercept():
     return q, s, hint, 1, c
 
 
+@verifies('alg', task='gr_equation_from')
 def _gra_equation_from_gradient_intercept():
     m, c = random.randint(-5,5), random.randint(-8,8)
     if m == 0: m = 3
@@ -4581,6 +4872,7 @@ def _gra_equation_from_gradient_intercept():
 
 
 
+@verifies('alg', task='gr_parallel')
 def _gra_parallel_gradient():
     m, c = random.randint(-5,5), random.randint(-8,8)
     if m == 0: m = -2
@@ -4592,6 +4884,7 @@ def _gra_parallel_gradient():
 
 
 
+@verifies('alg', task='gr_speed')
 def _gra_distance_time_speed():
     time = random.choice([2, 3, 4, 5, 6])
     distance = time * random.randint(20 // time + 1, 120 // time)
@@ -4605,6 +4898,7 @@ def _gra_distance_time_speed():
     return q, s, hint, 2, _number_raw(distance / time)
 
 
+@verifies('alg', task='gr_subst')
 def _gra_quadratic_substitute():
     a, b, c, x = 1, random.randint(-4, 4), random.randint(-5, 5), random.randint(-3, 4)
     y = a * x * x + b * x + c
@@ -4629,6 +4923,7 @@ def _gra_quadratic_substitute():
     return q, s, hint, 2, y
 
 
+@verifies('alg', task='gr_roots')
 def _gra_root_from_factorised():
     r1, r2 = random.sample(range(-5,6), 2)
     b1 = _gr_fmt_bracket(r1)
@@ -4636,10 +4931,12 @@ def _gra_root_from_factorised():
     q = f"Find the roots of y = {b1}{b2}."
     s = f"Set each bracket to zero → x = {r1}, x = {r2}."
     hint = "Roots when y = 0."
-    return q, s, hint, 2, _number_pair_answer(r1, r2, 'First root', 'Second root')
+    # the boxes are checked in order, so the key is sorted and the labels say which root goes first
+    return q, s, hint, 2, _number_pair_answer(min(r1, r2), max(r1, r2), 'Smaller root', 'Larger root')
 
 
 
+@verifies('alg', task='gr_midpoint')
 def _gra_midpoint():
     x1,y1,x2,y2 = random.randint(-5,5), random.randint(-5,5), random.randint(-5,5), random.randint(-5,5)
     mx, my = (x1+x2)/2, (y1+y2)/2
@@ -4649,25 +4946,30 @@ def _gra_midpoint():
     return q, s, hint, 2, _number_pair_answer(mx, my, 'x-coordinate', 'y-coordinate', sep=',')
 
 
+@verifies('alg', task='gr_intersect')
 def _gra_line_intersection_simple():
     m1,c1,m2,c2 = 2, random.randint(-4,4), -1, random.randint(2,8)
     x = (c2-c1)/(m1-m2); y = m1*x + c1
     note = _dp_note(x) or _dp_note(y)
     c1_txt = f"- {abs(c1)}" if c1 < 0 else f"+ {c1}"
-    q = f"Find the intersection of y = {m1}x {c1_txt} and y = {m2}x + {c2}.{note}"
+    q = f"Find the intersection of {_gr_fmt_linear(m1, c1)} and {_gr_fmt_linear(m2, c2)}.{note}"
     s = f"Set equal → {m1}x {c1_txt} = {m2}x + {c2} → x = {_number_fmt(x)}, y = {_number_fmt(y)}."
     hint = "At intersection, both equations give same x and y."
     return q, s, hint, 3, _number_pair_answer(round(x, 2), round(y, 2), 'x', 'y', sep=',')
 
 
+@verifies('alg', task='gr_subst')
 def _gra_reciprocal_value():
     k, x = random.choice([6,8,10,12,15,20]), random.choice([2,3,4,5])
+    while Fraction(k, x).denominator not in (1, 2, 4, 5):      # the answer must be exact (no unstated rounding)
+        k, x = random.choice([6,8,10,12,15,20]), random.choice([2,3,4,5])
     q = f"For y = {k}/x, find y when x = {x}."
     s = f"y = {k}/{x} = {fmt_dp(k/x, 2)}."
     hint = "Substitute into the reciprocal equation."
     return q, s, hint, 1, _number_raw(k / x)
 
 
+@verifies('alg', task='gr_subst')
 def _gra_cubic_substitute():
     a = random.randint(-3, 3)
     b = random.randint(-6, 6)
@@ -4675,7 +4977,8 @@ def _gra_cubic_substitute():
     y = x**3 + a * x + b
     terms = "x\u00b3"
     if a:
-        terms += f" + {a}x" if a > 0 else f" \u2212 {abs(a)}x"
+        ax = "x" if abs(a) == 1 else f"{abs(a)}x"
+        terms += f" + {ax}" if a > 0 else f" \u2212 {ax}"
     if b:
         terms += f" + {b}" if b > 0 else f" \u2212 {abs(b)}"
     q = f"For y = {terms}, find y when x = {x}."
@@ -4688,6 +4991,7 @@ def _gra_cubic_substitute():
 
 # ---- Scatter‑graph correlation questions ----
 
+@verifies('alg', task='gr_corr')
 def _gra_scatter_positive():
     n = random.randint(8, 15)
     points = [(i + random.uniform(-0.5, 0.5), 2*i + random.uniform(-1, 1)) for i in range(n)]
@@ -4698,6 +5002,7 @@ def _gra_scatter_positive():
     return q, s, hint, 1, _gr_correlation_choice('positive')
 
 
+@verifies('alg', task='gr_corr')
 def _gra_scatter_negative():
     n = random.randint(8, 15)
     points = [(i + random.uniform(-0.5, 0.5), -2*i + 20 + random.uniform(-1, 1)) for i in range(n)]
@@ -4708,9 +5013,24 @@ def _gra_scatter_negative():
     return q, s, hint, 1, _gr_correlation_choice('negative')
 
 
+@verifies('alg', task='gr_corr')
 def _gra_scatter_no_correlation():
     n = random.randint(10, 18)
-    points = [(random.uniform(0, 10), random.uniform(0, 10)) for _ in range(n)]
+
+    def _scattered():
+        return [(random.uniform(0, 10), random.uniform(0, 10)) for _ in range(n)]
+
+    def _weak(pts):
+        # random points can line up by chance; "no correlation" needs a genuinely weak relationship
+        mx_, my_ = sum(p_[0] for p_ in pts) / len(pts), sum(p_[1] for p_ in pts) / len(pts)
+        sxy = sum((p_[0] - mx_) * (p_[1] - my_) for p_ in pts)
+        sxx = sum((p_[0] - mx_) ** 2 for p_ in pts)
+        syy = sum((p_[1] - my_) ** 2 for p_ in pts)
+        return abs(sxy) / math.sqrt(sxx * syy) < 0.2
+
+    points = _scattered()
+    while not _weak(points):
+        points = _scattered()
     svg = _gr_svg_scatter(points, "Scatter graph", "x", "y")
     q = f"Scatter graph:\n{svg}\nWhat type of correlation does this show?"
     s = "No correlation (no clear pattern)."
@@ -4718,11 +5038,22 @@ def _gra_scatter_no_correlation():
     return q, s, hint, 1, _gr_correlation_choice('none')
 
 
+def _fits_line(points, m, c, tol=1.0):
+    """True when the line y = mx + c passes within tol of the mean point (a believable line of best fit)."""
+    mean_x = sum(p[0] for p in points) / len(points)
+    mean_y = sum(p[1] for p in points) / len(points)
+    return abs(m * mean_x + c - mean_y) <= tol
+
+
+@verifies('alg', task='gr_estimate')
 def _gra_scatter_line_of_best_fit():
     m = random.randint(2, 5)
     c = random.randint(1, 5)
     n = random.randint(8, 14)
-    points = [(i + random.uniform(-0.8, 0.8), m*i + c + random.uniform(-2, 2)) for i in range(n)]
+    while True:
+        points = [(i + random.uniform(-0.8, 0.8), m*i + c + random.uniform(-2, 2)) for i in range(n)]
+        if _fits_line(points, m, c):  # a line that misses the mean point is not a believable best fit
+            break
     svg = _gr_svg_scatter(points, "Scatter graph", "Hours", "Score", (m, c))
     # ask to estimate value for x = something
     xq = random.randint(3, 8)
@@ -4736,11 +5067,12 @@ def _gra_scatter_line_of_best_fit():
         f"(accept estimates within ±{y_tol})."
     )
     hint = "Read from the line, not from individual points."
-    return q, s, hint, 3, _gr_number_estimate_answer(y_val, y_tol)
+    return q, s, hint, 3, _gr_number_estimate_answer(y_val, y_tol, grid_spacing=y_step)
 
 
 # ---------- GRAPHS difficult (multi-step, a/b/c) ----------
 
+@verifies('alg', task='gr_line_multipart')
 def _gra_diff_line_equation_multipart():
     """Straight line through two points: gradient, y-intercept, then equation."""
     x1, y1 = random.randint(-2, 2), random.randint(-4, 4)
@@ -4778,6 +5110,7 @@ def _gra_diff_line_equation_multipart():
     )
 
 
+@verifies('alg', task='gr_journey')
 def _gra_diff_journey_multipart():
     """Distance\u2013time graph: speed, further distance, and time for a longer journey."""
     time_hr = random.choice([2, 3, 4, 5, 6])
@@ -4817,15 +5150,19 @@ def _gra_diff_journey_multipart():
     )
 
 
+@verifies('alg', task='gr_scatter_multipart')
 def _gra_diff_scatter_multipart():
     """Scatter graph: correlation, estimate y from x, then estimate x from y."""
     m = random.randint(2, 5)
     c = random.randint(3, 12)
     n = random.randint(10, 14)
-    points = [
-        (i + random.uniform(-0.6, 0.6), m * i + c + random.uniform(-2, 2))
-        for i in range(n)
-    ]
+    while True:
+        points = [
+            (i + random.uniform(-0.6, 0.6), m * i + c + random.uniform(-2, 2))
+            for i in range(n)
+        ]
+        if _fits_line(points, m, c):
+            break
     xq = random.randint(4, n - 2)
     y_est = m * xq + c
     yq = int(m * (n // 2) + c)
@@ -4887,6 +5224,7 @@ def _gra_diff_scatter_multipart():
     )
 
 
+@verifies('alg', task='gr_quad_features')
 def _gra_diff_quadratic_features_multipart():
     """Quadratic graph: y-intercept, roots, then minimum point."""
     r1, r2 = sorted(random.sample(range(-5, 4), 2))
@@ -4925,14 +5263,15 @@ def _gra_diff_quadratic_features_multipart():
         (c, r1, r2, _number_raw(tp_x), _number_raw(tp_y)),
         (
             'Part (a): y-intercept',
-            'Part (b): first root',
-            'Part (b): second root',
+            'Part (b): smaller root',
+            'Part (b): larger root',
             'Part (c): minimum x',
             'Part (c): minimum y',
         ),
     )
 
 
+@verifies('alg', task='gr_quad_intersection')
 def _gra_diff_quadratic_intersection_multipart():
     """Solve x² = mx + c using a graph of y = x² and a straight line."""
     while True:
@@ -4948,7 +5287,7 @@ def _gra_diff_quadratic_intersection_multipart():
     svg = _gr_svg_quadratic(1, 0, 0, line=(m, k))
     intro = f"The graph shows <strong>y = x²</strong> and <strong>{line_txt}</strong>."
     q = f"{intro}\n{svg}" + _ratio_abc_block(
-        "Write the coordinates of one point where the graphs intersect.",
+        "Write the coordinates of the point of intersection with the smaller x-coordinate.",
         "Write the coordinates of the other point of intersection.",
         f"Solve x² = {line_rhs} algebraically to verify your answers.",
     )
@@ -4975,8 +5314,8 @@ def _gra_diff_quadratic_intersection_multipart():
             'Part (a): intersection y',
             'Part (b): other intersection x',
             'Part (b): other intersection y',
-            'Part (c): first root',
-            'Part (c): second root',
+            'Part (c): smaller root',
+            'Part (c): larger root',
         ),
     )
 
@@ -5107,7 +5446,8 @@ def graphs_mcq(slot_index=None, difficulty='foundational'):
         # try to extract m and c from the question
         distractors = [correct, f"y = x + 1", f"y = x - 1", f"y = 2x"]
     elif 'speed' in q:
-        distractors = ['10', '20', '30', '40']
+        # every option carries the unit the keyed answer has, so no two options read as the same speed
+        distractors = [f'{v} km/h' for v in ('10', '20', '30', '40')]
     elif 'scatter' in q or 'correlation' in q:
         distractors = ['positive', 'negative', 'none', 'quadrant I']
     elif 'midpoint' in q:
@@ -5120,7 +5460,17 @@ def graphs_mcq(slot_index=None, difficulty='foundational'):
     else:
         distractors = ['0', '1', '2', '3']
 
-    clean_distractors = [d for d in distractors if d != correct]
+    def _lead(text):
+        # the leading value, read whole (so 1/6 and 1/2 differ, while 0.5, 0.50 and 1/2 or 10 and 10 km/h clash)
+        m_ = re.match(r'\s*(-?\d+(?:\.\d+)?)(?:\s*/\s*(\d+))?', str(text))
+        if not m_:
+            return None
+        if m_.group(2):
+            return Fraction(m_.group(1)) / int(m_.group(2)) if int(m_.group(2)) else None
+        return Fraction(m_.group(1))
+
+    clean_distractors = [d for d in distractors if d != correct and not (
+        _lead(d) is not None and _lead(d) == _lead(correct) and str(d)[:1] != '(')]
     options, letter = _mcq_options(correct, clean_distractors)
     return q, f"Answer: {letter}\n\n{hint}", hint, 1, options, letter
 
@@ -5156,7 +5506,7 @@ def _gr_problem_from_output(out, difficulty):
                     answer_format_hint='Enter as y = mx + c (e.g. y = 2x + 3)',
                 )
             elif raw_type == 'number_estimate':
-                tol = int(raw['tolerance'])
+                tol = raw['tolerance']
                 dp = raw.get('dp', 0)
                 return make_problem(
                     q, s, hint, difficulty, marks, 'gcse', 'maths', 'graphs',

@@ -8,6 +8,7 @@ from generators.shared.rounding import round_half_up as round
 import math
 import random
 from generators.shared.utils import make_problem
+from generators.shared.verify_hook import record, verifies
 from models import svg_kit
 from generators.shared.variant_utils import (
     select_tier_variants,
@@ -116,7 +117,10 @@ def _gsim_problem_from_output(out, difficulty):
                         'correct_answer_raw': '|'.join(str(v) for v in values),
                         'answer_type': 'number_fields',
                         'answer_labels': list(labels),
-                        'answer_format_hint': 'Enter a number in every field',
+                        'answer_format_hint': (
+                            'Enter a number in every field, with the smaller x first'
+                            if len(values) == 4 else 'Enter a number in every field'
+                        ),
                     }
             elif raw_type == 'linear':
                 extra = {
@@ -328,6 +332,10 @@ def _svg_two_lines(
     Never pass coordinate strings as labels on exam-style read/graph questions.
     x_min / y_min: pin axis limits (e.g. 0 for cost graphs so intercepts stay visible).
     """
+    # What is drawn, for the verification test: the two lines, the marked point and any plotted letters.
+    record('gsim_drawn', kind='lines', m1=m1, c1=c1, m2=m2, c2=c2,
+           point=(ix, iy) if show_point else None,
+           extra=[tuple(item) for item in (extra_points or [])])
     if x_min is not None or y_min is not None:
         bounds = _line_graph_bounds(m1, c1, m2, c2, ix, iy, x_min=x_min, y_min=y_min)
     else:
@@ -376,6 +384,7 @@ def _svg_two_lines(
 
 
 def _svg_parallel_lines(m, c1, c2, axis_numbers=False):
+    record('gsim_drawn', kind='lines', m1=m, c1=c1, m2=m, c2=c2, point=None, extra=[])
     x0, x1 = 0, 6
     pts = [(x0, m * x0 + c1), (x1, m * x1 + c1), (x0, m * x0 + c2), (x1, m * x1 + c2)]
     bounds = _bounds(pts, 1)
@@ -392,6 +401,8 @@ def _svg_parabola_line(r1, r2, a, b, mark="none", axis_numbers=False):
     mark: 'none' | 'one' | 'both' — dots only, never coordinate labels on the diagram.
     """
     y1, y2 = r1 * r1, r2 * r2
+    record('gsim_drawn', kind='parabola', a=a, b=b,
+           marks=[(r1, y1)] if mark == 'one' else ([(r1, y1), (r2, y2)] if mark == 'both' else []))
     x0, x1 = min(r1, r2) - 1, max(r1, r2) + 1
     pts = _parabola_pts(x0, x1) + _line_pts(a, b, x0, x1)
     if mark in ("one", "both"):
@@ -431,6 +442,7 @@ def _lines_at_point(ix, iy):
 # FOUNDATIONAL (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='gsim_point')
 def _gsim_f_read_intersection():
     ix = random.randint(1, 5)
     iy = random.randint(2, 8)
@@ -447,6 +459,7 @@ def _gsim_f_read_intersection():
     return q, s, "Read x across, then y up from the numbered axes.", 2, _gsim_pair_answer(ix, iy)
 
 
+@verifies('alg', task='keyed_text', text='the solution to both equations (the simultaneous solution)', drawn='cross')
 def _gsim_f_meaning_of_crossing():
     ix, iy = 4, 7
     m1, c1, m2, c2 = _lines_at_point(ix, iy)
@@ -476,6 +489,7 @@ def _gsim_f_meaning_of_crossing():
     return q, s, "One point on both lines = one simultaneous solution.", 1, opts, correct_letter
 
 
+@verifies('alg', task='gsim_which_point')
 def _gsim_f_which_point_on_both():
     ix = random.randint(2, 5)
     iy = random.randint(3, 7)
@@ -504,6 +518,7 @@ def _gsim_f_which_point_on_both():
     return q, s, "The point on both lines is at the intersection.", 2, opts, correct_letter
 
 
+@verifies('alg', task='gsim_y_at_x')
 def _gsim_f_read_y_at_crossing():
     ix = random.randint(2, 6)
     iy = random.randint(4, 10)
@@ -519,6 +534,7 @@ def _gsim_f_read_y_at_crossing():
     return q, s, "The y-coordinate at the crossing is part of the solution pair.", 2, _gsim_linear_answer(iy, "y")
 
 
+@verifies('alg', task='gsim_count')
 def _gsim_f_how_many_solutions_lines():
     parallel = random.choice([True, False])
     if parallel:
@@ -542,6 +558,7 @@ def _gsim_f_how_many_solutions_lines():
 # INTERMEDIATE (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='gsim_equations_from_graph')
 def _gsim_i_equations_from_graph():
     ix, iy = random.randint(2, 5), random.randint(4, 9)
     m1, c1, m2, c2 = _lines_at_point(ix, iy)
@@ -571,6 +588,7 @@ def _gsim_i_equations_from_graph():
     return q, s, "Compare gradients and where each line crosses the y-axis.", 3, opts, correct_letter
 
 
+@verifies('alg', task='gsim_point', which='marked')
 def _gsim_i_parabola_read_one_point():
     r1, r2, a, b = _parabola_line_roots()
     # Prefer marking the left root so the diagram stays readable.
@@ -587,6 +605,7 @@ def _gsim_i_parabola_read_one_point():
     return q, s, "Each crossing of curve and line is one solution pair.", 3, _gsim_pair_answer(r1, y1)
 
 
+@verifies('alg', task='gsim_count')
 def _gsim_i_parabola_count_intersections():
     r1, r2, a, b = _parabola_line_roots()
     svg = _svg_parabola_line(r1, r2, a, b, mark="none")
@@ -598,6 +617,7 @@ def _gsim_i_parabola_count_intersections():
     return q, s, "Count intersection points on the diagram.", 2, 2
 
 
+@verifies('alg', task='keyed_text', text='there are no solutions (the lines are parallel)', drawn='parallel')
 def _gsim_i_no_solution_parallel():
     m = random.randint(1, 3)
     c1, c2 = random.randint(0, 3), random.randint(5, 9)
@@ -625,6 +645,7 @@ def _gsim_i_no_solution_parallel():
     return q, s, "No intersection means no (x, y) works in both equations.", 2, opts, correct_letter
 
 
+@verifies('alg', task='gsim_point')
 def _gsim_i_negative_gradient():
     """One positive and one negative gradient meeting at an integer point."""
     ix = random.randint(2, 5)
@@ -647,6 +668,7 @@ def _gsim_i_negative_gradient():
 # DIFFICULT (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='gsim_both_points')
 def _gsim_d_both_parabola_points():
     r1, r2, a, b = _parabola_line_roots()
     y1, y2 = r1 * r1, r2 * r2
@@ -659,6 +681,7 @@ def _gsim_d_both_parabola_points():
     return q, s, "Both crossings are solutions — list them clearly.", 4, _gsim_fields_answer([r1, y1, r2, y2], ["x (1st)", "y (1st)", "x (2nd)", "y (2nd)"])
 
 
+@verifies('alg', task='gsim_count')
 def _gsim_d_tangent_one_solution():
     """Line tangent to y=x² at x=k → one repeated root."""
     k = random.randint(2, 5)
@@ -673,12 +696,14 @@ def _gsim_d_tangent_one_solution():
     return q, s, "Touching = one solution; crossing twice = two.", 3, 1
 
 
+@verifies('alg', task='gsim_count')
 def _gsim_d_line_misses_parabola():
     """y = x² and a line with no real intersections."""
     # Line y = mx + c below the parabola for integer m, so discriminant < 0.
     m = random.randint(1, 3)
     c = -random.randint(4, 8)
     # x² - mx - c = 0 → disc = m² + 4c; with c <= -4 and m <= 3, disc < 0.
+    record('gsim_drawn', kind='parabola', a=m, b=c, marks=[])
     pts = _parabola_pts(-2, 4) + _line_pts(m, c, -2, 4)
     bounds = _bounds(pts, 1)
     svg = _svg_grid(bounds)
@@ -696,6 +721,7 @@ def _gsim_d_line_misses_parabola():
     return q, s, "No intersection on the graph means no real simultaneous solutions.", 3, 0
 
 
+@verifies('alg', task='gsim_context')
 def _gsim_d_context_graph():
     """Real-world cost comparison: two companies, break-even number of items."""
     ix = random.randint(3, 6)
@@ -774,6 +800,7 @@ def _gsim_d_context_graph():
     return q, s, hint, 3, ix
 
 
+@verifies('alg', task='gsim_x_marked')
 def _gsim_i_verify_algebra_from_graph():
     r1, r2, a, b = _parabola_line_roots()
     if r1 > r2:
@@ -792,6 +819,7 @@ def _gsim_i_verify_algebra_from_graph():
 # MCQ (8 — randomised, often with SVG)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='gsim_point')
 def _gsim_mcq_read_coords():
     ix = random.randint(1, 5)
     iy = random.randint(2, 8)
@@ -811,6 +839,7 @@ def _gsim_mcq_read_coords():
     return q, sol, "Read the intersection coordinates.", 2, opts, correct_letter
 
 
+@verifies('alg', task='gsim_count')
 def _gsim_mcq_parallel_count():
     parallel = random.choice([True, False])
     if parallel:
@@ -834,6 +863,7 @@ def _gsim_mcq_parallel_count():
     return q, sol, "Count intersections on the graph.", 2, opts, correct_letter
 
 
+@verifies('alg', task='gsim_count')
 def _gsim_mcq_parabola_intersections():
     r1, r2, a, b = _parabola_line_roots()
     svg = _svg_parabola_line(r1, r2, a, b, mark="none")
@@ -849,6 +879,7 @@ def _gsim_mcq_parabola_intersections():
     return q, sol, "Count where the line meets the parabola.", 2, opts, correct_letter
 
 
+@verifies('alg', task='gsim_point', which='marked')
 def _gsim_mcq_parabola_point():
     r1, r2, a, b = _parabola_line_roots()
     y1 = r1 * r1
@@ -857,12 +888,13 @@ def _gsim_mcq_parabola_point():
         f"({r2}, {y1})",
         f"({r1}, {r2})",
         f"({r1 + r2}, {(r1 + r2) ** 2})",
-        f"({r2}, {r2 * r2})",
         f"({r1}, {y1 + 1})",
+        f"({r2}, {r2 * r2 + 1})",
     ]
+    other = f"({r2}, {r2 * r2})"            # the second intersection is also a solution, so never a distractor
     wrong = []
     for cand in candidates:
-        if cand != correct and cand not in wrong:
+        if cand != correct and cand != other and cand not in wrong:
             wrong.append(cand)
         if len(wrong) == 3:
             break
@@ -880,6 +912,7 @@ def _gsim_mcq_parabola_point():
     return q, sol, "A solution lies on both the curve and the line.", 2, opts, correct_letter
 
 
+@verifies('alg', task='keyed_text', text='the solution of both equations')
 def _gsim_mcq_solution_meaning():
     correct = "The solution of both equations"
     wrong = [
@@ -900,6 +933,7 @@ def _gsim_mcq_solution_meaning():
     return q, sol, "The intersection satisfies both lines at once.", 1, opts, correct_letter
 
 
+@verifies('alg', task='intersect_lines_text')
 def _gsim_mcq_find_intersection():
     ix = random.randint(1, 4)
     iy = random.randint(2, 7)
@@ -921,6 +955,7 @@ def _gsim_mcq_find_intersection():
     return q, sol, "Set the two right-hand sides equal, then solve for x.", 3, opts, correct_letter
 
 
+@verifies('alg', task='count_lines_text')
 def _gsim_mcq_parallel_zero():
     m = random.randint(1, 3)
     c1 = random.randint(1, 4)
@@ -940,6 +975,7 @@ def _gsim_mcq_parallel_zero():
     return q, sol, "Equal gradients mean the lines are parallel.", 2, opts, correct_letter
 
 
+@verifies('alg', task='keyed_text', text='1')
 def _gsim_mcq_tangent_count():
     correct = "1"
     wrong = ["0", "2", "Infinitely many"]

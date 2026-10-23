@@ -7,6 +7,7 @@ Inverse/multipart variants stay as 4-tuples; inverse linear and composite-rule a
 import random
 from fractions import Fraction
 from generators.shared.utils import make_problem, quadratic_roots_format_hint, quadratic_roots_ui_labels
+from generators.shared.verify_hook import verifies
 from generators.shared.variant_utils import (
     select_tier_variants,
     mcq_variants_from_pool,
@@ -217,6 +218,7 @@ def _fn_problem_from_output(out, difficulty):
 # FOUNDATIONAL (7)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='fn_eval')
 def _fn_f_evaluate_linear():
     m = random.randint(2, 7)
     c = random.randint(-8, 12)
@@ -234,6 +236,7 @@ def _fn_f_evaluate_linear():
     return q, s, "Replace every x in the rule with the given number.", 2, ans
 
 
+@verifies('alg', task='fn_eval')
 def _fn_f_evaluate_square():
     b = random.randint(-4, 4)
     c = random.randint(-5, 10)
@@ -260,6 +263,7 @@ def _fn_f_evaluate_square():
     return q, s, "Substitute carefully with negative values — use brackets.", 2, ans
 
 
+@verifies('alg', task='fn_machine')
 def _fn_f_input_output():
     m = random.randint(2, 5)
     c = random.randint(1, 9)
@@ -278,6 +282,7 @@ def _fn_f_input_output():
     return q, s, "Apply each step in order, or use f(x) notation.", 2, y
 
 
+@verifies('alg', task='fn_machine')
 def _fn_f_machine_add_then_multiply():
     """Function machine: add first, then multiply (order matters)."""
     c = random.randint(1, 8)
@@ -300,6 +305,7 @@ def _fn_f_machine_add_then_multiply():
     return q, s, hint, 2, y
 
 
+@verifies('alg', task='fn_machine')
 def _fn_f_machine_find_input():
     """Function machine: output given — work backwards to find the input."""
     m = random.randint(2, 5)
@@ -323,6 +329,7 @@ def _fn_f_machine_find_input():
     return q, s, hint, 3, x
 
 
+@verifies('alg', task='fn_solve')
 def _fn_f_find_input_linear():
     m = random.randint(2, 6)
     c = random.randint(1, 10)
@@ -339,6 +346,7 @@ def _fn_f_find_input_linear():
     return q, s, "Set f(x) equal to the target value and solve like a linear equation.", 3, _fn_linear_answer(x, 'x')
 
 
+@verifies('alg', task='fn_eval')
 def _fn_f_meaning_notation():
     m = random.randint(2, 4)
     c = random.randint(1, 6)
@@ -362,6 +370,7 @@ def _fn_f_meaning_notation():
 # INTERMEDIATE (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='fn_eval')
 def _fn_i_composite_linear():
     a = random.randint(2, 4)
     b = random.randint(1, 5)
@@ -382,6 +391,7 @@ def _fn_i_composite_linear():
     return q, s, "Work inside out: find g(x) first, then apply f.", 3, ans
 
 
+@verifies('alg', task='fn_eval')
 def _fn_i_sum_two_values():
     m = random.randint(2, 5)
     c = random.randint(-4, 8)
@@ -398,6 +408,7 @@ def _fn_i_sum_two_values():
     return q, s, "Evaluate each output separately, then add.", 3, s_val
 
 
+@verifies('alg', task='fn_eval')
 def _fn_i_quadratic_eval():
     r1 = random.randint(1, 4)
     r2 = random.randint(1, 4)
@@ -423,6 +434,7 @@ def _fn_i_quadratic_eval():
     return q, s, "Substitute into the quadratic expression.", 3, ans
 
 
+@verifies('alg', task='fn_inverse')
 def _fn_i_inverse_linear():
     m = random.randint(2, 6)
     c = random.randint(1, 12)
@@ -441,6 +453,7 @@ def _fn_i_inverse_linear():
     )
 
 
+@verifies('alg', task='fn_eval')
 def _fn_i_write_composite_rule():
     a = random.randint(2, 3)
     c = random.randint(2, 4)
@@ -464,6 +477,7 @@ def _fn_i_write_composite_rule():
 # DIFFICULT (5)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='fn_eval')
 def _fn_d_composite_quadratic():
     """f(x) = x², g(x) = x + k, find f(g(x)) and evaluate at a point."""
     k = random.randint(1, 5)
@@ -482,6 +496,7 @@ def _fn_d_composite_quadratic():
     return q, s, "Composite: apply g, then f.", 4, ans
 
 
+@verifies('alg', task='fn_solve', many=True)
 def _fn_d_solve_f_equals():
     r1 = random.randint(2, 6)
     r2 = random.randint(2, 6)
@@ -500,6 +515,7 @@ def _fn_d_solve_f_equals():
     return q, s, "f(x) = 0 is a quadratic equation — factorise or use the formula.", 4, _fn_quadratic_roots_answer(lo, hi)
 
 
+@verifies('alg', task='fn_inverse_eval')
 def _fn_d_inverse_then_eval():
     m = random.randint(2, 5)
     c = random.randint(2, 9)
@@ -521,6 +537,7 @@ def _fn_d_inverse_then_eval():
     return q, s, "Inverse maps output back to input.", 4, x_back
 
 
+@verifies('alg', task='fn_eval')
 def _fn_d_ff_linear():
     a = random.randint(2, 4)
     b = random.randint(1, 5)
@@ -539,6 +556,7 @@ def _fn_d_ff_linear():
     return q, s, "f(f(x)) means substitute f(x) into f again.", 4, ans
 
 
+@verifies('alg', task='fn_excluded')
 def _fn_d_domain_valid():
     q = (
         r"\(f(x) = \dfrac{1}{x}\). Which value of \(x\) "
@@ -548,6 +566,7 @@ def _fn_d_domain_valid():
     return q, s, "The input must not make the denominator zero.", 2, 0
 
 
+@verifies('alg', task='fn_multipart_comp')
 def _fn_d_multipart_composite_inverse():
     a = random.randint(2, 5)
     b = random.randint(1, 8)
@@ -587,6 +606,7 @@ def _fn_d_multipart_composite_inverse():
     )
 
 
+@verifies('alg', task='fn_multipart_quadratic')
 def _fn_d_multipart_quadratic_graph():
     h = random.randint(-4, 4)
     while h == 0:
@@ -622,12 +642,13 @@ def _fn_d_multipart_quadratic_graph():
     )
 
 
+@verifies('alg', task='fn_multipart_domain')
 def _fn_d_multipart_domain_range():
     excluded = random.choice([-4, -3, -2, 2, 3, 4])
     x_val = random.choice([n for n in range(-5, 6) if n != excluded])
     q_sub = x_val - excluded
     frac = Fraction(1, q_sub)
-    frac_raw = f'{frac.numerator}/{frac.denominator}'
+    frac_raw = str(frac.numerator) if frac.denominator == 1 else f'{frac.numerator}/{frac.denominator}'
     correct_mcq = 'Division by zero is undefined'
     mcq_pool = [
         'The numerator would be zero',
@@ -672,6 +693,7 @@ def _fn_d_multipart_domain_range():
 # MCQ (8 — randomised)
 # ══════════════════════════════════════════════════════════════════════════════
 
+@verifies('alg', task='fn_eval')
 def _fn_mcq_evaluate():
     m = random.randint(2, 7)
     c = random.randint(-6, 10)
@@ -688,6 +710,7 @@ def _fn_mcq_evaluate():
     return q, sol, "Substitute x into the rule.", 2, opts, correct_letter
 
 
+@verifies('alg', task='fn_eval')
 def _fn_mcq_composite():
     a, b, c, d = 2, 1, 3, 4
     x = random.randint(1, 4)
@@ -704,6 +727,7 @@ def _fn_mcq_composite():
     return q, sol, "Calculate g(x) first.", 2, opts, correct_letter
 
 
+@verifies('alg', task='fn_inverse')
 def _fn_mcq_inverse():
     m = random.randint(2, 5)
     c = random.randint(1, 8)
@@ -723,6 +747,7 @@ def _fn_mcq_inverse():
     return q, sol, "Solve y = mx + c for x.", 3, opts, correct_letter
 
 
+@verifies('alg', task='fn_eval')
 def _fn_mcq_fg_expression():
     a = random.randint(2, 4)
     k = random.randint(2, 6)
@@ -748,6 +773,7 @@ def _fn_mcq_fg_expression():
     return q, sol, "Replace x in f with g(x).", 2, opts, correct_letter
 
 
+@verifies('alg', task='fn_eval')
 def _fn_mcq_evaluate_quadratic():
     b = random.randint(-4, 4)
     c = random.randint(-6, 6)
@@ -766,6 +792,7 @@ def _fn_mcq_evaluate_quadratic():
     return q, sol, "Substitute the value, squaring first.", 2, opts, correct_letter
 
 
+@verifies('alg', task='fn_eval')
 def _fn_mcq_gf_composite():
     a, b, c, d = 2, 1, 3, 4
     x = random.randint(1, 4)
@@ -787,6 +814,7 @@ def _fn_mcq_gf_composite():
     return q, sol, "Work out f(x) first, then apply g.", 2, opts, correct_letter
 
 
+@verifies('alg', task='fn_solve')
 def _fn_mcq_solve_linear():
     m = random.randint(2, 5)
     c = random.randint(-5, 5)
@@ -807,6 +835,7 @@ def _fn_mcq_solve_linear():
     return q, sol, "Set the rule equal to the value and solve for x.", 3, opts, correct_letter
 
 
+@verifies('alg', task='fn_notation_meaning')
 def _fn_mcq_notation_meaning():
     n = random.randint(2, 6)
     correct = f"The output of f when the input is {n}"
