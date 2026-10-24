@@ -1160,6 +1160,7 @@ def _cl_d1_locus_proof():
          "In triangles PAP' and PBP': PP' = PP' (common), PA = PB (given), so by RHS △PAP' ≅ △PBP', giving AP' = BP'. "
          "So P' = M, meaning P lies on the perpendicular through M — the <strong>perpendicular bisector of AB</strong>. ✓")
     hint = "Prove both directions: (1) on perp bisector implies equidistant, (2) equidistant implies on perp bisector."
+    record('proof_model', proof='locus_equidistant')
     return q, s, hint, 6, _cl_steps_answer(
         (
             "Let M be the midpoint of AB.",

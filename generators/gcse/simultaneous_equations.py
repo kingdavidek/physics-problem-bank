@@ -670,7 +670,7 @@ def _sim_d_exam_multipart():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# MCQ (10)
+# MCQ (12)
 # ══════════════════════════════════════════════════════════════════════════════
 
 _SIM_MCQ_BANK = [
@@ -800,6 +800,31 @@ _SIM_MCQ_BANK = [
         "marks": 2,
         "sol": r"The x-terms match (4x), so subtract: \(4y = 16\) → \(y = 4\). Answer: <strong>A</strong>",
         "hint": "Subtract when the x-terms are identical.",
+    },
+    {
+        "difficulty": "intermediate",
+        "q": r"Solve simultaneously: \(3x + 2y = 16\) and \(x + y = 6\). What is \(x\)?",
+        "opts": ["A  x = 2", "B  x = 4", "C  x = 6", "D  x = 10"],
+        "ans": "B",
+        "marks": 2,
+        "sol": (
+            r"<strong>Step 1</strong>: multiply (2) by 2: \(2x + 2y = 12\).<br>"
+            r"<strong>Step 2</strong>: subtract from (1): \(x = 4\).<br>"
+            r"Answer: <strong>B</strong>"
+        ),
+        "hint": "Make the y-terms match, then subtract.",
+    },
+    {
+        "difficulty": "intermediate",
+        "q": r"At a cinema, 2 adult tickets and 1 child ticket cost £14. 1 adult ticket and 1 child ticket cost £9. How much is one adult ticket?",
+        "opts": ["A  £4", "B  £5", "C  £7", "D  £9"],
+        "ans": "B",
+        "marks": 2,
+        "sol": (
+            r"Let \(a\) be the adult price and \(c\) the child price: \(2a + c = 14\) and \(a + c = 9\).<br>"
+            r"Subtract: \(a = 5\). Answer: <strong>B</strong>"
+        ),
+        "hint": "Write one equation for each purchase, then subtract to remove the child price.",
     },
 ]
 

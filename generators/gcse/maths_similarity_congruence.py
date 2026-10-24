@@ -781,6 +781,7 @@ def _sc_i9_proof_aa_parallel():
         "Angle ADE = angle BAC because DE and BC are alternate interior angles.",
     )
     # "Angle A is common" does not depend on the parallel lines, so it can come anywhere before the conclusion.
+    record('proof_model', proof='aa_parallel')
     return q, s, "Identify two pairs of equal angles: one from parallel lines, one shared.", 4, _sc_proof_steps_answer(
         steps,
         distractors,
@@ -941,6 +942,7 @@ def _sc_d1_midpoint_theorem_proof():
         "Because DE is drawn inside the triangle, DE must equal BC.",
         "Angle ADE = angle ACB because DE is perpendicular to BC.",
     )
+    record('proof_model', proof='midpoint')
     return q, s, "Show AD/AB = AE/AC = 1/2 and angle A is common → SAS similarity.", 5, _sc_proof_steps_answer(
         steps,
         distractors,
@@ -1118,6 +1120,7 @@ def _sc_d7_congruence_proof():
             "The diagonals bisect each other, so triangle ABC ≅ triangle CDA by SAS.",
             "AD = DC, so triangle ABC ≅ triangle CDA by RHS.",
         )
+    record('proof_model', proof='congruence_isosceles' if choice == 1 else 'congruence_parallelogram')
     return q, s, hint, 4, _sc_proof_steps_answer(
         steps,
         distractors,

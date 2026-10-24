@@ -1487,6 +1487,19 @@ def test_check_algebraic_fraction_surd():
     assert check_algebraic_fraction('3|5|7', '3√5|14')['correct'] is False
 
 
+def test_check_algebraic_fraction_surd_bracketed_fraction_coefficient():
+    """(1/3)√6 is the same answer as √6/3 (a rationalised surd written with a fraction in front)."""
+    from generators.shared.answer_checkers import check_algebraic_fraction
+
+    for user in ('(1/3)√6', '(1/3)(√6)', '(2/6)√6', '√6/3', '1√6|3'):
+        assert check_algebraic_fraction('1|6|3', user)['correct'] is True, user
+    for user in ('(2/3)√6', '(1/3)√8', '(1/3)6', '(1/0)√6', '(0/3)√6', '1/3√6', '(1/3)√6)'):
+        assert check_algebraic_fraction('1|6|3', user)['correct'] is False, user
+    assert check_algebraic_fraction('2|3|5', '(2/5)√3')['correct'] is True
+    assert check_algebraic_fraction('2|3|5', '(2/5)√3', form='simplest_surd')['correct'] is True
+    assert check_algebraic_fraction('2|3|5', '(4/10)√3', form='simplest_surd')['correct'] is False
+
+
 def test_surds_rationalise_simple_check_api():
     import generators.gcse.maths as m
 
@@ -5070,6 +5083,55 @@ def test_check_algebraic_power_and_product_flexibility():
     assert check_algebraic(raw_mass, '√(2E)/√(10)')['correct'] is True
     assert check_algebraic(raw_mass, 'sqrt(2E)/sqrt(10)')['correct'] is True
     assert check_algebraic(raw_mass, '√2e/√5')['correct'] is False
+
+
+def test_check_algebraic_letters_in_any_order():
+    """Letters written side by side are a product, so 2ba is 2ab; a bare name such as AB keeps its order."""
+    from generators.shared.answer_checkers import check_algebraic
+
+    for raw, user in (('2ab', '2ba'), ('3xy+2', '3yx+2'), ('2abc', '2bac'), ('2abc', '2cba'),
+                      ('2a^2b', '2ba^2'), ('xyz+xz', 'x(y+1)z'), ('ab+b', 'b(a+1)'), ('ab+ac', 'ca+ba'),
+                      ('2b^2', '2bb'), ('2xy', '2 y x'), ('πr²', 'pir^2'), ('ab√2', 'sqrt(2)ba')):
+        assert check_algebraic(raw, user)['correct'] is True, (raw, user)
+    for raw, user in (('2ab', '3ba'), ('2ab', 'ba'), ('3xy+2', '3yx+3'), ('2abc', '2bd'), ('2ab', '2b'),
+                      ('xy', 'yx'), ('AB', 'BA'), ('bc', 'cb'), ('ab', 'ba')):
+        assert check_algebraic(raw, user)['correct'] is False, (raw, user)
+    assert check_algebraic('ab', 'ab')['correct'] is True
+
+
+def test_check_algebraic_letters_in_any_order_keeps_forms_and_names():
+    """Reordered letters still meet the expand and factorise form checks, and capital segment names, function
+    names and bare names are never reordered (Phase 4 review)."""
+    from generators.shared.answer_checkers import check_algebraic
+
+    # The form check reads the pupil's structure with the same letter reading as the value check.
+    assert check_algebraic('6ab+3a', '3(2ab+a)', form='expanded')['correct'] is False
+    assert check_algebraic('6ab+3a', '3(2ba+a)', form='expanded')['correct'] is False
+    assert check_algebraic('6ab+3a', '6ba+3a', form='expanded')['correct'] is True
+    assert check_algebraic('5ab', '2ab+3ba', form='expanded')['correct'] is False
+    assert check_algebraic('5x(x-2y)', '5(x^2-2xy)', form='factorised')['correct'] is False
+    assert check_algebraic('5x(x-2y)', '5x(-2y+x)', form='factorised')['correct'] is True
+    assert check_algebraic('3ab(a+b)', '3ba(b+a)', form='factorised')['correct'] is True
+    assert check_algebraic('3ab(a+b)', 'ab(3a+3b)', form='factorised')['correct'] is False
+    # AB and BA are different vectors; sin(2x) is not 2sin(x).
+    for raw, user in (('AB+BC', 'BA+BC'), ('2AB', '2BA'), ('sin(2x)', '2sin(x)'), ('cos(2x)', '2cos(x)')):
+        assert check_algebraic(raw, user)['correct'] is False, (raw, user)
+    for raw, user in (('2AB', '2AB'), ('sin(2x)', 'sin(2x)'), ('u=v-at', 'u=v-ta'), ('u=v-at', 'v-ta')):
+        assert check_algebraic(raw, user)['correct'] is True, (raw, user)
+
+
+def test_check_algebraic_letters_in_any_order_keeps_the_caps():
+    """Splitting letter runs must not open a way round the SymPy size caps or make a long answer slow."""
+    import time
+
+    from generators.shared.answer_checkers import MAX_SYMPY_EXPR_LEN, check_algebraic
+
+    long_run = 'abcdefghijklmnopqrstuvwxyz' * 3
+    start = time.time()
+    for user in (long_run, 'a' * (MAX_SYMPY_EXPR_LEN + 5), '2' + long_run, '(' + long_run + '+1)^9^9', 'ab' * 500,
+                 ('xy' * 30) + '^99999', '(' * 400 + 'ab' + ')' * 400):
+        assert check_algebraic('2ab', user)['correct'] is False, user[:30]
+    assert time.time() - start < 5, 'long letter runs are slow to refuse'
 
 
 def test_check_linear_inequality_natural_text():
@@ -10431,6 +10493,7 @@ def main():
     test_surds_expand_simple_uses_number_checker()
     test_surds_algebraic_fraction_variants_are_graded()
     test_check_algebraic_fraction_surd()
+    test_check_algebraic_fraction_surd_bracketed_fraction_coefficient()
     test_check_algebraic_fraction_binomial()
     test_check_algebraic_fraction_expanded_binomial()
     test_check_algebraic_fraction_empty_denominator_defaults_to_one()
@@ -10602,6 +10665,9 @@ def main():
     test_check_formula_fraction()
     test_check_algebraic_kinetic_formula()
     test_check_algebraic_power_and_product_flexibility()
+    test_check_algebraic_letters_in_any_order()
+    test_check_algebraic_letters_in_any_order_keeps_the_caps()
+    test_check_algebraic_letters_in_any_order_keeps_forms_and_names()
     test_check_coordinate_pairs()
     test_equations_simple_inequality_check_api()
     test_equations_number_line_check_api()

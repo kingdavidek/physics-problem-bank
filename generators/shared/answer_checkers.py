@@ -908,7 +908,24 @@ def _algebraic_expand_vector_labels(s: str, correct_raw) -> str:
     return s
 
 
-def _algebraic_prepare_for_sympy(value, *, context_raw=None) -> str:
+def _split_letter_runs(s: str) -> str:
+    """Read runs of letters as products of single letters (2ba is 2*b*a), leaving sqrt and pi whole.
+
+    Only the single-letter names SymPy is allowed to see remain, so the symbol-count and length caps still apply.
+    """
+    if len(s) > MAX_SYMPY_EXPR_LEN:
+        return s
+    pieces = re.split(r'(sqrt|pi)', s)
+    for i, piece in enumerate(pieces):
+        if i % 2 == 0:
+            pieces[i] = re.sub(r'[a-z]{2,}', lambda m: '*'.join(m.group()), piece)
+    s = ''.join(pieces)
+    s = re.sub(r'([a-z])(?=sqrt|pi)', r'\1*', s)
+    s = re.sub(r'(?<=pi)(?=[a-z])', '*', s)
+    return re.sub(r'(?<![a-z])([a-z])\(', r'\1*(', s)
+
+
+def _algebraic_prepare_for_sympy(value, *, context_raw=None, split_letters=False) -> str:
     """Convert a student/correct algebraic string into something SymPy can parse."""
     s = str(value or '').strip().lower()
     s = s.replace('\u221a', '√').replace('−', '-').replace('\u2212', '-')
@@ -940,15 +957,38 @@ def _algebraic_prepare_for_sympy(value, *, context_raw=None) -> str:
     s = re.sub(r'(?<![a-z])([a-z])\(', r'\1*(', s)     # x(x+1) is x*(x+1); sqrt( and pi are untouched
     if context_raw is not None:
         s = _algebraic_expand_vector_labels(s, context_raw)
+    if split_letters:
+        s = _split_letter_runs(s)
     return s
+
+
+_FUNCTION_NAMES_RE = re.compile(r'sin|cos|tan|log|ln|exp|abs', re.IGNORECASE)
+
+
+def _algebraic_split_letters_ok(correct_raw, user_raw) -> bool:
+    """Whether letters written side by side may be read as a product in any order (2ba is 2ab).
+
+    Not when the key names a segment or vector in capitals (AB, 2AB, AB + BC: AB and BA are different vectors),
+    not when either whole answer is a bare name such as AB or BC, and not when either side names a function
+    (sin(2x) must not become s*i*n*2*x, which would equal 2sin(x)).
+    """
+    if re.search(r'[A-Z]{2,}', str(correct_raw or '')):
+        return False
+    for x in (correct_raw, user_raw):
+        if _FUNCTION_NAMES_RE.search(str(x or '')):
+            return False
+        if re.fullmatch(r'[a-z]{2,}', _normalize_algebraic_string(x)) is not None:
+            return False
+    return True
 
 
 def _algebraic_sympy_equivalent(correct_raw, user_raw) -> bool:
     """Fallback: accept equivalent forms such as 0.5*3*t**2 and 3*t**2/2."""
     try:
-        correct_expr = _safe_sympify(_algebraic_prepare_for_sympy(correct_raw))
+        split = _algebraic_split_letters_ok(correct_raw, user_raw)
+        correct_expr = _safe_sympify(_algebraic_prepare_for_sympy(correct_raw, split_letters=split))
         user_expr = _safe_sympify(
-            _algebraic_prepare_for_sympy(user_raw, context_raw=correct_raw)
+            _algebraic_prepare_for_sympy(user_raw, context_raw=correct_raw, split_letters=split)
         )
         if correct_expr is None or user_expr is None:
             return False
@@ -1280,6 +1320,11 @@ def _split_algebraic_fraction_user(value) -> tuple[str, int] | None:
             return None
         return num_text, int(denom)
     s = _normalize_algebraic_string(raw)
+    # A bracketed fraction as the coefficient: (1/3)√6 is √6 over 3 (digits only, so nothing else changes meaning).
+    bracketed = re.fullmatch(r'\((\d{1,9})/(\d{1,9})\)(√.+)', s)
+    if bracketed:
+        denom = int(bracketed.group(2))
+        return (f'{bracketed.group(1)}{bracketed.group(3)}', denom) if denom > 0 else None
     if '/' not in s:
         return raw.strip(), 1
     # After normalisation, slash forms may look like (3√5)/(7).
@@ -1775,7 +1820,10 @@ def _wrong_form_result(normalized_user, normalized_correct, kind):
 
 def _algebraic_user_tree(user_raw, correct_raw):
     """The pupil's expression as an unevaluated SymPy tree, so its written structure survives."""
-    prepared = _algebraic_prepare_for_sympy(user_raw, context_raw=correct_raw)
+    # The same letter reading as the value check, so 3(2ab+a) is still seen as not expanded (it used to fail to
+    # parse here, and an unreadable structure is accepted once the value is right).
+    prepared = _algebraic_prepare_for_sympy(user_raw, context_raw=correct_raw,
+                                            split_letters=_algebraic_split_letters_ok(correct_raw, user_raw))
     # SymPy distributes a unary minus over a bracket even unevaluated; write -(x+1) as -1*(x+1) to keep it.
     prepared = re.sub(r'(?<![\w)])-\(', '-1*(', prepared)
     return _safe_sympify(prepared)

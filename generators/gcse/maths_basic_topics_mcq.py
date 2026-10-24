@@ -350,7 +350,7 @@ _FDP_MCQ_BANK = [
      "sol": "10/50=<strong>20%</strong>. Answer: B",
      "hint": "<strong>Key idea:</strong> change = 10, divide by the <em>original</em> £50: (10 ÷ 50) × 100 = 20%."},
     {"q": "0.2 recurring (0.2̄) as a fraction is:",
-     "opts": ["A  1/5", "B  2/9", "C  2/10", "D  1/9"],
+     "opts": ["A  1/5", "B  2/9", "C  22/100", "D  1/9"],
      "ans": "B", "marks": 3, "difficulty": "difficult",
      "sol": "<strong>2/9</strong>. Answer: B",
      "hint": (
@@ -888,7 +888,7 @@ _SURD_MCQ_BANK = [
      "sol": "√36=<strong>6</strong>. Answer: B",
      "hint": "√a×√b=√(ab)."},
     {"q": "(√5)² equals:",
-     "opts": ["A  5", "B  25", "C  √25", "D  10"],
+     "opts": ["A  5", "B  25", "C  √10", "D  10"],
      "ans": "A", "marks": 1, "difficulty": "intermediate",
      "sol": "<strong>5</strong>. Answer: A",
      "hint": "Square cancels root."},

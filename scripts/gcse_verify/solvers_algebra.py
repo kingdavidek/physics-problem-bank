@@ -1987,6 +1987,8 @@ def _property_holds(e, var, kind, n=None):
             return False
         if kind == 'prime' and not _is_prime(val):
             return False
+    if kind == 'either':            # both parities occur over the range
+        return len({int(e.subs(var, v)) % 2 for v in _RANGE}) == 2
     return True
 
 
@@ -2271,6 +2273,7 @@ _PROP_PHRASES = [
     (r'^always odd$', ('odd', None)),
     (r'^(?:it is )?always a multiple of (\d+)$', ('mult', 'num')),
     (r'^it is always prime$', ('prime', None)),
+    (r'^sometimes even and sometimes odd$', ('either', None)),
 ]
 
 
@@ -2313,6 +2316,104 @@ def t_ap_counter_mcq(ctx, **kw):
         val = int(e.subs(n, v))
         return int(m.group(3)) == val and not _is_prime(val)
     return judge_pred(ctx, pred, 'is a worked counterexample')
+
+
+@task('ap_consecutive_form')
+def t_ap_consecutive_form(ctx, **kw):
+    """Options are pairs 'a and b': exactly the keyed pair is always two consecutive odd (or even) numbers."""
+    m = re.search(r'consecutive\s+(odd|even)', ctx.low)
+    if m is None:
+        raise Cannot('the question does not say consecutive odd or even numbers')
+    kind = m.group(1)
+    n = sym('n')
+
+    def pred(text):
+        parts = [p for p in re.split(r'\s+and\s+', tex_to_text(text).lower()) if p.strip()]
+        if len(parts) != 2:
+            raise Cannot(f'expected two expressions in {text!r}')
+        first, second = read_val(parts[0]), read_val(parts[1])
+        if first is None or second is None:
+            raise Cannot(f'cannot read {text!r}')
+        return (sympy.expand(second - first) == 2
+                and _property_holds(first, n, kind) and _property_holds(second, n, kind))
+    return judge_pred(ctx, pred, f'always two consecutive {kind} numbers')
+
+
+@task('ap_mult_expr')
+def t_ap_mult_expr(ctx, **kw):
+    """Options are expressions: exactly the keyed one is a multiple of the stated number for every integer n."""
+    m = re.search(r'always a multiple of\s+(\d+)', ctx.low)
+    if m is None:
+        raise Cannot('the question does not name a multiple')
+    k, n = int(m.group(1)), sym('n')
+
+    def pred(text):
+        e = read_val(text)
+        if e is None:
+            raise Cannot(f'cannot read {text!r}')
+        return _property_holds(e, n, 'mult', k)
+    return judge_pred(ctx, pred, f'is always a multiple of {k}')
+
+
+@task('ap_counter_value')
+def t_ap_counter_value(ctx, **kw):
+    """Options are 'n = k': exactly the keyed value makes the stated expression not prime."""
+    if 'is prime' not in ctx.low or 'positive integer' not in ctx.low:
+        raise Cannot('no claim that an expression is prime for every positive integer')
+    stmt = next((s for s in ctx.segs if not re.fullmatch(r'[a-z]', s.strip())), None)
+    if stmt is None:
+        raise Cannot('no expression in the claim')
+    e, n = expr(stmt), sym('n')
+
+    def pred(text):
+        m = re.fullmatch(r'\s*n\s*=\s*(\d+)\s*', tex_to_text(text).lower())
+        if m is None:
+            raise Cannot(f'not a value of n: {text!r}')
+        return not _is_prime(int(e.subs(n, int(m.group(1)))))
+    return judge_pred(ctx, pred, 'makes the expression not prime')
+
+
+@task('ap_find_error')
+def t_ap_find_error(ctx, **kw):
+    """Lines of working are the maths segments in order: the first line that is not equal to the one before it."""
+    labels = [int(x) for x in re.findall(r'line (\d+):', ctx.low)]
+    if len(ctx.segs) < 3 or labels != list(range(1, len(ctx.segs) + 1)):
+        raise Cannot(f'the lines are not numbered 1 to {len(ctx.segs)}: {labels}')
+    lines = [expr(s.lstrip('=').strip()) for s in ctx.segs]
+    first = next((i + 1 for i in range(1, len(lines)) if sympy.expand(lines[i] - lines[i - 1]) != 0), None)
+
+    def pred(text):
+        t = tex_to_text(text).strip().lower()
+        m = re.fullmatch(r'line (\d+)', t)
+        if m:
+            return first == int(m.group(1))
+        if t == 'there is no mistake':
+            return first is None
+        raise Cannot(f'cannot read {text!r}')
+    return judge_pred(ctx, pred, 'names the first line that is not equal to the line before')
+
+
+@task('ap_square_parity')
+def t_ap_square_parity(ctx, **kw):
+    """'n^2 is even/odd': exactly the keyed statement about n holds for every whole number n with that square."""
+    m = re.search(r'\bis (even|odd)\b', ctx.low)
+    if m is None or not any(s.replace(' ', '') == 'n^2' for s in ctx.segs):
+        raise Cannot('the question does not say that n^2 is even or odd')
+    want = 0 if m.group(1) == 'even' else 1
+    ns = [v for v in _RANGE if (v * v) % 2 == want]
+
+    def pred(text):
+        t = tex_to_text(text).strip().lower()
+        m = re.fullmatch(r'n is (even|odd)', t)
+        if m:
+            return all(v % 2 == (0 if m.group(1) == 'even' else 1) for v in ns)
+        if t == 'n could be either odd or even':
+            return {v % 2 for v in ns} == {0, 1}
+        m = re.fullmatch(r'n is a multiple of (\d+)', t)
+        if m:
+            return all(v % int(m.group(1)) == 0 for v in ns)
+        raise Cannot(f'cannot read {text!r}')
+    return judge_pred(ctx, pred, 'is true of every n with that square')
 
 
 # ───────────────────────────── the "graphs" topic: plain-text questions with a drawn graph ─────────────────────────────

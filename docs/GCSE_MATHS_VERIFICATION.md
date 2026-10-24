@@ -1,7 +1,7 @@
 # GCSE Maths answer verification plan (step 2)
 
 **Goal (approved by David):** add an automatic test that re-solves generated questions, so wrong answers like the ones fixed in `fbd7685` cannot come back.
-**Status:** planned 2026-10-22; decisions confirmed (section 8). Each phase is one commit, made only when David explicitly asks.
+**Status:** planned 2026-10-22; decisions confirmed (section 8). Phases 1 to 4 are built (Phase 4: 2026-10-23, section 15); nothing is committed yet, and each phase is one commit, made only when David explicitly asks. Where an older section says static bank items are "pinned" (`register.STATIC_ITEMS`), section 15 supersedes it: 319 of 334 are now re-solved and 15 are listed in `register.STATIC_EXEMPT`.
 **Pipeline per phase:** implementer builds, an independent reviewer checks against this doc and the code, fixes, sync to David's laptop, hash parity check, full smoke suite green.
 
 ## 1. Where things stand (measured on `fbd7685`)
@@ -114,7 +114,7 @@ The test fails when a slot is neither verified nor exempt (for example a new var
 
 - `--deep` mode (200 seeds per slot plus a 40-seed quiz sweep, about 5 to 10 minutes), run manually; no scheduled CI job (decision 3).
 - Review `infeasible` and `static-bank` exemptions; target 95% practice and 90% MCQ fully verified.
-- **Done when:** a clean deep run and a reviewed, dated exemption list.
+- **Done when:** a clean deep run and a reviewed, dated exemption list. **Done 2026-10-23; see section 15.**
 
 ## 6. Policy when a check fails
 
@@ -480,3 +480,191 @@ An independent review of section 13 against David's three decisions and the code
 **Mutation tests** (each applied, run, then restored and confirmed by SHA-256): freeing a dependent pair in `_sc_i9` (ordering check and unit test fail); making `_cl_i11` strict again (ordering check fails); dropping `answer_step_prereqs` from the server-only keys, skipping it in `strip_problem_keys`, or returning the full stored copy on reveal (set-work and session tests fail); reading the spec from the request in `/api/v1/problems/check` (session test fails); dropping `answer_form` from the frozen copy (set-work test fails); removing the canonical-order guard (checker test fails); forcing the towers to always overlap (`overlap_outcomes` fails, 100 of 100 yes). All caught.
 
 **Left as they are.** The practice session is a signed cookie, so the stored problem (key, form and spec alike) can be decoded by the pupil's browser; this is how practice has always worked and is not new to the spec. Saved problems store the full generated problem and the account data export includes it, by design. The `_cl_d1` worked solution still has an em dash before "the perpendicular bisector of AB" in its last line; it is older copy, outside this change.
+
+## 15. Phase 4 build notes (2026-10-23)
+
+Deep mode, the lesson-quiz sweep and the exemption burn-down. Nothing committed; no static, JS or template file changed, so no `?v=` or `CACHE_VERSION` bump. Two bank items in `maths_basic_topics_mcq.py` and two answer-checker behaviours changed (below).
+
+### Coverage, before and after
+
+| Measure | Before (end of Phase 3) | After |
+|---|---|---|
+| Practice slots fully re-solved | 1,065 of 1,072 (99.3%) | 1,072 of 1,072 (100%) |
+| Practice exemptions | 7 (worded proofs) | 0 |
+| MCQ slots whose whole pool is re-solved ("strict") | 189 of 606 (31.2%) | 551 of 606 (90.9%) |
+| MCQ, mean share of each slot's pool that is re-solved | 38.7% | 96.7% |
+| Static bank items re-solved (not just hash-pinned) | 0 of 334 | 319 of 334 (95.5%) |
+| Static bank items exempt, with a reason | 334 pinned | 15 |
+
+"Fully verified" for MCQ is reported two ways because dispatch slots draw at random from a pool of bank items plus procedural questions. The strict figure (a slot counts only when every question it can serve is re-solved) meets the 90% target; the pool-share figure is the share of generated questions that are re-solved. Both are printed on every run (`scripts/gcse_verify/coverage.py`).
+
+By topic, MCQ strict slots / pool share / static items re-solved (every topic not listed is 21 of 21, 100%, with all its static items re-solved; the 12 direct-generator topics have no static bank):
+
+| Topic | Strict | Pool share | Static items re-solved |
+|---|---|---|---|
+| trigonometry | 0 of 21 | 57.1% | 8 of 15 |
+| constructions_loci | 7 of 21 | 70.5% | 10 of 15 |
+| simultaneous_equations | 12 of 18 | 93.3% | 9 of 10 |
+| pythagoras | 14 of 21 | 88.9% | 9 of 10 |
+| bidmas | 14 of 21 | 95.2% | 14 of 15 |
+
+Trigonometry is the weak spot: 7 of its 15 bank items are definitions, mnemonics or choices of rule, which have no number to recompute, and every one of its dispatch slots can serve one of them, so no trigonometry slot is strict. Earlier "before" figures count the Phase 3 position with the static items only pinned.
+
+### How the bank items are re-solved
+
+`scripts/gcse_verify/solvers_bank.py` (toolkit and the `bank` family) with the specs in `solvers_bank_number.py`, `solvers_bank_algebra.py` and `solvers_bank_geometry.py`. A spec is keyed by the item's digest (`mcq.item_digest`: plain question, sorted option texts, keyed text). It reads the numbers or the mathematics from the displayed question only (never the solution, hint or key), works out the answer itself, and returns an expected value or a test on the option text. The generic MCQ check in `engine.verify_problem` then needs exactly one option to be the recomputed answer, and for it to be the keyed one, and no two options to be equivalent. Editing a bank item changes its digest, so it fails until the spec is looked at. Negative control: each of the 319 re-solved items is tried with every wrong letter as the key (957 of 957 caught). All solver modules pass the independence check (stdlib, sympy and sibling solvers only; an exact `Fraction` BIDMAS evaluator in `solvers_bank.calc`).
+
+### The seven proofs
+
+All seven worded-proof practice slots are out of exemption (`register.EXEMPT` is empty). `scripts/gcse_verify/solvers_proofs.py` holds a model of each proof (`record('proof_model', proof=...)`, one line per generator, no change to output; `_sc_d7_congruence_proof` records which of its two proofs it drew). The model checks that each keyed step says what step k of that proof must say (patterns, with the numbers taken from the question: 80 and 40 degrees, the angle in the alternate segment, 70 and 110), that no distractor reads as a correct step, and that the dependency structure matches: the transitive step dependencies written in the model are compared with the problem's `answer_step_prereqs` (or a strict chain when it has none), so a loosened or over-tight order fails. It also tries each theorem on 25 deterministic pseudo-random coordinate sets (the AA similarity, the midpoint theorem, SSS in the isosceles and parallelogram figures, the angle at the centre, the alternate segment theorem, opposite angles of a cyclic quadrilateral, and the perpendicular bisector locus). Negative control (`proof_tampers` in the test): no order, a strict order where the proof allows two, two steps swapped, a distractor that says what a keyed step says, a changed number: 34 of 34 caught. The `ordering` check and `register.ORDER_FREE_PAIRS` are unchanged and still agree with the models.
+
+### Remaining exemptions (reviewed 2026-10-23)
+
+None among practice slots. The 15 static MCQ bank items below are kept pinned by digest because there is nothing to compute; every key and option was read by hand again on this date. Category `conceptual` is a definition, name or interpretation; `method` is a choice of rule or construction procedure.
+
+| Digest | Category | Item and reason |
+|---|---|---|
+| `d2ad3f201b3c` | conceptual | BIDMAS: what the letter I stands for. Vocabulary of the mnemonic. |
+| `bbd4b325472c` | conceptual | Definition of the hypotenuse. A naming convention. |
+| `74b0c6a3fb7c` | conceptual | What SOH CAH TOA is for. Vocabulary. |
+| `2383102f84e0` | method | Cosine rule for two sides and the included angle. A method judgement. |
+| `e747319c3334` | conceptual | Which ratio is outside the GCSE right-angled set (sec). Syllabus knowledge. |
+| `6b871d529a0a` | conceptual | Definition of the angle of elevation. A naming convention. |
+| `44b1476f6ef1` | method | Best first step in a 3D trigonometry problem. A method judgement. |
+| `f201e85aaa3b` | method | Rule for an angle from three sides (cosine rule rearranged). A method judgement. |
+| `e8537eb33269` | conceptual | Meaning of sin A greater than 1 in the sine rule (no such triangle). Interpretation. |
+| `0b8800279556` | conceptual | Plain-language description of elimination. A definition. |
+| `5d9cdf21e4ce` | method | Which tools construct a triangle from three sides. A method statement. |
+| `cfc695431cea` | conceptual | Locus equidistant from two intersecting lines. Described in words only. |
+| `aa47f1d3264c` | conceptual | Region closer to A and within 6 cm of B, in words. A region has no single value. |
+| `9ff174a302c5` | conceptual | Shape of the locus at a fixed distance from a segment (stadium), in words. |
+| `c0446fea7f9a` | method | Constructing 30 degrees (build 60 then bisect). A construction procedure. |
+
+The test checks the format of this table (category, reason of 20 or more characters), fails on a stale entry (a digest with a spec, or one that matches no item) and on an item that is neither re-solved nor listed. The reasons are in `register.STATIC_EXEMPT`.
+
+### Deep mode and the lesson-quiz sweep
+
+`--deep` is 200 seeds per practice slot (algebra included), 40 per direct MCQ slot, 100 per procedural MCQ function, and a quiz sweep of 40 seeds per topic. About 200 s on this machine with two runs side by side. No scheduled job (decision 3). The default run keeps 14 to 20 seeds and a two-seed quiz slice (64 quizzes, 630 questions, about 1.5 s of the run).
+
+A GCSE maths topic has no `lesson_bank`, so its ten-question quiz (`build_lesson_quiz`) draws MCQ problems from the same variant slots; what the quiz adds is the draw (3 foundational, 4 intermediate, 3 difficult, no repeated question text), the option shuffle and the grading. `scripts/gcse_verify/quiz.py` (`verify_quiz_items` in the plan) builds each seeded quiz through the real builder with a recording wrapper, so a question's records belong to the exact problem drawn, then checks: the shape; the key (a generated question is re-solved from its records; a bank question is re-solved by its digest spec after the quiz's own shuffle, so a key lost in the shuffle is caught; or it is one of the 15 reviewed exemptions); four distinct options lettered A to D with the key naming one of them; and `grade_lesson_quiz_problem` marking the keyed letter right and each other letter wrong. Negative control: a quiz with every key moved to another option is reported question by question (44 of 44 in the default run, 47 of 47 in the deep run at 123456).
+
+Results (deep, per seed offset below): 1,280 quizzes, 12,600 questions each, about 5,500 from generators and 6,700 bank questions re-solved, 380 to 400 reviewed exemptions, about 50,350 letters graded, no failure. The sweep found one shape limit that is a content gap, not a wrong answer, now recorded in `register.QUIZ_SHAPE` with the measured reason: `algebraic_proof` has only 5 distinct multiple-choice question texts across all three bands, so its quiz holds 5 questions, not 10 (3 foundational, 2 intermediate, no difficult); `vectors` and `pythagoras` have only 3 distinct foundational and 3 distinct intermediate questions, so the quiz is 3 / 3 / 4; `simultaneous_equations` has 3 intermediate, so it is 4 / 3 / 3. **For David:** these four topics need more multiple-choice questions in the short bands (the quiz builder is behaving as designed). The other 28 topics build ten questions in the 3 / 4 / 3 mix on every seed.
+
+### Deep runs
+
+| Seed offset | Practice questions | Result | Time |
+|---|---|---|---|
+| 0 | 214,400 | clean | 194 s |
+| 50000 | 214,400 | clean | 195 s |
+| 123456 | 214,400 | clean | 199 s |
+
+Each run also does about 19,300 checker round-trips, 5,034 drift generations and the quiz sweep above. Offsets 0 and 50000 ran side by side; 123456 ran with a drift dump alongside. No fix was needed for any deep-run failure: there were none. Default run (alone, `--seed 0`): 24 to 28 s (limit about 35 s).
+
+### Fixes in Phase 4
+
+1. `_FDP_MCQ_BANK`, "0.2 recurring as a fraction": option C was `2/10`, the same value as option A `1/5`. Now `22/100`. Found by the generic option check once the item was re-solved.
+2. `_SURD_MCQ_BANK`, "(sqrt 5) squared equals": option C was `sqrt 25`, which is 5, a second correct answer beside A. Now `sqrt 10`.
+3. `check_algebraic_fraction` (rationalised surd answers): `(1/3)sqrt6` is now read as sqrt 6 over 3. Only a bracketed fraction of whole numbers directly before a surd is read this way; `1/3sqrt6` stays refused (it could mean 1 over 3 sqrt 6), and zero and malformed forms are refused. With the simplest-surd form on, `(4/10)sqrt3` for 2sqrt3 over 5 gets the "equal but not simplest" message. Tests: `test_check_algebraic_fraction_surd_bracketed_fraction_coefficient`.
+4. `algebraic` checker: letters written side by side are a product in any order, so `2ba` is `2ab`, `3yx+2` is `3xy+2` and `ca+ba` is `ab+ac`. Runs of letters are split into single letters only for SymPy, after the existing length, symbol, exponent and node caps are applied to the result; a bare name on either side (`AB`, `BC`, `ba` against `ab`) is never reordered, so a vector name keeps its direction. Tests: `test_check_algebraic_letters_in_any_order` and `..._keeps_the_caps` (long letter runs, exponent towers, 1,000-character inputs, all refused in well under 5 s). Left for later, as agreed: identical-magnitude variants.
+5. Test-side: a lesson-quiz record map keyed by question text alone attached a rejected attempt's records to the question that was kept (a trigonometry exact-value question was checked against another angle); records are now keyed by question, options and key.
+
+### Drift
+
+Against `bb3f366` (a `git archive` copy): 3 runs of every one of the 1,678 slots (5,034 generations, all 32 topics, SVG ids normalised). Only 5 differ, all of them the two bank edits above (the `22/100` option twice, the `sqrt 10` option three times): every other generation is byte-identical, including the seven proof slots, which now call `record('proof_model', ...)`. The checker changes do not touch generators.
+
+### Checks run
+
+Verification smoke (default, alone): passes. Three deep runs: clean. `test_gcse_maths_correctness_smoke.py` and `test_answer_check_smoke.py`: pass. `ruff check .`: clean. Full suite: see the AI handoff line.
+
+### Phase 4 review notes (independent reviewer, 2026-10-23)
+
+Reviewed section 15 against the plan and the code (`solvers_bank*.py`, `solvers_proofs.py`, `quiz.py`, `coverage.py`, `register.py`, `mcq.py`, the test, the four generator diffs, `answer_checkers.py`, `lesson_quiz.py`). Nothing committed.
+
+**Confirmed.** Every bank spec is keyed by the item digest (plain question, sorted option texts, keyed text), so any edit to a question, an option or the key fails the test until a person looks at the spec; moving the key together with its option text is a shuffle and still verifies. Specs read only the displayed question and the option texts (never the solution, hint or key), and the independence check passes. The proof models compare each keyed step with the step the proof needs, with the numbers recomputed from the question, check that no distractor reads as a correct step, and compare the transitive dependencies with `answer_step_prereqs`; one limit worth stating plainly is that the step patterns are the generator's wording copied as patterns, so for wording they act as a reviewed pin, and only the numbers, the order, the dependencies and the geometry (random coordinates) are recomputed. The quiz sweep uses the real `build_lesson_quiz` (with the option shuffle in `make_problem`) and the real `grade_lesson_quiz_problem`. Drift against `bb3f366`, re-run by this review (3 runs of all 1,678 slots, 5,034 generations, SVG ids normalised): exactly 5 generations differ, all from the two bank edits (`22/100` twice, `√10` three times); the generator diffs are those two option texts and seven `record('proof_model', ...)` lines.
+
+**Spec sample.** All 318 distinct specs were read (319 items: the item "x + y = 7 and x - y = 3" sits in two banks and shares one spec). Beyond reading, a bypass harness changed each number in each re-solved question by one and re-registered the spec under the new digest, so the digest guard was out of the way and only the spec could catch the change. After the fixes below, 28 specs have no number in the question (definitions checked on a model: angle in a semicircle measured on a circle, tangent found as the direction that meets the circle once, Pythagoras formula tried on triples, and so on), 256 fail whenever any number in the question changes, 26 fail on some numbers, and 8 on none. The survivors were read one by one: labels ("3-figure", "u_6", "(2) from (1)"), prime factorisations written beside a number, angles in a diagram caption, a repeated "0.2" in "(0.2̄)", and changes too small to move a rounded or categorical answer (290° is still in the NW quadrant, 81 g in 120 cm³ still floats, √51 is still between 7 and 8, sides 6, 12, 14 are still not right-angled).
+
+**Found and fixed: specs that restated the answer or ignored the numbers asked about.**
+- Medium, transformations: `8e6eb7b34c18` (rotation of (a, b)) had (-b, a) written in and ignored "90° anticlockwise"; the five point-image items (`67e074311bc1`, `26ae5054fad2`, `f4faf6e386cd`, `a9368b1e8f04`, `ff6d24d02cbf`) each had their transformation written in by hand. A new `stem_map` reads the angle and direction, or the mirror line, from the question and builds the rotation or reflection matrix.
+- Medium, `5715064775f3` (make t the subject): hard-coded s = ½at² and ignored the formula shown; it now reads the formula and the given u.
+- Medium, `46b407f316cd`: read the HCF and LCM but not the products actually asked ("Does 7 × 70 = 14 × 35?"); now reads them (and keys "No" if they differ). `e7a10ff5f23b`: the divisor 6 was written in; now read.
+- Medium, circular truths: `4955f0684fe7` computed the "true" area with ½ab sin C itself (now from coordinates); `f3f3040bb606` wrote the bisector direction in as upright (now found as the points equally far from A and B); `2ce353347cfd` used (θ + 180) mod 360 as the truth (now the bearing of the reversed displacement); `6ae9a944a425` had constant counts for SSS, AAA and two angles (now built: cosine rule, the same angles at two sizes); `497512b19b51` had AAS as a constant and a trivial RHS test (now read from the given right angle, hypotenuse and leg); `496ad8a7cb8d` named the vector quantity by writing it as a pair (now: the quantity that changes when the journey is reversed).
+- Low, consistency: the silo's hemisphere radius was assumed equal to the cylinder's (now read); the map scale numerator, the bus start minutes, and the arithmetic and geometric terms shown after the first two are now checked.
+- Low, proof model `centre_angle` halved the angle with `//`, so an odd angle with a truncated half would have passed (generators use even angles only); now exact.
+
+**Found and fixed: the letter-order checker change (High).** The value check split letters but the form check did not, and a structure it cannot read is accepted once the value is right: `3(2ab+a)` was marked correct for an "expand" key `6ab+3a`, and `5(x^2-2xy)` as fully factorised for `5x(x-2y)` (before Phase 4 both were marked wrong by value, so this was a new way round the form rules). The form check now reads the pupil's answer with the same letter rule. Also, letter runs were split inside larger answers whatever they named: `BA+BC` was accepted for `AB+BC`, `2BA` for `2AB`, and `2sin(x)` for `sin(2x)`. No generator key has these today (a sweep of every level and subject, 4 seeds per slot: the only `algebraic` key with letters side by side is `u=v-at`, and `algebraic` and `algebraic_fraction` are produced only by GCSE maths), but the rule is now: no reordering when the key names something in capitals (`AB`), when either side names a function (sin, cos, tan, log, ln, exp, abs), or when either whole answer is a bare name. Test: `test_check_algebraic_letters_in_any_order_keeps_forms_and_names`. Bombs (26 letters x 3, `ab` x 500, `(abcdef)` x 30, long products of brackets, towers, `pi` and `sqrt` runs, 2,000-character inputs) through `algebraic`, `formula_fraction`, `algebraic_fraction`, `surd` and `linear`: slowest 0.005 s; the caps are applied after the split. `(1/3)√6` probes: `(1/3)√(6)`, `(1/3) √6`, `(3/9)√6` and `(1/3)sqrt(6)` read; `1/3√6`, `1/3 √6`, `(1/3)√6+1`, `(0/3)√6` and `(1/0)√6` refused. Not read (low, left): `(1/3)*√6`, `(1/3)sqrt6` and a negative bracketed coefficient.
+
+**Coverage, recomputed.** Independently of `coverage.py`, every MCQ dispatch slot was generated 120 times and each drawn question matched to its bank item: 551 of 606 slots strict (90.9%), with the same per-topic figures as section 15 (trigonometry 0 of 21, constructions_loci 7, bidmas 14, pythagoras 14, simultaneous_equations 12 of 18), and no drawn item outside the pool `coverage.py` assumes. The metric is honest (a slot counts only when every bank item it can serve has a spec, and an item with a spec that does not verify fails the test). The printed summary called the pool share (96.7%) "fully verified"; it now leads with the strict figure and prints the pool share beside it.
+
+**Exemptions.** All 15 read again; every key is right and none has a second correct option. Three loci items (`cfc695431cea`, `aa47f1d3264c`, `9ff174a302c5`) could be "re-solved" the way `852f2a72edd4` is, by a dictionary from option words to point sets, but that dictionary is itself a reading of the options, so they stay exempt.
+
+**Short quizzes.** Over 200 seeds each the builder never crashed or repeated a question: `algebraic_proof` always 5 questions (3 / 2 / 0), `vectors` and `pythagoras` 3 / 3 / 4, `simultaneous_equations` 4 / 3 / 3; the quiz pages use the length of the list, so a 5-question quiz plays and scores normally. **Content needed for David:** `algebraic_proof` has 5 multiple-choice stems shared by all three bands (always even, n(n+1), always odd, the n² + 1 counterexample, (n+1)² - n²); at least 5 more distinct ones are needed for ten questions, with at least 2 reachable in the intermediate band and 3 in the difficult band for the 3 / 4 / 3 mix. `vectors`, `pythagoras` and `simultaneous_equations` each need 1 more distinct intermediate question.
+
+**Mutation tests** (each applied alone, the test run, the file restored and checked by SHA-256): bank question number changed with the key kept; bank key letter changed; two bank options swapped with the key letter kept; two keyed proof steps swapped (`_sc_i9`); a wrong number in a keyed proof step (`_ct_d4`); a proof dependency loosened (`_sc_i9`); a distractor made to say a keyed step; one quiz key moved after the quiz is built; quiz grading comparing the wrong letter; the form check reading letters unsplit; the capital-name guard removed. All 11 failed, each for the expected reason (bank: digest not reviewed; proofs: `proof_model` verdicts; quiz: the quiz check; checker: the new unit test). Swapping two options and moving the key with them still verifies, as intended.
+
+**Results.** Default verification alone 25.3 s (26.2 s wall); `--deep --seed 271828` on the implementer's tree clean (192.7 s); `--deep --seed 314159` after this review's fixes clean (214,400 practice questions, 1,280 quizzes, 47 of 47 wrong quiz keys caught; 202.6 s). Answer-check smoke, GCSE correctness smoke and `ruff check .` pass.
+
+### Quiz content additions (2026-10-23)
+
+The Phase 4 sweep found four topics whose lesson quiz could not reach ten questions in the 3 / 4 / 3 mix because a band had too few distinct question texts. This adds the missing multiple-choice content. Nothing committed; no static, JS or template file changed, so no `?v=` or `CACHE_VERSION` bump. `register.QUIZ_SHAPE` is now empty and `quiz.py` asserts ten questions, 3 foundational + 4 intermediate + 3 difficult, no repeated question, for every topic. Over 200 seeds each, `algebraic_proof`, `vectors`, `pythagoras` and `simultaneous_equations` build 10 questions in the 3 / 4 / 3 mix with no repeat on every seed (2,000 questions per topic, no verification finding).
+
+**Static bank items (six).** Each has a digest-keyed spec that reads the numbers from the displayed question and computes the answer (`solvers_bank_number.py`, `solvers_bank_geometry.py`, `solvers_bank_algebra.py`). Changing any number in a question makes its spec fail (tried for every number in all six; the wrong-key negative control catches every wrong letter, 975 of 975 across the bank). To keep the bands exactly as they were, every existing item in the `pythagoras` and `vectors` banks now carries an explicit `difficulty` (before, the band came from the item's position, which a longer bank would have shifted).
+
+| Topic | Band | Question | Key | Distractors (misconception) |
+|---|---|---|---|---|
+| pythagoras | intermediate | A rectangle has a diagonal of 17 cm and one side of 8 cm. What is the area of the rectangle? | 120 cm² | 136 cm² (8 × 17, diagonal used as a side); 225 cm² (square of the missing side); 68 cm² (half of 136) |
+| pythagoras | intermediate | Points A (1, 2) and B (7, 10) are plotted on a coordinate grid. What is the distance AB? | 10 units | 14 units (6 + 8); 100 units (no square root); 48 units (6 × 8) |
+| vectors | intermediate | If a = (3, 1) and b = (-2, 4), find 2a + b. | (4, 6) | (4, 5) (only the first component doubled); (1, 5) (a + b); (8, -2) (2a - b) |
+| vectors | intermediate | The position vectors of P and Q are OP = (1, 2) and OQ = (4, 6). What is the length of PQ? | 5 | 7 (3 + 4, no Pythagoras); 25 (no square root); 10 (4 + 6, uses OQ not the difference) |
+| simultaneous_equations | intermediate | Solve simultaneously: 3x + 2y = 16 and x + y = 6. What is x? | x = 4 | x = 2 (the value of y); x = 6 (the total of the second equation); x = 10 (16 - 6) |
+| simultaneous_equations | intermediate | At a cinema, 2 adult tickets and 1 child ticket cost £14. 1 adult ticket and 1 child ticket cost £9. How much is one adult ticket? | £5 | £4 (the child price); £7 (14 ÷ 2); £9 (the second total) |
+
+Specs: `rectangle_area_from_diagonal` (reads "diagonal of" and "one side of", other side by Pythagoras, then the product), `distance_between_points` (reads the two written points), `combination_of_a_and_b` (reads the two columns and the coefficients in "find 2a + b"), `length_between_position_vectors` (reads OP and OQ and the vector named in the question, works out the difference), `system_asks` (the existing sympy solve of the pair, asked for x) and `ticket_prices` (reads the two purchases and the price asked about, solves the pair).
+
+**Algebraic proof (nine new generators, and four existing ones now served).** Before, one list of nine generators was shared by all three bands and `count=4` meant only its first four ever ran, so every band served the same five question texts. Now each band has its own pool (`_AP_MCQ_FOUNDATIONAL`, `_AP_MCQ_INTERMEDIATE`, `_AP_MCQ_DIFFICULT` in `generators/gcse/algebraic_proof.py`) and every generator in it is reachable (one MCQ slot per generator). Four existing generators that were never served now are (the sum of two consecutive numbers, the sum of three, the valid proof method, factorising n² + n); `_ap_mcq_odd_square` stays unused (its "Sometimes prime only" distractor is not a misconception). Nine are new, and every generator in the pools is re-solved, none exempt:
+
+| Band | Question (procedural parts in brackets) | Key | Distractors | Re-solved by |
+|---|---|---|---|---|
+| foundational | Even or odd? (already live, now foundational only), n + (n + 1), (n - 1) + n + (n + 1), valid proof method | as before | as before | existing tasks `ap_always`, `simplify`, `keyed_text` |
+| intermediate | (n + 1)² - n²; n(n + 1); the n² + 1 counterexample; factorise n² + n | as before | as before | existing tasks |
+| intermediate (new) | Which pair of expressions always represents two consecutive odd (or even) numbers? | 2n + 1 and 2n + 3 (or 2n and 2n + 2) | three of: consecutive integers (2n and 2n + 1), mixed parity (2n + 1 and 2n + 2), n and n + 2, a gap of 4 (2n + 1 and 2n + 5, 2n and 2n + 4) | `ap_consecutive_form`: both expressions have the stated parity for every n in -12 to 12 and differ by 2 |
+| intermediate (new) | The sum of two consecutive odd numbers is (2n + 1) + (2n + 3). For any integer n, this sum is: | Always a multiple of 4 | Always odd; Always a multiple of 3; Always a multiple of 8 (try n = 0) | `ap_prop` (property tested over n = -12 to 12) |
+| intermediate (new) | For any integer n, which expression is always a multiple of k? (k from 3, 4, 5, 6, 7, 9) | kn + kj, k(n + j) or kn - kj | three of: n + k; kn + k/2 (rounded down); n² + k; n(n + k) | `ap_mult_expr`: k read from the question, each option tested for every n |
+| intermediate (new) | Which value of n is a counterexample to the claim that f(n) is prime for every positive integer n? (f from 2n + 1, n² + n + 1, 6n + 1) | the one value that makes f(n) composite | three values that give primes | `ap_counter_value`: the expression is read from the question, each option tested for primality |
+| difficult (new) | For any integer n, which expression is always a multiple of 8? | (2n + 1)² - 1 | (2n + 1)² + 1; (2n)² + 4; (2n + 2)² - 4 | `ap_mult_expr` |
+| difficult (new) | The difference between the squares of two consecutive odd numbers is (2n + 3)² - (2n + 1)². This simplifies to: | 8(n + 1) | 8 (middle terms dropped); 12n + 8 (one middle term dropped); 4n + 4 (halved) | `simplify` (sympy; also checks no other option is equal) |
+| difficult (new) | A student is showing that the expression in line 1, (2n + k)² - k², is a multiple of 4. Which line of the working contains the first mistake, if any? (k from 1, 3, 5; four lines; the mistake is in line 2, 3 or 4, or there is none) | the line where the working first stops equalling the line before, or "There is no mistake" | the other lines and "There is no mistake" | `ap_find_error`: the lines are read from the question and compared by expanding each with the one before |
+| difficult (new) | For any integer n, the expression f(n) is: (f from n² + (n + 1)², 3n + 1, 2n(2n + 2), n³ - n, n² + n + 1, (n + 1)² - (n - 1)², (n + 3)² - n²) | one true statement (always even, odd, a multiple of 3, 4 or 8, or sometimes even and sometimes odd) | three statements that fail for some n | `ap_prop` (extended with "sometimes even and sometimes odd") |
+| difficult (new) | n is a whole number and n² is even (or odd). Which statement must be true? | n is even (or odd) | n is odd (even); n could be either odd or even; n is a multiple of 4 (or 3) | `ap_square_parity`: the whole numbers with that square parity are listed and each statement tested |
+
+The statement options in the property question are only ever drawn from the false statements plus one true one, so exactly one offered option is true even where another true statement (for example "Always even" beside "Always a multiple of 4") exists but is not offered. The foundational pool is the four generators above (5 distinct texts, because the even or odd generator has two); intermediate has 8 generators and difficult has 5, so a 3 / 4 / 3 quiz never runs short. Negative control: for every new generator, every wrong key over 40 seeds is caught (2,040 of 2,040).
+
+**Verification integration.** No exemption was added: the static bank has 325 re-solved items and 15 exempt (unchanged), `register.STATIC_EXEMPT` and `register.EXEMPT` are untouched. Five new tasks (`ap_consecutive_form`, `ap_mult_expr`, `ap_counter_value`, `ap_find_error`, `ap_square_parity`) were added to `solvers_algebra.py` and `ap_prop` gained one phrase; they read the displayed maths and options only (the generators record nothing but the task name). Coverage after this change: MCQ 556 of 611 slots strict (91.0%, was 90.9%), pool share 96.8%, static items 325 of 340 re-solved (95.6%).
+
+**Drift.** Against the working tree before this change (3 runs of every slot, 5,049 generations): only the multiple-choice slots of `algebraic_proof` (33 changed, 15 new), `vectors` (17), `pythagoras` (18) and `simultaneous_equations` (15) differ; every other generation, and every practice slot, is byte-identical.
+
+**Results.** Default verification alone 25.1 s; `--deep --seed 424242` clean (214,400 practice questions, 1,280 quizzes of 10 questions, 195.5 s); `test_gcse_maths_correctness_smoke.py`, `test_answer_check_smoke.py` and `ruff check .` pass; full suite in the AI handoff line.
+
+### Quiz content review notes (2026-10-23)
+
+Independent review of the quiz content additions, read as a GCSE maths teacher and as code. Every new or newly served generator was run over 400 seeds and every distinct question (with its options, key, solution and hint) was read; a separate checker written for this review (not the verification tasks) confirmed exactly one true option on 3,000 seeds of each procedural generator. No key was wrong and no question had two right answers.
+
+**Changed in this review (all in `generators/gcse/algebraic_proof.py`).**
+
+* Expression property question (difficult). The solution said "test \(n = 0\) and \(n = 1\): it is always ..." for every expression, which models the very mistake the proof-method question warns against, and for \(n^3 - n\) both tests give 0, which is a multiple of everything, so following the hint could not rule out "Always a multiple of 4" or "of 8". Each expression now carries its own algebra (for example \(n^3 - n = (n - 1)n(n + 1)\), three consecutive integers multiplied together), and each offered wrong statement gets a value of \(n\) where it fails (for example "“Always a multiple of 8” fails when \(n = 2\): the expression is 6"). Hint: "Expand and simplify first. To rule an option out, find one value of n where it fails."
+* Always a multiple of k (intermediate). The solution now shows the factor (\(6n + 12 = 6(n + 2)\)) instead of only asserting it, and the hint names the number ("A multiple of 6 has 6 as a factor") instead of a bare "k".
+* First mistake question. The line 3 explanation wrote the middle term outside LaTeX; it is now \(20n\).
+* Even or odd question (now foundational). Its options were plain text beside LaTeX neighbours; they are now in LaTeX.
+* Two newly served questions had hints that did not fit: "Three consecutive integers always sum to 3n" gave the answer away (now "Collect the n terms, then collect the number terms"), and "Factorise first, then explain using consecutive integers" on a plain factorising question is now "Look for a factor that both terms share".
+
+**Checked and left as they are.** The consecutive odd or even pair question cannot be read two ways (\(n\) and \(n + 2\) are consecutive odd numbers only when \(n\) is odd, and the question says "always ... for any integer \(n\)"). The counterexample value question always offers exactly one composite value (the others are primes for that expression). In the first mistake question the lines after a mistake follow correctly from the wrong line, so exactly one line is first wrong, and no wrong line is accidentally right for \(k = 1, 3, 5\). In the property question "Always even" and "Always a multiple of 4" (or 8) can both be true, but only one true statement is ever offered. The six static items are correct, their distractors match the misconceptions in the table above, and the bands are sensible (all six intermediate, where the short band was). British spelling, no em or en dash, no emoji in any new text (the em dashes the lint finds in these topics are in hints that predate this change).
+
+**Bands of the existing bank items.** Before, the band came from position (10 items, so items 1 to 3 foundational, 4 to 6 intermediate, 7 to 10 difficult). Stripping the new `difficulty` fields and the two new items and re-running `normalize_mcq_bank` gives exactly the bands now written in both banks, so nothing moved. Some of those inherited bands are generous (for example the length of \((0, 5)\) and "which is a unit vector" are difficult in `vectors`; "which calculation finds the distance from (0,0) to (6,8)" is difficult in `pythagoras` while the new A (1, 2) to B (7, 10) item is intermediate); they were kept so this change does not move questions pupils already see, and are worth a look in a later content pass.
+
+**Algebraic proof structure.** Practice mode still uses `_POOLS` unchanged and its output is byte-identical; only the `mcq` branch reads the band pools. The pools hold 4, 8 and 5 generators and the queue has one slot per generator, so all 17 are reachable. A difficulty outside the three bands falls back to all 17 (before, the first four). Nothing else references `_AP_MCQ_POOL` or the old slot names.
+
+**Mutation tests (all restored afterwards).** Static items, run through their spec under the original digest: every number in each question changed one at a time is caught (2, 4, 5, 4, 4 and 6 numbers, 25 of 25); every moved key is caught (18 of 18); a distractor made equal to the key in number form (120.0 cm², (4,6), x = 4.0, £5.00, 10.0 units, 5.0) is caught. A distractor written as an unevaluated surd equal to the key (√100 units, √25) is not caught: the generic option matcher does not evaluate a surd against a whole-number answer. No current item has such an option; it is an engine-wide limit, not a fault of these specs. Generators, 60 seeds each: the moved key is caught for all 14 served generators (2,520 of 2,520); a distractor rewritten to be a second right answer (for example \(2n + 2\) and \(2n + 4\) for consecutive even, \(2kn + k\) for a multiple of \(k\), a second composite value, "Always even" for \(4n + 4\), \(8n + 8\), "\(n\) is a multiple of 2") is caught for the ten generators where that can be written (600 of 600); in the first mistake question, making the wrong line right (or breaking a right line when the key is "no mistake") is caught 200 of 200, and correcting only line 2 while the later lines still follow the old wrong line (so line 3 becomes the first mistake) is caught 54 of 54.
+
+**Quiz shape.** 300 seeds per topic on `algebraic_proof`, `vectors`, `pythagoras` and `simultaneous_equations`, and 100 on every other topic: every quiz has 10 questions, 3 / 4 / 3, and no repeated question. The same question with other numbers can appear twice in one quiz (for example two "always a multiple of k" questions, or two counterexample value questions): 28%, 17%, 17% and 29% of quizzes on the four topics. The app already does this elsewhere (100% of quizzes on `number`, `ratio_proportion`, `functions` and others, 80% or more on `decimals`, `statistics`, `probability`), so it is reported, not changed.
+
+**Results after the review edits.** Coverage unchanged: MCQ 556 of 611 slots strict (91.0%), pool share 96.8%, static items 325 of 340 re-solved. Default verification alone 24.7 s. `--deep --seed 737373` clean (214,400 practice questions, 1,280 quizzes of 10 questions, 195.3 s). Drift against the tree with the four generator files at `bb3f366` (3 runs of every slot, 5,049 generations): only multiple-choice slots of `algebraic_proof` (36 changed, 15 new), `pythagoras` (18), `vectors` (17) and `simultaneous_equations` (15) differ; every other generation is byte-identical. `test_gcse_maths_correctness_smoke.py`, `test_answer_check_smoke.py` and `ruff check .` pass; full suite 104/104.

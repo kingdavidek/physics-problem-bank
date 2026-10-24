@@ -1209,6 +1209,7 @@ def _ct_d2_prove_angle():
         "Triangle OAC is equilateral, so angle OCA = 60°.",
         "Join AB only; OC is not needed for this proof.",
     )
+    record('proof_model', proof='centre_angle')
     return q, s, "Join OC; use isosceles triangles OAC and OBC; apply CT1.", 6, _ct_proof_steps_answer(
         steps,
         distractors,
@@ -1272,6 +1273,7 @@ def _ct_d4_alternate_segment_proof():
         "Draw radius OC and use triangle OAC is isosceles to find angle ACB.",
         f"Angle AOB = 2 × angle TAB = {2 * angle}° because the tangent doubles the angle at A.",
     )
+    record('proof_model', proof='alt_segment')
     return q, s, "Draw radius OA. Use CT5 (tangent ⊥ radius), isosceles triangle OAB, CT1.", 6, _ct_proof_steps_answer(
         steps,
         distractors,
@@ -1405,6 +1407,7 @@ def _ct_d10_prove_cyclic():
         "Since the angles are supplementary, ABCD must be a parallelogram.",
         "Draw the circumcircle through A, B, and C; D lies on it because all quadrilaterals are cyclic.",
     )
+    record('proof_model', proof='cyclic_converse')
     return q, s, "Converse of CT4: if opposite angles sum to 180°, the quadrilateral is cyclic.", 4, _ct_proof_steps_answer(
         steps,
         distractors,

@@ -5,9 +5,9 @@ are internally consistent.  This one re-solves each question from the numbers th
 (generators/shared/verify_hook.py) with independent solvers (scripts/gcse_verify/) and compares the
 result with the key.  See docs/GCSE_MATHS_VERIFICATION.md.
 
-Checks: practice re-solve, MCQ key, checker round-trip, ordered-proof orders, stated accuracy, properties, no-output-drift.
+Checks: practice re-solve, MCQ key (generators and the static bank), checker round-trip, ordered-proof orders and models, stated accuracy, lesson quizzes, properties, no-output-drift.
 
-Options: --deep (many more seeds, run by hand), --only NAME[,NAME] (check names or substrings),
+Options: --deep (200 seeds per slot, 40 seeds per topic quiz; run by hand, not in CI), --only NAME[,NAME] (check names or substrings),
 --seed N (offsets the run numbers), --json (machine-readable summary), --print-digests (static MCQ
 item digests, for updating register.py after a reviewed change).
 """
@@ -34,8 +34,9 @@ from generators.shared.answer_checkers import (  # noqa: E402
     FORM_AWARE_ANSWER_TYPES,
     check_answer,
 )
-from gcse_verify import core, engine, forms, harness, mcq, ordering, register, report  # noqa: E402
-from gcse_verify import (solvers_algebra, solvers_geometry, solvers_number, solvers_probability,  # noqa: E402,F401
+from gcse_verify import core, coverage, engine, forms, harness, mcq, ordering, quiz, register  # noqa: E402
+from gcse_verify import (solvers_algebra, solvers_bank, solvers_bank_algebra, solvers_bank_geometry, solvers_proofs,  # noqa: E402,F401
+                         solvers_bank_number, solvers_geometry, solvers_number, solvers_probability,
                          solvers_loci, solvers_shapes, solvers_stats, solvers_transform, solvers_vectors)  # (register the solvers)
 from gcse_verify.latex import plain  # noqa: E402
 from gcse_verify.registry import DIAGRAM_CHECKS  # noqa: E402
@@ -76,8 +77,8 @@ def issue(check, where, detail):
 
 def settings(args):
     if args.deep:
-        return dict(practice=200, practice_algebra=200, mcq_direct=40, procedural=100, drift=3, roundtrip=20)
-    return dict(practice=20, practice_algebra=14, mcq_direct=4, procedural=8, drift=3, roundtrip=5)
+        return dict(practice=200, practice_algebra=200, mcq_direct=40, procedural=100, drift=3, roundtrip=20, quiz=40)
+    return dict(practice=20, practice_algebra=14, mcq_direct=4, procedural=8, drift=3, roundtrip=5, quiz=2)
 
 
 def verified_slots(mode):
@@ -149,6 +150,21 @@ def check_register(slots):
             issue('register', key, f'EXEMPT category {category!r} is not self-marked or infeasible')
         if len(str(reason).strip()) < 20:
             issue('register', key, 'EXEMPT reason must be at least 20 characters')
+    for digest, entry in register.STATIC_EXEMPT.items():
+        try:
+            category, reason = entry
+        except (TypeError, ValueError):
+            issue('register', digest, 'STATIC_EXEMPT entry must be (category, reason)')
+            continue
+        if category not in ('conceptual', 'method', 'infeasible'):
+            issue('register', digest, f'STATIC_EXEMPT category {category!r} is not conceptual, method or infeasible')
+        if len(str(reason).strip()) < 20:
+            issue('register', digest, 'STATIC_EXEMPT reason must be at least 20 characters')
+    for slug, (floor, reason) in register.QUIZ_SHAPE.items():
+        if slug not in harness.topics():
+            issue('register', slug, 'QUIZ_SHAPE names a topic that does not exist')
+        if not 1 <= floor <= 10 or len(str(reason).strip()) < 20:
+            issue('register', slug, 'QUIZ_SHAPE needs a floor of 1 to 10 questions and a reason of 20 or more characters')
     for t in mcq.BANK_REFS:
         if t not in register.VERIFIED_TOPICS:
             issue('register', t, 'static bank mapped for a topic that is not verified')
@@ -229,6 +245,42 @@ def tamper(p):
         return None
     q['correct_answer_raw'] = bad[0]
     return q
+
+
+def proof_tampers(p):
+    """(description, problem) copies of an ordered proof with something wrong in it."""
+    raw = str(p['correct_answer_raw'])
+    ids = raw.split('|')[1:]
+    bank = [dict(b) for b in p['answer_step_bank']]
+    text = {str(b['id']): b['text'] for b in bank}
+    other = [b for b in bank if str(b['id']) not in ids]
+
+    def with_bank(items):
+        q = dict(p)
+        q['answer_step_bank'] = items
+        return q
+
+    if p.get('answer_step_prereqs'):
+        q = dict(p)
+        q.pop('answer_step_prereqs')
+        yield 'a strict order where the proof allows two', q
+        q = dict(p)
+        q['answer_step_prereqs'] = {k: [] for k in p['answer_step_prereqs']}
+        yield 'no order at all', q
+    else:
+        q = dict(p)
+        q['answer_step_prereqs'] = {k: [] for k in ids}
+        yield 'no order at all', q
+    q = dict(p)
+    q['correct_answer_raw'] = '|'.join([raw.split('|')[0], ids[1], ids[0]] + ids[2:])
+    yield 'two steps swapped', q
+    yield 'a distractor reads as a keyed step', with_bank(
+        [dict(b, text=text[ids[0]]) if b is other[0] else b for b in bank])
+    for b in bank:
+        if str(b['id']) == ids[-1]:
+            b['text'] = re.sub(r'\d', lambda m: str((int(m.group()) + 1) % 10), b['text'], count=1) \
+                if re.search(r'\d', b['text']) else b['text'] + ' This is not so.'
+    yield 'the last step changed', with_bank(bank)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -468,23 +520,43 @@ def run_checks(args, wanted):
                             issue('stated_accuracy', f'{slug}/{fn.__name__}#{r}', m)
         tally['procedural_functions'] = n_proc
 
-        pinned = 0
+        resolved = exempt = 0
+        bank_tried = bank_caught = 0
+        seen = set()
         for slug in sorted(mcq.BANK_REFS):
-            digests = set()
             for i, item in enumerate(mcq.bank(slug)):
                 d = mcq.item_digest(item)
-                digests.add(d)
+                seen.add(d)
+                where = f'{slug} bank item {i} ({d})'
                 for m in mcq.item_structure_errors(item):
-                    issue('mcq_key', f'{slug} bank item {i} ({d})', m)
-                if d in register.STATIC_ITEMS.get(slug, ()):
-                    pinned += 1
+                    issue('mcq_key', where, m)
+                in_specs, in_exempt = d in solvers_bank.SPECS, d in register.STATIC_EXEMPT
+                if in_specs and in_exempt:
+                    issue('register', where, 'item has a re-solve spec and is also listed in STATIC_EXEMPT (remove the exemption)')
+                elif in_specs:
+                    o = mcq.verify_static(item)
+                    if o.status != 'verified':
+                        for kind, msg in o.findings or [('norecord', 'no result')]:
+                            issue('mcq_key', where, f'[{kind}] {msg} :: {plain(item.get("q", ""))[:70]!r}')
+                    else:
+                        resolved += 1
+                        for q_, tried_, caught_ in mcq.tampered_item_checks(item, d):
+                            bank_tried += tried_
+                            bank_caught += caught_
+                            if tried_ != caught_:
+                                issue('negative_control', where, f'a wrong key {q_} was still verified')
+                elif in_exempt:
+                    exempt += 1
                 else:
-                    issue('mcq_key', f'{slug} bank item {i}', f'not reviewed: digest {d} is not pinned in register.STATIC_ITEMS '
-                          f'(check the key by hand, then update the digest; question: {plain(item.get("q", ""))[:70]!r})')
-            for d in register.STATIC_ITEMS.get(slug, ()):
-                if d not in digests:
-                    issue('mcq_key', f'{slug}', f'pinned digest {d} matches no bank item (item changed or removed)')
-        tally['pinned_items'] = pinned
+                    issue('mcq_key', where, f'not reviewed: digest {d} has no re-solve spec (solvers_bank_*.py) and is not in '
+                          f'register.STATIC_EXEMPT (question: {plain(item.get("q", ""))[:70]!r})')
+        for d in sorted(set(solvers_bank.SPECS) - seen):
+            issue('mcq_key', f'bank spec {d}', 'matches no bank item (the item changed or was removed; update or remove its spec)')
+        for d in sorted(set(register.STATIC_EXEMPT) - seen):
+            issue('register', f'STATIC_EXEMPT {d}', 'matches no bank item (the item changed or was removed)')
+        tally['bank_negative_control'] = f'{bank_caught}/{bank_tried}'
+        tally['resolved_items'] = resolved
+        tally['pinned_items'] = exempt
         tally['mcq_dispatch_slots'] = len(dispatch)
 
     # 3. checker round-trip
@@ -627,6 +699,24 @@ def run_checks(args, wanted):
                 caught += 1
         tally['negative_control'] = f'{caught}/{tried}'
 
+    # Negative control for the worded proofs: a loosened or tightened order, a swapped step, a distractor that
+    # says what a keyed step says and a changed number must each fail the proof model.
+    if want('negative') or want('practice'):
+        tried = caught = 0
+        seen = set()
+        for s, r, p, o in cache:
+            recs = o.records
+            if s in seen or o.status != 'verified' or not recs or recs[-1]['family'] != 'proof_model':
+                continue
+            seen.add(s)
+            for what, q in proof_tampers(p):
+                tried += 1
+                if engine.verify_problem(q, recs).status == 'verified':
+                    issue('negative_control', f'{s.label}#{r}', f'a damaged proof ({what}) was still verified')
+                else:
+                    caught += 1
+        tally['proof_negative_control'] = f'{caught}/{tried}'
+
     # Negative control for drawings: damaging the SVG must make the family's diagram check complain,
     # otherwise reading the drawing proves nothing.
     if want('negative') or want('practice'):
@@ -648,6 +738,26 @@ def run_checks(args, wanted):
             if not caught_it:
                 issue('negative_control', f'diagram:{fam}', 'a damaged drawing was still verified')
         tally['diagram_negative_control'] = f'{sum(state.values())}/{len(state)}'
+
+    # 4b. the lesson quizzes pupils get from each topic page (scripts/gcse_verify/quiz.py)
+    if want('quiz'):
+        qt = collections.Counter()
+        for slug in sorted(harness.topics()):
+            for seed in range(base, base + cfg['quiz']):
+                found, counts = quiz.check_quiz(slug, seed, solvers_bank)
+                qt.update(counts)
+                for m in found:
+                    issue('quiz', f'{slug} quiz seed {seed}', m)
+        tally['quiz'] = dict(qt)
+        caught = tried = 0                  # negative control: a quiz whose keys all moved must be reported question by question
+        for slug in ('bidmas', 'trigonometry', 'circle_theorems', 'probability', 'surds'):
+            found, counts = quiz.check_quiz(slug, base, solvers_bank, wrong_keys=True)
+            tried += counts['generated'] + counts['bank']
+            caught += len({m.split(':')[0] for m in found if m.startswith('question') and '[' in m})
+        tally['quiz_negative_control'] = f'{caught}/{tried}'
+        if caught < tried:
+            issue('negative_control', 'quiz', f'only {caught} of {tried} wrong quiz keys were reported')
+        tally['quiz_quizzes'] = len(harness.topics()) * cfg['quiz']
 
     # 5. properties (L1).  Phase 1 topics only: the pending topics have known structural gaps that
     # move into scope with their phase (e.g. 3-option items and checker-format keys in graphs and surds).
@@ -738,7 +848,7 @@ def run_checks(args, wanted):
 
 
 CHECK_NAMES = ('independence', 'register', 'solvers', 'practice_resolve', 'mcq_key', 'checker_roundtrip', 'ordering', 'overlap_outcomes',
-               'answer_form', 'stated_accuracy', 'negative_control', 'properties', 'no_output_drift')
+               'answer_form', 'stated_accuracy', 'negative_control', 'quiz', 'properties', 'no_output_drift')
 
 
 def main():
@@ -767,13 +877,7 @@ def main():
     slots, tally = run_checks(args, wanted)
     total = round(time.time() - t0, 1)
 
-    cov = report.coverage(slots, {
-        'practice_verified': tally.get('practice_verified', 0),
-        'mcq_direct_verified': tally.get('mcq_direct_verified', 0),
-        'procedural_functions': tally.get('procedural_functions', 0),
-        'pinned_items': tally.get('pinned_items', 0),
-        'mcq_dispatch_slots': tally.get('mcq_dispatch_slots', 0),
-    })
+    cov = coverage.tables(slots, coverage.resolved_digests(), set(register.EXEMPT), mcq.DIRECT_TOPICS)
     if args.json:
         print(json.dumps({'issues': ISSUES, 'tally': tally, 'coverage': cov, 'seconds': total}, indent=2, default=str))
     else:
@@ -785,10 +889,19 @@ def main():
             print(f'  ordered proofs: {tally["ordering_questions"]} questions in {tally["ordering_slots"]} slots, '
                   f'{tally["ordering_with_alternatives"]} with alternative orders '
                   f'({tally["ordering_slots_with_alternatives"]} slots)')
-        print(report.render(cov))
+        print(coverage.render(cov))
+        print(f'  static MCQ items: {tally.get("resolved_items", 0)} re-solved, {tally.get("pinned_items", 0)} exempt and pinned '
+              f'(negative control, wrong keys caught: {tally.get("bank_negative_control", "n/a")})')
+        if 'quiz' in tally:
+            q_ = tally['quiz']
+            print(f'  lesson quizzes: {tally["quiz_quizzes"]} quizzes, {q_.get("questions", 0)} questions '
+                  f'({q_.get("generated", 0)} from generators re-solved, {q_.get("bank", 0)} bank items re-solved after the '
+                  f'quiz shuffle, {q_.get("bank_exempt", 0)} reviewed exemptions), {q_.get("graded", 0)} letters graded '
+                  f'(wrong quiz keys caught: {tally.get("quiz_negative_control", "n/a")})')
         if 'negative_control' in tally:
             print(f'  negative control (tampered keys caught): {tally["negative_control"]}')
             print(f'  negative control (damaged drawings caught, by family): {tally.get("diagram_negative_control", "n/a")}')
+            print(f'  negative control (damaged proofs caught): {tally.get("proof_negative_control", "n/a")}')
         n_issues = sum(len(v) for v in ISSUES.values())
         if n_issues:
             print(f'{n_issues} issue(s):')
@@ -801,7 +914,7 @@ def main():
                     print(f'    {row}')
                 if len(rows) > 12:
                     print(f'    ... and {len(rows) - 12} more')
-    if total > 45:
+    if total > 45 and not args.deep:
         print(f'WARNING: run took {total}s (target 30s or less)')
     if ISSUES:
         sys.exit(1)

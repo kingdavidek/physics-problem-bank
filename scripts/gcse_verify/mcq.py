@@ -100,3 +100,28 @@ def verify_procedural(slug, fn, run):
     outcome = verify_problem(p, recs)
     outcome.problem = p
     return outcome
+
+
+def item_problem(item):
+    """A bank item shown as a problem (question, options, keyed letter), which is all a solver may read."""
+    return {'question': item.get('q', ''), 'options': item.get('opts'), 'correct_answer': item.get('ans')}
+
+
+def verify_static(item, key=None):
+    """Re-solve a static bank item with its registered spec (``key`` replaces the item's keyed letter)."""
+    from . import solvers_bank
+    p = item_problem(item)
+    if key is not None:
+        p['correct_answer'] = key
+    d = item_digest(item)
+    if d not in solvers_bank.SPECS:
+        raise KeyError(d)
+    return verify_problem(p, [{'family': 'bank', 'inputs': {'digest': d}, 'derived': ()}])
+
+
+def tampered_item_checks(item, digest):
+    """Negative control: every wrong keyed letter must fail. Yields (letter, 1, 1 if caught else 0)."""
+    right = str(item.get('ans', '')).strip().upper()
+    for ltr, _ in parse_options({'options': item.get('opts')}) or []:
+        if ltr != right:
+            yield ltr, 1, int(verify_static(item, key=ltr).status != 'verified')

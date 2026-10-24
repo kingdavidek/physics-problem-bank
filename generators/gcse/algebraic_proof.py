@@ -1,6 +1,6 @@
 """
 GCSE Maths – Algebraic Proof
-5 foundational · 5 intermediate · 5 difficult · 9 MCQ (randomised each time)
+5 foundational · 5 intermediate · 5 difficult · 17 MCQ generators in three band pools (randomised each time)
 Graded practice: expand/counterexample use algebraic/number/keyword fields;
 prove-that variants use ordered proof_steps (Plan C).
 """
@@ -590,7 +590,7 @@ def _ap_d_four_consecutive():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# MCQ (9 — randomised)
+# MCQ (three band pools, randomised)
 # ══════════════════════════════════════════════════════════════════════════════
 
 @verifies('alg', task='ap_always')
@@ -605,10 +605,10 @@ def _ap_mcq_even_odd():
     random.shuffle(exprs)
     letters = "ABCD"
     correct_letter = letters[exprs.index(correct_expr)]
-    opts = [f"{letters[i]}  {exprs[i]}" for i in range(4)]
+    opts = [rf"{letters[i]}  \({exprs[i]}\)" for i in range(4)]
     word = "even" if want_even else "odd"
     q = rf"For any integer \(n\), which expression is always <strong>{word}</strong>?"
-    sol = rf"<strong>{correct_expr}</strong> is always {word}. Answer: <strong>{correct_letter}</strong>"
+    sol = rf"<strong>\({correct_expr}\)</strong> is always {word}. Answer: <strong>{correct_letter}</strong>"
     return q, sol, "Even = 2n; odd = 2n+1.", 2, opts, correct_letter
 
 
@@ -641,7 +641,7 @@ def _ap_mcq_consecutive_product():
     opts = [f"{letters[i]}  {v}" for i, v in enumerate(vals)]
     q = r"For any integer \(n\), what is true about <strong>\(n(n+1)\)</strong>?"
     sol = rf"<strong>{correct}</strong>. Answer: <strong>{correct_letter}</strong>"
-    return q, sol, "Consecutive integers — one is even.", 2, opts, correct_letter
+    return q, sol, "Consecutive integers: one of them is even.", 2, opts, correct_letter
 
 
 @verifies('alg', task='ap_counter_mcq')
@@ -693,7 +693,7 @@ def _ap_mcq_three_consecutive():
         rf"Collect terms: \(3n\), so the sum is always a multiple of 3. "
         rf"Answer: <strong>{correct_letter}</strong>"
     )
-    return q, sol, "Three consecutive integers always sum to 3n.", 2, opts, correct_letter
+    return q, sol, "Collect the n terms, then collect the number terms.", 2, opts, correct_letter
 
 
 @verifies('alg', task='factorise')
@@ -710,7 +710,7 @@ def _ap_mcq_factorise_even():
         rf"Take out common factor \(n\): <strong>\(n(n + 1)\)</strong>, which is always even. "
         rf"Answer: <strong>{correct_letter}</strong>"
     )
-    return q, sol, "Factorise first, then explain using consecutive integers.", 2, opts, correct_letter
+    return q, sol, "Look for a factor that both terms share.", 2, opts, correct_letter
 
 
 @verifies('alg', task='ap_prop')
@@ -751,17 +751,317 @@ def _ap_mcq_proof_valid():
     return q, sol, "Proof uses algebra for general n; testing examples alone is not enough.", 1, opts, correct_letter
 
 
-_AP_MCQ_POOL = [
+def _ap_options(correct, wrong):
+    """Shuffle ``correct`` among ``wrong`` and return (lettered options, correct letter)."""
+    forms = list(wrong) + [correct]
+    random.shuffle(forms)
+    letters = "ABCD"
+    return [f"{letters[i]}  {f}" for i, f in enumerate(forms)], letters[forms.index(correct)]
+
+
+def _ap_is_prime(v):
+    return v > 1 and all(v % d for d in range(2, int(v ** 0.5) + 1))
+
+
+@verifies('alg', task='ap_consecutive_form')
+def _ap_mcq_consecutive_form():
+    """Which pair of expressions is always two consecutive odd (or even) numbers? Exactly one pair is."""
+    kind = random.choice(["odd", "even"])
+    if kind == "odd":
+        correct = r"\(2n + 1\) and \(2n + 3\)"
+        pool = [
+            r"\(2n\) and \(2n + 1\)",
+            r"\(2n + 1\) and \(2n + 2\)",
+            r"\(n\) and \(n + 2\)",
+            r"\(2n + 1\) and \(2n + 5\)",
+        ]
+        sol = (
+            r"An odd number is \(2n + 1\). The next odd number is 2 more, \(2n + 3\)."
+        )
+    else:
+        correct = r"\(2n\) and \(2n + 2\)"
+        pool = [
+            r"\(2n\) and \(2n + 1\)",
+            r"\(2n + 1\) and \(2n + 3\)",
+            r"\(n\) and \(n + 2\)",
+            r"\(2n\) and \(2n + 4\)",
+        ]
+        sol = r"An even number is \(2n\). The next even number is 2 more, \(2n + 2\)."
+    opts, letter = _ap_options(correct, random.sample(pool, 3))
+    q = rf"Which pair of expressions always represents two consecutive <strong>{kind}</strong> numbers, for any integer \(n\)?"
+    sol += (
+        r" Consecutive odd or even numbers differ by 2, and the form \(2n\) or \(2n + 1\) keeps the parity "
+        rf"for every integer \(n\). Answer: <strong>{letter}</strong>"
+    )
+    return q, sol, "Write the first number as 2n or 2n + 1, then add 2.", 2, opts, letter
+
+
+@verifies('alg', task='ap_prop')
+def _ap_mcq_sum_two_odds():
+    """The sum of two consecutive odd numbers is always a multiple of 4 (and not always of 8)."""
+    correct = "Always a multiple of 4"
+    wrong = ["Always odd", "Always a multiple of 3", "Always a multiple of 8"]
+    opts, letter = _ap_options(correct, wrong)
+    q = (
+        r"The sum of two consecutive odd numbers is \((2n + 1) + (2n + 3)\). "
+        r"For any integer \(n\), this sum is:"
+    )
+    sol = (
+        r"\((2n + 1) + (2n + 3) = 4n + 4 = 4(n + 1)\), so it is always a multiple of 4. "
+        r"It is not always a multiple of 8: when \(n = 0\) the sum is 4. "
+        rf"Answer: <strong>{letter}</strong>"
+    )
+    return q, sol, "Collect like terms, then factorise.", 2, opts, letter
+
+
+@verifies('alg', task='ap_mult_expr')
+def _ap_mcq_multiple_expression():
+    """Which expression is always a multiple of k (k varies)? Exactly one is."""
+    k = random.choice([3, 4, 5, 6, 7, 9])
+    j = random.choice([1, 2, 3])
+    sign = random.choice(["+", "-", "factorised"])
+    if sign == "factorised":
+        correct = rf"\({k}(n + {j})\)"
+        why = rf"{correct} is {k} times the whole number \(n + {j}\)"
+    else:
+        correct = rf"\({k}n {sign} {k * j}\)"
+        why = rf"\({k}n {sign} {k * j} = {k}(n {sign} {j})\), which is {k} times a whole number"
+    pool = [
+        rf"\(n + {k}\)",
+        rf"\({k}n + {k // 2}\)",
+        rf"\(n^2 + {k}\)",
+        rf"\(n(n + {k})\)",
+    ]
+    opts, letter = _ap_options(correct, random.sample(pool, 3))
+    q = rf"For any integer \(n\), which expression is always a multiple of <strong>{k}</strong>?"
+    sol = (
+        rf"{why} for every integer \(n\), so it is always a multiple of {k}. "
+        rf"Each other expression fails for some \(n\) (try \(n = 1\)). Answer: <strong>{letter}</strong>"
+    )
+    return q, sol, f"A multiple of {k} has {k} as a factor. Test n = 1 on each option.", 2, opts, letter
+
+
+_AP_PRIME_CLAIMS = [
+    (r"2n + 1", lambda n: 2 * n + 1),
+    (r"n^2 + n + 1", lambda n: n * n + n + 1),
+    (r"6n + 1", lambda n: 6 * n + 1),
+]
+
+
+@verifies('alg', task='ap_counter_value')
+def _ap_mcq_counterexample_value():
+    """Which value of n disproves 'f(n) is prime for every positive integer n'? Exactly one does."""
+    tex, f = random.choice(_AP_PRIME_CLAIMS)
+    fails = [n for n in range(2, 11) if not _ap_is_prime(f(n))]
+    passes = [n for n in range(1, 11) if _ap_is_prime(f(n))]
+    key = random.choice(fails)
+    values = sorted(random.sample(passes, 3) + [key])
+    opts = [rf"{'ABCD'[i]}  \(n = {v}\)" for i, v in enumerate(values)]
+    letter = "ABCD"[values.index(key)]
+    total = f(key)
+    d = next(d for d in range(2, total) if total % d == 0)
+    q = rf"Which value of \(n\) is a counterexample to the claim that \({tex}\) is prime for every positive integer \(n\)?"
+    sol = (
+        rf"When \(n = {key}\), \({tex}\) is {total}, and {total} = {d} × {total // d}, so it is not prime. "
+        rf"Each other value gives a prime. Answer: <strong>{letter}</strong>"
+    )
+    return q, sol, "Substitute each value of n and check whether the result is prime.", 2, opts, letter
+
+
+@verifies('alg', task='ap_mult_expr')
+def _ap_mcq_multiple_of_eight():
+    correct = r"\((2n + 1)^2 - 1\)"
+    wrong = [r"\((2n + 1)^2 + 1\)", r"\((2n)^2 + 4\)", r"\((2n + 2)^2 - 4\)"]
+    opts, letter = _ap_options(correct, wrong)
+    q = r"For any integer \(n\), which expression is always a multiple of <strong>8</strong>?"
+    sol = (
+        r"\((2n + 1)^2 - 1 = 4n^2 + 4n = 4n(n + 1)\). The product \(n(n + 1)\) of two consecutive integers is even, "
+        r"so it is \(2m\) for some integer \(m\), and \(4n(n + 1) = 8m\). "
+        rf"Answer: <strong>{letter}</strong>"
+    )
+    return q, sol, "Expand, factorise, then use the fact that n(n + 1) is always even.", 3, opts, letter
+
+
+@verifies('alg', task='simplify', form=None)
+def _ap_mcq_odd_squares_difference():
+    correct = r"\(8(n + 1)\)"
+    wrong = [r"\(8\)", r"\(12n + 8\)", r"\(4n + 4\)"]
+    opts, letter = _ap_options(correct, wrong)
+    q = (
+        r"The difference between the squares of two consecutive odd numbers is \((2n + 3)^2 - (2n + 1)^2\). "
+        r"This simplifies to:"
+    )
+    sol = (
+        r"\((2n + 3)^2 = 4n^2 + 12n + 9\) and \((2n + 1)^2 = 4n^2 + 4n + 1\). "
+        r"Subtracting gives \(8n + 8 = 8(n + 1)\), so the difference is always a multiple of 8. "
+        rf"Answer: <strong>{letter}</strong>"
+    )
+    return q, sol, "Expand both brackets carefully, including the middle term, then subtract.", 3, opts, letter
+
+
+def _ap_find_error_lines(k, scenario):
+    """The four lines of working for (2n + k)^2 - k^2, with the first mistake in line ``scenario`` (0 for none).
+
+    The lines after a mistake follow correctly from the wrong line, so only one step is wrong.
+    """
+    k2 = k * k
+    l1 = rf"(2n + {k})^2 - {k2}"
+    l2 = rf"= 4n^2 + {4 * k}n + {k2} - {k2}"
+    l3 = rf"= 4n^2 + {4 * k}n"
+    l4 = rf"= 4n(n + {k})"
+    if scenario == 2:       # the middle term of the expansion is halved
+        l2 = rf"= 4n^2 + {2 * k}n + {k2} - {k2}"
+        l3 = rf"= 4n^2 + {2 * k}n"
+        l4 = rf"= 2n(2n + {k})"
+    elif scenario == 3:     # the n is lost from the middle term
+        l3 = rf"= 4n^2 + {4 * k}"
+        l4 = rf"= 4(n^2 + {k})"
+    elif scenario == 4:     # factorising: 4n(n + k) written as 4(n + k)
+        l4 = rf"= 4(n + {k})"
+    return [l1, l2, l3, l4]
+
+
+_AP_ERROR_SCENARIOS = [
+    (0, "no mistake", "Every line follows from the line before it, so there is no mistake."),
+    (2, "line 2", r"In line 2 the middle term of the expansion should be \(2 \times 2n \times {k} = {m}n\)."),
+    (3, "line 3", r"In line 3 the \(n\) has been lost from the middle term \({m}n\)."),
+    (4, "line 4", r"In line 4 the factor \(n\) has been lost: \(4n^2 + {m}n = 4n(n + {k})\)."),
+]
+
+
+@verifies('alg', task='ap_find_error')
+def _ap_mcq_find_error():
+    """Spot the first mistake (or none) in four lines of working. The lines are re-checked with algebra."""
+    scenario, _, why = random.choice(_AP_ERROR_SCENARIOS)
+    k = random.choice([1, 3, 5])
+    lines = _ap_find_error_lines(k, scenario)
+    shown = "<br>".join(rf"Line {i + 1}: \({ln}\)" for i, ln in enumerate(lines))
+    q = (
+        "A student is showing that the expression in line 1 is a multiple of 4. "
+        "Which line of the working contains the first mistake, if any?<br>" + shown
+    )
+    opts = ["A  Line 2", "B  Line 3", "C  Line 4", "D  There is no mistake"]
+    letter = {2: "A", 3: "B", 4: "C", 0: "D"}[scenario]
+    sol = (
+        why.format(k=k, m=4 * k) + " Check each line by expanding it and comparing it with the line before. "
+        rf"Answer: <strong>{letter}</strong>"
+    )
+    return q, sol, "Expand line 1, then compare each line with the one before it.", 3, opts, letter
+
+
+_AP_PROPERTY_EXPRESSIONS = [
+    (r"n^2 + (n + 1)^2", lambda n: n * n + (n + 1) ** 2,
+     r"\(n^2 + (n + 1)^2 = 2n^2 + 2n + 1 = 2(n^2 + n) + 1\), one more than an even number."),
+    (r"3n + 1", lambda n: 3 * n + 1,
+     r"When \(n = 0\), \(3n + 1 = 1\) (odd), and when \(n = 1\), \(3n + 1 = 4\) (even)."),
+    (r"2n(2n + 2)", lambda n: 2 * n * (2 * n + 2),
+     r"\(2n(2n + 2) = 4n(n + 1)\), and \(n(n + 1)\) is even (one of two consecutive integers is even), "
+     r"so \(4n(n + 1)\) is 8 times a whole number."),
+    (r"n^3 - n", lambda n: n ** 3 - n,
+     r"\(n^3 - n = (n - 1)n(n + 1)\), three consecutive integers multiplied together: "
+     r"one of them is even and one of them is a multiple of 3."),
+    (r"n^2 + n + 1", lambda n: n * n + n + 1,
+     r"\(n^2 + n + 1 = n(n + 1) + 1\), and \(n(n + 1)\) is even, so this is one more than an even number."),
+    (r"(n + 1)^2 - (n - 1)^2", lambda n: (n + 1) ** 2 - (n - 1) ** 2,
+     r"\((n^2 + 2n + 1) - (n^2 - 2n + 1) = 4n\)."),
+    (r"(n + 3)^2 - n^2", lambda n: (n + 3) ** 2 - n * n,
+     r"\((n^2 + 6n + 9) - n^2 = 6n + 9 = 3(2n + 3)\), and \(6n + 9 = 2(3n + 4) + 1\) is one more than an even number."),
+]
+
+_AP_PROPERTY_STATEMENTS = [
+    ("Always even", lambda vs: all(v % 2 == 0 for v in vs)),
+    ("Always odd", lambda vs: all(v % 2 == 1 for v in vs)),
+    ("Always a multiple of 3", lambda vs: all(v % 3 == 0 for v in vs)),
+    ("Always a multiple of 4", lambda vs: all(v % 4 == 0 for v in vs)),
+    ("Always a multiple of 8", lambda vs: all(v % 8 == 0 for v in vs)),
+    ("Sometimes even and sometimes odd", lambda vs: len({v % 2 for v in vs}) == 2),
+]
+
+
+def _ap_property_counterexample(statement, f):
+    """Why ``statement`` (a false one) fails for ``f``: a value of n where it breaks, as a sentence."""
+    if statement.startswith("Sometimes"):
+        word = "even" if f(0) % 2 == 0 else "odd"
+        return rf"“{statement}” is wrong: the expression is always {word}."
+    test = dict(_AP_PROPERTY_STATEMENTS)[statement]
+    n = next(v for v in (0, 1, 2, 3, -1, 4, 5) if not test([f(v)]))
+    return rf"“{statement}” fails when \(n = {n}\): the expression is {f(n)}."
+
+
+@verifies('alg', task='ap_prop')
+def _ap_mcq_expression_property():
+    """What is true of an expression for every integer n? Exactly one offered statement is true."""
+    tex, f, working = random.choice(_AP_PROPERTY_EXPRESSIONS)
+    vs = [f(n) for n in range(-12, 13)]
+    true = [t for t, test in _AP_PROPERTY_STATEMENTS if test(vs)]
+    false = [t for t, test in _AP_PROPERTY_STATEMENTS if not test(vs)]
+    correct = random.choice(true)
+    wrong = random.sample(false, 3)
+    opts, letter = _ap_options(correct, wrong)
+    q = rf"For any integer \(n\), the expression \({tex}\) is:"
+    sol = (
+        rf"{working} So it is {correct.lower()}. "
+        + " ".join(_ap_property_counterexample(w, f) for w in wrong)
+        + rf" Answer: <strong>{letter}</strong>"
+    )
+    hint = "Expand and simplify first. To rule an option out, find one value of n where it fails."
+    return q, sol, hint, 3, opts, letter
+
+
+@verifies('alg', task='ap_square_parity')
+def _ap_mcq_square_parity():
+    """If n squared is even (or odd), what must be true of n?"""
+    parity = random.choice(["even", "odd"])
+    if parity == "even":
+        correct = r"\(n\) is even"
+        wrong = [r"\(n\) is odd", r"\(n\) could be either odd or even", r"\(n\) is a multiple of 4"]
+        why = r"An odd number squared is odd (odd × odd = odd), so \(n^2\) even forces \(n\) to be even."
+    else:
+        correct = r"\(n\) is odd"
+        wrong = [r"\(n\) is even", r"\(n\) could be either odd or even", r"\(n\) is a multiple of 3"]
+        why = r"An even number squared is even (\((2m)^2 = 4m^2\)), so \(n^2\) odd forces \(n\) to be odd."
+    opts, letter = _ap_options(correct, wrong)
+    q = rf"\(n\) is a whole number and \(n^2\) is {parity}. Which statement must be true?"
+    sol = rf"{why} Answer: <strong>{letter}</strong>"
+    return q, sol, "Try an even n and an odd n and see what happens to n squared.", 3, opts, letter
+
+
+# One pool per band, so a lesson quiz (3 foundational, 4 intermediate, 3 difficult, no repeated question) is
+# never short of distinct questions. Every function here is re-solved by the verification test.
+_AP_MCQ_FOUNDATIONAL = [
     _ap_mcq_even_odd,
+    _ap_mcq_sum_consecutive,
+    _ap_mcq_three_consecutive,
+    _ap_mcq_proof_valid,
+]
+
+_AP_MCQ_INTERMEDIATE = [
     _ap_mcq_square_diff,
     _ap_mcq_consecutive_product,
     _ap_mcq_counterexample,
-    _ap_mcq_sum_consecutive,
-    _ap_mcq_three_consecutive,
     _ap_mcq_factorise_even,
-    _ap_mcq_odd_square,
-    _ap_mcq_proof_valid,
+    _ap_mcq_consecutive_form,
+    _ap_mcq_sum_two_odds,
+    _ap_mcq_multiple_expression,
+    _ap_mcq_counterexample_value,
 ]
+
+_AP_MCQ_DIFFICULT = [
+    _ap_mcq_multiple_of_eight,
+    _ap_mcq_odd_squares_difference,
+    _ap_mcq_find_error,
+    _ap_mcq_expression_property,
+    _ap_mcq_square_parity,
+]
+
+_AP_MCQ_POOLS = {
+    "foundational": _AP_MCQ_FOUNDATIONAL,
+    "intermediate": _AP_MCQ_INTERMEDIATE,
+    "difficult": _AP_MCQ_DIFFICULT,
+}
+
+# Kept for callers that want every multiple-choice generator in one list.
+_AP_MCQ_POOL = _AP_MCQ_FOUNDATIONAL + _AP_MCQ_INTERMEDIATE + _AP_MCQ_DIFFICULT
 
 
 def _ap_mcq_dispatch():
@@ -805,8 +1105,9 @@ _POOLS = {
 
 def gcse_algebraic_proof_variants(difficulty, mode="practice"):
     if mode == "mcq":
+        pool = _AP_MCQ_POOLS.get(difficulty) or _AP_MCQ_POOL
         return mcq_variants_from_pool(
-            _AP_MCQ_POOL, "algebraic_proof", difficulty, count=4
+            pool, "algebraic_proof", difficulty, count=len(pool)
         )
 
     pool = _POOLS.get(difficulty)

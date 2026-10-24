@@ -874,11 +874,12 @@ def _py_d8_ladder_slip_multi():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# MCQ BANK (10 questions)
+# MCQ BANK (12 questions)
 # ══════════════════════════════════════════════════════════════════════════════
 
 _PY_MCQ_BANK = [
-    {"q": "In a right-angled triangle, which side is the hypotenuse?",
+    {"difficulty": "foundational",
+     "q": "In a right-angled triangle, which side is the hypotenuse?",
      "opts": ["A  The side opposite the right angle",
               "B  The shortest side",
               "C  The side next to the right angle only",
@@ -887,59 +888,83 @@ _PY_MCQ_BANK = [
      "sol": "The hypotenuse is opposite the right angle and is always the <strong>longest</strong> side. Answer: A",
      "hint": "Hypotenuse = longest side, opposite the 90° angle."},
 
-    {"q": "A right triangle has shorter sides 6 cm and 8 cm. What is the hypotenuse?",
+    {"difficulty": "foundational",
+     "q": "A right triangle has shorter sides 6 cm and 8 cm. What is the hypotenuse?",
      "opts": ["A  14 cm", "B  10 cm", "C  28 cm", "D  100 cm"],
      "ans": "B", "marks": 1,
      "sol": "c² = 6² + 8² = 36 + 64 = 100 → c = <strong>10 cm</strong>. Answer: B",
      "hint": "Use c² = a² + b²."},
 
-    {"q": "A right triangle has hypotenuse 13 cm and one side 5 cm. What is the other shorter side?",
+    {"difficulty": "foundational",
+     "q": "A right triangle has hypotenuse 13 cm and one side 5 cm. What is the other shorter side?",
      "opts": ["A  8 cm", "B  12 cm", "C  18 cm", "D  194 cm"],
      "ans": "B", "marks": 2,
      "sol": "b² = 13² − 5² = 169 − 25 = 144 → b = <strong>12 cm</strong>. Answer: B",
      "hint": "Rearrange: (shorter side)² = c² − a²."},
 
-    {"q": "Which formula is Pythagoras' theorem for legs a, b and hypotenuse c?",
+    {"difficulty": "intermediate",
+     "q": "Which formula is Pythagoras' theorem for legs a, b and hypotenuse c?",
      "opts": ["A  c = a + b", "B  c² = a² + b²", "C  c² = a² − b²", "D  a² = c² + b²"],
      "ans": "B", "marks": 1,
      "sol": "Pythagoras: <strong>c² = a² + b²</strong> where c is the hypotenuse. Answer: B",
      "hint": "Add the squares of the two shorter sides."},
 
-    {"q": "Do sides 7 cm, 24 cm and 25 cm form a right-angled triangle?",
+    {"difficulty": "intermediate",
+     "q": "Do sides 7 cm, 24 cm and 25 cm form a right-angled triangle?",
      "opts": ["A  Yes", "B  No", "C  Only if the angle is 45°", "D  Cannot tell"],
      "ans": "A", "marks": 2,
      "sol": "7² + 24² = 49 + 576 = 625 = 25². <strong>Yes</strong>. Answer: A",
      "hint": "Check whether (smaller)² + (middle)² = (largest)²."},
 
-    {"q": "A rectangle is 9 cm by 12 cm. What is the diagonal length?",
+    {"difficulty": "intermediate",
+     "q": "A rectangle is 9 cm by 12 cm. What is the diagonal length?",
      "opts": ["A  21 cm", "B  15 cm", "C  225 cm", "D  10.5 cm"],
      "ans": "B", "marks": 2,
      "sol": "d² = 9² + 12² = 81 + 144 = 225 → d = <strong>15 cm</strong>. Answer: B",
      "hint": "Diagonal of a rectangle — use Pythagoras on width and height."},
 
-    {"q": "A cuboid is 3 cm × 4 cm × 5 cm. What is the space diagonal?",
+    {"difficulty": "difficult",
+     "q": "A cuboid is 3 cm × 4 cm × 5 cm. What is the space diagonal?",
      "opts": ["A  12 cm", "B  5 cm", "C  7 cm", "D  √50 cm ≈ 7.07 cm"],
      "ans": "D", "marks": 2,
      "sol": "AG² = 3²+4²+5² = 50 → AG = √50 = 5√2 ≈ <strong>7.07 cm</strong>. Answer: D",
      "hint": "Space diagonal: √(l² + w² + h²)."},
 
-    {"q": "Which calculation finds the distance from (0,0) to (6,8)?",
+    {"difficulty": "difficult",
+     "q": "Which calculation finds the distance from (0,0) to (6,8)?",
      "opts": ["A  6 + 8", "B  √(6 + 8)", "C  √(6² + 8²)", "D  6 × 8"],
      "ans": "C", "marks": 1,
      "sol": "Distance = √((Δx)² + (Δy)²) = √(36+64) = <strong>√(6²+8²)</strong>. Answer: C",
      "hint": "Horizontal and vertical differences are the two legs."},
 
-    {"q": "A 10 m ladder touches a wall 6 m high. How far is the foot from the wall?",
+    {"difficulty": "difficult",
+     "q": "A 10 m ladder touches a wall 6 m high. How far is the foot from the wall?",
      "opts": ["A  4 m", "B  8 m", "C  16 m", "D  64 m"],
      "ans": "B", "marks": 2,
      "sol": "base² = 10² − 6² = 100 − 36 = 64 → base = <strong>8 m</strong>. Answer: B",
      "hint": "Ladder is the hypotenuse; height and base are the legs."},
 
-    {"q": "A triangle has sides 5 cm, 12 cm and 14 cm. Is it right-angled?",
+    {"difficulty": "difficult",
+     "q": "A triangle has sides 5 cm, 12 cm and 14 cm. Is it right-angled?",
      "opts": ["A  Yes", "B  No", "C  Yes, because 5+12>14", "D  Yes, because 5×12=60"],
      "ans": "B", "marks": 2,
      "sol": "5²+12² = 169, but 14² = 196. Not equal → <strong>not right-angled</strong>. Answer: B",
      "hint": "Compare sum of squares of the two shorter sides with square of the longest."},
+
+    {"difficulty": "intermediate",
+     "q": "A rectangle has a diagonal of 17 cm and one side of 8 cm. What is the area of the rectangle?",
+     "opts": ["A  136 cm²", "B  225 cm²", "C  120 cm²", "D  68 cm²"],
+     "ans": "C", "marks": 3,
+     "sol": "Missing side² = 17² − 8² = 289 − 64 = 225, so the missing side is 15 cm. "
+            "Area = 8 × 15 = <strong>120 cm²</strong>. Answer: C",
+     "hint": "The diagonal is the hypotenuse. Find the other side first, then multiply the two sides."},
+
+    {"difficulty": "intermediate",
+     "q": "Points A (1, 2) and B (7, 10) are plotted on a coordinate grid. What is the distance AB?",
+     "opts": ["A  14 units", "B  10 units", "C  100 units", "D  48 units"],
+     "ans": "B", "marks": 2,
+     "sol": "Across: 7 − 1 = 6. Up: 10 − 2 = 8. AB² = 6² + 8² = 100, so AB = <strong>10 units</strong>. Answer: B",
+     "hint": "Draw a right-angled triangle with the horizontal and vertical differences as the two shorter sides."},
 ]
 
 
